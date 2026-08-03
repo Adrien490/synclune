@@ -1,31 +1,26 @@
-import { Clock, Euro, Package, Receipt, ShoppingBag, Target, UserPlus } from "lucide-react";
+import { Euro, Package, Receipt, ShoppingBag, Target, UserPlus } from "lucide-react";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { buildSparklinePath } from "../services/sparkline-path.service";
 import { KpiCard } from "./kpi-card";
 import { KpiCardAnimated } from "./kpi-card-animated";
 import { ORDERS_TO_SHIP_HREF } from "@/modules/orders/constants/to-ship";
 
-function formatFulfillmentTime(hours: number): string {
-	if (hours <= 0) return "—";
-	if (hours < 24) return `${Math.round(hours)} h`;
-	const days = hours / 24;
-	return `${days.toFixed(1)} j`;
-}
-
 interface DashboardKpisProps {
 	kpis: GetKpisReturn;
-	comparisonLabel?: string;
 }
 
 /**
- * Dashboard KPIs grid - 4 featured + 4 compact
- * Row 1: CA net, Commandes, Panier moyen, À expédier (horizontal scroll on mobile)
- * Row 2: Finalisation panier, Note moyenne, Délai d'expédition, Nouveaux clients (2-col on mobile)
+ * Dashboard KPIs grid — mois en cours, valeurs brutes.
+ * Row 1 : CA net, Commandes, Panier moyen, À expédier (scroll horizontal mobile).
+ * Row 2 : Finalisation panier, Nouveaux clients (2 colonnes mobile).
  *
+ * Lot 4 SIMPLIFICATION.md S3.5 (2026-08-03) : plus de sparklines, d'évolutions
+ * « vs période précédente » ni de délai moyen d'expédition — les courbes et
+ * comparaisons vivent dans le dashboard Stripe ; ici ne restent que les chiffres
+ * du mois sous l'angle Synclune (CA net après remboursements, file à expédier).
  */
-export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: DashboardKpisProps) {
+export function DashboardKpis({ kpis }: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
 	const hasDiscounts = kpis.discountImpact.amount > 0;
 	const refundRate = kpis.monthlyRevenue.refundRate;
@@ -44,9 +39,6 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 
 	const revenuePriority: "critical" | "alert" = refundRate >= 10 ? "alert" : "critical";
 
-	const revenueSparkline = buildSparklinePath(kpis.sparklines.revenue);
-	const ordersSparkline = buildSparklinePath(kpis.sparklines.orders);
-
 	return (
 		<div className="space-y-4">
 			{/* Row 1: 4 featured KPIs — horizontal scroll on mobile (with edge fades), grid on sm+. */}
@@ -64,13 +56,9 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 									value={formatEuro(kpis.monthlyRevenue.netAmount, { compact: true })}
 									numericValue={kpis.monthlyRevenue.netAmount}
 									suffix=" €"
-									evolution={kpis.monthlyRevenue.evolution}
-									previousVolume={kpis.monthlyRevenue.previousVolume}
-									comparisonLabel={comparisonLabel}
 									icon={<Euro className="size-4" />}
 									size="featured"
 									priority={revenuePriority}
-									sparklinePath={revenueSparkline}
 									tooltip="Chiffre d'affaires net (après remboursements) des commandes payées ce mois"
 									subtitle={revenueSubtitle}
 									badge={
@@ -91,13 +79,9 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 									title="Commandes"
 									value={kpis.monthlyOrders.count.toString()}
 									numericValue={kpis.monthlyOrders.count}
-									evolution={kpis.monthlyOrders.evolution}
-									previousVolume={kpis.monthlyOrders.previousVolume}
-									comparisonLabel={comparisonLabel}
 									icon={<ShoppingBag className="size-4" />}
 									size="featured"
 									priority="critical"
-									sparklinePath={ordersSparkline}
 									tooltip="Nombre de commandes payées ce mois"
 								/>
 							</div>
@@ -110,9 +94,6 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 									value={formatEuro(kpis.averageOrderValue.amount, { compact: true })}
 									numericValue={kpis.averageOrderValue.amount}
 									suffix=" €"
-									evolution={kpis.averageOrderValue.evolution}
-									previousVolume={kpis.averageOrderValue.previousVolume}
-									comparisonLabel={comparisonLabel}
 									icon={<Receipt className="size-4" />}
 									size="featured"
 									priority="operational"
@@ -133,10 +114,8 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 									status={kpis.pendingShipment.count > 0 ? "warning" : "default"}
 									tooltip="Commandes payées en attente d'expédition"
 									// Le seul KPI qui désigne une FILE DE TRAVAIL et non une mesure :
-									// il doit mener aux commandes qu'il compte. Sans `href` (pourtant
-									// supporté par KpiCard), c'était un nombre mort — l'admin devait
-									// rejoindre la liste à la main puis repérer les lignes à l'œil.
-									// Pas de lien quand la file est vide : rien à aller voir.
+									// il doit mener aux commandes qu'il compte. Pas de lien quand la
+									// file est vide : rien à aller voir.
 									href={kpis.pendingShipment.count > 0 ? ORDERS_TO_SHIP_HREF : undefined}
 								/>
 							</div>
@@ -145,7 +124,7 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 				</ScrollFade>
 			</div>
 
-			{/* Row 2: Compact operational KPIs — 2-col on mobile (flat), 4-col at lg+ (full card) */}
+			{/* Row 2: Compact operational KPIs — 2-col on mobile (flat), lg+ full card */}
 			<div className="grid grid-cols-2 gap-x-4 gap-y-1 md:gap-4 lg:grid-cols-4">
 				<KpiCardAnimated index={4}>
 					<KpiCard
@@ -154,9 +133,6 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 						numericValue={kpis.conversionRate.rate}
 						suffix=" %"
 						decimalPlaces={1}
-						evolution={kpis.conversionRate.evolution}
-						previousVolume={kpis.conversionRate.previousVolume}
-						comparisonLabel={comparisonLabel}
 						icon={<Target className="size-4" />}
 						size="compact"
 						priority="operational"
@@ -172,36 +148,14 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 
 				<KpiCardAnimated index={5}>
 					<KpiCard
-						title="Délai d'expédition"
-						value={formatFulfillmentTime(kpis.avgFulfillmentTime.hours)}
-						numericValue={kpis.avgFulfillmentTime.hours}
-						evolution={
-							kpis.avgFulfillmentTime.hours > 0 ? kpis.avgFulfillmentTime.evolution : undefined
-						}
-						previousVolume={kpis.avgFulfillmentTime.previousVolume}
-						invertEvolutionColors
-						comparisonLabel={comparisonLabel}
-						icon={<Clock className="size-4" />}
-						size="compact"
-						priority="operational"
-						flatOnMobile
-						tooltip="Délai moyen entre le paiement et l'expédition"
-					/>
-				</KpiCardAnimated>
-
-				<KpiCardAnimated index={6}>
-					<KpiCard
 						title="Nouveaux clients"
 						value={kpis.newCustomers.count.toString()}
 						numericValue={kpis.newCustomers.count}
-						evolution={kpis.newCustomers.evolution}
-						previousVolume={kpis.newCustomers.previousVolume}
-						comparisonLabel={comparisonLabel}
 						icon={<UserPlus className="size-4" />}
 						size="compact"
 						priority="info"
 						flatOnMobile
-						tooltip="Clients dont la première commande payée tombe dans la période"
+						tooltip="Clients dont la première commande payée tombe dans le mois"
 					/>
 				</KpiCardAnimated>
 			</div>

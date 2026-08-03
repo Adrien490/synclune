@@ -27,63 +27,39 @@ export interface OrderForTransform {
 // ============================================================================
 
 export type GetKpisReturn = {
+	// Lot 4 S3.5 (2026-08-03) : mois en cours uniquement — plus d'évolutions
+	// « vs période précédente », de sparklines ni de délai moyen d'expédition
+	// (les courbes vivent dans le dashboard Stripe).
 	monthlyRevenue: {
 		amount: number;
 		netAmount: number;
 		refundAmount: number;
 		refundCount: number;
-		/** Pourcentage de commandes payées remboursées sur la période courante */
+		/** Pourcentage de commandes payées remboursées sur le mois en cours */
 		refundRate: number;
-		evolution: number;
-		/** Order count of the previous comparison period — used to gate evolution display when volume is too low to be meaningful */
-		previousVolume: number;
 	};
 	monthlyOrders: {
 		count: number;
-		evolution: number;
-		previousVolume: number;
 	};
 	averageOrderValue: {
 		amount: number;
-		evolution: number;
-		previousVolume: number;
 	};
 	conversionRate: {
 		rate: number;
-		evolution: number;
 		abandoned: number;
-		/** Total orders (paid + abandoned) of the previous period — denominator volume */
-		previousVolume: number;
 	};
 	pendingShipment: {
 		count: number;
 	};
 	discountImpact: {
 		amount: number;
-		evolution: number;
-		previousVolume: number;
-	};
-	avgFulfillmentTime: {
-		hours: number;
-		evolution: number;
-		previousVolume: number;
 	};
 	/**
-	 * Nouveaux clients : clients dont la 1ʳᵉ commande payée tombe dans la période
-	 * (clé client = COALESCE userId, customerEmail). Évolution vs période de comparaison.
+	 * Nouveaux clients : clients dont la 1ʳᵉ commande payée tombe dans le mois
+	 * (clé client = COALESCE userId, customerEmail).
 	 */
 	newCustomers: {
 		count: number;
-		evolution: number;
-		previousVolume: number;
-	};
-	/**
-	 * Compact daily series (current period, Paris wall-clock) feeding the
-	 * KpiCard background sparkline. Empty arrays when no data.
-	 */
-	sparklines: {
-		revenue: number[];
-		orders: number[];
 	};
 };
 
@@ -105,37 +81,6 @@ export type GetVatProgressReturn = {
 };
 
 // ============================================================================
-// TYPES - REVENUE CHART (RAW SQL)
-// ============================================================================
-
-export type RevenueRow = {
-	date: string;
-	revenue: bigint;
-	orders: bigint;
-	subtotal: bigint;
-	discounts: bigint;
-	shipping: bigint;
-};
-
-// ============================================================================
-// TYPES - REVENUE CHART
-// ============================================================================
-
-export type RevenueDataPoint = {
-	date: string;
-	revenue: number;
-	orders: number;
-	subtotal: number;
-	discounts: number;
-	shipping: number;
-	/**
-	 * Revenue of the comparison period (previous / YoY) aligned by ordinal bucket
-	 * index. Present on every point only when comparison data exists.
-	 */
-	previousRevenue?: number;
-};
-
-// ============================================================================
 // TYPES - PERIOD BOUNDARIES
 // ============================================================================
 
@@ -147,13 +92,6 @@ export type PeriodBoundaries = {
 	/** Same period one year earlier - used for Year-over-Year comparisons */
 	previousYearStart: Date;
 	previousYearEnd: Date;
-};
-
-export type ChartConfig = {
-	startDate: Date;
-	pointCount: number;
-	granularity: "daily" | "weekly" | "monthly";
-	sqlDateFormat: string;
 };
 
 // ============================================================================

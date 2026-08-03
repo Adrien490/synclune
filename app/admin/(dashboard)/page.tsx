@@ -11,8 +11,6 @@ import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts
 import { ChartError } from "@/modules/dashboard/components/chart-error";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
 import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-dashboard-button";
-import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
-import { DashboardMobileActions } from "@/modules/dashboard/components/dashboard-mobile-actions";
 import { VatProgressCard } from "@/modules/dashboard/components/vat-progress-card";
 
 import {
@@ -28,19 +26,12 @@ import { fetchDashboardActionItems } from "@/modules/dashboard/data/get-action-i
 import { fetchDashboardVatProgress } from "@/modules/dashboard/data/get-vat-progress";
 import { getNextUrssafDeadline } from "@/modules/dashboard/services/urssaf-deadline.service";
 
-import { getComparisonLabel, parsePeriod } from "@/modules/dashboard/constants/period.constants";
-import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
-
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
 	description: "Vue d'ensemble de ta boutique",
 };
 
-type AdminDashboardPageProps = {
-	searchParams: Promise<{ period?: string }>;
-};
-
-export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
+export default async function AdminDashboardPage() {
 	// Les 5 fetchers `modules/dashboard/data/*` (CA, TVA, alertes, commandes
 	// récentes, actions à mener) sont en `"use cache"` : ils ne PEUVENT pas
 	// s'auto-garder, `isAdmin()` lisant `headers()`, source dynamique interdite
@@ -48,23 +39,18 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 	// d'`assertAdminPage` pour pourquoi le layout ne suffit pas.
 	await assertAdminPage();
 
-	const params = await searchParams;
-	const period = parsePeriod(params.period);
-
 	return (
 		<section aria-label="Tableau de bord" className="relative isolate">
 			<h1 className="sr-only">Tableau de bord</h1>
+			{/* Lot 4 S3.5 : plus de sélecteur de période ni de sheets mobiles — le
+			    tableau de bord montre le mois en cours, un seul bouton Rafraîchir. */}
 			<header className="mb-4 md:mb-6">
 				<div
 					role="group"
 					aria-label="Actions du tableau de bord"
-					className="flex w-full flex-wrap items-center justify-start gap-3 md:justify-end"
+					className="flex w-full flex-wrap items-center justify-end gap-3"
 				>
-					<div className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end">
-						<PeriodSelector />
-						<RefreshDashboardButton />
-					</div>
-					<DashboardMobileActions className="md:hidden" />
+					<RefreshDashboardButton />
 				</div>
 			</header>
 
@@ -81,10 +67,10 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 					/>
 					<Suspense
 						fallback={
-							<KpisSkeleton count={4} compactCount={3} ariaLabel="Chargement des indicateurs" />
+							<KpisSkeleton count={4} compactCount={2} ariaLabel="Chargement des indicateurs" />
 						}
 					>
-						<KpisWrapper period={period} />
+						<KpisWrapper />
 					</Suspense>
 				</section>
 
@@ -112,10 +98,10 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 	);
 }
 
-async function KpisWrapper({ period }: { period: DashboardPeriod }) {
+async function KpisWrapper() {
 	let kpis;
 	try {
-		kpis = await fetchDashboardKpis(period);
+		kpis = await fetchDashboardKpis();
 	} catch (error) {
 		Sentry.captureException(error);
 		return (
@@ -126,7 +112,7 @@ async function KpisWrapper({ period }: { period: DashboardPeriod }) {
 			/>
 		);
 	}
-	return <DashboardKpis kpis={kpis} comparisonLabel={getComparisonLabel(period)} />;
+	return <DashboardKpis kpis={kpis} />;
 }
 
 async function AlertsWrapper() {

@@ -139,21 +139,8 @@ describe("KpiCard", () => {
 		expect(screen.getByTestId("kpi-value")).toHaveTextContent("1 500 €");
 	});
 
-	it("renders evolution when provided", () => {
-		render(
-			<KpiCard
-				title="CA du mois"
-				value="1 500 €"
-				evolution={12.5}
-				comparisonLabel="vs mois dernier"
-			/>,
-		);
-
-		const evolution = screen.getByTestId("kpi-evolution");
-		expect(evolution).toBeInTheDocument();
-		expect(evolution).toHaveAttribute("data-evolution", "12.5");
-		expect(evolution).toHaveAttribute("data-comparison", "vs mois dernier");
-	});
+	// Lot 4 S3.5 (2026-08-03) : le prop `evolution` est parti avec les
+	// comparaisons « vs période précédente » — les courbes vivent dans Stripe.
 
 	it("does not render evolution when undefined", () => {
 		render(<KpiCard title="CA du mois" value="1 500 €" />);
@@ -216,8 +203,6 @@ describe("KpiCard", () => {
 					value="1 500 €"
 					numericValue={1500}
 					suffix=" €"
-					evolution={10}
-					comparisonLabel="vs mois dernier"
 					href="/admin/ventes"
 				/>,
 			);
@@ -288,35 +273,12 @@ describe("KpiCard", () => {
 	// -------------------------------------------------------------------------
 
 	describe("accessibility", () => {
-		it("includes evolution direction in accessible label", () => {
-			render(
-				<KpiCard
-					title="Commandes"
-					value="25"
-					numericValue={25}
-					evolution={-15.3}
-					href="/admin/ventes"
-				/>,
-			);
+		it("keeps the accessible label to title + value + navigation hint", () => {
+			render(<KpiCard title="Commandes" value="25" numericValue={25} href="/admin/ventes" />);
 
 			const label = screen.getByRole("link").getAttribute("aria-label")!;
-			expect(label).toContain("En baisse");
-			expect(label).toContain("15.3%");
-		});
-
-		it("uses 'En hausse' for positive evolution", () => {
-			render(
-				<KpiCard
-					title="Commandes"
-					value="25"
-					numericValue={25}
-					evolution={8}
-					href="/admin/ventes"
-				/>,
-			);
-
-			const label = screen.getByRole("link").getAttribute("aria-label")!;
-			expect(label).toContain("En hausse");
+			expect(label).toContain("Commandes: 25");
+			expect(label).toContain("Cliquer pour voir les détails");
 		});
 
 		it("uses string value in label when numericValue is not set", () => {

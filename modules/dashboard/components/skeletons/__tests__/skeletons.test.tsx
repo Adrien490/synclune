@@ -58,13 +58,7 @@ vi.mock("../../constants/chart-styles", () => ({
 	},
 }));
 
-import {
-	FulfillmentSkeleton,
-	KpiCardSkeleton,
-	KpisSkeleton,
-	ListSkeleton,
-	VatProgressSkeleton,
-} from "../index";
+import { KpiCardSkeleton, KpisSkeleton, ListSkeleton, VatProgressSkeleton } from "../index";
 
 afterEach(cleanup);
 
@@ -170,27 +164,6 @@ describe("ListSkeleton", () => {
 		const { container } = render(<ListSkeleton itemCount={3} />);
 		const rows = container.querySelectorAll(".rounded-lg.border");
 		expect(rows).toHaveLength(3);
-	});
-});
-
-// ============================================================================
-// FulfillmentSkeleton
-// ============================================================================
-
-describe("FulfillmentSkeleton", () => {
-	it("renders with role='status' and aria-busy", () => {
-		render(<FulfillmentSkeleton />);
-		const status = screen.getByRole("status");
-		expect(status).toBeInTheDocument();
-		expect(status).toHaveAttribute("aria-busy", "true");
-	});
-
-	it("has the correct aria-label for the fulfillment pipeline", () => {
-		render(<FulfillmentSkeleton />);
-		expect(screen.getByRole("status")).toHaveAttribute(
-			"aria-label",
-			"Chargement du pipeline d'expédition",
-		);
 	});
 });
 

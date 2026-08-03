@@ -1,59 +1,12 @@
 // ============================================================================
 // DASHBOARD PERIOD CONFIGURATION
+//
+// Lot 4 SIMPLIFICATION.md S3.5 (2026-08-03) : le sélecteur de période est
+// parti — le tableau de bord montre le MOIS EN COURS, point. Le type et le
+// défaut restent car `getPeriodBoundaries` en dépend ; les labels, le parsing
+// d'URL et les libellés de comparaison sont morts avec le sélecteur.
 // ============================================================================
 
 export type DashboardPeriod = "7d" | "30d" | "month" | "quarter" | "year";
 
-export type ChartGranularity = "daily" | "weekly" | "monthly";
-
-type PeriodConfig = {
-	label: string;
-	chartGranularity: ChartGranularity;
-};
-
-export const DASHBOARD_PERIODS: Record<DashboardPeriod, PeriodConfig> = {
-	"7d": { label: "7 jours", chartGranularity: "daily" },
-	"30d": { label: "30 jours", chartGranularity: "daily" },
-	month: { label: "Ce mois", chartGranularity: "daily" },
-	quarter: { label: "Ce trimestre", chartGranularity: "weekly" },
-	year: { label: "Cette année", chartGranularity: "monthly" },
-} as const;
-
-/**
- * Short labels for the mobile segmented control (must fit in ~70px at 375px viewport)
- */
-export const DASHBOARD_PERIODS_SHORT: Record<DashboardPeriod, string> = {
-	"7d": "7j",
-	"30d": "30j",
-	month: "Mois",
-	quarter: "Trim.",
-	year: "Année",
-} as const;
-
 export const DEFAULT_PERIOD: DashboardPeriod = "month";
-
-export const PERIOD_SEARCH_PARAM = "period";
-
-export const COMPARISON_LABELS: Record<DashboardPeriod, string> = {
-	"7d": "vs 7j précédents",
-	"30d": "vs 30j précédents",
-	month: "vs mois dernier",
-	quarter: "vs trimestre dernier",
-	year: "vs année dernière",
-};
-
-/**
- * Parses and validates a period string from URL search params
- * Returns DEFAULT_PERIOD for invalid or missing values
- */
-export function parsePeriod(raw: string | undefined): DashboardPeriod {
-	if (raw && raw in DASHBOARD_PERIODS) return raw as DashboardPeriod;
-	return DEFAULT_PERIOD;
-}
-
-/**
- * Returns the comparison label for a given period (vs période précédente).
- */
-export function getComparisonLabel(period: DashboardPeriod): string {
-	return COMPARISON_LABELS[period];
-}

@@ -7,8 +7,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { cn } from "@/shared/utils/cn";
 import { ChevronRight, Info } from "lucide-react";
 import Link from "next/link";
-import { LOW_VOLUME_THRESHOLD } from "../constants/dashboard.constants";
-import { KpiEvolution } from "./kpi-evolution";
 import { KpiValue } from "./kpi-value";
 
 /**
@@ -55,7 +53,6 @@ const KPI_FLAT_MOBILE_OVERRIDES =
 interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	title: string;
 	value: string | number;
-	evolution?: number;
 	badge?: {
 		label: string;
 		variant?: "default" | "secondary" | "destructive" | "outline";
@@ -68,23 +65,16 @@ interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	animationDelay?: number;
 	href?: string;
 	tooltip?: string;
-	comparisonLabel?: string;
-	invertEvolutionColors?: boolean;
-	/** SVG path data for a background sparkline (7-day trend) */
-	sparklinePath?: string | null;
 	/**
 	 * When true, the Card chrome (border, gradient, shadow, min-height) is stripped
 	 * on mobile viewports (< md) for a flat iOS-native density. Desktop is unaffected.
 	 */
 	flatOnMobile?: boolean;
-	/** Volume of the previous comparison period — gates evolution display below LOW_VOLUME_THRESHOLD */
-	previousVolume?: number;
 }
 
 export function KpiCard({
 	title,
 	value,
-	evolution,
 	badge,
 	subtitle,
 	icon,
@@ -97,11 +87,7 @@ export function KpiCard({
 	animationDelay = 0,
 	href,
 	tooltip,
-	comparisonLabel,
-	invertEvolutionColors = false,
-	sparklinePath,
 	flatOnMobile = false,
-	previousVolume,
 }: KpiCardProps) {
 	const iconClassName = cn(
 		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/30 text-primary can-hover:group-hover:bg-primary/20 can-hover:group-hover:scale-110 transition-[transform,background-color] duration-300",
@@ -122,27 +108,6 @@ export function KpiCard({
 					className="bg-primary/20 pointer-events-none absolute -top-12 -right-12 size-40 rounded-full blur-3xl [animation-duration:4s] motion-safe:animate-pulse"
 				/>
 			)}
-			{sparklinePath && (
-				<>
-					<svg
-						viewBox="0 0 100 32"
-						className="pointer-events-none absolute right-0 bottom-0 h-12 w-2/3 opacity-10"
-						preserveAspectRatio="none"
-						aria-hidden="true"
-					>
-						<path
-							d={sparklinePath}
-							fill="none"
-							stroke="currentColor"
-							strokeWidth={1.5}
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						/>
-					</svg>
-					<span className="sr-only">Tendance sur la période</span>
-				</>
-			)}
-
 			<div
 				className="bg-secondary absolute top-2 right-2 size-1 rounded-full opacity-40 transition-opacity group-hover:opacity-60"
 				aria-hidden="true"
@@ -201,14 +166,6 @@ export function KpiCard({
 				/>
 
 				<div className="mt-2 flex flex-wrap items-center gap-1.5">
-					{evolution !== undefined && (
-						<KpiEvolution
-							evolution={evolution}
-							comparisonLabel={comparisonLabel}
-							invertColors={invertEvolutionColors}
-							previousVolume={previousVolume}
-						/>
-					)}
 					{badge && (
 						<Badge variant={badge.variant ?? "default"} className="text-xs font-normal">
 							{badge.label}
@@ -229,14 +186,7 @@ export function KpiCard({
 	);
 
 	const displayValue = numericValue !== undefined ? `${numericValue}${suffix ?? ""}` : value;
-	const isLowVolume = previousVolume !== undefined && previousVolume < LOW_VOLUME_THRESHOLD;
-	const evolutionText =
-		evolution !== undefined
-			? isLowVolume
-				? ". Comparaison non significative — données insuffisantes"
-				: `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`
-			: "";
-	const accessibleLabel = `${title}: ${displayValue}${evolutionText}${href ? ". Cliquer pour voir les détails" : ""}`;
+	const accessibleLabel = `${title}: ${displayValue}${href ? ". Cliquer pour voir les détails" : ""}`;
 
 	if (href) {
 		return (

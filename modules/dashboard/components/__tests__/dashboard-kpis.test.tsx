@@ -42,26 +42,24 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 			refundAmount: 200,
 			refundCount: 1,
 			refundRate: 4,
-			evolution: 12.5,
-			previousVolume: 50,
 		},
-		monthlyOrders: { count: 25, evolution: -3.2, previousVolume: 50 },
-		averageOrderValue: { amount: 200, evolution: 0, previousVolume: 50 },
-		conversionRate: { rate: 65.0, evolution: 2.1, abandoned: 8, previousVolume: 50 },
+		monthlyOrders: { count: 25 },
+		averageOrderValue: { amount: 200 },
+		conversionRate: { rate: 65.0, abandoned: 8 },
 		pendingShipment: { count: 3 },
-		discountImpact: { amount: 150, evolution: 10.0, previousVolume: 50 },
-		avgFulfillmentTime: { hours: 24, evolution: 0, previousVolume: 50 },
-		newCustomers: { count: 12, evolution: 8.0, previousVolume: 50 },
-		sparklines: { revenue: [], orders: [] },
+		discountImpact: { amount: 150 },
+		newCustomers: { count: 12 },
 		...overrides,
 	};
 }
 
 describe("DashboardKpis", () => {
-	it("renders 7 KPI cards (4 featured + 3 compact)", () => {
+	// Lot 4 S3.5 : 6 cartes (4 featured + 2 compactes) — le délai d'expédition
+	// est parti avec les évolutions et les sparklines.
+	it("renders 6 KPI cards (4 featured + 2 compact)", () => {
 		render(<DashboardKpis kpis={makeKpis()} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(7);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(6);
 	});
 
 	it("renders CA net du mois KPI with critical priority when refundRate < 10%", () => {
@@ -74,8 +72,6 @@ describe("DashboardKpis", () => {
 						refundAmount: 300,
 						refundCount: 2,
 						refundRate: 4,
-						evolution: 15.0,
-						previousVolume: 50,
 					},
 				})}
 			/>,
@@ -86,8 +82,6 @@ describe("DashboardKpis", () => {
 				title: "CA net du mois",
 				numericValue: 7200,
 				suffix: " €",
-				evolution: 15.0,
-				comparisonLabel: "vs mois dernier",
 				size: "featured",
 				priority: "critical",
 			}),
@@ -104,8 +98,6 @@ describe("DashboardKpis", () => {
 						refundAmount: 500,
 						refundCount: 5,
 						refundRate: 25,
-						evolution: 0,
-						previousVolume: 50,
 					},
 				})}
 			/>,
@@ -129,8 +121,6 @@ describe("DashboardKpis", () => {
 						refundAmount: 300,
 						refundCount: 2,
 						refundRate: 8,
-						evolution: 10,
-						previousVolume: 50,
 					},
 				})}
 			/>,
@@ -145,18 +135,12 @@ describe("DashboardKpis", () => {
 	});
 
 	it("renders Commandes KPI with correct props", () => {
-		render(
-			<DashboardKpis
-				kpis={makeKpis({ monthlyOrders: { count: 42, evolution: 8.3, previousVolume: 50 } })}
-			/>,
-		);
+		render(<DashboardKpis kpis={makeKpis({ monthlyOrders: { count: 42 } })} />);
 
 		expect(mockKpiCard).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: "Commandes",
 				numericValue: 42,
-				evolution: 8.3,
-				comparisonLabel: "vs mois dernier",
 				size: "featured",
 				priority: "critical",
 			}),
@@ -167,7 +151,7 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({
-					averageOrderValue: { amount: 175.5, evolution: -2.1, previousVolume: 50 },
+					averageOrderValue: { amount: 175.5 },
 				})}
 			/>,
 		);
@@ -177,8 +161,6 @@ describe("DashboardKpis", () => {
 				title: "Panier moyen",
 				numericValue: 175.5,
 				suffix: " €",
-				evolution: -2.1,
-				comparisonLabel: "vs mois dernier",
 				size: "featured",
 				priority: "operational",
 			}),
@@ -215,7 +197,7 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({
-					conversionRate: { rate: 72.5, evolution: 5.0, abandoned: 12, previousVolume: 50 },
+					conversionRate: { rate: 72.5, abandoned: 12 },
 				})}
 			/>,
 		);
@@ -237,7 +219,7 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({
-					conversionRate: { rate: 72.5, evolution: 5.0, abandoned: 12, previousVolume: 50 },
+					conversionRate: { rate: 72.5, abandoned: 12 },
 				})}
 			/>,
 		);
@@ -254,7 +236,7 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({
-					conversionRate: { rate: 90.0, evolution: 0, abandoned: 1, previousVolume: 50 },
+					conversionRate: { rate: 90.0, abandoned: 1 },
 				})}
 			/>,
 		);
@@ -271,7 +253,7 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({
-					conversionRate: { rate: 100, evolution: 0, abandoned: 0, previousVolume: 50 },
+					conversionRate: { rate: 100, abandoned: 0 },
 				})}
 			/>,
 		);
@@ -294,8 +276,6 @@ describe("DashboardKpis", () => {
 						refundAmount: 300,
 						refundCount: 2,
 						refundRate: 8,
-						evolution: 10,
-						previousVolume: 50,
 					},
 				})}
 			/>,
@@ -319,8 +299,6 @@ describe("DashboardKpis", () => {
 						refundAmount: 0,
 						refundCount: 0,
 						refundRate: 0,
-						evolution: 10,
-						previousVolume: 50,
 					},
 				})}
 			/>,
@@ -344,10 +322,8 @@ describe("DashboardKpis", () => {
 						refundAmount: 150,
 						refundCount: 1,
 						refundRate: 4,
-						evolution: 10,
-						previousVolume: 50,
 					},
-					discountImpact: { amount: 200, evolution: 5, previousVolume: 50 },
+					discountImpact: { amount: 200 },
 				})}
 			/>,
 		);
@@ -379,33 +355,11 @@ describe("DashboardKpis", () => {
 	});
 
 	it("renders a 'Nouveaux clients' KPI card from newCustomers", () => {
-		render(
-			<DashboardKpis
-				kpis={makeKpis({ newCustomers: { count: 7, evolution: 40, previousVolume: 50 } })}
-			/>,
-		);
+		render(<DashboardKpis kpis={makeKpis({ newCustomers: { count: 7 } })} />);
 
 		expect(mockKpiCard).toHaveBeenCalledWith(
 			expect.objectContaining({ title: "Nouveaux clients", value: "7" }),
 		);
-	});
-
-	it("passes a sparkline path to CA net & Commandes when the series has a trend", () => {
-		render(
-			<DashboardKpis kpis={makeKpis({ sparklines: { revenue: [1, 2, 3], orders: [3, 1, 4] } })} />,
-		);
-
-		const revenueCall = mockKpiCard.mock.calls.find(([p]) => p.title === "CA net du mois")?.[0];
-		const ordersCall = mockKpiCard.mock.calls.find(([p]) => p.title === "Commandes")?.[0];
-		expect(revenueCall?.sparklinePath).toMatch(/^M /);
-		expect(ordersCall?.sparklinePath).toMatch(/^M /);
-	});
-
-	it("passes a null sparkline path when the series is flat/empty", () => {
-		render(<DashboardKpis kpis={makeKpis()} />);
-
-		const revenueCall = mockKpiCard.mock.calls.find(([p]) => p.title === "CA net du mois")?.[0];
-		expect(revenueCall?.sparklinePath).toBeNull();
 	});
 
 	it("handles zero values without crashing", () => {
@@ -416,21 +370,17 @@ describe("DashboardKpis", () => {
 				refundAmount: 0,
 				refundCount: 0,
 				refundRate: 0,
-				evolution: 0,
-				previousVolume: 0,
 			},
-			monthlyOrders: { count: 0, evolution: 0, previousVolume: 0 },
-			averageOrderValue: { amount: 0, evolution: 0, previousVolume: 0 },
-			conversionRate: { rate: 0, evolution: 0, abandoned: 0, previousVolume: 0 },
+			monthlyOrders: { count: 0 },
+			averageOrderValue: { amount: 0 },
+			conversionRate: { rate: 0, abandoned: 0 },
 			pendingShipment: { count: 0 },
-			discountImpact: { amount: 0, evolution: 0, previousVolume: 0 },
-			avgFulfillmentTime: { hours: 0, evolution: 0, previousVolume: 0 },
-			newCustomers: { count: 0, evolution: 0, previousVolume: 0 },
-			sparklines: { revenue: [], orders: [] },
+			discountImpact: { amount: 0 },
+			newCustomers: { count: 0 },
 		};
 
 		render(<DashboardKpis kpis={kpis} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(7);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(6);
 	});
 });

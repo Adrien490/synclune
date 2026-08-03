@@ -1,6 +1,5 @@
 import type { DashboardPeriod } from "../constants/period.constants";
-import { DASHBOARD_PERIODS } from "../constants/period.constants";
-import type { PeriodBoundaries, ChartConfig } from "../types/dashboard.types";
+import type { PeriodBoundaries } from "../types/dashboard.types";
 import { getParisDateParts, parisWallTimeToUtc } from "@/shared/utils/timezone";
 
 // ============================================================================
@@ -90,73 +89,5 @@ export function getPeriodBoundaries(period: DashboardPeriod): PeriodBoundaries {
 	};
 }
 
-/**
- * Returns chart configuration for a given period
- * Includes start date, number of points, granularity, and SQL date format
- */
-export function getChartConfig(period: DashboardPeriod): ChartConfig {
-	const now = new Date();
-	const { year, month, day: date } = getParisDateParts(now);
-	const { chartGranularity } = DASHBOARD_PERIODS[period];
-
-	const SQL_DATE_FORMATS = {
-		daily: "YYYY-MM-DD",
-		weekly: "IYYY-IW",
-		monthly: "YYYY-MM",
-	} as const;
-
-	switch (period) {
-		case "7d":
-			return {
-				startDate: parisWallTimeToUtc(year, month, date - 7),
-				pointCount: 7,
-				granularity: chartGranularity,
-				sqlDateFormat: SQL_DATE_FORMATS[chartGranularity],
-			};
-
-		case "30d":
-			return {
-				startDate: parisWallTimeToUtc(year, month, date - 30),
-				pointCount: 30,
-				granularity: chartGranularity,
-				sqlDateFormat: SQL_DATE_FORMATS[chartGranularity],
-			};
-
-		case "month": {
-			const monthStart = parisWallTimeToUtc(year, month, 1);
-			const daysElapsed = date;
-			return {
-				startDate: monthStart,
-				pointCount: daysElapsed,
-				granularity: chartGranularity,
-				sqlDateFormat: SQL_DATE_FORMATS[chartGranularity],
-			};
-		}
-
-		case "quarter": {
-			const currentQuarter = Math.floor(month / 3);
-			const quarterStart = parisWallTimeToUtc(year, currentQuarter * 3, 1);
-			const daysSinceQuarterStart = Math.ceil(
-				(now.getTime() - quarterStart.getTime()) / (1000 * 60 * 60 * 24),
-			);
-			const weeksElapsed = Math.ceil(daysSinceQuarterStart / 7);
-			return {
-				startDate: quarterStart,
-				pointCount: weeksElapsed,
-				granularity: chartGranularity,
-				sqlDateFormat: SQL_DATE_FORMATS[chartGranularity],
-			};
-		}
-
-		case "year": {
-			const yearStart = parisWallTimeToUtc(year, 0, 1);
-			const monthsElapsed = month + 1;
-			return {
-				startDate: yearStart,
-				pointCount: monthsElapsed,
-				granularity: chartGranularity,
-				sqlDateFormat: SQL_DATE_FORMATS[chartGranularity],
-			};
-		}
-	}
-}
+// `getChartConfig` est parti au Lot 4 S3.5 (2026-08-03) avec les sparklines —
+// les courbes vivent dans le dashboard Stripe.
