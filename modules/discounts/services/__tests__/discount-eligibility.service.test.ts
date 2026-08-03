@@ -227,10 +227,12 @@ describe("checkDiscountEligibility", () => {
 	// -------------------------------------------------------------------------
 
 	describe("maxUsagePerUser check", () => {
-		it("should return not eligible when userId has reached the per-user limit", () => {
+		// [[DISC-USAGE-001]] Depuis le Lot 0 (S1.5), l'email de commande est la
+		// SEULE identité de la limite — `DiscountUsage.userId` n'existe plus.
+		it("should return not eligible when the email has reached the per-person limit", () => {
 			const discount = makeDiscount({ maxUsagePerUser: 1 });
-			const context = makeContext({ userId: "user-1" });
-			const usageCounts = { userCount: 1, emailCount: 0 };
+			const context = makeContext({ customerEmail: "guest@example.com" });
+			const usageCounts = { emailCount: 1 };
 
 			const result = checkDiscountEligibility(discount, context, usageCounts);
 
@@ -238,10 +240,10 @@ describe("checkDiscountEligibility", () => {
 			expect(result.error).toBe("Vous avez déjà utilisé ce code promo");
 		});
 
-		it("should return not eligible when userId has exceeded the per-user limit", () => {
+		it("should return not eligible when the email has exceeded the per-person limit", () => {
 			const discount = makeDiscount({ maxUsagePerUser: 2 });
-			const context = makeContext({ userId: "user-1" });
-			const usageCounts = { userCount: 3, emailCount: 0 };
+			const context = makeContext({ customerEmail: "guest@example.com" });
+			const usageCounts = { emailCount: 3 };
 
 			const result = checkDiscountEligibility(discount, context, usageCounts);
 
@@ -249,41 +251,20 @@ describe("checkDiscountEligibility", () => {
 			expect(result.error).toBe("Vous avez déjà utilisé ce code promo");
 		});
 
-		it("should return eligible when userId is below the per-user limit", () => {
-			const discount = makeDiscount({ maxUsagePerUser: 3 });
-			const context = makeContext({ userId: "user-1" });
-			const usageCounts = { userCount: 2, emailCount: 0 };
+		it("should return eligible when the email is below the per-person limit", () => {
+			const discount = makeDiscount({ maxUsagePerUser: 2 });
+			const context = makeContext({ customerEmail: "guest@example.com" });
+			const usageCounts = { emailCount: 1 };
 
 			const result = checkDiscountEligibility(discount, context, usageCounts);
 
 			expect(result.eligible).toBe(true);
 		});
 
-		it("should return not eligible when guest email has reached the per-user limit", () => {
+		it("should return eligible when no email is provided", () => {
 			const discount = makeDiscount({ maxUsagePerUser: 1 });
-			const context = makeContext({ customerEmail: "guest@example.com" });
-			const usageCounts = { userCount: 0, emailCount: 1 };
-
-			const result = checkDiscountEligibility(discount, context, usageCounts);
-
-			expect(result.eligible).toBe(false);
-			expect(result.error).toBe("Vous avez déjà utilisé ce code promo");
-		});
-
-		it("should return eligible when guest email is below the per-user limit", () => {
-			const discount = makeDiscount({ maxUsagePerUser: 2 });
-			const context = makeContext({ customerEmail: "guest@example.com" });
-			const usageCounts = { userCount: 0, emailCount: 1 };
-
-			const result = checkDiscountEligibility(discount, context, usageCounts);
-
-			expect(result.eligible).toBe(true);
-		});
-
-		it("should return eligible when neither userId nor email are provided", () => {
-			const discount = makeDiscount({ maxUsagePerUser: 1 });
-			const context = makeContext({ userId: undefined, customerEmail: undefined });
-			const usageCounts = { userCount: 0, emailCount: 0 };
+			const context = makeContext({ customerEmail: undefined });
+			const usageCounts = { emailCount: 0 };
 
 			const result = checkDiscountEligibility(discount, context, usageCounts);
 
@@ -291,30 +272,11 @@ describe("checkDiscountEligibility", () => {
 			// Cannot verify usage without identifier — deferred to checkout
 		});
 
-		it("should check BOTH userId and email counts when userId is present", () => {
-			// [[DISC-USAGE-001]] Les deux compteurs comptent : un usage passé en
-			// invité (userId NULL, donc userCount = 0) doit rester opposable au
-			// même client une fois connecté, sinon il gagne une redemption.
-			const discount = makeDiscount({ maxUsagePerUser: 2 });
-			const context = makeContext({
-				userId: "user-1",
-				customerEmail: "user@example.com",
-			});
-			const usageCounts = { userCount: 1, emailCount: 5 };
-
-			const result = checkDiscountEligibility(discount, context, usageCounts);
-
-			// emailCount (5) >= maxUsagePerUser (2) -> non éligible, même si
-			// userCount (1) est sous la limite.
-			expect(result.eligible).toBe(false);
-			expect(result.error).toBe("Vous avez déjà utilisé ce code promo");
-		});
-
 		it("should return eligible when no usageCounts provided (caller skipped fetch)", () => {
 			const discount = makeDiscount({ maxUsagePerUser: 1 });
-			const context = makeContext({ userId: "user-1" });
+			const context = makeContext({ customerEmail: "guest@example.com" });
 
-			// No usageCounts passed -> per-user check is skipped
+			// No usageCounts passed -> per-person check is skipped
 			const result = checkDiscountEligibility(discount, context);
 
 			expect(result.eligible).toBe(true);
@@ -338,10 +300,9 @@ describe("checkDiscountEligibility", () => {
 			});
 			const context = makeContext({
 				subtotal: 5000,
-				userId: "user-1",
 				customerEmail: "user@example.com",
 			});
-			const usageCounts = { userCount: 1, emailCount: 1 };
+			const usageCounts = { emailCount: 1 };
 
 			const result = checkDiscountEligibility(discount, context, usageCounts);
 

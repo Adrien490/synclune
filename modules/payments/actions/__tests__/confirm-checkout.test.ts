@@ -584,15 +584,10 @@ describe("confirmCheckout", () => {
 			});
 		});
 
-		it("should backfill User.stripeCustomerId (no-op guard) for authenticated users", async () => {
+		it("should never write on User post-confirm (User.stripeCustomerId dropped, Lot 0 S1.1)", async () => {
 			await confirmCheckout(createValidData());
 
-			await vi.waitFor(() => {
-				expect(mockPrisma.user.updateMany).toHaveBeenCalledWith({
-					where: { id: "cm3user0000123qz8v4h2j9d3", stripeCustomerId: null },
-					data: { stripeCustomerId: "cus_init_001" },
-				});
-			});
+			expect(mockPrisma.user.updateMany).not.toHaveBeenCalled();
 		});
 
 		it("should not enrich when the PI carries no customer", async () => {

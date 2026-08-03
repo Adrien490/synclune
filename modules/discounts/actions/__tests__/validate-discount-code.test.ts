@@ -438,7 +438,10 @@ describe("validateDiscountCode", () => {
 	// Session
 	// ──────────────────────────────────────────────────────────────
 
-	it("should use userId from session", async () => {
+	it("should use the session email as the maxUsagePerUser identity", async () => {
+		// Depuis le Lot 0 (S1.5), l'email de commande est la seule identité de la
+		// limite — la session ne fournit plus qu'un email prioritaire sur celui
+		// passé en paramètre.
 		mockGetSession.mockResolvedValue({
 			user: { id: "clxxxxxxxxxxxxxxxxxxxxxxx", email: "user@test.com" },
 		});
@@ -453,7 +456,7 @@ describe("validateDiscountCode", () => {
 
 		expect(mockGetDiscountUsageCounts).toHaveBeenCalledWith(
 			expect.objectContaining({
-				userId: "clxxxxxxxxxxxxxxxxxxxxxxx",
+				customerEmail: "user@test.com",
 			}),
 		);
 	});

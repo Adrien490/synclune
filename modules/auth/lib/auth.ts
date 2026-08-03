@@ -167,13 +167,8 @@ export const auth = betterAuth({
 	plugins: [
 		customSession(async ({ user, session }) => {
 			// Filtre les comptes bloqués : soft-deleted (deletedAt) + suspended (suspendedAt)
-			// + accountStatus INACTIVE/ANONYMIZED.
-			//
-			// PENDING_DELETION reste toléré, mais plus pour la raison d'origine : il
-			// permettait au client d'annuler sa demande de suppression depuis
-			// `/parametres`, surface qui n'existe plus. Aucun chemin applicatif ne pose
-			// plus ce statut — il ne subsiste que pour ne pas verrouiller une ligne
-			// héritée.
+			// + accountStatus INACTIVE/ANONYMIZED. (PENDING_DELETION, jadis toléré ici
+			// pour la période de grâce RGPD, a été purgé au Lot 0 — migration 20260803.)
 			//
 			// ⚠️ DÉFENSE EN PROFONDEUR — Ne pas se reposer uniquement sur cette dégradation.
 			// `requireAuth()` / `requireAdmin*()` (modules/auth/lib/require-auth.ts) re-checkent
@@ -185,7 +180,7 @@ export const auth = betterAuth({
 					id: session.userId,
 					...notDeleted,
 					suspendedAt: null,
-					accountStatus: { in: [AccountStatus.ACTIVE, AccountStatus.PENDING_DELETION] },
+					accountStatus: AccountStatus.ACTIVE,
 				},
 				select: { role: true },
 			});
@@ -227,13 +222,11 @@ export const auth = betterAuth({
 			// Bloquer signin email pour comptes révoqués (suspended/anonymized/deleted).
 			// Réponse générique "invalid credentials" → pas d'énumération possible.
 			//
-			// `PENDING_DELETION` et `INACTIVE` restent permis. La raison d'origine
-			// (« se reconnecter pour annuler la demande via `cancelAccountDeletion` »)
-			// n'existe plus — ce flux est parti avec l'espace client. Ce qui tient
-			// encore : aucun chemin applicatif ne pose plus ces deux statuts, donc
-			// seule une ligne héritée peut les porter, et le plugin `customSession`
-			// dégrade de toute façon un compte non-ACTIVE au rôle `USER`. Les bloquer
+			// `INACTIVE` reste permis : aucun chemin applicatif ne pose plus ce statut,
+			// donc seule une ligne héritée peut le porter, et le plugin `customSession`
+			// dégrade de toute façon un compte non-ACTIVE au rôle `USER`. Le bloquer
 			// ici n'ajouterait rien et fermerait la porte à un compte récupérable.
+			// (PENDING_DELETION a été purgé au Lot 0 — lignes basculées sur INACTIVE.)
 			if (path === "/sign-in/email") {
 				const body = ctx.body as { email?: string } | undefined;
 				// Même normalisation que `databaseHooks` ci-dessus : c'est ce qui rend

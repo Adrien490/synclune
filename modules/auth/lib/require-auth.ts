@@ -28,7 +28,6 @@ const REQUIRE_AUTH_USER_SELECT = {
 	role: true,
 	image: true,
 	emailVerified: true,
-	stripeCustomerId: true,
 } as const;
 
 type RequireAuthUser = Prisma.UserGetPayload<{
@@ -40,8 +39,8 @@ type RequireAuthUser = Prisma.UserGetPayload<{
  *
  * **C'est LE point de re-vérification**, celui qui rend inopérant un cookie de
  * session périmé. Filtre : `deletedAt IS NULL` + `suspendedAt IS NULL` +
- * `accountStatus = ACTIVE`. Bloque donc suspended / PENDING_DELETION /
- * INACTIVE / ANONYMIZED — et pas seulement une rétrogradation de rôle.
+ * `accountStatus = ACTIVE`. Bloque donc suspended / INACTIVE / ANONYMIZED —
+ * et pas seulement une rétrogradation de rôle.
  *
  * `cache()` déduplique l'appel au sein d'UNE requête serveur : le layout admin et
  * la page qu'il enveloppe se gardent tous les deux, sans payer deux requêtes.
@@ -117,11 +116,12 @@ export async function requireAuth(): Promise<{ user: RequireAuthUser } | { error
  *
  * Si un chemin de suppression de compte revient un jour, le réintroduire
  * explicitement — ne pas élargir le filtre de `fetchUserForAuth` à sa place.
+ * (Le statut `PENDING_DELETION` lui-même a été purgé au Lot 0, migration 20260803.)
  */
 
 /**
  * Autorise les invités (aucune session) MAIS rejette une session dont le
- * compte n'est pas `ACTIVE` (suspendu / INACTIVE / PENDING_DELETION / supprimé).
+ * compte n'est pas `ACTIVE` (suspendu / INACTIVE / supprimé).
  *
  * À utiliser dans les flux commerce optionnellement authentifiés (checkout,
  * validation de code promo) où `requireAuth()` est trop strict (il refuse les

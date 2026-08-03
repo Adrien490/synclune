@@ -389,7 +389,6 @@ describe("initializePayment", () => {
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
 			expect(mockGetOrCreateStripeCustomer).toHaveBeenCalledWith(
-				"cus_existing",
 				expect.objectContaining({ email: "marie@example.com" }),
 			);
 		});
@@ -477,7 +476,6 @@ describe("initializePayment", () => {
 			});
 
 			expect(mockGetOrCreateStripeCustomer).toHaveBeenCalledWith(
-				null,
 				expect.objectContaining({ email: "guest@example.com" }),
 			);
 		});

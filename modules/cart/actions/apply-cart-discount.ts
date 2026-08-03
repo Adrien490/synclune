@@ -104,21 +104,20 @@ export async function applyCartDiscount(
 			return error(CART_ERROR_MESSAGES.DISCOUNT_CODE_INVALID);
 		}
 
-		// 5. Check eligibility (user + email for guest limits)
+		// 5. Check eligibility (email de commande = seule identité de la limite par personne)
 		const session = await getSession();
 		const customerEmail = session?.user.email ?? undefined;
 
 		const usageCounts = discount.maxUsagePerUser
 			? await getDiscountUsageCounts({
 					discountId: discount.id,
-					userId,
 					customerEmail,
 				})
 			: undefined;
 
 		const eligibility = checkDiscountEligibility(
 			discount,
-			{ subtotal, userId, customerEmail },
+			{ subtotal, customerEmail },
 			usageCounts,
 		);
 

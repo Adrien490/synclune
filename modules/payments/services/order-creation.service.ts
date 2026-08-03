@@ -300,27 +300,21 @@ export async function createOrderInTransaction(
 				}
 				const discountType = discount.type;
 
-				// Read usage counts directly in transaction to prevent stale cache reads.
+				// Read usage count directly in transaction to prevent stale cache reads.
 				// Email is normalized (lowercase+trim) to avoid trivial guest bypass of
 				// maxUsagePerUser via casing/whitespace (cf [[CHECKOUT-AUDIT-003]]).
 				const normalizedEmail = finalEmail ? normalizeEmail(finalEmail) : null;
-				let usageCounts: { userCount: number; emailCount: number } | undefined;
+				let usageCounts: { emailCount: number } | undefined;
 				if (discount.maxUsagePerUser) {
-					let userCount = 0;
 					let emailCount = 0;
 
-					if (userId) {
-						userCount = await tx.discountUsage.count({
-							where: { discountId: discount.id, userId },
-						});
-					}
 					if (normalizedEmail) {
 						emailCount = await tx.discountUsage.count({
 							where: { discountId: discount.id, order: { customerEmail: normalizedEmail } },
 						});
 					}
 
-					usageCounts = { userCount, emailCount };
+					usageCounts = { emailCount };
 				}
 
 				const eligibility = checkDiscountEligibility(
@@ -339,7 +333,6 @@ export async function createOrderInTransaction(
 					},
 					{
 						subtotal,
-						userId: userId ?? undefined,
 						customerEmail: normalizedEmail ?? undefined,
 					},
 					usageCounts,
@@ -512,7 +505,6 @@ export async function createOrderInTransaction(
 					data: {
 						discountId: appliedDiscountId,
 						orderId: newOrder.id,
-						userId: userId ?? null,
 						discountCode: appliedDiscountCode!,
 						amountApplied: discountAmount,
 					},

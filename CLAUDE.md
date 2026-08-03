@@ -251,7 +251,7 @@ export async function createSomething(
 
 Tout le parcours d'achat est **invité** : panier et favoris par cookie de session (`Cart_owner_required` / `Wishlist_owner_required` acceptent `userId` NULL), checkout sans session (`confirmCheckout`), et consultation de commande par le lien tokenisé de l'email de confirmation (`/suivi-commande`, HMAC via `buildOrderTrackingUrl` — **SSOT à une seule branche**, cf. `order-tracking-url.regression.test.ts`). Il n'y a plus de fusion post-login : une donnée invitée **reste** invitée.
 
-Ce qui n'a **pas** disparu et pourquoi : `Order.userId`, `Cart.userId`, `Wishlist.userId`, `DiscountUsage.userId` (l'administratrice reste un `User` qui peut acheter ; `Order.userId` porte en outre le rattachement historique lu par `isInvoiceOwnerErased()`), `AccountStatus` (surface de révocation du compte admin, re-vérifiée en base par les helpers ci-dessous), et `Session`/`Account`/`Verification` (Better Auth y range le hash du mot de passe et les tokens de reset).
+Ce qui n'a **pas** disparu et pourquoi : `Order.userId`, `Cart.userId`, `Wishlist.userId` (l'administratrice reste un `User` qui peut acheter ; `Order.userId` porte en outre le rattachement historique lu par `isInvoiceOwnerErased()` — `DiscountUsage.userId`, lui, a été droppé au Lot 0 2026-08-03 : `maxUsagePerUser` se vérifie par email de commande), `AccountStatus` (surface de révocation du compte admin, re-vérifiée en base par les helpers ci-dessous), et `Session`/`Account`/`Verification` (Better Auth y range le hash du mot de passe et les tokens de reset).
 
 **Auth helpers** (`modules/auth/lib/require-auth`):
 
@@ -259,7 +259,7 @@ Ce qui n'a **pas** disparu et pourquoi : `Order.userId`, `Cart.userId`, `Wishlis
 - `requireAdmin()` - Verifies ADMIN role **avec re-vérification DB** (bloque admin rétrogradé/supprimé/suspendu) ; ne renvoie pas l'objet user
 - `requireAdminWithUser()` - Idem `requireAdmin()` (re-check DB) + renvoie l'objet user
 - `requireAdminApiRoute()` - Variante route handler (renvoie une `Response` HTTP) ; re-check DB du rôle
-- `requireActiveAccountIfAuthenticated()` - Autorise les invités (pas de session) mais rejette une session dont le compte n'est pas `ACTIVE` (suspendu/INACTIVE/PENDING_DELETION). Pour les flux commerce optionnellement authentifiés (checkout, discount) — **le cas nominal est désormais « pas de session »**, la branche session ne couvrant plus que l'administratrice qui achèterait sur sa propre boutique
+- `requireActiveAccountIfAuthenticated()` - Autorise les invités (pas de session) mais rejette une session dont le compte n'est pas `ACTIVE` (suspendu/INACTIVE). Pour les flux commerce optionnellement authentifiés (checkout, discount) — **le cas nominal est désormais « pas de session »**, la branche session ne couvrant plus que l'administratrice qui achèterait sur sa propre boutique
 - `isVerifiedAdmin(session)` - Variante **booléenne** (ne bloque pas) avec re-check DB, pour les branches de privilège optionnelles (ex: bypass admin de la garde « boutique fermée »). Prend la session en argument ; court-circuite sans query si le cookie ne prétend pas admin
 - `isAdmin()` (`modules/auth/utils/guards`) - Wrapper sans argument de `isVerifiedAdmin()` (résout la session + `cache()` de déduplication par requête). Garde des lectures admin de la couche `data/`, où un retour `ActionState` n'a pas de sens
 
@@ -286,9 +286,7 @@ Ce qui n'a **pas** disparu et pourquoi : `Order.userId`, `Cart.userId`, `Wishlis
 - **`schema.safeParse(data)` direct** : à conserver uniquement quand l'action :
   1. Retourne un type custom (pas `ActionState`) — ex: `quick-search.ts` retourne `QuickSearchResult`, `validate-discount-code.ts` retourne `ValidateDiscountCodeReturn`.
   2. A besoin du `path` Zod pour enrichir le message d'erreur — ex: `skus/{create,update}` retournent `validationError("${path}: ${message}")` pour cibler le champ fautif côté UI.
-  3. Branche sur le `path` pour appliquer une logique custom (retry, fallback) — ex: `validate-discount-code.ts` retry sans `userId` si seul ce champ est invalide.
-
-Toute nouvelle action `ActionState` simple doit utiliser `validateInput()`. Ajouter un cas safeParse direct requiert une raison documentée (path-aware ou retour custom).
+     Toute nouvelle action `ActionState` simple doit utiliser `validateInput()`. Ajouter un cas safeParse direct requiert une raison documentée (path-aware ou retour custom). _(Le 3ᵉ cas historique — retry path-aware de `validate-discount-code` sans `userId` — a disparu au Lot 0 2026-08-03 avec `DiscountUsage.userId`.)_
 
 ### Une Server Action VALIDE son argument, elle ne se contente pas de l'annoter
 
@@ -518,7 +516,7 @@ Conséquences fonctionnelles assumées : le DLQ email et le rejeu de webhooks pa
 
 **Monitors Sentry** — le monitoring cron est facturé **par monitor** (plan Developer : 1 seul inclus). Seuls les jobs revenue/légal en émettent (`SENTRY_MONITORED_CRONS` dans `schedules.ts`) ; les autres gardent la capture d'exception + l'alerte admin, mais pas la détection de run manqué.
 
-`cleanup-pending-orders` porte trois passes ops quotidiennes (commandes PENDING, paniers guest expirés, wishlists guest inactives — garde RGPD art. 5.1.e, seuil `updatedAt` 30 j + 7 j de grâce) plutôt que trois crons — chaque cron supplémentaire est un réveil DB de plus. _La passe « drainage de la file retour en stock » est partie avec le back-in-stock (2026-07-30)._
+`cleanup-pending-orders` porte quatre passes ops quotidiennes (commandes PENDING, paniers guest expirés, wishlists guest inactives — garde RGPD art. 5.1.e, seuil `updatedAt` 30 j + 7 j de grâce — et sessions Better Auth expirées, Lot 0 2026-08-03) plutôt que quatre crons — chaque cron supplémentaire est un réveil DB de plus. _La passe « drainage de la file retour en stock » est partie avec le back-in-stock (2026-07-30)._
 
 ### Other API Routes
 
@@ -630,14 +628,14 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 
 ### Tests régression dédiés
 
-| Test                                                                                                                                | Fichier                                                                                                                                             | Garde                               |
-| ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| OrderHistory n'a pas `deletedAt`                                                                                                    | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                   | Audit trail immuable (Art. L123-22) |
-| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                                          | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                   | Invariant 1 + 2                     |
-| Numérotation : pas de rollover silencieux au-delà de 99999/an                                                                       | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                  | Invariant 7                         |
-| Unicité cross-table des numéros d'avoir (trigger DB rejette un doublon Order↔Refund)                                                | `modules/invoices/services/__tests__/credit-note-cross-table-unique.integration.test.ts`                                                            | Invariant 7 (EINV-PRISMA-001)       |
-| Snapshots adresses Order : writers allowlistés (write-side) + aucun lecteur `Address` live dans les affichages commande (read-side) | `order-address-snapshot-immutability.regression.test.ts` + `modules/orders/constants/__tests__/order-address-read-snapshot-only.regression.test.ts` | Invariant 5                         |
-| Purge PII 10 ans : contrat de champs (PII scrubée / comptable préservé) sur Order + Refund + unpaid + notes                         | `modules/cron/services/__tests__/purge-pii-scrub-contract.regression.test.ts`                                                                       | Invariant 9                         |
+| Test                                                                                                        | Fichier                                                                                                                                           | Garde                               |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| OrderHistory n'a pas `deletedAt`                                                                            | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                 | Audit trail immuable (Art. L123-22) |
+| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                  | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                 | Invariant 1 + 2                     |
+| Numérotation : pas de rollover silencieux au-delà de 99999/an                                               | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                | Invariant 7                         |
+| Unicité cross-table des numéros d'avoir (trigger DB rejette un doublon Order↔Refund)                        | `modules/invoices/services/__tests__/credit-note-cross-table-unique.integration.test.ts`                                                          | Invariant 7 (EINV-PRISMA-001)       |
+| Snapshots adresses Order : writers allowlistés (write-side)                                                 | `order-address-snapshot-immutability.regression.test.ts` (le garde read-side scannait le modèle `Address`, supprimé — retiré au Lot 0 2026-08-03) | Invariant 5                         |
+| Purge PII 10 ans : contrat de champs (PII scrubée / comptable préservé) sur Order + Refund + unpaid + notes | `modules/cron/services/__tests__/purge-pii-scrub-contract.regression.test.ts`                                                                     | Invariant 9                         |
 
 ### Conformité réglementaire (référencement)
 

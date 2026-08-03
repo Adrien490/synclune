@@ -39,7 +39,9 @@
 
 ### Pourquoi Vercel Pro n'est pas un choix
 
-Le plan Hobby est **structurellement impossible** : (1) son ToS interdit l'usage commercial ; (2) il plafonne à **2 crons en déclenchement quotidien** alors que le projet en a 11, dont trois en demi-horaire. Le test `app/api/cron/__tests__/max-duration.test.ts` verrouille d'ailleurs déjà `maxDuration ≥ 60`, « the Pro plan ceiling we rely on ».
+_(Réconcilié 2026-08-03 — l'ancienne version parlait de « 11 crons dont trois en demi-horaire », état antérieur au right-sizing.)_
+
+Le dépôt est aujourd'hui **compatible avec la contrainte de rythme Hobby** : les 9 crons sont tous quotidiens ou moins fréquents, et c'est verrouillé par `cron-hobby-plan-daily-limit.regression.test.ts` (une expression infra-journalière fait refuser le déploiement entier — cf. CLAUDE.md § Cron Jobs). Deux raisons continuent néanmoins de plaider pour Pro : (1) le ToS Hobby interdit l'usage commercial ; (2) le plafond Hobby en **nombre** de crons (2 d'après la doc Vercel) est loin des 9 jobs actuels. Le test `app/api/cron/__tests__/max-duration.test.ts` verrouille par ailleurs `maxDuration ≥ 60`. **À vérifier au dashboard : le plan effectivement actif** — et si le Lot 1 de [`SIMPLIFICATION.md`](SIMPLIFICATION.md) (crons 9 → 3) est exécuté, la question du plafond en nombre se referme presque d'elle-même.
 
 ### Objectif de coût
 

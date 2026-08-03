@@ -139,7 +139,7 @@ describe("requireAuth", () => {
 
 	/**
 	 * @regression AUTH-ADMIN-001 — `fetchUserForAuth` must filter by suspendedAt + accountStatus = ACTIVE
-	 * to block suspended / PENDING_DELETION / INACTIVE / ANONYMIZED users.
+	 * to block suspended / INACTIVE / ANONYMIZED users.
 	 */
 	it("(AUTH-ADMIN-001) filters by suspendedAt = null AND accountStatus = ACTIVE", async () => {
 		mockGetSession.mockResolvedValue(makeSession());
@@ -355,7 +355,7 @@ describe("requireActiveAccountIfAuthenticated", () => {
 		);
 	});
 
-	it("returns FORBIDDEN when the authenticated account is not ACTIVE (suspended/INACTIVE/PENDING_DELETION)", async () => {
+	it("returns FORBIDDEN when the authenticated account is not ACTIVE (suspended/INACTIVE)", async () => {
 		// DB returns null because the active-only filter excludes the row,
 		// even though the session cookie is still valid (cookie-cache window).
 		mockGetSession.mockResolvedValue(makeSession());

@@ -1,15 +1,21 @@
 /**
  * @regression DISC-USAGE-001
  *
- * `maxUsagePerUser` doit être évalué sur les DEUX compteurs d'identité
- * (`userCount` ET `emailCount`), jamais l'un OU l'autre selon la présence de
- * `userId`.
+ * `maxUsagePerUser` doit être évalué sur l'EMAIL DE COMMANDE dès qu'il est
+ * présent — jamais court-circuité par un autre signal d'identité.
  *
- * Bug d'origine : `checkDiscountEligibility` testait `userCount` quand `userId`
- * était présent et ne consultait `emailCount` que dans la branche invité. Un
- * usage invité étant enregistré avec `DiscountUsage.userId = NULL`, il devenait
- * invisible dès que le client créait un compte avec le même email — offrant une
- * redemption supplémentaire par code et par personne (fuite financière).
+ * Bug d'origine (2026) : `checkDiscountEligibility` testait `userCount` quand
+ * `userId` était présent et ne consultait `emailCount` que dans la branche
+ * invité. Un usage invité étant enregistré sans compte, il devenait invisible
+ * dès que le client se connectait avec le même email — offrant une redemption
+ * supplémentaire par code et par personne (fuite financière).
+ *
+ * Depuis le Lot 0 (SIMPLIFICATION.md S1.5, 2026-08-03), `DiscountUsage.userId`
+ * n'existe plus : l'email de commande est la SEULE identité de la limite, pour
+ * une session admin comme pour une invitée. La fuite d'origine ne peut se
+ * reproduire que si une future évolution réintroduit un compteur par identité
+ * secondaire consulté À LA PLACE de l'email — ce fichier verrouille donc que
+ * l'email présent est toujours consulté, et que son compteur saturé rejette.
  *
  * Toute modification de ce fichier requiert une review explicite.
  */
@@ -52,19 +58,18 @@ function makeContext(
 	return { subtotal: 5000, ...overrides };
 }
 
-describe("@regression DISC-USAGE-001 — maxUsagePerUser cross-identity", () => {
+describe("@regression DISC-USAGE-001 — maxUsagePerUser par email de commande", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-17T12:00:00Z"));
 	});
 
-	it("rejette un utilisateur connecté dont l'usage passé était en invité (même email)", () => {
-		// Scénario de la fuite : commande invité avec alice@example.com
-		// (DiscountUsage.userId = NULL) puis création de compte et 2ᵉ commande.
-		// userCount = 0 (l'usage invité n'a pas de userId), emailCount = 1.
+	it("rejette quand l'email de commande a déjà consommé la limite (usage invité passé)", () => {
+		// Scénario de la fuite d'origine : commande invitée avec alice@example.com,
+		// puis 2ᵉ tentative — quel que soit le canal — avec le même email.
 		const discount = makeDiscount({ maxUsagePerUser: 1 });
-		const context = makeContext({ userId: "user-1", customerEmail: "alice@example.com" });
-		const usageCounts = { userCount: 0, emailCount: 1 };
+		const context = makeContext({ customerEmail: "alice@example.com" });
+		const usageCounts = { emailCount: 1 };
 
 		const result = checkDiscountEligibility(discount, context, usageCounts);
 
@@ -72,42 +77,43 @@ describe("@regression DISC-USAGE-001 — maxUsagePerUser cross-identity", () => 
 		expect(result.error).toBe("Vous avez déjà utilisé ce code promo");
 	});
 
-	it("rejette dès que l'un des deux compteurs atteint la limite (userId seul saturé)", () => {
+	it("reste éligible sous la limite", () => {
 		const discount = makeDiscount({ maxUsagePerUser: 2 });
-		const context = makeContext({ userId: "user-1", customerEmail: "alice@example.com" });
-		const usageCounts = { userCount: 2, emailCount: 0 };
-
-		const result = checkDiscountEligibility(discount, context, usageCounts);
-
-		expect(result.eligible).toBe(false);
-	});
-
-	it("ne double-compte pas : deux compteurs à 1 avec une limite de 2 restent éligibles", () => {
-		// Une même commande est comptée par les deux compteurs (userId + email).
-		// Le max, pas la somme — sinon un usage unique consommerait 2 slots.
-		const discount = makeDiscount({ maxUsagePerUser: 2 });
-		const context = makeContext({ userId: "user-1", customerEmail: "alice@example.com" });
-		const usageCounts = { userCount: 1, emailCount: 1 };
+		const context = makeContext({ customerEmail: "alice@example.com" });
+		const usageCounts = { emailCount: 1 };
 
 		const result = checkDiscountEligibility(discount, context, usageCounts);
 
 		expect(result.eligible).toBe(true);
 	});
 
-	it("laisse passer sans aucune identité (vérification différée à la création de commande)", () => {
+	it("laisse passer sans email (vérification différée à la création de commande)", () => {
+		// Le filet final est le re-check transactionnel d'order-creation.service.ts,
+		// qui compte par Order.customerEmail sous lock.
 		const discount = makeDiscount({ maxUsagePerUser: 1 });
-		const context = makeContext({ userId: undefined, customerEmail: undefined });
-		const usageCounts = { userCount: 0, emailCount: 0 };
+		const context = makeContext({ customerEmail: undefined });
+		const usageCounts = { emailCount: 0 };
 
 		const result = checkDiscountEligibility(discount, context, usageCounts);
 
 		expect(result.eligible).toBe(true);
 	});
 
-	it("reste inactif quand maxUsagePerUser est null, quels que soient les compteurs", () => {
+	it("laisse passer quand usageCounts n'a pas été résolu par l'appelant", () => {
+		// Même différé : un appelant qui ne peut pas compter (pas d'I/O) ne doit
+		// pas bloquer — la création de commande re-vérifie sous lock.
+		const discount = makeDiscount({ maxUsagePerUser: 1 });
+		const context = makeContext({ customerEmail: "alice@example.com" });
+
+		const result = checkDiscountEligibility(discount, context, undefined);
+
+		expect(result.eligible).toBe(true);
+	});
+
+	it("reste inactif quand maxUsagePerUser est null, quel que soit le compteur", () => {
 		const discount = makeDiscount({ maxUsagePerUser: null });
-		const context = makeContext({ userId: "user-1", customerEmail: "alice@example.com" });
-		const usageCounts = { userCount: 99, emailCount: 99 };
+		const context = makeContext({ customerEmail: "alice@example.com" });
+		const usageCounts = { emailCount: 99 };
 
 		const result = checkDiscountEligibility(discount, context, usageCounts);
 

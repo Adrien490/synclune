@@ -82,8 +82,7 @@ export const getDiscountByCodeSchema = z.object({
 export const validateDiscountCodeSchema = z.object({
 	code: discountCodeSchema,
 	subtotal: z.number().int().nonnegative(), // Montant du panier en centimes (hors frais de port)
-	userId: z.cuid2().optional(),
-	customerEmail: z.email().optional(), // Pour guest checkout
+	customerEmail: z.email().optional(), // Porte la limite maxUsagePerUser (parcours invité)
 });
 
 // ============================================================================

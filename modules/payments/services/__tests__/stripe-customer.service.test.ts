@@ -1,14 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockStripe, mockPrisma } = vi.hoisted(() => ({
+const { mockStripe } = vi.hoisted(() => ({
 	mockStripe: {
 		customers: {
 			create: vi.fn(),
-			update: vi.fn(),
-		},
-	},
-	mockPrisma: {
-		user: {
 			update: vi.fn(),
 		},
 	},
@@ -16,10 +11,6 @@ const { mockStripe, mockPrisma } = vi.hoisted(() => ({
 
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: mockStripe,
-}));
-
-vi.mock("@/shared/lib/prisma", () => ({
-	prisma: mockPrisma,
 }));
 
 // Mock Stripe class for error type checking
@@ -55,7 +46,6 @@ function makeParams(overrides = {}) {
 			country: "FR",
 		},
 		phoneNumber: "+33612345678",
-		userId: "user_123",
 		...overrides,
 	};
 }
@@ -65,26 +55,28 @@ describe("getOrCreateStripeCustomer", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should return existing customer ID without calling Stripe", async () => {
-		const result = await getOrCreateStripeCustomer("cus_existing123", makeParams());
-
-		expect(result).toEqual({ customerId: "cus_existing123" });
-		expect(mockStripe.customers.create).not.toHaveBeenCalled();
-	});
-
-	it("should create a new Stripe customer when none exists", async () => {
+	it("should create a Stripe customer and return its id", async () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new456" });
 
-		const result = await getOrCreateStripeCustomer(null, makeParams());
+		const result = await getOrCreateStripeCustomer(makeParams());
 
 		expect(result).toEqual({ customerId: "cus_new456" });
 		expect(mockStripe.customers.create).toHaveBeenCalledTimes(1);
 	});
 
-	it("should use email-based idempotency key", async () => {
+	it("should use email-based idempotency key (the ONLY dedupe since Lot 0 S1.1)", async () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
 
-		await getOrCreateStripeCustomer(null, makeParams({ email: "test@synclune.fr" }));
+		await getOrCreateStripeCustomer(makeParams({ email: "test@synclune.fr" }));
+
+		const options = mockStripe.customers.create.mock.calls[0]![1];
+		expect(options.idempotencyKey).toBe("customer-create-test@synclune.fr");
+	});
+
+	it("should lowercase and trim the email in the idempotency key", async () => {
+		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
+
+		await getOrCreateStripeCustomer(makeParams({ email: "  Test@Synclune.FR " }));
 
 		const options = mockStripe.customers.create.mock.calls[0]![1];
 		expect(options.idempotencyKey).toBe("customer-create-test@synclune.fr");
@@ -93,7 +85,7 @@ describe("getOrCreateStripeCustomer", () => {
 	it("should map address correctly to Stripe format", async () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
 
-		await getOrCreateStripeCustomer(null, makeParams());
+		await getOrCreateStripeCustomer(makeParams());
 
 		const params = mockStripe.customers.create.mock.calls[0]![0];
 		expect(params.address).toEqual({
@@ -108,7 +100,7 @@ describe("getOrCreateStripeCustomer", () => {
 	it("should set full name from firstName + lastName", async () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
 
-		await getOrCreateStripeCustomer(null, makeParams());
+		await getOrCreateStripeCustomer(makeParams());
 
 		const params = mockStripe.customers.create.mock.calls[0]![0];
 		expect(params.name).toBe("Marie Dupont");
@@ -117,7 +109,7 @@ describe("getOrCreateStripeCustomer", () => {
 	it("should include checkout metadata", async () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
 
-		await getOrCreateStripeCustomer(null, makeParams());
+		await getOrCreateStripeCustomer(makeParams());
 
 		const params = mockStripe.customers.create.mock.calls[0]![0];
 		expect(params.metadata).toEqual({
@@ -126,24 +118,22 @@ describe("getOrCreateStripeCustomer", () => {
 		});
 	});
 
-	it("should save Stripe customer ID to user record for authenticated users", async () => {
-		mockStripe.customers.create.mockResolvedValue({ id: "cus_new789" });
-		mockPrisma.user.update.mockResolvedValue({});
-
-		await getOrCreateStripeCustomer(null, makeParams({ userId: "user_abc" }));
-
-		expect(mockPrisma.user.update).toHaveBeenCalledWith({
-			where: { id: "user_abc" },
-			data: { stripeCustomerId: "cus_new789" },
-		});
-	});
-
-	it("should not update user record for guest checkout", async () => {
+	it("should omit name and address when init passes empty strings (abandoned funnel)", async () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
 
-		await getOrCreateStripeCustomer(null, makeParams({ userId: null }));
+		await getOrCreateStripeCustomer(
+			makeParams({
+				firstName: "",
+				lastName: "",
+				phoneNumber: null,
+				address: { addressLine1: "", postalCode: "", city: "" },
+			}),
+		);
 
-		expect(mockPrisma.user.update).not.toHaveBeenCalled();
+		const params = mockStripe.customers.create.mock.calls[0]![0];
+		expect(params).not.toHaveProperty("name");
+		expect(params).not.toHaveProperty("address");
+		expect(params).not.toHaveProperty("phone");
 	});
 
 	it("should return error message for invalid email (StripeInvalidRequestError)", async () => {
@@ -153,7 +143,7 @@ describe("getOrCreateStripeCustomer", () => {
 			),
 		);
 
-		const result = await getOrCreateStripeCustomer(null, makeParams());
+		const result = await getOrCreateStripeCustomer(makeParams());
 
 		expect(result).toEqual({
 			customerId: null,
@@ -161,22 +151,10 @@ describe("getOrCreateStripeCustomer", () => {
 		});
 	});
 
-	it("should return the created customerId even when persisting on User fails (no orphan)", async () => {
-		mockStripe.customers.create.mockResolvedValue({ id: "cus_created_999" });
-		mockPrisma.user.update.mockRejectedValue(new Error("DB unavailable"));
-
-		const result = await getOrCreateStripeCustomer(null, makeParams({ userId: "user_abc" }));
-
-		// The Stripe customer exists; a transient DB write failure must not discard
-		// its id (would orphan cus_xxx + drop the link on the PaymentIntent).
-		expect(result).toEqual({ customerId: "cus_created_999" });
-		expect(mockStripe.customers.create).toHaveBeenCalledTimes(1);
-	});
-
 	it("should return null customerId without error for transient errors", async () => {
 		mockStripe.customers.create.mockRejectedValue(new Error("Network timeout"));
 
-		const result = await getOrCreateStripeCustomer(null, makeParams());
+		const result = await getOrCreateStripeCustomer(makeParams());
 
 		expect(result).toEqual({ customerId: null });
 	});
@@ -185,7 +163,6 @@ describe("getOrCreateStripeCustomer", () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
 
 		await getOrCreateStripeCustomer(
-			null,
 			makeParams({
 				address: {
 					addressLine1: "1 Main St",

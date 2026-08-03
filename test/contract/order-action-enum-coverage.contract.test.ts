@@ -159,16 +159,9 @@ const KNOWN_ORPHANS = new Map<string, string>([
 	// TODO(audit): câbler createOrderAuditTx(action: CREATED) dans le flow
 	// de création de commande (modules/webhooks/services/checkout.service.ts).
 	["CREATED", "Gap connu : order creation ne produit pas d'audit CREATED."],
-	// Valeurs PDP_* devenues inertes après le recentrage B2C (2026-05-28) : la
-	// transmission B2B/B2G sur PDP a été supprimée (Synclune = micro-entreprise
-	// franchise TVA, vente B2C). Les valeurs d'enum sont conservées (Postgres ne
-	// supporte pas DROP VALUE proprement) mais n'ont plus de producteur.
-	["PDP_SUBMITTED", "Recentrage B2C — transmission PDP B2B/B2G supprimée."],
-	["PDP_ACCEPTED", "Recentrage B2C — transmission PDP B2B/B2G supprimée."],
-	["PDP_REJECTED", "Recentrage B2C — transmission PDP B2B/B2G supprimée."],
-	["PDP_RETRY", "Recentrage B2C — transmission PDP B2B/B2G supprimée."],
-	["PDP_ABANDONED", "Recentrage B2C — transmission PDP B2B/B2G supprimée."],
-	["PDP_CANCELLED", "Recentrage B2C — transmission PDP B2B/B2G supprimée."],
+	// Les 6 valeurs PDP_* (transmission B2B/B2G, inertes depuis le recentrage B2C
+	// 2026-05-28) ont été purgées de l'enum au Lot 0 (migration 20260803,
+	// SIMPLIFICATION.md S2.1) — plus rien à whitelister ici.
 ]);
 
 describe("@regression ord-test-029 — OrderAction enum coverage", () => {

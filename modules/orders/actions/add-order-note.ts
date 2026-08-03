@@ -12,18 +12,11 @@ import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { updateTag } from "next/cache";
 
 /**
- * Server Action ADMIN pour ajouter une note interne à une commande
- *
- * @param isInternal Colonne héritée de l'espace client (son lecteur
- *                   `getOrderNotesForUser` a disparu avec lui, 2026-07-31) :
- *                   écrite mais plus jamais lue — toutes les notes sont
- *                   internes de fait, seule l'admin les voit.
+ * Server Action ADMIN pour ajouter une note interne à une commande.
+ * Toutes les notes sont internes de fait : seule l'admin les voit (la colonne
+ * `isInternal` a été purgée au Lot 0, migration 20260803).
  */
-export async function addOrderNote(
-	orderId: string,
-	content: string,
-	isInternal = false,
-): Promise<ActionState> {
+export async function addOrderNote(orderId: string, content: string): Promise<ActionState> {
 	try {
 		// 1. Vérification authentification et admin
 		const auth = await requireAdminWithUser();
@@ -32,7 +25,7 @@ export async function addOrderNote(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Validation des entrées
-		const validated = validateInput(addOrderNoteSchema, { orderId, content, isInternal });
+		const validated = validateInput(addOrderNoteSchema, { orderId, content });
 		if ("error" in validated) return validated.error;
 
 		// 4. Sanitize input
@@ -57,7 +50,6 @@ export async function addOrderNote(
 					// ne remplace que content) — un email admin n'a rien à y faire.
 					// Aligné sur les 12 autres actions du module (audit 2026-08-01, P3).
 					authorName: auth.user.name ?? "Admin",
-					isInternal: validated.data.isInternal,
 				},
 			});
 

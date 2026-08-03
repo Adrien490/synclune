@@ -35,59 +35,23 @@ vi.mock("../constants/cache", () => ({
 import { getDiscountUsageCounts } from "../get-discount-usage-counts";
 
 // ============================================================================
-// Factories
-// ============================================================================
-
-function setupDefaults() {
-	mockPrisma.discountUsage.count.mockResolvedValue(0);
-}
-
-// ============================================================================
-// Tests: getDiscountUsageCounts
+// Tests: getDiscountUsageCounts — email de commande = seule identité de la
+// limite maxUsagePerUser depuis le retrait de DiscountUsage.userId (Lot 0 S1.5)
 // ============================================================================
 
 describe("getDiscountUsageCounts", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		setupDefaults();
+		mockPrisma.discountUsage.count.mockResolvedValue(0);
 	});
 
-	it("returns zero counts when no userId and no customerEmail", async () => {
+	it("returns a zero count without querying when no customerEmail", async () => {
 		const result = await getDiscountUsageCounts({
 			discountId: "discount-cuid-001",
 		});
 
-		expect(result.userCount).toBe(0);
 		expect(result.emailCount).toBe(0);
 		expect(mockPrisma.discountUsage.count).not.toHaveBeenCalled();
-	});
-
-	it("returns userCount when userId is provided", async () => {
-		mockPrisma.discountUsage.count.mockResolvedValueOnce(3);
-
-		const result = await getDiscountUsageCounts({
-			discountId: "discount-cuid-001",
-			userId: "user-001",
-		});
-
-		expect(result.userCount).toBe(3);
-		expect(result.emailCount).toBe(0);
-	});
-
-	it("queries discountUsage by discountId and userId", async () => {
-		mockPrisma.discountUsage.count.mockResolvedValueOnce(2);
-
-		await getDiscountUsageCounts({
-			discountId: "discount-cuid-001",
-			userId: "user-001",
-		});
-
-		expect(mockPrisma.discountUsage.count).toHaveBeenCalledWith({
-			where: {
-				discountId: "discount-cuid-001",
-				userId: "user-001",
-			},
-		});
 	});
 
 	it("returns emailCount when customerEmail is provided", async () => {
@@ -99,7 +63,6 @@ describe("getDiscountUsageCounts", () => {
 		});
 
 		expect(result.emailCount).toBe(1);
-		expect(result.userCount).toBe(0);
 	});
 
 	it("queries discountUsage by discountId and customerEmail via order relation", async () => {
@@ -110,6 +73,7 @@ describe("getDiscountUsageCounts", () => {
 			customerEmail: "guest@example.com",
 		});
 
+		expect(mockPrisma.discountUsage.count).toHaveBeenCalledTimes(1);
 		expect(mockPrisma.discountUsage.count).toHaveBeenCalledWith({
 			where: {
 				discountId: "discount-cuid-001",
@@ -120,26 +84,10 @@ describe("getDiscountUsageCounts", () => {
 		});
 	});
 
-	it("queries both userCount and emailCount when both are provided", async () => {
-		mockPrisma.discountUsage.count
-			.mockResolvedValueOnce(2) // userCount
-			.mockResolvedValueOnce(4); // emailCount
-
-		const result = await getDiscountUsageCounts({
-			discountId: "discount-cuid-001",
-			userId: "user-001",
-			customerEmail: "user@example.com",
-		});
-
-		expect(result.userCount).toBe(2);
-		expect(result.emailCount).toBe(4);
-		expect(mockPrisma.discountUsage.count).toHaveBeenCalledTimes(2);
-	});
-
-	it("calls cacheLife with cart profile", async () => {
+	it("calls cacheLife with checkout profile", async () => {
 		await getDiscountUsageCounts({
 			discountId: "discount-cuid-001",
-			userId: "user-001",
+			customerEmail: "guest@example.com",
 		});
 
 		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
@@ -148,41 +96,9 @@ describe("getDiscountUsageCounts", () => {
 	it("calls cacheTag with usage tag for the given discountId", async () => {
 		await getDiscountUsageCounts({
 			discountId: "discount-cuid-001",
-			userId: "user-001",
-		});
-
-		expect(mockCacheTag).toHaveBeenCalledWith("discount-usage-discount-cuid-001");
-	});
-
-	it("does not query userId count when userId is undefined", async () => {
-		await getDiscountUsageCounts({
-			discountId: "discount-cuid-001",
 			customerEmail: "guest@example.com",
 		});
 
-		// Only one count call for email — userId path was skipped
-		expect(mockPrisma.discountUsage.count).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.discountUsage.count).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ order: { customerEmail: "guest@example.com" } }),
-			}),
-		);
-	});
-
-	it("does not query email count when customerEmail is undefined", async () => {
-		mockPrisma.discountUsage.count.mockResolvedValueOnce(1);
-
-		await getDiscountUsageCounts({
-			discountId: "discount-cuid-001",
-			userId: "user-001",
-		});
-
-		// Only one count call for userId — email path was skipped
-		expect(mockPrisma.discountUsage.count).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.discountUsage.count).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ userId: "user-001" }),
-			}),
-		);
+		expect(mockCacheTag).toHaveBeenCalledWith("discount-usage-discount-cuid-001");
 	});
 });

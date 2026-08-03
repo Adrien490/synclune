@@ -82,6 +82,6 @@ export async function fetchCart(userId?: string, sessionId?: string): Promise<Ge
 
 	return {
 		...cart,
-		...resolveCartDiscount(cart.appliedDiscountCode, discount, cart.items, userId),
+		...resolveCartDiscount(cart.appliedDiscountCode, discount, cart.items),
 	};
 }

@@ -51,7 +51,6 @@ export function resolveCartDiscount(
 	appliedDiscountCode: string | null,
 	discount: DiscountValidation | null,
 	items: readonly CartItemForCartDiscount[],
-	userId?: string,
 ): ResolvedCartDiscount {
 	const CLEARED: ResolvedCartDiscount = { appliedDiscountCode: null, discountAmountCache: null };
 
@@ -70,7 +69,7 @@ export function resolveCartDiscount(
 	// `usageCounts` omis → `checkDiscountEligibility` saute la limite par
 	// utilisateur (cf. portée ci-dessus) et vérifie isActive / fenêtre de
 	// validité / minOrderAmount / quota global.
-	const eligibility = checkDiscountEligibility(discount, { subtotal, userId }, undefined);
+	const eligibility = checkDiscountEligibility(discount, { subtotal }, undefined);
 	if (!eligibility.eligible) {
 		return CLEARED;
 	}

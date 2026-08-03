@@ -5,7 +5,7 @@ const config: KnipConfig = {
 
 	ignore: ["e2e/**", "scripts/**"],
 
-	ignoreDependencies: ["@better-auth/cli", "pino-pretty", "@types/color"],
+	ignoreDependencies: ["pino-pretty"],
 
 	rules: {
 		duplicates: "off",

@@ -1889,24 +1889,6 @@ async function main(): Promise<void> {
 		`✅ ${ordersCreated} commandes créées (${skuInventoryDecrements.size} SKUs stock mis à jour)`,
 	);
 
-	// Update User.stripeCustomerId for users who have paid orders
-	const usersWithPaidOrders = await prisma.order.findMany({
-		where: { userId: { not: null }, paymentStatus: PaymentStatus.PAID },
-		select: { userId: true, stripeCustomerId: true },
-		distinct: ["userId"],
-	});
-
-	for (const order of usersWithPaidOrders) {
-		if (order.userId && order.stripeCustomerId) {
-			await prisma.user.update({
-				where: { id: order.userId },
-				data: { stripeCustomerId: order.stripeCustomerId },
-			});
-		}
-	}
-
-	console.log(`✅ ${usersWithPaidOrders.length} utilisateurs mis à jour avec stripeCustomerId`);
-
 	// ============================================
 	// NUMÉROS DE FACTURE (Article 286 CGI)
 	// ============================================
@@ -2062,7 +2044,6 @@ async function main(): Promise<void> {
 		discountUsagesData.push({
 			discountId: discount.id,
 			orderId: order.id,
-			userId: order.userId,
 			discountCode: discount.code,
 			amountApplied: Math.min(amountApplied, order.subtotal),
 		});
@@ -2847,12 +2828,11 @@ async function main(): Promise<void> {
 			data: { suspendedAt: faker.date.recent({ days: 7 }) },
 		});
 
-		// Pending deletion user — `deletionRequestedAt` a été droppée avec le cron
-		// `process-account-deletions` (migration 20260731100000) ; le statut seul reste
-		// posable et suffit à couvrir la dégradation de session (cf. `customSession`).
+		// Compte verrouillé hérité — `PENDING_DELETION` a été purgé au Lot 0 (migration
+		// 20260803) ; `INACTIVE` couvre la même dégradation de session (cf. `customSession`).
 		await prisma.user.update({
 			where: { id: edgeCaseUsers[1]!.id },
-			data: { accountStatus: AccountStatus.PENDING_DELETION },
+			data: { accountStatus: AccountStatus.INACTIVE },
 		});
 
 		// Anonymized user — idem pour `anonymizedAt`. Le scrub du nom et de l'email

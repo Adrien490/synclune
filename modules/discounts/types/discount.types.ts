@@ -88,8 +88,7 @@ export type ValidateDiscountCodeReturn = {
  */
 export type DiscountApplicationContext = {
 	subtotal: number; // Montant du panier en centimes (hors frais de port)
-	userId?: string; // ID utilisateur connecté
-	customerEmail?: string; // Email pour guest checkout
+	customerEmail?: string; // Email de commande — seule identité pour maxUsagePerUser (parcours invité)
 	excludeSaleItems?: boolean; // Exclure les articles soldés du calcul
 };
 

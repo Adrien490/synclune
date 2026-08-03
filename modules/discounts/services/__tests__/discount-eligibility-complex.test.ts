@@ -45,7 +45,6 @@ function makeContext(
 ): DiscountApplicationContext {
 	return {
 		subtotal: 10000,
-		userId: "user-1",
 		...overrides,
 	};
 }
@@ -236,42 +235,11 @@ describe("checkDiscountEligibility — complex scenarios", () => {
 	// Per-user usage limit
 	// -------------------------------------------------------------------
 
-	it("should reject per-user usage limit exceeded for authenticated user", () => {
+	it("should reject when the order email exceeded the per-person limit", () => {
 		const discount = makeDiscount({ maxUsagePerUser: 1 });
-		const context = makeContext({ userId: "user-1" });
+		const context = makeContext({ customerEmail: "guest@example.com" });
 
 		const result = checkDiscountEligibility(discount, context, {
-			userCount: 1,
-			emailCount: 0,
-		});
-
-		expect(result).toEqual({
-			eligible: false,
-			error: "Vous avez déjà utilisé ce code promo",
-		});
-	});
-
-	it("should accept per-user when under limit", () => {
-		const discount = makeDiscount({ maxUsagePerUser: 3 });
-		const context = makeContext({ userId: "user-1" });
-
-		const result = checkDiscountEligibility(discount, context, {
-			userCount: 2,
-			emailCount: 0,
-		});
-
-		expect(result).toEqual({ eligible: true });
-	});
-
-	it("should check email count for guest checkout (no userId)", () => {
-		const discount = makeDiscount({ maxUsagePerUser: 1 });
-		const context = makeContext({
-			userId: undefined,
-			customerEmail: "guest@example.com",
-		});
-
-		const result = checkDiscountEligibility(discount, context, {
-			userCount: 0,
 			emailCount: 1,
 		});
 
@@ -281,25 +249,32 @@ describe("checkDiscountEligibility — complex scenarios", () => {
 		});
 	});
 
-	it("should skip per-user check when neither userId nor customerEmail provided", () => {
-		const discount = makeDiscount({ maxUsagePerUser: 1 });
-		const context = makeContext({
-			userId: undefined,
-			customerEmail: undefined,
-		});
+	it("should accept per-person when under limit", () => {
+		const discount = makeDiscount({ maxUsagePerUser: 3 });
+		const context = makeContext({ customerEmail: "guest@example.com" });
 
 		const result = checkDiscountEligibility(discount, context, {
-			userCount: 5,
-			emailCount: 5,
+			emailCount: 2,
 		});
 
-		// Per-user check is skipped — will be validated at payment time
 		expect(result).toEqual({ eligible: true });
 	});
 
-	it("should skip per-user check when usageCounts not provided", () => {
+	it("should skip per-person check when no customerEmail provided", () => {
 		const discount = makeDiscount({ maxUsagePerUser: 1 });
-		const context = makeContext({ userId: "user-1" });
+		const context = makeContext({ customerEmail: undefined });
+
+		const result = checkDiscountEligibility(discount, context, {
+			emailCount: 5,
+		});
+
+		// Per-person check is skipped — will be validated at payment time
+		expect(result).toEqual({ eligible: true });
+	});
+
+	it("should skip per-person check when usageCounts not provided", () => {
+		const discount = makeDiscount({ maxUsagePerUser: 1 });
+		const context = makeContext({ customerEmail: "guest@example.com" });
 
 		// No usageCounts argument
 		const result = checkDiscountEligibility(discount, context);

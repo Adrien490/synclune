@@ -53,7 +53,6 @@ function getCartDiscountData(cart: NonNullable<Awaited<ReturnType<typeof getCart
 async function lookupAndValidate(
 	validatedCode: string,
 	cartData: { subtotal: number; cartItems: CartItemForDiscount[] },
-	userId?: string,
 	customerEmail?: string,
 ): Promise<ValidateDiscountCodeReturn> {
 	const discount = await prisma.discount.findUnique({
@@ -67,15 +66,13 @@ async function lookupAndValidate(
 
 	const context: DiscountApplicationContext = {
 		subtotal: cartData.subtotal,
-		userId,
 		customerEmail,
 	};
 
-	// Fetch usage counts for per-user limit check (I/O done here, not in the service)
+	// Fetch usage count for the per-person limit check (I/O done here, not in the service)
 	const usageCounts = discount.maxUsagePerUser
 		? await getDiscountUsageCounts({
 				discountId: discount.id,
-				userId,
 				customerEmail,
 			})
 		: undefined;
@@ -116,9 +113,9 @@ async function lookupAndValidate(
  * 3. Calculer le montant de la reduction
  *
  * Security:
- * - userId is always read from the server-side session (never trusted from client)
  * - subtotal is computed server-side from the cart (never trusted from client)
- * - customerEmail can be provided for guest checkout (validated by Zod)
+ * - customerEmail can be provided for guest checkout (validated by Zod) ; the
+ *   session email wins when a session exists (admin buying on her own shop)
  *
  * @param code - Le code promo saisi par l'utilisateur
  * @param customerEmail - L'email du client pour guest checkout (optionnel)
@@ -151,15 +148,14 @@ export async function validateDiscountCode(
 		// Ne PAS l'ajouter sans raison nouvelle.
 		//
 		// AUTHZ-1 : un invité passe ; une session dont le compte n'est pas ACTIVE
-		// (suspendu/INACTIVE/PENDING_DELETION) est rejetée (money-neutral, rejet direct).
+		// (suspendu/INACTIVE) est rejetée (money-neutral, rejet direct).
 		const accountGate = await requireActiveAccountIfAuthenticated();
 		if ("error" in accountGate) {
 			return { valid: false, error: accountGate.error.message };
 		}
 
-		// Read userId from session server-side (never trust client-provided value)
+		// Session email wins over the client-provided guest email (never trusted blindly)
 		const session = await getSession();
-		const userId = session?.user.id;
 		const sessionEmail = session?.user.email ?? undefined;
 
 		// Use session email if available, fallback to provided guest email.
@@ -181,7 +177,6 @@ export async function validateDiscountCode(
 		const validation = validateDiscountCodeSchema.safeParse({
 			code,
 			subtotal: cartData.subtotal,
-			userId,
 			customerEmail: effectiveEmail,
 		});
 
@@ -201,35 +196,11 @@ export async function validateDiscountCode(
 				return { valid: false, error: "Adresse email invalide" };
 			}
 
-			// If userId validation failed, retry without it but keep customerEmail for maxUsagePerUser
-			if (path === "userId") {
-				const retryValidation = validateDiscountCodeSchema.safeParse({
-					code,
-					subtotal: cartData.subtotal,
-					userId: undefined,
-					customerEmail: effectiveEmail,
-				});
-				if (!retryValidation.success) {
-					return { valid: false, error: "Code invalide" };
-				}
-				return lookupAndValidate(
-					retryValidation.data.code,
-					cartData,
-					undefined,
-					retryValidation.data.customerEmail,
-				);
-			}
-
 			return { valid: false, error: "Code invalide" };
 		}
 
 		// 2. Lookup, check eligibility, and calculate discount
-		return lookupAndValidate(
-			validation.data.code,
-			cartData,
-			validation.data.userId,
-			validation.data.customerEmail,
-		);
+		return lookupAndValidate(validation.data.code, cartData, validation.data.customerEmail);
 	} catch (e) {
 		Sentry.captureException(e, {
 			tags: { module: "discounts", action: "validateDiscountCode" },

@@ -70,7 +70,7 @@ describe("isAdmin", () => {
 		expect(await isAdmin()).toBe(false);
 	});
 
-	// Compte suspendu / INACTIVE / PENDING_DELETION / ANONYMIZED / soft-deleted :
+	// Compte suspendu / INACTIVE / ANONYMIZED / soft-deleted :
 	// le filtre de fetchUserForAuth ne renvoie aucune ligne.
 	it("returns false when the admin account is no longer active in DB", async () => {
 		mockGetSession.mockResolvedValue(ADMIN_SESSION);

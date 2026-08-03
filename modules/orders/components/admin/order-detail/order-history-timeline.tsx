@@ -193,53 +193,6 @@ const ACTION_CONFIG: Record<
 	},
 	// ⚠️ RÉSERVÉ — BRANCHES INATTEIGNABLES à ce jour.
 	//
-	// L'e-reporting DGFiP a été retiré du code (recentrage B2C) : AUCUN writer n'émet
-	// ces 6 `OrderAction`, donc aucune entrée d'historique ne peut les porter. Elles
-	// restent ici uniquement parce que `ACTION_CONFIG` est un `Record<OrderAction, …>`
-	// exhaustif : les retirer imposerait de passer le type en `Partial` + fallback au
-	// point de lecture, ce qui SUPPRIMERAIT le garde-fou « toute nouvelle valeur d'enum
-	// doit avoir un rendu » (erreur de compilation aujourd'hui). Les valeurs d'enum
-	// Postgres sont elles-mêmes conservées (cf. prisma/schema.prisma : retirer une
-	// valeur impose de recréer le type).
-	//
-	// Ne pas en déduire que la transmission PDP existe : à réécrire au go-live contre
-	// l'arrêté définitif et une Plateforme Agréée réelle (cf. docs/RUNBOOK.md).
-	PDP_SUBMITTED: {
-		icon: FileText,
-		color: "text-info",
-		label: "Transmis à la PDP",
-		symbol: "📤",
-	},
-	PDP_ACCEPTED: {
-		icon: CircleCheck,
-		color: "text-success",
-		label: "Accepté par la PDP",
-		symbol: "✓",
-	},
-	PDP_REJECTED: {
-		icon: CircleX,
-		color: "text-destructive",
-		label: "Rejeté par la PDP",
-		symbol: "✗",
-	},
-	PDP_RETRY: {
-		icon: RotateCcw,
-		color: "text-warning",
-		label: "Nouvelle tentative PDP",
-		symbol: "🔄",
-	},
-	PDP_ABANDONED: {
-		icon: AlertTriangle,
-		color: "text-destructive",
-		label: "Transmission PDP abandonnée",
-		symbol: "⚠",
-	},
-	PDP_CANCELLED: {
-		icon: CircleX,
-		color: "text-muted-foreground",
-		label: "Transmission PDP annulée",
-		symbol: "✗",
-	},
 };
 
 /**

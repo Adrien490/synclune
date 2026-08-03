@@ -775,7 +775,6 @@ describe("createOrderInTransaction — discount flow", () => {
 			data: {
 				discountId: "discount_1",
 				orderId: "order_1",
-				userId: "user_1",
 				discountCode: "PROMO10",
 				amountApplied: 598,
 			},
@@ -794,7 +793,9 @@ describe("createOrderInTransaction — discount flow", () => {
 		expect(mockTx.discountUsage.create).not.toHaveBeenCalled();
 	});
 
-	it("should query per-user usage count when maxUsagePerUser is set and userId provided", async () => {
+	it("should not count per-user when maxUsagePerUser is set but no email (identity = email only)", async () => {
+		// Depuis le Lot 0 (S1.5), l'email de commande est la seule identité de la
+		// limite — un userId présent ne déclenche plus aucun compteur.
 		mockTx.$queryRaw
 			.mockReset()
 			.mockResolvedValueOnce([makeSkuRow()])
@@ -804,9 +805,7 @@ describe("createOrderInTransaction — discount flow", () => {
 			makeParams({ discountCode: "PROMO10", userId: "user_1", finalEmail: null }),
 		);
 
-		expect(mockTx.discountUsage.count).toHaveBeenCalledWith({
-			where: { discountId: "discount_1", userId: "user_1" },
-		});
+		expect(mockTx.discountUsage.count).not.toHaveBeenCalled();
 	});
 
 	it("should query per-email usage count when maxUsagePerUser is set and finalEmail provided", async () => {

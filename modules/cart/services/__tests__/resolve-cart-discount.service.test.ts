@@ -113,7 +113,7 @@ describe("resolveCartDiscount", () => {
 		// Portée délibérée : éviter 2 count par lecture de panier.
 		const discount = makeDiscount({ maxUsagePerUser: 1 });
 
-		const result = resolveCartDiscount("SUMMER20", discount, [item(6000)], "user-1");
+		const result = resolveCartDiscount("SUMMER20", discount, [item(6000)]);
 
 		expect(result.appliedDiscountCode).toBe("SUMMER20");
 	});

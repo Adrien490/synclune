@@ -108,7 +108,7 @@ export async function initializePayment(
 			}
 
 			// AUTHZ-1 : gate pré-paiement. Un invité passe ; une session dont le compte
-			// n'est pas ACTIVE (suspendu/INACTIVE/PENDING_DELETION) est rejetée AVANT
+			// n'est pas ACTIVE (suspendu/INACTIVE) est rejetée AVANT
 			// la création du PaymentIntent → aucun débit orphelin possible. Ferme la
 			// fenêtre cookie-cache Better Auth (~5 min) post-suspension.
 			const accountGate = await requireActiveAccountIfAuthenticated();
@@ -202,25 +202,18 @@ export async function initializePayment(
 			}
 			const total = subtotal + shipping;
 
-			// Get or create Stripe customer
+			// Get or create Stripe customer. Dedupe relies on the email-based
+			// idempotency key inside the service — User.stripeCustomerId was dropped
+			// (Lot 0 S1.1) : le parcours est 100 % invité, rien à persister côté User.
 			const finalEmail = input.email ?? userEmail;
 			let stripeCustomerId: string | null = null;
 
-			if (userId) {
-				const user = await prisma.user.findUnique({
-					where: { id: userId },
-					select: { stripeCustomerId: true },
-				});
-				stripeCustomerId = user?.stripeCustomerId ?? null;
-			}
-
 			if (finalEmail) {
-				const customerResult = await getOrCreateStripeCustomer(stripeCustomerId, {
+				const customerResult = await getOrCreateStripeCustomer({
 					email: finalEmail,
 					firstName: "",
 					lastName: "",
 					address: { addressLine1: "", postalCode: "", city: "" },
-					userId,
 				});
 				if (!("error" in customerResult)) {
 					stripeCustomerId = customerResult.customerId;

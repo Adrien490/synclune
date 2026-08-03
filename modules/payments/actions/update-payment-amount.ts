@@ -254,10 +254,7 @@ export async function updatePaymentAmount(
 				});
 
 				if (discount) {
-					const eligibility = checkDiscountEligibility(discount, {
-						subtotal,
-						userId: userId ?? undefined,
-					});
+					const eligibility = checkDiscountEligibility(discount, { subtotal });
 
 					if (eligibility.eligible) {
 						const cartItemsForDiscount: CartItemForDiscount[] = [];

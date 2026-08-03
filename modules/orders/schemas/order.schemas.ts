@@ -533,9 +533,6 @@ export const addOrderNoteSchema = z.object({
 		.string()
 		.min(1, "La note ne peut pas être vide")
 		.max(5000, "Note trop longue (max 5000 caractères)"),
-	// true = note interne admin (fraude suspectée, blacklist, escalade légale).
-	// Filtrée par getOrderNotesForUser pour empêcher tout leak côté client.
-	isInternal: z.boolean().optional().default(false),
 });
 
 /**

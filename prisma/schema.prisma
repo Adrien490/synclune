@@ -24,23 +24,24 @@ enum Role {
 // === STATUT DE COMPTE (RGPD) ===
 enum AccountStatus {
   ACTIVE
-  INACTIVE
-  PENDING_DELETION
+  INACTIVE // Compte verrouille (aucun chemin applicatif ne le pose ; lignes heritees)
   ANONYMIZED
+  // PENDING_DELETION purgee au Lot 0 (migration 20260803, SIMPLIFICATION.md S2.5) :
+  // la demande de suppression est partie avec l'espace client, les lignes heritees
+  // ont ete basculees sur INACTIVE (meme effet : exclues du filtre ACTIVE).
 }
 
 model User {
-  id               String    @id @default(cuid(2))
-  role             Role      @default(USER)
-  name             String?   @db.VarChar(100)
-  email            String    @unique @db.VarChar(255)
-  emailVerified    Boolean   @default(false)
-  image            String?   @db.VarChar(2048)
-  stripeCustomerId String?   @unique @db.VarChar(50)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
-  suspendedAt      DateTime? // Date de suspension du compte
+  id            String    @id @default(cuid(2))
+  role          Role      @default(USER)
+  name          String?   @db.VarChar(100)
+  email         String    @unique @db.VarChar(255)
+  emailVerified Boolean   @default(false)
+  image         String?   @db.VarChar(2048)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  suspendedAt   DateTime? // Date de suspension du compte
 
   // === STATUT DE COMPTE (RGPD) ===
   accountStatus AccountStatus @default(ACTIVE)
@@ -50,15 +51,17 @@ model User {
   //   termsAcceptedAt / termsVersion  — posés à l'inscription, disparue
   //   marketingOptOutAt               — orphelin depuis le retrait du back-in-stock
   //   anonymizedAt / deletionRequestedAt — pilotaient le cron process-account-deletions
+  //   stripeCustomerId (migration 20260803) — jamais peuplé en parcours invité ; le
+  //     customer Stripe du checkout est créé par clé d'idempotence email, sans
+  //     persistance côté User (Lot 0 SIMPLIFICATION.md S1.1)
   // La rétention légale ne dépendait pas d'elles : elle porte sur la commande
   // (`Order.piiPurgedAt`, purge à `paidAt + 10 ans` par `hard-delete-retention`).
 
-  sessions       Session[]
-  accounts       Account[]
-  orders         Order[]
-  cart           Cart?
-  wishlist       Wishlist?
-  discountUsages DiscountUsage[]
+  sessions Session[]
+  accounts Account[]
+  orders   Order[]
+  cart     Cart?
+  wishlist Wishlist?
 
   // Relations avec les remboursements (audit)
   refundsCreated Refund[] @relation("RefundCreator")
@@ -81,8 +84,6 @@ model User {
   //     plutôt qu'une discipline d'appelant, y compris pour un compte créé par le
   //     seed ou en SQL manuel.
 
-  @@index([role, deletedAt]) // admin count guard + listing role filter
-  @@index([deletedAt, suspendedAt]) // admin listing soft-delete + suspension filter
 }
 
 model Session {
@@ -696,16 +697,10 @@ enum OrderAction {
   INVOICE_RECONCILED // Anomalie facture rattrapee par cron reconcile-invoices
   INVOICE_DOWNLOADED // Telechargement PDF facture (audit RGPD Art. 32 - EINV-SEC-002)
   BULK_EXPORT // Export CSV de masse (audit RGPD Art. 30 / livre de recettes - EINV-SEC-005)
-  // ⚠️ RESERVE / INUTILISE — transmission B2B/B2G sur PDP supprimee au recentrage B2C
-  // (2026-05-28). Aucun code n'emet ces valeurs. Conservees car retirer une valeur
-  // d'enum Postgres impose de recreer le type (risque > gain). NE PAS les reutiliser
-  // pour un autre sens. Cf. docs/INVOICING.md (residus enum PDP_*).
-  PDP_SUBMITTED // [reserve] Facture deposee sur la plateforme agreee (PDP/PA)
-  PDP_ACCEPTED // [reserve] ACK positif de la plateforme / destinataire
-  PDP_REJECTED // [reserve] Rejet de la plateforme
-  PDP_RETRY // [reserve] Tentative de retransmission (DLQ cron)
-  PDP_ABANDONED // [reserve] Abandon apres retries epuises
-  PDP_CANCELLED // [reserve] Annulation par l'emetteur avant ACCEPTED
+  // Les 6 valeurs PDP_* (transmission B2B/B2G, recentrage B2C 2026-05-28) ont ete
+  // purgees au Lot 0 (migration 20260803, SIMPLIFICATION.md S2.1) : jamais emises,
+  // aucune ligne OrderHistory ne les portait. La reecriture e-reporting au go-live
+  // 2027 reintroduira les siennes dans une migration dediee.
 }
 
 /// Statut de la facture associée à une commande
@@ -1033,8 +1028,6 @@ model Order {
   // vraiment que : les @unique (intégrité), les GIN trgm SQL (recherche admin), et les
   // index PARTIELS DLQ/purge (crons sur prédicat sélectif). NE PAS rajouter d'index
   // « par anticipation perf » : le repo a déjà dû dégraisser 2× (20260209/20260217).
-  @@index([userId, createdAt(sort: Desc)])
-  @@index([userId, status, createdAt(sort: Desc)]) // Espace client : "mes commandes" filtrées par statut
   @@index([customerEmail])
   @@index([stripeCustomerId])
   @@index([paymentStatus, createdAt]) // sync-async-payments cron
@@ -1153,12 +1146,6 @@ model OrderNote {
   // Admin qui a cree la note
   authorId   String
   authorName String @db.VarChar(100) // Denormalise pour historique si admin supprime
-
-  // Drapeau interne : true = visible uniquement par les admins (fraude suspectee,
-  // blacklist, escalade legale, etc.). false = visible aussi cote client si jamais
-  // /account/orders expose les notes. Default false pour preserver le comportement
-  // historique des notes existantes.
-  isInternal Boolean @default(false)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -1361,10 +1348,6 @@ model DiscountUsage {
   discountId String
   discount   Discount @relation(fields: [discountId], references: [id], onDelete: Restrict)
 
-  // Utilisateur (optionnel pour guest checkout)
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-
   // Commande associee (Restrict pour protection comptable)
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
@@ -1378,10 +1361,12 @@ model DiscountUsage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // La limite par personne (`maxUsagePerUser`) se verifie par EMAIL de commande
+  // (jointure Order.customerEmail) : plus de compte client depuis 2026-07-31, donc
+  // plus de dimension userId ici (Lot 0 SIMPLIFICATION.md S1.5). Le prefixe
+  // discountId des lookups est couvert par l'unique composite ci-dessous.
   @@unique([discountId, orderId])
   @@index([orderId])
-  @@index([discountId, userId]) // Pour verifier usage par utilisateur, couvre aussi discountId seul
-  @@index([userId]) // Lookup usage par utilisateur (verification limite promo/user)
 }
 
 // ============================================================================

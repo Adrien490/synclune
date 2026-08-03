@@ -7,7 +7,6 @@ import type {
 
 // Re-export des fonctions de validation pure depuis services/
 type UsageCounts = {
-	userCount: number;
 	emailCount: number;
 };
 
@@ -27,7 +26,7 @@ export function checkDiscountEligibility(
 	context: DiscountApplicationContext,
 	usageCounts?: UsageCounts,
 ): EligibilityCheckResult {
-	const { subtotal, userId, customerEmail } = context;
+	const { subtotal, customerEmail } = context;
 
 	// 1. Vérifier si actif
 	if (!discount.isActive) {
@@ -57,23 +56,17 @@ export function checkDiscountEligibility(
 		return { eligible: false, error: DISCOUNT_ERROR_MESSAGES.MAX_USAGE_REACHED };
 	}
 
-	// 5. Vérifier le nombre max d'utilisations par utilisateur
+	// 5. Vérifier le nombre max d'utilisations par personne
 	//
-	// [[DISC-USAGE-001]] On teste TOUJOURS les deux compteurs, jamais l'un OU
-	// l'autre selon la présence de `userId`. Un usage invité est enregistré avec
-	// `userId: NULL` : brancher sur `userId` rendait cet usage invisible dès que
-	// le client se créait un compte avec le même email, offrant une redemption
-	// supplémentaire par code et par personne (fuite `maxUsagePerUser`).
-	//
-	// Chaque compteur vaut 0 quand l'identité correspondante est absente
-	// (l'appelant ne requête que ce qu'il peut résoudre) — le `max` reste donc
-	// correct dans les trois configurations (userId seul, email seul, les deux).
-	// Sans aucune identité on laisse passer : la vérification aura lieu à la
-	// création de la commande, avec l'email de commande.
-	if (discount.maxUsagePerUser && usageCounts && (userId || customerEmail)) {
-		const { userCount, emailCount } = usageCounts;
-
-		if (Math.max(userCount, emailCount) >= discount.maxUsagePerUser) {
+	// [[DISC-USAGE-001]] L'identité est l'EMAIL DE COMMANDE, seule dimension
+	// restante depuis le retrait de `DiscountUsage.userId` (Lot 0 S1.5 — le
+	// parcours est 100 % invité, un compteur par compte ne comptait plus rien).
+	// L'email est normalisé (lowercase+trim) par l'appelant pour empêcher le
+	// contournement trivial par casse/espaces (cf [[CHECKOUT-AUDIT-003]]).
+	// Sans email on laisse passer : la vérification aura lieu à la création de
+	// la commande, avec l'email de commande.
+	if (discount.maxUsagePerUser && usageCounts && customerEmail) {
+		if (usageCounts.emailCount >= discount.maxUsagePerUser) {
 			return {
 				eligible: false,
 				error: DISCOUNT_ERROR_MESSAGES.USER_MAX_USAGE_REACHED,

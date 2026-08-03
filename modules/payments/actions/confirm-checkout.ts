@@ -440,23 +440,6 @@ export async function confirmCheckout(
 						address: v.shippingAddress,
 						phoneNumber: v.shippingAddress.phoneNumber,
 					});
-					// Self-heal: backfill User.stripeCustomerId if init created the
-					// customer but its DB write failed (transient). The `stripeCustomerId:
-					// null` guard makes this a no-op when already set and never clobbers
-					// an existing value (the column is @unique).
-					if (userId) {
-						try {
-							await prisma.user.updateMany({
-								where: { id: userId, stripeCustomerId: null },
-								data: { stripeCustomerId: piCustomerId },
-							});
-						} catch (e) {
-							logger.warn("[STRIPE_CUSTOMER] Failed to backfill User.stripeCustomerId", {
-								userId,
-								error: e instanceof Error ? e.message : String(e),
-							});
-						}
-					}
 				});
 			}
 

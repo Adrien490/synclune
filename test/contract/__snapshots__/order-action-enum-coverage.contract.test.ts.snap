@@ -71,12 +71,6 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/orders/services/archive-invoice-pdf.service.ts",
     "modules/refunds/services/archive-credit-note-pdf.service.ts",
   ],
-  "PDP_ABANDONED": [],
-  "PDP_ACCEPTED": [],
-  "PDP_CANCELLED": [],
-  "PDP_REJECTED": [],
-  "PDP_RETRY": [],
-  "PDP_SUBMITTED": [],
   "PROCESSING": [
     "modules/orders/actions/mark-as-processing.ts",
   ],
