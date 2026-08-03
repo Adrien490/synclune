@@ -859,6 +859,18 @@ model Order {
   // reconstituables a l'identique (Art. L102 B LPF).
   // Nullable pour compat avec les factures pre-snapshot (regeneration tombe sur
   // getVendorLegalInfo() env en fallback).
+  //
+  // ⚠️ CES 12 COLONNES NE SONT PAS UNE DUPLICATION DE `invoiceDataSnapshot`.
+  // Instruit au Lot 4 (SIMPLIFICATION.md S3.6, 2026-08-03), verdict GARDER.
+  // L'ordre du flux : `persistInvoiceNumber` les ecrit depuis l'env, PUIS
+  // `buildSellerInfo(order)` les LIT (`order.vendorX ?? env.X`) pour construire
+  // le payload qui sera hashe. Surtout : la Passe 0 de `reconcile-invoices`
+  // (`backfillInvoiceDataSnapshot`) reconstruit le snapshot des factures
+  // pre-snapshot, et pour celles-la ces colonnes sont la SEULE trace de
+  // l'identite d'emission — l'env de l'epoque n'est pas recuperable. Les
+  // dropper ferait figer sous hash, pour 10 ans, l'identite vendeur COURANTE
+  // sur des factures anciennes (Art. L102 B LPF viole, PDF regenere divergent
+  // du hash archive). Condition de reouverture dans SIMPLIFICATION.md S3.6.
   vendorLegalName String?    @db.VarChar(255)
   vendorTradeName String?    @db.VarChar(255)
   vendorAddress   String?    @db.VarChar(500)

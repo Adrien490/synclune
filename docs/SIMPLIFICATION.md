@@ -129,11 +129,16 @@ Reco globale : traiter S2.x **dans une migration qui touche déjà ces types** (
 - **Gain** : ~40 fichiers, −2 k LOC src, −3,5 k LOC test.
 - **Effort** : M. **Reco : simplifier.** `Décision : ✅ reco validée (2026-08-03)`
 
-### S3.6 — `Order.vendor*` : 12 colonnes → à instruire
+### S3.6 — `Order.vendor*` : 12 colonnes → **INSTRUIT, verdict : GARDER**
 
-- **Quoi** : 12 colonnes de snapshot vendeur, identiques sur toutes les lignes (il n'y a qu'une vendeuse). L'identité vendeur figure déjà dans `invoiceDataSnapshot` (sous SHA-256).
-- **Risque** : adossé à l'Art. L102 B LPF (immutabilité) ; il faut vérifier qui lit ces colonnes pour **construire** le snapshot au moment de l'émission (si elles alimentent le snapshot, les retirer déplace la source vers des constantes — acceptable en solo, mais à prouver writer par writer). Toucher au format du payload facture ⇒ incrémenter `INVOICE_DATA_FORMAT_VERSION` (invariant 10).
-- **Effort** : M (surtout d'analyse). **Reco : à instruire avant décision** — gain réel (12 colonnes sur le plus gros modèle) mais pas de retrait à l'aveugle. `Décision : ✅ reco validée (2026-08-03)`
+- **Quoi** : 12 colonnes de snapshot vendeur, identiques sur toutes les lignes (il n'y a qu'une vendeuse). Elles ressemblent à une duplication de `invoiceDataSnapshot` (qui porte déjà `seller` sous SHA-256).
+- **Ce que l'instruction a montré (2026-08-03)** — le flux réel, dans cet ordre :
+  1. `persistInvoiceNumber` écrit les 12 colonnes depuis `getVendorLegalInfo()` (env) au moment de l'émission (`buildVendorSnapshot`, ligne 161) ;
+  2. `buildInvoiceData` → **`buildSellerInfo(order)` lit `order.vendorX ?? env.X`**, colonne par colonne, pour les 12 ;
+  3. le résultat est canonicalisé, hashé SHA-256 et figé dans `invoiceDataSnapshot`.
+- **Pourquoi ce n'est PAS une duplication supprimable** : la Passe 0 du cron `reconcile-invoices` (`backfillInvoiceDataSnapshot`) reconstruit le snapshot des factures **pré-snapshot**, et pour celles-là les colonnes `vendor*` sont **la seule trace de l'identité d'émission** — l'env de l'époque n'est pas récupérable. Les dropper ferait tomber ce backfill sur l'env **courant** : on figerait 10 ans, sous hash, une identité vendeur qui n'est pas celle de la facture. Violation directe de la reconstituabilité (Art. L102 B LPF) et divergence PDF régénéré ↔ hash archivé. Aucune des 12 n'est morte : `buildSellerInfo` les lit toutes.
+- **Condition de réouverture** : `SELECT count(*) FROM "Order" WHERE "invoiceNumber" IS NOT NULL AND "invoiceDataSnapshot" IS NULL` = 0 **de façon durable**. Même alors, le gain (12 colonnes nullable sur ~240 lignes/an) ne pèse pas lourd face à l'invariant — à ne rouvrir que si le modèle `Order` devient un problème mesuré.
+- **Effort** : instruction faite. **Verdict : GARDER.** `Décision : ✅ GARDER — instruit le 2026-08-03, motif ci-dessus`
 
 ### S3.7 — Purge des sessions expirées (c'est un ajout, pas un retrait)
 

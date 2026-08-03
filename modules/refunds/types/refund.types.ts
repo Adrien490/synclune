@@ -47,30 +47,5 @@ export type GetRefundsReturn = {
 	totalCount: number;
 };
 
-// ============================================================================
-// FORM TYPES
-// ============================================================================
-
-/** Valeur d'un item dans le formulaire de remboursement */
-export interface RefundItemValue {
-	orderItemId: string;
-	quantity: number;
-	restock: boolean;
-	selected: boolean;
-	/**
-	 * UI-only : `true` quand l'admin a basculé manuellement le restock de ce
-	 * bijou. Empêche un changement de motif d'écraser l'override. Non transmis
-	 * à la server action (cf. `formatItemsForAction`).
-	 */
-	restockTouched?: boolean;
-}
-
-/** Valeurs du formulaire de création de remboursement */
-export interface CreateRefundFormValues {
-	orderId: string;
-	reason: RefundReason;
-	note: string;
-	items: RefundItemValue[];
-	/** ORD-REFUND-AUDIT-003 : confirmation pour refund sur commande annulée */
-	acceptCancelledOrder: boolean;
-}
+// Les types du formulaire de création (RefundItemValue, CreateRefundFormValues)
+// sont partis au Lot 2 S3.3 avec le formulaire lui-même.

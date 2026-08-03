@@ -92,60 +92,8 @@ export const GET_REFUND_SELECT = {
 	},
 } as const satisfies Prisma.RefundSelect;
 
-// ============================================================================
-// SELECT DEFINITIONS - ORDER FOR REFUND
-// ============================================================================
-
-export const GET_ORDER_FOR_REFUND_SELECT = {
-	id: true,
-	orderNumber: true,
-	customerEmail: true,
-	customerName: true,
-	subtotal: true,
-	discountAmount: true,
-	total: true,
-	status: true,
-	paymentStatus: true,
-	fulfillmentStatus: true,
-	trackingNumber: true,
-	stripePaymentIntentId: true,
-	items: {
-		select: {
-			id: true,
-			productTitle: true,
-			productImageUrl: true,
-			skuColor: true,
-			skuMaterial: true,
-			skuSize: true,
-			skuImageUrl: true,
-			price: true,
-			quantity: true,
-			skuId: true,
-			refundItems: {
-				where: {
-					refund: {
-						status: {
-							in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
-						},
-					},
-				},
-				select: {
-					quantity: true,
-				},
-			},
-		},
-	},
-	refunds: {
-		where: {
-			status: {
-				in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
-			},
-		},
-		select: {
-			amount: true,
-		},
-	},
-} as const satisfies Prisma.OrderSelect;
+// Le select de la page « Nouveau remboursement » est parti au Lot 2 S3.3
+// (création in-app supprimée — les remboursements se font dans Stripe).
 
 // ============================================================================
 // LABELS (FRANÇAIS)
@@ -203,35 +151,5 @@ export const SORT_LABELS = {
 	[SORT_OPTIONS.STATUS_DESC]: "Statut (Z-A)",
 } as const;
 
-// ============================================================================
-// ERROR MESSAGES
-// ============================================================================
-
-export const REFUND_ERROR_MESSAGES = {
-	NOT_FOUND: "Le remboursement n'existe pas.",
-	ORDER_NOT_FOUND: "La commande n'existe pas.",
-	CREATE_FAILED: "Erreur lors de la création du remboursement.",
-	UPDATE_FAILED: "Erreur lors de la mise à jour du remboursement.",
-	APPROVE_FAILED: "Erreur lors de l'approbation du remboursement.",
-	PROCESS_FAILED: "Erreur lors du traitement du remboursement.",
-	REJECT_FAILED: "Erreur lors du rejet du remboursement.",
-	CANCEL_FAILED: "Erreur lors de l'annulation du remboursement.",
-	RETRY_FAILED: "Erreur lors de la relance du remboursement.",
-	NOT_FAILED: "Seuls les remboursements en échec peuvent être relancés.",
-	ALREADY_PROCESSED: "Ce remboursement a déjà été traité.",
-	ALREADY_APPROVED: "Ce remboursement est déjà approuvé.",
-	ALREADY_REJECTED: "Ce remboursement a déjà été refusé.",
-	NOT_APPROVED: "Ce remboursement doit d'abord être approuvé avant d'être traité.",
-	CANNOT_CANCEL: "Ce remboursement ne peut plus être annulé (déjà traité ou refusé).",
-	AMOUNT_EXCEEDS_ORDER: "Le montant du remboursement dépasse le total de la commande.",
-	AMOUNT_EXCEEDS_REMAINING: "Le montant dépasse le montant restant remboursable.",
-	ORDER_CANCELLED_NEEDS_CONFIRMATION:
-		"Cette commande est annulée. Coche la case de confirmation pour rembourser malgré tout.",
-	NO_CHARGE_ID: "Impossible de rembourser : aucun ID de paiement Stripe trouvé.",
-	STRIPE_ERROR: "Erreur lors du remboursement Stripe.",
-	INVALID_ITEMS: "Les articles du remboursement sont invalides.",
-	QUANTITY_EXCEEDS_AVAILABLE: "La quantité demandée dépasse la quantité disponible.",
-	// ORD-STRIPE-007 : action admin bloquée car un dispute Stripe est ouvert
-	OPEN_DISPUTE:
-		"Un litige Stripe est en cours sur cette commande. Toute action de remboursement ou d'annulation doit attendre la résolution du litige (gérée automatiquement par le webhook).",
-} as const;
+// REFUND_ERROR_MESSAGES est parti au Lot 2 S3.3 avec les 7 actions du workflow
+// in-app qui les rendaient.
