@@ -41,9 +41,9 @@ export function useDiscountActions({ discount }: UseDiscountActionsParams): {
 	});
 
 	// Aligné sur la garde SERVEUR (`delete-discount.ts` refuse si `_count.usages > 0`).
-	// `usageCount` est un compteur dénormalisé que `resetDiscountCounter` remet à
-	// zéro en CONSERVANT l'historique `DiscountUsage` : s'y fier proposait un
-	// « Supprimer » que le serveur rejetait ensuite.
+	// On compte les lignes `DiscountUsage` et non le compteur dénormalisé
+	// `usageCount` : s'y fier proposait un « Supprimer » que le serveur rejetait
+	// ensuite.
 	const canDelete = discount._count.usages === 0;
 
 	const sections: ActionMenuSection[] = [

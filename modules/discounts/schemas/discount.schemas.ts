@@ -189,27 +189,7 @@ export const toggleDiscountStatusSchema = z.object({
 // BULK TOGGLE STATUS SCHEMA
 // ============================================================================
 
-// ============================================================================
-// RESTORE SCHEMA
-// ============================================================================
-
-export const restoreDiscountSchema = z.object({
-	id: z.cuid2("ID invalide"),
-});
-
-// ============================================================================
-// EXTEND VALIDITY SCHEMA
-// ============================================================================
-
-export const extendDiscountValiditySchema = z.object({
-	id: z.cuid2("ID invalide"),
-	days: z.number().int().min(1, "Au moins 1 jour").max(365, "Maximum 365 jours"),
-});
-
-// ============================================================================
-// RESET COUNTER SCHEMA
-// ============================================================================
-
-export const resetDiscountCounterSchema = z.object({
-	id: z.cuid2("ID invalide"),
-});
+// Les schémas restore/extend-validity/reset-counter sont partis au Lot 4 avec
+// leurs 3 Server Actions : aucune n'avait de déclencheur UI (SIMPLIFICATION.md
+// S3.9d). Prolonger une validité ou corriger un compteur passe par l'édition
+// complète du code promo (`update-discount`).
