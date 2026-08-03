@@ -4,7 +4,7 @@
 
 **Profil réel** (cf. BUSINESS.md) : micro-entreprise en franchise de TVA, 1 personne (Léane), ~20 commandes/mois, parcours d'achat 100 % invité, admin = une seule session possible.
 
-**Arbitrage du 2026-08-03 : toutes les recommandations validées en l'état par Adrien.** Le **Lot 0 est exécuté** (migration `20260803120000_lot0_drop_customer_account_residues` + code + docs) ; les lots suivants restent à lancer dans l'ordre du § 13.
+**Arbitrage du 2026-08-03 : toutes les recommandations validées en l'état par Adrien.** Le **Lot 0 est exécuté** (migration `20260803120000_lot0_drop_customer_account_residues` + code + docs) et le **Lot 1 aussi** (crons 9 → 3 + page `/admin/configuration/maintenance`) ; les lots suivants restent à lancer dans l'ordre du § 13.
 
 **Cap fixé par Adrien (2026-08-03)** — ces deux directives priment sur les recommandations item par item :
 
@@ -269,14 +269,14 @@ Ces chiffres reprennent les estimations item par item ; ils se raffineront lot p
 
 ## 13. Ordre d'exécution suggéré (après arbitrage)
 
-| Lot                              | Contenu                                                                                                                                                              | Préalable                 |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| **Lot 0 — ✅ fait (2026-08-03)** | Rang 1 complet (S1.1-S1.9) + S3.7 (purge sessions) + enums sûrs du Rang 2 (S2.1, S2.5) — migration `20260803120000_lot0_drop_customer_account_residues` + `down.sql` | aucun                     |
-| **Lot 1**                        | § 8 crons → noyau + page Maintenance                                                                                                                                 | arbitrage § 8             |
-| **Lot 2**                        | S3.3 remboursements Stripe-first + S3.4 PostWebhookTask (cohérents entre eux)                                                                                        | arbitrage restock partiel |
-| **Lot 3**                        | S3.1 fusion taxonomies                                                                                                                                               | —                         |
-| **Lot 4**                        | S3.2 rate-limits + S3.5 dashboard                                                                                                                                    | —                         |
-| **Lot 5**                        | Rang 4 selon décisions (wishlist, quick-search, vidéo, upload)                                                                                                       | comptage vidéos en base   |
+| Lot                              | Contenu                                                                                                                                                                       | Préalable                 |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| **Lot 0 — ✅ fait (2026-08-03)** | Rang 1 complet (S1.1-S1.9) + S3.7 (purge sessions) + enums sûrs du Rang 2 (S2.1, S2.5) — migration `20260803120000_lot0_drop_customer_account_residues` + `down.sql`          | aucun                     |
+| **Lot 1 — ✅ fait (2026-08-03)** | § 8 crons → noyau (reconcile-invoices, cleanup-pending-orders, hard-delete-retention) + page Maintenance (5 boutons, action `run-maintenance-task`) ; `reopen-store` supprimé | —                         |
+| **Lot 2**                        | S3.3 remboursements Stripe-first + S3.4 PostWebhookTask (cohérents entre eux)                                                                                                 | arbitrage restock partiel |
+| **Lot 3**                        | S3.1 fusion taxonomies                                                                                                                                                        | —                         |
+| **Lot 4**                        | S3.2 rate-limits + S3.5 dashboard                                                                                                                                             | —                         |
+| **Lot 5**                        | Rang 4 selon décisions (wishlist, quick-search, vidéo, upload)                                                                                                                | comptage vidéos en base   |
 
 Chaque lot = une PR, gates verts (`typecheck`, `lint`, `test`, e2e smoke), migrations toujours accompagnées de leur `down.sql`, jamais d'édition de `0_init`.
 

@@ -8,10 +8,12 @@ import type { StoreStatus } from "../types/store-settings.types";
 export async function getStoreStatus(): Promise<StoreStatus> {
 	const cached = await fetchStoreStatus();
 
-	// Eventual-consistency fallback OUTSIDE cache: if reopensAt has passed, treat the
-	// store as open even before the cron `reopen-store` (hourly) flips the DB row.
-	// Date.now() can NOT live inside the "use cache" body — it would be frozen at
-	// cache-write time and never re-evaluate.
+	// Read-time reopening OUTSIDE cache: if reopensAt has passed, treat the store
+	// as open. Since Lot 1 (SIMPLIFICATION.md, 2026-08-03) this is the ONLY
+	// mechanism — the `reopen-store` cron that used to flip the DB row was removed
+	// as redundant ; the stale row is harmless and cleared at the next manual
+	// close/reopen. Date.now() can NOT live inside the "use cache" body — it would
+	// be frozen at cache-write time and never re-evaluate.
 	if (cached.isClosed && cached.reopensAt && cached.reopensAt.getTime() <= Date.now()) {
 		return { isClosed: false, closureMessage: null, reopensAt: null };
 	}

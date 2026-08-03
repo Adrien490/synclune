@@ -14,6 +14,7 @@ import {
 	Store,
 	Landmark,
 	ShieldAlert,
+	Wrench,
 } from "lucide-react";
 import { ORDERS_TO_SHIP_HREF } from "@/modules/orders/constants/to-ship";
 
@@ -198,6 +199,12 @@ const BOUTIQUE_GROUP: NavGroup = {
 			title: "Sécurité",
 			url: "/admin/configuration/securite",
 			icon: ShieldAlert,
+		},
+		{
+			id: "maintenance",
+			title: "Maintenance",
+			url: "/admin/configuration/maintenance",
+			icon: Wrench,
 		},
 	],
 };

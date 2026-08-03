@@ -3,26 +3,6 @@
 	"regions": ["cdg1"],
 	"crons": [
 		{
-			"path": "/api/cron/retry-post-webhook-tasks",
-			"schedule": "0 2 * * *"
-		},
-		{
-			"path": "/api/cron/retry-webhooks",
-			"schedule": "0 2 * * *"
-		},
-		{
-			"path": "/api/cron/reopen-store",
-			"schedule": "0 3 * * *"
-		},
-		{
-			"path": "/api/cron/sync-async-payments",
-			"schedule": "0 5 * * *"
-		},
-		{
-			"path": "/api/cron/reconcile-refunds",
-			"schedule": "0 8 * * *"
-		},
-		{
 			"path": "/api/cron/reconcile-invoices",
 			"schedule": "0 2 * * *"
 		},
@@ -33,10 +13,6 @@
 		{
 			"path": "/api/cron/hard-delete-retention",
 			"schedule": "0 4 2 * *"
-		},
-		{
-			"path": "/api/cron/cleanup-orphan-media",
-			"schedule": "0 4 * * 3"
 		}
 	]
 }

@@ -541,6 +541,20 @@ export const ADMIN_ORDER_LIMITS = {
 } as const;
 
 /**
+ * Limite pour les tâches de maintenance manuelles (Lot 1 SIMPLIFICATION.md —
+ * ex-crons devenus boutons sur /admin/configuration/maintenance).
+ *
+ * Serrée : chaque tâche scanne Stripe ou UploadThing (coûteux), est idempotente
+ * et n'a aucune raison d'être relancée en rafale — une admin seule clique une
+ * fois et lit le résultat.
+ */
+export const ADMIN_MAINTENANCE_LIMIT: RateLimitConfig = {
+	name: "admin-maintenance",
+	limit: 6,
+	windowMs: minutes(5),
+};
+
+/**
  * Limite pour la recherche fuzzy admin (orders/users)
  *
  * Protège les indexes GIN trgm contre scraping si session admin compromise

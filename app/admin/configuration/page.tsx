@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { ShieldAlert, Store } from "lucide-react";
+import { ShieldAlert, Store, Wrench } from "lucide-react";
 import { type Metadata } from "next";
 import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
@@ -28,6 +28,12 @@ export default async function ConfigurationPage() {
 					description: "Sessions ouvertes, déconnexion de tous les appareils",
 					href: "/admin/configuration/securite",
 					icon: <ShieldAlert className="size-5" />,
+				},
+				{
+					title: "Maintenance",
+					description: "Tâches de rattrapage à lancer manuellement",
+					href: "/admin/configuration/maintenance",
+					icon: <Wrench className="size-5" />,
 				},
 			]}
 		/>
