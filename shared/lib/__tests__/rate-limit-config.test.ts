@@ -20,8 +20,6 @@ import {
 	AUTH_LOGOUT_LIMIT,
 	CRON_INVOKE_LIMIT,
 	AUTH_LIMITS,
-	// Sessions
-	// Communication
 	// Orders (client)
 	ORDER_INVOICE_DOWNLOAD_LIMIT,
 	ORDER_LIMITS,
@@ -32,88 +30,24 @@ import {
 	// Wishlist
 	WISHLIST_TOGGLE_LIMIT,
 	WISHLIST_LIMITS,
-	// User account
-	// Return
 	// Address
 	ADDRESS_SEARCH_LIMIT,
 	ADDRESS_LIMITS,
-	// Refunds
-	REFUND_CREATE_LIMIT,
-	REFUND_PROCESS_LIMIT,
-	REFUND_SINGLE_OPERATION_LIMIT,
-	REFUND_REFRESH_LIMIT,
-	REFUND_LIMITS,
-	// Admin - testimonials
-	// Admin - orders
-	ADMIN_ORDER_RESEND_EMAIL_LIMIT,
-	ADMIN_ORDER_MARK_AS_PAID_LIMIT,
-	ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT,
-	ADMIN_ORDER_REFRESH_LIMIT,
+	// Admin — preset partagé (Lot 4 SIMPLIFICATION.md S3.2)
+	ADMIN_LIMIT,
+	ADMIN_MAINTENANCE_LIMIT,
+	ADMIN_SEARCH_LIMIT,
 	ADMIN_ORDER_LIMITS,
-	// Admin - users
-	// Admin - products
-	ADMIN_PRODUCT_CREATE_LIMIT,
-	ADMIN_PRODUCT_UPDATE_LIMIT,
-	ADMIN_PRODUCT_DELETE_LIMIT,
-	ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT,
-	ADMIN_PRODUCT_DUPLICATE_LIMIT,
-	ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT,
-	ADMIN_PRODUCT_REFRESH_LIMIT,
 	ADMIN_PRODUCT_LIMITS,
-	// Admin - collections
-	ADMIN_COLLECTION_CREATE_LIMIT,
-	ADMIN_COLLECTION_UPDATE_LIMIT,
-	ADMIN_COLLECTION_DELETE_LIMIT,
-	ADMIN_COLLECTION_REFRESH_LIMIT,
 	ADMIN_COLLECTION_LIMITS,
-	// Admin - materials
-	ADMIN_MATERIAL_CREATE_LIMIT,
-	ADMIN_MATERIAL_UPDATE_LIMIT,
-	ADMIN_MATERIAL_DELETE_LIMIT,
-	ADMIN_MATERIAL_TOGGLE_STATUS_LIMIT,
-	ADMIN_MATERIAL_DUPLICATE_LIMIT,
-	ADMIN_MATERIAL_REFRESH_LIMIT,
 	ADMIN_MATERIAL_LIMITS,
-	// Admin - colors
-	ADMIN_COLOR_CREATE_LIMIT,
-	ADMIN_COLOR_UPDATE_LIMIT,
-	ADMIN_COLOR_DELETE_LIMIT,
-	ADMIN_COLOR_TOGGLE_STATUS_LIMIT,
-	ADMIN_COLOR_DUPLICATE_LIMIT,
-	ADMIN_COLOR_REFRESH_LIMIT,
 	ADMIN_COLOR_LIMITS,
-	// Admin - product types
-	ADMIN_PRODUCT_TYPE_CREATE_LIMIT,
-	ADMIN_PRODUCT_TYPE_UPDATE_LIMIT,
-	ADMIN_PRODUCT_TYPE_DELETE_LIMIT,
-	ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT,
-	ADMIN_PRODUCT_TYPE_REFRESH_LIMIT,
 	ADMIN_PRODUCT_TYPE_LIMITS,
-	// Admin - SKUs
-	ADMIN_SKU_ADJUST_STOCK_LIMIT,
-	ADMIN_SKU_UPDATE_PRICE_LIMIT,
-	ADMIN_SKU_CREATE_LIMIT,
-	ADMIN_SKU_UPDATE_LIMIT,
-	ADMIN_SKU_DELETE_LIMIT,
-	ADMIN_SKU_DUPLICATE_LIMIT,
-	ADMIN_SKU_TOGGLE_STATUS_LIMIT,
 	ADMIN_SKU_LIMITS,
-	// Admin - discounts
-	ADMIN_DISCOUNT_CREATE_LIMIT,
-	ADMIN_DISCOUNT_UPDATE_LIMIT,
-	ADMIN_DISCOUNT_DELETE_LIMIT,
-	ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT,
-	ADMIN_DISCOUNT_DUPLICATE_LIMIT,
-	ADMIN_DISCOUNT_REFRESH_LIMIT,
 	ADMIN_DISCOUNT_LIMITS,
-	// Admin - announcements
-	ADMIN_ANNOUNCEMENT_CREATE_LIMIT,
-	ADMIN_ANNOUNCEMENT_UPDATE_LIMIT,
-	ADMIN_ANNOUNCEMENT_DELETE_LIMIT,
-	ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT,
-	ADMIN_ANNOUNCEMENT_LIMITS,
-	// Admin - store settings
 	ADMIN_STORE_SETTINGS_LIMITS,
+	ADMIN_DASHBOARD_LIMITS,
+	REFUND_LIMITS,
 } from "@/shared/lib/rate-limit-config";
 
 // ============================================================================
@@ -158,69 +92,10 @@ describe("individual rate limit configs - valid shape", () => {
 		["WISHLIST_TOGGLE_LIMIT", WISHLIST_TOGGLE_LIMIT],
 		// Address
 		["ADDRESS_SEARCH_LIMIT", ADDRESS_SEARCH_LIMIT],
-		// Refunds
-		["REFUND_CREATE_LIMIT", REFUND_CREATE_LIMIT],
-		["REFUND_PROCESS_LIMIT", REFUND_PROCESS_LIMIT],
-		["REFUND_SINGLE_OPERATION_LIMIT", REFUND_SINGLE_OPERATION_LIMIT],
-		["REFUND_REFRESH_LIMIT", REFUND_REFRESH_LIMIT],
-		// Admin - orders
-		["ADMIN_ORDER_RESEND_EMAIL_LIMIT", ADMIN_ORDER_RESEND_EMAIL_LIMIT],
-		["ADMIN_ORDER_MARK_AS_PAID_LIMIT", ADMIN_ORDER_MARK_AS_PAID_LIMIT],
-		["ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT", ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT],
-		["ADMIN_ORDER_REFRESH_LIMIT", ADMIN_ORDER_REFRESH_LIMIT],
-		// Admin - products
-		["ADMIN_PRODUCT_CREATE_LIMIT", ADMIN_PRODUCT_CREATE_LIMIT],
-		["ADMIN_PRODUCT_UPDATE_LIMIT", ADMIN_PRODUCT_UPDATE_LIMIT],
-		["ADMIN_PRODUCT_DELETE_LIMIT", ADMIN_PRODUCT_DELETE_LIMIT],
-		["ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT", ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT],
-		["ADMIN_PRODUCT_DUPLICATE_LIMIT", ADMIN_PRODUCT_DUPLICATE_LIMIT],
-		["ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT", ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT],
-		["ADMIN_PRODUCT_REFRESH_LIMIT", ADMIN_PRODUCT_REFRESH_LIMIT],
-		// Admin - collections
-		["ADMIN_COLLECTION_CREATE_LIMIT", ADMIN_COLLECTION_CREATE_LIMIT],
-		["ADMIN_COLLECTION_UPDATE_LIMIT", ADMIN_COLLECTION_UPDATE_LIMIT],
-		["ADMIN_COLLECTION_DELETE_LIMIT", ADMIN_COLLECTION_DELETE_LIMIT],
-		["ADMIN_COLLECTION_REFRESH_LIMIT", ADMIN_COLLECTION_REFRESH_LIMIT],
-		// Admin - materials
-		["ADMIN_MATERIAL_CREATE_LIMIT", ADMIN_MATERIAL_CREATE_LIMIT],
-		["ADMIN_MATERIAL_UPDATE_LIMIT", ADMIN_MATERIAL_UPDATE_LIMIT],
-		["ADMIN_MATERIAL_DELETE_LIMIT", ADMIN_MATERIAL_DELETE_LIMIT],
-		["ADMIN_MATERIAL_TOGGLE_STATUS_LIMIT", ADMIN_MATERIAL_TOGGLE_STATUS_LIMIT],
-		["ADMIN_MATERIAL_DUPLICATE_LIMIT", ADMIN_MATERIAL_DUPLICATE_LIMIT],
-		["ADMIN_MATERIAL_REFRESH_LIMIT", ADMIN_MATERIAL_REFRESH_LIMIT],
-		// Admin - colors
-		["ADMIN_COLOR_CREATE_LIMIT", ADMIN_COLOR_CREATE_LIMIT],
-		["ADMIN_COLOR_UPDATE_LIMIT", ADMIN_COLOR_UPDATE_LIMIT],
-		["ADMIN_COLOR_DELETE_LIMIT", ADMIN_COLOR_DELETE_LIMIT],
-		["ADMIN_COLOR_TOGGLE_STATUS_LIMIT", ADMIN_COLOR_TOGGLE_STATUS_LIMIT],
-		["ADMIN_COLOR_DUPLICATE_LIMIT", ADMIN_COLOR_DUPLICATE_LIMIT],
-		["ADMIN_COLOR_REFRESH_LIMIT", ADMIN_COLOR_REFRESH_LIMIT],
-		// Admin - product types
-		["ADMIN_PRODUCT_TYPE_CREATE_LIMIT", ADMIN_PRODUCT_TYPE_CREATE_LIMIT],
-		["ADMIN_PRODUCT_TYPE_UPDATE_LIMIT", ADMIN_PRODUCT_TYPE_UPDATE_LIMIT],
-		["ADMIN_PRODUCT_TYPE_DELETE_LIMIT", ADMIN_PRODUCT_TYPE_DELETE_LIMIT],
-		["ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT", ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT],
-		["ADMIN_PRODUCT_TYPE_REFRESH_LIMIT", ADMIN_PRODUCT_TYPE_REFRESH_LIMIT],
-		// Admin - SKUs
-		["ADMIN_SKU_ADJUST_STOCK_LIMIT", ADMIN_SKU_ADJUST_STOCK_LIMIT],
-		["ADMIN_SKU_UPDATE_PRICE_LIMIT", ADMIN_SKU_UPDATE_PRICE_LIMIT],
-		["ADMIN_SKU_CREATE_LIMIT", ADMIN_SKU_CREATE_LIMIT],
-		["ADMIN_SKU_UPDATE_LIMIT", ADMIN_SKU_UPDATE_LIMIT],
-		["ADMIN_SKU_DELETE_LIMIT", ADMIN_SKU_DELETE_LIMIT],
-		["ADMIN_SKU_DUPLICATE_LIMIT", ADMIN_SKU_DUPLICATE_LIMIT],
-		["ADMIN_SKU_TOGGLE_STATUS_LIMIT", ADMIN_SKU_TOGGLE_STATUS_LIMIT],
-		// Admin - discounts
-		["ADMIN_DISCOUNT_CREATE_LIMIT", ADMIN_DISCOUNT_CREATE_LIMIT],
-		["ADMIN_DISCOUNT_UPDATE_LIMIT", ADMIN_DISCOUNT_UPDATE_LIMIT],
-		["ADMIN_DISCOUNT_DELETE_LIMIT", ADMIN_DISCOUNT_DELETE_LIMIT],
-		["ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT", ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT],
-		["ADMIN_DISCOUNT_DUPLICATE_LIMIT", ADMIN_DISCOUNT_DUPLICATE_LIMIT],
-		["ADMIN_DISCOUNT_REFRESH_LIMIT", ADMIN_DISCOUNT_REFRESH_LIMIT],
-		// Admin - announcements
-		["ADMIN_ANNOUNCEMENT_CREATE_LIMIT", ADMIN_ANNOUNCEMENT_CREATE_LIMIT],
-		["ADMIN_ANNOUNCEMENT_UPDATE_LIMIT", ADMIN_ANNOUNCEMENT_UPDATE_LIMIT],
-		["ADMIN_ANNOUNCEMENT_DELETE_LIMIT", ADMIN_ANNOUNCEMENT_DELETE_LIMIT],
-		["ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT", ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT],
+		// Admin
+		["ADMIN_LIMIT", ADMIN_LIMIT],
+		["ADMIN_MAINTENANCE_LIMIT", ADMIN_MAINTENANCE_LIMIT],
+		["ADMIN_SEARCH_LIMIT", ADMIN_SEARCH_LIMIT],
 	];
 
 	it.each(configs)("%s has limit > 0 and windowMs > 0", (_name, config) => {
@@ -276,6 +151,14 @@ describe("AUTH_LIMITS", () => {
 		expect(AUTH_LIMITS.EMAIL_VERIFICATION).toBe(AUTH_EMAIL_VERIFICATION_LIMIT);
 	});
 
+	it("l'auth ne se rabat JAMAIS sur le preset admin partagé", () => {
+		// Les presets d'auth bornent des attaques (brute force, énumération) :
+		// les fondre dans le compteur admin 120/min les rendrait décoratifs.
+		for (const config of Object.values(AUTH_LIMITS)) {
+			expect(config).not.toBe(ADMIN_LIMIT);
+		}
+	});
+
 	it("all entries have valid config shape", () => {
 		for (const config of Object.values(AUTH_LIMITS)) {
 			expect(isValidConfig(config)).toBe(true);
@@ -300,6 +183,14 @@ describe("PAYMENT_LIMITS", () => {
 		expect(PAYMENT_LIMITS.UPDATE_AMOUNT).toBe(PAYMENT_UPDATE_AMOUNT_LIMIT);
 	});
 
+	it("le checkout garde des compteurs SÉPARÉS par étape (leçon KI-004)", () => {
+		// Init, ajustement de montant et validation de code ne doivent pas
+		// partager un budget : l'incident d'origine était précisément un compteur
+		// commun qui laissait des opérations anodines bloquer le paiement.
+		const names = Object.values(PAYMENT_LIMITS).map((c) => c.name);
+		expect(new Set(names).size).toBe(names.length);
+	});
+
 	it("all entries have valid config shape", () => {
 		for (const config of Object.values(PAYMENT_LIMITS)) {
 			expect(isValidConfig(config)).toBe(true);
@@ -314,6 +205,8 @@ describe("PAYMENT_LIMITS", () => {
 describe("ORDER_LIMITS", () => {
 	it("contains expected keys", () => {
 		expect(ORDER_LIMITS).toHaveProperty("INVOICE_DOWNLOAD");
+		// USER_REFRESH est parti avec l'espace client (préset sans appelant).
+		expect(ORDER_LIMITS).not.toHaveProperty("USER_REFRESH");
 	});
 
 	it("references the correct individual configs", () => {
@@ -394,307 +287,61 @@ describe("ADDRESS_LIMITS", () => {
 });
 
 // ============================================================================
-// REFUND_LIMITS
+// ADMIN — preset PARTAGÉ (Lot 4 SIMPLIFICATION.md S3.2, 2026-08-03)
 // ============================================================================
 
-describe("REFUND_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(REFUND_LIMITS).toHaveProperty("CREATE");
-		expect(REFUND_LIMITS).toHaveProperty("PROCESS");
-		expect(REFUND_LIMITS).toHaveProperty("SINGLE_OPERATION");
+describe("ADMIN_LIMIT — consolidation délibérée", () => {
+	it("porte le nom 'admin' et un plafond généreux pour une humaine seule", () => {
+		expect(ADMIN_LIMIT.name).toBe("admin");
+		// Assez large pour une rafale d'édition (bulk SKU, drag-and-drop médias),
+		// assez bas pour borner un script sur cookie volé.
+		expect(ADMIN_LIMIT.limit).toBeGreaterThanOrEqual(60);
+		expect(ADMIN_LIMIT.limit).toBeLessThanOrEqual(300);
+	});
+
+	// Le partage par identité d'objet est le mécanisme (même pattern que
+	// WISHLIST_LIMITS, béni par rate-limit-preset-naming) : une clé qui cesse de
+	// pointer ADMIN_LIMIT sans preset dédié documenté est une régression.
+	const aggregates: [string, Record<string, RateLimitConfig>, string[]][] = [
+		["ADMIN_ORDER_LIMITS", ADMIN_ORDER_LIMITS, ["EXPORT"]],
+		["ADMIN_PRODUCT_LIMITS", ADMIN_PRODUCT_LIMITS, []],
+		["ADMIN_COLLECTION_LIMITS", ADMIN_COLLECTION_LIMITS, []],
+		["ADMIN_MATERIAL_LIMITS", ADMIN_MATERIAL_LIMITS, []],
+		["ADMIN_COLOR_LIMITS", ADMIN_COLOR_LIMITS, []],
+		["ADMIN_PRODUCT_TYPE_LIMITS", ADMIN_PRODUCT_TYPE_LIMITS, []],
+		["ADMIN_SKU_LIMITS", ADMIN_SKU_LIMITS, []],
+		["ADMIN_DISCOUNT_LIMITS", ADMIN_DISCOUNT_LIMITS, []],
+		["ADMIN_STORE_SETTINGS_LIMITS", ADMIN_STORE_SETTINGS_LIMITS, []],
+		["ADMIN_DASHBOARD_LIMITS", ADMIN_DASHBOARD_LIMITS, []],
+		["REFUND_LIMITS", REFUND_LIMITS, []],
+	];
+
+	it.each(aggregates)("%s pointe le preset partagé (hors clés dédiées)", (_n, agg, dedicated) => {
+		for (const [key, config] of Object.entries(agg)) {
+			if (dedicated.includes(key)) {
+				expect(config).not.toBe(ADMIN_LIMIT);
+				expect(isValidConfig(config)).toBe(true);
+			} else {
+				expect(config).toBe(ADMIN_LIMIT);
+			}
+		}
+	});
+
+	it("ADMIN_ORDER_LIMITS.EXPORT reste dédié et serré (CSV lourd)", () => {
+		expect(ADMIN_ORDER_LIMITS.EXPORT.name).toBe("admin-order-export");
+		expect(ADMIN_ORDER_LIMITS.EXPORT.limit).toBeLessThanOrEqual(10);
+	});
+
+	it("les presets à enjeu propre restent dédiés", () => {
+		expect(ADMIN_MAINTENANCE_LIMIT).not.toBe(ADMIN_LIMIT);
+		expect(ADMIN_SEARCH_LIMIT).not.toBe(ADMIN_LIMIT);
+	});
+
+	it("REFUND_LIMITS ne porte plus le workflow in-app (Lot 2 S3.3)", () => {
 		expect(REFUND_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(REFUND_LIMITS.CREATE).toBe(REFUND_CREATE_LIMIT);
-		expect(REFUND_LIMITS.PROCESS).toBe(REFUND_PROCESS_LIMIT);
-		expect(REFUND_LIMITS.SINGLE_OPERATION).toBe(REFUND_SINGLE_OPERATION_LIMIT);
-		expect(REFUND_LIMITS.REFRESH).toBe(REFUND_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(REFUND_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_ORDER_LIMITS
-// ============================================================================
-
-describe("ADMIN_ORDER_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_ORDER_LIMITS).toHaveProperty("RESEND_EMAIL");
-		expect(ADMIN_ORDER_LIMITS).toHaveProperty("MARK_AS_PAID");
-		expect(ADMIN_ORDER_LIMITS).toHaveProperty("SINGLE_OPERATIONS");
-		expect(ADMIN_ORDER_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_ORDER_LIMITS.RESEND_EMAIL).toBe(ADMIN_ORDER_RESEND_EMAIL_LIMIT);
-		expect(ADMIN_ORDER_LIMITS.MARK_AS_PAID).toBe(ADMIN_ORDER_MARK_AS_PAID_LIMIT);
-		expect(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS).toBe(ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT);
-		expect(ADMIN_ORDER_LIMITS.REFRESH).toBe(ADMIN_ORDER_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_ORDER_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_PRODUCT_LIMITS
-// ============================================================================
-
-describe("ADMIN_PRODUCT_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_PRODUCT_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_PRODUCT_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_PRODUCT_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_PRODUCT_LIMITS).toHaveProperty("TOGGLE_STATUS");
-		expect(ADMIN_PRODUCT_LIMITS).toHaveProperty("DUPLICATE");
-		expect(ADMIN_PRODUCT_LIMITS).toHaveProperty("UPDATE_COLLECTIONS");
-		expect(ADMIN_PRODUCT_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_PRODUCT_LIMITS.CREATE).toBe(ADMIN_PRODUCT_CREATE_LIMIT);
-		expect(ADMIN_PRODUCT_LIMITS.UPDATE).toBe(ADMIN_PRODUCT_UPDATE_LIMIT);
-		expect(ADMIN_PRODUCT_LIMITS.DELETE).toBe(ADMIN_PRODUCT_DELETE_LIMIT);
-		expect(ADMIN_PRODUCT_LIMITS.TOGGLE_STATUS).toBe(ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT);
-		expect(ADMIN_PRODUCT_LIMITS.DUPLICATE).toBe(ADMIN_PRODUCT_DUPLICATE_LIMIT);
-		expect(ADMIN_PRODUCT_LIMITS.UPDATE_COLLECTIONS).toBe(ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT);
-		expect(ADMIN_PRODUCT_LIMITS.REFRESH).toBe(ADMIN_PRODUCT_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_PRODUCT_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_COLLECTION_LIMITS
-// ============================================================================
-
-describe("ADMIN_COLLECTION_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_COLLECTION_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_COLLECTION_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_COLLECTION_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_COLLECTION_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_COLLECTION_LIMITS.CREATE).toBe(ADMIN_COLLECTION_CREATE_LIMIT);
-		expect(ADMIN_COLLECTION_LIMITS.UPDATE).toBe(ADMIN_COLLECTION_UPDATE_LIMIT);
-		expect(ADMIN_COLLECTION_LIMITS.DELETE).toBe(ADMIN_COLLECTION_DELETE_LIMIT);
-		expect(ADMIN_COLLECTION_LIMITS.REFRESH).toBe(ADMIN_COLLECTION_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_COLLECTION_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_MATERIAL_LIMITS
-// ============================================================================
-
-describe("ADMIN_MATERIAL_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_MATERIAL_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_MATERIAL_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_MATERIAL_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_MATERIAL_LIMITS).toHaveProperty("TOGGLE_STATUS");
-		expect(ADMIN_MATERIAL_LIMITS).toHaveProperty("DUPLICATE");
-		expect(ADMIN_MATERIAL_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_MATERIAL_LIMITS.CREATE).toBe(ADMIN_MATERIAL_CREATE_LIMIT);
-		expect(ADMIN_MATERIAL_LIMITS.UPDATE).toBe(ADMIN_MATERIAL_UPDATE_LIMIT);
-		expect(ADMIN_MATERIAL_LIMITS.DELETE).toBe(ADMIN_MATERIAL_DELETE_LIMIT);
-		expect(ADMIN_MATERIAL_LIMITS.TOGGLE_STATUS).toBe(ADMIN_MATERIAL_TOGGLE_STATUS_LIMIT);
-		expect(ADMIN_MATERIAL_LIMITS.DUPLICATE).toBe(ADMIN_MATERIAL_DUPLICATE_LIMIT);
-		expect(ADMIN_MATERIAL_LIMITS.REFRESH).toBe(ADMIN_MATERIAL_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_MATERIAL_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_COLOR_LIMITS
-// ============================================================================
-
-describe("ADMIN_COLOR_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_COLOR_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_COLOR_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_COLOR_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_COLOR_LIMITS).toHaveProperty("TOGGLE_STATUS");
-		expect(ADMIN_COLOR_LIMITS).toHaveProperty("DUPLICATE");
-		expect(ADMIN_COLOR_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_COLOR_LIMITS.CREATE).toBe(ADMIN_COLOR_CREATE_LIMIT);
-		expect(ADMIN_COLOR_LIMITS.UPDATE).toBe(ADMIN_COLOR_UPDATE_LIMIT);
-		expect(ADMIN_COLOR_LIMITS.DELETE).toBe(ADMIN_COLOR_DELETE_LIMIT);
-		expect(ADMIN_COLOR_LIMITS.TOGGLE_STATUS).toBe(ADMIN_COLOR_TOGGLE_STATUS_LIMIT);
-		expect(ADMIN_COLOR_LIMITS.DUPLICATE).toBe(ADMIN_COLOR_DUPLICATE_LIMIT);
-		expect(ADMIN_COLOR_LIMITS.REFRESH).toBe(ADMIN_COLOR_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_COLOR_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_PRODUCT_TYPE_LIMITS
-// ============================================================================
-
-describe("ADMIN_PRODUCT_TYPE_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_PRODUCT_TYPE_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_PRODUCT_TYPE_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_PRODUCT_TYPE_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_PRODUCT_TYPE_LIMITS).toHaveProperty("TOGGLE_STATUS");
-		expect(ADMIN_PRODUCT_TYPE_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_PRODUCT_TYPE_LIMITS.CREATE).toBe(ADMIN_PRODUCT_TYPE_CREATE_LIMIT);
-		expect(ADMIN_PRODUCT_TYPE_LIMITS.UPDATE).toBe(ADMIN_PRODUCT_TYPE_UPDATE_LIMIT);
-		expect(ADMIN_PRODUCT_TYPE_LIMITS.DELETE).toBe(ADMIN_PRODUCT_TYPE_DELETE_LIMIT);
-		expect(ADMIN_PRODUCT_TYPE_LIMITS.TOGGLE_STATUS).toBe(ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT);
-		expect(ADMIN_PRODUCT_TYPE_LIMITS.REFRESH).toBe(ADMIN_PRODUCT_TYPE_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_PRODUCT_TYPE_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_SKU_LIMITS
-// ============================================================================
-
-describe("ADMIN_SKU_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_SKU_LIMITS).toHaveProperty("ADJUST_STOCK");
-		expect(ADMIN_SKU_LIMITS).toHaveProperty("UPDATE_PRICE");
-		expect(ADMIN_SKU_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_SKU_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_SKU_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_SKU_LIMITS).toHaveProperty("DUPLICATE");
-		expect(ADMIN_SKU_LIMITS).toHaveProperty("TOGGLE_STATUS");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_SKU_LIMITS.ADJUST_STOCK).toBe(ADMIN_SKU_ADJUST_STOCK_LIMIT);
-		expect(ADMIN_SKU_LIMITS.UPDATE_PRICE).toBe(ADMIN_SKU_UPDATE_PRICE_LIMIT);
-		expect(ADMIN_SKU_LIMITS.CREATE).toBe(ADMIN_SKU_CREATE_LIMIT);
-		expect(ADMIN_SKU_LIMITS.UPDATE).toBe(ADMIN_SKU_UPDATE_LIMIT);
-		expect(ADMIN_SKU_LIMITS.DELETE).toBe(ADMIN_SKU_DELETE_LIMIT);
-		expect(ADMIN_SKU_LIMITS.DUPLICATE).toBe(ADMIN_SKU_DUPLICATE_LIMIT);
-		expect(ADMIN_SKU_LIMITS.TOGGLE_STATUS).toBe(ADMIN_SKU_TOGGLE_STATUS_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_SKU_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_DISCOUNT_LIMITS
-// ============================================================================
-
-describe("ADMIN_DISCOUNT_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_DISCOUNT_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_DISCOUNT_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_DISCOUNT_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_DISCOUNT_LIMITS).toHaveProperty("TOGGLE_STATUS");
-		expect(ADMIN_DISCOUNT_LIMITS).toHaveProperty("DUPLICATE");
-		expect(ADMIN_DISCOUNT_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_DISCOUNT_LIMITS.CREATE).toBe(ADMIN_DISCOUNT_CREATE_LIMIT);
-		expect(ADMIN_DISCOUNT_LIMITS.UPDATE).toBe(ADMIN_DISCOUNT_UPDATE_LIMIT);
-		expect(ADMIN_DISCOUNT_LIMITS.DELETE).toBe(ADMIN_DISCOUNT_DELETE_LIMIT);
-		expect(ADMIN_DISCOUNT_LIMITS.TOGGLE_STATUS).toBe(ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT);
-		expect(ADMIN_DISCOUNT_LIMITS.DUPLICATE).toBe(ADMIN_DISCOUNT_DUPLICATE_LIMIT);
-		expect(ADMIN_DISCOUNT_LIMITS.REFRESH).toBe(ADMIN_DISCOUNT_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_DISCOUNT_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_ANNOUNCEMENT_LIMITS
-// ============================================================================
-
-describe("ADMIN_ANNOUNCEMENT_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_ANNOUNCEMENT_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_ANNOUNCEMENT_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_ANNOUNCEMENT_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_ANNOUNCEMENT_LIMITS).toHaveProperty("TOGGLE_STATUS");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_ANNOUNCEMENT_LIMITS.CREATE).toBe(ADMIN_ANNOUNCEMENT_CREATE_LIMIT);
-		expect(ADMIN_ANNOUNCEMENT_LIMITS.UPDATE).toBe(ADMIN_ANNOUNCEMENT_UPDATE_LIMIT);
-		expect(ADMIN_ANNOUNCEMENT_LIMITS.DELETE).toBe(ADMIN_ANNOUNCEMENT_DELETE_LIMIT);
-		expect(ADMIN_ANNOUNCEMENT_LIMITS.TOGGLE_STATUS).toBe(ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_ANNOUNCEMENT_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_STORE_SETTINGS_LIMITS
-// ============================================================================
-
-describe("ADMIN_STORE_SETTINGS_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("CLOSE_STORE");
-		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("REOPEN_STORE");
-		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("UPDATE_CLOSURE_MESSAGE");
-		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("UPDATE_REOPENS_AT");
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_STORE_SETTINGS_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
+		expect(REFUND_LIMITS).not.toHaveProperty("CREATE");
+		expect(REFUND_LIMITS).not.toHaveProperty("PROCESS");
+		expect(REFUND_LIMITS).not.toHaveProperty("SINGLE_OPERATION");
 	});
 });
 

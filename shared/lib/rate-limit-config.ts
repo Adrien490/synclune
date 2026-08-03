@@ -433,112 +433,52 @@ const ORDER_TRACKING_VIEW_LIMIT: RateLimitConfig = {
 	windowMs: hours(1),
 };
 
-/**
- * Limite pour le rafraîchissement de ses propres commandes (espace client).
- *
- * Déclenchable au geste (pull-to-refresh) autant qu'au bouton : la limite doit
- * rester tolérante à quelques tirages successifs sans laisser un doigt insistant
- * marteler l'invalidation de cache.
- */
-const USER_ORDERS_REFRESH_LIMIT: RateLimitConfig = {
-	name: "user-orders-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
 export const ORDER_LIMITS = {
 	INVOICE_DOWNLOAD: ORDER_INVOICE_DOWNLOAD_LIMIT,
 	ADMIN_INVOICE_DOWNLOAD: ADMIN_INVOICE_DOWNLOAD_LIMIT,
 	STATUS_POLL: ORDER_STATUS_POLL_LIMIT,
 	TRACKING_VIEW: ORDER_TRACKING_VIEW_LIMIT,
-	USER_REFRESH: USER_ORDERS_REFRESH_LIMIT,
+	// USER_REFRESH parti avec l'espace client (Lot 4 S3.2 — préset sans appelant).
 } as const;
 
 // ========================================
-// 📦 ADMIN ORDER OPERATIONS
+// 🛡️ ADMINISTRATION (ADMIN) — Lot 4 SIMPLIFICATION.md S3.2 (2026-08-03)
 // ========================================
 
 /**
- * Limite pour le renvoi d'emails de commande (admin)
+ * Preset PARTAGÉ de toutes les opérations d'administration.
  *
- * Stricte pour eviter le spam de mails clients
- */
-export const ADMIN_ORDER_RESEND_EMAIL_LIMIT: RateLimitConfig = {
-	name: "admin-order-resend-email",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le marquage comme paye (admin)
+ * Avant : ~55 presets quasi identiques, un par action admin (create/update/
+ * delete/duplicate/toggle/refresh × 9 modules), chacun avec son compteur. Pour
+ * une boutique à UNE administratrice, cette granularité ne protégeait rien de
+ * plus : toutes ces actions passent `requireAdmin()` — le rate limit borne
+ * COMBIEN de fois, pas QUI.
  *
- * Moderee car mutation financiere
- */
-export const ADMIN_ORDER_MARK_AS_PAID_LIMIT: RateLimitConfig = {
-	name: "admin-order-mark-as-paid",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour les mutations unitaires sur commandes (admin)
+ * Le partage du compteur est DÉLIBÉRÉ et dimensionné en conséquence (leçon
+ * KI-004 : un partage se CHOISIT, il ne s'hérite pas d'une clé mal construite) :
+ * 120/min couvre très largement une humaine seule en rafale d'édition (bulk
+ * SKU, réordonnancement de médias, drag-and-drop), tout en bornant un script
+ * sur cookie volé. Les surfaces publiques, l'auth et le checkout gardent leurs
+ * presets dédiés, calibrés par les audits — ne PAS les rabattre ici.
  *
- * Moderee car actions admin individuelles (cancel, ship, deliver, etc.)
+ * Restent DÉDIÉS côté admin, car l'enjeu n'y est pas « une admin qui clique » :
+ * - `ADMIN_ORDER_EXPORT_LIMIT` — export CSV lourd (agrégations + fichier) ;
+ * - `ADMIN_MAINTENANCE_LIMIT`  — tâches qui scannent Stripe/UploadThing ;
+ * - `ADMIN_SEARCH_LIMIT`       — protège les index GIN trgm du scraping ;
+ * - `admin-invoice-download`   — exfiltration PDF (EINV-SEC-004, cf. ORDER_LIMITS).
  */
-export const ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT: RateLimitConfig = {
-	name: "admin-order-single-operations",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Toutes les limites admin commandes
- */
-/**
- * Limite pour le rafraichissement du cache commandes (admin)
- */
-export const ADMIN_ORDER_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-order-refresh",
-	limit: 10,
+export const ADMIN_LIMIT: RateLimitConfig = {
+	name: "admin",
+	limit: 120,
 	windowMs: minutes(1),
 };
 
-/**
- * Limite pour l'export bulk CSV du livre de recettes (admin)
- *
- * STRICTE car requete lourde : jusqu'a 50_000 lignes par export.
- * 10/heure = headroom suffisant pour usage legitime, protege la DB d'un admin
- * compromis ou d'une boucle de script.
- */
+/** Export CSV commandes — lourd (agrégations + fichier), serré à dessein. */
 const ADMIN_ORDER_EXPORT_LIMIT: RateLimitConfig = {
 	name: "admin-order-export",
-	limit: 10,
-	windowMs: hours(1),
-};
-
-/**
- * Limite pour la relance manuelle de generation de facture (admin)
- *
- * STRICTE car `retryInvoiceGeneration` declenche SYNCHRONEMENT `reconcileInvoiceOrder` :
- * rendu PDF + upload UploadThing + potentiellement `voidInvoice`, qui prend l'advisory
- * lock de l'annee (`2_000_000+year`) dans une transaction a `TX_TIMEOUT_LONG` (30 s).
- * Un clic repete sur la table d'anomalies serialisait autant de transactions de 30 s
- * sur ce lock, bloquant toute autre emission d'avoir pendant ce temps.
- */
-const ADMIN_INVOICE_RETRY_LIMIT: RateLimitConfig = {
-	name: "admin-invoice-retry",
 	limit: 5,
-	windowMs: minutes(1),
+	windowMs: minutes(5),
 };
-
-export const ADMIN_ORDER_LIMITS = {
-	RESEND_EMAIL: ADMIN_ORDER_RESEND_EMAIL_LIMIT,
-	MARK_AS_PAID: ADMIN_ORDER_MARK_AS_PAID_LIMIT,
-	SINGLE_OPERATIONS: ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT,
-	REFRESH: ADMIN_ORDER_REFRESH_LIMIT,
-	EXPORT: ADMIN_ORDER_EXPORT_LIMIT,
-	INVOICE_RETRY: ADMIN_INVOICE_RETRY_LIMIT,
-} as const;
 
 /**
  * Limite pour les tâches de maintenance manuelles (Lot 1 SIMPLIFICATION.md —
@@ -566,8 +506,138 @@ export const ADMIN_SEARCH_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Toutes les limites de recherche/consultation
+ * Agrégats par module — l'API des call sites est inchangée, mais toutes les
+ * clés pointent le MÊME preset partagé (déduplication par identité d'objet :
+ * exactement le pattern que `rate-limit-preset-naming.regression.test.ts`
+ * bénit déjà pour WISHLIST_LIMITS). Seules les clés listées « dédiées »
+ * ci-dessus font exception.
  */
+export const ADMIN_ORDER_LIMITS = {
+	RESEND_EMAIL: ADMIN_LIMIT,
+	MARK_AS_PAID: ADMIN_LIMIT,
+	SINGLE_OPERATIONS: ADMIN_LIMIT,
+	REFRESH: ADMIN_LIMIT,
+	EXPORT: ADMIN_ORDER_EXPORT_LIMIT,
+	INVOICE_RETRY: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_COLLECTION_LIMITS = {
+	CREATE: ADMIN_LIMIT,
+	UPDATE: ADMIN_LIMIT,
+	DELETE: ADMIN_LIMIT,
+	REFRESH: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_PRODUCT_LIMITS = {
+	CREATE: ADMIN_LIMIT,
+	UPDATE: ADMIN_LIMIT,
+	DELETE: ADMIN_LIMIT,
+	TOGGLE_STATUS: ADMIN_LIMIT,
+	DUPLICATE: ADMIN_LIMIT,
+	UPDATE_COLLECTIONS: ADMIN_LIMIT,
+	REFRESH: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_MATERIAL_LIMITS = {
+	CREATE: ADMIN_LIMIT,
+	UPDATE: ADMIN_LIMIT,
+	DELETE: ADMIN_LIMIT,
+	TOGGLE_STATUS: ADMIN_LIMIT,
+	DUPLICATE: ADMIN_LIMIT,
+	REFRESH: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_COLOR_LIMITS = {
+	CREATE: ADMIN_LIMIT,
+	UPDATE: ADMIN_LIMIT,
+	DELETE: ADMIN_LIMIT,
+	TOGGLE_STATUS: ADMIN_LIMIT,
+	DUPLICATE: ADMIN_LIMIT,
+	REFRESH: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_PRODUCT_TYPE_LIMITS = {
+	CREATE: ADMIN_LIMIT,
+	UPDATE: ADMIN_LIMIT,
+	DELETE: ADMIN_LIMIT,
+	TOGGLE_STATUS: ADMIN_LIMIT,
+	REFRESH: ADMIN_LIMIT,
+	DUPLICATE: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_SKU_LIMITS = {
+	ADJUST_STOCK: ADMIN_LIMIT,
+	UPDATE_PRICE: ADMIN_LIMIT,
+	CREATE: ADMIN_LIMIT,
+	UPDATE: ADMIN_LIMIT,
+	DELETE: ADMIN_LIMIT,
+	DUPLICATE: ADMIN_LIMIT,
+	TOGGLE_STATUS: ADMIN_LIMIT,
+	REFRESH: ADMIN_LIMIT,
+	REORDER_MEDIA: ADMIN_LIMIT,
+	SET_PRIMARY_MEDIA: ADMIN_LIMIT,
+	UPDATE_MEDIA_ALT: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_DISCOUNT_LIMITS = {
+	CREATE: ADMIN_LIMIT,
+	UPDATE: ADMIN_LIMIT,
+	DELETE: ADMIN_LIMIT,
+	TOGGLE_STATUS: ADMIN_LIMIT,
+	DUPLICATE: ADMIN_LIMIT,
+	REFRESH: ADMIN_LIMIT,
+	RESTORE: ADMIN_LIMIT,
+	EXTEND_VALIDITY: ADMIN_LIMIT,
+	RESET_COUNTER: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_STORE_SETTINGS_LIMITS = {
+	CLOSE_STORE: ADMIN_LIMIT,
+	REOPEN_STORE: ADMIN_LIMIT,
+	UPDATE_CLOSURE_MESSAGE: ADMIN_LIMIT,
+	UPDATE_REOPENS_AT: ADMIN_LIMIT,
+	UPDATE_ANNOUNCEMENT: ADMIN_LIMIT,
+} as const;
+
+export const ADMIN_DASHBOARD_LIMITS = {
+	REFRESH: ADMIN_LIMIT,
+} as const;
+
+// CREATE / PROCESS / SINGLE_OPERATION partis avec le workflow refunds in-app
+// (Lot 2 S3.3) ; seule la consultation garde son bouton de refresh.
+export const REFUND_LIMITS = {
+	REFRESH: ADMIN_LIMIT,
+} as const;
+
+// Alias encore importés individuellement (modules products et skus) — même
+// objet partagé, l'inlining des call sites est opportuniste.
+export const ADMIN_PRODUCT_CREATE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_PRODUCT_UPDATE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_PRODUCT_DELETE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT = ADMIN_LIMIT;
+export const ADMIN_PRODUCT_DUPLICATE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT = ADMIN_LIMIT;
+export const ADMIN_PRODUCT_REFRESH_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_ADJUST_STOCK_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_UPDATE_PRICE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_CREATE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_UPDATE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_DELETE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_DUPLICATE_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_TOGGLE_STATUS_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_REFRESH_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_REORDER_MEDIA_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_SET_PRIMARY_MEDIA_LIMIT = ADMIN_LIMIT;
+export const ADMIN_SKU_UPDATE_MEDIA_ALT_LIMIT = ADMIN_LIMIT;
+
+// Les presets ADMIN_ANNOUNCEMENT_* n'avaient plus AUCUN consommateur (les
+// annonces passent par ADMIN_STORE_SETTINGS_LIMITS.UPDATE_ANNOUNCEMENT) —
+// retirés au Lot 4 S3.2.
+
+// ========================================
+// 🔍 PUBLIC — presets conservés tels quels (calibrés par les audits KI-004)
+// ========================================
+
 /**
  * Limite pour les actions cookie (produits recents, recherches recentes)
  *
@@ -594,606 +664,6 @@ export const WISHLIST_LIMITS = {
 	REMOVE: WISHLIST_TOGGLE_LIMIT,
 } as const;
 
-// ========================================
-// 🛡️ ADMINISTRATION (ADMIN)
-// ========================================
-
-// ========================================
-// 📁 ADMIN COLLECTION OPERATIONS
-// ========================================
-
-export const ADMIN_COLLECTION_CREATE_LIMIT: RateLimitConfig = {
-	name: "admin-collection-create",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_COLLECTION_UPDATE_LIMIT: RateLimitConfig = {
-	name: "admin-collection-update",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_COLLECTION_DELETE_LIMIT: RateLimitConfig = {
-	name: "admin-collection-delete",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_COLLECTION_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-collection-refresh",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-// DUPLICATE / TOGGLE_STATUS / MANAGE_PRODUCTS retirés : reliquats des 4 actions
-// collection supprimées (audit admin catalogue 2026-07-26), plus aucun appelant.
-export const ADMIN_COLLECTION_LIMITS = {
-	CREATE: ADMIN_COLLECTION_CREATE_LIMIT,
-	UPDATE: ADMIN_COLLECTION_UPDATE_LIMIT,
-	DELETE: ADMIN_COLLECTION_DELETE_LIMIT,
-	REFRESH: ADMIN_COLLECTION_REFRESH_LIMIT,
-} as const;
-
-// ========================================
-// 📦 ADMIN PRODUCT OPERATIONS
-// ========================================
-
-/**
- * Limite pour la création de produits (admin)
- */
-export const ADMIN_PRODUCT_CREATE_LIMIT: RateLimitConfig = {
-	name: "admin-product-create",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la mise à jour de produits (admin)
- */
-export const ADMIN_PRODUCT_UPDATE_LIMIT: RateLimitConfig = {
-	name: "admin-product-update",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression de produits (admin)
- */
-export const ADMIN_PRODUCT_DELETE_LIMIT: RateLimitConfig = {
-	name: "admin-product-delete",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le toggle de statut de produit (admin)
- */
-export const ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
-	name: "admin-product-toggle-status",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la duplication de produits (admin)
- */
-export const ADMIN_PRODUCT_DUPLICATE_LIMIT: RateLimitConfig = {
-	name: "admin-product-duplicate",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la mise à jour des collections d'un produit (admin)
- */
-export const ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT: RateLimitConfig = {
-	name: "admin-product-update-collections",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le rafraichissement du cache produits (admin)
- */
-export const ADMIN_PRODUCT_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-product-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-/**
- * Toutes les limites admin produits
- */
-export const ADMIN_PRODUCT_LIMITS = {
-	CREATE: ADMIN_PRODUCT_CREATE_LIMIT,
-	UPDATE: ADMIN_PRODUCT_UPDATE_LIMIT,
-	DELETE: ADMIN_PRODUCT_DELETE_LIMIT,
-	TOGGLE_STATUS: ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT,
-	DUPLICATE: ADMIN_PRODUCT_DUPLICATE_LIMIT,
-	UPDATE_COLLECTIONS: ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT,
-	REFRESH: ADMIN_PRODUCT_REFRESH_LIMIT,
-} as const;
-
-// ========================================
-// 🪨 ADMIN MATERIAL OPERATIONS
-// ========================================
-
-/**
- * Limite pour la creation de materiaux (admin)
- */
-export const ADMIN_MATERIAL_CREATE_LIMIT: RateLimitConfig = {
-	name: "admin-material-create",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la mise a jour de materiaux (admin)
- */
-export const ADMIN_MATERIAL_UPDATE_LIMIT: RateLimitConfig = {
-	name: "admin-material-update",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression de materiaux (admin)
- */
-export const ADMIN_MATERIAL_DELETE_LIMIT: RateLimitConfig = {
-	name: "admin-material-delete",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le toggle de statut de materiau (admin)
- */
-export const ADMIN_MATERIAL_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
-	name: "admin-material-toggle-status",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la duplication de materiaux (admin)
- */
-export const ADMIN_MATERIAL_DUPLICATE_LIMIT: RateLimitConfig = {
-	name: "admin-material-duplicate",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le rafraichissement du cache materiaux (admin)
- */
-export const ADMIN_MATERIAL_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-material-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-/**
- * Toutes les limites admin materiaux
- */
-export const ADMIN_MATERIAL_LIMITS = {
-	CREATE: ADMIN_MATERIAL_CREATE_LIMIT,
-	UPDATE: ADMIN_MATERIAL_UPDATE_LIMIT,
-	DELETE: ADMIN_MATERIAL_DELETE_LIMIT,
-	TOGGLE_STATUS: ADMIN_MATERIAL_TOGGLE_STATUS_LIMIT,
-	DUPLICATE: ADMIN_MATERIAL_DUPLICATE_LIMIT,
-	REFRESH: ADMIN_MATERIAL_REFRESH_LIMIT,
-} as const;
-
-// ========================================
-// 🎨 ADMIN COLOR OPERATIONS
-// ========================================
-
-/**
- * Limite pour la creation de couleurs (admin)
- */
-export const ADMIN_COLOR_CREATE_LIMIT: RateLimitConfig = {
-	name: "admin-color-create",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la mise a jour de couleurs (admin)
- */
-export const ADMIN_COLOR_UPDATE_LIMIT: RateLimitConfig = {
-	name: "admin-color-update",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression de couleurs (admin)
- */
-export const ADMIN_COLOR_DELETE_LIMIT: RateLimitConfig = {
-	name: "admin-color-delete",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le toggle de statut de couleur (admin)
- */
-export const ADMIN_COLOR_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
-	name: "admin-color-toggle-status",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la duplication de couleurs (admin)
- */
-export const ADMIN_COLOR_DUPLICATE_LIMIT: RateLimitConfig = {
-	name: "admin-color-duplicate",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le rafraichissement du cache couleurs (admin)
- */
-export const ADMIN_COLOR_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-color-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-/**
- * Toutes les limites admin couleurs
- */
-export const ADMIN_COLOR_LIMITS = {
-	CREATE: ADMIN_COLOR_CREATE_LIMIT,
-	UPDATE: ADMIN_COLOR_UPDATE_LIMIT,
-	DELETE: ADMIN_COLOR_DELETE_LIMIT,
-	TOGGLE_STATUS: ADMIN_COLOR_TOGGLE_STATUS_LIMIT,
-	DUPLICATE: ADMIN_COLOR_DUPLICATE_LIMIT,
-	REFRESH: ADMIN_COLOR_REFRESH_LIMIT,
-} as const;
-
-// ========================================
-// 📦 ADMIN PRODUCT TYPE OPERATIONS
-// ========================================
-
-export const ADMIN_PRODUCT_TYPE_CREATE_LIMIT: RateLimitConfig = {
-	name: "admin-product-type-create",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_PRODUCT_TYPE_UPDATE_LIMIT: RateLimitConfig = {
-	name: "admin-product-type-update",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_PRODUCT_TYPE_DELETE_LIMIT: RateLimitConfig = {
-	name: "admin-product-type-delete",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
-	name: "admin-product-type-toggle-status",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_PRODUCT_TYPE_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-product-type-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-const ADMIN_PRODUCT_TYPE_DUPLICATE_LIMIT: RateLimitConfig = {
-	name: "admin-product-type-duplicate",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_PRODUCT_TYPE_LIMITS = {
-	CREATE: ADMIN_PRODUCT_TYPE_CREATE_LIMIT,
-	UPDATE: ADMIN_PRODUCT_TYPE_UPDATE_LIMIT,
-	DELETE: ADMIN_PRODUCT_TYPE_DELETE_LIMIT,
-	TOGGLE_STATUS: ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT,
-	REFRESH: ADMIN_PRODUCT_TYPE_REFRESH_LIMIT,
-	DUPLICATE: ADMIN_PRODUCT_TYPE_DUPLICATE_LIMIT,
-} as const;
-
-// ========================================
-// 💰 ADMIN SKU OPERATIONS
-// ========================================
-
-/**
- * Limite pour l'ajustement de stock d'un SKU (admin)
- *
- * Modérée pour permettre les ajustements rapides
- */
-export const ADMIN_SKU_ADJUST_STOCK_LIMIT: RateLimitConfig = {
-	name: "admin-sku-adjust-stock",
-	limit: 20, // 20 ajustements maximum
-	windowMs: minutes(1), // par minute
-};
-
-/**
- * Limite pour la mise à jour de prix d'un SKU (admin)
- *
- * Modérée pour permettre les modifications rapides
- */
-export const ADMIN_SKU_UPDATE_PRICE_LIMIT: RateLimitConfig = {
-	name: "admin-sku-update-price",
-	limit: 20, // 20 modifications maximum
-	windowMs: minutes(1), // par minute
-};
-
-/**
- * Limite pour la création de SKUs (admin)
- */
-export const ADMIN_SKU_CREATE_LIMIT: RateLimitConfig = {
-	name: "admin-sku-create",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la mise à jour de SKUs (admin)
- */
-export const ADMIN_SKU_UPDATE_LIMIT: RateLimitConfig = {
-	name: "admin-sku-update",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression de SKUs (admin)
- */
-export const ADMIN_SKU_DELETE_LIMIT: RateLimitConfig = {
-	name: "admin-sku-delete",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la duplication de SKUs (admin)
- */
-export const ADMIN_SKU_DUPLICATE_LIMIT: RateLimitConfig = {
-	name: "admin-sku-duplicate",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le changement de statut/défaut de SKUs (admin)
- *
- * Partagée par `update-sku-status` et `set-default-sku` : même nature d'action,
- * donc même budget — c'est voulu.
- */
-export const ADMIN_SKU_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
-	name: "admin-sku-toggle-status",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le rafraîchissement du cache SKUs (admin)
- *
- * `ADMIN_SKU_LIMITS` était le seul groupe admin sans clé `REFRESH` :
- * `refresh-skus` empruntait `TOGGLE_STATUS`, ce qui était invisible tant que la
- * clé du compteur ne portait que l'identifiant. Depuis KI-004 le nom du preset
- * entre dans la clé ET dans les logs — un blocage de rafraîchissement se serait
- * journalisé `action=admin-sku-toggle-status`, envoyant l'analyse post-mortem sur
- * une fausse piste. Aligné sur les autres modules (10/min).
- */
-export const ADMIN_SKU_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-sku-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-/**
- * Limite pour le reordonnancement des medias d'un SKU (admin)
- */
-export const ADMIN_SKU_REORDER_MEDIA_LIMIT: RateLimitConfig = {
-	name: "admin-sku-reorder-media",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la definition du media principal d'un SKU (admin)
- */
-export const ADMIN_SKU_SET_PRIMARY_MEDIA_LIMIT: RateLimitConfig = {
-	name: "admin-sku-set-primary-media",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la mise a jour de l'alt text d'un media SKU (admin)
- */
-export const ADMIN_SKU_UPDATE_MEDIA_ALT_LIMIT: RateLimitConfig = {
-	name: "admin-sku-update-media-alt",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-/**
- * Toutes les limites admin SKUs
- */
-export const ADMIN_SKU_LIMITS = {
-	ADJUST_STOCK: ADMIN_SKU_ADJUST_STOCK_LIMIT,
-	UPDATE_PRICE: ADMIN_SKU_UPDATE_PRICE_LIMIT,
-	CREATE: ADMIN_SKU_CREATE_LIMIT,
-	UPDATE: ADMIN_SKU_UPDATE_LIMIT,
-	DELETE: ADMIN_SKU_DELETE_LIMIT,
-	DUPLICATE: ADMIN_SKU_DUPLICATE_LIMIT,
-	TOGGLE_STATUS: ADMIN_SKU_TOGGLE_STATUS_LIMIT,
-	REFRESH: ADMIN_SKU_REFRESH_LIMIT,
-	REORDER_MEDIA: ADMIN_SKU_REORDER_MEDIA_LIMIT,
-	SET_PRIMARY_MEDIA: ADMIN_SKU_SET_PRIMARY_MEDIA_LIMIT,
-	UPDATE_MEDIA_ALT: ADMIN_SKU_UPDATE_MEDIA_ALT_LIMIT,
-} as const;
-
-// ========================================
-// REMBOURSEMENTS (REFUNDS)
-// ========================================
-
-/**
- * Limite pour la création de remboursements (admin)
- */
-export const REFUND_CREATE_LIMIT: RateLimitConfig = {
-	name: "refund-create",
-	limit: 5,
-	windowMs: minutes(1),
-};
-
-/**
- * Limite pour le traitement de remboursements via Stripe (admin)
- */
-export const REFUND_PROCESS_LIMIT: RateLimitConfig = {
-	name: "refund-process",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-/**
- * Limite pour les opérations unitaires sur remboursements (admin)
- */
-export const REFUND_SINGLE_OPERATION_LIMIT: RateLimitConfig = {
-	name: "refund-single-operation",
-	limit: 20,
-	windowMs: minutes(1),
-};
-
-/**
- * Toutes les limites de remboursements
- */
-/**
- * Limite pour le rafraichissement du cache remboursements (admin)
- */
-export const REFUND_REFRESH_LIMIT: RateLimitConfig = {
-	name: "refund-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-export const REFUND_LIMITS = {
-	CREATE: REFUND_CREATE_LIMIT,
-	PROCESS: REFUND_PROCESS_LIMIT,
-	SINGLE_OPERATION: REFUND_SINGLE_OPERATION_LIMIT,
-	REFRESH: REFUND_REFRESH_LIMIT,
-} as const;
-
-// ========================================
-// CODES PROMO (DISCOUNTS) - ADMIN
-// ========================================
-
-/**
- * Limite pour la creation de codes promo (admin)
- */
-export const ADMIN_DISCOUNT_CREATE_LIMIT: RateLimitConfig = {
-	name: "admin-discount-create",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la modification de codes promo (admin)
- */
-export const ADMIN_DISCOUNT_UPDATE_LIMIT: RateLimitConfig = {
-	name: "admin-discount-update",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression de codes promo (admin)
- */
-export const ADMIN_DISCOUNT_DELETE_LIMIT: RateLimitConfig = {
-	name: "admin-discount-delete",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le toggle de statut de codes promo (admin)
- */
-export const ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
-	name: "admin-discount-toggle-status",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la duplication de codes promo (admin)
- */
-export const ADMIN_DISCOUNT_DUPLICATE_LIMIT: RateLimitConfig = {
-	name: "admin-discount-duplicate",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le rafraichissement du cache codes promo (admin)
- */
-export const ADMIN_DISCOUNT_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-discount-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-/**
- * Limite pour la restauration d'un code promo soft-deleted (admin)
- */
-const ADMIN_DISCOUNT_RESTORE_LIMIT: RateLimitConfig = {
-	name: "admin-discount-restore",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la prolongation rapide de validite (admin)
- */
-const ADMIN_DISCOUNT_EXTEND_VALIDITY_LIMIT: RateLimitConfig = {
-	name: "admin-discount-extend-validity",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la reinitialisation du compteur d'usage (admin)
- *
- * Stricte car action sensible (perte du compteur usageCount)
- */
-const ADMIN_DISCOUNT_RESET_COUNTER_LIMIT: RateLimitConfig = {
-	name: "admin-discount-reset-counter",
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-/**
- * Toutes les limites admin codes promo
- */
-export const ADMIN_DISCOUNT_LIMITS = {
-	CREATE: ADMIN_DISCOUNT_CREATE_LIMIT,
-	UPDATE: ADMIN_DISCOUNT_UPDATE_LIMIT,
-	DELETE: ADMIN_DISCOUNT_DELETE_LIMIT,
-	TOGGLE_STATUS: ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT,
-	DUPLICATE: ADMIN_DISCOUNT_DUPLICATE_LIMIT,
-	REFRESH: ADMIN_DISCOUNT_REFRESH_LIMIT,
-	RESTORE: ADMIN_DISCOUNT_RESTORE_LIMIT,
-	EXTEND_VALIDITY: ADMIN_DISCOUNT_EXTEND_VALIDITY_LIMIT,
-	RESET_COUNTER: ADMIN_DISCOUNT_RESET_COUNTER_LIMIT,
-} as const;
-
-// ========================================
-// 📍 ADRESSES (ADDRESSES)
-// ========================================
-
 /**
  * Limite pour la recherche d'adresses (proxy BAN API)
  *
@@ -1205,57 +675,8 @@ export const ADDRESS_SEARCH_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1),
 };
 
-/**
- * Toutes les limites d'adresses
- */
 export const ADDRESS_LIMITS = {
 	SEARCH: ADDRESS_SEARCH_LIMIT,
-} as const;
-
-// ========================================
-// DEMANDES DE RETOUR (CLIENT)
-// ========================================
-
-// ========================================
-// 📢 ADMIN ANNOUNCEMENT OPERATIONS
-// ========================================
-
-export const ADMIN_ANNOUNCEMENT_CREATE_LIMIT: RateLimitConfig = {
-	name: "admin-announcement-create",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_ANNOUNCEMENT_UPDATE_LIMIT: RateLimitConfig = {
-	name: "admin-announcement-update",
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_ANNOUNCEMENT_DELETE_LIMIT: RateLimitConfig = {
-	name: "admin-announcement-delete",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
-	name: "admin-announcement-toggle-status",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-const ADMIN_ANNOUNCEMENT_DUPLICATE_LIMIT: RateLimitConfig = {
-	name: "admin-announcement-duplicate",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_ANNOUNCEMENT_LIMITS = {
-	CREATE: ADMIN_ANNOUNCEMENT_CREATE_LIMIT,
-	UPDATE: ADMIN_ANNOUNCEMENT_UPDATE_LIMIT,
-	DELETE: ADMIN_ANNOUNCEMENT_DELETE_LIMIT,
-	TOGGLE_STATUS: ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT,
-	DUPLICATE: ADMIN_ANNOUNCEMENT_DUPLICATE_LIMIT,
 } as const;
 
 export const PUBLIC_ANNOUNCEMENT_DISMISS_LIMIT: RateLimitConfig = {
@@ -1263,61 +684,6 @@ export const PUBLIC_ANNOUNCEMENT_DISMISS_LIMIT: RateLimitConfig = {
 	limit: 60,
 	windowMs: minutes(1),
 };
-
-// ========================================
-// 🏪 ADMIN STORE SETTINGS
-// ========================================
-
-const ADMIN_STORE_SETTINGS_CLOSE_STORE_LIMIT: RateLimitConfig = {
-	name: "admin-store-settings-close-store",
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-const ADMIN_STORE_SETTINGS_REOPEN_STORE_LIMIT: RateLimitConfig = {
-	name: "admin-store-settings-reopen-store",
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-const ADMIN_STORE_SETTINGS_UPDATE_CLOSURE_MESSAGE_LIMIT: RateLimitConfig = {
-	name: "admin-store-settings-update-closure-message",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-const ADMIN_STORE_SETTINGS_UPDATE_REOPENS_AT_LIMIT: RateLimitConfig = {
-	name: "admin-store-settings-update-reopens-at",
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-const ADMIN_STORE_SETTINGS_UPDATE_ANNOUNCEMENT_LIMIT: RateLimitConfig = {
-	name: "admin-store-settings-update-announcement",
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_STORE_SETTINGS_LIMITS = {
-	CLOSE_STORE: ADMIN_STORE_SETTINGS_CLOSE_STORE_LIMIT,
-	REOPEN_STORE: ADMIN_STORE_SETTINGS_REOPEN_STORE_LIMIT,
-	UPDATE_CLOSURE_MESSAGE: ADMIN_STORE_SETTINGS_UPDATE_CLOSURE_MESSAGE_LIMIT,
-	UPDATE_REOPENS_AT: ADMIN_STORE_SETTINGS_UPDATE_REOPENS_AT_LIMIT,
-	UPDATE_ANNOUNCEMENT: ADMIN_STORE_SETTINGS_UPDATE_ANNOUNCEMENT_LIMIT,
-} as const;
-
-/**
- * Limite pour le rafraichissement du cache dashboard (admin)
- */
-const ADMIN_DASHBOARD_REFRESH_LIMIT: RateLimitConfig = {
-	name: "admin-dashboard-refresh",
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-export const ADMIN_DASHBOARD_LIMITS = {
-	REFRESH: ADMIN_DASHBOARD_REFRESH_LIMIT,
-} as const;
 
 // ========================================
 // 🪝 WEBHOOKS
@@ -1355,21 +721,5 @@ export const STRIPE_WEBHOOK_LIMIT: RateLimitConfig = {
 	skipGlobalIpLimit: true,
 };
 
-/**
- * Webhook plateforme agréée (PDP/PA — Phase 5).
- *
- * Volume légitime attendu nettement plus faible que Stripe (≤1 event/facture
- * vs N events/order Stripe). On garde 100 req/min/IP comme garde-fou CPU-drain
- * (anti-bombardement de signatures invalides). Appliqué AVANT verify signature.
- *
- * WEBHOOK-AUDIT-003 : exempté du plafond transverse `GLOBAL_IP_LIMIT` comme le webhook
- * Stripe. Sans le flag, le compteur global (partagé avec toutes les autres actions vues
- * depuis cette IP) pourrait épuiser le budget de la PA avant même sa propre limite —
- * qui vaut ici exactement 100/min, donc reste le seul plafond effectif.
- */
-export const PDP_WEBHOOK_LIMIT: RateLimitConfig = {
-	name: "pdp-webhook",
-	limit: 100,
-	windowMs: minutes(1),
-	skipGlobalIpLimit: true,
-};
+// Le preset PDP_WEBHOOK_LIMIT (e-reporting, retiré 2026-07-26) est parti au
+// Lot 4 S3.2 — à recréer avec la machinerie PA au go-live 2027.

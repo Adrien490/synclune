@@ -83,8 +83,11 @@ const PRESETS = collectPresets();
 describe("presets de rate limit — nommage", () => {
 	// Garde-fou du garde-fou : si la collecte casse (renommage de module, refactor
 	// d'export), toutes les assertions ci-dessous passeraient sur un ensemble vide.
+	// Plancher abaissé délibérément au Lot 4 (SIMPLIFICATION.md S3.2, 2026-08-03) :
+	// les ~55 presets admin ont été consolidés sur un preset PARTAGÉ unique
+	// (`ADMIN_LIMIT`, dédup par identité d'objet — le pattern WISHLIST ci-dessous).
 	it("collecte bien l'ensemble des presets du repo", () => {
-		expect(PRESETS.size).toBeGreaterThan(100);
+		expect(PRESETS.size).toBeGreaterThan(25);
 	});
 
 	it("chaque preset porte un `name` non vide", () => {

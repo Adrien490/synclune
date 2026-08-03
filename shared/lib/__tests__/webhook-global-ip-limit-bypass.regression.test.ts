@@ -29,7 +29,7 @@ const { mockLogger } = vi.hoisted(() => ({
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 import { checkRateLimit } from "../rate-limit";
-import { STRIPE_WEBHOOK_LIMIT, PDP_WEBHOOK_LIMIT } from "../rate-limit-config";
+import { STRIPE_WEBHOOK_LIMIT } from "../rate-limit-config";
 
 beforeEach(() => {
 	delete process.env.RATE_LIMIT_WHITELIST;
@@ -40,10 +40,11 @@ beforeEach(() => {
 // Le store global est un Map au niveau module, sans reset exporté : chaque test
 // utilise une IP distincte pour ne pas hériter du compteur d'un autre.
 describe("@regression webhook-global-ip-limit-bypass — exemption du plafond transverse", () => {
-	it("les deux configs webhook déclarent skipGlobalIpLimit", () => {
+	it("la config webhook Stripe déclare skipGlobalIpLimit", () => {
 		// Sans ce flag, la `limit` déclarée ci-dessous est inatteignable.
+		// (PDP_WEBHOOK_LIMIT est parti au Lot 4 S3.2 avec le retrait e-reporting —
+		// à recréer AVEC ce flag quand la machinerie PA reviendra au go-live 2027.)
 		expect(STRIPE_WEBHOOK_LIMIT.skipGlobalIpLimit).toBe(true);
-		expect(PDP_WEBHOOK_LIMIT.skipGlobalIpLimit).toBe(true);
 	});
 
 	it("laisse passer 150 livraisons Stripe depuis une même IP (le plafond global était à 100)", async () => {
