@@ -1,10 +1,10 @@
 "use client";
 
 import { ReceiptText } from "lucide-react";
+import Link from "next/link";
 
 import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/enums";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -21,7 +21,6 @@ import {
 	REFUND_STATUS_LABELS,
 	REFUND_STATUS_VARIANTS,
 } from "@/modules/refunds/constants/refund.constants";
-import { useRefundActions } from "@/modules/refunds/hooks/use-refund-actions";
 
 interface RefundMobileItemProps {
 	refund: {
@@ -40,27 +39,19 @@ interface RefundMobileItemProps {
 	};
 }
 
+/**
+ * Carte remboursement (liste mobile admin) — consultation pure : le workflow
+ * (approve/reject/process) est parti au Lot 2 S3.3, les remboursements se font
+ * depuis le dashboard Stripe et arrivent ici par la synchro webhook. Plus de
+ * long-press menu : un tap ouvre le détail.
+ */
 export function RefundMobileItem({ refund }: RefundMobileItemProps) {
-	const { sections } = useRefundActions({
-		refund: {
-			id: refund.id,
-			status: refund.status,
-			amount: refund.amount,
-			orderId: refund.order.id,
-			orderNumber: refund.order.orderNumber,
-			failureReason: refund.failureReason,
-		},
-	});
-
 	return (
-		<LongPressMenuLink
+		<Link
 			href={`/admin/ventes/remboursements/${refund.id}`}
-			ariaLabel={`Remboursement ${refund.order.orderNumber}`}
-			sections={sections}
-			menuTitle="Actions remboursement"
-			menuDescription={refund.order.orderNumber}
-			className="rounded-md text-left"
-			viewTransitionName={`refund-card-${refund.id}`}
+			aria-label={`Remboursement ${refund.order.orderNumber}`}
+			className="block rounded-md text-left"
+			style={{ viewTransitionName: `refund-card-${refund.id}` }}
 		>
 			<Item
 				variant="outline"
@@ -106,6 +97,6 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</Link>
 	);
 }

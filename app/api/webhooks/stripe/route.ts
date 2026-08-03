@@ -4,17 +4,13 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
 import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
-import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	STALE_PROCESSING_THRESHOLD_MS,
 } from "@/modules/webhooks/constants/webhook.constants";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
-import {
-	persistPostWebhookTasks,
-	executePersistedTasksForEvent,
-} from "@/modules/webhooks/services/post-webhook-tasks.service";
+import { executePostWebhookTasks } from "@/modules/webhooks/services/execute-post-webhook-tasks.service";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
@@ -265,44 +261,34 @@ export async function POST(req: Request) {
 				dispatchEvent(event),
 			);
 
-			// 6. MARQUER COMME COMPLÉTÉ OU SKIPPED + persister les post-tasks (ORD-STRIPE-003)
-			// Atomique : si la persist échoue, l'event reste PROCESSING → retry-webhooks
-			// le repop. Si la persist réussit, les tasks survivront à un crash lambda
-			// dans le after() qui suit (cron retry-post-webhook-tasks les rattrape).
+			// 6. MARQUER COMME COMPLÉTÉ OU SKIPPED. Les post-tasks (emails + cache)
+			// s'exécutent EN DIRECT dans le after() ci-dessous — la file durable
+			// PostWebhookTask a été retirée au Lot 2 (SIMPLIFICATION.md S3.4) : le
+			// crash de lambda entre le 200 et l'envoi se rattrape à la main (alerte
+			// admin + resend-order-email), et la dédup reste portée par les clés
+			// d'idempotence Resend 24 h.
 			const finalStatus = result?.skipped
 				? WebhookEventStatus.SKIPPED
 				: WebhookEventStatus.COMPLETED;
 			const tasks = result?.tasks ?? [];
-			await prisma.$transaction(
-				async (tx) => {
-					await tx.webhookEvent.update({
-						where: { id: webhookRecord.id },
-						data: {
-							status: finalStatus,
-							processedAt: new Date(),
-						},
-					});
-					if (tasks.length > 0) {
-						await persistPostWebhookTasks(tx, webhookRecord.id, tasks);
-					}
+			await prisma.webhookEvent.update({
+				where: { id: webhookRecord.id },
+				data: {
+					status: finalStatus,
+					processedAt: new Date(),
 				},
-				// IDEM-TX-001 : les défauts Prisma (5s/2s) sont trop serrés pour cette
-				// finalisation sous charge. Un P2024 ici laisse l'event PROCESSING sans
-				// tasks persistées : le cron rattrape, mais au prix d'un re-dispatch
-				// complet — donc de concurrence supplémentaire sur les gardes aval.
-				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
-			);
+			});
 
 			// 7. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
 			const response = NextResponse.json({ received: true, status: "processed" });
 
 			if (tasks.length > 0) {
 				after(async () => {
-					logger.info(`Executing ${tasks.length} persisted post-webhook tasks`, {
+					logger.info(`Executing ${tasks.length} post-webhook tasks`, {
 						correlationId,
 						eventType: event.type,
 					});
-					const stats = await executePersistedTasksForEvent(webhookRecord.id);
+					const stats = await executePostWebhookTasks(tasks);
 					logger.info("Post-webhook tasks executed", {
 						correlationId,
 						eventType: event.type,

@@ -1402,9 +1402,10 @@ model WebhookEvent {
   // (fallback sur receivedAt côté lecture).
   processingStartedAt DateTime?
 
-  // ORD-STRIPE-003 : tâches post-webhook persistées (emails + cache invalidation)
-  // pour survivre à un crash de la lambda Vercel après le 200 retourné à Stripe.
-  postTasks PostWebhookTask[]
+  // La file `PostWebhookTask` (ORD-STRIPE-003) a été retirée au Lot 2
+  // (migration 20260803, SIMPLIFICATION.md S3.4) : les post-tasks s'exécutent en
+  // direct (`execute-post-webhook-tasks.service.ts`), la dédup email reste portée
+  // par les clés d'idempotence Resend 24 h.
 
   @@index([status, processedAt]) // rétention + retry queries filter by status then processedAt
   @@index([status, receivedAt]) // rétention par receivedAt + fallback candidats retry (processedAt NULL)
@@ -1415,11 +1416,6 @@ model WebhookEvent {
 // POST-WEBHOOK TASKS (ORD-STRIPE-003 — retry persistant)
 // ============================================================================
 
-enum PostWebhookTaskStatus {
-  PENDING // Persistée, pas encore exécutée (ou en attente de retry)
-  COMPLETED // Exécutée avec succès
-  FAILED // Échec définitif après MAX_POST_WEBHOOK_RETRY_ATTEMPTS
-}
 
 /// Tâches déclenchées par un webhook (emails transactionnels, invalidation de cache)
 /// qui doivent survivre à un crash de la lambda Vercel après le 200 retourné à Stripe.
@@ -1428,50 +1424,6 @@ enum PostWebhookTaskStatus {
 /// crash entre `after(...)` start et email-send = email perdu sans backstop.
 /// Le cron `retry-post-webhook-tasks` (toutes les 30min) repop PENDING + FAILED
 /// dont `attempts < MAX_POST_WEBHOOK_RETRY_ATTEMPTS`.
-model PostWebhookTask {
-  id String @id @default(cuid(2))
-
-  // Lien vers WebhookEvent (audit trail). SetNull pour préserver la task si
-  // l'événement est purgé par la passe de rétention de `cleanup-pending-orders`.
-  // Nullable aussi par construction : `sync-async-payments` rejoue les post-tasks
-  // d'un webhook définitivement perdu (WEBHOOK-AUDIT-003) sans événement à rattacher.
-  webhookEventId String?
-  webhookEvent   WebhookEvent? @relation(fields: [webhookEventId], references: [id], onDelete: SetNull)
-
-  /// Type de tâche : "ORDER_CONFIRMATION_EMAIL", "INVALIDATE_CACHE", etc.
-  /// Matche `PostWebhookTask["type"]` côté types TypeScript.
-  taskType String @db.VarChar(60)
-
-  /// Payload JSON sérialisé : soit `data` (email), soit `{ tags: string[] }` (cache).
-  payload Json
-
-  status       PostWebhookTaskStatus @default(PENDING)
-  attempts     Int                   @default(0)
-  errorMessage String?               @db.Text
-
-  /// Clé d'idempotence applicative (`refund-confirm-XYZ`, `order-confirm-XYZ`).
-  /// Sert à dédupliquer côté DB en plus de Resend (24h). Optionnelle pour
-  /// les INVALIDATE_CACHE qui n'ont pas besoin de dédup.
-  idempotencyKey String? @unique @db.VarChar(255)
-
-  createdAt   DateTime  @default(now())
-  processedAt DateTime?
-
-  // WEBHOOK-AUDIT-003 : horodatage de la DERNIÈRE tentative, posé par le claim
-  // optimiste de `executeBatch`. Support du backoff par paliers dans
-  // `retry-post-webhook-tasks` : sans lui, la sélection ne portait que sur
-  // `status + attempts` et les 5 tentatives partaient en ~20 min à cadence fixe.
-  // NULL = jamais tentée ⇒ éligible immédiatement (fail-open, lignes legacy).
-  lastAttemptAt DateTime?
-
-  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
-  //   PostWebhookTask_attempts_non_negative  CHECK ("attempts" >= 0)
-
-  @@index([status, attempts, createdAt]) // cron retry-post-webhook-tasks
-  @@index([status, attempts, lastAttemptAt]) // sélection par paliers de backoff
-  @@index([status, createdAt]) // passe de rétention (cleanup-pending-orders)
-  @@index([webhookEventId]) // audit lookup
-}
 
 // ============================================================================
 // PARAMETRES BOUTIQUE

@@ -6,14 +6,14 @@
  * de Léane. La SSOT des ids sert à la fois le schéma Zod de l'action
  * (`run-maintenance-task`) et le rendu de la page.
  *
- * `retry-post-webhook-tasks` est transitoire : il disparaît au Lot 2 avec la
- * file PostWebhookTask (S3.4).
+ * (Le bouton transitoire `retry-post-webhook-tasks` est parti au Lot 2 avec la
+ * file PostWebhookTask — les emails post-paiement s'envoient en direct, cf.
+ * `execute-post-webhook-tasks.service.ts`.)
  */
 export const MAINTENANCE_TASK_IDS = [
 	"retry-webhooks",
 	"reconcile-refunds",
 	"sync-async-payments",
-	"retry-post-webhook-tasks",
 	"cleanup-orphan-media",
 ] as const;
 
@@ -41,12 +41,6 @@ export const MAINTENANCE_TASKS_META: ReadonlyArray<{
 		title: "Synchroniser les paiements asynchrones",
 		description:
 			"Rapproche les paiements restés en attente côté Stripe (virements, méthodes différées).",
-	},
-	{
-		id: "retry-post-webhook-tasks",
-		title: "Rejouer les tâches post-paiement",
-		description:
-			"Rejoue les envois d'emails et invalidations de cache qui ont échoué après un paiement.",
 	},
 	{
 		id: "cleanup-orphan-media",

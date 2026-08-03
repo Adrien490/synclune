@@ -29,7 +29,6 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { RefundRowActions } from "./refund-row-actions";
 
 const REFUND_STATUS_ICONS: Record<RefundStatus, LucideIcon> = {
 	[RefundStatus.PENDING]: Clock,
@@ -63,17 +62,6 @@ export async function RefundsDataTable({
 				noItemsDescription="Aucun remboursement à traiter pour l'instant."
 				hasActiveFilters={hasActiveFilters}
 				resetFiltersHref="/admin/ventes/remboursements"
-				/*
-				 * `action` complète `resetFiltersHref` : `TableEmptyState` donne la
-				 * priorité au reset quand un filtre est actif, et retombe sur `action`
-				 * sinon. Sans ce prop, l'état vraiment-vide desktop était un cul-de-sac
-				 * alors que le pendant mobile (`refunds-mobile-list.tsx`) proposait bien
-				 * « Nouveau remboursement » — asymétrie desktop/mobile sans raison.
-				 */
-				action={{
-					label: "Nouveau remboursement",
-					href: "/admin/ventes/remboursements/nouveau",
-				}}
 			/>
 		);
 	}
@@ -103,13 +91,7 @@ export async function RefundsDataTable({
 					<TableHead className="w-[24%]">Client</TableHead>
 					<TableHead className="w-[16%]">Raison</TableHead>
 					<TableHead className="w-[12%]">Statut</TableHead>
-					<TableHead className="w-[12%] text-right">Montant</TableHead>
-					<TableHead
-						className="w-[10%] text-right"
-						aria-label="Actions disponibles pour chaque remboursement"
-					>
-						Actions
-					</TableHead>
+					<TableHead className="w-[22%] text-right">Montant</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -165,18 +147,6 @@ export async function RefundsDataTable({
 							</TableCell>
 							<TableCell className="text-right">
 								<span className="text-sm font-bold">{formatEuro(refund.amount)}</span>
-							</TableCell>
-							<TableCell className="text-right">
-								<RefundRowActions
-									refund={{
-										id: refund.id,
-										status: refund.status as RefundStatus,
-										amount: refund.amount,
-										orderId: refund.order.id,
-										orderNumber: refund.order.orderNumber,
-										failureReason: refund.failureReason,
-									}}
-								/>
 							</TableCell>
 						</TableRow>
 					);

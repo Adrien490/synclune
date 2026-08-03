@@ -6,7 +6,6 @@ const {
 	mockRetryWebhooks,
 	mockReconcileRefunds,
 	mockSyncAsyncPayments,
-	mockRetryPostWebhookTasks,
 	mockCleanupOrphanMedia,
 	mockLogger,
 } = vi.hoisted(() => ({
@@ -15,7 +14,6 @@ const {
 	mockRetryWebhooks: vi.fn(),
 	mockReconcileRefunds: vi.fn(),
 	mockSyncAsyncPayments: vi.fn(),
-	mockRetryPostWebhookTasks: vi.fn(),
 	mockCleanupOrphanMedia: vi.fn(),
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
@@ -40,10 +38,6 @@ vi.mock("../../services/sync-async-payments.service", () => ({
 	syncAsyncPayments: mockSyncAsyncPayments,
 }));
 
-vi.mock("../../services/retry-post-webhook-tasks.service", () => ({
-	retryPostWebhookTasks: mockRetryPostWebhookTasks,
-}));
-
 vi.mock("../../services/cleanup-orphan-media.service", () => ({
 	cleanupOrphanMedia: mockCleanupOrphanMedia,
 }));
@@ -60,7 +54,6 @@ const RUNNERS = {
 	"retry-webhooks": mockRetryWebhooks,
 	"reconcile-refunds": mockReconcileRefunds,
 	"sync-async-payments": mockSyncAsyncPayments,
-	"retry-post-webhook-tasks": mockRetryPostWebhookTasks,
 	"cleanup-orphan-media": mockCleanupOrphanMedia,
 } as const;
 

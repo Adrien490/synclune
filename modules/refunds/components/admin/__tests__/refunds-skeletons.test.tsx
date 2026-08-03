@@ -100,8 +100,8 @@ describe("RefundsDataTableSkeleton", () => {
 
 	it("passes the expected number of column definitions", () => {
 		render(<RefundsDataTableSkeleton />);
-		// 7 columns defined in the source
-		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-columns", "7");
+		// 6 colonnes — la colonne Actions est partie avec le workflow (Lot 2 S3.3).
+		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-columns", "6");
 	});
 });
 

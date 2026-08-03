@@ -19,9 +19,6 @@ import { join } from "node:path";
 const PROJECT_ROOT = process.cwd();
 const FILES_TO_AUDIT = [
 	// Refunds — flux de remboursement standard
-	"modules/refunds/actions/process-refund.ts",
-	"modules/refunds/actions/create-refund.ts",
-	"modules/refunds/actions/cancel-refund.ts",
 	"modules/refunds/services/issue-credit-note.service.ts",
 	"modules/refunds/services/archive-credit-note-pdf.service.ts",
 

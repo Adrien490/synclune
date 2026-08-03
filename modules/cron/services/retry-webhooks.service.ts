@@ -1,15 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
-import {
-	persistPostWebhookTasks,
-	executePersistedTasksForEvent,
-} from "@/modules/webhooks/services/post-webhook-tasks.service";
+import { executePostWebhookTasks } from "@/modules/webhooks/services/execute-post-webhook-tasks.service";
 import {
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	STALE_PROCESSING_THRESHOLD_MS,
@@ -198,31 +194,22 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 				? WebhookEventStatus.SKIPPED
 				: WebhookEventStatus.COMPLETED;
 
-			// ORD-STRIPE-003 : persiste les post-tasks dans la même tx que
-			// l'update du webhookEvent, puis exécute. Si l'exécution échoue,
-			// les tasks restent PENDING/FAILED → retry-post-webhook-tasks les rattrape.
+			// Post-tasks exécutées EN DIRECT (Lot 2 S3.4 — plus de file durable) :
+			// miroir de la finalisation côté route webhook. Un échec d'email est
+			// alerté (admin + Sentry) par le runner, pas rejoué automatiquement.
 			const tasks = result?.tasks ?? [];
-			await prisma.$transaction(
-				async (tx) => {
-					await tx.webhookEvent.update({
-						where: { id: candidate.id },
-						data: {
-							status: finalStatus,
-							processedAt: new Date(),
-							errorMessage: null,
-						},
-					});
-					if (tasks.length > 0) {
-						await persistPostWebhookTasks(tx, candidate.id, tasks);
-					}
+			await prisma.webhookEvent.update({
+				where: { id: candidate.id },
+				data: {
+					status: finalStatus,
+					processedAt: new Date(),
+					errorMessage: null,
 				},
-				// IDEM-TX-001 : miroir de la finalisation côté route webhook.
-				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
-			);
+			});
 
 			if (tasks.length > 0) {
 				try {
-					await executePersistedTasksForEvent(candidate.id);
+					await executePostWebhookTasks(tasks);
 				} catch (e) {
 					logger.warn("Post-webhook tasks failed during retry", {
 						cronJob: CRON_JOB,

@@ -88,7 +88,11 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 				<div className="-mx-[var(--admin-main-x,1.5rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0">
 					<OrderCustomerCard order={order} />
 
-					<OrderRefundsCard refunds={refunds} orderId={order.id} canRefund={canRefund} />
+					<OrderRefundsCard
+						refunds={refunds}
+						canRefund={canRefund}
+						stripePaymentIntentId={order.stripePaymentIntentId}
+					/>
 
 					<OrderAddressCard order={order} />
 

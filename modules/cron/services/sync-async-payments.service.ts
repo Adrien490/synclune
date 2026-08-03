@@ -11,7 +11,7 @@ import {
 } from "@/modules/webhooks/services/payment-intent.service";
 import { processOrderFromPaymentIntent } from "@/modules/webhooks/services/checkout.service";
 import { buildPostCheckoutTasksFromPI } from "@/modules/webhooks/services/checkout-post-tasks.service";
-import { persistPostWebhookTasks } from "@/modules/webhooks/services/post-webhook-tasks.service";
+import { executePostWebhookTasks } from "@/modules/webhooks/services/execute-post-webhook-tasks.service";
 import type { PostWebhookTask } from "@/modules/webhooks/types/webhook.types";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
@@ -126,25 +126,22 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		// ce qui récupère au passage les tags panier + stock/produit que la boucle
 		// ci-dessus n'invalidait pas.
 		const tasks = buildPostCheckoutTasksFromPI(order, pi);
-		const deferredTasks: PostWebhookTask[] = [];
+		const emailTasks: PostWebhookTask[] = [];
 		for (const task of tasks) {
 			if (task.type === "INVALIDATE_CACHE") {
-				// Le cron a déjà son propre mécanisme de flush en fin de run : inutile de
-				// persister une task pour ça, et l'invalidation part immédiatement.
+				// Le cron a déjà son propre mécanisme de flush en fin de run : inutile
+				// d'exécuter la tâche telle quelle, l'invalidation part immédiatement.
 				for (const tag of task.tags) tagsToInvalidate.add(tag);
 			} else {
-				deferredTasks.push(task);
+				emailTasks.push(task);
 			}
 		}
-		if (deferredTasks.length > 0) {
-			// Persistance seule (pas d'exécution inline) : `retry-post-webhook-tasks`
-			// (toutes les 30 min) sélectionne sur `status + attempts`, sans filtrer par
-			// `webhookEventId`, et les exécutera donc tout seul. La latence ajoutée est
-			// négligeable sur un chemin de rattrapage qui a déjà attendu ≥ 1 h, et la
-			// task survit à un crash du cron. `skipDuplicates` sur la clé
-			// `order-confirm-${orderId}` garantit qu'un webhook arrivé entre-temps
-			// (ou un run précédent) ne produit pas un second email.
-			await persistPostWebhookTasks(prisma, null, deferredTasks);
+		if (emailTasks.length > 0) {
+			// Exécution DIRECTE (Lot 2 S3.4 — la file PostWebhookTask a été retirée).
+			// Un webhook arrivé entre-temps, ou un run précédent, ne produit pas de
+			// second email : la clé d'idempotence Resend `order-confirm-${orderId}`
+			// (24 h cross-instance) dédoublonne, comme elle le faisait déjà sous la file.
+			await executePostWebhookTasks(emailTasks);
 		}
 	};
 

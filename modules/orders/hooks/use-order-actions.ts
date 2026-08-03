@@ -9,7 +9,6 @@ import {
 	Eye,
 	Package,
 	PackageX,
-	RotateCcw,
 	ShoppingBag,
 	StickyNote,
 	Trash2,
@@ -96,7 +95,6 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 		canCancel,
 		canMarkAsShipped,
 		canMarkAsDelivered,
-		canRefund,
 		canMarkAsProcessing,
 		canRevertToProcessing,
 		canMarkAsReturned,
@@ -220,18 +218,9 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				},
 			],
 		},
-		{
-			key: "refund",
-			items: [
-				{
-					key: "refund",
-					label: "Créer un remboursement",
-					icon: RotateCcw,
-					hidden: !canRefund,
-					href: `/admin/ventes/remboursements/nouveau?orderId=${order.id}`,
-				},
-			],
-		},
+		// Plus d'entrée « Créer un remboursement » : le remboursement se fait dans
+		// le dashboard Stripe (Lot 2 S3.3) — l'affordance vit sur OrderRefundsCard,
+		// qui porte le lien externe vers le PaymentIntent.
 		{
 			key: "danger",
 			items: [

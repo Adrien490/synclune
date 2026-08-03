@@ -1,12 +1,10 @@
 import { use } from "react";
 import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/client";
-import Link from "next/link";
 import { ReceiptText } from "lucide-react";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import { Button } from "@/shared/components/ui/button";
 import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetRefundsReturn } from "@/modules/refunds/types/refund.types";
 
@@ -41,11 +39,7 @@ export function RefundsMobileList({
 					actionElement={
 						hasActiveFilters ? (
 							<EmptyResetFiltersAction href="/admin/ventes/remboursements" />
-						) : (
-							<Button asChild className="min-h-11 shadow-[0_0_24px_var(--color-glow-pink)]">
-								<Link href="/admin/ventes/remboursements/nouveau">Nouveau remboursement</Link>
-							</Button>
-						)
+						) : undefined
 					}
 				/>
 			</div>

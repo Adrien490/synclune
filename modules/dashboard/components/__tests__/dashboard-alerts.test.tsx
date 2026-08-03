@@ -40,7 +40,7 @@ afterEach(cleanup);
 
 function makeAlerts(overrides: Partial<DashboardAlerts> = {}): DashboardAlerts {
 	return {
-		pendingRefunds: 0,
+		refundsNeedingAttention: 0,
 		...overrides,
 	};
 }
@@ -68,26 +68,26 @@ describe("DashboardAlerts", () => {
 	});
 
 	it("renders refund alert", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 3 })} />);
+		render(<DashboardAlertsComponent alerts={makeAlerts({ refundsNeedingAttention: 3 })} />);
 
-		expect(screen.getByText("3 remboursements en attente")).toBeInTheDocument();
+		expect(screen.getByText(/3 remboursements à rattraper/)).toBeInTheDocument();
 	});
 
 	it("renders singular remboursement text for 1 refund", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 1 })} />);
+		render(<DashboardAlertsComponent alerts={makeAlerts({ refundsNeedingAttention: 1 })} />);
 
-		expect(screen.getByText("1 remboursement en attente")).toBeInTheDocument();
+		expect(screen.getByText(/1 remboursement à rattraper/)).toBeInTheDocument();
 	});
 
 	it("links refund alert to filtered remboursements page", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 1 })} />);
+		render(<DashboardAlertsComponent alerts={makeAlerts({ refundsNeedingAttention: 1 })} />);
 
-		const link = screen.getByText("1 remboursement en attente").closest("a");
-		expect(link).toHaveAttribute("href", "/admin/ventes/remboursements?filter_status=PENDING");
+		const link = screen.getByText(/1 remboursement à rattraper/).closest("a");
+		expect(link).toHaveAttribute("href", "/admin/ventes/remboursements");
 	});
 
 	it("has role=region with aria-label (not status — banner contains interactive links)", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 1 })} />);
+		render(<DashboardAlertsComponent alerts={makeAlerts({ refundsNeedingAttention: 1 })} />);
 
 		const container = screen.getByRole("region");
 		expect(container).toHaveAttribute("aria-label", "Alertes nécessitant ton attention");

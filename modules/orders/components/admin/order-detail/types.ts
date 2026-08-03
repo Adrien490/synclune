@@ -49,8 +49,9 @@ export interface OrderCustomerCardProps {
 
 export interface OrderRefundsCardProps {
 	refunds: OrderRefundItem[];
-	orderId: string;
 	canRefund: boolean;
+	/** PaymentIntent de la commande — porte le lien « Rembourser dans Stripe » (Lot 2 S3.3). */
+	stripePaymentIntentId: string | null;
 }
 
 export interface OrderAddressCardProps {

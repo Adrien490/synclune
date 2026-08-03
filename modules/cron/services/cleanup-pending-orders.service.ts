@@ -4,7 +4,6 @@ import {
 	PaymentStatus,
 	HistorySource,
 	OrderAction,
-	PostWebhookTaskStatus,
 	WebhookEventStatus,
 } from "@/app/generated/prisma/client";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
@@ -247,14 +246,10 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
  * WEBHOOK-AUDIT-003 — purge les artefacts webhook RÉSOLUS au-delà de
  * `WEBHOOK_RECORD_RETENTION_MS` (90 j).
  *
- * Périmètre volontairement étroit :
- *  - `PostWebhookTask` COMPLETED uniquement — une task FAILED (dead-letter épuisée)
- *    est la seule trace d'un email jamais parti, on la conserve.
- *  - `WebhookEvent` COMPLETED/SKIPPED uniquement — un FAILED reste éligible au cron
- *    `retry-webhooks` ou documente un incident.
- *  - Un `WebhookEvent` portant encore une task non-COMPLETED est épargné : sa
- *    suppression déclencherait le `onDelete: SetNull` et couperait le lien d'audit
- *    entre la task en souffrance et son événement d'origine.
+ * Périmètre volontairement étroit : `WebhookEvent` COMPLETED/SKIPPED uniquement —
+ * un FAILED reste éligible au rejeu (bouton Maintenance `retry-webhooks`) ou
+ * documente un incident. (La purge des `PostWebhookTask` est partie avec la file,
+ * Lot 2 S3.4.)
  *
  * Batches bornés (`BATCH_SIZE_LARGE`) : le rattrapage s'étale sur plusieurs runs
  * quotidiens plutôt que de tenir une transaction longue sur un backlog historique.
@@ -262,26 +257,11 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 async function purgeExpiredWebhookRecords(): Promise<number> {
 	const cutoff = new Date(Date.now() - THRESHOLDS.WEBHOOK_RECORD_RETENTION_MS);
 
-	// Les tasks d'abord : purger l'événement en premier nullifierait leur
-	// `webhookEventId` (SetNull) et rendrait la sélection ci-dessous inopérante.
-	const staleTasks = await prisma.postWebhookTask.findMany({
-		where: { status: PostWebhookTaskStatus.COMPLETED, createdAt: { lt: cutoff } },
-		select: { id: true },
-		take: BATCH_SIZE_LARGE,
-	});
 	let deleted = 0;
-	if (staleTasks.length > 0) {
-		const { count } = await prisma.postWebhookTask.deleteMany({
-			where: { id: { in: staleTasks.map((t) => t.id) } },
-		});
-		deleted += count;
-	}
-
 	const staleEvents = await prisma.webhookEvent.findMany({
 		where: {
 			status: { in: [WebhookEventStatus.COMPLETED, WebhookEventStatus.SKIPPED] },
 			receivedAt: { lt: cutoff },
-			postTasks: { none: { status: { not: PostWebhookTaskStatus.COMPLETED } } },
 		},
 		select: { id: true },
 		take: BATCH_SIZE_LARGE,
@@ -296,7 +276,6 @@ async function purgeExpiredWebhookRecords(): Promise<number> {
 	if (deleted > 0) {
 		logger.info("Purged expired webhook records", {
 			cronJob: "cleanup-pending-orders",
-			tasks: staleTasks.length,
 			events: staleEvents.length,
 			retentionDays: Math.round(THRESHOLDS.WEBHOOK_RECORD_RETENTION_MS / (24 * 60 * 60 * 1000)),
 		});

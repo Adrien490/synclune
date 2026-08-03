@@ -26,10 +26,23 @@ export async function fetchDashboardAlerts(): Promise<DashboardAlerts> {
 	cacheTag(REFUNDS_CACHE_TAGS.LIST);
 
 	return Sentry.startSpan({ name: "dashboard.fetchAlerts", op: "db.read" }, async () => {
-		const pendingRefunds = await prisma.refund.count({
-			where: { status: RefundStatus.PENDING },
+		// Lot 2 S3.3 : plus aucun chemin ne produit PENDING (le workflow d'approbation
+		// est parti — Léane rembourse depuis le dashboard Stripe). L'actionnable est
+		// désormais « à rattraper » : échec Stripe, ou avoir manquant sur commande
+		// facturée — le périmètre exact du bouton Maintenance `reconcile-refunds`.
+		const refundsNeedingAttention = await prisma.refund.count({
+			where: {
+				OR: [
+					{ status: RefundStatus.FAILED },
+					{
+						status: RefundStatus.COMPLETED,
+						creditNoteNumber: null,
+						order: { invoiceNumber: { not: null } },
+					},
+				],
+			},
 		});
 
-		return { pendingRefunds };
+		return { refundsNeedingAttention };
 	});
 }

@@ -13,7 +13,6 @@ import { RefundsMobileListSkeleton } from "@/modules/refunds/components/admin/re
 import { RefreshRefundsButton } from "@/modules/refunds/components/admin/refresh-refunds-button";
 import { RefundsFilterSheet } from "@/modules/refunds/components/admin/refunds-filter-sheet";
 import { RefundsSortBadge } from "@/modules/refunds/components/admin/refunds-sort-badge";
-import { CreateRefundButton } from "@/modules/refunds/components/admin/create-refund-button";
 import { parseRefundParams, parseRefundFilters } from "./_utils/params";
 
 const RefundsBottomBar = dynamic(() =>
@@ -24,7 +23,6 @@ const RefundsBottomBar = dynamic(() =>
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import type { Metadata } from "next";
 
-import { RefundsAdminDialogs } from "./_components/refunds-admin-dialogs";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
@@ -74,12 +72,9 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title="Remboursements"
-				className="hidden md:block"
-				actions={<CreateRefundButton />}
-			/>
+			{/* Consultation pure (Lot 2 S3.3) : les remboursements se créent dans le
+			    dashboard Stripe, la synchro webhook alimente cette liste. */}
+			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
 
 			<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
 				<Suspense fallback={null}>
@@ -161,9 +156,6 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 					/>
 				</Suspense>
 			</div>
-
-			{/* Dialogs des actions long-press / row-actions (approve, process, reject, cancel) */}
-			<RefundsAdminDialogs />
 		</>
 	);
 }

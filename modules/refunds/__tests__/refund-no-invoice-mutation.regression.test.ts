@@ -67,18 +67,14 @@ describe("@regression refund-no-invoice-mutation", () => {
 			.filter((f) => orderWritePattern.test(readFileSync(f, "utf-8")))
 			.map(relPath);
 
-		// process-refund.ts:340-349 fait `tx.order.update({data:{paymentStatus}})` —
-		// c'est légitime (PARTIALLY_REFUNDED / REFUNDED), pas une mutation facture.
-		// On l'allowliste explicitement avec justification.
 		expect(offenders.sort()).toEqual(
 			[
-				// Légitime : update paymentStatus PARTIALLY_REFUNDED / REFUNDED après
-				// finalisation refund (Step 3 SAGA). Ne touche PAS invoice*/creditNote*.
-				"modules/refunds/actions/process-refund.ts",
-				// Légitime : même update paymentStatus, chemin asynchrone partagé
-				// webhook refund.updated + cron DLQ (P1-C audit 2026-08-01). Les
-				// écritures invoice*/creditNote* passent par voidInvoice/issueCreditNote,
-				// jamais en direct.
+				// Légitime : update paymentStatus PARTIALLY_REFUNDED / REFUNDED, chemin
+				// partagé webhook refund.updated + tâche Maintenance reconcile-refunds
+				// (P1-C audit 2026-08-01). Seul écrivain depuis le Lot 2 S3.3 (le SAGA
+				// admin process-refund est parti avec le workflow in-app). Les écritures
+				// invoice*/creditNote* passent par voidInvoice/issueCreditNote, jamais
+				// en direct.
 				"modules/refunds/services/finalize-refund.service.ts",
 			].sort(),
 		);

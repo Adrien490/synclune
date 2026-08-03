@@ -138,10 +138,6 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_price_positive" CHECK ("price"
 ALTER TABLE "OrderItem" DROP CONSTRAINT IF EXISTS "OrderItem_quantity_positive";
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_quantity_positive" CHECK ("quantity" > 0);
 
--- PostWebhookTask
-ALTER TABLE "PostWebhookTask" DROP CONSTRAINT IF EXISTS "PostWebhookTask_attempts_non_negative";
-ALTER TABLE "PostWebhookTask" ADD CONSTRAINT "PostWebhookTask_attempts_non_negative" CHECK ("attempts" >= 0);
-
 -- ProductSku
 ALTER TABLE "ProductSku" DROP CONSTRAINT IF EXISTS "ProductSku_compareAtPrice_valid";
 ALTER TABLE "ProductSku" ADD CONSTRAINT "ProductSku_compareAtPrice_valid" CHECK ("compareAtPrice" IS NULL OR "compareAtPrice" >= "priceInclTax");

@@ -76,23 +76,16 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
   ],
   "REFUND_COMPLETED": [
     "modules/orders/actions/mark-as-fully-refunded.ts",
-    "modules/refunds/actions/process-refund.ts",
     "modules/refunds/services/finalize-refund.service.ts",
     "modules/webhooks/services/refund.service.ts",
   ],
   "REFUND_CREATED": [
     "modules/orders/actions/mark-as-fully-refunded.ts",
-    "modules/refunds/actions/approve-refund.ts",
-    "modules/refunds/actions/create-refund.ts",
-    "modules/refunds/actions/retry-failed-refund.ts",
     "modules/webhooks/services/payment-intent.service.ts",
     "modules/webhooks/services/refund.service.ts",
   ],
   "REFUND_FAILED": [
     "modules/cron/services/reconcile-refunds.service.ts",
-    "modules/refunds/actions/cancel-refund.ts",
-    "modules/refunds/actions/process-refund.ts",
-    "modules/refunds/actions/reject-refund.ts",
     "modules/webhooks/services/refund.service.ts",
   ],
   "RETURNED": [

@@ -293,62 +293,34 @@ describe("cleanupPendingOrders", () => {
 			mockPrisma.order.findMany.mockResolvedValue([]);
 		});
 
-		it("ne purge QUE les artefacts résolus, au-delà du seuil de rétention", async () => {
+		// Lot 2 S3.4 : la purge des PostWebhookTask est partie avec la file — seule
+		// la rétention des WebhookEvent résolus subsiste.
+		it("ne purge QUE les événements résolus, au-delà du seuil de rétention", async () => {
 			await cleanupPendingOrders();
 
 			const cutoff = new Date(Date.now() - THRESHOLDS.WEBHOOK_RECORD_RETENTION_MS);
 
-			const taskWhere = mockPrisma.postWebhookTask.findMany.mock.calls[0]![0].where;
-			// Une task FAILED est la seule trace d'un email jamais parti : conservée.
-			expect(taskWhere.status).toBe("COMPLETED");
-			expect(taskWhere.createdAt.lt.getTime()).toBe(cutoff.getTime());
-
 			const eventWhere = mockPrisma.webhookEvent.findMany.mock.calls[0]![0].where;
-			// Un FAILED reste éligible au cron retry-webhooks ou documente un incident.
+			// Un FAILED reste éligible au rejeu (bouton Maintenance retry-webhooks)
+			// ou documente un incident.
 			expect(eventWhere.status).toEqual({ in: ["COMPLETED", "SKIPPED"] });
 			expect(eventWhere.receivedAt.lt.getTime()).toBe(cutoff.getTime());
 		});
 
-		it("épargne un événement portant encore une task non résolue (lien d'audit)", async () => {
-			await cleanupPendingOrders();
-
-			// Sans ce prédicat, le `onDelete: SetNull` couperait le lien entre une task
-			// en souffrance et son événement d'origine.
-			expect(mockPrisma.webhookEvent.findMany.mock.calls[0]![0].where.postTasks).toEqual({
-				none: { status: { not: "COMPLETED" } },
-			});
-		});
-
 		it("supprime par identifiants et remonte le total dans le résultat du cron", async () => {
-			mockPrisma.postWebhookTask.findMany.mockResolvedValue([{ id: "t1" }, { id: "t2" }]);
 			mockPrisma.webhookEvent.findMany.mockResolvedValue([{ id: "e1" }]);
-			mockPrisma.postWebhookTask.deleteMany.mockResolvedValue({ count: 2 });
 			mockPrisma.webhookEvent.deleteMany.mockResolvedValue({ count: 1 });
 
 			await cleanupPendingOrders();
 
-			expect(mockPrisma.postWebhookTask.deleteMany).toHaveBeenCalledWith({
-				where: { id: { in: ["t1", "t2"] } },
-			});
 			expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenCalledWith({
 				where: { id: { in: ["e1"] } },
 			});
 		});
 
-		it("purge les tasks AVANT les événements (sinon SetNull casse la sélection)", async () => {
-			mockPrisma.postWebhookTask.findMany.mockResolvedValue([{ id: "t1" }]);
-			mockPrisma.webhookEvent.findMany.mockResolvedValue([{ id: "e1" }]);
-
-			await cleanupPendingOrders();
-
-			const taskOrder = mockPrisma.postWebhookTask.deleteMany.mock.invocationCallOrder[0]!;
-			const eventOrder = mockPrisma.webhookEvent.deleteMany.mock.invocationCallOrder[0]!;
-			expect(taskOrder).toBeLessThan(eventOrder);
-		});
-
 		it("un échec de purge ne fait pas échouer l'annulation des commandes", async () => {
 			// La purge est accessoire : la raison d'être du cron reste l'annulation.
-			mockPrisma.postWebhookTask.findMany.mockRejectedValue(new Error("DB down"));
+			mockPrisma.webhookEvent.findMany.mockRejectedValue(new Error("DB down"));
 
 			await expect(cleanupPendingOrders()).resolves.toMatchObject({ errored: 0 });
 		});

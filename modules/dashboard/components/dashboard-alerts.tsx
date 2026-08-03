@@ -66,7 +66,7 @@ const ACTION_ITEMS: readonly ActionItemDescriptor[] = [
  * is surfaced by VatProgressCard in the "Conformité fiscale" section.
  */
 export function DashboardAlerts({ alerts, actionItems, urssafDeadline }: DashboardAlertsProps) {
-	const { pendingRefunds } = alerts;
+	const { refundsNeedingAttention } = alerts;
 
 	const urssafAlert =
 		urssafDeadline &&
@@ -82,7 +82,8 @@ export function DashboardAlerts({ alerts, actionItems, urssafDeadline }: Dashboa
 			})).filter((item) => item.count > 0)
 		: [];
 
-	const hasAlerts = pendingRefunds > 0 || urssafAlert !== null || activeActionItems.length > 0;
+	const hasAlerts =
+		refundsNeedingAttention > 0 || urssafAlert !== null || activeActionItems.length > 0;
 
 	if (!hasAlerts) return null;
 
@@ -104,13 +105,14 @@ export function DashboardAlerts({ alerts, actionItems, urssafDeadline }: Dashboa
 				</DashboardAlertLink>
 			)}
 
-			{pendingRefunds > 0 && (
+			{refundsNeedingAttention > 0 && (
 				<DashboardAlertLink
-					href="/admin/ventes/remboursements?filter_status=PENDING"
+					href="/admin/ventes/remboursements"
 					tone="warning"
 					icon={<RotateCcw className="text-warning size-4" aria-hidden="true" />}
 				>
-					{pendingRefunds} remboursement{pendingRefunds > 1 ? "s" : ""} en attente
+					{refundsNeedingAttention} remboursement{refundsNeedingAttention > 1 ? "s" : ""} à
+					rattraper — lance « Réconcilier » depuis la page Maintenance
 				</DashboardAlertLink>
 			)}
 

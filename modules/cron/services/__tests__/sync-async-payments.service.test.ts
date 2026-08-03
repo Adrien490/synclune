@@ -14,7 +14,7 @@ const {
 	mockSendAdminCronFailedAlert,
 	mockSendPaymentFailedEmail,
 	mockBuildPostCheckoutTasksFromPI,
-	mockPersistPostWebhookTasks,
+	mockExecutePostWebhookTasks,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn() },
@@ -32,7 +32,7 @@ const {
 	mockSendAdminCronFailedAlert: vi.fn(),
 	mockSendPaymentFailedEmail: vi.fn(),
 	mockBuildPostCheckoutTasksFromPI: vi.fn(),
-	mockPersistPostWebhookTasks: vi.fn(),
+	mockExecutePostWebhookTasks: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -87,8 +87,8 @@ vi.mock("@/modules/webhooks/services/checkout-post-tasks.service", () => ({
 	buildPostCheckoutTasksFromPI: mockBuildPostCheckoutTasksFromPI,
 }));
 
-vi.mock("@/modules/webhooks/services/post-webhook-tasks.service", () => ({
-	persistPostWebhookTasks: mockPersistPostWebhookTasks,
+vi.mock("@/modules/webhooks/services/execute-post-webhook-tasks.service", () => ({
+	executePostWebhookTasks: mockExecutePostWebhookTasks,
 }));
 
 import { syncAsyncPayments } from "../sync-async-payments.service";
@@ -109,7 +109,7 @@ describe("syncAsyncPayments", () => {
 		mockExtractPaymentMethodFromPaymentIntent.mockResolvedValue(undefined);
 		mockSendPaymentFailedEmail.mockResolvedValue(undefined);
 		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
-		mockPersistPostWebhookTasks.mockResolvedValue({ created: 0 });
+		mockExecutePostWebhookTasks.mockResolvedValue({ successful: 0, failed: 0 });
 	});
 
 	it("should return skipped result with STRIPE_KEY_MISSING reason when Stripe is not configured", async () => {
@@ -211,7 +211,7 @@ describe("syncAsyncPayments", () => {
 			userId: "user-9",
 		};
 
-		it("persiste la task ORDER_CONFIRMATION_EMAIL construite depuis la commande traitée", async () => {
+		it("exécute en direct la task ORDER_CONFIRMATION_EMAIL construite depuis la commande traitée", async () => {
 			const processedOrder = { id: "order-1", orderNumber: "SYN-001", items: [] };
 			const paymentIntent = { id: "pi_success", status: "succeeded" };
 			const emailTask = {
@@ -228,14 +228,12 @@ describe("syncAsyncPayments", () => {
 			// Construit depuis la commande RETOURNÉE par le traitement (état post-PAID),
 			// pas depuis le snapshot PENDING de la sélection.
 			expect(mockBuildPostCheckoutTasksFromPI).toHaveBeenCalledWith(processedOrder, paymentIntent);
-			// `webhookEventId` null : aucun WebhookEvent à rattacher sur ce chemin.
-			// `retry-post-webhook-tasks` sélectionne sur status+attempts et l'exécutera.
-			expect(mockPersistPostWebhookTasks).toHaveBeenCalledWith(expect.anything(), null, [
-				emailTask,
-			]);
+			// Lot 2 S3.4 : exécution DIRECTE — plus de file, la dédup est portée par
+			// la clé d'idempotence Resend `order-confirm-<id>`.
+			expect(mockExecutePostWebhookTasks).toHaveBeenCalledWith([emailTask]);
 		});
 
-		it("ne persiste pas de task INVALIDATE_CACHE — ses tags partent par le flush du cron", async () => {
+		it("n'exécute pas de task INVALIDATE_CACHE — ses tags partent par le flush du cron", async () => {
 			mockPrisma.order.findMany.mockResolvedValue([succeededOrder]);
 			mockStripe.paymentIntents.retrieve.mockResolvedValue({
 				id: "pi_success",
@@ -248,7 +246,7 @@ describe("syncAsyncPayments", () => {
 
 			await syncAsyncPayments();
 
-			expect(mockPersistPostWebhookTasks).not.toHaveBeenCalled();
+			expect(mockExecutePostWebhookTasks).not.toHaveBeenCalled();
 			// Les tags panier/stock que la boucle historique n'invalidait pas sont
 			// désormais couverts.
 			const invalidated = vi.mocked(revalidateTag).mock.calls.map((c) => c[0]);

@@ -8,12 +8,16 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { formatDateShort } from "@/shared/utils/dates";
-import { RotateCcw, ExternalLink, Plus } from "lucide-react";
+import { RotateCcw, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderRefundsCardProps } from "./types";
 
-export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCardProps) {
+export function OrderRefundsCard({
+	refunds,
+	canRefund,
+	stripePaymentIntentId,
+}: OrderRefundsCardProps) {
 	// Ne pas afficher si aucun remboursement et pas éligible
 	if (refunds.length === 0 && !canRefund) {
 		return null;
@@ -31,16 +35,20 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 						</Badge>
 					)}
 				</CardTitle>
-				{/* « Marquer remboursée » n'est PAS exposée ici : elle annule la facture et
-				    émet un avoir gap-free (irréversible), donc elle vit dans la section
-				    `danger` du menu d'actions, en rouge. « Créer » reste en `outline` : un
-				    remboursement Stripe est réversible et fréquent. */}
-				{canRefund && (
+				{/* Lot 2 S3.3 — le remboursement se fait dans le dashboard Stripe : le
+				    webhook charge.refunded crée la ligne ici, émet l'avoir et l'email.
+				    « Marquer remboursée » (hors Stripe, irréversible) reste dans la
+				    section `danger` du menu d'actions. */}
+				{canRefund && stripePaymentIntentId && (
 					<Button variant="outline" size="sm" asChild>
-						<Link href={`/admin/ventes/remboursements/nouveau?orderId=${orderId}`}>
-							<Plus className="size-4" aria-hidden="true" />
-							Créer
-						</Link>
+						<a
+							href={`https://dashboard.stripe.com/payments/${stripePaymentIntentId}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Rembourser dans Stripe
+							<ExternalLink className="size-4" aria-hidden="true" />
+						</a>
 					</Button>
 				)}
 			</CardHeader>

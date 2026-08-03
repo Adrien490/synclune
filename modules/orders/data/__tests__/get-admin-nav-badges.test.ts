@@ -38,7 +38,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
 		REFUNDED: "REFUNDED",
 	},
-	RefundStatus: { PENDING: "PENDING" },
+	RefundStatus: { FAILED: "FAILED", COMPLETED: "COMPLETED" },
 }));
 
 import { getAdminNavBadges } from "../get-admin-nav-badges";
@@ -85,14 +85,26 @@ describe("getAdminNavBadges", () => {
 		});
 	});
 
-	it("counts only PENDING refunds (awaiting admin validation)", async () => {
+	// Lot 2 S3.3 : PENDING n'a plus aucun producteur (workflow d'approbation
+	// supprimé). L'actionnable est « à rattraper » : échec Stripe, ou avoir
+	// manquant sur commande facturée — le périmètre du bouton reconcile-refunds.
+	it("counts refunds needing attention (FAILED or missing credit note)", async () => {
 		mockPrisma.order.count.mockResolvedValue(0);
 		mockPrisma.refund.count.mockResolvedValue(0);
 
 		await getAdminNavBadges();
 
 		expect(mockPrisma.refund.count).toHaveBeenCalledWith({
-			where: { status: "PENDING" },
+			where: {
+				OR: [
+					{ status: "FAILED" },
+					{
+						status: "COMPLETED",
+						creditNoteNumber: null,
+						order: { invoiceNumber: { not: null } },
+					},
+				],
+			},
 		});
 	});
 

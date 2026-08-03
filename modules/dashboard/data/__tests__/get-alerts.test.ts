@@ -40,6 +40,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		APPROVED: "APPROVED",
 		COMPLETED: "COMPLETED",
 		REJECTED: "REJECTED",
+		FAILED: "FAILED",
 	},
 }));
 
@@ -55,13 +56,13 @@ describe("fetchDashboardAlerts", () => {
 		mockRefundCount.mockResolvedValue(0);
 	});
 
-	it("should return pending refunds count", async () => {
+	it("should return the refunds-needing-attention count", async () => {
 		mockRefundCount.mockResolvedValue(3);
 
 		const result = await fetchDashboardAlerts();
 
 		expect(result).toEqual({
-			pendingRefunds: 3,
+			refundsNeedingAttention: 3,
 		});
 	});
 
@@ -69,15 +70,26 @@ describe("fetchDashboardAlerts", () => {
 		const result = await fetchDashboardAlerts();
 
 		expect(result).toEqual({
-			pendingRefunds: 0,
+			refundsNeedingAttention: 0,
 		});
 	});
 
-	it("should query refunds with PENDING status", async () => {
+	// Lot 2 S3.3 : PENDING n'a plus de producteur — l'actionnable est FAILED ou
+	// COMPLETED sans avoir sur commande facturée (périmètre de reconcile-refunds).
+	it("should query refunds needing attention (FAILED or missing credit note)", async () => {
 		await fetchDashboardAlerts();
 
 		expect(mockRefundCount).toHaveBeenCalledWith({
-			where: { status: "PENDING" },
+			where: {
+				OR: [
+					{ status: "FAILED" },
+					{
+						status: "COMPLETED",
+						creditNoteNumber: null,
+						order: { invoiceNumber: { not: null } },
+					},
+				],
+			},
 		});
 	});
 

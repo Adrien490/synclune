@@ -10,11 +10,9 @@ import {
 	ResponsiveAlertDialogHeader,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsReturned } from "@/modules/orders/hooks/use-mark-as-returned";
 import { Spinner } from "@/shared/components/ui/spinner";
-import Link from "next/link";
 
 export const MARK_AS_RETURNED_DIALOG_ID = "mark-as-returned";
 
@@ -52,22 +50,20 @@ export function MarkAsReturnedAlertDialog() {
 									La commande <strong>{dialog.data.orderNumber}</strong> a été marquée comme
 									retournée.
 								</p>
-								<p className="mt-2">Souhaitez-vous créer un remboursement pour cette commande ?</p>
+								{/* Lot 2 S3.3 : le remboursement se fait dans le dashboard Stripe
+								    (lien « Rembourser dans Stripe » sur la page commande) — le
+								    webhook crée la fiche ici, avec avoir et email automatiques. */}
+								<p className="mt-2">
+									Si tu veux la rembourser, passe par le dashboard Stripe : la fiche remboursement,
+									l&apos;avoir et l&apos;email partiront tout seuls.
+								</p>
 							</div>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel onClick={() => dialog.close()}>
-							Plus tard
-						</ResponsiveAlertDialogCancel>
-						<Button asChild>
-							<Link
-								href={`/admin/ventes/remboursements/nouveau?orderId=${dialog.data.orderId}`}
-								onClick={() => dialog.close()}
-							>
-								Créer un remboursement
-							</Link>
-						</Button>
+						<ResponsiveAlertDialogAction onClick={() => dialog.close()}>
+							Compris
+						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
 				</ResponsiveAlertDialogContent>
 			</ResponsiveAlertDialog>

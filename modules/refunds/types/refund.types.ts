@@ -1,16 +1,11 @@
 import { type Prisma, type RefundReason } from "@/app/generated/prisma/client";
 import { type z } from "zod";
 import { type PaginationInfo } from "@/shared/lib/pagination";
-import {
-	type GET_REFUND_SELECT,
-	type GET_REFUNDS_SELECT,
-	type GET_ORDER_FOR_REFUND_SELECT,
-} from "../constants/refund.constants";
+import { type GET_REFUND_SELECT, type GET_REFUNDS_SELECT } from "../constants/refund.constants";
 import {
 	type getRefundSchema,
 	type getRefundsSchema,
 	type refundFiltersSchema,
-	type getOrderForRefundSchema,
 } from "../schemas/refund.schemas";
 
 // ============================================================================
@@ -51,18 +46,6 @@ export type GetRefundsReturn = {
 	pagination: PaginationInfo;
 	totalCount: number;
 };
-
-// ============================================================================
-// ORDER FOR REFUND TYPES (from data/)
-// ============================================================================
-
-export type GetOrderForRefundParams = z.infer<typeof getOrderForRefundSchema>;
-
-export type OrderForRefund = Prisma.OrderGetPayload<{
-	select: typeof GET_ORDER_FOR_REFUND_SELECT;
-}>;
-
-export type OrderItemForRefund = OrderForRefund["items"][0];
 
 // ============================================================================
 // FORM TYPES

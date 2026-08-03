@@ -142,11 +142,13 @@ test.describe("Accessibilité - Pages admin", { tag: ["@slow"] }, () => {
 		await expectNoA11yViolations(page, { context: "Détail collection admin" });
 	});
 
-	test("Nouveau remboursement admin passe l'audit axe-core WCAG AA", async ({ page }) => {
-		await page.goto("/admin/ventes/remboursements/nouveau");
+	// Lot 2 S3.3 : la page « Nouveau remboursement » n'existe plus (Stripe-first).
+	// L'audit couvre à la place la page Maintenance introduite au Lot 1.
+	test("Maintenance admin passe l'audit axe-core WCAG AA", async ({ page }) => {
+		await page.goto("/admin/configuration/maintenance");
 		await page.waitForLoadState("domcontentloaded");
 
-		await expectNoA11yViolations(page, { context: "Nouveau remboursement" });
+		await expectNoA11yViolations(page, { context: "Maintenance" });
 	});
 });
 

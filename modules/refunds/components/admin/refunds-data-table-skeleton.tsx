@@ -1,7 +1,8 @@
 import { DataTableSkeleton } from "@/shared/components/data-table";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-/** Grille alignée sur `refunds-data-table.tsx` (7 colonnes, pagination curseur). */
+/** Grille alignée sur `refunds-data-table.tsx` (6 colonnes — consultation pure
+ * depuis le Lot 2 S3.3, la colonne Actions est partie avec le workflow). */
 export function RefundsDataTableSkeleton() {
 	return (
 		<DataTableSkeleton
@@ -23,8 +24,7 @@ export function RefundsDataTableSkeleton() {
 				},
 				{ width: "16%", cell: { type: "text", width: "w-28" } },
 				{ width: "12%", cell: { type: "badge", width: "w-20" } },
-				{ width: "12%", align: "right", cell: { type: "text", width: "w-16" } },
-				{ width: "10%", align: "right", cell: { type: "actions" } },
+				{ width: "22%", align: "right", cell: { type: "text", width: "w-16" } },
 			]}
 			pagination="cursor"
 		/>

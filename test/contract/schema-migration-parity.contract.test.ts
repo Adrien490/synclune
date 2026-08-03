@@ -257,8 +257,10 @@ describe("schema.prisma ↔ migrations", () => {
 	});
 
 	// Sanity du parser : sans ça les comparaisons passeraient à vide.
+	// Plancher abaissé délibérément à 29 au Lot 2 (SIMPLIFICATION.md S3.4,
+	// 2026-08-03) : drop de la table PostWebhookTask.
 	it("le parser reconstruit un état non trivial des deux côtés", () => {
-		expect(fromSchema.size).toBeGreaterThanOrEqual(30);
+		expect(fromSchema.size).toBeGreaterThanOrEqual(29);
 		expect(fromBaseline.size).toBe(fromSchema.size);
 		expect(fromBaseline.get("Order")?.has("invoiceNumber")).toBe(true);
 	});
@@ -348,7 +350,9 @@ describe("gardes SQL bruts — SSOT ↔ migrations ↔ documentation", () => {
 		expect(ssot.checks.has("Order_invoiceNumber_format")).toBe(true); // Art. 286 CGI
 		expect(ssot.checks.has("Order_total_formula")).toBe(true); // invariant monétaire
 		expect(ssot.triggers.has("Order_creditNoteNumber_cross_unique")).toBe(true);
-		expect(ssot.checks.size).toBeGreaterThanOrEqual(50);
+		// Plancher abaissé délibérément à 49 au Lot 2 (S3.4) : le CHECK
+		// PostWebhookTask_attempts_non_negative est parti avec sa table.
+		expect(ssot.checks.size).toBeGreaterThanOrEqual(49);
 	});
 
 	// LE point critique : `prisma migrate diff` ne génère AUCUN garde brut. Un

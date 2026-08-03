@@ -37,12 +37,10 @@ import { execFileSync } from "node:child_process";
 const DECLARED_INVENTORY_CREDITERS = [
 	// Restock inline à l'annulation admin → pose restock:false (ce bug).
 	"modules/orders/actions/cancel-order.ts",
-	// Consommateur de RefundItem.restock (chemin admin).
-	"modules/refunds/actions/process-refund.ts",
-	// Consommateur de RefundItem.restock (finalisation asynchrone partagée
-	// webhook refund.updated + cron DLQ — P1-C audit 2026-08-01 ; a remplacé le
-	// crédit inliné dans reconcile-refunds.service.ts, exclusif du précédent
-	// via le claim `status: APPROVED`).
+	// Consommateur unique de RefundItem.restock depuis le Lot 2 S3.3 (le SAGA
+	// admin process-refund est parti avec le workflow in-app) : finalisation
+	// partagée webhook refund.updated + tâche Maintenance reconcile-refunds
+	// (P1-C audit 2026-08-01).
 	"modules/refunds/services/finalize-refund.service.ts",
 	// restoreStockForOrder + restock inliné dans le claim markOrderAsCancelled.
 	"modules/webhooks/services/payment-intent.service.ts",
@@ -212,8 +210,8 @@ describe("STOCK-DOUBLE-CREDIT-001 — un seul créditeur de stock par remboursem
 
 		// …et ignore bien les non-payloads : `restock: boolean` (type) et
 		// `where: { refundId, restock: true }` (lecture).
-		const processRefund = readFileSync("modules/refunds/actions/process-refund.ts", "utf-8");
-		expect(refundItemRestockValues(processRefund)).toEqual([]);
+		const finalize = readFileSync("modules/refunds/services/finalize-refund.service.ts", "utf-8");
+		expect(refundItemRestockValues(finalize)).toEqual([]);
 
 		const reconcile = readFileSync("modules/cron/services/reconcile-refunds.service.ts", "utf-8");
 		expect(refundItemRestockValues(reconcile)).toEqual([]);

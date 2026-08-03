@@ -137,30 +137,11 @@ test.describe("Admin - Gestion des commandes", { tag: ["@regression"] }, () => {
 		await expect(heading).toBeVisible();
 	});
 
-	test("initier un remboursement depuis la page remboursements", async ({ page }) => {
-		await page.goto("/admin/ventes/remboursements/nouveau");
-		await page.waitForLoadState("domcontentloaded");
-
-		// Should be on the refund initiation page
-		await expect(page).toHaveURL(/\/admin\/ventes\/remboursements\/nouveau/);
-
-		// Verify refund form is present
-		const heading = page.getByRole("heading", { level: 1 });
-		await expect(heading).toBeVisible();
-
-		// Check for key form fields
-		const orderField = page
-			.getByLabel(/Commande|Numéro/i)
-			.or(page.getByPlaceholder(/commande|SYN/i));
-		const reasonField = page.getByLabel(/Raison|Motif/i).or(page.locator("textarea"));
-
-		// At minimum, the page should have some form of input for creating a refund
-		const hasOrderField = (await orderField.count()) > 0;
-		const hasReasonField = (await reasonField.count()) > 0;
-
-		expect(hasOrderField || hasReasonField, "Refund form should have order or reason fields").toBe(
-			true,
-		);
+	// Lot 2 S3.3 : le remboursement s'initie dans le dashboard Stripe — la page
+	// commande porte le lien externe, la création in-app n'existe plus.
+	test("l'initiation de remboursement in-app n'existe plus", async ({ page }) => {
+		const response = await page.goto("/admin/ventes/remboursements/nouveau");
+		expect(response?.status()).toBe(404);
 	});
 
 	test("la recherche de commandes fonctionne", async ({ page, adminPage }) => {

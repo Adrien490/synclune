@@ -159,7 +159,6 @@ describe("buildOrderTrackingUrl — SSOT unique pour TOUS les émetteurs", () =>
 		"modules/orders/actions/cancel-order.ts",
 		"modules/orders/actions/mark-as-fully-refunded.ts",
 		"modules/orders/actions/resend-order-email.ts",
-		"modules/refunds/actions/process-refund.ts",
 		"modules/refunds/services/finalize-refund.service.ts",
 		"app/paiement/confirmation/page.tsx",
 	];

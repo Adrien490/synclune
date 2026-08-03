@@ -4,7 +4,7 @@
 
 **Profil réel** (cf. BUSINESS.md) : micro-entreprise en franchise de TVA, 1 personne (Léane), ~20 commandes/mois, parcours d'achat 100 % invité, admin = une seule session possible.
 
-**Arbitrage du 2026-08-03 : toutes les recommandations validées en l'état par Adrien.** Le **Lot 0 est exécuté** (migration `20260803120000_lot0_drop_customer_account_residues` + code + docs) et le **Lot 1 aussi** (crons 9 → 3 + page `/admin/configuration/maintenance`) ; les lots suivants restent à lancer dans l'ordre du § 13.
+**Arbitrage du 2026-08-03 : toutes les recommandations validées en l'état par Adrien.** Le **Lot 0 est exécuté** (migration `20260803120000_lot0_drop_customer_account_residues` + code + docs) le **Lot 1 aussi** (crons 9 → 3 + page `/admin/configuration/maintenance`) et le **Lot 2 aussi** (remboursements Stripe-first + suppression de la file PostWebhookTask) ; restent les Lots 3-5 du § 13.
 
 **Cap fixé par Adrien (2026-08-03)** — ces deux directives priment sur les recommandations item par item :
 
@@ -179,7 +179,7 @@ Reco globale : traiter S2.x **dans une migration qui touche déjà ces types** (
 - **Quoi** : `SkuMedia.mediaType` polymorphe, génération de thumbnails vidéo côté client, et toute la famille d'invariants « une vidéo ne doit jamais atteindre un champ image » (`pickPrimaryImage`, filtres de selects, test `catalogue-selects-media-filter`).
 - **Pourquoi envisager le retrait** : le support vidéo impose une classe entière de garde-fous ; s'il y a **0 vidéo en base**, c'est du coût pur.
 - **Préalable** : compter les `SkuMedia` VIDEO en prod. Si Léane en publie, garder.
-- **Effort** : M. **Reco : conditionnel à l'usage réel.** `Décision : ✅ reco validée (2026-08-03)`
+- **Effort** : M. **Reco : conditionnel à l'usage réel.** `Décision : ✅ GARDER (Adrien, 2026-08-03) — les vidéos restent disponibles dans l'app ; item retiré du Lot 5`
 
 ### S4.4 — Upload admin : file hors-ligne + ETA
 
@@ -269,14 +269,14 @@ Ces chiffres reprennent les estimations item par item ; ils se raffineront lot p
 
 ## 13. Ordre d'exécution suggéré (après arbitrage)
 
-| Lot                              | Contenu                                                                                                                                                                       | Préalable                 |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| **Lot 0 — ✅ fait (2026-08-03)** | Rang 1 complet (S1.1-S1.9) + S3.7 (purge sessions) + enums sûrs du Rang 2 (S2.1, S2.5) — migration `20260803120000_lot0_drop_customer_account_residues` + `down.sql`          | aucun                     |
-| **Lot 1 — ✅ fait (2026-08-03)** | § 8 crons → noyau (reconcile-invoices, cleanup-pending-orders, hard-delete-retention) + page Maintenance (5 boutons, action `run-maintenance-task`) ; `reopen-store` supprimé | —                         |
-| **Lot 2**                        | S3.3 remboursements Stripe-first + S3.4 PostWebhookTask (cohérents entre eux)                                                                                                 | arbitrage restock partiel |
-| **Lot 3**                        | S3.1 fusion taxonomies                                                                                                                                                        | —                         |
-| **Lot 4**                        | S3.2 rate-limits + S3.5 dashboard                                                                                                                                             | —                         |
-| **Lot 5**                        | Rang 4 selon décisions (wishlist, quick-search, vidéo, upload)                                                                                                                | comptage vidéos en base   |
+| Lot                              | Contenu                                                                                                                                                                                                                                                                     | Préalable |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| **Lot 0 — ✅ fait (2026-08-03)** | Rang 1 complet (S1.1-S1.9) + S3.7 (purge sessions) + enums sûrs du Rang 2 (S2.1, S2.5) — migration `20260803120000_lot0_drop_customer_account_residues` + `down.sql`                                                                                                        | aucun     |
+| **Lot 1 — ✅ fait (2026-08-03)** | § 8 crons → noyau (reconcile-invoices, cleanup-pending-orders, hard-delete-retention) + page Maintenance (5 boutons, action `run-maintenance-task`) ; `reopen-store` supprimé                                                                                               | —         |
+| **Lot 2 — ✅ fait (2026-08-03)** | S3.3 remboursements Stripe-first (workflow in-app supprimé, webhook = chemin nominal, badge « à rattraper », lien Stripe sur la page commande ; restock partiel = manuel via l'édition de stock SKU) + S3.4 PostWebhookTask (exécution directe, migration `20260803150000`) | —         |
+| **Lot 3**                        | S3.1 fusion taxonomies                                                                                                                                                                                                                                                      | —         |
+| **Lot 4**                        | S3.2 rate-limits + S3.5 dashboard                                                                                                                                                                                                                                           | —         |
+| **Lot 5**                        | Rang 4 selon décisions (wishlist localStorage, quick-search simple, retrait offline-queue/ETA upload) — la vidéo est GARDÉE (décision Adrien 2026-08-03)                                                                                                                    | —         |
 
 Chaque lot = une PR, gates verts (`typecheck`, `lint`, `test`, e2e smoke), migrations toujours accompagnées de leur `down.sql`, jamais d'édition de `0_init`.
 

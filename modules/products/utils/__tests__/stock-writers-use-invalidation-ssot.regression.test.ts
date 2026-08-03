@@ -122,7 +122,6 @@ describe("STOCK-CANCEL-INVALIDATION-001 — les écrivains de stock passent par 
 		// service de finalisation partagé webhook + cron, plus dans le cron.)
 		const detected = STOCK_WRITERS.map((w) => w.rel);
 		expect(detected).toContain("modules/orders/actions/cancel-order.ts");
-		expect(detected).toContain("modules/refunds/actions/process-refund.ts");
 		expect(detected).toContain("modules/refunds/services/finalize-refund.service.ts");
 	});
 

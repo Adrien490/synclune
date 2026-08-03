@@ -273,10 +273,12 @@ describe("OrderRowActions", () => {
 			expect(screen.getByText("Annuler l'expédition")).toBeInTheDocument();
 		});
 
-		it("shows 'Créer un remboursement' when canRefund is true", () => {
+		// Lot 2 S3.3 : plus d'entrée « Créer un remboursement » dans le menu — le
+		// remboursement se fait dans le dashboard Stripe (lien sur OrderRefundsCard).
+		it("does NOT show 'Créer un remboursement' even when canRefund is true", () => {
 			setupMocks({ canRefund: true });
 			render(<OrderRowActions order={createOrder()} />);
-			expect(screen.getByText("Créer un remboursement")).toBeInTheDocument();
+			expect(screen.queryByText("Créer un remboursement")).toBeNull();
 		});
 	});
 

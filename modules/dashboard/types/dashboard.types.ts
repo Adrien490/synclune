@@ -181,7 +181,8 @@ export type GetRecentOrdersReturn = {
 // ============================================================================
 
 export type DashboardAlerts = {
-	pendingRefunds: number;
+	/** Remboursements à rattraper : FAILED, ou COMPLETED sans avoir sur commande facturée (Lot 2 S3.3). */
+	refundsNeedingAttention: number;
 };
 
 /**

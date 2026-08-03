@@ -212,7 +212,9 @@ describe("MarkAsReturnedAlertDialog", () => {
 		expect(screen.getByText("Commande retournée")).toBeInTheDocument();
 	});
 
-	it("shows 'Plus tard' cancel button in refund prompt view", () => {
+	// Lot 2 S3.3 : plus de création de remboursement in-app — le prompt post-retour
+	// oriente vers le dashboard Stripe et se ferme d'un seul bouton.
+	it("points to the Stripe dashboard in the refund prompt view (no in-app creation link)", () => {
 		mockDialogState = {
 			...mockDialogState,
 			data: {
@@ -224,23 +226,8 @@ describe("MarkAsReturnedAlertDialog", () => {
 
 		render(<MarkAsReturnedAlertDialog />);
 
-		expect(screen.getByText("Plus tard")).toBeInTheDocument();
-	});
-
-	it("shows 'Créer un remboursement' link with correct href in refund prompt view", () => {
-		mockDialogState = {
-			...mockDialogState,
-			data: {
-				orderId: "order_1",
-				orderNumber: "CMD-2026-001",
-				showRefundPrompt: true,
-			},
-		};
-
-		render(<MarkAsReturnedAlertDialog />);
-
-		const link = screen.getByText("Créer un remboursement").closest("a");
-		expect(link).toBeTruthy();
-		expect(link?.getAttribute("href")).toBe("/admin/ventes/remboursements/nouveau?orderId=order_1");
+		expect(screen.getByText(/dashboard Stripe/)).toBeInTheDocument();
+		expect(screen.getByText("Compris")).toBeInTheDocument();
+		expect(screen.queryByText("Créer un remboursement")).toBeNull();
 	});
 });

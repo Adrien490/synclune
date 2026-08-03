@@ -95,16 +95,20 @@ function createRefund(overrides = {}) {
 	} as any;
 }
 
+const PI = "pi_test_123";
+
 describe("OrderRefundsCard", () => {
 	it("returns null when no refunds and no canRefund", () => {
 		const { container } = render(
-			<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={false} />,
+			<OrderRefundsCard refunds={[]} canRefund={false} stripePaymentIntentId={PI} />,
 		);
 		expect(container.innerHTML).toBe("");
 	});
 
 	it("renders title Remboursements when refunds exist", () => {
-		render(<OrderRefundsCard refunds={[createRefund()]} orderId="order-1" canRefund={false} />);
+		render(
+			<OrderRefundsCard refunds={[createRefund()]} canRefund={false} stripePaymentIntentId={PI} />,
+		);
 		expect(screen.getByText("Remboursements")).toBeInTheDocument();
 	});
 
@@ -112,31 +116,39 @@ describe("OrderRefundsCard", () => {
 		render(
 			<OrderRefundsCard
 				refunds={[createRefund(), createRefund({ id: "refund-2" })]}
-				orderId="order-1"
 				canRefund={false}
+				stripePaymentIntentId={PI}
 			/>,
 		);
 		expect(screen.getByText("2")).toBeInTheDocument();
 	});
 
-	it("shows Créer button when canRefund is true", () => {
-		render(<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={true} />);
-		expect(screen.getByText("Créer")).toBeInTheDocument();
+	// Lot 2 S3.3 : le remboursement se fait dans le dashboard Stripe — la carte
+	// porte un lien externe vers le PaymentIntent, plus de création in-app.
+	it("shows the Stripe dashboard link when canRefund and a PaymentIntent exists", () => {
+		render(<OrderRefundsCard refunds={[]} canRefund={true} stripePaymentIntentId={PI} />);
+		const link = screen.getByRole("link", { name: /Rembourser dans Stripe/ });
+		expect(link).toHaveAttribute("href", `https://dashboard.stripe.com/payments/${PI}`);
+		expect(link).toHaveAttribute("target", "_blank");
+		expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
 	});
 
-	it("Créer button links to create refund page with orderId", () => {
-		render(<OrderRefundsCard refunds={[]} orderId="order-42" canRefund={true} />);
-		const link = screen.getByRole("link", { name: /Créer/ });
-		expect(link).toHaveAttribute("href", "/admin/ventes/remboursements/nouveau?orderId=order-42");
+	it("hides the Stripe link when canRefund is false", () => {
+		render(
+			<OrderRefundsCard refunds={[createRefund()]} canRefund={false} stripePaymentIntentId={PI} />,
+		);
+		expect(screen.queryByText(/Rembourser dans Stripe/)).toBeNull();
 	});
 
-	it("hides Créer button when canRefund is false", () => {
-		render(<OrderRefundsCard refunds={[createRefund()]} orderId="order-1" canRefund={false} />);
-		expect(screen.queryByText("Créer")).toBeNull();
+	it("hides the Stripe link when the order has no PaymentIntent", () => {
+		render(
+			<OrderRefundsCard refunds={[createRefund()]} canRefund={true} stripePaymentIntentId={null} />,
+		);
+		expect(screen.queryByText(/Rembourser dans Stripe/)).toBeNull();
 	});
 
 	it("shows Aucun remboursement text when refunds empty but canRefund is true", () => {
-		render(<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={true} />);
+		render(<OrderRefundsCard refunds={[]} canRefund={true} stripePaymentIntentId={PI} />);
 		expect(screen.getByText("Aucun remboursement pour cette commande.")).toBeInTheDocument();
 	});
 
@@ -144,8 +156,8 @@ describe("OrderRefundsCard", () => {
 		render(
 			<OrderRefundsCard
 				refunds={[createRefund({ status: "COMPLETED", amount: 2000 })]}
-				orderId="order-1"
 				canRefund={false}
+				stripePaymentIntentId={PI}
 			/>,
 		);
 		expect(screen.getByText("Remboursé")).toBeInTheDocument();
@@ -156,9 +168,11 @@ describe("OrderRefundsCard", () => {
 	// carte (bouton `outline`, même niveau visuel qu'un « Modifier ») pour la section
 	// `danger` du menu d'actions — elle annule la facture et émet un avoir gap-free.
 	it("n'expose PAS « Marquer remboursée » dans le header de la carte", () => {
-		render(<OrderRefundsCard refunds={[createRefund()]} orderId="order-1" canRefund={true} />);
+		render(
+			<OrderRefundsCard refunds={[createRefund()]} canRefund={true} stripePaymentIntentId={PI} />,
+		);
 		expect(screen.queryByText(/Marquer rembours/i)).toBeNull();
-		// « Créer » (remboursement Stripe, réversible) reste bien exposée.
-		expect(screen.getByText("Créer")).toBeInTheDocument();
+		// Le lien Stripe (remboursement réversible) reste bien exposé.
+		expect(screen.getByText(/Rembourser dans Stripe/)).toBeInTheDocument();
 	});
 });

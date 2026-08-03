@@ -12,7 +12,6 @@ import {
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
 
-import { RefundsAdminDialogs } from "../_components/refunds-admin-dialogs";
 import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 interface RefundDetailRouteProps {
@@ -62,8 +61,6 @@ export default async function RefundDetailRoute({ params }: RefundDetailRoutePro
 			</Breadcrumb>
 
 			<RefundDetailPage refund={refund} />
-
-			<RefundsAdminDialogs />
 		</div>
 	);
 }

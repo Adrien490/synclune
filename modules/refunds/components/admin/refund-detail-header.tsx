@@ -2,42 +2,30 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Ellipsis, ExternalLink, Receipt } from "lucide-react";
+import { ExternalLink, Receipt } from "lucide-react";
 import Link from "next/link";
 
-import {
-	ResponsiveActionMenu,
-	ResponsiveActionMenuContent,
-	ResponsiveActionMenuTrigger,
-} from "@/shared/components/responsive-action-menu";
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
 
 import { REFUND_STATUS_LABELS, REFUND_STATUS_VARIANTS } from "../../constants/refund.constants";
-import { useRefundActions } from "../../hooks/use-refund-actions";
 import type { GetRefundReturn } from "../../types/refund.types";
 import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
-import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
 import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 interface RefundDetailHeaderProps {
 	refund: NonNullable<GetRefundReturn>;
 }
 
+/**
+ * En-tête du détail remboursement — consultation pure depuis le Lot 2 S3.3 :
+ * le menu d'actions (approve/reject/process/retry) est parti avec le workflow
+ * in-app, Léane rembourse depuis le dashboard Stripe et la synchro webhook
+ * porte la conformité (avoir, email, statut).
+ */
 export function RefundDetailHeader({ refund }: RefundDetailHeaderProps) {
 	// Titre lisible pour le header mobile (sinon : id opaque Title-Casé).
 	useSetAdminPageTitle(`Remboursement ${formatEuro(refund.amount)}`);
-	const { sections } = useRefundActions({
-		refund: {
-			id: refund.id,
-			status: refund.status,
-			amount: refund.amount,
-			orderId: refund.order.id,
-			orderNumber: refund.order.orderNumber,
-			failureReason: refund.failureReason,
-		},
-	});
 
 	return (
 		<DetailHeaderShell>
@@ -82,27 +70,6 @@ export function RefundDetailHeader({ refund }: RefundDetailHeaderProps) {
 					</Link>
 				</p>
 			</div>
-
-			<DetailStickyActionBar>
-				<ResponsiveActionMenu>
-					<ResponsiveActionMenuTrigger asChild>
-						<Button
-							variant="outline"
-							size="sm"
-							aria-label="Plus d'actions"
-							className="min-h-11 w-full touch-manipulation sm:min-h-9 md:w-auto"
-						>
-							<Ellipsis className="size-4" aria-hidden="true" />
-							<span className="md:hidden">Actions</span>
-						</Button>
-					</ResponsiveActionMenuTrigger>
-					<ResponsiveActionMenuContent
-						title="Actions remboursement"
-						description={refund.order.orderNumber}
-						sections={sections}
-					/>
-				</ResponsiveActionMenu>
-			</DetailStickyActionBar>
 		</DetailHeaderShell>
 	);
 }

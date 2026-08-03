@@ -144,7 +144,6 @@ const EXPECTED_STATUS_MUTATORS = [
 	"modules/orders/actions/mark-as-processing.ts",
 	"modules/orders/actions/mark-as-shipped.ts",
 	"modules/orders/actions/revert-to-processing.ts",
-	"modules/refunds/actions/process-refund.ts",
 	"modules/webhooks/handlers/dispute-handlers.ts",
 	// Délégateurs (cf. DELEGATES_TO_CALLER) : mutent le statut mais l'invalidation
 	// est portée par l'appelant.

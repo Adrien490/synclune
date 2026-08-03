@@ -12,7 +12,6 @@ import type { MaintenanceTaskId } from "../constants/maintenance-tasks";
 import { retryFailedWebhooks } from "../services/retry-webhooks.service";
 import { reconcileRefunds } from "../services/reconcile-refunds.service";
 import { syncAsyncPayments } from "../services/sync-async-payments.service";
-import { retryPostWebhookTasks } from "../services/retry-post-webhook-tasks.service";
 import { cleanupOrphanMedia } from "../services/cleanup-orphan-media.service";
 
 /**
@@ -46,7 +45,6 @@ export async function runMaintenanceTask(
 		"retry-webhooks": retryFailedWebhooks,
 		"reconcile-refunds": reconcileRefunds,
 		"sync-async-payments": syncAsyncPayments,
-		"retry-post-webhook-tasks": retryPostWebhookTasks,
 		"cleanup-orphan-media": cleanupOrphanMedia,
 	};
 
