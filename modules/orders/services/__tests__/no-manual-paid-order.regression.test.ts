@@ -136,7 +136,26 @@ function fileWritesPaidOrderInline(
 	return false;
 }
 
-/** Les deux seuls fichiers autorisés à faire transiter une commande vers PAID. */
+/**
+ * Les deux seuls fichiers autorisés à faire transiter une commande vers PAID.
+ *
+ * ⚠️ CETTE ALLOWLIST EST LA RAISON POUR LAQUELLE LES 11 ACTIONS DE TRANSITION
+ * DE STATUT RESTENT SÉPARÉES. Instruit au Lot 4 (SIMPLIFICATION.md S3.8,
+ * 2026-08-03) : la proposition « fusionner les transitions rares dans une
+ * action générique `updateOrderStatus(statut)` » a été REJETÉE, parce que ce
+ * garde-fou raisonne sur des FICHIERS, pas sur des valeurs. Une action
+ * paramétrée par le statut cible devrait soit entrer dans cette liste — et
+ * alors elle autoriserait implicitement n'importe quelle transition, PAID
+ * comprise, sous un nom parfaitement anodin qui échapperait aussi au tripwire
+ * de nommage (`recordCashSale` / `createManualOrder`) — soit rester en dehors,
+ * et il faudrait de toute façon garder `mark-as-paid.ts` isolé.
+ *
+ * La granularité EST le garde-fou (invariant #8, NF 525). Second motif :
+ * chaque action écrit une `OrderAction` distincte dans `OrderHistory` (table
+ * immuable, Art. L123-22, 10 ans) — une action générique devrait mapper
+ * statut → OrderAction, déplaçant la complexité vers un point de défaillance
+ * silencieux (mauvaise valeur figée une décennie).
+ */
 const PAID_WRITER_ALLOWLIST = [
 	// Admin fallback pour paiements asynchrones non-webhookés (SEPA, etc.)
 	"modules/orders/actions/mark-as-paid.ts",
