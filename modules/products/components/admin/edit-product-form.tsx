@@ -16,7 +16,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 import type { EditProductFormProps } from "./edit-product-form-types";
 import { EditProductMediaCard } from "./edit-product-media-card";
 import { EditProductInfoCard } from "./edit-product-info-card";
@@ -67,10 +67,7 @@ export function EditProductForm({
 		retryFailed: retryFailedMediaUploads,
 		retrySingle: retrySingleMediaUpload,
 		clearFailed: clearFailedMediaUploads,
-	} = useMediaUpload({
-		enableOfflineQueue: true,
-		offlineContextKey: `edit-product-${product.id}`,
-	});
+	} = useMediaUpload({});
 
 	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
@@ -246,10 +243,6 @@ export function EditProductForm({
 							void retrySingleMediaUpload(file);
 						}}
 						onDismissErrors={clearFailedMediaUploads}
-						offlineContextKey={`edit-product-${product.id}`}
-						onReplayOffline={async (files) => {
-							await uploadMedia(files);
-						}}
 					/>
 					<EditProductInfoCard
 						form={form}

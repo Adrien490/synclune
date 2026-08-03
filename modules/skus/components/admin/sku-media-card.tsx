@@ -19,10 +19,6 @@ interface SkuMediaCardProps {
 	onRetry: () => void;
 	onRetryOne?: (file: File) => void;
 	onDismissErrors: () => void;
-	/** Routing key matching the parent's enableOfflineQueue context */
-	offlineContextKey?: string;
-	/** Drain offline queue + upload via parent's handleUpload */
-	onReplayOffline?: (files: File[]) => void | Promise<void>;
 	/** "sku-create" pour le formulaire de création, "sku-edit" pour l'édition. */
 	viewTransitionPrefix?: "sku-create" | "sku-edit";
 	/** True pour les forms d'édition (action serveur diffe et supprime côté UploadThing). */

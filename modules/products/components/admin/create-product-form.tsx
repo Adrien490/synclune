@@ -16,7 +16,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 import type { CreateProductFormProps } from "./create-product-form-types";
 import { CreateProductMediaCard } from "./create-product-media-card";
 import { CreateProductInfoCard } from "./create-product-info-card";
@@ -65,10 +65,7 @@ export function CreateProductForm({
 		retryFailed: retryFailedMediaUploads,
 		retrySingle: retrySingleMediaUpload,
 		clearFailed: clearFailedMediaUploads,
-	} = useMediaUpload({
-		enableOfflineQueue: true,
-		offlineContextKey: "create-product",
-	});
+	} = useMediaUpload({});
 
 	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
@@ -238,10 +235,6 @@ export function CreateProductForm({
 							void retrySingleMediaUpload(file);
 						}}
 						onDismissErrors={clearFailedMediaUploads}
-						onReplayOffline={async (files) => {
-							// Re-feed offline-queued files into the same upload pipeline
-							await uploadMedia(files);
-						}}
 					/>
 					<CreateProductInfoCard
 						form={form}

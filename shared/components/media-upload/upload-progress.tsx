@@ -4,11 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
-import {
-	formatBytesShort,
-	formatEtaLabel,
-	formatSpeedLabel,
-} from "@/modules/media/utils/format-eta";
+import { formatBytesShort } from "@/modules/media/utils/format-bytes";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { AlertTriangle, Check, RefreshCw, X } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -54,10 +50,6 @@ interface UploadProgressProps {
 	bytesUploaded?: number;
 	/** Total bytes to upload (P0.1) */
 	bytesTotal?: number;
-	/** Bytes-per-second over a sliding window — drives the speed label (P1.1) */
-	bytesPerSecond?: number | null;
-	/** Estimated seconds until completion — drives the ETA label (P1.1) */
-	etaSeconds?: number | null;
 	/** Per-file cancellation hook — when provided, renders an X button on queued/uploading items (P1.5) */
 	onCancelOne?: (fileName: string) => void;
 }
@@ -79,8 +71,6 @@ export function UploadProgress({
 	files,
 	bytesUploaded,
 	bytesTotal,
-	bytesPerSecond,
-	etaSeconds,
 	onCancelOne,
 }: UploadProgressProps) {
 	const shouldReduceMotion = useReducedMotion();
@@ -147,9 +137,8 @@ export function UploadProgress({
 						? "server-processing"
 						: "uploading";
 
-	const etaLabel = !isComplete && phase === "uploading" ? formatEtaLabel(etaSeconds ?? null) : null;
-	const speedLabel =
-		!isComplete && phase === "uploading" ? formatSpeedLabel(bytesPerSecond ?? null) : null;
+	// Lot 5/S4.4 : plus d'ETA ni de débit — l'octet parcouru suffit à dire que ça
+	// avance, et l'estimation était calibrée pour un upload en masse en 3G.
 	const bytesLabel =
 		!isComplete && phase === "uploading" && bytesTotal && bytesTotal > 0
 			? `${formatBytesShort(bytesUploaded ?? 0)} / ${formatBytesShort(bytesTotal)}`
@@ -258,24 +247,12 @@ export function UploadProgress({
 						{currentFileName}
 					</p>
 				)}
-				{(bytesLabel ?? etaLabel ?? speedLabel) && (
+				{bytesLabel && (
 					<div
 						className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-2 text-center text-xs tabular-nums"
 						aria-hidden="true"
 					>
-						{bytesLabel && <span>{bytesLabel}</span>}
-						{etaLabel && (
-							<>
-								<span aria-hidden="true">•</span>
-								<span>{etaLabel}</span>
-							</>
-						)}
-						{speedLabel && (
-							<>
-								<span aria-hidden="true">•</span>
-								<span>{speedLabel}</span>
-							</>
-						)}
+						<span>{bytesLabel}</span>
 					</div>
 				)}
 				{queuedCount > 0 && !isComplete && (
@@ -326,9 +303,11 @@ function FileProgressList({ files, reducedMotion, onCancelOne }: FileProgressLis
 			className="bg-muted/20 flex max-h-52 w-full flex-col gap-1 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
 			aria-label="Détails par fichier"
 		>
-			{files.map((file) => (
+			{/* Clé composite : deux fichiers homonymes (IMG_0001.jpg) ne doivent pas
+			    fusionner leurs lignes. */}
+			{files.map((file, index) => (
 				<FileProgressItem
-					key={file.fileName}
+					key={`${file.fileName}-${index}`}
 					file={file}
 					reducedMotion={reducedMotion}
 					onCancel={onCancelOne}
@@ -519,7 +498,7 @@ export function UploadErrorBanner({
 						size="icon"
 						onClick={handleDismiss}
 						className="size-11"
-						aria-label="Ignorer les erreurs d'upload"
+						aria-label="Ignorer les erreurs d'envoi"
 					>
 						<X className="size-4" aria-hidden="true" />
 					</Button>
@@ -531,8 +510,11 @@ export function UploadErrorBanner({
 					className="bg-background/50 flex max-h-40 flex-col gap-1.5 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
 					aria-label="Fichiers en échec"
 				>
-					{failedFiles.map((entry) => (
-						<li key={entry.fileName} className="flex items-start gap-2 rounded-sm px-2 py-1.5">
+					{failedFiles.map((entry, index) => (
+						<li
+							key={`${entry.fileName}-${index}`}
+							className="flex items-start gap-2 rounded-sm px-2 py-1.5"
+						>
 							<AlertTriangle
 								className="text-destructive mt-0.5 size-3.5 shrink-0"
 								aria-hidden="true"

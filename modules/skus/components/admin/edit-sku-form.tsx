@@ -17,7 +17,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 import type { SkuFormInstance, SkuFormSharedProps } from "./sku-form-types";
 import { SkuMediaCard } from "./sku-media-card";
 import { SkuSidebarCards } from "./sku-sidebar-cards";
@@ -77,10 +77,7 @@ export function EditProductVariantForm({
 		retryFailed: retryFailedMediaUploads,
 		retrySingle: retrySingleMediaUpload,
 		clearFailed: clearFailedMediaUploads,
-	} = useMediaUpload({
-		enableOfflineQueue: true,
-		offlineContextKey: `edit-sku-${sku.id}`,
-	});
+	} = useMediaUpload({});
 
 	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
@@ -244,10 +241,6 @@ export function EditProductVariantForm({
 						void retrySingleMediaUpload(file);
 					}}
 					onDismissErrors={clearFailedMediaUploads}
-					offlineContextKey={`edit-sku-${sku.id}`}
-					onReplayOffline={async (files) => {
-						await uploadMedia(files);
-					}}
 					viewTransitionPrefix="sku-edit"
 					skipUtapiDelete
 				/>

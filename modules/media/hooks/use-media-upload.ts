@@ -14,14 +14,8 @@ import {
 // `formatBytesShort` (français : Ko / Mo / Go) et non l'ancien `formatFileSize`
 // (anglais : KB / MB) — ces tailles s'affichent sous une copie qui annonce « max
 // 16 Mo », deux unités sur le même écran suggéraient deux plafonds différents.
-import { formatBytesShort } from "@/modules/media/utils/format-eta";
+import { formatBytesShort } from "@/modules/media/utils/format-bytes";
 import { compressImage, HeicDecodeError, isHeicFile } from "@/modules/media/utils/compress-image";
-import {
-	enqueue as enqueueOffline,
-	OfflineQueueFullError,
-	type OfflineUploadEndpoint,
-} from "@/modules/media/lib/offline-upload-queue";
-import { useUploadEta } from "@/modules/media/hooks/use-upload-eta";
 import { useUploadCancellation } from "@/modules/media/hooks/use-upload-cancellation";
 import { useVideoThumbnailUpload } from "@/modules/media/hooks/use-video-thumbnail-upload";
 import { withRetry } from "@/shared/utils/with-retry";
@@ -36,12 +30,7 @@ import type {
 	FileProgressState,
 } from "../types/hooks.types";
 
-interface UseMediaUploadOptionsExtended extends UseMediaUploadOptions {
-	/** Persist files in the offline IndexedDB queue when a network failure occurs (default: false) */
-	enableOfflineQueue?: boolean;
-	/** Routing key stored alongside offline-queued files so the right surface can replay them */
-	offlineContextKey?: string;
-}
+interface UseMediaUploadOptionsExtended extends UseMediaUploadOptions {}
 
 type CurrentBatchTracker = {
 	mode: "image-batch" | "video-single";
@@ -49,18 +38,6 @@ type CurrentBatchTracker = {
 	startBytes: number;
 	totalBytes: number;
 };
-
-function isLikelyNetworkError(err: unknown): boolean {
-	if (err instanceof TypeError) {
-		// fetch() rejects with TypeError when offline / DNS fails
-		return /failed to fetch|networkerror|load failed/i.test(err.message);
-	}
-	if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
-	if (err instanceof Error) {
-		return /network|offline|timeout/i.test(err.message);
-	}
-	return false;
-}
 
 /**
  * Production-ready hook for media uploads (images and videos)
@@ -74,7 +51,6 @@ function isLikelyNetworkError(err: unknown): boolean {
  * - Client-side video thumbnail generation (Canvas API)
  * - Retry with exponential backoff (network) + manual retry for failed files
  * - Cancellation: global (cancel) and per-file (cancelOne) via AbortController
- * - Offline queue (IndexedDB 50MB cap) for network failures
  * - Per-file error tracking exposed via failedFiles
  */
 export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): UseMediaUploadReturn {
@@ -87,8 +63,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		onSuccess,
 		onError,
 		onProgress,
-		enableOfflineQueue = false,
-		offlineContextKey,
 	} = options;
 
 	const [progress, setProgress] = useState<UploadProgress | null>(null);
@@ -114,9 +88,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 
 	// Per-file cancellation + sub-abort vidéo — extrait dans `useUploadCancellation` (audit P1.4 split).
 	const cancellation = useUploadCancellation();
-
-	// Throughput sampling + ETA ticker — extrait dans `useUploadEta` (audit P1.4 split).
-	const eta = useUploadEta();
 
 	// Latest-callback refs : écrites dans un effet post-render (jamais pendant le
 	// render — React peut rejouer/abandonner un render, la mutation fuirait).
@@ -144,7 +115,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	// Génération + upload thumbnail vidéo + cleanup orphan — extrait dans `useVideoThumbnailUpload` (audit P1.4 split).
 	const videoThumbnail = useVideoThumbnailUpload({ startUpload });
 
-	// Cleanup on unmount (ETA ticker cleanup vit dans `useUploadEta`).
+	// Cleanup on unmount.
 	useEffect(() => {
 		return () => {
 			abortControllerRef.current?.abort();
@@ -217,11 +188,9 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 
 	/**
 	 * Update global bytes counter and per-file bytes within the active batch.
-	 * Updates the throughput sample buffer for ETA computation.
 	 */
 	const updateBytesUploaded = (globalBytes: number, tracker: CurrentBatchTracker) => {
 		bytesUploadedRef.current = globalBytes;
-		eta.recordSample(globalBytes);
 
 		setProgress((prev) => {
 			if (!prev?.files) return prev;
@@ -252,29 +221,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			onProgressRef.current?.(next);
 			return next;
 		});
-	};
-
-	const startEtaTicker = () => {
-		eta.start(
-			() => ({
-				bytesUploaded: bytesUploadedRef.current,
-				bytesTotal: bytesTotalRef.current,
-			}),
-			({ bytesPerSecond, etaSeconds }) => {
-				if (!currentBatchRef.current) return;
-				setProgress((prev) => {
-					if (!prev) return prev;
-					if (prev.bytesPerSecond === bytesPerSecond && prev.etaSeconds === etaSeconds) return prev;
-					const next: UploadProgress = { ...prev, bytesPerSecond, etaSeconds };
-					onProgressRef.current?.(next);
-					return next;
-				});
-			},
-		);
-	};
-
-	const stopEtaTicker = () => {
-		eta.stop();
 	};
 
 	/**
@@ -437,35 +383,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			});
 		}
 		return validSizeFiles;
-	};
-
-	const persistOfflineIfPossible = async (files: File[]): Promise<File[]> => {
-		if (!enableOfflineQueue) return [];
-		const persisted: File[] = [];
-		for (const file of files) {
-			try {
-				await enqueueOffline({
-					file,
-					endpoint: endpoint as OfflineUploadEndpoint,
-					contextKey: offlineContextKey,
-				});
-				persisted.push(file);
-			} catch (e) {
-				if (e instanceof OfflineQueueFullError) {
-					toast.warning("File hors-ligne pleine", {
-						// Le message ne promet plus une reprise « en te reconnectant » : le
-						// plafond de la file est atteint, la reconnexion n'y changera rien.
-						// C'est de la place qu'il faut libérer, via « Vider la file ».
-						description: "Relance ou vide les fichiers déjà en attente pour faire de la place.",
-					});
-					break;
-				}
-				if (process.env.NODE_ENV === "development") {
-					console.warn("[useMediaUpload] enqueue offline échoué:", file.name, e);
-				}
-			}
-		}
-		return persisted;
 	};
 
 	const uploadVideo = async (
@@ -683,7 +600,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		const videos = files.filter((f) => getMediaTypeFromFile(f) === "VIDEO");
 
 		updateProgress({ phase: "uploading", current: `${images.length} image(s)` });
-		startEtaTicker();
 
 		const uploadResults: MediaUploadResult[] = [];
 
@@ -709,23 +625,9 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 				}
 			} catch (err) {
 				if (err instanceof DOMException && err.name === "AbortError") throw err;
-				if (isLikelyNetworkError(err) && enableOfflineQueue) {
-					const persisted = await persistOfflineIfPossible(images);
-					if (persisted.length > 0) {
-						const persistedNames = new Set(persisted.map((f) => f.name));
-						for (const f of images) {
-							if (persistedNames.has(f.name)) {
-								markFileState(f.name, "failed", "En attente de connexion");
-							} else {
-								pushFailed(f, "Échec réseau");
-							}
-						}
-						toast.info(`${persisted.length} fichier(s) en attente de connexion`, {
-							description: "Ils seront renvoyés au retour en ligne.",
-						});
-						return uploadResults;
-					}
-				}
+				// Lot 5/S4.4 : plus de mise en file hors-ligne (IndexedDB) sur échec
+				// réseau — l'échec est rendu tel quel et l'admin relance depuis la
+				// bannière d'erreur, qui porte déjà « Réessayer ».
 				const message = err instanceof Error ? err.message : "Échec du téléversement image";
 				for (const f of images) pushFailed(f, message);
 				throw err;
@@ -768,7 +670,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		cumulativeCompletedRef.current = 0;
 		bytesUploadedRef.current = 0;
 		bytesTotalRef.current = 0;
-		eta.reset();
 		cancellation.resetCancelled();
 
 		try {
@@ -793,21 +694,20 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 						queueRef.current = [];
 						setQueuedCount(0);
 						setProgress(null);
-						stopEtaTicker();
 						isProcessingRef.current = false;
 						if (keptCount > 0) {
-							toast.info("Upload annulé", {
+							toast.info("Envoi annulé", {
 								description: `${keptCount} fichier${keptCount > 1 ? "s" : ""} conservé${keptCount > 1 ? "s" : ""}`,
 							});
 						} else {
-							toast.info("Upload annulé");
+							toast.info("Envoi annulé");
 						}
 						return;
 					}
 
 					const err = error instanceof Error ? error : new Error(String(error));
 					onErrorRef.current?.(err);
-					toast.error("Échec de l'upload", { description: err.message });
+					toast.error("Échec de l'envoi", { description: err.message });
 					entry.resolve([]);
 				}
 			}
@@ -821,7 +721,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 				onSuccessRef.current?.(cumulativeResultsRef.current);
 			}
 			updateProgress({ phase: "done", completed: cumulativeCompletedRef.current, queued: 0 });
-			stopEtaTicker();
 
 			doneTimeoutRef.current = setTimeout(() => {
 				doneTimeoutRef.current = null;
@@ -833,12 +732,10 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			}, 1000);
 
 			isProcessingRef.current = false;
-			stopEtaTicker();
 		} catch (error) {
 			// `catch` + rethrow au lieu de `finally` (bail-out React Compiler). Le
 			// `return` du chemin abort ci-dessus fait déjà ce cleanup inline.
 			isProcessingRef.current = false;
-			stopEtaTicker();
 			throw error;
 		}
 	};
@@ -875,9 +772,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		cumulativeCompletedRef.current = 0;
 		bytesUploadedRef.current = 0;
 		bytesTotalRef.current = 0;
-		eta.reset();
 		cancellation.resetCancelled();
-		stopEtaTicker();
 	};
 
 	/**

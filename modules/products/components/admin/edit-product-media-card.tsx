@@ -19,10 +19,6 @@ interface EditProductMediaCardProps {
 	onRetry: () => void;
 	onRetryOne?: (file: File) => void;
 	onDismissErrors: () => void;
-	/** Routing key matching the parent's enableOfflineQueue context */
-	offlineContextKey?: string;
-	/** Drain offline queue + upload via parent's handleUpload (P1.2) */
-	onReplayOffline?: (files: File[]) => void | Promise<void>;
 }
 
 export function EditProductMediaCard(props: EditProductMediaCardProps) {

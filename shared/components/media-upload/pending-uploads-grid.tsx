@@ -7,7 +7,7 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 // `formatBytesShort` (Ko / Mo / Go) et non l'ancien `formatFileSize` (KB / MB) :
 // ces pastilles s'affichent juste sous un hint « max 16 Mo ».
-import { formatBytesShort } from "@/modules/media/utils/format-eta";
+import { formatBytesShort } from "@/modules/media/utils/format-bytes";
 import {
 	formatVideoDuration,
 	getVideoMetadata,
@@ -16,7 +16,7 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { Play, X } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { DragDropProvider, KeyboardSensor, PointerSensor, type DragEndEvent } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { PointerActivationConstraints } from "@dnd-kit/dom";
@@ -65,6 +65,9 @@ export function PendingUploadsGrid({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const isTouchDevice = useIsTouchDevice();
+	// Id unique : deux grilles montées en même temps ne doivent pas se partager
+	// le span d'instructions clavier.
+	const dragInstructionsId = useId();
 
 	// Région live du réordonnancement — laissée ouverte en P3 par l'audit du
 	// 2026-05-20 : le drag clavier fonctionnait sans qu'aucun retour vocal ne dise
@@ -107,6 +110,12 @@ export function PendingUploadsGrid({
 	const [videoPreviews, setVideoPreviews] = useState<Map<string, VideoMetadataPreview>>(
 		() => new Map(),
 	);
+	// Clés déjà extraites — un ref, PAS l'état `videoPreviews` dans les deps : avec
+	// l'état en dépendance, chaque metadata résolue relançait l'effet, dont le
+	// cleanup abortait l'extraction en vol des vidéos restantes avant de la
+	// redémarrer — O(N²) démarrages sur un lot. Une clé abortée n'est pas marquée,
+	// elle sera retentée au prochain passage.
+	const extractedKeysRef = useRef<Set<string>>(new Set());
 
 	useEffect(() => {
 		const controller = new AbortController();
@@ -118,7 +127,10 @@ export function PendingUploadsGrid({
 		// Le purge est fusionné dans la même chaîne pour éviter setState synchrone en effect
 		// (react-hooks/set-state-in-effect) et garantir une seule mise à jour par cycle.
 		void (async () => {
-			// Phase 1: purge stale entries
+			// Phase 1: purge stale entries (ref + state)
+			for (const key of [...extractedKeysRef.current]) {
+				if (!currentKeys.has(key)) extractedKeysRef.current.delete(key);
+			}
 			setVideoPreviews((prev) => {
 				if (prev.size === 0) return prev;
 				let hasStale = false;
@@ -139,13 +151,16 @@ export function PendingUploadsGrid({
 			// Phase 2: extract metadata for new videos
 			const toProcess = files
 				.map((file, index) => ({ file, key: `${file.name}-${file.lastModified}-${index}` }))
-				.filter(({ file, key }) => file.type.startsWith("video/") && !videoPreviews.has(key));
+				.filter(
+					({ file, key }) => file.type.startsWith("video/") && !extractedKeysRef.current.has(key),
+				);
 
 			for (const { file, key } of toProcess) {
 				if (controller.signal.aborted) return;
 				const metadata = await getVideoMetadata(file, controller.signal);
 				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- signal.aborted can become true during await
 				if (controller.signal.aborted || !metadata) continue;
+				extractedKeysRef.current.add(key);
 				setVideoPreviews((prev) => {
 					if (prev.has(key)) return prev;
 					const next = new Map(prev);
@@ -156,7 +171,7 @@ export function PendingUploadsGrid({
 		})();
 
 		return () => controller.abort();
-	}, [files, videoPreviews]);
+	}, [files]);
 
 	if (files.length === 0) return null;
 
@@ -223,6 +238,7 @@ export function PendingUploadsGrid({
 				videoDuration={videoDuration}
 				disabled={disabled}
 				draggable={Boolean(onReorder)}
+				dragInstructionsId={dragInstructionsId}
 				onRemove={() => handleRemove(index)}
 			/>
 		);
@@ -250,7 +266,7 @@ export function PendingUploadsGrid({
 			onDragStart={handleDragStart}
 			onDragEnd={handleDragEnd}
 		>
-			<span id="pending-drag-instructions" className="sr-only">
+			<span id={dragInstructionsId} className="sr-only">
 				Utilise Espace ou Entrée pour saisir un fichier, les flèches pour le déplacer, Espace ou
 				Entrée pour déposer, Échap pour annuler.
 			</span>
@@ -315,6 +331,8 @@ interface PendingUploadItemProps {
 	videoDuration: string | null;
 	disabled: boolean;
 	draggable: boolean;
+	/** Id du span d'instructions clavier rendu par la grille (useId du parent). */
+	dragInstructionsId: string;
 	onRemove: () => void;
 }
 
@@ -328,6 +346,7 @@ function PendingUploadItem({
 	videoDuration,
 	disabled,
 	draggable,
+	dragInstructionsId,
 	onRemove,
 }: PendingUploadItemProps) {
 	// Hooks must run unconditionally — when not draggable we simply don't attach the ref
@@ -341,8 +360,8 @@ function PendingUploadItem({
 						tabIndex: 0,
 						role: "group",
 						"aria-roledescription": "fichier réorganisable",
-						"aria-label": `Fichier ${index + 1}`,
-						"aria-describedby": "pending-drag-instructions",
+						"aria-label": `Fichier ${index + 1} : ${file.name}`,
+						"aria-describedby": dragInstructionsId,
 					}
 				: {})}
 			className={cn(

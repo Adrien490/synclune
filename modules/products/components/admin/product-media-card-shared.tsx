@@ -58,8 +58,6 @@ export interface UploadProgressShape {
 	files?: FileProgress[];
 	bytesUploaded?: number;
 	bytesTotal?: number;
-	bytesPerSecond?: number | null;
-	etaSeconds?: number | null;
 }
 
 // ============================================================================
@@ -137,8 +135,6 @@ export function UploadProgressPanel({
 				files={uploadProgress.files}
 				bytesUploaded={uploadProgress.bytesUploaded}
 				bytesTotal={uploadProgress.bytesTotal}
-				bytesPerSecond={uploadProgress.bytesPerSecond}
-				etaSeconds={uploadProgress.etaSeconds}
 				onCancel={onCancel}
 				onCancelOne={onCancelOne}
 			/>
@@ -265,7 +261,7 @@ export function EmptyMediaState({
 								multiple
 								disabled={isMediaUploading}
 								onFiles={onPickerFiles}
-								ariaLabel="Zone d'upload des médias du bijou"
+								ariaLabel="Zone d'envoi des médias du bijou"
 								primaryLabel="Clique ou glisse-dépose tes médias"
 								dropLabel="Relâche pour ajouter"
 								hint={MEDIA_FORMATS_HINT}
@@ -389,7 +385,7 @@ export function InlineUploadZone({
 						multiple
 						disabled={isMediaUploading}
 						onFiles={onPickerFiles}
-						ariaLabel="Zone d'upload des médias du bijou"
+						ariaLabel="Zone d'envoi des médias du bijou"
 						primaryLabel="Ajouter"
 						dropLabel="Relâche"
 						icon={<Upload className="text-muted-foreground/50 size-6" aria-hidden="true" />}

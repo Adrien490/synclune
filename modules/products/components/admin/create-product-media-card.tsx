@@ -19,8 +19,6 @@ interface CreateProductMediaCardProps {
 	onRetry: () => void;
 	onRetryOne?: (file: File) => void;
 	onDismissErrors: () => void;
-	/** Drain offline queue + upload via parent's handleUpload (P1.2) */
-	onReplayOffline?: (files: File[]) => void | Promise<void>;
 }
 
 export function CreateProductMediaCard(props: CreateProductMediaCardProps) {
@@ -29,7 +27,6 @@ export function CreateProductMediaCard(props: CreateProductMediaCardProps) {
 			{...props}
 			fieldName="initialSku.media"
 			viewTransitionName="product-create-media"
-			offlineContextKey="create-product"
 		/>
 	);
 }

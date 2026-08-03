@@ -6,11 +6,9 @@ import { Info } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
-import { OfflineQueueBanner } from "@/shared/components/media-upload/offline-queue-banner";
 import { UploadErrorBanner } from "@/shared/components/media-upload/upload-progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import type { FailedUpload } from "@/modules/media/types/hooks.types";
-import { useOfflineUploadQueue } from "@/modules/media/hooks/use-offline-upload-queue";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
 import {
 	asMediaArrayField,
@@ -30,7 +28,7 @@ import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
 
 /**
  * Carte « Médias » partagée entre les formulaires Créer/Éditer Produit et Créer/Éditer
- * Variante. Encapsule la mécanique commune (compteur, banner offline, banner erreur,
+ * Variante. Encapsule la mécanique commune (compteur, banner erreur,
  * empty state, grille drag-reorder, zone inline) pour garantir un alignement visuel
  * et fonctionnel total entre les trois flows.
  *
@@ -64,12 +62,6 @@ export interface MediaArrayCardProps {
 	onRetryOne?: (file: File) => void;
 	onDismissErrors: () => void;
 
-	// Offline queue
-	/** Routing key matching the parent's enableOfflineQueue context */
-	offlineContextKey?: string;
-	/** Drain offline queue + upload via parent's handleUpload (P1.2) */
-	onReplayOffline?: (files: File[]) => void | Promise<void>;
-
 	/**
 	 * Skip UploadThing delete when reorder/remove. Vrai pour les forms d'édition
 	 * (l'action serveur calcule le diff et supprime ce qui a été retiré). Faux pour
@@ -94,27 +86,11 @@ export function MediaArrayCard({
 	onRetry,
 	onRetryOne,
 	onDismissErrors,
-	offlineContextKey,
-	onReplayOffline,
 	skipUtapiDelete = false,
 }: MediaArrayCardProps) {
 	// Ancre de retour du focus quand le bandeau de progression disparaît : sans elle,
 	// le focus retomberait sur `<body>` à la fin de chaque envoi.
 	const cardRef = useRef<HTMLDivElement>(null);
-
-	const offlineQueue = useOfflineUploadQueue({
-		endpoint: "catalogMedia",
-		contextKey: offlineContextKey,
-		onReplayFiles: onReplayOffline,
-		// ⚠️ `autoReplayOnReconnect` doit rester à `true` : la bannière annonce
-		// « L'envoi reprendra tout seul dès que tu seras de nouveau en ligne. » Cette
-		// option a longtemps existé avec un défaut `false` qu'aucune surface ne
-		// passait — la promesse était donc fausse, et un fichier mis en file y restait
-		// indéfiniment. Ne pas retirer l'un sans réécrire l'autre.
-		autoReplayOnReconnect: true,
-		// Pas de rejeu par-dessus un envoi déjà en vol.
-		paused: isMediaUploading,
-	});
 
 	return (
 		<Card
@@ -169,18 +145,6 @@ export function MediaArrayCard({
 											Limite de {maxMediaCount} médias atteinte
 										</p>
 									</div>
-								)}
-
-								{offlineQueue.queuedCount > 0 && (
-									<OfflineQueueBanner
-										queuedCount={offlineQueue.queuedCount}
-										queuedBytes={offlineQueue.queuedBytes}
-										oldestQueuedAt={offlineQueue.oldestQueuedAt}
-										isOffline={offlineQueue.isOffline}
-										onReplay={() => void offlineQueue.replay()}
-										onDismiss={() => void offlineQueue.dropAll()}
-										disabled={isMediaUploading}
-									/>
 								)}
 
 								{failedFiles.length > 0 && (
@@ -262,6 +226,7 @@ export function MediaArrayCard({
 											}}
 											skipUtapiDelete={skipUtapiDelete}
 											maxItems={maxMediaCount}
+											ariaLabel={ariaLabel}
 											renderUploadZone={
 												isAtLimit
 													? undefined

@@ -102,10 +102,6 @@ export interface UploadProgress {
 	bytesTotal?: number;
 	/** Bytes uploaded so far across all files in the active session */
 	bytesUploaded?: number;
-	/** Estimated bytes-per-second over a sliding window (uploading phase only) */
-	bytesPerSecond?: number;
-	/** Estimated seconds until completion (uploading phase only). null when unknown */
-	etaSeconds?: number | null;
 }
 
 export interface FailedUpload {
