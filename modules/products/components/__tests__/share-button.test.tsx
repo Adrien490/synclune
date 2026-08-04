@@ -31,11 +31,13 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Share2: ({ size }: { size?: number }) => <span data-testid="share2-icon" data-size={size} />,
-	Check: ({ size }: { size?: number }) => <span data-testid="check-icon" data-size={size} />,
-	Copy: ({ size }: { size?: number }) => <span data-testid="copy-icon" data-size={size} />,
-	Mail: ({ size }: { size?: number }) => <span data-testid="mail-icon" data-size={size} />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ShareNetworkIcon: ({ size }: { size?: number }) => (
+		<span data-testid="share2-icon" data-size={size} />
+	),
+	CheckIcon: ({ size }: { size?: number }) => <span data-testid="check-icon" data-size={size} />,
+	CopyIcon: ({ size }: { size?: number }) => <span data-testid="copy-icon" data-size={size} />,
+	EnvelopeIcon: ({ size }: { size?: number }) => <span data-testid="mail-icon" data-size={size} />,
 }));
 
 vi.mock("@/shared/components/ui/dropdown-menu", () => ({

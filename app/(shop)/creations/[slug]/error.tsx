@@ -38,8 +38,8 @@ export default function ProductDetailError({
 					}
 					description={
 						<p className="text-muted-foreground text-lg md:text-xl">
-							Une erreur est survenue lors du chargement de cette création. Vous pouvez réessayer ou
-							découvrir nos autres bijoux artisanaux.
+							Une erreur est survenue lors du chargement de cette création. Tu peux réessayer, ou
+							aller voir mes autres bijoux.
 						</p>
 					}
 					actions={

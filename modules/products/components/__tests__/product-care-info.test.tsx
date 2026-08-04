@@ -1,80 +1,64 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
-// Stub shipping service so tests don't depend on external constants
-vi.mock("@/modules/orders/services/shipping.service", () => ({
-	formatShippingPrice: (cents: number) => `${(cents / 100).toFixed(2)} €`,
-}));
-
-vi.mock("@/modules/orders/constants/shipping-rates", () => ({
-	SHIPPING_RATES: {
-		FR: { amount: 499 },
-		EU: { amount: 950 },
-	},
-}));
-
-// Use real Radix Accordion — behaviour is what we're testing
 import { ProductCareInfo } from "../product-care-info";
 
 afterEach(cleanup);
 
-// ─── Tests ───────────────────────────────────────────────────────────────────
-
 describe("ProductCareInfo", () => {
-	it("renders both accordion triggers (Livraison and Entretien)", () => {
+	it("affiche les conseils d'entretien SANS clic — plus d'accordéon replié", () => {
 		render(<ProductCareInfo />);
 
-		expect(screen.getByRole("button", { name: /Livraison/i })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /Entretien/i })).toBeInTheDocument();
+		// C'est le seul endroit de la fiche où Léane parle. Il vivait sous un
+		// accordéon dont seule la section « Livraison » s'ouvrait par défaut : le
+		// mot de l'artisane était caché derrière un clic, sous des frais de port.
+		expect(screen.queryByRole("button")).not.toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /Comment en prendre soin/i })).toBeVisible();
+		expect(screen.getByText(/Range-le dans son petit écrin/i)).toBeVisible();
 	});
 
-	it("opens the Livraison section by default and displays shipping prices", () => {
+	it("tutoie, conformément à la convention de voix du dépôt", () => {
 		render(<ProductCareInfo />);
 
-		// FR rate: 499 cents → "4.99 €", EU rate: 950 cents → "9.50 €"
-		expect(screen.getByText("4.99 €")).toBeInTheDocument();
-		expect(screen.getByText("9.50 €")).toBeInTheDocument();
+		expect(screen.getByText(/Évite l'eau, les parfums/i)).toBeInTheDocument();
+		expect(screen.getByText(/prends-en soin et il te le rendra/i)).toBeInTheDocument();
+
+		// Les formes vouvoyées d'origine ne doivent pas revenir.
+		expect(screen.queryByText(/votre produit/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/vous le rendra/i)).not.toBeInTheDocument();
 	});
 
-	it("expands the Entretien section on click and shows care tips", async () => {
-		const user = userEvent.setup();
+	it("est signé — c'est ce qui en fait un mot et pas un encart", () => {
 		render(<ProductCareInfo />);
 
-		const careButton = screen.getByRole("button", { name: /Entretien/i });
-		await user.click(careButton);
-
-		expect(screen.getByText(/Évitez l'eau/i)).toBeInTheDocument();
+		expect(screen.getByText("— Léane")).toBeInTheDocument();
 	});
 
-	it("shows the silver-specific care tip when primaryMaterial includes 'argent'", async () => {
-		const user = userEvent.setup();
+	it("ne duplique plus les tarifs de livraison de ProductReassurance", () => {
+		render(<ProductCareInfo />);
+
+		// La section « Livraison » de l'accordéon répétait mot pour mot les tarifs
+		// déjà affichés au-dessus par `ProductReassurance`.
+		expect(screen.queryByText(/France métropolitaine/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/Union Européenne/i)).not.toBeInTheDocument();
+	});
+
+	it("ajoute le conseil argent quand le matériau contient « argent »", () => {
 		render(<ProductCareInfo primaryMaterial="Argent 925" />);
-
-		const careButton = screen.getByRole("button", { name: /Entretien/i });
-		await user.click(careButton);
 
 		expect(screen.getByText(/chiffon anti-oxydation/i)).toBeInTheDocument();
 	});
 
-	it("shows the gold-specific care tip when primaryMaterial includes 'or'", async () => {
-		const user = userEvent.setup();
-		render(<ProductCareInfo primaryMaterial="Or 18 carats" />);
+	it("ajoute le conseil or quand le matériau contient « or »", () => {
+		render(<ProductCareInfo primaryMaterial="Plaqué or" />);
 
-		const careButton = screen.getByRole("button", { name: /Entretien/i });
-		await user.click(careButton);
-
-		expect(screen.getByText(/eau tiède/i)).toBeInTheDocument();
+		expect(screen.getByText(/eau tiède avec un peu de savon/i)).toBeInTheDocument();
 	});
 
-	it("does not show material-specific tips when no primaryMaterial is given", async () => {
-		const user = userEvent.setup();
+	it("n'affiche aucun conseil spécifique sans matériau", () => {
 		render(<ProductCareInfo />);
 
-		const careButton = screen.getByRole("button", { name: /Entretien/i });
-		await user.click(careButton);
-
 		expect(screen.queryByText(/chiffon anti-oxydation/i)).not.toBeInTheDocument();
-		expect(screen.queryByText(/eau tiède/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/eau tiède avec un peu de savon/i)).not.toBeInTheDocument();
 	});
 });

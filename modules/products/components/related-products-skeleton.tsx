@@ -9,7 +9,7 @@ import { ProductCardSkeleton } from "@/modules/products/components/product-card-
  * Structure à respecter :
  * - Container : <aside className="space-y-6">
  * - En-tête : <div className="space-y-2"> avec h2
- * - Carousel : flex horizontal avec basis-[clamp(...)]
+ * - Carousel : flex horizontal, largeur de piste en `basis-` arbitraire (clamp)
  * - Cards : ProductCard structure (via ProductCardSkeleton partagé)
  * - CTA : <div className="flex justify-center pt-4">
  */

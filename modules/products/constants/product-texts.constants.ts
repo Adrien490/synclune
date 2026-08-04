@@ -4,6 +4,7 @@
  */
 
 import { PREPARATION_DELAY_LABEL } from "@/modules/orders/constants/shipping-rates";
+import { prefixWithProductType } from "@/modules/products/utils/product-type-prefix";
 
 export const PRODUCT_TEXTS = {
 	// Descriptions par défaut
@@ -33,7 +34,7 @@ export const PRODUCT_TEXTS = {
 		FROM: "À partir de",
 		ORIGINAL_PRICE: "Prix initial",
 		CURRENT_PRICE: "Prix actuel",
-		SAVINGS: (amount: string) => `Économisez ${amount}`,
+		SAVINGS: (amount: string) => `Tu économises ${amount}`,
 		PRICE_ON_REQUEST: "Prix sur demande",
 	},
 
@@ -53,24 +54,20 @@ export const PRODUCT_TEXTS = {
 		 * Format: "[Type] [Titre] - Bijou artisanal fait main par Synclune"
 		 */
 		DEFAULT_ALT: (title: string, productType?: string) =>
-			productType
-				? `${productType} ${title} - Bijou artisanal fait main par Synclune`
-				: `${title} - Bijou artisanal fait main par Synclune`,
+			`${prefixWithProductType(title, productType)} - Bijou artisanal fait main par Synclune`,
 
 		/**
 		 * ALT pour image placeholder/non disponible
 		 */
 		PLACEHOLDER_ALT: (title: string, productType?: string) =>
-			productType
-				? `${productType} ${title} - Image bientôt disponible`
-				: `${title} - Image bientôt disponible`,
+			`${prefixWithProductType(title, productType)} - Image bientôt disponible`,
 
 		/**
 		 * ALT pour les images de la galerie principale
 		 * Format: "[Type] [Titre] - Vue [index] sur [total]"
 		 */
 		GALLERY_MAIN_ALT: (title: string, index: number, total?: number, productType?: string) => {
-			const prefix = productType ? `${productType} ${title}` : title;
+			const prefix = prefixWithProductType(title, productType);
 			const viewInfo = total && total > 1 ? `Vue ${index} sur ${total}` : `Photo ${index}`;
 			return `${prefix} - ${viewInfo}`;
 		},
@@ -84,7 +81,7 @@ export const PRODUCT_TEXTS = {
 			isVideo = false,
 			productType?: string,
 		) => {
-			const prefix = productType ? `${productType} ${title}` : title;
+			const prefix = prefixWithProductType(title, productType);
 			const mediaType = isVideo ? "Vidéo" : "Miniature";
 			return `${prefix} - ${mediaType} ${index}`;
 		},

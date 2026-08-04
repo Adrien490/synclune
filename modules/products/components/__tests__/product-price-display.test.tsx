@@ -120,8 +120,8 @@ describe("ProductPriceDisplay", () => {
 			// Discount badge: -30% (round((5000-3500)/5000*100))
 			expect(screen.getByText(/-30%/)).toBeInTheDocument();
 
-			// Savings message
-			expect(screen.getByText(/Économisez/)).toBeInTheDocument();
+			// Savings message — tutoiement (SSOT `PRODUCT_TEXTS.PRICING.SAVINGS`)
+			expect(screen.getByText(/Tu économises/)).toBeInTheDocument();
 			expect(screen.getByText(/15\.00 €/)).toBeInTheDocument();
 		});
 
@@ -148,7 +148,7 @@ describe("ProductPriceDisplay", () => {
 			// Plus de bouton « prévenez-moi » : la notification de réassort a été
 			// retirée en V1. Le message d'attente reste la seule affordance.
 			expect(screen.getByRole("alert")).toHaveTextContent(
-				"Cette petite merveille sera bientôt disponible !",
+				"Cette petite merveille sera bientôt de retour !",
 			);
 		});
 

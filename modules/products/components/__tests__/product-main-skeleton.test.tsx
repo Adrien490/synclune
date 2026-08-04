@@ -34,6 +34,11 @@ describe("ProductMainSkeleton", () => {
 		const { container } = render(<ProductMainSkeleton />);
 		const gallerySection = container.querySelector("section");
 		expect(gallerySection?.className).toContain("lg:sticky");
-		expect(gallerySection?.className).toContain("lg:top-20");
+		// L'offset RÉSERVE la barre d'achat collante : les deux s'ancraient sinon à
+		// la même hauteur et la barre (z-70) recouvrait le haut du carton (z-10).
+		// Miroir exact de `page.tsx` — c'est cette parité qui évite le CLS.
+		expect(gallerySection?.className).toContain(
+			"lg:top-[calc(var(--navbar-height)+var(--pdp-cta-bar-height,0px))]",
+		);
 	});
 });

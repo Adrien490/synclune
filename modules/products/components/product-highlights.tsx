@@ -1,4 +1,12 @@
-import { Gem, Hand, Layers, MapPin, Maximize2, Palette, type LucideIcon } from "lucide-react";
+import {
+	ArrowsOutSimpleIcon,
+	HandIcon,
+	MapPinIcon,
+	PaletteIcon,
+	StackIcon,
+	SwatchesIcon,
+} from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
 
 import { generateHighlights } from "../services/product-highlights.service";
 import type { ProductHighlightId } from "../types/product-services.types";
@@ -9,13 +17,13 @@ interface ProductHighlightsProps {
 }
 
 const HIGHLIGHT_ICONS = {
-	material: Gem,
-	color: Palette,
-	handmade: Hand,
-	french: MapPin,
-	adjustable: Maximize2,
-	collection: Layers,
-} as const satisfies Record<ProductHighlightId, LucideIcon>;
+	material: SwatchesIcon,
+	color: PaletteIcon,
+	handmade: HandIcon,
+	french: MapPinIcon,
+	adjustable: ArrowsOutSimpleIcon,
+	collection: StackIcon,
+} as const satisfies Record<ProductHighlightId, Icon>;
 
 /**
  * ProductHighlights - Points clés produit avec pattern Baymard
@@ -32,10 +40,7 @@ export function ProductHighlights({ product }: ProductHighlightsProps) {
 	}
 
 	return (
-		<section
-			aria-labelledby="highlights-title"
-			className="bg-muted/30 border-border/50 rounded-xl border p-4"
-		>
+		<section aria-labelledby="highlights-title" className="p-4">
 			<h2 id="highlights-title" className="text-foreground mb-3 text-sm font-semibold">
 				Points clés
 			</h2>

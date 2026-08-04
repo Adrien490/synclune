@@ -41,6 +41,7 @@ export function StickyCartCTADesktop({
 	const currentSku = selectedSku ?? defaultSku;
 	const [isVisible, setIsVisible] = useState(false);
 	const observerRef = useRef<IntersectionObserver | null>(null);
+	const barRef = useRef<HTMLElement>(null);
 	const prefersReducedMotion = useReducedMotion();
 
 	const { action, isPending } = useAddToCart({ showErrorToast: false });
@@ -74,6 +75,42 @@ export function StickyCartCTADesktop({
 		return () => observerRef.current?.disconnect();
 	}, [targetId]);
 
+	/**
+	 * Publie la hauteur RÉELLE de la barre dans `--pdp-cta-bar-height`.
+	 *
+	 * La barre et la galerie épinglée s'ancraient toutes deux à `--navbar-height`,
+	 * la barre étant `z-(--z-bar-desktop)` (70) contre `lg:z-10` pour la galerie :
+	 * à son apparition elle recouvrait le scotch et le haut de la photo, et comme
+	 * la section galerie porte `lg:overflow-hidden`, la partie masquée n'était même
+	 * pas récupérable au scroll. La galerie réserve donc cette hauteur au lieu de
+	 * passer dessous. Même patron que `--pay-bar-height` (`pay-button.tsx`) :
+	 * on mesure, on ne présume pas — `py-3` + un bouton `size="lg"` suivent la
+	 * taille de police racine (WCAG 1.4.4), la hauteur n'est pas une constante px.
+	 *
+	 * ⚠️ Sous `lg` l'aside est `display:none`, donc mesuré à 0 : le garde
+	 * `height === 0` laisse la variable absente et la galerie garde son offset nu.
+	 */
+	useEffect(() => {
+		const el = barRef.current;
+		if (!el || typeof ResizeObserver === "undefined") return;
+
+		const root = document.documentElement;
+		const apply = () => {
+			const height = Math.round(el.getBoundingClientRect().height);
+			if (height === 0) return;
+			root.style.setProperty("--pdp-cta-bar-height", `${height}px`);
+		};
+
+		apply();
+		const observer = new ResizeObserver(apply);
+		observer.observe(el);
+
+		return () => {
+			observer.disconnect();
+			root.style.removeProperty("--pdp-cta-bar-height");
+		};
+	}, [isVisible]);
+
 	const slideVariants = {
 		hidden: prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -100 },
 		visible: prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 },
@@ -93,6 +130,7 @@ export function StickyCartCTADesktop({
 		<AnimatePresence mode="wait">
 			{isVisible && (
 				<m.aside
+					ref={barRef}
 					variants={slideVariants}
 					initial="hidden"
 					animate="visible"

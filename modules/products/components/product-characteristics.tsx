@@ -1,4 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader } from "@/shared/components/ui/card";
 import type { ProductSku } from "@/modules/products/types/product.types";
 
 interface ProductCharacteristicsProps {
@@ -6,10 +5,19 @@ interface ProductCharacteristicsProps {
 }
 
 /**
- * ProductCharacteristics - Affiche les informations de taille du SKU selectionne
+ * ProductCharacteristics — la dimension de la variante choisie.
  *
- * Place AVANT le bouton d'ajout au panier pour aider le client.
- * Les autres caracteristiques (materiau, fabrication) sont dans ProductHighlights.
+ * Ancien état : une `Card` autonome en `bg-muted/30`, posée entre deux autres
+ * panneaux portant EXACTEMENT la même enveloppe (`ProductReassurance` et
+ * `ProductHighlights`). Trois natures d'information — la matière, la dimension
+ * et la logistique — avaient le même fond, la même bordure et le même rayon :
+ * l'œil ne pouvait plus les trier. Les trois vivent désormais dans une seule
+ * fiche à filets, montée par `ProductDetails` ; ce composant ne rend plus que
+ * son contenu et son padding.
+ *
+ * Retourne `null` sans taille — et c'est ce qui impose que le padding vive ICI
+ * plutôt que dans un conteneur chez l'appelant : un wrapper rendu autour d'un
+ * enfant nul laisserait une case vide et un filet orphelin dans la fiche.
  */
 export function ProductCharacteristics({ selectedSku }: ProductCharacteristicsProps) {
 	const sizeInfo = selectedSku?.size
@@ -24,36 +32,17 @@ export function ProductCharacteristics({ selectedSku }: ProductCharacteristicsPr
 	}
 
 	return (
-		<Card
-			role="region"
+		<section
 			aria-labelledby="product-characteristics-title"
-			className="bg-muted/30 border-transparent transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
+			className="p-4 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 		>
-			<CardHeader>
-				<h2
-					id="product-characteristics-title"
-					className="text-muted-foreground text-xs/5 font-semibold tracking-widest uppercase antialiased"
-				>
-					Taille sélectionnée
-				</h2>
-				<CardDescription className="text-sm/6 tracking-normal antialiased">
-					Dimensions de la variante choisie
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-3">
-				<div className="bg-muted/50 rounded-lg p-2">
-					<span className="text-sm/6 tracking-normal antialiased">{sizeInfo.size}</span>
-				</div>
-
-				{sizeInfo.isAdjustable && (
-					<div className="bg-accent border-primary/20 rounded-lg border p-3">
-						<p className="text-accent-foreground text-sm/6 font-medium tracking-normal antialiased">
-							<span className="hidden sm:inline">Taille ajustable - </span>
-							Convient à la plupart des morphologies
-						</p>
-					</div>
-				)}
-			</CardContent>
-		</Card>
+			<h2 id="product-characteristics-title" className="text-foreground mb-3 text-sm font-semibold">
+				Taille
+			</h2>
+			<p className="text-muted-foreground text-sm">
+				<span className="text-foreground font-medium">{sizeInfo.size}</span>
+				{sizeInfo.isAdjustable && " — ajustable, elle convient à la plupart des morphologies"}
+			</p>
+		</section>
 	);
 }

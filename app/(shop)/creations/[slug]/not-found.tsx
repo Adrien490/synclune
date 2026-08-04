@@ -26,14 +26,14 @@ export default function ProductNotFound() {
 				}
 				description={
 					<p className="text-muted-foreground text-lg md:text-xl">
-						Cette création a peut-être été retirée ou n'est plus disponible. Découvrez nos autres
-						bijoux artisanaux faits main !
+						Cette création a peut-être été retirée ou n'est plus disponible. Viens découvrir mes
+						autres bijoux faits main !
 					</p>
 				}
 				actions={
 					<div className="flex flex-col justify-center gap-4 sm:flex-row">
 						<Button render={<Link href={ROUTES.SHOP.PRODUCTS} />} size="lg">
-							Découvrir nos créations
+							Découvrir mes créations
 						</Button>
 						<Button render={<Link href={ROUTES.SHOP.HOME} />} variant="secondary" size="lg">
 							Retour à l'accueil

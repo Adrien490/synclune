@@ -1,6 +1,11 @@
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
-import { RotateCcw, ShieldCheck, Truck } from "lucide-react";
+import {
+	ArrowCounterClockwiseIcon,
+	GiftIcon,
+	ShieldCheckIcon,
+	TruckIcon,
+} from "@phosphor-icons/react/ssr";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
 
@@ -13,10 +18,10 @@ import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
  */
 export function ProductReassurance() {
 	return (
-		<ul className="text-muted-foreground bg-muted/30 border-border/50 space-y-2.5 rounded-xl border p-4 text-sm">
+		<ul className="text-muted-foreground space-y-2.5 p-4 text-sm">
 			{/* Frais de livraison explicites - Baymard : 64% cherchent cette info avant add-to-cart */}
 			<li className="flex items-start gap-2.5">
-				<Truck className="text-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
+				<TruckIcon className="text-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
 				<div>
 					<span className="text-foreground font-medium">
 						France : {formatShippingPrice(SHIPPING_RATES.FR.amount)}
@@ -24,12 +29,19 @@ export function ProductReassurance() {
 					<span className="block">UE : {formatShippingPrice(SHIPPING_RATES.EU.amount)}</span>
 				</div>
 			</li>
+			<li className="flex items-start gap-2.5">
+				<GiftIcon className="text-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
+				<div>
+					<span className="text-foreground font-medium">Ce que tu reçois</span>
+					<span className="block">Le bijou dans son écrin, emballé à la main</span>
+				</div>
+			</li>
 			<li className="flex items-center gap-2.5">
-				<RotateCcw className="text-foreground size-4 shrink-0" aria-hidden="true" />
+				<ArrowCounterClockwiseIcon className="text-foreground size-4 shrink-0" aria-hidden="true" />
 				Retours et échanges sous 14 jours
 			</li>
 			<li className="flex items-start gap-2.5">
-				<ShieldCheck className="text-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
+				<ShieldCheckIcon className="text-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
 				<div className="space-y-1.5">
 					<span>Paiement sécurisé</span>
 					<div className="flex items-center gap-2" aria-label="Moyens de paiement acceptés">

@@ -9,114 +9,94 @@ import { ProductHighlights } from "./product-highlights";
 import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
-import { Separator } from "@/shared/components/ui/separator";
-import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 interface ProductDetailsProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
-	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
-	/** Whether this product is in the user's wishlist */
 }
 
 /**
- * ProductDetails - Wrapper client pour la section de détails produit
+ * ProductDetails — la colonne d'achat.
  *
- * Utilise useSelectedSku pour synchroniser le SKU avec les paramètres URL.
- * Quand l'utilisateur sélectionne une variante (couleur, matériau, taille),
- * l'URL change et ce composant re-calcule automatiquement le SKU sélectionné.
+ * Elle était une pile de neuf blocs séparés par un `space-y-8` rigoureusement
+ * constant, dont trois panneaux gris à l'enveloppe identique. Trois principes la
+ * gouvernent maintenant :
  *
- * Responsabilités :
- * - Calculer le SKU sélectionné depuis les searchParams URL
- * - Orchestrer les composants enfants : Prix, Caractéristiques, Sélecteurs, Panier, Entretien
- * - Animer les transitions lors du changement de variante
+ * **1. Un rythme, pas un pas.** Le bloc de décision (aplat du prix → nuancier →
+ * CTA) est serré à 12 px : ces trois éléments forment un seul geste. Les blocs de
+ * lecture sont à 24 px. Le mot de la fin est à 48 px, parce qu'on a fini d'acheter.
+ * Un espacement uniforme est l'ennemi de la hiérarchie.
+ *
+ * **2. Une seule fiche.** Matière (`ProductHighlights`), dimension
+ * (`ProductCharacteristics`) et logistique (`ProductReassurance`) partagent une
+ * enveloppe unique à filets au lieu de trois cartes jumelles. Chaque composant
+ * porte son propre padding et peut retourner `null` sans laisser de filet orphelin.
+ *
+ * **3. Plus d'`AnimatePresence` sur le prix ni sur les caractéristiques.** Les deux
+ * fondus étaient keyés sur l'id du SKU et se déclenchaient au changement de
+ * variante — exactement le moment où l'aplat se repeint déjà (transition CSS de
+ * `.piece-field`). Deux mouvements pour un seul événement : on garde celui qui
+ * porte l'information, la couleur.
  */
 export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
-	const prefersReducedMotion = useReducedMotion();
 
 	const currentSku = selectedSku ?? defaultSku;
 
-	// Animation variants
-	const fadeVariants = {
-		initial: prefersReducedMotion ? {} : { opacity: 0, y: 4 },
-		animate: { opacity: 1, y: 0 },
-		exit: prefersReducedMotion ? {} : { opacity: 0, y: -4 },
-	};
-
 	return (
-		<div className="space-y-8">
-			{/* 1. Prix (Baymard: visible en premier).
-			    Pas de wrapper aria-live ici : ProductPriceDisplay possède déjà ses propres
-			    annonces SR (aria-live + sr-only "Prix mis à jour : ..."). */}
-			<AnimatePresence mode="popLayout">
-				<m.div
-					key={`price-${currentSku.id || "no-sku"}`}
-					variants={fadeVariants}
-					initial="initial"
-					animate="animate"
-					exit="exit"
-					transition={{
-						duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.normal,
-					}}
-				>
-					<ProductPriceDisplay selectedSku={currentSku} product={product} />
-				</m.div>
-			</AnimatePresence>
+		<div className="flex flex-col gap-6">
+			{/* ── Le bloc de décision, serré ────────────────────────────────── */}
+			<div className="flex flex-col gap-3">
+				{/* 1. L'aplat de la pièce : prix, disponibilité, date de livraison.
+				    Pas de wrapper aria-live ici : ProductPriceDisplay possède déjà ses
+				    propres annonces SR. */}
+				<ProductPriceDisplay selectedSku={currentSku} product={product}>
+					<DeliveryEstimator />
+				</ProductPriceDisplay>
 
-			{/* 2. Sélection des variantes */}
-			<VariantSelector product={product} defaultSku={defaultSku} />
+				{/* 2. Le nuancier + les autres axes de variante */}
+				<VariantSelector product={product} defaultSku={defaultSku} />
 
-			{/* 3. CTA principal (monté pour réduire la distance au fold - Baymard) */}
-			<AddToCartForm product={product} selectedSku={currentSku} />
+				{/* 3. CTA principal (monté pour réduire la distance au fold - Baymard) */}
+				<AddToCartForm product={product} selectedSku={currentSku} />
+			</div>
 
-			{/* 4. Estimation livraison dynamique */}
-			<DeliveryEstimator />
-
-			{/* 5. Description produit — remontée près du CTA pour valoriser le storytelling
-			    artisanal (levier de conversion), surtout sur mobile. */}
+			{/* ── 4. La description : la seule prose de la page ─────────────────
+			    Elle était en `text-muted-foreground`, c'est-à-dire dans le gris exact
+			    des tarifs de port, coincée entre deux blocs de service. Or il n'y a
+			    pas de `metaDescription` en base : cette description EST la copie
+			    vitrine, le seul endroit où Léane décrit CETTE pièce. Elle passe donc
+			    en encre pleine et en Fraunces — un serif à axe optique, sur trois
+			    phrases éditoriales, pas sur du texte courant. */}
 			{product.description && (
-				<div
-					id="product-description"
-					className="text-muted-foreground max-w-prose space-y-3 text-base leading-relaxed tracking-normal antialiased"
-				>
+				<div id="product-description" className="max-w-[34rem] space-y-3">
 					<h2 className="sr-only">Description</h2>
 					{product.description.split("\n").map((line, i) => (
-						<p key={`desc-line-${i}`}>{line || "\u00A0"}</p>
+						<p
+							key={`desc-line-${i}`}
+							className="font-display text-foreground text-lg/8 font-normal tracking-normal"
+						>
+							{line || " "}
+						</p>
 					))}
 				</div>
 			)}
 
-			{/* 6. Réassurance (après CTA - "decision support") */}
-			<ProductReassurance />
+			{/* ── 5. La fiche : une seule enveloppe, trois filets ───────────────
+			    Matière, dimension, logistique. Chaque section rend son propre padding
+			    (cf. `ProductCharacteristics`, qui peut retourner `null`). */}
+			<div className="border-border divide-border divide-y overflow-hidden rounded-xl border">
+				<ProductHighlights product={product} />
+				<ProductCharacteristics selectedSku={currentSku} />
+				<ProductReassurance />
+			</div>
 
-			{/* 7. Caractéristiques principales. */}
-			<AnimatePresence mode="popLayout">
-				<m.div
-					key={`chars-${currentSku.id || "no-sku"}`}
-					variants={fadeVariants}
-					initial="initial"
-					animate="animate"
-					exit="exit"
-					transition={{
-						duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.fast,
-						delay: prefersReducedMotion ? 0 : 0.05,
-					}}
-				>
-					<ProductCharacteristics selectedSku={currentSku} />
-				</m.div>
-			</AnimatePresence>
-
-			<Separator />
-
-			{/* 8. Highlights produit (après CTA - pattern Etsy) */}
-			<ProductHighlights product={product} />
-
-			{/* 9. Entretien et livraison (reste en bas) */}
-			<ProductCareInfo primaryMaterial={currentSku.materials[0]?.material.name} />
+			{/* ── 6. Le mot de la fin, détaché ─────────────────────────────────── */}
+			<div className="pt-6">
+				<ProductCareInfo primaryMaterial={currentSku.materials[0]?.material.name} />
+			</div>
 		</div>
 	);
 }

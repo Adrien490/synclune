@@ -1,80 +1,56 @@
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/shared/components/ui/accordion";
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
-import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
-
 interface ProductCareInfoProps {
 	primaryMaterial?: string | null;
 }
 
 /**
- * ProductCareInfo - Informations d'entretien et de livraison
+ * ProductCareInfo — le mot de fin, à la première personne.
  *
- * Placé APRÈS le bouton d'ajout au panier car moins critique pour la décision d'achat.
+ * C'est le seul endroit de la fiche où quelqu'un parle. Trois choses l'annulaient :
  *
- * Responsabilités :
- * - Conseils d'entretien du bijou (accordéon)
- * - Informations de livraison et emballage (accordéon)
+ * 1. **Il était replié.** L'accordéon ouvrait « Livraison » par défaut
+ *    (`defaultValue={["shipping"]}`) et laissait « Entretien » fermé : la page
+ *    s'ouvrait sur des frais de port et cachait l'artisane derrière un clic.
+ * 2. **Il vouvoyait** (« votre produit », « Évitez », « il vous le rendra »),
+ *    alors que `CLAUDE.md` § Voix impose le tutoiement partout — et que le
+ *    catalogue, lui, dit déjà « mes créations », « mon atelier ».
+ * 3. **Il appelait un bijou fait main « votre produit »**, quatre fois.
+ *
+ * L'accordéon disparaît donc, et avec lui la section « Livraison » : ses tarifs
+ * faisaient DOUBLON avec `ProductReassurance`, qui les affiche déjà au-dessus.
+ * Il ne reste que l'entretien, visible, tutoyé, signé.
  */
 export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
+	const material = primaryMaterial?.toLowerCase();
+
 	return (
-		<Accordion defaultValue={["shipping"]} className="w-full">
-			{/* Section Livraison */}
-			<AccordionItem value="shipping">
-				<AccordionTrigger className="hover:bg-muted/50 -mx-2 rounded-lg px-2 text-sm/6 font-semibold tracking-normal antialiased transition-colors">
-					Livraison
-				</AccordionTrigger>
-				<AccordionContent className="text-muted-foreground space-y-3 text-sm/6 tracking-normal antialiased">
-					{/* Emballage */}
-					<div>
-						<p className="text-foreground font-medium">Emballage soigné</p>
-						<p>Chaque produit arrive dans un joli écrin</p>
-					</div>
-
-					{/* France */}
-					<div>
-						<p className="text-foreground font-medium">France métropolitaine</p>
-						<p>{formatShippingPrice(SHIPPING_RATES.FR.amount)}</p>
-					</div>
-
-					{/* Europe */}
-					<div>
-						<p className="text-foreground font-medium">Union Européenne</p>
-						<p>{formatShippingPrice(SHIPPING_RATES.EU.amount)}</p>
-					</div>
-				</AccordionContent>
-			</AccordionItem>
-
-			{/* Section Entretien */}
-			<AccordionItem value="care">
-				<AccordionTrigger className="hover:bg-muted/50 -mx-2 rounded-lg px-2 text-sm/6 font-semibold tracking-normal antialiased transition-colors">
-					Entretien
-				</AccordionTrigger>
-				<AccordionContent className="text-muted-foreground space-y-3 text-sm/6 tracking-normal antialiased">
-					<p>
-						J'ai passé des heures à créer votre produit (parfois avec quelques galères), alors voici
-						mes conseils pour qu'il dure longtemps :
-					</p>
-					<ul className="list-inside list-disc space-y-2">
-						<li>Évitez l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
-						<li>Rangez-le dans son petit écrin après chaque utilisation</li>
-						<li>Un petit coup de chiffon doux de temps en temps, et c'est nickel</li>
-						{primaryMaterial?.toLowerCase().includes("argent") && (
-							<li>Pour l'argent : un chiffon anti-oxydation, c'est la base</li>
-						)}
-						{primaryMaterial?.toLowerCase().includes("or") && (
-							<li>Pour l'or : de l'eau tiède avec un peu de savon fait l'affaire</li>
-						)}
-					</ul>
-					<p className="text-xs italic">
-						Votre produit a été créé avec passion, prenez-en soin et il vous le rendra !
-					</p>
-				</AccordionContent>
-			</AccordionItem>
-		</Accordion>
+		<section
+			aria-labelledby="product-care-title"
+			className="bg-muted/40 rounded-xl p-5 text-sm/6 tracking-normal antialiased"
+		>
+			<h2 id="product-care-title" className="text-foreground mb-2 font-semibold">
+				Comment en prendre soin
+			</h2>
+			<p className="text-muted-foreground">
+				J&apos;ai passé des heures sur celui-là (parfois avec quelques galères), alors voici mes
+				conseils pour qu&apos;il dure longtemps :
+			</p>
+			<ul className="text-muted-foreground mt-2 list-inside list-disc space-y-1.5">
+				<li>Évite l&apos;eau, les parfums et les produits cosmétiques (ça n&apos;aime pas trop)</li>
+				<li>Range-le dans son petit écrin après chaque utilisation</li>
+				<li>Un petit coup de chiffon doux de temps en temps, et c&apos;est nickel</li>
+				{material?.includes("argent") && (
+					<li>Pour l&apos;argent : un chiffon anti-oxydation, c&apos;est la base</li>
+				)}
+				{material?.includes("or") && (
+					<li>Pour l&apos;or : de l&apos;eau tiède avec un peu de savon fait l&apos;affaire</li>
+				)}
+			</ul>
+			<p className="text-muted-foreground mt-3">
+				Je l&apos;ai fait avec passion — prends-en soin et il te le rendra.
+			</p>
+			{/* Sacramento est réservée au décoratif (cf. `shared/styles/fonts.ts`) :
+			    une signature en est l'emploi canonique, comme sur `catalog-heading`. */}
+			<p className="font-cursive text-foreground mt-1 text-[1.75rem] leading-none">— Léane</p>
+		</section>
 	);
 }

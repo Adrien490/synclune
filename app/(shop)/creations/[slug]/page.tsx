@@ -10,6 +10,7 @@ import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-prod
 
 import { PageHeader } from "@/shared/components/page-header";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
+import { ProductAccentScope } from "@/modules/products/components/product-accent-scope";
 import { ProductDetails } from "@/modules/products/components/product-details";
 import { ProductMainSkeleton } from "@/modules/products/components/product-main-skeleton";
 import { StickyCartCTADesktop } from "@/modules/products/components/sticky-cart-cta-desktop";
@@ -161,22 +162,29 @@ export default async function ProductPage({
 				{/* Contenu principal */}
 				<div className="bg-background pt-20 pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-						<article id="product-main" className="space-y-12">
+						{/* `ProductAccentScope` pose `--piece-accent` (la couleur de la variante
+						    affichée) sur l'article : la galerie, l'aplat du prix, le nuancier et
+						    le CTA la partagent au lieu de la voir s'arrêter au carton photo. */}
+						<ProductAccentScope product={product} className="space-y-12">
 							{/* Section principale - Galerie fixe et Informations scrollables */}
 							{/* group/product-details permet aux enfants de réagir au data-pending des sélecteurs */}
 							<Suspense fallback={<ProductMainSkeleton />}>
 								<div className="group/product-details grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
-									{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
-									<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100dvh-6rem)] lg:overflow-hidden">
+									{/* Galerie sticky sur desktop uniquement.
+									    L'offset RÉSERVE la barre d'achat collante (`--pdp-cta-bar-height`,
+									    publiée par `StickyCartCTADesktop`) : les deux s'ancraient sinon à
+									    `--navbar-height`, la barre étant z-70 contre z-10 ici, et elle
+									    recouvrait le scotch + le haut de la photo — que `lg:overflow-hidden`
+									    rendait alors irrécupérables au scroll. La variable vaut 0 tant que
+									    la barre est absente, donc l'offset nu reste le cas nominal. */}
+									<section className="lg:sticky lg:top-[calc(var(--navbar-height)+var(--pdp-cta-bar-height,0px))] lg:z-10 lg:h-fit lg:max-h-[calc(100dvh-6rem-var(--pdp-cta-bar-height,0px))] lg:overflow-hidden">
 										<Gallery product={product} title={product.title} />
 									</section>
 
 									{/* Informations et configurateur scrollables */}
 									<section className="space-y-6 lg:min-h-dvh">
-										{/* 1. ProductInfo - Badges, wishlist (pattern Etsy : contexte rapide) */}
+										{/* 1. ProductInfo - type, titre, provenance, partage, favoris */}
 										<ProductInfo product={product} isInWishlist={isInWishlist} />
-
-										<Separator className="bg-border" />
 
 										{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
 										{/* Composant client qui synchronise le SKU avec les paramètres URL */}
@@ -203,7 +211,7 @@ export default async function ProductPage({
 							<Suspense fallback={<RelatedProductsSkeleton limit={4} />}>
 								<RelatedProducts currentProductSlug={product.slug} limit={4} />
 							</Suspense>
-						</article>
+						</ProductAccentScope>
 					</div>
 				</div>
 			</div>

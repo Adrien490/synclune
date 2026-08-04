@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("lucide-react", () => ({
-	Clock: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ClockIcon: ({ className }: { className?: string }) => (
 		<span data-testid="clock-icon" className={className} />
 	),
 }));

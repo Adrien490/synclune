@@ -40,18 +40,6 @@ vi.mock("@/modules/products/components/share-button", () => ({
 	ShareButton: () => <button data-testid="share-btn">Partager</button>,
 }));
 
-// Stub Badge
-vi.mock("@/shared/components/ui/badge", () => ({
-	Badge: ({ children }: { children: React.ReactNode; [key: string]: unknown }) => (
-		<span data-testid="badge">{children}</span>
-	),
-}));
-
-// Stub animations — HandDrawnAccent uses framer-motion useInView (IntersectionObserver)
-vi.mock("@/shared/components/animations", () => ({
-	HandDrawnAccent: () => null,
-}));
-
 import { ProductInfo } from "../product-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 
@@ -81,20 +69,29 @@ describe("ProductInfo", () => {
 		expect(screen.getAllByText("Collier Étoile").length).toBeGreaterThan(0);
 	});
 
-	it("renders the product type badge when a type is provided", () => {
+	it("renders the product type as an eyebrow above the title", () => {
 		const product = makeProduct({
 			type: { id: "t1", label: "Collier", slug: "collier" } as GetProductReturn["type"],
 		});
 
 		render(<ProductInfo product={product} />);
 
-		expect(screen.getByTestId("badge")).toHaveTextContent("Collier");
+		expect(screen.getByText("Collier")).toBeInTheDocument();
 	});
 
-	it("does not render a type badge when type is null", () => {
+	it("does not render the type eyebrow when type is null", () => {
 		render(<ProductInfo product={makeProduct({ type: null })} />);
 
-		expect(screen.queryByTestId("badge")).not.toBeInTheDocument();
+		expect(screen.queryByText("Collier")).not.toBeInTheDocument();
+	});
+
+	it("renders a single share + wishlist cluster (no mobile/desktop duplicate)", () => {
+		render(<ProductInfo product={makeProduct()} />);
+
+		// Deux clusters cohabitaient (`sm:hidden` + `hidden sm:flex`), donc deux
+		// boutons portant le même nom accessible dans l'arbre.
+		expect(screen.getAllByTestId("wishlist-btn")).toHaveLength(1);
+		expect(screen.getAllByTestId("share-btn")).toHaveLength(1);
 	});
 
 	it("renders the wishlist button with the correct product id", () => {
@@ -126,9 +123,9 @@ describe("ProductInfo", () => {
 		expect(heading).toHaveClass("sr-only");
 	});
 
-	it("renders the « Fait main en France » trust badge above-the-fold", () => {
+	it("renders the handmade provenance line above-the-fold, in the first person", () => {
 		render(<ProductInfo product={makeProduct()} />);
 
-		expect(screen.getByText("Fait main en France")).toBeInTheDocument();
+		expect(screen.getByText(/Fait main, chez moi, à Nantes/)).toBeInTheDocument();
 	});
 });
