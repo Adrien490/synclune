@@ -286,7 +286,32 @@ Règle : **un test ne se retire jamais seul, il part avec le code qu'il garde.**
 | LOC                  | —     | de l'ordre de **−19 k src / −25 k tests** + réduction e2e/CI                                                                                                                                                          |
 | Dépendances          | —     | −2 immédiates, jusqu'à ~8 selon arbitrages                                                                                                                                                                            |
 
-Ces chiffres reprennent les estimations item par item ; ils se raffineront lot par lot. Ce qui ne bouge pas : le socle légal (§ 9) et le tunnel d'achat.
+Ces chiffres reprennent les estimations item par item ; ils se raffineront lot par lot. Ce qui ne bouge pas : le tunnel d'achat.
+
+### Vague V3 — 2026-08-05 (au-delà de ce document)
+
+Trois lots exécutés APRÈS l'audit V2, sur instruction directe. Ils touchent des
+surfaces que ce document classait « on ne touche pas » (§ 9) — le § 9 est donc
+partiellement périmé, et voici où :
+
+| Lot | Contenu | Migration |
+| --- | --- | --- |
+| **Codes promo retirés** | modèle `Discount` + enum `DiscountType` + `Order.discountCode`/`discountId`/`discountAmount` + 7 CHECK ; `modules/discounts` (100 fichiers, ~14 200 L), étape panier/checkout, pages admin. `Order_total_formula` réécrit. La remise reste possible par `ProductSku.compareAtPrice` | `20260805200000` |
+| **PDF archivé = seule pièce probante** | `Order.invoiceDataSnapshot`/`invoiceDataHash` + 2 CHECK, `invoiceVoidedAt`, `OrderItem.productDescription`/`skuSku` ; `verify-invoice-snapshot`, `resolve-invoice-data`, `canonical-json`, `invoice-data-format` | `20260805210000` |
+| **`OrderHistory` recentré** | `OrderAction` 26 → 20 : les 6 valeurs de plomberie facture partent avec leurs écrivains | `20260805220000` |
+
+**Ce que le § 9 disait et qui ne tient plus** : « Invariants facturation 1-10 — ils
+priment sur toute simplification » reste vrai sur le FOND (numérotation gap-free,
+avoir obligatoire, PDF immuable, rétention 10 ans), mais les invariants **10 et 11**
+de `CLAUDE.md` ont été **réécrits** : l'identité vendeur ne vit plus dans un
+snapshot de données mais dans le PDF archivé, et `InvoiceData` est devenu un
+payload transitoire (plus de `formatVersion`).
+
+⚠️ **Le corollaire est plus contraignant qu'avant, pas moins** : l'archivage du PDF
+n'est plus un confort mais la seule conservation. `reconcile-invoices` reprend
+toute facture numérotée sans `invoicePdfUrl`, par un prédicat dérivé de l'état.
+
+**État du schéma après V3** : 20 modèles, 14 enums, 750 lignes, 22 CHECK.
 
 ## 13. Ordre d'exécution suggéré (après arbitrage)
 

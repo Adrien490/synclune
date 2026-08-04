@@ -77,7 +77,7 @@ Alternative plus légère à évaluer d'abord : `sessionStorage` (portée onglet
 ## KI-003 — Rate limit : libellés encore vouvoyants
 
 **Trouvé le** 2026-07-26 (audit UI/UX paiement, F7).
-**Où** une vingtaine d'occurrences de « Trop de tentatives. Veuillez réessayer plus tard. » dans `modules/payments` et `modules/discounts` (le compte est passé de ~26 au retrait du système d'avis le 2026-07-30).
+**Où** plusieurs occurrences de « Trop de tentatives. Veuillez réessayer plus tard. » dans `modules/payments` (le compte est passé de ~26 au retrait du système d'avis le 2026-07-30, puis a encore baissé au retrait des codes promo le 2026-08-05 — `modules/discounts` n'existe plus).
 **Sévérité** cosmétique.
 
 La convention de voix du repo est le tutoiement (cf. `CLAUDE.md` § Conventions). Le tunnel de paiement a été aligné et est verrouillé par `checkout-voice-tutoiement.regression.test.ts`, mais ces libellés-là sont partagés entre modules et chacun a un test qui assert la chaîne exacte. Les traiter un par un créerait une incohérence temporaire pire que l'état actuel : à faire en une passe transverse, avec un SSOT de messages de rate limit.
@@ -141,6 +141,8 @@ La séquence `A-YYYY-NNNNN` est **partagée** entre deux tables : `Order.creditN
 Le schéma le documentait déjà comme « cible (ticket futur) : migrer full-void vers `Refund.creditNoteNumber` puis dropper ces colonnes `Order` ».
 
 **Pourquoi c'est assumé, et non planifié.** La migration toucherait simultanément la numérotation séquentielle gap-free (Art. 286 CGI), le trigger d'unicité cross-table et l'archivage PDF des avoirs — soit le cœur réglementaire, à quelques semaines du lancement, pour un gain de propreté et zéro gain fonctionnel. Le rapport risque/bénéfice est défavorable : les cinq mécanismes sont en place, testés (dont un test d'intégration dédié au trigger) et n'ont produit aucun incident.
+
+**Mise à jour 2026-08-05.** Le retrait du snapshot de données de facture n'a PAS fermé cette entrée, et ne la rapproche pas : il touchait `invoiceDataSnapshot`, pas la numérotation. Les cinq garde-fous sont intacts — seul l'un d'eux a changé de nature, la passe d'intégrité PDF périodique ayant été remplacée par la vérification à chaque téléchargement (EINV-PDF-006).
 
 **À quelle condition rouvrir.** Si l'un de ces trois signaux apparaît : (a) un doublon de numéro d'avoir constaté en production ; (b) un troisième émetteur d'avoir devient nécessaire (à ce moment la duplication devient une triplication, et le lookup UNION une jointure à trois branches) ; (c) une refonte des remboursements touche déjà `issue-credit-note.service.ts` — auquel cas la migration devient un effet de bord peu coûteux plutôt qu'un chantier propre.
 
