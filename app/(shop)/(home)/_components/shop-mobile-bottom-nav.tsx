@@ -3,7 +3,12 @@
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Search, Heart, ShoppingBag } from "lucide-react";
+import {
+	HeartIcon,
+	HouseIcon,
+	MagnifyingGlassIcon,
+	ShoppingBagIcon,
+} from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -44,8 +49,23 @@ const CART_SHEET_ID = "cart" as const;
 // portalé. Désigner un id absent est plus nuisible que de l'omettre —
 // `aria-haspopup` + `aria-expanded` suffisent au pattern disclosure.
 
-/** Compteur → nom accessible, pour que l'onglet annonce son badge. */
-function tabAriaLabel(label: string, count: number, singular: string, plural: string): string {
+/**
+ * Compteur → nom accessible, pour que l'onglet annonce son badge.
+ *
+ * ⚠️ **Exportée pour être testée, pas pour être réutilisée ailleurs.** C'est ce
+ * nom accessible — et non la région d'annonce ci-dessous, qui écrit
+ * `Panier : 3 articles` avec un deux-points — que ciblent les locators
+ * Playwright du panier. Les deux formulations ont divergé une fois, et un
+ * correctif E2E dérivé de la mauvaise ne matchait AUCUNE des trois formes
+ * réelles. Le test de couture `e2e/pages/__tests__/cart-open-button-label.regression.test.ts`
+ * compose désormais les libellés depuis cette fonction plutôt que de les deviner.
+ */
+export function tabAriaLabel(
+	label: string,
+	count: number,
+	singular: string,
+	plural: string,
+): string {
 	if (count <= 0) return label;
 	return `${label}, ${count} ${count > 1 ? plural : singular}`;
 }
@@ -127,7 +147,7 @@ export function ShopMobileBottomNav() {
 			id: "home",
 			label: "Accueil",
 			href: ROUTES.SHOP.HOME,
-			icon: Home,
+			icon: HouseIcon,
 			isActive: pathname === ROUTES.SHOP.HOME,
 			type: "link" as const,
 		},
@@ -140,7 +160,7 @@ export function ShopMobileBottomNav() {
 			// produits » du panneau idle du dialog.
 			id: "search",
 			label: "Rechercher",
-			icon: Search,
+			icon: MagnifyingGlassIcon,
 			isActive: isQuickSearchOpen,
 			type: "button" as const,
 			onClick: handleSearchClick,
@@ -149,7 +169,7 @@ export function ShopMobileBottomNav() {
 			id: "wishlist",
 			label: "Favoris",
 			href: ROUTES.SHOP.FAVORITES,
-			icon: Heart,
+			icon: HeartIcon,
 			isActive: isRouteActive(pathname, ROUTES.SHOP.FAVORITES),
 			type: "link" as const,
 			// `type: "dot"` n'affiche AUCUN chiffre : sans ce libellé, le nombre de
@@ -165,7 +185,7 @@ export function ShopMobileBottomNav() {
 		{
 			id: "cart",
 			label: "Panier",
-			icon: ShoppingBag,
+			icon: ShoppingBagIcon,
 			isActive: isCartOpen,
 			type: "button" as const,
 			ariaLabel: tabAriaLabel("Panier", cartCount, "article", "articles"),

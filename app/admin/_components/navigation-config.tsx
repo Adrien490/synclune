@@ -1,20 +1,21 @@
-import type { LucideIcon } from "lucide-react";
 import {
-	LayoutDashboard,
-	ShoppingBag,
-	ReceiptText,
-	Package,
-	Layers,
-	Tag,
-	Palette,
-	Gem,
-	Settings,
-	Ticket,
-	Store,
-	Landmark,
-	ShieldAlert,
-	Wrench,
-} from "lucide-react";
+	BankIcon,
+	GearIcon,
+	PackageIcon,
+	PaletteIcon,
+	ReceiptIcon,
+	ShieldWarningIcon,
+	ShoppingBagIcon,
+	SquaresFourIcon,
+	StackIcon,
+	StorefrontIcon,
+	SwatchesIcon,
+	TagIcon,
+	TicketIcon,
+	WrenchIcon,
+} from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
+
 import { ORDERS_TO_SHIP_HREF } from "@/modules/orders/constants/to-ship";
 
 // ============================================================================
@@ -37,7 +38,7 @@ export interface NavItem {
 	title: string;
 	shortTitle?: string; // Pour mobile (optionnel, sinon title)
 	url: string;
-	icon: LucideIcon;
+	icon: Icon;
 	/**
 	 * Destination de la PASTILLE quand elle diffère du lien nu.
 	 *
@@ -50,9 +51,21 @@ export interface NavItem {
 
 interface NavGroup {
 	label: string;
-	icon?: LucideIcon;
+	icon?: Icon;
 	items: NavItem[];
 	collapsible?: boolean;
+	/**
+	 * Accent de marque du groupe, consommé par le menu mobile en rail vertical.
+	 *
+	 * Les valeurs sont celles de `[data-accent]` (`app/styles/section-accents.css`),
+	 * qui expose `--section-accent` — on ne redéclare donc aucune couleur ici, et
+	 * `rose` reste dérivé de `--primary`.
+	 *
+	 * ⚠️ Il n'y a que QUATRE accents, et le bloc d'actions du menu n'en prend
+	 * aucun : un cinquième groupe rendrait le code couleur arbitraire. C'est la
+	 * condition de validité de ce champ, pas un détail cosmétique.
+	 */
+	accent?: "rose" | "lavender" | "mint" | "sun";
 }
 
 interface NavigationData {
@@ -84,14 +97,15 @@ interface NavigationData {
  */
 const PILOTAGE_GROUP: NavGroup = {
 	label: "Pilotage",
-	icon: LayoutDashboard,
+	icon: SquaresFourIcon,
+	accent: "rose",
 	items: [
 		{
 			id: "dashboard",
 			title: "Tableau de bord",
 			shortTitle: "Accueil",
 			url: "/admin",
-			icon: LayoutDashboard,
+			icon: SquaresFourIcon,
 		},
 		{
 			id: "orders",
@@ -99,20 +113,20 @@ const PILOTAGE_GROUP: NavGroup = {
 			url: "/admin/ventes/commandes",
 			// La pastille compte la file « à expédier » — elle doit y mener.
 			badgeUrl: ORDERS_TO_SHIP_HREF,
-			icon: ShoppingBag,
+			icon: ShoppingBagIcon,
 		},
 		{
 			id: "refunds",
 			title: "Remboursements",
 			url: "/admin/ventes/remboursements",
 			badgeUrl: "/admin/ventes/remboursements?filter_status=PENDING",
-			icon: ReceiptText,
+			icon: ReceiptIcon,
 		},
 		{
 			id: "invoicing",
 			title: "Facturation",
 			url: "/admin/ventes/facturation",
-			icon: Landmark,
+			icon: BankIcon,
 		},
 		// Route inchangée (`/admin/marketing/discounts`) : seul le regroupement
 		// visuel bouge, comme pour la fusion Contenu+Configuration → Boutique.
@@ -123,46 +137,47 @@ const PILOTAGE_GROUP: NavGroup = {
 			title: "Codes promo",
 			shortTitle: "Promos",
 			url: "/admin/marketing/discounts",
-			icon: Ticket,
+			icon: TicketIcon,
 		},
 	],
 };
 
 const CATALOGUE_GROUP: NavGroup = {
 	label: "Catalogue",
-	icon: Package,
+	icon: PackageIcon,
+	accent: "lavender",
 	collapsible: true,
 	items: [
 		{
 			id: "products",
 			title: "Produits",
 			url: "/admin/catalogue/produits",
-			icon: Package,
+			icon: PackageIcon,
 		},
 		{
 			id: "collections",
 			title: "Collections",
 			url: "/admin/catalogue/collections",
-			icon: Layers,
+			icon: StackIcon,
 		},
 		{
 			id: "product-types",
 			title: "Types de produits",
 			shortTitle: "Types",
 			url: "/admin/catalogue/types-de-produits",
-			icon: Tag,
+			icon: TagIcon,
 		},
 		{
 			id: "colors",
 			title: "Couleurs",
 			url: "/admin/catalogue/couleurs",
-			icon: Palette,
+			icon: PaletteIcon,
 		},
 		{
 			id: "materials",
 			title: "Matériaux",
 			url: "/admin/catalogue/materiaux",
-			icon: Gem,
+			icon: SwatchesIcon,
 		},
 	],
 };
@@ -177,26 +192,27 @@ const CATALOGUE_GROUP: NavGroup = {
  */
 const BOUTIQUE_GROUP: NavGroup = {
 	label: "Boutique",
-	icon: Settings,
+	icon: GearIcon,
+	accent: "mint",
 	items: [
 		{
 			id: "store-settings",
 			title: "Réglages boutique",
 			shortTitle: "Réglages",
 			url: "/admin/configuration/boutique",
-			icon: Store,
+			icon: StorefrontIcon,
 		},
 		{
 			id: "security-settings",
 			title: "Sécurité",
 			url: "/admin/configuration/securite",
-			icon: ShieldAlert,
+			icon: ShieldWarningIcon,
 		},
 		{
 			id: "maintenance",
 			title: "Maintenance",
 			url: "/admin/configuration/maintenance",
-			icon: Wrench,
+			icon: WrenchIcon,
 		},
 	],
 };
@@ -291,4 +307,37 @@ export function badgeAriaLabel(itemId: string, count: number): string {
  */
 export function badgePendingLabel(count: number): string {
 	return `${count} en attente`;
+}
+
+/**
+ * Substantifs des files ACTIONNABLES, pour l'ardoise du menu mobile.
+ *
+ * Troisième formulation du même compteur, et elle est volontaire : la pastille
+ * dit un ÉTAT (« 3 commandes en attente »), l'ardoise dit un TRAVAIL (« 3
+ * commandes à expédier »). Les mots viennent du prédicat réel de
+ * `getAdminNavBadges` — la file `orders` est « à expédier »
+ * (`buildToShipWhereClause`), la file `refunds` est « à rattraper » (échec Stripe
+ * ou avoir manquant). Les rendre identiques rendrait le libellé faux d'un côté.
+ *
+ * Comme les deux autres, elle vit ICI : aucun composant ne fabrique la chaîne.
+ */
+const QUEUE_NOUNS: Record<string, { one: string; many: string }> = {
+	orders: { one: "commande à expédier", many: "commandes à expédier" },
+	refunds: { one: "remboursement à rattraper", many: "remboursements à rattraper" },
+};
+
+/**
+ * Libellé d'une ligne de file. `null` quand l'item n'est pas une file
+ * actionnable — l'appelant l'exclut alors de l'ardoise plutôt que d'inventer un
+ * substantif générique : une ligne « 4 éléments à traiter » n'apprend rien.
+ */
+export function queueLabel(itemId: string, count: number): string | null {
+	const noun = QUEUE_NOUNS[itemId];
+	if (!noun) return null;
+	return `${count} ${count > 1 ? noun.many : noun.one}`;
+}
+
+/** Les items qui peuvent apparaître dans l'ardoise, dans l'ordre de la navigation. */
+export function getQueueItems(): NavItem[] {
+	return getAllNavItems().filter((item) => item.id in QUEUE_NOUNS);
 }

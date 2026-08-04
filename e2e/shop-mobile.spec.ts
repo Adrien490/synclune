@@ -17,8 +17,38 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 };
 test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () => {
 	test.use({ viewport: MOBILE_VIEWPORT });
 
-	// Le test « hero + CTA au-dessus du fold » a été retiré avec les sections de
-	// la home (refonte landing, 2026-08-03) — à réintroduire avec la nouvelle page.
+	test("étal — titre ET première création au-dessus de la ligne de flottaison", async ({
+		page,
+	}) => {
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Le budget vertical du bloc titre (299 px mesuré à 390 px de large) existe
+		// pour ça : sur un écran de 844 px, une pièce entière doit rester visible
+		// SANS scroller, barre de navigation basse déduite. C'est la promesse de la
+		// direction « L'étal » — si la copie s'allonge, c'est elle qui cède.
+		const heading = page.locator("#etal").getByRole("heading", { level: 1 });
+		await expect(heading).toBeVisible();
+
+		const firstCard = page.locator("#etal article").first();
+		const cardCount = await page.locator("#etal article").count();
+		test.skip(cardCount === 0, "Catalogue vide : l'étal rend la carte de contact, pas de pièce.");
+
+		await expect(firstCard).toBeVisible();
+
+		const box = await firstCard.boundingBox();
+		expect(box).not.toBeNull();
+
+		// Hauteur de la bottom-nav boutique (--bottom-bar-height), mesurée plutôt
+		// que codée en dur : elle change avec la safe-area de l'appareil.
+		const bottomBar = page.getByRole("navigation", {
+			name: /Navigation principale de la boutique/i,
+		});
+		const barBox = await bottomBar.boundingBox();
+		const fold = MOBILE_VIEWPORT.height - (barBox?.height ?? 0);
+
+		expect(box!.y + box!.height).toBeLessThanOrEqual(fold);
+	});
 
 	test("bottom nav tabs — 5 onglets visibles sur mobile", async ({ page }) => {
 		await page.goto("/");

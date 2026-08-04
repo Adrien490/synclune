@@ -87,44 +87,73 @@
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 	}
 
-	/* Realistic lift hover — desktop only, motion-safe */
-	.polaroid-hover {
-		--polaroid-rotate: 0deg;
-		transform: rotate(var(--polaroid-rotate));
-		transition:
-			transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
-			box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
-	}
+	/* `.polaroid-hover` a été SUPPRIMÉE (audit CollectionCard 2026-08-04) : zéro
+	   consommateur dans tout le dépôt. Les deux cartes Atelier réimplémentent leur
+	   lift/tilt en classes Tailwind inline (`CARD_SURFACE_POLAROID` + le
+	   `motion-safe:can-hover:hover:*-rotate-1` alterné par index), et son
+	   `:focus-visible` posait un outline `--secondary` concurrent de la SSOT
+	   `focus-ring`. Ne pas la réintroduire sans consommateur. */
 
-	@media (hover: hover) and (pointer: fine) {
-		.polaroid-hover:hover {
-			transform: translateY(-8px) scale(1.04) rotate(calc(var(--polaroid-rotate) + 1deg));
-			box-shadow:
-				0 20px 40px -10px oklch(0 0 0 / 0.18),
-				0 8px 16px -8px oklch(0 0 0 / 0.1);
-		}
-	}
+	/* ==========================================
+	   PIECE FIELD — l'aplat de la pièce (fiche produit, « Le nuancier »)
 
-	/* Mobile tap feedback — glow on :active for touch devices */
-	@media (hover: none) {
-		.polaroid-hover:active {
-			box-shadow: 0 0 20px var(--glow-color, oklch(0.86 0.1 341 / 0.4));
-			transition: box-shadow 150ms;
-		}
-	}
+	   L'aplat qui porte le prix et la disponibilité prend la couleur du bijou
+	   affiché. C'est le seul endroit de la boutique où une couleur du catalogue
+	   devient un fond de texte, d'où les deux règles ci-dessous, ensemble et pas
+	   séparément :
 
-	/* Focus-visible ring for keyboard navigation */
-	.polaroid-hover:focus-visible {
-		outline: 2px solid var(--secondary);
-		outline-offset: 2px;
+	   1. l'encre est TOUJOURS `--foreground` — jamais l'accent, qui plafonne à
+	      2,5:1 en texte sur le fond de page ;
+	   2. la teinte a été bornée en amont par `normalizeAccentHex`
+	      (`L ∈ [0,62 ; 0,84]`), ce qui garantit ≥ 5,08:1 pour cette encre.
+
+	   Les deux sont verrouillées par `piece-accent-contrast.regression.test.ts`.
+	   Le repli `--primary` couvre les bijoux sans couleur exploitable.
+	   ========================================== */
+	.piece-field {
+		background-color: var(--piece-accent, var(--primary));
+		color: var(--foreground);
+		/* Le repeint EST l'argument de la direction : choisir une autre couleur
+		   dans le nuancier repeint la fiche, pas seulement la photo. La durée et
+		   la courbe sortent des tokens (`--duration-slow` / `--ease-smooth-out`),
+		   pas d'un réglage improvisé. */
+		transition: background-color var(--duration-slow) var(--ease-smooth-out);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.polaroid-hover,
-		.polaroid-hover:hover {
+		.piece-field {
 			transition: none;
-			transform: rotate(var(--polaroid-rotate));
 		}
+	}
+
+	/* ==========================================
+	   GALLERY MOUNT — le carton de la galerie produit (« Le carnet »)
+
+	   La photo est montée sur un carton d'encadrement : c'est lui qui porte le
+	   chrome (numéro de vue, loupe, chevrons à cheval sur le bord), plus rien ne
+	   flotte au-dessus du bijou.
+
+	   La teinte vient de `--piece-accent`, posée par `ProductAccentScope` sur
+	   l'`<article>` de la fiche depuis la couleur de la variante affichée
+	   (normalisée en OKLCh par `modules/media/services/gallery-accent.service.ts`)
+	   et retombe sur le rose signature hors variante colorée. Elle vivait avant
+	   sur le seul `<div>` de la galerie sous le nom `--gallery-accent` : elle ne
+	   pouvait donc teinter que ce carton, sur une boutique dont le positionnement
+	   est précisément la couleur. Le carton n'en est plus qu'un consommateur
+	   parmi l'aplat du prix, le nuancier et le CTA.
+
+	   ⚠️ Ici elle reste employée en **halo et en ruban** — jamais en encre.
+	   L'invariant général, lui, est plus large : le service borne la clarté
+	   (`L ∈ [0,62 ; 0,84]`), donc un aplat d'accent peut porter du texte en
+	   `--foreground` (5,08:1 au pire), mais jamais l'inverse.
+	   ========================================== */
+	.gallery-mount {
+		--gallery-accent-resolved: var(--piece-accent, var(--primary));
+		background-color: var(--card);
+		box-shadow:
+			0 0 0 3px var(--gallery-accent-resolved),
+			0 22px 44px -20px color-mix(in oklab, var(--gallery-accent-resolved) 70%, transparent),
+			0 1px 3px oklch(0 0 0 / 0.09);
 	}
 
 	/* ==========================================

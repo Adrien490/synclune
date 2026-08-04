@@ -23,7 +23,7 @@ import { usePathname } from "next/navigation";
 // GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
 // pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
 import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
-import { Menu } from "lucide-react";
+import { ListIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 import {
 	ADMIN_MENU_SHEET_CONTENT_ID,
@@ -137,7 +137,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 						aria-label="Menu de navigation"
 					>
 						{isMenuOpen && <BottomBarActivePill groupId="admin-nav" />}
-						<Menu className={bottomBarIconClass} aria-hidden="true" />
+						<ListIcon className={bottomBarIconClass} aria-hidden="true" />
 						<span className={bottomBarLabelClass}>Menu</span>
 					</button>
 				</li>
