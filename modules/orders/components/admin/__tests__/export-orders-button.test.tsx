@@ -110,9 +110,9 @@ vi.mock("@/shared/components/ui/label", () => ({
 	Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
 }));
 
-vi.mock("lucide-react", () => ({
-	Download: () => <svg data-testid="icon-download" />,
-	Loader2Icon: () => <svg data-testid="icon-loader" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	DownloadSimpleIcon: () => <svg data-testid="icon-download" />,
+	SpinnerIcon: () => <svg data-testid="icon-loader" />,
 }));
 
 const { mockToast } = vi.hoisted(() => {

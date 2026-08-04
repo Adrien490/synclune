@@ -108,9 +108,9 @@ vi.mock("@/shared/components/required-fields-note", () => ({
 	RequiredFieldsNote: () => <p>* Champs obligatoires</p>,
 }));
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const stub = () => <svg />;
-	return { Link2: stub, Loader2Icon: stub, Mail: stub, Truck: stub };
+	return { LinkIcon: stub, SpinnerIcon: stub, EnvelopeIcon: stub, TruckIcon: stub };
 });
 
 function openDialog(orderId = "order-1", orderNumber = "CMD-001") {

@@ -94,9 +94,13 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 						</DetailInfoRow>
 						{!order.actualDelivery && (
 							<DetailInfoRow label="Livraison estimée">
-								{format(estimateDeliveryDate(order.shippedAt, order.shippingCountry), "d MMMM yyyy", {
-									locale: fr,
-								})}
+								{format(
+									estimateDeliveryDate(order.shippedAt, order.shippingCountry),
+									"d MMMM yyyy",
+									{
+										locale: fr,
+									},
+								)}
 							</DetailInfoRow>
 						)}
 					</DetailInfoList>

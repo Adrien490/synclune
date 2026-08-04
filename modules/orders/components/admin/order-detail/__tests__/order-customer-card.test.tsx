@@ -30,11 +30,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Phone: () => <svg aria-hidden="true" />,
-	User: () => <svg aria-hidden="true" />,
-	ExternalLink: () => <svg aria-hidden="true" />,
-	Pencil: () => <svg aria-hidden="true" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	PhoneIcon: () => <svg aria-hidden="true" />,
+	UserIcon: () => <svg aria-hidden="true" />,
+	ArrowSquareOutIcon: () => <svg aria-hidden="true" />,
+	PencilSimpleIcon: () => <svg aria-hidden="true" />,
 }));
 
 vi.mock("next/link", () => ({

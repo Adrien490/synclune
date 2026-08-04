@@ -14,9 +14,9 @@ vi.mock("@/shared/components/ui/button", () => ({
 	Button: (props: RenderPropMockProps) => renderPropMock("button", props),
 }));
 
-vi.mock("lucide-react", () => ({
-	CreditCard: () => <svg aria-hidden="true" />,
-	ExternalLink: () => <svg aria-hidden="true" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CreditCardIcon: () => <svg aria-hidden="true" />,
+	ArrowSquareOutIcon: () => <svg aria-hidden="true" />,
 }));
 
 vi.mock("date-fns", () => ({

@@ -18,11 +18,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	Button: (props: RenderPropMockProps) => renderPropMock("button", props),
 }));
 
-vi.mock("lucide-react", () => ({
-	RotateCcw: () => <svg aria-hidden="true" />,
-	ExternalLink: () => <svg aria-hidden="true" />,
-	Plus: () => <svg aria-hidden="true" />,
-	Banknote: () => <svg aria-hidden="true" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowCounterClockwiseIcon: () => <svg aria-hidden="true" />,
+	ArrowSquareOutIcon: () => <svg aria-hidden="true" />,
+	PlusIcon: () => <svg aria-hidden="true" />,
+	MoneyIcon: () => <svg aria-hidden="true" />,
 }));
 
 vi.mock("next/link", () => ({
