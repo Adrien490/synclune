@@ -175,14 +175,6 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		});
 		expect(result.processed).toBe(1);
 		expect(result.invoiceNumberRecovered).toBe(1);
-		expect(mockCreateOrderAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				orderId: "order-1",
-				action: "INVOICE_RECONCILED",
-				source: "SYSTEM",
-				authorName: "Système (reconcile-invoices)",
-			}),
-		);
 	});
 
 	it("Pass 2: re-archives PDF when invoiceNumber set but invoicePdfUrl missing", async () => {
@@ -263,7 +255,7 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		expect(mockLogger.error).toHaveBeenCalled();
 	});
 
-	it("resets invoiceRetryDeferred=false on full successful recovery + writes audit trail", async () => {
+	it("resets invoiceRetryDeferred=false on full successful recovery", async () => {
 		mockPrisma.order.findMany.mockResolvedValueOnce([
 			buildCandidate({ invoicePdfUrl: "https://utfs.io/existing.pdf" }),
 		]);
@@ -280,14 +272,6 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		);
 		expect(resetCall).toBeDefined();
 		expect(resetCall?.[0]?.data).toEqual({ invoiceRetryDeferred: false });
-		expect(mockCreateOrderAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "INVOICE_RECONCILED",
-				metadata: expect.objectContaining({
-					invoiceNumberRecovered: true,
-				}),
-			}),
-		);
 	});
 
 	it("filters candidates by (DLQ flag OR unarchived credit note) + paidAt>6h (MIN_AGE_MS quarantine)", async () => {

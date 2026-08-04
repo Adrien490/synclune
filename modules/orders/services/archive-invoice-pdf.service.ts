@@ -1,10 +1,8 @@
 import { createHash } from "node:crypto";
-import { HistorySource, OrderAction } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { utapi } from "@/shared/lib/uploadthing";
 import { sendAdminPdfArchiveFailedAlert } from "@/modules/emails/services/admin-emails";
-import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
 
 /**
  * Trace audit immuable + alerte admin pour échec archivage. Best-effort,
@@ -24,18 +22,6 @@ async function flagPdfArchiveFailure(
 			select: { orderNumber: true },
 		});
 
-		await createOrderAudit({
-			orderId,
-			action: OrderAction.PDF_ARCHIVE_FAILED,
-			source: HistorySource.SYSTEM,
-			authorName: "Système (archive-invoice-pdf)",
-			note: `Archivage PDF UploadThing échoué — flag invoiceRetryDeferred posé`,
-			metadata: {
-				invoiceNumber,
-				errorMessage: errorMessage.slice(0, 500),
-				deferredAt: new Date().toISOString(),
-			},
-		});
 
 		await sendAdminPdfArchiveFailedAlert({
 			orderId,
@@ -108,14 +94,11 @@ export async function archiveInvoicePdf(
 			return null;
 		}
 
-		// Audit-tracé : INVOICE_ARCHIVED dans la même tx que l'update Order.
-		// (EINV-PDF-006 — Art. L123-22 : mutations critiques du dossier comptable
-		// doivent apparaître dans OrderHistory, ici l'archivage du PDF).
 		// IDEM-PDF-001 (audit idempotence 2026-07-02) : le check d'existence en
 		// tête de fonction est HORS transaction — une course eager (webhook) vs
 		// lazy (route download) vs Passe 2 cron uploadait deux fichiers puis
 		// écrasait la colonne (last-write-wins) + doublait l'audit
-		// INVOICE_ARCHIVED. Le claim `updateMany({invoicePdfUrl: null})`
+		// l'archive. Le claim `updateMany({invoicePdfUrl: null})`
 		// ré-évalue le prédicat au lock de ligne : un seul archiveur gagne,
 		// le perdant supprime son upload orphelin et sert l'archive gagnante.
 		const claim = await prisma.$transaction(async (tx) => {
@@ -139,17 +122,6 @@ export async function archiveInvoicePdf(
 				return { won: false as const };
 			}
 
-			await createOrderAuditTx(tx, {
-				orderId,
-				action: OrderAction.INVOICE_ARCHIVED,
-				source: HistorySource.SYSTEM,
-				authorName: "Système (archive-invoice-pdf)",
-				note: `Facture ${invoiceNumber} archivée sur UploadThing`,
-				metadata: {
-					invoiceNumber,
-					invoicePdfHash: hash,
-				},
-			});
 			return { won: true as const };
 		});
 

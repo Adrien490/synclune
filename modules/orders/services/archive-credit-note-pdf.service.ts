@@ -1,10 +1,8 @@
 import { createHash } from "node:crypto";
-import { HistorySource, OrderAction } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { utapi } from "@/shared/lib/uploadthing";
 import { sendAdminCreditNotePdfArchiveFailedAlert } from "@/modules/emails/services/admin-emails";
-import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
 
 /**
  * Trace audit immuable + alerte admin pour échec archivage avoir. Best-effort,
@@ -24,18 +22,6 @@ async function flagCreditNotePdfArchiveFailure(
 			select: { orderNumber: true },
 		});
 
-		await createOrderAudit({
-			orderId,
-			action: OrderAction.PDF_ARCHIVE_FAILED,
-			source: HistorySource.SYSTEM,
-			authorName: "Système (archive-credit-note-pdf)",
-			note: `Archivage PDF avoir UploadThing échoué — flag invoiceRetryDeferred posé`,
-			metadata: {
-				creditNoteNumber,
-				errorMessage: errorMessage.slice(0, 500),
-				deferredAt: new Date().toISOString(),
-			},
-		});
 
 		await sendAdminCreditNotePdfArchiveFailedAlert({
 			orderId,
@@ -114,9 +100,6 @@ export async function archiveCreditNotePdf(
 			return null;
 		}
 
-		// Audit-tracé : CREDIT_NOTE_ARCHIVED dans la même tx que l'update Order
-		// (Art. L123-22 : mutations critiques du dossier comptable visibles dans
-		// OrderHistory, ici l'archivage du PDF avoir).
 		// IDEM-PDF-001 : claim conditionnel ré-évalué au lock de ligne — cf.
 		// archive-invoice-pdf.service.ts (course eager/lazy/cron = double upload
 		// + double audit sans ce claim). Le perdant supprime son upload orphelin.
@@ -137,17 +120,6 @@ export async function archiveCreditNotePdf(
 				return { won: false as const };
 			}
 
-			await createOrderAuditTx(tx, {
-				orderId,
-				action: OrderAction.CREDIT_NOTE_ARCHIVED,
-				source: HistorySource.SYSTEM,
-				authorName: "Système (archive-credit-note-pdf)",
-				note: `Avoir ${creditNoteNumber} archivé sur UploadThing`,
-				metadata: {
-					creditNoteNumber,
-					creditNotePdfHash: hash,
-				},
-			});
 			return { won: true as const };
 		});
 

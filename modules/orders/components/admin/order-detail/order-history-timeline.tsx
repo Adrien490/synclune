@@ -13,7 +13,6 @@ import {
 	MapPinIcon,
 	PackageIcon,
 	TruckIcon,
-	WarningIcon,
 	XCircleIcon,
 } from "@phosphor-icons/react/ssr";
 import { Badge } from "@/shared/components/ui/badge";
@@ -98,12 +97,6 @@ const ACTION_CONFIG: Record<
 		label: "Facture générée",
 		symbol: "📄",
 	},
-	INVOICE_GENERATION_FAILED: {
-		icon: WarningIcon,
-		color: "text-destructive",
-		label: "Échec génération facture",
-		symbol: "⚠",
-	},
 	REFUND_CREATED: {
 		icon: ArrowCounterClockwiseIcon,
 		color: "text-warning",
@@ -145,36 +138,6 @@ const ACTION_CONFIG: Record<
 		color: "text-warning",
 		label: "Avoir émis",
 		symbol: "↺",
-	},
-	CREDIT_NOTE_ARCHIVED: {
-		icon: FileTextIcon,
-		color: "text-warning",
-		label: "PDF avoir archivé",
-		symbol: "🔒",
-	},
-	INVOICE_ARCHIVED: {
-		icon: FileTextIcon,
-		color: "text-success",
-		label: "PDF facture archivé",
-		symbol: "🔒",
-	},
-	PDF_ARCHIVE_FAILED: {
-		icon: WarningIcon,
-		color: "text-destructive",
-		label: "Échec archivage PDF",
-		symbol: "⚠",
-	},
-	CREDIT_NOTE_FAILED: {
-		icon: WarningIcon,
-		color: "text-destructive",
-		label: "Échec émission avoir",
-		symbol: "⚠",
-	},
-	INVOICE_RECONCILED: {
-		icon: CheckCircleIcon,
-		color: "text-success",
-		label: "Facture rattrapée (cron)",
-		symbol: "🔄",
 	},
 	// ⚠️ Ces deux entrées restent OBLIGATOIRES (`ACTION_CONFIG` est un
 	// `Record<OrderAction, …>`, le compilateur les exige) mais ne sont plus

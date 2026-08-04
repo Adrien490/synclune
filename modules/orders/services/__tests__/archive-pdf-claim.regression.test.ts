@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * isolée HORS transaction. Une course archivage eager (webhook) vs lazy (route
  * download) vs Passe 2 du cron reconcile-invoices lisait deux fois `null`,
  * uploadait DEUX fichiers UploadThing, écrasait la colonne (last-write-wins)
- * et doublait l'audit INVOICE_ARCHIVED (Art. L123-22).
+ * et écrasait la colonne d'archive (last-write-wins).
  *
  * Fix : claim `updateMany({id, invoicePdfUrl: null})` ré-évalué au lock de
  * ligne — un seul archiveur gagne ; le perdant supprime son upload orphelin,
@@ -79,8 +79,6 @@ describe("@regression IDEM-PDF-001 — claim conditionnel sur l'archivage factur
 
 		// Le fichier uploadé en double est nettoyé (best-effort).
 		expect(mockUtapi.deleteFiles).toHaveBeenCalledWith(["loser-key"]);
-		// Pas de 2ᵉ audit INVOICE_ARCHIVED.
-		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 		// On sert l'archive du gagnant (immuabilité L102 B préservée).
 		expect(result).toEqual({
 			invoicePdfUrl: "https://ufs.example/winner.pdf",
@@ -88,7 +86,7 @@ describe("@regression IDEM-PDF-001 — claim conditionnel sur l'archivage factur
 		});
 	});
 
-	it("claim GAGNÉ : archive posée via updateMany conditionnel + audit unique", async () => {
+	it("claim GAGNÉ : archive posée via updateMany conditionnel", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({ invoicePdfUrl: null, invoicePdfHash: null });
 		mockUtapi.uploadFiles.mockResolvedValue([
 			{ data: { ufsUrl: "https://ufs.example/inv.pdf", key: "key-1" } },
@@ -103,7 +101,6 @@ describe("@regression IDEM-PDF-001 — claim conditionnel sur l'archivage factur
 			}),
 		);
 		expect(mockUtapi.deleteFiles).not.toHaveBeenCalled();
-		expect(mockCreateOrderAuditTx).toHaveBeenCalledTimes(1);
 		expect(result?.invoicePdfUrl).toBe("https://ufs.example/inv.pdf");
 	});
 });

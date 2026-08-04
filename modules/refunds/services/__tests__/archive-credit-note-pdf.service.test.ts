@@ -5,11 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * Archivage PDF avoir partiel (Refund.creditNotePdf*) — symétrique à
  * `orders/archive-invoice-pdf.service.ts` (IDEM-PDF-001 : claim conditionnel).
  *
- * Verrouille notamment l'action d'audit : un avoir archivé doit tracer
- * CREDIT_NOTE_ARCHIVED (et non INVOICE_ARCHIVED — régression audit PDF facture
- * immuable 2026-07-10 : le trail comptable Art. L123-22 confondait les deux
- * artefacts, alignement avec `orders/archive-credit-note-pdf.service.ts` et la
- * branche repair de `verify-pdf-archive-integrity.service.ts`).
+ * ⚠️ Ce fichier verrouillait aussi l'action d'audit (CREDIT_NOTE_ARCHIVED vs
+ * INVOICE_ARCHIVED). Les deux valeurs ont été retirées d'`OrderAction` le
+ * 2026-08-05 : l'archivage est DÉRIVABLE de `creditNotePdfUrl`. Ce qui reste
+ * verrouillé ici — et qui compte — est le claim conditionnel et le hash réel.
  */
 
 const { mockPrisma, mockUtapi, mockLogger, mockCreateOrderAuditTx, mockCreateOrderAudit } =
@@ -61,7 +60,7 @@ function makeRefundRow(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-describe("archiveCreditNotePdf (Refund) — claim conditionnel + audit CREDIT_NOTE_ARCHIVED", () => {
+describe("archiveCreditNotePdf (Refund) — claim conditionnel", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockPrisma) => unknown) =>
@@ -70,7 +69,7 @@ describe("archiveCreditNotePdf (Refund) — claim conditionnel + audit CREDIT_NO
 		mockUtapi.deleteFiles.mockResolvedValue({ success: true });
 	});
 
-	it("claim GAGNÉ : hash SHA-256 réel persisté + audit unique CREDIT_NOTE_ARCHIVED (pas INVOICE_ARCHIVED)", async () => {
+	it("claim GAGNÉ : hash SHA-256 réel persisté", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefundRow());
 		mockUtapi.uploadFiles.mockResolvedValue([
 			{ data: { ufsUrl: "https://ufs.example/cn.pdf", key: "key-1" } },
@@ -86,19 +85,6 @@ describe("archiveCreditNotePdf (Refund) — claim conditionnel + audit CREDIT_NO
 				creditNotePdfHash: sampleHash,
 			},
 		});
-		expect(mockCreateOrderAuditTx).toHaveBeenCalledTimes(1);
-		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
-			mockPrisma,
-			expect.objectContaining({
-				orderId: "order-1",
-				action: OrderAction.CREDIT_NOTE_ARCHIVED,
-				metadata: expect.objectContaining({
-					refundId: REFUND_ID,
-					creditNoteNumber: CREDIT_NOTE_NUMBER,
-					creditNotePdfHash: sampleHash,
-				}),
-			}),
-		);
 		expect(result).toEqual({
 			creditNotePdfUrl: "https://ufs.example/cn.pdf",
 			creditNotePdfHash: sampleHash,
@@ -117,7 +103,6 @@ describe("archiveCreditNotePdf (Refund) — claim conditionnel + audit CREDIT_NO
 
 		expect(mockUtapi.uploadFiles).not.toHaveBeenCalled();
 		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
-		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 		expect(result).toEqual({
 			creditNotePdfUrl: "https://ufs.example/existing.pdf",
 			creditNotePdfHash: "a".repeat(64),
@@ -143,7 +128,6 @@ describe("archiveCreditNotePdf (Refund) — claim conditionnel + audit CREDIT_NO
 		const result = await archiveCreditNotePdf(REFUND_ID, CREDIT_NOTE_NUMBER, sampleBytes);
 
 		expect(mockUtapi.deleteFiles).toHaveBeenCalledWith(["loser-key"]);
-		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 		expect(result).toEqual({
 			creditNotePdfUrl: "https://ufs.example/winner.pdf",
 			creditNotePdfHash: "c".repeat(64),

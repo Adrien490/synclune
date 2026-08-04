@@ -1,4 +1,3 @@
-import { HistorySource, OrderAction } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminInvoiceFailedAlert } from "@/modules/emails/services/admin-emails";
@@ -8,7 +7,6 @@ import { archiveInvoicePdf } from "./archive-invoice-pdf.service";
 import { persistInvoiceNumber } from "./persist-invoice-number.service";
 import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
-import { createOrderAudit } from "../utils/order-audit";
 import type { GetOrderReturn } from "../types/order.types";
 
 /**
@@ -33,17 +31,6 @@ export async function flagInvoiceFailureForReconcile(
 			},
 		});
 
-		await createOrderAudit({
-			orderId,
-			action: OrderAction.INVOICE_GENERATION_FAILED,
-			source: HistorySource.SYSTEM,
-			authorName: "Système (ensure-invoice-number)",
-			note: `Génération facture échouée — flag invoiceRetryDeferred posé (cron reconcile-invoices rejouera)`,
-			metadata: {
-				errorMessage: errorMessage.slice(0, 500),
-				deferredAt: new Date().toISOString(),
-			},
-		});
 
 		await sendAdminInvoiceFailedAlert({
 			orderId,

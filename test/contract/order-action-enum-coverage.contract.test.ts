@@ -179,8 +179,15 @@ describe("@regression ord-test-029 — OrderAction enum coverage", () => {
 	const values = extractEnumValues(enumName);
 	const sites = findCallSites(enumName, values);
 
-	it("schema.prisma exposes at least 25 OrderAction values (audit trail breadth)", () => {
-		expect(values.length).toBeGreaterThanOrEqual(25);
+	// Plancher 25 → 20 le 2026-08-05 : `OrderHistory` est recentré sur les
+	// TRANSITIONS. Les 6 valeurs de plomberie facture retirées (INVOICE_ARCHIVED,
+	// CREDIT_NOTE_ARCHIVED, PDF_ARCHIVE_FAILED, CREDIT_NOTE_FAILED,
+	// INVOICE_GENERATION_FAILED, INVOICE_RECONCILED) redisaient un état DÉRIVABLE
+	// des colonnes (`invoicePdfUrl`, `creditNotePdfUrl`, `invoiceRetryDeferred`),
+	// et l'alerte réelle — e-mail admin + Sentry — ne passait pas par elles.
+	// ⚠️ Ce plancher garde son rôle : il empêche que l'enum se vide par dérive.
+	it("schema.prisma exposes at least 20 OrderAction values (audit trail breadth)", () => {
+		expect(values.length).toBeGreaterThanOrEqual(20);
 	});
 
 	describe("each OrderAction value has at least one application call-site", () => {

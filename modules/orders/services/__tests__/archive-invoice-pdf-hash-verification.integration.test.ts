@@ -182,24 +182,4 @@ describeIntegration("archiveInvoicePdf — hash verification (EINV-TEST-013)", (
 		expect(persisted.invoicePdfHash).toBe(hash1);
 	});
 
-	it("OrderHistory contient INVOICE_ARCHIVED après archivage réussi", async () => {
-		const user = await createTestUser();
-		const product = await createTestProduct();
-		const sku = await createTestSku(product.id);
-		const order = await createPaidOrder(prisma, user.id, sku.id);
-
-		const pdfBuffer = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
-		const expectedHash = createHash("sha256").update(pdfBuffer).digest("hex");
-
-		await archiveInvoicePdf(order.id, order.invoiceNumber!, pdfBuffer);
-
-		const history = await prisma.orderHistory.findFirst({
-			where: { orderId: order.id, action: "INVOICE_ARCHIVED" },
-		});
-
-		expect(history).not.toBeNull();
-		const meta = history!.metadata as { invoicePdfHash?: string; invoiceNumber?: string };
-		expect(meta.invoicePdfHash).toBe(expectedHash);
-		expect(meta.invoiceNumber).toBe(order.invoiceNumber);
-	});
 });

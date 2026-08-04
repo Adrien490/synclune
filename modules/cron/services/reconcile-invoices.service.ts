@@ -2,7 +2,6 @@ import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import * as Sentry from "@sentry/nextjs";
 import {
 	HistorySource,
-	OrderAction,
 	PaymentStatus,
 	InvoiceStatus,
 	RefundStatus,
@@ -23,7 +22,6 @@ import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { GET_ORDER_SELECT_ADMIN } from "@/modules/orders/constants/order.constants";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
-import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 
 const CRON_JOB = "reconcile-invoices";
@@ -333,8 +331,8 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		// dédoublonnait rien — il ne tolérait que deux échecs transitoires.
 		//
 		// Or l'admin est déjà prévenue à J+0, au moment de l'échec, par
-		// `flagInvoiceFailureForReconcile` (`sendAdminInvoiceFailedAlert` + audit
-		// `INVOICE_GENERATION_FAILED`). Le retard n'ajoutait donc aucun signal, et
+		// `flagInvoiceFailureForReconcile` (`sendAdminInvoiceFailedAlert`). Le
+		// retard n'ajoutait donc aucun signal, et
 		// l'anomalie reste visible en permanence dans l'écran Facturation via
 		// `invoiceRetryDeferred`, qui LUI est conservé — c'est le prédicat
 		// d'appartenance à la file, celui qui fait rejouer la commande demain.
@@ -364,19 +362,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	await prisma.order.update({
 		where: { id: order.id },
 		data: { invoiceRetryDeferred: false },
-	});
-	await createOrderAudit({
-		orderId: order.id,
-		action: OrderAction.INVOICE_RECONCILED,
-		source: HistorySource.SYSTEM,
-		authorName: "Système (reconcile-invoices)",
-		note: "Anomalie facture rattrapée par cron",
-		metadata: {
-			invoiceNumberRecovered,
-			pdfArchiveRecovered,
-			creditNoteRecovered,
-			creditNotePdfRecovered,
-		},
 	});
 	return {
 		kind: "recovered",

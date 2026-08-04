@@ -327,6 +327,13 @@ enum PaymentStatus {
   REFUNDED
 }
 
+// Réduit aux TRANSITIONS et aux jalons de facturation lisibles dans la timeline
+// (2026-08-05). Les 6 valeurs de plomberie retirées — INVOICE_GENERATION_FAILED,
+// INVOICE_ARCHIVED, CREDIT_NOTE_ARCHIVED, PDF_ARCHIVE_FAILED, CREDIT_NOTE_FAILED,
+// INVOICE_RECONCILED — traçaient des étapes techniques dont l'état est DÉRIVABLE
+// (`invoicePdfUrl`, `creditNotePdfUrl`, `invoiceRetryDeferred`) et dont l'alerte
+// réelle est ailleurs : e-mail admin + Sentry, tous deux conservés. Elles
+// noyaient les événements métier de la fiche commande.
 enum OrderAction {
   CREATED
   PAID
@@ -339,19 +346,13 @@ enum OrderAction {
   TRACKING_UPDATED
   ADDRESS_UPDATED
   INVOICE_GENERATED
-  INVOICE_GENERATION_FAILED
   REFUND_CREATED
   REFUND_COMPLETED
   REFUND_FAILED
   DISPUTE_OPENED
   DISPUTE_RESOLVED
   INVOICE_VOIDED
-  INVOICE_ARCHIVED
-  PDF_ARCHIVE_FAILED
-  CREDIT_NOTE_FAILED
   CREDIT_NOTE_GENERATED
-  CREDIT_NOTE_ARCHIVED
-  INVOICE_RECONCILED
   INVOICE_DOWNLOADED
   BULK_EXPORT
 }

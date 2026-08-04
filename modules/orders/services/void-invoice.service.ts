@@ -1,4 +1,5 @@
-import { Prisma, OrderAction, InvoiceStatus, HistorySource } from "@/app/generated/prisma/client";
+import { Prisma, OrderAction, InvoiceStatus } from "@/app/generated/prisma/client";
+import type { HistorySource } from "@/app/generated/prisma/client";
 import { BusinessError } from "@/shared/lib/actions/business-error";
 import { prisma } from "@/shared/lib/prisma";
 import {
@@ -18,7 +19,7 @@ import {
 } from "@/modules/invoices/services/credit-note-sequence.service";
 import { getParisDateParts } from "@/shared/utils/timezone";
 import { getOrderInvalidationTags } from "../constants/cache";
-import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
+import { createOrderAuditTx } from "../utils/order-audit";
 import { ensureOrderCreditNoteArchived } from "./ensure-credit-note-archived.service";
 
 /**
@@ -35,18 +36,6 @@ async function flagCreditNoteFailure(orderId: string, errorMessage: string): Pro
 			select: { orderNumber: true, invoiceNumber: true },
 		});
 
-		await createOrderAudit({
-			orderId,
-			action: OrderAction.CREDIT_NOTE_FAILED,
-			source: HistorySource.SYSTEM,
-			authorName: "Système (void-invoice)",
-			note: `Émission avoir échouée — flag invoiceRetryDeferred posé (cron reconcile-invoices rejouera)`,
-			metadata: {
-				invoiceNumber: order.invoiceNumber ?? undefined,
-				errorMessage: errorMessage.slice(0, 500),
-				deferredAt: new Date().toISOString(),
-			},
-		});
 
 		if (order.invoiceNumber) {
 			await sendAdminCreditNoteFailedAlert({

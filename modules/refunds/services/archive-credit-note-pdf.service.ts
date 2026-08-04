@@ -1,10 +1,8 @@
 import { createHash } from "node:crypto";
-import { HistorySource, OrderAction } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { utapi } from "@/shared/lib/uploadthing";
 import { sendAdminCreditNotePdfArchiveFailedAlert } from "@/modules/emails/services/admin-emails";
-import { createOrderAudit, createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 
 /**
  * Trace audit + alerte admin pour échec archivage avoir partiel. Best-effort,
@@ -21,19 +19,6 @@ async function flagCreditNotePdfArchiveFailure(
 	errorMessage: string,
 ): Promise<void> {
 	try {
-		await createOrderAudit({
-			orderId,
-			action: OrderAction.PDF_ARCHIVE_FAILED,
-			source: HistorySource.SYSTEM,
-			authorName: "Système (archive-credit-note-pdf)",
-			note: `Archivage PDF avoir UploadThing échoué — rattrapage cron requis`,
-			metadata: {
-				refundId,
-				creditNoteNumber,
-				errorMessage: errorMessage.slice(0, 500),
-				deferredAt: new Date().toISOString(),
-			},
-		});
 
 		const order = await prisma.order.findUnique({
 			where: { id: orderId },
@@ -144,18 +129,6 @@ export async function archiveCreditNotePdf(
 				return { won: false as const };
 			}
 
-			await createOrderAuditTx(tx, {
-				orderId: refund.orderId,
-				action: OrderAction.CREDIT_NOTE_ARCHIVED,
-				source: HistorySource.SYSTEM,
-				authorName: "Système (archive-credit-note-pdf)",
-				note: `Avoir ${creditNoteNumber} archivé sur UploadThing`,
-				metadata: {
-					refundId,
-					creditNoteNumber,
-					creditNotePdfHash: hash,
-				},
-			});
 			return { won: true as const };
 		});
 

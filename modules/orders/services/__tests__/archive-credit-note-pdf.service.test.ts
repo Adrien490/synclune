@@ -94,14 +94,6 @@ describe("archiveCreditNotePdf", () => {
 			}),
 		);
 		// F2 : audit trail CREDIT_NOTE_ARCHIVED émis dans la même tx.
-		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
-			mockPrisma,
-			expect.objectContaining({
-				orderId: "order-1",
-				action: OrderAction.CREDIT_NOTE_ARCHIVED,
-				metadata: expect.objectContaining({ creditNoteNumber: "A-2026-00001" }),
-			}),
-		);
 		expect(mockSendAdminAlert).not.toHaveBeenCalled();
 	});
 
@@ -119,7 +111,6 @@ describe("archiveCreditNotePdf", () => {
 		});
 		expect(mockUtapi.uploadFiles).not.toHaveBeenCalled();
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
-		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 	});
 
 	it("flags retry + alerts admin when UploadThing returns no ufsUrl", async () => {
