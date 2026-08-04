@@ -126,7 +126,6 @@ const validFormData = createMockFormData({
 
 function createShippedOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
-		userId: VALID_USER_ID,
 		status: "SHIPPED",
 		paymentStatus: "PAID",
 		fulfillmentStatus: "SHIPPED",

@@ -16,7 +16,6 @@ import {
 	invoiceTokenSchema,
 } from "@/modules/orders/schemas/order-route-params.schema";
 import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
-import { isInvoiceOwnerErased } from "@/modules/orders/utils/invoice-access-guard";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
@@ -195,21 +194,11 @@ export async function GET(
 	const tokenValid =
 		tokenFromQuery !== null &&
 		verifyInvoiceAccessToken(order.id, order.orderNumber, tokenFromQuery);
-	const sessionOwns = !!session?.user.id && order.userId === session.user.id;
 	// EINV-SEC-003 : 404 (pas 403) sur accès non autorisé — réponse indistincte du
 	// cas "commande inexistante" pour ne pas révéler l'existence d'une commande
 	// (anti-énumération, défense en profondeur en plus de l'entropie de orderNumber).
-	if (!isAdmin && !sessionOwns && !tokenValid) {
+	if (!isAdmin && !tokenValid) {
 		return new Response("Commande introuvable", { status: 404 });
-	}
-
-	// EINV-SEC-002 : l'accès restant non-admin/non-owner est forcément par token.
-	// Une fois le compte propriétaire anonymisé (RGPD Art. 17), on révoque le token
-	// permanent : il ne doit plus servir le PDF figé contenant l'identité d'origine.
-	if (!isAdmin && !sessionOwns && (await isInvoiceOwnerErased(order.userId))) {
-		return new Response("Ce document n'est plus accessible (compte supprimé).", {
-			status: 410,
-		});
 	}
 
 	// Une facture n'existe que pour une commande ENCAISSÉE (Art. 289-I) — miroir de
@@ -238,7 +227,7 @@ export async function GET(
 	let invoicePath: InvoicePath = "archived";
 	if (!order.invoiceNumber) {
 		invoicePath = "lazy_generate_number";
-		const result = await persistInvoiceNumber(order.id, order.userId);
+		const result = await persistInvoiceNumber(order.id);
 		if (result) {
 			invoiceOrder = {
 				...order,

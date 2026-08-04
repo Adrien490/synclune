@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_ADJUST_STOCK_LIMIT } from "@/shared/lib/rate-limit-config";
 import { STOCK_LIMITS } from "@/shared/constants/validation-limits";
@@ -17,7 +17,6 @@ import {
 import { updateTag } from "next/cache";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
-import { recordStockMovementTx } from "../services/stock-movement.service";
 
 type AffectedRow = { inventory: number };
 
@@ -31,9 +30,8 @@ export async function adjustSkuStock(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const admin = auth.user;
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_ADJUST_STOCK_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -41,14 +39,11 @@ export async function adjustSkuStock(
 		// 3. Extraire les données du FormData
 		const rawSkuId = safeFormGet(formData, "skuId");
 		const adjustmentRaw = safeFormGet(formData, "adjustment");
-		const reason = safeFormGet(formData, "reason");
 
 		// 4. Validation
 		const validation = validateInput(adjustSkuStockSchema, {
 			skuId: rawSkuId,
 			adjustment: parseInt(adjustmentRaw ?? "", 10),
-			// `.optional()` accepte `undefined`, pas `null` — `safeFormGet` rend `null`.
-			reason: reason ?? undefined,
 		});
 		if ("error" in validation) return validation.error;
 
@@ -56,10 +51,9 @@ export async function adjustSkuStock(
 		// pré-parse : celle-ci alimentait directement le `$queryRaw` plus bas, si bien
 		// qu'un futur `.transform()` / `z.coerce` sur `adjustSkuStockSchema` aurait été
 		// silencieusement sans effet sur ce qui est écrit en base.
-		const { skuId, adjustment, reason: validatedReason } = validation.data;
+		const { skuId, adjustment } = validation.data;
 
-		// 5. Métadonnées SKU AVANT l'update : fail-fast « Variante non trouvée » +
-		// `productId` requis pour l'enregistrement du mouvement de stock.
+		// 5. Métadonnées SKU AVANT l'update : fail-fast « Variante non trouvée ».
 		const sku = await prisma.productSku.findUnique({
 			// `deletedAt: null` — un SKU soft-deleted appartient à un produit lui-même
 			// supprimé (seul writer : `delete-product`), sans chemin de restauration. Aucune
@@ -78,9 +72,8 @@ export async function adjustSkuStock(
 
 		if (!sku) return error("Variante non trouvée");
 
-		// 6. Update atomique + audit StockMovement dans la MÊME transaction.
-		// `RETURNING` capture le nouvel inventaire dans le même statement (pas de race
-		// entre l'update et un read ultérieur) ; le mouvement est écrit atomiquement.
+		// 6. Update atomique : `RETURNING` capture le nouvel inventaire dans le même
+		// statement, sans race entre l'update et un read ultérieur.
 		const newInventory = await prisma.$transaction(async (tx) => {
 			let updated: AffectedRow[];
 
@@ -128,19 +121,7 @@ export async function adjustSkuStock(
 				}
 			}
 
-			const nextInventory = updated[0]!.inventory;
-
-			await recordStockMovementTx(tx, {
-				skuId: sku.id,
-				productId: sku.productId,
-				previousInventory: nextInventory - adjustment,
-				newInventory: nextInventory,
-				reason: validatedReason ?? null,
-				createdById: admin.id,
-				createdByName: admin.name ?? null,
-			});
-
-			return nextInventory;
+			return updated[0]!.inventory;
 		});
 
 		// 7. Invalider le cache avec les tags appropriés

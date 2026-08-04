@@ -9,7 +9,6 @@ const CONFIRMATION_ORDER_SELECT = {
 	id: true,
 	// EINV-SEC-001 : nécessaire pour l'ownership check côté wrapper non-caché.
 	// Ne PAS exposer userId à un composant client (server-only).
-	userId: true,
 	orderNumber: true,
 	createdAt: true,
 	customerEmail: true,
@@ -30,10 +29,10 @@ const CONFIRMATION_ORDER_SELECT = {
 		select: {
 			id: true,
 			productTitle: true,
+			productImageUrl: true,
 			skuColor: true,
 			skuMaterial: true,
 			skuSize: true,
-			skuImageUrl: true,
 			price: true,
 			quantity: true,
 		},
@@ -51,18 +50,14 @@ const confirmationParamsSchema = z.object({
  * Security :
  * - Lookup by `id` (cuid, cryptographically random) AND `orderNumber` (double verification).
  * - Soft-deleted orders excluded (`notDeleted`).
- * - EINV-SEC-001 : si la commande est rattachée à un compte (`order.userId !== null`),
- *   la session en cours doit correspondre. Les guest checkouts (`order.userId === null`)
- *   restent accessibles à toute personne ayant le couple (orderId, orderNumber) — c'est
- *   le seul moyen pour un acheteur invité d'afficher sa page post-paiement.
- *
- * @param sessionUserId — `session?.user?.id` du caller. `undefined` si non connecté.
+ * - EINV-SEC-001 : la garde d'ownership de session est partie avec `Order.userId`
+ *   (2026-08-05). Une commande n'a plus de propriétaire : l'accès repose sur la
+ *   connaissance du couple (orderId, orderNumber), dont `orderId` est un cuid2
+ *   cryptographiquement aléatoire. C'est le seul moyen pour un acheteur invité
+ *   d'afficher sa page post-paiement, et c'était déjà le chemin de 100 % des
+ *   commandes.
  */
-export async function getOrderForConfirmation(
-	orderId: string,
-	orderNumber: string,
-	sessionUserId?: string,
-) {
+export async function getOrderForConfirmation(orderId: string, orderNumber: string) {
 	const validation = confirmationParamsSchema.safeParse({ orderId, orderNumber });
 	if (!validation.success) return null;
 
@@ -71,10 +66,6 @@ export async function getOrderForConfirmation(
 		validation.data.orderNumber,
 	);
 	if (!order) return null;
-
-	if (order.userId && order.userId !== sessionUserId) {
-		return null;
-	}
 
 	return order;
 }

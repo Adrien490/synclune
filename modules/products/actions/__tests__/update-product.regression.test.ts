@@ -38,8 +38,6 @@ const {
 		color: { findMany: vi.fn() },
 		material: { findMany: vi.fn() },
 		// STOCK-PHANTOM-001 : `applyInventoryDeltaTx` prend un FOR UPDATE puis écrit
-		// un StockMovement quand le delta est non nul.
-		stockMovement: { create: vi.fn() },
 		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
@@ -228,7 +226,6 @@ describe("updateProduct — regression hardening", () => {
 		mockPrisma.productSku.update.mockResolvedValue({});
 		// Stock verrouillé aligné sur l'inventaire du produit rendu (delta 0 par défaut).
 		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 10 }]);
-		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockPrisma.productCollection.deleteMany.mockResolvedValue({});
 		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 0 });
 		mockPrisma.skuMedia.deleteMany.mockResolvedValue({});

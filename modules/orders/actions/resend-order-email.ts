@@ -78,7 +78,6 @@ export async function resendOrderEmail(
 				id: true,
 				// AUDIT-BIZ-001 : requis par `buildOrderTrackingUrl` pour router les
 				// commandes invité (userId null) vers le suivi tokenisé.
-				userId: true,
 				customerEmail: true,
 				customerName: true,
 				subtotal: true,

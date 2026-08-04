@@ -15,8 +15,6 @@ const {
 	const mockTx = {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn(), updateMany: vi.fn() },
-		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
-		stockMovement: { create: vi.fn() },
 		$queryRaw: vi.fn(),
 		cartItem: { deleteMany: vi.fn() },
 		// [[CART-DISCOUNT-003]] purge du code promo panier après paiement réussi
@@ -135,7 +133,6 @@ function makeOrderRow(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "order-1",
 		orderNumber: "SYN-002",
-		userId: "user-1",
 		customerEmail: "order@example.com",
 		paymentStatus: "PENDING",
 		shippingFirstName: "Marie",
@@ -176,7 +173,6 @@ function makeOrderWithItems(overrides: Partial<OrderWithItems> = {}): OrderWithI
 	return {
 		id: "order-1",
 		orderNumber: "SYN-002",
-		userId: "user-1",
 		customerEmail: "order@example.com",
 		shippingFirstName: "Marie",
 		shippingLastName: "Curie",
@@ -357,7 +353,7 @@ describe("processOrderFromPaymentIntent", () => {
 	 * confirmation.
 	 */
 	it("ne touche plus au panier (plus de table à purger, pas de cookie côté webhook)", async () => {
-		mockTx.order.findUnique.mockResolvedValue(makeOrderRow({ userId: null, user: null }));
+		mockTx.order.findUnique.mockResolvedValue(makeOrderRow({}));
 		const paymentIntent = makePaymentIntent({ metadata: { guestSessionId: GUEST_SESSION_ID } });
 
 		await processOrderFromPaymentIntent("order-1", paymentIntent);
@@ -463,7 +459,7 @@ describe("buildPostCheckoutTasksFromPI", () => {
 	});
 
 	it("n'émet plus de tag panier pour un invité (le panier est un cookie)", () => {
-		const order = makeOrderWithItems({ userId: null });
+		const order = makeOrderWithItems({});
 		const paymentIntent = makePaymentIntent({ metadata: { guestSessionId: GUEST_SESSION_ID } });
 
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);

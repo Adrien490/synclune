@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import { Prisma, HistorySource, PaymentStatus } from "@/app/generated/prisma/client";
-import type { VatRegime } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { BusinessError } from "@/shared/lib/actions/business-error";
 import { prisma } from "@/shared/lib/prisma";
@@ -10,8 +9,6 @@ import {
 	RETRYABLE_SEQUENCE_TX_ERROR_CODES,
 } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
-import { getVendorLegalInfo } from "@/shared/lib/stripe";
-import { normalizeFiscalIdentifier } from "@/shared/schemas/b2b-identifiers.schema";
 import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { invoiceDataSchema } from "@/modules/invoices/schemas/invoice.schema";
 import { canonicalJsonStringify } from "@/modules/invoices/utils/canonical-json";
@@ -96,7 +93,6 @@ function invoiceAdvisoryLockKey(year: number): number {
  */
 export async function persistInvoiceNumber(
 	orderId: string,
-	userId: string | null,
 	options: PersistInvoiceNumberOptions = {},
 ): Promise<PersistInvoiceNumberResult | null> {
 	const { source = HistorySource.SYSTEM, authorId, authorName } = options;
@@ -155,10 +151,6 @@ export async function persistInvoiceNumber(
 	// en UTC, donc un paiement du 31/12 23:30 UTC (= 01/01 00:30 Paris) doit porter
 	// le millésime Paris. Fallback `createdAt` si `paidAt` absent (état incohérent).
 	const year = getParisDateParts(order.paidAt ?? order.createdAt).year;
-
-	// Identité vendeur figée à l'émission (Art. L102 B LPF) — déterministe (env),
-	// donc calculable hors transaction.
-	const vendorSnapshot = buildVendorSnapshot();
 
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 		try {
@@ -266,10 +258,6 @@ export async function persistInvoiceNumber(
 						invoiceNumber,
 						invoiceStatus: "GENERATED",
 						invoiceGeneratedAt: now,
-						// Les vendor* sont écrits dans le même UPDATE — on les patche pour
-						// que `buildInvoiceData` voie l'état post-update et que le snapshot
-						// reflète l'identité figée du vendeur à T0.
-						...vendorSnapshotForOrderShape(vendorSnapshot),
 					} as GetOrderReturn;
 					const invoiceSnapshot = buildInvoiceData(orderForBuild);
 
@@ -304,7 +292,6 @@ export async function persistInvoiceNumber(
 							invoiceGeneratedAt: now,
 							invoiceDataSnapshot: JSON.parse(canonicalJson) as Prisma.InputJsonValue,
 							invoiceDataHash,
-							...vendorSnapshot,
 						},
 						select: { invoiceNumber: true, invoiceGeneratedAt: true },
 					});
@@ -387,145 +374,4 @@ export async function persistInvoiceNumber(
 	}
 
 	return null;
-}
-
-/**
- * EINV-PDF-005 : backfill du snapshot comptable (`invoiceDataSnapshot` +
- * `invoiceDataHash`) pour les factures émises AVANT l'introduction du snapshot
- * figé (numéro présent, snapshot null).
- *
- * NE GÉNÈRE PAS de numéro de facture (invariant 1 — il existe déjà) ni d'avoir.
- * Idempotent : noop si snapshot déjà présent ou si l'order n'est pas facturé.
- *
- * Pour ces factures historiques, `buildInvoiceData` résout l'identité vendeur
- * via les colonnes `vendor*` figées si présentes, sinon via l'env courant
- * (best-effort — l'env d'émission n'est pas récupérable). Le snapshot fige
- * cette résolution pour neutraliser toute dérive future (Art. L102 B LPF).
- *
- * Appelé par le cron `reconcile-invoices` (Passe 0).
- */
-export async function backfillInvoiceDataSnapshot(
-	orderId: string,
-): Promise<{ invoiceDataHash: string; invoiceDataSnapshot: Prisma.JsonValue } | null> {
-	const order = await prisma.order.findUnique({
-		where: { id: orderId },
-		select: GET_ORDER_SELECT_ADMIN,
-	});
-	if (!order || !order.invoiceNumber || !order.invoiceGeneratedAt) {
-		return null;
-	}
-	// Idempotent — snapshot déjà figé.
-	if (order.invoiceDataSnapshot != null) {
-		return null;
-	}
-
-	const invoiceData = buildInvoiceData(order as GetOrderReturn);
-	const canonicalJson = canonicalJsonStringify(invoiceData);
-	const invoiceDataHash = createHash("sha256").update(canonicalJson).digest("hex");
-	const snapshot = JSON.parse(canonicalJson) as Prisma.JsonValue;
-
-	await prisma.order.update({
-		where: { id: orderId },
-		data: {
-			invoiceDataSnapshot: snapshot as Prisma.InputJsonValue,
-			invoiceDataHash,
-		},
-	});
-
-	logger.info(`📑 Backfilled invoice data snapshot for legacy order ${orderId}`, {
-		service: "persist-invoice-number",
-		orderId,
-		invoiceNumber: order.invoiceNumber,
-	});
-
-	return { invoiceDataHash, invoiceDataSnapshot: snapshot };
-}
-
-/**
- * Fige l'identite du vendeur au moment de l'emission de la facture.
- *
- * Art. L102 B LPF : la facture doit etre reconstituable a l'identique 10 ans.
- * Si SIRET, raison sociale, regime TVA ou identifiants PDP changent (demenagement,
- * sortie franchise art. 293 B CGI, evolution forme juridique, changement de PDP),
- * les factures historiques conservent leurs valeurs d'emission.
- *
- * Les valeurs sont lues depuis getVendorLegalInfo() (env + defaults) au moment
- * de l'INSERT du numero — toute regeneration ulterieure via build-invoice-data
- * preferera ce snapshot au lieu de relire l'env actuel.
- */
-function buildVendorSnapshot(): Pick<
-	Prisma.OrderUpdateInput,
-	| "vendorLegalName"
-	| "vendorTradeName"
-	| "vendorAddress"
-	| "vendorSiren"
-	| "vendorSiret"
-	| "vendorVatNumber"
-	| "vendorVatRegime"
-	| "vendorLegalForm"
-	| "vendorApeCode"
-	| "vendorEmail"
-	| "vendorBankIban"
-	| "vendorBankBic"
-> {
-	const vendor = getVendorLegalInfo();
-	return {
-		vendorLegalName: vendor.company_legal_name,
-		vendorTradeName: vendor.company_trade_name,
-		vendorAddress: vendor.company_address,
-		// Normalise pour respecter le format canonique des CHECK DB (chiffres seuls).
-		vendorSiren: normalizeFiscalIdentifier(vendor.company_siren),
-		vendorSiret: normalizeFiscalIdentifier(vendor.company_siret),
-		vendorVatNumber: normalizeFiscalIdentifier(vendor.company_vat),
-		vendorVatRegime: parseVatRegime(vendor.company_vat_regime),
-		vendorLegalForm: vendor.company_legal_form,
-		vendorApeCode: vendor.company_ape,
-		vendorEmail: vendor.company_email,
-		// IBAN/BIC normalises (espaces strippes, majuscules) pour respecter les CHECK DB
-		// '^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$' / '^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$'.
-		vendorBankIban: normalizeBankIdentifier(vendor.bank_iban),
-		vendorBankBic: normalizeBankIdentifier(vendor.bank_bic),
-	};
-}
-
-function normalizeBankIdentifier(raw: string | null): string | null {
-	if (!raw) return null;
-	return raw.replace(/\s+/g, "").toUpperCase();
-}
-
-/**
- * Convertit une string env en VatRegime typed. Defaut FRANCHISE_BASE si valeur
- * inconnue — evite un crash silencieux sur le CHECK DB si l'env est mal config.
- */
-function parseVatRegime(raw: string): VatRegime {
-	if (raw === "NORMAL" || raw === "SIMPLIFIE" || raw === "FRANCHISE_BASE") {
-		return raw;
-	}
-	return "FRANCHISE_BASE";
-}
-
-/**
- * Cast les valeurs `Prisma.OrderUpdateInput` (wrappers `{set: ...}` possibles)
- * vers la forme plain-value attendue par `GetOrderReturn` pour le buildInvoiceData
- * en mémoire. En pratique `buildVendorSnapshot` retourne déjà des valeurs plates,
- * mais ce cast type-safe explicite documente l'intention et protégera si le
- * helper évolue vers les wrappers Prisma.
- */
-function vendorSnapshotForOrderShape(
-	snapshot: ReturnType<typeof buildVendorSnapshot>,
-): Record<string, string | null> {
-	const out: Record<string, string | null> = {};
-	for (const [key, value] of Object.entries(snapshot)) {
-		if (value === null) {
-			out[key] = null;
-		} else if (typeof value === "string") {
-			out[key] = value;
-		} else {
-			// Defensive : Prisma wrappers (`{ set: ... }`) ou autres types non-plain.
-			// `buildVendorSnapshot` ne devrait jamais produire ces formes, mais on
-			// préserve la robustesse pour l'évolution future du helper.
-			out[key] = String(value);
-		}
-	}
-	return out;
 }

@@ -10,7 +10,7 @@ import { deleteUploadThingFilesFromUrls } from "./delete-uploadthing-files.servi
  * Deux familles de références doivent survivre à un retrait de média :
  *
  * 1. MEDIA-AUDIT-003 — les snapshots de commande (`OrderItem.productImageUrl`
- *    / `skuImageUrl`) sont figés 10 ans (Art. L102 B LPF) et rendus dans le
+ *    sont figés 10 ans (Art. L102 B LPF) et rendus dans le
  *    PDF de facture : supprimer le blob fait afficher un 404 dans l'historique
  *    client. La garde vivait uniquement dans `update-product` — `update-sku`,
  *    son jumeau, supprimait sans vérifier (audit admin catalogue 2026-08-01).
@@ -38,9 +38,9 @@ async function filterDeletableCatalogMediaUrls(
 	const [referencingItems, referencingMedia] = await Promise.all([
 		prisma.orderItem.findMany({
 			where: {
-				OR: [{ productImageUrl: { in: urls } }, { skuImageUrl: { in: urls } }],
+				productImageUrl: { in: urls },
 			},
-			select: { productImageUrl: true, skuImageUrl: true },
+			select: { productImageUrl: true },
 		}),
 		prisma.skuMedia.findMany({
 			where: {
@@ -53,7 +53,6 @@ async function filterDeletableCatalogMediaUrls(
 	const referencedUrls = new Set<string>();
 	for (const item of referencingItems) {
 		if (item.productImageUrl) referencedUrls.add(item.productImageUrl);
-		if (item.skuImageUrl) referencedUrls.add(item.skuImageUrl);
 	}
 	for (const media of referencingMedia) {
 		referencedUrls.add(media.url);

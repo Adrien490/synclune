@@ -178,7 +178,6 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 					data: {
 						status: WebhookEventStatus.SKIPPED,
 						processedAt: new Date(),
-						errorMessage: null,
 					},
 				});
 				skipped++;
@@ -203,7 +202,6 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 				data: {
 					status: finalStatus,
 					processedAt: new Date(),
-					errorMessage: null,
 				},
 			});
 
@@ -226,7 +224,6 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 				where: { id: candidate.id },
 				data: {
 					status: WebhookEventStatus.FAILED,
-					errorMessage: message,
 					processedAt: new Date(),
 				},
 			});

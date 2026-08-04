@@ -55,9 +55,8 @@ async function createPaidOrderWithInvoice(
 			shippingCost: 0,
 			taxAmount: 0,
 			total: 4999,
-			currency: "EUR",
 			paymentMethod: "CARD",
-			invoiceStatus: "PENDING",
+			invoiceStatus: null,
 			items: {
 				create: [
 					{
@@ -75,7 +74,7 @@ async function createPaidOrderWithInvoice(
 			},
 		},
 	});
-	const persisted = await persistInvoiceNumber(order.id, userId);
+	const persisted = await persistInvoiceNumber(order.id);
 	if (!persisted) {
 		throw new Error(`Failed to persist invoice number for order ${order.id}`);
 	}
@@ -239,9 +238,8 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 					stripePaymentIntentId: `pi_mix_p_${i}_${Date.now()}`,
 					subtotal: 4999,
 					total: 4999,
-					currency: "EUR",
 					paymentMethod: "CARD",
-					invoiceStatus: "PENDING",
+					invoiceStatus: null,
 					items: {
 						create: [
 							{
@@ -275,7 +273,7 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 					}),
 				),
 			),
-			Promise.all(ordersForPersist.map((o) => persistInvoiceNumber(o.id, user.id))),
+			Promise.all(ordersForPersist.map((o) => persistInvoiceNumber(o.id))),
 		]);
 
 		expect(voidResults.filter((r) => r.kind === "voided")).toHaveLength(5);

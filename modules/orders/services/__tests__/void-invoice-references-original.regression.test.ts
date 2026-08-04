@@ -118,7 +118,6 @@ describe("voidInvoice — Art. 272-I CGI : avoir référence facture originale",
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue({
 			id: "order-original",
-			userId: "user-1",
 			invoiceNumber: "F-2026-00042",
 			invoiceStatus: "GENERATED",
 			invoiceVoidedAt: null,
@@ -129,7 +128,6 @@ describe("voidInvoice — Art. 272-I CGI : avoir référence facture originale",
 			invoiceVoidedAt: new Date(),
 			creditNoteNumber: "A-2026-00001",
 			creditNoteGeneratedAt: new Date(),
-			userId: "user-1",
 		});
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
 			fn(tx),
@@ -159,7 +157,6 @@ describe("voidInvoice — Art. 272-I CGI : avoir référence facture originale",
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue({
 			id: "order-no-invoice",
-			userId: "user-1",
 			invoiceNumber: null,
 			invoiceStatus: null,
 			invoiceVoidedAt: null,

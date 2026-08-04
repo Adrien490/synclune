@@ -412,22 +412,22 @@ describe("markAsFullyRefunded", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
-	describe("répartition proportionnelle du Refund manuel (arrondis)", () => {
-		function makeItem(id: string, price: number, quantity: number, refundItems: unknown[] = []) {
-			return { id, skuId: `sku-${id}`, quantity, price, refundItems };
+	// `RefundItem` est parti le 2026-08-05 : il n'y a plus de répartition par ligne,
+	// donc plus d'arrondis à absorber ni de parts nulles à écarter. Ce qui reste —
+	// et qui est le vrai invariant comptable — c'est que le Refund manuel porte
+	// EXACTEMENT le solde restant, dérivé de `order.total - Σ Refund.amount`.
+	describe("montant du Refund manuel", () => {
+		function makeItem(id: string, price: number, quantity: number) {
+			return { id, skuId: `sku-${id}`, quantity, price };
 		}
 
-		function getCreatedRefundItems() {
+		function createdRefundAmount() {
 			expect(mockPrisma.refund.create).toHaveBeenCalledTimes(1);
-			const arg = mockPrisma.refund.create.mock.calls[0]![0] as {
-				data: { amount: number; items: { create: { amount: number; quantity: number }[] } };
-			};
-			return { total: arg.data.amount, items: arg.data.items.create };
+			const arg = mockPrisma.refund.create.mock.calls[0]![0] as { data: { amount: number } };
+			return arg.data.amount;
 		}
 
-		it("le dernier item absorbe l'écart d'arrondi — sum(items) === remainingAmount", async () => {
-			// 3 items à 100 c chacun, 100 c restant à répartir : round(100/300*100)=33
-			// pour les 2 premiers, le dernier doit prendre 34 (pas 33) pour sommer à 100.
+		it("porte le SOLDE restant, pas le total de la commande", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue(
 				createMockOrder({
 					paymentStatus: "PAID",
@@ -436,61 +436,27 @@ describe("markAsFullyRefunded", () => {
 					items: [makeItem("i1", 100, 1), makeItem("i2", 100, 1), makeItem("i3", 100, 1)],
 				}),
 			);
-			const result = await markAsFullyRefunded(undefined, validFormData);
-			expect(result.status).toBe(ActionStatus.SUCCESS);
 
-			const { total, items } = getCreatedRefundItems();
-			expect(total).toBe(100);
-			expect(items.map((i) => i.amount)).toEqual([33, 33, 34]);
-			expect(items.reduce((s, i) => s + i.amount, 0)).toBe(100);
+			const result = await markAsFullyRefunded(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			expect(createdRefundAmount()).toBe(100);
 		});
 
-		it("aucune part négative ou nulle quand les arrondis à ,5 sur-allouent", async () => {
-			// 4 items de même poids, 2 c restants : chaque part vaut round(0.5)=1 —
-			// sans clamp les 3 premières allouent 3 c et la dernière tomberait à -1
-			// (violation RefundItem_amount_positive). Le clamp plafonne au restant et
-			// les parts nulles sont écartées.
-			mockPrisma.order.findUnique.mockResolvedValue(
-				createMockOrder({
-					paymentStatus: "PAID",
-					total: 6,
-					refunds: [{ amount: 4 }],
-					items: [
-						makeItem("i1", 1, 1),
-						makeItem("i2", 1, 1),
-						makeItem("i3", 1, 1),
-						makeItem("i4", 1, 1),
-					],
-				}),
-			);
-			const result = await markAsFullyRefunded(undefined, validFormData);
-			expect(result.status).toBe(ActionStatus.SUCCESS);
-
-			const { total, items } = getCreatedRefundItems();
-			expect(total).toBe(2);
-			expect(items.reduce((s, i) => s + i.amount, 0)).toBe(2);
-			for (const item of items) {
-				expect(item.amount).toBeGreaterThan(0);
-			}
-		});
-
-		it("exclut les items déjà entièrement remboursés et répartit sur le reste", async () => {
-			// i1 déjà remboursé (qty 1/1) → exclu ; tout le restant va sur i2.
+		it("porte le total quand aucun remboursement n'existe encore", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue(
 				createMockOrder({
 					paymentStatus: "PAID",
 					total: 500,
-					refunds: [{ amount: 200 }],
-					items: [makeItem("i1", 200, 1, [{ quantity: 1, amount: 200 }]), makeItem("i2", 300, 1)],
+					refunds: [],
+					items: [makeItem("i1", 500, 1)],
 				}),
 			);
-			const result = await markAsFullyRefunded(undefined, validFormData);
-			expect(result.status).toBe(ActionStatus.SUCCESS);
 
-			const { total, items } = getCreatedRefundItems();
-			expect(total).toBe(300);
-			expect(items).toHaveLength(1);
-			expect(items[0]!.amount).toBe(300);
+			const result = await markAsFullyRefunded(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			expect(createdRefundAmount()).toBe(500);
 		});
 
 		it("ne crée pas de Refund quand tout est déjà remboursé (remainingAmount <= 0)", async () => {
@@ -502,7 +468,9 @@ describe("markAsFullyRefunded", () => {
 					items: [makeItem("i1", 400, 1)],
 				}),
 			);
+
 			const result = await markAsFullyRefunded(undefined, validFormData);
+
 			expect(result.status).toBe(ActionStatus.SUCCESS);
 			expect(mockPrisma.refund.create).not.toHaveBeenCalled();
 		});

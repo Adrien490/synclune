@@ -78,7 +78,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 	return {
 		id: "nq8kx3v2p7rt9wd4bcfh6mzy",
 		orderNumber: "SYN-2026-99999",
-		userId: "user-1",
 		customerEmail: "test@example.com",
 		customerName: "Alice",
 		customerCompanyName: null,
@@ -98,7 +97,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 		taxAmount: 0,
 		shippingCost: 0,
 		total: 4500,
-		currency: "EUR",
 		paymentMethod: "CARD",
 		paidAt: new Date("2026-12-31T22:00:00Z"),
 		stripePaymentIntentId: "pi_x",
@@ -113,7 +111,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 				skuColorHexes: null,
 				skuMaterial: "Argent",
 				skuSize: null,
-				skuImageUrl: null,
 				price: 4500,
 				quantity: 1,
 				taxRate: 0,
@@ -144,7 +141,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: "F-2026-99999" }]);
 
-		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 		expect(result).toBeNull();
 		expect(mockTx.order.update).not.toHaveBeenCalled();
@@ -161,7 +158,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 		expect(result?.invoiceNumber).toBe("F-2027-00001");
 		const queryArg = mockTx.$queryRaw.mock.calls[0]![0];
@@ -180,7 +177,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 		const queryArg = mockTx.$queryRaw.mock.calls[0]![0];
 		expect(queryArg.values[0]).toMatch(/^F-2027-%$/);
@@ -196,7 +193,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceNumber: "F-2026-00001",
 			invoiceGeneratedAt: new Date(),
 		});
-		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 		const lockKey2026 = mockTx.$executeRaw.mock.calls[0]![0].values[0];
 
 		// Encaissement 2027
@@ -210,7 +207,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceGeneratedAt: new Date(),
 		});
 		runTx();
-		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 		const lockKey2027 = mockTx.$executeRaw.mock.calls[0]![0].values[0];
 
 		expect(lockKey2026).toBe(1_000_000 + 2026);
@@ -223,7 +220,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: "F-2026-99999" }]);
 
-		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 		expect(result).toBeNull();
 		// 1 seul appel à $transaction (pas de retry)
@@ -242,7 +239,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 		expect(result?.invoiceNumber).toBe("F-2026-99999");
 	});
@@ -262,7 +259,7 @@ describe("persistInvoiceNumber — millésime = encaissement, pas génération (
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 		expect(result?.invoiceNumber).toBe("F-2026-00001");
 		// Prefix + advisory lock suivent l'année d'encaissement 2026.
@@ -281,7 +278,7 @@ describe("persistInvoiceNumber — millésime = encaissement, pas génération (
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 		expect(result?.invoiceNumber).toBe("F-2027-00001");
 		expect(mockTx.$queryRaw.mock.calls[0]![0].values[0]).toBe("F-2027-%");
@@ -305,7 +302,7 @@ describe("persistInvoiceNumber — millésime = encaissement, pas génération (
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 		expect(result?.invoiceNumber).toBe("F-2025-00001");
 	});
@@ -314,7 +311,7 @@ describe("persistInvoiceNumber — millésime = encaissement, pas génération (
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 		runTx();
 
-		const result = await persistInvoiceNumber("order-unknown", "user-1");
+		const result = await persistInvoiceNumber("order-unknown");
 
 		expect(result).toBeNull();
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();

@@ -80,7 +80,6 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 			stripePaymentIntentId: true,
 			paymentStatus: true,
 			// CACHE-AUDIT-004 : nécessaire pour invalider les tags user-scopés.
-			userId: true,
 			// P2-1 : notifier le client à l'échec/abandon — ce cron est l'unique
 			// émetteur de l'email payment-failed (le webhook payment_failed est
 			// non-terminal et n'envoie rien, cf. handlePaymentFailure).

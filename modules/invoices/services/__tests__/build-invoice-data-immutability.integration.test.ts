@@ -64,7 +64,7 @@ describeIntegration(
 					total: 4999,
 					currency: "EUR",
 					paymentMethod: "CARD",
-					invoiceStatus: "PENDING",
+					invoiceStatus: null,
 					items: {
 						create: [
 							{
@@ -80,7 +80,7 @@ describeIntegration(
 					},
 				},
 			});
-			await persistInvoiceNumber(order.id, user.id);
+			await persistInvoiceNumber(order.id);
 
 			// Snapshot AVANT mutation
 			const orderBefore = (await prisma.order.findUniqueOrThrow({
@@ -143,7 +143,7 @@ describeIntegration(
 					total: 4999,
 					currency: "EUR",
 					paymentMethod: "CARD",
-					invoiceStatus: "PENDING",
+					invoiceStatus: null,
 					items: {
 						create: [
 							{
@@ -157,7 +157,7 @@ describeIntegration(
 					},
 				},
 			});
-			await persistInvoiceNumber(order.id, user.id);
+			await persistInvoiceNumber(order.id);
 
 			// Soft delete du Product (admin retire le produit du catalogue)
 			await prisma.product.update({

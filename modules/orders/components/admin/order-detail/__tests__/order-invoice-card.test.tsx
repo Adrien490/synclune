@@ -100,9 +100,7 @@ describe("OrderInvoiceCard", () => {
 	});
 
 	it("affiche l'anomalie 'payée sans facture' quand PAID sans invoiceNumber", () => {
-		render(
-			<OrderInvoiceCard order={createOrder({ invoiceNumber: null, invoiceStatus: "PENDING" })} />,
-		);
+		render(<OrderInvoiceCard order={createOrder({ invoiceNumber: null, invoiceStatus: null })} />);
 		expect(screen.getByText("Anomalie de facturation")).toBeInTheDocument();
 	});
 });

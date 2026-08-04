@@ -9,10 +9,9 @@ interface OrderSummaryCardProps {
 		createdAt: Date;
 		subtotal: number;
 		discountAmount: number;
-		discountUsages?: { discountCode: string; amountApplied: number }[];
+		discountUsages?: { discountCode: string }[];
 		shippingCost: number;
 		total: number;
-		currency: string;
 		paymentMethod?: string | null;
 	};
 }

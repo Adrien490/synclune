@@ -82,7 +82,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 	it("corrige le snapshot et ne rapporte QUE le champ modifié", async () => {
 		const result = await updatePendingOrderShippingSnapshot({
 			orderId: "order_1",
-			customerUserId: "cm3user0001",
 			shipping: CORRECTED,
 		});
 
@@ -98,7 +97,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 	it("prend l'advisory lock AVANT de lire le statut", async () => {
 		await updatePendingOrderShippingSnapshot({
 			orderId: "order_1",
-			customerUserId: null,
 			shipping: CORRECTED,
 		});
 
@@ -115,7 +113,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 
 		const result = await updatePendingOrderShippingSnapshot({
 			orderId: "order_1",
-			customerUserId: "cm3user0001",
 			shipping: CORRECTED,
 		});
 
@@ -131,7 +128,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 
 			const result = await updatePendingOrderShippingSnapshot({
 				orderId: "order_1",
-				customerUserId: null,
 				shipping: CORRECTED,
 			});
 
@@ -143,7 +139,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 	it("n'écrit rien quand l'adresse est inchangée (double-clic, retry réseau)", async () => {
 		const result = await updatePendingOrderShippingSnapshot({
 			orderId: "order_1",
-			customerUserId: null,
 			shipping: {
 				firstName: CURRENT.shippingFirstName,
 				lastName: CURRENT.shippingLastName,
@@ -166,7 +161,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 
 		const result = await updatePendingOrderShippingSnapshot({
 			orderId: "order_gone",
-			customerUserId: null,
 			shipping: CORRECTED,
 		});
 
@@ -179,7 +173,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 		// ni le nom du client, ni les valeurs d'adresse ne doivent y entrer.
 		await updatePendingOrderShippingSnapshot({
 			orderId: "order_1",
-			customerUserId: "cm3user0001",
 			shipping: CORRECTED,
 		});
 
@@ -189,7 +182,10 @@ describe("updatePendingOrderShippingSnapshot", () => {
 		expect(audit.action).toBe("ADDRESS_UPDATED");
 		expect(audit.source).toBe("CUSTOMER");
 		expect(audit.authorName).toBe("Client");
-		expect(audit.authorId).toBe("cm3user0001");
+		// `authorId` n'est plus posé : il venait de `Order.userId`, retiré le
+		// 2026-08-05 (achat 100 % invité — la colonne valait NULL partout). Le
+		// libellé neutre « Client » reste, c'est lui qui porte l'invariant RGPD.
+		expect(audit.authorId).toBeUndefined();
 		expect(audit.metadata).toEqual({
 			addressType: "shipping",
 			changedFields: ["shippingAddress1"],
@@ -205,7 +201,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 	it("omet authorId pour un invité (pas de compte) sans casser l'audit", async () => {
 		await updatePendingOrderShippingSnapshot({
 			orderId: "order_1",
-			customerUserId: null,
 			shipping: CORRECTED,
 		});
 
@@ -230,7 +225,6 @@ describe("updatePendingOrderShippingSnapshot", () => {
 
 			const result = await updatePendingOrderShippingSnapshot({
 				orderId: "order_1",
-				customerUserId: null,
 				shipping: { ...CORRECTED, address1: CURRENT.shippingAddress1, [field]: value },
 			});
 

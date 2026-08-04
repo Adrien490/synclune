@@ -67,8 +67,6 @@ const ALLOWLIST: Record<string, string> = {
 	"modules/webhooks/services/payment-intent.service.ts": "invalidé par ses appelants",
 	"modules/payments/services/order-creation.service.ts":
 		"décrément dans la tx de création — invalidé par checkout-post-tasks",
-	// Journal de mouvements : écrit `StockMovement`, pas `ProductSku.inventory`.
-	"modules/skus/services/stock-movement.service.ts": "n'écrit pas l'inventaire",
 };
 
 function collectSources(dir: string, acc: string[] = []): string[] {

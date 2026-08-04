@@ -269,12 +269,12 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
  * Currently tracked:
  * - catalogMedia        → SkuMedia (url, thumbnailUrl)
  * - (user avatars)      → User.image
- * - order snapshots     → OrderItem (productImageUrl, skuImageUrl)
+ * - order snapshots     → OrderItem (productImageUrl)
  * - invoice archives    → Order (invoicePdfUrl, creditNotePdfUrl)
  * - credit-note archives → Refund (creditNotePdfUrl) — avoirs PARTIELS par refund
  *
- * MEDIA-AUDIT-003 : les snapshots de commande (`OrderItem.productImageUrl` /
- * `skuImageUrl`) figent l'URL du media au checkout. Si la ligne `SkuMedia`
+ * MEDIA-AUDIT-003 : les snapshots de commande (`OrderItem.productImageUrl`)
+ * figent l'URL du media au checkout. Si la ligne `SkuMedia`
  * source disparait, le fichier ne doit PAS être supprimé tant qu'une commande
  * y fait référence — sinon l'historique client afficherait une image 404
  * (rétention légale 10 ans).
@@ -339,7 +339,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		},
 	});
 
-	// 3. Order snapshots (MEDIA-AUDIT-003) — productImageUrl + skuImageUrl.
+	// 3. Order snapshots (MEDIA-AUDIT-003) — productImageUrl.
 	// Protège l'intégrité historique : un fichier encore référencé par une
 	// commande passée ne doit jamais être considéré orphelin.
 	await paginateCursor({
@@ -349,8 +349,8 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		deadline,
 		fetch: (cursor, take) =>
 			prisma.orderItem.findMany({
-				where: { OR: [{ productImageUrl: { not: null } }, { skuImageUrl: { not: null } }] },
-				select: { id: true, productImageUrl: true, skuImageUrl: true },
+				where: { productImageUrl: { not: null } },
+				select: { id: true, productImageUrl: true },
 				take,
 				...(cursor && { skip: 1, cursor: { id: cursor } }),
 				orderBy: { id: "asc" },
@@ -359,10 +359,6 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 			for (const item of batch) {
 				if (item.productImageUrl) {
 					const key = extractFileKeyFromUrl(item.productImageUrl);
-					if (key) keys.add(key);
-				}
-				if (item.skuImageUrl) {
-					const key = extractFileKeyFromUrl(item.skuImageUrl);
 					if (key) keys.add(key);
 				}
 			}

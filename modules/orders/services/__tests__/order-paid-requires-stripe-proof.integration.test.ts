@@ -59,7 +59,6 @@ async function createPendingOrder(
 			shippingCost: 0,
 			taxAmount: 0,
 			total: 4999,
-			currency: "EUR",
 			items: {
 				create: [
 					{
@@ -158,7 +157,6 @@ describeIntegration(
 						shippingCost: 0,
 						taxAmount: 0,
 						total: 4999,
-						currency: "EUR",
 						items: {
 							create: [
 								{

@@ -15,7 +15,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 /**
  * Server Action ADMIN pour supprimer une note de commande.
  *
- * Business rules (parite avec updateOrderNote) :
+ * Business rules :
  * - Seul l'auteur original peut supprimer sa note (FORBIDDEN sinon)
  * - Les notes soft-deleted sont traitees comme inexistantes (NOT_FOUND)
  */

@@ -79,11 +79,10 @@ function createOrder(overrides = {}) {
 		orderNumber: "CMD-001",
 		customerName: "Marie Dupont",
 		customerEmail: "marie@example.com",
-		userId: "user-1",
 		// Gate sur invoiceNumber (P1-B audit 2026-08-01) : null = pas de facture
 		// émise → éditable. VOIDED conserve son numéro, donc reste verrouillé.
 		invoiceNumber: null,
-		invoiceStatus: "PENDING",
+		invoiceStatus: null,
 		...overrides,
 	} as any;
 }

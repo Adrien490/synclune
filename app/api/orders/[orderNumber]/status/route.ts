@@ -69,15 +69,10 @@ export async function GET(
 	try {
 		const order = await prisma.order.findFirst({
 			where: { id: orderId, orderNumber, ...notDeleted },
-			select: { paymentStatus: true, status: true, userId: true },
+			select: { paymentStatus: true, status: true },
 		});
 
 		if (!order) {
-			return NextResponse.json({ error: "Not found" }, { status: 404 });
-		}
-
-		// Ownership check parity with getOrderForConfirmation
-		if (order.userId && order.userId !== session?.user.id) {
 			return NextResponse.json({ error: "Not found" }, { status: 404 });
 		}
 

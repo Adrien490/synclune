@@ -62,7 +62,6 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 				paymentStatus: true,
 				customerEmail: true,
 				customerName: true,
-				userId: true,
 				refunds: {
 					select: {
 						id: true,
@@ -88,8 +87,8 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 
 		// 3. Synchroniser les remboursements Stripe avec la base
 		// ORD-STRIPE-006 : récupère la liste des Dashboard refunds créés pour
-		// émettre une alerte admin temps réel (les RefundItem au pro-rata
-		// ne suffisent pas — admin doit valider/restocker manuellement).
+		// émettre une alerte admin temps réel — un remboursement émis depuis le
+		// Dashboard ne dit rien du stock, que l'admin doit ajuster à la main.
 		// Defensive : fallback {} si le retour est undefined (compat mocks legacy).
 		const syncResult = await syncStripeRefunds(charge, order.refunds, order.id);
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Mocks legacy peuvent retourner undefined

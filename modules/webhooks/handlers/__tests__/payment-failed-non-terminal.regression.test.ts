@@ -127,7 +127,6 @@ describe("[regression] payment_failed non-terminal — F1 stale after succeeded"
 		mockOrderFindFirst.mockResolvedValue({
 			orderNumber: "SYN-PAID",
 			paymentStatus: "PAID",
-			userId: "user-1",
 		});
 
 		const result = await handlePaymentFailure(makePaymentIntent());
@@ -149,7 +148,6 @@ describe("[regression] payment_failed non-terminal — F1 stale after succeeded"
 			mockOrderFindFirst.mockResolvedValue({
 				orderNumber: "SYN-REF",
 				paymentStatus,
-				userId: null,
 			});
 
 			const result = await handlePaymentFailure(makePaymentIntent());
@@ -168,7 +166,6 @@ describe("[regression] payment_failed non-terminal — F2 refus puis retry même
 		mockOrderFindFirst.mockResolvedValue({
 			orderNumber: "SYN-PENDING",
 			paymentStatus: "PENDING",
-			userId: "user-2",
 		});
 	});
 
@@ -211,7 +208,6 @@ describe("[regression] payment_failed non-terminal — F2 refus puis retry même
 		mockOrderFindFirst.mockResolvedValue({
 			orderNumber: "SYN-FAILED",
 			paymentStatus: "FAILED",
-			userId: null,
 		});
 
 		const result = await handlePaymentFailure(makePaymentIntent());

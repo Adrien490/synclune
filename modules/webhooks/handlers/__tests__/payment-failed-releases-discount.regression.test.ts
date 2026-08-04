@@ -123,7 +123,6 @@ describe("[regression] CHECKOUT-AUDIT-001 — discount released on payment_inten
 		mockOrderFindFirst.mockResolvedValue({
 			orderNumber: "SYN-001",
 			paymentStatus: "PENDING",
-			userId: null,
 		});
 		mockOrderUpdateMany.mockResolvedValue({ count: 1 });
 	});

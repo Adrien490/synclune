@@ -74,7 +74,6 @@ describe("ORD-BIZ-011 — webhook payment_intent.succeeded race avec cancel-orde
 						findUnique: vi.fn().mockResolvedValue({
 							id: "order-ok",
 							orderNumber: "SYN-2026-0099",
-							userId: null,
 							customerEmail: null,
 							shippingFirstName: null,
 							shippingLastName: null,

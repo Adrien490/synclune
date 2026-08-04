@@ -24,8 +24,6 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
 	const mockTx = {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn(), updateMany: vi.fn() },
-		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
-		stockMovement: { create: vi.fn() },
 		cartItem: { deleteMany: vi.fn() },
 		// [[CART-DISCOUNT-003]] purge du code promo panier après paiement réussi
 		cart: { updateMany: vi.fn() },
@@ -65,10 +63,8 @@ function orderWithDuplicateLines(quantities: [number, number]) {
 	return {
 		id: "order-1",
 		orderNumber: "CMD-001",
-		userId: "user-1",
 		paymentStatus: "PENDING",
 		status: "PENDING",
-		currency: "EUR",
 		total: 5000,
 		items: quantities.map((quantity) => ({
 			skuId: DUPLICATED_SKU,

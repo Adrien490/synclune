@@ -208,9 +208,11 @@ describe("fetchDashboardRecentOrders", () => {
 					id: true,
 					orderNumber: true,
 					total: true,
-					user: expect.objectContaining({
-						select: { name: true, email: true },
-					}),
+					// Colonnes SNAPSHOT et non la relation `user` : celle-ci était
+					// toujours NULL (achat invité), si bien que la liste affichait
+					// « Invité » et un email vide pour TOUTES les lignes.
+					customerName: true,
+					customerEmail: true,
 				}),
 			}),
 		);

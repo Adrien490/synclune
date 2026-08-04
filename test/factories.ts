@@ -24,7 +24,7 @@ export const VALID_CUID2_NON_C = "km7q2p9x4v1w8t3r6y5z0nba";
 export const VALID_USER_ID = "user_cm1234567890abcdef";
 export const VALID_ORDER_ID = "order_cm1234567890abcde";
 export const VALID_SKU_ID = "sku_cm1234567890abcdefg";
-export const VALID_PRODUCT_ID = "prod_cm1234567890abcde";
+const VALID_PRODUCT_ID = "prod_cm1234567890abcde";
 
 // ============================================================================
 // FORM DATA
@@ -261,7 +261,6 @@ function createMockWebhookEvent(overrides: Record<string, unknown> = {}) {
 		stripeEventId: "evt_test_abc123",
 		eventType: "checkout.session.completed",
 		status: "PENDING",
-		errorMessage: null,
 		attempts: 0,
 		receivedAt: new Date("2026-01-15"),
 		processedAt: null,
@@ -299,7 +298,6 @@ function createMockDiscountUsage(overrides: Record<string, unknown> = {}) {
 		userId: VALID_USER_ID,
 		orderId: VALID_ORDER_ID,
 		discountCode: "PROMO20",
-		amountApplied: 998,
 		createdAt: new Date("2026-01-15"),
 		updatedAt: new Date("2026-01-15"),
 		...overrides,
@@ -323,7 +321,6 @@ function createMockOrderItem(overrides: Record<string, unknown> = {}) {
 		skuColor: "Or",
 		skuMaterial: "Argent 925",
 		skuSize: "M",
-		skuImageUrl: null,
 		price: 4999,
 		quantity: 1,
 		createdAt: new Date("2026-01-15"),

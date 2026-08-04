@@ -39,7 +39,10 @@ import { logger } from "@/shared/lib/logger";
  *
  * Cas d'usage : remboursement effectué hors de Stripe (geste commercial,
  * remboursement bancaire manuel, avoir). Ne déclenche AUCUN refund Stripe :
- * pour rembourser via Stripe, utiliser modules/refunds/actions/create-refund.
+ * un remboursement Stripe s'émet depuis le **Dashboard**, et l'ingestion se fait
+ * par le webhook `charge.refunded` (bascule Stripe-first, Lot 2 S3.3). Le renvoi
+ * vers `modules/refunds/actions/create-refund` a survécu ici jusqu'à l'audit
+ * Stripe du 2026-08-04 — cette action n'existe plus.
  *
  * Règles métier :
  * - paymentStatus doit être PAID ou PARTIALLY_REFUNDED
@@ -84,7 +87,6 @@ export async function markAsFullyRefunded(
 					select: {
 						id: true,
 						orderNumber: true,
-						userId: true,
 						total: true,
 						paymentStatus: true,
 						invoiceStatus: true,
@@ -92,23 +94,6 @@ export async function markAsFullyRefunded(
 						customerEmail: true,
 						customerName: true,
 						shippingFirstName: true,
-						items: {
-							select: {
-								id: true,
-								quantity: true,
-								price: true,
-								refundItems: {
-									where: {
-										refund: {
-											status: {
-												in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
-											},
-										},
-									},
-									select: { quantity: true, amount: true },
-								},
-							},
-						},
 						refunds: {
 							where: {
 								status: {
@@ -166,78 +151,31 @@ export async function markAsFullyRefunded(
 				// déjà couvert par des refunds existants (PARTIALLY_REFUNDED + manuel
 				// supplémentaire = REFUNDED total).
 				//
-				// Defensive : si le select Prisma n'a pas retourné items/refunds (cas
-				// tests legacy avec mock simplifié), on skip la création Refund —
-				// l'audit OrderHistory.REFUND_COMPLETED reste émis plus bas. En prod,
-				// le select garantit que ces champs sont présents.
+				// Defensive : si le select Prisma n'a pas retourné `refunds` (cas tests
+				// legacy avec mock simplifié), `alreadyRefunded` vaut 0 — l'audit
+				// OrderHistory.REFUND_COMPLETED reste émis plus bas.
 				const refundsArr = Array.isArray(found.refunds) ? found.refunds : [];
-				const itemsArr = Array.isArray(found.items) ? found.items : [];
 				const alreadyRefunded = refundsArr.reduce((sum, r) => sum + r.amount, 0);
 				const remainingAmount = found.total - alreadyRefunded;
 
 				let createdRefundId: string | null = null;
 
-				if (remainingAmount > 0 && itemsArr.length > 0) {
-					// Calculer les quantités restantes par OrderItem
-					const itemsToRefund = itemsArr
-						.map((item) => {
-							const itemRefundedItems = Array.isArray(item.refundItems) ? item.refundItems : [];
-							const refundedQty = itemRefundedItems.reduce((s, ri) => s + ri.quantity, 0);
-							const refundedAmt = itemRefundedItems.reduce((s, ri) => s + ri.amount, 0);
-							return {
-								orderItemId: item.id,
-								quantity: item.quantity - refundedQty,
-								itemTotal: item.price * item.quantity - refundedAmt,
-							};
-						})
-						.filter((i) => i.quantity > 0 && i.itemTotal > 0);
-
-					// Distribuer remainingAmount sur les items proportionnellement à
-					// itemTotal. Le dernier item absorbe l'arrondi pour garantir
-					// `sum(refundItem.amount) === remainingAmount`. Chaque part
-					// intermédiaire est plafonnée au restant non alloué : sans ce clamp,
-					// des arrondis à ,5 cumulés peuvent sur-allouer et rendre la part du
-					// dernier item négative (violerait RefundItem_amount_positive). Les
-					// parts nulles sont écartées pour la même contrainte CHECK (> 0).
-					const itemsTotalSum = itemsToRefund.reduce((s, i) => s + i.itemTotal, 0);
-					let allocated = 0;
-					const refundItemsData = itemsToRefund
-						.map((item, idx) => {
-							const isLast = idx === itemsToRefund.length - 1;
-							const amount = isLast
-								? remainingAmount - allocated
-								: itemsTotalSum > 0
-									? Math.min(
-											Math.round((item.itemTotal / itemsTotalSum) * remainingAmount),
-											remainingAmount - allocated,
-										)
-									: 0;
-							allocated += amount;
-							// Pas de restock automatique : refund manuel hors Stripe = geste
-							// commercial, le client a probablement gardé l'article (et depuis
-							// le Lot 6 le restock est toujours un ajustement manuel de stock).
-							return {
-								orderItemId: item.orderItemId,
-								quantity: item.quantity,
-								amount,
-							};
-						})
-						.filter((item) => item.amount > 0);
-
-					if (refundItemsData.length > 0 && typeof tx.refund.create === "function") {
+				if (remainingAmount > 0) {
+					// Plus de répartition par ligne : `RefundItem` est parti le 2026-08-05.
+					// L'itemisation était FABRIQUÉE — on rembourse un montant, pas des
+					// articles — et elle produisait une ligne d'avoir qui ne s'additionnait
+					// pas (quantité entière × prix plein ≠ montant proratisé). Le montant
+					// restant se déduit déjà de `Σ Refund.amount`, ci-dessus.
+					if (typeof tx.refund.create === "function") {
 						const createdRefund = await tx.refund.create({
 							data: {
 								orderId: id,
 								amount: remainingAmount,
-								currency: "EUR",
 								reason: RefundReason.OTHER,
 								status: RefundStatus.COMPLETED,
 								processedAt: new Date(),
 								note:
 									reason ?? "Remboursement manuel hors Stripe (chèque, virement, geste commercial)",
-								items: {
-									create: refundItemsData,
-								},
 							},
 							select: { id: true },
 						});

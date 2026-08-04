@@ -7,7 +7,7 @@
  *
  *     data: { …, inventory: validatedData.defaultSku.inventory }
  *
- * sans verrou de ligne, sans delta, et sans `StockMovement`. C'est exactement le
+ * sans verrou de ligne et sans delta. C'est exactement le
  * bug corrigé le 2026-05-29 sur `update-sku` (« Trou B » de l'audit intégrité
  * stock) — resté vivant deux mois de plus sur CE formulaire, c'est-à-dire sur le
  * plus utilisé, puisqu'il édite le SKU des produits mono-variante.
@@ -51,7 +51,6 @@ const {
 		collection: { findMany: vi.fn() },
 		color: { findMany: vi.fn() },
 		material: { findMany: vi.fn() },
-		stockMovement: { create: vi.fn() },
 		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
@@ -218,7 +217,6 @@ beforeEach(() => {
 		updatedAt: new Date(),
 	});
 	mockPrisma.productSku.update.mockResolvedValue({});
-	mockPrisma.stockMovement.create.mockResolvedValue({});
 	mockPrisma.productCollection.deleteMany.mockResolvedValue({});
 	mockPrisma.productCollection.createMany.mockResolvedValue({ count: 0 });
 	mockPrisma.skuMedia.deleteMany.mockResolvedValue({});
@@ -281,7 +279,6 @@ describe("STOCK-PHANTOM-001 — updateProduct n'écrase jamais le stock en absol
 		// Delta 0 : le stock reste à 4. Un set absolu l'aurait remis à 5 — stock
 		// fantôme, puis OversellError au prochain encaissement.
 		expect(skuUpdatePayload().data.inventory).toEqual({ increment: 0 });
-		expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
 	});
 
 	it("prend un verrou de ligne FOR UPDATE sur le SKU", async () => {
@@ -295,26 +292,6 @@ describe("STOCK-PHANTOM-001 — updateProduct n'écrase jamais le stock en absol
 		const rawCall = mockPrisma.$queryRaw.mock.calls[0]?.[0] as { strings?: string[] } | undefined;
 		// Template literal Prisma : les fragments SQL vivent dans `.strings`.
 		expect(JSON.stringify(rawCall?.strings ?? rawCall)).toMatch(/FOR UPDATE/);
-	});
-
-	it("trace le delta dans StockMovement avec la source SKU_UPDATE", async () => {
-		mockValidateInput.mockReturnValue({
-			data: validatedData({ inventory: 12, originalInventory: 10 }),
-		});
-		lockStock(10);
-
-		await updateProduct(undefined, formData);
-
-		expect(mockPrisma.stockMovement.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({
-				skuId: SKU_ID,
-				previousInventory: 10,
-				newInventory: 12,
-				delta: 2,
-				source: "SKU_UPDATE",
-				createdById: "admin-1",
-			}),
-		});
 	});
 
 	it("refuse un save qui ferait passer le stock réel sous zéro", async () => {

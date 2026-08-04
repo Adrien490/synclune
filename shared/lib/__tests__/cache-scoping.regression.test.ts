@@ -43,11 +43,10 @@ const NEXT_CONFIG_PATH = join(REPO_ROOT, "next.config.ts");
  * publiable telle quelle ? ». L'identité sert à CHOISIR la donnée, pas à la
  * qualifier de personnelle.
  */
-const PUBLIC_IDENTITY_SCOPED_CACHES = new Set<string>([
-	// Retourne des `ProductCarouselItem` — du catalogue public. `userId` ne sert
-	// qu'à choisir quels bijoux montrer ; l'historique lui-même n'est pas renvoyé.
-	"fetchPersonalizedRelatedProducts",
-]);
+// Vide depuis l'audit schéma V1 (2026-08-05) : `fetchPersonalizedRelatedProducts`
+// — la seule entrée — est partie avec `Order.userId`, le carrousel personnalisé
+// n'ayant plus d'historique à lire dans un parcours 100 % invité.
+const PUBLIC_IDENTITY_SCOPED_CACHES = new Set<string>([]);
 
 function collectDataFiles(dir: string, acc: string[] = []): string[] {
 	let entries: string[];

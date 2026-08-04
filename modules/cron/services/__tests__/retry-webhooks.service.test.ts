@@ -171,10 +171,7 @@ describe("retryFailedWebhooks", () => {
 		);
 		expect(mockPrisma.webhookEvent.update).toHaveBeenLastCalledWith({
 			where: { id: "wh-1" },
-			data: expect.objectContaining({
-				status: "COMPLETED",
-				errorMessage: null,
-			}),
+			data: expect.objectContaining({ status: "COMPLETED" }),
 		});
 		expect(result).toMatchObject({ processed: 1, errored: 0, skipped: 0 });
 	});
@@ -233,10 +230,7 @@ describe("retryFailedWebhooks", () => {
 		expect(mockSentryCaptureException).toHaveBeenCalled();
 		expect(mockPrisma.webhookEvent.update).toHaveBeenLastCalledWith({
 			where: { id: "wh-4" },
-			data: expect.objectContaining({
-				status: "FAILED",
-				errorMessage: "handler exploded",
-			}),
+			data: expect.objectContaining({ status: "FAILED" }),
 		});
 		expect(result).toMatchObject({ processed: 0, errored: 1, skipped: 0 });
 		// attempts passe 0 → 1 (< MAX 3) : pas encore d'alerte admin.

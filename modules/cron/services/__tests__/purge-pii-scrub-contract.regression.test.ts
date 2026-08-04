@@ -96,10 +96,6 @@ const MUST_BE_PRESERVED = [
 	"paidAt",
 	"orderNumber",
 	"paymentMethod",
-	"vendorLegalName",
-	"vendorSiren",
-	"vendorSiret",
-	"vendorVatNumber",
 ] as const;
 
 describe("ORDER_PII_SCRUB — contrat de champs (purge 10 ans, commandes payées)", () => {

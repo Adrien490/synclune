@@ -102,12 +102,11 @@ const CATALOGUE_TAG_OBJECTS = [
 		/** Aucun tag posé sans lecteur aujourd'hui. */
 		knownPosterless: [] as string[],
 		/**
-		 * `RELATED_USER` : orphelin d'invalidation ASSUMÉ et documenté
-		 * (`products/utils/cache.utils.ts`) — le carrousel personnalisé expire par TTL
-		 * plutôt que d'imposer une invalidation par utilisateur après chaque achat.
-		 * C'est le SEUL écart toléré, et il est ici pour qu'un second passe rouge.
+		 * Plus aucun écart : `RELATED_USER` — le seul toléré, orphelin d'invalidation
+		 * assumé — est parti avec le carrousel personnalisé et `Order.userId`
+		 * (audit schéma V1, 2026-08-05).
 		 */
-		knownMutatorless: ["RELATED_USER"] as string[],
+		knownMutatorless: [] as string[],
 	},
 	{
 		name: "COLLECTIONS_CACHE_TAGS",

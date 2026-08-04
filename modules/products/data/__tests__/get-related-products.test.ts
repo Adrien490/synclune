@@ -4,22 +4,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockFindMany,
-	mockFindUnique,
-	mockOrderItemFindMany,
-	mockCacheLife,
-	mockCacheTag,
-	mockGetSession,
-	mockHeaders,
-} = vi.hoisted(() => ({
+const { mockFindMany, mockFindUnique, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
 	mockFindUnique: vi.fn(),
-	mockOrderItemFindMany: vi.fn(),
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
-	mockGetSession: vi.fn(),
-	mockHeaders: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -28,9 +17,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 			findMany: mockFindMany,
 			findUnique: mockFindUnique,
 		},
-		orderItem: {
-			findMany: mockOrderItemFindMany,
-		},
 	},
 	notDeleted: { deletedAt: null },
 }));
@@ -38,18 +24,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 vi.mock("next/cache", () => ({
 	cacheLife: mockCacheLife,
 	cacheTag: mockCacheTag,
-}));
-
-vi.mock("next/headers", () => ({
-	headers: mockHeaders,
-}));
-
-vi.mock("@/modules/auth/lib/auth", () => ({
-	auth: {
-		api: {
-			getSession: mockGetSession,
-		},
-	},
 }));
 
 vi.mock("../../constants/related-products.constants", () => ({
@@ -69,7 +43,6 @@ vi.mock("../../constants/product.constants", () => ({
 vi.mock("../../constants/cache", () => ({
 	PRODUCTS_CACHE_TAGS: {
 		RELATED_PUBLIC: "related-products-public",
-		RELATED_USER: (userId: string) => `related-products-user-${userId}`,
 		RELATED_CONTEXTUAL: (slug: string) => `related-products-contextual-${slug}`,
 	},
 }));
@@ -99,17 +72,12 @@ function makeProduct(id: string, overrides: Record<string, unknown> = {}) {
 describe("getRelatedProducts", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
-		mockHeaders.mockResolvedValue(new Headers());
 	});
 
-	// ─── Public strategy (no slug, no user) ─────────────────────────────
+	// ─── Public strategy (no slug) ──────────────────────────────────────
 
 	describe("public strategy", () => {
-		beforeEach(() => {
-			mockGetSession.mockResolvedValue(null);
-		});
-
-		it("fetches public related products for unauthenticated users", async () => {
+		it("fetches public related products when no slug is given", async () => {
 			const products = [makeProduct("1"), makeProduct("2")];
 			mockFindMany.mockResolvedValue(products);
 
@@ -151,80 +119,6 @@ describe("getRelatedProducts", () => {
 
 			expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 			expect(mockCacheTag).toHaveBeenCalledWith("related-products-public");
-		});
-	});
-
-	// ─── Personalized strategy (no slug, authenticated user) ────────────
-
-	describe("personalized strategy", () => {
-		beforeEach(() => {
-			mockGetSession.mockResolvedValue({
-				user: { id: "user-1" },
-			});
-		});
-
-		it("fetches personalized products based on order history", async () => {
-			mockOrderItemFindMany.mockResolvedValue([
-				{
-					product: {
-						typeId: "type-1",
-						collections: [{ collectionId: "col-1" }],
-					},
-				},
-			]);
-			const products = [makeProduct("1")];
-			mockFindMany.mockResolvedValue(products);
-
-			const result = await getRelatedProducts();
-
-			expect(mockOrderItemFindMany).toHaveBeenCalledWith(
-				expect.objectContaining({
-					where: expect.objectContaining({
-						order: { userId: "user-1", paymentStatus: "PAID" },
-					}),
-				}),
-			);
-			expect(result).toEqual(products);
-		});
-
-		it("falls back to public products when no order history yields results", async () => {
-			mockOrderItemFindMany.mockResolvedValue([
-				{
-					product: {
-						typeId: "type-1",
-						collections: [],
-					},
-				},
-			]);
-			// First call (personalized) returns empty
-			mockFindMany
-				.mockResolvedValueOnce([])
-				// Second call (fallback) returns products
-				.mockResolvedValueOnce([makeProduct("fallback")]);
-
-			const result = await getRelatedProducts();
-
-			expect(mockFindMany).toHaveBeenCalledTimes(2);
-			expect(result[0]).toMatchObject({ id: "fallback" });
-		});
-
-		it("falls back to public when no order history at all", async () => {
-			mockOrderItemFindMany.mockResolvedValue([]);
-			const products = [makeProduct("public-1")];
-			mockFindMany.mockResolvedValue(products);
-
-			const result = await getRelatedProducts();
-
-			// Should fetch public products since no typeIds or collectionIds
-			expect(result).toEqual(products);
-		});
-
-		it("returns empty array on error", async () => {
-			mockOrderItemFindMany.mockRejectedValue(new Error("DB error"));
-
-			const result = await getRelatedProducts();
-
-			expect(result).toEqual([]);
 		});
 	});
 

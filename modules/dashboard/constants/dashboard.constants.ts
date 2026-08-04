@@ -12,12 +12,13 @@ export const GET_DASHBOARD_RECENT_ORDERS_SELECT = {
 	paymentStatus: true,
 	fulfillmentStatus: true,
 	total: true,
-	user: {
-		select: {
-			name: true,
-			email: true,
-		},
-	},
+	// Colonnes SNAPSHOT, pas la relation `user` : celle-ci était toujours NULL en
+	// achat invité (100 % des commandes), si bien que la liste affichait « Invité »
+	// et un email vide pour TOUTES les lignes. `Order.customerName`/`customerEmail`
+	// sont obligatoires et figés au checkout. La relation est partie avec
+	// `Order.userId` le 2026-08-05.
+	customerName: true,
+	customerEmail: true,
 } as const satisfies Prisma.OrderSelect;
 
 // ============================================================================

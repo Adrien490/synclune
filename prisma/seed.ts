@@ -173,7 +173,6 @@ async function cleanup(): Promise<void> {
 
 	await prisma.orderHistory.deleteMany();
 	await prisma.orderNote.deleteMany();
-	await prisma.refundItem.deleteMany();
 	await prisma.refund.deleteMany();
 	await prisma.discountUsage.deleteMany();
 	await prisma.orderItem.deleteMany();
@@ -1698,7 +1697,6 @@ async function main(): Promise<void> {
 				skuColor: sku.colors.length > 0 ? sku.colors.map((c) => c.color.name).join(" · ") : null,
 				skuMaterial: sku.materials[0]?.material.name ?? null,
 				skuSize: sku.size ?? null,
-				skuImageUrl: sku.images[0]?.url ?? null,
 				price: sku.priceInclTax,
 				quantity,
 			});
@@ -1979,7 +1977,10 @@ async function main(): Promise<void> {
 	});
 
 	const activeDiscounts = discounts.filter((d) => d.isActive);
-	const discountUsagesData: Prisma.DiscountUsageCreateManyInput[] = [];
+	const discountUsagesData: (Prisma.DiscountUsageCreateManyInput & {
+		/** Local uniquement : pilote `Order.discountAmount`, plus persisté depuis le 2026-08-05. */
+		amountApplied: number;
+	})[] = [];
 	const discountUsageCounts = new Map<string, number>();
 
 	for (const order of paidOrders) {
@@ -2001,7 +2002,11 @@ async function main(): Promise<void> {
 		discountUsageCounts.set(discount.id, (discountUsageCounts.get(discount.id) ?? 0) + 1);
 	}
 
-	await prisma.discountUsage.createMany({ data: discountUsagesData });
+	await prisma.discountUsage.createMany({
+		// `amountApplied` n'est plus une colonne (2026-08-05) — il ne sert plus qu'à
+		// dériver `Order.discountAmount` un peu plus bas.
+		data: discountUsagesData.map(({ amountApplied: _amountApplied, ...usage }) => usage),
+	});
 
 	// Batch update discount usage counts
 	for (const [discountId, count] of discountUsageCounts) {
@@ -2566,7 +2571,6 @@ async function main(): Promise<void> {
 		eventType: "payment_intent.failed",
 		status: WebhookEventStatus.FAILED,
 		attempts: 3,
-		errorMessage: "Handler threw an error",
 		receivedAt: faker.date.recent({ days: 30 }),
 		processedAt: faker.date.recent({ days: 30 }),
 	});
@@ -2579,15 +2583,6 @@ async function main(): Promise<void> {
 		attempts: 1,
 		receivedAt: faker.date.recent({ days: 15 }),
 		processedAt: faker.date.recent({ days: 15 }),
-	});
-
-	// Add PENDING events for retry-webhooks cron
-	webhookEventsData.push({
-		stripeEventId: `evt_${faker.string.alphanumeric(24)}`,
-		eventType: "payment_intent.succeeded",
-		status: WebhookEventStatus.PENDING,
-		attempts: 0,
-		receivedAt: new Date(),
 	});
 
 	// Add PROCESSING event (stuck mid-processing)

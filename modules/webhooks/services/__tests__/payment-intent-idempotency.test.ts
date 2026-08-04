@@ -19,8 +19,6 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 			findMany: vi.fn(),
 			update: vi.fn(),
 		},
-		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
-		stockMovement: { create: vi.fn() },
 		orderHistory: {
 			create: vi.fn(),
 		},
@@ -150,7 +148,6 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 				inventory: { increment: 5 },
 				isActive: true,
 			},
-			select: { inventory: true, productId: true },
 		});
 	});
 
@@ -206,7 +203,6 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 				inventory: { increment: 1 },
 				isActive: true,
 			},
-			select: { inventory: true, productId: true },
 		});
 	});
 
@@ -231,7 +227,6 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 			data: {
 				inventory: { increment: 1 },
 			},
-			select: { inventory: true, productId: true },
 		});
 	});
 
@@ -244,7 +239,6 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 			shouldRestore: false,
 			itemCount: 0,
 			restoredSkus: [],
-			userId: null,
 		});
 	});
 });
@@ -437,7 +431,7 @@ describe("sendRefundFailureAlert", () => {
 		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-001",
 			total: 4999,
-			user: { email: "client@example.com" },
+			customerEmail: "client@example.com",
 		});
 		mockSendAdminRefundFailedAlert.mockResolvedValue(undefined);
 
@@ -454,20 +448,22 @@ describe("sendRefundFailureAlert", () => {
 		});
 	});
 
-	it("should use fallback email when user has no email", async () => {
+	// L'alerte lisait `order.user?.email ?? "Email non disponible"` — or la relation
+	// `user` était TOUJOURS nulle (achat invité), donc ce repli s'affichait sur
+	// CHAQUE remboursement échoué. Elle lit désormais `Order.customerEmail`,
+	// colonne obligatoire figée au checkout : il n'y a plus de repli à tester.
+	it("transmet l'email client du snapshot de commande", async () => {
 		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-002",
 			total: 2500,
-			user: null,
+			customerEmail: "guest@example.com",
 		});
 		mockSendAdminRefundFailedAlert.mockResolvedValue(undefined);
 
 		await sendRefundFailureAlert("order-2", "pi_xyz", "payment_canceled", "Error");
 
 		expect(mockSendAdminRefundFailedAlert).toHaveBeenCalledWith(
-			expect.objectContaining({
-				customerEmail: "Email non disponible",
-			}),
+			expect.objectContaining({ customerEmail: "guest@example.com" }),
 		);
 	});
 
@@ -485,7 +481,7 @@ describe("sendRefundFailureAlert", () => {
 		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-003",
 			total: 1000,
-			user: { email: "test@example.com" },
+			customerEmail: "client@example.com",
 		});
 		mockSendAdminRefundFailedAlert.mockRejectedValue(new Error("Email service down"));
 

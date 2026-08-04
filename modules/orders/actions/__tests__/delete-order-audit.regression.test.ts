@@ -99,7 +99,6 @@ describe("ORD-BIZ-003 — delete-order crée une OrderHistory immuable", () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			id: VALID_CUID,
 			orderNumber: "SYN-2026-0001",
-			userId: "user-1",
 			status: "PENDING",
 			paymentStatus: "PENDING",
 			invoiceNumber: null,
@@ -135,7 +134,6 @@ describe("ORD-BIZ-003 — delete-order crée une OrderHistory immuable", () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			id: VALID_CUID,
 			orderNumber: "SYN-2026-0001",
-			userId: "user-1",
 			status: "PROCESSING",
 			paymentStatus: "PAID",
 			invoiceNumber: "F-2026-00001",
@@ -155,7 +153,6 @@ describe("ORD-BIZ-003 — delete-order crée une OrderHistory immuable", () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			id: VALID_CUID,
 			orderNumber: "SYN-2026-0001",
-			userId: "user-1",
 			status: "PROCESSING",
 			paymentStatus: "PAID",
 			invoiceNumber: null,
@@ -171,7 +168,6 @@ describe("ORD-BIZ-003 — delete-order crée une OrderHistory immuable", () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			id: VALID_CUID,
 			orderNumber: "SYN-2026-0001",
-			userId: "user-1",
 			status: "PENDING",
 			paymentStatus: "PENDING",
 			invoiceNumber: null,

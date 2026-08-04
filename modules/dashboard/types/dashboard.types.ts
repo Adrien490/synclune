@@ -16,10 +16,8 @@ export interface OrderForTransform {
 	paymentStatus: PaymentStatus;
 	fulfillmentStatus: FulfillmentStatus;
 	total: number;
-	user: {
-		name: string | null;
-		email: string;
-	} | null;
+	customerName: string;
+	customerEmail: string;
 }
 
 // ============================================================================

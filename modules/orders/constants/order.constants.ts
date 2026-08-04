@@ -15,7 +15,6 @@ export const GET_ORDERS_SELECT = {
 	customerName: true,
 	stripePaymentIntentId: true,
 	total: true,
-	currency: true,
 	status: true,
 	paymentStatus: true,
 	fulfillmentStatus: true,
@@ -60,7 +59,6 @@ export const GET_ORDERS_SELECT = {
 export const GET_ORDER_SELECT_ADMIN = {
 	id: true,
 	orderNumber: true,
-	userId: true,
 	stripePaymentIntentId: true,
 	stripeChargeId: true,
 	customerEmail: true,
@@ -69,7 +67,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	discountAmount: true,
 	shippingCost: true,
 	total: true,
-	currency: true,
 	shippingFirstName: true,
 	shippingLastName: true,
 	shippingAddress1: true,
@@ -106,20 +103,10 @@ export const GET_ORDER_SELECT_ADMIN = {
 	// snapshot à toute recomputation depuis les colonnes Order.
 	invoiceDataSnapshot: true,
 	invoiceDataHash: true,
-	// Snapshot vendeur fige au moment de invoiceGeneratedAt (Art. L102 B LPF)
-	vendorLegalName: true,
-	vendorTradeName: true,
-	vendorAddress: true,
-	vendorSiren: true,
-	vendorSiret: true,
-	vendorVatNumber: true,
-	vendorVatRegime: true,
-	vendorLegalForm: true,
-	// Extension snapshot (EINV-FORMAT-007/008 — 2026-05-28)
-	vendorEmail: true,
-	vendorApeCode: true,
-	vendorBankIban: true,
-	vendorBankBic: true,
+	// L'identité vendeur ne vit plus en colonnes : les 12 `vendor*` sont parties le
+	// 2026-08-05. Elle est figée dans `invoiceDataSnapshot`, écrit par le MÊME
+	// `update` que `invoiceNumber` — donc aucune facture ne peut naître sans elle,
+	// et c'est le snapshot que relit tout rendu ultérieur (cf. `buildSellerInfo`).
 	createdAt: true,
 	updatedAt: true,
 	items: {
@@ -135,7 +122,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 			skuColorHexes: true,
 			skuMaterial: true,
 			skuSize: true,
-			skuImageUrl: true,
 			price: true,
 			quantity: true,
 		},
@@ -146,34 +132,18 @@ export const GET_ORDER_SELECT_ADMIN = {
 			status: true,
 			reason: true,
 			amount: true,
-			currency: true,
 			note: true,
 			processedAt: true,
 			createdAt: true,
 			// Avoir par refund (Phase 2A — EINV-AUDIT-010)
 			creditNoteNumber: true,
 			creditNoteGeneratedAt: true,
-			items: {
-				select: {
-					id: true,
-					orderItemId: true,
-					quantity: true,
-					amount: true,
-					orderItem: {
-						select: {
-							productTitle: true,
-							skuColor: true,
-						},
-					},
-				},
-			},
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
 	discountUsages: {
 		select: {
 			discountCode: true,
-			amountApplied: true,
 		},
 	},
 	history: {
@@ -210,14 +180,12 @@ export const GET_ORDER_SELECT = GET_ORDER_SELECT_ADMIN;
 export const GET_ORDER_SELECT_CUSTOMER = {
 	id: true,
 	orderNumber: true,
-	userId: true,
 	customerEmail: true,
 	customerName: true,
 	subtotal: true,
 	discountAmount: true,
 	shippingCost: true,
 	total: true,
-	currency: true,
 	shippingFirstName: true,
 	shippingLastName: true,
 	shippingAddress1: true,
@@ -258,7 +226,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			skuColorHexes: true,
 			skuMaterial: true,
 			skuSize: true,
-			skuImageUrl: true,
 			price: true,
 			quantity: true,
 		},
@@ -269,34 +236,18 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			status: true,
 			reason: true,
 			amount: true,
-			currency: true,
 			note: true,
 			processedAt: true,
 			createdAt: true,
 			// Avoir par refund (Phase 2A — EINV-AUDIT-010)
 			creditNoteNumber: true,
 			creditNoteGeneratedAt: true,
-			items: {
-				select: {
-					id: true,
-					orderItemId: true,
-					quantity: true,
-					amount: true,
-					orderItem: {
-						select: {
-							productTitle: true,
-							skuColor: true,
-						},
-					},
-				},
-			},
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
 	discountUsages: {
 		select: {
 			discountCode: true,
-			amountApplied: true,
 		},
 	},
 	history: {
@@ -456,13 +407,8 @@ export const ORDER_ERROR_MESSAGES = {
 	CANNOT_UPDATE_BILLING_INVOICED:
 		"Ces informations ne peuvent plus être modifiées car une facture a été émise.",
 	// Update note
-	UPDATE_NOTE_FAILED: "Erreur lors de la modification de la note.",
 	NOTE_NOT_FOUND: "Note introuvable.",
 	NOT_NOTE_AUTHOR: "Vous ne pouvez modifier que vos propres notes.",
-	// Reorder
-	REORDER_FAILED: "Erreur lors de l'ajout des articles au panier.",
-	REORDER_NO_AVAILABLE_ITEMS:
-		"Aucun article de cette commande n'est disponible à la vente actuellement.",
 	// Mark as fully refunded
 	MARK_AS_FULLY_REFUNDED_FAILED: "Erreur lors du marquage de la commande comme remboursée.",
 	CANNOT_REFUND_NOT_PAID: "Seules les commandes payées peuvent être marquées comme remboursées.",

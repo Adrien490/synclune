@@ -11,16 +11,13 @@ import { prisma } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import type { RefundRecord } from "../types/webhook.types";
 
 export const WEBHOOK_AUDIT_AUTHOR = "Système (webhook Stripe)";
-
-// Re-export types for backwards compatibility
-/** Valid currency codes */
-const VALID_CURRENCY_CODES = new Set(["EUR"]);
 
 /**
  * ORD-STRIPE-006: Mappe Stripe refund.reason vers RefundReason local.
@@ -41,75 +38,21 @@ function mapStripeRefundReason(stripeReason: string | null | undefined): RefundR
 }
 
 /**
- * ORD-BIZ-001: Alloue un montant Dashboard refund (full ou partiel) sur les
- * OrderItem de la commande au pro-rata du subtotal item / subtotal commande.
- *
- * Préserve la traçabilité comptable Art. 272-I CGI (le restock éventuel est un
- * ajustement manuel de stock SKU — RefundItem.restock est parti au Lot 6).
- * Approximation assumée pour les partial refunds Dashboard : la quantity
- * reflète la qty totale de l'item (proxy "touché"), seul l'amount est pro-rata.
- * Les items dont l'amount pro-rata arrondi tombe à 0 (contrainte DB
- * `amount > 0`) sont filtrés.
- *
- * @returns liste de RefundItem prêts à create, vide si aucune allocation possible
+ * `Refund.currency` a été droppée (audit schéma V1, 2026-08-05) : un seul marché,
+ * une seule devise, et la colonne n'avait aucun lecteur. La devise reste néanmoins
+ * une propriété qu'on veut voir diverger si elle diverge — un remboursement hérite
+ * de la devise de sa charge, donc du PaymentIntent, déjà gardé côté commande
+ * (`checkout-order-processing.service.ts`). Ce log est le témoin résiduel : il
+ * n'échoue pas (le remboursement, lui, a bien eu lieu chez Stripe), il signale.
  */
-function allocateDashboardRefundItems(
-	items: Array<{ id: string; price: number; quantity: number }>,
-	refundAmount: number,
-	isFullRefund: boolean,
-): Array<{ orderItemId: string; quantity: number; amount: number }> {
-	if (items.length === 0 || refundAmount <= 0) return [];
-
-	if (isFullRefund) {
-		return items.map((oi) => ({
-			orderItemId: oi.id,
-			quantity: oi.quantity,
-			amount: oi.price * oi.quantity,
-		}));
-	}
-
-	const subtotal = items.reduce((acc, oi) => acc + oi.price * oi.quantity, 0);
-	if (subtotal <= 0) return [];
-
-	const allocations = items
-		.map((oi) => {
-			const itemSubtotal = oi.price * oi.quantity;
-			const proRata = Math.round((refundAmount * itemSubtotal) / subtotal);
-			return { orderItemId: oi.id, quantity: oi.quantity, amount: proRata };
-		})
-		.filter((a) => a.amount > 0);
-
-	if (allocations.length === 0) return [];
-
-	// Ajuste le dernier item pour absorber l'écart de rounding (sum doit == refundAmount).
-	const allocated = allocations.reduce((acc, a) => acc + a.amount, 0);
-	const drift = refundAmount - allocated;
-	if (drift !== 0) {
-		const last = allocations[allocations.length - 1]!;
-		const adjusted = last.amount + drift;
-		// Contrainte DB amount > 0 : si l'ajustement annule le dernier item, on retire.
-		if (adjusted > 0) {
-			last.amount = adjusted;
-		} else {
-			allocations.pop();
-		}
-	}
-
-	return allocations;
-}
-
-/**
- * Validates and returns a currency code string, defaulting to EUR if invalid
- */
-function validateCurrencyCode(currency: string | undefined | null): string {
-	const normalized = currency?.toUpperCase() ?? "EUR";
-	if (VALID_CURRENCY_CODES.has(normalized)) {
-		return normalized;
-	}
-	logger.warn(`⚠️ [WEBHOOK] Unknown currency code: ${currency}, defaulting to EUR`, {
+function warnOnUnexpectedRefundCurrency(stripeRefund: Stripe.Refund): void {
+	if ((stripeRefund.currency || DEFAULT_CURRENCY).toUpperCase() === DEFAULT_CURRENCY) return;
+	logger.warn(`⚠️ [WEBHOOK] Refund ${stripeRefund.id} settled in ${stripeRefund.currency}`, {
 		service: "webhook",
+		stripeRefundId: stripeRefund.id,
+		currency: stripeRefund.currency,
+		expected: DEFAULT_CURRENCY,
 	});
-	return "EUR";
 }
 
 /** Dashboard refund créé pendant le sync (ORD-STRIPE-006 alert admin). */
@@ -117,6 +60,48 @@ export interface DashboardRefundSummary {
 	stripeRefundId: string;
 	amount: number;
 	isFullRefund: boolean;
+}
+
+/**
+ * Liste COMPLÈTE des remboursements d'une charge.
+ *
+ * `charge.refunds` est déclaré *nullable, expandable* par `api/charges/object`, et
+ * la liste inline est **plafonnée à 10** — d'où le champ `refunds.has_more` que le
+ * code ignorait. Au-delà de 10, `syncStripeRefunds` ne voyait qu'une partie des
+ * lignes et n'en créait aucune pour le reste, pendant que `updateOrderPaymentStatus`
+ * basculait quand même la commande depuis `charge.amount_refunded` : une commande
+ * `REFUNDED` sans ligne `Refund`, donc **sans avoir** (Art. 272-I CGI).
+ *
+ * Improbable à ~20 commandes/mois — mais silencieux, et c'est ce qui le rend
+ * coûteux : il ne se manifesterait qu'à la relecture comptable.
+ *
+ * Le repli est volontairement souple : si la pagination échoue, on garde la page
+ * inline plutôt que de faire échouer tout le webhook (Stripe retenterait en
+ * boucle sur une erreur qui n'est pas la sienne).
+ */
+async function resolveChargeRefunds(charge: Stripe.Charge): Promise<Stripe.Refund[]> {
+	const inline = charge.refunds?.data ?? [];
+	if (!charge.refunds?.has_more) return inline;
+
+	try {
+		const { stripe } = await import("@/shared/lib/stripe");
+		const complete = await stripe.refunds
+			.list({ charge: charge.id, limit: 100 })
+			.autoPagingToArray({
+				limit: 1000,
+			});
+		logger.info(`Charge ${charge.id} refunds paginated (${inline.length} → ${complete.length})`, {
+			service: "webhook",
+			chargeId: charge.id,
+		});
+		return complete;
+	} catch (error) {
+		logger.error("Failed to paginate charge refunds, falling back to inline page", error, {
+			service: "webhook",
+			chargeId: charge.id,
+		});
+		return inline;
+	}
 }
 
 /**
@@ -137,7 +122,7 @@ export async function syncStripeRefunds(
 	}>,
 	orderId: string,
 ): Promise<{ dashboardRefundsCreated: DashboardRefundSummary[] }> {
-	const stripeRefunds = charge.refunds?.data ?? [];
+	const stripeRefunds = await resolveChargeRefunds(charge);
 
 	// ⚠️ AUDIT FIX: Batch toutes les opérations pour éviter N+1 queries
 	// Collecter les opérations à effectuer
@@ -148,7 +133,6 @@ export async function syncStripeRefunds(
 				type: "upsertDashboard";
 				stripeRefundId: string;
 				amount: number;
-				currency: string;
 				status: RefundStatus;
 				reason: RefundReason;
 		  };
@@ -251,11 +235,11 @@ export async function syncStripeRefunds(
 				}
 
 				// Remboursement fait depuis Stripe Dashboard - upsert pour idempotence
+				warnOnUnexpectedRefundCurrency(stripeRefund);
 				operations.push({
 					type: "upsertDashboard",
 					stripeRefundId: stripeRefund.id,
 					amount: stripeRefund.amount || 0,
-					currency: stripeRefund.currency || "EUR",
 					status: mappedStatus,
 					reason: mapStripeRefundReason(stripeRefund.reason),
 				});
@@ -376,12 +360,14 @@ export async function syncStripeRefunds(
 						}
 
 						case "upsertDashboard": {
-							// ORD-REFUND-003 / ORD-BIZ-001: refunds Dashboard arrivent
-							// sans breakdown article par article. On crée systématiquement
-							// des RefundItem proxy pour préserver la traçabilité comptable
-							// (Art. 272-I CGI) — au pro-rata du montant pour un partial
-							// refund, full montant pour un total. Le restock éventuel est
-							// une décision admin manuelle (ajustement de stock SKU).
+							// ORD-REFUND-003 / ORD-BIZ-001 : les refunds Dashboard arrivent sans
+							// ventilation article par article — et n'en reçoivent plus. Le
+							// modèle `RefundItem` a été retiré le 2026-08-05 : sa ventilation
+							// était FABRIQUÉE (on rembourse un montant, pas des articles) et
+							// produisait une ligne d'avoir qui ne s'additionnait pas (quantité
+							// entière × prix plein ≠ montant proratisé). La traçabilité
+							// comptable (Art. 272-I CGI) tient sur `Refund.amount` et l'avoir.
+							// Le restock éventuel reste une décision admin (ajustement SKU).
 							const existing = await tx.refund.findUnique({
 								where: { stripeRefundId: op.stripeRefundId },
 								select: { id: true },
@@ -416,31 +402,21 @@ export async function syncStripeRefunds(
 
 							const orderForRefund = await tx.order.findUniqueOrThrow({
 								where: { id: orderId },
-								select: {
-									total: true,
-									items: { select: { id: true, price: true, quantity: true } },
-								},
+								select: { total: true },
 							});
 							const isFullRefund = op.amount >= orderForRefund.total;
-							const allocatedItems = allocateDashboardRefundItems(
-								orderForRefund.items,
-								op.amount,
-								isFullRefund,
-							);
 
 							const createdDashboardRefund = await tx.refund.create({
 								data: {
 									orderId,
 									stripeRefundId: op.stripeRefundId,
 									amount: op.amount,
-									currency: validateCurrencyCode(op.currency),
 									reason: op.reason,
 									status: op.status,
 									note: isFullRefund
 										? "Remboursement TOTAL via Dashboard Stripe — stock non restauré (intervention admin requise si retour produit)"
-										: "Remboursement PARTIEL via Dashboard Stripe — items alloués au pro-rata, intervention admin requise pour restock",
+										: "Remboursement PARTIEL via Dashboard Stripe — intervention admin requise pour restock",
 									processedAt: now,
-									...(allocatedItems.length > 0 ? { items: { create: allocatedItems } } : {}),
 								},
 								select: { id: true },
 							});
@@ -538,7 +514,12 @@ export async function updateOrderPaymentStatus(
 	return { isFullyRefunded, isPartiallyRefunded };
 }
 
-const REFUND_RECORD_SELECT = {
+/**
+ * @public Exporté pour `test/contract/transactional-writes-schema-validity.contract.test.ts`,
+ * qui le soumet au validateur Prisma réel : `updatedAt` avait survécu ici après le
+ * drop de la colonne, invisible à `tsc`, et cassait toute résolution de refund.
+ */
+export const REFUND_RECORD_SELECT = {
 	id: true,
 	status: true,
 	amount: true,
@@ -612,6 +593,14 @@ export function mapStripeRefundStatus(stripeStatus: string | undefined | null): 
 		pending: RefundStatus.APPROVED,
 		failed: RefundStatus.FAILED,
 		canceled: RefundStatus.CANCELLED,
+		// `requires_action` était le SEUL statut de `api/refunds/object` sans entrée
+		// ici : il retombait sur `PENDING`, que la machine à états refuse depuis
+		// `APPROVED` — le remboursement restait donc APPROVED, et `reconcile-refunds`
+		// le classait « ni succeeded ni failed » à chaque passage, sans jamais
+		// escalader. Un remboursement pouvait rester en limbe indéfiniment sans que
+		// personne ne l'apprenne. Il est en vol, pas en échec : `APPROVED`, comme
+		// `pending`, ce qui le maintient candidat à la réconciliation.
+		requires_action: RefundStatus.APPROVED,
 	};
 
 	return statusMap[stripeStatus ?? "pending"] ?? RefundStatus.PENDING;

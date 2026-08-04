@@ -45,14 +45,6 @@ interface AdjustStockFormProps {
 	className?: string;
 }
 
-const REASON_SUGGESTIONS = [
-	"Correction inventaire",
-	"Casse",
-	"Reçu fournisseur",
-	"Retour client",
-	"Vol / Perte",
-];
-
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
 	withViewTransition(() => router.push(path));
 }
@@ -336,26 +328,6 @@ export function AdjustStockForm({
 						</div>
 					)}
 				</div>
-
-				<form.AppField name="reason">
-					{(field) => (
-						<field.InputField
-							label="Raison"
-							optional
-							type="text"
-							list="adjust-stock-reason-suggestions"
-							placeholder="Ex : Correction inventaire, casse…"
-							enterKeyHint="done"
-							autoCapitalize="sentences"
-							description="Enregistré pour le suivi des mouvements de stock."
-						/>
-					)}
-				</form.AppField>
-				<datalist id="adjust-stock-reason-suggestions">
-					{REASON_SUGGESTIONS.map((s) => (
-						<option key={s} value={s} />
-					))}
-				</datalist>
 			</fieldset>
 
 			<AdminFormFooter pending={isPending}>

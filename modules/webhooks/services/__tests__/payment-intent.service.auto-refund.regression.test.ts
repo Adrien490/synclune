@@ -163,7 +163,10 @@ describe("ORD-BIZ-002 — initiateAutomaticRefund crée un Refund local lié à 
 		mockStripeRefunds.create.mockResolvedValue({ id: "re_stripe_auto_1" });
 	});
 
-	it("crée un Refund local APPROVED avec items.length = order.items.length AVANT le call Stripe", async () => {
+	// `RefundItem` est parti le 2026-08-05 : le Refund local ne porte plus de lignes
+	// (l'itemisation était fabriquée — on rembourse un montant). Ce qui compte reste
+	// vrai et testé : le Refund existe AVANT l'appel Stripe, au bon montant.
+	it("crée un Refund local APPROVED au montant total AVANT le call Stripe", async () => {
 		const result = await initiateAutomaticRefund("pi_test_1", "order-1", "payment_failed");
 
 		expect(result.success).toBe(true);
@@ -174,18 +177,7 @@ describe("ORD-BIZ-002 — initiateAutomaticRefund crée un Refund local lié à 
 		expect(createPayload.data.amount).toBe(5000);
 		expect(createPayload.data.status).toBe("APPROVED");
 		expect(createPayload.data.reason).toBe("OTHER");
-
-		const items = createPayload.data.items.create as Array<{
-			orderItemId: string;
-			quantity: number;
-			amount: number;
-		}>;
-		expect(items).toHaveLength(2);
-		// Aucune instruction de restock (colonne droppée au Lot 6) : le stock est
-		// déjà restauré par restoreStockForOrder lors de payment_failed.
-		expect(items.every((i) => !("restock" in i))).toBe(true);
-		// sum(amount) doit couvrir le total
-		expect(items.reduce((acc, i) => acc + i.amount, 0)).toBe(5000);
+		expect(createPayload.data).not.toHaveProperty("items");
 	});
 
 	it("Audit F2 — le Refund local porte amount_received quand il diffère d'order.total (underbilling)", async () => {

@@ -149,7 +149,6 @@ function makeParams(overrides: Record<string, unknown> = {}) {
 		},
 		firstName: "Marie",
 		lastName: "Dupont",
-		userId: "user_1",
 		finalEmail: "marie@example.com",
 		// Invariant #8 (NF 525) : une commande naît TOUJOURS avec sa provenance
 		// Stripe. Le paramètre était optionnel jusqu'au 2026-07-31 et ce fixture
@@ -552,14 +551,13 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		expect(mockGetValidImageUrl).toHaveBeenCalledWith("https://example.com/primary.jpg");
 		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
 		expect(itemCall.data.productImageUrl).toBe("https://example.com/primary.jpg");
-		expect(itemCall.data.skuImageUrl).toBe("https://example.com/primary.jpg");
 	});
 
 	/**
 	 * @regression EINV-SNAPSHOT-MEDIA-001
 	 *
 	 * Une VIDÉO marquée `isPrimary` ne doit jamais atterrir dans le snapshot figé
-	 * `OrderItem.productImageUrl` / `skuImageUrl` — immuable, rétention 10 ans, rendu
+	 * `OrderItem.productImageUrl` — immuable, rétention 10 ans, rendu
 	 * dans l'historique client ET dans le PDF de facture. Le code faisait
 	 * `find((img) => img.isPrimary) ?? images[0]`, aveugle au `mediaType` (que le
 	 * select ne remontait même pas), et `getValidImageUrl` ne valide que HTTPS +
@@ -580,7 +578,6 @@ describe("createOrderInTransaction — order creation without discount", () => {
 
 		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
 		expect(itemCall.data.productImageUrl).toBe("https://example.com/photo.jpg");
-		expect(itemCall.data.skuImageUrl).toBe("https://example.com/photo.jpg");
 		expect(itemCall.data.productImageUrl).not.toContain(".mp4");
 	});
 
@@ -777,7 +774,6 @@ describe("createOrderInTransaction — discount flow", () => {
 				discountId: "discount_1",
 				orderId: "order_1",
 				discountCode: "PROMO10",
-				amountApplied: 598,
 			},
 		});
 		expect(result.appliedDiscountId).toBe("discount_1");
@@ -837,7 +833,6 @@ describe("createOrderInTransaction — discount flow", () => {
 		await createOrderInTransaction(
 			makeParams({
 				discountCode: "PROMO10",
-				userId: null,
 				finalEmail: "  Marie@Example.COM  ",
 			}),
 		);

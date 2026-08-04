@@ -35,7 +35,6 @@ export function useAdjustStockForm(options: UseAdjustStockFormOptions) {
 		defaultValues: {
 			skuId: options.skuId,
 			adjustment: 0,
-			reason: "",
 		},
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});

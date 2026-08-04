@@ -34,8 +34,6 @@ const {
 		material: { findUnique: vi.fn() },
 		orderItem: { findMany: vi.fn() },
 		// STOCK-PHANTOM-001 : `applyInventoryDeltaTx` prend un FOR UPDATE puis écrit
-		// un StockMovement quand le delta est non nul.
-		stockMovement: { create: vi.fn() },
 		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
@@ -224,7 +222,6 @@ describe("updateProduct", () => {
 		mockPrisma.productSku.update.mockResolvedValue({});
 		// Stock verrouillé aligné sur l'inventaire du produit rendu (delta 0 par défaut).
 		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 10 }]);
-		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockPrisma.productCollection.deleteMany.mockResolvedValue({});
 		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 1 });
 		mockPrisma.skuMedia.deleteMany.mockResolvedValue({});
@@ -416,9 +413,7 @@ describe("updateProduct", () => {
 		}
 
 		it("deletes only the URLs not referenced by any OrderItem snapshot", async () => {
-			mockPrisma.orderItem.findMany.mockResolvedValue([
-				{ productImageUrl: URL_REFERENCED, skuImageUrl: null },
-			]);
+			mockPrisma.orderItem.findMany.mockResolvedValue([{ productImageUrl: URL_REFERENCED }]);
 
 			const result = await updateProduct(undefined, formDataWithDeletions());
 			expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -431,8 +426,8 @@ describe("updateProduct", () => {
 
 		it("does not call UploadThing delete when all deleted URLs are still referenced", async () => {
 			mockPrisma.orderItem.findMany.mockResolvedValue([
-				{ productImageUrl: URL_REFERENCED, skuImageUrl: null },
-				{ productImageUrl: null, skuImageUrl: URL_FREE },
+				{ productImageUrl: URL_REFERENCED },
+				{ productImageUrl: URL_FREE },
 			]);
 
 			await updateProduct(undefined, formDataWithDeletions());

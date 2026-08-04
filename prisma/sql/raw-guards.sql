@@ -74,8 +74,6 @@ ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_creditNoteNumber_format_che
 ALTER TABLE "Order" ADD CONSTRAINT "Order_creditNoteNumber_format_check" CHECK ("creditNoteNumber" IS NULL OR "creditNoteNumber" ~ '^A-[0-9]{4}-[0-9]{5}$');
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_creditNotePdfHash_format_check";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_creditNotePdfHash_format_check" CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_currency_eur_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_currency_eur_check" CHECK (currency = 'EUR');
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_discountAmount_non_negative";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_discountAmount_non_negative" CHECK ("discountAmount" >= 0);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceDataHash_format_check";
@@ -107,18 +105,6 @@ ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_total_formula";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_total_formula" CHECK ("total" = GREATEST(0, "subtotal" - "discountAmount" + "shippingCost"));
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_total_non_negative";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_total_non_negative" CHECK ("total" >= 0);
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_vendorApeCode_format_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_vendorApeCode_format_check" CHECK ("vendorApeCode" IS NULL OR "vendorApeCode" ~ '^[0-9]{2}\.[0-9]{2}[A-Z]$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_vendorBankBic_format_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_vendorBankBic_format_check" CHECK ("vendorBankBic" IS NULL OR "vendorBankBic" ~ '^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_vendorBankIban_format_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_vendorBankIban_format_check" CHECK ("vendorBankIban" IS NULL OR "vendorBankIban" ~ '^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_vendorSiren_format_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_vendorSiren_format_check" CHECK ("vendorSiren" IS NULL OR "vendorSiren" ~ '^[0-9]{9}$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_vendorSiret_format_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_vendorSiret_format_check" CHECK ("vendorSiret" IS NULL OR "vendorSiret" ~ '^[0-9]{14}$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_vendorVatNumber_format_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_vendorVatNumber_format_check" CHECK ("vendorVatNumber" IS NULL OR "vendorVatNumber" ~ '^[A-Z]{2}[A-Z0-9]{2,13}$');
 
 -- OrderItem
 ALTER TABLE "OrderItem" DROP CONSTRAINT IF EXISTS "OrderItem_price_positive";
@@ -141,24 +127,10 @@ ALTER TABLE "Refund" DROP CONSTRAINT IF EXISTS "Refund_creditNoteNumber_format_c
 ALTER TABLE "Refund" ADD CONSTRAINT "Refund_creditNoteNumber_format_check" CHECK ("creditNoteNumber" IS NULL OR "creditNoteNumber" ~ '^A-[0-9]{4}-[0-9]{5}$');
 ALTER TABLE "Refund" DROP CONSTRAINT IF EXISTS "Refund_creditNotePdfHash_format_check";
 ALTER TABLE "Refund" ADD CONSTRAINT "Refund_creditNotePdfHash_format_check" CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$');
-ALTER TABLE "Refund" DROP CONSTRAINT IF EXISTS "Refund_currency_eur_check";
-ALTER TABLE "Refund" ADD CONSTRAINT "Refund_currency_eur_check" CHECK (currency = 'EUR');
-
--- RefundItem
-ALTER TABLE "RefundItem" DROP CONSTRAINT IF EXISTS "RefundItem_amount_positive";
-ALTER TABLE "RefundItem" ADD CONSTRAINT "RefundItem_amount_positive" CHECK ("amount" > 0);
-ALTER TABLE "RefundItem" DROP CONSTRAINT IF EXISTS "RefundItem_quantity_positive";
-ALTER TABLE "RefundItem" ADD CONSTRAINT "RefundItem_quantity_positive" CHECK ("quantity" >= 1);
 
 -- SkuMedia
 ALTER TABLE "SkuMedia" DROP CONSTRAINT IF EXISTS "SkuMedia_dimensions_positive";
 ALTER TABLE "SkuMedia" ADD CONSTRAINT "SkuMedia_dimensions_positive" CHECK ( ("width" IS NULL OR "width" > 0) AND ("height" IS NULL OR "height" > 0) );
-
--- StockMovement
-ALTER TABLE "StockMovement" DROP CONSTRAINT IF EXISTS "StockMovement_delta_consistent";
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_delta_consistent" CHECK ("newInventory" = "previousInventory" + "delta");
-ALTER TABLE "StockMovement" DROP CONSTRAINT IF EXISTS "StockMovement_inventory_non_negative";
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_inventory_non_negative" CHECK ("previousInventory" >= 0 AND "newInventory" >= 0);
 
 -- StoreSettings
 ALTER TABLE "StoreSettings" DROP CONSTRAINT IF EXISTS "StoreSettings_singleton_id";
@@ -201,10 +173,6 @@ CREATE UNIQUE INDEX "SkuMedia_one_primary_per_sku" ON "SkuMedia" ("skuId") WHERE
 -- que la valeur stockée est déjà minuscule.
 DROP INDEX IF EXISTS "User_email_lower_key";
 CREATE UNIQUE INDEX "User_email_lower_key" ON "User" (lower("email"));
-DROP INDEX IF EXISTS "User_email_unaccent_trgm_idx";
-CREATE INDEX "User_email_unaccent_trgm_idx" ON "User" USING gin (immutable_unaccent(email) gin_trgm_ops);
-DROP INDEX IF EXISTS "User_name_unaccent_trgm_idx";
-CREATE INDEX "User_name_unaccent_trgm_idx" ON "User" USING gin (immutable_unaccent(COALESCE(name, '')) gin_trgm_ops);
 
 
 -- ============================================================================

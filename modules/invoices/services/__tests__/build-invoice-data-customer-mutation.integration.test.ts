@@ -58,7 +58,7 @@ describeIntegration(
 					total: 4999,
 					currency: "EUR",
 					paymentMethod: "CARD",
-					invoiceStatus: "PENDING",
+					invoiceStatus: null,
 					items: {
 						create: [
 							{
@@ -71,7 +71,7 @@ describeIntegration(
 					},
 				},
 			});
-			await persistInvoiceNumber(order.id, user.id);
+			await persistInvoiceNumber(order.id);
 
 			// Snapshot AVANT
 			const orderBefore = (await prisma.order.findUniqueOrThrow({
@@ -133,7 +133,7 @@ describeIntegration(
 					total: 4999,
 					currency: "EUR",
 					paymentMethod: "CARD",
-					invoiceStatus: "PENDING",
+					invoiceStatus: null,
 					items: {
 						create: [
 							{
@@ -146,7 +146,7 @@ describeIntegration(
 					},
 				},
 			});
-			await persistInvoiceNumber(order.id, user.id);
+			await persistInvoiceNumber(order.id);
 
 			// MUTATION : l'utilisateur déménage et met à jour son adresse profile
 			// (table Address — pas accessible directement ici puisque l'Order a
@@ -198,7 +198,7 @@ describeIntegration(
 					total: 4999,
 					currency: "EUR",
 					paymentMethod: "CARD",
-					invoiceStatus: "PENDING",
+					invoiceStatus: null,
 					items: {
 						create: [
 							{
@@ -211,7 +211,7 @@ describeIntegration(
 					},
 				},
 			});
-			await persistInvoiceNumber(order.id, user.id);
+			await persistInvoiceNumber(order.id);
 
 			// Soft delete User (RGPD droit à l'effacement après 10 ans conservation)
 			await prisma.user.update({

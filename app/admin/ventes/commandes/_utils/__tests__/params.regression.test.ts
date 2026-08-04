@@ -36,10 +36,10 @@ describe("@regression order-filters-multi-select-not-truncated", () => {
 	it("conserve TOUTES les valeurs pour status et invoiceStatus", () => {
 		const filters = parse({
 			filter_status: ["PENDING", "PROCESSING", "SHIPPED"],
-			filter_invoiceStatus: ["GENERATED", "PENDING"],
+			filter_invoiceStatus: ["GENERATED", "VOIDED"],
 		});
 		expect(filters?.status).toEqual(["PENDING", "PROCESSING", "SHIPPED"]);
-		expect(filters?.invoiceStatus).toEqual(["GENERATED", "PENDING"]);
+		expect(filters?.invoiceStatus).toEqual(["GENERATED", "VOIDED"]);
 	});
 
 	it("normalise une valeur unique en tableau à un élément (accepté par le schéma)", () => {

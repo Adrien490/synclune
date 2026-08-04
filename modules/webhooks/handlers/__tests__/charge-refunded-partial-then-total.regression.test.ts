@@ -134,7 +134,6 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
 		paymentStatus: "PAID",
 		customerEmail: "client@example.com",
 		customerName: "Client Saga",
-		userId: "user-saga-1",
 		refunds: [],
 		...overrides,
 	};
@@ -269,7 +268,7 @@ describe("@regression charge-refunded-partial-then-total — EINV-TEST-009", () 
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
 		mockPrisma.order.findUnique.mockResolvedValue({
-			invoiceStatus: "PENDING",
+			invoiceStatus: null,
 			invoiceNumber: null,
 		});
 

@@ -83,8 +83,8 @@ export async function sendAdminRefundFailedAlert({
 
 /**
  * ORD-STRIPE-006 — alerte admin pour un refund créé via Dashboard Stripe qui
- * nécessite une intervention manuelle (refund partiel sans RefundItem → impossible
- * de connaître les articles remboursés ni de restocker automatiquement).
+ * nécessite une intervention manuelle : Stripe rembourse un MONTANT, jamais des
+ * articles — rien ne dit lesquels sont concernés, donc aucun restock automatique.
  */
 export async function sendAdminDashboardRefundAttentionAlert({
 	orderNumber,
@@ -109,8 +109,8 @@ export async function sendAdminDashboardRefundAttentionAlert({
 		`Montant    : ${formatEuro(amount)}`,
 	].join("\n");
 	const summary = isFullRefund
-		? `Refund TOTAL via Dashboard Stripe sans RefundItem. Vérifier si les articles doivent être restockés (intervention admin manuelle requise).`
-		: `Refund PARTIEL via Dashboard Stripe SANS RefundItem détaillé. Impossible de déterminer quels articles ont été remboursés ni de restocker. Intervention admin requise pour compléter la traçabilité.`;
+		? `Remboursement TOTAL via le Dashboard Stripe. Vérifie si les articles doivent être remis en stock (ajustement manuel).`
+		: `Remboursement PARTIEL via le Dashboard Stripe. Stripe rembourse un montant, pas des articles : à toi de déterminer lesquels sont concernés et de remettre le stock à jour si besoin.`;
 	return renderAndSend(
 		AdminAlertEmail({
 			type: "refund",

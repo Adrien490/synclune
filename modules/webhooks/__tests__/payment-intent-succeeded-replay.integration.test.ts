@@ -49,9 +49,8 @@ async function createPaidOrder(
 			stripePaymentIntentId: `pi_replay_${Date.now()}`,
 			subtotal: 4999,
 			total: 4999,
-			currency: "EUR",
 			paymentMethod: "CARD",
-			invoiceStatus: "PENDING",
+			invoiceStatus: null,
 			items: {
 				create: [
 					{

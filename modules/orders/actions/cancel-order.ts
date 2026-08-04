@@ -15,9 +15,7 @@ import {
 	InvoiceStatus,
 	RefundReason,
 	RefundStatus,
-	StockMovementSource,
 } from "@/app/generated/prisma/client";
-import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
 import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
 import {
 	collectStockInvalidationTags,
@@ -113,7 +111,6 @@ export async function cancelOrder(
 						fulfillmentStatus: true,
 						total: true,
 						stripePaymentIntentId: true,
-						userId: true,
 						customerEmail: true,
 						customerName: true,
 						shippingFirstName: true,
@@ -268,7 +265,7 @@ export async function cancelOrder(
 							RETURNING "inventory", "productId"
 						`;
 
-						// SKU hard-deleted entre-temps : rien à restaurer, rien à journaliser.
+						// SKU hard-deleted entre-temps : rien à restaurer.
 						// On ne throw pas — l'annulation doit aboutir (le claim est déjà gagné).
 						const row = updated[0];
 						if (!row) continue;
@@ -278,17 +275,6 @@ export async function cancelOrder(
 							skuId: item.skuId,
 							productId: row.productId,
 							productSlug: beforeById.get(item.skuId)?.product.slug ?? null,
-						});
-
-						await recordStockMovementTx(tx, {
-							skuId: item.skuId,
-							productId: row.productId,
-							previousInventory: row.inventory - item.quantity,
-							newInventory: row.inventory,
-							source: StockMovementSource.ORDER,
-							reason: `Annulation — commande ${found.orderNumber}`,
-							createdById: adminUser.id,
-							createdByName: adminUser.name ?? null,
 						});
 					}
 				}
@@ -324,13 +310,6 @@ export async function cancelOrder(
 								reason: RefundReason.CUSTOMER_REQUEST,
 								status: RefundStatus.APPROVED,
 								note: sanitizedReason ?? "Remboursement automatique sur annulation",
-								items: {
-									create: found.items.map((item) => ({
-										orderItemId: item.id,
-										quantity: item.quantity,
-										amount: item.price * item.quantity,
-									})),
-								},
 							},
 							select: { id: true },
 						});

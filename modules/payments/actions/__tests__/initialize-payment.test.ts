@@ -461,7 +461,6 @@ describe("initializePayment", () => {
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					metadata: expect.objectContaining({
-						userId: "guest",
 						guestSessionId: "session-guest-abc",
 					}),
 				}),

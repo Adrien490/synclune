@@ -76,7 +76,6 @@ describe("ensureInvoiceNumberPersisted", () => {
 	it("persists invoice number when order is PAID and invoiceNumber is null", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			invoiceNumber: null,
-			userId: "user-1",
 			paymentStatus: "PAID",
 		});
 		mockPersistInvoiceNumber.mockResolvedValue({
@@ -86,13 +85,12 @@ describe("ensureInvoiceNumberPersisted", () => {
 
 		await ensureInvoiceNumberPersisted("order-1");
 
-		expect(mockPersistInvoiceNumber).toHaveBeenCalledWith("order-1", "user-1");
+		expect(mockPersistInvoiceNumber).toHaveBeenCalledWith("order-1");
 	});
 
 	it("is idempotent — noop when invoiceNumber already set", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			invoiceNumber: "F-2026-00001",
-			userId: "user-1",
 			paymentStatus: "PAID",
 		});
 
@@ -104,7 +102,6 @@ describe("ensureInvoiceNumberPersisted", () => {
 	it("skips when order is not PAID (defensive)", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			invoiceNumber: null,
-			userId: "user-1",
 			paymentStatus: "PENDING",
 		});
 
@@ -128,7 +125,6 @@ describe("ensureInvoiceNumberPersisted", () => {
 		async (status) => {
 			mockPrisma.order.findUnique.mockResolvedValue({
 				invoiceNumber: null,
-				userId: "user-1",
 				paymentStatus: status,
 			});
 
@@ -141,7 +137,6 @@ describe("ensureInvoiceNumberPersisted", () => {
 	it("supports guest orders (userId null)", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			invoiceNumber: null,
-			userId: null,
 			paymentStatus: "PAID",
 		});
 		mockPersistInvoiceNumber.mockResolvedValue({
@@ -151,13 +146,12 @@ describe("ensureInvoiceNumberPersisted", () => {
 
 		await ensureInvoiceNumberPersisted("order-guest-1");
 
-		expect(mockPersistInvoiceNumber).toHaveBeenCalledWith("order-guest-1", null);
+		expect(mockPersistInvoiceNumber).toHaveBeenCalledWith("order-guest-1");
 	});
 
 	it("does not throw when persist fails — webhook must succeed regardless", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			invoiceNumber: null,
-			userId: "user-1",
 			paymentStatus: "PAID",
 		});
 		mockPersistInvoiceNumber.mockResolvedValue(null);

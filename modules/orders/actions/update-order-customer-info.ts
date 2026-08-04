@@ -56,7 +56,6 @@ export async function updateOrderCustomerInfo(
 				select: {
 					id: true,
 					orderNumber: true,
-					userId: true,
 					invoiceNumber: true,
 					customerEmail: true,
 					customerName: true,

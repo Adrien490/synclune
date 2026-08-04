@@ -53,9 +53,8 @@ async function createPaidOrder(
 			shippingCost: 0,
 			taxAmount: 0,
 			total: 4999,
-			currency: "EUR",
 			paymentMethod: "CARD",
-			invoiceStatus: "PENDING",
+			invoiceStatus: null,
 			items: {
 				create: [
 					{
@@ -99,9 +98,7 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 		}
 
 		// Lance les 20 persistInvoiceNumber en parallèle
-		const results = await Promise.all(
-			orders.map((order) => persistInvoiceNumber(order.id, user.id)),
-		);
+		const results = await Promise.all(orders.map((order) => persistInvoiceNumber(order.id)));
 
 		// Tous doivent réussir
 		expect(results.every((r) => r !== null)).toBe(true);
@@ -140,7 +137,7 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 			orderIds.push(order.id);
 		}
 
-		await Promise.all(orderIds.map((id) => persistInvoiceNumber(id, user.id)));
+		await Promise.all(orderIds.map((id) => persistInvoiceNumber(id)));
 
 		const persisted = await prisma.order.findMany({
 			where: { id: { in: orderIds } },
@@ -164,7 +161,7 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 			orderIds.push(order.id);
 		}
 
-		await Promise.all(orderIds.map((id) => persistInvoiceNumber(id, user.id)));
+		await Promise.all(orderIds.map((id) => persistInvoiceNumber(id)));
 
 		const histories = await prisma.orderHistory.findMany({
 			where: { orderId: { in: orderIds }, action: "INVOICE_GENERATED" },
@@ -187,8 +184,8 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 		const order1 = await createPaidOrder(prisma, user.id, sku.id, `UNIQ-A-${Date.now()}`);
 		const order2 = await createPaidOrder(prisma, user.id, sku.id, `UNIQ-B-${Date.now()}`);
 
-		const result1 = await persistInvoiceNumber(order1.id, user.id);
-		const result2 = await persistInvoiceNumber(order2.id, user.id);
+		const result1 = await persistInvoiceNumber(order1.id);
+		const result2 = await persistInvoiceNumber(order2.id);
 
 		expect(result1?.invoiceNumber).not.toBe(result2?.invoiceNumber);
 	});
@@ -201,13 +198,13 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 		const order = await createPaidOrder(prisma, user.id, sku.id, `IDEMP-${Date.now()}`);
 
 		// 1er appel — attribue F-YYYY-NNNNN.
-		const result1 = await persistInvoiceNumber(order.id, user.id);
+		const result1 = await persistInvoiceNumber(order.id);
 		expect(result1?.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
 
 		// 2e appel : la garde d'idempotence SOUS le lock re-lit le numéro de cette
 		// commande et le retourne tel quel — il NE doit PAS générer un nouveau
 		// numéro (sinon mutation Art. 286 + orphelinisation du 1er = gap).
-		const result2 = await persistInvoiceNumber(order.id, user.id);
+		const result2 = await persistInvoiceNumber(order.id);
 		expect(result2?.invoiceNumber).toBe(result1?.invoiceNumber);
 
 		// L'order conserve le numéro initial.
@@ -234,7 +231,7 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 		// 5 appels concurrents simulant webhook eager + fallback lazy route + retry
 		// Stripe + cron sync-async tombant ensemble dans la fenêtre PAID-sans-numéro.
 		const results = await Promise.all(
-			Array.from({ length: 5 }, () => persistInvoiceNumber(order.id, user.id)),
+			Array.from({ length: 5 }, () => persistInvoiceNumber(order.id)),
 		);
 
 		// Tous réussissent et retournent le MÊME numéro (un seul gagnant écrit, les

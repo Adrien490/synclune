@@ -30,7 +30,6 @@ const {
 			updateMany: vi.fn(),
 		},
 		skuMedia: { deleteMany: vi.fn(), create: vi.fn(), createMany: vi.fn() },
-		stockMovement: { create: vi.fn() },
 		color: { findUnique: vi.fn(), findMany: vi.fn() },
 		material: { findUnique: vi.fn(), findMany: vi.fn() },
 		$transaction: vi.fn(),
@@ -184,7 +183,6 @@ describe("updateProductSku — regression hardening", () => {
 		mockPrisma.skuMedia.deleteMany.mockResolvedValue({});
 		mockPrisma.skuMedia.create.mockResolvedValue({});
 		mockPrisma.skuMedia.createMany.mockResolvedValue({ count: 0 });
-		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockPrisma.color.findMany.mockResolvedValue([]);
 		mockPrisma.material.findMany.mockResolvedValue([]);
 
@@ -314,8 +312,6 @@ describe("updateProductSku — regression hardening", () => {
 					data: expect.objectContaining({ inventory: { increment: 0 } }),
 				}),
 			);
-			// delta 0 → aucun mouvement de stock fantôme dans l'audit.
-			expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
 		});
 
 		it("baisse volontaire applique le delta relatif (préserve les ventes concurrentes)", async () => {
@@ -334,20 +330,6 @@ describe("updateProductSku — regression hardening", () => {
 			expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ inventory: { increment: -10 } }),
-				}),
-			);
-			// Le delta appliqué est tracé dans StockMovement (source SKU_UPDATE),
-			// atomique avec l'update — parité d'audit avec adjust-sku-stock.
-			expect(mockPrisma.stockMovement.create).toHaveBeenCalledWith(
-				expect.objectContaining({
-					data: expect.objectContaining({
-						skuId: VALID_CUID,
-						previousInventory: 12,
-						newInventory: 2,
-						delta: -10,
-						source: "SKU_UPDATE",
-						createdById: "admin-1",
-					}),
 				}),
 			);
 		});

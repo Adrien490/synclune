@@ -94,6 +94,9 @@ export async function reconcileRefunds(): Promise<CronResult> {
 			stripeRefundId: true,
 			amount: true,
 			orderId: true,
+			// Âge du refund : sert l'escalade des remboursements bloqués chez Stripe
+			// (statut non terminal au-delà de `REFUND_STALE_PENDING_MS`).
+			createdAt: true,
 			// La finalisation (paymentStatus, avoir, email au snapshot
 			// customerEmail) vit dans `finalizeRefundCompletion`, qui se self-load —
 			// ce select ne porte plus que le nécessaire au pilotage de la passe.
@@ -218,8 +221,34 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					skipped++;
 				}
 			} else {
-				// pending / requires_action → laisser le webhook ou le prochain run gérer
+				// pending / requires_action → laisser le webhook ou le prochain run gérer.
+				//
+				// ⚠️ « Le prochain run gérera » n'était vrai que pour `pending`. Un refund
+				// bloqué chez Stripe (typiquement `requires_action`) retombait ici À CHAQUE
+				// passage, indéfiniment, sans jamais rien signaler : le client n'était pas
+				// remboursé, l'avoir n'était pas émis, et personne ne l'apprenait. Passé
+				// `REFUND_STALE_PENDING_MS`, on escalade — une fois, sur la clé
+				// d'idempotence Resend, pour ne pas re-alerter à chaque exécution.
 				skipped++;
+
+				const ageMs = now - refund.createdAt.getTime();
+				if (ageMs > THRESHOLDS.REFUND_STALE_PENDING_MS) {
+					logger.warn(
+						`Refund ${refund.id} stuck in '${stripeRefund.status}' for ${Math.round(ageMs / 3_600_000)}h`,
+						{
+							cronJob: "reconcile-refunds",
+							refundId: refund.id,
+							stripeRefundId: refund.stripeRefundId,
+							stripeStatus: stripeRefund.status,
+						},
+					);
+					await sendRefundFailureAlert(
+						refund.orderId,
+						refund.stripeRefundId,
+						"other",
+						`Remboursement bloqué chez Stripe au statut '${stripeRefund.status}' depuis ${Math.round(ageMs / 3_600_000)} h — intervention manuelle requise dans le Dashboard.`,
+					);
+				}
 			}
 		} catch (error) {
 			logger.error("Error reconciling refund", error, {
@@ -320,7 +349,7 @@ async function reconcileOverbilledOrders(): Promise<{
 			overbillingResolvedAt: null,
 			...notDeleted,
 		},
-		select: { id: true, orderNumber: true, total: true, overbilledAmountCents: true, userId: true },
+		select: { id: true, orderNumber: true, total: true, overbilledAmountCents: true },
 		take: BATCH_SIZE_MEDIUM,
 		orderBy: { createdAt: "asc" },
 	});

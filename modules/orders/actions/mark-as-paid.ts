@@ -6,10 +6,8 @@ import {
 	FulfillmentStatus,
 	type Prisma,
 	HistorySource,
-	StockMovementSource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
 import { selectDeactivatableSkuIds } from "@/modules/skus/services/validate-public-active-sku.service";
 import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -131,7 +129,6 @@ export async function markAsPaid(
 					status: true,
 					paymentStatus: true,
 					fulfillmentStatus: true,
-					userId: true,
 					customerEmail: true,
 					customerName: true,
 					subtotal: true,
@@ -234,15 +231,11 @@ export async function markAsPaid(
 
 			// Atomic stock decrement with conditional WHERE (prevents overselling).
 			//
-			// STOCK-LEDGER-001 : passé en `UPDATE … RETURNING` (même pattern que
-			// `adjust-sku-stock.ts`) plutôt qu'un `updateMany`, pour récupérer
-			// `inventory` et `productId` APRÈS l'écriture et en dériver le
-			// `StockMovement` sans requête supplémentaire ni fenêtre de course. Une
-			// lecture préalable séparée aurait pu être invalidée par un writer
-			// concurrent entre le SELECT et l'UPDATE, et le journal aurait consigné des
-			// valeurs absolues fausses.
+			// `UPDATE … RETURNING` plutôt qu'un `updateMany` : on a besoin d'`inventory`
+			// et `productId` APRÈS l'écriture (désactivation des SKU tombés à 0 +
+			// invalidation de cache), sans requête supplémentaire ni fenêtre de course.
 			//
-			// La condition reste identique : `isActive` ET `inventory >= quantity`.
+			// La condition : `isActive` ET `inventory >= quantity`.
 			// Zéro ligne affectée ⇒ stock insuffisant ou variante inactive ⇒ throw, ce
 			// qui annule toute la transaction (c'est la garde anti-survente de ce
 			// chemin, le seul décrément manuel de la boutique).
@@ -266,16 +259,6 @@ export async function markAsPaid(
 					if (row.inventory === 0) {
 						zeroStockSkus.push({ skuId: item.skuId, productId: row.productId });
 					}
-					await recordStockMovementTx(tx, {
-						skuId: item.skuId,
-						productId: row.productId,
-						previousInventory: row.inventory + item.quantity,
-						newInventory: row.inventory,
-						source: StockMovementSource.ORDER,
-						reason: `Encaissement manuel — commande ${found.orderNumber}`,
-						createdById: adminUser.id,
-						createdByName: adminUser.name ?? null,
-					});
 				}
 			}
 

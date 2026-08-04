@@ -97,10 +97,16 @@ export async function handlePaymentSuccess(
 			if (paymentIntent.amount_received > 0) {
 				try {
 					const { stripe } = await import("@/shared/lib/stripe");
+					// `duplicate` et non `requested_by_customer` : personne n'a rien demandé.
+					// C'est un encaissement qu'on ne sait rattacher à AUCUNE commande, donc
+					// une charge à annuler — la sémantique la plus proche parmi les trois
+					// valeurs de `api/refunds/create`. Le motif exact reste dans
+					// `metadata.reason` ; `reason` est ce que lisent le Dashboard, les
+					// exports comptables et un dossier de contestation.
 					const refund = await stripe.refunds.create(
 						{
 							payment_intent: paymentIntent.id,
-							reason: "requested_by_customer",
+							reason: "duplicate",
 							metadata: { reason: "orphan_charge_no_order" },
 						},
 						{ idempotencyKey: `orphan-refund-${paymentIntent.id}` },
@@ -320,7 +326,7 @@ async function handleOversell(
 
 	const order = await prisma.order.findFirst({
 		where: { id: orderId, ...notDeleted },
-		select: { orderNumber: true, customerEmail: true, total: true, userId: true },
+		select: { orderNumber: true, customerEmail: true, total: true },
 	});
 
 	// 1. Marquer FAILED (libère le discount). Idempotent.
@@ -383,7 +389,7 @@ async function handleAmountMismatch(
 
 	const order = await prisma.order.findFirst({
 		where: { id: orderId, ...notDeleted },
-		select: { orderNumber: true, customerEmail: true, total: true, userId: true },
+		select: { orderNumber: true, customerEmail: true, total: true },
 	});
 
 	// 1. Marquer FAILED (libère le discount). Idempotent.
@@ -508,7 +514,7 @@ export async function handlePaymentFailure(
 
 		const order = await prisma.order.findFirst({
 			where: { id: orderId, ...notDeleted },
-			select: { orderNumber: true, paymentStatus: true, userId: true },
+			select: { orderNumber: true, paymentStatus: true },
 		});
 
 		if (!order) {

@@ -22,7 +22,6 @@ interface OrderItem {
 export interface OrderWithItems {
 	id: string;
 	orderNumber: string;
-	userId: string | null;
 	customerEmail: string | null;
 	shippingFirstName: string | null;
 	shippingLastName: string | null;

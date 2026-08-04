@@ -45,7 +45,6 @@ interface TestOrderItem {
 	skuColor: string | null;
 	skuMaterial: string | null;
 	skuSize: string | null;
-	skuImageUrl: string | null;
 	price: number;
 	quantity: number;
 }
@@ -60,7 +59,6 @@ function createItem(overrides: Partial<TestOrderItem> = {}): TestOrderItem {
 		skuColor: null,
 		skuMaterial: null,
 		skuSize: null,
-		skuImageUrl: null,
 		price: 2500,
 		quantity: 1,
 		...overrides,
@@ -108,38 +106,21 @@ describe("OrderItemsList", () => {
 	});
 
 	describe("images", () => {
-		it("shows the SKU image when skuImageUrl is set (priority over productImageUrl)", () => {
+		// `OrderItem.skuImageUrl` est parti le 2026-08-05 : il recevait la MÊME
+		// valeur que `productImageUrl` (un seul writer, une seule variable), donc la
+		// « priorité » que testaient les deux cas précédents était indiscernable.
+		it("shows the product image snapshot", () => {
 			render(
 				<OrderItemsList
-					items={[
-						createItem({
-							skuImageUrl: "https://example.com/sku.jpg",
-							productImageUrl: "https://example.com/product.jpg",
-						}),
-					]}
-				/>,
-			);
-			const img = screen.getByRole("img");
-			expect(img.getAttribute("src")).toBe("https://example.com/sku.jpg");
-		});
-
-		it("falls back to the product image when skuImageUrl is null", () => {
-			render(
-				<OrderItemsList
-					items={[
-						createItem({
-							skuImageUrl: null,
-							productImageUrl: "https://example.com/product.jpg",
-						}),
-					]}
+					items={[createItem({ productImageUrl: "https://example.com/product.jpg" })]}
 				/>,
 			);
 			const img = screen.getByRole("img");
 			expect(img.getAttribute("src")).toBe("https://example.com/product.jpg");
 		});
 
-		it("shows the image placeholder text when both skuImageUrl and productImageUrl are null", () => {
-			render(<OrderItemsList items={[createItem({ skuImageUrl: null, productImageUrl: null })]} />);
+		it("shows the image placeholder text when productImageUrl is null", () => {
+			render(<OrderItemsList items={[createItem({ productImageUrl: null })]} />);
 			expect(screen.queryByRole("img")).toBeNull();
 			expect(screen.getByText("Image")).toBeInTheDocument();
 		});

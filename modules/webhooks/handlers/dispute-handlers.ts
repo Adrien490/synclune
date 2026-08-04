@@ -400,7 +400,6 @@ export async function handleDisputeClosed(
 						data: {
 							orderId: order.id,
 							amount: dispute.amount,
-							currency: "EUR",
 							// P2-F : refléter la vraie raison du litige (pas FRAUD systématique).
 							reason: mapDisputeReasonToRefundReason(dispute.reason),
 							status: RefundStatus.COMPLETED,

@@ -101,7 +101,6 @@ function buildParams(
 		},
 		firstName: "Marie",
 		lastName: "Dupont",
-		userId: null,
 		finalEmail: `buyer-${uniq()}@test.local`,
 		// Invariant #8 : provenance Stripe obligatoire dès la création. Unique par
 		// commande — `Order.stripePaymentIntentId` porte une contrainte UNIQUE, et

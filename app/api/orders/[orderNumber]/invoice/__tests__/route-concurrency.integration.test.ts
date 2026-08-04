@@ -52,9 +52,8 @@ async function createPaidOrderWithoutInvoice(
 			stripePaymentIntentId: `pi_rt_${Date.now()}`,
 			subtotal: 4999,
 			total: 4999,
-			currency: "EUR",
 			paymentMethod: "CARD",
-			invoiceStatus: "PENDING",
+			invoiceStatus: null,
 			items: {
 				create: [
 					{
@@ -89,8 +88,8 @@ describeIntegration("GET /api/orders/[orderNumber]/invoice — concurrence (EINV
 
 		// Simule 2 GET concurrents sur Order sans invoiceNumber
 		const [r1, r2] = await Promise.all([
-			persistInvoiceNumber(order.id, user.id),
-			persistInvoiceNumber(order.id, user.id),
+			persistInvoiceNumber(order.id),
+			persistInvoiceNumber(order.id),
 		]);
 
 		// Les deux réussissent et obtiennent des numéros distincts
@@ -124,7 +123,7 @@ describeIntegration("GET /api/orders/[orderNumber]/invoice — concurrence (EINV
 		const order = await createPaidOrderWithoutInvoice(prisma, user.id, sku.id);
 
 		const results = await Promise.all(
-			Array.from({ length: 5 }, () => persistInvoiceNumber(order.id, user.id)),
+			Array.from({ length: 5 }, () => persistInvoiceNumber(order.id)),
 		);
 
 		const successful = results.filter((r) => r !== null);

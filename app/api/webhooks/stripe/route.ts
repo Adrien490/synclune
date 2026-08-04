@@ -386,7 +386,6 @@ export async function POST(req: Request) {
 				where: { id: webhookRecord.id },
 				data: {
 					status: WebhookEventStatus.FAILED,
-					errorMessage: error instanceof Error ? error.message : String(error),
 					processedAt: new Date(),
 				},
 			});

@@ -32,12 +32,6 @@ describe("cache constants", () => {
 			expect(tag).toContain("sku-123");
 		});
 
-		it("RELATED_USER returns unique tags per user ID", () => {
-			const tag1 = PRODUCTS_CACHE_TAGS.RELATED_USER("user-1");
-			const tag2 = PRODUCTS_CACHE_TAGS.RELATED_USER("user-2");
-			expect(tag1).not.toBe(tag2);
-		});
-
 		it("RELATED_CONTEXTUAL returns unique tags per product slug", () => {
 			const tag = PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL("bague-lune");
 			expect(tag).toContain("bague-lune");

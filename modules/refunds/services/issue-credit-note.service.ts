@@ -112,7 +112,6 @@ export async function issueCreditNoteForRefund(
 							order: {
 								select: {
 									id: true,
-									userId: true,
 									invoiceNumber: true,
 									invoiceStatus: true,
 									paymentStatus: true,
@@ -200,7 +199,6 @@ export async function issueCreditNoteForRefund(
 					return {
 						kind: "issued-tx" as const,
 						updated,
-						orderUserId: refund.order.userId,
 						orderId: refund.order.id,
 					};
 				},

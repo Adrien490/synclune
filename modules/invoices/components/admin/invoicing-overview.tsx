@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Clock, FileWarning, Receipt } from "lucide-react";
+import { AlertTriangle, FileWarning, Receipt } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ExportComptableForm } from "@/modules/invoices/components/admin/export-comptable-form";
@@ -34,14 +34,7 @@ export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionP
 				<h2 id="invoice-counters-heading" className="text-foreground text-lg font-medium">
 					Factures
 				</h2>
-				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-					<CounterCard
-						icon={<Clock className="text-muted-foreground size-5" aria-hidden="true" />}
-						label="En attente"
-						value={overview.invoiceCounters.PENDING}
-						hint="Statut facture = PENDING (en cours de génération)"
-						href="/admin/ventes/commandes?filter_invoiceStatus=PENDING"
-					/>
+				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					<CounterCard
 						icon={<Receipt className="text-success size-5" aria-hidden="true" />}
 						label="Émises"

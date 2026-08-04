@@ -101,7 +101,6 @@ export async function markAsShipped(
 					status: true,
 					paymentStatus: true,
 					fulfillmentStatus: true,
-					userId: true,
 					customerEmail: true,
 					customerName: true,
 					shippingFirstName: true,

@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockPrisma,
 	mockPersistInvoiceNumber,
-	mockBackfillInvoiceDataSnapshot,
 	mockArchiveInvoicePdf,
 	mockVoidInvoice,
 	mockBuildInvoiceData,
@@ -22,7 +21,6 @@ const {
 		refund: { findMany: vi.fn(), update: vi.fn() },
 	},
 	mockPersistInvoiceNumber: vi.fn(),
-	mockBackfillInvoiceDataSnapshot: vi.fn(),
 	mockArchiveInvoicePdf: vi.fn(),
 	mockVoidInvoice: vi.fn(),
 	mockBuildInvoiceData: vi.fn(),
@@ -61,7 +59,6 @@ vi.mock("@/modules/emails/services/admin-emails", () => ({
 
 vi.mock("@/modules/orders/services/persist-invoice-number.service", () => ({
 	persistInvoiceNumber: mockPersistInvoiceNumber,
-	backfillInvoiceDataSnapshot: mockBackfillInvoiceDataSnapshot,
 }));
 
 vi.mock("@/modules/orders/services/archive-invoice-pdf.service", () => ({
@@ -114,7 +111,6 @@ function buildCandidate(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		id: "order-1",
 		orderNumber: "SYN-2026-00001",
-		userId: "user-1",
 		paymentStatus: "PAID",
 		invoiceStatus: null,
 		invoiceNumber: null,
@@ -135,9 +131,6 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		mockPrisma.order.update.mockResolvedValue({ invoiceReconcileAttempts: 1 });
 		mockBuildInvoiceData.mockReturnValue({});
 		mockRenderInvoicePdf.mockReturnValue(new Uint8Array([1, 2, 3]));
-		// Pass 0 backfill : noop par défaut (la plupart des candidats ont déjà un
-		// snapshot ou pas de invoiceGeneratedAt → guard skip).
-		mockBackfillInvoiceDataSnapshot.mockResolvedValue(null);
 		// Default success for chained passes so a Pass 1 success doesn't trip Pass 2
 		mockArchiveInvoicePdf.mockResolvedValue({ url: "https://utfs.io/x.pdf" });
 		// Resolve to undefined so `await fn().catch(...)` in escalate() works
@@ -189,7 +182,7 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 
 		const result = await reconcileInvoices();
 
-		expect(mockPersistInvoiceNumber).toHaveBeenCalledWith("order-1", "user-1", {
+		expect(mockPersistInvoiceNumber).toHaveBeenCalledWith("order-1", {
 			source: "SYSTEM",
 			authorName: "Système (reconcile-invoices)",
 		});
@@ -203,58 +196,6 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 				authorName: "Système (reconcile-invoices)",
 			}),
 		);
-	});
-
-	it("Pass 0: backfills invoiceDataSnapshot for legacy invoiced order with null snapshot (EINV-PDF-005)", async () => {
-		// Facture legacy : numéro émis, PDF déjà archivé, MAIS snapshot comptable
-		// manquant (émise avant l'introduction du snapshot figé). invoicePdfUrl set
-		// + paymentStatus PAID → seule la Passe 0 doit s'exécuter.
-		mockPrisma.order.findMany.mockResolvedValueOnce([
-			buildCandidate({
-				invoiceNumber: "F-2026-00007",
-				invoiceStatus: "GENERATED",
-				invoiceGeneratedAt: new Date("2026-03-01T00:00:00Z"),
-				invoicePdfUrl: "https://utfs.io/existing.pdf",
-				invoiceDataSnapshot: null,
-				invoiceRetryDeferred: false,
-			}),
-		]);
-		mockBackfillInvoiceDataSnapshot.mockResolvedValueOnce({
-			invoiceDataHash: "a".repeat(64),
-			invoiceDataSnapshot: { invoiceNumber: "F-2026-00007" },
-		});
-
-		const result = await reconcileInvoices();
-
-		expect(mockBackfillInvoiceDataSnapshot).toHaveBeenCalledWith("order-1");
-		expect(result.snapshotBackfilled).toBe(1);
-		expect(result.processed).toBe(1);
-		// PDF déjà archivé → Passe 2 ne se déclenche pas.
-		expect(mockArchiveInvoicePdf).not.toHaveBeenCalled();
-		expect(mockCreateOrderAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "INVOICE_RECONCILED",
-				metadata: expect.objectContaining({ snapshotBackfilled: true }),
-			}),
-		);
-	});
-
-	it("Pass 0 skipped when snapshot already present (idempotent)", async () => {
-		mockPrisma.order.findMany.mockResolvedValueOnce([
-			buildCandidate({
-				invoiceNumber: "F-2026-00008",
-				invoiceStatus: "GENERATED",
-				invoiceGeneratedAt: new Date("2026-03-01T00:00:00Z"),
-				invoicePdfUrl: "https://utfs.io/existing.pdf",
-				invoiceDataSnapshot: { invoiceNumber: "F-2026-00008" },
-				invoiceRetryDeferred: false,
-			}),
-		]);
-
-		const result = await reconcileInvoices();
-
-		expect(mockBackfillInvoiceDataSnapshot).not.toHaveBeenCalled();
-		expect(result.snapshotBackfilled).toBe(0);
 	});
 
 	it("Pass 2: re-archives PDF when invoiceNumber set but invoicePdfUrl missing", async () => {
@@ -382,7 +323,7 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		);
 	});
 
-	it("filters candidates by (DLQ flag OR legacy snapshot-null OR unarchived credit note) + paidAt>6h (MIN_AGE_MS quarantine)", async () => {
+	it("filters candidates by (DLQ flag OR unarchived credit note) + paidAt>6h (MIN_AGE_MS quarantine)", async () => {
 		await reconcileInvoices();
 		const findManyArgs = mockPrisma.order.findMany.mock.calls[0]?.[0];
 		expect(findManyArgs?.where).toMatchObject({
@@ -391,8 +332,6 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 				{
 					OR: [
 						{ invoiceRetryDeferred: true },
-						// EINV-PDF-005 : facture legacy à snapshot manquant.
-						{ invoiceNumber: { not: null }, invoiceDataSnapshot: expect.anything() },
 						// EINV-CREDIT-020 : avoir full-void émis mais PDF jamais archivé
 						// (sélection directe, pas seulement via le flag DLQ).
 						{ creditNoteNumber: { not: null }, creditNotePdfUrl: null },

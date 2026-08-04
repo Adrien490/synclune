@@ -1,19 +1,32 @@
 /**
  * @regression einv-sec-012-cross-user-idor
  *
- * Trois invariants d'autorisation de la route GET /api/orders/:orderNumber/invoice :
+ * Invariants d'autorisation de la route GET /api/orders/:orderNumber/invoice :
  *
- * 1. Client A authentifié ne peut JAMAIS lire la facture du Client B → 404.
- * 2. Anonyme sans token ne peut JAMAIS lire une facture → 401.
- * 3. Anonyme avec token invalide ne peut JAMAIS lire une facture → 404.
+ * 1. Anonyme sans token ne peut JAMAIS lire une facture → 401.
+ * 2. Anonyme avec token invalide ne peut JAMAIS lire une facture → 404.
+ * 3. Session non-admin sans token ne peut JAMAIS lire une facture → 404.
+ * 4. Token HMAC valide → 200 (seul chemin client).
+ * 5. Admin → 200, quel que soit le token (audit fiscal / SAV), mais rate-limité.
  *
  * EINV-SEC-003 : l'accès non autorisé renvoie 404 (indistinct du cas
  * "commande inexistante") et non 403, pour ne pas révéler l'existence d'une
  * commande (anti-énumération).
  *
- * L'admin bypasse l'ownership (audit fiscal / SAV) mais reste rate-limité (cf
- * EINV-SEC-004). Le token guest signé HMAC-BETTER_AUTH_SECRET permet le download
- * pour les guest checkouts (`Order.userId === null`).
+ * ⚠️ **Ce qui a disparu le 2026-08-05, et pourquoi ce n'est pas un affaiblissement.**
+ * `Order.userId` est parti (audit schéma V1, Lot C) : une commande n'a plus de
+ * propriétaire. Deux familles de cas sont donc devenues INEXPRIMABLES, pas
+ * seulement non testées —
+ *   · « propriétaire de session » (l'ancien cas 200) : la seule session possible
+ *     est celle de l'administratrice, déjà couverte par le cas admin ;
+ *   · EINV-SEC-002, la révocation du token permanent quand le compte propriétaire
+ *     était anonymisé (410) : sans compte client, il n'existe aucun compte à
+ *     effacer, et `isInvoiceOwnerErased` court-circuitait déjà sur `null` pour
+ *     100 % des commandes.
+ * Le cas « client B lit la facture de client A » reste couvert : il est devenu le
+ * cas 3 (toute session non-admin sans token → 404).
+ * **Si un compte client revient, ces deux familles doivent revenir AVEC lui** —
+ * cf. invariant 6 de CLAUDE.md.
  *
  * Cf. audit sécurité 2026-05-28 — EINV-SEC-012.
  */
@@ -126,7 +139,6 @@ const OTHER_USER_ID = "user_other_bbb";
 function makeOrderRow(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "order_test_id",
-		userId: OWNER_USER_ID,
 		orderNumber: "CMD-1700000000000-AAAAAAAAAAAA",
 		paymentStatus: "PAID",
 		invoiceNumber: "F-2026-00001",
@@ -180,7 +192,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 	});
 
-	it("returns 404 when client B is authenticated and tries to download client A's invoice", async () => {
+	it("returns 404 for any non-admin session without a valid token", async () => {
 		mockGetSession.mockResolvedValue({
 			user: { id: OTHER_USER_ID, role: "USER" },
 		});
@@ -201,18 +213,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		expect(mockCreateOrderAudit).not.toHaveBeenCalled();
 	});
 
-	it("returns 200 when owner session matches Order.userId", async () => {
-		mockGetSession.mockResolvedValue({
-			user: { id: OWNER_USER_ID, role: "USER" },
-		});
-
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA");
-
-		expect(response.status).toBe(200);
-		expect(response.headers.get("Content-Type")).toBe("application/pdf");
-	});
-
-	it("returns 200 when valid HMAC token is passed for a guest order (Order.userId === null)", async () => {
+	it("returns 200 when a valid HMAC token is passed (seul chemin client)", async () => {
 		mockGetSession.mockResolvedValue(null);
 		mockVerifyInvoiceAccessToken.mockReturnValue(true);
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: null }));
@@ -241,53 +242,5 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		const response = await callRoute("CMD-9999999999999-FFFFFFFFFFFF");
 
 		expect(response.status).toBe(404);
-	});
-
-	// EINV-SEC-002 — révocation du token permanent après effacement RGPD.
-	it("returns 410 when a valid token targets an order whose owner is ANONYMIZED", async () => {
-		mockGetSession.mockResolvedValue(null);
-		mockVerifyInvoiceAccessToken.mockReturnValue(true);
-		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: OWNER_USER_ID }));
-		// isInvoiceOwnerErased : le compte propriétaire a été anonymisé.
-		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "ANONYMIZED" });
-
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
-
-		expect(response.status).toBe(410);
-		expect(mockCreateOrderAudit).not.toHaveBeenCalled();
-	});
-
-	it("returns 410 when a valid token targets an order whose owner no longer exists (hard-deleted)", async () => {
-		mockGetSession.mockResolvedValue(null);
-		mockVerifyInvoiceAccessToken.mockReturnValue(true);
-		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: OWNER_USER_ID }));
-		mockPrisma.user.findUnique.mockResolvedValue(null);
-
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
-
-		expect(response.status).toBe(410);
-	});
-
-	it("returns 200 when a valid token targets an account order whose owner is still ACTIVE", async () => {
-		mockGetSession.mockResolvedValue(null);
-		mockVerifyInvoiceAccessToken.mockReturnValue(true);
-		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: OWNER_USER_ID }));
-		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "ACTIVE" });
-
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
-
-		expect(response.status).toBe(200);
-	});
-
-	it("does NOT query the owner account for a guest order token (userId === null)", async () => {
-		mockGetSession.mockResolvedValue(null);
-		mockVerifyInvoiceAccessToken.mockReturnValue(true);
-		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: null }));
-
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
-
-		expect(response.status).toBe(200);
-		// Pas de compte à effacer pour un guest → aucune lecture user.
-		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 });

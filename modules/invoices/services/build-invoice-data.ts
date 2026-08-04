@@ -65,7 +65,7 @@ export function buildInvoiceData(
 
 	const { format = "PDF", precedingInvoice = null } = options;
 
-	const seller = buildSellerInfo(order);
+	const seller = buildSellerInfo();
 	const buyer = buildBuyerInfo(order);
 	const shippingAddress = buildShippingAddress(order);
 	const billingAddress = buildBillingAddress(shippingAddress);
@@ -136,40 +136,52 @@ function buildVoidedInfo(order: GetOrderReturn): VoidedInfo | null {
 // ============================================================================
 
 /**
- * Construit le SellerInfo en preferant le snapshot vendor* fige sur Order
- * (Art. L102 B LPF). Si le snapshot est absent (factures pre-Phase 5), tombe
- * sur getVendorLegalInfo() (env actuel) — best-effort uniquement, le PDF
- * archive UploadThing reste l'autorite immuable via invoicePdfHash.
+ * Construit le SellerInfo depuis l'identite vendeur courante (env).
+ *
+ * ⚠️ Ce n'est PAS un raccourci au regard de l'Art. L102 B LPF : le resultat est
+ * fige, canonicalise et hashe dans `Order.invoiceDataSnapshot` au moment meme de
+ * l'attribution du numero (`persistInvoiceNumber`), et c'est ce snapshot — pas
+ * cette fonction — que tout rendu ulterieur relit (`resolveInvoiceDataForRender`).
+ * Une facture emise conserve donc l'identite vendeur de son emission meme si l'env
+ * change ensuite.
+ *
+ * Les 12 colonnes `Order.vendor*` qui doublaient ce calcul en base sont parties le
+ * 2026-08-05 : leur unique lecteur etait le backfill des factures anterieures au
+ * snapshot, un cas qui ne peut plus se produire puisque numero et snapshot sont
+ * ecrits dans le meme UPDATE. Les reintroduire n'aurait de sens que si le snapshot
+ * cessait d'etre pose a l'emission.
  */
-export function buildSellerInfo(order: GetOrderReturn): SellerInfo {
+export function buildSellerInfo(): SellerInfo {
 	const vendor = getVendorLegalInfo();
-	const legalName = order.vendorLegalName ?? vendor.company_legal_name;
-	const tradeName = order.vendorTradeName ?? vendor.company_trade_name;
-	const address = order.vendorAddress
-		? parseVendorAddress(order.vendorAddress, legalName)
-		: parseVendorAddress(vendor.company_address, legalName);
+	const legalName = vendor.company_legal_name;
 	return {
 		legalName,
-		tradeName,
-		// Snapshot DB est deja normalise (CHECK constraint `^[0-9]{9}$` / `^[0-9]{14}$`).
-		siren: order.vendorSiren ?? normalizeFiscalIdentifier(vendor.company_siren) ?? "",
-		siret: order.vendorSiret ?? normalizeFiscalIdentifier(vendor.company_siret) ?? "",
-		vatNumber: order.vendorVatNumber ?? normalizeFiscalIdentifier(vendor.company_vat),
-		apeCode: order.vendorApeCode ?? vendor.company_ape,
-		legalForm: order.vendorLegalForm ?? vendor.company_legal_form,
-		address,
-		email: order.vendorEmail ?? vendor.company_email,
-		// EINV-F4 : la mention 293 B est DÉRIVÉE du régime figé (pas d'un flag
+		tradeName: vendor.company_trade_name,
+		siren: normalizeFiscalIdentifier(vendor.company_siren) ?? "",
+		siret: normalizeFiscalIdentifier(vendor.company_siret) ?? "",
+		vatNumber: normalizeFiscalIdentifier(vendor.company_vat),
+		apeCode: vendor.company_ape,
+		legalForm: vendor.company_legal_form,
+		address: parseVendorAddress(vendor.company_address, legalName),
+		email: vendor.company_email,
+		// EINV-F4 : la mention 293 B est DÉRIVÉE du régime (pas d'un flag
 		// indépendant). En franchise on garantit un libellé non vide (fallback SSOT)
 		// — jamais de mention manquante figée 10 ans (Art. L102 B LPF). Hors
 		// franchise (NORMAL/SIMPLIFIE), pas de mention d'exonération.
-		vatExemptionText:
-			order.vendorVatRegime === "FRANCHISE_BASE" || !order.vendorVatRegime
-				? vendor.vat_exemption.trim() || DEFAULT_FRANCHISE_VAT_MENTION
-				: null,
-		bankIban: normalizeIban(order.vendorBankIban ?? vendor.bank_iban),
-		bankBic: normalizeBic(order.vendorBankBic ?? vendor.bank_bic),
+		vatExemptionText: isFranchiseRegime(vendor.company_vat_regime)
+			? vendor.vat_exemption.trim() || DEFAULT_FRANCHISE_VAT_MENTION
+			: null,
+		bankIban: normalizeIban(vendor.bank_iban),
+		bankBic: normalizeBic(vendor.bank_bic),
 	};
+}
+
+/**
+ * Toute valeur d'env autre que `NORMAL`/`SIMPLIFIE` vaut franchise : un env mal
+ * renseigné doit produire la mention plutôt que de l'omettre en silence.
+ */
+function isFranchiseRegime(raw: string): boolean {
+	return raw !== "NORMAL" && raw !== "SIMPLIFIE";
 }
 
 function normalizeIban(raw: string | null): string | null {

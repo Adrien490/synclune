@@ -158,7 +158,6 @@ function queryUser({ where }: { where: UserWhere }) {
 function makeOrderRow(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "order_test_id",
-		userId: OWNER_USER_ID,
 		orderNumber: "CMD-1700000000000-AAAAAAAAAAAA",
 		paymentStatus: "PAID",
 		invoiceNumber: "F-2026-00001",
@@ -296,15 +295,17 @@ describe("EINV-SEC-001 — credit-note route re-checks admin role from DB", () =
 		expectRateLimitBucket(`admin-invoice:${REAL_ADMIN_ID}`, 200);
 	});
 
-	it("returns 200 for the owner (USER role, matching userId)", async () => {
+	// `Order.userId` est parti le 2026-08-05 : il n'y a plus de « propriétaire »
+	// d'une commande. Le seul chemin client de cette route est le token HMAC ; ce
+	// que ce fichier verrouille — la re-vérification DB du rôle admin — reste
+	// couvert par les cas ci-dessus.
+	it("returns 404 for a non-admin session without a valid token", async () => {
 		mockGetSession.mockResolvedValue({
 			user: { id: OWNER_USER_ID, role: "USER" },
 		});
 
 		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA");
 
-		expect(response.status).toBe(200);
-		// USER role → pas de re-check DB du rôle admin.
-		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+		expect(response.status).toBe(404);
 	});
 });

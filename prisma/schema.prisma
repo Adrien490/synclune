@@ -35,13 +35,10 @@ model User {
 
   sessions Session[]
   accounts Account[]
-  orders   Order[]
 
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   User_email_lower_key
   //   User_email_lowercase
-  //   User_email_unaccent_trgm_idx
-  //   User_name_unaccent_trgm_idx
 }
 
 model Session {
@@ -160,7 +157,6 @@ model Material {
 }
 
 model ProductSkuColor {
-  id      String     @id @default(cuid(2))
   skuId   String
   sku     ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
   colorId String
@@ -168,16 +164,14 @@ model ProductSkuColor {
 
   position Int @default(0)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([skuId, colorId])
+  // PK composite : la clé surrogate `id` n'était sélectionnée nulle part, et
+  // `@@unique([skuId, colorId])` portait déjà l'identité de la ligne.
+  @@id([skuId, colorId])
   @@index([colorId])
   @@index([skuId, position])
 }
 
 model ProductSkuMaterial {
-  id         String     @id @default(cuid(2))
   skuId      String
   sku        ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
   materialId String
@@ -185,10 +179,9 @@ model ProductSkuMaterial {
 
   position Int @default(0)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([skuId, materialId])
+  // PK composite : la clé surrogate `id` n'était sélectionnée nulle part, et
+  // `@@unique([skuId, materialId])` portait déjà l'identité de la ligne.
+  @@id([skuId, materialId])
   @@index([materialId])
   @@index([skuId, position])
 }
@@ -217,9 +210,6 @@ model ProductCollection {
   addedAt DateTime @default(now())
 
   isFeatured Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   ProductCollection_collectionId_isFeatured_unique
@@ -277,7 +267,6 @@ model ProductSku {
 
   images         SkuMedia[]
   orderItems     OrderItem[]
-  stockMovements StockMovement[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   deletedAt      DateTime?
@@ -289,41 +278,6 @@ model ProductSku {
   //   ProductSku_productId_isDefault_unique
 
   @@index([productId])
-}
-
-enum StockMovementSource {
-  MANUAL_ADJUST
-  SKU_UPDATE
-  ORDER
-  WEBHOOK
-}
-
-model StockMovement {
-  id String @id @default(cuid(2))
-
-  skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
-
-  productId String
-
-  previousInventory Int
-  newInventory      Int
-  delta             Int
-
-  reason String? @db.VarChar(500)
-
-  source StockMovementSource @default(MANUAL_ADJUST)
-
-  createdById   String?
-  createdByName String? @db.VarChar(100)
-
-  createdAt DateTime @default(now())
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   StockMovement_delta_consistent
-  //   StockMovement_inventory_non_negative
-
-  @@index([skuId, createdAt(sort: Desc)])
 }
 
 model SkuMedia {
@@ -341,9 +295,6 @@ model SkuMedia {
 
   width  Int?
   height Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   SkuMedia_dimensions_positive
@@ -407,7 +358,6 @@ enum OrderAction {
 }
 
 enum InvoiceStatus {
-  PENDING
   GENERATED
   VOIDED
 }
@@ -431,9 +381,6 @@ enum PaymentMethod {
 model Order {
   id          String  @id @default(cuid(2))
   orderNumber String  @unique @db.VarChar(50)
-  userId      String?
-  user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-
   stripePaymentIntentId String? @unique
   stripeChargeId        String? @unique
 
@@ -453,7 +400,6 @@ model Order {
   discountAmount Int    @default(0)
   shippingCost   Int    @default(0)
   total          Int
-  currency       String @default("EUR") @db.VarChar(3)
 
   invoiceNumber      String?        @unique @db.VarChar(30)
   invoiceStatus      InvoiceStatus?
@@ -470,19 +416,6 @@ model Order {
 
   invoiceDataSnapshot Json?
   invoiceDataHash     String? @db.VarChar(64)
-
-  vendorLegalName String?    @db.VarChar(255)
-  vendorTradeName String?    @db.VarChar(255)
-  vendorAddress   String?    @db.VarChar(500)
-  vendorSiren     String?    @db.VarChar(9)
-  vendorSiret     String?    @db.VarChar(14)
-  vendorVatNumber String?    @db.VarChar(15)
-  vendorEmail     String?    @db.VarChar(255)
-  vendorApeCode   String?    @db.VarChar(10)
-  vendorBankIban  String?    @db.VarChar(34)
-  vendorBankBic   String?    @db.VarChar(11)
-  vendorVatRegime VatRegime?
-  vendorLegalForm String?    @db.VarChar(100)
 
   shippingCarrier   String?   @db.VarChar(30)
   trackingNumber    String?   @db.VarChar(50)
@@ -517,13 +450,14 @@ model Order {
   deletedAt DateTime?
 
   createdAt DateTime @default(now())
+  // Lu par l'`orderBy` du DLQ `reconcile-voided-invoices` (traite d'abord la
+  // commande la moins récemment touchée) — pas seulement un horodatage décoratif.
   updatedAt DateTime @updatedAt
 
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   Order_creditNoteNumber_cross_unique
   //   Order_creditNoteNumber_format_check
   //   Order_creditNotePdfHash_format_check
-  //   Order_currency_eur_check
   //   Order_customerEmail_unaccent_trgm_idx
   //   Order_customerName_unaccent_trgm_idx
   //   Order_discountAmount_non_negative
@@ -539,23 +473,25 @@ model Order {
   //   Order_subtotal_non_negative
   //   Order_total_formula
   //   Order_total_non_negative
-  //   Order_vendorApeCode_format_check
-  //   Order_vendorBankBic_format_check
-  //   Order_vendorBankIban_format_check
-  //   Order_vendorSiren_format_check
-  //   Order_vendorSiret_format_check
-  //   Order_vendorVatNumber_format_check
 
-  @@index([customerEmail])
-  @@index([paymentStatus, createdAt])
+  // 10 index composites → 5 (audit schéma V1, 2026-08-05). `Order` atteint ~2 400
+  // lignes au bout de DIX ANS à 20 commandes/mois : Postgres parcourt ça en moins
+  // d'une milliseconde, aucun de ces index ne servait une performance mesurable.
+  // Ce qu'ils coûtaient : de l'écriture à chaque commande et du bruit de schéma.
+  //
+  // Les 5 conservés couvrent les seules requêtes qui grandiront avec le temps :
+  // le tri de la liste admin, le livre de recettes (`paidAt`), la DLQ facture, la
+  // purge RGPD à 10 ans et le compteur de facturation.
+  //
+  // Retirés : `customerEmail` (la recherche admin passe par le GIN trigram),
+  // `paymentStatus+createdAt` et `paymentStatus+deletedAt+paidAt` (couverts par
+  // `paidAt`), `piiPurgedAt+paidAt+createdAt` (doublon du précédent) et
+  // `overbillingResolvedAt+overbilledAmountCents` (2 colonnes quasi toujours NULL).
   @@index([paidAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
-  @@index([paymentStatus, deletedAt, paidAt(sort: Desc)])
   @@index([invoiceStatus])
   @@index([invoiceRetryDeferred, paidAt], map: "Order_invoiceRetryDeferred_idx")
   @@index([piiPurgedAt, paidAt], map: "Order_piiPurgedAt_paidAt_idx")
-  @@index([piiPurgedAt, paidAt, createdAt], map: "Order_unpaid_pii_purge_idx")
-  @@index([overbillingResolvedAt, overbilledAmountCents], map: "Order_overbilling_unresolved_idx")
 }
 
 model OrderHistory {
@@ -584,7 +520,6 @@ model OrderHistory {
   createdAt DateTime @default(now())
 
   @@index([orderId, createdAt(sort: Desc)])
-  @@index([authorId])
 }
 
 model OrderItem {
@@ -607,15 +542,12 @@ model OrderItem {
   skuColorHexes String? @db.VarChar(200)
   skuMaterial   String? @db.VarChar(100)
   skuSize       String? @db.VarChar(50)
-  skuImageUrl   String? @db.VarChar(2048)
 
   price    Int
   quantity Int
 
-  refundItems RefundItem[]
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   OrderItem_price_positive
@@ -638,7 +570,6 @@ model OrderNote {
   authorName String @db.VarChar(100)
 
   createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@index([orderId, createdAt(sort: Desc)])
@@ -668,7 +599,6 @@ model Refund {
   stripeRefundId String? @unique
 
   amount   Int
-  currency String @default("EUR") @db.VarChar(3)
 
   reason        RefundReason
   status        RefundStatus @default(PENDING)
@@ -676,7 +606,6 @@ model Refund {
 
   note String? @db.Text
 
-  items RefundItem[]
 
   // Pas de `createdBy` : les remboursements sont Stripe-first (Lot 2 S3.3), la
   // colonne n'avait plus aucun lecteur. La trace « qui a déclenché » vit dans
@@ -688,6 +617,18 @@ model Refund {
   confirmationEmailSentAt DateTime?
 
   createdAt DateTime @default(now())
+
+  // ⚠️ `updatedAt` a un LECTEUR, contrairement à ses homologues du Lot B (audit
+  // schéma V1) : `handleRefundUpdated` s'en sert comme horloge de fraîcheur pour la
+  // fenêtre de grâce SAGA de 30 s (ORD-REFUND-AUDIT-004). Sans elle, un
+  // `refund.updated` arrivant pendant une finalisation concurrente
+  // (`reconcile-refunds` → `finalizeRefundCompletion`) prend COMPLETED, la
+  // finalisation voit `status != APPROVED` et abort → avoir Art. 272-I et audit
+  // perdus. Ce lecteur avait échappé au passage « le compilateur rend la liste
+  // exhaustive » : une clé inexistante dans un `select` imbriqué échappe au typage
+  // Prisma, et l'accès de propriété en aval avec elle. Ne pas re-dropper sans
+  // supprimer d'abord le garde et sa régression
+  // (`refund-webhook-saga-in-flight-skip.regression.test.ts`).
   updatedAt DateTime @updatedAt
 
   creditNoteNumber      String?   @unique @db.VarChar(30)
@@ -702,36 +643,11 @@ model Refund {
   //   Refund_creditNoteNumber_cross_unique
   //   Refund_creditNoteNumber_format_check
   //   Refund_creditNotePdfHash_format_check
-  //   Refund_currency_eur_check
 
   @@index([orderId])
   @@index([status, processedAt])
   @@index([status, stripeRefundId])
   @@index([createdAt(sort: Desc)])
-}
-
-model RefundItem {
-  id String @id @default(cuid(2))
-
-  refundId String
-  refund   Refund @relation(fields: [refundId], references: [id], onDelete: Restrict)
-
-  orderItemId String
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
-
-  quantity Int
-
-  amount Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   RefundItem_amount_positive
-  //   RefundItem_quantity_positive
-
-  @@index([refundId])
-  @@index([orderItemId])
 }
 
 enum DiscountType {
@@ -785,17 +701,11 @@ model DiscountUsage {
 
   discountCode String @db.VarChar(30)
 
-  amountApplied Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
   @@unique([discountId, orderId])
   @@index([orderId])
 }
 
 enum WebhookEventStatus {
-  PENDING
   PROCESSING
   COMPLETED
   FAILED
@@ -806,8 +716,11 @@ model WebhookEvent {
   id            String             @id @default(cuid(2))
   stripeEventId String             @unique
   eventType     String             @db.VarChar(100)
-  status        WebhookEventStatus @default(PENDING)
-  errorMessage  String?            @db.Text
+  // `PROCESSING` et non `PENDING` : la route webhook crée déjà la ligne en
+  // PROCESSING, et rien n'a jamais écrit PENDING — une telle ligne serait restée
+  // orpheline (ni rejouée par `retry-webhooks`, qui ne prend que FAILED, ni purgée
+  // par `cleanup-pending-orders`, qui ne prend que COMPLETED/SKIPPED).
+  status        WebhookEventStatus @default(PROCESSING)
   attempts      Int                @default(0)
   receivedAt    DateTime           @default(now())
   processedAt   DateTime?
@@ -828,8 +741,6 @@ model StoreSettings {
   closedBy       String?   @db.VarChar(255)
 
   orphanMediaScanOffset Int @default(0)
-
-  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :

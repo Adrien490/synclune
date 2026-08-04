@@ -38,8 +38,6 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
 	const mockTx = {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn(), updateMany: vi.fn(), findMany: vi.fn() },
-		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
-		stockMovement: { create: vi.fn() },
 		cartItem: { deleteMany: vi.fn() },
 		cart: { updateMany: vi.fn() },
 		$queryRaw: vi.fn(),
@@ -79,13 +77,11 @@ function orderBuyingLastUnit(skuId = SKU_ID, productId = PRODUCT_ID) {
 	return {
 		id: "order-1",
 		orderNumber: "CMD-001",
-		userId: "user-1",
 		paymentStatus: "PENDING",
 		status: "PENDING",
 		customerEmail: "a@b.c",
 		customerFirstName: "A",
 		customerLastName: "B",
-		currency: "EUR",
 		total: 2500,
 		items: [
 			{

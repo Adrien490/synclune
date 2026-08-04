@@ -87,7 +87,7 @@ export async function ensureInvoiceNumberPersisted(orderId: string): Promise<voi
 	try {
 		const order = await prisma.order.findUnique({
 			where: { id: orderId },
-			select: { invoiceNumber: true, userId: true, paymentStatus: true },
+			select: { invoiceNumber: true, paymentStatus: true },
 		});
 
 		if (!order) {
@@ -113,7 +113,7 @@ export async function ensureInvoiceNumberPersisted(orderId: string): Promise<voi
 			return;
 		}
 
-		const result = await persistInvoiceNumber(orderId, order.userId);
+		const result = await persistInvoiceNumber(orderId);
 		if (!result) {
 			logger.error(
 				`Failed to persist invoice number for paid order ${orderId} after retries — flagging for cron reconcile-invoices`,

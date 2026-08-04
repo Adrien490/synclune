@@ -64,9 +64,8 @@ async function createPaidOrder(
 			shippingCost: 0,
 			taxAmount: 0,
 			total: 4999,
-			currency: "EUR",
 			paymentMethod: "CARD",
-			invoiceStatus: "PENDING",
+			invoiceStatus: null,
 			items: {
 				create: [
 					{
@@ -137,9 +136,7 @@ describeIntegration(
 			const interleaved = [...orders2026, ...orders2027].sort((a, b) =>
 				a.orderNumber.localeCompare(b.orderNumber),
 			);
-			const results = await Promise.all(
-				interleaved.map((order) => persistInvoiceNumber(order.id, user.id)),
-			);
+			const results = await Promise.all(interleaved.map((order) => persistInvoiceNumber(order.id)));
 
 			expect(results.every((r) => r !== null)).toBe(true);
 			const invoiceNumbers = results.map((r) => r!.invoiceNumber);

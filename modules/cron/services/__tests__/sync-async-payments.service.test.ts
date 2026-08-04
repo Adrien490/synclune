@@ -185,7 +185,6 @@ describe("syncAsyncPayments", () => {
 			orderNumber: "SYN-001",
 			stripePaymentIntentId: "pi_success",
 			paymentStatus: "PENDING",
-			userId: "user-9",
 		};
 		mockPrisma.order.findMany.mockResolvedValue([order]);
 		mockStripe.paymentIntents.retrieve.mockResolvedValue({ id: "pi_success", status: "succeeded" });
@@ -208,7 +207,6 @@ describe("syncAsyncPayments", () => {
 			orderNumber: "SYN-001",
 			stripePaymentIntentId: "pi_success",
 			paymentStatus: "PENDING",
-			userId: "user-9",
 		};
 
 		it("exécute en direct la task ORDER_CONFIRMATION_EMAIL construite depuis la commande traitée", async () => {
@@ -363,7 +361,6 @@ describe("syncAsyncPayments", () => {
 			orderNumber: "SYN-3DS",
 			stripePaymentIntentId: "pi_requires_action",
 			paymentStatus: "PENDING",
-			userId: "user-3ds",
 		};
 		mockPrisma.order.findMany.mockResolvedValue([order]);
 		mockStripe.paymentIntents.retrieve.mockResolvedValue({
@@ -409,7 +406,6 @@ describe("syncAsyncPayments", () => {
 			orderNumber: "SYN-RACE",
 			stripePaymentIntentId: "pi_race",
 			paymentStatus: "PENDING",
-			userId: "user-race",
 		};
 		const succeededPi = { id: "pi_race", status: "succeeded" };
 		mockPrisma.order.findMany.mockResolvedValue([order]);
@@ -646,7 +642,6 @@ describe("syncAsyncPayments", () => {
 			orderNumber: "SYN-ABD",
 			stripePaymentIntentId: "pi_abandon",
 			paymentStatus: "PENDING",
-			userId: "user-abd",
 			customerEmail: "client@example.com",
 			customerName: "Camille",
 		};

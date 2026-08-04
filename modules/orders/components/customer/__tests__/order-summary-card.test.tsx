@@ -35,7 +35,7 @@ function createOrder(
 		createdAt: Date;
 		subtotal: number;
 		discountAmount: number;
-		discountUsages: { discountCode: string; amountApplied: number }[];
+		discountUsages: { discountCode: string }[];
 		shippingCost: number;
 		total: number;
 		currency: string;
@@ -50,7 +50,6 @@ function createOrder(
 		discountUsages: [],
 		shippingCost: 500,
 		total: 5500,
-		currency: "EUR",
 		paymentMethod: null,
 		...overrides,
 	};
@@ -112,7 +111,7 @@ describe("OrderSummaryCard", () => {
 			<OrderSummaryCard
 				order={createOrder({
 					discountAmount: 500,
-					discountUsages: [{ discountCode: "PROMO10", amountApplied: 500 }],
+					discountUsages: [{ discountCode: "PROMO10" }],
 				})}
 			/>,
 		);

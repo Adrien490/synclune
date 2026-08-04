@@ -116,7 +116,6 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 			mockPrisma.order.findUnique.mockResolvedValue({
 				id: VALID_CUID,
 				orderNumber: "SYN-2026-0001",
-				userId: "user-1",
 				fulfillmentStatus: "PROCESSING",
 				shippingFirstName: "Marie",
 				shippingLastName: "OldName",
@@ -187,7 +186,6 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 			mockPrisma.order.findUnique.mockResolvedValue({
 				id: VALID_CUID,
 				orderNumber: "SYN-2026-0001",
-				userId: "user-1",
 				fulfillmentStatus: "SHIPPED",
 				shippingFirstName: "",
 				shippingLastName: "",

@@ -60,13 +60,11 @@ export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant
 };
 
 export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
-	PENDING: "Non émise",
 	GENERATED: "Émise",
 	VOIDED: "Annulée (avoir)",
 };
 
 export const INVOICE_STATUS_VARIANTS: Record<InvoiceStatus, BadgeVariant> = {
-	PENDING: "outline",
 	GENERATED: "success",
 	VOIDED: "warning",
 };

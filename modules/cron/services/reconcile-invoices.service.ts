@@ -6,7 +6,6 @@ import {
 	PaymentStatus,
 	InvoiceStatus,
 	RefundStatus,
-	Prisma,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -15,10 +14,7 @@ import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/l
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 import { checkSequenceContinuity } from "@/modules/invoices/services/check-sequence-continuity.service";
-import {
-	persistInvoiceNumber,
-	backfillInvoiceDataSnapshot,
-} from "@/modules/orders/services/persist-invoice-number.service";
+import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
 import { ensureOrderCreditNoteArchived } from "@/modules/orders/services/ensure-credit-note-archived.service";
 import { ensureRefundCreditNoteArchived } from "@/modules/refunds/services/ensure-credit-note-archived.service";
@@ -36,7 +32,6 @@ const ESCALATION_THRESHOLD = 3;
 const MIN_AGE_MS = 6 * 60 * 60 * 1000; // 6h quarantine — eager path a sa chance
 
 interface ReconcileBreakdown {
-	snapshotBackfilled: number;
 	invoiceNumberRecovered: number;
 	pdfArchiveRecovered: number;
 	creditNoteRecovered: number;
@@ -57,7 +52,6 @@ interface ReconcileBreakdown {
  * DLQ facturation (audit monitoring 2026-05-28 EINV-OPS-004).
  *
  * Cron daily 02:00 qui rattrape les Orders en état pathologique :
- *   0. invoiceNumber + invoiceDataSnapshot NULL → backfillInvoiceDataSnapshot (EINV-PDF-005)
  *   1. PAID + invoiceNumber NULL + paidAt > 6h → persistInvoiceNumber
  *   2. invoiceNumber + invoicePdfUrl NULL → archiveInvoicePdf (régénère PDF depuis snapshot)
  *   3. REFUNDED + invoiceStatus GENERATED + creditNoteNumber NULL → voidInvoice
@@ -66,8 +60,7 @@ interface ReconcileBreakdown {
  * manquants, EINV-CREDIT-020), 8 (intégrité proactive des PDF archivés +
  * auto-réparation, Art. L102 B LPF).
  *
- * Sélection : `invoiceRetryDeferred=true` (DLQ) OU facture legacy à snapshot
- * manquant (`invoiceNumber` présent + `invoiceDataSnapshot` NULL — EINV-PDF-005).
+ * Sélection : `invoiceRetryDeferred=true` (DLQ) OU avoir émis sans PDF archivé.
  * Compteur `invoiceReconcileAttempts` incrémenté à chaque tentative ;
  * au-dessus du seuil `ESCALATION_THRESHOLD`, l'admin est alerté pour
  * intervention manuelle.
@@ -88,12 +81,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 					OR: [
 						// DLQ : anomalie facturation déjà flaguée.
 						{ invoiceRetryDeferred: true },
-						// EINV-PDF-005 : facture legacy à snapshot comptable manquant
-						// (numéro émis avant l'introduction du snapshot figé).
-						{
-							invoiceNumber: { not: null },
-							invoiceDataSnapshot: { equals: Prisma.DbNull },
-						},
 						// EINV-CREDIT-020 : avoir full-void émis mais PDF jamais archivé
 						// (crash entre la tx voidInvoice et l'archivage eager, ou échec
 						// d'upload jamais flagué). Sans cette sélection directe, seul le
@@ -108,9 +95,8 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 				{ OR: [{ paidAt: { lt: minAge } }, { paidAt: null }] },
 				// F3 (RGPD-PII-AUDIT 2026-05-30) : exclure les commandes dont la PII a été
 				// purgée à 10 ans (hard-delete-retention pose `piiPurgedAt` + met
-				// `invoiceDataSnapshot = DbNull`). Sans cette garde, une commande purgée
-				// matcherait l'OR « invoiceNumber présent + snapshot DbNull » ci-dessus et
-				// la Passe 2 régénérerait un PDF depuis les colonnes Order désormais scrubées
+				// `invoiceDataSnapshot = DbNull`). Sans cette garde, la Passe 2 régénérerait
+				// un PDF depuis les colonnes Order désormais scrubées
 				// (« Client supprimé »/« Adresse supprimée ») → archive corrompue divergeant
 				// de la facture d'origine (atteinte intégrité Art. L102 B LPF). La facture
 				// n'est plus reconstituable après purge (base légale expirée) : on n'y touche plus.
@@ -132,7 +118,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 	let errored = 0;
 	let skipped = 0;
 	const breakdown: ReconcileBreakdown = {
-		snapshotBackfilled: 0,
 		invoiceNumberRecovered: 0,
 		pdfArchiveRecovered: 0,
 		creditNoteRecovered: 0,
@@ -157,7 +142,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 			const recovered = await reconcileOrder(order);
 			if (recovered.kind === "recovered") {
 				processed++;
-				if (recovered.snapshotBackfilled) breakdown.snapshotBackfilled++;
 				if (recovered.invoiceNumberRecovered) breakdown.invoiceNumberRecovered++;
 				if (recovered.pdfArchiveRecovered) breakdown.pdfArchiveRecovered++;
 				if (recovered.creditNoteRecovered) breakdown.creditNoteRecovered++;
@@ -225,7 +209,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 export type ReconcileOutcome =
 	| {
 			kind: "recovered";
-			snapshotBackfilled: boolean;
 			invoiceNumberRecovered: boolean;
 			pdfArchiveRecovered: boolean;
 			creditNoteRecovered: boolean;
@@ -249,40 +232,15 @@ export async function reconcileInvoiceOrder(orderId: string): Promise<ReconcileO
 }
 
 async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> {
-	let snapshotBackfilled = false;
 	let invoiceNumberRecovered = false;
 	let pdfArchiveRecovered = false;
 	let creditNoteRecovered = false;
 	let creditNotePdfRecovered = false;
 	let anyFailure = false;
 
-	// Passe 0 : snapshot comptable manquant sur facture déjà émise (legacy
-	// pré-snapshot) — EINV-PDF-005. Fige les données pour que la régénération
-	// PDF/XML soit reconstituable à l'identique (Art. L102 B LPF).
-	const withSnapshot = order as GetOrderReturn & { invoiceDataSnapshot?: unknown };
-	if (order.invoiceNumber && order.invoiceGeneratedAt && withSnapshot.invoiceDataSnapshot == null) {
-		try {
-			const result = await backfillInvoiceDataSnapshot(order.id);
-			if (result) {
-				snapshotBackfilled = true;
-				// Charge le snapshot fraîchement figé en mémoire pour que la Passe 2
-				// rende le PDF depuis lui (cohérence hash archive ↔ snapshot).
-				withSnapshot.invoiceDataSnapshot = result.invoiceDataSnapshot;
-				order.invoiceDataHash = result.invoiceDataHash;
-			}
-		} catch (e) {
-			logger.error("Snapshot backfill threw during reconcile", e, {
-				cronJob: CRON_JOB,
-				orderId: order.id,
-				invoiceNumber: order.invoiceNumber,
-			});
-			anyFailure = true;
-		}
-	}
-
 	// Passe 1 : invoiceNumber manquant
 	if (!order.invoiceNumber && order.paymentStatus === PaymentStatus.PAID) {
-		const result = await persistInvoiceNumber(order.id, order.userId, {
+		const result = await persistInvoiceNumber(order.id, {
 			source: HistorySource.SYSTEM,
 			authorName: "Système (reconcile-invoices)",
 		});
@@ -383,7 +341,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	}
 
 	if (
-		!snapshotBackfilled &&
 		!invoiceNumberRecovered &&
 		!pdfArchiveRecovered &&
 		!creditNoteRecovered &&
@@ -410,7 +367,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		authorName: "Système (reconcile-invoices)",
 		note: "Anomalie facture rattrapée par cron",
 		metadata: {
-			snapshotBackfilled,
 			invoiceNumberRecovered,
 			pdfArchiveRecovered,
 			creditNoteRecovered,
@@ -419,7 +375,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	});
 	return {
 		kind: "recovered",
-		snapshotBackfilled,
 		invoiceNumberRecovered,
 		pdfArchiveRecovered,
 		creditNoteRecovered,

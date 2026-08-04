@@ -70,18 +70,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		invoicePdfUrl: null,
 		invoicePdfHash: null,
 		// Snapshot vendeur (defaults null = fallback env)
-		vendorLegalName: null,
-		vendorTradeName: null,
-		vendorAddress: null,
-		vendorSiren: null,
-		vendorSiret: null,
-		vendorVatNumber: null,
-		vendorVatRegime: null,
-		vendorLegalForm: null,
-		vendorApeCode: null,
-		vendorEmail: null,
-		vendorBankIban: null,
-		vendorBankBic: null,
 		createdAt: new Date("2026-05-27T17:55:00Z"),
 		updatedAt: new Date("2026-05-27T18:00:00Z"),
 		items: [
@@ -97,7 +85,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 				skuColorHexes: "#C0C0C0",
 				skuMaterial: "Argent 925",
 				skuSize: null,
-				skuImageUrl: null,
 				price: 4500,
 				quantity: 2,
 			},
@@ -279,51 +266,30 @@ describe("buildInvoiceData — B2C franchise", () => {
 	});
 });
 
-describe("buildInvoiceData — snapshot vendeur (Art. L102 B LPF)", () => {
+describe("buildInvoiceData — identite vendeur (Art. L102 B LPF)", () => {
 	beforeEach(() => vi.clearAllMocks());
 
-	it("prefere le snapshot Order.vendor* au lieu de relire getVendorLegalInfo() env", () => {
-		// Simule une commande emise quand Synclune etait sous un ANCIEN SIRET / raison sociale.
-		// Si l'env a change depuis, la facture historique doit garder les valeurs d'emission.
-		const data = buildInvoiceData(
-			makeOrder({
-				vendorLegalName: "ANCIEN NOM SARL",
-				vendorTradeName: "Ancienne Marque",
-				vendorAddress: "1 rue de l'Ancien, 75001 Paris, France",
-				vendorSiren: "111222333",
-				vendorSiret: "11122233300011",
-				vendorVatNumber: "FR00111222333",
-				vendorVatRegime: "FRANCHISE_BASE",
-				vendorLegalForm: "SARL",
-			}),
-		);
-		expect(data.seller.legalName).toBe("ANCIEN NOM SARL");
-		expect(data.seller.tradeName).toBe("Ancienne Marque");
-		expect(data.seller.siren).toBe("111222333");
-		expect(data.seller.siret).toBe("11122233300011");
-		expect(data.seller.vatNumber).toBe("FR00111222333");
-		expect(data.seller.legalForm).toBe("SARL");
-		expect(data.seller.address.line1).toBe("1 rue de l'Ancien");
-		expect(data.seller.address.postalCode).toBe("75001");
-		expect(data.seller.address.city).toBe("Paris");
-		expect(data.seller.address.recipientName).toBe("ANCIEN NOM SARL");
-	});
-
-	it("fallback getVendorLegalInfo() env quand snapshot Order.vendor* est null", () => {
-		const data = buildInvoiceData(makeOrder()); // defaults all null
+	// Les 12 colonnes `Order.vendor*` sont parties le 2026-08-05 : leur unique
+	// lecteur etait le backfill des factures anterieures au snapshot, un cas que
+	// l'ecriture conjointe numero+snapshot rend impossible. L'immutabilite ne
+	// repose donc plus sur des colonnes mais sur `invoiceDataSnapshot`, fige et
+	// hashe a l'emission — c'est lui que relit tout rendu ulterieur.
+	it("resout l'identite vendeur depuis l'env courant", () => {
+		const data = buildInvoiceData(makeOrder());
 		expect(data.seller.legalName).toBe("TADDEI LEANE - Entrepreneur Individuel");
+		expect(data.seller.tradeName).toBe("Synclune");
 		expect(data.seller.siren).toBe("839183027");
 		expect(data.seller.siret).toBe("83918302700037");
 		expect(data.seller.vatNumber).toBe("FR35839183027");
+		expect(data.seller.legalForm).toBe("Entrepreneur individuel");
+		expect(data.seller.address.line1).toBe("77 Boulevard du Tertre");
+		expect(data.seller.address.postalCode).toBe("44100");
+		expect(data.seller.address.city).toBe("Nantes");
+		expect(data.seller.address.recipientName).toBe("TADDEI LEANE - Entrepreneur Individuel");
 	});
 
-	it("vatExemptionText present si snapshot regime = FRANCHISE_BASE", () => {
-		const data = buildInvoiceData(makeOrder({ vendorVatRegime: "FRANCHISE_BASE" }));
+	it("porte la mention 293 B en regime de franchise", () => {
+		const data = buildInvoiceData(makeOrder());
 		expect(data.seller.vatExemptionText).toContain("art. 293 B");
-	});
-
-	it("vatExemptionText null si snapshot regime = NORMAL (sortie franchise — facture historique correcte)", () => {
-		const data = buildInvoiceData(makeOrder({ vendorVatRegime: "NORMAL" }));
-		expect(data.seller.vatExemptionText).toBeNull();
 	});
 });

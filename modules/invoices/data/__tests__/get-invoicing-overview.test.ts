@@ -13,7 +13,7 @@ const { mockPrisma, mockIsAdmin } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	InvoiceStatus: { PENDING: "PENDING", GENERATED: "GENERATED", VOIDED: "VOIDED" },
+	InvoiceStatus: { GENERATED: "GENERATED", VOIDED: "VOIDED" },
 	// Requis transitivement par PAID_REVENUE_STATUSES (COMP-03 : fenêtre franchise
 	// alignée sur get-vat-progress = CA encaissé brut incluant les remboursées).
 	PaymentStatus: {
@@ -69,7 +69,7 @@ describe("getInvoicingOverview — counters mapping", () => {
 		]);
 
 		const result = await getInvoicingOverview();
-		expect(result?.invoiceCounters).toEqual({ PENDING: 0, GENERATED: 42, VOIDED: 0 });
+		expect(result?.invoiceCounters).toEqual({ GENERATED: 42, VOIDED: 0 });
 	});
 
 	it("ignores null invoiceStatus rows (orders without invoice yet)", async () => {
@@ -79,7 +79,6 @@ describe("getInvoicingOverview — counters mapping", () => {
 		]);
 
 		const result = await getInvoicingOverview();
-		expect(result?.invoiceCounters.PENDING).toBe(0);
 		expect(result?.invoiceCounters.GENERATED).toBe(10);
 	});
 });

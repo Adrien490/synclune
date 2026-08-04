@@ -30,7 +30,6 @@ const {
 		},
 		skuMedia: { deleteMany: vi.fn(), create: vi.fn(), createMany: vi.fn(), findMany: vi.fn() },
 		orderItem: { findMany: vi.fn() },
-		stockMovement: { create: vi.fn() },
 		color: { findUnique: vi.fn() },
 		material: { findMany: vi.fn() },
 		$transaction: vi.fn(),
@@ -190,7 +189,6 @@ describe("updateProductSku", () => {
 		mockPrisma.orderItem.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 		mockDeleteUTFiles.mockResolvedValue({ deleted: 0, failed: 0 });
-		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockPrisma.color.findUnique.mockResolvedValue(null);
 		mockPrisma.material.findMany.mockResolvedValue([]);
 
@@ -360,7 +358,7 @@ describe("updateProductSku", () => {
 	// Symétrique du describe éponyme d'update-product.test.ts : la garde vivait
 	// uniquement côté produit, et `update-sku` — le jumeau — supprimait
 	// d'UploadThing des blobs encore figés dans un snapshot de commande
-	// (OrderItem.productImageUrl / skuImageUrl, rétention 10 ans, rendus dans le
+	// (OrderItem.productImageUrl, rétention 10 ans, rendus dans le
 	// PDF de facture) ou partagés avec un autre SKU par duplication.
 	describe("MEDIA-AUDIT-003: preservation of still-referenced media", () => {
 		const URL_REFERENCED = "https://utfs.io/f/used-in-order";
@@ -392,9 +390,7 @@ describe("updateProductSku", () => {
 		});
 
 		it("deletes only the URLs not referenced by any OrderItem snapshot", async () => {
-			mockPrisma.orderItem.findMany.mockResolvedValue([
-				{ productImageUrl: null, skuImageUrl: URL_REFERENCED },
-			]);
+			mockPrisma.orderItem.findMany.mockResolvedValue([{ productImageUrl: URL_REFERENCED }]);
 
 			const result = await updateProductSku(undefined, validFormData);
 			expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -407,7 +403,8 @@ describe("updateProductSku", () => {
 
 		it("does not call UploadThing delete when all removed URLs are still referenced", async () => {
 			mockPrisma.orderItem.findMany.mockResolvedValue([
-				{ productImageUrl: URL_REFERENCED, skuImageUrl: URL_FREE },
+				{ productImageUrl: URL_REFERENCED },
+				{ productImageUrl: URL_FREE },
 			]);
 
 			const result = await updateProductSku(undefined, validFormData);

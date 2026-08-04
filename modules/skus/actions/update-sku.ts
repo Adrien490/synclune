@@ -3,7 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -49,11 +49,8 @@ export async function updateProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		// requireAdminWithUser : l'identité admin est tracée dans le StockMovement
-		// écrit quand le stock change via ce formulaire.
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const admin = auth.user;
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_UPDATE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -206,14 +203,12 @@ export async function updateProductSku(
 					// Verrou ligne + DELTA relatif à la valeur affichée à l'admin, au lieu d'un
 					// set absolu last-write-wins. SSOT partagée avec `update-product` (fiche
 					// produit, cas mono-SKU) : cf. le docblock d'`applyInventoryDeltaTx` pour le
-					// détail de l'anti stock fantôme. Écrit aussi le StockMovement si delta ≠ 0.
-					const { delta: inventoryDelta } = await applyInventoryDeltaTx(tx, {
+					// détail de l'anti stock fantôme.
+					const inventoryDelta = await applyInventoryDeltaTx(tx, {
 						skuId: validatedData.skuId,
-						productId: existingSku.productId,
 						targetInventory: validatedData.inventory,
 						originalInventory: validatedData.originalInventory,
 						fallbackInventory: existingSku.inventory,
-						admin,
 					});
 
 					const updatedSku = await tx.productSku.update({

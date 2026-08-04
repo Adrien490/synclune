@@ -91,17 +91,21 @@ import { revalidateTag } from "next/cache";
 import { reconcileRefunds } from "../reconcile-refunds.service";
 import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
-function buildCandidate(overrides: Partial<{ id: string; stripeRefundId: string }> = {}) {
+function buildCandidate(
+	overrides: Partial<{ id: string; stripeRefundId: string; createdAt: Date }> = {},
+) {
 	return {
 		id: overrides.id ?? "refund-1",
 		stripeRefundId: overrides.stripeRefundId ?? "re_test_1",
 		amount: 2000,
 		orderId: "order-1",
+		// Récent par défaut : l'escalade « bloqué chez Stripe » ne doit pas se
+		// déclencher sur les cas nominaux. Les tests qui la visent passent une date.
+		createdAt: overrides.createdAt ?? new Date(),
 		order: {
 			id: "order-1",
 			orderNumber: "SYN-001",
 			total: 5000,
-			userId: "user-1",
 		},
 	};
 }
@@ -345,6 +349,41 @@ describe("reconcileRefunds", () => {
 		expect(result).toMatchObject({ processed: 0, errored: 0, skipped: 1 });
 	});
 
+	/**
+	 * @regression refund-stuck-non-terminal-escalates
+	 *
+	 * « pending / requires_action → le prochain run gérera » n'était vrai que pour
+	 * `pending`. Un refund bloqué chez Stripe retombait dans cette branche À CHAQUE
+	 * passage, indéfiniment, sans jamais rien signaler : client non remboursé, avoir
+	 * non émis, personne au courant. `requires_action` n'était même pas mappé et
+	 * retombait sur `PENDING`, une transition que la machine à états refuse depuis
+	 * `APPROVED` — le blocage était donc doublement muet.
+	 */
+	it("escalade un refund bloqué chez Stripe au-delà du seuil de fraîcheur", async () => {
+		const old = new Date(Date.now() - THRESHOLDS.REFUND_STALE_PENDING_MS - 60_000);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate({ createdAt: old })]);
+		mockStripe.refunds.retrieve.mockResolvedValue({ status: "requires_action" });
+
+		const result = await reconcileRefunds();
+
+		expect(mockSendRefundFailureAlert).toHaveBeenCalledWith(
+			"order-1",
+			"re_test_1",
+			"other",
+			expect.stringContaining("requires_action"),
+		);
+		expect(result).toMatchObject({ processed: 0, errored: 0, skipped: 1 });
+	});
+
+	it("n'escalade PAS un refund non terminal encore récent", async () => {
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
+		mockStripe.refunds.retrieve.mockResolvedValue({ status: "requires_action" });
+
+		await reconcileRefunds();
+
+		expect(mockSendRefundFailureAlert).not.toHaveBeenCalled();
+	});
+
 	it("skips refund with null stripeRefundId without calling Stripe", async () => {
 		const candidate = buildCandidate();
 		mockPrisma.refund.findMany.mockResolvedValueOnce([{ ...candidate, stripeRefundId: null }]);
@@ -553,7 +592,6 @@ describe("reconcileRefunds", () => {
 					orderNumber: "SYN-OB",
 					total: overrides.total ?? 5000,
 					overbilledAmountCents: overrides.delta ?? 500,
-					userId: "user-ob",
 				},
 			]);
 		}

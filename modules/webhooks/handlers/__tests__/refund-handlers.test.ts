@@ -167,7 +167,6 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
 		paymentStatus: "PAID",
 		customerEmail: "client@example.com",
 		customerName: "Marie Dupont",
-		userId: "user-1",
 		refunds: [],
 		...overrides,
 	};

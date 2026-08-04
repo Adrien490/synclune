@@ -62,7 +62,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 				orderNumber: "ORD-TEST-001",
 				customerEmail: "test@example.com",
 				total: 5000,
-				userId: "user-1",
 			}),
 		},
 	},

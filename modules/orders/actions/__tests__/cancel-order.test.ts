@@ -27,8 +27,6 @@ const {
 		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
 		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
-		// STOCK-LEDGER-001 : le restock écrit un StockMovement dans la même tx.
-		stockMovement: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn(), updateMany: vi.fn() },
 		refund: {
@@ -199,7 +197,6 @@ describe("cancelOrder", () => {
 		// `$queryRaw` sert l'advisory lock (retour ignoré) ET le `UPDATE … RETURNING`
 		// du restock (retour lu) — une seule valeur couvre les deux.
 		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 7, productId: "prod-1" }]);
-		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.discountUsage.deleteMany.mockResolvedValue({});
 		mockPrisma.discount.update.mockResolvedValue({});
@@ -298,7 +295,6 @@ describe("cancelOrder", () => {
 		const result = await cancelOrder(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
 	});
 
 	// STOCK-01 (contre-épreuve) : une commande PAID dont les articles ne sont pas
@@ -318,11 +314,6 @@ describe("cancelOrder", () => {
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		// Le restock passe par `UPDATE … RETURNING` (raw SQL) : c'est le mouvement de
-		// stock journalisé qui atteste du crédit, un par ligne restockée.
-		expect(mockPrisma.stockMovement.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({ skuId: "sku-1", delta: 2, source: "ORDER" }),
-		});
 	});
 
 	// Success with PAID payment (mark REFUNDED) — ORD-BIZ-009 requires autoRefund=true
@@ -513,7 +504,6 @@ describe("cancelOrder", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("modifiée par une autre opération");
-		expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
 		expect(mockPrisma.refund.create).not.toHaveBeenCalled();
 		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 	});
@@ -581,15 +571,8 @@ describe("cancelOrder", () => {
 						amount: 4999,
 						status: "APPROVED",
 						reason: "CUSTOMER_REQUEST",
-						items: {
-							create: [
-								expect.objectContaining({
-									orderItemId: "oi-1",
-									quantity: 1,
-									amount: 4999,
-								}),
-							],
-						},
+						// Plus de `items` : `RefundItem` est parti le 2026-08-05 (itemisation
+						// fabriquée — on rembourse un montant, pas des articles).
 					}),
 				}),
 			);

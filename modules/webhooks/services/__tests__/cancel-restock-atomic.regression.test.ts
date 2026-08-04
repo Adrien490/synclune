@@ -107,7 +107,6 @@ describe("@regression IDEM-CANCEL-002 — restock atomique avec le claim CANCELL
 		mockTx.order.findFirst.mockResolvedValue({
 			status: "PROCESSING",
 			paymentStatus: "PENDING",
-			userId: "user-1",
 			items: [
 				{ skuId: "sku-a", quantity: 2, sku: { product: { id: "prod-a", slug: "produit-a" } } },
 				// même SKU sur 2 items → agrégé
@@ -128,12 +127,10 @@ describe("@regression IDEM-CANCEL-002 — restock atomique avec le claim CANCELL
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
 			where: { id: "sku-a" },
 			data: { inventory: { increment: 3 } },
-			select: { inventory: true, productId: true },
 		});
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
 			where: { id: "sku-b" },
 			data: { inventory: { increment: 3 }, isActive: true },
-			select: { inventory: true, productId: true },
 		});
 		// CACHE-CATALOG-002 : le produit est propagé pour invalider la page vitrine.
 		expect(result).toEqual({
@@ -141,7 +138,6 @@ describe("@regression IDEM-CANCEL-002 — restock atomique avec le claim CANCELL
 				{ skuId: "sku-a", productId: "prod-a", productSlug: "produit-a" },
 				{ skuId: "sku-b", productId: "prod-b", productSlug: "produit-b" },
 			],
-			userId: "user-1",
 		});
 
 		// Ordre des opérations : le claim updateMany PRÉCÈDE tout restock —
@@ -158,7 +154,6 @@ describe("@regression IDEM-CANCEL-002 — restock atomique avec le claim CANCELL
 		mockTx.order.findFirst.mockResolvedValue({
 			status: "PROCESSING",
 			paymentStatus: "PENDING",
-			userId: "user-1",
 			items: [{ skuId: "sku-a", quantity: 2 }],
 		});
 		mockTx.order.updateMany.mockResolvedValue({ count: 0 });
@@ -168,14 +163,13 @@ describe("@regression IDEM-CANCEL-002 — restock atomique avec le claim CANCELL
 		expect(mockTx.productSku.update).not.toHaveBeenCalled();
 		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 		expect(mockTx.orderHistory.create).not.toHaveBeenCalled();
-		expect(result).toEqual({ restoredSkus: [], userId: "user-1" });
+		expect(result).toEqual({ restoredSkus: [] });
 	});
 
 	it("REJEU : order déjà CANCELLED/FAILED ⇒ skip idempotent avant même le claim", async () => {
 		mockTx.order.findFirst.mockResolvedValue({
 			status: "CANCELLED",
 			paymentStatus: "FAILED",
-			userId: "user-1",
 			items: [{ skuId: "sku-a", quantity: 2 }],
 		});
 
@@ -183,14 +177,13 @@ describe("@regression IDEM-CANCEL-002 — restock atomique avec le claim CANCELL
 
 		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockTx.productSku.update).not.toHaveBeenCalled();
-		expect(result).toEqual({ restoredSkus: [], userId: "user-1" });
+		expect(result).toEqual({ restoredSkus: [] });
 	});
 
 	it("ne restocke PAS une commande PENDING (stock jamais décrémenté — réservation optimiste)", async () => {
 		mockTx.order.findFirst.mockResolvedValue({
 			status: "PENDING",
 			paymentStatus: "PENDING",
-			userId: null,
 			items: [{ skuId: "sku-a", quantity: 2 }],
 		});
 		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
@@ -198,6 +191,6 @@ describe("@regression IDEM-CANCEL-002 — restock atomique avec le claim CANCELL
 		const result = await markOrderAsCancelled("order-1", "pi_123");
 
 		expect(mockTx.productSku.update).not.toHaveBeenCalled();
-		expect(result).toEqual({ restoredSkus: [], userId: null });
+		expect(result).toEqual({ restoredSkus: [] });
 	});
 });

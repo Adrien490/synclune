@@ -322,7 +322,7 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 		it("ne déclenche PAS voidInvoice quand invoiceStatus=PENDING", async () => {
 			setupOrderInTx({
 				paymentStatus: "PAID",
-				invoiceStatus: "PENDING",
+				invoiceStatus: null,
 				invoiceNumber: null,
 			});
 

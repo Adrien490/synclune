@@ -84,93 +84,11 @@ describe("softDelete", () => {
 		mockPrismaUpdate.mockResolvedValue({});
 	});
 
-	describe("softDelete.order", () => {
-		it("calls prisma.order.update with the correct id", async () => {
-			await softDelete.order("order-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledWith({
-				where: { id: "order-1" },
-				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-			});
-		});
-
-		it("sets deletedAt to a recent Date", async () => {
-			const before = new Date();
-			await softDelete.order("order-1");
-			const after = new Date();
-
-			const call = mockPrismaUpdate.mock.calls[0]![0];
-			expect(call.data.deletedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
-			expect(call.data.deletedAt.getTime()).toBeLessThanOrEqual(after.getTime());
-		});
-	});
-
-	describe("softDelete.user", () => {
-		it("calls prisma.user.update with the correct id", async () => {
-			await softDelete.user("user-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledWith({
-				where: { id: "user-1" },
-				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-			});
-		});
-
-		it("sets accountStatus to INACTIVE", async () => {
-			await softDelete.user("user-1");
-
-			const call = mockPrismaUpdate.mock.calls[0]![0];
-			expect(call.data.accountStatus).toBe("INACTIVE");
-		});
-
-		it("sets both deletedAt and accountStatus in a single update", async () => {
-			await softDelete.user("user-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledOnce();
-			const call = mockPrismaUpdate.mock.calls[0]![0];
-			expect(call.data).toMatchObject({
-				deletedAt: expect.any(Date),
-				accountStatus: "INACTIVE",
-			});
-		});
-	});
-
-	// softDelete.refund est parti au Lot 6 : Refund n'a plus de deletedAt (son
-	// seul writer, cancel-refund, est parti au Lot 2 — l'annulation est portée
-	// par status: CANCELLED, état terminal).
-
-	describe("softDelete.orderNote", () => {
-		it("calls prisma.orderNote.update with the correct id and deletedAt", async () => {
-			await softDelete.orderNote("note-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledWith({
-				where: { id: "note-1" },
-				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-			});
-		});
-	});
-
-	describe("softDelete.product", () => {
-		it("calls prisma.product.update with the correct id and deletedAt", async () => {
-			await softDelete.product("product-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledWith({
-				where: { id: "product-1" },
-				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-			});
-		});
-	});
-
-	describe("softDelete.productSku", () => {
-		it("calls prisma.productSku.update with the correct id and deletedAt", async () => {
-			await softDelete.productSku("sku-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledWith({
-				where: { id: "sku-1" },
-				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-			});
-		});
-	});
-
+	// Les cinq autres helpers (`order`, `user`, `orderNote`, `product`,
+	// `productSku`) sont partis le 2026-08-05 : aucun appelant. Chaque module pose
+	// son `deletedAt` dans sa propre transaction, avec les écritures qui vont avec
+	// (purge des liaisons, audit, promotion d'un défaut) — le helper mono-ligne ne
+	// faisait que suggérer un raccourci qui les aurait sautées.
 	describe("softDelete.discount", () => {
 		it("calls prisma.discount.update with the correct id and deletedAt", async () => {
 			await softDelete.discount("discount-1");
@@ -180,33 +98,19 @@ describe("softDelete", () => {
 				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
 			});
 		});
-	});
 
-	describe("shared behaviour across all helpers", () => {
-		const helpers: Array<[keyof typeof softDelete, string]> = [
-			["order", "order-id"],
-			["orderNote", "note-id"],
-			["product", "product-id"],
-			["productSku", "sku-id"],
-			["discount", "discount-id"],
-		];
-
-		it.each(helpers)("softDelete.%s passes the id as where.id", async (method, id) => {
-			await softDelete[method](id);
+		it("sets deletedAt to a recent Date", async () => {
+			const before = new Date();
+			await softDelete.discount("discount-1");
+			const after = new Date();
 
 			const call = mockPrismaUpdate.mock.calls[0]![0];
-			expect(call.where).toEqual({ id });
+			expect(call.data.deletedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+			expect(call.data.deletedAt.getTime()).toBeLessThanOrEqual(after.getTime());
 		});
 
-		it.each(helpers)("softDelete.%s sets deletedAt to a Date instance", async (method, id) => {
-			await softDelete[method](id);
-
-			const call = mockPrismaUpdate.mock.calls[0]![0];
-			expect(call.data.deletedAt).toBeInstanceOf(Date);
-		});
-
-		it.each(helpers)("softDelete.%s issues exactly one update call", async (method, id) => {
-			await softDelete[method](id);
+		it("issues exactly one update call", async () => {
+			await softDelete.discount("discount-1");
 
 			expect(mockPrismaUpdate).toHaveBeenCalledOnce();
 		});

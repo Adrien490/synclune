@@ -136,7 +136,6 @@ function makeOrderWithInvoice(overrides: Record<string, unknown> = {}) {
 		paymentStatus: "PAID",
 		customerEmail: "client@example.com",
 		customerName: "Marie",
-		userId: "user-1",
 		refunds: [],
 		...overrides,
 	};

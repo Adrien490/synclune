@@ -69,8 +69,12 @@ export const PRODUCTS_CACHE_TAGS = {
 	/** Produits similaires publics (visiteurs non authentifiés) */
 	RELATED_PUBLIC: "related-products-public",
 
-	/** Produits similaires personnalisés par utilisateur */
-	RELATED_USER: (userId: string) => `related-products-user-${userId}`,
+	// `RELATED_USER: (userId) => \`related-products-user-${userId}\`` a été RETIRÉ
+	// avec `Order.userId` (audit schéma V1, 2026-08-05) : son unique lecteur était le
+	// carrousel personnalisé par historique d'achat, impossible depuis que le
+	// parcours est 100 % invité. C'était aussi le seul orphelin d'invalidation
+	// toléré du catalogue — l'allowlist de `no-orphan-catalogue-cache-tags` est
+	// désormais vide.
 
 	/** Produits similaires contextuels par produit */
 	RELATED_CONTEXTUAL: (productSlug: string) => `related-products-contextual-${productSlug}`,

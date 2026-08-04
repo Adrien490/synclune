@@ -67,7 +67,6 @@ export async function markAsReturned(
 					orderNumber: true,
 					status: true,
 					fulfillmentStatus: true,
-					userId: true,
 					total: true,
 					customerEmail: true,
 					customerName: true,

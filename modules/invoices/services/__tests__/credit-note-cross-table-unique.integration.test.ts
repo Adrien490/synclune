@@ -71,7 +71,7 @@ async function createPaidOrder(
 			total: 4999,
 			currency: "EUR",
 			paymentMethod: "CARD",
-			invoiceStatus: "PENDING",
+			invoiceStatus: null,
 			items: {
 				create: [
 					{

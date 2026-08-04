@@ -147,10 +147,10 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 	});
 
 	it("only allowed call-sites assign a concrete invoiceStatus value", () => {
-		// Concrete write : `invoiceStatus: "GENERATED"` / `: "VOIDED"` / `: "PENDING"`
-		// ou `: InvoiceStatus.GENERATED|VOIDED|PENDING`. Exclut `: true` (select clause).
+		// Concrete write : `invoiceStatus: "GENERATED"` / `: "VOIDED"`
+		// ou `: InvoiceStatus.GENERATED|VOIDED`. Exclut `: true` (select clause).
 		const pattern =
-			/\binvoiceStatus\s*:\s*(?:InvoiceStatus\.(?:GENERATED|VOIDED|PENDING)|"(?:GENERATED|VOIDED|PENDING)")/;
+			/\binvoiceStatus\s*:\s*(?:InvoiceStatus\.(?:GENERATED|VOIDED)|"(?:GENERATED|VOIDED)")/;
 		const writers = allSourceFiles
 			.filter((f) => pattern.test(readFileSync(f, "utf-8")))
 			.map(relPath);

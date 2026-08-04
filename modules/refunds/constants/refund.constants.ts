@@ -11,14 +11,12 @@ export const GET_REFUNDS_SELECT = {
 	orderId: true,
 	stripeRefundId: true,
 	amount: true,
-	currency: true,
 	reason: true,
 	status: true,
 	failureReason: true,
 	note: true,
 	processedAt: true,
 	createdAt: true,
-	updatedAt: true,
 	order: {
 		select: {
 			id: true,
@@ -26,11 +24,6 @@ export const GET_REFUNDS_SELECT = {
 			customerEmail: true,
 			customerName: true,
 			total: true,
-		},
-	},
-	_count: {
-		select: {
-			items: true,
 		},
 	},
 } as const satisfies Prisma.RefundSelect;
@@ -44,14 +37,12 @@ export const GET_REFUND_SELECT = {
 	orderId: true,
 	stripeRefundId: true,
 	amount: true,
-	currency: true,
 	reason: true,
 	status: true,
 	failureReason: true,
 	note: true,
 	processedAt: true,
 	createdAt: true,
-	updatedAt: true,
 	// Avoir comptable partiel (Art. 272-I CGI) — EINV-UI-102
 	creditNoteNumber: true,
 	creditNoteGeneratedAt: true,
@@ -63,28 +54,6 @@ export const GET_REFUND_SELECT = {
 			customerName: true,
 			total: true,
 			stripePaymentIntentId: true,
-		},
-	},
-	items: {
-		select: {
-			id: true,
-			orderItemId: true,
-			quantity: true,
-			amount: true,
-			createdAt: true,
-			orderItem: {
-				select: {
-					id: true,
-					productTitle: true,
-					skuColor: true,
-					skuMaterial: true,
-					skuSize: true,
-					skuImageUrl: true,
-					price: true,
-					quantity: true,
-					skuId: true,
-				},
-			},
 		},
 	},
 } as const satisfies Prisma.RefundSelect;

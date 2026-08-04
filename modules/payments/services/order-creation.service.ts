@@ -11,7 +11,7 @@ import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import { generateOrderNumber } from "@/modules/orders/services/order-generation.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
-import { DEFAULT_CURRENCY, STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
+import { STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import { normalizeEmail } from "@/shared/utils/normalize-email";
@@ -70,7 +70,6 @@ export interface CreateOrderParams {
 	};
 	firstName: string;
 	lastName: string;
-	userId: string | null;
 	finalEmail: string | null;
 	discountCode?: string;
 	/**
@@ -135,7 +134,6 @@ export async function createOrderInTransaction(
 		shippingAddress,
 		firstName,
 		lastName,
-		userId,
 		finalEmail,
 		discountCode,
 		paymentIntentId,
@@ -424,12 +422,10 @@ export async function createOrderInTransaction(
 			const newOrder = await tx.order.create({
 				data: {
 					orderNumber,
-					userId,
 					subtotal,
 					discountAmount,
 					shippingCost,
 					total,
-					currency: DEFAULT_CURRENCY,
 					customerEmail: normalizeEmail(finalEmail ?? ""),
 					customerName: `${firstName} ${lastName}`.trim(),
 					shippingFirstName: firstName,
@@ -465,7 +461,7 @@ export async function createOrderInTransaction(
 				// première IMAGE → null). Le motif précédent
 				// `find((img) => img.isPrimary) ?? images[0]` est celui que CLAUDE.md
 				// bannit : aveugle au `mediaType`, il figeait un `.mp4` dans
-				// `productImageUrl`/`skuImageUrl` — snapshot immuable de rétention 10 ans,
+				// `productImageUrl` — snapshot immuable de rétention 10 ans,
 				// rendu dans l'historique client ET dans le PDF de facture.
 				// `getValidImageUrl` ne rattrape rien : il ne valide que HTTPS + domaine.
 				// `null` ⇒ on n'écrit pas d'URL, plutôt qu'une vidéo.
@@ -492,7 +488,6 @@ export async function createOrderInTransaction(
 						skuColorHexes: colorsHex || null,
 						skuMaterial: truncateSkuLabel(sku.material ?? null),
 						skuSize: sku.size ?? null,
-						skuImageUrl: imageUrl,
 						price: sku.priceInclTax,
 						quantity: cartItem.quantity,
 					},
@@ -506,7 +501,6 @@ export async function createOrderInTransaction(
 						discountId: appliedDiscountId,
 						orderId: newOrder.id,
 						discountCode: appliedDiscountCode!,
-						amountApplied: discountAmount,
 					},
 				});
 			}

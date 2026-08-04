@@ -139,11 +139,14 @@ export async function GET(
 		return new Response("Commande introuvable", { status: 404 });
 	}
 
-	const sessionOwns = order.userId === session.user.id;
-	// EINV-SEC-003 : 404 indistinct (anti-énumération), cf. /invoice. Pas de token
-	// guest sur cette route → l'accès owner-session implique un compte non anonymisé
-	// (sessions supprimées à l'anonymisation), donc pas de garde EINV-SEC-002 ici.
-	if (!isAdmin && !sessionOwns) {
+	// EINV-SEC-003 : 404 indistinct (anti-énumération), cf. /invoice.
+	//
+	// Route ADMIN uniquement : elle n'a pas de chemin par token invité, et la
+	// branche « propriétaire de session » a disparu avec `Order.userId`
+	// (2026-08-05) — une commande n'a plus de propriétaire, l'achat est 100 %
+	// invité. La seule session possible est celle de l'administratrice, déjà
+	// couverte par `isAdmin`.
+	if (!isAdmin) {
 		return new Response("Commande introuvable", { status: 404 });
 	}
 
@@ -164,7 +167,9 @@ export async function GET(
 		return new Response("Avoir non encore émis pour ce remboursement", { status: 404 });
 	}
 
-	const auditSource: HistorySource = isAdmin ? HistorySource.ADMIN : HistorySource.CUSTOMER;
+	// Route admin-only depuis le retrait de `Order.userId` : la branche CUSTOMER
+	// était devenue inatteignable.
+	const auditSource: HistorySource = HistorySource.ADMIN;
 	const auditAuthorId = session.user.id;
 
 	// Servir le PDF archivé si présent (immuable, Art. L102 B LPF).

@@ -262,9 +262,14 @@ describe("schema.prisma ↔ migrations", () => {
 	// avec le passage des favoris en cookie (drop Wishlist + WishlistItem,
 	// migration 20260803210000_drop_wishlist_tables), puis à 25 le 2026-08-04
 	// avec le passage du PANIER en cookie (drop Cart + CartItem, migration
-	// 20260804140000_drop_cart_tables).
+	// 20260804140000_drop_cart_tables), puis à 24 le 2026-08-05 avec le drop de
+	// `StockMovement` (audit schéma V1, Lot A : 7 écrivains, zéro lecteur — aucun
+	// findMany/count/aggregate, aucune page admin, aucun export), puis à 23 au
+	// Lot C avec `RefundItem` (itemisation FABRIQUÉE — Stripe rembourse un montant,
+	// pas des articles — qui produisait en outre une ligne d'avoir ne s'additionnant
+	// pas ; l'avoir émet désormais une ligne unique au montant remboursé).
 	it("le parser reconstruit un état non trivial des deux côtés", () => {
-		expect(fromSchema.size).toBeGreaterThanOrEqual(25);
+		expect(fromSchema.size).toBeGreaterThanOrEqual(23);
 		expect(fromBaseline.size).toBe(fromSchema.size);
 		expect(fromBaseline.get("Order")?.has("invoiceNumber")).toBe(true);
 	});
@@ -362,8 +367,16 @@ describe("gardes SQL bruts — SSOT ↔ migrations ↔ documentation", () => {
 		// CartItem_quantity_positive partis avec leurs tables, 2026-08-04), puis à
 		// 44 avec le dégraissage d'`Order` (Order_taxAmount_non_negative parti avec
 		// la colonne `taxAmount` — constante 0, exclue de `Order_total_formula` et
-		// jamais lue par le renderer de facture, 2026-08-04).
-		expect(ssot.checks.size).toBeGreaterThanOrEqual(44);
+		// jamais lue par le renderer de facture, 2026-08-04), puis à 36 le 2026-08-05
+		// (audit schéma V1, Lot A) : les 6 CHECK de format `Order_vendor*` partent
+		// avec leurs colonnes — l'identité vendeur est figée dans
+		// `invoiceDataSnapshot`, hashée SHA-256 à l'émission, et c'est ce snapshot
+		// que relit tout rendu ultérieur — et les 2 CHECK `StockMovement_*` avec
+		// leur table. Puis à 32 au Lot C : les 2 CHECK `RefundItem_*` partent avec la
+		// table, et les 2 `*_currency_eur_check` avec leurs colonnes — `currency`
+		// valait 'EUR' sur toutes les lignes précisément PARCE QUE ces CHECK
+		// l'imposaient ; la SSOT est désormais `DEFAULT_CURRENCY`.
+		expect(ssot.checks.size).toBeGreaterThanOrEqual(32);
 	});
 
 	// LE point critique : `prisma migrate diff` ne génère AUCUN garde brut. Un

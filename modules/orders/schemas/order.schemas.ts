@@ -544,18 +544,6 @@ export const deleteOrderNoteSchema = z.object({
 });
 
 /**
- * Schema pour l'édition d'une note de commande
- * Réservé à l'auteur de la note (vérifié dans l'action)
- */
-export const updateOrderNoteSchema = z.object({
-	noteId: z.cuid2({ message: "ID note invalide" }),
-	content: z
-		.string()
-		.min(1, "La note ne peut pas être vide")
-		.max(5000, "Note trop longue (max 5000 caractères)"),
-});
-
-/**
  * Schema pour transition explicite paymentStatus -> REFUNDED admin
  * Sans annulation de la commande (geste commercial, remboursement hors-bord Stripe).
  *

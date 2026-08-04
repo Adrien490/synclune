@@ -14,20 +14,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  *
  * Ce que le helper garantit : lecture sous `SELECT … FOR UPDATE` (sérialise avec le
  * `FOR UPDATE` de `checkout-order-processing.service`), delta relatif au stock
- * AFFICHÉ et non au stock réel, plancher à 0, et trace `StockMovement` source
- * `SKU_UPDATE`.
+ * AFFICHÉ et non au stock réel, et plancher à 0.
  *
  * `update-sku` portait déjà cette logique ; `update-product` était resté en set
  * absolu deux mois de plus. Elle vit ici pour ne plus pouvoir diverger.
  */
-
-const { mockRecordStockMovementTx } = vi.hoisted(() => ({
-	mockRecordStockMovementTx: vi.fn(),
-}));
-
-vi.mock("../stock-movement.service", () => ({
-	recordStockMovementTx: mockRecordStockMovementTx,
-}));
 
 vi.mock("@/shared/lib/actions", () => ({
 	// Sous-classe réelle : `instanceof` doit fonctionner chez l'appelant.
@@ -39,13 +30,9 @@ vi.mock("@/shared/lib/actions", () => ({
 	},
 }));
 
-vi.mock("@/app/generated/prisma/client", () => ({
-	StockMovementSource: { SKU_UPDATE: "SKU_UPDATE", MANUAL_ADJUST: "MANUAL_ADJUST" },
-}));
+vi.mock("@/app/generated/prisma/client", () => ({}));
 
 import { applyInventoryDeltaTx } from "../apply-inventory-delta.service";
-
-const ADMIN = { id: "admin-1", name: "Léane" };
 
 function makeTx(lockedInventory: number | null) {
 	return {
@@ -65,17 +52,14 @@ describe("STOCK-PHANTOM-001 — applyInventoryDeltaTx", () => {
 	it("ne touche à rien quand le champ de stock est inchangé (cas dominant)", async () => {
 		const tx = makeTx(10);
 
-		const result = await applyInventoryDeltaTx(tx, {
+		const delta = await applyInventoryDeltaTx(tx, {
 			skuId: "sku-1",
-			productId: "prod-1",
 			targetInventory: 7,
 			originalInventory: 7,
 			fallbackInventory: 7,
-			admin: ADMIN,
 		});
 
-		expect(result.delta).toBe(0);
-		expect(mockRecordStockMovementTx).not.toHaveBeenCalled();
+		expect(delta).toBe(0);
 		// Le verrou est pris MALGRÉ le delta nul : c'est lui qui sérialise avec le webhook.
 		expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
 	});
@@ -84,43 +68,16 @@ describe("STOCK-PHANTOM-001 — applyInventoryDeltaTx", () => {
 		// Formulaire ouvert à 10, une vente a fait tomber le stock réel à 8.
 		const tx = makeTx(8);
 
-		const result = await applyInventoryDeltaTx(tx, {
+		const delta = await applyInventoryDeltaTx(tx, {
 			skuId: "sku-1",
-			productId: "prod-1",
 			targetInventory: 12, // l'admin veut +2
 			originalInventory: 10,
 			fallbackInventory: 10,
-			admin: ADMIN,
 		});
 
 		// +2 relatif, PAS un set absolu à 12 : le stock finit à 10, pas à 12.
 		// Un set absolu aurait réintroduit l'unité vendue (stock fantôme).
-		expect(result.delta).toBe(2);
-		expect(result.previousInventory).toBe(8);
-		expect(result.newInventory).toBe(10);
-	});
-
-	it("trace le mouvement avec la source SKU_UPDATE et l'identité admin", async () => {
-		const tx = makeTx(8);
-
-		await applyInventoryDeltaTx(tx, {
-			skuId: "sku-1",
-			productId: "prod-1",
-			targetInventory: 12,
-			originalInventory: 10,
-			fallbackInventory: 10,
-			admin: ADMIN,
-		});
-
-		expect(mockRecordStockMovementTx).toHaveBeenCalledWith(tx, {
-			skuId: "sku-1",
-			productId: "prod-1",
-			previousInventory: 8,
-			newInventory: 10,
-			source: "SKU_UPDATE",
-			createdById: "admin-1",
-			createdByName: "Léane",
-		});
+		expect(delta).toBe(2);
 	});
 
 	it("refuse un delta qui ferait passer le stock réel sous zéro", async () => {
@@ -130,15 +87,11 @@ describe("STOCK-PHANTOM-001 — applyInventoryDeltaTx", () => {
 		await expect(
 			applyInventoryDeltaTx(tx, {
 				skuId: "sku-1",
-				productId: "prod-1",
 				targetInventory: 1,
 				originalInventory: 6,
 				fallbackInventory: 6,
-				admin: ADMIN,
 			}),
 		).rejects.toThrow(/stock a changé/i);
-
-		expect(mockRecordStockMovementTx).not.toHaveBeenCalled();
 	});
 
 	it("sans champ caché, baseline = cible ⇒ delta 0, aucun écrasement", async () => {
@@ -146,31 +99,33 @@ describe("STOCK-PHANTOM-001 — applyInventoryDeltaTx", () => {
 		// doit RIEN écraser plutôt que d'appliquer un set absolu déguisé.
 		const tx = makeTx(3);
 
-		const result = await applyInventoryDeltaTx(tx, {
+		const delta = await applyInventoryDeltaTx(tx, {
 			skuId: "sku-1",
-			productId: "prod-1",
 			targetInventory: 99,
 			fallbackInventory: 3,
-			admin: ADMIN,
 		});
 
-		expect(result.delta).toBe(0);
-		expect(mockRecordStockMovementTx).not.toHaveBeenCalled();
+		expect(delta).toBe(0);
 	});
 
 	it("retombe sur fallbackInventory si le FOR UPDATE ne rend aucune ligne", async () => {
-		const tx = makeTx(null);
+		// Aucune ligne verrouillée : la garde de plancher raisonne sur `fallbackInventory`
+		// (4), donc un retrait de 5 est refusé alors qu'un retrait de 4 passe.
+		await expect(
+			applyInventoryDeltaTx(makeTx(null), {
+				skuId: "sku-1",
+				targetInventory: 0,
+				originalInventory: 5,
+				fallbackInventory: 4,
+			}),
+		).rejects.toThrow(/stock a changé/i);
 
-		const result = await applyInventoryDeltaTx(tx, {
+		const delta = await applyInventoryDeltaTx(makeTx(null), {
 			skuId: "sku-1",
-			productId: "prod-1",
 			targetInventory: 5,
 			originalInventory: 4,
 			fallbackInventory: 4,
-			admin: ADMIN,
 		});
-
-		expect(result.previousInventory).toBe(4);
-		expect(result.newInventory).toBe(5);
+		expect(delta).toBe(1);
 	});
 });

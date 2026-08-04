@@ -27,25 +27,6 @@ export const CREDIT_NOTE_REFUND_SELECT = {
 	creditNoteGeneratedAt: true,
 	creditNotePdfUrl: true,
 	creditNotePdfHash: true,
-	items: {
-		select: {
-			orderItemId: true,
-			quantity: true,
-			amount: true,
-			orderItem: {
-				select: {
-					productTitle: true,
-					productDescription: true,
-					skuSku: true,
-					skuColor: true,
-					skuMaterial: true,
-					skuSize: true,
-					quantity: true,
-					price: true,
-				},
-			},
-		},
-	},
 } as const satisfies Prisma.RefundSelect;
 
 export interface RenderedRefundCreditNote {
@@ -95,7 +76,6 @@ export async function renderRefundCreditNotePdf(
 		reason: refund.reason,
 		creditNoteNumber: refund.creditNoteNumber,
 		creditNoteGeneratedAt: refund.creditNoteGeneratedAt,
-		items: refund.items,
 	});
 	const pdfBuffer = renderInvoicePdf(creditNoteData);
 

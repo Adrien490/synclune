@@ -61,7 +61,6 @@ export async function revertToProcessing(
 					orderNumber: true,
 					status: true,
 					fulfillmentStatus: true,
-					userId: true,
 					trackingNumber: true,
 					trackingUrl: true,
 					customerEmail: true,

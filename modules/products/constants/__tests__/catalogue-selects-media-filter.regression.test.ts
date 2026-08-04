@@ -39,7 +39,7 @@
  * 2026-07-30, EINV-SNAPSHOT-MEDIA-001) :
  *
  * - `modules/cart/data/get-sku-for-validation.ts` — alimente le snapshot figé
- *   `OrderItem.productImageUrl` / `skuImageUrl` (facture, rétention 10 ans). C'était le
+ *   `OrderItem.productImageUrl` (facture, rétention 10 ans). C'était le
  *   SEUL select de sélection d'image du repo à ne pas même exposer `mediaType`, et il
  *   était hors de la liste de fichiers de ce test : c'est ce trou qui a permis à un
  *   `.mp4` d'atteindre un PDF de facture. Verrouillé par

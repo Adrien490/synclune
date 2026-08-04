@@ -165,7 +165,7 @@ describe("fetchSkuForValidation", () => {
 	});
 
 	// `mediaType` est le champ qui permet à l'appelant d'écarter une vidéo. Sans lui,
-	// un `.mp4` se figeait dans `productImageUrl` / `skuImageUrl`.
+	// un `.mp4` se figeait dans `productImageUrl`.
 	it("selects mediaType so the caller can exclude videos", async () => {
 		await fetchSkuForValidation(VALID_SKU_ID);
 

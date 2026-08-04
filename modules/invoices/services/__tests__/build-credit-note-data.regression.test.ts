@@ -72,18 +72,6 @@ function makeOrder(): GetOrderReturn {
 		invoiceNumber: "F-2026-00001",
 		invoiceStatus: "GENERATED",
 		invoiceGeneratedAt: new Date("2026-05-27T18:00:00Z"),
-		vendorLegalName: null,
-		vendorTradeName: null,
-		vendorAddress: null,
-		vendorSiren: null,
-		vendorSiret: null,
-		vendorVatNumber: null,
-		vendorVatRegime: null,
-		vendorLegalForm: null,
-		vendorApeCode: null,
-		vendorEmail: null,
-		vendorBankIban: null,
-		vendorBankBic: null,
 	} as unknown as GetOrderReturn;
 }
 
@@ -94,23 +82,6 @@ function makeRefund(): RefundForCreditNote {
 		reason: "CUSTOMER_REQUEST",
 		creditNoteNumber: "A-2026-00042",
 		creditNoteGeneratedAt: new Date("2026-05-28T10:00:00Z"),
-		items: [
-			{
-				orderItemId: "item-1",
-				quantity: 1,
-				amount: 4500,
-				orderItem: {
-					productTitle: "Collier Lune d'Argent",
-					productDescription: null,
-					skuSku: "COL-LUN-001",
-					skuColor: "Argent",
-					skuMaterial: "Argent 925",
-					skuSize: null,
-					quantity: 2,
-					price: 4500,
-				},
-			},
-		],
 	};
 }
 
@@ -133,6 +104,28 @@ describe("@regression build-credit-note-data-franchise — EINV-CREDIT-018", () 
 		expect(line.lineTotalExclTax).toBe(4500);
 		expect(line.quantity).toBe(1);
 		expect(line.unitPriceExclTax).toBe(4500);
+	});
+
+	// @regression credit-note-line-arithmetic (2026-08-05)
+	//
+	// L'avoir dépliait les `RefundItem` produits par `allocateDashboardRefundItems`,
+	// qui proratisait `amount` en gardant `quantity` = quantité commandée ENTIÈRE :
+	// sur un remboursement partiel la ligne imprimait `2 × 30,00 €` pour un total
+	// de `20,00 €`. Une ligne qui ne s'additionne pas, figée sous SHA-256 dix ans.
+	it("produit une ligne qui S'ADDITIONNE (quantité × prix unitaire == total ligne)", () => {
+		const partialRefund: RefundForCreditNote = { ...makeRefund(), amount: 2000 };
+		const data = buildCreditNoteData(makeOrder(), partialRefund);
+
+		expect(data.lines).toHaveLength(1);
+		const line = data.lines[0]!;
+		expect(line.quantity * line.unitPriceExclTax).toBe(line.lineTotalExclTax);
+		expect(line.lineTotalInclTax).toBe(2000);
+		expect(data.totals.totalInclTax).toBe(2000);
+	});
+
+	it("référence la facture d'origine dans le libellé de la ligne", () => {
+		const data = buildCreditNoteData(makeOrder(), makeRefund());
+		expect(data.lines[0]!.productTitle).toContain("F-2026-00001");
 	});
 
 	it("référence la facture d'origine (Art. 272-I CGI) et produit un payload valide", () => {

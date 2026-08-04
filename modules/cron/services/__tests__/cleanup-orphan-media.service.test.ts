@@ -138,7 +138,7 @@ describe("cleanupOrphanMedia", () => {
 	});
 
 	// MEDIA-AUDIT-003 : un fichier encore référencé par un snapshot de commande
-	// (OrderItem.productImageUrl / skuImageUrl) ne doit jamais être supprimé, même
+	// (OrderItem.productImageUrl) ne doit jamais être supprimé, même
 	// si sa ligne SkuMedia source a disparu.
 	it("should not delete files referenced only by an OrderItem snapshot", async () => {
 		const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
@@ -146,10 +146,8 @@ describe("cleanupOrphanMedia", () => {
 		// Aucun SkuMedia/ReviewMedia/User ne référence ces fichiers : seuls des
 		// snapshots de commande les pointent.
 		mockPrisma.orderItem.findMany.mockResolvedValue([
-			{
-				productImageUrl: "https://utfs.io/f/order-snapshot-1",
-				skuImageUrl: "https://utfs.io/f/order-snapshot-2",
-			},
+			{ productImageUrl: "https://utfs.io/f/order-snapshot-1" },
+			{ productImageUrl: "https://utfs.io/f/order-snapshot-2" },
 		]);
 
 		mockListFiles.mockResolvedValue({

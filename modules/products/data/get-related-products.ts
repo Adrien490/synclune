@@ -1,8 +1,6 @@
-import { auth } from "@/modules/auth/lib/auth";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
-import { headers } from "next/headers";
 
 import {
 	RELATED_PRODUCTS_DEFAULT_LIMIT,
@@ -20,8 +18,17 @@ import type { ProductCarouselItem } from "../types/product.types";
  * Récupère des produits similaires intelligents selon le contexte
  *
  * - Si currentProductSlug fourni : algorithme contextuel intelligent
- * - Si utilisateur connecté (sans slug) : produits basés sur historique
- * - Si visiteur (sans slug) : nouveautés publiques
+ * - Sinon : nouveautés publiques
+ *
+ * La branche « historique d'achat de l'utilisateur connecté » a été RETIRÉE avec
+ * `Order.userId` (audit schéma V1, 2026-08-05) : le parcours d'achat est 100 %
+ * invité, donc aucune commande n'est rattachée à un compte et la seule session
+ * possible est celle de l'administratrice. La requête `orderItem` qui filtrait
+ * `order.userId` a survécu au drop de la colonne et levait une
+ * `PrismaClientValidationError` à chaque rendu du carrousel — invisible à `tsc`,
+ * qui n'applique pas l'excess property check sur un filtre de relation Prisma.
+ * Réouverture : le retour d'un compte client (cf. la condition posée par la
+ * migration `20260805120000_v1_audit_radical`).
  */
 export async function getRelatedProducts(options?: {
 	currentProductSlug?: string;
@@ -34,17 +41,7 @@ export async function getRelatedProducts(options?: {
 		return fetchContextualRelatedProducts(currentProductSlug, limit);
 	}
 
-	const session = await auth.api.getSession({
-		headers: await headers(),
-	});
-
-	const userId = session?.user.id;
-
-	if (userId) {
-		return fetchPersonalizedRelatedProducts(userId, limit);
-	} else {
-		return fetchPublicRelatedProducts(limit);
-	}
+	return fetchPublicRelatedProducts(limit);
 }
 
 /**
@@ -77,111 +74,6 @@ async function fetchPublicRelatedProducts(limit: number): Promise<ProductCarouse
 	} catch (error) {
 		logger.error("Failed to fetch public related products", error, {
 			service: "fetchPublicRelatedProducts",
-		});
-		return [];
-	}
-}
-
-/**
- * Produits similaires personnalisés basés sur l'historique utilisateur.
- *
- * Cache PUBLIC (audit cache 2026-07-31 — était `private`). `userId` est un
- * ARGUMENT, donc partie de la clé de cache Next : l'entrée d'un client ne peut pas
- * être servie à un autre. Ce que la fonction RETOURNE est du catalogue public
- * (`ProductCarouselItem`), pas l'historique lui-même — seul le choix des produits
- * est personnalisé.
- *
- * `private` coûtait ici tout le cache serveur (jamais stocké côté serveur) sur une
- * requête qui agrège `orderItem` — la plus lourde du carrousel.
- */
-async function fetchPersonalizedRelatedProducts(
-	userId: string,
-	limit: number,
-): Promise<ProductCarouselItem[]> {
-	"use cache";
-	cacheLife("catalog");
-	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_USER(userId));
-
-	try {
-		const orderHistory = await prisma.orderItem.findMany({
-			where: {
-				order: {
-					userId,
-					paymentStatus: "PAID",
-				},
-			},
-			select: {
-				product: {
-					select: {
-						typeId: true,
-						collections: {
-							select: { collectionId: true },
-						},
-					},
-				},
-			},
-			distinct: ["productId"],
-			take: 10,
-		});
-
-		const typeIds = orderHistory
-			.map((item) => item.product?.typeId)
-			.filter((id): id is string => id !== null);
-		const collectionIds = orderHistory.flatMap(
-			(item) => item.product?.collections.map((c) => c.collectionId) ?? [],
-		);
-
-		if (typeIds.length > 0 || collectionIds.length > 0) {
-			const relatedProducts = await prisma.product.findMany({
-				where: {
-					status: "PUBLIC",
-					...notDeleted,
-					skus: {
-						some: {
-							isActive: true,
-							inventory: { gt: 0 },
-						},
-					},
-					OR: [
-						...(typeIds.length > 0 ? [{ typeId: { in: typeIds } }] : []),
-						...(collectionIds.length > 0
-							? [{ collections: { some: { collectionId: { in: collectionIds } } } }]
-							: []),
-					],
-				},
-				select: PRODUCT_CAROUSEL_SELECT,
-				orderBy: {
-					createdAt: "desc",
-				},
-				take: limit,
-			});
-
-			if (relatedProducts.length > 0) {
-				return relatedProducts;
-			}
-		}
-
-		const fallbackProducts = await prisma.product.findMany({
-			where: {
-				status: "PUBLIC",
-				...notDeleted,
-				skus: {
-					some: {
-						isActive: true,
-						inventory: { gt: 0 },
-					},
-				},
-			},
-			select: PRODUCT_CAROUSEL_SELECT,
-			orderBy: {
-				createdAt: "desc",
-			},
-			take: limit,
-		});
-		return fallbackProducts;
-	} catch (error) {
-		logger.error("Failed to fetch personalized related products", error, {
-			service: "fetchPersonalizedRelatedProducts",
 		});
 		return [];
 	}

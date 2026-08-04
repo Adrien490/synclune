@@ -31,11 +31,10 @@ export function OrderItemsCard({
 
 						const imageAlt = variant ? `${item.productTitle} - ${variant}` : item.productTitle;
 
-						// `||` (et non `??`) : une chaine vide doit compter comme absente.
-						// L'ancien `item.skuImageUrl ?? item.productImageUrl ?? ""` pouvait
-						// livrer src="" a next/image (erreur runtime) quand skuImageUrl valait "".
+						// `||` (et non `??`) : une chaine vide doit compter comme absente,
+						// sinon elle passe en src="" a next/image (erreur runtime).
 						// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `||` volontaire : une chaîne vide doit compter comme absente ; `??` la laisserait passer en src="" (erreur runtime next/image)
-						const imageUrl = item.skuImageUrl || item.productImageUrl;
+						const imageUrl = item.productImageUrl || null;
 
 						return (
 							<div key={item.id} className="flex items-start gap-4 border-b py-3 last:border-0">

@@ -34,8 +34,8 @@ import { captureRefundError } from "../utils/capture-refund-error";
  * `reconcile-refunds.service.ts` ; elle est extraite ici pour que les deux
  * chemins soient le MÊME code. Le restock automatique (`RefundItem.restock`) est
  * parti au Lot 6 : plus aucun créateur ne le demandait depuis les remboursements
- * Stripe-first (Lot 2) — le restock post-refund est un ajustement manuel de
- * stock SKU (StockMovement MANUAL_ADJUST).
+ * Stripe-first (Lot 2) — le restock post-refund est un ajustement manuel du stock
+ * de la variante.
  *
  * ⚠️ L'appelant invalide les tags retournés avec l'API de SON contexte :
  * `revalidateTagsInBackground` (cron) ou tâche `INVALIDATE_CACHE` (webhook).

@@ -181,23 +181,4 @@ describeIntegration("processOrderFromPaymentIntent — décrément de stock (DB 
 		const fresh = await prisma.productSku.findUnique({ where: { id: sku.id } });
 		expect(fresh?.inventory).toBe(1);
 	});
-
-	// STOCK-LEDGER-001 : la vente doit laisser sa trace au journal, sinon un écart
-	// d'inventaire redevient inexplicable a posteriori.
-	it("écrit un StockMovement ORDER pour la vente", async () => {
-		const product = await createTestProduct();
-		const sku = await createTestSku(product.id, { inventory: 4 });
-		const order = await seedPendingOrder(sku.id, 3, sku.priceInclTax);
-
-		await processOrder(order.id, fakePaymentIntent(`pi_${uniq()}`, sku.priceInclTax * 3));
-
-		const movements = await prisma.stockMovement.findMany({ where: { skuId: sku.id } });
-		expect(movements).toHaveLength(1);
-		expect(movements[0]).toMatchObject({
-			previousInventory: 4,
-			newInventory: 1,
-			delta: -3,
-			source: "ORDER",
-		});
-	});
 });

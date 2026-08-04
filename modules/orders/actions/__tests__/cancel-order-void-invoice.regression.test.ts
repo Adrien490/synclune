@@ -178,7 +178,7 @@ function createTxOrder(overrides: Record<string, unknown> = {}) {
 		status: "PROCESSING",
 		paymentStatus: "PAID",
 		invoiceNumber: null,
-		invoiceStatus: "PENDING",
+		invoiceStatus: null,
 		...overrides,
 	});
 }
@@ -297,7 +297,7 @@ describe("@regression cancel-order-void-invoice — EINV-TEST-003", () => {
 	describe("invoice non-GENERATED — voidInvoice must NOT be called", () => {
 		it("ne déclenche PAS voidInvoice quand invoiceStatus=PENDING", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue(
-				createTxOrder({ invoiceNumber: null, invoiceStatus: "PENDING" }),
+				createTxOrder({ invoiceNumber: null, invoiceStatus: null }),
 			);
 
 			await cancelOrder(undefined, validFormData);
@@ -320,7 +320,7 @@ describe("@regression cancel-order-void-invoice — EINV-TEST-003", () => {
 
 		it("ne déclenche PAS voidInvoice pour une commande PENDING payment sans facture", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue(
-				createTxOrder({ paymentStatus: "PENDING", invoiceStatus: "PENDING", invoiceNumber: null }),
+				createTxOrder({ paymentStatus: "PENDING", invoiceStatus: null, invoiceNumber: null }),
 			);
 
 			await cancelOrder(undefined, validFormData);

@@ -19,7 +19,6 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		productSku: { findUnique: vi.fn() },
-		stockMovement: { create: vi.fn() },
 		$queryRaw: vi.fn(),
 		// Le runner exécute le callback contre le client mock (tx === mockPrisma)
 		$transaction: vi.fn(),
@@ -83,11 +82,10 @@ describe("adjustSkuStock", () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, adjustment: 5 } });
 		mockGetInventoryInvalidationTags.mockReturnValue(["sku-stock"]);
 		// $transaction exécute le callback contre le client mock (tx === mockPrisma),
-		// si bien que tx.$queryRaw et tx.stockMovement.create résolvent via les mocks.
+		// si bien que tx.$queryRaw résout via les mocks.
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockPrisma) => unknown) =>
 			cb(mockPrisma),
 		);
-		mockPrisma.stockMovement.create.mockResolvedValue({});
 		// Use mockImplementation for tagged template literal compatibility
 		mockPrisma.$queryRaw.mockImplementation(() => Promise.resolve([{ inventory: 15 }]));
 		mockPrisma.productSku.findUnique.mockResolvedValue({
@@ -163,7 +161,6 @@ describe("adjustSkuStock", () => {
 		const result = await adjustSkuStock(undefined, fd);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
 	});
 
 	it("should prevent negative stock on decrement", async () => {
@@ -186,24 +183,7 @@ describe("adjustSkuStock", () => {
 		expect(result.data).toBeDefined();
 	});
 
-	it("should record a StockMovement on increment", async () => {
-		await adjustSkuStock(undefined, validFormData);
-		expect(mockPrisma.stockMovement.create).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.stockMovement.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({
-				skuId: VALID_CUID,
-				productId: "prod-1",
-				previousInventory: 10, // 15 (newInventory) - 5 (delta)
-				newInventory: 15,
-				delta: 5,
-				source: "MANUAL_ADJUST",
-				createdById: "admin-1",
-				createdByName: "Admin",
-			}),
-		});
-	});
-
-	it("should record a StockMovement on decrement", async () => {
+	it("should apply a decrement", async () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, adjustment: -3 } });
 		mockPrisma.$queryRaw.mockImplementation(() => Promise.resolve([{ inventory: 12 }]));
 		const fd = createMockFormData({ skuId: VALID_CUID, adjustment: "-3" });
@@ -211,18 +191,9 @@ describe("adjustSkuStock", () => {
 		const result = await adjustSkuStock(undefined, fd);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.stockMovement.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({
-				delta: -3,
-				previousInventory: 15, // 12 - (-3)
-				newInventory: 12,
-				source: "MANUAL_ADJUST",
-				createdById: "admin-1",
-			}),
-		});
 	});
 
-	it("should not record a StockMovement when decrement is refused (insufficient stock)", async () => {
+	it("should refuse a decrement when stock is insufficient", async () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, adjustment: -20 } });
 		mockPrisma.$queryRaw
 			.mockImplementationOnce(() => Promise.resolve([]))
@@ -232,7 +203,6 @@ describe("adjustSkuStock", () => {
 		const result = await adjustSkuStock(undefined, fd);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

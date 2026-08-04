@@ -1,7 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/client";
-import { StockMovementSource } from "@/app/generated/prisma/client";
 import { BusinessError } from "@/shared/lib/actions";
-import { recordStockMovementTx } from "./stock-movement.service";
 
 /**
  * SSOT du stock saisi dans un FORMULAIRE admin : verrou de ligne, delta relatif,
@@ -27,16 +25,14 @@ import { recordStockMovementTx } from "./stock-movement.service";
  * appelants en font déjà un pour leurs autres champs, une seconde écriture sur la
  * même ligne serait gratuite.
  *
- * @returns `delta` à appliquer (0 = ne rien changer, cas dominant) et l'encadrement
- *   VERROUILLÉ du stock. `previousInventory`/`newInventory` viennent de la ligne
- *   verrouillée, jamais du formulaire : c'est ce qui rend le journal `StockMovement`
- *   fidèle même si un writer concurrent passe entre la lecture et l'écriture.
+ * @returns `delta` à appliquer (0 = ne rien changer, cas dominant), calculé contre la
+ *   ligne VERROUILLÉE et non contre la valeur du formulaire — c'est ce qui préserve un
+ *   décrément commité entre l'ouverture du formulaire et l'enregistrement.
  */
 export async function applyInventoryDeltaTx(
 	tx: Prisma.TransactionClient,
 	params: {
 		skuId: string;
-		productId: string;
 		/** Stock cible saisi dans le formulaire. */
 		targetInventory: number;
 		/**
@@ -46,9 +42,8 @@ export async function applyInventoryDeltaTx(
 		originalInventory?: number;
 		/** Valeur déjà lue hors verrou, utilisée si le FOR UPDATE ne rend aucune ligne. */
 		fallbackInventory: number;
-		admin: { id: string; name?: string | null };
 	},
-): Promise<{ delta: number; previousInventory: number; newInventory: number }> {
+): Promise<number> {
 	const lockedRows = await tx.$queryRaw<{ inventory: number }[]>`
 		SELECT "inventory" FROM "ProductSku" WHERE "id" = ${params.skuId} FOR UPDATE
 	`;
@@ -56,28 +51,13 @@ export async function applyInventoryDeltaTx(
 
 	const baselineInventory = params.originalInventory ?? params.targetInventory;
 	const delta = params.targetInventory - baselineInventory;
-	if (delta === 0) {
-		return { delta: 0, previousInventory: lockedInventory, newInventory: lockedInventory };
-	}
+	if (delta === 0) return 0;
 
-	const newInventory = lockedInventory + delta;
-	if (newInventory < 0) {
+	if (lockedInventory + delta < 0) {
 		throw new BusinessError(
 			"Le stock a changé depuis l'ouverture du formulaire. Rechargez la fiche et réessayez.",
 		);
 	}
 
-	// Audit inventaire, à parité avec `adjust-sku-stock`. Même transaction que
-	// l'`increment` de l'appelant : un rollback emporte les deux.
-	await recordStockMovementTx(tx, {
-		skuId: params.skuId,
-		productId: params.productId,
-		previousInventory: lockedInventory,
-		newInventory,
-		source: StockMovementSource.SKU_UPDATE,
-		createdById: params.admin.id,
-		createdByName: params.admin.name ?? null,
-	});
-
-	return { delta, previousInventory: lockedInventory, newInventory };
+	return delta;
 }

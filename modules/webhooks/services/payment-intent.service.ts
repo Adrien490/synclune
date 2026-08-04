@@ -10,10 +10,8 @@ import {
 	OrderAction,
 	RefundReason,
 	RefundStatus,
-	StockMovementSource,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
 import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import type { StockChangedSku } from "@/modules/products/utils/cache.utils";
@@ -78,9 +76,6 @@ export async function restoreStockForOrder(orderId: string): Promise<{
 	// CACHE-CATALOG-002 : produit inclus pour invalider la page vitrine
 	// (collectStockInvalidationTags), pas seulement SKU_STOCK.
 	restoredSkus: StockChangedSku[];
-	// CACHE-AUDIT-002 : exposé pour que le handler invalide les tags user-scopés
-	// (USER_ORDERS, LAST_ORDER…) via getOrderInvalidationTags sans re-fetch.
-	userId: string | null;
 }> {
 	// NB : tout est dans une transaction pour l'ATOMICITÉ du batch de restock (tout ou
 	// rien). Cela ne confère AUCUNE protection contre un double restock — en READ
@@ -95,7 +90,6 @@ export async function restoreStockForOrder(orderId: string): Promise<{
 					orderNumber: true,
 					status: true,
 					paymentStatus: true,
-					userId: true,
 					items: {
 						select: {
 							skuId: true,
@@ -110,14 +104,14 @@ export async function restoreStockForOrder(orderId: string): Promise<{
 				logger.error(`[WEBHOOK] Order ${orderId} not found for stock restoration`, undefined, {
 					service: "webhook",
 				});
-				return { shouldRestore: false, itemCount: 0, restoredSkus: [], userId: null };
+				return { shouldRestore: false, itemCount: 0, restoredSkus: [] };
 			}
 
 			// Only restore if stock was decremented (PROCESSING status = payment had succeeded)
 			const shouldRestore = order.status === "PROCESSING" || order.paymentStatus === "PAID";
 
 			if (!shouldRestore || order.items.length === 0) {
-				return { shouldRestore: false, itemCount: 0, restoredSkus: [], userId: order.userId };
+				return { shouldRestore: false, itemCount: 0, restoredSkus: [] };
 			}
 
 			// Group quantities by skuId in case multiple items share the same SKU
@@ -143,27 +137,12 @@ export async function restoreStockForOrder(orderId: string): Promise<{
 					// clair ; les 3 autres chemins l'ignoraient (P1-1).
 					const shouldReactivate = shouldReactivateAfterRestock(skuMap.get(skuId));
 
-					// STOCK-LEDGER-001 : on exploite la valeur RETOURNÉE par l'update
-					// plutôt qu'un `$queryRaw … RETURNING` comme ailleurs, parce que la
-					// décision de réactivation a besoin de l'`isActive` d'AVANT — donc du
-					// `findMany` ci-dessus de toute façon. `updated.inventory` reste la
-					// valeur post-écriture réelle, seule base fiable du journal.
-					const updated = await tx.productSku.update({
+					await tx.productSku.update({
 						where: { id: skuId },
 						data: {
 							inventory: { increment: quantity },
 							...(shouldReactivate && { isActive: true }),
 						},
-						select: { inventory: true, productId: true },
-					});
-
-					await recordStockMovementTx(tx, {
-						skuId,
-						productId: updated.productId,
-						previousInventory: updated.inventory - quantity,
-						newInventory: updated.inventory,
-						source: StockMovementSource.WEBHOOK,
-						reason: `Restauration de stock — commande ${order.orderNumber}`,
 					});
 				}),
 			);
@@ -181,7 +160,6 @@ export async function restoreStockForOrder(orderId: string): Promise<{
 					productId: productBySkuId.get(skuId)?.id,
 					productSlug: productBySkuId.get(skuId)?.slug,
 				})),
-				userId: order.userId,
 			};
 		},
 		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
@@ -337,7 +315,7 @@ export async function markOrderAsFailed(
 export async function markOrderAsCancelled(
 	orderId: string,
 	paymentIntentId: string,
-): Promise<{ restoredSkus: StockChangedSku[]; userId: string | null }> {
+): Promise<{ restoredSkus: StockChangedSku[] }> {
 	const txResult = await prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			const order = await tx.order.findFirst({
@@ -345,7 +323,6 @@ export async function markOrderAsCancelled(
 				select: {
 					status: true,
 					paymentStatus: true,
-					userId: true,
 					items: {
 						select: {
 							skuId: true,
@@ -360,7 +337,7 @@ export async function markOrderAsCancelled(
 				logger.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsCancelled`, undefined, {
 					service: "webhook",
 				});
-				return { releasedDiscountIds: [], restoredSkus: [], userId: null };
+				return { releasedDiscountIds: [], restoredSkus: [] };
 			}
 
 			if (order.status === "CANCELLED" && order.paymentStatus === "FAILED") {
@@ -368,7 +345,7 @@ export async function markOrderAsCancelled(
 					`⏭️ [WEBHOOK] Order ${orderId} already CANCELLED with FAILED payment, skipping`,
 					{ service: "webhook" },
 				);
-				return { releasedDiscountIds: [], restoredSkus: [], userId: order.userId };
+				return { releasedDiscountIds: [], restoredSkus: [] };
 			}
 
 			// Garde anti-rétrogradation (audit webhooks 2026-07-02, symétrique de
@@ -401,7 +378,7 @@ export async function markOrderAsCancelled(
 					`⚠️ [WEBHOOK] Blocked CANCELLED transition on order ${orderId} — protected payment state, skipping`,
 					{ service: "webhook", orderId, paymentIntentId },
 				);
-				return { releasedDiscountIds: [], restoredSkus: [], userId: order.userId };
+				return { releasedDiscountIds: [], restoredSkus: [] };
 			}
 
 			// IDEM-CANCEL-002 : restock atomique avec le claim CANCELLED (état
@@ -423,29 +400,18 @@ export async function markOrderAsCancelled(
 					select: { id: true, inventory: true, isActive: true },
 				});
 				const skuMap = new Map(skus.map((s) => [s.id, s]));
-				// STOCK-LEDGER-001 : journalise le crédit (source `WEBHOOK`) dans la même
-				// transaction que le claim CANCELLED, donc soumis au même single-winner —
-				// un rejeu du webhook ne produit ni double crédit ni doublon au journal.
+				// Le crédit vit dans la même transaction que le claim CANCELLED, donc
+				// soumis au même single-winner — un rejeu du webhook ne double pas le stock.
 				await Promise.all(
 					Array.from(stockUpdates.entries()).map(async ([skuId, quantity]) => {
 						// Même SSOT que restoreStockForOrder (cf. restock-reactivation.service).
 						const shouldReactivate = shouldReactivateAfterRestock(skuMap.get(skuId));
-						const updated = await tx.productSku.update({
+						await tx.productSku.update({
 							where: { id: skuId },
 							data: {
 								inventory: { increment: quantity },
 								...(shouldReactivate && { isActive: true }),
 							},
-							select: { inventory: true, productId: true },
-						});
-
-						await recordStockMovementTx(tx, {
-							skuId,
-							productId: updated.productId,
-							previousInventory: updated.inventory - quantity,
-							newInventory: updated.inventory,
-							source: StockMovementSource.WEBHOOK,
-							reason: `Annulation du paiement — commande ${orderId}`,
 						});
 					}),
 				);
@@ -481,7 +447,7 @@ export async function markOrderAsCancelled(
 			});
 
 			logger.info(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`, { service: "webhook" });
-			return { releasedDiscountIds: discountIds, restoredSkus, userId: order.userId };
+			return { releasedDiscountIds: discountIds, restoredSkus };
 		},
 		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
@@ -491,17 +457,17 @@ export async function markOrderAsCancelled(
 		txResult.releasedDiscountIds.map((discountId) => DISCOUNT_CACHE_TAGS.USAGE(discountId)),
 	);
 
-	return { restoredSkus: txResult.restoredSkus, userId: txResult.userId };
+	return { restoredSkus: txResult.restoredSkus };
 }
 
 /**
  * Initie un remboursement automatique via Stripe.
  *
- * ORD-BIZ-002 : crée un `Refund` local APPROVED (avec `RefundItems` couvrant
- * tous les OrderItem — sans impact stock : il n'a jamais été décrémenté sur ces
- * chemins (oversell/mismatch throw avant décrément), ou est restauré séparément
- * par `restoreStockForOrder` sur `payment_intent.canceled`) AVANT l'appel
- * Stripe.
+ * ORD-BIZ-002 : crée un `Refund` local APPROVED AVANT l'appel Stripe. Sans impact
+ * stock : il n'a jamais été décrémenté sur ces chemins (oversell/mismatch throw
+ * avant décrément), ou il est restauré séparément par `restoreStockForOrder` sur
+ * `payment_intent.canceled`. (La ventilation `RefundItem` mentionnée ici jusqu'au
+ * 2026-08-05 n'existe plus — modèle retiré, cf. `refund.service.ts`.)
  * `metadata.refund_id = localRefund.id` permet au webhook `charge.refunded`
  * de matcher via la branche `linkRefund` (et non `upsertDashboard`), donc
  * d'éviter la perte de traçabilité items côté DB.
@@ -565,17 +531,9 @@ export async function initiateAutomaticRefund(
 					data: {
 						orderId,
 						amount: refundAmount,
-						currency: "EUR",
 						reason: RefundReason.OTHER,
 						status: RefundStatus.APPROVED,
 						note: `${AUTO_REFUND_NOTE_PREFIX} (${reason})`,
-						items: {
-							create: order.items.map((oi) => ({
-								orderItemId: oi.id,
-								quantity: oi.quantity,
-								amount: oi.price * oi.quantity,
-							})),
-						},
 					},
 					select: { id: true, status: true, stripeRefundId: true },
 				});
@@ -692,7 +650,7 @@ export async function sendRefundFailureAlert(
 			select: {
 				orderNumber: true,
 				total: true,
-				user: { select: { email: true } },
+				customerEmail: true,
 			},
 		});
 
@@ -708,7 +666,10 @@ export async function sendRefundFailureAlert(
 
 		await sendAdminRefundFailedAlert({
 			orderNumber: order.orderNumber,
-			customerEmail: order.user?.email ?? "Email non disponible",
+			// Snapshot obligatoire figé au checkout — la relation `user` lue ici
+			// auparavant était toujours NULL (achat invité), donc l'alerte affichait
+			// « Email non disponible » sur CHAQUE remboursement échoué.
+			customerEmail: order.customerEmail,
 			amount: order.total,
 			reason,
 			errorMessage,

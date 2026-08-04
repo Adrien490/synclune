@@ -40,7 +40,8 @@ function makeOrder(overrides: Partial<OrderForTransform> = {}): OrderForTransfor
 		paymentStatus: PaymentStatus.PAID,
 		fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
 		total: 4500,
-		user: { name: "Alice", email: "alice@test.com" },
+		customerName: "Alice",
+		customerEmail: "alice@test.com",
 		...overrides,
 	};
 }
@@ -68,24 +69,18 @@ describe("transformRecentOrder", () => {
 		});
 	});
 
-	it("should default customerName to 'Invité' when user is null", () => {
-		const order = makeOrder({ user: null });
+	// Le transformer dérivait `customerName` de la relation `user` avec un repli
+	// « Invité ». Comme `Order.userId` était NULL sur 100 % des commandes (achat
+	// invité), la liste affichait « Invité » et un email vide pour TOUTES les
+	// lignes. Il recopie désormais les colonnes snapshot, obligatoires et figées au
+	// checkout — plus de repli, donc plus rien à tester de ce côté.
+	it("recopie les colonnes snapshot telles quelles", () => {
+		const order = makeOrder({ customerName: "Bérénice O.", customerEmail: "b@test.com" });
 
 		const result = transformRecentOrder(order);
 
-		expect(result.customerName).toBe("Invité");
-		expect(result.customerEmail).toBe("");
-	});
-
-	it("should default customerName to 'Invité' when user.name is null", () => {
-		const order = makeOrder({
-			user: { name: null, email: "guest@test.com" },
-		});
-
-		const result = transformRecentOrder(order);
-
-		expect(result.customerName).toBe("Invité");
-		expect(result.customerEmail).toBe("guest@test.com");
+		expect(result.customerName).toBe("Bérénice O.");
+		expect(result.customerEmail).toBe("b@test.com");
 	});
 
 	it("should preserve all order statuses", () => {
@@ -117,7 +112,12 @@ describe("transformRecentOrders", () => {
 	it("should transform multiple orders", () => {
 		const orders = [
 			makeOrder({ id: "order-1", orderNumber: "SYN-001" }),
-			makeOrder({ id: "order-2", orderNumber: "SYN-002", user: null }),
+			makeOrder({
+				id: "order-2",
+				orderNumber: "SYN-002",
+				customerName: "Invité",
+				customerEmail: "",
+			}),
 		];
 
 		const result = transformRecentOrders(orders);

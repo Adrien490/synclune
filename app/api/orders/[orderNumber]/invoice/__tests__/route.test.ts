@@ -125,8 +125,16 @@ const ORDER_NUMBER = "SYN-2026-0001";
 const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
 const PDF_HASH = createHash("sha256").update(PDF_BYTES).digest("hex");
 
-function makeReq() {
-	return new Request(`https://example.com/api/orders/${ORDER_NUMBER}/invoice`);
+/**
+ * Depuis le retrait de `Order.userId` (2026-08-05), le SEUL chemin client est le
+ * token HMAC — une commande n'a plus de propriétaire de session. Les requêtes
+ * portent donc un token bien formé (32 hex, cf. `invoiceTokenSchema`) ;
+ * `mockVerifyInvoiceAccessToken` décide de sa validité.
+ * `makeReq({ token: false })` pour exercer un accès sans token.
+ */
+function makeReq(options: { token?: boolean } = {}) {
+	const query = options.token === false ? "" : "?token=a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6";
+	return new Request(`https://example.com/api/orders/${ORDER_NUMBER}/invoice${query}`);
 }
 
 function makeParams() {
@@ -141,7 +149,6 @@ const ADMIN_SESSION = {
 const PAID_ORDER = {
 	id: "order-1",
 	orderNumber: ORDER_NUMBER,
-	userId: "user-1",
 	paymentStatus: "PAID" as const,
 	invoiceNumber: "INV-2026-0001",
 	invoiceStatus: "GENERATED" as const,
@@ -160,7 +167,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		mockGetRateLimitIdentifier.mockReturnValue("user:user-1");
 		mockGetClientIp.mockResolvedValue("127.0.0.1");
 		mockHeaders.mockResolvedValue(new Headers());
-		mockVerifyInvoiceAccessToken.mockReturnValue(false);
+		mockVerifyInvoiceAccessToken.mockReturnValue(true);
 		mockIsAllowedMediaDomain.mockReturnValue(true);
 		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 999 });
 		mockPrisma.order.findFirst.mockResolvedValue(PAID_ORDER);
@@ -183,7 +190,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		it("returns 401 when no session", async () => {
 			mockGetSession.mockResolvedValue(null);
 
-			const res = await GET(makeReq(), makeParams());
+			const res = await GET(makeReq({ token: false }), makeParams());
 
 			expect(res.status).toBe(401);
 		});
@@ -191,7 +198,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		it("returns 401 when session has no user.id", async () => {
 			mockGetSession.mockResolvedValue({ user: {} });
 
-			const res = await GET(makeReq(), makeParams());
+			const res = await GET(makeReq({ token: false }), makeParams());
 
 			expect(res.status).toBe(401);
 		});
@@ -231,8 +238,12 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			expect(res.status).toBe(404);
 		});
 
-		it("returns 404 when order belongs to a different user (anti-enumeration EINV-SEC-003)", async () => {
-			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
+		// `Order.userId` est parti le 2026-08-05 : le cas « commande d'un autre
+		// client » est devenu « session non-admin sans token valide » — même réponse,
+		// même motif d'anti-énumération.
+		it("returns 404 for a non-admin session whose token is invalid (EINV-SEC-003)", async () => {
+			mockVerifyInvoiceAccessToken.mockReturnValue(false);
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER });
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -350,7 +361,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 
 			const res = await GET(makeReq(), makeParams());
 
-			expect(mockPersistInvoiceNumber).toHaveBeenCalledWith("order-1", "user-1");
+			expect(mockPersistInvoiceNumber).toHaveBeenCalledWith("order-1");
 			expect(res.headers.get("Content-Disposition")).toBe(
 				`attachment; filename="facture-INV-2026-9999.pdf"`,
 			);
@@ -520,15 +531,16 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 
 		it("allows admin to download an invoice owned by a different user (audit)", async () => {
 			mockGetSession.mockResolvedValue(ADMIN_SESSION);
-			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER });
 
 			const res = await GET(makeReq(), makeParams());
 
 			expect(res.status).toBe(200);
 		});
 
-		it("non-admin still blocked by ownership check (404 anti-enumeration)", async () => {
-			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
+		it("non-admin still blocked without a valid token (404 anti-enumeration)", async () => {
+			mockVerifyInvoiceAccessToken.mockReturnValue(false);
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER });
 
 			const res = await GET(makeReq(), makeParams());
 

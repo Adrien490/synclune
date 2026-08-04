@@ -66,7 +66,6 @@ export async function deleteOrder(
 				select: {
 					id: true,
 					orderNumber: true,
-					userId: true,
 					status: true,
 					paymentStatus: true,
 					invoiceNumber: true,

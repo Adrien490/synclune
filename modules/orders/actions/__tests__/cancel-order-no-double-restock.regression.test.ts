@@ -50,9 +50,6 @@ const {
 		// ORD-STRIPE-007 : hasOpenDisputeTx compte les entrees d'audit DISPUTE_OPENED
 		// vs DISPUTE_RESOLVED (le modele Dispute a ete retire en V1). 0/0 = aucun litige.
 		orderHistory: { create: vi.fn(), count: vi.fn().mockResolvedValue(0) },
-		// STOCK-LEDGER-001 : `stockMovement.create` est appelé par
-		// `recordStockMovementTx` à chaque restock — sans lui, la tx throw.
-		stockMovement: { create: vi.fn() },
 		// `$queryRaw` sert DEUX usages ici : l'advisory lock (retour ignoré) et le
 		// `UPDATE … RETURNING` du restock (retour lu). Un `mockResolvedValue` unique
 		// couvre les deux — le lock se moque de ce qu'on lui rend.
@@ -155,10 +152,16 @@ vi.mock("@/modules/orders/utils/customer-name", () => ({
 import { cancelOrder } from "../cancel-order";
 
 /** Extrait les `RefundItem` du payload passé à `refund.create`. */
-function refundItemsFromCreateCall() {
+/**
+ * `RefundItem` est parti le 2026-08-05 : le Refund d'annulation ne porte PLUS
+ * aucune ligne, donc a fortiori aucune instruction de restock. L'invariant de
+ * cette régression (cancel-order ne délègue jamais le restock au refund) est
+ * désormais garanti par construction — on vérifie qu'aucun `items` n'est créé.
+ */
+function refundCreateData() {
 	const call = mockTx.refund.create.mock.calls[0]?.[0] as
-		{ data?: { items?: { create?: Array<{ restock?: boolean }> } } } | undefined;
-	return call?.data?.items?.create ?? [];
+		{ data?: Record<string, unknown> } | undefined;
+	return call?.data;
 }
 
 describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock à processRefund", () => {
@@ -199,21 +202,10 @@ describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 
-		// Le restock inline a bien eu lieu : exactement un mouvement de stock par
-		// ligne (STOCK-LEDGER-001), donc un crédit par ligne — pas deux.
-		expect(mockTx.stockMovement.create).toHaveBeenCalledTimes(2);
-		expect(mockTx.stockMovement.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({
-				skuId: "sku-1",
-				delta: 2,
-				source: "ORDER",
-			}),
-		});
-
 		// …et AUCUN RefundItem ne porte d'instruction de restock (colonne droppée).
-		const items = refundItemsFromCreateCall();
-		expect(items).toHaveLength(2);
-		expect(items.every((item) => !("restock" in item))).toBe(true);
+		const data = refundCreateData();
+		expect(data).toBeDefined();
+		expect(data).not.toHaveProperty("items");
 	});
 
 	// L'invariant est inconditionnel : même quand aucun restock inline n'a lieu
@@ -236,12 +228,10 @@ describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		// Aucun crédit du tout : ni écriture d'inventaire, ni ligne au journal.
-		expect(mockTx.stockMovement.create).not.toHaveBeenCalled();
 
-		const items = refundItemsFromCreateCall();
-		expect(items).toHaveLength(1);
-		expect(items[0] && "restock" in items[0]).toBe(false);
+		const data = refundCreateData();
+		expect(data).toBeDefined();
+		expect(data).not.toHaveProperty("items");
 	});
 
 	// Garde-fou du garde-fou : les deux tests ci-dessus s'appuient sur un mock du

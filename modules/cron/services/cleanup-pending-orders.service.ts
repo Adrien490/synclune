@@ -76,7 +76,6 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 			createdAt: true,
 			// CACHE-AUDIT-005 : invalider les tags user-scopés pour les pending
 			// abandonnés d'un client connecté.
-			userId: true,
 			items: { select: { id: true, skuId: true, quantity: true } },
 		},
 		take: BATCH_SIZE_LARGE,

@@ -405,7 +405,6 @@ describe("handlePaymentFailure", () => {
 		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-2026-00042",
 			paymentStatus: "PENDING",
-			userId: "user-1",
 		});
 		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
@@ -452,7 +451,6 @@ describe("handlePaymentFailure", () => {
 		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-2026-00042",
 			paymentStatus: "PAID",
-			userId: "user-1",
 		});
 
 		const result = await handlePaymentFailure(makePaymentIntent());
@@ -472,7 +470,6 @@ describe("handlePaymentFailure", () => {
 			mockPrisma.order.findFirst.mockResolvedValue({
 				orderNumber: "SYN-2026-00042",
 				paymentStatus,
-				userId: "user-1",
 			});
 
 			const result = await handlePaymentFailure(makePaymentIntent());
@@ -486,7 +483,6 @@ describe("handlePaymentFailure", () => {
 		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-2026-00042",
 			paymentStatus: "FAILED",
-			userId: "user-1",
 		});
 
 		const result = await handlePaymentFailure(makePaymentIntent());
@@ -600,7 +596,6 @@ describe("handlePaymentCanceled", () => {
 	it("should include restored SKU ids in cache tags", async () => {
 		mockMarkOrderAsCancelled.mockResolvedValue({
 			restoredSkus: [{ skuId: "sku-3" }],
-			userId: "user-1",
 		});
 
 		const result = await handlePaymentCanceled(makePaymentIntent());

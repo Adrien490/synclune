@@ -28,21 +28,6 @@ export interface RefundForCreditNote {
 	reason: string | null;
 	creditNoteNumber: string;
 	creditNoteGeneratedAt: Date;
-	items: Array<{
-		orderItemId: string;
-		quantity: number;
-		amount: number;
-		orderItem: {
-			productTitle: string;
-			productDescription: string | null;
-			skuSku: string | null;
-			skuColor: string | null;
-			skuMaterial: string | null;
-			skuSize: string | null;
-			quantity: number; // quantité initialement facturée
-			price: number; // prix unitaire HT (snapshot)
-		};
-	}>;
 }
 
 interface BuildCreditNoteDataOptions {
@@ -55,9 +40,8 @@ interface BuildCreditNoteDataOptions {
  * Différences avec `buildInvoiceData()` :
  *   - `invoiceNumber` = `refund.creditNoteNumber` (A-YYYY-NNNNN)
  *   - `issuedAt` = `refund.creditNoteGeneratedAt`
- *   - `lines` = mapping `RefundItem` → `InvoiceLine` en proratisant le
- *     snapshot OrderItem (quantité remboursée + amount remboursé)
- *   - `totals` = recalculés depuis les lignes du Refund (pas Order.total)
+ *   - `lines` = UNE ligne au montant remboursé (cf. `buildCreditNoteLine`)
+ *   - `totals` = recalculés depuis cette ligne (pas Order.total)
  *   - `precedingInvoice` = référence à la facture originale (Art. 272-I CGI)
  *   - `voidedInfo` = `null` (un avoir ne se "void" pas lui-même ; seul un
  *     avoir-correctif rare l'invalide, hors scope MVP)
@@ -88,14 +72,12 @@ export function buildCreditNoteData(
 
 	const { format = "PDF" } = options;
 
-	const seller = buildSellerInfo(order);
+	const seller = buildSellerInfo();
 	const buyer = buildBuyerInfo(order);
 	const shippingAddress = buildShippingAddress(order);
 	const billingAddress = buildBillingAddress(shippingAddress);
 
-	const lines: InvoiceLine[] = refund.items.map((refundItem, index) =>
-		buildCreditNoteLine(refundItem, index + 1),
-	);
+	const lines: InvoiceLine[] = [buildCreditNoteLine(refund, order.invoiceNumber)];
 
 	const totals = buildCreditNoteTotals(lines);
 
@@ -142,42 +124,46 @@ export function buildCreditNoteData(
 }
 
 /**
- * Mappe un `RefundItem` (avec son snapshot OrderItem) vers une `InvoiceLine`.
- * La quantité = quantité remboursée. Le total ligne = `refundItem.amount` (déjà
- * proratisé côté create-refund — inclut la part discount). Le détail
- * unitPriceExclTax + taxAmount est recalculé depuis le ratio.
+ * Construit l'UNIQUE ligne de l'avoir : le montant réellement remboursé, rattaché
+ * à la facture d'origine.
+ *
+ * ⚠️ Ce n'est pas une simplification cosmétique, c'est une CORRECTION (2026-08-05).
+ * L'ancienne version dépliait les `RefundItem` produits par
+ * `allocateDashboardRefundItems`, qui répartissait le montant au pro-rata en
+ * gardant `quantity` = quantité commandée ENTIÈRE. Sur un remboursement partiel,
+ * la ligne imprimée affichait donc `2 × 30,00 €` pour un total de `20,00 €` —
+ * une ligne qui ne s'additionne pas, figée sous SHA-256 pour dix ans
+ * (Art. L102 B LPF). L'itemisation était en outre FABRIQUÉE : depuis le passage
+ * Stripe-first (Lot 2), on rembourse un MONTANT, jamais des lignes — rien ne dit
+ * quel article est remboursé.
+ *
+ * Un avoir n'a pas d'obligation de détailler les articles : il doit référencer la
+ * facture qu'il corrige et porter le montant (Art. 272-I CGI). C'est ce que fait
+ * cette ligne, et elle a le mérite d'être vraie.
  */
 function buildCreditNoteLine(
-	refundItem: RefundForCreditNote["items"][number],
-	lineNumber: number,
+	refund: RefundForCreditNote,
+	originalInvoiceNumber: string,
 ): InvoiceLine {
-	// Franchise TVA (Art. 293 B CGI) : aucune TVA par ligne n'est stockée sur
-	// l'OrderItem (pas de colonnes taxRate/taxCategoryCode/hsCode/unitCode). Les
-	// valeurs sont dérivées intégralement ici, à l'identique de `buildInvoiceLine`
-	// côté facture (taux 0, HT = TTC). À la sortie de franchise (régime NORMAL),
-	// réintroduire OrderItem.taxRate dans les DEUX chemins (facture + avoir).
-	const lineTotalInclTax = refundItem.amount;
-	const lineTotalExclTax = lineTotalInclTax;
-	const taxAmount = 0;
+	// Franchise TVA (Art. 293 B CGI) : aucune TVA par ligne — HT = TTC, taux 0.
+	// À la sortie de franchise (régime NORMAL), réintroduire le taux dans les DEUX
+	// chemins (facture + avoir).
+	const lineTotal = refund.amount;
 
 	return {
-		lineNumber,
-		productTitle: refundItem.orderItem.productTitle,
-		productDescription: refundItem.orderItem.productDescription,
-		skuCode: refundItem.orderItem.skuSku,
-		variantInfo: {
-			color: refundItem.orderItem.skuColor,
-			material: refundItem.orderItem.skuMaterial,
-			size: refundItem.orderItem.skuSize,
-		},
-		quantity: refundItem.quantity,
-		unitPriceExclTax: refundItem.orderItem.price,
+		lineNumber: 1,
+		productTitle: `Remboursement sur facture ${originalInvoiceNumber}`,
+		productDescription: refund.reason ? `Motif : ${refund.reason}` : null,
+		skuCode: null,
+		variantInfo: { color: null, material: null, size: null },
+		quantity: 1,
+		unitPriceExclTax: lineTotal,
 		discountAmount: 0,
 		taxRate: 0,
 		taxCategoryCode: DEFAULT_TAX_CATEGORY as TaxCategoryCode,
-		taxAmount,
-		lineTotalExclTax,
-		lineTotalInclTax,
+		taxAmount: 0,
+		lineTotalExclTax: lineTotal,
+		lineTotalInclTax: lineTotal,
 		hsCode: null,
 		unitCode: null,
 	};
@@ -188,8 +174,8 @@ function buildCreditNoteTotals(lines: InvoiceLine[]): InvoiceTotals {
 	const totalTax = lines.reduce((sum, line) => sum + line.taxAmount, 0);
 	const totalInclTax = lines.reduce((sum, line) => sum + line.lineTotalInclTax, 0);
 
-	// Pour un avoir : pas de shipping (le shipping refund est inclus dans
-	// `refundItem.amount` côté create-refund, ou n'est pas remboursé du tout).
+	// Pour un avoir : pas de ligne de port distincte — `refund.amount` est le
+	// montant remboursé toutes causes confondues (articles et/ou livraison).
 	const shippingExclTax = 0;
 	const shippingTax = 0;
 

@@ -307,7 +307,6 @@ export async function confirmCheckout(
 					shippingAddress: v.shippingAddress,
 					firstName,
 					lastName,
-					userId,
 					finalEmail,
 					discountCode: v.discountCode,
 					paymentIntentId: v.paymentIntentId,
@@ -543,7 +542,6 @@ const IDEMPOTENT_ORDER_SELECT = {
 	id: true,
 	orderNumber: true,
 	total: true,
-	userId: true,
 	shippingCountry: true,
 	shippingPostalCode: true,
 	items: { select: { skuId: true, quantity: true } },
@@ -666,7 +664,6 @@ async function resolveIdempotentHit(
 	try {
 		const snapshotOutcome = await updatePendingOrderShippingSnapshot({
 			orderId: order.id,
-			customerUserId: order.userId,
 			shipping: {
 				firstName,
 				lastName,

@@ -70,7 +70,6 @@ export async function updateTracking(
 					orderNumber: true,
 					status: true,
 					fulfillmentStatus: true,
-					userId: true,
 					trackingNumber: true,
 					actualDelivery: true,
 				},

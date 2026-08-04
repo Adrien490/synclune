@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { applyInventoryDeltaTx } from "@/modules/skus/services/apply-inventory-delta.service";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
@@ -41,11 +41,8 @@ export async function updateProduct(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		// requireAdminWithUser : l'identité admin est tracée dans le StockMovement
-		// écrit quand le stock change via ce formulaire (parité update-sku).
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const admin = auth.user;
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -339,15 +336,13 @@ export async function updateProduct(
 				// C'était le bug corrigé sur `update-sku` deux mois plus tôt, resté vivant sur
 				// CE formulaire — le plus utilisé, puisqu'il édite le SKU des produits
 				// mono-variante. SSOT : `applyInventoryDeltaTx` (docblock = le détail).
-				const { delta: inventoryDelta } = await applyInventoryDeltaTx(tx, {
+				const inventoryDelta = await applyInventoryDeltaTx(tx, {
 					skuId: validatedData.defaultSku.skuId,
-					productId: validatedData.productId,
 					targetInventory: validatedData.defaultSku.inventory,
 					originalInventory: validatedData.defaultSku.originalInventory,
 					fallbackInventory:
 						existingProduct.skus.find((s) => s.id === validatedData.defaultSku.skuId)?.inventory ??
 						validatedData.defaultSku.inventory,
-					admin,
 				});
 
 				// Update SKU + sync couleurs & matériaux M2M (delete-all + create pour préserver l'ordre)

@@ -75,7 +75,6 @@ async function createPaidOrder(
 			stripePaymentIntentId: `pi_arch_${Date.now()}`,
 			subtotal: 4999,
 			total: 4999,
-			currency: "EUR",
 			paymentMethod: "CARD",
 			invoiceNumber: `F-${new Date().getFullYear()}-${Date.now().toString().slice(-5).padStart(5, "0")}`,
 			invoiceStatus: "GENERATED",

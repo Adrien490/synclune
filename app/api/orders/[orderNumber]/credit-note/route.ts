@@ -9,7 +9,6 @@ import {
 	invoiceTokenSchema,
 } from "@/modules/orders/schemas/order-route-params.schema";
 import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
-import { isInvoiceOwnerErased } from "@/modules/orders/utils/invoice-access-guard";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
@@ -161,17 +160,9 @@ export async function GET(
 	const tokenValid =
 		tokenFromQuery !== null &&
 		verifyInvoiceAccessToken(order.id, order.orderNumber, tokenFromQuery);
-	const sessionOwns = !!session?.user.id && order.userId === session.user.id;
 	// EINV-SEC-003 : 404 indistinct (anti-énumération), cf. /invoice.
-	if (!isAdmin && !sessionOwns && !tokenValid) {
+	if (!isAdmin && !tokenValid) {
 		return new Response("Commande introuvable", { status: 404 });
-	}
-
-	// EINV-SEC-002 : révocation du token permanent après effacement RGPD du compte.
-	if (!isAdmin && !sessionOwns && (await isInvoiceOwnerErased(order.userId))) {
-		return new Response("Ce document n'est plus accessible (compte supprimé).", {
-			status: 410,
-		});
 	}
 
 	// Garde fondamentale : pas de génération lazy d'avoir. Contrairement à la

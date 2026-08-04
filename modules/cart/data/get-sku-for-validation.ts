@@ -53,7 +53,7 @@ export async function fetchSkuForValidation(skuId: string) {
 				},
 			},
 			// EINV-SNAPSHOT-MEDIA-001 : `mediaType` est OBLIGATOIRE ici. Ce select
-			// alimente le snapshot figé `OrderItem.productImageUrl` / `skuImageUrl`
+			// alimente le snapshot figé `OrderItem.productImageUrl`
 			// (`order-creation.service.ts`) — immuable, rétention 10 ans, rendu dans
 			// l'historique client ET dans le PDF de facture. Sans `mediaType`,
 			// l'appelant ne pouvait pas écarter une vidéo : un `.mp4` se figeait dans

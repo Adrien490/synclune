@@ -21,8 +21,16 @@ export const DISPUTE_CLOSED_NOTE_PREFIX = (stripeDisputeId: string) =>
  *
  * Garde de double dépense : rembourser ou annuler une commande dont le chargeback
  * court, c'est payer deux fois (le refund admin PUIS la reprise de fonds Stripe si
- * le litige est perdu). Trois appelants : `create-refund`, `process-refund`,
- * `cancel-order`.
+ * le litige est perdu).
+ *
+ * ⚠️ **Un seul appelant : `cancel-order`.** Le docstring en annonçait trois
+ * (`create-refund`, `process-refund`) jusqu'à l'audit Stripe du 2026-08-04 — ces
+ * deux actions sont parties au Lot 2 avec le workflow de remboursement in-app.
+ * Depuis la bascule Stripe-first, ce garde ne couvre donc PLUS aucun chemin de
+ * remboursement : c'est le Dashboard Stripe qui affiche le litige à l'opératrice
+ * au moment où elle émet le refund. Arbitrage assumé, mais à connaître avant de
+ * réintroduire une action de remboursement applicative — elle devrait rappeler ce
+ * garde, sous le même verrou de ligne.
  *
  * Dérivé de l'audit trail depuis le retrait du modèle `Dispute` (simplification V1,
  * 2026-07-30) : un litige est ouvert tant que son `DISPUTE_OPENED` n'a pas reçu le

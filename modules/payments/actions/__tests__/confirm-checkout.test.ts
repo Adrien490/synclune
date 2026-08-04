@@ -671,7 +671,10 @@ describe("confirmCheckout", () => {
 					subtotal: 4500,
 					firstName: "Marie",
 					lastName: "Dupont",
-					userId: "cm3user0000123qz8v4h2j9d3",
+					// Plus de `userId` : `Order.userId` est parti le 2026-08-05 (achat
+					// 100 % invité). Le `userId` de SESSION reste, lui, dans les
+					// métadonnées du PaymentIntent — c'est la garde CHECKOUT-IDOR-001,
+					// asserted juste au-dessus.
 					finalEmail: "marie@example.com",
 					paymentIntentId: "pi_test_123",
 				}),
@@ -740,10 +743,7 @@ describe("confirmCheckout", () => {
 			await confirmCheckout(createValidData({ email: "guest@example.com" }));
 
 			expect(mockCreateOrderInTransaction).toHaveBeenCalledWith(
-				expect.objectContaining({
-					finalEmail: "guest@example.com",
-					userId: null,
-				}),
+				expect.objectContaining({ finalEmail: "guest@example.com" }),
 			);
 		});
 
@@ -836,7 +836,6 @@ describe("confirmCheckout", () => {
 			expect(mockUpdatePendingShippingSnapshot).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderId: "order-existing",
-					customerUserId: "cm3user0000123qz8v4h2j9d3",
 					shipping: expect.objectContaining({ address1: "14 Rue de la Paix" }),
 				}),
 			);
@@ -947,7 +946,6 @@ describe("confirmCheckout", () => {
 					total: true,
 					// KI-001 : `userId` alimente l'audit + l'invalidation de cache de la
 					// correction d'adresse d'une commande encore PENDING.
-					userId: true,
 					shippingCountry: true,
 					shippingPostalCode: true,
 					items: { select: { skuId: true, quantity: true } },

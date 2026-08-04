@@ -67,10 +67,9 @@ export type UpdatePendingShippingSnapshotOutcome =
  */
 export async function updatePendingOrderShippingSnapshot(params: {
 	orderId: string;
-	customerUserId: string | null;
 	shipping: PendingShippingSnapshot;
 }): Promise<UpdatePendingShippingSnapshotOutcome> {
-	const { orderId, customerUserId, shipping } = params;
+	const { orderId, shipping } = params;
 
 	return prisma.$transaction(async (tx) => {
 		await acquireOrderPaidLockTx(tx, orderId);
@@ -138,7 +137,6 @@ export async function updatePendingOrderShippingSnapshot(params: {
 			source: HistorySource.CUSTOMER,
 			// Libellé neutre imposé : cette table survit à l'effacement RGPD.
 			authorName: "Client",
-			...(customerUserId && { authorId: customerUserId }),
 			note: "Adresse de livraison corrigee par le client avant paiement",
 			metadata: {
 				addressType: "shipping",

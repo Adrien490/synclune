@@ -23,8 +23,6 @@ const {
 			findMany: vi.fn(),
 			update: vi.fn(),
 		},
-		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
-		stockMovement: { create: vi.fn() },
 		refund: {
 			findFirst: vi.fn(),
 			create: vi.fn(),
@@ -228,7 +226,6 @@ describe("restoreStockForOrder", () => {
 			shouldRestore: false,
 			itemCount: 0,
 			restoredSkus: [],
-			userId: null,
 		});
 	});
 
@@ -313,13 +310,11 @@ describe("restoreStockForOrder", () => {
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
 			where: { id: "sku-auto-deactivated" },
 			data: { inventory: { increment: 1 }, isActive: true },
-			select: { inventory: true, productId: true },
 		});
 
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
 			where: { id: "sku-manually-deactivated" },
 			data: { inventory: { increment: 1 } },
-			select: { inventory: true, productId: true },
 		});
 	});
 });
@@ -432,7 +427,6 @@ describe("markOrderAsCancelled", () => {
 		mockTx.order.findFirst.mockResolvedValue({
 			status: "PENDING",
 			paymentStatus: "PENDING",
-			userId: null,
 			items: [],
 		});
 		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
@@ -446,7 +440,6 @@ describe("markOrderAsCancelled", () => {
 			select: {
 				status: true,
 				paymentStatus: true,
-				userId: true,
 				items: {
 					select: {
 						skuId: true,
@@ -501,7 +494,6 @@ describe("markOrderAsCancelled", () => {
 		// IDEM-CANCEL-002 : retour combiné cancel+restock (rien restauré ici).
 		await expect(markOrderAsCancelled("nonexistent-order", "pi_cancelled123")).resolves.toEqual({
 			restoredSkus: [],
-			userId: null,
 		});
 
 		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
@@ -601,7 +593,10 @@ describe("sendRefundFailureAlert", () => {
 		const order = {
 			orderNumber: "SYN-042",
 			total: 9900,
-			user: { email: "client@example.com" },
+			// Colonne SNAPSHOT et non la relation `user` : celle-ci était toujours NULL
+			// (achat invité), donc l'alerte affichait « Email non disponible » à CHAQUE
+			// remboursement échoué.
+			customerEmail: "client@example.com",
 		};
 		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSendAdminRefundFailedAlert.mockResolvedValue(undefined);

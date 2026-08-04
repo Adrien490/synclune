@@ -115,7 +115,6 @@ describe("voidInvoice", () => {
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue({
 			id: "order-1",
-			userId: "user-1",
 			invoiceNumber: "F-2026-00010",
 			invoiceStatus: "GENERATED",
 			invoiceVoidedAt: null,
@@ -126,7 +125,6 @@ describe("voidInvoice", () => {
 			invoiceVoidedAt: new Date("2026-05-27T18:00:00Z"),
 			creditNoteNumber: "A-2026-00001",
 			creditNoteGeneratedAt: new Date("2026-05-27T18:00:00Z"),
-			userId: "user-1",
 		});
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
 			fn(tx),
@@ -163,7 +161,6 @@ describe("voidInvoice", () => {
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue({
 			id: "order-2",
-			userId: "user-1",
 			invoiceNumber: "F-2026-00050",
 			invoiceStatus: "GENERATED",
 			invoiceVoidedAt: null,
@@ -175,7 +172,6 @@ describe("voidInvoice", () => {
 			invoiceVoidedAt: new Date(),
 			creditNoteNumber: `A-${year}-00042`,
 			creditNoteGeneratedAt: new Date(),
-			userId: "user-1",
 		});
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
 			fn(tx),
@@ -192,7 +188,6 @@ describe("voidInvoice", () => {
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue({
 			id: "order-3",
-			userId: "user-1",
 			invoiceNumber: "F-2026-00010",
 			invoiceStatus: "VOIDED",
 			invoiceVoidedAt: new Date(),
@@ -216,7 +211,6 @@ describe("voidInvoice", () => {
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue({
 			id: "order-3b",
-			userId: "user-1",
 			invoiceNumber: "F-2026-00011",
 			invoiceStatus: "GENERATED",
 			invoiceVoidedAt: null,
@@ -241,7 +235,6 @@ describe("voidInvoice", () => {
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue({
 			id: "order-4",
-			userId: null,
 			invoiceNumber: null,
 			invoiceStatus: null,
 			invoiceVoidedAt: null,
@@ -288,7 +281,6 @@ describe("voidInvoice", () => {
 					invoiceVoidedAt: new Date(),
 					creditNoteNumber: "A-2026-00099",
 					creditNoteGeneratedAt: new Date(),
-					userId: "user-1",
 				},
 			});
 
@@ -328,7 +320,6 @@ describe("voidInvoice", () => {
 			const year = new Date().getFullYear();
 			tx.order.findUnique.mockResolvedValue({
 				id: "order-overflow",
-				userId: "user-1",
 				invoiceNumber: `F-${year}-00100`,
 				invoiceStatus: "GENERATED",
 				invoiceVoidedAt: null,
@@ -366,7 +357,6 @@ describe("voidInvoice", () => {
 			const year = new Date().getFullYear();
 			tx.order.findUnique.mockResolvedValue({
 				id: "order-overflow",
-				userId: "user-1",
 				invoiceNumber: `F-${year}-00100`,
 				invoiceStatus: "GENERATED",
 				invoiceVoidedAt: null,
@@ -387,7 +377,6 @@ describe("voidInvoice", () => {
 			const year = new Date().getFullYear();
 			tx.order.findUnique.mockResolvedValue({
 				id: "order-near-limit",
-				userId: "user-1",
 				invoiceNumber: `F-${year}-00100`,
 				invoiceStatus: "GENERATED",
 				invoiceVoidedAt: null,
@@ -398,7 +387,6 @@ describe("voidInvoice", () => {
 				invoiceVoidedAt: new Date(),
 				creditNoteNumber: `A-${year}-99999`,
 				creditNoteGeneratedAt: new Date(),
-				userId: "user-1",
 			});
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
 				fn(tx),
@@ -435,7 +423,6 @@ describe("voidInvoice", () => {
 			const tx = makeTx();
 			tx.order.findUnique.mockResolvedValue({
 				id: "order-ny",
-				userId: "user-1",
 				invoiceNumber: "F-2026-00200",
 				invoiceStatus: "GENERATED",
 				invoiceVoidedAt: null,
@@ -447,7 +434,6 @@ describe("voidInvoice", () => {
 				invoiceVoidedAt: new Date(),
 				creditNoteNumber: "A-2027-00001",
 				creditNoteGeneratedAt: new Date(),
-				userId: "user-1",
 			});
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
 				fn(tx),

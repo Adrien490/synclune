@@ -58,7 +58,6 @@ export async function updateOrderShippingAddress(
 				select: {
 					id: true,
 					orderNumber: true,
-					userId: true,
 					fulfillmentStatus: true,
 					shippingFirstName: true,
 					shippingLastName: true,

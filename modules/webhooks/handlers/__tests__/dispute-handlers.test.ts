@@ -180,7 +180,6 @@ function makeOrder(
 		customerEmail: "client@test.com",
 		paymentStatus: "PAID",
 		total: 5000,
-		userId: "user-1",
 		...overrides,
 	};
 }

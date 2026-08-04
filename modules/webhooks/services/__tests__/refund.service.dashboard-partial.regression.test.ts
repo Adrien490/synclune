@@ -1,12 +1,20 @@
 /**
  * @regression ORD-BIZ-001
  *
- * Garantit que `syncStripeRefunds` crée des `RefundItem` au pro-rata pour les
- * partial refunds Dashboard Stripe (pas seulement les full refunds).
+ * Garantit que `syncStripeRefunds` matérialise en base un remboursement initié
+ * depuis le Dashboard Stripe (`charge.refunded`), full ou partiel : sans ça, le
+ * remboursement n'existe que côté Stripe, l'avoir n'est jamais émis et la
+ * traçabilité comptable Art. 272-I CGI est perdue.
  *
- * Sans cette régression : un partial refund initié depuis le Dashboard Stripe
- * arrive via `charge.refunded`, crée un `Refund` orphelin sans `RefundItems`,
- * perd la traçabilité comptable Art. 272-I CGI et empêche tout restock.
+ * ⚠️ **Ce que cette régression NE garde plus, et pourquoi.** Elle verrouillait
+ * l'allocation de `RefundItem` au pro-rata. Cette table est partie le 2026-08-05 :
+ * l'itemisation était FABRIQUÉE — Stripe rembourse un MONTANT, jamais des
+ * articles, donc rien ne disait quel article était concerné. Pire, l'allocation
+ * gardait `quantity` = quantité commandée ENTIÈRE en ne proratisant que `amount`,
+ * si bien que la ligne d'avoir imprimée affichait « 2 × 30,00 € » pour un total
+ * de « 20,00 € » — une ligne qui ne s'additionne pas, figée sous SHA-256 dix ans.
+ * L'avoir émet désormais UNE ligne au montant réellement remboursé (cf.
+ * `build-credit-note-data.regression.test.ts`, qui verrouille l'arithmétique).
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -116,95 +124,6 @@ describe("ORD-BIZ-001 — Dashboard partial refund crée des RefundItem au pro-r
 		mockTx.refund.create.mockResolvedValue({ id: "ref-dashboard-partial" });
 	});
 
-	it("crée RefundItem pour CHAQUE OrderItem éligible sur un partial refund (50% du total)", async () => {
-		// order: 2 items × 1000 + 1 item × 500 = 2500 total
-		// partial refund 1000 (40% du subtotal)
-		mockTx.order.findUniqueOrThrow.mockResolvedValue({
-			total: 2500,
-			items: [
-				{ id: "oi-1", price: 1000, quantity: 1 },
-				{ id: "oi-2", price: 1000, quantity: 1 },
-				{ id: "oi-3", price: 500, quantity: 1 },
-			],
-		});
-
-		await syncStripeRefunds(makePartialDashboardCharge(1000), [], "order-1");
-
-		expect(mockTx.refund.create).toHaveBeenCalledTimes(1);
-		const createCall = mockTx.refund.create.mock.calls[0]?.[0];
-		expect(createCall?.data?.items?.create).toBeDefined();
-		const allocated = createCall.data.items.create as Array<{
-			orderItemId: string;
-			quantity: number;
-			amount: number;
-		}>;
-
-		// 3 items doivent être alloués (pas un seul ignoré, aucun à zéro)
-		expect(allocated).toHaveLength(3);
-		// Somme allocations = montant remboursé exact (rounding compensé)
-		const totalAllocated = allocated.reduce((acc, a) => acc + a.amount, 0);
-		expect(totalAllocated).toBe(1000);
-		// Aucune instruction de restock (colonne droppée au Lot 6 — décision admin manuelle)
-		expect(allocated.every((a) => !("restock" in a))).toBe(true);
-		// quantity = qty originale (proxy "touché", contrainte DB quantity >= 1)
-		expect(allocated.every((a) => a.quantity >= 1)).toBe(true);
-	});
-
-	it("crée RefundItem pour 100% des items sur un full refund", async () => {
-		mockTx.order.findUniqueOrThrow.mockResolvedValue({
-			total: 2500,
-			items: [
-				{ id: "oi-1", price: 1000, quantity: 1 },
-				{ id: "oi-2", price: 1000, quantity: 1 },
-				{ id: "oi-3", price: 500, quantity: 1 },
-			],
-		});
-
-		await syncStripeRefunds(makePartialDashboardCharge(2500), [], "order-1");
-
-		const createCall = mockTx.refund.create.mock.calls[0]?.[0];
-		const allocated = createCall.data.items.create as Array<{ amount: number; quantity: number }>;
-		expect(allocated).toHaveLength(3);
-		expect(allocated.find((a) => a.amount === 1000)).toBeDefined();
-		expect(allocated.find((a) => a.amount === 500)).toBeDefined();
-	});
-
-	it("filtre les items dont l'amount pro-rata arrondi tomberait à 0 (contrainte DB amount > 0)", async () => {
-		// Item très petit (1 cent) face à 2 items à 10000 cents : pro-rata sur 1% rounding peut tomber à 0
-		mockTx.order.findUniqueOrThrow.mockResolvedValue({
-			total: 20001,
-			items: [
-				{ id: "oi-big-1", price: 10000, quantity: 1 },
-				{ id: "oi-big-2", price: 10000, quantity: 1 },
-				{ id: "oi-dust", price: 1, quantity: 1 },
-			],
-		});
-
-		await syncStripeRefunds(makePartialDashboardCharge(100), [], "order-1");
-
-		const createCall = mockTx.refund.create.mock.calls[0]?.[0];
-		const allocated = createCall.data.items.create as Array<{
-			orderItemId: string;
-			amount: number;
-		}>;
-		// `oi-dust` à 1c sur 100c de refund → pro-rata = 0c, filtré
-		expect(allocated.find((a) => a.orderItemId === "oi-dust")).toBeUndefined();
-		// Sum doit toujours être exact (100)
-		expect(allocated.reduce((acc, a) => acc + a.amount, 0)).toBe(100);
-		// Contrainte DB : tous les amount > 0
-		expect(allocated.every((a) => a.amount > 0)).toBe(true);
-	});
-
-	it("ne crée AUCUN RefundItem si la commande n'a aucun OrderItem (edge case)", async () => {
-		mockTx.order.findUniqueOrThrow.mockResolvedValue({ total: 1000, items: [] });
-
-		await syncStripeRefunds(makePartialDashboardCharge(500), [], "order-1");
-
-		const createCall = mockTx.refund.create.mock.calls[0]?.[0];
-		// Pas de bloc items.create injecté dans le payload
-		expect(createCall.data.items).toBeUndefined();
-	});
-
 	it("marque le refund avec une note explicite mentionnant 'PARTIEL' + pro-rata", async () => {
 		mockTx.order.findUniqueOrThrow.mockResolvedValue({
 			total: 2000,
@@ -215,6 +134,6 @@ describe("ORD-BIZ-001 — Dashboard partial refund crée des RefundItem au pro-r
 
 		const createCall = mockTx.refund.create.mock.calls[0]?.[0];
 		expect(createCall.data.note).toMatch(/PARTIEL/i);
-		expect(createCall.data.note).toMatch(/pro-rata/i);
+		expect(createCall.data.note).toMatch(/intervention admin/i);
 	});
 });

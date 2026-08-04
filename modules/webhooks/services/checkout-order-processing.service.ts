@@ -8,9 +8,9 @@ import {
 	type PaymentStatus,
 	HistorySource,
 	OrderAction,
-	StockMovementSource,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { acquireOrderPaidLockTx } from "@/modules/orders/utils/order-paid-lock";
@@ -18,7 +18,6 @@ import {
 	selectDeactivatableSkuIds,
 	type DeactivationCandidate,
 } from "@/modules/skus/services/validate-public-active-sku.service";
-import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
 import type { OrderWithItems } from "../types/checkout.types";
 import { initiateAutomaticRefund } from "./payment-intent.service";
 
@@ -129,7 +128,6 @@ async function detectCancelledOrderRace(
 function mapToOrderWithItems(order: {
 	id: string;
 	orderNumber: string;
-	userId: string | null;
 	customerEmail: string | null;
 	shippingFirstName: string | null;
 	shippingLastName: string | null;
@@ -162,7 +160,6 @@ function mapToOrderWithItems(order: {
 	return {
 		id: order.id,
 		orderNumber: order.orderNumber,
-		userId: order.userId,
 		customerEmail: order.customerEmail,
 		shippingFirstName: order.shippingFirstName,
 		shippingLastName: order.shippingLastName,
@@ -228,9 +225,6 @@ async function processOrderAtomically(
 					},
 				},
 			},
-			user: {
-				select: { id: true },
-			},
 		},
 	});
 
@@ -252,9 +246,12 @@ async function processOrderAtomically(
 	// "100" EUR order). EUR-only today (CHECK Order_currency_eur_check + PI created
 	// `currency:"eur"`), but this protects any future multi-currency PI. Mirrors the
 	// refund-path guard (modules/refunds/lib/stripe-refund.ts) — audit F1, 2026-05-29.
-	if (expectedCurrency && expectedCurrency.toUpperCase() !== order.currency) {
+	// `Order.currency` est parti le 2026-08-05 : la colonne valait 'EUR' sur toutes
+	// les lignes, imposé par le CHECK `Order_currency_eur_check`. Comparer à la
+	// constante est donc STRICTEMENT équivalent, garde inchangée.
+	if (expectedCurrency && expectedCurrency.toUpperCase() !== DEFAULT_CURRENCY) {
 		throw new Error(
-			`Currency mismatch for order ${orderId} (${flowLabel}): Stripe settled in ${expectedCurrency.toUpperCase()} but order.currency is ${order.currency}`,
+			`Currency mismatch for order ${orderId} (${flowLabel}): Stripe settled in ${expectedCurrency.toUpperCase()} but the shop settles in ${DEFAULT_CURRENCY}`,
 		);
 	}
 
@@ -309,8 +306,8 @@ async function processOrderAtomically(
 	);
 
 	const skuIds = order.items.map((item) => item.skuId);
-	// `productId` est sélectionné pour l'audit `StockMovement` de l'étape 4 : le
-	// modèle le dénormalise, et le lire ici évite une requête de plus DANS la
+	// `productId` est sélectionné pour la désactivation des SKU tombés à zéro et
+	// l'invalidation de cache : le lire ici évite une requête de plus DANS la
 	// transaction (on tient déjà le verrou de ligne).
 	const skus = await tx.$queryRaw<
 		Array<{
@@ -382,33 +379,13 @@ async function processOrderAtomically(
 	// 4. Decrement stock once per SKU (quantités agrégées à l'étape 3 — une seule
 	// écriture par SKU même si plusieurs lignes le référencent)
 	//
-	// STOCK-LEDGER-001 : chaque décrément écrit son `StockMovement` (source `ORDER`)
-	// dans la MÊME transaction. C'est la vente — le mouvement de stock le plus
-	// fréquent de la boutique — et il n'était tracé nulle part : le journal ne
-	// couvrait que les ajustements saisis par un admin. Un écart entre l'inventaire
-	// et le physique n'était donc explicable que si un humain en était la cause,
-	// hypothèse que le double crédit STOCK-DOUBLE-CREDIT-001 a démentie.
-	// `previousInventory` vient du snapshot verrouillé de l'étape 3 : aucune écriture
-	// concurrente ne peut s'être glissée entre la lecture et ce décrément.
+	// Décrément dans la MÊME transaction que le reste de l'encaissement : le
+	// snapshot verrouillé de l'étape 3 garantit qu'aucune écriture concurrente ne
+	// s'est glissée entre la lecture et ce décrément.
 	for (const [skuId, requiredQuantity] of requiredQuantityBySku) {
-		// Non-null : l'étape 3 a throw `OversellError` pour tout SKU absent du map.
-		const locked = skuMap.get(skuId)!;
-
 		await tx.productSku.update({
 			where: { id: skuId },
 			data: { inventory: { decrement: requiredQuantity } },
-		});
-
-		await recordStockMovementTx(tx, {
-			skuId,
-			productId: locked.productId,
-			previousInventory: locked.inventory,
-			newInventory: locked.inventory - requiredQuantity,
-			source: StockMovementSource.ORDER,
-			reason: `Vente — commande ${order.orderNumber}`,
-			// Pas d'acteur humain : encaissement automatique (webhook Stripe ou cron
-			// sync-async-payments, qui partagent ce chemin). `createdById` est nullable
-			// précisément pour ce cas (« null = action système »).
 		});
 	}
 

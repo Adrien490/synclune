@@ -50,10 +50,20 @@ export const CART_SKU_SELECT = {
 			status: true,
 		},
 	},
+	// Famille « vignette unique » (cf. CLAUDE.md § mediaType) : l'appelant prend
+	// `images[0]` sans pouvoir trier (`cart-item.service.ts:93`), donc le filtre et
+	// l'ordre doivent être portés ICI.
+	//
+	// Deux défauts corrigés le 2026-08-05, tous deux nommés dans CLAUDE.md :
+	//  1. `where: { isPrimary: true }` SEUL est banni — sur un SKU sans média
+	//     primaire il rend 0 image alors que le SKU en a, et la ligne de panier
+	//     s'affichait sans vignette. Remplacé par l'ordre canonique + `take: 1`.
+	//  2. aucun filtre `mediaType` : une vidéo primaire atterrissait dans un
+	//     `<Image src>` — vignette cassée ET transformation `/_next/image` facturée.
 	images: {
-		where: { isPrimary: true },
+		where: { mediaType: "IMAGE" as const },
 		take: 1,
-		orderBy: { createdAt: "asc" as const },
+		orderBy: [{ isPrimary: "desc" as const }, { position: "asc" as const }, { id: "asc" as const }],
 		select: {
 			id: true,
 			url: true,

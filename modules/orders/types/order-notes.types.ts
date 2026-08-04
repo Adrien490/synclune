@@ -16,7 +16,7 @@ export type OrderNoteRecord = {
 /**
  * Note enrichie de la capacité du visiteur courant, calculée HORS cache.
  *
- * `canDelete` : `deleteOrderNote` / `updateOrderNote` n'autorisent que l'auteur
+ * `canDelete` : `deleteOrderNote` n'autorise que l'auteur
  * (`FORBIDDEN` sinon). Le panneau rendait auparavant l'icône Corbeille sur TOUTES les
  * notes — un bouton qui échouait systématiquement sur la note d'un collègue. La règle
  * est décidée côté serveur (qui connaît la session), pas re-dérivée côté client.

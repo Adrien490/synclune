@@ -74,7 +74,6 @@ describeIntegration("Webhooks — out-of-order delivery (integration)", () => {
 				orderId: order.id,
 				stripeRefundId,
 				amount: 5000,
-				currency: "EUR",
 				reason: "CUSTOMER_REQUEST",
 				status: RefundStatus.COMPLETED,
 				processedAt: new Date(),
@@ -100,7 +99,6 @@ describeIntegration("Webhooks — out-of-order delivery (integration)", () => {
 				orderId: order.id,
 				stripeRefundId,
 				amount: 3000,
-				currency: "EUR",
 				reason: "CUSTOMER_REQUEST",
 				status: RefundStatus.COMPLETED,
 			},
@@ -114,7 +112,6 @@ describeIntegration("Webhooks — out-of-order delivery (integration)", () => {
 				orderId: order.id,
 				stripeRefundId,
 				amount: 3000,
-				currency: "EUR",
 				reason: "CUSTOMER_REQUEST",
 				status: RefundStatus.PENDING, // hypothetical : initial state from refund.created
 			},

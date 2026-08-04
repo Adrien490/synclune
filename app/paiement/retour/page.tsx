@@ -36,7 +36,7 @@ interface CheckoutReturnPageProps {
 /**
  * Promise.race wrapper pour borner les appels Stripe.
  *
- * Le SDK Stripe v18 supporte `maxNetworkRetries` mais pas de deadline globale —
+ * Le SDK Stripe (v22) supporte `maxNetworkRetries` mais pas de deadline globale —
  * une indisponibilité Stripe pourrait figer la page jusqu'au timeout Vercel (10-30s).
  * On rejette manuellement après 5s et le caller redirige vers `/paiement/annulation?reason=processing_error`.
  */

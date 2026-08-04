@@ -8,7 +8,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * Vue d'ensemble du module facturation pour le dashboard admin
  * `/admin/ventes/facturation`. Renvoie les compteurs et derniers événements
  * nécessaires au pilotage opérationnel :
- *  - compteurs par invoiceStatus (PENDING / GENERATED / VOIDED)
+ *  - compteurs par invoiceStatus (GENERATED / VOIDED)
  *  - 30 derniers jours : CA TTC encaissé
  *
  * Admin only — la vue est composée de KPIs comptables sensibles. Le wrapper
@@ -84,7 +84,6 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 	});
 
 	const invoiceCounters: Record<InvoiceStatus, number> = {
-		PENDING: 0,
 		GENERATED: 0,
 		VOIDED: 0,
 	};

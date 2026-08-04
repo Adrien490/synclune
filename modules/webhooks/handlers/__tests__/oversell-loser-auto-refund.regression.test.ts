@@ -157,7 +157,6 @@ describe("[regression ord-stripe-009] oversell loser auto-refund", () => {
 			orderNumber: "SYN-2026-00099",
 			customerEmail: "loser@example.com",
 			total: 5000,
-			userId: "user-loser",
 		});
 	});
 

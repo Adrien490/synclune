@@ -101,8 +101,16 @@ const ORDER_NUMBER = "SYN-2026-0001";
 const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
 const PDF_HASH = createHash("sha256").update(PDF_BYTES).digest("hex");
 
-function makeReq() {
-	return new Request(`https://example.com/api/orders/${ORDER_NUMBER}/credit-note`);
+/**
+ * Depuis le retrait de `Order.userId` (2026-08-05), le SEUL chemin client est le
+ * token HMAC — une commande n'a plus de propriétaire de session. Les requêtes de
+ * test le portent donc par défaut ; `mockVerifyInvoiceAccessToken` décide de sa
+ * validité. `makeReq({ token: false })` pour exercer un accès sans token.
+ */
+function makeReq(options: { token?: boolean } = {}) {
+	// 32 hex — format imposé par `invoiceTokenSchema` (sinon 400 avant toute garde).
+	const query = options.token === false ? "" : "?token=a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6";
+	return new Request(`https://example.com/api/orders/${ORDER_NUMBER}/credit-note${query}`);
 }
 
 function makeParams() {
@@ -117,7 +125,6 @@ const ADMIN_SESSION = {
 const VOIDED_ORDER = {
 	id: "order-1",
 	orderNumber: ORDER_NUMBER,
-	userId: "user-1",
 	paymentStatus: "PAID" as const,
 	invoiceNumber: "F-2026-00042",
 	invoiceStatus: "VOIDED" as const,
@@ -145,7 +152,11 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 		mockGetRateLimitIdentifier.mockReturnValue("user:user-1");
 		mockGetClientIp.mockResolvedValue("127.0.0.1");
 		mockHeaders.mockResolvedValue(new Headers());
-		mockVerifyInvoiceAccessToken.mockReturnValue(false);
+		// Depuis le retrait de `Order.userId` (2026-08-05), le SEUL chemin client est
+		// le token HMAC : une commande n'a plus de propriétaire de session. Les tests
+		// de service du PDF partent donc d'un token valide ; ceux d'autorisation
+		// posent explicitement leur cas.
+		mockVerifyInvoiceAccessToken.mockReturnValue(true);
 		mockIsAllowedMediaDomain.mockReturnValue(true);
 		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 999 });
 		mockPrisma.order.findFirst.mockResolvedValue(VOIDED_ORDER);
@@ -170,7 +181,7 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 		it("returns 401 when no session and no token", async () => {
 			mockGetSession.mockResolvedValue(null);
 
-			const res = await GET(makeReq(), makeParams());
+			const res = await GET(makeReq({ token: false }), makeParams());
 
 			expect(res.status).toBe(401);
 		});
@@ -178,7 +189,7 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 		it("returns 401 when session has no user.id", async () => {
 			mockGetSession.mockResolvedValue({ user: {} });
 
-			const res = await GET(makeReq(), makeParams());
+			const res = await GET(makeReq({ token: false }), makeParams());
 
 			expect(res.status).toBe(401);
 		});
@@ -210,8 +221,13 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 			expect(res.status).toBe(404);
 		});
 
-		it("returns 404 when order belongs to a different user (EINV-SEC-003 anti-enumeration)", async () => {
-			mockPrisma.order.findFirst.mockResolvedValue({ ...VOIDED_ORDER, userId: "other-user" });
+		// `Order.userId` est parti le 2026-08-05 : une commande n'a plus de
+		// propriétaire, et l'ancien cas « la commande appartient à un autre client »
+		// est devenu « session non-admin sans token valide » — même réponse, même
+		// motif d'anti-énumération (EINV-SEC-003).
+		it("returns 404 for a non-admin session whose token is invalid (EINV-SEC-003 anti-enumeration)", async () => {
+			mockVerifyInvoiceAccessToken.mockReturnValue(false);
+			mockPrisma.user.findUnique.mockResolvedValue({ role: "USER" });
 
 			const res = await GET(makeReq(), makeParams());
 

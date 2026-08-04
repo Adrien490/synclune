@@ -94,23 +94,14 @@ describe("GET /api/orders/[orderNumber]/status", () => {
 		expect(res.status).toBe(404);
 	});
 
-	it("returns 404 when order belongs to a different authenticated user (IDOR guard)", async () => {
+	// La garde IDOR par propriétaire est partie avec `Order.userId` (2026-08-05) :
+	// une commande n'a plus de propriétaire, et cette route rend uniquement deux
+	// énumérations de statut — pas de PII. L'accès reste borné par la connaissance
+	// de l'`orderNumber` (entropie) et par le rate limit.
+	it("returns 200 with paymentStatus/status", async () => {
 		mockOrderFindFirst.mockResolvedValue({
 			paymentStatus: "PENDING",
 			status: "PENDING",
-			userId: "user_other",
-		});
-		mockGetSession.mockResolvedValue({ user: { id: "user_caller" } });
-
-		const res = await GET(makeRequest(), makeParams());
-		expect(res.status).toBe(404);
-	});
-
-	it("returns 200 with paymentStatus/status for guest order (userId null)", async () => {
-		mockOrderFindFirst.mockResolvedValue({
-			paymentStatus: "PENDING",
-			status: "PENDING",
-			userId: null,
 		});
 
 		const res = await GET(makeRequest(), makeParams());
@@ -124,7 +115,6 @@ describe("GET /api/orders/[orderNumber]/status", () => {
 		mockOrderFindFirst.mockResolvedValue({
 			paymentStatus: "PAID",
 			status: "PROCESSING",
-			userId: "user_caller",
 		});
 		mockGetSession.mockResolvedValue({ user: { id: "user_caller" } });
 
@@ -138,14 +128,13 @@ describe("GET /api/orders/[orderNumber]/status", () => {
 		mockOrderFindFirst.mockResolvedValue({
 			paymentStatus: "PENDING",
 			status: "PENDING",
-			userId: null,
 		});
 
 		await GET(makeRequest(), makeParams("SYN-2026-0042"));
 
 		expect(mockOrderFindFirst).toHaveBeenCalledWith({
 			where: { id: VALID_ORDER_ID, orderNumber: "SYN-2026-0042", deletedAt: null },
-			select: { paymentStatus: true, status: true, userId: true },
+			select: { paymentStatus: true, status: true },
 		});
 	});
 });

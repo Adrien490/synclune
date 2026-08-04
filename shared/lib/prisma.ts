@@ -1,6 +1,6 @@
 import "server-only";
 
-import { AccountStatus, PrismaClient } from "@/app/generated/prisma/client";
+import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { traceContext } from "@prisma/sqlcommenter-trace-context";
 
@@ -57,26 +57,20 @@ export { prisma };
 export const notDeleted = { deletedAt: null } as const;
 
 /**
- * Helper pour soft delete - Usage recommandé
+ * Helper de soft delete.
+ *
+ * ⚠️ Une seule entrée, et c'est voulu : les cinq autres (`order`, `user`,
+ * `orderNote`, `product`, `productSku`) n'avaient AUCUN appelant — chacun de ces
+ * modules pose son `deletedAt` dans sa propre transaction, avec les écritures qui
+ * l'accompagnent (purge des liaisons, audit, promotion d'un défaut). Un helper
+ * mono-ligne à côté ne faisait que suggérer un raccourci qui aurait sauté ces
+ * étapes. N'en rajouter un que si un appelant existe le jour même.
  *
  * @example
  * import { softDelete } from "@/shared/lib/prisma";
- * await softDelete.order(orderId);
- * await softDelete.user(userId);
+ * await softDelete.discount(discountId);
  */
 export const softDelete = {
-	order: (id: string) => prisma.order.update({ where: { id }, data: { deletedAt: new Date() } }),
-	user: (id: string) =>
-		prisma.user.update({
-			where: { id },
-			data: { deletedAt: new Date(), accountStatus: AccountStatus.INACTIVE },
-		}),
-	orderNote: (id: string) =>
-		prisma.orderNote.update({ where: { id }, data: { deletedAt: new Date() } }),
-	product: (id: string) =>
-		prisma.product.update({ where: { id }, data: { deletedAt: new Date() } }),
-	productSku: (id: string) =>
-		prisma.productSku.update({ where: { id }, data: { deletedAt: new Date() } }),
 	discount: (id: string) =>
 		prisma.discount.update({ where: { id }, data: { deletedAt: new Date() } }),
 };

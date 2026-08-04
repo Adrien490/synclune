@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/shared/lib/prisma";
 import { stripeCircuitBreaker, resendCircuitBreaker } from "@/shared/lib/circuit-breaker";
 import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
+import { STRIPE_API_VERSION } from "@/shared/constants/stripe-api-version";
 
 interface ServiceCheck {
 	status: "ok" | "error" | "degraded";
@@ -35,8 +36,12 @@ async function checkStripe(): Promise<ServiceCheck> {
 		if (!secretKey) {
 			return { status: "error", message: "STRIPE_SECRET_KEY not configured" };
 		}
+		// Client dédié (et non `shared/lib/stripe`) parce que le healthcheck veut
+		// échouer VITE : aucun retry, timeout court. La version d'API, elle, vient de
+		// la SSOT — un healthcheck vert sur une version différente de celle du tunnel
+		// de paiement est un signal qui ment.
 		const stripe = new Stripe(secretKey, {
-			apiVersion: "2026-06-24.dahlia",
+			apiVersion: STRIPE_API_VERSION,
 			maxNetworkRetries: 0,
 			timeout: 5000,
 		});

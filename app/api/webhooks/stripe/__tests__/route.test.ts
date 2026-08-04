@@ -1094,28 +1094,12 @@ describe("POST /api/webhooks/stripe - failed processing", () => {
 		// The outer catch returns 500
 		await POST(req);
 
+		// `errorMessage` est parti le 2026-08-05 : 4 écrivains, zéro lecteur (aucune
+		// UI n'expose cette table). Le motif de l'échec vit dans Sentry et les logs.
 		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
 			where: { id: "wh_failed" },
 			data: {
 				status: WebhookEventStatus.FAILED,
-				errorMessage: "Handler failed",
-				processedAt: expect.any(Date),
-			},
-		});
-	});
-
-	it("should store error message string when error is not an Error instance", async () => {
-		mockDispatchEvent.mockRejectedValue("string error");
-		mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord({ id: "wh_str_err" }));
-
-		const req = makeRequest();
-		await POST(req);
-
-		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
-			where: { id: "wh_str_err" },
-			data: {
-				status: WebhookEventStatus.FAILED,
-				errorMessage: "string error",
 				processedAt: expect.any(Date),
 			},
 		});

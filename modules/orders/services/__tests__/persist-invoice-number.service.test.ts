@@ -93,7 +93,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 	return {
 		id: "nq8kx3v2p7rt9wd4bcfh6mzy",
 		orderNumber: "SYN-2026-00001",
-		userId: "user-1",
 		customerEmail: "test@example.com",
 		customerName: "Alice Dupont",
 		customerCompanyName: null,
@@ -113,7 +112,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 		taxAmount: 0,
 		shippingCost: 500,
 		total: 9500,
-		currency: "EUR",
 		paymentMethod: "CARD",
 		paidAt: new Date("2026-05-28T10:00:00Z"),
 		stripePaymentIntentId: "pi_test_1",
@@ -128,7 +126,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 				skuColorHexes: null,
 				skuMaterial: "Argent 925",
 				skuSize: null,
-				skuImageUrl: null,
 				price: 4500,
 				quantity: 2,
 				taxRate: 0,
@@ -171,7 +168,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
 			expect(result?.invoiceNumber).toContain(`F-${year}-`);
@@ -185,7 +182,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceDataHash).toMatch(/^[a-f0-9]{64}$/);
 			expect(mockTx.order.update).toHaveBeenCalledOnce();
@@ -208,7 +205,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockTx.orderHistory.create).toHaveBeenCalledOnce();
 			const historyArgs = mockTx.orderHistory.create.mock.calls[0]?.[0] as {
@@ -225,15 +222,20 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			const sequence = result!.invoiceNumber.split("-")[2];
 			expect(sequence).toHaveLength(5);
 		});
 	});
 
-	describe("vendor snapshot (Art. L102 B LPF — facture reconstituable a l'identique)", () => {
-		it("fige les champs vendor* depuis getVendorLegalInfo() dans la meme tx d'INSERT", async () => {
+	describe("snapshot comptable (Art. L102 B LPF — facture reconstituable a l'identique)", () => {
+		// Depuis le 2026-08-05 l'identite vendeur ne vit plus en colonnes `Order.vendor*`
+		// mais UNIQUEMENT dans `invoiceDataSnapshot`. Ce qui doit rester vrai : le
+		// snapshot est ecrit dans le MEME `update` que le numero — sinon une facture
+		// pourrait exister sans identite figee, et sa regeneration relirait un env
+		// susceptible d'avoir change entre-temps.
+		it("fige le snapshot dans le MEME prisma.order.update que invoiceNumber (atomicite)", async () => {
 			runTx();
 			mockTx.$queryRaw.mockResolvedValue([]);
 			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
@@ -241,91 +243,21 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockTx.order.update).toHaveBeenCalledOnce();
 			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
 				data: {
-					vendorLegalName?: string;
-					vendorTradeName?: string;
-					vendorAddress?: string;
-					vendorSiren?: string;
-					vendorSiret?: string;
-					vendorVatNumber?: string | null;
-					vendorVatRegime?: string;
-					vendorLegalForm?: string;
+					invoiceNumber: string;
+					invoiceDataSnapshot?: { seller?: { siren?: string; siret?: string } };
+					invoiceDataHash?: string;
 				};
 			};
-			// Toutes les valeurs du snapshot sont presentes (defaults env si non set)
-			expect(updateArgs.data.vendorLegalName).toBeTruthy();
-			expect(updateArgs.data.vendorTradeName).toBeTruthy();
-			expect(updateArgs.data.vendorAddress).toBeTruthy();
-			// SIREN normalise (chiffres seuls) — respecte CHECK '^[0-9]{9}$'
-			expect(updateArgs.data.vendorSiren).toMatch(/^[0-9]{9}$/);
-			// SIRET normalise (chiffres seuls) — respecte CHECK '^[0-9]{14}$'
-			expect(updateArgs.data.vendorSiret).toMatch(/^[0-9]{14}$/);
-			// Default regime = FRANCHISE_BASE (art. 293 B CGI)
-			expect(updateArgs.data.vendorVatRegime).toBe("FRANCHISE_BASE");
-			expect(updateArgs.data.vendorLegalForm).toBeTruthy();
-		});
-
-		it("normalise VAT number env (espaces, points) au format CHECK '^[A-Z]{2}[A-Z0-9]{2,13}$'", async () => {
-			const ORIGINAL_VAT = process.env.VENDOR_VAT_NUMBER;
-			process.env.VENDOR_VAT_NUMBER = "FR 35 839 183 027";
-			runTx();
-			mockTx.$queryRaw.mockResolvedValue([]);
-			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
-				invoiceNumber: args.data.invoiceNumber,
-				invoiceGeneratedAt: new Date(),
-			}));
-
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
-
-			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
-				data: { vendorVatNumber?: string | null };
-			};
-			expect(updateArgs.data.vendorVatNumber).toBe("FR35839183027");
-
-			process.env.VENDOR_VAT_NUMBER = ORIGINAL_VAT;
-		});
-
-		it("snapshot est passe dans le MEME prisma.order.update que invoiceNumber (atomicite)", async () => {
-			runTx();
-			mockTx.$queryRaw.mockResolvedValue([]);
-			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
-				invoiceNumber: args.data.invoiceNumber,
-				invoiceGeneratedAt: new Date(),
-			}));
-
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
-
-			// 1 seul UPDATE = snapshot + numero + status sont commitees atomiquement
-			expect(mockTx.order.update).toHaveBeenCalledOnce();
-			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
-				data: { invoiceNumber: string; vendorSiren?: string };
-			};
 			expect(updateArgs.data.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
-			expect(updateArgs.data.vendorSiren).toBeTruthy();
-		});
-
-		it("parseVatRegime fallback FRANCHISE_BASE si VENDOR_VAT_REGIME inconnu", async () => {
-			const ORIGINAL = process.env.VENDOR_VAT_REGIME;
-			process.env.VENDOR_VAT_REGIME = "INVALID_REGIME";
-			runTx();
-			mockTx.$queryRaw.mockResolvedValue([]);
-			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
-				invoiceNumber: args.data.invoiceNumber,
-				invoiceGeneratedAt: new Date(),
-			}));
-
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
-
-			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
-				data: { vendorVatRegime?: string };
-			};
-			expect(updateArgs.data.vendorVatRegime).toBe("FRANCHISE_BASE");
-
-			process.env.VENDOR_VAT_REGIME = ORIGINAL;
+			expect(updateArgs.data.invoiceDataHash).toMatch(/^[a-f0-9]{64}$/);
+			// L'identite vendeur normalisee est bien DANS le payload hashe.
+			expect(updateArgs.data.invoiceDataSnapshot?.seller?.siren).toMatch(/^[0-9]{9}$/);
+			expect(updateArgs.data.invoiceDataSnapshot?.seller?.siret).toMatch(/^[0-9]{14}$/);
 		});
 	});
 
@@ -339,7 +271,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
 		});
@@ -353,7 +285,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-00042`);
 		});
@@ -367,7 +299,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
 		});
@@ -381,7 +313,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
 		});
@@ -396,7 +328,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
 			const lockSql = mockTx.$executeRaw.mock.calls[0]![0];
@@ -413,7 +345,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			const lockSql = mockTx.$executeRaw.mock.calls[0]![0];
 			const values = lockSql.values;
@@ -429,7 +361,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			const sqlArg = mockTx.$queryRaw.mock.calls[0]![0];
 			const sqlText = sqlArg.strings.join("");
@@ -447,7 +379,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockTx.order.update).toHaveBeenCalledWith({
 				where: { id: "nq8kx3v2p7rt9wd4bcfh6mzy" },
@@ -467,7 +399,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 			expect(mockUpdateTag).toHaveBeenCalledWith("order-detail");
@@ -481,7 +413,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", null);
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result).not.toBeNull();
 			expect(result!.invoiceNumber).toBe("F-2026-00001");
@@ -510,7 +442,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceDataHash: "a".repeat(64),
 			});
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe("F-2026-00007");
 			expect(result?.invoiceDataHash).toBe("a".repeat(64));
@@ -530,7 +462,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceDataHash: "b".repeat(64),
 			});
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
 			const lockText = mockTx.$executeRaw.mock.calls[0]![0].strings.join("");
@@ -551,7 +483,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 					return cb(mockTx);
 				});
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
 			expect(result?.invoiceNumber).toBe("F-2026-00006");
@@ -560,7 +492,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		it("returns null after MAX_RETRIES P2002 errors", async () => {
 			mockPrisma.$transaction.mockRejectedValue(makeP2002Error());
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result).toBeNull();
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(5);
@@ -574,7 +506,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		it("does NOT retry on non-P2002 errors", async () => {
 			mockPrisma.$transaction.mockRejectedValue(new Error("Connection refused"));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result).toBeNull();
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
@@ -587,7 +519,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			});
 			mockPrisma.$transaction.mockRejectedValue(p2001Error);
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result).toBeNull();
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
@@ -598,7 +530,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		it("returns null when transaction throws non-Prisma error", async () => {
 			mockPrisma.$transaction.mockRejectedValue(new Error("DB unreachable"));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result).toBeNull();
 		});
@@ -606,7 +538,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		it("does NOT invalidate cache tags on failure", async () => {
 			mockPrisma.$transaction.mockRejectedValue(new Error("DB unreachable"));
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockUpdateTag).not.toHaveBeenCalled();
 		});
@@ -627,7 +559,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const year = new Date().getFullYear();
 			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result).toBeNull();
 			expect(mockTx.order.update).not.toHaveBeenCalled();
@@ -646,7 +578,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const year = new Date().getFullYear();
 			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockSendAdminSequenceOverflowAlert).toHaveBeenCalledWith({
 				year,
@@ -659,7 +591,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const year = new Date().getFullYear();
 			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 		});
@@ -673,7 +605,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-99999`);
 		});
@@ -683,7 +615,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const year = new Date().getFullYear();
 			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
 
-			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(mockUpdateTag).not.toHaveBeenCalled();
 		});
@@ -700,7 +632,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			order.paymentStatus = "PENDING";
 			mockPrisma.order.findUnique.mockResolvedValue(order);
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result).toBeNull();
 			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
@@ -723,7 +655,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe("F-2026-00001");
 		});
@@ -740,7 +672,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe("F-2026-00001");
 		});

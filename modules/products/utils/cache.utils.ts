@@ -77,9 +77,6 @@ export function cacheProductDetailById(productId: string) {
  * - Les badges de la sidebar (affecte le count d'inventaire)
  * - Le carrousel « Vus récemment » (un produit archivé/supprimé doit en sortir)
  * - La liste des types de bijoux (leur `hasProducts` dépend des produits PUBLIC)
- *
- * Note: RELATED_USER n'est pas invalidé ici car il dépend du contexte user.
- * Il expirera naturellement via son TTL (30min).
  */
 export function getProductInvalidationTags(
 	productSlug: string,

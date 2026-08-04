@@ -16,7 +16,6 @@ import { ROUTES } from "@/shared/constants/urls";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateLong } from "@/shared/utils/dates";
 import { Clock, Heart, Package, Sparkles, TruckIcon } from "lucide-react";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -89,10 +88,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 		redirect("/");
 	}
 
-	// EINV-SEC-001 : on fetch la session AVANT pour passer userId à getOrderForConfirmation,
-	// qui rejette toute commande dont userId ne matche pas la session courante (sauf guest).
-	const session = await getSession();
-	const order = await getOrderForConfirmation(orderId, orderNumber, session?.user.id);
+	const order = await getOrderForConfirmation(orderId, orderNumber);
 
 	if (!order) {
 		redirect("/");
@@ -188,9 +184,9 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										{order.items.map((item) => (
 											<li key={item.id} className="flex gap-3 text-sm">
 												<div className="bg-muted relative size-14 shrink-0 overflow-hidden rounded-xl border">
-													{item.skuImageUrl ? (
+													{item.productImageUrl ? (
 														<Image
-															src={item.skuImageUrl}
+															src={item.productImageUrl}
 															alt={item.productTitle}
 															fill
 															sizes="56px"

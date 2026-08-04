@@ -20,9 +20,6 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
-		// STOCK-LEDGER-001 : le décrément est passé en `UPDATE … RETURNING` (raw SQL)
-		// pour dériver le StockMovement — `productSku.updateMany` n'est plus appelé.
-		stockMovement: { create: vi.fn() },
 		// Désactivation des SKU tombés à 0 (parité webhook) + résolution des slugs
 		// pour l'invalidation stock/catalogue post-commit.
 		productSku: {
@@ -172,7 +169,6 @@ describe("markAsPaid", () => {
 		// `$queryRaw` sert l'advisory lock (retour ignoré) ET le `UPDATE … RETURNING`
 		// du décrément (retour lu). Une ligne retournée = décrément accepté.
 		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 3, productId: "prod-1" }]);
-		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockReconcileInvoiceOrder.mockResolvedValue({ kind: "recovered" });
 
 		vi.mocked(markAsPaidSchema.safeParse).mockReturnValue({
@@ -297,11 +293,6 @@ describe("markAsPaid", () => {
 		// commande recoverable a toujours son stock à décrémenter ici.
 		const result = await markAsPaid(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-
-		// STOCK-LEDGER-001 : le décrément est journalisé (source ORDER, delta négatif).
-		expect(mockPrisma.stockMovement.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({ source: "ORDER", delta: -1 }),
-		});
 	});
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -322,7 +313,6 @@ describe("markAsPaid", () => {
 			const result = await markAsPaid(undefined, validFormData);
 
 			expect(result.status).toBe(ActionStatus.ERROR);
-			expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
 		});
 
 		it("porte la condition de stock ET d'activité dans le SQL du décrément", async () => {

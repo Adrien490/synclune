@@ -67,7 +67,6 @@ export async function markAsProcessing(
 					status: true,
 					paymentStatus: true,
 					fulfillmentStatus: true,
-					userId: true,
 				},
 			});
 

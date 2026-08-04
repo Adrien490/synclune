@@ -185,7 +185,6 @@ const MOCK_PI_USER = {
 	// ouvert à la saisie. Un fixture sans statut faisait échouer 20 tests d'un coup.
 	status: "requires_payment_method",
 	metadata: {
-		userId: "cm3user0000123qz8v4h2j9d3",
 		guestSessionId: "",
 	},
 };
@@ -194,7 +193,6 @@ const MOCK_PI_GUEST = {
 	id: "pi_test_abc123",
 	status: "requires_payment_method",
 	metadata: {
-		userId: "",
 		guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff",
 	},
 };
@@ -374,7 +372,6 @@ describe("updatePaymentAmount", () => {
 				id: "pi_test_abc123",
 				status: "requires_payment_method",
 				metadata: {
-					userId: "cm3user0000123qz8v4h2j9d3",
 					guestSessionId: "",
 					orderId: "order-bound",
 				},

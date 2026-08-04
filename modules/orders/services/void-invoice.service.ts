@@ -144,7 +144,6 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 						where: { id: orderId },
 						select: {
 							id: true,
-							userId: true,
 							invoiceNumber: true,
 							invoiceStatus: true,
 							invoiceVoidedAt: true,
@@ -188,7 +187,6 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 							invoiceVoidedAt: true,
 							creditNoteNumber: true,
 							creditNoteGeneratedAt: true,
-							userId: true,
 						},
 					});
 
