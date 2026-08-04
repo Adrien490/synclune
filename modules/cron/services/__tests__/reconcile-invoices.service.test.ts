@@ -14,7 +14,6 @@ const {
 	mockCheckSequenceContinuity,
 	mockEnsureOrderCreditNoteArchived,
 	mockEnsureRefundCreditNoteArchived,
-	mockVerifyPdfArchiveIntegrity,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
@@ -32,7 +31,6 @@ const {
 	mockCheckSequenceContinuity: vi.fn(),
 	mockEnsureOrderCreditNoteArchived: vi.fn(),
 	mockEnsureRefundCreditNoteArchived: vi.fn(),
-	mockVerifyPdfArchiveIntegrity: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -101,9 +99,6 @@ vi.mock("@/modules/orders/services/ensure-credit-note-archived.service", () => (
 vi.mock("@/modules/refunds/services/ensure-credit-note-archived.service", () => ({
 	ensureRefundCreditNoteArchived: mockEnsureRefundCreditNoteArchived,
 }));
-vi.mock("@/modules/invoices/services/verify-pdf-archive-integrity.service", () => ({
-	verifyPdfArchiveIntegrity: mockVerifyPdfArchiveIntegrity,
-}));
 
 import { reconcileInvoices } from "../reconcile-invoices.service";
 
@@ -119,7 +114,6 @@ function buildCandidate(overrides: Partial<Record<string, unknown>> = {}) {
 		creditNoteNumber: null,
 		paidAt: new Date("2026-05-27T00:00:00Z"),
 		invoiceRetryDeferred: true,
-		invoiceReconcileAttempts: 0,
 		...overrides,
 	};
 }
@@ -128,7 +122,6 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPrisma.order.findMany.mockResolvedValue([]);
-		mockPrisma.order.update.mockResolvedValue({ invoiceReconcileAttempts: 1 });
 		mockBuildInvoiceData.mockReturnValue({});
 		mockRenderInvoicePdf.mockReturnValue(new Uint8Array([1, 2, 3]));
 		// Default success for chained passes so a Pass 1 success doesn't trip Pass 2
@@ -145,12 +138,6 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 		mockEnsureOrderCreditNoteArchived.mockResolvedValue("already-archived");
 		mockEnsureRefundCreditNoteArchived.mockResolvedValue("already-archived");
-		mockVerifyPdfArchiveIntegrity.mockResolvedValue({
-			checked: 0,
-			repaired: 0,
-			unrepaired: 0,
-			fetchFailed: 0,
-		});
 		mockPrisma.refund.update.mockResolvedValue({});
 	});
 
@@ -241,46 +228,30 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 				orderId: "order-1",
 				source: "SYSTEM",
 				authorName: "Système (reconcile-invoices)",
-				authorId: null,
 			}),
 		);
 		expect(result.creditNoteRecovered).toBe(1);
 		expect(result.processed).toBe(1);
 	});
 
-	it("escalates to admin via sendAdminCronFailedAlert after 3 failed attempts", async () => {
+	// Il n'y a plus de compteur d'escalade (audit du module orders, 2026-08-05) :
+	// il ne faisait que retarder de 3 jours l'alerte que
+	// `flagInvoiceFailureForReconcile` émet déjà à J+0, et au-delà du seuil il
+	// ré-alertait à chaque run. Ce qui doit rester vrai : un échec compte comme
+	// `errored` (pas `skipped` — sinon le bouton « Relancer » répondrait « commande
+	// déjà saine »), sans écriture en base ni e-mail de relance.
+	it("compte un échec en errored, sans compteur ni e-mail de relance", async () => {
 		mockPrisma.order.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockPersistInvoiceNumber.mockResolvedValueOnce(null);
-		mockPrisma.order.update.mockResolvedValueOnce({ invoiceReconcileAttempts: 3 });
 
 		const result = await reconcileInvoices();
 
 		expect(result.errored).toBe(1);
-		expect(result.escalated).toBe(1);
-		expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
-			expect.objectContaining({
-				job: "reconcile-invoices",
-				errors: 1,
-				details: expect.objectContaining({
-					orderId: "order-1",
-					orderNumber: "SYN-2026-00001",
-					attempts: 3,
-					threshold: 3,
-				}),
-			}),
-		);
-	});
-
-	it("does NOT escalate when invoiceReconcileAttempts < 3", async () => {
-		mockPrisma.order.findMany.mockResolvedValueOnce([buildCandidate()]);
-		mockPersistInvoiceNumber.mockResolvedValueOnce(null);
-		mockPrisma.order.update.mockResolvedValueOnce({ invoiceReconcileAttempts: 2 });
-
-		const result = await reconcileInvoices();
-
-		expect(result.escalated).toBe(0);
-		expect(result.skipped).toBe(1);
+		expect(result.skipped).toBe(0);
 		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
+		// Aucune écriture : ni incrément, ni reset du drapeau — la commande doit
+		// rester dans la DLQ pour être rejouée la nuit suivante.
+		expect(mockPrisma.order.update).not.toHaveBeenCalled();
 	});
 
 	it("counts errored when a service throws synchronously", async () => {
@@ -303,16 +274,12 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 
 		await reconcileInvoices();
 
-		// 2 update calls expected: NONE in success path because anyFailure=false →
-		// final reset {invoiceRetryDeferred:false, invoiceReconcileAttempts:0}.
+		// Succès complet (anyFailure=false) → reset du seul drapeau restant.
 		const resetCall = mockPrisma.order.update.mock.calls.find(
 			(c) => c[0]?.data?.invoiceRetryDeferred === false,
 		);
 		expect(resetCall).toBeDefined();
-		expect(resetCall?.[0]?.data).toEqual({
-			invoiceRetryDeferred: false,
-			invoiceReconcileAttempts: 0,
-		});
+		expect(resetCall?.[0]?.data).toEqual({ invoiceRetryDeferred: false });
 		expect(mockCreateOrderAudit).toHaveBeenCalledWith(
 			expect.objectContaining({
 				action: "INVOICE_RECONCILED",
@@ -378,10 +345,7 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		expect(result.skipped).toBe(1);
 		expect(mockPrisma.order.update).toHaveBeenCalledWith(
 			expect.objectContaining({
-				data: {
-					invoiceRetryDeferred: false,
-					invoiceReconcileAttempts: 0,
-				},
+				data: { invoiceRetryDeferred: false },
 			}),
 		);
 	});
@@ -455,7 +419,6 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 			// État d'archive lu par la Passe 3b : pas encore archivé.
 			mockPrisma.order.findUnique.mockResolvedValue({ creditNotePdfUrl: null });
 			mockEnsureOrderCreditNoteArchived.mockResolvedValue("archived");
-			mockPrisma.order.update.mockResolvedValue({ invoiceReconcileAttempts: 0 });
 
 			const result = await reconcileInvoices();
 
@@ -475,17 +438,13 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 			mockPrisma.order.findMany.mockResolvedValue([candidate]);
 			mockPrisma.order.findUnique.mockResolvedValue({ creditNotePdfUrl: null });
 			mockEnsureOrderCreditNoteArchived.mockResolvedValue("failed");
-			mockPrisma.order.update.mockResolvedValue({ invoiceReconcileAttempts: 1 });
 
 			const result = await reconcileInvoices();
 
 			expect(result.creditNotePdfRecovered).toBe(0);
-			// anyFailure → increment invoiceReconcileAttempts (pas de reset des flags).
-			expect(mockPrisma.order.update).toHaveBeenCalledWith(
-				expect.objectContaining({
-					data: { invoiceReconcileAttempts: { increment: 1 } },
-				}),
-			);
+			// anyFailure → aucune écriture : ni compteur (retiré), ni reset du drapeau,
+			// qui doit rester posé pour que la commande soit rejouée.
+			expect(mockPrisma.order.update).not.toHaveBeenCalled();
 		});
 
 		it("Passe 7 : draine les avoirs Refund émis non archivés", async () => {
@@ -504,19 +463,8 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 			expect(result.refundCreditNotePdfRecovered).toBe(1);
 		});
 
-		it("Passe 8 : remonte le rapport d'intégrité dans le breakdown", async () => {
-			mockVerifyPdfArchiveIntegrity.mockResolvedValue({
-				checked: 5,
-				repaired: 1,
-				unrepaired: 2,
-				fetchFailed: 0,
-			});
-
-			const result = await reconcileInvoices();
-
-			expect(result.pdfIntegrityChecked).toBe(5);
-			expect(result.pdfIntegrityRepaired).toBe(1);
-			expect(result.pdfIntegrityUnrepaired).toBe(2);
-		});
+		// Plus de « Passe 8 : intégrité PDF » — le service et ses deux colonnes-curseurs
+		// sont partis (audit du module orders, 2026-08-05). La garantie Art. L102 B
+		// reste le SHA-256, re-vérifié à chaque téléchargement par les routes PDF.
 	});
 });

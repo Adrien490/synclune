@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { AlertTriangle, RotateCw } from "lucide-react";
+import { ArrowClockwiseIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Badge } from "@/shared/components/ui/badge";
@@ -50,7 +50,7 @@ export function AnomaliesSection({ anomalies }: AnomaliesSectionProps) {
 				Factures à résoudre ({anomalies.length})
 			</h2>
 			<Alert variant="destructive">
-				<AlertTriangle className="size-4" aria-hidden="true" />
+				<WarningIcon className="size-4" aria-hidden="true" />
 				<AlertTitle>Anomalies actionnables</AlertTitle>
 				<AlertDescription>
 					Le cron <code className="bg-destructive/10 rounded px-1 text-xs">reconcile-invoices</code>{" "}
@@ -66,7 +66,6 @@ export function AnomaliesSection({ anomalies }: AnomaliesSectionProps) {
 							<TableHead>Commande</TableHead>
 							<TableHead>Type</TableHead>
 							<TableHead className="text-right">Montant</TableHead>
-							<TableHead className="text-right">Tentatives</TableHead>
 							<TableHead>Payée le</TableHead>
 							<TableHead className="text-right">Action</TableHead>
 						</TableRow>
@@ -107,7 +106,6 @@ function AnomalyRow({ anomaly }: { anomaly: InvoiceAnomaly }) {
 				<Badge variant="destructive">{ANOMALY_LABELS[anomaly.type]}</Badge>
 			</TableCell>
 			<TableCell className="text-right">{formatEuro(anomaly.total)}</TableCell>
-			<TableCell className="text-right tabular-nums">{anomaly.invoiceReconcileAttempts}</TableCell>
 			<TableCell className="text-muted-foreground text-xs">
 				{anomaly.paidAt ? anomaly.paidAt.toISOString().slice(0, 10) : "—"}
 			</TableCell>
@@ -124,7 +122,7 @@ function AnomalyRow({ anomaly }: { anomaly: InvoiceAnomaly }) {
 						{pending ? (
 							<Spinner presentational className="size-3" />
 						) : (
-							<RotateCw className="size-3" aria-hidden="true" />
+							<ArrowClockwiseIcon className="size-3" aria-hidden="true" />
 						)}
 						<span className="ml-1.5">Relancer</span>
 					</Button>

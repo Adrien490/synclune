@@ -47,7 +47,6 @@ export interface InvoiceAnomaly {
 	paidAt: Date | null;
 	total: number;
 	invoiceNumber: string | null;
-	invoiceReconcileAttempts: number;
 }
 
 export interface InvoiceSummary {
@@ -165,9 +164,11 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 			invoiceStatus: true,
 			paymentStatus: true,
 			creditNoteNumber: true,
-			invoiceReconcileAttempts: true,
 		},
-		orderBy: { invoiceReconcileAttempts: "desc" },
+		// Tri par ancienneté d'encaissement : le compteur de tentatives qui servait
+		// d'ordre a été retiré (audit du module orders, 2026-08-05). La plus ancienne
+		// facture manquante est de toute façon la plus urgente (Art. 289-I CGI).
+		orderBy: { paidAt: "asc" },
 		take: 50,
 	});
 	const anomalies: InvoiceAnomaly[] = anomalyRows.map((o) => {
@@ -190,7 +191,6 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 			paidAt: o.paidAt,
 			total: o.total,
 			invoiceNumber: o.invoiceNumber,
-			invoiceReconcileAttempts: o.invoiceReconcileAttempts,
 		};
 	});
 

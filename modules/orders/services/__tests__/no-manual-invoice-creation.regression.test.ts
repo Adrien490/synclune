@@ -196,11 +196,6 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 				// Archivage PDF avoir immuable UploadThing + SHA-256 (Art. L102 B LPF,
 				// symétrie facture pour Art. 272-I CGI)
 				"modules/orders/services/archive-credit-note-pdf.service.ts",
-				// Contrôle d'intégrité des archives PDF (Art. L102 B LPF) — ré-upload
-				// d'une archive corrompue : n'écrit QUE invoicePdfUrl/creditNotePdfUrl
-				// (+ pdfIntegrityCheckedAt), et UNIQUEMENT si la régénération est
-				// bit-identique au hash d'origine (jamais de réécriture du hash).
-				"modules/invoices/services/verify-pdf-archive-integrity.service.ts",
 				// Seed dev — cf. allowlist test 1.
 				"prisma/seed.ts",
 			].sort(),
@@ -230,8 +225,6 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 				"modules/refunds/services/issue-credit-note.service.ts",
 				// Archivage PDF avoir Refund immuable (Art. L102 B LPF)
 				"modules/refunds/services/archive-credit-note-pdf.service.ts",
-				// Passe intégrité — remplacement d'URL bit-identique, cf. test Order.
-				"modules/invoices/services/verify-pdf-archive-integrity.service.ts",
 			].sort(),
 		);
 	});

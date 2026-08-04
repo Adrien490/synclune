@@ -40,7 +40,6 @@ describe("fetchDashboardActionItems", () => {
 		const result = await fetchDashboardActionItems();
 
 		expect(result).toEqual({
-			overbilledOrders: 0,
 			stuckProcessing: 0,
 			stuckShipped: 0,
 			stuckInvoices: 0,
@@ -49,9 +48,10 @@ describe("fetchDashboardActionItems", () => {
 	});
 
 	it("maps each count to the right field (Promise.all order)", async () => {
-		// order.count call order: overbilled, stuckProcessing, stuckShipped, stuckInvoices, orphanPending
+		// order.count call order: stuckProcessing, stuckShipped, stuckInvoices, orphanPending
+		// (le compteur `overbilledOrders` a été retiré — audit du module orders
+		// 2026-08-05 : il ne s'éteignait qu'au clic d'un bouton de maintenance.)
 		mockOrderCount
-			.mockResolvedValueOnce(1)
 			.mockResolvedValueOnce(2)
 			.mockResolvedValueOnce(3)
 			.mockResolvedValueOnce(4)
@@ -60,21 +60,22 @@ describe("fetchDashboardActionItems", () => {
 		const result = await fetchDashboardActionItems();
 
 		expect(result).toEqual({
-			overbilledOrders: 1,
 			stuckProcessing: 2,
 			stuckShipped: 3,
 			stuckInvoices: 4,
 			orphanPending: 5,
 		});
-		expect(mockOrderCount).toHaveBeenCalledTimes(5);
+		expect(mockOrderCount).toHaveBeenCalledTimes(4);
 	});
 
-	it("scopes the overbilled query to unresolved, non-deleted orders", async () => {
+	it("scope chaque compteur aux commandes non supprimées", async () => {
 		await fetchDashboardActionItems();
 
-		const where = mockOrderCount.mock.calls[0]![0].where;
-		expect(where.overbilledAmountCents).toEqual({ not: null });
-		expect(where.overbillingResolvedAt).toBeNull();
-		expect(where.deletedAt).toBeNull();
+		// `notDeleted` sur CHAQUE compteur, pas seulement le premier : un compteur
+		// qui l'oublierait ferait remonter des commandes soft-deleted dans
+		// « À traiter », sans aucun moyen de les en sortir.
+		for (const call of mockOrderCount.mock.calls) {
+			expect(call[0].where.deletedAt).toBeNull();
+		}
 	});
 });

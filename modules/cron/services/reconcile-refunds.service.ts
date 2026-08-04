@@ -1,7 +1,7 @@
 import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import * as Sentry from "@sentry/nextjs";
 import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
 import {
@@ -12,7 +12,7 @@ import {
 	THRESHOLDS,
 } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
-import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { REFUNDS_CACHE_TAGS } from "@/modules/refunds/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error";
@@ -285,19 +285,23 @@ export async function reconcileRefunds(): Promise<CronResult> {
 		tagsToInvalidate.add(tag);
 	}
 
-	// OVERBILL-RESOLVE-01 : auto-résolution de la sur-facturation. Reprend la
-	// moitié « résolution » de l'ex-cron alert-overbilled-orders (supprimé au
-	// right-sizing) — qui était le SEUL writer de Order.overbillingResolvedAt.
-	// Sans ce rattrapage, une commande sur-facturée puis remboursée resterait
-	// affichée « à traiter » sur le dashboard à vie (compteur monotone, cry-wolf).
-	// La ré-alerte email n'est PAS restaurée : la surveillance est passée en PULL
-	// (dashboard get-action-items). Lecture + mutation minimale, jamais le montant.
-	const overbillStats = await reconcileOverbilledOrders();
-	processed += overbillStats.resolved;
-	errored += overbillStats.errored;
-	for (const tag of overbillStats.tags) {
-		tagsToInvalidate.add(tag);
-	}
+	// Il n'y a PLUS de passe « auto-résolution de la sur-facturation » (audit du
+	// module orders, 2026-08-05). Elle posait `Order.overbillingResolvedAt` quand
+	// les remboursements couvraient le trop-perçu, uniquement pour éteindre un
+	// compteur du dashboard.
+	//
+	// Ce que la boucle coûtait pour ça : une colonne, une passe de ~90 lignes, et
+	// une heuristique de rattachement refund↔overbilling qui n'existe pas en base
+	// (deux signaux approchés, avec faux négatifs assumés). Surtout, son unique
+	// déclencheur est un BOUTON de maintenance : sans clic, l'alerte restait
+	// allumée indéfiniment — et son lien pointait vers la liste NON filtrée, donc
+	// elle ne disait même pas QUELLE commande était concernée.
+	//
+	// ⚠️ La DÉTECTION, elle, est intacte : `payment-handlers.ts` persiste toujours
+	// `Order.overbilledAmountCents` (lu par la garde anti-sur-remboursement de
+	// `refund-handlers.ts`, qui calcule `order.total + overbilled`), émet son
+	// alerte Sentry ET l'e-mail d'alerte admin. C'est cet e-mail qui prévient
+	// Léane, pas le compteur.
 
 	if (tagsToInvalidate.size > 0) {
 		tagsToInvalidate.add(REFUNDS_CACHE_TAGS.LIST);
@@ -320,105 +324,6 @@ export async function reconcileRefunds(): Promise<CronResult> {
 		skipped,
 		hasMore: candidates.length === BATCH_SIZE_MEDIUM,
 	};
-}
-
-/**
- * OVERBILL-RESOLVE-01 — auto-résolution de la sur-facturation.
- *
- * Le webhook `payment_intent.succeeded` persiste `Order.overbilledAmountCents`
- * quand Stripe encaisse plus que `order.total` (sans auto-rembourser — Invariant 9
- * e-reporting). Le dashboard (`get-action-items`) liste ces commandes tant que
- * `overbillingResolvedAt IS NULL`. Cette passe pose `overbillingResolvedAt` dès que
- * les refunds COMPLETED de la commande couvrent le delta (l'admin a remboursé le
- * trop-perçu via le flux refund normal) — quel que soit le chemin de complétion
- * (webhook `charge.refunded`, action `processRefund`, ou la phase 1 de ce cron).
- *
- * Reprend la moitié « résolution » de l'ex-cron `alert-overbilled-orders` (supprimé
- * au right-sizing), qui en était l'unique writer. La ré-alerte email n'est PAS
- * restaurée (monitoring passé en PULL). Lecture + `overbillingResolvedAt` seulement —
- * jamais le montant ni l'e-reporting (le remboursement reste une décision admin).
- */
-async function reconcileOverbilledOrders(): Promise<{
-	resolved: number;
-	errored: number;
-	tags: string[];
-}> {
-	const candidates = await prisma.order.findMany({
-		where: {
-			overbilledAmountCents: { not: null },
-			overbillingResolvedAt: null,
-			...notDeleted,
-		},
-		select: { id: true, orderNumber: true, total: true, overbilledAmountCents: true },
-		take: BATCH_SIZE_MEDIUM,
-		orderBy: { createdAt: "asc" },
-	});
-
-	if (candidates.length === 0) return { resolved: 0, errored: 0, tags: [] };
-
-	let resolved = 0;
-	let errored = 0;
-	// CACHE : la résolution change la fiche commande admin + le dashboard
-	// « À traiter » — invalider les tags par-commande/user via le helper SSOT,
-	// pas seulement les listes globales (sinon stale ~10 min profil `user`).
-	const tags = new Set<string>();
-
-	for (const order of candidates) {
-		const delta = order.overbilledAmountCents ?? 0;
-		try {
-			const completedRefunds = await prisma.refund.findMany({
-				where: { orderId: order.id, status: RefundStatus.COMPLETED },
-				select: { amount: true },
-			});
-			const totalRefunded = completedRefunds.reduce((sum, r) => sum + r.amount, 0);
-
-			// OVERBILL-RESOLVE-02 : un simple `totalRefunded >= delta` marquait
-			// « résolu » dès qu'un refund quelconque (retour produit, geste commercial)
-			// atteignait le delta, sans que le trop-perçu ait été restitué en tant que
-			// tel. Aucun lien causal refund↔overbilling n'existe en DB (les refunds
-			// Dashboard sont ré-alloués au pro-rata des items, la raison n'est pas
-			// discriminante, et tout refund est postérieur à la détection) — on retient
-			// donc deux signaux sans faux positif :
-			//   (a) un refund COMPLETED du montant EXACT du delta — le workflow
-			//       instruit par l'alerte admin (« remboursement manuel du delta ») ;
-			//   (b) cumul >= order.total + delta — les refunds produits ne peuvent
-			//       excéder order.total, donc le delta est nécessairement restitué.
-			// Faux négatif possible (delta remboursé en plusieurs fois) : la commande
-			// reste visible sur le dashboard « À traiter », jamais résolue à tort.
-			const hasExactDeltaRefund = completedRefunds.some((r) => r.amount === delta);
-			const isEverythingRefunded = totalRefunded >= order.total + delta;
-
-			if (hasExactDeltaRefund || isEverythingRefunded) {
-				// Guard `overbillingResolvedAt: null` → idempotent (pas de double-résolution
-				// si deux runs se chevauchent).
-				const { count } = await prisma.order.updateMany({
-					where: { id: order.id, overbillingResolvedAt: null },
-					data: { overbillingResolvedAt: new Date() },
-				});
-				if (count > 0) {
-					resolved++;
-					for (const tag of getOrderInvalidationTags(order.id)) {
-						tags.add(tag);
-					}
-					logger.info(`Overbilling auto-resolved on order ${order.orderNumber}`, {
-						cronJob: "reconcile-refunds",
-						orderId: order.id,
-						deltaCents: delta,
-						totalRefunded,
-					});
-				}
-			}
-		} catch (error) {
-			errored++;
-			logger.error("Failed to reconcile overbilled order", error, {
-				cronJob: "reconcile-refunds",
-				orderId: order.id,
-				orderNumber: order.orderNumber,
-			});
-		}
-	}
-
-	return { resolved, errored, tags: [...tags] };
 }
 
 /**

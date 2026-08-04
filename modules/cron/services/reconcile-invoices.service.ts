@@ -18,7 +18,6 @@ import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
 import { ensureOrderCreditNoteArchived } from "@/modules/orders/services/ensure-credit-note-archived.service";
 import { ensureRefundCreditNoteArchived } from "@/modules/refunds/services/ensure-credit-note-archived.service";
-import { verifyPdfArchiveIntegrity } from "@/modules/invoices/services/verify-pdf-archive-integrity.service";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve-invoice-data";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
@@ -28,7 +27,6 @@ import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 
 const CRON_JOB = "reconcile-invoices";
-const ESCALATION_THRESHOLD = 3;
 const MIN_AGE_MS = 6 * 60 * 60 * 1000; // 6h quarantine — eager path a sa chance
 
 interface ReconcileBreakdown {
@@ -39,11 +37,6 @@ interface ReconcileBreakdown {
 	creditNotePdfRecovered: number;
 	/** EINV-CREDIT-020 — PDF avoir partiel (Refund) archivé en rattrapage. */
 	refundCreditNotePdfRecovered: number;
-	/** Passe intégrité (L102 B LPF) — artefacts re-hashés / réparés / non réparables. */
-	pdfIntegrityChecked: number;
-	pdfIntegrityRepaired: number;
-	pdfIntegrityUnrepaired: number;
-	escalated: number;
 	/** EINV-SEQ-007 — nombre d'anomalies de continuité de séquence détectées (Art. 286 CGI). */
 	continuityIssues: number;
 }
@@ -56,14 +49,14 @@ interface ReconcileBreakdown {
  *   2. invoiceNumber + invoicePdfUrl NULL → archiveInvoicePdf (régénère PDF depuis snapshot)
  *   3. REFUNDED + invoiceStatus GENERATED + creditNoteNumber NULL → voidInvoice
  *   3b. creditNoteNumber + creditNotePdfUrl NULL → ensureOrderCreditNoteArchived (EINV-CREDIT-020)
- * Puis les passes globales : 4 (continuité séquences), 7 (PDF avoirs Refund
- * manquants, EINV-CREDIT-020), 8 (intégrité proactive des PDF archivés +
- * auto-réparation, Art. L102 B LPF).
+ * Puis les passes globales : 4 (continuité séquences) et 7 (PDF avoirs Refund
+ * manquants, EINV-CREDIT-020). La passe 8 « intégrité proactive des PDF
+ * archivés » a été retirée (cf. le commentaire à son ancien emplacement).
  *
  * Sélection : `invoiceRetryDeferred=true` (DLQ) OU avoir émis sans PDF archivé.
- * Compteur `invoiceReconcileAttempts` incrémenté à chaque tentative ;
- * au-dessus du seuil `ESCALATION_THRESHOLD`, l'admin est alerté pour
- * intervention manuelle.
+ * Pas de compteur de tentatives ni d'escalade : l'admin est alertée dès l'échec
+ * par `flagInvoiceFailureForReconcile`, et l'anomalie reste visible dans l'écran
+ * Facturation tant que le drapeau est posé.
  *
  * Reset `invoiceRetryDeferred=false` automatique après une passe entièrement
  * réussie (les services sous-jacents reflagment si besoin sur erreur future).
@@ -123,10 +116,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 		creditNoteRecovered: 0,
 		creditNotePdfRecovered: 0,
 		refundCreditNotePdfRecovered: 0,
-		pdfIntegrityChecked: 0,
-		pdfIntegrityRepaired: 0,
-		pdfIntegrityUnrepaired: 0,
-		escalated: 0,
 		continuityIssues: 0,
 	};
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
@@ -149,8 +138,7 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 				for (const tag of getOrderInvalidationTags(order.id)) {
 					tagsToInvalidate.add(tag);
 				}
-			} else if (recovered.kind === "escalated") {
-				breakdown.escalated++;
+			} else if (recovered.kind === "failed") {
 				errored++;
 			} else {
 				skipped++;
@@ -180,14 +168,19 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 	// post-anonymisation RGPD (avoir sans identité client, Art. 289 CGI).
 	breakdown.refundCreditNotePdfRecovered = await runRefundCreditNotePdfSweep(deadline);
 
-	// Passe 8 (Art. L102 B LPF) : contrôle d'intégrité proactif des PDF archivés
-	// (re-hash + auto-réparation bit-identique, rotation ~30 j par artefact).
-	// Complète la vérification au serving (EINV-PDF-006) : un PDF jamais
-	// re-téléchargé ne reste plus corrompu sans détection. Jamais bloquant.
-	const integrity = await verifyPdfArchiveIntegrity(deadline);
-	breakdown.pdfIntegrityChecked = integrity.checked;
-	breakdown.pdfIntegrityRepaired = integrity.repaired;
-	breakdown.pdfIntegrityUnrepaired = integrity.unrepaired;
+	// Il n'y a PLUS de passe 8 « intégrité PDF » (audit du module orders,
+	// 2026-08-05). Elle re-téléchargeait et re-hashait chaque artefact archivé tous
+	// les ~30 jours pour détecter une corruption UploadThing avant qu'un
+	// téléchargement ne la révèle.
+	//
+	// ⚠️ Ce qui garantit l'Art. L102 B n'a PAS bougé : c'est le SHA-256 stocké
+	// (`invoicePdfHash` / `creditNotePdfHash`), et il est re-vérifié à CHAQUE
+	// téléchargement par les routes facture/avoir (EINV-PDF-006). La passe ne
+	// faisait qu'avancer la détection, sur un corpus de ~240 documents/an que
+	// personne ne surveille entre deux téléchargements — au prix de 368 lignes, de
+	// deux colonnes-curseurs et d'un re-download intégral mensuel.
+	//
+	// La rouvrir demanderait d'abord de répondre à « qui lit le résultat ? ».
 
 	logger.info("Invoice reconciliation completed", {
 		cronJob: CRON_JOB,
@@ -214,7 +207,13 @@ export type ReconcileOutcome =
 			creditNoteRecovered: boolean;
 			creditNotePdfRecovered: boolean;
 	  }
-	| { kind: "escalated" }
+	/**
+	 * Une des étapes de rattrapage a échoué sur cette passe. Distinct de
+	 * `skipped` (« rien à faire, commande saine ») : le bouton « Relancer » de
+	 * l'écran Facturation doit dire à Léane que ça a échoué, pas que tout va bien.
+	 * Ne porte plus de compteur de tentatives — cf. `reconcileOrder`.
+	 */
+	| { kind: "failed" }
 	| { kind: "skipped" };
 
 /**
@@ -290,7 +289,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	) {
 		const result = await voidInvoice({
 			orderId: order.id,
-			authorId: null,
 			authorName: "Système (reconcile-invoices)",
 			source: HistorySource.SYSTEM,
 			reason: "Reconciliation cron — credit note missing post-refund",
@@ -327,17 +325,24 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	}
 
 	if (anyFailure) {
-		// Increment compteur + decide d'escalader
-		const updated = await prisma.order.update({
-			where: { id: order.id },
-			data: { invoiceReconcileAttempts: { increment: 1 } },
-			select: { invoiceReconcileAttempts: true },
-		});
-		if (updated.invoiceReconcileAttempts >= ESCALATION_THRESHOLD) {
-			await escalate(order.id, order.orderNumber, updated.invoiceReconcileAttempts);
-			return { kind: "escalated" };
-		}
-		return { kind: "skipped" };
+		// Plus de compteur `invoiceReconcileAttempts` ni d'escalade au 3ᵉ échec
+		// (audit du module orders, 2026-08-05).
+		//
+		// Ce que le compteur faisait réellement : RETARDER de trois jours la
+		// première alerte. Au-delà du seuil il ré-alertait à chaque run, donc il ne
+		// dédoublonnait rien — il ne tolérait que deux échecs transitoires.
+		//
+		// Or l'admin est déjà prévenue à J+0, au moment de l'échec, par
+		// `flagInvoiceFailureForReconcile` (`sendAdminInvoiceFailedAlert` + audit
+		// `INVOICE_GENERATION_FAILED`). Le retard n'ajoutait donc aucun signal, et
+		// l'anomalie reste visible en permanence dans l'écran Facturation via
+		// `invoiceRetryDeferred`, qui LUI est conservé — c'est le prédicat
+		// d'appartenance à la file, celui qui fait rejouer la commande demain.
+		//
+		// ⚠️ Réduction assumée : plus d'e-mail de rappel les jours suivants. Si une
+		// facture non émise devait redevenir criante (Art. 289-I), le rétablir passe
+		// par un rappel périodique — pas par un compteur en base.
+		return { kind: "failed" };
 	}
 
 	if (
@@ -350,7 +355,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		// d'anomalie (déjà rattrapée par lazy fallback). On le baisse.
 		await prisma.order.update({
 			where: { id: order.id },
-			data: { invoiceRetryDeferred: false, invoiceReconcileAttempts: 0 },
+			data: { invoiceRetryDeferred: false },
 		});
 		return { kind: "skipped" };
 	}
@@ -358,7 +363,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	// Reset flags après succès complet + audit trail
 	await prisma.order.update({
 		where: { id: order.id },
-		data: { invoiceRetryDeferred: false, invoiceReconcileAttempts: 0 },
+		data: { invoiceRetryDeferred: false },
 	});
 	await createOrderAudit({
 		orderId: order.id,
@@ -380,34 +385,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		creditNoteRecovered,
 		creditNotePdfRecovered,
 	};
-}
-
-async function escalate(orderId: string, orderNumber: string, attempts: number): Promise<void> {
-	logger.error("Invoice reconciliation exceeded threshold — escalating to admin", undefined, {
-		cronJob: CRON_JOB,
-		orderId,
-		orderNumber,
-		attempts,
-	});
-	await sendAdminCronFailedAlert({
-		job: CRON_JOB,
-		errors: 1,
-		details: {
-			orderId,
-			orderNumber,
-			attempts,
-			threshold: ESCALATION_THRESHOLD,
-			action:
-				"Intervention manuelle requise : voir /admin/ventes/commandes/" +
-				orderId +
-				" + docs/RUNBOOK.md",
-		},
-	}).catch((alertError) =>
-		logger.error("Failed to send escalation alert", alertError, {
-			cronJob: CRON_JOB,
-			orderId,
-		}),
-	);
 }
 
 /**

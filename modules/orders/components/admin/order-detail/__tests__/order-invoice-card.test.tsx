@@ -14,11 +14,11 @@ vi.mock("@/shared/components/ui/alert", () => ({
 	AlertDescription: ({ children }: any) => <div>{children}</div>,
 }));
 
-vi.mock("lucide-react", () => ({
-	AlertTriangle: () => <svg aria-hidden="true" />,
-	FileText: () => <svg aria-hidden="true" />,
-	FileWarning: () => <svg aria-hidden="true" />,
-	ShieldCheck: () => <svg aria-hidden="true" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	WarningIcon: () => <svg aria-hidden="true" />,
+	FileTextIcon: () => <svg aria-hidden="true" />,
+	FileXIcon: () => <svg aria-hidden="true" />,
+	ShieldCheckIcon: () => <svg aria-hidden="true" />,
 }));
 
 vi.mock("date-fns", () => ({ format: () => "10 janvier 2026 à 14h00" }));
@@ -55,7 +55,6 @@ function createOrder(overrides = {}) {
 		invoiceGeneratedAt: new Date("2026-01-10T14:00:00Z"),
 		invoicePdfHash: "a".repeat(64),
 		invoiceRetryDeferred: false,
-		invoiceReconcileAttempts: 0,
 		creditNoteNumber: null,
 		creditNoteGeneratedAt: null,
 		invoiceVoidedAt: null,
@@ -90,13 +89,12 @@ describe("OrderInvoiceCard", () => {
 	});
 
 	it("affiche l'alerte DLQ quand invoiceRetryDeferred=true malgré une facture émise (EINV-UI-105)", () => {
-		render(
-			<OrderInvoiceCard
-				order={createOrder({ invoiceRetryDeferred: true, invoiceReconcileAttempts: 3 })}
-			/>,
-		);
+		render(<OrderInvoiceCard order={createOrder({ invoiceRetryDeferred: true })} />);
 		expect(screen.getByText("Archivage / avoir en échec")).toBeInTheDocument();
-		expect(screen.getByText(/3 tentatives/)).toBeInTheDocument();
+		// Plus de « escaladé (N tentatives) » : le compteur `invoiceReconcileAttempts`
+		// a été retiré (audit du module orders, 2026-08-05). Le bandeau reste affiché
+		// tant que le drapeau DLQ est posé — c'est lui la surface de suivi.
+		expect(screen.getByText(/réessaie chaque nuit/)).toBeInTheDocument();
 	});
 
 	it("affiche l'anomalie 'payée sans facture' quand PAID sans invoiceNumber", () => {

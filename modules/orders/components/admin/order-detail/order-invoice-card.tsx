@@ -1,4 +1,4 @@
-import { AlertTriangle, FileText, FileWarning, ShieldCheck } from "lucide-react";
+import { FileTextIcon, FileXIcon, ShieldCheckIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PaymentStatus } from "@/app/generated/prisma/client";
@@ -47,7 +47,7 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 			<CardHeader>
 				<CardTitle className="flex items-center justify-between gap-2">
 					<span className="flex items-center gap-2">
-						<FileText className="size-5" aria-hidden="true" />
+						<FileTextIcon className="size-5" aria-hidden="true" />
 						Facture & avoir
 					</span>
 					{order.invoiceStatus && <InvoiceStatusBadge status={order.invoiceStatus} />}
@@ -56,7 +56,7 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 			<CardContent className="space-y-4">
 				{isAnomaly && (
 					<Alert variant="destructive">
-						<AlertTriangle className="size-4" aria-hidden="true" />
+						<WarningIcon className="size-4" aria-hidden="true" />
 						<AlertTitle>Anomalie de facturation</AlertTitle>
 						<AlertDescription>
 							Commande payée mais aucune facture émise. Le webhook ou le cron retry sera relancé
@@ -71,16 +71,14 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 
 				{isRetryDeferred && (
 					<Alert variant="destructive">
-						<AlertTriangle className="size-4" aria-hidden="true" />
+						<WarningIcon className="size-4" aria-hidden="true" />
 						<AlertTitle>Archivage / avoir en échec</AlertTitle>
 						<AlertDescription>
-							La facture est émise mais l&apos;archivage PDF ou l&apos;avoir a échoué et a été
-							escaladé ({order.invoiceReconcileAttempts} tentative
-							{order.invoiceReconcileAttempts > 1 ? "s" : ""}). Le cron{" "}
+							La facture est émise mais l&apos;archivage PDF ou l&apos;avoir a échoué. Le cron{" "}
 							<code className="bg-destructive/10 mx-1 rounded px-1 py-0.5 text-xs">
 								reconcile-invoices
 							</code>
-							réessaie automatiquement — voir le runbook facturation si persistant.
+							réessaie chaque nuit — voir le runbook facturation si le bandeau persiste.
 						</AlertDescription>
 					</Alert>
 				)}
@@ -127,7 +125,7 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 										title="Art. L102 B LPF — archive immuable"
 										className="flex items-center gap-2"
 									>
-										<ShieldCheck className="text-success size-3.5" aria-hidden="true" />…
+										<ShieldCheckIcon className="text-success size-3.5" aria-hidden="true" />…
 										{hashSuffix}
 									</span>
 								</DetailInfoRow>
@@ -144,7 +142,7 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 				{isVoided && order.creditNoteNumber && (
 					<div className="border-warning/40 bg-warning/5 space-y-3 rounded-md border p-3">
 						<div className="flex items-center gap-2">
-							<FileWarning className="text-warning size-4" aria-hidden="true" />
+							<FileXIcon className="text-warning size-4" aria-hidden="true" />
 							<p className="text-foreground text-sm font-medium">
 								Avoir comptable émis (Art. 272-I CGI)
 							</p>
