@@ -61,18 +61,6 @@ export const getSkuDetailsSchema = z.object({
 // ============================================================================
 
 /**
- * Schema pour appliquer un code promo au panier
- */
-export const applyCartDiscountSchema = z.object({
-	code: z
-		.string()
-		.trim()
-		.min(1, CART_ERROR_MESSAGES.DISCOUNT_CODE_REQUIRED)
-		.max(30, CART_ERROR_MESSAGES.DISCOUNT_CODE_INVALID)
-		.transform((v) => v.toUpperCase()),
-});
-
-/**
  * Schema pour supprimer plusieurs items en une fois
  */
 export const removeMultipleItemsSchema = z.object({

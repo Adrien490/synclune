@@ -459,7 +459,7 @@ export const updateTrackingSchema = z
  * ⚠️ Cet enum est la garde d'entrée de l'endpoint RPC : `"use server"` publie
  * l'action hors UI, et le type TypeScript est effacé à l'exécution.
  */
-export const ORDER_TRANSITION_KEYS = [
+const ORDER_TRANSITION_KEYS = [
 	"processing",
 	"delivered",
 	"returned",

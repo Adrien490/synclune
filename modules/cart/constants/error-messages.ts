@@ -23,10 +23,10 @@ export const CART_ERROR_MESSAGES = {
 
 	// Erreurs de panier
 	CART_ITEMS_LIMIT: (max: number) =>
-		`Votre panier ne peut pas contenir plus de ${max} articles différents`,
+		`Ton panier ne peut pas contenir plus de ${max} articles différents`,
 
 	// Messages de validation pré-commande
-	VALIDATION_FAILED: "Certains articles de votre panier ne sont plus disponibles",
+	VALIDATION_FAILED: "Certains articles de ton panier ne sont plus disponibles",
 
 	// Erreurs generales
 	GENERAL_ERROR: "Une erreur est survenue lors de l'opération",
@@ -34,11 +34,9 @@ export const CART_ERROR_MESSAGES = {
 
 	// Erreurs panier / metadata
 	CART_NOT_FOUND: "Panier introuvable",
-	CART_EMPTY: "Votre panier est vide",
-	CART_ALREADY_EMPTY: "Votre panier est déjà vide",
+	CART_EMPTY: "Ton panier est vide",
+	CART_ALREADY_EMPTY: "Ton panier est déjà vide",
 
 	// Erreurs code promo
-	DISCOUNT_CODE_REQUIRED: "Code promo requis",
-	DISCOUNT_CODE_INVALID: "Code promo invalide",
 	DISCOUNT_CODE_NOT_APPLIED: "Aucun code promo appliqué au panier",
 } as const;
