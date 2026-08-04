@@ -103,8 +103,8 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>{title}</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>{renderedDescription}</div>
+						<ResponsiveAlertDialogDescription render={<div />}>
+							{renderedDescription}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

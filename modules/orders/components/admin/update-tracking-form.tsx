@@ -46,7 +46,7 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 interface UpdateTrackingFormProps {
 	orderId: string;
@@ -146,10 +146,11 @@ export function UpdateTrackingForm({
 		getCanSubmit: () => trackingNumber.trim().length > 0 && carrier !== "",
 	});
 
-	const handleTrackingNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value;
-		form.setFieldValue("trackingNumber", value);
-
+	// Effet de bord de saisie branché en `listeners.onChange` sur l'AppField :
+	// l'ancien `onChange` posé sur InputField REMPLAÇAIT le binding TanStack du
+	// composant (spread après le binding) et re-implémentait l'écriture du state
+	// via `setFieldValue` (audit InputField 2026-08-03, P1-2).
+	const handleTrackingNumberChange = (value: string) => {
 		if (value.length >= 8 && value !== initialTrackingNumber && !customUrlMode) {
 			const detection = detectCarrierAndUrl(value);
 			form.setFieldValue("carrier", detection.carrier);
@@ -224,13 +225,15 @@ export function UpdateTrackingForm({
 							return undefined;
 						},
 					}}
+					listeners={{
+						onChange: ({ value }) => handleTrackingNumberChange(value),
+					}}
 				>
 					{(field) => (
 						<field.InputField
 							label="Numéro de suivi"
 							required
 							disabled={isPending}
-							onChange={handleTrackingNumberChange}
 							placeholder={carrier ? CARRIER_PLACEHOLDERS[carrier] : "Numéro de suivi"}
 							autoCapitalize="characters"
 							autoCorrect="off"
@@ -302,17 +305,17 @@ export function UpdateTrackingForm({
 										type="button"
 										variant="ghost"
 										size="icon"
-										asChild
+										render={
+											<a
+												href={trackingUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												aria-label="Tester l'URL de suivi dans un nouvel onglet"
+											/>
+										}
 										className="h-9 w-9 shrink-0"
 									>
-										<a
-											href={trackingUrl}
-											target="_blank"
-											rel="noopener noreferrer"
-											aria-label="Tester l'URL de suivi dans un nouvel onglet"
-										>
-											<ExternalLink className="size-4" aria-hidden="true" />
-										</a>
+										<ExternalLink className="size-4" aria-hidden="true" />
 									</Button>
 								)}
 							</>

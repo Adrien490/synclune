@@ -78,7 +78,7 @@ export type ActionMenuItem = {
 
 /**
  * A group of {@link ActionMenuItem}s. Sections are visually separated on
- * both mobile (border or uppercase label) and desktop (Radix separator).
+ * both mobile (border or uppercase label) and desktop (separator).
  */
 export type ActionMenuSection = {
 	key: string;
@@ -91,7 +91,7 @@ type Ctx = {
 	isMobile: boolean;
 	/**
 	 * Direct setter for the controlled `open` prop. Used by mobile `href` rows
-	 * to close the drawer without going through Vaul's `onOpenChange` →
+	 * to close the drawer without going through the `onOpenChange` →
 	 * `useBackButtonClose.handleClose` → `history.back()` path, which would
 	 * otherwise race against Next.js `<Link>` `router.push` and cancel the
 	 * navigation.
@@ -119,8 +119,8 @@ interface ResponsiveActionMenuProps {
 /**
  * Contextual action menu primitive.
  *
- * - **Desktop (≥ md)** — Radix `DropdownMenu` anchored to the trigger.
- * - **Mobile (< md)** — Vaul bottom `Drawer` (iOS ActionSheet / Material 3
+ * - **Desktop (≥ md)** — `DropdownMenu` Base UI anchored to the trigger.
+ * - **Mobile (< md)** — bottom `Drawer` Base UI (iOS ActionSheet / Material 3
  *   bottom sheet): handle drag, safe-area bottom, full-width actions with
  *   icon pills, destructive section, sticky "Annuler" button. Haptic fires
  *   on each selection and on overlay/scrim dismiss.
@@ -137,11 +137,9 @@ interface ResponsiveActionMenuProps {
  * @example
  * ```tsx
  * <ResponsiveActionMenu>
- *   <ResponsiveActionMenuTrigger asChild>
- *     <Button variant="ghost" aria-label="Actions">
- *       <EllipsisVertical />
- *     </Button>
- *   </ResponsiveActionMenuTrigger>
+ *   <ResponsiveActionMenuTrigger
+ *     render={<Button variant="ghost" aria-label="Actions"><EllipsisVertical /></Button>}
+ *   />
  *   <ResponsiveActionMenuContent
  *     title="Actions"
  *     description="Bague Rose Cendrée"
@@ -198,29 +196,24 @@ export function ResponsiveActionMenu({ open, onOpenChange, children }: Responsiv
 }
 
 interface TriggerProps {
-	children: React.ReactNode;
-	asChild?: boolean;
+	children?: React.ReactNode;
+	/** Équivalent Base UI de l'ancien `asChild` Radix. */
+	render?: React.ReactElement;
 }
 
 const handleClick = () => {
 	triggerHaptic("selection");
 };
 
-export function ResponsiveActionMenuTrigger({ children, asChild }: TriggerProps) {
+export function ResponsiveActionMenuTrigger({ children, render }: TriggerProps) {
 	const { isMobile } = useMenuCtx();
+	const Trigger = isMobile ? DrawerTrigger : DropdownMenuTrigger;
 
-	if (isMobile) {
-		return (
-			<DrawerTrigger asChild={asChild} onClick={handleClick}>
-				{children}
-			</DrawerTrigger>
-		);
-	}
-
+	// Les deux branches sont sur Base UI : même prop `render`, plus d'asymétrie.
 	return (
-		<DropdownMenuTrigger asChild={asChild} onClick={handleClick}>
+		<Trigger render={render} onClick={handleClick}>
 			{children}
-		</DropdownMenuTrigger>
+		</Trigger>
 	);
 }
 
@@ -283,15 +276,17 @@ export function ResponsiveActionMenuContent({
 					</div>
 				</DrawerBody>
 				<DrawerFooter className="pt-2">
-					<DrawerClose asChild>
-						<Button
-							variant="outline"
-							size="lg"
-							className="h-12 w-full"
-							onClick={() => triggerHaptic("light")}
-						>
-							{cancelLabel}
-						</Button>
+					<DrawerClose
+						render={
+							<Button
+								variant="outline"
+								size="lg"
+								className="h-12 w-full"
+								onClick={() => triggerHaptic("light")}
+							/>
+						}
+					>
+						{cancelLabel}
 					</DrawerClose>
 				</DrawerFooter>
 			</DrawerContent>
@@ -324,28 +319,33 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 
 	if (item.href) {
 		return (
-			<DropdownMenuItem asChild disabled={isInert} variant={item.variant} aria-busy={ariaBusy}>
-				<Link
-					href={item.href}
-					target={item.external ? "_blank" : undefined}
-					rel={item.external ? "noopener noreferrer" : undefined}
-					tabIndex={isInert ? -1 : undefined}
-					aria-disabled={isInert ? true : undefined}
-					onClick={(e) => {
-						if (isInert) {
-							e.preventDefault();
-							return;
-						}
-						triggerHaptic(hapticPattern);
-					}}
-				>
-					{item.pending ? (
-						<Spinner presentational />
-					) : Icon ? (
-						<Icon className="size-4" aria-hidden="true" />
-					) : null}
-					{item.label}
-				</Link>
+			<DropdownMenuItem
+				render={
+					<Link
+						href={item.href}
+						target={item.external ? "_blank" : undefined}
+						rel={item.external ? "noopener noreferrer" : undefined}
+						tabIndex={isInert ? -1 : undefined}
+						aria-disabled={isInert ? true : undefined}
+						onClick={(e) => {
+							if (isInert) {
+								e.preventDefault();
+								return;
+							}
+							triggerHaptic(hapticPattern);
+						}}
+					/>
+				}
+				disabled={isInert}
+				variant={item.variant}
+				aria-busy={ariaBusy}
+			>
+				{item.pending ? (
+					<Spinner presentational />
+				) : Icon ? (
+					<Icon className="size-4" aria-hidden="true" />
+				) : null}
+				{item.label}
 			</DropdownMenuItem>
 		);
 	}
@@ -355,11 +355,13 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 			disabled={isInert}
 			variant={item.variant}
 			aria-busy={ariaBusy}
-			onSelect={(e) => {
-				if (item.pending) {
-					e.preventDefault();
-					return;
-				}
+			// Base UI n'a pas d'`onSelect` : l'activation passe par `onClick`, et le
+			// maintien du menu ouvert par `closeOnClick` — plus par un
+			// `event.preventDefault()`. Laisser `onSelect` ici rendait l'action MORTE
+			// (prop inconnue, silencieusement ignorée).
+			closeOnClick={!item.pending}
+			onClick={() => {
+				if (item.pending) return;
 				triggerHaptic(hapticPattern);
 				item.onSelect?.();
 			}}
@@ -483,5 +485,5 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 		</button>
 	);
 
-	return closesMenu ? <DrawerClose asChild>{button}</DrawerClose> : button;
+	return closesMenu ? <DrawerClose render={button} /> : button;
 }

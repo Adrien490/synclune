@@ -51,26 +51,24 @@ export function DeleteCollectionAlertDialog() {
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Confirmer la suppression</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div className="space-y-3">
-								<p>
-									Êtes-vous sûr de vouloir supprimer la collection{" "}
-									<strong>&quot;{deleteDialog.data?.collectionName}&quot;</strong> ?
-								</p>
-								{productsCount > 0 ? (
-									<>
-										<p className="text-warning font-medium">
-											Cette collection contient {productsCount} produit
-											{productsCount > 1 ? "s" : ""}.
-										</p>
-										<p>
-											Les produits seront préservés mais n&apos;appartiendront plus à aucune
-											collection.
-										</p>
-									</>
-								) : null}
-								<p className="text-destructive font-medium">Cette action est irréversible.</p>
-							</div>
+						<ResponsiveAlertDialogDescription render={<div className="space-y-3" />}>
+							<p>
+								Êtes-vous sûr de vouloir supprimer la collection{" "}
+								<strong>&quot;{deleteDialog.data?.collectionName}&quot;</strong> ?
+							</p>
+							{productsCount > 0 ? (
+								<>
+									<p className="text-warning font-medium">
+										Cette collection contient {productsCount} produit
+										{productsCount > 1 ? "s" : ""}.
+									</p>
+									<p>
+										Les produits seront préservés mais n&apos;appartiendront plus à aucune
+										collection.
+									</p>
+								</>
+							) : null}
+							<p className="text-destructive font-medium">Cette action est irréversible.</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

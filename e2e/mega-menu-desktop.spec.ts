@@ -138,8 +138,32 @@ test.describe("Mega menu desktop", { tag: ["@regression"] }, () => {
 		const trigger = page.getByRole("button", { name: /Les créations/i }).first();
 		await trigger.hover();
 		await expect(trigger).toHaveAttribute("aria-expanded", "true", { timeout: 2000 });
-		// Sous reduced-motion, motion-reduce:animate-none désactive l'animation
-		// (vérification structurelle qu'on ne crash pas).
+
+		// Assertion réelle (l'ancienne version ne vérifiait que matchMedia) : le
+		// killswitch `.animate-in { animation: none !important }` (animations.css)
+		// doit neutraliser l'entrée du panneau — animationName resterait le nom
+		// des keyframes tw-animate-css sinon.
+		const content = page
+			.locator('[data-slot="navigation-menu-content"][data-state="open"]')
+			.first();
+		await expect(content).toBeVisible();
+		const animationName = await content.evaluate((el) => getComputedStyle(el).animationName);
+		expect(animationName).toBe("none");
+
+		// La SORTIE aussi : `.animate-out` avait échappé au killswitch, et le
+		// compensatoire `motion-reduce:animate-none` perdait en spécificité contre
+		// `data-[state=closed]:animate-out` (0,1,0 vs 0,2,0) — la fermeture restait
+		// animée sous reduced-motion. L'état closed étant démonté trop vite pour
+		// être observé, on injecte la classe (pattern toast-ui.spec.ts).
+		const animationNameOut = await page.evaluate(() => {
+			const el = document.createElement("div");
+			el.className = "animate-out";
+			document.body.appendChild(el);
+			const name = getComputedStyle(el).animationName;
+			el.remove();
+			return name;
+		});
+		expect(animationNameOut).toBe("none");
 	});
 });
 

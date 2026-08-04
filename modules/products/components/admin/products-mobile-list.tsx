@@ -41,8 +41,11 @@ export function ProductsMobileList({
 						hasActiveFilters ? (
 							<EmptyResetFiltersAction href="/admin/catalogue/produits" />
 						) : (
-							<Button asChild className="min-h-11 shadow-[0_0_24px_var(--color-glow-pink)]">
-								<Link href="/admin/catalogue/produits/nouveau">Nouveau produit</Link>
+							<Button
+								render={<Link href="/admin/catalogue/produits/nouveau" />}
+								className="min-h-11 shadow-[0_0_24px_var(--color-glow-pink)]"
+							>
+								Nouveau produit
 							</Button>
 						)
 					}

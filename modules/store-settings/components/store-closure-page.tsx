@@ -70,11 +70,13 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 					)}
 
 					<div className="flex justify-center">
-						<Button asChild variant="secondary" size="lg">
-							<Link href={`mailto:${BRAND.contact.email}`}>
-								<Mail className="size-4" />
-								Nous contacter
-							</Link>
+						<Button
+							render={<Link href={`mailto:${BRAND.contact.email}`} />}
+							variant="secondary"
+							size="lg"
+						>
+							<Mail className="size-4" />
+							Nous contacter
 						</Button>
 					</div>
 

@@ -93,17 +93,17 @@ export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetail
 				)}
 
 				<Button
-					asChild
+					render={
+						<Link
+							href={`/admin/catalogue/produits?filter_typeId=${productType.slug}`}
+							onClick={() => haptic("light")}
+						/>
+					}
 					variant="outline"
 					className="w-full transition-transform duration-150 active:scale-[0.98]"
 				>
-					<Link
-						href={`/admin/catalogue/produits?filter_typeId=${productType.slug}`}
-						onClick={() => haptic("light")}
-					>
-						Voir tous les produits
-						<ArrowRight className="size-4" aria-hidden="true" />
-					</Link>
+					Voir tous les produits
+					<ArrowRight className="size-4" aria-hidden="true" />
 				</Button>
 			</CardContent>
 		</Card>

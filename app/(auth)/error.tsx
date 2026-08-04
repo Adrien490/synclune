@@ -41,8 +41,8 @@ export default function AuthError({
 							<Button size="lg" onClick={reset}>
 								Réessayer
 							</Button>
-							<Button asChild variant="secondary" size="lg">
-								<Link href="/connexion">Page de connexion</Link>
+							<Button render={<Link href="/connexion" />} variant="secondary" size="lg">
+								Page de connexion
 							</Button>
 						</div>
 					}

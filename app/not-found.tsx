@@ -34,11 +34,11 @@ export default function NotFound() {
 				}
 				actions={
 					<div className="flex flex-col justify-center gap-4 sm:flex-row">
-						<Button asChild size="lg">
-							<Link href={ROUTES.SHOP.HOME}>Retour à l'accueil</Link>
+						<Button render={<Link href={ROUTES.SHOP.HOME} />} size="lg">
+							Retour à l'accueil
 						</Button>
-						<Button asChild variant="secondary" size="lg">
-							<Link href={ROUTES.SHOP.PRODUCTS}>Découvrir mes créations</Link>
+						<Button render={<Link href={ROUTES.SHOP.PRODUCTS} />} variant="secondary" size="lg">
+							Découvrir mes créations
 						</Button>
 					</div>
 				}

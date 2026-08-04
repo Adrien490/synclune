@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 const { mockOpenDialog, mockOpenAlertDialog, mockDuplicate, mockHaptic } = vi.hoisted(() => ({
 	mockOpenDialog: vi.fn(),
 	mockOpenAlertDialog: vi.fn(),
@@ -32,7 +34,7 @@ vi.mock("@/shared/utils/toast", () => ({
 	toast: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (fn: () => void) => fn(),
 }));
 
@@ -61,26 +63,7 @@ vi.mock("@/modules/discounts/components/admin/toggle-discount-status-alert-dialo
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		"aria-label": ariaLabel,
-		asChild,
-		className,
-		...rest
-	}: {
-		children: React.ReactNode;
-		"aria-label"?: string;
-		asChild?: boolean;
-		className?: string;
-		[key: string]: unknown;
-	}) => {
-		if (asChild) return <>{children}</>;
-		return (
-			<button aria-label={ariaLabel} className={className} {...rest}>
-				{children}
-			</button>
-		);
-	},
+	Button: (props: RenderPropMockProps) => renderPropMock("button", props),
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({
@@ -118,7 +101,6 @@ const discount = {
 	maxUsagePerUser: null,
 	usageCount: 0,
 	isActive: true,
-	startsAt: new Date("2026-01-01"),
 	endsAt: null,
 	createdAt: new Date("2026-05-01"),
 	updatedAt: new Date("2026-05-13"),

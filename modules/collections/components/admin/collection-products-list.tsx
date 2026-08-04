@@ -96,27 +96,29 @@ export function CollectionProductsList({
 									{/* Bouton etoile pour featured */}
 									<TableCell>
 										<Tooltip>
-											<TooltipTrigger asChild>
-												<Button
-													variant="ghost"
-													size="icon"
-													className="size-8"
-													onClick={() =>
-														handleSetFeatured(product.id, product.title, pc.isFeatured)
-													}
-													aria-label={
-														pc.isFeatured ? "Retirer le statut vedette" : "Definir comme vedette"
-													}
-												>
-													<Star
-														className={cn(
-															"size-5 transition-colors",
-															pc.isFeatured
-																? "fill-yellow-400 text-yellow-400"
-																: "text-muted-foreground hover:text-yellow-400",
-														)}
+											<TooltipTrigger
+												render={
+													<Button
+														variant="ghost"
+														size="icon"
+														className="size-8"
+														onClick={() =>
+															handleSetFeatured(product.id, product.title, pc.isFeatured)
+														}
+														aria-label={
+															pc.isFeatured ? "Retirer le statut vedette" : "Definir comme vedette"
+														}
 													/>
-												</Button>
+												}
+											>
+												<Star
+													className={cn(
+														"size-5 transition-colors",
+														pc.isFeatured
+															? "fill-yellow-400 text-yellow-400"
+															: "text-muted-foreground hover:text-yellow-400",
+													)}
+												/>
 											</TooltipTrigger>
 											<TooltipContent>
 												{pc.isFeatured
@@ -169,10 +171,8 @@ export function CollectionProductsList({
 											{/* Avertissement si produit featured non-PUBLIC */}
 											{pc.isFeatured && product.status !== ProductStatus.PUBLIC && (
 												<Tooltip>
-													<TooltipTrigger asChild>
-														<span className="text-amber-500">
-															<TriangleAlert className="size-4" />
-														</span>
+													<TooltipTrigger render={<span className="text-amber-500" />}>
+														<TriangleAlert className="size-4" />
 													</TooltipTrigger>
 													<TooltipContent>
 														<p>Ce produit vedette n'est pas visible sur le site</p>

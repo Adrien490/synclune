@@ -123,28 +123,30 @@ export function UploadActionSheet({
 			 */}
 			<div className="contents md:hidden">
 				<Drawer open={open} onOpenChange={setOpen}>
-					<DrawerTrigger asChild>
-						<Button
-							type="button"
-							variant="outline"
-							disabled={disabled}
-							onClick={() => haptic("light")}
-							className={cn(
-								"flex h-auto w-full items-center justify-start gap-3 rounded-xl border-2 border-dashed p-4 text-left",
-								"hover:border-primary/50 hover:bg-muted/50",
-								triggerClassName,
-							)}
-						>
-							<span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
-								<Plus className="size-5" aria-hidden="true" />
-							</span>
-							<span className="flex min-w-0 flex-col">
-								<span className="text-sm font-medium">{triggerLabel}</span>
-								{triggerDescription && (
-									<span className="text-muted-foreground text-xs">{triggerDescription}</span>
+					<DrawerTrigger
+						render={
+							<Button
+								type="button"
+								variant="outline"
+								disabled={disabled}
+								onClick={() => haptic("light")}
+								className={cn(
+									"flex h-auto w-full items-center justify-start gap-3 rounded-xl border-2 border-dashed p-4 text-left",
+									"hover:border-primary/50 hover:bg-muted/50",
+									triggerClassName,
 								)}
-							</span>
-						</Button>
+							/>
+						}
+					>
+						<span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
+							<Plus className="size-5" aria-hidden="true" />
+						</span>
+						<span className="flex min-w-0 flex-col">
+							<span className="text-sm font-medium">{triggerLabel}</span>
+							{triggerDescription && (
+								<span className="text-muted-foreground text-xs">{triggerDescription}</span>
+							)}
+						</span>
 					</DrawerTrigger>
 					<DrawerContent onOverlayClick={() => haptic("light")} className="max-h-fit">
 						<DrawerHeader>
@@ -203,15 +205,17 @@ export function UploadActionSheet({
 								</span>
 							</button>
 
-							<DrawerClose asChild>
-								<Button
-									type="button"
-									variant="ghost"
-									className="mt-2 min-h-12 w-full"
-									onClick={() => haptic("light")}
-								>
-									Annuler
-								</Button>
+							<DrawerClose
+								render={
+									<Button
+										type="button"
+										variant="ghost"
+										className="mt-2 min-h-12 w-full"
+										onClick={() => haptic("light")}
+									/>
+								}
+							>
+								Annuler
 							</DrawerClose>
 						</div>
 					</DrawerContent>

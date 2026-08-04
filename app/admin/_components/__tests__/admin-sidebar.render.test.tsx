@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
@@ -79,20 +81,13 @@ vi.mock("@/shared/components/ui/sidebar", () => ({
 			{children}
 		</ul>
 	),
-	SidebarMenuButton: ({
-		children,
-		tooltip,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		tooltip?: string;
-		asChild?: boolean;
-		size?: string;
-	}) => (
-		<div data-testid="sidebar-menu-button" title={tooltip}>
-			{children}
-		</div>
-	),
+	SidebarMenuButton: ({ children, tooltip, render, size: _size }: RenderPropMockProps) =>
+		renderPropMock("div", {
+			"data-testid": "sidebar-menu-button",
+			title: tooltip,
+			render,
+			children,
+		}),
 	SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
 		<li data-testid="sidebar-menu-item">{children}</li>
 	),

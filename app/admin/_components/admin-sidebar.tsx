@@ -44,13 +44,15 @@ export function AdminSidebar({ user, badges }: AdminSidebarProps) {
 					role="list"
 				>
 					<SidebarMenuItem>
-						<SidebarMenuButton size="lg" asChild tooltip={`${BRAND.name} - Administration`}>
-							<Link href="/admin">
-								<Logo size={40} rounded="lg" />
-								<span className="font-cursive flex-1 truncate text-2xl font-normal tracking-wide group-data-[collapsible=icon]:hidden">
-									{BRAND.name}
-								</span>
-							</Link>
+						<SidebarMenuButton
+							size="lg"
+							render={<Link href="/admin" />}
+							tooltip={`${BRAND.name} - Administration`}
+						>
+							<Logo size={40} rounded="lg" />
+							<span className="font-cursive flex-1 truncate text-2xl font-normal tracking-wide group-data-[collapsible=icon]:hidden">
+								{BRAND.name}
+							</span>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>

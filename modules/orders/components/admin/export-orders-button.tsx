@@ -163,11 +163,9 @@ export function ExportOrdersButton() {
 			open={state.open}
 			onOpenChange={(open) => dispatch({ type: "SET_OPEN", open })}
 		>
-			<ResponsiveDialogTrigger asChild>
-				<Button variant="outline" size="sm">
-					<Download className="mr-2 size-4" />
-					Exporter
-				</Button>
+			<ResponsiveDialogTrigger render={<Button variant="outline" size="sm" />}>
+				<Download className="mr-2 size-4" />
+				Exporter
 			</ResponsiveDialogTrigger>
 			<ResponsiveDialogContent className="sm:max-w-md">
 				<ResponsiveDialogHeader>

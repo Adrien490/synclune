@@ -34,6 +34,7 @@ import {
 	RESULTS_CONTAINER_ID,
 	SEARCH_DEBOUNCE_MS,
 	SWIPE_CLOSE_THRESHOLD_PX,
+	SWIPE_CLOSE_VELOCITY_PX_PER_MS,
 	SWIPE_RUBBER_BAND_FACTOR,
 } from "./constants";
 import type {
@@ -169,9 +170,9 @@ export function QuickSearchDialog({
 	const showAnimatedPlaceholder =
 		inputValue.length === 0 && productTypes.length > 0 && !shouldReduceMotion;
 
-	const navigateToSearch = (term: string, { saveToRecent = true } = {}) => {
+	const navigateToSearch = (term: string) => {
 		if (isPending) return;
-		if (saveToRecent) add(term);
+		add(term);
 		triggerHaptic("medium");
 		startTransition(() => {
 			// `replace`, pas `push` : l'entrée poussée à l'ouverture par
@@ -191,8 +192,15 @@ export function QuickSearchDialog({
 		navigateToSearch(trimmed);
 	};
 
+	// Même comportement que les pills de suggestion : le terme remplit le champ
+	// et la recherche s'affiche DANS le dialog (Entrée mène toujours à la PLP).
+	// Naviguait avant directement vers /produits?search= — deux affordances
+	// visuellement cousines, deux destinations (audit quick-search 2026-08-03).
+	// Pas de `add()` : le terme est déjà dans les récentes, le ré-ajouter le
+	// ferait remonter en tête à chaque clic.
 	const handleRecentSearch = (term: string) => {
-		navigateToSearch(term, { saveToRecent: false });
+		resetActiveIndex();
+		handleSearchFromSuggestion(term);
 	};
 
 	const handleQuickTagClick = (label: string) => {
@@ -213,8 +221,6 @@ export function QuickSearchDialog({
 	const handleClose = () => {
 		close();
 		reset();
-		setDragOffset(0);
-		setIsDragging(false);
 	};
 
 	// Le × est un `DialogClose` : la fermeture passe par Radix → `onOpenChange`
@@ -224,78 +230,95 @@ export function QuickSearchDialog({
 	// cette ref pour emprunter le même chemin.
 	const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-	// Swipe-down-to-dismiss on mobile (triggered from header drag handle area)
-	const touchStartYRef = useRef<number | null>(null);
+	// Swipe-down-to-dismiss on mobile (triggered from header drag handle area).
+	// Le drag écrit `transform` DIRECTEMENT sur le nœud du dialog (ref), sans
+	// état React : un `setState` par `touchmove` re-rendait tout l'arbre du
+	// dialog (liste de résultats, images, motion) à chaque frame de geste.
+	// Rien à réinitialiser à la fermeture : Radix démonte le nœud, l'inline
+	// style part avec lui.
+	const dialogContentRef = useRef<HTMLDivElement>(null);
+	const touchStartRef = useRef<{ y: number; t: number } | null>(null);
 	const touchDeltaYRef = useRef(0);
-	const [dragOffset, setDragOffset] = useState(0);
-	const [isDragging, setIsDragging] = useState(false);
+	// Dernier échantillon de mouvement — vélocité instantanée lue au relâcher.
+	const lastMoveRef = useRef({ y: 0, t: 0, velocity: 0 });
 	const handleHeaderTouchStart = (e: React.TouchEvent<HTMLElement>) => {
 		const y = e.touches[0]?.clientY;
-		if (typeof y === "number") {
-			touchStartYRef.current = y;
-			touchDeltaYRef.current = 0;
-			setIsDragging(true);
-		}
+		if (typeof y !== "number") return;
+		touchStartRef.current = { y, t: e.timeStamp };
+		touchDeltaYRef.current = 0;
+		lastMoveRef.current = { y, t: e.timeStamp, velocity: 0 };
+		const node = dialogContentRef.current;
+		if (node) node.style.transition = "none";
 	};
 	const handleHeaderTouchMove = (e: React.TouchEvent<HTMLElement>) => {
-		if (touchStartYRef.current === null) return;
+		const start = touchStartRef.current;
 		const y = e.touches[0]?.clientY;
-		if (typeof y === "number") {
-			const raw = y - touchStartYRef.current;
-			touchDeltaYRef.current = raw;
-			// Rubber band upward (negative) drag; downward stays 1:1
-			const offset = raw < 0 ? raw * SWIPE_RUBBER_BAND_FACTOR : raw;
-			setDragOffset(offset);
+		if (start === null || typeof y !== "number") return;
+		const raw = y - start.y;
+		touchDeltaYRef.current = raw;
+		const last = lastMoveRef.current;
+		const dt = e.timeStamp - last.t;
+		if (dt > 0) {
+			lastMoveRef.current = { y, t: e.timeStamp, velocity: (y - last.y) / dt };
 		}
+		// Rubber band upward (negative) drag; downward stays 1:1
+		const offset = raw < 0 ? raw * SWIPE_RUBBER_BAND_FACTOR : raw;
+		const node = dialogContentRef.current;
+		if (node) node.style.transform = `translateY(${offset}px)`;
 	};
 	const handleHeaderTouchEnd = () => {
 		const delta = touchDeltaYRef.current;
-		touchStartYRef.current = null;
+		const { velocity } = lastMoveRef.current;
+		touchStartRef.current = null;
 		touchDeltaYRef.current = 0;
-		setIsDragging(false);
-		// A downward swipe past the threshold dismisses the dialog — via le
-		// DialogClose (cf. `closeButtonRef`), pour la reprise d'historique.
-		if (delta > SWIPE_CLOSE_THRESHOLD_PX) {
+		// Snap back animé vers 0 ; la transition inline reprend le rôle que
+		// tenait l'ancien style JSX hors drag.
+		const node = dialogContentRef.current;
+		if (node) {
+			node.style.transition = "transform var(--duration-normal) var(--ease-spring)";
+			node.style.transform = "";
+		}
+		// Ferme sur la distance OU sur un flick rapide vers le bas (sous le seuil
+		// de distance mais l'intention est aussi claire) — via le DialogClose
+		// (cf. `closeButtonRef`), pour la reprise d'historique.
+		if (
+			delta > SWIPE_CLOSE_THRESHOLD_PX ||
+			(delta > 0 && velocity > SWIPE_CLOSE_VELOCITY_PX_PER_MS)
+		) {
 			triggerHaptic("medium");
 			closeButtonRef.current?.click();
 		}
-		// Snap back to 0 (transition handled by !isDragging)
-		setDragOffset(0);
 	};
 
 	return (
 		<Dialog
 			open={isOpen}
-			onOpenChange={(open) => {
-				if (!open) handleClose();
+			onOpenChange={(open, eventDetails) => {
+				if (open) return;
+
+				// « Escape en deux temps ». Radix exposait un `onEscapeKeyDown` sur le
+				// Content ; Base UI n'a plus qu'un point d'arbitrage — ce callback, avec
+				// la RAISON de la fermeture et un `cancel()` lu juste après notre retour.
+				// Texte présent → on annule la fermeture et on vide le champ ; champ
+				// vide → on laisse fermer, ce qui reprend l'entrée d'historique du
+				// wrapper. Verrouillé par `escape-two-step.regression.test.tsx`.
+				if (eventDetails?.reason === "escape-key" && inputValue.length > 0) {
+					eventDetails.cancel();
+					searchInputRef.current?.clear();
+					return;
+				}
+
+				handleClose();
 			}}
 		>
 			<DialogContent
 				showCloseButton={false}
-				onCloseAutoFocus={(e) => {
-					// Restore focus to the element that opened the dialog (captured in
-					// `lastTrigger` before it blurred itself / before Radix took over).
-					e.preventDefault();
-					lastTrigger.el?.focus();
-				}}
-				onEscapeKeyDown={(e) => {
-					// « Escape en deux temps ». Radix écoute Escape sur `document` en
-					// CAPTURE : le `stopPropagation` du handler du champ (phase bulle)
-					// arrive toujours APRÈS son dismiss — l'arbitrage doit donc se faire
-					// ICI. Texte présent → on bloque le dismiss et on vide le champ ;
-					// champ vide → on laisse Radix fermer, ce qui passe par
-					// `onOpenChange` (reprise de l'entrée d'historique du wrapper).
-					// Verrouillé par `escape-two-step.regression.test.tsx`.
-					if (inputValue.length > 0) {
-						e.preventDefault();
-						searchInputRef.current?.clear();
-					}
-				}}
+				// Remplace l'ancien `onCloseAutoFocus` + `preventDefault` : rend le focus
+				// à l'élément qui a ouvert le dialog (capturé dans `lastTrigger` avant
+				// qu'il ne se blure lui-même).
+				finalFocus={() => lastTrigger.el ?? false}
 				aria-busy={isPending}
-				style={{
-					transform: dragOffset !== 0 ? `translateY(${dragOffset}px)` : undefined,
-					transition: isDragging ? "none" : "transform var(--duration-normal) var(--ease-spring)",
-				}}
+				ref={dialogContentRef}
 				className={cn(
 					"group/search",
 					// Mobile: bottom-sheet pleine hauteur (suit le clavier via --vvh, fallback 100dvh)
@@ -327,24 +350,26 @@ export function QuickSearchDialog({
 					<div className="flex h-14 items-center px-4">
 						{/* Single close button: leftmost on mobile, rightmost on desktop (via order).
 							 DialogClose (pas un onClick → close()) : cf. `closeButtonRef`. */}
-						<DialogClose asChild>
-							<Button
-								ref={closeButtonRef}
-								variant="ghost"
-								size="icon"
-								disabled={isPending}
-								className="order-first size-11 shrink-0 md:order-last"
-								aria-label="Fermer"
-							>
-								<X className="size-5" />
-							</Button>
+						<DialogClose
+							render={
+								<Button
+									ref={closeButtonRef}
+									variant="ghost"
+									size="icon"
+									disabled={isPending}
+									className="order-first size-11 shrink-0 md:order-last"
+									aria-label="Fermer"
+								/>
+							}
+						>
+							<X className="size-5" />
 						</DialogClose>
 
 						<DialogTitle className="font-display flex-1 text-center text-lg font-medium md:text-left">
 							Rechercher
 						</DialogTitle>
 						<DialogDescription className="sr-only">
-							Recherchez un bijou par nom ou parcourez les collections et categories.
+							Recherche un bijou par nom ou parcours les collections et catégories.
 						</DialogDescription>
 
 						{/* Spacer mirrors the close button width to keep the title centered on mobile */}
@@ -436,7 +461,7 @@ export function QuickSearchDialog({
 						aria-live="polite"
 						className="text-muted-foreground px-4 pb-2 text-xs"
 					>
-						Tapez au moins {MIN_SEARCH_LENGTH} caractères pour rechercher
+						Tape au moins {MIN_SEARCH_LENGTH} caractères pour rechercher
 					</p>
 				)}
 
@@ -445,11 +470,11 @@ export function QuickSearchDialog({
 					{!isSearchMode && (
 						<>
 							{searches.length > 0 &&
-								`${searches.length} recherche${searches.length > 1 ? "s" : ""} recente${searches.length > 1 ? "s" : ""}.`}
+								`${searches.length} recherche${searches.length > 1 ? "s" : ""} récente${searches.length > 1 ? "s" : ""}.`}
 							{collections.length > 0 &&
 								` ${collections.length} collection${collections.length > 1 ? "s" : ""}.`}
 							{productTypes.length > 0 &&
-								` ${productTypes.length} categorie${productTypes.length > 1 ? "s" : ""}.`}
+								` ${productTypes.length} catégorie${productTypes.length > 1 ? "s" : ""}.`}
 						</>
 					)}
 				</div>

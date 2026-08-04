@@ -32,11 +32,11 @@ export default function ProductTypeCategoryNotFound() {
 				}
 				actions={
 					<div className="flex flex-col justify-center gap-4 sm:flex-row">
-						<Button asChild size="lg">
-							<Link href={ROUTES.SHOP.PRODUCTS}>Voir toutes les créations</Link>
+						<Button render={<Link href={ROUTES.SHOP.PRODUCTS} />} size="lg">
+							Voir toutes les créations
 						</Button>
-						<Button asChild variant="secondary" size="lg">
-							<Link href={ROUTES.SHOP.HOME}>Retour à l'accueil</Link>
+						<Button render={<Link href={ROUTES.SHOP.HOME} />} variant="secondary" size="lg">
+							Retour à l'accueil
 						</Button>
 					</div>
 				}

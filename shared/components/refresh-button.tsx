@@ -24,24 +24,26 @@ export function RefreshButton({
 }: RefreshButtonProps) {
 	return (
 		<Tooltip>
-			<TooltipTrigger asChild>
-				<Button
-					variant={variant}
-					size="icon"
-					onClick={onRefresh}
-					disabled={isPending}
-					className={cn(
-						"border-border/60 hover:border-border hover:bg-accent/30 size-11 transition-all duration-200",
-						hideOnMobile && "hidden md:flex",
-						className,
-					)}
-					aria-label={label}
-				>
-					<RefreshCw
-						className={cn("size-4", isPending && "motion-safe:animate-spin")}
-						aria-hidden="true"
+			<TooltipTrigger
+				render={
+					<Button
+						variant={variant}
+						size="icon"
+						onClick={onRefresh}
+						disabled={isPending}
+						className={cn(
+							"border-border/60 hover:border-border hover:bg-accent/30 size-11 transition-all duration-200",
+							hideOnMobile && "hidden md:flex",
+							className,
+						)}
+						aria-label={label}
 					/>
-				</Button>
+				}
+			>
+				<RefreshCw
+					className={cn("size-4", isPending && "motion-safe:animate-spin")}
+					aria-hidden="true"
+				/>
 			</TooltipTrigger>
 			<TooltipContent>
 				<p>{label}</p>

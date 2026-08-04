@@ -1,6 +1,8 @@
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // Hoisted mocks
 const { mockUseReducedMotion, mockScrollTo, mockSelectedScrollSnap, mockOn, mockOff } = vi.hoisted(
 	() => ({
@@ -120,13 +122,7 @@ vi.mock("@/shared/components/ui/carousel", () => ({
 
 vi.mock("@/shared/components/ui/tooltip", () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	TooltipTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <>{children}</>,
+	TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 	TooltipContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="tooltip-content">{children}</div>
 	),

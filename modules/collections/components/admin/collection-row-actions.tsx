@@ -26,16 +26,18 @@ export function CollectionRowActions(props: CollectionRowActionsProps) {
 
 	return (
 		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="size-11 p-0 transition-transform active:scale-95"
-					aria-label="Actions pour cette collection"
-				>
-					<span className="sr-only">Ouvrir le menu d&apos;actions</span>
-					<EllipsisVertical className="size-4" />
-				</Button>
+			<ResponsiveActionMenuTrigger
+				render={
+					<Button
+						variant="ghost"
+						size="sm"
+						className="size-11 p-0 transition-transform active:scale-95"
+						aria-label="Actions pour cette collection"
+					/>
+				}
+			>
+				<span className="sr-only">Ouvrir le menu d&apos;actions</span>
+				<EllipsisVertical className="size-4" />
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent
 				title="Actions collection"

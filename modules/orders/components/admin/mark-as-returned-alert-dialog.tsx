@@ -44,20 +44,18 @@ export function MarkAsReturnedAlertDialog() {
 				<ResponsiveAlertDialogContent>
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Commande retournée</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									La commande <strong>{dialog.data.orderNumber}</strong> a été marquée comme
-									retournée.
-								</p>
-								{/* Lot 2 S3.3 : le remboursement se fait dans le dashboard Stripe
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								La commande <strong>{dialog.data.orderNumber}</strong> a été marquée comme
+								retournée.
+							</p>
+							{/* Lot 2 S3.3 : le remboursement se fait dans le dashboard Stripe
 								    (lien « Rembourser dans Stripe » sur la page commande) — le
 								    webhook crée la fiche ici, avec avoir et email automatiques. */}
-								<p className="mt-2">
-									Si tu veux la rembourser, passe par le dashboard Stripe : la fiche remboursement,
-									l&apos;avoir et l&apos;email partiront tout seuls.
-								</p>
-							</div>
+							<p className="mt-2">
+								Si tu veux la rembourser, passe par le dashboard Stripe : la fiche remboursement,
+								l&apos;avoir et l&apos;email partiront tout seuls.
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
@@ -78,17 +76,15 @@ export function MarkAsReturnedAlertDialog() {
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Marquer comme retourné</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									Êtes-vous sûr de vouloir marquer la commande{" "}
-									<strong>{dialog.data?.orderNumber}</strong> comme retournée ?
-								</p>
-								<p className="text-muted-foreground mt-4 text-sm">
-									Le statut de livraison passera à "Retourné". Vous pourrez ensuite créer un
-									remboursement si nécessaire.
-								</p>
-							</div>
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								Êtes-vous sûr de vouloir marquer la commande{" "}
+								<strong>{dialog.data?.orderNumber}</strong> comme retournée ?
+							</p>
+							<p className="text-muted-foreground mt-4 text-sm">
+								Le statut de livraison passera à "Retourné". Vous pourrez ensuite créer un
+								remboursement si nécessaire.
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

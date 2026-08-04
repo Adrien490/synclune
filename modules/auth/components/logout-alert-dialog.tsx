@@ -1,7 +1,7 @@
 "use client";
 
 import { Spinner } from "@/shared/components/ui/spinner";
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import {
 	ResponsiveAlertDialog,
 	ResponsiveAlertDialogAction,
@@ -35,7 +35,7 @@ export function LogoutAlertDialog({
 
 	return (
 		<ResponsiveAlertDialog open={open} onOpenChange={setOpen}>
-			{children && <ResponsiveAlertDialogTrigger asChild>{children}</ResponsiveAlertDialogTrigger>}
+			{children && <ResponsiveAlertDialogTrigger render={children as ReactElement} />}
 			<ResponsiveAlertDialogContent>
 				<form
 					action={action}
@@ -44,13 +44,11 @@ export function LogoutAlertDialog({
 				>
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Se déconnecter ?</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div className="space-y-3">
-								<p>Voulez-vous vraiment vous déconnecter de votre compte ?</p>
-								<p className="text-muted-foreground text-sm">
-									Vous pourrez vous reconnecter à tout moment.
-								</p>
-							</div>
+						<ResponsiveAlertDialogDescription render={<div className="space-y-3" />}>
+							<p>Voulez-vous vraiment vous déconnecter de votre compte ?</p>
+							<p className="text-muted-foreground text-sm">
+								Vous pourrez vous reconnecter à tout moment.
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

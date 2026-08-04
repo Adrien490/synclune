@@ -157,7 +157,7 @@ export function FilterSheetWrapper({
 			// latéral desktop le mode permissif reste correct.
 			handleOnly={useBottomSheet}
 		>
-			{!hideTrigger && <SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>}
+			{!hideTrigger && <SheetTrigger render={(trigger ?? defaultTrigger) as React.ReactElement} />}
 
 			<SheetContent
 				id={id}
@@ -206,23 +206,25 @@ export function FilterSheetWrapper({
 									onClick={handleClearAll}
 									className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive min-h-11 shrink-0 text-xs transition-colors"
 									aria-label="Effacer tous les filtres"
-									data-vaul-no-drag
+									data-base-ui-swipe-ignore=""
 								>
 									<X className="mr-1 size-3" aria-hidden="true" />
 									<span className="hidden md:inline">Tout effacer</span>
 									<span className="md:hidden">Effacer</span>
 								</Button>
 							)}
-							<SheetClose asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="text-muted-foreground hover:text-foreground size-11 shrink-0"
-									aria-label="Fermer"
-									data-vaul-no-drag
-								>
-									<X className="size-4" />
-								</Button>
+							<SheetClose
+								render={
+									<Button
+										variant="ghost"
+										size="icon"
+										className="text-muted-foreground hover:text-foreground size-11 shrink-0"
+										aria-label="Fermer"
+										data-base-ui-swipe-ignore=""
+									/>
+								}
+							>
+								<X className="size-4" />
 							</SheetClose>
 						</div>
 					</div>
@@ -239,7 +241,7 @@ export function FilterSheetWrapper({
 					)}
 				</SheetHeader>
 
-				<ScrollArea className="min-h-0 flex-1 overscroll-contain" data-vaul-no-drag>
+				<ScrollArea className="min-h-0 flex-1 overscroll-contain" data-base-ui-swipe-ignore="">
 					<div
 						className={cn("px-6 py-4", isPending && "pointer-events-none")}
 						role="region"
@@ -257,14 +259,14 @@ export function FilterSheetWrapper({
 
 				<SheetFooter
 					className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-					data-vaul-no-drag
+					data-base-ui-swipe-ignore=""
 				>
 					<Button
 						type="button"
 						onClick={handleApply}
 						disabled={isPending}
 						className="h-11 w-full text-base sm:h-10 sm:text-sm"
-						data-vaul-no-drag
+						data-base-ui-swipe-ignore=""
 					>
 						{isPending && <Spinner presentational />}
 						{applyButtonText}

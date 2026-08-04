@@ -2,28 +2,6 @@
    ANIMATIONS & KEYFRAMES
    ======================================================================== */
 @layer utilities {
-	/* Animation shimmer sweep for announcement bar */
-	@keyframes announcement-shimmer {
-		0% {
-			transform: translateX(-100%);
-		}
-		100% {
-			transform: translateX(100%);
-		}
-	}
-
-	/* Shimmer ambiant du mot d'accent hero : balayage lent du dégradé.
-	   Appliqué via .text-gradient-multicolor (background-size: 300%, boucle fermée).
-	   Désactivé sous prefers-reduced-motion / forced-colors / prefers-contrast. */
-	@keyframes hero-gradient-shimmer {
-		0% {
-			background-position: 0% center;
-		}
-		100% {
-			background-position: 100% center;
-		}
-	}
-
 	/* Animation sparkle */
 	@keyframes sparkle-pulse {
 		0%,
@@ -41,7 +19,10 @@
 		animation: sparkle-pulse 2s ease-in-out infinite;
 	}
 
-	/* Animation heart-beat pour toast error */
+	/* Animation heart-beat pour toast error.
+	   Aucun call site produit : conservée comme CANARI e2e — toast-ui.spec.ts
+	   l'injecte sous emulateMedia({reducedMotion}) pour prouver que le
+	   killswitch ci-dessous fonctionne réellement. */
 	@keyframes heart-beat {
 		0%,
 		100% {
@@ -56,19 +37,6 @@
 		animation: heart-beat 2s ease-in-out infinite;
 	}
 
-	/* Animation wishlist button - single pop subtil (200ms) */
-	@keyframes wishlist-pop {
-		0% {
-			transform: scale(1);
-		}
-		50% {
-			transform: scale(1.12);
-		}
-		100% {
-			transform: scale(1);
-		}
-	}
-
 	/* Progress bar indeterminate for filter sheet */
 	@keyframes progress-indeterminate {
 		0% {
@@ -79,48 +47,69 @@
 		}
 	}
 
-	/* Animation shimmer pour skeleton loading */
+	/* Animation shimmer pour skeleton loading.
+	   Balayage par pseudo-élément translaté (transform = compositor-only) plutôt
+	   que background-position animé : cette propriété est paint-only et
+	   re-rasterisait chaque skeleton à chaque frame — coûteux à des dizaines
+	   d'exemplaires par écran de chargement (l'ancien will-change:
+	   background-position était d'ailleurs inopérant, une propriété
+	   non-compositable ne se promeut pas). */
 	@keyframes shimmer {
 		0% {
-			background-position: -200% 0;
+			transform: translateX(-100%);
 		}
 		100% {
-			background-position: 200% 0;
+			transform: translateX(100%);
 		}
+	}
+
+	/* :where() = spécificité 0 : un utilitaire de positionnement au call site
+	   (ex. Skeleton className="absolute inset-0") doit pouvoir gagner — cette
+	   couche @layer utilities est importée APRÈS celles de Tailwind. */
+	:where(.animate-shimmer) {
+		position: relative;
 	}
 
 	.animate-shimmer {
 		--shimmer-base: var(--accent);
 		--shimmer-highlight: oklch(0.96 0.01 270);
+		background: var(--shimmer-base);
+		overflow: hidden;
+	}
+
+	.animate-shimmer::after {
+		content: "";
+		position: absolute;
+		inset: 0;
 		background: linear-gradient(
 			90deg,
-			var(--shimmer-base) 0%,
+			transparent 0%,
 			var(--shimmer-highlight) 50%,
-			var(--shimmer-base) 100%
+			transparent 100%
 		);
-		background-size: 200% 100%;
+		transform: translateX(-100%);
 		animation: shimmer 1.5s ease-in-out infinite;
-		will-change: background-position;
 	}
 
-	/* Animation draw-line pour SVG dessinés à la main (Tendance 2026: Hand-drawn aesthetic) */
-	@keyframes draw-line {
-		to {
-			stroke-dashoffset: 0;
+	/* Balayage de TEXTE — titre d'un `Attachment` en cours d'envoi/traitement.
+	   Distinct de `.animate-shimmer` ci-dessus, qui balaie un bloc opaque via un
+	   ::after translaté : ici la cible est du texte, donc le dégradé doit passer
+	   par `background-clip: text` — et l'animation par `background-position`,
+	   paint-only. Le coût rasterisation reproché à cette propriété plus haut est
+	   assumé ici : quelques lignes de fichier à la fois, pas des dizaines de
+	   blocs de squelette plein écran.
+
+	   ⚠️ La règle qui consomme ces keyframes vit dans `app/globals.css`, en
+	   `@utility shimmer-text` et NON ici en classe nue : elle est appliquée
+	   derrière des variants (`group-data-[state=uploading]/attachment:`), et
+	   Tailwind ne sait composer un variant qu'avec une utility déclarée. */
+	@keyframes shimmer-text {
+		0% {
+			background-position: 100% 0;
 		}
-	}
-
-	.hand-drawn-underline {
-		stroke-dasharray: 200;
-		stroke-dashoffset: 200;
-		animation: draw-line 0.8s ease-out forwards;
-	}
-
-	.doodle-draw {
-		stroke-dashoffset: var(--path-length);
-		stroke-dasharray: var(--path-length);
-		animation: draw-line 0.8s ease-out forwards;
-		animation-delay: var(--draw-delay, 0s);
+		100% {
+			background-position: -100% 0;
+		}
 	}
 
 	/* ==========================================
@@ -138,88 +127,6 @@
 
 	.animate-badge-pulse {
 		animation: badge-pulse 0.3s ease-out;
-	}
-
-	/* ==========================================
-	   ANIMATIONS MULTISELECT
-	   ========================================== */
-	@keyframes wiggle {
-		0%,
-		100% {
-			transform: rotate(-3deg);
-		}
-		50% {
-			transform: rotate(3deg);
-		}
-	}
-
-	@keyframes scaleIn {
-		from {
-			opacity: 0;
-			transform: scale(0.95);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1);
-		}
-	}
-
-	@keyframes slideInDown {
-		from {
-			opacity: 0;
-			transform: translateY(-10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-
-	@keyframes menu-item-in {
-		from {
-			opacity: 0;
-			transform: translateY(8px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@keyframes flipIn {
-		from {
-			opacity: 0;
-			transform: perspective(400px) rotateX(-10deg);
-		}
-		to {
-			opacity: 1;
-			transform: perspective(400px) rotateX(0);
-		}
-	}
-
-	.animate-wiggle {
-		animation: wiggle 0.3s ease-in-out;
-	}
-	.animate-scaleIn {
-		animation: scaleIn 0.2s ease-out;
-	}
-	.animate-slideInDown {
-		animation: slideInDown 0.2s ease-out;
-	}
-	.animate-fadeIn {
-		animation: fadeIn 0.2s ease-out;
-	}
-	.animate-flipIn {
-		animation: flipIn 0.3s ease-out;
 	}
 
 	/* ==========================================
@@ -242,104 +149,19 @@
 	}
 
 	/* ==========================================
-	   GLITTER TWINKLE — GlitterSparkles component
-	   ========================================== */
-	@keyframes glitter-twinkle {
-		0% {
-			opacity: 0.15;
-			transform: rotate(0deg) scale(0.3);
-		}
-		33%,
-		66% {
-			opacity: 1;
-			transform: rotate(180deg) scale(1);
-		}
-		100% {
-			opacity: 0.15;
-			transform: rotate(360deg) scale(0.3);
-		}
-	}
-
-	@keyframes glitter-twinkle-reduced {
-		0%,
-		100% {
-			opacity: 0.5;
-		}
-		50% {
-			opacity: 1;
-		}
-	}
-
-	.animate-glitter-twinkle {
-		animation: glitter-twinkle var(--sparkle-duration, 3s) var(--ease-premium)
-			var(--sparkle-delay, 0s) infinite;
-	}
-
-	/* ==========================================
-	   SPLIT TEXT REVEAL — CSS-only hero text animation
-	   No opacity:0 initial state to preserve LCP
-	   ========================================== */
-	@keyframes split-text-reveal {
-		from {
-			translate: 0 20px;
-			opacity: 0.2;
-		}
-		to {
-			translate: 0 0;
-			opacity: 1;
-		}
-	}
-
-	.animate-split-text-reveal {
-		animation: split-text-reveal 0.5s ease-out both;
-		animation-delay: calc(var(--i, 0) * var(--stagger, 80ms));
-	}
-
-	/* ==========================================
-	   COLLAPSIBLE — Admin menu collapsible groups
-	   ========================================== */
-	@keyframes collapse-down {
-		from {
-			clip-path: inset(0 0 100% 0);
-			opacity: 0;
-		}
-		to {
-			clip-path: inset(0);
-			opacity: 1;
-		}
-	}
-
-	@keyframes collapse-up {
-		from {
-			clip-path: inset(0);
-			opacity: 1;
-		}
-		to {
-			clip-path: inset(0 0 100% 0);
-			opacity: 0;
-		}
-	}
-
-	.animate-collapse-down {
-		animation: collapse-down 200ms ease-out;
-	}
-
-	.animate-collapse-up {
-		animation: collapse-up 200ms ease-out;
-	}
-
-	/* ==========================================
 	   PRODUCT GRID CROSSFADE — Smooth entry after filter/sort change
 	   ========================================== */
+	/* opacity + transform uniquement : filter (blur) n'est pas compositable —
+	   l'animer re-rasterisait chaque carte (image incluse) à chaque frame,
+	   × 24 cartes en cascade, empilé au blur-[2px] du conteneur pendant les
+	   changements de filtre. */
 	@keyframes grid-crossfade-in {
 		from {
 			opacity: 0;
-			filter: blur(4px);
 			transform: scale(0.98);
 		}
 		to {
 			opacity: 1;
-			filter: blur(0);
 			transform: scale(1);
 		}
 	}
@@ -351,49 +173,34 @@
 
 	/* ==========================================
 	   REDUCED MOTION — Disable all animations
+	   Chaque sélecteur listé ici doit avoir un consommateur réel dans le repo
+	   (le bloc a déjà accumulé 10 sélecteurs morts, dont un jamais défini).
 	   ========================================== */
 	@media (prefers-reduced-motion: reduce) {
-		.animate-in {
+		/* .animate-out aussi : tw-animate-css n'a AUCUNE règle reduced-motion, et un
+		   `motion-reduce:animate-none` au call site perd en spécificité contre
+		   `data-[state=closed]:animate-out` (0,1,0 vs 0,2,0) — la fermeture du mega
+		   menu restait animée alors que l'ouverture était instantanée. Le !important
+		   couvre tous les call sites d'un coup. */
+		.animate-in,
+		.animate-out {
 			animation: none !important;
 		}
 
 		.animate-pulse,
 		.animate-sparkle-pulse,
-		/* heart-beat = pulsation infinie de l'icône toast erreur, appliquée sans
-		   motion-safe: au call-site (toast-icons.tsx) — A11Y-AUDIT-005 */
-		.animate-heart-beat {
-			animation: none;
-		}
-
-		/* Fallback statique pour shimmer: couleur unie au lieu du gradient animé */
-		.animate-shimmer {
-			animation: none;
-			background: var(--accent);
-		}
-
-		/* Hand-drawn: afficher directement sans animation */
-		.hand-drawn-underline,
-		.doodle-draw,
-		.doodle-draw-scroll {
-			animation: none;
-			stroke-dashoffset: 0;
-		}
-
-		.animate-wiggle,
-		.animate-scaleIn,
-		.animate-slideInDown,
-		.animate-fadeIn,
-		.animate-flipIn,
+		/* heart-beat = canari e2e (cf. définition ci-dessus) */
+		.animate-heart-beat,
 		.animate-badge-pulse,
-		.animate-split-text-reveal,
-		.animate-collapse-down,
-		.animate-collapse-up,
 		.product-item {
 			animation: none;
 		}
 
-		.animate-glitter-twinkle {
-			animation-name: glitter-twinkle-reduced;
+		/* Fallback statique pour shimmer : l'animation vit sur le ::after —
+		   le supprimer laisse la couleur unie de base (var(--accent)) */
+		.animate-shimmer::after {
+			content: none;
+			animation: none;
 		}
 	}
 }

@@ -56,16 +56,18 @@ export function VariantCard({
 					<CardTitle className={MOBILE_SECTION_TITLE}>Variante</CardTitle>
 					{tooltipText ? (
 						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="-m-2 hidden h-8 min-h-11 w-8 min-w-11 hover:bg-transparent sm:inline-flex"
-									aria-label="Plus d'informations sur la variante"
-								>
-									<Info className="text-muted-foreground hover:text-foreground size-4 transition-colors" />
-								</Button>
+							<TooltipTrigger
+								render={
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon"
+										className="-m-2 hidden h-8 min-h-11 w-8 min-w-11 hover:bg-transparent sm:inline-flex"
+										aria-label="Plus d'informations sur la variante"
+									/>
+								}
+							>
+								<Info className="text-muted-foreground hover:text-foreground size-4 transition-colors" />
 							</TooltipTrigger>
 							<TooltipContent side="bottom" className="max-w-62.5">
 								<p>{tooltipText}</p>

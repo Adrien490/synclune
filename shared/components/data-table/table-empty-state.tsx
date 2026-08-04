@@ -75,11 +75,7 @@ export function TableEmptyState({
 	const resolvedAction =
 		autoResetAction ??
 		actionElement ??
-		(action ? (
-			<Button asChild>
-				<Link href={action.href}>{action.label}</Link>
-			</Button>
-		) : null);
+		(action ? <Button render={<Link href={action.href} />}>{action.label}</Button> : null);
 
 	return (
 		<Empty size="lg" className={className}>

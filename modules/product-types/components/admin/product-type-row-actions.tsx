@@ -25,15 +25,17 @@ export function ProductTypeRowActions(props: ProductTypeRowActionsProps) {
 
 	return (
 		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="size-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
-					aria-label="Actions"
-				>
-					<EllipsisVertical className="size-4" />
-				</Button>
+			<ResponsiveActionMenuTrigger
+				render={
+					<Button
+						variant="ghost"
+						size="sm"
+						className="size-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+						aria-label="Actions"
+					/>
+				}
+			>
+				<EllipsisVertical className="size-4" />
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent title="Actions" description={props.label} sections={sections} />
 		</ResponsiveActionMenu>

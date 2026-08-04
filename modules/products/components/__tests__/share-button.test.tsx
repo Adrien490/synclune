@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -23,13 +25,7 @@ vi.mock("@/shared/utils/cn", () => ({
 
 vi.mock("@/shared/components/ui/tooltip", () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	TooltipTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <>{children}</>,
+	TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 	TooltipContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="tooltip-content">{children}</div>
 	),
@@ -44,29 +40,11 @@ vi.mock("lucide-react", () => ({
 
 vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	DropdownMenuTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <>{children}</>,
+	DropdownMenuTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="dropdown-content">{children}</div>
 	),
-	DropdownMenuItem: ({
-		children,
-		asChild: _asChild,
-		onSelect,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-		onSelect?: () => void;
-	}) => (
-		<button type="button" role="menuitem" onClick={onSelect}>
-			{children}
-		</button>
-	),
+	DropdownMenuItem: (props: RenderPropMockProps) => renderPropMock("div", props),
 }));
 
 // ============================================================================

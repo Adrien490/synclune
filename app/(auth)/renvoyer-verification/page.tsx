@@ -40,8 +40,8 @@ export default function ResendVerificationPage() {
 				</div>
 
 				<div className="text-center">
-					<Button asChild variant="ghost" size="sm">
-						<Link href="/inscription">Créer un nouveau compte</Link>
+					<Button render={<Link href="/inscription" />} variant="ghost" size="sm">
+						Créer un nouveau compte
 					</Button>
 				</div>
 			</div>

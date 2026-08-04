@@ -13,6 +13,7 @@ import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
 import { useRef } from "react";
 import { FieldLabel } from "./field-label";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 
 interface DateTimeFieldProps {
 	/** Label affiché au-dessus du champ */
@@ -87,17 +88,15 @@ export function DateTimeField({
 	max,
 }: DateTimeFieldProps) {
 	const field = useFieldContext<string>();
+	const hasError = useFieldErrorVisibility(field);
 	const helpTextId = helpText ? `${field.name}-help` : undefined;
 	const describedBy =
-		[helpTextId, field.state.meta.errors.length > 0 ? `${field.name}-error` : null]
-			.filter(Boolean)
-			.join(" ") || undefined;
+		[helpTextId, hasError ? `${field.name}-error` : null].filter(Boolean).join(" ") || undefined;
 
 	const selectedDate = parseValue(field.state.value);
 	const minDate = parseValue(min);
 	const maxDate = parseValue(max);
 	const lastTimeRef = useRef("00:00");
-	const hasError = field.state.meta.errors.length > 0;
 
 	const isOutOfRange = (date: Date) => {
 		if (minDate) {
@@ -230,23 +229,25 @@ export function DateTimeField({
 			{/* Desktop: Calendar popover */}
 			<div className={cn("hidden gap-2 md:flex", className)}>
 				<Popover>
-					<PopoverTrigger asChild>
-						<Button
-							type="button"
-							variant="outline"
-							disabled={disabled}
-							aria-invalid={hasError}
-							aria-describedby={describedBy}
-							aria-required={required}
-							aria-labelledby={label ? labelId : undefined}
-							className={cn(
-								"min-h-11 w-full justify-start text-left font-normal",
-								!selectedDate && "text-muted-foreground",
-							)}
-						>
-							<CalendarIcon className="mr-2 size-4" />
-							{displayValue || placeholder}
-						</Button>
+					<PopoverTrigger
+						render={
+							<Button
+								type="button"
+								variant="outline"
+								disabled={disabled}
+								aria-invalid={hasError}
+								aria-describedby={describedBy}
+								aria-required={required}
+								aria-labelledby={label ? labelId : undefined}
+								className={cn(
+									"min-h-11 w-full justify-start text-left font-normal",
+									!selectedDate && "text-muted-foreground",
+								)}
+							/>
+						}
+					>
+						<CalendarIcon className="mr-2 size-4" />
+						{displayValue || placeholder}
 					</PopoverTrigger>
 					<PopoverContent className="w-auto p-0" align="start">
 						<Calendar
@@ -298,7 +299,10 @@ export function DateTimeField({
 				</p>
 			)}
 
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+			/>
 		</Field>
 	);
 }

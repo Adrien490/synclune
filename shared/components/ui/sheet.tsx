@@ -1,78 +1,63 @@
 "use client";
 
+import { Drawer as SheetPrimitive } from "@base-ui/react/drawer";
 import { XIcon } from "lucide-react";
 import * as React from "react";
-import { Drawer as SheetPrimitive } from "vaul";
 
-import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
 
 type SheetDirection = "top" | "right" | "bottom" | "left";
 
-const SheetContext = React.createContext<{ direction: SheetDirection }>({
+const SheetContext = React.createContext<{ direction: SheetDirection; handleOnly: boolean }>({
 	direction: "right",
+	handleOnly: false,
 });
 
 /**
- * Vaul Sheet wrapper avec défauts Synclune.
+ * Vaul exprimait le BORD d'ancrage (`direction`), Base UI exprime le GESTE qui
+ * ferme (`swipeDirection`). Une sheet ancrée à droite se ferme vers la droite.
+ */
+const SWIPE_DIRECTION: Record<SheetDirection, "up" | "down" | "left" | "right"> = {
+	top: "up",
+	bottom: "down",
+	left: "left",
+	right: "right",
+};
+
+/**
+ * Sheet Base UI avec défauts Synclune.
  *
  * Modes de fermeture (cf. `.claude/plans/audit-mes-modales-swipeable-linked-badger.md`) :
  *
- * 1. **Permissif (défaut)** — Swipe-from-anywhere ferme la sheet. Convient aux
- *    contenus courts / lectures simples.
- * 2. **Strict (`handleOnly={true}`)** — Seule la `SheetHandle` visible permet
- *    de fermer la sheet. Convient au contenu scrollable interactif où chaque
- *    touch compte (filtres avec sliders/accordéons/search, long nav).
- * 3. **Saisie clavier (`repositionInputs={true}`)** — Vaul repositionne l'input
- *    focusé au-dessus du clavier mobile (au lieu de scroller). Auto-activé si
- *    `snapPoints` est défini.
+ * 1. **Permissif (défaut)** — swipe depuis n'importe où. Convient aux contenus
+ *    courts / lectures simples.
+ * 2. **Strict (`handleOnly`)** — seule la `SheetHandle` reste préhensible.
+ *    ⚠️ Mécanisme INVERSÉ depuis la migration : Vaul avait une liste blanche,
+ *    Base UI a une liste noire (`data-base-ui-swipe-ignore`). Cf. `ui/drawer.tsx`.
+ * 3. **Saisie clavier (`repositionInputs`)** — `Drawer.VirtualKeyboardProvider`.
+ *    Actif par défaut, comme l'était le défaut Vaul.
+ *
+ * Sans équivalent Base UI, retirés : `scrollLockTimeout`, `closeThreshold` et
+ * `noBodyStyles` (Base UI n'ajoute pas la couche `position: fixed` iOS de Vaul).
  */
 function Sheet({
 	direction = "right",
 	open,
 	onOpenChange,
-	scrollLockTimeout = 800,
-	closeThreshold = 0.15,
-	handleOnly,
+	handleOnly = false,
 	repositionInputs,
+	children,
 	...props
-}: React.ComponentProps<typeof SheetPrimitive.Root> & {
+}: Omit<SheetPrimitive.Root.Props, "onOpenChange" | "swipeDirection" | "children"> & {
+	// `Root.Props.children` accepte aussi une fonction de rendu (API `payload` de
+	// Base UI) ; on ne l'expose pas — nos appelants passent des enfants JSX.
+	children?: React.ReactNode;
 	direction?: SheetDirection;
-	/**
-	 * Délai en ms après un scroll avant que le sheet redevienne draggable.
-	 * Augmenté à 800ms pour éviter les fermetures accidentelles sur mobile.
-	 * @default 800
-	 */
-	scrollLockTimeout?: number;
-	/**
-	 * Fraction de la hauteur du sheet à swiper pour déclencher la fermeture
-	 * (Vaul default 0.25 = ~23% de viewport sur sheet 92dvh, trop exigeant
-	 * sur grands drawers). 0.15 reste un geste délibéré (~14% viewport)
-	 * mais beaucoup plus confortable. La fermeture par velocity (0.4) reste
-	 * inchangée pour les flicks rapides.
-	 * @default 0.15
-	 */
-	closeThreshold?: number;
-	/**
-	 * Si `true`, seule `<SheetHandle>` (la poignée visible) permet de drag/
-	 * fermer la sheet. Le reste du contenu n'écoute pas les gestes
-	 * swipe-to-close. À activer pour les sheets bottom à contenu scrollable
-	 * interactif (filtres, listes longues avec search).
-	 * @default false
-	 */
 	handleOnly?: boolean;
-	/**
-	 * Repositionne l'input focusé au-dessus du clavier mobile (au lieu de
-	 * scroller la page).
-	 *
-	 * ⚠️ Le défaut Vaul est `true`, et ne rien passer forwarde `undefined` —
-	 * donc le comportement par défaut est ACTIF. Ne le passer explicitement que
-	 * pour le désactiver (`false`) ou pour documenter l'intention sur une sheet
-	 * de saisie.
-	 */
 	repositionInputs?: boolean;
+	onOpenChange?: (open: boolean, eventDetails?: SheetPrimitive.Root.ChangeEventDetails) => void;
 }) {
 	// Bouton retour du navigateur (mobile) — ET reprise de l'entrée d'historique
 	// sur TOUTES les autres fermetures (X, scrim, Escape, swipe). Sans ce
@@ -81,64 +66,79 @@ function Sheet({
 	// retour matériel ne produisait rien de visible (un « back » mort par cycle,
 	// cumulatif). `handleClose` ne recule que si notre entrée est encore au
 	// sommet de l'historique — cf. use-back-button-close.
+	//
+	// L'appelant est notifié AVANT que l'entrée soit consommée, pour pouvoir
+	// annuler la fermeture (`eventDetails.cancel()`) — cf. `ui/dialog.tsx`.
+	const skipNextOnCloseRef = React.useRef(false);
+
 	const { handleClose } = useBackButtonClose({
 		isOpen: open ?? false,
-		onClose: () => onOpenChange?.(false),
+		onClose: () => {
+			if (skipNextOnCloseRef.current) {
+				skipNextOnCloseRef.current = false;
+				return;
+			}
+			onOpenChange?.(false);
+		},
 		id: "sheet",
 	});
 
-	const wrappedOnOpenChange = (newOpen: boolean) => {
-		if (!newOpen) {
-			handleClose();
-		} else {
-			onOpenChange?.(true);
+	const wrappedOnOpenChange = (
+		newOpen: boolean,
+		eventDetails: SheetPrimitive.Root.ChangeEventDetails,
+	) => {
+		if (newOpen) {
+			onOpenChange?.(true, eventDetails);
+			return;
 		}
+		onOpenChange?.(false, eventDetails);
+		if (eventDetails.isCanceled) return;
+		skipNextOnCloseRef.current = true;
+		handleClose();
 	};
 
-	// Stacking : si on est déjà dans un Drawer/Sheet Vaul, on monte un
-	// `NestedRoot` (animation scale parent + focus-trap chaîné) au lieu d'un
-	// nouveau `Root` qui écraserait le parent.
-	const isInsideVaul = useIsInsideVaul();
-	const VaulRoot = isInsideVaul ? SheetPrimitive.NestedRoot : SheetPrimitive.Root;
+	const body =
+		repositionInputs === false ? (
+			children
+		) : (
+			<SheetPrimitive.VirtualKeyboardProvider>{children}</SheetPrimitive.VirtualKeyboardProvider>
+		);
 
-	// snapPoints, activeSnapPoint, fadeFromIndex sont forwardés via ...props
-	// (types natifs de Vaul.Root — discriminated union on snapPoints presence).
+	// L'empilement des overlays imbriqués est natif chez Base UI : le
+	// `VaulNestedProvider` maison a disparu, et Escape ne traverse plus qu'une
+	// seule pile de couches — c'est ce qui referme l'invariant du verrou unique.
 	return (
-		<SheetContext.Provider value={{ direction }}>
-			<VaulNestedProvider>
-				<VaulRoot
-					data-slot="sheet"
-					direction={direction}
-					open={open}
-					onOpenChange={wrappedOnOpenChange}
-					scrollLockTimeout={scrollLockTimeout}
-					closeThreshold={closeThreshold}
-					handleOnly={handleOnly}
-					repositionInputs={repositionInputs}
-					noBodyStyles
-					{...props}
-				/>
-			</VaulNestedProvider>
+		<SheetContext.Provider value={{ direction, handleOnly }}>
+			<SheetPrimitive.Root
+				data-slot="sheet"
+				open={open}
+				onOpenChange={wrappedOnOpenChange}
+				swipeDirection={SWIPE_DIRECTION[direction]}
+				{...props}
+			>
+				{body}
+			</SheetPrimitive.Root>
 		</SheetContext.Provider>
 	);
 }
 
-function SheetTrigger({ ...props }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
+function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
 	return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
-function SheetClose({ ...props }: React.ComponentProps<typeof SheetPrimitive.Close>) {
+function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
 	return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
 /**
- * Handle draggable Vaul pour les bottom-sheets mobile.
- * Permet à Vaul de drag/fermer la sheet sans que le contenu interne
- * soit capturé. Rend une pill visible avec hit area étendue à 44px.
+ * Poignée des bottom-sheets mobile. Base UI n'a pas de primitive `Handle` — tout
+ * le popup est préhensible ; la poignée n'est qu'un repère visuel, sauf en mode
+ * `handleOnly` où elle redevient la seule zone non exclue du geste. Pill visible
+ * avec zone tactile étendue.
  */
-function SheetHandle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Handle>) {
+function SheetHandle({ className, ...props }: React.ComponentProps<"div">) {
 	return (
-		<SheetPrimitive.Handle
+		<div
 			data-slot="sheet-handle"
 			className={cn(
 				// Visuel agrandi pour repère pouce : 8×56 (vs 6×40 avant)
@@ -154,22 +154,19 @@ function SheetHandle({ className, ...props }: React.ComponentProps<typeof SheetP
 	);
 }
 
-function SheetPortal({ ...props }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
+function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
 	return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
-function SheetOverlay({
-	className,
-	onClick,
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
+/** `Backdrop` chez Base UI — le nom public reste `SheetOverlay`. */
+function SheetOverlay({ className, onClick, ...props }: SheetPrimitive.Backdrop.Props) {
 	return (
-		<SheetPrimitive.Overlay
+		<SheetPrimitive.Backdrop
 			data-slot="sheet-overlay"
 			className={cn(
 				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
-				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
-				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
+				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
+				"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
 				className,
 			)}
 			onClick={onClick}
@@ -177,6 +174,37 @@ function SheetOverlay({
 		/>
 	);
 }
+
+/** Alignement du panneau dans le `Viewport` (couche fixe plein écran). */
+const VIEWPORT_ALIGNMENT: Record<SheetDirection, string> = {
+	bottom: "items-end justify-center",
+	top: "items-start justify-center",
+	left: "items-stretch justify-start",
+	right: "items-stretch justify-end",
+};
+
+/**
+ * Entrée, sortie ET suivi du geste partagent la MÊME propriété `transform`, donc
+ * une transition — pas une animation keyframes comme les autres overlays. Une
+ * animation `slide-in` écraserait le `translate` piloté par le doigt (les
+ * keyframes l'emportent sur la déclaration, puis `fill-mode: both` fige la
+ * valeur finale), et le panneau se décrocherait du geste.
+ *
+ * Corollaire : le killswitch `prefers-reduced-motion` d'`animations.css` ne
+ * coupe que `animation` — c'est `app/styles/pwa.css` qui neutralise CES
+ * transitions-là.
+ */
+const SWIPE_TRANSFORM: Record<SheetDirection, string> = {
+	bottom:
+		"[transform:translateY(var(--drawer-swipe-movement-y))] data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)]",
+	top: "[transform:translateY(var(--drawer-swipe-movement-y))] data-starting-style:[transform:translateY(-100%)] data-ending-style:[transform:translateY(-100%)]",
+	left: "[transform:translateX(var(--drawer-swipe-movement-x))] data-starting-style:[transform:translateX(-100%)] data-ending-style:[transform:translateX(-100%)]",
+	right:
+		"[transform:translateX(var(--drawer-swipe-movement-x))] data-starting-style:[transform:translateX(100%)] data-ending-style:[transform:translateX(100%)]",
+};
+
+/** Courbe Vaul historique, conservée pour ne pas changer le ressenti. */
+const PANEL_TRANSITION = "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]";
 
 function SheetContent({
 	className,
@@ -187,11 +215,11 @@ function SheetContent({
 	onOverlayClick,
 	registerOverlay = true,
 	...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+}: Omit<SheetPrimitive.Popup.Props, "className"> & {
+	className?: string;
 	overlayClassName?: string;
 	showCloseButton?: boolean;
-	/** Accessible title for screen readers. Renders a sr-only Drawer.Title
-	 * to satisfy Radix's accessibility check. */
+	/** Accessible title for screen readers. Renders a sr-only Sheet.Title. */
 	title?: string;
 	/** Fired when the user taps the scrim overlay to dismiss.
 	 * Useful for attaching haptic feedback. */
@@ -204,44 +232,67 @@ function SheetContent({
 	 */
 	registerOverlay?: boolean;
 }) {
-	const { direction } = React.use(SheetContext);
+	const { direction, handleOnly } = React.use(SheetContext);
 
 	return (
 		<SheetPortal>
 			<OverlayStackRegister enabled={registerOverlay} />
 			<SheetOverlay className={overlayClassName} onClick={onOverlayClick} />
-			<SheetPrimitive.Content
-				data-slot="sheet-content"
-				className={cn(
-					// Base + group pour permettre group-has-[[data-pending]]/sheet sur les descendants
-					"group/sheet bg-background fixed z-(--z-overlay) flex flex-col gap-4 shadow-lg transition ease-in-out",
-					// Right sheet avec safe-area latérale (mode paysage)
-					direction === "right" &&
-						"inset-y-0 right-0 h-full w-full border-l pr-[max(0px,env(safe-area-inset-right))] sm:max-w-sm",
-					// Left sheet avec safe-area latérale (mode paysage)
-					direction === "left" &&
-						"inset-y-0 left-0 h-full w-full border-r pl-[max(0px,env(safe-area-inset-left))] sm:max-w-sm",
-					direction === "top" &&
-						"inset-x-0 top-0 h-auto border-b pt-[max(0px,env(safe-area-inset-top))]",
-					direction === "bottom" &&
-						"inset-x-0 bottom-0 h-auto border-t pb-[max(0px,env(safe-area-inset-bottom))]",
-					className,
-				)}
-				{...props}
+			<SheetPrimitive.Viewport
+				data-slot="sheet-viewport"
+				className={cn("fixed inset-0 z-(--z-overlay) flex", VIEWPORT_ALIGNMENT[direction])}
 			>
-				{title && <SheetPrimitive.Title className="sr-only">{title}</SheetPrimitive.Title>}
-				{children}
-				{showCloseButton && (
-					<SheetPrimitive.Close
-						aria-label="Fermer le panneau"
-						className="focus-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 inline-flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none"
-					>
-						<XIcon className="size-5" aria-hidden="true" />
-						<span className="sr-only">Fermer</span>
-					</SheetPrimitive.Close>
-				)}
-			</SheetPrimitive.Content>
+				<SheetPrimitive.Popup
+					data-slot="sheet-content"
+					data-direction={direction}
+					className={cn(
+						// Base + group pour permettre group-has-[[data-pending]]/sheet sur les descendants
+						"group/sheet bg-background flex flex-col gap-4 shadow-lg",
+						PANEL_TRANSITION,
+						SWIPE_TRANSFORM[direction],
+						// Right sheet avec safe-area latérale (mode paysage)
+						direction === "right" &&
+							"h-full w-full border-l pr-[max(0px,env(safe-area-inset-right))] sm:max-w-sm",
+						// Left sheet avec safe-area latérale (mode paysage)
+						direction === "left" &&
+							"h-full w-full border-r pl-[max(0px,env(safe-area-inset-left))] sm:max-w-sm",
+						direction === "top" && "h-auto w-full border-b pt-[max(0px,env(safe-area-inset-top))]",
+						direction === "bottom" &&
+							"h-auto w-full border-t pb-[max(0px,env(safe-area-inset-bottom))]",
+						className,
+					)}
+					{...props}
+				>
+					{title && <SheetPrimitive.Title className="sr-only">{title}</SheetPrimitive.Title>}
+					<SheetSwipeGuard enabled={handleOnly}>
+						{children}
+						{showCloseButton && (
+							<SheetPrimitive.Close
+								aria-label="Fermer le panneau"
+								className="focus-ring absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 inline-flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none"
+							>
+								<XIcon className="size-5" aria-hidden="true" />
+								<span className="sr-only">Fermer</span>
+							</SheetPrimitive.Close>
+						)}
+					</SheetSwipeGuard>
+				</SheetPrimitive.Popup>
+			</SheetPrimitive.Viewport>
 		</SheetPortal>
+	);
+}
+
+/**
+ * Exclut son sous-arbre du geste de fermeture (mode `handleOnly`).
+ * `display: contents` : invisible pour le flex du popup, mais présent dans
+ * l'arbre DOM où le `closest()` de Base UI le trouve. Cf. `ui/drawer.tsx`.
+ */
+function SheetSwipeGuard({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
+	if (!enabled) return children;
+	return (
+		<div className="contents" data-base-ui-swipe-ignore="">
+			{children}
+		</div>
 	);
 }
 
@@ -265,7 +316,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Title>) {
+function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
 	return (
 		<SheetPrimitive.Title
 			data-slot="sheet-title"
@@ -275,10 +326,7 @@ function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPr
 	);
 }
 
-function SheetDescription({
-	className,
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Description>) {
+function SheetDescription({ className, ...props }: SheetPrimitive.Description.Props) {
 	return (
 		<SheetPrimitive.Description
 			data-slot="sheet-description"

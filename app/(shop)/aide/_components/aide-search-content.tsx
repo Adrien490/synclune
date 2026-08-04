@@ -105,12 +105,12 @@ export function AideSearchContent({ items }: AideSearchContentProps) {
 					</EmptyHeader>
 				</Empty>
 			) : trimmed ? (
-				<Accordion type="single" collapsible className="w-full">
+				<Accordion multiple={false} className="w-full">
 					{filtered.map((item) => (
 						<AccordionItem key={item.id} value={item.id} className="scroll-mt-24">
 							<AccordionTrigger
 								headingLevel={3}
-								className="text-base data-[state=open]:font-medium sm:text-lg"
+								className="text-base data-panel-open:font-medium sm:text-lg"
 							>
 								{item.question}
 							</AccordionTrigger>
@@ -133,12 +133,12 @@ export function AideSearchContent({ items }: AideSearchContentProps) {
 								>
 									{FAQ_SECTIONS[sectionKey]}
 								</h2>
-								<Accordion type="single" collapsible className="w-full">
+								<Accordion multiple={false} className="w-full">
 									{sectionItems.map((item) => (
 										<AccordionItem key={item.id} value={item.id} className="scroll-mt-24">
 											<AccordionTrigger
 												headingLevel={3}
-												className="text-base data-[state=open]:font-medium sm:text-lg"
+												className="text-base data-panel-open:font-medium sm:text-lg"
 											>
 												{item.question}
 											</AccordionTrigger>

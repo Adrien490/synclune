@@ -55,10 +55,15 @@ describe("Button", () => {
 		expect(screen.getByRole("button")).toBeDisabled();
 	});
 
-	it("renders as a child element when asChild is true", () => {
+	it("renders the element passed to `render` instead of the default button", () => {
 		render(
-			<Button asChild>
-				<a href="/test">Link</a>
+			<Button
+				render={
+					// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants du Button
+					<a href="https://example.com/test" />
+				}
+			>
+				Link
 			</Button>,
 		);
 		expect(screen.getByRole("link", { name: "Link" })).toBeInTheDocument();

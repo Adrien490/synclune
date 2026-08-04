@@ -323,20 +323,22 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 				)}
 
 				<ResponsiveActionMenu>
-					<ResponsiveActionMenuTrigger asChild>
-						<Button
-							variant="outline"
-							size="sm"
-							aria-label="Plus d'actions"
-							aria-busy={isExporting || undefined}
-							className="min-h-11 min-w-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 sm:min-w-9"
-						>
-							{isExporting ? (
-								<Spinner presentational />
-							) : (
-								<Ellipsis className="size-4" aria-hidden="true" />
-							)}
-						</Button>
+					<ResponsiveActionMenuTrigger
+						render={
+							<Button
+								variant="outline"
+								size="sm"
+								aria-label="Plus d'actions"
+								aria-busy={isExporting || undefined}
+								className="min-h-11 min-w-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 sm:min-w-9"
+							/>
+						}
+					>
+						{isExporting ? (
+							<Spinner presentational />
+						) : (
+							<Ellipsis className="size-4" aria-hidden="true" />
+						)}
 					</ResponsiveActionMenuTrigger>
 					<ResponsiveActionMenuContent
 						title="Actions"

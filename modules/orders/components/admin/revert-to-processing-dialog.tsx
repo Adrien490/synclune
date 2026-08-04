@@ -56,24 +56,22 @@ export function RevertToProcessingDialog() {
 			<ResponsiveDialogContent>
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Annuler l'expédition</ResponsiveDialogTitle>
-					<ResponsiveDialogDescription asChild>
-						<div>
-							<p>
-								Êtes-vous sûr de vouloir annuler l'expédition de la commande{" "}
-								<strong>{dialog.data?.orderNumber}</strong> ?
-							</p>
-							{dialog.data?.trackingNumber && (
-								<>
-									<p className="text-warning mt-2">
-										Le numéro de suivi ({dialog.data.trackingNumber}) sera supprimé.
-									</p>
-									<p className="text-warning mt-2">
-										⚠️ Le client a reçu un email d'expédition. Pensez à le prévenir manuellement que
-										son numéro de suivi n'est plus valide.
-									</p>
-								</>
-							)}
-						</div>
+					<ResponsiveDialogDescription render={<div />}>
+						<p>
+							Êtes-vous sûr de vouloir annuler l'expédition de la commande{" "}
+							<strong>{dialog.data?.orderNumber}</strong> ?
+						</p>
+						{dialog.data?.trackingNumber && (
+							<>
+								<p className="text-warning mt-2">
+									Le numéro de suivi ({dialog.data.trackingNumber}) sera supprimé.
+								</p>
+								<p className="text-warning mt-2">
+									⚠️ Le client a reçu un email d'expédition. Pensez à le prévenir manuellement que
+									son numéro de suivi n'est plus valide.
+								</p>
+							</>
+						)}
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 

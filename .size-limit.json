@@ -54,12 +54,6 @@
 		"gzip": true
 	},
 	{
-		"name": "Account (espace client)",
-		"path": ".next/static/chunks/app/(account)/**/*.js",
-		"limit": "60 kB",
-		"gzip": true
-	},
-	{
 		"name": "Legal pages",
 		"path": ".next/static/chunks/app/(legal)/**/*.js",
 		"limit": "30 kB",

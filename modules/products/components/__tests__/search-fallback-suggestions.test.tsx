@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ---------------------------------------------------------------------------
 // Hoisted mocks
 // ---------------------------------------------------------------------------
@@ -63,26 +65,8 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		asChild,
-		variant,
-		size,
-		className,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-		variant?: string;
-		size?: string;
-		className?: string;
-	}) => {
-		if (asChild) return <>{children}</>;
-		return (
-			<button data-variant={variant} data-size={size} className={className}>
-				{children}
-			</button>
-		);
-	},
+	Button: ({ variant, size, ...props }: RenderPropMockProps) =>
+		renderPropMock("button", { "data-variant": variant, "data-size": size, ...props }),
 }));
 
 /**
@@ -259,7 +243,7 @@ describe("SearchFallbackSuggestions", () => {
 				}),
 			);
 
-			expect(screen.getByTestId("empty-description")).toHaveTextContent("Vouliez-vous dire");
+			expect(screen.getByTestId("empty-description")).toHaveTextContent("Tu voulais dire");
 
 			const link = screen.getByRole("link", { name: "bague" });
 			expect(link).toHaveAttribute("href", "/produits?search=bague");

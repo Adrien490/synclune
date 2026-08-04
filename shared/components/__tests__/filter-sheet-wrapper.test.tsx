@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // Mocks
 // ============================================================================
@@ -12,7 +14,8 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 				{children}
 			</div>
 		) : null,
-	SheetTrigger: ({ children }: any) => <div data-testid="sheet-trigger">{children}</div>,
+	SheetTrigger: (props: RenderPropMockProps) =>
+		renderPropMock("div", { "data-testid": "sheet-trigger", ...props }),
 	SheetContent: ({ children, onKeyDown, ...props }: any) => (
 		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
 		<div data-testid="sheet-content" onKeyDown={onKeyDown} {...props}>
@@ -29,7 +32,7 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 			{children}
 		</div>
 	),
-	SheetClose: ({ children }: any) => <>{children}</>,
+	SheetClose: (props: RenderPropMockProps) => renderPropMock("div", props),
 	SheetDescription: ({ children }: any) => <p>{children}</p>,
 	SheetHandle: () => <span data-testid="sheet-handle" />,
 }));
@@ -681,10 +684,10 @@ describe("FilterSheetWrapper", () => {
 			expect(sheet).toHaveAttribute("data-reposition-inputs", "true");
 		});
 
-		it("ScrollArea content region carries data-vaul-no-drag (defensive isolation of internal scroll)", () => {
+		it("ScrollArea content region carries data-base-ui-swipe-ignore (defensive isolation of internal scroll)", () => {
 			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
 			const scrollArea = screen.getByTestId("scroll-area");
-			expect(scrollArea).toHaveAttribute("data-vaul-no-drag");
+			expect(scrollArea).toHaveAttribute("data-base-ui-swipe-ignore");
 		});
 	});
 });

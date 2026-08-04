@@ -50,29 +50,31 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 			<SidebarMenu>
 				<SidebarMenuItem>
 					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<SidebarMenuButton
-								size="lg"
-								tooltip={user.name}
-								className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-							>
-								<Avatar className="size-8 shrink-0 rounded-lg">
-									<AvatarImage src={user.image ?? undefined} alt="" />
-									<AvatarFallback className="rounded-lg text-xs font-medium">
-										{initials}
-									</AvatarFallback>
-								</Avatar>
-								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-medium">{user.name}</span>
-									<span className="text-muted-foreground truncate text-xs" title={user.email}>
-										{user.email}
-									</span>
-								</div>
-								<ChevronsUpDown className="ml-auto size-4" aria-hidden="true" />
-							</SidebarMenuButton>
+						<DropdownMenuTrigger
+							render={
+								<SidebarMenuButton
+									size="lg"
+									tooltip={user.name}
+									className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+								/>
+							}
+						>
+							<Avatar className="size-8 shrink-0 rounded-lg">
+								<AvatarImage src={user.image ?? undefined} alt="" />
+								<AvatarFallback className="rounded-lg text-xs font-medium">
+									{initials}
+								</AvatarFallback>
+							</Avatar>
+							<div className="grid flex-1 text-left text-sm leading-tight">
+								<span className="truncate font-medium">{user.name}</span>
+								<span className="text-muted-foreground truncate text-xs" title={user.email}>
+									{user.email}
+								</span>
+							</div>
+							<ChevronsUpDown className="ml-auto size-4" aria-hidden="true" />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent
-							className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+							className="w-[--anchor-width] min-w-56 rounded-lg"
 							side={isMobile ? "bottom" : "right"}
 							align="end"
 							sideOffset={4}
@@ -80,7 +82,7 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 							{/* L'aide raccourcis n'était atteignable que par une icône du header
 							    dont seul le survol révélait la fonction, ou en connaissant `?`
 							    d'avance. Une entrée nommée dans le menu la rend découvrable. */}
-							<DropdownMenuItem className="cursor-pointer" onSelect={() => openShortcuts()}>
+							<DropdownMenuItem className="cursor-pointer" onClick={() => openShortcuts()}>
 								<Keyboard aria-hidden="true" />
 								Raccourcis clavier
 								<KbdGroup className="ml-auto">
@@ -89,7 +91,11 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<LogoutAlertDialog>
-								<DropdownMenuItem preventDefault variant="destructive" className="cursor-pointer">
+								<DropdownMenuItem
+									closeOnClick={false}
+									variant="destructive"
+									className="cursor-pointer"
+								>
 									<LogOut aria-hidden="true" />
 									Déconnexion
 								</DropdownMenuItem>

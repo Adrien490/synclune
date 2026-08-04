@@ -22,19 +22,21 @@ export function NavbarIconButtons({ isAdmin, userName, userEmail }: NavbarIconBu
 		<>
 			{/* Icône favoris (visible sur mobile et desktop) */}
 			<Tooltip>
-				<TooltipTrigger asChild>
-					<Link
-						href={ROUTES.SHOP.FAVORITES}
-						className={cn("inline-flex", iconButtonClassName)}
-						aria-label="Accéder à mes favoris"
-					>
-						<Heart
-							size={20}
-							className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105"
-							aria-hidden="true"
+				<TooltipTrigger
+					render={
+						<Link
+							href={ROUTES.SHOP.FAVORITES}
+							className={cn("inline-flex", iconButtonClassName)}
+							aria-label="Accéder à mes favoris"
 						/>
-						<WishlistBadge />
-					</Link>
+					}
+				>
+					<Heart
+						size={20}
+						className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105"
+						aria-hidden="true"
+					/>
+					<WishlistBadge />
 				</TooltipTrigger>
 				<TooltipContent className="hidden lg:block">Favoris</TooltipContent>
 			</Tooltip>
@@ -47,9 +49,9 @@ export function NavbarIconButtons({ isAdmin, userName, userEmail }: NavbarIconBu
 
 			{/* Icône panier - Ouvre le cart sheet */}
 			<Tooltip>
-				<TooltipTrigger asChild>
-					<CartSheetTrigger className={cn("inline-flex", iconButtonClassName)} />
-				</TooltipTrigger>
+				<TooltipTrigger
+					render={<CartSheetTrigger className={cn("inline-flex", iconButtonClassName)} />}
+				></TooltipTrigger>
 				<TooltipContent className="hidden lg:block">Panier</TooltipContent>
 			</Tooltip>
 		</>

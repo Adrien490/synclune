@@ -45,17 +45,15 @@ export function MarkAsDeliveredAlertDialog() {
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Confirmer la livraison</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									Êtes-vous sûr de vouloir marquer la commande{" "}
-									<strong>{dialog.data?.orderNumber}</strong> comme livrée ?
-								</p>
-								<p className="text-muted-foreground mt-4 text-sm">
-									Cette action force le statut si le webhook du transporteur ne fonctionne pas. La
-									date de livraison sera enregistrée.
-								</p>
-							</div>
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								Êtes-vous sûr de vouloir marquer la commande{" "}
+								<strong>{dialog.data?.orderNumber}</strong> comme livrée ?
+							</p>
+							<p className="text-muted-foreground mt-4 text-sm">
+								Cette action force le statut si le webhook du transporteur ne fonctionne pas. La
+								date de livraison sera enregistrée.
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

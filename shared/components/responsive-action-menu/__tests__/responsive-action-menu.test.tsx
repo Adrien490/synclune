@@ -93,14 +93,17 @@ describe("ResponsiveActionMenu — desktop", () => {
 		const user = userEvent.setup();
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 
 		expect(screen.getByRole("menu")).toBeInTheDocument();
 		expect(screen.getByRole("menuitem", { name: /Modifier/ })).toBeInTheDocument();
@@ -111,14 +114,17 @@ describe("ResponsiveActionMenu — desktop", () => {
 		const user = userEvent.setup();
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 
 		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
 	});
@@ -127,8 +133,8 @@ describe("ResponsiveActionMenu — desktop", () => {
 		const user = userEvent.setup();
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent
 					title="Actions"
@@ -138,6 +144,9 @@ describe("ResponsiveActionMenu — desktop", () => {
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 
 		expect(screen.queryByText("Caché")).not.toBeInTheDocument();
 	});
@@ -156,14 +165,17 @@ describe("ResponsiveActionMenu — desktop", () => {
 
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 		await user.click(screen.getByRole("menuitem", { name: /Supprimer/ }));
 
 		expect(onDelete).toHaveBeenCalledTimes(1);
@@ -174,14 +186,17 @@ describe("ResponsiveActionMenu — desktop", () => {
 		const user = userEvent.setup();
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 		const link = screen.getByRole("menuitem", { name: /Voir/ });
 		expect(link.getAttribute("href") ?? link.querySelector("a")?.getAttribute("href")).toBe(
 			"/creations/test",
@@ -200,19 +215,23 @@ describe("ResponsiveActionMenu — desktop", () => {
 
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 		mockTriggerHaptic.mockClear();
 
-		const item = screen.getByRole("menuitem", { name: /Modifier/ });
-		item.focus();
-		await user.keyboard("{Enter}");
+		// Base UI garde le focus DOM sur le popup et surligne l'item courant
+		// (`aria-activedescendant`) : `item.focus()` ne désigne plus la cible du
+		// clavier. On emprunte le vrai chemin utilisateur.
+		await user.keyboard("{ArrowDown}{Enter}");
 
 		expect(onEdit).toHaveBeenCalledTimes(1);
 		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
@@ -222,14 +241,17 @@ describe("ResponsiveActionMenu — desktop", () => {
 		const user = userEvent.setup();
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 		expect(screen.getByRole("menu")).toBeInTheDocument();
 
 		await user.keyboard("{Escape}");
@@ -257,14 +279,17 @@ describe("ResponsiveActionMenu — desktop", () => {
 
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 		const item = screen.getByRole("menuitem", { name: /Dupliquer/ });
 		expect(item).toHaveAttribute("aria-busy", "true");
 	});
@@ -273,14 +298,17 @@ describe("ResponsiveActionMenu — desktop", () => {
 		const user = userEvent.setup();
 		render(
 			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Actions" }));
+		// Base UI monte le popup de façon asynchrone (Radix le faisait dans le même
+		// tick) : attendre le menu avant toute assertion synchrone.
+		await screen.findByRole("menu");
 		expect(
 			screen.getByText(/Utilisez les flèches pour naviguer/i, { selector: "span.sr-only" }),
 		).toBeInTheDocument();
@@ -295,8 +323,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 	it("renders a Vaul Drawer with the sheet title and all actions", () => {
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent
 					title="Actions"
@@ -316,8 +344,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 	it("renders the uppercase section label when provided", () => {
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
@@ -329,8 +357,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 	it("renders an 'Annuler' button in the sticky footer", () => {
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
@@ -350,8 +378,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -382,8 +410,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -398,8 +426,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 	it("announces the action count via an aria-live region", () => {
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
@@ -420,8 +448,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -435,8 +463,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 	it("fires haptic `selection` when the overlay/scrim is tapped", () => {
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
@@ -452,8 +480,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 	it("fires haptic `light` when tapping the Annuler button", () => {
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={buildSections()} />
 			</ResponsiveActionMenu>,
@@ -482,8 +510,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -508,8 +536,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -538,8 +566,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -569,8 +597,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -591,8 +619,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -615,8 +643,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={onOpenChange}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -646,8 +674,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={onOpenChange}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,
@@ -675,8 +703,8 @@ describe("ResponsiveActionMenu — mobile", () => {
 
 		render(
 			<ResponsiveActionMenu open onOpenChange={() => {}}>
-				<ResponsiveActionMenuTrigger asChild>
-					<button type="button">Actions</button>
+				<ResponsiveActionMenuTrigger render={<button type="button" />}>
+					Actions
 				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions" sections={sections} />
 			</ResponsiveActionMenu>,

@@ -58,19 +58,17 @@ export function ToggleDiscountStatusAlertDialog() {
 						<ResponsiveAlertDialogTitle>
 							{isActive ? "Désactiver" : "Activer"} le code promo
 						</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div className="space-y-4">
-								<div>
-									Vous êtes sur le point de {targetState} le code promo{" "}
-									<strong>&quot;{dialog.data?.discountCode}&quot;</strong>.
-								</div>
+						<ResponsiveAlertDialogDescription render={<div className="space-y-4" />}>
+							<div>
+								Vous êtes sur le point de {targetState} le code promo{" "}
+								<strong>&quot;{dialog.data?.discountCode}&quot;</strong>.
+							</div>
 
-								<div className="bg-muted rounded-md p-3">
-									<div className="text-sm">
-										{isActive
-											? "Le code ne sera plus utilisable par les clients. Vous pourrez le réactiver à tout moment."
-											: "Le code redeviendra utilisable par les clients (sous réserve des autres conditions de validité)."}
-									</div>
+							<div className="bg-muted rounded-md p-3">
+								<div className="text-sm">
+									{isActive
+										? "Le code ne sera plus utilisable par les clients. Vous pourrez le réactiver à tout moment."
+										: "Le code redeviendra utilisable par les clients (sous réserve des autres conditions de validité)."}
 								</div>
 							</div>
 						</ResponsiveAlertDialogDescription>

@@ -41,8 +41,8 @@ export default function AdminError({
 							<Button size="lg" onClick={reset}>
 								Réessayer
 							</Button>
-							<Button asChild variant="secondary" size="lg">
-								<Link href="/admin">Retour au tableau de bord</Link>
+							<Button render={<Link href="/admin" />} variant="secondary" size="lg">
+								Retour au tableau de bord
 							</Button>
 						</div>
 					}

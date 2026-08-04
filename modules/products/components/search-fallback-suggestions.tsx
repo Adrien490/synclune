@@ -15,6 +15,7 @@ import {
 	EmptyDescription,
 } from "@/shared/components/ui/empty";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { ProductCardSkeleton } from "./product-card-skeleton";
 import { ResetSearchFiltersAction } from "./reset-search-filters-action";
 import { SearchCorrectionSuggestion } from "./search-correction-suggestion";
 
@@ -127,8 +128,14 @@ export async function SearchFallbackSuggestions({
 					</h2>
 					<div className="flex flex-wrap justify-center gap-2">
 						{productTypes.map((type) => (
-							<Button key={type.slug} asChild variant="outline" size="sm" className="rounded-full">
-								<Link href={`/produits/${type.slug}`}>{type.label}</Link>
+							<Button
+								key={type.slug}
+								render={<Link href={`/produits/${type.slug}`} />}
+								variant="outline"
+								size="sm"
+								className="rounded-full"
+							>
+								{type.label}
 							</Button>
 						))}
 					</div>
@@ -156,12 +163,10 @@ export function SearchFallbackSuggestionsSkeleton() {
 			<div className="space-y-4">
 				<Skeleton className="mx-auto h-6 w-48" />
 				<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+					{/* SSOT ProductCardSkeleton — l'ancien skeleton inline gardait le
+					    ratio 3/4 mobile d'avant l'unification 4/5 (CLS au swap) */}
 					{Array.from({ length: 4 }).map((_, i) => (
-						<div key={i} className="space-y-3">
-							<Skeleton className="aspect-3/4 rounded-lg sm:aspect-4/5" />
-							<Skeleton className="h-4 w-3/4" />
-							<Skeleton className="h-4 w-1/2" />
-						</div>
+						<ProductCardSkeleton key={i} />
 					))}
 				</div>
 			</div>

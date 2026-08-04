@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 
 // ============================================================================
@@ -24,7 +26,7 @@ vi.mock("@/shared/components/ui/button", () => {
 
 vi.mock("@/shared/components/ui/tooltip", () => ({
 	Tooltip: ({ children }: { children: unknown }) => children,
-	TooltipTrigger: ({ children, asChild: _a }: { children: unknown; asChild?: boolean }) => children,
+	TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 	TooltipContent: ({ children }: { children: unknown }) => {
 		const { createElement } = require("react");
 		return createElement("div", { "data-testid": "tooltip-content" }, children);

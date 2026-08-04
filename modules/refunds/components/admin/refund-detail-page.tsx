@@ -169,11 +169,13 @@ export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 									/>
 								</DetailInfoRow>
 							</DetailInfoList>
-							<Button asChild variant="outline" className="h-11 w-full justify-start gap-3">
-								<Link href={`/admin/ventes/commandes/${refund.order.id}`}>
-									<ExternalLink className="size-4" aria-hidden="true" />
-									Voir la commande
-								</Link>
+							<Button
+								render={<Link href={`/admin/ventes/commandes/${refund.order.id}`} />}
+								variant="outline"
+								className="h-11 w-full justify-start gap-3"
+							>
+								<ExternalLink className="size-4" aria-hidden="true" />
+								Voir la commande
 							</Button>
 						</CardContent>
 					</Card>

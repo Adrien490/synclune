@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
@@ -87,13 +89,7 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 			{children}
 		</div>
 	),
-	TooltipTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <div>{children}</div>,
+	TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 }));
 
 import { DashboardHeader } from "../dashboard-header";

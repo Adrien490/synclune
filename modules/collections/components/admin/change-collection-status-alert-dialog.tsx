@@ -95,27 +95,25 @@ export function ChangeCollectionStatusAlertDialog() {
 						<ResponsiveAlertDialogTitle>
 							Changer le statut en &quot;{config.label}&quot;
 						</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div className="space-y-4">
-								<div>
-									Vous êtes sur le point de changer le statut de{" "}
-									<strong>&quot;{dialog.data?.collectionName}&quot;</strong> de{" "}
-									<span className="font-semibold">{STATUS_CONFIG[currentStatus].label}</span> vers{" "}
-									<span className="font-semibold">{config.label}</span>.
-								</div>
-
-								<div className="bg-muted rounded-md p-3">
-									<div className="text-sm">{config.description}</div>
-								</div>
-
-								{isSignificantChange && (
-									<div className="text-muted-foreground text-xs">
-										{targetStatus === CollectionStatus.PUBLIC
-											? "La collection deviendra visible par tous les visiteurs de la boutique."
-											: "La collection ne sera plus visible sur la boutique."}
-									</div>
-								)}
+						<ResponsiveAlertDialogDescription render={<div className="space-y-4" />}>
+							<div>
+								Vous êtes sur le point de changer le statut de{" "}
+								<strong>&quot;{dialog.data?.collectionName}&quot;</strong> de{" "}
+								<span className="font-semibold">{STATUS_CONFIG[currentStatus].label}</span> vers{" "}
+								<span className="font-semibold">{config.label}</span>.
 							</div>
+
+							<div className="bg-muted rounded-md p-3">
+								<div className="text-sm">{config.description}</div>
+							</div>
+
+							{isSignificantChange && (
+								<div className="text-muted-foreground text-xs">
+									{targetStatus === CollectionStatus.PUBLIC
+										? "La collection deviendra visible par tous les visiteurs de la boutique."
+										: "La collection ne sera plus visible sur la boutique."}
+								</div>
+							)}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

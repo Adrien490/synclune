@@ -1,5 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 import type * as LucideReact from "lucide-react";
 
 // ============================================================================
@@ -104,38 +106,19 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 			{children}
 		</div>
 	),
-	DropdownMenuItem: ({
-		children,
-		className,
-		variant,
-		preventDefault,
-		onSelect,
-	}: {
-		children: React.ReactNode;
-		preventDefault?: boolean;
-		variant?: "default" | "destructive";
-		className?: string;
-		onSelect?: () => void;
-	}) => (
-		<button
-			data-testid="dropdown-item"
-			role="menuitem"
-			className={className}
-			data-variant={variant}
-			data-prevent-default={preventDefault ? "true" : undefined}
-			onClick={onSelect}
-		>
-			{children}
-		</button>
-	),
+	DropdownMenuItem: ({ variant, closeOnClick, ...props }: RenderPropMockProps) =>
+		renderPropMock("button", {
+			"data-testid": "dropdown-item",
+			role: "menuitem",
+			"data-variant": variant,
+			// `preventDefault` (Radix) est devenu `closeOnClick={false}` (Base UI) ;
+			// le testid reste le même pour ne pas réécrire les assertions.
+			"data-prevent-default": closeOnClick === false ? "true" : undefined,
+			...props,
+		}),
 	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <div data-testid="dropdown-trigger">{children}</div>,
+	DropdownMenuTrigger: (props: RenderPropMockProps) =>
+		renderPropMock("div", { "data-testid": "dropdown-trigger", ...props }),
 }));
 
 vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({

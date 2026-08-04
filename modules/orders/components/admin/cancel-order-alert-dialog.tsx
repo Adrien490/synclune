@@ -68,75 +68,73 @@ export function CancelOrderAlertDialog() {
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Confirmer l'annulation</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									Êtes-vous sûr de vouloir annuler la commande{" "}
-									<strong>{cancelDialog.data?.orderNumber}</strong> ?
-								</p>
-								{isPaid && (
-									<div className="border-warning/30 bg-warning/10 mt-3 space-y-2 rounded-md border p-3">
-										<p className="text-warning">
-											Cette commande a été payée. Le statut de paiement passera à REFUNDED.
-										</p>
-										<label
-											htmlFor="cancel-order-auto-refund"
-											className="flex items-center gap-2 text-sm"
-										>
-											<Checkbox
-												id="cancel-order-auto-refund"
-												checked={autoRefund}
-												onCheckedChange={(v) => setAutoRefund(v === true)}
-												disabled={isPending}
-											/>
-											<span>
-												Créer automatiquement le remboursement Stripe (sera traité par le cron)
-											</span>
-										</label>
-										{!autoRefund && (
-											<p className="text-muted-foreground text-xs">
-												Sans cette option, le remboursement Stripe devra être créé manuellement
-												depuis le module Remboursements.
-											</p>
-										)}
-									</div>
-								)}
-								{hasGeneratedInvoice && (
-									<div
-										className="border-warning/40 bg-warning/5 mt-3 space-y-1 rounded-md border p-3"
-										role="alert"
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								Êtes-vous sûr de vouloir annuler la commande{" "}
+								<strong>{cancelDialog.data?.orderNumber}</strong> ?
+							</p>
+							{isPaid && (
+								<div className="border-warning/30 bg-warning/10 mt-3 space-y-2 rounded-md border p-3">
+									<p className="text-warning">
+										Cette commande a été payée. Le statut de paiement passera à REFUNDED.
+									</p>
+									<label
+										htmlFor="cancel-order-auto-refund"
+										className="flex items-center gap-2 text-sm"
 									>
-										<p className="text-foreground flex items-center gap-2 text-sm font-medium">
-											<FileWarning className="text-warning size-4" aria-hidden="true" />
-											Émission d&apos;un avoir comptable
+										<Checkbox
+											id="cancel-order-auto-refund"
+											checked={autoRefund}
+											onCheckedChange={(v) => setAutoRefund(v === true)}
+											disabled={isPending}
+										/>
+										<span>
+											Créer automatiquement le remboursement Stripe (sera traité par le cron)
+										</span>
+									</label>
+									{!autoRefund && (
+										<p className="text-muted-foreground text-xs">
+											Sans cette option, le remboursement Stripe devra être créé manuellement depuis
+											le module Remboursements.
 										</p>
-										<p className="text-muted-foreground text-sm">
-											Cette commande est facturée
-											{invoiceNumber ? (
-												<>
-													{" "}
-													(
-													<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
-														{invoiceNumber}
-													</code>
-													)
-												</>
-											) : null}
-											. Un avoir{" "}
-											<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
-												A-YYYY-NNNNN
-											</code>{" "}
-											sera émis automatiquement (Art. 272-I CGI). Cette opération est{" "}
-											<strong>irréversible</strong> — l&apos;avoir intègre la séquence comptable
-											gap-free.
-										</p>
-									</div>
-								)}
-								<p className="text-muted-foreground mt-4 text-sm">
-									La commande restera en base de données pour préserver la traçabilité comptable
-									(numérotation des factures).
-								</p>
-							</div>
+									)}
+								</div>
+							)}
+							{hasGeneratedInvoice && (
+								<div
+									className="border-warning/40 bg-warning/5 mt-3 space-y-1 rounded-md border p-3"
+									role="alert"
+								>
+									<p className="text-foreground flex items-center gap-2 text-sm font-medium">
+										<FileWarning className="text-warning size-4" aria-hidden="true" />
+										Émission d&apos;un avoir comptable
+									</p>
+									<p className="text-muted-foreground text-sm">
+										Cette commande est facturée
+										{invoiceNumber ? (
+											<>
+												{" "}
+												(
+												<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
+													{invoiceNumber}
+												</code>
+												)
+											</>
+										) : null}
+										. Un avoir{" "}
+										<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
+											A-YYYY-NNNNN
+										</code>{" "}
+										sera émis automatiquement (Art. 272-I CGI). Cette opération est{" "}
+										<strong>irréversible</strong> — l&apos;avoir intègre la séquence comptable
+										gap-free.
+									</p>
+								</div>
+							)}
+							<p className="text-muted-foreground mt-4 text-sm">
+								La commande restera en base de données pour préserver la traçabilité comptable
+								(numérotation des factures).
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

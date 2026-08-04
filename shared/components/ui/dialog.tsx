@@ -1,6 +1,6 @@
 "use client";
 
-import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
 
@@ -8,28 +8,62 @@ import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
 
-function Dialog({
-	open,
-	onOpenChange,
-	...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+/**
+ * `onOpenChange` de Base UI reçoit un second argument `eventDetails` et le
+ * REND obligatoire à l'appel. Aucun appelant n'en a besoin, et nos fermetures
+ * synthétiques (retour matériel) n'ont pas d'événement à fournir : on re-type
+ * le prop à un seul paramètre. Idem pour `className`, que Base UI autorise en
+ * fonction de l'état — `DialogContent` doit pouvoir l'inspecter (`max-w-`).
+ */
+type DialogProps = Omit<DialogPrimitive.Root.Props, "onOpenChange"> & {
+	onOpenChange?: (open: boolean, eventDetails?: DialogPrimitive.Root.ChangeEventDetails) => void;
+};
+
+function Dialog({ open, onOpenChange, ...props }: DialogProps) {
 	// Bouton retour du navigateur (mobile) — ET reprise de l'entrée d'historique
 	// sur les autres fermetures (X, scrim, Escape), sans quoi chaque cycle
 	// ouvrir/fermer laissait une entrée orpheline de même URL et avalait la
 	// pression suivante sur le retour matériel. Cf. use-back-button-close pour la
 	// garde qui empêche de défaire une navigation en vol.
+	//
+	// `open`/`onOpenChange` ont la même sémantique chez Base UI que chez Radix :
+	// ce câblage traverse la migration sans changement (Base UI ajoute seulement
+	// un second argument `eventDetails`, qu'on ignore).
+	// `handleClose()` fait DEUX choses : consommer l'entrée d'historique, puis
+	// notifier via `onClose`. Or Base UI laisse l'appelant annuler une fermeture
+	// (`eventDetails.cancel()`, lu juste après notre retour) — il faut donc le
+	// consulter AVANT de toucher à l'historique, alors que `onClose` n'est appelé
+	// qu'après. D'où cette garde : on notifie nous-mêmes en premier, et on
+	// neutralise la notification redondante de `handleClose`. Le chemin
+	// « retour matériel » (popstate), lui, continue de passer par `onClose`.
+	const skipNextOnCloseRef = React.useRef(false);
+
 	const { handleClose } = useBackButtonClose({
 		isOpen: open ?? false,
-		onClose: () => onOpenChange?.(false),
+		onClose: () => {
+			if (skipNextOnCloseRef.current) {
+				skipNextOnCloseRef.current = false;
+				return;
+			}
+			onOpenChange?.(false);
+		},
 		id: "dialog",
 	});
 
-	const wrappedOnOpenChange = (newOpen: boolean) => {
-		if (!newOpen) {
-			handleClose();
-		} else {
-			onOpenChange?.(true);
+	const wrappedOnOpenChange = (
+		newOpen: boolean,
+		eventDetails: DialogPrimitive.Root.ChangeEventDetails,
+	) => {
+		if (newOpen) {
+			onOpenChange?.(true, eventDetails);
+			return;
 		}
+
+		onOpenChange?.(false, eventDetails);
+		if (eventDetails.isCanceled) return;
+
+		skipNextOnCloseRef.current = true;
+		handleClose();
 	};
 
 	return (
@@ -42,30 +76,28 @@ function Dialog({
 	);
 }
 
-function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
 	return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({ ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
 	return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.Close>) {
+function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
 	return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
-function DialogOverlay({
-	className,
-	...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+/** `Backdrop` chez Base UI — le nom public reste `DialogOverlay`. */
+function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
 	return (
-		<DialogPrimitive.Overlay
+		<DialogPrimitive.Backdrop
 			data-slot="dialog-overlay"
 			aria-hidden="true"
 			className={cn(
 				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
-				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
-				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
+				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
+				"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
 				className,
 			)}
 			{...props}
@@ -73,13 +105,15 @@ function DialogOverlay({
 	);
 }
 
+/** `Popup` chez Base UI — le nom public reste `DialogContent`. */
 function DialogContent({
 	className,
 	children,
 	showCloseButton = true,
 	registerOverlay = true,
 	...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+}: Omit<DialogPrimitive.Popup.Props, "className"> & {
+	className?: string;
 	showCloseButton?: boolean;
 	/**
 	 * Quand `false`, ce dialog ne s'empile pas sur la pile d'overlays globale :
@@ -95,15 +129,15 @@ function DialogContent({
 		<DialogPortal data-slot="dialog-portal">
 			<OverlayStackRegister enabled={registerOverlay} />
 			<DialogOverlay />
-			<DialogPrimitive.Content
+			<DialogPrimitive.Popup
 				data-slot="dialog-content"
 				className={cn(
 					"bg-background fixed top-[50%] left-[50%] z-(--z-overlay) grid w-full translate-x-[-50%] translate-y-[-50%] rounded-xl shadow-lg",
 					// Animations avec scale + slide-in-from-bottom
-					"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
-					"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
-					"motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95",
-					"motion-safe:data-[state=closed]:slide-out-to-top-[2%] motion-safe:data-[state=open]:slide-in-from-bottom-[2%]",
+					"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
+					"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
+					"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
+					"motion-safe:data-closed:slide-out-to-top-[2%] motion-safe:data-open:slide-in-from-bottom-[2%]",
 					"motion-safe:duration-200",
 					!hasMaxWidth && "max-w-[90%] sm:max-w-lg",
 					className,
@@ -115,13 +149,13 @@ function DialogContent({
 					<DialogPrimitive.Close
 						data-slot="dialog-close"
 						aria-label="Fermer la boîte de dialogue"
-						className="focus-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-[max(1rem,env(safe-area-inset-top))] right-4 -mr-2 flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0"
+						className="focus-ring absolute top-[max(1rem,env(safe-area-inset-top))] right-4 -mr-2 flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0"
 					>
 						<XIcon className="size-5" aria-hidden="true" />
 						<span className="sr-only">Fermer</span>
 					</DialogPrimitive.Close>
 				)}
-			</DialogPrimitive.Content>
+			</DialogPrimitive.Popup>
 		</DialogPortal>
 	);
 }
@@ -146,7 +180,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
+function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
 	return (
 		<DialogPrimitive.Title
 			data-slot="dialog-title"
@@ -156,10 +190,7 @@ function DialogTitle({ className, ...props }: React.ComponentProps<typeof Dialog
 	);
 }
 
-function DialogDescription({
-	className,
-	...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+function DialogDescription({ className, ...props }: DialogPrimitive.Description.Props) {
 	return (
 		<DialogPrimitive.Description
 			data-slot="dialog-description"

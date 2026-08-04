@@ -27,16 +27,18 @@ export function ProductSkuRowActions(props: ProductSkuRowActionsProps) {
 
 	return (
 		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="size-11 p-0 transition-transform active:scale-95"
-					aria-label="Actions pour cette variante"
-				>
-					<EllipsisVertical className="size-4" />
-					<span className="sr-only">Ouvrir le menu d&apos;actions</span>
-				</Button>
+			<ResponsiveActionMenuTrigger
+				render={
+					<Button
+						variant="ghost"
+						size="sm"
+						className="size-11 p-0 transition-transform active:scale-95"
+						aria-label="Actions pour cette variante"
+					/>
+				}
+			>
+				<EllipsisVertical className="size-4" />
+				<span className="sr-only">Ouvrir le menu d&apos;actions</span>
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent
 				title="Actions variante"

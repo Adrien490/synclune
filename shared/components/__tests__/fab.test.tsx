@@ -1,5 +1,7 @@
 import type React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
 
 // ============================================================================
@@ -69,42 +71,20 @@ vi.mock("@/shared/hooks/use-media-query", () => ({
 	useMediaQuery: vi.fn(() => mockIsDesktop.value),
 }));
 
-vi.mock("@/shared/components/ui/button", () => {
-	const {
-		forwardRef: fRef,
-		isValidElement: isVE,
-		cloneElement: cloneEl,
-		createElement,
-	} = require("react");
-	return {
-		Button: fRef(
-			(
-				{
-					children,
-					asChild,
-					size: _size,
-					variant: _variant,
-					...props
-				}: Record<string, unknown> & { children?: unknown; asChild?: boolean },
-				ref: unknown,
-			) => {
-				if (asChild && isVE(children)) {
-					return cloneEl(
-						children as React.ReactElement,
-						{ ref, ...props } as Record<string, unknown>,
-					);
-				}
-				return createElement("div", { ref, "data-testid": "button", ...props }, children);
-			},
-		),
-	};
-});
+vi.mock("@/shared/components/ui/button", () => ({
+	Button: ({ size: _size, variant: _variant, render, ...props }: RenderPropMockProps) =>
+		// Sans `render`, le mock rend un <div data-testid="button"> (et non un
+		// <button>) : plusieurs assertions du fichier s'appuient sur ce testid.
+		render
+			? renderPropMock("div", { ...props, render })
+			: renderPropMock("div", { "data-testid": "button", ...props }),
+}));
 
 vi.mock("@/shared/components/ui/tooltip", () => {
 	const { createElement } = require("react");
 	return {
 		Tooltip: ({ children }: { children: unknown }) => children,
-		TooltipTrigger: ({ children }: { children: unknown }) => children,
+		TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 		TooltipContent: ({ children }: { children: unknown }) =>
 			createElement("div", { "data-testid": "tooltip-content" }, children),
 	};

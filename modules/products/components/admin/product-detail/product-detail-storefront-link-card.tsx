@@ -38,39 +38,39 @@ export function ProductDetailStorefrontLinkCard({
 			<CardContent className="space-y-3">
 				{isPublic ? (
 					<Button
-						asChild
-						variant="outline"
-						className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
-					>
-						<Link
-							href={`/creations/${slug}`}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label="Voir la fiche produit sur la boutique (nouvel onglet)"
-							onClick={() => haptic("light")}
-						>
-							<ExternalLink className="size-4" aria-hidden="true" />
-							Voir sur la boutique
-						</Link>
-					</Button>
-				) : isDraft ? (
-					<>
-						<Button
-							asChild
-							variant="outline"
-							className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
-						>
+						render={
 							<Link
 								href={`/creations/${slug}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								aria-label="Aperçu de la fiche produit en brouillon (nouvel onglet)"
-								aria-describedby="storefront-link-help"
+								aria-label="Voir la fiche produit sur la boutique (nouvel onglet)"
 								onClick={() => haptic("light")}
-							>
-								<Eye className="size-4" aria-hidden="true" />
-								Aperçu (brouillon)
-							</Link>
+							/>
+						}
+						variant="outline"
+						className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
+					>
+						<ExternalLink className="size-4" aria-hidden="true" />
+						Voir sur la boutique
+					</Button>
+				) : isDraft ? (
+					<>
+						<Button
+							render={
+								<Link
+									href={`/creations/${slug}`}
+									target="_blank"
+									rel="noopener noreferrer"
+									aria-label="Aperçu de la fiche produit en brouillon (nouvel onglet)"
+									aria-describedby="storefront-link-help"
+									onClick={() => haptic("light")}
+								/>
+							}
+							variant="outline"
+							className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
+						>
+							<Eye className="size-4" aria-hidden="true" />
+							Aperçu (brouillon)
 						</Button>
 						<p id="storefront-link-help" className="text-muted-foreground text-xs">
 							Ce produit est en brouillon : l'aperçu n'est visible que par les administrateurs

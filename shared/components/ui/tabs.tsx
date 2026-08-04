@@ -1,11 +1,10 @@
 "use client";
 
-import * as TabsPrimitive from "@radix-ui/react-tabs";
-import * as React from "react";
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 
 import { cn } from "@/shared/utils/cn";
 
-function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {
+function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
 	return (
 		<TabsPrimitive.Root
 			data-slot="tabs"
@@ -15,12 +14,12 @@ function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive
 	);
 }
 
-function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
+function TabsList({ className, ...props }: TabsPrimitive.List.Props) {
 	return (
 		<TabsPrimitive.List
 			data-slot="tabs-list"
 			className={cn(
-				"bg-muted text-muted-foreground flex h-auto w-fit max-w-full snap-x snap-mandatory scrollbar-none items-center justify-start gap-1 overflow-x-auto scroll-smooth rounded-lg p-[3px]",
+				"bg-muted text-muted-foreground flex h-auto w-fit max-w-full snap-x snap-mandatory scrollbar-none items-center justify-start gap-1 overflow-x-auto scroll-smooth rounded-lg p-[3px] motion-reduce:scroll-auto",
 				className,
 			)}
 			{...props}
@@ -28,13 +27,16 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
 	);
 }
 
-function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+/** Base UI nomme cette partie `Tab` — le nom public reste `TabsTrigger`. */
+function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
 	return (
-		<TabsPrimitive.Trigger
+		<TabsPrimitive.Tab
 			data-slot="tabs-trigger"
 			className={cn(
 				"text-foreground inline-flex min-h-11 shrink-0 snap-start items-center justify-center gap-1.5 rounded-md border border-transparent px-3 py-2 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 sm:min-h-9 sm:px-2 sm:py-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-				"data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-input data-[state=active]:shadow-sm",
+				// Base UI expose l'onglet actif via `data-active` (booléen présent/absent),
+				// là où Radix écrivait `data-state="active"`.
+				"data-active:bg-background data-active:text-foreground data-active:border-input data-active:shadow-sm",
 				"focus-ring",
 				className,
 			)}
@@ -43,9 +45,10 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
 	);
 }
 
-function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+/** Base UI nomme cette partie `Panel` — le nom public reste `TabsContent`. */
+function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
 	return (
-		<TabsPrimitive.Content
+		<TabsPrimitive.Panel
 			data-slot="tabs-content"
 			className={cn("focus-ring flex-1", className)}
 			{...props}

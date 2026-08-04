@@ -40,15 +40,20 @@ export function OrderRefundsCard({
 				    « Marquer remboursée » (hors Stripe, irréversible) reste dans la
 				    section `danger` du menu d'actions. */}
 				{canRefund && stripePaymentIntentId && (
-					<Button variant="outline" size="sm" asChild>
-						<a
-							href={`https://dashboard.stripe.com/payments/${stripePaymentIntentId}`}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Rembourser dans Stripe
-							<ExternalLink className="size-4" aria-hidden="true" />
-						</a>
+					<Button
+						variant="outline"
+						size="sm"
+						render={
+							// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants du Button
+							<a
+								href={`https://dashboard.stripe.com/payments/${stripePaymentIntentId}`}
+								target="_blank"
+								rel="noopener noreferrer"
+							/>
+						}
+					>
+						Rembourser dans Stripe
+						<ExternalLink className="size-4" aria-hidden="true" />
 					</Button>
 				)}
 			</CardHeader>
@@ -78,11 +83,13 @@ export function OrderRefundsCard({
 										<span>{formatDateShort(new Date(refund.createdAt))}</span>
 									</div>
 								</div>
-								<Button variant="ghost" size="sm" asChild>
-									<Link href={`/admin/ventes/remboursements/${refund.id}`}>
-										<ExternalLink className="size-4" aria-hidden="true" />
-										<span className="sr-only">Voir le détail du remboursement</span>
-									</Link>
+								<Button
+									variant="ghost"
+									size="sm"
+									render={<Link href={`/admin/ventes/remboursements/${refund.id}`} />}
+								>
+									<ExternalLink className="size-4" aria-hidden="true" />
+									<span className="sr-only">Voir le détail du remboursement</span>
 								</Button>
 							</div>
 						))}

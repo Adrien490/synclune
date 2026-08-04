@@ -122,17 +122,17 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 				)}
 
 				<Button
-					asChild
+					render={
+						<Link
+							href={`/admin/catalogue/inventaire?materialId=${material.id}`}
+							onClick={() => haptic("light")}
+						/>
+					}
 					variant="outline"
 					className="w-full transition-transform duration-150 active:scale-[0.98]"
 				>
-					<Link
-						href={`/admin/catalogue/inventaire?materialId=${material.id}`}
-						onClick={() => haptic("light")}
-					>
-						Voir toutes les variantes
-						<ArrowRight className="size-4" aria-hidden="true" />
-					</Link>
+					Voir toutes les variantes
+					<ArrowRight className="size-4" aria-hidden="true" />
 				</Button>
 			</CardContent>
 		</Card>

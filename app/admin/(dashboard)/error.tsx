@@ -43,8 +43,8 @@ export default function DashboardError({
 			</p>
 			<div className="flex flex-wrap items-center justify-center gap-2">
 				<Button onClick={reset}>Réessayer</Button>
-				<Button variant="outline" asChild>
-					<Link href={ROUTES.ADMIN.ORDERS}>Voir les commandes</Link>
+				<Button variant="outline" render={<Link href={ROUTES.ADMIN.ORDERS} />}>
+					Voir les commandes
 				</Button>
 			</div>
 		</div>

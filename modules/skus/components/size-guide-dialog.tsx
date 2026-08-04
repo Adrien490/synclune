@@ -8,6 +8,7 @@ import {
 	ResponsiveDialogTitle,
 	ResponsiveDialogTrigger,
 } from "@/shared/components/responsive-dialog";
+import type { ReactElement } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Ruler, Info } from "lucide-react";
@@ -32,19 +33,21 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 
 	return (
 		<ResponsiveDialog>
-			<ResponsiveDialogTrigger asChild>
-				{children ?? (
-					<Button
-						variant="outline"
-						size="sm"
-						className="border-primary/30 hover:border-primary hover:bg-primary/5 h-10 gap-1.5 px-3 text-xs"
-						type="button"
-					>
-						<Ruler className="size-3.5" aria-hidden="true" />
-						Guide des tailles
-					</Button>
-				)}
-			</ResponsiveDialogTrigger>
+			<ResponsiveDialogTrigger
+				render={
+					(children ?? (
+						<Button
+							variant="outline"
+							size="sm"
+							className="border-primary/30 hover:border-primary hover:bg-primary/5 h-10 gap-1.5 px-3 text-xs"
+							type="button"
+						>
+							<Ruler className="size-3.5" aria-hidden="true" />
+							Guide des tailles
+						</Button>
+					)) as ReactElement
+				}
+			/>
 			<ResponsiveDialogContent className="flex max-h-[85vh] flex-col sm:max-w-lg">
 				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle className="flex items-center gap-2">

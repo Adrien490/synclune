@@ -84,55 +84,56 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 								<li key={order.id}>
 									<Fade y={6} delay={index * 0.02} inView once>
 										{index > 0 && <ItemSeparator />}
-										<Item asChild size="sm">
-											<Link
-												href={buildOrderHref(order)}
-												aria-label={buildOrderAriaLabel(order)}
-												className="transform-gpu touch-manipulation active:scale-[0.99] motion-safe:transition-transform motion-safe:duration-150"
-												style={{ viewTransitionName: `order-card-${order.id}` } as CSSProperties}
-											>
-												<ItemContent>
-													<ItemTitle className="gap-1.5">
-														<span
-															className="text-sm font-medium"
-															style={
-																{ viewTransitionName: `order-number-${order.id}` } as CSSProperties
-															}
-														>
-															#{order.orderNumber}
-														</span>
-														<Badge
-															variant={ORDER_STATUS_VARIANTS[order.status]}
-															className="text-2xs"
-															style={
-																{ viewTransitionName: `order-status-${order.id}` } as CSSProperties
-															}
-														>
-															{ORDER_STATUS_LABELS[order.status]}
-														</Badge>
-													</ItemTitle>
-													<ItemDescription className="text-xs">
-														<span className="truncate">{order.customerName}</span>
-														<span className="text-2xs block">
-															{format(new Date(order.createdAt), "dd/MM à HH:mm", { locale: fr })}
-														</span>
-													</ItemDescription>
-												</ItemContent>
-												<ItemActions className="shrink-0">
+										<Item
+											render={
+												<Link
+													href={buildOrderHref(order)}
+													aria-label={buildOrderAriaLabel(order)}
+													className="transform-gpu touch-manipulation active:scale-[0.99] motion-safe:transition-transform motion-safe:duration-150"
+													style={{ viewTransitionName: `order-card-${order.id}` } as CSSProperties}
+												/>
+											}
+											size="sm"
+										>
+											<ItemContent>
+												<ItemTitle className="gap-1.5">
 													<span
-														className="text-foreground text-sm font-semibold tabular-nums"
+														className="text-sm font-medium"
 														style={
-															{ viewTransitionName: `order-total-${order.id}` } as CSSProperties
+															{ viewTransitionName: `order-number-${order.id}` } as CSSProperties
 														}
 													>
-														{formatEuro(order.total)}
+														#{order.orderNumber}
 													</span>
-													<ChevronRight
-														className="text-muted-foreground/60 size-4"
-														aria-hidden="true"
-													/>
-												</ItemActions>
-											</Link>
+													<Badge
+														variant={ORDER_STATUS_VARIANTS[order.status]}
+														className="text-2xs"
+														style={
+															{ viewTransitionName: `order-status-${order.id}` } as CSSProperties
+														}
+													>
+														{ORDER_STATUS_LABELS[order.status]}
+													</Badge>
+												</ItemTitle>
+												<ItemDescription className="text-xs">
+													<span className="truncate">{order.customerName}</span>
+													<span className="text-2xs block">
+														{format(new Date(order.createdAt), "dd/MM à HH:mm", { locale: fr })}
+													</span>
+												</ItemDescription>
+											</ItemContent>
+											<ItemActions className="shrink-0">
+												<span
+													className="text-foreground text-sm font-semibold tabular-nums"
+													style={{ viewTransitionName: `order-total-${order.id}` } as CSSProperties}
+												>
+													{formatEuro(order.total)}
+												</span>
+												<ChevronRight
+													className="text-muted-foreground/60 size-4"
+													aria-hidden="true"
+												/>
+											</ItemActions>
 										</Item>
 									</Fade>
 								</li>

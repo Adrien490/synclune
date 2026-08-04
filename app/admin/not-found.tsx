@@ -34,9 +34,7 @@ export default function AdminNotFound() {
 				L&apos;élément a peut-être été supprimé, ou son adresse a changé.
 			</p>
 			<div className="flex flex-wrap items-center justify-center gap-2">
-				<Button asChild>
-					<Link href={ROUTES.ADMIN.DASHBOARD}>Retour au tableau de bord</Link>
-				</Button>
+				<Button render={<Link href={ROUTES.ADMIN.DASHBOARD} />}>Retour au tableau de bord</Button>
 			</div>
 		</div>
 	);

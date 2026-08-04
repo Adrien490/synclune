@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
 
@@ -48,7 +50,8 @@ vi.mock("@/shared/components/ui/popover", () => ({
 			{children}
 		</div>
 	),
-	PopoverTrigger: ({ children }: any) => <div data-testid="popover-trigger">{children}</div>,
+	PopoverTrigger: (props: RenderPropMockProps) =>
+		renderPropMock("div", { "data-testid": "popover-trigger", ...props }),
 }));
 
 vi.mock("@/shared/components/ui/drawer", () => ({
@@ -67,7 +70,7 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 			data-testid="drawer-body"
 			className={className}
 			style={style}
-			data-vaul-no-drag={rest["data-vaul-no-drag"] !== undefined ? "" : undefined}
+			data-base-ui-swipe-ignore={rest["data-base-ui-swipe-ignore"] !== undefined ? "" : undefined}
 		>
 			{children}
 		</div>
@@ -352,10 +355,10 @@ describe("MultiSelect — responsive", () => {
 		expect(screen.getByTestId("drawer-title").textContent).toBe("Choisir des couleurs");
 	});
 
-	it("mobile DrawerBody is flagged data-vaul-no-drag", () => {
+	it("mobile DrawerBody is flagged data-base-ui-swipe-ignore", () => {
 		mockIsMobile.value = true;
 		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
-		expect(screen.getByTestId("drawer-body").hasAttribute("data-vaul-no-drag")).toBe(true);
+		expect(screen.getByTestId("drawer-body").hasAttribute("data-base-ui-swipe-ignore")).toBe(true);
 	});
 });
 

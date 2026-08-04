@@ -1,5 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 import type * as LucideReact from "lucide-react";
 
 // ============================================================================
@@ -38,13 +40,8 @@ vi.mock("@/shared/components/ui/collapsible", () => ({
 	CollapsibleContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="collapsible-content">{children}</div>
 	),
-	CollapsibleTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <div data-testid="collapsible-trigger">{children}</div>,
+	CollapsibleTrigger: (props: RenderPropMockProps) =>
+		renderPropMock("div", { "data-testid": "collapsible-trigger", ...props }),
 }));
 
 vi.mock("@/shared/components/ui/sidebar", () => ({

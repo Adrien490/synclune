@@ -119,9 +119,11 @@ export async function CollectionsDataTable({
 									</Link>
 									{hasFeaturedProduct && (
 										<Tooltip>
-											<TooltipTrigger asChild>
-												<Star className="size-4 shrink-0 fill-yellow-400 text-yellow-400" />
-											</TooltipTrigger>
+											<TooltipTrigger
+												render={
+													<Star className="size-4 shrink-0 fill-yellow-400 text-yellow-400" />
+												}
+											></TooltipTrigger>
 											<TooltipContent>
 												<p>Produit vedette defini</p>
 											</TooltipContent>
@@ -143,10 +145,8 @@ export async function CollectionsDataTable({
 									{/* Warning si PUBLIC mais aucun produit visible */}
 									{collection.status === CollectionStatus.PUBLIC && productsCount === 0 && (
 										<Tooltip>
-											<TooltipTrigger asChild>
-												<span className="text-amber-500">
-													<TriangleAlert className="size-4" />
-												</span>
+											<TooltipTrigger render={<span className="text-amber-500" />}>
+												<TriangleAlert className="size-4" />
 											</TooltipTrigger>
 											<TooltipContent>
 												<p>Aucun produit visible en boutique</p>

@@ -48,11 +48,15 @@ export default function OrderTrackingNotFound() {
 				actions={
 					<div className="space-y-4">
 						<div className="flex flex-col justify-center gap-4 sm:flex-row">
-							<Button asChild size="lg">
-								<Link href={ROUTES.SHOP.HOME}>Retour à l&apos;accueil</Link>
+							<Button render={<Link href={ROUTES.SHOP.HOME} />} size="lg">
+								Retour à l&apos;accueil
 							</Button>
-							<Button asChild variant="secondary" size="lg">
-								<Link href={`mailto:${BRAND.contact.email}`}>M&apos;écrire</Link>
+							<Button
+								render={<Link href={`mailto:${BRAND.contact.email}`} />}
+								variant="secondary"
+								size="lg"
+							>
+								M&apos;écrire
 							</Button>
 						</div>
 					</div>

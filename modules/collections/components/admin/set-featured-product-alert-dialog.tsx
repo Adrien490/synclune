@@ -63,32 +63,30 @@ export function SetFeaturedProductAlertDialog() {
 					<ResponsiveAlertDialogTitle>
 						{isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}
 					</ResponsiveAlertDialogTitle>
-					<ResponsiveAlertDialogDescription asChild>
-						<div className="space-y-3">
-							{isFeatured ? (
-								<>
-									<p>
-										Voulez-vous retirer le statut vedette de{" "}
-										<strong>&quot;{dialog.data?.productTitle}&quot;</strong> ?
-									</p>
-									<p>
-										La collection n'aura plus de produit vedette et affichera le produit le plus
-										recent comme image representative.
-									</p>
-								</>
-							) : (
-								<>
-									<p>
-										Voulez-vous definir <strong>&quot;{dialog.data?.productTitle}&quot;</strong>{" "}
-										comme produit vedette de cette collection ?
-									</p>
-									<p>
-										Ce produit sera utilise comme image representative de la collection sur la page
-										d'accueil et dans les listes.
-									</p>
-								</>
-							)}
-						</div>
+					<ResponsiveAlertDialogDescription render={<div className="space-y-3" />}>
+						{isFeatured ? (
+							<>
+								<p>
+									Voulez-vous retirer le statut vedette de{" "}
+									<strong>&quot;{dialog.data?.productTitle}&quot;</strong> ?
+								</p>
+								<p>
+									La collection n'aura plus de produit vedette et affichera le produit le plus
+									recent comme image representative.
+								</p>
+							</>
+						) : (
+							<>
+								<p>
+									Voulez-vous definir <strong>&quot;{dialog.data?.productTitle}&quot;</strong> comme
+									produit vedette de cette collection ?
+								</p>
+								<p>
+									Ce produit sera utilise comme image representative de la collection sur la page
+									d'accueil et dans les listes.
+								</p>
+							</>
+						)}
 					</ResponsiveAlertDialogDescription>
 				</ResponsiveAlertDialogHeader>
 				<ResponsiveAlertDialogFooter>

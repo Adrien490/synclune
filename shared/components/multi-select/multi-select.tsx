@@ -501,7 +501,7 @@ export const MultiSelect = ({
 			<>
 				{ariaLiveRegion}
 				<Drawer open={isOpen} onOpenChange={handleOpenChange} repositionInputs={showSearch}>
-					<DrawerTrigger asChild>{trigger}</DrawerTrigger>
+					<DrawerTrigger render={trigger} />
 					<DrawerContent>
 						<DrawerHeader>
 							<DrawerTitle>{placeholder}</DrawerTitle>
@@ -512,14 +512,14 @@ export const MultiSelect = ({
 							</DrawerDescription>
 						</DrawerHeader>
 						{showSearch && (
-							<div className="pb-2" data-vaul-no-drag>
+							<div className="pb-2" data-base-ui-swipe-ignore="">
 								{searchInput}
 							</div>
 						)}
 						<DrawerBody
 							style={{ maxHeight: `min(60vh, ${maxHeight + 80}px)` }}
 							className="overscroll-contain"
-							data-vaul-no-drag
+							data-base-ui-swipe-ignore=""
 						>
 							{selectAllRow}
 							{optionsList}
@@ -534,12 +534,8 @@ export const MultiSelect = ({
 		<>
 			{ariaLiveRegion}
 			<Popover open={isOpen} onOpenChange={handleOpenChange}>
-				<PopoverTrigger asChild>{trigger}</PopoverTrigger>
-				<PopoverContent
-					className="w-(--radix-popover-trigger-width) min-w-64 p-1"
-					align="start"
-					sideOffset={4}
-				>
+				<PopoverTrigger render={trigger} />
+				<PopoverContent className="w-(--anchor-width) min-w-64 p-1" align="start" sideOffset={4}>
 					{showSearch && <div className="px-1 pt-1 pb-2">{searchInput}</div>}
 					{selectAllRow}
 					<div

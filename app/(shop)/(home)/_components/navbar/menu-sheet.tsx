@@ -30,7 +30,7 @@ import { iconButtonClassName, VAUL_TRANSITION_DURATION_MS } from "./navbar-style
 
 /**
  * Id déterministe (et non `useId()`) : `aria-controls` doit désigner un élément
- * réel. Le `SheetContent` n'étant monté par le portail Vaul que sheet ouvert, un
+ * réel. Le `SheetContent` n'étant monté par le portail que sheet ouvert, un
  * id généré rendait la relation invérifiable et intestable. Aligné sur l'admin
  * (`#admin-menu-sheet-content`). Le menu est un singleton par page.
  */
@@ -58,7 +58,6 @@ interface MenuSheetProps {
 		slug: string;
 		label: string;
 		images: CollectionImage[];
-		createdAt?: Date;
 	}>;
 	isAdmin?: boolean;
 	session?: NavbarSessionData | null;
@@ -127,7 +126,7 @@ export function MenuSheet({
 		};
 	}, [isOpen]);
 
-	// Defer LogoutAlertDialog until Vaul finishes its exit transition. Listening
+	// Defer LogoutAlertDialog until the sheet finishes its exit transition. Listening
 	// for transitionend (transform property) on sheet-content is more robust
 	// than a hardcoded setTimeout — fallback timer kicks in only if the event
 	// is interrupted (e.g. reduced-motion unmounts the content before paint).
@@ -179,28 +178,28 @@ export function MenuSheet({
 					haptic("light");
 					if (open) {
 						// Blur trigger before sheet opens to prevent aria-hidden conflict:
-						// Vaul/Radix sets aria-hidden on the header before focus moves to sheet content
+						// the library sets aria-hidden on the header before focus moves to sheet content
 						if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 						openMenu();
 						return;
 					}
 					closeMenu();
 				}}
-				preventScrollRestoration
-				scrollLockTimeout={500}
 			>
-				<SheetTrigger asChild>
-					<button
-						ref={triggerRef}
-						type="button"
-						className={triggerClassName}
-						aria-label={isOpen ? "Fermer le menu de navigation" : "Menu de navigation"}
-						aria-haspopup="dialog"
-						aria-expanded={isOpen}
-						aria-controls={MENU_SHEET_CONTENT_ID}
-					>
-						<HamburgerIcon isOpen={isOpen} />
-					</button>
+				<SheetTrigger
+					render={
+						<button
+							ref={triggerRef}
+							type="button"
+							className={triggerClassName}
+							aria-label={isOpen ? "Fermer le menu de navigation" : "Menu de navigation"}
+							aria-haspopup="dialog"
+							aria-expanded={isOpen}
+							aria-controls={MENU_SHEET_CONTENT_ID}
+						/>
+					}
+				>
+					<HamburgerIcon isOpen={isOpen} />
 				</SheetTrigger>
 
 				<SheetContent
@@ -213,13 +212,10 @@ export function MenuSheet({
 					className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r pt-0! pr-0! pb-0! sm:w-80 sm:max-w-md"
 					onOverlayClick={() => haptic("light")}
 					// Restaure le focus sur le burger. Sans cela il retombait sur `<body>`
-					// (le trigger est blurré avant l'ouverture, donc le FocusScope Radix
-					// n'avait mémorisé que `<body>`) — cf. `triggerRef` ci-dessus.
-					onCloseAutoFocus={(event) => {
-						if (!triggerRef.current) return;
-						event.preventDefault();
-						triggerRef.current.focus();
-					}}
+					// (le trigger est blurré avant l'ouverture, donc la restauration
+					// automatique n'aurait mémorisé que `<body>`) — cf. `triggerRef`.
+					// `finalFocus` remplace l'ancien `onCloseAutoFocus` + `preventDefault`.
+					finalFocus={triggerRef}
 				>
 					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pb-2 pl-5">
 						<SheetTitle className="font-cursive flex items-center text-xl">

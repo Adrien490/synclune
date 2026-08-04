@@ -83,18 +83,16 @@ export function DeleteOrderAlertDialog({ successPath }: DeleteOrderAlertDialogPr
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Confirmer la suppression</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									Êtes-vous sûr de vouloir supprimer la commande{" "}
-									<strong>{deleteDialog.data?.orderNumber}</strong> ?
-								</p>
-								<p className="text-destructive mt-2 font-medium">Cette action est irréversible.</p>
-								<p className="text-muted-foreground mt-4 text-sm">
-									Note: Seules les commandes sans facture et non payées peuvent être supprimées
-									(commandes de test, abandonnées ou échouées).
-								</p>
-							</div>
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								Êtes-vous sûr de vouloir supprimer la commande{" "}
+								<strong>{deleteDialog.data?.orderNumber}</strong> ?
+							</p>
+							<p className="text-destructive mt-2 font-medium">Cette action est irréversible.</p>
+							<p className="text-muted-foreground mt-4 text-sm">
+								Note: Seules les commandes sans facture et non payées peuvent être supprimées
+								(commandes de test, abandonnées ou échouées).
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 

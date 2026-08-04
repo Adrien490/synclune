@@ -47,11 +47,11 @@ export default function ProduitsCatalogError({
 							<Button size="lg" onClick={reset}>
 								Réessayer
 							</Button>
-							<Button asChild variant="secondary" size="lg">
-								<Link href="/collections">Voir les collections</Link>
+							<Button render={<Link href="/collections" />} variant="secondary" size="lg">
+								Voir les collections
 							</Button>
-							<Button asChild variant="ghost" size="lg">
-								<Link href="/">Retour à l'accueil</Link>
+							<Button render={<Link href="/" />} variant="ghost" size="lg">
+								Retour à l'accueil
 							</Button>
 						</div>
 					}

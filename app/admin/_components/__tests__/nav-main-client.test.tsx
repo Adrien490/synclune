@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -42,31 +44,15 @@ vi.mock("@/shared/lib/navigation", () => ({
 }));
 
 vi.mock("@/shared/components/ui/sidebar", () => ({
-	SidebarMenuButton: ({
-		children,
-		isActive,
-		tooltip,
-		className,
-		asChild: _asChild,
-		...rest
-	}: {
-		children: React.ReactNode;
-		isActive?: boolean;
-		tooltip?: string;
-		className?: string;
-		asChild?: boolean;
-		[key: string]: unknown;
-	}) => (
-		<div
-			data-testid="sidebar-menu-button"
-			data-active={isActive}
-			title={tooltip}
-			className={className}
-			{...rest}
-		>
-			{children}
-		</div>
-	),
+	SidebarMenuButton: ({ children, isActive, tooltip, render, ...rest }: RenderPropMockProps) =>
+		renderPropMock("div", {
+			"data-testid": "sidebar-menu-button",
+			"data-active": isActive,
+			title: tooltip,
+			...rest,
+			render,
+			children,
+		}),
 	SidebarMenuBadge: ({
 		children,
 		className,
@@ -163,8 +149,11 @@ describe("NavMainClient", () => {
 			mockIsRouteActive.mockReturnValue(true);
 			render(<NavMainClient {...defaultProps} />);
 			const button = screen.getByTestId("sidebar-menu-button");
-			expect(button.className).toMatch(/data-\[active=true\]:bg-primary\/10/);
-			expect(button.className).toMatch(/data-\[active=true\]:\[&_svg\]:text-primary/);
+			// Sélecteur migré Radix → Base UI : `SidebarMenuButton` dérive désormais
+			// `data-active` de son `state` useRender (présent/absent) au lieu d'un
+			// `data-active="true"/"false"`. La règle gardée est la même.
+			expect(button.className).toMatch(/data-active:bg-primary\/10/);
+			expect(button.className).toMatch(/data-active:\[&_svg\]:text-primary/);
 			expect(button.className).toMatch(/motion-safe:before:transition-opacity/);
 		});
 	});

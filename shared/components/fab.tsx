@@ -14,6 +14,7 @@ import {
 	useState,
 	useTransition,
 	type ReactNode,
+	type ReactElement,
 } from "react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -61,12 +62,13 @@ function TooltipMaybe({
 	content: ReactNode;
 	side: "top" | "right" | "bottom" | "left";
 	sideOffset?: number;
-	children: ReactNode;
+	/** Élément (et non `ReactNode`) : il est passé au prop `render` du TooltipTrigger. */
+	children: ReactElement;
 }) {
 	if (!enabled) return <>{children}</>;
 	return (
 		<Tooltip>
-			<TooltipTrigger asChild>{children}</TooltipTrigger>
+			<TooltipTrigger render={children} />
 			<TooltipContent side={side} sideOffset={sideOffset}>
 				{content}
 			</TooltipContent>
@@ -398,23 +400,23 @@ export function Fab({
 							{href ? (
 								<Button
 									ref={mainButtonCallbackRef}
-									asChild
+									render={
+										<a
+											href={href}
+											onClick={handleMainHrefClick}
+											aria-label={ariaLabel}
+											aria-haspopup={ariaHasPopup}
+											aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
+										/>
+									}
 									variant="primary"
 									size="lg"
 									className={cn(mainButtonClassName, className)}
 								>
-									<a
-										href={href}
-										onClick={handleMainHrefClick}
-										aria-label={ariaLabel}
-										aria-haspopup={ariaHasPopup}
-										aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
-									>
-										<span className={iconWrapperClassName}>{icon}</span>
-										{badge && (
-											<div className="pointer-events-none absolute -top-1.5 -left-1.5">{badge}</div>
-										)}
-									</a>
+									<span className={iconWrapperClassName}>{icon}</span>
+									{badge && (
+										<div className="pointer-events-none absolute -top-1.5 -left-1.5">{badge}</div>
+									)}
 								</Button>
 							) : (
 								<Button

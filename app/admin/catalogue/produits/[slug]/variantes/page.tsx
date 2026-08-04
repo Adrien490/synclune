@@ -212,18 +212,17 @@ export default async function ProductVariantsPage({
 				className="hidden md:block"
 				actions={
 					<div className="flex items-center gap-2">
-						<Button variant="outline" asChild>
-							<Link href={`/admin/catalogue/produits/${slug}/modifier`}>
-								{/* `Pencil` et non `ArrowLeft` : c'est une action d'édition, pas un
+						<Button
+							variant="outline"
+							render={<Link href={`/admin/catalogue/produits/${slug}/modifier`} />}
+						>
+							{/* `Pencil` et non `ArrowLeft` : c'est une action d'édition, pas un
 								    retour — la flèche gauche annonçait un retour en arrière. */}
-								<Pencil className="mr-2 size-4" />
-								Modifier le produit
-							</Link>
+							<Pencil className="mr-2 size-4" />
+							Modifier le produit
 						</Button>
-						<Button asChild>
-							<Link href={`/admin/catalogue/produits/${slug}/variantes/nouveau`}>
-								Nouvelle variante
-							</Link>
+						<Button render={<Link href={`/admin/catalogue/produits/${slug}/variantes/nouveau`} />}>
+							Nouvelle variante
 						</Button>
 					</div>
 				}

@@ -132,8 +132,13 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 			const activePage = n.querySelector<HTMLElement>('[aria-current="page"]');
 			// scrollIntoView est typé non-optionnel mais absent de JSDOM —
 			// `?.()` garde l'environnement de test sain (TypeScript narrow OK).
+			// La garde shouldReduceMotion plus bas ne couvre que le TIMING — le
+			// scroll lui-même doit aussi être instantané.
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- JSDOM ne polyfill pas scrollIntoView
-			activePage?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+			activePage?.scrollIntoView?.({
+				block: "center",
+				behavior: shouldReduceMotion ? "auto" : "smooth",
+			});
 			n.querySelector<HTMLAnchorElement>("a")?.focus();
 		}
 
@@ -257,10 +262,8 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 				direction="bottom"
 				open={isOpen}
 				onOpenChange={handleOpenChange}
-				preventScrollRestoration
-				scrollLockTimeout={500}
 				// Sur iOS Safari, la search input prend le focus → clavier remonte sans
-				// repositionner le contenu Vaul : input masqué. repositionInputs corrige.
+				// repositionner le contenu : input masqué. repositionInputs corrige.
 				repositionInputs
 				// Navigation longue et scrollable sur 92 dvh : un scroll vers le bas
 				// depuis le haut de la liste fermait la sheet. La `SheetHandle` visible
@@ -273,17 +276,18 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 					overlayClassName="bg-black/50"
 					showCloseButton={false}
 					onOverlayClick={() => triggerHaptic("selection")}
-					// Suspend l'auto-focus Radix par défaut (qui cible la search input
-					// → pop clavier iOS). Le focus est appliqué après l'animation
-					// d'entrée par l'effect [isOpen, shouldReduceMotion] (cf. supra).
-					onOpenAutoFocus={(e) => e.preventDefault()}
+					// Suspend l'auto-focus par défaut (qui ciblerait la search input →
+					// pop clavier iOS). Le focus est appliqué après l'animation d'entrée
+					// par l'effect [isOpen, shouldReduceMotion] (cf. supra).
+					// `initialFocus={false}` remplace l'ancien `onOpenAutoFocus` + preventDefault.
+					initialFocus={false}
 				>
 					<SheetHeader className="sr-only p-0!">
 						<SheetTitle>Menu d&apos;administration</SheetTitle>
 						<SheetDescription>Navigation du tableau de bord administrateur</SheetDescription>
 					</SheetHeader>
 
-					{/* Drag handle Vaul — affordance toujours draggable malgré le ScrollFade
+					{/* Poignée de drag — affordance toujours draggable malgré le ScrollFade
 					 * en dessous, sinon le swipe est intercepté par le scroll interne. */}
 					<SheetHandle className="mt-3 mb-2" />
 
@@ -317,7 +321,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 								// "go" si un résultat existe (Entrée navigue), sinon "done" ferme
 								// juste le clavier (filtre live, pas de submit classique).
 								enterKeyHint={isSearching && filteredItems.length > 0 ? "go" : "done"}
-								data-vaul-no-drag
+								data-base-ui-swipe-ignore=""
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 								onKeyDown={handleSearchKeyDown}

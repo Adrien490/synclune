@@ -153,29 +153,29 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 
 				<div className="flex flex-col gap-2 sm:flex-row">
 					<Button
-						asChild
+						render={
+							<Link
+								href={`/admin/catalogue/produits/${product.slug}/variantes/nouveau`}
+								onClick={() => haptic("light")}
+							/>
+						}
 						className="flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 					>
-						<Link
-							href={`/admin/catalogue/produits/${product.slug}/variantes/nouveau`}
-							onClick={() => haptic("light")}
-						>
-							<Plus className="size-4" aria-hidden="true" />
-							Nouvelle variante
-						</Link>
+						<Plus className="size-4" aria-hidden="true" />
+						Nouvelle variante
 					</Button>
 					<Button
-						asChild
+						render={
+							<Link
+								href={`/admin/catalogue/produits/${product.slug}/variantes`}
+								onClick={() => haptic("light")}
+							/>
+						}
 						variant="outline"
 						className="flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 					>
-						<Link
-							href={`/admin/catalogue/produits/${product.slug}/variantes`}
-							onClick={() => haptic("light")}
-						>
-							Gérer les variantes
-							<ArrowRight className="size-4" aria-hidden="true" />
-						</Link>
+						Gérer les variantes
+						<ArrowRight className="size-4" aria-hidden="true" />
 					</Button>
 				</div>
 			</CardContent>

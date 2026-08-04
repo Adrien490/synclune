@@ -214,39 +214,41 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 					<div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1">
 						{products.map((product, index) => (
 							<Tooltip key={product.id}>
-								<TooltipTrigger asChild>
-									<Button
-										onClick={() => scrollTo(index)}
-										variant="ghost"
-										size="icon"
-										className={cn(
-											// Zone tactile (WCAG 2.5.5)
-											"size-11 cursor-pointer p-0",
-											"flex items-center justify-center",
-											"transition-[background-color] duration-300",
-											// Thème: hover avec card
-											"hover:bg-card/10 rounded-full",
-										)}
-										aria-label={`Aller au produit ${index + 1}: ${product.title}`}
-										aria-current={current === index ? "true" : undefined}
-									>
-										<span
+								<TooltipTrigger
+									render={
+										<Button
+											onClick={() => scrollTo(index)}
+											variant="ghost"
+											size="icon"
 											className={cn(
-												"flex size-3 items-center justify-center rounded-full sm:size-3.5",
-												// Compositor-only: scale instead of size change
-												"motion-safe:transition-[transform,background-color,box-shadow] motion-safe:duration-300",
-												current === index
-													? // Actif: thème card/foreground
-														"bg-card text-foreground scale-[2] font-semibold shadow-lg"
-													: // Inactif: thème card avec opacité
-														"bg-card/70 group-hover/carousel:bg-card/90 scale-100",
+												// Zone tactile (WCAG 2.5.5)
+												"size-11 cursor-pointer p-0",
+												"flex items-center justify-center",
+												"transition-[background-color] duration-300",
+												// Thème: hover avec card
+												"hover:bg-card/10 rounded-full",
 											)}
-										>
-											{current === index && (
-												<span className="text-[5px] sm:text-[6px]">{index + 1}</span>
-											)}
-										</span>
-									</Button>
+											aria-label={`Aller au produit ${index + 1}: ${product.title}`}
+											aria-current={current === index ? "true" : undefined}
+										/>
+									}
+								>
+									<span
+										className={cn(
+											"flex size-3 items-center justify-center rounded-full sm:size-3.5",
+											// Compositor-only: scale instead of size change
+											"motion-safe:transition-[transform,background-color,box-shadow] motion-safe:duration-300",
+											current === index
+												? // Actif: thème card/foreground
+													"bg-card text-foreground scale-[2] font-semibold shadow-lg"
+												: // Inactif: thème card avec opacité
+													"bg-card/70 group-hover/carousel:bg-card/90 scale-100",
+										)}
+									>
+										{current === index && (
+											<span className="text-[5px] sm:text-[6px]">{index + 1}</span>
+										)}
+									</span>
 								</TooltipTrigger>
 								<TooltipContent side="top" className="hidden max-w-50 sm:block">
 									<p className="truncate text-sm font-medium">{product.title}</p>

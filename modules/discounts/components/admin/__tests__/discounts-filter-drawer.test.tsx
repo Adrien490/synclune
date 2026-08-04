@@ -81,7 +81,7 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 	DrawerBody: ({ children, ...rest }: { children: React.ReactNode } & Record<string, unknown>) => (
 		<div
 			data-testid="drawer-body"
-			data-vaul-no-drag={rest["data-vaul-no-drag"] !== undefined ? "" : undefined}
+			data-base-ui-swipe-ignore={rest["data-base-ui-swipe-ignore"] !== undefined ? "" : undefined}
 		>
 			{children}
 		</div>
@@ -176,9 +176,11 @@ describe("DiscountsFilterDrawer", () => {
 			expect(screen.queryByTestId("drawer-title")).not.toBeInTheDocument();
 		});
 
-		it("flags DrawerBody data-vaul-no-drag", () => {
+		it("flags DrawerBody data-base-ui-swipe-ignore", () => {
 			renderDrawer();
-			expect(screen.getByTestId("drawer-body").hasAttribute("data-vaul-no-drag")).toBe(true);
+			expect(screen.getByTestId("drawer-body").hasAttribute("data-base-ui-swipe-ignore")).toBe(
+				true,
+			);
 		});
 	});
 

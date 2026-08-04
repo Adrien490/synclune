@@ -25,16 +25,18 @@ export function ProductRowActions(props: ProductRowActionsProps) {
 
 	return (
 		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="size-11 p-0 transition-transform active:scale-95"
-					aria-label={`Actions pour ${props.productTitle}`}
-					onPointerDown={() => haptic("selection")}
-				>
-					<EllipsisVertical className="size-4" />
-				</Button>
+			<ResponsiveActionMenuTrigger
+				render={
+					<Button
+						variant="ghost"
+						size="sm"
+						className="size-11 p-0 transition-transform active:scale-95"
+						aria-label={`Actions pour ${props.productTitle}`}
+						onPointerDown={() => haptic("selection")}
+					/>
+				}
+			>
+				<EllipsisVertical className="size-4" />
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent
 				title="Actions"

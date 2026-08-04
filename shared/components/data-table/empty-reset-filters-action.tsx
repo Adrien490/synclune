@@ -22,16 +22,19 @@ export function EmptyResetFiltersAction({
 	label = "Réinitialiser les filtres",
 }: EmptyResetFiltersActionProps) {
 	return (
-		<Button asChild variant="outline">
-			<Link
-				href={href}
-				onClick={() => {
-					triggerHaptic("light");
-				}}
-			>
-				<FilterX aria-hidden="true" />
-				{label}
-			</Link>
+		<Button
+			render={
+				<Link
+					href={href}
+					onClick={() => {
+						triggerHaptic("light");
+					}}
+				/>
+			}
+			variant="outline"
+		>
+			<FilterX aria-hidden="true" />
+			{label}
 		</Button>
 	);
 }

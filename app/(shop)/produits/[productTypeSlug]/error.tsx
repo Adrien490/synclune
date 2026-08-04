@@ -47,11 +47,11 @@ export default function ProductTypeCategoryError({
 							<Button size="lg" onClick={reset}>
 								Réessayer
 							</Button>
-							<Button asChild variant="secondary" size="lg">
-								<Link href="/produits">Voir toutes les créations</Link>
+							<Button render={<Link href="/produits" />} variant="secondary" size="lg">
+								Voir toutes les créations
 							</Button>
-							<Button asChild variant="ghost" size="lg">
-								<Link href="/">Retour à l'accueil</Link>
+							<Button render={<Link href="/" />} variant="ghost" size="lg">
+								Retour à l'accueil
 							</Button>
 						</div>
 					}

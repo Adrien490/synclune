@@ -130,8 +130,8 @@ export default async function LegalPage() {
 										<CardDescription className="text-sm">{page.description}</CardDescription>
 									</CardHeader>
 									<CardContent>
-										<Button asChild variant="outline" className="w-full">
-											<Link href={page.href}>Consulter</Link>
+										<Button render={<Link href={page.href} />} variant="outline" className="w-full">
+											Consulter
 										</Button>
 									</CardContent>
 								</Card>
@@ -206,15 +206,21 @@ export default async function LegalPage() {
 							personnelles ou nos conditions de vente.
 						</p>
 						<div className="flex flex-col justify-center gap-4 sm:flex-row">
-							<Button asChild size="lg">
-								<a href={`mailto:${contactEmail}`} className="flex items-center gap-2">
-									Nous contacter
-								</a>
+							<Button
+								render={
+									// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants du Button
+									<a href={`mailto:${contactEmail}`} className="flex items-center gap-2" />
+								}
+								size="lg"
+							>
+								Nous contacter
 							</Button>
-							<Button asChild variant="outline" size="lg">
-								<Link href="/" className="flex items-center gap-2">
-									Retour à l'accueil
-								</Link>
+							<Button
+								render={<Link href="/" className="flex items-center gap-2" />}
+								variant="outline"
+								size="lg"
+							>
+								Retour à l'accueil
 							</Button>
 						</div>
 					</div>

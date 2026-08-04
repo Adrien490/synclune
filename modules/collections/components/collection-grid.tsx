@@ -43,8 +43,8 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 					<EmptyDescription>Aucune collection disponible pour le moment.</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
-					<Button asChild variant="primary" size="lg">
-						<Link href="/produits">Découvrir la boutique</Link>
+					<Button render={<Link href="/produits" />} variant="primary" size="lg">
+						Découvrir la boutique
 					</Button>
 				</EmptyContent>
 			</Empty>

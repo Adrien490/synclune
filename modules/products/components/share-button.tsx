@@ -162,15 +162,17 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 	if (canShare) {
 		return (
 			<Tooltip>
-				<TooltipTrigger asChild>
-					<button
-						type="button"
-						onClick={handleNativeShare}
-						aria-label={ariaLabel}
-						className={buttonClassName}
-					>
-						{buttonContent}
-					</button>
+				<TooltipTrigger
+					render={
+						<button
+							type="button"
+							onClick={handleNativeShare}
+							aria-label={ariaLabel}
+							className={buttonClassName}
+						/>
+					}
+				>
+					{buttonContent}
 				</TooltipTrigger>
 				<TooltipContent className="hidden sm:block">
 					{feedback === "copied" ? "Lien copié !" : "Partager"}
@@ -191,37 +193,45 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<button
-					type="button"
-					aria-label={ariaLabel}
-					className={buttonClassName}
-					data-testid="share-button-trigger"
-				>
-					{buttonContent}
-				</button>
+			<DropdownMenuTrigger
+				render={
+					<button
+						type="button"
+						aria-label={ariaLabel}
+						className={buttonClassName}
+						data-testid="share-button-trigger"
+					/>
+				}
+			>
+				{buttonContent}
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="min-w-56">
-				<DropdownMenuItem asChild>
-					<a
-						href={pinterestHref}
-						target="_blank"
-						rel="noopener noreferrer"
-						onClick={() => triggerHaptic("selection")}
-					>
-						<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-							<path d={PINTEREST_LOGO_PATH} />
-						</svg>
-						Épingler sur Pinterest
-					</a>
+				<DropdownMenuItem
+					render={
+						// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants de l'item
+						<a
+							href={pinterestHref}
+							target="_blank"
+							rel="noopener noreferrer"
+							onClick={() => triggerHaptic("selection")}
+						/>
+					}
+				>
+					<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+						<path d={PINTEREST_LOGO_PATH} />
+					</svg>
+					Épingler sur Pinterest
 				</DropdownMenuItem>
-				<DropdownMenuItem asChild>
-					<a href={mailtoHref} onClick={() => triggerHaptic("selection")}>
-						<Mail className="size-4" aria-hidden="true" />
-						Envoyer par e-mail
-					</a>
+				<DropdownMenuItem
+					render={
+						// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants de l'item
+						<a href={mailtoHref} onClick={() => triggerHaptic("selection")} />
+					}
+				>
+					<Mail className="size-4" aria-hidden="true" />
+					Envoyer par e-mail
 				</DropdownMenuItem>
-				<DropdownMenuItem onSelect={handleCopy}>
+				<DropdownMenuItem onClick={handleCopy}>
 					<Copy className="size-4" aria-hidden="true" />
 					Copier le lien
 				</DropdownMenuItem>

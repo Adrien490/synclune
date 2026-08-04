@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 vi.mock("lucide-react", () => ({
 	ExternalLink: () => <svg data-testid="icon-external-link" />,
 	Eye: () => <svg data-testid="icon-eye" />,
@@ -36,26 +38,8 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		asChild,
-		disabled,
-		"aria-describedby": ariaDescribedBy,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-		disabled?: boolean;
-		variant?: string;
-		className?: string;
-		"aria-describedby"?: string;
-	}) =>
-		asChild ? (
-			<>{children}</>
-		) : (
-			<button type="button" disabled={disabled} aria-describedby={ariaDescribedBy}>
-				{children}
-			</button>
-		),
+	Button: ({ variant, className, ...props }: RenderPropMockProps) =>
+		renderPropMock("button", { type: "button", ...props }),
 }));
 
 vi.mock("@/shared/components/ui/card", () => ({

@@ -1,4 +1,3 @@
-import { Slot } from "@radix-ui/react-slot";
 import { ChevronRight, Ellipsis } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -32,17 +31,9 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
 	);
 }
 
-function BreadcrumbLink({
-	asChild,
-	className,
-	...props
-}: React.ComponentProps<typeof Link> & {
-	asChild?: boolean;
-}) {
-	const Comp = asChild ? Slot : Link;
-
+function BreadcrumbLink({ className, ...props }: React.ComponentProps<typeof Link>) {
 	return (
-		<Comp
+		<Link
 			data-slot="breadcrumb-link"
 			className={cn(
 				"hover:text-foreground max-w-30 truncate transition-colors sm:max-w-none",

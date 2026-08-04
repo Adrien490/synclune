@@ -141,16 +141,18 @@ afterEach(() => {
 });
 
 describe("MenuSheet — navigation des liens (regression locked)", () => {
-	it("aucun lien de navigation n'est enveloppé dans un SheetClose (data-vaul-drawer-close)", () => {
+	it("aucun lien de navigation n'est enveloppé dans un SheetClose", () => {
 		renderOpenMenu();
 
 		const links = screen.getAllByRole("link");
 		expect(links.length).toBeGreaterThan(2);
 
 		for (const link of links) {
+			// Marqueur migré : Vaul posait `data-vaul-drawer-close` sur son wrapper,
+			// Base UI ne pose rien — c'est notre `data-slot` qui identifie le Close.
 			let node: HTMLElement | null = link;
 			while (node) {
-				expect(node.getAttribute("data-vaul-drawer-close")).toBeNull();
+				expect(node.getAttribute("data-slot")).not.toBe("sheet-close");
 				node = node.parentElement;
 			}
 		}

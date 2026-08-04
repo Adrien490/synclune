@@ -92,96 +92,94 @@ export function MarkAsFullyRefundedAlertDialog() {
 						<ResponsiveAlertDialogTitle>
 							Marquer comme entièrement remboursée
 						</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									Marquer la commande <strong>{dialog.data?.orderNumber}</strong> comme remboursée
-									manuellement hors Stripe.
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								Marquer la commande <strong>{dialog.data?.orderNumber}</strong> comme remboursée
+								manuellement hors Stripe.
+							</p>
+							<div className="bg-muted/50 mt-3 space-y-1 rounded-md border p-3 text-sm">
+								<p className="text-foreground font-medium">Cas d&apos;usage :</p>
+								<ul className="text-muted-foreground list-disc space-y-0.5 pl-5">
+									<li>Remboursement par virement bancaire ou chèque</li>
+									<li>Geste commercial (échange marchandise, avoir boutique)</li>
+									<li>Régularisation après PARTIALLY_REFUNDED Stripe</li>
+								</ul>
+								<p className="text-muted-foreground mt-2 text-xs">
+									<strong>Aucun appel Stripe ne sera effectué.</strong> Pour rembourser via Stripe,
+									utiliser plutôt le module Remboursements.
 								</p>
-								<div className="bg-muted/50 mt-3 space-y-1 rounded-md border p-3 text-sm">
-									<p className="text-foreground font-medium">Cas d&apos;usage :</p>
-									<ul className="text-muted-foreground list-disc space-y-0.5 pl-5">
-										<li>Remboursement par virement bancaire ou chèque</li>
-										<li>Geste commercial (échange marchandise, avoir boutique)</li>
-										<li>Régularisation après PARTIALLY_REFUNDED Stripe</li>
-									</ul>
-									<p className="text-muted-foreground mt-2 text-xs">
-										<strong>Aucun appel Stripe ne sera effectué.</strong> Pour rembourser via
-										Stripe, utiliser plutôt le module Remboursements.
+							</div>
+							{hasGeneratedInvoice && (
+								<div
+									className="border-warning/40 bg-warning/5 mt-3 space-y-1 rounded-md border p-3"
+									role="alert"
+								>
+									<p className="text-foreground flex items-center gap-2 text-sm font-medium">
+										<FileWarning className="text-warning size-4" aria-hidden="true" />
+										Émission d&apos;un avoir comptable
+									</p>
+									<p className="text-muted-foreground text-sm">
+										Cette commande est facturée
+										{invoiceNumber ? (
+											<>
+												{" "}
+												(
+												<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
+													{invoiceNumber}
+												</code>
+												)
+											</>
+										) : null}
+										. Un avoir{" "}
+										<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
+											A-YYYY-NNNNN
+										</code>{" "}
+										sera émis automatiquement (Art. 272-I CGI).
 									</p>
 								</div>
-								{hasGeneratedInvoice && (
-									<div
-										className="border-warning/40 bg-warning/5 mt-3 space-y-1 rounded-md border p-3"
-										role="alert"
-									>
-										<p className="text-foreground flex items-center gap-2 text-sm font-medium">
-											<FileWarning className="text-warning size-4" aria-hidden="true" />
-											Émission d&apos;un avoir comptable
-										</p>
-										<p className="text-muted-foreground text-sm">
-											Cette commande est facturée
-											{invoiceNumber ? (
-												<>
-													{" "}
-													(
-													<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
-														{invoiceNumber}
-													</code>
-													)
-												</>
-											) : null}
-											. Un avoir{" "}
-											<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
-												A-YYYY-NNNNN
-											</code>{" "}
-											sera émis automatiquement (Art. 272-I CGI).
-										</p>
-									</div>
-								)}
-								<div className="mt-3 space-y-1.5">
-									<FieldLabel htmlFor="mark-as-fully-refunded-method" required>
-										Moyen du remboursement
-									</FieldLabel>
-									<Select
-										value={method}
-										onValueChange={(v) => setMethod(v as ManualRefundMethod)}
-										disabled={isPending}
-									>
-										<SelectTrigger id="mark-as-fully-refunded-method">
-											<SelectValue placeholder="Sélectionner…" />
-										</SelectTrigger>
-										<SelectContent>
-											{MANUAL_REFUND_METHODS.map((m) => (
-												<SelectItem key={m.value} value={m.value}>
-													{m.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<p className="text-muted-foreground text-xs">
-										Tracé dans l&apos;audit Art. L123-22 pour distinguer du remboursement Stripe.
-									</p>
-								</div>
+							)}
+							<div className="mt-3 space-y-1.5">
+								<FieldLabel htmlFor="mark-as-fully-refunded-method" required>
+									Moyen du remboursement
+								</FieldLabel>
+								<Select
+									value={method}
+									onValueChange={(v) => setMethod(v as ManualRefundMethod)}
+									disabled={isPending}
+								>
+									<SelectTrigger id="mark-as-fully-refunded-method">
+										<SelectValue placeholder="Sélectionner…" />
+									</SelectTrigger>
+									<SelectContent>
+										{MANUAL_REFUND_METHODS.map((m) => (
+											<SelectItem key={m.value} value={m.value}>
+												{m.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<p className="text-muted-foreground text-xs">
+									Tracé dans l&apos;audit Art. L123-22 pour distinguer du remboursement Stripe.
+								</p>
+							</div>
 
-								<div className="mt-3 space-y-1.5">
-									<Label htmlFor="mark-as-fully-refunded-reason" className="text-sm">
-										Motif (optionnel)
-									</Label>
-									<Textarea
-										id="mark-as-fully-refunded-reason"
-										value={reason}
-										onChange={(e) => setReason(e.target.value)}
-										placeholder="Virement bancaire reçu le ../../...., geste commercial..."
-										rows={2}
-										disabled={isPending}
-										maxLength={500}
-										className="resize-none"
-									/>
-									<p className="text-muted-foreground text-xs">
-										Apparaîtra dans la timeline d&apos;audit et la note Refund.
-									</p>
-								</div>
+							<div className="mt-3 space-y-1.5">
+								<Label htmlFor="mark-as-fully-refunded-reason" className="text-sm">
+									Motif (optionnel)
+								</Label>
+								<Textarea
+									id="mark-as-fully-refunded-reason"
+									value={reason}
+									onChange={(e) => setReason(e.target.value)}
+									placeholder="Virement bancaire reçu le ../../...., geste commercial..."
+									rows={2}
+									disabled={isPending}
+									maxLength={500}
+									className="resize-none"
+								/>
+								<p className="text-muted-foreground text-xs">
+									Apparaîtra dans la timeline d&apos;audit et la note Refund.
+								</p>
 							</div>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>

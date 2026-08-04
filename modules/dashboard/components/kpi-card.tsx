@@ -129,14 +129,16 @@ export function KpiCard({
 					<CardTitle className="text-muted-foreground text-sm font-medium">{title}</CardTitle>
 					{tooltip && !href && (
 						<Tooltip>
-							<TooltipTrigger asChild>
-								<button
-									type="button"
-									className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex size-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
-									aria-label={`Info: ${title}`}
-								>
-									<Info className="size-3.5" aria-hidden="true" />
-								</button>
+							<TooltipTrigger
+								render={
+									<button
+										type="button"
+										className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex size-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
+										aria-label={`Info: ${title}`}
+									/>
+								}
+							>
+								<Info className="size-3.5" aria-hidden="true" />
 							</TooltipTrigger>
 							<TooltipContent side="top" className="max-w-xs">
 								<p className="text-sm">{tooltip}</p>

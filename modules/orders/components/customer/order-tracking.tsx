@@ -98,16 +98,20 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 
 				{/* Track button */}
 				{order.trackingUrl && (
-					<Button variant="outline" className="w-full sm:w-auto" asChild>
-						<a
-							href={order.trackingUrl}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label="Suivre mon colis (s'ouvre dans un nouvel onglet)"
-						>
-							<ExternalLink className="mr-2 size-4" />
-							Suivre mon colis
-						</a>
+					<Button
+						variant="outline"
+						className="w-full sm:w-auto"
+						render={
+							<a
+								href={order.trackingUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="Suivre mon colis (s'ouvre dans un nouvel onglet)"
+							/>
+						}
+					>
+						<ExternalLink className="mr-2 size-4" />
+						Suivre mon colis
 					</Button>
 				)}
 			</div>

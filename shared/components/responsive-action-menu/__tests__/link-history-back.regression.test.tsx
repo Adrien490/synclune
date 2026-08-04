@@ -82,8 +82,8 @@ const SECTIONS: ActionMenuSection[] = [
 function renderControlledMenu(onOpenChange: (open: boolean) => void) {
 	return render(
 		<ResponsiveActionMenu open={true} onOpenChange={onOpenChange}>
-			<ResponsiveActionMenuTrigger asChild>
-				<button type="button">Trigger</button>
+			<ResponsiveActionMenuTrigger render={<button type="button" />}>
+				Trigger
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent title="Actions" sections={SECTIONS} />
 		</ResponsiveActionMenu>,
@@ -106,11 +106,12 @@ describe("ResponsiveActionMenu — Link history.back race (regression locked)", 
 
 		const link = screen.getByTestId("action-link");
 
-		// Vaul DrawerClose renders a <button data-vaul-drawer-close> wrapper.
-		// If the Link were wrapped, walking up the DOM from the <a> would hit it.
+		// Marqueur migré : Vaul posait `data-vaul-drawer-close`, Base UI ne pose
+		// rien — c'est notre `data-slot` qui identifie le Close. Si le Link était
+		// enveloppé, remonter le DOM depuis le <a> le rencontrerait.
 		let node: HTMLElement | null = link;
 		while (node) {
-			expect(node.getAttribute("data-vaul-drawer-close")).toBeNull();
+			expect(node.getAttribute("data-slot")).not.toBe("drawer-close");
 			node = node.parentElement;
 		}
 	});

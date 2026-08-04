@@ -2,6 +2,8 @@ import React from "react";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
@@ -58,17 +60,7 @@ vi.mock("@/shared/components/cursor-pagination", () => ({
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-		[key: string]: unknown;
-	}) => {
-		if (asChild) return <>{children}</>;
-		return <button>{children}</button>;
-	},
+	Button: (props: RenderPropMockProps) => renderPropMock("button", props),
 }));
 
 vi.mock("@/shared/components/ui/empty", () => ({

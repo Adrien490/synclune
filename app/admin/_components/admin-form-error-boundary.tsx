@@ -42,8 +42,8 @@ export function AdminFormErrorBoundary({
 			</p>
 			<div className="flex flex-wrap items-center justify-center gap-2">
 				<Button onClick={reset}>Réessayer</Button>
-				<Button variant="outline" asChild>
-					<Link href={backHref}>{backLabel}</Link>
+				<Button variant="outline" render={<Link href={backHref} />}>
+					{backLabel}
 				</Button>
 			</div>
 		</div>

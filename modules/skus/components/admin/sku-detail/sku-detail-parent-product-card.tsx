@@ -70,17 +70,17 @@ export function SkuDetailParentProductCard({ sku }: SkuDetailParentProductCardPr
 				) : null}
 
 				<Button
-					asChild
+					render={
+						<Link
+							href={`/admin/catalogue/produits/${sku.product.slug}`}
+							onClick={() => haptic("light")}
+						/>
+					}
 					variant="outline"
 					className="w-full transition-transform duration-150 active:scale-[0.98]"
 				>
-					<Link
-						href={`/admin/catalogue/produits/${sku.product.slug}`}
-						onClick={() => haptic("light")}
-					>
-						Voir le produit
-						<ArrowRight className="size-4" aria-hidden="true" />
-					</Link>
+					Voir le produit
+					<ArrowRight className="size-4" aria-hidden="true" />
 				</Button>
 			</CardContent>
 		</Card>

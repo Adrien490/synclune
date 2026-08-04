@@ -39,9 +39,7 @@ export function DashboardHeader() {
 		>
 			<div className="flex min-w-0 flex-1 items-center gap-2 px-4">
 				<Tooltip>
-					<TooltipTrigger asChild>
-						<SidebarTrigger className="-ml-1 shrink-0" />
-					</TooltipTrigger>
+					<TooltipTrigger render={<SidebarTrigger className="-ml-1 shrink-0" />}></TooltipTrigger>
 					<TooltipContent side="right" sideOffset={8}>
 						<span>Basculer le menu</span>
 						<KbdGroup className="ml-2">
@@ -55,15 +53,17 @@ export function DashboardHeader() {
 					<DashboardBreadcrumb />
 				</div>
 				<Tooltip>
-					<TooltipTrigger asChild>
-						<button
-							type="button"
-							onClick={() => openShortcuts()}
-							className={iconButtonClass}
-							aria-label="Afficher les raccourcis clavier"
-						>
-							<Keyboard className="size-4" aria-hidden="true" />
-						</button>
+					<TooltipTrigger
+						render={
+							<button
+								type="button"
+								onClick={() => openShortcuts()}
+								className={iconButtonClass}
+								aria-label="Afficher les raccourcis clavier"
+							/>
+						}
+					>
+						<Keyboard className="size-4" aria-hidden="true" />
 					</TooltipTrigger>
 					<TooltipContent side="bottom">
 						<span>Raccourcis clavier</span>
@@ -73,16 +73,18 @@ export function DashboardHeader() {
 					</TooltipContent>
 				</Tooltip>
 				<Tooltip>
-					<TooltipTrigger asChild>
-						<Link
-							href="/"
-							target="_blank"
-							rel="noopener noreferrer"
-							className={iconButtonClass}
-							aria-label="Voir le site (nouvel onglet)"
-						>
-							<ExternalLink className="size-4" aria-hidden="true" />
-						</Link>
+					<TooltipTrigger
+						render={
+							<Link
+								href="/"
+								target="_blank"
+								rel="noopener noreferrer"
+								className={iconButtonClass}
+								aria-label="Voir le site (nouvel onglet)"
+							/>
+						}
+					>
+						<ExternalLink className="size-4" aria-hidden="true" />
 					</TooltipTrigger>
 					<TooltipContent side="bottom">Voir le site</TooltipContent>
 				</Tooltip>

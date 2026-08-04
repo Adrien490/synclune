@@ -65,12 +65,17 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 								className="size-8 p-0"
 							/>
 							{order.trackingUrl && (
-								<Button variant="outline" size="sm" asChild>
-									<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer">
-										<ExternalLink className="size-4" aria-hidden="true" />
-										Suivre
-										<span className="sr-only"> (s'ouvre dans un nouvel onglet)</span>
-									</a>
+								<Button
+									variant="outline"
+									size="sm"
+									render={
+										// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants du Button
+										<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" />
+									}
+								>
+									<ExternalLink className="size-4" aria-hidden="true" />
+									Suivre
+									<span className="sr-only"> (s'ouvre dans un nouvel onglet)</span>
 								</Button>
 							)}
 						</div>

@@ -108,13 +108,15 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 					</div>
 
 					<div className="flex flex-col gap-3">
-						<Button asChild className="w-full">
-							<Link href="/collections">Découvrir nos collections</Link>
+						<Button render={<Link href="/collections" />} className="w-full">
+							Découvrir nos collections
 						</Button>
-						<Button asChild variant="outline" className="w-full">
-							<Link href={isConnected ? "/" : "/connexion"}>
-								{isConnected ? "Retour au site" : "Se connecter"}
-							</Link>
+						<Button
+							render={<Link href={isConnected ? "/" : "/connexion"} />}
+							variant="outline"
+							className="w-full"
+						>
+							{isConnected ? "Retour au site" : "Se connecter"}
 						</Button>
 					</div>
 				</div>
@@ -159,8 +161,8 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 				</div>
 
 				<div className="space-y-2 pt-2 text-center">
-					<Button asChild variant="outline" className="w-full">
-						<Link href="/connexion">Retour à la connexion</Link>
+					<Button render={<Link href="/connexion" />} variant="outline" className="w-full">
+						Retour à la connexion
 					</Button>
 				</div>
 			</div>

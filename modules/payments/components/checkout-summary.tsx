@@ -208,18 +208,20 @@ function SummaryContent({
 					<span className="text-xl/7 tabular-nums sm:text-2xl/8">{formatEuro(total)}</span>
 				</div>
 				{/* Info micro-entreprise */}
-				<TooltipProvider delayDuration={200}>
+				<TooltipProvider delay={200}>
 					<Tooltip>
-						<TooltipTrigger asChild>
-							<button
-								type="button"
-								className="text-muted-foreground focus-ring ml-auto flex items-center gap-1 rounded-sm text-xs/5 tracking-normal antialiased"
-								aria-label="Pourquoi pas de TVA ?"
-								aria-describedby={tvaTooltipId}
-							>
-								<span>{DEFAULT_FRANCHISE_VAT_MENTION}</span>
-								<Info className="size-3" aria-hidden="true" />
-							</button>
+						<TooltipTrigger
+							render={
+								<button
+									type="button"
+									className="text-muted-foreground focus-ring ml-auto flex items-center gap-1 rounded-sm text-xs/5 tracking-normal antialiased"
+									aria-label="Pourquoi pas de TVA ?"
+									aria-describedby={tvaTooltipId}
+								/>
+							}
+						>
+							<span>{DEFAULT_FRANCHISE_VAT_MENTION}</span>
+							<Info className="size-3" aria-hidden="true" />
 						</TooltipTrigger>
 						<TooltipContent id={tvaTooltipId} className="max-w-xs text-center">
 							Synclune est en franchise en base de TVA (régime micro-entreprise). Aucune TVA

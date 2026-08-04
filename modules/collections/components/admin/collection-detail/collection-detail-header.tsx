@@ -72,29 +72,31 @@ export function CollectionDetailHeader({ collection }: CollectionDetailHeaderPro
 
 			<DetailStickyActionBar>
 				<Button
-					asChild
+					render={
+						<Link
+							href={`/admin/catalogue/collections/${collection.slug}/modifier`}
+							onClick={() => haptic("light")}
+						/>
+					}
 					size="sm"
 					className="min-h-11 flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
 				>
-					<Link
-						href={`/admin/catalogue/collections/${collection.slug}/modifier`}
-						onClick={() => haptic("light")}
-					>
-						<Pencil className="size-4" aria-hidden="true" />
-						Modifier
-					</Link>
+					<Pencil className="size-4" aria-hidden="true" />
+					Modifier
 				</Button>
 
 				<ResponsiveActionMenu>
-					<ResponsiveActionMenuTrigger asChild>
-						<Button
-							variant="outline"
-							size="sm"
-							aria-label="Plus d'actions"
-							className="min-h-11 min-w-11 touch-manipulation sm:min-h-9 sm:min-w-9"
-						>
-							<Ellipsis className="size-4" aria-hidden="true" />
-						</Button>
+					<ResponsiveActionMenuTrigger
+						render={
+							<Button
+								variant="outline"
+								size="sm"
+								aria-label="Plus d'actions"
+								className="min-h-11 min-w-11 touch-manipulation sm:min-h-9 sm:min-w-9"
+							/>
+						}
+					>
+						<Ellipsis className="size-4" aria-hidden="true" />
 					</ResponsiveActionMenuTrigger>
 					<ResponsiveActionMenuContent
 						title="Actions collection"

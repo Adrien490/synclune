@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 vi.mock("@/shared/components/ui/card", () => ({
 	Card: ({ children }: any) => <div>{children}</div>,
 	CardHeader: ({ children }: any) => <div>{children}</div>,
@@ -13,10 +15,7 @@ vi.mock("@/shared/components/ui/badge", () => ({
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({ children, asChild, ...props }: any) => {
-		if (asChild) return <div {...props}>{children}</div>;
-		return <button {...props}>{children}</button>;
-	},
+	Button: (props: RenderPropMockProps) => renderPropMock("button", props),
 }));
 
 vi.mock("lucide-react", () => ({

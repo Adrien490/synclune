@@ -2,7 +2,6 @@ import type { UserConfig } from "@commitlint/types";
 
 const MODULE_SCOPES = [
 	"addresses",
-	"announcements",
 	"auth",
 	"cart",
 	"collections",

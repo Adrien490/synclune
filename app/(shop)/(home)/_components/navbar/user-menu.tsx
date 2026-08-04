@@ -52,17 +52,19 @@ export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
 		<>
 			<DropdownMenu>
 				<Tooltip>
-					<TooltipTrigger asChild>
-						<DropdownMenuTrigger
-							aria-label="Menu administration"
-							className={cn("hidden sm:inline-flex", iconButtonClassName)}
-						>
-							<User
-								size={20}
-								className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105 motion-safe:group-data-[state=open]:scale-105"
-								aria-hidden="true"
+					<TooltipTrigger
+						render={
+							<DropdownMenuTrigger
+								aria-label="Menu administration"
+								className={cn("hidden sm:inline-flex", iconButtonClassName)}
 							/>
-						</DropdownMenuTrigger>
+						}
+					>
+						<User
+							size={20}
+							className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105 motion-safe:group-data-[state=open]:scale-105"
+							aria-hidden="true"
+						/>
 					</TooltipTrigger>
 					<TooltipContent className="hidden lg:block">Administration</TooltipContent>
 				</Tooltip>
@@ -88,17 +90,19 @@ export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
 							<DropdownMenuSeparator />
 						</>
 					)}
-					<DropdownMenuItem asChild>
-						<Link href={ROUTES.ADMIN.DASHBOARD} prefetch={null} className="cursor-pointer">
-							<LayoutDashboard aria-hidden="true" />
-							<span>Tableau de bord admin</span>
-						</Link>
+					<DropdownMenuItem
+						render={
+							<Link href={ROUTES.ADMIN.DASHBOARD} prefetch={null} className="cursor-pointer" />
+						}
+					>
+						<LayoutDashboard aria-hidden="true" />
+						<span>Tableau de bord admin</span>
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						variant="destructive"
-						preventDefault
-						onSelect={() => setLogoutOpen(true)}
+						closeOnClick={false}
+						onClick={() => setLogoutOpen(true)}
 						className="cursor-pointer"
 					>
 						<LogOut aria-hidden="true" />

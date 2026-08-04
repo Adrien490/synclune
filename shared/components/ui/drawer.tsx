@@ -1,119 +1,146 @@
 "use client";
 
-import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
+import { Drawer as DrawerPrimitive } from "@base-ui/react/drawer";
+import * as React from "react";
+
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
-import * as React from "react";
-import { Drawer as DrawerPrimitive } from "vaul";
+
+type DrawerDirection = "top" | "right" | "bottom" | "left";
+
+const DrawerContext = React.createContext<{ direction: DrawerDirection; handleOnly: boolean }>({
+	direction: "bottom",
+	handleOnly: false,
+});
 
 /**
- * Vaul Drawer wrapper avec défauts Synclune.
+ * Vaul exprimait le BORD d'ancrage (`direction`), Base UI exprime le GESTE qui
+ * ferme (`swipeDirection`). Un drawer ancré en bas se ferme vers le bas.
+ */
+const SWIPE_DIRECTION: Record<DrawerDirection, "up" | "down" | "left" | "right"> = {
+	top: "up",
+	bottom: "down",
+	left: "left",
+	right: "right",
+};
+
+/**
+ * Drawer Base UI avec défauts Synclune.
  *
- * Modes de fermeture (cf. `.claude/plans/audit-mes-modales-swipeable-linked-badger.md`) :
+ * Modes de fermeture :
  *
- * 1. **Permissif (défaut)** — Swipe-from-anywhere ferme le drawer. Convient aux
- *    listes courtes / menus simples (SortDrawer, ResponsiveActionMenu).
- * 2. **Strict (`handleOnly={true}`)** — Seule la `DrawerHandle` visible permet
- *    de fermer. Convient au contenu scrollable interactif où chaque touch
- *    compte (cart, filtres, bulk actions, long nav). Évite les fermetures
- *    accidentelles quand l'utilisateur scrolle / interagit.
- * 3. **Saisie clavier (`repositionInputs={true}`)** — Vaul repositionne l'input
- *    focusé au-dessus du clavier mobile au lieu de scroller (Vaul l'active
- *    auto si `snapPoints` est défini, sinon explicite). Convient aux drawers
- *    avec search/text input.
+ * 1. **Permissif (défaut)** — swipe depuis n'importe où dans le panneau.
+ * 2. **Strict (`handleOnly`)** — seule la `DrawerHandle` reste préhensible.
+ *    ⚠️ Le mécanisme s'est INVERSÉ à la migration : Vaul avait une liste
+ *    blanche (« seule la poignée drague »), Base UI a une liste noire
+ *    (`data-base-ui-swipe-ignore` sur les descendants à exclure). On enveloppe
+ *    donc le contenu dans un conteneur `display:contents` porteur de
+ *    l'attribut — invisible pour la mise en page flex, mais trouvé par le
+ *    `closest()` de Base UI.
+ * 3. **Saisie clavier (`repositionInputs`)** — `Drawer.VirtualKeyboardProvider`
+ *    remonte le champ focusé au-dessus du clavier mobile. Actif par défaut,
+ *    comme l'était le défaut Vaul.
+ *
+ * Sans équivalent Base UI, retirés : `scrollLockTimeout` et `closeThreshold`
+ * (Base UI arbitre scroll vs swipe par la direction du geste et la vélocité,
+ * pas par un délai ni un seuil configurables).
  */
 function Drawer({
 	open,
 	onOpenChange,
-	scrollLockTimeout = 800,
-	closeThreshold = 0.15,
-	handleOnly,
+	direction = "bottom",
+	handleOnly = false,
 	repositionInputs,
+	children,
 	...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root> & {
-	/**
-	 * Si `true`, seul `<DrawerHandle>` (la poignée visible en haut) permet de
-	 * drag/fermer le drawer. Le reste du contenu n'écoute pas les gestes
-	 * swipe-to-close. Active pour les drawers avec contenu interactif scrollable.
-	 * @default false
-	 */
+}: Omit<DrawerPrimitive.Root.Props, "onOpenChange" | "swipeDirection" | "children"> & {
+	// `Root.Props.children` accepte aussi une fonction de rendu (API `payload` de
+	// Base UI) ; on ne l'expose pas — nos appelants passent des enfants JSX.
+	children?: React.ReactNode;
+	direction?: DrawerDirection;
 	handleOnly?: boolean;
-	/**
-	 * Repositionne l'input focusé au-dessus du clavier mobile (au lieu de
-	 * scroller la page).
-	 *
-	 * ⚠️ Le défaut Vaul est `true`, et ne rien passer forwarde `undefined` —
-	 * donc le comportement par défaut est ACTIF. Ne le passer explicitement que
-	 * pour le désactiver (`false`) ou pour documenter l'intention.
-	 */
 	repositionInputs?: boolean;
+	onOpenChange?: (open: boolean, eventDetails?: DrawerPrimitive.Root.ChangeEventDetails) => void;
 }) {
+	// Cf. `ui/dialog.tsx` : on notifie AVANT de consommer l'entrée d'historique,
+	// pour laisser l'appelant annuler la fermeture (`eventDetails.cancel()`).
+	const skipNextOnCloseRef = React.useRef(false);
+
 	const { handleClose } = useBackButtonClose({
 		isOpen: open ?? false,
-		onClose: () => onOpenChange?.(false),
+		onClose: () => {
+			if (skipNextOnCloseRef.current) {
+				skipNextOnCloseRef.current = false;
+				return;
+			}
+			onOpenChange?.(false);
+		},
 		id: "drawer",
 	});
 
-	const wrappedOnOpenChange = (newOpen: boolean) => {
-		if (!newOpen) {
-			handleClose();
-		} else {
-			onOpenChange?.(true);
+	const wrappedOnOpenChange = (
+		newOpen: boolean,
+		eventDetails: DrawerPrimitive.Root.ChangeEventDetails,
+	) => {
+		if (newOpen) {
+			onOpenChange?.(true, eventDetails);
+			return;
 		}
+		onOpenChange?.(false, eventDetails);
+		if (eventDetails.isCanceled) return;
+		skipNextOnCloseRef.current = true;
+		handleClose();
 	};
 
-	// Stacking : si un Drawer/Sheet Vaul parent est déjà monté, on utilise
-	// `NestedRoot` pour empiler proprement (animation scale + focus-trap chaîné).
-	const isInsideVaul = useIsInsideVaul();
-	const VaulRoot = isInsideVaul ? DrawerPrimitive.NestedRoot : DrawerPrimitive.Root;
+	const body =
+		repositionInputs === false ? (
+			children
+		) : (
+			<DrawerPrimitive.VirtualKeyboardProvider>{children}</DrawerPrimitive.VirtualKeyboardProvider>
+		);
 
-	// Défauts cohérents avec le wrapper Sheet :
-	// - scrollLockTimeout 800ms : évite les fermetures accidentelles juste
-	//   après un scroll sur mobile (Vaul default 100ms est trop court).
-	// - closeThreshold 0.15 : fraction de la hauteur du drawer à swiper pour
-	//   déclencher la fermeture. Vaul default 0.25 demande ~23% de viewport
-	//   sur grands drawers, trop pénible. 0.15 reste un geste volontaire.
+	// L'empilement des drawers imbriqués est natif chez Base UI (`data-nested`,
+	// `--nested-drawers`) : le `VaulNestedProvider` maison a disparu.
 	return (
-		<VaulNestedProvider>
-			<VaulRoot
+		<DrawerContext.Provider value={{ direction, handleOnly }}>
+			<DrawerPrimitive.Root
 				data-slot="drawer"
 				open={open}
 				onOpenChange={wrappedOnOpenChange}
-				scrollLockTimeout={scrollLockTimeout}
-				closeThreshold={closeThreshold}
-				handleOnly={handleOnly}
-				repositionInputs={repositionInputs}
+				swipeDirection={SWIPE_DIRECTION[direction]}
 				{...props}
-			/>
-		</VaulNestedProvider>
+			>
+				{body}
+			</DrawerPrimitive.Root>
+		</DrawerContext.Provider>
 	);
 }
 
-function DrawerTrigger({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
+function DrawerTrigger({ ...props }: DrawerPrimitive.Trigger.Props) {
 	return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />;
 }
 
-function DrawerPortal({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Portal>) {
+function DrawerPortal({ ...props }: DrawerPrimitive.Portal.Props) {
 	return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />;
 }
 
-function DrawerClose({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Close>) {
+function DrawerClose({ ...props }: DrawerPrimitive.Close.Props) {
 	return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
 }
 
 /**
- * Handle draggable pour le drawer.
- * Quand handleOnly est activé sur le Drawer parent, seul ce composant
- * permet de drag/fermer le drawer, évitant les fermetures accidentelles.
+ * Poignée de drag. Base UI n'a pas de primitive `Handle` — la totalité du popup
+ * est préhensible, la poignée n'est donc qu'un repère visuel… sauf en mode
+ * `handleOnly`, où elle redevient la seule zone non exclue du geste.
  */
 function DrawerHandle({
 	className,
 	"aria-label": ariaLabel = "Glisser pour fermer",
 	...props
-}: React.ComponentProps<typeof DrawerPrimitive.Handle>) {
+}: React.ComponentProps<"div">) {
 	return (
-		<DrawerPrimitive.Handle
+		<div
 			data-slot="drawer-handle"
 			aria-label={ariaLabel}
 			className={cn(
@@ -126,15 +153,13 @@ function DrawerHandle({
 	);
 }
 
-function DrawerOverlay({
-	className,
-	...props
-}: React.ComponentProps<typeof DrawerPrimitive.Overlay>) {
+/** `Backdrop` chez Base UI — le nom public reste `DrawerOverlay`. */
+function DrawerOverlay({ className, ...props }: DrawerPrimitive.Backdrop.Props) {
 	return (
-		<DrawerPrimitive.Overlay
+		<DrawerPrimitive.Backdrop
 			data-slot="drawer-overlay"
 			className={cn(
-				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0 fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
+				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0 fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				className,
 			)}
 			{...props}
@@ -142,13 +167,39 @@ function DrawerOverlay({
 	);
 }
 
+/** Alignement du panneau dans le `Viewport` (couche fixe plein écran). */
+const VIEWPORT_ALIGNMENT: Record<DrawerDirection, string> = {
+	bottom: "items-end justify-center",
+	top: "items-start justify-center",
+	left: "items-stretch justify-start",
+	right: "items-stretch justify-end",
+};
+
+/**
+ * Entrée, sortie et suivi du geste partagent la même propriété `transform` :
+ * c'est une TRANSITION, pas une animation keyframes (qui écraserait le
+ * `translate` piloté par le doigt). Cf. le commentaire détaillé de `ui/sheet.tsx`.
+ */
+const SWIPE_TRANSFORM: Record<DrawerDirection, string> = {
+	bottom:
+		"[transform:translateY(var(--drawer-swipe-movement-y))] data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)]",
+	top: "[transform:translateY(var(--drawer-swipe-movement-y))] data-starting-style:[transform:translateY(-100%)] data-ending-style:[transform:translateY(-100%)]",
+	left: "[transform:translateX(var(--drawer-swipe-movement-x))] data-starting-style:[transform:translateX(-100%)] data-ending-style:[transform:translateX(-100%)]",
+	right:
+		"[transform:translateX(var(--drawer-swipe-movement-x))] data-starting-style:[transform:translateX(100%)] data-ending-style:[transform:translateX(100%)]",
+};
+
+/** Courbe Vaul historique, conservée pour ne pas changer le ressenti. */
+const PANEL_TRANSITION = "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]";
+
 function DrawerContent({
 	className,
 	children,
 	onOverlayClick,
 	registerOverlay = true,
 	...props
-}: React.ComponentProps<typeof DrawerPrimitive.Content> & {
+}: Omit<DrawerPrimitive.Popup.Props, "className"> & {
+	className?: string;
 	/**
 	 * Callback fired when the scrim (overlay) is tapped/clicked.
 	 * Utile pour déclencher un haptic `selection` sur dismiss mobile
@@ -158,32 +209,57 @@ function DrawerContent({
 	/** Parité avec Dialog/AlertDialog/Sheet — opt-out de l'overlay-stack. */
 	registerOverlay?: boolean;
 }) {
+	const { direction, handleOnly } = React.use(DrawerContext);
+
 	return (
 		<DrawerPortal data-slot="drawer-portal">
 			<OverlayStackRegister enabled={registerOverlay} />
 			<DrawerOverlay onClick={onOverlayClick} />
-			<DrawerPrimitive.Content
-				data-slot="drawer-content"
-				className={cn(
-					"group/drawer-content bg-background fixed z-(--z-overlay) flex h-auto flex-col px-4 shadow-xl",
-					// Top drawer
-					"data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[80vh] data-[vaul-drawer-direction=top]:rounded-b-xl data-[vaul-drawer-direction=top]:border-b",
-					// Bottom drawer avec safe-area padding et overflow-hidden pour forcer le scroll interne
-					"data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:rounded-t-xl data-[vaul-drawer-direction=bottom]:border-t",
-					"data-[vaul-drawer-direction=bottom]:max-h-[90vh] data-[vaul-drawer-direction=bottom]:overflow-hidden data-[vaul-drawer-direction=bottom]:pb-[max(1rem,env(safe-area-inset-bottom))]",
-					// Right drawer (avec safe-area latérale en mode paysage iPhone)
-					"data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:border-l data-[vaul-drawer-direction=right]:pr-[max(0px,env(safe-area-inset-right))] data-[vaul-drawer-direction=right]:sm:max-w-sm",
-					// Left drawer (avec safe-area latérale en mode paysage iPhone)
-					"data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-full data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=left]:pl-[max(0px,env(safe-area-inset-left))] data-[vaul-drawer-direction=left]:sm:max-w-sm",
-					className,
-				)}
-				{...props}
+			<DrawerPrimitive.Viewport
+				data-slot="drawer-viewport"
+				className={cn("fixed inset-0 z-(--z-overlay) flex", VIEWPORT_ALIGNMENT[direction])}
 			>
-				{/* Handle visible uniquement pour les bottom drawers */}
-				<DrawerHandle className="hidden group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
-				{children}
-			</DrawerPrimitive.Content>
+				<DrawerPrimitive.Popup
+					data-slot="drawer-content"
+					data-direction={direction}
+					className={cn(
+						"group/drawer-content bg-background flex h-auto flex-col px-4 shadow-xl",
+						PANEL_TRANSITION,
+						SWIPE_TRANSFORM[direction],
+						direction === "top" && "mb-24 max-h-[80vh] w-full rounded-b-xl border-b",
+						direction === "bottom" &&
+							"mt-24 max-h-[90vh] w-full overflow-hidden rounded-t-xl border-t pb-[max(1rem,env(safe-area-inset-bottom))]",
+						direction === "right" &&
+							"w-full border-l pr-[max(0px,env(safe-area-inset-right))] sm:max-w-sm",
+						direction === "left" &&
+							"w-full border-r pl-[max(0px,env(safe-area-inset-left))] sm:max-w-sm",
+						className,
+					)}
+					{...props}
+				>
+					{/* Handle visible uniquement pour les bottom drawers */}
+					{direction === "bottom" && <DrawerHandle />}
+					<DrawerSwipeGuard enabled={handleOnly}>{children}</DrawerSwipeGuard>
+				</DrawerPrimitive.Popup>
+			</DrawerPrimitive.Viewport>
 		</DrawerPortal>
+	);
+}
+
+/**
+ * Exclut son sous-arbre du geste de fermeture (mode `handleOnly`).
+ *
+ * `display: contents` : le conteneur disparaît de la mise en page — les enfants
+ * restent des items flex directs du popup, donc `flex-1` sur le body et
+ * `mt-auto` sur le footer continuent de fonctionner — mais il reste dans l'ARBRE
+ * DOM, où le `closest('[data-base-ui-swipe-ignore]')` de Base UI le trouve.
+ */
+function DrawerSwipeGuard({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
+	if (!enabled) return children;
+	return (
+		<div className="contents" data-base-ui-swipe-ignore="">
+			{children}
+		</div>
 	);
 }
 
@@ -217,7 +293,7 @@ function DrawerBody({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function DrawerTitle({ className, ...props }: React.ComponentProps<typeof DrawerPrimitive.Title>) {
+function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
 	return (
 		<DrawerPrimitive.Title
 			data-slot="drawer-title"
@@ -227,10 +303,7 @@ function DrawerTitle({ className, ...props }: React.ComponentProps<typeof Drawer
 	);
 }
 
-function DrawerDescription({
-	className,
-	...props
-}: React.ComponentProps<typeof DrawerPrimitive.Description>) {
+function DrawerDescription({ className, ...props }: DrawerPrimitive.Description.Props) {
 	return (
 		<DrawerPrimitive.Description
 			data-slot="drawer-description"

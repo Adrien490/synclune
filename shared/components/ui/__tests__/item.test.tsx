@@ -14,17 +14,6 @@ vi.mock("@/shared/components/ui/separator", () => ({
 	Separator: (props: React.HTMLAttributes<HTMLHRElement>) => <hr {...props} />,
 }));
 
-vi.mock("@radix-ui/react-slot", () => ({
-	Slot: ({
-		children,
-		...props
-	}: React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode }) => (
-		<div data-radix-slot {...props}>
-			{children}
-		</div>
-	),
-}));
-
 // ============================================================================
 // IMPORT AFTER MOCKS
 // ============================================================================
@@ -113,14 +102,27 @@ describe("Item", () => {
 		expect(screen.getByTestId("item").tagName).toBe("DIV");
 	});
 
-	it("renders Slot component when asChild is true", () => {
+	// `render` (Base UI) remplace l'élément rendu — l'ancien `asChild` de Radix.
+	// Assertion sur le VRAI composant : la version précédente mockait
+	// `@radix-ui/react-slot` et ne validait donc que son propre mock.
+	it("renders the element passed to `render`, keeping its own props and the item state", () => {
 		render(
-			<Item data-testid="item" asChild>
-				<span>child</span>
+			<Item
+				data-testid="item"
+				size="sm"
+				render={
+					// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants de l'Item
+					<a href="https://example.com/produits" />
+				}
+			>
+				child
 			</Item>,
 		);
 		const el = screen.getByTestId("item");
-		expect(el).toHaveAttribute("data-radix-slot");
+		expect(el.tagName).toBe("A");
+		expect(el).toHaveAttribute("href", "https://example.com/produits");
+		expect(el).toHaveAttribute("data-slot", "item");
+		expect(el).toHaveAttribute("data-size", "sm");
 	});
 });
 

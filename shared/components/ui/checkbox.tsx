@@ -1,22 +1,31 @@
 "use client";
 
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
+import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
 import { CheckIcon, MinusIcon } from "lucide-react";
-import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 
-function Checkbox({
-	className,
-	checked,
-	...props
-}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+/**
+ * ⚠️ `checked` est désormais un `boolean` STRICT. Radix modélisait l'état
+ * indéterminé par la valeur sentinelle `checked="indeterminate"` ; Base UI en
+ * fait un prop `indeterminate` distinct. Le callback est donc lui aussi
+ * re-typé : `(checked: boolean)` au lieu de `(checked: CheckedState)` — le
+ * second argument `eventDetails` de Base UI est volontairement masqué aux
+ * appelants, aucun n'en a besoin.
+ */
+/** @public Surface du kit shadcn/ui vendored — exempté du rapport knip. */
+export type CheckboxProps = Omit<CheckboxPrimitive.Root.Props, "onCheckedChange"> & {
+	onCheckedChange?: (checked: boolean) => void;
+};
+
+function Checkbox({ className, indeterminate, onCheckedChange, ...props }: CheckboxProps) {
 	return (
 		<CheckboxPrimitive.Root
 			data-slot="checkbox"
-			checked={checked}
+			indeterminate={indeterminate}
+			onCheckedChange={onCheckedChange ? (checked: boolean) => onCheckedChange(checked) : undefined}
 			className={cn(
-				"peer border-input data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground data-[state=indeterminate]:border-primary can-hover:hover:border-ring/70 focus-ring aria-invalid:ring-destructive/20 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-[box-shadow,border-color,transform] disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-95",
+				"peer border-input data-checked:bg-primary data-checked:text-primary-foreground data-checked:border-primary data-indeterminate:bg-primary data-indeterminate:text-primary-foreground data-indeterminate:border-primary can-hover:hover:border-ring/70 focus-ring aria-invalid:ring-destructive/20 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-[box-shadow,border-color,transform] disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-95",
 				className,
 			)}
 			{...props}
@@ -25,11 +34,7 @@ function Checkbox({
 				data-slot="checkbox-indicator"
 				className="flex items-center justify-center text-current transition-none"
 			>
-				{checked === "indeterminate" ? (
-					<MinusIcon className="size-3.5" />
-				) : (
-					<CheckIcon className="size-3.5" />
-				)}
+				{indeterminate ? <MinusIcon className="size-3.5" /> : <CheckIcon className="size-3.5" />}
 			</CheckboxPrimitive.Indicator>
 		</CheckboxPrimitive.Root>
 	);

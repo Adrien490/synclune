@@ -8,5 +8,18 @@
 #
 # trustPolicy : refuse une mise à jour dont les signaux de confiance (provenance,
 #   signatures) se dégradent par rapport à la version installée.
+#
+# trustPolicyExclude : faux positifs structurels — versions DÉJÀ dans le lockfile
+#   depuis des mois, re-signalées à chaque `pnpm update` parce qu'une autre version
+#   du paquet porte une attestation de provenance et pas celle que le range impose.
+#   - eslint-import-resolver-typescript : la lignée 3.x (épinglée ^3.5.2 par
+#     eslint-config-next) n'a JAMAIS eu de provenance ; seule la 4.x en publie.
+#     À retirer quand eslint-config-next passera au resolver 4.x.
+#   - chokidar : provenance perdue en 4.0.2/4.0.3 (déc. 2024, version ubiquitaire
+#     depuis), revenue en 5.0.0 — hors du range de react-email.
+#     À retirer quand react-email acceptera chokidar 5.
 minimumReleaseAge: 10080
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  - eslint-import-resolver-typescript
+  - chokidar

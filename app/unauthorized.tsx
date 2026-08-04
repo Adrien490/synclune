@@ -33,11 +33,11 @@ export default function Unauthorized() {
 				}
 				actions={
 					<div className="flex flex-col justify-center gap-4 sm:flex-row">
-						<Button asChild size="lg">
-							<Link href={ROUTES.SHOP.HOME}>Retour à la boutique</Link>
+						<Button render={<Link href={ROUTES.SHOP.HOME} />} size="lg">
+							Retour à la boutique
 						</Button>
-						<Button asChild variant="secondary" size="lg">
-							<Link href={ROUTES.AUTH.SIGN_IN}>Se connecter</Link>
+						<Button render={<Link href={ROUTES.AUTH.SIGN_IN} />} variant="secondary" size="lg">
+							Se connecter
 						</Button>
 					</div>
 				}

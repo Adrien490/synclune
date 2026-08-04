@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -25,15 +27,7 @@ vi.mock("@/modules/orders/utils/carrier.utils", () => ({
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		asChild: _asChild,
-		...props
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-		[key: string]: unknown;
-	}) => <div {...props}>{children}</div>,
+	Button: (props: RenderPropMockProps) => renderPropMock("div", props),
 }));
 
 vi.mock("lucide-react", () => ({

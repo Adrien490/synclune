@@ -32,11 +32,16 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 			}
 		>
 			<div className="space-y-4 pt-4">
-				<Button asChild size="lg" className="w-full">
-					<Link href="/connexion">Retour à la connexion</Link>
+				<Button render={<Link href="/connexion" />} size="lg" className="w-full">
+					Retour à la connexion
 				</Button>
-				<Button asChild variant="outline" size="lg" className="w-full">
-					<Link href="/inscription">Créer un compte</Link>
+				<Button
+					render={<Link href="/inscription" />}
+					variant="outline"
+					size="lg"
+					className="w-full"
+				>
+					Créer un compte
 				</Button>
 				<div className="pt-2 text-center">
 					<Link

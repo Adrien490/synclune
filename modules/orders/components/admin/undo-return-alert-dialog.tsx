@@ -49,16 +49,14 @@ export function UndoReturnAlertDialog() {
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Annuler le retour</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									Annuler le retour de la commande <strong>{dialog.data?.orderNumber}</strong> ?
-								</p>
-								<p className="text-muted-foreground mt-4 text-sm">
-									Le statut de livraison repassera à &quot;Livré&quot;. Un remboursement déjà créé
-									n&apos;est pas affecté.
-								</p>
-							</div>
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								Annuler le retour de la commande <strong>{dialog.data?.orderNumber}</strong> ?
+							</p>
+							<p className="text-muted-foreground mt-4 text-sm">
+								Le statut de livraison repassera à &quot;Livré&quot;. Un remboursement déjà créé
+								n&apos;est pas affecté.
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

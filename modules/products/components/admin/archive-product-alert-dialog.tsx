@@ -64,41 +64,39 @@ export function ArchiveProductAlertDialog() {
 						<ResponsiveAlertDialogTitle>
 							{isArchiving ? "Archiver le bijou" : "Désarchiver le bijou"}
 						</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div className="space-y-3">
-								{isArchiving ? (
-									<>
-										<p>
-											Êtes-vous sûr de vouloir archiver le bijou{" "}
-											<strong>&quot;{archiveDialog.data?.productTitle}&quot;</strong> ?
-										</p>
-										<p>
-											Le bijou ne sera plus visible sur la boutique mais restera accessible dans le
-											dashboard.
-										</p>
-										<p className="text-muted-foreground text-xs">
-											Ses variantes seront désactivées. Vous pourrez le restaurer à tout moment : il
-											reviendra en brouillon.
-										</p>
-									</>
-								) : (
-									<>
-										<p>
-											Êtes-vous sûr de vouloir désarchiver le bijou{" "}
-											<strong>&quot;{archiveDialog.data?.productTitle}&quot;</strong> ?
-										</p>
-										<p>
-											Le bijou sera remis en statut &quot;Brouillon&quot;. Il ne sera pas visible
-											sur la boutique.
-										</p>
-										<p className="text-muted-foreground text-xs">
-											Ses variantes ont été désactivées lors de l&apos;archivage. Réactivez-en au
-											moins une (avec du stock et une image) depuis « Gérer variantes », puis
-											publiez-le.
-										</p>
-									</>
-								)}
-							</div>
+						<ResponsiveAlertDialogDescription render={<div className="space-y-3" />}>
+							{isArchiving ? (
+								<>
+									<p>
+										Êtes-vous sûr de vouloir archiver le bijou{" "}
+										<strong>&quot;{archiveDialog.data?.productTitle}&quot;</strong> ?
+									</p>
+									<p>
+										Le bijou ne sera plus visible sur la boutique mais restera accessible dans le
+										dashboard.
+									</p>
+									<p className="text-muted-foreground text-xs">
+										Ses variantes seront désactivées. Vous pourrez le restaurer à tout moment : il
+										reviendra en brouillon.
+									</p>
+								</>
+							) : (
+								<>
+									<p>
+										Êtes-vous sûr de vouloir désarchiver le bijou{" "}
+										<strong>&quot;{archiveDialog.data?.productTitle}&quot;</strong> ?
+									</p>
+									<p>
+										Le bijou sera remis en statut &quot;Brouillon&quot;. Il ne sera pas visible sur
+										la boutique.
+									</p>
+									<p className="text-muted-foreground text-xs">
+										Ses variantes ont été désactivées lors de l&apos;archivage. Réactivez-en au
+										moins une (avec du stock et une image) depuis « Gérer variantes », puis
+										publiez-le.
+									</p>
+								</>
+							)}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

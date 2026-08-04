@@ -182,13 +182,15 @@ export async function ProductVariantsDataTable({
 									return (
 										<div className="flex min-w-0 items-center gap-2">
 											<Tooltip>
-												<TooltipTrigger asChild>
-													<span
-														className="border-border size-4 cursor-help rounded-full border-2 shadow-sm"
-														style={buildSwatchStyle(hexes)}
-														aria-label={`Couleur${names.length > 1 ? "s" : ""} : ${getSwatchAriaLabel(names)}`}
-													/>
-												</TooltipTrigger>
+												<TooltipTrigger
+													render={
+														<span
+															className="border-border size-4 cursor-help rounded-full border-2 shadow-sm"
+															style={buildSwatchStyle(hexes)}
+															aria-label={`Couleur${names.length > 1 ? "s" : ""} : ${getSwatchAriaLabel(names)}`}
+														/>
+													}
+												></TooltipTrigger>
 												<TooltipContent>
 													<p>{label}</p>
 													<p className="text-muted-foreground text-xs">{hexes.join(" / ")}</p>

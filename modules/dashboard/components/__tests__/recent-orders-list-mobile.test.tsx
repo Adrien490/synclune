@@ -2,6 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 import type { RecentOrderItem } from "../../types/dashboard.types";
 
 // ============================================================================
@@ -65,10 +67,10 @@ vi.mock("lucide-react", () => ({
 	ShoppingBag: () => <span data-testid="icon-shopping-bag" />,
 }));
 
-// Item primitives — forward asChild + style for VT assertions
+// Item primitives — forward `render` + style for VT assertions
 vi.mock("@/shared/components/ui/item", () => ({
-	Item: ({ asChild, children }: { asChild?: boolean; size?: string; children: React.ReactNode }) =>
-		asChild ? <>{children}</> : <div data-testid="item">{children}</div>,
+	Item: ({ size: _size, ...props }: RenderPropMockProps) =>
+		renderPropMock("div", { "data-testid": "item", ...props }),
 	ItemGroup: ({
 		children,
 		"aria-label": ariaLabel,

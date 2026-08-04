@@ -23,7 +23,7 @@ const {
 	mockTriggerHaptic: vi.fn(),
 	// Capture handler props passed to SheetContent so tests can invoke them with a
 	// synthetic event (otherwise unreachable without a real Vaul portal).
-	mockSheetContentProps: { current: null as null | { onOpenAutoFocus?: (e: Event) => void } },
+	mockSheetContentProps: { current: null as null | { initialFocus?: unknown } },
 }));
 
 // ============================================================================
@@ -118,15 +118,15 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 		className,
 		id,
 		onOverlayClick,
-		onOpenAutoFocus,
+		initialFocus,
 	}: {
 		children: React.ReactNode;
 		className?: string;
 		id?: string;
 		onOverlayClick?: (e: React.MouseEvent) => void;
-		onOpenAutoFocus?: (e: Event) => void;
+		initialFocus?: unknown;
 	}) => {
-		mockSheetContentProps.current = { onOpenAutoFocus };
+		mockSheetContentProps.current = { initialFocus };
 		return (
 			<div data-testid="sheet-content" data-slot="sheet-content" id={id} className={className}>
 				<div data-testid="sheet-overlay" onClick={(e) => onOverlayClick?.(e)} aria-hidden="true" />
@@ -461,14 +461,10 @@ describe("AdminMenuSheet", () => {
 		});
 	});
 
-	describe("vaul gestures", () => {
-		it("passes scrollLockTimeout=500 to Sheet (P1.3 — drag-to-close reactivity after scroll)", () => {
-			mockIsOpen.current = true;
-			render(<AdminMenuSheet user={defaultUser} />);
-			const sheet = screen.getByTestId("sheet");
-			expect(sheet).toHaveAttribute("data-scroll-lock-timeout", "500");
-		});
-	});
+	// `scrollLockTimeout` était un réglage Vaul, sans équivalent Base UI (l'arbitrage
+	// scroll vs swipe s'y fait sur la direction du geste). Le prop et son test ont
+	// disparu avec la migration ; ce qui reste gardé, c'est `handleOnly` — cf.
+	// `handle-only-allowlist.regression.test.ts`.
 
 	describe("sheet content id (P0 — aria-controls target)", () => {
 		it("renders SheetContent with the stable id used by the bottom-bar trigger", () => {
@@ -682,12 +678,13 @@ describe("AdminMenuSheet", () => {
 	});
 
 	describe("focus management on open (F1 — parité menu-sheet-nav)", () => {
-		it("passes an onOpenAutoFocus handler that calls preventDefault (no iOS keyboard pop)", () => {
+		it("suspend l'auto-focus d'ouverture (pas de pop clavier iOS)", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
-			const e = { preventDefault: vi.fn() };
-			mockSheetContentProps.current?.onOpenAutoFocus?.(e as unknown as Event);
-			expect(e.preventDefault).toHaveBeenCalledTimes(1);
+			// Base UI expose `initialFocus` : `false` = « ne déplace pas le focus ».
+			// Remplace l'ancien `onOpenAutoFocus` + `preventDefault` de Radix ; le
+			// focus reste appliqué après l'animation par l'effect dédié.
+			expect(mockSheetContentProps.current?.initialFocus).toBe(false);
 		});
 
 		it("focuses the first nav link after the open animation (fallback timer)", () => {

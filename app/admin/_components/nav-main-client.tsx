@@ -44,27 +44,25 @@ export function NavMainClient({ url, tooltip, badge, badgeUrl, children }: NavMa
 	return (
 		<>
 			<SidebarMenuButton
-				asChild
+				render={<Link href={url} aria-current={isActive ? "page" : undefined} />}
 				isActive={isActive}
 				tooltip={tooltipText}
-				className="before:bg-primary data-[active=true]:bg-primary/10 data-[active=true]:[&_svg]:text-primary relative before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:opacity-0 data-[active=true]:before:opacity-100 motion-safe:before:transition-opacity"
+				className="before:bg-primary data-active:bg-primary/10 data-active:[&_svg]:text-primary relative before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:opacity-0 data-active:before:opacity-100 motion-safe:before:transition-opacity"
 			>
-				<Link href={url} aria-current={isActive ? "page" : undefined}>
-					{children}
-					{/* Compteur rattaché au NOM ACCESSIBLE du lien (le badge visuel et le
+				{children}
+				{/* Compteur rattaché au NOM ACCESSIBLE du lien (le badge visuel et le
 					    dot sont aria-hidden). Le label « Commandes » porte déjà le nom,
 					    « (N en attente) » suffit donc sans répéter le substantif. */}
-					{pendingLabel && <span className="sr-only">({pendingLabel})</span>}
-					{/* N2 : dot d'alerte visible uniquement en mode replié (icône),
+				{pendingLabel && <span className="sr-only">({pendingLabel})</span>}
+				{/* N2 : dot d'alerte visible uniquement en mode replié (icône),
 					    quand le badge numérique est masqué. */}
-					{badgeCount !== null && (
-						<span
-							aria-hidden="true"
-							className="bg-primary absolute top-1 right-1 hidden size-2 rounded-full group-data-[collapsible=icon]:block"
-						/>
-					)}
-					<LoadingIndicator />
-				</Link>
+				{badgeCount !== null && (
+					<span
+						aria-hidden="true"
+						className="bg-primary absolute top-1 right-1 hidden size-2 rounded-full group-data-[collapsible=icon]:block"
+					/>
+				)}
+				<LoadingIndicator />
 			</SidebarMenuButton>
 			{/* N1 : badge numérique visuel en sidebar étendue (parité mobile).
 			    Quand `badgeUrl` est fourni, le compteur devient CLIQUABLE et mène à la

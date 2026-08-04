@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { CollectionCard } from "./collection-card";
 import type { QuickSearchCollection, RecentlyViewedProduct } from "./constants";
@@ -254,7 +254,7 @@ export function IdleContent({
 				{!hasContent && (
 					<Stagger className="py-8 text-center" role="status" stagger={0.03} delay={0.05} y={10}>
 						<Search className="text-muted-foreground/20 mx-auto mb-4 size-10" aria-hidden="true" />
-						<p className="text-muted-foreground text-sm">Trouvez votre prochain bijou</p>
+						<p className="text-muted-foreground text-sm">Trouve ton prochain bijou</p>
 					</Stagger>
 				)}
 
@@ -264,11 +264,13 @@ export function IdleContent({
 					dialog au lieu de pointer vers /produits, c'est le seul chemin mobile
 					vers le catalogue complet. Audit recherche 2026-07-26. */}
 				<div className="text-center">
-					<Button asChild variant="outline" className="min-h-11 touch-manipulation sm:min-h-10">
-						{/* `replace` : consomme l'entrée d'historique du dialog (CLAUDE.md § Overlays). */}
-						<Link href="/produits" replace onClick={handleViewAllProducts}>
-							Voir tous les produits
-						</Link>
+					{/* `replace` : consomme l'entrée d'historique du dialog (CLAUDE.md § Overlays). */}
+					<Button
+						render={<Link href="/produits" replace onClick={handleViewAllProducts} />}
+						variant="outline"
+						className="min-h-11 touch-manipulation sm:min-h-10"
+					>
+						Voir tous les produits
 					</Button>
 				</div>
 			</div>

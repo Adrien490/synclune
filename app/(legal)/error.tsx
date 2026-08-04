@@ -29,8 +29,8 @@ export default function LegalError({
 					<Button size="lg" onClick={reset}>
 						Réessayer
 					</Button>
-					<Button asChild variant="secondary" size="lg">
-						<Link href="/">Retour à l&apos;accueil</Link>
+					<Button render={<Link href="/" />} variant="secondary" size="lg">
+						Retour à l&apos;accueil
 					</Button>
 				</div>
 			</div>

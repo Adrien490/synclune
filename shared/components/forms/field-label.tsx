@@ -49,18 +49,20 @@ export function FieldLabel({
 				)}
 			</Label>
 			{tooltip && (
-				<TooltipProvider delayDuration={200}>
+				<TooltipProvider delay={200}>
 					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								type="button"
-								variant="ghost"
-								size="icon"
-								className="text-muted-foreground hover:text-foreground h-auto w-auto p-0 hover:bg-transparent"
-								aria-label="Plus d'informations"
-							>
-								<CircleHelp className="size-3.5" />
-							</Button>
+						<TooltipTrigger
+							render={
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon"
+									className="text-muted-foreground hover:text-foreground h-auto w-auto p-0 hover:bg-transparent"
+									aria-label="Plus d'informations"
+								/>
+							}
+						>
+							<CircleHelp className="size-3.5" />
 						</TooltipTrigger>
 						<TooltipContent side="right" className="max-w-xs">
 							{tooltip}

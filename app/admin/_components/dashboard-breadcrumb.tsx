@@ -93,8 +93,8 @@ export function DashboardBreadcrumb() {
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="start">
 									{collapsedSegments.map((segment) => (
-										<DropdownMenuItem key={segment.href} asChild>
-											<Link href={segment.href}>{segment.label}</Link>
+										<DropdownMenuItem key={segment.href} render={<Link href={segment.href} />}>
+											{segment.label}
 										</DropdownMenuItem>
 									))}
 								</DropdownMenuContent>

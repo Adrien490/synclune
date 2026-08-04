@@ -163,15 +163,13 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 						<ImageOff className="size-8" aria-hidden="true" />
 						<p className="text-sm">Aucun média</p>
 						<Button
-							asChild
+							render={<Link href={editHref} onClick={() => haptic("light")} />}
 							size="sm"
 							variant="outline"
 							className="transition-transform duration-150 active:scale-[0.98]"
 						>
-							<Link href={editHref} onClick={() => haptic("light")}>
-								<ImagePlus className="size-4" aria-hidden="true" />
-								Ajouter des médias
-							</Link>
+							<ImagePlus className="size-4" aria-hidden="true" />
+							Ajouter des médias
 						</Button>
 					</div>
 				)}

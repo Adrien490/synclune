@@ -147,8 +147,8 @@ async function OrderTrackingPageContent({ searchParams }: OrderTrackingPageProps
 
 				<div className="space-y-2 text-center">
 					<p className="text-muted-foreground text-sm">Une question sur ta commande ?</p>
-					<Button asChild variant="link">
-						<Link href={`mailto:${BRAND.contact.email}`}>Écris-moi</Link>
+					<Button render={<Link href={`mailto:${BRAND.contact.email}`} />} variant="link">
+						Écris-moi
 					</Button>
 				</div>
 			</div>

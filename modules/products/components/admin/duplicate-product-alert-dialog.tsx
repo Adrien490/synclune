@@ -14,7 +14,7 @@ import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-prod
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useRouter } from "next/navigation";
 
@@ -66,22 +66,20 @@ export function DuplicateProductAlertDialog() {
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Dupliquer ce bijou</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									Êtes-vous sûr de vouloir dupliquer le bijou{" "}
-									<strong>&quot;{duplicateDialog.data?.productTitle}&quot;</strong> ?
-								</p>
-								<p className="mt-4">Une copie sera créée avec :</p>
-								<ul className="mt-2 list-inside list-disc space-y-1">
-									<li>Le titre préfixé par &quot;Copie de&quot;</li>
-									<li>Toutes les variantes et leurs images</li>
-									<li>Le statut mis en &quot;Brouillon&quot;</li>
-								</ul>
-								<p className="text-muted-foreground mt-4 text-xs">
-									Vous pourrez ensuite modifier le bijou dupliqué selon vos besoins.
-								</p>
-							</div>
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								Êtes-vous sûr de vouloir dupliquer le bijou{" "}
+								<strong>&quot;{duplicateDialog.data?.productTitle}&quot;</strong> ?
+							</p>
+							<p className="mt-4">Une copie sera créée avec :</p>
+							<ul className="mt-2 list-inside list-disc space-y-1">
+								<li>Le titre préfixé par &quot;Copie de&quot;</li>
+								<li>Toutes les variantes et leurs images</li>
+								<li>Le statut mis en &quot;Brouillon&quot;</li>
+							</ul>
+							<p className="text-muted-foreground mt-4 text-xs">
+								Vous pourrez ensuite modifier le bijou dupliqué selon vos besoins.
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

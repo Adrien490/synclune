@@ -295,14 +295,21 @@ export default async function RetractationPage() {
 						<section className="bg-muted/30 space-y-4 rounded-lg p-6">
 							<h3 className="text-lg font-semibold">Documents connexes</h3>
 							<div className="flex flex-wrap gap-3">
-								<Button asChild variant="outline" size="sm">
-									<Link href="/cgv">Conditions Générales de Vente</Link>
+								<Button render={<Link href="/cgv" />} variant="outline" size="sm">
+									Conditions Générales de Vente
 								</Button>
-								<Button asChild variant="outline" size="sm">
-									<Link href="/confidentialite">Politique de Confidentialité</Link>
+								<Button render={<Link href="/confidentialite" />} variant="outline" size="sm">
+									Politique de Confidentialité
 								</Button>
-								<Button asChild variant="outline" size="sm">
-									<a href={`mailto:${contactEmail}`}>Nous contacter</a>
+								<Button
+									render={
+										// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants du Button
+										<a href={`mailto:${contactEmail}`} />
+									}
+									variant="outline"
+									size="sm"
+								>
+									Nous contacter
 								</Button>
 							</div>
 						</section>

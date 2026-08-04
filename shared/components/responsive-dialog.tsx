@@ -43,13 +43,13 @@ interface ResponsiveDialogProps {
 }
 
 /**
- * Dialog responsive : Vaul Drawer (bottom, fullscreen-friendly + safe-area)
- * sur mobile, Radix Dialog (centré) sur desktop. API miroir du Dialog Radix.
+ * Dialog responsive : Drawer Base UI (bottom, fullscreen-friendly + safe-area)
+ * sur mobile, Dialog Base UI (centré) sur desktop.
  *
  * Pattern parallèle à `ResponsiveAlertDialog` pour les overlays non-destructifs
  * (forms admin, dialogs de gestion). Sur mobile, les enfants sont
  * auto-scrollables via un wrap interne ; le DrawerContent reste overflow-hidden
- * pour préserver le drag-handle natif.
+ * pour préserver la poignée de drag.
  */
 function ResponsiveDialog({ children, open, onOpenChange }: ResponsiveDialogProps) {
 	const isMobile = useIsMobile();
@@ -102,7 +102,7 @@ function ResponsiveDialogContent({
 			>
 				<div
 					className="-mx-4 flex min-h-0 flex-1 [scrollbar-gutter:stable] flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-2"
-					data-vaul-no-drag
+					data-base-ui-swipe-ignore=""
 				>
 					{children}
 				</div>
@@ -140,7 +140,10 @@ function ResponsiveDialogFooter({ className, ...props }: React.ComponentProps<"d
 	);
 }
 
-function ResponsiveDialogTitle({ className, ...props }: React.ComponentProps<typeof DialogTitle>) {
+// Les deux branches (Drawer mobile, Dialog desktop) sont désormais sur Base UI :
+// mêmes signatures, `render` des deux côtés — plus aucune traduction à faire.
+
+function ResponsiveDialogTitle({ className, ...props }: React.ComponentProps<typeof DrawerTitle>) {
 	const { isMobile } = useResponsive("ResponsiveDialogTitle");
 	return isMobile ? (
 		<DrawerTitle className={className} {...props} />
@@ -152,7 +155,7 @@ function ResponsiveDialogTitle({ className, ...props }: React.ComponentProps<typ
 function ResponsiveDialogDescription({
 	className,
 	...props
-}: React.ComponentProps<typeof DialogDescription>) {
+}: React.ComponentProps<typeof DrawerDescription>) {
 	const { isMobile } = useResponsive("ResponsiveDialogDescription");
 	return isMobile ? (
 		<DrawerDescription className={className} {...props} />
@@ -161,7 +164,7 @@ function ResponsiveDialogDescription({
 	);
 }
 
-function ResponsiveDialogTrigger(props: React.ComponentProps<typeof DialogTrigger>) {
+function ResponsiveDialogTrigger(props: React.ComponentProps<typeof DrawerTrigger>) {
 	const { isMobile } = useResponsive("ResponsiveDialogTrigger");
 	return isMobile ? <DrawerTrigger {...props} /> : <DialogTrigger {...props} />;
 }

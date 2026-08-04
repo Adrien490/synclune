@@ -14,17 +14,6 @@ vi.mock("@/shared/components/ui/separator", () => ({
 	Separator: (props: React.HTMLAttributes<HTMLHRElement>) => <hr {...props} />,
 }));
 
-vi.mock("@radix-ui/react-slot", () => ({
-	Slot: ({
-		children,
-		...props
-	}: React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode }) => (
-		<div data-radix-slot {...props}>
-			{children}
-		</div>
-	),
-}));
-
 // ============================================================================
 // IMPORT AFTER MOCKS
 // ============================================================================
@@ -99,13 +88,19 @@ describe("ButtonGroupText", () => {
 		expect(screen.getByTestId("text").tagName).toBe("DIV");
 	});
 
-	it("renders Slot component when asChild is true", () => {
+	// `render` (Base UI) remplace l'élément rendu — l'ancien `asChild` de Radix.
+	// Assertion sur le VRAI composant : la version précédente mockait
+	// `@radix-ui/react-slot` et ne validait donc que son propre mock.
+	it("renders the element passed to `render` instead of the default div", () => {
 		render(
-			<ButtonGroupText data-testid="text" asChild>
-				<span>Label</span>
+			<ButtonGroupText data-testid="text" className="custom" render={<span />}>
+				Label
 			</ButtonGroupText>,
 		);
-		expect(screen.getByTestId("text")).toHaveAttribute("data-radix-slot");
+		const el = screen.getByTestId("text");
+		expect(el.tagName).toBe("SPAN");
+		expect(el).toHaveTextContent("Label");
+		expect(el.className).toContain("custom");
 	});
 });
 

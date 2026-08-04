@@ -587,23 +587,25 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 								<div className="space-y-2">
 									<Label className="text-sm">Du</Label>
 									<Popover>
-										<PopoverTrigger asChild>
-											<Button
-												variant="outline"
-												className={cn(
-													"w-full justify-start text-left font-normal",
-													!field.state.value && "text-muted-foreground",
-												)}
-											>
-												<CalendarIcon className="mr-2 h-4 w-4" />
-												{field.state.value ? (
-													format(new Date(field.state.value), "PPP", {
-														locale: fr,
-													})
-												) : (
-													<span>Sélectionner une date</span>
-												)}
-											</Button>
+										<PopoverTrigger
+											render={
+												<Button
+													variant="outline"
+													className={cn(
+														"w-full justify-start text-left font-normal",
+														!field.state.value && "text-muted-foreground",
+													)}
+												/>
+											}
+										>
+											<CalendarIcon className="mr-2 h-4 w-4" />
+											{field.state.value ? (
+												format(new Date(field.state.value), "PPP", {
+													locale: fr,
+												})
+											) : (
+												<span>Sélectionner une date</span>
+											)}
 										</PopoverTrigger>
 										<PopoverContent className="w-auto p-0" align="start">
 											<Calendar
@@ -631,23 +633,25 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 								<div className="space-y-2">
 									<Label className="text-sm">Au</Label>
 									<Popover>
-										<PopoverTrigger asChild>
-											<Button
-												variant="outline"
-												className={cn(
-													"w-full justify-start text-left font-normal",
-													!field.state.value && "text-muted-foreground",
-												)}
-											>
-												<CalendarIcon className="mr-2 h-4 w-4" />
-												{field.state.value ? (
-													format(new Date(field.state.value), "PPP", {
-														locale: fr,
-													})
-												) : (
-													<span>Sélectionner une date</span>
-												)}
-											</Button>
+										<PopoverTrigger
+											render={
+												<Button
+													variant="outline"
+													className={cn(
+														"w-full justify-start text-left font-normal",
+														!field.state.value && "text-muted-foreground",
+													)}
+												/>
+											}
+										>
+											<CalendarIcon className="mr-2 h-4 w-4" />
+											{field.state.value ? (
+												format(new Date(field.state.value), "PPP", {
+													locale: fr,
+												})
+											) : (
+												<span>Sélectionner une date</span>
+											)}
 										</PopoverTrigger>
 										<PopoverContent className="w-auto p-0" align="start">
 											<Calendar

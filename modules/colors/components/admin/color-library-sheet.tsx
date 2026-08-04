@@ -69,17 +69,19 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 
 	return (
 		<ResponsiveDialog open={open} onOpenChange={setOpen}>
-			<ResponsiveDialogTrigger asChild>
-				<Button
-					type="button"
-					variant="outline"
-					disabled={disabled}
-					onClick={() => haptic("light")}
-					className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none sm:min-h-9 sm:w-auto"
-				>
-					<BookMarked className="size-4" aria-hidden="true" />
-					Choisir depuis le catalogue
-				</Button>
+			<ResponsiveDialogTrigger
+				render={
+					<Button
+						type="button"
+						variant="outline"
+						disabled={disabled}
+						onClick={() => haptic("light")}
+						className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none sm:min-h-9 sm:w-auto"
+					/>
+				}
+			>
+				<BookMarked className="size-4" aria-hidden="true" />
+				Choisir depuis le catalogue
 			</ResponsiveDialogTrigger>
 			<ResponsiveDialogContent className="sm:max-w-2xl">
 				<ResponsiveDialogHeader className="text-left">

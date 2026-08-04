@@ -23,6 +23,31 @@
  * SSOT du vocabulaire "premium halo" partagé entre FAB, futures cards et CTA primaires.
  * Hérite du radius parent via before:rounded-[inherit]. Easing overshoot pour ressort
  * subtil (cubic-bezier(0.34,1.2,0.64,1) ≈ +7% overshoot, vs 1.56 "boing"). */
+/* Balayage de texte d'un titre en cours de traitement (`AttachmentTitle`).
+ * Déclaré en `@utility` — et non en classe nue dans `styles/animations.css` —
+ * parce qu'il n'est JAMAIS appliqué nu : toujours derrière un variant
+ * (`group-data-[state=uploading]/attachment:motion-safe:shimmer-text`), et
+ * Tailwind ne compose un variant qu'avec une utility déclarée.
+ * Keyframes : `@keyframes shimmer-text` dans `styles/animations.css`.
+ *
+ * ⚠️ Toujours poser `motion-safe:` au call site plutôt que neutraliser
+ * l'animation ici : la couleur du texte vaut `transparent` (le dégradé fait
+ * office d'encre), donc couper la seule animation laisserait un titre INVISIBLE.
+ * Ne pas appliquer l'utility du tout est le bon repli. */
+@utility shimmer-text {
+	background: linear-gradient(
+		90deg,
+		var(--muted-foreground) 0%,
+		var(--foreground) 50%,
+		var(--muted-foreground) 100%
+	);
+	background-size: 200% 100%;
+	background-clip: text;
+	-webkit-background-clip: text;
+	color: transparent;
+	animation: shimmer-text 1.8s linear infinite;
+}
+
 @utility hover-halo {
 	@apply relative;
 	@apply before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit];
@@ -34,10 +59,8 @@
 
 html {
 	scroll-behavior: smooth;
-	scroll-padding-top: calc(var(--navbar-height) + var(--announcement-bar-height, 0px));
+	scroll-padding-top: var(--navbar-height);
 	--navbar-height: 4rem;
-	--ab-height: 56px;
-	--announcement-bar-height: 0px;
 	/* `--bottom-bar-height` n'est VOLONTAIREMENT pas déclarée ici.
 	 *
 	 * Elle est posée au runtime par `use-bottom-bar-height` avec la hauteur mesurée,
@@ -138,7 +161,6 @@ html:has([data-checkout-shell]) {
 @media (width >= 40rem) {
 	html {
 		--navbar-height: 5rem;
-		--ab-height: 44px;
 	}
 	/* Scroll compact mode: home navbar shrinks h-20 → h-16 once scrolled past threshold.
 	 * Relies on :has() + [data-home-navbar][data-scrolled="true"] set by NavbarWrapper. */
@@ -216,8 +238,8 @@ main#main-content {
 	 * Usage : préfixe `xs:` Tailwind sur classes qui doivent s'activer dès
 	 * 23.4375rem (375px à police racine par défaut), avant le `sm:` standard à
 	 * 40rem. Réservé aux composants où le viewport 360-374px nécessite un
-	 * fallback distinct (announcement-bar, empty state, input-group small
-	 * variant, media-upload-grid, skeleton xs).
+	 * fallback distinct (empty state, input-group small variant,
+	 * media-upload-grid, skeleton xs).
 	 *
 	 * En rem, comme toute l'échelle — voir `shared/constants/breakpoints.ts`.
 	 * Un breakpoint en px se désynchronise des seuils JS et des autres variants
@@ -329,10 +351,8 @@ main#main-content {
 
 	/* ==========================================
 	   DECORATIVE SHADOWS (tokens des ombres décoratives — remplacent
-	   les rgba(0,0,0,x) littéraux : polaroids, navbar)
+	   les rgba(0,0,0,x) littéraux : navbar)
 	   ========================================== */
-	--shadow-floating: 0 8px 30px oklch(0 0 0 / 0.12), 0 2px 8px oklch(0 0 0 / 0.08);
-	--shadow-lift: 0 12px 24px -8px oklch(0 0 0 / 0.15);
 	--shadow-header: 0 10px 15px -3px oklch(0 0 0 / 0.08), 0 4px 6px -4px oklch(0 0 0 / 0.08);
 
 	/* Échelle d'ombres UI (shadcn) — vivait dans :root, seule famille de tokens
@@ -345,15 +365,6 @@ main#main-content {
 	--shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
 	--shadow-xl: 0 20px 25px -5px oklch(0 0 0 / 0.1), 0 8px 10px -6px oklch(0 0 0 / 0.1);
 	--shadow-2xl: 0 25px 50px -12px oklch(0 0 0 / 0.25);
-
-	/* ==========================================
-	   HERO GRADIENT WORD (mot d'accent du h1 home)
-	   SSOT des 3 stops du dégradé multicolore rose → violet → menthe.
-	   Consommés par .text-gradient-multicolor (app/styles/utilities.css).
-	   ========================================== */
-	--gradient-hero-from: oklch(0.66 0.2 350); /* rose/magenta */
-	--gradient-hero-via: oklch(0.58 0.18 295); /* violet/lavande */
-	--gradient-hero-to: oklch(0.68 0.14 175); /* teal/menthe */
 
 	/* ==========================================
 	   EVOLUTION COLORS (Dashboard KPIs)
@@ -456,12 +467,6 @@ main#main-content {
 	--chart-3: oklch(0.5 0.1 200);
 	--chart-4: oklch(0.75 0.15 25); /* Corail lumineux - bijoux colorés */
 	--chart-5: oklch(0.7 0.1 300);
-
-	/* Polaroid caption colors (on white bg, WCAG AA 4.5:1+) */
-	--polaroid-caption-mauve: oklch(0.45 0.12 340);
-	--polaroid-caption-violet: oklch(0.44 0.12 290);
-	--polaroid-caption-green: oklch(0.42 0.1 155);
-	--polaroid-caption-brown: oklch(0.46 0.09 70);
 }
 
 /* ========================================================================

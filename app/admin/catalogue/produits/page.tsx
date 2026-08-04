@@ -85,8 +85,8 @@ export default async function ProductsAdminPage({ searchParams }: ProductsAdminP
 				title="Produits"
 				className="hidden md:block"
 				actions={
-					<Button asChild>
-						<Link href="/admin/catalogue/produits/nouveau">Nouveau produit</Link>
+					<Button render={<Link href="/admin/catalogue/produits/nouveau" />}>
+						Nouveau produit
 					</Button>
 				}
 			/>

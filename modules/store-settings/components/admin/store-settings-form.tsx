@@ -16,7 +16,7 @@ import {
 } from "@/shared/components/ui/card";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { StoreSettingsAdmin } from "../../types/store-settings.types";
 import { EditClosureMessageForm } from "./edit-closure-message-form";
@@ -116,31 +116,31 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 						<div className="sm:flex sm:justify-end">
 							<Button
 								variant="destructive"
-								asChild
+								render={
+									<Link
+										href="/admin/configuration/boutique/fermer"
+										onClick={(event) => {
+											if (
+												event.defaultPrevented ||
+												event.button !== 0 ||
+												event.metaKey ||
+												event.ctrlKey ||
+												event.shiftKey ||
+												event.altKey
+											) {
+												return;
+											}
+											event.preventDefault();
+											triggerHaptic("light");
+											withViewTransition(() => router.push("/admin/configuration/boutique/fermer"));
+										}}
+										style={{ viewTransitionName: "store-status-action" }}
+									/>
+								}
 								className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
 							>
-								<Link
-									href="/admin/configuration/boutique/fermer"
-									onClick={(event) => {
-										if (
-											event.defaultPrevented ||
-											event.button !== 0 ||
-											event.metaKey ||
-											event.ctrlKey ||
-											event.shiftKey ||
-											event.altKey
-										) {
-											return;
-										}
-										event.preventDefault();
-										triggerHaptic("light");
-										withViewTransition(() => router.push("/admin/configuration/boutique/fermer"));
-									}}
-									style={{ viewTransitionName: "store-status-action" }}
-								>
-									<Lock className="mr-2 size-4" />
-									Fermer la boutique
-								</Link>
+								<Lock className="mr-2 size-4" />
+								Fermer la boutique
 							</Button>
 						</div>
 					)}

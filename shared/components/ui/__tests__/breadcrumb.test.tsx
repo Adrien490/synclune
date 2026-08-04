@@ -31,14 +31,6 @@ vi.mock("lucide-react", () => ({
 	),
 }));
 
-vi.mock("@radix-ui/react-slot", () => ({
-	Slot: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
-		<span data-testid="slot" {...props}>
-			{children}
-		</span>
-	),
-}));
-
 // ============================================================================
 // IMPORT AFTER MOCKS
 // ============================================================================

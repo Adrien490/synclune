@@ -1,18 +1,19 @@
 "use client";
 
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
-import * as React from "react";
+import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
+import type * as React from "react";
 
 import { buttonVariants } from "@/shared/components/ui/button";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
 import { cn } from "@/shared/utils/cn";
 
-function AlertDialog({
-	open,
-	onOpenChange,
-	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
+/** Même re-typage à un paramètre que `Dialog` — cf. le commentaire là-bas. */
+type AlertDialogProps = Omit<AlertDialogPrimitive.Root.Props, "onOpenChange"> & {
+	onOpenChange?: (open: boolean) => void;
+};
+
+function AlertDialog({ open, onOpenChange, ...props }: AlertDialogProps) {
 	// Bouton retour du navigateur (mobile) — ET reprise de l'entrée d'historique
 	// sur les autres fermetures (Annuler, Escape), sans quoi chaque confirmation
 	// affichée puis annulée laissait une entrée orpheline de même URL et avalait
@@ -41,28 +42,24 @@ function AlertDialog({
 	);
 }
 
-function AlertDialogTrigger({
-	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Trigger>) {
+function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
 	return <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />;
 }
 
-function AlertDialogPortal({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
+function AlertDialogPortal({ ...props }: AlertDialogPrimitive.Portal.Props) {
 	return <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />;
 }
 
-function AlertDialogOverlay({
-	className,
-	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Overlay>) {
+/** `Backdrop` chez Base UI — le nom public reste `AlertDialogOverlay`. */
+function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdrop.Props) {
 	return (
-		<AlertDialogPrimitive.Overlay
+		<AlertDialogPrimitive.Backdrop
 			data-slot="alert-dialog-overlay"
 			aria-hidden="true"
 			className={cn(
 				"fixed inset-0 z-(--z-alert) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
-				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
-				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
+				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
+				"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
 				"duration-200",
 				className,
 			)}
@@ -71,12 +68,13 @@ function AlertDialogOverlay({
 	);
 }
 
+/** `Popup` chez Base UI — le nom public reste `AlertDialogContent`. */
 function AlertDialogContent({
 	className,
 	children,
 	registerOverlay = true,
 	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
+}: AlertDialogPrimitive.Popup.Props & {
 	/**
 	 * Quand `false`, cette confirmation ne s'empile pas sur la pile d'overlays
 	 * globale (l'UI ancrée en bas reste visible derrière elle).
@@ -88,7 +86,7 @@ function AlertDialogContent({
 		<AlertDialogPortal>
 			<OverlayStackRegister enabled={registerOverlay} />
 			<AlertDialogOverlay />
-			<AlertDialogPrimitive.Content
+			<AlertDialogPrimitive.Popup
 				data-slot="alert-dialog-content"
 				className={cn(
 					"fixed top-1/2 left-1/2 z-(--z-alert) w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 sm:max-w-105",
@@ -107,16 +105,16 @@ function AlertDialogContent({
 					"border-primary/20 rounded-xl border",
 					"shadow-xl",
 					"p-6",
-					"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
-					"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
-					"motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95",
+					"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
+					"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
+					"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
 					"duration-200",
 					className,
 				)}
 				{...props}
 			>
 				{children}
-			</AlertDialogPrimitive.Content>
+			</AlertDialogPrimitive.Popup>
 		</AlertDialogPortal>
 	);
 }
@@ -141,10 +139,7 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">)
 	);
 }
 
-function AlertDialogTitle({
-	className,
-	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Title>) {
+function AlertDialogTitle({ className, ...props }: AlertDialogPrimitive.Title.Props) {
 	return (
 		<AlertDialogPrimitive.Title
 			data-slot="alert-dialog-title"
@@ -154,10 +149,7 @@ function AlertDialogTitle({
 	);
 }
 
-function AlertDialogDescription({
-	className,
-	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Description>) {
+function AlertDialogDescription({ className, ...props }: AlertDialogPrimitive.Description.Props) {
 	return (
 		<AlertDialogPrimitive.Description
 			data-slot="alert-dialog-description"
@@ -167,19 +159,28 @@ function AlertDialogDescription({
 	);
 }
 
-function AlertDialogAction({
-	className,
-	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
-	return <AlertDialogPrimitive.Action className={cn(buttonVariants(), className)} {...props} />;
+/**
+ * ⚠️ Base UI n'a ni `Action` ni `Cancel` : les deux sont des `Close`. La
+ * distinction n'est plus que visuelle (et sémantique pour l'appelant), ce qui a
+ * une conséquence a11y — Radix donnait le focus initial au `Cancel`, garde-fou
+ * classique d'une confirmation destructive. Les `data-slot` distincts et l'ordre
+ * DOM (Cancel AVANT Action) portent désormais seuls cet invariant, verrouillé
+ * par `alert-dialog-initial-focus.regression.test.tsx`.
+ */
+function AlertDialogAction({ className, ...props }: AlertDialogPrimitive.Close.Props) {
+	return (
+		<AlertDialogPrimitive.Close
+			data-slot="alert-dialog-action"
+			className={cn(buttonVariants(), className)}
+			{...props}
+		/>
+	);
 }
 
-function AlertDialogCancel({
-	className,
-	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
+function AlertDialogCancel({ className, ...props }: AlertDialogPrimitive.Close.Props) {
 	return (
-		<AlertDialogPrimitive.Cancel
+		<AlertDialogPrimitive.Close
+			data-slot="alert-dialog-cancel"
 			className={cn(buttonVariants({ variant: "secondary" }), className)}
 			{...props}
 		/>

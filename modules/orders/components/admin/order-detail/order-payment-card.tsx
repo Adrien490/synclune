@@ -41,15 +41,20 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 									className="size-6 p-0"
 									size="icon"
 								/>
-								<Button variant="ghost" size="sm" className="size-6 p-0" asChild>
-									<a
-										href={`https://dashboard.stripe.com/payments/${order.stripePaymentIntentId}`}
-										target="_blank"
-										rel="noopener noreferrer"
-										aria-label="Voir sur Stripe (s'ouvre dans un nouvel onglet)"
-									>
-										<ExternalLink className="size-3" aria-hidden="true" />
-									</a>
+								<Button
+									variant="ghost"
+									size="sm"
+									className="size-6 p-0"
+									render={
+										<a
+											href={`https://dashboard.stripe.com/payments/${order.stripePaymentIntentId}`}
+											target="_blank"
+											rel="noopener noreferrer"
+											aria-label="Voir sur Stripe (s'ouvre dans un nouvel onglet)"
+										/>
+									}
+								>
+									<ExternalLink className="size-3" aria-hidden="true" />
 								</Button>
 							</div>
 						</DetailInfoRow>

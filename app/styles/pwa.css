@@ -163,24 +163,43 @@ textarea {
 }
 
 /* ========================================================================
-   VAUL DRAWER - Optimisation des gestes tactiles
+   SHEET / DRAWER (Base UI) - Optimisation des gestes tactiles
    ======================================================================== */
 
-/* Permettre les gestes Vaul dans les drawers (override du overscroll-behavior global) */
-[data-vaul-drawer] {
+/* Permettre les gestes de swipe dans les panneaux (override du
+   overscroll-behavior global). Les sélecteurs `[data-vaul-*]` de la version
+   précédente n'existent plus : Base UI ne pose pas d'attributs de librairie, ce
+   sont NOS `data-slot` / `data-direction` qui portent le ciblage. */
+[data-slot="sheet-content"],
+[data-slot="drawer-content"] {
 	overscroll-behavior: auto;
 	touch-action: pan-y pinch-zoom;
 }
 
+/* ⚠️ Le killswitch de `app/styles/animations.css` ne neutralise que `animation` :
+   il ne voit PAS ces panneaux, qui glissent par TRANSITION (entrée, sortie et
+   suivi du doigt partagent la propriété `transform` — cf. `ui/sheet.tsx`). Sans
+   la règle ci-dessous, le panier continuerait de glisser 300 ms sous réduction
+   de mouvement. Le backdrop, lui, s'anime bien en keyframes. */
+@media (prefers-reduced-motion: reduce) {
+	[data-slot="sheet-content"],
+	[data-slot="drawer-content"],
+	[data-slot="sheet-overlay"],
+	[data-slot="drawer-overlay"] {
+		transition: none !important;
+		animation: none !important;
+	}
+}
+
 /* Permettre le swipe horizontal dans les ScrollArea et ScrollFade des sheets latéraux */
-[data-vaul-drawer-direction="right"] [data-slot="scroll-area-viewport"],
-[data-vaul-drawer-direction="left"] [data-slot="scroll-area-viewport"],
-[data-vaul-drawer-direction="right"] [data-slot="scroll-fade-container"],
-[data-vaul-drawer-direction="left"] [data-slot="scroll-fade-container"] {
+[data-direction="right"] [data-slot="scroll-area-viewport"],
+[data-direction="left"] [data-slot="scroll-area-viewport"],
+[data-direction="right"] [data-slot="scroll-fade-container"],
+[data-direction="left"] [data-slot="scroll-fade-container"] {
 	touch-action: pan-y pan-x;
 }
 
 /* Permettre le scroll vertical dans le bottom sheet sans déclencher le drag-to-close */
-[data-vaul-drawer-direction="bottom"] [data-slot="scroll-fade-container"] {
+[data-direction="bottom"] [data-slot="scroll-fade-container"] {
 	touch-action: pan-y;
 }

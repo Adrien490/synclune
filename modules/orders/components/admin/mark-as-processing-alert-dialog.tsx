@@ -45,17 +45,15 @@ export function MarkAsProcessingAlertDialog() {
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Passer en préparation</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription asChild>
-							<div>
-								<p>
-									Êtes-vous sûr de vouloir passer la commande{" "}
-									<strong>{dialog.data?.orderNumber}</strong> en préparation ?
-								</p>
-								<p className="text-muted-foreground mt-4 text-sm">
-									Le statut passera de "En attente" à "En préparation". Vous pourrez ensuite
-									l'expédier une fois le colis prêt.
-								</p>
-							</div>
+						<ResponsiveAlertDialogDescription render={<div />}>
+							<p>
+								Êtes-vous sûr de vouloir passer la commande{" "}
+								<strong>{dialog.data?.orderNumber}</strong> en préparation ?
+							</p>
+							<p className="text-muted-foreground mt-4 text-sm">
+								Le statut passera de "En attente" à "En préparation". Vous pourrez ensuite
+								l'expédier une fois le colis prêt.
+							</p>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

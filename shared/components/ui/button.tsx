@@ -1,6 +1,7 @@
-import { Slot } from "@radix-ui/react-slot";
+import { mergeProps } from "@base-ui/react/merge-props";
+import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
+import type * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 
@@ -38,28 +39,34 @@ function Button({
 	className,
 	variant,
 	size,
-	asChild = false,
+	render,
 	"aria-label": ariaLabel,
 	...props
-}: React.ComponentProps<"button"> &
-	VariantProps<typeof buttonVariants> & {
-		asChild?: boolean;
-	}) {
+}: useRender.ComponentProps<"button"> &
+	React.ComponentProps<"button"> &
+	VariantProps<typeof buttonVariants>) {
 	// Warning dev pour boutons icon-only sans label (WCAG 4.1.2)
 	if (process.env.NODE_ENV === "development" && size === "icon" && !ariaLabel) {
 		console.warn("[Button] aria-label requis pour les boutons icon-only");
 	}
 
-	const Comp = asChild ? Slot : "button";
-
-	return (
-		<Comp
-			data-slot="button"
-			aria-label={ariaLabel}
-			className={cn(buttonVariants({ variant, size, className }))}
-			{...props}
-		/>
-	);
+	// `render` remplace l'élément rendu — équivalent Base UI de l'ancien `asChild`
+	// Radix. ⚠️ Les enfants restent portés par le `Button`, pas par l'élément
+	// passé : `<Button render={<Link href="/x" />}>Voir</Button>`.
+	// `useRender` n'appelle son unique hook (`useMergedRefs`) que si `document`
+	// existe — ce module reste donc utilisable depuis un composant serveur.
+	return useRender({
+		defaultTagName: "button",
+		props: mergeProps<"button">(
+			{
+				"aria-label": ariaLabel,
+				className: cn(buttonVariants({ variant, size, className })),
+			},
+			props,
+		),
+		render,
+		state: { slot: "button" },
+	});
 }
 
 export { Button, buttonVariants };

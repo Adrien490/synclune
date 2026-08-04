@@ -1,41 +1,49 @@
 "use client";
 
-import * as PopoverPrimitive from "@radix-ui/react-popover";
-import * as React from "react";
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 
 import { cn } from "@/shared/utils/cn";
 
-function Popover({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+function Popover({ ...props }: PopoverPrimitive.Root.Props) {
 	return <PopoverPrimitive.Root data-slot="popover" {...props} />;
 }
 
-function PopoverTrigger({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
 	return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 }
 
 function PopoverContent({
 	className,
 	align = "center",
+	alignOffset = 0,
+	side = "bottom",
 	sideOffset = 4,
 	...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: PopoverPrimitive.Popup.Props &
+	Pick<PopoverPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">) {
 	return (
 		<PopoverPrimitive.Portal>
-			<PopoverPrimitive.Content
-				data-slot="popover-content"
+			<PopoverPrimitive.Positioner
 				align={align}
+				alignOffset={alignOffset}
+				side={side}
 				sideOffset={sideOffset}
-				className={cn(
-					"bg-popover text-popover-foreground z-(--z-float) w-72 max-w-[calc(100vw-2rem)] origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
-					"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
-					"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
-					"motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95",
-					"motion-safe:data-[side=bottom]:slide-in-from-top-2 motion-safe:data-[side=left]:slide-in-from-right-2",
-					"motion-safe:data-[side=right]:slide-in-from-left-2 motion-safe:data-[side=top]:slide-in-from-bottom-2",
-					className,
-				)}
-				{...props}
-			/>
+				className="isolate z-(--z-float)"
+			>
+				<PopoverPrimitive.Popup
+					data-slot="popover-content"
+					className={cn(
+						"bg-popover text-popover-foreground w-72 max-w-[calc(100vw-2rem)] origin-(--transform-origin) rounded-md border p-4 shadow-md outline-hidden",
+						"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
+						"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
+						"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
+						"motion-safe:data-[side=bottom]:slide-in-from-top-2 motion-safe:data-[side=left]:slide-in-from-right-2",
+						"motion-safe:data-[side=right]:slide-in-from-left-2 motion-safe:data-[side=top]:slide-in-from-bottom-2",
+						className,
+					)}
+					{...props}
+				/>
+			</PopoverPrimitive.Positioner>
 		</PopoverPrimitive.Portal>
 	);
 }

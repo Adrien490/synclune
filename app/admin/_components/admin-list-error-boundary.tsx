@@ -47,8 +47,8 @@ export function AdminListErrorBoundary({
 			</p>
 			<div className="flex flex-wrap items-center justify-center gap-2">
 				<Button onClick={reset}>Réessayer</Button>
-				<Button variant="outline" asChild>
-					<Link href={fallbackHref}>{fallbackLabel}</Link>
+				<Button variant="outline" render={<Link href={fallbackHref} />}>
+					{fallbackLabel}
 				</Button>
 			</div>
 		</div>

@@ -39,17 +39,19 @@ export function CollapsibleNavGroup({ groupLabel, groupId, badges }: Collapsible
 	return (
 		<Collapsible defaultOpen={hasActiveItem} className="group/collapsible">
 			<SidebarGroup role="group" aria-labelledby={groupId}>
-				<CollapsibleTrigger asChild>
-					<SidebarGroupLabel
-						id={groupId}
-						className="cursor-pointer text-xs font-semibold tracking-wider text-[color:var(--sidebar-muted-foreground)] uppercase hover:text-[color:var(--sidebar-foreground)]"
-					>
-						{group.label}
-						<ChevronRight
-							className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90"
-							aria-hidden="true"
+				<CollapsibleTrigger
+					render={
+						<SidebarGroupLabel
+							id={groupId}
+							className="cursor-pointer text-xs font-semibold tracking-wider text-[color:var(--sidebar-muted-foreground)] uppercase hover:text-[color:var(--sidebar-foreground)]"
 						/>
-					</SidebarGroupLabel>
+					}
+				>
+					{group.label}
+					<ChevronRight
+						className="ml-auto size-4 transition-transform group-data-open/collapsible:rotate-90"
+						aria-hidden="true"
+					/>
 				</CollapsibleTrigger>
 				<CollapsibleContent>
 					<SidebarMenu

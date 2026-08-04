@@ -2,6 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -94,13 +96,7 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 	TooltipContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="tooltip-content">{children}</div>
 	),
-	TooltipTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <div>{children}</div>,
+	TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 }));
 
 vi.mock("@/shared/components/data-table/table-empty-state", () => ({

@@ -47,20 +47,20 @@ export function SkuDetailStorefrontLinkCard({ sku }: SkuDetailStorefrontLinkCard
 			<CardContent className="space-y-3">
 				{isVisible ? (
 					<Button
-						asChild
+						render={
+							<Link
+								href={`/creations/${sku.product.slug}?sku=${sku.id}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="Voir cette variante sur la boutique (nouvel onglet)"
+								onClick={() => haptic("light")}
+							/>
+						}
 						variant="outline"
 						className="w-full transition-transform duration-150 active:scale-[0.98]"
 					>
-						<Link
-							href={`/creations/${sku.product.slug}?sku=${sku.id}`}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label="Voir cette variante sur la boutique (nouvel onglet)"
-							onClick={() => haptic("light")}
-						>
-							<ExternalLink className="size-4" aria-hidden="true" />
-							Voir sur la boutique
-						</Link>
+						<ExternalLink className="size-4" aria-hidden="true" />
+						Voir sur la boutique
 					</Button>
 				) : (
 					<>
