@@ -83,7 +83,6 @@ vi.mock("@/modules/emails/services/admin-emails", () => ({
 import { voidInvoice } from "../void-invoice.service";
 
 const AUTHOR = {
-	authorId: "admin-1",
 	authorName: "Alice Admin",
 	source: "ADMIN" as const,
 	reason: "Annulation après facture",

@@ -22,7 +22,6 @@ async function flagCreditNotePdfArchiveFailure(
 			select: { orderNumber: true },
 		});
 
-
 		await sendAdminCreditNotePdfArchiveFailedAlert({
 			orderId,
 			orderNumber: order.orderNumber,

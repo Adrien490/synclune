@@ -28,9 +28,6 @@ export const ORDERS_CACHE_TAGS = {
 	/** Historique d'une commande spécifique (audit trail) */
 	HISTORY: (orderId: string) => `order-history-${orderId}`,
 
-	/** Notes internes d'une commande (admin) */
-	NOTES: (orderId: string) => `order-notes-${orderId}`,
-
 	/** Remboursements d'une commande */
 	REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
 

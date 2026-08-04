@@ -19,7 +19,6 @@ async function flagCreditNotePdfArchiveFailure(
 	errorMessage: string,
 ): Promise<void> {
 	try {
-
 		const order = await prisma.order.findUnique({
 			where: { id: orderId },
 			select: { orderNumber: true },

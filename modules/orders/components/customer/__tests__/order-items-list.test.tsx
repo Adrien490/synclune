@@ -22,9 +22,9 @@ vi.mock("next/image", () => ({
 	}) => <img src={src} alt={alt} className={className} {...props} />,
 }));
 
-// Mock lucide-react icons
-vi.mock("lucide-react", () => ({
-	ShoppingBag: () => <svg data-testid="icon-shopping-bag" />,
+// Mock des icônes Phosphor
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ShoppingBagIcon: () => <svg data-testid="icon-shopping-bag" />,
 }));
 
 // Mock formatEuro to return a predictable string

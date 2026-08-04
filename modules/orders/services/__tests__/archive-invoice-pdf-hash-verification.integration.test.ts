@@ -181,5 +181,4 @@ describeIntegration("archiveInvoicePdf — hash verification (EINV-TEST-013)", (
 		});
 		expect(persisted.invoicePdfHash).toBe(hash1);
 	});
-
 });

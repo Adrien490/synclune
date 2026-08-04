@@ -46,7 +46,6 @@ import { captureRefundError } from "../utils/capture-refund-error";
 export interface FinalizeRefundCompletionParams {
 	refundId: string;
 	source: HistorySource;
-	authorId?: string | null;
 	authorName: string;
 	auditNote: string;
 	/** Champs additionnels fusionnés dans la metadata d'audit (ex: provenance). */
@@ -71,7 +70,7 @@ const FINALIZE_NOOP: FinalizeRefundCompletionResult = {
 export async function finalizeRefundCompletion(
 	params: FinalizeRefundCompletionParams,
 ): Promise<FinalizeRefundCompletionResult> {
-	const { refundId, source, authorId, authorName, auditNote, auditMetadata } = params;
+	const { refundId, source, authorName, auditNote, auditMetadata } = params;
 
 	const refund = await prisma.refund.findUnique({
 		where: { id: refundId },
@@ -149,7 +148,6 @@ export async function finalizeRefundCompletion(
 			orderId,
 			action: OrderAction.REFUND_COMPLETED,
 			source,
-			authorId: authorId ?? undefined,
 			authorName,
 			newPaymentStatus,
 			note: auditNote,
@@ -181,7 +179,6 @@ export async function finalizeRefundCompletion(
 	const creditNoteResult = await issueCreditNoteForRefund({
 		refundId,
 		source,
-		authorId: authorId ?? undefined,
 		authorName,
 	});
 	if (creditNoteResult.kind === "failed") {
@@ -202,7 +199,6 @@ export async function finalizeRefundCompletion(
 		if (invoiceState?.invoiceStatus === InvoiceStatus.GENERATED && invoiceState.invoiceNumber) {
 			const voided = await voidInvoice({
 				orderId,
-				authorId: authorId ?? null,
 				authorName,
 				source,
 				reason: "Avoir émis suite à remboursement total (finalisation refund)",

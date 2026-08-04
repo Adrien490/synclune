@@ -262,13 +262,12 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 	});
 
 	describe("invoice GENERATED — voidInvoice IS called", () => {
-		it("appelle voidInvoice avec orderId + authorId admin + source=ADMIN", async () => {
+		it("appelle voidInvoice avec orderId + authorName + source=ADMIN", async () => {
 			await markAsFullyRefunded(undefined, validFormData);
 
 			expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
 			expect(mockVoidInvoice).toHaveBeenCalledWith({
 				orderId: expect.any(String),
-				authorId: "admin-1",
 				authorName: "Admin Sophie",
 				source: "ADMIN",
 				reason: "Geste commercial",

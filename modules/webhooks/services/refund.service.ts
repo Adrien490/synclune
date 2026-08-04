@@ -14,7 +14,6 @@ import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
-import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import type { RefundRecord } from "../types/webhook.types";
 
 export const WEBHOOK_AUDIT_AUTHOR = "Système (webhook Stripe)";
@@ -284,7 +283,6 @@ export async function syncStripeRefunds(
 									orderId,
 									action: OrderAction.REFUND_COMPLETED,
 									source: HistorySource.WEBHOOK,
-									authorId: SYSTEM_AUTHOR_ID,
 									authorName: WEBHOOK_AUDIT_AUTHOR,
 									note: "Refund completed via charge.refunded webhook",
 									metadata: {
@@ -341,7 +339,6 @@ export async function syncStripeRefunds(
 									orderId,
 									action: OrderAction.REFUND_COMPLETED,
 									source: HistorySource.WEBHOOK,
-									authorId: SYSTEM_AUTHOR_ID,
 									authorName: WEBHOOK_AUDIT_AUTHOR,
 									note: "Refund linked + completed via charge.refunded webhook",
 									metadata: {
@@ -383,7 +380,6 @@ export async function syncStripeRefunds(
 										orderId,
 										action: OrderAction.REFUND_COMPLETED,
 										source: HistorySource.WEBHOOK,
-										authorId: SYSTEM_AUTHOR_ID,
 										authorName: WEBHOOK_AUDIT_AUTHOR,
 										note: "Dashboard refund finalized via webhook",
 										metadata: {
@@ -429,7 +425,6 @@ export async function syncStripeRefunds(
 										? OrderAction.REFUND_COMPLETED
 										: OrderAction.REFUND_CREATED,
 								source: HistorySource.WEBHOOK,
-								authorId: SYSTEM_AUTHOR_ID,
 								authorName: WEBHOOK_AUDIT_AUTHOR,
 								note: isFullRefund
 									? "Dashboard refund (full) — admin attention required for restock decision"
@@ -671,7 +666,6 @@ export async function updateRefundStatus(
 					orderId: refundForAudit.orderId,
 					action: OrderAction.REFUND_COMPLETED,
 					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: WEBHOOK_AUDIT_AUTHOR,
 					note: `Refund completed via Stripe webhook (status: ${stripeStatus})`,
 					metadata: {
@@ -732,7 +726,6 @@ export async function markRefundAsFailed(refundId: string, failureReason: string
 					orderId: refundForAudit.orderId,
 					action: OrderAction.REFUND_FAILED,
 					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: WEBHOOK_AUDIT_AUTHOR,
 					note: `Refund failed via Stripe webhook: ${failureReason}`,
 					metadata: {

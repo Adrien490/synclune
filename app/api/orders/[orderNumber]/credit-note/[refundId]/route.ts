@@ -41,14 +41,12 @@ async function recordCreditNoteDownload(params: {
 	orderId: string;
 	refundId: string;
 	creditNoteNumber: string;
-	authorId: string | undefined;
 	source: HistorySource;
 }): Promise<void> {
 	try {
 		await createOrderAudit({
 			orderId: params.orderId,
 			action: OrderAction.INVOICE_DOWNLOADED,
-			authorId: params.authorId,
 			source: params.source,
 			metadata: {
 				creditNoteNumber: params.creditNoteNumber,
@@ -170,7 +168,6 @@ export async function GET(
 	// Route admin-only depuis le retrait de `Order.userId` : la branche CUSTOMER
 	// était devenue inatteignable.
 	const auditSource: HistorySource = HistorySource.ADMIN;
-	const auditAuthorId = session.user.id;
 
 	// Servir le PDF archivé si présent (immuable, Art. L102 B LPF).
 	if (refund.creditNotePdfUrl) {
@@ -228,7 +225,6 @@ export async function GET(
 						orderId: order.id,
 						refundId: refund.id,
 						creditNoteNumber: refund.creditNoteNumber,
-						authorId: auditAuthorId,
 						source: auditSource,
 					});
 					return new Response(buffer, {
@@ -305,7 +301,6 @@ export async function GET(
 		orderId: order.id,
 		refundId: refund.id,
 		creditNoteNumber: refund.creditNoteNumber,
-		authorId: auditAuthorId,
 		source: auditSource,
 	});
 

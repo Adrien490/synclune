@@ -94,7 +94,6 @@ export async function updateOrderCustomerInfo(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "ADDRESS_UPDATED",
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				note: "Informations client modifiées",
 				metadata: {

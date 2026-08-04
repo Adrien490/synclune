@@ -182,10 +182,10 @@ describe("updatePendingOrderShippingSnapshot", () => {
 		expect(audit.action).toBe("ADDRESS_UPDATED");
 		expect(audit.source).toBe("CUSTOMER");
 		expect(audit.authorName).toBe("Client");
-		// `authorId` n'est plus posé : il venait de `Order.userId`, retiré le
-		// 2026-08-05 (achat 100 % invité — la colonne valait NULL partout). Le
-		// libellé neutre « Client » reste, c'est lui qui porte l'invariant RGPD.
-		expect(audit.authorId).toBeUndefined();
+		// La colonne `OrderHistory.authorId` a disparu (audit V2, Lot 1 — ~35
+		// écrivains, zéro lecteur) ; elle était de toute façon déjà NULL ici depuis
+		// le retrait de `Order.userId`. Le libellé neutre « Client » reste, c'est
+		// lui qui porte l'invariant RGPD.
 		expect(audit.metadata).toEqual({
 			addressType: "shipping",
 			changedFields: ["shippingAddress1"],
@@ -198,14 +198,13 @@ describe("updatePendingOrderShippingSnapshot", () => {
 		expect(serialized).not.toContain("+33600000000");
 	});
 
-	it("omet authorId pour un invité (pas de compte) sans casser l'audit", async () => {
+	it("trace un invité (pas de compte) sans casser l'audit", async () => {
 		await updatePendingOrderShippingSnapshot({
 			orderId: "order_1",
 			shipping: CORRECTED,
 		});
 
 		const audit = mockCreateAudit.mock.calls[0]![1] as Record<string, unknown>;
-		expect(audit).not.toHaveProperty("authorId");
 		expect(audit.authorName).toBe("Client");
 	});
 

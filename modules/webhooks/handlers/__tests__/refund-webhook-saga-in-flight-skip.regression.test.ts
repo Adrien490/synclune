@@ -81,7 +81,6 @@ vi.mock("@/modules/orders/services/void-invoice.service", () => ({
 vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: vi.fn().mockResolvedValue({ kind: "noop", reason: "missing" }),
 }));
-vi.mock("../../constants/webhook.constants", () => ({ SYSTEM_AUTHOR_ID: "system" }));
 vi.mock("@/modules/refunds/services/finalize-refund.service", () => ({
 	finalizeRefundCompletion: mockFinalizeRefundCompletion,
 }));

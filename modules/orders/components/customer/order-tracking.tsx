@@ -82,7 +82,11 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 						<div>
 							<span className="text-muted-foreground">Livraison estimée : </span>
 							<span className="font-medium">
-								{format(estimateDeliveryDate(order.shippedAt, order.shippingCountry), "d MMMM yyyy", { locale: fr })}
+								{format(
+									estimateDeliveryDate(order.shippedAt, order.shippingCountry),
+									"d MMMM yyyy",
+									{ locale: fr },
+								)}
 							</span>
 						</div>
 					)}

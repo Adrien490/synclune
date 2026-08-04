@@ -100,7 +100,6 @@ export async function deleteOrder(
 				previousStatus: found.status,
 				previousPaymentStatus: found.paymentStatus,
 				note: reason,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {

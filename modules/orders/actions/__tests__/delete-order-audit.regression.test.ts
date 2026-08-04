@@ -117,7 +117,6 @@ describe("ORD-BIZ-003 — delete-order crée une OrderHistory immuable", () => {
 				orderId: VALID_CUID,
 				action: "CANCELLED",
 				source: "ADMIN",
-				authorId: "admin-42",
 				authorName: "Sophie",
 				note: "commande de test à nettoyer",
 				metadata: expect.objectContaining({

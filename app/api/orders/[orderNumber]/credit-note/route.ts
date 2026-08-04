@@ -32,14 +32,12 @@ const UPLOADTHING_FETCH_TIMEOUT_MS = 5_000;
 async function recordCreditNoteDownload(params: {
 	orderId: string;
 	creditNoteNumber: string;
-	authorId: string | undefined;
 	source: HistorySource;
 }): Promise<void> {
 	try {
 		await createOrderAudit({
 			orderId: params.orderId,
 			action: OrderAction.INVOICE_DOWNLOADED,
-			authorId: params.authorId,
 			source: params.source,
 			metadata: {
 				documentType: "CREDIT_NOTE",
@@ -190,7 +188,6 @@ export async function GET(
 		);
 	}
 	const auditSource: HistorySource = isAdmin ? HistorySource.ADMIN : HistorySource.CUSTOMER;
-	const auditAuthorId = session?.user.id;
 
 	type CreditNotePath = "archived" | "lazy_regenerate";
 	let creditNotePath: CreditNotePath = "archived";
@@ -258,7 +255,6 @@ export async function GET(
 					await recordCreditNoteDownload({
 						orderId: order.id,
 						creditNoteNumber: order.creditNoteNumber,
-						authorId: auditAuthorId,
 						source: auditSource,
 					});
 					return new Response(buffer, {
@@ -348,7 +344,6 @@ export async function GET(
 	await recordCreditNoteDownload({
 		orderId: order.id,
 		creditNoteNumber: order.creditNoteNumber,
-		authorId: auditAuthorId,
 		source: auditSource,
 	});
 

@@ -373,7 +373,7 @@ describe("POST /api/admin/orders/export", () => {
 			expect(response.status).toBe(200);
 			expect(mockPrisma.orderHistory.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					data: expect.objectContaining({ action: "BULK_EXPORT", authorId: "admin-1" }),
+					data: expect.objectContaining({ action: "BULK_EXPORT" }),
 				}),
 			);
 		});

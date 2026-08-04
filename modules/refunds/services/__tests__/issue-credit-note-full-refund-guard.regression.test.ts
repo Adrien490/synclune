@@ -126,7 +126,7 @@ function makeTx(): FakeTx {
 	};
 }
 
-const AUTHOR = { source: "WEBHOOK" as const, authorId: null, authorName: "Stripe" };
+const AUTHOR = { source: "WEBHOOK" as const, authorName: "Stripe" };
 
 /** Branche `prisma.$transaction` pour exécuter le callback avec un tx donné. */
 function wireTx(tx: FakeTx, refundFindUnique: ReturnType<typeof vi.fn>): void {

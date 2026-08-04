@@ -13,8 +13,8 @@ import { describe, expect, it } from "vitest";
  *
  * Garde (RGPD-AUDIT P1-2) : un audit `source: HistorySource.CUSTOMER` ne doit
  * JAMAIS dériver `authorName` de l'utilisateur (`user.name`, `user.email`) —
- * `authorId` suffit à la traçabilité, `authorName` reste un libellé neutre
- * ("Client"). Bug historique : `cancel-order-customer.ts` écrivait `user.name`
+ * `source: CUSTOMER` suffit à qualifier l'origine, `authorName` reste un libellé
+ * neutre ("Client"). Bug historique : `cancel-order-customer.ts` écrivait `user.name`
  * et `request-return.ts` écrivait `user.name ?? user.email`.
  *
  * Garde étendue (audit rétention PII 10 ans 2026-07-09) : les VALEURS d'adresse

@@ -121,7 +121,6 @@ function makeTx(): FakeTx {
 
 const AUTHOR = {
 	source: "ADMIN" as const,
-	authorId: "admin-1",
 	authorName: "Alice Admin",
 };
 

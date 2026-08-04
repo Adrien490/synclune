@@ -53,9 +53,12 @@ describe("@regression cron-services-have-callers", () => {
 	// vert pour rien (leçon audit admin commandes 2026-07-26).
 	// Plancher abaissé à 9 le 2026-08-04 : `cleanup-carts.service.ts` est parti
 	// avec le passage du panier en cookie (le cookie expire tout seul côté client,
-	// il n'y a plus rien à purger en base).
+	// il n'y a plus rien à purger en base). Puis à 8 le 2026-08-05 (audit V2,
+	// Lot 3) : `retry-webhooks.service.ts` était un TROISIÈME système de reprise
+	// empilé sur le retry Stripe de 3 jours (la route renvoie 500) et sur les
+	// tâches de réconciliation métier — cf. `docs/KNOWN-ISSUES.md`, KI-006.
 	it("détecte bien les services et le corpus de recherche", () => {
-		expect(serviceFiles.length).toBeGreaterThanOrEqual(9);
+		expect(serviceFiles.length).toBeGreaterThanOrEqual(8);
 		expect(searchFiles.length).toBeGreaterThan(500);
 	});
 

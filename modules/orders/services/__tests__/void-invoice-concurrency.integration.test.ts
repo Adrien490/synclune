@@ -104,7 +104,6 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 			orders.map((order) =>
 				voidInvoice({
 					orderId: order.id,
-					authorId: null,
 					authorName: "System",
 					source: HistorySource.SYSTEM,
 					reason: "Test concurrence",
@@ -146,14 +145,12 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 		const [result1, result2] = await Promise.all([
 			voidInvoice({
 				orderId: order.id,
-				authorId: null,
 				authorName: "System",
 				source: HistorySource.SYSTEM,
 				reason: "Test 1",
 			}),
 			voidInvoice({
 				orderId: order.id,
-				authorId: null,
 				authorName: "System",
 				source: HistorySource.SYSTEM,
 				reason: "Test 2",
@@ -189,7 +186,6 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 			orders.map((o) =>
 				voidInvoice({
 					orderId: o.id,
-					authorId: null,
 					authorName: "System",
 					source: HistorySource.SYSTEM,
 					reason: "Avoir test",
@@ -266,7 +262,6 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 				ordersForVoid.map((o) =>
 					voidInvoice({
 						orderId: o.id,
-						authorId: null,
 						authorName: "System",
 						source: HistorySource.SYSTEM,
 						reason: "test",

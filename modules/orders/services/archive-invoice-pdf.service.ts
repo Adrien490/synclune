@@ -22,7 +22,6 @@ async function flagPdfArchiveFailure(
 			select: { orderNumber: true },
 		});
 
-
 		await sendAdminPdfArchiveFailedAlert({
 			orderId,
 			orderNumber: order.orderNumber,

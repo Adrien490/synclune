@@ -7,7 +7,6 @@ const { mockPrisma, mockUpdateTag, mockDeleteUploadThingFilesFromUrls, mockLogge
 			skuMedia: { findMany: vi.fn() },
 			order: { findMany: vi.fn(), updateMany: vi.fn() },
 			refund: { updateMany: vi.fn() },
-			orderNote: { updateMany: vi.fn() },
 			orderHistory: { updateMany: vi.fn() },
 			$transaction: vi.fn(),
 		},
@@ -49,7 +48,6 @@ import { BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import {
 	ORDER_HISTORY_PII_SCRUB,
 	ORDER_PII_SCRUB,
-	PURGED_ORDER_NOTE_CONTENT,
 	REFUND_PII_SCRUB,
 } from "@/modules/orders/constants/pii-scrub";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
@@ -66,7 +64,6 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.order.findMany.mockResolvedValue([]);
 		mockPrisma.order.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.orderNote.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.orderHistory.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.$transaction.mockResolvedValue({ count: 0 });
 		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0, failed: 0 });
@@ -199,7 +196,7 @@ describe("hardDeleteExpiredRecords", () => {
 		vi.spyOn(Date, "now").mockRestore();
 	});
 
-	it("purges order PII past 10-year retention: deletes PDFs FIRST (incl. per-refund credit notes), then scrubs Order+Refund+OrderNote+OrderHistory + sets piiPurgedAt", async () => {
+	it("purges order PII past 10-year retention: deletes PDFs FIRST (incl. per-refund credit notes), then scrubs Order+Refund+OrderHistory + sets piiPurgedAt", async () => {
 		// 1st findMany = paid purge, 2nd findMany = unpaid (abandoned) purge → empty here.
 		mockPrisma.order.findMany
 			.mockResolvedValueOnce([
@@ -220,7 +217,7 @@ describe("hardDeleteExpiredRecords", () => {
 			])
 			.mockResolvedValueOnce([]);
 		// paid-purge scrub tx runs first (callback exécuté pour observer les scrubs
-		// internes Refund/OrderNote/Order), then the product tx → { count }.
+		// internes Refund/OrderHistory/Order), then the product tx → { count }.
 		mockPrisma.order.updateMany.mockResolvedValue({ count: 2 });
 		mockPrisma.$transaction
 			.mockImplementationOnce(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
@@ -257,16 +254,12 @@ describe("hardDeleteExpiredRecords", () => {
 		const scrubTxOrder = mockPrisma.$transaction.mock.invocationCallOrder[0]!;
 		expect(deleteOrder).toBeLessThan(scrubTxOrder);
 
-		// Scrub atomique dans la tx : Refund (avoirs + note), OrderNote (texte libre),
-		// OrderHistory (note + metadata — arbitrage 2026-08-03, seul writer autorisé),
+		// Scrub atomique dans la tx : Refund (avoirs + note), OrderHistory (note +
+		// metadata — arbitrage 2026-08-03, seul writer autorisé),
 		// Order (payload complet + sentinel piiPurgedAt).
 		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
 			where: { orderId: { in: ["order-1", "order-2"] } },
 			data: { ...REFUND_PII_SCRUB },
-		});
-		expect(mockPrisma.orderNote.updateMany).toHaveBeenCalledWith({
-			where: { orderId: { in: ["order-1", "order-2"] } },
-			data: { content: PURGED_ORDER_NOTE_CONTENT },
 		});
 		expect(mockPrisma.orderHistory.updateMany).toHaveBeenCalledWith({
 			where: { orderId: { in: ["order-1", "order-2"] } },

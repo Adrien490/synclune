@@ -89,7 +89,6 @@ export async function POST(request: Request) {
 				data: {
 					orderId: null,
 					action: OrderAction.BULK_EXPORT,
-					authorId: admin.user.id,
 					source: HistorySource.ADMIN,
 					note: `Export CSV livre de recettes — ${orders.length} lignes`,
 					metadata: {

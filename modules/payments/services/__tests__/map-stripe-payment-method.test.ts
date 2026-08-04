@@ -13,11 +13,8 @@ vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 vi.mock("@/app/generated/prisma/enums", () => ({
 	PaymentMethod: {
 		CARD: "CARD",
-		SEPA_DEBIT: "SEPA_DEBIT",
-		KLARNA: "KLARNA",
 		LINK: "LINK",
 		WALLET: "WALLET",
-		BANCONTACT: "BANCONTACT",
 		OTHER: "OTHER",
 	},
 }));
@@ -52,21 +49,21 @@ describe("mapPaymentMethodFromCharge — Stripe → PaymentMethod enum", () => {
 		expect(mapPaymentMethodFromCharge(makeCharge("card"))).toBe("CARD");
 	});
 
-	it("maps 'sepa_debit' → SEPA_DEBIT", () => {
-		expect(mapPaymentMethodFromCharge(makeCharge("sepa_debit"))).toBe("SEPA_DEBIT");
-	});
-
-	it("maps 'klarna' → KLARNA", () => {
-		expect(mapPaymentMethodFromCharge(makeCharge("klarna"))).toBe("KLARNA");
-	});
-
 	it("maps 'link' → LINK", () => {
 		expect(mapPaymentMethodFromCharge(makeCharge("link"))).toBe("LINK");
 	});
 
-	it("maps 'bancontact' → BANCONTACT", () => {
-		expect(mapPaymentMethodFromCharge(makeCharge("bancontact"))).toBe("BANCONTACT");
-	});
+	// Les trois valeurs SEPA_DEBIT / KLARNA / BANCONTACT ont été retirées de l'enum
+	// (audit V2, Lot 1) : le checkout est card-only, Stripe ne peut pas produire ces
+	// types. La garde ici est qu'ils tombent en OTHER SANS throw — si un jour
+	// `payment_method_types` est élargi sans rouvrir l'enum, la commande passe et le
+	// moyen est simplement mal typé, plutôt que le webhook n'échoue.
+	it.each(["sepa_debit", "klarna", "bancontact"])(
+		"maps '%s' (moyen retiré de l'enum) → OTHER sans throw",
+		(type) => {
+			expect(mapPaymentMethodFromCharge(makeCharge(type))).toBe("OTHER");
+		},
+	);
 
 	it("maps 'card' with wallet.type=apple_pay → WALLET", () => {
 		expect(mapPaymentMethodFromCharge(makeCharge("card", "apple_pay"))).toBe("WALLET");
@@ -94,17 +91,17 @@ describe("mapPaymentMethodFromCharge — Stripe → PaymentMethod enum", () => {
 
 describe("extractPaymentMethodFromPaymentIntent — webhook entrypoint", () => {
 	it("reads expanded latest_charge directly (no API call)", async () => {
-		const pi = makePI(makeCharge("sepa_debit"));
+		const pi = makePI(makeCharge("card"));
 		const result = await extractPaymentMethodFromPaymentIntent(pi);
-		expect(result).toBe("SEPA_DEBIT");
+		expect(result).toBe("CARD");
 		expect(mockStripe.charges.retrieve).not.toHaveBeenCalled();
 	});
 
 	it("retrieves charge when latest_charge is a string id", async () => {
-		mockStripe.charges.retrieve.mockResolvedValue(makeCharge("klarna"));
+		mockStripe.charges.retrieve.mockResolvedValue(makeCharge("link"));
 		const pi = makePI("ch_test_1");
 		const result = await extractPaymentMethodFromPaymentIntent(pi);
-		expect(result).toBe("KLARNA");
+		expect(result).toBe("LINK");
 		expect(mockStripe.charges.retrieve).toHaveBeenCalledWith("ch_test_1");
 	});
 
@@ -134,10 +131,10 @@ describe("extractPaymentMethodFromPaymentIntent — webhook entrypoint", () => {
 		expect(result).toBe("WALLET");
 	});
 
-	it("Bancontact flow : retrieves charge with type=bancontact → BANCONTACT", async () => {
+	it("moyen retiré de l'enum : retrieves charge with type=bancontact → OTHER", async () => {
 		mockStripe.charges.retrieve.mockResolvedValue(makeCharge("bancontact"));
 		const pi = makePI("ch_bancontact_1");
 		const result = await extractPaymentMethodFromPaymentIntent(pi);
-		expect(result).toBe("BANCONTACT");
+		expect(result).toBe("OTHER");
 	});
 });

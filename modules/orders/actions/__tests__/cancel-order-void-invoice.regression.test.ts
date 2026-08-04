@@ -2,7 +2,7 @@
  * @regression cancel-order-void-invoice
  *
  * Garde-fou comptable Art. 272-I CGI : cancelOrder DOIT appeler voidInvoice()
- * avec les bons arguments (orderId, authorId, authorName, source=ADMIN, reason)
+ * avec les bons arguments (orderId, authorName, source=ADMIN, reason)
  * UNIQUEMENT quand la facture est `invoiceStatus=GENERATED`.
  *
  * Bug latent visé (EINV-TEST-003) : le test existant `cancel-order.test.ts`
@@ -231,7 +231,7 @@ describe("@regression cancel-order-void-invoice — EINV-TEST-003", () => {
 	});
 
 	describe("invoice GENERATED — voidInvoice must be called with admin context", () => {
-		it("appelle voidInvoice avec orderId, authorId admin, authorName, source=ADMIN", async () => {
+		it("appelle voidInvoice avec orderId, authorName, source=ADMIN", async () => {
 			const order = createTxOrder({
 				invoiceNumber: "F-2026-00123",
 				invoiceStatus: "GENERATED",
@@ -243,7 +243,6 @@ describe("@regression cancel-order-void-invoice — EINV-TEST-003", () => {
 			expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
 			expect(mockVoidInvoice).toHaveBeenCalledWith({
 				orderId: order.id,
-				authorId: "admin-1",
 				authorName: "Admin Sophie",
 				source: "ADMIN",
 				reason: "Annulation client",

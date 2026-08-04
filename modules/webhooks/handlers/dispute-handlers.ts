@@ -21,7 +21,6 @@ import {
 	DISPUTE_OPENED_NOTE_PREFIX,
 } from "@/modules/orders/services/has-open-dispute.service";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
-import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 
 /**
@@ -186,7 +185,6 @@ export async function handleDisputeCreated(
 					orderId: order.id,
 					action: OrderAction.DISPUTE_OPENED,
 					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: SYSTEM_AUTHOR_NAME,
 					note: noteContent,
 					metadata: {
@@ -433,7 +431,6 @@ export async function handleDisputeClosed(
 						orderId: order.id,
 						action: OrderAction.DISPUTE_RESOLVED,
 						source: HistorySource.WEBHOOK,
-						authorId: SYSTEM_AUTHOR_ID,
 						authorName: SYSTEM_AUTHOR_NAME,
 						previousPaymentStatus: order.paymentStatus,
 						newPaymentStatus:
@@ -462,7 +459,6 @@ export async function handleDisputeClosed(
 					orderId: order.id,
 					action: OrderAction.DISPUTE_RESOLVED,
 					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: SYSTEM_AUTHOR_NAME,
 					note: noteContent,
 					metadata: {
@@ -518,7 +514,6 @@ export async function handleDisputeClosed(
 				if (invoiceState?.invoiceStatus === InvoiceStatus.GENERATED && invoiceState.invoiceNumber) {
 					const voided = await voidInvoice({
 						orderId: order.id,
-						authorId: SYSTEM_AUTHOR_ID,
 						authorName: SYSTEM_AUTHOR_NAME,
 						source: HistorySource.WEBHOOK,
 						reason: `Avoir émis suite à chargeback perdu (litige Stripe ${dispute.id})`,
@@ -545,7 +540,6 @@ export async function handleDisputeClosed(
 				const creditNoteResult = await issueCreditNoteForRefund({
 					refundId: chargebackRefundId,
 					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: SYSTEM_AUTHOR_NAME,
 				});
 				if (creditNoteResult.kind === "failed") {

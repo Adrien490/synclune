@@ -101,9 +101,7 @@ vi.mock("@/modules/orders/utils/order-audit", () => ({
 	createOrderAuditTx: vi.fn(),
 }));
 
-vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
-	SYSTEM_AUTHOR_ID: "00000000-0000-0000-0000-000000000000",
-}));
+vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,

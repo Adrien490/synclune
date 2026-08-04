@@ -69,8 +69,8 @@ export async function retryInvoiceGeneration(
 			if (result.creditNoteRecovered) parts.push("avoir");
 			return success(`Facture rattrapée (${parts.join(", ") || "aucune action"})`);
 		}
-		if (result.kind === "escalated") {
-			return error("Tentatives multiples échouées — voir runbook + Sentry");
+		if (result.kind === "failed") {
+			return error("Le rattrapage a échoué — voir Sentry et docs/RUNBOOK.md");
 		}
 		return success("Rien à reconcilier (commande déjà saine)");
 	} catch (e) {

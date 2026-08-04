@@ -184,7 +184,6 @@ export async function markAsFullyRefunded(
 						await createOrderAuditTx(tx, {
 							orderId: id,
 							action: OrderAction.REFUND_CREATED,
-							authorId: adminUser.id,
 							authorName: adminUser.name ?? "Admin",
 							source: HistorySource.ADMIN,
 							note: `Refund manuel créé pour traçabilité du flux financier (${(remainingAmount / 100).toFixed(2)} €) — méthode: ${manualRefundMethod}`,
@@ -205,7 +204,6 @@ export async function markAsFullyRefunded(
 					action: OrderAction.REFUND_COMPLETED,
 					previousPaymentStatus: found.paymentStatus,
 					newPaymentStatus: PaymentStatus.REFUNDED,
-					authorId: adminUser.id,
 					authorName: adminUser.name ?? "Admin",
 					source: HistorySource.ADMIN,
 					note: reason ?? `Marquée comme remboursée (manuel — méthode: ${manualRefundMethod})`,
@@ -260,7 +258,6 @@ export async function markAsFullyRefunded(
 		if (order.invoiceStatus === InvoiceStatus.GENERATED && order.invoiceNumber) {
 			const voided = await voidInvoice({
 				orderId: order.id,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				reason: reason ?? "Avoir suite à remboursement total manuel",

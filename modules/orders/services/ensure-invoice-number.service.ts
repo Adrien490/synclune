@@ -31,7 +31,6 @@ export async function flagInvoiceFailureForReconcile(
 			},
 		});
 
-
 		await sendAdminInvoiceFailedAlert({
 			orderId,
 			orderNumber: order.orderNumber,

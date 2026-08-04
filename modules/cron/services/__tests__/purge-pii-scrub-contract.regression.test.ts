@@ -111,7 +111,6 @@ describe("ORDER_PII_SCRUB — contrat de champs (purge 10 ans, commandes payées
 		expect(Object.prototype.hasOwnProperty.call(SCRUB, field)).toBe(false);
 	});
 
-
 	it("nulle les pointeurs PDF (URL + hash) pour les deux documents", () => {
 		expect(SCRUB.invoicePdfUrl).toBeNull();
 		expect(SCRUB.invoicePdfHash).toBeNull();

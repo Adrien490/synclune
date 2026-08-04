@@ -38,7 +38,6 @@ vi.mock("../../constants/cache", () => ({
 		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
 		LAST_ORDER: (userId: string) => `last-order-user-${userId}`,
 		HISTORY: (orderId: string) => `order-history-${orderId}`,
-		NOTES: (orderId: string) => `order-notes-${orderId}`,
 		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
 		CONFIRMATION: (orderId: string) => `order-confirmation-${orderId}`,
 		DETAIL: (orderId: string) => `order-detail-${orderId}`,

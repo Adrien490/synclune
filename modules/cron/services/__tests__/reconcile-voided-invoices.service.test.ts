@@ -65,7 +65,6 @@ describe("reconcileVoidedInvoices", () => {
 		expect(mockVoidInvoice).toHaveBeenCalledOnce();
 		expect(mockVoidInvoice.mock.calls[0]?.[0]).toMatchObject({
 			orderId: "order-1",
-			authorId: null,
 			source: "SYSTEM",
 			reason: expect.stringContaining("annulée"),
 		});

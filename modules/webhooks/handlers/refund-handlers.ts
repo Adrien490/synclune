@@ -20,7 +20,6 @@ import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.typ
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
-import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { HistorySource, InvoiceStatus, RefundStatus } from "@/app/generated/prisma/client";
 
 /**
@@ -157,7 +156,6 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			if (invoiceState?.invoiceStatus === InvoiceStatus.GENERATED && invoiceState.invoiceNumber) {
 				const voided = await voidInvoice({
 					orderId: order.id,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: "Stripe",
 					source: HistorySource.WEBHOOK,
 					reason: "Avoir émis suite à remboursement total Stripe",
@@ -242,7 +240,6 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 				const creditNoteResult = await issueCreditNoteForRefund({
 					refundId: r.id,
 					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: "Stripe",
 				});
 				if (creditNoteResult.kind === "failed") {
@@ -471,7 +468,6 @@ export async function handleRefundUpdated(
 				const outcome = await finalizeRefundCompletion({
 					refundId: refund.id,
 					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: WEBHOOK_AUDIT_AUTHOR,
 					auditNote: `Refund completed via Stripe webhook (status: ${stripeRefund.status ?? "unknown"})`,
 					auditMetadata: {

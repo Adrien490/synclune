@@ -36,7 +36,6 @@ async function flagCreditNoteFailure(orderId: string, errorMessage: string): Pro
 			select: { orderNumber: true, invoiceNumber: true },
 		});
 
-
 		if (order.invoiceNumber) {
 			await sendAdminCreditNoteFailedAlert({
 				orderId,

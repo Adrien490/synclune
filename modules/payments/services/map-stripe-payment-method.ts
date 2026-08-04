@@ -17,12 +17,15 @@ import { logger } from "@/shared/lib/logger";
  * Apple Pay / Google Pay : Stripe les expose comme `card` avec `wallet`
  * sous-objet — on les remonte au top-level WALLET pour distinguer du card brut.
  */
+// ⚠️ Pas d'entrée `sepa_debit` / `klarna` / `bancontact` : le checkout déclare
+// `payment_method_types: ["card"]` (`initialize-payment.ts`), donc Stripe ne peut
+// pas produire ces types — les trois valeurs d'enum ont été retirées à l'audit V2
+// (Lot 1). Rouvrir un de ces moyens exige d'élargir `payment_method_types`, de
+// réintroduire la valeur dans l'enum Prisma ET de rajouter sa ligne ici : sans la
+// ligne, le moyen serait silencieusement tracé `OTHER`.
 const STRIPE_TYPE_TO_PAYMENT_METHOD: Record<string, PaymentMethod> = {
 	card: PaymentMethod.CARD,
-	sepa_debit: PaymentMethod.SEPA_DEBIT,
-	klarna: PaymentMethod.KLARNA,
 	link: PaymentMethod.LINK,
-	bancontact: PaymentMethod.BANCONTACT,
 	// Wallets non-card pourraient apparaître en top-level (cas rare) :
 	apple_pay: PaymentMethod.WALLET,
 	google_pay: PaymentMethod.WALLET,

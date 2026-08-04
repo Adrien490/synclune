@@ -72,7 +72,6 @@ export async function reconcileVoidedInvoices(): Promise<CronResult> {
 		try {
 			const result = await voidInvoice({
 				orderId: order.id,
-				authorId: null,
 				authorName: RECONCILE_AUDIT_AUTHOR,
 				source: HistorySource.SYSTEM,
 				reason:

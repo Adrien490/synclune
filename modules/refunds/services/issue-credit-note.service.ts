@@ -71,7 +71,6 @@ export type IssueCreditNoteResult =
 interface IssueCreditNoteParams {
 	refundId: string;
 	source: HistorySource;
-	authorId?: string | null;
 	authorName: string;
 }
 
@@ -80,7 +79,7 @@ const MAX_RETRIES = 5;
 export async function issueCreditNoteForRefund(
 	params: IssueCreditNoteParams,
 ): Promise<IssueCreditNoteResult> {
-	const { refundId, source, authorId, authorName } = params;
+	const { refundId, source, authorName } = params;
 
 	let lastError: unknown = null;
 
@@ -184,7 +183,6 @@ export async function issueCreditNoteForRefund(
 					await createOrderAuditTx(tx, {
 						orderId: refund.order.id,
 						action: OrderAction.CREDIT_NOTE_GENERATED,
-						authorId: authorId ?? undefined,
 						authorName,
 						source,
 						note: `Avoir ${creditNoteNumber} émis pour le remboursement ${refundId} (montant ${(refund.amount / 100).toFixed(2)} €).`,
