@@ -9,13 +9,12 @@ import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import type { ColorCombo } from "@/shared/types/product-sku.types";
-import { Check } from "lucide-react";
+import { MaskingTape } from "@/shared/components/masking-tape";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { m, useReducedMotion } from "motion/react";
 
 interface ColorSelectorProps {
 	/**
@@ -55,7 +54,6 @@ function ColorSelectorInner({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
-	const shouldReduceMotion = useReducedMotion();
 
 	const defaultComboKey =
 		defaultSku && defaultSku.colors.length > 0
@@ -171,11 +169,17 @@ function ColorSelectorInner({
 					</Button>
 				)}
 			</div>
-			<div ref={containerRef} className="flex flex-wrap gap-3">
+			{/* Le nuancier : on voit la couleur AVANT de lire son nom.
+			    Les pastilles de 28 px montraient une teinte trop petite pour être jugée
+			    sur une boutique dont le positionnement EST la couleur — a fortiori pour
+			    un dégradé bicolore. La plaquette de 88 × 56 donne un aplat franc, le nom
+			    dessous, et la sélection est tenue par un bout de scotch (`MaskingTape`,
+			    la primitive partagée avec les cartes et le carton de la galerie).
+			    La cible tactile fait ≈ 88 × 84, très au-dessus des 44 px requis. */}
+			<div ref={containerRef} className="flex flex-wrap gap-2.5">
 				{combos.map((combo, index) => {
 					const isSelected = combo.comboKey === optimisticCombo;
 					const isAvailable = isComboAvailable(combo.comboKey);
-					const isMulti = combo.hexes.length > 1;
 					const allLight = areAllColorsLight(combo.hexes, (hex) => isLightColor(hex, 0.85));
 
 					return (
@@ -201,52 +205,49 @@ function ColorSelectorInner({
 								prefetchComboImage(combo.comboKey);
 							}}
 							className={cn(
-								"group relative flex min-h-13 items-center gap-2.5 rounded-xl border-2 p-3.5 transition-all sm:min-h-11 sm:rounded-lg sm:p-3",
-								"hover:shadow-sm active:scale-[0.98]",
-								"aria-disabled:cursor-not-allowed aria-disabled:opacity-70 aria-disabled:saturate-50",
-								isSelected
-									? "border-primary bg-primary/5"
-									: "border-border hover:border-primary/50",
+								// `flex` : les plaquettes sont des items d'une rangée flex, donc
+								// étirées à la hauteur de la plus haute (celle qui porte « épuisée »
+								// sur deux lignes). Sans `flex` ici, le cadre interne gardait sa
+								// hauteur naturelle et les anneaux d'encre ne s'alignaient plus.
+								"group relative flex w-22 rounded-md text-left transition-transform",
+								"active:scale-[0.98] motion-reduce:transition-none",
+								"aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:saturate-50",
 							)}
 						>
-							<div
-								className={cn(
-									"border-background shrink-0 rounded-full border-2 shadow-sm",
-									// Taille un cran plus grande pour les combos multi (lisibilité gradient)
-									isMulti ? "h-10 w-10 sm:h-9 sm:w-9" : "h-8 w-8 sm:h-7 sm:w-7",
-									allLight && "ring-border/30 ring-1",
-								)}
-								style={{
-									...buildSwatchStyle(combo.hexes),
-									// View Transition : morphing depuis la pastille de la ProductCard
-									// (même comboKey) vers cette pastille au moment du navigate.
-									viewTransitionName: `variant-pill-${combo.comboKey}`,
-								}}
-								aria-hidden="true"
-							/>
-							<div className="text-left">
-								<span className="text-sm/6 font-medium tracking-normal antialiased">
-									{combo.label}
-								</span>
-								{!isAvailable && (
-									<p className="text-muted-foreground text-xs/5 tracking-normal antialiased">
-										Indisponible
-									</p>
-								)}
-							</div>
+							{/* La sélection se lit par la FORME (scotch + anneau d'encre), jamais
+							    par la seule couleur — l'aplat, lui, appartient au bijou. */}
 							{isSelected && (
-								<m.div
-									initial={shouldReduceMotion ? {} : { scale: 0.85 }}
-									animate={{ scale: 1 }}
-									transition={
-										shouldReduceMotion
-											? { duration: 0 }
-											: { type: "spring", stiffness: 400, damping: 15 }
-									}
-								>
-									<Check className="text-primary ml-auto h-4 w-4" aria-hidden="true" />
-								</m.div>
+								<MaskingTape className="bg-foreground/15 -top-1.5 left-1/2 z-10 h-3.5 w-11 -translate-x-1/2 -rotate-3" />
 							)}
+							<span
+								className={cn(
+									"flex w-full flex-col overflow-hidden rounded-md transition-shadow",
+									isSelected
+										? "ring-foreground ring-2"
+										: "ring-foreground/15 can-hover:group-hover:ring-foreground/40 group-focus-visible:ring-foreground/40 ring-1",
+								)}
+							>
+								<span
+									className={cn("block h-14", allLight && "ring-border/40 ring-1 ring-inset")}
+									style={{
+										...buildSwatchStyle(combo.hexes),
+										// View Transition : morphing depuis la pastille de la ProductCard
+										// (même comboKey) vers cette plaquette au moment du navigate.
+										viewTransitionName: `variant-pill-${combo.comboKey}`,
+									}}
+									aria-hidden="true"
+								/>
+								<span className="bg-card block grow px-2 py-1.5">
+									<span className="block text-xs/4 font-medium tracking-normal antialiased">
+										{combo.label}
+									</span>
+									{!isAvailable && (
+										<span className="text-muted-foreground text-2xs/4 block tracking-normal antialiased">
+											épuisée
+										</span>
+									)}
+								</span>
+							</span>
 						</button>
 					);
 				})}
