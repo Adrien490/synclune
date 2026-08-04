@@ -149,8 +149,8 @@ vi.mock("@/shared/constants/seo-config", () => ({
 	SITE_URL: "https://example.com",
 }));
 
-vi.mock("lucide-react", () => ({
-	TriangleAlert: () => <span data-testid="triangle-alert" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	WarningIcon: () => <span data-testid="triangle-alert" />,
 }));
 
 // ============================================================================
@@ -253,7 +253,8 @@ describe("ProductList", () => {
 
 		it("shows the error message text in the alert", async () => {
 			await renderList({ productsPromise: makeErrorResult(), perPage: 24 });
-			expect(screen.getByText(/erreur est survenue/i)).toBeInTheDocument();
+			// Voix : c'est Léane qui parle, pas un système (« Une erreur est survenue »).
+			expect(screen.getByText(/n'arrive pas à charger les créations/i)).toBeInTheDocument();
 		});
 
 		it("shows the RefreshButton in the error alert", async () => {
@@ -302,37 +303,51 @@ describe("ProductList", () => {
 			expect(screen.getByTestId("product-card-2")).toBeInTheDocument();
 		});
 
-		it("renders the product grid with correct aria-label", async () => {
-			await renderList({ productsPromise: makeSuccessResult(), perPage: 24 });
-			expect(screen.getByRole("list", { name: "Liste des produits" })).toBeInTheDocument();
-		});
-
-		it("shows total count in the result counter", async () => {
-			await renderList({ productsPromise: makeSuccessResult({ totalCount: 42 }), perPage: 24 });
-			expect(screen.getByText("42")).toBeInTheDocument();
-		});
-
-		it('uses "produit" singular when totalCount is 1', async () => {
-			await renderList({
-				productsPromise: makeSuccessResult({ products: [makeProduct("1")], totalCount: 1 }),
-				perPage: 24,
-			});
-			expect(screen.getByText("produit")).toBeInTheDocument();
-		});
-
-		it('uses "produits" plural when totalCount > 1', async () => {
-			await renderList({ productsPromise: makeSuccessResult({ totalCount: 5 }), perPage: 24 });
-			expect(screen.getByText("produits")).toBeInTheDocument();
-		});
-
-		it("renders each product card in its own list item", async () => {
-			// `<li>` natifs depuis la conversion de StaggerGrid en `as="ul" itemAs="li"`
-			// (react-doctor prefer-tag-over-role) : plus de `role="listitem"` explicite.
+		/**
+		 * Depuis « L'étal continue » (2026-08-05), ce composant ne rend AUCUN
+		 * conteneur : ses cartes sont des cellules directes de la grille du shell,
+		 * pour que le bloc titre soit la première cellule de cette même grille.
+		 *
+		 * Conséquence assumée, identique à celle de l'étal : plus de `<ul>`/`<li>`.
+		 * Une liste mêlant un `h1` et des cartes demanderait soit `display: contents`
+		 * sur le `<ul>` (qui fait tomber la sémantique de liste sur plusieurs
+		 * moteurs), soit d'annoncer le titre comme « élément 1 sur N ». Chaque carte
+		 * est un `<article aria-labelledby>` annoncé individuellement, et le `h2`
+		 * masqué du bloc titre nomme l'ensemble.
+		 */
+		it("ne rend aucun conteneur : les cartes sont des cellules de la grille du shell", async () => {
 			const { container } = await renderList({
 				productsPromise: makeSuccessResult(),
 				perPage: 24,
 			});
-			expect(container.querySelectorAll("li")).toHaveLength(2);
+
+			expect(container.querySelectorAll("ul")).toHaveLength(0);
+			expect(container.querySelectorAll("li")).toHaveLength(0);
+			expect(screen.queryByRole("list", { name: /liste des (produits|créations)/i })).toBeNull();
+		});
+
+		it("ne rend plus le compteur visuel — il a rejoint le bloc titre", async () => {
+			await renderList({ productsPromise: makeSuccessResult({ totalCount: 42 }), perPage: 24 });
+
+			// « 42 produits » vivait ici, en gris de 14 px sous les filtres. Le compte
+			// est désormais une phrase du bloc titre ; le laisser aux deux endroits
+			// donnerait deux compteurs divergents pendant une transition.
+			expect(screen.queryByText("42")).toBeNull();
+		});
+
+		it("garde la live region du nombre de résultats à une position stable", async () => {
+			// Elle doit rester rendue AU-DESSUS des trois branches (erreur / vide /
+			// peuplée) : une région qui apparaît en même temps que son texte n'est
+			// jamais vocalisée. Audit recherche 2026-07-26.
+			const { container } = await renderList({
+				productsPromise: makeSuccessResult({ totalCount: 5 }),
+				perPage: 24,
+				searchTerm: "bague",
+			});
+
+			const region = container.querySelector('[role="status"][aria-live="polite"]');
+			expect(region).not.toBeNull();
+			expect(region!.textContent).toMatch(/5 produits pour/);
 		});
 
 		it("passes correct index to each ProductCard", async () => {

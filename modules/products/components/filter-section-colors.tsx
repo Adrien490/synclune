@@ -2,7 +2,7 @@
 
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { cn } from "@/shared/utils/cn";
-import { Check } from "lucide-react";
+import { CheckIcon } from "@phosphor-icons/react/ssr";
 import { isLightColor, getContrastTextColor } from "@/modules/colors/utils/color-contrast.utils";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { SectionSearch, SEARCH_THRESHOLD } from "./filter-section-header";
@@ -84,12 +84,12 @@ export function ColorFilterSection({
 										}}
 									>
 										{isSelected && (
-											<Check
+											<CheckIcon
 												className="absolute inset-0 m-auto size-3"
 												style={{
 													color: getContrastTextColor(color.hex),
 												}}
-												strokeWidth={3}
+												weight="bold"
 											/>
 										)}
 									</span>

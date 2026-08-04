@@ -389,8 +389,8 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	X: () => <span data-testid="x-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	XIcon: () => <span data-testid="x-icon" />,
 }));
 
 vi.mock("@/shared/utils/toast", () => ({

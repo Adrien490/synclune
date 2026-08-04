@@ -247,7 +247,7 @@ function ProductFilterSheetInner({
 						onClearAll={clearAllFilters}
 						isPending={isPending}
 						title="Filtres"
-						description="Affinez votre recherche"
+						description="Affine ta recherche"
 					>
 						<Accordion defaultValue={defaultOpenSections} className="w-full">
 							{/* 1. Types de bijoux (masqué si aucun type) */}

@@ -1,29 +1,22 @@
+import { CatalogHeadingSkeleton } from "@/modules/products/components/catalog-heading";
+import { CATALOG_GRID } from "@/modules/products/components/catalog-grid.constants";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
-import { PageHeaderSkeleton } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-
-interface ProductCatalogSkeletonProps {
-	/**
-	 * Quand `true`, masque le `PageHeaderSkeleton` sur mobile (`hidden sm:block`)
-	 * pour matcher le `PageHeader` réel rendu uniquement sm+.
-	 */
-	hideHeaderOnMobile?: boolean;
-}
 
 /**
  * Squelette du `ProductCatalog` (page racine `/produits` + catégorie
  * `/produits/[productTypeSlug]`).
  *
- * Miroir 1:1 du composant `ProductCatalog` pour éviter tout CLS au moment
- * du swap Suspense → contenu final :
- * - `PageHeaderSkeleton` (desktop) masqué mobile (`hideHeaderOnMobile`)
- * - sticky sub-header mobile (3 boutons miroir `ProductSortBar`)
- * - toolbar desktop (search + tri + filtres)
- * - grille produits (`ProductListSkeleton`)
+ * Miroir 1:1 de `ProductCatalog` pour éviter tout CLS au swap Suspense →
+ * contenu final, direction « L'étal continue » (2026-08-05) :
+ * - fil d'Ariane desktop (`hidden md:block`)
+ * - barre unique collante (3 cellules sous `md`, champ déplié au-dessus)
+ * - grille unique : bloc titre en première cellule, puis les cartes
+ *
+ * ⚠️ La géométrie de la grille vient de la SSOT `catalog-grid.constants.ts` — la
+ * réécrire ici la laisserait dériver au premier changement de gouttière.
  */
-export function ProductCatalogSkeleton({
-	hideHeaderOnMobile = true,
-}: ProductCatalogSkeletonProps = {}) {
+export function ProductCatalogSkeleton() {
 	return (
 		/*
 		 * `role="status"` + `aria-busy` : ce squelette est le `loading.tsx` complet de
@@ -34,39 +27,43 @@ export function ProductCatalogSkeleton({
 		 */
 		<div className="min-h-dvh" role="status" aria-busy="true" aria-label="Chargement du catalogue">
 			<span className="sr-only">Chargement du catalogue…</span>
-			<PageHeaderSkeleton className={hideHeaderOnMobile ? "hidden sm:block" : undefined} />
 
-			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
-				<div className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
-					{/* Mobile sticky sub-header skeleton — miroir ProductSortBar (tri / recherche / filtres) */}
+			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
+				<div className="group/container mx-auto max-w-6xl space-y-5 px-4 sm:px-6 lg:px-8">
+					{/* Fil d'Ariane desktop */}
+					<div aria-hidden className="hidden md:block">
+						<Skeleton className="h-5 w-44 rounded" />
+					</div>
+
+					{/* Barre unique — miroir de `ProductSortBar` */}
 					<div
 						aria-hidden
-						className="bg-background/80 border-border/50 -mx-4 border-b backdrop-blur-md sm:-mx-6 md:hidden"
+						className="bg-background/80 border-border/50 -mx-4 border-b px-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
 					>
-						<div className="divide-border/30 flex items-stretch divide-x">
-							{[0, 1, 2].map((i) => (
-								<div key={i} className="flex flex-1 items-center justify-center gap-1.5 px-2 py-3">
-									<Skeleton className="size-4 rounded" />
-									<Skeleton className="h-3 w-14 rounded" />
-								</div>
-							))}
-						</div>
-					</div>
-
-					{/* Desktop toolbar skeleton */}
-					<div className="md:bg-card md:border-border/60 hidden min-w-0 p-0 md:flex md:rounded-lg md:border md:p-4 md:shadow-sm">
-						<div className="flex w-full flex-row items-center gap-2">
-							<div className="min-w-0 flex-1">
-								<Skeleton className="h-10 w-full rounded-md" />
+						<div className="flex items-stretch gap-3">
+							<div className="hidden min-w-0 flex-1 items-center py-2 md:flex">
+								<Skeleton className="h-11 w-full max-w-md rounded-md" />
 							</div>
-							<div className="flex shrink-0 flex-row items-center gap-2">
-								<Skeleton className="h-11 w-45 rounded-md" />
-								<Skeleton className="h-11 w-[90px] rounded-md" />
+							<div className="divide-border/30 flex flex-1 items-stretch divide-x md:flex-none md:items-center md:gap-1 md:divide-x-0">
+								{[0, 1, 2].map((i) => (
+									<div
+										key={i}
+										className={`flex h-11 flex-1 items-center justify-center gap-1.5 px-2 md:flex-none md:px-3.5 ${
+											i === 1 ? "md:hidden" : ""
+										}`}
+									>
+										<Skeleton className="size-4 rounded" />
+										<Skeleton className="h-3 w-14 rounded" />
+									</div>
+								))}
 							</div>
 						</div>
 					</div>
 
-					<ProductListSkeleton />
+					<div className={CATALOG_GRID}>
+						<CatalogHeadingSkeleton />
+						<ProductListSkeleton />
+					</div>
 				</div>
 			</section>
 		</div>

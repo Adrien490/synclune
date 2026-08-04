@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SearchX } from "lucide-react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 
 import { getProducts } from "@/modules/products/data/get-products";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
@@ -69,12 +69,20 @@ export async function SearchFallbackSuggestions({
 			<Empty>
 				<EmptyHeader>
 					<EmptyMedia variant="icon">
-						<SearchX className="size-6" />
+						<MagnifyingGlassIcon className="size-6" />
 					</EmptyMedia>
+					{/* Tutoiement : c'est Léane qui parle, et c'est le moment où la
+					    cliente a le plus besoin d'être prise par la main. Le vouvoiement
+					    d'origine (« vos critères », « vos filtres ») était la seule
+					    entorse à la règle de voix sur cette surface.
+					    ⚠️ Le mot « produit » est un CONTRAT E2E : `product-browsing.spec.ts`
+					    cherche `/aucun produit/i` et `e2e/pages/search.page.ts`
+					    `/aucun (résultat|produit)/i` pour reconnaître l'état vide. La voix
+					    change, le mot-clé reste. */}
 					<EmptyTitle>
 						{searchTerm
-							? `Aucun résultat pour "${searchTerm}"`
-							: "Aucun produit ne correspond à vos critères"}
+							? `Aucun résultat pour « ${searchTerm} »`
+							: "Aucun produit ne correspond à ta recherche"}
 					</EmptyTitle>
 					<EmptyDescription>
 						{suggestion ? (
@@ -84,7 +92,7 @@ export async function SearchFallbackSuggestions({
 							// `announce={false}` : le `<Empty>` parent est déjà une live region.
 							<SearchCorrectionSuggestion suggestion={suggestion} announce={false} />
 						) : (
-							"Essayez de modifier vos filtres."
+							"Essaie un autre mot, ou retire un filtre — je n'ai qu'une poignée de pièces en ligne."
 						)}
 					</EmptyDescription>
 				</EmptyHeader>
@@ -102,10 +110,13 @@ export async function SearchFallbackSuggestions({
 			{/* Dernières créations */}
 			{latestProducts.length > 0 && (
 				<section aria-labelledby="latest-products-heading" className="space-y-4">
+					{/* « Mes », pas « Nos » : il n'y a qu'une personne derrière la boutique. */}
 					<h2 id="latest-products-heading" className="text-center text-lg font-semibold">
-						Nos dernières créations
+						Mes dernières créations
 					</h2>
-					<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+					{/* `lg:gap-8` comme la grille principale (`product-list.tsx`) : sans lui,
+					    la gouttière changeait au moment où la recherche ne rend plus rien. */}
+					<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8">
 						{latestProducts.map((product, index) => (
 							<ProductCard
 								key={product.id}

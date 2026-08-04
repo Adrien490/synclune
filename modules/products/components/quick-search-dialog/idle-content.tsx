@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Search, X } from "lucide-react";
+import { CaretRightIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { AnimatePresence, m } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -185,7 +185,7 @@ export function IdleContent({
 													"data-[active=true]:bg-muted",
 												)}
 											>
-												<Search
+												<MagnifyingGlassIcon
 													className="text-muted-foreground size-4 shrink-0"
 													aria-hidden="true"
 												/>
@@ -199,7 +199,7 @@ export function IdleContent({
 											className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-xl transition-[color,background-color,opacity] group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
 											aria-label={`Supprimer "${term}"`}
 										>
-											<X className="size-5 sm:size-4" />
+											<XIcon className="size-5 sm:size-4" />
 										</button>
 									</m.li>
 								))}
@@ -244,7 +244,7 @@ export function IdleContent({
 								className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:min-h-9"
 							>
 								Voir toutes les collections
-								<ChevronRight className="size-4" aria-hidden="true" />
+								<CaretRightIcon className="size-4" aria-hidden="true" />
 							</Link>
 						</div>
 					</section>
@@ -253,7 +253,10 @@ export function IdleContent({
 				{/* Empty State */}
 				{!hasContent && (
 					<Stagger className="py-8 text-center" role="status" stagger={0.03} delay={0.05} y={10}>
-						<Search className="text-muted-foreground/20 mx-auto mb-4 size-10" aria-hidden="true" />
+						<MagnifyingGlassIcon
+							className="text-muted-foreground/20 mx-auto mb-4 size-10"
+							aria-hidden="true"
+						/>
 						<p className="text-muted-foreground text-sm">Trouve ton prochain bijou</p>
 					</Stagger>
 				)}

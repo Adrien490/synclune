@@ -1,5 +1,5 @@
-import { Suspense, use } from "react";
-import { TriangleAlert } from "lucide-react";
+import { Suspense, use, type CSSProperties } from "react";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { ProductCard } from "@/modules/products/components/product-card";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
@@ -7,9 +7,9 @@ import type { ProductFilters, SortField } from "@/modules/products/types/product
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { PUBLIC_PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
 import { RefreshButton } from "./refresh-button";
 import { ProductsLoadMore } from "./products-load-more";
+import { CATALOG_PENDING_DIM, CATALOG_ROW_CELL } from "./catalog-grid.constants";
 
 import {
 	SearchFallbackSuggestions,
@@ -33,6 +33,29 @@ interface ProductListProps {
 	filters?: ProductFilters;
 }
 
+/**
+ * Cellules « créations » du catalogue — rendues DANS la grille du shell.
+ *
+ * @description
+ * Ce composant **ne rend aucun conteneur** : ses cellules sont des enfants
+ * directs de la grille de `ProductCatalog` (un fragment et une frontière
+ * `Suspense` ne produisent pas de nœud DOM, donc ne cassent pas le placement en
+ * grille). C'est ce qui permet au bloc titre d'être la première CELLULE de la
+ * grille des créations plutôt qu'une bande posée au-dessus — direction
+ * « L'étal continue », artifact du 2026-08-05. Même montage que `etal-grid.tsx`.
+ *
+ * ⚠️ **Plus de `<ul>` / `<li>`.** La grille mélange désormais un bloc titre et
+ * des cartes ; en faire une liste demanderait soit un `display: contents` sur le
+ * `<ul>` (qui fait tomber la sémantique de liste sur plusieurs moteurs), soit
+ * d'annoncer le `<h1>` comme « élément 1 sur N ». Chaque `ProductCard` est déjà
+ * un `<article aria-labelledby>` annoncé individuellement, et le `h2` masqué du
+ * bloc titre nomme l'ensemble. Arbitrage identique à celui de l'étal.
+ *
+ * ⚠️ **Le grisage `data-pending` est posé CELLULE par cellule**, pas sur la
+ * grille : posé sur le conteneur, il éteindrait aussi le bloc titre et son
+ * compteur pendant une recherche — or c'est précisément le compteur qu'on veut
+ * voir changer.
+ */
 export function ProductList({
 	productsPromise,
 	perPage,
@@ -60,7 +83,7 @@ export function ProductList({
 	 * (Ce n'est PAS un problème de Suspense : l'URL est écrite dans un
 	 * `startTransition`, et React ne réaffiche pas le fallback d'une frontière
 	 * déjà révélée pendant une transition — c'est bien pour ça que
-	 * `product-catalog.tsx` grise la grille existante au lieu du skeleton.)
+	 * `product-catalog.tsx` grise les cartes existantes au lieu du skeleton.)
 	 */
 	const liveRegion = (
 		<ResultCountLiveRegion
@@ -74,28 +97,28 @@ export function ProductList({
 	// Afficher une erreur si la requete a echoue
 	if (error) {
 		return (
-			<>
+			<div className={CATALOG_ROW_CELL}>
 				{liveRegion}
 				<Alert variant="destructive">
-					<TriangleAlert className="size-4" />
+					<WarningIcon className="size-4" />
 					<AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center">
-						<span>Une erreur est survenue lors du chargement des produits.</span>
+						<span>Je n&apos;arrive pas à charger les créations pour le moment.</span>
 						<RefreshButton />
 					</AlertDescription>
 				</Alert>
-			</>
+			</div>
 		);
 	}
 
 	// Afficher les suggestions de repli si aucun produit (Baymard UX)
 	if (products.length === 0) {
 		return (
-			<>
+			<div className={CATALOG_ROW_CELL}>
 				{liveRegion}
 				<Suspense fallback={<SearchFallbackSuggestionsSkeleton />}>
 					<SearchFallbackSuggestions searchTerm={searchTerm} suggestion={suggestion} />
 				</Suspense>
-			</>
+			</div>
 		);
 	}
 
@@ -113,89 +136,71 @@ export function ProductList({
 	// L'émetteur de page a été conservé parce que son `ItemList` reste *dans* son
 	// `CollectionPage`, la forme attendue sur une page de catégorie.
 
-	// Layout Grid par defaut
 	return (
-		<div className="space-y-6">
-			{liveRegion}
-
-			{/* Suggestion de correction si peu de resultats */}
-			{suggestion && <SearchCorrectionSuggestion suggestion={suggestion} />}
-
-			{/* Compteur VISUEL uniquement — l'annonce est portée par
-				`ResultCountLiveRegion` ci-dessus, à une position stable. Garder
-				`aria-live` ici en ferait une seconde région concurrente de celle de
-				`CursorPagination` (double annonce à chaque changement de page). */}
-			<div className="flex items-center justify-between">
-				<p className="text-muted-foreground text-sm">
-					<span className="text-foreground font-medium">{totalCount}</span>{" "}
-					{totalCount > 1 ? "produits" : "produit"}
-				</p>
+		<>
+			<div className={CATALOG_ROW_CELL}>
+				{liveRegion}
+				{/* Suggestion de correction si peu de resultats */}
+				{suggestion && <SearchCorrectionSuggestion suggestion={suggestion} />}
 			</div>
 
-			{/* P8: Grille des produits avec animation stagger.
-			 *
-			 * Plafonnée à 4 colonnes : PAS de palier `2xl:`. Le conteneur parent est
-			 * capé à `max-w-6xl` (1152px, cf. product-catalog.tsx) et ne grandit pas
-			 * au-delà — un palier de colonnes déclenché sur la largeur du VIEWPORT
-			 * répartit donc le même espace en plus de parts. `2xl:grid-cols-5` faisait
-			 * tomber les cartes de 248px à 192px (-22%) au lieu d'exploiter l'espace :
-			 * la 5ᵉ colonne coûtait de la lisibilité produit sans rien gagner.
-			 * Au-dessus de 1152px, l'espace est de la marge, pas des colonnes.
-			 * Audit responsive 2026-07-26, P2. */}
-			<StaggerGrid
-				id="products-list"
-				as="ul"
-				itemAs="li"
-				aria-label="Liste des produits"
-				className="grid grid-cols-2 gap-4 transition-[opacity,filter,transform] duration-300 ease-out outline-none group-has-[[data-pending]]/container:pointer-events-none group-has-[[data-pending]]/container:scale-[0.98] group-has-[[data-pending]]/container:opacity-40 group-has-[[data-pending]]/container:blur-[2px] sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8"
-				inView={false}
-			>
-				{products.map((product, index) => (
-					<div
-						key={product.id}
-						className="product-item"
-						style={{ "--item-index": index } as React.CSSProperties}
-					>
-						<ProductCard
-							product={product}
-							index={index}
-							isInWishlist={wishlistProductIds.has(product.id)}
-							sectionId="catalog"
-							preferOnSale={preferOnSale}
-						/>
-					</div>
-				))}
-			</StaggerGrid>
+			{/* Le compteur VISUEL a rejoint le bloc titre (`catalog-heading.tsx`) : il
+			    y est une phrase, plus un gris de 14 px coincé entre les filtres et la
+			    grille. L'annonce, elle, reste portée par `ResultCountLiveRegion`
+			    ci-dessus, à une position stable. */}
 
-			{/* Mobile: load-more hybride (bouton + IntersectionObserver 80%) */}
-			<div className="mt-6 md:hidden">
-				<ProductsLoadMore
-					key={`${sortBy ?? "default"}-${searchTerm ?? ""}-${JSON.stringify(filters ?? {})}`}
-					initialCursor={nextCursor}
-					initialHasMore={hasNextPage}
-					initialDisplayedCount={products.length}
-					totalCount={totalCount}
-					wishlistProductIds={wishlistProductIds}
-					sortBy={sortBy}
-					search={searchTerm}
-					filters={filters}
-					preferOnSale={preferOnSale}
-				/>
-			</div>
+			{/* Les cartes sont des cellules de la grille du shell — plafonnée à 4
+			 * colonnes, PAS de palier `2xl:` : le conteneur est capé à `max-w-6xl`
+			 * (1152px) et ne grandit pas au-delà, donc une colonne de plus répartit le
+			 * même espace en plus de parts. `2xl:grid-cols-5` faisait tomber les cartes
+			 * de 248px à 192px (-22%). Audit responsive 2026-07-26, P2. */}
+			{products.map((product, index) => (
+				<div
+					key={product.id}
+					className={`product-item ${CATALOG_PENDING_DIM}`}
+					style={{ "--item-index": index } as CSSProperties}
+				>
+					<ProductCard
+						product={product}
+						index={index}
+						isInWishlist={wishlistProductIds.has(product.id)}
+						sectionId="catalog"
+						preferOnSale={preferOnSale}
+					/>
+				</div>
+			))}
 
-			{/* Desktop: cursor pagination URL-driven (deep-link, SEO, back/forward) */}
-			<div className="mt-8 hidden justify-end md:flex lg:mt-12">
-				<CursorPagination
-					perPage={perPage}
-					hasNextPage={hasNextPage}
-					hasPreviousPage={hasPreviousPage}
-					currentPageSize={products.length}
-					nextCursor={nextCursor}
-					prevCursor={prevCursor}
-					totalCount={totalCount}
-					perPageOptions={PUBLIC_PER_PAGE_OPTIONS}
-				/>
+			<div className={`${CATALOG_ROW_CELL} ${CATALOG_PENDING_DIM}`}>
+				{/* Mobile: load-more hybride (bouton + IntersectionObserver 80%) */}
+				<div className="mt-6 md:hidden">
+					<ProductsLoadMore
+						key={`${sortBy ?? "default"}-${searchTerm ?? ""}-${JSON.stringify(filters ?? {})}`}
+						initialCursor={nextCursor}
+						initialHasMore={hasNextPage}
+						initialDisplayedCount={products.length}
+						totalCount={totalCount}
+						wishlistProductIds={wishlistProductIds}
+						sortBy={sortBy}
+						search={searchTerm}
+						filters={filters}
+						preferOnSale={preferOnSale}
+					/>
+				</div>
+
+				{/* Desktop: cursor pagination URL-driven (deep-link, SEO, back/forward) */}
+				<div className="mt-8 hidden justify-end md:flex lg:mt-12">
+					<CursorPagination
+						perPage={perPage}
+						hasNextPage={hasNextPage}
+						hasPreviousPage={hasPreviousPage}
+						currentPageSize={products.length}
+						nextCursor={nextCursor}
+						prevCursor={prevCursor}
+						totalCount={totalCount}
+						perPageOptions={PUBLIC_PER_PAGE_OPTIONS}
+					/>
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }

@@ -55,6 +55,19 @@ vi.mock("@/modules/products/services/product-filter-params.service", () => ({
 	isProductCategoryPage: mockIsProductCategoryPage,
 }));
 
+/**
+ * La barre déplie un vrai `SearchInput` à partir de `md` (lot 1 de « L'étal
+ * continue »). On le stube : ce fichier teste la BARRE — sa structure, ses trois
+ * cellules, sa mécanique clavier — pas le champ, qui a sa propre suite. Sans ce
+ * mock, `SearchInput` réclame `useRouter`, absent du mock `next/navigation`
+ * ci-dessus, et les 15 tests tombent d'un coup.
+ */
+vi.mock("@/shared/components/search-input", () => ({
+	SearchInput: ({ placeholder }: { placeholder?: string }) => (
+		<input data-testid="search-input" placeholder={placeholder} />
+	),
+}));
+
 vi.mock("@/modules/products/constants/product.constants", () => ({
 	PRODUCT_FILTER_DIALOG_ID: "product-filter-sheet",
 	PRODUCTS_SORT_LABELS: {
@@ -96,10 +109,10 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	Search: () => <span data-testid="search-icon" />,
-	ArrowUpDown: () => <span data-testid="sort-icon" />,
-	SlidersHorizontal: () => <span data-testid="filter-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	MagnifyingGlassIcon: () => <span data-testid="search-icon" />,
+	ArrowsDownUpIcon: () => <span data-testid="sort-icon" />,
+	SlidersHorizontalIcon: () => <span data-testid="filter-icon" />,
 }));
 
 // ============================================================================
@@ -161,12 +174,39 @@ describe("ProductSortBar", () => {
 			}
 		});
 
-		it("applies sticky positioning below the navbar", () => {
-			renderDefault();
+		it("colle sous la navbar, à une hauteur qui ne bouge PAS au défilement", () => {
+			render(<ProductSortBar sortOptions={sortOptions} />);
 			const nav = screen.getByRole("navigation", { name: "Tri, recherche et filtres" });
+
 			expect(nav.className).toContain("sticky");
-			expect(nav.className).toContain("top-[var(--navbar-height)]");
-			expect(nav.className).toContain("md:hidden");
+			// `--navbar-height` se contracte de 5rem à 4rem au scroll : une barre qui en
+			// dérive remonte de 16px au premier pixel scrollé. `--navbar-height-static`
+			// est le token créé pour ça (cf. `etal-section.tsx`).
+			expect(nav.className).toContain("top-[var(--navbar-height-static)]");
+			expect(nav.className).not.toContain("var(--navbar-height)]");
+		});
+
+		it("n'est plus réservée au mobile — c'est la barre unique du catalogue", () => {
+			render(<ProductSortBar sortOptions={sortOptions} />);
+			const nav = screen.getByRole("navigation", { name: "Tri, recherche et filtres" });
+
+			// La `Toolbar` desktop concurrente a disparu du shell : masquer celle-ci
+			// sous `md` laisserait le catalogue sans aucun contrôle sur desktop.
+			expect(nav.className).not.toContain("md:hidden");
+		});
+
+		it("déplie un champ de recherche à partir de md, et y masque le bouton", () => {
+			render(
+				<ProductSortBar sortOptions={sortOptions} searchPlaceholder="Rechercher des bagues…" />,
+			);
+
+			expect(screen.getByTestId("search-input")).toHaveAttribute(
+				"placeholder",
+				"Rechercher des bagues…",
+			);
+			// Le bouton reste rendu (il sert sous `md`) mais s'efface là où le champ
+			// est déplié — sinon deux entrées pour un seul geste.
+			expect(screen.getByRole("button", { name: /recherche/i }).className).toContain("md:hidden");
 		});
 	});
 

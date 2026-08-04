@@ -75,8 +75,8 @@ vi.mock("@/shared/components/ui/badge", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Filter: () => <span data-testid="filter-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	FunnelIcon: () => <span data-testid="filter-icon" />,
 }));
 
 // ============================================================================

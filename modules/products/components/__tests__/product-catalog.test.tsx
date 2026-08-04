@@ -33,10 +33,6 @@ vi.mock("@/modules/products/components/filter-badges", () => ({
 	),
 }));
 
-vi.mock("@/modules/products/components/product-filter-trigger", () => ({
-	ProductFilterTrigger: () => <button data-testid="product-filter-trigger">Filtres</button>,
-}));
-
 vi.mock("@/modules/products/components/product-list", () => ({
 	ProductList: ({
 		searchTerm,
@@ -63,78 +59,46 @@ vi.mock("@/modules/products/components/product-list-skeleton", () => ({
 }));
 
 vi.mock("@/modules/products/components/product-sort-bar", () => ({
-	ProductSortBar: ({ sortOptions }: { sortOptions: { value: string; label: string }[] }) => (
-		<div data-testid="product-sort-bar" data-options={sortOptions.length} />
-	),
-}));
-
-vi.mock("@/shared/components/toolbar", () => ({
-	Toolbar: ({
-		children,
-		search,
+	ProductSortBar: ({
+		sortOptions,
+		searchPlaceholder,
 	}: {
-		children: React.ReactNode;
-		search?: React.ReactNode;
-		className?: string;
+		sortOptions: { value: string; label: string }[];
+		searchPlaceholder?: string;
 	}) => (
-		<div data-testid="toolbar">
-			{search}
-			{children}
-		</div>
+		<div
+			data-testid="product-sort-bar"
+			data-options={sortOptions.length}
+			data-search-placeholder={searchPlaceholder}
+		/>
 	),
 }));
 
-vi.mock("@/shared/components/page-header", () => ({
-	PageHeader: ({
+/**
+ * Le bloc titre est un Server Component `async` (son compteur `await` la promesse
+ * catalogue) : on le stube pour que ce fichier reste un test du SHELL — titre
+ * calculé, props transmises, structure de grille. Le bloc lui-même a son propre
+ * garde-fou statique (`@regression catalogue-mobile-h1`).
+ */
+vi.mock("@/modules/products/components/catalog-heading", () => ({
+	CatalogHeading: ({
 		title,
-		description,
-		breadcrumbs,
+		activeProductType,
+		searchTerm,
 	}: {
 		title: string;
-		description?: string;
-		breadcrumbs?: { label: string; href: string }[];
-		className?: string;
-		actions?: React.ReactNode;
+		activeProductType?: { slug: string; label: string; description?: string | null };
+		searchTerm?: string;
 	}) => (
-		<header data-testid="page-header">
+		<div
+			data-testid="catalog-heading"
+			data-active-type={activeProductType?.slug}
+			data-search-term={searchTerm}
+			data-description={activeProductType?.description ?? undefined}
+		>
 			<h1>{title}</h1>
-			{description && <p data-testid="page-description">{description}</p>}
-			{breadcrumbs && (
-				<nav aria-label="breadcrumbs">
-					{breadcrumbs.map((b) => (
-						<a key={b.href} href={b.href}>
-							{b.label}
-						</a>
-					))}
-				</nav>
-			)}
-		</header>
+		</div>
 	),
-}));
-
-vi.mock("@/shared/components/select-filter", () => ({
-	SelectFilter: ({
-		label,
-	}: {
-		label: string;
-		filterKey: string;
-		options: unknown[];
-		placeholder: string;
-		noPrefix?: boolean;
-	}) => <div data-testid="select-filter">{label}</div>,
-}));
-
-vi.mock("@/shared/components/search-input", () => ({
-	SearchInput: ({
-		placeholder,
-		paramName,
-	}: {
-		placeholder: string;
-		paramName: string;
-		mode?: string;
-		size?: string;
-		className?: string;
-	}) => <input data-testid="search-input" placeholder={placeholder} data-param={paramName} />,
 }));
 
 vi.mock("@/shared/utils/safe-json-ld", () => ({
@@ -188,10 +152,9 @@ function makeProps(overrides: Partial<ProductCatalogProps> = {}): ProductCatalog
 		maxPriceInEuros: 500,
 		activeFiltersCount: 0,
 		jsonLd: { "@type": "ItemList" },
-		breadcrumbs: [
-			{ label: "Accueil", href: "/" },
-			{ label: "Créations", href: "/produits" },
-		],
+		// Forme RÉELLE : ni `/produits` ni `/produits/[type]` ne passent « Accueil »,
+		// c'est le fil d'Ariane qui l'ajoute en tête (comme le faisait `PageHeader`).
+		breadcrumbs: [{ label: "Créations", href: "/produits" }],
 		...overrides,
 	};
 }
@@ -207,19 +170,17 @@ afterEach(() => {
 
 describe("ProductCatalog", () => {
 	describe("page title", () => {
-		// Le titre est rendu deux fois : mobile (`<h1 sm:hidden>` compact) et desktop
-		// (PageHeader `hidden sm:block`). En DOM jsdom, les deux sont présents (CSS ignoré),
-		// d'où `getAllByRole` au lieu de `getByRole`.
+		// Depuis « L'étal continue » (2026-08-05) il n'y a plus qu'UN h1 : celui du
+		// bloc titre, visible à tous les viewports. L'ancien montage en rendait deux
+		// (un `sr-only sm:hidden` + celui du PageHeader `hidden sm:block`).
 		it('shows "Les créations" by default', () => {
 			render(<ProductCatalog {...makeProps()} />);
-			const headings = screen.getAllByRole("heading", { name: "Les créations" });
-			expect(headings.length).toBeGreaterThanOrEqual(1);
+			expect(screen.getByRole("heading", { name: "Les créations" })).toBeInTheDocument();
 		});
 
 		it("shows search term title when searchTerm is provided", () => {
 			render(<ProductCatalog {...makeProps({ searchTerm: "bague" })} />);
-			const headings = screen.getAllByRole("heading", { name: 'Recherche "bague"' });
-			expect(headings.length).toBeGreaterThanOrEqual(1);
+			expect(screen.getByRole("heading", { name: 'Recherche "bague"' })).toBeInTheDocument();
 		});
 
 		it("shows product type label when activeProductType is provided", () => {
@@ -230,8 +191,7 @@ describe("ProductCatalog", () => {
 					})}
 				/>,
 			);
-			const headings = screen.getAllByRole("heading", { name: "Bagues" });
-			expect(headings.length).toBeGreaterThanOrEqual(1);
+			expect(screen.getByRole("heading", { name: "Bagues" })).toBeInTheDocument();
 		});
 
 		it("prioritises searchTerm title over activeProductType label", () => {
@@ -243,27 +203,27 @@ describe("ProductCatalog", () => {
 					})}
 				/>,
 			);
-			const headings = screen.getAllByRole("heading", { name: 'Recherche "argent"' });
-			expect(headings.length).toBeGreaterThanOrEqual(1);
+			expect(screen.getByRole("heading", { name: 'Recherche "argent"' })).toBeInTheDocument();
 		});
 
-		it("exposes a mobile-only H1 (WCAG 2.4.6) via data-testid", () => {
+		/**
+		 * L'ancien montage exposait un `h1` `sr-only sm:hidden` via
+		 * `data-testid="catalog-mobile-title"`, parce que le `PageHeader` était masqué
+		 * sous 40rem — la page n'affichait alors AUCUN mot en mobile. Le contournement
+		 * est parti avec la bande : il ne doit pas revenir.
+		 */
+		it("n'expose plus de h1 masqué en mobile — il n'y en a qu'un, et il est visible", () => {
 			render(<ProductCatalog {...makeProps()} />);
-			const mobileTitle = screen.getByTestId("catalog-mobile-title");
-			expect(mobileTitle.tagName).toBe("H1");
-			expect(mobileTitle.className).toContain("sm:hidden");
-			expect(mobileTitle.className).toContain("sr-only");
+
+			expect(screen.queryByTestId("catalog-mobile-title")).not.toBeInTheDocument();
+			expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
 		});
 	});
 
-	describe("page description", () => {
-		it("shows default description when no searchTerm and no activeProductType", () => {
-			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByTestId("page-description")).toBeInTheDocument();
-			expect(screen.getByTestId("page-description").textContent).toContain("créations colorées");
-		});
-
-		it("shows product type description when activeProductType has one", () => {
+	describe("contexte transmis au bloc titre", () => {
+		// La description n'est plus une prop de bande : c'est le bloc titre qui décide
+		// quoi dire (copie d'atelier, description du type, ou contexte de recherche).
+		it("passe le type actif et sa description au bloc titre", () => {
 			render(
 				<ProductCatalog
 					{...makeProps({
@@ -275,31 +235,51 @@ describe("ProductCatalog", () => {
 					})}
 				/>,
 			);
-			expect(screen.getByTestId("page-description").textContent).toContain(
-				"Toutes mes bagues artisanales.",
-			);
+			const heading = screen.getByTestId("catalog-heading");
+			expect(heading).toHaveAttribute("data-active-type", "bague");
+			expect(heading).toHaveAttribute("data-description", "Toutes mes bagues artisanales.");
 		});
 
-		it("hides description when searchTerm is provided", () => {
+		it("passe le terme recherché au bloc titre", () => {
 			render(<ProductCatalog {...makeProps({ searchTerm: "argent" })} />);
-			expect(screen.queryByTestId("page-description")).not.toBeInTheDocument();
+			expect(screen.getByTestId("catalog-heading")).toHaveAttribute("data-search-term", "argent");
 		});
 	});
 
 	describe("breadcrumbs", () => {
-		it("renders the breadcrumbs passed as props", () => {
+		it("rend « Accueil » en tête, puis les breadcrumbs passés", () => {
 			render(
 				<ProductCatalog
 					{...makeProps({
 						breadcrumbs: [
-							{ label: "Accueil", href: "/" },
-							{ label: "Bagues", href: "/produits?type=bague" },
+							{ label: "Créations", href: "/produits" },
+							{ label: "Bagues", href: "/produits/bagues" },
 						],
 					})}
 				/>,
 			);
-			expect(screen.getByRole("link", { name: "Accueil" })).toBeInTheDocument();
-			expect(screen.getByRole("link", { name: "Bagues" })).toBeInTheDocument();
+
+			// « Accueil » est ajouté par le fil d'Ariane, pas par l'appelant — même
+			// contrat que l'ancien `PageHeader`. Un appelant qui le passerait aussi
+			// produirait deux liens identiques.
+			expect(screen.getByRole("link", { name: "Accueil" })).toHaveAttribute("href", "/");
+			expect(screen.getByRole("link", { name: "Créations" })).toHaveAttribute("href", "/produits");
+		});
+
+		it("marque le dernier maillon comme page courante, sans lien", () => {
+			render(
+				<ProductCatalog
+					{...makeProps({
+						breadcrumbs: [
+							{ label: "Créations", href: "/produits" },
+							{ label: "Bagues", href: "/produits/bagues" },
+						],
+					})}
+				/>,
+			);
+
+			expect(screen.queryByRole("link", { name: "Bagues" })).not.toBeInTheDocument();
+			expect(screen.getByText("Bagues")).toHaveAttribute("aria-current", "page");
 		});
 	});
 
@@ -339,10 +319,15 @@ describe("ProductCatalog", () => {
 	});
 
 	describe("search placeholder", () => {
+		// Le champ vit désormais DANS la barre unique (`ProductSortBar`), qui le déplie
+		// à partir de `md`. L'ancienne `Toolbar` desktop a disparu avec son
+		// `SelectFilter`, dont le libellé bégayait « Trier par  Trier par ».
 		it("uses generic jewelry placeholder by default", () => {
 			render(<ProductCatalog {...makeProps()} />);
-			const input = screen.getByTestId("search-input");
-			expect(input).toHaveAttribute("placeholder", "Rechercher des bijoux…");
+			expect(screen.getByTestId("product-sort-bar")).toHaveAttribute(
+				"data-search-placeholder",
+				"Rechercher des bijoux…",
+			);
 		});
 
 		it("uses product type specific placeholder when activeProductType is set", () => {
@@ -353,8 +338,16 @@ describe("ProductCatalog", () => {
 					})}
 				/>,
 			);
-			const input = screen.getByTestId("search-input");
-			expect(input).toHaveAttribute("placeholder", "Rechercher des bagues…");
+			expect(screen.getByTestId("product-sort-bar")).toHaveAttribute(
+				"data-search-placeholder",
+				"Rechercher des bagues…",
+			);
+		});
+
+		it("ne rend plus de barre d'outils desktop concurrente", () => {
+			render(<ProductCatalog {...makeProps()} />);
+			expect(screen.queryByTestId("toolbar")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("select-filter")).not.toBeInTheDocument();
 		});
 	});
 

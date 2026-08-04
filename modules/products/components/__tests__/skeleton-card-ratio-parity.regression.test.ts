@@ -35,6 +35,21 @@ const DELEGATING_SKELETONS = [
 	"modules/products/components/related-products-skeleton.tsx",
 	"modules/products/components/search-fallback-suggestions.tsx",
 	"modules/wishlist/components/wishlist-grid-skeleton.tsx",
+	// Squelette de la grille de l'accueil (l'étal, 2026-08-04) — enregistré ici
+	// dès sa création : une grille de plus que le garde-fou ne voyait pas est
+	// exactement ce qui a laissé les trois skeletons d'origine dériver.
+	"app/(shop)/(home)/_components/etal/etal-grid.tsx",
+] as const;
+
+/**
+ * Cellules NON-produit qui vivent dans une grille de `ProductCard` et doivent
+ * donc porter le MÊME ratio de média — sans quoi elles dépareillent la rangée le
+ * jour où le ratio des cartes change. Elles ne délèguent pas au SSOT (ce ne sont
+ * pas des squelettes : leur « photo » a un contenu propre).
+ */
+const MEDIA_RATIO_MIRRORS = [
+	// Dernière cellule de l'étal : l'aplat des 4 couleurs de marque.
+	"app/(shop)/(home)/_components/etal/etal-all-creations-card.tsx",
 ] as const;
 
 function read(relativePath: string): string {
@@ -81,6 +96,17 @@ describe("@regression skeleton-card-ratio-parity", () => {
 					"mobile) qui a causé le CLS d'origine. Rendre <ProductCardSkeleton /> " +
 					"à la place.",
 			).toEqual([]);
+		});
+	}
+
+	for (const mirror of MEDIA_RATIO_MIRRORS) {
+		it(`${mirror} porte exactement le ratio de média de ProductCard`, () => {
+			expect(
+				aspectTokens(mirror),
+				`${mirror} est une cellule d'une grille de ProductCard : son ratio de ` +
+					"média doit suivre celui de product-card.tsx, sinon elle dépareille " +
+					"la rangée dès que le ratio des cartes change.",
+			).toEqual(cardTokens);
 		});
 	}
 });

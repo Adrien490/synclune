@@ -107,8 +107,8 @@ vi.mock("@/modules/products/components/reset-search-filters-action", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	SearchX: () => <svg data-testid="icon-search-x" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	MagnifyingGlassIcon: () => <svg data-testid="icon-search-x" />,
 }));
 
 vi.mock("@/shared/components/ui/skeleton", () => ({
@@ -195,7 +195,7 @@ describe("SearchFallbackSuggestions", () => {
 			render(await SearchFallbackSuggestions({}));
 
 			expect(screen.getByTestId("empty-title")).toHaveTextContent(
-				"Aucun produit ne correspond à vos critères",
+				"Aucun produit ne correspond à ta recherche",
 			);
 		});
 
@@ -206,7 +206,7 @@ describe("SearchFallbackSuggestions", () => {
 			render(await SearchFallbackSuggestions({ searchTerm: "collier rose" }));
 
 			expect(screen.getByTestId("empty-title")).toHaveTextContent(
-				'Aucun résultat pour "collier rose"',
+				"Aucun résultat pour « collier rose »",
 			);
 		});
 
@@ -226,7 +226,7 @@ describe("SearchFallbackSuggestions", () => {
 			render(await SearchFallbackSuggestions({}));
 
 			expect(screen.getByTestId("empty-description")).toHaveTextContent(
-				"Essayez de modifier vos filtres.",
+				"Essaie un autre mot, ou retire un filtre — je n'ai qu'une poignée de pièces en ligne.",
 			);
 		});
 	});
@@ -294,13 +294,13 @@ describe("SearchFallbackSuggestions", () => {
 	});
 
 	describe("latest products section", () => {
-		it("renders the 'Nos dernières créations' heading when products exist", async () => {
+		it("renders the 'Mes dernières créations' heading when products exist", async () => {
 			mockGetProducts.mockResolvedValue(makeProductsReturn([createProduct()]));
 			mockGetProductTypes.mockResolvedValue(makeProductTypesReturn());
 
 			render(await SearchFallbackSuggestions({}));
 
-			expect(screen.getByRole("heading", { name: "Nos dernières créations" })).toBeInTheDocument();
+			expect(screen.getByRole("heading", { name: "Mes dernières créations" })).toBeInTheDocument();
 		});
 
 		it("does not render the products section when no latest products", async () => {
@@ -310,7 +310,7 @@ describe("SearchFallbackSuggestions", () => {
 			render(await SearchFallbackSuggestions({}));
 
 			expect(
-				screen.queryByRole("heading", { name: "Nos dernières créations" }),
+				screen.queryByRole("heading", { name: "Mes dernières créations" }),
 			).not.toBeInTheDocument();
 		});
 
@@ -475,7 +475,7 @@ describe("SearchFallbackSuggestions", () => {
 			render(await SearchFallbackSuggestions({}));
 
 			expect(screen.getByTestId("empty")).toBeInTheDocument();
-			expect(screen.getByRole("heading", { name: "Nos dernières créations" })).toBeInTheDocument();
+			expect(screen.getByRole("heading", { name: "Mes dernières créations" })).toBeInTheDocument();
 			expect(screen.getByRole("heading", { name: "Explorer par catégorie" })).toBeInTheDocument();
 		});
 
@@ -487,7 +487,7 @@ describe("SearchFallbackSuggestions", () => {
 
 			expect(screen.getByTestId("empty")).toBeInTheDocument();
 			expect(
-				screen.queryByRole("heading", { name: "Nos dernières créations" }),
+				screen.queryByRole("heading", { name: "Mes dernières créations" }),
 			).not.toBeInTheDocument();
 			expect(
 				screen.queryByRole("heading", { name: "Explorer par catégorie" }),
