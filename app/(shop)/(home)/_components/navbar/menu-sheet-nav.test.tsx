@@ -106,7 +106,24 @@ describe("MenuSheetNav", () => {
 
 			expect(screen.getByText("Nos créations")).toBeInTheDocument();
 			expect(screen.getByText("Collections")).toBeInTheDocument();
-			expect(screen.getByText("Favoris")).toBeInTheDocument();
+			expect(screen.getByRole("link", { name: /Mes favoris/ })).toBeInTheDocument();
+		});
+
+		// Même raison exactement que l'en-tête « Découvrir » ci-dessous : il coiffait
+		// UN seul lien pour tout le trafic public — et il s'appelait « Favoris »
+		// au-dessus de « Mes favoris ». Le nom de la région survit en `aria-label`.
+		it("n'affiche plus l'en-tête « Favoris », mais garde la région nommée", () => {
+			render(
+				<MenuSheetNav
+					navItems={baseNavItems}
+					productTypes={productTypes}
+					collections={collections}
+					session={null}
+				/>,
+			);
+
+			expect(screen.queryByRole("heading", { name: "Favoris" })).toBeNull();
+			expect(screen.getByRole("region", { name: "Favoris et compte" })).toBeInTheDocument();
 		});
 
 		// L'en-tête « Découvrir » coiffait DEUX entrées ; depuis que « L'atelier »

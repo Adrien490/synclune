@@ -8,7 +8,7 @@ import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { m, useReducedMotion, type Variants } from "motion/react";
-import { Heart } from "lucide-react";
+import { HeartIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
@@ -119,12 +119,27 @@ export function MenuSheetNav({
 		};
 	}, [shouldReduceMotion]);
 
-	// Compute stagger delay in seconds (mirrors previous CSS timing)
-	function delay(baseMs: number, index: number) {
-		return shouldReduceMotion ? 0 : (baseMs + index * 20) / 1000;
+	// Cascade MONOTONE : un SEUL compteur traverse tout le menu, dans l'ordre du
+	// DOM.
+	//
+	// Chaque section calculait auparavant son délai depuis SA propre base (30, 70,
+	// 90, 110, 140, 150, 170). Avec les 7 familles du catalogue, « Nos créations »
+	// courait jusqu'à 230 ms pendant que « Collections » repartait à 110 et que le
+	// séparateur décoratif tombait à 140 — au milieu des catégories qu'il est
+	// censé suivre. Trois sections s'animaient simultanément : ce qui se lisait
+	// n'était pas une cascade mais du scintillement.
+	//
+	// ⚠️ Le compteur est recréé à CHAQUE rendu (closure locale), et il n'est
+	// consommé que par des composants enfants rendus dans l'ordre du DOM. Un
+	// double rendu StrictMode repart donc de zéro, et un enfant ne peut pas se
+	// re-rendre seul : `wishlistCount` / `cartCount` sont lus ICI, donc toute
+	// mise à jour du store re-rend ce composant et régénère la suite complète.
+	let step = 0;
+	function nextDelay() {
+		return shouldReduceMotion ? 0 : (30 + step++ * 20) / 1000;
 	}
 
-	const sectionProps = { isMenuItemActive, itemVariants, delay };
+	const sectionProps = { isMenuItemActive, itemVariants, nextDelay };
 
 	return (
 		<m.nav
@@ -136,7 +151,7 @@ export function MenuSheetNav({
 		>
 			{/* User header (if logged in) */}
 			{session?.user && (
-				<m.div variants={itemVariants} custom={delay(30, 0)}>
+				<m.div variants={itemVariants} custom={nextDelay()}>
 					<UserHeader session={session} wishlistCount={wishlistCount} cartCount={cartCount} />
 				</m.div>
 			)}
@@ -152,13 +167,13 @@ export function MenuSheetNav({
 				className="relative my-6 flex items-center justify-center"
 				aria-hidden="true"
 				variants={itemVariants}
-				custom={delay(140, 0)}
+				custom={nextDelay()}
 			>
 				<div className="absolute inset-0 flex items-center">
 					<div className="border-border/80 w-full border-t" />
 				</div>
 				<div className="bg-background/95 relative rounded-full px-3">
-					<Heart className="text-muted-foreground fill-muted-foreground/20 size-4" />
+					<HeartIcon className="text-muted-foreground fill-muted-foreground/20 size-4" />
 				</div>
 			</m.div>
 
@@ -175,7 +190,7 @@ export function MenuSheetNav({
 				<m.div
 					className="border-border/60 mt-4 border-t pt-4"
 					variants={itemVariants}
-					custom={delay(170, 0)}
+					custom={nextDelay()}
 				>
 					{/* Pas de `<SheetClose asChild>` — cf. `menu-sheet-navigate-context`. */}
 					<Link

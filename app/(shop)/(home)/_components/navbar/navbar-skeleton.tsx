@@ -7,12 +7,20 @@
  *
  * Container: max-w-6xl (cohérent avec navbar.tsx)
  * Hauteur: h-16 sm:h-20 (cohérent avec navbar.tsx)
- * Grille: `lg:grid-cols-[1fr_auto_1fr]` (cohérent avec navbar.tsx)
+ * Colonnes: flex `flex-1 / auto / flex-1`, la gauche passant `lg:flex-none`
+ * (cohérent avec navbar.tsx — cf. son commentaire pour les deux régimes)
  */
 export function NavbarSkeleton() {
 	return (
 		<header
-			className="pwa-header fixed inset-x-0 top-0 z-(--z-header) border-b border-transparent bg-transparent ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
+			// Même SOL que la navbar réelle (« La devanture », 2026-08-04) : fond,
+			// filet et grain sont désormais permanents et non plus révélés au scroll.
+			// Un squelette `bg-transparent border-transparent` aurait fait apparaître
+			// la barre d'un coup au swap Suspense, à chaque cold load.
+			// Pas de bandeau d'accent en revanche : la route n'est pas encore résolue
+			// côté client, et deviner une couleur pour la corriger 200 ms plus tard
+			// serait pire que le filet neutre.
+			className="pwa-header polaroid-paper bg-background/95 border-border fixed inset-x-0 top-0 z-(--z-header) border-b backdrop-blur-md"
 			aria-busy="true"
 		>
 			{/* Même nom accessible que la navbar réelle : le landmark ne doit pas
@@ -24,9 +32,10 @@ export function NavbarSkeleton() {
 				className="ease-in-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
 			>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					{/* Même grille `1fr auto 1fr` que la navbar réelle à partir de `lg` :
-					    la géométrie est déclarée deux fois, elle doit bouger deux fois. */}
-					<div className="flex h-16 items-center gap-4 sm:h-20 lg:grid lg:grid-cols-[1fr_auto_1fr]">
+					{/* Mêmes colonnes que la navbar réelle : la géométrie est déclarée deux
+					    fois, elle doit bouger deux fois. Depuis 2026-08-04, plus de grille —
+					    la nav suit le logo à gauche, seule la colonne droite grandit. */}
+					<div className="flex h-16 items-center gap-4 sm:h-20">
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 						<div className="flex min-w-0 flex-1 items-center lg:flex-none">
 							{/* Menu burger skeleton (mobile uniquement) - size-11 = 44px matches real burger.

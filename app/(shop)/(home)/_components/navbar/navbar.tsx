@@ -15,6 +15,7 @@ import { DesktopNav } from "./desktop-nav";
 import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarIconButtons } from "./navbar-icon-buttons";
+import { NavbarRoomLabel } from "./navbar-room-label";
 import { NavbarWrapper } from "./navbar-wrapper";
 
 /** "Nouveau" badge eligibility window — published within the last N days. */
@@ -55,8 +56,11 @@ export async function Navbar() {
 		images: extractCollectionImages(c.products),
 	}));
 
-	// Générer les items de navigation mobile en fonction de la session et statut admin
-	const mobileNavItems = getMobileNavItems(productTypes, menuCollections, userIsAdmin);
+	// Destinations de premier niveau du menu mobile. Plus d'arguments : la
+	// hiérarchie (types, collections) descend directement dans `MenuSheet` via ses
+	// propres props, et l'entrée admin est rendue par `MenuSheetNav` — cf. le
+	// JSDoc de `getMobileNavItems`, qui portait un arbre entier jeté à l'arrivée.
+	const mobileNavItems = getMobileNavItems();
 
 	// Featured products for the mega menu — the 2 newest published creations.
 	// "Nouveau" badge eligibility via shared isRecent() helper (NEW_PRODUCT_BADGE_DAYS window).
@@ -112,27 +116,42 @@ export async function Navbar() {
 	return (
 		<BadgeCountsStoreProvider initialWishlistCount={wishlistCount} initialCartCount={cartCount}>
 			<NavbarWrapper>
+				{/* Plus de `tabIndex={-1}` ni d'`outline-none`. Le premier rendait ce
+				    landmark focusable par programme, mais il n'a pas d'`id` : rien ne
+				    pouvait le viser — le `SkipLink` de `app/layout.tsx` pointe
+				    `#main-content`. Le second neutralisait donc un anneau de focus qui
+				    ne pouvait pas apparaître. Reliquat des deux côtés. */}
 				<nav
 					aria-label="Navigation principale"
-					tabIndex={-1}
-					className="outline-none motion-safe:transition-colors motion-safe:duration-[var(--duration-slow)] motion-safe:ease-in-out"
+					className="motion-safe:transition-colors motion-safe:duration-[var(--duration-slow)] motion-safe:ease-in-out"
 				>
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 						<div
 							className={cn(
 								"flex h-16 items-center gap-4 sm:h-20",
-								// À partir de `lg`, une GRILLE à trois colonnes, dont deux égales de
-								// part et d'autre du centre. En flex, la zone gauche était
-								// `lg:flex-none` (largeur du logo) tandis que centre et droite se
-								// partageaient le reste à parts égales : le « centre » n'était donc
-								// pas celui de la page, et le bloc de nav tombait ~140px à sa gauche.
-								// `1fr auto 1fr` centre la colonne du milieu par construction.
-								"lg:grid lg:grid-cols-[1fr_auto_1fr]",
-								// Scroll compact: shrink sm:h-20 → sm:h-16 once scrolled past threshold.
-								// Snap (no animation) — `height` transition is non-composable and forces
-								// layout reflow at 60fps during the 300ms tween. The compaction is set on
-								// `data-scrolled` (binary state) so the visual jump is acceptable.
-								"group-data-[scrolled=true]:sm:h-16",
+								// ⚠️ PLUS de grille `1fr auto 1fr` à partir de `lg` (2026-08-04). Elle
+								// centrait la nav sur la page ; la nav suit désormais le logo, collée à
+								// lui. C'est le flex qui produit les DEUX régimes, sans variante :
+								//
+								//   sous `lg` — gauche et droite sont `flex-1` à base 0, le centre est
+								//     `flex: 0 1 auto`. Les deux colonnes latérales se partagent le
+								//     reste à parts égales, donc le logo mobile est centré sur la page.
+								//     Corollaire utile : leur largeur ne dépend pas de leur contenu, donc
+								//     l'apparition du nom de salle au scroll ne décale pas la marque.
+								//   à partir de `lg` — la gauche passe `lg:flex-none` (largeur du logo),
+								//     le centre reste à sa largeur de contenu, et seule la droite
+								//     grandit : logo · nav · [espace] · actions.
+								//
+								// Ne pas « rétablir le centrage » d'un côté sans l'autre : le seul
+								// levier est `lg:flex-none` sur la colonne gauche.
+								// ⚠️ PLUS de compaction au scroll (« La devanture », 2026-08-04). Elle
+								// valait `group-data-[scrolled=true]:sm:h-16` : un snap de 16px assumé
+								// (une transition sur `height` est non composable), pendant que le logo
+								// glissait sur 300ms — un seul état, deux horloges. Et surtout elle
+								// faisait varier `--navbar-height`, donc sautait la barre de tri de
+								// `/produits` et la CTA collante de la PDP au PREMIER pixel scrollé.
+								// Le scroll porte désormais de l'information (ombre + nom de la salle)
+								// au lieu de contracter la barre.
 							)}
 						>
 							{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
@@ -153,20 +172,29 @@ export async function Navbar() {
 									`QuickSearchTrigger variant="bar"` dans `NavbarIconButtons`.
 									Audit recherche 2026-07-26. */}
 
-								<Logo
-									href="/"
-									size={48}
-									className={cn(
-										"hidden max-w-full min-w-0 origin-left lg:flex",
-										// Scroll compact: subtle scale-down of desktop logo when scrolled
-										"motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:ease-out",
-										"group-data-[scrolled=true]:motion-safe:scale-90",
-									)}
-									shadow
-									sizes="64px"
-									showText
-									textClassName="text-xl lg:text-2xl text-foreground truncate"
-								/>
+								{/* ⚠️ Le seuil est porté par ce conteneur, PAS par la prop `className`
+								    du `Logo` — elle s'applique au CONTENU, à l'intérieur du `<Link>`.
+								    Un `hidden lg:flex` posé là laissait donc le lien lui-même rendu :
+								    un `<a>` de 0 × 0 px, invisible mais toujours dans l'ordre de
+								    tabulation. Les deux logos (desktop et mobile) coexistant, il y
+								    avait à chaque largeur un arrêt de focus sans aucun indicateur
+								    visible — exactement ce que WCAG 2.4.7 interdit. `display: none`
+								    sur l'ancêtre le retire de l'ordre de tabulation pour de bon.
+
+								    Plus de `scale-90` au scroll non plus : c'était le compagnon de la
+								    compaction de hauteur, retirée ci-dessus. Seul, il devenait une
+								    micro-animation sans fonction. */}
+								<div className="hidden min-w-0 lg:flex">
+									<Logo
+										href="/"
+										size={48}
+										className="max-w-full min-w-0"
+										shadow
+										sizes="64px"
+										showText
+										textClassName="text-xl lg:text-2xl text-foreground truncate"
+									/>
+								</div>
 							</div>
 
 							{/* Section centrale: Logo (mobile) / Navigation desktop */}
@@ -174,16 +202,19 @@ export async function Navbar() {
 								{/* Logo mobile centré — AVEC le nom depuis la déduplication du
 								    header (2026-08-04) : le cluster d'actions ayant quitté la
 								    droite sous `lg`, la place existe enfin pour la marque, là où
-								    il n'y avait qu'une pastille de 44px. */}
-								<Logo
-									href="/"
-									size={40}
-									className="min-w-0 lg:hidden"
-									shadow
-									sizes="40px"
-									showText
-									textClassName="text-foreground truncate text-xl"
-								/>
+								    il n'y avait qu'une pastille de 44px.
+								    Seuil sur le conteneur, cf. le logo desktop ci-dessus. */}
+								<div className="min-w-0 lg:hidden">
+									<Logo
+										href="/"
+										size={40}
+										className="min-w-0"
+										shadow
+										sizes="40px"
+										showText
+										textClassName="text-foreground truncate text-xl"
+									/>
+								</div>
 								<DesktopNav
 									navItems={desktopNavItems}
 									featuredProducts={featuredProducts}
@@ -192,8 +223,11 @@ export async function Navbar() {
 							</div>
 
 							{/* Section droite: Favoris + Recherche + Panier (+ menu admin) —
-							    desktop uniquement depuis la déduplication (cf. NavbarIconButtons). */}
+							    desktop uniquement depuis la déduplication (cf. NavbarIconButtons).
+							    Sous `lg`, cette colonne était entièrement VIDE : c'est le nom de la
+							    salle courante qui l'occupe désormais, une fois la page scrollée. */}
 							<div className="flex min-w-0 flex-1 items-center justify-end">
+								<NavbarRoomLabel />
 								<div className="flex shrink-0 items-center gap-2 sm:gap-3">
 									<NavbarIconButtons
 										isAdmin={userIsAdmin}

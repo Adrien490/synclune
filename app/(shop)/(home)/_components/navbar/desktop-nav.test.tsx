@@ -73,28 +73,40 @@ vi.mock("@/shared/components/ui/navigation-menu", () => ({
 	// DOM, et tous les `getByRole("link")` échouent sans que le composant réel
 	// soit en cause (cf. `test/mocks/render-prop.tsx`).
 	NavigationMenuLink: (props: RenderPropMockProps) => renderPropMock("a", props),
+	/**
+	 * ⚠️ Le trigger honore `render`, comme le vrai. Depuis 2026-08-04 il rend un
+	 * `<Link>` : un mock qui ignorerait `render` referait un `<button>` sans
+	 * `href`, donc verrouillerait précisément le défaut qu'on vient de corriger.
+	 *
+	 * Il reproduit aussi le couplage `nativeButton` → attribut, lu dans
+	 * `@base-ui/react/internals/use-button/useButton.mjs` : `true` spread
+	 * `type="button"`, `false` spread `role="button"`. C'est pour ça que le
+	 * trigger reste interrogeable en `getByRole("button")` tout en portant un
+	 * `href` — l'arbre d'accessibilité réel dit « bouton », le DOM dit « ancre ».
+	 */
 	NavigationMenuTrigger: ({
 		children,
 		onClick,
 		showChevron: _showChevron,
+		nativeButton,
+		render,
 		...props
-	}: {
-		children: React.ReactNode;
+	}: RenderPropMockProps & {
+		children?: React.ReactNode;
 		onClick?: (event: unknown) => void;
 		showChevron?: boolean;
-		[key: string]: unknown;
-	}) => (
-		<button
-			type="button"
-			onClick={(event) => {
-				Object.assign(event, { preventBaseUIHandler });
+		nativeButton?: boolean;
+	}) =>
+		renderPropMock(nativeButton === false ? "a" : "button", {
+			...(nativeButton === false ? { role: "button" } : { type: "button" }),
+			...props,
+			render,
+			children,
+			onClick: (event: unknown) => {
+				Object.assign(event as object, { preventBaseUIHandler });
 				onClick?.(event);
-			}}
-			{...props}
-		>
-			{children}
-		</button>
-	),
+			},
+		}),
 	NavigationMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	NavigationMenuPopup: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
 	navigationMenuTriggerStyle: "",
@@ -175,11 +187,31 @@ describe("DesktopNav", () => {
 		expect(link.getAttribute("href")).toBe("/a-propos");
 	});
 
-	it("renders dropdown items as buttons (triggers)", () => {
+	it("rend les triggers de mega-menu comme de VRAIS liens porteurs de href", () => {
 		render(<DesktopNav navItems={navItems} />);
 
-		const creationsButton = screen.getByRole("button", { name: "Les créations" });
-		expect(creationsButton).toBeInTheDocument();
+		// ⚠️ C'est l'assertion centrale du correctif 2026-08-04. Les deux
+		// destinations principales du desktop étaient des `<button>` naviguant par
+		// `router.push` : ⌘-clic, clic milieu, « Ouvrir dans un nouvel onglet »,
+		// « Copier l'adresse du lien », prefetch au survol et `LoadingIndicator`
+		// étaient TOUS perdus. Un `href` réel les rend tous les six d'un coup.
+		const creations = screen.getByRole("button", { name: "Les créations" });
+		expect(creations.tagName).toBe("A");
+		expect(creations.getAttribute("href")).toBe("/produits");
+
+		const collections = screen.getByRole("button", { name: "Les collections" });
+		expect(collections.getAttribute("href")).toBe("/collections");
+	});
+
+	it("garde le rôle `button` malgré l'ancre — l'annonce suit le CLAVIER, pas le DOM", () => {
+		render(<DesktopNav navItems={navItems} />);
+
+		// Ce n'est pas une régression mais la continuité : l'élément ouvrait déjà un
+		// panneau sur Entrée quand c'était un `<button>`. Annoncer « lien » ferait
+		// promettre une navigation que la touche Entrée ne fait justement pas.
+		const creations = screen.getByRole("button", { name: "Les créations" });
+		expect(creations.getAttribute("role")).toBe("button");
+		expect(creations.getAttribute("type")).toBeNull();
 	});
 
 	it("marks the active dropdown trigger with aria-current=page", () => {
@@ -224,24 +256,54 @@ describe("DesktopNav", () => {
 			expect(mockPush).not.toHaveBeenCalled();
 		});
 
-		it("does not navigate on keyboard-triggered click (detail === 0, opens panel)", () => {
+		it("ANNULE l'action native au clic clavier (detail === 0) et laisse Base UI ouvrir", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
 			const trigger = screen.getByRole("button", { name: "Les créations" });
-			fireEvent.click(trigger, { detail: 0 });
+			// `fireEvent` rend `false` quand `preventDefault()` a été appelé.
+			const notPrevented = fireEvent.click(trigger, { detail: 0 });
 
+			// ⚠️ L'assertion sur `defaultPrevented` est neuve, et elle est le point de
+			// bascule du passage en ancre : tant que l'élément était un `<button>`, un
+			// simple `return` suffisait à ne pas naviguer. Sur un `<a href>`, ne rien
+			// faire laisse la touche Entrée naviguer NATIVEMENT en plus d'ouvrir le
+			// panneau — le défaut serait invisible à toute assertion sur `mockPush`.
+			expect(notPrevented).toBe(false);
+			expect(preventBaseUIHandler).not.toHaveBeenCalled();
 			expect(mockPush).not.toHaveBeenCalled();
 		});
 
-		it("navigates on mouse click on dropdown trigger", () => {
+		it("laisse l'ancre naviguer NATIVEMENT au clic souris, sans router.push", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
 			const trigger = screen.getByRole("button", { name: "Les créations" });
-			fireEvent.click(trigger, { detail: 1 });
+			const notPrevented = fireEvent.click(trigger, { detail: 1 });
 
-			expect(mockPush).toHaveBeenCalledWith("/produits");
+			// L'action par défaut survit : c'est elle qui navigue désormais, et c'est
+			// elle qui apporte ⌘-clic, clic milieu et menu contextuel.
+			expect(notPrevented).toBe(true);
+			// ⚠️ Le signal qui empêche le panneau de s'ouvrir est
+			// `preventBaseUIHandler`, PAS `preventDefault` : Base UI ne consulte pas
+			// `defaultPrevented`. Et ici les deux ne sont surtout pas interchangeables —
+			// `preventDefault()` annulerait la navigation qu'on vient de rétablir.
+			expect(preventBaseUIHandler).toHaveBeenCalledTimes(1);
+			expect(mockPush).not.toHaveBeenCalled();
+		});
+
+		it("n'intercepte RIEN sur ⌘-clic — c'est le navigateur qui ouvre l'onglet", () => {
+			mockPush.mockClear();
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			const notPrevented = fireEvent.click(trigger, { detail: 1, metaKey: true });
+
+			// Le cas qui motivait tout le lot : avec `router.push`, ⌘-clic naviguait
+			// dans l'onglet COURANT, quel que soit le modificateur. Il n'y a rien à
+			// coder pour le supporter — il suffit de ne pas voler l'action par défaut.
+			expect(notPrevented).toBe(true);
+			expect(mockPush).not.toHaveBeenCalled();
 		});
 
 		it("does not navigate on touch tap — lets Base UI open the panel (F3)", () => {
@@ -252,24 +314,13 @@ describe("DesktopNav", () => {
 			const trigger = screen.getByRole("button", { name: "Les créations" });
 			// Touch tap fires a click with detail >= 1, but on a coarse pointer we must
 			// open the mega menu instead of navigating away.
-			fireEvent.click(trigger, { detail: 1 });
+			const notPrevented = fireEvent.click(trigger, { detail: 1 });
 
+			// Même bascule que la branche clavier : sur une ancre il faut ANNULER,
+			// plus seulement s'abstenir.
+			expect(notPrevented).toBe(false);
 			expect(mockPush).not.toHaveBeenCalled();
 			expect(preventBaseUIHandler).not.toHaveBeenCalled();
-		});
-
-		it("appelle preventBaseUIHandler au clic souris pour ne pas ouvrir le panneau en plus de naviguer", () => {
-			mockPush.mockClear();
-			render(<DesktopNav navItems={navItems} />);
-
-			const trigger = screen.getByRole("button", { name: "Les créations" });
-			fireEvent.click(trigger, { detail: 1 });
-
-			// ⚠️ Le signal est `preventBaseUIHandler`, PAS `preventDefault` : Base UI
-			// ne consulte pas `defaultPrevented`. Asserter l'ancien aurait laissé
-			// passer un panneau qui s'ouvre en même temps que la navigation.
-			expect(preventBaseUIHandler).toHaveBeenCalledTimes(1);
-			expect(mockPush).toHaveBeenCalledWith("/produits");
 		});
 
 		it("does not navigate on Escape key (Base UI handles menu close)", () => {

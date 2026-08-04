@@ -1,5 +1,5 @@
 import { act, cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/font/google", () => {
 	const fontMock = () => ({
@@ -10,9 +10,18 @@ vi.mock("next/font/google", () => {
 	return { Figtree: fontMock, Fraunces: fontMock, Sacramento: fontMock };
 });
 
+let mockPathname = "/";
+vi.mock("next/navigation", () => ({
+	usePathname: () => mockPathname,
+}));
+
 import { NavbarWrapper } from "./navbar-wrapper";
 
-describe("NavbarWrapper (scroll compact)", () => {
+describe("NavbarWrapper (sol permanent, accent de salle, état de scroll)", () => {
+	beforeEach(() => {
+		mockPathname = "/";
+	});
+
 	afterEach(() => {
 		cleanup();
 		window.scrollY = 0;
@@ -81,24 +90,107 @@ describe("NavbarWrapper (scroll compact)", () => {
 		expect(header).toHaveAttribute("data-scrolled", "false");
 	});
 
-	it("renders the glass-effect layer with backdrop/shadow/bg classes (visibility via opacity)", () => {
+	// « La devanture » (2026-08-04) : le sol de la barre a quitté le calque de
+	// scroll. Il était en `opacity-0` jusqu'à 20px, donc au repos — l'état où l'on
+	// découvre chaque page — la barre n'avait ni fond, ni filet, ni grain.
+	it("pose le SOL en permanence : fond, filet, grain et flou, sans opacité conditionnelle", () => {
+		const { container } = render(
+			<NavbarWrapper>
+				<nav />
+			</NavbarWrapper>,
+		);
+		const ground = container.querySelectorAll("header > div[aria-hidden]")[0];
+		expect(ground).not.toBeNull();
+		const className = ground?.className ?? "";
+
+		expect(className).toContain("bg-background/95");
+		expect(className).toContain("border-b");
+		expect(className).toContain("polaroid-paper");
+		// Le flou vit ICI et pas sur le calque de scroll : posé au-dessus d'un fond
+		// quasi opaque, son arrière-plan serait cet aplat — il ne flouterait rien.
+		expect(className).toContain("backdrop-blur-md");
+		expect(className).not.toContain("opacity-0");
+	});
+
+	it("réserve au calque de scroll la seule PROFONDEUR, et n'y anime que l'opacité", () => {
 		const { container } = render(
 			<NavbarWrapper>
 				<nav />
 			</NavbarWrapper>,
 		);
 		fireScroll(40);
-		// Glass effect lives on an absolute layer inside <header> — only its opacity
-		// transitions when data-scrolled flips. Group-hover/data variant applies via :group.
-		const layer = container.querySelector("header > div[aria-hidden]");
-		expect(layer).not.toBeNull();
-		const layerClassName = layer?.className ?? "";
-		expect(layerClassName).toContain("backdrop-blur-md");
-		// Ombre tokenisée (--shadow-header, globals.css) — remplace shadow-lg shadow-black/8
-		expect(layerClassName).toContain("shadow-header");
-		expect(layerClassName).toContain("bg-background/95");
-		expect(layerClassName).toContain("group-data-[scrolled=true]:opacity-100");
-		expect(layerClassName).toContain("opacity-0");
+		const depth = container.querySelectorAll("header > div[aria-hidden]")[1];
+		expect(depth).not.toBeNull();
+		const className = depth?.className ?? "";
+
+		// Ombre tokenisée (--shadow-header, globals.css).
+		expect(className).toContain("shadow-header");
+		expect(className).toContain("opacity-0");
+		expect(className).toContain("group-data-[scrolled=true]/navbar:opacity-100");
+		// Invariant compositor-friendly : aucune propriété non composable animée.
+		expect(className).toContain("motion-safe:transition-opacity");
+		expect(className).not.toMatch(/transition-\[?(?:all|colors|height)/);
+	});
+
+	// Le bandeau consommait `--section-accent` : il virait au lavande sur les
+	// créations, au menthe sur les collections, et disparaissait hors boutique. La
+	// barre changeait donc de couleur à chaque navigation — jugé instable
+	// (décision design 2026-08-04). Il est désormais la SIGNATURE de la marque :
+	// toujours peint, toujours `--primary`.
+	describe("bandeau de marque", () => {
+		it.each([
+			["/", "rose"],
+			["/collections/mariage", "mint"],
+			["/produits", "lavender"],
+		])("peint le même filet primary sur %s (accent de salle : %s)", (pathname, accent) => {
+			mockPathname = pathname;
+			const { container } = render(
+				<NavbarWrapper>
+					<nav />
+				</NavbarWrapper>,
+			);
+
+			const band = container.querySelector("header > div.bg-primary");
+			expect(band).not.toBeNull();
+			// ⚠️ Le bandeau vit DANS la hauteur de la barre (`absolute bottom-0`) et
+			// n'est jamais ajouté dessous : sinon le header mesurerait 4px de plus
+			// que `--navbar-height`, et tout ce qui s'y accroche se décalerait.
+			expect(band?.className).toContain("absolute");
+			expect(band?.className).toContain("bottom-0");
+			// La couleur ne dérive plus de l'accent de salle.
+			expect(band?.className).not.toContain("--section-accent");
+
+			// `data-accent` survit : il alimente `--section-soft` (aplat de l'entrée
+			// de nav courante) et le nom de la salle sous `lg`.
+			expect(container.querySelector("header")).toHaveAttribute("data-accent", accent);
+		});
+
+		it("peint le bandeau jusque hors des salles de la boutique, sans data-accent", () => {
+			mockPathname = "/cgv";
+			const { container } = render(
+				<NavbarWrapper>
+					<nav />
+				</NavbarWrapper>,
+			);
+			expect(container.querySelector("header")).not.toHaveAttribute("data-accent");
+			expect(container.querySelector("header > div.bg-primary")).not.toBeNull();
+		});
+	});
+
+	// Le header enveloppe toute la barre : un `group` ANONYME en fait le premier
+	// ancêtre `.group` de chacun de ses descendants et lui fait capturer leurs
+	// variants. Constaté deux fois — le trait dessiné de CHAQUE entrée de nav
+	// s'affichait dès qu'un élément quelconque du header prenait le focus, et les
+	// icônes d'action grossissaient au survol de n'importe quel point de la barre.
+	it("nomme son groupe (`group/navbar`) et ne squatte pas l'espace de noms anonyme", () => {
+		const { container } = render(
+			<NavbarWrapper>
+				<nav />
+			</NavbarWrapper>,
+		);
+		const className = container.querySelector("header")?.className ?? "";
+		expect(className).toContain("group/navbar");
+		expect(className).not.toMatch(/(^|\s)group(\s|$)/);
 	});
 
 	it("colle le header en top-0 sans offset ni transform (barre d'annonce retirée)", () => {

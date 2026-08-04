@@ -13,88 +13,42 @@ export type {
 export const MAX_COLLECTIONS_IN_MENU = 3;
 
 /**
- * Génère les items de navigation mobile en fonction de l'état de connexion
+ * Destinations de premier niveau du menu mobile.
  *
- * Flow optimisé selon les bonnes pratiques bijouterie artisanale:
+ * ## Ce que le sheet en consomme RÉELLEMENT : deux entrées, par href
  *
- * 💎 DÉCOUVRIR (80% des sessions)
- *    → Les créations (collapsible avec types: Bagues, Colliers, etc.)
- *    → Les collections (collapsible avec collections: Mariage, Été 2025, etc.)
- *    → Personnaliser (service différenciateur)
+ * `MenuSheetNav` ne fait que trois `find(...)` sur cette liste — accueil, « à
+ * propos » (absent aujourd'hui) et favoris. Tout le reste de la hiérarchie est
+ * rendu par les sections dédiées, qui reçoivent `productTypes` et `collections`
+ * **directement en props** du `MenuSheet`.
  *
- * ─────────────
- * 🛠️ ADMIN
- *    → Tableau de bord (si admin)
+ * ⚠️ La fonction construisait donc, pour rien, un arbre complet : `children` de
+ * « Les créations » (1 + n types) et de « Les collections » (1 + 3 collections
+ * avec `description`, `imageUrl`, `blurDataUrl`), plus un item admin « Tableau de
+ * bord » que `MenuSheetNav` n'a jamais lu — il rend le sien. Le tout sérialisé
+ * dans le payload RSC de CHAQUE page de la boutique, puis jeté à l'arrivée.
+ * `menu-sheet.tsx` le disait déjà en toutes lettres : « the children embedded in
+ * navItems are not used by the sheet ».
+ *
+ * Les deux entrées de section survivent parce que la liste est le SSOT des
+ * destinations de premier niveau ; `DiscoverSection` y cherche encore
+ * `ROUTES.SHOP.ABOUT`, point d'extension documenté dont le retrait a été refusé
+ * le 2026-07-26.
  *
  * Note: "Panier" supprimé (redondant avec header)
  * Note: plus d'entrée "Compte" — l'espace client a été retiré (2026-07-31)
  * Note: "L'atelier" retiré temporairement du menu mobile (à réintégrer plus tard)
- *
- * @param productTypes - Types de produits actifs
- * @param collections - Collections actives (optionnel)
- * @param isAdmin - Si l'utilisateur est administrateur
- * @returns Items de navigation filtrés et adaptés avec support des children
  */
-export function getMobileNavItems(
-	productTypes?: Array<{ slug: string; label: string }>,
-	collections?: Array<{
-		slug: string;
-		label: string;
-		description?: string | null;
-		imageUrl?: string | null;
-		blurDataUrl?: string | null;
-	}>,
-	isAdmin?: boolean,
-): NavItemWithChildren[] {
-	// Item "Les créations" avec collapsible des types
-	const bijouxItem: NavItemWithChildren = {
-		href: ROUTES.SHOP.PRODUCTS,
-		label: "Les créations",
-		icon: "gem",
-		hasDropdown: true,
-		children: productTypes
-			? [
-					{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations", icon: "gem" },
-					...productTypes.map((type) => ({
-						href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
-						label: type.label,
-					})),
-				]
-			: undefined,
-	};
-
-	// Item "Collections" avec collapsible des collections (limité aux 3 dernières)
-	const collectionsItem: NavItemWithChildren = {
-		href: ROUTES.SHOP.COLLECTIONS,
-		label: "Les collections",
-		icon: "folder-open",
-		hasDropdown: true,
-		children: collections
-			? [
-					{
-						href: ROUTES.SHOP.COLLECTIONS,
-						label: "Toutes les collections",
-						icon: "folder-open",
-					},
-					...collections.slice(0, MAX_COLLECTIONS_IN_MENU).map((collection) => ({
-						href: ROUTES.SHOP.COLLECTION(collection.slug),
-						label: collection.label,
-						description: collection.description,
-						imageUrl: collection.imageUrl,
-						blurDataUrl: collection.blurDataUrl,
-					})),
-				]
-			: undefined,
-	};
-
-	// Flow optimisé: Accueil → Créations → Collections → Favoris → Tableau de bord (admin)
-	const items: NavItemWithChildren[] = [
+export function getMobileNavItems(): NavItemWithChildren[] {
+	return [
 		// 🏠 ACCUEIL - Retour à la page d'accueil
 		{ href: ROUTES.SHOP.HOME, label: "Accueil", icon: "home" },
 
-		// 💎 DÉCOUVRIR - Créations en premier
-		bijouxItem,
-		collectionsItem,
+		// 💎 DÉCOUVRIR - Créations en premier. Pas de `children` : la hiérarchie est
+		// rendue par `CreationsSection` / `CollectionsSection` depuis leurs propres
+		// props.
+		{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations", icon: "gem" },
+		{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections", icon: "folder-open" },
 
 		// 🏡 L'ATELIER - Page à propos : retiré temporairement du menu mobile
 		// (à réintégrer plus tard). DiscoverSection rend l'item s'il est fourni.
@@ -107,13 +61,6 @@ export function getMobileNavItems(
 		// ❤️ FAVORIS - Accessible à tous (Baymard: full scope label)
 		{ href: ROUTES.SHOP.FAVORITES, label: "Mes favoris", icon: "heart" },
 	];
-
-	// 🛠️ ADMIN - Tableau de bord (uniquement pour les administrateurs)
-	if (isAdmin) {
-		items.push({ href: ROUTES.ADMIN.ROOT, label: "Tableau de bord", icon: "layout-dashboard" });
-	}
-
-	return items;
 }
 
 /** Type pour les images de collections dans le mega menu */
@@ -161,8 +108,10 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 						...productTypes.map((type) => ({
 							href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
 							label: type.label,
-							// iconKey passed to MegaMenuColumn to resolve a lucide icon per category
-							iconKey: type.slug,
+							// Plus d'`iconKey` : `MegaMenuColumn` n'affiche plus d'icône par
+							// catégorie — le mapping ne servait que 3 des 7 familles réelles et
+							// désalignait les 4 autres de 26px. Détail du retrait dans le
+							// commentaire d'en-tête de `mega-menu-column.tsx`.
 						})),
 					]
 				: undefined,

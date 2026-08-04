@@ -199,7 +199,17 @@ export function MenuSheet({
 							aria-label={isOpen ? "Fermer le menu de navigation" : "Menu de navigation"}
 							aria-haspopup="dialog"
 							aria-expanded={isOpen}
-							aria-controls={MENU_SHEET_CONTENT_ID}
+							// ⚠️ CONDITIONNEL. Le `SheetContent` n'est monté par le portail que sheet
+							// ouvert : posé en permanence, `aria-controls` désignait un id ABSENT du
+							// document les 99 % du temps où le menu est fermé (axe le relève en
+							// `aria-valid-attr-value`).
+							//
+							// C'est exactement ce que `shop-mobile-bottom-nav.tsx` refuse de faire, avec
+							// sa justification écrite : « Désigner un id absent est plus nuisible que de
+							// l'omettre — `aria-haspopup` + `aria-expanded` suffisent au pattern
+							// disclosure ». Deux surfaces du même dépôt ne peuvent pas trancher
+							// l'inverse l'une de l'autre.
+							aria-controls={isOpen ? MENU_SHEET_CONTENT_ID : undefined}
 						/>
 					}
 				>
@@ -208,25 +218,45 @@ export function MenuSheet({
 
 				<SheetContent
 					id={MENU_SHEET_CONTENT_ID}
-					// Le panneau avait TROIS affordances de fermeture concurrentes : ce
-					// bouton « × » par défaut (posé en haut à droite, donc dans la zone du
-					// titre), le scrim et le swipe — plus le burger lui-même, vers lequel
-					// `finalFocus` renvoie de toute façon. On garde le scrim et le geste.
-					showCloseButton={false}
+					// ⚠️ Le « × » par défaut est RÉTABLI (2026-08-04). Il avait été retiré au
+					// motif de « TROIS affordances de fermeture concurrentes : ce bouton, le
+					// scrim et le swipe — plus le burger lui-même ». La prémisse était fausse
+					// au doigt : le panneau mesure `min(88vw, 340px)` et RECOUVRE intégralement
+					// le burger, qui vit à ≤ 56 px du bord gauche. « Plus le burger » ne valait
+					// que pour le clavier, où `finalFocus` y ramène.
+					//
+					// Ce qui restait à un primo-visiteur tactile : une bande de scrim de 50 px
+					// à 390 px, 38 px à 320 px, sans aucune affordance — ou un geste que rien
+					// n'annonce. Sortir d'un panneau ne se devine pas.
+					//
+					// Sûr vis-à-vis de la race `history.back()` de
+					// `menu-sheet-navigate-context` : ce piège ne concerne QUE `SheetClose`
+					// enroulé autour d'un `<Link>`, où le `back()` synchrone double le
+					// `router.push`. Ici il n'y a aucune navigation à doubler, et consommer
+					// l'entrée poussée à l'ouverture est exactement le comportement voulu.
 					// `pl-0!` et non `p-0!` : `p-0` écrasait via tailwind-merge le
 					// `pl-[max(0px,env(safe-area-inset-left))]` que `sheet.tsx` pose sur la
 					// branche `direction="left"`, laissant le contenu sous l'encoche en
 					// paysage. On neutralise les trois autres côtés et on laisse l'inset
 					// gauche vivre, additionné au padding propre de chaque bloc.
-					className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r pt-0! pr-0! pb-0! sm:w-80 sm:max-w-md"
-					onOverlayClick={() => haptic("light")}
+					// Plus de `sm:w-80 sm:max-w-md` : le panneau RÉTRÉCISSAIT de 340 à 320 px
+					// en passant à `sm`, soit l'inverse du sens attendu. `min(88vw, 340px)`
+					// plafonne seul à 340 px dès 387 px de large — les deux variantes ne
+					// faisaient que le contredire.
+					className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r pt-0! pr-0! pb-0!"
+					// ⚠️ Plus de `onOverlayClick={() => haptic("light")}` ici. Un tap sur le
+					// scrim déclenche le `onClick` du `Backdrop` PUIS le dismiss de Base UI,
+					// donc `onOpenChange` — qui vibre déjà. Deux pulsations pour un geste,
+					// contre la règle « haptique : pas d'abus » du dépôt.
 					// Restaure le focus sur le burger. Sans cela il retombait sur `<body>`
 					// (le trigger est blurré avant l'ouverture, donc la restauration
 					// automatique n'aurait mémorisé que `<body>`) — cf. `triggerRef`.
 					// `finalFocus` remplace l'ancien `onCloseAutoFocus` + `preventDefault`.
 					finalFocus={triggerRef}
 				>
-					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pb-2 pl-5">
+					{/* `pr-16` : réserve la place du « × » (size-11 posé à `right-4`, soit de
+					    16 à 60 px du bord). Sans lui le titre passerait dessous. */}
+					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pr-16 pb-2 pl-5">
 						<SheetTitle className="font-cursive flex items-center text-xl">
 							{/* `min-h-11` : sans lui la cible ne mesurait que la line-height de
 							    `text-xl`, soit 28px — sous le minimum WCAG 2.5.5 (44px). */}

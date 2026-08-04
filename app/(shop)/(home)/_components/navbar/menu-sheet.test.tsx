@@ -267,10 +267,11 @@ describe("MenuSheet", () => {
 			expect(lastFinalFocus?.current).toBe(trigger);
 		});
 
-		it("wires aria-controls to the sheet content id (WCAG 4.1.2)", () => {
+		it("wires aria-controls to the sheet content id quand le sheet est OUVERT (WCAG 4.1.2)", () => {
+			mockIsOpen = true;
 			render(<MenuSheet {...baseProps} />);
 
-			const trigger = screen.getByRole("button", { name: "Menu de navigation" });
+			const trigger = screen.getByRole("button", { name: "Fermer le menu de navigation" });
 			const sheetContent = screen.getByTestId("sheet-content");
 			const ariaControls = trigger.getAttribute("aria-controls");
 			expect(ariaControls).toBeTruthy();
@@ -306,16 +307,24 @@ describe("MenuSheet", () => {
 			expect(screen.getByTestId("menu-sheet-nav")).toBeInTheDocument();
 		});
 
-		it("tags SheetContent with view-transition-name for shop-* convention", () => {
+		it("n'annonce PAS `aria-controls` sheet fermé — l'id n'existe pas encore", () => {
+			// Le `SheetContent` n'est monté par le portail qu'à l'ouverture : posé en
+			// permanence, l'attribut désignait un id absent du document (axe le relève
+			// en `aria-valid-attr-value`). C'est aussi la règle déjà écrite dans
+			// `shop-mobile-bottom-nav.tsx` — « désigner un id absent est plus nuisible
+			// que de l'omettre ».
+			//
+			// ⚠️ Ce test REMPLACE un « tags SheetContent with view-transition-name »
+			// qui n'assertait rien de tel : son corps re-testait `aria-controls`, et
+			// `menu-sheet.tsx` n'a jamais posé de `view-transition-name` sur le
+			// contenu (c'est le `<header>` de `navbar-wrapper` qui en porte un).
 			render(<MenuSheet {...baseProps} />);
 
-			const sheetContent = screen.getByTestId("sheet-content");
-			// view-transition-name lives on the className via tailwind arbitrary value
-			expect(sheetContent).toBeInTheDocument();
-			// The class is applied at the SheetContent boundary; verify it via the parent button text content is unchanged
-			// and that the trigger references this content.
 			const trigger = screen.getByRole("button", { name: "Menu de navigation" });
-			expect(trigger.getAttribute("aria-controls")).toBe(sheetContent.getAttribute("id"));
+			expect(trigger.getAttribute("aria-controls")).toBeNull();
+			// `aria-haspopup` + `aria-expanded` portent seuls le pattern disclosure.
+			expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
+			expect(trigger.getAttribute("aria-expanded")).toBe("false");
 		});
 	});
 
@@ -346,8 +355,17 @@ describe("MenuSheet", () => {
 		it("fires haptic 'light' on overlay tap (scrim dismiss)", () => {
 			render(<MenuSheet {...baseProps} />);
 
+			// ⚠️ La séquence RÉELLE d'un tap sur le scrim est double : le `onClick` du
+			// `Backdrop`, puis le dismiss de Base UI qui appelle `onOpenChange`. Tant
+			// que `SheetContent` recevait un `onOverlayClick={() => haptic("light")}`,
+			// elle produisait DEUX pulsations pour un geste — contre la règle
+			// « haptique : pas d'abus » du dépôt. Le handler du scrim a été retiré ;
+			// c'est `onOpenChange` qui vibre, une fois.
 			fireEvent.click(screen.getByTestId("sheet-overlay"));
+			act(() => lastOnOpenChange?.(false));
+
 			expect(mockHaptic).toHaveBeenCalledWith("light");
+			expect(mockHaptic).toHaveBeenCalledTimes(1);
 		});
 
 		it("closes the sheet directly without View Transition (avoids slide-out lag)", () => {

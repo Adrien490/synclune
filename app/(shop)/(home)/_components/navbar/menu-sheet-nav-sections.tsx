@@ -29,7 +29,17 @@ const activeLinkClassName = cn(
 interface SectionProps {
 	isMenuItemActive: (href: string, options?: { exact?: boolean }) => boolean;
 	itemVariants: Variants;
-	delay: (baseMs: number, index: number) => number;
+	/**
+	 * Rend le délai d'apparition du PROCHAIN élément, en secondes.
+	 *
+	 * ⚠️ Signature volontairement sans argument : les sections calculaient chacune
+	 * leur base — 90 ms pour les créations, 110 pour les collections, 140 pour le
+	 * séparateur — ce qui produisait une cascade
+	 * non monotone — cf. `menu-sheet-nav.tsx`. L'ordre est désormais celui des
+	 * appels, donc celui du DOM. **Appeler une seule fois par élément rendu**, et
+	 * dans l'ordre où ils apparaissent.
+	 */
+	nextDelay: () => number;
 }
 
 function getLinkClass(
@@ -123,41 +133,44 @@ interface UserHeaderProps {
 	cartCount: number;
 }
 
+/**
+ * Bloc d'identité en tête du menu — **non interactif**.
+ *
+ * ⚠️ C'était un `<Link>` vers `ROUTES.ADMIN.DASHBOARD`. Or `MenuSheetNav` rend
+ * plus bas une entrée « Tableau de bord » vers `ROUTES.ADMIN.ROOT`, et les deux
+ * constantes valent `"/admin"` (`shared/constants/urls.ts`) : la même
+ * destination était offerte DEUX fois dans le même panneau, à ~400 px d'écart
+ * vertical, avec deux libellés qui ne se ressemblaient pas.
+ *
+ * C'est ce bloc-ci qui a perdu son lien, et pas l'autre : « Bonjour Léane » se
+ * lit comme une carte d'identité, pas comme une destination — le libellé
+ * explicite « Tableau de bord » porte mieux l'action. Bénéfice secondaire : un
+ * arrêt de tabulation en moins, et la disparition d'un nom accessible qui
+ * empilait la civilité et deux compteurs (« Administration - Léane, 3 favoris,
+ * 2 articles ») sur un lien dont la destination n'était ni l'un ni l'autre.
+ */
 export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProps) {
-	const onNavigate = useMenuSheetNavigate();
 	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should also be treated as missing
 	const firstName = session.user.name?.split(" ")[0] || null;
 	const greeting = firstName ? `Bonjour ${firstName}` : "Bonjour";
-	const labelSubject = firstName ?? "bienvenue";
 
 	return (
 		<div className="bg-primary/5 mb-4 rounded-xl p-4">
-			<Link
-				href={ROUTES.ADMIN.DASHBOARD}
-				replace
-				prefetch={null}
-				onClick={onNavigate}
-				className="group block"
-				aria-label={`Administration - ${labelSubject}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
-			>
-				<div>
-					<p className="text-foreground text-base font-semibold">{greeting}</p>
-					<p className="text-muted-foreground mt-0.5 text-sm">
-						{wishlistCount > 0 && (
-							<span>
-								{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
-							</span>
-						)}
-						{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
-						{cartCount > 0 && (
-							<span>
-								{cartCount} article{cartCount > 1 ? "s" : ""}
-							</span>
-						)}
-						{wishlistCount === 0 && cartCount === 0 && <span>Espace administration</span>}
-					</p>
-				</div>
-			</Link>
+			<p className="text-foreground text-base font-semibold">{greeting}</p>
+			<p className="text-muted-foreground mt-0.5 text-sm">
+				{wishlistCount > 0 && (
+					<span>
+						{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
+					</span>
+				)}
+				{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
+				{cartCount > 0 && (
+					<span>
+						{cartCount} article{cartCount > 1 ? "s" : ""}
+					</span>
+				)}
+				{wishlistCount === 0 && cartCount === 0 && <span>Espace administration</span>}
+			</p>
 		</div>
 	);
 }
@@ -184,7 +197,7 @@ export function DiscoverSection({
 	aboutItem,
 	isMenuItemActive,
 	itemVariants,
-	delay,
+	nextDelay,
 }: DiscoverSectionProps) {
 	if (!homeItem) return null;
 
@@ -195,7 +208,7 @@ export function DiscoverSection({
 					href={homeItem.href}
 					isMenuItemActive={isMenuItemActive}
 					itemVariants={itemVariants}
-					customDelay={delay(70, 0)}
+					customDelay={nextDelay()}
 				>
 					{homeItem.label}
 				</NavLink>
@@ -204,7 +217,7 @@ export function DiscoverSection({
 						href={aboutItem.href}
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
-						customDelay={delay(70, 1)}
+						customDelay={nextDelay()}
 					>
 						{aboutItem.label}
 					</NavLink>
@@ -224,7 +237,7 @@ export function CreationsSection({
 	productTypes,
 	isMenuItemActive,
 	itemVariants,
-	delay,
+	nextDelay,
 }: CreationsSectionProps) {
 	if (!productTypes || productTypes.length === 0) return null;
 
@@ -237,18 +250,18 @@ export function CreationsSection({
 					href={ROUTES.SHOP.PRODUCTS}
 					isMenuItemActive={isMenuItemActive}
 					itemVariants={itemVariants}
-					customDelay={delay(90, 0)}
+					customDelay={nextDelay()}
 					exact
 				>
 					Tous les bijoux
 				</NavLink>
-				{productTypes.map((type, i) => (
+				{productTypes.map((type) => (
 					<NavLink
 						key={type.slug}
 						href={ROUTES.SHOP.PRODUCT_TYPE(type.slug)}
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
-						customDelay={delay(90, i + 1)}
+						customDelay={nextDelay()}
 					>
 						{type.label}
 					</NavLink>
@@ -304,7 +317,7 @@ export function CollectionsSection({
 	collections,
 	isMenuItemActive,
 	itemVariants,
-	delay,
+	nextDelay,
 }: CollectionsSectionProps) {
 	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
 	if (!displayedCollections || displayedCollections.length === 0) return null;
@@ -318,18 +331,18 @@ export function CollectionsSection({
 					href={ROUTES.SHOP.COLLECTIONS}
 					isMenuItemActive={isMenuItemActive}
 					itemVariants={itemVariants}
-					customDelay={delay(110, 0)}
+					customDelay={nextDelay()}
 					exact
 				>
 					Toutes les collections
 				</NavLink>
-				{displayedCollections.map((collection, i) => (
+				{displayedCollections.map((collection) => (
 					<NavLink
 						key={collection.slug}
 						href={ROUTES.SHOP.COLLECTION(collection.slug)}
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
-						customDelay={delay(110, i + 1)}
+						customDelay={nextDelay()}
 						className="gap-3"
 					>
 						<CollectionThumb images={collection.images} />
@@ -361,6 +374,16 @@ interface AccountSectionProps extends SectionProps {
  *
  * « Déconnexion » subsiste et n'apparaît que pour la session admin, seule session
  * possible désormais.
+ *
+ * ⚠️ **Plus d'en-tête visible**, exactement pour la raison qui l'a fait retirer de
+ * `DiscoverSection` quelques dizaines de lignes plus haut : il coiffait UN seul
+ * lien pour 100 % du trafic public, et il s'appelait « Favoris » au-dessus de
+ * « Mes favoris ». Il était en outre plus petit (Fraunces 14px) que l'entrée
+ * qu'il classait (Figtree 16px) — le libellé qui classe rendu moins présent que
+ * le libellé classé, donc lu comme deux entrées dont une inerte. Et il ne
+ * couvrait de toute façon pas « Déconnexion », la seule entrée qui puisse s'y
+ * ajouter. Le nom de la section survit en `aria-label`, pour l'arbre
+ * d'accessibilité où une région sans nom est une région muette.
  */
 export function AccountSection({
 	favoritesItem,
@@ -369,11 +392,10 @@ export function AccountSection({
 	onLogoutClick,
 	isMenuItemActive,
 	itemVariants,
-	delay,
+	nextDelay,
 }: AccountSectionProps) {
 	return (
-		<section aria-labelledby="section-account">
-			<SectionHeader id="section-account">Favoris</SectionHeader>
+		<section aria-label="Favoris et compte">
 			<ul className="space-y-1">
 				{/*
 				 * Favoris — accessible à TOUS, sans gate `isLoggedIn` : l'onglet de la
@@ -387,7 +409,7 @@ export function AccountSection({
 						href={favoritesItem.href}
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
-						customDelay={delay(150, 0)}
+						customDelay={nextDelay()}
 						className="justify-between"
 						ariaLabel={
 							wishlistCount > 0
@@ -410,7 +432,7 @@ export function AccountSection({
 
 				{/* Logout (logged in only) — closes menu before opening dialog */}
 				{isLoggedIn && (
-					<m.li variants={itemVariants} custom={delay(150, 1)}>
+					<m.li variants={itemVariants} custom={nextDelay()}>
 						<button
 							type="button"
 							className={cn(
