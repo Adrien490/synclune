@@ -35,7 +35,7 @@ function createOrder(
 		createdAt: Date;
 		subtotal: number;
 		discountAmount: number;
-		discountUsages: { discountCode: string }[];
+		discountCode: string | null;
 		shippingCost: number;
 		total: number;
 		currency: string;
@@ -47,7 +47,7 @@ function createOrder(
 		createdAt: new Date("2026-01-01"),
 		subtotal: 5000,
 		discountAmount: 0,
-		discountUsages: [],
+		discountCode: null,
 		shippingCost: 500,
 		total: 5500,
 		paymentMethod: null,
@@ -106,12 +106,12 @@ describe("OrderSummaryCard", () => {
 		expect(screen.queryByText(/Réduction/)).not.toBeInTheDocument();
 	});
 
-	it("shows the discount code when discountUsages are present", () => {
+	it("shows the discount code when one is attached to the order", () => {
 		render(
 			<OrderSummaryCard
 				order={createOrder({
 					discountAmount: 500,
-					discountUsages: [{ discountCode: "PROMO10" }],
+					discountCode: "PROMO10",
 				})}
 			/>,
 		);

@@ -1,10 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { releaseOrderDiscountUsageTx } from "../release-order-discount-usage.service";
 
+/**
+ * ⚠️ Réécrit le 2026-08-05 (audit schéma V2, Lot 2) : le code promo d'une commande
+ * vit désormais en DEUX COLONNES sur `Order` (`discountId` + snapshot
+ * `discountCode`), la table `DiscountUsage` a été repliée.
+ *
+ * Un cas de l'ancienne suite est devenu INEXPRIMABLE, pas seulement non testé —
+ * « returns the same discountId multiple times if order has duplicate usages » :
+ * une commande ne peut plus porter qu'UN code (une colonne scalaire), donc il n'y
+ * a plus de doublon possible à ne pas coalescer. Le cookie panier ne portait déjà
+ * qu'un `discountCode` singulier — le cas défendait une forme que la base
+ * autorisait mais que le code ne produisait jamais.
+ *
+ * Condition de réouverture : si un jour une commande peut cumuler plusieurs codes,
+ * il faudra une table de liaison ET ce cas de non-coalescence.
+ */
 const mockTx = {
-	discountUsage: {
-		findMany: vi.fn(),
-		deleteMany: vi.fn(),
+	order: {
+		findUnique: vi.fn(),
+		updateMany: vi.fn(),
 	},
 	discount: {
 		updateMany: vi.fn(),
@@ -16,50 +31,60 @@ describe("releaseOrderDiscountUsageTx", () => {
 		vi.clearAllMocks();
 	});
 
-	it("returns [] and skips writes when no DiscountUsage attached to order", async () => {
-		mockTx.discountUsage.findMany.mockResolvedValue([]);
+	it("returns [] and skips writes when no discount attached to order", async () => {
+		mockTx.order.findUnique.mockResolvedValue({ discountId: null });
 
-		const result = await releaseOrderDiscountUsageTx(mockTx as any, "order-empty");
+		const result = await releaseOrderDiscountUsageTx(mockTx as never, "order-empty");
 
 		expect(result).toEqual([]);
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockTx.discount.updateMany).not.toHaveBeenCalled();
-		expect(mockTx.discountUsage.deleteMany).not.toHaveBeenCalled();
 	});
 
-	it("decrements usageCount with usageCount > 0 guard and deletes DiscountUsage rows", async () => {
-		mockTx.discountUsage.findMany.mockResolvedValue([
-			{ id: "use_1", discountId: "disc_a" },
-			{ id: "use_2", discountId: "disc_b" },
-		]);
+	it("returns [] and skips writes when the order does not exist", async () => {
+		mockTx.order.findUnique.mockResolvedValue(null);
+
+		const result = await releaseOrderDiscountUsageTx(mockTx as never, "order-gone");
+
+		expect(result).toEqual([]);
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
+		expect(mockTx.discount.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("clears both columns, then decrements usageCount under the usageCount > 0 guard", async () => {
+		mockTx.order.findUnique.mockResolvedValue({ discountId: "disc_a" });
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 		mockTx.discount.updateMany.mockResolvedValue({ count: 1 });
-		mockTx.discountUsage.deleteMany.mockResolvedValue({ count: 2 });
 
-		const result = await releaseOrderDiscountUsageTx(mockTx as any, "order-1");
+		const result = await releaseOrderDiscountUsageTx(mockTx as never, "order-1");
 
-		expect(result).toEqual(["disc_a", "disc_b"]);
-		expect(mockTx.discount.updateMany).toHaveBeenCalledTimes(2);
-		expect(mockTx.discount.updateMany).toHaveBeenNthCalledWith(1, {
+		expect(result).toEqual(["disc_a"]);
+		// Le snapshot part avec la relation : laisser `discountCode` derrière
+		// afficherait « Réduction (SUMMER10) » sur une commande dont la réduction a
+		// justement été libérée.
+		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
+			where: { id: "order-1", discountId: { not: null } },
+			data: { discountId: null, discountCode: null },
+		});
+		expect(mockTx.discount.updateMany).toHaveBeenCalledTimes(1);
+		expect(mockTx.discount.updateMany).toHaveBeenCalledWith({
 			where: { id: "disc_a", usageCount: { gt: 0 } },
 			data: { usageCount: { decrement: 1 } },
 		});
-		expect(mockTx.discount.updateMany).toHaveBeenNthCalledWith(2, {
-			where: { id: "disc_b", usageCount: { gt: 0 } },
-			data: { usageCount: { decrement: 1 } },
-		});
-		expect(mockTx.discountUsage.deleteMany).toHaveBeenCalledWith({ where: { orderId: "order-1" } });
 	});
 
-	it("returns the same discountId multiple times if order has duplicate usages (audit trail)", async () => {
-		// Defensive: in practice, a single order should have one DiscountUsage per discountId,
-		// but the helper must not coalesce silently — it must reflect what's in DB.
-		mockTx.discountUsage.findMany.mockResolvedValue([
-			{ id: "use_1", discountId: "disc_a" },
-			{ id: "use_2", discountId: "disc_a" },
-		]);
+	it("ne décrémente PAS quand le claim est perdu (appel concurrent passé avant)", async () => {
+		// [[DISC-USAGE-002]] Le cœur de l'idempotence : la remise à NULL est un CLAIM
+		// (`discountId: { not: null }`). Sans lui — c'était le cas de l'implémentation
+		// à base de findMany → decrement → deleteMany — deux transactions concurrentes
+		// lisaient le même usage et décrémentaient CHACUNE. Le garde `usageCount > 0`
+		// empêchait de passer sous zéro, pas de décompter deux fois une seule commande.
+		mockTx.order.findUnique.mockResolvedValue({ discountId: "disc_a" });
+		mockTx.order.updateMany.mockResolvedValue({ count: 0 });
 
-		const result = await releaseOrderDiscountUsageTx(mockTx as any, "order-dup");
+		const result = await releaseOrderDiscountUsageTx(mockTx as never, "order-race");
 
-		expect(result).toEqual(["disc_a", "disc_a"]);
-		expect(mockTx.discount.updateMany).toHaveBeenCalledTimes(2);
+		expect(result).toEqual([]);
+		expect(mockTx.discount.updateMany).not.toHaveBeenCalled();
 	});
 });

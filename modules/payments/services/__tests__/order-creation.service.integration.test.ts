@@ -168,7 +168,9 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 		const discount = await prisma.discount.findUnique({ where: { code } });
 		expect(discount?.usageCount).toBe(1);
 
-		const usages = await prisma.discountUsage.count({ where: { discountCode: code } });
+		// Le code promo vit en colonnes sur `Order` (audit V2, Lot 2) : une commande
+		// portant le code == une utilisation.
+		const usages = await prisma.order.count({ where: { discountCode: code } });
 		expect(usages).toBe(1);
 	});
 
@@ -278,7 +280,7 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 
 		// Tout-ou-rien : aucun résidu en DB.
 		expect(await prisma.order.count({ where: { customerEmail: email } })).toBe(0);
-		expect(await prisma.discountUsage.count({ where: { discountCode: code } })).toBe(0);
+		expect(await prisma.order.count({ where: { discountCode: code } })).toBe(0);
 		const discount = await prisma.discount.findUnique({ where: { code } });
 		expect(discount?.usageCount).toBe(0);
 	});
@@ -325,7 +327,7 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 		// L'incrément raw SQL est bien annulé avec le reste.
 		const discount = await prisma.discount.findUnique({ where: { code } });
 		expect(discount?.usageCount).toBe(0);
-		expect(await prisma.discountUsage.count({ where: { discountCode: code } })).toBe(0);
+		expect(await prisma.order.count({ where: { discountCode: code } })).toBe(0);
 		expect(await prisma.order.count({ where: { customerEmail: email } })).toBe(0);
 	});
 });

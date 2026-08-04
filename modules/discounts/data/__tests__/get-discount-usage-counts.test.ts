@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockPrisma, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
-		discountUsage: { count: vi.fn() },
+		order: { count: vi.fn() },
 	},
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
@@ -42,7 +42,7 @@ import { getDiscountUsageCounts } from "../get-discount-usage-counts";
 describe("getDiscountUsageCounts", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.discountUsage.count.mockResolvedValue(0);
+		mockPrisma.order.count.mockResolvedValue(0);
 	});
 
 	it("returns a zero count without querying when no customerEmail", async () => {
@@ -51,11 +51,11 @@ describe("getDiscountUsageCounts", () => {
 		});
 
 		expect(result.emailCount).toBe(0);
-		expect(mockPrisma.discountUsage.count).not.toHaveBeenCalled();
+		expect(mockPrisma.order.count).not.toHaveBeenCalled();
 	});
 
 	it("returns emailCount when customerEmail is provided", async () => {
-		mockPrisma.discountUsage.count.mockResolvedValueOnce(1);
+		mockPrisma.order.count.mockResolvedValueOnce(1);
 
 		const result = await getDiscountUsageCounts({
 			discountId: "discount-cuid-001",
@@ -65,21 +65,22 @@ describe("getDiscountUsageCounts", () => {
 		expect(result.emailCount).toBe(1);
 	});
 
-	it("queries discountUsage by discountId and customerEmail via order relation", async () => {
-		mockPrisma.discountUsage.count.mockResolvedValueOnce(1);
+	it("compte les Order portant ce discountId ET cet email (plus de join)", async () => {
+		mockPrisma.order.count.mockResolvedValueOnce(1);
 
 		await getDiscountUsageCounts({
 			discountId: "discount-cuid-001",
 			customerEmail: "guest@example.com",
 		});
 
-		expect(mockPrisma.discountUsage.count).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.discountUsage.count).toHaveBeenCalledWith({
+		expect(mockPrisma.order.count).toHaveBeenCalledTimes(1);
+		// Le code promo vit en colonnes sur `Order` (audit V2, Lot 2) : le prédicat
+		// est plat. L'ancienne requête traversait déjà la relation `order` pour
+		// atteindre `customerEmail` — la table de liaison n'ajoutait qu'un join.
+		expect(mockPrisma.order.count).toHaveBeenCalledWith({
 			where: {
 				discountId: "discount-cuid-001",
-				order: {
-					customerEmail: "guest@example.com",
-				},
+				customerEmail: "guest@example.com",
 			},
 		});
 	});

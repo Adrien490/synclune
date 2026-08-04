@@ -22,7 +22,7 @@ export const GET_DISCOUNT_SELECT = {
 	endsAt: true,
 	createdAt: true,
 	updatedAt: true,
-	_count: { select: { usages: true } },
+	_count: { select: { orders: true } },
 } as const satisfies Prisma.DiscountSelect;
 
 // ============================================================================
@@ -41,7 +41,7 @@ export const GET_DISCOUNTS_SELECT = {
 	isActive: true,
 	endsAt: true,
 	createdAt: true,
-	_count: { select: { usages: true } },
+	_count: { select: { orders: true } },
 } as const satisfies Prisma.DiscountSelect;
 
 // ============================================================================

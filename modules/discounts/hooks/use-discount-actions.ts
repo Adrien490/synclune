@@ -1,6 +1,12 @@
 "use client";
 
-import { Copy, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import {
+	CopyIcon,
+	PencilSimpleIcon,
+	ToggleLeftIcon,
+	ToggleRightIcon,
+	TrashIcon,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -40,11 +46,11 @@ export function useDiscountActions({ discount }: UseDiscountActionsParams): {
 		},
 	});
 
-	// Aligné sur la garde SERVEUR (`delete-discount.ts` refuse si `_count.usages > 0`).
+	// Aligné sur la garde SERVEUR (`delete-discount.ts` refuse si `_count.orders > 0`).
 	// On compte les lignes `DiscountUsage` et non le compteur dénormalisé
 	// `usageCount` : s'y fier proposait un « Supprimer » que le serveur rejetait
 	// ensuite.
-	const canDelete = discount._count.usages === 0;
+	const canDelete = discount._count.orders === 0;
 
 	const sections: ActionMenuSection[] = [
 		{
@@ -53,20 +59,20 @@ export function useDiscountActions({ discount }: UseDiscountActionsParams): {
 				{
 					key: "edit",
 					label: "Modifier",
-					icon: Pencil,
+					icon: PencilSimpleIcon,
 					href: `/admin/marketing/discounts/${discount.id}/modifier`,
 				},
 				{
 					key: "duplicate",
 					label: "Dupliquer",
-					icon: Copy,
+					icon: CopyIcon,
 					disabled: isDuplicating,
 					onSelect: () => duplicate(discount.id),
 				},
 				{
 					key: "toggle",
 					label: discount.isActive ? "Désactiver" : "Activer",
-					icon: discount.isActive ? PowerOff : Power,
+					icon: discount.isActive ? ToggleLeftIcon : ToggleRightIcon,
 					closesMenu: false,
 					onSelect: () =>
 						openToggleDialog({
@@ -84,7 +90,7 @@ export function useDiscountActions({ discount }: UseDiscountActionsParams): {
 					key: "delete",
 					label: "Supprimer",
 					description: canDelete ? undefined : "Ce code a déjà été utilisé",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive",
 					disabled: !canDelete,
 					closesMenu: false,

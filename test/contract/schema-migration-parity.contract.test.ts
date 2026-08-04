@@ -267,9 +267,15 @@ describe("schema.prisma ↔ migrations", () => {
 	// findMany/count/aggregate, aucune page admin, aucun export), puis à 23 au
 	// Lot C avec `RefundItem` (itemisation FABRIQUÉE — Stripe rembourse un montant,
 	// pas des articles — qui produisait en outre une ligne d'avoir ne s'additionnant
-	// pas ; l'avoir émet désormais une ligne unique au montant remboursé).
+	// pas ; l'avoir émet désormais une ligne unique au montant remboursé), puis à 22
+	// au Lot 1 de l'audit V2 (2026-08-05) avec `OrderNote` : une feature CRUD
+	// complète pour une note libre, alors qu'`OrderHistory.note` existe déjà et
+	// s'affiche sur le même écran de détail commande (arbitrage Adrien), puis à 21
+	// au Lot 2 avec `DiscountUsage` : une table à UNE ligne maximum par commande
+	// (le cookie panier porte un `discountCode` singulier), repliée en deux colonnes
+	// plates sur `Order` — `discountId` + le snapshot `discountCode`.
 	it("le parser reconstruit un état non trivial des deux côtés", () => {
-		expect(fromSchema.size).toBeGreaterThanOrEqual(23);
+		expect(fromSchema.size).toBeGreaterThanOrEqual(21);
 		expect(fromBaseline.size).toBe(fromSchema.size);
 		expect(fromBaseline.get("Order")?.has("invoiceNumber")).toBe(true);
 	});

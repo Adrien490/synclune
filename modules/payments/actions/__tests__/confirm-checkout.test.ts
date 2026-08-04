@@ -57,6 +57,8 @@ const {
 			order: {
 				findUnique: vi.fn(),
 				delete: vi.fn(),
+				// Claim de libération du code promo (audit V2, Lot 2).
+				updateMany: vi.fn(),
 			},
 			user: {
 				findUnique: vi.fn(),
@@ -64,10 +66,6 @@ const {
 			},
 			discount: {
 				updateMany: vi.fn(),
-			},
-			discountUsage: {
-				findMany: vi.fn(),
-				deleteMany: vi.fn(),
 			},
 			address: {
 				count: vi.fn(),
@@ -499,11 +497,10 @@ function setupDefaults() {
 	mockPrisma.$queryRaw.mockResolvedValue([]);
 	mockPrisma.order.delete.mockResolvedValue({});
 	mockPrisma.discount.updateMany.mockResolvedValue({ count: 1 });
-	mockPrisma.discountUsage.deleteMany.mockResolvedValue({ count: 1 });
-	// [[DISC-USAGE-002]] `cleanupFailedCheckout` libère désormais via
-	// `releaseOrderDiscountUsageTx`, qui lit d'abord les usages par `orderId`.
-	// Défaut « aucun usage » — les tests avec remise le surchargent.
-	mockPrisma.discountUsage.findMany.mockResolvedValue([]);
+	// [[DISC-USAGE-002]] `cleanupFailedCheckout` libère via
+	// `releaseOrderDiscountUsageTx`, qui CLAIME les colonnes `discountId`/`discountCode`
+	// d'`Order` (audit V2, Lot 2 — le code promo n'est plus une table de liaison).
+	mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 }
 
 // Chorégraphie des order.findUnique pour les tests exerçant cleanupFailedCheckout :
@@ -511,13 +508,21 @@ function setupDefaults() {
 // 3e = re-check SOUS l'advisory lock dans la tx (CHECKOUT-RACE-004). Sans ce helper,
 // le re-check in-tx lit le défaut null → cleanup traite la commande comme déjà
 // supprimée et ne delete rien.
+//
+// Le 4e appel — `releaseOrderDiscountUsageTx` lisant `discountId` (audit V2, Lot 2) —
+// tombe volontairement sur la valeur de BASE, pas sur la chaîne de `Once` : les tests
+// « sans remise » gardent `discountId: null`, ceux qui exercent le rollback la
+// surchargent. Allonger la chaîne aurait couplé chaque test au nombre exact de reads.
 function setupCleanupOrderState(
 	inTxState: { paymentStatus: string; stripePaymentIntentId: string } | null = {
 		paymentStatus: "PENDING",
 		stripePaymentIntentId: "pi_test_123",
 	},
+	/** Ce que lit `releaseOrderDiscountUsageTx` — `null` = commande sans code promo. */
+	releasedDiscountId: string | null = null,
 ) {
 	mockPrisma.order.findUnique
+		.mockResolvedValue({ discountId: releasedDiscountId })
 		.mockResolvedValueOnce(null)
 		.mockResolvedValueOnce({ paymentStatus: "PENDING", stripePaymentIntentId: "pi_test_123" })
 		.mockResolvedValueOnce(inTxState);
@@ -1559,11 +1564,6 @@ describe("confirmCheckout", () => {
 				appliedDiscountId: "disc-001",
 				appliedDiscountCode: "SAVE10",
 			});
-			// [[DISC-USAGE-002]] La libération se fait par `orderId` : le service
-			// canonique lit les usages puis décrémente par `discountId`.
-			mockPrisma.discountUsage.findMany.mockResolvedValue([
-				{ id: "usage-1", discountId: "disc-001" },
-			]);
 		});
 
 		it("should rollback discount usage when cleanup triggered by succeeded PI", async () => {
@@ -1572,12 +1572,15 @@ describe("confirmCheckout", () => {
 				type: "invalid_request_error",
 			});
 			mockStripe.paymentIntents.update.mockRejectedValue(error);
-			setupCleanupOrderState();
+			// [[DISC-USAGE-002]] Le service canonique lit `Order.discountId` puis
+			// décrémente par cet id.
+			setupCleanupOrderState(undefined, "disc-001");
 
 			await confirmCheckout(createValidData({ discountCode: "SAVE10" }));
 
-			expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
-				where: { orderId: "order-001" },
+			expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+				where: { id: "order-001", discountId: { not: null } },
+				data: { discountId: null, discountCode: null },
 			});
 			// [[DISC-USAGE-002]] Décrément par `id` (via les usages de la commande),
 			// plus par `code` : un renommage admin du code entre la création de la
@@ -1594,12 +1597,15 @@ describe("confirmCheckout", () => {
 				type: "invalid_request_error",
 			});
 			mockStripe.paymentIntents.update.mockRejectedValue(error);
-			setupCleanupOrderState();
+			// [[DISC-USAGE-002]] Le service canonique lit `Order.discountId` puis
+			// décrémente par cet id.
+			setupCleanupOrderState(undefined, "disc-001");
 
 			await confirmCheckout(createValidData({ discountCode: "SAVE10" }));
 
-			expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
-				where: { orderId: "order-001" },
+			expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+				where: { id: "order-001", discountId: { not: null } },
+				data: { discountId: null, discountCode: null },
 			});
 			// [[DISC-USAGE-002]] Décrément par `id` (via les usages de la commande),
 			// plus par `code` : un renommage admin du code entre la création de la
@@ -1664,17 +1670,15 @@ describe("confirmCheckout", () => {
 			mockStripe.paymentIntents.update.mockRejectedValue(
 				new mockCircuitBreakerErrorClass("paymentIntents"),
 			);
-			setupCleanupOrderState();
 			// [[DISC-USAGE-002]] La libération passe par `releaseOrderDiscountUsageTx`,
-			// qui lit les usages par `orderId` avant de décrémenter.
-			mockPrisma.discountUsage.findMany.mockResolvedValue([
-				{ id: "usage-1", discountId: "disc-001" },
-			]);
+			// qui lit `Order.discountId` avant de décrémenter.
+			setupCleanupOrderState(undefined, "disc-001");
 
 			await confirmCheckout(createValidData({ discountCode: "PROMO10" }));
 
-			expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
-				where: { orderId: "order-001" },
+			expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+				where: { id: "order-001", discountId: { not: null } },
+				data: { discountId: null, discountCode: null },
 			});
 			// Décrément par `id`, plus par `code` : un renommage admin du code entre la
 			// création de la commande et le rollback ratait la ligne.

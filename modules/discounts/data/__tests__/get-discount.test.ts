@@ -42,7 +42,7 @@ vi.mock("../../constants/discount.constants", () => ({
 		usageCount: true,
 		createdAt: true,
 		updatedAt: true,
-		_count: { select: { usages: true } },
+		_count: { select: { orders: true } },
 	},
 }));
 
@@ -80,7 +80,7 @@ function makeDiscount(overrides: Record<string, unknown> = {}) {
 		endsAt: null,
 		createdAt: new Date("2024-01-01"),
 		updatedAt: new Date("2024-01-10"),
-		_count: { usages: 42 },
+		_count: { orders: 42 },
 		...overrides,
 	};
 }

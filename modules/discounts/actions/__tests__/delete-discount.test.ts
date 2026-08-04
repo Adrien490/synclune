@@ -108,13 +108,13 @@ const validFormData = createFormData({ id: "disc-123" });
 const discountWithNoUsages = {
 	id: "disc-123",
 	code: "PROMO20",
-	_count: { usages: 0 },
+	_count: { orders: 0 },
 };
 
 const discountWithUsages = {
 	id: "disc-123",
 	code: "PROMO20",
-	_count: { usages: 5 },
+	_count: { orders: 5 },
 };
 
 // ============================================================================
@@ -235,7 +235,7 @@ describe("deleteDiscount", () => {
 			select: {
 				id: true,
 				code: true,
-				_count: { select: { usages: true } },
+				_count: { select: { orders: true } },
 			},
 		});
 	});

@@ -75,13 +75,13 @@ vi.mock("@/shared/components/responsive-action-menu", async () => {
 	return buildResponsiveActionMenuMock();
 });
 
-vi.mock("lucide-react", () => ({
-	Copy: () => <svg data-testid="icon-copy" />,
-	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
-	Pencil: () => <svg data-testid="icon-pencil" />,
-	Trash2: () => <svg data-testid="icon-trash" />,
-	Power: () => <svg data-testid="icon-power" />,
-	PowerOff: () => <svg data-testid="icon-power-off" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CopyIcon: () => <svg data-testid="icon-copy" />,
+	DotsThreeVerticalIcon: () => <svg data-testid="icon-ellipsis" />,
+	PencilSimpleIcon: () => <svg data-testid="icon-pencil" />,
+	TrashIcon: () => <svg data-testid="icon-trash" />,
+	ToggleRightIcon: () => <svg data-testid="icon-power" />,
+	ToggleLeftIcon: () => <svg data-testid="icon-power-off" />,
 }));
 
 import { DiscountRowActions } from "../discount-row-actions";
@@ -104,7 +104,7 @@ function createDiscount(overrides: Record<string, unknown> = {}): Discount {
 		endsAt: null,
 		usageCount: 0,
 		createdAt: new Date("2026-03-01T10:00:00Z"),
-		_count: { usages: 0 },
+		_count: { orders: 0 },
 		...overrides,
 	} as unknown as Discount;
 }
@@ -162,15 +162,15 @@ describe("DiscountRowActions", () => {
 	});
 
 	// La garde s'aligne sur le SERVEUR (`delete-discount.ts` refuse si
-	// `_count.usages > 0`), pas sur le compteur dénormalisé `usageCount`.
+	// `_count.orders > 0`), pas sur le compteur dénormalisé `usageCount`.
 	it("disables 'Supprimer' when the discount has usages", () => {
-		render(<DiscountRowActions discount={createDiscount({ _count: { usages: 3 } })} />);
+		render(<DiscountRowActions discount={createDiscount({ _count: { orders: 3 } })} />);
 		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
 		expect(deleteItem).toHaveAttribute("aria-disabled", "true");
 	});
 
 	it("enables 'Supprimer' when the discount has no usages", () => {
-		render(<DiscountRowActions discount={createDiscount({ _count: { usages: 0 } })} />);
+		render(<DiscountRowActions discount={createDiscount({ _count: { orders: 0 } })} />);
 		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
 		expect(deleteItem).not.toHaveAttribute("aria-disabled", "true");
 	});
@@ -180,7 +180,7 @@ describe("DiscountRowActions", () => {
 	// serveur rejettera ensuite.
 	it("keeps 'Supprimer' disabled after a counter reset that preserved usage history", () => {
 		render(
-			<DiscountRowActions discount={createDiscount({ usageCount: 0, _count: { usages: 3 } })} />,
+			<DiscountRowActions discount={createDiscount({ usageCount: 0, _count: { orders: 3 } })} />,
 		);
 		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
 		expect(deleteItem).toHaveAttribute("aria-disabled", "true");

@@ -16,6 +16,11 @@ type DiscountUsageCountsResult = {
  * Récupère le compteur d'utilisation d'un code promo par email de commande —
  * seule identité de la limite `maxUsagePerUser` depuis le retrait de
  * `DiscountUsage.userId` (Lot 0 S1.5, parcours 100 % invité).
+ *
+ * Compte désormais sur `Order` directement : `DiscountUsage` a été replié en
+ * `Order.discountId`/`discountCode` (audit V2, Lot 2). Le prédicat est le même
+ * — l'ancienne requête traversait déjà la relation `order` pour atteindre
+ * `customerEmail`, la table de liaison n'ajoutait qu'un join.
  */
 export async function getDiscountUsageCounts(
 	params: DiscountUsageCountsParams,
@@ -40,12 +45,10 @@ export async function getDiscountUsageCounts(
 	let emailCount = 0;
 
 	if (customerEmail) {
-		emailCount = await prisma.discountUsage.count({
+		emailCount = await prisma.order.count({
 			where: {
 				discountId,
-				order: {
-					customerEmail,
-				},
+				customerEmail,
 			},
 		});
 	}

@@ -23,12 +23,10 @@ const {
 	const mockTx = {
 		$queryRaw: vi.fn(),
 		$executeRaw: vi.fn(),
-		order: { create: vi.fn() },
+		// `count` : le comptage `maxUsagePerUser` porte sur `Order` depuis le repli de
+		// `DiscountUsage` en colonnes (audit V2, Lot 2).
+		order: { create: vi.fn(), count: vi.fn() },
 		orderItem: { create: vi.fn() },
-		discountUsage: {
-			create: vi.fn(),
-			count: vi.fn(),
-		},
 	};
 
 	const mockPrisma = {
@@ -210,8 +208,7 @@ describe("createOrderInTransaction — stock verification", () => {
 		mockTx.$executeRaw.mockResolvedValue(1);
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 		mockTx.orderItem.create.mockResolvedValue({});
-		mockTx.discountUsage.create.mockResolvedValue({});
-		mockTx.discountUsage.count.mockResolvedValue(0);
+		mockTx.order.count.mockResolvedValue(0);
 		mockCalculateShipping.mockReturnValue(450);
 		mockGenerateOrderNumber.mockReturnValue("SYN-2026-0001");
 		mockGetValidImageUrl.mockReturnValue("https://example.com/image.jpg");
@@ -364,8 +361,7 @@ describe("createOrderInTransaction — shipping", () => {
 		mockTx.$executeRaw.mockResolvedValue(1);
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 		mockTx.orderItem.create.mockResolvedValue({});
-		mockTx.discountUsage.create.mockResolvedValue({});
-		mockTx.discountUsage.count.mockResolvedValue(0);
+		mockTx.order.count.mockResolvedValue(0);
 		mockGenerateOrderNumber.mockReturnValue("SYN-2026-0001");
 		mockGetValidImageUrl.mockReturnValue("https://example.com/image.jpg");
 	});
@@ -398,8 +394,7 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		mockTx.$queryRaw.mockResolvedValue([makeSkuRow()]);
 		mockTx.$executeRaw.mockResolvedValue(1);
 		mockTx.orderItem.create.mockResolvedValue({});
-		mockTx.discountUsage.create.mockResolvedValue({});
-		mockTx.discountUsage.count.mockResolvedValue(0);
+		mockTx.order.count.mockResolvedValue(0);
 		mockCalculateShipping.mockReturnValue(450);
 		mockGenerateOrderNumber.mockReturnValue("SYN-2026-0001");
 		mockGetValidImageUrl.mockReturnValue("https://example.com/image.jpg");
@@ -527,7 +522,6 @@ describe("createOrderInTransaction — order creation without discount", () => {
 
 		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
 		expect(itemCall.data.orderId).toBe("order_1");
-		expect(itemCall.data.productId).toBe("prod_1");
 		expect(itemCall.data.skuId).toBe("sku_1");
 		expect(itemCall.data.productTitle).toBe("Bague Étoile");
 		expect(itemCall.data.skuSku).toBe("SKU-001");
@@ -661,8 +655,7 @@ describe("createOrderInTransaction — discount flow", () => {
 		mockTx.$executeRaw.mockResolvedValue(1);
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 		mockTx.orderItem.create.mockResolvedValue({});
-		mockTx.discountUsage.create.mockResolvedValue({});
-		mockTx.discountUsage.count.mockResolvedValue(0);
+		mockTx.order.count.mockResolvedValue(0);
 		mockCalculateShipping.mockReturnValue(450);
 		mockGenerateOrderNumber.mockReturnValue("SYN-2026-0001");
 		mockGetValidImageUrl.mockReturnValue("https://example.com/image.jpg");
@@ -769,25 +762,30 @@ describe("createOrderInTransaction — discount flow", () => {
 			makeParams({ discountCode: "PROMO10", userId: "user_1" }),
 		);
 
-		expect(mockTx.discountUsage.create).toHaveBeenCalledWith({
-			data: {
-				discountId: "discount_1",
-				orderId: "order_1",
-				discountCode: "PROMO10",
-			},
-		});
+		// Audit V2, Lot 2 : plus de ligne `DiscountUsage` écrite après coup — les deux
+		// colonnes sont posées DANS le `order.create`, donc dans la même écriture que
+		// le reste de la commande.
+		const createArgs = mockTx.order.create.mock.calls.at(-1)?.[0] as {
+			data: { discountId?: string; discountCode?: string };
+		};
+		expect(createArgs.data.discountId).toBe("discount_1");
+		expect(createArgs.data.discountCode).toBe("PROMO10");
 		expect(result.appliedDiscountId).toBe("discount_1");
 		expect(result.appliedDiscountCode).toBe("PROMO10");
 		expect(result.discountAmount).toBe(598);
 	});
 
-	it("should not create DiscountUsage record and not increment when discountAmount is 0", async () => {
+	it("ne pose aucune colonne de code promo et n'incrémente pas quand discountAmount vaut 0", async () => {
 		mockCalculateDiscountWithExclusion.mockReturnValue(0);
 
 		await createOrderInTransaction(makeParams({ discountCode: "PROMO10" }));
 
 		expect(mockTx.$executeRaw).not.toHaveBeenCalled();
-		expect(mockTx.discountUsage.create).not.toHaveBeenCalled();
+		const createArgs = mockTx.order.create.mock.calls.at(-1)?.[0] as {
+			data: { discountId?: string; discountCode?: string };
+		};
+		expect(createArgs.data.discountId).toBeUndefined();
+		expect(createArgs.data.discountCode).toBeUndefined();
 	});
 
 	it("should not count per-user when maxUsagePerUser is set but no email (identity = email only)", async () => {
@@ -802,7 +800,7 @@ describe("createOrderInTransaction — discount flow", () => {
 			makeParams({ discountCode: "PROMO10", userId: "user_1", finalEmail: null }),
 		);
 
-		expect(mockTx.discountUsage.count).not.toHaveBeenCalled();
+		expect(mockTx.order.count).not.toHaveBeenCalled();
 	});
 
 	it("should query per-email usage count when maxUsagePerUser is set and finalEmail provided", async () => {
@@ -815,10 +813,10 @@ describe("createOrderInTransaction — discount flow", () => {
 			makeParams({ discountCode: "PROMO10", userId: null, finalEmail: "marie@example.com" }),
 		);
 
-		expect(mockTx.discountUsage.count).toHaveBeenCalledWith({
+		expect(mockTx.order.count).toHaveBeenCalledWith({
 			where: {
 				discountId: "discount_1",
-				order: { customerEmail: "marie@example.com" },
+				customerEmail: "marie@example.com",
 			},
 		});
 	});
@@ -838,10 +836,10 @@ describe("createOrderInTransaction — discount flow", () => {
 		);
 
 		// Count uses normalized email (lowercase + trim)
-		expect(mockTx.discountUsage.count).toHaveBeenCalledWith({
+		expect(mockTx.order.count).toHaveBeenCalledWith({
 			where: {
 				discountId: "discount_1",
-				order: { customerEmail: "marie@example.com" },
+				customerEmail: "marie@example.com",
 			},
 		});
 
@@ -855,7 +853,7 @@ describe("createOrderInTransaction — discount flow", () => {
 		// Default discount row has maxUsagePerUser: null
 		await createOrderInTransaction(makeParams({ discountCode: "PROMO10" }));
 
-		expect(mockTx.discountUsage.count).not.toHaveBeenCalled();
+		expect(mockTx.order.count).not.toHaveBeenCalled();
 	});
 });
 
@@ -869,8 +867,7 @@ describe("createOrderInTransaction — totals", () => {
 		mockTx.$queryRaw.mockResolvedValue([makeSkuRow()]);
 		mockTx.$executeRaw.mockResolvedValue(1);
 		mockTx.orderItem.create.mockResolvedValue({});
-		mockTx.discountUsage.create.mockResolvedValue({});
-		mockTx.discountUsage.count.mockResolvedValue(0);
+		mockTx.order.count.mockResolvedValue(0);
 		mockGenerateOrderNumber.mockReturnValue("SYN-2026-0001");
 		mockGetValidImageUrl.mockReturnValue("https://example.com/image.jpg");
 	});

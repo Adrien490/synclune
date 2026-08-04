@@ -49,7 +49,7 @@ export async function deleteDiscount(
 			select: {
 				id: true,
 				code: true,
-				_count: { select: { usages: true } },
+				_count: { select: { orders: true } },
 			},
 		});
 
@@ -57,7 +57,7 @@ export async function deleteDiscount(
 			return notFound("Code promo");
 		}
 
-		if (discount._count.usages > 0) {
+		if (discount._count.orders > 0) {
 			return error(DISCOUNT_ERROR_MESSAGES.HAS_USAGES);
 		}
 
