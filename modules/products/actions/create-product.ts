@@ -62,7 +62,10 @@ export async function createProduct(
 			// defaut sur : un appel sans champ `status` publiait immediatement le bijou.
 			status: formData.get("status") ?? undefined,
 			initialSku: {
-				sku: formData.get("initialSku.sku"),
+				// Plus de lecture de `initialSku.sku` : aucun formulaire ne rend ce champ et
+				// `createProductSchema` n'a pas cette clé — le code SKU est généré plus bas,
+				// dans la transaction. La lecture ne faisait qu'entretenir l'idée d'un champ
+				// saisissable.
 				priceInclTaxEuros: formData.get("initialSku.priceInclTaxEuros"),
 				compareAtPriceEuros: formData.get("initialSku.compareAtPriceEuros"),
 				inventory: formData.get("initialSku.inventory"),
@@ -138,7 +141,7 @@ export async function createProduct(
 				}
 				if (!productType.isActive) {
 					throw new BusinessError(
-						"Le type de bijou sélectionné est désactivé. Choisissez un type actif.",
+						"Le type de bijou sélectionné est désactivé. Choisis un type actif.",
 					);
 				}
 			}
@@ -295,9 +298,7 @@ export async function createProduct(
 			collectionTags.forEach((tag) => updateTag(tag));
 		}
 
-		// 10. Audit log
-
-		// 11. Success
+		// 10. Success
 		return success(
 			`Nouveau bijou « ${product.title} » dans l'atelier${
 				product.status === "PUBLIC" ? " — publié" : ""

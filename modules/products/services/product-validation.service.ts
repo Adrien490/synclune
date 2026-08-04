@@ -1,6 +1,14 @@
 /**
  * Service de validation metier pour les produits
  * Fonctions pures sans effets de bord
+ *
+ * ⚠️ Ces `errorMessage` ne sont pas des libellés de log : ils remontent TELS QUELS
+ * à l'admin, en toast, depuis `create-product` et `update-product`. Deux règles en
+ * découlent, toutes deux enfreintes jusqu'à l'audit du 2026-08-04 :
+ *
+ * - **tutoiement** (CLAUDE.md § Voix) — les sept messages vouvoyaient ;
+ * - **aucun nom d'enum** — ils disaient « PUBLIC » et « DRAFT » là où l'interface
+ *   écrit « En vente » et « Brouillon ». L'admin lisait le vocabulaire de la base.
  */
 
 type ProductPublicationValidation = {
@@ -37,8 +45,7 @@ export function validateProductForPublication(
 	if (!product.title || product.title.trim().length === 0) {
 		return {
 			isValid: false,
-			errorMessage:
-				"Impossible de publier ce produit car le titre est vide. Veuillez renseigner un titre.",
+			errorMessage: "Impossible de publier ce produit : son titre est vide. Renseigne un titre.",
 		};
 	}
 
@@ -50,7 +57,7 @@ export function validateProductForPublication(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de publier ce produit car il n'a aucune variante active. Veuillez activer au moins une variante avant de publier.",
+				"Impossible de publier ce produit : il n'a aucune variante active. Active au moins une variante avant de publier.",
 		};
 	}
 
@@ -60,7 +67,7 @@ export function validateProductForPublication(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de publier ce produit car aucune variante active n'a de stock. Veuillez ajouter du stock à au moins une variante.",
+				"Impossible de publier ce produit : aucune variante active n'a de stock. Ajoute du stock à au moins une variante.",
 		};
 	}
 
@@ -73,7 +80,7 @@ export function validateProductForPublication(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de publier ce produit car aucune variante active n'a d'image principale. Veuillez ajouter une image à au moins une variante.",
+				"Impossible de publier ce produit : aucune variante active n'a d'image principale. Ajoute une image à au moins une variante.",
 		};
 	}
 
@@ -87,7 +94,7 @@ export function validateProductForPublication(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de publier ce produit : aucune variante active n'a à la fois du stock et une image. Veuillez compléter au moins une variante.",
+				"Impossible de publier ce produit : aucune variante active n'a à la fois du stock et une image. Complète au moins une variante.",
 		};
 	}
 
@@ -112,7 +119,7 @@ export function validatePublicProductCreation(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de créer un produit PUBLIC avec une variante inactive. Veuillez activer la variante ou créer le produit en DRAFT.",
+				"Impossible de mettre ce produit en vente avec une variante inactive. Active la variante, ou enregistre-le en brouillon.",
 		};
 	}
 
@@ -120,7 +127,7 @@ export function validatePublicProductCreation(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de créer un produit PUBLIC avec un stock à 0. Veuillez ajouter du stock ou créer le produit en DRAFT.",
+				"Impossible de mettre ce produit en vente avec un stock à 0. Ajoute du stock, ou enregistre-le en brouillon.",
 		};
 	}
 

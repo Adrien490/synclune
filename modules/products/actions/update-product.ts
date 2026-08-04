@@ -253,7 +253,7 @@ export async function updateProduct(
 					// isActive : uniquement sur changement (cf. `typeIdChanged` etape 6).
 					if (typeIdChanged && !productType.isActive) {
 						throw new BusinessError(
-							"Le type de bijou sélectionné est désactivé. Choisissez un type actif.",
+							"Le type de bijou sélectionné est désactivé. Choisis un type actif.",
 						);
 					}
 				}

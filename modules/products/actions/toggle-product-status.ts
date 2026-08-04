@@ -135,8 +135,13 @@ export async function toggleProductStatus(
 		// 5.6. Verifier si le produit a des commandes (warning informatif pour ARCHIVED)
 		let warningMessage: string | undefined;
 		if (newStatus === "ARCHIVED") {
+			// Compte via la relation SKU, et non via un `OrderItem.productId` : cette
+			// colonne a été retirée (audit V2, Lot 1). `OrderItem.skuId` est en
+			// `onDelete: Restrict`, donc le SKU existe toujours — là où l'ancien
+			// pointeur, nullable et en `SetNull`, aurait compté 0 pour un produit
+			// dont la ligne avait été détachée.
 			const orderItemsCount = await prisma.orderItem.count({
-				where: { productId },
+				where: { sku: { productId } },
 			});
 
 			if (orderItemsCount > 0) {
