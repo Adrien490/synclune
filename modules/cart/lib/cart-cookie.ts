@@ -40,7 +40,7 @@ const DISCOUNT_CODE_REGEX = /^[A-Z0-9_-]{1,30}$/;
 const MAX_PRICE_AT_ADD = 1_000_000;
 
 /** Une ligne du panier telle qu'elle vit dans le cookie. */
-export interface CartCookieItem {
+interface CartCookieItem {
 	skuId: string;
 	quantity: number;
 	/**

@@ -28,7 +28,7 @@ const CART_GUARD_SKU_SELECT = {
 	},
 } as const;
 
-export interface CartGuardItem {
+interface CartGuardItem {
 	/** Le skuId — identité de la ligne depuis le passage en cookie. */
 	id: string;
 	skuId: string;

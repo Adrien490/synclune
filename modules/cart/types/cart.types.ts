@@ -36,7 +36,7 @@ export interface CartItem {
  * panier vide. Les appelants qui testaient `!cart` peuvent tester
  * `cart.items.length === 0`.
  */
-export interface CartView {
+interface CartView {
 	items: CartItem[];
 	/** Code promo appliqué et TOUJOURS éligible, `null` sinon (re-dérivé à la lecture). */
 	appliedDiscountCode: string | null;

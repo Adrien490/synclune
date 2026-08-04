@@ -73,12 +73,3 @@ export async function validateCart(): Promise<ValidateCartResult> {
 		};
 	}
 }
-
-/**
- * Variante simplifiée pour vérifier rapidement si le panier est valide
- * @returns true si valide, false sinon
- */
-export async function isCartValid(): Promise<boolean> {
-	const result = await validateCart();
-	return result.isValid;
-}
