@@ -4,6 +4,7 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
 import { MultiSelect, type MultiSelectOption } from "@/shared/components/multi-select";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 
 interface MultiSelectFieldProps {
 	label?: string;
@@ -25,7 +26,7 @@ export const MultiSelectField = ({
 }: MultiSelectFieldProps) => {
 	const field = useFieldContext<string[]>();
 
-	const hasError = field.state.meta.errors.length > 0;
+	const hasError = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -64,7 +65,10 @@ export const MultiSelectField = ({
 			 */}
 			<input type="hidden" name={field.name} value={JSON.stringify(field.state.value)} />
 
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+			/>
 		</Field>
 	);
 };

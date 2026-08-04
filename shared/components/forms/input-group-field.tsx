@@ -4,8 +4,15 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { InputGroup, InputGroupInput } from "@/shared/components/ui/input-group";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { FieldLabel } from "./field-label";
+import { displayNumberValue, parseNumberInputValue } from "./number-input-value";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 
-interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputGroupFieldProps extends Omit<
+	React.InputHTMLAttributes<HTMLInputElement>,
+	// Le binding TanStack et l'`id` (contrat `id === field.name`,
+	// cf. field-name-id-contract.regression) appartiennent au composant.
+	"value" | "onChange" | "onBlur" | "name" | "id"
+> {
 	/**
 	 * Addon(s) à afficher avant ou après le champ.
 	 * Utiliser InputGroupAddon avec `align` pour positionner.
@@ -32,7 +39,7 @@ interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElemen
  * Supporte un `label` intégré optionnel (comme InputField).
  * Si omis, utilisez `<FieldLabel htmlFor={field.name}>` manuellement.
  *
- * Pour les champs numériques :
+ * Pour les champs numériques (SSOT `number-input-value.ts`) :
  * - Les valeurs vides retournent `null`
  * - La valeur `0` est correctement affichée et préservée
  *
@@ -51,49 +58,32 @@ interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElemen
  * ```
  */
 export const InputGroupField = ({
-	disabled,
 	label,
 	optional,
-	placeholder,
 	required,
 	type,
-	min,
-	max,
-	step,
 	children,
 	inputMode,
-	enterKeyHint,
-	autoComplete,
-	pattern,
 	description,
-	...props
+	...rest
 }: InputGroupFieldProps) => {
 	const field = useFieldContext<string | number | null>();
 
-	const hasError = field.state.meta.errors.length > 0;
+	const hasError = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (type === "number") {
-			const numValue = e.target.valueAsNumber;
-			// Si la valeur est NaN (champ vide), on retourne null pour les champs optionnels
-			field.handleChange(isNaN(numValue) ? null : numValue);
+			field.handleChange(parseNumberInputValue(e.target));
 		} else {
 			field.handleChange(e.target.value);
 		}
 	};
 
-	// Pour les inputs number, on affiche une chaîne vide uniquement si null, undefined ou NaN
-	// Le 0 doit pouvoir être affiché et saisi
-	const displayValue: string | number =
-		type === "number"
-			? field.state.value === null ||
-				(typeof field.state.value === "number" && isNaN(field.state.value))
-				? ""
-				: (field.state.value as number)
-			: (field.state.value ?? "");
+	const displayValue =
+		type === "number" ? displayNumberValue(field.state.value) : (field.state.value ?? "");
 
 	return (
 		<Field data-invalid={hasError}>
@@ -104,25 +94,19 @@ export const InputGroupField = ({
 			)}
 			<InputGroup>
 				<InputGroupInput
+					// `rest` d'abord : le binding TanStack et le contrat a11y ci-dessous
+					// doivent toujours gagner sur un attribut passé par l'appelant.
+					{...rest}
 					id={field.name}
-					min={min}
-					max={max}
-					step={step}
 					type={type}
-					disabled={disabled}
 					name={field.name}
-					placeholder={placeholder}
 					value={displayValue}
 					onChange={handleChange}
 					onBlur={field.handleBlur}
 					inputMode={inputMode ?? (type === "number" ? "decimal" : undefined)}
-					enterKeyHint={enterKeyHint}
-					autoComplete={autoComplete}
-					pattern={pattern}
 					aria-invalid={hasError}
 					aria-describedby={describedBy}
 					aria-required={required}
-					{...props}
 				/>
 				{children}
 			</InputGroup>
@@ -131,7 +115,10 @@ export const InputGroupField = ({
 					{description}
 				</p>
 			)}
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+			/>
 		</Field>
 	);
 };

@@ -12,7 +12,7 @@ import {
 	type ComponentProps,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, m, MotionConfig } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Search, X } from "lucide-react";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
@@ -299,160 +299,160 @@ function SearchInputInner({
 		}
 	};
 
+	// Pas de <MotionConfig reducedMotion="user"> local : le MotionProvider racine
+	// (app/layout.tsx) applique déjà exactement ce réglage à tout le body.
 	return (
-		<MotionConfig reducedMotion="user">
-			<form
-				role="search"
-				onSubmit={handleSubmit}
-				className={cn("flex gap-2", className)}
-				data-pending={isPending ? "" : undefined}
+		<form
+			role="search"
+			onSubmit={handleSubmit}
+			className={cn("flex gap-2", className)}
+			data-pending={isPending ? "" : undefined}
+		>
+			<div
+				className={cn(
+					"relative flex flex-1 items-center overflow-hidden",
+					"bg-background border-input border",
+					"hover:border-muted-foreground/40",
+					// Focus ring aligné au SSOT `focus-ring` (app/globals.css) —
+					// `focus-within` car le conteneur n'est pas focusable, l'<input> l'est.
+					"focus-within:border-ring focus-within:ring-ring focus-within:ring-[3px]",
+					"transition-[border-color,box-shadow] duration-200",
+					isPending && "border-ring/50",
+					maxLengthFlash && "ring-destructive/50 ring-2",
+					styles.container,
+				)}
 			>
 				<div
 					className={cn(
-						"relative flex flex-1 items-center overflow-hidden",
-						"bg-background border-input border",
-						"hover:border-muted-foreground/40",
-						// Focus ring aligné au SSOT `focus-ring` (app/globals.css) —
-						// `focus-within` car le conteneur n'est pas focusable, l'<input> l'est.
-						"focus-within:border-ring focus-within:ring-ring focus-within:ring-[3px]",
-						"transition-[border-color,box-shadow] duration-200",
-						isPending && "border-ring/50",
-						maxLengthFlash && "ring-destructive/50 ring-2",
-						styles.container,
+						"text-muted-foreground pointer-events-none absolute inset-y-0 flex items-center",
+						styles.iconLeft,
 					)}
 				>
-					<div
-						className={cn(
-							"text-muted-foreground pointer-events-none absolute inset-y-0 flex items-center",
-							styles.iconLeft,
+					<AnimatePresence mode="wait">
+						{isPending ? (
+							<m.span
+								key="loader"
+								// `aria-hidden` retire tout le sous-arbre de l'arbre d'accessibilité,
+								// dont le `role="status"` interne de `MiniDotsLoader` : sans ça, DEUX
+								// live regions parlaient à chaque frappe (le loader + la région
+								// sr-only « Recherche en cours… » ci-dessous), et
+								// `searchForm.locator('[role="status"]')` était ambigu côté E2E.
+								// Le loader est purement visuel ici — l'annonce est portée par la
+								// région sr-only, seule SSOT.
+								aria-hidden="true"
+								className="flex items-center"
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								transition={{ duration: MOTION_CONFIG.duration.fast }}
+							>
+								<MiniDotsLoader size="sm" color="primary" />
+							</m.span>
+						) : (
+							<m.span
+								key="search"
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								transition={{ duration: MOTION_CONFIG.duration.fast }}
+							>
+								<Search className="size-4" aria-hidden="true" />
+							</m.span>
 						)}
-					>
-						<AnimatePresence mode="wait">
-							{isPending ? (
-								<m.span
-									key="loader"
-									// `aria-hidden` retire tout le sous-arbre de l'arbre d'accessibilité,
-									// dont le `role="status"` interne de `MiniDotsLoader` : sans ça, DEUX
-									// live regions parlaient à chaque frappe (le loader + la région
-									// sr-only « Recherche en cours… » ci-dessous), et
-									// `searchForm.locator('[role="status"]')` était ambigu côté E2E.
-									// Le loader est purement visuel ici — l'annonce est portée par la
-									// région sr-only, seule SSOT.
-									aria-hidden="true"
-									className="flex items-center"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-									exit={{ opacity: 0 }}
-									transition={{ duration: MOTION_CONFIG.duration.fast }}
-								>
-									<MiniDotsLoader size="sm" color="primary" />
-								</m.span>
-							) : (
-								<m.span
-									key="search"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-									exit={{ opacity: 0 }}
-									transition={{ duration: MOTION_CONFIG.duration.fast }}
-								>
-									<Search className="size-4" aria-hidden="true" />
-								</m.span>
-							)}
-						</AnimatePresence>
-					</div>
-
-					<form.AppField
-						name="search"
-						validators={{
-							onChangeAsync: async ({ value }) => {
-								handleSearch(value);
-								return undefined;
-							},
-							onChangeAsyncDebounceMs: debounceMs,
-						}}
-					>
-						{(field) => (
-							<>
-								<Input
-									ref={inputRef}
-									autoComplete="off"
-									autoCorrect="off"
-									autoCapitalize="off"
-									spellCheck={false}
-									// eslint-disable-next-line jsx-a11y/no-autofocus
-									autoFocus={autoFocus}
-									role={ariaExpanded !== undefined ? "combobox" : undefined}
-									aria-expanded={ariaExpanded}
-									aria-controls={ariaControls}
-									aria-activedescendant={activeDescendantId}
-									type="search"
-									inputMode="search"
-									enterKeyHint="search"
-									maxLength={TEXT_LIMITS.SEARCH.max}
-									value={field.state.value}
-									onChange={(e) => {
-										field.handleChange(e.target.value);
-										onValueChange?.(e.target.value);
-									}}
-									onKeyDown={(e) => {
-										handleKeyDown(e, field.state.value);
-										externalKeyDown?.(e);
-									}}
-									className={cn(
-										"border-none shadow-none focus-visible:ring-0",
-										"bg-transparent",
-										"placeholder:text-muted-foreground/70",
-										"transition-[color,background-color] duration-150",
-										"[&::-webkit-search-cancel-button]:appearance-none",
-										styles.input,
-									)}
-									placeholder={placeholder}
-									aria-label={ariaLabel ?? placeholder}
-									aria-busy={isPending}
-									aria-describedby={[statusId, ariaDescribedBy].filter(Boolean).join(" ")}
-								/>
-
-								<AnimatePresence mode="wait">
-									{field.state.value && (
-										<m.div
-											initial={{ opacity: 0, scale: 0.8 }}
-											animate={{ opacity: 1, scale: 1 }}
-											exit={{ opacity: 0, scale: 0.8 }}
-											transition={{ duration: MOTION_CONFIG.duration.fast }}
-											className="absolute right-0"
-										>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												onClick={handleClear}
-												className={cn(
-													"text-muted-foreground hover:text-foreground transition-[transform,color] duration-150 active:scale-95",
-													styles.clearButton,
-												)}
-												aria-label="Effacer la recherche"
-											>
-												<X className={styles.clearIcon} aria-hidden="true" />
-											</Button>
-										</m.div>
-									)}
-								</AnimatePresence>
-							</>
-						)}
-					</form.AppField>
+					</AnimatePresence>
 				</div>
 
-				{/* Bouton submit sr-only pour l'accessibilité clavier (Enter géré nativement) */}
-				<button type="submit" className="sr-only">
-					Rechercher
-				</button>
+				<form.AppField
+					name="search"
+					validators={{
+						onChangeAsync: async ({ value }) => {
+							handleSearch(value);
+							return undefined;
+						},
+						onChangeAsyncDebounceMs: debounceMs,
+					}}
+				>
+					{(field) => (
+						<>
+							<Input
+								ref={inputRef}
+								autoComplete="off"
+								autoCorrect="off"
+								autoCapitalize="off"
+								spellCheck={false}
+								// eslint-disable-next-line jsx-a11y/no-autofocus
+								autoFocus={autoFocus}
+								role={ariaExpanded !== undefined ? "combobox" : undefined}
+								aria-expanded={ariaExpanded}
+								aria-controls={ariaControls}
+								aria-activedescendant={activeDescendantId}
+								type="search"
+								inputMode="search"
+								enterKeyHint="search"
+								maxLength={TEXT_LIMITS.SEARCH.max}
+								value={field.state.value}
+								onChange={(e) => {
+									field.handleChange(e.target.value);
+									onValueChange?.(e.target.value);
+								}}
+								onKeyDown={(e) => {
+									handleKeyDown(e, field.state.value);
+									externalKeyDown?.(e);
+								}}
+								className={cn(
+									"border-none shadow-none focus-visible:ring-0",
+									"bg-transparent",
+									"placeholder:text-muted-foreground/70",
+									"transition-[color,background-color] duration-150",
+									"[&::-webkit-search-cancel-button]:appearance-none",
+									styles.input,
+								)}
+								placeholder={placeholder}
+								aria-label={ariaLabel ?? placeholder}
+								aria-busy={isPending}
+								aria-describedby={[statusId, ariaDescribedBy].filter(Boolean).join(" ")}
+							/>
 
-				{/* Live region for screen readers */}
-				<span id={statusId} role="status" aria-live="polite" className="sr-only">
-					{isPending ? "Recherche en cours…" : ""}
-				</span>
-			</form>
-		</MotionConfig>
+							<AnimatePresence mode="wait">
+								{field.state.value && (
+									<m.div
+										initial={{ opacity: 0, scale: 0.8 }}
+										animate={{ opacity: 1, scale: 1 }}
+										exit={{ opacity: 0, scale: 0.8 }}
+										transition={{ duration: MOTION_CONFIG.duration.fast }}
+										className="absolute right-0"
+									>
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon"
+											onClick={handleClear}
+											className={cn(
+												"text-muted-foreground hover:text-foreground transition-[transform,color] duration-150 active:scale-95",
+												styles.clearButton,
+											)}
+											aria-label="Effacer la recherche"
+										>
+											<X className={styles.clearIcon} aria-hidden="true" />
+										</Button>
+									</m.div>
+								)}
+							</AnimatePresence>
+						</>
+					)}
+				</form.AppField>
+			</div>
+
+			{/* Bouton submit sr-only pour l'accessibilité clavier (Enter géré nativement) */}
+			<button type="submit" className="sr-only">
+				Rechercher
+			</button>
+
+			{/* Live region for screen readers */}
+			<span id={statusId} role="status" aria-live="polite" className="sr-only">
+				{isPending ? "Recherche en cours…" : ""}
+			</span>
+		</form>
 	);
 }
 

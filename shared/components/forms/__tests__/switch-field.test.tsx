@@ -5,10 +5,18 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockHandleChange, mockHandleBlur } = vi.hoisted(() => ({
-	mockHandleChange: vi.fn(),
-	mockHandleBlur: vi.fn(),
-}));
+const { mockHandleChange, mockHandleBlur, fakeFormStore } = vi.hoisted(() => {
+	const fakeFormStore = {
+		state: { submissionAttempts: 0 },
+		get: () => fakeFormStore.state,
+		subscribe: () => ({ unsubscribe: () => {} }),
+	};
+	return {
+		mockHandleChange: vi.fn(),
+		mockHandleBlur: vi.fn(),
+		fakeFormStore,
+	};
+});
 
 // ============================================================================
 // MODULE MOCKS
@@ -19,8 +27,9 @@ vi.mock("@/shared/lib/form-context", () => ({
 		name: "test-switch",
 		state: {
 			value: false,
-			meta: { errors: [] },
+			meta: { errors: [], isBlurred: true },
 		},
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 	})),
@@ -91,9 +100,10 @@ function makeFieldContext(overrides: Record<string, unknown> = {}) {
 		name: "test-switch",
 		state: {
 			value: false,
-			meta: { errors: [] },
+			meta: { errors: [], isBlurred: true },
 			...(overrides.state as object),
 		},
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 		...overrides,
@@ -129,7 +139,7 @@ describe("SwitchField", () => {
 
 	it("reflects default off state from field value", () => {
 		vi.mocked(useFieldContext).mockReturnValue(
-			makeFieldContext({ state: { value: false, meta: { errors: [] } } }) as any,
+			makeFieldContext({ state: { value: false, meta: { errors: [], isBlurred: true } } }) as any,
 		);
 		render(<SwitchField />);
 		expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
@@ -137,7 +147,7 @@ describe("SwitchField", () => {
 
 	it("reflects checked state when field value is true", () => {
 		vi.mocked(useFieldContext).mockReturnValue(
-			makeFieldContext({ state: { value: true, meta: { errors: [] } } }) as any,
+			makeFieldContext({ state: { value: true, meta: { errors: [], isBlurred: true } } }) as any,
 		);
 		render(<SwitchField />);
 		expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
@@ -156,7 +166,7 @@ describe("SwitchField", () => {
 
 	it("calls handleChange with false when on switch is toggled", () => {
 		vi.mocked(useFieldContext).mockReturnValue(
-			makeFieldContext({ state: { value: true, meta: { errors: [] } } }) as any,
+			makeFieldContext({ state: { value: true, meta: { errors: [], isBlurred: true } } }) as any,
 		);
 		render(<SwitchField />);
 		fireEvent.click(screen.getByRole("switch"));

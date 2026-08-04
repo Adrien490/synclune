@@ -1,5 +1,6 @@
 // Device detection hooks
-export { useIsTouchDevice } from "./use-touch-device";
+// (`useIsTouchDevice` n'est pas ré-exporté ici : ses ~11 consommateurs l'importent
+// tous directement depuis `@/shared/hooks/use-touch-device`.)
 export { useMediaQuery } from "./use-media-query";
 
 // State & Effects hooks

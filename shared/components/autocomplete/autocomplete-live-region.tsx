@@ -1,4 +1,11 @@
 interface AutocompleteLiveRegionProps {
+	/**
+	 * Gate sur l'état ouvert du combobox : sans lui, une recherche relancée
+	 * APRÈS sélection (le hook checkout re-cherche l'adresse complète écrite
+	 * par onSelect) faisait annoncer « Recherche en cours » puis « N résultats
+	 * trouvés » alors que la liste était fermée et la saisie terminée.
+	 */
+	isOpen: boolean;
 	isLoading: boolean;
 	hasResults: boolean;
 	hasValidQuery: boolean;
@@ -6,6 +13,7 @@ interface AutocompleteLiveRegionProps {
 }
 
 export function AutocompleteLiveRegion({
+	isOpen,
 	isLoading,
 	hasResults,
 	hasValidQuery,
@@ -13,13 +21,15 @@ export function AutocompleteLiveRegion({
 }: AutocompleteLiveRegionProps) {
 	return (
 		<span className="sr-only" aria-live="polite">
-			{isLoading
-				? "Recherche en cours"
-				: hasResults
-					? `${itemCount} résultat${itemCount > 1 ? "s" : ""} trouvé${itemCount > 1 ? "s" : ""}`
-					: hasValidQuery
-						? "Aucun résultat"
-						: ""}
+			{!isOpen
+				? ""
+				: isLoading
+					? "Recherche en cours"
+					: hasResults
+						? `${itemCount} résultat${itemCount > 1 ? "s" : ""} trouvé${itemCount > 1 ? "s" : ""}`
+						: hasValidQuery
+							? "Aucun résultat"
+							: ""}
 		</span>
 	);
 }

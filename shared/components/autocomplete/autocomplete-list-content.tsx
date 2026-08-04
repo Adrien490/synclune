@@ -148,7 +148,12 @@ function AutocompleteLoadingSkeletons({
 	return (
 		<>
 			{[...Array<unknown>(count)].map((_, i) => (
-				<li key={`skeleton-${i}`} className="min-h-11 p-3 md:min-h-0 md:py-2" aria-hidden="true">
+				<li
+					key={`skeleton-${i}`}
+					role="presentation"
+					className="min-h-11 p-3 md:min-h-0 md:py-2"
+					aria-hidden="true"
+				>
 					<div className="flex items-center gap-3">
 						{hasImage && (
 							<Skeleton
@@ -182,8 +187,10 @@ function AutocompleteEmptyState({
 	noResultsDescription: string;
 	action?: ReactNode;
 }) {
+	// role="presentation" : seuls option/group sont des enfants valides d'un
+	// listbox — le rôle listitem implicite du <li> serait signalé par axe.
 	return (
-		<li className="w-full">
+		<li role="presentation" className="w-full">
 			<Empty>
 				<EmptyHeader>
 					<EmptyMedia>
@@ -209,7 +216,7 @@ function AutocompleteErrorState({
 }) {
 	const haptic = useHaptic();
 	return (
-		<li className="w-full">
+		<li role="presentation" className="w-full">
 			<Empty>
 				<EmptyHeader>
 					<EmptyMedia>
@@ -281,7 +288,7 @@ function AutocompleteItem<T>({
 			aria-setsize={itemCount}
 			className={cn(
 				"min-h-11 cursor-pointer touch-manipulation p-3 transition-colors duration-150 select-none [-webkit-tap-highlight-color:transparent] md:min-h-0 md:py-2",
-				isActive ? "bg-accent" : "bg-card hover:bg-muted active:bg-accent",
+				isActive ? "bg-accent" : "hover:bg-muted active:bg-accent",
 			)}
 			onClick={() => onSelect(item)}
 			onPointerEnter={(e) => {

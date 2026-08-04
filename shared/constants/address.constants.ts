@@ -20,13 +20,13 @@ export const ADDRESS_CONSTANTS = {
 	 */
 	MAX_FULL_NAME_LENGTH: 100,
 	MIN_ADDRESS_LENGTH: 5,
-	// Aligned with Prisma `Address.address1/address2 VarChar(255)` and
-	// `Order.shippingAddress1/billingAddress1 VarChar(255)` snapshot fields.
+	// Aligned with Prisma `Order.shippingAddress1/shippingAddress2 VarChar(255)`
+	// snapshot fields.
 	MAX_ADDRESS_LENGTH: 255,
 	MIN_CITY_LENGTH: 2,
-	// Aligned with Prisma `Address.city VarChar(100)` and `Order.shippingCity VarChar(100)`.
+	// Aligned with Prisma `Order.shippingCity VarChar(100)`.
 	MAX_CITY_LENGTH: 100,
-	// Aligned with Prisma `Order.shippingPostalCode/billingPostalCode VarChar(10)`.
+	// Aligned with Prisma `Order.shippingPostalCode VarChar(10)`.
 	MAX_POSTAL_CODE_LENGTH: 10,
 	POSTAL_CODE_REGEX: /^[A-Za-z0-9]{2,4}[\s-]?[A-Za-z0-9]{2,4}$/,
 	DEFAULT_COUNTRY: "FR",

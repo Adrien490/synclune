@@ -23,6 +23,7 @@ describe("AutocompleteLiveRegion", () => {
 	it("has aria-live='polite'", () => {
 		const { container } = render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={false}
 				hasResults={false}
 				hasValidQuery={false}
@@ -37,6 +38,7 @@ describe("AutocompleteLiveRegion", () => {
 	it("does NOT set aria-atomic (avoids re-announcing full text on rapid transitions)", () => {
 		const { container } = render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={false}
 				hasResults={false}
 				hasValidQuery={false}
@@ -53,6 +55,7 @@ describe("AutocompleteLiveRegion", () => {
 	it("shows 'Recherche en cours' when isLoading=true", () => {
 		render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={true}
 				hasResults={false}
 				hasValidQuery={true}
@@ -66,6 +69,7 @@ describe("AutocompleteLiveRegion", () => {
 	it("loading message takes priority over hasResults", () => {
 		render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={true}
 				hasResults={true}
 				hasValidQuery={true}
@@ -81,6 +85,7 @@ describe("AutocompleteLiveRegion", () => {
 	it("shows '1 résultat trouvé' for a single result", () => {
 		render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={false}
 				hasResults={true}
 				hasValidQuery={true}
@@ -94,6 +99,7 @@ describe("AutocompleteLiveRegion", () => {
 	it("shows '3 résultats trouvés' for multiple results", () => {
 		render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={false}
 				hasResults={true}
 				hasValidQuery={true}
@@ -107,6 +113,7 @@ describe("AutocompleteLiveRegion", () => {
 	it("shows '2 résultats trouvés' for exactly 2 results", () => {
 		render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={false}
 				hasResults={true}
 				hasValidQuery={true}
@@ -122,6 +129,7 @@ describe("AutocompleteLiveRegion", () => {
 	it("shows 'Aucun résultat' when hasValidQuery=true and no results", () => {
 		render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={false}
 				hasResults={false}
 				hasValidQuery={true}
@@ -132,11 +140,33 @@ describe("AutocompleteLiveRegion", () => {
 		expect(screen.getByText("Aucun résultat")).toBeInTheDocument();
 	});
 
+	// ─── Closed combobox ───────────────────────────────────────────────────
+
+	it("stays silent when isOpen=false, even while loading or with results", () => {
+		// Gate isOpen : sans lui, une recherche relancée APRÈS sélection (le hook
+		// checkout re-cherche l'adresse complète écrite par onSelect) faisait
+		// annoncer « Recherche en cours » puis « N résultats trouvés » alors que
+		// la liste était fermée et la saisie terminée.
+		const { container } = render(
+			<AutocompleteLiveRegion
+				isOpen={false}
+				isLoading={true}
+				hasResults={true}
+				hasValidQuery={true}
+				itemCount={5}
+			/>,
+		);
+
+		const span = container.firstChild as HTMLElement;
+		expect(span.textContent).toBe("");
+	});
+
 	// ─── No valid query ────────────────────────────────────────────────────
 
 	it("renders empty string when hasValidQuery=false and no results", () => {
 		const { container } = render(
 			<AutocompleteLiveRegion
+				isOpen={true}
 				isLoading={false}
 				hasResults={false}
 				hasValidQuery={false}

@@ -12,6 +12,4 @@ export { Fade } from "./fade";
 export { Reveal } from "./reveal";
 export { Stagger } from "./stagger";
 
-export { SplitTextCSS } from "./split-text-css";
-
 export { HandDrawnAccent, HandDrawnUnderline } from "./hand-drawn-accent";

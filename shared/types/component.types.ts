@@ -119,44 +119,6 @@ export interface FilterSheetWrapperProps {
 }
 
 /**
- * Props pour le composant SectionTitle
- */
-export interface SectionTitleProps {
-	children: ReactNode;
-	id?: string;
-	className?: string;
-	/**
-	 * Niveau de titre semantique
-	 * @default "h2"
-	 */
-	as?: "h1" | "h2" | "h3";
-	/**
-	 * Variante de taille
-	 * @default "default"
-	 */
-	size?: "hero" | "default" | "small";
-	/**
-	 * Alignement du texte
-	 * @default "center"
-	 */
-	align?: "left" | "center" | "right";
-	/**
-	 * Graisse de la police
-	 * @default "light"
-	 */
-	weight?: "light" | "normal" | "medium" | "semibold";
-	/**
-	 * Utiliser l'italique (Fraunces italic)
-	 * @default false
-	 */
-	italic?: boolean;
-	/**
-	 * Schema.org itemProp attribute
-	 */
-	itemProp?: string;
-}
-
-/**
  * Props pour le composant SortSelect
  */
 export interface SortSelectProps {

@@ -30,7 +30,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 
 function renderAccordion(headingLevel?: 2 | 3 | 4 | 5 | 6) {
 	return render(
-		<Accordion type="single" collapsible>
+		<Accordion multiple={false}>
 			<AccordionItem value="item-1">
 				<AccordionTrigger headingLevel={headingLevel}>Question 1</AccordionTrigger>
 				<AccordionContent>Answer 1</AccordionContent>
@@ -95,9 +95,9 @@ describe("AccordionTrigger with headingLevel", () => {
 		expect(container.querySelector("h3")).toBeInTheDocument();
 	});
 
-	it("does not render explicit heading wrapper when headingLevel is not set (Radix renders default header)", () => {
+	it("does not render explicit heading wrapper when headingLevel is not set (Base UI renders a default header)", () => {
 		const { container } = render(
-			<Accordion type="single">
+			<Accordion multiple={false}>
 				<AccordionItem value="item-1">
 					<AccordionTrigger>No heading</AccordionTrigger>
 					<AccordionContent>Content</AccordionContent>

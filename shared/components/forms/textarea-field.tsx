@@ -4,6 +4,7 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 import { cn } from "@/shared/utils/cn";
 
 interface TextareaFieldProps extends React.ComponentProps<"textarea"> {
@@ -46,11 +47,14 @@ export const TextareaField = ({
 	...rest
 }: TextareaFieldProps) => {
 	const field = useFieldContext<string>();
-	const hasErrors = field.state.meta.errors.length > 0;
+	const hasErrors = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasErrors ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
-	const showFooter = hasErrors || (showCounter && maxLength);
+	// Le layout du pied ne dépend que de la config compteur, jamais de l'état
+	// d'erreur : brancher sur `hasErrors` remonterait `FieldError` à chaque
+	// bascule et couperait son animation grid-rows.
+	const withCounter = Boolean(showCounter && maxLength);
 
 	return (
 		<Field data-invalid={hasErrors}>
@@ -86,17 +90,21 @@ export const TextareaField = ({
 					{description}
 				</p>
 			)}
-			{showFooter ? (
+			{withCounter ? (
 				<div className="text-muted-foreground flex justify-between text-xs">
-					<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
-					{showCounter && maxLength && (
-						<span aria-live="polite">
-							{field.state.value.length}/{maxLength}
-						</span>
-					)}
+					<FieldError
+						id={`${field.name}-error`}
+						errors={hasErrors ? field.state.meta.errors : undefined}
+					/>
+					<span aria-live="polite">
+						{field.state.value.length}/{maxLength}
+					</span>
 				</div>
 			) : (
-				<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+				<FieldError
+					id={`${field.name}-error`}
+					errors={hasErrors ? field.state.meta.errors : undefined}
+				/>
 			)}
 		</Field>
 	);

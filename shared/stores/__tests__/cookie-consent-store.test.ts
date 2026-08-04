@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 
+import { COOKIE_CONSENT_CHANGE_EVENT } from "@/shared/lib/analytics/track";
 import type { CookieConsentStore } from "../cookie-consent-store";
 import type { StoreApi } from "zustand/vanilla";
 
@@ -149,6 +150,47 @@ describe("createCookieConsentStore", () => {
 			expect(store.getState().bannerVisible).toBe(true);
 			expect(store.getState().consentDate).toBeNull();
 			expect(store.getState().policyVersion).toBe(0);
+		});
+	});
+
+	describe("consent change event (Sentry Replay sync)", () => {
+		const listen = () => {
+			const listener = vi.fn();
+			window.addEventListener(COOKIE_CONSENT_CHANGE_EVENT, listener);
+			return {
+				listener,
+				detail: (call = 0) => (listener.mock.calls[call]?.[0] as CustomEvent).detail,
+				dispose: () => window.removeEventListener(COOKIE_CONSENT_CHANGE_EVENT, listener),
+			};
+		};
+
+		it("should emit accepted=true on acceptCookies", () => {
+			const { listener, detail, dispose } = listen();
+			store.getState().acceptCookies();
+
+			expect(listener).toHaveBeenCalledOnce();
+			expect(detail()).toEqual({ accepted: true });
+			dispose();
+		});
+
+		it("should emit accepted=false on rejectCookies", () => {
+			const { listener, detail, dispose } = listen();
+			store.getState().rejectCookies();
+
+			expect(listener).toHaveBeenCalledOnce();
+			expect(detail()).toEqual({ accepted: false });
+			dispose();
+		});
+
+		it("should emit accepted=false on resetConsent (withdrawal must stop sinks immediately)", () => {
+			store.getState().acceptCookies();
+
+			const { listener, detail, dispose } = listen();
+			store.getState().resetConsent();
+
+			expect(listener).toHaveBeenCalledOnce();
+			expect(detail()).toEqual({ accepted: false });
+			dispose();
 		});
 	});
 

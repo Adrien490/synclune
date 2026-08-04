@@ -4,6 +4,7 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "@/shared/components/forms/field-label";
 import { inputBaseStyles } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 import { cn } from "@/shared/utils/cn";
 import type { Country } from "react-phone-number-input";
 import type { Ref } from "react";
@@ -78,7 +79,7 @@ export const PhoneField = ({
 }: PhoneFieldProps) => {
 	const field = useFieldContext<string | undefined>();
 
-	const hasError = field.state.meta.errors.length > 0;
+	const hasError = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -115,7 +116,10 @@ export const PhoneField = ({
 					{description}
 				</p>
 			)}
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+			/>
 		</Field>
 	);
 };

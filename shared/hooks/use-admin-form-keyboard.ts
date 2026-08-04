@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 /**
  * Overlays qui consomment déjà Échap : le raccourci « retour à la liste » doit les

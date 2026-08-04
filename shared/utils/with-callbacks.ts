@@ -1,77 +1,85 @@
-import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { unstable_rethrow } from "next/navigation";
 
+import { GENERIC_ERROR_MESSAGE } from "@/shared/constants/error-messages";
 import { ActionStatus } from "@/shared/types/server-action";
 import type { ActionState } from "@/shared/types/server-action";
 import type { Callbacks } from "@/shared/types/callback.types";
 
-export const withCallbacks = <T extends ActionState | unknown = ActionState, R = unknown>(
+/**
+ * Extrait le `status` d'un résultat d'action sans présumer de sa forme
+ * (`undefined` pour un résultat custom qui n'en porte pas).
+ */
+export const getActionStatus = (result: unknown): ActionStatus | undefined => {
+	if (result !== null && typeof result === "object" && "status" in result) {
+		return (result as { status: ActionStatus }).status;
+	}
+	return undefined;
+};
+
+/**
+ * Un callback UI qui throw ne doit ni maquiller le résultat réel de l'action
+ * (la mutation serveur a déjà eu lieu — un état ERROR fabriqué pousserait
+ * l'utilisateur à re-soumettre) ni faire tomber le formulaire sur une error
+ * boundary. On échappe la pile courante : le handler global
+ * d'`instrumentation-client.ts` capture l'erreur vers Sentry.
+ */
+const dispatchSafely = (dispatch: () => void): void => {
+	try {
+		dispatch();
+	} catch (callbackError) {
+		setTimeout(() => {
+			throw callbackError;
+		});
+	}
+};
+
+export const withCallbacks = <T = ActionState, R = unknown>(
 	fn: (prev: T | undefined, formData: FormData) => Promise<T>,
 	callbacks: Callbacks<T, R>,
 ): ((prev: T | undefined, formData: FormData) => Promise<T>) => {
 	return async (prev: T | undefined, formData: FormData) => {
-		// Appel du callback de démarrage et récupération de la référence (pour les toasts par exemple)
+		// Référence retournée par onStart (ex: id du toast loading)
 		const reference = callbacks.onStart?.();
+		const end = () => {
+			if (reference != null) {
+				dispatchSafely(() => callbacks.onEnd?.(reference));
+			}
+		};
 
+		let result: T;
 		try {
-			const result = await fn(prev, formData);
-
-			// Appel du callback de fin si une référence est disponible
-			if (reference) {
-				callbacks.onEnd?.(reference);
-			}
-
-			// Appel du callback de succès si l'action a réussi
-			if (
-				result &&
-				typeof result === "object" &&
-				"status" in result &&
-				result.status === ActionStatus.SUCCESS
-			) {
-				callbacks.onSuccess?.(result);
-			}
-			// Appel du callback de warning si l'action a retourné un warning
-			else if (
-				result &&
-				typeof result === "object" &&
-				"status" in result &&
-				result.status === ActionStatus.WARNING
-			) {
-				callbacks.onWarning?.(result);
-			}
-			// Appel du callback d'erreur pour tous les autres cas
-			else if (
-				result &&
-				typeof result === "object" &&
-				"status" in result &&
-				result.status !== ActionStatus.SUCCESS &&
-				result.status !== ActionStatus.WARNING
-			) {
-				callbacks.onError?.(result);
-			}
-
-			return result;
+			result = await fn(prev, formData);
 		} catch (error) {
-			// Propager les erreurs de redirection Next.js (redirect() lance une exception)
-			if (isRedirectError(error)) {
-				throw error;
-			}
+			// Dismiss AVANT le re-throw : redirect() navigue sans démonter le Toaster
+			// (root layout), et un toast.loading n'expire jamais de lui-même.
+			end();
 
-			// Garantir que le callback de fin est appelé même en cas d'exception
-			// (important pour dismisser les toasts loading)
-			if (reference) {
-				callbacks.onEnd?.(reference);
-			}
+			// Signaux framework (redirect, notFound, forbidden…) : à laisser remonter
+			// à Next, pas à convertir en toast d'erreur.
+			unstable_rethrow(error);
 
-			// Créer un ActionState d'erreur pour les exceptions non catchées
+			// Vraie exception. Message générique : les erreurs métier arrivent déjà en
+			// ActionState via handleActionError, et en prod Next masque de toute façon
+			// le message serveur (en anglais) — le détail vit dans les logs serveur/Sentry.
 			const errorResult = {
 				status: ActionStatus.ERROR,
-				message: error instanceof Error ? error.message : "Une erreur inattendue est survenue",
+				message: GENERIC_ERROR_MESSAGE,
 			} as T;
-
-			// Appeler le callback d'erreur
-			callbacks.onError?.(errorResult);
-
+			dispatchSafely(() => callbacks.onError?.(errorResult));
 			return errorResult;
 		}
+
+		end();
+
+		const status = getActionStatus(result);
+		if (status === ActionStatus.SUCCESS) {
+			dispatchSafely(() => callbacks.onSuccess?.(result));
+		} else if (status === ActionStatus.WARNING) {
+			dispatchSafely(() => callbacks.onWarning?.(result));
+		} else if (status !== undefined && status !== ActionStatus.INITIAL) {
+			dispatchSafely(() => callbacks.onError?.(result));
+		}
+
+		return result;
 	};
 };

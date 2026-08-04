@@ -108,14 +108,17 @@ describe("SwipeableCard", () => {
 			expect(container.firstChild).toHaveClass("custom-class");
 		});
 
-		it("has touch-pan-y and overflow-hidden on container", () => {
+		it("has touch-pan-y and overflow-x-clip on container", () => {
 			const { container } = render(
 				<SwipeableCard>
 					<span>Content</span>
 				</SwipeableCard>,
 			);
 
-			expect(container.firstChild).toHaveClass("touch-pan-y", "overflow-hidden");
+			// overflow-x-clip et non overflow-hidden : l'axe vertical doit rester
+			// visible (tape/lift/glow de la ProductCard polaroid sur /favoris)
+			expect(container.firstChild).toHaveClass("touch-pan-y", "overflow-x-clip");
+			expect(container.firstChild).not.toHaveClass("overflow-hidden");
 		});
 	});
 

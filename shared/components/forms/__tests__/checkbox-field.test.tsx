@@ -5,10 +5,18 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockHandleChange, mockHandleBlur } = vi.hoisted(() => ({
-	mockHandleChange: vi.fn(),
-	mockHandleBlur: vi.fn(),
-}));
+const { mockHandleChange, mockHandleBlur, fakeFormStore } = vi.hoisted(() => {
+	const fakeFormStore = {
+		state: { submissionAttempts: 0 },
+		get: () => fakeFormStore.state,
+		subscribe: () => ({ unsubscribe: () => {} }),
+	};
+	return {
+		mockHandleChange: vi.fn(),
+		mockHandleBlur: vi.fn(),
+		fakeFormStore,
+	};
+});
 
 // ============================================================================
 // MODULE MOCKS
@@ -19,8 +27,9 @@ vi.mock("@/shared/lib/form-context", () => ({
 		name: "test-checkbox",
 		state: {
 			value: false,
-			meta: { errors: [] },
+			meta: { errors: [], isBlurred: true },
 		},
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 	})),
@@ -83,9 +92,10 @@ function makeFieldContext(overrides: Record<string, unknown> = {}) {
 		name: "test-checkbox",
 		state: {
 			value: false,
-			meta: { errors: [] },
+			meta: { errors: [], isBlurred: true },
 			...(overrides.state as object),
 		},
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 		...overrides,
@@ -121,7 +131,7 @@ describe("CheckboxField", () => {
 
 	it("reflects checked state from field value", () => {
 		vi.mocked(useFieldContext).mockReturnValue(
-			makeFieldContext({ state: { value: true, meta: { errors: [] } } }) as any,
+			makeFieldContext({ state: { value: true, meta: { errors: [], isBlurred: true } } }) as any,
 		);
 		render(<CheckboxField />);
 		expect(screen.getByRole("checkbox")).toBeChecked();
@@ -129,7 +139,7 @@ describe("CheckboxField", () => {
 
 	it("reflects unchecked state from field value", () => {
 		vi.mocked(useFieldContext).mockReturnValue(
-			makeFieldContext({ state: { value: false, meta: { errors: [] } } }) as any,
+			makeFieldContext({ state: { value: false, meta: { errors: [], isBlurred: true } } }) as any,
 		);
 		render(<CheckboxField />);
 		expect(screen.getByRole("checkbox")).not.toBeChecked();

@@ -2,6 +2,7 @@
 
 import { toast as sonnerToast } from "sonner";
 
+import { GENERIC_ERROR_MESSAGE } from "@/shared/constants/error-messages";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { MOBILE_MEDIA_QUERY } from "@/shared/hooks/use-mobile";
 import { announce } from "@/shared/utils/announce";
@@ -26,8 +27,6 @@ import { announce } from "@/shared/utils/announce";
  * Un seul rendu, mobile comme desktop : Sonner (`<AppToaster />` adapte position,
  * gestes et `visibleToasts` au viewport).
  */
-
-const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Merci de réessayer.";
 
 const TECHNICAL_ERROR_PATTERNS: readonly RegExp[] = [
 	/\bprisma\b/i,

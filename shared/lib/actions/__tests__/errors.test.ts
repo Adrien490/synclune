@@ -2,13 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { type ZodError, z } from "zod";
 import { ActionStatus } from "@/shared/types/server-action";
 
-const { mockIsRedirectError, mockLogger } = vi.hoisted(() => ({
-	mockIsRedirectError: vi.fn(),
+const { mockLogger } = vi.hoisted(() => ({
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}));
-
-vi.mock("next/dist/client/components/redirect-error", () => ({
-	isRedirectError: mockIsRedirectError,
 }));
 
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
@@ -41,14 +36,24 @@ describe("BusinessError", () => {
 describe("handleActionError", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
-		mockIsRedirectError.mockReturnValue(false);
 	});
 
+	// Erreurs framework réelles (pas de mock de `unstable_rethrow`) : mêmes
+	// digests que ceux produits par redirect()/notFound().
 	it("re-throws redirect errors", () => {
-		const redirectErr = new Error("NEXT_REDIRECT");
-		mockIsRedirectError.mockReturnValue(true);
+		const redirectErr = Object.assign(new Error("NEXT_REDIRECT"), {
+			digest: "NEXT_REDIRECT;push;/admin;307;",
+		});
 
 		expect(() => handleActionError(redirectErr)).toThrow(redirectErr);
+	});
+
+	it("re-throws notFound errors", () => {
+		const notFoundErr = Object.assign(new Error("NEXT_HTTP_ERROR_FALLBACK"), {
+			digest: "NEXT_HTTP_ERROR_FALLBACK;404",
+		});
+
+		expect(() => handleActionError(notFoundErr)).toThrow(notFoundErr);
 	});
 
 	it("converts ZodError to VALIDATION_ERROR", () => {

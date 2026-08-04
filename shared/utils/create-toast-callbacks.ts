@@ -1,7 +1,8 @@
 import { toast } from "@/shared/utils/toast";
 
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import type { CreateToastCallbacksOptions } from "@/shared/types/callback.types";
+import type { Callbacks, CreateToastCallbacksOptions } from "@/shared/types/callback.types";
+import { getActionStatus } from "@/shared/utils/with-callbacks";
 
 /**
  * Type guard pour vérifier si une valeur contient un message
@@ -25,7 +26,7 @@ export const hasMessage = (
  *
  * @template T - Type du résultat de l'action (défaut: ActionState)
  * @param options - Options de configuration
- * @returns Un objet avec les callbacks onStart, onEnd, onSuccess et onError
+ * @returns Un objet avec les callbacks onStart, onEnd, onSuccess, onWarning et onError
  *
  * @example
  * ```typescript
@@ -38,13 +39,12 @@ export const hasMessage = (
  * });
  * ```
  */
-export const createToastCallbacks = <T extends ActionState | unknown = ActionState>(
+export const createToastCallbacks = <T = ActionState>(
 	options: CreateToastCallbacksOptions<T> = {},
 ) => {
 	const {
 		loadingMessage,
 		showSuccessToast = true,
-		showWarningToast = true,
 		showErrorToast = true,
 		onSuccess: customOnSuccess,
 		onWarning: customOnWarning,
@@ -60,15 +60,13 @@ export const createToastCallbacks = <T extends ActionState | unknown = ActionSta
 			return undefined;
 		},
 		onEnd: (reference: string | number | undefined) => {
-			if (reference !== undefined) {
+			if (reference != null) {
 				toast.dismiss(reference);
 			}
 		},
 		onSuccess: (result: T) => {
-			// Call custom success callback if provided
 			customOnSuccess?.(result);
 
-			// Default toast behavior
 			if (showSuccessToast && hasMessage(result)) {
 				if (successAction) {
 					toast.success(result.message, {
@@ -80,29 +78,21 @@ export const createToastCallbacks = <T extends ActionState | unknown = ActionSta
 			}
 		},
 		onWarning: (result: T) => {
-			// Call custom warning callback if provided
 			customOnWarning?.(result);
 
-			// Default toast behavior - use warning toast
-			if (showWarningToast && hasMessage(result)) {
+			if (hasMessage(result)) {
 				toast.warning(result.message);
 			}
 		},
 		onError: (result: T) => {
-			// Call custom error callback if provided
 			customOnError?.(result);
 
-			// Skip toast for validation errors (already shown inline by form fields)
+			// Toast skippé pour les erreurs de validation, déjà affichées inline par les champs
 			if (showErrorToast && hasMessage(result)) {
-				const isValidationError =
-					typeof result === "object" &&
-					"status" in result &&
-					(result as unknown as { status: string }).status === ActionStatus.VALIDATION_ERROR;
-
-				if (!isValidationError) {
+				if (getActionStatus(result) !== ActionStatus.VALIDATION_ERROR) {
 					toast.error(result.message);
 				}
 			}
 		},
-	};
+	} satisfies Callbacks<T, string | number | undefined>;
 };

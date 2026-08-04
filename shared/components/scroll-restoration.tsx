@@ -38,15 +38,13 @@ export function ScrollRestoration() {
 			const saved = sessionStorage.getItem(key);
 			if (saved) {
 				const scrollY = parseInt(saved, 10);
-				// Delay to allow streaming content to render
+				// Delay to allow streaming content to render.
+				// "instant" inconditionnel : une RESTAURATION de position doit être
+				// un saut, pas un défilement animé — pour tout le monde, pas
+				// seulement sous reduced-motion (l'ancien ternaire avait d'ailleurs
+				// deux branches identiques).
 				requestAnimationFrame(() => {
-					const prefersReducedMotion = window.matchMedia(
-						"(prefers-reduced-motion: reduce)",
-					).matches;
-					window.scrollTo({
-						top: scrollY,
-						behavior: prefersReducedMotion ? "instant" : "instant",
-					});
+					window.scrollTo({ top: scrollY, behavior: "instant" });
 				});
 			}
 		}

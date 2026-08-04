@@ -27,7 +27,10 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 					"text-primary-foreground shadow-lg hover:shadow-xl",
 					"hover:bg-primary/90",
 					scaleClass,
-					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
+					// Masqué-puis-révélé au survol UNIQUEMENT là où le hover existe (can-hover) :
+					// sur tablette tactile ≥ sm, la flèche reste visible en permanence — le tap
+					// qui déclencherait le sticky-hover ouvre la lightbox, pas la révélation.
+					"sm:can-hover:opacity-0 sm:can-hover:group-hover:opacity-100 hidden sm:flex",
 					// WCAG 2.4.7 — visible au focus clavier (et révélé à l'arrivée du focus dans la galerie)
 					"sm:group-focus-within:opacity-100 sm:focus-visible:opacity-100",
 					transitionClass,
@@ -46,7 +49,10 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 					"text-primary-foreground shadow-lg hover:shadow-xl",
 					"hover:bg-primary/90",
 					scaleClass,
-					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
+					// Masqué-puis-révélé au survol UNIQUEMENT là où le hover existe (can-hover) :
+					// sur tablette tactile ≥ sm, la flèche reste visible en permanence — le tap
+					// qui déclencherait le sticky-hover ouvre la lightbox, pas la révélation.
+					"sm:can-hover:opacity-0 sm:can-hover:group-hover:opacity-100 hidden sm:flex",
 					// WCAG 2.4.7 — visible au focus clavier (et révélé à l'arrivée du focus dans la galerie)
 					"sm:group-focus-within:opacity-100 sm:focus-visible:opacity-100",
 					transitionClass,

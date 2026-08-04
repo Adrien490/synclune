@@ -111,11 +111,11 @@ describe("REDACT_PATHS", () => {
 		expect(REDACT_PATHS).toContain("context.phone");
 	});
 
-	it("includes customer/shipping/billing PII variants", () => {
+	// `customerPhone` et `billingPhone` ont disparu avec leurs colonnes
+	// (2026-08-04) : le seul téléphone du modèle Order est `shippingPhone`.
+	it("includes customer/shipping PII variants", () => {
 		expect(REDACT_PATHS).toContain("context.customerEmail");
-		expect(REDACT_PATHS).toContain("context.customerPhone");
 		expect(REDACT_PATHS).toContain("context.shippingPhone");
-		expect(REDACT_PATHS).toContain("context.billingPhone");
 	});
 
 	it("includes nested user.* paths", () => {
@@ -127,7 +127,6 @@ describe("REDACT_PATHS", () => {
 	it("includes nested order.* paths", () => {
 		expect(REDACT_PATHS).toContain("context.order.customerEmail");
 		expect(REDACT_PATHS).toContain("context.order.customerName");
-		expect(REDACT_PATHS).toContain("context.order.customerPhone");
 	});
 });
 

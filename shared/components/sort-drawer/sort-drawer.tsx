@@ -156,11 +156,12 @@ function SortDrawerInner({
 	const focusableIndex = selectedIndex === -1 ? 0 : selectedIndex;
 
 	// Au montage du drawer, on focus l'option active plutôt que la poignée de
-	// drag (défaut Vaul/Radix non informatif) — pattern ARIA APG radiogroup.
-	const handleOpenAutoFocus = (e: Event) => {
-		e.preventDefault();
-		optionRefs.current[focusableIndex]?.focus();
-	};
+	// drag (défaut non informatif) — pattern ARIA APG radiogroup.
+	//
+	// `initialFocus` de Base UI remplace l'ancien `onOpenAutoFocus` +
+	// `preventDefault` : il attend l'ÉLÉMENT à focuser (ou `false` pour ne pas
+	// bouger), au lieu d'un événement à neutraliser.
+	const handleInitialFocus = () => optionRefs.current[focusableIndex] ?? false;
 
 	// Handle option selection
 	const handleSelect = (value: string) => {
@@ -237,7 +238,7 @@ function SortDrawerInner({
 
 	return (
 		<Drawer open={open} onOpenChange={handleOpenChange}>
-			<DrawerContent id={id} onOpenAutoFocus={handleOpenAutoFocus}>
+			<DrawerContent id={id} initialFocus={handleInitialFocus}>
 				<DrawerHeader className="relative pb-2">
 					<DrawerTitle className="flex items-center gap-2">
 						{title}

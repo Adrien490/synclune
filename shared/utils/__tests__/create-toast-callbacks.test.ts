@@ -156,13 +156,6 @@ describe("createToastCallbacks", () => {
 			expect(mockToast.warning).toHaveBeenCalledWith("Careful!");
 		});
 
-		it("does not show toast when showWarningToast is false", () => {
-			const callbacks = createToastCallbacks({ showWarningToast: false });
-			callbacks.onWarning({ message: "Warning", status: ActionStatus.WARNING });
-
-			expect(mockToast.warning).not.toHaveBeenCalled();
-		});
-
 		it("calls custom onWarning callback", () => {
 			const custom = vi.fn();
 			const callbacks = createToastCallbacks({ onWarning: custom });
@@ -247,7 +240,7 @@ describe("createToastCallbacks", () => {
 			const callbacks = createToastCallbacks();
 			callbacks.onEnd(0);
 
-			// 0 is falsy but defined — the check is `!== undefined`
+			// 0 is falsy but a valid toast id — the check is `!= null`
 			expect(mockToast.dismiss).toHaveBeenCalledWith(0);
 		});
 	});
@@ -266,7 +259,6 @@ describe("createToastCallbacks", () => {
 		it("does not crash when all show flags are false and result has no message", () => {
 			const callbacks = createToastCallbacks({
 				showSuccessToast: false,
-				showWarningToast: false,
 				showErrorToast: false,
 			});
 

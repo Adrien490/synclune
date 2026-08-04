@@ -55,20 +55,19 @@ vi.mock("motion/react", () => {
 
 vi.mock("@/shared/components/animations/motion.config", () => ({
 	MOTION_CONFIG: { duration: { slow: 0.3 }, easing: { easeOut: [0, 0, 0.2, 1] } },
+	maybeReduceMotion: (transition: unknown) => transition ?? {},
 }));
 
+// `data-variant` exposé pour verrouiller le poids visuel égal des deux boutons
+// (CNIL) — la décision de l'audit 2026-05-19 avait été écrasée par un commit
+// sans rapport précisément parce qu'aucun test n'assertait les variants.
 vi.mock("@/shared/components/ui/button", () => {
 	const { forwardRef, createElement } = require("react");
 	const Button = forwardRef(
 		(
-			{
-				children,
-				variant: _v,
-				size: _s,
-				...props
-			}: Record<string, unknown> & { children?: unknown },
+			{ children, variant, size: _s, ...props }: Record<string, unknown> & { children?: unknown },
 			ref: unknown,
-		) => createElement("button", { ref, ...props }, children),
+		) => createElement("button", { ref, "data-variant": variant, ...props }, children),
 	);
 	Button.displayName = "Button";
 	return { Button };
@@ -171,6 +170,27 @@ describe("CookieBanner", () => {
 
 			expect(screen.getByRole("button", { name: "Refuser" })).toBeInTheDocument();
 		});
+
+		it("gives Accepter and Refuser the same outline variant (CNIL: equal visual weight)", () => {
+			render(<CookieBanner />);
+
+			expect(screen.getByRole("button", { name: "Accepter" })).toHaveAttribute(
+				"data-variant",
+				"outline",
+			);
+			expect(screen.getByRole("button", { name: "Refuser" })).toHaveAttribute(
+				"data-variant",
+				"outline",
+			);
+		});
+
+		it("shows the 6-month retention mention visibly (not sr-only)", () => {
+			render(<CookieBanner />);
+
+			const mention = screen.getByText("Ton choix sera mémorisé pendant 6 mois.");
+			expect(mention).toBeInTheDocument();
+			expect(mention).not.toHaveClass("sr-only");
+		});
 	});
 
 	describe("actions", () => {
@@ -213,6 +233,12 @@ describe("CookieBanner", () => {
 			render(<CookieBanner />);
 
 			expect(screen.getByRole("region", { name: "Cookies" })).not.toHaveAttribute("aria-modal");
+		});
+
+		it("does not declare aria-live (region mounted WITH its content is never vocalized)", () => {
+			render(<CookieBanner />);
+
+			expect(screen.getByRole("region", { name: "Cookies" })).not.toHaveAttribute("aria-live");
 		});
 
 		it("has aria-labelledby pointing to the h2 title", () => {

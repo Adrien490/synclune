@@ -27,6 +27,12 @@
  * Volontairement une allowlist, et non une interdiction repo-wide : un
  * garde-fou qui hurle sur chaque nouvelle bottom-sheet serait désactivé en une
  * semaine.
+ *
+ * ⚠️ Migration Base UI : le PROP survit, son MÉCANISME s'est inversé. Vaul avait
+ * une liste blanche (« seule la poignée drague ») ; Base UI a une liste noire
+ * (`data-base-ui-swipe-ignore` sur les descendants à exclure). Les wrappers
+ * traduisent — l'arbitrage produit, lui, est inchangé, et c'est ce que ce
+ * garde-fou verrouille.
  */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -48,7 +54,7 @@ const WRAPPERS = new Set(["shared/components/ui/sheet.tsx", "shared/components/u
 const ALLOWED = new Map<string, string>([
 	[
 		"modules/cart/components/cart-sheet.tsx",
-		"swipe-to-delete des lignes vs scroll de liste vs drag-to-dismiss Vaul",
+		"swipe-to-delete des lignes vs scroll de liste vs drag-to-dismiss du panneau",
 	],
 	[
 		"shared/components/filter-sheet-wrapper.tsx",

@@ -28,7 +28,7 @@ vi.mock("../decorative-halo.css", () => ({}));
 // IMPORT UNDER TEST
 // ============================================================================
 
-import { DecorativeHalo, DecorativeHaloGroup } from "../decorative-halo";
+import { DecorativeHalo } from "../decorative-halo";
 
 describe("DecorativeHalo", () => {
 	beforeEach(() => {
@@ -85,37 +85,5 @@ describe("DecorativeHalo", () => {
 		const { container } = render(<DecorativeHalo animationDelay={2} />);
 		const el = container.firstChild as HTMLElement;
 		expect(el.style.animationDelay).toBe("");
-	});
-});
-
-describe("DecorativeHaloGroup", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockReducedMotion.value = false;
-	});
-
-	afterEach(cleanup);
-
-	it('density="light" renders 2 halos', () => {
-		const { container } = render(<DecorativeHaloGroup density="light" />);
-		const halos = container.firstChild!.childNodes;
-		expect(halos).toHaveLength(2);
-	});
-
-	it('density="medium" renders 3 halos', () => {
-		const { container } = render(<DecorativeHaloGroup density="medium" />);
-		const halos = container.firstChild!.childNodes;
-		expect(halos).toHaveLength(3);
-	});
-
-	it('density="heavy" renders 4 halos', () => {
-		const { container } = render(<DecorativeHaloGroup density="heavy" />);
-		const halos = container.firstChild!.childNodes;
-		expect(halos).toHaveLength(4);
-	});
-
-	it("container has aria-hidden=true", () => {
-		const { container } = render(<DecorativeHaloGroup />);
-		expect(container.firstChild).toHaveAttribute("aria-hidden", "true");
 	});
 });

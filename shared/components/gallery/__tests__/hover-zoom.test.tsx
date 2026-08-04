@@ -5,8 +5,9 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockReducedMotion } = vi.hoisted(() => ({
+const { mockReducedMotion, mockHoverCapable } = vi.hoisted(() => ({
 	mockReducedMotion: { value: false },
+	mockHoverCapable: { value: true },
 }));
 
 // ============================================================================
@@ -15,6 +16,13 @@ const { mockReducedMotion } = vi.hoisted(() => ({
 
 vi.mock("motion/react", () => ({
 	useReducedMotion: () => mockReducedMotion.value,
+}));
+
+// Capacité hover (hover: hover) and (pointer: fine) — true par défaut (desktop souris).
+// Le stub matchMedia global de test/setup.ts renvoie false pour tout, ce qui
+// rendrait le composant statique et casserait les tests d'interaction.
+vi.mock("@/shared/hooks/use-media-query", () => ({
+	useMediaQuery: () => mockHoverCapable.value,
 }));
 
 vi.mock("next/image", () => ({
@@ -38,6 +46,7 @@ vi.mock("@/shared/utils/cn", () => ({
 
 vi.mock("@/modules/media/constants/image-config.constants", () => ({
 	GALLERY_MAIN_SIZES: "(max-width: 768px) 100vw, 50vw",
+	MAIN_IMAGE_QUALITY: 80,
 }));
 
 // ============================================================================
@@ -67,6 +76,7 @@ import { GalleryHoverZoom } from "../hover-zoom";
 describe("GalleryHoverZoom", () => {
 	beforeEach(() => {
 		mockReducedMotion.value = false;
+		mockHoverCapable.value = true;
 		pendingFrameCallback = null;
 		rafCancelCount = 0;
 		lastRafId = 0;
@@ -129,6 +139,30 @@ describe("GalleryHoverZoom", () => {
 			const wrapper = container.firstChild as HTMLElement;
 			expect(wrapper.className).not.toContain("overflow-hidden");
 			expect(wrapper.className).not.toContain("cursor-zoom-in");
+		});
+
+		// Sans pointeur fin (iPad : branche desktop choisie sur la LARGEUR), un tap
+		// émule mouseenter sans jamais émettre mouseleave → scale sticky derrière la
+		// lightbox. Le composant doit se désactiver lui-même.
+		it("non-hover-capable device disables the zoom container entirely (static render)", () => {
+			mockHoverCapable.value = false;
+			const { container } = render(
+				<GalleryHoverZoom src="/test.jpg" alt="Touch device" enabled={true} />,
+			);
+			const wrapper = container.firstChild as HTMLElement;
+			expect(wrapper.className).not.toContain("overflow-hidden");
+			expect(wrapper.className).not.toContain("cursor-zoom-in");
+		});
+
+		it("non-hover-capable device: emulated mouseenter applies no scale (no sticky zoom)", () => {
+			mockHoverCapable.value = false;
+			const { container } = render(<GalleryHoverZoom src="/test.jpg" alt="No sticky" />);
+			const wrapper = container.firstChild as HTMLElement;
+			const img = screen.getByAltText("No sticky") as HTMLImageElement;
+
+			fireEvent.mouseEnter(wrapper);
+
+			expect(img.style.transform).toBe("");
 		});
 
 		it("enabled mode has overflow-hidden class", () => {

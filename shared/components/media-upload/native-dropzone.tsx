@@ -60,7 +60,7 @@ export function NativeDropzone({
 	primaryLabel = "Glisse tes fichiers ou clique",
 	dropLabel = "Relâche pour ajouter",
 	hint,
-	ariaLabel = "Zone d'upload (glisse ou clique)",
+	ariaLabel = "Zone d'envoi de fichiers (glisse ou clique)",
 	icon,
 	className,
 }: NativeDropzoneProps) {

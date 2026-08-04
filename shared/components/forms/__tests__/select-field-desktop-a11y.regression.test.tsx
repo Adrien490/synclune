@@ -20,15 +20,24 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { mockHandleChange, mockHandleBlur } = vi.hoisted(() => ({
-	mockHandleChange: vi.fn(),
-	mockHandleBlur: vi.fn(),
-}));
+const { mockHandleChange, mockHandleBlur, fakeFormStore } = vi.hoisted(() => {
+	const fakeFormStore = {
+		state: { submissionAttempts: 0 },
+		get: () => fakeFormStore.state,
+		subscribe: () => ({ unsubscribe: () => {} }),
+	};
+	return {
+		mockHandleChange: vi.fn(),
+		mockHandleBlur: vi.fn(),
+		fakeFormStore,
+	};
+});
 
 vi.mock("@/shared/lib/form-context", () => ({
 	useFieldContext: () => ({
 		name: "country",
-		state: { value: "fr", meta: { errors: [] } },
+		state: { value: "fr", meta: { errors: [], isBlurred: true } },
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 	}),

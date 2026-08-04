@@ -14,8 +14,8 @@ export const PHONE_ERROR_MESSAGES = {
 } as const;
 
 /**
- * Longueur maximale — alignée sur `Order.shippingPhone`, `Order.customerPhone` et
- * `Order.billingPhone`, tous `VarChar(20)`.
+ * Longueur maximale — alignée sur `Order.shippingPhone`, `VarChar(20)`. C'est
+ * depuis le 2026-08-04 la seule colonne de téléphone du modèle Order.
  *
  * L'E.164 plafonne à 15 chiffres + `+`, soit 16 caractères : la marge est confortable
  * **une fois la normalisation appliquée**. C'est bien la normalisation qui compte,

@@ -15,9 +15,9 @@ const CookieBanner = dynamic(
 /**
  * Lazy gate for the cookie banner.
  *
- * The heavy banner chunk (motion/react + FocusScope + ~20-30 KiB) only
- * loads for visitors who haven't yet consented. Returning visitors who
- * already accepted/rejected never download this code.
+ * The heavy banner chunk (motion/react, ~20-30 KiB) only loads for
+ * visitors who haven't yet consented. Returning visitors who already
+ * accepted/rejected never download this code.
  *
  * Hydration ordering:
  * 1. SSR + first paint: `_hasHydrated=false` → render nothing (banner is

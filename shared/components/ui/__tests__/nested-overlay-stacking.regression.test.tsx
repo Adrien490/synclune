@@ -1,9 +1,9 @@
 /**
  * @regression nested-overlay-stacking
  *
- * Une confirmation Radix ouverte depuis une `Sheet` Vaul doit s'EMPILER : les
- * deux restent montées, Échap ne ferme que la confirmation, et la sheet reste
- * pleinement interactive une fois la confirmation refermée.
+ * Une confirmation ouverte depuis une `Sheet` doit s'EMPILER : les deux restent
+ * montées, Échap ne ferme que la confirmation, et la sheet reste pleinement
+ * interactive une fois la confirmation refermée.
  *
  * Audit « Overlays » 2026-07-26 : ce cas est pourtant le plus fréquent du repo
  * (« Effacer tous les filtres ? » dans `filter-sheet-wrapper`, les deux
@@ -11,12 +11,16 @@
  * AUCUN test ne montait un vrai `AlertDialog` dans une vraie `Sheet`. La
  * couverture s'arrêtait à `vaul-nested-context` en isolation.
  *
- * Ce qui est verrouillé ici, et pourquoi ça tient : Vaul rend un
- * `DialogPrimitive.Content` Radix, donc la sheet et la confirmation sont deux
- * couches Radix. Leur empilement (`FocusScope`, `DismissableLayer`, verrou de
- * scroll unique `react-remove-scroll`) est géré nativement — c'est ce qui rend
- * l'imbrication sûre, et c'est ce que ce test empêche de casser en silence, par
- * exemple en repassant une des deux familles sur une implémentation maison.
+ * Ce qui est verrouillé ici, et pourquoi ça tient : les deux familles sont des
+ * couches Base UI, dont l'empilement (focus, dismiss, verrou de scroll) est géré
+ * nativement — c'est ce qui rend l'imbrication sûre, et c'est ce que ce test
+ * empêche de casser en silence, par exemple en repassant une des deux familles
+ * sur une autre implémentation.
+ *
+ * ⚠️ Ce fichier a DÉJÀ attrapé la régression qu'il décrit : pendant la migration,
+ * la `Sheet` est restée un cycle sur Vaul alors que l'`AlertDialog` était passé
+ * à Base UI. Deux piles de couches indépendantes ⇒ Échap fermait la confirmation
+ * ET la sheet. C'est ce qui a imposé de migrer les quatre familles ensemble.
  */
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -74,11 +78,17 @@ function FiltersSheet({ onConfirm }: { onConfirm?: () => void }) {
  * Présence DOM de la sheet.
  *
  * À ne PAS confondre avec une requête par rôle : quand la confirmation est
- * ouverte, Radix pose `aria-hidden` sur tout ce qui est en dessous, donc la
- * sheet sort de l'arbre d'accessibilité et `queryByRole("dialog")` renvoie
- * `null`. C'est le comportement correct d'un modal empilé — pas un démontage.
+ * ouverte, la couche du dessous sort de l'arbre d'accessibilité et
+ * `queryByRole("dialog")` renvoie `null`. C'est le comportement correct d'un
+ * modal empilé — pas un démontage.
  */
 const sheetMounted = () => document.querySelector('[data-slot="sheet-content"]');
+
+/**
+ * Conteneur de portail de la sheet — c'est LUI que Base UI rend inerte quand une
+ * couche s'empile par-dessus (Radix marquait le contenu lui-même).
+ */
+const sheetPortal = () => document.querySelector('[data-slot="sheet-portal"]');
 const sheet = () => screen.queryByRole("dialog", { name: "Filtres" });
 const confirm = () => screen.queryByRole("alertdialog");
 
@@ -103,7 +113,8 @@ describe("@regression nested-overlay-stacking", () => {
 		// d'accessibilité. Un lecteur d'écran ne doit percevoir que la couche du
 		// dessus, sinon la confirmation n'est plus vraiment modale.
 		expect(sheet()).not.toBeInTheDocument();
-		expect(sheetMounted()).toHaveAttribute("aria-hidden", "true");
+		expect(sheetPortal()).toHaveAttribute("aria-hidden", "true");
+		expect(sheetPortal()).toHaveAttribute("data-base-ui-inert");
 	});
 
 	it("Échap ne ferme que la confirmation, pas la sheet", () => {
@@ -142,13 +153,20 @@ describe("@regression nested-overlay-stacking", () => {
 		expect(sheet()).toBeInTheDocument();
 	});
 
-	it("un seul verrou de scroll est posé pour les deux couches", () => {
+	it("ne laisse aucune couche inerte orpheline après fermeture de la confirmation", () => {
 		render(<FiltersSheet />);
 		fireEvent.click(screen.getByRole("button", { name: "Tout effacer" }));
+		expect(sheetPortal()).toHaveAttribute("data-base-ui-inert");
 
-		// `react-remove-scroll` marque le body une seule fois, quel que soit le
-		// nombre de couches — c'est ce qui garantit qu'aucun verrou ne survit à la
-		// fermeture de la couche supérieure.
-		expect(document.body).toHaveAttribute("data-scroll-locked");
+		fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+
+		// Remplace l'ancienne assertion sur `data-scroll-locked` (marqueur de
+		// `react-remove-scroll`, que Vaul/Radix embarquaient) : Base UI ne laisse
+		// aucune trace DOM de son verrou de scroll. Ce qui reste observable — et
+		// qui porte la même garantie — c'est qu'aucune inertie ne survit à la
+		// fermeture de la couche supérieure : sinon la sheet resterait visible mais
+		// invisible aux lecteurs d'écran et hors du parcours clavier.
+		expect(sheetPortal()).not.toHaveAttribute("data-base-ui-inert");
+		expect(sheet()).toBeInTheDocument();
 	});
 });

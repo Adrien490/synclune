@@ -48,11 +48,14 @@ vi.mock("@/shared/components/ui/drawer", async () => {
 					{children}
 				</div>
 			) : null,
-		DrawerContent: ({ children, className, onOpenAutoFocus }: any) => {
+		DrawerContent: ({ children, className, initialFocus }: any) => {
 			// Simule l'autofocus Vaul/Radix déclenché à l'ouverture du drawer.
 			useEffect(() => {
-				onOpenAutoFocus?.(new Event("focus", { cancelable: true }));
-			}, [onOpenAutoFocus]);
+				// `initialFocus` renvoie l'ÉLÉMENT à focuser (ou false) — il ne reçoit
+				// plus un événement à neutraliser comme l'ancien `onOpenAutoFocus`.
+				const target = typeof initialFocus === "function" ? initialFocus() : null;
+				if (target && typeof target.focus === "function") target.focus();
+			}, [initialFocus]);
 			return (
 				<div data-testid="drawer-content" className={className}>
 					{children}

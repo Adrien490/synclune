@@ -39,7 +39,6 @@ const SENSITIVE_KEYS = new Set<string>([
 	"customeremail",
 	"customerphone",
 	"shippingphone",
-	"billingphone",
 	"firstname",
 	"lastname",
 	"customername",

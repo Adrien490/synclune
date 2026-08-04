@@ -83,11 +83,21 @@ vi.mock("@/shared/components/multi-select", () => ({
 // FORM CONTEXT MOCK
 // ============================================================================
 
+const { fakeFormStore } = vi.hoisted(() => {
+	const fakeFormStore = {
+		state: { submissionAttempts: 0 },
+		get: () => fakeFormStore.state,
+		subscribe: () => ({ unsubscribe: () => {} }),
+	};
+	return { fakeFormStore };
+});
+
 const mockHandleChange = vi.fn();
 
 const createFieldState = (value: string[], errors: any[] = []) => ({
-	state: { value, meta: { errors } },
+	state: { value, meta: { errors, isBlurred: true } },
 	name: "collections",
+	form: { store: fakeFormStore },
 	handleChange: mockHandleChange,
 	handleBlur: vi.fn(),
 });

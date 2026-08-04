@@ -1,15 +1,25 @@
 /**
  * Classes Tailwind partagées entre ProductCard et CollectionCard.
- * SSOT pour l'enveloppe visuelle des cards storefront (border, shadow, hover, focus, motion).
+ * SSOT pour l'enveloppe visuelle des cards storefront (surface, hover, focus, motion).
  * Toute évolution visuelle de la surface doit passer par ici pour rester cohérente.
  *
- * Différences à laisser inline dans chaque composant : rounded breakpoint, scale ratio,
- * effets propres (lift, GPU hint, active tap feedback).
+ * Différences à laisser inline dans chaque composant : display (grid/block),
+ * sens du tilt (alterné par index), classes hook (`product-card`, …).
  */
 
-export const CARD_SURFACE_BASE = [
-	"bg-card group relative touch-manipulation overflow-hidden",
-	"border-2 border-transparent shadow-sm",
+/**
+ * Surface « tirage papier » des cartes Atelier (ProductCard polaroid,
+ * CollectionCard planche-contact) — redesigns 2026-08-03.
+ *
+ * Décline l'ancienne CARD_SURFACE_BASE SANS `overflow-hidden` : le masking
+ * tape déborde du cadre, c'est la zone média de chaque carte qui clippe.
+ * Le padding est la marge blanche du tirage ; pas de padding bas, la légende
+ * gère le sien.
+ */
+export const CARD_SURFACE_POLAROID = [
+	"bg-card group relative touch-manipulation",
+	"rounded-md border-2 border-transparent shadow-sm",
+	"p-2 pb-0 sm:p-2.5 sm:pb-0",
 	"transition-[transform,border-color,box-shadow] duration-300 ease-out",
 	"motion-reduce:transition-colors",
 ].join(" ");

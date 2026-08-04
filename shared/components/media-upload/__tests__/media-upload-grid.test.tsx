@@ -106,6 +106,7 @@ vi.mock("@/modules/media/components/admin/sortable-media-item", () => ({
 			data-testid={`sortable-item-${props.index}`}
 			data-is-primary={props.isPrimary}
 			data-media-type={(props.media as MediaItem).mediaType}
+			data-drag-instructions-id={props.dragInstructionsId}
 		>
 			<button data-testid={`move-up-${props.index}`} onClick={props.onMoveUp as () => void}>
 				Move up
@@ -267,14 +268,22 @@ describe("MediaUploadGrid", () => {
 	// Accessibility
 	// -----------------------------------------------------------------------
 	describe("accessibility", () => {
-		it("provides screen reader drag instructions", () => {
+		it("provides screen reader drag instructions bound to tiles via aria-describedby", () => {
 			render(<MediaUploadGrid media={[image1]} onChange={mockOnChange} />);
 
-			const instructions = document.getElementById("drag-instructions");
+			// L'id vient de useId : on le résout depuis la prop passée aux tuiles au
+			// lieu d'asserter un id codé en dur. Le binding est la partie qui manquait
+			// (P1 audit 2026-08-03) : un span jamais référencé n'est jamais vocalisé,
+			// et le KeyboardSensor pose alors son propre describedby générique.
+			const instructionsId = screen.getByTestId("sortable-item-0").dataset.dragInstructionsId;
+			expect(instructionsId).toBeTruthy();
+
+			const instructions = document.getElementById(instructionsId!);
 			expect(instructions).toBeInTheDocument();
 			expect(instructions?.textContent).toContain("Espace ou Entrée");
 			expect(instructions?.textContent).toContain("flèches");
 			expect(instructions?.textContent).toContain("Échap");
+			expect(instructions?.textContent).toContain("Suppr");
 		});
 
 		it("has aria-live region for announcements", () => {
@@ -290,6 +299,72 @@ describe("MediaUploadGrid", () => {
 
 			const grid = screen.getByRole("group");
 			expect(grid).toHaveAttribute("aria-label", "Médias du produit");
+		});
+
+		it("uses the ariaLabel prop when provided (SKU forms say « variante »)", () => {
+			render(
+				<MediaUploadGrid
+					media={[image1]}
+					onChange={mockOnChange}
+					ariaLabel="Médias de la variante"
+				/>,
+			);
+
+			expect(screen.getByRole("group")).toHaveAttribute("aria-label", "Médias de la variante");
+		});
+	});
+
+	// -----------------------------------------------------------------------
+	// OS file drop — gated on canAddMore
+	// -----------------------------------------------------------------------
+	describe("OS file drop", () => {
+		function makeDataTransfer(files: File[]) {
+			return { types: ["Files"], files, dropEffect: "" };
+		}
+
+		it("accepts dropped files below the limit", () => {
+			const onFilesDropped = vi.fn();
+			render(
+				<MediaUploadGrid
+					media={[image1]}
+					onChange={mockOnChange}
+					maxItems={2}
+					onFilesDropped={onFilesDropped}
+				/>,
+			);
+
+			const file = new File(["x"], "photo.jpg", { type: "image/jpeg" });
+			fireEvent.drop(screen.getByRole("group"), { dataTransfer: makeDataTransfer([file]) });
+
+			expect(onFilesDropped).toHaveBeenCalledWith([file]);
+		});
+
+		it("refuses dropped files at the limit and says why", () => {
+			// À saturation, l'overlay disait encore « Dépose pour ajouter » et le drop
+			// partait au pipeline pour un refus a posteriori (P2 audit 2026-08-03).
+			const onFilesDropped = vi.fn();
+			render(
+				<MediaUploadGrid
+					media={[image1, image2]}
+					onChange={mockOnChange}
+					maxItems={2}
+					onFilesDropped={onFilesDropped}
+				/>,
+			);
+
+			const grid = screen.getByRole("group");
+			const file = new File(["x"], "photo.jpg", { type: "image/jpeg" });
+
+			fireEvent.dragOver(grid, { dataTransfer: makeDataTransfer([file]) });
+			expect(screen.getByText("Limite de 2 médias atteinte")).toBeInTheDocument();
+			expect(screen.queryByText("Dépose pour ajouter")).not.toBeInTheDocument();
+
+			fireEvent.drop(grid, { dataTransfer: makeDataTransfer([file]) });
+			expect(onFilesDropped).not.toHaveBeenCalled();
+			expect(mockToast.error).toHaveBeenCalledWith(
+				"Limite de 2 médias atteinte",
+				expect.any(Object),
+			);
 		});
 	});
 

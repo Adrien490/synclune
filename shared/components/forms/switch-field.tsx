@@ -2,6 +2,7 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
 import { Switch } from "@/shared/components/ui/switch";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 import { useRef, type ReactNode } from "react";
 
 interface SwitchFieldProps {
@@ -24,7 +25,7 @@ export const SwitchField = ({
 	const field = useFieldContext<boolean>();
 	const hiddenRef = useRef<HTMLInputElement>(null);
 
-	const hasError = field.state.meta.errors.length > 0;
+	const hasError = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -68,7 +69,10 @@ export const SwitchField = ({
 					{description}
 				</p>
 			)}
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+			/>
 		</Field>
 	);
 };

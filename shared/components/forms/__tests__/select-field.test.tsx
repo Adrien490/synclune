@@ -5,10 +5,18 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockHandleChange, mockHandleBlur } = vi.hoisted(() => ({
-	mockHandleChange: vi.fn(),
-	mockHandleBlur: vi.fn(),
-}));
+const { mockHandleChange, mockHandleBlur, fakeFormStore } = vi.hoisted(() => {
+	const fakeFormStore = {
+		state: { submissionAttempts: 0 },
+		get: () => fakeFormStore.state,
+		subscribe: () => ({ unsubscribe: () => {} }),
+	};
+	return {
+		mockHandleChange: vi.fn(),
+		mockHandleBlur: vi.fn(),
+		fakeFormStore,
+	};
+});
 
 // ============================================================================
 // MODULE MOCKS
@@ -19,8 +27,9 @@ vi.mock("@/shared/lib/form-context", () => ({
 		name: "test-select",
 		state: {
 			value: undefined,
-			meta: { errors: [] },
+			meta: { errors: [], isBlurred: true },
 		},
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 	})),
@@ -114,9 +123,10 @@ function makeFieldContext(overrides: Record<string, unknown> = {}) {
 		name: "test-select",
 		state: {
 			value: undefined,
-			meta: { errors: [] },
+			meta: { errors: [], isBlurred: true },
 			...(overrides.state as object),
 		},
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 		...overrides,
@@ -187,7 +197,10 @@ describe("SelectField", () => {
 	it("renders error alert when field has errors", () => {
 		vi.mocked(useFieldContext).mockReturnValue(
 			makeFieldContext({
-				state: { value: undefined, meta: { errors: [{ message: "Sélection requise" }] } },
+				state: {
+					value: undefined,
+					meta: { errors: [{ message: "Sélection requise" }], isBlurred: true },
+				},
 			}) as any,
 		);
 		render(<SelectField options={OPTIONS} />);
@@ -200,7 +213,7 @@ describe("SelectField", () => {
 
 	it("clears selection when clearable button is clicked (native select: empty value)", () => {
 		vi.mocked(useFieldContext).mockReturnValue(
-			makeFieldContext({ state: { value: "fr", meta: { errors: [] } } }) as any,
+			makeFieldContext({ state: { value: "fr", meta: { errors: [], isBlurred: true } } }) as any,
 		);
 		render(<SelectField options={OPTIONS} clearable />);
 		// Selecting empty string on native select triggers handleChange with undefined

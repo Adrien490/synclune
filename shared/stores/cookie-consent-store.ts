@@ -7,7 +7,8 @@ import { noopStorage } from "./noop-storage";
 
 /**
  * Notifie les consommateurs hors React (Sentry Replay dans
- * `instrumentation-client.ts`) qu'un choix de consentement vient d'être fait.
+ * `instrumentation-client.ts`) qu'un choix de consentement vient d'être fait
+ * — ou retiré (`accepted: false` couvre le refus ET le retrait).
  * Le dispatch se fait APRÈS le `set()` zustand : le middleware persist a déjà
  * écrit localStorage, les listeners peuvent donc relire l'état à jour.
  */
@@ -94,6 +95,11 @@ export const createCookieConsentStore = (initState: CookieConsentState = default
 							consentDate: null,
 							policyVersion: 0,
 						});
+						// Retrait du consentement (RGPD art. 7.3) : les sinks (Sentry
+						// Replay) doivent s'arrêter IMMÉDIATEMENT — sans cet event, un
+						// replay en cours continuait jusqu'au prochain clic Accepter/
+						// Refuser dans la bannière (audit cookie-banner 2026-08-03).
+						emitConsentChange(false);
 					},
 				}),
 				{

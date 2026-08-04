@@ -4,7 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
-import { GALLERY_MAIN_SIZES } from "@/modules/media/constants/image-config.constants";
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import {
+	GALLERY_MAIN_SIZES,
+	MAIN_IMAGE_QUALITY,
+} from "@/modules/media/constants/image-config.constants";
 
 interface GalleryHoverZoomProps {
 	src: string;
@@ -21,6 +25,10 @@ interface GalleryHoverZoomProps {
 	sizes?: string;
 }
 
+// Même capacité que le variant `can-hover:` de globals.css. Requête sans largeur
+// → littéral autorisé (seuls les seuils de largeur passent par le SSOT breakpoints).
+const HOVER_CAPABLE_QUERY = "(hover: hover) and (pointer: fine)";
+
 export function GalleryHoverZoom({
 	src,
 	alt,
@@ -29,78 +37,50 @@ export function GalleryHoverZoom({
 	enabled = true,
 	className,
 	preload = false,
-	quality = 85,
+	quality = MAIN_IMAGE_QUALITY,
 	sizes = GALLERY_MAIN_SIZES,
 }: GalleryHoverZoomProps) {
 	const [isZooming, setIsZooming] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const imageRef = useRef<HTMLImageElement>(null);
 	const prefersReduced = useReducedMotion();
+	const hoverCapable = useMediaQuery(HOVER_CAPABLE_QUERY);
 
-	const rectRef = useRef<DOMRect | null>(null);
 	const rafRef = useRef<number | null>(null);
-	const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// Sous prefers-reduced-motion, on désactive complètement le zoom (contrat "moins de mouvement").
-	const interactive = enabled && !prefersReduced;
+	// Sans pointeur fin non plus : le consommateur choisit cette branche sur la LARGEUR
+	// (iPad ≥ md), or un tap y émule mouseenter sans jamais émettre mouseleave —
+	// scale(2) resterait collé derrière la lightbox ouverte par le même tap.
+	const interactive = enabled && !prefersReduced && hoverCapable;
 
-	// Debounced resize listener pour éviter le jank (seulement si interactif)
-	useEffect(() => {
-		if (!interactive) return;
-
-		const updateRect = () => {
-			if (containerRef.current) {
-				rectRef.current = containerRef.current.getBoundingClientRect();
-			}
-		};
-
-		const debouncedUpdateRect = () => {
-			if (resizeTimeoutRef.current) {
-				clearTimeout(resizeTimeoutRef.current);
-			}
-			resizeTimeoutRef.current = setTimeout(updateRect, 150);
-		};
-
-		updateRect();
-		window.addEventListener("resize", debouncedUpdateRect);
-
-		return () => {
-			window.removeEventListener("resize", debouncedUpdateRect);
-			if (resizeTimeoutRef.current) {
-				clearTimeout(resizeTimeoutRef.current);
-			}
-		};
-	}, [interactive]);
+	const applyOrigin = (clientX: number, clientY: number) => {
+		if (!containerRef.current || !imageRef.current) return;
+		// Rect relu à chaque application : un rect mémorisé au mouseenter se périme
+		// dès que la page scrolle sous le curseur (origine du zoom décalée).
+		const rect = containerRef.current.getBoundingClientRect();
+		const x = ((clientX - rect.left) / rect.width) * 100;
+		const y = ((clientY - rect.top) / rect.height) * 100;
+		imageRef.current.style.transformOrigin = `${x}% ${y}%`;
+	};
 
 	// RAF-only throttle (plus efficace que Date.now + RAF)
 	const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-		if (!imageRef.current || !rectRef.current || !isZooming) return;
+		if (!imageRef.current || !isZooming) return;
 
 		// Skip si RAF déjà en cours
 		if (rafRef.current) return;
 
 		rafRef.current = requestAnimationFrame(() => {
 			rafRef.current = null;
-			if (!rectRef.current || !imageRef.current) return;
-
-			const x = ((e.clientX - rectRef.current.left) / rectRef.current.width) * 100;
-			const y = ((e.clientY - rectRef.current.top) / rectRef.current.height) * 100;
-
-			imageRef.current.style.transformOrigin = `${x}% ${y}%`;
+			applyOrigin(e.clientX, e.clientY);
 		});
 	};
 
 	const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-		if (containerRef.current) {
-			rectRef.current = containerRef.current.getBoundingClientRect();
-		}
 		// Recale l'origine sur le point d'entrée du curseur AVANT d'activer le scale,
 		// sinon le zoom démarre sur la dernière origine du survol précédent (saut visuel).
-		if (imageRef.current && rectRef.current) {
-			const x = ((e.clientX - rectRef.current.left) / rectRef.current.width) * 100;
-			const y = ((e.clientY - rectRef.current.top) / rectRef.current.height) * 100;
-			imageRef.current.style.transformOrigin = `${x}% ${y}%`;
-		}
+		applyOrigin(e.clientX, e.clientY);
 		setIsZooming(true);
 	};
 

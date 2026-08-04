@@ -69,9 +69,11 @@ const BLACKLIST_IPS = process.env.RATE_LIMIT_BLACKLIST?.split(",").map((ip) => i
  * si bien qu'un test `startsWith("user:")` ne les reconnaissait plus et logguait l'id
  * en clair. Le segment `guest:<email>:<ip>`, lui, n'a jamais été masqué : l'email du
  * client partait tel quel dans les logs à chaque blocage. Même défaut sur le segment
- * `session:<uuid>` — la valeur exacte des cookies bearer `cart_session` /
- * `wishlist_session` partait en clair vers logs/Sentry au premier blocage d'un
- * invité, et les rejouer suffit à prendre le contrôle du panier et des favoris.
+ * `session:<uuid>` — la valeur exacte du cookie bearer `cart_session` (et, à
+ * l'époque, `wishlist_session` — remplacé 2026-08-03 par un cookie `wishlist`
+ * non-bearer portant directement les Product IDs) partait en clair vers
+ * logs/Sentry au premier blocage d'un invité, et la rejouer suffit à prendre le
+ * contrôle du panier.
  * L'IP reste disponible dans le champ `ip=` dédié, on ne perd donc rien
  * d'exploitable.
  */

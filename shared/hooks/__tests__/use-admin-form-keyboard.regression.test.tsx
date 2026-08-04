@@ -20,7 +20,7 @@ const { mockPush, mockHaptic } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
 vi.mock("@/shared/hooks/use-haptic", () => ({ useHaptic: () => mockHaptic }));
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (fn: () => void) => fn(),
 }));
 

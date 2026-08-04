@@ -5,10 +5,18 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockHandleChange, mockHandleBlur } = vi.hoisted(() => ({
-	mockHandleChange: vi.fn(),
-	mockHandleBlur: vi.fn(),
-}));
+const { mockHandleChange, mockHandleBlur, fakeFormStore } = vi.hoisted(() => {
+	const fakeFormStore = {
+		state: { submissionAttempts: 0 },
+		get: () => fakeFormStore.state,
+		subscribe: () => ({ unsubscribe: () => {} }),
+	};
+	return {
+		mockHandleChange: vi.fn(),
+		mockHandleBlur: vi.fn(),
+		fakeFormStore,
+	};
+});
 
 // ============================================================================
 // MODULE MOCKS
@@ -19,8 +27,9 @@ vi.mock("@/shared/lib/form-context", () => ({
 		name: "test-password",
 		state: {
 			value: "",
-			meta: { errors: [] },
+			meta: { errors: [], isBlurred: true },
 		},
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 	})),
@@ -100,9 +109,10 @@ function makeFieldContext(overrides: Record<string, unknown> = {}) {
 		name: "test-password",
 		state: {
 			value: "",
-			meta: { errors: [] },
+			meta: { errors: [], isBlurred: true },
 			...(overrides.state as object),
 		},
+		form: { store: fakeFormStore },
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,
 		...overrides,
@@ -195,7 +205,10 @@ describe("PasswordInputField", () => {
 	it("renders error alert when field has errors", () => {
 		vi.mocked(useFieldContext).mockReturnValue(
 			makeFieldContext({
-				state: { value: "", meta: { errors: [{ message: "Mot de passe invalide" }] } },
+				state: {
+					value: "",
+					meta: { errors: [{ message: "Mot de passe invalide" }], isBlurred: true },
+				},
 			}) as any,
 		);
 		render(<PasswordInputField />);

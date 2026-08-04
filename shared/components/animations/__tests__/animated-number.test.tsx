@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, cleanup } from "@testing-library/react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -64,6 +64,11 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 
 import { AnimatedNumber, NumberTicker } from "../animated-number";
 
+function renderSpan(ui: Parameters<typeof render>[0]): HTMLSpanElement {
+	const { container } = render(ui);
+	return container.querySelector("span")!;
+}
+
 describe("AnimatedNumber", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -76,45 +81,45 @@ describe("AnimatedNumber", () => {
 
 	it("renders <span> with formatted value when reduced motion", () => {
 		mockReducedMotion.value = true;
-		render(<AnimatedNumber value={42} />);
-		const el = screen.getByRole("status");
+		const el = renderSpan(<AnimatedNumber value={42} />);
 		expect(el.tagName).toBe("SPAN");
 		expect(el.textContent).toContain("42");
 	});
 
 	it("formats with fr-FR locale by default (space as thousands separator)", () => {
 		mockReducedMotion.value = true;
-		render(<AnimatedNumber value={1234} />);
-		const text = screen.getByRole("status").textContent!;
+		const text = renderSpan(<AnimatedNumber value={1234} />).textContent!;
 		// fr-FR uses narrow no-break space (U+202F) or non-breaking space
 		expect(text.replace(/\s/g, " ")).toBe("1 234");
 	});
 
 	it("displays decimal places when specified", () => {
 		mockReducedMotion.value = true;
-		render(<AnimatedNumber value={42} decimalPlaces={2} />);
-		const text = screen.getByRole("status").textContent!;
+		const text = renderSpan(<AnimatedNumber value={42} decimalPlaces={2} />).textContent!;
 		expect(text).toContain("42,00");
 	});
 
 	it("uses custom formatter when provided", () => {
 		mockReducedMotion.value = true;
-		render(<AnimatedNumber value={42} formatter={(n) => `${n}%`} />);
-		expect(screen.getByRole("status").textContent).toBe("42%");
+		const el = renderSpan(<AnimatedNumber value={42} formatter={(n) => `${n}%`} />);
+		expect(el.textContent).toBe("42%");
 	});
 
-	it("has correct ARIA attributes", () => {
+	it("is NOT a live region (motion rewrites textContent per frame — a role=status here would vocalize every intermediate value; announcements belong to call sites)", () => {
 		mockReducedMotion.value = true;
-		render(<AnimatedNumber value={10} />);
-		const el = screen.getByRole("status");
-		expect(el).toHaveAttribute("aria-live", "polite");
-		expect(el).toHaveAttribute("aria-atomic", "true");
+		const reducedEl = renderSpan(<AnimatedNumber value={10} />);
+		expect(reducedEl).not.toHaveAttribute("role");
+		expect(reducedEl).not.toHaveAttribute("aria-live");
+		cleanup();
+		mockReducedMotion.value = false;
+		const animatedEl = renderSpan(<AnimatedNumber value={10} />);
+		expect(animatedEl).not.toHaveAttribute("role");
+		expect(animatedEl).not.toHaveAttribute("aria-live");
 	});
 
 	it("applies className and default classes", () => {
 		mockReducedMotion.value = true;
-		render(<AnimatedNumber value={10} className="text-xl" />);
-		const el = screen.getByRole("status");
+		const el = renderSpan(<AnimatedNumber value={10} className="text-xl" />);
 		expect(el.className).toContain("inline-block");
 		expect(el.className).toContain("tabular-nums");
 		expect(el.className).toContain("text-xl");
@@ -137,10 +142,17 @@ describe("AnimatedNumber", () => {
 		expect(mockSpringValue.current).toBe(5);
 	});
 
+	it("startValue === value renders the real amount at mount (no count-up from 0)", () => {
+		mockReducedMotion.value = false;
+		const el = renderSpan(
+			<AnimatedNumber value={1234} startValue={1234} formatter={(n) => `${n} €`} />,
+		);
+		expect(el.textContent).toBe("1234 €");
+	});
+
 	it("formats with en-US locale when specified", () => {
 		mockReducedMotion.value = true;
-		render(<AnimatedNumber value={1234} locale="en-US" />);
-		const text = screen.getByRole("status").textContent!;
+		const text = renderSpan(<AnimatedNumber value={1234} locale="en-US" />).textContent!;
 		expect(text).toBe("1,234");
 	});
 });

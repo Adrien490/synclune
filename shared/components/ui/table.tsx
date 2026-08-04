@@ -39,7 +39,10 @@ function Table({ className, striped, caption, noRegion, children, ...props }: Ta
 			aria-label={caption ?? "Tableau de données"}
 			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable container needs keyboard access
 			tabIndex={0}
-			className={cn("relative w-full overflow-x-auto scroll-smooth", "focus-ring")}
+			className={cn(
+				"relative w-full overflow-x-auto scroll-smooth motion-reduce:scroll-auto",
+				"focus-ring",
+			)}
 		>
 			{tableElement}
 		</div>

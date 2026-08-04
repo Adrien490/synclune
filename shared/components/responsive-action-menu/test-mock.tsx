@@ -39,9 +39,25 @@ type MockActionMenuSection = {
 
 export function buildResponsiveActionMenuMock() {
 	const ResponsiveActionMenu = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-	const ResponsiveActionMenuTrigger = ({ children }: { children: React.ReactNode }) => (
-		<>{children}</>
-	);
+	// Le trigger expose `render` (Base UI) : l'élément passé REMPLACE le
+	// composant, les enfants éventuels lui sont fusionnés. Un mock qui se
+	// contenterait de rendre `children` ferait disparaître le bouton du DOM.
+	const ResponsiveActionMenuTrigger = ({
+		render,
+		children,
+	}: {
+		render?: React.ReactElement;
+		children?: React.ReactNode;
+	}) =>
+		React.isValidElement(render) ? (
+			React.cloneElement(
+				render,
+				undefined,
+				children ?? (render.props as { children?: React.ReactNode }).children,
+			)
+		) : (
+			<>{children}</>
+		);
 	const ResponsiveActionMenuContent = ({
 		title,
 		sections,

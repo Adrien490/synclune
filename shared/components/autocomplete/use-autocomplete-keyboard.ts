@@ -26,14 +26,19 @@ export function useAutocompleteKeyboard<T>({
 }: UseAutocompleteKeyboardParams<T>) {
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (!isOpen) {
-			if (e.key === "ArrowDown" && hasValidQuery && hasResults) {
+			// Rouvre aussi sans résultats : le dropdown ré-affiche l'état applicable
+			// (erreur + « Réessayer », état vide) — sinon, après Escape sur une
+			// erreur, aucun moyen clavier de re-atteindre le retry.
+			if (e.key === "ArrowDown" && hasValidQuery) {
 				e.preventDefault();
 				setIsOpen(true);
-				setActiveIndex(0);
+				setActiveIndex(hasResults ? 0 : -1);
 			}
 			return;
 		}
 
+		// Home/End volontairement NON interceptés : le pattern APG combobox les
+		// réserve au curseur texte (aller au début/à la fin de la saisie).
 		switch (e.key) {
 			case "ArrowDown":
 				e.preventDefault();
@@ -43,16 +48,6 @@ export function useAutocompleteKeyboard<T>({
 			case "ArrowUp":
 				e.preventDefault();
 				setActiveIndex((prev: number) => Math.max(prev - 1, -1));
-				break;
-
-			case "Home":
-				e.preventDefault();
-				setActiveIndex(0);
-				break;
-
-			case "End":
-				e.preventDefault();
-				setActiveIndex(items.length - 1);
 				break;
 
 			case "Enter":

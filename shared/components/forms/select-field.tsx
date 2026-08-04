@@ -13,6 +13,7 @@ import {
 import { NativeSelect, NativeSelectOption } from "@/shared/components/ui/native-select";
 import { Button } from "@/shared/components/ui/button";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 import { X } from "lucide-react";
 
 interface SelectFieldProps<T extends string> {
@@ -79,7 +80,7 @@ export const SelectField = <T extends string>({
 	const field = useFieldContext<T | undefined>();
 	const triggerRef = useRef<HTMLButtonElement>(null);
 
-	const hasError = field.state.meta.errors.length > 0;
+	const hasError = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -209,7 +210,10 @@ export const SelectField = <T extends string>({
 					{description}
 				</p>
 			)}
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+			/>
 		</Field>
 	);
 };

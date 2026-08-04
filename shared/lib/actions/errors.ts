@@ -7,7 +7,7 @@
 
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { ZodError } from "zod";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { unstable_rethrow } from "next/navigation";
 import { Prisma } from "@/app/generated/prisma/client";
 import { logger, type LogContext } from "@/shared/lib/logger";
 import { BusinessError } from "./business-error";
@@ -39,10 +39,8 @@ export function handleActionError(
 	defaultMessage?: string,
 	context?: LogContext,
 ): ActionState {
-	// Redirect errors doivent être re-thrown (Next.js)
-	if (isRedirectError(error)) {
-		throw error;
-	}
+	// Signaux framework (redirect, notFound, forbidden…) : re-throw vers Next
+	unstable_rethrow(error);
 
 	// Erreurs de validation Zod
 	if (error instanceof ZodError) {

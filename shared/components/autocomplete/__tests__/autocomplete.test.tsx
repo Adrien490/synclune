@@ -300,22 +300,22 @@ describe("Autocomplete", () => {
 	describe("minQueryLength hint", () => {
 		it("shows hint when query is shorter than minQueryLength", () => {
 			renderAutocomplete({ value: "a", minQueryLength: 3 });
-			expect(screen.getByText(/Tapez encore 2 caractères/)).toBeInTheDocument();
+			expect(screen.getByText(/Encore 2 caractères/)).toBeInTheDocument();
 		});
 
 		it("shows singular form when only 1 character remaining", () => {
 			renderAutocomplete({ value: "a", minQueryLength: 2 });
-			expect(screen.getByText(/Tapez encore 1 caractère$/)).toBeInTheDocument();
+			expect(screen.getByText(/Encore 1 caractère$/)).toBeInTheDocument();
 		});
 
 		it("does not show hint when query is empty", () => {
 			renderAutocomplete({ value: "", minQueryLength: 2 });
-			expect(screen.queryByText(/Tapez encore/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/Encore \d caractère/)).not.toBeInTheDocument();
 		});
 
 		it("does not show hint when query meets minQueryLength", () => {
 			renderAutocomplete({ value: "ab", minQueryLength: 2 });
-			expect(screen.queryByText(/Tapez encore/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/Encore \d caractère/)).not.toBeInTheDocument();
 		});
 
 		it("includes hintId in aria-describedby when hint is visible", () => {
@@ -325,7 +325,7 @@ describe("Autocomplete", () => {
 			// The hint paragraph should exist in the DOM with that id
 			const hintEl = document.getElementById(describedBy.split(" ")[0]!);
 			expect(hintEl).toBeInTheDocument();
-			expect(hintEl?.textContent).toMatch(/Tapez encore/);
+			expect(hintEl?.textContent).toMatch(/Encore \d caractère/);
 		});
 
 		it("combines hintId and external aria-describedby", () => {
@@ -464,19 +464,44 @@ describe("Autocomplete", () => {
 	// --------------------------------------------------------------------------
 
 	describe("loading state", () => {
-		it("announces 'Recherche en cours' via live region when isLoading=true", () => {
-			// The Spinner is passed as endIcon to Input, but due to Input's internal rendering
-			// logic the spinner is not always visible in DOM. The live region is the reliable
-			// indicator that loading is active and accessible.
+		it("announces 'Recherche en cours' via live region when isLoading=true and open", () => {
 			renderAutocomplete({ isLoading: true, value: "ba" });
+			fireEvent.focus(getInput());
 			const liveRegion = document.querySelector("[aria-live='polite']");
 			expect(liveRegion?.textContent).toBe("Recherche en cours");
 		});
 
 		it("does not announce loading when isLoading=false", () => {
 			renderAutocomplete({ isLoading: false, value: "ba" });
+			fireEvent.focus(getInput());
 			const liveRegion = document.querySelector("[aria-live='polite']");
 			expect(liveRegion?.textContent).not.toBe("Recherche en cours");
+		});
+
+		it("swaps the search icon for the spinner while loading", () => {
+			// Le spinner vit dans le startIcon : en endIcon il était masqué par le
+			// bouton clear dès que le champ avait une valeur — toujours le cas
+			// pendant une recherche.
+			renderAutocomplete({ isLoading: true, value: "ba" });
+			expect(screen.getByTestId("spinner")).toBeInTheDocument();
+			expect(screen.queryByTestId("search-icon")).not.toBeInTheDocument();
+		});
+
+		it("restores the search icon when loading ends", () => {
+			renderAutocomplete({ isLoading: false, value: "ba" });
+			expect(screen.queryByTestId("spinner")).not.toBeInTheDocument();
+			expect(screen.getByTestId("search-icon")).toBeInTheDocument();
+		});
+
+		it("does not show a spinner when showSearchIcon=false (skeletons remain the loading feedback)", () => {
+			renderAutocomplete({ isLoading: true, value: "ba", showSearchIcon: false });
+			expect(screen.queryByTestId("spinner")).not.toBeInTheDocument();
+		});
+
+		it("sets aria-busy on the listbox while loading", () => {
+			renderAutocomplete({ value: "ba", items: [], isLoading: true });
+			fireEvent.focus(getInput());
+			expect(screen.getByRole("listbox")).toHaveAttribute("aria-busy", "true");
 		});
 
 		it("shows loading skeletons in dropdown when isLoading=true and query is valid", () => {
@@ -792,29 +817,28 @@ describe("Autocomplete", () => {
 			expect(onSelect).not.toHaveBeenCalled();
 		});
 
-		it("moves to first item on Home key", () => {
+		it("leaves Home to the text cursor (APG: no listbox jump, no preventDefault)", () => {
 			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
 			fireEvent.focus(getInput());
 			// Navigate to second item first
 			fireEvent.keyDown(getInput(), { key: "ArrowDown" });
 			fireEvent.keyDown(getInput(), { key: "ArrowDown" });
-			// Then go Home
-			fireEvent.keyDown(getInput(), { key: "Home" });
+			const activeBefore = getInput().getAttribute("aria-activedescendant");
 
-			const activeId = getInput().getAttribute("aria-activedescendant");
-			// Should correspond to first item
-			const options = screen.getAllByRole("option");
-			expect(options[0]).toHaveAttribute("id", activeId);
+			// fireEvent renvoie false si preventDefault a été appelé
+			const notPrevented = fireEvent.keyDown(getInput(), { key: "Home" });
+
+			expect(notPrevented).toBe(true);
+			expect(getInput().getAttribute("aria-activedescendant")).toBe(activeBefore);
 		});
 
-		it("moves to last item on End key", () => {
+		it("leaves End to the text cursor (APG: no listbox jump, no preventDefault)", () => {
 			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
 			fireEvent.focus(getInput());
-			fireEvent.keyDown(getInput(), { key: "End" });
+			const notPrevented = fireEvent.keyDown(getInput(), { key: "End" });
 
-			const activeId = getInput().getAttribute("aria-activedescendant");
-			const options = screen.getAllByRole("option");
-			expect(options[options.length - 1]).toHaveAttribute("id", activeId);
+			expect(notPrevented).toBe(true);
+			expect(getInput()).not.toHaveAttribute("aria-activedescendant");
 		});
 
 		it("marks the active item with aria-selected='true'", () => {
@@ -1106,12 +1130,14 @@ describe("Autocomplete", () => {
 
 describe("AutocompleteLiveRegion", () => {
 	function renderRegion(props: {
+		isOpen?: boolean;
 		isLoading?: boolean;
 		hasResults?: boolean;
 		hasValidQuery?: boolean;
 		itemCount?: number;
 	}) {
 		const defaults = {
+			isOpen: true,
 			isLoading: false,
 			hasResults: false,
 			hasValidQuery: false,
@@ -1169,6 +1195,14 @@ describe("AutocompleteLiveRegion", () => {
 		renderRegion({ isLoading: true, hasResults: true, hasValidQuery: true, itemCount: 5 });
 		expect(document.querySelector("[aria-live]")?.textContent).toBe("Recherche en cours");
 	});
+
+	it("stays silent when closed, even while loading or with results", () => {
+		// Gate isOpen : après sélection, le hook checkout re-cherche l'adresse
+		// complète — sans le gate, le SR annonçait « Recherche en cours » puis
+		// « N résultats trouvés » liste fermée, saisie terminée.
+		renderRegion({ isOpen: false, isLoading: true, hasResults: true, itemCount: 5 });
+		expect(document.querySelector("[aria-live]")?.textContent).toBe("");
+	});
 });
 
 // ============================================================================
@@ -1218,15 +1252,18 @@ describe("useAutocompleteKeyboard", () => {
 		expect(params.setActiveIndex).toHaveBeenCalledWith(0);
 	});
 
-	it("ArrowDown when closed but no results: does nothing", () => {
+	it("ArrowDown when closed and no results: reopens on the applicable state (error/empty) without active index", () => {
+		// Après Escape sur une erreur, ArrowDown doit permettre de re-atteindre
+		// le bouton « Réessayer » — l'ancien gate `hasResults` l'interdisait.
 		const params = buildParams({ isOpen: false, hasResults: false });
 		const { result } = renderHook(() => useAutocompleteKeyboard(params));
 		const event = createKeyboardEvent("ArrowDown");
 
 		result.current(event);
 
-		expect(params.setIsOpen).not.toHaveBeenCalled();
-		expect(params.setActiveIndex).not.toHaveBeenCalled();
+		expect(event.preventDefault).toHaveBeenCalled();
+		expect(params.setIsOpen).toHaveBeenCalledWith(true);
+		expect(params.setActiveIndex).toHaveBeenCalledWith(-1);
 	});
 
 	it("ArrowDown when closed but query invalid: does nothing", () => {
@@ -1310,9 +1347,11 @@ describe("useAutocompleteKeyboard", () => {
 		expect(updater(-1)).toBe(-1);
 	});
 
-	// --- Home ---
+	// --- Home / End ---
+	// Pattern APG combobox : Home/End restent au curseur texte de l'input
+	// (début/fin de la saisie), ils ne naviguent PAS dans le listbox.
 
-	it("Home: sets activeIndex to 0 and calls preventDefault", () => {
+	it("Home: not intercepted (no preventDefault, no listbox jump)", () => {
 		const setActiveIndex = vi.fn();
 		const params = buildParams({ isOpen: true, activeIndex: 2, setActiveIndex });
 		const { result } = renderHook(() => useAutocompleteKeyboard(params));
@@ -1320,13 +1359,11 @@ describe("useAutocompleteKeyboard", () => {
 
 		result.current(event);
 
-		expect(event.preventDefault).toHaveBeenCalled();
-		expect(setActiveIndex).toHaveBeenCalledWith(0);
+		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(setActiveIndex).not.toHaveBeenCalled();
 	});
 
-	// --- End ---
-
-	it("End: sets activeIndex to last item index and calls preventDefault", () => {
+	it("End: not intercepted (no preventDefault, no listbox jump)", () => {
 		const setActiveIndex = vi.fn();
 		const params = buildParams({ isOpen: true, activeIndex: 0, setActiveIndex });
 		const { result } = renderHook(() => useAutocompleteKeyboard(params));
@@ -1334,8 +1371,8 @@ describe("useAutocompleteKeyboard", () => {
 
 		result.current(event);
 
-		expect(event.preventDefault).toHaveBeenCalled();
-		expect(setActiveIndex).toHaveBeenCalledWith(TEST_ITEMS.length - 1);
+		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(setActiveIndex).not.toHaveBeenCalled();
 	});
 
 	// --- Enter ---

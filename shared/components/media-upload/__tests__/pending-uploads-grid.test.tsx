@@ -108,23 +108,26 @@ describe("PendingUploadsGrid", () => {
 		it("rend chaque item focusable et décrit quand onReorder est fourni", () => {
 			render(<PendingUploadsGrid files={[file1, file2]} {...noopHandlers} onReorder={vi.fn()} />);
 
-			// Les instructions clavier sont rendues et adressables
-			expect(document.getElementById("pending-drag-instructions")).toBeInTheDocument();
-
-			for (const label of ["Fichier 1", "Fichier 2"]) {
+			for (const label of [/^Fichier 1 : /, /^Fichier 2 : /]) {
 				const item = screen.getByRole("group", { name: label });
 				expect(item).toHaveAttribute("tabindex", "0");
 				expect(item).toHaveAttribute("aria-roledescription", "fichier réorganisable");
-				expect(item).toHaveAttribute("aria-describedby", "pending-drag-instructions");
+				// L'id vient de useId (unique par instance) : on résout le describedby
+				// au lieu d'asserter un id codé en dur.
+				const describedBy = item.getAttribute("aria-describedby");
+				expect(describedBy).toBeTruthy();
+				const instructions = document.getElementById(describedBy!);
+				expect(instructions).toBeInTheDocument();
+				expect(instructions?.textContent).toContain("Espace ou Entrée");
 			}
 		});
 
 		it("ne rend aucun attribut de drag clavier quand onReorder est absent", () => {
 			render(<PendingUploadsGrid files={[file1, file2]} {...noopHandlers} />);
 
-			expect(document.getElementById("pending-drag-instructions")).toBeNull();
-			expect(screen.queryByRole("group", { name: "Fichier 1" })).toBeNull();
-			expect(screen.queryByRole("group", { name: "Fichier 2" })).toBeNull();
+			expect(screen.queryByText(/saisir un fichier/)).toBeNull();
+			expect(screen.queryByRole("group", { name: /^Fichier 1/ })).toBeNull();
+			expect(screen.queryByRole("group", { name: /^Fichier 2/ })).toBeNull();
 		});
 	});
 });

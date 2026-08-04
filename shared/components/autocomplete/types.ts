@@ -4,6 +4,12 @@ import type { HapticPattern } from "@/shared/hooks/use-haptic";
 /**
  * Props pour le composant Autocomplete
  * @template T - Type des items a afficher dans la liste
+ *
+ * ⚠️ Usage dans un overlay Radix (Dialog/Sheet) : Radix ecoute Escape en
+ * CAPTURE au niveau document — le preventDefault du composant (bubble) ne le
+ * bloque pas, Escape fermerait la liste ET l'overlay. Arbitrer cote overlay
+ * via son `onEscapeKeyDown` (cf. audit recherche 2026-08-01). Aucun usage
+ * actuel concerne (checkout = page).
  */
 export interface AutocompleteProps<T> {
 	/** Nom du champ pour les formulaires */
@@ -30,9 +36,9 @@ export interface AutocompleteProps<T> {
 		alt: string;
 		blurDataURL?: string | null;
 	} | null;
-	/** Taille de l'image en pixels (defaut: 32) */
+	/** Taille de l'image en pixels (defaut: 56 desktop ; force a 72 sur mobile) */
 	imageSize?: number;
-	/** Placeholder du champ de recherche (defaut: "Rechercher...") */
+	/** Placeholder du champ de recherche (defaut: "Rechercher…") */
 	placeholder?: string;
 	/** Indique si les donnees sont en cours de chargement */
 	isLoading?: boolean;
@@ -46,11 +52,11 @@ export interface AutocompleteProps<T> {
 	inputClassName?: string;
 	/** Message affiche quand aucun resultat (defaut: "Aucun resultat trouve") */
 	noResultsMessage?: string;
-	/** Description affichee sous le message (defaut: "Essayez de modifier votre recherche") */
+	/** Description affichee sous le message (defaut: "Essaie de modifier ta recherche") */
 	noResultsDescription?: string;
 	/** Slot rendu apres la description dans l'etat vide (ex: bouton "Saisir manuellement") */
 	emptyStateAction?: ReactNode;
-	/** Nombre minimum de caracteres pour lancer la recherche (defaut: 3) */
+	/** Nombre minimum de caracteres pour lancer la recherche (defaut: 2) */
 	minQueryLength?: number;
 	/** Delai avant fermeture du dropdown sur blur en ms (defaut: 150) */
 	blurDelay?: number;

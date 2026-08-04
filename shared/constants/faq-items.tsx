@@ -6,7 +6,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { formatEuro } from "@/shared/utils/format-euro";
 
 /**
- * SSOT des items FAQ, partagés entre la home (`HomeFaq`) et la page d'aide (`/aide`).
+ * SSOT des items FAQ, consommés par la page d'aide (`/aide`).
  *
  * - `answerText` : version texte brut (utilisée pour le schema JSON-LD FAQPage + recherche)
  * - `answer` : version JSX riche (utilisée par les accordéons UI)
@@ -250,13 +250,3 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 		),
 	},
 ];
-
-/**
- * Sous-ensemble affiché sur la home (6 questions les plus fréquentes).
- * Maintient la rétro-compatibilité avec `home-faq.tsx` historique.
- */
-export const HOME_FAQ_ITEMS: ReadonlyArray<FaqItem> = FAQ_ITEMS.filter((item) =>
-	["fait-main", "delai", "entretien", "personnalisation", "retours", "editions-limitees"].includes(
-		item.id,
-	),
-);

@@ -55,7 +55,9 @@ describe("@regression overlay-history-wiring", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Fermer la boîte de dialogue" }));
 
 		expect(backSpy).toHaveBeenCalledTimes(1);
-		expect(onOpenChange).toHaveBeenCalledWith(false);
+		// Base UI joint un `eventDetails` (raison de la fermeture + `cancel()`) que
+		// le wrapper fait suivre : on n'assert que le premier argument.
+		expect(onOpenChange.mock.calls.some(([open]) => open === false)).toBe(true);
 	});
 
 	it("Dialog : Escape reprend l'entrée d'historique", () => {
@@ -88,7 +90,9 @@ describe("@regression overlay-history-wiring", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
 
 		expect(backSpy).toHaveBeenCalledTimes(1);
-		expect(onOpenChange).toHaveBeenCalledWith(false);
+		// Base UI joint un `eventDetails` (raison de la fermeture + `cancel()`) que
+		// le wrapper fait suivre : on n'assert que le premier argument.
+		expect(onOpenChange.mock.calls.some(([open]) => open === false)).toBe(true);
 	});
 
 	it("Sheet : la croix reprend l'entrée d'historique", () => {
@@ -102,7 +106,9 @@ describe("@regression overlay-history-wiring", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Fermer le panneau" }));
 
 		expect(backSpy).toHaveBeenCalledTimes(1);
-		expect(onOpenChange).toHaveBeenCalledWith(false);
+		// Base UI joint un `eventDetails` (raison de la fermeture + `cancel()`) que
+		// le wrapper fait suivre : on n'assert que le premier argument.
+		expect(onOpenChange.mock.calls.some(([open]) => open === false)).toBe(true);
 	});
 
 	it("n'appelle pas back() à l'ouverture", () => {

@@ -7,9 +7,10 @@ import { arrayMove } from "@dnd-kit/helpers";
 import type { DragEndEvent } from "@dnd-kit/react";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useReducedMotion } from "motion/react";
-import { Play, Upload } from "lucide-react";
+import { Ban, Play, Upload } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useId, useState } from "react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { useLightbox } from "@/shared/hooks";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -17,7 +18,7 @@ import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { lazy, Suspense } from "react";
 import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
@@ -44,6 +45,8 @@ interface MediaUploadGridProps {
 	renderUploadZone?: () => React.ReactNode;
 	/** When provided, enables native drag-and-drop of files from the OS file system (P2.5) */
 	onFilesDropped?: (files: File[]) => void;
+	/** Accessible label of the grid group (e.g. "Médias de la variante"). */
+	ariaLabel?: string;
 }
 
 export function MediaUploadGrid({
@@ -53,8 +56,13 @@ export function MediaUploadGrid({
 	maxItems = 6,
 	renderUploadZone,
 	onFilesDropped,
+	ariaLabel = "Médias du produit",
 }: MediaUploadGridProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
+	// Id unique : deux grilles sur une même page ne doivent pas se partager le span
+	// d'instructions, et le KeyboardSensor n'injecte son describedby générique que
+	// si la tuile n'en porte pas déjà un.
+	const dragInstructionsId = useId();
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
 	const [isFileDropTarget, setIsFileDropTarget] = useState(false);
@@ -285,9 +293,9 @@ export function MediaUploadGrid({
 				onDragEnd={handleDragEnd}
 			>
 				{/* Keyboard drag & drop instructions (screen readers) */}
-				<span id="drag-instructions" className="sr-only">
+				<span id={dragInstructionsId} className="sr-only">
 					Utilise Espace ou Entrée pour saisir un élément, les flèches pour le déplacer, Espace ou
-					Entrée pour déposer, Échap pour annuler.
+					Entrée pour déposer, Échap pour annuler. Suppr supprime le média.
 				</span>
 
 				{/* aria-live region for drag & drop announcements */}
@@ -298,17 +306,22 @@ export function MediaUploadGrid({
 				<div
 					className={`xs:gap-2.5 relative grid w-full grid-cols-2 gap-2 rounded-lg sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4 ${
 						isFileDropTarget && onFilesDropped
-							? "ring-primary bg-primary/5 ring-2 ring-offset-2 transition-colors"
+							? canAddMore
+								? "ring-primary bg-primary/5 ring-2 ring-offset-2 transition-colors"
+								: "ring-warning bg-warning/5 ring-2 ring-offset-2 transition-colors"
 							: ""
 					}`}
 					role="group"
-					aria-label="Médias du produit"
+					aria-label={ariaLabel}
 					{...(onFilesDropped
 						? {
 								onDragOver: (e: React.DragEvent<HTMLDivElement>) => {
 									if (!e.dataTransfer.types.includes("Files")) return;
 									e.preventDefault();
-									e.dataTransfer.dropEffect = "copy";
+									// À saturation, l'overlay explique le refus et le curseur OS
+									// annonce « interdit » — sans ça, la grille invitait à déposer
+									// juste sous le bandeau « Limite atteinte » du parent.
+									e.dataTransfer.dropEffect = canAddMore ? "copy" : "none";
 									setIsFileDropTarget(true);
 								},
 								onDragLeave: (e: React.DragEvent<HTMLDivElement>) => {
@@ -319,6 +332,11 @@ export function MediaUploadGrid({
 									if (e.dataTransfer.files.length === 0) return;
 									e.preventDefault();
 									setIsFileDropTarget(false);
+									if (!canAddMore) {
+										triggerHaptic("error");
+										toast.error(`Limite de ${maxItems} médias atteinte`);
+										return;
+									}
 									triggerHaptic("medium");
 									onFilesDropped(Array.from(e.dataTransfer.files));
 								},
@@ -349,6 +367,7 @@ export function MediaUploadGrid({
 										: () => handleSetAsPrimary(index)
 								}
 								onUpdateAltText={(altText) => handleUpdateAltText(index, altText)}
+								dragInstructionsId={dragInstructionsId}
 							/>
 						);
 					})}
@@ -359,15 +378,25 @@ export function MediaUploadGrid({
 					)}
 
 					{/* OS files drag overlay — pointer-events-none so it doesn't intercept the drop. */}
-					{isFileDropTarget && onFilesDropped && (
-						<div
-							aria-hidden="true"
-							className="border-primary bg-background/85 text-primary pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed backdrop-blur-sm"
-						>
-							<Upload className="size-8" aria-hidden="true" />
-							<p className="text-sm font-medium">Dépose pour ajouter</p>
-						</div>
-					)}
+					{isFileDropTarget &&
+						onFilesDropped &&
+						(canAddMore ? (
+							<div
+								aria-hidden="true"
+								className="border-primary bg-background/85 text-primary pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed backdrop-blur-sm"
+							>
+								<Upload className="size-8" aria-hidden="true" />
+								<p className="text-sm font-medium">Dépose pour ajouter</p>
+							</div>
+						) : (
+							<div
+								aria-hidden="true"
+								className="border-warning bg-background/85 text-warning pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed backdrop-blur-sm"
+							>
+								<Ban className="size-8" aria-hidden="true" />
+								<p className="text-sm font-medium">Limite de {maxItems} médias atteinte</p>
+							</div>
+						))}
 				</div>
 
 				{/* DragOverlay for better visual feedback during drag */}
@@ -420,7 +449,15 @@ export function MediaUploadGrid({
 
 			{/* Lightbox */}
 			{lightboxOpen && (
-				<Suspense fallback={null}>
+				<Suspense
+					fallback={
+						// Le chunk lightbox se charge à la première ouverture : sans ce voile,
+						// le premier clic « Agrandir » ne produisait rien à l'écran.
+						<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+							<Spinner label="Chargement de l'aperçu" className="size-8 text-white" />
+						</div>
+					}
+				>
 					<MediaLightbox
 						open={lightboxOpen}
 						close={closeLightbox}

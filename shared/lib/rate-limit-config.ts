@@ -596,7 +596,6 @@ export const ADMIN_STORE_SETTINGS_LIMITS = {
 	REOPEN_STORE: ADMIN_LIMIT,
 	UPDATE_CLOSURE_MESSAGE: ADMIN_LIMIT,
 	UPDATE_REOPENS_AT: ADMIN_LIMIT,
-	UPDATE_ANNOUNCEMENT: ADMIN_LIMIT,
 } as const;
 
 export const ADMIN_DASHBOARD_LIMITS = {
@@ -629,10 +628,6 @@ export const ADMIN_SKU_REFRESH_LIMIT = ADMIN_LIMIT;
 export const ADMIN_SKU_REORDER_MEDIA_LIMIT = ADMIN_LIMIT;
 export const ADMIN_SKU_SET_PRIMARY_MEDIA_LIMIT = ADMIN_LIMIT;
 export const ADMIN_SKU_UPDATE_MEDIA_ALT_LIMIT = ADMIN_LIMIT;
-
-// Les presets ADMIN_ANNOUNCEMENT_* n'avaient plus AUCUN consommateur (les
-// annonces passent par ADMIN_STORE_SETTINGS_LIMITS.UPDATE_ANNOUNCEMENT) —
-// retirés au Lot 4 S3.2.
 
 // ========================================
 // 🔍 PUBLIC — presets conservés tels quels (calibrés par les audits KI-004)
@@ -678,12 +673,6 @@ export const ADDRESS_SEARCH_LIMIT: RateLimitConfig = {
 export const ADDRESS_LIMITS = {
 	SEARCH: ADDRESS_SEARCH_LIMIT,
 } as const;
-
-export const PUBLIC_ANNOUNCEMENT_DISMISS_LIMIT: RateLimitConfig = {
-	name: "public-announcement-dismiss",
-	limit: 60,
-	windowMs: minutes(1),
-};
 
 // ========================================
 // 🪝 WEBHOOKS

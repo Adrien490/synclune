@@ -109,12 +109,14 @@ describe("Input", () => {
 		expect(screen.getByTestId("icon-x")).toBeInTheDocument();
 	});
 
-	it("does not show endIcon when clearable and value is empty (showClearButton=false overrides nullish coalescing)", () => {
+	it("shows endIcon when clearable and value is empty (clear button hidden, endIcon takes the slot)", () => {
+		// Contrat du JSDoc `endIcon` : « masquée si clearable est actif ET le champ
+		// a une valeur » — donc visible quand le champ est vide. L'ancien `??`
+		// court-circuitait sur `""` (falsy non-nullish) et ne rendait RIEN.
 		const { container } = render(
 			<Input clearable value="" onChange={vi.fn()} endIcon={<svg data-testid="end-icon" />} />,
 		);
-		// showClearButton is false (not undefined), so `false ?? hasEndIcon` = false — nothing shown
-		expect(container.querySelector("[data-testid='end-icon']")).not.toBeInTheDocument();
+		expect(container.querySelector("[data-testid='end-icon']")).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Effacer le champ" })).not.toBeInTheDocument();
 	});
 

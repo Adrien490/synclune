@@ -103,29 +103,20 @@ export function AnimatedNumber({
 		return unsubscribe;
 	}, [spring, value, startValue, direction, shouldReduceMotion]);
 
-	// Si reduced motion, afficher directement la valeur finale
+	// Pas de role="status"/aria-live ici : motion réécrit le textContent à CHAQUE
+	// frame du spring — une région live dessus fait vocaliser chaque valeur
+	// intermédiaire. L'annonce SR appartient au call site, sur la valeur finale
+	// (ex. la région différée de cart-sheet.tsx).
 	if (shouldReduceMotion) {
 		return (
-			<span
-				ref={ref}
-				role="status"
-				aria-live="polite"
-				aria-atomic="true"
-				className={cn("inline-block tabular-nums", className)}
-			>
+			<span ref={ref} className={cn("inline-block tabular-nums", className)}>
 				{formattedValue}
 			</span>
 		);
 	}
 
 	return (
-		<m.span
-			ref={ref}
-			role="status"
-			aria-live="polite"
-			aria-atomic="true"
-			className={cn("inline-block tabular-nums", className)}
-		>
+		<m.span ref={ref} className={cn("inline-block tabular-nums", className)}>
 			{display}
 		</m.span>
 	);

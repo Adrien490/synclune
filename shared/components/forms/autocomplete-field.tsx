@@ -4,6 +4,7 @@ import { Autocomplete, type AutocompleteProps } from "@/shared/components/autoco
 import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 
 type AutocompleteFieldProps<T> = Omit<AutocompleteProps<T>, "name" | "value" | "onChange"> & {
 	/** Label affiché au-dessus du champ */
@@ -53,7 +54,7 @@ export function AutocompleteField<T>({
 }: AutocompleteFieldProps<T>) {
 	const field = useFieldContext<string>();
 
-	const hasError = field.state.meta.errors.length > 0;
+	const hasError = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -81,7 +82,10 @@ export function AutocompleteField<T>({
 					{description}
 				</p>
 			)}
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+			/>
 		</Field>
 	);
 }

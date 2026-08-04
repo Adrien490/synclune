@@ -134,23 +134,9 @@ describe("softDelete", () => {
 		});
 	});
 
-	describe("softDelete.refund", () => {
-		it("calls prisma.refund.update with the correct id and deletedAt", async () => {
-			await softDelete.refund("refund-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledWith({
-				where: { id: "refund-1" },
-				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-			});
-		});
-
-		it("does not set accountStatus", async () => {
-			await softDelete.refund("refund-1");
-
-			const call = mockPrismaUpdate.mock.calls[0]![0];
-			expect(call.data.accountStatus).toBeUndefined();
-		});
-	});
+	// softDelete.refund est parti au Lot 6 : Refund n'a plus de deletedAt (son
+	// seul writer, cancel-refund, est parti au Lot 2 — l'annulation est portée
+	// par status: CANCELLED, état terminal).
 
 	describe("softDelete.orderNote", () => {
 		it("calls prisma.orderNote.update with the correct id and deletedAt", async () => {
@@ -199,7 +185,6 @@ describe("softDelete", () => {
 	describe("shared behaviour across all helpers", () => {
 		const helpers: Array<[keyof typeof softDelete, string]> = [
 			["order", "order-id"],
-			["refund", "refund-id"],
 			["orderNote", "note-id"],
 			["product", "product-id"],
 			["productSku", "sku-id"],

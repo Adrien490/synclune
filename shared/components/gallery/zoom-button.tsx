@@ -30,8 +30,11 @@ export function GalleryZoomButton({ onOpen }: GalleryZoomButtonProps) {
 				"size-11 rounded-full shadow-lg",
 				"items-center justify-center hover:bg-black/80",
 				!prefersReduced && "transition-[transform,opacity] active:scale-95",
-				"sm:opacity-0 sm:group-hover:opacity-100",
-				"focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2",
+				// Masqué-puis-révélé au survol UNIQUEMENT là où le hover existe (can-hover) :
+				// sur tablette tactile ≥ sm, le bouton reste visible en permanence.
+				"sm:can-hover:opacity-0 sm:can-hover:group-hover:opacity-100",
+				// WCAG 2.4.7 — révélé à l'arrivée du focus dans la galerie (parité avec les flèches)
+				"focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 sm:group-focus-within:opacity-100",
 			)}
 			aria-label="Zoomer l'image en plein écran"
 		>

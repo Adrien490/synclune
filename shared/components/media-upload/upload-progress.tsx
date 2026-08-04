@@ -1,14 +1,24 @@
 "use client";
 
+import {
+	Attachment,
+	AttachmentAction,
+	AttachmentActions,
+	AttachmentContent,
+	AttachmentDescription,
+	AttachmentMedia,
+	AttachmentTitle,
+	type AttachmentState,
+} from "@/shared/components/ui/attachment";
 import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { formatBytesShort } from "@/modules/media/utils/format-bytes";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { AlertTriangle, Check, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, Check, ImageIcon, RefreshCw, VideoIcon, X } from "lucide-react";
 import { Spinner } from "@/shared/components/ui/spinner";
-import type { FileProgress } from "@/modules/media/types/hooks.types";
+import type { FileProgress, FileProgressState } from "@/modules/media/types/hooks.types";
 
 // Screen reader announcements are throttled to these milestones to avoid spamming
 // NVDA/VoiceOver with one annoucement per progress tick during long uploads.
@@ -263,11 +273,7 @@ export function UploadProgress({
 			</div>
 
 			{files && files.length > 0 && !isComplete && (
-				<FileProgressList
-					files={files}
-					reducedMotion={shouldReduceMotion}
-					onCancelOne={onCancelOne}
-				/>
+				<FileProgressList files={files} onCancelOne={onCancelOne} />
 			)}
 
 			{onCancel && !isComplete && (
@@ -293,31 +299,25 @@ export function UploadProgress({
 
 interface FileProgressListProps {
 	files: FileProgress[];
-	reducedMotion: boolean | null;
 	onCancelOne?: (fileName: string) => void;
 }
 
-function FileProgressList({ files, reducedMotion, onCancelOne }: FileProgressListProps) {
+function FileProgressList({ files, onCancelOne }: FileProgressListProps) {
 	return (
 		<ul
-			className="bg-muted/20 flex max-h-52 w-full flex-col gap-1 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
+			className="bg-muted/20 flex max-h-52 w-full flex-col gap-1.5 overflow-y-auto overscroll-contain rounded-md border p-2"
 			aria-label="Détails par fichier"
 		>
 			{/* Clé composite : deux fichiers homonymes (IMG_0001.jpg) ne doivent pas
 			    fusionner leurs lignes. */}
 			{files.map((file, index) => (
-				<FileProgressItem
-					key={`${file.fileName}-${index}`}
-					file={file}
-					reducedMotion={reducedMotion}
-					onCancel={onCancelOne}
-				/>
+				<FileProgressItem key={`${file.fileName}-${index}`} file={file} onCancel={onCancelOne} />
 			))}
 		</ul>
 	);
 }
 
-const stateLabels: Record<FileProgress["state"], string> = {
+const stateLabels: Record<FileProgressState, string> = {
 	queued: "En attente",
 	validating: "Validation",
 	compressing: "Compression",
@@ -326,18 +326,34 @@ const stateLabels: Record<FileProgress["state"], string> = {
 	failed: "Échec",
 };
 
+// Le pipeline distingue 6 phases, la primitive `Attachment` n'en peint que 5 :
+// `validating` et `compressing` partagent le même traitement visuel (balayage du
+// titre) que le traitement serveur. La phase exacte reste lisible dans la
+// description ET sur `data-file-state`.
+const attachmentStates: Record<FileProgressState, AttachmentState> = {
+	queued: "idle",
+	validating: "processing",
+	compressing: "processing",
+	uploading: "uploading",
+	done: "done",
+	failed: "error",
+};
+
 interface FileProgressItemProps {
 	file: FileProgress;
-	reducedMotion: boolean | null;
 	onCancel?: (fileName: string) => void;
 }
 
-function FileProgressItem({ file, reducedMotion, onCancel }: FileProgressItemProps) {
+function FileProgressItem({ file, onCancel }: FileProgressItemProps) {
 	const haptic = useHaptic();
 	const isDone = file.state === "done";
 	const isFailed = file.state === "failed";
-	const isActive = file.state === "uploading" || file.state === "compressing";
+	const isActive =
+		file.state === "uploading" || file.state === "compressing" || file.state === "validating";
 	const canCancel = onCancel && (file.state === "queued" || file.state === "uploading");
+	// Le pourcentage n'a de sens qu'en cours de route : à 0 il n'informe pas, à
+	// 100 la phase suivante a déjà pris le relais.
+	const showPercent = isActive && file.percent > 0 && file.percent < 100;
 
 	const handleCancel = () => {
 		haptic("light");
@@ -345,61 +361,55 @@ function FileProgressItem({ file, reducedMotion, onCancel }: FileProgressItemPro
 	};
 
 	return (
-		<li
-			className={cn(
-				"flex items-center gap-2 rounded-sm px-1.5 py-1",
-				!reducedMotion && "transition-colors duration-200",
-				isDone && "bg-success/10",
-				isFailed && "bg-destructive/10",
-			)}
-			data-state={file.state}
-		>
-			<span
-				className={cn(
-					"flex size-4 shrink-0 items-center justify-center rounded-full",
-					isDone && "bg-success/30",
-					isFailed && "bg-destructive/30",
-					isActive && "bg-primary/20",
-					!isDone && !isFailed && !isActive && "bg-muted",
-				)}
-				aria-hidden="true"
+		<li className="min-w-0">
+			<Attachment
+				size="xs"
+				state={attachmentStates[file.state]}
+				// La phase exacte du pipeline, que `data-state` agrège (cf. `attachmentStates`).
+				data-file-state={file.state}
+				// Pas de garde `prefers-reduced-motion` ici : `Attachment` porte déjà
+				// `transition-colors` en propre, donc la garde ne pilotait que la durée.
+				// Et une transition de COULEUR n'est pas un déclencheur vestibulaire —
+				// le repo ne gate en `motion-safe:` que le mouvement (cf. la SSOT
+				// `spinner-ssot`, qui vise les rotations).
+				className={cn("w-full min-w-0", isDone && "border-success/30 bg-success/10")}
 			>
-				{isDone ? (
-					<Check className="text-success size-3" />
-				) : isFailed ? (
-					<AlertTriangle className="text-destructive size-3" />
-				) : isActive ? (
-					<Spinner presentational className="text-primary size-3" />
-				) : null}
-			</span>
-			<span className="flex-1 truncate" title={file.fileName}>
-				{file.fileName}
-			</span>
-			{isActive && file.percent > 0 && file.percent < 100 && (
-				<span className="text-muted-foreground tabular-nums">{file.percent}%</span>
-			)}
-			<span
-				className={cn(
-					"text-muted-foreground tabular-nums",
-					isDone && "text-success",
-					isFailed && "text-destructive",
-				)}
-			>
-				{stateLabels[file.state]}
-			</span>
-			{canCancel && (
-				<button
-					type="button"
-					onClick={handleCancel}
-					aria-label={`Annuler ${file.fileName}`}
-					className={cn(
-						"text-muted-foreground hover:text-destructive focus-visible:ring-primary relative flex size-7 shrink-0 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none",
-						"after:absolute after:-inset-2 after:content-['']",
+				<AttachmentMedia className={cn(isDone && "bg-success/15")}>
+					{isDone ? (
+						<Check className="text-success" aria-hidden="true" />
+					) : isFailed ? (
+						<AlertTriangle aria-hidden="true" />
+					) : isActive ? (
+						<Spinner presentational size="sm" className="text-primary" />
+					) : file.mediaType === "VIDEO" ? (
+						<VideoIcon className="text-muted-foreground" aria-hidden="true" />
+					) : (
+						<ImageIcon className="text-muted-foreground" aria-hidden="true" />
 					)}
-				>
-					<X className="size-3" aria-hidden="true" />
-				</button>
-			)}
+				</AttachmentMedia>
+				<AttachmentContent>
+					<AttachmentTitle title={file.fileName}>{file.fileName}</AttachmentTitle>
+					{/* La description porte le seul retour d'avancement par fichier :
+					    phase + pourcentage fusionnés, là où la ligne précédente les
+					    séparait en deux colonnes que la troncature du nom écrasait. */}
+					<AttachmentDescription className={cn("tabular-nums", isDone && "text-success")}>
+						{showPercent
+							? `${stateLabels[file.state]} · ${file.percent}%`
+							: stateLabels[file.state]}
+					</AttachmentDescription>
+				</AttachmentContent>
+				{canCancel && (
+					<AttachmentActions>
+						<AttachmentAction
+							onClick={handleCancel}
+							aria-label={`Annuler ${file.fileName}`}
+							className="text-muted-foreground can-hover:hover:text-destructive"
+						>
+							<X aria-hidden="true" />
+						</AttachmentAction>
+					</AttachmentActions>
+				)}
+			</Attachment>
 		</li>
 	);
 }
@@ -507,37 +517,40 @@ export function UploadErrorBanner({
 
 			{onRetryOne && (
 				<ul
-					className="bg-background/50 flex max-h-40 flex-col gap-1.5 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
+					className="flex max-h-40 flex-col gap-1.5 overflow-y-auto overscroll-contain"
 					aria-label="Fichiers en échec"
 				>
 					{failedFiles.map((entry, index) => (
-						<li
-							key={`${entry.fileName}-${index}`}
-							className="flex items-start gap-2 rounded-sm px-2 py-1.5"
-						>
-							<AlertTriangle
-								className="text-destructive mt-0.5 size-3.5 shrink-0"
-								aria-hidden="true"
-							/>
-							<div className="min-w-0 flex-1">
-								<p className="truncate font-medium" title={entry.fileName}>
-									{entry.fileName}
-								</p>
-								<p className="text-muted-foreground text-xs">{entry.error}</p>
-							</div>
-							{entry.file && (
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									onClick={() => handleRetryOne(entry.file!)}
-									className="min-h-11 shrink-0 gap-1 px-2 text-xs"
-									aria-label={`Réessayer ${entry.fileName}`}
-								>
-									<RefreshCw className="size-3" aria-hidden="true" />
-									<span className="hidden sm:inline">Réessayer</span>
-								</Button>
-							)}
+						<li key={`${entry.fileName}-${index}`} className="min-w-0">
+							<Attachment state="error" size="sm" className="bg-background w-full min-w-0">
+								<AttachmentMedia>
+									<AlertTriangle aria-hidden="true" />
+								</AttachmentMedia>
+								<AttachmentContent>
+									<AttachmentTitle title={entry.fileName}>{entry.fileName}</AttachmentTitle>
+									{/* Le motif de l'échec ne se tronque pas : c'est lui qui dit
+									    quoi corriger avant de réessayer (et il porte l'information
+									    que la couleur seule ne transmet pas — WCAG 1.4.1). */}
+									<AttachmentDescription className="whitespace-normal">
+										{entry.error}
+									</AttachmentDescription>
+								</AttachmentContent>
+								{entry.file && (
+									<AttachmentActions>
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											onClick={() => handleRetryOne(entry.file!)}
+											className="min-h-11 shrink-0 gap-1 px-2 text-xs"
+											aria-label={`Réessayer ${entry.fileName}`}
+										>
+											<RefreshCw className="size-3" aria-hidden="true" />
+											<span className="hidden sm:inline">Réessayer</span>
+										</Button>
+									</AttachmentActions>
+								)}
+							</Attachment>
 						</li>
 					))}
 				</ul>

@@ -291,15 +291,16 @@ describe("SelectFilter", () => {
 				<SelectFilter filterKey="status" label="Statut" options={mockOptions} maxHeight={500} />,
 			);
 
+			// Style inline, pas toHaveStyle : jsdom 30 résout min() dans getComputedStyle
 			const scrollArea = screen.getByTestId("scroll-area");
-			expect(scrollArea).toHaveStyle({ maxHeight: "min(500px, 60vh)" });
+			expect(scrollArea.style.maxHeight).toBe("min(500px, 60vh)");
 		});
 
 		it("uses default maxHeight of 400 when not provided", () => {
 			render(<SelectFilter filterKey="status" label="Statut" options={mockOptions} />);
 
 			const scrollArea = screen.getByTestId("scroll-area");
-			expect(scrollArea).toHaveStyle({ maxHeight: "min(400px, 60vh)" });
+			expect(scrollArea.style.maxHeight).toBe("min(400px, 60vh)");
 		});
 
 		it("applies max-width constraint on SelectContent", () => {

@@ -9,11 +9,11 @@ export const AUTOCOMPLETE_DEFAULTS = {
 	/** Taille des images en pixels - mobile (plus grand pour tactile) */
 	imageSizeMobile: 72,
 	/** Placeholder du champ de recherche */
-	placeholder: "Rechercher...",
+	placeholder: "Rechercher…",
 	/** Message quand aucun resultat */
 	noResultsMessage: "Aucun résultat trouvé",
 	/** Description sous le message d'absence de resultats */
-	noResultsDescription: "Essayez de modifier votre recherche",
+	noResultsDescription: "Essaie de modifier ta recherche",
 	/** Nombre minimum de caracteres pour lancer la recherche */
 	minQueryLength: 2,
 	/** Delai avant fermeture sur blur desktop (ms) */

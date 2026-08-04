@@ -58,12 +58,22 @@ vi.mock("../field-label", () => ({
 // FORM CONTEXT MOCK
 // ============================================================================
 
+const { fakeFormStore } = vi.hoisted(() => {
+	const fakeFormStore = {
+		state: { submissionAttempts: 0 },
+		get: () => fakeFormStore.state,
+		subscribe: () => ({ unsubscribe: () => {} }),
+	};
+	return { fakeFormStore };
+});
+
 const mockHandleChange = vi.fn();
 const mockHandleBlur = vi.fn();
 
 const createFieldState = (value: string | number | null, errors: any[] = []) => ({
-	state: { value, meta: { errors } },
+	state: { value, meta: { errors, isBlurred: true } },
 	name: "price",
+	form: { store: fakeFormStore },
 	handleChange: mockHandleChange,
 	handleBlur: mockHandleBlur,
 });

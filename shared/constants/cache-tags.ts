@@ -64,11 +64,14 @@ export const SHARED_CACHE_TAGS = {
 	PRODUCT_TYPES_LIST: "product-types-list",
 
 	/**
-	 * Menu de navigation (navbar)
+	 * Liste des collections (cross-module)
 	 *
-	 * Utilisé par : collections, product-types
+	 * Utilisé par : collections, products
+	 * Partagé ici, comme PRODUCTS_LIST : une mutation produit doit invalider les
+	 * surfaces collections (les bento des cartes — /collections et mega-menu — sont
+	 * des images de PRODUITS, sélectionnées via `collection.products.skus.images`).
 	 */
-	NAVBAR_MENU: "navbar-menu",
+	COLLECTIONS_LIST: "collections-list",
 
 	/**
 	 * Images du sitemap
@@ -90,7 +93,6 @@ export const SHARED_CACHE_TAGS = {
  */
 export const STATIC_PAGES_CACHE_TAGS = {
 	FOOTER: "footer",
-	ATELIER_SECTION: "atelier-section",
 	LEGAL_TERMS: "legal-terms",
 	LEGAL_PRIVACY: "legal-privacy",
 	LEGAL_NOTICE: "legal-notice",

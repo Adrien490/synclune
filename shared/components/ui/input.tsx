@@ -103,7 +103,11 @@ function Input({
 				{...props}
 			/>
 
-			{(showClearButton ?? hasEndIcon) && (
+			{/* `||`, pas `??` : showClearButton vaut `""` (falsy non-nullish) quand
+			    clearable est actif et le champ vide — le `??` court-circuitait et
+			    l'endIcon n'était jamais rendu dans cette configuration. */}
+			{/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `??` était précisément le bug, cf. commentaire ci-dessus */}
+			{(showClearButton || hasEndIcon) && (
 				<div className="absolute top-1/2 right-3 -translate-y-1/2">
 					{showClearButton ? (
 						<button

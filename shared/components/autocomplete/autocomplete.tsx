@@ -6,7 +6,7 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, m, MotionConfig } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { SearchIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { AutocompleteLiveRegion } from "./autocomplete-live-region";
@@ -84,6 +84,7 @@ export function Autocomplete<T>({
 	}
 
 	// Refs
+	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const blurTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 	const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -110,9 +111,10 @@ export function Autocomplete<T>({
 	useEffect(() => {
 		if (activeIndex >= 0 && showResults) {
 			const activeElement = document.getElementById(`${reactId}-item-${activeIndex}`);
+			const instant = isMobile || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 			activeElement?.scrollIntoView({
 				block: "nearest",
-				behavior: isMobile ? "instant" : "smooth",
+				behavior: instant ? "instant" : "smooth",
 			});
 		}
 	}, [activeIndex, reactId, showResults, isMobile]);
@@ -136,15 +138,24 @@ export function Autocomplete<T>({
 		}
 	};
 
-	const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-		const currentTarget = e.currentTarget;
+	const handleBlur = () => {
+		// Flush du debounce en vol : sans ça, une soumission de formulaire dans
+		// les `debounceMs` suivant la dernière frappe lit une valeur stale.
+		if (debounceRef.current) {
+			clearTimeout(debounceRef.current);
+			debounceRef.current = undefined;
+			onChange(localValue);
+		}
 
 		if (blurTimeoutRef.current) {
 			clearTimeout(blurTimeoutRef.current);
 		}
 
 		blurTimeoutRef.current = setTimeout(() => {
-			if (!currentTarget.parentElement?.contains(document.activeElement)) {
+			// Le conteneur racine, pas `parentElement` : le listbox est un sibling
+			// du wrapper interne de l'Input — l'ancien check ne le contenait jamais,
+			// et cliquer « Réessayer » fermait le dropdown pendant le retry.
+			if (!containerRef.current?.contains(document.activeElement)) {
 				setIsOpen(false);
 				setActiveIndex(-1);
 			}
@@ -166,6 +177,7 @@ export function Autocomplete<T>({
 
 		if (debounceMs > 0) {
 			debounceRef.current = setTimeout(() => {
+				debounceRef.current = undefined;
 				onChange(newValue);
 			}, debounceMs);
 		} else {
@@ -183,6 +195,7 @@ export function Autocomplete<T>({
 		// Annuler tout debounce en cours
 		if (debounceRef.current) {
 			clearTimeout(debounceRef.current);
+			debounceRef.current = undefined;
 		}
 
 		// Rendre le focus au champ : le bouton d'effacement se démonte dès que la
@@ -193,6 +206,13 @@ export function Autocomplete<T>({
 	};
 
 	const handleItemSelect = (item: T) => {
+		// Annuler le debounce en vol AVANT onSelect : sinon le onChange stale du
+		// timer re-clobber la valeur écrite par onSelect ~debounceMs après le clic
+		// (au checkout, l'adresse sélectionnée revenait au fragment tapé).
+		if (debounceRef.current) {
+			clearTimeout(debounceRef.current);
+			debounceRef.current = undefined;
+		}
 		if (selectionPattern) triggerHaptic(selectionPattern);
 		onSelect(item);
 		setIsOpen(false);
@@ -219,114 +239,134 @@ export function Autocomplete<T>({
 		? Math.min(loadingSkeletonCount, AUTOCOMPLETE_DEFAULTS.loadingSkeletonCountMobile)
 		: loadingSkeletonCount;
 
+	// Pas de <MotionConfig reducedMotion="user"> local : le MotionProvider racine
+	// (app/layout.tsx) applique déjà exactement ce réglage à tout le body.
 	return (
-		<MotionConfig reducedMotion="user">
-			<div className={cn("relative w-full", className)}>
-				<div className="relative">
-					<Input
-						ref={inputRef}
-						id={name}
-						name={name}
-						type="text"
-						role="combobox"
-						disabled={disabled}
-						value={localValue}
-						onChange={handleInputChange}
-						onFocus={handleFocus}
-						onBlur={handleBlur}
-						onKeyDown={handleKeyDown}
-						placeholder={placeholder}
-						startIcon={
-							showSearchIcon ? <SearchIcon className="text-muted-foreground size-4" /> : undefined
-						}
-						clearable={showClearButton}
-						onClear={handleClear}
-						endIcon={isLoading ? <Spinner className="size-5" /> : undefined}
-						className={inputClassName}
-						aria-autocomplete="list"
-						aria-controls={showResults ? listboxId : undefined}
-						aria-expanded={showResults}
-						aria-activedescendant={
-							showResults && activeIndex >= 0 ? getItemId(activeIndex) : undefined
-						}
-						aria-describedby={
-							[showMinQueryHint ? hintId : null, ariaDescribedBy].filter(Boolean).join(" ") ||
-							undefined
-						}
-						aria-invalid={ariaInvalid}
-						aria-required={ariaRequired}
-						autoComplete={autoComplete}
-						inputMode={inputMode}
-						enterKeyHint={enterKeyHint}
-						autoCorrect={autoCorrect}
-						autoCapitalize={autoCapitalize}
-						spellCheck={spellCheck}
-					/>
-				</div>
-
-				{/* Hint pour minQueryLength */}
-				<AnimatePresence mode="popLayout">
-					{showMinQueryHint && (
-						<m.p
-							id={hintId}
-							className="text-muted-foreground mt-1.5 ml-0.5 text-sm md:text-xs"
-							initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
-							animate={AUTOCOMPLETE_ANIMATIONS.hint.animate}
-							exit={AUTOCOMPLETE_ANIMATIONS.hint.exit}
-							transition={AUTOCOMPLETE_ANIMATIONS.hint.transition}
-						>
-							Tapez encore {remainingChars} caractère{remainingChars > 1 ? "s" : ""}
-						</m.p>
-					)}
-				</AnimatePresence>
-
-				{/* Live region */}
-				<AutocompleteLiveRegion
-					isLoading={isLoading}
-					hasResults={hasResults}
-					hasValidQuery={hasValidQuery}
-					itemCount={items.length}
+		<div ref={containerRef} className={cn("relative w-full", className)}>
+			<div className="relative">
+				<Input
+					ref={inputRef}
+					id={name}
+					name={name}
+					type="text"
+					role="combobox"
+					disabled={disabled}
+					value={localValue}
+					onChange={handleInputChange}
+					onFocus={handleFocus}
+					onBlur={handleBlur}
+					onKeyDown={handleKeyDown}
+					placeholder={placeholder}
+					startIcon={
+						// Le spinner remplace la loupe pendant le chargement : en `endIcon`
+						// il était invisible dans toutes les configurations (le bouton clear
+						// est prioritaire dès que le champ a une valeur — toujours le cas
+						// pendant une recherche). `presentational` : la live region annonce
+						// déjà « Recherche en cours ».
+						showSearchIcon ? (
+							isLoading ? (
+								<Spinner presentational />
+							) : (
+								<SearchIcon className="text-muted-foreground size-4" />
+							)
+						) : undefined
+					}
+					clearable={showClearButton}
+					onClear={handleClear}
+					className={inputClassName}
+					aria-autocomplete="list"
+					aria-controls={showResults ? listboxId : undefined}
+					aria-expanded={showResults}
+					aria-activedescendant={
+						showResults && activeIndex >= 0 ? getItemId(activeIndex) : undefined
+					}
+					aria-describedby={
+						[showMinQueryHint ? hintId : null, ariaDescribedBy].filter(Boolean).join(" ") ||
+						undefined
+					}
+					aria-invalid={ariaInvalid}
+					aria-required={ariaRequired}
+					autoComplete={autoComplete}
+					inputMode={inputMode}
+					enterKeyHint={enterKeyHint}
+					autoCorrect={autoCorrect}
+					autoCapitalize={autoCapitalize}
+					spellCheck={spellCheck}
 				/>
-
-				<AnimatePresence mode="popLayout">
-					{showResults && (
-						<m.ul
-							id={listboxId}
-							role="listbox"
-							aria-label="Résultats de recherche"
-							className="bg-background absolute z-(--z-float) mt-1 max-h-[min(20rem,calc(var(--vvh,100dvh)*0.5))] w-full overflow-auto overscroll-contain rounded-md border py-1 text-sm shadow-lg focus:outline-hidden"
-							initial={AUTOCOMPLETE_ANIMATIONS.dropdown.initial}
-							animate={AUTOCOMPLETE_ANIMATIONS.dropdown.animate}
-							exit={AUTOCOMPLETE_ANIMATIONS.dropdown.exit}
-							transition={AUTOCOMPLETE_ANIMATIONS.dropdown.transition}
-						>
-							<AutocompleteListContent
-								items={items}
-								activeIndex={activeIndex}
-								error={error}
-								isLoading={isLoading}
-								hasResults={hasResults}
-								showResultsCount={showResultsCount}
-								showEmptyState={showEmptyState}
-								noResultsMessage={noResultsMessage}
-								noResultsDescription={noResultsDescription}
-								emptyStateAction={emptyStateAction}
-								onRetry={onRetry}
-								getItemLabel={getItemLabel}
-								getItemKey={getItemKey}
-								getItemDescription={getItemDescription}
-								getItemImage={getItemImage}
-								effectiveImageSize={effectiveImageSize}
-								onItemSelect={handleItemSelect}
-								onItemHover={setActiveIndex}
-								getItemId={getItemId}
-								loadingSkeletonCount={effectiveSkeletonCount}
-								hapticOnRetry={hapticEnabled ? "light" : false}
-							/>
-						</m.ul>
-					)}
-				</AnimatePresence>
 			</div>
-		</MotionConfig>
+
+			{/* Hint pour minQueryLength */}
+			<AnimatePresence mode="popLayout">
+				{showMinQueryHint && (
+					<m.p
+						id={hintId}
+						className="text-muted-foreground mt-1.5 ml-0.5 text-sm md:text-xs"
+						initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
+						animate={AUTOCOMPLETE_ANIMATIONS.hint.animate}
+						exit={AUTOCOMPLETE_ANIMATIONS.hint.exit}
+						transition={AUTOCOMPLETE_ANIMATIONS.hint.transition}
+					>
+						Encore {remainingChars} caractère{remainingChars > 1 ? "s" : ""}
+					</m.p>
+				)}
+			</AnimatePresence>
+
+			{/* Live region */}
+			<AutocompleteLiveRegion
+				isOpen={isOpen}
+				isLoading={isLoading}
+				hasResults={hasResults}
+				hasValidQuery={hasValidQuery}
+				itemCount={items.length}
+			/>
+
+			<AnimatePresence mode="popLayout">
+				{showResults && (
+					<m.ul
+						id={listboxId}
+						role="listbox"
+						aria-label="Résultats de recherche"
+						aria-busy={isLoading || undefined}
+						// preventDefault sur mousedown : l'input garde le focus pendant
+						// toute interaction dans le dropdown (clic « Réessayer »,
+						// press-hold sur une option) — sans ça le blur-timeout démonte
+						// la cible sous le curseur. Exception : le `<ul>` lui-même,
+						// pour ne pas casser le drag de sa scrollbar (Firefox).
+						onMouseDown={(e) => {
+							if (e.target !== e.currentTarget) e.preventDefault();
+						}}
+						className="bg-background absolute z-(--z-float) mt-1 max-h-[min(20rem,calc(var(--vvh,100dvh)*0.5))] w-full overflow-auto overscroll-contain rounded-xl border py-1 text-sm shadow-lg focus:outline-hidden"
+						initial={AUTOCOMPLETE_ANIMATIONS.dropdown.initial}
+						animate={AUTOCOMPLETE_ANIMATIONS.dropdown.animate}
+						exit={AUTOCOMPLETE_ANIMATIONS.dropdown.exit}
+						transition={AUTOCOMPLETE_ANIMATIONS.dropdown.transition}
+					>
+						<AutocompleteListContent
+							items={items}
+							activeIndex={activeIndex}
+							error={error}
+							isLoading={isLoading}
+							hasResults={hasResults}
+							showResultsCount={showResultsCount}
+							showEmptyState={showEmptyState}
+							noResultsMessage={noResultsMessage}
+							noResultsDescription={noResultsDescription}
+							emptyStateAction={emptyStateAction}
+							onRetry={onRetry}
+							getItemLabel={getItemLabel}
+							getItemKey={getItemKey}
+							getItemDescription={getItemDescription}
+							getItemImage={getItemImage}
+							effectiveImageSize={effectiveImageSize}
+							onItemSelect={handleItemSelect}
+							onItemHover={setActiveIndex}
+							getItemId={getItemId}
+							loadingSkeletonCount={effectiveSkeletonCount}
+							hapticOnRetry={hapticEnabled ? "light" : false}
+						/>
+					</m.ul>
+				)}
+			</AnimatePresence>
+		</div>
 	);
 }

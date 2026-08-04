@@ -37,9 +37,8 @@ const SKIP_DIRS = new Set(["node_modules", "__snapshots__"]);
  * doit être justifiée en commentaire.
  */
 const ALLOWLIST = new Set<string>([
-	// Washi tape décoratif des polaroids (pink/lavender/mint/peach) : palette
-	// ornementale sans sémantique d'état — aucun token à substituer.
-	"components/polaroid-frame.tsx",
+	// (vide — `polaroid-frame.tsx`, dernier entrant, est parti avec la section
+	// Atelier lors du vidage de la landing, 2026-08-03)
 ]);
 
 const RAW_PALETTE =

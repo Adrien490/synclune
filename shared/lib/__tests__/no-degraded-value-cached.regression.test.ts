@@ -12,7 +12,11 @@ import { describe, expect, it } from "vitest";
  *
  * Le piège est que le repli *retourne normalement* : Next met donc la valeur
  * dégradée en cache exactement comme un vrai résultat, pour toute la fenêtre du
- * profil. Une panne DB d'une seconde pendant un cache miss donnait :
+ * profil. `Promise.allSettled` est la même évasion sans le mot `catch` — c'est
+ * par lui que `getNavbarMenuData` a mis des menus vides en cache 24 h sous le
+ * radar de ce garde (audit navbar 2026-08-03) ; le scope cache agrégé a été
+ * déposé, et la détection couvre désormais les deux formes. Une panne DB d'une
+ * seconde pendant un cache miss donnait :
  *
  *  - `getProducts` → catalogue vide pendant 5 min (revalidate `catalog`), 15 min stale ;
  *  - `getCollections` → « aucune collection » jusqu'à **24 h** (profil `reference`) ;
@@ -37,12 +41,10 @@ const REPO_ROOT = join(import.meta.dirname, "..", "..", "..");
  */
 const MUST_NOT_CATCH_INSIDE_CACHE = [
 	"modules/products/data/get-products.ts",
-	"modules/products/data/get-public-product-count.ts",
 	"modules/products/data/get-max-product-price.ts",
 	"modules/products/data/get-product-counts-by-status.ts",
 	"modules/products/data/get-product-collections.ts",
 	"modules/collections/data/get-collections.ts",
-	"modules/collections/data/get-public-collection-count.ts",
 	"modules/collections/data/get-collection-options.ts",
 	"modules/collections/data/get-collection-counts-by-status.ts",
 	"modules/skus/data/fetch-skus.ts",
@@ -102,18 +104,24 @@ describe("CACHE-DEGRADED-VALUE-001 — aucune valeur dégradée mise en cache", 
 		expect(cachedFunctionBodies(source).length).toBeGreaterThan(0);
 	});
 
-	it.each(MUST_NOT_CATCH_INSIDE_CACHE)("%s n'a aucun catch dans son scope caché", (rel) => {
-		const source = stripComments(readFileSync(join(REPO_ROOT, rel), "utf8"));
-		const offending = cachedFunctionBodies(source).filter((body) => /\bcatch\s*\(/.test(body));
+	it.each(MUST_NOT_CATCH_INSIDE_CACHE)(
+		"%s n'a ni catch ni allSettled dans son scope caché",
+		(rel) => {
+			const source = stripComments(readFileSync(join(REPO_ROOT, rel), "utf8"));
+			const offending = cachedFunctionBodies(source).filter((body) =>
+				/\bcatch\s*\(|\ballSettled\b/.test(body),
+			);
 
-		expect(
-			offending.length,
-			`\`${rel}\` a un try/catch DANS son scope "use cache". Le repli retourne ` +
-				`normalement, donc Next met la valeur dégradée en cache pour toute la fenêtre ` +
-				`du profil — indiscernable d'une donnée légitime. Déplacer le catch dans le ` +
-				`wrapper appelant (modèle : \`modules/skus/data/fetch-skus.ts\`).`,
-		).toBe(0);
-	});
+			expect(
+				offending.length,
+				`\`${rel}\` avale une erreur DANS son scope "use cache" (try/catch ou ` +
+					`Promise.allSettled). Le repli retourne normalement, donc Next met la valeur ` +
+					`dégradée en cache pour toute la fenêtre du profil — indiscernable d'une ` +
+					`donnée légitime. Déplacer le repli dans le wrapper appelant (modèle : ` +
+					`\`modules/skus/data/fetch-skus.ts\`).`,
+			).toBe(0);
+		},
+	);
 
 	/**
 	 * Contre-épreuve de l'extracteur : sur un fichier synthétique portant un catch
@@ -150,5 +158,38 @@ async function inner() {
 	}
 }`;
 		expect(cachedFunctionBodies(insideCache).filter((b) => /\bcatch\s*\(/.test(b))).toHaveLength(1);
+	});
+
+	/**
+	 * Contre-épreuve `allSettled` : la forme sans `catch` doit être vue elle aussi
+	 * (c'est exactement l'évasion de `getNavbarMenuData`, audit navbar 2026-08-03),
+	 * et un `allSettled` dans le wrapper ne doit PAS déclencher.
+	 */
+	it("l'extracteur voit un allSettled dans le scope caché, pas dans le wrapper", () => {
+		const detector = (b: string) => /\bcatch\s*\(|\ballSettled\b/.test(b);
+
+		const insideCache = `
+export async function wrap() {
+	return inner();
+}
+
+async function inner() {
+	"use cache";
+	const [a, b] = await Promise.allSettled([one(), two()]);
+	return { a, b };
+}`;
+		expect(cachedFunctionBodies(insideCache).filter(detector)).toHaveLength(1);
+
+		const wrapperOnly = `
+export async function wrap() {
+	const [a, b] = await Promise.allSettled([inner(), other()]);
+	return { a, b };
+}
+
+async function inner() {
+	"use cache";
+	return prisma.thing.count();
+}`;
+		expect(cachedFunctionBodies(wrapperOnly).filter(detector)).toHaveLength(0);
 	});
 });

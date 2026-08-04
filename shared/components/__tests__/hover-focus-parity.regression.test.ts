@@ -68,6 +68,38 @@ const GUARDS: readonly Guard[] = [
 		hover: "hover:opacity-100",
 		focus: "focus-visible:opacity-100",
 	},
+	// Audit galerie 2026-08-03 : les reveals sont en outre gatés `can-hover:` —
+	// sur tablette tactile ≥ sm ces contrôles restent visibles en permanence
+	// (le hover n'y existe pas, et le tap "révélateur" ouvrirait la lightbox).
+	{
+		file: "shared/components/gallery/navigation.tsx",
+		affordance: "les flèches précédente/suivante de la galerie se révèlent",
+		hover: "sm:can-hover:group-hover:opacity-100",
+		focus: "sm:group-focus-within:opacity-100",
+	},
+	{
+		file: "shared/components/gallery/zoom-button.tsx",
+		affordance: "le bouton plein écran de la galerie se révèle",
+		hover: "sm:can-hover:group-hover:opacity-100",
+		focus: "sm:group-focus-within:opacity-100",
+	},
+	// Redesigns « Atelier » 2026-08-03 : le trait dessiné sous le titre est
+	// l'affordance du lien de carte (équivalent d'un soulignement), et le CTA
+	// panier desktop n'existe qu'au survol de la carte produit. Le trait a été
+	// extrait en primitive partagée lors du redesign CollectionCard
+	// « Planche-contact » — ce garde couvre les deux cartes via la SSOT.
+	{
+		file: "shared/components/squiggle-underline.tsx",
+		affordance: "le trait rose se dessine sous le titre (soulignement du lien de carte)",
+		hover: "can-hover:group-hover:[stroke-dashoffset:0]",
+		focus: "group-focus-within:[stroke-dashoffset:0]",
+	},
+	{
+		file: "modules/cart/components/add-to-cart-card-button.tsx",
+		affordance: "le CTA « Ajouter au panier » desktop se révèle sur la photo",
+		hover: "sm:can-hover:group-hover:opacity-100",
+		focus: "sm:focus-within:opacity-100",
+	},
 ];
 
 describe("@regression hover-focus-parity", () => {

@@ -17,8 +17,6 @@ export type CreateToastCallbacksOptions<T = ActionState> = {
 	loadingMessage?: string;
 	/** Afficher un toast de succès (défaut: true) */
 	showSuccessToast?: boolean;
-	/** Afficher un toast de warning (défaut: true) */
-	showWarningToast?: boolean;
 	/** Afficher un toast d'erreur (défaut: true) */
 	showErrorToast?: boolean;
 	/** Callback personnalisé appelé en cas de succès */
@@ -45,6 +43,12 @@ export type CreateToastCallbacksOptions<T = ActionState> = {
 	 *
 	 * Si un besoin d'undo générique réapparaît, préférer `successAction` plutôt que
 	 * de réintroduire un second chemin qui doublonne avec lui.
+	 *
+	 * ⚠️ Pas de `showWarningToast` non plus (retiré 2026-08-03, audit
+	 * with-callbacks/create-toast-callbacks) : zéro appelant depuis sa création,
+	 * et l'unique producteur de WARNING (mark-as-shipped, échec d'email non
+	 * bloquant) exige précisément que le toast s'affiche — un warning masqué
+	 * serait un succès mensonger.
 	 */
 };
 
@@ -66,6 +70,6 @@ export type Callbacks<T, R = unknown> = {
 	onSuccess?: (result: T) => void;
 	/** Appelé si l'action retourne un warning (status === WARNING) */
 	onWarning?: (result: T) => void;
-	/** Appelé si l'action échoue (status !== SUCCESS && status !== WARNING) */
+	/** Appelé si l'action échoue (status présent, hors SUCCESS / WARNING / INITIAL) */
 	onError?: (result: T) => void;
 };

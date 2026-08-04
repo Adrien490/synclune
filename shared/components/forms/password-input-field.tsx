@@ -4,6 +4,7 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
 import { Input } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { Eye, EyeOff } from "lucide-react";
@@ -50,7 +51,7 @@ export const PasswordInputField = ({
 	const field = useFieldContext<string>();
 	const [showPassword, setShowPassword] = useState(false);
 
-	const hasError = field.state.meta.errors.length > 0;
+	const hasError = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -79,7 +80,7 @@ export const PasswordInputField = ({
 	);
 
 	return (
-		<Field data-invalid={field.state.meta.errors.length > 0}>
+		<Field data-invalid={hasError}>
 			{label && (
 				<FieldLabel htmlFor={field.name} required={required}>
 					{label}
@@ -116,7 +117,10 @@ export const PasswordInputField = ({
 					{description}
 				</p>
 			)}
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+			/>
 		</Field>
 	);
 };

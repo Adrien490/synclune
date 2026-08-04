@@ -1,6 +1,7 @@
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { useFieldErrorVisibility } from "./use-field-error-visibility";
 import { cn } from "@/shared/utils/cn";
 import { useRef, type ReactNode } from "react";
 
@@ -26,7 +27,7 @@ export const CheckboxField = ({
 	const field = useFieldContext<boolean>();
 	const hiddenRef = useRef<HTMLInputElement>(null);
 
-	const hasError = field.state.meta.errors.length > 0;
+	const hasError = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -78,7 +79,11 @@ export const CheckboxField = ({
 					{description}
 				</p>
 			)}
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} className="ml-7" />
+			<FieldError
+				id={`${field.name}-error`}
+				errors={hasError ? field.state.meta.errors : undefined}
+				className="ml-7"
+			/>
 		</Field>
 	);
 };

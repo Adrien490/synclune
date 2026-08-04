@@ -62,14 +62,6 @@ export const MOTION_CONFIG = {
 			mass: 0.5,
 		},
 
-		// Responsive hover spring (hero floating images)
-		hover: {
-			type: "spring" as const,
-			stiffness: 300,
-			damping: 25,
-			mass: 0.5,
-		},
-
 		// Smooth list item transitions (cart, lists)
 		list: {
 			type: "spring" as const,
@@ -122,35 +114,11 @@ export const MOTION_CONFIG = {
 		margin: "-50px",
 	},
 
-	// Homepage section animation presets (shared across 4+ sections)
+	// Section animation presets — seul `footer` a survécu au vidage de la
+	// landing (2026-08-03) ; les presets title/grid/cta/timeline/carousel et
+	// les presets background (blob/sparkle/scrollIndicator) sont partis avec.
 	section: {
-		title: { y: 20, duration: 0.6 },
-		subtitle: { y: 10, delay: 0.1, duration: 0.6 },
-		grid: { stagger: 0.08, y: 25 },
-		cta: { y: 15, delay: 0.3, duration: 0.5 },
-		timeline: { stagger: 0.12, y: 30 },
 		footer: { y: 10, duration: 0.4, stagger: 0.08 },
-		carousel: { y: 20, duration: 0.8, delay: 0.2 },
-		content: { y: 20, duration: 0.6, delay: 0.2 },
-		// Delay for the hand-drawn underline beneath each SectionTitle,
-		// tuned so the ink reveal starts once the title is fading in.
-		underline: { delay: 0.15 },
-	},
-
-	// Background animation presets
-	background: {
-		blob: {
-			cycle: 20, // 20s CSS animation cycle
-			fadeIn: 1.5, // Framer Motion fade-in duration
-			stagger: 0.2, // Delay between blobs
-		},
-		sparkle: {
-			durationRange: [2, 4] as readonly [number, number],
-			delayMax: 3,
-		},
-		scrollIndicator: {
-			duration: 1.5,
-		},
 	},
 } as const;
 
