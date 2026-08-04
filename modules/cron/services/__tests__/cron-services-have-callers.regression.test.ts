@@ -51,8 +51,11 @@ describe("@regression cron-services-have-callers", () => {
 
 	// Garde-fou du garde-fou : un glob cassé qui ne détecte rien rendrait ce test
 	// vert pour rien (leçon audit admin commandes 2026-07-26).
+	// Plancher abaissé à 9 le 2026-08-04 : `cleanup-carts.service.ts` est parti
+	// avec le passage du panier en cookie (le cookie expire tout seul côté client,
+	// il n'y a plus rien à purger en base).
 	it("détecte bien les services et le corpus de recherche", () => {
-		expect(serviceFiles.length).toBeGreaterThanOrEqual(10);
+		expect(serviceFiles.length).toBeGreaterThanOrEqual(9);
 		expect(searchFiles.length).toBeGreaterThan(500);
 	});
 

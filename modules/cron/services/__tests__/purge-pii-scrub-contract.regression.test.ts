@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { Prisma } from "@/app/generated/prisma/client";
 import {
 	CUSTOMER_SHIPPING_PII_SCRUB,
+	ORDER_HISTORY_PII_SCRUB,
 	ORDER_PII_SCRUB,
 	PURGED_ORDER_NOTE_CONTENT,
 	REFUND_PII_SCRUB,
@@ -22,12 +23,14 @@ import {
  *
  *  (a) Les surfaces PII DOIVENT être scrubées — base légale de conservation
  *      expirée ⇒ limitation de conservation RGPD Art. 5.1.e :
- *      billing* + invoiceDataSnapshot/Hash + pointeurs PDF facture/avoir +
- *      identifiants Stripe pseudonymes (cus_/pi_) + avoirs par-refund
- *      (Refund.creditNotePdf*) + textes libres (Refund.note, OrderNote.content).
+ *      shipping* + invoiceDataSnapshot/Hash + pointeurs PDF facture/avoir +
+ *      identifiants Stripe pseudonymes (cus_/pi_) + tracking (trackingNumber/Url,
+ *      audit 2026-08-03) + avoirs par-refund (Refund.creditNotePdf*) + textes
+ *      libres (Refund.note, OrderNote.content, OrderHistory.note/metadata —
+ *      arbitrage 2026-08-03 : immuable PENDANT la rétention, pas au-delà).
  *  (b) Les champs comptables non-PII NE DOIVENT JAMAIS figurer dans le scrub —
  *      la ligne survit (Art. L123-22) : numéros (invoiceNumber/creditNoteNumber),
- *      montants (total/subtotal/taxAmount/discountAmount/shippingCost/amount) et
+ *      montants (total/subtotal/discountAmount/shippingCost/amount) et
  *      dates d'encaissement (paidAt/processedAt) restent intacts.
  *
  * Le test `hard-delete-retention.service.test.ts` couvre la SÉLECTION (where) et
@@ -46,10 +49,9 @@ const REFUND_SCRUB = REFUND_PII_SCRUB as Record<string, unknown>;
 const MUST_BE_SCRUBBED = [
 	"customerEmail",
 	"customerName",
-	"customerPhone",
-	// F4 (RGPD-PII-AUDIT 2026-05-30) : identifiant Stripe pseudonyme rattachable à
-	// une personne — scrubé comme à l'anonymisation compte.
-	"stripeCustomerId",
+	// Ni `customerPhone` ni `stripeCustomerId` : colonnes retirées le 2026-08-04
+	// (la première n'était jamais écrite au checkout — le téléphone vit dans
+	// `shippingPhone`, scrubé plus bas ; la seconde n'avait aucun lecteur).
 	// Audit rétention PII 2026-07-09 : `pi_xxx` est rattachable à une personne via
 	// Stripe au même titre que `cus_xxx` — nullé à échéance (pas à l'anonymisation,
 	// où refunds/litiges restent possibles).
@@ -61,13 +63,13 @@ const MUST_BE_SCRUBBED = [
 	"shippingPostalCode",
 	"shippingCity",
 	"shippingPhone",
-	"billingFirstName",
-	"billingLastName",
-	"billingAddress1",
-	"billingAddress2",
-	"billingPostalCode",
-	"billingCity",
-	"billingPhone",
+	// Pas de `billing*` : les 9 colonnes sont parties le 2026-08-04 — jamais
+	// renseignées sur une commande réelle. L'adresse portée par la facture est
+	// l'adresse de livraison, déjà scrubée juste au-dessus.
+	// Audit rétention PII 2026-08-03 : identifiant transporteur rattaché à la
+	// livraison d'une personne nommée — scrubé comme l'adresse et le téléphone.
+	"trackingNumber",
+	"trackingUrl",
 	"invoiceDataSnapshot",
 	"invoiceDataHash",
 	"invoicePdfUrl",
@@ -89,7 +91,6 @@ const MUST_BE_PRESERVED = [
 	"creditNoteGeneratedAt",
 	"total",
 	"subtotal",
-	"taxAmount",
 	"discountAmount",
 	"shippingCost",
 	"paidAt",
@@ -104,6 +105,13 @@ const MUST_BE_PRESERVED = [
 describe("ORDER_PII_SCRUB — contrat de champs (purge 10 ans, commandes payées)", () => {
 	it.each(MUST_BE_SCRUBBED)("scrub le champ PII %s", (field) => {
 		expect(Object.prototype.hasOwnProperty.call(SCRUB, field)).toBe(true);
+		// Audit rétention PII 2026-08-03 (P2-A) : la présence de la clé ne suffit
+		// pas — Prisma IGNORE silencieusement une valeur `undefined` (colonne non
+		// touchée), et le test du service spread la même constante, donc un
+		// `field: someVar` devenu undefined laisserait survivre le champ à la
+		// purge avec deux tests verts. null / DbNull / valeur de remplacement
+		// restent tous valides ; seul undefined est interdit.
+		expect(SCRUB[field]).not.toBeUndefined();
 	});
 
 	it.each(MUST_BE_PRESERVED)("ne touche JAMAIS le champ comptable %s", (field) => {
@@ -135,15 +143,14 @@ describe("UNPAID_ORDER_PII_SCRUB — contrat de champs (commandes jamais payées
 	it("couvre toute la surface opérationnelle partagée + les identifiants Stripe", () => {
 		for (const key of Object.keys(CUSTOMER_SHIPPING_PII_SCRUB)) {
 			expect(Object.prototype.hasOwnProperty.call(UNPAID_SCRUB, key)).toBe(true);
+			// P2-A : undefined est invisible à Prisma — cf. le même garde sur SCRUB.
+			expect(UNPAID_SCRUB[key]).not.toBeUndefined();
 		}
 		expect(UNPAID_SCRUB.stripePaymentIntentId).toBeNull();
 	});
 
 	it("ne touche AUCUNE surface facture (inexistante sur une commande non payée)", () => {
 		const invoiceSurfaces = [
-			"billingFirstName",
-			"billingLastName",
-			"billingAddress1",
 			"invoiceDataSnapshot",
 			"invoiceDataHash",
 			"invoicePdfUrl",
@@ -174,7 +181,6 @@ describe("REFUND_PII_SCRUB — contrat de champs (avoirs par-refund, purge 10 an
 		"reason",
 		"processedAt",
 		"attemptCount",
-		"createdBy",
 	] as const;
 
 	it.each(REFUND_MUST_BE_SCRUBBED)("scrub le champ PII Refund.%s", (field) => {
@@ -191,6 +197,40 @@ describe("REFUND_PII_SCRUB — contrat de champs (avoirs par-refund, purge 10 an
 		for (const key of Object.keys(REFUND_SCRUB)) {
 			expect(allowed.has(key)).toBe(true);
 		}
+	});
+});
+
+describe("ORDER_HISTORY_PII_SCRUB — contrat de champs (neutralisation à l'échéance)", () => {
+	// Arbitrage 2026-08-03 (audit rétention PII) : l'immutabilité d'OrderHistory
+	// (invariant 3) vaut PENDANT la rétention 10 ans, pas au-delà. Seuls les deux
+	// champs à valeurs libres sont neutralisés — la ligne d'audit survit.
+	const HISTORY_SCRUB = ORDER_HISTORY_PII_SCRUB as Record<string, unknown>;
+
+	/** Champs d'audit qui DOIVENT survivre (action, statuts, dates, auteur staff). */
+	const HISTORY_MUST_BE_PRESERVED = [
+		"action",
+		"previousStatus",
+		"newStatus",
+		"previousPaymentStatus",
+		"newPaymentStatus",
+		"authorId",
+		"authorName",
+		"source",
+		"createdAt",
+		"orderId",
+	] as const;
+
+	it("neutralise note (null) et metadata (DbNull — champ Json)", () => {
+		expect(HISTORY_SCRUB.note).toBeNull();
+		expect(HISTORY_SCRUB.metadata).toBe(Prisma.DbNull);
+	});
+
+	it.each(HISTORY_MUST_BE_PRESERVED)("ne touche JAMAIS OrderHistory.%s (audit)", (field) => {
+		expect(Object.prototype.hasOwnProperty.call(HISTORY_SCRUB, field)).toBe(false);
+	});
+
+	it("ne contient aucune clé inattendue (anti-dérive)", () => {
+		expect(Object.keys(HISTORY_SCRUB).sort()).toEqual(["metadata", "note"]);
 	});
 });
 
@@ -219,16 +259,20 @@ describe("tables couvertes par chaque passe de purge (source scan)", () => {
 		return source.slice(start, nextFn === -1 ? undefined : nextFn);
 	}
 
-	it("purgeExpiredOrderPii (10 ans) scrube Order + Refund + OrderNote", () => {
+	it("purgeExpiredOrderPii (10 ans) scrube Order + Refund + OrderNote + OrderHistory", () => {
 		const body = bodyOf("purgeExpiredOrderPii");
 		expect(body).toContain("refund.updateMany");
 		expect(body).toContain("orderNote.updateMany");
 		expect(body).toContain("PURGED_ORDER_NOTE_CONTENT");
+		expect(body).toContain("orderHistory.updateMany");
+		expect(body).toContain("ORDER_HISTORY_PII_SCRUB");
 	});
 
-	it("purgeAbandonedOrderPii (jamais payées, 3 ans) scrube Order + OrderNote", () => {
+	it("purgeAbandonedOrderPii (jamais payées, 3 ans) scrube Order + OrderNote + OrderHistory", () => {
 		const body = bodyOf("purgeAbandonedOrderPii");
 		expect(body).toContain("orderNote.updateMany");
 		expect(body).toContain("PURGED_ORDER_NOTE_CONTENT");
+		expect(body).toContain("orderHistory.updateMany");
+		expect(body).toContain("ORDER_HISTORY_PII_SCRUB");
 	});
 });

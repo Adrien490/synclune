@@ -218,7 +218,6 @@ describe("reconcileRefunds", () => {
 		expect(call.where.status).toBe("APPROVED");
 		expect(call.where.stripeRefundId).toEqual({ not: null });
 		expect(call.where.processedAt).toBeNull();
-		expect(call.where.deletedAt).toBeNull();
 
 		const ninetyDays = 90 * 24 * 60 * 60 * 1000;
 		const expectedMaxAge = new Date(Date.now() - ninetyDays);

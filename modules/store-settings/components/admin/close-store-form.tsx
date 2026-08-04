@@ -32,15 +32,17 @@ export function CloseStoreForm() {
 	});
 
 	const [state, formAction, isPending] = useActionState(
-		withCallbacks(closeStore, {
-			...createToastCallbacks({ loadingMessage: "Fermeture de la boutique…" }),
-			onSuccess: (result) => {
-				createToastCallbacks({ loadingMessage: "Fermeture de la boutique…" }).onSuccess(result);
-				form.reset();
-				allowNavigation();
-				router.push("/admin/configuration/boutique");
-			},
-		}),
+		withCallbacks(
+			closeStore,
+			createToastCallbacks({
+				loadingMessage: "Fermeture de la boutique…",
+				onSuccess: () => {
+					form.reset();
+					allowNavigation();
+					router.push("/admin/configuration/boutique");
+				},
+			}),
+		),
 		undefined,
 	);
 

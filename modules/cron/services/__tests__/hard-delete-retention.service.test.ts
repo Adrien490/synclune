@@ -8,6 +8,7 @@ const { mockPrisma, mockUpdateTag, mockDeleteUploadThingFilesFromUrls, mockLogge
 			order: { findMany: vi.fn(), updateMany: vi.fn() },
 			refund: { updateMany: vi.fn() },
 			orderNote: { updateMany: vi.fn() },
+			orderHistory: { updateMany: vi.fn() },
 			$transaction: vi.fn(),
 		},
 		mockUpdateTag: vi.fn(),
@@ -46,6 +47,7 @@ vi.mock("@/shared/lib/logger", () => ({
 import { hardDeleteExpiredRecords } from "../hard-delete-retention.service";
 import { BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import {
+	ORDER_HISTORY_PII_SCRUB,
 	ORDER_PII_SCRUB,
 	PURGED_ORDER_NOTE_CONTENT,
 	REFUND_PII_SCRUB,
@@ -65,6 +67,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.order.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.orderNote.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.orderHistory.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.$transaction.mockResolvedValue({ count: 0 });
 		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0, failed: 0 });
 	});
@@ -196,7 +199,7 @@ describe("hardDeleteExpiredRecords", () => {
 		vi.spyOn(Date, "now").mockRestore();
 	});
 
-	it("purges order PII past 10-year retention: deletes PDFs FIRST (incl. per-refund credit notes), then scrubs Order+Refund+OrderNote + sets piiPurgedAt", async () => {
+	it("purges order PII past 10-year retention: deletes PDFs FIRST (incl. per-refund credit notes), then scrubs Order+Refund+OrderNote+OrderHistory + sets piiPurgedAt", async () => {
 		// 1st findMany = paid purge, 2nd findMany = unpaid (abandoned) purge → empty here.
 		mockPrisma.order.findMany
 			.mockResolvedValueOnce([
@@ -255,6 +258,7 @@ describe("hardDeleteExpiredRecords", () => {
 		expect(deleteOrder).toBeLessThan(scrubTxOrder);
 
 		// Scrub atomique dans la tx : Refund (avoirs + note), OrderNote (texte libre),
+		// OrderHistory (note + metadata — arbitrage 2026-08-03, seul writer autorisé),
 		// Order (payload complet + sentinel piiPurgedAt).
 		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
 			where: { orderId: { in: ["order-1", "order-2"] } },
@@ -263,6 +267,10 @@ describe("hardDeleteExpiredRecords", () => {
 		expect(mockPrisma.orderNote.updateMany).toHaveBeenCalledWith({
 			where: { orderId: { in: ["order-1", "order-2"] } },
 			data: { content: PURGED_ORDER_NOTE_CONTENT },
+		});
+		expect(mockPrisma.orderHistory.updateMany).toHaveBeenCalledWith({
+			where: { orderId: { in: ["order-1", "order-2"] } },
+			data: { ...ORDER_HISTORY_PII_SCRUB },
 		});
 		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
 			where: { id: { in: ["order-1", "order-2"] }, piiPurgedAt: null },

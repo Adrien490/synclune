@@ -88,14 +88,13 @@ export async function reconcileRefunds(): Promise<CronResult> {
 			stripeRefundId: { not: null },
 			processedAt: null,
 			createdAt: { gte: maxAge, lt: minAge },
-			...notDeleted,
 		},
 		select: {
 			id: true,
 			stripeRefundId: true,
 			amount: true,
 			orderId: true,
-			// La finalisation (restock, paymentStatus, avoir, email au snapshot
+			// La finalisation (paymentStatus, avoir, email au snapshot
 			// customerEmail) vit dans `finalizeRefundCompletion`, qui se self-load —
 			// ce select ne porte plus que le nécessaire au pilotage de la passe.
 			order: {
@@ -166,7 +165,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 
 			if (stripeRefund.status === "succeeded") {
 				// P1-C (audit 2026-08-01) : toute la finalisation (claim COMPLETED,
-				// restock + ledger, paymentStatus, audit, avoir, voidInvoice fallback,
+				// paymentStatus, audit, avoir, voidInvoice fallback,
 				// email) vit dans le service PARTAGÉ avec le webhook refund.updated —
 				// les deux chemins sont le même code. Le service n'invalide rien :
 				// on collecte ses tags et on sort en `revalidateTagsInBackground` en
@@ -339,7 +338,7 @@ async function reconcileOverbilledOrders(): Promise<{
 		const delta = order.overbilledAmountCents ?? 0;
 		try {
 			const completedRefunds = await prisma.refund.findMany({
-				where: { orderId: order.id, status: RefundStatus.COMPLETED, ...notDeleted },
+				where: { orderId: order.id, status: RefundStatus.COMPLETED },
 				select: { amount: true },
 			});
 			const totalRefunded = completedRefunds.reduce((sum, r) => sum + r.amount, 0);
@@ -423,7 +422,6 @@ async function retryStuckAutoRefundCreations(params: {
 			note: { startsWith: AUTO_REFUND_NOTE_PREFIX },
 			attemptCount: { lt: AUTO_REFUND_MAX_CREATE_ATTEMPTS },
 			createdAt: { gte: maxAge, lt: minAge },
-			...notDeleted,
 		},
 		select: {
 			id: true,
@@ -558,7 +556,6 @@ async function backfillMissingCreditNotes(params: {
 			creditNoteNumber: null,
 			processedAt: { gte: maxAge, lt: minAge },
 			order: { invoiceNumber: { not: null } },
-			...notDeleted,
 		},
 		select: { id: true, orderId: true, order: { select: { orderNumber: true } } },
 		take: BATCH_SIZE_MEDIUM,

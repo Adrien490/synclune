@@ -23,9 +23,6 @@ export const BATCH_SIZE_LARGE = 50;
  * Retention periods in days
  */
 export const RETENTION = {
-	/** Grace period before GDPR account deletion is executed */
-	GDPR_GRACE_PERIOD_DAYS: 30,
-
 	/** Days to keep completed webhook events before cleanup */
 	WEBHOOK_COMPLETED_DAYS: 90,
 

@@ -6,6 +6,7 @@ import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import {
+	ORDER_HISTORY_PII_SCRUB,
 	ORDER_PII_SCRUB,
 	PURGED_ORDER_NOTE_CONTENT,
 	REFUND_PII_SCRUB,
@@ -37,6 +38,9 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * - Order (paid) — PII purge only (row kept, PII scrubbed, invoice/credit-note PDFs deleted)
  * - Refund — per-refund credit-note PDFs deleted + pointers/note scrubbed with the parent order
  * - OrderNote — free-text content scrubbed with the parent order (row + staff author kept)
+ * - OrderHistory — free-value fields (`note`, `metadata`) neutralised with the parent order
+ *   (row + action/statuses/dates/staff author kept). Immutability (invariant 3) holds DURING
+ *   the 10-year retention; past it the audit-trail legal basis expires too (arbitrage 2026-08-03)
  * - Order (never paid) — customer/shipping PII purge past the unpaid-retention window
  *
  * Scrub payloads (ORDER_PII_SCRUB, UNPAID_ORDER_PII_SCRUB, REFUND_PII_SCRUB) live in
@@ -166,9 +170,10 @@ async function purgeExpiredOrderPii(
 	}
 
 	// 2. Scrub PII + drop PDF pointers in a single transaction (compliance-critical).
-	// Refunds (avoirs partiels + note libre) et OrderNotes (texte libre) des mêmes
-	// commandes sont scrubés atomiquement avec la ligne Order : une purge partielle
-	// (Order scrubé mais avoir intact) serait invisible au retry (`piiPurgedAt` posé).
+	// Refunds (avoirs partiels + note libre), OrderNotes (texte libre) et OrderHistory
+	// (note + metadata à valeurs libres) des mêmes commandes sont scrubés atomiquement
+	// avec la ligne Order : une purge partielle (Order scrubé mais avoir intact)
+	// serait invisible au retry (`piiPurgedAt` posé).
 	const purged = await prisma.$transaction(
 		async (tx) => {
 			await tx.refund.updateMany({
@@ -178,6 +183,13 @@ async function purgeExpiredOrderPii(
 			await tx.orderNote.updateMany({
 				where: { orderId: { in: orderIds } },
 				data: { content: PURGED_ORDER_NOTE_CONTENT },
+			});
+			// Seule mutation OrderHistory autorisée du dépôt (immuable PENDANT la
+			// rétention, pas au-delà — arbitrage 2026-08-03) : neutralise les champs
+			// à valeurs libres (note admin, tracking en metadata), la ligne survit.
+			await tx.orderHistory.updateMany({
+				where: { orderId: { in: orderIds } },
+				data: { ...ORDER_HISTORY_PII_SCRUB },
 			});
 			return tx.order.updateMany({
 				where: { id: { in: orderIds }, piiPurgedAt: null },
@@ -247,6 +259,13 @@ async function purgeAbandonedOrderPii(cutoff: Date): Promise<{
 			await tx.orderNote.updateMany({
 				where: { orderId: { in: orderIds } },
 				data: { content: PURGED_ORDER_NOTE_CONTENT },
+			});
+			// Même neutralisation OrderHistory que la purge 10 ans : une commande
+			// jamais payée n'atteint jamais la clé `paidAt`, ses lignes d'historique
+			// (raison d'annulation en texte libre…) survivraient sinon indéfiniment.
+			await tx.orderHistory.updateMany({
+				where: { orderId: { in: orderIds } },
+				data: { ...ORDER_HISTORY_PII_SCRUB },
 			});
 			return tx.order.updateMany({
 				where: { id: { in: orderIds }, paidAt: null, piiPurgedAt: null },

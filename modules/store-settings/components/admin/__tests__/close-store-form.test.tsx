@@ -102,10 +102,17 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => mockTriggerHaptic,
 }));
 
+// Mock fidèle au contrat de la fabrique : elle invoque le `onSuccess`/`onError`
+// custom passé en options AVANT le toast par défaut. Un mock qui jetterait les
+// options rendrait le test aveugle au câblage réel (le composant passe son
+// effet post-succès via `options.onSuccess`).
 vi.mock("@/shared/utils/create-toast-callbacks", () => ({
-	createToastCallbacks: () => ({
-		onSuccess: vi.fn(),
-		onError: vi.fn(),
+	createToastCallbacks: (options?: {
+		onSuccess?: (r: unknown) => void;
+		onError?: (r: unknown) => void;
+	}) => ({
+		onSuccess: (result: unknown) => options?.onSuccess?.(result),
+		onError: (result: unknown) => options?.onError?.(result),
 	}),
 }));
 

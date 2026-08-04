@@ -38,13 +38,15 @@ export function ReopenStoreDialog({ previousFocusRef, reopensAt }: ReopenStoreDi
 	const dialog = useAlertDialog(REOPEN_STORE_DIALOG_ID);
 
 	const [, formAction, isPending] = useActionState(
-		withCallbacks(reopenStore, {
-			...createToastCallbacks({ loadingMessage: "Réouverture de la boutique…" }),
-			onSuccess: (result) => {
-				createToastCallbacks({ loadingMessage: "Réouverture de la boutique…" }).onSuccess(result);
-				dialog.close();
-			},
-		}),
+		withCallbacks(
+			reopenStore,
+			createToastCallbacks({
+				loadingMessage: "Réouverture de la boutique…",
+				onSuccess: () => {
+					dialog.close();
+				},
+			}),
+		),
 		undefined,
 	);
 

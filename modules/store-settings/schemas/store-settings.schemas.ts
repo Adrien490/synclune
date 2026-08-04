@@ -1,12 +1,5 @@
 import { z } from "zod";
 
-import {
-	ANNOUNCEMENT_VARIANTS,
-	DEFAULT_ANNOUNCEMENT_VARIANT,
-} from "@/shared/constants/announcement";
-import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
-import { isSafeStorefrontLink } from "@/shared/utils/is-safe-storefront-link";
-
 import { parseParisDateTimeLocal } from "../utils/paris-datetime";
 
 export const closeStoreSchema = z
@@ -57,58 +50,5 @@ export const updateReopensAtSchema = z
 		{
 			message: "La date de réouverture doit être dans le futur",
 			path: ["reopensAt"],
-		},
-	);
-
-export const updateAnnouncementSchema = z
-	.object({
-		message: z
-			.string()
-			.trim()
-			.max(200, "Le message ne peut pas dépasser 200 caractères")
-			.optional()
-			.default("")
-			.transform((val) => (val === "" ? null : val)),
-		link: z
-			.string()
-			.trim()
-			.max(2048, "Le lien ne peut pas dépasser 2048 caractères")
-			.optional()
-			.default("")
-			.refine((val) => val === "" || isSafeStorefrontLink(val), {
-				message: "Le lien doit commencer par / (chemin interne) ou https://",
-			})
-			.transform((val) => (val === "" ? null : val)),
-		startsAt: z
-			.string()
-			.optional()
-			.default("")
-			.transform((val) => parseParisDateTimeLocal(val)),
-		endsAt: z
-			.string()
-			.optional()
-			.default("")
-			.transform((val) => parseParisDateTimeLocal(val)),
-		isActive: formBooleanSchema.optional().default(false),
-		variant: z.enum(ANNOUNCEMENT_VARIANTS).optional().default(DEFAULT_ANNOUNCEMENT_VARIANT),
-	})
-	.refine(
-		(data) => {
-			if (!data.startsAt || !data.endsAt) return true;
-			return data.endsAt.getTime() > data.startsAt.getTime();
-		},
-		{
-			message: "La date de fin doit être postérieure à la date de début",
-			path: ["endsAt"],
-		},
-	)
-	.refine(
-		(data) => {
-			if (data.isActive && (!data.message || data.message.length === 0)) return false;
-			return true;
-		},
-		{
-			message: "Un message est requis pour activer le bandeau",
-			path: ["message"],
 		},
 	);

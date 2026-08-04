@@ -548,7 +548,6 @@ async function runRefundCreditNotePdfSweep(deadline: number): Promise<number> {
 				status: RefundStatus.COMPLETED,
 				// Post-purge 10 ans, l'avoir n'est plus reconstituable — on n'y touche plus.
 				order: { piiPurgedAt: null },
-				...notDeleted,
 			},
 			select: { id: true },
 			take: BATCH_SIZE_MEDIUM,

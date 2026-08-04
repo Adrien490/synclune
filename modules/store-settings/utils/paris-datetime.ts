@@ -1,6 +1,6 @@
 /**
  * Helpers de saisie/affichage `datetime-local` ancrés sur l'heure de Paris pour
- * les dates de fermeture/réouverture boutique (et le bandeau d'annonce).
+ * les dates de fermeture/réouverture boutique.
  *
  * Contexte : `<input type="datetime-local">` émet une chaîne SANS fuseau
  * (`"2026-07-01T10:00"`). Parsée côté serveur (Vercel = UTC) via `new Date(val)`,
