@@ -21,8 +21,8 @@ export function CartBadge() {
 		<CountBadge
 			count={count}
 			size="lg"
-			singularLabel="article dans votre panier"
-			pluralLabel="articles dans votre panier"
+			singularLabel="article dans ton panier"
+			pluralLabel="articles dans ton panier"
 			bumpKey={bump?.key}
 			bumpDelta={bump?.delta}
 		/>

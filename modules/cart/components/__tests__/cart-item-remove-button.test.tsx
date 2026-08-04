@@ -58,8 +58,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Trash2: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	TrashIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="trash-icon" className={className} />
 	),
 }));

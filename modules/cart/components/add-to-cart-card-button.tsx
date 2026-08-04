@@ -6,7 +6,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
 import { cn } from "@/shared/utils/cn";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { Button } from "@/shared/components/ui/button";
 
@@ -135,15 +135,14 @@ export function AddToCartCardButton({
 						<Spinner presentational />
 					) : (
 						<span className="inline-flex items-center gap-2">
-							<ShoppingCart size={18} aria-hidden="true" />
+							<ShoppingBagIcon size={18} aria-hidden="true" />
 							<span className="text-sm font-medium">Ajouter</span>
 						</span>
 					)
 				) : (
 					<>
-						<ShoppingCart
+						<ShoppingBagIcon
 							size={18}
-							strokeWidth={2}
 							className={cn("shrink-0", isPending && "opacity-60")}
 							aria-hidden="true"
 						/>

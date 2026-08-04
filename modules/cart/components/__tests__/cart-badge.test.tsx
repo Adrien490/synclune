@@ -86,8 +86,8 @@ describe("CartBadge", () => {
 		mockState.cartCount = 1;
 		render(<CartBadge />);
 		const badge = screen.getByTestId("count-badge");
-		expect(badge.dataset["singular"]).toBe("article dans votre panier");
-		expect(badge.dataset["plural"]).toBe("articles dans votre panier");
+		expect(badge.dataset["singular"]).toBe("article dans ton panier");
+		expect(badge.dataset["plural"]).toBe("articles dans ton panier");
 	});
 
 	it("forwards cartBump to drive the +N flash on optimistic add", () => {

@@ -41,8 +41,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Trash2: () => <svg data-testid="trash-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	TrashIcon: () => <svg data-testid="trash-icon" />,
 }));
 
 import { CartClearButton } from "../cart-clear-button";

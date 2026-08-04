@@ -149,8 +149,8 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Loader2Icon: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-loader" className={className} />
 	),
 }));
@@ -191,7 +191,7 @@ describe("RemoveCartItemAlertDialog", () => {
 	it("renders the title", () => {
 		mockIsOpen.value = true;
 		render(<RemoveCartItemAlertDialog />);
-		expect(screen.getByText("Retirer ce produit de votre panier ?")).toBeInTheDocument();
+		expect(screen.getByText("Retirer cette pièce de ton panier ?")).toBeInTheDocument();
 	});
 
 	it("renders description with item name when data is provided", () => {
@@ -205,7 +205,7 @@ describe("RemoveCartItemAlertDialog", () => {
 		mockIsOpen.value = true;
 		mockDialogData.value = null;
 		render(<RemoveCartItemAlertDialog />);
-		expect(screen.getByText(/Vous voulez vraiment retirer ce produit/i)).toBeInTheDocument();
+		expect(screen.getByText(/Tu veux vraiment retirer cette pièce/i)).toBeInTheDocument();
 	});
 
 	it("renders 'Annuler' and 'Retirer' buttons", () => {

@@ -4,7 +4,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { Button } from "@/shared/components/ui/button";
 import { useUpdateCartPrices } from "@/modules/cart/hooks/use-update-cart-prices";
-import { RefreshCw } from "lucide-react";
+import { ArrowsClockwiseIcon, PiggyBankIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 import {
 	detectPriceChanges,
@@ -42,40 +42,48 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 	};
 
 	return (
+		/*
+		 * ⚠️ Le texte est en `--foreground`, pas dans la couleur de l'état.
+		 *
+		 * Ce conteneur portait `text-destructive-foreground` — qui vaut
+		 * `oklch(1 0 0)`, donc BLANC : c'est la couleur du texte posé sur
+		 * `--destructive` PLEIN, jamais sur une de ses teintes. Sur
+		 * `bg-destructive/5` (#f8f3f6), le titre — seul nœud à ne pas redéfinir
+		 * sa couleur, là où le `<ul>` et le paragraphe final le font — s'affichait
+		 * à **1,10:1**. L'avertissement était littéralement invisible.
+		 *
+		 * `role="alert"` implique déjà `aria-live="assertive"` : le
+		 * `aria-live="polite"` qui l'accompagnait dégradait l'urgence qu'on venait
+		 * de déclarer. La branche « baisse » garde `role="status"` (poli par
+		 * définition), sans redondance non plus.
+		 */
 		<div
 			className={cn(
-				"border-b px-6 py-2.5 text-xs sm:text-sm",
-				hasIncrease
-					? "border-destructive/20 bg-destructive/5 text-destructive-foreground"
-					: "border-success/30 bg-success/10 text-success",
+				"text-foreground border-b border-l-4 px-6 py-2.5 text-xs sm:text-sm",
+				hasIncrease ? "border-l-destructive bg-destructive/10" : "border-l-success bg-success/10",
 			)}
 			role={hasIncrease ? "alert" : "status"}
-			aria-live="polite"
 		>
-			<p className="mb-1 font-medium">
-				<span role="img" aria-hidden="true">
-					{hasIncrease ? "⚠️" : "💚"}
-				</span>
-				<span className="sr-only">{hasIncrease ? "Attention :" : "Bonne nouvelle :"}</span>{" "}
+			<p className="mb-1 flex items-center gap-1.5 font-semibold">
+				{hasIncrease ? (
+					<WarningIcon className="text-destructive size-4 shrink-0" aria-hidden="true" />
+				) : (
+					<PiggyBankIcon className="text-success size-4 shrink-0" aria-hidden="true" />
+				)}
+				<span className="sr-only">{hasIncrease ? "Attention :" : "Bonne nouvelle :"}</span>
 				{hasIncrease ? "Des prix ont changé" : "Des prix ont baissé !"}
 			</p>
-			<ul
-				className={cn(
-					"list-inside list-disc space-y-0.5",
-					hasIncrease ? "text-destructive" : "text-success",
-				)}
-			>
+			<ul className="list-inside list-disc space-y-0.5">
 				{itemsWithPriceChange.map((item) => {
 					const priceIncreased = isPriceIncrease(item);
 					return (
 						<li key={item.id} className="line-clamp-1">
 							{item.sku.product.title}:{" "}
-							<span className="line-through">{formatEuro(item.priceAtAdd)}</span> →{" "}
-							<span
-								className={
-									priceIncreased ? "text-destructive font-semibold" : "text-success font-semibold"
-								}
-							>
+							<span className="text-muted-foreground line-through">
+								{formatEuro(item.priceAtAdd)}
+							</span>{" "}
+							→{" "}
+							<span className="font-semibold">
 								{priceIncreased ? "↑ " : "↓ "}
 								{formatEuro(item.sku.priceInclTax)}
 							</span>
@@ -86,10 +94,10 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					);
 				})}
 			</ul>
-			<p className={cn("mt-2 text-xs", hasIncrease ? "text-destructive/90" : "text-success/90")}>
+			<p className="text-muted-foreground mt-2 text-xs">
 				{hasIncrease
-					? "Votre panier conserve les prix au moment de l'ajout pour éviter toute surprise."
-					: "Vous pouvez actualiser votre panier pour profiter des nouveaux prix."}
+					? "Ton panier garde le prix du jour où tu les as ajoutées, pour éviter toute surprise."
+					: "Tu peux actualiser ton panier pour profiter des nouveaux prix."}
 			</p>
 
 			{/* Bouton pour actualiser les prix */}
@@ -99,21 +107,22 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					disabled={isPending}
 					size="sm"
 					variant="outline"
+					// Pas de `text-destructive` ici : sur le fond du panneau il vaut
+					// 4,34:1, juste sous le seuil AA de 4,5:1 pour du texte de 14 px.
+					// La teinte reste portée par la bordure, le libellé par --foreground.
 					className={cn(
 						"w-full sm:w-auto",
-						hasIncrease
-							? "border-destructive/30 text-destructive hover:bg-destructive/10"
-							: "border-success/40 text-success can-hover:hover:bg-success/10",
+						hasIncrease ? "border-destructive/40" : "border-success/40",
 					)}
 				>
 					{isPending ? (
 						<>
-							<RefreshCw className="mr-1.5 size-3.5 motion-safe:animate-spin" />
+							<ArrowsClockwiseIcon className="mr-1.5 size-3.5 motion-safe:animate-spin" />
 							Mise à jour…
 						</>
 					) : (
 						<>
-							<RefreshCw className="mr-1.5 size-3.5" />
+							<ArrowsClockwiseIcon className="mr-1.5 size-3.5" />
 							Actualiser les prix
 						</>
 					)}

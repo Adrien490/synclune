@@ -5,7 +5,9 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { SwipeableCard } from "@/shared/components/swipeable-card";
+import { CARD_SURFACE_FOCUS, CARD_SURFACE_HOVER } from "@/shared/components/card-surface.constants";
 import { useGestureHintOnce } from "@/shared/hooks/use-gesture-hint-once";
+import { CartStateChip } from "./cart-state-chip";
 import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
@@ -29,7 +31,7 @@ import {
 	getCartItemDiscountPercent,
 	getCartItemPrimaryImage,
 } from "../services/cart-item.service";
-import { Trash2 } from "lucide-react";
+import { TrashIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
@@ -43,22 +45,28 @@ interface CartSheetItemRowProps {
 	 */
 	isMobile?: boolean;
 	/**
-	 * Premier article de la liste → joue le « peek nudge » de découvrabilité du
-	 * swipe-to-delete, une seule fois par appareil (`useGestureHintOnce`).
+	 * Rang dans la liste. Sert à deux choses : le « peek nudge » de
+	 * découvrabilité du swipe-to-delete (premier article seulement,
+	 * `useGestureHintOnce`) et le sens de la rotation du tirage.
 	 */
-	isFirst?: boolean;
+	index?: number;
 }
 
 /**
- * Ligne d'article version compacte pour le cart sheet
- * Layout vertical optimise pour la largeur du sheet
+ * Ligne d'article du cart sheet — surface « tirage » posée sur le panneau.
+ *
+ * La rotation de ±0,4° est volontairement SOUS le seuil de perception
+ * consciente : on ne la voit pas, on lit une pile plutôt qu'une liste. Ce n'est
+ * pas une animation (valeur statique) — elle survit donc à
+ * `prefers-reduced-motion`, contrairement au halo de survol.
  */
 export function CartSheetItemRow({
 	item,
 	onClose,
 	isMobile = false,
-	isFirst = false,
+	index = 0,
 }: CartSheetItemRowProps) {
+	const isFirst = index === 0;
 	// Le swipe-to-delete n'avait aucun indice : `useGestureHintOnce` (le mécanisme
 	// prévu pour ça, et que `swipeable-card` recommande explicitement) n'était câblé
 	// que sur les commandes admin. Le hook est appelé inconditionnellement
@@ -100,10 +108,14 @@ export function CartSheetItemRow({
 	const article = (
 		<article
 			className={cn(
-				"group/item rounded-lg border p-3.5",
+				"group/item bg-card rounded-md border p-3 shadow-sm sm:p-3.5",
 				"grid grid-cols-[5rem_1fr] gap-3.5 sm:grid-cols-[6rem_1fr]",
-				hasIssue ? "border-destructive/50 bg-destructive/5" : "border-border",
+				"transition-[border-color,box-shadow] duration-300 ease-out motion-reduce:transition-colors",
+				CARD_SURFACE_HOVER,
+				CARD_SURFACE_FOCUS,
+				hasIssue ? "border-destructive/50" : "border-transparent",
 			)}
+			style={{ transform: index % 2 === 0 ? "rotate(-0.4deg)" : "rotate(0.4deg)" }}
 			aria-label={ariaLabelParts.join(", ")}
 		>
 			<Link
@@ -217,20 +229,14 @@ export function CartSheetItemRow({
 				</div>
 
 				{hasIssue ? (
-					<div className="flex gap-1">
-						{isOutOfStock && (
-							<Badge variant="destructive" className="text-2xs px-1.5 py-0">
-								Rupture
-							</Badge>
-						)}
-						{isInactive && (
-							<Badge variant="destructive" className="text-2xs px-1.5 py-0">
-								Indisponible
-							</Badge>
-						)}
+					<div className="mt-1 flex flex-wrap gap-1">
+						{isOutOfStock && <CartStateChip tone="danger">Rupture</CartStateChip>}
+						{isInactive && <CartStateChip tone="danger">Plus disponible</CartStateChip>}
 					</div>
 				) : item.sku.inventory > 1 && item.sku.inventory <= STOCK_THRESHOLDS.LOW ? (
-					<p className="text-warning text-xs">Plus que {item.sku.inventory} en stock</p>
+					<p className="mt-1">
+						<CartStateChip tone="warning">Plus que {item.sku.inventory} en stock</CartStateChip>
+					</p>
 				) : null}
 			</div>
 
@@ -240,7 +246,7 @@ export function CartSheetItemRow({
 				data-base-ui-swipe-ignore=""
 			>
 				{item.sku.inventory === 1 && !hasIssue ? (
-					<span className="text-warning text-xs font-medium">Dernière pièce !</span>
+					<CartStateChip tone="warning">Il n&apos;en reste qu&apos;un</CartStateChip>
 				) : (
 					<CartItemQuantitySelector
 						skuId={item.sku.id}
@@ -263,10 +269,10 @@ export function CartSheetItemRow({
 
 	return (
 		<SwipeableCard
-			className="rounded-lg"
+			className="rounded-md"
 			peek={peek}
 			leftAction={{
-				children: <Trash2 className="text-destructive-foreground size-5" aria-hidden="true" />,
+				children: <TrashIcon className="text-destructive-foreground size-5" aria-hidden="true" />,
 				label: `Supprimer ${item.sku.product.title} du panier`,
 				onAction: handleSwipeRemove,
 			}}

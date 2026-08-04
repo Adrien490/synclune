@@ -111,6 +111,17 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 			{children}
 		</div>
 	),
+	SheetClose: ({
+		children,
+		"aria-label": ariaLabel,
+	}: {
+		children: React.ReactNode;
+		"aria-label"?: string;
+	}) => (
+		<button type="button" data-testid="sheet-close" aria-label={ariaLabel}>
+			{children}
+		</button>
+	),
 }));
 
 // Mock Drawer UI — render children in simplified wrappers (mobile branch)
@@ -165,6 +176,17 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 			{children}
 		</p>
 	),
+	DrawerClose: ({
+		children,
+		"aria-label": ariaLabel,
+	}: {
+		children: React.ReactNode;
+		"aria-label"?: string;
+	}) => (
+		<button type="button" data-testid="drawer-close" aria-label={ariaLabel}>
+			{children}
+		</button>
+	),
 }));
 
 // Mock Empty
@@ -207,9 +229,10 @@ vi.mock("@/shared/components/scroll-fade", () => ({
 	),
 }));
 
-// Mock lucide-react
-vi.mock("lucide-react", () => ({
-	ShoppingBag: () => <svg data-testid="shopping-bag-icon" />,
+// Mock des icônes Phosphor
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ShoppingBagIcon: () => <svg data-testid="shopping-bag-icon" />,
+	XIcon: () => <svg data-testid="close-icon" />,
 }));
 
 // Mock formatEuro
@@ -349,12 +372,12 @@ describe("CartSheet", () => {
 	describe("empty cart", () => {
 		it("renders empty state when the cart is empty", () => {
 			render(<CartSheet cart={createCart([])} />);
-			expect(screen.getByText("Votre panier est vide !")).toBeInTheDocument();
+			expect(screen.getByText("Ton panier est encore vide")).toBeInTheDocument();
 		});
 
 		it("renders empty state when cart has no items", () => {
 			render(<CartSheet cart={createCart([])} />);
-			expect(screen.getByText("Votre panier est vide !")).toBeInTheDocument();
+			expect(screen.getByText("Ton panier est encore vide")).toBeInTheDocument();
 		});
 
 		it("renders 'Panier vide' in the screen reader live region", () => {
@@ -364,9 +387,16 @@ describe("CartSheet", () => {
 			expect(liveRegion.closest("[aria-live]")).toHaveAttribute("aria-live", "polite");
 		});
 
-		it("has role='status' on empty container", () => {
+		it("n'ajoute PAS de seconde région live sur le conteneur vide", () => {
+			// La région live différée du panier annonce déjà « Panier vide ». Un
+			// `role="status"` sur le conteneur en faisait une seconde sur la MÊME
+			// information — double vocalisation au montage. C'est exactement ce que
+			// documente le JSDoc d'`Empty`, qui a retiré ces attributs de la
+			// primitive pour cette raison.
 			render(<CartSheet cart={createCart([])} />);
-			expect(screen.getByRole("status")).toBeInTheDocument();
+			expect(screen.queryByRole("status")).not.toBeInTheDocument();
+			// …mais l'information reste annoncée, par la région dédiée.
+			expect(screen.getByText("Panier vide")).toBeInTheDocument();
 		});
 
 		it("renders shopping links", () => {
@@ -482,7 +512,7 @@ describe("CartSheet", () => {
 			const alert = screen.getByRole("alert");
 			expect(alert).toBeInTheDocument();
 			expect(alert).toHaveAttribute("aria-label", "Problèmes de stock dans le panier");
-			expect(screen.getByText("Ajustez votre panier pour continuer")).toBeInTheDocument();
+			expect(screen.getByText("Ajuste ton panier pour continuer")).toBeInTheDocument();
 		});
 
 		it("passes hasStockIssues=true to footer", () => {
@@ -525,7 +555,7 @@ describe("CartSheet", () => {
 		it("renders sr-only description", () => {
 			render(<CartSheet cart={createCart([])} />);
 			const description = screen.getByTestId("sheet-description");
-			expect(description).toHaveTextContent("Gérez les articles de votre panier");
+			expect(description).toHaveTextContent("Gère les articles de ton panier");
 			expect(description).toHaveClass("sr-only");
 		});
 
@@ -584,7 +614,46 @@ describe("CartSheet", () => {
 			mockIsMobile.value = true;
 			render(<CartSheet cart={createCart([])} />);
 			expect(screen.getByTestId("drawer")).toBeInTheDocument();
-			expect(screen.getByText("Votre panier est vide !")).toBeInTheDocument();
+			expect(screen.getByText("Ton panier est encore vide")).toBeInTheDocument();
+		});
+	});
+
+	/**
+	 * @regression cart-sheet-list-not-clipped-2026-08-04
+	 *
+	 * La ligne de panier peint VOLONTAIREMENT hors de sa boîte : rotation ±0,4°
+	 * du tirage (1,19 px de débord au coin), `shadow-sm`, le halo de survol de
+	 * `CARD_SURFACE_HOVER` (30 px de flou) et l'ombre de focus de
+	 * `CARD_SURFACE_FOCUS`.
+	 *
+	 * Un `overflow-hidden` sur le `<m.li>` rognait les quatre — donc aussi une
+	 * affordance CLAVIER (WCAG 2.4.7), pas seulement de l'esthétique : la
+	 * signature visuelle de la refonte « papier de soie » ne s'affichait pas du
+	 * tout. Il ne protégeait rien, l'animation de sortie étant `opacity + scale`
+	 * et jamais `height` depuis le passage à `mode="popLayout"`.
+	 *
+	 * Même classe de bug que le `SwipeableCard` qui clippait la ProductCard
+	 * polaroid sur `/favoris` — la leçon avait été apprise un cran plus bas dans
+	 * l'arbre, pas ici.
+	 */
+	describe("@regression la liste ne clippe pas ses lignes", () => {
+		it("le wrapper animé garde son origine de scale mais ne clippe rien", () => {
+			const { container } = render(
+				<CartSheet cart={createCart([createCartItem(), createCartItem({ id: "item-2" })])} />,
+			);
+
+			const wrappers = container.querySelectorAll("ul[role='list'] > li");
+			expect(wrappers.length).toBe(2);
+
+			for (const wrapper of wrappers) {
+				// `origin-top` reste nécessaire : c'est le point d'ancrage du `scale`
+				// des animations d'entrée et de sortie.
+				expect(wrapper.className).toContain("origin-top");
+				// Le clip, lui, est interdit — sous toutes ses formes.
+				expect(wrapper.className).not.toContain("overflow-hidden");
+				expect(wrapper.className).not.toContain("overflow-clip");
+				expect(wrapper.className).not.toContain("overflow-y-hidden");
+			}
 		});
 	});
 });

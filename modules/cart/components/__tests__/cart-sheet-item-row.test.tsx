@@ -47,8 +47,8 @@ vi.mock("@/shared/components/swipeable-card", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Trash2: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	TrashIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="swipe-trash-icon" className={className} />
 	),
 }));
@@ -356,7 +356,7 @@ describe("CartSheetItemRow", () => {
 		vi.mocked(cartItemService.isCartItemInactive).mockReturnValue(true);
 		vi.mocked(cartItemService.hasCartItemIssue).mockReturnValue(true);
 		render(<CartSheetItemRow item={createCartItem()} />);
-		expect(screen.getByText("Indisponible")).toBeInTheDocument();
+		expect(screen.getByText("Plus disponible")).toBeInTheDocument();
 	});
 
 	it("renders color attribute when present", () => {
@@ -384,7 +384,7 @@ describe("CartSheetItemRow", () => {
 			},
 		});
 		render(<CartSheetItemRow item={item} />);
-		expect(screen.getByText("Dernière pièce !")).toBeInTheDocument();
+		expect(screen.getByText(/reste qu'un/)).toBeInTheDocument();
 	});
 
 	it("renders fallback when no image is available", () => {

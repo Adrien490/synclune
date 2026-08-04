@@ -58,9 +58,9 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-// Mock lucide-react icons (LoaderCircle pour le CTA)
-vi.mock("lucide-react", () => ({
-	Loader2Icon: ({ className }: { className?: string }) => (
+// Mock des icônes Phosphor (SpinnerIcon pour le CTA)
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="loader-icon" className={className} aria-hidden="true" />
 	),
 }));
@@ -162,14 +162,14 @@ describe("AddToCartForm", () => {
 	});
 
 	describe("when no SKU is selected (single-SKU product)", () => {
-		it("renders 'Produit non disponible' for a product with only one SKU", () => {
+		it("renders 'Pièce non disponible' for a product with only one SKU", () => {
 			setupDefaultMocks();
 			// Single SKU product with no selection
 			const product = createProduct({ skus: [createSku()] });
 
 			render(<AddToCartForm product={product} selectedSku={null} />);
 
-			expect(screen.getByText("Produit non disponible")).toBeInTheDocument();
+			expect(screen.getByText("Pièce non disponible")).toBeInTheDocument();
 		});
 
 		it("renders disabled button when selectedSku is null", () => {
@@ -183,7 +183,7 @@ describe("AddToCartForm", () => {
 	});
 
 	describe("when no SKU is selected (multi-variant product)", () => {
-		it("shows 'Choisissez la couleur' when color is required and not selected", () => {
+		it("shows 'Choisis la couleur' when color is required and not selected", () => {
 			mockUseAddToCart.mockReturnValue({ action: vi.fn(), isPending: false, state: undefined });
 			mockUseVariantValidation.mockReturnValue({
 				validationErrors: ["Veuillez sélectionner une couleur"],
@@ -198,10 +198,10 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={null} />);
 
-			expect(screen.getByText("Choisissez la couleur")).toBeInTheDocument();
+			expect(screen.getByText("Choisis la couleur")).toBeInTheDocument();
 		});
 
-		it("shows 'Choisissez le matériau' when material is required and not selected", () => {
+		it("shows 'Choisis le matériau' when material is required and not selected", () => {
 			mockUseAddToCart.mockReturnValue({ action: vi.fn(), isPending: false, state: undefined });
 			mockUseVariantValidation.mockReturnValue({
 				validationErrors: ["Veuillez sélectionner un matériau"],
@@ -216,7 +216,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={null} />);
 
-			expect(screen.getByText("Choisissez le matériau")).toBeInTheDocument();
+			expect(screen.getByText("Choisis le matériau")).toBeInTheDocument();
 		});
 
 		it("shows combined message when both color and size are required and missing", () => {
@@ -234,7 +234,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={null} />);
 
-			expect(screen.getByText("Choisissez la couleur et la taille")).toBeInTheDocument();
+			expect(screen.getByText("Choisis la couleur et la taille")).toBeInTheDocument();
 		});
 	});
 

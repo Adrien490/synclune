@@ -30,8 +30,8 @@ vi.mock("@/modules/cart/components/cart-badge", () => ({
 	CartBadge: () => <span data-testid="cart-badge" />,
 }));
 
-vi.mock("lucide-react", () => ({
-	ShoppingCart: ({ size, className }: { size?: number; className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ShoppingBagIcon: ({ size, className }: { size?: number; className?: string }) => (
 		<svg data-testid="shopping-cart-icon" data-size={size} className={className} />
 	),
 }));

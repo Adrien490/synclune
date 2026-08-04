@@ -21,17 +21,23 @@ export async function CartSheetRecommendations() {
 	}
 
 	return (
+		/* Gouttière `px-6` comme tout le reste du panneau. Cette section était la
+		   SEULE en `px-4` : 8 px d'écart sur toute la hauteur, qui la faisaient
+		   lire comme une pièce rapportée. */
 		<section
 			className="shrink-0 border-t py-3"
 			aria-labelledby="cart-sheet-recommendations-heading"
 		>
 			<h3
 				id="cart-sheet-recommendations-heading"
-				className="mb-2 px-4 text-xs font-semibold tracking-wide uppercase"
+				className="text-muted-foreground mb-2 px-6 text-xs font-semibold tracking-wide uppercase"
 			>
-				Vous pourriez aimer
+				Ça irait bien avec
 			</h3>
-			<ScrollFade axis="horizontal" className="px-4">
+			{/* `fadeFromClass` : le panneau du panier est en `bg-muted`, pas en
+			    `bg-background` (le défaut de `ScrollFade`) — un fondu latéral partant
+			    du blanc laisserait deux liserés clairs sur les bords de la rangée. */}
+			<ScrollFade axis="horizontal" className="px-6" fadeFromClass="from-muted">
 				<div className="flex gap-3 pb-1">
 					{recommendations.map((product) => {
 						const primarySku = product.skus[0];
@@ -44,10 +50,10 @@ export async function CartSheetRecommendations() {
 							<CartCloseLink
 								key={product.id}
 								href={`/creations/${product.slug}`}
-								className="group/reco focus-visible:ring-ring flex w-28 shrink-0 flex-col gap-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								className="group/reco focus-visible:ring-ring bg-card flex w-28 shrink-0 flex-col gap-1.5 rounded-md border border-transparent p-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 								aria-label={`Voir ${product.title}${price != null ? ` — ${formatEuro(price)}` : ""}`}
 							>
-								<div className="bg-muted relative aspect-square w-full overflow-hidden rounded-lg border">
+								<div className="bg-muted relative aspect-square w-full overflow-hidden rounded-sm">
 									{image && thumbSrc ? (
 										<Image
 											src={thumbSrc}

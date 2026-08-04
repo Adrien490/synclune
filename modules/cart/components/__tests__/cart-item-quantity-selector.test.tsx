@@ -96,9 +96,9 @@ vi.mock("@/shared/components/ui/input", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Minus: () => <svg data-testid="minus-icon" />,
-	Plus: () => <svg data-testid="plus-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	MinusIcon: () => <svg data-testid="minus-icon" />,
+	PlusIcon: () => <svg data-testid="plus-icon" />,
 }));
 
 // ============================================================================

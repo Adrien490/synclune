@@ -70,8 +70,8 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Loader2Icon: () => <svg data-testid="loader-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: () => <svg data-testid="loader-icon" />,
 }));
 
 import { ClearCartAlertDialog } from "../clear-cart-alert-dialog";
@@ -86,9 +86,9 @@ afterEach(() => {
 describe("ClearCartAlertDialog", () => {
 	it("renders title + description when open", () => {
 		render(<ClearCartAlertDialog />);
-		expect(screen.getByText(/vider votre panier/i)).toBeInTheDocument();
+		expect(screen.getByText(/vider ton panier/i)).toBeInTheDocument();
 		expect(
-			screen.getByText(/tous les articles de votre panier seront supprimés/i),
+			screen.getByText(/toutes les pièces de ton panier seront retirées/i),
 		).toBeInTheDocument();
 	});
 

@@ -112,7 +112,7 @@ describe("CartSheetRecommendations", () => {
 		const jsx = await CartSheetRecommendations();
 		const { container } = render(jsx!);
 		expect(container.querySelector("section")).toBeInTheDocument();
-		expect(screen.getByText("Vous pourriez aimer")).toBeInTheDocument();
+		expect(screen.getByText("Ça irait bien avec")).toBeInTheDocument();
 	});
 
 	it("renders a link per recommendation", async () => {

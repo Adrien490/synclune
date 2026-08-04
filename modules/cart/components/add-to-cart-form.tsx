@@ -45,10 +45,10 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 		if (requiresMaterial && !searchParams.get("material")) missing.push("le matériau");
 		if (requiresSize && !searchParams.get("size")) missing.push("la taille");
 
-		if (missing.length === 0) return "Choisissez vos options";
-		if (missing.length === 1) return `Choisissez ${missing[0]}`;
-		if (missing.length === 2) return `Choisissez ${missing[0]} et ${missing[1]}`;
-		return `Choisissez ${missing.slice(0, -1).join(", ")} et ${missing[missing.length - 1]}`;
+		if (missing.length === 0) return "Choisis tes options";
+		if (missing.length === 1) return `Choisis ${missing[0]}`;
+		if (missing.length === 2) return `Choisis ${missing[0]} et ${missing[1]}`;
+		return `Choisis ${missing.slice(0, -1).join(", ")} et ${missing[missing.length - 1]}`;
 	};
 
 	// Vérifier si le produit a un seul SKU
@@ -107,7 +107,7 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 				) : !selectedSku ? (
 					<>
 						{hasOnlyOneSku ? (
-							<span>Produit non disponible</span>
+							<span>Pièce non disponible</span>
 						) : (
 							<span>{getMissingOptionsMessage()}</span>
 						)}

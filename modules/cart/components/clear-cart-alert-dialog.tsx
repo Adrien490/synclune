@@ -65,10 +65,10 @@ export function ClearCartAlertDialog() {
 			<ResponsiveAlertDialogContent>
 				<form onSubmit={handleSubmit} aria-label="Vider le panier">
 					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>Vider votre panier ?</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogTitle>Vider ton panier ?</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>
-							Tous les articles de votre panier seront supprimés. Vous pourrez toujours les
-							retrouver dans la boutique si vous changez d&apos;avis.
+							Toutes les pièces de ton panier seront retirées. Tu pourras toujours les retrouver
+							dans la boutique si tu changes d&apos;avis.
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>

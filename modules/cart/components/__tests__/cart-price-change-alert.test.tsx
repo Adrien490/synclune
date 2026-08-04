@@ -42,9 +42,15 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	RefreshCw: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowsClockwiseIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="refresh-icon" className={className} />
+	),
+	PiggyBankIcon: ({ className }: { className?: string }) => (
+		<svg data-testid="piggy-bank-icon" className={className} />
+	),
+	WarningIcon: ({ className }: { className?: string }) => (
+		<svg data-testid="warning-icon" className={className} />
 	),
 }));
 
@@ -147,10 +153,13 @@ describe("CartPriceChangeAlert", () => {
 		expect(savingsText).toBeInTheDocument();
 	});
 
-	it("has aria-live='polite' on the alert container", () => {
+	it("ne double PAS role='alert' d'un aria-live redondant", () => {
+		// `role="alert"` implique deja `aria-live="assertive"`. Le
+		// `aria-live="polite"` qui l'accompagnait DEGRADAIT l'urgence qu'on venait
+		// de declarer — l'attribut explicite l'emporte sur celui du role.
 		const items = [createItem("1", 2000, 2500)];
 		render(<CartPriceChangeAlert items={items as never} />);
-		expect(screen.getByRole("alert")).toHaveAttribute("aria-live", "polite");
+		expect(screen.getByRole("alert")).not.toHaveAttribute("aria-live");
 	});
 
 	it("shows downward arrow for price decrease", () => {
