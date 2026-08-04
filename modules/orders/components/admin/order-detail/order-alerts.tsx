@@ -1,15 +1,14 @@
 import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
-import { TriangleAlert, Clock, RotateCcw, CircleX } from "lucide-react";
+import { TriangleAlert, RotateCcw, CircleX } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import type { OrderAlertsProps } from "./types";
 
 export function OrderAlerts({ status, paymentStatus, fulfillmentStatus }: OrderAlertsProps) {
 	const isCancelled = status === OrderStatus.CANCELLED;
 	const isPaymentFailed = paymentStatus === PaymentStatus.FAILED;
-	const isPaymentExpired = paymentStatus === PaymentStatus.EXPIRED;
 	const isReturned = fulfillmentStatus === FulfillmentStatus.RETURNED;
 
-	if (!isCancelled && !isPaymentFailed && !isPaymentExpired && !isReturned) {
+	if (!isCancelled && !isPaymentFailed && !isReturned) {
 		return null;
 	}
 
@@ -28,15 +27,6 @@ export function OrderAlerts({ status, paymentStatus, fulfillmentStatus }: OrderA
 					<AlertTitle>Paiement échoué</AlertTitle>
 					<AlertDescription>
 						Le paiement a échoué. Contactez le client pour résoudre le problème.
-					</AlertDescription>
-				</Alert>
-			)}
-			{isPaymentExpired && (
-				<Alert>
-					<Clock className="size-4" />
-					<AlertTitle>Session de paiement expirée</AlertTitle>
-					<AlertDescription>
-						La session de paiement a expiré sans tentative de paiement.
 					</AlertDescription>
 				</Alert>
 			)}

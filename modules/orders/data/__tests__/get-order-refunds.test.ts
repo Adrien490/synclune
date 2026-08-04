@@ -177,16 +177,6 @@ describe("getOrderRefunds", () => {
 		);
 	});
 
-	it("includes notDeleted filter (deletedAt: null) in where clause", async () => {
-		await getOrderRefunds(VALID_ORDER_ID);
-
-		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ deletedAt: null }),
-			}),
-		);
-	});
-
 	it("orders results by createdAt descending", async () => {
 		await getOrderRefunds(VALID_ORDER_ID);
 

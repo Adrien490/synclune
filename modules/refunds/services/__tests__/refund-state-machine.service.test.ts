@@ -31,7 +31,6 @@ describe("refund-state-machine", () => {
 		const allowed: Array<[RefundStatus, RefundStatus]> = [
 			[RefundStatus.PENDING, RefundStatus.APPROVED],
 			[RefundStatus.PENDING, RefundStatus.COMPLETED], // webhook shortcut (Stripe Dashboard)
-			[RefundStatus.PENDING, RefundStatus.REJECTED],
 			[RefundStatus.PENDING, RefundStatus.CANCELLED],
 			[RefundStatus.PENDING, RefundStatus.FAILED],
 			[RefundStatus.APPROVED, RefundStatus.COMPLETED],
@@ -51,27 +50,17 @@ describe("refund-state-machine", () => {
 			// COMPLETED is terminal
 			[RefundStatus.COMPLETED, RefundStatus.PENDING],
 			[RefundStatus.COMPLETED, RefundStatus.APPROVED],
-			[RefundStatus.COMPLETED, RefundStatus.REJECTED],
 			[RefundStatus.COMPLETED, RefundStatus.CANCELLED],
 			[RefundStatus.COMPLETED, RefundStatus.FAILED],
-			// REJECTED is terminal
-			[RefundStatus.REJECTED, RefundStatus.PENDING],
-			[RefundStatus.REJECTED, RefundStatus.APPROVED],
-			[RefundStatus.REJECTED, RefundStatus.COMPLETED],
-			[RefundStatus.REJECTED, RefundStatus.CANCELLED],
-			[RefundStatus.REJECTED, RefundStatus.FAILED],
 			// CANCELLED is terminal
 			[RefundStatus.CANCELLED, RefundStatus.PENDING],
 			[RefundStatus.CANCELLED, RefundStatus.APPROVED],
 			[RefundStatus.CANCELLED, RefundStatus.COMPLETED],
-			[RefundStatus.CANCELLED, RefundStatus.REJECTED],
 			[RefundStatus.CANCELLED, RefundStatus.FAILED],
-			// APPROVED cannot regress to PENDING/REJECTED
+			// APPROVED cannot regress to PENDING
 			[RefundStatus.APPROVED, RefundStatus.PENDING],
-			[RefundStatus.APPROVED, RefundStatus.REJECTED],
-			// FAILED cannot regress to PENDING/REJECTED/CANCELLED
+			// FAILED cannot regress to PENDING/CANCELLED
 			[RefundStatus.FAILED, RefundStatus.PENDING],
-			[RefundStatus.FAILED, RefundStatus.REJECTED],
 			[RefundStatus.FAILED, RefundStatus.CANCELLED],
 		];
 
@@ -81,9 +70,8 @@ describe("refund-state-machine", () => {
 	});
 
 	describe("isTerminalStatus", () => {
-		it("returns true for COMPLETED / REJECTED / CANCELLED", () => {
+		it("returns true for COMPLETED / CANCELLED", () => {
 			expect(isTerminalStatus(RefundStatus.COMPLETED)).toBe(true);
-			expect(isTerminalStatus(RefundStatus.REJECTED)).toBe(true);
 			expect(isTerminalStatus(RefundStatus.CANCELLED)).toBe(true);
 		});
 

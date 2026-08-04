@@ -27,11 +27,6 @@ function params(overrides: Partial<GetRefundsParams> = {}): GetRefundsParams {
 // ============================================================================
 
 describe("buildRefundWhereClause", () => {
-	it("should always set deletedAt to null", () => {
-		const result = buildRefundWhereClause(params());
-		expect(result.deletedAt).toBeNull();
-	});
-
 	it("should return no AND clause when no filters or search are provided", () => {
 		const result = buildRefundWhereClause(params());
 		expect(result.AND).toBeUndefined();

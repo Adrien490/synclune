@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Phone, User } from "lucide-react";
+import { Pencil, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -32,7 +32,6 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 			orderNumber: order.orderNumber,
 			customerEmail: order.customerEmail,
 			customerName: order.customerName,
-			customerPhone: order.customerPhone,
 		});
 	};
 
@@ -65,12 +64,9 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 				<div>
 					<p className="font-medium">{order.customerName}</p>
 					<p className="text-muted-foreground text-sm break-words">{order.customerEmail}</p>
-					{order.customerPhone && (
-						<p className="text-muted-foreground flex items-center gap-1 text-sm">
-							<Phone className="size-3" aria-hidden="true" />
-							{order.customerPhone}
-						</p>
-					)}
+					{/* Le téléphone est celui du snapshot de livraison : il s'affiche et
+					    s'édite dans la carte « Livraison ». `Order.customerPhone`, jamais
+					    renseignée au checkout, a été retirée le 2026-08-04. */}
 				</div>
 			</CardContent>
 		</Card>

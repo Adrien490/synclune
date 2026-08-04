@@ -35,7 +35,6 @@ export interface OrderWithItems {
 	subtotal: number;
 	discountAmount: number;
 	shippingCost: number;
-	taxAmount: number;
 	total: number;
 	items: OrderItem[];
 }

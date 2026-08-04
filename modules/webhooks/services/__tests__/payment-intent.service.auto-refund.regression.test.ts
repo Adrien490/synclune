@@ -179,11 +179,11 @@ describe("ORD-BIZ-002 — initiateAutomaticRefund crée un Refund local lié à 
 			orderItemId: string;
 			quantity: number;
 			amount: number;
-			restock: boolean;
 		}>;
 		expect(items).toHaveLength(2);
-		// restock=false : stock déjà restauré par restoreStockForOrder lors de payment_failed
-		expect(items.every((i) => i.restock === false)).toBe(true);
+		// Aucune instruction de restock (colonne droppée au Lot 6) : le stock est
+		// déjà restauré par restoreStockForOrder lors de payment_failed.
+		expect(items.every((i) => !("restock" in i))).toBe(true);
 		// sum(amount) doit couvrir le total
 		expect(items.reduce((acc, i) => acc + i.amount, 0)).toBe(5000);
 	});

@@ -125,11 +125,10 @@ describeIntegration("archiveInvoicePdf — hash verification (EINV-TEST-013)", (
 		// Vérification DB
 		const persisted = await prisma.order.findUniqueOrThrow({
 			where: { id: order.id },
-			select: { invoicePdfUrl: true, invoicePdfHash: true, invoiceArchivedAt: true },
+			select: { invoicePdfUrl: true, invoicePdfHash: true },
 		});
 		expect(persisted.invoicePdfHash).toBe(expectedHash);
 		expect(persisted.invoicePdfUrl).toContain("utfs.io/f/mock-invoice-");
-		expect(persisted.invoiceArchivedAt).not.toBeNull();
 	});
 
 	it("idempotence — 2e appel sur même order retourne le hash existant SANS ré-uploader", async () => {

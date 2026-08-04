@@ -75,7 +75,6 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 						subtotal={order.subtotal}
 						discountAmount={order.discountAmount}
 						shippingCost={order.shippingCost}
-						taxAmount={order.taxAmount}
 						total={order.total}
 					/>
 

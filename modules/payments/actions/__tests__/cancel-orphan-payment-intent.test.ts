@@ -10,7 +10,7 @@ const {
 	mockWithStripeCircuitBreaker,
 	mockLoggerInfo,
 	mockGetSession,
-	mockGetOrCreateCartSessionId,
+	mockGetOrCreateGuestSessionId,
 	mockCheckRateLimit,
 	mockGetClientIp,
 	mockGetRateLimitIdentifier,
@@ -21,7 +21,7 @@ const {
 	mockWithStripeCircuitBreaker: vi.fn((fn: () => Promise<unknown>) => fn()),
 	mockLoggerInfo: vi.fn(),
 	mockGetSession: vi.fn(),
-	mockGetOrCreateCartSessionId: vi.fn(),
+	mockGetOrCreateGuestSessionId: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
 	mockGetClientIp: vi.fn(),
 	mockGetRateLimitIdentifier: vi.fn(),
@@ -48,8 +48,8 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 	getSession: mockGetSession,
 }));
 
-vi.mock("@/modules/cart/lib/cart-session", () => ({
-	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
+vi.mock("@/modules/cart/lib/guest-session", () => ({
+	getOrCreateGuestSessionId: mockGetOrCreateGuestSessionId,
 }));
 
 vi.mock("@/shared/lib/rate-limit", () => ({
@@ -97,7 +97,7 @@ describe("cancelOrphanPaymentIntent", () => {
 		mockWithStripeCircuitBreaker.mockImplementation((fn: () => Promise<unknown>) => fn());
 		// Default: authenticated owner of AUTH_PI, rate limit OK.
 		mockGetSession.mockResolvedValue({ user: { id: USER_ID } });
-		mockGetOrCreateCartSessionId.mockResolvedValue(null);
+		mockGetOrCreateGuestSessionId.mockResolvedValue(null);
 		mockHeaders.mockResolvedValue(new Map());
 		mockGetClientIp.mockResolvedValue("1.2.3.4");
 		mockGetRateLimitIdentifier.mockReturnValue("guest:rl");
@@ -134,7 +134,7 @@ describe("cancelOrphanPaymentIntent", () => {
 
 	it("cancels when the guest session owns the PI (metadata.guestSessionId match)", async () => {
 		mockGetSession.mockResolvedValue(null);
-		mockGetOrCreateCartSessionId.mockResolvedValue(GUEST_SESSION_A);
+		mockGetOrCreateGuestSessionId.mockResolvedValue(GUEST_SESSION_A);
 		mockStripePaymentIntentsRetrieve.mockResolvedValue({
 			id: "pi_test_abc123",
 			metadata: { userId: "guest", guestSessionId: GUEST_SESSION_A },
@@ -159,7 +159,7 @@ describe("cancelOrphanPaymentIntent", () => {
 
 	it("does NOT cancel a guest PI when the session id differs", async () => {
 		mockGetSession.mockResolvedValue(null);
-		mockGetOrCreateCartSessionId.mockResolvedValue(GUEST_SESSION_A);
+		mockGetOrCreateGuestSessionId.mockResolvedValue(GUEST_SESSION_A);
 		mockStripePaymentIntentsRetrieve.mockResolvedValue({
 			id: "pi_test_abc123",
 			metadata: { userId: "guest", guestSessionId: GUEST_SESSION_B },
@@ -194,7 +194,7 @@ describe("cancelOrphanPaymentIntent", () => {
 
 	it("returns early when there is no user and no session id", async () => {
 		mockGetSession.mockResolvedValue(null);
-		mockGetOrCreateCartSessionId.mockResolvedValue(null);
+		mockGetOrCreateGuestSessionId.mockResolvedValue(null);
 
 		await cancelOrphanPaymentIntent("pi_test_abc123");
 

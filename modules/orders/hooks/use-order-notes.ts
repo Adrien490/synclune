@@ -21,6 +21,9 @@ export function useOrderNotes() {
 	const removeSuccessRef = useRef<(() => void) | undefined>(undefined);
 
 	const [, addFormAction, isAddActionPending] = useActionState(
+		// L'arrow externe diffère la création des callbacks au submit : ils lisent
+		// une ref (`addSuccessRef`), interdit pendant le rendu (react-hooks/refs).
+		// Ne pas « simplifier » en passage direct de withCallbacks.
 		async (_prev: ActionState | undefined, formData: FormData) =>
 			withCallbacks(
 				async (_p: ActionState | undefined, fd: FormData) =>
@@ -36,6 +39,7 @@ export function useOrderNotes() {
 	);
 
 	const [, removeFormAction, isRemoveActionPending] = useActionState(
+		// Même motif que ci-dessus : `removeSuccessRef` est lue dans onSuccess.
 		async (_prev: ActionState | undefined, formData: FormData) =>
 			withCallbacks(
 				async (_p: ActionState | undefined, fd: FormData) =>

@@ -1,15 +1,17 @@
 /**
  * @regression ORD-BIZ-004
  *
- * Garantit que `markAsPaid` autorise la recovery `FAILED → PAID` et `EXPIRED → PAID`
+ * Garantit que `markAsPaid` autorise la recovery `FAILED → PAID`
  * (paiement bancaire manuel post-échec) avec safety guards :
  * - refus si un Refund non-terminal existe (sinon double-comptabilisation)
  * - refus si commande CANCELLED ou paymentStatus PAID/PARTIALLY_REFUNDED/REFUNDED
  * - audit `metadata.recoveredFrom` tracé pour distinguer recovery vs paiement initial
  *
  * Le service `canMarkAsPaid` (UI) est aussi élargi pour exposer le bouton sur
- * FAILED/EXPIRED. Sans cette régression, ces transitions sont silencieusement
- * bloquées et l'admin doit créer une nouvelle commande (perte traçabilité).
+ * FAILED. Sans cette régression, cette transition est silencieusement
+ * bloquée et l'admin doit créer une nouvelle commande (perte traçabilité).
+ * (La branche EXPIRED de cette régression est partie au Lot 6 avec la valeur
+ * d'enum — vestige du flux Checkout Session, plus aucun writer.)
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -175,22 +177,6 @@ describe("ORD-BIZ-004 — mark-as-paid recovery FAILED/EXPIRED → PAID", () => 
 		);
 	});
 
-	it("autorise EXPIRED → PAID quand aucun Refund existant + trace metadata.recoveredFrom=EXPIRED", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(
-			createOrder({ id: VALID_CUID, paymentStatus: "EXPIRED" }),
-		);
-
-		const result = await markAsPaid(undefined, validFormData);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
-			mockPrisma,
-			expect.objectContaining({
-				metadata: expect.objectContaining({ recoveredFrom: "EXPIRED" }),
-			}),
-		);
-	});
-
 	it("autorise PENDING → PAID SANS poser metadata.recoveredFrom (paiement initial, pas recovery)", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue(
 			createOrder({ id: VALID_CUID, paymentStatus: "PENDING" }),
@@ -249,8 +235,8 @@ describe("ORD-BIZ-004 — mark-as-paid recovery FAILED/EXPIRED → PAID", () => 
 	});
 });
 
-describe("ORD-BIZ-004 — getOrderPermissions.canMarkAsPaid expose le bouton pour FAILED/EXPIRED", () => {
-	it("expose canMarkAsPaid sur PENDING + FAILED + EXPIRED ; refuse PAID/REFUNDED", async () => {
+describe("ORD-BIZ-004 — getOrderPermissions.canMarkAsPaid expose le bouton pour FAILED", () => {
+	it("expose canMarkAsPaid sur PENDING + FAILED ; refuse PAID/REFUNDED", async () => {
 		const { getOrderPermissions } = await import("../../services/order-status-validation.service");
 
 		expect(
@@ -266,15 +252,6 @@ describe("ORD-BIZ-004 — getOrderPermissions.canMarkAsPaid expose le bouton pou
 			getOrderPermissions({
 				status: "PENDING",
 				paymentStatus: "FAILED",
-				fulfillmentStatus: "UNFULFILLED",
-				trackingNumber: null,
-			}).canMarkAsPaid,
-		).toBe(true);
-
-		expect(
-			getOrderPermissions({
-				status: "PENDING",
-				paymentStatus: "EXPIRED",
 				fulfillmentStatus: "UNFULFILLED",
 				trackingNumber: null,
 			}).canMarkAsPaid,

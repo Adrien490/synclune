@@ -196,6 +196,7 @@ export function CheckoutAddressFields({
 						label="Complément d'adresse"
 						optional
 						autoComplete="address-line2"
+						autoCapitalize="sentences"
 						enterKeyHint="next"
 						maxLength={ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH}
 					/>
@@ -240,6 +241,7 @@ export function CheckoutAddressFields({
 										pattern={isNumericPostalCode ? "[0-9]*" : undefined}
 										autoComplete="postal-code"
 										autoCorrect="off"
+										spellCheck={false}
 										enterKeyHint="next"
 										// Aligné sur la borne haute du validateur — sans ça le champ
 										// accepte une saisie que la validation rejettera.

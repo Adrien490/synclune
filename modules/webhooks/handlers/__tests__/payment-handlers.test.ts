@@ -440,17 +440,12 @@ describe("handlePaymentFailure", () => {
 		).toBeUndefined();
 	});
 
-	it("persists failure details via a PENDING-conditional updateMany (race-safe, no transition)", async () => {
+	// Les colonnes `Order.paymentFailure*` ont été retirées le 2026-08-04 : le
+	// handler n'écrit plus rien, il observe (cf. payment-failed-non-terminal).
+	it("writes nothing to the database (observability only)", async () => {
 		await handlePaymentFailure(makePaymentIntent());
 
-		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
-			where: { id: "order-1", paymentStatus: "PENDING", deletedAt: null },
-			data: {
-				paymentFailureCode: "card_declined",
-				paymentDeclineCode: "insufficient_funds",
-				paymentFailureMessage: "Your card was declined.",
-			},
-		});
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("skips as stale when the order is already PAID (out-of-order delivery, F1)", async () => {
@@ -518,16 +513,10 @@ describe("handlePaymentFailure", () => {
 	 * explicitement leur ABSENCE : les réintroduire signifierait avoir recréé une
 	 * entrée de cache user-scopée sans le dire.
 	 */
-	it("invalide le tag order-detail, sans tag user-scopé", async () => {
+	it("n'émet AUCUNE tâche : rien n'a changé en base", async () => {
 		const result = await handlePaymentFailure(makePaymentIntent());
 
-		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
-		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
-		if (cacheTask?.type === "INVALIDATE_CACHE") {
-			expect(cacheTask.tags).toContain("order-detail-order-1");
-			expect(cacheTask.tags.some((t) => t.startsWith("orders-user-"))).toBe(false);
-			expect(cacheTask.tags.some((t) => t.startsWith("last-order-user-"))).toBe(false);
-		}
+		expect(result.tasks).toBeUndefined();
 	});
 });
 

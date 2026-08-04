@@ -17,7 +17,7 @@ import { z } from "zod";
  * de fuite réels (cf. update-order-customer-info.ts:88-107).
  */
 const FORBIDDEN_KEY_PATTERN =
-	/(email|phone|address1|address2|postalCode|address\b|street|firstName|lastName|fullName|customerName|customerEmail|customerPhone|shippingPhone|billingPhone|fiscalNumber|tva|vatNumber|iban|cardNumber|cvv|password|token|secret|apiKey|ssn|nir|niss)/i;
+	/(email|phone|address1|address2|postalCode|address\b|street|firstName|lastName|fullName|customerName|customerEmail|shippingPhone|fiscalNumber|tva|vatNumber|iban|cardNumber|cvv|password|token|secret|apiKey|ssn|nir|niss)/i;
 
 function findForbiddenKey(value: unknown, path: string[] = []): string | null {
 	if (value === null || typeof value !== "object") return null;

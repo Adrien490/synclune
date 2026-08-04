@@ -444,8 +444,8 @@ describe("updateRefundStatus — state transitions", () => {
 		expect(mockPrisma.refund.updateMany).toHaveBeenCalled();
 	});
 
-	it("should reject REJECTED to COMPLETED transition", async () => {
-		await updateRefundStatus("ref-1", "COMPLETED" as never, "succeeded", "REJECTED" as never);
+	it("should reject CANCELLED to COMPLETED transition", async () => {
+		await updateRefundStatus("ref-1", "COMPLETED" as never, "succeeded", "CANCELLED" as never);
 
 		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});

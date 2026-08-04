@@ -43,6 +43,7 @@ export async function updateOrderShippingAddress(
 			shippingPostalCode: safeFormGet(formData, "shippingPostalCode"),
 			shippingCity: safeFormGet(formData, "shippingCity"),
 			shippingCountry: safeFormGet(formData, "shippingCountry") ?? "FR",
+			shippingPhone: safeFormGet(formData, "shippingPhone") ?? undefined,
 		};
 
 		const validated = validateInput(updateOrderShippingAddressSchema, rawData);
@@ -66,6 +67,7 @@ export async function updateOrderShippingAddress(
 					shippingPostalCode: true,
 					shippingCity: true,
 					shippingCountry: true,
+					shippingPhone: true,
 				},
 			});
 
@@ -90,6 +92,9 @@ export async function updateOrderShippingAddress(
 				shippingPostalCode: sanitizeText(addressData.shippingPostalCode),
 				shippingCity: sanitizeText(addressData.shippingCity),
 				shippingCountry: addressData.shippingCountry,
+				// `shippingPhone` est NOT NULL en base : un champ vidé revient à la
+				// chaîne vide, jamais à NULL (le schéma Zod accepte `""`).
+				shippingPhone: addressData.shippingPhone ? sanitizeText(addressData.shippingPhone) : "",
 			};
 
 			await tx.order.update({
@@ -97,9 +102,11 @@ export async function updateOrderShippingAddress(
 				data: sanitizedData,
 			});
 
-			// Audit trail (Art. L123-22 Code de Commerce). ORD-BIZ-005 :
-			// `addressType: "shipping"` harmonise avec update-order-billing-address
-			// pour permettre les filtres d'audit par type d'adresse.
+			// Audit trail (Art. L123-22 Code de Commerce). `addressType: "shipping"`
+			// est conservé bien qu'il n'existe plus qu'un seul type d'adresse depuis
+			// le retrait des colonnes `billing*` (2026-08-04) : les entrées d'audit
+			// déjà écrites le portent, et un filtre par type doit continuer de les
+			// retrouver — la table est immuable pendant 10 ans.
 			// ⚠️ RGPD (audit rétention 10 ans 2026-07-09) : ne JAMAIS écrire de
 			// valeurs d'adresse dans OrderHistory.metadata — la table est immuable
 			// 10 ans, jamais scrubée à l'anonymisation ni à la purge. `changedFields`

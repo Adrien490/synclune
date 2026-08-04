@@ -20,7 +20,6 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		PENDING: "PENDING",
 		PAID: "PAID",
 		FAILED: "FAILED",
-		EXPIRED: "EXPIRED",
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
 		REFUNDED: "REFUNDED",
 	} as const,
@@ -61,7 +60,7 @@ import { OrderAlerts } from "../order-alerts";
 // ============================================================================
 
 type OrderStatus = "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
-type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "PARTIALLY_REFUNDED" | "REFUNDED";
+type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "PARTIALLY_REFUNDED" | "REFUNDED";
 type FulfillmentStatus = "UNFULFILLED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "RETURNED";
 
 afterEach(cleanup);
@@ -120,17 +119,6 @@ describe("OrderAlerts", () => {
 		expect(screen.getByText("Paiement échoué")).toBeInTheDocument();
 	});
 
-	it("renders payment expired alert when paymentStatus is EXPIRED", () => {
-		render(
-			<OrderAlerts
-				status={"PROCESSING" as OrderStatus}
-				paymentStatus={"EXPIRED" as PaymentStatus}
-				fulfillmentStatus={"UNFULFILLED" as FulfillmentStatus}
-			/>,
-		);
-		expect(screen.getByText("Session de paiement expirée")).toBeInTheDocument();
-	});
-
 	it("renders returned alert when fulfillmentStatus is RETURNED", () => {
 		render(
 			<OrderAlerts
@@ -174,17 +162,6 @@ describe("OrderAlerts", () => {
 			/>,
 		);
 		expect(screen.getByTestId("icon-triangle-alert")).toBeInTheDocument();
-	});
-
-	it("renders Clock icon for payment expired alert", () => {
-		render(
-			<OrderAlerts
-				status={"PROCESSING" as OrderStatus}
-				paymentStatus={"EXPIRED" as PaymentStatus}
-				fulfillmentStatus={"UNFULFILLED" as FulfillmentStatus}
-			/>,
-		);
-		expect(screen.getByTestId("icon-clock")).toBeInTheDocument();
 	});
 
 	it("renders RotateCcw icon for returned alert", () => {

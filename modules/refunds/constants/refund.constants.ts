@@ -16,7 +16,6 @@ export const GET_REFUNDS_SELECT = {
 	status: true,
 	failureReason: true,
 	note: true,
-	createdBy: true,
 	processedAt: true,
 	createdAt: true,
 	updatedAt: true,
@@ -50,7 +49,6 @@ export const GET_REFUND_SELECT = {
 	status: true,
 	failureReason: true,
 	note: true,
-	createdBy: true,
 	processedAt: true,
 	createdAt: true,
 	updatedAt: true,
@@ -73,7 +71,6 @@ export const GET_REFUND_SELECT = {
 			orderItemId: true,
 			quantity: true,
 			amount: true,
-			restock: true,
 			createdAt: true,
 			orderItem: {
 				select: {
@@ -103,7 +100,6 @@ export const REFUND_STATUS_LABELS: Record<RefundStatus, string> = {
 	[RefundStatus.PENDING]: "En attente",
 	[RefundStatus.APPROVED]: "Approuvé",
 	[RefundStatus.COMPLETED]: "Remboursé",
-	[RefundStatus.REJECTED]: "Refusé",
 	[RefundStatus.FAILED]: "Échoué",
 	[RefundStatus.CANCELLED]: "Annulé",
 };
@@ -112,7 +108,6 @@ export const REFUND_STATUS_VARIANTS: Record<RefundStatus, BadgeVariant> = {
 	[RefundStatus.PENDING]: "warning",
 	[RefundStatus.APPROVED]: "default",
 	[RefundStatus.COMPLETED]: "success",
-	[RefundStatus.REJECTED]: "destructive",
 	[RefundStatus.FAILED]: "destructive",
 	[RefundStatus.CANCELLED]: "secondary",
 };
@@ -120,8 +115,6 @@ export const REFUND_STATUS_VARIANTS: Record<RefundStatus, BadgeVariant> = {
 export const REFUND_REASON_LABELS: Record<RefundReason, string> = {
 	[RefundReason.CUSTOMER_REQUEST]: "Rétractation client",
 	[RefundReason.DEFECTIVE]: "Produit défectueux",
-	[RefundReason.WRONG_ITEM]: "Erreur de préparation",
-	[RefundReason.LOST_IN_TRANSIT]: "Colis perdu",
 	[RefundReason.FRAUD]: "Fraude",
 	[RefundReason.OTHER]: "Autre",
 };

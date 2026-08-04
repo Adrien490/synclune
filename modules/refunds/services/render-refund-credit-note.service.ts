@@ -68,7 +68,7 @@ export async function renderRefundCreditNotePdf(
 	refundId: string,
 ): Promise<RenderedRefundCreditNote | null> {
 	const refund = await prisma.refund.findFirst({
-		where: { id: refundId, deletedAt: null },
+		where: { id: refundId },
 		select: { ...CREDIT_NOTE_REFUND_SELECT, orderId: true },
 	});
 

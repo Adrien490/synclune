@@ -28,7 +28,6 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 	PENDING: "Paiement en attente",
 	PAID: "Payée",
 	FAILED: "Échouée",
-	EXPIRED: "Expirée",
 	PARTIALLY_REFUNDED: "Partiellement remboursée",
 	REFUNDED: "Remboursée",
 };
@@ -37,7 +36,6 @@ export const PAYMENT_STATUS_VARIANTS: Record<PaymentStatus, BadgeVariant> = {
 	PENDING: "warning",
 	PAID: "success",
 	FAILED: "destructive",
-	EXPIRED: "secondary",
 	PARTIALLY_REFUNDED: "warning",
 	REFUNDED: "secondary",
 };

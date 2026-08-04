@@ -27,7 +27,7 @@ vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 vi.mock("@/modules/orders/hooks/use-update-order-customer-info", () => ({
 	useUpdateOrderCustomerInfo: (onSuccess: () => void) => mockUseHook(onSuccess),
 }));
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (cb: () => void) => cb(),
 }));
 
@@ -38,7 +38,6 @@ const baseProps = {
 	orderNumber: "SYN-2026-0001",
 	customerEmail: "marie@example.com",
 	customerName: "Marie Dupont",
-	customerPhone: "06 12 34 56 78" as string | null,
 };
 
 afterEach(() => {
@@ -55,12 +54,6 @@ describe("EditCustomerInfoForm", () => {
 		render(<EditCustomerInfoForm {...baseProps} />);
 		expect((screen.getByLabelText(/Nom complet/) as HTMLInputElement).value).toBe("Marie Dupont");
 		expect((screen.getByLabelText(/^Email/) as HTMLInputElement).value).toBe("marie@example.com");
-		expect((screen.getByLabelText(/Téléphone/) as HTMLInputElement).value).toBe("06 12 34 56 78");
-	});
-
-	it("rend un téléphone vide quand customerPhone est null", () => {
-		render(<EditCustomerInfoForm {...baseProps} customerPhone={null} />);
-		expect((screen.getByLabelText(/Téléphone/) as HTMLInputElement).value).toBe("");
 	});
 
 	it("expose l'id de commande en champ caché", () => {

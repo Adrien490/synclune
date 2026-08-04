@@ -5,17 +5,13 @@ import {
 	OrderAction,
 	PaymentStatus,
 	RefundStatus,
-	StockMovementSource,
 } from "@/app/generated/prisma/client";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
-import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
-import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
-import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
 import { canTransition } from "./refund-state-machine.service";
 import { issueCreditNoteForRefund } from "./issue-credit-note.service";
 import { sendRefundConfirmationOnce } from "./send-refund-confirmation.service";
@@ -26,18 +22,20 @@ import { captureRefundError } from "../utils/capture-refund-error";
  * Finalisation partagée d'un refund Stripe confirmé (`succeeded`) — service
  * transactionnel appelé depuis DEUX contextes non-Server-Action :
  *
- * - `reconcile-refunds` (cron DLQ) : refunds dont le SAGA `processRefund` Step 3
- *   a échoué après le succès Stripe ;
+ * - `reconcile-refunds` (tâche Maintenance) : refunds APPROVED dont la
+ *   finalisation webhook a été manquée ;
  * - `handleRefundUpdated` (webhook `refund.updated`) : refunds partis en
- *   `pending` chez Stripe (virement SEPA…), que `processRefund` laisse APPROVED
- *   en déléguant la finalisation à ce webhook.
+ *   `pending` chez Stripe (virement SEPA…), finalisés à la confirmation.
  *
  * Historique (audit « Admin commandes » 2026-08-01, P1-C) : le webhook ne posait
- * que `status: COMPLETED` + `processedAt` — sans restock, sans avoir Art. 272-I,
- * sans email — et `processedAt` non nul excluait le refund à jamais du cron
- * (candidats `processedAt: null`). Cette machinerie vivait déjà, complète, en
- * privé dans `reconcile-refunds.service.ts` ; elle est extraite ici pour que les
- * deux chemins soient le MÊME code.
+ * que `status: COMPLETED` + `processedAt` — sans avoir Art. 272-I, sans email —
+ * et `processedAt` non nul excluait le refund à jamais du cron (candidats
+ * `processedAt: null`). Cette machinerie vivait déjà, complète, en privé dans
+ * `reconcile-refunds.service.ts` ; elle est extraite ici pour que les deux
+ * chemins soient le MÊME code. Le restock automatique (`RefundItem.restock`) est
+ * parti au Lot 6 : plus aucun créateur ne le demandait depuis les remboursements
+ * Stripe-first (Lot 2) — le restock post-refund est un ajustement manuel de
+ * stock SKU (StockMovement MANUAL_ADJUST).
  *
  * ⚠️ L'appelant invalide les tags retournés avec l'API de SON contexte :
  * `revalidateTagsInBackground` (cron) ou tâche `INVALIDATE_CACHE` (webhook).
@@ -60,16 +58,13 @@ export interface FinalizeRefundCompletionResult {
 	finalized: boolean;
 	/** true si cette finalisation rend la commande totalement remboursée. */
 	isFullyRefunded: boolean;
-	/** SKU dont l'inventory a réellement été incrémenté (restock=true + SKU vivant). */
-	restockedSkuIds: string[];
-	/** Tags de cache à invalider par l'appelant (refund + commande + stock). */
+	/** Tags de cache à invalider par l'appelant (refund + commande). */
 	tags: string[];
 }
 
 const FINALIZE_NOOP: FinalizeRefundCompletionResult = {
 	finalized: false,
 	isFullyRefunded: false,
-	restockedSkuIds: [],
 	tags: [],
 };
 
@@ -79,7 +74,7 @@ export async function finalizeRefundCompletion(
 	const { refundId, source, authorId, authorName, auditNote, auditMetadata } = params;
 
 	const refund = await prisma.refund.findUnique({
-		where: { id: refundId, ...notDeleted },
+		where: { id: refundId },
 		select: {
 			id: true,
 			amount: true,
@@ -102,7 +97,7 @@ export async function finalizeRefundCompletion(
 	const orderNumber = refund.order.orderNumber;
 
 	// ========================================================================
-	// Transaction atomique : claim COMPLETED + restock + paymentStatus + audit
+	// Transaction atomique : claim COMPLETED + paymentStatus + audit
 	// ========================================================================
 	const txResult = await prisma.$transaction(async (tx) => {
 		const updated = await tx.refund.updateMany({
@@ -123,64 +118,6 @@ export async function finalizeRefundCompletion(
 				});
 			}
 			return null;
-		}
-
-		// Restock inventory pour les articles `restock=true`. Idempotent : seul le
-		// chemin qui gagne le guard `status: APPROVED` ci-dessus exécute ce bloc
-		// (process-refund Step 3, le cron DLQ et le webhook sont mutuellement
-		// exclusifs). Coalesce par skuId (parité process-refund). Un SKU supprimé
-		// entre la création du refund et la finalisation est skippé silencieusement.
-		const refundItems = await tx.refundItem.findMany({
-			where: { refundId, restock: true },
-			select: { quantity: true, orderItem: { select: { skuId: true } } },
-		});
-		const restockBySkuId = new Map<string, number>();
-		for (const ri of refundItems) {
-			const skuId = ri.orderItem.skuId;
-			if (skuId) {
-				restockBySkuId.set(skuId, (restockBySkuId.get(skuId) ?? 0) + ri.quantity);
-			}
-		}
-		const restockedSkuIds: string[] = [];
-		if (restockBySkuId.size > 0) {
-			// STOCK-LEDGER-001 : `UPDATE … RETURNING` remplace le couple
-			// findMany-puis-update. Le journal `StockMovement` obtient un
-			// `previousInventory` lu AU MOMENT de l'écriture, et le gate 0→N se
-			// calcule sur la même vérité.
-			// P1-1 : état AVANT crédit — discriminant de `shouldReactivateAfterRestock`.
-			// On ne réactive que ce que la VENTE a désactivé (`inventory === 0`),
-			// jamais un retrait manuel de l'admin.
-			const skusBefore = await tx.productSku.findMany({
-				where: { id: { in: [...restockBySkuId.keys()] } },
-				select: { id: true, isActive: true, inventory: true },
-			});
-			const beforeById = new Map(skusBefore.map((s) => [s.id, s]));
-
-			for (const [skuId, qty] of restockBySkuId) {
-				const reactivate = shouldReactivateAfterRestock(beforeById.get(skuId));
-
-				const updatedRows = await tx.$queryRaw<Array<{ inventory: number; productId: string }>>`
-					UPDATE "ProductSku"
-					SET "inventory" = "inventory" + ${qty},
-					    "isActive" = CASE WHEN ${reactivate} THEN true ELSE "isActive" END,
-					    "updatedAt" = NOW()
-					WHERE "id" = ${skuId}
-					RETURNING "inventory", "productId"
-				`;
-
-				const row = updatedRows[0];
-				if (!row) continue; // SKU supprimé entre create et finalisation
-
-				restockedSkuIds.push(skuId);
-				await recordStockMovementTx(tx, {
-					skuId,
-					productId: row.productId,
-					previousInventory: row.inventory - qty,
-					newInventory: row.inventory,
-					source: StockMovementSource.SYSTEM,
-					reason: `Remboursement ${refundId}`,
-				});
-			}
 		}
 
 		// Recalcule total COMPLETED après cette finalisation
@@ -221,44 +158,23 @@ export async function finalizeRefundCompletion(
 				refundAmount: refund.amount,
 				totalRefunded,
 				orderTotal: refund.order.total,
-				restockedSkuCount: restockedSkuIds.length,
 				...(auditMetadata ?? {}),
 			},
 		});
 
-		return { isFullyRefunded, restockedSkuIds };
+		return { isFullyRefunded };
 	});
 
 	if (!txResult) return FINALIZE_NOOP;
 
-	const { isFullyRefunded, restockedSkuIds } = txResult;
+	const { isFullyRefunded } = txResult;
 
 	// Tags : refund + commande (paymentStatus a bougé — CACHE-AUDIT-010, les DEUX
-	// helpers composés) + stock plus bas.
+	// helpers composés).
 	const tags = new Set<string>([
 		...getRefundInvalidationTags(refundId, orderId),
 		...getOrderInvalidationTags(orderId),
 	]);
-
-	// Tags inventaire/vitrine via la SSOT (STOCK-STALE-BASELINE-001). Itération
-	// sur les ids demandés : un SKU hard-deleted garde son `SKU_STOCK` invalidé
-	// (repli prévu par le helper).
-	if (restockedSkuIds.length > 0) {
-		const restockedSkus = await prisma.productSku.findMany({
-			where: { id: { in: restockedSkuIds } },
-			select: { id: true, productId: true, product: { select: { slug: true } } },
-		});
-		const productBySkuId = new Map(restockedSkus.map((sku) => [sku.id, sku]));
-		for (const tag of collectStockInvalidationTags(
-			restockedSkuIds.map((skuId) => ({
-				skuId,
-				productId: productBySkuId.get(skuId)?.productId ?? null,
-				productSlug: productBySkuId.get(skuId)?.product.slug ?? null,
-			})),
-		)) {
-			tags.add(tag);
-		}
-	}
 
 	// EINV-CREDIT-001 : avoir partiel (Art. 272-I). Idempotent (noop si déjà émis,
 	// noop full-refund — l'avoir canonique vient alors de voidInvoice ci-dessous).
@@ -350,5 +266,5 @@ export async function finalizeRefundCompletion(
 		}
 	}
 
-	return { finalized: true, isFullyRefunded, restockedSkuIds, tags: [...tags] };
+	return { finalized: true, isFullyRefunded, tags: [...tags] };
 }

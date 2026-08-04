@@ -14,7 +14,6 @@ export const GET_ORDERS_SELECT = {
 	customerEmail: true,
 	customerName: true,
 	stripePaymentIntentId: true,
-	stripeCustomerId: true,
 	total: true,
 	currency: true,
 	status: true,
@@ -47,7 +46,11 @@ export const GET_ORDERS_SELECT = {
 //   - GET_ORDER_SELECT_CUSTOMER : minimisation RGPD pour l'espace client
 //
 // Différences customer vs admin :
-//   - stripePaymentIntentId / stripeCustomerId : retirés (cross-order fingerprint inutile)
+//   - stripePaymentIntentId / stripeChargeId : retirés (fingerprints cross-commande
+//     inutiles côté client). Corollaire : les builders `InvoiceData` doivent lire ces
+//     deux champs en `?? null` — sur un order chargé en select CUSTOMER puis CASTÉ en
+//     `GetOrderReturn` (route facture, rendu d'avoir), ils valent `undefined` au
+//     runtime alors que le type promet `string | null`.
 //   - history.metadata : retiré (peut contenir des PII, ex: previous.email sur ADDRESS_UPDATED)
 //   - history.authorName : retiré (fuite identité admin interne)
 //
@@ -59,15 +62,12 @@ export const GET_ORDER_SELECT_ADMIN = {
 	orderNumber: true,
 	userId: true,
 	stripePaymentIntentId: true,
-	stripeCustomerId: true,
+	stripeChargeId: true,
 	customerEmail: true,
 	customerName: true,
-	customerPhone: true,
-	// Discriminant e-reporting B2C (toujours B2C — micro-entreprise franchise)
 	subtotal: true,
 	discountAmount: true,
 	shippingCost: true,
-	taxAmount: true,
 	total: true,
 	currency: true,
 	shippingFirstName: true,
@@ -78,15 +78,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	shippingCity: true,
 	shippingCountry: true,
 	shippingPhone: true,
-	billingSameAsShipping: true,
-	billingFirstName: true,
-	billingLastName: true,
-	billingAddress1: true,
-	billingAddress2: true,
-	billingPostalCode: true,
-	billingCity: true,
-	billingCountry: true,
-	billingPhone: true,
 	shippingCarrier: true,
 	trackingNumber: true,
 	trackingUrl: true,
@@ -222,11 +213,9 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	userId: true,
 	customerEmail: true,
 	customerName: true,
-	customerPhone: true,
 	subtotal: true,
 	discountAmount: true,
 	shippingCost: true,
-	taxAmount: true,
 	total: true,
 	currency: true,
 	shippingFirstName: true,
@@ -237,15 +226,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	shippingCity: true,
 	shippingCountry: true,
 	shippingPhone: true,
-	billingSameAsShipping: true,
-	billingFirstName: true,
-	billingLastName: true,
-	billingAddress1: true,
-	billingAddress2: true,
-	billingPostalCode: true,
-	billingCity: true,
-	billingCountry: true,
-	billingPhone: true,
 	shippingCarrier: true,
 	trackingNumber: true,
 	trackingUrl: true,

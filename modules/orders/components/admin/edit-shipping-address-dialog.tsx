@@ -25,6 +25,7 @@ interface EditShippingAddressData {
 	shippingPostalCode: string;
 	shippingCity: string;
 	shippingCountry: string;
+	shippingPhone?: string | null;
 	[key: string]: unknown;
 }
 
@@ -56,6 +57,7 @@ export function EditShippingAddressDialog() {
 						shippingPostalCode={dialog.data.shippingPostalCode}
 						shippingCity={dialog.data.shippingCity}
 						shippingCountry={dialog.data.shippingCountry}
+						shippingPhone={dialog.data.shippingPhone}
 						onSuccess={dialog.close}
 					/>
 				)}

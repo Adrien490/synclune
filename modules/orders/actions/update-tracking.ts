@@ -118,11 +118,14 @@ export async function updateTracking(
 				return { ...found, _error: "concurrent_change" as const };
 			}
 
-			// Audit trail (Art. L123-22 Code de Commerce)
+			// Audit trail (Art. L123-22 Code de Commerce). Le numéro de suivi ne va
+			// que dans `metadata` : `note` est du texte affiché tel quel et la purge
+			// d'échéance neutralise les deux, mais on n'écrit pas d'identifiant
+			// transporteur en clair là où un libellé neutre suffit (audit 2026-08-03).
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "TRACKING_UPDATED",
-				note: `Suivi mis à jour : ${validated.data.trackingNumber}`,
+				note: "Suivi mis à jour",
 				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				metadata: {

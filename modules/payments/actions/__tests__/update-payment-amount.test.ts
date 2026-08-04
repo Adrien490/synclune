@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
 	mockGetSession,
-	mockGetOrCreateCartSessionId,
+	mockGetOrCreateGuestSessionId,
 	mockGetCart,
 	mockGetSkuDetails,
 	mockValidateCartItemsWithDb,
@@ -34,7 +34,7 @@ const {
 
 	return {
 		mockGetSession: vi.fn(),
-		mockGetOrCreateCartSessionId: vi.fn(),
+		mockGetOrCreateGuestSessionId: vi.fn(),
 		mockGetCart: vi.fn(),
 		mockGetSkuDetails: vi.fn(),
 		mockValidateCartItemsWithDb: vi.fn(),
@@ -66,8 +66,8 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 	getSession: mockGetSession,
 }));
 
-vi.mock("@/modules/cart/lib/cart-session", () => ({
-	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
+vi.mock("@/modules/cart/lib/guest-session", () => ({
+	getOrCreateGuestSessionId: mockGetOrCreateGuestSessionId,
 }));
 
 vi.mock("@/modules/cart/data/get-cart", () => ({
@@ -210,7 +210,6 @@ const MOCK_DISCOUNT_FIXED_1000 = {
 	maxUsagePerUser: null,
 	usageCount: 0,
 	isActive: true,
-	startsAt: new Date("2020-01-01"),
 	endsAt: null,
 };
 
@@ -230,7 +229,7 @@ function setupAuthenticatedUser(userId = "cm3user0000123qz8v4h2j9d3") {
 
 function setupGuestUser(sessionId = "6f9619ff-8b86-4d11-b42d-00c04fc964ff") {
 	mockGetSession.mockResolvedValue(null);
-	mockGetOrCreateCartSessionId.mockResolvedValue(sessionId);
+	mockGetOrCreateGuestSessionId.mockResolvedValue(sessionId);
 }
 
 function setupRateLimit(success = true, error?: string) {
@@ -486,7 +485,7 @@ describe("updatePaymentAmount", () => {
 
 		it("returns error when no userId and no sessionId", async () => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue(null);
+			mockGetOrCreateGuestSessionId.mockResolvedValue(null);
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
 
@@ -498,7 +497,7 @@ describe("updatePaymentAmount", () => {
 
 		it("does not call Stripe when session is invalid", async () => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue(null);
+			mockGetOrCreateGuestSessionId.mockResolvedValue(null);
 
 			await updatePaymentAmount(VALID_PARAMS);
 

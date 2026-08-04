@@ -4,8 +4,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 import { acquireOrderPaidLockTx } from "@/modules/orders/utils/order-paid-lock";
-import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { getOrCreateGuestSessionId } from "@/modules/cart/lib/guest-session";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
@@ -106,7 +105,7 @@ export async function confirmCheckout(
 
 			// 3. In-memory rate limiting
 			const headersList = await headers();
-			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
+			const sessionId = !userId ? await getOrCreateGuestSessionId() : null;
 			const ipAddress = await getClientIp(headersList);
 			// Budget PROPRE à la confirmation (F3) : il partageait auparavant son compteur
 			// avec `initializePayment`, le panier, les favoris et la validation de code
@@ -237,7 +236,7 @@ export async function confirmCheckout(
 			// Placé APRÈS le pre-check d'idempotence (3b) : sur une commande déjà liée, le
 			// webhook a pu vider le panier et cette garde n'aurait plus de sens.
 			const serverCart = await getCart();
-			if (!serverCart || serverCart.items.length === 0) {
+			if (serverCart.items.length === 0) {
 				return { success: false, error: "Panier vide ou introuvable." };
 			}
 			if (!cartMatchesServerCart(v.cartItems, serverCart.items)) {
@@ -443,9 +442,11 @@ export async function confirmCheckout(
 				});
 			}
 
-			// 10. Invalidate cart cache
-			const cartTags = getCartInvalidationTags(userId ?? undefined, sessionId ?? undefined);
-			cartTags.forEach((tag) => updateTag(tag));
+			// 10. Aucune invalidation de panier à faire : depuis le passage du panier en
+			// cookie (2026-08-04), il n'a plus d'entrée de cache par identité. Le
+			// vidage lui-même a lieu sur `/paiement/confirmation` (`clearCartAfterOrder`)
+			// et non ici — `confirmCheckout` s'exécute AVANT la confirmation Stripe,
+			// vider ici priverait de son panier un client dont la carte est refusée.
 
 			return {
 				success: true,

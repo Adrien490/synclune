@@ -25,7 +25,7 @@ import { describe, expect, it } from "vitest";
  * Durcissement 2026-07-09 (audit facturation légale) :
  *  - `updateMany`/`createMany` couverts par le writePattern (un
  *    `tx.order.updateMany` échappait à l'ancienne regex `update\s*\(`) ;
- *  - `invoiceDataSnapshot`/`invoiceDataHash`/`invoiceArchivedAt` ajoutés au
+ *  - `invoiceDataSnapshot`/`invoiceDataHash` ajoutés au
  *    fieldPattern (falsifier le snapshot comptable = atteinte Art. L102 B LPF) ;
  *  - les écritures `Refund.creditNote*` ont leur propre assertion (la séquence
  *    A-YYYY est partagée Order ∪ Refund — un writer rogue côté Refund casserait
@@ -176,7 +176,7 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 		const writePattern =
 			/\b(?:prisma|tx)\.order\.(?:update|updateMany|create|createMany|upsert)\s*\(/;
 		const fieldPattern =
-			/\b(?:invoiceNumber|creditNoteNumber|invoiceGeneratedAt|invoiceVoidedAt|creditNoteGeneratedAt|invoicePdfUrl|invoicePdfHash|creditNotePdfUrl|creditNotePdfHash|invoiceDataSnapshot|invoiceDataHash|invoiceArchivedAt)\s*:\s*(?!true\b|false\b)/;
+			/\b(?:invoiceNumber|creditNoteNumber|invoiceGeneratedAt|invoiceVoidedAt|creditNoteGeneratedAt|invoicePdfUrl|invoicePdfHash|creditNotePdfUrl|creditNotePdfHash|invoiceDataSnapshot|invoiceDataHash)\s*:\s*(?!true\b|false\b)/;
 		const writers = allSourceFiles
 			.filter((f) => {
 				const content = readFileSync(f, "utf-8");

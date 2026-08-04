@@ -9,7 +9,7 @@ import {
 	getSkuDetails,
 	validateCartItemsWithDb,
 } from "@/modules/cart/services/sku-validation.service";
-import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
+import { getOrCreateGuestSessionId } from "@/modules/cart/lib/guest-session";
 import { getCart } from "@/modules/cart/data/get-cart";
 import {
 	cartMatchesServerCart,
@@ -87,7 +87,7 @@ export async function initializePayment(
 
 			// In-memory rate limiting
 			const headersList = await headers();
-			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
+			const sessionId = !userId ? await getOrCreateGuestSessionId() : null;
 			const ipAddress = await getClientIp(headersList);
 			// Identifiant PRÉFIXÉ par l'action (F3) : sans préfixe, ce compteur était le
 			// même que celui du panier, des favoris et de la validation de code promo —
@@ -131,7 +131,7 @@ export async function initializePayment(
 			// facturé) ; ici elle sert à échouer au montage plutôt qu'au clic sur Payer,
 			// après un formulaire entièrement rempli.
 			const serverCart = await getCart();
-			if (!serverCart || serverCart.items.length === 0) {
+			if (serverCart.items.length === 0) {
 				return { success: false, error: "Panier vide ou introuvable." };
 			}
 			if (!cartMatchesServerCart(input.cartItems, serverCart.items)) {
@@ -248,9 +248,11 @@ export async function initializePayment(
 
 			// Create Payment Intent
 			// Carte uniquement (décision produit). `payment_method_types: ["card"]`
-			// restreint le PI à la carte au niveau serveur — Apple Pay / Google Pay
-			// restent disponibles (wallets adossés au type `card`), Link et les
-			// méthodes à redirection (SEPA debit, Klarna, Bancontact) sont exclus.
+			// restreint le PI à la carte au niveau serveur — Link et les méthodes à
+			// redirection (SEPA debit, Klarna, Bancontact) sont exclus. Les wallets
+			// Apple Pay / Google Pay sont adossés au type `card` : leur affichage dans
+			// le PaymentElement dépend de la config du dashboard Stripe (méthodes
+			// activées + domaine Apple Pay enregistré), pas du code.
 			const createPaymentIntent = (key: string) =>
 				withStripeCircuitBreaker(() =>
 					stripe.paymentIntents.create(

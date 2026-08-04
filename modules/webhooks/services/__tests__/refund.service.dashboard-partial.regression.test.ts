@@ -137,7 +137,6 @@ describe("ORD-BIZ-001 — Dashboard partial refund crée des RefundItem au pro-r
 			orderItemId: string;
 			quantity: number;
 			amount: number;
-			restock: boolean;
 		}>;
 
 		// 3 items doivent être alloués (pas un seul ignoré, aucun à zéro)
@@ -145,8 +144,8 @@ describe("ORD-BIZ-001 — Dashboard partial refund crée des RefundItem au pro-r
 		// Somme allocations = montant remboursé exact (rounding compensé)
 		const totalAllocated = allocated.reduce((acc, a) => acc + a.amount, 0);
 		expect(totalAllocated).toBe(1000);
-		// restock=false par défaut (admin doit décider)
-		expect(allocated.every((a) => a.restock === false)).toBe(true);
+		// Aucune instruction de restock (colonne droppée au Lot 6 — décision admin manuelle)
+		expect(allocated.every((a) => !("restock" in a))).toBe(true);
 		// quantity = qty originale (proxy "touché", contrainte DB quantity >= 1)
 		expect(allocated.every((a) => a.quantity >= 1)).toBe(true);
 	});

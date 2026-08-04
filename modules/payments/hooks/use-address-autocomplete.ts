@@ -48,7 +48,7 @@ export function useAddressAutocomplete(
 			if (abortController.signal.aborted || currentRequestId !== requestIdRef.current) return;
 
 			setResults(result.addresses);
-			setError(result.error ? "La recherche d'adresses a echoue. Reessayez." : null);
+			setError(result.error ? "La recherche d'adresses a échoué. Réessaie." : null);
 		});
 
 		return () => abortController.abort();

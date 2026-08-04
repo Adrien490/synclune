@@ -25,7 +25,6 @@ import {
 	CircleOff,
 	Clock,
 	ReceiptText,
-	XCircle,
 	type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -34,7 +33,6 @@ const REFUND_STATUS_ICONS: Record<RefundStatus, LucideIcon> = {
 	[RefundStatus.PENDING]: Clock,
 	[RefundStatus.APPROVED]: CheckCircle,
 	[RefundStatus.COMPLETED]: BadgeCheck,
-	[RefundStatus.REJECTED]: XCircle,
 	[RefundStatus.FAILED]: AlertCircle,
 	[RefundStatus.CANCELLED]: CircleOff,
 };

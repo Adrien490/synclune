@@ -68,7 +68,7 @@ export function buildInvoiceData(
 	const seller = buildSellerInfo(order);
 	const buyer = buildBuyerInfo(order);
 	const shippingAddress = buildShippingAddress(order);
-	const billingAddress = buildBillingAddress(order, shippingAddress);
+	const billingAddress = buildBillingAddress(shippingAddress);
 	const lines = order.items.map((item, index) => buildInvoiceLine(item, index + 1));
 	const totals = buildTotals(order, lines);
 	const voidedInfo = buildVoidedInfo(order);
@@ -90,7 +90,20 @@ export function buildInvoiceData(
 			method: order.paymentMethod,
 			paidAt: order.paidAt,
 			stripePaymentIntentId: order.stripePaymentIntentId,
-			stripeChargeId: null, // pas dans GET_ORDER_SELECT, peut être ajouté plus tard
+			// `Order.stripeChargeId` existe depuis la migration 20260804200000 ; avant
+			// elle, ce champ était `null` EN DUR faute de colonne à lire.
+			//
+			// Le `?? null` n'est pas cosmétique : ce builder est appelé sur deux formes
+			// d'order. Le chemin qui COMPTE — l'écriture du snapshot figé par
+			// `persistInvoiceNumber` — charge en `GET_ORDER_SELECT_ADMIN`, donc la vraie
+			// valeur. Les chemins de RENDU (`resolveInvoiceDataForRender` en fallback
+			// legacy, `renderOrderCreditNotePdf`) chargent en `GET_ORDER_SELECT_CUSTOMER`
+			// puis castent : la propriété est alors absente, `undefined`, et sans ce
+			// coalescing elle DISPARAÎTRAIT du JSON au lieu de valoir `null` — une
+			// divergence de forme du payload, exactement ce que `formatVersion` sert à
+			// interdire. Avec, ces chemins rendent `null`, à l'octet ce qu'ils rendaient
+			// avant la migration.
+			stripeChargeId: order.stripeChargeId ?? null,
 		},
 		precedingInvoice,
 		voidedInfo,
@@ -197,7 +210,11 @@ export function buildBuyerInfo(order: GetOrderReturn): BuyerInfo {
 		firstName,
 		lastName,
 		email: order.customerEmail,
-		phone: order.customerPhone,
+		// Le téléphone du client vient du snapshot d'adresse : `Order.customerPhone`
+		// a été retirée le 2026-08-04, elle n'était jamais renseignée au checkout.
+		// La forme du payload est inchangée (`buyer.phone` existe toujours), donc
+		// pas de bump de INVOICE_DATA_FORMAT_VERSION — seule la valeur devient réelle.
+		phone: order.shippingPhone,
 		siret: null,
 		vatNumber: null,
 	};
@@ -231,21 +248,37 @@ export function buildShippingAddress(order: GetOrderReturn): StructuredAddress {
 	};
 }
 
-export function buildBillingAddress(
-	order: GetOrderReturn,
-	shippingAddress: StructuredAddress,
-): StructuredAddress {
-	if (order.billingSameAsShipping || !order.billingFirstName) {
-		return shippingAddress;
-	}
-	return {
-		recipientName: `${order.billingFirstName} ${order.billingLastName ?? ""}`.trim(),
-		line1: order.billingAddress1 ?? shippingAddress.line1,
-		line2: order.billingAddress2,
-		postalCode: order.billingPostalCode ?? shippingAddress.postalCode,
-		city: order.billingCity ?? shippingAddress.city,
-		countryCode: order.billingCountry ?? shippingAddress.countryCode,
-	};
+/**
+ * Adresse imprimée sous « Facturé à » (Art. 242 nonies A ann. II CGI : nom
+ * complet et adresse du client).
+ *
+ * En B2C de vente à distance, l'acheteuse se fait livrer chez elle : son adresse
+ * de facturation EST son adresse de livraison. Les 9 colonnes `Order.billing*`
+ * qui permettaient de les dissocier ont été retirées le 2026-08-04 — elles
+ * n'étaient renseignées sur AUCUNE commande réelle : leur seul writer était une
+ * action admin qui se verrouille dès `invoiceNumber !== null`, or la facture est
+ * émise dans les secondes suivant le paiement (webhook `payment_intent.succeeded`
+ * → `ensureInvoiceNumberPersisted`). La fenêtre d'édition valait zéro.
+ *
+ * ⚠️ CONDITION DE RÉOUVERTURE, DATÉE. L'art. 242 nonies A ann. II CGI demande
+ * deux choses distinctes : l'adresse du CLIENT (1°) et, « si elle est différente
+ * de l'adresse du client », l'adresse de LIVRAISON (7° bis). Tant que l'acheteuse
+ * se fait livrer chez elle les deux coïncident et une seule suffit. Dès qu'une
+ * commande part chez un tiers (cadeau), les deux mentions fusionnent ici et le 1°
+ * n'est plus satisfait — ce défaut existe à l'identique AVANT et APRÈS le retrait
+ * des colonnes, qui n'étaient jamais renseignées.
+ *
+ * En format structuré (Factur-X/UBL/CII), l'adresse de livraison occupe les
+ * BT-75→79, un bloc SÉPARÉ de l'adresse acheteur : la plateforme agréée ne peut
+ * pas dériver l'un de l'autre. À traiter avant l'obligation d'émission +
+ * e-reporting B2C du **1er septembre 2027**, et de toute façon le jour où les
+ * commandes cadeau cessent d'être marginales. Le chantier est alors : capter
+ * l'adresse de l'acheteuse AU CHECKOUT, puis la porter ici. Ne pas ré-ajouter
+ * les colonnes sans ce champ de saisie — ce serait recréer exactement l'état
+ * qu'on vient de retirer.
+ */
+export function buildBillingAddress(shippingAddress: StructuredAddress): StructuredAddress {
+	return shippingAddress;
 }
 
 function buildInvoiceLine(item: GetOrderReturn["items"][number], lineNumber: number): InvoiceLine {

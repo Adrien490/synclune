@@ -179,12 +179,6 @@ describe("OrderStatusTimeline", () => {
 			expect(label.className).toContain("text-muted-foreground");
 		});
 
-		it("shows payment step with muted text when paymentStatus is EXPIRED", () => {
-			render(<OrderStatusTimeline order={createOrder({ paymentStatus: "EXPIRED" })} />);
-			const label = screen.getByText("Paiement reçu");
-			expect(label.className).toContain("text-muted-foreground");
-		});
-
 		it("displays the paid date when paymentStatus is PAID and paidAt is set", () => {
 			render(
 				<OrderStatusTimeline order={createOrder({ paymentStatus: "PAID", paidAt: PAID_DATE })} />,

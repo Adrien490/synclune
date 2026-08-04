@@ -168,7 +168,6 @@ export async function verifyPdfArchiveIntegrity(deadline: number): Promise<PdfIn
 		const refunds = await prisma.refund.findMany({
 			where: {
 				creditNotePdfUrl: { not: null },
-				deletedAt: null,
 				order: { piiPurgedAt: null },
 				OR: [{ pdfIntegrityCheckedAt: null }, { pdfIntegrityCheckedAt: { lt: cutoff } }],
 			},

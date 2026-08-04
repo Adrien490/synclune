@@ -8,7 +8,7 @@ const {
 	mockPrismaClientKnownRequestError,
 	mockPrisma,
 	mockGetSession,
-	mockGetOrCreateCartSessionId,
+	mockGetOrCreateGuestSessionId,
 	mockGetCart,
 	mockUpdatePendingShippingSnapshot,
 	mockGetOrderMetadataInvalidationTags,
@@ -76,7 +76,7 @@ const {
 			$transaction: vi.fn(),
 		},
 		mockGetSession: vi.fn(),
-		mockGetOrCreateCartSessionId: vi.fn(),
+		mockGetOrCreateGuestSessionId: vi.fn(),
 		mockGetCart: vi.fn(),
 		mockUpdatePendingShippingSnapshot: vi.fn(),
 		mockGetOrderMetadataInvalidationTags: vi.fn(),
@@ -123,8 +123,8 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 	getSession: mockGetSession,
 }));
 
-vi.mock("@/modules/cart/lib/cart-session", () => ({
-	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
+vi.mock("@/modules/cart/lib/guest-session", () => ({
+	getOrCreateGuestSessionId: mockGetOrCreateGuestSessionId,
 }));
 
 // CHECKOUT-CART-PARITY-001 : les lignes facturées sont confrontées au panier serveur.
@@ -461,7 +461,7 @@ function setupDefaults() {
 	mockStripe.paymentIntents.retrieve.mockImplementation(async () => {
 		const session = (await mockGetSession()) as { user?: { id?: string } } | null;
 		const sessionUserId = session?.user?.id ?? null;
-		const guestSessionId = sessionUserId ? null : await mockGetOrCreateCartSessionId();
+		const guestSessionId = sessionUserId ? null : await mockGetOrCreateGuestSessionId();
 		return {
 			...MOCK_PAYMENT_INTENT,
 			metadata: {
@@ -629,14 +629,19 @@ describe("confirmCheckout", () => {
 			);
 		});
 
-		it("should invalidate cart cache tags after success", async () => {
+		/**
+		 * Depuis le passage du panier en cookie (2026-08-04), le panier n'a plus
+		 * d'entrée de cache par identité : il n'y a plus rien à invalider ici. Le
+		 * vidage lui-même a lieu sur `/paiement/confirmation` (`clearCartAfterOrder`)
+		 * — surtout PAS ici, car `confirmCheckout` s'exécute AVANT la confirmation
+		 * Stripe : vider à ce point priverait de son panier un client dont la carte
+		 * est refusée.
+		 */
+		it("n'invalide plus aucun tag de cache panier", async () => {
 			await confirmCheckout(createValidData());
 
-			expect(mockGetCartInvalidationTags).toHaveBeenCalledWith(
-				"cm3user0000123qz8v4h2j9d3",
-				undefined,
-			);
-			expect(mockUpdateTag).toHaveBeenCalledWith("cart-user-cm3user0000123qz8v4h2j9d3");
+			expect(mockUpdateTag).not.toHaveBeenCalledWith(expect.stringContaining("cart-user-"));
+			expect(mockUpdateTag).not.toHaveBeenCalledWith(expect.stringContaining("cart-session-"));
 		});
 
 		it("should invalidate discount usage cache when discount was applied", async () => {
@@ -681,7 +686,7 @@ describe("confirmCheckout", () => {
 	describe("happy path (guest user)", () => {
 		beforeEach(() => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue("550e8400-e29b-41d4-a716-446655440000");
+			mockGetOrCreateGuestSessionId.mockResolvedValue("550e8400-e29b-41d4-a716-446655440000");
 			mockGetRateLimitIdentifier.mockReturnValue("session:550e8400-e29b-41d4-a716-446655440000");
 		});
 
@@ -711,10 +716,10 @@ describe("confirmCheckout", () => {
 			expect(mockPrisma.user.updateMany).not.toHaveBeenCalled();
 		});
 
-		it("should call getOrCreateCartSessionId for guest rate limiting", async () => {
+		it("should call getOrCreateGuestSessionId for guest rate limiting", async () => {
 			await confirmCheckout(createValidData({ email: "guest@example.com" }));
 
-			expect(mockGetOrCreateCartSessionId).toHaveBeenCalled();
+			expect(mockGetOrCreateGuestSessionId).toHaveBeenCalled();
 		});
 
 		it("should include guestSessionId in PI metadata for guest", async () => {
@@ -742,20 +747,10 @@ describe("confirmCheckout", () => {
 			);
 		});
 
-		it("should include cart session tag when invalidating cache for guest", async () => {
-			mockGetCartInvalidationTags.mockReturnValue([
-				"cart-session-550e8400-e29b-41d4-a716-446655440000",
-			]);
-
+		it("n'invalide plus aucun tag de cache panier pour un invité non plus", async () => {
 			await confirmCheckout(createValidData({ email: "guest@example.com" }));
 
-			expect(mockGetCartInvalidationTags).toHaveBeenCalledWith(
-				undefined,
-				"550e8400-e29b-41d4-a716-446655440000",
-			);
-			expect(mockUpdateTag).toHaveBeenCalledWith(
-				"cart-session-550e8400-e29b-41d4-a716-446655440000",
-			);
+			expect(mockUpdateTag).not.toHaveBeenCalledWith(expect.stringContaining("cart-session-"));
 		});
 	});
 
@@ -1051,7 +1046,7 @@ describe("confirmCheckout", () => {
 
 		it("rejects a guest PI whose guestSessionId differs from the caller's session", async () => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue("550e8400-e29b-41d4-a716-446655440000");
+			mockGetOrCreateGuestSessionId.mockResolvedValue("550e8400-e29b-41d4-a716-446655440000");
 			mockPiMetadata({
 				userId: "guest",
 				guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff",
@@ -1309,7 +1304,7 @@ describe("confirmCheckout", () => {
 
 		it("should use email+IP based identifier for guests with email", async () => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
+			mockGetOrCreateGuestSessionId.mockResolvedValue("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
 
 			await confirmCheckout(createValidData({ email: "guest@example.com" }));
 
@@ -1343,7 +1338,7 @@ describe("confirmCheckout", () => {
 
 		it("should return error for missing guest email when no session email", async () => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
+			mockGetOrCreateGuestSessionId.mockResolvedValue("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
 
 			const result = await confirmCheckout(createValidData({ email: undefined }));
 

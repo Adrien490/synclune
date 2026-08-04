@@ -130,7 +130,6 @@ export async function archiveInvoicePdf(
 				data: {
 					invoicePdfUrl: data.ufsUrl,
 					invoicePdfHash: hash,
-					invoiceArchivedAt: new Date(),
 					// Si le précédent run avait flagué un retry, on le relâche maintenant
 					// que l'archive est bien posée.
 					invoiceRetryDeferred: false,

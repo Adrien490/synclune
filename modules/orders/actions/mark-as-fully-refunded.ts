@@ -140,7 +140,6 @@ export async function markAsFullyRefunded(
 					where: {
 						orderId: id,
 						status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] },
-						deletedAt: null,
 					},
 				});
 				if (pendingStripeRefunds > 0) {
@@ -214,13 +213,13 @@ export async function markAsFullyRefunded(
 										)
 									: 0;
 							allocated += amount;
+							// Pas de restock automatique : refund manuel hors Stripe = geste
+							// commercial, le client a probablement gardé l'article (et depuis
+							// le Lot 6 le restock est toujours un ajustement manuel de stock).
 							return {
 								orderItemId: item.orderItemId,
 								quantity: item.quantity,
 								amount,
-								// Pas de restock par défaut : refund manuel hors Stripe = geste
-								// commercial, le client a probablement gardé l'article.
-								restock: false,
 							};
 						})
 						.filter((item) => item.amount > 0);
@@ -233,7 +232,6 @@ export async function markAsFullyRefunded(
 								currency: "EUR",
 								reason: RefundReason.OTHER,
 								status: RefundStatus.COMPLETED,
-								createdBy: adminUser.id,
 								processedAt: new Date(),
 								note:
 									reason ?? "Remboursement manuel hors Stripe (chèque, virement, geste commercial)",
@@ -339,7 +337,7 @@ export async function markAsFullyRefunded(
 				// réelle). L'e-reporting reste juste (par Refund) ; seul le niveau document doit
 				// être réconcilié manuellement. On alerte plutôt que de sur-créditer en silence.
 				const partialCreditNoteCount = await prisma.refund.count({
-					where: { orderId: order.id, creditNoteNumber: { not: null }, ...notDeleted },
+					where: { orderId: order.id, creditNoteNumber: { not: null } },
 				});
 				if (partialCreditNoteCount > 0) {
 					Sentry.withScope((scope) => {

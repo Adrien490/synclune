@@ -10,10 +10,7 @@ import type { GetRefundsParams } from "../types/refund.types";
  * Construit la clause WHERE pour la recherche de remboursements
  */
 export function buildRefundWhereClause(params: GetRefundsParams): Prisma.RefundWhereInput {
-	const where: Prisma.RefundWhereInput = {
-		// Soft delete: exclure les remboursements supprimés par défaut
-		deletedAt: null,
-	};
+	const where: Prisma.RefundWhereInput = {};
 	const AND: Prisma.RefundWhereInput[] = [];
 
 	// Recherche textuelle (orderNumber, customerEmail, customerName).

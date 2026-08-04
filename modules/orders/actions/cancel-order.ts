@@ -156,7 +156,6 @@ export async function cancelOrder(
 						status: {
 							in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
 						},
-						deletedAt: null,
 					},
 					_sum: { amount: true },
 				});
@@ -176,7 +175,7 @@ export async function cancelOrder(
 				// Déterminer le nouveau paymentStatus.
 				// - PAID/PARTIALLY_REFUNDED → REFUNDED (le remboursement sera traité)
 				// - PENDING → FAILED (le paiement n'a jamais abouti, on coupe le polling cron)
-				// - FAILED/EXPIRED/REFUNDED → inchangé
+				// - FAILED/REFUNDED → inchangé
 				const newPaymentStatus =
 					found.paymentStatus === PaymentStatus.PAID ||
 					found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED
@@ -300,10 +299,19 @@ export async function cancelOrder(
 				// compteur négatif rendrait le code redeemable au-delà de `maxUsageCount`).
 				const releasedDiscountIds = await releaseOrderDiscountUsageTx(tx, id);
 
-				// 4. Auto-refund: créer un Refund (status APPROVED) à traiter manuellement
-				// par l'admin via processRefund (appel Stripe synchrone hors transaction).
-				// Pour PARTIALLY_REFUNDED, calcule le solde restant à rembourser
-				// (sinon on créerait un Refund du montant total qui dépasse le payé restant).
+				// 4. Auto-refund: créer un Refund (status APPROVED) — le remboursement
+				// Stripe se fait depuis le dashboard (Lot 2), le webhook refund.updated
+				// finalisera (avoir + email). Pour PARTIALLY_REFUNDED, calcule le solde
+				// restant à rembourser (sinon on créerait un Refund du montant total
+				// qui dépasse le payé restant).
+				//
+				// STOCK-DOUBLE-CREDIT-001 (mémoire) : l'étape 2 ci-dessus
+				// (`shouldRestoreStock`) a DÉJÀ restauré le stock dans cette
+				// transaction. Le vecteur de double crédit — un drapeau de restock sur
+				// RefundItem ré-incrémenté à la finalisation — est structurellement
+				// mort depuis le Lot 6 (colonne droppée, la finalisation ne touche
+				// plus au stock) ; tout restock post-refund est un ajustement manuel
+				// de stock SKU.
 				let createdRefundId: string | null = null;
 				let autoRefundAmount = 0;
 				if (autoRefund && wasPayable) {
@@ -316,31 +324,11 @@ export async function cancelOrder(
 								reason: RefundReason.CUSTOMER_REQUEST,
 								status: RefundStatus.APPROVED,
 								note: sanitizedReason ?? "Remboursement automatique sur annulation",
-								createdBy: adminUser.id,
 								items: {
 									create: found.items.map((item) => ({
 										orderItemId: item.id,
 										quantity: item.quantity,
 										amount: item.price * item.quantity,
-										// STOCK-DOUBLE-CREDIT-001 : TOUJOURS `false`. L'étape 2
-										// ci-dessus (`shouldRestoreStock`) a DÉJÀ restauré le stock,
-										// dans cette transaction et sous le même claim. Or
-										// `processRefund` ré-incrémente tout `RefundItem` à
-										// `restock: true` (process-refund.ts:396-455), sans jamais
-										// vérifier si quelqu'un l'a précédé — sa seule garde est
-										// `status: APPROVED`, l'état exact où on le crée ici. Poser
-										// `shouldRestoreStock` créditait donc DEUX fois : une à
-										// l'annulation, une quand l'admin traite le remboursement
-										// depuis la fiche (chemin que le message de succès lui
-										// indique explicitement). L'inventaire dépassait alors le
-										// physique, et le CHECK `inventory >= 0` ne borne que le
-										// plancher — survente garantie sur les ventes suivantes.
-										// Le contrat du repo : `RefundItem.restock` est la SSOT du
-										// crédit côté `processRefund`, donc un writer qui restocke
-										// lui-même doit poser `false` (cf. mark-as-fully-refunded.ts,
-										// refund.service.ts, payment-intent.service.ts). Neutralise
-										// aussi le 3e créditeur, reconcile-refunds.service.ts:749.
-										restock: false,
 									})),
 								},
 							},

@@ -20,7 +20,6 @@ interface EditCustomerInfoData {
 	orderNumber: string;
 	customerEmail: string;
 	customerName: string;
-	customerPhone?: string | null;
 	[key: string]: unknown;
 }
 
@@ -47,7 +46,6 @@ export function EditCustomerInfoDialog() {
 						orderNumber={dialog.data.orderNumber}
 						customerEmail={dialog.data.customerEmail}
 						customerName={dialog.data.customerName}
-						customerPhone={dialog.data.customerPhone}
 						onSuccess={dialog.close}
 					/>
 				)}

@@ -91,7 +91,7 @@ export function buildCreditNoteData(
 	const seller = buildSellerInfo(order);
 	const buyer = buildBuyerInfo(order);
 	const shippingAddress = buildShippingAddress(order);
-	const billingAddress = buildBillingAddress(order, shippingAddress);
+	const billingAddress = buildBillingAddress(shippingAddress);
 
 	const lines: InvoiceLine[] = refund.items.map((refundItem, index) =>
 		buildCreditNoteLine(refundItem, index + 1),
@@ -122,7 +122,14 @@ export function buildCreditNoteData(
 			method: order.paymentMethod,
 			paidAt: order.paidAt,
 			stripePaymentIntentId: order.stripePaymentIntentId,
-			stripeChargeId: null,
+			// `?? null` obligatoire, cf. la note détaillée dans `buildInvoiceData` :
+			// l'UNIQUE appelant (`renderRefundCreditNotePdf`) charge l'order en
+			// `GET_ORDER_SELECT_CUSTOMER` puis le caste en `GetOrderReturn`. La propriété
+			// est donc absente au runtime, et sans coalescing la clé disparaîtrait du
+			// JSON. Le PDF d'avoir est hashé (`Refund.creditNotePdfHash`, Art. L102 B
+			// LPF) : sa forme de données doit rester stable, et elle l'est ici — cette
+			// valeur reste `null`, identique à ce qu'elle valait avant la migration.
+			stripeChargeId: order.stripeChargeId ?? null,
 		},
 		precedingInvoice,
 		voidedInfo: null,

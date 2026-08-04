@@ -27,13 +27,12 @@ import { canMarkAsReturned } from "../services/order-status-validation.service";
  * - Passe FulfillmentStatus à RETURNED
  * - Optionnel : raison du retour pour l'audit trail
  *
- * ORD-BIZ-010 : cette action NE déclenche PAS de restock automatique. Le
- * restock est lié au `Refund` (RefundItem.restock=true) — l'admin doit
- * créer manuellement le remboursement après le retour, ce qui restockera
- * en même temps qu'il rembourse. Le dialog `MarkAsReturnedAlertDialog`
- * propose un lien direct vers la création de remboursement en étape 2.
- * `metadata.requiresRefund: true` est tracé pour faciliter les futurs
- * filtres "retours en attente de remboursement".
+ * ORD-BIZ-010 : cette action NE déclenche PAS de restock automatique. Depuis
+ * les remboursements Stripe-first (Lot 2) et le drop de `RefundItem.restock`
+ * (Lot 6), le restock post-retour est TOUJOURS un geste manuel : l'admin
+ * rembourse depuis le dashboard Stripe puis ré-ajuste le stock SKU si l'article
+ * est revendable. `metadata.requiresRefund: true` est tracé pour faciliter les
+ * futurs filtres "retours en attente de remboursement".
  */
 export async function markAsReturned(
 	_prevState: ActionState | undefined,

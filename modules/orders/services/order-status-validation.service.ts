@@ -199,7 +199,6 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	const isRefunded = order.paymentStatus === PaymentStatus.REFUNDED;
 	const isPaymentPending = order.paymentStatus === PaymentStatus.PENDING;
 	const isPaymentFailed = order.paymentStatus === PaymentStatus.FAILED;
-	const isPaymentExpired = order.paymentStatus === PaymentStatus.EXPIRED;
 	const hasTrackingNumber = !!order.trackingNumber;
 
 	const isReturned = order.fulfillmentStatus === FulfillmentStatus.RETURNED;
@@ -227,13 +226,12 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 		// Passage en traitement possible si en attente et payé (ou partiellement remboursé)
 		canMarkAsProcessing: isPending && isPaidOrPartiallyRefunded,
 
-		// Marquage comme payé possible si paiement en attente OU échoué/expiré
-		// (ORD-BIZ-004 : recovery après paiement bancaire manuel post-échec ou
-		// expiration session checkout). Bloqué sur PAID/PARTIALLY_REFUNDED/REFUNDED
-		// pour éviter double comptabilisation. L'action ajoute des safety guards
-		// (pas de Refund existant, pas de cancellation, etc.).
-		canMarkAsPaid:
-			(isPaymentPending || isPaymentFailed || isPaymentExpired) && (isPending || isProcessing),
+		// Marquage comme payé possible si paiement en attente OU échoué
+		// (ORD-BIZ-004 : recovery après paiement bancaire manuel post-échec).
+		// Bloqué sur PAID/PARTIALLY_REFUNDED/REFUNDED pour éviter double
+		// comptabilisation. L'action ajoute des safety guards (pas de Refund
+		// existant, pas de cancellation, etc.).
+		canMarkAsPaid: (isPaymentPending || isPaymentFailed) && (isPending || isProcessing),
 
 		// Annulation possible si pas encore expédié
 		canCancel: (isPending || isProcessing) && !isCancelled,

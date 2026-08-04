@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 const { mockPermissions, mockAlertDialogOpen, mockHaptic, mockBaseSections } = vi.hoisted(() => ({
 	mockPermissions: {
 		canMarkAsPaid: false,
@@ -102,7 +104,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 // Mock ResponsiveActionMenu to render the menu items inline so they're queryable
 vi.mock("@/shared/components/responsive-action-menu", () => ({
 	ResponsiveActionMenu: ({ children }: any) => <div>{children}</div>,
-	ResponsiveActionMenuTrigger: ({ children }: any) => <div>{children}</div>,
+	ResponsiveActionMenuTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 	ResponsiveActionMenuContent: ({ sections }: any) => (
 		<div data-testid="action-menu-content">
 			{sections.map((section: any) =>

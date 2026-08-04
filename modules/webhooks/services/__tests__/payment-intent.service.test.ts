@@ -351,20 +351,17 @@ describe("markOrderAsFailed", () => {
 
 		expect(result).toEqual({ transitioned: true });
 		// Garde anti-rétrogradation (audit webhooks 2026-07-02) : la transition
-		// n'est permise que depuis PENDING/EXPIRED, prédicat dans le WHERE.
+		// n'est permise que depuis PENDING, prédicat dans le WHERE.
 		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
 			where: {
 				id: "order-1",
-				paymentStatus: { in: ["PENDING", "EXPIRED"] },
+				paymentStatus: "PENDING",
 				deletedAt: null,
 			},
 			data: expect.objectContaining({
 				paymentStatus: "FAILED",
 				status: "CANCELLED",
 				stripePaymentIntentId: "pi_failed123",
-				paymentFailureCode: "card_declined",
-				paymentDeclineCode: "do_not_honor",
-				paymentFailureMessage: "Your card was declined.",
 			}),
 		});
 	});

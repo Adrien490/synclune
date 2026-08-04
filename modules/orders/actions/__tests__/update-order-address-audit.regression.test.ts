@@ -1,7 +1,7 @@
 /**
  * @regression ORD-BIZ-005
  *
- * Garantit que `updateOrderShippingAddress` et `updateOrderBillingAddress`
+ * Garantit que `updateOrderShippingAddress`
  * créent une entrée `OrderHistory.ADDRESS_UPDATED` immuable traçant qui/quand/
  * quels champs (Art. L123-22).
  *
@@ -76,7 +76,6 @@ vi.mock("../../constants/order.constants", () => ({
 		CANNOT_UPDATE_ADDRESS_SHIPPED: "Commande déjà expédiée.",
 		CANNOT_UPDATE_BILLING_INVOICED: "Facture déjà émise.",
 		UPDATE_SHIPPING_ADDRESS_FAILED: "Erreur shipping.",
-		UPDATE_BILLING_ADDRESS_FAILED: "Erreur billing.",
 	},
 }));
 vi.mock("../../constants/cache", () => ({
@@ -84,12 +83,10 @@ vi.mock("../../constants/cache", () => ({
 }));
 vi.mock("../../schemas/order.schemas", () => ({
 	updateOrderShippingAddressSchema: {},
-	updateOrderBillingAddressSchema: {},
 }));
 vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
 
 import { updateOrderShippingAddress } from "../update-order-shipping-address";
-import { updateOrderBillingAddress } from "../update-order-billing-address";
 
 describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDATED", () => {
 	beforeEach(() => {
@@ -208,120 +205,6 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 
 			expect(result.status).toBe(ActionStatus.ERROR);
 			expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
-		});
-	});
-
-	describe("updateOrderBillingAddress", () => {
-		it("crée OrderHistory.ADDRESS_UPDATED avec addressType=billing + changedFields, SANS valeur d'adresse", async () => {
-			mockValidateInput.mockReturnValue({
-				data: {
-					id: VALID_CUID,
-					billingSameAsShipping: false,
-					billingFirstName: "Jean",
-					billingLastName: "Martin",
-					billingAddress1: "5 Bd Saint-Michel",
-					billingPostalCode: "75005",
-					billingCity: "Paris",
-					billingCountry: "FR",
-					billingPhone: "0612345678",
-				},
-			});
-			mockPrisma.order.findUnique.mockResolvedValue({
-				id: VALID_CUID,
-				orderNumber: "SYN-2026-0001",
-				userId: "user-1",
-				// Miroir du select réel : le gate lit invoiceNumber (null = pas de facture
-				// émise), plus invoiceStatus (P1-B audit 2026-08-01)
-				invoiceNumber: null,
-				billingSameAsShipping: true,
-				billingFirstName: null,
-				billingLastName: null,
-				billingAddress1: null,
-				billingAddress2: null,
-				billingPostalCode: null,
-				billingCity: null,
-				billingCountry: null,
-				billingPhone: null,
-			});
-
-			const result = await updateOrderBillingAddress(
-				undefined,
-				createMockFormData({
-					id: VALID_CUID,
-					billingSameAsShipping: "false",
-					billingFirstName: "Jean",
-					billingLastName: "Martin",
-					billingAddress1: "5 Bd Saint-Michel",
-					billingPostalCode: "75005",
-					billingCity: "Paris",
-					billingCountry: "FR",
-					billingPhone: "0612345678",
-				}),
-			);
-
-			expect(result.status).toBe(ActionStatus.SUCCESS);
-			expect(mockCreateOrderAuditTx).toHaveBeenCalledTimes(1);
-			expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
-				mockPrisma,
-				expect.objectContaining({
-					orderId: VALID_CUID,
-					action: "ADDRESS_UPDATED",
-					metadata: expect.objectContaining({
-						addressType: "billing",
-						previousSameAsShipping: true,
-						newSameAsShipping: false,
-						changedFields: expect.arrayContaining(["billingLastName", "billingAddress1"]),
-					}),
-				}),
-			);
-
-			// RGPD : aucune VALEUR d'adresse dans le metadata immuable.
-			const metadata = mockCreateOrderAuditTx.mock.calls[0]![1].metadata;
-			expect(metadata).not.toHaveProperty("previousAddress");
-			expect(metadata).not.toHaveProperty("newAddress");
-			const serialized = JSON.stringify(metadata);
-			expect(serialized).not.toContain("Martin");
-			expect(serialized).not.toContain("Saint-Michel");
-		});
-
-		it("refuse si la facture est déjà GENERATED (immutabilité comptable)", async () => {
-			mockValidateInput.mockReturnValue({
-				data: {
-					id: VALID_CUID,
-					billingSameAsShipping: false,
-					billingFirstName: "Jean",
-					billingLastName: "Martin",
-					billingAddress1: "5 Bd Saint-Michel",
-					billingPostalCode: "75005",
-					billingCity: "Paris",
-					billingCountry: "FR",
-					billingPhone: "0612345678",
-				},
-			});
-			mockPrisma.order.findUnique.mockResolvedValue({
-				id: VALID_CUID,
-				orderNumber: "SYN-2026-0001",
-				userId: "user-1",
-				invoiceStatus: "GENERATED",
-				billingSameAsShipping: true,
-				billingFirstName: null,
-				billingLastName: null,
-				billingAddress1: null,
-				billingAddress2: null,
-				billingPostalCode: null,
-				billingCity: null,
-				billingCountry: null,
-				billingPhone: null,
-			});
-
-			const result = await updateOrderBillingAddress(
-				undefined,
-				createMockFormData({ id: VALID_CUID, billingSameAsShipping: "false" }),
-			);
-
-			expect(result.status).toBe(ActionStatus.ERROR);
-			expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
-			expect(mockPrisma.order.update).not.toHaveBeenCalled();
 		});
 	});
 });

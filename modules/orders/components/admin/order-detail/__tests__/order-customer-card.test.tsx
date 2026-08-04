@@ -79,7 +79,6 @@ function createOrder(overrides = {}) {
 		orderNumber: "CMD-001",
 		customerName: "Marie Dupont",
 		customerEmail: "marie@example.com",
-		customerPhone: null,
 		userId: "user-1",
 		// Gate sur invoiceNumber (P1-B audit 2026-08-01) : null = pas de facture
 		// émise → éditable. VOIDED conserve son numéro, donc reste verrouillé.
@@ -128,13 +127,11 @@ describe("OrderCustomerCard", () => {
 		}
 	});
 
-	it("shows phone when customerPhone is present", () => {
-		render(<OrderCustomerCard order={createOrder({ customerPhone: "+33612345678" })} />);
-		expect(screen.getByText("+33612345678")).toBeInTheDocument();
-	});
-
-	it("hides phone section when customerPhone is null", () => {
-		render(<OrderCustomerCard order={createOrder({ customerPhone: null })} />);
+	// @regression order-single-phone (2026-08-04) : `Order.customerPhone` est
+	// partie — le téléphone du client vit dans `shippingPhone` et s'affiche dans
+	// la carte « Livraison ». Cette carte ne doit plus prétendre en porter un.
+	it("n'affiche plus de téléphone", () => {
+		render(<OrderCustomerCard order={createOrder()} />);
 		expect(screen.queryByText(/\+336/)).toBeNull();
 	});
 

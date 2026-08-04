@@ -1,3 +1,4 @@
+import { CookieBannerLazy } from "@/shared/components/cookie-banner-lazy";
 import { Logo } from "@/shared/components/logo";
 
 /**
@@ -41,6 +42,11 @@ export default function OrderTrackingLayout({ children }: { children: React.Reac
 			<main id="main-content" tabIndex={-1} className="flex-1">
 				{children}
 			</main>
+
+			{/* Porte d'entrée DIRECTE (lien email de confirmation) : sans la bannière
+			    ici, un invité qui n'est jamais passé par la boutique n'a aucune
+			    occasion de consentir ou refuser (audit cookie-banner 2026-08-03). */}
+			<CookieBannerLazy />
 		</div>
 	);
 }

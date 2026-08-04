@@ -1,9 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { mockEditShippingOpen, mockEditBillingOpen, mockHaptic, mockPush } = vi.hoisted(() => ({
+const { mockEditShippingOpen, mockHaptic, mockPush } = vi.hoisted(() => ({
 	mockEditShippingOpen: vi.fn(),
-	mockEditBillingOpen: vi.fn(),
 	mockHaptic: vi.fn(),
 	mockPush: vi.fn(),
 }));
@@ -62,7 +61,7 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: (id: string) => ({
-		open: id === "edit-shipping-address" ? mockEditShippingOpen : mockEditBillingOpen,
+		open: id === "edit-shipping-address" ? mockEditShippingOpen : vi.fn(),
 		close: vi.fn(),
 		isOpen: false,
 		data: null,
@@ -78,16 +77,11 @@ vi.mock("../../edit-shipping-address-dialog", () => ({
 	EDIT_SHIPPING_ADDRESS_DIALOG_ID: "edit-shipping-address",
 }));
 
-vi.mock("../../edit-billing-address-dialog", () => ({
-	EDIT_BILLING_ADDRESS_DIALOG_ID: "edit-billing-address",
-}));
-
 import { OrderAddressCard } from "../order-address-card";
 
 afterEach(() => {
 	cleanup();
 	mockEditShippingOpen.mockReset();
-	mockEditBillingOpen.mockReset();
 	mockHaptic.mockReset();
 });
 
@@ -103,15 +97,6 @@ function createOrder(overrides = {}) {
 		shippingCity: "Paris",
 		shippingCountry: "FR",
 		shippingPhone: null,
-		billingSameAsShipping: true,
-		billingFirstName: null,
-		billingLastName: null,
-		billingAddress1: null,
-		billingAddress2: null,
-		billingPostalCode: null,
-		billingCity: null,
-		billingCountry: null,
-		billingPhone: null,
 		fulfillmentStatus: "UNFULFILLED",
 		// Gate sur invoiceNumber (P1-B audit 2026-08-01) : null = pas de facture
 		// émise → éditable. VOIDED conserve son numéro, donc reste verrouillé.
@@ -122,19 +107,19 @@ function createOrder(overrides = {}) {
 }
 
 describe("OrderAddressCard", () => {
-	it("renders Adresses title", () => {
-		render(<OrderAddressCard order={createOrder()} />);
-		expect(screen.getByText("Adresses")).toBeInTheDocument();
-	});
-
-	it("shows shipping section heading", () => {
+	it("renders the Livraison title", () => {
 		render(<OrderAddressCard order={createOrder()} />);
 		expect(screen.getByText("Livraison")).toBeInTheDocument();
 	});
 
-	it("shows billing section heading", () => {
+	// @regression order-single-address (2026-08-04) : les 9 colonnes `billing*`
+	// sont parties — la carte ne doit plus offrir de section ni de bouton de
+	// facturation, sous peine de reproposer une édition sans destination.
+	it("n'affiche plus AUCUNE surface de facturation", () => {
 		render(<OrderAddressCard order={createOrder()} />);
-		expect(screen.getByText("Facturation")).toBeInTheDocument();
+		expect(screen.queryByText("Facturation")).toBeNull();
+		expect(screen.queryByText(/Identique à l'adresse de livraison/i)).toBeNull();
+		expect(screen.queryByRole("button", { name: /facturation/i })).toBeNull();
 	});
 
 	it("shows full name", () => {
@@ -177,30 +162,6 @@ describe("OrderAddressCard", () => {
 		expect(screen.queryByText(/\+336/)).toBeNull();
 	});
 
-	it("shows 'Identique à l'adresse de livraison' when billingSameAsShipping", () => {
-		render(<OrderAddressCard order={createOrder({ billingSameAsShipping: true })} />);
-		expect(screen.getByText(/Identique à l'adresse de livraison/i)).toBeInTheDocument();
-	});
-
-	it("shows billing-specific fields when not same as shipping", () => {
-		render(
-			<OrderAddressCard
-				order={createOrder({
-					billingSameAsShipping: false,
-					billingFirstName: "Jean",
-					billingLastName: "Martin",
-					billingAddress1: "5 avenue Foch",
-					billingPostalCode: "75116",
-					billingCity: "Paris",
-					billingCountry: "FR",
-				})}
-			/>,
-		);
-		expect(screen.getByText("Jean Martin")).toBeInTheDocument();
-		expect(screen.getByText("5 avenue Foch")).toBeInTheDocument();
-		expect(screen.getByText("75116 Paris")).toBeInTheDocument();
-	});
-
 	it("shows Modifier shipping button before shipment", () => {
 		render(<OrderAddressCard order={createOrder({ fulfillmentStatus: "UNFULFILLED" })} />);
 		expect(
@@ -211,34 +172,6 @@ describe("OrderAddressCard", () => {
 	it("hides Modifier shipping button after shipment", () => {
 		render(<OrderAddressCard order={createOrder({ fulfillmentStatus: "SHIPPED" })} />);
 		expect(screen.queryByRole("button", { name: /Modifier l'adresse de livraison/i })).toBeNull();
-	});
-
-	it("shows Modifier billing button before invoice issuance", () => {
-		render(<OrderAddressCard order={createOrder({ invoiceNumber: null })} />);
-		expect(
-			screen.getByRole("button", { name: /Modifier l'adresse de facturation/i }),
-		).toBeInTheDocument();
-	});
-
-	it("hides Modifier billing button after invoice generated", () => {
-		render(
-			<OrderAddressCard
-				order={createOrder({ invoiceNumber: "F-2026-00042", invoiceStatus: "GENERATED" })}
-			/>,
-		);
-		expect(screen.queryByRole("button", { name: /Modifier l'adresse de facturation/i })).toBeNull();
-	});
-
-	// @regression invoice-issued-lock (P1-B audit 2026-08-01) : voidInvoice
-	// conserve invoiceNumber — l'adresse de facturation reste verrouillée après
-	// void (l'avoir est rendu depuis les colonnes vivantes, Art. 272-I / L102 B).
-	it("hides Modifier billing button when invoice is VOIDED (invoiceNumber conservé)", () => {
-		render(
-			<OrderAddressCard
-				order={createOrder({ invoiceNumber: "F-2026-00042", invoiceStatus: "VOIDED" })}
-			/>,
-		);
-		expect(screen.queryByRole("button", { name: /Modifier l'adresse de facturation/i })).toBeNull();
 	});
 
 	it("opens shipping edit dialog on Modifier click", () => {
@@ -252,17 +185,5 @@ describe("OrderAddressCard", () => {
 			}),
 		);
 		expect(mockHaptic).toHaveBeenCalledWith("light");
-	});
-
-	it("opens billing edit dialog on Modifier click", () => {
-		render(<OrderAddressCard order={createOrder()} />);
-		fireEvent.click(screen.getByRole("button", { name: /Modifier l'adresse de facturation/i }));
-		expect(mockEditBillingOpen).toHaveBeenCalledWith(
-			expect.objectContaining({
-				orderId: "order-1",
-				orderNumber: "CMD-001",
-				billingSameAsShipping: true,
-			}),
-		);
 	});
 });

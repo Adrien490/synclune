@@ -27,7 +27,7 @@ vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 vi.mock("@/modules/orders/hooks/use-update-order-shipping-address", () => ({
 	useUpdateOrderShippingAddress: (onSuccess: () => void) => mockUseHook(onSuccess),
 }));
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (cb: () => void) => cb(),
 }));
 

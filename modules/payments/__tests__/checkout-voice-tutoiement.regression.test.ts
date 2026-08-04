@@ -30,11 +30,15 @@ import { describe, expect, it } from "vitest";
 
 const REPO_ROOT = process.cwd();
 
-const SCANNED_DIRS = ["modules/payments/components", "app/paiement"];
-const SCANNED_FILES = ["modules/payments/hooks/use-checkout-submit.ts"];
+const SCANNED_DIRS = ["modules/payments/components", "modules/payments/hooks", "app/paiement"];
 
-/** `vous` / `votre` / `vos` en mot entier, insensible à la casse. */
-const VOUVOIEMENT = /\b(vous|votre|vos)\b/i;
+/**
+ * `vous` / `votre` / `vos` en mot entier, insensible à la casse, plus les
+ * impératifs vouvoyants sans pronom (`Veuillez`, `Réessayez`) — c'est ainsi que
+ * « La recherche d'adresses a echoue. Reessayez. » a échappé au scan pendant que
+ * les hooks étaient hors périmètre (audit UI/UX 2026-08-03).
+ */
+const VOUVOIEMENT = /\b(vous|votre|vos|veuillez|r[ée]essayez)\b/i;
 
 function collectSourceFiles(relativeDir: string): string[] {
 	const absolute = join(REPO_ROOT, relativeDir);
@@ -65,7 +69,7 @@ function stripComments(source: string): string {
 		.replace(/\/\/.*$/gm, "");
 }
 
-const FILES = [...SCANNED_DIRS.flatMap(collectSourceFiles), ...SCANNED_FILES];
+const FILES = SCANNED_DIRS.flatMap(collectSourceFiles);
 
 describe("Checkout — voix unique (tutoiement)", () => {
 	it("le scan couvre bien les fichiers attendus (garde-fou du garde-fou)", () => {
@@ -73,14 +77,19 @@ describe("Checkout — voix unique (tutoiement)", () => {
 		expect(FILES).toContain(join("modules/payments/components", "checkout-summary.tsx"));
 		expect(FILES).toContain(join("modules/payments/components", "checkout-form-body.tsx"));
 		expect(FILES).toContain(join("modules/payments/components", "checkout-contact-section.tsx"));
-		expect(FILES).toContain("modules/payments/hooks/use-checkout-submit.ts");
+		expect(FILES).toContain(join("modules/payments/hooks", "use-checkout-submit.ts"));
+		expect(FILES).toContain(join("modules/payments/hooks", "use-address-autocomplete.ts"));
 	});
 
 	it("le regex de détection mord réellement (garde-fou du garde-fou)", () => {
 		expect(VOUVOIEMENT.test("Vérifiez votre connexion")).toBe(true);
 		expect(VOUVOIEMENT.test("Connectez-vous pour accéder à vos adresses")).toBe(true);
-		// Pas de faux positif sur un mot qui contient la sous-chaîne.
+		// Impératifs vouvoyants sans pronom, avec ou sans accents.
+		expect(VOUVOIEMENT.test("La recherche a echoue. Reessayez.")).toBe(true);
+		expect(VOUVOIEMENT.test("Veuillez réessayer plus tard.")).toBe(true);
+		// Pas de faux positif sur un mot qui contient la sous-chaîne, ni sur le tutoiement.
 		expect(VOUVOIEMENT.test("Nous avons envoyé un e-mail")).toBe(false);
+		expect(VOUVOIEMENT.test("La recherche d'adresses a échoué. Réessaie.")).toBe(false);
 	});
 
 	it("aucune copie vouvoyante ne subsiste dans le tunnel", () => {

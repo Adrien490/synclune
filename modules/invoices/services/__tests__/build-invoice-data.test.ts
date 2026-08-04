@@ -35,15 +35,12 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		userId: "user-1",
 		stripeCheckoutSessionId: "cs_test_1",
 		stripePaymentIntentId: "pi_test_1",
-		stripeCustomerId: "cus_test_1",
 		stripeInvoiceId: null,
 		customerEmail: "alice@example.com",
 		customerName: "Alice Dupont",
-		customerPhone: "+33612345678",
 		subtotal: 9000,
 		discountAmount: 0,
 		shippingCost: 500,
-		taxAmount: 0,
 		total: 9500,
 		currency: "EUR",
 		shippingFirstName: "Alice",
@@ -54,15 +51,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		shippingCity: "Paris",
 		shippingCountry: "FR",
 		shippingPhone: "+33612345678",
-		billingSameAsShipping: true,
-		billingFirstName: null,
-		billingLastName: null,
-		billingAddress1: null,
-		billingAddress2: null,
-		billingPostalCode: null,
-		billingCity: null,
-		billingCountry: null,
-		billingPhone: null,
 		shippingCarrier: "colissimo",
 		trackingNumber: null,
 		trackingUrl: null,
@@ -178,22 +166,17 @@ describe("buildInvoiceData — B2C franchise", () => {
 		expect(data.billingAddress).toEqual(data.shippingAddress);
 	});
 
-	it("uses distinct billing address when billingSameAsShipping=false", () => {
-		const data = buildInvoiceData(
-			makeOrder({
-				billingSameAsShipping: false,
-				billingFirstName: "Alice",
-				billingLastName: "Dupont",
-				billingAddress1: "20 rue de la Facturation",
-				billingAddress2: null,
-				billingPostalCode: "75003",
-				billingCity: "Paris",
-				billingCountry: "FR",
-				billingPhone: "+33611111111",
-			}),
-		);
-		expect(data.billingAddress.line1).toBe("20 rue de la Facturation");
-		expect(data.billingAddress.postalCode).toBe("75003");
+	// @regression order-billing-is-shipping (2026-08-04) : les 9 colonnes
+	// `billing*` sont parties (jamais renseignées sur une commande réelle). En
+	// B2C de vente à distance l'adresse de facturation EST l'adresse de
+	// livraison — c'est elle que le PDF imprime sous « Facturé à ». Si une
+	// dissociation redevient nécessaire (commandes cadeau, ou obligation
+	// d'émission structurée du 1er sept. 2027 : BT-75→79 est un bloc distinct de
+	// l'adresse acheteur), elle passera par une saisie AU CHECKOUT, pas par des
+	// colonnes que rien ne remplit.
+	it("ne peut PLUS dissocier facturation et livraison, quoi qu'on passe", () => {
+		const data = buildInvoiceData(makeOrder({} as never));
+		expect(data.billingAddress).toEqual(data.shippingAddress);
 	});
 
 	it("maps each OrderItem to an InvoiceLine, deriving franchise totals from price × quantity", () => {
@@ -216,7 +199,6 @@ describe("buildInvoiceData — B2C franchise", () => {
 		expect(data.totals.taxBreakdown[0]!).toMatchObject({
 			rate: 0,
 			categoryCode: "ZB",
-			taxAmount: 0,
 			exemptionReason: "Franchise art. 293 B CGI",
 		});
 	});
@@ -230,10 +212,35 @@ describe("buildInvoiceData — B2C franchise", () => {
 	});
 
 	it("payment info captures paidAt and stripe IDs", () => {
-		const data = buildInvoiceData(makeOrder());
+		const data = buildInvoiceData(makeOrder({ stripeChargeId: "ch_test_1" }));
 		expect(data.payment.method).toBe("CARD");
 		expect(data.payment.paidAt).toEqual(new Date("2026-05-27T18:00:00Z"));
 		expect(data.payment.stripePaymentIntentId).toBe("pi_test_1");
+		// Test de COUTURE colonne → snapshot. Jusqu'à la migration 20260804200000,
+		// `stripeChargeId` était `null` EN DUR ici alors que le champ existait dans le
+		// type ET dans le schéma Zod : rien ne rougissait, et chaque facture figeait un
+		// `null` pour 10 ans (Art. L102 B LPF). Assertion sur la VALEUR, pas sur la
+		// présence de la clé — c'est la valeur qui s'était perdue.
+		expect(data.payment.stripeChargeId).toBe("ch_test_1");
+	});
+
+	// Le chemin qui écrit le snapshot charge en `GET_ORDER_SELECT_ADMIN`, mais les
+	// chemins de RENDU (fallback legacy de `resolveInvoiceDataForRender`,
+	// `renderOrderCreditNotePdf`) chargent en `GET_ORDER_SELECT_CUSTOMER` — qui exclut
+	// délibérément les identifiants Stripe — puis CASTENT en `GetOrderReturn`. La
+	// propriété est alors absente de l'objet, pas `null`. Sans le `?? null` du builder,
+	// la clé disparaîtrait du JSON : une divergence de FORME du payload, précisément ce
+	// que `formatVersion` sert à rendre détectable.
+	it("un order en select CUSTOMER (propriété absente) rend null, pas une clé manquante", () => {
+		const order = makeOrder();
+		delete (order as Partial<Order>).stripeChargeId;
+
+		const data = buildInvoiceData(order);
+
+		expect(data.payment.stripeChargeId).toBeNull();
+		expect(Object.hasOwn(data.payment, "stripeChargeId")).toBe(true);
+		// La forme reste celle que valide le schéma figé sous SHA-256.
+		expect(invoiceDataSchema.safeParse(data).success).toBe(true);
 	});
 
 	it("invoiceFormat defaults to PDF; accepts override", () => {

@@ -15,7 +15,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
-import type { PostWebhookTask, WebhookHandlerResult } from "../types/webhook.types";
+import type { WebhookHandlerResult } from "../types/webhook.types";
 import {
 	processOrderFromPaymentIntent,
 	buildPostCheckoutTasksFromPI,
@@ -466,8 +466,12 @@ export async function handlePaymentProcessing(
  *    et la rétrogradait PAID→FAILED sans refund (amount_received=0 dans le
  *    snapshot stale) — client débité, commande annulée.
  *
- * Nouveau contrat : observabilité seulement. On persiste les détails d'échec
- * (diagnostic admin pendant la fenêtre PENDING), AUCUNE transition d'état,
+ * Nouveau contrat : observabilité seulement, et rien d'autre — AUCUNE écriture
+ * en base. Les détails d'échec partent au log (et au dashboard Stripe, qui reste
+ * la source autoritaire du motif de refus) : les colonnes `Order.paymentFailure*`
+ * qui les recevaient ont été retirées, n'ayant jamais eu de lecteur. Le chemin
+ * TERMINAL (`markOrderAsFailed`) les consigne, lui, dans `OrderHistory.metadata`.
+ * AUCUNE transition d'état,
  * aucun restock (réservation optimiste : une PENDING n'a jamais de stock
  * décrémenté), aucun refund (payment_failed ⇒ amount_received=0 en card-only ;
  * les anomalies d'encaissement sont couvertes par handleAmountMismatch /
@@ -537,29 +541,23 @@ export async function handlePaymentFailure(
 			return { success: true, skipped: true, reason: "already_failed" };
 		}
 
-		// Cas nominal (PENDING) : persister les détails d'échec SANS transition.
-		// updateMany conditionnel = race-safe : si succeeded commit entre le fetch
-		// et cet update, le prédicat (ré-évalué au lock de ligne) fait un no-op.
-		await prisma.order.updateMany({
-			where: { id: orderId, paymentStatus: "PENDING", ...notDeleted },
-			data: {
-				paymentFailureCode: failureDetails.code,
-				paymentDeclineCode: failureDetails.declineCode,
-				paymentFailureMessage: failureDetails.message,
-			},
-		});
-
+		// Cas nominal (PENDING) : on trace, on n'écrit pas. `declineCode` est la
+		// valeur qui sert vraiment en support (`insufficient_funds` vs
+		// `do_not_honor`) — elle est ici, pas dans une colonne que personne ne lit.
+		// Aucune invalidation de cache non plus : rien n'a changé en base, et cette
+		// branche se déclenche à chaque nouvelle tentative de carte.
 		logger.info(
 			`❌ [WEBHOOK] Payment attempt failed on order ${order.orderNumber} — kept PENDING (PI retryable)`,
-			{ service: "webhook", orderId, failureCode: failureDetails.code },
+			{
+				service: "webhook",
+				orderId,
+				failureCode: failureDetails.code,
+				declineCode: failureDetails.declineCode,
+				failureMessage: failureDetails.message,
+			},
 		);
 
-		// CACHE-AUDIT-002 : helper canonique pour couvrir les tags user-scopés
-		// (USER_ORDERS, LAST_ORDER) et le détail commande.
-		const cacheTags: string[] = [...getOrderInvalidationTags(orderId)];
-		const tasks: PostWebhookTask[] = [{ type: "INVALIDATE_CACHE", tags: cacheTags }];
-
-		return { success: true, tasks };
+		return { success: true };
 	} catch (error) {
 		logger.error(`❌ [WEBHOOK] Error handling payment failure for order ${orderId}:`, error, {
 			service: "webhook",

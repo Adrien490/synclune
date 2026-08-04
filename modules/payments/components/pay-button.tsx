@@ -64,6 +64,7 @@ export function PayButton({
 	const haptic = useHaptic();
 	const [phase, setPhase] = useState<Phase>("idle");
 	const [error, setError] = useState<string | null>(null);
+	const [showReloadAction, setShowReloadAction] = useState(false);
 	const errorRef = useRef<HTMLDivElement>(null);
 	const barRef = useRef<HTMLDivElement>(null);
 	const hintId = useId();
@@ -81,7 +82,11 @@ export function PayButton({
 	// Bring error into view on mobile where the sticky CTA may otherwise hide it.
 	useEffect(() => {
 		if (error && errorRef.current) {
-			errorRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+			const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+			errorRef.current.scrollIntoView({
+				behavior: reduceMotion ? "auto" : "smooth",
+				block: "nearest",
+			});
 			errorRef.current.focus({ preventScroll: true });
 		}
 	}, [error]);
@@ -102,10 +107,13 @@ export function PayButton({
 
 		const root = document.documentElement;
 		const apply = () => {
-			root.style.setProperty(
-				"--pay-bar-height",
-				`${Math.round(el.getBoundingClientRect().height)}px`,
-			);
+			const height = Math.round(el.getBoundingClientRect().height);
+			// Pendant le mount de Stripe, la barre vit dans le conteneur `hidden` de
+			// checkout-stripe-section : mesurer 0 et l'écrire ferait osciller la
+			// hauteur du document (fallback 8rem → 1rem → réel). On garde le
+			// fallback CSS tant qu'il n'y a pas de vraie mesure.
+			if (height === 0) return;
+			root.style.setProperty("--pay-bar-height", `${height}px`);
 		};
 
 		apply();
@@ -164,6 +172,7 @@ export function PayButton({
 
 		haptic("medium");
 		setError(null);
+		setShowReloadAction(false);
 
 		try {
 			const result = await submit({
@@ -182,6 +191,12 @@ export function PayButton({
 				case "checkout-error":
 				case "stripe-error":
 					if (result.status !== "form-invalid") showError(result.message);
+					// La famille `checkout-error` regroupe les refus serveur dont la
+					// plupart prescrivent « Actualise la page » (panier modifié, prix
+					// changés, commande déjà initiée…) : fournir le contrôle au lieu de
+					// décrire un geste. Pas sur `stripe-error` (refus de carte) : là,
+					// réessayer SANS recharger est le bon chemin.
+					setShowReloadAction(result.status === "checkout-error");
 					setPhase("idle");
 					return;
 				case "redirecting":
@@ -238,7 +253,25 @@ export function PayButton({
 					aria-live="assertive"
 					className="focus-visible:outline-none"
 				>
-					<AlertDescription>{error}</AlertDescription>
+					<AlertDescription className="space-y-3">
+						<p>{error}</p>
+						{showReloadAction && (
+							<Button
+								type="button"
+								size="sm"
+								variant="outline"
+								// `allowNavigation()` AVANT le reload : sinon `useUnsavedChanges`
+								// déclenche son `beforeunload` et l'utilisateur doit confirmer
+								// une perte de données pour l'action qu'il vient de demander.
+								onClick={() => {
+									allowNavigation?.();
+									window.location.reload();
+								}}
+							>
+								Recharger la page
+							</Button>
+						)}
+					</AlertDescription>
 				</Alert>
 			)}
 

@@ -55,6 +55,13 @@ describe("OrderHistory — audit trail immutability", () => {
  * `create` (append-only) sont permis. Sans cette garde, un futur
  * `prisma.orderHistory.update(...)` masquerait/réécrirait un audit trail comptable
  * (Art. L123-22) tout en laissant le test au vert.
+ *
+ * UNIQUE exception (arbitrage 2026-08-03, audit rétention PII) : la purge
+ * d'échéance `hard-delete-retention.service.ts` neutralise `note` + `metadata`
+ * (ORDER_HISTORY_PII_SCRUB) sur les commandes dont la rétention légale est échue
+ * — l'immutabilité vaut PENDANT les 10 ans (Art. L123-22), pas au-delà (RGPD
+ * Art. 5.1.e). L'allowlist ci-dessous est FERMÉE : tout autre writer reste une
+ * régression réglementaire.
  */
 describe("OrderHistory — pas de mutation côté code (append-only)", () => {
 	const REPO_ROOT = process.cwd();
@@ -108,6 +115,8 @@ describe("OrderHistory — pas de mutation côté code (append-only)", () => {
 			})
 			.map(relPath)
 			.sort();
-		expect(offenders).toEqual([]);
+		// Allowlist fermée : la purge d'échéance est le SEUL writer autorisé
+		// (neutralisation note/metadata à `paidAt + 10 ans` — arbitrage 2026-08-03).
+		expect(offenders).toEqual(["modules/cron/services/hard-delete-retention.service.ts"]);
 	});
 });

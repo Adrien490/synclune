@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
+import { getOrCreateGuestSessionId } from "@/modules/cart/lib/guest-session";
 import { getCart } from "@/modules/cart/data/get-cart";
 import {
 	getSkuDetails,
@@ -78,7 +78,7 @@ export async function updatePaymentAmount(
 			// 1. Auth + session resolution
 			const session = await getSession();
 			const userId = session?.user.id ?? null;
-			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
+			const sessionId = !userId ? await getOrCreateGuestSessionId() : null;
 
 			if (!userId && !sessionId) {
 				return { success: false, error: "Session invalide." };
@@ -186,7 +186,7 @@ export async function updatePaymentAmount(
 			// 6. Recompute subtotal server-side from the authenticated cart.
 			// Never trust a client-supplied subtotal (audit P0.1).
 			const cart = await getCart();
-			if (!cart || cart.items.length === 0) {
+			if (cart.items.length === 0) {
 				return { success: false, error: "Panier vide ou introuvable." };
 			}
 
@@ -248,7 +248,6 @@ export async function updatePaymentAmount(
 						maxUsagePerUser: true,
 						usageCount: true,
 						isActive: true,
-						startsAt: true,
 						endsAt: true,
 					},
 				});

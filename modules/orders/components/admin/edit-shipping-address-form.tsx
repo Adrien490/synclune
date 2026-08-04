@@ -30,7 +30,7 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 interface EditShippingAddressFormProps {
 	orderId: string;
@@ -42,6 +42,7 @@ interface EditShippingAddressFormProps {
 	shippingPostalCode: string;
 	shippingCity: string;
 	shippingCountry: string;
+	shippingPhone?: string | null;
 	onSuccess?: () => void;
 	redirectOnSuccess?: boolean;
 	successPath?: string;
@@ -67,6 +68,7 @@ export function EditShippingAddressForm({
 	shippingPostalCode,
 	shippingCity,
 	shippingCountry,
+	shippingPhone,
 	onSuccess,
 	redirectOnSuccess = false,
 	successPath,
@@ -87,6 +89,7 @@ export function EditShippingAddressForm({
 			shippingPostalCode,
 			shippingCity,
 			shippingCountry,
+			shippingPhone: shippingPhone ?? "",
 		},
 	});
 
@@ -329,6 +332,26 @@ export function EditShippingAddressForm({
 							disabled={isPending}
 							required
 							autoComplete="country"
+						/>
+					)}
+				</form.AppField>
+
+				{/* Seul champ éditable portant le téléphone du client depuis le retrait
+				    de `Order.customerPhone` (2026-08-04). C'est le numéro transmis au
+				    transporteur : une faute de frappe doit rester corrigeable. */}
+				<form.AppField name="shippingPhone">
+					{(field) => (
+						<field.InputField
+							label="Téléphone"
+							optional
+							type="tel"
+							inputMode="tel"
+							autoComplete="tel"
+							autoCorrect="off"
+							spellCheck={false}
+							enterKeyHint="done"
+							maxLength={20}
+							placeholder="06 12 34 56 78"
 						/>
 					)}
 				</form.AppField>

@@ -149,7 +149,6 @@ function makeOrderRow(overrides: Record<string, unknown> = {}) {
 		subtotal: 8000,
 		discountAmount: 0,
 		shippingCost: 600,
-		taxAmount: 0,
 		total: 8600,
 		user: { id: "user-1" },
 		items: [
@@ -190,7 +189,6 @@ function makeOrderWithItems(overrides: Partial<OrderWithItems> = {}): OrderWithI
 		subtotal: 8000,
 		discountAmount: 0,
 		shippingCost: 600,
-		taxAmount: 0,
 		total: 8600,
 		items: [
 			{
@@ -239,7 +237,7 @@ describe("processOrderFromPaymentIntent", () => {
 		mockTx.cartItem.deleteMany.mockResolvedValue({ count: 0 });
 	});
 
-	it("updates order with stripePaymentIntentId and customer id from PaymentIntent", async () => {
+	it("updates order with stripePaymentIntentId from PaymentIntent", async () => {
 		const paymentIntent = makePaymentIntent({ id: "pi_XYZ", customer: "cus_XYZ" });
 
 		await processOrderFromPaymentIntent("order-1", paymentIntent);
@@ -251,7 +249,6 @@ describe("processOrderFromPaymentIntent", () => {
 					status: "PROCESSING",
 					paymentStatus: "PAID",
 					stripePaymentIntentId: "pi_XYZ",
-					stripeCustomerId: "cus_XYZ",
 					paidAt: expect.any(Date),
 				}),
 			}),
@@ -282,13 +279,18 @@ describe("processOrderFromPaymentIntent", () => {
 		expect(updateCall.data).not.toHaveProperty("shippingCarrier");
 	});
 
-	it("sets stripeCustomerId to null when PaymentIntent.customer is non-string", async () => {
+	// @regression order-no-stripe-customer-column (2026-08-04) : la colonne
+	// `Order.stripeCustomerId` a été retirée — elle n'avait aucun lecteur (tous
+	// les liens profonds Stripe passent par le PaymentIntent). Le webhook ne doit
+	// plus tenter de l'écrire, sous peine d'« Unknown argument » au runtime (le
+	// build Prisma `small` ne type pas les `data` de mutation).
+	it("n'écrit PLUS de stripeCustomerId, quelle que soit la forme de PaymentIntent.customer", async () => {
 		const paymentIntent = makePaymentIntent({
 			customer: { id: "cus_obj", object: "customer" },
 		});
 		await processOrderFromPaymentIntent("order-1", paymentIntent);
 		const updateCall = mockTx.order.update.mock.calls[0]?.[0] as { data: Record<string, unknown> };
-		expect(updateCall.data.stripeCustomerId).toBeNull();
+		expect(updateCall.data).not.toHaveProperty("stripeCustomerId");
 	});
 
 	/**
@@ -347,15 +349,20 @@ describe("processOrderFromPaymentIntent", () => {
 		);
 	});
 
-	it("clears guest cart when metadata.guestSessionId is present and order has no userId", async () => {
+	/**
+	 * Le webhook NE VIDE PLUS le panier : depuis le passage en cookie
+	 * (2026-08-04), le panier vit dans le navigateur du client, et un webhook
+	 * Stripe est un appel serveur-à-serveur — il ne porte aucun cookie. Le vidage
+	 * est repris par `clearCartAfterOrder`, déclenché depuis la page de
+	 * confirmation.
+	 */
+	it("ne touche plus au panier (plus de table à purger, pas de cookie côté webhook)", async () => {
 		mockTx.order.findUnique.mockResolvedValue(makeOrderRow({ userId: null, user: null }));
 		const paymentIntent = makePaymentIntent({ metadata: { guestSessionId: GUEST_SESSION_ID } });
 
 		await processOrderFromPaymentIntent("order-1", paymentIntent);
 
-		expect(mockTx.cartItem.deleteMany).toHaveBeenCalledWith({
-			where: { cart: { sessionId: GUEST_SESSION_ID } },
-		});
+		expect(mockTx.cartItem.deleteMany).not.toHaveBeenCalled();
 	});
 
 	it("is idempotent when order already PAID (returns early without re-decrementing stock)", async () => {
@@ -416,7 +423,11 @@ describe("buildPostCheckoutTasksFromPI", () => {
 		const cacheTask = tasks.find((t) => t.type === "INVALIDATE_CACHE");
 		expect(cacheTask).toBeDefined();
 		expect((cacheTask as { tags: string[] }).tags).toEqual(
-			expect.arrayContaining(["orders-list", "cart-user-1", "sku-stock-sku-pi-1"]),
+			expect.arrayContaining(["orders-list", "sku-stock-sku-pi-1"]),
+		);
+		// Plus aucun tag panier : le panier n'a plus d'entrée de cache par identité.
+		expect((cacheTask as { tags: string[] }).tags).not.toEqual(
+			expect.arrayContaining([expect.stringContaining("cart-")]),
 		);
 	});
 
@@ -451,14 +462,16 @@ describe("buildPostCheckoutTasksFromPI", () => {
 		expect(tasks.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL")).toBeUndefined();
 	});
 
-	it("uses guest session id from PaymentIntent metadata for cart invalidation when order has no userId", () => {
-		mockGetCartInvalidationTags.mockReturnValue([`cart-${GUEST_SESSION_ID}`]);
+	it("n'émet plus de tag panier pour un invité (le panier est un cookie)", () => {
 		const order = makeOrderWithItems({ userId: null });
 		const paymentIntent = makePaymentIntent({ metadata: { guestSessionId: GUEST_SESSION_ID } });
 
-		buildPostCheckoutTasksFromPI(order, paymentIntent);
+		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 
-		expect(mockGetCartInvalidationTags).toHaveBeenCalledWith(undefined, GUEST_SESSION_ID);
+		const cacheTask = tasks.find((t) => t.type === "INVALIDATE_CACHE");
+		expect((cacheTask as { tags: string[] }).tags).not.toEqual(
+			expect.arrayContaining([expect.stringContaining("cart-")]),
+		);
 	});
 
 	it("never emits an admin new-order task (removed)", () => {

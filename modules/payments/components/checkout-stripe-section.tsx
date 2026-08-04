@@ -36,8 +36,10 @@ interface CheckoutStripeSectionProps {
  * Stripe card block: <Elements> wrapper, standard PaymentElement, PayButton and trust badges.
  *
  * Carte uniquement : le PaymentIntent est restreint à `payment_method_types: ["card"]`
- * côté serveur (`initialize-payment.ts`). Aucun paiement express (Apple Pay / Google Pay /
- * Link) n'est proposé.
+ * côté serveur (`initialize-payment.ts`) — Link et les méthodes à redirection sont
+ * exclus. Les wallets Apple Pay / Google Pay restent adossés au type `card` : leur
+ * affichage dans le PaymentElement dépend de la config du dashboard Stripe (méthodes
+ * activées + domaine Apple Pay enregistré), pas du code.
  *
  * Isolated in its own file so `checkout-form.tsx` can load it via `next/dynamic`
  * and keep the ~100KB `@stripe/react-stripe-js` bundle off the critical path.

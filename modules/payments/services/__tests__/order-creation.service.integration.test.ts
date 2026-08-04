@@ -135,7 +135,6 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 				maxUsageCount: 1,
 				usageCount: 0,
 				isActive: true,
-				startsAt: new Date("2020-01-01T00:00:00Z"),
 			},
 		});
 
@@ -241,7 +240,6 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 				value: 500,
 				usageCount: 0,
 				isActive: true,
-				startsAt: new Date("2020-01-01T00:00:00Z"),
 			},
 		});
 		const email = `rollback-${uniq()}@test.local`;
@@ -297,7 +295,6 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 				value: 500,
 				usageCount: 0,
 				isActive: true,
-				startsAt: new Date("2020-01-01T00:00:00Z"),
 			},
 		});
 		const email = `rollback-fk-${uniq()}@test.local`;

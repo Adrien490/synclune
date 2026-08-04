@@ -6,7 +6,7 @@ import type { GetOrderReturn } from "@/modules/orders/types/order.types";
  * @regression invoice-amount-consistency-2026-05-28
  *
  * Garantit la cohérence comptable entre les snapshots `OrderItem.*` et les
- * agrégats `Order.subtotal/discountAmount/shippingCost/taxAmount/total` au
+ * agrégats `Order.subtotal/discountAmount/shippingCost/total` au
  * moment où `buildInvoiceData()` produit l'objet pivot. Un drift ici =
  * facture PDF affichant des chiffres différents du livre des recettes
  * (Art. L102 B LPF — incohérence audit fiscal).
@@ -14,7 +14,7 @@ import type { GetOrderReturn } from "@/modules/orders/types/order.types";
  * Invariants vérifiés :
  *  1. sum(OrderItem.price × quantity) ≈ Order.subtotal (franchise : TVA dérivée à 0)
  *  2. Order.subtotal + Order.shippingCost - Order.discountAmount = Order.total
- *     (en franchise — taxAmount=0 et shippingTax=0)
+ *     (en franchise — TVA nulle partout)
  *  3. totals retournés par buildInvoiceData préservent la relation
  *     totalExclTax + totalTax = totalInclTax (à 1c près pour arrondis CEFACT)
  *  4. amountDue ∈ [0, totalInclTax]
@@ -82,7 +82,6 @@ function makeOrderFixture(overrides: Partial<GetOrderReturn> = {}): GetOrderRetu
 		currency: "EUR",
 		customerEmail: "client@example.com",
 		customerName: "Marie Dupont",
-		customerPhone: null,
 		customerCompanyName: null,
 		customerCompanySiren: null,
 		customerCompanySiret: null,
@@ -90,7 +89,6 @@ function makeOrderFixture(overrides: Partial<GetOrderReturn> = {}): GetOrderRetu
 		subtotal: 17900,
 		discountAmount: 0,
 		shippingCost: 490,
-		taxAmount: 0,
 		total: 18390,
 		paymentStatus: "PAID",
 		paidAt: new Date("2026-05-15T10:00:00Z"),
@@ -103,14 +101,6 @@ function makeOrderFixture(overrides: Partial<GetOrderReturn> = {}): GetOrderRetu
 		shippingPostalCode: "75002",
 		shippingCity: "Paris",
 		shippingCountry: "FR",
-		billingSameAsShipping: true,
-		billingFirstName: null,
-		billingLastName: null,
-		billingAddress1: null,
-		billingAddress2: null,
-		billingPostalCode: null,
-		billingCity: null,
-		billingCountry: null,
 		invoiceNumber: "F-2026-00042",
 		invoiceStatus: "GENERATED",
 		invoiceGeneratedAt: new Date("2026-05-15T10:00:01Z"),
@@ -123,7 +113,9 @@ describe("buildInvoiceData — cohérence montants Order ↔ OrderItem (régress
 	it("sum(OrderItem.price × quantity) ≈ Order.subtotal (franchise : TVA = 0)", () => {
 		const order = makeOrderFixture();
 		const sumLines = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-		expect(sumLines).toBe(order.subtotal + order.taxAmount);
+		// Franchise en base : HT = TTC, et `Order.taxAmount` n'existe plus (colonne
+		// retirée le 2026-08-04, elle valait toujours 0).
+		expect(sumLines).toBe(order.subtotal);
 	});
 
 	it("Order.subtotal + Order.shippingCost - Order.discountAmount = Order.total", () => {

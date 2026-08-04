@@ -186,7 +186,6 @@ function makeDiscountRow(overrides: Record<string, unknown> = {}) {
 		maxUsagePerUser: null,
 		usageCount: 0,
 		isActive: true,
-		startsAt: new Date("2025-01-01"),
 		endsAt: null,
 		...overrides,
 	};
@@ -408,7 +407,7 @@ describe("createOrderInTransaction — order creation without discount", () => {
 	});
 
 	it("should compute correct totals: subtotal + shipping, no discount", async () => {
-		// subtotal=5980, shipping=450, total=6430, taxAmount=0
+		// subtotal=5980, shipping=450, total=6430
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder({ total: 6430 }));
 
 		await createOrderInTransaction(makeParams());
@@ -417,17 +416,19 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		expect(createCall.data.subtotal).toBe(5980);
 		expect(createCall.data.shippingCost).toBe(450);
 		expect(createCall.data.discountAmount).toBe(0);
-		expect(createCall.data.taxAmount).toBe(0);
 		expect(createCall.data.total).toBe(6430);
 	});
 
-	it("should always set taxAmount to 0", async () => {
-		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+	// @regression order-no-tax-column (2026-08-04) : `Order.taxAmount` a été
+	// retirée — franchise en base (Art. 293 B), la colonne valait toujours 0,
+	// était exclue de `Order_total_formula` et jamais lue par le renderer.
+	it("n'écrit AUCUNE colonne de TVA sur la commande", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder({ total: 6430 }));
 
 		await createOrderInTransaction(makeParams());
 
 		const createCall = mockTx.order.create.mock.calls[0]![0];
-		expect(createCall.data.taxAmount).toBe(0);
+		expect(createCall.data).not.toHaveProperty("taxAmount");
 	});
 
 	it("should set customerEmail to empty string when finalEmail is null", async () => {

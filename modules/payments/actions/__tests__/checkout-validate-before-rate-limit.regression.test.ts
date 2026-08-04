@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
 	checkRateLimit: vi.fn(),
 	getClientIp: vi.fn(),
 	getSession: vi.fn(),
-	getOrCreateCartSessionId: vi.fn(),
+	getOrCreateGuestSessionId: vi.fn(),
 	assertStoreOpen: vi.fn(),
 	isVerifiedAdmin: vi.fn(),
 	requireActiveAccountIfAuthenticated: vi.fn(),
@@ -37,8 +37,8 @@ vi.mock("@/shared/lib/rate-limit", () => ({
 	getClientIp: mocks.getClientIp,
 }));
 vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: mocks.getSession }));
-vi.mock("@/modules/cart/lib/cart-session", () => ({
-	getOrCreateCartSessionId: mocks.getOrCreateCartSessionId,
+vi.mock("@/modules/cart/lib/guest-session", () => ({
+	getOrCreateGuestSessionId: mocks.getOrCreateGuestSessionId,
 }));
 vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
 	assertStoreOpen: mocks.assertStoreOpen,
@@ -85,7 +85,7 @@ describe("@regression confirmCheckout — parse AVANT dérivation du rate limit"
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mocks.getSession.mockResolvedValue(null);
-		mocks.getOrCreateCartSessionId.mockResolvedValue("guest-session-1");
+		mocks.getOrCreateGuestSessionId.mockResolvedValue("guest-session-1");
 		mocks.getClientIp.mockResolvedValue("203.0.113.7");
 		mocks.assertStoreOpen.mockResolvedValue(null);
 		mocks.isVerifiedAdmin.mockResolvedValue(false);

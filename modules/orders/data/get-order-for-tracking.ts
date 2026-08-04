@@ -63,7 +63,6 @@ const GET_ORDER_TRACKING_SELECT = {
 	// Statut seul (pas de montant, pas de `note` libre) : suffit à
 	// `getReturnIneligibilityReason` pour détecter `ALREADY_REQUESTED`.
 	refunds: {
-		where: { deletedAt: null },
 		select: { status: true },
 	},
 } as const satisfies Prisma.OrderSelect;

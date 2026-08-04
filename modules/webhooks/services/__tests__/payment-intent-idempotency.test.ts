@@ -276,9 +276,6 @@ describe("markOrderAsFailed — idempotency", () => {
 			data: expect.objectContaining({
 				paymentStatus: "FAILED",
 				status: "CANCELLED",
-				paymentFailureCode: "card_declined",
-				paymentDeclineCode: "insufficient_funds",
-				paymentFailureMessage: "Your card was declined.",
 			}),
 		});
 	});
@@ -307,11 +304,7 @@ describe("markOrderAsFailed — idempotency", () => {
 
 		expect(mockTx.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				data: expect.objectContaining({
-					paymentFailureCode: null,
-					paymentDeclineCode: null,
-					paymentFailureMessage: null,
-				}),
+				data: expect.objectContaining({}),
 			}),
 		);
 	});

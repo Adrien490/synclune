@@ -31,14 +31,13 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 interface EditCustomerInfoFormProps {
 	orderId: string;
 	orderNumber: string;
 	customerEmail: string;
 	customerName: string;
-	customerPhone?: string | null;
 	onSuccess?: () => void;
 	redirectOnSuccess?: boolean;
 	successPath?: string;
@@ -60,7 +59,6 @@ export function EditCustomerInfoForm({
 	orderNumber,
 	customerEmail,
 	customerName,
-	customerPhone,
 	onSuccess,
 	redirectOnSuccess = false,
 	successPath,
@@ -76,7 +74,6 @@ export function EditCustomerInfoForm({
 		defaultValues: {
 			customerName,
 			customerEmail,
-			customerPhone: customerPhone ?? "",
 		},
 	});
 
@@ -199,7 +196,7 @@ export function EditCustomerInfoForm({
 								type="email"
 								inputMode="email"
 								autoComplete="email"
-								autoCapitalize="off"
+								autoCapitalize="none"
 								autoCorrect="off"
 								spellCheck={false}
 								enterKeyHint="next"
@@ -211,23 +208,6 @@ export function EditCustomerInfoForm({
 						)}
 					</form.AppField>
 				</div>
-
-				<form.AppField name="customerPhone">
-					{(field) => (
-						<field.InputField
-							label="Téléphone"
-							optional
-							type="tel"
-							inputMode="tel"
-							autoComplete="tel"
-							autoCorrect="off"
-							spellCheck={false}
-							enterKeyHint="done"
-							maxLength={20}
-							placeholder="06 12 34 56 78"
-						/>
-					)}
-				</form.AppField>
 			</fieldset>
 
 			<form.AppForm>

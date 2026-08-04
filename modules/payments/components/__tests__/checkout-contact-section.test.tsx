@@ -28,26 +28,7 @@ vi.mock("@/modules/payments/components/checkout-section", () => ({
 	),
 }));
 
-vi.mock("next/link", () => ({
-	default: ({
-		href,
-		children,
-		className,
-	}: {
-		href: string;
-		children: React.ReactNode;
-		className?: string;
-	}) => (
-		<a href={href} className={className}>
-			{children}
-		</a>
-	),
-}));
-
 vi.mock("lucide-react", () => ({
-	Info: ({ className }: { className?: string }) => (
-		<svg data-testid="icon-info" className={className} />
-	),
 	Mail: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-mail" className={className} />
 	),
@@ -130,15 +111,13 @@ describe("CheckoutContactSection", () => {
 		expect(screen.getByTestId("input-Adresse email")).toBeInTheDocument();
 	});
 
-	it("renders login link for guest user", () => {
+	it("ne rend AUCUN lien de connexion pour un invité (connexion admin-only depuis 2026-07-31)", () => {
+		// « Tu as déjà un compte ? Connecte-toi » envoyait 100 % des clients vers
+		// /connexion, réservée à l'administration — une impasse avec promesse fausse
+		// (aucun compte client, le suivi passe par le lien tokenisé de l'email).
 		render(<CheckoutContactSection form={createMockForm()} session={null} />);
-		expect(screen.getByRole("link", { name: "Connecte-toi" })).toBeInTheDocument();
-	});
-
-	it("login link points to /connexion with callback", () => {
-		render(<CheckoutContactSection form={createMockForm()} session={null} />);
-		const link = screen.getByRole("link", { name: "Connecte-toi" });
-		expect(link).toHaveAttribute("href", "/connexion?callbackURL=/paiement");
+		expect(screen.queryByRole("link")).not.toBeInTheDocument();
+		expect(screen.queryByText(/Tu as déjà un compte/)).not.toBeInTheDocument();
 	});
 
 	// ─── Logged-in user ───────────────────────────────────────────────────────

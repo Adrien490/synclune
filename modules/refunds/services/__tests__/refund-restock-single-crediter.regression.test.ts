@@ -1,28 +1,22 @@
 /**
  * @regression STOCK-DOUBLE-CREDIT-001
  *
- * Contrat transverse : **un seul créditeur de stock par remboursement.**
+ * Contrat transverse : **aucun crédit de stock piloté par un remboursement.**
  *
- * `RefundItem.restock` est la SSOT du crédit d'inventaire côté `processRefund`
- * (process-refund.ts:396-455) et de son jumeau asynchrone partagé webhook + cron
- * (finalize-refund.service.ts) — les deux sont mutuellement exclusifs
- * (claim `status: APPROVED`), donc au plus UN des deux crédite.
+ * Historique : `RefundItem.restock` était la SSOT du crédit d'inventaire à la
+ * finalisation d'un refund. `cancel-order.ts` posait `restock: shouldRestoreStock`
+ * — le même booléen que son restock inline — et le stock était crédité DEUX fois
+ * (le CHECK `ProductSku_inventory_non_negative` ne borne que le plancher : le
+ * sur-comptage passe, l'inventaire dépasse le physique, la boutique survend).
  *
- * Corollaire : un writer qui restaure le stock LUI-MÊME doit poser `restock: false`
- * sur les `RefundItem` qu'il crée, sinon le stock est crédité deux fois — une fois
- * par lui, une fois quand le remboursement est traité. Le CHECK
- * `ProductSku_inventory_non_negative` ne borne que le plancher : le sur-comptage
- * passe, l'inventaire dépasse le physique, et la boutique survend.
+ * Depuis le Lot 6 (2026-08-03), la colonne `RefundItem.restock` est DROPPÉE et
+ * `finalize-refund.service.ts` ne touche plus à l'inventaire : le vecteur de
+ * double crédit est structurellement mort, et tout restock post-refund est un
+ * ajustement manuel de stock SKU. Ce test verrouille ce nouvel état :
  *
- * C'est exactement le défaut que portait `cancel-order.ts` (`restock:
- * shouldRestoreStock`, soit le même booléen que son restock inline). Ce test
- * généralise la garde : au lieu de verrouiller ce fichier-là, il verrouille la
- * RÈGLE pour tout futur writer.
- *
- * Volontairement borné aux fichiers qui créditent l'inventaire (4 aujourd'hui)
- * plutôt qu'un scan de tous les usages de `restock` : les `select` Prisma, les
- * schémas Zod et les annotations de type en contiennent aussi, et un garde-fou qui
- * hurle sur eux serait désactivé en une semaine (cf. CLAUDE.md, hover-focus-parity).
+ * 1. la liste fermée des créditeurs d'inventaire (aucun chemin refund n'y figure) ;
+ * 2. aucun payload de création `RefundItem` ne porte de champ `restock` — en
+ *    réintroduire un sans re-poser la question du double crédit est une régression.
  */
 
 import { describe, it, expect } from "vitest";
@@ -35,13 +29,13 @@ import { execFileSync } from "node:child_process";
  * et si oui pose-t-il `restock: false` ?
  */
 const DECLARED_INVENTORY_CREDITERS = [
-	// Restock inline à l'annulation admin → pose restock:false (ce bug).
+	// Restock inline à l'annulation admin (unique crédit lié à une annulation —
+	// le Refund créé ensuite ne déclenche plus rien, cf. en-tête).
 	"modules/orders/actions/cancel-order.ts",
-	// Consommateur unique de RefundItem.restock depuis le Lot 2 S3.3 (le SAGA
-	// admin process-refund est parti avec le workflow in-app) : finalisation
-	// partagée webhook refund.updated + tâche Maintenance reconcile-refunds
-	// (P1-C audit 2026-08-01).
-	"modules/refunds/services/finalize-refund.service.ts",
+	// finalize-refund.service.ts est SORTI de cette liste au Lot 6 : la
+	// finalisation d'un refund ne crédite plus l'inventaire (RefundItem.restock
+	// droppée). L'y réinscrire = réintroduire un créditeur refund, donc re-poser
+	// TOUTE la question du double crédit avec cancel-order.
 	// restoreStockForOrder + restock inliné dans le claim markOrderAsCancelled.
 	"modules/webhooks/services/payment-intent.service.ts",
 	// Delta relatif du formulaire d'édition SKU admin (audit intégrité stock
@@ -184,14 +178,16 @@ describe("STOCK-DOUBLE-CREDIT-001 — un seul créditeur de stock par remboursem
 		expect(discovered).toEqual(DECLARED_INVENTORY_CREDITERS);
 	});
 
-	it("tout créditeur d'inventaire pose restock:false sur les RefundItem qu'il crée", () => {
+	// Lot 6 : la colonne est droppée — AUCUN payload RefundItem ne doit porter
+	// `restock`, quel que soit le fichier. Un `restock:` qui réapparaît dans un
+	// payload de création signifie qu'on a ré-ajouté la colonne sans re-poser la
+	// question du double crédit.
+	it("aucun payload de création RefundItem ne porte de champ restock", () => {
 		const violations: Array<{ path: string; value: string }> = [];
 
 		for (const { path, source } of files) {
-			if (!creditsInventory(source)) continue;
-
 			for (const value of refundItemRestockValues(source)) {
-				if (value !== "false") violations.push({ path, value });
+				violations.push({ path, value });
 			}
 		}
 
@@ -200,28 +196,28 @@ describe("STOCK-DOUBLE-CREDIT-001 — un seul créditeur de stock par remboursem
 
 	// Contre-épreuve : le discriminant trouve bien les payloads qu'il doit trouver.
 	// Sans elle, une regex cassée rendrait le test ci-dessus vert sur zéro payload
-	// inspecté — le mode d'échec le plus courant de ce genre de garde-fou.
-	it("le discriminant détecte les payloads RefundItem réels", () => {
-		const cancelOrder = readFileSync("modules/orders/actions/cancel-order.ts", "utf-8");
-		expect(refundItemRestockValues(cancelOrder)).toEqual(["false"]);
+	// inspecté — le mode d'échec le plus courant de ce genre de garde-fou. Plus
+	// aucun payload réel n'existe dans le repo (c'est le point du Lot 6) : la
+	// contre-épreuve porte sur une fixture synthétique reproduisant la forme
+	// exacte des anciens payloads de cancel-order.
+	it("le discriminant détecte un payload RefundItem (fixture synthétique)", () => {
+		const fixture = [
+			"\t\t\t\t\t\t\t\tcreate: found.items.map((item) => ({",
+			"\t\t\t\t\t\t\t\t\torderItemId: item.id,",
+			"\t\t\t\t\t\t\t\t\tquantity: item.quantity,",
+			"\t\t\t\t\t\t\t\t\tamount: item.price * item.quantity,",
+			"\t\t\t\t\t\t\t\t\trestock: false,",
+			"\t\t\t\t\t\t\t\t})),",
+		].join("\n");
+		expect(refundItemRestockValues(fixture)).toEqual(["false"]);
 
-		const autoRefund = readFileSync("modules/webhooks/services/payment-intent.service.ts", "utf-8");
-		expect(refundItemRestockValues(autoRefund)).toEqual(["false"]);
-
-		// …et ignore bien les non-payloads : `restock: boolean` (type) et
-		// `where: { refundId, restock: true }` (lecture).
-		const finalize = readFileSync("modules/refunds/services/finalize-refund.service.ts", "utf-8");
-		expect(refundItemRestockValues(finalize)).toEqual([]);
-
-		const reconcile = readFileSync("modules/cron/services/reconcile-refunds.service.ts", "utf-8");
-		expect(refundItemRestockValues(reconcile)).toEqual([]);
-
-		// Le contre-exemple « writer légitime avec restock: true » était
-		// `request-return.ts` (demande de retour client) : l'article revient
-		// physiquement, donc il portait `true` sans créditer lui-même l'inventaire.
-		// L'action a été supprimée avec l'espace client (2026-07-31) — les retours
-		// passent par l'email de contact puis une action admin. Il ne reste donc
-		// aucun writer à `true` dans le repo, et l'invariant se réduit à sa
-		// moitié haute : tout créditeur écrit `restock: false`.
+		// …et ignore bien les non-payloads : un `where` de lecture sans
+		// `orderItemId:` à proximité.
+		const nonPayload = [
+			"\t\tconst refundItems = await tx.refundItem.findMany({",
+			"\t\t\twhere: { refundId, restock: true },",
+			"\t\t});",
+		].join("\n");
+		expect(refundItemRestockValues(nonPayload)).toEqual([]);
 	});
 });

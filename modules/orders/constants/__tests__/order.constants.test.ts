@@ -10,14 +10,13 @@ import {
  * @regression ORD-COMPLY-001 + ORD-COMPLY-004 (audit conformité 2026-05-27)
  *
  * Verrouille la minimisation RGPD du sélecteur customer :
- * - Pas d'IDs Stripe sensibles (cross-order fingerprint).
+ * - Pas d'id Stripe sensible (fingerprint cross-commande).
  * - Pas de history.metadata (peut contenir des PII anciennes).
  * - Pas de history.authorName (fuite identité admin interne).
  */
 describe("GET_ORDER_SELECT_CUSTOMER", () => {
-	it("does not expose stripePaymentIntentId / stripeCustomerId", () => {
+	it("does not expose stripePaymentIntentId", () => {
 		expect(GET_ORDER_SELECT_CUSTOMER).not.toHaveProperty("stripePaymentIntentId");
-		expect(GET_ORDER_SELECT_CUSTOMER).not.toHaveProperty("stripeCustomerId");
 	});
 
 	it("does not expose history.metadata or history.authorName", () => {
@@ -42,9 +41,8 @@ describe("GET_ORDER_SELECT (alias)", () => {
 });
 
 describe("GET_ORDER_SELECT_ADMIN", () => {
-	it("exposes the Stripe IDs (admin scope)", () => {
+	it("exposes the Stripe PaymentIntent id (admin scope)", () => {
 		expect(GET_ORDER_SELECT_ADMIN.stripePaymentIntentId).toBe(true);
-		expect(GET_ORDER_SELECT_ADMIN.stripeCustomerId).toBe(true);
 	});
 
 	it("exposes history.metadata + history.authorName (admin scope)", () => {

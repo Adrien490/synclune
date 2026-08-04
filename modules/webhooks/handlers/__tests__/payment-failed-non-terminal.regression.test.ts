@@ -182,18 +182,16 @@ describe("[regression] payment_failed non-terminal — F2 refus puis retry même
 		expect(mockInitiateAutomaticRefund).not.toHaveBeenCalled();
 	});
 
-	it("persiste les détails d'échec via updateMany conditionnel PENDING (race-safe vs succeeded concurrent)", async () => {
+	// @regression payment-failed-writes-nothing (2026-08-04) : les 3 colonnes
+	// `Order.paymentFailure*` ont été retirées (aucun lecteur ; le motif de refus
+	// vit dans le log, dans `OrderHistory.metadata` côté chemin TERMINAL, et au
+	// dashboard Stripe qui en reste la source autoritaire). Ce handler est
+	// désormais purement observationnel : il ne DOIT plus écrire du tout — sinon
+	// on rouvre une écriture en base à chaque nouvelle tentative de carte.
+	it("n'écrit RIEN en base (handler purement observationnel)", async () => {
 		await handlePaymentFailure(makePaymentIntent());
 
-		expect(mockOrderUpdateMany).toHaveBeenCalledTimes(1);
-		expect(mockOrderUpdateMany).toHaveBeenCalledWith({
-			where: { id: "order-nt", paymentStatus: "PENDING", deletedAt: null },
-			data: {
-				paymentFailureCode: "card_declined",
-				paymentDeclineCode: "insufficient_funds",
-				paymentFailureMessage: "Your card was declined.",
-			},
-		});
+		expect(mockOrderUpdateMany).not.toHaveBeenCalled();
 	});
 
 	it("n'émet AUCUNE tâche PAYMENT_FAILED_EMAIL (le cron sync-async-payments est l'unique émetteur)", async () => {
@@ -204,8 +202,9 @@ describe("[regression] payment_failed non-terminal — F2 refus puis retry même
 		expect(
 			result.tasks?.find((t) => (t.type as string) === "PAYMENT_FAILED_EMAIL"),
 		).toBeUndefined();
-		// Seule l'invalidation cache est émise (détails d'échec visibles admin).
-		expect(result.tasks?.map((t) => t.type)).toEqual(["INVALIDATE_CACHE"]);
+		// Plus AUCUNE tâche : rien n'ayant changé en base, invalider le cache
+		// serait un réveil Neon gratuit à chaque retry de carte.
+		expect(result.tasks).toBeUndefined();
 	});
 
 	it("FAILED (le cron a déjà acté) → skip idempotent sans écriture", async () => {

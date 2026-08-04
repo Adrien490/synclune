@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
+import { getOrCreateGuestSessionId } from "@/modules/cart/lib/guest-session";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
@@ -38,7 +38,7 @@ export async function cancelOrphanPaymentIntent(rawPaymentIntentId: unknown): Pr
 		// 1. Resolve caller identity (auth user OU session invité).
 		const session = await getSession();
 		const userId = session?.user.id ?? null;
-		const sessionId = !userId ? await getOrCreateCartSessionId() : null;
+		const sessionId = !userId ? await getOrCreateGuestSessionId() : null;
 		if (!userId && !sessionId) return;
 
 		// 2. Rate limit (borne l'abus de l'API Stripe `cancel`).

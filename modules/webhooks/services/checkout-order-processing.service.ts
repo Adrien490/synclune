@@ -21,7 +21,6 @@ import {
 import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
 import type { OrderWithItems } from "../types/checkout.types";
 import { initiateAutomaticRefund } from "./payment-intent.service";
-import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 
 /**
  * ORD-BIZ-011 : custom error thrown when a `payment_intent.succeeded` webhook
@@ -143,7 +142,6 @@ function mapToOrderWithItems(order: {
 	subtotal: number;
 	discountAmount: number;
 	shippingCost: number;
-	taxAmount: number;
 	total: number;
 	items: Array<{
 		productTitle: string | null;
@@ -177,7 +175,6 @@ function mapToOrderWithItems(order: {
 		subtotal: order.subtotal,
 		discountAmount: order.discountAmount,
 		shippingCost: order.shippingCost,
-		taxAmount: order.taxAmount,
 		total: order.total,
 		items: order.items.map((item) => ({
 			productTitle: item.productTitle,
@@ -194,14 +191,17 @@ function mapToOrderWithItems(order: {
 
 /**
  * Common order processing logic shared between CS and PI flows.
- * Validates stock, decrements inventory, deactivates out-of-stock SKUs, clears cart.
- * The caller provides flow-specific order update data and guest session ID.
+ * Validates stock, decrements inventory, deactivates out-of-stock SKUs.
+ * The caller provides flow-specific order update data.
+ *
+ * ⚠️ Ne vide PLUS le panier : il vit dans le cookie `cart` du client depuis le
+ * 2026-08-04, hors de portée d'un webhook. D'où la disparition du paramètre
+ * `guestSessionId`, qui ne servait qu'à retrouver le panier invité en base.
  */
 async function processOrderAtomically(
 	tx: Prisma.TransactionClient,
 	orderId: string,
 	orderUpdateData: Prisma.OrderUpdateInput,
-	guestSessionId: string | undefined,
 	flowLabel: string,
 	expectedAmountReceived?: number | null,
 	expectedCurrency?: string | null,
@@ -519,38 +519,41 @@ async function processOrderAtomically(
 		);
 	}
 
-	// 6. Clear cart after successful payment (logged-in OR guest)
+	// 6. Le vidage du panier N'A PLUS LIEU ICI.
 	//
-	// [[CART-DISCOUNT-003]] On purge AUSSI le code promo appliqué au panier, comme
-	// le fait `clear-cart`. Ne vider que les `cartItem` laissait
-	// `appliedDiscountCode`/`discountAmountCache` en place : le prochain panier
-	// repartait avec un code déjà consommé, désormais repris automatiquement au
-	// checkout (cf. [[CART-DISCOUNT-002]]).
-	const cartScope = order.userId
-		? { userId: order.userId }
-		: guestSessionId
-			? { sessionId: guestSessionId }
-			: null;
-
-	if (cartScope) {
-		await tx.cartItem.deleteMany({ where: { cart: cartScope } });
-		await tx.cart.updateMany({
-			where: cartScope,
-			data: { appliedDiscountCode: null, discountAmountCache: null },
-		});
-		logger.info(
-			`🧹 [WEBHOOK] Cart cleared for ${
-				order.userId ? `user ${order.userId}` : `guest session ${guestSessionId}`
-			} after successful payment (${flowLabel})`,
-			{ service: "webhook" },
-		);
-	}
+	// Depuis le passage du panier en cookie (2026-08-04), il n'y a plus de table
+	// `Cart` à purger — et un webhook Stripe est un appel serveur-à-serveur, donc
+	// sans aucun cookie du client. Cette étape supprimait les `CartItem` et
+	// remettait `appliedDiscountCode`/`discountAmountCache` à NULL
+	// ([[CART-DISCOUNT-003]]) ; les deux sont désormais portés par le cookie `cart`
+	// et partent ensemble à sa suppression.
+	//
+	// Le vidage est repris par `clearCartAfterOrder`, déclenché au montage de
+	// `/paiement/confirmation` (seule surface qui a la main sur le cookie). Angle
+	// mort assumé : un client qui ne revient jamais sur cette page garde son
+	// cookie — cf. la JSDoc de l'action.
 
 	logger.info(`✅ [WEBHOOK] Order processed successfully (${flowLabel}): ${order.orderNumber}`, {
 		service: "webhook",
 	});
 
 	return mapToOrderWithItems(order);
+}
+
+/**
+ * `PaymentIntent.latest_charge` → id de Charge, sans appel réseau.
+ *
+ * Stripe n'expand pas `latest_charge` par défaut : sur un PI de webhook c'est une
+ * STRING (l'id), pas un objet — exactement ce qu'on veut stocker. Le cas objet n'est
+ * couvert que pour un appelant qui aurait expandé. Ne JAMAIS retrieve la Charge ici :
+ * `extractPaymentMethodFromPaymentIntent` le fait déjà côté handler pour lire
+ * `payment_method_details`, et un second aller-retour Stripe dans la transaction
+ * d'encaissement mangerait le budget de `TX_TIMEOUT_LONG` pour une donnée déjà en main.
+ */
+function readChargeId(paymentIntent: Stripe.PaymentIntent): string | null {
+	const latest = paymentIntent.latest_charge;
+	if (typeof latest === "string") return latest;
+	return latest?.id ?? null;
 }
 
 /**
@@ -575,6 +578,8 @@ export async function processOrderFromPaymentIntent(
 		paymentIntent.amount_received,
 	);
 
+	const stripeChargeId = readChargeId(paymentIntent);
+
 	return prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			return processOrderAtomically(
@@ -591,14 +596,13 @@ export async function processOrderFromPaymentIntent(
 					paymentStatus: "PAID",
 					paidAt: new Date(),
 					stripePaymentIntentId: paymentIntent.id,
-					stripeCustomerId:
-						typeof paymentIntent.customer === "string" ? paymentIntent.customer : null,
+					// Spread conditionnel, comme `paymentMethod` juste en dessous : un PI
+					// sans `latest_charge` (PI succeeded sans capture — cas rare tracé par
+					// `extractPaymentMethodFromPaymentIntent`) ne doit pas REMETTRE la
+					// colonne à NULL sur une commande où un passage antérieur l'avait posée.
+					...(stripeChargeId !== null && { stripeChargeId }),
 					...(paymentMethod !== undefined && { paymentMethod }),
 				},
-				// Zod boundary : guestSessionId malformé droppé (fail-open par champ)
-				parsePaymentIntentMetadata(paymentIntent.metadata, {
-					paymentIntentId: paymentIntent.id,
-				}).guestSessionId,
 				"PI flow",
 				paymentIntent.amount_received,
 				paymentIntent.currency,

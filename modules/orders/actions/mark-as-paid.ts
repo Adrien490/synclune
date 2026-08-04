@@ -181,7 +181,7 @@ export async function markAsPaid(
 			// Miroir de getOrderPermissions().canMarkAsPaid : seul PENDING/PROCESSING
 			// est encaissable manuellement. Cette action était la seule du module sans
 			// précondition de statut — une commande SHIPPED/DELIVERED dont le paiement
-			// retomberait FAILED/EXPIRED aurait été ramenée à PROCESSING avec
+			// retomberait FAILED aurait été ramenée à PROCESSING avec
 			// re-décrément de stock (audit 2026-08-01, P3 — seul trou du graphe).
 			if (found.status !== OrderStatus.PENDING && found.status !== OrderStatus.PROCESSING) {
 				return { ...found, _error: "not_markable" as const };
@@ -202,19 +202,16 @@ export async function markAsPaid(
 				return { ...found, _error: "no_stripe_proof" as const };
 			}
 
-			// ORD-BIZ-004 : recovery FAILED/EXPIRED → PAID autorisée (paiement
+			// ORD-BIZ-004 : recovery FAILED → PAID autorisée (paiement
 			// bancaire manuel après échec). Safety guard : refuser s'il existe
 			// déjà un Refund non-terminal (sinon on autorise mark-as-paid + le
 			// Refund finalise plus tard = bug comptable).
-			const isRecovery =
-				found.paymentStatus === PaymentStatus.FAILED ||
-				found.paymentStatus === PaymentStatus.EXPIRED;
+			const isRecovery = found.paymentStatus === PaymentStatus.FAILED;
 			if (isRecovery) {
 				const existingRefund = await tx.refund.findFirst({
 					where: {
 						orderId: id,
 						status: { in: ["PENDING", "APPROVED", "COMPLETED"] },
-						deletedAt: null,
 					},
 					select: { id: true },
 				});
@@ -227,7 +224,7 @@ export async function markAsPaid(
 			// Flow Elements : le stock n'est JAMAIS décrémenté avant le passage à PAID
 			// (order-creation vérifie FOR UPDATE mais ne décrémente pas ; le décrément
 			// a lieu dans processOrderFromPaymentIntent au webhook `payment_intent.succeeded`).
-			// Une commande PENDING/FAILED/EXPIRED — seuls états recoverables ici — a donc
+			// Une commande PENDING/FAILED — seuls états recoverables ici — a donc
 			// toujours son stock à décrémenter au moment du mark-as-paid manuel.
 			const stockAdjusted = found.items.length > 0;
 			/** SKU décrémentés — sert l'invalidation de cache post-commit. */
@@ -362,7 +359,7 @@ export async function markAsPaid(
 			}
 
 			// Audit trail (Best Practice Stripe 2025). ORD-BIZ-004 :
-			// metadata.recoveredFrom flag recovery FAILED/EXPIRED → PAID.
+			// metadata.recoveredFrom flag recovery FAILED → PAID.
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "PAID",

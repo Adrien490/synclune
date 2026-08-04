@@ -147,6 +147,9 @@ export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) 
 															spellCheck={false}
 															enterKeyHint="send"
 															maxLength={30}
+															// Compteur : un code collé plus long que 30 caractères est
+															// tronqué par `maxLength` sans aucun autre signal.
+															showCounter
 															onKeyDown={(e: React.KeyboardEvent) => {
 																if (e.key === "Enter") {
 																	e.preventDefault();

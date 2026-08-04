@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 /**
  * @regression order-address-snapshot-immutability-2026-05-28
  *
- * Garantit que les snapshots adresses sur Order (`shipping*`, `billing*`) restent
+ * Garantit que les snapshots adresses sur Order (`shipping*`) restent
  * isolés du modèle `Address` du client. Une mise à jour d'Address ne doit jamais
  * propager vers les Order historiques (Art. L102 B LPF — facture comme données
  * figées). Une commande créée en mars avec adresse X doit rester avec adresse X
@@ -24,7 +24,6 @@ import { describe, expect, it } from "vitest";
  *  - `update-order-shipping-address.ts` : correction admin pre-shipment uniquement
  *    (bloque si `fulfillmentStatus IN (SHIPPED, DELIVERED, RETURNED)`), audit trail
  *    `ADDRESS_UPDATED` obligatoire — fix typo livraison avant expédition.
- *  - `update-order-billing-address.ts` : correction admin pre-shipment, idem.
  *  - `anonymize-user.service.ts` : anonymisation RGPD (droit à l'oubli Art. 17 GDPR),
  *    remplace PII par "X" / "Adresse supprimée" — conserve l'audit comptable
  *    (montants/dates) mais purge l'identité.
@@ -82,14 +81,6 @@ const ADDRESS_FIELDS = [
 	"shippingCountry",
 	"shippingPhone",
 	// Billing snapshot
-	"billingFirstName",
-	"billingLastName",
-	"billingAddress1",
-	"billingAddress2",
-	"billingPostalCode",
-	"billingCity",
-	"billingCountry",
-	"billingPhone",
 ];
 
 /**
@@ -140,7 +131,7 @@ function findInlineAddressWritesInOrderData(content: string): boolean {
 }
 
 describe("Facturation — snapshots adresses Order immuables (Invariant #5)", () => {
-	it("only allowlisted services inline shipping*/billing* in an Order data block", () => {
+	it("only allowlisted services inline shipping* in an Order data block", () => {
 		const writers = allSourceFiles
 			.filter((f) => findInlineAddressWritesInOrderData(readFileSync(f, "utf-8")))
 			.map(relPath)
@@ -176,10 +167,7 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 		// `data: <variableName>` (jamais inline). Si quelqu'un refactore vers
 		// `data: { shippingFirstName: ... }` inline, le test précédent l'attrapera
 		// comme nouveau writer → forcera mise à jour de l'allowlist.
-		const actions = [
-			"modules/orders/actions/update-order-shipping-address.ts",
-			"modules/orders/actions/update-order-billing-address.ts",
-		];
+		const actions = ["modules/orders/actions/update-order-shipping-address.ts"];
 		for (const rel of actions) {
 			const content = readFileSync(join(REPO_ROOT, rel), "utf-8");
 			expect(content).toMatch(/\b(?:prisma|tx)\.order\.update\s*\(/);
@@ -194,7 +182,7 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 		// ou un script de migration qui propage Address changes vers Order.shipping*.
 		// Aucun use case légitime — toute "sync" doit créer une NOUVELLE Order via checkout.
 		const pattern =
-			/orders\s*:\s*\{\s*(?:update|updateMany|upsert)[\s\S]{0,500}?\b(?:shippingFirstName|shippingAddress1|billingFirstName|billingAddress1)\b/;
+			/orders\s*:\s*\{\s*(?:update|updateMany|upsert)[\s\S]{0,500}?\b(?:shippingFirstName|shippingAddress1)\b/;
 		const offenders = allSourceFiles
 			.filter((f) => {
 				const content = readFileSync(f, "utf-8");
@@ -214,7 +202,6 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 		// poser un audit log.
 		const actionFiles = [
 			"modules/orders/actions/update-order-shipping-address.ts",
-			"modules/orders/actions/update-order-billing-address.ts",
 			// Writer client (KI-001) : même exigence d'audit trail que les 2 actions admin.
 			"modules/orders/services/update-pending-order-shipping-snapshot.service.ts",
 		];

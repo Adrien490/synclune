@@ -157,8 +157,8 @@ describe("getReturnIneligibilityReason", () => {
 			expect(getReturnIneligibilityReason(order)).toBe("ALREADY_REQUESTED");
 		});
 
-		it("should return null when only REJECTED refunds exist", () => {
-			const order = makeOrder({ refunds: [{ status: "REJECTED" }] });
+		it("should return null when only CANCELLED refunds exist", () => {
+			const order = makeOrder({ refunds: [{ status: "CANCELLED" }] });
 			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
@@ -169,14 +169,14 @@ describe("getReturnIneligibilityReason", () => {
 
 		it("should return ALREADY_REQUESTED when one refund among many is PENDING", () => {
 			const order = makeOrder({
-				refunds: [{ status: "REJECTED" }, { status: "COMPLETED" }, { status: "PENDING" }],
+				refunds: [{ status: "CANCELLED" }, { status: "COMPLETED" }, { status: "PENDING" }],
 			});
 			expect(getReturnIneligibilityReason(order)).toBe("ALREADY_REQUESTED");
 		});
 
 		it("should return ALREADY_REQUESTED when one refund among many is APPROVED", () => {
 			const order = makeOrder({
-				refunds: [{ status: "REJECTED" }, { status: "APPROVED" }],
+				refunds: [{ status: "CANCELLED" }, { status: "APPROVED" }],
 			});
 			expect(getReturnIneligibilityReason(order)).toBe("ALREADY_REQUESTED");
 		});

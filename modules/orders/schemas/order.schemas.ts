@@ -578,7 +578,8 @@ export const updateOrderCustomerInfoSchema = z.object({
 	id: z.cuid2(),
 	customerEmail: emailSchema,
 	customerName: z.string().min(1).max(100),
-	customerPhone: phoneSchema.optional().or(z.literal("")),
+	// Pas de téléphone ici : il vit dans `shippingPhone` (capté au checkout,
+	// obligatoire) et s'édite avec l'adresse de livraison.
 });
 
 /**
@@ -619,40 +620,12 @@ export const updateOrderShippingAddressSchema = z.object({
 	shippingPostalCode: postalCodeSchema,
 	shippingCity: citySchema,
 	shippingCountry: shippingCountrySchema.default(ADDRESS_CONSTANTS.DEFAULT_COUNTRY),
+	// Seul champ éditable portant le téléphone du client depuis le retrait de
+	// `Order.customerPhone` (2026-08-04) : sans lui, une faute de frappe sur le
+	// numéro donné au transporteur ne serait plus corrigeable nulle part.
+	shippingPhone: phoneSchema.optional().or(z.literal("")),
 });
 
-/**
- * Schema for updating the billing address of an order before invoice generation
- * Admin only - used to correct address errors before fiscal invoice (Art. 286 CGI)
- */
-export const updateOrderBillingAddressSchema = z
-	.object({
-		id: z.cuid2(),
-		billingSameAsShipping: z.boolean(),
-		// Mêmes briques que l'adresse de livraison ci-dessus, toutes optionnelles :
-		// c'est le refine plus bas qui exige le bloc complet quand la facturation
-		// diverge de la livraison.
-		billingFirstName: nameFieldSchema.optional(),
-		billingLastName: nameFieldSchema.optional(),
-		billingAddress1: addressLineSchema.optional(),
-		billingAddress2: addressLineOptionalSchema.or(z.literal("")),
-		billingPostalCode: postalCodeSchema.optional(),
-		billingCity: citySchema.optional(),
-		billingCountry: shippingCountrySchema.optional(),
-		billingPhone: phoneSchema.optional(),
-	})
-	.refine(
-		(data) =>
-			data.billingSameAsShipping ||
-			(data.billingFirstName &&
-				data.billingLastName &&
-				data.billingAddress1 &&
-				data.billingPostalCode &&
-				data.billingCity &&
-				data.billingCountry &&
-				data.billingPhone),
-		{
-			message: "Tous les champs de facturation sont requis si l'adresse diffère de la livraison.",
-			path: ["billingSameAsShipping"],
-		},
-	);
+// Il n'existe PAS de schéma d'adresse de facturation : en B2C de vente à
+// distance, l'adresse de facturation est l'adresse de livraison ci-dessus, et
+// c'est elle que le PDF imprime sous « Facturé à » (cf. `buildBillingAddress`).

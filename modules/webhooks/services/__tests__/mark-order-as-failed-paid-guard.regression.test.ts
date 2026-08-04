@@ -10,7 +10,7 @@
  *  2. fenêtre read-committed : un `payment_intent.succeeded` concurrent
  *     commitant PAID entre la lecture et l'écriture était écrasé.
  * La garde est désormais ATOMIQUE : `updateMany` conditionnel
- * `paymentStatus: { in: ["PENDING", "EXPIRED"] }` — le prédicat est ré-évalué
+ * `paymentStatus: "PENDING"` — le prédicat est ré-évalué
  * au lock de ligne. Un blocage PAID→FAILED remonte en Sentry warning (ce chemin
  * ne doit jamais se produire : bug appelant ou race à investiguer).
  */
@@ -156,7 +156,7 @@ describe("[regression] markOrderAsFailed — garde atomique anti-PAID", () => {
 		expect(mockSentryCaptureMessage).not.toHaveBeenCalled();
 	});
 
-	it("PENDING (contrôle) → transition + release discount + audit, prédicat PENDING/EXPIRED dans le WHERE", async () => {
+	it("PENDING (contrôle) → transition + release discount + audit, prédicat PENDING dans le WHERE", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
 		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 		mockReleaseOrderDiscountUsageTx.mockResolvedValue(["disc_1"]);
@@ -167,7 +167,7 @@ describe("[regression] markOrderAsFailed — garde atomique anti-PAID", () => {
 		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
 			where: {
 				id: "order-ok",
-				paymentStatus: { in: ["PENDING", "EXPIRED"] },
+				paymentStatus: "PENDING",
 				deletedAt: null,
 			},
 			data: expect.objectContaining({

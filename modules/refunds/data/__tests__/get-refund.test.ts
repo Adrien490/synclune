@@ -86,7 +86,6 @@ function makeRefund(overrides: Record<string, unknown> = {}) {
 		status: "PENDING",
 		failureReason: null,
 		note: null,
-		createdBy: "admin@example.com",
 		processedAt: null,
 		createdAt: new Date("2024-01-15"),
 		updatedAt: new Date("2024-01-15"),
@@ -172,16 +171,6 @@ describe("getRefundById", () => {
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ id: "refund-cuid-999" }),
-			}),
-		);
-	});
-
-	it("includes notDeleted filter in where clause", async () => {
-		await getRefundById({ id: "refund-cuid-001" });
-
-		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ deletedAt: null }),
 			}),
 		);
 	});

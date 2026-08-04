@@ -4,7 +4,7 @@
  * EINV-TEST-011 — Immutabilité facture après mutation Address/User.
  *
  * Invariant 5 (CLAUDE.md §Facturation) : Snapshots adresses figés sur Order
- * (`billing*`, `shipping*`) au checkout. Le modèle `Address` ou `User` du
+ * (`shipping*`) au checkout. Le modèle `User` du
  * client peut évoluer indépendamment (changement nom, déménagement) sans
  * affecter la facture archivée Art. L102 B LPF.
  *
@@ -172,7 +172,7 @@ describeIntegration(
 			expect(data.shippingAddress.countryCode).toBe("FR");
 		});
 
-		it("billing distinct du shipping reste figé même si le User est supprimé (soft delete)", async () => {
+		it("l'adresse de facturation (= le shipping figé) survit à la suppression du User", async () => {
 			const user = await createTestUser();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
@@ -190,14 +190,6 @@ describeIntegration(
 					shippingCity: "Paris",
 					shippingCountry: "FR",
 					shippingPhone: "+33600000000",
-					billingSameAsShipping: false,
-					billingFirstName: "Bill",
-					billingLastName: "Side",
-					billingAddress1: "5 av billing",
-					billingPostalCode: "75008",
-					billingCity: "Paris",
-					billingCountry: "FR",
-					billingPhone: "+33600000001",
 					status: OrderStatus.PROCESSING,
 					paymentStatus: PaymentStatus.PAID,
 					paidAt: new Date(),
@@ -234,8 +226,11 @@ describeIntegration(
 			const data = buildInvoiceData(orderAfter);
 
 			// Billing reste figé
-			expect(data.billingAddress.line1).toBe("5 av billing");
-			expect(data.billingAddress.postalCode).toBe("75008");
+			// Depuis le retrait des colonnes `billing*` (2026-08-04), l'adresse de
+			// facturation EST le snapshot d'expédition figé sur la commande — c'est
+			// lui qui doit survivre à la disparition du User (Art. L102 B LPF).
+			expect(data.billingAddress).toEqual(data.shippingAddress);
+			expect(data.billingAddress.line1).toBe("1 rue ship");
 
 			// Shipping aussi
 			expect(data.shippingAddress.line1).toBe("1 rue ship");

@@ -12,7 +12,6 @@ export function OrderItemsCard({
 	subtotal,
 	discountAmount,
 	shippingCost,
-	taxAmount,
 	total,
 }: OrderItemsCardProps) {
 	return (
@@ -99,12 +98,8 @@ export function OrderItemsCard({
 						<span className="text-muted-foreground">Livraison</span>
 						<span>{shippingCost === 0 ? "Gratuite" : formatEuro(shippingCost)}</span>
 					</div>
-					{taxAmount > 0 && (
-						<div className="flex justify-between text-sm">
-							<span className="text-muted-foreground">TVA</span>
-							<span>{formatEuro(taxAmount)}</span>
-						</div>
-					)}
+					{/* Pas de ligne TVA : franchise en base (Art. 293 B CGI) — la mention
+					    d'exonération est portée par le PDF de facture, pas par cette carte. */}
 					<Separator />
 					<div className="flex justify-between text-lg font-semibold">
 						<span>Total</span>

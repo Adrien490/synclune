@@ -34,7 +34,6 @@ export interface OrderItemsCardProps {
 	subtotal: number;
 	discountAmount: number;
 	shippingCost: number;
-	taxAmount: number;
 	total: number;
 }
 

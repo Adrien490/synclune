@@ -42,7 +42,6 @@ vi.mock("@/modules/orders/constants/status-display", () => ({
 		PENDING: "En attente",
 		PAID: "Payée",
 		FAILED: "Échouée",
-		EXPIRED: "Expirée",
 		PARTIALLY_REFUNDED: "Partiellement remboursée",
 		REFUNDED: "Remboursée",
 	},
@@ -50,7 +49,6 @@ vi.mock("@/modules/orders/constants/status-display", () => ({
 		PENDING: "warning",
 		PAID: "success",
 		FAILED: "destructive",
-		EXPIRED: "secondary",
 		PARTIALLY_REFUNDED: "warning",
 		REFUNDED: "secondary",
 	},
@@ -171,11 +169,6 @@ describe("OrderStatusBadges", () => {
 		it("displays 'Échouée' for FAILED payment status", () => {
 			render(<OrderStatusBadges order={createOrder("PENDING", "FAILED", "UNFULFILLED")} />);
 			expect(screen.getByText("Échouée")).toBeInTheDocument();
-		});
-
-		it("displays 'Expirée' for EXPIRED payment status", () => {
-			render(<OrderStatusBadges order={createOrder("PENDING", "EXPIRED", "UNFULFILLED")} />);
-			expect(screen.getByText("Expirée")).toBeInTheDocument();
 		});
 
 		it("displays 'Partiellement remboursée' for PARTIALLY_REFUNDED payment status", () => {

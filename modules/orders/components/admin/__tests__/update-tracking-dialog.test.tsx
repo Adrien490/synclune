@@ -34,7 +34,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: vi.fn(),
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (fn: () => void) => fn(),
 }));
 
@@ -56,12 +56,18 @@ vi.mock("@/modules/orders/hooks/use-update-tracking-form", () => ({
 			// Le numéro de suivi est rendu via `form.AppField` + `field.InputField` :
 			// le mock reproduit le contrat minimal du field component (label lié par
 			// htmlFor, input id/name = nom du champ, description sous le champ).
+			// Contrat de saisie : c'est le COMPOSANT qui porte le binding (l'appelant
+			// ne peut plus passer `onChange`, Omit du type) — représenté ici par
+			// `setFieldValue` — et l'effet de bord de l'appelant passe par
+			// `listeners.onChange` sur l'AppField.
 			AppField: ({
 				name,
 				children,
+				listeners,
 			}: {
 				name: string;
 				children: (field: Record<string, unknown>) => React.ReactNode;
+				listeners?: { onChange?: (payload: { value: string }) => void };
 			}) =>
 				children({
 					InputField: ({
@@ -77,6 +83,10 @@ vi.mock("@/modules/orders/hooks/use-update-tracking-form", () => ({
 								id={name}
 								name={name}
 								value={(mockFormStore as Record<string, any>)[name] ?? ""}
+								onChange={(e) => {
+									mockFormHook.setFieldValue(name, e.target.value);
+									listeners?.onChange?.({ value: e.target.value });
+								}}
 								{...props}
 							/>
 							{description ? <p>{description}</p> : null}

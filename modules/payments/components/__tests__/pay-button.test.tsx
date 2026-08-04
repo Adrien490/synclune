@@ -295,6 +295,55 @@ describe("PayButton", () => {
 		expect(screen.getByText("Stock insuffisant")).toBeInTheDocument();
 	});
 
+	// ─── Recharger la page sur erreur serveur (audit UI/UX 2026-08-03) ────────
+
+	it("offre « Recharger la page » sur une erreur serveur, et libère le garde beforeunload d'abord", async () => {
+		// La plupart des refus serveur (`checkout-error`) prescrivent « Actualise la
+		// page » sans fournir le contrôle : le seul chemin était F5, qui déclenche le
+		// confirm de `useUnsavedChanges`.
+		const reload = vi.fn();
+		Object.defineProperty(window, "location", {
+			configurable: true,
+			value: { ...window.location, reload },
+		});
+		const allowNavigation = vi.fn();
+		mockConfirmCheckout.mockResolvedValue({
+			success: false,
+			error: "Ton panier a changé depuis l'ouverture de cette page.",
+		});
+		render(<PayButton {...defaultProps} allowNavigation={allowNavigation} />);
+		await userEvent.click(screen.getByRole("button", { name: /Commander et payer/ }));
+
+		await userEvent.click(screen.getByRole("button", { name: "Recharger la page" }));
+
+		expect(allowNavigation).toHaveBeenCalled();
+		expect(reload).toHaveBeenCalled();
+		// Ordre : sans `allowNavigation()` d'abord, l'utilisateur doit confirmer une
+		// perte de données pour l'action qu'il vient justement de demander.
+		const allowOrder = allowNavigation.mock.invocationCallOrder[0];
+		const reloadOrder = reload.mock.invocationCallOrder[0];
+		expect(allowOrder).toBeDefined();
+		expect(reloadOrder).toBeDefined();
+		expect(allowOrder!).toBeLessThan(reloadOrder!);
+	});
+
+	it("n'offre PAS « Recharger la page » sur un refus de carte (stripe-error)", async () => {
+		// Après un refus de carte, réessayer SANS recharger est le bon chemin :
+		// l'Alert « Montant verrouillé » prend le relais, et recharger ferait perdre
+		// le formulaire (KI-002, assumé).
+		mockConfirmCheckout.mockResolvedValue({ success: true, orderId: "order-123" });
+		mockStripe.value = {
+			confirmPayment: vi.fn().mockResolvedValue({
+				error: { type: "card_error", message: "Votre carte a été refusée." },
+			}),
+		};
+		render(<PayButton {...defaultProps} />);
+		await userEvent.click(screen.getByRole("button", { name: /Commander et payer/ }));
+
+		expect(screen.getByTestId("payment-error-alert")).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Recharger la page" })).not.toBeInTheDocument();
+	});
+
 	// ─── Phase transitions ────────────────────────────────────────────────────
 
 	it("calls confirmCheckout with form data when submission succeeds up to 3DS", async () => {

@@ -24,11 +24,12 @@ import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { HistorySource, InvoiceStatus, RefundStatus } from "@/app/generated/prisma/client";
 
 /**
- * ORD-REFUND-AUDIT-004 : fenêtre de grâce pour SAGA admin in-flight.
- * Si processRefund (admin) est entre Step 2.5 (stripeRefundId persisté) et
- * Step 3 (finalize transaction), le webhook refund.updated arrive parfois
- * AVANT la fin de Step 3. Sans guard, updateRefundStatus marque COMPLETED →
- * Step 3 abort → restock + audit ADMIN perdus.
+ * ORD-REFUND-AUDIT-004 : fenêtre de grâce pour une finalisation concurrente
+ * in-flight (héritage du SAGA processRefund, parti au Lot 2). Si un autre
+ * chemin (tâche Maintenance reconcile-refunds, redélivrance) est en train de
+ * finaliser, le webhook refund.updated peut arriver AVANT son commit ; sans
+ * guard, updateRefundStatus marquerait COMPLETED → la finalisation concurrente
+ * abort → avoir + audit perdus.
  */
 const SAGA_IN_FLIGHT_GRACE_MS = 30_000;
 
@@ -190,7 +191,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 					// comptable (avoir complémentaire vs nette) est un arbitrage hors code →
 					// on alerte plutôt que de sur-créditer silencieusement.
 					const partialCreditNoteCount = await prisma.refund.count({
-						where: { orderId: order.id, creditNoteNumber: { not: null }, ...notDeleted },
+						where: { orderId: order.id, creditNoteNumber: { not: null } },
 					});
 					if (partialCreditNoteCount > 0) {
 						Sentry.withScope((scope) => {
@@ -436,10 +437,11 @@ export async function handleRefundUpdated(
 			return { success: true, skipped: true, reason: "Refund not found in database" };
 		}
 
-		// ORD-REFUND-AUDIT-004 : skip si SAGA admin in-flight (Step 2.5 a posé
-		// stripeRefundId mais Step 3 n'a pas encore commit). Sans ce guard, la
-		// transition APPROVED→COMPLETED par le webhook précède Step 3 → restock
-		// + audit ADMIN perdus. Le SAGA Step 3 (ou le cron reconcile) finalisera.
+		// ORD-REFUND-AUDIT-004 : skip si une finalisation concurrente vient de
+		// toucher la ligne (APPROVED + processedAt null + update tout frais). Sans
+		// ce guard, la transition APPROVED→COMPLETED par ce webhook ferait abort
+		// la finalisation concurrente → avoir + audit perdus. L'autre chemin (ou
+		// la tâche Maintenance reconcile-refunds) finalisera.
 		const sinceUpdate = Date.now() - refund.updatedAt.getTime();
 		if (
 			refund.status === RefundStatus.APPROVED &&
@@ -460,13 +462,12 @@ export async function handleRefundUpdated(
 		if (refund.status !== newStatus) {
 			// P1-C (audit « Admin commandes » 2026-08-01) : la transition → COMPLETED
 			// d'un refund resté APPROVED — le chemin nominal d'un refund parti en
-			// `pending` chez Stripe (processRefund sort avant Step 3 en déléguant à
-			// ce webhook) — doit dérouler la MÊME finalisation que le SAGA admin :
-			// restock + ledger, paymentStatus, audit, avoir Art. 272-I, email.
+			// `pending` chez Stripe — doit dérouler la finalisation COMPLÈTE :
+			// paymentStatus, audit, avoir Art. 272-I, email.
 			// `updateRefundStatus` ne posait que status+processedAt — et `processedAt`
-			// non nul excluait le refund à jamais du cron reconcile-refunds
-			// (candidats `processedAt: null`) : stock jamais recrédité, avoir
-			// manquant, aucun email, aucune alerte.
+			// non nul excluait le refund à jamais de la tâche reconcile-refunds
+			// (candidats `processedAt: null`) : avoir manquant, aucun email,
+			// aucune alerte.
 			if (newStatus === RefundStatus.COMPLETED) {
 				const outcome = await finalizeRefundCompletion({
 					refundId: refund.id,
@@ -496,8 +497,8 @@ export async function handleRefundUpdated(
 						{
 							type: "INVALIDATE_CACHE",
 							// Le service retourne TOUS les tags (refund + commande —
-							// paymentStatus a bougé — + stock restocké) ; il n'invalide
-							// rien lui-même (`updateTag` throw hors Server Action, E872).
+							// paymentStatus a bougé) ; il n'invalide rien lui-même
+							// (`updateTag` throw hors Server Action, E872).
 							tags: outcome.tags,
 						},
 					],

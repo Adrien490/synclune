@@ -212,7 +212,7 @@ describe("useAddressAutocomplete", () => {
 
 		await act(async () => {});
 
-		expect(result.current.error).toBe("La recherche d'adresses a echoue. Reessayez.");
+		expect(result.current.error).toBe("La recherche d'adresses a échoué. Réessaie.");
 	});
 
 	it("sets error to null when result.error is falsy", async () => {

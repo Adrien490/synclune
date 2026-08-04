@@ -1,10 +1,8 @@
 import type Stripe from "stripe";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { generateInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
 import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
 import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
-import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 import type { PostWebhookTask } from "../types/webhook.types";
 import type { OrderWithItems } from "../types/checkout.types";
 import { getBaseUrl } from "@/shared/constants/urls";
@@ -27,19 +25,12 @@ export function buildPostCheckoutTasksFromPI(
 	const invoiceUrl = buildInvoiceUrl(baseUrl, order.id, order.orderNumber);
 
 	// 1. Cache invalidation
+	//
+	// ⚠️ Plus AUCUN tag panier : depuis le passage du panier en cookie
+	// (2026-08-04), le panier n'a plus d'entrée de cache par identité à invalider.
+	// Sa seule dépendance serveur est la matérialisation des SKUs (`fetchCartSkus`),
+	// couverte par les tags catalogue posés juste en dessous.
 	const cacheTags: string[] = [...getOrderInvalidationTags(order.id)];
-
-	if (order.userId) {
-		cacheTags.push(...getCartInvalidationTags(order.userId, undefined));
-	} else {
-		// Zod boundary : guestSessionId malformé droppé (fail-open par champ)
-		const guestSessionId = parsePaymentIntentMetadata(paymentIntent.metadata, {
-			paymentIntentId: paymentIntent.id,
-		}).guestSessionId;
-		if (guestSessionId) {
-			cacheTags.push(...getCartInvalidationTags(undefined, guestSessionId));
-		}
-	}
 
 	// CACHE-CATALOG-002 : le décrément de stock doit invalider la page produit
 	// (tag `product-${slug}`, qui embarque skus.inventory) et l'inventaire admin,

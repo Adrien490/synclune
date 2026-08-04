@@ -43,13 +43,12 @@ export async function updateOrderCustomerInfo(
 			id: safeFormGet(formData, "id"),
 			customerEmail: safeFormGet(formData, "customerEmail"),
 			customerName: safeFormGet(formData, "customerName"),
-			customerPhone: safeFormGet(formData, "customerPhone") ?? undefined,
 		};
 
 		const validated = validateInput(updateOrderCustomerInfoSchema, rawData);
 		if ("error" in validated) return validated.error;
 
-		const { id, customerEmail, customerName, customerPhone } = validated.data;
+		const { id, customerEmail, customerName } = validated.data;
 
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
@@ -61,7 +60,6 @@ export async function updateOrderCustomerInfo(
 					invoiceNumber: true,
 					customerEmail: true,
 					customerName: true,
-					customerPhone: true,
 				},
 			});
 
@@ -77,14 +75,12 @@ export async function updateOrderCustomerInfo(
 
 			const sanitizedEmail = sanitizeText(customerEmail).toLowerCase();
 			const sanitizedName = sanitizeText(customerName);
-			const sanitizedPhone = customerPhone ? sanitizeText(customerPhone) : null;
 
 			await tx.order.update({
 				where: { id },
 				data: {
 					customerEmail: sanitizedEmail,
 					customerName: sanitizedName,
-					customerPhone: sanitizedPhone,
 				},
 			});
 
@@ -95,7 +91,6 @@ export async function updateOrderCustomerInfo(
 			const changedFields: string[] = [];
 			if (found.customerName !== sanitizedName) changedFields.push("name");
 			if (found.customerEmail !== sanitizedEmail) changedFields.push("contactIdentity");
-			if (found.customerPhone !== sanitizedPhone) changedFields.push("contactNumber");
 
 			await createOrderAuditTx(tx, {
 				orderId: id,

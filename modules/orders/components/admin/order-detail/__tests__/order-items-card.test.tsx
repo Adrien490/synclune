@@ -46,7 +46,6 @@ function createItem(overrides = {}) {
 		quantity: 1,
 		// TVA par ligne (Phase 2A — franchise art. 293 B par défaut)
 		taxRate: 0,
-		taxAmount: 0,
 		lineTotalExcludingTax: 2500,
 		lineTotalIncludingTax: 2500,
 		taxCategoryCode: "ZB" as const,
@@ -64,7 +63,6 @@ function renderCard(itemOverrides = {}, cardOverrides = {}) {
 			subtotal={2500}
 			discountAmount={0}
 			shippingCost={500}
-			taxAmount={0}
 			total={3000}
 			{...cardOverrides}
 		/>,
@@ -80,7 +78,6 @@ describe("OrderItemsCard", () => {
 				subtotal={5000}
 				discountAmount={0}
 				shippingCost={500}
-				taxAmount={0}
 				total={5500}
 			/>,
 		);
@@ -129,7 +126,6 @@ describe("OrderItemsCard", () => {
 				subtotal={2000}
 				discountAmount={0}
 				shippingCost={0}
-				taxAmount={0}
 				total={2000}
 			/>,
 		);
@@ -143,7 +139,6 @@ describe("OrderItemsCard", () => {
 				subtotal={2500}
 				discountAmount={0}
 				shippingCost={500}
-				taxAmount={0}
 				total={3000}
 			/>,
 		);
@@ -157,7 +152,6 @@ describe("OrderItemsCard", () => {
 				subtotal={2500}
 				discountAmount={0}
 				shippingCost={0}
-				taxAmount={0}
 				total={2500}
 			/>,
 		);
@@ -171,7 +165,6 @@ describe("OrderItemsCard", () => {
 				subtotal={2000}
 				discountAmount={0}
 				shippingCost={500}
-				taxAmount={0}
 				total={2500}
 			/>,
 		);
@@ -185,7 +178,6 @@ describe("OrderItemsCard", () => {
 				subtotal={3000}
 				discountAmount={500}
 				shippingCost={0}
-				taxAmount={0}
 				total={2500}
 			/>,
 		);

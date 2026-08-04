@@ -192,11 +192,8 @@ describe("getOrderPermissions", () => {
 			).toBe(false);
 		});
 
-		it("autorise FAILED et EXPIRED (paiement jamais abouti)", () => {
+		it("autorise FAILED (paiement jamais abouti)", () => {
 			expect(getOrderPermissions({ status: "PENDING", paymentStatus: "FAILED" }).canDelete).toBe(
-				true,
-			);
-			expect(getOrderPermissions({ status: "PENDING", paymentStatus: "EXPIRED" }).canDelete).toBe(
 				true,
 			);
 		});
@@ -594,35 +591,6 @@ describe("getOrderPermissions - PARTIALLY_REFUNDED payment status", () => {
 	});
 });
 
-describe("getOrderPermissions - EXPIRED payment status", () => {
-	it("should block paid-gated permissions for PENDING + EXPIRED but allow recovery via canMarkAsPaid (ORD-BIZ-004)", () => {
-		const permissions = getOrderPermissions({
-			status: "PENDING",
-			paymentStatus: "EXPIRED",
-		});
-
-		expect(permissions.canMarkAsProcessing).toBe(false);
-		// ORD-BIZ-004 : recovery EXPIRED → PAID autorisée
-		expect(permissions.canMarkAsPaid).toBe(true);
-		expect(permissions.canRefund).toBe(false);
-		expect(permissions.canCancel).toBe(true);
-		expect(permissions.canMarkAsShipped).toBe(false);
-		expect(permissions.canMarkAsDelivered).toBe(false);
-		expect(permissions.canRevertToProcessing).toBe(false);
-	});
-
-	it("should allow canMarkAsPaid recovery for PROCESSING + EXPIRED (ORD-BIZ-004)", () => {
-		const permissions = getOrderPermissions({
-			status: "PROCESSING",
-			paymentStatus: "EXPIRED",
-		});
-
-		expect(permissions.canMarkAsShipped).toBe(false);
-		expect(permissions.canRefund).toBe(false);
-		// ORD-BIZ-004 : recovery EXPIRED → PAID autorisée
-		expect(permissions.canMarkAsPaid).toBe(true);
-		expect(permissions.canCancel).toBe(true);
-		expect(permissions.canMarkAsDelivered).toBe(false);
-		expect(permissions.canRevertToProcessing).toBe(false);
-	});
-});
+// Le bloc « EXPIRED payment status » est parti au Lot 6 avec la valeur d'enum
+// (vestige du flux Checkout Session — la recovery ORD-BIZ-004 ne couvre plus
+// que FAILED, testée ci-dessus).

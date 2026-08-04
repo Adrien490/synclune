@@ -194,7 +194,7 @@ export async function restoreStockForOrder(orderId: string): Promise<{
  * Idempotent: if the order is already FAILED, the operation is skipped.
  *
  * Garde anti-rétrogradation (audit webhooks 2026-07-02, F1) : la transition n'est
- * autorisée QUE depuis PENDING/EXPIRED, via un `updateMany` conditionnel dont le
+ * autorisée QUE depuis PENDING, via un `updateMany` conditionnel dont le
  * prédicat est ré-évalué au lock de ligne — un `findFirst` + `update` inconditionnel
  * laissait une fenêtre read-committed où un `payment_intent.succeeded` concurrent
  * commitait PAID entre la lecture et l'écriture, rétrogradant une commande payée
@@ -238,16 +238,16 @@ export async function markOrderAsFailed(
 			const updated = await tx.order.updateMany({
 				where: {
 					id: orderId,
-					paymentStatus: { in: ["PENDING", "EXPIRED"] },
+					paymentStatus: "PENDING",
 					...notDeleted,
 				},
 				data: {
 					paymentStatus: "FAILED",
 					status: "CANCELLED",
 					stripePaymentIntentId: paymentIntentId,
-					paymentFailureCode: failureDetails.code,
-					paymentDeclineCode: failureDetails.declineCode,
-					paymentFailureMessage: failureDetails.message,
+					// Le motif d'échec n'a plus de colonne dédiée : il est consigné
+					// juste en dessous dans `OrderHistory.metadata` (piste d'audit
+					// immuable), et le dashboard Stripe en reste la source autoritaire.
 				},
 			});
 
@@ -498,10 +498,10 @@ export async function markOrderAsCancelled(
  * Initie un remboursement automatique via Stripe.
  *
  * ORD-BIZ-002 : crée un `Refund` local APPROVED (avec `RefundItems` couvrant
- * tous les OrderItem, `restock=false` car le stock n'a jamais été décrémenté
- * sur ces chemins — oversell/mismatch throw avant décrément — ou est restauré
- * séparément par `restoreStockForOrder` sur `payment_intent.canceled`) AVANT
- * l'appel Stripe.
+ * tous les OrderItem — sans impact stock : il n'a jamais été décrémenté sur ces
+ * chemins (oversell/mismatch throw avant décrément), ou est restauré séparément
+ * par `restoreStockForOrder` sur `payment_intent.canceled`) AVANT l'appel
+ * Stripe.
  * `metadata.refund_id = localRefund.id` permet au webhook `charge.refunded`
  * de matcher via la branche `linkRefund` (et non `upsertDashboard`), donc
  * d'éviter la perte de traçabilité items côté DB.
@@ -541,8 +541,7 @@ export async function initiateAutomaticRefund(
 					where: {
 						orderId,
 						note: { startsWith: AUTO_REFUND_NOTE_PREFIX },
-						status: { notIn: [RefundStatus.CANCELLED, RefundStatus.REJECTED] },
-						...notDeleted,
+						status: { not: RefundStatus.CANCELLED },
 					},
 					select: { id: true, status: true, stripeRefundId: true },
 					// Déterminisme : sans `orderBy`, un reliquat de doublon historique
@@ -575,7 +574,6 @@ export async function initiateAutomaticRefund(
 								orderItemId: oi.id,
 								quantity: oi.quantity,
 								amount: oi.price * oi.quantity,
-								restock: false,
 							})),
 						},
 					},

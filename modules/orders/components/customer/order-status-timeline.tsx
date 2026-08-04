@@ -60,7 +60,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 			date: order.paidAt,
 			icon: CreditCard,
 			completed: isPaid,
-			failed: order.paymentStatus === "FAILED" || order.paymentStatus === "EXPIRED",
+			failed: order.paymentStatus === "FAILED",
 		},
 		{
 			label: "En préparation",

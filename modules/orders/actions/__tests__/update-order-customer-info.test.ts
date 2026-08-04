@@ -85,7 +85,6 @@ const validFormData = createMockFormData({
 	id: VALID_CUID,
 	customerEmail: "new@example.com",
 	customerName: "Marie Nouveau",
-	customerPhone: "0612345678",
 });
 
 describe("updateOrderCustomerInfo", () => {
@@ -102,7 +101,6 @@ describe("updateOrderCustomerInfo", () => {
 				id: VALID_CUID,
 				customerEmail: "new@example.com",
 				customerName: "Marie Nouveau",
-				customerPhone: "0612345678",
 			},
 		});
 		mockGetOrderMetadataInvalidationTags.mockReturnValue(["orders-list"]);
@@ -110,9 +108,7 @@ describe("updateOrderCustomerInfo", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
-		mockPrisma.order.findUnique.mockResolvedValue(
-			createMockOrder({ invoiceStatus: null, customerPhone: "0600000000" }),
-		);
+		mockPrisma.order.findUnique.mockResolvedValue(createMockOrder({ invoiceStatus: null }));
 		mockPrisma.order.update.mockResolvedValue({});
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
@@ -192,7 +188,6 @@ describe("updateOrderCustomerInfo", () => {
 				data: {
 					customerEmail: "new@example.com",
 					customerName: "Marie Nouveau",
-					customerPhone: "0612345678",
 				},
 			}),
 		);
@@ -204,7 +199,6 @@ describe("updateOrderCustomerInfo", () => {
 				id: VALID_CUID,
 				customerEmail: "UPPER@EXAMPLE.COM",
 				customerName: "Marie",
-				customerPhone: undefined,
 			},
 		});
 		await updateOrderCustomerInfo(undefined, validFormData);
@@ -217,25 +211,8 @@ describe("updateOrderCustomerInfo", () => {
 		);
 	});
 
-	it("sets phone to null when not provided", async () => {
-		mockValidateInput.mockReturnValue({
-			data: {
-				id: VALID_CUID,
-				customerEmail: "new@example.com",
-				customerName: "Marie",
-				customerPhone: undefined,
-			},
-		});
-		await updateOrderCustomerInfo(undefined, validFormData);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ customerPhone: null }),
-			}),
-		);
-	});
-
 	it("creates audit trail with PII-free metadata (changedFields only)", async () => {
-		// ORD-COMPLY-001 : email/name/phone strippés du metadata (exposé client).
+		// ORD-COMPLY-001 : email et nom strippés du metadata (exposé client).
 		await updateOrderCustomerInfo(undefined, validFormData);
 		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
 			mockPrisma,
@@ -244,7 +221,7 @@ describe("updateOrderCustomerInfo", () => {
 				note: "Informations client modifiées",
 				metadata: {
 					updateType: "customerInfo",
-					changedFields: expect.arrayContaining(["contactIdentity", "contactNumber"]),
+					changedFields: expect.arrayContaining(["contactIdentity"]),
 				},
 			}),
 		);

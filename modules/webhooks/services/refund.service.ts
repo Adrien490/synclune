@@ -7,7 +7,7 @@ import {
 	RefundReason,
 	RefundStatus,
 } from "@/app/generated/prisma/client";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
@@ -44,11 +44,12 @@ function mapStripeRefundReason(stripeReason: string | null | undefined): RefundR
  * ORD-BIZ-001: Alloue un montant Dashboard refund (full ou partiel) sur les
  * OrderItem de la commande au pro-rata du subtotal item / subtotal commande.
  *
- * Préserve la traçabilité comptable Art. 272-I CGI et permet à l'admin de
- * décider du restock par item plus tard. Approximation assumée pour les
- * partial refunds Dashboard : la quantity reflète la qty totale de l'item
- * (proxy "touché"), seul l'amount est pro-rata. Les items dont l'amount
- * pro-rata arrondi tombe à 0 (contrainte DB `amount > 0`) sont filtrés.
+ * Préserve la traçabilité comptable Art. 272-I CGI (le restock éventuel est un
+ * ajustement manuel de stock SKU — RefundItem.restock est parti au Lot 6).
+ * Approximation assumée pour les partial refunds Dashboard : la quantity
+ * reflète la qty totale de l'item (proxy "touché"), seul l'amount est pro-rata.
+ * Les items dont l'amount pro-rata arrondi tombe à 0 (contrainte DB
+ * `amount > 0`) sont filtrés.
  *
  * @returns liste de RefundItem prêts à create, vide si aucune allocation possible
  */
@@ -56,7 +57,7 @@ function allocateDashboardRefundItems(
 	items: Array<{ id: string; price: number; quantity: number }>,
 	refundAmount: number,
 	isFullRefund: boolean,
-): Array<{ orderItemId: string; quantity: number; amount: number; restock: boolean }> {
+): Array<{ orderItemId: string; quantity: number; amount: number }> {
 	if (items.length === 0 || refundAmount <= 0) return [];
 
 	if (isFullRefund) {
@@ -64,7 +65,6 @@ function allocateDashboardRefundItems(
 			orderItemId: oi.id,
 			quantity: oi.quantity,
 			amount: oi.price * oi.quantity,
-			restock: false,
 		}));
 	}
 
@@ -75,7 +75,7 @@ function allocateDashboardRefundItems(
 		.map((oi) => {
 			const itemSubtotal = oi.price * oi.quantity;
 			const proRata = Math.round((refundAmount * itemSubtotal) / subtotal);
-			return { orderItemId: oi.id, quantity: oi.quantity, amount: proRata, restock: false };
+			return { orderItemId: oi.id, quantity: oi.quantity, amount: proRata };
 		})
 		.filter((a) => a.amount > 0);
 
@@ -168,21 +168,18 @@ export async function syncStripeRefunds(
 		const existingRefund = existingByStripeId.get(stripeRefund.id);
 
 		if (existingRefund) {
-			// ORD-STRIPE-002: si un SAGA processRefund est en cours (Step 2.5 a
-			// posé stripeRefundId mais Step 3 n'a pas encore commit), on laisse
-			// le SAGA finaliser pour que le restock + audit trail s'appliquent
-			// dans la MÊME transaction. Si le webhook prenait COMPLETED ici,
-			// Step 3 verrait `status != APPROVED` et abort → restock perdu et
-			// le cron reconcile-refunds skip aussi (filtre status=APPROVED).
-			// Signature SAGA en cours : status=APPROVED ET processedAt=null.
+			// ORD-STRIPE-002 : un refund APPROVED avec processedAt=null attend sa
+			// finalisation COMPLÈTE (avoir Art. 272-I + email) par `refund.updated`
+			// → `finalizeRefundCompletion` (P1-C, audit 2026-08-01), avec la tâche
+			// Maintenance reconcile-refunds en filet. L'opération `updateStatus` de
+			// ce chemin-ci est MAIGRE (status seul, sans avoir/email) : si elle
+			// prenait COMPLETED ici, la finalisation verrait `status != APPROVED`
+			// et abort → avoir et email perdus.
 			//
 			// ⚠️ Skip DÉLIBÉRÉMENT inconditionnel (pas de fenêtre 30 s comme
-			// handleRefundUpdated) : l'opération `updateStatus` de ce chemin est
-			// MAIGRE (status seul, sans restock/avoir/email). Un refund parti en
-			// `pending` chez Stripe garde cette signature jusqu'à sa confirmation —
-			// sa finalisation COMPLÈTE passe par `refund.updated` →
-			// `finalizeRefundCompletion` (P1-C, audit 2026-08-01), avec le cron
-			// reconcile-refunds en filet. Élargir ce chemin-ci recréerait le trou.
+			// handleRefundUpdated) : un refund parti en `pending` chez Stripe garde
+			// cette signature jusqu'à sa confirmation. Élargir ce chemin-ci
+			// recréerait le trou.
 			if (existingRefund.status === RefundStatus.APPROVED && existingRefund.processedAt === null) {
 				logger.info(
 					`Refund ${existingRefund.id} pending admin SAGA finalization — skipping webhook updateStatus`,
@@ -228,7 +225,6 @@ export async function syncStripeRefunds(
 						amount: stripeRefund.amount,
 						status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] },
 						stripeRefundId: null,
-						...notDeleted,
 					},
 					select: { id: true },
 				});
@@ -276,9 +272,9 @@ export async function syncStripeRefunds(
 				for (const op of operations) {
 					switch (op.type) {
 						case "updateStatus": {
-							// ORD-REFUND-005: guard sur status non-terminal + deletedAt
-							// pour éviter de ressusciter un refund CANCELLED soft-deleted
-							// si Stripe traite quand même le refund après cancel admin.
+							// ORD-REFUND-005: guard sur status non-terminal pour éviter de
+							// ressusciter un refund CANCELLED (état terminal) si Stripe
+							// traite quand même le refund après une annulation dashboard.
 							const refundForAudit = await tx.refund.findUnique({
 								where: { id: op.id },
 								select: { amount: true, stripeRefundId: true, status: true },
@@ -287,13 +283,12 @@ export async function syncStripeRefunds(
 								where: {
 									id: op.id,
 									status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] },
-									deletedAt: null,
 								},
 								data: { status: RefundStatus.COMPLETED, processedAt: now },
 							});
 							if (updated.count === 0) {
 								logger.error(
-									`[WEBHOOK] Refund ${op.id} is terminal/deleted but Stripe marks succeeded — orphan refund`,
+									`[WEBHOOK] Refund ${op.id} is terminal but Stripe marks succeeded — orphan refund`,
 									undefined,
 									{ service: "webhook", refundId: op.id },
 								);
@@ -323,11 +318,10 @@ export async function syncStripeRefunds(
 						}
 
 						case "linkRefund": {
-							// ORD-REFUND-005: guard sur status non-terminal + deletedAt
-							// pour éviter de ressusciter un refund CANCELLED soft-deleted.
-							// CANCELLED est terminal (state machine), donc si l'admin a
-							// annulé entre Step 2 (Stripe call) et l'arrivée du webhook,
-							// on doit signaler le refund Stripe orphelin.
+							// ORD-REFUND-005: guard sur status non-terminal — CANCELLED est
+							// terminal (state machine), donc si le refund a été annulé côté
+							// Stripe entre sa création et l'arrivée du webhook, on doit
+							// signaler le refund Stripe orphelin.
 							const refundForAudit = await tx.refund.findUnique({
 								where: { id: op.id },
 								select: { amount: true, status: true },
@@ -338,7 +332,6 @@ export async function syncStripeRefunds(
 									status: {
 										in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.FAILED],
 									},
-									deletedAt: null,
 								},
 								data: {
 									stripeRefundId: op.stripeRefundId,
@@ -348,7 +341,7 @@ export async function syncStripeRefunds(
 							});
 							if (updated.count === 0) {
 								logger.error(
-									`[WEBHOOK] Refund ${op.id} is CANCELLED/deleted but Stripe processed refund ${op.stripeRefundId} — orphan refund, manual intervention required`,
+									`[WEBHOOK] Refund ${op.id} is CANCELLED but Stripe processed refund ${op.stripeRefundId} — orphan refund, manual intervention required`,
 									undefined,
 									{
 										service: "webhook",
@@ -386,10 +379,9 @@ export async function syncStripeRefunds(
 							// ORD-REFUND-003 / ORD-BIZ-001: refunds Dashboard arrivent
 							// sans breakdown article par article. On crée systématiquement
 							// des RefundItem proxy pour préserver la traçabilité comptable
-							// (Art. 272-I CGI) et permettre un restock admin manuel — au
-							// pro-rata du montant pour un partial refund, full montant
-							// pour un total. restock=false par défaut dans les deux cas :
-							// décision admin manuelle requise pour Dashboard refunds.
+							// (Art. 272-I CGI) — au pro-rata du montant pour un partial
+							// refund, full montant pour un total. Le restock éventuel est
+							// une décision admin manuelle (ajustement de stock SKU).
 							const existing = await tx.refund.findUnique({
 								where: { stripeRefundId: op.stripeRefundId },
 								select: { id: true },

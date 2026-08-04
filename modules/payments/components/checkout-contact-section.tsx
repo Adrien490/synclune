@@ -17,8 +17,7 @@ import { CheckoutSection } from "./checkout-section";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
 import { logout } from "@/modules/auth/actions/logout";
 import { toast } from "@/shared/utils/toast";
-import { Info, Mail } from "lucide-react";
-import Link from "next/link";
+import { Mail } from "lucide-react";
 
 interface CheckoutContactSectionProps {
 	form: CheckoutFormInstance;
@@ -67,32 +66,21 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 							},
 						}}
 					>
+						{/* Pas de lien « Connecte-toi » ici : /connexion est réservée à
+						    l'administration (plus de compte client), et le suivi de commande
+						    passe par le lien tokenisé de l'email de confirmation. */}
 						{(field) => (
-							<div className="space-y-2">
-								<field.InputField
-									label="Adresse email"
-									type="email"
-									required
-									inputMode="email"
-									autoComplete="email"
-									enterKeyHint="next"
-									spellCheck={false}
-									autoCorrect="off"
-								/>
-								<div className="text-muted-foreground flex items-start gap-1.5 text-sm">
-									<Info className="mt-0.5 size-3.5 shrink-0" />
-									<span>
-										Tu as déjà un compte ?{" "}
-										<Link
-											href="/connexion?callbackURL=/paiement"
-											className="text-foreground font-medium underline hover:no-underline"
-										>
-											Connecte-toi
-										</Link>{" "}
-										pour retrouver tes commandes et leur suivi
-									</span>
-								</div>
-							</div>
+							<field.InputField
+								label="Adresse email"
+								type="email"
+								required
+								inputMode="email"
+								autoComplete="email"
+								enterKeyHint="next"
+								spellCheck={false}
+								autoCorrect="off"
+								autoCapitalize="none"
+							/>
 						)}
 					</form.AppField>
 				)}

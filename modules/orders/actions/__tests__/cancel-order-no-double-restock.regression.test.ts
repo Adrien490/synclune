@@ -1,27 +1,23 @@
 /**
  * @regression STOCK-DOUBLE-CREDIT-001
  *
- * Garantit que `cancelOrder` crée son Refund automatique avec `restock: false`.
+ * Garantit que le Refund automatique créé par `cancelOrder` ne porte AUCUNE
+ * instruction de restock.
  *
  * `cancelOrder` restaure le stock LUI-MÊME, dans sa transaction, quand la commande
  * a réellement décrémenté (`paymentStatus` PAID/PARTIALLY_REFUNDED) et n'est pas
- * encore expédiée (`fulfillmentStatus` UNFULFILLED/PROCESSING). Il crée ensuite un
- * `Refund` APPROVED que l'admin traite via `processRefund` — chemin que le message
- * de succès lui indique explicitement (« à traiter via la fiche remboursement »).
+ * encore expédiée (`fulfillmentStatus` UNFULFILLED/PROCESSING). Historiquement il
+ * posait ensuite `restock: shouldRestoreStock` sur les `RefundItem` — le MÊME
+ * booléen que son restock inline — et la finalisation du remboursement ré-créditait
+ * le stock une seconde fois. L'inventaire dépassait le physique, et le CHECK
+ * `ProductSku_inventory_non_negative` ne borne que le plancher — survente garantie.
  *
- * Or `processRefund` ré-incrémente tout `RefundItem` à `restock: true`
- * (process-refund.ts:396-455) et sa SEULE garde est `status: APPROVED`, l'état exact
- * dans lequel `cancelOrder` le crée. Le code posait `restock: shouldRestoreStock`,
- * soit le MÊME booléen que le restock inline : le stock était donc crédité DEUX fois
- * (une à l'annulation, une au traitement du remboursement). L'inventaire dépassait
- * alors le physique, et le CHECK `ProductSku_inventory_non_negative` ne borne que le
- * plancher — d'où une survente garantie sur les ventes suivantes, invisible faute de
- * journal `StockMovement` sur les chemins commerce.
- *
- * Contrat du repo : `RefundItem.restock` est la SSOT du crédit côté `processRefund`.
- * Un writer qui restocke lui-même DOIT poser `false` — comme le font déjà
- * `mark-as-fully-refunded.ts`, `refund.service.ts` et `payment-intent.service.ts`.
- * Neutralise aussi le 3e créditeur possible, `reconcile-refunds.service.ts:749`.
+ * Depuis le Lot 6 (2026-08-03), `RefundItem.restock` est DROPPÉE et la
+ * finalisation d'un refund ne touche plus à l'inventaire : le restock inline de
+ * `cancelOrder` est l'unique créditeur du chemin d'annulation. Ce test verrouille :
+ * (1) exactement un crédit par ligne quand le restock inline a lieu, zéro sinon ;
+ * (2) le payload `RefundItem` ne porte aucun champ `restock` — sa réapparition
+ * dans la source est une régression (réintroduction du vecteur de double crédit).
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -181,7 +177,7 @@ describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock
 
 	// Le cas du bug : commande PAID non expédiée → cancelOrder restocke inline,
 	// donc le Refund qu'il crée ne doit SURTOUT pas redemander un restock.
-	it("pose restock:false sur une commande PAID non expédiée, DÉJÀ restockée inline", async () => {
+	it("ne porte aucun champ restock sur une commande PAID non expédiée, DÉJÀ restockée inline", async () => {
 		mockTx.order.findUnique.mockResolvedValue(
 			createMockOrder({
 				id: VALID_CUID,
@@ -214,15 +210,15 @@ describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock
 			}),
 		});
 
-		// …et AUCUN RefundItem ne redemande ce même crédit à processRefund.
+		// …et AUCUN RefundItem ne porte d'instruction de restock (colonne droppée).
 		const items = refundItemsFromCreateCall();
 		expect(items).toHaveLength(2);
-		expect(items.every((item) => item.restock === false)).toBe(true);
+		expect(items.every((item) => !("restock" in item))).toBe(true);
 	});
 
 	// L'invariant est inconditionnel : même quand aucun restock inline n'a lieu
-	// (articles physiquement sortis), processRefund ne doit pas en fabriquer un.
-	it("pose restock:false sur une commande PAID déjà expédiée, NON restockée inline", async () => {
+	// (articles physiquement sortis), le Refund ne doit pas en fabriquer un.
+	it("ne porte aucun champ restock sur une commande PAID déjà expédiée, NON restockée inline", async () => {
 		mockTx.order.findUnique.mockResolvedValue(
 			createMockOrder({
 				id: VALID_CUID,
@@ -245,15 +241,15 @@ describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock
 
 		const items = refundItemsFromCreateCall();
 		expect(items).toHaveLength(1);
-		expect(items[0]?.restock).toBe(false);
+		expect(items[0] && "restock" in items[0]).toBe(false);
 	});
 
 	// Garde-fou du garde-fou : les deux tests ci-dessus s'appuient sur un mock du
 	// payload. Si un refactor déplaçait la construction des RefundItem hors du
 	// `refund.create` inspecté, ils passeraient au vert sans rien vérifier. Cette
-	// assertion lit la source et interdit littéralement la réintroduction du lien
-	// entre le flag de restock et le drapeau du RefundItem.
-	it("la source de cancel-order n'associe jamais restock à shouldRestoreStock", () => {
+	// assertion lit la source et interdit littéralement la réintroduction d'une
+	// instruction de restock dans le payload.
+	it("la source de cancel-order ne pose plus aucune instruction restock", () => {
 		const source = readFileSync(
 			join(process.cwd(), "modules/orders/actions/cancel-order.ts"),
 			"utf-8",
@@ -261,9 +257,7 @@ describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock
 
 		// Le restock inline existe toujours (sinon le stock ne reviendrait jamais).
 		expect(source).toMatch(/if \(shouldRestoreStock\)/);
-		// Mais le RefundItem est figé à false.
-		expect(source).toMatch(/restock:\s*false/);
-		expect(source).not.toMatch(/restock:\s*shouldRestoreStock/);
-		expect(source).not.toMatch(/restock:\s*stockWasDecremented/);
+		// Mais plus AUCUNE clé `restock:` dans un payload (colonne droppée au Lot 6).
+		expect(source).not.toMatch(/restock:\s*(false|true|shouldRestoreStock|stockWasDecremented)/);
 	});
 });

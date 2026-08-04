@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockPrisma,
 	mockGetSession,
-	mockGetOrCreateCartSessionId,
+	mockGetOrCreateGuestSessionId,
 	mockGetCart,
 	mockCheckRateLimit,
 	mockGetClientIp,
@@ -39,7 +39,7 @@ const {
 			order: { findUnique: vi.fn() },
 		},
 		mockGetSession: vi.fn(),
-		mockGetOrCreateCartSessionId: vi.fn(),
+		mockGetOrCreateGuestSessionId: vi.fn(),
 		mockGetCart: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
@@ -72,8 +72,8 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 	getSession: mockGetSession,
 }));
 
-vi.mock("@/modules/cart/lib/cart-session", () => ({
-	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
+vi.mock("@/modules/cart/lib/guest-session", () => ({
+	getOrCreateGuestSessionId: mockGetOrCreateGuestSessionId,
 }));
 
 // CHECKOUT-CART-PARITY-001 : les lignes du client sont confrontées au panier serveur.
@@ -206,7 +206,7 @@ function setupDefaults() {
 	});
 
 	// Guest session (not used when authenticated)
-	mockGetOrCreateCartSessionId.mockResolvedValue("session-guest-abc");
+	mockGetOrCreateGuestSessionId.mockResolvedValue("session-guest-abc");
 
 	// Store closure guard: store is open
 	mockAssertStoreOpen.mockResolvedValue(null);
@@ -330,8 +330,8 @@ describe("initializePayment", () => {
 		it("should use user session to build rate limit identifier", async () => {
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
-			// Should not call getOrCreateCartSessionId for authenticated users
-			expect(mockGetOrCreateCartSessionId).not.toHaveBeenCalled();
+			// Should not call getOrCreateGuestSessionId for authenticated users
+			expect(mockGetOrCreateGuestSessionId).not.toHaveBeenCalled();
 			// Identifiant PRÉFIXÉ par l (F3) : un `user:<id>` nu partageait son
 			// compteur avec confirmCheckout, le panier, les favoris et les codes promo.
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
@@ -416,7 +416,7 @@ describe("initializePayment", () => {
 	describe("happy path (guest with email)", () => {
 		beforeEach(() => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue("session-guest-abc");
+			mockGetOrCreateGuestSessionId.mockResolvedValue("session-guest-abc");
 			mockPrisma.user.findUnique.mockResolvedValue(null);
 			mockGetOrCreateStripeCustomer.mockResolvedValue({ customerId: "cus_new_guest" });
 		});
@@ -436,7 +436,7 @@ describe("initializePayment", () => {
 				email: "guest@example.com",
 			});
 
-			expect(mockGetOrCreateCartSessionId).toHaveBeenCalled();
+			expect(mockGetOrCreateGuestSessionId).toHaveBeenCalled();
 		});
 
 		it("should use composite guest rate limit id (email + ip) when both are available", async () => {
@@ -1013,7 +1013,6 @@ describe("initializePayment", () => {
 			// le mock doit refléter un admin réel, pas juste le stub par défaut.
 			mockPrisma.user.findUnique.mockResolvedValue({
 				role: "ADMIN",
-				stripeCustomerId: "cus_existing",
 			});
 			mockAssertStoreOpen.mockResolvedValue({
 				closed: true,

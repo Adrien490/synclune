@@ -274,7 +274,6 @@ export async function createOrderInTransaction(
 						maxUsageCount: number | null;
 						maxUsagePerUser: number | null;
 						usageCount: number;
-						startsAt: Date;
 						endsAt: Date | null;
 						isActive: boolean;
 					}>
@@ -282,7 +281,7 @@ export async function createOrderInTransaction(
 				SELECT
 					id, code, type, value,
 					"minOrderAmount", "maxUsageCount", "maxUsagePerUser",
-					"usageCount", "startsAt", "endsAt", "isActive"
+					"usageCount", "endsAt", "isActive"
 				FROM "Discount"
 				WHERE code = ${discountCode.toUpperCase()}
 				AND "deletedAt" IS NULL
@@ -328,7 +327,6 @@ export async function createOrderInTransaction(
 						maxUsagePerUser: discount.maxUsagePerUser,
 						usageCount: discount.usageCount,
 						isActive: discount.isActive,
-						startsAt: discount.startsAt,
 						endsAt: discount.endsAt,
 					},
 					{
@@ -379,10 +377,13 @@ export async function createOrderInTransaction(
 				}
 			}
 
-			// Micro-entreprise: TVA non applicable (art. 293 B du CGI)
-			// Seuil franchise TVA 2026 : 85 000 € (ventes de biens — cas Synclune) / 37 500 € (prestations)
+			// Micro-entreprise : TVA non applicable (art. 293 B du CGI). Aucune TVA
+			// n'est stockée — ni ici, ni par ligne : le total est HT = TTC et le CHECK
+			// `Order_total_formula` l'exclut. Sortir de la franchise (seuil 2026 :
+			// 85 000 € pour les ventes de biens) est un chantier à part entière, décrit
+			// dans docs/RUNBOOK.md § « si la franchise était perdue » — il exige des
+			// colonnes de TVA PAR LIGNE sur OrderItem, pas un agrégat sur Order.
 			const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
-			const taxAmount = 0;
 			// MIN-AMOUNT-DIVERGE-01 : `total` est le montant AUTORITAIRE posé sur le PI
 			// avant capture (confirm-checkout). Pas de plancher STRIPE_MIN_AMOUNT_EUR_CENTS
 			// ici (contrairement à update-payment-amount qui clampe pour l'affichage) —
@@ -427,7 +428,6 @@ export async function createOrderInTransaction(
 					subtotal,
 					discountAmount,
 					shippingCost,
-					taxAmount,
 					total,
 					currency: DEFAULT_CURRENCY,
 					customerEmail: normalizeEmail(finalEmail ?? ""),

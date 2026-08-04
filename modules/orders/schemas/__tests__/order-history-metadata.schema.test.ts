@@ -68,7 +68,6 @@ describe("orderHistoryMetadataSchema", () => {
 		// Our regex matches "customerName" precisely, so "stripeCustomerId" must pass.
 		const result = orderHistoryMetadataSchema.safeParse({
 			stripeRefundId: "re_test_123",
-			stripeCustomerId: "cus_test_123",
 		});
 		expect(result.success).toBe(true);
 	});

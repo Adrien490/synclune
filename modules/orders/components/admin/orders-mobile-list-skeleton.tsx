@@ -16,12 +16,7 @@ export function OrdersMobileListSkeleton({ hasActiveFilters }: OrdersMobileListS
 				<ItemGroup>
 					{Array.from({ length: 5 }).map((_, i) => (
 						<li key={i}>
-							<Item
-								variant="outline"
-								size="sm"
-								className="gap-3"
-								style={{ animationDelay: `${i * 100}ms` }}
-							>
+							<Item variant="outline" size="sm" className="gap-3">
 								<ItemContent>
 									<div className="flex items-center gap-2">
 										<Skeleton shape="text" className="h-5 w-28" />

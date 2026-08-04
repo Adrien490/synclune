@@ -69,7 +69,7 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 	),
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (cb: () => void) => cb(),
 }));
 

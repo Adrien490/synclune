@@ -86,7 +86,7 @@ describe("@regression refund-no-invoice-mutation", () => {
 		// (createOrderAuditTx avec metadata.invoiceNumber pour traçabilité) sont
 		// hors scope — elles n'écrivent pas sur le modèle Order.
 		const orderFieldPattern =
-			/\b(?:invoiceNumber|invoiceStatus|invoiceGeneratedAt|invoiceVoidedAt|invoicePdfUrl|invoicePdfHash|invoiceDataSnapshot|invoiceDataHash|invoiceArchivedAt|invoiceXmlUrl|invoiceXmlHash|invoiceXmlFormat|invoiceXmlArchivedAt|creditNoteNumber|creditNoteGeneratedAt|creditNotePdfUrl|creditNotePdfHash)\s*:\s*(?!true\b|false\b)/;
+			/\b(?:invoiceNumber|invoiceStatus|invoiceGeneratedAt|invoiceVoidedAt|invoicePdfUrl|invoicePdfHash|invoiceDataSnapshot|invoiceDataHash|invoiceXmlUrl|invoiceXmlHash|invoiceXmlFormat|invoiceXmlArchivedAt|creditNoteNumber|creditNoteGeneratedAt|creditNotePdfUrl|creditNotePdfHash)\s*:\s*(?!true\b|false\b)/;
 		const orderWritePattern = /\b(?:prisma|tx)\.order\.(?:update|updateMany|create|upsert)\s*\(/;
 		const offenders = refundSourceFiles
 			.filter((f) => {
