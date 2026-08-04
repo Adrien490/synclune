@@ -42,10 +42,6 @@ vi.mock("@/modules/payments/components/payment-step", () => ({
 	),
 }));
 
-vi.mock("@/modules/discounts/actions/validate-discount-code", () => ({
-	validateDiscountCode: vi.fn(),
-}));
-
 vi.mock("@/modules/payments/hooks/use-payment-intent", () => ({
 	usePaymentIntent: vi.fn().mockReturnValue({
 		clientSecret: null,
@@ -107,9 +103,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 					country: "FR",
 					phoneNumber: "",
 				},
-				_appliedDiscount: null,
-				_discountOpen: false,
-				discountCode: "",
 			},
 		},
 		setFieldValue: vi.fn(),
@@ -134,9 +127,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 							country: "FR",
 							phoneNumber: "",
 						},
-						_appliedDiscount: null,
-						_discountOpen: false,
-						discountCode: "",
 					},
 					canSubmit: true,
 					submissionAttempts: 0,
