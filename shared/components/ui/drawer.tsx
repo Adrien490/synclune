@@ -160,6 +160,9 @@ function DrawerOverlay({ className, ...props }: DrawerPrimitive.Backdrop.Props) 
 			data-slot="drawer-overlay"
 			className={cn(
 				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0 fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
+				// Durée alignée sur `PANEL_TRANSITION` (300 ms) + `fill-mode-forwards` :
+				// cf. le commentaire de `ui/sheet.tsx`, même défaut à l'identique.
+				"fill-mode-forwards motion-safe:duration-300",
 				className,
 			)}
 			{...props}

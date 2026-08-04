@@ -103,6 +103,8 @@ function SelectContent({
 						"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
 						"motion-safe:data-[side=bottom]:slide-in-from-top-2 motion-safe:data-[side=left]:slide-in-from-right-2",
 						"motion-safe:data-[side=right]:slide-in-from-left-2 motion-safe:data-[side=top]:slide-in-from-bottom-2",
+						// cf. `ui/popover.tsx` — `animate-out` exige un fill mode.
+						"fill-mode-forwards",
 						className,
 					)}
 					{...props}

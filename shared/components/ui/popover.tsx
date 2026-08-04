@@ -39,6 +39,11 @@ function PopoverContent({
 						"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
 						"motion-safe:data-[side=bottom]:slide-in-from-top-2 motion-safe:data-[side=left]:slide-in-from-right-2",
 						"motion-safe:data-[side=right]:slide-in-from-left-2 motion-safe:data-[side=top]:slide-in-from-bottom-2",
+						// `animate-out` sans fill mode revient au style de base en fin
+						// d'animation — cf. `ui/dialog.tsx`. Inoffensif ici (Base UI démonte
+						// le popup dans un `flushSync` avant la peinture), mais la règle est
+						// uniforme, cf. `animate-out-fill-mode.regression.test.ts`.
+						"fill-mode-forwards",
 						className,
 					)}
 					{...props}

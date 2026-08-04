@@ -60,7 +60,11 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
 				"fixed inset-0 z-(--z-alert) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
 				"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
-				"duration-200",
+				// `fill-mode-forwards` : cf. le commentaire de `ui/dialog.tsx`. Ici les
+				// deux durées coïncidaient déjà (200/200), donc pas de clignotement
+				// constaté — mais rien ne le garantissait, et un `duration-*` changé
+				// d'un seul côté suffisait à le rouvrir.
+				"fill-mode-forwards duration-200",
 				className,
 			)}
 			{...props}
@@ -108,7 +112,7 @@ function AlertDialogContent({
 					"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
 					"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
 					"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
-					"duration-200",
+					"fill-mode-forwards duration-200",
 					className,
 				)}
 				{...props}

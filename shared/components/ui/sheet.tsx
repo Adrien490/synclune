@@ -167,6 +167,13 @@ function SheetOverlay({ className, onClick, ...props }: SheetPrimitive.Backdrop.
 				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
 				"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
+				// Durée alignée sur `PANEL_TRANSITION` (300 ms) + `fill-mode-forwards` :
+				// cf. le commentaire de `ui/dialog.tsx`. Le démontage n'est piloté que
+				// par les animations du POPUP (`useOpenStateTransitions` de Base UI
+				// n'observe que `popupRef`), donc un scrim qui finit avant lui reste
+				// affiché — et sans fill mode, réapparaît opaque. C'est le cas le pire
+				// du repo : 150 ms de scrim noir ressuscité à chaque fermeture.
+				"fill-mode-forwards motion-safe:duration-300",
 				className,
 			)}
 			onClick={onClick}

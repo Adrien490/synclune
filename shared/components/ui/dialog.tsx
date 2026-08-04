@@ -98,6 +98,10 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
 				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
 				"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
+				// Durée ALIGNÉE sur celle du popup (cf. le commentaire de fond sur
+				// `fill-mode-forwards` plus bas) : sans elle le scrim retombait sur le
+				// défaut 150 ms de tw-animate-css pendant que le popup animait 200 ms.
+				"fill-mode-forwards motion-safe:duration-200",
 				className,
 			)}
 			{...props}
@@ -139,6 +143,14 @@ function DialogContent({
 					"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
 					"motion-safe:data-closed:slide-out-to-top-[2%] motion-safe:data-open:slide-in-from-bottom-[2%]",
 					"motion-safe:duration-200",
+					// ⚠️ `animate-out` est INUTILISABLE sans fill mode. Les keyframes
+					// `exit` de tw-animate-css n'ont qu'un `to` (`opacity: 0`), et le
+					// raccourci `animation` fixe `fill-mode: none` : à la fin de
+					// l'animation l'élément REVIENT à son style de base — c'est-à-dire
+					// pleinement visible. `animate-in` n'a pas ce défaut (ses keyframes
+					// n'ont qu'un `from`, l'état final EST le style de base), d'où un bug
+					// qui ne se manifestait qu'à la fermeture.
+					"fill-mode-forwards",
 					!hasMaxWidth && "max-w-[90%] sm:max-w-lg",
 					className,
 				)}
