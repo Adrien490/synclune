@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
+import { buildIdempotencyKey } from "@/shared/lib/stripe-idempotency";
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
@@ -32,7 +33,14 @@ export async function getOrCreateStripeCustomer(
 	return Sentry.startSpan({ name: "stripe.customers.create", op: "stripe.customer" }, async () => {
 		try {
 			// Lowercase + trim so case variations of the same email reuse the same Stripe customer.
-			const customerIdempotencyKey = `customer-create-${params.email.toLowerCase().trim()}`;
+			// L'email est HASHÉ, pas concaténé : `api/idempotent_requests` déconseille
+			// explicitement d'y mettre un identifiant personnel, et cette clé partait dans
+			// un en-tête HTTP que Stripe conserve 24 h. Le digest préserve la
+			// déduplication à l'identique (même email normalisé ⇒ même clé) et borne la
+			// longueur, un email pouvant aller jusqu'à 255 c. à lui seul.
+			const customerIdempotencyKey = buildIdempotencyKey("customer-create", [
+				params.email.toLowerCase().trim(),
+			]);
 
 			// `initializePayment` appelle ce service AVANT toute saisie d'adresse : il
 			// passe des chaînes vides. On omet alors `name` et `address` au lieu

@@ -43,10 +43,16 @@ export const maxDuration = 60;
  *       - le replay malveillant pendant la fenêtre 5min
  *       - les retries Stripe légitimes après timeout 200
  *       - les doublons cross-instance Vercel concurrents via deux gardes ciblées :
- *         (a) catch P2002 sur l'`upsert` quand deux threads tentent la branche
- *             CREATE simultanément (1ère insertion) ;
- *         (b) race-guard post-upsert (`existingEvent === null && attempts >= 1`)
- *             quand un thread a inséré entre le findUnique et l'upsert d'un autre.
+ *         (a) catch P2002 sur le `create` quand deux threads tentent la première
+ *             insertion simultanément ;
+ *         (b) claim OPTIMISTE (`updateMany` conditionné sur le couple
+ *             `status` + `attempts` qu'on vient de lire) pour toute reprise :
+ *             `claimed.count === 0` ⇒ un autre worker a repris l'event, on sort.
+ *         ⚠️ Ce paragraphe décrivait un `upsert` et un race-guard
+ *         `existingEvent === null && attempts >= 1` jusqu'à l'audit Stripe du
+ *         2026-08-04 : IDEM-ROUTE-001 les a remplacés par la paire
+ *         create/claim ci-dessous, précisément parce que l'`upsert` réécrivait
+ *         PROCESSING sans ré-asserter l'état lu.
  *       - la reprise d'un PROCESSING périmé (lambda crashée) sans avaler le retry
  *         Stripe NI barger-in sur un traitement concurrent : la fraîcheur est
  *         mesurée sur `processingStartedAt` (WEBHOOK-AUDIT-002), (re)posé à chaque
@@ -72,6 +78,7 @@ export async function POST(req: Request) {
 		}
 
 		const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+		const secretKey = process.env.STRIPE_SECRET_KEY;
 
 		const body = await req.text();
 		const headersList = await headers();
@@ -111,8 +118,63 @@ export async function POST(req: Request) {
 		let event: Stripe.Event;
 		try {
 			event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-		} catch {
+		} catch (signatureError) {
+			// L'échec de signature était avalé par un `catch {}` NU : ni log, ni Sentry.
+			// C'est le seul événement de sécurité que cet endpoint puisse produire, et
+			// il était invisible — impossible de distinguer « un secret de webhook
+			// périmé après rotation » (tous les paiements cessent d'être enregistrés,
+			// en silence) d'« un scanner qui tape l'URL ». La checklist de mise en
+			// production de Stripe demande explicitement de journaliser côté marchand.
+			//
+			// ⚠️ On ne journalise NI le corps NI la signature : le payload porte des
+			// données client, et la même checklist rappelle que les logs ne doivent
+			// contenir aucune donnée confidentielle. Le message du SDK suffit à
+			// séparer « timestamp hors tolérance » de « signature invalide ».
+			const reason = signatureError instanceof Error ? signatureError.message : "unknown";
+			logger.warn("Webhook signature verification failed", { correlationId, reason });
+			Sentry.withScope((scope) => {
+				scope.setLevel("warning");
+				scope.setTag("webhookSignature", "invalid");
+				scope.setFingerprint(["webhook", "invalid-signature"]);
+				scope.setContext("webhook", { reason });
+				Sentry.captureMessage("Webhook signature verification failed", "warning");
+			});
 			return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+		}
+
+		// 2bis. Cohérence de mode (test ↔ live).
+		//
+		// La signature prouve que l'event vient bien de Stripe, PAS qu'il vient du
+		// bon compte : un endpoint dont le `whsec_` de test traîne en production
+		// accepterait des events de sandbox et muterait de vraies commandes. Le
+		// `whsec_` ne portant aucun marqueur de mode, c'est `event.livemode` qui
+		// ferme ce côté — l'env schema couvrant déjà la paire sk_/pk_.
+		//
+		// 200 `skipped` et non 4xx/5xx : l'event est authentique, il n'est
+		// simplement pas pour nous. Un statut d'erreur déclencherait des retries
+		// Stripe jusqu'à épuisement, sur un event qui ne sera jamais traitable.
+		// ⚠️ On n'arbitre QUE si `livemode` est un booléen présent. Un event Stripe
+		// réel le porte toujours, mais traiter son absence comme un désaccord
+		// reviendrait à refuser un paiement sur une inférence — c'est-à-dire à faire
+		// plus de dégâts que le défaut couvert, alors que la signature a déjà prouvé
+		// l'authenticité. Un `!== expectsLiveEvents` nu faisait d'ailleurs échouer
+		// tout payload sans le champ.
+		const expectsLiveEvents = secretKey.startsWith("sk_live_");
+		if (typeof event.livemode === "boolean" && event.livemode !== expectsLiveEvents) {
+			logger.warn("Webhook livemode mismatch, skipping", {
+				correlationId,
+				eventId: event.id,
+				eventType: event.type,
+				eventLivemode: event.livemode,
+				expectsLiveEvents,
+			});
+			Sentry.withScope((scope) => {
+				scope.setLevel("warning");
+				scope.setTag("webhookLivemodeMismatch", "true");
+				scope.setFingerprint(["webhook", "livemode-mismatch"]);
+				Sentry.captureMessage("Webhook livemode mismatch", "warning");
+			});
+			return NextResponse.json({ received: true, status: "skipped" });
 		}
 
 		// 3. IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
@@ -279,7 +341,19 @@ export async function POST(req: Request) {
 				},
 			});
 
-			// 7. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
+			// 7. Réponse, puis effets de bord différés.
+			//
+			// ⚠️ Ce commentaire annonçait « RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best
+			// Practice Stripe) » — ce que le code ne fait PAS et n'a jamais fait :
+			// `dispatchEvent` est AWAITÉ plus haut, donc le 200 part après le
+			// traitement métier complet. Seules les tâches post-webhook (emails,
+			// invalidation de cache) passent par `after()`.
+			//
+			// C'est un choix, pas un oubli : accuser réception avant d'avoir traité
+			// obligerait à une file durable pour ne pas perdre l'event si la lambda
+			// meurt — or `PostWebhookTask` a justement été retirée (Lot 2). Traiter
+			// en ligne fait porter la reprise par le retry de Stripe, qui est
+			// durable par construction. `maxDuration = 60` couvre la fenêtre.
 			const response = NextResponse.json({ received: true, status: "processed" });
 
 			if (tasks.length > 0) {

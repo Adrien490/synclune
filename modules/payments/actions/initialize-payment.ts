@@ -27,6 +27,7 @@ import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-cu
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { headers } from "next/headers";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
+import { buildIdempotencyKey } from "@/shared/lib/stripe-idempotency";
 import { initializePaymentSchema } from "../schemas/checkout.schema";
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
@@ -244,7 +245,20 @@ export async function initializePayment(
 				};
 			}
 			const customerKey = stripeCustomerId ?? "anon";
-			const idempotencyKey = `pi-init-${ownerKey}-${customerKey}-${total}-${cartHash}`;
+			// ⚠️ Le digest n'est PAS cosmétique : `api/idempotent_requests` borne la clé
+			// à 255 caractères. En clair, la clé pesait ~70 c. de préfixe (`ownerKey` est
+			// un UUID de 36 c.) plus ~32 c. par ligne de panier — elle franchissait donc
+			// la borne dès 6 SKU distincts, alors que le schéma en autorise 50
+			// (`MAX_CART_ITEMS`). Le SHA-256 la fige à 72 c. quel que soit le panier, en
+			// conservant exactement la sémantique de déduplication : mêmes entrées,
+			// même clé. La même page déconseille aussi d'y mettre des identifiants
+			// personnels — le digest règle les deux d'un coup.
+			const idempotencyKey = buildIdempotencyKey("pi-init", [
+				ownerKey,
+				customerKey,
+				String(total),
+				cartHash,
+			]);
 
 			// Create Payment Intent
 			// Carte uniquement (décision produit). `payment_method_types: ["card"]`

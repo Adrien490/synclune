@@ -124,8 +124,14 @@ describe("envSchema", () => {
 			expect(result.success).toBe(true);
 		});
 
-		it("accepts sk_live_ key", () => {
-			const result = envSchema.safeParse({ ...validEnv(), STRIPE_SECRET_KEY: "sk_live_abc123" });
+		it("accepts sk_live_ key (avec la publiable live correspondante)", () => {
+			// Les deux clés doivent basculer ENSEMBLE : depuis l'audit Stripe, une
+			// secrète live à côté d'une publiable test est un échec de validation.
+			const result = envSchema.safeParse({
+				...validEnv(),
+				STRIPE_SECRET_KEY: "sk_live_abc123",
+				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_abc123",
+			});
 			expect(result.success).toBe(true);
 		});
 	});
@@ -173,12 +179,46 @@ describe("envSchema", () => {
 			expect(result.success).toBe(true);
 		});
 
-		it("accepts pk_live_ key", () => {
+		it("accepts pk_live_ key (avec la secrète live correspondante)", () => {
 			const result = envSchema.safeParse({
 				...validEnv(),
+				STRIPE_SECRET_KEY: "sk_live_abc123",
 				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_abc123",
 			});
 			expect(result.success).toBe(true);
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// @regression stripe-key-mode-coherence
+	//
+	// `startsWith("sk_")` / `startsWith("pk_")` acceptent indifféremment `_test_`
+	// et `_live_` : un `sk_live_` posé à côté d'un `pk_test_` passait la validation
+	// et n'échouait qu'à l'exécution, chez Stripe, sur une erreur opaque — au
+	// moment précis où un client tente de payer.
+	// --------------------------------------------------------------------------
+
+	describe("cohérence de mode des clés Stripe", () => {
+		it("rejette une secrète live avec une publiable test", () => {
+			const result = envSchema.safeParse({
+				...validEnv(),
+				STRIPE_SECRET_KEY: "sk_live_abc123",
+				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_abc123",
+			});
+			expect(result.success).toBe(false);
+		});
+
+		it("rejette une secrète test avec une publiable live", () => {
+			const result = envSchema.safeParse({
+				...validEnv(),
+				STRIPE_SECRET_KEY: "sk_test_abc123",
+				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_abc123",
+			});
+			expect(result.success).toBe(false);
+		});
+
+		it("accepte une paire test cohérente", () => {
+			expect(envSchema.safeParse(validEnv()).success).toBe(true);
 		});
 	});
 

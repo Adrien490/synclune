@@ -70,16 +70,24 @@ describe("getOrCreateStripeCustomer", () => {
 		await getOrCreateStripeCustomer(makeParams({ email: "test@synclune.fr" }));
 
 		const options = mockStripe.customers.create.mock.calls[0]![1];
-		expect(options.idempotencyKey).toBe("customer-create-test@synclune.fr");
+		// L'email est HASHÉ depuis l'audit Stripe (`api/idempotent_requests` déconseille
+		// tout identifiant personnel dans la clé). On assert la FORME et l'absence de
+		// fuite, pas un digest en dur — figer la valeur ne vérifierait que le SHA-256.
+		expect(options.idempotencyKey).toMatch(/^customer-create-[0-9a-f]{64}$/);
+		expect(options.idempotencyKey).not.toContain("test@synclune.fr");
 	});
 
 	it("should lowercase and trim the email in the idempotency key", async () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
 
 		await getOrCreateStripeCustomer(makeParams({ email: "  Test@Synclune.FR " }));
+		await getOrCreateStripeCustomer(makeParams({ email: "test@synclune.fr" }));
 
-		const options = mockStripe.customers.create.mock.calls[0]![1];
-		expect(options.idempotencyKey).toBe("customer-create-test@synclune.fr");
+		// La propriété qui compte n'est pas la valeur de la clé mais le fait que deux
+		// écritures d'un même email CONVERGENT — sinon la dédupe (seul mécanisme
+		// depuis le checkout 100 % invité) laisserait passer un doublon de client.
+		const [firstCall, secondCall] = mockStripe.customers.create.mock.calls;
+		expect(firstCall![1].idempotencyKey).toBe(secondCall![1].idempotencyKey);
 	});
 
 	it("should map address correctly to Stripe format", async () => {

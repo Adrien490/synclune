@@ -14,6 +14,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type Stripe from "stripe";
+import { STRIPE_API_VERSION } from "@/shared/constants/stripe-api-version";
 
 const {
 	mockHandleChargeRefunded,
@@ -130,6 +131,15 @@ describe("Stripe webhook contract — fixture shape validation", () => {
 		expect(typeof event.data.object).toBe("object");
 		expect(event.created).toBeTypeOf("number");
 		expect(event.livemode).toBe(false);
+	});
+
+	// Les fixtures SONT le contrat Stripe de la suite unitaire : si elles décrivent
+	// une version d'API que le SDK n'utilise plus, on valide un monde disparu. Elles
+	// sont restées sur `2025-09-30.clover` pendant que `shared/lib/stripe.ts`
+	// épinglait `dahlia` — deux versions majeures d'écart — précisément parce que
+	// cette assertion n'existait pas.
+	it.each(fixtures)("$name déclare la version d'API épinglée", ({ event }) => {
+		expect(event.api_version).toBe(STRIPE_API_VERSION);
 	});
 });
 

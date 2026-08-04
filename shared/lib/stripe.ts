@@ -3,10 +3,11 @@ import Stripe from "stripe";
 import { stripeCircuitBreaker, CircuitBreakerError } from "./circuit-breaker";
 import { logger } from "./logger";
 import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
+import { STRIPE_API_VERSION } from "@/shared/constants/stripe-api-version";
 
 /**
  * Instance Stripe centralisée pour toute l'application
- * - apiVersion épinglée explicitement ("2026-06-24.dahlia") pour neutraliser les breaking changes silencieux
+ * - apiVersion épinglée via la SSOT `STRIPE_API_VERSION` pour neutraliser les breaking changes silencieux
  * - maxNetworkRetries: 2 pour retry automatique en cas d'erreur réseau
  * - timeout: 10s
  *
@@ -14,7 +15,7 @@ import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise"
  * Pour les contextes où la clé pourrait manquer (cron jobs), utiliser getStripeClient().
  */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-	apiVersion: "2026-06-24.dahlia",
+	apiVersion: STRIPE_API_VERSION,
 	maxNetworkRetries: 2,
 	timeout: 10_000,
 });
@@ -27,8 +28,8 @@ export { CircuitBreakerError };
  *
  * @example
  * ```ts
- * const session = await withStripeCircuitBreaker(() =>
- *   stripe.checkout.sessions.create({ ... })
+ * const paymentIntent = await withStripeCircuitBreaker(() =>
+ *   stripe.paymentIntents.create({ ... })
  * );
  * ```
  */
@@ -61,7 +62,7 @@ export function getStripeClient(): Stripe | null {
 		return null;
 	}
 	_stripeClient = new Stripe(secretKey, {
-		apiVersion: "2026-06-24.dahlia",
+		apiVersion: STRIPE_API_VERSION,
 		maxNetworkRetries: 2,
 		timeout: 10_000,
 	});

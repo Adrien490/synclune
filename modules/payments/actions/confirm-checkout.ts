@@ -19,6 +19,7 @@ import { parseFullName } from "@/modules/payments/utils/parse-full-name";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 import { enrichStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
 import { createOrderInTransaction } from "@/modules/payments/services/order-creation.service";
+import { buildStatementDescriptorSuffix } from "@/modules/payments/utils/statement-descriptor";
 import { computeCartSubtotal } from "@/modules/payments/services/checkout-subtotal.service";
 import {
 	cartMatchesServerCart,
@@ -393,6 +394,32 @@ export async function confirmCheckout(
 					stripe.paymentIntents.update(v.paymentIntentId, {
 						amount: order.total,
 						receipt_email: finalEmail,
+						// `description` et `shipping` arrivent ICI et pas à la création : à
+						// l'initialisation du PI (montage de la page paiement) ni la commande
+						// ni l'adresse n'existent encore. Aucun appel Stripe supplémentaire.
+						//
+						// `shipping` n'est pas décoratif pour un vendeur de biens physiques :
+						// Stripe s'en sert pour préremplir les preuves de livraison d'un
+						// dossier de contestation, et Radar le lit dans son évaluation. Sans
+						// lui, un chargeback « produit non reçu » se défend à la main.
+						description: `Commande ${order.orderNumber}`,
+						shipping: {
+							name: `${firstName} ${lastName}`.trim(),
+							phone: v.shippingAddress.phoneNumber,
+							address: {
+								line1: v.shippingAddress.addressLine1,
+								...(v.shippingAddress.addressLine2 && { line2: v.shippingAddress.addressLine2 }),
+								postal_code: v.shippingAddress.postalCode,
+								city: v.shippingAddress.city,
+								country: v.shippingAddress.country,
+							},
+						},
+						// ⚠️ `statement_descriptor_suffix`, JAMAIS `statement_descriptor` :
+						// `api/payment_intents` précise que poser ce dernier sur une charge
+						// CARTE renvoie une erreur — et le tunnel est card-only. Le suffixe
+						// est concaténé au préfixe du compte, l'ensemble étant plafonné à
+						// 22 caractères par les réseaux.
+						statement_descriptor_suffix: buildStatementDescriptorSuffix(order.orderNumber),
 						metadata: {
 							orderId: order.id,
 							orderNumber: order.orderNumber,
@@ -402,9 +429,31 @@ export async function confirmCheckout(
 					}),
 				);
 			} catch (stripeError) {
+				// La course « le PI est devenu terminal entre le retrieve et l'update »
+				// se reconnaît au CODE, pas au message : `api/errors` expose
+				// `payment_intent_unexpected_state` précisément pour ça, et le `message`
+				// est une chaîne d'affichage — localisable et reformulable sans préavis
+				// par Stripe. Sniffer « succeeded » dedans faisait dépendre le sort d'un
+				// paiement RÉUSSI d'un mot anglais : la moindre reformulation renvoyait
+				// le client sur « Une erreur est survenue » alors qu'il venait de payer.
+				//
+				// L'état exact vient de `error.payment_intent`, que Stripe joint à cette
+				// erreur — c'est la vue la plus fraîche qui soit, plus récente que le `pi`
+				// relu à l'étape 3. Repli sur ce dernier, puis sur l'ancien sniff si le
+				// `code` manque (proxy, version d'API exotique).
 				if (stripeError instanceof Stripe.errors.StripeInvalidRequestError) {
-					const isAlreadySucceeded = stripeError.message.includes("succeeded");
-					const isAlreadyCanceled = stripeError.message.includes("canceled");
+					const terminalStatus =
+						stripeError.code === "payment_intent_unexpected_state"
+							? (stripeError.payment_intent?.status ?? pi.status)
+							: null;
+
+					const isAlreadySucceeded =
+						terminalStatus === "succeeded" ||
+						(stripeError.code === undefined && stripeError.message.includes("succeeded"));
+					const isAlreadyCanceled =
+						terminalStatus === "canceled" ||
+						(stripeError.code === undefined && stripeError.message.includes("canceled"));
+
 					if (isAlreadySucceeded || isAlreadyCanceled) {
 						await cleanupFailedCheckout(order.id);
 						return {

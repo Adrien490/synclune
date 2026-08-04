@@ -11,12 +11,31 @@ Pour resynchroniser une fixture avec la version actuelle de l'API Stripe :
 stripe events resend evt_xxx --print-json > test/fixtures/stripe/<event>.json
 
 # Ou déclencher un event de référence
-stripe trigger checkout.session.completed --print-json > test/fixtures/stripe/checkout.session.completed.json
+stripe trigger payment_intent.succeeded --print-json > test/fixtures/stripe/payment_intent.succeeded.json
 ```
+
+⚠️ **N'utilise que des types réellement routés** (`getRegisteredEventTypes()`). L'exemple
+de cette section montrait `checkout.session.completed` jusqu'à l'audit Stripe du
+2026-08-04 — un event délibérément RETIRÉ du registry (le tunnel est PaymentIntents +
+Elements, aucune Checkout Session n'est jamais créée). Le copier-coller produisait une
+fixture non routable, qui casse la garde de complétude du contract test.
 
 ⚠️ Les fixtures actuelles sont **minimales et synthétiques** (suffisantes pour vérifier
 le routing du registry). Pour des tests métier profonds (line_items, shipping, etc.),
 préférer les payloads capturés via Stripe CLI.
+
+### Dette connue — les shapes n'ont pas été re-capturées
+
+Les 12 fixtures ont porté `"api_version": "2025-09-30.clover"` pendant que le SDK était
+épinglé sur `2026-06-24.dahlia` (deux versions majeures d'écart). L'audit du 2026-08-04 a
+aligné le champ sur la SSOT `STRIPE_API_VERSION` et posé l'assertion qui empêche la
+dérive de recommencer — mais **les payloads eux-mêmes n'ont pas été régénérés** (Stripe
+CLI absent de la machine). Ils restent donc écrits à la main d'après ce que les handlers
+consomment, pas capturés depuis un compte `dahlia`.
+
+Conséquence à connaître : un champ que `dahlia` aurait renommé, retiré ou dont il aurait
+changé la sémantique ne serait PAS attrapé ici. Une passe `stripe trigger` sur les
+12 types reste à faire.
 
 ## Contract test
 

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { STRIPE_API_VERSION } from "@/shared/constants/stripe-api-version";
 
 // ============================================================================
 // Hoisted mocks
@@ -468,7 +469,10 @@ describe("getStripeClient", () => {
 		freshGetStripeClient();
 
 		expect(mocks.mockStripeConstructor).toHaveBeenCalledWith("sk_test_abc123", {
-			apiVersion: "2026-06-24.dahlia",
+			// SSOT, pas un littéral : figer la chaîne ici laisserait le test vert
+			// pendant que la source dérive — c'est exactement ce qui avait permis à
+			// `app/api/health/route.ts` de garder sa propre copie.
+			apiVersion: STRIPE_API_VERSION,
 			maxNetworkRetries: 2,
 			timeout: 10_000,
 		});

@@ -17,10 +17,13 @@ const {
 	mockSendWebhookFailedAlert,
 	mockCheckRateLimit,
 	mockGetClientIp,
+	mockLoggerWarn,
+	mockLogger,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	STALE_PROCESSING_THRESHOLD_MS,
 	WebhookEventStatus,
 } = vi.hoisted(() => {
+	const loggerWarn = vi.fn();
 	const constructEvent = vi.fn();
 	const nextResponseJson = vi.fn((body: unknown, init?: ResponseInit) => ({
 		body,
@@ -55,6 +58,8 @@ const {
 		mockSendWebhookFailedAlert: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
+		mockLoggerWarn: loggerWarn,
+		mockLogger: { info: vi.fn(), warn: loggerWarn, error: vi.fn(), debug: vi.fn() },
 		MAX_WEBHOOK_RETRY_ATTEMPTS: 3,
 		STALE_PROCESSING_THRESHOLD_MS: 15 * 60 * 1000,
 		WebhookEventStatus: {
@@ -73,6 +78,13 @@ const {
 
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: mockStripe,
+}));
+
+// Mocké depuis l'audit Stripe : la route journalise désormais l'échec de
+// signature (elle l'avalait dans un `catch {}` nu), et ces logs sont assertés.
+// Effet de bord bienvenu : la suite ne déverse plus de JSON pino sur stdout.
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -420,6 +432,98 @@ describe("POST /api/webhooks/stripe - signature validation", () => {
 		await POST(req);
 
 		expect(mockConstructEvent).toHaveBeenCalledWith(body, "t=123,v1=valid_sig", "whsec_test_123");
+	});
+
+	/**
+	 * @regression webhook-signature-failure-observable
+	 *
+	 * L'échec de signature était avalé par un `catch {}` NU. C'est pourtant le seul
+	 * événement de sécurité que cet endpoint produise, et son invisibilité rendait
+	 * indiscernables deux situations opposées : un scanner qui tape l'URL (bénin) et
+	 * un `STRIPE_WEBHOOK_SECRET` périmé après rotation — auquel cas TOUS les
+	 * paiements cessent d'être enregistrés, sans une ligne de log.
+	 */
+	it("journalise l'échec de signature au lieu de l'avaler silencieusement", async () => {
+		mockConstructEvent.mockImplementation(() => {
+			throw new Error("No signatures found matching the expected signature for payload");
+		});
+
+		await POST(makeRequest());
+
+		expect(mockLoggerWarn).toHaveBeenCalledWith(
+			"Webhook signature verification failed",
+			expect.objectContaining({ reason: expect.stringContaining("No signatures found") }),
+		);
+	});
+
+	it("ne journalise NI le corps NI la signature (aucune donnée client en logs)", async () => {
+		const body = '{"customer_email":"cliente@example.com"}';
+		mockConstructEvent.mockImplementation(() => {
+			throw new Error("Signature mismatch");
+		});
+
+		await POST(makeRequest(body));
+
+		const logged = JSON.stringify(mockLoggerWarn.mock.calls);
+		expect(logged).not.toContain("cliente@example.com");
+		expect(logged).not.toContain("v1=valid_sig");
+	});
+});
+
+/**
+ * @regression webhook-livemode-mismatch-skipped
+ *
+ * La signature prouve que l'event vient de Stripe, PAS qu'il vient du bon compte :
+ * un `whsec_` de test resté en production ferait muter de vraies commandes par des
+ * events de sandbox. Le `whsec_` ne portant aucun marqueur de mode, `event.livemode`
+ * est le seul discriminant côté webhook (l'env schema couvre déjà la paire sk_/pk_).
+ *
+ * Le statut compte autant que la détection : **200**, jamais une erreur. Un 4xx/5xx
+ * ferait retenter Stripe jusqu'à épuisement sur un event qui ne sera jamais traitable.
+ */
+describe("POST /api/webhooks/stripe - cohérence livemode", () => {
+	it("skippe en 200 un event live reçu avec une clé de test", async () => {
+		mockConstructEvent.mockReturnValue({
+			id: "evt_live_1",
+			type: "payment_intent.succeeded",
+			livemode: true, // clé de test en env (`sk_test_…`) ⇒ désaccord
+			data: { object: {} },
+		});
+
+		const response = await POST(makeRequest());
+
+		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "skipped" });
+		expect(response.status).toBe(200);
+		expect(mockDispatchEvent).not.toHaveBeenCalled();
+		// Rien ne doit être écrit : l'event n'appartient pas à ce compte.
+		expect(mockPrisma.webhookEvent.create).not.toHaveBeenCalled();
+	});
+
+	it("traite normalement un event de test avec une clé de test", async () => {
+		mockConstructEvent.mockReturnValue({
+			id: "evt_test_1",
+			type: "payment_intent.succeeded",
+			livemode: false,
+			data: { object: {} },
+		});
+
+		await POST(makeRequest());
+
+		expect(mockDispatchEvent).toHaveBeenCalled();
+	});
+
+	it("ne bloque PAS un payload dépourvu de livemode", async () => {
+		// Fail-open assumé : refuser un paiement sur l'ABSENCE d'un champ ferait plus
+		// de dégâts que le défaut couvert, la signature ayant déjà prouvé l'origine.
+		mockConstructEvent.mockReturnValue({
+			id: "evt_nolivemode",
+			type: "payment_intent.succeeded",
+			data: { object: {} },
+		});
+
+		await POST(makeRequest());
+
+		expect(mockDispatchEvent).toHaveBeenCalled();
 	});
 });
 

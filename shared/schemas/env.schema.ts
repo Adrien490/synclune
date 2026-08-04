@@ -49,7 +49,13 @@ const stripSpaces = (value: string) => value.replaceAll(/\s/g, "");
  *
  * Les variables sont groupées par domaine fonctionnel.
  */
-export const envSchema = z.object({
+/**
+ * Forme brute. Le schéma réellement consommé est `envSchema` plus bas : il ajoute
+ * les contrôles inter-champs (cohérence de mode des clés Stripe), qu'un `z.object`
+ * seul ne peut pas exprimer. ⚠️ Ne pas valider contre cette forme-ci — elle laisse
+ * passer un `sk_live_` accompagné d'un `pk_test_`.
+ */
+const envSchemaShape = z.object({
 	// ========================================
 	// Base de données
 	// ========================================
@@ -86,9 +92,13 @@ export const envSchema = z.object({
 	// ========================================
 	// Stripe (Paiement)
 	// ========================================
-	STRIPE_SECRET_KEY: z.string().startsWith("sk_"),
-	STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_"),
-	NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith("pk_"),
+	STRIPE_SECRET_KEY: z.string().startsWith("sk_", "STRIPE_SECRET_KEY doit commencer par 'sk_'"),
+	STRIPE_WEBHOOK_SECRET: z
+		.string()
+		.startsWith("whsec_", "STRIPE_WEBHOOK_SECRET doit commencer par 'whsec_'"),
+	NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z
+		.string()
+		.startsWith("pk_", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY doit commencer par 'pk_'"),
 
 	// ========================================
 	// Upload (UploadThing)
@@ -244,7 +254,49 @@ export const envSchema = z.object({
 	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
+/** `sk_test_…` → "test", `pk_live_…` → "live", sinon `null` (forme inconnue). */
+function stripeKeyMode(key: string | undefined): "test" | "live" | null {
+	if (!key) return null;
+	if (/^(sk|pk|rk)_test_/.test(key)) return "test";
+	if (/^(sk|pk|rk)_live_/.test(key)) return "live";
+	return null;
+}
+
+/**
+ * Cohérence de mode entre la clé secrète et la clé publiable.
+ *
+ * `startsWith("sk_")` / `startsWith("pk_")` accepte indifféremment `_test_` et
+ * `_live_` : un `sk_live_` posé à côté d'un `pk_test_` passait la validation et
+ * n'échouait qu'à l'exécution, chez Stripe, sur une erreur opaque — au moment
+ * précis où un client tente de payer. Les deux clés décrivent le MÊME compte vu
+ * de deux côtés ; qu'elles divergent est toujours une erreur de configuration.
+ *
+ * ⚠️ On ne vérifie délibérément PAS « des clés live en production » : les
+ * déploiements de prévisualisation Vercel tournent avec `NODE_ENV=production` et
+ * doivent pouvoir utiliser des clés de test. Le mode n'est pas déductible de
+ * l'environnement ; seule sa cohérence interne l'est.
+ *
+ * `STRIPE_WEBHOOK_SECRET` n'entre pas dans le contrôle : un `whsec_` ne porte
+ * aucun marqueur de mode. C'est la garde `event.livemode` du route handler qui
+ * couvre ce troisième côté.
+ */
+export const envSchema = envSchemaShape.superRefine((env, ctx) => {
+	const secretMode = stripeKeyMode(env.STRIPE_SECRET_KEY);
+	const publishableMode = stripeKeyMode(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
+	if (secretMode && publishableMode && secretMode !== publishableMode) {
+		ctx.addIssue({
+			code: "custom",
+			path: ["NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"],
+			message:
+				`Incohérence de mode Stripe : STRIPE_SECRET_KEY est en '${secretMode}' ` +
+				`et NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY en '${publishableMode}'. ` +
+				`Les deux clés doivent venir du même compte et du même mode.`,
+		});
+	}
+});
+
 /**
  * Type inféré des variables d'environnement validées
  */
-export type Env = z.infer<typeof envSchema>;
+export type Env = z.infer<typeof envSchemaShape>;

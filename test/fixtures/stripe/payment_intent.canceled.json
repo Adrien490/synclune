@@ -1,7 +1,7 @@
 {
 	"id": "evt_test_pi_canceled",
 	"object": "event",
-	"api_version": "2025-09-30.clover",
+	"api_version": "2026-06-24.dahlia",
 	"created": 1715760000,
 	"type": "payment_intent.canceled",
 	"livemode": false,
