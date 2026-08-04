@@ -128,7 +128,17 @@ export function useFocusFirstError() {
 		// `aria-invalid` sur les deux. En desktop, cibler la première occurrence
 		// revenait à `focus()` + `scrollIntoView()` sur un `display:none` — deux
 		// no-op silencieux, le focus restait où il était.
-		const first = findFirstVisible(root.querySelectorAll<HTMLElement>('[aria-invalid="true"]'));
+		//
+		// `data-field-invalid` est le repli des champs COMPOSITES, qui n'ont pas de
+		// contrôle unique où poser `aria-invalid` — la carte média du catalogue est
+		// une grille d'images plus un bouton d'envoi. Son conteneur est un
+		// `role="group"`, et `group` ne SUPPORTE PAS `aria-invalid` (ARIA 1.2) : l'y
+		// poser quand même serait ignoré des lecteurs d'écran tout en faisant passer
+		// le champ pour correctement marqué. Le groupe décrit donc son erreur par
+		// `aria-describedby`, et signale à ce hook par cet attribut de données.
+		const first = findFirstVisible(
+			root.querySelectorAll<HTMLElement>('[aria-invalid="true"], [data-field-invalid="true"]'),
+		);
 		if (!first) return false;
 		focusElement(first);
 		return true;

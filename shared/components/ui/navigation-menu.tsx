@@ -1,7 +1,7 @@
 "use client";
 
 import { NavigationMenu as NavigationMenuPrimitive } from "@base-ui/react/navigation-menu";
-import { ChevronDownIcon } from "lucide-react";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import type * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
@@ -90,7 +90,7 @@ function NavigationMenuTrigger({
 		>
 			{children}
 			{showChevron && (
-				<ChevronDownIcon
+				<CaretDownIcon
 					// `group-data-popup-open:` et non `group-data-[state=open]:` : Base UI
 					// expose l'état du popup sur le trigger par un attribut PRÉSENT ou
 					// ABSENT (`data-popup-open`), pas par une valeur.
@@ -193,13 +193,26 @@ function NavigationMenuPopup({
  * `flex flex-col gap-1`, ce qui obligeait deux call sites à la défaire avec un
  * `flex-row!` — un défaut par défaut. Le lien ne pose plus que le focus visible
  * et la taille des icônes ; la mise en page appartient à l'appelant.
+ *
+ * ⚠️ **Le dimensionnement d'icône épargne le trait dessiné à la main.**
+ * `[&_svg:not([class*='size-'])]:size-4` est une commodité pour les pictogrammes,
+ * mais sa spécificité (`.classe svg:not(…)`) écrase les `h-*` / `w-*` que
+ * l'appelant pose sur le SVG lui-même. `SquiggleUnderline` se déclare en
+ * `h-2 w-[calc(100%-1.5rem)]` — sans `size-`, donc non exempté : le soulignement
+ * du header rendait **16 × 16 px**, un gribouillis sous la première lettre au
+ * lieu d'un trait courant sous le libellé. Le repère d'`aria-current="page"` de
+ * la nav n'était donc pas seulement trop pâle, il était aussi à la mauvaise
+ * échelle — et seule une entrée ACTIVE le rend visible, ce qui l'a caché
+ * jusqu'ici. L'exclusion se fait sur `data-slot`, stable, et non sur une classe
+ * qu'un `cn()` peut réordonner.
  */
 function NavigationMenuLink({ className, ...props }: NavigationMenuPrimitive.Link.Props) {
 	return (
 		<NavigationMenuPrimitive.Link
 			data-slot="navigation-menu-link"
 			className={cn(
-				"[&_svg:not([class*='text-'])]:text-muted-foreground focus-ring [&_svg:not([class*='size-'])]:size-4",
+				"[&_svg:not([class*='text-'])]:text-muted-foreground focus-ring",
+				"[&_svg:not([data-slot='squiggle-underline']):not([class*='size-'])]:size-4",
 				className,
 			)}
 			{...props}

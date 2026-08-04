@@ -9,11 +9,11 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { EmptyResetFiltersAction } from "./empty-reset-filters-action";
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 
 interface TableEmptyStateProps {
-	/** Icone a afficher (composant Lucide) */
-	icon: LucideIcon;
+	/** Icone a afficher (composant Phosphor) */
+	icon: Icon;
 	/** Titre de l'etat vide */
 	title: string;
 	/** Description de l'etat vide (shown when hasActiveFilters is true or undefined) */

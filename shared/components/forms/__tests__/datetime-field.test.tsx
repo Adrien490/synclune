@@ -63,9 +63,9 @@ vi.mock("./field-label", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	CalendarIcon: () => <svg data-testid="calendar-icon" />,
-	X: () => <svg data-testid="x-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CalendarBlankIcon: () => <svg data-testid="calendar-icon" />,
+	XIcon: () => <svg data-testid="x-icon" />,
 }));
 
 vi.mock("date-fns/locale", () => ({

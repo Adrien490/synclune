@@ -30,8 +30,8 @@ vi.mock("@/shared/components/ui/counter-badge", () => ({
 	},
 }));
 
-vi.mock("lucide-react", () => ({
-	Images: () => <svg data-testid="icon-images" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ImagesIcon: () => <svg data-testid="icon-images" />,
 }));
 
 // Import AFTER mocks

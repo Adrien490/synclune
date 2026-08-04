@@ -46,8 +46,8 @@ vi.mock("@/shared/components/fab", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	LayoutDashboard: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SquaresFourIcon: ({ className }: { className?: string }) => (
 		<span data-testid="layout-dashboard-icon" className={className} aria-hidden="true" />
 	),
 }));

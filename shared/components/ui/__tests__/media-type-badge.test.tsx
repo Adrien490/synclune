@@ -14,8 +14,10 @@ vi.mock("class-variance-authority", () => ({
 	cva: () => () => "badge-classes",
 }));
 
-vi.mock("lucide-react", () => ({
-	Video: (props: React.SVGProps<SVGSVGElement>) => <svg data-testid="video-icon" {...props} />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	VideoCameraIcon: (props: React.SVGProps<SVGSVGElement>) => (
+		<svg data-testid="video-icon" {...props} />
+	),
 }));
 
 // ============================================================================

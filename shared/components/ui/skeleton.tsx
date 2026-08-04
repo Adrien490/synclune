@@ -27,11 +27,30 @@ const skeletonVariants = cva("", {
 });
 
 interface SkeletonProps
-	extends React.ComponentProps<"div">, VariantProps<typeof skeletonVariants> {}
+	extends Omit<React.ComponentProps<"div">, "ref">, VariantProps<typeof skeletonVariants> {
+	/**
+	 * Tag rendu (défaut `div`).
+	 *
+	 * ⚠️ `span` est OBLIGATOIRE dès que le skeleton vit dans un contenu de flux
+	 * (`<p>`, `<h1>`, `<label>`…) : un `<div>` y est un descendant illégal, que le
+	 * parser HTML corrige en fermant le `<p>` — d'où une erreur d'hydratation React
+	 * (« In HTML, <div> cannot be a descendant of <p> »), invisible au typecheck.
+	 * Penser alors à `inline-block` : les hauteurs/largeurs sont inertes sur une
+	 * boîte inline.
+	 */
+	as?: "div" | "span";
+}
 
-function Skeleton({ className, variant, shape, size, ...props }: SkeletonProps) {
+function Skeleton({
+	as: Component = "div",
+	className,
+	variant,
+	shape,
+	size,
+	...props
+}: SkeletonProps) {
 	return (
-		<div
+		<Component
 			data-slot="skeleton"
 			role="presentation"
 			aria-hidden="true"

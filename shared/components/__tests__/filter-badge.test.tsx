@@ -100,8 +100,8 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	X: ({ className, ...props }: Record<string, unknown>) => {
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	XIcon: ({ className, ...props }: Record<string, unknown>) => {
 		const { createElement } = require("react");
 		return createElement("svg", { className, "data-testid": "x-icon", ...props });
 	},

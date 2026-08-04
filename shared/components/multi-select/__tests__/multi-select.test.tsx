@@ -12,11 +12,11 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	Check: () => <svg data-testid="icon-check" />,
-	ChevronDown: () => <svg data-testid="icon-chevron-down" />,
-	Search: () => <svg data-testid="icon-search" />,
-	X: () => <svg data-testid="icon-x" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CheckIcon: () => <svg data-testid="icon-check" />,
+	CaretDownIcon: () => <svg data-testid="icon-chevron-down" />,
+	MagnifyingGlassIcon: () => <svg data-testid="icon-search" />,
+	XIcon: () => <svg data-testid="icon-x" />,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({

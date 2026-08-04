@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
@@ -33,7 +33,7 @@ interface CounterBadgeProps {
 	count: number;
 	max: number;
 	label: string;
-	icon?: LucideIcon;
+	icon?: Icon;
 	className?: string;
 }
 

@@ -118,11 +118,11 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	AlertCircleIcon: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	WarningCircleIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="alert-circle-icon" className={className} />
 	),
-	SearchIcon: ({ className }: { className?: string }) => (
+	MagnifyingGlassIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="search-icon" className={className} />
 	),
 }));

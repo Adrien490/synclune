@@ -88,11 +88,11 @@ vi.mock("@/shared/components/ui/select", () => ({
 	SelectValue: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("lucide-react", () => ({
-	ChevronLeft: () => <span data-testid="icon-chevron-left" />,
-	ChevronRight: () => <span data-testid="icon-chevron-right" />,
-	ChevronsLeft: () => <span data-testid="icon-chevrons-left" />,
-	Loader2Icon: () => <span data-testid="icon-loader" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CaretLeftIcon: () => <span data-testid="icon-chevron-left" />,
+	CaretRightIcon: () => <span data-testid="icon-chevron-right" />,
+	CaretDoubleLeftIcon: () => <span data-testid="icon-chevrons-left" />,
+	SpinnerIcon: () => <span data-testid="icon-loader" />,
 }));
 
 // ============================================================================

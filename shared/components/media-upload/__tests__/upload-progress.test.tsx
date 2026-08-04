@@ -60,10 +60,11 @@ describe("UploadProgress", () => {
 	// -------------------------------------------------------------------------
 	describe("variant default", () => {
 		it("affiche le spinner, la barre de progression et le texte pendant le téléversement", () => {
-			const { container } = render(<UploadProgress progress={50} />);
+			render(<UploadProgress progress={50} />);
 
-			// Spinner (LoaderCircle SVG rendered by lucide-react)
-			container.querySelector(".lucide-loader-circle, .lucide-loader2, svg");
+			// Le sélecteur `.lucide-*` d'origine était mort (résultat jamais assert)
+			// et Phosphor n'émet aucune classe de ce genre : seul `aria-busy` porte
+			// l'information, et c'est lui qu'on vérifie.
 			// The status container should be aria-busy
 			const status = screen.getByRole("status");
 			expect(status.getAttribute("aria-busy")).toBe("true");

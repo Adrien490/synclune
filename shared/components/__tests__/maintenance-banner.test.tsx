@@ -17,8 +17,8 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Construction: ({
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	TrafficConeIcon: ({
 		className,
 		"aria-hidden": ariaHidden,
 	}: {

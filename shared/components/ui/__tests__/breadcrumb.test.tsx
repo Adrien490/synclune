@@ -22,11 +22,11 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	ChevronRight: (props: React.SVGProps<SVGSVGElement>) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CaretRightIcon: (props: React.SVGProps<SVGSVGElement>) => (
 		<svg data-testid="chevron-right" {...props} />
 	),
-	Ellipsis: (props: React.SVGProps<SVGSVGElement>) => (
+	DotsThreeIcon: (props: React.SVGProps<SVGSVGElement>) => (
 		<svg data-testid="ellipsis-icon" {...props} />
 	),
 }));

@@ -102,11 +102,11 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	Check: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CheckIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="check-icon" className={className} aria-hidden="true" />
 	),
-	X: ({ className }: { className?: string }) => (
+	XIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="x-icon" className={className} aria-hidden="true" />
 	),
 }));

@@ -13,8 +13,8 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	ChevronDownIcon: ({
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CaretDownIcon: ({
 		className,
 		"aria-hidden": ariaHidden,
 	}: {

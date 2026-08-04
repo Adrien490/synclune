@@ -28,6 +28,21 @@
  * garde-fou qui hurle sur chaque nouvelle bottom-sheet serait désactivé en une
  * semaine.
  *
+ * ## Retrait du 2026-08-04 — `admin-menu-sheet.tsx`
+ *
+ * Le menu admin mobile est SORTI de l'allowlist. Sa justification (« navigation
+ * longue et scrollable, chaque touch compte ») décrivait une collision constatée
+ * **sous Vaul**, dont l'arbitrage scroll↔swipe reposait sur `scrollLockTimeout`.
+ * Base UI arbitre sur la DIRECTION du geste et n'a aucun équivalent de ce
+ * réglage : la prémisse n'a pas survécu à la migration. Combiné à
+ * `showCloseButton={false}` et à la bottom bar qui se dépublie à l'ouverture, il
+ * ne restait aucune sortie atteignable au pouce sur un panneau de 92 dvh.
+ *
+ * ⚠️ Si la fermeture accidentelle pendant le scroll revient sous Base UI, c'est
+ * un vrai signal de réouverture — mais il faudra alors la CONSTATER, et la
+ * réinscription devra s'accompagner d'une sortie visible dans l'en-tête, comme
+ * le font déjà le panier et le panneau de filtres.
+ *
  * ⚠️ Migration Base UI : le PROP survit, son MÉCANISME s'est inversé. Vaul avait
  * une liste blanche (« seule la poignée drague ») ; Base UI a une liste noire
  * (`data-base-ui-swipe-ignore` sur les descendants à exclure). Les wrappers
@@ -59,10 +74,6 @@ const ALLOWED = new Map<string, string>([
 	[
 		"shared/components/filter-sheet-wrapper.tsx",
 		"sliders de prix et accordéons — un drag sur un slider fermait la sheet",
-	],
-	[
-		"app/admin/_components/admin-menu-sheet.tsx",
-		"navigation longue et scrollable, chaque touch compte",
 	],
 ]);
 

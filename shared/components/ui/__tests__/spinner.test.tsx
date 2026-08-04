@@ -13,8 +13,8 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	Loader2Icon: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
 		<svg data-testid="loader-icon" className={className} {...props} />
 	),
 }));

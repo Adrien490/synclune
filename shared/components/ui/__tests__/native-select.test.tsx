@@ -9,8 +9,8 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	ChevronDownIcon: (props: Record<string, unknown>) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CaretDownIcon: (props: Record<string, unknown>) => (
 		<svg data-testid="chevron-icon" aria-hidden="true" data-slot={props["data-slot"] as string} />
 	),
 }));

@@ -9,7 +9,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { m } from "motion/react";
-import { AlertCircleIcon, SearchIcon } from "lucide-react";
+import { MagnifyingGlassIcon, WarningCircleIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/shared/components/ui/button";
 import Image from "next/image";
 import type { ReactNode } from "react";
@@ -194,7 +194,7 @@ function AutocompleteEmptyState({
 			<Empty>
 				<EmptyHeader>
 					<EmptyMedia>
-						<SearchIcon className="size-6" strokeWidth={1.5} />
+						<MagnifyingGlassIcon className="size-6" />
 					</EmptyMedia>
 					<EmptyTitle>{noResultsMessage}</EmptyTitle>
 					<EmptyDescription>{noResultsDescription}</EmptyDescription>
@@ -220,7 +220,7 @@ function AutocompleteErrorState({
 			<Empty>
 				<EmptyHeader>
 					<EmptyMedia>
-						<AlertCircleIcon className="text-destructive size-6" strokeWidth={1.5} />
+						<WarningCircleIcon className="text-destructive size-6" />
 					</EmptyMedia>
 					<EmptyTitle className="text-destructive">{error}</EmptyTitle>
 					{onRetry && (

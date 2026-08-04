@@ -90,11 +90,11 @@ vi.mock("@/shared/components/ui/tooltip", () => {
 	};
 });
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const { createElement } = require("react");
 	return {
-		ChevronLeft: () => createElement("span", { "data-testid": "icon-chevron-left" }),
-		X: () => createElement("span", { "data-testid": "icon-x" }),
+		CaretLeftIcon: () => createElement("span", { "data-testid": "icon-chevron-left" }),
+		XIcon: () => createElement("span", { "data-testid": "icon-x" }),
 	};
 });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 import Link from "next/link";
 import {
 	useEffect,
@@ -23,8 +23,8 @@ interface StickyActionBarItemBase {
 	key: string;
 	/** Visible label (truncated when the bar is narrow). */
 	label: string;
-	/** Leading icon (lucide-react). */
-	icon: LucideIcon;
+	/** Leading icon (@phosphor-icons/react/ssr). */
+	icon: Icon;
 	/**
 	 * Accessible name — should describe the EFFECT only ("Ouvrir les filtres").
 	 * The active-count is announced automatically via a sibling sr-only span

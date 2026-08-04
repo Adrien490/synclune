@@ -108,12 +108,12 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const { createElement } = require("react");
 	return {
-		Search: (props: Record<string, unknown>) =>
+		MagnifyingGlassIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "search-icon", ...props }),
-		X: (props: Record<string, unknown>) =>
+		XIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "x-icon", ...props }),
 	};
 });

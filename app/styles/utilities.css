@@ -8,6 +8,62 @@
 		word-break: break-word;
 	}
 
+	/* ==========================================
+	   MOT D'ACCENT DÉGRADÉ DU H1 (home — bloc titre de l'étal)
+	   Stops via les tokens SSOT --gradient-hero-* (globals.css).
+
+	   Dégradé STATIQUE : l'ancienne version balayait 300 % de largeur en boucle
+	   infinie (`hero-gradient-shimmer`, 9 s). Une animation infinie sur
+	   l'élément LCP de la page coûte des recompositions permanentes pour un
+	   effet que personne ne regarde après la première seconde — elle n'est pas
+	   restaurée avec le reste.
+
+	   iOS Safari : `-webkit-text-fill-color` est requis pour que le clip-text
+	   peigne réellement le glyphe, et le halo passe par `text-shadow` et NON
+	   par `filter: drop-shadow` — un `filter` sur un élément
+	   `background-clip: text` y casse le rendu et fait disparaître le mot.
+	   ========================================== */
+	.text-gradient-multicolor {
+		background: linear-gradient(
+			100deg,
+			var(--gradient-hero-from) 0%,
+			var(--gradient-hero-via) 45%,
+			var(--gradient-hero-to) 100%
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+		text-shadow: 0 2px 14px var(--color-glow-pink);
+	}
+
+	/* Fallback contraste forcé (Windows high-contrast) : texte plein système. */
+	@media (forced-colors: active) {
+		.text-gradient-multicolor {
+			background: none;
+			color: CanvasText;
+			-webkit-text-fill-color: CanvasText;
+			text-shadow: none;
+		}
+	}
+
+	/* Fallback contraste renforcé : miroir de forced-colors. C'est LE filet des
+	   stops rose/menthe, sous 3:1 par construction.
+
+	   ⚠️ La cible est --foreground, PAS --primary comme dans la version d'avant
+	   le vidage de la landing : --primary est le rose pastel (#fdb8e4), soit
+	   ~1,5:1 sur --background. Ce « filet » RABAISSAIT le contraste sous celui
+	   du dégradé qu'il était censé rattraper — la seule sortie honnête pour qui
+	   demande plus de contraste, c'est l'encre. */
+	@media (prefers-contrast: more) {
+		.text-gradient-multicolor {
+			background: none;
+			color: var(--foreground);
+			-webkit-text-fill-color: var(--foreground);
+			text-shadow: none;
+		}
+	}
+
 	/* Gradient Hero avec couleurs logo */
 	.bg-linear-organic {
 		background: linear-gradient(

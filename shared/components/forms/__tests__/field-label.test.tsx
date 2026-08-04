@@ -34,8 +34,8 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 	TooltipContent: ({ children }: any) => <div role="tooltip">{children}</div>,
 }));
 
-vi.mock("lucide-react", () => ({
-	CircleHelp: () => <svg data-testid="help-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	QuestionIcon: () => <svg data-testid="help-icon" />,
 }));
 
 // ============================================================================

@@ -34,10 +34,10 @@ vi.mock("@/shared/components/ui/button", () => {
 	return { Button };
 });
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const { createElement } = require("react");
 	return {
-		Copy: (props: Record<string, unknown>) =>
+		CopyIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "copy-icon", ...props }),
 	};
 });

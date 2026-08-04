@@ -14,14 +14,14 @@ vi.mock("@/shared/components/ui/button", () => ({
 	buttonVariants: (opts?: Record<string, unknown>) => opts?.variant ?? "default",
 }));
 
-vi.mock("lucide-react", () => ({
-	ChevronLeftIcon: (props: React.SVGProps<SVGSVGElement>) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CaretLeftIcon: (props: React.SVGProps<SVGSVGElement>) => (
 		<svg data-testid="chevron-left" {...props} />
 	),
-	ChevronRightIcon: (props: React.SVGProps<SVGSVGElement>) => (
+	CaretRightIcon: (props: React.SVGProps<SVGSVGElement>) => (
 		<svg data-testid="chevron-right" {...props} />
 	),
-	MoreHorizontalIcon: (props: React.SVGProps<SVGSVGElement>) => (
+	DotsThreeIcon: (props: React.SVGProps<SVGSVGElement>) => (
 		<svg data-testid="more-horizontal" {...props} />
 	),
 }));

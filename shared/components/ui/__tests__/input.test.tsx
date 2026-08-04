@@ -14,8 +14,8 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	X: () => <svg data-testid="icon-x" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	XIcon: () => <svg data-testid="icon-x" />,
 }));
 
 // Import AFTER mocks

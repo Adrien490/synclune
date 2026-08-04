@@ -2,7 +2,7 @@
 
 import { Radio as RadioPrimitive } from "@base-ui/react/radio";
 import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group";
-import { CircleIcon } from "lucide-react";
+import { CircleIcon } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/shared/utils/cn";
 
@@ -34,7 +34,13 @@ function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
 				data-slot="radio-group-indicator"
 				className="relative flex items-center justify-center"
 			>
-				<CircleIcon className="fill-primary absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2" />
+				{/* Rose PROFOND, pas --primary : le point est le seul porteur de l'état
+				 « sélectionné », et le pastel n'était qu'à 1,6:1 sur un fond de carte
+				 (1:1 s'il se trouvait sur un aplat rose). WCAG 1.4.11 demande 3:1. */}
+				<CircleIcon
+					weight="fill"
+					className="text-brand-rose-strong absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2"
+				/>
 			</RadioPrimitive.Indicator>
 		</RadioPrimitive.Root>
 	);

@@ -25,12 +25,12 @@ vi.mock("next/link", () => ({
 	},
 }));
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const { createElement } = require("react");
 	return {
 		CheckIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "check-icon", ...props }),
-		ChevronDownIcon: (props: Record<string, unknown>) =>
+		CaretDownIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "chevron-down", ...props }),
 	};
 });

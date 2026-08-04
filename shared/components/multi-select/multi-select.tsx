@@ -16,7 +16,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { useHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { CaretDownIcon, CheckIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react/ssr";
 import * as React from "react";
 
 export interface MultiSelectOption {
@@ -290,7 +290,7 @@ export const MultiSelect = ({
 			{selected.length === 0 ? (
 				<>
 					<span className="text-muted-foreground mx-3 text-sm">{placeholder}</span>
-					<ChevronDown
+					<CaretDownIcon
 						className={cn(
 							"text-muted-foreground mx-2 size-4 motion-safe:transition-transform",
 							isOpen && "rotate-180",
@@ -322,7 +322,7 @@ export const MultiSelect = ({
 									aria-label={`Retirer ${labelOf(val)}`}
 									className="hover:bg-foreground/20 focus-visible:ring-foreground/50 -mr-1 ml-1 flex size-6 cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden disabled:cursor-not-allowed"
 								>
-									<X className="size-3" aria-hidden="true" />
+									<XIcon className="size-3" aria-hidden="true" />
 								</button>
 							</Badge>
 						))}
@@ -354,10 +354,10 @@ export const MultiSelect = ({
 							aria-label="Tout effacer"
 							className="text-muted-foreground can-hover:hover:text-foreground focus-ring mx-1 flex size-8 cursor-pointer items-center justify-center rounded-sm disabled:cursor-not-allowed"
 						>
-							<X className="size-4" aria-hidden="true" />
+							<XIcon className="size-4" aria-hidden="true" />
 						</button>
 						<Separator orientation="vertical" className="h-6" />
-						<ChevronDown
+						<CaretDownIcon
 							className={cn(
 								"text-muted-foreground mx-2 size-4 motion-safe:transition-transform",
 								isOpen && "rotate-180",
@@ -372,7 +372,7 @@ export const MultiSelect = ({
 
 	const searchInput = showSearch ? (
 		<div className="relative">
-			<Search
+			<MagnifyingGlassIcon
 				className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
 				aria-hidden="true"
 			/>
@@ -406,7 +406,7 @@ export const MultiSelect = ({
 					aria-label="Effacer la recherche"
 					className="text-muted-foreground can-hover:hover:text-foreground focus-ring absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm"
 				>
-					<X className="size-4" aria-hidden="true" />
+					<XIcon className="size-4" aria-hidden="true" />
 				</button>
 			)}
 		</div>
@@ -481,7 +481,9 @@ export const MultiSelect = ({
 							/>
 							{option.prefix}
 							<span className="flex-1 truncate">{option.label}</span>
-							{isSelected && <Check className="text-primary size-4 shrink-0" aria-hidden="true" />}
+							{isSelected && (
+								<CheckIcon className="text-primary size-4 shrink-0" aria-hidden="true" />
+							)}
 						</li>
 					);
 					/* eslint-enable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-to-interactive-role */

@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { ACCEPT_ATTRIBUTE_IMAGES_ONLY } from "@/modules/media/constants/media-limits.constants";
 import { cn } from "@/shared/utils/cn";
-import { Camera, FolderOpen, Image as ImageIcon, Plus } from "lucide-react";
+import { CameraIcon, FolderOpenIcon, ImageIcon, PlusIcon } from "@phosphor-icons/react/ssr";
 import { useRef, useState } from "react";
 
 interface UploadActionSheetProps {
@@ -139,7 +139,7 @@ export function UploadActionSheet({
 						}
 					>
 						<span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
-							<Plus className="size-5" aria-hidden="true" />
+							<PlusIcon className="size-5" aria-hidden="true" />
 						</span>
 						<span className="flex min-w-0 flex-col">
 							<span className="text-sm font-medium">{triggerLabel}</span>
@@ -162,7 +162,7 @@ export function UploadActionSheet({
 									className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-4 rounded-xl px-4 py-3 text-left motion-safe:transition-colors"
 								>
 									<span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
-										<Camera className="size-5" aria-hidden="true" />
+										<CameraIcon className="size-5" aria-hidden="true" />
 									</span>
 									<span className="flex flex-col">
 										<span className="text-sm font-medium">Capturer un cliché</span>
@@ -195,7 +195,7 @@ export function UploadActionSheet({
 								className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-4 rounded-xl px-4 py-3 text-left motion-safe:transition-colors"
 							>
 								<span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
-									<FolderOpen className="size-5" aria-hidden="true" />
+									<FolderOpenIcon className="size-5" aria-hidden="true" />
 								</span>
 								<span className="flex flex-col">
 									<span className="text-sm font-medium">Parcourir mes fichiers</span>

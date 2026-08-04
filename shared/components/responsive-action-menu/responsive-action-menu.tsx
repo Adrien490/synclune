@@ -1,7 +1,8 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import { ChevronRight } from "lucide-react";
+import { CaretRightIcon } from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
+
 import { Spinner } from "@/shared/components/ui/spinner";
 import Link from "next/link";
 import * as React from "react";
@@ -44,8 +45,8 @@ export type ActionMenuItem = {
 	label: string;
 	/** Optional short description shown under the label on mobile. */
 	description?: string;
-	/** Leading icon from lucide-react. Rendered in a 40×40 pill on mobile. */
-	icon?: LucideIcon;
+	/** Leading icon from @phosphor-icons/react/ssr. Rendered in a 40×40 pill on mobile. */
+	icon?: Icon;
 	/** Visual variant. @default "default" */
 	variant?: "default" | "destructive";
 	/** Render the action disabled (greyed, no pointer). */
@@ -427,7 +428,7 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 				) : null}
 			</span>
 			{item.href && item.external ? (
-				<ChevronRight className="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+				<CaretRightIcon className="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
 			) : null}
 		</span>
 	);

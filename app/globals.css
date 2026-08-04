@@ -12,10 +12,31 @@
 @import "./styles/entrance.css";
 @import "./styles/components.css";
 
-/* Focus ring centralisé (WCAG 2.4.7) — style shadcn (border + ring 3px sur token --ring)
- * SSOT pour tous les éléments focusables. Aligné sur Button/Input pour cohérence DS. */
+/* Focus ring centralisé (WCAG 2.4.7 + 1.4.11) — SSOT de tous les éléments focusables.
+ *
+ * DEUX tons, et ce n'est pas décoratif : `--ring` vaut `--primary`, le rose
+ * `#fdb8e4`, qui plafonne à **1,55:1** sur `--background`. Un anneau rose seul
+ * est donc, littéralement, un indicateur de focus invisible — très en dessous
+ * des 3:1 exigés pour un état d'interface. L'utility posait bien
+ * `focus-visible:border-ring` en plus, mais un élément SANS bordure (les
+ * libellés de la nav du header, notamment) ne montrait que le halo pastel.
+ *
+ * - `outline: 2px solid var(--foreground)` porte l'INFORMATION — 19,5:1, et
+ *   l'outline reste visible en `forced-colors`, contrairement à un box-shadow ;
+ * - l'anneau rose de 5px porte la MARQUE, en aplat, où le rose est excellent.
+ *   L'outline se peignant par-dessus ses 2 premiers pixels, on lit 2px d'encre
+ *   puis 3px de rose.
+ *
+ * L'outline est déclaré en CSS brut plutôt qu'en `@apply focus-visible:outline-*` :
+ * `outline-none` pose `--tw-outline-style: none`, que les utilities de largeur
+ * relisent — l'outline serait resté invisible sans qu'aucun test ne le voie. */
 @utility focus-ring {
-	@apply focus-visible:border-ring focus-visible:ring-ring outline-none focus-visible:ring-[3px];
+	@apply focus-visible:border-ring focus-visible:ring-ring outline-none focus-visible:ring-[5px];
+
+	&:focus-visible {
+		outline: 2px solid var(--foreground);
+		outline-offset: 0;
+	}
 }
 
 /* Halo glow rose centralisé — pseudo-element ::before flou (blur-xl) qui s'opacifie
@@ -61,6 +82,18 @@ html {
 	scroll-behavior: smooth;
 	scroll-padding-top: var(--navbar-height);
 	--navbar-height: 4rem;
+	/* Hauteur de la barre AU REPOS — insensible au mode compact.
+	 *
+	 * `--navbar-height` suit la barre pendant le scroll (5rem → 4rem une fois
+	 * compactée, cf. plus bas) : un contenu qui en dérive son offset haut
+	 * REMONTE de 16 px au premier pixel scrollé. Les pages catalogue y échappent
+	 * de justesse — leur `pt-[calc(var(--navbar-height)+1rem)]` est écrasé par
+	 * `sm:pt-4`, donc n'existe que sous 40rem, où la variable ne bouge pas.
+	 *
+	 * Toute surface qui doit compenser la barre fixe AU-DELÀ de 40rem (l'étal de
+	 * la home) prend celle-ci. Elle ne rétrécit jamais : la barre compactée
+	 * laisse simplement 16 px d'air de plus, ce qui ne bouge pas. */
+	--navbar-height-static: 4rem;
 	/* `--bottom-bar-height` n'est VOLONTAIREMENT pas déclarée ici.
 	 *
 	 * Elle est posée au runtime par `use-bottom-bar-height` avec la hauteur mesurée,
@@ -161,12 +194,21 @@ html:has([data-checkout-shell]) {
 @media (width >= 40rem) {
 	html {
 		--navbar-height: 5rem;
+		--navbar-height-static: 5rem;
 	}
-	/* Scroll compact mode: home navbar shrinks h-20 → h-16 once scrolled past threshold.
-	 * Relies on :has() + [data-home-navbar][data-scrolled="true"] set by NavbarWrapper. */
-	html:has(header[data-home-navbar][data-scrolled="true"]) {
-		--navbar-height: 4rem;
-	}
+	/* ⚠️ Il n'y a PLUS de mode compact, et c'est délibéré (refonte « La devanture »,
+	 * 2026-08-04). Une règle `html:has(header[data-home-navbar][data-scrolled="true"])`
+	 * faisait ici retomber `--navbar-height` de 5rem à 4rem : tout ce qui s'y accroche
+	 * — la barre de tri collante de `/produits`, la barre CTA collante de la PDP —
+	 * sautait donc de 16 px, instantanément, au PREMIER pixel scrollé. La barre, elle,
+	 * changeait de hauteur en snap (une transition sur `height` est non composable)
+	 * pendant que le logo glissait sur 300 ms : un seul état, trois horloges.
+	 *
+	 * La barre garde désormais sa hauteur, et le scroll porte de l'information plutôt
+	 * qu'une contraction : ombre portée, et nom de la salle courante sous `lg`.
+	 * Conséquence directe : `--navbar-height` est CONSTANTE, donc un offset qui en
+	 * dérive ne bouge plus. `--navbar-height-static` reste distincte — l'étal en dépend
+	 * et un test le verrouille — mais les deux valent maintenant la même chose. */
 }
 
 /* ==========================================
@@ -359,6 +401,28 @@ main#main-content {
 	--color-brand-sun: oklch(0.85 0.11 86);
 
 	/* ==========================================
+	   ROSE PROFOND — le rose de marque, mais LISIBLE
+	   ⚠️ Ce n'est PAS un doublon de --primary, et il ne faut pas le « nettoyer »
+	   comme tel : c'est le même rose (teinte 340.78, identique à --primary) à une
+	   luminosité qui passe les seuils WCAG.
+
+	   --primary (L 0.8593) est un pastel : 1,6:1 sur blanc. Excellent en APLAT
+	   sous encre foncée (12,61:1), inutilisable dès qu'il doit porter une
+	   information à lui seul. Or c'était exactement son rôle sur deux contrôles :
+	   le point du radio et la case cochée — des indicateurs d'ÉTAT, que
+	   WCAG 1.4.11 exige à 3:1 minimum.
+
+	   (L'anneau de focus souffrait du même mal ; il est traité autrement, par
+	   l'outline en `--foreground` de `@utility focus-ring`. `--ring` reste donc
+	   pastel à dessein : il n'y porte plus que la marque.)
+
+	   Règle d'usage : --primary pour les surfaces (aplats, boutons, halos) ;
+	   --color-brand-rose-strong dès que le rose doit être VU pour comprendre un
+	   état. Verrouillé par `shared/components/__tests__/token-contrast.regression.test.ts`.
+	   ========================================== */
+	--color-brand-rose-strong: oklch(0.55 0.16 340.78);
+
+	/* ==========================================
 	   DECORATIVE SHADOWS (tokens des ombres décoratives — remplacent
 	   les rgba(0,0,0,x) littéraux : navbar)
 	   ========================================== */
@@ -433,6 +497,24 @@ main#main-content {
 	--secondary-foreground: oklch(0.13 0.01 270);
 
 	/* ==========================================
+	   HERO GRADIENT WORD (mot d'accent du h1 de la home)
+	   SSOT des 3 stops du dégradé rose → violet → menthe, consommés par
+	   `.text-gradient-multicolor` (app/styles/utilities.css).
+
+	   ⚠️ Ce ne sont PAS les accents de marque (--primary,
+	   --color-brand-lavender/mint/sun) : ceux-là sont des pastels conçus pour
+	   l'APLAT (7,8–12,7:1 sous --foreground) et tombent à 1,5–2,5:1 en TEXTE.
+	   Les valeurs ci-dessous sont leurs pendants assombris, seuls tenables sur
+	   un glyphe — elles restent malgré tout sous 3:1 sur les stops rose et
+	   menthe (arbitrage de marque assumé). Le filet est la bascule
+	   `prefers-contrast: more` / `forced-colors` portée par l'utility : ne
+	   jamais la retirer en même temps que ces tokens.
+	   ========================================== */
+	--gradient-hero-from: oklch(0.66 0.2 350); /* rose/magenta */
+	--gradient-hero-via: oklch(0.58 0.18 295); /* violet/lavande */
+	--gradient-hero-to: oklch(0.68 0.14 175); /* teal/menthe */
+
+	/* ==========================================
 	   ACCENT (Gris neutre — hover/surfaces, aligné sur --muted)
 	   ========================================== */
 	--accent: oklch(0.94 0.01 270);
@@ -457,6 +539,11 @@ main#main-content {
 
 	--border: oklch(0.92 0.01 270);
 	--input: oklch(0.94 0.01 270);
+	/* ⚠️ Reste le rose PASTEL, délibérément. L'anneau de focus ne porte plus
+	 * l'information à lui seul : `@utility focus-ring` peint par-dessus un
+	 * `outline: 2px solid var(--foreground)` (19,5:1) et ne garde le halo de 5px
+	 * que pour la marque, en aplat — registre où le pastel est excellent.
+	 * L'assombrir ici casserait ce partage des rôles. */
 	--ring: oklch(0.8593 0.097 340.78);
 
 	/* ==========================================
@@ -497,8 +584,15 @@ main#main-content {
 		letter-spacing: var(--tracking-normal);
 	}
 
+	/* Repli global pour tout ce qui ne compose pas `focus-ring`.
+	 *
+	 * Traçait en `var(--primary)` — le rose `#fdb8e4`, **1,55:1** sur
+	 * `--background`. C'était donc l'indicateur de focus par DÉFAUT de tout le
+	 * dépôt, et il était sous les 3:1 de WCAG 1.4.11. Même correction que
+	 * l'utility : l'encre porte l'information, le rose reste un aplat de marque
+	 * (halo de l'anneau `focus-ring`, ruban, badges). */
 	:focus-visible {
-		outline: 2px solid var(--primary);
+		outline: 2px solid var(--foreground);
 		outline-offset: 2px;
 		border-radius: var(--radius-sm);
 	}

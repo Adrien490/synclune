@@ -88,9 +88,9 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	Eye: () => <span data-testid="eye-icon" />,
-	EyeOff: () => <span data-testid="eye-off-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	EyeIcon: () => <span data-testid="eye-icon" />,
+	EyeSlashIcon: () => <span data-testid="eye-off-icon" />,
 }));
 
 // ============================================================================

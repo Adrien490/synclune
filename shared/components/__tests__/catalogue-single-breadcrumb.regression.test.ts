@@ -49,17 +49,43 @@ function pageHeaderElement(source: string): string {
 
 /** Sources rendant un `PageHeader` avec `breadcrumbs`, en plus d'un JSON-LD de page. */
 const SURFACES_WITH_PAGE_LEVEL_JSONLD = [
-	// /produits et /produits/[productTypeSlug] partagent ce composant
-	"modules/products/components/product-catalog.tsx",
 	"app/(shop)/collections/[slug]/page.tsx",
 	"app/(shop)/creations/[slug]/page.tsx",
 ];
+
+/**
+ * Le shell du catalogue (`/produits` et `/produits/[productTypeSlug]`) ne figure
+ * plus dans la liste ci-dessus : depuis la direction « L'étal continue »
+ * (2026-08-05) il **ne rend plus de `PageHeader` du tout**. Son bloc titre est
+ * une cellule de la grille, et son fil d'Ariane est un `<nav>` visuel sans
+ * JSON-LD. L'opt-out n'a donc plus d'objet — mais l'invariant, lui, tient
+ * toujours, et c'est cette voie-là qu'il faut garder fermée.
+ */
+const CATALOG_SHELL = "modules/products/components/product-catalog.tsx";
 
 describe("catalogue — un seul BreadcrumbList par page (@regression catalogue-single-breadcrumb)", () => {
 	it.each(SURFACES_WITH_PAGE_LEVEL_JSONLD)("%s passe noStructuredData à PageHeader", (path) => {
 		const element = pageHeaderElement(read(path));
 
 		expect(element).toContain("noStructuredData");
+	});
+
+	it("le shell du catalogue n'a AUCUN émetteur de BreadcrumbList concurrent", () => {
+		const source = read(CATALOG_SHELL);
+
+		// Ré-introduire `PageHeader` avec des `breadcrumbs` republierait un second
+		// `BreadcrumbList` sur /produits et /produits/[type] — le défaut d'origine.
+		expect(source).not.toMatch(/<PageHeader\b/);
+
+		// Le fil d'Ariane visuel du shell ne doit pas se mettre à émettre du balisage
+		// de son côté : le seul émetteur reste `buildCatalogJsonLd`, dont le
+		// `BreadcrumbList` est déjà imbriqué dans son `CollectionPage`.
+		expect(source).not.toMatch(/"@type":\s*"BreadcrumbList"/);
+		expect(source).not.toContain("itemListElement");
+
+		// Prémisse : il rend bien un fil d'Ariane VISUEL, sinon l'assertion
+		// ci-dessus passerait au vert sur une page qui n'en a plus du tout.
+		expect(source).toContain('aria-label="Fil d\'Ariane"');
 	});
 
 	it("ProductList n'émet plus de JSON-LD (l'ItemList vit dans le CollectionPage de la page)", () => {

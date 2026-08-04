@@ -111,10 +111,10 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	Filter: () => <span data-testid="filter-icon" />,
-	Loader2Icon: () => <span data-testid="loader-icon" />,
-	X: () => <span data-testid="x-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	FunnelIcon: () => <span data-testid="filter-icon" />,
+	SpinnerIcon: () => <span data-testid="loader-icon" />,
+	XIcon: () => <span data-testid="x-icon" />,
 }));
 
 // ============================================================================

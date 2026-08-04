@@ -41,10 +41,10 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const { createElement } = require("react");
 	return {
-		RefreshCw: ({ className, ...props }: Record<string, unknown>) =>
+		ArrowsClockwiseIcon: ({ className, ...props }: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "refresh-icon", className, ...props }),
 	};
 });

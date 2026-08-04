@@ -24,10 +24,10 @@ vi.mock("next/link", () => ({
 	},
 }));
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const { createElement } = require("react");
 	return {
-		ChevronLeft: (props: Record<string, unknown>) =>
+		CaretLeftIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "chevron-left", ...props }),
 	};
 });

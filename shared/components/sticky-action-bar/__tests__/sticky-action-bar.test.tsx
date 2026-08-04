@@ -1,5 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
+import {
+	ArrowsDownUpIcon,
+	MagnifyingGlassIcon,
+	PlusIcon,
+	SlidersHorizontalIcon,
+} from "@phosphor-icons/react/ssr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __resetHapticCooldown } from "@/shared/hooks/use-haptic";
@@ -41,7 +46,7 @@ function baseItems(overrides: Partial<StickyActionBarItem> = {}): StickyActionBa
 	return [
 		{
 			key: "sort",
-			icon: ArrowUpDown,
+			icon: ArrowsDownUpIcon,
 			label: "Trier",
 			ariaLabel: "Ouvrir le tri",
 			onClick: vi.fn(),
@@ -49,14 +54,14 @@ function baseItems(overrides: Partial<StickyActionBarItem> = {}): StickyActionBa
 		} as StickyActionBarItem,
 		{
 			key: "search",
-			icon: Search,
+			icon: MagnifyingGlassIcon,
 			label: "Rechercher",
 			ariaLabel: "Ouvrir la recherche",
 			onClick: vi.fn(),
 		},
 		{
 			key: "filter",
-			icon: SlidersHorizontal,
+			icon: SlidersHorizontalIcon,
 			label: "Filtrer",
 			ariaLabel: "Ouvrir les filtres",
 			onClick: vi.fn(),
@@ -92,7 +97,7 @@ describe("StickyActionBar", () => {
 		const items: StickyActionBarItem[] = [
 			{
 				key: "sort",
-				icon: ArrowUpDown,
+				icon: ArrowsDownUpIcon,
 				label: "Trier",
 				ariaLabel: "Ouvrir le tri",
 				onClick: handleSort,
@@ -161,7 +166,7 @@ describe("StickyActionBar", () => {
 			{
 				kind: "link",
 				key: "add",
-				icon: Plus,
+				icon: PlusIcon,
 				label: "Ajouter",
 				ariaLabel: "Ajouter un element",
 				href: "/admin/produits/nouveau",
@@ -198,7 +203,7 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: handle,
@@ -215,7 +220,7 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: vi.fn(),
@@ -232,7 +237,7 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: vi.fn(),
@@ -251,7 +256,7 @@ describe("StickyActionBar", () => {
 				{
 					kind: "link",
 					key: "add",
-					icon: Plus,
+					icon: PlusIcon,
 					label: "Ajouter",
 					ariaLabel: "Ajouter un element",
 					href: "/admin/produits/nouveau",
@@ -307,14 +312,14 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: vi.fn(),
 				},
 				{
 					key: "search",
-					icon: Search,
+					icon: MagnifyingGlassIcon,
 					label: "Rechercher",
 					ariaLabel: "Ouvrir la recherche",
 					onClick: vi.fn(),
@@ -322,7 +327,7 @@ describe("StickyActionBar", () => {
 				},
 				{
 					key: "filter",
-					icon: SlidersHorizontal,
+					icon: SlidersHorizontalIcon,
 					label: "Filtrer",
 					ariaLabel: "Ouvrir les filtres",
 					onClick: vi.fn(),
@@ -341,14 +346,14 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: vi.fn(),
 				},
 				{
 					key: "search",
-					icon: Search,
+					icon: MagnifyingGlassIcon,
 					label: "Rechercher",
 					ariaLabel: "Ouvrir la recherche",
 					onClick: vi.fn(),
@@ -356,7 +361,7 @@ describe("StickyActionBar", () => {
 				},
 				{
 					key: "filter",
-					icon: SlidersHorizontal,
+					icon: SlidersHorizontalIcon,
 					label: "Filtrer",
 					ariaLabel: "Ouvrir les filtres",
 					onClick: vi.fn(),
@@ -375,7 +380,7 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: vi.fn(),
@@ -383,14 +388,14 @@ describe("StickyActionBar", () => {
 				},
 				{
 					key: "search",
-					icon: Search,
+					icon: MagnifyingGlassIcon,
 					label: "Rechercher",
 					ariaLabel: "Ouvrir la recherche",
 					onClick: vi.fn(),
 				},
 				{
 					key: "filter",
-					icon: SlidersHorizontal,
+					icon: SlidersHorizontalIcon,
 					label: "Filtrer",
 					ariaLabel: "Ouvrir les filtres",
 					onClick: vi.fn(),
@@ -409,7 +414,7 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "a",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "A",
 					ariaLabel: "A",
 					onClick: vi.fn(),
@@ -417,7 +422,7 @@ describe("StickyActionBar", () => {
 				},
 				{
 					key: "b",
-					icon: Search,
+					icon: MagnifyingGlassIcon,
 					label: "B",
 					ariaLabel: "B",
 					onClick: vi.fn(),
@@ -476,7 +481,7 @@ describe("StickyActionBar", () => {
 			{
 				kind: "link",
 				key: "add",
-				icon: Plus,
+				icon: PlusIcon,
 				label: "Ajouter",
 				ariaLabel: "Ajouter un produit",
 				href: "/admin/produits/nouveau",
@@ -493,7 +498,7 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "filter",
-					icon: SlidersHorizontal,
+					icon: SlidersHorizontalIcon,
 					label: "Filtrer",
 					ariaLabel: "Ouvrir le panneau filtres",
 					onClick: vi.fn(),
@@ -513,7 +518,7 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "filter",
-					icon: SlidersHorizontal,
+					icon: SlidersHorizontalIcon,
 					label: "Filtrer",
 					ariaLabel: "Ouvrir le panneau filtres",
 					onClick: vi.fn(),
@@ -544,7 +549,7 @@ describe("StickyActionBar", () => {
 					items={[
 						{
 							key: "sort",
-							icon: ArrowUpDown,
+							icon: ArrowsDownUpIcon,
 							label: "Trier",
 							ariaLabel: "Ouvrir le tri",
 							onClick: vi.fn(),
@@ -563,7 +568,7 @@ describe("StickyActionBar", () => {
 			const searchItem = (overrides: Partial<StickyActionBarItem>): StickyActionBarItem =>
 				({
 					key: "search",
-					icon: Search,
+					icon: MagnifyingGlassIcon,
 					label: "Rechercher",
 					ariaLabel: "Ouvrir la recherche",
 					onClick: vi.fn(),
@@ -573,7 +578,7 @@ describe("StickyActionBar", () => {
 			const initial: StickyActionBarItem[] = [
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: vi.fn(),
@@ -593,7 +598,7 @@ describe("StickyActionBar", () => {
 					items={[
 						{
 							key: "sort",
-							icon: ArrowUpDown,
+							icon: ArrowsDownUpIcon,
 							label: "Trier",
 							ariaLabel: "Ouvrir le tri",
 							onClick: vi.fn(),
@@ -615,7 +620,7 @@ describe("StickyActionBar", () => {
 			const items: StickyActionBarItem[] = [
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: handle,
@@ -776,7 +781,7 @@ describe("StickyActionBar", () => {
 			return [
 				{
 					key: "filter",
-					icon: SlidersHorizontal,
+					icon: SlidersHorizontalIcon,
 					label: "Filtrer",
 					ariaLabel: "Ouvrir les filtres",
 					onClick: vi.fn(),
@@ -784,7 +789,7 @@ describe("StickyActionBar", () => {
 				},
 				{
 					key: "sort",
-					icon: ArrowUpDown,
+					icon: ArrowsDownUpIcon,
 					label: "Trier",
 					ariaLabel: "Ouvrir le tri",
 					onClick: vi.fn(),

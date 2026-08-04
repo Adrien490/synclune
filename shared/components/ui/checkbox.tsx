@@ -1,7 +1,7 @@
 "use client";
 
 import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
-import { CheckIcon, MinusIcon } from "lucide-react";
+import { CheckIcon, MinusIcon } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/shared/utils/cn";
 
@@ -25,7 +25,10 @@ function Checkbox({ className, indeterminate, onCheckedChange, ...props }: Check
 			indeterminate={indeterminate}
 			onCheckedChange={onCheckedChange ? (checked: boolean) => onCheckedChange(checked) : undefined}
 			className={cn(
-				"peer border-input data-checked:bg-primary data-checked:text-primary-foreground data-checked:border-primary data-indeterminate:bg-primary data-indeterminate:text-primary-foreground data-indeterminate:border-primary can-hover:hover:border-ring/70 focus-ring aria-invalid:ring-destructive/20 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-[box-shadow,border-color,transform] disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-95",
+				// Rose PROFOND sur les états cochés : la pastille pleine EST le signal, et
+				// en pastel elle ne se détachait du fond blanc qu'à 1,6:1. L'encre reste
+				// `--primary-foreground` (quasi-noir), à 5,7:1 sur ce rose-là.
+				"peer border-input data-checked:bg-brand-rose-strong data-checked:text-primary-foreground data-checked:border-brand-rose-strong data-indeterminate:bg-brand-rose-strong data-indeterminate:text-primary-foreground data-indeterminate:border-brand-rose-strong can-hover:hover:border-ring/70 focus-ring aria-invalid:ring-destructive/20 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-[box-shadow,border-color,transform] disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-95",
 				className,
 			)}
 			{...props}

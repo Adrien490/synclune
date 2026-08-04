@@ -68,21 +68,16 @@ const GUARDS: readonly Guard[] = [
 		hover: "hover:opacity-100",
 		focus: "focus-visible:opacity-100",
 	},
-	// Audit galerie 2026-08-03 : les reveals sont en outre gatés `can-hover:` —
-	// sur tablette tactile ≥ sm ces contrôles restent visibles en permanence
-	// (le hover n'y existe pas, et le tap "révélateur" ouvrirait la lightbox).
-	{
-		file: "shared/components/gallery/navigation.tsx",
-		affordance: "les flèches précédente/suivante de la galerie se révèlent",
-		hover: "sm:can-hover:group-hover:opacity-100",
-		focus: "sm:group-focus-within:opacity-100",
-	},
-	{
-		file: "shared/components/gallery/zoom-button.tsx",
-		affordance: "le bouton plein écran de la galerie se révèle",
-		hover: "sm:can-hover:group-hover:opacity-100",
-		focus: "sm:group-focus-within:opacity-100",
-	},
+	// ⚠️ `shared/components/gallery/navigation.tsx` et `zoom-button.tsx` ont été
+	// RETIRÉS de cette liste au redesign « Le carnet » (2026-08-04) : leurs
+	// contrôles ne sont plus révélés au survol, ils sont PERMANENTS. Un garde-fou
+	// qui exige encore un `sm:can-hover:group-hover:opacity-100` sur un composant
+	// qui n'en a plus échoue pour la bonne raison — mais le corriger en
+	// réintroduisant l'opacité serait la pire des lectures. Le contrat de la
+	// galerie est désormais l'inverse, et c'est
+	// `shared/components/gallery/__tests__/gallery-chrome-off-photo.regression.test.tsx`
+	// qui le verrouille : aucun chrome posé sur la photo, donc rien à révéler.
+	//
 	// Redesigns « Atelier » 2026-08-03 : le trait dessiné sous le titre est
 	// l'affordance du lien de carte (équivalent d'un soulignement), et le CTA
 	// panier desktop n'existe qu'au survol de la carte produit. Le trait a été

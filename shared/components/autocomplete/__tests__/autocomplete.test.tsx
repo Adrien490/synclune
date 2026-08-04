@@ -132,14 +132,14 @@ vi.mock("@/shared/components/ui/empty", () => {
 	};
 });
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const { createElement } = require("react");
 	return {
-		SearchIcon: (props: Record<string, unknown>) =>
+		MagnifyingGlassIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "search-icon", ...props }),
-		AlertCircleIcon: (props: Record<string, unknown>) =>
+		WarningCircleIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "alert-icon", ...props }),
-		X: (props: Record<string, unknown>) =>
+		XIcon: (props: Record<string, unknown>) =>
 			createElement("svg", { "data-testid": "x-icon", ...props }),
 	};
 });

@@ -16,7 +16,14 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { formatBytesShort } from "@/modules/media/utils/format-bytes";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { AlertTriangle, Check, ImageIcon, RefreshCw, VideoIcon, X } from "lucide-react";
+import {
+	ArrowsClockwiseIcon,
+	CheckIcon,
+	ImageIcon,
+	VideoCameraIcon,
+	WarningIcon,
+	XIcon,
+} from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { FileProgress, FileProgressState } from "@/modules/media/types/hooks.types";
 
@@ -166,7 +173,7 @@ export function UploadProgress({
 
 				{isComplete ? (
 					<div className="bg-success/20 flex size-7 items-center justify-center rounded-full sm:size-5">
-						<Check className="text-success size-4 sm:size-3" aria-hidden="true" />
+						<CheckIcon className="text-success size-4 sm:size-3" aria-hidden="true" />
 					</div>
 				) : (
 					<Spinner presentational className="text-primary size-7 sm:size-5" />
@@ -210,7 +217,7 @@ export function UploadProgress({
 
 			{isComplete ? (
 				<div className="bg-success/20 flex size-12 items-center justify-center rounded-full sm:size-10">
-					<Check className="text-success size-6 sm:size-5" aria-hidden="true" />
+					<CheckIcon className="text-success size-6 sm:size-5" aria-hidden="true" />
 				</div>
 			) : (
 				<Spinner presentational className="text-primary size-10 sm:size-8" />
@@ -285,7 +292,7 @@ export function UploadProgress({
 					className="h-11 min-w-11 gap-1.5 px-3"
 					aria-label="Annuler l'envoi"
 				>
-					<X className="size-4" aria-hidden="true" />
+					<XIcon className="size-4" aria-hidden="true" />
 					<span className="text-xs">Annuler</span>
 				</Button>
 			)}
@@ -376,13 +383,13 @@ function FileProgressItem({ file, onCancel }: FileProgressItemProps) {
 			>
 				<AttachmentMedia className={cn(isDone && "bg-success/15")}>
 					{isDone ? (
-						<Check className="text-success" aria-hidden="true" />
+						<CheckIcon className="text-success" aria-hidden="true" />
 					) : isFailed ? (
-						<AlertTriangle aria-hidden="true" />
+						<WarningIcon aria-hidden="true" />
 					) : isActive ? (
 						<Spinner presentational size="sm" className="text-primary" />
 					) : file.mediaType === "VIDEO" ? (
-						<VideoIcon className="text-muted-foreground" aria-hidden="true" />
+						<VideoCameraIcon className="text-muted-foreground" aria-hidden="true" />
 					) : (
 						<ImageIcon className="text-muted-foreground" aria-hidden="true" />
 					)}
@@ -405,7 +412,7 @@ function FileProgressItem({ file, onCancel }: FileProgressItemProps) {
 							aria-label={`Annuler ${file.fileName}`}
 							className="text-muted-foreground can-hover:hover:text-destructive"
 						>
-							<X aria-hidden="true" />
+							<XIcon aria-hidden="true" />
 						</AttachmentAction>
 					</AttachmentActions>
 				)}
@@ -475,7 +482,7 @@ export function UploadErrorBanner({
 		>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-start gap-2 sm:items-center">
-					<AlertTriangle
+					<WarningIcon
 						className="text-destructive mt-0.5 size-5 shrink-0 sm:mt-0"
 						aria-hidden="true"
 					/>
@@ -499,7 +506,7 @@ export function UploadErrorBanner({
 						onClick={handleRetry}
 						className="min-h-11 gap-1.5"
 					>
-						<RefreshCw className="size-3.5" aria-hidden="true" />
+						<ArrowsClockwiseIcon className="size-3.5" aria-hidden="true" />
 						Tout réessayer
 					</Button>
 					<Button
@@ -510,7 +517,7 @@ export function UploadErrorBanner({
 						className="size-11"
 						aria-label="Ignorer les erreurs d'envoi"
 					>
-						<X className="size-4" aria-hidden="true" />
+						<XIcon className="size-4" aria-hidden="true" />
 					</Button>
 				</div>
 			</div>
@@ -524,7 +531,7 @@ export function UploadErrorBanner({
 						<li key={`${entry.fileName}-${index}`} className="min-w-0">
 							<Attachment state="error" size="sm" className="bg-background w-full min-w-0">
 								<AttachmentMedia>
-									<AlertTriangle aria-hidden="true" />
+									<WarningIcon aria-hidden="true" />
 								</AttachmentMedia>
 								<AttachmentContent>
 									<AttachmentTitle title={entry.fileName}>{entry.fileName}</AttachmentTitle>
@@ -545,7 +552,7 @@ export function UploadErrorBanner({
 											className="min-h-11 shrink-0 gap-1 px-2 text-xs"
 											aria-label={`Réessayer ${entry.fileName}`}
 										>
-											<RefreshCw className="size-3" aria-hidden="true" />
+											<ArrowsClockwiseIcon className="size-3" aria-hidden="true" />
 											<span className="hidden sm:inline">Réessayer</span>
 										</Button>
 									</AttachmentActions>
