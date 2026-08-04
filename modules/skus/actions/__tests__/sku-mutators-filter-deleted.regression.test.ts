@@ -37,14 +37,11 @@ const GUARDED_READS: Array<[string, RegExp]> = [
 		"modules/skus/actions/delete-sku.ts",
 		/where:\s*\{\s*id:\s*validatedSkuId,\s*deletedAt:\s*null\s*\}/,
 	],
-	[
-		"modules/skus/actions/set-primary-sku-media.ts",
-		/where:\s*\{\s*id:\s*mediaId,\s*sku:\s*\{\s*deletedAt:\s*null\s*\}\s*\}/,
-	],
-	[
-		"modules/skus/actions/update-sku-media-alt-text.ts",
-		/where:\s*\{\s*id:\s*mediaId,\s*sku:\s*\{\s*deletedAt:\s*null\s*\}\s*\}/,
-	],
+	// `set-primary-sku-media.ts` et `update-sku-media-alt-text.ts` sont sortis de
+	// cette liste avec les actions elles-mêmes (audit schéma V4, 2026-08-05) :
+	// c'étaient des endpoints RPC publics sans déclencheur UI. Le média principal et
+	// l'`altText` transitent par `update-sku` / `update-product`, déjà gardés
+	// ci-dessus — l'invariant n'a donc pas perdu de surface.
 	[
 		"modules/skus/actions/create-sku.ts",
 		/where:\s*\{\s*id:\s*validatedData\.productId,\s*deletedAt:\s*null\s*\}/,

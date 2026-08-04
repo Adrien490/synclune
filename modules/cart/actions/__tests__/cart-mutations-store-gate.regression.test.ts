@@ -44,7 +44,8 @@ const INTENTIONALLY_UNGATED: Record<string, string> = {
 		"vidage post-paiement (page de confirmation) — la commande est déjà passée, " +
 		"gater ici laisserait un panier fantôme si la boutique ferme entre-temps",
 	"remove-from-cart.ts": "retrait d'article — jamais bloquant",
-	"remove-multiple-items.ts": "retrait d'articles — jamais bloquant",
+	// `remove-multiple-items.ts` a quitté cette liste avec l'action elle-même
+	// (audit schéma V4, 2026-08-05 : endpoint RPC public sans déclencheur UI).
 	"remove-unavailable-items.ts": "nettoyage d'articles indisponibles",
 	// `move-to-wishlist.ts` a quitté cette liste avec l'action elle-même
 	// (audit wishlist 2026-08-01 : endpoint RPC sans appelant UI).

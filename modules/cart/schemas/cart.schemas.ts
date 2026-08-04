@@ -60,15 +60,11 @@ export const getSkuDetailsSchema = z.object({
 // CART METADATA SCHEMAS (P1 + P2 + P3)
 // ============================================================================
 
-/**
- * Schema pour supprimer plusieurs items en une fois
- */
-export const removeMultipleItemsSchema = z.object({
-	skuIds: z
-		.array(z.cuid2("ID de l'article invalide"))
-		.min(1, "Au moins un article à supprimer")
-		.max(MAX_CART_ITEMS, `Maximum ${MAX_CART_ITEMS} articles supprimables en une fois`),
-});
+// `removeMultipleItemsSchema` retiré avec l'action `remove-multiple-items.ts`
+// (audit schéma V4, 2026-08-05) : endpoint RPC public sans aucun déclencheur UI —
+// le panier ne propose que la suppression ligne à ligne (`remove-from-cart`) et le
+// retrait des articles indisponibles (`remove-unavailable-items`), qui a sa propre
+// action parce qu'il calcule lui-même la liste.
 
 // `reorderFromOrderSchema` retiré avec l'action `reorder-from-order.ts` : son
 // unique déclencheur était le bouton « Racheter » de la page détail de commande,

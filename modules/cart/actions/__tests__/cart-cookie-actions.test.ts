@@ -56,7 +56,6 @@ vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
 import { addToCart } from "../add-to-cart";
 import { removeFromCart } from "../remove-from-cart";
 import { updateCartItem } from "../update-cart-item";
-import { removeMultipleItems } from "../remove-multiple-items";
 import { clearCart } from "../clear-cart";
 import { ActionStatus } from "@/shared/types/server-action";
 import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "../../constants/cart";
@@ -345,47 +344,6 @@ describe("updateCartItem", () => {
 		});
 
 		const result = await updateCartItem(undefined, formData({ skuId: SKU_A, quantity: "5" }));
-
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockWriteCartCookie).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// removeMultipleItems
-// ============================================================================
-
-describe("removeMultipleItems", () => {
-	beforeEach(() => {
-		mockReadCartCookie.mockResolvedValue({
-			items: [
-				{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 },
-				{ skuId: SKU_B, quantity: 1, priceAtAdd: 200 },
-			],
-			discountCode: null,
-		});
-	});
-
-	it("retire les lignes listées (JSON)", async () => {
-		const result = await removeMultipleItems(
-			undefined,
-			formData({ skuIds: JSON.stringify([SKU_A, SKU_B]) }),
-		);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(writtenCart().items).toEqual([]);
-	});
-
-	it("accepte aussi une liste séparée par des virgules", async () => {
-		await removeMultipleItems(undefined, formData({ skuIds: `${SKU_A},${SKU_B}` }));
-		expect(writtenCart().items).toEqual([]);
-	});
-
-	it("échoue si aucune ligne ne correspond", async () => {
-		const result = await removeMultipleItems(
-			undefined,
-			formData({ skuIds: JSON.stringify(["cm9999999999999999999zzzz"]) }),
-		);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockWriteCartCookie).not.toHaveBeenCalled();

@@ -73,11 +73,21 @@ export function getSkuInvalidationTags(
 		PRODUCTS_CACHE_TAGS.MAX_PRICE,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
-		// Le sitemap images lit `skus.images` triés isPrimary desc — exactement ce
-		// que mutent set-primary-sku-media, reorder-sku-media, update/delete/create-sku.
+		// Le sitemap images lit `skus.images` triés isPrimary desc — exactement ce que
+		// mutent create/update/delete-sku (l'ordre et le média principal sont recalculés
+		// depuis l'ordre du tableau du formulaire ; les actions chirurgicales
+		// `set-primary-sku-media` / `reorder-sku-media` ont été retirées le 2026-08-05,
+		// elles n'avaient aucun déclencheur UI).
 		// Sans ce tag il restait périmé toute la fenêtre du profil `reference`
 		// (24 h revalidate / 7 j stale). Parité avec getProductInvalidationTags.
 		SHARED_CACHE_TAGS.SITEMAP_IMAGES,
+		// Les cartes de collection (/collections + mega-menu) lisent des données de
+		// SKU sous `collections-list` : le bento est fait d'images de SKU, et le
+		// « À partir de X € » d'un agrégat de `priceInclTax`. `getProductInvalidationTags`
+		// posait déjà ce tag, pas celui-ci — une modification de prix rapide
+		// (`update-sku-price`) ou de média SKU laissait donc la carte périmée toute
+		// la fenêtre du profil `reference` (24 h). Audit CollectionCard 2026-08-04.
+		SHARED_CACHE_TAGS.COLLECTIONS_LIST,
 	];
 
 	// Invalider le cache stock temps réel et le détail par ID si skuId fourni

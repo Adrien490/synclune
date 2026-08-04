@@ -105,7 +105,11 @@ describe("Server Actions — couverture rate limit", () => {
 	it("le scan trouve bien les Server Actions du repo", () => {
 		// Plancher 100 → 90 au retrait des codes promo (2026-08-05) :
 		// `modules/discounts` portait 10 Server Actions.
-		expect(SERVER_ACTION_FILES.length).toBeGreaterThan(90);
+		// Plancher 90 → 85 au retrait des 4 actions sans déclencheur UI (audit
+		// schéma V4, 2026-08-05) : 96 → 92 fichiers, la marge tombait à 2 — assez
+		// pour que le prochain retrait légitime fasse rougir ce garde-fou, qui n'a
+		// rien à dire sur le sujet.
+		expect(SERVER_ACTION_FILES.length).toBeGreaterThan(85);
 	});
 
 	// Next autorise aussi `"use server"` DANS un corps de fonction, ce que le scan
