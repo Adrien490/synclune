@@ -26,7 +26,6 @@ const nextConfig: NextConfig = {
 			"embla-carousel-react",
 			"@tanstack/react-form",
 			"@radix-ui/react-focus-scope",
-			"@radix-ui/react-navigation-menu",
 		],
 	},
 

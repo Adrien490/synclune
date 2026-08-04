@@ -94,7 +94,7 @@ const baseNavItems = [
 
 describe("MenuSheetNav", () => {
 	describe("sections", () => {
-		it("renders discover, creations, collections, and favorites sections", () => {
+		it("renders creations, collections, and favorites sections", () => {
 			render(
 				<MenuSheetNav
 					navItems={baseNavItems}
@@ -104,10 +104,26 @@ describe("MenuSheetNav", () => {
 				/>,
 			);
 
-			expect(screen.getByText("Découvrir")).toBeInTheDocument();
 			expect(screen.getByText("Nos créations")).toBeInTheDocument();
 			expect(screen.getByText("Collections")).toBeInTheDocument();
 			expect(screen.getByText("Favoris")).toBeInTheDocument();
+		});
+
+		// L'en-tête « Découvrir » coiffait DEUX entrées ; depuis que « L'atelier »
+		// ne sort plus de `getMobileNavItems`, il n'en restait qu'une — un titre de
+		// section pour le seul lien « Accueil ». Le lien reste, l'en-tête part.
+		it("n'affiche plus l'en-tête « Découvrir », mais garde le lien Accueil en tête", () => {
+			render(
+				<MenuSheetNav
+					navItems={baseNavItems}
+					productTypes={productTypes}
+					collections={collections}
+					session={null}
+				/>,
+			);
+
+			expect(screen.queryByText("Découvrir")).toBeNull();
+			expect(screen.getByRole("link", { name: "Accueil" })).toBeInTheDocument();
 		});
 
 		// "L'atelier" (ROUTES.SHOP.ABOUT) retiré temporairement de getMobileNavItems

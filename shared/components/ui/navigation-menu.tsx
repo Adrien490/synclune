@@ -1,50 +1,69 @@
-import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
+"use client";
+
+import { NavigationMenu as NavigationMenuPrimitive } from "@base-ui/react/navigation-menu";
 import { ChevronDownIcon } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 
-function NavigationMenu({
-	className,
-	children,
-	viewport = true,
-	...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Root> & {
-	viewport?: boolean;
-}) {
+/**
+ * Mega-menu de la navbar boutique, sur Base UI.
+ *
+ * Était le **dernier îlot Radix** du dépôt après `8a5131b62` (migration Radix →
+ * Base UI) : sheet, dialog, dropdown et tooltip étaient passés, pas celui-ci. Deux
+ * bibliothèques d'overlay = deux piles de dismiss et de focus indépendantes, ce
+ * que `nested-overlay-stacking.regression.test.tsx` documente comme la cause
+ * directe d'un bug déjà payé (Échap fermait la confirmation ET la sheet).
+ *
+ * Trois conséquences structurelles de la bascule, toutes voulues :
+ *
+ * 1. **Le panneau est portalisé** (`Portal` → `<body>`) au lieu d'être rendu dans
+ *    le `<header>`. Il n'est donc plus confiné au contexte d'empilement du header,
+ *    ce qui supprime *par construction* le recouvrement par la barre CTA sticky de
+ *    la PDP (`--z-bar-desktop`, même `top` que le panneau).
+ * 2. **Le panneau est ancré et dimensionné** par le `Positioner`, au lieu de sortir
+ *    du flux à coups de `fixed! left-0! right-0! w-screen!`. `w-screen` valait
+ *    `100vw`, gouttière de scrollbar comprise — donc un débordement horizontal
+ *    d'environ 15px sur desktop.
+ * 3. **Les transitions remplacent les keyframes.** Base UI expose
+ *    `data-starting-style` / `data-ending-style`, pilotés par transition — c'est le
+ *    modèle que CLAUDE.md impose déjà aux panneaux (une `animate-in` écraserait le
+ *    translate et `fill-mode: both` figerait la valeur finale).
+ *
+ * Correspondances qui ne sont PAS des renommages : `asChild` → `render`,
+ * `data-[state=open]` → `data-open` (popup) et `data-popup-open` (trigger),
+ * `onCloseAutoFocus` → `finalFocus`.
+ */
+function NavigationMenu({ className, ...props }: NavigationMenuPrimitive.Root.Props) {
 	return (
 		<NavigationMenuPrimitive.Root
 			data-slot="navigation-menu"
-			data-viewport={viewport}
-			className={cn(
-				"group/navigation-menu relative flex max-w-max flex-1 items-center justify-center",
-				className,
-			)}
-			{...props}
-		>
-			{children}
-			{viewport && <NavigationMenuViewport />}
-		</NavigationMenuPrimitive.Root>
-	);
-}
-
-function NavigationMenuList({
-	className,
-	...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.List>) {
-	return (
-		<NavigationMenuPrimitive.List
-			data-slot="navigation-menu-list"
-			className={cn("group flex flex-1 list-none items-center justify-center gap-1", className)}
+			// `render={<div />}` : le Root de Base UI rend un `<nav>`. La navbar en
+			// expose déjà un (`aria-label="Navigation principale"`) — deux `<nav>`
+			// imbriqués donneraient deux landmarks pour une seule navigation.
+			render={<div />}
+			className={cn("relative flex max-w-max flex-1 items-center justify-center", className)}
 			{...props}
 		/>
 	);
 }
 
-function NavigationMenuItem({
-	className,
-	...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Item>) {
+function NavigationMenuList({ className, ...props }: NavigationMenuPrimitive.List.Props) {
+	return (
+		<NavigationMenuPrimitive.List
+			data-slot="navigation-menu-list"
+			// Pas de `group` nu ici. L'ancienne version en portait un, et c'est lui
+			// que capturaient les `group-hover:` des descendants faute de `group`
+			// local : les icônes de catégorie restaient teintées en permanence dès
+			// que le panneau était ouvert. Les descendants nomment désormais leur
+			// propre groupe (`group/item`).
+			className={cn("flex flex-1 list-none items-center justify-center gap-1", className)}
+			{...props}
+		/>
+	);
+}
+
+function NavigationMenuItem({ className, ...props }: NavigationMenuPrimitive.Item.Props) {
 	return (
 		<NavigationMenuPrimitive.Item
 			data-slot="navigation-menu-item"
@@ -55,46 +74,48 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle =
-	"group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium disabled:pointer-events-none disabled:opacity-50 transition-[color,box-shadow] focus-ring";
+	"inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium disabled:pointer-events-none disabled:opacity-50 focus-ring";
 
 function NavigationMenuTrigger({
 	className,
 	children,
 	showChevron = true,
 	...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Trigger> & {
-	showChevron?: boolean;
-}) {
+}: NavigationMenuPrimitive.Trigger.Props & { showChevron?: boolean }) {
 	return (
 		<NavigationMenuPrimitive.Trigger
 			data-slot="navigation-menu-trigger"
-			className={cn(navigationMenuTriggerStyle, "group", className)}
+			className={cn(navigationMenuTriggerStyle, "group/trigger", className)}
 			{...props}
 		>
 			{children}
 			{showChevron && (
-				<>
-					{" "}
-					<ChevronDownIcon
-						className="relative top-px ml-1 size-3 transition duration-300 group-data-[state=open]:rotate-180"
-						aria-hidden="true"
-					/>
-				</>
+				<ChevronDownIcon
+					// `group-data-popup-open:` et non `group-data-[state=open]:` : Base UI
+					// expose l'état du popup sur le trigger par un attribut PRÉSENT ou
+					// ABSENT (`data-popup-open`), pas par une valeur.
+					className="relative top-px ml-1 size-3 shrink-0 motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-data-popup-open/trigger:rotate-180"
+					aria-hidden="true"
+				/>
 			)}
 		</NavigationMenuPrimitive.Trigger>
 	);
 }
 
-function NavigationMenuContent({
-	className,
-	...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Content>) {
+/**
+ * Contenu d'un item, déplacé dans le `Viewport` du popup quand l'item devient
+ * actif. `keepMounted` est volontairement laissé à `false` : les liens du
+ * mega-menu dupliquent ceux du sheet mobile et du footer, donc rien n'est perdu
+ * pour l'indexation.
+ */
+function NavigationMenuContent({ className, ...props }: NavigationMenuPrimitive.Content.Props) {
 	return (
 		<NavigationMenuPrimitive.Content
 			data-slot="navigation-menu-content"
 			className={cn(
-				"motion-safe:data-[motion^=from-]:animate-in motion-safe:data-[motion^=to-]:animate-out motion-safe:data-[motion^=from-]:fade-in motion-safe:data-[motion^=to-]:fade-out motion-safe:data-[motion=from-end]:slide-in-from-right-52 motion-safe:data-[motion=from-start]:slide-in-from-left-52 motion-safe:data-[motion=to-end]:slide-out-to-right-52 motion-safe:data-[motion=to-start]:slide-out-to-left-52 top-0 left-0 w-full p-2 pr-2.5 md:absolute md:w-auto",
-				"group-data-[viewport=false]/navigation-menu:bg-popover group-data-[viewport=false]/navigation-menu:text-popover-foreground group-data-[viewport=false]/navigation-menu:data-[state=open]:animate-in group-data-[viewport=false]/navigation-menu:data-[state=closed]:animate-out group-data-[viewport=false]/navigation-menu:data-[state=closed]:zoom-out-95 group-data-[viewport=false]/navigation-menu:data-[state=open]:zoom-in-95 group-data-[viewport=false]/navigation-menu:data-[state=open]:fade-in-0 group-data-[viewport=false]/navigation-menu:data-[state=closed]:fade-out-0 group-data-[viewport=false]/navigation-menu:top-full group-data-[viewport=false]/navigation-menu:mt-1.5 group-data-[viewport=false]/navigation-menu:overflow-hidden group-data-[viewport=false]/navigation-menu:rounded-md group-data-[viewport=false]/navigation-menu:border group-data-[viewport=false]/navigation-menu:shadow group-data-[viewport=false]/navigation-menu:duration-200",
+				"h-full w-full",
+				"motion-safe:transition-[opacity,translate] motion-safe:duration-[var(--duration-normal)] motion-safe:ease-[var(--ease-premium)]",
+				"data-ending-style:opacity-0 data-starting-style:opacity-0",
 				className,
 			)}
 			{...props}
@@ -102,33 +123,83 @@ function NavigationMenuContent({
 	);
 }
 
-function NavigationMenuViewport({
+/**
+ * Le popup ancré. À composer une seule fois, en frère de la `List`.
+ *
+ * Le dimensionnement suit `--popup-width` / `--popup-height`, publiées par Base UI
+ * d'après le contenu actif : c'est ce qui fait le morphing d'un panneau à l'autre.
+ */
+function NavigationMenuPopup({
 	className,
+	children,
+	sideOffset = 8,
+	align = "center",
+	collisionPadding = 16,
 	...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
+}: NavigationMenuPrimitive.Popup.Props &
+	Pick<
+		NavigationMenuPrimitive.Positioner.Props,
+		"sideOffset" | "align" | "alignOffset" | "collisionPadding"
+	>) {
 	return (
-		<div className={cn("absolute top-full left-0 isolate z-(--z-float) flex justify-center")}>
-			<NavigationMenuPrimitive.Viewport
-				data-slot="navigation-menu-viewport"
-				className={cn(
-					"origin-top-center data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 relative mt-1.5 h-(--radix-navigation-menu-viewport-height) w-full overflow-hidden rounded-md bg-transparent md:w-(--radix-navigation-menu-viewport-width)",
-					className,
-				)}
-				{...props}
-			/>
-		</div>
+		<NavigationMenuPrimitive.Portal>
+			<NavigationMenuPrimitive.Positioner
+				side="bottom"
+				sideOffset={sideOffset}
+				align={align}
+				collisionPadding={collisionPadding}
+				className="isolate z-(--z-float) outline-none"
+			>
+				<NavigationMenuPrimitive.Popup
+					data-slot="navigation-menu-popup"
+					// `render={<div />}` : le Popup rend un `<nav>` par défaut — encore un
+					// landmark de trop, le panneau vivant déjà sous la navigation principale.
+					render={<div />}
+					className={cn(
+						"bg-popover text-popover-foreground",
+						"h-(--popup-height) w-(--popup-width)",
+						// Pas d'`overflow-hidden` ici : c'est le `Viewport` qui clippe le
+						// contenu (avec le même rayon), ce qui laisse un décor volontairement
+						// débordant — le ruban de masking tape — sortir du cadre.
+						"origin-(--transform-origin) rounded-xl border shadow-lg",
+						"max-w-(--available-width)",
+						// Transition, pas keyframes : entrée, sortie ET morphing entre deux
+						// panneaux partagent les mêmes propriétés.
+						"motion-safe:transition-[opacity,transform,width,height] motion-safe:duration-[var(--duration-normal)] motion-safe:ease-[var(--ease-premium)]",
+						"data-starting-style:scale-[0.98] data-starting-style:opacity-0",
+						"data-ending-style:scale-[0.98] data-ending-style:opacity-0",
+						className,
+					)}
+					{...props}
+				>
+					{/* `children` = DÉCOR uniquement (ruban, filet…). Le contenu réel est
+					    déplacé dans le `Viewport` par Base UI quand un item devient actif —
+					    ne rien y passer à la main. */}
+					{children}
+					<NavigationMenuPrimitive.Viewport
+						data-slot="navigation-menu-viewport"
+						className="relative h-full w-full overflow-hidden rounded-[inherit]"
+					/>
+				</NavigationMenuPrimitive.Popup>
+			</NavigationMenuPrimitive.Positioner>
+		</NavigationMenuPrimitive.Portal>
 	);
 }
 
-function NavigationMenuLink({
-	className,
-	...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Link>) {
+/**
+ * Lien du mega-menu.
+ *
+ * ⚠️ Volontairement SANS classe de mise en page. L'ancienne version imposait
+ * `flex flex-col gap-1`, ce qui obligeait deux call sites à la défaire avec un
+ * `flex-row!` — un défaut par défaut. Le lien ne pose plus que le focus visible
+ * et la taille des icônes ; la mise en page appartient à l'appelant.
+ */
+function NavigationMenuLink({ className, ...props }: NavigationMenuPrimitive.Link.Props) {
 	return (
 		<NavigationMenuPrimitive.Link
 			data-slot="navigation-menu-link"
 			className={cn(
-				"[&_svg:not([class*='text-'])]:text-muted-foreground focus-ring flex flex-col gap-1 rounded-none p-2 text-sm transition-all [&_svg:not([class*='size-'])]:size-4",
+				"[&_svg:not([class*='text-'])]:text-muted-foreground focus-ring [&_svg:not([class*='size-'])]:size-4",
 				className,
 			)}
 			{...props}
@@ -142,6 +213,7 @@ export {
 	NavigationMenuItem,
 	NavigationMenuLink,
 	NavigationMenuList,
+	NavigationMenuPopup,
 	NavigationMenuTrigger,
 	navigationMenuTriggerStyle,
 };

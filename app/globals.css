@@ -288,6 +288,15 @@ main#main-content {
 	   Z-INDEX SCALE
 	   ========================================== */
 	--z-overlay: 75;
+	/* Header boutique : AU-DESSUS des barres (70), SOUS les overlays (75).
+	   Il valait `z-40` en dur, hors de cette échelle — un oubli qui n'était
+	   inoffensif que tant que rien ne le croisait. La barre CTA sticky de la PDP
+	   (`--z-bar-desktop`, `top: var(--navbar-height)`) se peignait par-dessus le
+	   mega-menu, qui était alors rendu DANS le header donc confiné à sa couche.
+	   Le panneau est désormais portalisé (`--z-float`), mais le header reste sur
+	   l'échelle : c'est la dérive qui avait produit le bug, pas la valeur.
+	   Audit navbar 2026-08-04. */
+	--z-header: 72;
 	--z-bar: 70;
 	--z-bar-desktop: 70;
 	/* FAB volontairement sous --z-bar (70) : desktop-only vs bottom-bar mobile-only (mutuellement exclusifs) */

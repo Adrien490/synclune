@@ -10,7 +10,7 @@ import { cn } from "@/shared/utils/cn";
 import { QUICK_SEARCH_DIALOG_ID } from "./constants";
 import { lastTrigger } from "./last-trigger";
 
-interface QuickSearchTriggerProps {
+interface QuickSearchTriggerProps extends React.ComponentProps<"button"> {
 	className?: string;
 	ref?: React.Ref<HTMLButtonElement>;
 	/**
@@ -26,10 +26,20 @@ interface QuickSearchTriggerProps {
 /**
  * Trigger button for the quick search dialog.
  */
-export function QuickSearchTrigger({ className, ref, variant = "icon" }: QuickSearchTriggerProps) {
+export function QuickSearchTrigger({
+	className,
+	ref,
+	variant = "icon",
+	onClick,
+	// Les props restantes sont propagées : sans elles, envelopper le déclencheur
+	// dans un `TooltipTrigger render={…}` perdait en silence les gestionnaires et
+	// les attributs ARIA que Base UI y injecte (l'infobulle ne s'ouvrait jamais).
+	...props
+}: QuickSearchTriggerProps) {
 	const { open, isOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
 
 	const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+		onClick?.(e);
 		triggerHaptic("light");
 		// Remember this button so focus can return to it when the dialog
 		// closes (see `onCloseAutoFocus`), then blur it: Radix sets
@@ -45,6 +55,7 @@ export function QuickSearchTrigger({ className, ref, variant = "icon" }: QuickSe
 			<button
 				ref={ref}
 				type="button"
+				{...props}
 				onClick={handleClick}
 				aria-label="Ouvrir la recherche rapide"
 				aria-expanded={isOpen}
@@ -76,6 +87,7 @@ export function QuickSearchTrigger({ className, ref, variant = "icon" }: QuickSe
 			ref={ref}
 			variant="ghost"
 			size="icon"
+			{...props}
 			onClick={handleClick}
 			className={cn("size-11 touch-manipulation transition-all duration-300 ease-out", className)}
 			aria-label="Ouvrir la recherche rapide"

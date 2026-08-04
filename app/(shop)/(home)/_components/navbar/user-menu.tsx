@@ -56,17 +56,21 @@ export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
 						render={
 							<DropdownMenuTrigger
 								aria-label="Menu administration"
-								className={cn("hidden sm:inline-flex", iconButtonClassName)}
+								className={cn("hidden lg:inline-flex", iconButtonClassName)}
 							/>
 						}
 					>
 						<User
 							size={20}
-							className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105 motion-safe:group-data-[state=open]:scale-105"
+							// `group-data-popup-open:` et non `group-data-[state=open]:` : reliquat
+							// Radix resté après la migration Base UI, qui n'expose pas `data-state`
+							// sur un trigger mais un `data-popup-open` présent ou absent. La règle
+							// ne se déclenchait donc plus depuis `8a5131b62`.
+							className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105 motion-safe:group-data-popup-open:scale-105"
 							aria-hidden="true"
 						/>
 					</TooltipTrigger>
-					<TooltipContent className="hidden lg:block">Administration</TooltipContent>
+					<TooltipContent>Administration</TooltipContent>
 				</Tooltip>
 				<DropdownMenuContent
 					align="end"

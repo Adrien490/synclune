@@ -27,13 +27,17 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 			data-scrolled={isScrolled}
 			data-home-navbar
 			style={{ viewTransitionName: "shop-navbar" }}
-			className={cn("pwa-header", "group fixed inset-x-0 top-0 z-40")}
+			className={cn("pwa-header", "group fixed inset-x-0 top-0 z-(--z-header)")}
 		>
 			{/* Glass effect layer — only opacity transitions (compositor-friendly). */}
 			<div
 				aria-hidden="true"
 				className={cn(
 					"pointer-events-none absolute inset-0 -z-10",
+					// `polaroid-paper` : le grain de papier mat des cartes Atelier, en
+					// pseudo-élément. Il ne coûte aucune propriété animée de plus — la
+					// couche entière ne transitionne toujours que son opacité.
+					"polaroid-paper",
 					"bg-background/95 border-border shadow-header border-b backdrop-blur-md",
 					"opacity-0 motion-safe:transition-opacity motion-safe:duration-[var(--duration-slow)] motion-safe:ease-out",
 					"group-data-[scrolled=true]:opacity-100",

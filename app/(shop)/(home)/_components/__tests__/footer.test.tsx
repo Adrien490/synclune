@@ -123,7 +123,7 @@ vi.mock("@/shared/providers/cookie-consent-store-provider", () => ({
 		selector({ resetConsent: resetConsentMock }),
 }));
 
-import { Footer } from "../footer";
+import { Footer, FooterSkeleton } from "../footer";
 
 afterEach(() => {
 	cleanup();
@@ -170,17 +170,20 @@ describe("Footer", () => {
 
 	// --- Navigation section ---
 
-	it("renders navigation section with 4 footer nav items", async () => {
+	// Refonte « La signature » (2026-08-04) : « Navigation » → « La boutique », et
+	// « Aide et FAQ » descend dans la colonne contact — le libre-service se lit
+	// avant l'adresse e-mail, pas au milieu du plan de site.
+	it("renders the shop column with its 3 navigation links", async () => {
 		await renderFooter();
 
-		const navSection = screen.getByRole("navigation", { name: /navigation/i });
+		const navSection = screen.getByRole("navigation", { name: /la boutique/i });
 		expect(navSection).toBeInTheDocument();
 
-		const navHeading = screen.getByText("Navigation");
+		const navHeading = screen.getByText("La boutique");
 		expect(navHeading.tagName).toBe("H3");
 
 		const links = within(navSection).getAllByRole("link");
-		expect(links).toHaveLength(4);
+		expect(links).toHaveLength(3);
 
 		expect(links[0]).toHaveAttribute("href", "/produits");
 		expect(links[0]).toHaveTextContent("Les créations");
@@ -188,13 +191,10 @@ describe("Footer", () => {
 		expect(links[1]).toHaveAttribute("href", "/collections");
 		expect(links[1]).toHaveTextContent("Les collections");
 
-		expect(links[2]).toHaveAttribute("href", "/aide");
-		expect(links[2]).toHaveTextContent("Aide et FAQ");
-
 		// « Mon compte » → « Mes favoris » : l'espace client a été retiré
 		// (2026-07-31), les favoris sont la seule surface personnelle restante.
-		expect(links[3]).toHaveAttribute("href", "/favoris");
-		expect(links[3]).toHaveTextContent("Mes favoris");
+		expect(links[2]).toHaveAttribute("href", "/favoris");
+		expect(links[2]).toHaveTextContent("Mes favoris");
 	});
 
 	// --- Focus ring SSOT (WCAG 2.4.7) ---
@@ -202,7 +202,7 @@ describe("Footer", () => {
 	it("applies focus-ring SSOT utility on FooterLink anchors", async () => {
 		await renderFooter();
 
-		const navSection = screen.getByRole("navigation", { name: /navigation/i });
+		const navSection = screen.getByRole("navigation", { name: /la boutique/i });
 		const links = within(navSection).getAllByRole("link");
 		for (const link of links) {
 			expect(link.className).toContain("focus-ring");
@@ -211,15 +211,21 @@ describe("Footer", () => {
 
 	// --- Contact section ---
 
-	it("renders contact section with email, copy-button and location", async () => {
+	it("renders the contact column with help, email, copy-button and location", async () => {
 		await renderFooter();
 
-		const contactSection = screen.getByRole("region", { name: /contact/i });
+		const contactSection = screen.getByRole("region", { name: /écrire à l'atelier/i });
 		expect(contactSection).toBeInTheDocument();
 
-		const emailLink = within(contactSection).getByRole("link");
-		expect(emailLink).toHaveAttribute("href", "mailto:contact@synclune.fr");
-		expect(emailLink).toHaveAttribute(
+		const links = within(contactSection).getAllByRole("link");
+		expect(links).toHaveLength(2);
+
+		// L'aide d'abord — déflexion avant le message (refonte 2026-08-04).
+		expect(links[0]).toHaveAttribute("href", "/aide");
+		expect(links[0]).toHaveTextContent("Aide et FAQ");
+
+		expect(links[1]).toHaveAttribute("href", "mailto:contact@synclune.fr");
+		expect(links[1]).toHaveAttribute(
 			"aria-label",
 			"Envoyer un email à Synclune : contact@synclune.fr",
 		);
@@ -233,7 +239,11 @@ describe("Footer", () => {
 
 	// --- Social links ---
 
-	it("renders social links for Instagram and TikTok with target _blank", async () => {
+	// Refonte « La signature » (2026-08-04) : les deux réseaux deviennent des
+	// pastilles icône-seule dans le bloc signature. Les handles ne sont plus du
+	// texte visible — WCAG 2.5.3 (Label in Name) ne s'applique donc plus, mais le
+	// nom accessible continue de les porter, et c'est ce qui est verrouillé ici.
+	it("renders social links as icon-only pastilles with handles in the accessible name", async () => {
 		await renderFooter();
 
 		const socialNav = screen.getByRole("navigation", { name: /réseaux sociaux/i });
@@ -244,21 +254,23 @@ describe("Footer", () => {
 		expect(links[0]).toHaveAttribute("href", "https://www.instagram.com/synclune.bijoux/");
 		expect(links[0]).toHaveAttribute("target", "_blank");
 		expect(links[0]).toHaveAttribute("rel", "noopener noreferrer");
-		// WCAG 2.5.3 (Label in Name) : le nom accessible contient le texte visible (le handle)
 		expect(links[0]).toHaveAttribute(
 			"aria-label",
 			"@synclune.bijoux — Instagram de Synclune (nouvelle fenêtre)",
 		);
-		expect(within(links[0]!).getByText("@synclune.bijoux")).toBeInTheDocument();
 
 		// TikTok
 		expect(links[1]).toHaveAttribute("href", "https://www.tiktok.com/@synclune");
 		expect(links[1]).toHaveAttribute("target", "_blank");
+		expect(links[1]).toHaveAttribute("rel", "noopener noreferrer");
 		expect(links[1]).toHaveAttribute(
 			"aria-label",
 			"@synclune — TikTok de Synclune (nouvelle fenêtre)",
 		);
-		expect(within(links[1]!).getByText("@synclune")).toBeInTheDocument();
+
+		// Icône seule : aucun texte visible dans la pastille.
+		expect(links[0]!.textContent).toBe("");
+		expect(links[1]!.textContent).toBe("");
 	});
 
 	// --- Reassurance items ---
@@ -308,13 +320,21 @@ describe("Footer", () => {
 
 	// --- Copyright ---
 
-	it("renders copyright with current year and brand name", async () => {
+	// Le millésime a été RETIRÉ le 2026-08-04, et son absence est un invariant, pas
+	// un oubli : `Footer` est un scope `"use cache"` profil `reference` (7 j de
+	// stale, 24 h de revalidation) dont le tag n'a aucun mutateur. Toute valeur
+	// dérivée du temps y est figée au remplissage de l'entrée — l'année était donc
+	// fausse pendant environ une journée chaque 1ᵉʳ janvier. La mention de
+	// copyright n'a besoin d'aucune date (Convention de Berne : la protection ne
+	// dépend d'aucune formalité). Réintroduire un millésime ici exige de sortir la
+	// valeur du cache, pas seulement de la recalculer.
+	it("renders the copyright without any time-derived value", async () => {
 		await renderFooter();
 
-		const year = new Date().getFullYear();
-		const copyright = screen.getByText(new RegExp(`© ${year} Synclune`));
+		const copyright = screen.getByText(/© Synclune/);
 		expect(copyright).toBeInTheDocument();
 		expect(copyright.textContent).toContain("Tous droits réservés");
+		expect(copyright.textContent).not.toMatch(/\d{4}/);
 	});
 
 	// --- Legal links ---
@@ -328,17 +348,29 @@ describe("Footer", () => {
 		const links = within(legalNav).getAllByRole("link");
 		expect(links).toHaveLength(6);
 
-		// CGV has ariaLabel — WCAG 2.5.3 : le nom accessible contient le texte visible ("CGV")
-		const cgv = links[0];
-		expect(cgv).toHaveTextContent("CGV");
-		expect(cgv).toHaveAttribute("aria-label", "CGV — Conditions Générales de Vente");
-
-		// Others
+		// Libellés abrégés le 2026-08-04 pour tenir en deux colonnes sous `sm` sans
+		// repasser à la ligne (le bandeau empilait 7 cibles pleine largeur, 308 px).
+		expect(links[0]).toHaveTextContent("CGV");
 		expect(links[1]).toHaveTextContent("Mentions légales");
-		expect(links[2]).toHaveTextContent("Politique de confidentialité");
-		expect(links[3]).toHaveTextContent("Gestion des cookies");
-		expect(links[4]).toHaveTextContent("Formulaire de rétractation");
+		expect(links[2]).toHaveTextContent("Confidentialité");
+		expect(links[3]).toHaveTextContent("Cookies");
+		expect(links[4]).toHaveTextContent("Rétractation");
 		expect(links[5]).toHaveTextContent("Accessibilité");
+	});
+
+	// WCAG 2.5.3 (Label in Name) : dès qu'un libellé visible est abrégé, le nom
+	// accessible doit le CONTENIR — sinon la commande vocale « clique sur
+	// Confidentialité » ne trouve plus la cible. Assertion en boucle : elle couvre
+	// aussi tout libellé qu'on abrégerait plus tard en oubliant son `ariaLabel`.
+	it("keeps every legal link's accessible name containing its visible label", async () => {
+		await renderFooter();
+
+		const legalNav = screen.getByRole("navigation", { name: /liens légaux/i });
+		for (const link of within(legalNav).getAllByRole("link")) {
+			const visibleLabel = link.textContent;
+			expect(visibleLabel).toBeTruthy();
+			expect(link.getAttribute("aria-label") ?? visibleLabel).toContain(visibleLabel);
+		}
 	});
 
 	// Les libellés seuls ne suffisent pas : un href cassé (`/cvg`) passait au vert.
@@ -418,5 +450,32 @@ describe("Footer", () => {
 		const logoColumn = logo.closest("div.order-1");
 		expect(logoColumn).not.toBeNull();
 		expect(logoColumn?.className).not.toMatch(/\bhidden\b/);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Squelette
+// ---------------------------------------------------------------------------
+
+describe("FooterSkeleton", () => {
+	// Un landmark ne doit pas changer d'identité au swap Suspense : le squelette
+	// était `aria-hidden`, donc `contentinfo` DISPARAISSAIT de l'arbre pendant le
+	// stream. Même arbitrage que `NavbarSkeleton` (2026-08-04) — `aria-busy` porte
+	// l'état de chargement, le nom porte l'identité.
+	it("exposes the same contentinfo landmark and accessible name as the real footer", async () => {
+		render(<FooterSkeleton />);
+
+		const skeleton = screen.getByRole("contentinfo");
+		expect(skeleton).toHaveAttribute("aria-label", "Informations et liens utiles");
+		expect(skeleton).toHaveAttribute("aria-busy", "true");
+		expect(skeleton).not.toHaveAttribute("aria-hidden");
+
+		cleanup();
+
+		const Result = await Footer();
+		render(Result);
+		expect(screen.getByRole("heading", { level: 2 }).textContent).toBe(
+			"Informations et liens utiles",
+		);
 	});
 });

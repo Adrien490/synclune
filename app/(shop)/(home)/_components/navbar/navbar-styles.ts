@@ -2,7 +2,10 @@ import { cn } from "@/shared/utils/cn";
 
 /** Shared base classes for icon buttons in the navbar (desktop + mobile trigger) */
 export const iconButtonClassName = cn(
-	"relative items-center justify-center size-11 rounded-xl group",
+	// `rounded-md` et non `rounded-xl` : c'est le rayon des cartes Atelier
+	// (`CARD_SURFACE_POLAROID`). Le header était la dernière surface du storefront
+	// à garder son propre vocabulaire de formes.
+	"relative items-center justify-center size-11 rounded-md group",
 	"text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground",
 	"ease-out motion-safe:transition-[transform,color,background-color] motion-safe:duration-[var(--duration-slow)]",
 	"motion-safe:can-hover:hover:scale-105 motion-safe:active:scale-95",

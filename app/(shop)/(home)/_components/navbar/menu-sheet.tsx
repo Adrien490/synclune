@@ -40,7 +40,11 @@ const MENU_SHEET_CONTENT_ID = "shop-menu-sheet-content";
 const triggerClassName = cn(
 	iconButtonClassName,
 	"-ml-3 inline-flex lg:hidden bg-transparent cursor-pointer",
-	"focus-visible:outline-2 focus-visible:outline-primary",
+	// Pas de `focus-visible:outline-*` ici : `iconButtonClassName` compose déjà
+	// `focus-ring`, dont la première déclaration est `outline-none`. Rajouter un
+	// outline par-dessus produisait DEUX indicateurs concurrents (anneau 3px +
+	// contour 2px) sur le contrôle mobile le plus utilisé du site — exactement la
+	// dérive que l'audit du 2026-05-25 avait supprimée partout ailleurs.
 	// Tap feedback parity with footer-link / bottom-bar (2026-05-12)
 	"touch-manipulation motion-safe:transition-transform motion-safe:duration-150 active:scale-[0.95]",
 );
@@ -204,6 +208,11 @@ export function MenuSheet({
 
 				<SheetContent
 					id={MENU_SHEET_CONTENT_ID}
+					// Le panneau avait TROIS affordances de fermeture concurrentes : ce
+					// bouton « × » par défaut (posé en haut à droite, donc dans la zone du
+					// titre), le scrim et le swipe — plus le burger lui-même, vers lequel
+					// `finalFocus` renvoie de toute façon. On garde le scrim et le geste.
+					showCloseButton={false}
 					// `pl-0!` et non `p-0!` : `p-0` écrasait via tailwind-merge le
 					// `pl-[max(0px,env(safe-area-inset-left))]` que `sheet.tsx` pose sur la
 					// branche `direction="left"`, laissant le contenu sous l'encoche en

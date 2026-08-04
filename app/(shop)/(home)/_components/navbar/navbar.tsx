@@ -121,6 +121,13 @@ export async function Navbar() {
 						<div
 							className={cn(
 								"flex h-16 items-center gap-4 sm:h-20",
+								// À partir de `lg`, une GRILLE à trois colonnes, dont deux égales de
+								// part et d'autre du centre. En flex, la zone gauche était
+								// `lg:flex-none` (largeur du logo) tandis que centre et droite se
+								// partageaient le reste à parts égales : le « centre » n'était donc
+								// pas celui de la page, et le bloc de nav tombait ~140px à sa gauche.
+								// `1fr auto 1fr` centre la colonne du milieu par construction.
+								"lg:grid lg:grid-cols-[1fr_auto_1fr]",
 								// Scroll compact: shrink sm:h-20 → sm:h-16 once scrolled past threshold.
 								// Snap (no animation) — `height` transition is non-composable and forces
 								// layout reflow at 60fps during the 300ms tween. The compaction is set on
@@ -163,9 +170,20 @@ export async function Navbar() {
 							</div>
 
 							{/* Section centrale: Logo (mobile) / Navigation desktop */}
-							<div className="flex items-center justify-center lg:flex-1">
-								{/* Logo mobile centré (icône seule) */}
-								<Logo href="/" size={44} className="lg:hidden" shadow sizes="44px" />
+							<div className="flex min-w-0 items-center justify-center">
+								{/* Logo mobile centré — AVEC le nom depuis la déduplication du
+								    header (2026-08-04) : le cluster d'actions ayant quitté la
+								    droite sous `lg`, la place existe enfin pour la marque, là où
+								    il n'y avait qu'une pastille de 44px. */}
+								<Logo
+									href="/"
+									size={40}
+									className="min-w-0 lg:hidden"
+									shadow
+									sizes="40px"
+									showText
+									textClassName="text-foreground truncate text-xl"
+								/>
 								<DesktopNav
 									navItems={desktopNavItems}
 									featuredProducts={featuredProducts}
@@ -173,7 +191,8 @@ export async function Navbar() {
 								/>
 							</div>
 
-							{/* Section droite: Favoris + Recherche + Panier (+ menu admin) */}
+							{/* Section droite: Favoris + Recherche + Panier (+ menu admin) —
+							    desktop uniquement depuis la déduplication (cf. NavbarIconButtons). */}
 							<div className="flex min-w-0 flex-1 items-center justify-end">
 								<div className="flex shrink-0 items-center gap-2 sm:gap-3">
 									<NavbarIconButtons

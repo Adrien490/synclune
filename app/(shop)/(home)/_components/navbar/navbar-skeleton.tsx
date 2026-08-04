@@ -1,30 +1,38 @@
 /**
  * Skeleton de la Navbar pour le fallback de Suspense
  *
- * Reproduit exactement la structure de la navbar refactorée:
- * - Mobile: Menu burger à gauche, Logo centré (icône seule), Actions à droite
- * - Desktop: Logo avec texte à gauche, Navigation centrale, Actions à droite
+ * Reproduit exactement la structure de la navbar réelle :
+ * - Mobile: Menu burger à gauche, Logo + nom centrés, rien à droite
+ * - Desktop: Logo avec nom à gauche, Navigation centrée, Actions à droite
  *
  * Container: max-w-6xl (cohérent avec navbar.tsx)
  * Hauteur: h-16 sm:h-20 (cohérent avec navbar.tsx)
+ * Grille: `lg:grid-cols-[1fr_auto_1fr]` (cohérent avec navbar.tsx)
  */
 export function NavbarSkeleton() {
 	return (
 		<header
-			className="fixed inset-x-0 top-0 z-40 border-b border-transparent bg-transparent pt-[env(safe-area-inset-top)] ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
+			className="pwa-header fixed inset-x-0 top-0 z-(--z-header) border-b border-transparent bg-transparent ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
 			aria-busy="true"
-			aria-label="Chargement de la navigation"
 		>
+			{/* Même nom accessible que la navbar réelle : le landmark ne doit pas
+			    changer d'identité au swap Suspense. `aria-busy` porte l'état de
+			    chargement, le libellé porte l'identité — les mélanger faisait
+			    disparaître « Navigation principale » de l'arbre pendant le stream. */}
 			<nav
-				aria-label="Navigation principale en cours de chargement"
+				aria-label="Navigation principale"
 				className="ease-in-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
 			>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="flex h-16 items-center gap-4 sm:h-20">
+					{/* Même grille `1fr auto 1fr` que la navbar réelle à partir de `lg` :
+					    la géométrie est déclarée deux fois, elle doit bouger deux fois. */}
+					<div className="flex h-16 items-center gap-4 sm:h-20 lg:grid lg:grid-cols-[1fr_auto_1fr]">
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 						<div className="flex min-w-0 flex-1 items-center lg:flex-none">
-							{/* Menu burger skeleton (mobile uniquement) - size-11 = 44px matches real burger */}
-							<div className="bg-muted/60 size-11 rounded-xl motion-safe:animate-pulse lg:hidden" />
+							{/* Menu burger skeleton (mobile uniquement) - size-11 = 44px matches real burger.
+							    `-ml-3` reproduit l'offset du vrai trigger (`menu-sheet.tsx`) : sans lui, le
+							    burger sautait de 0.75rem vers la gauche au swap squelette → navbar. */}
+							<div className="bg-muted/60 -ml-3 size-11 rounded-md motion-safe:animate-pulse lg:hidden" />
 
 							{/* Pas de placeholder recherche mobile : le trigger a été retiré de la
 							    navbar (l'entrée mobile est l'onglet « Rechercher » de la bottom-nav,
@@ -33,40 +41,41 @@ export function NavbarSkeleton() {
 
 							{/* Logo skeleton (desktop uniquement) */}
 							<div className="hidden items-center gap-3 lg:flex">
-								{/* Icône logo - size-12 = 48px matches Logo size={48} */}
-								<div className="bg-muted/60 size-12 rounded-lg motion-safe:animate-pulse" />
+								{/* Icône logo - size-12 = 48px, rounded-full comme le Logo réel (rounded="full" par défaut) */}
+								<div className="bg-muted/60 size-12 rounded-full motion-safe:animate-pulse" />
 								{/* Texte "SYNCLUNE" */}
 								<div className="bg-muted/60 h-6 w-24 rounded-md motion-safe:animate-pulse" />
 							</div>
 						</div>
 
 						{/* Section centrale: Logo (mobile) / Navigation desktop */}
-						<div className="flex items-center justify-center lg:flex-1">
-							{/* Logo skeleton centré (mobile uniquement) - size-11 = 44px matches Logo size={44} */}
-							<div className="bg-muted/60 size-11 rounded-lg motion-safe:animate-pulse lg:hidden" />
+						<div className="flex min-w-0 items-center justify-center">
+							{/* Logo mobile — icône 40px + nom, comme la navbar réelle depuis la
+							    déduplication du cluster d'actions. */}
+							<div className="flex items-center gap-3 lg:hidden">
+								<div className="bg-muted/60 size-10 rounded-full motion-safe:animate-pulse" />
+								<div className="bg-muted/60 h-5 w-24 rounded-md motion-safe:animate-pulse" />
+							</div>
 
 							{/* Navigation desktop skeleton (cachée sur mobile) */}
 							{/* 2 items: Les créations, Les collections (synchronisé avec getDesktopNavItems) */}
 							<div className="hidden items-center gap-1 lg:flex">
-								<div className="bg-muted/60 h-9 w-24 rounded-lg motion-safe:animate-pulse" />
-								<div className="bg-muted/60 h-9 w-28 rounded-lg motion-safe:animate-pulse" />
+								<div className="bg-muted/60 h-9 w-28 rounded-md motion-safe:animate-pulse" />
+								<div className="bg-muted/60 h-9 w-32 rounded-md motion-safe:animate-pulse" />
 							</div>
 						</div>
 
-						{/* Section droite: Favoris + Recherche + Panier — pas de placeholder
-						    « compte » : UserMenu rend null hors session admin, le cas nominal
-						    (100 % du trafic public) est donc 3 surfaces, pas 4. */}
+						{/* Section droite — VIDE sous `lg` : le cluster d'actions (favoris,
+						    recherche, panier) est désormais `hidden lg:inline-flex`, la
+						    bottom-bar en étant le porteur unique sur mobile. Pas de
+						    placeholder « compte » non plus : UserMenu rend null hors session
+						    admin, soit 100 % du trafic public. */}
 						<div className="flex min-w-0 flex-1 items-center justify-end">
-							<div className="flex items-center gap-2 sm:gap-3">
-								{/* Icône favoris skeleton (toujours visible) */}
-								<div className="bg-muted/60 size-11 rounded-xl motion-safe:animate-pulse" />
-
-								{/* Recherche skeleton — mime QuickSearchTrigger variant="bar" :
-								    icône carrée entre sm et lg, pilule h-9 w-56 à partir de lg */}
-								<div className="bg-muted/60 hidden h-11 w-11 rounded-xl motion-safe:animate-pulse sm:block lg:h-9 lg:w-56 lg:rounded-lg" />
-
-								{/* Icône panier skeleton (toujours visible) */}
-								<div className="bg-muted/60 size-11 rounded-xl motion-safe:animate-pulse" />
+							<div className="hidden items-center gap-2 sm:gap-3 lg:flex">
+								{/* Favoris, recherche et panier : trois carrés de 44px */}
+								<div className="bg-muted/60 size-11 rounded-md motion-safe:animate-pulse" />
+								<div className="bg-muted/60 size-11 rounded-md motion-safe:animate-pulse" />
+								<div className="bg-muted/60 size-11 rounded-md motion-safe:animate-pulse" />
 							</div>
 						</div>
 					</div>

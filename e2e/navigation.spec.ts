@@ -98,13 +98,17 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		const menuDialog = page.getByRole("dialog");
 		await expect(menuDialog).toBeVisible();
 
-		// Le menu doit contenir les items de navigation
-		await expect(menuDialog.getByRole("link", { name: /Accueil/i })).toBeVisible();
+		// Le menu doit contenir les items de navigation.
+		// ⚠️ `exact: true` : en regex, `/Accueil/i` matchait AUSSI le lien de marque
+		// du panneau, dont le nom accessible est « Synclune - Retour à l'accueil » —
+		// deux éléments, donc violation du strict mode.
+		await expect(menuDialog.getByRole("link", { name: "Accueil", exact: true })).toBeVisible();
 
-		// Fermer via le bouton X du panneau. Ciblé précisément : /Fermer/i matchait
-		// aussi le burger, dont le label devient « Fermer le menu de navigation ».
-		const closeButton = page.getByRole("button", { name: "Fermer le panneau" });
-		await closeButton.click();
+		// Fermer par Échap. Le bouton « × » par défaut du SheetContent a été retiré
+		// (2026-08-04) : il posait une quatrième affordance de fermeture dans la zone
+		// du titre, en plus du scrim, du swipe et du burger. Échap est le chemin
+		// clavier, et c'est celui qui doit rester garanti.
+		await page.keyboard.press("Escape");
 
 		// Le menu doit être fermé
 		await expect(menuDialog).not.toBeVisible();
@@ -132,6 +136,11 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		const mentionsLink = footer.getByRole("link", { name: /Mentions légales/i });
 		await expect(mentionsLink).toBeAttached();
 
+		// Le libellé VISIBLE est « Confidentialité » depuis la refonte du footer
+		// (2026-08-04) ; c'est le nom accessible qui porte la forme longue
+		// (« Confidentialité — Politique de confidentialité », WCAG 2.5.3). Ce
+		// sélecteur cible bien le nom accessible : raccourcir l'`ariaLabel` de
+		// `legalLinks` casserait ce test, et c'est voulu.
 		const confidentialiteLink = footer.getByRole("link", { name: /Politique de confidentialité/i });
 		await expect(confidentialiteLink).toBeAttached();
 	});

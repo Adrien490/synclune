@@ -7,9 +7,12 @@ import {
 	NavigationMenuItem,
 	NavigationMenuLink,
 	NavigationMenuList,
+	NavigationMenuPopup,
 	NavigationMenuTrigger,
 	navigationMenuTriggerStyle,
 } from "@/shared/components/ui/navigation-menu";
+import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
+import { MaskingTape } from "@/shared/components/masking-tape";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
@@ -27,22 +30,25 @@ interface DesktopNavProps {
 	spotlightCollection?: NavItemChild;
 }
 
+/**
+ * Libellés en Fraunces (`font-display`) et non plus en Figtree : le header était
+ * la dernière surface du storefront à parler shadcn-neutre, entre des cartes
+ * « Atelier » (tirage polaroid, masking tape, trait dessiné) et un footer à
+ * l'accent manuscrit.
+ *
+ * Le trait de 2px animé en `scale-x` cède la place à `SquiggleUnderline` — la
+ * même primitive que les cartes. Bénéfice non cosmétique : elle se dessine au
+ * survol **et au focus clavier** (`group-focus-within`), parité WCAG 2.4.7 que
+ * l'ancien `hover:after:scale-x-100` n'avait pas.
+ */
 const linkClasses = cn(
-	"relative h-auto px-3 py-2 rounded-sm text-sm font-medium tracking-[0.02em]",
+	"group relative h-auto px-3 py-2 rounded-sm font-display text-[0.9375rem] font-medium",
 	"text-foreground/85 hover:text-foreground",
 	"data-[active=true]:text-foreground",
 	"motion-safe:transition-[color,background-color] motion-safe:duration-[var(--duration-normal)]",
-	// Subtle rose accent halo on hover (premium brand touch, stays under underline)
-	"motion-safe:hover:bg-primary/8 data-[state=open]:bg-primary/8",
+	// Halo rose discret au survol et à l'ouverture du panneau.
+	"motion-safe:hover:bg-primary/8 data-popup-open:bg-primary/8",
 	"focus-ring",
-	// Underline animé au hover — spring easing premium
-	"after:absolute after:bottom-0 after:left-1 after:right-1",
-	"after:h-0.5 after:bg-primary after:rounded-full",
-	"after:origin-center after:scale-x-0",
-	"motion-safe:after:transition-transform motion-safe:after:duration-[220ms] motion-safe:after:[transition-timing-function:var(--ease-spring)]",
-	"hover:after:scale-x-100 data-[state=open]:after:scale-x-100",
-	"data-[active=true]:after:scale-x-100",
-	"motion-reduce:hover:after:scale-x-100 motion-reduce:data-[state=open]:after:scale-x-100",
 );
 
 export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: DesktopNavProps) {
@@ -55,15 +61,7 @@ export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: 
 	const isTouch = useIsTouchDevice();
 
 	return (
-		<NavigationMenu
-			className="hidden lg:flex"
-			// viewport={false} disables Radix's auto-positioned viewport so the
-			// mega-menu content can break out to full-width via the !important
-			// overrides applied on NavigationMenuContent below (top/left/right/w-screen).
-			viewport={false}
-			delayDuration={120}
-			skipDelayDuration={300}
-		>
+		<NavigationMenu className="hidden lg:flex" delay={120} closeDelay={150}>
 			<NavigationMenuList className="gap-1">
 				{navItems.map((item) => {
 					const itemIsActive = isMenuItemActive(item.href);
@@ -72,16 +70,22 @@ export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: 
 					if (!item.hasDropdown) {
 						return (
 							<NavigationMenuItem key={item.href}>
-								<NavigationMenuLink asChild>
-									<Link
-										href={item.href}
-										className={cn(navigationMenuTriggerStyle, linkClasses)}
-										data-active={itemIsActive}
-										aria-current={itemIsActive ? "page" : undefined}
-									>
-										{item.label}
-										<LoadingIndicator />
-									</Link>
+								<NavigationMenuLink
+									render={
+										<Link
+											href={item.href}
+											data-active={itemIsActive}
+											aria-current={itemIsActive ? "page" : undefined}
+										/>
+									}
+									className={cn(navigationMenuTriggerStyle, linkClasses)}
+								>
+									{item.label}
+									<SquiggleUnderline
+										className="-bottom-0.5 left-3 h-2 w-[calc(100%-1.5rem)]"
+										drawn={itemIsActive}
+									/>
+									<LoadingIndicator />
 								</NavigationMenuLink>
 							</NavigationMenuItem>
 						);
@@ -95,58 +99,61 @@ export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: 
 								className={linkClasses}
 								data-active={itemIsActive}
 								aria-current={itemIsActive ? "page" : undefined}
-								onClick={(e) => {
-									// Keyboard activation (Enter/Space) synthesizes a click with
-									// detail === 0 — let it fall through to Radix's toggle so the
-									// mega-menu panel opens, keeping its links reachable for
-									// keyboard / screen-reader users.
-									if (e.detail === 0) return;
-									// Touch (coarse pointer, no hover): let the tap open the panel
-									// via Radix instead of navigating away — the in-panel CTA
-									// handles navigation to the section page (F3).
+								onClick={(event) => {
+									// Activation clavier (Entrée/Espace) : le clic synthétisé porte
+									// `detail === 0`. On laisse Base UI ouvrir le panneau, sinon ses
+									// liens seraient injoignables au clavier et au lecteur d'écran.
+									if (event.detail === 0) return;
+									// Tactile (pointeur grossier, pas de survol) : le tap ouvre le
+									// panneau au lieu de naviguer — le CTA interne prend le relais (F3).
 									if (isTouch) return;
-									// Mouse click on a hover-capable pointer: go straight to the
-									// section page (hover already revealed the mega menu).
-									e.preventDefault();
+									// Souris sur un pointeur capable de survol : le survol a déjà
+									// montré le panneau, le clic va droit à la page section.
+									//
+									// ⚠️ `preventBaseUIHandler()`, PAS `preventDefault()`. Base UI ne
+									// consulte pas `defaultPrevented` : ses gestionnaires internes sont
+									// fusionnés par `mergeProps`, qui ne les court-circuite que sur ce
+									// signal dédié. Un `preventDefault()` seul aurait laissé le panneau
+									// s'ouvrir en même temps que la navigation.
+									event.preventBaseUIHandler();
 									router.push(item.href);
 								}}
 							>
 								{item.label}
+								<SquiggleUnderline
+									className="-bottom-0.5 left-3 h-2 w-[calc(100%-2.75rem)]"
+									drawn={itemIsActive}
+								/>
 							</NavigationMenuTrigger>
-							{/* !important overrides needed to break out of Radix NavigationMenu's
-						   absolute positioning and render a full-width mega menu anchored
-						   below the navbar. Without these, the dropdown renders relative to
-						   its trigger with default padding/border/rounding. */}
-							<NavigationMenuContent
-								className={cn(
-									"fixed! right-0! left-0! w-screen!",
-									"top-(--navbar-height)!",
-									"mt-0! rounded-none! p-0!",
-									// Subtle rose hairline at the top — atelier signature, brand identity touch
-									"bg-background border-b-border border-x-0! border-t border-b border-t-[var(--color-glow-pink)] shadow-md",
-									// Easing homogène (tokens) entrée/sortie pour adoucir le swap entre panneaux.
-									"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=open]:duration-[var(--duration-normal)] data-[state=open]:[animation-timing-function:var(--ease-premium)]",
-									"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-[var(--duration-fast)] data-[state=closed]:[animation-timing-function:var(--ease-premium)]",
-									"motion-reduce:animate-none",
+							{/* Le panneau était pleine largeur (`fixed! left-0! right-0! w-screen!`).
+							    C'était un gabarit de grand magasin pour un catalogue d'une dizaine
+							    de liens — et `w-screen` valait `100vw`, gouttière de scrollbar
+							    comprise, donc ~15px de débordement horizontal. Chaque panneau porte
+							    désormais SA largeur : Base UI morphe de l'une à l'autre. */}
+							<NavigationMenuContent>
+								{item.dropdownType === "creations" && (
+									<MegaMenuCreations
+										productTypes={item.children}
+										featuredProducts={featuredProducts}
+										spotlightCollection={spotlightCollection}
+									/>
 								)}
-							>
-								<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-									{item.dropdownType === "creations" && (
-										<MegaMenuCreations
-											productTypes={item.children}
-											featuredProducts={featuredProducts}
-											spotlightCollection={spotlightCollection}
-										/>
-									)}
-									{item.dropdownType === "collections" && (
-										<MegaMenuCollections collections={item.children} />
-									)}
-								</div>
+								{item.dropdownType === "collections" && (
+									<MegaMenuCollections collections={item.children} />
+								)}
 							</NavigationMenuContent>
 						</NavigationMenuItem>
 					);
 				})}
 			</NavigationMenuList>
+
+			{/* Le panneau, monté une seule fois. Base UI y déplace le contenu de l'item
+			    actif et morphe la taille d'un panneau à l'autre. Le ruban de masking
+			    tape remplace le filet rose : même vocabulaire que les cartes Atelier,
+			    et il déborde du cadre — d'où l'absence d'`overflow-hidden` ici. */}
+			<NavigationMenuPopup className="overflow-visible">
+				<MaskingTape className="-top-2 left-10 h-4 w-20 -rotate-2" />
+			</NavigationMenuPopup>
 		</NavigationMenu>
 	);
 }

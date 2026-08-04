@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 
 // Mock next/font/google (imported transitively via barrel → unsaved-changes-dialog → alert-dialog → fonts)
 vi.mock("next/font/google", () => {
@@ -40,6 +41,16 @@ vi.mock("next/navigation", () => ({
 	usePathname: () => "/produits",
 }));
 
+/**
+ * Espion du signal Base UI qui court-circuite le gestionnaire interne du trigger.
+ *
+ * ⚠️ Ce n'est PAS `preventDefault()`. Base UI ne consulte jamais
+ * `defaultPrevented` : ses gestionnaires sont fusionnés par `mergeProps`, qui ne
+ * les saute que sur `event.preventBaseUIHandler()`. Le mock du trigger reproduit
+ * donc ce contrat, sinon le composant lèverait sur une méthode absente.
+ */
+const preventBaseUIHandler = vi.fn();
+
 // Mock NavigationMenu components to render children directly
 vi.mock("@/shared/components/ui/navigation-menu", () => ({
 	NavigationMenu: ({
@@ -57,19 +68,35 @@ vi.mock("@/shared/components/ui/navigation-menu", () => ({
 		[key: string]: unknown;
 	}) => <ul {...props}>{children}</ul>,
 	NavigationMenuItem: ({ children }: { children: React.ReactNode }) => <li>{children}</li>,
-	NavigationMenuLink: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	// `renderPropMock` et non `<>{children}</>` : le lien passe désormais par
+	// `render={<Link/>}`. Un mock qui ignore `render` fait DISPARAÎTRE l'ancre du
+	// DOM, et tous les `getByRole("link")` échouent sans que le composant réel
+	// soit en cause (cf. `test/mocks/render-prop.tsx`).
+	NavigationMenuLink: (props: RenderPropMockProps) => renderPropMock("a", props),
 	NavigationMenuTrigger: ({
 		children,
+		onClick,
+		showChevron: _showChevron,
 		...props
 	}: {
 		children: React.ReactNode;
+		onClick?: (event: unknown) => void;
+		showChevron?: boolean;
 		[key: string]: unknown;
 	}) => (
-		<button type="button" {...props}>
+		<button
+			type="button"
+			onClick={(event) => {
+				Object.assign(event, { preventBaseUIHandler });
+				onClick?.(event);
+			}}
+			{...props}
+		>
 			{children}
 		</button>
 	),
 	NavigationMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	NavigationMenuPopup: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
 	navigationMenuTriggerStyle: "",
 }));
 
@@ -100,6 +127,7 @@ import { DesktopNav } from "./desktop-nav";
 afterEach(() => {
 	cleanup();
 	mockIsTouch = false;
+	preventBaseUIHandler.mockClear();
 });
 
 const navItems = [
@@ -176,7 +204,7 @@ describe("DesktopNav", () => {
 	});
 
 	describe("keyboard navigation", () => {
-		it("does not navigate on Enter key press (Radix opens the mega menu)", () => {
+		it("does not navigate on Enter key press (Base UI opens the mega menu)", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
@@ -216,7 +244,7 @@ describe("DesktopNav", () => {
 			expect(mockPush).toHaveBeenCalledWith("/produits");
 		});
 
-		it("does not navigate on touch tap — lets Radix open the panel (F3)", () => {
+		it("does not navigate on touch tap — lets Base UI open the panel (F3)", () => {
 			mockIsTouch = true;
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
@@ -227,21 +255,24 @@ describe("DesktopNav", () => {
 			fireEvent.click(trigger, { detail: 1 });
 
 			expect(mockPush).not.toHaveBeenCalled();
+			expect(preventBaseUIHandler).not.toHaveBeenCalled();
 		});
 
-		it("calls preventDefault on mouse click to skip Radix's onItemSelect toggle", () => {
+		it("appelle preventBaseUIHandler au clic souris pour ne pas ouvrir le panneau en plus de naviguer", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
 			const trigger = screen.getByRole("button", { name: "Les créations" });
-			const event = new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1 });
-			trigger.dispatchEvent(event);
+			fireEvent.click(trigger, { detail: 1 });
 
-			expect(event.defaultPrevented).toBe(true);
+			// ⚠️ Le signal est `preventBaseUIHandler`, PAS `preventDefault` : Base UI
+			// ne consulte pas `defaultPrevented`. Asserter l'ancien aurait laissé
+			// passer un panneau qui s'ouvre en même temps que la navigation.
+			expect(preventBaseUIHandler).toHaveBeenCalledTimes(1);
 			expect(mockPush).toHaveBeenCalledWith("/produits");
 		});
 
-		it("does not navigate on Escape key (Radix handles menu close)", () => {
+		it("does not navigate on Escape key (Base UI handles menu close)", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
@@ -251,7 +282,7 @@ describe("DesktopNav", () => {
 			expect(mockPush).not.toHaveBeenCalled();
 		});
 
-		it("does not navigate on ArrowDown (Radix handles focus shift)", () => {
+		it("does not navigate on ArrowDown (Base UI handles focus shift)", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
@@ -262,14 +293,14 @@ describe("DesktopNav", () => {
 		});
 	});
 
-	describe("visual polish", () => {
-		it("applies tracking-[0.02em] premium letter-spacing on triggers and links", () => {
+	describe("habillage Atelier", () => {
+		it("compose les libellés en Fraunces (font-display) sur les liens comme sur les triggers", () => {
 			render(<DesktopNav navItems={navItems} />);
 
 			const link = screen.getByRole("link", { name: "L'atelier" });
-			expect(link.className).toContain("tracking-[0.02em]");
+			expect(link.className).toContain("font-display");
 			const trigger = screen.getByRole("button", { name: "Les créations" });
-			expect(trigger.className).toContain("tracking-[0.02em]");
+			expect(trigger.className).toContain("font-display");
 		});
 
 		it("renders subtle primary-tinted hover background (gold/rose accent)", () => {
@@ -278,10 +309,30 @@ describe("DesktopNav", () => {
 			expect(link.className).toContain("hover:bg-primary/8");
 		});
 
-		it("binds the underline transition to --ease-spring token", () => {
+		it("remplace le filet de 2px par le trait dessiné à la main, qui répond aussi au focus", () => {
+			const { container } = render(<DesktopNav navItems={navItems} />);
+
+			// Le `SquiggleUnderline` est rendu pour chaque entrée. Sa valeur ici n'est
+			// pas cosmétique : contrairement au `after:scale-x` qu'il remplace, il se
+			// dessine sur `group-focus-within` — parité survol/focus (WCAG 2.4.7).
+			const paths = container.querySelectorAll("svg path[stroke-linecap='round']");
+			expect(paths.length).toBeGreaterThanOrEqual(navItems.length);
+			expect(paths[0]?.getAttribute("class")).toContain("group-focus-within:[stroke-dashoffset:0]");
+		});
+
+		it("marque d'un trait déjà dessiné l'entrée correspondant à la page courante", () => {
 			render(<DesktopNav navItems={navItems} />);
-			const link = screen.getByRole("link", { name: "L'atelier" });
-			expect(link.className).toContain("var(--ease-spring)");
+
+			// `/produits` est actif (cf. mock de useActiveNavbarItem). Sans l'option
+			// `drawn`, remplacer le filet permanent par un trait au survol aurait fait
+			// disparaître le repère visuel de `aria-current="page"`.
+			const activeTrigger = screen.getByRole("button", { name: "Les créations" });
+			const activePath = activeTrigger.querySelector("svg path");
+			expect(activePath?.getAttribute("class")).toContain("[stroke-dashoffset:0]");
+
+			const inactiveTrigger = screen.getByRole("button", { name: "Les collections" });
+			const inactivePath = inactiveTrigger.querySelector("svg path");
+			expect(inactivePath?.getAttribute("class")).toContain("[stroke-dashoffset:120]");
 		});
 	});
 });

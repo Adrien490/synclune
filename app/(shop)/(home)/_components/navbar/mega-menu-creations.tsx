@@ -20,6 +20,14 @@ interface MegaMenuCreationsProps {
 	spotlightCollection?: NavItemChild;
 }
 
+/**
+ * Rail droit du panneau. Passé de 360px à 15rem avec le panneau ancré : les
+ * vignettes carrées côte à côte devenaient minuscules dans cette largeur, d'où
+ * le passage à des lignes compactes (vignette + libellé), qui logent les deux
+ * nouveautés sans allonger le panneau.
+ */
+const RAIL_WIDTH = "w-60";
+
 export function MegaMenuCreations({
 	productTypes,
 	featuredProducts,
@@ -42,13 +50,22 @@ export function MegaMenuCreations({
 	const hasRail = hasProducts || hasSpotlight;
 
 	return (
-		<div className="py-6" role="region" aria-labelledby={regionHeadingId}>
+		// Le panneau porte sa propre largeur (cf. `DesktopNav`) : 46rem avec le rail,
+		// nettement moins sans lui — sinon les catégories s'étirent dans le vide.
+		<div
+			role="region"
+			aria-labelledby={regionHeadingId}
+			className={cn(
+				"px-6 py-5",
+				hasRail ? "w-[min(46rem,var(--available-width))]" : "w-[min(28rem,var(--available-width))]",
+			)}
+		>
 			<h2 id={regionHeadingId} className="sr-only">
 				Créations
 			</h2>
-			<div className="flex gap-8">
-				{/* Left zone: categories — largeur contrainte sans rail pour éviter l'étirement. */}
-				<div className={cn(hasRail ? "flex-1" : "w-full max-w-3xl")}>
+			<div className="flex gap-6">
+				{/* Left zone: categories */}
+				<div className="min-w-0 flex-1">
 					<MegaMenuColumn
 						title="Catégories"
 						subtitle="Bijoux par type"
@@ -60,7 +77,7 @@ export function MegaMenuCreations({
 				{/* Right zone: nouveautés (prioritaire) */}
 				{hasProducts && (
 					<div
-						className="border-border w-[360px] shrink-0 border-l pl-8"
+						className={cn("border-border shrink-0 border-l pl-6", RAIL_WIDTH)}
 						role="region"
 						aria-labelledby={featuredHeadingId}
 					>
@@ -73,68 +90,58 @@ export function MegaMenuCreations({
 						<p className="text-muted-foreground font-display mb-3 text-xs italic">
 							Pièces récentes de l&apos;atelier
 						</p>
-						<div
-							className={cn(
-								"grid gap-4",
-								featuredProducts.length === 1 ? "grid-cols-1" : "grid-cols-2",
-							)}
-						>
+						<div className="grid gap-1">
 							{featuredProducts.map((product) => (
-								<NavigationMenuLink key={product.slug} asChild>
-									<Link
-										href={ROUTES.SHOP.PRODUCT(product.slug)}
+								<NavigationMenuLink
+									key={product.slug}
+									render={<Link href={ROUTES.SHOP.PRODUCT(product.slug)} />}
+									className={cn(
+										"group/product flex items-center gap-3",
+										"rounded-lg p-1.5",
+										"ease-out motion-safe:transition-colors motion-safe:duration-[var(--duration-slow)]",
+										"hover:bg-accent/50",
+										"focus-ring",
+									)}
+								>
+									<div
 										className={cn(
-											"group/product flex flex-col gap-2",
-											"rounded-lg p-1.5",
-											// Single product: cap width so the square image doesn't balloon
-											// across the full 360px right zone.
-											featuredProducts.length === 1 && "max-w-[170px]",
-											"ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
-											"hover:bg-accent/50",
-											"focus-ring",
+											"bg-muted relative size-14 shrink-0 overflow-hidden rounded-md",
+											"ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)]",
+											"motion-safe:can-hover:group-hover/product:-translate-y-0.5",
+											"can-hover:group-hover/product:shadow-premium-rose",
 										)}
 									>
-										<div
-											className={cn(
-												"bg-muted relative aspect-square overflow-hidden rounded-lg",
-												"ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)]",
-												"motion-safe:can-hover:group-hover/product:-translate-y-0.5",
-												"can-hover:group-hover/product:shadow-premium-rose",
-											)}
-										>
-											<Image
-												src={product.imageUrl}
-												alt=""
-												fill
-												sizes="(max-width: 1024px) 140px, 160px"
-												className="object-cover"
-												placeholder={product.blurDataUrl ? "blur" : "empty"}
-												blurDataURL={product.blurDataUrl ?? undefined}
-												aria-hidden="true"
-											/>
+										<Image
+											src={product.imageUrl}
+											alt=""
+											fill
+											sizes="56px"
+											className="object-cover"
+											placeholder={product.blurDataUrl ? "blur" : "empty"}
+											blurDataURL={product.blurDataUrl ?? undefined}
+											aria-hidden="true"
+										/>
+									</div>
+									<div className="min-w-0">
+										<p className="text-foreground line-clamp-1 text-sm font-medium">
+											{product.title}
+										</p>
+										<p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+											{formatEuro(product.priceInclTax, { compact: true })}
 											{product.isNew && (
+												// Le badge a quitté la vignette : à 56px il la mangeait.
 												<span
 													className={cn(
-														"absolute top-1 left-1 z-10",
 														"rounded-full px-1.5 py-0.5",
 														"bg-primary/90 text-primary-foreground",
 														"text-[0.625rem] leading-none font-medium tracking-wide",
-														"shadow-sm backdrop-blur-sm",
 													)}
 												>
 													Nouveau
 												</span>
 											)}
-										</div>
-										<div className="min-w-0">
-											<p className="text-foreground line-clamp-1 text-sm font-medium">
-												{product.title}
-											</p>
-											<p className="text-muted-foreground text-xs">
-												{formatEuro(product.priceInclTax, { compact: true })}
-											</p>
-										</div>
-									</Link>
+										</p>
+									</div>
 								</NavigationMenuLink>
 							))}
 						</div>
@@ -144,7 +151,7 @@ export function MegaMenuCreations({
 				{/* Right zone fallback: spotlight collection (quand pas de nouveautés) */}
 				{hasSpotlight && spotlightCollection && (
 					<div
-						className="border-border w-[360px] shrink-0 border-l pl-8"
+						className={cn("border-border shrink-0 border-l pl-6", RAIL_WIDTH)}
 						role="region"
 						aria-labelledby={spotlightHeadingId}
 					>
@@ -157,41 +164,43 @@ export function MegaMenuCreations({
 						<p className="text-muted-foreground font-display mb-3 text-xs italic">
 							Une collection à explorer
 						</p>
-						<NavigationMenuLink asChild>
-							<Link
-								href={spotlightCollection.href}
-								aria-current={pathname === spotlightCollection.href ? "page" : undefined}
+						<NavigationMenuLink
+							render={
+								<Link
+									href={spotlightCollection.href}
+									aria-current={pathname === spotlightCollection.href ? "page" : undefined}
+								/>
+							}
+							className={cn(
+								"group/spotlight block rounded-lg p-1.5",
+								"ease-out motion-safe:transition-colors motion-safe:duration-[var(--duration-slow)]",
+								"hover:bg-accent/50",
+								"focus-ring",
+							)}
+						>
+							<div
 								className={cn(
-									"group/spotlight block rounded-lg p-1.5",
-									"ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
-									"hover:bg-accent/50",
-									"focus-ring",
+									"overflow-hidden rounded-lg",
+									"ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)]",
+									"motion-safe:can-hover:group-hover/spotlight:-translate-y-0.5",
+									"can-hover:group-hover/spotlight:shadow-premium-rose",
 								)}
 							>
-								<div
-									className={cn(
-										"overflow-hidden rounded-lg",
-										"ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)]",
-										"motion-safe:can-hover:group-hover/spotlight:-translate-y-0.5",
-										"can-hover:group-hover/spotlight:shadow-premium-rose",
-									)}
-								>
-									<CollectionImagesGrid
-										images={spotlightImages}
-										collectionName={spotlightCollection.label}
-										variant="compact"
-									/>
-								</div>
-								<div className="mt-2 min-w-0 px-0.5">
-									<p className="text-foreground line-clamp-1 text-sm font-medium">
-										{spotlightCollection.label}
-									</p>
-									<span className="text-primary mt-0.5 inline-flex items-center gap-1 text-xs font-medium">
-										Découvrir la collection
-										<ArrowRight className="size-3" aria-hidden="true" />
-									</span>
-								</div>
-							</Link>
+								<CollectionImagesGrid
+									images={spotlightImages}
+									collectionName={spotlightCollection.label}
+									variant="compact"
+								/>
+							</div>
+							<div className="mt-2 min-w-0 px-0.5">
+								<p className="text-foreground line-clamp-1 text-sm font-medium">
+									{spotlightCollection.label}
+								</p>
+								<span className="text-primary mt-0.5 inline-flex items-center gap-1 text-xs font-medium">
+									Découvrir la collection
+									<ArrowRight className="size-3" aria-hidden="true" />
+								</span>
+							</div>
 						</NavigationMenuLink>
 					</div>
 				)}

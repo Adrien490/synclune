@@ -41,11 +41,6 @@ interface MegaMenuColumnProps {
 	subtitle?: string;
 	/** Navigation items to display in the column */
 	items: NavItemChild[];
-	/** Optional "View all" link at the bottom */
-	viewAllLink?: {
-		href: string;
-		label: string;
-	};
 	/** Display items in a multi-column grid */
 	columns?: 2 | 3;
 }
@@ -62,13 +57,7 @@ interface MegaMenuColumnProps {
  * - Optional multi-column grid layout
  * - Visual hierarchy: first item styled as primary CTA
  */
-export function MegaMenuColumn({
-	title,
-	subtitle,
-	items,
-	viewAllLink,
-	columns,
-}: MegaMenuColumnProps) {
+export function MegaMenuColumn({ title, subtitle, items, columns }: MegaMenuColumnProps) {
 	const headingId = useId();
 	const pathname = usePathname();
 
@@ -96,24 +85,28 @@ export function MegaMenuColumn({
 
 			{/* Primary CTA link with distinct styling */}
 			{primaryItem && (
-				<NavigationMenuLink asChild>
-					{/* flex-row! requis : NavigationMenuLink applique flex-col par défaut (shared/components/ui/navigation-menu.tsx). */}
-					<Link
-						href={primaryItem.href}
-						aria-current={pathname === primaryItem.href ? "page" : undefined}
-						className={cn(
-							"relative flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
-							"bg-accent/40 hover:bg-accent",
-							"text-foreground",
-							"focus-ring",
-							"mb-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
-							pathname === primaryItem.href && "bg-accent font-medium",
-						)}
-					>
-						{primaryItem.label}
-						<ArrowRight className="text-muted-foreground size-3.5" aria-hidden="true" />
-						<LoadingIndicator />
-					</Link>
+				// `render` et non `asChild` (Base UI n'a pas de Slot) : l'ÉLÉMENT passé
+				// remplace celui du composant, les enfants restent portés par le composant.
+				// Plus de `flex-row!` — le lien n'impose plus `flex-col` par défaut.
+				<NavigationMenuLink
+					render={
+						<Link
+							href={primaryItem.href}
+							aria-current={pathname === primaryItem.href ? "page" : undefined}
+						/>
+					}
+					className={cn(
+						"relative flex min-h-11 items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
+						"bg-accent/40 hover:bg-accent",
+						"text-foreground",
+						"focus-ring",
+						"mb-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
+						pathname === primaryItem.href && "bg-accent font-medium",
+					)}
+				>
+					{primaryItem.label}
+					<ArrowRight className="text-muted-foreground size-3.5" aria-hidden="true" />
+					<LoadingIndicator />
 				</NavigationMenuLink>
 			)}
 
@@ -130,58 +123,39 @@ export function MegaMenuColumn({
 					const Icon = item.iconKey ? (ITEM_ICON_MAP[item.iconKey] ?? null) : null;
 					return (
 						<li key={item.href}>
-							<NavigationMenuLink asChild>
-								<Link
-									href={item.href}
-									aria-current={isActive ? "page" : undefined}
-									className={cn(
-										"relative flex min-h-11 items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm",
-										"hover:bg-accent hover:text-accent-foreground",
-										"focus-ring",
-										"motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
-										isActive && "bg-accent/50 font-medium",
-									)}
-								>
-									{Icon && (
-										<Icon
-											className={cn(
-												"text-foreground/40 size-4 shrink-0 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
-												"group-hover:text-foreground/60",
-												isActive && "text-primary/80",
-											)}
-											aria-hidden="true"
-										/>
-									)}
-									<span className="truncate">{item.label}</span>
-									<LoadingIndicator />
-								</Link>
+							<NavigationMenuLink
+								render={<Link href={item.href} aria-current={isActive ? "page" : undefined} />}
+								className={cn(
+									// `group/item` nommé, et non `group` nu : sans lui, le `group-hover:`
+									// de l'icône ci-dessous remontait jusqu'à `NavigationMenuList`, le
+									// premier ancêtre porteur de `group` — or il faut précisément
+									// survoler cette liste pour ouvrir le panneau. Toutes les icônes
+									// étaient donc teintées en permanence, et le retour visuel par
+									// ligne n'existait jamais. Audit navbar 2026-08-04.
+									"group/item relative flex min-h-11 items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm",
+									"hover:bg-accent hover:text-accent-foreground",
+									"focus-ring",
+									"motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
+									isActive && "bg-accent/50 font-medium",
+								)}
+							>
+								{Icon && (
+									<Icon
+										className={cn(
+											"text-foreground/40 size-4 shrink-0 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
+											"group-hover/item:text-foreground/60 group-focus-visible/item:text-foreground/60",
+											isActive && "text-primary/80",
+										)}
+										aria-hidden="true"
+									/>
+								)}
+								<span className="truncate">{item.label}</span>
+								<LoadingIndicator />
 							</NavigationMenuLink>
 						</li>
 					);
 				})}
 			</ul>
-
-			{viewAllLink && (
-				<div className="border-border mt-4 border-t pt-3">
-					<NavigationMenuLink asChild>
-						<Link
-							href={viewAllLink.href}
-							aria-current={pathname === viewAllLink.href ? "page" : undefined}
-							className={cn(
-								"relative inline-flex min-h-11 flex-row! items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium",
-								"text-foreground hover:text-foreground",
-								"hover:bg-accent/50",
-								"focus-ring",
-								"motion-safe:transition-colors",
-							)}
-						>
-							{viewAllLink.label}
-							<ArrowRight className="text-muted-foreground size-3.5" aria-hidden="true" />
-							<LoadingIndicator />
-						</Link>
-					</NavigationMenuLink>
-				</div>
-			)}
 		</div>
 	);
 }

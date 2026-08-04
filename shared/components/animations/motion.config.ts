@@ -118,7 +118,9 @@ export const MOTION_CONFIG = {
 	// landing (2026-08-03) ; les presets title/grid/cta/timeline/carousel et
 	// les presets background (blob/sparkle/scrollIndicator) sont partis avec.
 	section: {
-		footer: { y: 10, duration: 0.4, stagger: 0.08 },
+		// `stagger` retiré le 2026-08-04 : le footer n'a qu'un seul <Fade>, et plus
+		// aucun consommateur ne lisait cette clé depuis le vidage de la landing.
+		footer: { y: 10, duration: 0.4 },
 	},
 } as const;
 

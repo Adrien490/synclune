@@ -14,7 +14,7 @@ export function MenuSheetFooter() {
 					href={BRAND.social.instagram.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-muted-foreground can-hover:hover:text-foreground can-hover:hover:bg-accent inline-flex size-11 items-center justify-center rounded-full motion-safe:transition-all motion-safe:duration-[var(--duration-fast)] motion-safe:active:scale-95"
+					className="text-muted-foreground can-hover:hover:text-foreground can-hover:hover:bg-accent focus-ring inline-flex size-11 items-center justify-center rounded-full motion-safe:transition-all motion-safe:duration-[var(--duration-fast)] motion-safe:active:scale-95"
 					aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
 				>
 					<InstagramIcon decorative size={18} />
@@ -23,7 +23,7 @@ export function MenuSheetFooter() {
 					href={BRAND.social.tiktok.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-muted-foreground can-hover:hover:text-foreground can-hover:hover:bg-accent inline-flex size-11 items-center justify-center rounded-full motion-safe:transition-all motion-safe:duration-[var(--duration-fast)] motion-safe:active:scale-95"
+					className="text-muted-foreground can-hover:hover:text-foreground can-hover:hover:bg-accent focus-ring inline-flex size-11 items-center justify-center rounded-full motion-safe:transition-all motion-safe:duration-[var(--duration-fast)] motion-safe:active:scale-95"
 					aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
 				>
 					<TikTokIcon decorative size={18} />

@@ -3,18 +3,48 @@ import { test, expect } from "./fixtures";
 /**
  * Mega menu desktop — UI/UX comportements clés.
  *
- * Le mega menu Radix NavigationMenu est rendu uniquement à partir de lg (1024px).
- * Il s'ouvre au hover sur le trigger, se ferme sur Escape, clic extérieur,
- * Tab vers l'extérieur. Le clic souris n'effectue PAS de navigation
- * (seul Enter clavier le fait — la navigation passe par le CTA "Toutes les..." du panneau).
+ * Le mega menu (Base UI `NavigationMenu` depuis 2026-08-04) n'est rendu qu'à
+ * partir de `lg` (1024px). Il s'ouvre au survol du trigger et se ferme sur
+ * Échap, clic extérieur ou Tab vers l'extérieur.
  *
- * Structurel : on vérifie présence/absence d'éléments, attributs ARIA et data-state.
+ * ⚠️ **Contrat du déclencheur — corrigé le 2026-08-04.** Cet en-tête et deux
+ * tests affirmaient l'inverse de ce que fait le code : « le clic souris
+ * n'effectue PAS de navigation (seul Enter le fait) ». L'implémentation
+ * (`desktop-nav.tsx`) et les tests unitaires (`desktop-nav.test.tsx`) disent
+ * depuis toujours le contraire, et c'est le comportement voulu (F3) :
+ *
+ * - **clic souris** sur pointeur fin → navigue vers la page section (le survol a
+ *   déjà montré le panneau) ;
+ * - **Entrée / Espace** (clic synthétisé, `detail === 0`) → OUVRE le panneau,
+ *   sans quoi ses liens seraient injoignables au clavier ;
+ * - **tap tactile** → ouvre le panneau, le CTA interne prenant le relais.
+ *
+ * La contradiction était restée invisible parce que la suite ne peut pas
+ * s'exécuter sur une base sans type de produit : `hasDropdown` est alors faux, le
+ * trigger est rendu en `<a>` et tous les tests échouent sur le locator. D'où le
+ * garde d'environnement ci-dessous, qui saute explicitement plutôt que d'expirer.
+ *
+ * Structurel : on vérifie présence/absence d'éléments, attributs ARIA et états.
  */
 
 const DESKTOP_VIEWPORT = { width: 1280, height: 800 };
 
 test.describe("Mega menu desktop", { tag: ["@regression"] }, () => {
 	test.use({ viewport: DESKTOP_VIEWPORT });
+
+	// Garde d'environnement. `getDesktopNavItems` ne pose `hasDropdown` que s'il
+	// existe au moins un type de produit actif : sur une base non seedée, l'entrée
+	// est rendue en `<a>` et les dix tests expiraient sur le locator au bout de
+	// 30s chacun, en masquant leur vraie cause. On saute explicitement.
+	test.beforeEach(async ({ page }) => {
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+		const triggerCount = await page.getByRole("button", { name: /Les créations/i }).count();
+		test.skip(
+			triggerCount === 0,
+			"Catalogue vide (aucun type de produit publié) : le mega-menu n'est pas monté.",
+		);
+	});
 
 	test("le trigger 'Les créations' est visible et accessible au clavier", async ({ page }) => {
 		await page.goto("/");
@@ -47,17 +77,15 @@ test.describe("Mega menu desktop", { tag: ["@regression"] }, () => {
 		await expect(trigger).toHaveAttribute("aria-expanded", "false", { timeout: 2000 });
 	});
 
-	test("clic souris sur le trigger n'effectue PAS de navigation directe", async ({ page }) => {
+	test("clic souris sur le trigger navigue vers la page section", async ({ page }) => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
-		const initialUrl = page.url();
 
 		const trigger = page.getByRole("button", { name: /Les créations/i }).first();
 		await trigger.click();
 
-		// L'URL doit rester identique. Radix gère l'ouverture/fermeture du panneau.
-		await page.waitForTimeout(300);
-		expect(page.url()).toBe(initialUrl);
+		// Le survol a déjà révélé le panneau : le clic va droit au catalogue.
+		await page.waitForURL(/\/produits$/, { timeout: 5000 });
 	});
 
 	test("le CTA 'Toutes les créations' du panneau navigue vers /produits", async ({ page }) => {
@@ -74,15 +102,19 @@ test.describe("Mega menu desktop", { tag: ["@regression"] }, () => {
 		await page.waitForURL(/\/produits$/, { timeout: 5000 });
 	});
 
-	test("la touche Enter sur le trigger navigue (intent clavier explicite)", async ({ page }) => {
+	test("la touche Enter sur le trigger ouvre le panneau au lieu de naviguer", async ({ page }) => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
+		const initialUrl = page.url();
 
 		const trigger = page.getByRole("button", { name: /Les créations/i }).first();
 		await trigger.focus();
 		await page.keyboard.press("Enter");
 
-		await page.waitForURL(/\/produits$/, { timeout: 5000 });
+		// Naviguer ici rendrait les liens du panneau injoignables au clavier : ils
+		// ne sont montés que panneau ouvert.
+		await expect(trigger).toHaveAttribute("aria-expanded", "true", { timeout: 2000 });
+		expect(page.url()).toBe(initialUrl);
 	});
 
 	test("le panneau ouvert expose un region landmark pour les lecteurs d'écran", async ({
@@ -139,22 +171,23 @@ test.describe("Mega menu desktop", { tag: ["@regression"] }, () => {
 		await trigger.hover();
 		await expect(trigger).toHaveAttribute("aria-expanded", "true", { timeout: 2000 });
 
-		// Assertion réelle (l'ancienne version ne vérifiait que matchMedia) : le
-		// killswitch `.animate-in { animation: none !important }` (animations.css)
-		// doit neutraliser l'entrée du panneau — animationName resterait le nom
-		// des keyframes tw-animate-css sinon.
-		const content = page
-			.locator('[data-slot="navigation-menu-content"][data-state="open"]')
-			.first();
-		await expect(content).toBeVisible();
-		const animationName = await content.evaluate((el) => getComputedStyle(el).animationName);
+		// Le panneau anime désormais par TRANSITION (`data-starting-style` /
+		// `data-ending-style` de Base UI), toutes gatées `motion-safe:`. Sous
+		// reduced-motion, on attend donc les DEUX : aucune keyframe n'a été
+		// réintroduite, et aucune transition n'est appliquée.
+		const popup = page.locator('[data-slot="navigation-menu-popup"][data-open]').first();
+		await expect(popup).toBeVisible();
+		const { animationName, transitionDuration } = await popup.evaluate((el) => {
+			const style = getComputedStyle(el);
+			return { animationName: style.animationName, transitionDuration: style.transitionDuration };
+		});
 		expect(animationName).toBe("none");
+		expect(transitionDuration).toBe("0s");
 
-		// La SORTIE aussi : `.animate-out` avait échappé au killswitch, et le
-		// compensatoire `motion-reduce:animate-none` perdait en spécificité contre
-		// `data-[state=closed]:animate-out` (0,1,0 vs 0,2,0) — la fermeture restait
-		// animée sous reduced-motion. L'état closed étant démonté trop vite pour
-		// être observé, on injecte la classe (pattern toast-ui.spec.ts).
+		// Le killswitch `.animate-out` reste vérifié ici bien que le panneau ne s'en
+		// serve plus : il avait échappé au `animations.css`, et le compensatoire
+		// `motion-reduce:animate-none` perdait en spécificité contre
+		// `data-[state=closed]:animate-out` (0,1,0 vs 0,2,0).
 		const animationNameOut = await page.evaluate(() => {
 			const el = document.createElement("div");
 			el.className = "animate-out";

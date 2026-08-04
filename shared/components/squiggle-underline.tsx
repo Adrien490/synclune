@@ -12,8 +12,15 @@ import { cn } from "@/shared/utils/cn";
  *
  * Contrat d'intégration : l'ancêtre carte porte `group`, le parent direct du
  * SVG est `relative` (le trait se positionne sous la ligne de titre).
+ *
+ * @param drawn - Force le trait à l'état DESSINÉ, indépendamment du survol et du
+ *   focus. Ajouté pour la nav du header (2026-08-04), où le trait sert aussi
+ *   d'indicateur de section courante : sans lui, remplacer l'ancien filet de 2px
+ *   par ce trait aurait fait disparaître le repère `aria-current="page"` à l'œil.
+ *   Purement additif — les usages carte n'y touchent pas et gardent le
+ *   comportement survol/focus verrouillé par `hover-focus-parity.regression`.
  */
-export function SquiggleUnderline({ className }: { className?: string }) {
+export function SquiggleUnderline({ className, drawn }: { className?: string; drawn?: boolean }) {
 	return (
 		<svg
 			viewBox="0 0 84 10"
@@ -26,7 +33,10 @@ export function SquiggleUnderline({ className }: { className?: string }) {
 				stroke="var(--primary)"
 				strokeWidth="2.5"
 				strokeLinecap="round"
-				className="can-hover:group-hover:[stroke-dashoffset:0] [stroke-dasharray:120] [stroke-dashoffset:120] group-focus-within:[stroke-dashoffset:0] motion-safe:transition-[stroke-dashoffset] motion-safe:duration-500"
+				className={cn(
+					"can-hover:group-hover:[stroke-dashoffset:0] [stroke-dasharray:120] [stroke-dashoffset:120] group-focus-within:[stroke-dashoffset:0] motion-safe:transition-[stroke-dashoffset] motion-safe:duration-500",
+					drawn && "[stroke-dashoffset:0]",
+				)}
 			/>
 		</svg>
 	);

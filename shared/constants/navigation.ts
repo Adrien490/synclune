@@ -195,21 +195,34 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 	return items;
 }
 
-// Footer - Navigation simple (labels harmonisés avec le header)
+// Footer, colonne « La boutique » (labels harmonisés avec le header)
 export const footerNavItems = [
 	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations" },
 	{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections" },
-	{ href: ROUTES.SHOP.HELP, label: "Aide et FAQ" },
 	{ href: ROUTES.SHOP.FAVORITES, label: "Mes favoris" },
 ] as const;
 
-// Liens légaux
+// Footer, colonne « Écrire à l'atelier » : le libre-service AVANT l'adresse e-mail
+// (une question de délai de livraison se répond seule ; un message, non).
+export const footerHelpNavItems = [{ href: ROUTES.SHOP.HELP, label: "Aide et FAQ" }] as const;
+
+// Liens légaux — libellés courts, pour tenir en deux colonnes sous `sm` sans
+// repasser à la ligne (le bandeau faisait 7 cibles empilées, 308 px).
+// WCAG 2.5.3 (Label in Name) : dès que le libellé visible est abrégé, le nom
+// accessible DOIT le contenir en tête, puis développer.
 export const legalLinks = [
-	// WCAG 2.5.3 (Label in Name) : le nom accessible doit contenir le texte visible ("CGV").
 	{ label: "CGV", href: ROUTES.LEGAL.CGV, ariaLabel: "CGV — Conditions Générales de Vente" },
 	{ label: "Mentions légales", href: ROUTES.LEGAL.LEGAL_NOTICE },
-	{ label: "Politique de confidentialité", href: ROUTES.LEGAL.PRIVACY },
-	{ label: "Gestion des cookies", href: ROUTES.LEGAL.COOKIES },
-	{ label: "Formulaire de rétractation", href: ROUTES.LEGAL.WITHDRAWAL },
+	{
+		label: "Confidentialité",
+		href: ROUTES.LEGAL.PRIVACY,
+		ariaLabel: "Confidentialité — Politique de confidentialité",
+	},
+	{ label: "Cookies", href: ROUTES.LEGAL.COOKIES, ariaLabel: "Cookies — Gestion des cookies" },
+	{
+		label: "Rétractation",
+		href: ROUTES.LEGAL.WITHDRAWAL,
+		ariaLabel: "Rétractation — Formulaire de rétractation",
+	},
 	{ label: "Accessibilité", href: ROUTES.LEGAL.ACCESSIBILITY },
 ] as const;

@@ -8,6 +8,7 @@ import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import type { Variants } from "motion/react";
 import { m } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMenuSheetNavigate } from "./menu-sheet-navigate-context";
 
@@ -52,10 +53,10 @@ function SectionHeader({
 	as?: "h2" | "h3";
 }) {
 	return (
-		<Tag
-			id={id}
-			className="text-muted-foreground px-4 py-2 text-xs font-semibold tracking-wider uppercase"
-		>
+		// Fraunces plutôt que des capitales grises : un en-tête de tableau de bord
+		// dans un menu de boutique de bijoux. Même famille que les titres du
+		// mega-menu desktop et des cartes Atelier.
+		<Tag id={id} className="text-foreground font-display px-4 pt-3 pb-1.5 text-sm font-medium">
 			{children}
 		</Tag>
 	);
@@ -168,6 +169,16 @@ interface DiscoverSectionProps extends SectionProps {
 	aboutItem?: { href: string; label: string };
 }
 
+/**
+ * Bloc primaire du menu — sans en-tête de section.
+ *
+ * S'appelait « Découvrir » et coiffait DEUX entrées. Depuis que « L'atelier » ne
+ * sort plus de `getMobileNavItems` (`ROUTES.SHOP.ABOUT` pointe `/a-propos`, une
+ * route redirigée vers l'accueil), il n'en restait qu'une : un en-tête de section
+ * pour le seul lien « Accueil ». La branche `aboutItem` est CONSERVÉE — c'est un
+ * point d'extension documenté des deux côtés, dont le retrait a été refusé le
+ * 2026-07-26 ; seul l'en-tête disparaît.
+ */
 export function DiscoverSection({
 	homeItem,
 	aboutItem,
@@ -178,8 +189,7 @@ export function DiscoverSection({
 	if (!homeItem) return null;
 
 	return (
-		<section aria-labelledby="section-discover" className="mb-4">
-			<SectionHeader id="section-discover">Découvrir</SectionHeader>
+		<section aria-label="Accès direct" className="mb-2">
 			<ul className="space-y-1">
 				<NavLink
 					href={homeItem.href}
@@ -250,6 +260,38 @@ export function CreationsSection({
 
 // --- Collections Section ---
 
+/**
+ * Vignette d'une collection dans le menu mobile.
+ *
+ * Les images étaient DÉJÀ dans les props du sheet (`collections[].images`,
+ * alimentées par `extractCollectionImages`) et simplement ignorées : le desktop
+ * en faisait une grille bento, le mobile n'affichait que du texte. C'était de la
+ * donnée déjà chargée et jetée, sur une boutique de bijoux, du côté où passe
+ * l'essentiel du trafic.
+ */
+function CollectionThumb({ images }: { images: CollectionImage[] }) {
+	const image = images[0];
+
+	if (!image) {
+		return <span className="bg-muted size-9 shrink-0 rounded-md" aria-hidden="true" />;
+	}
+
+	return (
+		<span className="bg-muted relative size-9 shrink-0 overflow-hidden rounded-md">
+			<Image
+				src={image.url}
+				alt=""
+				fill
+				sizes="36px"
+				className="object-cover"
+				placeholder={image.blurDataUrl ? "blur" : "empty"}
+				blurDataURL={image.blurDataUrl ?? undefined}
+				aria-hidden="true"
+			/>
+		</span>
+	);
+}
+
 interface CollectionsSectionProps extends SectionProps {
 	collections?: Array<{
 		slug: string;
@@ -288,8 +330,10 @@ export function CollectionsSection({
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
 						customDelay={delay(110, i + 1)}
+						className="gap-3"
 					>
-						{collection.label}
+						<CollectionThumb images={collection.images} />
+						<span className="min-w-0 truncate">{collection.label}</span>
 					</NavLink>
 				))}
 			</ul>

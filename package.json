@@ -62,7 +62,6 @@
 		"@prisma/client": "^7.9.0",
 		"@prisma/sqlcommenter-trace-context": "^7.9.0",
 		"@radix-ui/react-focus-scope": "^1.1.16",
-		"@radix-ui/react-navigation-menu": "^1.2.22",
 		"@sentry/nextjs": "^10.68.0",
 		"@stripe/react-stripe-js": "^6.8.0",
 		"@stripe/stripe-js": "^9.12.0",
