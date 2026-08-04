@@ -11,9 +11,9 @@ interface NavbarWrapperProps {
  * Wrapper client de la Navbar avec effet de scroll (glass effect).
  *
  * Architecture compositor-friendly :
- * - Le header est positionné via `transform: translateY(--announcement-bar-height)`
- *   au lieu de `top: var(...)`. La prop `transform` est composable (GPU thread)
- *   alors que `top` déclenche un layout reflow à chaque variation.
+ * - Le header est collé en `top-0` sans offset : la barre d'annonce, seule chose
+ *   qui pouvait le décaler, a été retirée (2026-08-04). Plus de `transform` ni de
+ *   transition associée — un header dont l'offset est constant n'a rien à animer.
  * - Le glass effect (backdrop, shadow, border) vit sur un calque absolu dédié
  *   dont seule l'opacité est animée — pas de transitions sur
  *   `background-color/border-color/box-shadow/backdrop-filter`.
@@ -26,15 +26,8 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 		<header
 			data-scrolled={isScrolled}
 			data-home-navbar
-			style={{
-				viewTransitionName: "shop-navbar",
-				transform: "translateY(var(--announcement-bar-height, 0px))",
-			}}
-			className={cn(
-				"pwa-header",
-				"group fixed inset-x-0 top-0 z-40",
-				"ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)]",
-			)}
+			style={{ viewTransitionName: "shop-navbar" }}
+			className={cn("pwa-header", "group fixed inset-x-0 top-0 z-40")}
 		>
 			{/* Glass effect layer — only opacity transitions (compositor-friendly). */}
 			<div

@@ -148,7 +148,7 @@ export async function GET(
 	}
 
 	const refund = await prisma.refund.findFirst({
-		where: { id: refundId, orderId: order.id, deletedAt: null },
+		where: { id: refundId, orderId: order.id },
 		select: CREDIT_NOTE_REFUND_SELECT,
 	});
 

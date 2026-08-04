@@ -1,6 +1,8 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // Stub window.matchMedia (needed by useEdgeSwipe)
 beforeAll(() => {
 	Object.defineProperty(window, "matchMedia", {
@@ -80,7 +82,7 @@ vi.mock("motion/react", () => {
 // Capture latest onOpenChange handler so tests can fire close events directly.
 let lastOnOpenChange: ((open: boolean) => void) | undefined;
 // Capture the onCloseAutoFocus handler (focus restoration on close).
-let lastOnCloseAutoFocus: ((event: Event) => void) | undefined;
+let lastFinalFocus: React.RefObject<HTMLElement | null> | undefined;
 
 // Mock Sheet components — forward key props (scrollLockTimeout, onOpenChange,
 // onOverlayClick, id on SheetContent) so tests can assert on them.
@@ -104,19 +106,19 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 			</div>
 		);
 	},
-	SheetTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	SheetTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 	SheetContent: ({
 		children,
 		onOverlayClick,
-		onCloseAutoFocus,
+		finalFocus,
 		id,
 	}: {
 		children: React.ReactNode;
 		onOverlayClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
-		onCloseAutoFocus?: (event: Event) => void;
+		finalFocus?: React.RefObject<HTMLElement | null>;
 		id?: string;
 	}) => {
-		lastOnCloseAutoFocus = onCloseAutoFocus;
+		lastFinalFocus = finalFocus;
 		return (
 			<div data-testid="sheet-content" id={id} data-slot="sheet-content">
 				<button type="button" data-testid="sheet-overlay" onClick={onOverlayClick as never}>
@@ -219,7 +221,6 @@ const baseProps = {
 		slug: string;
 		label: string;
 		images: Array<{ url: string; blurDataUrl: string | null; alt: string | null }>;
-		createdAt?: Date;
 	}>,
 	isAdmin: false,
 	session: null,
@@ -253,21 +254,17 @@ describe("MenuSheet", () => {
 
 		it("restitue le focus sur le burger à la fermeture (WCAG 2.4.3)", () => {
 			// Régression : `onOpenChange(true)` blur `document.activeElement` avant que
-			// le SheetContent ne monte, donc le FocusScope de Radix ne mémorisait que
-			// `<body>` et le focus retombait là à la fermeture. `onCloseAutoFocus`
-			// réapplique explicitement le trigger conservé en ref.
+			// le SheetContent ne monte, donc la restauration automatique ne mémorisait
+			// que `<body>` et le focus retombait là à la fermeture.
+			//
+			// Le mécanisme a changé de forme à la migration : Base UI expose
+			// `finalFocus` (l'ÉLÉMENT à focuser), là où Radix demandait d'intercepter
+			// `onCloseAutoFocus` et d'appeler `preventDefault`. On vérifie donc que la
+			// ref pointe bien sur le burger — la garantie, elle, est identique.
 			render(<MenuSheet {...baseProps} />);
 
 			const trigger = screen.getByRole("button", { name: "Menu de navigation" });
-			expect(lastOnCloseAutoFocus).toBeTypeOf("function");
-
-			const event = new Event("closeAutoFocus", { cancelable: true });
-			act(() => lastOnCloseAutoFocus?.(event));
-
-			expect(document.activeElement).toBe(trigger);
-			// Le défaut Radix (focus sur l'élément mémorisé) doit être neutralisé,
-			// sinon il écraserait notre restitution.
-			expect(event.defaultPrevented).toBe(true);
+			expect(lastFinalFocus?.current).toBe(trigger);
 		});
 
 		it("wires aria-controls to the sheet content id (WCAG 4.1.2)", () => {
@@ -334,12 +331,10 @@ describe("MenuSheet", () => {
 	});
 
 	describe("native 2026 mobile polish", () => {
-		it("passes a tuned scrollLockTimeout (500ms) to the Sheet", () => {
-			render(<MenuSheet {...baseProps} />);
-
-			const sheet = screen.getByTestId("sheet");
-			expect(sheet.getAttribute("data-scroll-lock-timeout")).toBe("500");
-		});
+		// `scrollLockTimeout` était un réglage Vaul (délai avant que le panneau
+		// redevienne draggable après un scroll). Base UI arbitre scroll vs swipe par
+		// la direction du geste, sans délai configurable : le prop a disparu avec la
+		// migration, et le test avec lui.
 
 		it("fires haptic 'light' when the sheet is toggled open", () => {
 			render(<MenuSheet {...baseProps} />);

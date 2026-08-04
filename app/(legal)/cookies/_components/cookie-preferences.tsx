@@ -42,7 +42,7 @@ export function CookiePreferences() {
 				<h3 className="mb-2 font-semibold">Statut actuel</h3>
 				<p className="text-muted-foreground text-sm">
 					{accepted === null ? (
-						"Vous n'avez pas encore fait de choix."
+						"Tu n'as pas encore fait de choix."
 					) : accepted ? (
 						<>
 							Cookies <span className="text-success font-medium">acceptés</span>
@@ -63,16 +63,17 @@ export function CookiePreferences() {
 			{/* Message de confirmation */}
 			{saved && (
 				<div className="border-success/30 bg-success/10 rounded-md border p-3" role="status">
-					<p className="text-success text-sm">Vos préférences ont été enregistrées</p>
+					<p className="text-success text-sm">Tes préférences ont été enregistrées</p>
 				</div>
 			)}
 
-			{/* Boutons d'action */}
+			{/* Boutons d'action — même paire que la bannière : poids strictement égal
+			    en outline, aucune option privilégiée (décision Q1, audit 2026-08-03) */}
 			<div className="flex flex-col gap-3 sm:flex-row">
-				<Button onClick={handleAccept} variant="secondary" className="flex-1">
+				<Button onClick={handleAccept} variant="outline" className="flex-1">
 					Accepter les cookies
 				</Button>
-				<Button onClick={handleReject} variant="secondary" className="flex-1">
+				<Button onClick={handleReject} variant="outline" className="flex-1">
 					Refuser les cookies
 				</Button>
 			</div>

@@ -2,8 +2,6 @@ import { CollectionStatus } from "@/app/generated/prisma/client";
 import type { Collection } from "@/modules/collections/types/collection.types";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
-import { cacheLife, cacheTag } from "next/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
  * Extract up to 4 product images from a collection for Bento Grid display.
@@ -21,19 +19,24 @@ export function extractCollectionImages(products: Collection["products"]) {
 }
 
 /**
- * Cached public menu data (collections and product types).
+ * Public menu data (collections and product types).
  * Shared between Navbar and @quicksearch parallel route.
  *
- * `{ isAdmin: false }` : cette fonction est un scope `"use cache"` — `getCollections`/
- * `getProductTypes` ne doivent pas résoudre `isAdmin()` elles-mêmes (lecture `headers()`,
- * une source dynamique interdite dans un scope cache). Sans risque : les filtres ci-dessous
- * forcent déjà PUBLIC/actif, ce menu n'a jamais exposé de contenu admin.
+ * ⚠️ PAS de `"use cache"` ici, et c'est voulu : `fetchCollections` et
+ * `fetchProductTypes` sont déjà cachées chacune (profil + tags LIST propres),
+ * donc un scope agrégé n'économisait qu'un lookup. Surtout, il mettait en cache
+ * la valeur DÉGRADÉE : le repli vide ci-dessous — et celui du wrapper de
+ * `getCollections`, conçu pour vivre hors cache — retourne normalement, donc
+ * Next le figeait sous le profil `reference` (revalidate 24 h). Une panne DB
+ * d'une seconde pendant un miss = menus vides jusqu'au lendemain,
+ * indiscernables d'un catalogue sans collection (CACHE-DEGRADED-VALUE-001).
+ * Sans scope cache, le repli ne vaut que pour la requête en cours.
+ *
+ * `{ isAdmin: false }` : ce menu est public et n'a jamais exposé de contenu
+ * admin — les filtres ci-dessous forcent déjà PUBLIC/actif. Passer le littéral
+ * évite à chaque fn de résoudre la session pour rien.
  */
 export async function getNavbarMenuData() {
-	"use cache";
-	cacheLife("reference");
-	cacheTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
-
 	const [collectionsData, productTypesData] = await Promise.allSettled([
 		getCollections(
 			{

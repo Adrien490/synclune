@@ -10,7 +10,6 @@ import {
 	Gem,
 	Settings,
 	Ticket,
-	Megaphone,
 	Store,
 	Landmark,
 	ShieldAlert,
@@ -169,13 +168,12 @@ const CATALOGUE_GROUP: NavGroup = {
 };
 
 /**
- * Groupe « Boutique » — réglages et contenu éditorial.
+ * Groupe « Boutique » — tout ce qui paramètre la vitrine.
  *
- * Fusionne les anciens groupes mono-item `Contenu` (Annonces) et `Configuration`
- * (Boutique) : deux libellés de groupe et deux séparateurs pour deux liens, alors
- * que les deux relèvent du même geste (paramétrer la vitrine) et sont consultés
- * rarement. Les routes `/admin/contenu/**` et `/admin/configuration/**` sont
- * inchangées — seul le regroupement visuel bouge.
+ * Anciennement issu de la fusion des groupes mono-item `Contenu` (Annonces) et
+ * `Configuration` (Boutique). La barre d'annonce ayant été retirée le 2026-08-04,
+ * la section `/admin/contenu/**` a disparu avec elle : ne restent que des routes
+ * `/admin/configuration/**`.
  */
 const BOUTIQUE_GROUP: NavGroup = {
 	label: "Boutique",
@@ -187,12 +185,6 @@ const BOUTIQUE_GROUP: NavGroup = {
 			shortTitle: "Réglages",
 			url: "/admin/configuration/boutique",
 			icon: Store,
-		},
-		{
-			id: "announcements",
-			title: "Annonces",
-			url: "/admin/contenu/annonces",
-			icon: Megaphone,
 		},
 		{
 			id: "security-settings",

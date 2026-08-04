@@ -21,7 +21,7 @@ export function EdgeSwipeIndicator({ progress, hidden = false }: EdgeSwipeIndica
 	return (
 		<div
 			aria-hidden="true"
-			className="from-primary/40 pointer-events-none fixed inset-y-0 left-0 z-(--z-overlay) w-1 bg-gradient-to-r to-transparent transition-opacity duration-75 ease-out motion-reduce:hidden lg:hidden"
+			className="from-primary/40 pointer-events-none fixed inset-y-0 left-0 z-(--z-overlay) w-1 bg-linear-to-r to-transparent transition-opacity duration-75 ease-out motion-reduce:hidden lg:hidden"
 			style={{ opacity: progress }}
 		/>
 	);

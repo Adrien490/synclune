@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 import { render, screen, cleanup } from "@testing-library/react";
 
 // ============================================================================
@@ -20,7 +22,8 @@ vi.mock("@/modules/auth/hooks/use-logout", () => ({
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({ children, open }: any) =>
 		open ? <div data-testid="dialog">{children}</div> : <div>{children}</div>,
-	AlertDialogTrigger: ({ children }: any) => <div data-testid="trigger">{children}</div>,
+	AlertDialogTrigger: (props: RenderPropMockProps) =>
+		renderPropMock("div", { "data-testid": "trigger", ...props }),
 	AlertDialogContent: ({ children }: any) => <div>{children}</div>,
 	AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
 	AlertDialogTitle: ({ children }: any) => <h2>{children}</h2>,

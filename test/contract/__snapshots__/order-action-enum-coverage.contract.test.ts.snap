@@ -3,7 +3,6 @@
 exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map snapshot for review on drift 1`] = `
 {
   "ADDRESS_UPDATED": [
-    "modules/orders/actions/update-order-billing-address.ts",
     "modules/orders/actions/update-order-customer-info.ts",
     "modules/orders/actions/update-order-shipping-address.ts",
     "modules/orders/services/update-pending-order-shipping-snapshot.service.ts",

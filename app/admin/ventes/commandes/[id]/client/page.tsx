@@ -47,7 +47,6 @@ export default async function OrderCustomerPage({ params }: { params: CustomerPa
 				orderNumber={order.orderNumber}
 				customerEmail={order.customerEmail}
 				customerName={order.customerName}
-				customerPhone={order.customerPhone}
 				redirectOnSuccess
 				successPath={`/admin/ventes/commandes/${order.id}`}
 				className="max-w-2xl"

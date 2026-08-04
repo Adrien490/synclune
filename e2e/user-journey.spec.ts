@@ -39,7 +39,8 @@ test.describe("Parcours utilisateur authentifie", { tag: ["@regression"] }, () =
 	 * Ce bloc vérifiait que `/commandes`, `/parametres` et `/favoris` redirigeaient un
 	 * visiteur vers `/connexion`. Deux de ces trois routes ont disparu au retrait de
 	 * l'espace client (2026-07-31) — et `/favoris` n'a JAMAIS dû rediriger : la
-	 * wishlist est portée par le cookie `wishlist_session`, elle est accessible aux
+	 * wishlist est portée par un cookie (aujourd'hui `wishlist`, qui contient
+	 * directement les Product IDs — retrait de la base 2026-08-03), elle est accessible aux
 	 * invités (le test passait parce que la route figurait déjà dans `publicRoutes`,
 	 * donc l'assertion de redirection n'y était jamais évaluée… sur une liste où elle
 	 * n'aurait pas dû figurer).

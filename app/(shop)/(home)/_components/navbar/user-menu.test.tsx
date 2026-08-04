@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 vi.mock("next/font/google", () => {
 	const fontMock = () => ({
 		className: "mock-font",
@@ -34,7 +36,7 @@ vi.mock("next/link", () => ({
 
 vi.mock("@/shared/components/ui/tooltip", () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 	TooltipContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
@@ -42,31 +44,13 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenu: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="dropdown-root">{children}</div>
 	),
-	DropdownMenuTrigger: ({
-		children,
-		...props
-	}: {
-		children: React.ReactNode;
-		[key: string]: unknown;
-	}) => (
-		<button type="button" data-testid="dropdown-trigger" {...props}>
-			{children}
-		</button>
-	),
+	DropdownMenuTrigger: (props: RenderPropMockProps) =>
+		renderPropMock("button", { type: "button", "data-testid": "dropdown-trigger", ...props }),
 	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="dropdown-content">{children}</div>
 	),
-	DropdownMenuItem: ({
-		children,
-		onSelect,
-	}: {
-		children: React.ReactNode;
-		onSelect?: () => void;
-	}) => (
-		<button type="button" data-testid="dropdown-item" onClick={onSelect}>
-			{children}
-		</button>
-	),
+	DropdownMenuItem: ({ closeOnClick: _c, ...props }: RenderPropMockProps) =>
+		renderPropMock("button", { type: "button", "data-testid": "dropdown-item", ...props }),
 	DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="dropdown-label">{children}</div>
 	),

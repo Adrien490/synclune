@@ -17,16 +17,8 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 };
 test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () => {
 	test.use({ viewport: MOBILE_VIEWPORT });
 
-	test("accueil affiche le hero + CTA visibles au-dessus du fold", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
-
-		const h1 = page.getByRole("heading", { level: 1 });
-		await expect(h1.first()).toBeVisible();
-
-		const ctaShop = page.getByRole("link", { name: /Découvrir la boutique/i });
-		await expect(ctaShop).toBeVisible();
-	});
+	// Le test « hero + CTA au-dessus du fold » a été retiré avec les sections de
+	// la home (refonte landing, 2026-08-03) — à réintroduire avec la nouvelle page.
 
 	test("bottom nav tabs — 5 onglets visibles sur mobile", async ({ page }) => {
 		await page.goto("/");

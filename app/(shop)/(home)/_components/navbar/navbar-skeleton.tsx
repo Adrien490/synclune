@@ -11,7 +11,7 @@
 export function NavbarSkeleton() {
 	return (
 		<header
-			className="fixed inset-x-0 top-[var(--announcement-bar-height)] z-40 border-b border-transparent bg-transparent pt-[env(safe-area-inset-top)] ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
+			className="fixed inset-x-0 top-0 z-40 border-b border-transparent bg-transparent pt-[env(safe-area-inset-top)] ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
 			aria-busy="true"
 			aria-label="Chargement de la navigation"
 		>
@@ -26,8 +26,10 @@ export function NavbarSkeleton() {
 							{/* Menu burger skeleton (mobile uniquement) - size-11 = 44px matches real burger */}
 							<div className="bg-muted/60 size-11 rounded-xl motion-safe:animate-pulse lg:hidden" />
 
-							{/* Search icon skeleton (mobile only - between burger and logo) */}
-							<div className="bg-muted/60 size-11 rounded-xl motion-safe:animate-pulse sm:hidden" />
+							{/* Pas de placeholder recherche mobile : le trigger a été retiré de la
+							    navbar (l'entrée mobile est l'onglet « Rechercher » de la bottom-nav,
+							    audit recherche 2026-07-26) — un placeholder ici décalait le logo au
+							    swap skeleton → navbar. */}
 
 							{/* Logo skeleton (desktop uniquement) */}
 							<div className="hidden items-center gap-3 lg:flex">
@@ -51,17 +53,17 @@ export function NavbarSkeleton() {
 							</div>
 						</div>
 
-						{/* Section droite: Favoris + Recherche + Compte + Panier */}
+						{/* Section droite: Favoris + Recherche + Panier — pas de placeholder
+						    « compte » : UserMenu rend null hors session admin, le cas nominal
+						    (100 % du trafic public) est donc 3 surfaces, pas 4. */}
 						<div className="flex min-w-0 flex-1 items-center justify-end">
 							<div className="flex items-center gap-2 sm:gap-3">
 								{/* Icône favoris skeleton (toujours visible) */}
 								<div className="bg-muted/60 size-11 rounded-xl motion-safe:animate-pulse" />
 
-								{/* Icône recherche skeleton (visible sur sm+ seulement) */}
-								<div className="bg-muted/60 hidden size-11 rounded-xl motion-safe:animate-pulse sm:inline-flex" />
-
-								{/* Icône compte skeleton (visible sur sm+ seulement) */}
-								<div className="bg-muted/60 hidden size-11 rounded-xl motion-safe:animate-pulse sm:inline-flex" />
+								{/* Recherche skeleton — mime QuickSearchTrigger variant="bar" :
+								    icône carrée entre sm et lg, pilule h-9 w-56 à partir de lg */}
+								<div className="bg-muted/60 hidden h-11 w-11 rounded-xl motion-safe:animate-pulse sm:block lg:h-9 lg:w-56 lg:rounded-lg" />
 
 								{/* Icône panier skeleton (toujours visible) */}
 								<div className="bg-muted/60 size-11 rounded-xl motion-safe:animate-pulse" />

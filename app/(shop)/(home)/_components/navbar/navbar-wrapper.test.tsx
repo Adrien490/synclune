@@ -101,15 +101,15 @@ describe("NavbarWrapper (scroll compact)", () => {
 		expect(layerClassName).toContain("opacity-0");
 	});
 
-	it("positions the header via transform translateY (composable, replaces top: var)", () => {
+	it("colle le header en top-0 sans offset ni transform (barre d'annonce retirée)", () => {
 		const { container } = render(
 			<NavbarWrapper>
 				<nav />
 			</NavbarWrapper>,
 		);
 		const header = container.querySelector("header") as HTMLElement | null;
-		expect(header?.style.transform).toContain("translateY(var(--announcement-bar-height");
 		expect(header?.className).toContain("top-0");
+		expect(header?.style.transform).toBe("");
 	});
 
 	it("publishes view-transition-name for Next 16 View Transitions API", () => {

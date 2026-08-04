@@ -107,7 +107,6 @@ describe("POST /api/admin/orders/export", () => {
 			firstName: null,
 			lastName: null,
 			emailVerified: true,
-			stripeCustomerId: null,
 		});
 		mockBuildExportWhereClause.mockReturnValue({ paymentStatus: "PAID" });
 		mockPrisma.order.findMany.mockResolvedValue(SAMPLE_ORDERS);

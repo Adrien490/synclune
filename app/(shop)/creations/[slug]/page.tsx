@@ -7,7 +7,6 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
 import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
-import { getProductCartsCount } from "@/modules/cart/data/get-product-carts-count";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
@@ -51,23 +50,16 @@ export default async function ProductPage({
 	const [{ slug }, urlParams] = await Promise.all([params, searchParams]);
 
 	// Paralléliser toutes les requêtes pour optimiser le TTFB
-	const [admin, productData, wishlistProductIds] = await Promise.all([
+	const [admin, product, wishlistProductIds] = await Promise.all([
 		isAdmin(),
-		(async () => {
-			const product = await getProductBySlug({ slug, includeDraft: true });
-			if (!product) return null;
-			const cartsCount = await getProductCartsCount(product.id);
-			return { product, cartsCount };
-		})(),
+		getProductBySlug({ slug, includeDraft: true }),
 		getWishlistProductIds(),
 	]);
 
 	// Vérifier existence produit
-	if (!productData) {
+	if (!product) {
 		notFound();
 	}
-
-	const { product, cartsCount } = productData;
 
 	// Sécurité: Bloquer les DRAFT pour les non-admins
 	if (product.status === "DRAFT" && !admin) {
@@ -188,11 +180,7 @@ export default async function ProductPage({
 
 										{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
 										{/* Composant client qui synchronise le SKU avec les paramètres URL */}
-										<ProductDetails
-											product={product}
-											defaultSku={selectedSku}
-											cartsCount={cartsCount}
-										/>
+										<ProductDetails product={product} defaultSku={selectedSku} />
 									</section>
 								</div>
 							</Suspense>

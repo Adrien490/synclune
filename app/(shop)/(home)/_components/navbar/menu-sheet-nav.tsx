@@ -39,7 +39,6 @@ interface MenuSheetNavProps {
 		slug: string;
 		label: string;
 		images: CollectionImage[];
-		createdAt?: Date;
 	}>;
 	session?: NavbarSessionData | null;
 	isAdmin?: boolean;
@@ -81,7 +80,12 @@ export function MenuSheetNav({
 			const n = navRef.current;
 			if (!n) return;
 			const activePage = n.querySelector<HTMLElement>('[aria-current="page"]');
-			activePage?.scrollIntoView({ block: "center", behavior: "smooth" });
+			// La garde shouldReduceMotion plus bas ne couvre que le TIMING (skip de
+			// l'attente transitionend) — le scroll lui-même doit aussi être instantané.
+			activePage?.scrollIntoView({
+				block: "center",
+				behavior: shouldReduceMotion ? "auto" : "smooth",
+			});
 			// preventScroll: focusing the first link must not undo the scroll-to-active
 			// above (default focus() scrolls the target into view → jumps back to top).
 			n.querySelector<HTMLAnchorElement>("a")?.focus({ preventScroll: true });

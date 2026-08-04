@@ -41,7 +41,6 @@ import { phoneSchema } from "@/shared/schemas/phone.schemas";
 import { confirmCheckoutSchema } from "@/modules/payments/schemas/checkout.schema";
 import {
 	markAsShippedSchema,
-	updateOrderBillingAddressSchema,
 	updateOrderCustomerInfoSchema,
 	updateOrderShippingAddressSchema,
 	updateTrackingSchema,
@@ -261,12 +260,6 @@ const PAIRS: readonly Pair[] = [
 		path: [],
 		column: "Order.customerEmail",
 	},
-	{
-		label: "phoneSchema → Order.customerPhone",
-		schema: phoneSchema,
-		path: [],
-		column: "Order.customerPhone",
-	},
 
 	// ── Admin commandes ────────────────────────────────────────────────────────
 	{
@@ -314,28 +307,22 @@ const PAIRS: readonly Pair[] = [
 		column: "Order.customerEmail",
 	},
 	{
-		label: "updateOrderCustomerInfo · customerPhone → Order.customerPhone",
-		schema: updateOrderCustomerInfoSchema,
-		path: ["customerPhone"],
-		column: "Order.customerPhone",
+		label: "phoneSchema → Order.shippingPhone",
+		schema: phoneSchema,
+		path: [],
+		column: "Order.shippingPhone",
+	},
+	{
+		label: "updateOrderShippingAddress · shippingPhone → Order.shippingPhone",
+		schema: updateOrderShippingAddressSchema,
+		path: ["shippingPhone"],
+		column: "Order.shippingPhone",
 	},
 	{
 		label: "updateOrderCustomerInfo · customerName → Order.customerName",
 		schema: updateOrderCustomerInfoSchema,
 		path: ["customerName"],
 		column: "Order.customerName",
-	},
-	{
-		label: "updateOrderBillingAddress · billingAddress1 → Order.billingAddress1",
-		schema: updateOrderBillingAddressSchema,
-		path: ["billingAddress1"],
-		column: "Order.billingAddress1",
-	},
-	{
-		label: "updateOrderBillingAddress · billingCity → Order.billingCity",
-		schema: updateOrderBillingAddressSchema,
-		path: ["billingCity"],
-		column: "Order.billingCity",
 	},
 	{
 		label: "updateOrderShippingAddress · shippingFirstName → Order.shippingFirstName",
@@ -372,18 +359,6 @@ const PAIRS: readonly Pair[] = [
 		schema: updateOrderShippingAddressSchema,
 		path: ["shippingCity"],
 		column: "Order.shippingCity",
-	},
-	{
-		label: "updateOrderBillingAddress · billingPhone → Order.billingPhone",
-		schema: updateOrderBillingAddressSchema,
-		path: ["billingPhone"],
-		column: "Order.billingPhone",
-	},
-	{
-		label: "updateOrderBillingAddress · billingPostalCode → Order.billingPostalCode",
-		schema: updateOrderBillingAddressSchema,
-		path: ["billingPostalCode"],
-		column: "Order.billingPostalCode",
 	},
 
 	// ── Catalogue ──────────────────────────────────────────────────────────────

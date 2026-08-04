@@ -1,8 +1,8 @@
 /**
  * @regression admin-section-hub-coverage
  *
- * Les 5 pages « hub » de section (`/admin/ventes`, `/catalogue`, `/marketing`,
- * `/contenu`, `/configuration`) répliquent l'arborescence à la main via
+ * Les 4 pages « hub » de section (`/admin/ventes`, `/catalogue`, `/marketing`,
+ * `/configuration`) répliquent l'arborescence à la main via
  * `SectionNavigation` : titre, description et icône par carte. Cette copie
  * éditoriale a de la valeur (elle explique chaque destination, ce que
  * `navigationData` ne fait pas) — mais rien ne garantissait qu'elle reste alignée
@@ -29,7 +29,6 @@ const HUB_PAGES = [
 	"app/admin/ventes/page.tsx",
 	"app/admin/catalogue/page.tsx",
 	"app/admin/marketing/page.tsx",
-	"app/admin/contenu/page.tsx",
 	"app/admin/configuration/page.tsx",
 ] as const;
 

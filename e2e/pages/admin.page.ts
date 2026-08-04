@@ -75,16 +75,6 @@ export class AdminPage {
 		await this.page.waitForLoadState("domcontentloaded");
 	}
 
-	async gotoAnnouncements() {
-		await this.page.goto("/admin/contenu/annonces");
-		await this.page.waitForLoadState("domcontentloaded");
-	}
-
-	async gotoFaq() {
-		await this.page.goto("/admin/contenu/faq");
-		await this.page.waitForLoadState("domcontentloaded");
-	}
-
 	async gotoProductTypes() {
 		await this.page.goto("/admin/catalogue/types-de-produits");
 		await this.page.waitForLoadState("domcontentloaded");

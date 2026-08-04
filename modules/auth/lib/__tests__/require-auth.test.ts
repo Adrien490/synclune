@@ -53,7 +53,6 @@ function makeUser(overrides: Record<string, unknown> = {}) {
 		firstName: "Marie",
 		lastName: "Dupont",
 		emailVerified: true,
-		stripeCustomerId: "cus_123",
 		...overrides,
 	};
 }

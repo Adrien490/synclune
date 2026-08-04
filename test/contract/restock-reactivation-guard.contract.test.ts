@@ -34,10 +34,10 @@ import { execFileSync } from "node:child_process";
 const RESTOCK_PATHS = [
 	// Annulation admin (restock inline dans le claim CANCELLED).
 	"modules/orders/actions/cancel-order.ts",
-	// Finalisation d'un remboursement (webhook refund.updated + tâche Maintenance
-	// reconcile-refunds — P1-C audit 2026-08-01). Seul créditeur refund depuis le
-	// Lot 2 S3.3 : le SAGA admin process-refund est parti avec le workflow in-app.
-	"modules/refunds/services/finalize-refund.service.ts",
+	// finalize-refund.service.ts est SORTI de cette liste au Lot 6 (2026-08-03) :
+	// la finalisation d'un refund ne crédite plus l'inventaire (RefundItem.restock
+	// droppée, restock post-refund = ajustement manuel admin). Sa réapparition ici
+	// signifie qu'un chemin refund recrédite du stock — décision à re-instruire.
 	// restoreStockForOrder + restock inliné du claim markOrderAsCancelled.
 	"modules/webhooks/services/payment-intent.service.ts",
 ].sort();

@@ -6,17 +6,17 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 	});
 
-	test("la homepage charge et affiche les sections clés", { tag: ["@smoke"] }, async ({ page }) => {
+	test("la homepage charge avec navbar et footer", { tag: ["@smoke"] }, async ({ page }) => {
 		// Le titre de la page doit contenir Synclune
 		await expect(page).toHaveTitle(/Synclune/);
 
-		// La section hero doit être présente
-		const heroSection = page.locator("#hero-section");
-		await expect(heroSection).toBeVisible();
-
-		// La navbar doit être présente avec le label aria correct
+		// ⚠️ Le contenu de la page est volontairement vide en attendant la refonte
+		// landing (2026-08-03) — seuls navbar et footer sont garantis ici.
 		const navbar = page.getByRole("navigation", { name: "Navigation principale" });
 		await expect(navbar).toBeVisible();
+
+		const footer = page.getByRole("contentinfo");
+		await expect(footer).toBeAttached();
 	});
 
 	test("le logo de la navbar est un lien vers l'accueil", async ({ page }) => {

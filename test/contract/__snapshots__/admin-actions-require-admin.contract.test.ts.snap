@@ -44,7 +44,6 @@ exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list o
   "modules/orders/actions/resend-order-email.ts",
   "modules/orders/actions/revert-to-processing.ts",
   "modules/orders/actions/undo-return.ts",
-  "modules/orders/actions/update-order-billing-address.ts",
   "modules/orders/actions/update-order-customer-info.ts",
   "modules/orders/actions/update-order-note.ts",
   "modules/orders/actions/update-order-shipping-address.ts",
@@ -77,7 +76,6 @@ exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list o
   "modules/skus/actions/update-sku.ts",
   "modules/store-settings/actions/close-store.ts",
   "modules/store-settings/actions/reopen-store.ts",
-  "modules/store-settings/actions/update-announcement.ts",
   "modules/store-settings/actions/update-closure-message.ts",
   "modules/store-settings/actions/update-reopens-at.ts",
 ]

@@ -3,7 +3,6 @@ import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
-import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
 import { CookieBannerLazy } from "@/shared/components/cookie-banner-lazy";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { Suspense } from "react";
@@ -24,9 +23,6 @@ export default async function LegalLayout({ children }: { children: React.ReactN
 					reopensAt={storeStatus.reopensAt}
 				/>
 			)}
-			<Suspense fallback={null}>
-				<AnnouncementBarWrapper />
-			</Suspense>
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>

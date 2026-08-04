@@ -64,7 +64,6 @@ const regularUserDb = {
 	lastName: "User",
 	image: null,
 	emailVerified: true,
-	stripeCustomerId: null,
 	deletedAt: null,
 };
 
@@ -77,7 +76,6 @@ const adminUserDb = {
 	lastName: "User",
 	image: null,
 	emailVerified: true,
-	stripeCustomerId: null,
 	deletedAt: null,
 };
 

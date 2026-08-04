@@ -258,9 +258,13 @@ describe("schema.prisma ↔ migrations", () => {
 
 	// Sanity du parser : sans ça les comparaisons passeraient à vide.
 	// Plancher abaissé délibérément à 29 au Lot 2 (SIMPLIFICATION.md S3.4,
-	// 2026-08-03) : drop de la table PostWebhookTask.
+	// 2026-08-03 : drop de la table PostWebhookTask), puis à 27 le même jour
+	// avec le passage des favoris en cookie (drop Wishlist + WishlistItem,
+	// migration 20260803210000_drop_wishlist_tables), puis à 25 le 2026-08-04
+	// avec le passage du PANIER en cookie (drop Cart + CartItem, migration
+	// 20260804140000_drop_cart_tables).
 	it("le parser reconstruit un état non trivial des deux côtés", () => {
-		expect(fromSchema.size).toBeGreaterThanOrEqual(29);
+		expect(fromSchema.size).toBeGreaterThanOrEqual(25);
 		expect(fromBaseline.size).toBe(fromSchema.size);
 		expect(fromBaseline.get("Order")?.has("invoiceNumber")).toBe(true);
 	});
@@ -350,9 +354,16 @@ describe("gardes SQL bruts — SSOT ↔ migrations ↔ documentation", () => {
 		expect(ssot.checks.has("Order_invoiceNumber_format")).toBe(true); // Art. 286 CGI
 		expect(ssot.checks.has("Order_total_formula")).toBe(true); // invariant monétaire
 		expect(ssot.triggers.has("Order_creditNoteNumber_cross_unique")).toBe(true);
-		// Plancher abaissé délibérément à 49 au Lot 2 (S3.4) : le CHECK
-		// PostWebhookTask_attempts_non_negative est parti avec sa table.
-		expect(ssot.checks.size).toBeGreaterThanOrEqual(49);
+		// Plancher abaissé délibérément à 49 au Lot 2 (S3.4 : le CHECK
+		// PostWebhookTask_attempts_non_negative est parti avec sa table), puis à
+		// 48 avec le passage des favoris en cookie (Wishlist_owner_required parti
+		// avec la table Wishlist, 2026-08-03), puis à 45 avec le passage du PANIER
+		// en cookie (Cart_owner_required + CartItem_priceAtAdd_positive +
+		// CartItem_quantity_positive partis avec leurs tables, 2026-08-04), puis à
+		// 44 avec le dégraissage d'`Order` (Order_taxAmount_non_negative parti avec
+		// la colonne `taxAmount` — constante 0, exclue de `Order_total_formula` et
+		// jamais lue par le renderer de facture, 2026-08-04).
+		expect(ssot.checks.size).toBeGreaterThanOrEqual(44);
 	});
 
 	// LE point critique : `prisma migrate diff` ne génère AUCUN garde brut. Un

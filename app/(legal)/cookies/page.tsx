@@ -98,22 +98,32 @@ export default async function CookiesPage() {
 							</p>
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>
-									<strong>cart_session</strong> : Identifiant de panier visiteur - Créé{" "}
+									<strong>cart</strong> : Contenu du panier - Créé{" "}
 									<span className="text-success font-medium">
 										uniquement lors de l'ajout d'un produit au panier
 									</span>
-									. Durée : 7 jours (httpOnly, secure). Stocke uniquement un identifiant pour
-									retrouver votre panier en base de données. Aucun contenu du panier n'est stocké
-									dans ce cookie.
+									. Durée : 7 jours après la dernière interaction (httpOnly, secure). Stocke
+									directement les articles du panier (variante, quantité, prix constaté) et le code
+									promo appliqué, dans votre navigateur uniquement — aucun panier n'est conservé en
+									base de données.
 								</li>
 								<li>
-									<strong>wishlist_session</strong> : Identifiant de wishlist visiteur - Créé{" "}
+									<strong>cart_session</strong> : Identifiant technique de commande - Créé{" "}
 									<span className="text-success font-medium">
-										uniquement lors de l'ajout d'un produit à votre wishlist
+										uniquement au démarrage d'un paiement
 									</span>
-									. Durée : 30 jours (httpOnly, secure, conforme RGPD). Stocke uniquement un
-									identifiant pour retrouver votre wishlist en base de données. Aucun contenu de la
-									wishlist n'est stocké dans ce cookie.
+									. Durée : 7 jours (httpOnly, secure). Stocke un identifiant aléatoire qui sert à
+									vérifier que le paiement en cours est bien le vôtre, et à limiter le nombre de
+									requêtes. Aucune donnée personnelle.
+								</li>
+								<li>
+									<strong>wishlist</strong> : Liste de favoris - Créé{" "}
+									<span className="text-success font-medium">
+										uniquement lors de l'ajout d'un produit à vos favoris
+									</span>
+									. Durée : 30 jours après la dernière interaction (httpOnly, secure). Stocke
+									directement les identifiants des produits ajoutés en favoris, dans votre
+									navigateur uniquement — rien n'est conservé sur nos serveurs.
 								</li>
 								<li>
 									<strong>better-auth.session_token</strong> : Jeton de session - Créé{" "}
@@ -152,11 +162,6 @@ export default async function CookiesPage() {
 								<li>
 									<strong>fab-hidden-*</strong> : Boutons flottants masqués - Mémorise votre choix
 									de masquer un bouton d&apos;action flottant. Durée : 1 an.
-								</li>
-								<li>
-									<strong>announcement_dismissed_*</strong> : Bandeau d&apos;annonce fermé -
-									Mémorise la fermeture d&apos;un bandeau d&apos;annonce pour ne pas le réafficher.
-									Durée : 24 heures.
 								</li>
 							</ul>
 

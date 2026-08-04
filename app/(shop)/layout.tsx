@@ -7,7 +7,6 @@ import { StoreClosurePage } from "@/modules/store-settings/components/store-clos
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
-import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
 import { CookieBannerLazy } from "@/shared/components/cookie-banner-lazy";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
@@ -54,9 +53,6 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 					reopensAt={storeStatus.reopensAt}
 				/>
 			)}
-			<Suspense fallback={null}>
-				<AnnouncementBarWrapper />
-			</Suspense>
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>

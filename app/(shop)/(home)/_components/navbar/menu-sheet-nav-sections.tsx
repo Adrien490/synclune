@@ -153,7 +153,7 @@ export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProp
 								{cartCount} article{cartCount > 1 ? "s" : ""}
 							</span>
 						)}
-						{wishlistCount === 0 && cartCount === 0 && <span>Mon espace personnel</span>}
+						{wishlistCount === 0 && cartCount === 0 && <span>Espace administration</span>}
 					</p>
 				</div>
 			</Link>
@@ -255,7 +255,6 @@ interface CollectionsSectionProps extends SectionProps {
 		slug: string;
 		label: string;
 		images: CollectionImage[];
-		createdAt?: Date;
 	}>;
 }
 

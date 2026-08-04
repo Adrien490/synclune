@@ -129,7 +129,9 @@
 
 	/* ==========================================
 	   MEGA MENU — Shadow premium rose
-	   Used on collection cards hover/focus to convey premium lift.
+	   Used ONLY by the mega-menu's local collection card clone
+	   (mega-menu-collections.tsx) — the real CollectionCard uses
+	   CARD_SURFACE_HOVER (card-surface.constants.ts).
 	   Uses primary token with relative color to stay in sync with theme.
 	   ========================================== */
 	.shadow-premium-rose {
@@ -449,11 +451,31 @@
 	background: transparent;
 }
 
+/* Icône « International » (globe SVG de la lib). Les drapeaux de PAYS, eux,
+   passent par .PhoneInputCountryIconEmoji ci-dessous. */
 .PhoneInput--synclune .PhoneInputCountryIconImg {
 	display: block;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+}
+
+/* Drapeau emoji — cf. `phone-input-lazy.tsx` pour le pourquoi (les 272 SVG de
+   country-flag-icons ne sont pas tree-shakables, et le repli `flagUrl` est
+   bloqué par notre CSP). `object-fit` ne s'applique pas à du texte : on centre.
+   Sous Windows, faute de glyphe de drapeau, ce sont les deux lettres du code
+   pays qui s'affichent — d'où le resserrement pour les garder dans la boîte. */
+.PhoneInput--synclune .PhoneInputCountryIconEmoji {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	font-family:
+		"Apple Color Emoji", "Twemoji Mozilla", "Noto Color Emoji", "Segoe UI Emoji", sans-serif;
+	font-size: 0.95rem;
+	line-height: 1;
+	letter-spacing: -0.06em;
 }
 
 .PhoneInput--synclune .PhoneInputCountrySelect {

@@ -217,7 +217,6 @@ function createMockDiscount(overrides: Record<string, unknown> = {}) {
 		type: "PERCENTAGE",
 		value: 20,
 		isActive: true,
-		startsAt: new Date("2026-01-01"),
 		endsAt: new Date("2026-12-31"),
 		minOrderAmount: null,
 		maxUsageCount: null,
@@ -344,35 +343,7 @@ function createMockRefundItem(overrides: Record<string, unknown> = {}) {
 		orderItemId: "oi_cm1234567890abcde",
 		quantity: 1,
 		amount: 4999,
-		restock: true,
 		createdAt: new Date("2026-01-20"),
-		...overrides,
-	};
-}
-
-// ============================================================================
-// WISHLIST
-// ============================================================================
-
-function createMockWishlist(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "wl_cm1234567890abcde",
-		userId: VALID_USER_ID,
-		sessionId: null,
-		items: [],
-		createdAt: new Date("2026-01-01"),
-		updatedAt: new Date("2026-01-01"),
-		...overrides,
-	};
-}
-
-function createMockWishlistItem(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "wi_cm1234567890abcde",
-		wishlistId: "wl_cm1234567890abcde",
-		productId: VALID_PRODUCT_ID,
-		createdAt: new Date("2026-01-15"),
-		updatedAt: new Date("2026-01-15"),
 		...overrides,
 	};
 }

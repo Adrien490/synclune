@@ -196,24 +196,20 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 	});
 
 	test("cookie banner - Tab through options, Enter active le choix", async ({ page }) => {
-		// Clear cookies to trigger cookie banner
-		await page.context().clearCookies();
+		// Le consentement vit en localStorage (Zustand persist, clé "cookie-consent"),
+		// PAS en cookie — l'ancien clearCookies() ne déclenchait rien. Et la bannière
+		// est un landmark region nommé par son h2, pas un dialog : les anciens
+		// sélecteurs ne matchaient jamais → test.skip systématique (faux positif
+		// silencieux, audit cookie-banner 2026-08-03).
+		await page.addInitScript(() => window.localStorage.removeItem("cookie-consent"));
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Look for cookie banner
-		const cookieBanner = page
-			.locator('[role="dialog"][aria-label*="cookie" i], [data-cookie-banner], [class*="cookie"]')
-			.first();
-		if ((await cookieBanner.count()) === 0) {
-			test.skip(true, "Pas de banner cookie visible");
-			return;
-		}
+		// Chunk lazy (dynamic ssr:false) : la bannière apparaît après hydratation
+		const cookieBanner = page.getByRole("region", { name: "Cookies" });
+		await expect(cookieBanner).toBeVisible({ timeout: 10_000 });
 
-		// Find accept/reject buttons inside the banner
-		const acceptButton = page.getByRole("button", { name: /Accepter|Tout accepter/i }).first();
-		if ((await acceptButton.count()) === 0) return;
-
+		const acceptButton = cookieBanner.getByRole("button", { name: "Accepter" });
 		await acceptButton.focus();
 		await expect(acceptButton).toBeFocused();
 

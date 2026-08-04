@@ -5,7 +5,8 @@ import { ROUTES } from "@/shared/constants/urls";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { getRecentProducts } from "@/modules/products/data/get-recent-products";
+import { getProducts } from "@/modules/products/data/get-products";
+import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-provider";
 import { AppBadgeSync } from "@/shared/components/app-badge-sync";
 import { cn } from "@/shared/utils/cn";
@@ -19,31 +20,26 @@ import { NavbarWrapper } from "./navbar-wrapper";
 /** "Nouveau" badge eligibility window — published within the last N days. */
 const NEW_PRODUCT_BADGE_DAYS = 14;
 
-// Extract primary image from a product's default SKU
-function extractProductImage(p: Awaited<ReturnType<typeof getRecentProducts>>[number]) {
-	const sku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
-	const image = sku?.images.find((img) => img.isPrimary) ?? sku?.images[0];
-	return { sku, image };
-}
-
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
-	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
-	const [session, cartCount, wishlistCount, menuData, recentProducts] = await Promise.all([
+	// Les données publiques (collections, productTypes, nouveautés) sont servies
+	// par les caches des data fns sous-jacentes
+	const [session, cartCount, wishlistCount, menuData, newestProducts] = await Promise.all([
 		getSession().catch(() => null),
 		getCartItemCount(),
 		getWishlistItemCount(),
 		getNavbarMenuData(),
-		getRecentProducts({ limit: 2 }),
+		// Rail « Nouveautés » du mega menu : les 2 dernières créations PUBLIÉES.
+		// Était branché sur les « récemment vus » du cookie — rail vide pour tout
+		// primo-visiteur, et des produits anciens déjà consultés étiquetés
+		// « Pièces récentes de l'atelier » (audit navbar 2026-08-03).
+		getProducts({ perPage: 2, sortBy: "created-descending", filters: { status: "PUBLIC" } }),
 	]);
 
 	const { collectionsData, productTypesData } = menuData;
 
 	// Dériver isAdmin depuis la session (évite un appel DB redondant)
 	const userIsAdmin = session?.user.role === "ADMIN";
-
-	const safeCartCount = cartCount;
-	const safeWishlistCount = wishlistCount;
 
 	const productTypes = productTypesData.productTypes.map((t) => ({
 		slug: t.slug,
@@ -62,12 +58,16 @@ export async function Navbar() {
 	// Générer les items de navigation mobile en fonction de la session et statut admin
 	const mobileNavItems = getMobileNavItems(productTypes, menuCollections, userIsAdmin);
 
-	// Featured products for the mega menu (up to 2 recent products with images).
+	// Featured products for the mega menu — the 2 newest published creations.
 	// "Nouveau" badge eligibility via shared isRecent() helper (NEW_PRODUCT_BADGE_DAYS window).
-	// recentProducts is already capped to 2 via getRecentProducts({ limit: 2 }) above.
-	const featuredProducts = recentProducts
+	// `skus[0]` est le SKU par défaut (orderBy `isDefault desc` de GET_PRODUCTS_SELECT) ;
+	// le choix du média passe par la SSOT pickPrimaryImage — ce select ne filtre pas
+	// `mediaType`, réécrire `find(isPrimary) ?? images[0]` mettrait un .mp4 dans <Image src>.
+	// Un produit sans image réelle est écarté du rail plutôt que rendu en placeholder.
+	const featuredProducts = newestProducts.products
 		.map((p) => {
-			const { sku, image } = extractProductImage(p);
+			const sku = p.skus[0];
+			const image = pickPrimaryImage(sku?.images);
 			return {
 				slug: p.slug,
 				title: p.title,
@@ -110,10 +110,7 @@ export async function Navbar() {
 		: undefined;
 
 	return (
-		<BadgeCountsStoreProvider
-			initialWishlistCount={safeWishlistCount}
-			initialCartCount={safeCartCount}
-		>
+		<BadgeCountsStoreProvider initialWishlistCount={wishlistCount} initialCartCount={cartCount}>
 			<NavbarWrapper>
 				<nav
 					aria-label="Navigation principale"

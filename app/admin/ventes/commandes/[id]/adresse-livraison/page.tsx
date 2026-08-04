@@ -60,6 +60,7 @@ export default async function ShippingAddressPage({
 				shippingPostalCode={order.shippingPostalCode}
 				shippingCity={order.shippingCity}
 				shippingCountry={order.shippingCountry}
+				shippingPhone={order.shippingPhone}
 				redirectOnSuccess
 				successPath={`/admin/ventes/commandes/${order.id}`}
 				className="max-w-2xl"

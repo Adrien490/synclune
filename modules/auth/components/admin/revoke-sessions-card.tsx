@@ -36,16 +36,18 @@ export function RevokeSessionsCard() {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const [, formAction, isPending] = useActionState(
-		withCallbacks(revokeAllSessions, {
-			...createToastCallbacks({ loadingMessage: "Révocation des sessions…" }),
-			onSuccess: (result) => {
-				createToastCallbacks({ loadingMessage: "Révocation des sessions…" }).onSuccess(result);
-				setIsOpen(false);
-				// La session courante vient d'être révoquée elle aussi : rester sur
-				// /admin afficherait une page morte jusqu'au prochain rendu serveur.
-				router.replace(ROUTES.AUTH.SIGN_IN);
-			},
-		}),
+		withCallbacks(
+			revokeAllSessions,
+			createToastCallbacks({
+				loadingMessage: "Révocation des sessions…",
+				onSuccess: () => {
+					setIsOpen(false);
+					// La session courante vient d'être révoquée elle aussi : rester sur
+					// /admin afficherait une page morte jusqu'au prochain rendu serveur.
+					router.replace(ROUTES.AUTH.SIGN_IN);
+				},
+			}),
+		),
 		undefined,
 	);
 

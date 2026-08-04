@@ -260,16 +260,16 @@ export default async function PrivacyPolicyPage() {
 												7 jours après la dernière interaction
 											</td>
 										</tr>
-										<tr>
-											<td className="border border-gray-300 p-3">Wishlist visiteur</td>
-											<td className="border border-gray-300 p-3">
-												30 jours après la dernière interaction
-											</td>
-										</tr>
+										{/*
+										 * Ni « Panier visiteur » ni « Wishlist visiteur » n'apparaissent
+										 * dans la rétention SERVEUR : depuis le 2026-08-03 (favoris) et le
+										 * 2026-08-04 (panier), les deux vivent uniquement dans des cookies
+										 * du navigateur — aucune donnée n'en est conservée en base.
+										 */}
 										<tr>
 											<td className="border border-gray-300 p-3">Cookies techniques</td>
 											<td className="border border-gray-300 p-3">
-												7 jours (cart_session), 30 jours (wishlist_session)
+												7 jours (cart, cart_session), 30 jours (wishlist)
 											</td>
 										</tr>
 									</tbody>
@@ -364,15 +364,24 @@ export default async function PrivacyPolicyPage() {
 							</p>
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>
-									<strong>cart_session :</strong> identifiant de panier visiteur - Créé uniquement
-									lors de l'ajout d'un produit au panier. Durée : 7 jours (httpOnly, secure). Stocke
-									uniquement un UUID pour récupérer votre panier en base de données.
+									<strong>cart :</strong> contenu du panier - Créé uniquement lors de l'ajout d'un
+									produit au panier. Durée : 7 jours après la dernière interaction (httpOnly,
+									secure). Stocke directement les articles du panier (variante, quantité, prix
+									constaté) et le code promo appliqué, dans votre navigateur uniquement — aucun
+									panier n'est conservé en base de données.
 								</li>
 								<li>
-									<strong>wishlist_session :</strong> identifiant de wishlist visiteur - Créé
-									uniquement lors de l'ajout d'un produit à votre wishlist. Durée : 30 jours
-									(httpOnly, secure, conforme RGPD). Stocke uniquement un UUID pour récupérer votre
-									wishlist en base de données.
+									<strong>cart_session :</strong> identifiant technique de commande - Créé
+									uniquement au démarrage d'un paiement. Durée : 7 jours (httpOnly, secure). Stocke
+									un UUID aléatoire servant à vérifier que le paiement en cours est bien le vôtre,
+									et à limiter le nombre de requêtes. Aucune donnée personnelle.
+								</li>
+								<li>
+									<strong>wishlist :</strong> liste de favoris - Créé uniquement lors de l'ajout
+									d'un produit à vos favoris. Durée : 30 jours après la dernière interaction
+									(httpOnly, secure). Stocke directement les identifiants des produits favoris, dans
+									votre navigateur uniquement — aucune donnée wishlist n'est conservée en base de
+									données.
 								</li>
 								<li>
 									<strong>better-auth.session_token :</strong> jeton de session - Créé uniquement
@@ -390,9 +399,8 @@ export default async function PrivacyPolicyPage() {
 									recherches récentes - confort de navigation. Durée : 30 jours (httpOnly, secure).
 								</li>
 								<li>
-									<strong>fab-hidden-* / announcement_dismissed_* :</strong> mémorisation de vos
-									choix d'affichage (bouton flottant masqué : 1 an ; bandeau d'annonce fermé : 24
-									heures) (httpOnly, secure).
+									<strong>fab-hidden-* :</strong> mémorisation de vos choix d'affichage (bouton
+									flottant masqué). Durée : 1 an (httpOnly, secure).
 								</li>
 							</ul>
 							<p>

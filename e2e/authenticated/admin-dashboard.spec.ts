@@ -370,7 +370,6 @@ test.describe("Admin - Hub pages smoke tests", { tag: ["@regression"] }, () => {
 		{ url: "/admin/catalogue", name: "Catalogue" },
 		{ url: "/admin/marketing", name: "Marketing" },
 		{ url: "/admin/ventes", name: "Ventes" },
-		{ url: "/admin/contenu", name: "Contenu" },
 	];
 
 	for (const { url, name } of hubPages) {

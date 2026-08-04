@@ -77,11 +77,6 @@ const EditShippingAddressDialog = dynamic(() =>
 		(mod) => mod.EditShippingAddressDialog,
 	),
 );
-const EditBillingAddressDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/edit-billing-address-dialog").then(
-		(mod) => mod.EditBillingAddressDialog,
-	),
-);
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -160,7 +155,6 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 			<OrderNotesDialog />
 			<EditCustomerInfoDialog />
 			<EditShippingAddressDialog />
-			<EditBillingAddressDialog />
 		</div>
 	);
 }
