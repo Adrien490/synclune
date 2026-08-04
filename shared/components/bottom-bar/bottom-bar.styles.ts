@@ -15,14 +15,27 @@ import { cn } from "@/shared/utils/cn";
  * d'accord avec le défaut `height` de `BottomBar` (56), qui sert de repli avant
  * mesure — verrouillé par `bottom-bar-height-contract.regression.test.ts`.
  */
-export const bottomBarContainerClass = "flex items-stretch h-14";
+export const bottomBarContainerClass = "flex items-stretch h-14 gap-0.5 px-1";
 
 /**
  * Classes for the `<li>` wrapping each item — un `<li>` est `display: list-item`,
  * donc le `flex-1` de {@link bottomBarItemClass} n'y aurait aucun effet sans ce
  * conteneur flex intermédiaire.
+ *
+ * ⚠️ **`min-w-0` est la classe qui fait TENIR la barre**, pas une précaution.
+ *
+ * Un flex item a `min-width: auto` par défaut : il refuse de rétrécir sous la
+ * largeur min-content de son contenu. Sans elle, le `min-w-[44px]` de l'item
+ * n'a jamais sa chance — c'est le `<li>` qui impose la largeur du libellé le plus
+ * long, et le `truncate` du libellé ne se déclenche jamais.
+ *
+ * Constaté au rendu, PAS en test : à 200 % de police racine la barre mesurait
+ * encore 477px pour un écran de 390 (« Rechercher » à lui seul réclamait 124px),
+ * alors que l'arithmétique du garde-fou — 5 × 44 = 220 — était juste. Le test
+ * était vert pour une raison incomplète : il vérifiait le plancher déclaré, pas
+ * que quelque chose puisse l'atteindre.
  */
-export const bottomBarItemWrapperClass = "flex flex-1";
+export const bottomBarItemWrapperClass = "flex flex-1 min-w-0";
 
 /** Classes for an individual item (button or link) inside the bar. */
 export const bottomBarItemClass = cn(
@@ -43,6 +56,9 @@ export const bottomBarItemClass = cn(
 	// — 4rem = 64px ne correspondait à rien. Verrouillé par
 	// `bottom-bar-touch-target-px.regression.test.ts`.
 	"h-full min-h-14 min-w-[44px]",
+	// Coins hauts arrondis : la languette de l'onglet courant monte du bas de la
+	// barre comme l'intercalaire d'un classeur qu'on aurait tiré.
+	"rounded-t-[10px]",
 	"transition-colors duration-200",
 	// `motion-safe:` sur le scale comme partout ailleurs dans la primitive : le
 	// retour tactile de la pression est un transform, pas une couleur.
@@ -70,11 +86,28 @@ export const bottomBarItemClass = cn(
 /**
  * Classes applied to an active item (in addition to bottomBarItemClass).
  *
+ * **La languette.** L'onglet courant n'est plus signalé par un ornement posé
+ * dessus (l'ancienne pastille de 32×4) : c'est la CELLULE ENTIÈRE qui change de
+ * matière, en aplat d'accent de marque sous encre `--foreground`.
+ *
+ * ⚠️ C'est le sens de lecture qui rend la chose conforme. Les quatre accents
+ * (rose, lavande, menthe, soleil) sont **inutilisables en encre** sur fond clair
+ * — 1,54 à 2,49:1 — mais excellents en **aplat** sous `--foreground` : 7,85 à
+ * 12,68:1. Une barre franchement colorée est donc possible sans la moindre
+ * concession, à condition de ne jamais inverser le sens. Verrouillé par
+ * `bottom-bar-accent-is-a-surface.regression.test.ts`.
+ *
+ * La couleur vient de `--section-accent`, posée par `data-accent` sur l'élément
+ * (cf. `app/styles/section-accents.css`), avec repli sur le rose signature —
+ * même motif que `HandDrawnUnderline`. C'est ce repli qui fait qu'un seul dessin
+ * sert les deux hôtes : la boutique décline quatre couleurs de rayon, l'admin
+ * garde une languette rose, sans variante à maintenir.
+ *
  * Includes forced-colors (Windows High Contrast) and prefers-contrast: more
  * outlines so the active state remains perceivable without relying on color alone.
  */
 export const bottomBarActiveItemClass = cn(
-	"text-foreground",
+	"bottom-bar-tab-current text-foreground",
 	"forced-colors:outline forced-colors:outline-2 forced-colors:outline-[Highlight]",
 	"contrast-more:outline contrast-more:outline-2 contrast-more:outline-current",
 );

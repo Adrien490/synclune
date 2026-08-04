@@ -75,7 +75,6 @@ vi.mock("@/shared/components/bottom-bar", () => ({
 	BottomBar: ({ children, ...props }: { children: React.ReactNode }) => (
 		<nav {...props}>{children}</nav>
 	),
-	BottomBarActivePill: () => null,
 	bottomBarContainerClass: "container",
 	bottomBarItemWrapperClass: "item-wrapper",
 	bottomBarItemClass: "item",

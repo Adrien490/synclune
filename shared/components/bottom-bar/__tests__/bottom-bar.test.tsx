@@ -84,7 +84,7 @@ vi.mock("@/shared/components/visual-viewport-bridge", () => ({
 	useKeyboardOpen: useKeyboardOpenMock,
 }));
 
-// Mock motion config — include `snappy` used by BottomBarActivePill
+// Mock motion config
 vi.mock("@/shared/components/animations/motion.config", () => ({
 	MOTION_CONFIG: {
 		spring: {
@@ -94,7 +94,7 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
-import { BottomBar, BottomBarActivePill } from "../bottom-bar";
+import { BottomBar } from "../bottom-bar";
 import {
 	bottomBarContainerClass,
 	bottomBarItemWrapperClass,
@@ -518,61 +518,6 @@ describe("BottomBar", () => {
 		const el = container.querySelector("nav")!;
 		expect(el).toHaveAttribute("hidden");
 		expect(el).toHaveAttribute("inert");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// BottomBarActivePill
-// ---------------------------------------------------------------------------
-
-describe("BottomBarActivePill", () => {
-	it("renders as a span with aria-hidden", () => {
-		const { container } = render(<BottomBarActivePill groupId="nav" />);
-		const span = container.querySelector("span");
-		expect(span).not.toBeNull();
-		expect(span).toHaveAttribute("aria-hidden", "true");
-	});
-
-	it("applies pill base classes", () => {
-		const { container } = render(<BottomBarActivePill groupId="nav" />);
-		const span = container.querySelector("span")!;
-		expect(span.className).toContain("bg-primary");
-		expect(span.className).toContain("rounded-full");
-	});
-
-	it("includes forced-colors fallback color", () => {
-		const { container } = render(<BottomBarActivePill groupId="nav" />);
-		const span = container.querySelector("span")!;
-		expect(span.className).toContain("forced-colors:bg-[Highlight]");
-	});
-
-	it("merges custom className", () => {
-		const { container } = render(<BottomBarActivePill groupId="nav" className="h-2 w-10" />);
-		const span = container.querySelector("span")!;
-		expect(span.className).toContain("w-10");
-		expect(span.className).toContain("h-2");
-	});
-
-	it("renders static span (no layoutId) when reduced motion", () => {
-		useReducedMotionMock.mockReturnValueOnce(true);
-		const { container } = render(<BottomBarActivePill groupId="nav" />);
-		const span = container.querySelector("span")!;
-		expect(span).not.toHaveAttribute("layoutid");
-		expect(span).not.toHaveAttribute("data-layout-id");
-	});
-
-	it("forwards layoutId via Framer (pill morph wiring across tabs)", () => {
-		const { container } = render(<BottomBarActivePill groupId="shop-nav" />);
-		const span = container.querySelector("span")!;
-		expect(span).toHaveAttribute("data-layout-id", "shop-nav");
-	});
-
-	it("uses spring.snappy transition for iOS-18 morph feel", () => {
-		const { container } = render(<BottomBarActivePill groupId="admin-nav" />);
-		const span = container.querySelector("span")!;
-		const raw = span.getAttribute("data-transition");
-		expect(raw).not.toBeNull();
-		expect(JSON.parse(raw!)).toMatchObject({ damping: 35, stiffness: 500 });
 	});
 });
 

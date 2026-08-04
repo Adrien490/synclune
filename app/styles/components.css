@@ -94,6 +94,31 @@
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 	}
 
+	/* La languette de l'onglet courant : un APLAT d'accent, jamais de l'encre.
+	   Les quatre accents de marque donnent 7,85 à 12,68:1 sous `--foreground` en
+	   aplat, mais 1,54 à 2,49:1 employés comme couleur de texte — c'est le sens de
+	   lecture qui rend la barre colorée conforme.
+
+	   Le repli sur `--primary` n'est pas décoratif : hors d'un `[data-accent]`
+	   (toute la surface admin), `--section-accent` n'existe pas, et sans repli la
+	   languette serait TRANSPARENTE — un onglet courant invisible, en silence.
+	   Même motif que `HandDrawnUnderline`. */
+	/* ⚠️ Les trois sélecteurs sont NÉCESSAIRES, ce n'est pas de la redondance.
+	   `can-hover:hover:bg-primary/5` et `active:bg-primary/10` de
+	   `bottomBarItemClass` compilent en `.classe:hover` / `.classe:active`, soit
+	   une spécificité (0,2,0) contre (0,1,0) pour une classe nue : la pseudo-classe
+	   gagnait, et survoler l'onglet COURANT effaçait sa languette au profit d'un
+	   rose à 5 % — sur iPad avec souris, la couleur du rayon disparaissait sous le
+	   curseur. Constaté au rendu (`getComputedStyle` avant/après `hover`), invisible
+	   en test unitaire comme à l'œil sur une capture.
+	   Le retour tactile de la pression reste porté par le `scale`, qui ne touche
+	   pas à la couleur. */
+	.bottom-bar-tab-current,
+	.bottom-bar-tab-current:hover,
+	.bottom-bar-tab-current:active {
+		background-color: var(--section-accent, var(--primary));
+	}
+
 	/* ==========================================
 	   POLAROID FRAME — Paper texture & hover
 	   ========================================== */

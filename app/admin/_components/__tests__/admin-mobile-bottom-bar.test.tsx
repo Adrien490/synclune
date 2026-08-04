@@ -99,7 +99,6 @@ vi.mock("@/shared/components/bottom-bar", () => ({
 			{children}
 		</nav>
 	),
-	BottomBarActivePill: () => <span data-testid="active-pill" />,
 	bottomBarContainerClass: "container",
 	bottomBarItemWrapperClass: "item-wrapper",
 	bottomBarItemClass: "item",

@@ -29,7 +29,11 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { bottomBarContainerClass, bottomBarItemClass } from "../bottom-bar.styles";
+import {
+	bottomBarContainerClass,
+	bottomBarItemClass,
+	bottomBarItemWrapperClass,
+} from "../bottom-bar.styles";
 
 /** Valeur plancher de WCAG 2.5.5 (Target Size), en CSS px. */
 const WCAG_MIN_TARGET_PX = 44;
@@ -68,6 +72,24 @@ describe("@regression bottom-bar-touch-target-px — la cible tactile est en px"
 		const minWidth = Number(match![1]);
 
 		expect(minWidth * MAX_TABS).toBeLessThanOrEqual(NARROWEST_VIEWPORT_PX);
+	});
+
+	/**
+	 * ⚠️ L'assertion ci-dessus est vraie et INSUFFISANTE — elle l'a été une fois.
+	 *
+	 * Déclarer un plancher de 44px ne sert à rien si rien ne peut l'atteindre. Un
+	 * flex item a `min-width: auto` par défaut : il refuse de rétrécir sous la
+	 * largeur min-content de son contenu. Le `<li>` imposait donc la largeur du
+	 * libellé le plus long, et le `truncate` de l'item ne se déclenchait jamais.
+	 *
+	 * Mesuré au RENDU après le passage en px (2026-08-04, `/` à 390 px, police
+	 * racine 32px) : la barre faisait encore 477px pour un écran de 390, dont
+	 * 124px pour le seul onglet « Rechercher » — alors que l'arithmétique
+	 * ci-dessus, 5 × 44 = 220, était juste. Le garde était vert pour une raison
+	 * incomplète.
+	 */
+	it("le conteneur d'onglet peut réellement rétrécir jusqu'à ce plancher", () => {
+		expect(bottomBarItemWrapperClass).toContain("min-w-0");
 	});
 
 	/**

@@ -13,66 +13,6 @@ import { cn } from "@/shared/utils/cn";
 // (rechargement complet au lieu de la préservation d'état).
 
 // ---------------------------------------------------------------------------
-// BottomBarActivePill
-// ---------------------------------------------------------------------------
-
-interface BottomBarActivePillProps {
-	/**
-	 * Shared layoutId identifying this pill across sibling tabs.
-	 * All tab items in the same bar must pass the same `groupId` so the pill
-	 * morphs smoothly between them when the active tab changes.
-	 */
-	groupId: string;
-	/** Override class names for custom sizing or color. */
-	className?: string;
-}
-
-/**
- * iOS-18-style pill indicator rendered above the active tab.
- *
- * Render **only** on the active item. When the active tab changes, `motion/react`
- * morphs the pill from its previous position to the new one via shared `layoutId`.
- * Respects `prefers-reduced-motion` (static span, no layout animation).
- *
- * @example
- * ```tsx
- * {items.map(item => (
- *   <li key={item.href} className="flex-1">
- *     <Link href={item.href} className={bottomBarItemClass}>
- *       {isActive(item) && <BottomBarActivePill groupId="shop-nav" />}
- *       <Icon className={bottomBarIconClass} />
- *       <span className={bottomBarLabelClass}>{item.label}</span>
- *     </Link>
- *   </li>
- * ))}
- * ```
- */
-export function BottomBarActivePill({ groupId, className }: BottomBarActivePillProps) {
-	const prefersReducedMotion = useReducedMotion();
-
-	const pillClass = cn(
-		"absolute top-0 left-1/2 -translate-x-1/2",
-		"w-8 h-1 rounded-full",
-		"bg-primary",
-		"forced-colors:bg-[Highlight]",
-		className,
-	);
-
-	if (prefersReducedMotion) {
-		return <span className={pillClass} aria-hidden="true" />;
-	}
-
-	return (
-		<m.span
-			layoutId={groupId}
-			transition={MOTION_CONFIG.spring.snappy}
-			className={pillClass}
-			aria-hidden="true"
-		/>
-	);
-}
-
-// ---------------------------------------------------------------------------
 // BottomBar
 // ---------------------------------------------------------------------------
 
@@ -123,8 +63,10 @@ interface BottomBarProps {
  * offset themselves above it. That value is the *total* occupied height,
  * `env(safe-area-inset-bottom)` included — consumers add their own breathing room
  * (`+ 1rem`) and **never** re-add the safe-area inset. Handles iOS
- * safe-area insets (bottom + sides), backdrop blur with an *opaque* fallback,
- * slide-out hide state (with `inert`), and entrance spring.
+ * safe-area insets (bottom + sides), an **opaque paper surface** (no backdrop
+ * blur — the contrast must not depend on what scrolls behind, nor on the
+ * browser supporting `backdrop-filter`), slide-out hide state (with `inert`),
+ * and entrance spring.
  *
  * Slides out automatically when the soft keyboard opens (via {@link useKeyboardOpen},
  * folded into the animation target — the CSS `[data-hide-on-keyboard]` rule alone
@@ -134,8 +76,10 @@ interface BottomBarProps {
  * **Composition tips:**
  * - Wrap items in a `<ul role="list">` carrying {@link bottomBarContainerClass},
  *   one `<li className="flex-1">` per tab, so screen readers announce the item count.
- * - Render {@link BottomBarActivePill} only on the active item (with a shared
- *   `groupId`) for the iOS-18-style morphing indicator.
+ * - L'onglet courant porte `bottomBarActiveItemClass` : une languette pleine
+ *   hauteur en aplat d'accent, pas un ornement posé dessus. Poser `data-accent`
+ *   sur le `<li>` courant pour choisir sa couleur ; hors `data-accent` elle
+ *   retombe sur le rose signature.
  * - For iOS/Android-native feel, call `triggerHaptic("selection")` from
  *   `@/shared/hooks/use-haptic` on tab change (skip it when the tab is already active).
  * - Use `<CountBadge>` (shared/components/ui/count-badge) for counters on icon

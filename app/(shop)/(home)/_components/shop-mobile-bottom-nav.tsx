@@ -14,7 +14,6 @@ import { useEffect, useRef, useState } from "react";
 
 import {
 	BottomBar,
-	BottomBarActivePill,
 	bottomBarContainerClass,
 	bottomBarItemWrapperClass,
 	bottomBarItemClass,
@@ -40,6 +39,33 @@ import { cn } from "@/shared/utils/cn";
  * avec une CTA sticky ou un flow focus (checkout).
  */
 const HIDDEN_ROUTES = [ROUTES.SHOP.CHECKOUT, ROUTES.SHOP.CHECKOUT_RETURN, ROUTES.AUTH.SIGN_IN];
+
+/**
+ * Accent de marque par onglet — la couleur de sa languette quand il est courant.
+ *
+ * Chaque rayon de la boutique a le sien, et les deux DÉCLENCHEURS (Rechercher,
+ * Panier) partagent « soleil » : la languette d'un lieu dure tant qu'on y est,
+ * celle d'un panneau ouvert est passagère. Deux natures, deux couleurs — c'est ce
+ * qui remplace l'ancienne pastille unique, qui servait indistinctement à dire
+ * « ta page » et « ce panneau est ouvert », et glissait de l'une à l'autre en
+ * racontant une navigation qui n'avait pas eu lieu.
+ *
+ * ⚠️ Ces valeurs sont posées en `data-accent` sur le `<li>`, PAS héritées de la
+ * cascade : la barre est `createPortal(…, document.body)`, donc elle ne vit dans
+ * aucune `<section data-accent>` et `--section-accent` ne lui descend jamais.
+ * `[data-accent="mint"]` étant un simple sélecteur d'attribut
+ * (`app/styles/section-accents.css`), le poser sur l'élément suffit.
+ *
+ * Les quatre accents sont employés en APLAT sous `--foreground` (7,85 à 12,68:1)
+ * et jamais en encre, où ils tomberaient à 1,54–2,49:1.
+ */
+const TAB_ACCENT = {
+	home: "rose",
+	products: "lavender",
+	search: "sun",
+	wishlist: "mint",
+	cart: "sun",
+} as const;
 
 /** Id du sheet panier dans le `sheet-store` (cf. `SheetId`). */
 const CART_SHEET_ID = "cart" as const;
@@ -275,7 +301,13 @@ export function ShopMobileBottomNav() {
 
 					if (tab.type === "button") {
 						return (
-							<li key={tab.id} className={bottomBarItemWrapperClass}>
+							<li
+								key={tab.id}
+								className={bottomBarItemWrapperClass}
+								data-accent={
+									tab.isActive ? TAB_ACCENT[tab.id as keyof typeof TAB_ACCENT] : undefined
+								}
+							>
 								<button
 									type="button"
 									onClick={(e) => {
@@ -287,7 +319,6 @@ export function ShopMobileBottomNav() {
 									aria-expanded={tab.isActive}
 									aria-label={"ariaLabel" in tab ? tab.ariaLabel : tab.label}
 								>
-									{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
 									{iconEl}
 									<span className={bottomBarLabelClass}>{tab.label}</span>
 								</button>
@@ -296,7 +327,11 @@ export function ShopMobileBottomNav() {
 					}
 
 					return (
-						<li key={tab.id} className={bottomBarItemWrapperClass}>
+						<li
+							key={tab.id}
+							className={bottomBarItemWrapperClass}
+							data-accent={tab.isActive ? TAB_ACCENT[tab.id as keyof typeof TAB_ACCENT] : undefined}
+						>
 							<Link
 								href={tab.href}
 								// Les onglets-liens n'émettaient AUCUN haptique là où les
@@ -309,7 +344,6 @@ export function ShopMobileBottomNav() {
 								aria-current={tab.isActive ? "page" : undefined}
 								aria-label={"ariaLabel" in tab ? tab.ariaLabel : undefined}
 							>
-								{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
 								{iconEl}
 								<span className={bottomBarLabelClass}>{tab.label}</span>
 								<LoadingIndicator />

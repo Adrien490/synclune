@@ -4,7 +4,6 @@ import { createPortal } from "react-dom";
 import { useState } from "react";
 import {
 	BottomBar,
-	BottomBarActivePill,
 	bottomBarContainerClass,
 	bottomBarItemWrapperClass,
 	bottomBarItemClass,
@@ -100,7 +99,6 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 						badgeCount > 0 ? `${label}, ${badgeAriaLabel(tab.id, badgeCount)}` : undefined
 					}
 				>
-					{isActive && <BottomBarActivePill groupId="admin-nav" />}
 					<span className="relative">
 						<Icon
 							className={bottomBarIconClass}
@@ -155,7 +153,6 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 						aria-controls={ADMIN_MENU_SHEET_CONTENT_ID}
 						aria-label="Menu de navigation"
 					>
-						{isMenuOpen && <BottomBarActivePill groupId="admin-nav" />}
 						<ListIcon
 							className={bottomBarIconClass}
 							weight={isMenuOpen ? "fill" : "regular"}

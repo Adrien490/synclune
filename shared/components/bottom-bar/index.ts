@@ -1,4 +1,4 @@
-export { BottomBar, BottomBarActivePill } from "./bottom-bar";
+export { BottomBar } from "./bottom-bar";
 export {
 	bottomBarContainerClass,
 	bottomBarItemWrapperClass,
