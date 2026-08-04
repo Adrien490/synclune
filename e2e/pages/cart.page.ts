@@ -12,12 +12,38 @@ export class CartPage {
 	readonly checkoutLink: Locator;
 
 	constructor(private page: Page) {
-		this.openButton = page.getByRole("button", { name: /Ouvrir mon panier/i });
+		/**
+		 * ⚠️ **Deux déclencheurs, selon la largeur — et c'est le point.**
+		 *
+		 * `CartSheetTrigger` (`aria-label="Ouvrir mon panier"`) vit dans la navbar
+		 * en `hidden lg:inline-flex` : sous 64 rem il est en `display:none`, donc
+		 * absent de l'arbre d'accessibilité. Sous ce seuil, le seul ouvreur est
+		 * l'onglet de `ShopMobileBottomNav`, dont le libellé est
+		 * `Panier : N articles` / `Panier vide`.
+		 *
+		 * Ne cibler que le premier rendait TOUTE cette suite inopérante sur les
+		 * projets `mobile-chrome` (412 px) et `mobile-webkit` (390 px) — qui
+		 * exécutent pourtant `cart.spec.ts`. C'est ce trou qui a laissé la branche
+		 * `Drawer` sans couverture, et avec elle l'absence de bouton de fermeture
+		 * sur mobile : le test nommé « se ferme via le bouton de fermeture »
+		 * n'atteignait jamais l'assertion.
+		 *
+		 * ⚠️ **Le libellé mobile vient de `tabAriaLabel`, PAS de la région
+		 * d'annonce.** Les deux vivent dans `shop-mobile-bottom-nav.tsx` et
+		 * divergent : la région écrit `Panier : 3 articles` (deux-points), tandis
+		 * que `tabAriaLabel` — celui du bouton — écrit `Panier, 3 articles`
+		 * (virgule), et `Panier` tout court quand le panier est vide. Un premier
+		 * correctif avait dérivé son motif de la mauvaise chaîne et ne matchait
+		 * donc AUCUNE des trois formes. D'où `^Panier` sans suffixe, et le test
+		 * de couture `cart-open-button-label.regression.test.ts` qui compose les
+		 * libellés depuis la vraie fonction.
+		 */
+		this.openButton = page.getByRole("button", { name: /Ouvrir mon panier|^Panier/i }).first();
 		this.dialog = page.getByRole("dialog");
-		this.emptyMessage = this.dialog.getByText(/Votre panier est vide/i);
+		this.emptyMessage = this.dialog.getByText(/Ton panier est encore vide/i);
 		this.shopLink = this.dialog.getByRole("link", { name: /Découvrir la boutique/i });
 		this.collectionsLink = this.dialog.getByRole("link", { name: /Voir les collections/i });
-		this.closeButton = this.dialog.getByRole("button", { name: /Fermer/i });
+		this.closeButton = this.dialog.getByRole("button", { name: /Fermer le panier/i });
 		this.title = this.dialog.getByText(/Mon panier/i);
 		this.checkoutLink = this.dialog.getByRole("link", {
 			name: /Passer commande|Commander|Paiement/i,

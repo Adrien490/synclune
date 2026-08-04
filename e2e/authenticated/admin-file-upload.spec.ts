@@ -53,7 +53,7 @@ test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, (
 	test("la zone d'upload et ses contraintes sont visibles", async ({ page }) => {
 		// Sur desktop c'est la NativeDropzone qui est rendue visible (l'action sheet
 		// mobile est présente dans le DOM mais masquée par la media query).
-		const dropzone = page.getByRole("button", { name: /Zone d'upload des médias/i });
+		const dropzone = page.getByRole("button", { name: /Zone d'envoi des médias du bijou/i });
 		await expect(dropzone).toBeVisible();
 
 		// Les contraintes réellement appliquées par le serveur doivent être écrites.
@@ -134,7 +134,7 @@ test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, (
 
 	test("le formulaire refuse la soumission sans média", async ({ page }) => {
 		// La carte Médias porte un validateur « Au moins une image est requise ».
-		await page.getByRole("button", { name: /^Créer/i }).click();
+		await page.getByRole("button", { name: /Publier le bijou|Enregistrer le brouillon/i }).click();
 
 		await expect(page.getByText(/Au moins une image est requise/i)).toBeVisible({
 			timeout: TIMEOUTS.VALIDATION,
@@ -158,7 +158,9 @@ test.describe("Admin — upload de médias, surface mobile", { tag: ["@regressio
 		// côté serveur) avant de la remplacer — contenu inadapté, puis décalage.
 		const trigger = page.getByRole("button", { name: /Ajouter des médias/i });
 		await expect(trigger).toBeVisible();
-		await expect(page.getByRole("button", { name: /Zone d'upload des médias/i })).toBeHidden();
+		await expect(
+			page.getByRole("button", { name: /Zone d'envoi des médias du bijou/i }),
+		).toBeHidden();
 
 		await trigger.click();
 

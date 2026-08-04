@@ -25,17 +25,33 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 		expect(count).toBeGreaterThan(0);
 	});
 
+	// ⚠️ Ce test cherchait `[class*="counter"], [data-gallery-counter]` — le
+	// composant n'émettait NI l'un NI l'autre. Seul le repli `.or(liveRegion)` le
+	// faisait passer : le compteur visuel n'a jamais été couvert, et le test était
+	// vert pour la mauvaise raison. Il cible désormais le sélecteur réel, et les
+	// deux surfaces sont vérifiées SÉPARÉMENT — un `or` ne peut plus masquer la
+	// disparition de l'une des deux.
 	test("le compteur d'images est visible quand il y a plusieurs images", async ({ page }) => {
 		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
 		const images = gallery.locator("img");
 		const imgCount = await images.count();
 
 		if (imgCount > 1) {
-			const counter = gallery.locator('[class*="counter"], [data-gallery-counter]');
-			const liveRegion = gallery.locator('[role="status"][aria-live="polite"]');
-			// Either the visual counter or the SR live region should be present
-			await expect(counter.or(liveRegion).first()).toBeAttached();
+			// Le numéro de vue vit dans la réserve basse du carton, à toutes les
+			// tailles (l'ancienne pastille de verre était `hidden sm:block`).
+			await expect(gallery.getByTestId("gallery-counter")).toBeVisible();
+			await expect(gallery.getByTestId("gallery-counter")).toHaveText(
+				new RegExp(`1\\s*/\\s*${imgCount}`),
+			);
 		}
+	});
+
+	test("la région live annonce la vue courante", async ({ page }) => {
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		const liveRegion = gallery.locator('[role="status"][aria-live="polite"]');
+
+		await expect(liveRegion).toHaveCount(1);
+		await expect(liveRegion).toHaveText(/Image 1 sur/);
 	});
 
 	test("les vignettes sont affichées quand il y a plusieurs images", async ({ page }) => {

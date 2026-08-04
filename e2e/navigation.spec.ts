@@ -6,14 +6,19 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 	});
 
-	test("la homepage charge avec navbar et footer", { tag: ["@smoke"] }, async ({ page }) => {
+	test("la homepage charge avec navbar, étal et footer", { tag: ["@smoke"] }, async ({ page }) => {
 		// Le titre de la page doit contenir Synclune
 		await expect(page).toHaveTitle(/Synclune/);
 
-		// ⚠️ Le contenu de la page est volontairement vide en attendant la refonte
-		// landing (2026-08-03) — seuls navbar et footer sont garantis ici.
 		const navbar = page.getByRole("navigation", { name: "Navigation principale" });
 		await expect(navbar).toBeVisible();
+
+		// Ancre de la home réintroduite avec le premier écran « L'étal »
+		// (2026-08-04) : le bloc titre est rendu hors de la frontière Suspense
+		// de la grille, il est donc là même catalogue vide.
+		const etal = page.locator("#etal");
+		await expect(etal).toBeVisible();
+		await expect(etal.getByRole("heading", { level: 1 })).toHaveText(/Des bijoux colorés/);
 
 		const footer = page.getByRole("contentinfo");
 		await expect(footer).toBeAttached();

@@ -20,7 +20,7 @@ test.describe("Panier", { tag: ["@critical"] }, () => {
 	test("le panier vide affiche un message d'état vide", async ({ cartPage }) => {
 		await cartPage.open();
 
-		// Le panier est vide: message «Votre panier est vide»
+		// Le panier est vide : message «Ton panier est encore vide»
 		await expect(cartPage.emptyMessage).toBeVisible();
 	});
 
@@ -41,6 +41,46 @@ test.describe("Panier", { tag: ["@critical"] }, () => {
 	test("le cart sheet se ferme via le bouton de fermeture", async ({ cartPage }) => {
 		await cartPage.open();
 		await cartPage.close();
+	});
+
+	/**
+	 * Ce test existe parce que le bouton de fermeture MANQUAIT entièrement sur la
+	 * branche mobile (`DrawerContent` n'en rend pas, contrairement à
+	 * `SheetContent`) et que rien ne le voyait : le déclencheur ciblé par la page
+	 * object était `display:none` sous 64 rem, donc la suite ne s'ouvrait même pas
+	 * sur les projets mobiles.
+	 *
+	 * L'assertion porte sur la SORTIE, pas sur le bouton : sur un panneau qui
+	 * recouvrirait de nouveau tout le scrim, avec `handleOnly` actif, il ne
+	 * resterait aucune affordance de fermeture visible.
+	 */
+	test("le bouton de fermeture est visible et atteignable au clavier", async ({ cartPage }) => {
+		await cartPage.open();
+
+		await expect(cartPage.closeButton).toBeVisible();
+		await cartPage.closeButton.focus();
+		await expect(cartPage.closeButton).toBeFocused();
+	});
+
+	test("le scrim reste tapable — le panneau ne recouvre pas tout l'écran", async ({
+		page,
+		cartPage,
+	}) => {
+		await cartPage.open();
+
+		const panel = cartPage.dialog;
+		const panelBox = await panel.boundingBox();
+		const viewport = page.viewportSize();
+		expect(panelBox).not.toBeNull();
+		expect(viewport).not.toBeNull();
+
+		// Au moins une bande de scrim doit rester découverte : c'est elle qui rend
+		// la fermeture par tap-à-côté possible. À 100 dvh il n'en restait aucune.
+		const uncovered =
+			(panelBox?.y ?? 0) > 0 ||
+			(panelBox?.x ?? 0) > 0 ||
+			(panelBox?.x ?? 0) + (panelBox?.width ?? 0) < (viewport?.width ?? 0);
+		expect(uncovered).toBe(true);
 	});
 
 	test("le cart sheet se ferme avec la touche Escape", async ({ page, cartPage }) => {

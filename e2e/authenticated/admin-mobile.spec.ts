@@ -53,9 +53,39 @@ test.describe("Admin - Mobile (viewport 390x844)", { tag: ["@regression"] }, () 
 			"true",
 		);
 
-		// Navigation links should be visible inside the menu
-		await expect(sheet.getByRole("link", { name: /Produits/i }).first()).toBeVisible();
-		await expect(sheet.getByRole("link", { name: /Commandes/i }).first()).toBeVisible();
+		// Depuis le passage au « tableau de service » (2026-08-04), la carte du site
+		// est repliée : seul le groupe de la route courante s'ouvre d'office. Sur
+		// `/admin`, c'est `Pilotage` — donc « Commandes » est visible, « Produits »
+		// non, tant que `Catalogue` n'est pas déplié.
+		await expect(sheet.getByRole("button", { name: /Catalogue/i })).toHaveAttribute(
+			"aria-expanded",
+			"false",
+		);
+		await expect(sheet.getByRole("link", { name: /^Commandes$/ }).first()).toBeVisible();
+
+		await sheet.getByRole("button", { name: /Catalogue/i }).click();
+		await expect(sheet.getByRole("link", { name: /^Produits$/ })).toBeVisible();
+	});
+
+	test("le menu offre une sortie visible (pas seulement la poignée)", async ({ page }) => {
+		await page.goto("/admin");
+		await page.waitForLoadState("domcontentloaded");
+
+		await page.getByRole("button", { name: MENU_TRIGGER }).click();
+		const sheet = page.locator("#admin-menu-sheet-content");
+		await expect(sheet).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+
+		// La bottom bar se dépublie à l'ouverture : sans ce bouton, les deux seules
+		// cibles de fermeture vivaient dans les 8 % hauts de l'écran.
+		const close = sheet.getByRole("button", { name: "Fermer le menu" });
+		await expect(close).toBeVisible();
+		await close.click();
+
+		await expect(sheet).toBeHidden({ timeout: TIMEOUTS.FEEDBACK });
+		await expect(page.getByRole("button", { name: MENU_TRIGGER })).toHaveAttribute(
+			"aria-expanded",
+			"false",
+		);
 	});
 
 	test("la navigation mobile fonctionne depuis le menu sheet", async ({ page }) => {
@@ -67,10 +97,8 @@ test.describe("Admin - Mobile (viewport 390x844)", { tag: ["@regression"] }, () 
 		const sheet = page.locator("#admin-menu-sheet-content");
 		await expect(sheet).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 
-		await sheet
-			.getByRole("link", { name: /Produits/i })
-			.first()
-			.click();
+		await sheet.getByRole("button", { name: /Catalogue/i }).click();
+		await sheet.getByRole("link", { name: /^Produits$/ }).click();
 		await page.waitForLoadState("domcontentloaded");
 
 		await expect(page).toHaveURL(/\/admin\/catalogue\/produits/);
@@ -152,13 +180,12 @@ test.describe("Admin - Mobile (viewport 390x844)", { tag: ["@regression"] }, () 
 		await page.waitForLoadState("domcontentloaded");
 
 		// Form fields should be visible and fillable
-		const nameField = page.getByLabel(/^Nom$/i).or(page.getByLabel(/Nom du produit/i));
+		const nameField = page.getByLabel(/Titre du bijou/i);
 		await expect(nameField.first()).toBeVisible();
 
-		// Submit button should be visible (may need to scroll)
-		const submitButton = page.getByRole("button", {
-			name: /Créer|Enregistrer|Sauvegarder|Publier|Brouillon/i,
-		});
+		// Ciblé par type et non par libellé : celui-ci est dynamique (il annonce ce
+		// qui manque tant que la pièce est incomplète).
+		const submitButton = page.locator('button[type="submit"]');
 		await expect(submitButton.first()).toBeAttached();
 	});
 
@@ -204,6 +231,26 @@ test.describe("Admin - Mobile (viewport 390x844)", { tag: ["@regression"] }, () 
 
 		await expect(sheet.getByRole("link", { name: /Matériaux/i })).toBeVisible();
 		await expect(sheet.getByRole("link", { name: /^Commandes$/i })).toHaveCount(0);
+	});
+
+	test("l'ardoise annonce l'état des files, travail ou pas", async ({ page }) => {
+		await page.goto("/admin");
+		await page.waitForLoadState("domcontentloaded");
+
+		await page.getByRole("button", { name: MENU_TRIGGER }).click();
+		const sheet = page.locator("#admin-menu-sheet-content");
+		await expect(sheet).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+
+		// Le contenu dépend des données seedées : soit une file, soit l'état « à
+		// jour ». Ce qui est invariant, c'est qu'il y a TOUJOURS une réponse — le
+		// menu ne peut pas rester muet sur ce qu'il reste à faire.
+		const board = sheet.getByRole("region", { name: /Ce qui t'attend/i });
+		await expect(board).toBeVisible();
+		await expect(
+			board
+				.getByText(/Rien à traiter/i)
+				.or(board.getByRole("link", { name: /à expédier|à rattraper/i }).first()),
+		).toBeVisible();
 	});
 });
 

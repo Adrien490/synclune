@@ -38,7 +38,7 @@ export class ProductCatalogPage {
 	 * Check if the current product detail page has a variant selector.
 	 */
 	async hasVariantSelector(): Promise<boolean> {
-		const variantRegion = this.page.getByRole("region", { name: /Choisissez vos options/i });
+		const variantRegion = this.page.getByRole("region", { name: /Choisis tes options/i });
 		return (await variantRegion.count()) > 0;
 	}
 
@@ -46,7 +46,12 @@ export class ProductCatalogPage {
 	 * Select a color variant by clicking the first available color radio.
 	 */
 	async selectFirstAvailableColor(): Promise<boolean> {
-		const colorGroup = this.page.getByRole("radiogroup", { name: /Sélection de couleur/i });
+		// Le nom accessible du fieldset est « Sélection de la variante » (combos M2M,
+		// mono OU multi-couleur) — pas « couleur ». Le sélecteur cherchait l'ancien
+		// libellé et ne matchait donc RIEN : `selectFirstAvailableColor` rendait
+		// `false` en silence depuis la migration M2M du 2026-05-15, et les appelants
+		// sautaient l'étape sans jamais échouer.
+		const colorGroup = this.page.getByRole("radiogroup", { name: /Sélection de la variante/i });
 		if ((await colorGroup.count()) === 0) return false;
 
 		const availableColor = colorGroup

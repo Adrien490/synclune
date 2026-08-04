@@ -7,12 +7,24 @@ test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 	});
 
-	test("la homepage n'a pas de h1 en double", async ({ page }) => {
+	test("la homepage a exactement un h1", async ({ page }) => {
 		const h1Elements = page.getByRole("heading", { level: 1 });
-		const count = await h1Elements.count();
-		// La homepage peut avoir 0 ou 1 h1 visible (le hero contient le titre principal)
-		// On accepte 0 ou 1 mais jamais plus
-		expect(count).toBeLessThanOrEqual(1);
+
+		// ⚠️ L'assertion était « 0 ou 1 » avec un commentaire affirmant que le
+		// hero portait le titre — or le hero avait été supprimé (vidage de la
+		// landing, 2026-08-03) et la home n'avait plus AUCUN h1 : le test
+		// passait pour la mauvaise raison, et la home pouvait perdre son titre
+		// principal sans qu'aucun test ne rougisse. Le bloc titre de l'étal le
+		// rend de nouveau, quel que soit l'état du catalogue (il vit hors de la
+		// frontière Suspense de la grille).
+		await expect(h1Elements).toHaveCount(1);
+		await expect(h1Elements.first()).toBeVisible();
+
+		// La hiérarchie ne saute pas de h1 à h3 : les titres de carte sont des
+		// h3, un h2 (masqué) les rattache au titre de page. `heading-order` est
+		// une règle best-practice d'axe, hors des tags WCAG scannés ici — sans
+		// cette assertion, rien ne la couvre.
+		await expect(page.getByRole("heading", { level: 2 })).not.toHaveCount(0);
 	});
 
 	test("les images de la homepage ont des attributs alt", async ({ page }) => {

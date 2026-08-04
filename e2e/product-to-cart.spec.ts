@@ -50,7 +50,7 @@ test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 			} else {
 				// Product may require SKU selection first (variants)
 				const variantSelector = page
-					.getByRole("region", { name: /Choisissez vos options/i })
+					.getByRole("region", { name: /Choisis tes options/i })
 					.or(page.locator('[role="radiogroup"]'));
 				expect(
 					await variantSelector.count(),

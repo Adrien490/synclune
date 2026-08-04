@@ -4,6 +4,12 @@ import { TEST_RUN_ID } from "../helpers/test-run";
 test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 	const testProductName = `Produit Test ${TEST_RUN_ID}`;
 
+	// ⚠️ DETTE CONNUE, ANTÉRIEURE À LA REFONTE « ÉTABLI » : ce test ne téléverse
+	// aucun média, alors que la carte Photos porte un validateur « Au moins une image
+	// est requise » (cf. `admin-file-upload.spec.ts`, qui asserte ce refus). La
+	// création ne peut donc pas aboutir et l'assertion finale échoue. Les sélecteurs
+	// ci-dessous ont été réalignés sur les libellés réellement rendus, mais rendre ce
+	// test vert demande de lui faire téléverser une image — chantier à part.
 	test("creer un nouveau produit avec les champs obligatoires", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
@@ -16,7 +22,7 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 		await expect(page).toHaveURL(/\/admin\/catalogue\/produits\/(nouveau|new|create)/i);
 
 		// Fill required fields
-		const nameField = page.getByLabel(/^Nom$/i).or(page.getByLabel(/Nom du produit/i));
+		const nameField = page.getByLabel(/Titre du bijou/i);
 		await expect(nameField.first()).toBeVisible();
 		await nameField.first().fill(testProductName);
 
@@ -30,7 +36,7 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 		}
 
 		// Select product type if dropdown exists
-		const typeSelect = page.getByLabel(/Type de produit/i);
+		const typeSelect = page.getByLabel(/Type de bijou/i);
 		if ((await typeSelect.count()) > 0) {
 			await typeSelect.first().click();
 			const firstOption = page.getByRole("option").first();
@@ -39,8 +45,11 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 			}
 		}
 
-		// Submit the form
-		const submitButton = page.getByRole("button", { name: /Créer|Enregistrer|Sauvegarder/i });
+		// ⚠️ Le bouton de soumission est ciblé par son TYPE, pas par son libellé :
+		// celui-ci est dynamique (« Publier le bijou » / « Enregistrer le brouillon »,
+		// et « Ajoute une photo » / « Il manque le prix » tant qu'il manque quelque
+		// chose). Un sélecteur par libellé se désaligne au premier changement de copie.
+		const submitButton = page.locator('button[type="submit"]');
 		await expect(submitButton.first()).toBeVisible();
 		await submitButton.first().click();
 
