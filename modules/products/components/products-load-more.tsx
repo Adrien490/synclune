@@ -27,7 +27,14 @@ interface ProductsLoadMoreProps {
  * Footer stays accessible because hasMore eventually becomes false.
  *
  * Parent (`product-list.tsx`) re-mounts via key derived from filters/sort/search
- * to reset accumulated state when URL searchParams change.
+ * to reset accumulated state when URL searchParams change. ⚠️ Ce remount est la
+ * SEULE chose qui réinitialise `LoadMore` : son `useActionState` fige son état
+ * initial, donc un `initialCursor` qui change ne suffit pas.
+ *
+ * `itemClassName="product-item"` : les cartes ajoutées reprennent l'animation
+ * d'entrée de la grille du catalogue (SSOT `app/styles/animations.css`, avec son
+ * repli `prefers-reduced-motion`), au lieu d'en jouer une seconde qui leur serait
+ * propre. `--item-index` est posé par `LoadMore`, réinitialisé à chaque lot.
  */
 export function ProductsLoadMore({
 	initialCursor,
@@ -46,13 +53,12 @@ export function ProductsLoadMore({
 			initialHasMore={initialHasMore}
 			initialDisplayedCount={initialDisplayedCount}
 			totalCount={totalCount}
-			controlsId="products-list"
 			itemsLabel="produit"
 			itemsLabelPlural="produits"
 			buttonLabel="Voir plus de produits"
 			errorMessage="Impossible de charger plus de produits"
-			itemsContainerLabel="Produits supplémentaires"
-			itemsContainerClassName="grid grid-cols-2 gap-4 sm:gap-6"
+			itemsContainerClassName="grid grid-cols-2 items-start gap-4 sm:gap-6"
+			itemClassName="product-item"
 			enableAutoLoad
 			autoLoadThreshold={0.8}
 			autoLoadRootMargin="0px 0px 200px 0px"
