@@ -606,10 +606,19 @@ model OrderItem {
   productTitle    String  @db.VarChar(200)
   productImageUrl String? @db.VarChar(2048)
 
-  skuColor      String? @db.VarChar(100)
-  skuColorHexes String? @db.VarChar(200)
-  skuMaterial   String? @db.VarChar(100)
-  skuSize       String? @db.VarChar(50)
+  // Pas de `skuColorHexes` : le snapshot CSV des hex n'avait qu'un rendu dans tout
+  // le dépôt — les pastilles de couleur de l'e-mail de confirmation. Ni le PDF de
+  // facture, ni l'admin, ni le suivi client, ni l'e-mail d'expédition ne le
+  // lisaient, alors qu'il traversait 8 couches de transport. `skuColor` porte le
+  // NOM de la couleur et reste : c'est lui qui est imprimé sur la facture.
+  //
+  // ⚠️ Condition de réouverture : les hex ne se dérivent PAS au rendu. L'invariant 4
+  // (snapshots `OrderItem` figés au checkout) l'interdit — un renvoi d'e-mail six
+  // mois plus tard afficherait les couleurs COURANTES du SKU, ou rien s'il a été
+  // supprimé. Rouvrir la pastille, c'est rouvrir la colonne.
+  skuColor    String? @db.VarChar(100)
+  skuMaterial String? @db.VarChar(100)
+  skuSize     String? @db.VarChar(50)
 
   price    Int
   quantity Int

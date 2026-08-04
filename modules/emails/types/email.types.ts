@@ -20,7 +20,6 @@ export type OrderItem = {
 	 * Optionnel pour rétro-compat avec les commandes antérieures à la migration
 	 * `add_sku_color_hexes_snapshot` (la pastille est juste skipée si absent).
 	 */
-	skuColorHexes?: string | null;
 	skuMaterial: string | null;
 	skuSize: string | null;
 	quantity: number;

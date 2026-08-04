@@ -77,7 +77,6 @@ export function buildPostCheckoutTasksFromPI(
 				items: order.items.map((item) => ({
 					productTitle: item.productTitle ?? "Produit",
 					skuColor: item.skuColor,
-					skuColorHexes: item.skuColorHexes,
 					skuMaterial: item.skuMaterial,
 					skuSize: item.skuSize,
 					quantity: item.quantity,

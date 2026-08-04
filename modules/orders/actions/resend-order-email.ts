@@ -101,7 +101,6 @@ export async function resendOrderEmail(
 					select: {
 						productTitle: true,
 						skuColor: true,
-						skuColorHexes: true,
 						skuMaterial: true,
 						skuSize: true,
 						quantity: true,

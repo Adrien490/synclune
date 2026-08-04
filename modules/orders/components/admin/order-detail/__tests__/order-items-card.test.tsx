@@ -38,7 +38,6 @@ function createItem(overrides = {}) {
 		productImageUrl: null,
 		skuSku: null,
 		skuColor: null,
-		skuColorHexes: null,
 		skuSize: null,
 		skuMaterial: null,
 		price: 2500,

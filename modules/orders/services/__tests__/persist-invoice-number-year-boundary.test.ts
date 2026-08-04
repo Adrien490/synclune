@@ -108,7 +108,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 				productImageUrl: null,
 				skuSku: "SKU-1",
 				skuColor: null,
-				skuColorHexes: null,
 				skuMaterial: "Argent",
 				skuSize: null,
 				price: 4500,

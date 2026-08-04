@@ -76,7 +76,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 				productTitle: "Collier Lune d'Argent",
 				productImageUrl: null,
 				skuColor: "Argent",
-				skuColorHexes: "#C0C0C0",
 				skuMaterial: "Argent 925",
 				skuSize: null,
 				price: 4500,

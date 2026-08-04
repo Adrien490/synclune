@@ -123,7 +123,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 				productImageUrl: null,
 				skuSku: "SKU-1",
 				skuColor: "Argent",
-				skuColorHexes: null,
 				skuMaterial: "Argent 925",
 				skuSize: null,
 				price: 4500,
@@ -173,8 +172,6 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			expect(result?.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
 			expect(result?.invoiceNumber).toContain(`F-${year}-`);
 		});
-
-
 
 		it("pads the sequence to 5 digits", async () => {
 			runTx();

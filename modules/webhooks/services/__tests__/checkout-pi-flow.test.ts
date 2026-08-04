@@ -144,7 +144,6 @@ function makeOrderRow(overrides: Record<string, unknown> = {}) {
 		shippingCountry: "FR",
 		shippingPhone: "+33600000000",
 		subtotal: 8000,
-		discountAmount: 0,
 		shippingCost: 600,
 		total: 8600,
 		user: { id: "user-1" },
@@ -183,7 +182,6 @@ function makeOrderWithItems(overrides: Partial<OrderWithItems> = {}): OrderWithI
 		shippingCountry: "FR",
 		shippingPhone: "+33600000000",
 		subtotal: 8000,
-		discountAmount: 0,
 		shippingCost: 600,
 		total: 8600,
 		items: [
@@ -193,7 +191,6 @@ function makeOrderWithItems(overrides: Partial<OrderWithItems> = {}): OrderWithI
 				price: 8000,
 				productTitle: "Collier argent",
 				skuColor: "Argent",
-				skuColorHexes: null,
 				skuMaterial: "Argent 925",
 				skuSize: "Unique",
 				sku: {
@@ -497,7 +494,6 @@ describe("buildPostCheckoutTasksFromPI", () => {
 				{
 					productTitle: null,
 					skuColor: "Or",
-					skuColorHexes: null,
 					skuMaterial: "Or 18k",
 					skuSize: "52",
 					quantity: 2,

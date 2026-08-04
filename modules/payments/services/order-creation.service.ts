@@ -330,10 +330,6 @@ export async function createOrderInTransaction(
 				const primaryImage = pickPrimaryImage(sku.images);
 				const imageUrl = getValidImageUrl(primaryImage?.url ?? null) ?? null;
 
-				const colorsHex = sku.colors
-					.map((c) => c.hex)
-					.filter(Boolean)
-					.join(",");
 				// Micro-entreprise franchise TVA (art. 293 B CGI) : aucune TVA par ligne
 				// n'est stockée. Le total ligne (HT = TTC) se dérive de price × quantity ;
 				// la facture le recalcule dans buildInvoiceData() (taxRate=0).
@@ -344,7 +340,6 @@ export async function createOrderInTransaction(
 						productTitle: product.title,
 						productImageUrl: imageUrl,
 						skuColor: truncateSkuLabel(sku.colors.map((c) => c.name).join(" · ") || null),
-						skuColorHexes: colorsHex || null,
 						skuMaterial: truncateSkuLabel(sku.material ?? null),
 						skuSize: sku.size ?? null,
 						price: sku.priceInclTax,

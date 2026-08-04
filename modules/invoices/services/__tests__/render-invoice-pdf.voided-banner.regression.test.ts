@@ -94,7 +94,6 @@ function makeVoidedOrder(): Order {
 				productTitle: "Pendentif Argent",
 				productImageUrl: null,
 				skuColor: "Argent",
-				skuColorHexes: "#C0C0C0",
 				skuMaterial: "Argent 925",
 				skuSize: null,
 				price: 4500,
