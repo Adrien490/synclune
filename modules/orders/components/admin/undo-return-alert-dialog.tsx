@@ -11,7 +11,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useUndoReturn } from "@/modules/orders/hooks/use-undo-return";
+import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 export const UNDO_RETURN_DIALOG_ID = "undo-return";
@@ -29,7 +29,7 @@ interface UndoReturnData {
 export function UndoReturnAlertDialog() {
 	const dialog = useAlertDialog<UndoReturnData>(UNDO_RETURN_DIALOG_ID);
 
-	const { action, isPending } = useUndoReturn({
+	const { action, isPending } = useUpdateOrderStatus("undo-return", {
 		onSuccess: () => {
 			dialog.close();
 		},

@@ -11,7 +11,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useMarkAsDelivered } from "@/modules/orders/hooks/use-mark-as-delivered";
+import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 export const MARK_AS_DELIVERED_DIALOG_ID = "mark-as-delivered";
@@ -25,7 +25,7 @@ interface MarkAsDeliveredData {
 export function MarkAsDeliveredAlertDialog() {
 	const dialog = useAlertDialog<MarkAsDeliveredData>(MARK_AS_DELIVERED_DIALOG_ID);
 
-	const { action, isPending } = useMarkAsDelivered({
+	const { action, isPending } = useUpdateOrderStatus("delivered", {
 		onSuccess: () => {
 			dialog.close();
 		},

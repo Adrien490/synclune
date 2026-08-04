@@ -340,6 +340,7 @@ export const ORDER_ERROR_MESSAGES = {
 	CANNOT_DELIVER_NOT_SHIPPED: "Une commande non expédiée ne peut pas être marquée comme livrée.",
 	// Mark as processing
 	MARK_AS_PROCESSING_FAILED: "Erreur lors du passage en préparation.",
+	UPDATE_FAILED: "Erreur lors de la mise à jour de la commande.",
 	ALREADY_PROCESSING: "Cette commande est déjà en cours de préparation.",
 	CANNOT_PROCESS_UNPAID: "Une commande non payée ne peut pas être mise en préparation.",
 	CANNOT_PROCESS_CANCELLED: "Une commande annulée ne peut pas être mise en préparation.",

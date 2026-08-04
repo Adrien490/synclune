@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { FieldLabel } from "@/shared/components/forms/field-label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useRevertToProcessing } from "@/modules/orders/hooks/use-revert-to-processing";
+import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 export const REVERT_TO_PROCESSING_DIALOG_ID = "revert-to-processing";
@@ -27,7 +27,7 @@ interface RevertToProcessingData {
 
 export function RevertToProcessingDialog() {
 	const dialog = useAlertDialog<RevertToProcessingData>(REVERT_TO_PROCESSING_DIALOG_ID);
-	const { action } = useRevertToProcessing();
+	const { action } = useUpdateOrderStatus("revert-to-processing");
 	const [isPending, startTransition] = useTransition();
 	const [reason, setReason] = useState("");
 

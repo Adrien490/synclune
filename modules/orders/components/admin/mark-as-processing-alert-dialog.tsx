@@ -11,7 +11,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useMarkAsProcessing } from "@/modules/orders/hooks/use-mark-as-processing";
+import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 export const MARK_AS_PROCESSING_DIALOG_ID = "mark-as-processing";
@@ -25,7 +25,7 @@ interface MarkAsProcessingData {
 export function MarkAsProcessingAlertDialog() {
 	const dialog = useAlertDialog<MarkAsProcessingData>(MARK_AS_PROCESSING_DIALOG_ID);
 
-	const { action, isPending } = useMarkAsProcessing({
+	const { action, isPending } = useUpdateOrderStatus("processing", {
 		onSuccess: () => {
 			dialog.close();
 		},

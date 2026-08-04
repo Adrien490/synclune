@@ -16,8 +16,8 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => mockDialog,
 }));
 
-vi.mock("@/modules/orders/hooks/use-revert-to-processing", () => ({
-	useRevertToProcessing: () => ({ action: mockAction }),
+vi.mock("@/modules/orders/hooks/use-update-order-status", () => ({
+	useUpdateOrderStatus: (_transition: string) => ({ action: mockAction }),
 }));
 
 vi.mock("@/shared/components/responsive-dialog", () => ({
@@ -48,8 +48,8 @@ vi.mock("@/shared/components/ui/textarea", () => ({
 	Textarea: (props: any) => <textarea {...props} />,
 }));
 
-vi.mock("lucide-react", () => ({
-	Loader2Icon: () => <svg data-testid="loader" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: () => <svg data-testid="loader" />,
 }));
 
 describe("RevertToProcessingDialog", () => {

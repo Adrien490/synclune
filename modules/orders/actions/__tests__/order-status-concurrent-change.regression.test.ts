@@ -2,9 +2,10 @@
  * @regression order-status-toctou
  *
  * Audit statuts commande 2026-07-02 (F1) : les 5 actions admin de transition
- * (markAsShipped, markAsDelivered, markAsProcessing, markAsReturned,
- * revertToProcessing) validaient le statut sur un `findUnique` puis faisaient
- * un `update` inconditionnel. En read-committed le findUnique ne verrouille
+ * validaient le statut sur un `findUnique` puis faisaient un `update`
+ * inconditionnel. Quatre d'entre elles ont fusionné dans `updateOrderStatus`
+ * (2026-08-05) — la garde doit tenir POUR CHAQUE CLÉ DE TRANSITION, pas
+ * seulement pour l'action. En read-committed le findUnique ne verrouille
  * pas la ligne : un writer concurrent (autre admin, webhook cancel, cron)
  * pouvait changer l'état entre le fetch et l'update — ex. SHIPPED posé sur
  * une commande devenue CANCELLED.
@@ -94,13 +95,15 @@ vi.mock("@/modules/emails/services/order-emails", () => ({
 }));
 
 import { markAsShipped } from "../mark-as-shipped";
-import { markAsDelivered } from "../mark-as-delivered";
-import { markAsProcessing } from "../mark-as-processing";
-import { markAsReturned } from "../mark-as-returned";
-import { revertToProcessing } from "../revert-to-processing";
+import { updateOrderStatus } from "../update-order-status";
 import { ORDER_ERROR_MESSAGES } from "../../constants/order.constants";
 
 const formData = createMockFormData({ id: VALID_CUID });
+
+/** `updateOrderStatus` lit la clé dans le FormData — un par transition. */
+function transitionFormData(transition: string) {
+	return createMockFormData({ id: VALID_CUID, transition, reason: "raison valide" });
+}
 
 describe("@regression order-status-toctou — updateMany count===0 ⇒ abort propre", () => {
 	beforeEach(() => {
@@ -108,9 +111,20 @@ describe("@regression order-status-toctou — updateMany count===0 ⇒ abort pro
 
 		mockRequireAdminWithUser.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockValidateInput.mockReturnValue({
-			data: { id: VALID_CUID, trackingNumber: "1Z999", sendEmail: true, reason: "raison valide" },
-		});
+		// ÉCHO plutôt que valeur fixe : `updateOrderStatus` lit `data.transition`,
+		// et une valeur fixe ferait passer les 4 clés par la même branche de config.
+		mockValidateInput.mockImplementation((_schema: unknown, data: Record<string, unknown>) => ({
+			data: {
+				id: VALID_CUID,
+				trackingNumber: "1Z999",
+				sendEmail: true,
+				reason: "raison valide",
+				// Seules les clés RENSEIGNÉES écrasent les valeurs par défaut : un
+				// `safeFormGet` absent rend `null`, et l'écrasement aveugle privait
+				// `markAsShipped` de son numéro de suivi.
+				...Object.fromEntries(Object.entries(data).filter(([, v]) => v != null)),
+			},
+		}));
 		mockGetOrderInvalidationTags.mockReturnValue(["orders-list"]);
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
 		mockNotFound.mockImplementation((r: string) => ({
@@ -142,10 +156,13 @@ describe("@regression order-status-toctou — updateMany count===0 ⇒ abort pro
 
 	const actions: Array<[string, () => Promise<{ status: string; message?: string }>]> = [
 		["markAsShipped", () => markAsShipped(undefined, formData)],
-		["markAsDelivered", () => markAsDelivered(undefined, formData)],
-		["markAsProcessing", () => markAsProcessing(undefined, formData)],
-		["markAsReturned", () => markAsReturned(undefined, formData)],
-		["revertToProcessing", () => revertToProcessing(undefined, formData)],
+		...(["delivered", "processing", "returned", "revert-to-processing"] as const).map(
+			(t) =>
+				[`updateOrderStatus(${t})`, () => updateOrderStatus(undefined, transitionFormData(t))] as [
+					string,
+					() => Promise<{ status: string; message?: string }>,
+				],
+		),
 	];
 
 	for (const [name, run] of actions) {

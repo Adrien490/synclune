@@ -11,7 +11,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useMarkAsReturned } from "@/modules/orders/hooks/use-mark-as-returned";
+import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 export const MARK_AS_RETURNED_DIALOG_ID = "mark-as-returned";
@@ -26,7 +26,7 @@ interface MarkAsReturnedData {
 export function MarkAsReturnedAlertDialog() {
 	const dialog = useAlertDialog<MarkAsReturnedData>(MARK_AS_RETURNED_DIALOG_ID);
 
-	const { action, isPending } = useMarkAsReturned({
+	const { action, isPending } = useUpdateOrderStatus("returned", {
 		onSuccess: () => {
 			dialog.open({ ...dialog.data!, showRefundPrompt: true });
 		},

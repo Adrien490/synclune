@@ -445,66 +445,37 @@ export const updateTrackingSchema = z
  * Schema pour marquer une commande comme livrée
  * Utilisé pour forcer le statut si le webhook transporteur ne fonctionne pas
  */
-export const markAsDeliveredSchema = z.object({
-	id: z.cuid2(),
-});
-
 // ============================================================================
-// MARK AS PROCESSING SCHEMA
+// TRANSITIONS DE STATUT (action générique)
 // ============================================================================
 
 /**
- * Schema pour passer une commande payée en préparation
- * Transition : PENDING (PAID) → PROCESSING
+ * Clés des transitions NON MONÉTAIRES, consommées par `updateOrderStatus`.
+ *
+ * Une CLÉ, pas un statut cible : `processing` et `revert-to-processing` visent
+ * tous deux `PROCESSING`, mais depuis des états différents et avec des effets
+ * différents (le second efface le suivi d'expédition).
+ *
+ * ⚠️ Cet enum est la garde d'entrée de l'endpoint RPC : `"use server"` publie
+ * l'action hors UI, et le type TypeScript est effacé à l'exécution.
  */
-export const markAsProcessingSchema = z.object({
+export const ORDER_TRANSITION_KEYS = [
+	"processing",
+	"delivered",
+	"returned",
+	"revert-to-processing",
+	"undo-return",
+] as const;
+
+export type OrderTransitionKey = (typeof ORDER_TRANSITION_KEYS)[number];
+
+export const updateOrderStatusSchema = z.object({
 	id: z.cuid2(),
-	// Pas de champ `sendEmail` : l'action ne soumet que `{ id }` et aucun email
-	// n'est envoyé sur cette transition — le champ acceptait une entrée sans
-	// aucun effet (audit 2026-08-01, P3).
-});
-
-// ============================================================================
-// REVERT TO PROCESSING SCHEMA
-// ============================================================================
-
-/**
- * Schema pour annuler une expédition et revenir en préparation
- * Transition : SHIPPED → PROCESSING
- * Requiert une raison obligatoire pour l'audit trail
- */
-export const revertToProcessingSchema = z.object({
-	id: z.cuid2(),
-	reason: z
-		.string()
-		.min(1, "La raison est obligatoire")
-		.max(500, "La raison ne peut pas dépasser 500 caractères"),
-});
-
-// ============================================================================
-// MARK AS RETURNED SCHEMA
-// ============================================================================
-
-/**
- * Schema pour marquer une commande comme retournée
- * Transition FulfillmentStatus : DELIVERED → RETURNED
- * Le OrderStatus reste DELIVERED
- */
-export const markAsReturnedSchema = z.object({
-	id: z.cuid2(),
-	reason: z.string().max(500).optional(),
-});
-
-// ============================================================================
-// UNDO RETURN SCHEMA
-// ============================================================================
-
-/**
- * Schema pour annuler un retour saisi par erreur
- * Transition FulfillmentStatus : RETURNED → DELIVERED (OrderStatus inchangé)
- */
-export const undoReturnSchema = z.object({
-	id: z.cuid2(),
+	transition: z.enum(ORDER_TRANSITION_KEYS),
+	// Borne alignée sur `OrderHistory.note` (`@db.Text`, pas de VarChar) et sur
+	// l'ancienne `revertToProcessingSchema`. Obligatoire ou non selon la
+	// transition — arbitré côté action, là où la config le sait.
+	reason: z.string().max(500, "La raison ne peut pas dépasser 500 caractères").optional(),
 });
 
 /**

@@ -138,7 +138,6 @@ const EXPECTED_STATUS_MUTATORS = [
 	// avec l'API de son contexte.
 	"modules/refunds/services/finalize-refund.service.ts",
 	"modules/orders/actions/cancel-order.ts",
-	"modules/orders/actions/mark-as-delivered.ts",
 	"modules/orders/actions/mark-as-fully-refunded.ts",
 	"modules/orders/actions/mark-as-paid.ts",
 	// Entrés dans le périmètre CACHE-AUDIT-010 au Lot 4 (audit V2) : le retour
@@ -146,20 +145,33 @@ const EXPECTED_STATUS_MUTATORS = [
 	// des axes, ces deux actions mutent `Order.status` — et invalident bien via
 	// `getOrderInvalidationTags`. Le garde les a détectées de lui-même : c'est
 	// exactement son office.
-	"modules/orders/actions/mark-as-returned.ts",
-	"modules/orders/actions/undo-return.ts",
-	"modules/orders/actions/mark-as-processing.ts",
 	"modules/orders/actions/mark-as-shipped.ts",
-	"modules/orders/actions/revert-to-processing.ts",
 	"modules/webhooks/handlers/dispute-handlers.ts",
 	// Délégateurs (cf. DELEGATES_TO_CALLER) : mutent le statut mais l'invalidation
 	// est portée par l'appelant.
 	"modules/webhooks/services/payment-intent.service.ts",
 	"modules/webhooks/services/refund.service.ts",
-	// NB : `checkout-order-processing.service.ts` mute aussi le statut (PROCESSING/
-	// PAID) mais via `data: orderUpdateData` (variable) — angle mort du détecteur
-	// source-level, donc ABSENT de cette liste à dessein. Sa délégation est tout
-	// de même verrouillée par le test "delegating services" via DELEGATES_TO_CALLER.
+	// NB : deux fichiers mutent le statut sans être détectables — cf.
+	// DETECTOR_BLIND_SPOTS ci-dessous. Ils sont ABSENTS de cette liste à dessein.
+];
+
+/**
+ * Mutateurs de statut que le détecteur source-level NE PEUT PAS voir, parce que
+ * leur `data:` n'est pas un objet littéral au point d'appel :
+ *
+ *  - `checkout-order-processing.service.ts` passe `data: orderUpdateData` (variable) ;
+ *  - `update-order-status.ts` passe `data: config.data(now)` — la fusion des cinq
+ *    transitions (2026-08-05) a déplacé les champs écrits dans une table de
+ *    configuration, et le détecteur cherche `status:` DANS l'objet littéral.
+ *
+ * ⚠️ Le premier n'était couvert que par un commentaire. Les deux le sont
+ * désormais par une ASSERTION : un angle mort documenté mais non testé finit par
+ * devenir un angle mort tout court. Chacun doit soit s'auto-invalider via
+ * `getOrderInvalidationTags`, soit figurer dans `DELEGATES_TO_CALLER`.
+ */
+const DETECTOR_BLIND_SPOTS = [
+	"modules/webhooks/services/checkout-order-processing.service.ts",
+	"modules/orders/actions/update-order-status.ts",
 ];
 
 /**
@@ -190,6 +202,26 @@ describe("CACHE-AUDIT-010 — invalidation des mutations de statut commande", ()
 
 	it("freezes the set of files mutating Order.status/paymentStatus via order.update", () => {
 		expect(actualMutators).toEqual([...EXPECTED_STATUS_MUTATORS].sort());
+	});
+
+	it("les angles morts du détecteur invalident ou délèguent, et c'est ASSERTÉ", () => {
+		// Sans ce test, un mutateur invisible au détecteur pourrait cesser
+		// d'invalider sans qu'aucun garde-fou ne bronche.
+		const notCovered = DETECTOR_BLIND_SPOTS.filter((rel) => {
+			if (DELEGATES_TO_CALLER.includes(rel)) return false;
+			const content = readFileSync(join(REPO_ROOT, rel), "utf-8");
+			return !/getOrderInvalidationTags\s*\(/.test(content);
+		});
+		expect(notCovered).toEqual([]);
+	});
+
+	it("le détecteur ne voit VRAIMENT pas les angles morts (garde-fou du garde-fou)", () => {
+		// Si le détecteur gagne la capacité de les voir, ils doivent rejoindre
+		// EXPECTED_STATUS_MUTATORS — et cette liste cesser d'exister.
+		const nowVisible = DETECTOR_BLIND_SPOTS.filter((rel) =>
+			mutatesOrderStatusViaUpdate(readFileSync(join(REPO_ROOT, rel), "utf-8")),
+		);
+		expect(nowVisible).toEqual([]);
 	});
 
 	it("every self-invalidating mutator routes through getOrderInvalidationTags()", () => {

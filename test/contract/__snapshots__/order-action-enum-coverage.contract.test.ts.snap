@@ -24,7 +24,7 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/refunds/services/issue-credit-note.service.ts",
   ],
   "DELIVERED": [
-    "modules/orders/actions/mark-as-delivered.ts",
+    "modules/orders/actions/update-order-status.ts",
   ],
   "DISPUTE_OPENED": [
     "modules/orders/services/has-open-dispute.service.ts",
@@ -51,7 +51,7 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/webhooks/services/checkout-order-processing.service.ts",
   ],
   "PROCESSING": [
-    "modules/orders/actions/mark-as-processing.ts",
+    "modules/orders/actions/update-order-status.ts",
   ],
   "REFUND_COMPLETED": [
     "modules/orders/actions/mark-as-fully-refunded.ts",
@@ -68,15 +68,14 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/webhooks/services/refund.service.ts",
   ],
   "RETURNED": [
-    "modules/orders/actions/mark-as-returned.ts",
+    "modules/orders/actions/update-order-status.ts",
   ],
   "SHIPPED": [
     "modules/orders/actions/mark-as-shipped.ts",
     "modules/orders/actions/resend-order-email.ts",
   ],
   "STATUS_REVERTED": [
-    "modules/orders/actions/revert-to-processing.ts",
-    "modules/orders/actions/undo-return.ts",
+    "modules/orders/actions/update-order-status.ts",
   ],
   "TRACKING_UPDATED": [
     "modules/orders/actions/update-tracking.ts",

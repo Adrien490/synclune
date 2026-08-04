@@ -25,8 +25,8 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => mockDialogState,
 }));
 
-vi.mock("@/modules/orders/hooks/use-mark-as-processing", () => ({
-	useMarkAsProcessing: ({ onSuccess }: { onSuccess?: () => void } = {}) => ({
+vi.mock("@/modules/orders/hooks/use-update-order-status", () => ({
+	useUpdateOrderStatus: (_transition: string, { onSuccess }: { onSuccess?: () => void } = {}) => ({
 		action: mockAction,
 		isPending: mockIsPending,
 		onSuccess,
@@ -88,9 +88,9 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	),
 }));
 
-vi.mock("lucide-react", async (importOriginal) => ({
+vi.mock("@phosphor-icons/react/ssr", async (importOriginal) => ({
 	...((await importOriginal()) as Record<string, unknown>),
-	Loader2Icon: ({ className }: { className?: string }) => (
+	SpinnerIcon: ({ className }: { className?: string }) => (
 		<span data-testid="loader" className={className} />
 	),
 }));
