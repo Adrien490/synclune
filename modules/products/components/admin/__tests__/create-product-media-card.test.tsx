@@ -177,15 +177,15 @@ vi.mock("@/shared/components/media-upload/upload-action-sheet", () => ({
 	),
 }));
 
-vi.mock("@/shared/constants/validation-limits", () => ({
-	ARRAY_LIMITS: { SKU_MEDIA: 10 },
-}));
-
-vi.mock("lucide-react", () => ({
-	Camera: (props: Record<string, unknown>) => <svg data-testid="icon-camera" {...props} />,
-	ImagePlus: (props: Record<string, unknown>) => <svg data-testid="icon-image-plus" {...props} />,
-	Info: (props: Record<string, unknown>) => <svg data-testid="icon-info" {...props} />,
-	Upload: (props: Record<string, unknown>) => <svg data-testid="icon-upload" {...props} />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CameraIcon: (props: Record<string, unknown>) => <svg data-testid="icon-camera" {...props} />,
+	ImageSquareIcon: (props: Record<string, unknown>) => (
+		<svg data-testid="icon-image-plus" {...props} />
+	),
+	InfoIcon: (props: Record<string, unknown>) => <svg data-testid="icon-info" {...props} />,
+	UploadSimpleIcon: (props: Record<string, unknown>) => (
+		<svg data-testid="icon-upload" {...props} />
+	),
 }));
 
 vi.mock("sonner", () => ({
@@ -210,6 +210,7 @@ function createMediaForm(
 		thumbnailUrl?: string | null;
 		blurDataUrl?: string;
 	}> = [],
+	errors: string[] = [],
 ) {
 	return {
 		Field: ({
@@ -221,7 +222,7 @@ function createMediaForm(
 			validators?: unknown;
 		}) =>
 			children({
-				state: { value: media, meta: { errors: [] } },
+				state: { value: media, meta: { errors } },
 				handleChange: vi.fn(),
 				pushValue: vi.fn(),
 				removeValue: vi.fn(),
@@ -251,11 +252,18 @@ afterEach(() => {
 });
 
 describe("CreateProductMediaCard", () => {
+	/*
+	 * ⚠️ Ces assertions portent sur le VRAI plafond (`ARRAY_LIMITS.SKU_MEDIA` = 6).
+	 * Le fichier mockait `@/shared/constants/validation-limits` avec `SKU_MEDIA: 10`
+	 * — toutes les assertions « 0/10 », « 3/10 », « jusqu'à 10 médias » et « Limite de
+	 * 10 médias » testaient donc une fiction, et changer le vrai plafond ne rougissait
+	 * rien. Mock retiré (audit 2026-08-04).
+	 */
 	describe("rendering", () => {
-		it("renders card title Médias", () => {
+		it("renders card title Les photos", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.getByTestId("card-title")).toHaveTextContent("Médias");
+			expect(screen.getByTestId("card-title")).toHaveTextContent("Les photos");
 		});
 
 		it("renders media counter badge", () => {
@@ -264,10 +272,10 @@ describe("CreateProductMediaCard", () => {
 			expect(screen.getByTestId("media-counter")).toBeInTheDocument();
 		});
 
-		it("shows counter as 0/10 when no media", () => {
+		it("shows counter as 0/6 when no media", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.getByTestId("media-counter")).toHaveTextContent("0/10");
+			expect(screen.getByTestId("media-counter")).toHaveTextContent("0/6");
 		});
 
 		it("renders hint text about image ordering", () => {
@@ -286,7 +294,7 @@ describe("CreateProductMediaCard", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			expect(
-				screen.getByText("Confie jusqu'à 10 médias de ton bijou à l'atelier"),
+				screen.getByText("Confie jusqu'à 6 médias de ton bijou à l'atelier"),
 			).toBeInTheDocument();
 		});
 
@@ -343,7 +351,7 @@ describe("CreateProductMediaCard", () => {
 			}));
 			const form = createMediaForm(media);
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.getByTestId("media-counter")).toHaveTextContent("3/10");
+			expect(screen.getByTestId("media-counter")).toHaveTextContent("3/6");
 		});
 	});
 
@@ -355,7 +363,7 @@ describe("CreateProductMediaCard", () => {
 			}));
 			const form = createMediaForm(media);
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.getByText("Limite de 10 médias atteinte")).toBeInTheDocument();
+			expect(screen.getByText("Limite de 6 médias atteinte")).toBeInTheDocument();
 		});
 
 		it("shows Info icon when at limit", () => {
@@ -375,7 +383,7 @@ describe("CreateProductMediaCard", () => {
 			}));
 			const form = createMediaForm(media);
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.queryByText("Limite de 10 médias atteinte")).not.toBeInTheDocument();
+			expect(screen.queryByText("Limite de 6 médias atteinte")).not.toBeInTheDocument();
 		});
 	});
 
@@ -537,6 +545,56 @@ describe("CreateProductMediaCard", () => {
 			expect(
 				sheet.querySelector('[aria-label="Zone d\'envoi des médias du bijou"]'),
 			).not.toBeNull();
+		});
+	});
+
+	/**
+	 * @regression media-field-focus-anchor
+	 *
+	 * Le champ média n'a pas de contrôle unique, donc rien ne portait son `id` ni
+	 * son état invalide. Deux mécanismes en dépendaient et échouaient EN SILENCE :
+	 * `useFocusFirstError` cherche `[aria-invalid="true"]`, et le lien « Photos »
+	 * du récapitulatif d'erreurs cherche `#initialSku.media`. Soumettre sans photo
+	 * — le premier manque de la cascade, donc le plus fréquent — ne déplaçait donc
+	 * ni le focus ni le scroll, et le lien du récapitulatif était mort.
+	 */
+	describe("ancre de focus du champ média", () => {
+		it("porte l'id du champ, cible du lien « Photos » du récapitulatif d'erreurs", () => {
+			const form = createMediaForm();
+			const { container } = render(
+				<CreateProductMediaCard form={form as never} {...defaultProps} />,
+			);
+
+			const anchor = container.querySelector("#initialSku\\.media");
+			expect(anchor).not.toBeNull();
+			// Focalisable par programme : `focusFirstInvalid()` appelle `focus()`.
+			expect(anchor).toHaveAttribute("tabindex", "-1");
+		});
+
+		// ⚠️ `data-field-invalid` et non `aria-invalid` : `role="group"` ne supporte pas
+		// `aria-invalid` (ARIA 1.2). C'est le sélecteur de repli qu'accepte
+		// `useFocusFirstError` pour les champs composites.
+		it("se marque invalide et décrit son erreur quand la photo manque", () => {
+			const form = createMediaForm([], ["Au moins une image est requise"]);
+			const { container } = render(
+				<CreateProductMediaCard form={form as never} {...defaultProps} />,
+			);
+
+			const anchor = container.querySelector('[data-field-invalid="true"]');
+			expect(anchor).toHaveAttribute("id", "initialSku.media");
+			expect(anchor).toHaveAttribute("aria-describedby", "initialSku.media-error");
+			expect(container.querySelector("#initialSku\\.media-error")).toHaveTextContent(
+				"Au moins une image est requise",
+			);
+		});
+
+		it("ne se marque pas invalide quand le champ est valide", () => {
+			const form = createMediaForm();
+			const { container } = render(
+				<CreateProductMediaCard form={form as never} {...defaultProps} />,
+			);
+
+			expect(container.querySelector('[data-field-invalid="true"]')).toBeNull();
 		});
 	});
 });

@@ -1,13 +1,13 @@
 "use client";
 
 import { useRef } from "react";
-import { Info } from "lucide-react";
+import { InfoIcon } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/shared/utils/cn";
 import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { UploadErrorBanner } from "@/shared/components/media-upload/upload-progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import type { FailedUpload } from "@/modules/media/types/hooks.types";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
 import {
@@ -24,7 +24,8 @@ import {
 	type UploadProgressShape,
 } from "../product-media-card-shared";
 
-import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
+import { FORM_SECTION_ACCENT_CLASS, FORM_SECTION_CARD_CLASS } from "./shared-styles";
+import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
 
 /**
  * Carte « Médias » partagée entre les formulaires Créer/Éditer Produit et Créer/Éditer
@@ -49,6 +50,10 @@ export interface MediaArrayCardProps {
 	maxMediaCount?: number;
 	/** Aria-label sur la Card region (default "Médias du bijou"). */
 	ariaLabel?: string;
+	/** Titre affiché de la section (default "Médias"). */
+	title?: string;
+	/** Accent de marque posé en repère de gouttière (cf. FORM_SECTION_ACCENT_CLASS). */
+	accent?: "rose" | "lavender" | "mint" | "sun";
 
 	// Upload pipeline (parent porte useMediaUpload + useMediaFieldUpload)
 	isMediaUploading: boolean;
@@ -76,6 +81,8 @@ export function MediaArrayCard({
 	viewTransitionName,
 	maxMediaCount = ARRAY_LIMITS.SKU_MEDIA,
 	ariaLabel = "Médias du bijou",
+	title = "Médias",
+	accent,
 	isMediaUploading,
 	uploadProgress,
 	handleUpload,
@@ -98,13 +105,18 @@ export function MediaArrayCard({
 			tabIndex={-1}
 			role="region"
 			aria-label={ariaLabel}
-			className={cn(FORM_SECTION_CARD_CLASS, "focus-visible:outline-none")}
+			data-accent={accent}
+			className={cn(
+				FORM_SECTION_CARD_CLASS,
+				accent && FORM_SECTION_ACCENT_CLASS,
+				"focus-visible:outline-none",
+			)}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Médias</CardTitle>
+			<CardHeader className="px-0 sm:px-0 md:px-6">
+				<FormSectionTitle>{title}</FormSectionTitle>
 			</CardHeader>
-			<CardContent className="px-0 pb-[max(0px,env(safe-area-inset-bottom))] sm:px-0 sm:pb-0 lg:px-6">
+			<CardContent className="px-0 pb-[max(0px,env(safe-area-inset-bottom))] sm:px-0 sm:pb-0 md:px-6">
 				<form.Field
 					name={fieldName}
 					mode="array"
@@ -117,11 +129,58 @@ export function MediaArrayCard({
 						const arrayField = asMediaArrayField(field);
 						const currentCount = arrayField.state.value.length;
 						const isAtLimit = currentCount >= maxMediaCount;
+						/*
+						 * ⚠️ Le champ média n'a pas de contrôle unique — il n'existait donc dans
+						 * le DOM ni `id`, ni marqueur d'invalidité. Deux mécanismes en
+						 * dépendaient et échouaient EN SILENCE :
+						 *
+						 * - `focusFirstInvalid()` cherche `[aria-invalid="true"]` dans le
+						 *   formulaire ; il n'en trouvait aucun, donc soumettre sans photo ne
+						 *   déplaçait ni le focus ni le scroll ni l'haptique ;
+						 * - le lien « Photos » du récapitulatif d'erreurs cherche
+						 *   `#<nom du champ>` ; il ne trouvait rien, donc le bouton était mort.
+						 *
+						 * Le manque de photo est le PREMIER de la cascade « ce qui manque » de la
+						 * règle d'établi, donc le plus fréquent : les deux chemins prévus pour y
+						 * emmener l'admin ne fonctionnaient précisément que dans les autres cas.
+						 *
+						 * `role="group"` : un champ composite EST un groupe, et c'est ce qui rend
+						 * `aria-describedby` porteur — l'admin focalisé ici s'entend annoncer le
+						 * message d'erreur.
+						 *
+						 * ⚠️ Le marqueur machine est `data-field-invalid`, PAS `aria-invalid` :
+						 * ARIA 1.2 ne liste pas `aria-invalid` parmi les états supportés par
+						 * `group`, donc l'y poser serait ignoré des lecteurs d'écran tout en
+						 * faisant passer le champ pour correctement marqué. `useFocusFirstError`
+						 * accepte les deux sélecteurs pour cette raison.
+						 */
+						const errorId = `${fieldName}-error`;
+						const hasError = arrayField.state.meta.errors.some(Boolean);
 
 						return (
-							<div className="space-y-3">
+							<div
+								id={fieldName}
+								role="group"
+								aria-label={ariaLabel}
+								tabIndex={-1}
+								data-field-invalid={hasError || undefined}
+								aria-describedby={hasError ? errorId : undefined}
+								className="space-y-3 focus-visible:outline-none"
+							>
 								<div className="flex items-center justify-between">
+									{/*
+									 * L'astérisque manquait : `RequiredFieldsNote` annonce en tête de
+									 * formulaire que l'astérisque marque l'obligatoire, or la photo est
+									 * le PREMIER manque que réclame la règle d'établi — et la seule
+									 * exigence qui n'était signalée nulle part avant l'envoi. Même
+									 * marqueur que `FieldLabel`, `aria-hidden` compris : c'est
+									 * `aria-invalid` sur le groupe qui porte l'information aux lecteurs
+									 * d'écran, pas ce caractère.
+									 */}
 									<p className="text-muted-foreground text-xs">
+										<span className="text-destructive" aria-hidden="true">
+											*{" "}
+										</span>
 										La première image sera l'image principale. Glisse-dépose pour réorganiser.
 										<br />
 										{/*
@@ -140,7 +199,7 @@ export function MediaArrayCard({
 
 								{isAtLimit && (
 									<div className="bg-secondary/10 border-secondary flex items-start gap-2 rounded-lg border p-3">
-										<Info className="text-secondary-foreground mt-0.5 size-4 shrink-0" />
+										<InfoIcon className="text-secondary-foreground mt-0.5 size-4 shrink-0" />
 										<p className="text-secondary-foreground text-xs">
 											Limite de {maxMediaCount} médias atteinte
 										</p>
@@ -159,6 +218,7 @@ export function MediaArrayCard({
 								{arrayField.state.value.length === 0 ? (
 									<EmptyMediaState
 										field={arrayField}
+										errorId={errorId}
 										isMediaUploading={isMediaUploading}
 										uploadProgress={uploadProgress}
 										isAtLimit={isAtLimit}

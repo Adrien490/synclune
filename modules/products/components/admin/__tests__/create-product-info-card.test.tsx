@@ -102,8 +102,24 @@ vi.mock("next/navigation", () => ({
 	}),
 }));
 
-vi.mock("lucide-react", () => ({
-	Plus: (props: Record<string, unknown>) => <svg data-testid="icon-plus" {...props} />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	PlusIcon: (props: Record<string, unknown>) => <svg data-testid="icon-plus" {...props} />,
+}));
+
+// La section « Le bijou » monte désormais les attributs de la variante initiale.
+// Ces deux champs ont leurs propres suites (teintes ordonnables, plafond de 3,
+// pastilles de couleur) : les monter pour de vrai ici tirerait tout le sous-arbre
+// MultiSelect + dnd-kit dans un test qui porte sur la carte, pas sur le sélecteur.
+vi.mock("@/modules/colors/components/admin/color-multi-select-field", () => ({
+	ColorMultiSelectField: ({ fieldName }: { fieldName: string }) => (
+		<div data-testid="color-multi-select-field" data-field-name={fieldName} />
+	),
+}));
+
+vi.mock("@/modules/materials/components/admin/material-multi-select-field", () => ({
+	MaterialMultiSelectField: ({ fieldName }: { fieldName: string }) => (
+		<div data-testid="material-multi-select-field" data-field-name={fieldName} />
+	),
 }));
 
 // ============================================================================
@@ -124,6 +140,18 @@ const defaultProductTypes = [
 const defaultCollections = [
 	{ id: "col-1", name: "Collection Lune" },
 	{ id: "col-2", name: "Collection Étoile" },
+];
+
+// La section « Le bijou » absorbe les attributs de la variante initiale : à la
+// création il n'en existe qu'une, et la séparer de la pièce n'ajoutait qu'une carte.
+const defaultColors = [
+	{ id: "color-1", name: "Turquoise", hex: "#6cc6c9" },
+	{ id: "color-2", name: "Laiton", hex: "#d9b166" },
+];
+
+const defaultMaterials = [
+	{ id: "mat-1", name: "Résine" },
+	{ id: "mat-2", name: "Laiton" },
 ];
 
 function createMockForm(overrides?: Record<string, unknown>) {
@@ -195,15 +223,40 @@ describe("CreateProductInfoCard", () => {
 				form={form as never}
 				productTypes={defaultProductTypes}
 				collections={defaultCollections}
+				colors={defaultColors}
+				materials={defaultMaterials}
 			/>,
 		);
 		return form;
 	}
 
-	describe("rendering", () => {
-		it("renders card title Informations", () => {
+	describe("attributs de la variante initiale", () => {
+		it("monte le champ des teintes sur initialSku.colorIds", () => {
 			setup();
-			expect(screen.getByTestId("card-title")).toHaveTextContent("Informations");
+			expect(screen.getByTestId("color-multi-select-field")).toHaveAttribute(
+				"data-field-name",
+				"initialSku.colorIds",
+			);
+		});
+
+		it("monte le champ des matériaux sur initialSku.materialIds", () => {
+			setup();
+			expect(screen.getByTestId("material-multi-select-field")).toHaveAttribute(
+				"data-field-name",
+				"initialSku.materialIds",
+			);
+		});
+
+		it("monte le champ de taille", () => {
+			setup();
+			expect(screen.getByTestId("field-initialSku.size")).toBeInTheDocument();
+		});
+	});
+
+	describe("rendering", () => {
+		it("renders card title Le bijou", () => {
+			setup();
+			expect(screen.getByTestId("card-title")).toHaveTextContent("Le bijou");
 		});
 
 		it("renders card wrapper", () => {
@@ -282,7 +335,7 @@ describe("CreateProductInfoCard", () => {
 		it("renders helper text for collections", () => {
 			setup();
 			expect(
-				screen.getByText("Un produit peut appartenir à plusieurs collections"),
+				screen.getByText("Un bijou peut appartenir à plusieurs collections"),
 			).toBeInTheDocument();
 		});
 

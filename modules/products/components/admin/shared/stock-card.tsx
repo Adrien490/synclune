@@ -1,14 +1,15 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 
 import { FieldLabel } from "@/shared/components/forms";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 
-import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
+import { FORM_SECTION_CARD_CLASS } from "./shared-styles";
+import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
 
-export interface StockCardProps {
+export interface StockFieldProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shared across multiple form instances (Create/Edit Product, Create/Edit SKU). Union typing would create generic explosion; caller is responsible for field name validity.
 	form: any;
 	/** Nom du champ TanStack pour l'inventaire (e.g. "initialSku.inventory"). */
@@ -17,16 +18,61 @@ export interface StockCardProps {
 	hintIdPrefix?: string;
 	/** Microcopie sous le champ (default sku-side wording). */
 	hint?: string;
+}
+
+export interface StockCardProps extends StockFieldProps {
 	viewTransitionName?: string;
 }
 
-export function StockCard({
+/**
+ * Le champ de quantité, sans chrome de section — monté soit dans `StockCard`,
+ * soit dans la section « Le prix et le stock » du formulaire de création.
+ */
+export function StockField({
 	form,
 	inventoryFieldName,
 	hintIdPrefix = "stock-card",
-	hint = "Laissez vide ou 0 si la variante est en rupture",
-	viewTransitionName,
-}: StockCardProps) {
+	hint = "Laisse vide ou 0 si la variante est en rupture",
+}: StockFieldProps) {
+	return (
+		<form.AppField name={inventoryFieldName}>
+			{(field: {
+				InputGroupField: React.ComponentType<{
+					type: string;
+					min?: number;
+					inputMode: "text" | "numeric";
+					enterKeyHint: "next" | "done";
+					"aria-describedby": string;
+					children?: React.ReactNode;
+				}>;
+			}) => (
+				<div className="space-y-2">
+					{/* `htmlFor` = `id` posé par `InputGroupField` — cf. `pricing-card.tsx`. */}
+					<FieldLabel htmlFor={inventoryFieldName} optional>
+						Quantité en stock
+					</FieldLabel>
+					<field.InputGroupField
+						type="number"
+						min={0}
+						inputMode="numeric"
+						enterKeyHint="done"
+						aria-describedby={`${hintIdPrefix}-hint`}
+					>
+						<InputGroupAddon align="inline-end">
+							<PackageIcon className="text-muted-foreground size-4" />
+							<InputGroupText className="text-muted-foreground text-xs">unités</InputGroupText>
+						</InputGroupAddon>
+					</field.InputGroupField>
+					<p id={`${hintIdPrefix}-hint`} className="text-muted-foreground text-xs">
+						{hint}
+					</p>
+				</div>
+			)}
+		</form.AppField>
+	);
+}
+
+export function StockCard({ viewTransitionName, ...field }: StockCardProps) {
 	return (
 		<Card
 			role="region"
@@ -34,41 +80,11 @@ export function StockCard({
 			className={FORM_SECTION_CARD_CLASS}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Stock</CardTitle>
+			<CardHeader className="px-0 sm:px-0 md:px-6">
+				<FormSectionTitle>Stock</FormSectionTitle>
 			</CardHeader>
-			<CardContent className="px-0 sm:px-0 lg:px-6">
-				<form.AppField name={inventoryFieldName}>
-					{(field: {
-						InputGroupField: React.ComponentType<{
-							type: string;
-							min?: number;
-							inputMode: "text" | "numeric";
-							enterKeyHint: "next" | "done";
-							"aria-describedby": string;
-							children?: React.ReactNode;
-						}>;
-					}) => (
-						<div className="space-y-2">
-							<FieldLabel optional>Quantité en stock</FieldLabel>
-							<field.InputGroupField
-								type="number"
-								min={0}
-								inputMode="numeric"
-								enterKeyHint="done"
-								aria-describedby={`${hintIdPrefix}-hint`}
-							>
-								<InputGroupAddon align="inline-end">
-									<Package className="text-muted-foreground size-4" />
-									<InputGroupText className="text-muted-foreground text-xs">unités</InputGroupText>
-								</InputGroupAddon>
-							</field.InputGroupField>
-							<p id={`${hintIdPrefix}-hint`} className="text-muted-foreground text-xs">
-								{hint}
-							</p>
-						</div>
-					)}
-				</form.AppField>
+			<CardContent className="px-0 sm:px-0 md:px-6">
+				<StockField {...field} />
 			</CardContent>
 		</Card>
 	);

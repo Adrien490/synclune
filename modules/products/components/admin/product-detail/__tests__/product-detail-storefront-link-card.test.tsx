@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 
-vi.mock("lucide-react", () => ({
-	ExternalLink: () => <svg data-testid="icon-external-link" />,
-	Eye: () => <svg data-testid="icon-eye" />,
-	EyeOff: () => <svg data-testid="icon-eye-off" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowSquareOutIcon: () => <svg data-testid="icon-external-link" />,
+	EyeIcon: () => <svg data-testid="icon-eye" />,
+	EyeSlashIcon: () => <svg data-testid="icon-eye-off" />,
 }));
 
 vi.mock("next/link", () => ({

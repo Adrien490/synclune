@@ -3,7 +3,13 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form-nextjs";
-import { AlertTriangle, ArrowRight, Minus, Plus, RotateCcw } from "lucide-react";
+import {
+	ArrowCounterClockwiseIcon,
+	ArrowRightIcon,
+	MinusIcon,
+	PlusIcon,
+	WarningIcon,
+} from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 import { useAdjustStockForm } from "@/modules/skus/hooks/use-adjust-stock-form";
@@ -173,7 +179,7 @@ export function AdjustStockForm({
 								aria-label="Réinitialiser l'ajustement"
 								className="text-muted-foreground hover:text-foreground -mr-1 h-8 gap-1 px-2 text-xs"
 							>
-								<RotateCcw className="size-3.5" aria-hidden="true" />
+								<ArrowCounterClockwiseIcon className="size-3.5" aria-hidden="true" />
 								Réinitialiser
 							</Button>
 						)}
@@ -200,7 +206,7 @@ export function AdjustStockForm({
 											aria-label="Diminuer de 1"
 											className="h-11 w-11 touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
 										>
-											<Minus className="size-4" />
+											<MinusIcon className="size-4" />
 										</Button>
 										<Input
 											id="adjustment"
@@ -234,7 +240,7 @@ export function AdjustStockForm({
 											aria-label="Augmenter de 1"
 											className="h-11 w-11 touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
 										>
-											<Plus className="size-4" />
+											<PlusIcon className="size-4" />
 										</Button>
 									</div>
 
@@ -276,7 +282,7 @@ export function AdjustStockForm({
 							<div className="text-muted-foreground mb-1 text-xs">Actuel</div>
 							<div className="font-semibold tabular-nums">{currentStock}</div>
 						</div>
-						<ArrowRight className="text-muted-foreground size-4" aria-hidden="true" />
+						<ArrowRightIcon className="text-muted-foreground size-4" aria-hidden="true" />
 						<div className="flex flex-col items-center gap-1 text-center">
 							<div className="text-muted-foreground text-xs">Nouveau</div>
 							<div
@@ -311,19 +317,19 @@ export function AdjustStockForm({
 					)}
 					{newStock < 0 && (
 						<div className="text-destructive mt-2 flex items-center justify-center gap-1.5 text-xs">
-							<AlertTriangle className="size-3.5" aria-hidden="true" />
+							<WarningIcon className="size-3.5" aria-hidden="true" />
 							<span>Stock invalide</span>
 						</div>
 					)}
 					{crossesIntoRupture && (
 						<div className="text-warning mt-2 flex items-center justify-center gap-1.5 text-xs">
-							<AlertTriangle className="size-3.5" aria-hidden="true" />
+							<WarningIcon className="size-3.5" aria-hidden="true" />
 							<span>Cet ajustement met la variante en rupture.</span>
 						</div>
 					)}
 					{crossesIntoLow && (
 						<div className="text-warning mt-2 flex items-center justify-center gap-1.5 text-xs">
-							<AlertTriangle className="size-3.5" aria-hidden="true" />
+							<WarningIcon className="size-3.5" aria-hidden="true" />
 							<span>Passera sous le seuil de stock faible.</span>
 						</div>
 					)}

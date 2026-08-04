@@ -11,14 +11,14 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import {
-	Archive,
-	FileEdit,
-	FolderOpen,
-	Globe,
-	Star,
-	TriangleAlert,
-	type LucideIcon,
-} from "lucide-react";
+	ArchiveIcon,
+	FolderOpenIcon,
+	GlobeIcon,
+	NotePencilIcon,
+	StarIcon,
+	WarningIcon,
+} from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CreateCollectionButton } from "./create-collection-button";
@@ -29,12 +29,12 @@ const STATUS_CONFIG: Record<
 	{
 		label: string;
 		variant: "default" | "secondary" | "destructive" | "outline";
-		Icon: LucideIcon;
+		Icon: Icon;
 	}
 > = {
-	[CollectionStatus.PUBLIC]: { label: "Public", variant: "default", Icon: Globe },
-	[CollectionStatus.DRAFT]: { label: "Brouillon", variant: "secondary", Icon: FileEdit },
-	[CollectionStatus.ARCHIVED]: { label: "Archivé", variant: "outline", Icon: Archive },
+	[CollectionStatus.PUBLIC]: { label: "Public", variant: "default", Icon: GlobeIcon },
+	[CollectionStatus.DRAFT]: { label: "Brouillon", variant: "secondary", Icon: NotePencilIcon },
+	[CollectionStatus.ARCHIVED]: { label: "Archivé", variant: "outline", Icon: ArchiveIcon },
 };
 
 // Helper pour tronquer la description
@@ -61,7 +61,7 @@ export async function CollectionsDataTable({
 		return (
 			<TableEmptyState
 				className="hidden md:flex"
-				icon={FolderOpen}
+				icon={FolderOpenIcon}
 				title="Aucune collection trouvée"
 				description="Aucune collection ne correspond aux critères de recherche."
 				noItemsDescription="Aucune collection pour l'instant."
@@ -121,7 +121,7 @@ export async function CollectionsDataTable({
 										<Tooltip>
 											<TooltipTrigger
 												render={
-													<Star className="size-4 shrink-0 fill-yellow-400 text-yellow-400" />
+													<StarIcon className="size-4 shrink-0 fill-yellow-400 text-yellow-400" />
 												}
 											></TooltipTrigger>
 											<TooltipContent>
@@ -146,7 +146,7 @@ export async function CollectionsDataTable({
 									{collection.status === CollectionStatus.PUBLIC && productsCount === 0 && (
 										<Tooltip>
 											<TooltipTrigger render={<span className="text-amber-500" />}>
-												<TriangleAlert className="size-4" />
+												<WarningIcon className="size-4" />
 											</TooltipTrigger>
 											<TooltipContent>
 												<p>Aucun produit visible en boutique</p>

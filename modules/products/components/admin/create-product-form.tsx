@@ -20,20 +20,27 @@ import { withViewTransition } from "@/shared/utils/view-transition";
 import type { CreateProductFormProps } from "./create-product-form-types";
 import { CreateProductMediaCard } from "./create-product-media-card";
 import { CreateProductInfoCard } from "./create-product-info-card";
-import { CreateProductSidebarCards } from "./create-product-sidebar-cards";
+import { CreateProductPriceStockCard } from "./create-product-price-stock-card";
+import { CreateProductEtabliBar } from "./create-product-etabli-bar";
 import { runAfterValidation } from "@/shared/utils/run-after-validation";
 
 export type { CreateProductFormProps };
 
 const PRODUCTS_LIST_PATH = "/admin/catalogue/produits";
 
+/**
+ * Traduit un nom de champ TanStack en libellé humain pour le récapitulatif
+ * d'erreurs. N'y lister QUE des champs réellement validés : `status` y figurait
+ * alors qu'aucun validateur ne le vise (il a toujours une valeur), donc l'entrée
+ * ne pouvait pas être atteinte.
+ */
 const FIELD_LABELS: Record<string, string> = {
 	title: "Titre du bijou",
 	description: "Description",
 	typeId: "Type de bijou",
 	collectionIds: "Collections",
-	status: "Visibilité",
-	"initialSku.media": "Médias",
+	// Le libellé suit le titre visible de la section, cible du lien : « Les photos ».
+	"initialSku.media": "Les photos",
 	"initialSku.colorIds": "Couleurs",
 	"initialSku.materialIds": "Matériaux",
 	"initialSku.size": "Taille",
@@ -187,7 +194,8 @@ export function CreateProductForm({
 
 			<FormServerErrorAlert errors={serverErrors} />
 
-			{/* Validation error summary — appears after first submit attempt if 2+ errors */}
+			{/* Récapitulatif de validation — dès la première erreur, après la première
+			    tentative d'envoi (`ErrorSummary` gère lui-même le singulier). */}
 			<form.Subscribe
 				selector={(state) => ({
 					submissionAttempts: state.submissionAttempts,
@@ -213,64 +221,66 @@ export function CreateProductForm({
 
 			<RequiredFieldsNote />
 
-			<fieldset
-				disabled={isPending}
-				className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start"
-			>
-				{/* Main column */}
-				<div className="space-y-6 lg:col-span-2">
-					<CreateProductMediaCard
-						form={form}
-						isMediaUploading={isMediaUploading}
-						uploadProgress={uploadProgress}
-						handleUpload={handleUpload}
-						setDeletedImageUrls={setDeletedImageUrls}
-						failedFiles={failedMediaUploads}
-						onCancel={cancelMediaUpload}
-						onCancelOne={cancelOneMediaUpload}
-						onRetry={() => {
-							void retryFailedMediaUploads();
-						}}
-						onRetryOne={(file) => {
-							void retrySingleMediaUpload(file);
-						}}
-						onDismissErrors={clearFailedMediaUploads}
-					/>
-					<CreateProductInfoCard
-						form={form}
-						productTypes={productTypes}
-						collections={collections}
-					/>
-				</div>
-
-				{/* Sidebar */}
-				<CreateProductSidebarCards form={form} colors={colors} materials={materials} />
+			{/*
+			 * Colonne unique bornée à 46rem (736px). Le conteneur admin est
+			 * `max-w-[100rem]` sans `mx-auto` : sans borne interne, la description
+			 * s'étirait sur ~910px à 1680 de large, soit ~150 caractères par ligne.
+			 * Le plafond est sur la colonne, pas sur le `<main>` — l'espace en trop
+			 * devient de la marge, jamais une colonne de plus.
+			 */}
+			<fieldset disabled={isPending} className="max-w-[46rem] space-y-10">
+				<CreateProductMediaCard
+					form={form}
+					isMediaUploading={isMediaUploading}
+					uploadProgress={uploadProgress}
+					handleUpload={handleUpload}
+					setDeletedImageUrls={setDeletedImageUrls}
+					failedFiles={failedMediaUploads}
+					onCancel={cancelMediaUpload}
+					onCancelOne={cancelOneMediaUpload}
+					onRetry={() => {
+						void retryFailedMediaUploads();
+					}}
+					onRetryOne={(file) => {
+						void retrySingleMediaUpload(file);
+					}}
+					onDismissErrors={clearFailedMediaUploads}
+				/>
+				<CreateProductInfoCard
+					form={form}
+					productTypes={productTypes}
+					collections={collections}
+					colors={colors}
+					materials={materials}
+				/>
+				<CreateProductPriceStockCard form={form} />
 			</fieldset>
 
-			{/* Sticky footer: always-visible actions (safe-area + admin bottom-bar aware) */}
-			<form.AppForm>
-				<AdminFormFooter pending={isPending}>
-					<form.Subscribe selector={(state) => [state.values.status] as const}>
-						{([status]) => (
-							<div className="flex justify-end">
-								<form.SubmitButton
-									isPending={isPending || isMediaUploading}
-									idleLabel={status === "PUBLIC" ? "Publier le bijou" : "Enregistrer le brouillon"}
-									pendingLabel={
-										isPending
-											? status === "PUBLIC"
-												? "Publication…"
-												: "Enregistrement…"
-											: "Téléversement…"
-									}
-									showKbdHint
-									className="w-full sm:w-auto sm:min-w-56"
-								/>
-							</div>
-						)}
-					</form.Subscribe>
-				</AdminFormFooter>
-			</form.AppForm>
+			{/*
+			 * Sticky footer: always-visible actions (safe-area + admin bottom-bar aware).
+			 * Plus de `<form.AppForm>` : il n'existait que pour fournir le contexte à
+			 * `form.SubmitButton`, dont la barre d'établi a délibérément divergé (cf. sa
+			 * dérogation commentée). Le reste de la barre n'utilise que `form.Subscribe`
+			 * et `form.AppField`, qui n'en dépendent pas.
+			 */}
+			<AdminFormFooter
+				pending={isPending}
+				// `AdminFormFooter` est collant sous `md` et REDEVIENT statique au-dessus
+				// (`md:static`) : le sticky desktop y est d'ordinaire inutile, le `<main>`
+				// suffisant à ramener le pied de formulaire. Ici il ne suffit pas — la
+				// colonne unique rend la page plus haute que l'ancienne grille à deux
+				// colonnes, donc prix, stock et visibilité se retrouveraient PLUS loin
+				// qu'avant. On rétablit donc le collage au-dessus de `md`, au call site
+				// seulement : le composant est partagé par 21 formulaires et sa sobriété
+				// est une décision verrouillée.
+				className="md:bg-background/80 md:sticky md:bottom-0 md:z-10 md:-mx-[var(--admin-main-x,1.5rem)] md:px-[var(--admin-main-x,1.5rem)] md:py-3 md:backdrop-blur-md"
+			>
+				<CreateProductEtabliBar
+					form={form}
+					isPending={isPending}
+					isMediaUploading={isMediaUploading}
+				/>
+			</AdminFormFooter>
 		</form>
 	);
 }

@@ -1,9 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("lucide-react", () => ({
-	Info: () => <svg data-testid="icon-info" />,
-	Copy: () => <svg data-testid="icon-copy" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	InfoIcon: () => <svg data-testid="icon-info" />,
+	CopyIcon: () => <svg data-testid="icon-copy" />,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({

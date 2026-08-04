@@ -1,6 +1,12 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, LayoutList, Plus, Star } from "lucide-react";
+import {
+	ArrowRightIcon,
+	ListDashesIcon,
+	PlusIcon,
+	StarIcon,
+	WarningIcon,
+} from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
@@ -57,7 +63,7 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 		<Card style={{ viewTransitionName: "product-detail-skus" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<LayoutList className="size-5" aria-hidden="true" />
+					<ListDashesIcon className="size-5" aria-hidden="true" />
 					Variantes
 				</CardTitle>
 			</CardHeader>
@@ -93,7 +99,7 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 
 				{outOfStockCount > 0 ? (
 					<p className="text-destructive flex items-center gap-1.5 text-xs" role="status">
-						<AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
+						<WarningIcon className="size-3.5 shrink-0" aria-hidden="true" />
 						{outOfStockCount} variante{outOfStockCount > 1 ? "s" : ""} en rupture
 					</p>
 				) : null}
@@ -115,7 +121,7 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 								>
 									<div className="flex min-w-0 items-center gap-1.5">
 										{sku.isDefault ? (
-											<Star
+											<StarIcon
 												className="text-muted-foreground size-3 shrink-0"
 												aria-label="Variante par défaut"
 											/>
@@ -161,7 +167,7 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 						}
 						className="flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 					>
-						<Plus className="size-4" aria-hidden="true" />
+						<PlusIcon className="size-4" aria-hidden="true" />
 						Nouvelle variante
 					</Button>
 					<Button
@@ -175,7 +181,7 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 						className="flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 					>
 						Gérer les variantes
-						<ArrowRight className="size-4" aria-hidden="true" />
+						<ArrowRightIcon className="size-4" aria-hidden="true" />
 					</Button>
 				</div>
 			</CardContent>

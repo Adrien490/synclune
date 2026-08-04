@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Upload } from "lucide-react";
+import { ImageSquareIcon, UploadSimpleIcon } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/shared/utils/cn";
 
@@ -157,6 +157,12 @@ interface EmptyMediaStateProps {
 	handleUpload: (files: File[], field: MediaField) => void;
 	onCancel: () => void;
 	onCancelOne?: (fileName: string) => void;
+	/**
+	 * `id` du bloc d'erreur, référencé par l'`aria-describedby` du groupe de champ
+	 * (cf. `MediaArrayCard`). Sans lui, le message existait à l'écran mais rien ne
+	 * le rattachait au champ : l'admin focalisé sur le groupe n'entendait rien.
+	 */
+	errorId?: string;
 }
 
 export function EmptyMediaState({
@@ -169,6 +175,7 @@ export function EmptyMediaState({
 	handleUpload,
 	onCancel,
 	onCancelOne,
+	errorId,
 }: EmptyMediaStateProps) {
 	const remaining = Math.max(0, maxMediaCount - (currentCount ?? field.state.value.length));
 	const remainingLabel = `${remaining} restant${remaining > 1 ? "s" : ""}`;
@@ -238,7 +245,7 @@ export function EmptyMediaState({
 				<div id="media-upload-zone" className="space-y-3">
 					{!isMediaUploading && pendingFiles.length === 0 && (
 						<div className="bg-muted/20 border-border flex items-center gap-3 rounded-lg border border-dashed p-3">
-							<ImagePlus className="text-muted-foreground/50 size-5" />
+							<ImageSquareIcon className="text-muted-foreground/50 size-5" />
 							<p className="text-muted-foreground text-sm">
 								Confie jusqu'à {maxMediaCount} médias de ton bijou à l'atelier
 							</p>
@@ -265,7 +272,7 @@ export function EmptyMediaState({
 								primaryLabel="Clique ou glisse-dépose tes médias"
 								dropLabel="Relâche pour ajouter"
 								hint={MEDIA_FORMATS_HINT}
-								icon={<Upload className="text-primary/70 size-12" aria-hidden="true" />}
+								icon={<UploadSimpleIcon className="text-primary/70 size-12" aria-hidden="true" />}
 								className="min-h-40 rounded-xl"
 							/>
 						}
@@ -273,7 +280,7 @@ export function EmptyMediaState({
 				</div>
 			)}
 			{field.state.meta.errors.length > 0 && (
-				<div role="alert" className="text-destructive space-y-1 text-center text-sm">
+				<div id={errorId} role="alert" className="text-destructive space-y-1 text-center text-sm">
 					{field.state.meta.errors.map((error: unknown) => (
 						<p key={String(error)}>{String(error)}</p>
 					))}
@@ -388,7 +395,9 @@ export function InlineUploadZone({
 						ariaLabel="Zone d'envoi des médias du bijou"
 						primaryLabel="Ajouter"
 						dropLabel="Relâche"
-						icon={<Upload className="text-muted-foreground/50 size-6" aria-hidden="true" />}
+						icon={
+							<UploadSimpleIcon className="text-muted-foreground/50 size-6" aria-hidden="true" />
+						}
 						className="h-full min-h-0 w-full flex-1 gap-1 border-0 p-2"
 					/>
 				}

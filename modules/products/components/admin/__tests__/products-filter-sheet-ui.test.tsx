@@ -5,9 +5,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("lucide-react", () => ({
-	Search: (props: Record<string, unknown>) => <svg data-testid="icon-search" {...props} />,
-	X: (props: Record<string, unknown>) => <svg data-testid="icon-x" {...props} />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	MagnifyingGlassIcon: (props: Record<string, unknown>) => (
+		<svg data-testid="icon-search" {...props} />
+	),
+	XIcon: (props: Record<string, unknown>) => <svg data-testid="icon-x" {...props} />,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({

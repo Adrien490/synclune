@@ -187,12 +187,14 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	Check: ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CheckIcon: ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
 		<span data-testid="check-icon" className={className} style={style} />
 	),
-	Search: () => <span data-testid="search-icon" />,
-	X: ({ className }: { className?: string }) => <span data-testid="x-icon" className={className} />,
+	MagnifyingGlassIcon: () => <span data-testid="search-icon" />,
+	XIcon: ({ className }: { className?: string }) => (
+		<span data-testid="x-icon" className={className} />
+	),
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({

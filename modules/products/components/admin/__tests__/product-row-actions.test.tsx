@@ -175,17 +175,17 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Archive: () => <svg data-testid="icon-archive" />,
-	ArchiveRestore: () => <svg data-testid="icon-archive-restore" />,
-	Copy: () => <svg data-testid="icon-copy" />,
-	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
-	Eye: () => <svg data-testid="icon-eye" />,
-	FolderPlus: () => <svg data-testid="icon-folder-plus" />,
-	LayoutList: () => <svg data-testid="icon-layout-list" />,
-	Pencil: () => <svg data-testid="icon-pencil" />,
-	Trash2: () => <svg data-testid="icon-trash" />,
-	Upload: () => <svg data-testid="icon-upload" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArchiveIcon: () => <svg data-testid="icon-archive" />,
+	BoxArrowUpIcon: () => <svg data-testid="icon-archive-restore" />,
+	CopyIcon: () => <svg data-testid="icon-copy" />,
+	DotsThreeVerticalIcon: () => <svg data-testid="icon-ellipsis" />,
+	EyeIcon: () => <svg data-testid="icon-eye" />,
+	FolderPlusIcon: () => <svg data-testid="icon-folder-plus" />,
+	ListDashesIcon: () => <svg data-testid="icon-layout-list" />,
+	PencilSimpleIcon: () => <svg data-testid="icon-pencil" />,
+	TrashIcon: () => <svg data-testid="icon-trash" />,
+	UploadSimpleIcon: () => <svg data-testid="icon-upload" />,
 }));
 
 // ============================================================================

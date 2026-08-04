@@ -149,14 +149,14 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Package: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	PackageIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-package" className={className} />
 	),
-	Star: ({ className }: { className?: string }) => (
+	StarIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-star" className={className} />
 	),
-	TriangleAlert: ({ className }: { className?: string }) => (
+	WarningIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-triangle-alert" className={className} />
 	),
 }));

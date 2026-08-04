@@ -35,8 +35,8 @@ vi.mock("@/modules/media/components/media-lightbox", () => ({
 	default: ({ open }: { open: boolean }) => (open ? <div data-testid="media-lightbox" /> : null),
 }));
 
-vi.mock("lucide-react", () => ({
-	Package: ({
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	PackageIcon: ({
 		className,
 		"aria-hidden": ariaHidden,
 	}: {

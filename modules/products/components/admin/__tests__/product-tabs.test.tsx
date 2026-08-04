@@ -65,9 +65,9 @@ vi.mock("@/shared/components/ui/tabs", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Info: () => <svg data-testid="icon-info" />,
-	PackageOpen: () => <svg data-testid="icon-package-open" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	InfoIcon: () => <svg data-testid="icon-info" />,
+	PackageIcon: () => <svg data-testid="icon-package-open" />,
 }));
 
 // ============================================================================

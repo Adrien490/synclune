@@ -102,8 +102,8 @@ vi.mock("@/shared/components/ui/label", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Loader2Icon: () => <span data-testid="icon-loader" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: () => <span data-testid="icon-loader" />,
 }));
 
 vi.mock("@/shared/utils/cn", () => ({

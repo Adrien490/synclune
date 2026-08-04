@@ -1,15 +1,14 @@
 "use client";
 
-import { Info } from "lucide-react";
+import { InfoIcon } from "@phosphor-icons/react/ssr";
 
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { FieldLabel } from "@/shared/components/forms";
-import { ColorMultiSelectField } from "@/modules/colors/components/admin/color-multi-select-field";
-import { MaterialMultiSelectField } from "@/modules/materials/components/admin/material-multi-select-field";
 
-import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
+import { FORM_SECTION_CARD_CLASS } from "./shared-styles";
+import { VariantAttributeFields } from "./variant-attribute-fields";
+import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
 
 type ColorOption = { id: string; name: string; hex: string };
 type MaterialOption = { id: string; name: string };
@@ -51,9 +50,9 @@ export function VariantCard({
 			className={FORM_SECTION_CARD_CLASS}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
+			<CardHeader className="px-0 sm:px-0 md:px-6">
 				<div className="flex items-center gap-1">
-					<CardTitle className={MOBILE_SECTION_TITLE}>Variante</CardTitle>
+					<FormSectionTitle>Variante</FormSectionTitle>
 					{tooltipText ? (
 						<Tooltip>
 							<TooltipTrigger
@@ -67,7 +66,7 @@ export function VariantCard({
 									/>
 								}
 							>
-								<Info className="text-muted-foreground hover:text-foreground size-4 transition-colors" />
+								<InfoIcon className="text-muted-foreground hover:text-foreground size-4 transition-colors" />
 							</TooltipTrigger>
 							<TooltipContent side="bottom" className="max-w-62.5">
 								<p>{tooltipText}</p>
@@ -76,59 +75,20 @@ export function VariantCard({
 					) : null}
 				</div>
 			</CardHeader>
-			<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
-				<form.AppField name={colorIdsFieldName}>
-					{(field: {
-						name: string;
-						state: { value: string[] };
-						handleChange: (v: string[]) => void;
-					}) => (
-						<ColorMultiSelectField
-							fieldName={field.name}
-							value={field.state.value}
-							onValueChange={(ids) => field.handleChange(ids)}
-							options={colors}
-						/>
-					)}
-				</form.AppField>
-
-				<form.AppField name={materialsFieldName}>
-					{(field: {
-						name: string;
-						state: { value: string[] };
-						handleChange: (v: string[]) => void;
-					}) => (
-						<MaterialMultiSelectField
-							fieldName={field.name}
-							value={field.state.value}
-							onValueChange={(ids) => field.handleChange(ids)}
-							options={materials}
-						/>
-					)}
-				</form.AppField>
-
-				<form.AppField name={sizeFieldName}>
-					{(field: {
-						InputGroupField: React.ComponentType<{
-							placeholder: string;
-							inputMode: "text" | "numeric";
-							enterKeyHint: "next" | "done";
-							autoCapitalize: "none" | "sentences" | "words";
-							autoComplete: string;
-						}>;
-					}) => (
-						<div className="space-y-2">
-							<FieldLabel optional>Taille</FieldLabel>
-							<field.InputGroupField
-								placeholder="Ex: 52, Ajustable, 18cm…"
-								inputMode="text"
-								enterKeyHint="next"
-								autoCapitalize="none"
-								autoComplete="off"
-							/>
-						</div>
-					)}
-				</form.AppField>
+			<CardContent className="space-y-4 px-0 sm:px-0 md:px-6">
+				<VariantAttributeFields
+					// `form` est volontairement `any` des deux côtés : trois instances de
+					// formulaire distinctes le traversent, et les typer en union ferait
+					// exploser les génériques. Décision d'API déjà arbitrée sur les cards
+					// admin — ne pas la « corriger ».
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					form={form}
+					colors={colors}
+					materials={materials}
+					colorIdsFieldName={colorIdsFieldName}
+					materialsFieldName={materialsFieldName}
+					sizeFieldName={sizeFieldName}
+				/>
 			</CardContent>
 		</Card>
 	);

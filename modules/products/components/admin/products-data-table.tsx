@@ -2,7 +2,8 @@
 import Link from "next/link";
 
 // External packages
-import { Archive, FileEdit, Globe, Package, type LucideIcon } from "lucide-react";
+import { ArchiveIcon, GlobeIcon, NotePencilIcon, PackageIcon } from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
 
 // Generated types
 import { ProductStatus } from "@/app/generated/prisma/client";
@@ -36,10 +37,10 @@ import { getProductTotalStock } from "@/modules/products/utils/get-product-total
 import { ProductImageCell } from "./product-image-cell";
 import { ProductRowActions } from "./product-row-actions";
 
-const PRODUCT_STATUS_ICONS: Record<ProductStatus, LucideIcon> = {
-	[ProductStatus.PUBLIC]: Globe,
-	[ProductStatus.DRAFT]: FileEdit,
-	[ProductStatus.ARCHIVED]: Archive,
+const PRODUCT_STATUS_ICONS: Record<ProductStatus, Icon> = {
+	[ProductStatus.PUBLIC]: GlobeIcon,
+	[ProductStatus.DRAFT]: NotePencilIcon,
+	[ProductStatus.ARCHIVED]: ArchiveIcon,
 };
 
 interface ProductsDataTableProps {
@@ -59,7 +60,7 @@ export async function ProductsDataTable({
 		return (
 			<TableEmptyState
 				className="hidden md:flex"
-				icon={Package}
+				icon={PackageIcon}
 				title="Aucun bijou trouvé"
 				description="Aucun bijou ne correspond aux critères de recherche."
 				hasActiveFilters={hasActiveFilters}

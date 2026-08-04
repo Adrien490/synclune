@@ -43,11 +43,11 @@ vi.mock("next/image", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Package: () => <svg data-testid="icon-package" />,
-	Check: (props: Record<string, unknown>) => <svg data-testid="icon-check" {...props} />,
-	Loader2Icon: (props: Record<string, unknown>) => <svg data-testid="icon-loader" {...props} />,
-	MoreVertical: (props: Record<string, unknown>) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	PackageIcon: () => <svg data-testid="icon-package" />,
+	CheckIcon: (props: Record<string, unknown>) => <svg data-testid="icon-check" {...props} />,
+	SpinnerIcon: (props: Record<string, unknown>) => <svg data-testid="icon-loader" {...props} />,
+	DotsThreeVerticalIcon: (props: Record<string, unknown>) => (
 		<svg data-testid="icon-more-vertical" {...props} />
 	),
 }));

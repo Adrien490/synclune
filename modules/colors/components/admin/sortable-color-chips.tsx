@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/react/sortable";
 import { PointerActivationConstraints } from "@dnd-kit/dom";
 import { RestrictToWindow } from "@dnd-kit/dom/modifiers";
 import { arrayMove } from "@dnd-kit/helpers";
-import { GripVertical, Star, X } from "lucide-react";
+import { DotsSixVerticalIcon, StarIcon, XIcon } from "@phosphor-icons/react/ssr";
 
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 import { Badge } from "@/shared/components/ui/badge";
@@ -120,7 +120,10 @@ function SortableColorChipItem({ chip, index, isPrimary, onRemove }: SortableCol
 			)}
 			aria-label={`${chip.name}${isPrimary ? ", couleur principale" : ""}, position ${index + 1}`}
 		>
-			<GripVertical className="text-muted-foreground/70 size-3.5 shrink-0" aria-hidden="true" />
+			<DotsSixVerticalIcon
+				className="text-muted-foreground/70 size-3.5 shrink-0"
+				aria-hidden="true"
+			/>
 			<span
 				className={cn(
 					"size-4 shrink-0 rounded-full",
@@ -132,7 +135,7 @@ function SortableColorChipItem({ chip, index, isPrimary, onRemove }: SortableCol
 			<span className="max-w-[10rem] truncate">{chip.name}</span>
 			{isPrimary && (
 				<Badge variant="secondary" className="text-2xs gap-1 px-1.5 py-0 font-medium">
-					<Star className="size-2.5 fill-current" aria-hidden="true" />
+					<StarIcon className="size-2.5" weight="fill" aria-hidden="true" />
 					Principale
 				</Badge>
 			)}
@@ -148,7 +151,7 @@ function SortableColorChipItem({ chip, index, isPrimary, onRemove }: SortableCol
 				className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-ring inline-flex size-6 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-1"
 				aria-label={`Retirer ${chip.name} de la palette`}
 			>
-				<X className="size-3" aria-hidden="true" />
+				<XIcon className="size-3" aria-hidden="true" />
 			</button>
 		</li>
 	);

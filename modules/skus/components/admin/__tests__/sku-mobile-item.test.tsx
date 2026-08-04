@@ -88,10 +88,10 @@ vi.mock("@/shared/contexts/admin-list-pending-context", () => ({
 	useAdminListPendingContextOptional: () => pendingContextMock.current,
 }));
 
-vi.mock("lucide-react", () => ({
-	Package: () => <svg data-testid="icon-package" />,
-	MoreVertical: () => <svg data-testid="icon-more-vertical" />,
-	Loader2Icon: (props: Record<string, unknown>) => <svg data-testid="icon-loader" {...props} />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	PackageIcon: () => <svg data-testid="icon-package" />,
+	DotsThreeVerticalIcon: () => <svg data-testid="icon-more-vertical" />,
+	SpinnerIcon: (props: Record<string, unknown>) => <svg data-testid="icon-loader" {...props} />,
 }));
 
 import { SkuMobileItem } from "../sku-mobile-item";

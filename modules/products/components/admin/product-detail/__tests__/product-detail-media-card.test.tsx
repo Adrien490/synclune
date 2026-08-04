@@ -1,10 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("lucide-react", () => ({
-	Images: () => <svg data-testid="icon-images" />,
-	ImageOff: () => <svg data-testid="icon-image-off" />,
-	ImagePlus: () => <svg data-testid="icon-image-plus" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ImagesIcon: () => <svg data-testid="icon-images" />,
+	ImageBrokenIcon: () => <svg data-testid="icon-image-off" />,
+	ImageSquareIcon: () => <svg data-testid="icon-image-plus" />,
 }));
 
 vi.mock("next/image", () => ({

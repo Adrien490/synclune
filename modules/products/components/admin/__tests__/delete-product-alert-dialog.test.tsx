@@ -103,9 +103,9 @@ vi.mock("@/shared/components/ui/alert-dialog", () => {
 	};
 });
 
-vi.mock("lucide-react", async (importOriginal) => ({
+vi.mock("@phosphor-icons/react/ssr", async (importOriginal) => ({
 	...((await importOriginal()) as Record<string, unknown>),
-	Loader2Icon: (props: Record<string, unknown>) => {
+	SpinnerIcon: (props: Record<string, unknown>) => {
 		const { createElement } = require("react");
 		return createElement("svg", { "data-testid": "loader-circle", ...props });
 	},

@@ -187,6 +187,7 @@ interface FormOverrides {
 	canSubmit?: boolean;
 	isValid?: boolean;
 	status?: string;
+	title?: string;
 	collectionIds?: string[];
 	initialSku?: {
 		media?: Array<{
@@ -205,6 +206,24 @@ interface FormOverrides {
 	};
 }
 
+/**
+ * État d'un bijou prêt à partir en boutique.
+ *
+ * La règle d'établi dérive le libellé de son bouton des VALEURS du formulaire, pas
+ * de `canSubmit` : les validateurs TanStack ne tournent qu'au `onChange`, donc au
+ * montage un formulaire vide est encore « valide ». Sans photo, sans titre et sans
+ * prix, le bouton annonce ce qui manque — d'où ce jeu de valeurs complet pour
+ * tester les libellés nominaux.
+ */
+const COMPLETE_FORM: FormOverrides = {
+	title: "Bracelet Marée basse",
+	initialSku: {
+		media: [{ url: "https://example.com/bracelet.jpg", mediaType: "IMAGE" as const }],
+		priceInclTaxEuros: 38,
+		inventory: 4,
+	},
+};
+
 function createMockForm(overrides: FormOverrides = {}) {
 	const fieldStub = {
 		name: "test",
@@ -220,7 +239,16 @@ function createMockForm(overrides: FormOverrides = {}) {
 				{children}
 			</div>
 		),
-		RadioGroupField: () => <div />,
+		// Le stub expose `disabled` et le nom accessible : la barre d'établi vit HORS
+		// du <fieldset disabled> de la colonne, donc c'est le seul endroit où l'on
+		// peut vérifier qu'elle se grise bien pendant l'envoi.
+		RadioGroupField: (props: { "aria-label"?: string; disabled?: boolean }) => (
+			<div
+				data-testid="radio-group-field"
+				data-disabled={props.disabled ? "" : undefined}
+				aria-label={props["aria-label"]}
+			/>
+		),
 	};
 
 	const defaultInitialSku = {
@@ -235,7 +263,7 @@ function createMockForm(overrides: FormOverrides = {}) {
 
 	const formState = {
 		values: {
-			title: "",
+			title: overrides.title ?? "",
 			description: "",
 			typeId: "",
 			collectionIds: overrides.collectionIds ?? [],
@@ -281,23 +309,10 @@ function createMockForm(overrides: FormOverrides = {}) {
 		AppField: ({ children }: { children: (field: typeof fieldStub) => React.ReactNode }) => {
 			return <>{children(fieldStub)}</>;
 		},
-		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-		// Mock fidèle du form.SubmitButton partagé (le vrai requiert le formContext)
-		SubmitButton: ({
-			isPending,
-			idleLabel,
-			pendingLabel,
-		}: {
-			isPending?: boolean;
-			idleLabel: string;
-			pendingLabel: string;
-			showKbdHint?: boolean;
-			className?: string;
-		}) => (
-			<button type="submit" disabled={!formState.canSubmit || isPending} aria-busy={isPending}>
-				{isPending ? pendingLabel : idleLabel}
-			</button>
-		),
+		// Ni `AppForm` ni `SubmitButton` : la barre d'établi a délibérément divergé du
+		// bouton partagé (cf. sa dérogation commentée), donc plus rien ici ne consomme
+		// le `formContext`. Les garder stubés laisserait croire au lecteur que le
+		// composant s'appuie encore dessus.
 	};
 }
 
@@ -358,7 +373,7 @@ describe("CreateProductForm", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByText("Médias")).toBeInTheDocument();
+			expect(screen.getByText("Les photos")).toBeInTheDocument();
 		});
 
 		it("renders media counter badge", () => {
@@ -392,11 +407,13 @@ describe("CreateProductForm", () => {
 			expect(screen.getByText("Quantité en stock")).toBeInTheDocument();
 		});
 
-		it("renders variant attributes section", () => {
+		it("renders variant attributes inside the « Le bijou » section", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByText("Variante")).toBeInTheDocument();
+			// À la création il n'existe qu'une variante : ses attributs ont rejoint la
+			// pièce elle-même plutôt que d'occuper une carte séparée.
+			expect(screen.getByText("Le bijou")).toBeInTheDocument();
 			expect(screen.getByText("Couleur")).toBeInTheDocument();
 			expect(screen.getByText("Matériau")).toBeInTheDocument();
 		});
@@ -414,8 +431,26 @@ describe("CreateProductForm", () => {
 	// --------------------------------------------------------------------------
 
 	describe("submit button", () => {
-		it("renders single submit button with PUBLIC label by default", () => {
+		it("annonce ce qui manque tant que la pièce est incomplète", () => {
+			// État par défaut du mock : ni photo, ni titre, ni prix.
 			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByRole("button", { name: "Ajoute une photo" })).toBeInTheDocument();
+			expect(screen.queryByText("Publier le bijou")).not.toBeInTheDocument();
+		});
+
+		it("réclame le titre une fois la photo ajoutée", () => {
+			setup({
+				initialSku: { media: [{ url: "https://example.com/a.jpg", mediaType: "IMAGE" as const }] },
+			});
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByRole("button", { name: "Il manque le titre" })).toBeInTheDocument();
+		});
+
+		it("renders single submit button with PUBLIC label when complete", () => {
+			setup(COMPLETE_FORM);
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(screen.getByRole("button", { name: "Publier le bijou" })).toBeInTheDocument();
@@ -423,18 +458,25 @@ describe("CreateProductForm", () => {
 		});
 
 		it("renders submit button with DRAFT label when status=DRAFT", () => {
-			setup({ status: "DRAFT" });
+			setup({ ...COMPLETE_FORM, status: "DRAFT" });
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(screen.getByRole("button", { name: "Enregistrer le brouillon" })).toBeInTheDocument();
 			expect(screen.queryByText("Publier le bijou")).not.toBeInTheDocument();
 		});
 
-		it("disables submit button when form cannot submit", () => {
-			setup({ canSubmit: false });
+		/**
+		 * ⚠️ Test INVERSÉ (audit 2026-08-04). Il assertait `toBeDisabled()` et
+		 * verrouillait ainsi le défaut : `canSubmit` bascule à `false` dès le premier
+		 * envoi raté, ce qui sortait de l'ordre de tabulation le SEUL endroit qui dit
+		 * ce qui manque (le libellé du bouton). Un formulaire incomplet doit rester
+		 * soumettable — c'est la soumission qui déclenche validation puis focus.
+		 */
+		it("reste soumettable quand le formulaire est incomplet — le libellé doit rester atteignable", () => {
+			setup({ ...COMPLETE_FORM, canSubmit: false });
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByRole("button", { name: /brouillon|publier/i })).toBeDisabled();
+			expect(screen.getByRole("button", { name: /brouillon|publier/i })).not.toBeDisabled();
 		});
 
 		it("disables submit button when pending (PUBLIC)", () => {
@@ -641,46 +683,132 @@ describe("CreateProductForm", () => {
 	// Layout sections
 	// --------------------------------------------------------------------------
 
+	// --------------------------------------------------------------------------
+	// Règle d'établi
+	// --------------------------------------------------------------------------
+
+	describe("règle d'établi", () => {
+		const bar = () => document.querySelector('[data-slot="etabli-bar"]');
+
+		it("reste éteinte tant qu'il manque quelque chose", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(bar()).not.toHaveAttribute("data-ready");
+		});
+
+		it("s'allume dès que la pièce est complète", () => {
+			setup(COMPLETE_FORM);
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(bar()).toHaveAttribute("data-ready");
+		});
+
+		it("n'écrit pas deux fois ce qui manque", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			// Le bouton porte le message ; le récapitulatif montre prix et stock.
+			expect(screen.getByRole("button", { name: "Ajoute une photo" })).toBeInTheDocument();
+			expect(screen.getAllByText(/Ajoute une photo/)).toHaveLength(1);
+			expect(screen.getByText("Prix à définir")).toBeInTheDocument();
+		});
+
+		it("récapitule le prix et le stock une fois renseignés", () => {
+			setup(COMPLETE_FORM);
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByText("38,00 €")).toBeInTheDocument();
+			expect(screen.getByText(/4 en stock/)).toBeInTheDocument();
+		});
+
+		it("ne porte aucune région live — elle ânonnerait à chaque frappe", () => {
+			setup(COMPLETE_FORM);
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(bar()?.querySelector("[aria-live]")).toBeNull();
+		});
+
+		it("nomme le groupe de visibilité et le grise pendant l'envoi", () => {
+			// La barre est un frère du <fieldset disabled>, pas un descendant : sans
+			// `disabled` explicite, la visibilité restait active pendant la soumission.
+			setup(COMPLETE_FORM, { isPending: true });
+			render(<CreateProductForm {...defaultProps} />);
+
+			const radios = screen.getByTestId("radio-group-field");
+			expect(radios).toHaveAttribute("data-disabled");
+			expect(radios).toHaveAttribute("aria-label", "Visibilité");
+		});
+
+		it("laisse la visibilité active hors soumission", () => {
+			setup(COMPLETE_FORM);
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByTestId("radio-group-field")).not.toHaveAttribute("data-disabled");
+		});
+
+		it("refuse de s'allumer quand la mise en vente serait rejetée", () => {
+			// ⚠️ `initialSku` est REMPLACÉ, pas fusionné, par `setup` : sans réécrire
+			// média et prix ici, la pièce serait incomplète et l'assertion passerait
+			// pour une tout autre raison que celle qu'on prétend tester.
+			setup({
+				...COMPLETE_FORM,
+				status: "PUBLIC",
+				initialSku: { ...COMPLETE_FORM.initialSku, inventory: 0 },
+			});
+			render(<CreateProductForm {...defaultProps} />);
+
+			// Tout le reste est rempli : seule la mise en vente à zéro stock bloque.
+			// La barre s'allumait et proposait « Publier le bijou » pendant que
+			// l'alerte annonçait, juste au-dessus, que le serveur refuserait.
+			expect(bar()).not.toHaveAttribute("data-ready");
+			expect(screen.getByRole("button", { name: "Renseigne le stock" })).toBeInTheDocument();
+			expect(document.querySelector('[data-slot="publication-warning"]')).toBeInTheDocument();
+		});
+
+		it("s'allume pour un brouillon à zéro stock — rien ne part en boutique", () => {
+			setup({
+				...COMPLETE_FORM,
+				status: "DRAFT",
+				initialSku: { ...COMPLETE_FORM.initialSku, inventory: 0 },
+			});
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(bar()).toHaveAttribute("data-ready");
+			expect(document.querySelector('[data-slot="publication-warning"]')).toBeNull();
+		});
+
+		it("n'alerte pas quand le stock suit la mise en vente", () => {
+			setup(COMPLETE_FORM);
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(document.querySelector('[data-slot="publication-warning"]')).toBeNull();
+		});
+	});
+
 	describe("layout sections", () => {
-		it("renders the Informations card title", () => {
+		it("rend les trois sections de la colonne, et rien de plus", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByText("Informations")).toBeInTheDocument();
+			expect(screen.getByText("Les photos")).toBeInTheDocument();
+			expect(screen.getByText("Le bijou")).toBeInTheDocument();
+			expect(screen.getByText("Le prix et le stock")).toBeInTheDocument();
+
+			// Tarification, Stock et Variante ont fusionné : plus de cartes séparées.
+			expect(screen.queryByText("Tarification")).not.toBeInTheDocument();
+			expect(screen.queryByText("Variante")).not.toBeInTheDocument();
+			expect(screen.queryByRole("region", { name: "Statut du bijou" })).not.toBeInTheDocument();
 		});
 
-		it("renders the Tarification card title", () => {
+		it("porte la visibilité sur la règle d'établi, pas dans une carte", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByText("Tarification")).toBeInTheDocument();
-		});
-
-		it("renders the Stock card title", () => {
-			setup();
-			render(<CreateProductForm {...defaultProps} />);
-
-			expect(screen.getByText("Stock")).toBeInTheDocument();
-		});
-
-		it("renders the Variante card title", () => {
-			setup();
-			render(<CreateProductForm {...defaultProps} />);
-
-			expect(screen.getByText("Variante")).toBeInTheDocument();
-		});
-
-		it("renders the Statut card with visibility label and help text", () => {
-			setup();
-			render(<CreateProductForm {...defaultProps} />);
-
-			expect(screen.getByRole("region", { name: "Statut du bijou" })).toBeInTheDocument();
+			// « En vente » remplace « Public » : le libellé se suffit désormais à
+			// lui-même, ce que l'ancienne note d'aide compensait.
 			expect(screen.getByText("Visibilité")).toBeInTheDocument();
-			expect(
-				screen.getByText(
-					"Un brouillon reste invisible côté boutique. Public le rend visible immédiatement.",
-				),
-			).toBeInTheDocument();
+			expect(screen.getByRole("region", { name: "Le prix et le stock" })).toBeInTheDocument();
 		});
 
 		it("renders collections multi-select", () => {
@@ -690,15 +818,16 @@ describe("CreateProductForm", () => {
 			expect(screen.getByTestId("multi-select")).toBeInTheDocument();
 		});
 
-		it("renders tooltip info button for variant section", () => {
+		it("ne rend plus le tooltip « Variante » (la section a disparu)", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
+			// Ce déclencheur était `hidden sm:inline-flex` : sous 640px, le mot le plus
+			// jargonneux du formulaire n'avait aucune glose. La section renommée
+			// « Le bijou » n'a plus besoin d'être expliquée.
 			expect(
-				screen.getByRole("button", {
-					name: "Plus d'informations sur la variante",
-				}),
-			).toBeInTheDocument();
+				screen.queryByRole("button", { name: "Plus d'informations sur la variante" }),
+			).not.toBeInTheDocument();
 		});
 
 		it("renders create product type button", () => {
@@ -816,15 +945,18 @@ describe("CreateProductForm", () => {
 			});
 		});
 
-		it("disables submit buttons when canSubmit is false", () => {
+		// ⚠️ Test INVERSÉ, même motif que « reste soumettable quand le formulaire est
+		// incomplet » ci-dessus : seule une occupation RÉELLE grise le bouton.
+		it("ne grise pas les boutons de soumission sur canSubmit false", () => {
 			setup({ canSubmit: false }, { isPending: false });
 			render(<CreateProductForm {...defaultProps} />);
 
 			const submitButtons = screen
 				.getAllByRole("button")
 				.filter((btn) => btn.getAttribute("type") === "submit");
+			expect(submitButtons.length).toBeGreaterThan(0);
 			submitButtons.forEach((button) => {
-				expect(button).toBeDisabled();
+				expect(button).not.toBeDisabled();
 			});
 		});
 

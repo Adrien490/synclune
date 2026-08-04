@@ -32,9 +32,9 @@ vi.mock("next/navigation", () => ({
 	useSearchParams: () => mockSearchParams,
 }));
 
-vi.mock("lucide-react", () => ({
-	ArrowUpDown: (props: Record<string, unknown>) => <svg data-testid="icon-sort" {...props} />,
-	X: (props: Record<string, unknown>) => <svg data-testid="icon-x" {...props} />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowsDownUpIcon: (props: Record<string, unknown>) => <svg data-testid="icon-sort" {...props} />,
+	XIcon: (props: Record<string, unknown>) => <svg data-testid="icon-x" {...props} />,
 }));
 
 // ============================================================================

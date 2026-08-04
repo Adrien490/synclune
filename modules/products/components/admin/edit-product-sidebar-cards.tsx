@@ -1,6 +1,6 @@
 "use client";
 
-import { TriangleAlert } from "lucide-react";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 
@@ -39,7 +39,7 @@ export function EditProductSidebarCards({ form, colors, materials }: EditProduct
 				form={form}
 				inventoryFieldName="defaultSku.inventory"
 				hintIdPrefix="edit-product-stock"
-				hint="Laissez vide ou 0 si le bijou est en rupture"
+				hint="Laisse vide ou 0 si le bijou est en rupture"
 			/>
 			<StatusCard
 				form={form}
@@ -82,11 +82,11 @@ export function EditProductSidebarCards({ form, colors, materials }: EditProduct
 					if (reasons.length === 0) return null;
 					return (
 						<Alert variant="warning" data-slot="publication-warning">
-							<TriangleAlert aria-hidden="true" />
+							<WarningIcon aria-hidden="true" />
 							<AlertTitle>Publication incohérente</AlertTitle>
 							<AlertDescription>
-								Le serveur refusera la publication car {reasons.join(" et ")}. Repassez le statut en
-								« Brouillon » ou corrigez la variante par défaut avant d'enregistrer.
+								Impossible de publier car {reasons.join(" et ")}. Repasse le statut en « Brouillon
+								», ou corrige la variante par défaut avant d'enregistrer.
 							</AlertDescription>
 						</Alert>
 					);

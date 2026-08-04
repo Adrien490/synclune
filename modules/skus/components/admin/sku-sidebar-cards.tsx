@@ -73,7 +73,7 @@ export function SkuSidebarCards({
 					form={form}
 					inventoryFieldName="inventory"
 					hintIdPrefix={`${viewTransitionPrefix}-stock`}
-					hint="Laissez vide ou 0 si la variante est en rupture"
+					hint="Laisse vide ou 0 si la variante est en rupture"
 					viewTransitionName={`${viewTransitionPrefix}-stock`}
 				/>
 			</div>

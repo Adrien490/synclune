@@ -2,30 +2,49 @@
 
 import { FieldLabel } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { COLLECTION_DIALOG_ID } from "@/modules/collections/components/admin/collection-form-dialog";
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { Plus } from "lucide-react";
+import { cn } from "@/shared/utils/cn";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import type {
 	CreateProductFormInstance,
 	CreateProductFormProps,
 } from "./create-product-form-types";
-import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared/shared-styles";
+import { FORM_SECTION_ACCENT_CLASS, FORM_SECTION_CARD_CLASS } from "./shared/shared-styles";
+import { VariantAttributeFields } from "./shared/variant-attribute-fields";
+import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
 
 interface CreateProductInfoCardProps {
 	form: CreateProductFormInstance;
 	productTypes: CreateProductFormProps["productTypes"];
 	collections: CreateProductFormProps["collections"];
+	colors: CreateProductFormProps["colors"];
+	materials: CreateProductFormProps["materials"];
 }
 
+/**
+ * Section « Le bijou » du formulaire de création.
+ *
+ * Réunit ce qui DÉCRIT la pièce — titre, description, type, collections, puis les
+ * attributs de la variante initiale (teintes, matériaux, taille). Ce qui DÉCIDE de
+ * sa mise en vente (prix, stock, visibilité) vit sur la règle d'établi, en pied de
+ * formulaire : cf. `CreateProductEtabliBar`.
+ *
+ * À la création il n'existe qu'une seule variante, donc la séparer de la pièce ne
+ * produisait qu'une carte de plus à traverser — et sa seule glose (« Variante »)
+ * était masquée sous 640px de toute façon.
+ */
 export function CreateProductInfoCard({
 	form,
 	productTypes,
 	collections,
+	colors,
+	materials,
 }: CreateProductInfoCardProps) {
 	const router = useRouter();
 	const haptic = useHaptic();
@@ -35,14 +54,15 @@ export function CreateProductInfoCard({
 	return (
 		<Card
 			role="region"
-			aria-label="Informations générales du bijou"
-			className={FORM_SECTION_CARD_CLASS}
+			aria-label="Le bijou"
+			data-accent="rose"
+			className={cn(FORM_SECTION_CARD_CLASS, FORM_SECTION_ACCENT_CLASS)}
 			style={{ viewTransitionName: "product-create-info" }}
 		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Informations</CardTitle>
+			<CardHeader className="px-0 sm:px-0 md:px-6">
+				<FormSectionTitle>Le bijou</FormSectionTitle>
 			</CardHeader>
-			<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
+			<CardContent className="space-y-6 px-0 sm:px-0 md:px-6">
 				<form.AppField
 					name="title"
 					validators={{
@@ -126,7 +146,7 @@ export function CreateProductInfoCard({
 									}}
 									aria-label="Créer un nouveau type de produit"
 								>
-									<Plus className="size-4" />
+									<PlusIcon className="size-4" />
 								</Button>
 							</div>
 						</div>
@@ -136,10 +156,20 @@ export function CreateProductInfoCard({
 				<form.AppField name="collectionIds">
 					{(field) => (
 						<div className="space-y-2">
-							<FieldLabel optional>Collections</FieldLabel>
+							{/*
+							 * `htmlFor` + `id` appariés, comme le fait déjà `ColorMultiSelectField`.
+							 * Sans eux, le combobox tirait son nom accessible de son CONTENU : il
+							 * s'annonçait « Sélectionner des collections » à vide, puis par le nom
+							 * des collections choisies — le champ perdait son identité au moment
+							 * précis où il était rempli.
+							 */}
+							<FieldLabel htmlFor={field.name} optional>
+								Collections
+							</FieldLabel>
 							<div className="flex gap-2">
 								<div className="flex-1">
 									<MultiSelect
+										id={field.name}
 										options={collections.map((c) => ({
 											value: c.id,
 											label: c.name,
@@ -166,15 +196,24 @@ export function CreateProductInfoCard({
 									}}
 									aria-label="Créer une nouvelle collection"
 								>
-									<Plus className="size-4" />
+									<PlusIcon className="size-4" />
 								</Button>
 							</div>
 							<p id="collections-hint" className="text-muted-foreground text-xs">
-								Un produit peut appartenir à plusieurs collections
+								Un bijou peut appartenir à plusieurs collections
 							</p>
 						</div>
 					)}
 				</form.AppField>
+
+				<VariantAttributeFields
+					form={form}
+					colors={colors}
+					materials={materials}
+					colorIdsFieldName="initialSku.colorIds"
+					materialsFieldName="initialSku.materialIds"
+					sizeFieldName="initialSku.size"
+				/>
 			</CardContent>
 		</Card>
 	);

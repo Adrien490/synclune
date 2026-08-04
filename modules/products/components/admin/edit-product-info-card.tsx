@@ -2,16 +2,17 @@
 
 import { FieldLabel } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { COLLECTION_DIALOG_ID } from "@/modules/collections/components/admin/collection-form-dialog";
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { Plus } from "lucide-react";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import type { EditProductFormInstance, EditProductFormProps } from "./edit-product-form-types";
-import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared/shared-styles";
+import { FORM_SECTION_CARD_CLASS } from "./shared/shared-styles";
+import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
 
 interface EditProductInfoCardProps {
 	form: EditProductFormInstance;
@@ -48,10 +49,10 @@ export function EditProductInfoCard({
 			className={FORM_SECTION_CARD_CLASS}
 			style={{ viewTransitionName: "product-edit-info" }}
 		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Informations</CardTitle>
+			<CardHeader className="px-0 sm:px-0 md:px-6">
+				<FormSectionTitle>Informations</FormSectionTitle>
 			</CardHeader>
-			<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
+			<CardContent className="space-y-6 px-0 sm:px-0 md:px-6">
 				<form.AppField
 					name="title"
 					validators={{
@@ -136,7 +137,7 @@ export function EditProductInfoCard({
 									}}
 									aria-label="Créer un nouveau type de produit"
 								>
-									<Plus className="size-4" />
+									<PlusIcon className="size-4" />
 								</Button>
 							</div>
 						</div>
@@ -176,7 +177,7 @@ export function EditProductInfoCard({
 									}}
 									aria-label="Créer une nouvelle collection"
 								>
-									<Plus className="size-4" />
+									<PlusIcon className="size-4" />
 								</Button>
 							</div>
 							<p id="collections-edit-hint" className="text-muted-foreground text-xs">

@@ -27,6 +27,11 @@ export function CreateProductMediaCard(props: CreateProductMediaCardProps) {
 			{...props}
 			fieldName="initialSku.media"
 			viewTransitionName="product-create-media"
+			title="Les photos"
+			// Le nom annoncé suit le titre visible : la région s'appelait encore
+			// « Médias du bijou » alors que la section affiche « Les photos ».
+			ariaLabel="Les photos"
+			accent="sun"
 		/>
 	);
 }

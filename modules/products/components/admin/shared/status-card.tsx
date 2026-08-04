@@ -1,10 +1,11 @@
 "use client";
 
 import { FieldLabel } from "@/shared/components/forms";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 
-import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
+import { FORM_SECTION_CARD_CLASS } from "./shared-styles";
+import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
 
 type RadioOption = { value: string; label: string };
 
@@ -60,10 +61,10 @@ export function StatusCard({
 			className={FORM_SECTION_CARD_CLASS}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>{cardTitle}</CardTitle>
+			<CardHeader className="px-0 sm:px-0 md:px-6">
+				<FormSectionTitle>{cardTitle}</FormSectionTitle>
 			</CardHeader>
-			<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
+			<CardContent className="space-y-4 px-0 sm:px-0 md:px-6">
 				<form.AppField name={radioFieldName} listeners={{ onChange: () => haptic("selection") }}>
 					{(field: {
 						name: string;

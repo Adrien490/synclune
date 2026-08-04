@@ -118,9 +118,9 @@ vi.mock("@/shared/components/ui/checkbox", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Loader2Icon: () => <svg data-testid="icon-loader" />,
-	FolderOpen: () => <svg data-testid="icon-folder-open" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: () => <svg data-testid="icon-loader" />,
+	FolderOpenIcon: () => <svg data-testid="icon-folder-open" />,
 }));
 
 vi.mock("sonner", () => ({
