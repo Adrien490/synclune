@@ -16,12 +16,7 @@ export function ColorsMobileListSkeleton({ hasActiveFilters }: ColorsMobileListS
 				<ItemGroup>
 					{Array.from({ length: 5 }).map((_, i) => (
 						<li key={i}>
-							<Item
-								variant="outline"
-								size="sm"
-								className="gap-3"
-								style={{ animationDelay: `${i * 100}ms` }}
-							>
+							<Item variant="outline" size="sm" className="gap-3">
 								<ItemMedia variant="icon">
 									<Skeleton shape="circle" className="size-8" />
 								</ItemMedia>

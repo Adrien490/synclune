@@ -117,12 +117,14 @@ describe("STOCK-CANCEL-INVALIDATION-001 — les écrivains de stock passent par 
 	it("trouve bien des écrivains de stock (sanity)", () => {
 		expect(SOURCES.length).toBeGreaterThan(100);
 		expect(STOCK_WRITERS.length).toBeGreaterThan(3);
-		// Les trois chemins de restock qui avaient divergé doivent être détectés.
-		// (P1-C audit 2026-08-01 : le restock du rattrapage vit désormais dans le
-		// service de finalisation partagé webhook + cron, plus dans le cron.)
+		// Deux écrivains aux formes DIFFÉRENTES, pour que la sanity check couvre les
+		// deux motifs : `cancel-order` écrit en SQL brut (`"inventory" =`),
+		// `adjust-sku-stock` en Prisma (`inventory: { increment } `). Une seule des
+		// deux regex cassée laisserait donc le test rouge.
+		// (Le chemin refund a quitté cette liste au Lot 6 — cf. le test infra.)
 		const detected = STOCK_WRITERS.map((w) => w.rel);
 		expect(detected).toContain("modules/orders/actions/cancel-order.ts");
-		expect(detected).toContain("modules/refunds/services/finalize-refund.service.ts");
+		expect(detected).toContain("modules/skus/actions/adjust-sku-stock.ts");
 	});
 
 	it("chaque écrivain de stock référence un helper d'invalidation SSOT", () => {
@@ -165,16 +167,22 @@ describe("STOCK-CANCEL-INVALIDATION-001 — les écrivains de stock passent par 
 	 * que soit le helper qui compose ses tags.
 	 */
 	it("la finalisation compose via la SSOT sans invalider ; le cron sort par revalidateTagsInBackground", () => {
-		// P1-C (audit 2026-08-01) : la composition des tags stock vit dans le
-		// service de finalisation PARTAGÉ (webhook + cron), qui retourne son tag
-		// set SANS invalider lui-même — chaque appelant sort avec l'API de SON
-		// contexte (tâche INVALIDATE_CACHE côté webhook, revalidateTagsInBackground
-		// côté cron ; `updateTag` throw E872 dans les deux).
+		// P1-C (audit 2026-08-01) : la composition des tags vit dans le service de
+		// finalisation PARTAGÉ (webhook + cron), qui retourne son tag set SANS
+		// invalider lui-même — chaque appelant sort avec l'API de SON contexte
+		// (tâche INVALIDATE_CACHE côté webhook, revalidateTagsInBackground côté
+		// cron ; `updateTag` throw E872 dans les deux).
+		//
+		// Lot 6 (2026-08-03) : ce service ne compose plus de tags STOCK — il
+		// n'écrit plus l'inventaire depuis le drop de `RefundItem.restock`. Le
+		// contrat qui subsiste, et qui est celui que ce test garde réellement,
+		// c'est qu'il compose par des SSOT et n'invalide PAS lui-même.
 		const service = SOURCES.find(
 			(s) => s.rel === "modules/refunds/services/finalize-refund.service.ts",
 		);
 		expect(service).toBeDefined();
-		expect(service!.code).toContain("collectStockInvalidationTags");
+		expect(service!.code).toContain("getRefundInvalidationTags");
+		expect(service!.code).toContain("getOrderInvalidationTags");
 		expect(service!.code).not.toMatch(/\bupdateTag\(/);
 		expect(service!.code).not.toMatch(/\brevalidateTag/);
 

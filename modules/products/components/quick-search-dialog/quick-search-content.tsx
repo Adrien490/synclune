@@ -77,12 +77,17 @@ export function QuickSearchContent({
 	return (
 		<div className="flex h-full flex-col">
 			{/* Screen reader announcement (replaces Suspense fallback "Recherche en cours…") —
-				muette en erreur / rate-limit, où un « 0 résultat trouvé » serait faux :
-				ces états ont déjà leur propre role=alert / role=status. */}
+				muette en erreur, où un « 0 résultat trouvé » serait faux : l'erreur a son
+				propre role=alert (annoncé à l'insertion). Le rate-limit est annoncé ICI et
+				non par le bloc visible : celui-ci est inséré AVEC son contenu, pattern connu
+				pour ne pas être vocalisé (audit feedback/aria-live 2026-07-26) — seule une
+				région déjà montée dont le TEXTE change est annoncée de façon fiable. */}
 			<div role="status" aria-live="polite" className="sr-only">
-				{isSuccess
-					? `${totalCount} résultat${totalCount !== 1 ? "s" : ""} trouvé${totalCount !== 1 ? "s" : ""}.`
-					: ""}
+				{isRateLimited
+					? "Trop de requêtes — réessaie dans quelques instants."
+					: isSuccess
+						? `${totalCount} résultat${totalCount !== 1 ? "s" : ""} trouvé${totalCount !== 1 ? "s" : ""}.`
+						: ""}
 			</div>
 
 			<div className="min-h-0 flex-1">
@@ -102,7 +107,7 @@ export function QuickSearchContent({
 								</EmptyHeader>
 								<EmptyContent>
 									<p className="text-muted-foreground text-center text-xs">
-										Essayez avec moins de mots ou parcourez nos catégories
+										Essaie avec moins de mots ou parcours nos catégories
 									</p>
 									<QuickTagPills
 										productTypes={productTypes}
@@ -117,7 +122,7 @@ export function QuickSearchContent({
 						{/* Spell suggestion */}
 						{suggestion && (
 							<p role="status" aria-live="polite" className="text-muted-foreground text-sm">
-								Vouliez-vous dire{" "}
+								Tu voulais dire{" "}
 								{/* Vrai bouton, atteignable au Tab : ce n'est pas une option du
 									listbox mais une COMMANDE, et il est désormais rendu hors de
 									celui-ci (un listbox ne possède que `option`/`group`). Il perd
@@ -139,15 +144,14 @@ export function QuickSearchContent({
 
 						{/* Rate limited — pas de compte à rebours : la Server Action ne renvoie
 							aucun `retryAfter`, un compteur serait inventé. Pour en ajouter un,
-							exposer d'abord le délai côté `quick-search.ts`. */}
+							exposer d'abord le délai côté `quick-search.ts`. Pas de role=status
+							ici : l'annonce SR passe par la région sr-only permanente en tête
+							(un bloc inséré avec son contenu n'est pas vocalisé de façon fiable,
+							et deux régions feraient une double annonce). */}
 						{isRateLimited && (
-							<div
-								role="status"
-								aria-live="polite"
-								className="flex flex-col items-center justify-center gap-3 px-4 py-4"
-							>
+							<div className="flex flex-col items-center justify-center gap-3 px-4 py-4">
 								<p className="text-muted-foreground text-center text-sm">
-									Trop de requêtes, veuillez patienter quelques instants.
+									Trop de requêtes — réessaie dans quelques instants.
 								</p>
 								<Button variant="outline" size="sm" onClick={onRetry}>
 									Réessayer
@@ -203,12 +207,12 @@ export function QuickSearchContent({
 
 							{/* Matched product types */}
 							{matchedTypes.length > 0 && (
-								<div role="group" aria-label="Categories correspondantes">
+								<div role="group" aria-label="Catégories correspondantes">
 									<h3
 										aria-hidden="true"
 										className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase"
 									>
-										Categories
+										Catégories
 									</h3>
 									<div className="space-y-1">
 										{matchedTypes.map((type) => (

@@ -30,9 +30,6 @@ const {
 		skuMedia: {
 			findMany: vi.fn(),
 		},
-		cartItem: {
-			count: vi.fn(),
-		},
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -124,7 +121,7 @@ function createMockSkuForDelete(overrides: Record<string, unknown> = {}) {
 			// Include both the SKU being deleted and another active SKU (length >= 2 passes the guard)
 			skus: [{ id: VALID_CUID }, { id: VALID_CUID_2 }],
 		},
-		_count: { orderItems: 0, cartItems: 0 },
+		_count: { orderItems: 0 },
 		...overrides,
 	};
 }
@@ -153,7 +150,6 @@ describe("deleteProductSku", () => {
 		mockPrisma.productSku.delete.mockResolvedValue({});
 		// Re-check anti-race dans la transaction : 0 = pas de course par défaut
 		mockPrisma.orderItem.count.mockResolvedValue(0);
-		mockPrisma.cartItem.count.mockResolvedValue(0);
 		// La SSOT deleteUnreferencedCatalogMedia lit OrderItem ET SkuMedia : un
 		// `findMany` non armé (undefined) ferait échouer son Promise.all en
 		// silence (catch interne) et aucune suppression ne serait observée.
@@ -221,7 +217,7 @@ describe("deleteProductSku", () => {
 
 	it("should return error when SKU has order items", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
-			createMockSkuForDelete({ _count: { orderItems: 3, cartItems: 0 } }),
+			createMockSkuForDelete({ _count: { orderItems: 3 } }),
 		);
 		const result = await deleteProductSku(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -230,7 +226,7 @@ describe("deleteProductSku", () => {
 
 	it("should use singular article label for exactly 1 order item", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
-			createMockSkuForDelete({ _count: { orderItems: 1, cartItems: 0 } }),
+			createMockSkuForDelete({ _count: { orderItems: 1 } }),
 		);
 		const result = await deleteProductSku(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -238,13 +234,19 @@ describe("deleteProductSku", () => {
 		expect(result.message).not.toContain("articles");
 	});
 
-	it("should return error when SKU has cart items", async () => {
+	/**
+	 * La garde « présente dans N paniers » a disparu avec le passage du panier en
+	 * cookie (2026-08-04) : plus de table `CartItem`, plus de FK `onDelete: Restrict`,
+	 * et surtout aucune visibilité serveur sur les paniers des visiteurs. La
+	 * suppression est donc désormais PERMISE dans ce cas — la ligne du cookie
+	 * devient simplement inerte (`getCart()` écarte un SKU soft-deleted).
+	 */
+	it("supprime désormais un SKU même s'il pourrait être dans des paniers", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
-			createMockSkuForDelete({ _count: { orderItems: 0, cartItems: 2 } }),
+			createMockSkuForDelete({ _count: { orderItems: 0 } }),
 		);
 		const result = await deleteProductSku(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("2 panier");
+		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
 	it("should return error when PUBLIC product would have no active SKU after delete", async () => {
@@ -358,16 +360,10 @@ describe("deleteProductSku", () => {
 	 * jamais atteindre productSku.delete.
 	 */
 	describe("re-check anti-race sous transaction", () => {
-		it("should return business error and skip delete when a cart item appears mid-race", async () => {
-			// Checks pré-tx verts (_count à 0), mais le re-check tx voit 1 panier
-			mockPrisma.cartItem.count.mockResolvedValue(1);
-
-			const result = await deleteProductSku(undefined, validFormData);
-
-			expect(result.status).toBe(ActionStatus.ERROR);
-			expect(result.message).toContain("vient d'être ajoutée à un panier");
-			expect(mockPrisma.productSku.delete).not.toHaveBeenCalled();
-		});
+		// Le re-check PANIER sous transaction est parti avec la table CartItem
+		// (2026-08-04) : il n'y a plus de FK Restrict dont anticiper le P2003.
+		// Seul le re-check COMMANDE subsiste — c'est lui qui protège l'historique
+		// comptable, et il est couvert juste en dessous.
 
 		it("should return business error and skip delete when an order item appears mid-race", async () => {
 			// Checks pré-tx verts (_count à 0), mais le re-check tx voit 1 commande

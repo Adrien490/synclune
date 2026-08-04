@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { SortableMediaItem, type SortableMediaItemProps } from "../sortable-media-item";
 import type { MediaItem } from "@/modules/media/types/hooks.types";
@@ -55,8 +57,10 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 	),
 	DrawerHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	DrawerTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
-	DrawerTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	DrawerClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	// `render` (Base UI) : l'élément passé REMPLACE le composant. Un mock qui ne
+	// rendrait que `children` ferait disparaître le bouton du DOM.
+	DrawerTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
+	DrawerClose: (props: RenderPropMockProps) => renderPropMock("div", props),
 }));
 
 vi.mock("@/shared/components/ui/tooltip", () => ({
@@ -64,7 +68,7 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 	TooltipContent: ({ children }: { children: React.ReactNode }) => (
 		<span>{children as React.ReactNode}</span>
 	),
-	TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 }));
 
 // EditAltTextDialog depends on ResponsiveDialog + dialog/drawer providers; stub for unit-test isolation.
@@ -260,16 +264,17 @@ describe("SortableMediaItem", () => {
 			expect(screen.getByRole("group")).toHaveClass("can-hover:cursor-grab");
 		});
 
-		it("keyboard sortable instructions live region is referenced from the grid (drag-instructions id)", () => {
-			// The sr-only #drag-instructions live region is rendered by MediaUploadGrid (parent).
-			// SortableMediaItem itself no longer carries a focusable drag handle: the parent
-			// tile is tabbable (tabIndex=0) and aria-roledescription announces the sortable
-			// semantics. This test guards the new contract.
-			renderItem();
+		it("binds aria-describedby to the grid's keyboard instructions", () => {
+			// Le span sr-only d'instructions est rendu par MediaUploadGrid (parent, id
+			// via useId) et DOIT être référencé ici : sans ce binding, le KeyboardSensor
+			// pose son propre describedby générique et les instructions françaises ne
+			// sont jamais vocalisées (constat P1 audit media-upload 2026-08-03).
+			renderItem({ dragInstructionsId: "grid-drag-instructions" });
 
 			const group = screen.getByRole("group");
 			expect(group).toHaveAttribute("tabIndex", "0");
 			expect(group).toHaveAttribute("aria-roledescription", "élément réorganisable");
+			expect(group).toHaveAttribute("aria-describedby", "grid-drag-instructions");
 		});
 	});
 
@@ -300,6 +305,17 @@ describe("SortableMediaItem", () => {
 			renderItem({ onOpenDeleteDialog: onDelete });
 
 			fireEvent.keyDown(screen.getByRole("group"), { key: "Enter" });
+
+			expect(onDelete).not.toHaveBeenCalled();
+		});
+
+		it("ignores Delete while a drag is in progress", () => {
+			// Pendant un drag clavier, Suppr ne doit pas ouvrir la confirmation de
+			// suppression par-dessus l'élément saisi.
+			const onDelete = vi.fn();
+			renderItem({ onOpenDeleteDialog: onDelete, isDraggingAny: true });
+
+			fireEvent.keyDown(screen.getByRole("group"), { key: "Delete" });
 
 			expect(onDelete).not.toHaveBeenCalled();
 		});

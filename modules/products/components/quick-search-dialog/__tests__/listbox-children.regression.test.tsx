@@ -62,7 +62,7 @@ vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (cb: () => void) => cb(),
 }));
 
@@ -158,7 +158,7 @@ describe("le listbox ne possède que des groupes et des options", () => {
 	it("avec une suggestion orthographique (rendue HORS du listbox)", () => {
 		render(<QuickSearchContent results={success({ suggestion: "bagues" })} {...baseProps} />);
 
-		expect(screen.getByText(/vouliez-vous dire/i)).toBeInTheDocument();
+		expect(screen.getByText(/tu voulais dire/i)).toBeInTheDocument();
 		expect(screen.getByRole("listbox")).not.toContainElement(
 			screen.getByRole("button", { name: /rechercher bagues/i }),
 		);

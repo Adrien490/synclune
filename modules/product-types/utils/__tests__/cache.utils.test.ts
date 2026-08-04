@@ -127,22 +127,23 @@ describe("productTypeCountsTag", () => {
 // ============================================================================
 
 describe("getProductTypeInvalidationTags", () => {
-	it("returns LIST + ADMIN_BADGES + NAVBAR_MENU + PRODUCTS_LIST cascade by default", () => {
+	it("returns LIST + ADMIN_BADGES + PRODUCTS_LIST cascade by default", () => {
 		const tags = getProductTypeInvalidationTags();
 
 		expect(tags).toContain("product-types-list");
 		expect(tags).toContain("admin-badges");
-		expect(tags).toContain("navbar-menu");
 		// Cascade : tout changement de label/slug impacte les cards produits.
+		// `product-types-list` couvre aussi le mega-menu : `getNavbarMenuData` lit
+		// l'entrée de `fetchProductTypes` directement (ex-tag `navbar-menu` déposé).
 		expect(tags).toContain("products-list");
-		expect(tags).toHaveLength(4);
+		expect(tags).toHaveLength(3);
 	});
 
 	it("includes detail tag when slug is provided", () => {
 		const tags = getProductTypeInvalidationTags("bagues");
 
 		expect(tags).toContain("product-type-bagues");
-		expect(tags).toHaveLength(5);
+		expect(tags).toHaveLength(4);
 	});
 
 	it("omits detail tag when slug is undefined", () => {
@@ -155,7 +156,7 @@ describe("getProductTypeInvalidationTags", () => {
 		const tags = getProductTypeInvalidationTags("bagues", "pt-123");
 
 		expect(tags).toContain("product-type-pt-123-counts");
-		expect(tags).toHaveLength(6);
+		expect(tags).toHaveLength(5);
 	});
 
 	it("omits counts tag when productTypeId is undefined", () => {

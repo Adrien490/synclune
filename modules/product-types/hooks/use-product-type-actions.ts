@@ -9,7 +9,7 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { TaxonomyDeletePayload } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
 

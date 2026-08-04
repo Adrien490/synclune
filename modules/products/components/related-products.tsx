@@ -75,13 +75,16 @@ export async function RelatedProducts({ currentProductSlug, limit = 8 }: Related
 					aria-label="Carousel de produits similaires"
 				>
 					<CarouselContent className="-ml-4 py-4 sm:-ml-6" showFade>
-						{relatedProducts.map((product) => (
+						{relatedProducts.map((product, index) => (
 							<CarouselItem
 								key={product.id}
 								className="basis-[47%] pl-4 sm:basis-[clamp(200px,48vw,280px)] sm:pl-6 md:basis-1/3 lg:basis-1/4"
 							>
+								{/* `index` restaure l'alternance d'inclinaison au survol (une carte
+								    sur deux) — `disablePreload` neutralise ses effets eager/LCP */}
 								<ProductCard
 									product={product}
+									index={index}
 									isInWishlist={wishlistProductIds.has(product.id)}
 									sectionId="related"
 									disablePreload

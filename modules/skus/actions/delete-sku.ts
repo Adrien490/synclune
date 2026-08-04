@@ -18,7 +18,6 @@ import {
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { deleteUnreferencedCatalogMedia } from "@/modules/media/services/delete-unreferenced-catalog-media.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
-import { CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 
 /**
  * Server Action pour supprimer une variante de produit
@@ -94,7 +93,6 @@ export async function deleteProductSku(
 				_count: {
 					select: {
 						orderItems: true,
-						cartItems: true,
 					},
 				},
 			},
@@ -122,16 +120,17 @@ export async function deleteProductSku(
 			);
 		}
 
-		// 8. CRITIQUE : Verifier que le SKU n'est pas dans des paniers
-		// Prisma a onDelete: Restrict sur CartItem.sku
-		const cartItemsCount = existingSku._count.cartItems;
-
-		if (cartItemsCount > 0) {
-			return error(
-				`Cette variante ne peut pas être supprimée car elle est présente dans ${cartItemsCount} panier${cartItemsCount > 1 ? "s" : ""}. ` +
-					"Veuillez désactiver cette variante à la place.",
-			);
-		}
+		// 8. La garde « présente dans N paniers » a DISPARU avec le passage du panier
+		// en cookie (2026-08-04) : il n'existe plus ni table `CartItem` ni FK
+		// `onDelete: Restrict` à anticiper, et le serveur n'a aucune visibilité sur
+		// les paniers des visiteurs — ils vivent dans leurs navigateurs.
+		//
+		// Conséquence assumée : supprimer une variante présente dans le panier de
+		// quelqu'un est désormais possible. Ce n'est pas une perte de sûreté — la
+		// ligne devient simplement inerte (`getCart()` écarte un SKU soft-deleted,
+		// `validateCart` la signale, et le checkout la refuse sous verrou) — mais la
+		// suppression est plus permissive qu'avant. La garde `orderItems`, elle,
+		// reste : elle protège l'historique comptable.
 
 		// 9. Pour les produits PUBLIC : verifier qu'il reste au moins 1 SKU actif apres suppression
 		// activeSkusCount deja charge dans la requete initiale
@@ -149,22 +148,14 @@ export async function deleteProductSku(
 		const imageUrls = existingSku.images.map((img) => img.url);
 
 		const promotedSkuSku = await prisma.$transaction(async (tx) => {
-			// Re-check sous transaction : un CartItem/OrderItem a pu apparaître entre
-			// les checks des étapes 7-8 (hors tx) et le DELETE. Sans ce re-check, la FK
-			// Restrict ferait échouer le delete en P2003 générique — on préfère refuser
-			// avec un message métier explicite.
-			const [orderItemsNow, cartItemsNow] = await Promise.all([
-				tx.orderItem.count({ where: { skuId: validatedSkuId } }),
-				tx.cartItem.count({ where: { skuId: validatedSkuId } }),
-			]);
+			// Re-check sous transaction : un OrderItem a pu apparaître entre le check
+			// de l'étape 7 (hors tx) et le DELETE. Sans ce re-check, la FK Restrict
+			// ferait échouer le delete en P2003 générique — on préfère refuser avec un
+			// message métier explicite. (Plus de re-check panier : cf. étape 8.)
+			const orderItemsNow = await tx.orderItem.count({ where: { skuId: validatedSkuId } });
 			if (orderItemsNow > 0) {
 				throw new BusinessError(
 					"Cette variante vient d'être associée à une commande. Pour conserver l'historique, veuillez la désactiver à la place.",
-				);
-			}
-			if (cartItemsNow > 0) {
-				throw new BusinessError(
-					"Cette variante vient d'être ajoutée à un panier. Veuillez la désactiver à la place.",
 				);
 			}
 
@@ -240,9 +231,6 @@ export async function deleteProductSku(
 			existingSku.materials.map((m) => m.materialId),
 		);
 		tags.forEach((tag) => updateTag(tag));
-
-		// Invalider le compteur FOMO "X paniers contenant ce produit"
-		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(existingSku.productId));
 
 		// 13. Audit log
 

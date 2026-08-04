@@ -83,7 +83,18 @@ vi.mock("@/shared/components/responsive-action-menu", async () => {
 	};
 	return {
 		ResponsiveActionMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-		ResponsiveActionMenuTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		ResponsiveActionMenuTrigger: ({
+			render,
+			children,
+		}: {
+			render?: React.ReactElement;
+			children?: React.ReactNode;
+		}) =>
+			React.isValidElement(render) ? (
+				React.cloneElement(render, undefined, children)
+			) : (
+				<>{children}</>
+			),
 		ResponsiveActionMenuContent: ({
 			title,
 			sections,

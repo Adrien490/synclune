@@ -67,7 +67,7 @@ vi.mock("../../utils/cache.utils", () => ({
 	getCollectionInvalidationTags: mockGetCollectionInvalidationTags,
 }));
 vi.mock("@/shared/constants/cache-tags", () => ({
-	SHARED_CACHE_TAGS: { NAVBAR_MENU: "navbar-menu" },
+	SHARED_CACHE_TAGS: { ADMIN_BADGES: "admin-badges" },
 }));
 
 import { updateCollection } from "../update-collection";

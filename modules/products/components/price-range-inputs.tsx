@@ -119,7 +119,7 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 						const newMaxPrice = sliderToPrice(newPos[1]!, maxPrice);
 						onChange([newMinPrice, newMaxPrice]);
 					}}
-					onValueCommit={() => {
+					onValueCommitted={() => {
 						draggingRef.current = false;
 						haptic("selection");
 					}}

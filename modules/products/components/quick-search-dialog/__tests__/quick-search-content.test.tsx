@@ -53,7 +53,7 @@ vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (cb: () => void) => cb(),
 }));
 
@@ -226,7 +226,7 @@ describe("QuickSearchContent", () => {
 		expect(screen.getByText(/aucun résultat pour/i)).toBeInTheDocument();
 	});
 
-	it("shows rate limited message", () => {
+	it("shows rate limited message and announces it via the permanent live region", () => {
 		render(
 			<QuickSearchContent
 				results={makeResults({ products: [], totalCount: 0, rateLimited: true })}
@@ -235,7 +235,14 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		expect(screen.getByText(/trop de requêtes/i)).toBeInTheDocument();
+		// Deux occurrences attendues : le bloc visible ET la région sr-only
+		// permanente. C'est cette dernière qui porte l'annonce — un bloc inséré
+		// avec son contenu n'est pas vocalisé de façon fiable ; seule une région
+		// déjà montée dont le texte change l'est.
+		expect(screen.getAllByText(/trop de requêtes/i)).toHaveLength(2);
+		const status = screen.getByRole("status");
+		expect(status).toHaveClass("sr-only");
+		expect(status).toHaveTextContent(/trop de requêtes/i);
 	});
 
 	it("shows error message with a retry button when error flag is set", async () => {
@@ -267,7 +274,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		expect(screen.getByText(/trop de requêtes/i)).toBeInTheDocument();
+		expect(screen.getAllByText(/trop de requêtes/i).length).toBeGreaterThan(0);
 		expect(screen.queryByText(/temporairement indisponible/i)).not.toBeInTheDocument();
 	});
 
@@ -276,7 +283,7 @@ describe("QuickSearchContent", () => {
 			<QuickSearchContent results={makeResults({ suggestion: "bagues" })} {...defaultProps} />,
 		);
 
-		expect(screen.getByText(/vouliez-vous dire/i)).toBeInTheDocument();
+		expect(screen.getByText(/tu voulais dire/i)).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /rechercher bagues/i })).toBeInTheDocument();
 	});
 
@@ -298,7 +305,7 @@ describe("QuickSearchContent", () => {
 		);
 
 		const emptyTitle = screen.getByText(/aucun résultat pour/i);
-		const suggestionText = screen.getByText(/vouliez-vous dire/i);
+		const suggestionText = screen.getByText(/tu voulais dire/i);
 		expect(emptyTitle).toBeInTheDocument();
 		expect(suggestionText).toBeInTheDocument();
 
@@ -335,7 +342,7 @@ describe("QuickSearchContent", () => {
 		render(<QuickSearchContent results={makeResults()} {...defaultProps} />);
 
 		// "bague" query matches "Bagues" product type via word-start
-		expect(screen.getByRole("group", { name: /categories correspondantes/i })).toBeInTheDocument();
+		expect(screen.getByRole("group", { name: /catégories correspondantes/i })).toBeInTheDocument();
 	});
 
 	it("announces result count for screen readers", () => {

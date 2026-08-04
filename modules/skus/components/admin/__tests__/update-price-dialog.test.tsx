@@ -48,7 +48,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: vi.fn(),
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (fn: () => void) => fn(),
 }));
 

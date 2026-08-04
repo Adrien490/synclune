@@ -1,8 +1,10 @@
 import {
-	CARD_SURFACE_BASE,
 	CARD_SURFACE_FOCUS,
 	CARD_SURFACE_HOVER,
+	CARD_SURFACE_POLAROID,
 } from "@/shared/components/card-surface.constants";
+import { MaskingTape } from "@/shared/components/masking-tape";
+import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,7 +27,10 @@ import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants"
 
 interface ProductCardProps {
 	product: ProductCarouselItem;
-	/** Index dans la liste (pour eager loading + fetchPriority above-fold) */
+	/**
+	 * Index dans la liste (eager loading + fetchPriority above-fold, et sens
+	 * de l'inclinaison au survol : une carte sur deux penche à droite)
+	 */
 	index?: number;
 	/** Indique si le produit est dans la wishlist */
 	isInWishlist?: boolean;
@@ -35,14 +40,6 @@ interface ProductCardProps {
 	preferOnSale?: boolean;
 	/** Disable above-fold preload (for cards inside Suspense boundaries) */
 	disablePreload?: boolean;
-	/**
-	 * Opt-in "Nouveau" badge. Set by the calling section (typically
-	 * `latest-creations`) — ProductCard does not infer freshness from
-	 * `createdAt` because `Date.now()` is not permitted in cached Server
-	 * Components (Next 16 Cache Components). Yields to stock/urgency/promo
-	 * badges sharing the top-left slot.
-	 */
-	showNewBadge?: boolean;
 }
 
 /**
@@ -63,7 +60,7 @@ function CardBadge({
 		<Badge
 			aria-hidden="true"
 			variant={variant}
-			className={cn("absolute top-2.5 left-2.5 z-20 rounded-full shadow-md", className)}
+			className={cn("absolute top-2 left-2 z-20 rounded-full shadow-md", className)}
 		>
 			{children}
 		</Badge>
@@ -74,6 +71,13 @@ function CardBadge({
  * Carte produit pour l'affichage dans les grilles (catalogue, collections, recherche).
  *
  * @description
+ * Redesign « Atelier » (2026-08-03) : la carte est un tirage polaroid épinglé —
+ * cadre blanc avec ruban de masking tape rose, photo insérée (ratio 4/5 unifié
+ * tous viewports), légende dessous (eyebrow type produit, titre en Fraunces
+ * souligné d'un trait dessiné à la main au survol/focus, matière, prix avec
+ * remise inline). Au survol la carte s'incline légèrement (sens alterné par
+ * index) ; le CTA panier desktop est une pastille posée sur la photo.
+ *
  * Server component optimise pour les Core Web Vitals avec:
  * - Preload des images above-fold (index < ABOVE_FOLD_THRESHOLD)
  * - Support responsive
@@ -83,9 +87,14 @@ function CardBadge({
  * Note: Schema.org JSON-LD est genere sur la page produit detaillee uniquement
  * (pas de microdata dans les grilles pour eviter la redondance)
  *
+ * Surface via CARD_SURFACE_POLAROID (SSOT partagée avec CollectionCard,
+ * sans `overflow-hidden` : le tape déborde du cadre, c'est la zone média qui
+ * clippe). Tape et trait dessiné sont les primitives partagées MaskingTape /
+ * SquiggleUnderline.
+ *
  * z-index stack (documented):
  * - z-10: Stretched link (title link ::after covers the entire card)
- * - z-20: Badges (stock, promo, new)
+ * - z-20: Badges (stock) + tape décoratif (pointer-events-none)
  * - z-30: Interactive buttons (wishlist, add to cart, color swatches)
  *
  * @example
@@ -100,16 +109,23 @@ export function ProductCard({
 	sectionId,
 	preferOnSale,
 	disablePreload = false,
-	showNewBadge: showNewBadgeProp = false,
 }: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
 
 	// Single-pass O(n) extraction of all display data from SKUs
-	const { defaultSku, price, compareAtPrice, stockInfo, primaryImage, secondaryImage, colors } =
-		getProductCardData(product, preferOnSale ? { preferOnSale } : undefined);
+	const {
+		defaultSku,
+		price,
+		compareAtPrice,
+		stockInfo,
+		primaryImage,
+		secondaryImage,
+		colors,
+		material,
+	} = getProductCardData(product, preferOnSale ? { preferOnSale } : undefined);
 
-	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
+	const { status: stockStatus, message: stockMessage } = stockInfo;
 
 	// No active SKU — produit en catalogue sans variante publiée (état "à venir")
 	const noActiveSku = defaultSku === null;
@@ -123,22 +139,10 @@ export function ProductCard({
 	// Urgency badge for low stock (scarcity signal for conversion)
 	const showUrgencyBadge = stockStatus === "low_stock";
 
-	// Discount percentage for promo badge
+	// Remise inline à côté du prix (plus de badge promo sur l'image : la promo
+	// ne dispute plus le slot haut-gauche aux badges de stock)
 	const discountPercent = computeDiscountPercent(price, compareAtPrice);
-	const hasDiscount = discountPercent > 0;
-
-	// Stock badges take priority over promo badge (same position)
-	const showPromoBadge =
-		hasDiscount && stockStatus !== "out_of_stock" && !showUrgencyBadge && !noActiveSku;
-
-	// "Nouveau" badge — opt-in by the parent section. Yields to stock/urgency/promo
-	// badges sharing the top-left slot.
-	const showNewBadge =
-		showNewBadgeProp &&
-		stockStatus !== "out_of_stock" &&
-		!showUrgencyBadge &&
-		!showPromoBadge &&
-		!noActiveSku;
+	const showDiscountPill = discountPercent > 0 && !noActiveSku;
 
 	const baseUrl = `/creations/${slug}`;
 	const productUrl =
@@ -163,20 +167,19 @@ export function ProductCard({
 	// Aligned with Gallery PDP for card→detail morph (gallery.tsx:436).
 	const productViewTransitionName = `product-${product.id}`;
 
-	// Build sr-only description for screen readers (badges info)
+	// Build sr-only description for screen readers (badges + promo info)
 	const badgeDescriptions: string[] = [];
 	if (stockStatus === "out_of_stock") {
 		badgeDescriptions.push(outOfStockBadgeMessage);
-	} else if (showUrgencyBadge) {
+	} else if (showUrgencyBadge && defaultSku) {
+		// Même source que le badge visuel : le stock du SKU affiché, pas l'agrégat
+		const count = defaultSku.inventory;
 		badgeDescriptions.push(
-			`Stock limité : plus que ${inventory} exemplaire${inventory > 1 ? "s" : ""} disponible${inventory > 1 ? "s" : ""}`,
+			`Stock limité : plus que ${count} exemplaire${count > 1 ? "s" : ""} disponible${count > 1 ? "s" : ""}`,
 		);
 	}
-	if (showPromoBadge) {
+	if (showDiscountPill) {
 		badgeDescriptions.push(`Promotion : -${discountPercent}%`);
-	}
-	if (showNewBadge) {
-		badgeDescriptions.push("Nouveauté");
 	}
 	const badgeDescId =
 		badgeDescriptions.length > 0
@@ -190,13 +193,23 @@ export function ProductCard({
 			aria-labelledby={titleId}
 			aria-describedby={badgeDescId}
 			className={cn(
-				CARD_SURFACE_BASE,
-				"product-card grid gap-4 rounded-lg sm:rounded-xl",
+				// grid-rows-[auto_1fr] : la légende absorbe la hauteur excédentaire quand
+				// la rangée est étirée par une carte voisine au titre plus long — combiné
+				// au mt-auto du CTA mobile, les boutons restent alignés dans la rangée
+				"product-card grid grid-rows-[auto_1fr]",
+				CARD_SURFACE_POLAROID,
 				CARD_SURFACE_HOVER,
-				"motion-safe:can-hover:hover:scale-[1.02]",
+				// Inclinaison + lift au survol, sens alterné une carte sur deux
+				"motion-safe:can-hover:hover:-translate-y-1",
+				(index ?? 0) % 2 === 0
+					? "motion-safe:can-hover:hover:-rotate-1"
+					: "motion-safe:can-hover:hover:rotate-1",
 				CARD_SURFACE_FOCUS,
 			)}
 		>
+			{/* Masking tape décoratif, centré en haut (silhouette du tirage épinglé) */}
+			<MaskingTape className="-top-2 left-1/2 z-20 h-4 w-14 -translate-x-1/2 -rotate-2" />
+
 			{/* sr-only badge descriptions for screen readers */}
 			{badgeDescId && (
 				<span id={badgeDescId} className="sr-only">
@@ -204,17 +217,10 @@ export function ProductCard({
 				</span>
 			)}
 
-			{/* Image container with interactive buttons */}
+			{/* Photo insérée dans le cadre — ratio 4/5 unifié tous viewports */}
 			{/* bg-muted acts as CSS-only fallback if image fails to load */}
-			<div
-				className={cn(
-					"product-card-media bg-muted relative overflow-hidden rounded-lg sm:rounded-xl",
-					"aspect-3/4 sm:aspect-4/5",
-					// Gradient overlay on hover
-					"motion-safe:can-hover:group-hover:after:opacity-100 after:absolute after:inset-0 after:z-[5] after:bg-linear-to-t after:from-black/5 after:to-transparent after:opacity-0 motion-safe:after:transition-opacity motion-safe:after:duration-300",
-				)}
-			>
-				{/* Status badges — stock badges take priority over promo */}
+			<div className="product-card-media bg-muted relative aspect-4/5 overflow-hidden rounded-sm">
+				{/* Status badges — stock badges take priority */}
 				{stockStatus === "out_of_stock" && (
 					<CardBadge
 						variant="secondary"
@@ -224,15 +230,14 @@ export function ProductCard({
 					</CardBadge>
 				)}
 				{showUrgencyBadge && <CardBadge variant="warning">{stockMessage}</CardBadge>}
-				{showPromoBadge && <CardBadge variant="destructive">-{discountPercent}%</CardBadge>}
-				{showNewBadge && <CardBadge variant="default">Nouveau</CardBadge>}
 
-				{/* Wishlist button (client island) */}
+				{/* Wishlist button (client island) — toujours visible, pastille blanche
+				    pour le contraste sur les photos (plus de reveal au survol) */}
 				<WishlistButton
 					productId={product.id}
 					isInWishlist={isInWishlist}
 					productTitle={title}
-					className="motion-safe:can-hover:sm:group-hover:opacity-100 motion-safe:can-hover:sm:group-hover:scale-100 absolute top-2.5 right-2.5 z-30 scale-90 opacity-100 transition-[opacity,transform] duration-200 sm:scale-90 sm:opacity-0 sm:focus-within:scale-100 sm:focus-within:opacity-100 sm:has-[:focus-visible]:opacity-100"
+					className="bg-card/85 absolute top-2 right-2 z-30 rounded-full shadow-sm backdrop-blur-sm"
 				/>
 
 				<div className="absolute inset-0">
@@ -243,9 +248,9 @@ export function ProductCard({
 						alt={primaryImage.alt ?? PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 						fill
 						className={cn(
-							"rounded-lg object-cover sm:rounded-xl",
+							"rounded-sm object-cover",
 							!secondaryImage &&
-								"motion-safe:can-hover:group-hover:scale-[1.08] ease-out motion-safe:transition-[transform] motion-safe:duration-300",
+								"motion-safe:can-hover:group-hover:scale-105 ease-out motion-safe:transition-[transform] motion-safe:duration-300",
 						)}
 						style={{ viewTransitionName: productViewTransitionName }}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
@@ -261,7 +266,7 @@ export function ProductCard({
 							alt=""
 							aria-hidden="true"
 							fill
-							className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-lg object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500 sm:rounded-xl"
+							className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-sm object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500"
 							loading="lazy"
 							quality={IMAGE_QUALITY.STANDARD}
 							sizes={IMAGE_SIZES.PRODUCT_CARD}
@@ -269,7 +274,7 @@ export function ProductCard({
 					)}
 				</div>
 
-				{/* Add to cart button - Desktop (client island) */}
+				{/* Add to cart button - Desktop (client island) : pastille posée sur la photo */}
 				{defaultSku && stockStatus !== "out_of_stock" && (
 					<AddToCartCardButton
 						skuId={defaultSku.id}
@@ -280,34 +285,62 @@ export function ProductCard({
 				)}
 			</div>
 
-			{/* Card content — no position:relative so stretched link ::after reaches the article */}
-			<div className="flex flex-col gap-3 overflow-hidden px-3 pt-1 pb-4 sm:gap-3.5 sm:px-4 sm:pb-5 lg:px-5 lg:pb-6">
-				{/* Stretched link: title link with ::after covering the entire card */}
+			{/* Légende du polaroid — no position:relative so stretched link ::after reaches the article */}
+			<div className="flex flex-col gap-1.5 overflow-hidden px-1.5 pt-2.5 pb-3 sm:px-2 sm:pt-3 sm:pb-4">
+				{/* Eyebrow type produit — première question de l'acheteuse dans une grille */}
+				<span className="text-2xs text-muted-foreground font-semibold tracking-widest uppercase">
+					{productType ? `${productType} · fait main` : "Fait main"}
+				</span>
+
+				{/* Stretched link: title link with ::after covering the entire card.
+				    Le trait dessiné sous le titre est l'affordance du lien : il se
+				    révèle au survol ET au focus clavier (WCAG 2.4.7). */}
 				<Link
 					href={productUrl}
-					className="focus-ring block after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
+					className="focus-ring block w-fit max-w-full after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
 				>
-					<h3 id={titleId} className="text-foreground line-clamp-2 text-base sm:text-lg">
-						{title}
-					</h3>
+					<span className="relative block">
+						<h3
+							id={titleId}
+							className="font-display text-foreground line-clamp-2 text-base font-normal sm:text-lg"
+						>
+							{title}
+						</h3>
+						<SquiggleUnderline />
+					</span>
 				</Link>
 
-				{/* Prix — placed before colors for scannability (Baymard guideline) */}
-				{!noActiveSku && <ProductPrice price={price} compareAtPrice={compareAtPrice} />}
+				{/* Matière principale du SKU affiché */}
+				{material && !noActiveSku && (
+					<span className="text-muted-foreground text-xs">{material}</span>
+				)}
+
+				{/* Prix — placed before colors for scannability (Baymard guideline),
+				    remise inline recollée au prix */}
+				{!noActiveSku && (
+					<ProductPrice
+						price={price}
+						compareAtPrice={compareAtPrice}
+						discountPercent={showDiscountPill ? discountPercent : undefined}
+						className="mt-0.5"
+					/>
+				)}
 
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (
 					<ProductCardColorSwatches colors={colors} productUrl={productUrl} title={title} />
 				)}
 
-				{/* Add to cart button - Mobile full-width (client island) */}
+				{/* Add to cart button - Mobile full-width (client island).
+				    mt-auto : pousse le CTA en bas de la légende (1fr) pour que les
+				    boutons d'une même rangée de grille restent alignés */}
 				{defaultSku && stockStatus !== "out_of_stock" && (
 					<AddToCartCardButton
 						skuId={defaultSku.id}
 						productTitle={title}
 						product={product}
 						variant="mobile-full"
-						className="relative z-30 sm:hidden"
+						className="relative z-30 mt-auto pt-1 sm:hidden"
 					/>
 				)}
 			</div>

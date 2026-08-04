@@ -22,7 +22,7 @@ interface ProductCareInfoProps {
  */
 export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 	return (
-		<Accordion type="multiple" defaultValue={["shipping"]} className="w-full">
+		<Accordion defaultValue={["shipping"]} className="w-full">
 			{/* Section Livraison */}
 			<AccordionItem value="shipping">
 				<AccordionTrigger className="hover:bg-muted/50 -mx-2 rounded-lg px-2 text-sm/6 font-semibold tracking-normal antialiased transition-colors">

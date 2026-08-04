@@ -21,6 +21,8 @@ export const PRODUCT_TEXTS = {
 	STOCK: {
 		IN_STOCK: "En stock",
 		LOW_STOCK: "Stock limité",
+		/** Badge d'urgence de la carte produit — compte du SKU affiché */
+		LOW_STOCK_LEFT: (count: number) => `Plus que ${count} !`,
 		OUT_OF_STOCK: "Rupture de stock",
 		ON_DEMAND: "Sur commande",
 		COMING_SOON: "Bientôt disponible",

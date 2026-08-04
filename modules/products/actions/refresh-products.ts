@@ -37,9 +37,9 @@ export async function refreshProducts(
 			SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 			SHARED_CACHE_TAGS.ADMIN_BADGES,
 			SHARED_CACHE_TAGS.SITEMAP_IMAGES,
-			// Global lui aussi (présent dans getProductInvalidationTags) : sans lui,
-			// le mega-menu ne se rafraîchissait pas depuis le bouton.
-			SHARED_CACHE_TAGS.NAVBAR_MENU,
+			// Global lui aussi (présent dans getProductInvalidationTags) : les bento
+			// collections (/collections + mega-menu) montrent des images de produits.
+			SHARED_CACHE_TAGS.COLLECTIONS_LIST,
 		];
 		globalTags.forEach((tag) => updateTag(tag));
 

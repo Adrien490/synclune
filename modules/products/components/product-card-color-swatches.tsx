@@ -32,8 +32,12 @@ export function ProductCardColorSwatches({
 	title,
 }: ProductCardColorSwatchesProps) {
 	return (
+		// `role="list"` explicite : `list-none` fait perdre la sémantique liste à
+		// VoiceOver/Safari, qui n'annoncerait plus le nombre de variantes
+		// eslint-disable-next-line jsx-a11y/no-redundant-roles -- redondant en HTML, pas pour VoiceOver avec list-style:none
 		<ul
-			className="relative z-30 m-0 flex list-none items-center gap-1.5 p-0"
+			role="list"
+			className="relative z-30 m-0 flex list-none items-center gap-2 p-0"
 			aria-label={`${colors.length} variantes disponibles pour ${title}`}
 		>
 			{colors.slice(0, MAX_COLOR_SWATCHES).map((color) => {
@@ -43,9 +47,7 @@ export function ProductCardColorSwatches({
 					? `${productUrl}?variant=${color.comboKey}`
 					: `${productUrl}?color=${color.slug}`;
 				const allLight = areAllColorsLight(hexes, (hex) => isLightColor(hex, 0.85));
-				const variantLabel = isCombo
-					? `${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`
-					: `${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`;
+				const variantLabel = `${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`;
 
 				return (
 					<li key={color.slug}>

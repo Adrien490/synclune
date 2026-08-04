@@ -47,7 +47,6 @@ vi.mock("../constants/cache", () => ({
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
 		ADMIN_BADGES: "admin-badges",
-		NAVBAR_MENU: "navbar-menu",
 	},
 }));
 
@@ -102,8 +101,9 @@ describe("refreshCollections", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("collections-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("collection-counts");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
-		expect(mockUpdateTag).toHaveBeenCalledWith("navbar-menu");
-		expect(mockUpdateTag).toHaveBeenCalledTimes(4);
+		// `collections-list` couvre aussi le mega-menu : `getNavbarMenuData` lit
+		// l'entrée de `fetchCollections` directement (ex-tag `navbar-menu` déposé).
+		expect(mockUpdateTag).toHaveBeenCalledTimes(3);
 	});
 
 	it("should return success after cache invalidation", async () => {

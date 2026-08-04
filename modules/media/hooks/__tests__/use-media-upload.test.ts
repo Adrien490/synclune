@@ -486,7 +486,7 @@ describe("useMediaUpload", () => {
 			expect(() => unmount()).not.toThrow();
 		});
 
-		it("should toast 'Upload annulé' (no count) when cancelled before any success", async () => {
+		it("should toast 'Envoi annulé' (no count) when cancelled before any success", async () => {
 			mockWithRetry.mockImplementation((_fn: () => unknown, opts: { signal?: AbortSignal }) => {
 				return new Promise((_, reject) => {
 					opts.signal?.addEventListener("abort", () => {
@@ -512,7 +512,7 @@ describe("useMediaUpload", () => {
 
 			expect(toast.info).toHaveBeenCalledTimes(1);
 			const callArgs = vi.mocked(toast.info).mock.calls[0]!;
-			expect(callArgs[0]).toBe("Upload annulé");
+			expect(callArgs[0]).toBe("Envoi annulé");
 			// No description (no kept files) — wrapper still injects a default duration
 			expect(callArgs[1]).not.toHaveProperty("description");
 		});
@@ -534,7 +534,7 @@ describe("useMediaUpload", () => {
 			});
 
 			expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "Network failure" }));
-			expect(toast.error).toHaveBeenCalledWith("Échec de l'upload", expect.any(Object));
+			expect(toast.error).toHaveBeenCalledWith("Échec de l'envoi", expect.any(Object));
 		});
 
 		it("should return partial results when error occurs after some uploads", async () => {

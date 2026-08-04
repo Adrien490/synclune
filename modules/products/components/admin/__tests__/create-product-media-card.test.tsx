@@ -156,7 +156,7 @@ vi.mock("@/modules/media/utils/uploadthing", () => ({
 		<button
 			data-testid="upload-dropzone"
 			data-endpoint={endpoint}
-			aria-label={ariaLabel ?? "Zone d'upload"}
+			aria-label={ariaLabel ?? "Zone d'envoi"}
 		>
 			Upload
 		</button>
@@ -300,7 +300,7 @@ describe("CreateProductMediaCard", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			expect(
-				screen.getByRole("button", { name: /Zone d'upload des médias du bijou/i }),
+				screen.getByRole("button", { name: /Zone d'envoi des médias du bijou/i }),
 			).toBeInTheDocument();
 		});
 
@@ -535,7 +535,7 @@ describe("CreateProductMediaCard", () => {
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			const sheet = screen.getByTestId("upload-action-sheet");
 			expect(
-				sheet.querySelector('[aria-label="Zone d\'upload des médias du bijou"]'),
+				sheet.querySelector('[aria-label="Zone d\'envoi des médias du bijou"]'),
 			).not.toBeNull();
 		});
 	});

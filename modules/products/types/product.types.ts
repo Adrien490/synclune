@@ -108,6 +108,11 @@ export interface ProductCardData {
 	/** Couleurs disponibles pour les swatches */
 	colors: ColorSwatch[];
 	/**
+	 * Matériau principal du SKU affiché (position 0, priorité saisie admin).
+	 * null si le SKU n'a aucun matériau ou si aucun SKU actif.
+	 */
+	material: string | null;
+	/**
 	 * Indique si le produit a un SKU actif valide.
 	 * false signifie que le produit ne devrait pas être affiché
 	 * ou qu'un warning devrait être montré à l'admin.

@@ -152,36 +152,16 @@ describe("ProductPriceDisplay", () => {
 			);
 		});
 
-		it("renders the FOMO carts badge when cartsCount is provided and product is in stock", () => {
+		// Le badge FOMO « Dans X paniers » a été RETIRÉ avec le passage du panier en
+		// cookie (2026-08-04) : il comptait les paniers des AUTRES visiteurs, ce
+		// qu'un cookie ne permet structurellement pas — le serveur ne voit que le
+		// cookie de la requête courante. Ne pas le réintroduire sans une source de
+		// données côté serveur (arbitrage Adrien : suppression, pas remplacement).
+		it("n'affiche aucun badge « dans X paniers »", () => {
 			const sku = makeSku({ inventory: 10, isActive: true });
-			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} cartsCount={3} />);
-
-			expect(screen.getByText(/3/)).toBeInTheDocument();
-			// Should use plural form
-			expect(screen.getByText(/paniers/i)).toBeInTheDocument();
-		});
-
-		it("does not render the FOMO badge when cartsCount is 0", () => {
-			const sku = makeSku({ inventory: 10, isActive: true });
-			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} cartsCount={0} />);
+			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} />);
 
 			expect(screen.queryByText(/panier/i)).not.toBeInTheDocument();
-		});
-
-		it("does not render the FOMO badge when cartsCount is below threshold (1)", () => {
-			const sku = makeSku({ inventory: 10, isActive: true });
-			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} cartsCount={1} />);
-
-			// Threshold = 2 → "Dans 1 panier" is suppressed as weak social proof
-			expect(screen.queryByText(/panier/i)).not.toBeInTheDocument();
-		});
-
-		it("renders the FOMO badge at the threshold (2)", () => {
-			const sku = makeSku({ inventory: 10, isActive: true });
-			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} cartsCount={2} />);
-
-			expect(screen.getByText(/2/)).toBeInTheDocument();
-			expect(screen.getByText(/paniers/i)).toBeInTheDocument();
 		});
 
 		it("exposes aria-live=polite on the price region for variant transitions", () => {

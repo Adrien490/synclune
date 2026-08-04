@@ -52,7 +52,7 @@ vi.mock("@/shared/utils/toast", () => ({
 	toast: { success: mockToastSuccess },
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: mockWithViewTransition,
 }));
 

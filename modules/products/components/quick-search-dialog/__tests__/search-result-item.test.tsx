@@ -53,7 +53,7 @@ vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (cb: () => void) => cb(),
 }));
 
@@ -356,7 +356,7 @@ describe("SearchResultItem", () => {
 describe("SearchResultsSkeleton", () => {
 	it("renders the skeleton loading container", () => {
 		render(<SearchResultsSkeleton />);
-		expect(screen.getByLabelText(/chargement des resultats/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/chargement des résultats/i)).toBeInTheDocument();
 	});
 
 	it("renders 4 skeleton rows (SKELETON_ROWS = 4)", () => {

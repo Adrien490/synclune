@@ -183,7 +183,9 @@ describe("getProductCardData", () => {
 			expect(result.stockInfo.totalInventory).toBe(1);
 		});
 
-		it("should return low_stock when total inventory is 3 (threshold)", () => {
+		it("should base the urgency message on the DISPLAYED sku, not the aggregate", () => {
+			// Audit ProductCard 2026-08-03 : l'agrégat mentait (« Plus que 3 ! » pour
+			// 2 couleurs × quelques exemplaires) — le badge suit le SKU affiché.
 			const sku1 = createMockSku({ id: "sku-1", inventory: 2 });
 			const sku2 = createMockSku({ id: "sku-2", inventory: 1, isDefault: false });
 			const product = createMockProduct({}, [sku1, sku2]);
@@ -191,9 +193,21 @@ describe("getProductCardData", () => {
 			const result = getProductCardData(product);
 
 			expect(result.stockInfo.status).toBe("low_stock");
-			expect(result.stockInfo.message).toBe("Plus que 3 !");
+			expect(result.stockInfo.message).toBe("Plus que 2 !");
 			expect(result.stockInfo.totalInventory).toBe(3);
 			expect(result.stockInfo.availableSkus).toBe(2);
+		});
+
+		it("should flag low_stock when the displayed sku is nearly gone even if another variant is well stocked", () => {
+			const sku1 = createMockSku({ id: "sku-1", inventory: 1 });
+			const sku2 = createMockSku({ id: "sku-2", inventory: 50, isDefault: false });
+			const product = createMockProduct({}, [sku1, sku2]);
+
+			const result = getProductCardData(product);
+
+			expect(result.stockInfo.status).toBe("low_stock");
+			expect(result.stockInfo.message).toBe("Plus que 1 !");
+			expect(result.stockInfo.totalInventory).toBe(51);
 		});
 
 		it("should return in_stock when inventory > LOW threshold", () => {

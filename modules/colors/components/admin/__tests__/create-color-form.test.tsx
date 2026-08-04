@@ -29,7 +29,7 @@ vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 	useUnsavedChanges: mockUseUnsavedChanges,
 }));
 vi.mock("@/modules/colors/actions/create-color", () => ({ createColor: mockCreateColor }));
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (cb: () => void) => cb(),
 }));
 

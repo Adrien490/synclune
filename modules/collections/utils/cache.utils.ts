@@ -53,11 +53,10 @@ export function cacheCollectionDetail(slug: string) {
  * - Les produits de la collection
  * - La liste des produits (car ils affichent leur collection)
  * - Les badges de la sidebar admin
- * - Le mega-menu de la navbar (images de collection triées isFeatured desc,
- *   profil `reference` : sans ce tag, `setFeaturedProduct` laissait la navbar
- *   sur l'ancienne image jusqu'à 24 h — les 5 autres mutations l'ajoutaient
- *   chacune à la main, exactement la divergence de call sites que ce helper
- *   existe pour empêcher ; pattern aligné sur getProductTypeInvalidationTags)
+ *
+ * `LIST` couvre aussi le mega-menu de la navbar : `getNavbarMenuData` n'a plus
+ * de scope cache propre (ex-tag `NAVBAR_MENU`, déposé — CACHE-DEGRADED-VALUE-001),
+ * il lit l'entrée `collections-list` de `fetchCollections` directement.
  */
 export function getCollectionInvalidationTags(collectionSlug: string): string[] {
 	return [
@@ -67,6 +66,5 @@ export function getCollectionInvalidationTags(collectionSlug: string): string[] 
 		COLLECTIONS_CACHE_TAGS.PRODUCTS(collectionSlug),
 		SHARED_CACHE_TAGS.PRODUCTS_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
-		SHARED_CACHE_TAGS.NAVBAR_MENU,
 	];
 }

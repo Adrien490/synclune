@@ -66,6 +66,13 @@ export const SEARCH_DEBOUNCE_MS = 300;
 /** Downward swipe distance (px) from the mobile header that dismisses the dialog */
 export const SWIPE_CLOSE_THRESHOLD_PX = 80;
 
+/**
+ * Vélocité instantanée (px/ms) d'un flick vers le bas qui ferme même sous le
+ * seuil de distance — un geste rapide et court est une intention de fermeture
+ * aussi claire qu'un drag long (même arbitrage que Vaul, qui prend 0.4).
+ */
+export const SWIPE_CLOSE_VELOCITY_PX_PER_MS = 0.5;
+
 /** Dampening applied to an upward (over-)drag so it feels rubber-banded */
 export const SWIPE_RUBBER_BAND_FACTOR = 0.3;
 

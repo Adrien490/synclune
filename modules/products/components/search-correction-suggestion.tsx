@@ -16,7 +16,7 @@ interface SearchCorrectionSuggestionProps {
 
 /**
  * Affiche une suggestion de correction de recherche
- * "Vouliez-vous dire : [suggestion] ?"
+ * "Tu voulais dire : [suggestion] ?"
  *
  * Le lien conserve tous les filtres actuels en ne remplaçant que le terme de
  * recherche — c'est la raison d'être de ce composant, et pourquoi il remplace le
@@ -48,7 +48,7 @@ function SearchCorrectionSuggestionInner({
 			role={announce ? "status" : undefined}
 			aria-live={announce ? "polite" : undefined}
 		>
-			Vouliez-vous dire :{" "}
+			Tu voulais dire :{" "}
 			<Link href={href} className="font-medium underline underline-offset-4">
 				{suggestion}
 			</Link>{" "}

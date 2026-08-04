@@ -16,12 +16,7 @@ export function SkusMobileListSkeleton({ hasActiveFilters }: SkusMobileListSkele
 				<ItemGroup>
 					{Array.from({ length: 5 }).map((_, i) => (
 						<li key={i}>
-							<Item
-								variant="outline"
-								size="sm"
-								className="gap-3"
-								style={{ animationDelay: `${i * 100}ms` }}
-							>
+							<Item variant="outline" size="sm" className="gap-3">
 								<Skeleton shape="rounded" className="size-12 shrink-0" />
 								<ItemContent>
 									<div className="flex items-center gap-2">

@@ -70,7 +70,7 @@ vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (cb: () => void) => cb(),
 }));
 
@@ -176,7 +176,7 @@ describe("IdleContent", () => {
 	describe("empty state", () => {
 		it("shows empty state message when no content at all", () => {
 			render(<IdleContent {...defaultProps} />);
-			expect(screen.getByText("Trouvez votre prochain bijou")).toBeInTheDocument();
+			expect(screen.getByText("Trouve ton prochain bijou")).toBeInTheDocument();
 		});
 
 		it("has a link to /produits in the empty state", () => {
@@ -258,7 +258,7 @@ describe("IdleContent", () => {
 
 		it("does not show empty state when recentlyViewed has items", () => {
 			render(<IdleContent {...defaultProps} onClose={onClose} recentlyViewed={[mockProduct]} />);
-			expect(screen.queryByText("Trouvez votre prochain bijou")).not.toBeInTheDocument();
+			expect(screen.queryByText("Trouve ton prochain bijou")).not.toBeInTheDocument();
 		});
 	});
 
@@ -401,7 +401,7 @@ describe("IdleContent", () => {
 	describe("mixed content", () => {
 		it("does not show empty state when any content is present", () => {
 			render(<IdleContent {...defaultProps} searches={["bague"]} />);
-			expect(screen.queryByText("Trouvez votre prochain bijou")).not.toBeInTheDocument();
+			expect(screen.queryByText("Trouve ton prochain bijou")).not.toBeInTheDocument();
 		});
 
 		it("renders all sections when all content is provided", () => {

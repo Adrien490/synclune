@@ -112,12 +112,12 @@ export function getProductInvalidationTags(
 		// produits PUBLIC : publier le premier bijou d'un type doit le faire apparaître
 		// au mega-menu et au sitemap sans attendre l'expiration du profil `user`.
 		SHARED_CACHE_TAGS.PRODUCT_TYPES_LIST,
-		// …et l'entrée du mega-menu elle-même. Elle enveloppe `getProductTypes` dans
-		// son propre scope caché, donc elle hérite bien de `product-types-list` par
-		// propagation — mais les mutateurs collections et product-types, eux, posent
-		// `NAVBAR_MENU` explicitement. S'appuyer sur la propagation d'un côté et pas
-		// de l'autre rendait l'invariant illisible pour un coût nul.
-		SHARED_CACHE_TAGS.NAVBAR_MENU,
+		// Les bento des collections (/collections + mega-menu navbar) sont des images
+		// de PRODUITS lues via `collection.products.skus.images` sous `collections-list` :
+		// changer l'image d'un bijou doit les rafraîchir sans attendre l'expiration du
+		// profil `reference` (24 h). Remplace l'ex-tag `NAVBAR_MENU`, déposé quand
+		// `getNavbarMenuData` a perdu son scope cache agrégé (CACHE-DEGRADED-VALUE-001).
+		SHARED_CACHE_TAGS.COLLECTIONS_LIST,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 		SHARED_CACHE_TAGS.SITEMAP_IMAGES,
@@ -155,7 +155,7 @@ export function getProductInvalidationTags(
  * ⚠️ Il existait ici une SECONDE implémentation homonyme, plus pauvre, à laquelle
  * `collectStockInvalidationTags` déléguait (audit cache 2026-07-31). Elle omettait
  * `SKU_DETAIL_BY_ID`, `SKUS_LIST` et `LIST` : toute invalidation passant par ce
- * fichier (`toggle-product-status`, `mark-as-paid`, remboursements avec restock)
+ * fichier (`toggle-product-status`, `mark-as-paid`)
  * laissait donc le formulaire d'édition SKU sur un inventaire périmé, alors que le
  * même geste depuis `adjust-sku-stock` — qui importait l'autre version — était
  * correct. Deux helpers de même nom et de couverture différente : le call site

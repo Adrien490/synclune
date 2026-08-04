@@ -19,7 +19,10 @@ export function buildSkuUrl(
 	sku: Pick<SkuFromList, "colors" | "materials" | "size">,
 ): string {
 	const params = new URLSearchParams();
-	const primaryColorSlug = sku.colors[0]?.color.slug;
+	// Tri par position : l'ordre du tableau Prisma n'est pas garanti, et le
+	// service des combos (product-display) trie déjà ainsi — sans ce tri les
+	// deux chemins pouvaient désigner deux couleurs « principales » différentes
+	const primaryColorSlug = [...sku.colors].sort((a, b) => a.position - b.position)[0]?.color.slug;
 	if (primaryColorSlug) params.set("color", primaryColorSlug);
 	const primaryMaterial = getPrimaryMaterialName(sku.materials);
 	if (primaryMaterial) params.set("material", slugify(primaryMaterial));

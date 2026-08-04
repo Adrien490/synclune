@@ -25,10 +25,12 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
 			{/* Carousel skeleton - Correspond à la structure du carousel */}
 			<div className="w-full overflow-hidden">
 				<div className="-ml-4 flex py-4 sm:-ml-6">
+					{/* Basis STRICTEMENT identique au CarouselItem de related-products.tsx —
+					 * l'ancien clamp 72vw mobile (vs 47% réel) décalait tout au swap (CLS) */}
 					{Array.from({ length: limit }).map((_, index) => (
 						<div
 							key={index}
-							className="flex-shrink-0 basis-[clamp(200px,72vw,280px)] pl-4 sm:pl-6 md:basis-1/3 lg:basis-1/4"
+							className="flex-shrink-0 basis-[47%] pl-4 sm:basis-[clamp(200px,48vw,280px)] sm:pl-6 md:basis-1/3 lg:basis-1/4"
 						>
 							<ProductCardSkeleton />
 						</div>

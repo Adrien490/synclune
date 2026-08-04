@@ -117,9 +117,11 @@ describe("getProductInvalidationTags", () => {
 		// Le `hasProducts` d'un type de bijou se calcule sur les produits PUBLIC : sans ce
 		// tag, publier le premier bijou d'un type ne le faisait pas apparaître au mega-menu.
 		expect(tags).toContain("product-types-list");
-		// …et l'entrée du mega-menu elle-même, que les mutateurs collections et
-		// product-types posaient déjà explicitement (audit cache catalogue 2026-07-31).
-		expect(tags).toContain("navbar-menu");
+		// Les bento collections (/collections + mega-menu) montrent des images de
+		// PRODUITS lues sous `collections-list` : changer l'image d'un bijou doit les
+		// rafraîchir (remplace l'ex-tag `navbar-menu`, déposé avec le scope cache
+		// agrégé de `getNavbarMenuData` — CACHE-DEGRADED-VALUE-001).
+		expect(tags).toContain("collections-list");
 		// `fetchSkuDetailById` embarque product.title/status/_count.skus sous `skus-list`.
 		expect(tags).toContain("skus-list");
 		expect(tags).toHaveLength(13);

@@ -61,7 +61,7 @@ vi.mock("../../utils/cache.utils", () => ({
 	getCollectionInvalidationTags: mockGetCollectionInvalidationTags,
 }));
 vi.mock("@/shared/constants/cache-tags", () => ({
-	SHARED_CACHE_TAGS: { NAVBAR_MENU: "navbar-menu" },
+	SHARED_CACHE_TAGS: { ADMIN_BADGES: "admin-badges" },
 }));
 
 import { deleteCollection } from "../delete-collection";
@@ -97,12 +97,12 @@ describe("deleteCollection", () => {
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
-		// Miroir du contrat réel : NAVBAR_MENU vit désormais DANS le helper (les
+		// Miroir du contrat réel : les tags globaux vivent DANS le helper (les
 		// updateTag manuels ont été retirés des actions).
 		mockGetCollectionInvalidationTags.mockReturnValue([
 			"collections-list",
 			`collection-bague-soleil`,
-			"navbar-menu",
+			"admin-badges",
 		]);
 		mockPrisma.collection.findUnique.mockResolvedValue(makeCollection());
 		mockPrisma.collection.delete.mockResolvedValue({});
@@ -233,9 +233,9 @@ describe("deleteCollection", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("collection-bague-soleil");
 	});
 
-	it("should invalidate the NAVBAR_MENU cache tag", async () => {
+	it("should invalidate the ADMIN_BADGES cache tag returned by the helper", async () => {
 		await deleteCollection(undefined, validFormData);
-		expect(mockUpdateTag).toHaveBeenCalledWith("navbar-menu");
+		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 	});
 
 	// ---------- Error handling ----------

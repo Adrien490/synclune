@@ -1,3 +1,5 @@
+import { ProductCardSkeleton } from "./product-card-skeleton";
+
 /**
  * Skeleton de chargement pour le composant RecentlyViewedProducts
  *
@@ -5,7 +7,8 @@
  * - Container : <aside className="space-y-6">
  * - En-tete : <div className="space-y-2"> avec h2
  * - Grille : grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6
- * - Cards : ProductCard structure
+ * - Cards : SSOT `ProductCardSkeleton` (parité anti-CLS structurelle avec
+ *   ProductCard — l'ancienne copie locale avait dérivé du redesign Atelier)
  */
 export function RecentlyViewedProductsSkeleton({ limit = 4 }: { limit?: number }) {
 	return (
@@ -22,29 +25,5 @@ export function RecentlyViewedProductsSkeleton({ limit = 4 }: { limit?: number }
 				))}
 			</div>
 		</aside>
-	);
-}
-
-/**
- * Skeleton d'une ProductCard
- */
-function ProductCardSkeleton() {
-	return (
-		<div className="product-card-skeleton bg-card overflow-hidden rounded-lg shadow-sm">
-			{/* Image - aspect-4/5 full-bleed avec rounded-t-lg */}
-			<div className="bg-muted aspect-3/4 motion-safe:animate-pulse sm:aspect-4/5" />
-
-			{/* Contenu - p-4 flex flex-col gap-2 comme ProductCard */}
-			<div className="flex flex-col gap-2 p-4">
-				{/* Titre - line-clamp-2 text-lg (2 lignes) */}
-				<div className="space-y-2">
-					<div className="bg-muted h-6 rounded motion-safe:animate-pulse" />
-					<div className="bg-muted h-6 w-3/4 rounded motion-safe:animate-pulse" />
-				</div>
-
-				{/* Prix */}
-				<div className="bg-muted h-5 w-20 rounded motion-safe:animate-pulse" />
-			</div>
-		</div>
 	);
 }

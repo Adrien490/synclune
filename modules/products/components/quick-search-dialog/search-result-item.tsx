@@ -8,7 +8,7 @@ import { Tap } from "@/shared/components/animations/tap";
 import { Skeleton, SkeletonGroup, SkeletonText } from "@/shared/components/ui/skeleton";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { SEARCH_SYNONYMS } from "../../constants/search-synonyms";
 import type { QuickSearchProduct } from "../../data/quick-search-products";
@@ -171,7 +171,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
  */
 export function SearchResultsSkeleton() {
 	return (
-		<SkeletonGroup label="Chargement des resultats…" className="space-y-2 px-4">
+		<SkeletonGroup label="Chargement des résultats…" className="space-y-2 px-4">
 			{Array.from({ length: SKELETON_ROWS }).map((_, i) => (
 				<div key={i} className="flex items-center gap-3 py-2">
 					<Skeleton shape="rounded" className="size-12 shrink-0" />

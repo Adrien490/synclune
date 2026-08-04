@@ -41,10 +41,12 @@ const DECLARED_INVENTORY_WRITERS: Record<string, string> = {
 	"modules/orders/actions/mark-as-paid.ts": "ORDER (encaissement manuel)",
 	"modules/orders/actions/cancel-order.ts": "ORDER (restock annulation)",
 	"modules/webhooks/services/payment-intent.service.ts": "WEBHOOK (restauration)",
-	// P1-C (audit 2026-08-01) : le restock du rattrapage a quitté
-	// reconcile-refunds.service.ts pour le service de finalisation partagé
-	// webhook refund.updated + cron.
-	"modules/refunds/services/finalize-refund.service.ts": "SYSTEM (finalisation refund)",
+	// `modules/refunds/services/finalize-refund.service.ts` a quitté cette liste au
+	// Lot 6 (2026-08-03) : `RefundItem.restock` est droppée, plus aucun créateur ne
+	// la demandait depuis les remboursements Stripe-first (Lot 2). La finalisation
+	// n'écrit donc plus l'inventaire — le restock post-refund est redevenu un
+	// ajustement manuel de stock SKU (`adjust-sku-stock`, MANUAL_ADJUST), déjà
+	// journalisé. Ce n'est PAS une dispense de journal : c'est une écriture en moins.
 };
 
 function moduleSourceFiles(): string[] {

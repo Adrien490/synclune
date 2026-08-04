@@ -5,6 +5,16 @@ import { CollectionImageItem } from "./collection-image-item";
 
 type CollectionImagesVariant = "default" | "compact";
 
+/**
+ * Chrome du conteneur, dans les deux modes d'insertion de la grille :
+ * - soudé (défaut) : coins arrondis en haut seulement, la grille est collée au
+ *   bloc texte de la carte (mega-menu, historique).
+ * - framed : la grille est un tirage inséré dans le cadre planche-contact de
+ *   CollectionCard (marge blanche autour), petits coins sur les 4 angles.
+ */
+const GRID_CHROME_DEFAULT = "overflow-hidden rounded-t-lg lg:rounded-t-xl";
+const GRID_CHROME_FRAMED = "overflow-hidden rounded-sm";
+
 interface CollectionImagesGridProps {
 	images: CollectionImage[];
 	collectionName: string;
@@ -12,6 +22,8 @@ interface CollectionImagesGridProps {
 	/** LCP candidate (1re carte) — seule l'image principale recoit fetchPriority=high. */
 	isLcpCandidate?: boolean;
 	variant?: CollectionImagesVariant;
+	/** Grille insérée dans le cadre planche-contact (coins `rounded-sm` aux 4 angles). */
+	framed?: boolean;
 	/** Collection slug — forwarded to the first image as view-transition-name key. */
 	collectionSlug?: string;
 }
@@ -31,6 +43,7 @@ export function CollectionImagesGrid({
 	isAboveFold = false,
 	isLcpCandidate = false,
 	variant = "default",
+	framed = false,
 	collectionSlug,
 }: CollectionImagesGridProps) {
 	const count = images.length;
@@ -45,6 +58,7 @@ export function CollectionImagesGrid({
 				isLcpCandidate={isLcpCandidate}
 				ariaLabel={ariaLabel}
 				variant={variant}
+				framed={framed}
 				collectionSlug={collectionSlug}
 			/>
 		);
@@ -59,6 +73,7 @@ export function CollectionImagesGrid({
 				isLcpCandidate={isLcpCandidate}
 				ariaLabel={ariaLabel}
 				variant={variant}
+				framed={framed}
 				collectionSlug={collectionSlug}
 			/>
 		);
@@ -73,6 +88,7 @@ export function CollectionImagesGrid({
 				isLcpCandidate={isLcpCandidate}
 				ariaLabel={ariaLabel}
 				variant={variant}
+				framed={framed}
 				collectionSlug={collectionSlug}
 			/>
 		);
@@ -86,6 +102,7 @@ export function CollectionImagesGrid({
 			isLcpCandidate={isLcpCandidate}
 			ariaLabel={ariaLabel}
 			variant={variant}
+			framed={framed}
 			collectionSlug={collectionSlug}
 		/>
 	);
@@ -101,6 +118,7 @@ interface LayoutProps {
 	isLcpCandidate: boolean;
 	ariaLabel: string;
 	variant: CollectionImagesVariant;
+	framed: boolean;
 	collectionSlug?: string;
 }
 
@@ -112,6 +130,7 @@ function SingleImageLayout({
 	isLcpCandidate,
 	ariaLabel,
 	variant,
+	framed,
 	collectionSlug,
 }: LayoutProps & { image: CollectionImage }) {
 	const sizes =
@@ -123,7 +142,10 @@ function SingleImageLayout({
 		<div
 			role="group"
 			aria-label={ariaLabel}
-			className="bg-muted relative aspect-square overflow-hidden rounded-t-lg lg:rounded-t-xl"
+			className={cn(
+				"bg-muted relative aspect-square",
+				framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT,
+			)}
 		>
 			<CollectionImageItem
 				image={image}
@@ -147,6 +169,7 @@ function TwoImagesLayout({
 	isLcpCandidate,
 	ariaLabel,
 	variant,
+	framed,
 	collectionSlug,
 }: LayoutProps & { images: CollectionImage[] }) {
 	const sizes =
@@ -158,7 +181,7 @@ function TwoImagesLayout({
 		<div
 			role="group"
 			aria-label={ariaLabel}
-			className="grid grid-cols-2 gap-0.5 overflow-hidden rounded-t-lg lg:rounded-t-xl"
+			className={cn("grid grid-cols-2 gap-0.5", framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT)}
 		>
 			{images.map((image, i) => (
 				<div key={image.url} className="bg-muted relative aspect-square overflow-hidden">
@@ -186,6 +209,7 @@ function ThreeImagesLayout({
 	isLcpCandidate,
 	ariaLabel,
 	variant,
+	framed,
 	collectionSlug,
 }: LayoutProps & { images: CollectionImage[] }) {
 	const mainSizes =
@@ -201,7 +225,10 @@ function ThreeImagesLayout({
 		<div
 			role="group"
 			aria-label={ariaLabel}
-			className="grid grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-t-lg lg:rounded-t-xl"
+			className={cn(
+				"grid grid-cols-2 grid-rows-2 gap-0.5",
+				framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT,
+			)}
 		>
 			{/* Grande image - span 2 rows */}
 			<div className="bg-muted relative row-span-2 overflow-hidden">
@@ -240,6 +267,7 @@ function BentoGridLayout({
 	isLcpCandidate,
 	ariaLabel,
 	variant,
+	framed,
 	collectionSlug,
 }: LayoutProps & { images: CollectionImage[] }) {
 	const mainSizes =
@@ -260,7 +288,8 @@ function BentoGridLayout({
 			role="group"
 			aria-label={ariaLabel}
 			className={cn(
-				"grid gap-0.5 overflow-hidden rounded-t-lg lg:rounded-t-xl",
+				"grid gap-0.5",
+				framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT,
 				// Mobile : 2x2
 				"grid-cols-2 grid-rows-2",
 				// Desktop : Bento (1 grande + 3 petites)

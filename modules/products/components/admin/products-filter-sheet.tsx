@@ -355,7 +355,6 @@ function ProductsFilterSheetInner({
 			>
 				<Accordion
 					ref={accordionRef}
-					type="multiple"
 					defaultValue={defaultOpenSections}
 					onValueChange={handleAccordionValueChange}
 					className="w-full"

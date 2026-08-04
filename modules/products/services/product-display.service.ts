@@ -14,6 +14,7 @@
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
 import { logger } from "@/shared/lib/logger";
 import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
+import { PRODUCT_TEXTS } from "../constants/product-texts.constants";
 import type {
 	ProductFromList,
 	SkuFromList,
@@ -274,24 +275,33 @@ export function getProductCardData(
 	const price = defaultSku?.priceInclTax ?? 0;
 	const compareAtPrice = defaultSku?.compareAtPrice ?? null;
 
+	// Matière principale du SKU affiché — déjà chargée par les selects catalogue,
+	// affichée sous le titre de la carte (redesign Atelier 2026-08-03)
+	const material = defaultSku ? getPrimaryMaterialName(defaultSku.materials) : null;
+
 	// Warning en dev si pas de SKU
 	if (!defaultSku && process.env.NODE_ENV === "development") {
 		logger.warn(`Product "${product.slug}" has no active SKU`, { service: "product-display" });
 	}
 
-	// Stock info avec support low_stock
+	// Stock info avec support low_stock. La rupture se juge sur l'AGRÉGAT (tous
+	// SKUs actifs à 0 = rien à vendre), mais l'urgence se juge sur le SKU AFFICHÉ :
+	// l'agrégat mentait dans les deux sens — 3 couleurs × 1 exemplaire affichait
+	// « Plus que 3 ! », et une variante presque épuisée n'affichait rien si une
+	// autre couleur était bien stockée (audit ProductCard 2026-08-03).
+	const displayedInventory = defaultSku?.inventory ?? 0;
 	let status: StockStatus;
 	let message: string;
 
 	if (totalInventory === 0) {
 		status = "out_of_stock";
-		message = "Rupture de stock";
-	} else if (totalInventory <= STOCK_THRESHOLDS.LOW) {
+		message = PRODUCT_TEXTS.STOCK.OUT_OF_STOCK;
+	} else if (displayedInventory > 0 && displayedInventory <= STOCK_THRESHOLDS.LOW) {
 		status = "low_stock";
-		message = `Plus que ${totalInventory} !`;
+		message = PRODUCT_TEXTS.STOCK.LOW_STOCK_LEFT(displayedInventory);
 	} else {
 		status = "in_stock";
-		message = "En stock";
+		message = PRODUCT_TEXTS.STOCK.IN_STOCK;
 	}
 
 	const stockInfo: ProductStockInfo = {
@@ -321,6 +331,7 @@ export function getProductCardData(
 		primaryImage,
 		secondaryImage,
 		colors,
+		material,
 		hasValidSku: defaultSku !== null && defaultSku.isActive,
 	};
 }

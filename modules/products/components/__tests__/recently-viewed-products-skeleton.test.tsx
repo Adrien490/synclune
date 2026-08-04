@@ -54,8 +54,8 @@ describe("RecentlyViewedProductsSkeleton", () => {
 		const cards = container.querySelectorAll(".product-card-skeleton");
 		// Each card has an image and content area
 		cards.forEach((card) => {
-			// Image skeleton
-			const imageDiv = card.querySelector(".bg-muted.aspect-3\\/4");
+			// Image skeleton — ratio 4/5 aligné sur product-card.tsx (parité CLS)
+			const imageDiv = card.querySelector(".bg-muted.aspect-4\\/5");
 			expect(imageDiv).not.toBeNull();
 			// Content area
 			const contentDiv = card.querySelector(".flex.flex-col");

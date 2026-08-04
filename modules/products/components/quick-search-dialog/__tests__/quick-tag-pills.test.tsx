@@ -65,7 +65,7 @@ describe("QuickTagPills", () => {
 
 	it("renders group with accessible label", () => {
 		render(<QuickTagPills productTypes={mockProductTypes} onSelect={onSelect} />);
-		expect(screen.getByRole("group", { name: /suggestions de categories/i })).toBeInTheDocument();
+		expect(screen.getByRole("group", { name: /suggestions de catégories/i })).toBeInTheDocument();
 	});
 
 	it("applies text-sm class when size is sm (default)", () => {

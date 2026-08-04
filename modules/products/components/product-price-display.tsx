@@ -9,13 +9,11 @@ import {
 	calculateDiscountPercent,
 	hasActiveDiscount,
 } from "@/modules/products/services/product-pricing.service";
-import { CARTS_COUNT_MIN_THRESHOLD } from "@/modules/products/constants/social-proof.constants";
 
 interface ProductPriceProps {
 	selectedSku: ProductSku | null;
 	product: GetProductReturn;
 	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
-	cartsCount?: number;
 }
 
 /**
@@ -27,7 +25,7 @@ interface ProductPriceProps {
  * - Afficher le badge de réduction
  * - Afficher le badge de disponibilité (En stock / Stock limité / Rupture)
  */
-export function ProductPriceDisplay({ selectedSku, product, cartsCount }: ProductPriceProps) {
+export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps) {
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
 	const priceInfo = calculatePriceInfo(product.skus);
 
@@ -169,20 +167,6 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					</Badge>
 				)}
 			</div>
-
-			{/* Badge "dans X paniers" - FOMO Etsy-style (seuil min = 2 pour crédibilité) */}
-			{cartsCount !== undefined &&
-				cartsCount >= CARTS_COUNT_MIN_THRESHOLD &&
-				stockStatus !== "out_of_stock" && (
-					<Badge
-						variant="outline"
-						className="border-primary/50 bg-primary/10 text-primary text-xs/5 tracking-normal antialiased"
-						role="status"
-						aria-label={`Actuellement dans ${cartsCount} paniers`}
-					>
-						Dans <span className="font-bold">{cartsCount}</span> paniers
-					</Badge>
-				)}
 
 			{/* Message d'économie */}
 			{hasDiscount && (

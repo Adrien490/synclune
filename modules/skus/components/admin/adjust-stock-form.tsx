@@ -27,7 +27,7 @@ import {
 	getStockStatusLabel,
 	getStockVariant,
 } from "@/shared/utils/stock-variant";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 /** Plafond aligné sur `adjustSkuStockSchema` (adjustment.max(99999)). */
 const MAX_INVENTORY = 99999;

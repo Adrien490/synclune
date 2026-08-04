@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // Hoisted mocks
 // ============================================================================
@@ -101,7 +103,7 @@ vi.mock("@/shared/components/ui/input-group", () => ({
 vi.mock("@/shared/components/ui/tooltip", () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 	TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	TooltipTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 }));
 
 vi.mock("@/shared/components/multi-select", () => ({
@@ -371,7 +373,7 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(
-				screen.getByRole("button", { name: /Zone d'upload des médias du bijou/i }),
+				screen.getByRole("button", { name: /Zone d'envoi des médias du bijou/i }),
 			).toBeInTheDocument();
 		});
 
@@ -735,7 +737,7 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(
-				screen.getByRole("button", { name: /Zone d'upload des médias du bijou/i }),
+				screen.getByRole("button", { name: /Zone d'envoi des médias du bijou/i }),
 			).toBeInTheDocument();
 			expect(screen.getByText(/AVIF/)).toBeInTheDocument();
 		});

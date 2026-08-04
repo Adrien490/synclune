@@ -15,8 +15,6 @@ import {
 } from "@/shared/lib/actions";
 import { deleteProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
-import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 
@@ -98,32 +96,15 @@ export async function deleteProduct(
 			);
 		}
 
-		// 6. Find affected carts and wishlists before deletion (for cache invalidation)
-		const affectedCarts = await prisma.cartItem.findMany({
-			where: { sku: { productId } },
-			select: { cart: { select: { userId: true, sessionId: true } } },
-			distinct: ["cartId"],
-		});
-		const affectedWishlists = await prisma.wishlistItem.findMany({
-			where: { productId },
-			select: { wishlist: { select: { userId: true, sessionId: true } } },
-			distinct: ["wishlistId"],
-		});
+		// 6. Ni panier ni wishlist à purger : les deux vivent désormais dans les
+		// cookies de chaque visiteuse (`wishlist` 2026-08-03, `cart` 2026-08-04).
+		// Un id de SKU ou de produit supprimé y devient simplement inerte — la
+		// matérialisation ne rend que des produits lisibles, et `getCart()` écarte
+		// silencieusement une ligne dont le SKU est soft-deleted.
 
 		// 7. Soft delete le produit et ses SKUs dans une transaction
-		// Also clean up CartItems and WishlistItems referencing this product's SKUs
 		// Files are preserved on UploadThing until hard delete (10-year retention)
 		await prisma.$transaction(async (tx) => {
-			// Remove CartItems referencing this product's SKUs before soft-deleting
-			await tx.cartItem.deleteMany({
-				where: { sku: { productId } },
-			});
-
-			// Remove WishlistItems referencing this product
-			await tx.wishlistItem.deleteMany({
-				where: { productId },
-			});
-
 			// Remove collection memberships — pas de restore-product : les lignes
 			// ProductCollection d'un produit soft-deleted ne servent plus qu'à fuir
 			// dans les selects collections (filtrés sur status seul).
@@ -142,23 +123,8 @@ export async function deleteProduct(
 			});
 		});
 
-		// 8. Invalidate cart and wishlist caches for affected users
-		// (effet limité aux caches `private` du client courant — la fenêtre de
-		// staleness des autres clients est bornée par le profil `checkout`)
-		for (const { cart } of affectedCarts) {
-			const cartTags = getCartInvalidationTags(
-				cart.userId ?? undefined,
-				cart.sessionId ?? undefined,
-			);
-			cartTags.forEach((tag) => updateTag(tag));
-		}
-		for (const { wishlist } of affectedWishlists) {
-			const wishlistTags = getWishlistInvalidationTags(
-				wishlist.userId ?? undefined,
-				wishlist.sessionId ?? undefined,
-			);
-			wishlistTags.forEach((tag) => updateTag(tag));
-		}
+		// 8. Aucun cache panier à invalider (cf. étape 6) : la matérialisation des
+		// SKUs du panier est couverte par les tags catalogue ci-dessous.
 
 		// 9. Invalidate cache tags (invalidation ciblee au lieu de revalidatePath global)
 		const productTags = getProductInvalidationTags(existingProduct.slug, existingProduct.id, {

@@ -18,7 +18,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { isCreateProductTypeSuccessData } from "../../utils/is-create-product-type-success-data";
 import { runAfterValidation } from "@/shared/utils/run-after-validation";

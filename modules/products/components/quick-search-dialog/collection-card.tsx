@@ -7,7 +7,7 @@ import { Layers } from "lucide-react";
 
 import { Tap } from "@/shared/components/animations/tap";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { QuickSearchCollection } from "./constants";
 import { HighlightMatch } from "./search-result-item";

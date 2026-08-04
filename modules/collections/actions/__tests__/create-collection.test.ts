@@ -64,7 +64,7 @@ vi.mock("../../utils/cache.utils", () => ({
 	getCollectionInvalidationTags: mockGetCollectionInvalidationTags,
 }));
 vi.mock("@/shared/constants/cache-tags", () => ({
-	SHARED_CACHE_TAGS: { NAVBAR_MENU: "navbar-menu" },
+	SHARED_CACHE_TAGS: { ADMIN_BADGES: "admin-badges" },
 }));
 
 import { createCollection } from "../create-collection";
@@ -90,9 +90,9 @@ describe("createCollection", () => {
 		});
 		mockSanitizeText.mockImplementation((t: string) => t);
 		mockGenerateSlug.mockResolvedValue("nouvelle-collection");
-		// Miroir du contrat réel : NAVBAR_MENU vit désormais DANS le helper (les
+		// Miroir du contrat réel : les tags globaux vivent DANS le helper (les
 		// updateTag manuels ont été retirés des actions).
-		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list", "navbar-menu"]);
+		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list", "admin-badges"]);
 
 		// Transaction mock: execute the callback and return its result
 		mockPrisma.$transaction.mockImplementation(
@@ -161,10 +161,11 @@ describe("createCollection", () => {
 		expect(mockPrisma.collection.create).toHaveBeenCalled();
 	});
 
-	it("should invalidate cache and navbar after creation", async () => {
+	it("should invalidate every tag returned by the helper after creation", async () => {
 		const result = await createCollection(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockUpdateTag).toHaveBeenCalledWith("navbar-menu");
+		expect(mockUpdateTag).toHaveBeenCalledWith("collections-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 	});
 
 	it("should succeed with valid data", async () => {

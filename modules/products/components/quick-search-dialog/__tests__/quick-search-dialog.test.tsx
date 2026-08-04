@@ -585,7 +585,7 @@ describe("QuickSearchDialog", () => {
 			mockSearches.current = ["bague", "collier"];
 			render(<QuickSearchDialog {...defaultProps} />);
 			const status = screen.getByRole("status");
-			expect(status.textContent).toContain("2 recherches recentes");
+			expect(status.textContent).toContain("2 recherches récentes");
 		});
 
 		it("shows screen reader announcement with collections count", () => {
@@ -597,7 +597,7 @@ describe("QuickSearchDialog", () => {
 		it("shows screen reader announcement with categories count", () => {
 			render(<QuickSearchDialog {...defaultProps} />);
 			const status = screen.getByRole("status");
-			expect(status.textContent).toContain("2 categories");
+			expect(status.textContent).toContain("2 catégories");
 		});
 	});
 
@@ -691,14 +691,14 @@ describe("QuickSearchDialog", () => {
 			mockIsSearchMode.current = false;
 			mockInputValue.current = "ba";
 			render(<QuickSearchDialog {...defaultProps} />);
-			expect(screen.getByText(/tapez au moins 3 caractères/i)).toBeInTheDocument();
+			expect(screen.getByText(/tape au moins 3 caractères/i)).toBeInTheDocument();
 		});
 
 		it("does not show hint when input is empty", () => {
 			mockIsSearchMode.current = false;
 			mockInputValue.current = "";
 			render(<QuickSearchDialog {...defaultProps} />);
-			expect(screen.queryByText(/tapez au moins 3 caractères/i)).not.toBeInTheDocument();
+			expect(screen.queryByText(/tape au moins 3 caractères/i)).not.toBeInTheDocument();
 		});
 
 		it("does not show hint when in search mode (3+ chars)", () => {
@@ -711,7 +711,7 @@ describe("QuickSearchDialog", () => {
 				suggestion: null,
 			};
 			render(<QuickSearchDialog {...defaultProps} />);
-			expect(screen.queryByText(/tapez au moins 3 caractères/i)).not.toBeInTheDocument();
+			expect(screen.queryByText(/tape au moins 3 caractères/i)).not.toBeInTheDocument();
 		});
 	});
 
@@ -761,14 +761,17 @@ describe("QuickSearchDialog", () => {
 	});
 
 	describe("handleRecentSearch", () => {
-		it("navigates to search without saving to recent when a recent search is clicked", () => {
+		it("runs the search in-dialog (same behavior as suggestion pills) without saving to recent", () => {
 			mockIsSearchMode.current = false;
 			render(<QuickSearchDialog {...defaultProps} />);
 			fireEvent.click(screen.getByTestId("idle-recent-search"));
-			expect(mockRouterReplace).toHaveBeenCalledWith(
-				expect.stringContaining("/produits?search=bague"),
-			);
-			// Should NOT call add() since saveToRecent=false
+			// Aligné sur les pills : le terme remplit le champ et la recherche
+			// s'affiche DANS le dialog — plus de navigation directe vers la PLP.
+			expect(mockResetActiveIndex).toHaveBeenCalled();
+			expect(mockHandleSearchFromSuggestion).toHaveBeenCalledWith("bague");
+			expect(mockRouterReplace).not.toHaveBeenCalled();
+			// Pas de add() : le terme est déjà dans les récentes, le ré-ajouter le
+			// ferait remonter en tête à chaque clic.
 			expect(mockAdd).not.toHaveBeenCalled();
 		});
 	});

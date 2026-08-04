@@ -69,11 +69,14 @@ interface FilterSheetProps {
 /** Scroll vers la grid produits si l'ancre existe, fallback top sinon. */
 function scrollToProductsGrid() {
 	if (typeof window === "undefined") return;
+	const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+		? ("auto" as const)
+		: ("smooth" as const);
 	const anchor = document.getElementById(PRODUCTS_GRID_ANCHOR_ID);
 	if (anchor) {
-		anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+		anchor.scrollIntoView({ behavior, block: "start" });
 	} else {
-		window.scrollTo({ top: 0, behavior: "smooth" });
+		window.scrollTo({ top: 0, behavior });
 	}
 }
 
@@ -246,7 +249,7 @@ function ProductFilterSheetInner({
 						title="Filtres"
 						description="Affinez votre recherche"
 					>
-						<Accordion type="multiple" defaultValue={defaultOpenSections} className="w-full">
+						<Accordion defaultValue={defaultOpenSections} className="w-full">
 							{/* 1. Types de bijoux (masqué si aucun type) */}
 							{sortedProductTypes.length > 0 && (
 								<FilterSection

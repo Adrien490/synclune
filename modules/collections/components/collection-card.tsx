@@ -1,11 +1,13 @@
 import { ABOVE_FOLD_THRESHOLD } from "@/modules/collections/constants/image-sizes.constants";
 import { COLLECTION_TEXTS } from "@/modules/collections/constants/collection-texts.constants";
 import {
-	CARD_SURFACE_BASE,
 	CARD_SURFACE_FOCUS,
 	CARD_SURFACE_HOVER,
+	CARD_SURFACE_POLAROID,
 } from "@/shared/components/card-surface.constants";
+import { MaskingTape } from "@/shared/components/masking-tape";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
+import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Link from "next/link";
@@ -17,6 +19,10 @@ interface CollectionCardProps {
 	name: string;
 	/** Images multiples pour Bento Grid (prioritaire) */
 	images?: CollectionImage[];
+	/**
+	 * Index dans la liste (preload above-fold, et sens de l'inclinaison au
+	 * survol : une planche sur deux penche à droite)
+	 */
 	index?: number;
 	/** Niveau de heading pour hierarchie a11y (defaut: h3) */
 	headingLevel?: "h2" | "h3" | "h4";
@@ -31,14 +37,28 @@ interface CollectionCardProps {
 }
 
 /**
- * Card de collection - Design coherent avec ProductCard via CARD_SURFACE_*.
+ * Card de collection — « La Planche-contact » (redesign Atelier 2026-08-03).
+ *
+ * @description
+ * Un produit est un tirage polaroid (ProductCard) ; une collection est la
+ * planche-contact de la série : un seul cadre papier (CARD_SURFACE_POLAROID +
+ * grain `.polaroid-paper`), le bento existant inséré dedans (variante
+ * `framed`), masking tape de coin, légende à gauche — eyebrow
+ * « Collection · N créations » (le compteur promu en tête de légende), titre
+ * Fraunces souligné du trait rose (SquiggleUnderline, dessiné au survol ET au
+ * focus clavier), description, from-price. Au survol la planche s'incline
+ * légèrement (sens alterné par index), gaté motion-safe + can-hover.
  *
  * Pattern stretched-link : <article relative> wrappe la carte, <Link> entoure
- * uniquement le titre avec ::after qui couvre toute la carte. Le reste du contenu
- * (description, prix, compteur) est decoratif/non-interactif et reste cliquable via
- * le ::after — aucun element decoratif positionne/transforme ne doit le recouvrir.
- * La structure permet d'ajouter un futur CTA secondaire (couche z-30) sans imbriquer
- * button dans anchor.
+ * uniquement le titre avec ::after qui couvre toute la carte. Le reste du
+ * contenu est decoratif/non-interactif et reste cliquable via le ::after —
+ * aucun element decoratif ne doit intercepter les clics : tape et grain sont
+ * `pointer-events-none`, sous le ::after.
+ *
+ * z-index stack (documented):
+ * - z-1: grain papier (`.polaroid-paper::before`, pointer-events-none)
+ * - z-10: Stretched link (title link ::after covers the entire card)
+ * - z-20: Masking tape de coin (pointer-events-none)
  */
 export function CollectionCard({
 	slug,
@@ -60,21 +80,38 @@ export function CollectionCard({
 	const collectionUrl = `/collections/${slug}`;
 	const hasImages = images !== undefined && images.length > 0;
 
+	// Eyebrow — la sémantique « série » dite en tête de légende : compteur promu
+	// (redesign 2026-08-03, remplace la ligne discrète en pied de carte de
+	// l'audit F3 2026-05-29), « Bientôt » si la collection est vide.
+	const eyebrow =
+		productCount !== undefined
+			? `${COLLECTION_TEXTS.CARD_EYEBROW_PREFIX} · ${
+					productCount > 0
+						? COLLECTION_TEXTS.PRODUCT_COUNT(productCount)
+						: COLLECTION_TEXTS.PRODUCT_COUNT_EMPTY
+				}`
+			: COLLECTION_TEXTS.CARD_EYEBROW_PREFIX;
+
 	return (
 		<article
 			aria-labelledby={titleId}
 			className={cn(
-				CARD_SURFACE_BASE,
-				"rounded-lg lg:rounded-xl",
+				CARD_SURFACE_POLAROID,
+				// Grain papier de la planche (::before z-1, pointer-events-none)
+				"polaroid-paper",
 				CARD_SURFACE_HOVER,
-				// Scale-only hover (origine centre, cf ProductCard) : pas de translate
-				// qui deplacerait la carte sous le curseur (oscillation hover => clic difficile).
-				"motion-safe:can-hover:hover:scale-[1.02]",
+				// Inclinaison + lift au survol, sens alterné une planche sur deux
+				"motion-safe:can-hover:hover:-translate-y-1",
+				(index ?? 0) % 2 === 0
+					? "motion-safe:can-hover:hover:-rotate-1"
+					: "motion-safe:can-hover:hover:rotate-1",
 				CARD_SURFACE_FOCUS,
-				"active:scale-[0.98] active:transition-transform active:duration-75",
 			)}
 		>
-			{/* Images Bento Grid (ou placeholder) */}
+			{/* Masking tape de coin — silhouette distincte du tape centré produit */}
+			<MaskingTape className="-top-2 -left-3.5 z-20 h-4 w-14 rotate-[-35deg]" />
+
+			{/* Tirage inséré dans le cadre : bento adaptatif, ou placeholder */}
 			{hasImages ? (
 				<CollectionImagesGrid
 					images={images}
@@ -82,75 +119,51 @@ export function CollectionCard({
 					isAboveFold={isAboveFold}
 					isLcpCandidate={isLcpCandidate}
 					collectionSlug={slug}
+					framed
 				/>
 			) : (
 				<PlaceholderImage
-					className="rounded-t-lg rounded-b-none border-0 lg:rounded-t-xl"
+					className="rounded-sm border-0"
 					label={`${name} — ${COLLECTION_TEXTS.PLACEHOLDER.COMING_SOON}`}
 				/>
 			)}
 
-			{/* Titre avec elements decoratifs */}
-			<div className="px-4 pb-4 text-center sm:px-5 sm:pb-5">
-				{/* Gradient divider — expands on hover */}
-				<div
-					className={cn(
-						"mx-auto mb-3 h-0.5 w-16",
-						"via-primary/50 bg-linear-to-r from-transparent to-transparent",
-						"origin-center transition-[transform,opacity] duration-300",
-						"scale-x-75",
-						"motion-reduce:scale-x-100",
-						"motion-safe:can-hover:group-hover:scale-x-100 motion-safe:can-hover:group-hover:via-primary/60",
-						"group-focus-within:via-primary/60 motion-safe:group-focus-within:scale-x-100",
-					)}
-					aria-hidden="true"
-				/>
+			{/* Légende de la planche — no position:relative so stretched link ::after
+			    reaches the article */}
+			<div className="flex flex-col gap-1.5 overflow-hidden px-1.5 pt-2.5 pb-3 sm:px-2 sm:pt-3 sm:pb-4">
+				<span className="text-2xs text-muted-foreground font-semibold tracking-widest uppercase">
+					{eyebrow}
+				</span>
 
-				{/* Stretched link: titre enveloppe par Link avec ::after couvrant la carte.
-				    Aligne sur ProductCard : aucun element decoratif positionne/transforme
-				    ne doit se superposer au ::after (z-10) sous peine de capter les clics. */}
+				{/* Stretched link : le trait dessiné sous le titre est l'affordance du
+				    lien — il se révèle au survol ET au focus clavier (WCAG 2.4.7). */}
 				<Link
 					href={collectionUrl}
-					className="focus-ring block after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
+					className="focus-ring block w-fit max-w-full after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
 				>
-					<HeadingTag
-						id={titleId}
-						className={cn(
-							"wrap-break-words line-clamp-2",
-							"text-base tracking-wide sm:text-lg",
-							"text-foreground",
-						)}
-					>
-						{name}
-					</HeadingTag>
+					<span className="relative block">
+						<HeadingTag
+							id={titleId}
+							className="font-display text-foreground wrap-break-words line-clamp-2 text-base font-normal sm:text-lg"
+						>
+							{name}
+						</HeadingTag>
+						<SquiggleUnderline />
+					</span>
 				</Link>
 
 				{/* Description : visible sur tous les viewports */}
-				{description && (
-					<p className="text-muted-foreground mt-1.5 line-clamp-2 text-xs">{description}</p>
-				)}
+				{description && <p className="text-muted-foreground line-clamp-2 text-xs">{description}</p>}
 
 				{/* From-price — signal de scan prioritaire (apres le titre, cf Baymard) */}
 				{priceRange && (
-					<p className="text-foreground mt-2 text-sm font-medium">
+					<p className="text-foreground mt-0.5 text-sm font-medium">
 						<span className="text-muted-foreground font-normal">
 							{COLLECTION_TEXTS.PRICING.FROM_LABEL}{" "}
 						</span>
 						{formatEuro(priceRange.min, { compact: true })}
 					</p>
 				)}
-
-				{/* Product count — meta discrete (ou signal « Bientot » si 0 produit) */}
-				{productCount !== undefined &&
-					(productCount > 0 ? (
-						<p className="text-muted-foreground mt-1 text-xs">
-							{COLLECTION_TEXTS.PRODUCT_COUNT(productCount)}
-						</p>
-					) : (
-						<p className="text-muted-foreground/80 mt-1 text-xs italic">
-							{COLLECTION_TEXTS.PRODUCT_COUNT_EMPTY}
-						</p>
-					))}
 			</div>
 		</article>
 	);

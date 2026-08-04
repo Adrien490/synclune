@@ -66,7 +66,7 @@ vi.mock("@/shared/lib/actions", () => ({
 }));
 
 vi.mock("@/shared/constants/cache-tags", () => ({
-	SHARED_CACHE_TAGS: { NAVBAR_MENU: "navbar-menu" },
+	SHARED_CACHE_TAGS: { ADMIN_BADGES: "admin-badges" },
 }));
 
 vi.mock("../../utils/cache.utils", () => ({
@@ -127,12 +127,12 @@ describe("updateCollectionStatus", () => {
 
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		// Miroir du contrat réel : NAVBAR_MENU vit désormais DANS le helper (les
+		// Miroir du contrat réel : les tags globaux vivent DANS le helper (les
 		// updateTag manuels ont été retirés des actions).
 		mockGetCollectionInvalidationTags.mockReturnValue([
 			"collections-list",
 			"collection-bijoux",
-			"navbar-menu",
+			"admin-badges",
 		]);
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -260,7 +260,7 @@ describe("updateCollectionStatus", () => {
 	// Cache invalidation
 	// --------------------------------------------------------------------------
 
-	it("should invalidate collection tags and navbar menu on status change", async () => {
+	it("should invalidate every tag returned by the helper on status change", async () => {
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, status: "PUBLIC" } });
 		mockPrisma.collection.findUnique.mockResolvedValue(
 			createMockCollection({ slug: "collection-bijoux" }),
@@ -269,7 +269,8 @@ describe("updateCollectionStatus", () => {
 		await updateCollectionStatus(undefined, makeFormData());
 
 		expect(mockGetCollectionInvalidationTags).toHaveBeenCalledWith("collection-bijoux");
-		expect(mockUpdateTag).toHaveBeenCalledWith("navbar-menu");
+		expect(mockUpdateTag).toHaveBeenCalledWith("collections-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 	});
 
 	// --------------------------------------------------------------------------

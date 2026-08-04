@@ -19,7 +19,7 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 const COMPARE_AT_PRICE_ERROR = "Le prix barré doit être supérieur au prix de vente";
 

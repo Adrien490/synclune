@@ -50,9 +50,9 @@ afterEach(() => {
 
 describe("SearchCorrectionSuggestion", () => {
 	describe("rendering", () => {
-		it("renders the suggestion message with 'Vouliez-vous dire' text", () => {
+		it("renders the suggestion message with 'Tu voulais dire' text", () => {
 			render(<SearchCorrectionSuggestion suggestion="bague" />);
-			expect(screen.getByText(/Vouliez-vous dire/)).toBeInTheDocument();
+			expect(screen.getByText(/Tu voulais dire/)).toBeInTheDocument();
 		});
 
 		it("renders the suggestion term as a link", () => {

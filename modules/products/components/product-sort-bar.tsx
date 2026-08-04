@@ -174,7 +174,7 @@ function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 				aria-label="Tri, recherche et filtres"
 				className={cn(
 					"md:hidden",
-					"sticky top-[calc(var(--announcement-bar-height,0px)+var(--navbar-height))] z-30",
+					"sticky top-[var(--navbar-height)] z-30",
 					"bg-background/80 backdrop-blur-md",
 					"border-border/50 border-b",
 					// Extend past container horizontal padding for a full-bleed sticky strip.

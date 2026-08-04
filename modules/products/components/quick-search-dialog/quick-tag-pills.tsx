@@ -24,7 +24,7 @@ export function QuickTagPills({
 	return (
 		<div
 			role="group"
-			aria-label="Suggestions de categories"
+			aria-label="Suggestions de catégories"
 			className={cn("flex flex-wrap gap-1.5", centered && "justify-center")}
 		>
 			{productTypes.map((type) => (

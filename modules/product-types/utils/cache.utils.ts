@@ -95,7 +95,6 @@ export function cacheProductTypeCounts(productTypeId: string) {
  * Invalide automatiquement :
  * - La liste des types de produits.
  * - Les badges de la sidebar admin.
- * - Le menu de navigation (navbar).
  * - La liste des produits (cascade : un type renommé impacte les cards produits).
  * - Si `slug` fourni : le tag détail granulaire `product-type-${slug}`.
  * - Si `productTypeId` fourni : le tag counts par statut `product-type-${id}-counts`.
@@ -104,7 +103,6 @@ export function getProductTypeInvalidationTags(slug?: string, productTypeId?: st
 	const tags: string[] = [
 		PRODUCT_TYPES_CACHE_TAGS.LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
-		SHARED_CACHE_TAGS.NAVBAR_MENU,
 		PRODUCTS_CACHE_TAGS.LIST,
 	];
 	if (slug) tags.push(productTypeDetailTag(slug));

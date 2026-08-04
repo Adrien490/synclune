@@ -19,13 +19,11 @@ const {
 	mockGetProductInvalidationTags,
 	mockGetCollectionInvalidationTags,
 	mockGetCartInvalidationTags,
-	mockGetWishlistInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		product: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { updateMany: vi.fn() },
 		cartItem: { findMany: vi.fn(), deleteMany: vi.fn() },
-		wishlistItem: { findMany: vi.fn(), deleteMany: vi.fn() },
 		productCollection: { deleteMany: vi.fn() },
 		orderItem: { count: vi.fn() },
 		$transaction: vi.fn(),
@@ -41,7 +39,6 @@ const {
 	mockGetProductInvalidationTags: vi.fn(),
 	mockGetCollectionInvalidationTags: vi.fn(),
 	mockGetCartInvalidationTags: vi.fn(),
-	mockGetWishlistInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
@@ -76,9 +73,6 @@ vi.mock("@/modules/collections/utils/cache.utils", () => ({
 }));
 vi.mock("@/modules/cart/constants/cache", () => ({
 	getCartInvalidationTags: mockGetCartInvalidationTags,
-}));
-vi.mock("@/modules/wishlist/constants/cache", () => ({
-	getWishlistInvalidationTags: mockGetWishlistInvalidationTags,
 }));
 
 import { deleteProduct } from "../delete-product";
@@ -118,12 +112,10 @@ describe("deleteProduct", () => {
 		});
 		mockPrisma.orderItem.count.mockResolvedValue(0);
 		mockPrisma.cartItem.findMany.mockResolvedValue([]);
-		mockPrisma.wishlistItem.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.cartItem.deleteMany.mockResolvedValue({});
-		mockPrisma.wishlistItem.deleteMany.mockResolvedValue({});
 		mockPrisma.productCollection.deleteMany.mockResolvedValue({});
 		mockPrisma.productSku.updateMany.mockResolvedValue({});
 		mockPrisma.product.update.mockResolvedValue({});
@@ -198,19 +190,9 @@ describe("deleteProduct", () => {
 		expect(mockUpdateTag).toHaveBeenCalled();
 	});
 
-	it("invalidates wishlist tags for each affected wishlist (audit wishlist 2026-08-01)", async () => {
-		mockPrisma.wishlistItem.findMany.mockResolvedValue([
-			{ wishlist: { userId: null, sessionId: "session-guest" } },
-			{ wishlist: { userId: "user-admin", sessionId: null } },
-		]);
-		mockGetWishlistInvalidationTags.mockReturnValue(["wishlist-tag"]);
-
-		await deleteProduct(undefined, validFormData);
-
-		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith(undefined, "session-guest");
-		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith("user-admin", undefined);
-		expect(mockUpdateTag).toHaveBeenCalledWith("wishlist-tag");
-	});
+	// Le test « invalidates wishlist tags » est parti avec la wishlist en base
+	// (2026-08-03) : les favoris vivent dans le cookie de chaque navigateur,
+	// deleteProduct n'a plus rien à purger ni à invalider côté wishlist.
 
 	it("should call handleActionError on unexpected exception", async () => {
 		mockPrisma.product.findUnique.mockRejectedValue(new Error("DB crash"));

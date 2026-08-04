@@ -35,12 +35,18 @@ vi.mock("../collection-images-grid", () => ({
 	CollectionImagesGrid: ({
 		collectionName,
 		images,
+		framed,
 	}: {
 		images: unknown[];
 		collectionName: string;
 		isAboveFold?: boolean;
+		framed?: boolean;
 	}) => (
-		<div data-testid="collection-images-grid" data-collection={collectionName}>
+		<div
+			data-testid="collection-images-grid"
+			data-collection={collectionName}
+			data-framed={framed ? "true" : "false"}
+		>
 			{images.length} images
 		</div>
 	),
@@ -121,20 +127,20 @@ describe("CollectionCard", () => {
 		);
 	});
 
-	it("renders product count when provided and greater than zero", () => {
+	it("renders product count in the eyebrow when provided and greater than zero", () => {
 		renderCard({ productCount: 12 });
-		expect(screen.getByText("12 articles")).toBeInTheDocument();
+		expect(screen.getByText("Collection · 12 créations")).toBeInTheDocument();
 	});
 
-	it("renders singular 'article' when product count is 1", () => {
+	it("renders singular 'création' when product count is 1", () => {
 		renderCard({ productCount: 1 });
-		expect(screen.getByText("1 article")).toBeInTheDocument();
+		expect(screen.getByText("Collection · 1 création")).toBeInTheDocument();
 	});
 
-	it("renders 'Bientôt' instead of an article count when productCount is 0", () => {
+	it("renders 'Bientôt' instead of a count when productCount is 0", () => {
 		renderCard({ productCount: 0 });
-		expect(screen.queryByText(/article/)).toBeNull();
-		expect(screen.getByText("Bientôt")).toBeInTheDocument();
+		expect(screen.queryByText(/création/)).toBeNull();
+		expect(screen.getByText("Collection · Bientôt")).toBeInTheDocument();
 	});
 
 	it("renders description text", () => {
@@ -212,7 +218,7 @@ describe("CollectionCard", () => {
 		});
 	});
 
-	describe("visual hierarchy: price prioritized over count (audit 2026-05-29 F3)", () => {
+	describe("visual hierarchy: price primary, count as eyebrow (audit 2026-05-29 F3, révisé 2026-08-03)", () => {
 		it("renders price as the primary signal (text-sm font-medium)", () => {
 			const { container } = renderCard({ priceRange: { min: 2000, max: 5000 } });
 			// Price <p> is the one wrapping the visible "À partir de" prefix.
@@ -225,10 +231,19 @@ describe("CollectionCard", () => {
 			expect(price!.className).toMatch(/font-medium/);
 		});
 
-		it("renders productCount as discrete meta (text-xs muted, no font-medium)", () => {
+		/**
+		 * Révision 2026-08-03 (redesign « Planche-contact ») : le compteur n'est
+		 * plus une méta discrète en pied de carte — il est promu en eyebrow
+		 * « Collection · N créations » en tête de légende (la sémantique « série »
+		 * dite textuellement, constat n°2 de l'audit). L'esprit de F3 est
+		 * conservé : il reste visuellement subordonné au prix (micro-typo
+		 * text-2xs muted vs text-sm font-medium).
+		 */
+		it("renders productCount as the eyebrow (text-2xs uppercase muted, no font-medium)", () => {
 			renderCard({ productCount: 42 });
-			const count = screen.getByText("42 articles");
-			expect(count.className).toMatch(/text-xs/);
+			const count = screen.getByText("Collection · 42 créations");
+			expect(count.className).toMatch(/text-2xs/);
+			expect(count.className).toMatch(/uppercase/);
 			expect(count.className).toMatch(/text-muted-foreground/);
 			expect(count.className).not.toMatch(/font-medium/);
 		});
@@ -283,18 +298,47 @@ describe("CollectionCard", () => {
 	describe("empty state (audit 2026-05-29 F6)", () => {
 		it("renders the 'Bientôt' signal when productCount is 0", () => {
 			renderCard({ productCount: 0 });
-			expect(screen.getByText("Bientôt")).toBeInTheDocument();
+			expect(screen.getByText(/Bientôt/)).toBeInTheDocument();
 		});
 
-		it("renders the article count (not 'Bientôt') when productCount > 0", () => {
+		it("renders the creation count (not 'Bientôt') when productCount > 0", () => {
 			renderCard({ productCount: 5 });
-			expect(screen.getByText("5 articles")).toBeInTheDocument();
-			expect(screen.queryByText("Bientôt")).not.toBeInTheDocument();
+			expect(screen.getByText("Collection · 5 créations")).toBeInTheDocument();
+			expect(screen.queryByText(/Bientôt/)).not.toBeInTheDocument();
 		});
 
 		it("renders neither count nor 'Bientôt' when productCount is undefined", () => {
 			renderCard({});
-			expect(screen.queryByText("Bientôt")).not.toBeInTheDocument();
+			expect(screen.queryByText(/Bientôt/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/création/)).not.toBeInTheDocument();
+		});
+	});
+
+	describe("planche-contact frame (redesign 2026-08-03)", () => {
+		it("renders the bento in framed mode (tirage inséré dans le cadre)", () => {
+			renderCard({ images: mockImages });
+			expect(screen.getByTestId("collection-images-grid")).toHaveAttribute("data-framed", "true");
+		});
+
+		it("sets the title in Fraunces (font-display)", () => {
+			renderCard();
+			const heading = screen.getByRole("heading");
+			expect(heading.className).toMatch(/font-display/);
+		});
+
+		it("tilts left on even index and right on odd index (hover, motion-safe + can-hover)", () => {
+			const { container } = renderCard({ index: 0 });
+			expect(container.querySelector("article")!.className).toContain(
+				"motion-safe:can-hover:hover:-rotate-1",
+			);
+			cleanup();
+			const { container: odd } = renderCard({ index: 1 });
+			expect(odd.querySelector("article")!.className).toContain(
+				"motion-safe:can-hover:hover:rotate-1",
+			);
+			expect(odd.querySelector("article")!.className).not.toContain(
+				"motion-safe:can-hover:hover:-rotate-1",
+			);
 		});
 	});
 });

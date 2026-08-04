@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 const { mockHaptic, mockUseIsMobile } = vi.hoisted(() => ({
 	mockHaptic: vi.fn(),
 	mockUseIsMobile: vi.fn(() => false),
@@ -18,7 +20,7 @@ vi.mock("@/shared/hooks/use-mobile", () => ({ useIsMobile: mockUseIsMobile }));
 // renders, simplifying interaction tests.
 vi.mock("@/shared/components/responsive-dialog", () => ({
 	ResponsiveDialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	ResponsiveDialogTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	ResponsiveDialogTrigger: (props: RenderPropMockProps) => renderPropMock("div", props),
 	ResponsiveDialogContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="responsive-dialog-content">{children}</div>
 	),

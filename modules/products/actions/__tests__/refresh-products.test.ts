@@ -62,7 +62,7 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 		ADMIN_INVENTORY_LIST: "admin-inventory-list",
 		SITEMAP_IMAGES: "sitemap-images",
 		PRODUCT_TYPES_LIST: "product-types-list",
-		NAVBAR_MENU: "navbar-menu",
+		COLLECTIONS_LIST: "collections-list",
 	},
 }));
 
@@ -127,12 +127,15 @@ describe("refreshProducts", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("product-types-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-inventory-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("sitemap-images");
+		// Les bento collections (/collections + mega-menu) montrent des images de
+		// produits — rafraîchies via `collections-list` (ex-tag `navbar-menu`).
+		expect(mockUpdateTag).toHaveBeenCalledWith("collections-list");
 	});
 
 	it("should invalidate exactly 11 cache tags", async () => {
 		await refreshProducts(undefined, emptyFormData);
-		// 11e tag : NAVBAR_MENU (global, présent dans getProductInvalidationTags —
-		// sans lui le mega-menu ne se rafraîchissait pas depuis le bouton).
+		// 11e tag : COLLECTIONS_LIST (global, présent dans getProductInvalidationTags —
+		// les bento collections montrent des images de produits).
 		expect(mockUpdateTag).toHaveBeenCalledTimes(11);
 	});
 

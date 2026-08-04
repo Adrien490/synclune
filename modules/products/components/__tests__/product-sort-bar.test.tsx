@@ -165,9 +165,7 @@ describe("ProductSortBar", () => {
 			renderDefault();
 			const nav = screen.getByRole("navigation", { name: "Tri, recherche et filtres" });
 			expect(nav.className).toContain("sticky");
-			expect(nav.className).toContain(
-				"top-[calc(var(--announcement-bar-height,0px)+var(--navbar-height))]",
-			);
+			expect(nav.className).toContain("top-[var(--navbar-height)]");
 			expect(nav.className).toContain("md:hidden");
 		});
 	});

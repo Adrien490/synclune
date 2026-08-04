@@ -467,7 +467,7 @@ describe("getCollections", () => {
 			expect(mockLoggerError).not.toHaveBeenCalled();
 		});
 
-		it("ne logge PAS « Connection closed. » pendant la phase build (lecture \"use cache\" avortée)", async () => {
+		it('ne logge PAS « Connection closed. » pendant la phase build (lecture "use cache" avortée)', async () => {
 			vi.stubEnv("NEXT_PHASE", "phase-production-build");
 			mockFindMany.mockRejectedValue(new Error("Connection closed."));
 
