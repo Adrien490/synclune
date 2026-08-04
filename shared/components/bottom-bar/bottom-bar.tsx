@@ -134,8 +134,6 @@ interface BottomBarProps {
  * **Composition tips:**
  * - Wrap items in a `<ul role="list">` carrying {@link bottomBarContainerClass},
  *   one `<li className="flex-1">` per tab, so screen readers announce the item count.
- * - If you want vertical dividers between items, add `divide-x divide-border/30`
- *   to that container.
  * - Render {@link BottomBarActivePill} only on the active item (with a shared
  *   `groupId`) for the iOS-18-style morphing indicator.
  * - For iOS/Android-native feel, call `triggerHaptic("selection")` from

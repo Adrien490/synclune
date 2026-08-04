@@ -248,11 +248,7 @@ export function ShopMobileBottomNav() {
 										triggerHaptic("selection");
 										tab.onClick(e);
 									}}
-									className={cn(
-										bottomBarItemClass,
-										"can-hover:hover:bg-primary/5",
-										tab.isActive && bottomBarActiveItemClass,
-									)}
+									className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
 									aria-haspopup="dialog"
 									aria-expanded={tab.isActive}
 									aria-label={"ariaLabel" in tab ? tab.ariaLabel : tab.label}
@@ -275,11 +271,7 @@ export function ShopMobileBottomNav() {
 								// change » = `selection` (règle haptique projet), et seulement quand
 								// l'onglet change réellement de page.
 								onClick={() => !tab.isActive && triggerHaptic("selection")}
-								className={cn(
-									bottomBarItemClass,
-									"can-hover:hover:bg-primary/5",
-									tab.isActive && bottomBarActiveItemClass,
-								)}
+								className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
 								aria-current={tab.isActive ? "page" : undefined}
 								aria-label={"ariaLabel" in tab ? tab.ariaLabel : undefined}
 							>

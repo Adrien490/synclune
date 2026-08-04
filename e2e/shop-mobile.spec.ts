@@ -50,7 +50,7 @@ test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () =
 		expect(box!.y + box!.height).toBeLessThanOrEqual(fold);
 	});
 
-	test("bottom nav tabs — 5 onglets visibles sur mobile", async ({ page }) => {
+	test("bottom nav tabs — les 5 onglets visibles sur mobile", async ({ page }) => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
@@ -59,14 +59,21 @@ test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () =
 		});
 		await expect(bottomNav).toBeVisible();
 
-		// ⚠️ L'onglet 2 est un BOUTON « Rechercher » (il ouvre le quick-search), pas
-		// un lien « Produits » : ce test assertait un onglet retiré par l'audit
-		// recherche du 2026-07-26 et ne couvrait donc que 4 onglets sur 5.
+		// ⚠️ Ce test a assert « Compte » pendant cinq jours après le retrait de
+		// l'espace client (2026-07-31) — donc rouge en permanence, sur la surface
+		// même qu'il prétendait garder. Son intitulé disait « 5 onglets » alors que
+		// la barre en comptait quatre. La leçon : compter les onglets EXPLICITEMENT,
+		// pour qu'un retrait ou un ajout casse le test au lieu de le laisser dériver.
+		//
+		// Le jeu courant est Accueil · Créations · Rechercher · Favoris · Panier —
+		// « Créations » ajouté par la refonte « L'intercalaire » (2026-08-04), sans
+		// quoi aucun onglet ne pouvait représenter le catalogue.
 		await expect(bottomNav.getByRole("link", { name: /Accueil/i })).toBeVisible();
+		await expect(bottomNav.getByRole("link", { name: /Créations/i })).toBeVisible();
 		await expect(bottomNav.getByRole("button", { name: /Rechercher/i })).toBeVisible();
 		await expect(bottomNav.getByRole("link", { name: /Favoris/i })).toBeVisible();
 		await expect(bottomNav.getByRole("button", { name: /Panier/i })).toBeVisible();
-		await expect(bottomNav.getByRole("link", { name: /Compte/i })).toBeVisible();
+		await expect(bottomNav.locator("a, button")).toHaveCount(5);
 	});
 
 	test("bottom nav — l'onglet Panier ouvre le cart sheet", async ({ page }) => {

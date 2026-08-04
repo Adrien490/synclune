@@ -567,8 +567,16 @@ describe("Exported class constants", () => {
 		expect(bottomBarItemWrapperClass).toContain("flex-1");
 	});
 
-	it("bottomBarItemClass uses focus-ring SSOT utility (globals.css)", () => {
-		expect(bottomBarItemClass).toContain("focus-ring");
+	// L'anneau de focus ne peut PAS venir de `focus-ring` : cet utilitaire tire sur
+	// `--ring`, qui vaut `--primary` — 1,55:1 sur le fond de la barre, là où WCAG
+	// 1.4.11 exige 3:1. Il est remplacé par un contour `--foreground` (19,54:1).
+	it("bottomBarItemClass n'utilise PAS focus-ring (--ring = --primary, 1,55:1)", () => {
+		expect(bottomBarItemClass).not.toContain("focus-ring");
+	});
+
+	it("bottomBarItemClass pose un contour de focus sur --foreground", () => {
+		expect(bottomBarItemClass).toContain("focus-visible:outline-foreground");
+		expect(bottomBarItemClass).toContain("focus-visible:outline-2");
 	});
 
 	// L'anneau de focus est un box-shadow EXTERNE et les onglets sont jointifs et
@@ -583,8 +591,10 @@ describe("Exported class constants", () => {
 		expect(bottomBarItemClass).toContain("min-h-14");
 	});
 
+	// ⚠️ En px, pas en rem : une cible tactile ne suit pas la police racine.
+	// Détail et garde dédié dans `bottom-bar-touch-target-px.regression.test.ts`.
 	it("bottomBarItemClass contains min-width", () => {
-		expect(bottomBarItemClass).toContain("min-w-16");
+		expect(bottomBarItemClass).toContain("min-w-[44px]");
 	});
 
 	// Le retour tactile de la pression est un transform : il suit la préférence

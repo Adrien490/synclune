@@ -249,7 +249,22 @@ export const navigationData: NavigationData = {
  * IDs des items affichés dans la section "Accès rapide" du menu mobile.
  * Filtrés depuis getAllNavItems() pour rester en sync avec navigationData.
  */
-const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products"] as const;
+/**
+ * ⚠️ `refunds` en fait partie **parce qu'il porte une pastille**.
+ *
+ * `getAdminNavBadges()` compte deux files actionnables — `orders` et `refunds` —
+ * et `app/admin/layout.tsx` passe l'objet entier à la barre du bas. Mais tant que
+ * `refunds` n'était pas un onglet d'accès rapide, ce compteur traversait tout le
+ * layout pour être ignoré : sur son téléphone, l'administratrice ne voyait jamais
+ * un remboursement en échec Stripe ni un avoir manquant sur une commande
+ * facturée. C'est exactement le périmètre du bouton `reconcile-refunds` de la
+ * page Maintenance, donc une file à conséquence fiscale.
+ *
+ * Corollaire à tenir : **tout item badgé par `getAdminNavBadges()` doit figurer
+ * ici**, sinon son compteur redevient muet en mobile. Verrouillé par le test
+ * « chaque file badgée est atteignable en accès rapide » de navigation-config.test.ts.
+ */
+const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products", "refunds"] as const;
 
 /**
  * Récupère tous les items de navigation (liste plate).
@@ -281,9 +296,17 @@ export function getQuickAccessItems(): NavItem[] {
  * Seuls les items réellement badgés (cf. getAdminNavBadges → { orders, refunds })
  * ont une entrée.
  */
-const BADGE_NOUNS: Record<string, { one: string; many: string }> = {
-	orders: { one: "commande en attente", many: "commandes en attente" },
-	refunds: { one: "remboursement en attente", many: "remboursements en attente" },
+const BADGE_NOUNS: Record<string, { one: string; many: string; none: string }> = {
+	orders: {
+		one: "commande en attente",
+		many: "commandes en attente",
+		none: "Aucune commande en attente",
+	},
+	refunds: {
+		one: "remboursement en attente",
+		many: "remboursements en attente",
+		none: "Aucun remboursement en attente",
+	},
 };
 
 /**
@@ -308,6 +331,20 @@ export function badgeAriaLabel(itemId: string, count: number): string {
 export function badgePendingLabel(count: number): string {
 	return `${count} en attente`;
 }
+
+/**
+ * Libellé annoncé quand une file badgée retombe à zéro.
+ *
+ * Écrit en toutes lettres par item plutôt que dérivé de `one` : « Aucune » /
+ * « Aucun » dépend du genre du substantif, que rien dans la donnée ne porte.
+ * Le déduire produirait « Aucune remboursement en attente ».
+ */
+export function badgeEmptyLabel(itemId: string): string {
+	return BADGE_NOUNS[itemId]?.none ?? "Aucun élément en attente";
+}
+
+/** Ids des files réellement badgées (SSOT locale, alignée sur `getAdminNavBadges`). */
+export const BADGED_ITEM_IDS = Object.keys(BADGE_NOUNS);
 
 /**
  * Substantifs des files ACTIONNABLES, pour l'ardoise du menu mobile.

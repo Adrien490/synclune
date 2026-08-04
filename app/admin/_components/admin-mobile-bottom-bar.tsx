@@ -27,7 +27,9 @@ import { ListIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 import {
 	ADMIN_MENU_SHEET_CONTENT_ID,
+	BADGED_ITEM_IDS,
 	badgeAriaLabel,
+	badgeEmptyLabel,
 	getQuickAccessItems,
 	type NavItem,
 } from "./navigation-config";
@@ -46,7 +48,13 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const hasOverlay = useHasOverlay();
 	const isHidden = isMenuOpen || hasOverlay;
 
-	const ordersBadge = badges?.["orders"] ?? 0;
+	// Toutes les files badgées, pas seulement `orders`. `getAdminNavBadges()`
+	// compte aussi `refunds` et le layout passe l'objet entier : ne lire qu'une
+	// clé faisait traverser tout le layout au compteur des remboursements pour
+	// qu'il soit ignoré — un échec Stripe n'existait pas sur téléphone.
+	const counts: Record<string, number> = {};
+	for (const id of BADGED_ITEM_IDS) counts[id] = badges?.[id] ?? 0;
+	const countsSignature = BADGED_ITEM_IDS.map((id) => `${id}:${counts[id]}`).join("|");
 
 	// Annonce des changements de pastille, dérivée PENDANT LE RENDU (pas dans un
 	// effet) : la région ci-dessous est ainsi montée dès le premier rendu avec un
@@ -55,18 +63,25 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	// sur `count > 0` : la région naissait AVEC son texte, donc la transition 0→1 —
 	// l'arrivée d'une commande à traiter, la seule qui compte — était muette
 	// (audit bottom-bar 2026-07-30, P2-4).
-	const [prevOrdersBadge, setPrevOrdersBadge] = useState(ordersBadge);
+	//
+	// On annonce file par file, et seulement celles qui ont BOUGÉ : un compteur de
+	// remboursements inchangé n'a pas à être re-vocalisé parce qu'une commande est
+	// arrivée.
+	const [prevCounts, setPrevCounts] = useState<Record<string, number>>(counts);
+	const [prevSignature, setPrevSignature] = useState(countsSignature);
 	const [announcement, setAnnouncement] = useState("");
-	if (prevOrdersBadge !== ordersBadge) {
-		setPrevOrdersBadge(ordersBadge);
-		setAnnouncement(
-			ordersBadge > 0 ? badgeAriaLabel("orders", ordersBadge) : "Aucune commande en attente",
+	if (prevSignature !== countsSignature) {
+		setPrevSignature(countsSignature);
+		setPrevCounts(counts);
+		const changed = BADGED_ITEM_IDS.filter((id) => (prevCounts[id] ?? 0) !== counts[id]).map(
+			(id) => (counts[id]! > 0 ? badgeAriaLabel(id, counts[id]!) : badgeEmptyLabel(id)),
 		);
+		setAnnouncement(changed.join(", "));
 	}
 
 	function renderTab(tab: NavItem) {
 		const isActive = isRouteActive(pathname, tab.url);
-		const badgeCount = tab.id === "orders" ? ordersBadge : 0;
+		const badgeCount = counts[tab.id] ?? 0;
 		const Icon = tab.icon;
 		const label = tab.shortTitle ?? tab.title;
 		return (
@@ -82,7 +97,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 					// d'un tab est plus discret qu'en menu sheet, où le titre adjacent
 					// suffirait. Clamp visuel « 99+ », mais le SR garde le compte exact.
 					aria-label={
-						badgeCount > 0 ? `${label}, ${badgeAriaLabel("orders", badgeCount)}` : undefined
+						badgeCount > 0 ? `${label}, ${badgeAriaLabel(tab.id, badgeCount)}` : undefined
 					}
 				>
 					{isActive && <BottomBarActivePill groupId="admin-nav" />}

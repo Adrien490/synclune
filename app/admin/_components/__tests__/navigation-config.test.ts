@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	badgeAriaLabel,
 	getAllNavItems,
+	BADGED_ITEM_IDS,
 	getQuickAccessItems,
 	navigationData,
 	type NavItem as _NavItem,
@@ -118,14 +119,25 @@ describe("getAllNavItems", () => {
 });
 
 describe("getQuickAccessItems", () => {
-	it("returns exactly 3 items", () => {
+	it("returns exactly 4 items", () => {
 		const items = getQuickAccessItems();
-		expect(items).toHaveLength(3);
+		expect(items).toHaveLength(4);
 	});
 
-	it("returns dashboard, orders, and products in order", () => {
+	it("returns dashboard, orders, products and refunds in order", () => {
 		const items = getQuickAccessItems();
-		expect(items.map((i) => i.id)).toEqual(["dashboard", "orders", "products"]);
+		expect(items.map((i) => i.id)).toEqual(["dashboard", "orders", "products", "refunds"]);
+	});
+
+	// `getAdminNavBadges()` compte `orders` ET `refunds`, et le layout admin passe
+	// l'objet entier à la barre du bas. Tant que `refunds` n'était pas un accès
+	// rapide, son compteur traversait tout le layout pour être ignoré : un échec
+	// Stripe n'existait pas sur téléphone. Toute file badgée doit rester joignable.
+	it("expose un onglet d'accès rapide pour CHAQUE file badgée", () => {
+		const ids = getQuickAccessItems().map((i) => i.id);
+		for (const badged of BADGED_ITEM_IDS) {
+			expect(ids).toContain(badged);
+		}
 	});
 
 	it("returns valid NavItem objects", () => {
