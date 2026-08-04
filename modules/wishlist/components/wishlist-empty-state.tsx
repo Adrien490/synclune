@@ -27,18 +27,18 @@ export function WishlistEmptyState() {
 				<EmptyMedia variant="icon">
 					<Heart className="size-6" />
 				</EmptyMedia>
-				<EmptyTitle>Votre liste de favoris est vide</EmptyTitle>
+				<EmptyTitle>Ta liste de favoris est vide</EmptyTitle>
 			</EmptyHeader>
 			<EmptyDescription>
-				Découvrez nos créations artisanales et ajoutez vos coups de cœur à vos favoris pour les
+				Découvre nos créations artisanales et ajoute tes coups de cœur à tes favoris pour les
 				retrouver facilement.
 			</EmptyDescription>
 			<EmptyActions>
-				<Button asChild variant="primary" size="lg">
-					<Link href="/produits">Découvrir nos créations</Link>
+				<Button render={<Link href="/produits" />} variant="primary" size="lg">
+					Découvrir nos créations
 				</Button>
-				<Button asChild variant="outline" size="lg">
-					<Link href="/collections">Voir les collections</Link>
+				<Button render={<Link href="/collections" />} variant="outline" size="lg">
+					Voir les collections
 				</Button>
 			</EmptyActions>
 		</Empty>

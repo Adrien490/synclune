@@ -44,7 +44,7 @@ export function showWishlistUndoToast({
 		const result = await addToWishlist(undefined, fd);
 		if (result.status === ActionStatus.SUCCESS) {
 			toast.success(
-				productTitle ? `« ${productTitle} » restauré dans vos favoris` : "Article restauré",
+				productTitle ? `« ${productTitle} » restauré dans tes favoris` : "Article restauré",
 			);
 			onRestored?.();
 		} else {
@@ -63,9 +63,9 @@ export function showWishlistUndoToast({
 	}
 
 	toast.success(
-		productTitle ? `« ${productTitle} » retiré de vos favoris` : "Article retiré de vos favoris",
+		productTitle ? `« ${productTitle} » retiré de tes favoris` : "Article retiré de tes favoris",
 		{
-			description: "Vous pourrez toujours le retrouver dans nos créations.",
+			description: "Tu pourras toujours le retrouver dans nos créations.",
 			duration: 5000,
 			action: {
 				label: "Annuler",

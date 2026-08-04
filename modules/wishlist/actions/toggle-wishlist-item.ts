@@ -1,62 +1,48 @@
 "use server";
 
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
-import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { headers } from "next/headers";
 import { toggleWishlistItemSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
-import { getOrCreateWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
+import { readWishlistCookie, writeWishlistCookie } from "@/modules/wishlist/lib/wishlist-cookie";
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
-import { addProductToWishlist } from "@/modules/wishlist/services/upsert-wishlist-item.service";
-import { Prisma } from "@/app/generated/prisma/client";
+import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import {
 	validateInput,
 	handleActionError,
 	success,
 	error,
-	enforceRateLimit,
 	safeFormGet,
 } from "@/shared/lib/actions";
 
 /**
- * Server Action pour toggle un article dans la wishlist
- * Si present → retire, si absent → ajoute
+ * Server Action pour toggle un article dans les favoris
+ * Si présent → retire, si absent → ajoute
  *
- * Supporte les utilisateurs connectes ET les visiteurs (sessions invite)
+ * La wishlist vit entièrement dans le cookie `wishlist` (retrait de la base
+ * 2026-08-03) : la mutation est une réécriture du cookie, seule la validation
+ * « produit PUBLIC » à l'ajout touche la DB. Pas d'invalidation de cache —
+ * poser le cookie déclenche déjà le re-rendu avec la nouvelle valeur, et la
+ * matérialisation produits est cachée sur les ARGUMENTS (nouvelle liste =
+ * nouvelle clé).
  *
  * Pattern:
- * 1. Validation des donnees (Zod)
- * 2. Rate limiting (protection anti-spam)
- * 3. Récupération/création wishlist + check existence
- * 4. Si existe → delete ; sinon → délégation au service `addProductToWishlist`
- * 5. Invalidation cache immediate (read-your-own-writes)
+ * 1. Rate limiting (protection anti-spam)
+ * 2. Validation des données (Zod)
+ * 3. Lecture du cookie → retrait ou ajout (cap + produit PUBLIC)
+ * 4. Réécriture du cookie (maxAge glissant)
  */
 export async function toggleWishlistItem(
 	_: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Recuperer l'authentification (user ou session invite)
-		const session = await getSession();
-		const userId = session?.user.id;
-		const sessionId = !userId ? await getOrCreateWishlistSessionId() : null;
-
-		if (!userId && !sessionId) {
-			return error(WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
-		}
-
-		// 2. Rate limiting (protection anti-spam) — before validation to prevent enumeration
-		const headersList = await headers();
-		const ipAddress = await getClientIp(headersList);
-		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.TOGGLE, ipAddress);
+		// 1. Rate limiting (protection anti-spam) — before validation to prevent enumeration
+		const rateCheck = await enforceRateLimitForCurrentUser(WISHLIST_LIMITS.TOGGLE);
 		if ("error" in rateCheck) return rateCheck.error;
 
-		// 3. Validation avec Zod
+		// 2. Validation avec Zod
 		const validated = validateInput(toggleWishlistItemSchema, {
 			productId: safeFormGet(formData, "productId"),
 		});
@@ -64,71 +50,35 @@ export async function toggleWishlistItem(
 
 		const { productId } = validated.data;
 
-		// 4. Transaction: lookup wishlist existante → si item présent retire,
-		//    sinon délègue à addProductToWishlist (qui upsert + valide + create).
-		const transactionResult = await prisma.$transaction(async (tx) => {
-			// 4a. Lookup wishlist existante (sans création — pas de upsert ici car
-			//     le path "add" délègue à addProductToWishlist qui fait son propre upsert).
-			const existingWishlist = await tx.wishlist.findFirst({
-				where: userId ? { userId } : { sessionId: sessionId! },
-				select: {
-					id: true,
-					items: {
-						where: { productId },
-						select: { id: true },
-						take: 1,
-					},
-				},
-			});
+		// 3. Le cookie est la SSOT — lecture validée (forme cuid2, dédup, cap)
+		const ids = await readWishlistCookie();
 
-			const existingItem = existingWishlist?.items[0];
-
-			// Path "remove" : item existe → delete + refresh timestamp
-			// (existingItem truthy implique existingWishlist truthy par construction)
-			if (existingItem) {
-				await tx.wishlistItem.delete({ where: { id: existingItem.id } });
-				await tx.wishlist.update({
-					where: { id: existingWishlist!.id },
-					data: { updatedAt: new Date() },
-				});
-
-				return {
-					action: "removed" as const,
-					wishlistItemId: undefined,
-				};
-			}
-
-			// Path "add" : pas d'item existant → service partagé (upsert wishlist + check
-			// cap + validation produit + create item, tout dans le scope tx).
-			const created = await addProductToWishlist(tx, {
-				userId: userId ?? null,
-				sessionId,
-				productId,
-			});
-
-			return {
-				action: "added" as const,
-				wishlistItemId: created.wishlistItemId,
-			};
-		});
-
-		// 5. Invalidation cache immediate (read-your-own-writes)
-		const tags = getWishlistInvalidationTags(userId, sessionId ?? undefined);
-		tags.forEach((tag) => updateTag(tag));
-
-		return success(
-			transactionResult.action === "added" ? "Ajoute a vos favoris" : "Retire de vos favoris",
-			{
-				action: transactionResult.action,
-				wishlistItemId: transactionResult.wishlistItemId,
-			},
-		);
-	} catch (e) {
-		// Unique constraint violation (wishlistId, productId) — race double-submit
-		// concurrent (très rare ici car on a check existence avant), traité comme succès idempotent.
-		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-			return success("Deja dans vos favoris");
+		// Path "remove" : présent → retire
+		if (ids.includes(productId)) {
+			await writeWishlistCookie(ids.filter((id) => id !== productId));
+			return success("Retiré de tes favoris", { action: "removed" as const });
 		}
+
+		// Path "add" : cap puis validation produit — un id n'entre dans le
+		// cookie que s'il désigne un produit réellement PUBLIC (sinon n'importe
+		// quel cuid2 forgé gonflerait la liste et le badge).
+		if (ids.length >= WISHLIST_MAX_ITEMS) {
+			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
+		}
+
+		const product = await prisma.product.findUnique({
+			where: { id: productId, status: "PUBLIC", deletedAt: null },
+			select: { id: true },
+		});
+		if (!product) {
+			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
+		}
+
+		// 4. Plus récent en premier — l'ordre du cookie est l'ordre d'affichage
+		await writeWishlistCookie([productId, ...ids]);
+
+		return success("Ajouté à tes favoris", { action: "added" as const });
+	} catch (e) {
 		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}
 }

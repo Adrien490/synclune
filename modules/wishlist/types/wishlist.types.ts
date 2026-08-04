@@ -1,41 +1,22 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-import { type PaginationInfo } from "@/shared/lib/pagination";
-import type { ActionState } from "@/shared/types/server-action";
-import { type GET_WISHLIST_ITEM_SELECT } from "../constants/wishlist.constants";
+import type { Product } from "@/modules/products/types/product.types";
 
 // ============================================================================
 // TYPES - WISHLIST
 // ============================================================================
 
 /**
- * Paramètres pour la récupération de la wishlist avec pagination cursor
- * @param cursor - Curseur de pagination (CUID2)
- * @param direction - Direction de pagination ("forward" | "backward")
- * @param perPage - Nombre d'éléments par page
- */
-export type GetWishlistParams = {
-	cursor?: string;
-	direction?: "forward" | "backward";
-	perPage?: number;
-};
-
-/**
- * Type d'un article de wishlist avec ses données SKU et produit
- * Inclut: SKU (prix, inventaire, couleur, matériau), produit (titre, slug), image primaire
- */
-type WishlistItem = Prisma.WishlistItemGetPayload<{
-	select: typeof GET_WISHLIST_ITEM_SELECT;
-}>;
-
-/**
- * Retour de getWishlist avec pagination et count total
+ * Retour de getWishlist.
+ *
+ * Les items sont directement des produits (payload `GET_PRODUCTS_SELECT`,
+ * même shape que la PLP → compatible ProductCard) : depuis le retrait de la
+ * base (2026-08-03), il n'existe plus de ligne `WishlistItem` intermédiaire —
+ * le cookie `wishlist` porte les Product IDs, la DB ne sert qu'à les
+ * matérialiser.
  */
 export type GetWishlistReturn = {
-	/** Liste des articles de la wishlist */
-	items: WishlistItem[];
-	/** Informations de pagination cursor-based */
-	pagination: PaginationInfo;
-	/** Nombre total d'articles dans la wishlist */
+	/** Produits favoris, plus récent en premier (ordre du cookie) */
+	items: Product[];
+	/** Nombre de favoris encore publics (== items.length) */
 	totalCount: number;
 };
 
@@ -48,10 +29,3 @@ export type GetWishlistReturn = {
  * Returns just the count as a number (used for badge display)
  */
 export type GetWishlistItemCountReturn = number;
-
-// ============================================================================
-// TYPES - WISHLIST MERGE
-// ============================================================================
-
-// `MergeWishlistsResult` retiré avec `merge-wishlists.ts` (2026-07-31) : la
-// wishlist invité reste attachée à son cookie `wishlist_session`.

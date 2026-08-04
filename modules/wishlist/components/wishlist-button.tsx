@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { AnimatedHeartIcon } from "@/shared/components/icons/animated-heart-icon";
-import { HeartBurst } from "@/shared/components/animations/heart-burst";
 import { useWishlistToggle } from "@/modules/wishlist/hooks/use-wishlist-toggle";
 import { cn } from "@/shared/utils/cn";
 import { Button } from "@/shared/components/ui/button";
@@ -29,10 +27,10 @@ interface WishlistButtonProps {
 	enableUndoToast?: boolean;
 }
 
-const sizeConfig: Record<WishlistButtonSize, { button: string; icon: string; burst: number }> = {
-	sm: { button: "size-9", icon: "size-4", burst: 0.85 },
-	md: { button: "size-11", icon: "size-5", burst: 1 },
-	lg: { button: "size-14", icon: "size-8 sm:size-7", burst: 1.25 },
+const sizeConfig: Record<WishlistButtonSize, { button: string; icon: string }> = {
+	sm: { button: "size-9", icon: "size-4" },
+	md: { button: "size-11", icon: "size-5" },
+	lg: { button: "size-14", icon: "size-8 sm:size-7" },
 };
 
 /**
@@ -57,16 +55,13 @@ export function WishlistButton({
 	size = "md",
 	enableUndoToast = false,
 }: WishlistButtonProps) {
-	// Compteur incrémenté à chaque ajout pour remonter (= re-jouer) le burst de cœurs.
-	const [burstKey, setBurstKey] = useState(0);
-
 	const { isInWishlist, action, isPending } = useWishlistToggle({
 		initialIsInWishlist,
 		enableUndoToast,
 		productTitle,
 	});
 
-	const { button: buttonSize, icon: iconSize, burst: burstScale } = sizeConfig[size];
+	const { button: buttonSize, icon: iconSize } = sizeConfig[size];
 
 	const ariaLabel = isInWishlist
 		? productTitle
@@ -85,10 +80,6 @@ export function WishlistButton({
 			size="icon"
 			onClick={(e) => {
 				e.stopPropagation();
-				// Burst urgent (hors transition de la form action) → joue au clic, pas
-				// après le serveur. Un setState dans l'action de formulaire ne serait commit
-				// qu'à la résolution serveur ; ici l'événement discret commit immédiatement.
-				if (!isInWishlist) setBurstKey((k) => k + 1);
 			}}
 			disabled={isPending}
 			className={cn(
@@ -110,9 +101,13 @@ export function WishlistButton({
 				decorative
 				className={cn(
 					iconSize,
-					"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
+					// Un seul `filter` composé par état : deux utilitaires `drop-shadow-[…]`
+					// écrasent la même variable --tw-drop-shadow (une des deux ombres était
+					// perdue), et l'arbitrary property `[filter:…]` de l'état rempli
+					// écrasait les deux. tailwind-merge ne garde que le dernier [filter:…].
+					"[filter:drop-shadow(0_0_3px_rgba(255,255,255,0.9))_drop-shadow(0_1px_2px_rgba(0,0,0,0.3))]",
 					isInWishlist &&
-						"[filter:drop-shadow(0_0_6px_color-mix(in_oklab,var(--primary)_60%,transparent))]",
+						"[filter:drop-shadow(0_0_3px_rgba(255,255,255,0.9))_drop-shadow(0_1px_2px_rgba(0,0,0,0.3))_drop-shadow(0_0_6px_color-mix(in_oklab,var(--primary)_60%,transparent))]",
 				)}
 			/>
 		</Button>
@@ -121,19 +116,14 @@ export function WishlistButton({
 	return (
 		<form action={action} className={className}>
 			<input type="hidden" name="productId" value={productId} />
-			{/* Conteneur relatif pour ancrer le burst de cœurs centré sur l'icône, sans
-			    toucher au positionnement du `<form>` (parfois absolu, posé par le parent). */}
-			<span className="relative inline-flex">
-				<Tooltip delayDuration={500}>
-					<TooltipTrigger asChild>{button}</TooltipTrigger>
-					{/* `can-hover:block hidden` masque le tooltip sur touch (pointer:coarse) pour éviter
-					    un flash au tap mobile, tout en gardant l'aide desktop hover/focus. */}
-					<TooltipContent side="bottom" className="can-hover:block hidden">
-						{tooltipText}
-					</TooltipContent>
-				</Tooltip>
-				{burstKey > 0 && <HeartBurst key={burstKey} seed={burstKey} scale={burstScale} />}
-			</span>
+			<Tooltip delay={500}>
+				<TooltipTrigger render={button} />
+				{/* `can-hover:block hidden` masque le tooltip sur touch (pointer:coarse) pour éviter
+				    un flash au tap mobile, tout en gardant l'aide desktop hover/focus. */}
+				<TooltipContent side="bottom" className="can-hover:block hidden">
+					{tooltipText}
+				</TooltipContent>
+			</Tooltip>
 		</form>
 	);
 }

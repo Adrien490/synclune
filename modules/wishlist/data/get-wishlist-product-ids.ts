@@ -1,16 +1,17 @@
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { notDeleted, prisma } from "@/shared/lib/prisma";
-import { logger } from "@/shared/lib/logger";
-import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
-import { cacheWishlistProductIds } from "@/modules/wishlist/constants/cache";
+import { readWishlistCookie } from "@/modules/wishlist/lib/wishlist-cookie";
 
 /**
- * Récupère tous les Product IDs présents dans la wishlist de l'utilisateur/visiteur
+ * Récupère tous les Product IDs présents dans les favoris du visiteur.
  *
- * Optimisé pour éviter le problème N+1 : une seule requête pour tous les produits.
- * Retourne un Set pour des lookups O(1) dans les listes de produits.
+ * Source : le cookie `wishlist` (SSOT depuis le retrait de la base 2026-08-03) —
+ * aucune requête DB. Retourne un Set pour des lookups O(1) dans les listes de
+ * produits.
  *
- * @returns Set des Product IDs dans la wishlist (vide si pas de wishlist)
+ * Le Set peut contenir l'id d'un produit archivé/supprimé depuis son ajout :
+ * inoffensif, les surfaces consommatrices ne rendent que des produits PUBLIC,
+ * un id périmé n'y matche donc jamais rien.
+ *
+ * @returns Set des Product IDs favoris (vide si pas de cookie)
  *
  * @example
  * ```tsx
@@ -19,42 +20,5 @@ import { cacheWishlistProductIds } from "@/modules/wishlist/constants/cache";
  * ```
  */
 export async function getWishlistProductIds(): Promise<Set<string>> {
-	const session = await getSession();
-	const userId = session?.user.id;
-	const sessionId = !userId ? await getWishlistSessionId() : null;
-
-	return fetchWishlistProductIds(userId, sessionId ?? undefined);
-}
-
-/**
- * Fonction cachée qui récupère les Product IDs de la wishlist
- */
-async function fetchWishlistProductIds(userId?: string, sessionId?: string): Promise<Set<string>> {
-	"use cache: private";
-	cacheWishlistProductIds(userId, sessionId);
-
-	// Pas d'utilisateur ni de session = wishlist vide
-	if (!userId && !sessionId) return new Set();
-
-	try {
-		const wishlistItems = await prisma.wishlistItem.findMany({
-			where: {
-				wishlist: userId ? { userId } : { sessionId },
-				productId: { not: null }, // Exclure les items dont le produit a été archivé
-				product: {
-					status: "PUBLIC",
-					...notDeleted,
-				},
-			},
-			select: { productId: true },
-		});
-
-		// Filtrer les nulls (ne devrait pas arriver avec le where ci-dessus, mais TypeScript l'exige)
-		return new Set(
-			wishlistItems.map((item) => item.productId).filter((id): id is string => id !== null),
-		);
-	} catch (e) {
-		logger.error("Failed to fetch wishlist product IDs", e, { service: "wishlist" });
-		return new Set<string>();
-	}
+	return new Set(await readWishlistCookie());
 }

@@ -4,7 +4,6 @@ import { useEffect, useOptimistic, useRef } from "react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { announce } from "@/shared/utils/announce";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
 
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
@@ -17,34 +16,25 @@ import { WishlistEmptyState } from "./wishlist-empty-state";
 
 interface WishlistListContentProps {
 	items: GetWishlistReturn["items"];
-	pagination: GetWishlistReturn["pagination"];
-	totalCount: number;
-	perPage: number;
 }
 
 /**
  * Contenu de la liste wishlist - Client Component
  *
  * Réutilise ProductCard pour uniformité visuelle avec le reste du site.
- * Les items sont tous marqués comme "en wishlist" via isInWishlist boolean.
+ * Les items sont directement des produits (le cookie `wishlist` est la SSOT,
+ * plafonné à 100 ids — la grille rend tout, plus de pagination).
  *
  * Suppression directe : un retrait est appliqué optimistiquement via
  * `useOptimistic` (`onItemRemoved`) puis confirmé par la revalidation serveur.
  */
-export function WishlistListContent({
-	items,
-	pagination,
-	totalCount,
-	perPage,
-}: WishlistListContentProps) {
-	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
+export function WishlistListContent({ items }: WishlistListContentProps) {
 	const prefersReducedMotion = useReducedMotion();
 
-	// Optimistic state pour la liste d'items (filtre par productId)
+	// Optimistic state pour la liste de produits (filtre par id)
 	const [optimisticItems, removeOptimisticItem] = useOptimistic(
 		items,
-		(state, removedProductId: string) =>
-			state.filter((item) => item.productId !== removedProductId),
+		(state, removedProductId: string) => state.filter((product) => product.id !== removedProductId),
 	);
 
 	const handleItemRemoved = (productId: string) => {
@@ -55,8 +45,7 @@ export function WishlistListContent({
 		onItemRemoved: handleItemRemoved,
 	};
 
-	// Adjust totalCount for optimistic removals on the current page
-	const optimisticTotalCount = totalCount - (items.length - optimisticItems.length);
+	const optimisticTotalCount = optimisticItems.length;
 
 	const isEmpty = optimisticItems.length === 0;
 
@@ -76,7 +65,7 @@ export function WishlistListContent({
 	const wasEmptyRef = useRef(isEmpty);
 	useEffect(() => {
 		if (isEmpty && !wasEmptyRef.current) {
-			announce("Votre liste de favoris est maintenant vide");
+			announce("Ta liste de favoris est maintenant vide");
 		}
 		wasEmptyRef.current = isEmpty;
 	}, [isEmpty]);
@@ -101,9 +90,9 @@ export function WishlistListContent({
 				{/* Grid des items de wishlist avec animation */}
 				<div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
 					<AnimatePresence mode="popLayout">
-						{optimisticItems.map((item, index) => (
+						{optimisticItems.map((product, index) => (
 							<m.div
-								key={item.id}
+								key={product.id}
 								initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.9 }}
 								animate={{ opacity: 1, scale: 1 }}
 								exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.9 }}
@@ -118,15 +107,16 @@ export function WishlistListContent({
 								}
 							>
 								<SwipeableWishlistItem
-									productId={item.productId!}
-									itemName={item.product?.title}
+									productId={product.id}
+									itemName={product.title}
 									isFirst={index === 0}
 								>
 									<ProductCard
-										product={item.product!}
+										product={product}
 										index={index}
 										isInWishlist
 										sectionId="wishlist"
+										disablePreload
 									/>
 								</SwipeableWishlistItem>
 							</m.div>
@@ -136,20 +126,7 @@ export function WishlistListContent({
 
 				{/* Annonce pour screen readers */}
 				<div role="status" aria-live="polite" className="sr-only">
-					{optimisticTotalCount} article{optimisticTotalCount > 1 ? "s" : ""} dans vos favoris
-				</div>
-
-				{/* Pagination */}
-				<div className="mt-12 flex justify-end">
-					<CursorPagination
-						perPage={perPage}
-						hasNextPage={hasNextPage}
-						hasPreviousPage={hasPreviousPage}
-						currentPageSize={optimisticItems.length}
-						nextCursor={nextCursor}
-						prevCursor={prevCursor}
-						totalCount={optimisticTotalCount}
-					/>
+					{optimisticTotalCount} article{optimisticTotalCount > 1 ? "s" : ""} dans tes favoris
 				</div>
 			</div>
 		</WishlistListOptimisticContext.Provider>

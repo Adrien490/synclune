@@ -1,20 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // MOCKS
 // ============================================================================
 
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-		variant?: string;
-		size?: string;
-	}) => (asChild ? <>{children}</> : <button>{children}</button>),
+	Button: (props: RenderPropMockProps) => renderPropMock("button", props),
 }));
 
 vi.mock("@/shared/components/ui/empty", () => ({

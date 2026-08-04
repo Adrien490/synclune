@@ -130,8 +130,9 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 	 * avec le hook post-login de Better Auth.
 	 *
 	 * Le nouveau contrat est plus simple, et couvert par les tests ci-dessus : la
-	 * wishlist invité N'EST PLUS fusionnée — elle reste attachée au cookie
-	 * `wishlist_session` (30 jours, renouvelés à chaque interaction).
+	 * wishlist invité N'EST PLUS fusionnée — elle vit entièrement dans le cookie
+	 * `wishlist` (Product IDs, 30 jours renouvelés à chaque interaction ; retrait
+	 * de la base 2026-08-03).
 	 */
 
 	test("retirer un produit depuis la page favoris", async ({

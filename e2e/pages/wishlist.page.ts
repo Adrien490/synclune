@@ -9,7 +9,7 @@ export class WishlistPage {
 
 	constructor(private page: Page) {
 		this.heading = page.getByRole("heading", { level: 1 });
-		// « Votre liste de favoris est vide » (wishlist-empty-state.tsx) — un motif
+		// « Ta liste de favoris est vide » (wishlist-empty-state.tsx) — un motif
 		// « wishlist » ne matche RIEN : tout le DOM rendu est en français
 		this.emptyHeading = page.getByRole("heading", { name: /liste de favoris est vide/i });
 		this.shopLink = page.getByRole("link", { name: /Découvrir nos créations/i });

@@ -1,61 +1,25 @@
-import { CursorPaginationSkeleton } from "@/shared/components/cursor-pagination";
+import { ProductCardSkeleton } from "@/modules/products/components/product-card-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { cn } from "@/shared/utils/cn";
 
 export function WishlistGridSkeleton() {
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6">
 			{/* Header placeholder (count) */}
 			<Skeleton className="h-5 w-20 rounded" />
 
-			{/* Product grid matching ProductCard structure */}
+			{/* Grille — aligné sur wishlist-list-content.tsx ; cartes = SSOT
+			 * ProductCardSkeleton (parité anti-CLS structurelle avec ProductCard).
+			 * Pas de pagination : /favoris n'en a plus. */}
 			<div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
 				{Array.from({ length: 8 }).map((_, i) => (
-					<article
+					<div
 						key={i}
-						className={cn(
-							"product-card relative grid gap-4 overflow-hidden rounded-lg",
-							"bg-card border-2 border-transparent shadow-sm",
-							"motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4",
-							"motion-safe:duration-300",
-						)}
+						className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4 motion-safe:duration-300"
 						style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
 					>
-						{/* Image with aspect ratio matching ProductCard */}
-						<div className="product-card-media bg-muted relative aspect-square overflow-hidden rounded-lg sm:aspect-4/5">
-							<Skeleton className="absolute inset-0 rounded-lg" />
-
-							{/* Wishlist button placeholder (top-right) */}
-							<div className="absolute top-2.5 right-2.5 z-20">
-								<Skeleton className="size-11 rounded-full" />
-							</div>
-						</div>
-
-						{/* Content matching ProductCard layout */}
-						<div className="relative flex flex-col gap-2.5 px-3 pb-3 sm:gap-3 sm:px-4 sm:pb-4 lg:px-5 lg:pb-5">
-							{/* Title */}
-							<Skeleton className="h-5 w-4/5 rounded sm:h-6" />
-
-							{/* Color swatches placeholder */}
-							<div className="flex gap-1.5">
-								<Skeleton className="size-4 rounded-full sm:size-5" />
-								<Skeleton className="size-4 rounded-full sm:size-5" />
-								<Skeleton className="size-4 rounded-full sm:size-5" />
-							</div>
-
-							{/* Price */}
-							<Skeleton className="h-6 w-1/3 rounded" />
-
-							{/* Mobile add-to-cart button */}
-							<Skeleton className="h-10 w-full rounded-md sm:hidden" />
-						</div>
-					</article>
+						<ProductCardSkeleton />
+					</div>
 				))}
-			</div>
-
-			{/* Pagination */}
-			<div className="mt-12 flex justify-end">
-				<CursorPaginationSkeleton />
 			</div>
 		</div>
 	);
