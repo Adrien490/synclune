@@ -1,6 +1,6 @@
 "use server";
 
-import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
+import { OrderStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -24,7 +24,6 @@ import { canMarkAsDelivered } from "../services/order-status-validation.service"
  * - La commande doit être expédiée (OrderStatus.SHIPPED)
  * - Utilisé pour forcer le statut si le webhook transporteur ne fonctionne pas
  * - Passe OrderStatus à DELIVERED
- * - Passe FulfillmentStatus à DELIVERED
  * - Enregistre la date de livraison effective
  */
 export async function markAsDelivered(
@@ -57,7 +56,6 @@ export async function markAsDelivered(
 					id: true,
 					orderNumber: true,
 					status: true,
-					fulfillmentStatus: true,
 				},
 			});
 
@@ -75,7 +73,6 @@ export async function markAsDelivered(
 				where: { id, ...notDeleted, status: OrderStatus.SHIPPED },
 				data: {
 					status: OrderStatus.DELIVERED,
-					fulfillmentStatus: FulfillmentStatus.DELIVERED,
 					actualDelivery: deliveryDate,
 				},
 			});
@@ -88,9 +85,6 @@ export async function markAsDelivered(
 				action: "DELIVERED",
 				previousStatus: found.status,
 				newStatus: OrderStatus.DELIVERED,
-				previousFulfillmentStatus: found.fulfillmentStatus,
-				newFulfillmentStatus: FulfillmentStatus.DELIVERED,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {

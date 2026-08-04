@@ -6,7 +6,8 @@
  *
  * `cancelOrder` restaure le stock LUI-MÊME, dans sa transaction, quand la commande
  * a réellement décrémenté (`paymentStatus` PAID/PARTIALLY_REFUNDED) et n'est pas
- * encore expédiée (`fulfillmentStatus` UNFULFILLED/PROCESSING). Historiquement il
+ * encore expédiée (`status` PENDING/PROCESSING — ex-`fulfillmentStatus`
+ * UNFULFILLED/PROCESSING avant la fusion des axes). Historiquement il
  * posait ensuite `restock: shouldRestoreStock` sur les `RefundItem` — le MÊME
  * booléen que son restock inline — et la finalisation du remboursement ré-créditait
  * le stock une seconde fois. L'inventaire dépassait le physique, et le CHECK
@@ -186,7 +187,6 @@ describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock
 				id: VALID_CUID,
 				status: "PROCESSING",
 				paymentStatus: "PAID",
-				fulfillmentStatus: "UNFULFILLED",
 				total: 9998,
 				items: [
 					{ id: "oi-1", skuId: "sku-1", quantity: 2, price: 4999 },
@@ -216,7 +216,6 @@ describe("STOCK-DOUBLE-CREDIT-001 — cancelOrder ne délègue jamais le restock
 				id: VALID_CUID,
 				status: "PROCESSING",
 				paymentStatus: "PAID",
-				fulfillmentStatus: "SHIPPED",
 				total: 4999,
 				items: [{ id: "oi-1", skuId: "sku-1", quantity: 1, price: 4999 }],
 			}),

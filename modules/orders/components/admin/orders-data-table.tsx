@@ -1,8 +1,4 @@
-import {
-	type OrderStatus,
-	type PaymentStatus,
-	type FulfillmentStatus,
-} from "@/app/generated/prisma/client";
+import { type OrderStatus, type PaymentStatus } from "@/app/generated/prisma/client";
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { perPageOptionsUpTo } from "@/shared/lib/pagination";
 import { GET_ORDERS_MAX_RESULTS_PER_PAGE } from "@/modules/orders/constants/order.constants";
@@ -24,23 +20,25 @@ import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 import {
-	Clock,
-	PackageCheck,
-	PackageOpen,
-	ShoppingBag,
-	Truck,
-	XCircle,
-	type LucideIcon,
-} from "lucide-react";
+	CheckCircleIcon,
+	ClockIcon,
+	PackageIcon,
+	ShoppingBagIcon,
+	TruckIcon,
+	XCircleIcon,
+	ArrowUUpLeftIcon,
+} from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { OrderRowActions } from "./order-row-actions";
 
-const ORDER_STATUS_ICONS: Record<OrderStatus, LucideIcon> = {
-	PENDING: Clock,
-	PROCESSING: PackageOpen,
-	SHIPPED: Truck,
-	DELIVERED: PackageCheck,
-	CANCELLED: XCircle,
+const ORDER_STATUS_ICONS: Record<OrderStatus, Icon> = {
+	PENDING: ClockIcon,
+	PROCESSING: PackageIcon,
+	SHIPPED: TruckIcon,
+	DELIVERED: CheckCircleIcon,
+	RETURNED: ArrowUUpLeftIcon,
+	CANCELLED: XCircleIcon,
 };
 
 interface OrdersDataTableProps {
@@ -60,7 +58,7 @@ export async function OrdersDataTable({
 		return (
 			<TableEmptyState
 				className="hidden md:flex"
-				icon={ShoppingBag}
+				icon={ShoppingBagIcon}
 				title="Aucune commande trouvée"
 				description="Aucune commande ne correspond aux critères de recherche."
 				noItemsDescription="Aucune commande n'a encore été passée."
@@ -173,7 +171,6 @@ export async function OrdersDataTable({
 										orderNumber: order.orderNumber,
 										status: order.status as OrderStatus,
 										paymentStatus: order.paymentStatus as PaymentStatus,
-										fulfillmentStatus: order.fulfillmentStatus as FulfillmentStatus,
 										trackingNumber: order.trackingNumber,
 										trackingUrl: order.trackingUrl,
 										invoiceNumber: order.invoiceNumber,

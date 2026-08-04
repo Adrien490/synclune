@@ -243,7 +243,6 @@ describe("ORD-BIZ-004 — getOrderPermissions.canMarkAsPaid expose le bouton pou
 			getOrderPermissions({
 				status: "PENDING",
 				paymentStatus: "PENDING",
-				fulfillmentStatus: "UNFULFILLED",
 				trackingNumber: null,
 			}).canMarkAsPaid,
 		).toBe(true);
@@ -252,7 +251,6 @@ describe("ORD-BIZ-004 — getOrderPermissions.canMarkAsPaid expose le bouton pou
 			getOrderPermissions({
 				status: "PENDING",
 				paymentStatus: "FAILED",
-				fulfillmentStatus: "UNFULFILLED",
 				trackingNumber: null,
 			}).canMarkAsPaid,
 		).toBe(true);
@@ -261,7 +259,6 @@ describe("ORD-BIZ-004 — getOrderPermissions.canMarkAsPaid expose le bouton pou
 			getOrderPermissions({
 				status: "PROCESSING",
 				paymentStatus: "PAID",
-				fulfillmentStatus: "PROCESSING",
 				trackingNumber: null,
 			}).canMarkAsPaid,
 		).toBe(false);
@@ -270,7 +267,6 @@ describe("ORD-BIZ-004 — getOrderPermissions.canMarkAsPaid expose le bouton pou
 			getOrderPermissions({
 				status: "PENDING",
 				paymentStatus: "REFUNDED",
-				fulfillmentStatus: "UNFULFILLED",
 				trackingNumber: null,
 			}).canMarkAsPaid,
 		).toBe(false);
@@ -279,7 +275,6 @@ describe("ORD-BIZ-004 — getOrderPermissions.canMarkAsPaid expose le bouton pou
 			getOrderPermissions({
 				status: "CANCELLED",
 				paymentStatus: "FAILED",
-				fulfillmentStatus: "UNFULFILLED",
 				trackingNumber: null,
 			}).canMarkAsPaid,
 		).toBe(false);

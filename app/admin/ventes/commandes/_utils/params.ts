@@ -1,9 +1,4 @@
-import {
-	FulfillmentStatus,
-	InvoiceStatus,
-	OrderStatus,
-	PaymentStatus,
-} from "@/app/generated/prisma/enums";
+import { InvoiceStatus, OrderStatus, PaymentStatus } from "@/app/generated/prisma/enums";
 import type { GetOrdersParams } from "@/modules/orders/types/order.types";
 import type { OrdersSearchParams } from "../page";
 import { getAllParamsIn, getFirstParam } from "@/shared/utils/params";
@@ -46,7 +41,6 @@ const sortedBounds = <T extends number | Date>(
 export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filters"] => {
 	let status: OrderFilters["status"] = undefined;
 	let paymentStatus: OrderFilters["paymentStatus"] = undefined;
-	let fulfillmentStatus: OrderFilters["fulfillmentStatus"] = undefined;
 	let invoiceStatus: OrderFilters["invoiceStatus"] = undefined;
 	let invoiceAnomaly: boolean | undefined = undefined;
 	let pdfNotArchived: boolean | undefined = undefined;
@@ -78,9 +72,6 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 					break;
 				case "paymentStatus":
 					paymentStatus = getAllParamsIn(value, Object.values(PaymentStatus));
-					break;
-				case "fulfillmentStatus":
-					fulfillmentStatus = getAllParamsIn(value, Object.values(FulfillmentStatus));
 					break;
 				case "invoiceStatus":
 					invoiceStatus = getAllParamsIn(value, Object.values(InvoiceStatus));
@@ -145,7 +136,6 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 	return {
 		status,
 		paymentStatus,
-		fulfillmentStatus,
 		invoiceStatus,
 		invoiceAnomaly,
 		pdfNotArchived,

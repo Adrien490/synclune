@@ -66,11 +66,7 @@ export type AllowedShippingCountry = ShippingCountry;
 // TYPES - ORDER STATUS VALIDATION (from services/)
 // ============================================================================
 
-import {
-	type OrderStatus,
-	type PaymentStatus,
-	type FulfillmentStatus,
-} from "@/app/generated/prisma/client";
+import { type OrderStatus, type PaymentStatus } from "@/app/generated/prisma/client";
 
 export interface OrderForShipValidation {
 	status: OrderStatus;
@@ -84,7 +80,6 @@ type ShipBlockReason = "already_shipped" | "cancelled" | "unpaid" | "not_process
 export interface OrderStateInput {
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
-	fulfillmentStatus?: FulfillmentStatus | null;
 	trackingNumber?: string | null;
 	/** Requis par `canDelete` : une commande facturée n'est plus supprimable. */
 	invoiceNumber?: string | null;

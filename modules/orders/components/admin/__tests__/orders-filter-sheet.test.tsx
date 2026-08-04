@@ -309,8 +309,8 @@ vi.mock("@/modules/orders/constants/status-display", () => ({
 	},
 }));
 
-vi.mock("lucide-react", () => ({
-	CalendarIcon: () => <svg data-testid="icon-calendar" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CalendarBlankIcon: () => <svg data-testid="icon-calendar" />,
 }));
 
 vi.mock("date-fns", () => ({
@@ -739,7 +739,6 @@ describe("OrdersFilterSheet", () => {
 		expect(mockFormReset).toHaveBeenCalledWith({
 			statuses: [],
 			paymentStatuses: [],
-			fulfillmentStatuses: [],
 			invoiceStatuses: [],
 			invoiceAnomaly: false,
 			pdfNotArchived: false,

@@ -2,12 +2,7 @@
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-	HistorySource,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
@@ -49,7 +44,6 @@ import { estimateDeliveryDate } from "../services/shipping.service";
  * - La commande ne doit pas être annulée
  * - Requiert un numéro de suivi
  * - Passe OrderStatus à SHIPPED
- * - Passe FulfillmentStatus à SHIPPED
  * - Enregistre le numéro de suivi et la date d'expédition
  * - Envoie un email au client si sendEmail = true
  */
@@ -100,7 +94,6 @@ export async function markAsShipped(
 					orderNumber: true,
 					status: true,
 					paymentStatus: true,
-					fulfillmentStatus: true,
 					customerEmail: true,
 					customerName: true,
 					shippingFirstName: true,
@@ -140,7 +133,6 @@ export async function markAsShipped(
 				},
 				data: {
 					status: OrderStatus.SHIPPED,
-					fulfillmentStatus: FulfillmentStatus.SHIPPED,
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					shippingCarrier: validated.data.carrier ?? null,
@@ -163,9 +155,6 @@ export async function markAsShipped(
 				action: "SHIPPED",
 				previousStatus: found.status,
 				newStatus: OrderStatus.SHIPPED,
-				previousFulfillmentStatus: found.fulfillmentStatus,
-				newFulfillmentStatus: FulfillmentStatus.SHIPPED,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
@@ -260,7 +249,6 @@ export async function markAsShipped(
 				orderId: order.id,
 				action: "SHIPPED",
 				note: "Email de confirmation d'expédition non envoyé (échec Resend ou client sans email)",
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.SYSTEM,
 				metadata: { emailDeliveryFailed: true, postCommit: true },

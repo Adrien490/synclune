@@ -10,7 +10,6 @@ export const GET_DASHBOARD_RECENT_ORDERS_SELECT = {
 	createdAt: true,
 	status: true,
 	paymentStatus: true,
-	fulfillmentStatus: true,
 	total: true,
 	// Colonnes SNAPSHOT, pas la relation `user` : celle-ci était toujours NULL en
 	// achat invité (100 % des commandes), si bien que la liste affichait « Invité »

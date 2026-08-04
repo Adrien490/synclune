@@ -24,7 +24,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-	FulfillmentStatus,
 	InvoiceStatus,
 	OrderStatus,
 	PaymentStatus,
@@ -59,7 +58,6 @@ describe("@regression filtres admin — URL forgée", () => {
 		const forged = {
 			filter_status: "DROP TABLE",
 			filter_paymentStatus: "../../etc",
-			filter_fulfillmentStatus: "BOGUS",
 			filter_invoiceStatus: "<script>",
 		};
 
@@ -68,21 +66,20 @@ describe("@regression filtres admin — URL forgée", () => {
 
 			expect(filters?.status).toBeUndefined();
 			expect(filters?.paymentStatus).toBeUndefined();
-			expect(filters?.fulfillmentStatus).toBeUndefined();
+			expect(filters?.status).toBeUndefined();
 			expect(filters?.invoiceStatus).toBeUndefined();
 		});
 
-		it("laisse passer les 4 enums valides (contre-épreuve)", () => {
+		// TROIS enums depuis le Lot 4 : `FulfillmentStatus` a fusionné dans `OrderStatus`.
+		it("laisse passer les 3 enums valides (contre-épreuve)", () => {
 			const filters = parseFilters({
 				filter_status: OrderStatus.PROCESSING,
 				filter_paymentStatus: PaymentStatus.PAID,
-				filter_fulfillmentStatus: FulfillmentStatus.SHIPPED,
 				filter_invoiceStatus: InvoiceStatus.GENERATED,
 			});
 
 			expect(filters?.status).toEqual([OrderStatus.PROCESSING]);
 			expect(filters?.paymentStatus).toEqual([PaymentStatus.PAID]);
-			expect(filters?.fulfillmentStatus).toEqual([FulfillmentStatus.SHIPPED]);
 			expect(filters?.invoiceStatus).toEqual([InvoiceStatus.GENERATED]);
 		});
 

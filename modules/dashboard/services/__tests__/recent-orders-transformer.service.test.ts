@@ -6,6 +6,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
 		CANCELLED: "CANCELLED",
 	},
 	PaymentStatus: {
@@ -15,16 +16,10 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		EXPIRED: "EXPIRED",
 		REFUNDED: "REFUNDED",
 	},
-	FulfillmentStatus: {
-		UNFULFILLED: "UNFULFILLED",
-		PARTIALLY_FULFILLED: "PARTIALLY_FULFILLED",
-		FULFILLED: "FULFILLED",
-		RETURNED: "RETURNED",
-	},
 }));
 
 import { transformRecentOrder, transformRecentOrders } from "../recent-orders-transformer.service";
-import { FulfillmentStatus, OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import type { OrderForTransform } from "../../types/dashboard.types";
 
 // ---------------------------------------------------------------------------
@@ -38,7 +33,6 @@ function makeOrder(overrides: Partial<OrderForTransform> = {}): OrderForTransfor
 		createdAt: new Date("2026-01-15T10:00:00Z"),
 		status: OrderStatus.PROCESSING,
 		paymentStatus: PaymentStatus.PAID,
-		fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
 		total: 4500,
 		customerName: "Alice",
 		customerEmail: "alice@test.com",
@@ -62,7 +56,6 @@ describe("transformRecentOrder", () => {
 			createdAt: new Date("2026-01-15T10:00:00Z"),
 			status: OrderStatus.PROCESSING,
 			paymentStatus: PaymentStatus.PAID,
-			fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
 			total: 4500,
 			customerName: "Alice",
 			customerEmail: "alice@test.com",

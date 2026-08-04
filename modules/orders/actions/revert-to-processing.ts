@@ -1,6 +1,6 @@
 "use server";
 
-import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
+import { OrderStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -25,7 +25,6 @@ import { canRevertToProcessing } from "../services/order-status-validation.servi
  * - La commande doit être en SHIPPED
  * - Efface les informations de tracking (trackingNumber, trackingUrl, shippedAt)
  * - Passe OrderStatus à PROCESSING
- * - Passe FulfillmentStatus à PROCESSING
  * - Requiert une raison obligatoire pour l'audit trail
  */
 export async function revertToProcessing(
@@ -60,7 +59,6 @@ export async function revertToProcessing(
 					id: true,
 					orderNumber: true,
 					status: true,
-					fulfillmentStatus: true,
 					trackingNumber: true,
 					trackingUrl: true,
 					customerEmail: true,
@@ -83,7 +81,6 @@ export async function revertToProcessing(
 				where: { id, ...notDeleted, status: OrderStatus.SHIPPED },
 				data: {
 					status: OrderStatus.PROCESSING,
-					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 					trackingNumber: null,
 					trackingUrl: null,
 					shippingCarrier: null,
@@ -104,10 +101,7 @@ export async function revertToProcessing(
 				action: "STATUS_REVERTED",
 				previousStatus: found.status,
 				newStatus: OrderStatus.PROCESSING,
-				previousFulfillmentStatus: found.fulfillmentStatus,
-				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 				note: validated.data.reason,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {

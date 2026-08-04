@@ -144,6 +144,7 @@ function mapToOrderWithItems(order: {
 	items: Array<{
 		productTitle: string | null;
 		skuColor: string | null;
+		skuColorHexes: string | null;
 		skuMaterial: string | null;
 		skuSize: string | null;
 		quantity: number;
@@ -176,6 +177,7 @@ function mapToOrderWithItems(order: {
 		items: order.items.map((item) => ({
 			productTitle: item.productTitle,
 			skuColor: item.skuColor,
+			skuColorHexes: item.skuColorHexes,
 			skuMaterial: item.skuMaterial,
 			skuSize: item.skuSize,
 			quantity: item.quantity,
@@ -569,7 +571,6 @@ export async function processOrderFromPaymentIntent(
 					// « En préparation », et aucun chemin de correction (markAsProcessing
 					// exige status=PENDING). Pas de backfill des lignes antérieures —
 					// TO_SHIP_FULFILLMENT_STATUSES et la timeline client les absorbent.
-					fulfillmentStatus: "PROCESSING",
 					paymentStatus: "PAID",
 					paidAt: new Date(),
 					stripePaymentIntentId: paymentIntent.id,

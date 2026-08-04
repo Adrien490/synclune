@@ -4,15 +4,16 @@ import {
 	getReturnIneligibilityReason,
 	getReturnDaysRemaining,
 } from "../return-eligibility.service";
-import type { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import type { OrderStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
 interface OrderInput {
+	/** Ex-`status` : axe unique depuis le Lot 4 (audit V2). */
+	status: OrderStatus;
 	paymentStatus: PaymentStatus;
-	fulfillmentStatus: FulfillmentStatus;
 	actualDelivery: Date | null;
 	refunds: Array<{ status: RefundStatus }>;
 }
@@ -25,8 +26,8 @@ const DELIVERED_EXPIRED = new Date("2026-02-01T12:00:00Z"); // 22 days ago
 
 function makeOrder(overrides: Partial<OrderInput> = {}): OrderInput {
 	return {
+		status: "DELIVERED",
 		paymentStatus: "PAID",
-		fulfillmentStatus: "DELIVERED",
 		actualDelivery: DELIVERED_WITHIN_PERIOD,
 		refunds: [],
 		...overrides,
@@ -81,27 +82,28 @@ describe("getReturnIneligibilityReason", () => {
 	});
 
 	// --------------------------------------------------------------------------
-	// Fulfillment status
+	// Statut d'avancement (ex-fulfillment)
 	// --------------------------------------------------------------------------
 
-	describe("fulfillment status", () => {
-		it("should return null when fulfillment status is DELIVERED", () => {
-			const order = makeOrder({ fulfillmentStatus: "DELIVERED" });
+	describe("order status", () => {
+		it("should return null when status is DELIVERED", () => {
+			const order = makeOrder({ status: "DELIVERED" });
 			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return NOT_DELIVERED when fulfillment status is SHIPPED", () => {
-			const order = makeOrder({ fulfillmentStatus: "SHIPPED" });
+		it("should return NOT_DELIVERED when status is SHIPPED", () => {
+			const order = makeOrder({ status: "SHIPPED" });
 			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
 		});
 
-		it("should return NOT_DELIVERED when fulfillment status is PROCESSING", () => {
-			const order = makeOrder({ fulfillmentStatus: "PROCESSING" });
+		it("should return NOT_DELIVERED when status is PROCESSING", () => {
+			const order = makeOrder({ status: "PROCESSING" });
 			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
 		});
 
-		it("should return NOT_DELIVERED when fulfillment status is UNFULFILLED", () => {
-			const order = makeOrder({ fulfillmentStatus: "UNFULFILLED" });
+		it("should return NOT_DELIVERED when status is PENDING", () => {
+			// Ex-`UNFULFILLED` : équivalent exact sur l'axe unique (Lot 4).
+			const order = makeOrder({ status: "PENDING" });
 			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
 		});
 	});
@@ -192,7 +194,6 @@ describe("getReturnIneligibilityReason", () => {
 		it("should report NOT_PAID even when the order is also undelivered", () => {
 			const order = makeOrder({
 				paymentStatus: "FAILED",
-				fulfillmentStatus: "UNFULFILLED",
 				actualDelivery: null,
 				refunds: [{ status: "PENDING" }],
 			});
@@ -201,7 +202,6 @@ describe("getReturnIneligibilityReason", () => {
 
 		it("should report NOT_DELIVERED before checking the deadline or refunds", () => {
 			const order = makeOrder({
-				fulfillmentStatus: "SHIPPED",
 				actualDelivery: null,
 				refunds: [{ status: "PENDING" }],
 			});

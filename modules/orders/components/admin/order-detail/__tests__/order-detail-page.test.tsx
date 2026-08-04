@@ -8,10 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
-vi.mock("@/modules/orders/data/get-order-notes", () => ({
-	getOrderNotes: vi.fn().mockResolvedValue({ notes: [] }),
-}));
-
 vi.mock("@/modules/orders/data/get-order-refunds", () => ({
 	getOrderRefunds: vi.fn().mockResolvedValue({ refunds: [] }),
 }));
@@ -90,7 +86,6 @@ function createOrder(overrides: Partial<GetOrderReturn> = {}): GetOrderReturn {
 		orderNumber: "CMD-001",
 		status: "PROCESSING",
 		paymentStatus: "PAID",
-		fulfillmentStatus: "UNFULFILLED",
 		subtotal: 4000,
 		discountAmount: 0,
 		shippingCost: 500,

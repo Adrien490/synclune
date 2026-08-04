@@ -88,7 +88,6 @@ export function createMockOrder(overrides: Record<string, unknown> = {}) {
 		shippingCountry: "France",
 		status: "PENDING",
 		paymentStatus: "PENDING",
-		fulfillmentStatus: "UNFULFILLED",
 		total: 4999,
 		subtotal: 4999,
 		discountAmount: 0,
@@ -341,24 +340,6 @@ function createMockRefundItem(overrides: Record<string, unknown> = {}) {
 		quantity: 1,
 		amount: 4999,
 		createdAt: new Date("2026-01-20"),
-		...overrides,
-	};
-}
-
-// ============================================================================
-// ORDER NOTES
-// ============================================================================
-
-function createMockOrderNote(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "on_cm1234567890abcde",
-		orderId: VALID_ORDER_ID,
-		content: "Client contacte par telephone",
-		authorId: "admin_cm1234567890abcde",
-		authorName: "Admin Test",
-		createdAt: new Date("2026-01-15"),
-		updatedAt: new Date("2026-01-15"),
-		deletedAt: null,
 		...overrides,
 	};
 }

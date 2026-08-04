@@ -4,18 +4,18 @@ import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-	AlertTriangle,
-	ChevronDown,
-	Clock,
-	CreditCard,
-	FileText,
-	MapPin,
-	Package,
-	Truck,
-	CircleCheck,
-	CircleX,
-	RotateCcw,
-} from "lucide-react";
+	ArrowCounterClockwiseIcon,
+	CaretDownIcon,
+	CheckCircleIcon,
+	ClockIcon,
+	CreditCardIcon,
+	FileTextIcon,
+	MapPinIcon,
+	PackageIcon,
+	TruckIcon,
+	WarningIcon,
+	XCircleIcon,
+} from "@phosphor-icons/react/ssr";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -23,7 +23,6 @@ import { cn } from "@/shared/utils/cn";
 import { formatDateTime } from "@/shared/utils/dates";
 import type { OrderAction, HistorySource } from "@/app/generated/prisma/enums";
 import {
-	FULFILLMENT_STATUS_LABELS,
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
@@ -37,8 +36,6 @@ interface OrderHistoryEntry {
 	newStatus?: string | null;
 	previousPaymentStatus?: string | null;
 	newPaymentStatus?: string | null;
-	previousFulfillmentStatus?: string | null;
-	newFulfillmentStatus?: string | null;
 	note?: string | null;
 	metadata?: unknown; // JsonValue from Prisma
 	authorName?: string | null;
@@ -53,140 +50,145 @@ interface OrderHistoryTimelineProps {
 // Mapping action → icône + couleur + label + symbole (accessibilité: pas couleur seule)
 const ACTION_CONFIG: Record<
 	OrderAction,
-	{ icon: typeof Clock; color: string; label: string; symbol: string }
+	{ icon: typeof ClockIcon; color: string; label: string; symbol: string }
 > = {
-	CREATED: { icon: Clock, color: "text-info", label: "Commande créée", symbol: "⏱" },
-	PAID: { icon: CreditCard, color: "text-success", label: "Paiement reçu", symbol: "✓" },
+	CREATED: { icon: ClockIcon, color: "text-info", label: "Commande créée", symbol: "⏱" },
+	PAID: { icon: CreditCardIcon, color: "text-success", label: "Paiement reçu", symbol: "✓" },
 	PROCESSING: {
-		icon: Package,
+		icon: PackageIcon,
 		color: "text-warning",
 		label: "En préparation",
 		symbol: "⚙",
 	},
-	SHIPPED: { icon: Truck, color: "text-info", label: "Expédiée", symbol: "→" },
+	SHIPPED: { icon: TruckIcon, color: "text-info", label: "Expédiée", symbol: "→" },
 	DELIVERED: {
-		icon: CircleCheck,
+		icon: CheckCircleIcon,
 		color: "text-success",
 		label: "Livrée",
 		symbol: "✓✓",
 	},
-	CANCELLED: { icon: CircleX, color: "text-destructive", label: "Annulée", symbol: "✗" },
+	CANCELLED: { icon: XCircleIcon, color: "text-destructive", label: "Annulée", symbol: "✗" },
 	RETURNED: {
-		icon: RotateCcw,
+		icon: ArrowCounterClockwiseIcon,
 		color: "text-warning",
 		label: "Retournée",
 		symbol: "↩",
 	},
 	STATUS_REVERTED: {
-		icon: RotateCcw,
+		icon: ArrowCounterClockwiseIcon,
 		color: "text-warning",
 		label: "Statut annulé",
 		symbol: "↶",
 	},
 	TRACKING_UPDATED: {
-		icon: Truck,
+		icon: TruckIcon,
 		color: "text-info",
 		label: "Suivi mis à jour",
 		symbol: "📦",
 	},
 	ADDRESS_UPDATED: {
-		icon: MapPin,
+		icon: MapPinIcon,
 		color: "text-info",
 		label: "Adresse modifiée",
 		symbol: "📍",
 	},
 	INVOICE_GENERATED: {
-		icon: FileText,
+		icon: FileTextIcon,
 		color: "text-success",
 		label: "Facture générée",
 		symbol: "📄",
 	},
 	INVOICE_GENERATION_FAILED: {
-		icon: AlertTriangle,
+		icon: WarningIcon,
 		color: "text-destructive",
 		label: "Échec génération facture",
 		symbol: "⚠",
 	},
 	REFUND_CREATED: {
-		icon: RotateCcw,
+		icon: ArrowCounterClockwiseIcon,
 		color: "text-warning",
 		label: "Remboursement créé",
 		symbol: "↩",
 	},
 	REFUND_COMPLETED: {
-		icon: CircleCheck,
+		icon: CheckCircleIcon,
 		color: "text-success",
 		label: "Remboursement confirmé",
 		symbol: "✓",
 	},
 	REFUND_FAILED: {
-		icon: CircleX,
+		icon: XCircleIcon,
 		color: "text-destructive",
 		label: "Remboursement échoué",
 		symbol: "✗",
 	},
 	DISPUTE_OPENED: {
-		icon: CircleX,
+		icon: XCircleIcon,
 		color: "text-destructive",
 		label: "Litige ouvert",
 		symbol: "⚠",
 	},
 	DISPUTE_RESOLVED: {
-		icon: CircleCheck,
+		icon: CheckCircleIcon,
 		color: "text-success",
 		label: "Litige résolu",
 		symbol: "✓",
 	},
 	INVOICE_VOIDED: {
-		icon: FileText,
+		icon: FileTextIcon,
 		color: "text-muted-foreground",
 		label: "Facture annulée",
 		symbol: "✗",
 	},
 	CREDIT_NOTE_GENERATED: {
-		icon: FileText,
+		icon: FileTextIcon,
 		color: "text-warning",
 		label: "Avoir émis",
 		symbol: "↺",
 	},
 	CREDIT_NOTE_ARCHIVED: {
-		icon: FileText,
+		icon: FileTextIcon,
 		color: "text-warning",
 		label: "PDF avoir archivé",
 		symbol: "🔒",
 	},
 	INVOICE_ARCHIVED: {
-		icon: FileText,
+		icon: FileTextIcon,
 		color: "text-success",
 		label: "PDF facture archivé",
 		symbol: "🔒",
 	},
 	PDF_ARCHIVE_FAILED: {
-		icon: AlertTriangle,
+		icon: WarningIcon,
 		color: "text-destructive",
 		label: "Échec archivage PDF",
 		symbol: "⚠",
 	},
 	CREDIT_NOTE_FAILED: {
-		icon: AlertTriangle,
+		icon: WarningIcon,
 		color: "text-destructive",
 		label: "Échec émission avoir",
 		symbol: "⚠",
 	},
 	INVOICE_RECONCILED: {
-		icon: CircleCheck,
+		icon: CheckCircleIcon,
 		color: "text-success",
 		label: "Facture rattrapée (cron)",
 		symbol: "🔄",
 	},
+	// ⚠️ Ces deux entrées restent OBLIGATOIRES (`ACTION_CONFIG` est un
+	// `Record<OrderAction, …>`, le compilateur les exige) mais ne sont plus
+	// atteintes : `ACCESS_LOG_ACTIONS` les filtre avant le rendu. Ne pas les
+	// supprimer, ne pas supprimer les actions de l'enum non plus — cf. la note
+	// sur `ACCESS_LOG_ACTIONS`.
 	INVOICE_DOWNLOADED: {
-		icon: FileText,
+		icon: FileTextIcon,
 		color: "text-info",
 		label: "Facture téléchargée",
 		symbol: "⬇",
 	},
 	BULK_EXPORT: {
-		icon: FileText,
+		icon: FileTextIcon,
 		color: "text-info",
 		label: "Export CSV admin",
 		symbol: "📊",
@@ -229,14 +231,16 @@ function extractInvoiceMetadata(metadata: unknown): {
 	};
 }
 
-// Labels traduits pour les statuts
-// Dérivé des SSOT status-display — l'ordre de spread arbitre les clés
-// partagées : PENDING → « En attente » (ordre), PROCESSING → « En
-// préparation » (fulfillment), comme affiché historiquement.
+// Labels traduits pour les statuts.
+//
+// Un seul spread de statut commande depuis le Lot 4 (audit V2) : `ORDER_STATUS_LABELS`
+// a absorbé la table fulfillment. L'arbitrage que l'ordre de spread portait
+// auparavant (PROCESSING → « En préparation », le libellé fulfillment) est
+// désormais figé DANS la SSOT — c'est le mot du bouton, et c'est ce que la timeline
+// affichait déjà.
 const STATUS_LABELS: Record<string, string> = {
 	...PAYMENT_STATUS_LABELS,
 	...ORDER_STATUS_LABELS,
-	...FULFILLMENT_STATUS_LABELS,
 };
 
 function getStatusLabel(status: string | null | undefined): string {
@@ -244,8 +248,26 @@ function getStatusLabel(status: string | null | undefined): string {
 	return STATUS_LABELS[status] ?? status;
 }
 
-export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
+/**
+ * Actions de JOURNAL D'ACCÈS, masquées de cette timeline (audit V2, Lot 4).
+ *
+ * ⚠️ Masquées à l'affichage SEULEMENT — elles continuent d'être écrites, et il ne
+ * faut pas les retirer d'`OrderAction`. Ce sont des contrôles RGPD Art. 30/32
+ * durcis délibérément : `BULK_EXPORT` est **fail-closed** (l'export CSV renvoie
+ * 503 si l'audit n'a pas pu être écrit, et la route est POST plutôt que GET
+ * exactement pour ça), `INVOICE_DOWNLOADED` escalade en Sentry — c'est la seule
+ * trace de qui a téléchargé la facture d'un client, qui porte ses nom et adresse.
+ *
+ * Pourquoi les masquer : elles tracent un ACCÈS à un document, pas un changement
+ * d'état de la commande. Un téléchargement par commande suffisait à noyer les
+ * événements métier de la fiche, et le compteur du titre les comptait aussi.
+ */
+const ACCESS_LOG_ACTIONS: ReadonlySet<string> = new Set(["INVOICE_DOWNLOADED", "BULK_EXPORT"]);
+
+export function OrderHistoryTimeline({ history: rawHistory }: OrderHistoryTimelineProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
+
+	const history = rawHistory.filter((entry) => !ACCESS_LOG_ACTIONS.has(entry.action));
 
 	if (history.length === 0) {
 		return (
@@ -366,12 +388,6 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 												{getStatusLabel(entry.newPaymentStatus)}
 											</div>
 										)}
-										{entry.newFulfillmentStatus && !entry.newStatus && (
-											<div className="text-muted-foreground text-xs">
-												Traitement : {getStatusLabel(entry.previousFulfillmentStatus)} →{" "}
-												{getStatusLabel(entry.newFulfillmentStatus)}
-											</div>
-										)}
 
 										{/* Note */}
 										{entry.note && (
@@ -408,7 +424,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 								onClick={() => setIsExpanded(true)}
 								className="text-muted-foreground"
 							>
-								<ChevronDown className="mr-1 size-4" aria-hidden="true" />
+								<CaretDownIcon className="mr-1 size-4" aria-hidden="true" />
 								Voir {hiddenCount} entrées plus anciennes
 							</Button>
 						</div>
@@ -423,7 +439,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 								onClick={() => setIsExpanded(false)}
 								className="text-muted-foreground"
 							>
-								<ChevronDown className="mr-1 size-4 rotate-180" aria-hidden="true" />
+								<CaretDownIcon className="mr-1 size-4 rotate-180" aria-hidden="true" />
 								Réduire
 							</Button>
 						</div>

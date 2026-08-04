@@ -1,6 +1,6 @@
 "use server";
 
-import { FulfillmentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -58,7 +58,9 @@ export async function updateOrderShippingAddress(
 				select: {
 					id: true,
 					orderNumber: true,
-					fulfillmentStatus: true,
+					// Portait `fulfillmentStatus` jusqu'au Lot 4 : la garde « pas après
+					// expédition » lit désormais l'axe unique.
+					status: true,
 					shippingFirstName: true,
 					shippingLastName: true,
 					shippingAddress1: true,
@@ -72,11 +74,12 @@ export async function updateOrderShippingAddress(
 
 			if (!found) return null;
 
-			// Cannot update address after shipment
+			// Cannot update address after shipment. Lu sur `status` depuis le Lot 4 —
+			// mêmes trois valeurs, un seul axe.
 			if (
-				found.fulfillmentStatus === FulfillmentStatus.SHIPPED ||
-				found.fulfillmentStatus === FulfillmentStatus.DELIVERED ||
-				found.fulfillmentStatus === FulfillmentStatus.RETURNED
+				found.status === OrderStatus.SHIPPED ||
+				found.status === OrderStatus.DELIVERED ||
+				found.status === OrderStatus.RETURNED
 			) {
 				return { ...found, _error: "already_shipped" as const };
 			}
@@ -114,7 +117,6 @@ export async function updateOrderShippingAddress(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "ADDRESS_UPDATED",
-				authorId: auth.user.id,
 				authorName: auth.user.name ?? "Admin",
 				note: "Adresse de livraison modifiee",
 				metadata: {

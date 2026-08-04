@@ -80,7 +80,7 @@ const allSourceFiles = [
 
 /**
  * Affectation concrète de `status:` ou `paymentStatus:` (literal enum OU variable),
- * en excluant `: true`/`: false` (clauses `select`). `\b` exclut `fulfillmentStatus`
+ * en excluant `: true`/`: false` (clauses `select`). `\b` exclut `status`
  * (FulfillmentStatus n'est PAS dans le périmètre CACHE-AUDIT-010) et
  * `newPaymentStatus`/`previousPaymentStatus` (audit trail, casse différente).
  */
@@ -141,6 +141,13 @@ const EXPECTED_STATUS_MUTATORS = [
 	"modules/orders/actions/mark-as-delivered.ts",
 	"modules/orders/actions/mark-as-fully-refunded.ts",
 	"modules/orders/actions/mark-as-paid.ts",
+	// Entrés dans le périmètre CACHE-AUDIT-010 au Lot 4 (audit V2) : le retour
+	// vivait sur `fulfillmentStatus`, hors scope de cette règle. Depuis la fusion
+	// des axes, ces deux actions mutent `Order.status` — et invalident bien via
+	// `getOrderInvalidationTags`. Le garde les a détectées de lui-même : c'est
+	// exactement son office.
+	"modules/orders/actions/mark-as-returned.ts",
+	"modules/orders/actions/undo-return.ts",
 	"modules/orders/actions/mark-as-processing.ts",
 	"modules/orders/actions/mark-as-shipped.ts",
 	"modules/orders/actions/revert-to-processing.ts",
@@ -259,8 +266,30 @@ describe("CACHE-AUDIT-010 — invalidation des mutations de statut commande", ()
 			"ADMIN_ORDERS_LIST",
 		];
 
+		/**
+		 * Exemption nommée — un fetcher qui lit `Order` SANS lire de statut.
+		 *
+		 * `getDiscountUsageCounts` compte les commandes portant un `discountId` + un
+		 * email donnés (limite `maxUsagePerUser`, parcours invité). Il n'interroge
+		 * `prisma.order` que depuis le repli de `DiscountUsage` en colonnes sur
+		 * `Order` (audit V2, Lot 2) — avant, la même requête passait par la table de
+		 * liaison et ce garde ne la voyait pas.
+		 *
+		 * La règle ci-dessus ne s'applique pas : aucune TRANSITION DE STATUT ne change
+		 * ce compte. Seules la création d'une commande avec le code et la libération
+		 * du code le font, et les deux invalident `DISCOUNT_CACHE_TAGS.USAGE(id)` —
+		 * 4 mutateurs vivants (`confirm-checkout.ts` ×2, `payment-intent.service.ts`
+		 * ×2). L'entrée est donc joignable, par le tag du DISCOUNT et non de la
+		 * commande.
+		 *
+		 * ⚠️ Exempter le FICHIER, pas le motif : si ce fetcher se met un jour à lire
+		 * `status`/`paymentStatus`, retirer cette ligne — il retombera sous la règle.
+		 */
+		const NON_STATUS_ORDER_FETCHERS = ["modules/discounts/data/get-discount-usage-counts.ts"];
+
 		const unreachable = allSourceFiles
 			.filter((f) => relPath(f).includes("/data/"))
+			.filter((f) => !NON_STATUS_ORDER_FETCHERS.includes(relPath(f)))
 			.filter((f) => {
 				const content = readFileSync(f, "utf-8");
 				// Directive ancrée en début de ligne + `;` final : `get-order-for-tracking.ts`

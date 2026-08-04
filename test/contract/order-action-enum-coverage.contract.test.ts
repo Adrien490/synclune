@@ -37,9 +37,16 @@ function extractEnumValues(enumName: string): string[] {
  *      (la prop `action` du helper `createOrderAuditTx` est typée `OrderAction`)
  *
  * Pour éviter les faux positifs (les valeurs partagées avec OrderStatus /
- * FulfillmentStatus / PaymentStatus comme SHIPPED, PROCESSING, DELIVERED…),
- * on n'accepte le style #2 que dans des fichiers qui IMPORTENT `OrderAction`
- * ou `createOrderAudit*` (signal fort que le `action:` proche est typé).
+ * PaymentStatus comme SHIPPED, PROCESSING, DELIVERED…), on n'accepte le style #2
+ * que dans des fichiers qui IMPORTENT `OrderAction` ou `createOrderAudit*`
+ * (signal fort que le `action:` proche est typé).
+ *
+ * ⚠️ Le style #2 doit accepter le TERNAIRE. Le motif exigeait le littéral collé
+ * (`action:\s*"VALUE"`), donc `action: x === "shipping" ? "SHIPPED" : "CREATED"`
+ * (`resend-order-email.ts`) était invisible : `CREATED` a été whitelisté comme
+ * orphelin alors qu'il avait un écrivain, et le garde-fou « whitelist sanity »
+ * était aveugle pour la même raison. On scanne donc TOUTES les valeurs citées sur
+ * une ligne portant `action:`, et non la première collée au `:`.
  */
 function findCallSites(enumName: string, values: string[]): Map<string, string[]> {
 	const sites = new Map<string, string[]>();
@@ -65,7 +72,7 @@ function findCallSites(enumName: string, values: string[]): Map<string, string[]
 	// Codebase Synclune n'utilise QUE les doubles guillemets pour ces littéraux
 	// (`pnpm format` enforce). Pas de single quote dans la regex pour éviter
 	// les conflits d'échappement shell.
-	const literalPattern = `action:\\s*"(${valuesAlt})"`;
+	const literalPattern = `action:.*"(${valuesAlt})"`;
 	let literalRaw = "";
 	try {
 		literalRaw = execSync(`git grep -Pn -- '${literalPattern}' modules app shared`, {
@@ -135,12 +142,15 @@ function findCallSites(enumName: string, values: string[]): Map<string, string[]
 			continue;
 		}
 
-		// Style 2 : string literal `action: "VALUE"` — uniquement dans fichier audit-aware
-		const literalMatch = content.match(/action:\s*"([A-Z_][A-Z0-9_]*)"/);
-		if (literalMatch && isAuditAwareFile(filePath)) {
-			const value = literalMatch[1]!;
-			const arr = sites.get(value);
-			if (arr && !arr.includes(filePath)) arr.push(filePath);
+		// Style 2 : string literal sur une ligne `action:` — uniquement dans un
+		// fichier audit-aware. On prend TOUTES les valeurs citées sur la ligne (un
+		// ternaire en porte deux), pas seulement celle collée au `:`.
+		if (content.includes("action:") && isAuditAwareFile(filePath)) {
+			for (const m of content.matchAll(/"([A-Z_][A-Z0-9_]*)"/g)) {
+				const value = m[1]!;
+				const arr = sites.get(value);
+				if (arr && !arr.includes(filePath)) arr.push(filePath);
+			}
 		}
 	}
 	return sites;
@@ -152,13 +162,13 @@ function findCallSites(enumName: string, values: string[]): Map<string, string[]
  * justifiant la raison + un horizon de levée.
  */
 const KNOWN_ORPHANS = new Map<string, string>([
-	// Order creation should write OrderHistory{action: "CREATED"} but the
-	// current flow does NOT (orders are created via webhook checkout handler
-	// which writes action: "PAID" directly, skipping CREATED). This is a
-	// known gap to address in a future audit — until then, whitelisted.
-	// TODO(audit): câbler createOrderAuditTx(action: CREATED) dans le flow
-	// de création de commande (modules/webhooks/services/checkout.service.ts).
-	["CREATED", "Gap connu : order creation ne produit pas d'audit CREATED."],
+	// `CREATED` a été RETIRÉ de cette whitelist (audit V2, Lot 4) : il n'a jamais
+	// été orphelin. `resend-order-email.ts` l'écrit — via un ternaire, que le
+	// détecteur ne savait pas lire (cf. l'avertissement sur `findCallSites`). La
+	// whitelist affirmait donc un gap inexistant, et le garde-fou « whitelist
+	// sanity » ne pouvait pas la contredire puisqu'il s'appuie sur le même
+	// détecteur. Ne pas la réintroduire sans vérifier le call-site à la main.
+	//
 	// Les 6 valeurs PDP_* (transmission B2B/B2G, inertes depuis le recentrage B2C
 	// 2026-05-28) ont été purgées de l'enum au Lot 0 (migration 20260803,
 	// SIMPLIFICATION.md S2.1) — plus rien à whitelister ici.

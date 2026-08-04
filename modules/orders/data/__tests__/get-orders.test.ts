@@ -87,8 +87,8 @@ vi.mock("../../constants/order.constants", () => ({
 		STATUS_DESC: "status-descending",
 		PAYMENT_STATUS_ASC: "paymentStatus-ascending",
 		PAYMENT_STATUS_DESC: "paymentStatus-descending",
-		FULFILLMENT_STATUS_ASC: "fulfillmentStatus-ascending",
-		FULFILLMENT_STATUS_DESC: "fulfillmentStatus-descending",
+		FULFILLMENT_STATUS_ASC: "status-ascending",
+		FULFILLMENT_STATUS_DESC: "status-descending",
 	},
 }));
 

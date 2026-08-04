@@ -73,7 +73,6 @@ function makeVoidedOrder(): Order {
 		shippedAt: null,
 		status: "CANCELLED",
 		paymentStatus: "REFUNDED",
-		fulfillmentStatus: "UNFULFILLED",
 		paymentMethod: "CARD",
 		paidAt: new Date("2026-05-20T10:00:00Z"),
 		// Facture initialement émise...

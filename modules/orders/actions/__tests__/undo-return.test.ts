@@ -89,8 +89,8 @@ const validFormData = createMockFormData({ id: VALID_CUID });
 // Paire cohérente : l'état exact que `markAsReturned` produit.
 function makeReturnedOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
-		status: "DELIVERED",
-		fulfillmentStatus: "RETURNED",
+		// Ex-paire (DELIVERED, RETURNED) : axe unique depuis le Lot 4.
+		status: "RETURNED",
 		paymentStatus: "PAID",
 		...overrides,
 	});
@@ -165,9 +165,7 @@ describe("undoReturn", () => {
 
 	// Real guard: not returned
 	it("refuses when fulfillment is not RETURNED (real canUndoReturn)", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(
-			makeReturnedOrder({ fulfillmentStatus: "DELIVERED" }),
-		);
+		mockPrisma.order.findUnique.mockResolvedValue(makeReturnedOrder({ status: "DELIVERED" }));
 
 		const result = await undoReturn(undefined, validFormData);
 
@@ -188,7 +186,7 @@ describe("undoReturn", () => {
 	});
 
 	// Happy path
-	it("flips fulfillmentStatus back to DELIVERED with the atomic guard", async () => {
+	it("flips status back to DELIVERED with the atomic guard", async () => {
 		await undoReturn(undefined, validFormData);
 
 		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
@@ -196,10 +194,10 @@ describe("undoReturn", () => {
 			where: {
 				id: VALID_CUID,
 				deletedAt: null,
-				status: "DELIVERED",
-				fulfillmentStatus: "RETURNED",
+				// Garde atomique : ré-asserte RETURNED (axe unique, Lot 4).
+				status: "RETURNED",
 			},
-			data: { fulfillmentStatus: "DELIVERED" },
+			data: { status: "DELIVERED" },
 		});
 	});
 
@@ -224,9 +222,8 @@ describe("undoReturn", () => {
 			expect.objectContaining({
 				orderId: VALID_CUID,
 				action: "STATUS_REVERTED",
-				previousFulfillmentStatus: "RETURNED",
-				newFulfillmentStatus: "DELIVERED",
-				authorId: "admin-1",
+				previousStatus: "RETURNED",
+				newStatus: "DELIVERED",
 			}),
 		);
 	});

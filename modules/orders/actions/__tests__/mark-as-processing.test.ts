@@ -98,7 +98,6 @@ function createPendingPaidOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
 		status: "PENDING",
 		paymentStatus: "PAID",
-		fulfillmentStatus: "UNFULFILLED",
 		...overrides,
 	});
 }
@@ -232,7 +231,6 @@ describe("markAsProcessing", () => {
 				}),
 				data: expect.objectContaining({
 					status: "PROCESSING",
-					fulfillmentStatus: "PROCESSING",
 				}),
 			}),
 		);
@@ -245,7 +243,6 @@ describe("markAsProcessing", () => {
 			expect.objectContaining({
 				action: "PROCESSING",
 				newStatus: "PROCESSING",
-				newFulfillmentStatus: "PROCESSING",
 			}),
 		);
 	});

@@ -129,7 +129,6 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 					id: VALID_CUID,
 					status: "PROCESSING",
 					paymentStatus: "PAID",
-					fulfillmentStatus: "PROCESSING",
 					customerEmail: "client@example.com",
 				}),
 			);
@@ -165,7 +164,6 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 					id: VALID_CUID,
 					status: "PROCESSING",
 					paymentStatus: "PAID",
-					fulfillmentStatus: "PROCESSING",
 					customerEmail: "client@example.com",
 				}),
 			);
@@ -192,7 +190,6 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 					id: VALID_CUID,
 					status: "PROCESSING",
 					paymentStatus: "PAID",
-					fulfillmentStatus: "PROCESSING",
 					customerEmail: "client@example.com",
 				}),
 			);
@@ -214,7 +211,6 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 					id: VALID_CUID,
 					status: "PROCESSING",
 					paymentStatus: "PAID",
-					fulfillmentStatus: "PROCESSING",
 					customerEmail: "client@example.com",
 				}),
 			);

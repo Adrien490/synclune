@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Info } from "lucide-react";
+import { InfoIcon } from "@phosphor-icons/react/ssr";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { BRAND } from "@/shared/constants/brand";
 import { ROUTES } from "@/shared/constants/urls";
@@ -8,13 +8,12 @@ import {
 	getReturnIneligibilityReason,
 	WITHDRAWAL_PERIOD_DAYS,
 } from "@/modules/refunds/services/return-eligibility.service";
-import type { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/enums";
+import type { OrderStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/enums";
 
 interface OrderReturnGuidanceProps {
 	order: {
-		status: string;
+		status: OrderStatus;
 		paymentStatus: PaymentStatus;
-		fulfillmentStatus: FulfillmentStatus;
 		actualDelivery: Date | null;
 		refunds?: Array<{ status: RefundStatus }>;
 	};
@@ -40,8 +39,8 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 	if (order.status === "CANCELLED") return null;
 
 	const reason = getReturnIneligibilityReason({
+		status: order.status,
 		paymentStatus: order.paymentStatus,
-		fulfillmentStatus: order.fulfillmentStatus,
 		actualDelivery: order.actualDelivery,
 		refunds: order.refunds ?? [],
 	});
@@ -65,7 +64,7 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 		const daysRemaining = getReturnDaysRemaining(order.actualDelivery);
 		return (
 			<Alert>
-				<Info />
+				<InfoIcon />
 				<AlertTitle>Retour possible</AlertTitle>
 				<AlertDescription className="space-y-2">
 					<p>
@@ -82,7 +81,7 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 	if (reason === "ALREADY_REQUESTED") {
 		return (
 			<Alert>
-				<Info />
+				<InfoIcon />
 				<AlertTitle>Demande de retour en cours</AlertTitle>
 				<AlertDescription>
 					Ta demande est en cours de traitement. Je reviens vers toi par email dès qu&apos;elle est
@@ -95,7 +94,7 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 	if (reason === "DEADLINE_EXCEEDED") {
 		return (
 			<Alert>
-				<Info />
+				<InfoIcon />
 				<AlertTitle>Délai de rétractation écoulé</AlertTitle>
 				<AlertDescription>
 					Le délai de {WITHDRAWAL_PERIOD_DAYS} jours suivant la réception est passé. Si ton bijou
@@ -109,7 +108,7 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 	// NOT_DELIVERED — le cas le plus fréquent, et celui qui n'avait aucune UI.
 	return (
 		<Alert>
-			<Info />
+			<InfoIcon />
 			<AlertTitle>Changer d&apos;avis, annuler ou retourner</AlertTitle>
 			<AlertDescription className="space-y-2">
 				<p>

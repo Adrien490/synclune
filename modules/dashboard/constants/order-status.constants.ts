@@ -9,6 +9,4 @@
 export {
 	ORDER_STATUS_LABELS,
 	ORDER_STATUS_VARIANTS,
-	FULFILLMENT_STATUS_LABELS,
-	FULFILLMENT_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";

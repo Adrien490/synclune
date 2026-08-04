@@ -1,11 +1,6 @@
 import { type Prisma, HistorySource } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import type {
-	OrderAction,
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/client";
+import type { OrderAction, OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import type { CreateOrderAuditParams } from "../types/order-audit.types";
 import { orderHistoryMetadataSchema } from "../schemas/order-history-metadata.schema";
 import { logger } from "@/shared/lib/logger";
@@ -62,11 +57,8 @@ export async function createOrderAudit(params: CreateOrderAuditParams): Promise<
 			newStatus: params.newStatus,
 			previousPaymentStatus: params.previousPaymentStatus,
 			newPaymentStatus: params.newPaymentStatus,
-			previousFulfillmentStatus: params.previousFulfillmentStatus,
-			newFulfillmentStatus: params.newFulfillmentStatus,
 			note: params.note,
 			metadata: safeMetadata,
-			authorId: params.authorId,
 			authorName: params.authorName,
 			source: params.source ?? HistorySource.ADMIN,
 		},
@@ -93,11 +85,8 @@ export async function createOrderAuditTx(
 			newStatus: params.newStatus,
 			previousPaymentStatus: params.previousPaymentStatus,
 			newPaymentStatus: params.newPaymentStatus,
-			previousFulfillmentStatus: params.previousFulfillmentStatus,
-			newFulfillmentStatus: params.newFulfillmentStatus,
 			note: params.note,
 			metadata: safeMetadata,
-			authorId: params.authorId,
 			authorName: params.authorName,
 			source: params.source ?? HistorySource.ADMIN,
 		},
@@ -113,16 +102,13 @@ export function buildStatusChangeAudit(
 	previousOrder: {
 		status: OrderStatus;
 		paymentStatus: PaymentStatus;
-		fulfillmentStatus: FulfillmentStatus;
 	},
 	newOrder: {
 		status: OrderStatus;
 		paymentStatus: PaymentStatus;
-		fulfillmentStatus: FulfillmentStatus;
 	},
 	options?: {
 		note?: string;
-		authorId?: string;
 		authorName?: string;
 		source?: HistorySource;
 		metadata?: Record<string, unknown>;
@@ -139,16 +125,7 @@ export function buildStatusChangeAudit(
 				: undefined,
 		newPaymentStatus:
 			previousOrder.paymentStatus !== newOrder.paymentStatus ? newOrder.paymentStatus : undefined,
-		previousFulfillmentStatus:
-			previousOrder.fulfillmentStatus !== newOrder.fulfillmentStatus
-				? previousOrder.fulfillmentStatus
-				: undefined,
-		newFulfillmentStatus:
-			previousOrder.fulfillmentStatus !== newOrder.fulfillmentStatus
-				? newOrder.fulfillmentStatus
-				: undefined,
 		note: options?.note,
-		authorId: options?.authorId,
 		authorName: options?.authorName,
 		source: options?.source ?? HistorySource.ADMIN,
 		metadata: options?.metadata,

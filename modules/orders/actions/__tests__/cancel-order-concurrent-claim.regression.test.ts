@@ -109,7 +109,6 @@ describe("@regression IDEM-CANCEL-001 — annulations admin concurrentes", () =>
 			createMockOrder({
 				status: "PENDING",
 				paymentStatus: "PAID",
-				fulfillmentStatus: "UNFULFILLED",
 				items: [{ id: "item-1", skuId: "sku-1", quantity: 2, price: 1000 }],
 			}),
 		);

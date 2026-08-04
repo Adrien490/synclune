@@ -1,12 +1,7 @@
 import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { z } from "zod";
 import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
-import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-	InvoiceStatus,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, InvoiceStatus } from "@/app/generated/prisma/client";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { ADDRESS_CONSTANTS } from "@/shared/constants/address.constants";
 import {
@@ -41,10 +36,6 @@ const paymentStatusSchema = z
 	.union([z.enum(PaymentStatus), z.array(z.enum(PaymentStatus))])
 	.optional();
 
-const fulfillmentStatusSchema = z
-	.union([z.enum(FulfillmentStatus), z.array(z.enum(FulfillmentStatus))])
-	.optional();
-
 const invoiceStatusSchema = z
 	.union([z.enum(InvoiceStatus), z.array(z.enum(InvoiceStatus))])
 	.optional();
@@ -57,7 +48,6 @@ export const orderFiltersSchema = z
 	.object({
 		status: orderStatusSchema,
 		paymentStatus: paymentStatusSchema,
-		fulfillmentStatus: fulfillmentStatusSchema,
 		invoiceStatus: invoiceStatusSchema,
 		/**
 		 * Preset "anomalie de facturation" (EINV-UI-005 audit 2026-05-28).
@@ -109,8 +99,6 @@ const orderSortBySchema = z
 		SORT_OPTIONS.STATUS_DESC,
 		SORT_OPTIONS.PAYMENT_STATUS_ASC,
 		SORT_OPTIONS.PAYMENT_STATUS_DESC,
-		SORT_OPTIONS.FULFILLMENT_STATUS_ASC,
-		SORT_OPTIONS.FULFILLMENT_STATUS_DESC,
 	])
 	.default(SORT_OPTIONS.CREATED_DESC);
 
@@ -517,30 +505,6 @@ export const markAsReturnedSchema = z.object({
  */
 export const undoReturnSchema = z.object({
 	id: z.cuid2(),
-});
-
-// ============================================================================
-// ORDER NOTES SCHEMA
-// ============================================================================
-
-/**
- * Schema pour l'ajout d'une note interne à une commande
- * Réservé aux administrateurs
- */
-export const addOrderNoteSchema = z.object({
-	orderId: z.cuid2({ message: "ID commande invalide" }),
-	content: z
-		.string()
-		.min(1, "La note ne peut pas être vide")
-		.max(5000, "Note trop longue (max 5000 caractères)"),
-});
-
-/**
- * Schema pour la suppression d'une note de commande
- * Réservé aux administrateurs
- */
-export const deleteOrderNoteSchema = z.object({
-	noteId: z.cuid2({ message: "ID note invalide" }),
 });
 
 /**

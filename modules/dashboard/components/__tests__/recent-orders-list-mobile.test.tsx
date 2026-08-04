@@ -61,10 +61,10 @@ vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
 }));
 
-vi.mock("lucide-react", () => ({
-	ArrowRight: () => <span data-testid="icon-arrow-right" />,
-	ChevronRight: () => <span data-testid="icon-chevron-right" />,
-	ShoppingBag: () => <span data-testid="icon-shopping-bag" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowRightIcon: () => <span data-testid="icon-arrow-right" />,
+	CaretRightIcon: () => <span data-testid="icon-chevron-right" />,
+	ShoppingBagIcon: () => <span data-testid="icon-shopping-bag" />,
 }));
 
 // Item primitives — forward `render` + style for VT assertions
@@ -154,7 +154,6 @@ function createOrder(overrides: Partial<RecentOrderItem> = {}): RecentOrderItem 
 		createdAt: new Date("2026-02-15T14:30:00Z"),
 		status: "PROCESSING" as RecentOrderItem["status"],
 		paymentStatus: "PAID" as RecentOrderItem["paymentStatus"],
-		fulfillmentStatus: "UNFULFILLED" as RecentOrderItem["fulfillmentStatus"],
 		total: 8500,
 		customerName: "Marie Dupont",
 		customerEmail: "marie@example.com",

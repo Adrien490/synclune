@@ -36,10 +36,10 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
 		CANCELLED: "CANCELLED",
 	},
 	PaymentStatus: { PENDING: "PENDING", PAID: "PAID" },
-	FulfillmentStatus: { UNFULFILLED: "UNFULFILLED", RETURNED: "RETURNED", DELIVERED: "DELIVERED" },
 }));
 
 vi.mock("@/modules/orders/components/admin/mark-as-paid-alert-dialog", () => ({
@@ -62,16 +62,16 @@ vi.mock("date-fns", () => ({
 }));
 vi.mock("date-fns/locale", () => ({ fr: {} }));
 
-vi.mock("lucide-react", () => {
+vi.mock("@phosphor-icons/react/ssr", () => {
 	const stub = () => <svg />;
 	return {
-		CircleCheck: stub,
-		CreditCard: stub,
-		Download: stub,
-		Ellipsis: stub,
-		FileText: stub,
-		Loader2Icon: stub,
-		Truck: stub,
+		CheckCircleIcon: stub,
+		CreditCardIcon: stub,
+		DownloadSimpleIcon: stub,
+		DotsThreeIcon: stub,
+		FileTextIcon: stub,
+		SpinnerIcon: stub,
+		TruckIcon: stub,
 	};
 });
 
@@ -233,7 +233,6 @@ describe("OrderHeader", () => {
 			orderNumber: "CMD-001",
 			status: "PENDING",
 			paymentStatus: "PENDING",
-			fulfillmentStatus: "UNFULFILLED",
 			trackingNumber: null,
 			trackingUrl: null,
 			shippingCarrier: null,
@@ -244,77 +243,67 @@ describe("OrderHeader", () => {
 	}
 
 	it("renders order number in H1", () => {
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Commande CMD-001");
 	});
 
 	it("H1 is visible on mobile (no hidden md:block)", () => {
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		const h1 = screen.getByRole("heading", { level: 1 });
 		expect(h1.className).not.toMatch(/hidden md:block/);
 	});
 
 	it("renders creation date (desktop variant)", () => {
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByText(/1 mars 2026 à 10h00/)).toBeInTheDocument();
 	});
 
 	it('shows "Marquer payée" primary button when canMarkAsPaid', () => {
 		mockPermissions.canMarkAsPaid = true;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByRole("button", { name: /Marquer payée/i })).toBeInTheDocument();
 	});
 
 	it('hides "Marquer payée" button when not canMarkAsPaid', () => {
 		mockPermissions.canMarkAsPaid = false;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.queryByRole("button", { name: /Marquer payée/i })).toBeNull();
 	});
 
 	it('shows "Marquer expédiée" when canMarkAsShipped', () => {
 		mockPermissions.canMarkAsShipped = true;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByRole("button", { name: /Marquer expédiée/i })).toBeInTheDocument();
 	});
 
 	it('shows "Marquer livrée" when canMarkAsDelivered', () => {
 		mockPermissions.canMarkAsDelivered = true;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByRole("button", { name: /Marquer livrée/i })).toBeInTheDocument();
 	});
 
 	it("triggers haptic when clicking primary button", () => {
 		mockPermissions.canMarkAsPaid = true;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		fireEvent.click(screen.getByRole("button", { name: /Marquer payée/i }));
 		expect(mockHaptic).toHaveBeenCalledWith("medium");
 		expect(mockAlertDialogOpen).toHaveBeenCalled();
 	});
 
-	it("renders Notes internes in menu (base label without count)", () => {
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Notes internes")).toBeInTheDocument();
-	});
-
-	it("renders notes count Notes internes (3) when notesCount > 0", () => {
-		render(<OrderHeader order={createOrder()} notesCount={3} />);
-		expect(screen.getByText("Notes internes (3)")).toBeInTheDocument();
-	});
-
 	it("renders Exporter en CSV item in menu", () => {
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByText("Exporter en CSV")).toBeInTheDocument();
 	});
 
 	it("hides mark-paid from menu when primary button visible (no doublon)", () => {
 		mockPermissions.canMarkAsPaid = true;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		// primary button visible
 		expect(screen.getAllByRole("button", { name: /Marquer payée/i })).toHaveLength(1);
 		// menu item filtered out
@@ -324,26 +313,26 @@ describe("OrderHeader", () => {
 	it('shows "Créer un remboursement" when canRefund', () => {
 		mockPermissions.canRefund = true;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByText("Créer un remboursement")).toBeInTheDocument();
 	});
 
 	it('shows "Annuler la commande" when canCancel', () => {
 		mockPermissions.canCancel = true;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByText("Annuler la commande")).toBeInTheDocument();
 	});
 
 	it('shows "Annuler l\'expédition" when canRevertToProcessing', () => {
 		mockPermissions.canRevertToProcessing = true;
 		refreshSections();
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		expect(screen.getByText("Annuler l'expédition")).toBeInTheDocument();
 	});
 
 	it("ellipsis trigger has WCAG-compliant touch target classes on mobile", () => {
-		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		render(<OrderHeader order={createOrder()} />);
 		const trigger = screen.getByRole("button", { name: /Plus d'actions/i });
 		expect(trigger.className).toMatch(/min-h-11/);
 		expect(trigger.className).toMatch(/touch-manipulation/);
@@ -359,12 +348,12 @@ describe("OrderHeader", () => {
 	 */
 	describe("Télécharger la facture", () => {
 		it("shows the download item in the menu", () => {
-			render(<OrderHeader order={createOrder()} notesCount={0} />);
+			render(<OrderHeader order={createOrder()} />);
 			expect(screen.getByText(/Télécharger la facture/i)).toBeInTheDocument();
 		});
 
 		it("renders item disabled when paymentStatus is not PAID", () => {
-			render(<OrderHeader order={createOrder({ paymentStatus: "PENDING" })} notesCount={0} />);
+			render(<OrderHeader order={createOrder({ paymentStatus: "PENDING" })} />);
 			// L'option apparaît mais doit être disabled. Le mock du menu rend les
 			// items via stub onSelect ; on vérifie ici la présence du label seul.
 			expect(screen.getByText(/Télécharger la facture/i)).toBeInTheDocument();

@@ -1,4 +1,4 @@
-import { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/enums";
+import { OrderStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/enums";
 
 /** 14-day withdrawal period (directive 2011/83/EU, art. L221-18) */
 export const WITHDRAWAL_PERIOD_DAYS = 14;
@@ -6,8 +6,9 @@ const MS_PER_DAY = 86_400_000;
 const WITHDRAWAL_PERIOD_MS = WITHDRAWAL_PERIOD_DAYS * MS_PER_DAY;
 
 interface ReturnEligibilityOrder {
+	/** Ex-`fulfillmentStatus` : axe unique depuis le Lot 4 (audit V2). */
+	status: OrderStatus;
 	paymentStatus: PaymentStatus;
-	fulfillmentStatus: FulfillmentStatus;
 	actualDelivery: Date | null;
 	refunds: Array<{ status: RefundStatus }>;
 }
@@ -17,7 +18,7 @@ interface ReturnEligibilityOrder {
  *
  * - `null` : eligible
  * - `NOT_PAID` : payment status outside (PAID, PARTIALLY_REFUNDED)
- * - `NOT_DELIVERED` : fulfillment status != DELIVERED OR actualDelivery missing
+ * - `NOT_DELIVERED` : status != DELIVERED OR actualDelivery missing
  * - `DEADLINE_EXCEEDED` : delivered but past 14-day withdrawal window
  * - `ALREADY_REQUESTED` : a PENDING or APPROVED refund already exists
  */
@@ -33,7 +34,7 @@ export function getReturnIneligibilityReason(
 		order.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
 	if (!validPaymentStatus) return "NOT_PAID";
 
-	if (order.fulfillmentStatus !== FulfillmentStatus.DELIVERED || !order.actualDelivery) {
+	if (order.status !== OrderStatus.DELIVERED || !order.actualDelivery) {
 		return "NOT_DELIVERED";
 	}
 

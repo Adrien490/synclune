@@ -1,7 +1,7 @@
 import type { Prisma } from "@/app/generated/prisma/client";
 import { notDeleted } from "@/shared/lib/prisma";
 import { SHIPPABLE_PAYMENT_STATUSES } from "../constants/revenue-status.constants";
-import { TO_SHIP_EXCLUDED_ORDER_STATUS, TO_SHIP_FULFILLMENT_STATUSES } from "../constants/to-ship";
+import { TO_SHIP_ORDER_STATUSES } from "../constants/to-ship";
 
 /**
  * Clause `where` Prisma de la file « à expédier ».
@@ -21,7 +21,8 @@ export function buildToShipWhereClause(): Prisma.OrderWhereInput {
 	return {
 		...notDeleted,
 		paymentStatus: { in: [...SHIPPABLE_PAYMENT_STATUSES] },
-		fulfillmentStatus: { in: [...TO_SHIP_FULFILLMENT_STATUSES] },
-		status: { not: TO_SHIP_EXCLUDED_ORDER_STATUS },
+		// Un seul axe depuis le Lot 4 : la liste positive exclut CANCELLED par
+		// construction, plus besoin du `status: { not: CANCELLED }` qui doublait.
+		status: { in: [...TO_SHIP_ORDER_STATUSES] },
 	};
 }

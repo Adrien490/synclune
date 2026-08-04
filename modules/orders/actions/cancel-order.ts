@@ -10,7 +10,6 @@
 import {
 	OrderStatus,
 	PaymentStatus,
-	FulfillmentStatus,
 	HistorySource,
 	InvoiceStatus,
 	RefundReason,
@@ -56,7 +55,7 @@ import { extractCustomerFirstName } from "../utils/customer-name";
  * Règles métier :
  * - Passe le statut de la commande à CANCELLED
  * - paymentStatus : PAID/PARTIALLY_REFUNDED → REFUNDED, PENDING → FAILED, autres inchangés
- * - Restocke les SKUs si fulfillmentStatus ∈ {UNFULFILLED, PROCESSING} (articles non sortis)
+ * - Restocke les SKUs si status ∈ {PENDING, PROCESSING} (articles non sortis)
  * - Si une facture a été générée (invoiceStatus=GENERATED) : passe à VOIDED + audit
  *   INVOICE_VOIDED (invoiceNumber conservé pour séquentialité Art. 286 CGI)
  * - autoRefund : crée un Refund APPROVED du SOLDE restant à rembourser (gère
@@ -108,7 +107,6 @@ export async function cancelOrder(
 						orderNumber: true,
 						status: true,
 						paymentStatus: true,
-						fulfillmentStatus: true,
 						total: true,
 						stripePaymentIntentId: true,
 						customerEmail: true,
@@ -190,14 +188,15 @@ export async function cancelOrder(
 				// conditions, alignées sur l'invariant de restoreStockForOrder
 				// (payment-intent.service.ts) :
 				//  1. le stock a été retiré : paymentStatus PAID / PARTIALLY_REFUNDED ;
-				//  2. les articles ne sont pas encore sortis physiquement : fulfillment
-				//     UNFULFILLED / PROCESSING (une PAID PROCESSING = articles encore en stock).
+				//  2. les articles ne sont pas encore sortis physiquement : status
+				//     PENDING / PROCESSING (une PAID PROCESSING = articles encore en stock).
+				//     `PENDING` remplace l'ex-`UNFULFILLED` (équivalents exacts, Lot 4) ;
+				//     le sens de la garde est inchangé, seul l'axe lu diffère.
 				const stockWasDecremented =
 					found.paymentStatus === PaymentStatus.PAID ||
 					found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
 				const notYetShipped =
-					found.fulfillmentStatus === FulfillmentStatus.UNFULFILLED ||
-					found.fulfillmentStatus === FulfillmentStatus.PROCESSING;
+					found.status === OrderStatus.PENDING || found.status === OrderStatus.PROCESSING;
 				const shouldRestoreStock = stockWasDecremented && notYetShipped;
 
 				// La facture émise n'est pas effacée (séquentialité Art. 286 CGI) — elle
@@ -327,7 +326,6 @@ export async function cancelOrder(
 					previousPaymentStatus: found.paymentStatus,
 					newPaymentStatus: newPaymentStatus,
 					note: sanitizedReason ?? undefined,
-					authorId: adminUser.id,
 					authorName: adminUser.name ?? "Admin",
 					source: HistorySource.ADMIN,
 					metadata: {
@@ -394,7 +392,6 @@ export async function cancelOrder(
 		if (order._invoiceVoided) {
 			const voided = await voidInvoice({
 				orderId: order.id,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				reason: sanitizedReason ?? "Facture invalidée suite à annulation",

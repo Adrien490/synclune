@@ -193,6 +193,7 @@ function makeOrderWithItems(overrides: Partial<OrderWithItems> = {}): OrderWithI
 				price: 8000,
 				productTitle: "Collier argent",
 				skuColor: "Argent",
+				skuColorHexes: null,
 				skuMaterial: "Argent 925",
 				skuSize: "Unique",
 				sku: {
@@ -253,18 +254,18 @@ describe("processOrderFromPaymentIntent", () => {
 
 	/**
 	 * @regression livraison-tracking-2026-08-01
-	 * Le webhook n'écrivait pas `fulfillmentStatus` : (PROCESSING, UNFULFILLED)
+	 * Le webhook n'écrivait pas `status` : (PROCESSING, UNFULFILLED)
 	 * était l'état de 100 % des commandes payées par Stripe — badge admin
 	 * « Non traitée » à côté de « En préparation », sans chemin de correction
 	 * (markAsProcessing exige status=PENDING, déjà consommé par le webhook).
 	 */
-	it("[regression] synchronizes fulfillmentStatus to PROCESSING alongside status", async () => {
+	it("[regression] synchronizes status to PROCESSING alongside status", async () => {
 		const paymentIntent = makePaymentIntent();
 
 		await processOrderFromPaymentIntent("order-1", paymentIntent);
 
 		const updateCall = mockTx.order.update.mock.calls[0]?.[0] as { data: Record<string, unknown> };
-		expect(updateCall.data.fulfillmentStatus).toBe("PROCESSING");
+		expect(updateCall.data.status).toBe("PROCESSING");
 	});
 
 	it("does not set shippingCost/shippingCarrier (already stored from confirmCheckout)", async () => {
@@ -496,6 +497,7 @@ describe("buildPostCheckoutTasksFromPI", () => {
 				{
 					productTitle: null,
 					skuColor: "Or",
+					skuColorHexes: null,
 					skuMaterial: "Or 18k",
 					skuSize: "52",
 					quantity: 2,

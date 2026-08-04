@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { StickyNote } from "lucide-react";
+import { NoteIcon } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 
-import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import type { OrderStatus, PaymentStatus } from "@/app/generated/prisma/browser";
 import type { InvoiceStatus } from "@/app/generated/prisma/client";
 import {
 	DefaultLongPressAffordance,
@@ -42,7 +42,6 @@ type Order = {
 	total: number;
 	createdAt: Date | string;
 	_count: { items: number };
-	fulfillmentStatus?: FulfillmentStatus | null;
 	trackingNumber?: string | null;
 	trackingUrl?: string | null;
 	invoiceNumber?: string | null;
@@ -121,7 +120,6 @@ export function OrdersMobileListItem({ order, isFirst }: { order: Order; isFirst
 			orderNumber: order.orderNumber,
 			status: order.status as OrderStatus,
 			paymentStatus: order.paymentStatus as PaymentStatus,
-			fulfillmentStatus: order.fulfillmentStatus,
 			trackingNumber: order.trackingNumber,
 			trackingUrl: order.trackingUrl,
 			invoiceNumber: order.invoiceNumber,
@@ -144,7 +142,7 @@ export function OrdersMobileListItem({ order, isFirst }: { order: Order; isFirst
 				className="rounded-lg"
 				peek={peek}
 				rightAction={{
-					children: <StickyNote className="text-secondary-foreground size-5" aria-hidden="true" />,
+					children: <NoteIcon className="text-secondary-foreground size-5" aria-hidden="true" />,
 					label: `Ouvrir les notes de ${order.orderNumber}`,
 					className: "bg-secondary",
 					onAction: openNotes,

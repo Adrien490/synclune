@@ -5,42 +5,32 @@ import { z } from "zod";
 // Hoisted mocks — must be set up before any module under test is imported.
 // ---------------------------------------------------------------------------
 
-const { mockOrderStatus, mockPaymentStatus, mockFulfillmentStatus, mockInvoiceStatus } = vi.hoisted(
-	() => ({
-		mockOrderStatus: {
-			PENDING: "PENDING",
-			PROCESSING: "PROCESSING",
-			SHIPPED: "SHIPPED",
-			DELIVERED: "DELIVERED",
-			CANCELLED: "CANCELLED",
-			RETURNED: "RETURNED",
-		},
-		mockPaymentStatus: {
-			PENDING: "PENDING",
-			PAID: "PAID",
-			FAILED: "FAILED",
-			REFUNDED: "REFUNDED",
-			PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
-		},
-		mockFulfillmentStatus: {
-			UNFULFILLED: "UNFULFILLED",
-			PROCESSING: "PROCESSING",
-			SHIPPED: "SHIPPED",
-			DELIVERED: "DELIVERED",
-			RETURNED: "RETURNED",
-		},
-		mockInvoiceStatus: {
-			PENDING: "PENDING",
-			GENERATED: "GENERATED",
-			VOIDED: "VOIDED",
-		},
-	}),
-);
+const { mockOrderStatus, mockPaymentStatus, mockInvoiceStatus } = vi.hoisted(() => ({
+	mockOrderStatus: {
+		PENDING: "PENDING",
+		PROCESSING: "PROCESSING",
+		SHIPPED: "SHIPPED",
+		DELIVERED: "DELIVERED",
+		CANCELLED: "CANCELLED",
+		RETURNED: "RETURNED",
+	},
+	mockPaymentStatus: {
+		PENDING: "PENDING",
+		PAID: "PAID",
+		FAILED: "FAILED",
+		REFUNDED: "REFUNDED",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+	},
+	mockInvoiceStatus: {
+		PENDING: "PENDING",
+		GENERATED: "GENERATED",
+		VOIDED: "VOIDED",
+	},
+}));
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	OrderStatus: mockOrderStatus,
 	PaymentStatus: mockPaymentStatus,
-	FulfillmentStatus: mockFulfillmentStatus,
 	InvoiceStatus: mockInvoiceStatus,
 }));
 
@@ -70,8 +60,8 @@ vi.mock("../constants/order.constants", () => ({
 		STATUS_DESC: "status-descending",
 		PAYMENT_STATUS_ASC: "paymentStatus-ascending",
 		PAYMENT_STATUS_DESC: "paymentStatus-descending",
-		FULFILLMENT_STATUS_ASC: "fulfillmentStatus-ascending",
-		FULFILLMENT_STATUS_DESC: "fulfillmentStatus-descending",
+		FULFILLMENT_STATUS_ASC: "status-ascending",
+		FULFILLMENT_STATUS_DESC: "status-descending",
 	},
 }));
 
@@ -80,7 +70,6 @@ import {
 	cancelOrderSchema,
 	markAsShippedSchema,
 	carrierEnum,
-	addOrderNoteSchema,
 	exportInvoicesSchema,
 	markAsFullyRefundedSchema,
 	manualRefundMethodEnum,
@@ -326,51 +315,6 @@ describe("carrierEnum", () => {
 });
 
 // ============================================================================
-// addOrderNoteSchema
-// ============================================================================
-
-describe("addOrderNoteSchema", () => {
-	it("accepts a valid orderId and non-empty content", () => {
-		const result = addOrderNoteSchema.safeParse({
-			orderId: VALID_CUID,
-			content: "This is an internal note about the order.",
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("rejects empty content", () => {
-		const result = addOrderNoteSchema.safeParse({
-			orderId: VALID_CUID,
-			content: "",
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("accepts content at exactly 5000 characters", () => {
-		const result = addOrderNoteSchema.safeParse({
-			orderId: VALID_CUID,
-			content: "a".repeat(5000),
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("rejects content longer than 5000 characters", () => {
-		const result = addOrderNoteSchema.safeParse({
-			orderId: VALID_CUID,
-			content: "a".repeat(5001),
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects an invalid orderId", () => {
-		const result = addOrderNoteSchema.safeParse({
-			orderId: "not-a-cuid2",
-			content: "Valid note content",
-		});
-		expect(result.success).toBe(false);
-	});
-});
-
 // ============================================================================
 // bulkDeleteOrdersSchema
 // ============================================================================

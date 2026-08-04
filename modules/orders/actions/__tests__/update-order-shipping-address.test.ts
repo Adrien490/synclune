@@ -95,12 +95,13 @@ vi.mock("../../constants/order.constants", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	FulfillmentStatus: {
-		UNFULFILLED: "UNFULFILLED",
+	OrderStatus: {
+		PENDING: "PENDING",
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
 		RETURNED: "RETURNED",
+		CANCELLED: "CANCELLED",
 	},
 }));
 
@@ -140,7 +141,7 @@ const validParsedData = {
 
 function createOrderForAddressUpdate(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
-		fulfillmentStatus: "UNFULFILLED",
+		status: "PENDING",
 		...overrides,
 	});
 }
@@ -239,13 +240,13 @@ describe("updateOrderShippingAddress", () => {
 	// Business rules: cannot update after shipment
 	it("should return error when order is SHIPPED", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue(
-			createOrderForAddressUpdate({ fulfillmentStatus: "SHIPPED", _error: "already_shipped" }),
+			createOrderForAddressUpdate({ status: "SHIPPED", _error: "already_shipped" }),
 		);
 		// The action returns the result of the transaction, which includes _error
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
 				mockPrisma.order.findUnique.mockResolvedValue({
-					...createOrderForAddressUpdate({ fulfillmentStatus: "SHIPPED" }),
+					...createOrderForAddressUpdate({ status: "SHIPPED" }),
 				});
 				return fn(mockPrisma);
 			},
@@ -261,7 +262,7 @@ describe("updateOrderShippingAddress", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
 				mockPrisma.order.findUnique.mockResolvedValue({
-					...createOrderForAddressUpdate({ fulfillmentStatus: "DELIVERED" }),
+					...createOrderForAddressUpdate({ status: "DELIVERED" }),
 				});
 				return fn(mockPrisma);
 			},
@@ -277,7 +278,7 @@ describe("updateOrderShippingAddress", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
 				mockPrisma.order.findUnique.mockResolvedValue({
-					...createOrderForAddressUpdate({ fulfillmentStatus: "RETURNED" }),
+					...createOrderForAddressUpdate({ status: "RETURNED" }),
 				});
 				return fn(mockPrisma);
 			},
@@ -306,7 +307,7 @@ describe("updateOrderShippingAddress", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
 				mockPrisma.order.findUnique.mockResolvedValue(
-					createOrderForAddressUpdate({ fulfillmentStatus: "PROCESSING" }),
+					createOrderForAddressUpdate({ status: "PROCESSING" }),
 				);
 				return fn(mockPrisma);
 			},
@@ -355,7 +356,6 @@ describe("updateOrderShippingAddress", () => {
 			expect.objectContaining({
 				orderId: VALID_CUID,
 				action: "ADDRESS_UPDATED",
-				authorId: "admin-1",
 				authorName: "Admin",
 				note: "Adresse de livraison modifiee",
 				metadata: expect.objectContaining({

@@ -14,6 +14,7 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
 		CANCELLED: "CANCELLED",
 	} as const,
 	PaymentStatus: {
@@ -22,13 +23,6 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		FAILED: "FAILED",
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
 		REFUNDED: "REFUNDED",
-	} as const,
-	FulfillmentStatus: {
-		UNFULFILLED: "UNFULFILLED",
-		PROCESSING: "PROCESSING",
-		SHIPPED: "SHIPPED",
-		DELIVERED: "DELIVERED",
-		RETURNED: "RETURNED",
 	} as const,
 }));
 
@@ -46,11 +40,11 @@ vi.mock("@/shared/components/ui/alert", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	TriangleAlert: () => <svg data-testid="icon-triangle-alert" />,
-	Clock: () => <svg data-testid="icon-clock" />,
-	RotateCcw: () => <svg data-testid="icon-rotate-ccw" />,
-	CircleX: () => <svg data-testid="icon-circle-x" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	WarningIcon: () => <svg data-testid="icon-triangle-alert" />,
+	ClockIcon: () => <svg data-testid="icon-clock" />,
+	ArrowCounterClockwiseIcon: () => <svg data-testid="icon-rotate-ccw" />,
+	XCircleIcon: () => <svg data-testid="icon-circle-x" />,
 }));
 
 import { OrderAlerts } from "../order-alerts";
@@ -76,33 +70,21 @@ describe("OrderAlerts", () => {
 
 	it("renders nothing for a normal active order", () => {
 		const { container } = render(
-			<OrderAlerts
-				status={"PROCESSING" as OrderStatus}
-				paymentStatus={"PAID" as PaymentStatus}
-				fulfillmentStatus={"UNFULFILLED" as FulfillmentStatus}
-			/>,
+			<OrderAlerts status={"PROCESSING" as OrderStatus} paymentStatus={"PAID" as PaymentStatus} />,
 		);
 		expect(container.firstChild).toBeNull();
 	});
 
 	it("renders cancelled alert when status is CANCELLED", () => {
 		render(
-			<OrderAlerts
-				status={"CANCELLED" as OrderStatus}
-				paymentStatus={"PAID" as PaymentStatus}
-				fulfillmentStatus={"UNFULFILLED" as FulfillmentStatus}
-			/>,
+			<OrderAlerts status={"CANCELLED" as OrderStatus} paymentStatus={"PAID" as PaymentStatus} />,
 		);
 		expect(screen.getByText("Commande annulée")).toBeInTheDocument();
 	});
 
 	it("renders destructive variant for cancelled alert", () => {
 		render(
-			<OrderAlerts
-				status={"CANCELLED" as OrderStatus}
-				paymentStatus={"PAID" as PaymentStatus}
-				fulfillmentStatus={"UNFULFILLED" as FulfillmentStatus}
-			/>,
+			<OrderAlerts status={"CANCELLED" as OrderStatus} paymentStatus={"PAID" as PaymentStatus} />,
 		);
 		const alert = screen.getByTestId("alert");
 		expect(alert).toHaveAttribute("data-variant", "destructive");
@@ -113,42 +95,32 @@ describe("OrderAlerts", () => {
 			<OrderAlerts
 				status={"PROCESSING" as OrderStatus}
 				paymentStatus={"FAILED" as PaymentStatus}
-				fulfillmentStatus={"UNFULFILLED" as FulfillmentStatus}
 			/>,
 		);
 		expect(screen.getByText("Paiement échoué")).toBeInTheDocument();
 	});
 
-	it("renders returned alert when fulfillmentStatus is RETURNED", () => {
+	it("renders returned alert when status is RETURNED", () => {
 		render(
-			<OrderAlerts
-				status={"PROCESSING" as OrderStatus}
-				paymentStatus={"PAID" as PaymentStatus}
-				fulfillmentStatus={"RETURNED" as FulfillmentStatus}
-			/>,
+			<OrderAlerts status={"RETURNED" as OrderStatus} paymentStatus={"PAID" as PaymentStatus} />,
 		);
 		expect(screen.getByText("Commande retournée")).toBeInTheDocument();
 	});
 
 	it("renders multiple alerts simultaneously", () => {
 		render(
-			<OrderAlerts
-				status={"CANCELLED" as OrderStatus}
-				paymentStatus={"FAILED" as PaymentStatus}
-				fulfillmentStatus={"RETURNED" as FulfillmentStatus}
-			/>,
+			<OrderAlerts status={"CANCELLED" as OrderStatus} paymentStatus={"FAILED" as PaymentStatus} />,
 		);
+		// DEUX alertes, pas trois : « annulée » + « paiement échoué ». La 3ᵉ était
+		// « retournée », qui vivait sur l'autre axe — sur un axe unique une commande
+		// ne peut plus être CANCELLED et RETURNED à la fois (Lot 4, audit V2).
 		const alerts = screen.getAllByTestId("alert");
-		expect(alerts.length).toBe(3);
+		expect(alerts.length).toBe(2);
 	});
 
 	it("renders CircleX icon for cancelled alert", () => {
 		render(
-			<OrderAlerts
-				status={"CANCELLED" as OrderStatus}
-				paymentStatus={"PAID" as PaymentStatus}
-				fulfillmentStatus={"UNFULFILLED" as FulfillmentStatus}
-			/>,
+			<OrderAlerts status={"CANCELLED" as OrderStatus} paymentStatus={"PAID" as PaymentStatus} />,
 		);
 		expect(screen.getByTestId("icon-circle-x")).toBeInTheDocument();
 	});
@@ -158,7 +130,6 @@ describe("OrderAlerts", () => {
 			<OrderAlerts
 				status={"PROCESSING" as OrderStatus}
 				paymentStatus={"FAILED" as PaymentStatus}
-				fulfillmentStatus={"UNFULFILLED" as FulfillmentStatus}
 			/>,
 		);
 		expect(screen.getByTestId("icon-triangle-alert")).toBeInTheDocument();
@@ -166,11 +137,7 @@ describe("OrderAlerts", () => {
 
 	it("renders RotateCcw icon for returned alert", () => {
 		render(
-			<OrderAlerts
-				status={"PROCESSING" as OrderStatus}
-				paymentStatus={"PAID" as PaymentStatus}
-				fulfillmentStatus={"RETURNED" as FulfillmentStatus}
-			/>,
+			<OrderAlerts status={"RETURNED" as OrderStatus} paymentStatus={"PAID" as PaymentStatus} />,
 		);
 		expect(screen.getByTestId("icon-rotate-ccw")).toBeInTheDocument();
 	});

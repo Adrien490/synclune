@@ -1,6 +1,6 @@
 "use server";
 
-import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
+import { OrderStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -29,7 +29,7 @@ import { canUndoReturn } from "../services/order-status-validation.service";
  * Règles métier :
  * - La commande doit être (DELIVERED, RETURNED) — l'état exact que
  *   `markAsReturned` produit ;
- * - Seul `fulfillmentStatus` revient à DELIVERED, le OrderStatus est inchangé ;
+ * - Transition explicite `RETURNED → DELIVERED` sur `status` (axe unique depuis le Lot 4) ;
  * - Audit `STATUS_REVERTED` (pas de nouvelle valeur d'enum : `OrderAction` est
  *   un type Postgres sur un historique baseliné) + `note` explicite ;
  * - Ne touche PAS aux Refunds : un remboursement déjà créé suit son propre
@@ -62,7 +62,6 @@ export async function undoReturn(
 					id: true,
 					orderNumber: true,
 					status: true,
-					fulfillmentStatus: true,
 				},
 			});
 
@@ -73,18 +72,18 @@ export async function undoReturn(
 				return { ...found, _error: validation.reason };
 			}
 
-			// Garde atomique : ré-asserte (DELIVERED, RETURNED) — miroir de
-			// canUndoReturn. count===0 ⇒ writer concurrent entre le findUnique et
-			// l'update — abort sans audit.
+			// Garde atomique : ré-asserte RETURNED — miroir de canUndoReturn.
+			// count===0 ⇒ writer concurrent entre le findUnique et l'update — abort
+			// sans audit. Un seul axe depuis le Lot 4 : la sortie du retour est une
+			// transition explicite `RETURNED → DELIVERED`.
 			const updated = await tx.order.updateMany({
 				where: {
 					id,
 					...notDeleted,
-					status: OrderStatus.DELIVERED,
-					fulfillmentStatus: FulfillmentStatus.RETURNED,
+					status: OrderStatus.RETURNED,
 				},
 				data: {
-					fulfillmentStatus: FulfillmentStatus.DELIVERED,
+					status: OrderStatus.DELIVERED,
 				},
 			});
 			if (updated.count === 0) {
@@ -94,10 +93,9 @@ export async function undoReturn(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "STATUS_REVERTED",
-				previousFulfillmentStatus: found.fulfillmentStatus,
-				newFulfillmentStatus: FulfillmentStatus.DELIVERED,
+				previousStatus: OrderStatus.RETURNED,
+				newStatus: OrderStatus.DELIVERED,
 				note: "Retour annulé (saisie par erreur)",
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 			});

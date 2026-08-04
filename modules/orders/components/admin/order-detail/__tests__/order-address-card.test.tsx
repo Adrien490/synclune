@@ -30,11 +30,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	MapPin: () => <svg aria-hidden="true" />,
-	Phone: () => <svg aria-hidden="true" />,
-	Pencil: () => <svg aria-hidden="true" />,
-	ReceiptText: () => <svg aria-hidden="true" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	MapPinIcon: () => <svg aria-hidden="true" />,
+	PhoneIcon: () => <svg aria-hidden="true" />,
+	PencilSimpleIcon: () => <svg aria-hidden="true" />,
+	ReceiptIcon: () => <svg aria-hidden="true" />,
 }));
 
 vi.mock("@/shared/components/copy-button", () => ({
@@ -46,12 +46,13 @@ vi.mock("@/shared/constants/countries", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/browser", () => ({
-	FulfillmentStatus: {
-		UNFULFILLED: "UNFULFILLED",
-		PARTIAL: "PARTIAL",
+	OrderStatus: {
+		PENDING: "PENDING",
+		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
 		RETURNED: "RETURNED",
+		CANCELLED: "CANCELLED",
 	},
 	InvoiceStatus: {
 		PENDING: "PENDING",
@@ -97,7 +98,7 @@ function createOrder(overrides = {}) {
 		shippingCity: "Paris",
 		shippingCountry: "FR",
 		shippingPhone: null,
-		fulfillmentStatus: "UNFULFILLED",
+		status: "PENDING",
 		// Gate sur invoiceNumber (P1-B audit 2026-08-01) : null = pas de facture
 		// émise → éditable. VOIDED conserve son numéro, donc reste verrouillé.
 		invoiceNumber: null,
@@ -163,14 +164,14 @@ describe("OrderAddressCard", () => {
 	});
 
 	it("shows Modifier shipping button before shipment", () => {
-		render(<OrderAddressCard order={createOrder({ fulfillmentStatus: "UNFULFILLED" })} />);
+		render(<OrderAddressCard order={createOrder({ status: "PENDING" })} />);
 		expect(
 			screen.getByRole("button", { name: /Modifier l'adresse de livraison/i }),
 		).toBeInTheDocument();
 	});
 
 	it("hides Modifier shipping button after shipment", () => {
-		render(<OrderAddressCard order={createOrder({ fulfillmentStatus: "SHIPPED" })} />);
+		render(<OrderAddressCard order={createOrder({ status: "SHIPPED" })} />);
 		expect(screen.queryByRole("button", { name: /Modifier l'adresse de livraison/i })).toBeNull();
 	});
 

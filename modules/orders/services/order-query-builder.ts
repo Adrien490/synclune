@@ -94,14 +94,6 @@ export function buildOrderFilterConditions(filters: OrderFilters): Prisma.OrderW
 			paymentStatuses.length === 1 ? paymentStatuses[0] : { in: paymentStatuses };
 	}
 
-	if (filters.fulfillmentStatus !== undefined) {
-		const fulfillmentStatuses = Array.isArray(filters.fulfillmentStatus)
-			? filters.fulfillmentStatus
-			: [filters.fulfillmentStatus];
-		conditions.fulfillmentStatus =
-			fulfillmentStatuses.length === 1 ? fulfillmentStatuses[0] : { in: fulfillmentStatuses };
-	}
-
 	if (filters.invoiceStatus !== undefined) {
 		const invoiceStatuses = Array.isArray(filters.invoiceStatus)
 			? filters.invoiceStatus

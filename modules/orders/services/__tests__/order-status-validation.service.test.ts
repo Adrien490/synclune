@@ -6,6 +6,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
 		CANCELLED: "CANCELLED",
 	},
 	PaymentStatus: {
@@ -15,13 +16,6 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		EXPIRED: "EXPIRED",
 		REFUNDED: "REFUNDED",
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
-	},
-	FulfillmentStatus: {
-		UNFULFILLED: "UNFULFILLED",
-		PROCESSING: "PROCESSING",
-		SHIPPED: "SHIPPED",
-		DELIVERED: "DELIVERED",
-		RETURNED: "RETURNED",
 	},
 }));
 
@@ -31,6 +25,7 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
 		CANCELLED: "CANCELLED",
 	},
 	PaymentStatus: {
@@ -40,13 +35,6 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		EXPIRED: "EXPIRED",
 		REFUNDED: "REFUNDED",
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
-	},
-	FulfillmentStatus: {
-		UNFULFILLED: "UNFULFILLED",
-		PROCESSING: "PROCESSING",
-		SHIPPED: "SHIPPED",
-		DELIVERED: "DELIVERED",
-		RETURNED: "RETURNED",
 	},
 }));
 
@@ -283,11 +271,11 @@ describe("getOrderPermissions", () => {
 		expect(permissions.canRevertToProcessing).toBe(false);
 	});
 
-	it("should not allow canMarkAsReturned for a DELIVERED + RETURNED order", () => {
+	it("should not allow canMarkAsReturned for an already RETURNED order", () => {
 		const permissions = getOrderPermissions({
-			status: "DELIVERED",
+			// Un seul axe depuis le Lot 4 : l'ex-paire (DELIVERED, RETURNED) s'écrit RETURNED.
+			status: "RETURNED",
 			paymentStatus: "PAID",
-			fulfillmentStatus: "RETURNED",
 			trackingNumber: "ABC123",
 		});
 
@@ -394,18 +382,16 @@ describe("canMarkAsDelivered", () => {
 // ============================================================================
 
 describe("canMarkAsReturned", () => {
-	it("should return canReturn: true when status is DELIVERED and fulfillmentStatus is DELIVERED", () => {
+	it("should return canReturn: true when status is DELIVERED and status is DELIVERED", () => {
 		const result = canMarkAsReturned({
 			status: "DELIVERED",
-			fulfillmentStatus: "DELIVERED",
 		});
 		expect(result).toEqual({ canReturn: true });
 	});
 
-	it("should return already_returned reason when fulfillmentStatus is RETURNED", () => {
+	it("should return already_returned reason when status is RETURNED", () => {
 		const result = canMarkAsReturned({
-			status: "DELIVERED",
-			fulfillmentStatus: "RETURNED",
+			status: "RETURNED",
 		});
 		expect(result).toEqual({ canReturn: false, reason: "already_returned" });
 	});
@@ -413,7 +399,6 @@ describe("canMarkAsReturned", () => {
 	it("should return not_delivered reason when status is SHIPPED", () => {
 		const result = canMarkAsReturned({
 			status: "SHIPPED",
-			fulfillmentStatus: "SHIPPED",
 		});
 		expect(result).toEqual({ canReturn: false, reason: "not_delivered" });
 	});
@@ -421,7 +406,6 @@ describe("canMarkAsReturned", () => {
 	it("should return not_delivered reason when status is PROCESSING", () => {
 		const result = canMarkAsReturned({
 			status: "PROCESSING",
-			fulfillmentStatus: "PROCESSING",
 		});
 		expect(result).toEqual({ canReturn: false, reason: "not_delivered" });
 	});
@@ -429,7 +413,6 @@ describe("canMarkAsReturned", () => {
 	it("should return not_delivered reason when status is PENDING", () => {
 		const result = canMarkAsReturned({
 			status: "PENDING",
-			fulfillmentStatus: "UNFULFILLED",
 		});
 		expect(result).toEqual({ canReturn: false, reason: "not_delivered" });
 	});

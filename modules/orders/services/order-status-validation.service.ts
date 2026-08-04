@@ -8,7 +8,7 @@
  * - Calculer les permissions disponibles selon l'état
  */
 
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/browser";
 
 import type {
 	OrderForShipValidation,
@@ -111,11 +111,8 @@ export function canMarkAsDelivered(order: { status: OrderStatus }): DeliveryVali
 /**
  * Vérifie si une commande peut être marquée comme retournée
  */
-export function canMarkAsReturned(order: {
-	status: OrderStatus;
-	fulfillmentStatus: FulfillmentStatus;
-}): ReturnValidationResult {
-	if (order.fulfillmentStatus === FulfillmentStatus.RETURNED) {
+export function canMarkAsReturned(order: { status: OrderStatus }): ReturnValidationResult {
+	if (order.status === OrderStatus.RETURNED) {
 		return { canReturn: false, reason: "already_returned" };
 	}
 	if (order.status !== OrderStatus.DELIVERED) {
@@ -128,19 +125,16 @@ export function canMarkAsReturned(order: {
  * Vérifie si un retour peut être annulé (saisie par erreur).
  *
  * `RETURNED` était un état ABSORBANT (différé de l'audit 2026-07-26, fermé le
- * 2026-08-01) : `markAsReturned` laisse `status = DELIVERED`, or toutes les
- * sorties existantes exigeaient SHIPPED ou bloquaient DELIVERED — un retour
- * saisi par erreur était irréversible par l'UI et verrouillait définitivement
- * l'édition d'adresse.
+ * 2026-08-01) : le retour ne vivait que sur `fulfillmentStatus` tandis que
+ * `status` restait `DELIVERED`, or toutes les sorties existantes exigeaient
+ * SHIPPED ou bloquaient DELIVERED — un retour saisi par erreur était
+ * irréversible par l'UI et verrouillait définitivement l'édition d'adresse.
+ *
+ * Depuis le Lot 4 (fusion des deux axes), `RETURNED` est une valeur d'`OrderStatus`
+ * et la sortie est une transition explicite `RETURNED → DELIVERED`.
  */
-export function canUndoReturn(order: {
-	status: OrderStatus;
-	fulfillmentStatus: FulfillmentStatus;
-}): UndoReturnValidationResult {
-	if (
-		order.status !== OrderStatus.DELIVERED ||
-		order.fulfillmentStatus !== FulfillmentStatus.RETURNED
-	) {
+export function canUndoReturn(order: { status: OrderStatus }): UndoReturnValidationResult {
+	if (order.status !== OrderStatus.RETURNED) {
 		return { canUndo: false, reason: "not_returned" };
 	}
 	return { canUndo: true };
@@ -184,13 +178,19 @@ export function canRevertToProcessing(order: { status: OrderStatus }): RevertVal
 
 /**
  * Calcule les permissions disponibles pour une commande
- * basées sur son état actuel (status, paymentStatus, fulfillmentStatus)
+ * basées sur son état actuel (status, paymentStatus)
  */
 export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	const isPending = order.status === OrderStatus.PENDING;
 	const isProcessing = order.status === OrderStatus.PROCESSING;
 	const isShipped = order.status === OrderStatus.SHIPPED;
 	const isDelivered = order.status === OrderStatus.DELIVERED;
+	// ⚠️ `RETURNED` succède à `DELIVERED` : la marchandise est revenue, donc tout ce
+	// qui était vrai « après livraison » le reste. Avant la fusion des axes (Lot 4),
+	// un retour laissait `status = DELIVERED` et ces booléens restaient vrais par
+	// construction — les traiter comme un état DISTINCT de DELIVERED interdirait le
+	// remboursement exactement au moment où il devient nécessaire.
+	const isDeliveredOrReturned = isDelivered || order.status === OrderStatus.RETURNED;
 	const isCancelled = order.status === OrderStatus.CANCELLED;
 
 	const isPaid = order.paymentStatus === PaymentStatus.PAID;
@@ -201,7 +201,7 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	const isPaymentFailed = order.paymentStatus === PaymentStatus.FAILED;
 	const hasTrackingNumber = !!order.trackingNumber;
 
-	const isReturned = order.fulfillmentStatus === FulfillmentStatus.RETURNED;
+	const isReturned = order.status === OrderStatus.RETURNED;
 
 	return {
 		// Suppression (soft delete) possible seulement sur une commande jamais facturée
@@ -212,10 +212,10 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 		canDelete: !order.invoiceNumber && !isPaid && !isRefunded,
 
 		// Remboursement possible si payé (ou partiellement remboursé) et pas annulé/retourné
-		canRefund: (isProcessing || isShipped || isDelivered) && isPaidOrPartiallyRefunded,
+		canRefund: (isProcessing || isShipped || isDeliveredOrReturned) && isPaidOrPartiallyRefunded,
 
 		// Mise à jour du suivi possible si expédié/livré avec numéro de suivi
-		canUpdateTracking: (isShipped || isDelivered) && hasTrackingNumber,
+		canUpdateTracking: (isShipped || isDeliveredOrReturned) && hasTrackingNumber,
 
 		// Expédition possible si en traitement et payé (ou partiellement remboursé)
 		canMarkAsShipped: isProcessing && isPaidOrPartiallyRefunded,

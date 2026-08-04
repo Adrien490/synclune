@@ -4,7 +4,6 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import {
 	CollectionStatus,
 	DiscountType,
-	FulfillmentStatus,
 	MediaType,
 	OrderAction,
 	OrderStatus,
@@ -172,9 +171,7 @@ async function cleanup(): Promise<void> {
 	console.log("🧹 Nettoyage de la base de données...");
 
 	await prisma.orderHistory.deleteMany();
-	await prisma.orderNote.deleteMany();
 	await prisma.refund.deleteMany();
-	await prisma.discountUsage.deleteMany();
 	await prisma.orderItem.deleteMany();
 	await prisma.order.deleteMany();
 
@@ -1688,7 +1685,6 @@ async function main(): Promise<void> {
 			subtotal += lineAmount;
 
 			itemsData.push({
-				productId: product.id,
 				skuId: sku.id,
 				productTitle: product.title,
 				productDescription: product.description,
@@ -1729,17 +1725,6 @@ async function main(): Promise<void> {
 							{ weight: 20, value: PaymentStatus.FAILED },
 						])
 					: PaymentStatus.PAID;
-
-		let fulfillmentStatus: FulfillmentStatus = FulfillmentStatus.UNFULFILLED;
-		if (status === OrderStatus.SHIPPED) {
-			fulfillmentStatus = FulfillmentStatus.SHIPPED;
-		} else if (status === OrderStatus.DELIVERED) {
-			fulfillmentStatus = FulfillmentStatus.DELIVERED;
-		} else if (status === OrderStatus.PROCESSING) {
-			fulfillmentStatus = sampleBoolean(0.5)
-				? FulfillmentStatus.PROCESSING
-				: FulfillmentStatus.UNFULFILLED;
-		}
 
 		const orderDate = randomRecentDate();
 
@@ -1809,7 +1794,6 @@ async function main(): Promise<void> {
 				total,
 				status,
 				paymentStatus,
-				fulfillmentStatus,
 				...shippingData,
 				...stripeIds,
 				paidAt: paymentStatus === PaymentStatus.PAID ? orderDate : null,
@@ -1970,43 +1954,48 @@ async function main(): Promise<void> {
 	// ============================================
 	// UTILISATIONS CODES PROMO (batch)
 	// ============================================
+	// ⚠️ Le filtre `userId: { not: null }` qui vivait ici portait sur une colonne
+	// `Order.userId` DROPPÉE au Lot C (2026-08-05) : `pnpm seed` aurait levé une
+	// `PrismaClientValidationError`. Ni `tsc` ni le lint ne le voyaient — c'est
+	// l'angle mort documenté dans CLAUDE.md (une clé inconnue dans un `select` ou un
+	// `where` Prisma passe le typage). Le parcours est 100 % invité : il n'y a plus
+	// de commande « rattachée à un compte » à filtrer.
 	const paidOrders = await prisma.order.findMany({
-		where: { paymentStatus: PaymentStatus.PAID, userId: { not: null } },
-		select: { id: true, userId: true, subtotal: true },
+		where: { paymentStatus: PaymentStatus.PAID },
+		select: { id: true, subtotal: true, shippingCost: true },
 		take: 25,
 	});
 
 	const activeDiscounts = discounts.filter((d) => d.isActive);
-	const discountUsagesData: (Prisma.DiscountUsageCreateManyInput & {
-		/** Local uniquement : pilote `Order.discountAmount`, plus persisté depuis le 2026-08-05. */
-		amountApplied: number;
-	})[] = [];
 	const discountUsageCounts = new Map<string, number>();
+	let discountedOrderCount = 0;
 
+	// Le code promo vit maintenant EN COLONNES sur `Order` (audit V2, Lot 2) :
+	// une seule écriture par commande, au lieu d'un `DiscountUsage.createMany`
+	// suivi d'une passe de mise à jour des montants.
 	for (const order of paidOrders) {
 		if (!sampleBoolean(0.4)) continue;
 
 		const discount = faker.helpers.arrayElement(activeDiscounts);
-		const amountApplied =
+		const rawAmount =
 			discount.type === DiscountType.PERCENTAGE
 				? Math.round(order.subtotal * (discount.value / 100))
 				: discount.value;
+		const discountAmount = Math.min(rawAmount, order.subtotal);
 
-		discountUsagesData.push({
-			discountId: discount.id,
-			orderId: order.id,
-			discountCode: discount.code,
-			amountApplied: Math.min(amountApplied, order.subtotal),
+		await prisma.order.update({
+			where: { id: order.id },
+			data: {
+				discountId: discount.id,
+				discountCode: discount.code,
+				discountAmount,
+				total: Math.max(0, order.subtotal - discountAmount + order.shippingCost),
+			},
 		});
 
 		discountUsageCounts.set(discount.id, (discountUsageCounts.get(discount.id) ?? 0) + 1);
+		discountedOrderCount++;
 	}
-
-	await prisma.discountUsage.createMany({
-		// `amountApplied` n'est plus une colonne (2026-08-05) — il ne sert plus qu'à
-		// dériver `Order.discountAmount` un peu plus bas.
-		data: discountUsagesData.map(({ amountApplied: _amountApplied, ...usage }) => usage),
-	});
 
 	// Batch update discount usage counts
 	for (const [discountId, count] of discountUsageCounts) {
@@ -2016,25 +2005,7 @@ async function main(): Promise<void> {
 		});
 	}
 
-	// Update discountAmount and recalculate total on orders with discount usage
-	for (const usage of discountUsagesData) {
-		const order = await prisma.order.findUnique({
-			where: { id: usage.orderId! },
-			select: { subtotal: true, shippingCost: true },
-		});
-		if (!order) continue;
-
-		const newTotal = Math.max(0, order.subtotal - usage.amountApplied + order.shippingCost);
-		await prisma.order.update({
-			where: { id: usage.orderId! },
-			data: {
-				discountAmount: usage.amountApplied,
-				total: newTotal,
-			},
-		});
-	}
-
-	console.log(`✅ ${discountUsagesData.length} utilisations de codes promo créées`);
+	console.log(`✅ ${discountedOrderCount} utilisations de codes promo créées`);
 
 	// ============================================
 	// PANIERS — plus rien à semer
@@ -2221,7 +2192,6 @@ async function main(): Promise<void> {
 			id: true,
 			status: true,
 			paymentStatus: true,
-			fulfillmentStatus: true,
 			createdAt: true,
 		},
 	});
@@ -2341,8 +2311,8 @@ async function main(): Promise<void> {
 		allHistoryEntries.push({
 			orderId: deliveredForHistory[0].id,
 			action: OrderAction.RETURNED,
-			previousFulfillmentStatus: FulfillmentStatus.DELIVERED,
-			newFulfillmentStatus: FulfillmentStatus.RETURNED,
+			previousStatus: OrderStatus.DELIVERED,
+			newStatus: OrderStatus.RETURNED,
 			note: "Retour client - produit non conforme aux attentes",
 			source: HistorySource.CUSTOMER,
 			createdAt: returnDate,
@@ -2478,48 +2448,9 @@ async function main(): Promise<void> {
 	await prisma.orderHistory.createMany({ data: allHistoryEntries });
 	console.log(`✅ ${allHistoryEntries.length} entrées d'historique de commandes créées`);
 
-	// ============================================
-	// NOTES DE COMMANDES (batch)
-	// ============================================
-	const ordersForNotes = await prisma.order.findMany({
-		where: { status: { in: [OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.CANCELLED] } },
-		select: { id: true, createdAt: true },
-		take: 12,
-	});
-
-	const noteContents = [
-		"Client a demandé un emballage cadeau - fait",
-		"Livraison express demandée - priorité traitée",
-		"Échange téléphonique avec la cliente - tout OK",
-		"Adresse modifiée après validation - mise à jour Colissimo",
-		"Demande de facture envoyée par email",
-		"Retard livraison - client informé par email",
-		"Bijou personnalisé avec gravure - vérifié avant envoi",
-		"Réclamation traitée - geste commercial accordé",
-		"Suivi colis bloqué - contact transporteur en cours",
-		"Client fidèle - code promo VIP envoyé",
-	];
-
-	const orderNotesData: Prisma.OrderNoteCreateManyInput[] = [];
-
-	for (const order of ordersForNotes) {
-		if (!sampleBoolean(0.7)) continue;
-
-		const noteDate = new Date(order.createdAt);
-		noteDate.setHours(noteDate.getHours() + faker.number.int({ min: 2, max: 72 }));
-
-		const noteAdmin = faker.helpers.arrayElement(adminUsers);
-		orderNotesData.push({
-			orderId: order.id,
-			content: faker.helpers.arrayElement(noteContents),
-			authorId: noteAdmin.id,
-			authorName: noteAdmin.name,
-			createdAt: noteDate,
-		});
-	}
-
-	await prisma.orderNote.createMany({ data: orderNotesData });
-	console.log(`✅ ${orderNotesData.length} notes de commandes créées`);
+	// Plus de seed de notes de commande : le modèle `OrderNote` a été retiré
+	// (2026-08-05). La trace opérationnelle d'une commande vit dans `OrderHistory`,
+	// dont le champ `note` est désormais la seule surface de texte libre.
 
 	// Plus de seed wishlist : les favoris vivent dans le cookie `wishlist` de
 	// chaque navigateur (retrait des tables Wishlist/WishlistItem, 2026-08-03).

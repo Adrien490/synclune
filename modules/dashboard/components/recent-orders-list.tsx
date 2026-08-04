@@ -26,16 +26,11 @@ import type {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
-import { ArrowRight, ChevronRight, ShoppingBag } from "lucide-react";
+import { ArrowRightIcon, CaretRightIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import type { CSSProperties } from "react";
 import { cn } from "@/shared/utils/cn";
 
-import {
-	ORDER_STATUS_LABELS,
-	ORDER_STATUS_VARIANTS,
-	FULFILLMENT_STATUS_LABELS,
-	FULFILLMENT_STATUS_VARIANTS,
-} from "../constants/order-status.constants";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_VARIANTS } from "../constants/order-status.constants";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { CHART_STYLES } from "../constants/chart-styles";
 
@@ -73,7 +68,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 						className="text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-8 text-center"
 						role="status"
 					>
-						<ShoppingBag className="size-8 opacity-40" aria-hidden="true" />
+						<ShoppingBagIcon className="size-8 opacity-40" aria-hidden="true" />
 						<p className="text-sm font-medium">Aucune commande récente</p>
 						<p className="text-xs">Les nouvelles commandes apparaîtront ici</p>
 					</div>
@@ -129,7 +124,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 												>
 													{formatEuro(order.total)}
 												</span>
-												<ChevronRight
+												<CaretRightIcon
 													className="text-muted-foreground/60 size-4"
 													aria-hidden="true"
 												/>
@@ -144,7 +139,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 							className="text-muted-foreground hover:text-foreground inline-flex h-11 w-full touch-manipulation items-center justify-center gap-1.5 text-sm active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150"
 						>
 							Voir toutes les commandes
-							<ArrowRight className="size-3.5" aria-hidden="true" />
+							<ArrowRightIcon className="size-3.5" aria-hidden="true" />
 						</Link>
 					</>
 				)}
@@ -178,12 +173,6 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 										<p className="text-sm font-medium">#{order.orderNumber}</p>
 										<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
 											{ORDER_STATUS_LABELS[order.status]}
-										</Badge>
-										<Badge
-											variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
-											className="xs:inline-flex hidden text-xs"
-										>
-											{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
 										</Badge>
 									</div>
 									<p

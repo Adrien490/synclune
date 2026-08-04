@@ -100,9 +100,7 @@ async function fetchOrders(
 					? [{ status: direction }, { id: "asc" }]
 					: params.sortBy.startsWith("paymentStatus-")
 						? [{ paymentStatus: direction }, { id: "asc" }]
-						: params.sortBy.startsWith("fulfillmentStatus-")
-							? [{ fulfillmentStatus: direction }, { id: "asc" }]
-							: [{ createdAt: "desc" }, { id: "asc" }];
+						: [{ createdAt: "desc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_ORDERS_DEFAULT_PER_PAGE),

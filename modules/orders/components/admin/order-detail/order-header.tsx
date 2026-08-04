@@ -3,7 +3,14 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PaymentStatus } from "@/app/generated/prisma/browser";
-import { CircleCheck, CreditCard, Download, Ellipsis, FileText, Truck } from "lucide-react";
+import {
+	CheckCircleIcon,
+	CreditCardIcon,
+	DotsThreeIcon,
+	DownloadSimpleIcon,
+	FileTextIcon,
+	TruckIcon,
+} from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useActionState, useState } from "react";
 import { exportSingleOrder } from "@/modules/orders/actions/export-single-order";
@@ -35,7 +42,7 @@ const PRIMARY_BUTTON_KEYS = new Set(["mark-paid", "mark-shipped", "mark-delivere
 // Items inutiles dans le contexte détail (déjà sur la page)
 const DETAIL_HIDDEN_KEYS = new Set(["view", "select"]);
 
-export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
+export function OrderHeader({ order }: OrderHeaderProps) {
 	// Titre lisible pour le header mobile (sinon : id opaque Title-Casé).
 	useSetAdminPageTitle(`Commande ${order.orderNumber}`);
 	const haptic = useHaptic();
@@ -71,7 +78,6 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 			orderNumber: order.orderNumber,
 			status: order.status,
 			paymentStatus: order.paymentStatus,
-			fulfillmentStatus: order.fulfillmentStatus,
 			trackingNumber: order.trackingNumber,
 			trackingUrl: order.trackingUrl,
 			invoiceNumber: order.invoiceNumber,
@@ -82,7 +88,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	const exportItem: ActionMenuItem = {
 		key: "export-csv",
 		label: isExporting ? "Export…" : "Exporter en CSV",
-		icon: Download,
+		icon: DownloadSimpleIcon,
 		disabled: isExporting,
 		pending: isExporting,
 		onSelect: () => {
@@ -100,7 +106,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	const downloadInvoiceItem: ActionMenuItem = {
 		key: "download-invoice",
 		label: isDownloadingInvoice ? "Téléchargement…" : "Télécharger la facture",
-		icon: FileText,
+		icon: FileTextIcon,
 		disabled: !canDownloadInvoice || isDownloadingInvoice,
 		pending: isDownloadingInvoice,
 		onSelect: () => {
@@ -151,7 +157,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	const downloadCreditNoteItem: ActionMenuItem = {
 		key: "download-credit-note",
 		label: isDownloadingCreditNote ? "Téléchargement…" : "Télécharger l'avoir",
-		icon: FileText,
+		icon: FileTextIcon,
 		disabled: !canDownloadCreditNote || isDownloadingCreditNote,
 		pending: isDownloadingCreditNote,
 		onSelect: () => {
@@ -201,13 +207,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 				return {
 					...section,
 					items: [
-						...section.items
-							.filter((item) => !DETAIL_HIDDEN_KEYS.has(item.key))
-							.map((item) =>
-								item.key === "notes" && notesCount > 0
-									? { ...item, label: `Notes internes (${notesCount})` }
-									: item,
-							),
+						...section.items.filter((item) => !DETAIL_HIDDEN_KEYS.has(item.key)),
 						downloadInvoiceItem,
 						...(canDownloadCreditNote ? [downloadCreditNoteItem] : []),
 						exportItem,
@@ -280,7 +280,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 						onClick={handleMarkAsPaid}
 						className="min-h-11 flex-1 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 md:flex-none"
 					>
-						<CreditCard className="size-4" aria-hidden="true" />
+						<CreditCardIcon className="size-4" aria-hidden="true" />
 						Marquer payée
 					</Button>
 				)}
@@ -290,7 +290,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 						onClick={handleMarkAsShipped}
 						className="min-h-11 flex-1 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 md:flex-none"
 					>
-						<Truck className="size-4" aria-hidden="true" />
+						<TruckIcon className="size-4" aria-hidden="true" />
 						Marquer expédiée
 					</Button>
 				)}
@@ -300,7 +300,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 						onClick={handleMarkAsDelivered}
 						className="min-h-11 flex-1 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 md:flex-none"
 					>
-						<CircleCheck className="size-4" aria-hidden="true" />
+						<CheckCircleIcon className="size-4" aria-hidden="true" />
 						Marquer livrée
 					</Button>
 				)}
@@ -316,7 +316,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 						{isDownloadingInvoice ? (
 							<Spinner presentational />
 						) : (
-							<FileText className="size-4" aria-hidden="true" />
+							<FileTextIcon className="size-4" aria-hidden="true" />
 						)}
 						{isDownloadingInvoice ? "Facture…" : "Facture"}
 					</Button>
@@ -337,7 +337,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 						{isExporting ? (
 							<Spinner presentational />
 						) : (
-							<Ellipsis className="size-4" aria-hidden="true" />
+							<DotsThreeIcon className="size-4" aria-hidden="true" />
 						)}
 					</ResponsiveActionMenuTrigger>
 					<ResponsiveActionMenuContent

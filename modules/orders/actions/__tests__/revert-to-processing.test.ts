@@ -107,7 +107,6 @@ function makeFd(reason = "Erreur étiquette") {
 function makeShippedOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
 		status: "SHIPPED",
-		fulfillmentStatus: "FULFILLED",
 		paymentStatus: "PAID",
 		trackingNumber: "TRACK-123",
 		trackingUrl: "https://track.test/TRACK-123",
@@ -207,7 +206,6 @@ describe("revertToProcessing", () => {
 			where: { id: VALID_CUID, deletedAt: null, status: "SHIPPED" },
 			data: {
 				status: "PROCESSING",
-				fulfillmentStatus: "PROCESSING",
 				trackingNumber: null,
 				trackingUrl: null,
 				shippingCarrier: null,
@@ -234,9 +232,7 @@ describe("revertToProcessing", () => {
 				action: "STATUS_REVERTED",
 				previousStatus: "SHIPPED",
 				newStatus: "PROCESSING",
-				newFulfillmentStatus: "PROCESSING",
 				note: "Mauvaise adresse",
-				authorId: "admin-1",
 				metadata: expect.objectContaining({
 					previousTrackingNumber: "ABC",
 					previousTrackingUrl: "https://x",

@@ -111,7 +111,6 @@ import type { ResendEmailType } from "../../types/email.types";
 function createDeliveredOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
 		status: "DELIVERED",
-		fulfillmentStatus: "DELIVERED",
 		paymentStatus: "PAID",
 		trackingNumber: "1Z999AA10123456784",
 		trackingUrl: "https://tracking.example.com/1Z999",
@@ -124,7 +123,6 @@ function createDeliveredOrder(overrides: Record<string, unknown> = {}) {
 function createShippedOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
 		status: "SHIPPED",
-		fulfillmentStatus: "SHIPPED",
 		paymentStatus: "PAID",
 		trackingNumber: "1Z999AA10123456784",
 		trackingUrl: "https://tracking.example.com/1Z999",
@@ -239,7 +237,6 @@ describe("resendOrderEmail", () => {
 				data: expect.objectContaining({
 					orderId: VALID_CUID,
 					action: "CREATED",
-					authorId: "admin-1",
 					source: "ADMIN",
 					note: expect.stringContaining("renvoyé"),
 				}),
@@ -276,9 +273,7 @@ describe("resendOrderEmail", () => {
 	});
 
 	it("should return error for shipping email when order is not SHIPPED or DELIVERED", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(
-			createMockOrder({ status: "PROCESSING", fulfillmentStatus: "PROCESSING" }),
-		);
+		mockPrisma.order.findUnique.mockResolvedValue(createMockOrder({ status: "PROCESSING" }));
 
 		const result = await resendOrderEmail(VALID_CUID, "shipping");
 

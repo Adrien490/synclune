@@ -2,7 +2,7 @@
  * @regression order-filters-multi-select-not-truncated
  *
  * Les 4 filtres d'énumération de la liste des commandes (`status`, `paymentStatus`,
- * `fulfillmentStatus`, `invoiceStatus`) sont MULTI-SÉLECTION :
+ * `status`, `invoiceStatus`) sont MULTI-SÉLECTION :
  *  - `orders-filter-sheet.tsx` écrit `params.append(...)` une fois par case cochée ;
  *  - `orderFiltersSchema` les type `T | T[]` ;
  *  - `buildOrderWhereClause` génère `{ in: [...] }` pour un tableau.
@@ -28,9 +28,9 @@ describe("@regression order-filters-multi-select-not-truncated", () => {
 		expect(filters?.paymentStatus).toEqual(["PAID", "PARTIALLY_REFUNDED"]);
 	});
 
-	it("conserve TOUTES les valeurs d'un filtre répété (fulfillmentStatus)", () => {
-		const filters = parse({ filter_fulfillmentStatus: ["UNFULFILLED", "PROCESSING"] });
-		expect(filters?.fulfillmentStatus).toEqual(["UNFULFILLED", "PROCESSING"]);
+	it("conserve TOUTES les valeurs d'un filtre répété (status)", () => {
+		const filters = parse({ filter_status: ["PENDING", "PROCESSING"] });
+		expect(filters?.status).toEqual(["PENDING", "PROCESSING"]);
 	});
 
 	it("conserve TOUTES les valeurs pour status et invoiceStatus", () => {
@@ -51,7 +51,7 @@ describe("@regression order-filters-multi-select-not-truncated", () => {
 		const filters = parse({});
 		expect(filters?.status).toBeUndefined();
 		expect(filters?.paymentStatus).toBeUndefined();
-		expect(filters?.fulfillmentStatus).toBeUndefined();
+		expect(filters?.status).toBeUndefined();
 		expect(filters?.invoiceStatus).toBeUndefined();
 	});
 
@@ -68,12 +68,13 @@ describe("@regression order-filters-multi-select-not-truncated", () => {
 
 	it("le lien profond « à expédier » est parsé en deux filtres multi-valeurs", () => {
 		// Miroir exact de ORDERS_TO_SHIP_HREF, sans importer prisma dans ce test.
+		// `PENDING` remplace `UNFULFILLED` : axe unique depuis le Lot 4 (audit V2).
 		const filters = parse({
 			filter_paymentStatus: ["PAID", "PARTIALLY_REFUNDED"],
-			filter_fulfillmentStatus: ["UNFULFILLED", "PROCESSING"],
+			filter_status: ["PENDING", "PROCESSING"],
 		});
 
 		expect(filters?.paymentStatus).toEqual(["PAID", "PARTIALLY_REFUNDED"]);
-		expect(filters?.fulfillmentStatus).toEqual(["UNFULFILLED", "PROCESSING"]);
+		expect(filters?.status).toEqual(["PENDING", "PROCESSING"]);
 	});
 });

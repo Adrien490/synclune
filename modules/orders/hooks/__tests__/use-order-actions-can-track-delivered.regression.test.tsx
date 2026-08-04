@@ -10,7 +10,7 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/browser";
 
 // ============================================================================
 // HOISTED MOCKS — couper le graphe de dépendances `useOrderActions`
@@ -63,7 +63,6 @@ describe("useOrderActions — canTrack regression (ORD-UI-005)", () => {
 					orderNumber: "ORD-100",
 					status: OrderStatus.SHIPPED,
 					paymentStatus: PaymentStatus.PAID,
-					fulfillmentStatus: FulfillmentStatus.SHIPPED,
 					trackingNumber: "ABC123",
 					trackingUrl: "https://tracking.example/ABC123",
 					invoiceNumber: null,
@@ -85,7 +84,6 @@ describe("useOrderActions — canTrack regression (ORD-UI-005)", () => {
 					orderNumber: "ORD-101",
 					status: OrderStatus.DELIVERED,
 					paymentStatus: PaymentStatus.PAID,
-					fulfillmentStatus: FulfillmentStatus.DELIVERED,
 					trackingNumber: "ABC456",
 					trackingUrl: "https://tracking.example/ABC456",
 					invoiceNumber: "F-2026-00042",
@@ -109,7 +107,6 @@ describe("useOrderActions — canTrack regression (ORD-UI-005)", () => {
 					orderNumber: "ORD-102",
 					status: OrderStatus.PROCESSING,
 					paymentStatus: PaymentStatus.PAID,
-					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 					trackingNumber: null,
 					trackingUrl: null,
 					invoiceNumber: null,

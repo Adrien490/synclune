@@ -2,7 +2,7 @@
 
 import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check } from "lucide-react";
+import { CheckIcon } from "@phosphor-icons/react/ssr";
 import {
 	Drawer,
 	DrawerBody,
@@ -18,14 +18,10 @@ import { ORDER_TOTAL_FILTER_MAX_EUROS } from "@/modules/orders/constants/order.c
 import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
-	FULFILLMENT_STATUS_LABELS,
 	INVOICE_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
 import { SHIPPABLE_PAYMENT_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
-import {
-	appendToShipParams,
-	TO_SHIP_FULFILLMENT_STATUSES,
-} from "@/modules/orders/constants/to-ship";
+import { appendToShipParams, TO_SHIP_ORDER_STATUSES } from "@/modules/orders/constants/to-ship";
 
 interface OrdersFilterDrawerProps {
 	open: boolean;
@@ -38,7 +34,7 @@ interface OrdersFilterDrawerProps {
  * Preset composé « à expédier » — la seule file de travail quotidienne, et la seule
  * chose que ce tiroir mono-sélection ne pouvait pas exprimer : elle croise deux
  * dimensions multi-valeurs (`paymentStatus` ∈ {PAID, PARTIALLY_REFUNDED} ET
- * `fulfillmentStatus` ∈ {UNFULFILLED, PROCESSING}). Le plus proche disponible était
+ * `status` ∈ {PENDING, PROCESSING}). Le plus proche disponible était
  * « Statut: En préparation », qui ne désigne pas la même population.
  *
  * Miroir du prédicat SSOT `buildToShipWhereClause()` / `ORDERS_TO_SHIP_HREF`.
@@ -74,11 +70,6 @@ const FILTER_OPTIONS = [
 		value: `payment_${key}`,
 		label: `Paiement: ${label}`,
 	})),
-	// Fulfillment statuses
-	...Object.entries(FULFILLMENT_STATUS_LABELS).map(([key, label]) => ({
-		value: `fulfillment_${key}`,
-		label: `Livraison: ${label}`,
-	})),
 	// Invoice statuses
 	...Object.entries(INVOICE_STATUS_LABELS).map(([key, label]) => ({
 		value: `invoice_${key}`,
@@ -93,7 +84,6 @@ const FILTER_OPTIONS = [
 const RESET_FILTER_KEYS = [
 	"filter_status",
 	"filter_paymentStatus",
-	"filter_fulfillmentStatus",
 	"filter_invoiceStatus",
 	"filter_invoiceAnomaly",
 	"filter_pdfNotArchived",
@@ -118,14 +108,16 @@ const RANGE_KEYS = [
 
 function getCurrentFilter(searchParams: URLSearchParams): string {
 	const paymentStatuses = searchParams.getAll("filter_paymentStatus");
-	const fulfillmentStatuses = searchParams.getAll("filter_fulfillmentStatus");
+	// `getAll` et non `get` : `appendToShipParams` écrit PLUSIEURS `filter_status`
+	// depuis que la file « à expédier » se croise sur cet axe seul (Lot 4).
+	const statuses = searchParams.getAll("filter_status");
 
 	// Preset composé d'abord : ses paramètres ressemblent sinon à un filtre simple.
 	const isToShip =
 		paymentStatuses.length === SHIPPABLE_PAYMENT_STATUSES.length &&
 		SHIPPABLE_PAYMENT_STATUSES.every((s) => paymentStatuses.includes(s)) &&
-		fulfillmentStatuses.length === TO_SHIP_FULFILLMENT_STATUSES.length &&
-		TO_SHIP_FULFILLMENT_STATUSES.every((s) => fulfillmentStatuses.includes(s));
+		statuses.length === TO_SHIP_ORDER_STATUSES.length &&
+		TO_SHIP_ORDER_STATUSES.every((s) => statuses.includes(s));
 	if (isToShip) return TO_SHIP_VALUE;
 
 	// Presets booléens ensuite : eux aussi ressembleraient sinon à « Tous ».
@@ -135,12 +127,10 @@ function getCurrentFilter(searchParams: URLSearchParams): string {
 	}
 	if (searchParams.get("filter_showDeleted") === "deleted") return DELETED_VALUE;
 
-	const filterStatus = searchParams.get("filter_status");
 	const filterInvoiceStatus = searchParams.get("filter_invoiceStatus");
 
-	if (filterStatus) return `status_${filterStatus}`;
+	if (statuses[0]) return `status_${statuses[0]}`;
 	if (paymentStatuses[0]) return `payment_${paymentStatuses[0]}`;
-	if (fulfillmentStatuses[0]) return `fulfillment_${fulfillmentStatuses[0]}`;
 	if (filterInvoiceStatus) return `invoice_${filterInvoiceStatus}`;
 	return "all";
 }
@@ -173,8 +163,6 @@ function OrdersFilterDrawerInner({ open, onOpenChange, id }: OrdersFilterDrawerP
 				params.set("filter_status", value.replace("status_", ""));
 			} else if (value.startsWith("payment_")) {
 				params.set("filter_paymentStatus", value.replace("payment_", ""));
-			} else if (value.startsWith("fulfillment_")) {
-				params.set("filter_fulfillmentStatus", value.replace("fulfillment_", ""));
 			} else if (value.startsWith("invoice_")) {
 				params.set("filter_invoiceStatus", value.replace("invoice_", ""));
 			} else if (value === DELETED_VALUE) {
@@ -247,7 +235,7 @@ function OrdersFilterDrawerInner({ open, onOpenChange, id }: OrdersFilterDrawerP
 								>
 									<span>{option.label}</span>
 									{isSelected && (
-										<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
+										<CheckIcon className="text-primary size-4 shrink-0" aria-hidden="true" />
 									)}
 								</button>
 							);

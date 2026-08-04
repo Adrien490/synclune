@@ -11,6 +11,7 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
 		CANCELLED: "CANCELLED",
 	},
 	PaymentStatus: {
@@ -31,12 +32,12 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	Clock: () => <svg data-testid="icon-clock" />,
-	Package: () => <svg data-testid="icon-package" />,
-	Truck: () => <svg data-testid="icon-truck" />,
-	CircleCheck: () => <svg data-testid="icon-circle-check" />,
-	CircleX: () => <svg data-testid="icon-circle-x" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ClockIcon: () => <svg data-testid="icon-clock" />,
+	PackageIcon: () => <svg data-testid="icon-package" />,
+	TruckIcon: () => <svg data-testid="icon-truck" />,
+	CheckCircleIcon: () => <svg data-testid="icon-circle-check" />,
+	XCircleIcon: () => <svg data-testid="icon-circle-x" />,
 }));
 
 import { OrderProgressStepper } from "../order-detail/order-progress-stepper";

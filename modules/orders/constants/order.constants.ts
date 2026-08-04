@@ -17,7 +17,6 @@ export const GET_ORDERS_SELECT = {
 	total: true,
 	status: true,
 	paymentStatus: true,
-	fulfillmentStatus: true,
 	shippingCarrier: true,
 	trackingNumber: true,
 	trackingUrl: true,
@@ -83,7 +82,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	shippedAt: true,
 	status: true,
 	paymentStatus: true,
-	fulfillmentStatus: true,
 	paymentMethod: true,
 	paidAt: true,
 	invoiceNumber: true,
@@ -113,7 +111,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 		select: {
 			id: true,
 			skuId: true,
-			productId: true,
 			productTitle: true,
 			productDescription: true,
 			productImageUrl: true,
@@ -141,11 +138,7 @@ export const GET_ORDER_SELECT_ADMIN = {
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
-	discountUsages: {
-		select: {
-			discountCode: true,
-		},
-	},
+	discountCode: true,
 	history: {
 		select: {
 			id: true,
@@ -154,8 +147,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 			newStatus: true,
 			previousPaymentStatus: true,
 			newPaymentStatus: true,
-			previousFulfillmentStatus: true,
-			newFulfillmentStatus: true,
 			note: true,
 			metadata: true,
 			authorName: true,
@@ -202,7 +193,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	shippedAt: true,
 	status: true,
 	paymentStatus: true,
-	fulfillmentStatus: true,
 	paymentMethod: true,
 	paidAt: true,
 	invoiceNumber: true,
@@ -217,7 +207,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 		select: {
 			id: true,
 			skuId: true,
-			productId: true,
 			productTitle: true,
 			productDescription: true,
 			productImageUrl: true,
@@ -245,11 +234,7 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
-	discountUsages: {
-		select: {
-			discountCode: true,
-		},
-	},
+	discountCode: true,
 	history: {
 		select: {
 			id: true,
@@ -258,8 +243,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			newStatus: true,
 			previousPaymentStatus: true,
 			newPaymentStatus: true,
-			previousFulfillmentStatus: true,
-			newFulfillmentStatus: true,
 			note: true,
 			source: true,
 			createdAt: true,
@@ -327,8 +310,6 @@ export const SORT_OPTIONS = {
 	STATUS_DESC: "status-descending",
 	PAYMENT_STATUS_ASC: "paymentStatus-ascending",
 	PAYMENT_STATUS_DESC: "paymentStatus-descending",
-	FULFILLMENT_STATUS_ASC: "fulfillmentStatus-ascending",
-	FULFILLMENT_STATUS_DESC: "fulfillmentStatus-descending",
 } as const;
 
 export const GET_ORDERS_SORT_FIELDS: ReadonlyValues<typeof SORT_OPTIONS> =
@@ -343,8 +324,6 @@ export const SORT_LABELS = {
 	[SORT_OPTIONS.STATUS_DESC]: "Statut (Z-A)",
 	[SORT_OPTIONS.PAYMENT_STATUS_ASC]: "Paiement (A-Z)",
 	[SORT_OPTIONS.PAYMENT_STATUS_DESC]: "Paiement (Z-A)",
-	[SORT_OPTIONS.FULFILLMENT_STATUS_ASC]: "Livraison (A-Z)",
-	[SORT_OPTIONS.FULFILLMENT_STATUS_DESC]: "Livraison (Z-A)",
 } as const;
 
 // ============================================================================

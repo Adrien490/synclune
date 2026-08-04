@@ -24,13 +24,16 @@ const GET_ORDER_TRACKING_SELECT = {
 	createdAt: true,
 	status: true,
 	paymentStatus: true,
-	fulfillmentStatus: true,
 	paidAt: true,
 	shippedAt: true,
 	actualDelivery: true,
 	estimatedDelivery: true,
 	subtotal: true,
 	discountAmount: true,
+	// `discountCode` manquait ici alors qu'`OrderSummaryCard` le rend — « Réduction
+	// (CODE10) ». La prop étant optionnelle, `tsc` ne bronchait pas et la
+	// parenthèse restait vide sur toutes les commandes (audit V2, Lot 5).
+	discountCode: true,
 	shippingCost: true,
 	total: true,
 	paymentMethod: true,
@@ -47,7 +50,6 @@ const GET_ORDER_TRACKING_SELECT = {
 	items: {
 		select: {
 			id: true,
-			productId: true,
 			productTitle: true,
 			productDescription: true,
 			productImageUrl: true,

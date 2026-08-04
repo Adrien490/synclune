@@ -151,15 +151,8 @@ describe("buildOrderFilterConditions", () => {
 		expect(result.paymentStatus).toEqual({ in: ["PAID", "REFUNDED"] });
 	});
 
-	it("should filter by single fulfillmentStatus", () => {
-		const result = buildOrderFilterConditions(
-			filters({
-				fulfillmentStatus: "SHIPPED",
-			}),
-		);
-		expect(result.fulfillmentStatus).toBe("SHIPPED");
-	});
-
+	// L'ex-cas « single fulfillmentStatus » a disparu avec l'axe : il fait doublon
+	// avec « should filter by single status » ci-dessus (Lot 4, audit V2).
 	it("should filter by single invoiceStatus", () => {
 		const result = buildOrderFilterConditions(
 			filters({

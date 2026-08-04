@@ -18,7 +18,6 @@ export function transformRecentOrder(order: OrderForTransform): RecentOrderItem 
 		createdAt: order.createdAt,
 		status: order.status,
 		paymentStatus: order.paymentStatus,
-		fulfillmentStatus: order.fulfillmentStatus,
 		total: order.total,
 		customerName: order.customerName,
 		customerEmail: order.customerEmail,

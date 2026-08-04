@@ -36,6 +36,7 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
 		CANCELLED: "CANCELLED",
 	} as const,
 	PaymentStatus: {
@@ -87,24 +88,23 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Banknote: () => <svg data-testid="icon-banknote" />,
-	CircleCheck: () => <svg data-testid="icon-circle-check" />,
-	CreditCard: () => <svg data-testid="icon-credit-card" />,
-	Eye: () => <svg data-testid="icon-eye" />,
-	ExternalLink: () => <svg data-testid="icon-external-link" />,
-	Mail: () => <svg data-testid="icon-mail" />,
-	EllipsisVertical: () => <svg data-testid="icon-ellipsis-vertical" />,
-	Package: () => <svg data-testid="icon-package" />,
-	PackageCheck: () => <svg data-testid="icon-package-check" />,
-	PackageX: () => <svg data-testid="icon-package-x" />,
-	RotateCcw: () => <svg data-testid="icon-rotate-ccw" />,
-	ShoppingBag: () => <svg data-testid="icon-shopping-bag" />,
-	StickyNote: () => <svg data-testid="icon-sticky-note" />,
-	Trash2: () => <svg data-testid="icon-trash2" />,
-	Truck: () => <svg data-testid="icon-truck" />,
-	Undo2: () => <svg data-testid="icon-undo2" />,
-	CircleX: () => <svg data-testid="icon-circle-x" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	MoneyIcon: () => <svg data-testid="icon-banknote" />,
+	CheckCircleIcon: () => <svg data-testid="icon-circle-check" />,
+	CreditCardIcon: () => <svg data-testid="icon-credit-card" />,
+	EyeIcon: () => <svg data-testid="icon-eye" />,
+	ArrowSquareOutIcon: () => <svg data-testid="icon-external-link" />,
+	EnvelopeIcon: () => <svg data-testid="icon-mail" />,
+	DotsThreeVerticalIcon: () => <svg data-testid="icon-ellipsis-vertical" />,
+	PackageIcon: () => <svg data-testid="icon-package" />,
+	XCircleIcon: () => <svg data-testid="icon-circle-x" />,
+	ArrowArcLeftIcon: () => <svg data-testid="icon-package-x" />,
+	ArrowCounterClockwiseIcon: () => <svg data-testid="icon-rotate-ccw" />,
+	ShoppingBagIcon: () => <svg data-testid="icon-shopping-bag" />,
+	NoteIcon: () => <svg data-testid="icon-sticky-note" />,
+	TrashIcon: () => <svg data-testid="icon-trash2" />,
+	TruckIcon: () => <svg data-testid="icon-truck" />,
+	ArrowUUpLeftIcon: () => <svg data-testid="icon-undo2" />,
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
@@ -148,7 +148,6 @@ vi.mock("../revert-to-processing-dialog", () => ({
 vi.mock("../mark-as-returned-alert-dialog", () => ({
 	MARK_AS_RETURNED_DIALOG_ID: "mark-as-returned",
 }));
-vi.mock("../order-notes-dialog", () => ({ ORDER_NOTES_DIALOG_ID: "order-notes" }));
 
 // ---------------------------------------------------------------------------
 // Component import — after all mocks
@@ -165,7 +164,6 @@ function createOrder(overrides: Record<string, unknown> = {}) {
 		orderNumber: "CMD-001",
 		status: "PENDING" as const,
 		paymentStatus: "PENDING" as const,
-		fulfillmentStatus: null,
 		trackingNumber: null,
 		trackingUrl: null,
 		...overrides,
@@ -221,12 +219,6 @@ describe("OrderRowActions", () => {
 			setupMocks();
 			render(<OrderRowActions order={createOrder()} />);
 			expect(screen.getByText("Voir les détails")).toBeInTheDocument();
-		});
-
-		it("always shows 'Notes internes' menu item", () => {
-			setupMocks();
-			render(<OrderRowActions order={createOrder()} />);
-			expect(screen.getByText("Notes internes")).toBeInTheDocument();
 		});
 
 		it("always shows 'Renvoyer un email' submenu trigger", () => {
@@ -306,26 +298,24 @@ describe("OrderRowActions", () => {
 	});
 
 	describe("derived permissions - returned", () => {
-		it("shows 'Marquer comme retourné' when status is DELIVERED and fulfillmentStatus is not RETURNED", () => {
+		it("shows 'Marquer comme retourné' when status is DELIVERED and status is not RETURNED", () => {
 			setupMocks({ canMarkAsReturned: true });
 			render(
 				<OrderRowActions
 					order={createOrder({
 						status: "DELIVERED" as const,
-						fulfillmentStatus: "DELIVERED" as const,
 					})}
 				/>,
 			);
 			expect(screen.getByText("Marquer comme retourné")).toBeInTheDocument();
 		});
 
-		it("hides 'Marquer comme retourné' when fulfillmentStatus is RETURNED", () => {
+		it("hides 'Marquer comme retourné' when status is RETURNED", () => {
 			setupMocks({ canMarkAsReturned: false });
 			render(
 				<OrderRowActions
 					order={createOrder({
 						status: "DELIVERED" as const,
-						fulfillmentStatus: "RETURNED" as const,
 					})}
 				/>,
 			);

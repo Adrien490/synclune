@@ -51,7 +51,10 @@ describe("@regression orders-filter-surface-parity", () => {
 		expect(keys).toContain("status");
 		expect(keys).toContain("totalMin");
 		expect(keys).toContain("invoiceAnomaly");
-		expect(keys.length).toBeGreaterThanOrEqual(12);
+		// Plancher abaissé de 12 à 11 au Lot 4 (audit V2) : la clé `fulfillmentStatus`
+		// part avec l'axe, et avec elle une section entière du tiroir de filtres qui
+		// montrait le même avancement que la section « statut ».
+		expect(keys.length).toBeGreaterThanOrEqual(11);
 	});
 
 	/**

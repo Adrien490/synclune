@@ -1,6 +1,6 @@
 "use server";
 
-import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
+import { OrderStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -24,7 +24,7 @@ import { canMarkAsReturned } from "../services/order-status-validation.service";
  * Règles métier :
  * - La commande doit être DELIVERED
  * - Le OrderStatus reste DELIVERED (on ne revient pas en arrière)
- * - Passe FulfillmentStatus à RETURNED
+ * - Passe OrderStatus à RETURNED
  * - Optionnel : raison du retour pour l'audit trail
  *
  * ORD-BIZ-010 : cette action NE déclenche PAS de restock automatique. Depuis
@@ -66,7 +66,6 @@ export async function markAsReturned(
 					id: true,
 					orderNumber: true,
 					status: true,
-					fulfillmentStatus: true,
 					total: true,
 					customerEmail: true,
 					customerName: true,
@@ -85,15 +84,18 @@ export async function markAsReturned(
 			// canMarkAsReturned). count===0 ⇒ writer concurrent entre le findUnique
 			// et l'update — abort sans audit (le findUnique ne verrouille pas la
 			// ligne en read-committed).
+			// Le retour vit désormais sur `status` (audit V2, Lot 4) : la garde
+			// atomique se lit sur le SEUL axe restant, et `DELIVERED` exclut déjà
+			// `RETURNED` par construction — l'ancien `fulfillmentStatus != RETURNED`
+			// n'a plus d'équivalent à écrire.
 			const updated = await tx.order.updateMany({
 				where: {
 					id,
 					...notDeleted,
 					status: OrderStatus.DELIVERED,
-					fulfillmentStatus: { not: FulfillmentStatus.RETURNED },
 				},
 				data: {
-					fulfillmentStatus: FulfillmentStatus.RETURNED,
+					status: OrderStatus.RETURNED,
 				},
 			});
 			if (updated.count === 0) {
@@ -105,10 +107,9 @@ export async function markAsReturned(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "RETURNED",
-				previousFulfillmentStatus: found.fulfillmentStatus,
-				newFulfillmentStatus: FulfillmentStatus.RETURNED,
+				previousStatus: found.status,
+				newStatus: OrderStatus.RETURNED,
 				note: validated.data.reason,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: { requiresRefund: true, restockAutomated: false },

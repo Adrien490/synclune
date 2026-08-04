@@ -1,6 +1,6 @@
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 import type { OrderRefundItem } from "@/modules/orders/data/get-order-refunds";
-import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import type { OrderStatus, PaymentStatus } from "@/app/generated/prisma/browser";
 
 // ============================================================================
 // HEADER (Client Component)
@@ -8,7 +8,6 @@ import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/genera
 
 export interface OrderHeaderProps {
 	order: GetOrderReturn;
-	notesCount: number;
 }
 
 // ============================================================================
@@ -18,7 +17,6 @@ export interface OrderHeaderProps {
 export interface OrderAlertsProps {
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
-	fulfillmentStatus: FulfillmentStatus;
 }
 
 export interface OrderStatusBadgesProps {

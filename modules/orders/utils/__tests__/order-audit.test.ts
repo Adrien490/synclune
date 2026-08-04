@@ -38,11 +38,8 @@ describe("createOrderAudit", () => {
 			newStatus: "CONFIRMED" as never,
 			previousPaymentStatus: "UNPAID" as never,
 			newPaymentStatus: "PAID" as never,
-			previousFulfillmentStatus: "UNFULFILLED" as never,
-			newFulfillmentStatus: "SHIPPED" as never,
 			note: "Admin action",
 			metadata: { reason: "test" },
-			authorId: "user-1",
 			authorName: "Admin User",
 			source: "ADMIN" as never,
 		});
@@ -56,11 +53,8 @@ describe("createOrderAudit", () => {
 				newStatus: "CONFIRMED",
 				previousPaymentStatus: "UNPAID",
 				newPaymentStatus: "PAID",
-				previousFulfillmentStatus: "UNFULFILLED",
-				newFulfillmentStatus: "SHIPPED",
 				note: "Admin action",
 				metadata: { reason: "test" },
-				authorId: "user-1",
 				authorName: "Admin User",
 				source: "ADMIN",
 			}),
@@ -88,10 +82,7 @@ describe("createOrderAudit", () => {
 		expect(callData.newStatus).toBeUndefined();
 		expect(callData.previousPaymentStatus).toBeUndefined();
 		expect(callData.newPaymentStatus).toBeUndefined();
-		expect(callData.previousFulfillmentStatus).toBeUndefined();
-		expect(callData.newFulfillmentStatus).toBeUndefined();
 		expect(callData.note).toBeUndefined();
-		expect(callData.authorId).toBeUndefined();
 		expect(callData.authorName).toBeUndefined();
 	});
 
@@ -192,9 +183,6 @@ describe("createOrderAuditTx", () => {
 			newStatus: "CANCELLED" as never,
 			previousPaymentStatus: "UNPAID" as never,
 			newPaymentStatus: "REFUNDED" as never,
-			previousFulfillmentStatus: "UNFULFILLED" as never,
-			newFulfillmentStatus: "RETURNED" as never,
-			authorId: "admin-1",
 			authorName: "Super Admin",
 			metadata: { ip: "127.0.0.1" },
 		});
@@ -204,9 +192,6 @@ describe("createOrderAuditTx", () => {
 		expect(callData.newStatus).toBe("CANCELLED");
 		expect(callData.previousPaymentStatus).toBe("UNPAID");
 		expect(callData.newPaymentStatus).toBe("REFUNDED");
-		expect(callData.previousFulfillmentStatus).toBe("UNFULFILLED");
-		expect(callData.newFulfillmentStatus).toBe("RETURNED");
-		expect(callData.authorId).toBe("admin-1");
 		expect(callData.authorName).toBe("Super Admin");
 		expect(callData.metadata).toEqual({ ip: "127.0.0.1" });
 	});
@@ -229,7 +214,6 @@ describe("buildStatusChangeAudit", () => {
 	const baseOrder = {
 		status: "PENDING" as const,
 		paymentStatus: "UNPAID" as const,
-		fulfillmentStatus: "UNFULFILLED" as const,
 	};
 
 	it("detects status change and sets previous/new status", () => {
@@ -283,23 +267,19 @@ describe("buildStatusChangeAudit", () => {
 	});
 
 	it("detects fulfillment status change", () => {
-		const newOrder = { ...baseOrder, fulfillmentStatus: "SHIPPED" as const };
+		const newOrder = { ...baseOrder, status: "SHIPPED" as const };
 		const result = buildStatusChangeAudit(
 			"order-1",
 			"FULFILLMENT_UPDATE" as never,
 			baseOrder as never,
 			newOrder as never,
 		);
-
-		expect(result.previousFulfillmentStatus).toBe("UNFULFILLED");
-		expect(result.newFulfillmentStatus).toBe("SHIPPED");
 	});
 
 	it("detects all three status changes simultaneously", () => {
 		const newOrder = {
 			status: "CONFIRMED" as const,
 			paymentStatus: "PAID" as const,
-			fulfillmentStatus: "SHIPPED" as const,
 		};
 		const result = buildStatusChangeAudit(
 			"order-1",
@@ -312,8 +292,6 @@ describe("buildStatusChangeAudit", () => {
 		expect(result.newStatus).toBe("CONFIRMED");
 		expect(result.previousPaymentStatus).toBe("UNPAID");
 		expect(result.newPaymentStatus).toBe("PAID");
-		expect(result.previousFulfillmentStatus).toBe("UNFULFILLED");
-		expect(result.newFulfillmentStatus).toBe("SHIPPED");
 	});
 
 	it("defaults source to ADMIN when not specified", () => {
@@ -347,14 +325,12 @@ describe("buildStatusChangeAudit", () => {
 			baseOrder as never,
 			{
 				note: "Test note",
-				authorId: "user-1",
 				authorName: "Admin",
 				metadata: { reason: "test" },
 			},
 		);
 
 		expect(result.note).toBe("Test note");
-		expect(result.authorId).toBe("user-1");
 		expect(result.authorName).toBe("Admin");
 		expect(result.metadata).toEqual({ reason: "test" });
 	});
@@ -371,16 +347,13 @@ describe("buildStatusChangeAudit", () => {
 		expect(result.action).toBe("CANCELLED");
 	});
 
-	it("sets fulfillmentStatus fields to undefined when fulfillmentStatus is unchanged", () => {
+	it("sets status fields to undefined when status is unchanged", () => {
 		const result = buildStatusChangeAudit(
 			"order-1",
 			"NOTE_ADDED" as never,
 			baseOrder as never,
 			baseOrder as never,
 		);
-
-		expect(result.previousFulfillmentStatus).toBeUndefined();
-		expect(result.newFulfillmentStatus).toBeUndefined();
 	});
 
 	it("omits optional options fields when options object is not provided", () => {
@@ -392,7 +365,6 @@ describe("buildStatusChangeAudit", () => {
 		);
 
 		expect(result.note).toBeUndefined();
-		expect(result.authorId).toBeUndefined();
 		expect(result.authorName).toBeUndefined();
 		expect(result.metadata).toBeUndefined();
 	});
@@ -410,8 +382,6 @@ describe("buildStatusChangeAudit", () => {
 		expect(result.newStatus).toBe("CANCELLED");
 		expect(result.previousPaymentStatus).toBeUndefined();
 		expect(result.newPaymentStatus).toBeUndefined();
-		expect(result.previousFulfillmentStatus).toBeUndefined();
-		expect(result.newFulfillmentStatus).toBeUndefined();
 	});
 
 	it("only detects payment change while status and fulfillment remain the same", () => {
@@ -427,26 +397,17 @@ describe("buildStatusChangeAudit", () => {
 		expect(result.newStatus).toBeUndefined();
 		expect(result.previousPaymentStatus).toBe("UNPAID");
 		expect(result.newPaymentStatus).toBe("REFUNDED");
-		expect(result.previousFulfillmentStatus).toBeUndefined();
-		expect(result.newFulfillmentStatus).toBeUndefined();
 	});
 
-	it("only detects fulfillment change while status and payment remain the same", () => {
-		const newOrder = { ...baseOrder, fulfillmentStatus: "DELIVERED" as const };
-		const result = buildStatusChangeAudit(
-			"order-1",
-			"FULFILLMENT_UPDATE" as never,
-			baseOrder as never,
-			newOrder as never,
-		);
-
-		expect(result.previousStatus).toBeUndefined();
-		expect(result.newStatus).toBeUndefined();
-		expect(result.previousPaymentStatus).toBeUndefined();
-		expect(result.newPaymentStatus).toBeUndefined();
-		expect(result.previousFulfillmentStatus).toBe("UNFULFILLED");
-		expect(result.newFulfillmentStatus).toBe("DELIVERED");
-	});
+	// Le cas « seul le traitement change, statut et paiement inchangés » est devenu
+	// INEXPRIMABLE au Lot 4 (audit V2), pas seulement non testé : `fulfillmentStatus`
+	// n'existe plus, et les 4 valeurs qu'il partageait avec `status` étaient écrites
+	// en LOCKSTEP par les 7 actions de commande. Un changement de traitement EST
+	// désormais un changement de statut — couvert par les cas ci-dessus.
+	//
+	// Condition de réouverture : si un jour l'avancement logistique se dissocie de
+	// l'avancement commercial (ex. préparation partielle multi-colis), il faudra un
+	// second axe ET ce cas de détection indépendante.
 
 	it("all statuses unchanged produces a params object with all status fields undefined", () => {
 		const result = buildStatusChangeAudit(
@@ -461,8 +422,6 @@ describe("buildStatusChangeAudit", () => {
 		expect(result.newStatus).toBeUndefined();
 		expect(result.previousPaymentStatus).toBeUndefined();
 		expect(result.newPaymentStatus).toBeUndefined();
-		expect(result.previousFulfillmentStatus).toBeUndefined();
-		expect(result.newFulfillmentStatus).toBeUndefined();
 		expect(result.note).toBe("Just a note");
 	});
 

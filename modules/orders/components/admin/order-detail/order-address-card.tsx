@@ -1,8 +1,8 @@
 "use client";
 
-import { MapPin, Pencil, Phone } from "lucide-react";
+import { MapPinIcon, PencilSimpleIcon, PhoneIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
-import { FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { OrderStatus } from "@/app/generated/prisma/browser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { CopyButton } from "@/shared/components/copy-button";
@@ -33,9 +33,9 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 	const editShippingDialog = useAlertDialog(EDIT_SHIPPING_ADDRESS_DIALOG_ID);
 
 	const canEditShipping =
-		order.fulfillmentStatus !== FulfillmentStatus.SHIPPED &&
-		order.fulfillmentStatus !== FulfillmentStatus.DELIVERED &&
-		order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
+		order.status !== OrderStatus.SHIPPED &&
+		order.status !== OrderStatus.DELIVERED &&
+		order.status !== OrderStatus.RETURNED;
 
 	const shippingAddressText = [
 		`${order.shippingFirstName} ${order.shippingLastName}`,
@@ -71,7 +71,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 		<Card>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<CardTitle className="flex items-center gap-2 text-base">
-					<MapPin className="size-5" aria-hidden="true" />
+					<MapPinIcon className="size-5" aria-hidden="true" />
 					Livraison
 				</CardTitle>
 				<div className="flex items-center gap-1">
@@ -84,7 +84,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 							className="min-h-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9"
 							aria-label="Modifier l'adresse de livraison"
 						>
-							<Pencil className="size-4" aria-hidden="true" />
+							<PencilSimpleIcon className="size-4" aria-hidden="true" />
 							Modifier
 						</Button>
 					)}
@@ -103,7 +103,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 					<p>{getCountryLabel(order.shippingCountry)}</p>
 					{order.shippingPhone && (
 						<p className="text-muted-foreground mt-2 flex items-center gap-1">
-							<Phone className="size-3" aria-hidden="true" />
+							<PhoneIcon className="size-3" aria-hidden="true" />
 							{order.shippingPhone}
 						</p>
 					)}

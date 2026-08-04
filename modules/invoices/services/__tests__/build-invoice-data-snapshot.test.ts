@@ -68,7 +68,6 @@ function makeB2COrder(overrides: Partial<Order> = {}): Order {
 		shippedAt: null,
 		status: "PROCESSING",
 		paymentStatus: "PAID",
-		fulfillmentStatus: "UNFULFILLED",
 		paymentMethod: "CARD",
 		paidAt: new Date("2026-05-27T18:00:00Z"),
 		invoiceNumber: "F-2026-00042",

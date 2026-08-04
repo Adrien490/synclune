@@ -306,8 +306,8 @@ export async function createOrderInTransaction(
 					let emailCount = 0;
 
 					if (normalizedEmail) {
-						emailCount = await tx.discountUsage.count({
-							where: { discountId: discount.id, order: { customerEmail: normalizedEmail } },
+						emailCount = await tx.order.count({
+							where: { discountId: discount.id, customerEmail: normalizedEmail },
 						});
 					}
 
@@ -438,8 +438,14 @@ export async function createOrderInTransaction(
 					shippingPhone: shippingAddress.phoneNumber ?? "",
 					status: "PENDING",
 					paymentStatus: "PENDING",
-					fulfillmentStatus: "UNFULFILLED",
 					stripePaymentIntentId: paymentIntentId,
+					// Code promo posé À LA CRÉATION, plus dans une ligne `DiscountUsage`
+					// écrite après coup (audit V2, Lot 2). Le snapshot `discountCode` suit
+					// la même doctrine que `OrderItem.productTitle` : figé au checkout, il
+					// survit au renommage comme à la suppression du code.
+					...(appliedDiscountId && discountAmount > 0
+						? { discountId: appliedDiscountId, discountCode: appliedDiscountCode }
+						: {}),
 				},
 			});
 
@@ -478,7 +484,6 @@ export async function createOrderInTransaction(
 				await tx.orderItem.create({
 					data: {
 						orderId: newOrder.id,
-						productId: product.id,
 						skuId: sku.id,
 						productTitle: product.title,
 						productDescription: product.description ?? null,
@@ -490,17 +495,6 @@ export async function createOrderInTransaction(
 						skuSize: sku.size ?? null,
 						price: sku.priceInclTax,
 						quantity: cartItem.quantity,
-					},
-				});
-			}
-
-			// Record discount usage for audit trail
-			if (appliedDiscountId && discountAmount > 0) {
-				await tx.discountUsage.create({
-					data: {
-						discountId: appliedDiscountId,
-						orderId: newOrder.id,
-						discountCode: appliedDiscountCode!,
 					},
 				});
 			}

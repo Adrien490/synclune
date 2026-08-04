@@ -3,7 +3,6 @@
 import {
 	OrderStatus,
 	PaymentStatus,
-	FulfillmentStatus,
 	type Prisma,
 	HistorySource,
 } from "@/app/generated/prisma/client";
@@ -39,7 +38,6 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
  * - Le paiement ne doit pas déjà être PAID
  * - Passe PaymentStatus à PAID
  * - Passe OrderStatus à PROCESSING
- * - Passe FulfillmentStatus à PROCESSING
  * - Enregistre la date de paiement
  */
 export async function markAsPaid(
@@ -128,7 +126,6 @@ export async function markAsPaid(
 					orderNumber: true,
 					status: true,
 					paymentStatus: true,
-					fulfillmentStatus: true,
 					customerEmail: true,
 					customerName: true,
 					subtotal: true,
@@ -332,7 +329,6 @@ export async function markAsPaid(
 				data: {
 					paymentStatus: PaymentStatus.PAID,
 					status: OrderStatus.PROCESSING,
-					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 					paidAt: new Date(),
 					invoiceRetryDeferred: true,
 				},
@@ -350,9 +346,6 @@ export async function markAsPaid(
 				newStatus: OrderStatus.PROCESSING,
 				previousPaymentStatus: found.paymentStatus,
 				newPaymentStatus: PaymentStatus.PAID,
-				previousFulfillmentStatus: found.fulfillmentStatus,
-				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {

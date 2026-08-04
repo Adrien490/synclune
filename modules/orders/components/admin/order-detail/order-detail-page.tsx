@@ -1,6 +1,5 @@
-import { TriangleAlert } from "lucide-react";
+import { WarningIcon } from "@phosphor-icons/react/ssr";
 
-import { getOrderNotes } from "@/modules/orders/data/get-order-notes";
 import { getOrderRefunds } from "@/modules/orders/data/get-order-refunds";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
@@ -24,15 +23,9 @@ interface OrderDetailPageProps {
 }
 
 export async function OrderDetailPage({ order }: OrderDetailPageProps) {
-	// Fetch données complémentaires côté serveur en parallèle
-	const [notesResult, refundsResult] = await Promise.all([
-		getOrderNotes(order.id),
-		getOrderRefunds(order.id),
-	]);
+	const refundsResult = await getOrderRefunds(order.id);
 
-	const notesError = "error" in notesResult ? notesResult.error : null;
 	const refundsError = "error" in refundsResult ? refundsResult.error : null;
-	const notesCount = "notes" in notesResult ? notesResult.notes.length : 0;
 	const refunds = "refunds" in refundsResult ? refundsResult.refunds : [];
 
 	// Permissions calculées via state machine centralisée
@@ -41,29 +34,22 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 
 	return (
 		<div className="space-y-4 md:space-y-6">
-			<OrderHeader order={order} notesCount={notesCount} />
+			<OrderHeader order={order} />
 
 			<OrderProgressStepper status={order.status} paymentStatus={order.paymentStatus} />
 
-			{(notesError ?? refundsError) && (
+			{refundsError && (
 				<Alert variant="destructive" role="alert">
-					<TriangleAlert className="size-4" />
+					<WarningIcon className="size-4" />
 					<AlertTitle>Chargement partiel</AlertTitle>
 					<AlertDescription>
-						{notesError && refundsError
-							? "Impossible de charger les notes internes et les remboursements de cette commande. Les compteurs peuvent être incorrects — rafraîchir la page."
-							: notesError
-								? "Impossible de charger les notes internes de cette commande. Le compteur peut être incorrect — rafraîchir la page."
-								: "Impossible de charger les remboursements de cette commande. La liste peut être incomplète — rafraîchir la page avant de créer un nouveau remboursement."}
+						Impossible de charger les remboursements de cette commande. La liste peut être
+						incomplète — rafraîchir la page avant de créer un nouveau remboursement.
 					</AlertDescription>
 				</Alert>
 			)}
 
-			<OrderAlerts
-				status={order.status}
-				paymentStatus={order.paymentStatus}
-				fulfillmentStatus={order.fulfillmentStatus}
-			/>
+			<OrderAlerts status={order.status} paymentStatus={order.paymentStatus} />
 
 			<OrderStatusBadges order={order} />
 

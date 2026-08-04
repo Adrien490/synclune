@@ -1,15 +1,15 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// Mock lucide-react icons to avoid SVG rendering complexity
-vi.mock("lucide-react", () => ({
-	CircleCheck: () => <svg data-testid="icon-check-circle" />,
-	Clock: () => <svg data-testid="icon-clock" />,
-	CreditCard: () => <svg data-testid="icon-credit-card" />,
-	Package: () => <svg data-testid="icon-package" />,
-	Truck: () => <svg data-testid="icon-truck" />,
-	CircleX: () => <svg data-testid="icon-x-circle" />,
-	Undo2: () => <svg data-testid="icon-undo" />,
+// Mock des icônes Phosphor pour éviter la complexité du rendu SVG
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CheckCircleIcon: () => <svg data-testid="icon-check-circle" />,
+	ClockIcon: () => <svg data-testid="icon-clock" />,
+	CreditCardIcon: () => <svg data-testid="icon-credit-card" />,
+	PackageIcon: () => <svg data-testid="icon-package" />,
+	TruckIcon: () => <svg data-testid="icon-truck" />,
+	XCircleIcon: () => <svg data-testid="icon-x-circle" />,
+	ArrowUUpLeftIcon: () => <svg data-testid="icon-undo" />,
 }));
 
 // Mock Badge to render children with variant as a data attribute
@@ -62,7 +62,7 @@ type OrderInput = Parameters<typeof OrderStatusTimeline>[0]["order"];
 /**
  * Libellé d'une étape de la timeline.
  *
- * Nécessaire depuis que les fixtures posent des paires (status, fulfillmentStatus)
+ * Un seul axe depuis le Lot 4 (audit V2) : les fixtures ne posent plus qu'un `status`
  * cohérentes : le badge d'en-tête rend `ORDER_STATUS_LABELS[status]`, qui collide
  * avec le libellé de l'étape correspondante (« Expédiée », « Livrée »). Le badge
  * est un `<span>`, les étapes des `<p>`.
@@ -77,7 +77,6 @@ function createOrder(overrides: Partial<OrderInput> = {}): OrderInput {
 	return {
 		status: "PENDING",
 		paymentStatus: "PENDING",
-		fulfillmentStatus: "UNFULFILLED",
 		createdAt: BASE_DATE,
 		paidAt: null,
 		shippedAt: null,
@@ -104,11 +103,7 @@ describe("OrderStatusTimeline", () => {
 		});
 
 		it("renders the badge with success variant for DELIVERED status", () => {
-			render(
-				<OrderStatusTimeline
-					order={createOrder({ status: "DELIVERED", fulfillmentStatus: "DELIVERED" })}
-				/>,
-			);
+			render(<OrderStatusTimeline order={createOrder({ status: "DELIVERED" })} />);
 			expect(screen.getByTestId("badge").getAttribute("data-variant")).toBe("success");
 		});
 	});
@@ -197,15 +192,15 @@ describe("OrderStatusTimeline", () => {
 		});
 	});
 
-	// ⚠️ Les fixtures ci-dessous posent des paires (status, fulfillmentStatus)
+	// ⚠️ Un seul axe depuis le Lot 4 : les fixtures ne posent plus qu'un `status`
 	// COHÉRENTES, telles que la production les produit. Les anciennes ne
-	// renseignaient que `fulfillmentStatus`, produisant des états impossibles
-	// (`status: PENDING` + `fulfillmentStatus: DELIVERED`) — c'est ce qui rendait
+	// renseignaient que `status`, produisant des états impossibles
+	// (`status: PENDING` + `status: DELIVERED`) — c'est ce qui rendait
 	// invisible le fait que la timeline ignorait `status`.
 	describe("preparation step", () => {
 		// Le cas le plus important : l'état réel de toute commande fraîchement
 		// payée. Le webhook pose `status = PROCESSING` et laisse
-		// `fulfillmentStatus = UNFULFILLED`. Avant correction, l'étape restait
+		// `status = UNFULFILLED`. Avant correction, l'étape restait
 		// grise pour 100 % des clientes ayant payé.
 		it("est active sur une commande payée dont le fulfillment est resté UNFULFILLED", () => {
 			render(
@@ -214,7 +209,6 @@ describe("OrderStatusTimeline", () => {
 						status: "PROCESSING",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "UNFULFILLED",
 					})}
 				/>,
 			);
@@ -229,7 +223,6 @@ describe("OrderStatusTimeline", () => {
 						status: "PROCESSING",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "PROCESSING",
 					})}
 				/>,
 			);
@@ -244,7 +237,6 @@ describe("OrderStatusTimeline", () => {
 						status: "SHIPPED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
 					})}
 				/>,
@@ -260,7 +252,6 @@ describe("OrderStatusTimeline", () => {
 						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "DELIVERED",
 						actualDelivery: DELIVERED_DATE,
 					})}
 				/>,
@@ -300,7 +291,6 @@ describe("OrderStatusTimeline", () => {
 						status: "SHIPPED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
 					})}
 				/>,
@@ -316,7 +306,6 @@ describe("OrderStatusTimeline", () => {
 						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "DELIVERED",
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: DELIVERED_DATE,
 					})}
@@ -333,7 +322,6 @@ describe("OrderStatusTimeline", () => {
 						status: "PROCESSING",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "PROCESSING",
 					})}
 				/>,
 			);
@@ -350,7 +338,6 @@ describe("OrderStatusTimeline", () => {
 						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "DELIVERED",
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: DELIVERED_DATE,
 					})}
@@ -367,7 +354,6 @@ describe("OrderStatusTimeline", () => {
 						status: "SHIPPED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
 					})}
 				/>,
@@ -383,7 +369,6 @@ describe("OrderStatusTimeline", () => {
 						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						fulfillmentStatus: "DELIVERED",
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: DELIVERED_DATE,
 					})}
@@ -398,7 +383,6 @@ describe("OrderStatusTimeline", () => {
 				<OrderStatusTimeline
 					order={createOrder({
 						status: "SHIPPED",
-						fulfillmentStatus: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: null,
 					})}
@@ -412,17 +396,18 @@ describe("OrderStatusTimeline", () => {
 		});
 	});
 
-	// `markAsReturned` pose `fulfillmentStatus = RETURNED` en laissant
-	// `status = DELIVERED`. Avant correction, aucune branche ne traitait cette
-	// valeur : le badge affichait « Livrée » pendant que les trois étapes de
-	// fulfillment régressaient toutes en gris, sans mention du retour.
+	// `markAsReturned` pose `status = RETURNED`. Historiquement le retour vivait sur
+	// `fulfillmentStatus` en laissant `status = DELIVERED`, et aucune branche ne
+	// traitait cette valeur : le badge affichait « Livrée » pendant que les trois
+	// étapes régressaient toutes en gris, sans mention du retour. Depuis la fusion
+	// des axes (Lot 4), le retour est une valeur d'`OrderStatus` à part entière.
 	describe("returned order", () => {
 		function returnedOrder() {
 			return createOrder({
-				status: "DELIVERED",
+				// Ex-paire (DELIVERED, RETURNED) : axe unique depuis le Lot 4.
+				status: "RETURNED",
 				paymentStatus: "PAID",
 				paidAt: PAID_DATE,
-				fulfillmentStatus: "RETURNED",
 				shippedAt: SHIPPED_DATE,
 				actualDelivery: DELIVERED_DATE,
 			});
@@ -446,7 +431,6 @@ describe("OrderStatusTimeline", () => {
 					order={createOrder({
 						status: "DELIVERED",
 						paymentStatus: "PAID",
-						fulfillmentStatus: "DELIVERED",
 					})}
 				/>,
 			);
@@ -467,7 +451,6 @@ describe("OrderStatusTimeline", () => {
 							status: "DELIVERED",
 							paymentStatus,
 							paidAt: PAID_DATE,
-							fulfillmentStatus: "DELIVERED",
 						})}
 					/>,
 				);

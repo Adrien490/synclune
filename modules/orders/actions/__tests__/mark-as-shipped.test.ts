@@ -116,7 +116,6 @@ function createShippableOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
 		status: "PROCESSING",
 		paymentStatus: "PAID",
-		fulfillmentStatus: "PROCESSING",
 		...overrides,
 	});
 }

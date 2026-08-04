@@ -69,7 +69,6 @@ export async function updateTracking(
 					id: true,
 					orderNumber: true,
 					status: true,
-					fulfillmentStatus: true,
 					trackingNumber: true,
 					actualDelivery: true,
 				},
@@ -100,7 +99,7 @@ export async function updateTracking(
 			// un `revertToProcessing` concurrent nullait les champs de suivi et cette
 			// action les repeuplait aussitôt sur une commande revenue en PROCESSING
 			// (la garde ORD-BIZ-006 des 30 jours subissait la même course).
-			// Aligné sur les 5 autres writers de fulfillment.
+			// Aligné sur les 5 autres writers de statut.
 			const updated = await tx.order.updateMany({
 				where: {
 					id,
@@ -125,7 +124,6 @@ export async function updateTracking(
 				orderId: id,
 				action: "TRACKING_UPDATED",
 				note: "Suivi mis à jour",
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				metadata: {
 					previousTrackingNumber: found.trackingNumber,

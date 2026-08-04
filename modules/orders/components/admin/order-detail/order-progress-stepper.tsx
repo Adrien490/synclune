@@ -3,7 +3,13 @@
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/browser";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
-import { Clock, Package, Truck, CircleCheck, CircleX } from "lucide-react";
+import {
+	CheckCircleIcon,
+	ClockIcon,
+	PackageIcon,
+	TruckIcon,
+	XCircleIcon,
+} from "@phosphor-icons/react/ssr";
 
 // ============================================================================
 // TYPES
@@ -17,7 +23,7 @@ interface OrderProgressStepperProps {
 interface Step {
 	key: OrderStatus;
 	label: string;
-	icon: typeof Clock;
+	icon: typeof ClockIcon;
 }
 
 // ============================================================================
@@ -25,10 +31,10 @@ interface Step {
 // ============================================================================
 
 const STEPS: Step[] = [
-	{ key: OrderStatus.PENDING, label: "En attente", icon: Clock },
-	{ key: OrderStatus.PROCESSING, label: "Préparation", icon: Package },
-	{ key: OrderStatus.SHIPPED, label: "Expédiée", icon: Truck },
-	{ key: OrderStatus.DELIVERED, label: "Livrée", icon: CircleCheck },
+	{ key: OrderStatus.PENDING, label: "En attente", icon: ClockIcon },
+	{ key: OrderStatus.PROCESSING, label: "Préparation", icon: PackageIcon },
+	{ key: OrderStatus.SHIPPED, label: "Expédiée", icon: TruckIcon },
+	{ key: OrderStatus.DELIVERED, label: "Livrée", icon: CheckCircleIcon },
 ];
 
 const STATUS_ORDER: Record<OrderStatus, number> = {
@@ -36,6 +42,10 @@ const STATUS_ORDER: Record<OrderStatus, number> = {
 	[OrderStatus.PROCESSING]: 1,
 	[OrderStatus.SHIPPED]: 2,
 	[OrderStatus.DELIVERED]: 3,
+	// Hors du parcours nominal, comme CANCELLED : le stepper décrit l'acheminement
+	// (attente → préparation → expédition → livraison). Un retour survient APRÈS
+	// livraison et n'est pas une 5ᵉ étape — il est signalé par `OrderAlerts`.
+	[OrderStatus.RETURNED]: -1,
 	[OrderStatus.CANCELLED]: -1,
 };
 
@@ -131,7 +141,7 @@ export function OrderProgressStepper({ status, paymentStatus }: OrderProgressSte
 			{isCancelled && (
 				<div className="mt-4 flex justify-center">
 					<Badge variant="destructive" className="gap-1">
-						<CircleX className="size-3.5" aria-hidden="true" />
+						<XCircleIcon className="size-3.5" aria-hidden="true" />
 						Commande annulée
 					</Badge>
 				</div>

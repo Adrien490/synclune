@@ -78,9 +78,11 @@ describe("getAdminNavBadges", () => {
 				deletedAt: null,
 				// Une commande partiellement remboursée reste à expédier.
 				paymentStatus: { in: ["PAID", "PARTIALLY_REFUNDED"] },
-				// « En préparation » n'est pas « expédié ».
-				fulfillmentStatus: { in: ["UNFULFILLED", "PROCESSING"] },
-				status: { not: "CANCELLED" },
+				// « En préparation » n'est pas « expédié ». `PENDING` remplace
+				// l'ex-`UNFULFILLED` : axe unique depuis le Lot 4 (audit V2).
+				// Plus de `status: { not: CANCELLED }` : l'exclusion est STRUCTURELLE
+				// depuis le Lot 4 — CANCELLED n'est pas dans la liste positive.
+				status: { in: ["PENDING", "PROCESSING"] },
 			},
 		});
 	});

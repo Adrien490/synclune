@@ -4,8 +4,6 @@ import {
 	ORDER_STATUS_VARIANTS,
 	PAYMENT_STATUS_LABELS,
 	PAYMENT_STATUS_VARIANTS,
-	FULFILLMENT_STATUS_LABELS,
-	FULFILLMENT_STATUS_VARIANTS,
 	INVOICE_STATUS_LABELS,
 	INVOICE_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";
@@ -14,7 +12,6 @@ import type { OrderStatusBadgesProps } from "./types";
 export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 	const orderStatusLabel = ORDER_STATUS_LABELS[order.status];
 	const paymentStatusLabel = PAYMENT_STATUS_LABELS[order.paymentStatus];
-	const fulfillmentStatusLabel = FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus];
 	const invoiceStatusLabel = order.invoiceStatus
 		? INVOICE_STATUS_LABELS[order.invoiceStatus]
 		: null;
@@ -38,15 +35,6 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 				style={{ viewTransitionName: `order-payment-${order.id}` }}
 			>
 				{paymentStatusLabel}
-			</Badge>
-			<Badge
-				variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
-				className="text-sm"
-				role="status"
-				aria-label={`Statut du traitement : ${fulfillmentStatusLabel}`}
-				style={{ viewTransitionName: `order-fulfillment-${order.id}` }}
-			>
-				{fulfillmentStatusLabel}
 			</Badge>
 			{order.invoiceStatus && invoiceStatusLabel && (
 				<Badge

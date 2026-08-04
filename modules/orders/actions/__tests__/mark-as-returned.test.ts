@@ -106,7 +106,6 @@ const validFormData = createMockFormData({ id: VALID_CUID });
 function makeDeliveredOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
 		status: "DELIVERED",
-		fulfillmentStatus: "FULFILLED",
 		paymentStatus: "PAID",
 		...overrides,
 	});
@@ -183,9 +182,7 @@ describe("markAsReturned", () => {
 
 	// Already returned
 	it("returns ALREADY_RETURNED when fulfillment is already RETURNED", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(
-			makeDeliveredOrder({ fulfillmentStatus: "RETURNED" }),
-		);
+		mockPrisma.order.findUnique.mockResolvedValue(makeDeliveredOrder({ status: "RETURNED" }));
 		mockCanMarkAsReturned.mockReturnValue({ canReturn: false, reason: "already_returned" });
 
 		const result = await markAsReturned(undefined, validFormData);
@@ -208,26 +205,26 @@ describe("markAsReturned", () => {
 	});
 
 	// Happy path: status update
-	it("flips fulfillmentStatus to RETURNED and keeps order.status untouched", async () => {
+	it("bascule `status` sur RETURNED via la garde atomique (axe unique, Lot 4)", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue(makeDeliveredOrder());
 
 		await markAsReturned(undefined, validFormData);
 
 		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
-			// Garde atomique : le where ré-asserte DELIVERED + pas déjà RETURNED
+			// Garde atomique : le `where` ré-asserte DELIVERED. Sur l'axe unique,
+			// « pas déjà RETURNED » est impliqué — un statut ne vaut qu'une valeur.
 			where: {
 				id: VALID_CUID,
 				deletedAt: null,
 				status: "DELIVERED",
-				fulfillmentStatus: { not: "RETURNED" },
 			},
-			data: { fulfillmentStatus: "RETURNED" },
+			data: { status: "RETURNED" },
 		});
 	});
 
 	// Audit
-	it("records an atomic audit log entry with the previous fulfillment status", async () => {
-		const order = makeDeliveredOrder({ fulfillmentStatus: "FULFILLED" });
+	it("records an atomic audit log entry with the previous status", async () => {
+		const order = makeDeliveredOrder();
 		mockPrisma.order.findUnique.mockResolvedValue(order);
 
 		const fd = createMockFormData({ id: VALID_CUID, reason: "Article cassé" });
@@ -239,10 +236,9 @@ describe("markAsReturned", () => {
 			expect.objectContaining({
 				orderId: VALID_CUID,
 				action: "RETURNED",
-				previousFulfillmentStatus: "FULFILLED",
-				newFulfillmentStatus: "RETURNED",
+				previousStatus: "DELIVERED",
+				newStatus: "RETURNED",
 				note: "Article cassé",
-				authorId: "admin-1",
 			}),
 		);
 	});

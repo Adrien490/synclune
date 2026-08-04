@@ -73,7 +73,6 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
 		total: 4999,
 		createdAt: new Date("2026-05-01T10:00:00Z"),
 		_count: { items: 2 },
-		fulfillmentStatus: "UNFULFILLED" as const,
 		trackingNumber: null,
 		trackingUrl: null,
 		invoiceNumber: null,

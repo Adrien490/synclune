@@ -134,7 +134,6 @@ describe("@regression order-status-toctou — updateMany count===0 ⇒ abort pro
 			createMockOrder({
 				status: "PROCESSING",
 				paymentStatus: "PAID",
-				fulfillmentStatus: "PROCESSING",
 			}),
 		);
 		// …mais un writer concurrent l'a changée avant l'update atomique.

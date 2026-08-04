@@ -38,7 +38,6 @@ export type OrderFiltersSearchParams = {
 	// `getAllParams`, une forme que le type interdisait.
 	filter_status?: string | string[];
 	filter_paymentStatus?: string | string[];
-	filter_fulfillmentStatus?: string | string[];
 	filter_invoiceStatus?: string | string[];
 	filter_invoiceAnomaly?: string;
 	filter_pdfNotArchived?: string;

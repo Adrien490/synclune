@@ -1,13 +1,8 @@
 "use client";
 
-import { EllipsisVertical } from "lucide-react";
+import { DotsThreeVerticalIcon } from "@phosphor-icons/react/ssr";
 
-import type {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-	InvoiceStatus,
-} from "@/app/generated/prisma/browser";
+import type { OrderStatus, PaymentStatus, InvoiceStatus } from "@/app/generated/prisma/browser";
 import {
 	ResponsiveActionMenu,
 	ResponsiveActionMenuContent,
@@ -23,7 +18,6 @@ interface OrderRowActionsProps {
 		orderNumber: string;
 		status: OrderStatus;
 		paymentStatus: PaymentStatus;
-		fulfillmentStatus?: FulfillmentStatus | null;
 		trackingNumber?: string | null;
 		trackingUrl?: string | null;
 		invoiceNumber?: string | null;
@@ -46,7 +40,7 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 					/>
 				}
 			>
-				<EllipsisVertical className="size-4" />
+				<DotsThreeVerticalIcon className="size-4" />
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent
 				title="Actions"

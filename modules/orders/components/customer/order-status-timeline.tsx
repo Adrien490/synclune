@@ -1,8 +1,4 @@
-import {
-	type OrderStatus,
-	type PaymentStatus,
-	type FulfillmentStatus,
-} from "@/app/generated/prisma/client";
+import { type OrderStatus, type PaymentStatus } from "@/app/generated/prisma/client";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	ORDER_STATUS_LABELS,
@@ -11,13 +7,20 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/shared/utils/cn";
-import { CircleCheck, Clock, CreditCard, Package, Truck, CircleX, Undo2 } from "lucide-react";
+import {
+	ArrowUUpLeftIcon,
+	CheckCircleIcon,
+	ClockIcon,
+	CreditCardIcon,
+	PackageIcon,
+	TruckIcon,
+	XCircleIcon,
+} from "@phosphor-icons/react/ssr";
 
 interface OrderStatusTimelineProps {
 	order: {
 		status: OrderStatus;
 		paymentStatus: PaymentStatus;
-		fulfillmentStatus: FulfillmentStatus;
 		createdAt: Date;
 		paidAt: Date | null;
 		shippedAt: Date | null;
@@ -26,19 +29,23 @@ interface OrderStatusTimelineProps {
 }
 
 export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
-	// Les étapes de progression dérivent d'`OrderStatus`, PAS de `fulfillmentStatus`.
+	// Les étapes de progression dérivent d'`OrderStatus`, seul axe depuis le Lot 4.
 	//
-	// Le webhook `payment_intent.succeeded` écrit `status = PROCESSING` sans
-	// toucher `fulfillmentStatus` : la paire `(PROCESSING, UNFULFILLED)` est donc
-	// l'état NORMAL de toute commande payée. En lisant `fulfillmentStatus`, cette
-	// timeline laissait « En préparation » ni cochée ni active pour 100 % des
-	// clientes ayant payé — et l'admin ne pouvait pas corriger, `canMarkAsProcessing`
-	// exigeant `status === PENDING`. `status` est le SSOT du cycle de vie et reste
-	// toujours cohérent ; `fulfillmentStatus` n'est lu que pour `RETURNED`, seule
-	// information qu'`OrderStatus` ne porte pas.
-	const isShipped = order.status === "SHIPPED" || order.status === "DELIVERED";
-	const isDelivered = order.status === "DELIVERED";
-	const isReturned = order.fulfillmentStatus === "RETURNED";
+	// Historique utile : ce composant lisait `fulfillmentStatus`, et le webhook
+	// `payment_intent.succeeded` écrivait `status = PROCESSING` sans y toucher — la
+	// paire `(PROCESSING, UNFULFILLED)` était donc l'état NORMAL de toute commande
+	// payée, et « En préparation » restait ni cochée ni active pour 100 % des
+	// clientes ayant payé. La correction d'alors fut de tout lire sur `status`, sauf
+	// `RETURNED` — « seule information qu'OrderStatus ne porte pas ». C'est
+	// exactement le constat qui a fondé la fusion des deux axes : cette exception
+	// est désormais une valeur d'`OrderStatus`.
+	// `RETURNED` succède à `DELIVERED` : les étapes antérieures restent COMPLÉTÉES.
+	// C'est précisément le défaut historique décrit ci-dessus — les trois étapes
+	// régressaient en gris sur un retour — qu'il ne faut pas réintroduire en
+	// traitant `RETURNED` comme un état parallèle plutôt que postérieur.
+	const isReturned = order.status === "RETURNED";
+	const isDelivered = order.status === "DELIVERED" || isReturned;
+	const isShipped = order.status === "SHIPPED" || isDelivered;
 
 	// Un remboursement (total ou partiel) n'annule pas le fait que le paiement a
 	// été reçu : sans ces deux valeurs, l'étape « Paiement reçu » restait muette
@@ -52,13 +59,13 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 		{
 			label: "Commande passée",
 			date: order.createdAt,
-			icon: Clock,
+			icon: ClockIcon,
 			completed: true,
 		},
 		{
 			label: "Paiement reçu",
 			date: order.paidAt,
-			icon: CreditCard,
+			icon: CreditCardIcon,
 			completed: isPaid,
 			failed: order.paymentStatus === "FAILED",
 		},
@@ -68,21 +75,21 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 			// réutiliser `paidAt` affichait l'horodatage du paiement deux étapes de
 			// suite sous un libellé qui ne le désigne pas.
 			date: null,
-			icon: Package,
+			icon: PackageIcon,
 			completed: order.status === "PROCESSING" || isShipped,
 			active: order.status === "PROCESSING",
 		},
 		{
 			label: "Expédiée",
 			date: order.shippedAt,
-			icon: Truck,
+			icon: TruckIcon,
 			completed: isShipped,
 			active: order.status === "SHIPPED",
 		},
 		{
 			label: "Livrée",
 			date: order.actualDelivery,
-			icon: CircleCheck,
+			icon: CheckCircleIcon,
 			completed: isDelivered,
 			active: isDelivered && !isReturned,
 		},
@@ -94,7 +101,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 					{
 						label: "Retournée",
 						date: null,
-						icon: Undo2,
+						icon: ArrowUUpLeftIcon,
 						completed: true,
 					},
 				]
@@ -114,7 +121,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 			<div className="border-border/60 border-t pt-4">
 				{isCancelled ? (
 					<div className="bg-destructive/10 flex items-center gap-3 rounded-lg p-4">
-						<CircleX className="text-destructive size-6" />
+						<XCircleIcon className="text-destructive size-6" />
 						<div>
 							<p className="text-destructive font-medium">Commande annulée</p>
 							<p className="text-muted-foreground text-sm">Cette commande a été annulée.</p>

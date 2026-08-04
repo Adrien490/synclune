@@ -1,11 +1,6 @@
 "use server";
 
-import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-	HistorySource,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -36,7 +31,6 @@ import { canMarkAsProcessing } from "../services/order-status-validation.service
  * - La commande doit être payée (PaymentStatus.PAID)
  * - La commande ne doit pas être annulée
  * - Passe OrderStatus à PROCESSING
- * - Passe FulfillmentStatus à PROCESSING
  */
 export async function markAsProcessing(
 	_prevState: ActionState | undefined,
@@ -66,7 +60,6 @@ export async function markAsProcessing(
 					orderNumber: true,
 					status: true,
 					paymentStatus: true,
-					fulfillmentStatus: true,
 				},
 			});
 
@@ -89,7 +82,6 @@ export async function markAsProcessing(
 				},
 				data: {
 					status: OrderStatus.PROCESSING,
-					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 				},
 			});
 			if (updated.count === 0) {
@@ -101,9 +93,6 @@ export async function markAsProcessing(
 				action: "PROCESSING",
 				previousStatus: found.status,
 				newStatus: OrderStatus.PROCESSING,
-				previousFulfillmentStatus: found.fulfillmentStatus,
-				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 			});

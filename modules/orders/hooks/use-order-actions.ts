@@ -1,33 +1,23 @@
 "use client";
 
 import {
-	Banknote,
-	CircleCheck,
-	CircleX,
-	CreditCard,
-	ExternalLink,
-	Eye,
-	Package,
-	PackageX,
-	ShoppingBag,
-	StickyNote,
-	Trash2,
-	Truck,
-	Undo2,
-} from "lucide-react";
+	ArrowArcLeftIcon,
+	ArrowSquareOutIcon,
+	ArrowUUpLeftIcon,
+	CheckCircleIcon,
+	CreditCardIcon,
+	EyeIcon,
+	MoneyIcon,
+	PackageIcon,
+	ShoppingBagIcon,
+	TrashIcon,
+	TruckIcon,
+	XCircleIcon,
+} from "@phosphor-icons/react/ssr";
 
-import { useRouter } from "next/navigation";
-
-import {
-	OrderStatus,
-	PaymentStatus,
-	type FulfillmentStatus,
-	type InvoiceStatus,
-} from "@/app/generated/prisma/browser";
+import { OrderStatus, PaymentStatus, type InvoiceStatus } from "@/app/generated/prisma/browser";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { useResendOrderEmail } from "./use-resend-order-email";
 
@@ -39,7 +29,6 @@ import { MARK_AS_PAID_DIALOG_ID } from "../components/admin/mark-as-paid-alert-d
 import { MARK_AS_PROCESSING_DIALOG_ID } from "../components/admin/mark-as-processing-alert-dialog";
 import { MARK_AS_RETURNED_DIALOG_ID } from "../components/admin/mark-as-returned-alert-dialog";
 import { MARK_AS_SHIPPED_DIALOG_ID } from "../components/admin/mark-as-shipped-dialog";
-import { ORDER_NOTES_DIALOG_ID } from "../components/admin/order-notes-dialog";
 import { REVERT_TO_PROCESSING_DIALOG_ID } from "../components/admin/revert-to-processing-dialog";
 import { UNDO_RETURN_DIALOG_ID } from "../components/admin/undo-return-alert-dialog";
 import { getOrderPermissions } from "../services/order-status-validation.service";
@@ -51,7 +40,6 @@ interface UseOrderActionsParams {
 		orderNumber: string;
 		status: OrderStatus;
 		paymentStatus: PaymentStatus;
-		fulfillmentStatus?: FulfillmentStatus | null;
 		trackingNumber?: string | null;
 		trackingUrl?: string | null;
 		invoiceNumber?: string | null;
@@ -72,17 +60,6 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
 	const undoReturnDialog = useAlertDialog(UNDO_RETURN_DIALOG_ID);
 	const markAsFullyRefundedDialog = useAlertDialog(MARK_AS_FULLY_REFUNDED_DIALOG_ID);
-	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
-	const router = useRouter();
-	const isMobile = useIsMobile();
-
-	const openNotes = () => {
-		if (isMobile) {
-			router.push(`/admin/ventes/commandes/${order.id}/notes`);
-		} else {
-			notesDialog.open({ orderId: order.id, orderNumber: order.orderNumber });
-		}
-	};
 
 	const { resend: resendEmail, isPending: isResendingEmail } = useResendOrderEmail();
 
@@ -114,15 +91,8 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "view",
 					label: "Voir les détails",
-					icon: Eye,
+					icon: EyeIcon,
 					href: `/admin/ventes/commandes/${order.id}`,
-				},
-				{
-					key: "notes",
-					label: "Notes internes",
-					icon: StickyNote,
-					closesMenu: false,
-					onSelect: openNotes,
 				},
 			],
 		},
@@ -133,14 +103,14 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "email-confirmation",
 					label: "Confirmation de commande",
-					icon: ShoppingBag,
+					icon: ShoppingBagIcon,
 					disabled: isResendingEmail,
 					onSelect: () => resendEmail(order.id, "confirmation"),
 				},
 				{
 					key: "email-shipping",
 					label: "Expédition",
-					icon: Truck,
+					icon: TruckIcon,
 					disabled: isResendingEmail,
 					hidden: !((isShipped || isDelivered) && order.trackingNumber),
 					onSelect: () => resendEmail(order.id, "shipping"),
@@ -154,7 +124,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "mark-paid",
 					label: "Marquer comme payée",
-					icon: CreditCard,
+					icon: CreditCardIcon,
 					hidden: !canMarkAsPaid,
 					closesMenu: false,
 					onSelect: () => markAsPaidDialog.open(open({})),
@@ -162,7 +132,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "mark-processing",
 					label: "Passer en préparation",
-					icon: Package,
+					icon: PackageIcon,
 					hidden: !canMarkAsProcessing,
 					closesMenu: false,
 					onSelect: () => markAsProcessingDialog.open(open({})),
@@ -170,7 +140,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "mark-shipped",
 					label: "Marquer comme expédiée",
-					icon: Truck,
+					icon: TruckIcon,
 					hidden: !canMarkAsShipped,
 					closesMenu: false,
 					onSelect: () => markAsShippedDialog.open(open({})),
@@ -178,7 +148,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "tracking",
 					label: "Suivre le colis",
-					icon: ExternalLink,
+					icon: ArrowSquareOutIcon,
 					hidden: !canTrack,
 					href: order.trackingUrl ?? "#",
 					external: true,
@@ -186,7 +156,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "mark-delivered",
 					label: "Marquer comme livrée",
-					icon: CircleCheck,
+					icon: CheckCircleIcon,
 					hidden: !canMarkAsDelivered,
 					closesMenu: false,
 					onSelect: () => markAsDeliveredDialog.open(open({})),
@@ -194,7 +164,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "revert-processing",
 					label: "Annuler l'expédition",
-					icon: Undo2,
+					icon: ArrowUUpLeftIcon,
 					hidden: !canRevertToProcessing,
 					closesMenu: false,
 					onSelect: () =>
@@ -203,7 +173,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "mark-returned",
 					label: "Marquer comme retourné",
-					icon: PackageX,
+					icon: ArrowArcLeftIcon,
 					hidden: !canMarkAsReturned,
 					closesMenu: false,
 					onSelect: () => markAsReturnedDialog.open(open({})),
@@ -211,7 +181,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "undo-return",
 					label: "Annuler le retour",
-					icon: Undo2,
+					icon: ArrowUUpLeftIcon,
 					hidden: !canUndoReturn,
 					closesMenu: false,
 					onSelect: () => undoReturnDialog.open(open({})),
@@ -233,7 +203,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					// `OrderRefundsCard`, au même niveau visuel qu'un « Modifier ».
 					key: "mark-fully-refunded",
 					label: "Marquer comme remboursée (hors Stripe)",
-					icon: Banknote,
+					icon: MoneyIcon,
 					variant: "destructive",
 					hidden: !canMarkAsFullyRefunded,
 					closesMenu: false,
@@ -248,7 +218,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "cancel",
 					label: "Annuler la commande",
-					icon: CircleX,
+					icon: XCircleIcon,
 					variant: "destructive",
 					hidden: !canCancel,
 					closesMenu: false,
@@ -264,7 +234,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 				{
 					key: "delete",
 					label: "Supprimer",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive",
 					hidden: !canDelete,
 					closesMenu: false,

@@ -1,8 +1,4 @@
-import {
-	type FulfillmentStatus,
-	type OrderStatus,
-	type PaymentStatus,
-} from "@/app/generated/prisma/client";
+import { type OrderStatus, type PaymentStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // TYPES - SERVICE INPUTS (from services/)
@@ -14,7 +10,6 @@ export interface OrderForTransform {
 	createdAt: Date;
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
-	fulfillmentStatus: FulfillmentStatus;
 	total: number;
 	customerName: string;
 	customerEmail: string;
@@ -102,7 +97,6 @@ export type RecentOrderItem = {
 	createdAt: Date;
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
-	fulfillmentStatus: FulfillmentStatus;
 	total: number;
 	customerName: string;
 	customerEmail: string;

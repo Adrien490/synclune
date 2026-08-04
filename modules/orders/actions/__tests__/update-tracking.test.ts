@@ -128,7 +128,6 @@ function createShippedOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
 		status: "SHIPPED",
 		paymentStatus: "PAID",
-		fulfillmentStatus: "SHIPPED",
 		trackingNumber: null,
 		...overrides,
 	});
@@ -253,7 +252,6 @@ describe("updateTracking", () => {
 			expect.objectContaining({
 				orderId: VALID_CUID,
 				action: "TRACKING_UPDATED",
-				authorId: "admin-1",
 			}),
 		);
 	});

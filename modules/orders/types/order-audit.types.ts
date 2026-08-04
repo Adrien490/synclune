@@ -2,7 +2,6 @@ import type {
 	OrderAction,
 	OrderStatus,
 	PaymentStatus,
-	FulfillmentStatus,
 	HistorySource,
 } from "@/app/generated/prisma/client";
 
@@ -18,8 +17,6 @@ export interface CreateOrderAuditParams {
 	newStatus?: OrderStatus;
 	previousPaymentStatus?: PaymentStatus;
 	newPaymentStatus?: PaymentStatus;
-	previousFulfillmentStatus?: FulfillmentStatus;
-	newFulfillmentStatus?: FulfillmentStatus;
 
 	// Note explicative
 	note?: string;
@@ -27,8 +24,8 @@ export interface CreateOrderAuditParams {
 	// Métadonnées additionnelles (JSON)
 	metadata?: Record<string, unknown>;
 
-	// Auteur de l'action
-	authorId?: string;
+	// Auteur de l'action. Pas d'`authorId` : cf. commentaire du modèle
+	// `OrderHistory` dans `prisma/schema.prisma` (colonne write-only retirée).
 	authorName?: string;
 
 	// Source de l'action

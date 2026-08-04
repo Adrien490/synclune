@@ -13,14 +13,13 @@ import { Separator } from "@/shared/components/ui/separator";
 import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
-	FULFILLMENT_STATUS_LABELS,
 	INVOICE_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
 import { ORDER_TOTAL_FILTER_MAX_EUROS } from "@/modules/orders/constants/order.constants";
 import { cn } from "@/shared/utils/cn";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarBlankIcon } from "@phosphor-icons/react/ssr";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition, Suspense, type ComponentProps } from "react";
 
@@ -31,7 +30,6 @@ interface OrdersFilterSheetProps {
 interface FilterFormData {
 	statuses: string[];
 	paymentStatuses: string[];
-	fulfillmentStatuses: string[];
 	invoiceStatuses: string[];
 	invoiceAnomaly: boolean;
 	pdfNotArchived: boolean;
@@ -70,7 +68,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 	const initialValues = ((): FilterFormData => {
 		const statuses: string[] = [];
 		const paymentStatuses: string[] = [];
-		const fulfillmentStatuses: string[] = [];
 		const invoiceStatuses: string[] = [];
 		let invoiceAnomaly = false;
 		let pdfNotArchived = false;
@@ -86,8 +83,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 				statuses.push(value);
 			} else if (key === "filter_paymentStatus") {
 				paymentStatuses.push(value);
-			} else if (key === "filter_fulfillmentStatus") {
-				fulfillmentStatuses.push(value);
 			} else if (key === "filter_invoiceStatus") {
 				invoiceStatuses.push(value);
 			} else if (key === "filter_invoiceAnomaly") {
@@ -112,7 +107,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		return {
 			statuses: [...new Set(statuses)],
 			paymentStatuses: [...new Set(paymentStatuses)],
-			fulfillmentStatuses: [...new Set(fulfillmentStatuses)],
 			invoiceStatuses: [...new Set(invoiceStatuses)],
 			invoiceAnomaly,
 			pdfNotArchived,
@@ -137,7 +131,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		const filterKeys = [
 			"filter_status",
 			"filter_paymentStatus",
-			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
 			"filter_invoiceAnomaly",
 			"filter_pdfNotArchived",
@@ -171,13 +164,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		// Add payment statuses
 		if (formData.paymentStatuses.length > 0) {
 			formData.paymentStatuses.forEach((status) => params.append("filter_paymentStatus", status));
-		}
-
-		// Add fulfillment statuses
-		if (formData.fulfillmentStatuses.length > 0) {
-			formData.fulfillmentStatuses.forEach((status) =>
-				params.append("filter_fulfillmentStatus", status),
-			);
 		}
 
 		// Add invoice statuses (Art. 286 CGI — auditer factures émises/voided)
@@ -233,7 +219,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		const defaultValues: FilterFormData = {
 			statuses: [],
 			paymentStatuses: [],
-			fulfillmentStatuses: [],
 			invoiceStatuses: [],
 			invoiceAnomaly: false,
 			pdfNotArchived: false,
@@ -249,7 +234,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		const filterKeys = [
 			"filter_status",
 			"filter_paymentStatus",
-			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
 			"filter_invoiceAnomaly",
 			"filter_pdfNotArchived",
@@ -282,7 +266,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		const multiValueKeys = [
 			"filter_status",
 			"filter_paymentStatus",
-			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
 			"filter_invoiceAnomaly",
 			"filter_pdfNotArchived",
@@ -389,39 +372,6 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 									<CheckboxFilterItem
 										key={value}
 										id={`payment-${value}`}
-										checked={isSelected}
-										onCheckedChange={(checked) => {
-											if (checked && !isSelected) {
-												field.pushValue(value);
-											} else if (!checked && isSelected) {
-												const index = field.state.value.indexOf(value);
-												field.removeValue(index);
-											}
-										}}
-									>
-										{label}
-									</CheckboxFilterItem>
-								);
-							})}
-						</fieldset>
-					)}
-				</form.Field>
-
-				<Separator />
-
-				{/* Fulfillment Status */}
-				<form.Field name="fulfillmentStatuses" mode="array">
-					{(field) => (
-						<fieldset className="space-y-1">
-							<legend className="text-foreground mb-2 text-sm font-medium">
-								Statut de traitement
-							</legend>
-							{Object.entries(FULFILLMENT_STATUS_LABELS).map(([value, label]) => {
-								const isSelected = field.state.value.includes(value);
-								return (
-									<CheckboxFilterItem
-										key={value}
-										id={`fulfillment-${value}`}
 										checked={isSelected}
 										onCheckedChange={(checked) => {
 											if (checked && !isSelected) {
@@ -598,7 +548,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 												/>
 											}
 										>
-											<CalendarIcon className="mr-2 h-4 w-4" />
+											<CalendarBlankIcon className="mr-2 h-4 w-4" />
 											{field.state.value ? (
 												format(new Date(field.state.value), "PPP", {
 													locale: fr,
@@ -644,7 +594,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 												/>
 											}
 										>
-											<CalendarIcon className="mr-2 h-4 w-4" />
+											<CalendarBlankIcon className="mr-2 h-4 w-4" />
 											{field.state.value ? (
 												format(new Date(field.state.value), "PPP", {
 													locale: fr,

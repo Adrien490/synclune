@@ -22,7 +22,7 @@ import { describe, expect, it } from "vitest";
  *  - `order-creation.service.ts` : snapshot initial au checkout (post-PaymentIntent
  *    succeeded) — figé une fois pour toutes.
  *  - `update-order-shipping-address.ts` : correction admin pre-shipment uniquement
- *    (bloque si `fulfillmentStatus IN (SHIPPED, DELIVERED, RETURNED)`), audit trail
+ *    (bloque si `status IN (SHIPPED, DELIVERED, RETURNED)`), audit trail
  *    `ADDRESS_UPDATED` obligatoire — fix typo livraison avant expédition.
  *  - `anonymize-user.service.ts` : anonymisation RGPD (droit à l'oubli Art. 17 GDPR),
  *    remplace PII par "X" / "Adresse supprimée" — conserve l'audit comptable

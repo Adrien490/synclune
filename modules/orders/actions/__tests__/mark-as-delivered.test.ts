@@ -78,7 +78,6 @@ function createShippedOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
 		status: "SHIPPED",
 		paymentStatus: "PAID",
-		fulfillmentStatus: "SHIPPED",
 		...overrides,
 	});
 }

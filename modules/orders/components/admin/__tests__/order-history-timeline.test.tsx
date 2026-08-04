@@ -19,18 +19,18 @@ vi.mock("@/shared/utils/dates", () => ({
 	formatDateTime: () => "2 janvier 2026 à 10:30",
 }));
 
-vi.mock("lucide-react", () => ({
-	AlertTriangle: () => <svg data-testid="icon-alert-triangle" />,
-	ChevronDown: () => <svg data-testid="icon-chevron-down" />,
-	Clock: () => <svg data-testid="icon-clock" />,
-	CreditCard: () => <svg data-testid="icon-credit-card" />,
-	FileText: () => <svg data-testid="icon-file-text" />,
-	MapPin: () => <svg data-testid="icon-map-pin" />,
-	Package: () => <svg data-testid="icon-package" />,
-	Truck: () => <svg data-testid="icon-truck" />,
-	CircleCheck: () => <svg data-testid="icon-circle-check" />,
-	CircleX: () => <svg data-testid="icon-circle-x" />,
-	RotateCcw: () => <svg data-testid="icon-rotate-ccw" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	WarningIcon: () => <svg data-testid="icon-alert-triangle" />,
+	CaretDownIcon: () => <svg data-testid="icon-chevron-down" />,
+	ClockIcon: () => <svg data-testid="icon-clock" />,
+	CreditCardIcon: () => <svg data-testid="icon-credit-card" />,
+	FileTextIcon: () => <svg data-testid="icon-file-text" />,
+	MapPinIcon: () => <svg data-testid="icon-map-pin" />,
+	PackageIcon: () => <svg data-testid="icon-package" />,
+	TruckIcon: () => <svg data-testid="icon-truck" />,
+	CheckCircleIcon: () => <svg data-testid="icon-circle-check" />,
+	XCircleIcon: () => <svg data-testid="icon-circle-x" />,
+	ArrowCounterClockwiseIcon: () => <svg data-testid="icon-rotate-ccw" />,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({
@@ -113,8 +113,6 @@ interface TestOrderHistoryEntry {
 	newStatus?: string | null;
 	previousPaymentStatus?: string | null;
 	newPaymentStatus?: string | null;
-	previousFulfillmentStatus?: string | null;
-	newFulfillmentStatus?: string | null;
 	note?: string | null;
 	metadata?: unknown;
 	authorName?: string | null;
@@ -132,8 +130,6 @@ function createEntry(overrides: Partial<TestOrderHistoryEntry> = {}): ComponentE
 		newStatus: "PENDING",
 		previousPaymentStatus: null,
 		newPaymentStatus: null,
-		previousFulfillmentStatus: null,
-		newFulfillmentStatus: null,
 		note: null,
 		metadata: null,
 		authorName: null,
@@ -225,16 +221,19 @@ describe("OrderHistoryTimeline", () => {
 		expect(screen.getByText(/Paiement/)).toHaveTextContent("Paiement : En attente → Payé");
 	});
 
-	it("shows fulfillment transition only when newFulfillmentStatus is present and newStatus is absent", () => {
+	// La ligne « Traitement : X → Y » a disparu avec l'axe `fulfillmentStatus`
+	// (Lot 4, audit V2) : un retour est désormais une transition de STATUT, rendue
+	// par la ligne « Statut » ci-dessus. C'est la même information, sur une ligne
+	// au lieu de deux.
+	it("rend un retour comme une transition de statut", () => {
 		const entry = createEntry({
-			newStatus: null,
-			previousFulfillmentStatus: "UNFULFILLED",
-			newFulfillmentStatus: "RETURNED",
+			previousStatus: "DELIVERED",
+			newStatus: "RETURNED",
 		});
 
 		render(<OrderHistoryTimeline history={[entry]} />);
 
-		expect(screen.getByText(/Traitement/)).toHaveTextContent("Traitement : À préparer → Retournée");
+		expect(screen.getByText(/Statut/)).toHaveTextContent("Statut : Livrée → Retournée");
 	});
 
 	// ─── Content ──────────────────────────────────────────────────────────────

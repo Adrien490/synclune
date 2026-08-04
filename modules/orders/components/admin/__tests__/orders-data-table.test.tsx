@@ -22,7 +22,6 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
 		orderNumber: "SYN-2026-0001",
 		status: "PENDING",
 		paymentStatus: "PENDING",
-		fulfillmentStatus: "UNFULFILLED",
 		trackingNumber: null,
 		trackingUrl: null,
 		invoiceNumber: null,

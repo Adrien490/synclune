@@ -116,7 +116,7 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 			mockPrisma.order.findUnique.mockResolvedValue({
 				id: VALID_CUID,
 				orderNumber: "SYN-2026-0001",
-				fulfillmentStatus: "PROCESSING",
+				status: "PROCESSING",
 				shippingFirstName: "Marie",
 				shippingLastName: "OldName",
 				shippingAddress1: "1 Rue Ancienne",
@@ -146,7 +146,6 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 				expect.objectContaining({
 					orderId: VALID_CUID,
 					action: "ADDRESS_UPDATED",
-					authorId: "admin-7",
 					authorName: "Lucie",
 					metadata: expect.objectContaining({
 						addressType: "shipping",
@@ -186,7 +185,7 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 			mockPrisma.order.findUnique.mockResolvedValue({
 				id: VALID_CUID,
 				orderNumber: "SYN-2026-0001",
-				fulfillmentStatus: "SHIPPED",
+				status: "SHIPPED",
 				shippingFirstName: "",
 				shippingLastName: "",
 				shippingAddress1: "",

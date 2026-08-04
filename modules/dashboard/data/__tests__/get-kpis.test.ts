@@ -71,11 +71,8 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
 		CANCELLED: "CANCELLED",
-	},
-	FulfillmentStatus: {
-		UNFULFILLED: "UNFULFILLED",
-		PROCESSING: "PROCESSING",
 	},
 }));
 

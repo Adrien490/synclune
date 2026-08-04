@@ -27,7 +27,6 @@ const {
 		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
 		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
-		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn(), updateMany: vi.fn() },
 		refund: {
 			create: vi.fn(),
@@ -197,8 +196,7 @@ describe("cancelOrder", () => {
 		// `$queryRaw` sert l'advisory lock (retour ignoré) ET le `UPDATE … RETURNING`
 		// du restock (retour lu) — une seule valeur couvre les deux.
 		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 7, productId: "prod-1" }]);
-		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
-		mockPrisma.discountUsage.deleteMany.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.discount.update.mockResolvedValue({});
 		mockPrisma.refund.create.mockResolvedValue({ id: "refund-auto-1" });
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
@@ -287,7 +285,7 @@ describe("cancelOrder", () => {
 	it("should NOT restore stock when cancelling a PENDING (never-decremented) order", async () => {
 		const order = createTxOrder({
 			paymentStatus: "PENDING",
-			fulfillmentStatus: "UNFULFILLED",
+			status: "PENDING",
 			items: [{ skuId: "sku-1", quantity: 2 }],
 		});
 		mockPrisma.order.findUnique.mockResolvedValue(order);
@@ -303,7 +301,7 @@ describe("cancelOrder", () => {
 	it("should restore stock when cancelling a PAID, not-yet-shipped order", async () => {
 		const order = createTxOrder({
 			paymentStatus: "PAID",
-			fulfillmentStatus: "UNFULFILLED",
+			status: "PENDING",
 			items: [{ id: "item-1", skuId: "sku-1", quantity: 2, price: 4999 }],
 		});
 		mockPrisma.order.findUnique.mockResolvedValue(order);
@@ -383,7 +381,6 @@ describe("cancelOrder", () => {
 			expect.objectContaining({
 				orderId: VALID_CUID,
 				action: "CANCELLED",
-				authorId: "admin-1",
 			}),
 		);
 	});
@@ -414,11 +411,12 @@ describe("cancelOrder", () => {
 		const order = createTxOrder({
 			paymentStatus: "PAID",
 		});
-		mockPrisma.order.findUnique.mockResolvedValue(order);
-		mockPrisma.discountUsage.findMany.mockResolvedValue([
-			{ id: "usage-1", discountId: "disc-A" },
-			{ id: "usage-2", discountId: "disc-B" },
-		]);
+		// Un seul code par commande depuis le repli de `DiscountUsage` en colonnes
+		// (audit V2, Lot 2) : le cas « deux codes libérés » que vérifiait cette
+		// assertion est devenu INEXPRIMABLE, pas seulement non testé — `Order.discountId`
+		// est une colonne scalaire. Il défendait une forme que la base autorisait mais
+		// que le checkout ne produisait jamais (cookie panier à un seul code).
+		mockPrisma.order.findUnique.mockResolvedValue({ ...order, discountId: "disc-A" });
 
 		await cancelOrder(undefined, createMockFormData({ id: VALID_CUID, autoRefund: "true" }));
 
@@ -426,29 +424,27 @@ describe("cancelOrder", () => {
 		// décrément est un `updateMany` GARDÉ par `usageCount > 0` (un `update` nu
 		// laissait le compteur passer négatif → code redeemable au-delà de
 		// maxUsageCount).
-		expect(mockPrisma.discount.updateMany).toHaveBeenCalledTimes(2);
+		expect(mockPrisma.discount.updateMany).toHaveBeenCalledTimes(1);
 		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
 			where: { id: "disc-A", usageCount: { gt: 0 } },
 			data: { usageCount: { decrement: 1 } },
 		});
-		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
-			where: { id: "disc-B", usageCount: { gt: 0 } },
-			data: { usageCount: { decrement: 1 } },
-		});
-		expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
-			where: { orderId: VALID_CUID },
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			where: { id: VALID_CUID, discountId: { not: null } },
+			data: { discountId: null, discountCode: null },
 		});
 	});
 
-	it("should not call deleteMany on discountUsage when there are no usages", async () => {
+	it("ne libère rien quand la commande ne porte aucun code promo", async () => {
 		const order = createTxOrder();
-		mockPrisma.order.findUnique.mockResolvedValue(order);
-		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
+		mockPrisma.order.findUnique.mockResolvedValue({ ...order, discountId: null });
 
 		await cancelOrder(undefined, validFormData);
 
-		expect(mockPrisma.discountUsage.deleteMany).not.toHaveBeenCalled();
-		expect(mockPrisma.discount.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalledWith(
+			expect.objectContaining({ data: { discountId: null, discountCode: null } }),
+		);
+		expect(mockPrisma.discount.updateMany).not.toHaveBeenCalled();
 	});
 
 	// PARTIALLY_REFUNDED should become REFUNDED on cancel — requires autoRefund=true (ORD-BIZ-009)
@@ -491,7 +487,7 @@ describe("cancelOrder", () => {
 	it("should abort with a concurrent-change error when the atomic claim matches no row", async () => {
 		const order = createTxOrder({
 			paymentStatus: "PAID",
-			fulfillmentStatus: "UNFULFILLED",
+			status: "PENDING",
 			items: [{ id: "item-1", skuId: "sku-1", quantity: 2, price: 4999 }],
 		});
 		mockPrisma.order.findUnique.mockResolvedValue(order);

@@ -234,8 +234,7 @@ model Product {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  skus       ProductSku[]
-  orderItems OrderItem[]
+  skus ProductSku[]
 
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   Product_description_unaccent_trgm_idx
@@ -309,6 +308,14 @@ enum OrderStatus {
   PROCESSING
   SHIPPED
   DELIVERED
+  // Absorbe l'unique valeur que `FulfillmentStatus` portait en propre (audit V2,
+  // Lot 4, 2026-08-05). Les quatre autres membres de cet enum étaient écrits EN
+  // LOCKSTEP avec `status` par les 7 actions de commande : `UNFULFILLED`↔`PENDING`,
+  // puis `PROCESSING`/`SHIPPED`/`DELIVERED` à l'identique.
+  //
+  // ⚠️ `RETURNED` n'est PAS absorbant : `undo-return` rebascule vers `DELIVERED`
+  // (cf. `order-status-validation.service.ts`).
+  RETURNED
   CANCELLED
 }
 
@@ -318,14 +325,6 @@ enum PaymentStatus {
   FAILED
   PARTIALLY_REFUNDED
   REFUNDED
-}
-
-enum FulfillmentStatus {
-  UNFULFILLED
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  RETURNED
 }
 
 enum OrderAction {
@@ -362,19 +361,17 @@ enum InvoiceStatus {
   VOIDED
 }
 
-enum VatRegime {
-  FRANCHISE_BASE
-  NORMAL
-  SIMPLIFIE
-}
-
+// Le checkout est card-only (`payment_method_types: ["card"]`,
+// `initialize-payment.ts`) : Stripe n'émettra jamais `SEPA_DEBIT`, `KLARNA` ni
+// `BANCONTACT`, retirés à l'audit V2 (Lot 1). `WALLET` et `LINK` restent
+// atteignables — ce sont des portefeuilles rendus SUR une carte
+// (`payment_method_details.card.wallet.type`), pas d'autres moyens de paiement.
+// Rouvrir un de ces moyens exige d'élargir `payment_method_types` ET de
+// réintroduire la valeur ici + sa ligne dans `map-stripe-payment-method.ts`.
 enum PaymentMethod {
   CARD
-  SEPA_DEBIT
-  KLARNA
   LINK
   WALLET
-  BANCONTACT
   OTHER
 }
 
@@ -424,18 +421,42 @@ model Order {
   actualDelivery    DateTime?
   shippedAt         DateTime?
 
-  status            OrderStatus       @default(PENDING)
-  paymentStatus     PaymentStatus     @default(PENDING)
-  fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
+  // Deux axes, pas trois : `status` porte l'avancement (dont `RETURNED`) et
+  // `paymentStatus` l'encaissement. `fulfillmentStatus` était un troisième axe
+  // écrit en lockstep avec le premier — cf. le commentaire d'`OrderStatus`.
+  //
+  // ⚠️ `PENDING` désigne DEUX situations, désambiguïsées par `paymentStatus` :
+  // « pas encore payée » et « payée, pas encore prise en main ». C'est déjà ainsi
+  // que la file « à expédier » se construit (`to-ship.service.ts`) — aucune
+  // information n'a été perdue au retrait de `fulfillmentStatus`.
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
 
   paymentMethod PaymentMethod @default(CARD)
   paidAt        DateTime?
 
-  items          OrderItem[]
-  discountUsages DiscountUsage[]
-  refunds        Refund[]
-  notes          OrderNote[]
-  history        OrderHistory[]
+  // Code promo : DEUX colonnes plates, pas une table de liaison.
+  //
+  // `DiscountUsage` a été retiré le 2026-08-05 (audit V2, Lot 2) : c'était une
+  // table à UNE ligne maximum par commande — le cookie panier porte un
+  // `discountCode` singulier (`cart-cookie.ts`) et `order-creation.service.ts`
+  // n'en créait jamais qu'une, sous `if (appliedDiscountId && ...)`. Elle coûtait
+  // un modèle, une relation et un join dans chaque select de commande.
+  //
+  // `discountCode` est un SNAPSHOT figé au checkout, comme les colonnes
+  // `productTitle`/`skuColor` d'`OrderItem` : il survit au renommage comme à la
+  // suppression du code. `discountId` porte la relation, et sert au comptage de
+  // la limite `maxUsagePerUser` (par email, parcours invité).
+  //
+  // ⚠️ `onDelete: Restrict` et NON `SetNull` : c'est lui qui préserve la garde
+  // « un code déjà utilisé ne se supprime pas », que `DiscountUsage` portait.
+  discountCode String?   @db.VarChar(30)
+  discountId   String?
+  discount     Discount? @relation(fields: [discountId], references: [id], onDelete: Restrict)
+
+  items   OrderItem[]
+  refunds Refund[]
+  history OrderHistory[]
 
   invoiceRetryDeferred     Boolean @default(false)
   invoiceReconcileAttempts Int     @default(0)
@@ -505,14 +526,16 @@ model OrderHistory {
   newStatus                 OrderStatus?
   previousPaymentStatus     PaymentStatus?
   newPaymentStatus          PaymentStatus?
-  previousFulfillmentStatus FulfillmentStatus?
-  newFulfillmentStatus      FulfillmentStatus?
 
   note String? @db.Text
 
   metadata Json?
 
-  authorId   String?
+  // Pas d'`authorId` : la colonne avait ~35 écrivains et ZÉRO lecteur (absente
+  // de tout `select`, de tout `where`, de tout composant) — retirée à l'audit V2
+  // (Lot 1). Sur une boutique à opératrice unique, l'identité de l'auteur est
+  // déjà portée par `authorName` (affiché dans la timeline) et par `source`
+  // (badge Admin / Stripe / Client / Système).
   authorName String? @db.VarChar(100)
 
   source HistorySource @default(ADMIN)
@@ -527,9 +550,12 @@ model OrderItem {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-
+  // Pas de `productId` : la colonne était sélectionnée par 3 selects et lue par
+  // AUCUN appelant (retirée à l'audit V2, Lot 1). C'était en outre un pointeur
+  // VIVANT dans une table de snapshot, contraire à l'invariant « snapshots
+  // OrderItem figés » — les colonnes `product*` ci-dessous portent déjà tout ce
+  // que la commande doit conserver. Les `productId` utilisés en logique de
+  // restock viennent du `RETURNING` SQL sur `ProductSku`, pas d'ici.
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
 
@@ -555,24 +581,6 @@ model OrderItem {
 
   @@index([orderId])
   @@index([skuId])
-  @@index([productId])
-}
-
-model OrderNote {
-  id String @id @default(cuid(2))
-
-  orderId String?
-  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  content String @db.Text
-
-  authorId   String
-  authorName String @db.VarChar(100)
-
-  createdAt DateTime  @default(now())
-  deletedAt DateTime?
-
-  @@index([orderId, createdAt(sort: Desc)])
 }
 
 enum RefundReason {
@@ -609,7 +617,7 @@ model Refund {
 
   // Pas de `createdBy` : les remboursements sont Stripe-first (Lot 2 S3.3), la
   // colonne n'avait plus aucun lecteur. La trace « qui a déclenché » vit dans
-  // `OrderHistory.authorId`, écrit par les mêmes actions.
+  // `OrderHistory.authorName`, écrit par les mêmes actions.
   processedAt DateTime?
 
   attemptCount Int @default(0)
@@ -644,9 +652,13 @@ model Refund {
   //   Refund_creditNoteNumber_format_check
   //   Refund_creditNotePdfHash_format_check
 
+  // Pas d'index `[status, stripeRefundId]` : aucune requête ne filtre sur une
+  // VALEUR de `stripeRefundId` conjointement à `status` — les lookups par id
+  // Stripe passent par la contrainte `@unique`, et les deux requêtes qui
+  // combinent les colonnes ne testent qu'une NULLITÉ, la sélectivité venant de
+  // `status`, déjà couvert en préfixe par `[status, processedAt]`.
   @@index([orderId])
   @@index([status, processedAt])
-  @@index([status, stripeRefundId])
   @@index([createdAt(sort: Desc)])
 }
 
@@ -676,7 +688,7 @@ model Discount {
 
   isActive Boolean @default(true)
 
-  usages DiscountUsage[]
+  orders Order[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -689,20 +701,6 @@ model Discount {
   //   Discount_usageCount_non_negative
   //   Discount_usageCount_within_limit
   //   Discount_value_positive
-}
-
-model DiscountUsage {
-  id         String   @id @default(cuid(2))
-  discountId String
-  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Restrict)
-
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
-
-  discountCode String @db.VarChar(30)
-
-  @@unique([discountId, orderId])
-  @@index([orderId])
 }
 
 enum WebhookEventStatus {
@@ -718,18 +716,30 @@ model WebhookEvent {
   eventType     String             @db.VarChar(100)
   // `PROCESSING` et non `PENDING` : la route webhook crée déjà la ligne en
   // PROCESSING, et rien n'a jamais écrit PENDING — une telle ligne serait restée
-  // orpheline (ni rejouée par `retry-webhooks`, qui ne prend que FAILED, ni purgée
-  // par `cleanup-pending-orders`, qui ne prend que COMPLETED/SKIPPED).
+  // orpheline (jamais reprise, ni purgée par `cleanup-pending-orders`, qui ne
+  // prend que COMPLETED/SKIPPED).
   status        WebhookEventStatus @default(PROCESSING)
+  // Compte les REDÉLIVRANCES DE STRIPE, pas des rejeux applicatifs : la route
+  // renvoie 500 en échec, Stripe retente 3 jours, et chaque passage ré-incrémente.
+  // Alimente le seuil d'alerte admin `MAX_WEBHOOK_RETRY_ATTEMPTS`.
   attempts      Int                @default(0)
   receivedAt    DateTime           @default(now())
   processedAt   DateTime?
 
+  // Fraîcheur d'un PROCESSING figé (WEBHOOK-AUDIT-002) — lu par le pré-check
+  // d'idempotence de la route, seul consommateur depuis le Lot 3.
   processingStartedAt DateTime?
 
-  @@index([status, processedAt])
+  // 3 index → 1 (audit V2, Lot 3, 2026-08-05). Le retrait de la tâche
+  // `retry-webhooks` a laissé DEUX index sans lecteur, pas un :
+  //   - `[status, attempts, processedAt]` servait sa requête de candidats
+  //     (`status=FAILED AND attempts < MAX AND processedAt < minAge`) ;
+  //   - `[status, processedAt]` n'en avait déjà plus : `processedAt` n'apparaît
+  //     plus que dans des `data:` d'écriture, jamais dans un `where`.
+  // Le seul conservé sert la purge à 90 jours de `cleanup-pending-orders`
+  // (`status IN (COMPLETED, SKIPPED) AND receivedAt < cutoff`). Les autres accès
+  // passent par `stripeEventId @unique` ou par la clé primaire.
   @@index([status, receivedAt])
-  @@index([status, attempts, processedAt])
 }
 
 model StoreSettings {

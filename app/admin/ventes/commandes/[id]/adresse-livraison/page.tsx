@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EditShippingAddressForm } from "@/modules/orders/components/admin/edit-shipping-address-form";
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
-import { FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { OrderStatus } from "@/app/generated/prisma/browser";
 import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 type ShippingAddressPageParams = Promise<{ id: string }>;
@@ -38,10 +38,12 @@ export default async function ShippingAddressPage({
 		notFound();
 	}
 
+	// Miroir EXACT de la garde de `update-order-shipping-address.ts` — lue sur
+	// `status` depuis le Lot 4, mêmes trois valeurs.
 	const canEditShipping =
-		order.fulfillmentStatus !== FulfillmentStatus.SHIPPED &&
-		order.fulfillmentStatus !== FulfillmentStatus.DELIVERED &&
-		order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
+		order.status !== OrderStatus.SHIPPED &&
+		order.status !== OrderStatus.DELIVERED &&
+		order.status !== OrderStatus.RETURNED;
 
 	if (!canEditShipping) {
 		notFound();
