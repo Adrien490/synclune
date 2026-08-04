@@ -11,3 +11,10 @@ public/swe-worker*
 pnpm-lock.yaml
 *.min.js
 *.min.css
+
+# Mirror de la doc Stripe (markdown brut, regénérable : pnpm docs:stripe).
+# Sans ces lignes, `pnpm format:check` — donc `pnpm validate` — parcourt
+# ~1,6 Mo de markdown qu'on ne maîtrise pas et rougit.
+# INDEX.md est écrit à la main et reste formaté normalement.
+docs/stripe/*.md
+!docs/stripe/INDEX.md

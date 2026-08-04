@@ -57,6 +57,12 @@ next-env.d.ts
 # Claude Code
 .claude
 
+# Mirror de la doc Stripe — regénérable par `pnpm docs:stripe` (~1,6 Mo).
+# Non versionné : la doc Stripe bouge en continu, un mirror commité serait
+# périmé et polluerait chaque diff. Seul l'index rédigé est suivi.
+docs/stripe/*.md
+!docs/stripe/INDEX.md
+
 # Serwist
 public/sw*
 public/swe-worker*
