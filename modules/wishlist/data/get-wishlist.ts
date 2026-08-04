@@ -1,143 +1,82 @@
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
-import { cacheWishlist } from "@/modules/wishlist/constants/cache";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
-import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
-
 import { logger } from "@/shared/lib/logger";
-import {
-	GET_WISHLIST_SELECT,
-	GET_WISHLIST_ITEM_SELECT,
-	GET_WISHLIST_DEFAULT_PER_PAGE,
-	GET_WISHLIST_MAX_RESULTS_PER_PAGE,
-} from "../constants/wishlist.constants";
-import type { GetWishlistParams, GetWishlistReturn } from "../types/wishlist.types";
+import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
+import { GET_PRODUCTS_SELECT } from "@/modules/products/constants/product.constants";
+import { cacheProducts } from "@/modules/products/utils/cache.utils";
+import { readWishlistCookie } from "@/modules/wishlist/lib/wishlist-cookie";
+
+import type { GetWishlistReturn } from "../types/wishlist.types";
 
 // Re-export types for components that import from data/
 export type { GetWishlistReturn } from "../types/wishlist.types";
 
-// ============================================================================
-// MAIN FUNCTIONS
-// ============================================================================
-
 /**
- * Récupère la wishlist de l'utilisateur connecté ou du visiteur avec pagination
+ * Récupère les produits favoris du visiteur.
  *
- * Supporte les utilisateurs connectés ET les visiteurs (sessions invité)
+ * Les Product IDs viennent du cookie `wishlist` (SSOT depuis le retrait de la
+ * base 2026-08-03) ; seule la matérialisation en produits passe par la DB.
+ * Un id dont le produit n'est plus PUBLIC est silencieusement écarté (même
+ * comportement que l'ancien filtre de relation).
  *
- * @param params - Paramètres de pagination (cursor, direction, perPage)
- * @returns Wishlist items paginés avec informations de pagination
+ * Plus de pagination : le cookie est plafonné à `WISHLIST_MAX_ITEMS` (100),
+ * la grille rend tout.
  */
-export async function getWishlist(params: GetWishlistParams = {}): Promise<GetWishlistReturn> {
-	const session = await getSession();
-	const userId = session?.user.id;
-	const sessionId = !userId ? await getWishlistSessionId() : null;
+export async function getWishlist(): Promise<GetWishlistReturn> {
+	try {
+		const productIds = await readWishlistCookie();
 
-	return await fetchWishlist(userId, sessionId ?? undefined, params);
+		if (productIds.length === 0) {
+			return { items: [], totalCount: 0 };
+		}
+
+		const items = await fetchWishlistProducts(productIds);
+		return { items, totalCount: items.length };
+	} catch (e) {
+		// Le repli vit ICI, HORS du scope "use cache" de fetchWishlistProducts —
+		// sinon la liste vide d'une panne serait mise en cache (CACHE-DEGRADED-VALUE-001).
+		//
+		// Lecture avortée à la clôture d'un prerender (build) : signal de contrôle
+		// Next, le rendu est jeté — repli silencieux, pas un incident à logger.
+		// Deux formes ici, d'où la SSOT plutôt qu'`unstable_rethrow` : `cookies()`
+		// qui rejette (HANGING_PROMISE_REJECTION, observé sur /favoris) ET la lecture
+		// `"use cache"` coupée (« Connection closed. », que Next ne marque pas.)
+		if (!isPrerenderInterrupt(e)) {
+			logger.error("Failed to fetch wishlist", e, { service: "wishlist" });
+		}
+		return { items: [], totalCount: 0 };
+	}
 }
 
 /**
- * Récupère la wishlist d'un utilisateur ou visiteur avec pagination et cache.
+ * Matérialise une liste de Product IDs en produits publics, dans l'ordre des
+ * ids (le cookie range le plus récent en premier).
  *
- * @internal Privé au module — accédé uniquement via le wrapper `getWishlist`
- * (qui résout `userId`/`sessionId` depuis la session/cookies). Ne JAMAIS appeler
- * directement avec un userId arbitraire : aucune vérification d'ownership ici.
+ * Cache PUBLIC volontaire : la clé d'une entrée `"use cache"` est construite
+ * sur les ARGUMENTS — ici des Product IDs, du catalogue pur. Deux visiteuses
+ * avec la même liste partagent l'entrée, et rien de personnel n'est retourné
+ * (la liste elle-même vient du cookie de l'appelante, jamais du cache).
+ * Même politique d'invalidation que la PLP (`cacheProducts()` → tag
+ * PRODUCTS_LIST, profil catalog).
  */
-async function fetchWishlist(
-	userId?: string,
-	sessionId?: string,
-	params: GetWishlistParams = {},
-): Promise<GetWishlistReturn> {
-	"use cache: private";
+async function fetchWishlistProducts(productIds: string[]): Promise<GetWishlistReturn["items"]> {
+	"use cache";
+	cacheProducts();
 
-	cacheWishlist(userId, sessionId);
-
-	try {
-		// Pas d'utilisateur ni de session = pas de wishlist
-		if (!userId && !sessionId) {
-			return {
-				items: [],
-				pagination: {
-					nextCursor: null,
-					prevCursor: null,
-					hasNextPage: false,
-					hasPreviousPage: false,
-				},
-				totalCount: 0,
-			};
-		}
-
-		const take = Math.min(
-			Math.max(1, params.perPage ?? GET_WISHLIST_DEFAULT_PER_PAGE),
-			GET_WISHLIST_MAX_RESULTS_PER_PAGE,
-		);
-
-		const cursorConfig = buildCursorPagination({
-			cursor: params.cursor,
-			direction: params.direction,
-			take,
-		});
-
-		// Filtres communs pour les requêtes wishlistItem
-		// Supporte userId OU sessionId
-		// Exclut les produits soft-deleted ou non publics
-		const itemWhereClause = {
-			wishlist: userId ? { userId } : { sessionId },
-			product: {
-				status: "PUBLIC" as const,
+	// ⚠️ AUCUN try/catch dans ce scope : le repli appartient à `getWishlist`,
+	// hors du cache — sinon le vide d'une panne est mis en cache pour toute la
+	// fenêtre du profil. Même motif que `get-products.ts`.
+	{
+		const products = await prisma.product.findMany({
+			where: {
+				id: { in: productIds },
+				status: "PUBLIC",
 				...notDeleted,
 			},
-		};
+			select: GET_PRODUCTS_SELECT,
+		});
 
-		// Exécuter count et findMany en parallèle (2 requêtes au lieu de 3)
-		const [totalCount, items] = await Promise.all([
-			prisma.wishlistItem.count({
-				where: itemWhereClause,
-			}),
-			prisma.wishlistItem.findMany({
-				where: itemWhereClause,
-				select: GET_WISHLIST_ITEM_SELECT,
-				orderBy: GET_WISHLIST_SELECT.items.orderBy,
-				...cursorConfig,
-			}),
-		]);
-
-		if (totalCount === 0) {
-			return {
-				items: [],
-				pagination: {
-					nextCursor: null,
-					prevCursor: null,
-					hasNextPage: false,
-					hasPreviousPage: false,
-				},
-				totalCount: 0,
-			};
-		}
-
-		const { items: paginatedItems, pagination } = processCursorResults(
-			items,
-			take,
-			params.direction,
-			params.cursor,
-		);
-
-		return {
-			items: paginatedItems,
-			pagination,
-			totalCount,
-		};
-	} catch (e) {
-		logger.error("Failed to fetch wishlist", e, { service: "wishlist" });
-		return {
-			items: [],
-			pagination: {
-				nextCursor: null,
-				prevCursor: null,
-				hasNextPage: false,
-				hasPreviousPage: false,
-			},
-			totalCount: 0,
-		};
+		// findMany ne garantit pas l'ordre de `in` — on réordonne sur le cookie
+		const byId = new Map(products.map((product) => [product.id, product]));
+		return productIds.flatMap((id) => byId.get(id) ?? []);
 	}
 }

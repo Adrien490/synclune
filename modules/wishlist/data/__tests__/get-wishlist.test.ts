@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { VALID_USER_ID, VALID_PRODUCT_ID } from "@/test/factories";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -7,27 +6,20 @@ import { VALID_USER_ID, VALID_PRODUCT_ID } from "@/test/factories";
 
 const {
 	mockPrisma,
-	mockBuildCursorPagination,
-	mockProcessCursorResults,
-	mockCacheWishlist,
-	mockGetSession,
-	mockGetWishlistSessionId,
+	mockReadWishlistCookie,
+	mockLoggerError,
 	mockCacheLife,
 	mockCacheTag,
+	mockIsPrerenderInterrupt,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		wishlistItem: {
-			count: vi.fn(),
-			findMany: vi.fn(),
-		},
+		product: { findMany: vi.fn() },
 	},
-	mockBuildCursorPagination: vi.fn(),
-	mockProcessCursorResults: vi.fn(),
-	mockCacheWishlist: vi.fn(),
-	mockGetSession: vi.fn(),
-	mockGetWishlistSessionId: vi.fn(),
+	mockReadWishlistCookie: vi.fn(),
+	mockLoggerError: vi.fn(),
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
+	mockIsPrerenderInterrupt: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -35,287 +27,116 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-vi.mock("@/shared/lib/pagination", () => ({
-	buildCursorPagination: mockBuildCursorPagination,
-	processCursorResults: mockProcessCursorResults,
+vi.mock("@/modules/wishlist/lib/wishlist-cookie", () => ({
+	readWishlistCookie: mockReadWishlistCookie,
 }));
 
 vi.mock("@/shared/lib/logger", () => ({
-	logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
-}));
-
-vi.mock("@/modules/wishlist/constants/cache", () => ({
-	cacheWishlist: mockCacheWishlist,
-}));
-
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
-}));
-
-vi.mock("@/modules/wishlist/lib/wishlist-session", () => ({
-	getWishlistSessionId: mockGetWishlistSessionId,
+	logger: { error: mockLoggerError, warn: vi.fn(), info: vi.fn() },
 }));
 
 vi.mock("next/cache", () => ({
 	cacheLife: mockCacheLife,
 	cacheTag: mockCacheTag,
+	updateTag: vi.fn(),
+	revalidateTag: vi.fn(),
 }));
 
-vi.mock("../constants/wishlist.constants", () => ({
-	GET_WISHLIST_SELECT: {
-		items: {
-			orderBy: { createdAt: "desc" },
-		},
-	},
-	GET_WISHLIST_ITEM_SELECT: { id: true, productId: true, createdAt: true },
-	GET_WISHLIST_DEFAULT_PER_PAGE: 20,
-	GET_WISHLIST_MAX_RESULTS_PER_PAGE: 200,
+vi.mock("@/shared/lib/prerender-interrupt", () => ({
+	isPrerenderInterrupt: mockIsPrerenderInterrupt,
 }));
 
 import { getWishlist } from "../get-wishlist";
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
+const ID_A = "cm1234567890abcdefghijk12";
+const ID_B = "cm1234567890abcdefghijk34";
+const ID_C = "cm1234567890abcdefghijk56";
 
-const VALID_SESSION_ID = "session_abc123";
-
-const EMPTY_PAGINATION = {
-	nextCursor: null,
-	prevCursor: null,
-	hasNextPage: false,
-	hasPreviousPage: false,
-};
-
-const EMPTY_RESULT = {
-	items: [],
-	pagination: EMPTY_PAGINATION,
-	totalCount: 0,
-};
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-function createMockWishlistItem(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "item_001",
-		productId: VALID_PRODUCT_ID,
-		createdAt: new Date("2026-01-15"),
-		...overrides,
-	};
+function mockProduct(id: string) {
+	return { id, title: `Produit ${id}` };
 }
 
-// ============================================================================
-// TESTS
-// ============================================================================
+beforeEach(() => {
+	vi.clearAllMocks();
+	mockIsPrerenderInterrupt.mockReturnValue(false);
+});
 
 describe("getWishlist", () => {
-	beforeEach(() => {
-		vi.resetAllMocks();
+	it("retourne vide sans cookie, SANS toucher la DB", async () => {
+		mockReadWishlistCookie.mockResolvedValue([]);
 
-		mockBuildCursorPagination.mockReturnValue({ take: 20, skip: 0 });
-		mockProcessCursorResults.mockReturnValue({
-			items: [createMockWishlistItem()],
-			pagination: EMPTY_PAGINATION,
-		});
-		mockPrisma.wishlistItem.count.mockResolvedValue(1);
-		mockPrisma.wishlistItem.findMany.mockResolvedValue([createMockWishlistItem()]);
-		mockGetSession.mockResolvedValue(null);
-		mockGetWishlistSessionId.mockResolvedValue(null);
-	});
-
-	// No userId and no sessionId → immediate empty return
-	it("should return empty result when neither session nor wishlist cookie present", async () => {
 		const result = await getWishlist();
 
-		expect(result).toEqual(EMPTY_RESULT);
-		expect(mockPrisma.wishlistItem.count).not.toHaveBeenCalled();
-		expect(mockPrisma.wishlistItem.findMany).not.toHaveBeenCalled();
+		expect(result).toEqual({ items: [], totalCount: 0 });
+		expect(mockPrisma.product.findMany).not.toHaveBeenCalled();
 	});
 
-	// userId takes priority over sessionId
-	it("should query by userId when user is authenticated", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+	it("matérialise les ids en produits PUBLIC non supprimés", async () => {
+		mockReadWishlistCookie.mockResolvedValue([ID_A]);
+		mockPrisma.product.findMany.mockResolvedValue([mockProduct(ID_A)]);
 
 		await getWishlist();
 
-		expect(mockPrisma.wishlistItem.count).toHaveBeenCalledWith(
+		expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({
-					wishlist: { userId: VALID_USER_ID },
-				}),
-			}),
-		);
-		expect(mockPrisma.wishlistItem.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({
-					wishlist: { userId: VALID_USER_ID },
+					id: { in: [ID_A] },
+					status: "PUBLIC",
+					deletedAt: null,
 				}),
 			}),
 		);
 	});
 
-	// sessionId used when no userId
-	it("should query by sessionId for guest user", async () => {
-		mockGetWishlistSessionId.mockResolvedValue(VALID_SESSION_ID);
-
-		await getWishlist();
-
-		expect(mockPrisma.wishlistItem.count).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({
-					wishlist: { sessionId: VALID_SESSION_ID },
-				}),
-			}),
-		);
-		expect(mockPrisma.wishlistItem.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({
-					wishlist: { sessionId: VALID_SESSION_ID },
-				}),
-			}),
-		);
-	});
-
-	// Product filter: PUBLIC + notDeleted
-	it("should filter products by status PUBLIC and notDeleted", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-
-		await getWishlist();
-
-		expect(mockPrisma.wishlistItem.count).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({
-					product: expect.objectContaining({
-						status: "PUBLIC",
-						deletedAt: null,
-					}),
-				}),
-			}),
-		);
-	});
-
-	// totalCount 0 → early empty return (skips processCursorResults)
-	it("should return empty result when totalCount is 0", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-		mockPrisma.wishlistItem.count.mockResolvedValue(0);
-		mockPrisma.wishlistItem.findMany.mockResolvedValue([]);
+	it("préserve l'ordre du cookie (plus récent en premier) malgré l'ordre DB", async () => {
+		mockReadWishlistCookie.mockResolvedValue([ID_B, ID_A]);
+		// findMany retourne dans un ordre arbitraire
+		mockPrisma.product.findMany.mockResolvedValue([mockProduct(ID_A), mockProduct(ID_B)]);
 
 		const result = await getWishlist();
 
-		expect(result).toEqual(EMPTY_RESULT);
-		expect(mockProcessCursorResults).not.toHaveBeenCalled();
+		expect(result.items.map((p) => p.id)).toEqual([ID_B, ID_A]);
 	});
 
-	// processCursorResults called with correct args
-	it("should call processCursorResults with items, take, direction and cursor", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-		const items = [createMockWishlistItem()];
-		mockPrisma.wishlistItem.findMany.mockResolvedValue(items);
-		mockPrisma.wishlistItem.count.mockResolvedValue(1);
-
-		const params = { cursor: "cursor_abc", direction: "forward" as const, perPage: 10 };
-		await getWishlist(params);
-
-		expect(mockProcessCursorResults).toHaveBeenCalledWith(items, 10, "forward", "cursor_abc");
-	});
-
-	// perPage of 0 is not nullish: `0 ?? DEFAULT` evaluates to 0, then Math.max(1, 0) = 1
-	it("should fall back to default perPage when perPage is 0 (falsy)", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-
-		await getWishlist({ perPage: 0 });
-
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
-	});
-
-	// perPage clamped to 1 minimum when given a negative number
-	it("should clamp perPage to minimum of 1 when given a negative number", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-
-		await getWishlist({ perPage: -5 });
-
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
-	});
-
-	// perPage clamped to MAX
-	it("should clamp perPage to MAX (200) when given a value above the limit", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-
-		await getWishlist({ perPage: 9999 });
-
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
-	});
-
-	// default perPage applied when not specified
-	it("should use default perPage (20) when perPage is not specified", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-
-		await getWishlist({});
-
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
-	});
-
-	// Returns paginated items and pagination from processCursorResults
-	it("should return paginatedItems and pagination from processCursorResults", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-		const paginatedItem = createMockWishlistItem({ id: "item_paginated" });
-		const pagination = {
-			nextCursor: "next_cursor",
-			prevCursor: null,
-			hasNextPage: true,
-			hasPreviousPage: false,
-		};
-		mockProcessCursorResults.mockReturnValue({ items: [paginatedItem], pagination });
-		mockPrisma.wishlistItem.count.mockResolvedValue(5);
+	it("écarte silencieusement les ids sans produit PUBLIC correspondant", async () => {
+		mockReadWishlistCookie.mockResolvedValue([ID_A, ID_C, ID_B]);
+		// ID_C archivé/supprimé : absent du résultat DB
+		mockPrisma.product.findMany.mockResolvedValue([mockProduct(ID_A), mockProduct(ID_B)]);
 
 		const result = await getWishlist();
 
-		expect(result.items).toEqual([paginatedItem]);
-		expect(result.pagination).toEqual(pagination);
-		expect(result.totalCount).toBe(5);
+		expect(result.items.map((p) => p.id)).toEqual([ID_A, ID_B]);
+		expect(result.totalCount).toBe(2);
 	});
 
-	// count and findMany run with same where clause
-	it("should run count and findMany with the same where clause", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-
-		await getWishlist();
-
-		const countCall = mockPrisma.wishlistItem.count.mock.calls[0]![0];
-		const findManyCall = mockPrisma.wishlistItem.findMany.mock.calls[0]![0];
-
-		expect(countCall.where).toEqual(findManyCall.where);
-	});
-
-	// Error resilience: exception during DB calls returns empty result
-	it("should return empty result when an exception is thrown", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-		mockPrisma.wishlistItem.count.mockRejectedValue(new Error("DB timeout"));
+	it("retourne vide ET logge sur une panne DB (repli hors du scope cache)", async () => {
+		mockReadWishlistCookie.mockResolvedValue([ID_A]);
+		mockPrisma.product.findMany.mockRejectedValue(new Error("db down"));
 
 		const result = await getWishlist();
 
-		expect(result).toEqual(EMPTY_RESULT);
+		expect(result).toEqual({ items: [], totalCount: 0 });
+		expect(mockLoggerError).toHaveBeenCalled();
 	});
 
-	// Error resilience: findMany exception
-	it("should return empty result when findMany throws", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-		mockPrisma.wishlistItem.findMany.mockRejectedValue(new Error("Connection lost"));
+	it("retourne vide SANS logger quand cookies() rejette pendant le prerender (PPR)", async () => {
+		mockReadWishlistCookie.mockRejectedValue(new Error("prerender interrupted"));
+		mockIsPrerenderInterrupt.mockReturnValue(true);
 
 		const result = await getWishlist();
 
-		expect(result).toEqual(EMPTY_RESULT);
+		expect(result).toEqual({ items: [], totalCount: 0 });
+		expect(mockLoggerError).not.toHaveBeenCalled();
 	});
 
-	// Defense-in-depth: authenticated user ignores guest cookie
-	it("should ignore guest cookie when user is authenticated", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-		mockGetWishlistSessionId.mockResolvedValue(VALID_SESSION_ID);
+	it("retourne vide SANS logger quand la lecture `use cache` est coupée à la clôture", async () => {
+		mockReadWishlistCookie.mockResolvedValue([ID_A]);
+		mockPrisma.product.findMany.mockRejectedValue(new Error("Connection closed."));
+		mockIsPrerenderInterrupt.mockReturnValue(true);
 
-		await getWishlist();
+		const result = await getWishlist();
 
-		expect(mockGetWishlistSessionId).not.toHaveBeenCalled();
+		expect(result).toEqual({ items: [], totalCount: 0 });
+		expect(mockLoggerError).not.toHaveBeenCalled();
 	});
 });
