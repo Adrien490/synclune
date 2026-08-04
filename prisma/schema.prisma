@@ -383,7 +383,19 @@ model Order {
   id          String  @id @default(cuid(2))
   orderNumber String  @unique @db.VarChar(50)
   stripePaymentIntentId String? @unique
-  stripeChargeId        String? @unique
+
+  // Pas de `stripeChargeId` : ajoutée le 2026-08-04 pour UNE raison — `buildInvoiceData`
+  // écrivait `payment.stripeChargeId: null` EN DUR, et ce `null` partait figé dans
+  // `invoiceDataSnapshot`, canonicalisé sous SHA-256 pour dix ans. Le snapshot a été
+  // retiré à la vague V3 : le considérant est parti avec lui. Le renderer PDF ne l'a
+  // JAMAIS imprimé, et aucune requête ne l'a jamais filtré.
+  //
+  // La charge reste retrouvable à tout instant depuis `stripePaymentIntentId`
+  // (conservé, `@unique`, et exigé par le CHECK `Order_paid_requires_stripe_proof`)
+  // via `PaymentIntent.latest_charge`.
+  //
+  // ⚠️ Condition de réouverture : si un snapshot de données de facture revient, la
+  // colonne doit revenir AVANT lui — sinon on refige un `null` pour dix ans.
 
   customerEmail String @db.VarChar(255)
   customerName  String @db.VarChar(100)

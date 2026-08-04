@@ -44,11 +44,11 @@ export const GET_ORDERS_SELECT = {
 //   - GET_ORDER_SELECT_CUSTOMER : minimisation RGPD pour l'espace client
 //
 // Différences customer vs admin :
-//   - stripePaymentIntentId / stripeChargeId : retirés (fingerprints cross-commande
-//     inutiles côté client). Corollaire : les builders `InvoiceData` doivent lire ces
-//     deux champs en `?? null` — sur un order chargé en select CUSTOMER puis CASTÉ en
-//     `GetOrderReturn` (route facture, rendu d'avoir), ils valent `undefined` au
-//     runtime alors que le type promet `string | null`.
+//   - stripePaymentIntentId : retiré (fingerprint cross-commande inutile côté
+//     client). Corollaire : les builders `InvoiceData` doivent le lire en `?? null` —
+//     sur un order chargé en select CUSTOMER puis CASTÉ en `GetOrderReturn` (route
+//     facture, rendu d'avoir), il vaut `undefined` au runtime alors que le type
+//     promet `string | null`.
 //   - history.metadata : retiré (peut contenir des PII, ex: previous.email sur ADDRESS_UPDATED)
 //   - history.authorName : retiré (fuite identité admin interne)
 //
@@ -59,7 +59,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	id: true,
 	orderNumber: true,
 	stripePaymentIntentId: true,
-	stripeChargeId: true,
 	customerEmail: true,
 	customerName: true,
 	subtotal: true,

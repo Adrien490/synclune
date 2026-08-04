@@ -121,7 +121,6 @@ const paymentInfoSchema = z.object({
 	method: z.enum(PaymentMethod),
 	paidAt: z.date().nullable(),
 	stripePaymentIntentId: z.string().nullable(),
-	stripeChargeId: z.string().nullable(),
 });
 
 const precedingInvoiceSchema = z

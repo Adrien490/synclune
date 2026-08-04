@@ -101,15 +101,14 @@ export function buildCreditNoteData(
 		payment: {
 			method: order.paymentMethod,
 			paidAt: order.paidAt,
-			stripePaymentIntentId: order.stripePaymentIntentId,
-			// `?? null` obligatoire, cf. la note détaillée dans `buildInvoiceData` :
-			// l'UNIQUE appelant (`renderRefundCreditNotePdf`) charge l'order en
-			// `GET_ORDER_SELECT_CUSTOMER` puis le caste en `GetOrderReturn`. La propriété
-			// est donc absente au runtime, et sans coalescing la clé disparaîtrait du
-			// JSON. Le PDF d'avoir est hashé (`Refund.creditNotePdfHash`, Art. L102 B
-			// LPF) : sa forme de données doit rester stable, et elle l'est ici — cette
-			// valeur reste `null`, identique à ce qu'elle valait avant la migration.
-			stripeChargeId: order.stripeChargeId ?? null,
+			// `?? null` obligatoire : ce builder est appelé sur deux formes d'order.
+			// `GET_ORDER_SELECT_CUSTOMER` exclut délibérément l'identifiant Stripe
+			// (minimisation RGPD), et les chemins de RENDU chargent avec ce select puis
+			// CASTENT en `GetOrderReturn` — la propriété est alors absente, `undefined`,
+			// alors que le type promet `string | null`. Sans coalescing,
+			// `invoiceDataSchema` (`z.string().nullable()`, qui REJETTE `undefined`)
+			// échouerait sur ce chemin, et la clé disparaîtrait du payload.
+			stripePaymentIntentId: order.stripePaymentIntentId ?? null,
 		},
 		precedingInvoice,
 		voidedInfo: null,

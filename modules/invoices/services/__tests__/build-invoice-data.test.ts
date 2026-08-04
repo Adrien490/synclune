@@ -186,35 +186,35 @@ describe("buildInvoiceData — B2C franchise", () => {
 		expect(data.totals.amountDue).toBe(0);
 	});
 
-	it("payment info captures paidAt and stripe IDs", () => {
-		const data = buildInvoiceData(makeOrder({ stripeChargeId: "ch_test_1" }));
+	it("payment info captures paidAt and the payment intent id", () => {
+		const data = buildInvoiceData(makeOrder());
 		expect(data.payment.method).toBe("CARD");
 		expect(data.payment.paidAt).toEqual(new Date("2026-05-27T18:00:00Z"));
+		// Test de COUTURE colonne → payload. `stripeChargeId` a été retiré à l'audit
+		// schéma V4 : son considérant — un `null` figé sous SHA-256 dans
+		// `invoiceDataSnapshot` — est parti avec le snapshot lui-même (vague V3), et le
+		// renderer ne l'a jamais imprimé.
 		expect(data.payment.stripePaymentIntentId).toBe("pi_test_1");
-		// Test de COUTURE colonne → snapshot. Jusqu'à la migration 20260804200000,
-		// `stripeChargeId` était `null` EN DUR ici alors que le champ existait dans le
-		// type ET dans le schéma Zod : rien ne rougissait, et chaque facture figeait un
-		// `null` pour 10 ans (Art. L102 B LPF). Assertion sur la VALEUR, pas sur la
-		// présence de la clé — c'est la valeur qui s'était perdue.
-		expect(data.payment.stripeChargeId).toBe("ch_test_1");
 	});
 
-	// Le chemin qui écrit le snapshot charge en `GET_ORDER_SELECT_ADMIN`, mais les
-	// chemins de RENDU (fallback legacy de `resolveInvoiceDataForRender`,
-	// `renderOrderCreditNotePdf`) chargent en `GET_ORDER_SELECT_CUSTOMER` — qui exclut
-	// délibérément les identifiants Stripe — puis CASTENT en `GetOrderReturn`. La
-	// propriété est alors absente de l'objet, pas `null`. Sans le `?? null` du builder,
-	// la clé disparaîtrait du JSON : une divergence de FORME du payload, précisément ce
-	// que `formatVersion` sert à rendre détectable.
+	// `persistInvoiceNumber` charge en `GET_ORDER_SELECT_ADMIN`, mais les chemins de
+	// RENDU (`resolveInvoiceDataForRender`, `renderOrderCreditNotePdf`) chargent en
+	// `GET_ORDER_SELECT_CUSTOMER` — qui exclut délibérément l'identifiant Stripe
+	// (minimisation RGPD) — puis CASTENT en `GetOrderReturn`. La propriété est alors
+	// absente de l'objet, pas `null`, alors que le type promet `string | null`.
+	//
+	// Ce test gardait `stripeChargeId`, retiré à l'audit schéma V4. Il est RETARGETÉ
+	// sur `stripePaymentIntentId`, qui subit exactement le même sort dans le même
+	// select et n'était PAS coalescé — le trou survivait donc au champ qui le
+	// documentait. `invoiceDataSchema` rejette `undefined` (`z.string().nullable()`).
 	it("un order en select CUSTOMER (propriété absente) rend null, pas une clé manquante", () => {
 		const order = makeOrder();
-		delete (order as Partial<Order>).stripeChargeId;
+		delete (order as Partial<Order>).stripePaymentIntentId;
 
 		const data = buildInvoiceData(order);
 
-		expect(data.payment.stripeChargeId).toBeNull();
-		expect(Object.hasOwn(data.payment, "stripeChargeId")).toBe(true);
-		// La forme reste celle que valide le schéma figé sous SHA-256.
+		expect(data.payment.stripePaymentIntentId).toBeNull();
+		expect(Object.hasOwn(data.payment, "stripePaymentIntentId")).toBe(true);
 		expect(invoiceDataSchema.safeParse(data).success).toBe(true);
 	});
 

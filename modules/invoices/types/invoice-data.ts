@@ -27,7 +27,6 @@ import type { TaxCategoryCode } from "@/shared/constants/tax-categories";
  *  - Art. 272-I CGI (avoir) → variant via `precedingInvoice`
  */
 export interface InvoiceData {
-
 	// === IDENTIFIANTS ===
 	invoiceNumber: string;
 	invoiceFormat: InvoiceFormat;
@@ -197,7 +196,6 @@ interface PaymentInfo {
 	method: PaymentMethod;
 	paidAt: Date | null;
 	stripePaymentIntentId: string | null;
-	stripeChargeId: string | null;
 }
 
 export interface PrecedingInvoiceRef {

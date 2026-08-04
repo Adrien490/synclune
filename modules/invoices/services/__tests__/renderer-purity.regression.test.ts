@@ -125,7 +125,6 @@ function makeFixture(overrides: Partial<InvoiceData> = {}): InvoiceData {
 			method: "CARD",
 			paidAt: new Date("2026-05-27T18:00:00Z"),
 			stripePaymentIntentId: "pi_test_1",
-			stripeChargeId: null,
 		},
 		precedingInvoice: null,
 		voidedInfo: null,

@@ -515,22 +515,6 @@ async function processOrderAtomically(
 }
 
 /**
- * `PaymentIntent.latest_charge` → id de Charge, sans appel réseau.
- *
- * Stripe n'expand pas `latest_charge` par défaut : sur un PI de webhook c'est une
- * STRING (l'id), pas un objet — exactement ce qu'on veut stocker. Le cas objet n'est
- * couvert que pour un appelant qui aurait expandé. Ne JAMAIS retrieve la Charge ici :
- * `extractPaymentMethodFromPaymentIntent` le fait déjà côté handler pour lire
- * `payment_method_details`, et un second aller-retour Stripe dans la transaction
- * d'encaissement mangerait le budget de `TX_TIMEOUT_LONG` pour une donnée déjà en main.
- */
-function readChargeId(paymentIntent: Stripe.PaymentIntent): string | null {
-	const latest = paymentIntent.latest_charge;
-	if (typeof latest === "string") return latest;
-	return latest?.id ?? null;
-}
-
-/**
  * Processes order from a Payment Intent (new PI flow).
  * Shipping info is already stored in the Order (set during confirmCheckout).
  *
@@ -552,8 +536,6 @@ export async function processOrderFromPaymentIntent(
 		paymentIntent.amount_received,
 	);
 
-	const stripeChargeId = readChargeId(paymentIntent);
-
 	return prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			return processOrderAtomically(
@@ -569,11 +551,6 @@ export async function processOrderFromPaymentIntent(
 					paymentStatus: "PAID",
 					paidAt: new Date(),
 					stripePaymentIntentId: paymentIntent.id,
-					// Spread conditionnel, comme `paymentMethod` juste en dessous : un PI
-					// sans `latest_charge` (PI succeeded sans capture — cas rare tracé par
-					// `extractPaymentMethodFromPaymentIntent`) ne doit pas REMETTRE la
-					// colonne à NULL sur une commande où un passage antérieur l'avait posée.
-					...(stripeChargeId !== null && { stripeChargeId }),
 					...(paymentMethod !== undefined && { paymentMethod }),
 				},
 				"PI flow",

@@ -94,7 +94,6 @@ function makeValidB2cInvoice(): InvoiceData {
 			method: "CARD",
 			paidAt: new Date("2026-05-27T18:00:00Z"),
 			stripePaymentIntentId: "pi_test_123",
-			stripeChargeId: null,
 		},
 		precedingInvoice: null,
 		voidedInfo: null,

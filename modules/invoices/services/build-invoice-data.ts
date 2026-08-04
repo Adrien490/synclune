@@ -87,19 +87,14 @@ export function buildInvoiceData(
 		payment: {
 			method: order.paymentMethod,
 			paidAt: order.paidAt,
-			stripePaymentIntentId: order.stripePaymentIntentId,
-			// `Order.stripeChargeId` existe depuis la migration 20260804200000 ; avant
-			// elle, ce champ était `null` EN DUR faute de colonne à lire.
-			//
-			// Le `?? null` n'est pas cosmétique : ce builder est appelé sur deux formes
-			// d'order. Le chemin qui COMPTE — l'écriture du snapshot figé par
-			// `persistInvoiceNumber` — charge en `GET_ORDER_SELECT_ADMIN`, donc la vraie
-			// valeur. Les chemins de RENDU chargent en `GET_ORDER_SELECT_CUSTOMER` puis
-			// castent : la propriété est alors absente, `undefined`. Le coalescing la
-			// ramène à `null` pour que le PDF rendu soit identique quel que soit le
-			// select d'origine — c'est ce qui rend `renderInvoicePdf` déterministe, et
-			// donc le SHA-256 de l'archive reproductible.
-			stripeChargeId: order.stripeChargeId ?? null,
+			// `?? null` obligatoire : ce builder est appelé sur deux formes d'order.
+			// `GET_ORDER_SELECT_CUSTOMER` exclut délibérément l'identifiant Stripe
+			// (minimisation RGPD), et les chemins de RENDU chargent avec ce select puis
+			// CASTENT en `GetOrderReturn` — la propriété est alors absente, `undefined`,
+			// alors que le type promet `string | null`. Sans coalescing,
+			// `invoiceDataSchema` (`z.string().nullable()`, qui REJETTE `undefined`)
+			// échouerait sur ce chemin, et la clé disparaîtrait du payload.
+			stripePaymentIntentId: order.stripePaymentIntentId ?? null,
 		},
 		precedingInvoice,
 		voidedInfo,

@@ -112,7 +112,6 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 			method: "CARD",
 			paidAt: new Date("2026-05-28T10:31:00Z"),
 			stripePaymentIntentId: "pi_test_1",
-			stripeChargeId: null,
 		},
 		precedingInvoice: null,
 		voidedInfo: null,
@@ -209,7 +208,6 @@ describe("renderInvoicePdf — déterminisme bit-à-bit (Art. L102 B LPF)", () =
 				method: "CARD",
 				paidAt: "2026-05-28T10:31:00Z" as unknown as Date,
 				stripePaymentIntentId: "pi_test_1",
-				stripeChargeId: null,
 			},
 		});
 		const a = renderInvoicePdf(dateInstance);
