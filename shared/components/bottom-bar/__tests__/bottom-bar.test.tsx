@@ -407,9 +407,19 @@ describe("BottomBar", () => {
 		expect(el.className).toContain("pr-[env(safe-area-inset-right)]");
 	});
 
-	// Le repli sans `backdrop-filter` doit être OPAQUE : `/80` sans flou laisse
-	// passer la photo produit derrière des libellés `text-xs text-muted-foreground`.
-	it("opacifie son fond quand backdrop-filter n'est pas supporté", () => {
+	/**
+	 * L'invariant est le même qu'avant — rien ne doit transparaître derrière les
+	 * libellés — mais il ne dépend plus d'une condition.
+	 *
+	 * La barre était une vitre `bg-background/80 backdrop-blur-xl`, avec un repli
+	 * opaque quand `backdrop-filter` manque : 20 % de transparence *sans flou*
+	 * laissait passer la photo produit derrière des libellés
+	 * `text-muted-foreground` et tombait sous 4,5:1 (WCAG 1.4.3). Depuis la
+	 * refonte « L'intercalaire » (2026-08-04) elle est du papier opaque, toujours :
+	 * le contraste ne dépend plus du support de `backdrop-filter`, et la languette
+	 * d'accent a un fond neutre à mordre.
+	 */
+	it("est opaque, sans dépendre du support de backdrop-filter", () => {
 		render(
 			<BottomBar aria-label="bar">
 				<span>content</span>
@@ -417,8 +427,24 @@ describe("BottomBar", () => {
 		);
 
 		const el = screen.getByLabelText("bar");
-		expect(el.className).toContain("bg-background ");
-		expect(el.className).toContain("supports-[backdrop-filter]:bg-background/80");
+		expect(el.className).toContain("bg-card");
+		// Aucune opacité conditionnelle, aucun flou : plus rien à faire dépendre
+		// d'une capacité du navigateur.
+		expect(el.className).not.toContain("backdrop-blur");
+		expect(el.className).not.toMatch(/bg-\w+\/\d/);
+	});
+
+	// Le grain papier partagé avec les cartes du catalogue (`.polaroid-paper`).
+	// ⚠️ Son `::after` couvre toute la barre : il DOIT rester `pointer-events-none`,
+	// sinon plus aucun onglet n'est cliquable (assertion côté CSS ci-dessous).
+	it("porte la surface papier", () => {
+		render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		expect(screen.getByLabelText("bar").className).toContain("bottom-bar-paper");
 	});
 
 	// -------------------------------------------------------------------------

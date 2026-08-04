@@ -248,7 +248,16 @@ export function ShopMobileBottomNav() {
 				{tabs.map((tab) => {
 					const iconEl = (
 						<span className="relative">
-							<tab.icon className={bottomBarIconClass} aria-hidden="true" />
+							{/* `weight="fill"` sur l'onglet courant : c'est l'affordance canonique
+							 * d'une tab bar, et elle est GRATUITE ici — chaque module Phosphor
+							 * embarque ses six graisses dans un module unique, intreeshakable.
+							 * Elle était déjà payée dans le bundle et pas utilisée : actif et
+							 * inactif ne se distinguaient que par une nuance de gris. */}
+							<tab.icon
+								className={bottomBarIconClass}
+								weight={tab.isActive ? "fill" : "regular"}
+								aria-hidden="true"
+							/>
 							{"badge" in tab && tab.badge && (
 								<CountBadge
 									count={tab.badge.count}

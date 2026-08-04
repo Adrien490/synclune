@@ -102,7 +102,11 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 				>
 					{isActive && <BottomBarActivePill groupId="admin-nav" />}
 					<span className="relative">
-						<Icon className={bottomBarIconClass} aria-hidden="true" />
+						<Icon
+							className={bottomBarIconClass}
+							weight={isActive ? "fill" : "regular"}
+							aria-hidden="true"
+						/>
 						{badgeCount > 0 && (
 							/* Purement visuel : le compte est déjà dans l'aria-label du lien,
 							 * et l'annonce des changements est portée par la région unique
@@ -152,7 +156,11 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 						aria-label="Menu de navigation"
 					>
 						{isMenuOpen && <BottomBarActivePill groupId="admin-nav" />}
-						<ListIcon className={bottomBarIconClass} aria-hidden="true" />
+						<ListIcon
+							className={bottomBarIconClass}
+							weight={isMenuOpen ? "fill" : "regular"}
+							aria-hidden="true"
+						/>
 						<span className={bottomBarLabelClass}>Menu</span>
 					</button>
 				</li>

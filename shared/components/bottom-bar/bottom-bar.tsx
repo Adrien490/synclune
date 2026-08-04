@@ -201,13 +201,25 @@ export function BottomBar({
 		// s'insère. En paysage iPhone la barre boutique reste montée (844px < 64rem)
 		// et les onglets extrêmes tombaient sous l'encoche / le coin arrondi.
 		"pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]",
-		// Le repli sans `backdrop-filter` doit être OPAQUE : un fond à 20 % de
-		// transparence *sans flou* laisse passer la photo produit derrière des
-		// libellés `text-xs text-muted-foreground` et tombe sous 4.5:1 (WCAG 1.4.3).
-		// Avec flou, `/80` produit le matériau de la Tab Bar iOS.
-		"bg-background supports-[backdrop-filter]:bg-background/80 backdrop-blur-xl",
+		// Papier OPAQUE, plus une vitre floutée (refonte « L'intercalaire »,
+		// 2026-08-04). Trois raisons, dans cet ordre :
+		//
+		// 1. Le contraste cesse de dépendre de ce qu'il y a derrière. Le repli sans
+		//    `backdrop-filter` devait déjà être opaque — 20 % de transparence *sans
+		//    flou* laissait passer la photo produit derrière des libellés
+		//    `text-muted-foreground` et tombait sous 4,5:1 (WCAG 1.4.3). Léane
+		//    photographie ses pièces elle-même, sans charte de prise de vue : une
+		//    pièce claire sur fond clair est le cas courant, pas le cas limite.
+		// 2. La languette d'accent (`bottomBarActiveItemClass`) a besoin d'un fond
+		//    neutre à mordre — un aplat de couleur sur une vitre translucide se
+		//    mélange à la photo qui défile dessous.
+		// 3. C'est le matériau des cartes du catalogue (`.polaroid-paper`), donc la
+		//    barre cesse d'être la seule surface du site à parler la langue d'iOS.
+		//
+		// Perte assumée : l'effet de matière du flou sur un contenu qui défile.
+		"bottom-bar-paper bg-card",
 		"border-border/60 border-t",
-		"shadow-[0_-0.5px_0_oklch(0_0_0/0.06)]",
+		"shadow-[0_-8px_24px_-12px_oklch(0_0_0/0.14)]",
 		hidden && "pointer-events-none",
 		className,
 	);

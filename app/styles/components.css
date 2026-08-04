@@ -71,6 +71,30 @@
 	}
 
 	/* ==========================================
+	   BOTTOM BAR — papier opaque
+	   ==========================================
+	   Le grain de `.polaroid-paper`, à opacité réduite (.03 contre .035) : la
+	   barre est petite et toujours à l'écran, donc un bruit à pleine force s'y
+	   remarque là où il ne se remarque pas sur une carte qu'on survole.
+
+	   Pourquoi une classe et pas un utilitaire Tailwind : c'est un pseudo-élément
+	   avec un `background-image` en data-URI et un `mix-blend-mode`, comme les
+	   autres surfaces « papier » du dépôt (`.polaroid-paper`, `.gallery-mount`).
+
+	   ⚠️ `pointer-events: none` est non négociable : le calque couvre toute la
+	   barre, onglets compris — sans lui, plus aucun onglet n'est cliquable. */
+	.bottom-bar-paper::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		pointer-events: none;
+		opacity: 0.03;
+		mix-blend-mode: multiply;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	}
+
+	/* ==========================================
 	   POLAROID FRAME — Paper texture & hover
 	   ========================================== */
 
