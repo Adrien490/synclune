@@ -526,7 +526,7 @@ existe**. Chaque module pose son `deletedAt` dans sa propre transaction, avec le
 l'accompagnent (purge des liaisons, audit, promotion d'un nouveau défaut) ; un helper mono-ligne
 à côté ne fait que suggérer un raccourci qui sauterait ces étapes.
 
-**Key enums**: `ProductStatus`, `OrderStatus`, `PaymentStatus`, `RefundStatus`, `FulfillmentStatus`
+**Key enums**: `ProductStatus`, `OrderStatus`, `PaymentStatus`, `RefundStatus`
 
 **Il n'y a plus de journal d'inventaire** (`StockMovement` supprimé : 7 écrivains, zéro lecteur).
 Le registre obligatoire d'une micro-entreprise est le livre de recettes (export CSV filtré sur

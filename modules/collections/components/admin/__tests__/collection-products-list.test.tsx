@@ -184,7 +184,6 @@ type ProductEntry = GetCollectionReturn["products"][number];
 function makeProductEntry(overrides: Partial<ProductEntry> = {}): ProductEntry {
 	return {
 		id: "pc-1",
-		addedAt: new Date("2024-01-01"),
 		isFeatured: false,
 		product: {
 			id: "prod-1",

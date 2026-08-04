@@ -32,7 +32,6 @@ export const GET_COLLECTION_SELECT = {
 		},
 		select: {
 			id: true,
-			addedAt: true,
 			isFeatured: true,
 			product: {
 				select: {

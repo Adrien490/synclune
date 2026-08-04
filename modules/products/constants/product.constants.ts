@@ -178,7 +178,6 @@ export const GET_PRODUCT_SELECT = {
 	collections: {
 		select: {
 			id: true,
-			addedAt: true,
 			isFeatured: true,
 			collection: {
 				select: {
@@ -309,7 +308,6 @@ export const GET_PRODUCTS_SELECT = {
 	collections: {
 		select: {
 			id: true,
-			addedAt: true,
 			isFeatured: true,
 			collection: {
 				select: {

@@ -1665,8 +1665,10 @@ async function main(): Promise<void> {
 	const skuInventoryDecrements = new Map<string, number>();
 
 	for (let i = 0; i < CONFIG.orderCount; i += 1) {
-		const customer = sampleBoolean(0.85) ? faker.helpers.arrayElement(usersData) : null;
-		const customerId = customer?.id ?? null;
+		// Pas de rattachement à un `User` : `Order.userId` a été droppée (audit
+		// schéma V1, Lot C). Le parcours d'achat est 100 % invité — l'identité de
+		// la cliente vit dans les colonnes figées `customerName`/`customerEmail`,
+		// produites par `generateShippingAddress()` ci-dessous.
 		const orderItemsCount = faker.number.int({ min: 1, max: 3 });
 		const itemsData: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] = [];
 		const usedSkuIds = new Set<string>();
@@ -1788,7 +1790,6 @@ async function main(): Promise<void> {
 		await prisma.order.create({
 			data: {
 				orderNumber: buildOrderNumber(i + 1),
-				user: customerId ? { connect: { id: customerId } } : undefined,
 				subtotal,
 				shippingCost: shipping,
 				total,

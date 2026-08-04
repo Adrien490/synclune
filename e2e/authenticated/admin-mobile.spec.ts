@@ -283,8 +283,10 @@ test.describe("Admin - Tablette (viewport 1024x768)", { tag: ["@regression"] }, 
 		await kpi.first().click();
 		await page.waitForLoadState("domcontentloaded");
 
+		// `fulfillmentStatus` a été absorbé par `status` (audit V2, Lot 4) :
+		// `appendToShipParams()` n'émet plus que ces deux dimensions.
 		await expect(page).toHaveURL(/filter_paymentStatus=PAID/);
-		await expect(page).toHaveURL(/filter_fulfillmentStatus=UNFULFILLED/);
+		await expect(page).toHaveURL(/filter_status=PENDING/);
 	});
 
 	test("les datatables sont lisibles sur tablette", async ({ page }) => {
