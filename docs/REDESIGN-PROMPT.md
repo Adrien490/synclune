@@ -29,8 +29,8 @@ n'améliore rien est un échec, pas une livraison.
 Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà écrit dans le projet :
 - `CLAUDE.md` : conventions, invariants React 19, et les sections Breakpoints / Overlays / Survol vs focus / Voix
 - `app/globals.css` **et les 6 feuilles qu'il importe** (`app/styles/{utilities,animations,entrance,components,
-  section-accents,pwa}.css`) — c'est là que vivent `hand-drawn-underline`, `.doodle-draw`, `.enter-inview`,
-  `.text-gradient-multicolor`, `[data-accent]`, `@utility hover-halo`, `@utility focus-ring`
+  section-accents,pwa}.css`) — c'est là que vivent `.enter-inview`, `.hand-draw-inview`, `.animate-shimmer`,
+  `.product-item`, `[data-accent]`, `@utility hover-halo`, `@utility focus-ring`
 - `shared/components/animations/motion.config.ts` (`MOTION_CONFIG`), `shared/styles/fonts.ts`,
   `shared/components/ui/`, `shared/constants/breakpoints.ts`
 - les données et contenus RÉELS de la cible — jamais de lorem, de faux avis ni de prix inventés

@@ -466,7 +466,7 @@ Note /100, classe les risques RGPD en P0/P1.
 
 ---
 
-## 30 — Rétention PII 10 ans
+## 30 — Rétention PII 10 ans : DONE
 
 ```text
 Audit le point « Rétention PII 10 ans » dans Synclune.
@@ -1226,7 +1226,7 @@ Note /100, propose corrections/améliorations si pertinent.
 
 ---
 
-## 85 — Animations et reduced motion
+## 85 — Animations et reduced motion : DONE
 
 ```text
 Audit le point « Animations et reduced motion » dans Synclune.
@@ -1402,7 +1402,7 @@ Note /100, propose corrections/améliorations si pertinent.
 
 ---
 
-## 98 — Pages paiement confirmation/annulation/retour
+## 98 — Pages paiement confirmation/annulation/retour : DONE
 
 ```text
 Audit le point « Pages paiement » dans Synclune.
