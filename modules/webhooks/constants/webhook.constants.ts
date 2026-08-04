@@ -1,12 +1,11 @@
 /**
- * Reserved UUID for system-generated OrderNotes (webhooks, cron)
- * Uses UUID v4 nil-like format to avoid collision with real user IDs
- */
-export const SYSTEM_AUTHOR_ID = "00000000-0000-0000-0000-000000000000";
-
-/**
  * Maximum retry attempts for webhook events before admin alert.
- * Used by the Stripe webhook handler (alert) and the retry-webhooks cron (skip threshold).
+ *
+ * Seul consommateur depuis l'audit V2 (Lot 3, 2026-08-05) : le handler de la route
+ * Stripe. `attempts` compte les REDÉLIVRANCES DE STRIPE (la route renvoie 500 en
+ * échec, Stripe retente 3 jours) — la tâche `retry-webhooks`, qui s'en servait
+ * aussi comme seuil d'abandon, a été retirée : c'était un troisième système de
+ * reprise par-dessus deux qui sont durables par construction.
  */
 export const MAX_WEBHOOK_RETRY_ATTEMPTS = 3;
 
@@ -21,7 +20,11 @@ export const MAX_WEBHOOK_RETRY_ATTEMPTS = 3;
  * l'ancien seuil de 24h. Utilisé par :
  *   - le pré-check d'idempotence de la route (un PROCESSING périmé n'est PAS
  *     court-circuité en 200 → on laisse l'event se reprendre au lieu d'avaler
- *     le retry légitime de Stripe) ;
- *   - le cron `retry-webhooks` (reset des PROCESSING périmés → FAILED).
+ *     le retry légitime de Stripe).
+ *
+ * ⚠️ C'est le SEUL consommateur depuis le retrait de `retry-webhooks` (audit V2,
+ * Lot 3) — la reprise d'un PROCESSING périmé dépend donc entièrement d'une
+ * redélivrance de Stripe. Passé sa fenêtre de 3 jours, la ligne reste figée en
+ * PROCESSING (cf. `docs/KNOWN-ISSUES.md`, KI-006).
  */
 export const STALE_PROCESSING_THRESHOLD_MS = 15 * 60 * 1000;

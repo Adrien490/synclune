@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockRequireAdmin,
 	mockEnforceRateLimit,
-	mockRetryWebhooks,
 	mockReconcileRefunds,
 	mockSyncAsyncPayments,
 	mockCleanupOrphanMedia,
@@ -11,7 +10,6 @@ const {
 } = vi.hoisted(() => ({
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
-	mockRetryWebhooks: vi.fn(),
 	mockReconcileRefunds: vi.fn(),
 	mockSyncAsyncPayments: vi.fn(),
 	mockCleanupOrphanMedia: vi.fn(),
@@ -24,10 +22,6 @@ vi.mock("@/modules/auth/lib/require-auth", () => ({
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
-}));
-
-vi.mock("../../services/retry-webhooks.service", () => ({
-	retryFailedWebhooks: mockRetryWebhooks,
 }));
 
 vi.mock("../../services/reconcile-refunds.service", () => ({
@@ -51,7 +45,6 @@ import { MAINTENANCE_TASK_IDS } from "../../constants/maintenance-tasks";
 import { ActionStatus } from "@/shared/types/server-action";
 
 const RUNNERS = {
-	"retry-webhooks": mockRetryWebhooks,
 	"reconcile-refunds": mockReconcileRefunds,
 	"sync-async-payments": mockSyncAsyncPayments,
 	"cleanup-orphan-media": mockCleanupOrphanMedia,
@@ -79,7 +72,7 @@ describe("runMaintenanceTask", () => {
 		const authError = { error: { status: ActionStatus.FORBIDDEN, message: "Accès refusé" } };
 		mockRequireAdmin.mockResolvedValue(authError);
 
-		const result = await runMaintenanceTask(undefined, formDataWith("retry-webhooks"));
+		const result = await runMaintenanceTask(undefined, formDataWith("reconcile-refunds"));
 
 		expect(result).toBe(authError.error);
 		for (const runner of Object.values(RUNNERS)) {
@@ -91,10 +84,10 @@ describe("runMaintenanceTask", () => {
 		const limitError = { error: { status: ActionStatus.ERROR, message: "Trop de tentatives" } };
 		mockEnforceRateLimit.mockResolvedValue(limitError);
 
-		const result = await runMaintenanceTask(undefined, formDataWith("retry-webhooks"));
+		const result = await runMaintenanceTask(undefined, formDataWith("reconcile-refunds"));
 
 		expect(result).toBe(limitError.error);
-		expect(mockRetryWebhooks).not.toHaveBeenCalled();
+		expect(mockReconcileRefunds).not.toHaveBeenCalled();
 	});
 
 	it("rejects an unknown task id (Zod enum) without running anything", async () => {
@@ -116,9 +109,9 @@ describe("runMaintenanceTask", () => {
 	});
 
 	it("reports the counts in the success message", async () => {
-		mockRetryWebhooks.mockResolvedValue({ processed: 5, errored: 0, skipped: 2 });
+		mockReconcileRefunds.mockResolvedValue({ processed: 5, errored: 0, skipped: 2 });
 
-		const result = await runMaintenanceTask(undefined, formDataWith("retry-webhooks"));
+		const result = await runMaintenanceTask(undefined, formDataWith("reconcile-refunds"));
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("5 traité(s)");

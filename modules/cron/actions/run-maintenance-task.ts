@@ -9,7 +9,6 @@ import type { ActionState } from "@/shared/types/server-action";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { runMaintenanceTaskSchema } from "../schemas/maintenance.schemas";
 import type { MaintenanceTaskId } from "../constants/maintenance-tasks";
-import { retryFailedWebhooks } from "../services/retry-webhooks.service";
 import { reconcileRefunds } from "../services/reconcile-refunds.service";
 import { syncAsyncPayments } from "../services/sync-async-payments.service";
 import { cleanupOrphanMedia } from "../services/cleanup-orphan-media.service";
@@ -17,7 +16,7 @@ import { cleanupOrphanMedia } from "../services/cleanup-orphan-media.service";
 /**
  * Lance une tâche de maintenance à la demande — Lot 1 SIMPLIFICATION.md.
  *
- * Ces cinq passes étaient des crons quotidiens/hebdomadaires ; leur service est
+ * Ces passes étaient des crons quotidiens/hebdomadaires ; leur service est
  * inchangé (mêmes claims idempotents, mêmes captures Sentry, invalidation via
  * `revalidateTagsInBackground` — légale dans une Server Action, contrairement à
  * `updateTag` qui, lui, est interdit dans les routes). Seul le déclencheur
@@ -42,7 +41,6 @@ export async function runMaintenanceTask(
 	// Map locale, volontairement NON exportée : dans un fichier "use server",
 	// chaque export devient un endpoint RPC.
 	const runners: Record<MaintenanceTaskId, () => Promise<CronResult>> = {
-		"retry-webhooks": retryFailedWebhooks,
 		"reconcile-refunds": reconcileRefunds,
 		"sync-async-payments": syncAsyncPayments,
 		"cleanup-orphan-media": cleanupOrphanMedia,

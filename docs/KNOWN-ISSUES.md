@@ -145,3 +145,25 @@ Le schéma le documentait déjà comme « cible (ticket futur) : migrer full-voi
 **À quelle condition rouvrir.** Si l'un de ces trois signaux apparaît : (a) un doublon de numéro d'avoir constaté en production ; (b) un troisième émetteur d'avoir devient nécessaire (à ce moment la duplication devient une triplication, et le lookup UNION une jointure à trois branches) ; (c) une refonte des remboursements touche déjà `issue-credit-note.service.ts` — auquel cas la migration devient un effet de bord peu coûteux plutôt qu'un chantier propre.
 
 **Ne pas** ajouter d'écriture sur `Order.creditNote*` depuis un nouveau chemin de code : cela renforcerait la duplication au lieu de la contenir. Tout nouvel avoir passe par `Refund`.
+
+## KI-006 — Un webhook Stripe définitivement échoué n'est plus rejouable depuis l'admin
+
+**Décidé le** 2026-08-05 (audit schéma V2, Lot 3 — arbitrage Adrien).
+**Où** la tâche `retry-webhooks` a été retirée de `modules/cron/constants/maintenance-tasks.ts` (4 boutons → 3) ; son service `modules/cron/services/retry-webhooks.service.ts` est supprimé.
+**Sévérité** faible — angle mort assumé, pas un défaut.
+
+Trois systèmes de reprise se superposaient sur les webhooks Stripe. Deux sont durables par construction :
+
+1. **Stripe lui-même** — la route renvoie un **500** en cas d'échec (`app/api/webhooks/stripe/route.ts`), donc Stripe redélivre pendant **3 jours**. Chaque redélivrance ré-incrémente `WebhookEvent.attempts`, qui alimente toujours le seuil d'alerte admin (`MAX_WEBHOOK_RETRY_ATTEMPTS`).
+2. **Les tâches de réconciliation métier** — `reconcile-invoices` (cron quotidien), `reconcile-refunds` et `sync-async-payments` (boutons) rattrapent les _conséquences_ d'un event perdu : numéro de facture manquant, avoir non émis, paiement asynchrone non synchronisé.
+
+`retry-webhooks` était le troisième étage, et le seul non durable : un clic ponctuel qui re-dispatchait les lignes `FAILED`.
+
+**Ce qu'on perd concrètement.** Passé la fenêtre de 3 jours de Stripe, un event définitivement échoué ne se rejoue plus depuis `/admin/configuration/maintenance`. Deux conséquences :
+
+- le rejeu se fait depuis le **dashboard Stripe** (bouton « Resend » sur l'événement), qui reste la source de vérité ;
+- une ligne `WebhookEvent` figée en `PROCESSING` (lambda morte en plein dispatch) n'est plus remise en `FAILED` par personne : sa reprise dépend entièrement d'une redélivrance Stripe. `STALE_PROCESSING_THRESHOLD_MS` n'a donc plus qu'un consommateur, le pré-check d'idempotence de la route. Ces lignes ne sont pas purgées non plus (`cleanup-pending-orders` ne prend que `COMPLETED`/`SKIPPED`) — elles s'accumulent, très lentement, comme trace d'incident.
+
+**Pourquoi c'est acceptable ici.** À ~20 commandes/mois, le reliquat après 3 jours de retries Stripe se compte en unités par an, et l'alerte admin par email signale chaque épuisement. Le coût du bouton (un service, ses deux suites de tests, et **deux index** sur `WebhookEvent` — cf. migration `20260805150000`) dépassait sa valeur.
+
+**À quelle condition rouvrir.** Si l'un de ces signaux apparaît : (a) un event constaté perdu au-delà de J+3 avec conséquence métier non rattrapée par les tâches de réconciliation ; (b) le volume de commandes rend le rattrapage manuel via Stripe impraticable ; (c) une ligne `PROCESSING` figée est observée en production. Dans ce cas, restaurer le service **et** les index (`down.sql` de la migration), pas seulement le bouton.

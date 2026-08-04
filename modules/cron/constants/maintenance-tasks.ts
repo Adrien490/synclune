@@ -9,9 +9,16 @@
  * (Le bouton transitoire `retry-post-webhook-tasks` est parti au Lot 2 avec la
  * file PostWebhookTask — les emails post-paiement s'envoient en direct, cf.
  * `execute-post-webhook-tasks.service.ts`.)
+ *
+ * ⚠️ `retry-webhooks` est parti à l'audit V2 (Lot 3, 2026-08-05) : c'était un
+ * TROISIÈME système de reprise empilé sur deux qui sont durables par construction.
+ * La route webhook renvoie un 500 en cas d'échec (`app/api/webhooks/stripe/route.ts`),
+ * donc Stripe redélivre tout seul pendant 3 jours — et chaque redélivrance
+ * ré-incrémente `WebhookEvent.attempts`, qui alimente toujours l'alerte admin.
+ * Les conséquences métier, elles, sont rattrapées par les tâches de réconciliation
+ * ci-dessous. Angle mort assumé, cf. `docs/KNOWN-ISSUES.md` (KI-006).
  */
 export const MAINTENANCE_TASK_IDS = [
-	"retry-webhooks",
 	"reconcile-refunds",
 	"sync-async-payments",
 	"cleanup-orphan-media",
@@ -24,12 +31,6 @@ export const MAINTENANCE_TASKS_META: ReadonlyArray<{
 	title: string;
 	description: string;
 }> = [
-	{
-		id: "retry-webhooks",
-		title: "Rejouer les webhooks Stripe",
-		description:
-			"Rejoue les événements Stripe en échec. Stripe retente déjà de son côté pendant 3 jours — ce bouton rattrape le reliquat.",
-	},
 	{
 		id: "reconcile-refunds",
 		title: "Réconcilier les remboursements",

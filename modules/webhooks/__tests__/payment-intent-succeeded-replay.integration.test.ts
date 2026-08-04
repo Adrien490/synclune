@@ -3,9 +3,10 @@
  *
  * EINV-TEST-006 — Replay payment_intent.succeeded sur même PaymentIntent.
  *
- * Cas réel : Stripe peut re-livrer un webhook plusieurs fois sous 24h (retry
- * automatique sur 5xx) + cron `retry-webhooks` repush les events en DLQ.
- * Multi-instance Vercel peut traiter le même event en parallèle.
+ * Cas réel : Stripe peut re-livrer un webhook plusieurs fois sous 24 h (retry
+ * automatique sur 5xx, pendant 3 jours) — seule source de rejeu depuis le retrait
+ * du bouton `retry-webhooks` (audit V2, Lot 3). Multi-instance Vercel peut traiter
+ * le même event en parallèle.
  *
  * Invariants :
  *   1. Un seul `invoiceNumber` persisté pour l'order (idempotence via

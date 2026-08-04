@@ -246,9 +246,10 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
  * `WEBHOOK_RECORD_RETENTION_MS` (90 j).
  *
  * Périmètre volontairement étroit : `WebhookEvent` COMPLETED/SKIPPED uniquement —
- * un FAILED reste éligible au rejeu (bouton Maintenance `retry-webhooks`) ou
+ * un FAILED reste éligible à une redélivrance de Stripe (3 jours) et, au-delà,
  * documente un incident. (La purge des `PostWebhookTask` est partie avec la file,
- * Lot 2 S3.4.)
+ * Lot 2 S3.4 ; le bouton Maintenance `retry-webhooks` qui rejouait les FAILED est
+ * parti à l'audit V2, Lot 3 — cf. `docs/KNOWN-ISSUES.md`, KI-006.)
  *
  * Batches bornés (`BATCH_SIZE_LARGE`) : le rattrapage s'étale sur plusieurs runs
  * quotidiens plutôt que de tenir une transaction longue sur un backlog historique.

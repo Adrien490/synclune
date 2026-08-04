@@ -3,9 +3,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { mockPrisma, mockUpdateTag, mockCreateOrderAuditTx, mockSendAdminCronFailedAlert } =
 	vi.hoisted(() => ({
 		mockPrisma: {
-			order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
+			order: {
+				findMany: vi.fn(),
+				findUnique: vi.fn(),
+				update: vi.fn(),
+				count: vi.fn(),
+				// Claim de libération du code promo (audit V2, Lot 2).
+				updateMany: vi.fn(),
+			},
 			productSku: { update: vi.fn() },
-			discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 			discount: { update: vi.fn(), updateMany: vi.fn() },
 			// WEBHOOK-AUDIT-003 : passe de rétention des artefacts webhook.
 			postWebhookTask: { findMany: vi.fn(), deleteMany: vi.fn() },
@@ -70,7 +76,6 @@ function mockTransactionResolves(): void {
 			paymentStatus: "PENDING",
 			stripePaymentIntentId: null,
 		});
-		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		return cb(mockPrisma);
 	});
 }
@@ -178,14 +183,19 @@ describe("cleanupPendingOrders", () => {
 	it("releases discount usages atomically when present", async () => {
 		mockPrisma.order.findMany.mockResolvedValue([buildStaleOrder()]);
 		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockPrisma) => unknown) => {
+			// UN SEUL objet pour DEUX lectures successives sur le même mock : la garde
+			// d'état fraîche (status/paymentStatus/stripePaymentIntentId) puis
+			// `releaseOrderDiscountUsageTx`, qui lit `discountId` — le code promo vit
+			// en colonnes sur `Order` depuis l'audit V2, Lot 2. Deux
+			// `mockResolvedValue` successifs se seraient écrasés, la garde aurait lu un
+			// objet sans `status` et serait sortie avant la libération.
 			mockPrisma.order.findUnique.mockResolvedValue({
 				status: "PENDING",
 				paymentStatus: "PENDING",
 				stripePaymentIntentId: null,
+				discountId: "discount-1",
 			});
-			mockPrisma.discountUsage.findMany.mockResolvedValue([
-				{ id: "usage-1", discountId: "discount-1" },
-			]);
+			mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 			return cb(mockPrisma);
 		});
 
@@ -197,8 +207,9 @@ describe("cleanupPendingOrders", () => {
 			where: { id: "discount-1", usageCount: { gt: 0 } },
 			data: { usageCount: { decrement: 1 } },
 		});
-		expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
-			where: { orderId: "order-1" },
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			where: { id: "order-1", discountId: { not: null } },
+			data: { discountId: null, discountCode: null },
 		});
 	});
 
@@ -274,7 +285,6 @@ describe("cleanupPendingOrders", () => {
 					paymentStatus: "PENDING",
 					stripePaymentIntentId: null,
 				});
-				mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 				return cb(mockPrisma);
 			});
 

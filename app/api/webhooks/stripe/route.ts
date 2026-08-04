@@ -231,15 +231,15 @@ export async function POST(req: Request) {
 		// IDEM-ROUTE-001 (audit idempotence 2026-07-26) : l'ancien `upsert` écrivait
 		// `PROCESSING` en branche `update` SANS ré-asserter le statut lu par le pré-check
 		// ci-dessus, et le race-guard post-upsert n'armait que si l'event était absent.
-		// Sur un event `FAILED`, la séquence « la route lit FAILED → le cron
-		// retry-webhooks claim FAILED→PROCESSING → la route écrit quand même » faisait
+		// Sur un event `FAILED`, la séquence « la route lit FAILED → un second
+		// dispatcher claim FAILED→PROCESSING → la route écrit quand même » faisait
 		// dispatcher les DEUX en parallèle. C'est la fenêtre qui rendait atteignables les
 		// doublons handler-level (dont IDEM-DISPUTE-001, P0).
 		//
-		// On distingue donc les deux cas, avec la même discipline que le cron
-		// (`retry-webhooks.service.ts`) : `create` pour une première réception, sinon un
+		// On distingue donc les deux cas : `create` pour une première réception, sinon un
 		// claim CONDITIONNEL sur l'état exact qu'on vient de lire (`status` + `attempts`
-		// en version optimiste). Un seul gagnant, quel que soit le nombre de concurrents.
+		// en version optimiste). Un seul gagnant, quel que soit le nombre de concurrents
+		// — la garde reste nécessaire, deux redélivrances Stripe pouvant se croiser.
 		let webhookRecord: { id: string; attempts: number };
 
 		if (existingEvent === null) {
