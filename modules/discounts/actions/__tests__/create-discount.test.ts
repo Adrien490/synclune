@@ -115,7 +115,6 @@ const validatedData = {
 	minOrderAmount: null,
 	maxUsageCount: null,
 	maxUsagePerUser: null,
-	startsAt: null,
 	endsAt: null,
 };
 
@@ -283,14 +282,6 @@ describe("createDiscount", () => {
 				data: expect.objectContaining({ isActive: true }),
 			}),
 		);
-	});
-
-	it("should pass startsAt: undefined to Prisma when not provided (lets DB @default(now()) handle it)", async () => {
-		await createDiscount(undefined, validFormData);
-
-		const createCall = mockPrisma.discount.create.mock.calls[0]![0];
-		// startsAt absent or undefined → Prisma @default(now()) takes over (single source of truth)
-		expect(createCall.data.startsAt).toBeUndefined();
 	});
 
 	it("should return success with discount id", async () => {

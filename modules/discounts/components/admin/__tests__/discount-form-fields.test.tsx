@@ -64,7 +64,7 @@ vi.mock("@/modules/discounts/utils/validate-discount-code-field", () => ({
 }));
 
 // Stub form with helpers reused across all sections.
-function buildMockForm(currentType: "PERCENTAGE" | "FIXED_AMOUNT" = "PERCENTAGE", startsAt = "") {
+function buildMockForm(currentType: "PERCENTAGE" | "FIXED_AMOUNT" = "PERCENTAGE") {
 	const renderField = (name: string, render: (field: Record<string, unknown>) => React.ReactNode) =>
 		render({
 			name,
@@ -168,7 +168,7 @@ function buildMockForm(currentType: "PERCENTAGE" | "FIXED_AMOUNT" = "PERCENTAGE"
 		}: {
 			children: (value: unknown) => React.ReactNode;
 			selector: (state: Record<string, unknown>) => unknown;
-		}) => <>{children(selector({ values: { type: currentType, startsAt } }))}</>,
+		}) => <>{children(selector({ values: { type: currentType } }))}</>,
 	} as unknown as DiscountFormInstance;
 }
 
@@ -188,7 +188,7 @@ describe("DiscountFormFields", () => {
 		expect(screen.getByRole("region", { name: "Période de validité" })).toBeInTheDocument();
 	});
 
-	it("renders all 8 fields", () => {
+	it("renders all 7 fields", () => {
 		render(<DiscountFormFields form={buildMockForm()} isPending={false} />);
 		expect(screen.getByTestId("field-code")).toBeInTheDocument();
 		expect(screen.getByTestId("select-type")).toBeInTheDocument();
@@ -196,7 +196,6 @@ describe("DiscountFormFields", () => {
 		expect(screen.getByTestId("field-minOrderAmountEuros")).toBeInTheDocument();
 		expect(screen.getByTestId("field-maxUsageCount")).toBeInTheDocument();
 		expect(screen.getByTestId("field-maxUsagePerUser")).toBeInTheDocument();
-		expect(screen.getByTestId("datetime-startsAt")).toBeInTheDocument();
 		expect(screen.getByTestId("datetime-endsAt")).toBeInTheDocument();
 	});
 
@@ -229,10 +228,11 @@ describe("DiscountFormFields", () => {
 		expect(maxUsageCountField).toHaveAttribute("aria-describedby", "maxUsageCount-desc");
 	});
 
-	it("propagates min attribute from startsAt to endsAt for client-level guard", () => {
-		const startsAt = "2026-06-01T10:00";
-		render(<DiscountFormFields form={buildMockForm("PERCENTAGE", startsAt)} isPending={false} />);
-		expect(screen.getByTestId("datetime-endsAt")).toHaveAttribute("min", startsAt);
+	// `Discount.startsAt` a été retiré le 2026-08-04 : la section « Période de
+	// validité » n'a plus qu'un champ, donc plus de garde client entre les deux.
+	it("ne rend pas de champ de date de début", () => {
+		render(<DiscountFormFields form={buildMockForm()} isPending={false} />);
+		expect(screen.queryByTestId("datetime-startsAt")).not.toBeInTheDocument();
 	});
 
 	it("renders code section with viewTransitionName", () => {

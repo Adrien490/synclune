@@ -85,7 +85,6 @@ function makeDiscount(overrides: Record<string, unknown> = {}) {
 		minOrderAmount: null,
 		maxUsageCount: 100,
 		maxUsagePerUser: 1,
-		startsAt: new Date("2026-01-01"),
 		endsAt: new Date("2026-12-31"),
 		...overrides,
 	};

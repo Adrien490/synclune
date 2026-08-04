@@ -118,7 +118,6 @@ const mockDiscount = {
 	maxUsagePerUser: null,
 	usageCount: 0,
 	isActive: true,
-	startsAt: new Date("2024-01-01"),
 	endsAt: null,
 };
 
@@ -182,7 +181,6 @@ describe("validateDiscountCode", () => {
 			role: "USER",
 			image: null,
 			emailVerified: true,
-			stripeCustomerId: null,
 		});
 
 		// Default: cart with items (subtotal = 5000)
@@ -264,14 +262,9 @@ describe("validateDiscountCode", () => {
 		expect(result.error).toBe("Votre panier est vide");
 	});
 
-	it("should return error when cart is null", async () => {
-		mockGetCart.mockResolvedValue(null);
-
-		const result = await validateDiscountCode(VALID_CODE);
-
-		expect(result.valid).toBe(false);
-		expect(result.error).toBe("Votre panier est vide");
-	});
+	// Plus de cas « panier null » : depuis le passage du panier en cookie
+	// (2026-08-04), `getCart()` rend toujours un objet — un visiteur sans cookie a
+	// simplement un panier vide, déjà couvert par le test au-dessus.
 
 	// ──────────────────────────────────────────────────────────────
 	// Input validation

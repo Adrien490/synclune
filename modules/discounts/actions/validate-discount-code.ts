@@ -167,7 +167,7 @@ export async function validateDiscountCode(
 
 		// Fetch cart server-side to compute subtotal (never trust client-provided value)
 		const cart = await getCart();
-		if (!cart || cart.items.length === 0) {
+		if (cart.items.length === 0) {
 			return { valid: false, error: "Votre panier est vide" };
 		}
 

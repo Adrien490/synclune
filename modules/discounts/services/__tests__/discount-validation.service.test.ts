@@ -23,7 +23,6 @@ function createMockDiscount(overrides: Partial<DiscountValidation> = {}): Discou
 		maxUsagePerUser: null,
 		usageCount: 0,
 		isActive: true,
-		startsAt: new Date("2026-01-01"),
 		endsAt: null,
 		...overrides,
 	};

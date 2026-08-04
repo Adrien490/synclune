@@ -15,15 +15,7 @@ import {
 	formatDiscountValue,
 } from "@/modules/discounts/constants/discount.constants";
 import type { DiscountStatus } from "@/modules/discounts/types/discount.types";
-import {
-	CalendarClock,
-	CheckCircle,
-	CircleOff,
-	TicketX,
-	Timer,
-	Ticket,
-	type LucideIcon,
-} from "lucide-react";
+import { CheckCircle, CircleOff, TicketX, Timer, Ticket, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { DiscountRowActions } from "./discount-row-actions";
 import { CreateDiscountButton } from "./create-discount-button";
@@ -32,7 +24,6 @@ import { getDiscountStatus } from "@/modules/discounts/services/discount-validat
 const DISCOUNT_STATUS_ICONS: Record<DiscountStatus, LucideIcon> = {
 	active: CheckCircle,
 	inactive: CircleOff,
-	scheduled: CalendarClock,
 	expired: Timer,
 	exhausted: TicketX,
 };

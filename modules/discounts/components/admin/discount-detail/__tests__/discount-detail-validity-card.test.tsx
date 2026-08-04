@@ -40,32 +40,10 @@ describe("DiscountDetailValidityCard", () => {
 		cleanup();
 	});
 
-	it("affiche un indice 'Démarre …' pour un discount futur", () => {
-		const { container } = render(
-			<DiscountDetailValidityCard
-				discount={
-					{
-						...baseDiscount,
-						startsAt: new Date("2026-06-01"),
-						endsAt: new Date("2026-12-31"),
-					} as any
-				}
-			/>,
-		);
-		const hint = container.querySelector("p.italic");
-		expect(hint?.textContent).toMatch(/^Démarre/i);
-	});
-
 	it("affiche un indice 'Se termine …' pour un discount actif avec fin", () => {
 		const { container } = render(
 			<DiscountDetailValidityCard
-				discount={
-					{
-						...baseDiscount,
-						startsAt: new Date("2026-01-01"),
-						endsAt: new Date("2026-12-31"),
-					} as any
-				}
+				discount={{ ...baseDiscount, endsAt: new Date("2026-12-31") } as any}
 			/>,
 		);
 		const hint = container.querySelector("p.italic");
@@ -75,13 +53,7 @@ describe("DiscountDetailValidityCard", () => {
 	it("affiche un indice 'A expiré …' pour un discount terminé", () => {
 		const { container } = render(
 			<DiscountDetailValidityCard
-				discount={
-					{
-						...baseDiscount,
-						startsAt: new Date("2025-01-01"),
-						endsAt: new Date("2025-12-31"),
-					} as any
-				}
+				discount={{ ...baseDiscount, endsAt: new Date("2025-12-31") } as any}
 			/>,
 		);
 		const hint = container.querySelector("p.italic");
@@ -90,17 +62,16 @@ describe("DiscountDetailValidityCard", () => {
 
 	it("affiche un indice 'Validité sans date de fin' si endsAt null", () => {
 		const { container } = render(
-			<DiscountDetailValidityCard
-				discount={
-					{
-						...baseDiscount,
-						startsAt: new Date("2026-01-01"),
-						endsAt: null,
-					} as any
-				}
-			/>,
+			<DiscountDetailValidityCard discount={{ ...baseDiscount, endsAt: null } as any} />,
 		);
 		const hint = container.querySelector("p.italic");
 		expect(hint?.textContent).toBe("Validité sans date de fin");
+	});
+
+	// Il n'y a plus de date de DÉBUT (`Discount.startsAt` retiré le 2026-08-04) :
+	// la carte n'affiche qu'une ligne, et il n'existe plus d'indice « Démarre … ».
+	it("n'affiche pas de date de début", () => {
+		render(<DiscountDetailValidityCard discount={{ ...baseDiscount, endsAt: null } as any} />);
+		expect(screen.queryByText("Démarre le")).not.toBeInTheDocument();
 	});
 });

@@ -37,7 +37,6 @@ interface DiscountDialogData extends Record<string, unknown> {
 		maxUsageCount: number | null;
 		maxUsagePerUser: number | null;
 		isActive: boolean;
-		startsAt: Date | null;
 		endsAt: Date | null;
 	};
 }

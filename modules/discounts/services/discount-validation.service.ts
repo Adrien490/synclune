@@ -17,9 +17,7 @@ export type { DiscountStatus } from "../types/discount.types";
 export function isDiscountCurrentlyValid(discount: DiscountValidation): boolean {
 	if (!discount.isActive) return false;
 
-	const now = new Date();
-	if (now < discount.startsAt) return false;
-	if (discount.endsAt && now > discount.endsAt) return false;
+	if (discount.endsAt && new Date() > discount.endsAt) return false;
 
 	if (discount.maxUsageCount && discount.usageCount >= discount.maxUsageCount) {
 		return false;
@@ -37,9 +35,7 @@ export function isDiscountCurrentlyValid(discount: DiscountValidation): boolean 
 export function getDiscountStatus(discount: DiscountValidation): DiscountStatus {
 	if (!discount.isActive) return "inactive";
 
-	const now = new Date();
-	if (now < discount.startsAt) return "scheduled";
-	if (discount.endsAt && now > discount.endsAt) return "expired";
+	if (discount.endsAt && new Date() > discount.endsAt) return "expired";
 
 	if (discount.maxUsageCount && discount.usageCount >= discount.maxUsageCount) {
 		return "exhausted";

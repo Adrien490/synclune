@@ -7,7 +7,7 @@ import type { ActionMenuSection } from "@/shared/components/responsive-action-me
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { Discount } from "../types/discount.types";
 

@@ -16,7 +16,8 @@ type UsageCounts = {
  *
  * Conditions vérifiées :
  * 1. Code actif
- * 2. Période de validité (startsAt / endsAt)
+ * 2. Date de fin (endsAt) — il n'y a pas de date de début : un code est
+ *    utilisable dès sa création (cf. drop de `startsAt`, 2026-08-04)
  * 3. Montant minimum de commande (appliqué sur subtotal hors frais de port)
  * 4. Limite d'utilisation globale (maxUsageCount)
  * 5. Limite d'utilisation par utilisateur (maxUsagePerUser) + guest checkout par email
@@ -33,12 +34,8 @@ export function checkDiscountEligibility(
 		return { eligible: false, error: DISCOUNT_ERROR_MESSAGES.NOT_ACTIVE };
 	}
 
-	// 2. Vérifier la période de validité (startsAt / endsAt)
-	const now = new Date();
-	if (now < discount.startsAt) {
-		return { eligible: false, error: DISCOUNT_ERROR_MESSAGES.NOT_YET_ACTIVE };
-	}
-	if (discount.endsAt && now > discount.endsAt) {
+	// 2. Vérifier la date de fin
+	if (discount.endsAt && new Date() > discount.endsAt) {
 		return { eligible: false, error: DISCOUNT_ERROR_MESSAGES.EXPIRED };
 	}
 

@@ -25,48 +25,24 @@ export function DiscountValiditySection({ form, isPending }: DiscountValiditySec
 				<CardTitle className={FORM_SECTION_TITLE_CLASS}>Période de validité</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
+				{/*
+				 * Un seul champ : il n'y a plus de date de DÉBUT (`Discount.startsAt`
+				 * retiré le 2026-08-04). Un code est utilisable dès sa création ; pour
+				 * le préparer à l'avance, le créer désactivé et l'activer au moment
+				 * voulu via le toggle.
+				 */}
 				<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-					<form.AppField name="startsAt">
+					<form.AppField name="endsAt">
 						{(field) => (
 							<field.DateTimeField
-								label="Date de début"
-								placeholder="Activation immédiate"
+								label="Date de fin"
+								placeholder="Durée illimitée"
 								optional
 								disabled={isPending}
-								helpText="Heure locale du navigateur. Laisser vide pour activer immédiatement."
+								helpText="Heure locale du navigateur. Laisser vide pour une durée illimitée."
 							/>
 						)}
 					</form.AppField>
-
-					<form.Subscribe selector={(state) => state.values.startsAt}>
-						{(startsAt) => (
-							<form.AppField
-								name="endsAt"
-								validators={{
-									onChangeListenTo: ["startsAt"],
-									onChange: ({ value, fieldApi }) => {
-										if (!value) return undefined;
-										const start = fieldApi.form.getFieldValue("startsAt");
-										if (start && value <= start) {
-											return "Doit être postérieure à la date de début";
-										}
-										return undefined;
-									},
-								}}
-							>
-								{(field) => (
-									<field.DateTimeField
-										label="Date de fin"
-										placeholder="Durée illimitée"
-										optional
-										disabled={isPending}
-										min={startsAt || undefined}
-										helpText="Heure locale du navigateur. Laisser vide pour une durée illimitée."
-									/>
-								)}
-							</form.AppField>
-						)}
-					</form.Subscribe>
 				</div>
 			</CardContent>
 		</Card>

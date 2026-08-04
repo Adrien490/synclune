@@ -125,7 +125,6 @@ const validatedData = {
 	minOrderAmount: null,
 	maxUsageCount: null,
 	maxUsagePerUser: null,
-	startsAt: null,
 	endsAt: null,
 };
 

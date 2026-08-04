@@ -56,7 +56,6 @@ export async function duplicateDiscount(
 				minOrderAmount: true,
 				maxUsageCount: true,
 				maxUsagePerUser: true,
-				startsAt: true,
 				endsAt: true,
 			},
 		});
@@ -106,7 +105,6 @@ export async function duplicateDiscount(
 				minOrderAmount: original.minOrderAmount,
 				maxUsageCount: original.maxUsageCount,
 				maxUsagePerUser: original.maxUsagePerUser,
-				startsAt: original.startsAt,
 				endsAt: original.endsAt,
 				usageCount: 0,
 				isActive: false,

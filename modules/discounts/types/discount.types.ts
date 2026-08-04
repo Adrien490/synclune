@@ -17,9 +17,12 @@ import {
 // ============================================================================
 
 /**
- * Statut possible d'un code promo
+ * Statut possible d'un code promo.
+ *
+ * Pas de `scheduled` : `Discount.startsAt` a été retiré le 2026-08-04 — un code
+ * est utilisable dès sa création, l'activation différée est manuelle.
  */
-export type DiscountStatus = "active" | "inactive" | "exhausted" | "scheduled" | "expired";
+export type DiscountStatus = "active" | "inactive" | "exhausted" | "expired";
 
 // ============================================================================
 // ENTITY TYPES

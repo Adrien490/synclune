@@ -31,7 +31,6 @@ const discount = {
 	maxUsagePerUser: null,
 	usageCount: 5,
 	isActive: true,
-	startsAt: new Date("2026-01-01"),
 	endsAt: new Date("2026-12-31"),
 	createdAt: new Date("2026-01-01"),
 	updatedAt: new Date("2026-01-01"),

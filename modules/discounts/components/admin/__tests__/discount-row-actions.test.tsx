@@ -24,7 +24,7 @@ vi.mock("@/shared/utils/toast", () => ({
 	toast: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
 }));
 
-vi.mock("@/shared/utils/with-view-transition", () => ({
+vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: (fn: () => void) => fn(),
 }));
 
@@ -101,7 +101,6 @@ function createDiscount(overrides: Record<string, unknown> = {}): Discount {
 		maxUsageCount: null,
 		maxUsagePerUser: null,
 		isActive: true,
-		startsAt: new Date("2026-03-01T10:00:00Z"),
 		endsAt: null,
 		usageCount: 0,
 		createdAt: new Date("2026-03-01T10:00:00Z"),

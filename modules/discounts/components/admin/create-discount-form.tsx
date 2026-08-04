@@ -17,7 +17,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { useDiscountForm } from "../../hooks/use-discount-form";
 import { DiscountFormFields } from "./discount-form-fields";
@@ -36,7 +36,6 @@ const FIELD_LABELS: Record<string, string> = {
 	minOrderAmount: "Montant minimum de commande",
 	maxUsageCount: "Utilisations totales max",
 	maxUsagePerUser: "Utilisations par client max",
-	startsAt: "Date de début",
 	endsAt: "Date de fin",
 };
 

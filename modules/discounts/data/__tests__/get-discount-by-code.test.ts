@@ -70,7 +70,6 @@ function makeDiscount(overrides: Record<string, unknown> = {}) {
 		maxUsagePerUser: null,
 		usageCount: 5,
 		isActive: true,
-		startsAt: null,
 		endsAt: null,
 		...overrides,
 	};

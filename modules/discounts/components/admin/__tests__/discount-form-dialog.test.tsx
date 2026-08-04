@@ -209,7 +209,7 @@ vi.mock("@/shared/components/forms", () => ({
 		}) => {
 			const mockState = {
 				canSubmit: true,
-				values: { type: "PERCENTAGE", startsAt: "" },
+				values: { type: "PERCENTAGE" },
 			};
 			const selected = selector(mockState as Record<string, unknown>);
 			return <>{children(selected)}</>;
@@ -278,7 +278,6 @@ describe("DiscountFormDialog", () => {
 					maxUsageCount: null,
 					maxUsagePerUser: null,
 					isActive: true,
-					startsAt: null,
 					endsAt: null,
 				},
 			},
@@ -300,7 +299,6 @@ describe("DiscountFormDialog", () => {
 					maxUsageCount: null,
 					maxUsagePerUser: null,
 					isActive: true,
-					startsAt: null,
 					endsAt: null,
 				},
 			},
@@ -322,7 +320,6 @@ describe("DiscountFormDialog", () => {
 					maxUsageCount: null,
 					maxUsagePerUser: null,
 					isActive: true,
-					startsAt: null,
 					endsAt: null,
 				},
 			},
@@ -344,7 +341,6 @@ describe("DiscountFormDialog", () => {
 					maxUsageCount: null,
 					maxUsagePerUser: null,
 					isActive: true,
-					startsAt: null,
 					endsAt: null,
 				},
 			},

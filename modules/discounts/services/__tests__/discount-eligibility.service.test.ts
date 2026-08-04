@@ -6,7 +6,6 @@ import type { DiscountValidation, DiscountApplicationContext } from "../../types
 vi.mock("../../constants/discount.constants", () => ({
 	DISCOUNT_ERROR_MESSAGES: {
 		NOT_ACTIVE: "Ce code promo n'est plus actif",
-		NOT_YET_ACTIVE: "Ce code promo n'est pas encore actif",
 		EXPIRED: "Ce code promo a expiré",
 		MAX_USAGE_REACHED: "Ce code promo a atteint sa limite d'utilisation",
 		USER_MAX_USAGE_REACHED: "Vous avez déjà utilisé ce code promo",
@@ -29,7 +28,6 @@ function makeDiscount(overrides: Record<string, unknown> = {}): DiscountValidati
 		maxUsagePerUser: null,
 		usageCount: 0,
 		isActive: true,
-		startsAt: new Date("2026-01-01T00:00:00Z"),
 		endsAt: null,
 		...overrides,
 	} as DiscountValidation;
@@ -80,16 +78,6 @@ describe("checkDiscountEligibility", () => {
 	// -------------------------------------------------------------------------
 
 	describe("date range check", () => {
-		it("should return not eligible when startsAt is in the future", () => {
-			const discount = makeDiscount({
-				startsAt: new Date("2026-02-18T00:00:00Z"),
-			});
-			const result = checkDiscountEligibility(discount, makeContext());
-
-			expect(result.eligible).toBe(false);
-			expect(result.error).toBe("Ce code promo n'est pas encore actif");
-		});
-
 		it("should return not eligible when endsAt is in the past", () => {
 			const discount = makeDiscount({
 				endsAt: new Date("2026-02-16T23:59:59Z"),
@@ -100,9 +88,8 @@ describe("checkDiscountEligibility", () => {
 			expect(result.error).toBe("Ce code promo a expiré");
 		});
 
-		it("should return eligible when startsAt is in the past and endsAt is in the future", () => {
+		it("should return eligible when endsAt is in the future", () => {
 			const discount = makeDiscount({
-				startsAt: new Date("2026-02-01T00:00:00Z"),
 				endsAt: new Date("2026-03-01T00:00:00Z"),
 			});
 			const result = checkDiscountEligibility(discount, makeContext());
@@ -110,28 +97,8 @@ describe("checkDiscountEligibility", () => {
 			expect(result.eligible).toBe(true);
 		});
 
-		it("should return eligible when startsAt is in the past and endsAt is null", () => {
+		it("should return eligible when endsAt is null (no expiration)", () => {
 			const discount = makeDiscount({ endsAt: null });
-			const result = checkDiscountEligibility(discount, makeContext());
-
-			expect(result.eligible).toBe(true);
-		});
-
-		it("should return eligible when only startsAt is set and is in the past", () => {
-			const discount = makeDiscount({
-				startsAt: new Date("2026-01-01T00:00:00Z"),
-				endsAt: null,
-			});
-			const result = checkDiscountEligibility(discount, makeContext());
-
-			expect(result.eligible).toBe(true);
-		});
-
-		it("should return eligible when only endsAt is set and is in the future", () => {
-			const discount = makeDiscount({
-				startsAt: new Date("2020-01-01T00:00:00Z"),
-				endsAt: new Date("2026-12-31T23:59:59Z"),
-			});
 			const result = checkDiscountEligibility(discount, makeContext());
 
 			expect(result.eligible).toBe(true);
@@ -291,7 +258,6 @@ describe("checkDiscountEligibility", () => {
 		it("should return eligible when all conditions are satisfied", () => {
 			const discount = makeDiscount({
 				isActive: true,
-				startsAt: new Date("2026-01-01T00:00:00Z"),
 				endsAt: new Date("2026-12-31T23:59:59Z"),
 				minOrderAmount: 2000,
 				maxUsageCount: 100,

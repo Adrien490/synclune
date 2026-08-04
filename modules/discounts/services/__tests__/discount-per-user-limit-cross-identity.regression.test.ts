@@ -27,7 +27,6 @@ import type { DiscountValidation, DiscountApplicationContext } from "../../types
 vi.mock("../../constants/discount.constants", () => ({
 	DISCOUNT_ERROR_MESSAGES: {
 		NOT_ACTIVE: "Ce code promo n'est plus actif",
-		NOT_YET_ACTIVE: "Ce code promo n'est pas encore actif",
 		EXPIRED: "Ce code promo a expiré",
 		MAX_USAGE_REACHED: "Ce code promo a atteint sa limite d'utilisation",
 		USER_MAX_USAGE_REACHED: "Vous avez déjà utilisé ce code promo",
@@ -46,7 +45,6 @@ function makeDiscount(overrides: Record<string, unknown> = {}): DiscountValidati
 		maxUsagePerUser: null,
 		usageCount: 0,
 		isActive: true,
-		startsAt: new Date("2026-01-01T00:00:00Z"),
 		endsAt: null,
 		...overrides,
 	} as DiscountValidation;

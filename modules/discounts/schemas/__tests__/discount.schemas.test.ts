@@ -292,47 +292,14 @@ describe("createDiscountSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("should reject endsAt before startsAt (cross-field refinement)", () => {
+	it("should coerce string date to Date for endsAt", () => {
 		const result = createDiscountSchema.safeParse({
 			...validPercentageDiscount,
-			startsAt: new Date("2025-12-01"),
-			endsAt: new Date("2025-11-01"),
-		});
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			const paths = result.error.issues.map((i) => i.path.join("."));
-			expect(paths).toContain("endsAt");
-		}
-	});
-
-	it("should reject startsAt equal to endsAt (cross-field refinement)", () => {
-		const sameDate = new Date("2025-12-01");
-		const result = createDiscountSchema.safeParse({
-			...validPercentageDiscount,
-			startsAt: sameDate,
-			endsAt: sameDate,
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("should accept startsAt before endsAt", () => {
-		const result = createDiscountSchema.safeParse({
-			...validPercentageDiscount,
-			startsAt: new Date("2025-11-01"),
-			endsAt: new Date("2025-12-01"),
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should coerce string date to Date for startsAt", () => {
-		const result = createDiscountSchema.safeParse({
-			...validPercentageDiscount,
-			startsAt: "2025-11-01",
 			endsAt: "2025-12-01",
 		});
 		expect(result.success).toBe(true);
 		if (result.success) {
-			expect(result.data.startsAt).toBeInstanceOf(Date);
+			expect(result.data.endsAt).toBeInstanceOf(Date);
 		}
 	});
 
@@ -342,7 +309,6 @@ describe("createDiscountSchema", () => {
 			minOrderAmount: null,
 			maxUsageCount: null,
 			maxUsagePerUser: null,
-			startsAt: null,
 			endsAt: null,
 		});
 		expect(result.success).toBe(true);
@@ -379,15 +345,6 @@ describe("updateDiscountSchema", () => {
 
 	it("should reject PERCENTAGE value above 100 (inherited cross-field refinement)", () => {
 		const result = updateDiscountSchema.safeParse({ ...validInput, value: 101 });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject endsAt before startsAt (inherited cross-field refinement)", () => {
-		const result = updateDiscountSchema.safeParse({
-			...validInput,
-			startsAt: new Date("2025-12-01"),
-			endsAt: new Date("2025-11-01"),
-		});
 		expect(result.success).toBe(false);
 	});
 });

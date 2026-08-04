@@ -19,7 +19,6 @@ export type DiscountFormValues = {
 	minOrderAmountEuros: number | null;
 	maxUsageCount: number | null;
 	maxUsagePerUser: number | null;
-	startsAt: string;
 	endsAt: string;
 };
 
@@ -30,7 +29,6 @@ export interface DiscountFormSeed {
 	minOrderAmount: number | null;
 	maxUsageCount: number | null;
 	maxUsagePerUser: number | null;
-	startsAt: Date | null;
 	endsAt: Date | null;
 }
 
@@ -50,7 +48,6 @@ export function getDiscountFormDefaults(seed?: DiscountFormSeed | null): Discoun
 			minOrderAmountEuros: null,
 			maxUsageCount: null,
 			maxUsagePerUser: null,
-			startsAt: "",
 			endsAt: "",
 		};
 	}
@@ -61,7 +58,6 @@ export function getDiscountFormDefaults(seed?: DiscountFormSeed | null): Discoun
 		minOrderAmountEuros: seed.minOrderAmount != null ? seed.minOrderAmount / 100 : null,
 		maxUsageCount: seed.maxUsageCount,
 		maxUsagePerUser: seed.maxUsagePerUser,
-		startsAt: formatDateTimeLocal(seed.startsAt),
 		endsAt: formatDateTimeLocal(seed.endsAt),
 	};
 }

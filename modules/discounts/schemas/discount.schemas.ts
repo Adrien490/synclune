@@ -111,7 +111,8 @@ const baseDiscountSchema = z.object({
 		.nullable(),
 	maxUsageCount: z.number().int().positive().optional().nullable(),
 	maxUsagePerUser: z.number().int().positive().optional().nullable(),
-	startsAt: z.coerce.date().optional().nullable(),
+	// Pas de `startsAt` : un code est utilisable dès sa création (activation
+	// différée = manuelle depuis le retrait du cron de planification).
 	endsAt: z.coerce.date().optional().nullable(),
 });
 
@@ -126,15 +127,6 @@ const discountRefinements = <T extends typeof baseDiscountSchema>(schema: T) =>
 				return true;
 			},
 			{ message: "Un pourcentage ne peut pas dépasser 100%", path: ["value"] },
-		)
-		.refine(
-			(data) => {
-				if (data.startsAt && data.endsAt && data.startsAt >= data.endsAt) {
-					return false;
-				}
-				return true;
-			},
-			{ message: "La date de fin doit être postérieure à la date de début", path: ["endsAt"] },
 		)
 		.refine(
 			(data) => {

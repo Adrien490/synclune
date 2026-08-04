@@ -54,11 +54,6 @@ vi.mock("@/shared/utils/toast", () => ({
 	},
 }));
 
-// Prevent redirect errors from propagating in test environment
-vi.mock("next/dist/client/components/redirect-error", () => ({
-	isRedirectError: () => false,
-}));
-
 // ============================================================================
 // Imports (after mocks)
 // ============================================================================

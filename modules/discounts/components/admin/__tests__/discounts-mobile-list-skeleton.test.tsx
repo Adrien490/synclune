@@ -78,14 +78,12 @@ describe("DiscountsMobileListSkeleton", () => {
 			expect(wrapper.className).toContain("md:hidden");
 		});
 
-		it("applies staggered animation delays to items", () => {
+		it("n'applique PAS d'animationDelay aux items (Item n'a aucune classe animate-* — le délai était inerte)", () => {
 			render(<DiscountsMobileListSkeleton />);
 			const items = screen.getAllByTestId("item");
-			expect(items[0]).toHaveStyle("animation-delay: 0ms");
-			expect(items[1]).toHaveStyle("animation-delay: 100ms");
-			expect(items[2]).toHaveStyle("animation-delay: 200ms");
-			expect(items[3]).toHaveStyle("animation-delay: 300ms");
-			expect(items[4]).toHaveStyle("animation-delay: 400ms");
+			for (const item of items) {
+				expect(item.style.animationDelay).toBe("");
+			}
 		});
 	});
 

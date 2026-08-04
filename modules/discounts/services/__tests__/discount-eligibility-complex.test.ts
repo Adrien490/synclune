@@ -8,7 +8,6 @@ vi.mock("../discount-validation.service", () => ({
 vi.mock("../../constants/discount.constants", () => ({
 	DISCOUNT_ERROR_MESSAGES: {
 		NOT_ACTIVE: "Ce code promo n'est plus actif",
-		NOT_YET_ACTIVE: "Ce code promo n'est pas encore actif",
 		EXPIRED: "Ce code promo a expiré",
 		MAX_USAGE_REACHED: "Ce code promo a atteint sa limite d'utilisation",
 		USER_MAX_USAGE_REACHED: "Vous avez déjà utilisé ce code promo",
@@ -30,7 +29,6 @@ function makeDiscount(overrides: Partial<DiscountValidation> = {}): DiscountVali
 		type: "PERCENTAGE",
 		value: 20,
 		isActive: true,
-		startsAt: new Date("2026-01-01"),
 		endsAt: new Date("2026-12-31"),
 		minOrderAmount: null,
 		maxUsageCount: null,
@@ -118,19 +116,6 @@ describe("checkDiscountEligibility — complex scenarios", () => {
 	// Time period checks
 	// -------------------------------------------------------------------
 
-	it("should reject discount that hasn't started yet", () => {
-		const discount = makeDiscount({
-			startsAt: new Date("2026-12-01"),
-		});
-
-		const result = checkDiscountEligibility(discount, makeContext());
-
-		expect(result).toEqual({
-			eligible: false,
-			error: "Ce code promo n'est pas encore actif",
-		});
-	});
-
 	it("should reject expired discount", () => {
 		const discount = makeDiscount({
 			endsAt: new Date("2026-01-01"),
@@ -146,14 +131,6 @@ describe("checkDiscountEligibility — complex scenarios", () => {
 
 	it("should accept discount with null endsAt (no expiration)", () => {
 		const discount = makeDiscount({ endsAt: null });
-
-		const result = checkDiscountEligibility(discount, makeContext());
-
-		expect(result).toEqual({ eligible: true });
-	});
-
-	it("should accept discount with a far-past startsAt (immediately valid)", () => {
-		const discount = makeDiscount({ startsAt: new Date("2020-01-01T00:00:00Z") });
 
 		const result = checkDiscountEligibility(discount, makeContext());
 
@@ -289,12 +266,12 @@ describe("checkDiscountEligibility — complex scenarios", () => {
 	it("should reject with NOT_ACTIVE before checking dates", () => {
 		const discount = makeDiscount({
 			isActive: false,
-			startsAt: new Date("2026-12-01"),
+			endsAt: new Date("2026-01-01"),
 		});
 
 		const result = checkDiscountEligibility(discount, makeContext());
 
-		// isActive check takes priority over startsAt check
+		// isActive check takes priority over endsAt check
 		expect(result).toEqual({
 			eligible: false,
 			error: "Ce code promo n'est plus actif",

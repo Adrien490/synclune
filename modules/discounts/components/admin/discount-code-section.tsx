@@ -60,6 +60,9 @@ export function DiscountCodeSection({ form, isPending }: DiscountCodeSectionProp
 								autoCorrect="off"
 								enterKeyHint="next"
 								maxLength={30}
+								// Compteur : un code collé plus long que 30 caractères est
+								// tronqué par `maxLength` sans aucun autre signal.
+								showCounter
 								description="Lettres majuscules, chiffres et tirets uniquement, 3 à 30 caractères."
 							/>
 						</div>

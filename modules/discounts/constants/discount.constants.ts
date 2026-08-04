@@ -19,7 +19,6 @@ export const GET_DISCOUNT_SELECT = {
 	maxUsagePerUser: true,
 	usageCount: true,
 	isActive: true,
-	startsAt: true,
 	endsAt: true,
 	createdAt: true,
 	updatedAt: true,
@@ -40,7 +39,6 @@ export const GET_DISCOUNTS_SELECT = {
 	maxUsagePerUser: true,
 	usageCount: true,
 	isActive: true,
-	startsAt: true,
 	endsAt: true,
 	createdAt: true,
 	_count: { select: { usages: true } },
@@ -60,7 +58,6 @@ export const GET_DISCOUNT_VALIDATION_SELECT = {
 	maxUsagePerUser: true,
 	usageCount: true,
 	isActive: true,
-	startsAt: true,
 	endsAt: true,
 } as const satisfies Prisma.DiscountSelect;
 
@@ -118,7 +115,6 @@ export const DISCOUNT_STATUS_BADGE_CONFIG: Record<
 > = {
 	active: { label: "Actif", variant: "success" },
 	inactive: { label: "Inactif", variant: "secondary" },
-	scheduled: { label: "Planifié", variant: "outline" },
 	expired: { label: "Expiré", variant: "secondary" },
 	exhausted: { label: "Épuisé", variant: "secondary" },
 };
@@ -144,7 +140,6 @@ export function formatDiscountUsage(usageCount: number, maxUsageCount: number | 
 export const DISCOUNT_ERROR_MESSAGES = {
 	NOT_FOUND: "Code promo introuvable",
 	NOT_ACTIVE: "Ce code promo n'est plus actif",
-	NOT_YET_ACTIVE: "Ce code promo n'est pas encore actif",
 	EXPIRED: "Ce code promo a expiré",
 	MAX_USAGE_REACHED: "Ce code promo a atteint sa limite d'utilisation",
 	USER_MAX_USAGE_REACHED: "Vous avez déjà utilisé ce code promo",

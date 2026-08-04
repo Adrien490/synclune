@@ -30,7 +30,6 @@ const base = {
 	value: 20,
 	maxUsageCount: null,
 	maxUsagePerUser: null,
-	startsAt: null,
 	endsAt: null,
 };
 
