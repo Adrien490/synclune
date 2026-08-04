@@ -14,8 +14,9 @@ const SPARKLES = [
 ] as const;
 
 /**
- * Animated HeartIcon with SVG morphing between outline and filled states.
- * Uses motion/react for smooth fill/stroke transitions and sparkle animations.
+ * Animated HeartIcon cross-fading between outline and filled states.
+ * The two strokes/fills stay static CSS colors — only `opacity` and `scale` animate,
+ * because `--primary` is an `oklch()` token Motion cannot interpolate (see below).
  * Respects prefers-reduced-motion.
  *
  * Drop-in replacement for HeartIcon in client components.
@@ -86,26 +87,43 @@ export function AnimatedHeartIcon({
 		>
 			{!decorative && <title>{accessibleLabel}</title>}
 
-			{/* Heart path with morphing fill/stroke transition */}
-			<m.path
-				d={HEART_PATH}
-				strokeLinecap="round"
-				strokeLinejoin="round"
+			{/* Deux tracés superposés en fondu croisé, JAMAIS une interpolation de `fill`/`stroke`.
+			    `--primary` est un `oklch()` : Motion ne sait pas interpoler cette famille de
+			    couleurs, et WebKit sérialise en plus la valeur calculée en `lab(…)` — d'où le
+			    « is not an animatable color » en console, et une bascule sèche au lieu du fondu.
+			    Les couleurs restent donc du CSS statique ; seule l'opacité s'anime. */}
+			<m.g
 				initial={false}
-				animate={{
-					fill: isFilled ? "var(--primary)" : "rgba(0,0,0,0)",
-					stroke: isFilled ? "rgba(0,0,0,0)" : "var(--primary)",
-					strokeWidth: isFilled ? 0 : 1.5,
-					scale: isFilled ? [1, 1.15, 1] : 1,
-				}}
+				animate={{ scale: isFilled ? [1, 1.15, 1] : 1 }}
 				transition={{
-					fill: { duration: MOTION_CONFIG.duration.normal, ease: MOTION_CONFIG.easing.easeOut },
-					stroke: { duration: MOTION_CONFIG.duration.fast },
-					strokeWidth: { duration: MOTION_CONFIG.duration.fast },
-					scale: { duration: MOTION_CONFIG.duration.normal, ease: MOTION_CONFIG.easing.easeOut },
+					duration: MOTION_CONFIG.duration.normal,
+					ease: MOTION_CONFIG.easing.easeOut,
 				}}
 				style={{ originX: "50%", originY: "50%" }}
-			/>
+			>
+				<m.path
+					d={HEART_PATH}
+					fill="none"
+					stroke="var(--primary)"
+					strokeWidth="1.5"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					initial={false}
+					animate={{ opacity: isFilled ? 0 : 1 }}
+					transition={{ duration: MOTION_CONFIG.duration.fast }}
+				/>
+				<m.path
+					d={HEART_PATH}
+					fill="var(--primary)"
+					stroke="none"
+					initial={false}
+					animate={{ opacity: isFilled ? 1 : 0 }}
+					transition={{
+						duration: MOTION_CONFIG.duration.normal,
+						ease: MOTION_CONFIG.easing.easeOut,
+					}}
+				/>
+			</m.g>
 
 			{/* Sparkles with AnimatePresence for enter/exit */}
 			<AnimatePresence>
