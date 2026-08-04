@@ -57,8 +57,8 @@ vi.mock("@/modules/wishlist/utils/show-wishlist-undo-toast", () => ({
 	showWishlistUndoToast: mockShowUndoToast,
 }));
 
-vi.mock("lucide-react", () => ({
-	Trash2: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	TrashIcon: ({ className }: { className?: string }) => (
 		<span data-testid="trash-icon" className={className} />
 	),
 }));

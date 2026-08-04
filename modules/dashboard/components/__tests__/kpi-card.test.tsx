@@ -86,9 +86,9 @@ vi.mock("@/shared/components/ui/badge", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	ChevronRight: () => <svg data-testid="chevron-right" />,
-	Info: () => <svg data-testid="info-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CaretRightIcon: () => <svg data-testid="chevron-right" />,
+	InfoIcon: () => <svg data-testid="info-icon" />,
 }));
 
 vi.mock("../kpi-evolution", () => ({

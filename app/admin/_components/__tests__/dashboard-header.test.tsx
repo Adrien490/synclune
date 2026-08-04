@@ -7,11 +7,11 @@ import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-pr
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("lucide-react", () => ({
-	ExternalLink: (props: Record<string, unknown>) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowSquareOutIcon: (props: Record<string, unknown>) => (
 		<svg data-testid="external-link-icon" {...props} />
 	),
-	Keyboard: (props: Record<string, unknown>) => <svg data-testid="keyboard-icon" {...props} />,
+	KeyboardIcon: (props: Record<string, unknown>) => <svg data-testid="keyboard-icon" {...props} />,
 }));
 
 vi.mock("@/app/admin/_components/keyboard-shortcuts.constants", () => ({

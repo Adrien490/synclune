@@ -13,8 +13,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({ children }: any) => <button>{children}</button>,
 }));
 
-vi.mock("lucide-react", () => ({
-	LogOut: () => <svg />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SignOutIcon: () => <svg />,
 }));
 
 import { LogoutCard } from "../logout-card";

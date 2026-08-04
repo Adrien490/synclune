@@ -32,8 +32,8 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Heart: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	HeartIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-heart" className={className} />
 	),
 }));

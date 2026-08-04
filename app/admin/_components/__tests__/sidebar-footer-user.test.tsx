@@ -2,7 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
-import type * as LucideReact from "lucide-react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -27,14 +26,14 @@ vi.mock("@/shared/components/ui/kbd", () => ({
 	KbdGroup: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock("lucide-react", async (importOriginal) => {
-	const actual = await importOriginal<typeof LucideReact>();
+vi.mock("@phosphor-icons/react/ssr", async (importOriginal) => {
+	const actual = await importOriginal<typeof PhosphorIcons>();
 	return {
 		...actual,
-		ChevronsUpDown: (props: Record<string, unknown>) => (
+		CaretUpDownIcon: (props: Record<string, unknown>) => (
 			<svg data-testid="icon-chevrons" {...props} />
 		),
-		LogOut: (props: Record<string, unknown>) => <svg data-testid="icon-logout" {...props} />,
+		SignOutIcon: (props: Record<string, unknown>) => <svg data-testid="icon-logout" {...props} />,
 	};
 });
 
@@ -128,6 +127,7 @@ vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
 }));
 
 import { SidebarFooterUser } from "../sidebar-footer-user";
+import type * as PhosphorIcons from "@phosphor-icons/react/ssr";
 
 // ============================================================================
 // SETUP

@@ -41,8 +41,8 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Loader2Icon: () => <svg data-testid="loader" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: () => <svg data-testid="loader" />,
 }));
 
 import { LogoutAlertDialog } from "../logout-alert-dialog";

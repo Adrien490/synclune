@@ -123,12 +123,12 @@ vi.mock("@/shared/components/ui/field", () => ({
 	FieldGroup: ({ children }: any) => <div>{children}</div>,
 }));
 
-vi.mock("lucide-react", () => ({
-	CircleAlert: () => <svg data-testid="icon-alert" />,
-	CircleCheck: () => <svg data-testid="icon-check" />,
-	CircleX: () => <svg data-testid="icon-x" />,
-	Loader2Icon: () => <svg data-testid="loader" />,
-	Mail: () => <svg data-testid="icon-mail" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	WarningCircleIcon: () => <svg data-testid="icon-alert" />,
+	CheckCircleIcon: () => <svg data-testid="icon-check" />,
+	XCircleIcon: () => <svg data-testid="icon-x" />,
+	SpinnerIcon: () => <svg data-testid="loader" />,
+	EnvelopeIcon: () => <svg data-testid="icon-mail" />,
 }));
 
 afterEach(cleanup);

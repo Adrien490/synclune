@@ -13,8 +13,8 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
-	ArrowLeft: () => <svg data-testid="arrow-left" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowLeftIcon: () => <svg data-testid="arrow-left" />,
 }));
 
 vi.mock("next/link", () => ({
