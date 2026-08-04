@@ -113,7 +113,6 @@ function generateShippingAddress() {
 	return {
 		customerEmail: faker.internet.email({ firstName, lastName }).toLowerCase(),
 		customerName: `${firstName} ${lastName}`,
-		customerPhone: phone,
 		shippingFirstName: firstName,
 		shippingLastName: lastName,
 		shippingAddress1: faker.location.streetAddress(),
@@ -179,11 +178,6 @@ async function cleanup(): Promise<void> {
 	await prisma.discountUsage.deleteMany();
 	await prisma.orderItem.deleteMany();
 	await prisma.order.deleteMany();
-
-	await prisma.cartItem.deleteMany();
-	await prisma.cart.deleteMany();
-	await prisma.wishlistItem.deleteMany();
-	await prisma.wishlist.deleteMany();
 
 	await prisma.webhookEvent.deleteMany();
 	await prisma.discount.deleteMany();
@@ -1674,12 +1668,6 @@ async function main(): Promise<void> {
 	let ordersCreated = 0;
 	const skuInventoryDecrements = new Map<string, number>();
 
-	// Pre-generate one Stripe customer ID per user for consistency
-	const userStripeCustomerMap = new Map<string, string>();
-	for (const user of usersData) {
-		userStripeCustomerMap.set(user.id, `cus_${faker.string.alphanumeric(14)}`);
-	}
-
 	for (let i = 0; i < CONFIG.orderCount; i += 1) {
 		const customer = sampleBoolean(0.85) ? faker.helpers.arrayElement(usersData) : null;
 		const customerId = customer?.id ?? null;
@@ -1731,7 +1719,7 @@ async function main(): Promise<void> {
 		]);
 
 		// Cancelled orders: 60% were cancelled before payment (PENDING), 40% after (REFUNDED)
-		// PENDING orders: ~15% FAILED, ~10% EXPIRED, rest stay PENDING
+		// PENDING orders: ~20% FAILED, rest stay PENDING
 		const paymentStatus =
 			status === OrderStatus.CANCELLED
 				? sampleBoolean(0.6)
@@ -1739,37 +1727,10 @@ async function main(): Promise<void> {
 					: PaymentStatus.REFUNDED
 				: status === OrderStatus.PENDING
 					? faker.helpers.weightedArrayElement([
-							{ weight: 75, value: PaymentStatus.PENDING },
-							{ weight: 15, value: PaymentStatus.FAILED },
-							{ weight: 10, value: PaymentStatus.EXPIRED },
+							{ weight: 80, value: PaymentStatus.PENDING },
+							{ weight: 20, value: PaymentStatus.FAILED },
 						])
 					: PaymentStatus.PAID;
-
-		// Payment failure details for FAILED orders
-		const paymentFailureData =
-			paymentStatus === PaymentStatus.FAILED
-				? {
-						paymentFailureCode: faker.helpers.arrayElement([
-							"card_declined",
-							"expired_card",
-							"insufficient_funds",
-							"processing_error",
-						]),
-						paymentDeclineCode: faker.helpers.arrayElement([
-							"generic_decline",
-							"insufficient_funds",
-							"lost_card",
-							"stolen_card",
-							null,
-						]),
-						paymentFailureMessage: faker.helpers.arrayElement([
-							"Your card was declined.",
-							"Your card has expired.",
-							"Your card has insufficient funds.",
-							"An error occurred while processing your card.",
-						]),
-					}
-				: {};
 
 		let fulfillmentStatus: FulfillmentStatus = FulfillmentStatus.UNFULFILLED;
 		if (status === OrderStatus.SHIPPED) {
@@ -1790,7 +1751,6 @@ async function main(): Promise<void> {
 			paymentStatus === PaymentStatus.PAID || paymentStatus === PaymentStatus.REFUNDED
 				? {
 						stripePaymentIntentId: `pi_${faker.string.alphanumeric(24)}`,
-						stripeCustomerId: customerId ? userStripeCustomerMap.get(customerId)! : null,
 					}
 				: paymentStatus === PaymentStatus.PENDING
 					? { stripePaymentIntentId: `pi_${faker.string.alphanumeric(24)}` }
@@ -1848,14 +1808,12 @@ async function main(): Promise<void> {
 				user: customerId ? { connect: { id: customerId } } : undefined,
 				subtotal,
 				shippingCost: shipping,
-				taxAmount: 0,
 				total,
 				status,
 				paymentStatus,
 				fulfillmentStatus,
 				...shippingData,
 				...stripeIds,
-				...paymentFailureData,
 				paidAt: paymentStatus === PaymentStatus.PAID ? orderDate : null,
 				createdAt: orderDate,
 				updatedAt: orderDate,
@@ -1950,7 +1908,6 @@ async function main(): Promise<void> {
 			type: DiscountType.PERCENTAGE,
 			value: 10,
 			isActive: true,
-			startsAt: new Date(),
 			endsAt: futureDate,
 		},
 		{
@@ -1958,7 +1915,6 @@ async function main(): Promise<void> {
 			type: DiscountType.FIXED_AMOUNT,
 			value: 500,
 			isActive: true,
-			startsAt: new Date(),
 			endsAt: futureDate,
 		},
 		{
@@ -1966,7 +1922,6 @@ async function main(): Promise<void> {
 			type: DiscountType.PERCENTAGE,
 			value: 15,
 			isActive: false,
-			startsAt: pastDate,
 			endsAt: pastDate,
 		},
 		{
@@ -1975,7 +1930,6 @@ async function main(): Promise<void> {
 			value: 20,
 			isActive: true,
 			maxUsageCount: 50,
-			startsAt: new Date(),
 			endsAt: futureDate,
 		},
 		{
@@ -1984,7 +1938,6 @@ async function main(): Promise<void> {
 			value: 1000,
 			isActive: true,
 			maxUsagePerUser: 1,
-			startsAt: new Date(),
 			endsAt: futureDate,
 		},
 		{
@@ -1993,7 +1946,6 @@ async function main(): Promise<void> {
 			value: 10,
 			isActive: true,
 			minOrderAmount: 5000,
-			startsAt: new Date(),
 			endsAt: futureDate,
 		},
 		{
@@ -2001,7 +1953,6 @@ async function main(): Promise<void> {
 			type: DiscountType.PERCENTAGE,
 			value: 25,
 			isActive: true,
-			startsAt: new Date(),
 			endsAt: futureDate,
 		},
 		{
@@ -2010,7 +1961,6 @@ async function main(): Promise<void> {
 			value: 30,
 			isActive: true,
 			maxUsageCount: 100,
-			startsAt: new Date(),
 			endsAt: futureDate,
 		},
 	];
@@ -2082,82 +2032,12 @@ async function main(): Promise<void> {
 	console.log(`✅ ${discountUsagesData.length} utilisations de codes promo créées`);
 
 	// ============================================
-	// PANIERS (CART + CART ITEM)
+	// PANIERS — plus rien à semer
 	// ============================================
-	const usersForCarts = await prisma.user.findMany({
-		where: { role: "USER" },
-		select: { id: true },
-		take: 8,
-	});
-
-	const activeSKUs = await prisma.productSku.findMany({
-		where: { isActive: true, inventory: { gt: 0 }, deletedAt: null },
-		select: { id: true, priceInclTax: true },
-		take: 50,
-	});
-
-	let cartsCreated = 0;
-	for (let i = 0; i < usersForCarts.length; i++) {
-		const user = usersForCarts[i]!;
-		const isAbandoned = i >= 5;
-
-		const cartDate = new Date();
-		if (isAbandoned) {
-			cartDate.setDate(cartDate.getDate() - faker.number.int({ min: 7, max: 30 }));
-		} else {
-			cartDate.setHours(cartDate.getHours() - faker.number.int({ min: 1, max: 24 }));
-		}
-
-		const itemCount = faker.number.int({ min: 1, max: 4 });
-		const selectedSKUs = faker.helpers.arrayElements(activeSKUs, itemCount);
-
-		// Abandoned carts get expiresAt (relance e-mail retirée — scaffolding supprimé)
-		const expiresAt = new Date(cartDate);
-		expiresAt.setDate(expiresAt.getDate() + 30);
-
-		try {
-			await prisma.cart.create({
-				data: {
-					userId: user.id,
-					expiresAt,
-					createdAt: cartDate,
-					updatedAt: cartDate,
-					items: {
-						create: selectedSKUs.map((sku) => ({
-							skuId: sku.id,
-							quantity: faker.number.int({ min: 1, max: 2 }),
-							priceAtAdd: sku.priceInclTax,
-						})),
-					},
-				},
-			});
-			cartsCreated++;
-		} catch (error) {
-			logError("cart-user", error);
-		}
-	}
-
-	// Guest carts (sessionId)
-	for (let i = 0; i < 3; i++) {
-		const itemCount = faker.number.int({ min: 1, max: 3 });
-		const selectedSKUs = faker.helpers.arrayElements(activeSKUs, itemCount);
-
-		await prisma.cart.create({
-			data: {
-				sessionId: faker.string.uuid(),
-				expiresAt: faker.date.future({ years: 0.1 }),
-				items: {
-					create: selectedSKUs.map((sku) => ({
-						skuId: sku.id,
-						quantity: 1,
-						priceAtAdd: sku.priceInclTax,
-					})),
-				},
-			},
-		});
-		cartsCreated++;
-	}
-	console.log(`✅ ${cartsCreated} paniers créés`);
+	// Le panier vit dans le cookie `cart` de chaque navigateur depuis le
+	// 2026-08-04 (comme les favoris depuis le 2026-08-03) : il n'y a plus de
+	// tables `Cart`/`CartItem` à peupler. Pour tester un panier garni en local,
+	// ajouter des articles depuis la boutique.
 
 	// ============================================
 	// REMBOURSEMENTS (REFUND + REFUND ITEM)
@@ -2176,7 +2056,6 @@ async function main(): Promise<void> {
 		RefundStatus.APPROVED,
 		RefundStatus.COMPLETED,
 		RefundStatus.COMPLETED,
-		RefundStatus.REJECTED,
 		RefundStatus.FAILED,
 		RefundStatus.CANCELLED,
 	];
@@ -2184,8 +2063,6 @@ async function main(): Promise<void> {
 	const refundReasons: RefundReason[] = [
 		RefundReason.CUSTOMER_REQUEST,
 		RefundReason.DEFECTIVE,
-		RefundReason.WRONG_ITEM,
-		RefundReason.LOST_IN_TRANSIT,
 		RefundReason.FRAUD,
 		RefundReason.OTHER,
 	];
@@ -2219,16 +2096,11 @@ async function main(): Promise<void> {
 					stripeRefundId:
 						refundStatus === RefundStatus.COMPLETED ? `re_${faker.string.alphanumeric(24)}` : null,
 					failureReason:
-						refundStatus === RefundStatus.REJECTED
-							? "Délai de rétractation dépassé"
-							: refundStatus === RefundStatus.FAILED
-								? "Stripe refund failed: card_not_found"
-								: null,
+						refundStatus === RefundStatus.FAILED ? "Stripe refund failed: card_not_found" : null,
 					note:
 						reason === RefundReason.DEFECTIVE
 							? "Fermoir cassé à la réception - photos reçues par email"
 							: null,
-					createdBy: adminUser.id,
 					processedAt:
 						refundStatus === RefundStatus.COMPLETED || refundStatus === RefundStatus.FAILED
 							? refundDate
@@ -2253,7 +2125,6 @@ async function main(): Promise<void> {
 									orderItemId: item.id,
 									quantity: item.quantity,
 									amount,
-									restock: reason !== RefundReason.DEFECTIVE,
 								};
 							});
 						})(),
@@ -2299,7 +2170,6 @@ async function main(): Promise<void> {
 					status: RefundStatus.COMPLETED,
 					stripeRefundId: `re_${faker.string.alphanumeric(24)}`,
 					note: "Remboursement suite à annulation de commande",
-					createdBy: adminUser.id,
 					processedAt: refundDate,
 					createdAt: refundDate,
 					items: {
@@ -2320,7 +2190,6 @@ async function main(): Promise<void> {
 									orderItemId: item.id,
 									quantity: item.quantity,
 									amount,
-									restock: true,
 								};
 							});
 						})(),
@@ -2368,7 +2237,7 @@ async function main(): Promise<void> {
 			createdAt: currentDate,
 		});
 
-		// 2. Payment (only for orders that actually got paid, not FAILED/EXPIRED)
+		// 2. Payment (only for orders that actually got paid, not FAILED)
 		if (
 			order.paymentStatus === PaymentStatus.PAID ||
 			order.paymentStatus === PaymentStatus.REFUNDED ||
@@ -2647,66 +2516,8 @@ async function main(): Promise<void> {
 	await prisma.orderNote.createMany({ data: orderNotesData });
 	console.log(`✅ ${orderNotesData.length} notes de commandes créées`);
 
-	// ============================================
-	// WISHLISTS (FAVORIS)
-	// ============================================
-	const usersForWishlist = await prisma.user.findMany({
-		where: { role: "USER" },
-		select: { id: true },
-		take: 6,
-	});
-
-	const allProducts = await prisma.product.findMany({
-		where: { status: ProductStatus.PUBLIC, deletedAt: null },
-		select: { id: true },
-	});
-
-	let wishlistsCreated = 0;
-
-	// User wishlists
-	for (const user of usersForWishlist) {
-		const itemCount = faker.number.int({ min: 2, max: 5 });
-		const selectedProducts = faker.helpers.arrayElements(allProducts, itemCount);
-
-		try {
-			await prisma.wishlist.create({
-				data: {
-					userId: user.id,
-					items: {
-						create: selectedProducts.map((product) => ({
-							productId: product.id,
-						})),
-					},
-				},
-			});
-			wishlistsCreated++;
-		} catch (error) {
-			logError("wishlist-user", error);
-		}
-	}
-
-	// Guest wishlists (sessionId)
-	for (let i = 0; i < 2; i++) {
-		const itemCount = faker.number.int({ min: 1, max: 3 });
-		const selectedProducts = faker.helpers.arrayElements(allProducts, itemCount);
-
-		const expiresAt = new Date();
-		expiresAt.setDate(expiresAt.getDate() + 30);
-
-		await prisma.wishlist.create({
-			data: {
-				sessionId: faker.string.uuid(),
-				expiresAt,
-				items: {
-					create: selectedProducts.map((product) => ({
-						productId: product.id,
-					})),
-				},
-			},
-		});
-		wishlistsCreated++;
-	}
-	console.log(`✅ ${wishlistsCreated} wishlists créées`);
+	// Plus de seed wishlist : les favoris vivent dans le cookie `wishlist` de
+	// chaque navigateur (retrait des tables Wishlist/WishlistItem, 2026-08-03).
 
 	// ============================================
 	// WEBHOOK EVENTS (enriched with order data)
@@ -2860,7 +2671,6 @@ async function main(): Promise<void> {
 			isActive: true,
 			maxUsageCount: 10,
 			usageCount: 10,
-			startsAt: new Date(),
 			endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 		},
 		{
@@ -2868,7 +2678,6 @@ async function main(): Promise<void> {
 			type: DiscountType.PERCENTAGE,
 			value: 20,
 			isActive: true,
-			startsAt: new Date(),
 			endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 		},
 	];

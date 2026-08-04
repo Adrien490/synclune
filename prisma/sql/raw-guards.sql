@@ -54,16 +54,6 @@ $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT;
 
 -- ## CHECK constraints
 
--- Cart
-ALTER TABLE "Cart" DROP CONSTRAINT IF EXISTS "Cart_owner_required";
-ALTER TABLE "Cart" ADD CONSTRAINT "Cart_owner_required" CHECK ("userId" IS NOT NULL OR "sessionId" IS NOT NULL);
-
--- CartItem
-ALTER TABLE "CartItem" DROP CONSTRAINT IF EXISTS "CartItem_priceAtAdd_positive";
-ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_priceAtAdd_positive" CHECK ("priceAtAdd" > 0);
-ALTER TABLE "CartItem" DROP CONSTRAINT IF EXISTS "CartItem_quantity_positive";
-ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_quantity_positive" CHECK ("quantity" >= 1);
-
 -- Discount
 ALTER TABLE "Discount" DROP CONSTRAINT IF EXISTS "Discount_maxUsagePerUser_positive";
 ALTER TABLE "Discount" ADD CONSTRAINT "Discount_maxUsagePerUser_positive" CHECK ("maxUsagePerUser" IS NULL OR "maxUsagePerUser" > 0);
@@ -113,8 +103,6 @@ ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_shippingCost_non_negative";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_shippingCost_non_negative" CHECK ("shippingCost" >= 0);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_subtotal_non_negative";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_subtotal_non_negative" CHECK ("subtotal" >= 0);
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_taxAmount_non_negative";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_taxAmount_non_negative" CHECK ("taxAmount" >= 0);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_total_formula";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_total_formula" CHECK ("total" = GREATEST(0, "subtotal" - "discountAmount" + "shippingCost"));
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_total_non_negative";
@@ -187,9 +175,8 @@ ALTER TABLE "StoreSettings" ADD CONSTRAINT "StoreSettings_singleton_id" CHECK (i
 ALTER TABLE "User" DROP CONSTRAINT IF EXISTS "User_email_lowercase";
 ALTER TABLE "User" ADD CONSTRAINT "User_email_lowercase" CHECK ("email" = lower("email"));
 
--- Wishlist
-ALTER TABLE "Wishlist" DROP CONSTRAINT IF EXISTS "Wishlist_owner_required";
-ALTER TABLE "Wishlist" ADD CONSTRAINT "Wishlist_owner_required" CHECK ("userId" IS NOT NULL OR "sessionId" IS NOT NULL);
+-- Wishlist : plus aucun garde — les tables Wishlist/WishlistItem sont droppées
+-- (favoris en cookie, migration 20260803210000_drop_wishlist_tables).
 
 
 -- ## Index partiels / expression / NULLS NOT DISTINCT
