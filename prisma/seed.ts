@@ -1861,7 +1861,10 @@ async function main(): Promise<void> {
 		id: faker.string.nanoid(12),
 		userId: user.id,
 		token: faker.string.alphanumeric({ length: 32 }),
-		expiresAt: faker.date.future({ years: 0.1 }),
+		// `date.future({ years })` tronque `years` à l'entier depuis faker v10 :
+		// une fraction (0.1) rend une plage vide et jette « `from` date must be
+		// before `to` date ». Les échéances courtes passent donc par `days`.
+		expiresAt: faker.date.soon({ days: 30 }),
 		ipAddress: faker.internet.ipv4(),
 		userAgent: faker.internet.userAgent(),
 	}));
@@ -1944,29 +1947,9 @@ async function main(): Promise<void> {
 							? refundDate
 							: null,
 					createdAt: refundDate,
-					items: {
-						create: (() => {
-							// Distribute refund amount proportionally across items
-							const totalItemsValue = itemsToRefund.reduce(
-								(sum, item) => sum + item.price * item.quantity,
-								0,
-							);
-							let remaining = refundAmount;
-							return itemsToRefund.map((item, idx) => {
-								const itemValue = item.price * item.quantity;
-								const amount =
-									idx === itemsToRefund.length - 1
-										? remaining
-										: Math.round((itemValue / totalItemsValue) * refundAmount);
-								remaining -= amount;
-								return {
-									orderItemId: item.id,
-									quantity: item.quantity,
-									amount,
-								};
-							});
-						})(),
-					},
+					// Pas de lignes : `RefundItem` est parti le 2026-08-05 (invariant
+					// 6bis de CLAUDE.md). On rembourse un MONTANT, pas des articles —
+					// `itemsToRefund` ne sert plus qu'à calculer un montant plausible.
 				},
 			});
 
@@ -2010,28 +1993,6 @@ async function main(): Promise<void> {
 					note: "Remboursement suite à annulation de commande",
 					processedAt: refundDate,
 					createdAt: refundDate,
-					items: {
-						create: (() => {
-							const totalItemsValue = order.items.reduce(
-								(sum, item) => sum + item.price * item.quantity,
-								0,
-							);
-							let remaining = refundAmount;
-							return order.items.map((item, idx) => {
-								const itemValue = item.price * item.quantity;
-								const amount =
-									idx === order.items.length - 1
-										? remaining
-										: Math.round((itemValue / totalItemsValue) * refundAmount);
-								remaining -= amount;
-								return {
-									orderItemId: item.id,
-									quantity: item.quantity,
-									amount,
-								};
-							});
-						})(),
-					},
 				},
 			});
 			refundsCreated++;
@@ -2398,19 +2359,20 @@ async function main(): Promise<void> {
 			id: faker.string.nanoid(12),
 			identifier: "email-verification",
 			value: faker.string.alphanumeric(64),
-			expiresAt: faker.date.future({ years: 0.01 }),
+			// cf. commentaire des sessions : `days`, jamais une fraction de `years`.
+			expiresAt: faker.date.soon({ days: 3 }),
 		},
 		{
 			id: faker.string.nanoid(12),
 			identifier: "password-reset",
 			value: faker.string.alphanumeric(64),
-			expiresAt: faker.date.future({ years: 0.01 }),
+			expiresAt: faker.date.soon({ days: 3 }),
 		},
 		{
 			id: faker.string.nanoid(12),
 			identifier: "expired-token",
 			value: faker.string.alphanumeric(64),
-			expiresAt: faker.date.past({ years: 0.01 }),
+			expiresAt: faker.date.recent({ days: 3 }),
 		},
 	];
 	await prisma.verification.createMany({ data: verificationData });
@@ -2441,7 +2403,10 @@ async function main(): Promise<void> {
 			data: {
 				accountStatus: AccountStatus.ANONYMIZED,
 				name: "Utilisateur anonymisé",
-				email: `anonymized-${faker.string.alphanumeric(8)}@anon.synclune.fr`,
+				// `casing: "lower"` obligatoire : le seed écrit en Prisma direct, donc
+				// sans les `databaseHooks` Better Auth qui normalisent la casse — et le
+				// CHECK `User_email_lowercase` rejette la moindre majuscule (23514).
+				email: `anonymized-${faker.string.alphanumeric({ length: 8, casing: "lower" })}@anon.synclune.fr`,
 			},
 		});
 
