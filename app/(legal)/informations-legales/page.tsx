@@ -8,7 +8,14 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import { Cookie, Eye, FileText, RotateCcw, Scale, Shield } from "lucide-react";
+import {
+	ArrowCounterClockwiseIcon,
+	CookieIcon,
+	EyeIcon,
+	FileTextIcon,
+	ScalesIcon,
+	ShieldIcon,
+} from "@phosphor-icons/react/ssr";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -49,37 +56,37 @@ const legalPages = [
 		title: "Mentions légales",
 		description: "Identification de l'éditeur, hébergeur et directeur de publication",
 		href: "/mentions-legales",
-		icon: FileText,
+		icon: FileTextIcon,
 	},
 	{
 		title: "Conditions Générales de Vente",
 		description: "CGV, livraison, paiement, garanties et règlement des litiges",
 		href: "/cgv",
-		icon: Scale,
+		icon: ScalesIcon,
 	},
 	{
 		title: "Politique de confidentialité",
 		description: "Protection des données personnelles et respect du RGPD",
 		href: "/confidentialite",
-		icon: Shield,
+		icon: ShieldIcon,
 	},
 	{
 		title: "Gestion des cookies",
 		description: "Informations sur les cookies utilisés et gestion des préférences",
 		href: "/cookies",
-		icon: Cookie,
+		icon: CookieIcon,
 	},
 	{
 		title: "Droit de rétractation",
 		description: "Formulaire type de rétractation (14 jours)",
 		href: "/retractation",
-		icon: RotateCcw,
+		icon: ArrowCounterClockwiseIcon,
 	},
 	{
 		title: "Accessibilité",
 		description: "Déclaration d'accessibilité et engagement pour un site accessible",
 		href: "/accessibilite",
-		icon: Eye,
+		icon: EyeIcon,
 	},
 ];
 
