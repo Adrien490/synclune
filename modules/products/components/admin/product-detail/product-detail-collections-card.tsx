@@ -30,7 +30,7 @@ export function ProductDetailCollectionsCard({ collections }: ProductDetailColle
 				) : (
 					<ul className="-mx-2 space-y-1" aria-label={`${collections.length} collection(s)`}>
 						{collections.map((entry) => (
-							<li key={entry.id}>
+							<li key={entry.collection.id}>
 								<Link
 									href={`/admin/catalogue/collections/${entry.collection.slug}`}
 									onClick={() => haptic("light")}

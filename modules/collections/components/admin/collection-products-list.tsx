@@ -92,7 +92,7 @@ export function CollectionProductsList({
 							const price = defaultSku?.priceInclTax;
 
 							return (
-								<TableRow key={pc.id}>
+								<TableRow key={product.id}>
 									{/* Bouton etoile pour featured */}
 									<TableCell>
 										<Tooltip>

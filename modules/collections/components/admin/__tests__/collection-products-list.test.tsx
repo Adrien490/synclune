@@ -183,7 +183,6 @@ type ProductEntry = GetCollectionReturn["products"][number];
  */
 function makeProductEntry(overrides: Partial<ProductEntry> = {}): ProductEntry {
 	return {
-		id: "pc-1",
 		isFeatured: false,
 		product: {
 			id: "prod-1",
@@ -294,7 +293,6 @@ describe("CollectionProductsList", () => {
 	it("renders a row for each product", () => {
 		const products = [
 			makeProductEntry({
-				id: "pc-1",
 				product: {
 					...makeProductEntry().product,
 					id: "prod-1",
@@ -303,7 +301,6 @@ describe("CollectionProductsList", () => {
 				},
 			}),
 			makeProductEntry({
-				id: "pc-2",
 				product: {
 					...makeProductEntry().product,
 					id: "prod-2",

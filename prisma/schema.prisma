@@ -201,7 +201,6 @@ model Collection {
 }
 
 model ProductCollection {
-  id           String     @id @default(cuid(2))
   productId    String
   product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
   collectionId String
@@ -214,7 +213,11 @@ model ProductCollection {
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   ProductCollection_collectionId_isFeatured_unique
 
-  @@unique([productId, collectionId])
+  // PK composite, comme `ProductSkuColor` / `ProductSkuMaterial` : la clé surrogate
+  // `id` n'était sélectionnée que par `GET_COLLECTION_SELECT`, et son unique
+  // consommateur était une `key` React que `product.id` porte aussi bien. Toutes les
+  // mutations passaient déjà par `where: { productId_collectionId: … }`.
+  @@id([productId, collectionId])
   @@index([collectionId])
 }
 

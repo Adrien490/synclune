@@ -31,7 +31,10 @@ export const GET_COLLECTION_SELECT = {
 			},
 		},
 		select: {
-			id: true,
+			// Pas d'`id` : `ProductCollection` est passé en PK composite
+			// `(productId, collectionId)` (audit schéma V4, 2026-08-05). La clé
+			// surrogate n'avait qu'un consommateur, une `key` React — c'est
+			// `product.id` qui la porte désormais.
 			isFeatured: true,
 			product: {
 				select: {
