@@ -1,18 +1,6 @@
-import { CollectionsSection } from "@/app/(shop)/(home)/_components/collections-section";
-import { LatestCreations } from "@/app/(shop)/(home)/_components/latest-creations";
-import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
-
-import { getProducts, type GetProductsReturn } from "@/modules/products/data/get-products";
-import { ScrollToTop } from "@/shared/components/scroll-to-top";
 import { StructuredData } from "@/shared/components/structured-data";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
-import { AtelierStats } from "./_components/atelier-section/atelier-stats";
-import { HeroReassuranceBanner } from "./_components/hero-reassurance-banner";
-import { HeroSection } from "./_components/hero-section";
-import { HomeFaq } from "./_components/home-faq";
 
 export const metadata: Metadata = {
 	title: {
@@ -56,67 +44,13 @@ export const metadata: Metadata = {
 	},
 };
 
-export default async function Page() {
-	// Kick off cached data fetches in parallel (all have "use cache" at top level)
-	const productsPromise = getProducts(
-		{ perPage: 4, sortBy: "created-descending", filters: { status: "PUBLIC" } },
-		{ isAdmin: false },
-	);
-
-	return (
-		<>
-			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, ItemList */}
-			<Suspense fallback={null}>
-				<HomepageStructuredData productsPromise={productsPromise} />
-			</Suspense>
-
-			{/* 1. Hero - Attention capture + rotating tagline. Fully static: its SSR
-			    HTML — incl. the title LCP text — is in the initial document. */}
-			<HeroSection />
-
-			{/* 1b. Reassurance banner - Baymard trust signals immediately under hero */}
-			<HeroReassuranceBanner />
-
-			{/* 2. Latest Creations - 4 most recent products.
-			    Rendered synchronously (no Suspense) so React 19 hoists
-			    `<link rel="preload">` for the LCP image — ProductCard[0]. Only the
-			    first card preloads (see latest-creations.tsx). */}
-			<LatestCreations productsPromise={productsPromise} />
-
-			{/* 3. Collections - Thematic browsing with descriptions */}
-			<Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
-				<CollectionsSection />
-			</Suspense>
-
-			{/* 4. L'Atelier - Story + creative process merged.
-			    `stats` passe en slot ReactNode à travers le "use cache" reference de la
-			    section : les counts (profil catalog) restent frais sans figer la section. */}
-			<Suspense fallback={<AtelierSectionSkeleton />}>
-				<AtelierSection
-					stats={
-						/* key explicite : un élément JSX qui traverse un composant "use cache"
-						   est désérialisé comme enfant « de liste » → warning React sans key. */
-						<Suspense key="atelier-stats" fallback={null}>
-							<AtelierStats />
-						</Suspense>
-					}
-				/>
-			</Suspense>
-
-			{/* 5. FAQ - Long-tail SEO + last-mile reassurance */}
-			<HomeFaq />
-
-			<ScrollToTop />
-		</>
-	);
-}
-
-async function HomepageStructuredData({
-	productsPromise,
-}: {
-	productsPromise: Promise<GetProductsReturn>;
-}) {
-	const productsResult = await productsPromise;
-
-	return <StructuredData includeHomepageSchemas featuredProducts={productsResult.products} />;
+/**
+ * Page d'accueil volontairement vide (2026-08-03) : les sections ont été
+ * retirées en attendant la refonte complète de la landing. Navbar et footer
+ * restent rendus par le layout `(shop)`. La copie de la section Atelier est
+ * sauvegardée dans `docs/atelier-story.md` ; les composants complets vivent
+ * dans l'historique git.
+ */
+export default function Page() {
+	return <StructuredData includeHomepageSchemas />;
 }

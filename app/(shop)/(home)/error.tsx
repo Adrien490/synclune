@@ -41,8 +41,8 @@ export default function HomeError({
 							<Button size="lg" onClick={reset}>
 								Réessayer
 							</Button>
-							<Button asChild variant="secondary" size="lg">
-								<Link href="/produits">Voir la boutique</Link>
+							<Button render={<Link href="/produits" />} variant="secondary" size="lg">
+								Voir la boutique
 							</Button>
 						</div>
 					}
