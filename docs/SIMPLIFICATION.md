@@ -294,11 +294,11 @@ Trois lots exécutés APRÈS l'audit V2, sur instruction directe. Ils touchent d
 surfaces que ce document classait « on ne touche pas » (§ 9) — le § 9 est donc
 partiellement périmé, et voici où :
 
-| Lot | Contenu | Migration |
-| --- | --- | --- |
-| **Codes promo retirés** | modèle `Discount` + enum `DiscountType` + `Order.discountCode`/`discountId`/`discountAmount` + 7 CHECK ; `modules/discounts` (100 fichiers, ~14 200 L), étape panier/checkout, pages admin. `Order_total_formula` réécrit. La remise reste possible par `ProductSku.compareAtPrice` | `20260805200000` |
-| **PDF archivé = seule pièce probante** | `Order.invoiceDataSnapshot`/`invoiceDataHash` + 2 CHECK, `invoiceVoidedAt`, `OrderItem.productDescription`/`skuSku` ; `verify-invoice-snapshot`, `resolve-invoice-data`, `canonical-json`, `invoice-data-format` | `20260805210000` |
-| **`OrderHistory` recentré** | `OrderAction` 26 → 20 : les 6 valeurs de plomberie facture partent avec leurs écrivains | `20260805220000` |
+| Lot                                    | Contenu                                                                                                                                                                                                                                                                             | Migration        |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| **Codes promo retirés**                | modèle `Discount` + enum `DiscountType` + `Order.discountCode`/`discountId`/`discountAmount` + 7 CHECK ; `modules/discounts` (100 fichiers, ~14 200 L), étape panier/checkout, pages admin. `Order_total_formula` réécrit. La remise reste possible par `ProductSku.compareAtPrice` | `20260805200000` |
+| **PDF archivé = seule pièce probante** | `Order.invoiceDataSnapshot`/`invoiceDataHash` + 2 CHECK, `invoiceVoidedAt`, `OrderItem.productDescription`/`skuSku` ; `verify-invoice-snapshot`, `resolve-invoice-data`, `canonical-json`, `invoice-data-format`                                                                    | `20260805210000` |
+| **`OrderHistory` recentré**            | `OrderAction` 26 → 20 : les 6 valeurs de plomberie facture partent avec leurs écrivains                                                                                                                                                                                             | `20260805220000` |
 
 **Ce que le § 9 disait et qui ne tient plus** : « Invariants facturation 1-10 — ils
 priment sur toute simplification » reste vrai sur le FOND (numérotation gap-free,
@@ -312,6 +312,27 @@ n'est plus un confort mais la seule conservation. `reconcile-invoices` reprend
 toute facture numérotée sans `invoicePdfUrl`, par un prédicat dérivé de l'état.
 
 **État du schéma après V3** : 20 modèles, 14 enums, 750 lignes, 22 CHECK.
+
+### Vague V4 (2026-08-05) — la veine est épuisée, et c'est le résultat
+
+Quatrième passe, posée aux DEUX grains à la fois : « ce modèle est-il obligatoire pour une micro-entreprise française de bijoux faits main ? » **et** « ce champ l'est-il ? ». Trois explorations parallèles ont balayé les 20 modèles et leurs ~250 champs.
+
+**Verdict : le schéma est sain.** Aucun modèle superflu — 4 imposés par Better Auth, 10 pour le catalogue (tous avec CRUD admin, facettes vitrine et lecteurs clientes), 4 pour le socle légal, 2 pour l'infra. La récolte tient en **2 colonnes, 1 clé surrogate, 9 index et 4 endpoints RPC sans UI**. C'est une information en soi : la prochaine réduction de surface ne viendra plus du schéma.
+
+| Lot      | Contenu                                                                                                                                                                                                                                               |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **V4-1** | 4 Server Actions sans déclencheur UI (`reorder-sku-media`, `set-primary-sku-media`, `update-sku-media-alt-text`, `remove-multiple-items`) — donc 4 endpoints RPC publics. Aucun outil ne les voyait : knip traite `"use server"` comme point d'entrée |
+| **V4-2** | `ProductCollection` → PK composite `(productId, collectionId)`, comme les deux autres tables de liaison. `tsc` a trouvé 2 selects que le grep avait manqués                                                                                           |
+| **V4-3** | `OrderItem.skuColorHexes` + ses 8 couches + `EmailColorSwatch`. Arbitrage assumé : l'e-mail garde le NOM de la couleur, perd la pastille                                                                                                              |
+| **V4-4** | `Order.stripeChargeId` — son considérant (un `null` figé dans `invoiceDataSnapshot`) est parti avec le snapshot à la V3. Le test qui la gardait est RETARGETÉ sur `stripePaymentIntentId`, qui avait le même trou                                     |
+| **V4-5** | 9 `@@index` sur des tables de dizaines de lignes (31 → 22) — le travail que la V1 avait fait sur `Order` seul                                                                                                                                         |
+| **V4-6** | Hygiène de `select` : `Refund.processedAt` (4 sites) et `StoreSettings.updatedAt` cessent d'être transportés au client. Les colonnes restent, elles sont vitales côté serveur                                                                         |
+
+**Instruits et GARDÉS, avec le motif** — à ne pas re-proposer : `Order.invoiceStatus` (dérivable en théorie, ~10 sites de lecture dont un `groupBy` et le bandeau « ANNULÉE » du PDF) · `Order.total` (le CHECK `Order_total_formula` est le DÉTECTEUR d'incohérence, pas une redondance) · `Order.trackingUrl` (dérivation seulement partielle : `getTrackingUrl` rend `null` pour le transporteur « autre ») · `Order.customerName` vs `shipping*Name` (trois writers les font diverger après création) · `Order.deletedAt` (soft delete borné aux commandes ni payées ni facturées) · `WebhookEvent.eventType`/`processedAt` (write-only, mais la table n'a aucune page admin — leur lecteur est un `psql` d'incident) · `Color`/`Material` comme entités · la M2M couleurs/matériaux et sa `position` · les 4 index GIN trigram · **tout le périmètre auth** (les 6 colonnes OAuth d'`Account` et les 3 axes de révocation d'`User` sont instruits comme retirables, arbitrage Adrien : on ne touche pas au chemin de connexion sur une branche de simplification).
+
+**Défaut trouvé en chemin, consigné et non corrigé** : KI-007 — l'ordre des matériaux d'un SKU n'est pas modifiable après coup, alors que « index 0 = matériau principal » alimente la PDP, le SEO et `build-sku-url`.
+
+**État du schéma après V4** : 20 modèles, 14 enums, 22 CHECK, **22 `@@index`**.
 
 ## 13. Ordre d'exécution suggéré (après arbitrage)
 

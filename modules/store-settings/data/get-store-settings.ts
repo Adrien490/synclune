@@ -23,7 +23,8 @@ async function fetchStoreSettings(): Promise<StoreSettingsAdmin | null> {
 				reopensAt: true,
 				closedAt: true,
 				closedBy: true,
-				updatedAt: true,
+				// Pas d'`updatedAt` : sélectionnée sans consommateur en aval (audit schéma
+				// V4). La COLONNE reste, portée par `@updatedAt` de Prisma.
 			},
 		});
 	} catch (err) {

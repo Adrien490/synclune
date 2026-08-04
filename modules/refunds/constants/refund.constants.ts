@@ -15,7 +15,10 @@ export const GET_REFUNDS_SELECT = {
 	status: true,
 	failureReason: true,
 	note: true,
-	processedAt: true,
+	// Pas de `processedAt` : la COLONNE est vitale — `where` du DLQ
+	// `reconcile-refunds`, bucketing des KPI dashboard, garde SAGA de 30 s de
+	// `refund-handlers`. Mais aucun rendu ne la lit : les cartes et tables affichent
+	// `createdAt`. On cesse donc de la transporter jusqu'au client (audit schéma V4).
 	createdAt: true,
 	order: {
 		select: {
@@ -41,7 +44,10 @@ export const GET_REFUND_SELECT = {
 	status: true,
 	failureReason: true,
 	note: true,
-	processedAt: true,
+	// Pas de `processedAt` : la COLONNE est vitale — `where` du DLQ
+	// `reconcile-refunds`, bucketing des KPI dashboard, garde SAGA de 30 s de
+	// `refund-handlers`. Mais aucun rendu ne la lit : les cartes et tables affichent
+	// `createdAt`. On cesse donc de la transporter jusqu'au client (audit schéma V4).
 	createdAt: true,
 	// Avoir comptable partiel (Art. 272-I CGI) — EINV-UI-102
 	creditNoteNumber: true,

@@ -113,7 +113,8 @@ export const GET_ORDER_SELECT_ADMIN = {
 			reason: true,
 			amount: true,
 			note: true,
-			processedAt: true,
+			// Pas de `processedAt` : cf. la note de `refund.constants.ts` — colonne
+			// vitale côté serveur, aucun lecteur côté rendu.
 			createdAt: true,
 			// Avoir par refund (Phase 2A — EINV-AUDIT-010)
 			creditNoteNumber: true,
@@ -202,7 +203,8 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			reason: true,
 			amount: true,
 			note: true,
-			processedAt: true,
+			// Pas de `processedAt` : cf. la note de `refund.constants.ts` — colonne
+			// vitale côté serveur, aucun lecteur côté rendu.
 			createdAt: true,
 			// Avoir par refund (Phase 2A — EINV-AUDIT-010)
 			creditNoteNumber: true,

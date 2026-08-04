@@ -750,6 +750,14 @@ enum WebhookEventStatus {
 model WebhookEvent {
   id            String             @id @default(cuid(2))
   stripeEventId String             @unique
+  // `eventType` et `processedAt` sont ÉCRITS-SEULEMENT — instruit et CONSERVÉ à
+  // l'audit schéma V4 (2026-08-05). Aucun `where`, aucun `orderBy`, aucun rendu :
+  // la route travaille sur `event.type` du payload fraîchement désérialisé, et la
+  // purge à 90 jours trie sur `receivedAt`.
+  //
+  // Elles restent parce que cette table n'a **aucune page admin** : sa seule surface
+  // de lecture est le SQL d'incident (« quel type d'event, traité quand »). Retirer
+  // une colonne write-only n'est pas un réflexe quand le lecteur est un `psql`.
   eventType     String             @db.VarChar(100)
   // `PROCESSING` et non `PENDING` : la route webhook crée déjà la ligne en
   // PROCESSING, et rien n'a jamais écrit PENDING — une telle ligne serait restée

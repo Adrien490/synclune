@@ -30,7 +30,6 @@ const MOCK_SETTINGS = {
 	reopensAt: null,
 	closedAt: null,
 	closedBy: null,
-	updatedAt: new Date("2026-03-14T10:00:00Z"),
 };
 
 // ============================================================================
@@ -63,7 +62,6 @@ describe("getStoreSettings", () => {
 				reopensAt: true,
 				closedAt: true,
 				closedBy: true,
-				updatedAt: true,
 			},
 		});
 	});

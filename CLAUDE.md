@@ -537,7 +537,7 @@ Le registre obligatoire d'une micro-entreprise est le livre de recettes (export 
 
 ### Migrations & rollback
 
-Chaque nouvelle migration **doit** ajouter un `down.sql` paire dans le même dossier (`prisma/migrations/<timestamp>_<name>/down.sql`) pour permettre un rollback rapide en cas d'incident production. Exemple : `prisma/migrations/20260804200000_add_order_stripe_charge_id/down.sql`. (Les 21 migrations en ont une — c'est le contract test de parité qui l'exige, pas une convention molle.)
+Chaque nouvelle migration **doit** ajouter un `down.sql` paire dans le même dossier (`prisma/migrations/<timestamp>_<name>/down.sql`) pour permettre un rollback rapide en cas d'incident production. Exemple : `prisma/migrations/20260806130000_v4_index_rightsizing/down.sql`. (Les 36 migrations en ont une — c'est le contract test de parité qui l'exige, pas une convention molle.)
 
 Pas de rétroactif sur les migrations existantes (risque trop élevé). En cas de besoin de rollback historique : restore Neon PITR.
 

@@ -169,3 +169,17 @@ Trois systèmes de reprise se superposaient sur les webhooks Stripe. Deux sont d
 **Pourquoi c'est acceptable ici.** À ~20 commandes/mois, le reliquat après 3 jours de retries Stripe se compte en unités par an, et l'alerte admin par email signale chaque épuisement. Le coût du bouton (un service, ses deux suites de tests, et **deux index** sur `WebhookEvent` — cf. migration `20260805150000`) dépassait sa valeur.
 
 **À quelle condition rouvrir.** Si l'un de ces signaux apparaît : (a) un event constaté perdu au-delà de J+3 avec conséquence métier non rattrapée par les tâches de réconciliation ; (b) le volume de commandes rend le rattrapage manuel via Stripe impraticable ; (c) une ligne `PROCESSING` figée est observée en production. Dans ce cas, restaurer le service **et** les index (`down.sql` de la migration), pas seulement le bouton.
+
+## KI-007 — L'ordre des matériaux d'un SKU n'est pas modifiable, alors qu'il porte du sens
+
+**Trouvé le** 2026-08-05 (audit schéma V4, en instruisant `ProductSkuMaterial.position`).
+**Où** `modules/materials/components/admin/material-multi-select-field.tsx` (le champ), face à `modules/colors/components/admin/sortable-color-chips.tsx` (l'équivalent couleurs).
+**Sévérité** faible en exploitation, moyenne en cohérence — rien ne casse, mais l'admin ne peut pas corriger une donnée qui alimente trois surfaces publiques.
+
+L'invariant « index 0 = matériau principal » est bien consommé : `getPrimaryMaterialName` (`modules/skus/utils/sku-materials-label.ts`) alimente les highlights de la PDP, les conseils d'entretien (`product-care-info.tsx`), le SEO et le paramètre `?material=` de `build-sku-url.ts`. Les selects trient partout sur `orderBy: { position: "asc" }`.
+
+Mais **rien ne permet de changer cet ordre après coup.** Les couleurs ont un composant de réordonnancement par drag-and-drop (`sortable-color-chips.tsx`, `@dnd-kit`, clavier inclus) ; les matériaux n'ont qu'un `MultiSelect`, dont la `position` est écrite depuis l'index du tableau, c'est-à-dire **l'ordre de sélection**. Une créatrice qui coche « Laiton » puis « Résine » fige « Laiton » comme matériau principal, et le seul recours est de tout décocher et recommencer. Le doc-comment du champ promet pourtant l'inverse.
+
+**Pourquoi ce n'est pas corrigé ici.** L'audit V4 était un audit de SCHÉMA : la colonne `position` est vivante et justifiée des deux côtés, c'est la surface d'édition qui manque. Le correctif est un composant admin (extraire le générique de `sortable-color-chips` ou le dupliquer), pas une migration — chantier à part.
+
+**À quelle condition traiter.** Dès qu'un bijou bi-matière voit son matériau principal mal classé en vitrine, ou à la prochaine passe sur les formulaires de variante. Le correctif minimal, si le drag-and-drop est trop cher : rendre l'ordre de sélection **visible** dans le champ (numéroter les puces), pour qu'au moins la conséquence soit lisible au moment de la saisie.

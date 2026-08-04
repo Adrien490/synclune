@@ -16,5 +16,4 @@ export interface StoreSettingsAdmin extends StoreStatus {
 	id: string;
 	closedAt: Date | null;
 	closedBy: string | null;
-	updatedAt: Date;
 }
