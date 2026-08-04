@@ -82,8 +82,8 @@ vi.mock("@/shared/components/gallery/navigation", () => ({
 }));
 
 vi.mock("@/shared/components/gallery/zoom-button", () => ({
-	GalleryZoomButton: ({ onOpen }: { onOpen: () => void }) => (
-		<button data-testid="gallery-zoom-button" onClick={onOpen}>
+	GalleryZoomButton: ({ onOpen, mediaType }: { onOpen: () => void; mediaType?: string }) => (
+		<button data-testid="gallery-zoom-button" data-media-type={mediaType} onClick={onOpen}>
 			Zoom
 		</button>
 	),
@@ -267,6 +267,32 @@ describe("Gallery", () => {
 			vi.mocked(buildGallery).mockReturnValue(images);
 			render(<Gallery product={createProduct()} title="Bague étoile" />);
 			expect(screen.getByTestId("gallery-counter")).toBeInTheDocument();
+		});
+	});
+
+	// La loupe était gatée sur `mediaType === "IMAGE"`. Sur un produit qui mélange
+	// photos et vidéo, deux flèches droite depuis la loupe focalisée la démontaient
+	// SOUS le focus : le focus retombait sur `<body>`, et comme le listener `keydown`
+	// de la galerie est attaché à l'élément galerie, un événement émis sur `<body>`
+	// ne remonte plus jusqu'à lui — flèches, Home et End mouraient en silence.
+	describe("la loupe ne se démonte jamais sous le focus", () => {
+		it("reste montée quand le média courant est une vidéo", () => {
+			const images = [createMedia("m-1", { mediaType: "VIDEO" }), createMedia("m-2")];
+			vi.mocked(buildGallery).mockReturnValue(images);
+			render(<Gallery product={createProduct()} title="Bague étoile" />);
+			expect(screen.getByTestId("gallery-zoom-button")).toBeInTheDocument();
+		});
+
+		it("annonce le type du média courant, seule chose qui change", () => {
+			vi.mocked(buildGallery).mockReturnValue([createMedia("m-1", { mediaType: "VIDEO" })]);
+			render(<Gallery product={createProduct()} title="Bague étoile" />);
+			expect(screen.getByTestId("gallery-zoom-button")).toHaveAttribute("data-media-type", "VIDEO");
+
+			cleanup();
+
+			vi.mocked(buildGallery).mockReturnValue([createMedia("m-1")]);
+			render(<Gallery product={createProduct()} title="Bague étoile" />);
+			expect(screen.getByTestId("gallery-zoom-button")).toHaveAttribute("data-media-type", "IMAGE");
 		});
 	});
 

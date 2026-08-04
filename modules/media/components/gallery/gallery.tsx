@@ -19,12 +19,11 @@ import { parseGalleryParams } from "@/modules/media/schemas/gallery-params.schem
 import { buildGallery } from "@/modules/media/services/gallery-builder.service";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
 
-import {
-	GalleryCounter,
-	GalleryDots,
-	GalleryNavigation,
-	GalleryZoomButton,
-} from "@/shared/components/gallery";
+import { GalleryCounter, GalleryNavigation, GalleryZoomButton } from "@/shared/components/gallery";
+import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { MaskingTape } from "@/shared/components/masking-tape";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useLightbox } from "@/shared/hooks";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { mediaBelow } from "@/shared/constants/breakpoints";
@@ -122,27 +121,52 @@ function GalleryThumbnailList({
 		});
 	}, [current, prefersReduced]);
 
+	// Le trait dessiné sous la vignette active EST l'indicateur de position.
+	// Il remplace l'ancien pager tactile, qui basculait au-delà de 5 photos sur un
+	// badge fraction non interactif (`aria-hidden`, aucun handler) : à 5-8 photos
+	// par bijou, c'était le cas NOMINAL — le seul contrôle qui ressemblait à un
+	// pager était mort, 12 px au-dessus de la bande qui, elle, fonctionnait.
 	const thumbnails = images.map((media, index) => (
-		<GalleryThumbnail
-			key={media.id}
-			media={media}
-			index={index}
-			isActive={index === current}
-			hasError={thumbnailErrors.has(media.id)}
-			title={title}
-			onClick={() => onScrollTo(index)}
-			onError={() => onError(media.id)}
-			className={isDesktop ? "hover:shadow-sm" : "size-14 shrink-0"}
-			isLCPCandidate={index === 0}
-		/>
+		<div key={media.id} className={cn("relative pb-2.5", !isDesktop && "shrink-0")}>
+			<GalleryThumbnail
+				media={media}
+				index={index}
+				isActive={index === current}
+				hasError={thumbnailErrors.has(media.id)}
+				title={title}
+				onClick={() => onScrollTo(index)}
+				onError={() => onError(media.id)}
+				className={isDesktop ? "hover:shadow-sm" : "size-14"}
+				isLCPCandidate={index === 0}
+			/>
+			{index === current && (
+				// Monté/démonté au changement de vue : l'animation `hand-draw-load`
+				// rejoue donc à chaque fois, et le trait SE DESSINE au lieu
+				// d'apparaître. Neutralisée sous `prefers-reduced-motion`.
+				<HandDrawnAccent
+					variant="underline"
+					inView={false}
+					color="var(--piece-accent, var(--primary))"
+					strokeWidth={3}
+					width={isDesktop ? 52 : 40}
+					height={9}
+					duration={MOTION_CONFIG.duration.slow}
+					className="absolute inset-x-0 bottom-0 mx-auto"
+				/>
+			)}
+		</div>
 	));
 
 	if (isDesktop) {
 		return (
-			<div className="order-1 hidden md:block">
+			// Plafonné à la hauteur de la photo, et défilant. Sans ça, à 8 vignettes
+			// de 80 px, le rail mesurait 696 px contre 570 px de photo : la ligne de
+			// grille prenait la hauteur du RAIL et laissait ~126 px de vide sous le
+			// bijou — et `scrollIntoView` n'avait aucun conteneur à faire défiler.
+			<div className="relative order-1 hidden md:block">
 				<div
 					ref={tablistRef}
-					className="flex flex-col gap-2"
+					className="absolute inset-0 flex flex-col gap-2 overflow-y-auto pr-1"
 					role="tablist"
 					aria-label="Vignettes du produit"
 				>
@@ -207,11 +231,15 @@ function GalleryContent({ product, title }: GalleryProps) {
 	});
 
 	// Build image list based on selected variants
-	const images: ProductMedia[] = buildGallery({
-		product,
-		selectedVariants: { colorCombo, colorSlug, materialSlug, size },
-	});
+	const selectedVariants = { colorCombo, colorSlug, materialSlug, size };
+	const images: ProductMedia[] = buildGallery({ product, selectedVariants });
 
+	// Teinte du carton : la couleur du bijou qu'on regarde. Elle n'est plus
+	// calculée ici — `ProductAccentScope` la pose une seule fois en
+	// `--piece-accent` sur l'`<article>` de la fiche, pour que l'aplat du prix,
+	// le nuancier et le CTA la partagent au lieu de la voir s'arrêter au carton.
+	// La galerie n'en est plus qu'un consommateur ; hors de ce scope, le repli
+	// `--primary` s'applique.
 	const slides = buildLightboxSlides(images, prefersReduced);
 
 	// Embla carousel
@@ -401,60 +429,76 @@ function GalleryContent({ product, title }: GalleryProps) {
 						/>
 					)}
 
-					{/* Main image with Embla */}
+					{/* Le carton : la photo est MONTÉE dessus, elle ne le remplit pas.
+					    Le chrome vit sur ce carton — le numéro de vue et la loupe sont dans la
+					    réserve basse, hors de la photo, et les chevrons sont posés À CHEVAL sur
+					    le bord (≈30 px des 44 px du jeton retombent sur la photo, à mi-hauteur).
+					    Le point commun, celui qui compte : plus rien n'a besoin d'être révélé
+					    au survol. */}
 					<div className="gallery-main group relative order-2">
-						<div
-							className={cn(
-								"relative aspect-3/4 overflow-hidden rounded-2xl sm:aspect-4/5 sm:rounded-3xl",
-								"bg-linear-organic sm:border-border border-0 sm:border-2",
-								"shadow-md hover:shadow-lg sm:shadow-lg",
-								transitionClass,
-							)}
-						>
-							{/* Subtle hover effect */}
-							<div
-								className={cn(
-									"ring-primary/20 pointer-events-none absolute inset-0 z-10 rounded-2xl opacity-0 ring-1 group-hover:opacity-100 sm:rounded-3xl",
-									!prefersReduced && "transition-opacity duration-300",
-								)}
+						<div className="gallery-mount relative rounded-sm p-3 pb-4 sm:p-3.5 sm:pb-5">
+							<MaskingTape
+								className="-top-2 left-6 h-5 w-24 -rotate-2 motion-reduce:rotate-0"
+								tint="var(--piece-accent, var(--primary))"
 							/>
 
-							{/* Image counter - Desktop only (mobile relies on GalleryDots) */}
-							{images.length > 1 && <GalleryCounter current={current} total={images.length} />}
-
-							{/* Dots / fraction indicator - Mobile only (sm:hidden interne) */}
-							{images.length > 1 && (
-								<GalleryDots current={current} total={images.length} onSelect={scrollTo} />
-							)}
-
-							{/* Zoom button - Desktop only */}
-							{currentMedia?.mediaType === "IMAGE" && <GalleryZoomButton onOpen={open} />}
-
-							{/* Embla carousel viewport */}
-							<div ref={emblaRef} className="absolute inset-0 overflow-hidden">
-								<div className="flex h-full">
-									{images.map((media, index) => (
-										<GallerySlide
-											// `url` dans la clé : si un média est remplacé en place, React remonte
-											// le slide et son `videoState` repart à "loading" — plus besoin d'un
-											// effet de reset côté enfant.
-											key={`${media.id}-${media.url}`}
-											id={`gallery-panel-${index}`}
-											media={media}
-											index={index}
-											title={title}
-											productType={productType}
-											totalImages={images.length}
-											isActive={index === current}
-											onOpen={open}
-											viewTransitionName={index === 0 ? `product-${product.id}` : undefined}
-										/>
-									))}
+							{/* La boîte photo n'est PAS clippée : c'est le viewport Embla qui
+							    clippe, pour que les chevrons puissent déborder du bord du carton. */}
+							<div className="relative aspect-3/4 sm:aspect-4/5">
+								<div
+									ref={emblaRef}
+									className="bg-linear-organic absolute inset-0 overflow-hidden rounded-[2px]"
+								>
+									<div id="gallery-slides" className="flex h-full">
+										{images.map((media, index) => (
+											<GallerySlide
+												// `url` dans la clé : si un média est remplacé en place, React remonte
+												// le slide et son `videoState` repart à "loading" — plus besoin d'un
+												// effet de reset côté enfant.
+												key={`${media.id}-${media.url}`}
+												id={`gallery-panel-${index}`}
+												media={media}
+												index={index}
+												title={title}
+												productType={productType}
+												totalImages={images.length}
+												isActive={index === current}
+												onOpen={open}
+												viewTransitionName={index === 0 ? `product-${product.id}` : undefined}
+											/>
+										))}
+									</div>
 								</div>
+
+								{/* Chevrons à cheval sur le bord du carton — permanents, desktop only */}
+								{images.length > 1 && (
+									<GalleryNavigation
+										onPrev={scrollPrev}
+										onNext={scrollNext}
+										controlsId="gallery-slides"
+									/>
+								)}
 							</div>
 
-							{/* Navigation arrows - Desktop only */}
-							{images.length > 1 && <GalleryNavigation onPrev={scrollPrev} onNext={scrollNext} />}
+							{/* La réserve basse — le poids bas de l'encadreur. `min-h-11` seulement
+							    à partir de `md` : c'est la hauteur d'une CIBLE TACTILE, et sous ce
+							    seuil la réserve n'en contient aucune (la loupe est `hidden md:flex`,
+							    le numéro est un texte `aria-hidden`). On réservait donc 44 px de vide
+							    sur le viewport le plus contraint, juste au-dessus de la ligne de
+							    flottaison. ⚠️ `product-main-skeleton.tsx` REPRODUIT cette réserve :
+							    tout changement de hauteur doit y être répercuté, sinon CLS au
+							    streaming. */}
+							<div className="mt-3 flex items-center gap-3 md:min-h-11">
+								{images.length > 1 && <GalleryCounter current={current} total={images.length} />}
+								{/* Inconditionnelle : gatée sur `mediaType === "IMAGE"`, elle se
+								    démontait SOUS le focus en arrivant sur un slide vidéo, et la
+								    navigation au clavier mourait avec elle. Cf. `zoom-button.tsx`. */}
+								<GalleryZoomButton
+									onOpen={open}
+									mediaType={currentMedia?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE"}
+									isOpen={isOpen}
+								/>
+							</div>
 						</div>
 					</div>
 
@@ -474,7 +518,17 @@ function GalleryContent({ product, title }: GalleryProps) {
 			</div>
 
 			{isOpen && (
-				<Suspense fallback={null}>
+				<Suspense
+					fallback={
+						// Le chunk lightbox se charge à la première ouverture. Sans ce voile, le
+						// premier geste — surtout le tap mobile, qui n'a aucun survol pour
+						// préchauffer — ne produisait RIEN à l'écran le temps du téléchargement.
+						// Même correctif que `media-upload-grid.tsx` côté admin.
+						<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+							<Spinner label="Chargement de l'aperçu" className="size-8 text-white" />
+						</div>
+					}
+				>
 					<MediaLightbox
 						open={isOpen}
 						close={close}

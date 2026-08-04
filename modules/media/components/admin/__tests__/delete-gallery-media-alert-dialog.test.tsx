@@ -104,9 +104,9 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	),
 }));
 
-vi.mock("lucide-react", async (importOriginal) => ({
+vi.mock("@phosphor-icons/react/ssr", async (importOriginal) => ({
 	...((await importOriginal()) as Record<string, unknown>),
-	Loader2Icon: ({ className }: { className?: string }) => (
+	SpinnerIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-loader" className={className} />
 	),
 }));

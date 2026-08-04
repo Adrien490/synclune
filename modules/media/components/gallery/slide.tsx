@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CircleAlert, RefreshCw } from "lucide-react";
+import { ArrowsClockwiseIcon, WarningCircleIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
 import { useMediaQuery } from "@/shared/hooks";
@@ -14,7 +14,7 @@ import {
 } from "@/modules/media/constants/gallery.constants";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
-import { GalleryHoverZoom } from "@/shared/components/gallery";
+import { GalleryHoverZoom, prefetchLightbox } from "@/shared/components/gallery";
 import { GalleryPinchZoom } from "./pinch-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
@@ -74,7 +74,7 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 			}
 		>
 			<div className="bg-background/90 flex flex-col items-center gap-3 rounded-xl p-4 shadow-lg backdrop-blur-sm">
-				<CircleAlert className="text-muted-foreground size-8" aria-hidden="true" />
+				<WarningCircleIcon className="text-muted-foreground size-8" aria-hidden="true" />
 				<p className="text-muted-foreground text-center text-sm">Impossible de charger la vidéo</p>
 				<button
 					type="button"
@@ -85,7 +85,7 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 					}}
 					className="bg-primary text-primary-foreground hover:bg-primary/90 flex min-h-11 touch-manipulation items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
 				>
-					<RefreshCw className="size-4" aria-hidden="true" />
+					<ArrowsClockwiseIcon className="size-4" aria-hidden="true" />
 					Réessayer
 				</button>
 			</div>
@@ -155,61 +155,55 @@ export function GallerySlide({
 	// Vidéo : même rendu mobile/desktop
 	if (media.mediaType === "VIDEO") {
 		return (
+			// Surface de clic, PAS un contrôle — même forme que la branche image desktop
+			// plus bas. C'était un `role="button" tabIndex={0}` nommé « Ouvrir la vidéo en
+			// plein écran » niché dans le tabpanel, qui doublait `GalleryZoomButton` ;
+			// celui-ci porte désormais le libellé pour les DEUX types de média. Le div
+			// interne n'existait que pour éviter un `<button>` dans un `<button>` quand
+			// `VideoErrorFallback` rend le sien : ce risque est parti avec le rôle.
+			// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events -- surface de clic souris/tactile ; le chemin clavier est GalleryZoomButton
 			<div
 				id={id}
 				role="tabpanel"
-				className="h-full min-w-0 flex-[0_0_100%]"
+				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in"
 				style={{ viewTransitionName }}
+				onClick={onOpen}
+				onPointerDown={prefetchLightbox}
 			>
-				{/* Use div instead of button to avoid nested <button> when VideoErrorFallback renders */}
-				<div
-					role="button"
-					tabIndex={0}
-					className="relative h-full cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
-					onClick={onOpen}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") {
-							e.preventDefault();
-							onOpen();
+				{videoState === "loading" && <VideoLoadingSpinner />}
+				{videoState === "error" && (
+					<VideoErrorFallback onRetry={handleRetry} poster={media.thumbnailUrl ?? undefined} />
+				)}
+				<video
+					ref={videoRef}
+					preload="metadata"
+					className={cn(
+						"h-full w-full object-cover",
+						transitionClass,
+						videoState !== "ready" ? "opacity-0" : "opacity-100",
+					)}
+					muted
+					loop={!prefersReduced}
+					playsInline
+					autoPlay={isActive && !prefersReduced}
+					poster={media.thumbnailUrl ?? undefined}
+					onCanPlay={() => {
+						if (videoRef.current && videoRef.current.readyState >= 3) {
+							setVideoState("ready");
 						}
 					}}
-					aria-label="Ouvrir la vidéo en plein écran"
+					onPlaying={() => setVideoState("ready")}
+					onError={() => setVideoState("error")}
+					aria-label={`Vidéo ${title}`}
+					aria-describedby={`video-desc-${index}`}
 				>
-					{videoState === "loading" && <VideoLoadingSpinner />}
-					{videoState === "error" && (
-						<VideoErrorFallback onRetry={handleRetry} poster={media.thumbnailUrl ?? undefined} />
-					)}
-					<video
-						ref={videoRef}
-						preload="metadata"
-						className={cn(
-							"h-full w-full object-cover",
-							transitionClass,
-							videoState !== "ready" ? "opacity-0" : "opacity-100",
-						)}
-						muted
-						loop={!prefersReduced}
-						playsInline
-						autoPlay={isActive && !prefersReduced}
-						poster={media.thumbnailUrl ?? undefined}
-						onCanPlay={() => {
-							if (videoRef.current && videoRef.current.readyState >= 3) {
-								setVideoState("ready");
-							}
-						}}
-						onPlaying={() => setVideoState("ready")}
-						onError={() => setVideoState("error")}
-						aria-label={`Vidéo ${title}`}
-						aria-describedby={`video-desc-${index}`}
-					>
-						<source src={media.url} type={getVideoMimeType(media.url)} />
-						{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
-						<track kind="captions" srcLang="fr" label="Français" default />
-					</video>
-					<span id={`video-desc-${index}`} className="sr-only">
-						Vidéo de démonstration du produit sans audio
-					</span>
-				</div>
+					<source src={media.url} type={getVideoMimeType(media.url)} />
+					{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
+					<track kind="captions" srcLang="fr" label="Français" default />
+				</video>
+				<span id={`video-desc-${index}`} className="sr-only">
+					Vidéo de démonstration du produit sans audio
+				</span>
 			</div>
 		);
 	}
@@ -222,13 +216,25 @@ export function GallerySlide({
 	// Mobile → Pinch-zoom natif
 	if (isDesktop) {
 		return (
-			<button
-				type="button"
+			// Surface de clic, PAS un contrôle. C'était un `<button>` nommé « Ouvrir
+			// l'image en plein écran », posé sous `GalleryZoomButton` (« Zoomer
+			// l'image en plein écran ») et déclenchant le même `onOpen` : deux arrêts
+			// au clavier et deux libellés jumeaux pour un seul geste. Le plein écran
+			// a désormais un seul contrôle nommé, dans la réserve du carton — et ce
+			// panneau redevient le `tabpanel` que les vignettes annoncent déjà via
+			// `aria-controls`, ce que le `<button>` n'était pas.
+			// Pas de gestionnaire clavier ICI, et c'est le but : le chemin clavier du
+			// plein écran est `GalleryZoomButton`, qui porte le libellé et l'arrêt de
+			// tabulation. En rajouter un rendrait ce panneau focusable et
+			// réintroduirait exactement le doublon qu'on vient de retirer.
+			// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events -- surface de clic souris ; le chemin clavier/lecteur d'écran est GalleryZoomButton
+			<div
 				id={id}
-				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
+				role="tabpanel"
+				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in"
 				style={{ viewTransitionName }}
 				onClick={onOpen}
-				aria-label="Ouvrir l'image en plein écran"
+				onPointerDown={prefetchLightbox}
 			>
 				<GalleryHoverZoom
 					src={media.url}
@@ -238,7 +244,7 @@ export function GallerySlide({
 					preload={index === 0}
 					quality={MAIN_IMAGE_QUALITY}
 				/>
-			</button>
+			</div>
 		);
 	}
 
@@ -249,6 +255,11 @@ export function GallerySlide({
 			role="tabpanel"
 			className="relative h-full min-w-0 flex-[0_0_100%]"
 			style={{ viewTransitionName }}
+			// Au doigt, c'est le SEUL préchauffage possible du chunk lightbox : la loupe,
+			// qui préchargeait sur `mouseenter`/`focus`, est `hidden md:flex` — en
+			// `display: none`, elle n'émet ni l'un ni l'autre. Le geste commence au
+			// `pointerdown`, bien avant que `onTap` ne se décide.
+			onPointerDown={prefetchLightbox}
 		>
 			<GalleryPinchZoom
 				src={media.url}

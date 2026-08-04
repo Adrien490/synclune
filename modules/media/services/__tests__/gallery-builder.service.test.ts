@@ -86,11 +86,21 @@ describe("buildGallery", () => {
 		expect(result[0]!.skuId).toBeUndefined();
 	});
 
-	it("includes product type in fallback alt text", () => {
+	// Le type ne se préfixe QUE si le titre ne le nomme pas déjà : les libellés de
+	// type sont au pluriel (« Bagues ») et les titres commencent par le singulier
+	// (« Bague Éclat »). Cf. `modules/products/utils/product-type-prefix.ts`.
+	it("ne double pas le type dans l'alt de repli quand le titre le nomme déjà", () => {
 		const product = makeProduct([]);
 		const result = buildGallery({ product: product as never, selectedVariants: {} });
 
-		expect(result[0]!.alt).toBe("Bague Bague Éclat - Image bientôt disponible");
+		expect(result[0]!.alt).toBe("Bague Éclat - Image bientôt disponible");
+	});
+
+	it("préfixe le type dans l'alt de repli quand le titre ne le nomme pas", () => {
+		const product = makeProduct([], { title: "Éclat de Lune" });
+		const result = buildGallery({ product: product as never, selectedVariants: {} });
+
+		expect(result[0]!.alt).toBe("Bague Éclat de Lune - Image bientôt disponible");
 	});
 
 	it("uses product title only in fallback alt when no type", () => {
@@ -263,7 +273,19 @@ describe("buildGallery", () => {
 
 		const result = buildGallery({ product: product as never, selectedVariants: {} });
 
-		expect(result[0]!.alt).toBe("Bague Bague Éclat en Or Rose - Photo 1");
+		expect(result[0]!.alt).toBe("Bague Éclat en Or Rose - Photo 1");
+	});
+
+	it("préfixe le type quand le titre ne le nomme pas", () => {
+		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")], {
+			materials: [{ materialId: "m-or", position: 0, material: { name: "Or" } }],
+			colors: [{ colorId: "c-rose", position: 0, color: { name: "Rose" } }],
+		});
+		const product = makeProduct([sku], { title: "Éclat de Lune" });
+
+		const result = buildGallery({ product: product as never, selectedVariants: {} });
+
+		expect(result[0]!.alt).toBe("Bague Éclat de Lune en Or Rose - Photo 1");
 	});
 
 	it("avoids duplicate color/material in alt text", () => {
@@ -276,7 +298,7 @@ describe("buildGallery", () => {
 		const result = buildGallery({ product: product as never, selectedVariants: {} });
 
 		// Should not repeat "Or Rose" twice
-		expect(result[0]!.alt).toBe("Bague Bague Éclat en Or Rose - Photo 1");
+		expect(result[0]!.alt).toBe("Bague Éclat en Or Rose - Photo 1");
 	});
 
 	it("includes size in alt text when present", () => {

@@ -1,6 +1,7 @@
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
 import { MAX_GALLERY_IMAGES } from "@/modules/media/constants/media-limits.constants";
 import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
+import { prefixWithProductType } from "@/modules/products/utils/product-type-prefix";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
@@ -28,8 +29,9 @@ function buildAltText(
 ): string {
 	const { productType, materialName, colorName, size } = variantInfo ?? {};
 
-	// Build prefix with jewelry type
-	const prefix = productType ? `${productType} ${productTitle}` : productTitle;
+	// Build prefix with jewelry type — sans le répéter quand le titre le nomme
+	// déjà (« Colliers » + « Collier Lune Céleste »).
+	const prefix = prefixWithProductType(productTitle, productType);
 
 	// Build jewelry characteristics
 	const characteristics: string[] = [];
@@ -193,9 +195,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 
 	// Fallback: Use fallback image if none available
 	if (gallery.length === 0) {
-		const fallbackAlt = productType
-			? `${productType} ${product.title} - Image bientôt disponible`
-			: `${product.title} - Image bientôt disponible`;
+		const fallbackAlt = `${prefixWithProductType(product.title, productType)} - Image bientôt disponible`;
 		gallery.push({
 			...FALLBACK_PRODUCT_IMAGE,
 			alt: fallbackAlt,

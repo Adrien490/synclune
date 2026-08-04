@@ -2,57 +2,22 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockReducedMotion } = vi.hoisted(() => ({
-	mockReducedMotion: { value: false },
-}));
-
-// ============================================================================
 // MODULE MOCKS
 // ============================================================================
-
-vi.mock("motion/react", () => ({
-	useReducedMotion: () => mockReducedMotion.value,
-}));
 
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		onClick,
-		"aria-label": ariaLabel,
-		className,
-	}: {
-		children?: React.ReactNode;
-		onClick?: () => void;
-		"aria-label"?: string;
-		className?: string;
-	}) => (
-		<button onClick={onClick} aria-label={ariaLabel} className={className}>
-			{children}
-		</button>
-	),
-}));
-
-vi.mock("lucide-react", () => ({
-	ChevronLeft: ({ className }: { className?: string }) => (
-		<svg data-testid="chevron-left" className={className} aria-hidden="true" />
-	),
-	ChevronRight: ({ className }: { className?: string }) => (
-		<svg data-testid="chevron-right" className={className} aria-hidden="true" />
-	),
-}));
+// Les chevrons sont des tracés SVG en ligne depuis « Le carnet » : plus de
+// bibliothèque d'icônes ni de `Button` shadcn à mocker. Le composant est donc
+// rendu ENTIER, ce qui rend ces assertions plus fortes qu'avant — l'ancien stub
+// de `Button` ne relayait que `onClick`, `aria-label` et `className`.
 
 // ============================================================================
 // IMPORT UNDER TEST
 // ============================================================================
 
-import React from "react";
 import { GalleryNavigation } from "../navigation";
 
 // ============================================================================
@@ -62,14 +27,9 @@ import { GalleryNavigation } from "../navigation";
 describe("GalleryNavigation", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockReducedMotion.value = false;
 	});
 
 	afterEach(cleanup);
-
-	// ============================================================================
-	// Rendering
-	// ============================================================================
 
 	describe("rendering", () => {
 		it("renders prev button with aria-label 'Image précédente'", () => {
@@ -84,29 +44,39 @@ describe("GalleryNavigation", () => {
 			expect(screen.getByRole("button", { name: "Image suivante" })).toBeInTheDocument();
 		});
 
-		it("renders ChevronLeft icon inside prev button", () => {
-			render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
+		it("chaque bouton porte un chevron décoratif", () => {
+			const { container } = render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
 
-			expect(screen.getByTestId("chevron-left")).toBeInTheDocument();
+			const svgs = container.querySelectorAll("svg");
+			expect(svgs).toHaveLength(2);
+			for (const svg of svgs) {
+				expect(svg).toHaveAttribute("aria-hidden", "true");
+				expect(svg).toHaveAttribute("focusable", "false");
+			}
 		});
 
-		it("renders ChevronRight icon inside next button", () => {
-			render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
+		// Les deux chevrons ne sont pas l'image miroir l'un de l'autre par
+		// `scale-x-[-1]` : ce sont deux tracés distincts, pour que l'irrégularité
+		// « à la main » ne se lise pas comme une symétrie parfaite.
+		it("les deux chevrons ont des tracés distincts", () => {
+			const { container } = render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
 
-			expect(screen.getByTestId("chevron-right")).toBeInTheDocument();
+			const paths = [...container.querySelectorAll("path")].map((p) => p.getAttribute("d"));
+			expect(paths).toHaveLength(2);
+			expect(paths[0]).not.toBe(paths[1]);
 		});
 
-		it("icons are aria-hidden", () => {
+		// Contrat central de « Le carnet » : les commandes sont permanentes. Le
+		// détail des classes est verrouillé par
+		// `gallery-chrome-off-photo.regression.test.ts`.
+		it("les deux boutons sont rendus sans état masqué", () => {
 			render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
 
-			expect(screen.getByTestId("chevron-left")).toHaveAttribute("aria-hidden", "true");
-			expect(screen.getByTestId("chevron-right")).toHaveAttribute("aria-hidden", "true");
+			for (const button of screen.getAllByRole("button")) {
+				expect(button.className).not.toContain("opacity-0");
+			}
 		});
 	});
-
-	// ============================================================================
-	// Interaction
-	// ============================================================================
 
 	describe("interaction", () => {
 		it("clicking prev button calls onPrev", () => {
@@ -144,19 +114,39 @@ describe("GalleryNavigation", () => {
 
 			expect(onPrev).not.toHaveBeenCalled();
 		});
-	});
 
-	// ============================================================================
-	// Reduced motion
-	// ============================================================================
-
-	describe("reduced motion", () => {
-		it("renders both buttons regardless of reduced motion preference", () => {
-			mockReducedMotion.value = true;
+		it("les deux boutons sont de type button (pas de submit implicite)", () => {
 			render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
 
-			expect(screen.getByRole("button", { name: "Image précédente" })).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "Image suivante" })).toBeInTheDocument();
+			for (const button of screen.getAllByRole("button")) {
+				expect(button).toHaveAttribute("type", "button");
+			}
+		});
+	});
+
+	// Sous `forced-colors: active` (Windows High Contrast), les `box-shadow` sont
+	// SUPPRIMÉS. Or c'est un `box-shadow` qui porte ici l'anneau d'encre au repos ET
+	// le sandwich de focus : les deux disparaissaient ensemble, laissant un aplat
+	// `Canvas` sur `Canvas`. Repli en `outline`, comme `bottom-bar.styles.ts`.
+	describe("contraste forcé", () => {
+		it("les jetons gardent un bord et un anneau de focus", () => {
+			render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
+
+			for (const button of screen.getAllByRole("button")) {
+				expect(button.className).toContain("forced-colors:outline");
+				expect(button.className).toContain("forced-colors:outline-[CanvasText]");
+				expect(button.className).toContain("forced-colors:focus-visible:outline-[Highlight]");
+			}
+		});
+	});
+
+	describe("aria-controls", () => {
+		it("référence le conteneur de slides quand on le lui donne", () => {
+			render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} controlsId="gallery-slides" />);
+
+			for (const button of screen.getAllByRole("button")) {
+				expect(button).toHaveAttribute("aria-controls", "gallery-slides");
+			}
 		});
 	});
 });

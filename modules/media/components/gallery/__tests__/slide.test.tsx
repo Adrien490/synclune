@@ -62,11 +62,11 @@ vi.mock("@/modules/media/components/gallery/pinch-zoom", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	CircleAlert: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	WarningCircleIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-circle-alert" className={className} />
 	),
-	RefreshCw: ({ className }: { className?: string }) => (
+	ArrowsClockwiseIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-refresh" className={className} />
 	),
 }));
@@ -149,9 +149,16 @@ describe("GallerySlide", () => {
 
 	// ─── Image - desktop ──────────────────────────────────────────────────────
 
-	it("renders a button for image slide on desktop", () => {
+	// Le slide desktop N'EST PLUS un bouton. C'en était un, nommé « Ouvrir l'image
+	// en plein écran », posé sous `GalleryZoomButton` (« Zoomer l'image en plein
+	// écran ») et déclenchant le même `onOpen` : deux arrêts au clavier et deux
+	// libellés jumeaux pour un seul geste. Il redevient le `tabpanel` que les
+	// vignettes annoncent déjà via `aria-controls` — ce que le `<button>` n'était
+	// pas —, et le plein écran a un seul contrôle nommé, dans la réserve du carton.
+	it("le slide desktop est un tabpanel, pas un second bouton plein écran", () => {
 		render(<GallerySlide {...defaultImageProps} />);
-		expect(screen.getByRole("button")).toBeInTheDocument();
+		expect(screen.getByRole("tabpanel")).toBeInTheDocument();
+		expect(screen.queryByRole("button")).not.toBeInTheDocument();
 	});
 
 	it("renders GalleryHoverZoom on desktop", () => {
@@ -166,13 +173,15 @@ describe("GallerySlide", () => {
 
 	it("applies id prop to slide container on desktop", () => {
 		render(<GallerySlide {...defaultImageProps} id="gallery-panel-0" />);
-		expect(screen.getByRole("button")).toHaveAttribute("id", "gallery-panel-0");
+		expect(screen.getByRole("tabpanel")).toHaveAttribute("id", "gallery-panel-0");
 	});
 
+	// La surface de clic reste : à la souris, on clique la photo pour l'agrandir.
+	// Ce qui a disparu, c'est l'arrêt de tabulation et le libellé en double.
 	it("calls onOpen when image slide clicked on desktop", async () => {
 		const onOpen = vi.fn();
 		render(<GallerySlide {...defaultImageProps} onOpen={onOpen} />);
-		screen.getByRole("button").click();
+		screen.getByRole("tabpanel").click();
 		expect(onOpen).toHaveBeenCalledOnce();
 	});
 
@@ -204,9 +213,22 @@ describe("GallerySlide", () => {
 		expect(container.querySelector("video")).toBeInTheDocument();
 	});
 
-	it("renders aria-label on video open button", () => {
+	// Même contrat que le slide image desktop, et pour la même raison. Le wrapper
+	// vidéo était un `role="button" tabIndex={0}` nommé « Ouvrir la vidéo en plein
+	// écran », qui doublait `GalleryZoomButton` — lequel porte désormais le libellé
+	// pour les DEUX types de média (il ne se démonte plus sur un slide vidéo, sans
+	// quoi il emportait le focus clavier avec lui).
+	it("le slide vidéo est un tabpanel, pas un second bouton plein écran", () => {
 		render(<GallerySlide {...defaultImageProps} media={createVideoMedia()} />);
-		expect(screen.getByRole("button", { name: /plein écran/i })).toBeInTheDocument();
+		expect(screen.getByRole("tabpanel")).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: /plein écran/i })).not.toBeInTheDocument();
+	});
+
+	it("calls onOpen when video slide clicked", () => {
+		const onOpen = vi.fn();
+		render(<GallerySlide {...defaultImageProps} media={createVideoMedia()} onOpen={onOpen} />);
+		screen.getByRole("tabpanel").click();
+		expect(onOpen).toHaveBeenCalledOnce();
 	});
 
 	it("shows loading spinner initially for video", () => {

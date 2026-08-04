@@ -165,6 +165,41 @@ describe("GalleryHoverZoom", () => {
 			expect(img.style.transform).toBe("");
 		});
 
+		// Jumeau du cas ci-dessus, pour l'appareil que la media query NE VOIT PAS.
+		// `(hover: hover) and (pointer: fine)` décrit le pointeur PRIMAIRE : un
+		// portable Windows à écran tactile (primaire = trackpad) y répond `true`, donc
+		// `mockHoverCapable` reste vrai et la branche interactive est bien rendue. Un
+		// doigt y émulait alors `mouseenter` sans jamais émettre `mouseleave` — le
+		// scale restait collé derrière la lightbox ouverte par le même geste.
+		it("hover-capable device: a touch pointer still applies no scale (no sticky zoom)", () => {
+			const { container } = render(<GalleryHoverZoom src="/test.jpg" alt="Hybrid" />);
+			const wrapper = container.firstChild as HTMLElement;
+			const img = screen.getByAltText("Hybrid") as HTMLImageElement;
+
+			// `pointerenter` précède toujours le `mouseenter` de compatibilité.
+			fireEvent.pointerEnter(wrapper, { pointerType: "touch" });
+			fireEvent.mouseEnter(wrapper);
+
+			expect(img.style.transform).toBe("scale(1)");
+		});
+
+		// …et le drapeau se corrige tout seul dès que la souris revient, sinon le zoom
+		// resterait mort jusqu'au remontage sur une machine hybride.
+		it("hover-capable device: a mouse pointer after a touch re-enables the zoom", () => {
+			const { container } = render(<GalleryHoverZoom src="/test.jpg" alt="Back to mouse" />);
+			const wrapper = container.firstChild as HTMLElement;
+			const img = screen.getByAltText("Back to mouse") as HTMLImageElement;
+
+			fireEvent.pointerEnter(wrapper, { pointerType: "touch" });
+			fireEvent.mouseEnter(wrapper);
+			fireEvent.mouseLeave(wrapper);
+
+			fireEvent.pointerEnter(wrapper, { pointerType: "mouse" });
+			fireEvent.mouseEnter(wrapper, { clientX: 100, clientY: 200 });
+
+			expect(img.style.transform).toBe("scale(2)");
+		});
+
 		it("enabled mode has overflow-hidden class", () => {
 			const { container } = render(
 				<GalleryHoverZoom src="/test.jpg" alt="Zoom enabled" enabled={true} />,

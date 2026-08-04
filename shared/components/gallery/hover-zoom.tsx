@@ -15,13 +15,15 @@ interface GalleryHoverZoomProps {
 	alt: string;
 	blurDataUrl?: string;
 	zoomLevel?: 2 | 3;
+	/** @public Interrupteur du zoom — dormant : aucun appelant ne le passe aujourd'hui. */
 	enabled?: boolean;
+	/** @public Dormant : aucun appelant ne le passe aujourd'hui. */
 	className?: string;
 	/** Marque l'image comme LCP candidate (first image) */
 	preload?: boolean;
 	/** Image quality (0-100) */
 	quality?: number;
-	/** Image sizes for responsive */
+	/** @public Image sizes for responsive — dormant : le défaut SSOT suffit aux appelants. */
 	sizes?: string;
 }
 
@@ -47,6 +49,8 @@ export function GalleryHoverZoom({
 	const hoverCapable = useMediaQuery(HOVER_CAPABLE_QUERY);
 
 	const rafRef = useRef<number | null>(null);
+	// Dernier pointeur entré sur le conteneur. Voir `handlePointerEnter`.
+	const nonMousePointerRef = useRef(false);
 
 	// Sous prefers-reduced-motion, on désactive complètement le zoom (contrat "moins de mouvement").
 	// Sans pointeur fin non plus : le consommateur choisit cette branche sur la LARGEUR
@@ -77,7 +81,22 @@ export function GalleryHoverZoom({
 		});
 	};
 
+	// La capacité de survol se vérifie aussi par ÉVÉNEMENT, pas seulement par appareil.
+	// `(hover: hover) and (pointer: fine)` décrit le pointeur PRIMAIRE : sur un portable
+	// tactile (primaire = trackpad) elle répond `true`, si bien qu'un doigt sur l'écran y
+	// émulait `mouseenter` sans jamais émettre `mouseleave` — `scale()` restait collé
+	// derrière la lightbox ouverte par le même geste. C'est le bug iPad du 2026-08-03, sur
+	// la classe d'appareils que le gating par media query ne couvre pas.
+	// `pointerenter` précède toujours le `mouseenter` de compatibilité, pour les deux
+	// types d'entrée : le drapeau est donc à jour à chaque survol, et il se corrige tout
+	// seul quand l'utilisatrice repasse à la souris.
+	const handlePointerEnter = (e: React.PointerEvent<HTMLDivElement>) => {
+		nonMousePointerRef.current = e.pointerType !== "mouse";
+		if (nonMousePointerRef.current) setIsZooming(false);
+	};
+
 	const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+		if (nonMousePointerRef.current) return;
 		// Recale l'origine sur le point d'entrée du curseur AVANT d'activer le scale,
 		// sinon le zoom démarre sur la dernière origine du survol précédent (saut visuel).
 		applyOrigin(e.clientX, e.clientY);
@@ -127,11 +146,12 @@ export function GalleryHoverZoom({
 		<div
 			ref={containerRef}
 			className={cn(
-				"group/zoom relative h-full w-full overflow-hidden",
+				"relative h-full w-full overflow-hidden",
 				// Cohérent avec l'action au clic (ouverture plein écran) — cf. wrapper <button> du slide
 				"cursor-zoom-in",
 				className,
 			)}
+			onPointerEnter={handlePointerEnter}
 			onMouseMove={handleMouseMove}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}

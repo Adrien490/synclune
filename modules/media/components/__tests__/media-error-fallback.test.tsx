@@ -27,8 +27,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	RotateCcw: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowCounterClockwiseIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-rotate" className={className} />
 	),
 }));
