@@ -21,6 +21,7 @@ import { updateTag } from "next/cache";
 import { z } from "zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { estimateDeliveryDate } from "@/modules/orders/services/shipping.service";
 import { createOrderAudit } from "../utils/order-audit";
 import { extractCustomerFirstName } from "../utils/customer-name";
 
@@ -90,12 +91,12 @@ export async function resendOrderEmail(
 				shippingPostalCode: true,
 				shippingCity: true,
 				shippingCountry: true,
+				shippedAt: true,
 				shippingCarrier: true,
 				trackingNumber: true,
 				trackingUrl: true,
 				// Sans cette colonne le renvoi perdait la ligne « Livraison estimée » :
 				// le mail renvoyé n'était pas une copie fidèle de l'original.
-				estimatedDelivery: true,
 				items: {
 					select: {
 						productTitle: true,
@@ -172,9 +173,13 @@ export async function resendOrderEmail(
 					// Repli si le transporteur n'expose pas d'URL de suivi ("autre").
 					orderTrackingUrl: buildOrderTrackingUrl(order),
 					carrierLabel,
-					// Parité avec le premier envoi (`mark-as-shipped`) : même format.
-					estimatedDelivery: order.estimatedDelivery
-						? format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })
+					// Parité avec le premier envoi (`mark-as-shipped`) : même format, et
+					// même DÉRIVATION — la date n'est plus stockée, elle se recalcule de
+					// `shippedAt` + `shippingCountry`.
+					estimatedDelivery: order.shippedAt
+						? format(estimateDeliveryDate(order.shippedAt, order.shippingCountry), "d MMMM yyyy", {
+								locale: fr,
+							})
 						: null,
 					shippingAddress: {
 						firstName: order.shippingFirstName || "",

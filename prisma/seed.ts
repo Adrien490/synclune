@@ -1773,7 +1773,6 @@ async function main(): Promise<void> {
 				trackingNumber: trackingNum,
 				trackingUrl: trackingUrls[carrier],
 				shippedAt,
-				estimatedDelivery,
 			};
 
 			if (status === OrderStatus.DELIVERED) {

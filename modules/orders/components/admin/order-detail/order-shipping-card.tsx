@@ -1,9 +1,10 @@
 "use client";
 
-import { ExternalLink, Truck } from "lucide-react";
+import { ArrowSquareOutIcon, TruckIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { estimateDeliveryDate } from "@/modules/orders/services/shipping.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -37,7 +38,7 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 		<Card>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<CardTitle className="flex items-center gap-2">
-					<Truck className="size-5" aria-hidden="true" />
+					<TruckIcon className="size-5" aria-hidden="true" />
 					Expédition
 				</CardTitle>
 				{canUpdateTracking && (
@@ -73,7 +74,7 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 										<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" />
 									}
 								>
-									<ExternalLink className="size-4" aria-hidden="true" />
+									<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 									Suivre
 									<span className="sr-only"> (s'ouvre dans un nouvel onglet)</span>
 								</Button>
@@ -84,18 +85,18 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 				{/* Le bloc « Numéro de suivi » ci-dessus n'est PAS un `DetailInfoRow` :
 				    c'est une valeur + un sous-libellé transporteur + un groupe d'actions,
 				    pas une paire libellé/valeur. Seules les vraies paires sont migrées. */}
-				{(order.shippedAt ?? (order.estimatedDelivery && !order.actualDelivery)) && (
+				{order.shippedAt && (
 					<DetailInfoList orientation="stacked">
-						{order.shippedAt && (
-							<DetailInfoRow label="Date d'expédition">
-								{format(order.shippedAt, "d MMMM yyyy 'à' HH'h'mm", {
+						<DetailInfoRow label="Date d'expédition">
+							{format(order.shippedAt, "d MMMM yyyy 'à' HH'h'mm", {
+								locale: fr,
+							})}
+						</DetailInfoRow>
+						{!order.actualDelivery && (
+							<DetailInfoRow label="Livraison estimée">
+								{format(estimateDeliveryDate(order.shippedAt, order.shippingCountry), "d MMMM yyyy", {
 									locale: fr,
 								})}
-							</DetailInfoRow>
-						)}
-						{order.estimatedDelivery && !order.actualDelivery && (
-							<DetailInfoRow label="Livraison estimée">
-								{format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })}
 							</DetailInfoRow>
 						)}
 					</DetailInfoList>

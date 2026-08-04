@@ -210,9 +210,6 @@ describe("revertToProcessing", () => {
 				trackingUrl: null,
 				shippingCarrier: null,
 				shippedAt: null,
-				// Oubliée à l'origine : une estimation de livraison survivait à
-				// l'annulation de l'expédition et s'affichait sur la carte admin.
-				estimatedDelivery: null,
 			},
 		});
 	});

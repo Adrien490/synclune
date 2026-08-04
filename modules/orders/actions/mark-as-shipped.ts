@@ -81,8 +81,9 @@ export async function markAsShipped(
 		const finalTrackingUrl =
 			validated.data.trackingUrl ?? getTrackingUrl(carrierValue, validated.data.trackingNumber);
 
-		// Date estimée de livraison, calculée dans la transaction (dépend du pays)
-		// puis réutilisée pour l'email de confirmation post-commit.
+		// Date estimée de livraison — calculée, jamais PERSISTÉE : elle se dérive de
+		// `shippedAt` + `shippingCountry` (colonne retirée le 2026-08-05). On la
+		// remonte ici uniquement pour l'email de confirmation post-commit.
 		let estimatedDeliveryForEmail: Date | undefined;
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
@@ -137,7 +138,6 @@ export async function markAsShipped(
 					trackingUrl: finalTrackingUrl,
 					shippingCarrier: validated.data.carrier ?? null,
 					shippedAt,
-					estimatedDelivery,
 				},
 			});
 			if (updated.count === 0) {

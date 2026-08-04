@@ -1,0 +1,23 @@
+-- `Order.estimatedDelivery` : une colonne qui recopiait une fonction (2026-08-05).
+--
+-- La valeur était intégralement DÉRIVABLE de deux autres colonnes de la même
+-- ligne : `estimateDeliveryDate(shippedAt, shippingCountry)`, fonction pure
+-- (`modules/orders/services/shipping.service.ts`). Un seul écrivain la posait
+-- (`mark-as-shipped`), un seul la remettait à NULL (`revert-to-processing`), et
+-- aucune requête ne filtrait ni ne triait dessus.
+--
+-- ⚠️ LA FONCTIONNALITÉ N'EST PAS RETIRÉE : la date prévisionnelle reste affichée
+-- à la cliente sur `/suivi-commande`, dans l'e-mail d'expédition et sur la fiche
+-- admin — elle est simplement CALCULÉE au rendu au lieu d'être stockée. C'est un
+-- écart assumé vs le plan, qui prévoyait de perdre l'affichage : le supprimer
+-- n'apportait rien de plus au schéma, puisque c'est la colonne qui était en trop.
+--
+-- Conséquence à connaître : la date affichée suit désormais la table de délais
+-- COURANTE (`SHIPPING_RATES`). Si ces délais changent, une commande déjà expédiée
+-- affichera la nouvelle estimation, pas celle calculée le jour de l'expédition.
+-- Acceptable pour une ESTIMATION (ce n'est ni un engagement contractuel ni une
+-- donnée comptable) — et ça reste plus juste qu'une valeur figée devenue fausse.
+-- ⚠️ Si un jour la date devient un ENGAGEMENT (garantie de livraison, pénalité),
+-- il faudra la re-figer en colonne, au moment de l'expédition.
+
+ALTER TABLE "Order" DROP COLUMN "estimatedDelivery";

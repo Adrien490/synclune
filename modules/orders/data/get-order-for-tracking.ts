@@ -27,7 +27,6 @@ const GET_ORDER_TRACKING_SELECT = {
 	paidAt: true,
 	shippedAt: true,
 	actualDelivery: true,
-	estimatedDelivery: true,
 	subtotal: true,
 	shippingCost: true,
 	total: true,

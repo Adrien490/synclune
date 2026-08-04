@@ -1,7 +1,8 @@
 import { Button } from "@/shared/components/ui/button";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ExternalLink } from "lucide-react";
+import { estimateDeliveryDate } from "@/modules/orders/services/shipping.service";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { getShippingRate } from "@/modules/orders/services/shipping.service";
 import { PREPARATION_DELAY_LABEL } from "@/modules/orders/constants/shipping-rates";
@@ -15,7 +16,6 @@ interface OrderTrackingProps {
 		trackingUrl: string | null;
 		shippingCarrier: string | null;
 		shippedAt: Date | null;
-		estimatedDelivery: Date | null;
 		actualDelivery: Date | null;
 	};
 }
@@ -78,11 +78,11 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 							</span>
 						</div>
 					)}
-					{order.estimatedDelivery && !order.actualDelivery && (
+					{order.shippedAt && !order.actualDelivery && (
 						<div>
 							<span className="text-muted-foreground">Livraison estimée : </span>
 							<span className="font-medium">
-								{format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })}
+								{format(estimateDeliveryDate(order.shippedAt, order.shippingCountry), "d MMMM yyyy", { locale: fr })}
 							</span>
 						</div>
 					)}
@@ -110,7 +110,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 							/>
 						}
 					>
-						<ExternalLink className="mr-2 size-4" />
+						<ArrowSquareOutIcon className="mr-2 size-4" />
 						Suivre mon colis
 					</Button>
 				)}

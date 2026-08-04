@@ -27,13 +27,20 @@ vi.mock("@/shared/components/ui/button", () => ({
 	},
 }));
 
-vi.mock("lucide-react", () => ({
-	Truck: () => <svg aria-hidden="true" />,
-	ExternalLink: () => <svg aria-hidden="true" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	TruckIcon: () => <svg aria-hidden="true" />,
+	ArrowSquareOutIcon: () => <svg aria-hidden="true" />,
 }));
 
 vi.mock("date-fns", () => ({
-	format: () => "15 mars 2026 à 10h30",
+	// Deux libellés DISTINCTS : la carte affiche désormais la date d'expédition ET
+	// la livraison estimée (dérivée), et un mock constant les rendait
+	// indiscernables (`getByText` trouvait deux nœuds).
+	format: (_date: unknown, fmt: string) =>
+		fmt.includes("HH") ? "15 mars 2026 à 10h30" : "20 mars 2026",
+	// `estimateDeliveryDate` (livraison estimée, désormais DÉRIVÉE de
+	// `shippedAt` + `shippingCountry`) s'appuie dessus — cf. shipping.service.
+	addBusinessDays: (date: Date, _days: number) => date,
 }));
 vi.mock("date-fns/locale", () => ({ fr: {} }));
 

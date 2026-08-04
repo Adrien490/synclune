@@ -445,7 +445,11 @@ model Order {
   shippingCarrier   String?   @db.VarChar(30)
   trackingNumber    String?   @db.VarChar(50)
   trackingUrl       String?   @db.VarChar(2048)
-  estimatedDelivery DateTime?
+  // Pas d'`estimatedDelivery` : la date était STOCKÉE alors qu'elle est
+  // entièrement DÉRIVABLE de `shippedAt` + `shippingCountry` par
+  // `estimateDeliveryDate()` (pure). Une colonne qui recopie le résultat d'une
+  // fonction de deux autres colonnes ne peut que dériver d'elles. La date reste
+  // affichée à la cliente — elle est calculée au rendu.
   actualDelivery    DateTime?
   shippedAt         DateTime?
 

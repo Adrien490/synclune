@@ -88,8 +88,7 @@ export async function revertToProcessing(
 					// Écrite par `markAsShipped` à partir de `shippedAt` : la laisser
 					// derrière affichait une date de livraison estimée sur une commande
 					// sans expédition (la carte admin ne gate que sur `shippedAt` OU
-					// `estimatedDelivery`, donc le second terme suffisait à l'afficher).
-					estimatedDelivery: null,
+
 				},
 			});
 			if (updated.count === 0) {

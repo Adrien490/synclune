@@ -9,6 +9,9 @@ import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-pr
 
 vi.mock("date-fns", () => ({
 	format: (_date: unknown, _fmt: string, _options?: unknown) => "1 janvier 2026",
+	// `estimateDeliveryDate` (livraison estimée, désormais DÉRIVÉE de
+	// `shippedAt` + `shippingCountry`) s'appuie dessus — cf. shipping.service.
+	addBusinessDays: (date: Date, _days: number) => date,
 }));
 
 vi.mock("date-fns/locale", () => ({
@@ -30,8 +33,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 	Button: (props: RenderPropMockProps) => renderPropMock("div", props),
 }));
 
-vi.mock("lucide-react", () => ({
-	ExternalLink: () => <svg data-testid="icon-external-link" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowSquareOutIcon: () => <svg data-testid="icon-external-link" />,
 }));
 
 import { OrderTracking } from "../order-tracking";
@@ -51,7 +54,6 @@ function createOrder(
 		trackingUrl: string | null;
 		shippingCarrier: string | null;
 		shippedAt: Date | null;
-		estimatedDelivery: Date | null;
 		actualDelivery: Date | null;
 	}> = {},
 ) {
@@ -64,7 +66,6 @@ function createOrder(
 		trackingUrl: "https://track.example.com/1Z999AA10123456784",
 		shippingCarrier: "colissimo",
 		shippedAt: new Date("2026-01-01"),
-		estimatedDelivery: null,
 		actualDelivery: null,
 		...overrides,
 	};
@@ -147,7 +148,7 @@ describe("OrderTracking", () => {
 	it("shows estimated delivery when set and not yet delivered", () => {
 		render(
 			<OrderTracking
-				order={createOrder({ estimatedDelivery: new Date("2026-01-05"), actualDelivery: null })}
+				order={createOrder({ shippedAt: new Date("2026-01-01"), actualDelivery: null })}
 			/>,
 		);
 		expect(screen.getByText(/Livraison estimée/i)).toBeInTheDocument();
@@ -157,7 +158,6 @@ describe("OrderTracking", () => {
 		render(
 			<OrderTracking
 				order={createOrder({
-					estimatedDelivery: new Date("2026-01-05"),
 					actualDelivery: new Date("2026-01-04"),
 				})}
 			/>,
