@@ -6,7 +6,6 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { AnimatedNumber } from "@/shared/components/animations/animated-number";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
-import { CartPromoCodeForm } from "./cart-promo-code-form";
 import Link from "next/link";
 
 interface CartSheetFooterProps {
@@ -15,8 +14,6 @@ interface CartSheetFooterProps {
 	isPending: boolean;
 	hasStockIssues: boolean;
 	onClose: () => void;
-	appliedDiscountCode?: string | null;
-	discountAmount?: number | null;
 }
 
 export function CartSheetFooter({
@@ -25,8 +22,6 @@ export function CartSheetFooter({
 	isPending,
 	hasStockIssues,
 	onClose,
-	appliedDiscountCode = null,
-	discountAmount = null,
 }: CartSheetFooterProps) {
 	const haptic = useHaptic();
 
@@ -36,43 +31,54 @@ export function CartSheetFooter({
 	};
 
 	return (
-		<SheetFooter className="mt-auto shrink-0 border-t px-6 pt-3 pb-4">
-			<div className="w-full space-y-2">
-				{/* Promo code disclosure — collapsed by default, chip when applied */}
-				<CartPromoCodeForm
-					appliedDiscountCode={appliedDiscountCode}
-					discountAmount={discountAmount}
-				/>
-
-				{/* Subtotal */}
-				<div className="flex items-center justify-between">
-					<span className="font-semibold">
-						Sous-total ({totalItems} article{totalItems > 1 ? "s" : ""})
-					</span>
-					<span
-						aria-busy={isPending}
-						className="text-lg font-bold tabular-nums transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:motion-safe:animate-pulse"
-					>
-						{/* startValue={subtotal} : sans lui le spring part de 0 et le
-						    sous-total COMPTE de 0,00 € au montant réel à chaque ouverture
-						    du panier (montant transactionnel faux ~1 s). Ainsi le mount
-						    affiche la vraie valeur ; seuls les changements de quantité
-						    animent, de l'ancien montant vers le nouveau. */}
-						<AnimatedNumber value={subtotal} startValue={subtotal} formatter={formatEuro} />
-					</span>
-				</div>
-				{/* Réduction appliquée — visible quand un code promo est actif */}
-				{discountAmount !== null && discountAmount > 0 && (
-					<div className="text-success flex items-center justify-between text-sm">
-						<span>Réduction{appliedDiscountCode ? ` (${appliedDiscountCode})` : ""}</span>
-						<span className="tabular-nums">−{formatEuro(discountAmount)}</span>
+		/*
+		 * `pb-[max(1rem,env(safe-area-inset-bottom))]` — le footer est le PROPRIÉTAIRE
+		 * UNIQUE de la marge basse du panier, sur les deux formats. Les deux popups
+		 * posent `pb-0` : avant, la primitive `DrawerContent` ajoutait la sienne au
+		 * `pb-4` d'ici, soit ≥ 32 px de vide sous « Continuer mes achats » sur un
+		 * panneau borné à 85 dvh. Garder la formule `max()` et non un `pb-4` nu :
+		 * c'est elle qui empêche le CTA de passer sous la barre d'accueil iPhone.
+		 */
+		<SheetFooter className="bg-background mt-auto shrink-0 border-t px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+			<div className="w-full space-y-2.5">
+				{/*
+				 * Le récapitulatif est une ÉTIQUETTE, pas une suite de lignes : un cadre
+				 * et une ligne de conduite pointillée sous le total.
+				 *
+				 * ⚠️ **Le montant n'est PAS en `--font-display`.** Fraunces n'expose ni
+				 * `tnum` ni `pnum` (sa table GSUB ne porte que `kern` et `liga`), donc
+				 * `tabular-nums` y est un no-op : mesuré, « 111,11 € » et « 888,88 € »
+				 * diffèrent de **16,14 px** en Fraunces 24 px, à l'identique avec ou sans
+				 * l'utilitaire. Comme `AnimatedNumber` traverse toutes les valeurs
+				 * intermédiaires, le total se serait mis à gigoter à chaque changement de
+				 * quantité — sur le seul chiffre transactionnel du panneau. Figtree, elle,
+				 * porte bien `tnum` (Δ 24,11 px → 0,00 px). La display reste sur le titre
+				 * du panneau, où elle ne fait aucun travail numérique.
+				 */}
+				<div className="bg-card rounded-sm border-2 px-4 py-3">
+					<div className="flex items-baseline justify-between gap-3 border-b border-dotted pb-2">
+						<span className="text-sm">
+							Sous-total · {totalItems} article{totalItems > 1 ? "s" : ""}
+						</span>
+						<span
+							aria-busy={isPending}
+							className="text-2xl leading-none font-semibold tabular-nums transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:motion-safe:animate-pulse"
+						>
+							{/* startValue={subtotal} : sans lui le spring part de 0 et le
+							    sous-total COMPTE de 0,00 € au montant réel à chaque ouverture
+							    du panier (montant transactionnel faux ~1 s). Ainsi le mount
+							    affiche la vraie valeur ; seuls les changements de quantité
+							    animent, de l'ancien montant vers le nouveau. */}
+							<AnimatedNumber value={subtotal} startValue={subtotal} formatter={formatEuro} />
+						</span>
 					</div>
-				)}
-				{/* Hint frais postaux — réduit la friction à l'étape paiement */}
-				<p className="text-muted-foreground text-xs">
-					Frais postaux dès {formatEuro(SHIPPING_RATES.FR.amount)} — calculés à l&apos;étape
-					suivante.
-				</p>
+					{/* Hint frais postaux — réduit la friction à l'étape paiement */}
+					<p className="text-muted-foreground mt-2 flex items-baseline justify-between gap-3 text-xs">
+						<span>Frais postaux dès</span>
+						<span className="tabular-nums">{formatEuro(SHIPPING_RATES.FR.amount)}</span>
+					</p>
+					<p className="text-muted-foreground mt-1 text-xs">Calculés à l&apos;étape suivante.</p>
+				</div>
 				{/* Pas de région live ici : la région différée de cart-sheet.tsx annonce
 				    déjà « N articles, sous-total X » — deux régions sur la même valeur
 				    = double vocalisation. */}

@@ -129,7 +129,6 @@ export async function markAsPaid(
 					customerEmail: true,
 					customerName: true,
 					subtotal: true,
-					discountAmount: true,
 					shippingCost: true,
 					total: true,
 					shippingFirstName: true,
@@ -501,7 +500,6 @@ export async function markAsPaid(
 						price: item.price,
 					})),
 					subtotal: order.subtotal,
-					discount: order.discountAmount,
 					shipping: order.shippingCost,
 					total: order.total,
 					shippingAddress: {

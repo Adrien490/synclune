@@ -312,45 +312,6 @@ describe("updatePaymentAmount", () => {
 			});
 		});
 
-		it("applies the server-derived discount when an eligible code is provided", async () => {
-			mockDiscountFindFirst.mockResolvedValue(MOCK_DISCOUNT_FIXED_1000);
-			const params = { ...VALID_PARAMS, discountCode: "promo10" };
-
-			const result = await updatePaymentAmount(params);
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.newTotal).toBe(4499); // 5000 - 1000 + 499
-			}
-			expect(mockStripePaymentIntentsUpdate).toHaveBeenCalledWith("pi_test_abc123", {
-				amount: 4499,
-			});
-			// Lookup normalisé en majuscules (aligné order-creation).
-			expect(mockDiscountFindFirst).toHaveBeenCalledWith(
-				expect.objectContaining({
-					where: expect.objectContaining({ code: "PROMO10" }),
-				}),
-			);
-		});
-
-		it("clamps to STRIPE_MIN_AMOUNT_EUR_CENTS when discount+shipping cancel out", async () => {
-			setupShipping(0);
-			// Override cart to a 1000-cent total so the fixed 1000-cent discount fully zeroes the subtotal.
-			setupCart(
-				{ items: [{ sku: { id: "sku-1" }, quantity: 1, priceAtAdd: 1000 }] },
-				{ success: true, data: { sku: { id: "sku-1", priceInclTax: 1000 } } },
-			);
-			mockDiscountFindFirst.mockResolvedValue(MOCK_DISCOUNT_FIXED_1000);
-			const params = { ...VALID_PARAMS, discountCode: "PROMO10" };
-
-			const result = await updatePaymentAmount(params);
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.newTotal).toBe(50); // STRIPE_MIN_AMOUNT_EUR_CENTS
-			}
-		});
-
 		it("retrieves the PI from Stripe to verify ownership", async () => {
 			await updatePaymentAmount(VALID_PARAMS);
 
@@ -580,14 +541,6 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("rejects a non-string discountCode", async () => {
-			const params = { ...VALID_PARAMS, discountCode: 1000 };
-
-			const result = await updatePaymentAmount(params);
-
-			expect(result.success).toBe(false);
-		});
-
 		it("accepts a null discountCode as valid", async () => {
 			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountCode: null });
 
@@ -686,72 +639,6 @@ describe("updatePaymentAmount", () => {
 	// ──────────────────────────────────────────────────────────────
 	// Server-side discount derivation (audit F1)
 	// ──────────────────────────────────────────────────────────────
-
-	describe("server-side discount derivation (audit F1)", () => {
-		beforeEach(() => {
-			setupDefaults();
-		});
-
-		it("ignores a legacy/malicious numeric discountAmount field — full price applied", async () => {
-			// Ancien contrat : le client envoyait un montant arbitraire. Le champ est
-			// désormais inconnu du schéma (strippé par Zod) — aucune minoration possible.
-			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountAmount: 4999 });
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.newTotal).toBe(5499); // 5000 + 499, remise ignorée
-			}
-			expect(mockStripePaymentIntentsUpdate).toHaveBeenCalledWith("pi_test_abc123", {
-				amount: 5499,
-			});
-		});
-
-		it("applies zero discount when the code is unknown", async () => {
-			mockDiscountFindFirst.mockResolvedValue(null);
-
-			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountCode: "NOPE" });
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.newTotal).toBe(5499);
-			}
-		});
-
-		it("applies zero discount when the code is ineligible (expired)", async () => {
-			mockDiscountFindFirst.mockResolvedValue({
-				...MOCK_DISCOUNT_FIXED_1000,
-				endsAt: new Date("2021-01-01"),
-			});
-
-			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountCode: "PROMO10" });
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.newTotal).toBe(5499);
-			}
-		});
-
-		it("derives a percentage discount from the cart, excluding sale items", async () => {
-			mockDiscountFindFirst.mockResolvedValue({
-				...MOCK_DISCOUNT_FIXED_1000,
-				type: "PERCENTAGE",
-				value: 10,
-			});
-
-			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountCode: "PROMO10" });
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.newTotal).toBe(4999); // 5000 - 10% + 499
-			}
-		});
-
-		it("does not query the discount table when no code is provided", async () => {
-			await updatePaymentAmount(VALID_PARAMS);
-
-			expect(mockDiscountFindFirst).not.toHaveBeenCalled();
-		});
-	});
 
 	// ──────────────────────────────────────────────────────────────
 	// PI ownership verification
@@ -856,22 +743,6 @@ describe("updatePaymentAmount", () => {
 			await updatePaymentAmount({ ...VALID_PARAMS, postalCode: "20000" });
 
 			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
-		});
-
-		it("still computes newTotal as subtotal - discount when shipping unavailable", async () => {
-			mockDiscountFindFirst.mockResolvedValue({
-				...MOCK_DISCOUNT_FIXED_1000,
-				type: "PERCENTAGE",
-				value: 10,
-			});
-			const params = { ...VALID_PARAMS, discountCode: "PROMO10", postalCode: "20000" };
-
-			const result = await updatePaymentAmount(params);
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.newTotal).toBe(4500); // 5000 - 500 + 0
-			}
 		});
 
 		it("returns shippingInfo=null when shipping is unavailable", async () => {

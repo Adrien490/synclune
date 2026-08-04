@@ -85,7 +85,6 @@ const invoiceLineSchema = z.object({
 	}),
 	quantity: z.number().int().positive(),
 	unitPriceExclTax: z.number().int().nonnegative(),
-	discountAmount: z.number().int().nonnegative(),
 	taxRate: z.number().int().nonnegative(),
 	taxCategoryCode: taxCategoryCodeSchema,
 	taxAmount: z.number().int().nonnegative(),
@@ -111,7 +110,6 @@ const taxBreakdownLineSchema = z.object({
 
 const invoiceTotalsSchema = z.object({
 	subtotalExclTax: z.number().int().nonnegative(),
-	totalDiscount: z.number().int().nonnegative(),
 	shippingExclTax: z.number().int().nonnegative(),
 	shippingTax: z.number().int().nonnegative(),
 	taxBreakdown: z.array(taxBreakdownLineSchema),
@@ -188,7 +186,7 @@ export const invoiceDataSchema = z
 			return (
 				sumLineExclTax === data.totals.subtotalExclTax &&
 				sumLineInclTax + data.totals.shippingExclTax + data.totals.shippingTax ===
-					data.totals.totalInclTax + data.totals.totalDiscount &&
+					data.totals.totalInclTax &&
 				sumLineTax + data.totals.shippingTax === data.totals.totalTax
 			);
 		},

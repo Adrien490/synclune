@@ -48,7 +48,6 @@ function makeB2COrder(overrides: Partial<Order> = {}): Order {
 		customerEmail: "alice@example.com",
 		customerName: "Alice Dupont",
 		subtotal: 9000,
-		discountAmount: 0,
 		shippingCost: 500,
 		taxAmount: 0,
 		total: 9500,
@@ -98,7 +97,6 @@ function makeB2COrder(overrides: Partial<Order> = {}): Order {
 			},
 		],
 		refunds: [],
-		discountUsages: [],
 		history: [],
 		...overrides,
 	} as Order;

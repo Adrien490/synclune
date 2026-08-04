@@ -66,7 +66,6 @@ function makeValidB2cInvoice(): InvoiceData {
 				variantInfo: { color: "Argent", material: "Argent 925", size: null },
 				quantity: 2,
 				unitPriceExclTax: 4500,
-				discountAmount: 0,
 				taxRate: 0,
 				taxCategoryCode: "ZB",
 				taxAmount: 0,
@@ -78,7 +77,6 @@ function makeValidB2cInvoice(): InvoiceData {
 		],
 		totals: {
 			subtotalExclTax: 9000,
-			totalDiscount: 0,
 			shippingExclTax: 500,
 			shippingTax: 0,
 			taxBreakdown: [

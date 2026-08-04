@@ -310,7 +310,6 @@ function buildInvoiceLine(item: GetOrderReturn["items"][number], lineNumber: num
 		},
 		quantity: item.quantity,
 		unitPriceExclTax: item.price,
-		discountAmount: 0, // pas de remise par ligne actuellement
 		taxRate: 0,
 		taxCategoryCode: DEFAULT_TAX_CATEGORY as TaxCategoryCode,
 		taxAmount: 0,
@@ -325,7 +324,6 @@ function buildTotals(order: GetOrderReturn, lines: InvoiceLine[]): InvoiceTotals
 	const subtotalExclTax = lines.reduce((sum, line) => sum + line.lineTotalExclTax, 0);
 	const totalTaxFromLines = lines.reduce((sum, line) => sum + line.taxAmount, 0);
 	const totalInclTax = order.total;
-	const totalDiscount = order.discountAmount;
 	const shippingExclTax = order.shippingCost;
 	const shippingTax = 0; // franchise — pas de TVA sur livraison non plus
 	const totalTax = totalTaxFromLines + shippingTax;
@@ -335,7 +333,6 @@ function buildTotals(order: GetOrderReturn, lines: InvoiceLine[]): InvoiceTotals
 
 	return {
 		subtotalExclTax,
-		totalDiscount,
 		shippingExclTax,
 		shippingTax,
 		taxBreakdown,

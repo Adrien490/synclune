@@ -48,7 +48,6 @@ describe("OrderConfirmationEmail", () => {
 		customerName: "Marie",
 		items: baseOrderItems,
 		subtotal: 17900,
-		discount: 0,
 		shipping: 490,
 		total: 18390,
 		shippingAddress: baseShippingAddress,
@@ -80,16 +79,6 @@ describe("OrderConfirmationEmail", () => {
 		const html = await render(<OrderConfirmationEmail {...baseProps} />);
 		expect(html).toContain("Collier Luna");
 		expect(html).toContain("Boucles Étoile");
-	});
-
-	it("does not show the discount line when discount is zero", async () => {
-		const html = await render(<OrderConfirmationEmail {...baseProps} discount={0} />);
-		expect(html).not.toContain("Réduction");
-	});
-
-	it("shows the discount line only when discount is greater than zero", async () => {
-		const html = await render(<OrderConfirmationEmail {...baseProps} discount={1000} />);
-		expect(html).toContain("Réduction");
 	});
 
 	it("contains the tracking URL", async () => {

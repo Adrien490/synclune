@@ -88,34 +88,9 @@ describe("OrderSummaryCard", () => {
 		expect(screen.getByText("53.00 €")).toBeInTheDocument();
 	});
 
-	it("shows the discount row when discountAmount is greater than zero", () => {
-		render(
-			<OrderSummaryCard
-				order={createOrder({
-					discountAmount: 1000,
-					total: 4500,
-				})}
-			/>,
-		);
-		expect(screen.getByText(/Réduction/)).toBeInTheDocument();
-		expect(screen.getByText("-10.00 €")).toBeInTheDocument();
-	});
-
 	it("hides the discount row when discountAmount is zero", () => {
 		render(<OrderSummaryCard order={createOrder({ discountAmount: 0 })} />);
 		expect(screen.queryByText(/Réduction/)).not.toBeInTheDocument();
-	});
-
-	it("shows the discount code when one is attached to the order", () => {
-		render(
-			<OrderSummaryCard
-				order={createOrder({
-					discountAmount: 500,
-					discountCode: "PROMO10",
-				})}
-			/>,
-		);
-		expect(screen.getByText(/PROMO10/)).toBeInTheDocument();
 	});
 
 	it("shows the order number", () => {

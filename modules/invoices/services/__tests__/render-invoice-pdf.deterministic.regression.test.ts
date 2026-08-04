@@ -84,7 +84,6 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 				variantInfo: { color: "Argent", material: "Argent 925", size: null },
 				quantity: 2,
 				unitPriceExclTax: 4500,
-				discountAmount: 0,
 				taxRate: 0,
 				taxCategoryCode: "ZB",
 				taxAmount: 0,
@@ -96,7 +95,6 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 		],
 		totals: {
 			subtotalExclTax: 9000,
-			totalDiscount: 0,
 			shippingExclTax: 500,
 			shippingTax: 0,
 			taxBreakdown: [
@@ -159,7 +157,6 @@ describe("renderInvoicePdf — déterminisme bit-à-bit (Art. L102 B LPF)", () =
 					variantInfo: { color: null, material: null, size: null },
 					quantity: 1,
 					unitPriceExclTax: 10000,
-					discountAmount: 0,
 					taxRate: 2000,
 					taxCategoryCode: "S",
 					taxAmount: 2000,
@@ -171,7 +168,6 @@ describe("renderInvoicePdf — déterminisme bit-à-bit (Art. L102 B LPF)", () =
 			],
 			totals: {
 				subtotalExclTax: 10000,
-				totalDiscount: 0,
 				shippingExclTax: 0,
 				shippingTax: 0,
 				taxBreakdown: [

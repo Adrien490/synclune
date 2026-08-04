@@ -27,7 +27,14 @@
  * Entier obligatoire : l'invariant « entiers seuls » (EINV-PDF-008, cf. en-tête de
  * `types/invoice-data.ts`) tient à ce que le round-trip JSONB Postgres soit byte-stable.
  */
-export const INVOICE_DATA_FORMAT_VERSION = 1;
+// v2 (2026-08-05) — retrait des codes promo : `InvoiceTotals.totalDiscount` et
+// `InvoiceLine.discountAmount` disparaissent du payload. Changement de FORME, donc
+// incrément obligatoire (cf. la règle ci-dessus) : sans lui, un snapshot v1 relu par
+// le cast `as InvoiceData` exposerait `totalDiscount` sur un type qui ne le déclare
+// plus, et un futur lecteur ne pourrait pas distinguer « champ absent » de « remise
+// nulle ». Les deux champs valaient toujours 0 sur les factures émises (aucune
+// commande réelle), mais la règle ne se négocie pas au cas par cas.
+export const INVOICE_DATA_FORMAT_VERSION = 2;
 
 /** Forme implicite des snapshots écrits avant l'introduction de `formatVersion`. */
 export const LEGACY_INVOICE_DATA_FORMAT_VERSION = 1;

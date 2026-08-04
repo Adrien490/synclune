@@ -4,15 +4,11 @@ import { useEffect, useEffectEvent } from "react";
 import dynamic from "next/dynamic";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import { CircleAlert, Lock, WifiOff } from "lucide-react";
+import { LockIcon, WarningCircleIcon, WifiSlashIcon } from "@phosphor-icons/react/ssr";
 import type { Session } from "@/modules/auth/lib/auth";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import type { getShippingInfo } from "@/modules/orders/services/shipping.service";
-import type {
-	AppliedDiscount,
-	ValidateDiscountCodeReturn,
-} from "@/modules/discounts/types/discount.types";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 import type { useCheckoutForm } from "../hooks/use-checkout-form";
 import type { usePaymentIntent } from "../hooks/use-payment-intent";
@@ -21,7 +17,6 @@ import { CheckoutSection } from "./checkout-section";
 import { ShippingMethodSection } from "./shipping-method-section";
 import { CheckoutContactSection } from "./checkout-contact-section";
 import { CheckoutAddressFields } from "./checkout-address-fields";
-import { CheckoutDiscountSection } from "./checkout-discount-section";
 import { CheckoutErrorSummary } from "./checkout-error-summary";
 import { PaymentSectionSkeleton } from "./payment-section-skeleton";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
@@ -49,8 +44,6 @@ interface CheckoutFormBodyProps {
 	shippingInfo: ReturnType<typeof getShippingInfo>;
 	shippingUnavailable: boolean;
 	total: number;
-	discountAmount: number;
-	appliedDiscount: AppliedDiscount | null;
 	country: ShippingCountry;
 	postalCode: string;
 	/** Montant figé une fois la commande liée au PI (CHECKOUT-CONSENT-001). */
@@ -73,8 +66,6 @@ export function CheckoutFormBody({
 	shippingInfo,
 	shippingUnavailable,
 	total,
-	discountAmount,
-	appliedDiscount,
 	country,
 	postalCode,
 	lockedAmount,
@@ -82,28 +73,20 @@ export function CheckoutFormBody({
 	allowNavigation,
 	onOrderBound,
 }: CheckoutFormBodyProps) {
-	// Keep Stripe PaymentIntent amount in sync with country/postalCode/discount changes
+	// Keep Stripe PaymentIntent amount in sync with country/postalCode changes
 	// so the card PaymentElement charges the correct total.
 	// `updateAmount` is debounced 500ms internally.
-	const appliedDiscountCode = appliedDiscount?.code ?? null;
 	const isAmountLocked = lockedAmount !== null;
 	const syncStripeAmount = useEffectEvent(() => {
 		// Commande déjà liée au PI : le serveur refuse l'update (`metadata.orderId`),
 		// inutile de solliciter l'action.
 		if (!pi.paymentIntentId || shippingUnavailable || isAmountLocked) return;
-		pi.updateAmount(country, postalCode, appliedDiscountCode);
+		pi.updateAmount(country, postalCode);
 	});
 
 	useEffect(() => {
 		syncStripeAmount();
-	}, [
-		pi.paymentIntentId,
-		country,
-		postalCode,
-		appliedDiscountCode,
-		shippingUnavailable,
-		isAmountLocked,
-	]);
+	}, [pi.paymentIntentId, country, postalCode, shippingUnavailable, isAmountLocked]);
 
 	return (
 		<form
@@ -156,7 +139,7 @@ export function CheckoutFormBody({
 
 				{!isOnline && (
 					<Alert variant="destructive" role="alert" aria-live="assertive">
-						<WifiOff className="size-4" />
+						<WifiSlashIcon className="size-4" />
 						<AlertTitle>Connexion internet perdue</AlertTitle>
 						<AlertDescription>
 							Vérifie ta connexion internet avant de continuer. Le paiement nécessite une connexion
@@ -167,7 +150,7 @@ export function CheckoutFormBody({
 
 				{pi.error && (
 					<Alert variant="destructive" role="alert">
-						<CircleAlert className="size-4" />
+						<WarningCircleIcon className="size-4" />
 						<AlertDescription className="flex flex-wrap items-center gap-3">
 							<span>{pi.error}</span>
 							<Button
@@ -187,7 +170,7 @@ export function CheckoutFormBody({
 				<div className="space-y-8">
 					{isAmountLocked && (
 						<Alert role="status">
-							<Lock className="size-4" />
+							<LockIcon className="size-4" />
 							<AlertTitle>Montant verrouillé</AlertTitle>
 							{/*
 							 * La copie promettait « Actualise la page si tu veux modifier ta livraison
@@ -279,12 +262,9 @@ export function CheckoutFormBody({
 								shippingInfo={shippingInfo}
 							/>
 						</CheckoutSection>
-
-						{/* === SECTION 4: Discount Code === */}
-						<CheckoutDiscountSection form={form} />
 					</fieldset>
 
-					{/* === SECTION 5: Payment === */}
+					{/* === SECTION 4: Payment === */}
 					<CheckoutSection title="Paiement">
 						{pi.isLoading ? (
 							<PaymentSectionSkeleton />
@@ -339,10 +319,6 @@ export function CheckoutFormBody({
 					shippingUnavailable={shippingUnavailable}
 					shippingInfo={shippingInfo}
 					total={total}
-					discountAmount={discountAmount}
-					appliedDiscount={
-						appliedDiscount as NonNullable<ValidateDiscountCodeReturn["discount"]> | null
-					}
 				/>
 			</div>
 		</form>

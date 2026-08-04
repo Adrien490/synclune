@@ -4,6 +4,7 @@ import { useDeferredValue, useOptimistic, useRef, useTransition } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import {
 	Sheet,
+	SheetClose,
 	SheetContent,
 	SheetDescription,
 	SheetHeader,
@@ -11,6 +12,7 @@ import {
 } from "@/shared/components/ui/sheet";
 import {
 	Drawer,
+	DrawerClose,
 	DrawerContent,
 	DrawerDescription,
 	DrawerHeader,
@@ -19,7 +21,7 @@ import {
 import ScrollFade from "@/shared/components/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBagIcon, XIcon } from "@phosphor-icons/react/ssr";
 import {
 	Empty,
 	EmptyActions,
@@ -55,6 +57,73 @@ interface CartSheetProps {
 	recommendations?: React.ReactNode;
 }
 
+interface CartSheetHeaderContentProps {
+	hasItems: boolean;
+	totalItems: number;
+	isPending: boolean;
+	/** `SheetTitle` ou `DrawerTitle` — mêmes primitives Base UI, racines différentes. */
+	Title: typeof SheetTitle;
+	Description: typeof SheetDescription;
+	Close: typeof SheetClose;
+}
+
+/**
+ * Contenu de l'en-tête, partagé par les deux branches.
+ *
+ * ⚠️ **Le bouton de fermeture est rendu ICI, pas par la primitive.**
+ * `SheetContent` en pose un par défaut (`showCloseButton`), mais ancré au
+ * POPUP (`top-[max(1rem,env(safe-area-inset-top))]`) tandis que le bouton
+ * « Vider » était centré sur l'EN-TÊTE : deux boutons voisins de même taille
+ * dont les centres étaient à 38 px et 30 px du haut. Et `DrawerContent`, lui,
+ * n'en rend AUCUN — sur mobile le panneau plein écran recouvrait la totalité
+ * du scrim et `handleOnly` excluait le contenu du geste, ne laissant qu'une
+ * poignée de 8 px comme unique sortie.
+ *
+ * Les deux boutons vivent donc dans la même rangée flex : un seul mécanisme
+ * d'alignement, et une sortie visible sur les deux formats.
+ */
+function CartSheetHeaderContent({
+	hasItems,
+	totalItems,
+	isPending,
+	Title,
+	Description,
+	Close,
+}: CartSheetHeaderContentProps) {
+	return (
+		<div className="flex items-center justify-between gap-2">
+			<div className="min-w-0">
+				<Title
+					aria-label={
+						hasItems ? `Mon panier, ${totalItems} article${totalItems > 1 ? "s" : ""}` : undefined
+					}
+				>
+					Mon panier
+					{hasItems && (
+						<span
+							aria-hidden="true"
+							className="text-muted-foreground transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
+						>
+							{" "}
+							({totalItems})
+						</span>
+					)}
+				</Title>
+				<Description className="sr-only">Gère les articles de ton panier</Description>
+			</div>
+			<div className="flex shrink-0 items-center gap-1">
+				{hasItems && <CartClearButton disabled={isPending} />}
+				<Close
+					aria-label="Fermer le panier"
+					className="focus-ring text-muted-foreground can-hover:hover:text-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-colors"
+				>
+					<XIcon className="size-5" aria-hidden="true" />
+				</Close>
+			</div>
+		</div>
+	);
+}
+
 interface CartSheetBodyProps {
 	items: CartItem[];
 	hasItems: boolean;
@@ -67,8 +136,6 @@ interface CartSheetBodyProps {
 	close: () => void;
 	recommendations?: React.ReactNode;
 	shouldReduceMotion: boolean | null;
-	appliedDiscountCode: string | null;
-	discountAmount: number | null;
 }
 
 function CartSheetBody({
@@ -83,8 +150,6 @@ function CartSheetBody({
 	shouldReduceMotion,
 	totalItems,
 	subtotal,
-	appliedDiscountCode,
-	discountAmount,
 }: CartSheetBodyProps) {
 	// Defer SR announcements so rapid +/- taps don't spam VoiceOver
 	const announceItems = useDeferredValue(totalItems);
@@ -99,17 +164,22 @@ function CartSheetBody({
 			</div>
 
 			{!hasItems ? (
-				<div className="flex min-h-0 flex-1 flex-col px-6 py-8" role="status">
+				/* Pas de `role="status"` ici : la région live ci-dessus annonce déjà
+			   « Panier vide », et deux régions sur la même information produisent une
+			   double vocalisation au montage. C'est exactement ce que documente le
+			   JSDoc d'`Empty` (`shared/components/ui/empty.tsx`), qui a retiré ces
+			   attributs de la primitive pour cette raison. */
+				<div className="flex min-h-0 flex-1 flex-col px-6 py-8">
 					<Empty variant="borderless" className="flex-1">
 						<EmptyHeader>
 							<EmptyMedia variant="icon">
-								<ShoppingBag className="size-6" />
+								<ShoppingBagIcon className="size-6" />
 							</EmptyMedia>
-							<EmptyTitle>Votre panier est vide !</EmptyTitle>
+							<EmptyTitle>Ton panier est encore vide</EmptyTitle>
 						</EmptyHeader>
 						<EmptyDescription>
-							Chaque bijou est une pièce unique, fabriquée à la main avec amour. Trouvez celui qui
-							vous correspond !
+							Chaque pièce est faite à la main, en un seul exemplaire. Trouve celle qui te
+							ressemble.
 						</EmptyDescription>
 						<EmptyActions>
 							<Button
@@ -132,16 +202,17 @@ function CartSheetBody({
 			) : (
 				<>
 					{hasStockIssues && (
+						/* Texte en `--foreground` : `text-destructive` sur `bg-destructive/10`
+						   valait 3,81:1 et sa liste `text-destructive/80` en 12 px 2,93:1 —
+						   les deux sous AA. La barre pleine à gauche porte la sévérité. */
 						<div
 							id="stock-issues-alert"
-							className="bg-destructive/10 border-destructive/20 shrink-0 border-b px-6 py-2.5"
+							className="bg-destructive/10 border-l-destructive text-foreground shrink-0 border-b border-l-4 px-6 py-2.5"
 							role="alert"
 							aria-label="Problèmes de stock dans le panier"
 						>
-							<p className="text-destructive text-sm font-medium">
-								Ajustez votre panier pour continuer
-							</p>
-							<ul className="text-destructive/80 mt-1 space-y-0.5 text-xs">
+							<p className="text-sm font-semibold">Ajuste ton panier pour continuer</p>
+							<ul className="mt-1 space-y-0.5 text-xs">
 								{itemsWithIssues.map((item) => (
 									<li key={item.id} className="flex items-center gap-1">
 										<span aria-hidden="true">•</span>
@@ -160,14 +231,32 @@ function CartSheetBody({
 					</div>
 
 					<div className="min-h-0 flex-1">
-						<ScrollFade axis="vertical" className="h-full overscroll-contain" hideScrollbar={false}>
+						{/* `fadeFromClass` : le défaut est `from-background`, or la liste est
+						    posée sur le panneau en `bg-muted`. Sans override, le fondu de
+						    haut et de bas partait d'une couleur qui n'est pas celle du fond. */}
+						<ScrollFade
+							axis="vertical"
+							className="h-full overscroll-contain"
+							fadeFromClass="from-muted"
+							hideScrollbar={false}
+						>
 							{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
 							<ul role="list" className="space-y-3 px-6 py-4">
 								<AnimatePresence mode="popLayout" initial={false}>
 									{items.map((item, index) => (
 										/* Pas d'animation de `height` (relayout à chaque frame) : `layout` +
 										   `mode="popLayout"` sortent l'item du flux et font glisser ses voisins
-										   via transform — même effet de collapse, sans jank. */
+										   via transform — même effet de collapse, sans jank.
+
+										   ⚠️ **Surtout pas d'`overflow-hidden` ici.** La ligne peint
+										   volontairement hors de sa boîte : rotation ±0,4° du tirage
+										   (1,19 px de débord au coin), `shadow-sm`, le halo de survol de
+										   `CARD_SURFACE_HOVER` (30 px de flou) et l'ombre de focus de
+										   `CARD_SURFACE_FOCUS`. Un clip les rognait tous les quatre — donc
+										   aussi une affordance CLAVIER, pas seulement de l'esthétique. Il
+										   ne protégeait rien : l'animation de sortie est `opacity + scale`,
+										   jamais `height`. Verrouillé par
+										   `cart-sheet-list-not-clipped.regression.test.tsx`. */
 										<m.li
 											key={item.id}
 											layout
@@ -175,13 +264,13 @@ function CartSheetBody({
 											animate={{ opacity: 1, scale: 1 }}
 											exit={{ opacity: 0, scale: 0.95 }}
 											transition={shouldReduceMotion ? { duration: 0 } : MOTION_CONFIG.spring.list}
-											className="origin-top overflow-hidden"
+											className="origin-top"
 										>
 											<CartSheetItemRow
 												item={item}
 												onClose={close}
 												isMobile={isMobile}
-												isFirst={index === 0}
+												index={index}
 											/>
 										</m.li>
 									))}
@@ -199,8 +288,6 @@ function CartSheetBody({
 					isPending={isPending}
 					hasStockIssues={hasStockIssues}
 					onClose={close}
-					appliedDiscountCode={appliedDiscountCode}
-					discountAmount={discountAmount}
 				/>
 			)}
 		</>
@@ -277,8 +364,6 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		close,
 		recommendations: isMobile ? undefined : recommendations,
 		shouldReduceMotion,
-		appliedDiscountCode: optimisticCart.appliedDiscountCode,
-		discountAmount: optimisticCart.discountAmountCache,
 	};
 
 	return (
@@ -287,44 +372,46 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 				{isMobile ? (
 					// `handleOnly` : trois gestes se disputaient les mêmes pixels — swipe
 					// horizontal de suppression d'article, scroll vertical de la liste, et
-					// drag-to-dismiss Vaul (déclenché dès 15 dvh via `closeThreshold: 0.15`).
-					// Le panier se fermait donc par accident pendant qu'on manipulait une
-					// ligne. La fermeture par geste passe désormais par la seule poignée
-					// visible ; le bouton de fermeture de l'en-tête reste l'alternative.
+					// drag-to-dismiss du panneau. Le panier se fermait par accident pendant
+					// qu'on manipulait une ligne. La fermeture par GESTE passe donc par la
+					// seule poignée ; le bouton « Fermer » de l'en-tête et le scrim sont les
+					// deux autres sorties — cf. `CartSheetHeaderContent` et la hauteur
+					// ci-dessous, qui doivent rester cohérents avec ce commentaire.
 					<Drawer open={isOpen} onOpenChange={handleOpenChange} handleOnly>
 						<DrawerContent
-							className="group/sheet mt-0 flex h-[var(--vvh,100dvh)] max-h-[var(--vvh,100dvh)] flex-col gap-0 rounded-t-none px-0 pt-[env(safe-area-inset-top)]"
+							// 85 dvh, et pas 100 : à hauteur pleine le panneau recouvrait la
+							// TOTALITÉ du scrim, qui n'avait donc plus un pixel tapable. Les
+							// 15 dvh restants rendent la boutique visible et le scrim cliquable
+							// — c'est la géométrie qui décide si le scrim existe.
+							//
+							// `pb-0` : la primitive pose `pb-[max(1rem,env(safe-area-inset-bottom))]`
+							// sur les drawers du bas, et `CartSheetFooter` posait déjà son propre
+							// `pb-4` — soit ≥ 32 px de vide sous « Continuer mes achats », sur une
+							// hauteur désormais bornée. Un seul propriétaire désormais, et c'est le
+							// FOOTER : lui seul existe sur les deux formats, et il porte la même
+							// formule `max(1rem, safe-area)` — sinon retirer celle-ci ici ferait
+							// passer le CTA sous la barre d'accueil iPhone.
+							//
+							// ⚠️ `bg-muted` OPAQUE, jamais `bg-muted/40` : cette classe écrase le
+							// `bg-background` de la primitive (tailwind-merge, même groupe
+							// `bg-color`), et c'est la SEULE surface pleine du panneau. Une
+							// alpha ici ne « teinte » rien : elle laisse voir le scrim
+							// `bg-black/50` et la page derrière, ce qui composite le panneau en
+							// gris sale (~#AAA) et le fait varier selon le contenu de la page.
+							className="group/sheet bg-muted mt-0 flex h-[85dvh] max-h-[85dvh] flex-col gap-0 px-0 pb-0"
 							data-pending={isPending ? "" : undefined}
 							aria-busy={isPending}
 							onOverlayClick={handleOverlayClick}
 						>
-							<DrawerHeader className="relative shrink-0 border-b px-6 py-4">
-								<DrawerTitle
-									aria-label={
-										hasItems
-											? `Mon panier, ${totalItems} article${totalItems > 1 ? "s" : ""}`
-											: undefined
-									}
-								>
-									Mon panier
-									{hasItems && (
-										<span
-											aria-hidden="true"
-											className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
-										>
-											{" "}
-											({totalItems})
-										</span>
-									)}
-								</DrawerTitle>
-								<DrawerDescription className="sr-only">
-									Gérez les articles de votre panier
-								</DrawerDescription>
-								{hasItems && (
-									<div className="absolute top-1/2 right-4 -translate-y-1/2">
-										<CartClearButton disabled={isPending} />
-									</div>
-								)}
+							<DrawerHeader className="bg-background shrink-0 border-b px-6 py-3">
+								<CartSheetHeaderContent
+									hasItems={hasItems}
+									totalItems={totalItems}
+									isPending={isPending}
+									Title={DrawerTitle}
+									Description={DrawerDescription}
+									Close={DrawerClose}
+								/>
 							</DrawerHeader>
 							<CartSheetBody {...bodyProps} />
 						</DrawerContent>
@@ -334,40 +421,26 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 				) : (
 					<Sheet direction="right" open={isOpen} onOpenChange={handleOpenChange}>
 						<SheetContent
-							className="group/sheet flex w-full flex-col gap-0 p-0 pb-[env(safe-area-inset-bottom)] sm:max-w-lg"
+							// `pb-0` : la marge basse appartient au footer, sur les deux formats.
+							// `bg-muted` OPAQUE : cf. le commentaire de la branche mobile ci-dessus.
+							className="group/sheet bg-muted flex w-full flex-col gap-0 p-0 pb-0 sm:max-w-lg"
 							data-pending={isPending ? "" : undefined}
 							aria-busy={isPending}
 							onOverlayClick={handleOverlayClick}
+							// Le bouton de la primitive est ancré au POPUP, celui de l'en-tête
+							// à l'EN-TÊTE : deux centres à 8 px l'un de l'autre. On n'en garde
+							// qu'un, dans la rangée flex de l'en-tête.
+							showCloseButton={false}
 						>
-							<SheetHeader className="relative shrink-0 border-b px-6 py-4">
-								<SheetTitle
-									aria-label={
-										hasItems
-											? `Mon panier, ${totalItems} article${totalItems > 1 ? "s" : ""}`
-											: undefined
-									}
-								>
-									Mon panier
-									{hasItems && (
-										<span
-											aria-hidden="true"
-											className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
-										>
-											{" "}
-											({totalItems})
-										</span>
-									)}
-								</SheetTitle>
-								<SheetDescription className="sr-only">
-									Gérez les articles de votre panier
-								</SheetDescription>
-								{hasItems && (
-									// right-16 = right-4 + size-10, leaves room for the Sheet's
-									// built-in close button (Radix renders top-right by default).
-									<div className="absolute top-1/2 right-16 -translate-y-1/2">
-										<CartClearButton disabled={isPending} />
-									</div>
-								)}
+							<SheetHeader className="bg-background shrink-0 border-b px-6 py-3">
+								<CartSheetHeaderContent
+									hasItems={hasItems}
+									totalItems={totalItems}
+									isPending={isPending}
+									Title={SheetTitle}
+									Description={SheetDescription}
+									Close={SheetClose}
+								/>
 							</SheetHeader>
 							<CartSheetBody {...bodyProps} />
 						</SheetContent>

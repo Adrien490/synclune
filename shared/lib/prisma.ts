@@ -15,7 +15,7 @@ const adapter = new PrismaNeon({ connectionString: databaseUrl! });
  * Client Prisma avec Neon serverless adapter
  *
  * Soft Delete :
- * - Les modèles Order, User, Product, ProductSku (et OrderNote, Discount) ont un champ `deletedAt` pour le soft delete
+ * - Les modèles Order, User, Product, ProductSku et Discount ont un champ `deletedAt` pour le soft delete
  * - Le filtrage automatique n'est PAS implémenté via $extends pour éviter
  *   les problèmes de compatibilité avec les transactions Prisma
  * - Utiliser `where: { deletedAt: null }` explicitement dans les requêtes
@@ -56,21 +56,11 @@ export { prisma };
  */
 export const notDeleted = { deletedAt: null } as const;
 
-/**
- * Helper de soft delete.
- *
- * ⚠️ Une seule entrée, et c'est voulu : les cinq autres (`order`, `user`,
- * `orderNote`, `product`, `productSku`) n'avaient AUCUN appelant — chacun de ces
- * modules pose son `deletedAt` dans sa propre transaction, avec les écritures qui
- * l'accompagnent (purge des liaisons, audit, promotion d'un défaut). Un helper
- * mono-ligne à côté ne faisait que suggérer un raccourci qui aurait sauté ces
- * étapes. N'en rajouter un que si un appelant existe le jour même.
- *
- * @example
- * import { softDelete } from "@/shared/lib/prisma";
- * await softDelete.discount(discountId);
- */
-export const softDelete = {
-	discount: (id: string) =>
-		prisma.discount.update({ where: { id }, data: { deletedAt: new Date() } }),
-};
+// Plus de helper `softDelete` : sa DERNIÈRE entrée (`discount`) est partie avec
+// les codes promo le 2026-08-05, et les cinq précédentes (`order`, `user`,
+// `orderNote`, `product`, `productSku`) n'avaient déjà aucun appelant. Chaque
+// module pose son `deletedAt` dans sa propre transaction, avec les écritures qui
+// l'accompagnent (purge des liaisons, audit, promotion d'un défaut) ; un helper
+// mono-ligne à côté ne faisait que suggérer un raccourci qui aurait sauté ces
+// étapes. Ne pas le recréer « au cas où » — le recréer le jour où un appelant
+// existe, et pas avant.

@@ -49,7 +49,9 @@ describe("Admin skeletons — parité avec la table réelle", () => {
 	const pairs = findPairs();
 
 	it("chaque admin data-table a son skeleton", () => {
-		expect(pairs.length).toBe(9);
+		// 9 → 8 au retrait des codes promo (2026-08-05) : la paire
+		// `discounts-data-table` / son skeleton part avec le modèle `Discount`.
+		expect(pairs.length).toBe(8);
 	});
 
 	it.each(pairs.map((p) => [p.module, p] as const))(

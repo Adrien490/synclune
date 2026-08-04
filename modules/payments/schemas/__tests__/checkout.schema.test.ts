@@ -172,9 +172,4 @@ describe("confirmCheckoutSchema", () => {
 		});
 		expect(result.success).toBe(false);
 	});
-
-	it("should reject a discountCode shorter than 3 characters", () => {
-		const result = confirmCheckoutSchema.safeParse({ ...validCheckout, discountCode: "AB" });
-		expect(result.success).toBe(false);
-	});
 });

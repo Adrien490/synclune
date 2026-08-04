@@ -1,6 +1,5 @@
 import type Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
-import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import { logger } from "@/shared/lib/logger";
 import {
 	// IDEM-AUTOREFUND-001 : import VALEUR (et non `type`) — `Prisma.PrismaClientKnownRequestError`
@@ -18,9 +17,6 @@ import type { StockChangedSku } from "@/modules/products/utils/cache.utils";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
-import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
-import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
-import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import type { PaymentFailureDetails } from "../types/webhook.types";
 
 /**
@@ -176,13 +172,9 @@ export async function restoreStockForOrder(orderId: string): Promise<{
  * prédicat est ré-évalué au lock de ligne — un `findFirst` + `update` inconditionnel
  * laissait une fenêtre read-committed où un `payment_intent.succeeded` concurrent
  * commitait PAID entre la lecture et l'écriture, rétrogradant une commande payée
- * (restock fantôme + discount libéré + client débité sans commande). Une tentative
+ * (restock fantôme + client débité sans commande). Une tentative
  * PAID→FAILED bloquée remonte en Sentry warning : ce chemin ne doit jamais se
  * produire (bug appelant ou race à investiguer).
- *
- * Libère également le code promo attaché (cf [[CHECKOUT-AUDIT-001]]) : décrémente
- * `Discount.usageCount` et supprime les `DiscountUsage` orphelines, sinon le
- * compteur dérive à chaque paiement échoué.
  *
  * @returns `transitioned: false` si la commande était déjà FAILED (idempotence),
  *   introuvable, ou dans un état protégé (PAID/REFUNDED/PARTIALLY_REFUNDED).
@@ -203,14 +195,14 @@ export async function markOrderAsFailed(
 				logger.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsFailed`, undefined, {
 					service: "webhook",
 				});
-				return { transitioned: false, blockedStatus: null, releasedDiscountIds: [] as string[] };
+				return { transitioned: false, blockedStatus: null };
 			}
 
 			if (order.paymentStatus === "FAILED") {
 				logger.info(`⏭️ [WEBHOOK] Order ${orderId} already marked as FAILED, skipping`, {
 					service: "webhook",
 				});
-				return { transitioned: false, blockedStatus: null, releasedDiscountIds: [] as string[] };
+				return { transitioned: false, blockedStatus: null };
 			}
 
 			const updated = await tx.order.updateMany({
@@ -239,11 +231,8 @@ export async function markOrderAsFailed(
 				return {
 					transitioned: false,
 					blockedStatus: fresh?.paymentStatus ?? order.paymentStatus,
-					releasedDiscountIds: [] as string[],
 				};
 			}
-
-			const discountIds = await releaseOrderDiscountUsageTx(tx, orderId);
 
 			await createOrderAuditTx(tx, {
 				orderId,
@@ -259,12 +248,11 @@ export async function markOrderAsFailed(
 					failureCode: failureDetails.code,
 					declineCode: failureDetails.declineCode,
 					failureMessage: failureDetails.message,
-					releasedDiscountsCount: discountIds.length,
 				},
 			});
 
 			logger.info(`❌ [WEBHOOK] Order ${orderId} marked as FAILED`, { service: "webhook" });
-			return { transitioned: true, blockedStatus: null, releasedDiscountIds: discountIds };
+			return { transitioned: true, blockedStatus: null };
 		},
 		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
@@ -286,10 +274,6 @@ export async function markOrderAsFailed(
 			);
 		});
 	}
-
-	revalidateTagsInBackground(
-		txResult.releasedDiscountIds.map((discountId) => DISCOUNT_CACHE_TAGS.USAGE(discountId)),
-	);
 
 	return { transitioned: txResult.transitioned };
 }
@@ -337,7 +321,7 @@ export async function markOrderAsCancelled(
 				logger.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsCancelled`, undefined, {
 					service: "webhook",
 				});
-				return { releasedDiscountIds: [], restoredSkus: [] };
+				return { restoredSkus: [] };
 			}
 
 			if (order.status === "CANCELLED" && order.paymentStatus === "FAILED") {
@@ -345,7 +329,7 @@ export async function markOrderAsCancelled(
 					`⏭️ [WEBHOOK] Order ${orderId} already CANCELLED with FAILED payment, skipping`,
 					{ service: "webhook" },
 				);
-				return { releasedDiscountIds: [], restoredSkus: [] };
+				return { restoredSkus: [] };
 			}
 
 			// Garde anti-rétrogradation (audit webhooks 2026-07-02, symétrique de
@@ -378,7 +362,7 @@ export async function markOrderAsCancelled(
 					`⚠️ [WEBHOOK] Blocked CANCELLED transition on order ${orderId} — protected payment state, skipping`,
 					{ service: "webhook", orderId, paymentIntentId },
 				);
-				return { releasedDiscountIds: [], restoredSkus: [] };
+				return { restoredSkus: [] };
 			}
 
 			// IDEM-CANCEL-002 : restock atomique avec le claim CANCELLED (état
@@ -427,8 +411,6 @@ export async function markOrderAsCancelled(
 				);
 			}
 
-			const discountIds = await releaseOrderDiscountUsageTx(tx, orderId);
-
 			await createOrderAuditTx(tx, {
 				orderId,
 				action: OrderAction.CANCELLED,
@@ -441,20 +423,15 @@ export async function markOrderAsCancelled(
 				metadata: {
 					paymentIntentId,
 					reason: "payment_intent.canceled",
-					releasedDiscountsCount: discountIds.length,
 					restoredSkuCount: restoredSkus.length,
 				},
 			});
 
 			logger.info(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`, { service: "webhook" });
-			return { releasedDiscountIds: discountIds, restoredSkus };
+			return { restoredSkus };
 		},
 		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
-	);
-
-	revalidateTagsInBackground(
-		txResult.releasedDiscountIds.map((discountId) => DISCOUNT_CACHE_TAGS.USAGE(discountId)),
 	);
 
 	return { restoredSkus: txResult.restoredSkus };
@@ -542,7 +519,6 @@ export async function initiateAutomaticRefund(
 					orderId,
 					action: OrderAction.REFUND_CREATED,
 					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
 					authorName: "Système (auto-refund)",
 					note: `Auto-refund initié suite à ${reason}`,
 					metadata: {

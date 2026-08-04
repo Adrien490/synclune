@@ -2,7 +2,7 @@
  * @regression cart-mutations-must-gate-on-store-closure
  *
  * AUDIT-BIZ-001 — `assertStoreOpen()` était appliqué de façon inégale sur les
- * mutations panier : `addToCart` / `updateCartItem` / `applyCartDiscount` étaient
+ * mutations panier : `addToCart` / `updateCartItem` étaient
  * gardés, mais `reorderFromOrder` — qui remplit le panier tout autant — ne
  * l'était pas. Un `ReorderButton` reste cliquable pendant une fermeture, car
  * l'espace client est délibérément accessible boutique fermée.
@@ -28,7 +28,6 @@ const ACTIONS_DIR = join(__dirname, "..");
 const MUST_GATE = [
 	"add-to-cart.ts",
 	"update-cart-item.ts",
-	"apply-cart-discount.ts",
 	// `reorder-from-order.ts` a quitté cette liste avec l'action elle-même : son
 	// unique déclencheur était le bouton « Racheter » de la page détail de commande,
 	// disparue avec l'espace client (2026-07-31).
@@ -47,7 +46,6 @@ const INTENTIONALLY_UNGATED: Record<string, string> = {
 	"remove-from-cart.ts": "retrait d'article — jamais bloquant",
 	"remove-multiple-items.ts": "retrait d'articles — jamais bloquant",
 	"remove-unavailable-items.ts": "nettoyage d'articles indisponibles",
-	"remove-cart-discount.ts": "retrait d'un code promo — jamais bloquant",
 	// `move-to-wishlist.ts` a quitté cette liste avec l'action elle-même
 	// (audit wishlist 2026-08-01 : endpoint RPC sans appelant UI).
 	"update-cart-prices.ts": "resynchronise des prix, n'ajoute rien",

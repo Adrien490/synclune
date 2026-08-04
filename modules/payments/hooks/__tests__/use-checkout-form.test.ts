@@ -147,22 +147,6 @@ describe("useCheckoutForm", () => {
 		);
 	});
 
-	it("calls useAppForm with empty discountCode by default", () => {
-		setup();
-
-		renderHook(() => useCheckoutForm({ session: null }));
-
-		expect(mockUseAppForm).toHaveBeenCalledWith(
-			expect.objectContaining({
-				defaultValues: expect.objectContaining({
-					discountCode: "",
-					_appliedDiscount: null,
-					_discountOpen: false,
-				}),
-			}),
-		);
-	});
-
 	// --------------------------------------------------------------------------
 	// useAppForm receives an onSubmit handler
 	// --------------------------------------------------------------------------

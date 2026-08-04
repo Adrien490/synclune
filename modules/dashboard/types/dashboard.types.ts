@@ -44,9 +44,6 @@ export type GetKpisReturn = {
 	pendingShipment: {
 		count: number;
 	};
-	discountImpact: {
-		amount: number;
-	};
 	/**
 	 * Nouveaux clients : clients dont la 1ʳᵉ commande payée tombe dans le mois
 	 * (clé client = COALESCE userId, customerEmail).
@@ -122,10 +119,13 @@ export type DashboardAlerts = {
  *
  * Pas de compteur de litiges : le modèle `Dispute` a été retiré en V1 (2026-07-30),
  * les deadlines de chargeback se suivent dans le Dashboard Stripe.
+ *
+ * Pas de compteur de sur-facturation non plus (audit du module orders,
+ * 2026-08-05) : il ne pouvait s'éteindre qu'en cliquant un bouton de maintenance,
+ * et son lien menait à la liste NON filtrée — il ne disait pas quelle commande.
+ * La détection subsiste, mais elle prévient par e-mail d'alerte admin.
  */
 export type DashboardActionItems = {
-	/** Commandes sur-facturées non résolues (overbilledAmountCents non nul). */
-	overbilledOrders: number;
 	/** Commandes PAID en PROCESSING depuis plus de 7 jours. */
 	stuckProcessing: number;
 	/** Commandes SHIPPED depuis plus de 14 jours sans livraison confirmée. */

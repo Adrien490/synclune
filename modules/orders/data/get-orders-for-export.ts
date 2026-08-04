@@ -21,7 +21,6 @@ const EXPORT_SELECT = {
 	customerName: true,
 	customerEmail: true,
 	subtotal: true,
-	discountAmount: true,
 	shippingCost: true,
 	total: true,
 	paymentMethod: true,

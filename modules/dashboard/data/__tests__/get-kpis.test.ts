@@ -112,7 +112,6 @@ describe("fetchDashboardKpis — mois en cours uniquement", () => {
 			averageOrderValue: { amount: 2500 },
 			conversionRate: { rate: 50, abandoned: 4 },
 			pendingShipment: { count: 2 },
-			discountImpact: { amount: 500 },
 			newCustomers: { count: 3 },
 		});
 	});

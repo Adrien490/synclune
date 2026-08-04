@@ -39,7 +39,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		customerEmail: "alice@example.com",
 		customerName: "Alice Dupont",
 		subtotal: 9000,
-		discountAmount: 0,
 		shippingCost: 500,
 		total: 9500,
 		currency: "EUR",
@@ -89,7 +88,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 			},
 		],
 		refunds: [],
-		discountUsages: [],
 		history: [],
 		...overrides,
 	} as Order;

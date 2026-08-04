@@ -95,12 +95,12 @@ describe("CartSheetFooter", () => {
 
 	it("displays item count in singular for one item", () => {
 		render(<CartSheetFooter {...createProps({ totalItems: 1 })} />);
-		expect(screen.getByText(/Sous-total \(1 article\)/)).toBeInTheDocument();
+		expect(screen.getByText(/Sous-total · 1 article/)).toBeInTheDocument();
 	});
 
 	it("displays item count in plural for multiple items", () => {
 		render(<CartSheetFooter {...createProps({ totalItems: 3 })} />);
-		expect(screen.getByText(/Sous-total \(3 articles\)/)).toBeInTheDocument();
+		expect(screen.getByText(/Sous-total · 3 articles/)).toBeInTheDocument();
 	});
 
 	it("renders checkout link to /paiement when no stock issues", () => {
@@ -166,33 +166,68 @@ describe("CartSheetFooter", () => {
 		expect(screen.getByTestId("sheet-footer")).toBeInTheDocument();
 	});
 
+	/**
+	 * @regression cart-footer-owns-bottom-inset-2026-08-04
+	 *
+	 * Le footer est le PROPRIÉTAIRE UNIQUE de la marge basse du panier, sur les
+	 * deux formats — les deux popups posent `pb-0`.
+	 *
+	 * Avant, `DrawerContent` ajoutait son `pb-[max(1rem,env(safe-area-inset-bottom))]`
+	 * au `pb-4` d'ici : ≥ 32 px de vide sous « Continuer mes achats », sur un
+	 * panneau mobile borné à 85 dvh.
+	 *
+	 * ⚠️ La formule `max()` est load-bearing, pas cosmétique : un `pb-4` nu ferait
+	 * passer le CTA sous la barre d'accueil iPhone. Corriger le doublon en
+	 * retirant simplement l'`env()` du popup aurait donc échangé un défaut
+	 * d'espacement contre un défaut d'atteignabilité.
+	 */
+	/**
+	 * @regression cart-total-no-display-face-tabular-2026-08-04
+	 *
+	 * `tabular-nums` n'émet que `font-variant-numeric`, dont l'effet dépend de la
+	 * feature OpenType `tnum` du fichier servi. **Fraunces ne l'expose pas** — sa
+	 * table GSUB ne porte que `kern` et `liga`.
+	 *
+	 * Mesuré sur le woff2 réellement buildé, à 24 px :
+	 * - Fraunces : « 111,11 € » = 80,97 px, « 888,88 € » = 97,11 px → Δ **16,14 px**,
+	 *   identique avec ET sans `tabular-nums` (l'utilitaire ne fait rien).
+	 * - Figtree : Δ 24,11 px sans, **0,00 px** avec.
+	 *
+	 * Le sous-total est animé par `AnimatedNumber`, donc il traverse toutes les
+	 * valeurs intermédiaires : en display, il se serait mis à gigoter de ~16 px à
+	 * chaque changement de quantité, sur le seul chiffre transactionnel du panneau.
+	 */
+	it("@regression n'associe pas la police display à tabular-nums sur le total", () => {
+		render(<CartSheetFooter {...createProps()} />);
+		// `AnimatedNumber` est mocké en `<span data-testid="animated-number">` :
+		// le porteur des classes est son parent, celui qui reçoit le montant.
+		const total = screen.getByTestId("animated-number").parentElement;
+
+		expect(total?.className).toContain("tabular-nums");
+		expect(total?.className).not.toContain("font-display");
+	});
+
+	it("@regression porte lui-même la marge basse, safe-area comprise", () => {
+		render(<CartSheetFooter {...createProps()} />);
+		const footer = screen.getByTestId("sheet-footer");
+
+		expect(footer.className).toContain("pb-[max(1rem,env(safe-area-inset-bottom))]");
+		// Pas de seconde valeur de padding bas qui viendrait s'y superposer.
+		expect(footer.className).not.toMatch(/\bpb-\d/);
+	});
+
 	it("renders the shipping fees hint with the rate from SHIPPING_RATES.FR", () => {
 		render(<CartSheetFooter {...createProps()} />);
 		// SHIPPING_RATES.FR.amount === 499 (4.99 €). The mocked formatEuro returns "4.99 €".
-		expect(
-			screen.getByText(/Frais postaux dès 4\.99 € — calculés à l'étape suivante/),
-		).toBeInTheDocument();
+		// Libellé et montant sont deux nœuds depuis que le récapitulatif est une
+		// étiquette (le montant s'aligne à droite en `tabular-nums`).
+		expect(screen.getByText("Frais postaux dès")).toBeInTheDocument();
+		expect(screen.getByText("4.99 €")).toBeInTheDocument();
+		expect(screen.getByText(/Calculés à l'étape suivante/)).toBeInTheDocument();
 	});
 
 	it("does not render the discount line when no discount is applied", () => {
 		render(<CartSheetFooter {...createProps()} />);
-		expect(screen.queryByText(/^Réduction/)).not.toBeInTheDocument();
-	});
-
-	it("renders the discount line with the applied code label", () => {
-		render(
-			<CartSheetFooter
-				{...createProps({ appliedDiscountCode: "SUMMER20", discountAmount: 500 })}
-			/>,
-		);
-		expect(screen.getByText("Réduction (SUMMER20)")).toBeInTheDocument();
-		expect(screen.getByText(/−5\.00 €/)).toBeInTheDocument();
-	});
-
-	it("does not render the discount line when discountAmount is zero", () => {
-		render(
-			<CartSheetFooter {...createProps({ appliedDiscountCode: "EMPTY", discountAmount: 0 })} />,
-		);
 		expect(screen.queryByText(/^Réduction/)).not.toBeInTheDocument();
 	});
 });

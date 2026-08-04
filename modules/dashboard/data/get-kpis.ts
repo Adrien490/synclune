@@ -52,7 +52,7 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 					paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
 					...notDeleted,
 				},
-				_sum: { total: true, discountAmount: true },
+				_sum: { total: true },
 				_count: true,
 			}),
 			// Taux de finalisation (ANALYTICS-AUDIT-006) : numérateur ET dénominateur
@@ -126,9 +126,6 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 			},
 			pendingShipment: {
 				count: pendingShipmentCount,
-			},
-			discountImpact: {
-				amount: currentMonth._sum.discountAmount ?? 0,
 			},
 			newCustomers: {
 				count: Number(newCustomersRows[0]?.currentCount ?? 0),

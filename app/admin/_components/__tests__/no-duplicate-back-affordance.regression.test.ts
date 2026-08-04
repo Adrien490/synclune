@@ -36,7 +36,6 @@ const DETAIL_BODY_SURFACES = [
 	"modules/products/components/admin/product-detail/product-detail-header.tsx",
 	"modules/orders/components/admin/order-detail/order-header.tsx",
 	"modules/refunds/components/admin/refund-detail-header.tsx",
-	"modules/discounts/components/admin/discount-detail/discount-detail-header.tsx",
 	"modules/skus/components/admin/sku-detail/sku-detail-header.tsx",
 	"modules/collections/components/admin/collection-detail/collection-detail-header.tsx",
 	"modules/materials/components/admin/material-detail/material-detail-header.tsx",
@@ -59,10 +58,12 @@ describe("@regression admin-mobile-no-duplicate-back", () => {
 		expect(code).not.toMatch(/aria-label=[{"'`]?[^"'`}]*\bRetour\b/);
 	});
 
-	it("aucune surface de détail n'importe ArrowLeft (icône de retour)", () => {
+	it("aucune surface de détail n'importe ArrowLeftIcon (icône de retour)", () => {
 		const offenders = DETAIL_BODY_SURFACES.filter((relPath) => {
 			const code = stripComments(readFileSync(join(ROOT, relPath), "utf8"));
-			return /^import\s+\{[^}]*\bArrowLeft\b[^}]*\}\s+from\s+["']lucide-react["']/m.test(code);
+			return /^import\s+\{[^}]*\bArrowLeftIcon\b[^}]*\}\s+from\s+["']@phosphor-icons\/react\/ssr["']/m.test(
+				code,
+			);
 		});
 
 		expect(offenders).toEqual([]);
@@ -74,7 +75,7 @@ describe("@regression admin-mobile-no-duplicate-back", () => {
 		);
 
 		expect(header).toMatch(/aria-label="Retour"/);
-		expect(header).toMatch(/ChevronLeft/);
+		expect(header).toMatch(/CaretLeftIcon/);
 	});
 
 	it("le header mobile n'émet pas de <h1> (la page porte la structure)", () => {

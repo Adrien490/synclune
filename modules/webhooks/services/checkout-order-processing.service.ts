@@ -138,7 +138,6 @@ function mapToOrderWithItems(order: {
 	shippingCountry: string | null;
 	shippingPhone: string | null;
 	subtotal: number;
-	discountAmount: number;
 	shippingCost: number;
 	total: number;
 	items: Array<{
@@ -171,7 +170,6 @@ function mapToOrderWithItems(order: {
 		shippingCountry: order.shippingCountry,
 		shippingPhone: order.shippingPhone,
 		subtotal: order.subtotal,
-		discountAmount: order.discountAmount,
 		shippingCost: order.shippingCost,
 		total: order.total,
 		items: order.items.map((item) => ({
@@ -502,10 +500,9 @@ async function processOrderAtomically(
 	//
 	// Depuis le passage du panier en cookie (2026-08-04), il n'y a plus de table
 	// `Cart` à purger — et un webhook Stripe est un appel serveur-à-serveur, donc
-	// sans aucun cookie du client. Cette étape supprimait les `CartItem` et
-	// remettait `appliedDiscountCode`/`discountAmountCache` à NULL
-	// ([[CART-DISCOUNT-003]]) ; les deux sont désormais portés par le cookie `cart`
-	// et partent ensemble à sa suppression.
+	// sans aucun cookie du client. Cette étape supprimait les `CartItem` ; les
+	// lignes sont désormais portées par le cookie `cart` et partent à sa
+	// suppression.
 	//
 	// Le vidage est repris par `clearCartAfterOrder`, déclenché au montage de
 	// `/paiement/confirmation` (seule surface qui a la main sur le cookie). Angle

@@ -58,7 +58,6 @@ import { removeFromCart } from "../remove-from-cart";
 import { updateCartItem } from "../update-cart-item";
 import { removeMultipleItems } from "../remove-multiple-items";
 import { clearCart } from "../clear-cart";
-import { removeCartDiscount } from "../remove-cart-discount";
 import { ActionStatus } from "@/shared/types/server-action";
 import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "../../constants/cart";
 
@@ -420,34 +419,5 @@ describe("clearCart", () => {
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.data).toMatchObject({ clearedCount: 0 });
 		expect(mockClearCartCookie).not.toHaveBeenCalled();
-	});
-});
-
-describe("removeCartDiscount", () => {
-	it("retire le code en gardant les articles", async () => {
-		mockReadCartCookie.mockResolvedValue({
-			items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
-			discountCode: "BIENVENUE10",
-		});
-
-		const result = await removeCartDiscount(undefined);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(writtenCart()).toEqual({
-			items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
-			discountCode: null,
-		});
-	});
-
-	it("échoue quand aucun code n'est appliqué", async () => {
-		mockReadCartCookie.mockResolvedValue({
-			items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
-			discountCode: null,
-		});
-
-		const result = await removeCartDiscount(undefined);
-
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockWriteCartCookie).not.toHaveBeenCalled();
 	});
 });

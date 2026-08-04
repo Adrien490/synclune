@@ -1,6 +1,12 @@
 interface OrderItem {
 	productTitle: string | null;
 	skuColor: string | null;
+	// Snapshot CSV des hex de couleur, rendu en pastilles dans l'email de
+	// confirmation (`EmailColorSwatch`). Il manquait ici : le webhook Stripe étant
+	// l'émetteur de ~100 % des commandes, les pastilles ne s'affichaient QUE sur un
+	// « marquer comme payée » manuel ou un renvoi admin — les deux seuls autres
+	// émetteurs, qui eux transmettaient la colonne (audit V2, Lot 5).
+	skuColorHexes: string | null;
 	skuMaterial: string | null;
 	skuSize: string | null;
 	quantity: number;
@@ -32,7 +38,6 @@ export interface OrderWithItems {
 	shippingCountry: string | null;
 	shippingPhone: string | null;
 	subtotal: number;
-	discountAmount: number;
 	shippingCost: number;
 	total: number;
 	items: OrderItem[];

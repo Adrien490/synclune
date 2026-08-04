@@ -304,7 +304,6 @@ function createValidData(overrides: Partial<ConfirmCheckoutData> = {}): ConfirmC
 		cartItems: VALID_CART_ITEMS,
 		shippingAddress: VALID_SHIPPING_ADDRESS,
 		email: undefined,
-		discountCode: undefined,
 		paymentIntentId: "pi_test_123",
 		...overrides,
 	};
@@ -367,8 +366,6 @@ const MOCK_ORDER = {
 const MOCK_ORDER_RESULT = {
 	order: MOCK_ORDER,
 	appliedDiscountId: null,
-	discountAmount: 0,
-	appliedDiscountCode: null,
 };
 
 const MOCK_PAYMENT_INTENT = {
@@ -647,18 +644,6 @@ describe("confirmCheckout", () => {
 
 			expect(mockUpdateTag).not.toHaveBeenCalledWith(expect.stringContaining("cart-user-"));
 			expect(mockUpdateTag).not.toHaveBeenCalledWith(expect.stringContaining("cart-session-"));
-		});
-
-		it("should invalidate discount usage cache when discount was applied", async () => {
-			mockCreateOrderInTransaction.mockResolvedValue({
-				...MOCK_ORDER_RESULT,
-				appliedDiscountId: "disc-001",
-				appliedDiscountCode: "PROMO20",
-			});
-
-			await confirmCheckout(createValidData({ discountCode: "PROMO20" }));
-
-			expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc-001");
 		});
 
 		it("should call computeCartSubtotal with cart items and SKU results", async () => {
@@ -1557,66 +1542,6 @@ describe("confirmCheckout", () => {
 	// PI cleanup with discount
 	// ──────────────────────────────────────────────────────────────
 
-	describe("cleanup with discount applied", () => {
-		beforeEach(() => {
-			mockCreateOrderInTransaction.mockResolvedValue({
-				...MOCK_ORDER_RESULT,
-				appliedDiscountId: "disc-001",
-				appliedDiscountCode: "SAVE10",
-			});
-		});
-
-		it("should rollback discount usage when cleanup triggered by succeeded PI", async () => {
-			const error = new StripeModule.errors.StripeInvalidRequestError({
-				message: "This PaymentIntent has a status of succeeded.",
-				type: "invalid_request_error",
-			});
-			mockStripe.paymentIntents.update.mockRejectedValue(error);
-			// [[DISC-USAGE-002]] Le service canonique lit `Order.discountId` puis
-			// décrémente par cet id.
-			setupCleanupOrderState(undefined, "disc-001");
-
-			await confirmCheckout(createValidData({ discountCode: "SAVE10" }));
-
-			expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
-				where: { id: "order-001", discountId: { not: null } },
-				data: { discountId: null, discountCode: null },
-			});
-			// [[DISC-USAGE-002]] Décrément par `id` (via les usages de la commande),
-			// plus par `code` : un renommage admin du code entre la création de la
-			// commande et le rollback ratait la ligne et laissait `usageCount` gonflé.
-			expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
-				where: { id: "disc-001", usageCount: { gt: 0 } },
-				data: { usageCount: { decrement: 1 } },
-			});
-		});
-
-		it("should rollback discount usage when cleanup triggered by canceled PI", async () => {
-			const error = new StripeModule.errors.StripeInvalidRequestError({
-				message: "This PaymentIntent has a status of canceled.",
-				type: "invalid_request_error",
-			});
-			mockStripe.paymentIntents.update.mockRejectedValue(error);
-			// [[DISC-USAGE-002]] Le service canonique lit `Order.discountId` puis
-			// décrémente par cet id.
-			setupCleanupOrderState(undefined, "disc-001");
-
-			await confirmCheckout(createValidData({ discountCode: "SAVE10" }));
-
-			expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
-				where: { id: "order-001", discountId: { not: null } },
-				data: { discountId: null, discountCode: null },
-			});
-			// [[DISC-USAGE-002]] Décrément par `id` (via les usages de la commande),
-			// plus par `code` : un renommage admin du code entre la création de la
-			// commande et le rollback ratait la ligne et laissait `usageCount` gonflé.
-			expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
-				where: { id: "disc-001", usageCount: { gt: 0 } },
-				data: { usageCount: { decrement: 1 } },
-			});
-		});
-	});
-
 	// ──────────────────────────────────────────────────────────────
 	// Stripe update failure + cleanup
 	// ──────────────────────────────────────────────────────────────
@@ -1658,36 +1583,6 @@ describe("confirmCheckout", () => {
 			expect(result).toEqual({
 				success: false,
 				error: "Une erreur est survenue lors de la validation de la commande.",
-			});
-		});
-
-		it("should not skip cleanup when discount was applied and stripe update fails", async () => {
-			mockCreateOrderInTransaction.mockResolvedValue({
-				...MOCK_ORDER_RESULT,
-				appliedDiscountId: "disc-001",
-				appliedDiscountCode: "PROMO10",
-			});
-			mockStripe.paymentIntents.update.mockRejectedValue(
-				new mockCircuitBreakerErrorClass("paymentIntents"),
-			);
-			// [[DISC-USAGE-002]] La libération passe par `releaseOrderDiscountUsageTx`,
-			// qui lit `Order.discountId` avant de décrémenter.
-			setupCleanupOrderState(undefined, "disc-001");
-
-			await confirmCheckout(createValidData({ discountCode: "PROMO10" }));
-
-			expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
-				where: { id: "order-001", discountId: { not: null } },
-				data: { discountId: null, discountCode: null },
-			});
-			// Décrément par `id`, plus par `code` : un renommage admin du code entre la
-			// création de la commande et le rollback ratait la ligne.
-			expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
-				where: { id: "disc-001", usageCount: { gt: 0 } },
-				data: { usageCount: { decrement: 1 } },
-			});
-			expect(mockPrisma.order.delete).toHaveBeenCalledWith({
-				where: { id: "order-001" },
 			});
 		});
 

@@ -138,11 +138,11 @@ vi.mock("motion/react", () => ({
 	useReducedMotion: () => false,
 }));
 
-vi.mock("lucide-react", () => ({
-	ArrowRight: () => <svg data-testid="icon-arrow-right" />,
-	Check: () => <svg data-testid="icon-check" />,
-	Minus: () => <svg data-testid="icon-minus" />,
-	Plus: () => <svg data-testid="icon-plus" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	ArrowRightIcon: () => <svg data-testid="icon-arrow-right" />,
+	CheckIcon: () => <svg data-testid="icon-check" />,
+	MinusIcon: () => <svg data-testid="icon-minus" />,
+	PlusIcon: () => <svg data-testid="icon-plus" />,
 }));
 
 vi.mock("@/shared/components/scroll-fade", () => ({
@@ -216,11 +216,7 @@ describe("SkuSelectorDialog", () => {
 
 	it("renders nothing when dialog is closed", () => {
 		mockIsOpen.value = false;
-		const { container } = render(
-			<SkuSelectorDialog
-				cart={{ items: [], appliedDiscountCode: null, discountAmountCache: null }}
-			/>,
-		);
+		const { container } = render(<SkuSelectorDialog cart={{ items: [] }} />);
 		expect(container.firstChild).toBeNull();
 	});
 
@@ -245,11 +241,7 @@ describe("SkuSelectorDialog", () => {
 			},
 			preselectedColor: null,
 		};
-		render(
-			<SkuSelectorDialog
-				cart={{ items: [], appliedDiscountCode: null, discountAmountCache: null }}
-			/>,
-		);
+		render(<SkuSelectorDialog cart={{ items: [] }} />);
 		expect(screen.getByTestId("responsive-dialog")).toBeInTheDocument();
 	});
 
@@ -274,11 +266,7 @@ describe("SkuSelectorDialog", () => {
 			},
 			preselectedColor: null,
 		};
-		render(
-			<SkuSelectorDialog
-				cart={{ items: [], appliedDiscountCode: null, discountAmountCache: null }}
-			/>,
-		);
+		render(<SkuSelectorDialog cart={{ items: [] }} />);
 		expect(screen.getByTestId("dialog-title")).toHaveTextContent("Bague étoile");
 	});
 });

@@ -5,8 +5,10 @@ import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants
 /**
  * Cookie du panier : SSOT du panier depuis le retrait de la base (2026-08-04),
  * sur le modèle de `wishlist-cookie.ts`. Le cookie porte directement les lignes
- * (SKU, quantité, prix constaté à l'ajout) et le code promo appliqué — il n'y a
- * plus ni table `Cart` ni table `CartItem`.
+ * (SKU, quantité, prix constaté à l'ajout) — il n'y a plus ni table `Cart` ni
+ * table `CartItem`. Plus de code promo non plus : les `Discount` ont été retirés
+ * le 2026-08-05, avec la clé `d` de la forme sérialisée. Un ancien cookie qui la
+ * porte encore reste lisible — les clés inconnues sont simplement ignorées.
  */
 const CART_COOKIE_NAME = "cart";
 
@@ -23,10 +25,6 @@ const CART_COOKIE_MAX_AGE = 60 * 60 * 24 * CART_EXPIRATION_DAYS; // 7 jours en s
  * évite qu'une valeur forgée gonfle lectures et requêtes.
  */
 const CUID2_LIKE_REGEX = /^[a-z][a-z0-9]{1,31}$/;
-
-/** Aligné sur `applyCartDiscountSchema` et sur `Cart.appliedDiscountCode` (VarChar(30)). */
-const DISCOUNT_CODE_MAX_LENGTH = 30;
-const DISCOUNT_CODE_REGEX = /^[A-Z0-9_-]{1,30}$/;
 
 /**
  * Plafond de prix accepté dans le cookie (10 000 € en centimes).
@@ -52,14 +50,12 @@ interface CartCookieItem {
 
 export interface CartCookieValue {
 	items: CartCookieItem[];
-	/** Code promo appliqué, en majuscules. `null` si aucun. */
-	discountCode: string | null;
 }
 
-const EMPTY_CART: CartCookieValue = { items: [], discountCode: null };
+const EMPTY_CART: CartCookieValue = { items: [] };
 
 /**
- * Forme sérialisée, volontairement compacte : `{"i":[[skuId,qty,price]],"d":"CODE"}`.
+ * Forme sérialisée, volontairement compacte : `{"i":[[skuId,qty,price]]}`.
  *
  * ⚠️ Budget 4 Ko. Next sérialise la valeur avec `encodeURIComponent`, donc chaque
  * caractère de ponctuation JSON (`[`, `]`, `"`, `,`) coûte 3 octets une fois
@@ -70,7 +66,6 @@ const EMPTY_CART: CartCookieValue = { items: [], discountCode: null };
 type SerializedItem = [skuId: string, quantity: number, priceAtAdd: number];
 interface SerializedCart {
 	i?: unknown;
-	d?: unknown;
 }
 
 function isPositiveInt(value: unknown, max: number): value is number {
@@ -123,7 +118,7 @@ export async function readCartCookie(): Promise<CartCookieValue> {
 		return EMPTY_CART;
 	}
 
-	const { i, d } = parsed as SerializedCart;
+	const { i } = parsed as SerializedCart;
 
 	const items: CartCookieItem[] = [];
 	if (Array.isArray(i)) {
@@ -137,16 +132,9 @@ export async function readCartCookie(): Promise<CartCookieValue> {
 		}
 	}
 
-	const discountCode =
-		typeof d === "string" && d.length <= DISCOUNT_CODE_MAX_LENGTH && DISCOUNT_CODE_REGEX.test(d)
-			? d
-			: null;
-
-	// Un code promo sans article n'a rien à remiser : on le laisse tomber plutôt
-	// que de le réafficher sur un panier vide.
 	if (items.length === 0) return EMPTY_CART;
 
-	return { items, discountCode };
+	return { items };
 }
 
 /**
@@ -165,12 +153,9 @@ export async function writeCartCookie(cart: CartCookieValue): Promise<void> {
 		return;
 	}
 
-	const payload: { i: SerializedItem[]; d?: string } = {
+	const payload: { i: SerializedItem[] } = {
 		i: items.map((item) => [item.skuId, item.quantity, item.priceAtAdd]),
 	};
-	if (cart.discountCode) {
-		payload.d = cart.discountCode;
-	}
 
 	cookieStore.set(CART_COOKIE_NAME, JSON.stringify(payload), {
 		httpOnly: true, // Pas accessible en JavaScript (protection XSS)

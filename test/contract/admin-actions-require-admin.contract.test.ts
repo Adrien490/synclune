@@ -45,7 +45,6 @@ const ADMIN_ACTION_DIRS = [
 	// vivaient encore hors contrat. Toutes étaient gardées, rien ne l'imposait.
 	// `discounts` porte en outre le seul sous-dossier d'actions du repo
 	// (`actions/admin/`), d'où le scan récursif ci-dessous.
-	"modules/discounts/actions",
 	"modules/media/actions",
 	"modules/dashboard/actions",
 ];
@@ -85,10 +84,8 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	// RÉELLE : `requireActiveAccountIfAuthenticated()` (autorise l'invité, rejette
 	// une session dont le compte n'est pas ACTIVE) + rate limit. Retour custom
 	// `ValidateDiscountCodeReturn`, donc incompatible avec l'early-return ActionState.
-	"modules/discounts/actions/validate-discount-code.ts",
 	// Fin wrapper de lecture au-dessus de `validateDiscountCode` : hérite de sa
 	// garde et de son rate limit, n'écrit rien en base.
-	"modules/discounts/actions/apply-discount-code.ts",
 ]);
 
 interface ActionFile {

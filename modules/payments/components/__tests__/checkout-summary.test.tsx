@@ -79,14 +79,14 @@ vi.mock("@/shared/components/icons/payment-icons", () => ({
 	CBIcon: () => <svg data-testid="cb-icon" />,
 }));
 
-vi.mock("lucide-react", () => ({
-	ChevronDown: () => <svg data-testid="chevron-down" />,
-	ExternalLink: () => <svg data-testid="external-link-icon" />,
-	Info: () => <svg data-testid="info-icon" />,
-	Pencil: () => <svg data-testid="pencil-icon" />,
-	Shield: () => <svg data-testid="shield-icon" />,
-	ShoppingBag: () => <svg data-testid="shopping-bag-icon" />,
-	Tag: () => <svg data-testid="tag-icon" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CaretDownIcon: () => <svg data-testid="chevron-down" />,
+	ArrowSquareOutIcon: () => <svg data-testid="external-link-icon" />,
+	InfoIcon: () => <svg data-testid="info-icon" />,
+	PencilSimpleIcon: () => <svg data-testid="pencil-icon" />,
+	ShieldIcon: () => <svg data-testid="shield-icon" />,
+	ShoppingBagIcon: () => <svg data-testid="shopping-bag-icon" />,
+	TagIcon: () => <svg data-testid="tag-icon" />,
 	TruckIcon: () => <svg data-testid="truck-icon" />,
 }));
 
@@ -98,13 +98,10 @@ vi.mock("@/shared/utils/cn", () => ({
 
 import { CheckoutSummary } from "../checkout-summary";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
-import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 
 afterEach(cleanup);
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
-
-type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
 
 function createCartItem(overrides: Record<string, unknown> = {}) {
 	return {
@@ -132,25 +129,12 @@ function createCart(items: ReturnType<typeof createCartItem>[] = []): NonNullabl
 	} as unknown as NonNullable<GetCartReturn>;
 }
 
-function createDiscount(overrides: Partial<AppliedDiscount> = {}): AppliedDiscount {
-	return {
-		id: "disc-1",
-		code: "SAVE10",
-		type: "PERCENTAGE" as AppliedDiscount["type"],
-		value: 10,
-		discountAmount: 500,
-		excludeSaleItems: false,
-		...overrides,
-	};
-}
-
 const defaultProps = {
 	subtotal: 2500,
 	shipping: 600,
 	shippingUnavailable: false,
 	shippingInfo: null,
 	total: 3100,
-	discountAmount: 0,
 };
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -383,43 +367,10 @@ describe("CheckoutSummary", () => {
 	});
 
 	describe("discount display", () => {
-		it("shows discount line when appliedDiscount is provided with discountAmount > 0", () => {
-			const cart = createCart([createCartItem()]);
-			const discount = createDiscount({ code: "SAVE10", discountAmount: 500 });
-
-			render(
-				<CheckoutSummary
-					cart={cart}
-					{...defaultProps}
-					discountAmount={500}
-					appliedDiscount={discount}
-				/>,
-			);
-
-			expect(screen.getAllByText(/Réduction \(SAVE10\)/).length).toBeGreaterThanOrEqual(1);
-		});
-
-		it("shows formatted discount amount with negative sign", () => {
-			mockFormatEuro.mockImplementation((n: number) => `${(n / 100).toFixed(2)} €`);
-			const cart = createCart([createCartItem()]);
-			const discount = createDiscount({ discountAmount: 500 });
-
-			render(
-				<CheckoutSummary
-					cart={cart}
-					{...defaultProps}
-					discountAmount={500}
-					appliedDiscount={discount}
-				/>,
-			);
-
-			expect(screen.getAllByText(/-5\.00 €/).length).toBeGreaterThanOrEqual(1);
-		});
-
 		it("hides discount line when appliedDiscount is null", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} {...defaultProps} appliedDiscount={null} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
 		});
@@ -430,38 +381,6 @@ describe("CheckoutSummary", () => {
 			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
-		});
-
-		it("hides discount line when discountAmount is 0", () => {
-			const cart = createCart([createCartItem()]);
-			const discount = createDiscount({ discountAmount: 0 });
-
-			render(
-				<CheckoutSummary
-					cart={cart}
-					{...defaultProps}
-					discountAmount={0}
-					appliedDiscount={discount}
-				/>,
-			);
-
-			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
-		});
-
-		it("shows discount code in the reduction label", () => {
-			const cart = createCart([createCartItem()]);
-			const discount = createDiscount({ code: "SUMMER20", discountAmount: 1000 });
-
-			render(
-				<CheckoutSummary
-					cart={cart}
-					{...defaultProps}
-					discountAmount={1000}
-					appliedDiscount={discount}
-				/>,
-			);
-
-			expect(screen.getAllByText(/SUMMER20/).length).toBeGreaterThanOrEqual(1);
 		});
 	});
 

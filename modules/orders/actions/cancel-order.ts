@@ -22,7 +22,6 @@ import {
 } from "@/modules/products/utils/cache.utils";
 import { updateTagsAfterMutation } from "@/shared/lib/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
@@ -278,13 +277,7 @@ export async function cancelOrder(
 					}
 				}
 
-				// 3. Libérer les codes promo utilisés sur cette commande.
-				// [[DISC-USAGE-002]] Toujours via le service canonique : son décrément est
-				// gardé par `usageCount > 0`, ce qu'un `update` direct ne fait pas (un
-				// compteur négatif rendrait le code redeemable au-delà de `maxUsageCount`).
-				const releasedDiscountIds = await releaseOrderDiscountUsageTx(tx, id);
-
-				// 4. Auto-refund: créer un Refund (status APPROVED) — le remboursement
+				// 3. Auto-refund: créer un Refund (status APPROVED) — le remboursement
 				// Stripe se fait depuis le dashboard (Lot 2), le webhook refund.updated
 				// finalisera (avoir + email). Pour PARTIALLY_REFUNDED, calcule le solde
 				// restant à rembourser (sinon on créerait un Refund du montant total
@@ -317,7 +310,7 @@ export async function cancelOrder(
 					}
 				}
 
-				// 5. Audit trail (Best Practice Stripe 2025)
+				// 4. Audit trail (Best Practice Stripe 2025)
 				await createOrderAuditTx(tx, {
 					orderId: id,
 					action: "CANCELLED",
@@ -331,7 +324,6 @@ export async function cancelOrder(
 					metadata: {
 						stockRestored: shouldRestoreStock,
 						itemsCount: found.items.length,
-						releasedDiscountIds,
 						autoRefundId: createdRefundId,
 						autoRefundAmount,
 						invoiceVoided: shouldVoidInvoice,

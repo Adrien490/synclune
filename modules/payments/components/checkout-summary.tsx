@@ -17,16 +17,13 @@ import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { getSkuColorsLabel } from "@/modules/skus/utils/sku-colors-label";
-import { ChevronDown, ExternalLink, Info, Shield } from "lucide-react";
+import { ArrowSquareOutIcon, CaretDownIcon, InfoIcon, ShieldIcon } from "@phosphor-icons/react/ssr";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
-import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import Image from "next/image";
 import Link from "next/link";
 import { SHIPPING_UNAVAILABLE } from "../constants/shipping-unavailable";
 import { ROUTES } from "@/shared/constants/urls";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
-
-type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
 
 interface CheckoutSummaryProps {
 	cart: NonNullable<GetCartReturn>;
@@ -35,8 +32,6 @@ interface CheckoutSummaryProps {
 	shippingUnavailable: boolean;
 	shippingInfo: ShippingRate | null;
 	total: number;
-	discountAmount: number;
-	appliedDiscount?: AppliedDiscount | null;
 }
 
 /**
@@ -51,8 +46,6 @@ interface SummaryContentProps {
 	shippingUnavailable: boolean;
 	shippingInfo: ShippingRate | null;
 	total: number;
-	discountAmount: number;
-	appliedDiscount?: AppliedDiscount | null;
 	totalItems: number;
 	onEditCart: () => void;
 }
@@ -64,8 +57,6 @@ function SummaryContent({
 	shippingUnavailable,
 	shippingInfo,
 	total,
-	discountAmount,
-	appliedDiscount,
 	totalItems,
 	onEditCart,
 }: SummaryContentProps) {
@@ -157,16 +148,6 @@ function SummaryContent({
 					<span className="text-base/6 font-medium tabular-nums">{formatEuro(subtotal)}</span>
 				</div>
 
-				{/* Discount line */}
-				{appliedDiscount && discountAmount > 0 && (
-					<div className="text-success flex items-center justify-between">
-						<span>Réduction ({appliedDiscount.code})</span>
-						<span className="text-base/6 font-medium tabular-nums">
-							-{formatEuro(discountAmount)}
-						</span>
-					</div>
-				)}
-
 				{/* Frais de port */}
 				<div className="flex items-center justify-between">
 					<span className="text-muted-foreground">Livraison</span>
@@ -221,7 +202,7 @@ function SummaryContent({
 							}
 						>
 							<span>{DEFAULT_FRANCHISE_VAT_MENTION}</span>
-							<Info className="size-3" aria-hidden="true" />
+							<InfoIcon className="size-3" aria-hidden="true" />
 						</TooltipTrigger>
 						<TooltipContent id={tvaTooltipId} className="max-w-xs text-center">
 							Synclune est en franchise en base de TVA (régime micro-entreprise). Aucune TVA
@@ -242,7 +223,7 @@ function SummaryContent({
 
 				{/* Message sécurité */}
 				<div className="text-muted-foreground flex items-center justify-center gap-1.5 text-xs">
-					<Shield className="text-success size-3.5" />
+					<ShieldIcon className="text-success size-3.5" />
 					<span>Paiement 100% sécurisé</span>
 				</div>
 
@@ -255,7 +236,7 @@ function SummaryContent({
 						rel="noopener noreferrer"
 					>
 						Politique de retour
-						<ExternalLink className="size-3" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-3" aria-hidden="true" />
 						<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 					</Link>
 					<span aria-hidden="true">·</span>
@@ -266,7 +247,7 @@ function SummaryContent({
 						rel="noopener noreferrer"
 					>
 						CGV
-						<ExternalLink className="size-3" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-3" aria-hidden="true" />
 						<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 					</Link>
 				</div>
@@ -282,8 +263,6 @@ export function CheckoutSummary({
 	shippingUnavailable,
 	shippingInfo,
 	total,
-	discountAmount,
-	appliedDiscount,
 }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
 	const haptic = useHaptic();
@@ -342,8 +321,6 @@ export function CheckoutSummary({
 		shippingUnavailable,
 		shippingInfo,
 		total,
-		discountAmount,
-		appliedDiscount,
 		totalItems,
 		onEditCart: handleEditCart,
 	};
@@ -351,8 +328,7 @@ export function CheckoutSummary({
 	return (
 		<>
 			{/* Pré-montée et VIDE au premier rendu, en dehors des deux cartes (leur
-			    conteneur parent n'est jamais `display:none`) — même pattern que la région
-			    de `CheckoutDiscountSection`. */}
+			    conteneur parent n'est jamais `display:none`). */}
 			<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 				{totalAnnouncement}
 			</span>
@@ -382,7 +358,7 @@ export function CheckoutSummary({
 								</CardTitle>
 								<div className="flex items-center gap-2">
 									<span className="text-lg font-semibold tabular-nums">{formatEuro(total)}</span>
-									<ChevronDown
+									<CaretDownIcon
 										className={`text-muted-foreground size-4 transition-transform ${
 											isMobileOpen ? "rotate-180" : ""
 										}`}

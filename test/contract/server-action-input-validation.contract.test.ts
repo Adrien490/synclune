@@ -44,8 +44,6 @@ const VALIDATION_MARKERS = [
 const EXEMPTIONS: Record<string, string> = {
 	// Délègue le code brut à `validateDiscountCode`, qui fait le `safeParse` (le code
 	// n'est jamais utilisé avant). Test de vérité seul ici.
-	"modules/discounts/actions/apply-discount-code.ts":
-		"délègue la validation à validateDiscountCode (safeParse en aval)",
 };
 
 /** Retire commentaires et chaînes pour ne pas détecter un marqueur cité en prose. */
@@ -114,7 +112,10 @@ describe("contrat · validation des entrées de Server Actions", () => {
 	describe("garde-fous du garde-fou", () => {
 		it("le scan trouve réellement les fichiers 'use server'", () => {
 			// Sans ce plancher, un glob cassé rendrait la suite vacuellement verte.
-			expect(SERVER_ACTION_FILES.length).toBeGreaterThan(100);
+			// Abaissé de 100 à 90 le 2026-08-05 avec le retrait des codes promo :
+			// `modules/discounts` portait 10 Server Actions (create/update/delete/
+			// duplicate/toggle/refresh + validate/apply/remove côté panier).
+			expect(SERVER_ACTION_FILES.length).toBeGreaterThan(90);
 		});
 
 		it("le détecteur de paramètres distingue consommé et ignoré", () => {

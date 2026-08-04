@@ -6,7 +6,7 @@
  * (findFirst snapshot + update inconditionnel, seule garde `=== "FAILED"`)
  * laissait deux brèches :
  *  1. un appelant passant un ordre PAID (payment_failed hors-ordre) écrasait
- *     la commande payée (FAILED + CANCELLED + discount libéré) ;
+ *     la commande payée (FAILED + CANCELLED) ;
  *  2. fenêtre read-committed : un `payment_intent.succeeded` concurrent
  *     commitant PAID entre la lecture et l'écriture était écrasé.
  * La garde est désormais ATOMIQUE : `updateMany` conditionnel
@@ -19,7 +19,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockTx,
 	mockPrisma,
-	mockReleaseOrderDiscountUsageTx,
 	mockUpdateTag,
 	mockSentryWithScope,
 	mockSentryCaptureMessage,
@@ -43,7 +42,6 @@ const {
 	return {
 		mockTx,
 		mockPrisma: { $transaction: vi.fn() },
-		mockReleaseOrderDiscountUsageTx: vi.fn().mockResolvedValue([]),
 		mockUpdateTag: vi.fn(),
 		mockSentryWithScope: vi.fn((cb: (scope: typeof mockScope) => void) => cb(mockScope)),
 		mockSentryCaptureMessage: vi.fn(),
@@ -75,14 +73,6 @@ vi.mock("@/shared/constants/urls", () => ({
 	ROUTES: { ADMIN: { ORDER_DETAIL: (id: string) => `/admin/${id}` } },
 }));
 
-vi.mock("@/modules/discounts/services/release-order-discount-usage.service", () => ({
-	releaseOrderDiscountUsageTx: mockReleaseOrderDiscountUsageTx,
-}));
-
-vi.mock("@/modules/discounts/constants/cache", () => ({
-	DISCOUNT_CACHE_TAGS: { USAGE: (id: string) => `discount-usage-${id}` },
-}));
-
 // Ce service s'execute en contexte route handler (cron/webhook) : il invalide via
 // `revalidateTagsInBackground` -> `revalidateTag(tag, { expire: 0 })`, car
 // `updateTag` y throw (E872). Les DEUX sont routes vers le meme espion : ce que
@@ -105,13 +95,12 @@ const FAILURE_DETAILS = {
 describe("[regression] markOrderAsFailed — garde atomique anti-PAID", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockReleaseOrderDiscountUsageTx.mockResolvedValue([]);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
 			cb(mockTx),
 		);
 	});
 
-	it("PAID → écriture bloquée (count 0) : pas de release discount, pas d'audit, Sentry warning", async () => {
+	it("PAID → écriture bloquée (count 0) : pas d'audit, Sentry warning", async () => {
 		mockTx.order.findFirst
 			// Snapshot initial (PAID — l'appelant a raté sa propre garde)
 			.mockResolvedValueOnce({ status: "PROCESSING", paymentStatus: "PAID" })
@@ -122,7 +111,6 @@ describe("[regression] markOrderAsFailed — garde atomique anti-PAID", () => {
 		const result = await markOrderAsFailed("order-paid", "pi_stale", FAILURE_DETAILS);
 
 		expect(result).toEqual({ transitioned: false });
-		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 		expect(mockTx.orderHistory.create).not.toHaveBeenCalled();
 		expect(mockUpdateTag).not.toHaveBeenCalled();
 		// Visibilité : ce chemin ne doit jamais fire en prod → Sentry warning.
@@ -142,7 +130,6 @@ describe("[regression] markOrderAsFailed — garde atomique anti-PAID", () => {
 		const result = await markOrderAsFailed("order-race", "pi_race", FAILURE_DETAILS);
 
 		expect(result).toEqual({ transitioned: false });
-		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 		expect(mockTx.orderHistory.create).not.toHaveBeenCalled();
 	});
 
@@ -156,10 +143,9 @@ describe("[regression] markOrderAsFailed — garde atomique anti-PAID", () => {
 		expect(mockSentryCaptureMessage).not.toHaveBeenCalled();
 	});
 
-	it("PENDING (contrôle) → transition + release discount + audit, prédicat PENDING dans le WHERE", async () => {
+	it("PENDING (contrôle) → transition + audit, prédicat PENDING dans le WHERE", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
 		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
-		mockReleaseOrderDiscountUsageTx.mockResolvedValue(["disc_1"]);
 
 		const result = await markOrderAsFailed("order-ok", "pi_ok", FAILURE_DETAILS);
 
@@ -175,9 +161,7 @@ describe("[regression] markOrderAsFailed — garde atomique anti-PAID", () => {
 				status: "CANCELLED",
 			}),
 		});
-		expect(mockReleaseOrderDiscountUsageTx).toHaveBeenCalledWith(mockTx, "order-ok");
 		expect(mockTx.orderHistory.create).toHaveBeenCalled();
-		expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc_1");
 		expect(mockSentryCaptureMessage).not.toHaveBeenCalled();
 	});
 });

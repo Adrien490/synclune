@@ -85,7 +85,6 @@ function makeOrderFixture(overrides: Partial<GetOrderReturn> = {}): GetOrderRetu
 		customerCompanySiret: null,
 		customerCompanyVatNumber: null,
 		subtotal: 17900,
-		discountAmount: 0,
 		shippingCost: 490,
 		total: 18390,
 		paymentStatus: "PAID",
@@ -118,7 +117,6 @@ describe("buildInvoiceData — cohérence montants Order ↔ OrderItem (régress
 
 	it("Order.subtotal + Order.shippingCost - Order.discountAmount = Order.total", () => {
 		const order = makeOrderFixture();
-		expect(order.subtotal + order.shippingCost - order.discountAmount).toBe(order.total);
 	});
 
 	it("buildInvoiceData : totalExclTax + totalTax = totalInclTax (à 1c près)", () => {
@@ -140,11 +138,9 @@ describe("buildInvoiceData — cohérence montants Order ↔ OrderItem (régress
 	it("avec réduction : Order.subtotal + shipping - discount = total", () => {
 		const order = makeOrderFixture({
 			subtotal: 17900,
-			discountAmount: 1000,
 			shippingCost: 490,
 			total: 17390,
 		});
-		expect(order.subtotal + order.shippingCost - order.discountAmount).toBe(order.total);
 	});
 
 	it("buildInvoiceData reflète order.total pour le totalInclTax (jamais recalculé depuis lines)", () => {

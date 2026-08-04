@@ -50,20 +50,15 @@ const skuRow = (id: string) => ({ id, priceInclTax: 4990, compareAtPrice: null }
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockReadCartCookie.mockResolvedValue({ items: [], discountCode: null });
+	mockReadCartCookie.mockResolvedValue({ items: [] });
 	mockFindMany.mockResolvedValue([]);
-	mockResolveCartDiscount.mockReturnValue({
-		appliedDiscountCode: null,
-		discountAmountCache: null,
-	});
+	mockResolveCartDiscount.mockReturnValue({});
 });
 
 describe("getCart", () => {
 	it("rend un panier VIDE (jamais null) sans cookie", async () => {
 		expect(await getCart()).toEqual({
 			items: [],
-			appliedDiscountCode: null,
-			discountAmountCache: null,
 		});
 		expect(mockFindMany).not.toHaveBeenCalled();
 	});
@@ -71,7 +66,6 @@ describe("getCart", () => {
 	it("matérialise les lignes du cookie en joignant les SKUs", async () => {
 		mockReadCartCookie.mockResolvedValue({
 			items: [{ skuId: SKU_A, quantity: 2, priceAtAdd: 4990 }],
-			discountCode: null,
 		});
 		mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
 
@@ -87,7 +81,6 @@ describe("getCart", () => {
 				{ skuId: SKU_B, quantity: 1, priceAtAdd: 100 },
 				{ skuId: SKU_A, quantity: 1, priceAtAdd: 200 },
 			],
-			discountCode: null,
 		});
 		mockFindMany.mockResolvedValue([skuRow(SKU_A), skuRow(SKU_B)]);
 
@@ -102,7 +95,6 @@ describe("getCart", () => {
 				{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 },
 				{ skuId: SKU_B, quantity: 1, priceAtAdd: 200 },
 			],
-			discountCode: null,
 		});
 		mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
 
@@ -114,7 +106,6 @@ describe("getCart", () => {
 	it("filtre les SKUs et produits soft-deleted côté requête", async () => {
 		mockReadCartCookie.mockResolvedValue({
 			items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
-			discountCode: null,
 		});
 		mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
 
@@ -135,7 +126,6 @@ describe("getCart", () => {
 		beforeEach(() => {
 			mockReadCartCookie.mockResolvedValue({
 				items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
-				discountCode: null,
 			});
 			mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
 		});
@@ -160,23 +150,8 @@ describe("getCart", () => {
 		beforeEach(() => {
 			mockReadCartCookie.mockResolvedValue({
 				items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 4990 }],
-				discountCode: "BIENVENUE10",
 			});
 			mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
-		});
-
-		it("re-dérive la remise à la lecture depuis les articles COURANTS", async () => {
-			mockGetDiscountByCode.mockResolvedValue({ code: "BIENVENUE10" });
-			mockResolveCartDiscount.mockReturnValue({
-				appliedDiscountCode: "BIENVENUE10",
-				discountAmountCache: 499,
-			});
-
-			const cart = await getCart();
-
-			expect(mockGetDiscountByCode).toHaveBeenCalledWith({ code: "BIENVENUE10" });
-			expect(cart.appliedDiscountCode).toBe("BIENVENUE10");
-			expect(cart.discountAmountCache).toBe(499);
 		});
 
 		it("efface l'affichage d'un code devenu inéligible", async () => {
@@ -184,15 +159,12 @@ describe("getCart", () => {
 
 			const cart = await getCart();
 
-			expect(cart.appliedDiscountCode).toBeNull();
-			expect(cart.discountAmountCache).toBeNull();
 			expect(cart.items).toHaveLength(1);
 		});
 
 		it("ne consulte aucun discount sans code appliqué", async () => {
 			mockReadCartCookie.mockResolvedValue({
 				items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 4990 }],
-				discountCode: null,
 			});
 
 			await getCart();
@@ -209,13 +181,12 @@ describe("getCart", () => {
 	it("rend un panier vide et loggue sur erreur de base", async () => {
 		mockReadCartCookie.mockResolvedValue({
 			items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
-			discountCode: null,
 		});
 		mockFindMany.mockRejectedValue(new Error("db down"));
 
 		const cart = await getCart();
 
-		expect(cart).toEqual({ items: [], appliedDiscountCode: null, discountAmountCache: null });
+		expect(cart).toEqual({ items: [] });
 		expect(mockLoggerError).toHaveBeenCalled();
 	});
 });

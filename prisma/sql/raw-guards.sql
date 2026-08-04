@@ -54,28 +54,12 @@ $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT;
 
 -- ## CHECK constraints
 
--- Discount
-ALTER TABLE "Discount" DROP CONSTRAINT IF EXISTS "Discount_maxUsagePerUser_positive";
-ALTER TABLE "Discount" ADD CONSTRAINT "Discount_maxUsagePerUser_positive" CHECK ("maxUsagePerUser" IS NULL OR "maxUsagePerUser" > 0);
-ALTER TABLE "Discount" DROP CONSTRAINT IF EXISTS "Discount_minOrderAmount_positive";
-ALTER TABLE "Discount" ADD CONSTRAINT "Discount_minOrderAmount_positive" CHECK ("minOrderAmount" IS NULL OR "minOrderAmount" > 0);
-ALTER TABLE "Discount" DROP CONSTRAINT IF EXISTS "Discount_percentage_max_100";
-ALTER TABLE "Discount" ADD CONSTRAINT "Discount_percentage_max_100" CHECK ("type" != 'PERCENTAGE' OR "value" <= 100);
-ALTER TABLE "Discount" DROP CONSTRAINT IF EXISTS "Discount_usageCount_non_negative";
-ALTER TABLE "Discount" ADD CONSTRAINT "Discount_usageCount_non_negative" CHECK ("usageCount" >= 0);
-ALTER TABLE "Discount" DROP CONSTRAINT IF EXISTS "Discount_usageCount_within_limit";
-ALTER TABLE "Discount" ADD CONSTRAINT "Discount_usageCount_within_limit" CHECK ("maxUsageCount" IS NULL OR "usageCount" <= "maxUsageCount");
-ALTER TABLE "Discount" DROP CONSTRAINT IF EXISTS "Discount_value_positive";
-ALTER TABLE "Discount" ADD CONSTRAINT "Discount_value_positive" CHECK ("value" > 0);
-
 
 -- Order
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_creditNoteNumber_format_check";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_creditNoteNumber_format_check" CHECK ("creditNoteNumber" IS NULL OR "creditNoteNumber" ~ '^A-[0-9]{4}-[0-9]{5}$');
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_creditNotePdfHash_format_check";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_creditNotePdfHash_format_check" CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_discountAmount_non_negative";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_discountAmount_non_negative" CHECK ("discountAmount" >= 0);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceDataHash_format_check";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_invoiceDataHash_format_check" CHECK ("invoiceDataHash" IS NULL OR "invoiceDataHash" ~ '^[a-f0-9]{64}$');
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceDataSnapshot_hash_coherence_check";
@@ -84,8 +68,6 @@ ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceNumber_format";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_invoiceNumber_format" CHECK ("invoiceNumber" IS NULL OR "invoiceNumber" ~ '^F-[0-9]{4}-[0-9]{5}$');
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoicePdfHash_format_check";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_invoicePdfHash_format_check" CHECK ("invoicePdfHash" IS NULL OR "invoicePdfHash" ~ '^[a-f0-9]{64}$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceReconcileAttempts_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_invoiceReconcileAttempts_check" CHECK ("invoiceReconcileAttempts" >= 0);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_overbilledAmountCents_positive_check";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_overbilledAmountCents_positive_check" CHECK ("overbilledAmountCents" IS NULL OR "overbilledAmountCents" > 0);
 -- Invariant #8 (NF 525) : aucune commande payée sans preuve Stripe.
@@ -102,7 +84,7 @@ ALTER TABLE "Order" ADD CONSTRAINT "Order_shippingCost_non_negative" CHECK ("shi
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_subtotal_non_negative";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_subtotal_non_negative" CHECK ("subtotal" >= 0);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_total_formula";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_total_formula" CHECK ("total" = GREATEST(0, "subtotal" - "discountAmount" + "shippingCost"));
+ALTER TABLE "Order" ADD CONSTRAINT "Order_total_formula" CHECK ("total" = GREATEST(0, "subtotal" + "shippingCost"));
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_total_non_negative";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_total_non_negative" CHECK ("total" >= 0);
 

@@ -1,16 +1,9 @@
-import { DiscountType } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { BusinessError } from "@/shared/lib/actions";
-import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
-import {
-	calculateDiscountWithExclusion,
-	type CartItemForDiscount,
-} from "@/modules/discounts/services/discount-calculation.service";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import { generateOrderNumber } from "@/modules/orders/services/order-generation.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
-import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
@@ -24,10 +17,6 @@ import * as Sentry from "@sentry/nextjs";
 // sur un chemin de facturation.
 const CART_ITEM_MISMATCH_ERROR =
 	"Certains articles de ton panier sont introuvables. Actualise la page.";
-
-function isDiscountType(value: string): value is DiscountType {
-	return value === DiscountType.PERCENTAGE || value === DiscountType.FIXED_AMOUNT;
-}
 
 /** Longueur des colonnes `OrderItem.skuColor` / `skuMaterial` (`VarChar(100)`). */
 const SKU_LABEL_SNAPSHOT_MAX_LENGTH = 100;
@@ -71,7 +60,6 @@ export interface CreateOrderParams {
 	firstName: string;
 	lastName: string;
 	finalEmail: string | null;
-	discountCode?: string;
 	/**
 	 * PaymentIntent Stripe de la commande — OBLIGATOIRE (invariant #8, NF 525).
 	 *
@@ -89,16 +77,13 @@ export interface CreateOrderParams {
 
 interface CreateOrderResult {
 	order: { id: string; orderNumber: string; total: number };
-	appliedDiscountId: string | null;
-	discountAmount: number;
-	appliedDiscountCode: string | null;
 }
 
 /**
  * Creates an order atomically inside a Prisma transaction.
  *
- * Verifies stock with FOR UPDATE row locking, applies discount code, and
- * creates the order + order items + discount usage record in a single transaction.
+ * Verifies stock with FOR UPDATE row locking and creates the order + order items
+ * in a single transaction.
  *
  * **Optimistic stock reservation**: Stock is verified (FOR UPDATE) but NOT decremented here.
  * The actual inventory decrement happens in the Stripe webhook handler
@@ -110,7 +95,7 @@ interface CreateOrderResult {
  * ⚠️ Le perdant a DÉJÀ encaissé son paiement Stripe. Il n'est PAS récupéré par
  * `cleanup-pending-orders` (ce cron exclut les commandes avec `stripePaymentIntentId`).
  * C'est `handlePaymentSuccess` → `handleOversell` (ORD-STRIPE-009) qui le rembourse
- * automatiquement + marque la commande FAILED (libérant le code promo). Ce trade-off
+ * automatiquement + marque la commande FAILED. Ce trade-off
  * évite la logique de rollback complexe et est acceptable au volume actuel.
  *
  * **Pas d'entrée OrderHistory à la création (délibéré)** : une commande PENDING n'est
@@ -135,7 +120,6 @@ export async function createOrderInTransaction(
 		firstName,
 		lastName,
 		finalEmail,
-		discountCode,
 		paymentIntentId,
 	} = params;
 
@@ -143,7 +127,7 @@ export async function createOrderInTransaction(
 	// hors transaction par computeCartSubtotal) doit égaler la somme des lignes qui
 	// seront réellement snapshotées ci-dessous (mêmes skuDetailsResults). Toute
 	// divergence (filtrage, arrondi) produirait un Order dont
-	// total ≠ Σ items + livraison − remise, indétectable en aval. Vérification pure,
+	// total ≠ Σ items + livraison, indétectable en aval. Vérification pure,
 	// AVANT la transaction — aucun lock tenu si elle échoue.
 	let computedSubtotal = 0;
 	for (const cartItem of cartItems) {
@@ -256,138 +240,18 @@ export async function createOrderInTransaction(
 				throw new BusinessError("Livraison non disponible pour cette zone (Corse, DOM-TOM)");
 			}
 
-			// Apply discount code atomically with FOR UPDATE lock
-			let discountAmount = 0;
-			let appliedDiscountId: string | null = null;
-			let appliedDiscountCode: string | null = null;
-
-			if (discountCode) {
-				const discountRows = await tx.$queryRaw<
-					Array<{
-						id: string;
-						code: string;
-						type: string;
-						value: number;
-						minOrderAmount: number | null;
-						maxUsageCount: number | null;
-						maxUsagePerUser: number | null;
-						usageCount: number;
-						endsAt: Date | null;
-						isActive: boolean;
-					}>
-				>`
-				SELECT
-					id, code, type, value,
-					"minOrderAmount", "maxUsageCount", "maxUsagePerUser",
-					"usageCount", "endsAt", "isActive"
-				FROM "Discount"
-				WHERE code = ${discountCode.toUpperCase()}
-				AND "deletedAt" IS NULL
-				FOR UPDATE
-			`;
-
-				if (discountRows.length === 0) {
-					throw new BusinessError(DISCOUNT_ERROR_MESSAGES.NOT_FOUND);
-				}
-
-				const discount = discountRows[0]!;
-
-				if (!isDiscountType(discount.type)) {
-					throw new BusinessError(`Type de réduction inconnu : ${discount.type}`);
-				}
-				const discountType = discount.type;
-
-				// Read usage count directly in transaction to prevent stale cache reads.
-				// Email is normalized (lowercase+trim) to avoid trivial guest bypass of
-				// maxUsagePerUser via casing/whitespace (cf [[CHECKOUT-AUDIT-003]]).
-				const normalizedEmail = finalEmail ? normalizeEmail(finalEmail) : null;
-				let usageCounts: { emailCount: number } | undefined;
-				if (discount.maxUsagePerUser) {
-					let emailCount = 0;
-
-					if (normalizedEmail) {
-						emailCount = await tx.order.count({
-							where: { discountId: discount.id, customerEmail: normalizedEmail },
-						});
-					}
-
-					usageCounts = { emailCount };
-				}
-
-				const eligibility = checkDiscountEligibility(
-					{
-						id: discount.id,
-						code: discount.code,
-						type: discountType,
-						value: discount.value,
-						minOrderAmount: discount.minOrderAmount,
-						maxUsageCount: discount.maxUsageCount,
-						maxUsagePerUser: discount.maxUsagePerUser,
-						usageCount: discount.usageCount,
-						isActive: discount.isActive,
-						endsAt: discount.endsAt,
-					},
-					{
-						subtotal,
-						customerEmail: normalizedEmail ?? undefined,
-					},
-					usageCounts,
-				);
-
-				if (!eligibility.eligible) {
-					throw new BusinessError(eligibility.error ?? "Code promo invalide");
-				}
-
-				const cartItemsForDiscount: CartItemForDiscount[] = [];
-				for (const cartItem of cartItems) {
-					const skuResult = skuDetailsResults.find(
-						(r) => r.success && r.data?.sku.id === cartItem.skuId,
-					);
-					if (skuResult?.success && skuResult.data) {
-						cartItemsForDiscount.push({
-							priceInclTax: skuResult.data.sku.priceInclTax,
-							quantity: cartItem.quantity,
-							compareAtPrice: skuResult.data.sku.compareAtPrice,
-						});
-					}
-				}
-
-				discountAmount = calculateDiscountWithExclusion({
-					type: discountType,
-					value: discount.value,
-					cartItems: cartItemsForDiscount,
-					excludeSaleItems: true,
-				});
-				discountAmount = Math.max(0, Math.min(discountAmount, subtotal));
-
-				if (discountAmount > 0) {
-					const updateResult = await tx.$executeRaw`
-					UPDATE "Discount"
-					SET "usageCount" = "usageCount" + 1
-					WHERE id = ${discount.id}
-						AND ("maxUsageCount" IS NULL OR "usageCount" < "maxUsageCount")
-				`;
-					if (updateResult === 0) {
-						throw new BusinessError("Ce code promo a atteint sa limite d'utilisation");
-					}
-					appliedDiscountId = discount.id;
-					appliedDiscountCode = discount.code;
-				}
-			}
-
 			// Micro-entreprise : TVA non applicable (art. 293 B du CGI). Aucune TVA
 			// n'est stockée — ni ici, ni par ligne : le total est HT = TTC et le CHECK
 			// `Order_total_formula` l'exclut. Sortir de la franchise (seuil 2026 :
 			// 85 000 € pour les ventes de biens) est un chantier à part entière, décrit
 			// dans docs/RUNBOOK.md § « si la franchise était perdue » — il exige des
 			// colonnes de TVA PAR LIGNE sur OrderItem, pas un agrégat sur Order.
-			const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
 			// MIN-AMOUNT-DIVERGE-01 : `total` est le montant AUTORITAIRE posé sur le PI
 			// avant capture (confirm-checkout). Pas de plancher STRIPE_MIN_AMOUNT_EUR_CENTS
 			// ici (contrairement à update-payment-amount qui clampe pour l'affichage) —
 			// l'invariant qui le rend inutile : `shippingCost >= STRIPE_MIN_AMOUNT_EUR_CENTS`
 			// (frais FR par défaut = 499 c, jamais null en métropole) ⇒ total >= shipping >= min.
-			const total = Math.max(0, subtotalAfterDiscount + shippingCost);
+			const total = Math.max(0, subtotal + shippingCost);
 
 			// Le rejet ci-dessous matérialise cet invariant au lieu de le documenter.
 			// Il n'est atteignable qu'après l'introduction d'un port gratuit ou d'un tarif
@@ -404,7 +268,7 @@ export async function createOrderInTransaction(
 					// Aucune PII : uniquement des montants.
 					scope.setContext("checkout", {
 						total,
-						subtotalAfterDiscount,
+						subtotal,
 						shippingCost,
 						minimum: STRIPE_MIN_AMOUNT_EUR_CENTS,
 					});
@@ -423,7 +287,6 @@ export async function createOrderInTransaction(
 				data: {
 					orderNumber,
 					subtotal,
-					discountAmount,
 					shippingCost,
 					total,
 					customerEmail: normalizeEmail(finalEmail ?? ""),
@@ -439,13 +302,6 @@ export async function createOrderInTransaction(
 					status: "PENDING",
 					paymentStatus: "PENDING",
 					stripePaymentIntentId: paymentIntentId,
-					// Code promo posé À LA CRÉATION, plus dans une ligne `DiscountUsage`
-					// écrite après coup (audit V2, Lot 2). Le snapshot `discountCode` suit
-					// la même doctrine que `OrderItem.productTitle` : figé au checkout, il
-					// survit au renommage comme à la suppression du code.
-					...(appliedDiscountId && discountAmount > 0
-						? { discountId: appliedDiscountId, discountCode: appliedDiscountCode }
-						: {}),
 				},
 			});
 
@@ -499,7 +355,7 @@ export async function createOrderInTransaction(
 				});
 			}
 
-			return { order: newOrder, appliedDiscountId, discountAmount, appliedDiscountCode };
+			return { order: newOrder };
 		},
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);

@@ -273,9 +273,14 @@ describe("schema.prisma ↔ migrations", () => {
 	// s'affiche sur le même écran de détail commande (arbitrage Adrien), puis à 21
 	// au Lot 2 avec `DiscountUsage` : une table à UNE ligne maximum par commande
 	// (le cookie panier porte un `discountCode` singulier), repliée en deux colonnes
-	// plates sur `Order` — `discountId` + le snapshot `discountCode`.
+	// plates sur `Order` — `discountId` + le snapshot `discountCode`. Puis à 20 le
+	// 2026-08-05 avec le RETRAIT COMPLET des codes promo (`Discount` + l'enum
+	// `DiscountType` + les 3 colonnes d'`Order`) : à ~20 commandes/mois il n'y a pas
+	// de programme promotionnel à piloter, et la remise reste possible par le prix
+	// barré `ProductSku.compareAtPrice`, déjà en place. Condition de réouverture
+	// détaillée dans la migration 20260805200000.
 	it("le parser reconstruit un état non trivial des deux côtés", () => {
-		expect(fromSchema.size).toBeGreaterThanOrEqual(21);
+		expect(fromSchema.size).toBeGreaterThanOrEqual(20);
 		expect(fromBaseline.size).toBe(fromSchema.size);
 		expect(fromBaseline.get("Order")?.has("invoiceNumber")).toBe(true);
 	});
@@ -382,7 +387,17 @@ describe("gardes SQL bruts — SSOT ↔ migrations ↔ documentation", () => {
 		// table, et les 2 `*_currency_eur_check` avec leurs colonnes — `currency`
 		// valait 'EUR' sur toutes les lignes précisément PARCE QUE ces CHECK
 		// l'imposaient ; la SSOT est désormais `DEFAULT_CURRENCY`.
-		expect(ssot.checks.size).toBeGreaterThanOrEqual(32);
+		//
+		// Puis à 31 (audit du module `orders`, 2026-08-05) :
+		// `Order_invoiceReconcileAttempts_check` part avec sa colonne — le compteur
+		// d'escalade de la DLQ facture ne faisait que retarder de 3 jours une alerte
+		// déjà émise à J+0 par `flagInvoiceFailureForReconcile`.
+		//
+		// Puis à 24 (retrait des codes promo, 2026-08-05) : les 6 CHECK `Discount_*`
+		// partent avec leur table, et `Order_discountAmount_non_negative` avec sa
+		// colonne. `Order_total_formula` n'est PAS retiré mais RÉÉCRIT — il perd son
+		// terme de remise et continue de verrouiller `total = subtotal + shippingCost`.
+		expect(ssot.checks.size).toBeGreaterThanOrEqual(24);
 	});
 
 	// LE point critique : `prisma migrate diff` ne génère AUCUN garde brut. Un

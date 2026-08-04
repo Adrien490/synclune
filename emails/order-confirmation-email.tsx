@@ -17,7 +17,6 @@ interface OrderConfirmationEmailProps {
 	customerName: string;
 	items: OrderItem[];
 	subtotal: number;
-	discount: number;
 	shipping: number;
 	total: number;
 	shippingAddress: ShippingAddress;
@@ -36,7 +35,6 @@ export const OrderConfirmationEmail = ({
 	customerName,
 	items,
 	subtotal,
-	discount,
 	shipping,
 	total,
 	shippingAddress,
@@ -144,14 +142,6 @@ export const OrderConfirmationEmail = ({
 					value={formatEuro(subtotal)}
 					variant="mono"
 				/>
-				{discount > 0 && (
-					<EmailSummaryRow
-						style={{ marginBottom: "8px" }}
-						label="Réduction"
-						value={`-${formatEuro(discount)}`}
-						variant="highlight"
-					/>
-				)}
 				<EmailSummaryRow
 					style={{ marginBottom: "8px" }}
 					label="Livraison"
@@ -280,7 +270,6 @@ OrderConfirmationEmail.PreviewProps = {
 		},
 	],
 	subtotal: 17900,
-	discount: 0,
 	shipping: 490,
 	total: 18390,
 	shippingAddress: {

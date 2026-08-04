@@ -62,8 +62,10 @@ describe("Admin data-tables — alignement colonnes header/corps", () => {
 
 	const dataTables = findDataTables();
 
-	it("découvre les 9 admin data-tables", () => {
-		expect(dataTables.length).toBe(9);
+	it("découvre les 8 admin data-tables", () => {
+		// 9 → 8 au retrait des codes promo (2026-08-05) : `discounts-data-table`
+		// part avec le modèle `Discount`.
+		expect(dataTables.length).toBe(8);
 	});
 
 	it.each(dataTables.map((path) => [relative(process.cwd(), path), path] as const))(

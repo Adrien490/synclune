@@ -10,7 +10,6 @@ import {
 import { emailOptionalSchema } from "@/shared/schemas/email.schemas";
 import { phoneSchema } from "@/shared/schemas/phone.schemas";
 import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
-import { discountCodeSchema } from "@/modules/discounts/schemas/discount.schemas";
 import { parseFullName } from "../utils/parse-full-name";
 
 // Longueurs alignées sur les colonnes Prisma Order.shipping* (VarChar 50/255/100/10).
@@ -117,7 +116,6 @@ export const confirmCheckoutSchema = z.object({
 	cartItems: cartItemsSchema,
 	shippingAddress: addressSchema,
 	email: emailOptionalSchema,
-	discountCode: discountCodeSchema.optional(),
 	paymentIntentId: paymentIntentIdSchema,
 	// Montant AFFICHÉ au client sur le bouton « Commander et payer » (centimes).
 	// Garde de CONSENTEMENT uniquement (CHECKOUT-CONSENT-001) : sur hit idempotent,

@@ -29,7 +29,6 @@ const LIST_PAGES = [
 	"app/admin/catalogue/couleurs/page.tsx",
 	"app/admin/catalogue/materiaux/page.tsx",
 	"app/admin/catalogue/types-de-produits/page.tsx",
-	"app/admin/marketing/discounts/page.tsx",
 	"app/admin/ventes/commandes/page.tsx",
 	"app/admin/ventes/remboursements/page.tsx",
 ];
@@ -82,7 +81,9 @@ describe("état « recherche en cours » des listes admin", () => {
 		// Garde anti-« vert pour la mauvaise raison » : si le grep ne trouve plus
 		// rien, la boucle serait vide et le test passerait sans rien vérifier.
 		// Plancher 9 → 8 au retrait de la liste `/admin/clients` (2026-07-31).
-		expect(roots.length).toBeGreaterThanOrEqual(8);
+		// Plancher 8 → 7 au retrait des codes promo (2026-08-05) : la liste
+		// `/admin/marketing/discounts` part avec le modèle `Discount`.
+		expect(roots.length).toBeGreaterThanOrEqual(7);
 
 		const missing = roots.filter(
 			(p) => !bodyWithoutImports(p).includes("ADMIN_LIST_PENDING_CLASS"),

@@ -167,7 +167,6 @@ export interface InvoiceLine {
 	/** Prix unitaire HT en centimes. */
 	unitPriceExclTax: number;
 	/** Remise appliquée à la ligne en centimes. */
-	discountAmount: number;
 	/** Taux TVA en basis points (2000 = 20.00%). */
 	taxRate: number;
 	/** Catégorie TVA UNTDID 5305. */
@@ -186,7 +185,6 @@ export interface InvoiceLine {
 
 export interface InvoiceTotals {
 	subtotalExclTax: number;
-	totalDiscount: number;
 	shippingExclTax: number;
 	shippingTax: number;
 	taxBreakdown: TaxBreakdownLine[];

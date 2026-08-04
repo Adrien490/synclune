@@ -26,7 +26,6 @@ function makeOrder(
 		customerName: string;
 		customerEmail: string;
 		subtotal: number;
-		discountAmount: number;
 		shippingCost: number;
 		total: number;
 		paymentMethod: string;
@@ -44,7 +43,6 @@ function makeOrder(
 		customerName: "Jean Dupont",
 		customerEmail: "jean.dupont@example.com",
 		subtotal: 5000,
-		discountAmount: 0,
 		shippingCost: 500,
 		total: 5500,
 		paymentMethod: "card",
@@ -195,11 +193,11 @@ describe("generateOrdersCsv", () => {
 		expect(headerRow.split(";").length).toBeGreaterThan(1);
 	});
 
-	it("should have correct header row with 15 columns", () => {
+	it("should have correct header row with 14 columns", () => {
 		const csv = generateOrdersCsv([makeOrder()]);
 		const headerRow = csv.replace("\uFEFF", "").split("\n")[0]!;
 		const columns = headerRow.split(";");
-		expect(columns).toHaveLength(15);
+		expect(columns).toHaveLength(14);
 		expect(columns[0]).toBe("N° Facture");
 		expect(columns[1]).toBe("N° Avoir");
 		expect(columns[2]).toBe("N° Commande");
@@ -207,14 +205,13 @@ describe("generateOrdersCsv", () => {
 		expect(columns[4]).toBe("Client");
 		expect(columns[5]).toBe("Email");
 		expect(columns[6]).toBe("Sous-total");
-		expect(columns[7]).toBe("Réduction");
-		expect(columns[8]).toBe("Livraison");
-		expect(columns[9]).toBe("Total");
-		expect(columns[10]).toBe("Remboursé");
-		expect(columns[11]).toBe("Net encaissé");
-		expect(columns[12]).toBe("Moyen de paiement");
-		expect(columns[13]).toBe("Statut paiement");
-		expect(columns[14]).toBe("Statut commande");
+		expect(columns[7]).toBe("Livraison");
+		expect(columns[8]).toBe("Total");
+		expect(columns[9]).toBe("Remboursé");
+		expect(columns[10]).toBe("Net encaissé");
+		expect(columns[11]).toBe("Moyen de paiement");
+		expect(columns[12]).toBe("Statut paiement");
+		expect(columns[13]).toBe("Statut commande");
 	});
 
 	it("should format dates in French locale (dd/mm/yyyy)", () => {
@@ -226,13 +223,11 @@ describe("generateOrdersCsv", () => {
 	});
 
 	it("should format amounts in euros with comma as decimal separator", () => {
-		const order = makeOrder({ subtotal: 5099, discountAmount: 500, shippingCost: 0, total: 4599 });
+		const order = makeOrder({ subtotal: 5099, shippingCost: 0, total: 5099 });
 		const csv = generateOrdersCsv([order]);
 		const dataRow = csv.replace("\uFEFF", "").split("\n")[1];
 		expect(dataRow).toContain("50,99");
-		expect(dataRow).toContain("5,00");
 		expect(dataRow).toContain("0,00");
-		expect(dataRow).toContain("45,99");
 	});
 
 	it("should escape CSV special characters in customer names", () => {
@@ -247,7 +242,7 @@ describe("generateOrdersCsv", () => {
 		const csv = generateOrdersCsv([]);
 		const lines = csv.replace("\uFEFF", "").split("\n");
 		expect(lines).toHaveLength(1);
-		expect(lines[0]!.split(";")).toHaveLength(15);
+		expect(lines[0]!.split(";")).toHaveLength(14);
 	});
 
 	/**
@@ -261,9 +256,9 @@ describe("generateOrdersCsv", () => {
 		const order = makeOrder({ total: 10000, refunds: [{ amount: 500 }, { amount: 1500 }] });
 		const csv = generateOrdersCsv([order]);
 		const cells = csv.split("\n")[1]!.split(";");
-		expect(cells[9]).toBe("100,00"); // Total
-		expect(cells[10]).toBe("20,00"); // Remboursé (5,00 + 15,00)
-		expect(cells[11]).toBe("80,00"); // Net encaissé
+		expect(cells[8]).toBe("100,00"); // Total
+		expect(cells[9]).toBe("20,00"); // Remboursé (5,00 + 15,00)
+		expect(cells[10]).toBe("80,00"); // Net encaissé
 	});
 
 	it("renders the credit note number in the N° Avoir column", () => {

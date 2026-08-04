@@ -38,14 +38,9 @@ const RATE_LIMIT_CALLS = [
  * plafonnées.
  */
 const ALLOWLIST: Record<string, string> = {
-	"modules/discounts/actions/apply-discount-code.ts":
-		"Wrapper FormData qui délègue immédiatement à `validateDiscountCode`, laquelle applique " +
-		"`PAYMENT_LIMITS.VALIDATE_DISCOUNT`. Un plafond propre doublerait le compteur du même flux.",
 	"modules/products/data/get-product-collections.ts":
 		"Lectures admin (`isAdmin()`), sans effet de bord ni envoi : le coût est une requête " +
 		"indexée. Documenté plutôt que plafonné pour ne pas gêner les formulaires produit.",
-	"modules/orders/data/get-order-notes.ts":
-		"Lecture admin (`requireAdminWithUser`) rendue dans le détail commande, même raisonnement.",
 };
 
 function collectSourceFiles(dir: string, acc: string[] = []): string[] {
@@ -108,7 +103,9 @@ describe("Server Actions — couverture rate limit", () => {
 	// rendrait le scan silencieusement vide, et l'assertion principale passerait
 	// sur un ensemble nul — le pire des faux verts.
 	it("le scan trouve bien les Server Actions du repo", () => {
-		expect(SERVER_ACTION_FILES.length).toBeGreaterThan(100);
+		// Plancher 100 → 90 au retrait des codes promo (2026-08-05) :
+		// `modules/discounts` portait 10 Server Actions.
+		expect(SERVER_ACTION_FILES.length).toBeGreaterThan(90);
 	});
 
 	// Next autorise aussi `"use server"` DANS un corps de fonction, ce que le scan

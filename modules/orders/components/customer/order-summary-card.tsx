@@ -8,8 +8,6 @@ interface OrderSummaryCardProps {
 		orderNumber: string;
 		createdAt: Date;
 		subtotal: number;
-		discountAmount: number;
-		discountCode?: string | null;
 		shippingCost: number;
 		total: number;
 		paymentMethod?: string | null;
@@ -47,12 +45,6 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 						<span className="text-muted-foreground">Sous-total</span>
 						<span>{formatEuro(order.subtotal)}</span>
 					</div>
-					{order.discountAmount > 0 && (
-						<div className="text-success flex justify-between">
-							<span>Réduction{order.discountCode && ` (${order.discountCode})`}</span>
-							<span>-{formatEuro(order.discountAmount)}</span>
-						</div>
-					)}
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">Livraison</span>
 						<span>{order.shippingCost === 0 ? "Offerte" : formatEuro(order.shippingCost)}</span>

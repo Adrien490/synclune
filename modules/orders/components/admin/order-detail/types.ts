@@ -30,7 +30,6 @@ export interface OrderStatusBadgesProps {
 export interface OrderItemsCardProps {
 	items: GetOrderReturn["items"];
 	subtotal: number;
-	discountAmount: number;
 	shippingCost: number;
 	total: number;
 }

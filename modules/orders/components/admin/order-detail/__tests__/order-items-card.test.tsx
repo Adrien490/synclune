@@ -12,8 +12,8 @@ vi.mock("@/shared/components/ui/separator", () => ({
 	Separator: () => <hr />,
 }));
 
-vi.mock("lucide-react", () => ({
-	Package: () => <svg aria-hidden="true" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	PackageIcon: () => <svg aria-hidden="true" />,
 }));
 
 vi.mock("@/shared/utils/format-euro", () => ({
@@ -60,7 +60,6 @@ function renderCard(itemOverrides = {}, cardOverrides = {}) {
 		<OrderItemsCard
 			items={items}
 			subtotal={2500}
-			discountAmount={0}
 			shippingCost={500}
 			total={3000}
 			{...cardOverrides}
@@ -71,15 +70,7 @@ function renderCard(itemOverrides = {}, cardOverrides = {}) {
 describe("OrderItemsCard", () => {
 	it("renders title with item count", () => {
 		const items = [createItem(), createItem({ id: "item-2", productTitle: "Collier argent" })];
-		render(
-			<OrderItemsCard
-				items={items}
-				subtotal={5000}
-				discountAmount={0}
-				shippingCost={500}
-				total={5500}
-			/>,
-		);
+		render(<OrderItemsCard items={items} subtotal={5000} shippingCost={500} total={5500} />);
 		expect(screen.getByText("Articles (2)")).toBeInTheDocument();
 	});
 
@@ -123,7 +114,6 @@ describe("OrderItemsCard", () => {
 			<OrderItemsCard
 				items={[createItem({ price: 2000 })]}
 				subtotal={2000}
-				discountAmount={0}
 				shippingCost={0}
 				total={2000}
 			/>,
@@ -133,27 +123,13 @@ describe("OrderItemsCard", () => {
 
 	it("shows shipping cost when non-zero", () => {
 		render(
-			<OrderItemsCard
-				items={[createItem()]}
-				subtotal={2500}
-				discountAmount={0}
-				shippingCost={500}
-				total={3000}
-			/>,
+			<OrderItemsCard items={[createItem()]} subtotal={2500} shippingCost={500} total={3000} />,
 		);
 		expect(screen.getByText("5.00 €")).toBeInTheDocument();
 	});
 
 	it("shows Gratuite when shipping cost is 0", () => {
-		render(
-			<OrderItemsCard
-				items={[createItem()]}
-				subtotal={2500}
-				discountAmount={0}
-				shippingCost={0}
-				total={2500}
-			/>,
-		);
+		render(<OrderItemsCard items={[createItem()]} subtotal={2500} shippingCost={0} total={2500} />);
 		expect(screen.getByText("Gratuite")).toBeInTheDocument();
 	});
 
@@ -162,26 +138,11 @@ describe("OrderItemsCard", () => {
 			<OrderItemsCard
 				items={[createItem({ price: 2000 })]}
 				subtotal={2000}
-				discountAmount={0}
 				shippingCost={500}
 				total={2500}
 			/>,
 		);
 		expect(screen.getByText("Total")).toBeInTheDocument();
-	});
-
-	it("shows discount when discountAmount is greater than 0", () => {
-		render(
-			<OrderItemsCard
-				items={[createItem()]}
-				subtotal={3000}
-				discountAmount={500}
-				shippingCost={0}
-				total={2500}
-			/>,
-		);
-		expect(screen.getByText("Réduction")).toBeInTheDocument();
-		expect(screen.getByText("-5.00 €")).toBeInTheDocument();
 	});
 
 	it("hides discount when discountAmount is 0", () => {

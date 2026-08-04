@@ -81,7 +81,6 @@ export async function resendOrderEmail(
 				customerEmail: true,
 				customerName: true,
 				subtotal: true,
-				discountAmount: true,
 				shippingCost: true,
 				total: true,
 				shippingFirstName: true,
@@ -127,7 +126,6 @@ export async function resendOrderEmail(
 					customerName: extractCustomerFirstName(order.customerName, order.shippingFirstName),
 					items: order.items,
 					subtotal: order.subtotal,
-					discount: order.discountAmount,
 					shipping: order.shippingCost,
 					total: order.total,
 					shippingAddress: {
@@ -215,7 +213,6 @@ export async function resendOrderEmail(
 					emailType === "shipping"
 						? "Email d'expédition renvoyé manuellement au client"
 						: "Email de confirmation renvoyé manuellement au client",
-				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				// Pas de clé `emailType` : `sanitizeAuditMetadata` la rejette (motif

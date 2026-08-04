@@ -392,22 +392,6 @@ describe("markOrderAsFailed", () => {
 		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 	});
-
-	it("releases attached discount usage and invalidates USAGE cache tag (CHECKOUT-AUDIT-001)", async () => {
-		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
-		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
-		mockReleaseOrderDiscountUsageTx.mockResolvedValue(["disc_1", "disc_2"]);
-
-		await markOrderAsFailed("order-1", "pi_failed123", {
-			code: null,
-			declineCode: null,
-			message: null,
-		});
-
-		expect(mockReleaseOrderDiscountUsageTx).toHaveBeenCalledWith(mockTx, "order-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc_1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc_2");
-	});
 });
 
 // ============================================================================
@@ -498,17 +482,6 @@ describe("markOrderAsCancelled", () => {
 
 		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
-	});
-
-	it("releases attached discount usage and invalidates USAGE cache tag (CHECKOUT-AUDIT-001)", async () => {
-		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
-		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
-		mockReleaseOrderDiscountUsageTx.mockResolvedValue(["disc_42"]);
-
-		await markOrderAsCancelled("order-1", "pi_cancelled123");
-
-		expect(mockReleaseOrderDiscountUsageTx).toHaveBeenCalledWith(mockTx, "order-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc_42");
 	});
 });
 

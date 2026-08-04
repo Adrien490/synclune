@@ -44,7 +44,6 @@ function makeConfirmationOrder(overrides: Record<string, unknown> = {}) {
 		orderNumber: VALID_ORDER_NUMBER,
 		subtotal: 9900,
 		shippingCost: 500,
-		discountAmount: 0,
 		total: 10400,
 		paymentStatus: "PAID",
 		shippingFirstName: "Jean",

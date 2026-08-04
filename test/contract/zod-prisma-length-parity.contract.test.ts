@@ -47,7 +47,6 @@ import {
 } from "@/modules/orders/schemas/order.schemas";
 import { imageSchema } from "@/modules/products/schemas/product-media.schemas";
 import { createProductSkuSchema } from "@/modules/skus/schemas/sku.schemas";
-import { discountCodeSchema } from "@/modules/discounts/schemas/discount.schemas";
 
 // ============================================================================
 // Introspection Zod v4
@@ -386,12 +385,6 @@ const PAIRS: readonly Pair[] = [
 		schema: createProductSkuSchema,
 		path: ["sku"],
 		column: "ProductSku.sku",
-	},
-	{
-		label: "discountCodeSchema → Discount.code",
-		schema: discountCodeSchema,
-		path: [],
-		column: "Discount.code",
 	},
 ];
 

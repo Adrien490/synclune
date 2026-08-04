@@ -1,4 +1,11 @@
-import { Euro, Package, Receipt, ShoppingBag, Target, UserPlus } from "lucide-react";
+import {
+	CurrencyEurIcon,
+	PackageIcon,
+	ReceiptIcon,
+	ShoppingBagIcon,
+	TargetIcon,
+	UserPlusIcon,
+} from "@phosphor-icons/react/ssr";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -22,13 +29,9 @@ interface DashboardKpisProps {
  */
 export function DashboardKpis({ kpis }: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
-	const hasDiscounts = kpis.discountImpact.amount > 0;
 	const refundRate = kpis.monthlyRevenue.refundRate;
 
 	const revenueSubtitleParts: string[] = [];
-	if (hasDiscounts) {
-		revenueSubtitleParts.push(`-${formatEuro(kpis.discountImpact.amount)} remises`);
-	}
 	if (hasRefunds) {
 		revenueSubtitleParts.push(
 			`-${formatEuro(kpis.monthlyRevenue.refundAmount)} remb. (${refundRate.toFixed(1)}%)`,
@@ -56,7 +59,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 									value={formatEuro(kpis.monthlyRevenue.netAmount, { compact: true })}
 									numericValue={kpis.monthlyRevenue.netAmount}
 									suffix=" €"
-									icon={<Euro className="size-4" />}
+									icon={<CurrencyEurIcon className="size-4" />}
 									size="featured"
 									priority={revenuePriority}
 									tooltip="Chiffre d'affaires net (après remboursements) des commandes payées ce mois"
@@ -79,7 +82,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 									title="Commandes"
 									value={kpis.monthlyOrders.count.toString()}
 									numericValue={kpis.monthlyOrders.count}
-									icon={<ShoppingBag className="size-4" />}
+									icon={<ShoppingBagIcon className="size-4" />}
 									size="featured"
 									priority="critical"
 									tooltip="Nombre de commandes payées ce mois"
@@ -94,7 +97,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 									value={formatEuro(kpis.averageOrderValue.amount, { compact: true })}
 									numericValue={kpis.averageOrderValue.amount}
 									suffix=" €"
-									icon={<Receipt className="size-4" />}
+									icon={<ReceiptIcon className="size-4" />}
 									size="featured"
 									priority="operational"
 									tooltip="Valeur moyenne des commandes ce mois"
@@ -108,7 +111,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 									title="À expédier"
 									value={kpis.pendingShipment.count.toString()}
 									numericValue={kpis.pendingShipment.count}
-									icon={<Package className="size-4" />}
+									icon={<PackageIcon className="size-4" />}
 									size="featured"
 									priority={kpis.pendingShipment.count > 0 ? "alert" : "info"}
 									status={kpis.pendingShipment.count > 0 ? "warning" : "default"}
@@ -133,7 +136,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 						numericValue={kpis.conversionRate.rate}
 						suffix=" %"
 						decimalPlaces={1}
-						icon={<Target className="size-4" />}
+						icon={<TargetIcon className="size-4" />}
 						size="compact"
 						priority="operational"
 						flatOnMobile
@@ -151,7 +154,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 						title="Nouveaux clients"
 						value={kpis.newCustomers.count.toString()}
 						numericValue={kpis.newCustomers.count}
-						icon={<UserPlus className="size-4" />}
+						icon={<UserPlusIcon className="size-4" />}
 						size="compact"
 						priority="info"
 						flatOnMobile

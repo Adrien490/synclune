@@ -388,7 +388,7 @@ describe("createOrderInTransaction — shipping", () => {
 // ORDER CREATION WITHOUT DISCOUNT
 // ============================================================================
 
-describe("createOrderInTransaction — order creation without discount", () => {
+describe("createOrderInTransaction — order creation", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockTx.$queryRaw.mockResolvedValue([makeSkuRow()]);
@@ -400,7 +400,7 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		mockGetValidImageUrl.mockReturnValue("https://example.com/image.jpg");
 	});
 
-	it("should compute correct totals: subtotal + shipping, no discount", async () => {
+	it("should compute correct totals: subtotal + shipping", async () => {
 		// subtotal=5980, shipping=450, total=6430
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder({ total: 6430 }));
 
@@ -409,7 +409,6 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		const createCall = mockTx.order.create.mock.calls[0]![0];
 		expect(createCall.data.subtotal).toBe(5980);
 		expect(createCall.data.shippingCost).toBe(450);
-		expect(createCall.data.discountAmount).toBe(0);
 		expect(createCall.data.total).toBe(6430);
 	});
 
@@ -629,233 +628,19 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		expect(mockGetValidImageUrl).toHaveBeenCalledWith("https://example.com/image.jpg");
 	});
 
-	it("should return the created order with appliedDiscountId null and discountAmount 0", async () => {
+	it("should return the created order", async () => {
 		const createdOrder = makeCreatedOrder();
 		mockTx.order.create.mockResolvedValue(createdOrder);
 
 		const result = await createOrderInTransaction(makeParams());
 
 		expect(result.order).toBe(createdOrder);
-		expect(result.appliedDiscountId).toBeNull();
-		expect(result.discountAmount).toBe(0);
-		expect(result.appliedDiscountCode).toBeNull();
 	});
 });
 
 // ============================================================================
 // DISCOUNT FLOW
 // ============================================================================
-
-describe("createOrderInTransaction — discount flow", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockTx.$queryRaw
-			.mockResolvedValueOnce([makeSkuRow()])
-			.mockResolvedValueOnce([makeDiscountRow()]);
-		mockTx.$executeRaw.mockResolvedValue(1);
-		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
-		mockTx.orderItem.create.mockResolvedValue({});
-		mockTx.order.count.mockResolvedValue(0);
-		mockCalculateShipping.mockReturnValue(450);
-		mockGenerateOrderNumber.mockReturnValue("SYN-2026-0001");
-		mockGetValidImageUrl.mockReturnValue("https://example.com/image.jpg");
-		mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
-		mockCalculateDiscountWithExclusion.mockReturnValue(598);
-	});
-
-	it("should query discount with uppercased code", async () => {
-		await createOrderInTransaction(makeParams({ discountCode: "promo10" }));
-
-		// The second $queryRaw call is for the discount lookup — we verify uppercase
-		// by checking the mock was called (template literal tag, raw SQL cannot be inspected directly)
-		expect(mockTx.$queryRaw).toHaveBeenCalledTimes(2);
-	});
-
-	it("should throw BusinessError with NOT_FOUND message when discount code does not exist", async () => {
-		mockTx.$queryRaw.mockReset().mockResolvedValueOnce([makeSkuRow()]).mockResolvedValueOnce([]);
-
-		await expect(createOrderInTransaction(makeParams({ discountCode: "INVALID" }))).rejects.toThrow(
-			"Code promo introuvable",
-		);
-	});
-
-	it("should throw BusinessError when eligibility check fails", async () => {
-		mockCheckDiscountEligibility.mockReturnValue({
-			eligible: false,
-			error: "Ce code promo a expiré",
-		});
-
-		const err = await createOrderInTransaction(makeParams({ discountCode: "PROMO10" })).catch(
-			(e) => e,
-		);
-		expect(err).toBeInstanceOf(MockBusinessError);
-		expect(err.message).toBe("Ce code promo a expiré");
-	});
-
-	it("should throw BusinessError with fallback message when eligibility error is undefined", async () => {
-		mockCheckDiscountEligibility.mockReturnValue({ eligible: false, error: undefined });
-
-		const err = await createOrderInTransaction(makeParams({ discountCode: "PROMO10" })).catch(
-			(e) => e,
-		);
-		expect(err).toBeInstanceOf(MockBusinessError);
-		expect(err.message).toBe("Code promo invalide");
-	});
-
-	it("should call calculateDiscountWithExclusion with correct cart items and excludeSaleItems=true", async () => {
-		await createOrderInTransaction(makeParams({ discountCode: "PROMO10" }));
-
-		expect(mockCalculateDiscountWithExclusion).toHaveBeenCalledWith({
-			type: "PERCENTAGE",
-			value: 10,
-			cartItems: [
-				{
-					priceInclTax: 2990,
-					quantity: 2,
-					compareAtPrice: null,
-				},
-			],
-			excludeSaleItems: true,
-		});
-	});
-
-	it("should clamp discount amount to subtotal maximum", async () => {
-		// discountAmount would exceed subtotal
-		mockCalculateDiscountWithExclusion.mockReturnValue(99999);
-
-		await createOrderInTransaction(makeParams({ discountCode: "PROMO10", subtotal: 5980 }));
-
-		const createCall = mockTx.order.create.mock.calls[0]![0];
-		expect(createCall.data.discountAmount).toBe(5980);
-	});
-
-	it("should clamp discount amount to 0 minimum", async () => {
-		mockCalculateDiscountWithExclusion.mockReturnValue(-50);
-
-		await createOrderInTransaction(makeParams({ discountCode: "PROMO10" }));
-
-		const createCall = mockTx.order.create.mock.calls[0]![0];
-		expect(createCall.data.discountAmount).toBe(0);
-	});
-
-	it("should increment usage count via raw SQL when discount amount is positive", async () => {
-		await createOrderInTransaction(makeParams({ discountCode: "PROMO10" }));
-
-		expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
-	});
-
-	it("should throw BusinessError on race condition when 0 rows updated", async () => {
-		mockTx.$executeRaw.mockResolvedValue(0);
-
-		const err = await createOrderInTransaction(makeParams({ discountCode: "PROMO10" })).catch(
-			(e) => e,
-		);
-		expect(err).toBeInstanceOf(MockBusinessError);
-		expect(err.message).toBe("Ce code promo a atteint sa limite d'utilisation");
-	});
-
-	it("should create a DiscountUsage record when discount is applied", async () => {
-		const order = makeCreatedOrder({ id: "order_1" });
-		mockTx.order.create.mockResolvedValue(order);
-
-		const result = await createOrderInTransaction(
-			makeParams({ discountCode: "PROMO10", userId: "user_1" }),
-		);
-
-		// Audit V2, Lot 2 : plus de ligne `DiscountUsage` écrite après coup — les deux
-		// colonnes sont posées DANS le `order.create`, donc dans la même écriture que
-		// le reste de la commande.
-		const createArgs = mockTx.order.create.mock.calls.at(-1)?.[0] as {
-			data: { discountId?: string; discountCode?: string };
-		};
-		expect(createArgs.data.discountId).toBe("discount_1");
-		expect(createArgs.data.discountCode).toBe("PROMO10");
-		expect(result.appliedDiscountId).toBe("discount_1");
-		expect(result.appliedDiscountCode).toBe("PROMO10");
-		expect(result.discountAmount).toBe(598);
-	});
-
-	it("ne pose aucune colonne de code promo et n'incrémente pas quand discountAmount vaut 0", async () => {
-		mockCalculateDiscountWithExclusion.mockReturnValue(0);
-
-		await createOrderInTransaction(makeParams({ discountCode: "PROMO10" }));
-
-		expect(mockTx.$executeRaw).not.toHaveBeenCalled();
-		const createArgs = mockTx.order.create.mock.calls.at(-1)?.[0] as {
-			data: { discountId?: string; discountCode?: string };
-		};
-		expect(createArgs.data.discountId).toBeUndefined();
-		expect(createArgs.data.discountCode).toBeUndefined();
-	});
-
-	it("should not count per-user when maxUsagePerUser is set but no email (identity = email only)", async () => {
-		// Depuis le Lot 0 (S1.5), l'email de commande est la seule identité de la
-		// limite — un userId présent ne déclenche plus aucun compteur.
-		mockTx.$queryRaw
-			.mockReset()
-			.mockResolvedValueOnce([makeSkuRow()])
-			.mockResolvedValueOnce([makeDiscountRow({ maxUsagePerUser: 1 })]);
-
-		await createOrderInTransaction(
-			makeParams({ discountCode: "PROMO10", userId: "user_1", finalEmail: null }),
-		);
-
-		expect(mockTx.order.count).not.toHaveBeenCalled();
-	});
-
-	it("should query per-email usage count when maxUsagePerUser is set and finalEmail provided", async () => {
-		mockTx.$queryRaw
-			.mockReset()
-			.mockResolvedValueOnce([makeSkuRow()])
-			.mockResolvedValueOnce([makeDiscountRow({ maxUsagePerUser: 1 })]);
-
-		await createOrderInTransaction(
-			makeParams({ discountCode: "PROMO10", userId: null, finalEmail: "marie@example.com" }),
-		);
-
-		expect(mockTx.order.count).toHaveBeenCalledWith({
-			where: {
-				discountId: "discount_1",
-				customerEmail: "marie@example.com",
-			},
-		});
-	});
-
-	it("[regression] CHECKOUT-AUDIT-003 — normalizes email for per-email usage count and Order snapshot", async () => {
-		mockTx.$queryRaw
-			.mockReset()
-			.mockResolvedValueOnce([makeSkuRow()])
-			.mockResolvedValueOnce([makeDiscountRow({ maxUsagePerUser: 1 })]);
-		mockTx.order.create.mockResolvedValueOnce(makeCreatedOrder());
-
-		await createOrderInTransaction(
-			makeParams({
-				discountCode: "PROMO10",
-				finalEmail: "  Marie@Example.COM  ",
-			}),
-		);
-
-		// Count uses normalized email (lowercase + trim)
-		expect(mockTx.order.count).toHaveBeenCalledWith({
-			where: {
-				discountId: "discount_1",
-				customerEmail: "marie@example.com",
-			},
-		});
-
-		// Order.customerEmail is stored normalized
-		const createCall = mockTx.order.create.mock.calls.at(-1)?.[0] as
-			{ data: { customerEmail: string } } | undefined;
-		expect(createCall?.data.customerEmail).toBe("marie@example.com");
-	});
-
-	it("should not query usage counts when maxUsagePerUser is null", async () => {
-		// Default discount row has maxUsagePerUser: null
-		await createOrderInTransaction(makeParams({ discountCode: "PROMO10" }));
-
-		expect(mockTx.order.count).not.toHaveBeenCalled();
-	});
-});
 
 // ============================================================================
 // TOTALS
@@ -879,25 +664,8 @@ describe("createOrderInTransaction — totals", () => {
 		await createOrderInTransaction(makeParams({ subtotal: 5980 }));
 
 		const createCall = mockTx.order.create.mock.calls[0]![0];
-		// total = max(0, 5980 - 0 + 450) = 6430
+		// total = max(0, 5980 + 450) = 6430
 		expect(createCall.data.total).toBe(6430);
-	});
-
-	it("should compute total as subtotal - discount + shipping", async () => {
-		mockCalculateShipping.mockReturnValue(450);
-		mockTx.$queryRaw
-			.mockReset()
-			.mockResolvedValueOnce([makeSkuRow()])
-			.mockResolvedValueOnce([makeDiscountRow()]);
-		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
-		mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
-		mockCalculateDiscountWithExclusion.mockReturnValue(598);
-
-		await createOrderInTransaction(makeParams({ subtotal: 5980, discountCode: "PROMO10" }));
-
-		const createCall = mockTx.order.create.mock.calls[0]![0];
-		// total = max(0, 5980 - 598 + 450) = 5832
-		expect(createCall.data.total).toBe(5832);
 	});
 
 	it("REFUSE un total sous le minimum Stripe au lieu de créer la commande (MIN-AMOUNT-DIVERGE-01)", async () => {
@@ -908,18 +676,16 @@ describe("createOrderInTransaction — totals", () => {
 		// Le scénario n'est atteignable qu'avec un port gratuit ou un tarif < 50 c
 		// (`calculateShipping` → 0 ci-dessous) — exactement ce que le commentaire
 		// ⚠️ du service annonçait sans l'implémenter.
+		// Sans codes promo, le seul chemin vers un total sous le minimum est un
+		// article à 0 € (« offert ») combiné à un port gratuit.
 		mockCalculateShipping.mockReturnValue(0);
-		mockTx.$queryRaw
-			.mockReset()
-			.mockResolvedValueOnce([makeSkuRow()])
-			.mockResolvedValueOnce([makeDiscountRow()]);
+		mockTx.$queryRaw.mockReset().mockResolvedValueOnce([makeSkuRow({ priceInclTax: 0 })]);
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder({ total: 0 }));
-		mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
-		// Remise clampée au subtotal ⇒ total = 0 + 0 = 0.
-		mockCalculateDiscountWithExclusion.mockReturnValue(5980);
 
 		await expect(
-			createOrderInTransaction(makeParams({ subtotal: 5980, discountCode: "PROMO10" })),
+			createOrderInTransaction(
+				makeParams({ subtotal: 0, skuDetailsResults: [makeSkuResult({ priceInclTax: 0 })] }),
+			),
 		).rejects.toThrow(/trop faible pour être encaissé/i);
 
 		// Fail-closed : aucune commande créée, donc rien à nettoyer en aval.
@@ -929,15 +695,12 @@ describe("createOrderInTransaction — totals", () => {
 	it("accepte un total exactement égal au minimum Stripe", async () => {
 		// Borne inclusive : le rejet porte sur `< 50`, pas `<= 50`.
 		mockCalculateShipping.mockReturnValue(50);
-		mockTx.$queryRaw
-			.mockReset()
-			.mockResolvedValueOnce([makeSkuRow()])
-			.mockResolvedValueOnce([makeDiscountRow()]);
+		mockTx.$queryRaw.mockReset().mockResolvedValueOnce([makeSkuRow({ priceInclTax: 0 })]);
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder({ total: 50 }));
-		mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
-		mockCalculateDiscountWithExclusion.mockReturnValue(5980);
 
-		await createOrderInTransaction(makeParams({ subtotal: 5980, discountCode: "PROMO10" }));
+		await createOrderInTransaction(
+			makeParams({ subtotal: 0, skuDetailsResults: [makeSkuResult({ priceInclTax: 0 })] }),
+		);
 
 		const createCall = mockTx.order.create.mock.calls[0]![0];
 		expect(createCall.data.total).toBe(50);

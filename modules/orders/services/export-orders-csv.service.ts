@@ -13,7 +13,6 @@ interface ExportableOrder {
 	customerName: string;
 	customerEmail: string;
 	subtotal: number;
-	discountAmount: number;
 	shippingCost: number;
 	total: number;
 	paymentMethod: string;
@@ -101,7 +100,6 @@ export function generateOrdersCsv(orders: ExportableOrder[]): string {
 		"Client",
 		"Email",
 		"Sous-total",
-		"Réduction",
 		"Livraison",
 		"Total",
 		"Remboursé",
@@ -135,7 +133,6 @@ export function generateOrdersCsv(orders: ExportableOrder[]): string {
 			text(order.customerName),
 			text(order.customerEmail),
 			formatEuroCsv(order.subtotal),
-			formatEuroCsv(order.discountAmount),
 			formatEuroCsv(order.shippingCost),
 			formatEuroCsv(order.total),
 			formatEuroCsv(refundedAmount),

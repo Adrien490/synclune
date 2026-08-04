@@ -13,7 +13,6 @@ export async function sendOrderConfirmationEmail({
 	customerName,
 	items,
 	subtotal,
-	discount,
 	shipping,
 	total,
 	shippingAddress,
@@ -27,7 +26,6 @@ export async function sendOrderConfirmationEmail({
 	customerName: string;
 	items: OrderItem[];
 	subtotal: number;
-	discount: number;
 	shipping: number;
 	total: number;
 	shippingAddress: ShippingAddress;
@@ -54,7 +52,6 @@ export async function sendOrderConfirmationEmail({
 			customerName,
 			items,
 			subtotal,
-			discount,
 			shipping,
 			total,
 			shippingAddress,

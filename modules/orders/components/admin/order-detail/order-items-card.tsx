@@ -1,4 +1,4 @@
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
@@ -7,18 +7,12 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderItemsCardProps } from "./types";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
-export function OrderItemsCard({
-	items,
-	subtotal,
-	discountAmount,
-	shippingCost,
-	total,
-}: OrderItemsCardProps) {
+export function OrderItemsCard({ items, subtotal, shippingCost, total }: OrderItemsCardProps) {
 	return (
 		<Card>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Package className="size-5" aria-hidden="true" />
+					<PackageIcon className="size-5" aria-hidden="true" />
 					Articles ({items.length})
 				</CardTitle>
 			</CardHeader>
@@ -53,7 +47,7 @@ export function OrderItemsCard({
 										/>
 									) : (
 										<div className="flex h-full w-full items-center justify-center">
-											<Package className="text-muted-foreground size-6" aria-hidden="true" />
+											<PackageIcon className="text-muted-foreground size-6" aria-hidden="true" />
 										</div>
 									)}
 								</div>
@@ -87,12 +81,6 @@ export function OrderItemsCard({
 						<span className="text-muted-foreground">Sous-total</span>
 						<span>{formatEuro(subtotal)}</span>
 					</div>
-					{discountAmount > 0 && (
-						<div className="text-success flex justify-between text-sm">
-							<span>Réduction</span>
-							<span>-{formatEuro(discountAmount)}</span>
-						</div>
-					)}
 					<div className="flex justify-between text-sm">
 						<span className="text-muted-foreground">Livraison</span>
 						<span>{shippingCost === 0 ? "Gratuite" : formatEuro(shippingCost)}</span>

@@ -12,7 +12,6 @@ import { logger } from "@/shared/lib/logger";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
-import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, THRESHOLDS } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
@@ -49,7 +48,6 @@ const SYNC_ASYNC_SPOF_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
  *
  * Effects per order (atomic):
  *  - status → CANCELLED
- *  - discount usages released (usageCount decrement + DiscountUsage delete)
  *  - audit trail (HistorySource.SYSTEM, OrderAction.CANCELLED)
  *
  * STOCK-01 : PAS de restock. Réservation optimiste — le stock n'est décrémenté
@@ -129,11 +127,6 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 
 					// STOCK-01 : pas de restock (stock jamais décrémenté sur une PENDING).
 
-					// [[DISC-USAGE-002]] Toujours via le service canonique : son décrément est
-					// gardé par `usageCount > 0`, ce qu'un `update` direct ne fait pas (un
-					// compteur négatif rendrait le code redeemable au-delà de `maxUsageCount`).
-					const releasedDiscountIds = await releaseOrderDiscountUsageTx(tx, order.id);
-
 					await createOrderAuditTx(tx, {
 						orderId: order.id,
 						action: OrderAction.CANCELLED,
@@ -145,7 +138,6 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 						metadata: {
 							reason: "abandoned_checkout",
 							itemsCount: order.items.length,
-							releasedDiscountsCount: releasedDiscountIds.length,
 							ageHours: Math.floor((Date.now() - order.createdAt.getTime()) / (60 * 60 * 1000)),
 						},
 					});

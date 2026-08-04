@@ -158,7 +158,6 @@ function buildCreditNoteLine(
 		variantInfo: { color: null, material: null, size: null },
 		quantity: 1,
 		unitPriceExclTax: lineTotal,
-		discountAmount: 0,
 		taxRate: 0,
 		taxCategoryCode: DEFAULT_TAX_CATEGORY as TaxCategoryCode,
 		taxAmount: 0,
@@ -183,7 +182,6 @@ function buildCreditNoteTotals(lines: InvoiceLine[]): InvoiceTotals {
 
 	return {
 		subtotalExclTax,
-		totalDiscount: 0,
 		shippingExclTax,
 		shippingTax,
 		taxBreakdown,

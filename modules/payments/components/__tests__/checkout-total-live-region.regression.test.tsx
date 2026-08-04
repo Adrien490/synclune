@@ -58,7 +58,6 @@ const SUMMARY_SOURCE = join(REPO_ROOT, "modules/payments/components/checkout-sum
 
 const cart = {
 	id: "cart-1",
-	appliedDiscountCode: null,
 	items: [
 		{
 			id: "item-1",
@@ -83,8 +82,6 @@ const baseProps = {
 	shippingUnavailable: false,
 	shippingInfo: null,
 	total: 2999,
-	discountAmount: 0,
-	appliedDiscount: null,
 };
 
 afterEach(cleanup);
@@ -135,7 +132,7 @@ describe("Checkout — région live unique du total", () => {
 	it("ne réannonce rien si le total ne change pas", () => {
 		const { rerender } = render(<CheckoutSummary {...baseProps} />);
 
-		rerender(<CheckoutSummary {...baseProps} discountAmount={0} />);
+		rerender(<CheckoutSummary {...baseProps} />);
 
 		expect(screen.getByRole("status")).toHaveTextContent("");
 	});

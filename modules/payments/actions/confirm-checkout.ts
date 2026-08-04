@@ -13,8 +13,6 @@ import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { after } from "next/server";
-import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
-import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { parseFullName } from "@/modules/payments/utils/parse-full-name";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 import { enrichStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
@@ -206,8 +204,8 @@ export async function confirmCheckout(
 				return { success: false, error: "Ce paiement a été annulé. Recommence." };
 			}
 
-			// 4. Resolve email (normalize so Order.customerEmail and downstream
-			// discount per-user counts stay consistent — cf [[CHECKOUT-AUDIT-003]])
+			// 4. Resolve email (normalisé pour que `Order.customerEmail` reste
+			// comparable en aval — cf [[CHECKOUT-AUDIT-003]])
 			const rawFinalEmail = v.email ?? userEmail;
 			if (!rawFinalEmail) {
 				return {
@@ -229,9 +227,8 @@ export async function confirmCheckout(
 
 			// 5bis. CHECKOUT-CART-PARITY-001 — les lignes facturées sont celles du CLIENT.
 			// Elles doivent correspondre au panier serveur, seule base de calcul de
-			// `updatePaymentAmount` (montant du PI) et de `validateDiscountCode` (remise
-			// affichée). Deux paniers différents produisent deux exclusions
-			// `excludeSaleItems` différentes, donc un `order.total` qui peut dépasser le
+			// `updatePaymentAmount` (montant du PI). Deux paniers différents produisent
+			// deux totaux différents, donc un `order.total` qui peut dépasser le
 			// `displayedTotal` : le client se voyait alors refuser son paiement par la garde
 			// de consentement, avec un message de divergence qui ne nommait jamais la cause.
 			// Placé APRÈS le pre-check d'idempotence (3b) : sur une commande déjà liée, le
@@ -308,7 +305,6 @@ export async function confirmCheckout(
 					firstName,
 					lastName,
 					finalEmail,
-					discountCode: v.discountCode,
 					paymentIntentId: v.paymentIntentId,
 				});
 			} catch (createError) {
@@ -334,28 +330,20 @@ export async function confirmCheckout(
 				throw createError;
 			}
 
-			const { order, appliedDiscountId } = orderResult;
+			const { order } = orderResult;
 
 			span.setAttribute("order.id", order.id);
 			span.setAttribute("order.number", order.orderNumber);
 			span.setAttribute("checkout.total", order.total);
 			span.setAttribute("checkout.item_count", v.cartItems.length);
 
-			if (appliedDiscountId) {
-				updateTag(DISCOUNT_CACHE_TAGS.USAGE(appliedDiscountId));
-			}
-
 			// 8bis. CHECKOUT-CONSENT-002 — garde de consentement sur le chemin PRIMAIRE.
 			// `resolveIdempotentHit` refusait déjà de faire payer plus que le montant
 			// affiché, mais uniquement sur un hit idempotent : la première passe
 			// posait `order.total` sur le PI sans jamais le comparer à
-			// `displayedTotal`. Or `createOrderInTransaction` ne lève PAS toujours
-			// quand la remise s'évapore — un code encore ÉLIGIBLE dont le montant
-			// retombe à 0 (ex. tous les articles du panier passés en solde entre
-			// l'affichage et le clic : `excludeSaleItems` exclut alors tout, donc
-			// `eligibleSubtotal = 0`) produit `discountAmount = 0` sans erreur. Le
-			// client était alors débité du plein tarif alors que son CTA affichait le
-			// total remisé, et le garde webhook ne rejette que la SOUS-facturation.
+			// `displayedTotal`. Le garde webhook, lui, ne rejette que la
+			// SOUS-facturation : sans cette passe, une divergence à la hausse entre
+			// l'écran et la commande était débitée sans être vue.
 			if (typeof v.displayedTotal === "number" && order.total > v.displayedTotal) {
 				await cleanupFailedCheckout(order.id);
 				Sentry.withScope((scope) => {
@@ -366,7 +354,6 @@ export async function confirmCheckout(
 					scope.setContext("checkout", {
 						orderTotal: order.total,
 						displayedTotal: v.displayedTotal,
-						discountApplied: appliedDiscountId !== null,
 					});
 					Sentry.captureMessage(
 						"confirmCheckout: primary pass refused — order total exceeds the amount displayed to the customer",
@@ -743,7 +730,6 @@ async function cleanupFailedCheckout(orderId: string) {
 				deleted: false,
 				paidRace: false,
 				stripePaymentIntentId: null,
-				releasedDiscountIds: [] as string[],
 			};
 		}
 		if (fresh.paymentStatus === "PAID") {
@@ -751,27 +737,15 @@ async function cleanupFailedCheckout(orderId: string) {
 				deleted: false,
 				paidRace: true,
 				stripePaymentIntentId: fresh.stripePaymentIntentId,
-				releasedDiscountIds: [] as string[],
 			};
 		}
-		// [[DISC-USAGE-002]] Libération par `orderId` via le service canonique.
-		// L'ancien décrément matchait le `code` du discount, ce qui rate la ligne
-		// (donc laisse `usageCount` gonflé) si un admin renomme le code entre la
-		// création de la commande et ce rollback.
-		const releasedDiscountIds = await releaseOrderDiscountUsageTx(tx, orderId);
 		await tx.order.delete({ where: { id: orderId } });
-		return { deleted: true, paidRace: false, stripePaymentIntentId: null, releasedDiscountIds };
+		return { deleted: true, paidRace: false, stripePaymentIntentId: null };
 	});
 
 	if (outcome.paidRace) {
 		reportCleanupAbortedPaid(orderId, outcome.stripePaymentIntentId);
 		return;
-	}
-	// Invalidate discount usage cache after rollback so admin views reflect the new count.
-	if (outcome.deleted) {
-		for (const discountId of outcome.releasedDiscountIds) {
-			updateTag(DISCOUNT_CACHE_TAGS.USAGE(discountId));
-		}
 	}
 }
 

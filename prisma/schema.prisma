@@ -393,10 +393,11 @@ model Order {
   shippingCountry    String  @default("FR") @db.VarChar(2)
   shippingPhone      String  @db.VarChar(20)
 
-  subtotal       Int
-  discountAmount Int    @default(0)
-  shippingCost   Int    @default(0)
-  total          Int
+  // Pas de `discountAmount` : les codes promo ont été retirés le 2026-08-05.
+  // `Order_total_formula` vaut désormais `total = subtotal + shippingCost`.
+  subtotal     Int
+  shippingCost Int @default(0)
+  total        Int
 
   invoiceNumber      String?        @unique @db.VarChar(30)
   invoiceStatus      InvoiceStatus?
@@ -435,38 +436,45 @@ model Order {
   paymentMethod PaymentMethod @default(CARD)
   paidAt        DateTime?
 
-  // Code promo : DEUX colonnes plates, pas une table de liaison.
+  // Pas de code promo : le modèle `Discount`, l'enum `DiscountType` et les
+  // colonnes `discountCode`/`discountId`/`discountAmount` ont été retirés le
+  // 2026-08-05. Une micro-entreprise à ~20 commandes/mois n'a pas de programme
+  // promotionnel à piloter ; la remise, si elle revient un jour, se fera par un
+  // prix barré (`ProductSku.compareAtPrice`, déjà en place) et non par un moteur
+  // de codes avec plafonds d'usage, éligibilité et comptage par email.
   //
-  // `DiscountUsage` a été retiré le 2026-08-05 (audit V2, Lot 2) : c'était une
-  // table à UNE ligne maximum par commande — le cookie panier porte un
-  // `discountCode` singulier (`cart-cookie.ts`) et `order-creation.service.ts`
-  // n'en créait jamais qu'une, sous `if (appliedDiscountId && ...)`. Elle coûtait
-  // un modèle, une relation et un join dans chaque select de commande.
-  //
-  // `discountCode` est un SNAPSHOT figé au checkout, comme les colonnes
-  // `productTitle`/`skuColor` d'`OrderItem` : il survit au renommage comme à la
-  // suppression du code. `discountId` porte la relation, et sert au comptage de
-  // la limite `maxUsagePerUser` (par email, parcours invité).
-  //
-  // ⚠️ `onDelete: Restrict` et NON `SetNull` : c'est lui qui préserve la garde
-  // « un code déjà utilisé ne se supprime pas », que `DiscountUsage` portait.
-  discountCode String?   @db.VarChar(30)
-  discountId   String?
-  discount     Discount? @relation(fields: [discountId], references: [id], onDelete: Restrict)
+  // ⚠️ Condition de réouverture : il faudra RE-créer le snapshot figé
+  // (`discountCode` était un instantané survivant au renommage du code), la
+  // garde `onDelete: Restrict` — « un code déjà utilisé ne se supprime pas » —
+  // et le décompte transactionnel de `usageCount` sous le lock de stock. Ne pas
+  // se contenter d'une colonne de montant : c'est ce trio qui rendait la remise
+  // auditable.
 
   items   OrderItem[]
   refunds Refund[]
   history OrderHistory[]
 
-  invoiceRetryDeferred     Boolean @default(false)
-  invoiceReconcileAttempts Int     @default(0)
+  // Drapeau d'appartenance à la DLQ facture, relu par `reconcile-invoices`.
+  //
+  // Pas de compteur `invoiceReconcileAttempts` à côté (retiré 2026-08-05) : il ne
+  // faisait que RETARDER de 3 jours la première alerte, alors que
+  // `flagInvoiceFailureForReconcile` alerte déjà à J+0 — et au-delà du seuil il
+  // ré-alertait à chaque run, donc il ne dédoublonnait rien.
+  invoiceRetryDeferred Boolean @default(false)
 
+  // Trop-perçu Stripe (capture > `total`), posé par `payment_intent.succeeded`.
+  //
+  // ⚠️ NE PAS RETIRER : lu par la garde anti-sur-remboursement de
+  // `refund-handlers.ts`, qui borne le remboursement à `total + overbilled`. Sans
+  // lui, rembourser un trop-perçu légitime déclencherait une alerte Sentry.
+  //
+  // Pas de `overbillingResolvedAt` en face (retiré 2026-08-05) : il n'existait que
+  // pour éteindre un compteur de dashboard, son unique writer était une passe
+  // déclenchée à la main, et le lien de l'alerte menait à la liste NON filtrée.
+  // La notification réelle, c'est l'e-mail d'alerte admin, qui subsiste.
   overbilledAmountCents Int?
-  overbillingResolvedAt DateTime?
 
   piiPurgedAt DateTime?
-
-  pdfIntegrityCheckedAt DateTime?
 
   deletedAt DateTime?
 
@@ -481,12 +489,10 @@ model Order {
   //   Order_creditNotePdfHash_format_check
   //   Order_customerEmail_unaccent_trgm_idx
   //   Order_customerName_unaccent_trgm_idx
-  //   Order_discountAmount_non_negative
   //   Order_invoiceDataHash_format_check
   //   Order_invoiceDataSnapshot_hash_coherence_check
   //   Order_invoiceNumber_format
   //   Order_invoicePdfHash_format_check
-  //   Order_invoiceReconcileAttempts_check
   //   Order_overbilledAmountCents_positive_check
   //   Order_paid_requires_paidAt
   //   Order_paid_requires_stripe_proof
@@ -644,8 +650,6 @@ model Refund {
   creditNotePdfUrl      String?   @db.VarChar(2048)
   creditNotePdfHash     String?   @db.VarChar(64)
 
-  pdfIntegrityCheckedAt DateTime?
-
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   Refund_amount_positive
   //   Refund_creditNoteNumber_cross_unique
@@ -660,47 +664,6 @@ model Refund {
   @@index([orderId])
   @@index([status, processedAt])
   @@index([createdAt(sort: Desc)])
-}
-
-enum DiscountType {
-  PERCENTAGE
-  FIXED_AMOUNT
-}
-
-model Discount {
-  id   String @id @default(cuid(2))
-  code String @unique @db.VarChar(30)
-
-  type  DiscountType
-  value Int
-
-  minOrderAmount  Int?
-  maxUsageCount   Int?
-  maxUsagePerUser Int?
-
-  // Pas de `startsAt` : un code promo est actif dès sa création, et se ferme
-  // soit à `endsAt`, soit au toggle `isActive`. La planification à l'avance
-  // exigeait un cron (`process-scheduled-discounts`, supprimé) — l'activation
-  // différée est donc devenue manuelle.
-  endsAt DateTime?
-
-  usageCount Int @default(0)
-
-  isActive Boolean @default(true)
-
-  orders Order[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   Discount_maxUsagePerUser_positive
-  //   Discount_minOrderAmount_positive
-  //   Discount_percentage_max_100
-  //   Discount_usageCount_non_negative
-  //   Discount_usageCount_within_limit
-  //   Discount_value_positive
 }
 
 enum WebhookEventStatus {

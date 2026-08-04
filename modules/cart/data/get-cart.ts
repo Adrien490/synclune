@@ -1,12 +1,10 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
-import { getDiscountByCode } from "@/modules/discounts/data/get-discount-by-code";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 
 import { readCartCookie } from "../lib/cart-cookie";
-import { resolveCartDiscount } from "../services/resolve-cart-discount.service";
 
 import { CART_SKU_SELECT } from "../constants/cart";
 import type { CartItem, CartItemSku, GetCartReturn } from "../types/cart.types";
@@ -14,11 +12,7 @@ import type { CartItem, CartItemSku, GetCartReturn } from "../types/cart.types";
 // Re-export pour compatibilité
 export type { GetCartReturn } from "../types/cart.types";
 
-const EMPTY_CART: GetCartReturn = {
-	items: [],
-	appliedDiscountCode: null,
-	discountAmountCache: null,
-};
+const EMPTY_CART: GetCartReturn = { items: [] };
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -58,19 +52,7 @@ export async function getCart(): Promise<GetCartReturn> {
 			return EMPTY_CART;
 		}
 
-		if (!cookieCart.discountCode) {
-			return { items, appliedDiscountCode: null, discountAmountCache: null };
-		}
-
-		// [[CART-DISCOUNT-001]] Le cookie ne porte que le CODE, jamais le montant :
-		// la remise est re-dérivée ici, seul point de lecture du panier, pour qu'elle
-		// suive toujours les articles réels (cf. `resolve-cart-discount.service.ts`).
-		// Un code devenu inéligible disparaît simplement de l'affichage — on ne
-		// réécrit pas le cookie depuis une lecture (`cookies().set()` throw pendant
-		// un rendu de Server Component).
-		const discount = await getDiscountByCode({ code: cookieCart.discountCode });
-
-		return { items, ...resolveCartDiscount(cookieCart.discountCode, discount, items) };
+		return { items };
 	} catch (error) {
 		unstable_rethrow(error);
 		// Le repli vit ICI, HORS du scope "use cache" de `fetchCartSkus` — sinon le

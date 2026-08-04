@@ -50,12 +50,12 @@ describe("Verrou de montant — l'adresse reste corrigeable", () => {
 	});
 
 	it("le fieldset disabled couvre TOUJOURS ce qui porte le montant", () => {
-		// L'autre moitié de l'invariant : relâcher le gel sur le code promo ou les frais
+		// L'autre moitié de l'invariant : relâcher le gel sur les frais de livraison
 		// laisserait le CTA suivre des modifications qui ne seront jamais débitées.
+		// (La section code promo a disparu avec les `Discount`, 2026-08-05.)
 		const source = stripComments(readSource(BODY));
 		const fieldset = /<fieldset disabled=\{isAmountLocked\}[\s\S]*?<\/fieldset>/.exec(source);
 
-		expect(fieldset![0]).toMatch(/<CheckoutDiscountSection/);
 		expect(fieldset![0]).toMatch(/<ShippingMethodSection/);
 	});
 

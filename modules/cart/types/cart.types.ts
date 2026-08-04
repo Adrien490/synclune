@@ -38,10 +38,6 @@ export interface CartItem {
  */
 interface CartView {
 	items: CartItem[];
-	/** Code promo appliqué et TOUJOURS éligible, `null` sinon (re-dérivé à la lecture). */
-	appliedDiscountCode: string | null;
-	/** Montant de la remise en centimes, re-dérivé des articles courants. */
-	discountAmountCache: number | null;
 }
 
 export type GetCartReturn = CartView;

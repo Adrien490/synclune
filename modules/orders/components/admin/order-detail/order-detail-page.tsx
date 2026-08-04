@@ -59,7 +59,6 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 					<OrderItemsCard
 						items={order.items}
 						subtotal={order.subtotal}
-						discountAmount={order.discountAmount}
 						shippingCost={order.shippingCost}
 						total={order.total}
 					/>

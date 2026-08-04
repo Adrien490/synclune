@@ -14,7 +14,6 @@ const CONFIRMATION_ORDER_SELECT = {
 	customerEmail: true,
 	subtotal: true,
 	shippingCost: true,
-	discountAmount: true,
 	total: true,
 	paymentStatus: true,
 	stripePaymentIntentId: true,

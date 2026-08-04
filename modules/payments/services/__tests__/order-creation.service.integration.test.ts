@@ -36,7 +36,6 @@
  * schéma worker) pour que le client de prod tape sur la DB d'intégration.
  */
 import { describe, it, expect, beforeAll } from "vitest";
-import { DiscountType } from "@/app/generated/prisma/client";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
 import { createTestProduct, createTestSku } from "@/test/integration/factories";
 import type { SkuDetailsResult } from "@/modules/cart/types/sku-validation.types";
@@ -122,58 +121,6 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 			await import("@/modules/payments/services/order-creation.service"));
 	});
 
-	it("applies a maxUsageCount=1 discount exactly once under 2 concurrent orders", async () => {
-		const product = await createTestProduct();
-		const sku = await createTestSku(product.id, { inventory: 100, priceInclTax: 5_000 });
-		const code = `ATOMIC${uniq()}`;
-		await prisma.discount.create({
-			data: {
-				code,
-				type: DiscountType.FIXED_AMOUNT,
-				value: 500, // 5€
-				maxUsageCount: 1,
-				usageCount: 0,
-				isActive: true,
-			},
-		});
-
-		const skuDetails = buildSkuDetails({
-			id: sku.id,
-			sku: sku.sku,
-			priceInclTax: sku.priceInclTax,
-			compareAtPrice: sku.compareAtPrice,
-			product: { id: product.id, title: product.title, slug: product.slug },
-		});
-
-		const mkParams = () =>
-			buildParams({
-				skuId: sku.id,
-				skuDetails,
-				priceInclTax: sku.priceInclTax,
-				discountCode: code,
-			});
-
-		const results = await Promise.allSettled([
-			createOrderInTransaction(mkParams()),
-			createOrderInTransaction(mkParams()),
-		]);
-
-		const fulfilled = results.filter((r) => r.status === "fulfilled");
-		const rejected = results.filter((r) => r.status === "rejected");
-
-		// Exactement 1 succès, 1 rejet : le code promo n'est pas sur-consommé.
-		expect(fulfilled).toHaveLength(1);
-		expect(rejected).toHaveLength(1);
-
-		const discount = await prisma.discount.findUnique({ where: { code } });
-		expect(discount?.usageCount).toBe(1);
-
-		// Le code promo vit en colonnes sur `Order` (audit V2, Lot 2) : une commande
-		// portant le code == une utilisation.
-		const usages = await prisma.order.count({ where: { discountCode: code } });
-		expect(usages).toBe(1);
-	});
-
 	it("documents optimistic stock reservation: 2 concurrent orders for inventory=1 BOTH succeed (decrement happens at webhook)", async () => {
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id, { inventory: 1, priceInclTax: 5_000 });
@@ -227,107 +174,5 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 				}),
 			),
 		).rejects.toThrow(/insuffisant/i);
-	});
-
-	it("rolls back everything (order, items, discount usage) when a later stock check fails mid-transaction", async () => {
-		const product = await createTestProduct();
-		const skuOk = await createTestSku(product.id, { inventory: 10, priceInclTax: 3_000 });
-		const skuLow = await createTestSku(product.id, { inventory: 1, priceInclTax: 2_000 });
-		const code = `RLBK${uniq()}`;
-		await prisma.discount.create({
-			data: {
-				code,
-				type: DiscountType.FIXED_AMOUNT,
-				value: 500,
-				usageCount: 0,
-				isActive: true,
-			},
-		});
-		const email = `rollback-${uniq()}@test.local`;
-
-		const detailsOk = buildSkuDetails({
-			id: skuOk.id,
-			sku: skuOk.sku,
-			priceInclTax: skuOk.priceInclTax,
-			compareAtPrice: skuOk.compareAtPrice,
-			product: { id: product.id, title: product.title, slug: product.slug },
-		});
-		const detailsLow = buildSkuDetails({
-			id: skuLow.id,
-			sku: skuLow.sku,
-			priceInclTax: skuLow.priceInclTax,
-			compareAtPrice: skuLow.compareAtPrice,
-			product: { id: product.id, title: product.title, slug: product.slug },
-		});
-
-		await expect(
-			createOrderInTransaction(
-				buildParams({
-					skuId: skuOk.id,
-					skuDetails: detailsOk,
-					priceInclTax: skuOk.priceInclTax,
-					cartItems: [
-						{ skuId: skuOk.id, quantity: 1 },
-						{ skuId: skuLow.id, quantity: 5 }, // > inventory=1 → BusinessError en cours de tx
-					],
-					skuDetailsResults: [detailsOk, detailsLow],
-					subtotal: 1 * 3_000 + 5 * 2_000,
-					discountCode: code,
-					finalEmail: email,
-				}),
-			),
-		).rejects.toThrow(/insuffisant/i);
-
-		// Tout-ou-rien : aucun résidu en DB.
-		expect(await prisma.order.count({ where: { customerEmail: email } })).toBe(0);
-		expect(await prisma.order.count({ where: { discountCode: code } })).toBe(0);
-		const discount = await prisma.discount.findUnique({ where: { code } });
-		expect(discount?.usageCount).toBe(0);
-	});
-
-	it("rolls back the raw-SQL usageCount increment when a write fails AFTER it (FK violation on order item snapshot)", async () => {
-		const product = await createTestProduct();
-		const sku = await createTestSku(product.id, { inventory: 10, priceInclTax: 5_000 });
-		const code = `RLBKFK${uniq()}`;
-		await prisma.discount.create({
-			data: {
-				code,
-				type: DiscountType.FIXED_AMOUNT,
-				value: 500,
-				usageCount: 0,
-				isActive: true,
-			},
-		});
-		const email = `rollback-fk-${uniq()}@test.local`;
-
-		// productId inexistant dans le snapshot : le check stock passe (raw SQL par
-		// skuId + JOIN sur le VRAI productId), l'incrément usageCount passe, puis
-		// orderItem.create viole la FK productId → rollback INTÉGRAL de la tx,
-		// y compris l'UPDATE raw SQL du usageCount.
-		const poisonedDetails = buildSkuDetails({
-			id: sku.id,
-			sku: sku.sku,
-			priceInclTax: sku.priceInclTax,
-			compareAtPrice: sku.compareAtPrice,
-			product: { id: "prod_missing_fk", title: product.title, slug: product.slug },
-		});
-
-		await expect(
-			createOrderInTransaction(
-				buildParams({
-					skuId: sku.id,
-					skuDetails: poisonedDetails,
-					priceInclTax: sku.priceInclTax,
-					discountCode: code,
-					finalEmail: email,
-				}),
-			),
-		).rejects.toThrow();
-
-		// L'incrément raw SQL est bien annulé avec le reste.
-		const discount = await prisma.discount.findUnique({ where: { code } });
-		expect(discount?.usageCount).toBe(0);
-		expect(await prisma.order.count({ where: { discountCode: code } })).toBe(0);
-		expect(await prisma.order.count({ where: { customerEmail: email } })).toBe(0);
 	});
 });

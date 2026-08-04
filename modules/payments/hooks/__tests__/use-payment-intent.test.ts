@@ -226,7 +226,7 @@ describe("usePaymentIntent", () => {
 
 		// Before initialization completes, paymentIntentId is null
 		act(() => {
-			result.current.updateAmount("FR", "75001", null);
+			result.current.updateAmount("FR", "75001");
 		});
 
 		expect(mockUpdatePaymentAmount).not.toHaveBeenCalled();
@@ -246,7 +246,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", "WELCOME10");
+			result.current.updateAmount("FR", "75001");
 		});
 
 		// Not called yet — debounce pending
@@ -263,7 +263,6 @@ describe("usePaymentIntent", () => {
 			paymentIntentId: "pi_123",
 			country: "FR",
 			postalCode: "75001",
-			discountCode: "WELCOME10",
 		});
 
 		vi.useRealTimers();
@@ -279,9 +278,9 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", null);
-			result.current.updateAmount("FR", "75001", "CODE1");
-			result.current.updateAmount("FR", "75001", "CODE2");
+			result.current.updateAmount("FR", "75001");
+			result.current.updateAmount("FR", "75001");
+			result.current.updateAmount("FR", "75001");
 		});
 
 		await act(async () => {
@@ -291,7 +290,7 @@ describe("usePaymentIntent", () => {
 
 		expect(mockUpdatePaymentAmount).toHaveBeenCalledTimes(1);
 		expect(mockUpdatePaymentAmount).toHaveBeenCalledWith(
-			expect.objectContaining({ discountCode: "CODE2" }),
+			expect.objectContaining({ country: "FR", postalCode: "75001" }),
 		);
 
 		vi.useRealTimers();
@@ -307,7 +306,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", null);
+			result.current.updateAmount("FR", "75001");
 		});
 
 		act(() => {
@@ -333,7 +332,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", null);
+			result.current.updateAmount("FR", "75001");
 		});
 
 		await act(async () => {
@@ -368,7 +367,7 @@ describe("usePaymentIntent", () => {
 		const initialTotal = result.current.total;
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", null);
+			result.current.updateAmount("FR", "75001");
 		});
 
 		await act(async () => {
@@ -633,7 +632,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", null);
+			result.current.updateAmount("FR", "75001");
 		});
 
 		// Unmount before debounce fires
@@ -668,7 +667,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", null);
+			result.current.updateAmount("FR", "75001");
 		});
 
 		act(() => {

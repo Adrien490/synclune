@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
-import type { AppliedDiscount } from "@/modules/discounts/types/discount.types";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { usePaymentIntent } from "../hooks/use-payment-intent";
 
 import { CheckoutFormBody } from "./checkout-form-body";
-import { validateDiscountCode } from "@/modules/discounts/actions/validate-discount-code";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 
 function subscribeOnlineStatus(callback: () => void) {
@@ -40,7 +38,7 @@ interface CheckoutFormProps {
 /**
  * Single-page checkout form (Shopify-style).
  *
- * Sections: Contact, Livraison, Frais et délai de livraison, Code promo, Paiement.
+ * Sections: Contact, Livraison, Frais et délai de livraison, Paiement.
  * Payment via Stripe PaymentElement — carte uniquement (pas de paiement express).
  */
 export function CheckoutForm({ cart, session }: CheckoutFormProps) {
@@ -104,60 +102,6 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 		if (lockedAmount === null) setLockedAmount(pi.boundAmount);
 	}
 
-	// [[CART-DISCOUNT-002]] Reprise du code promo appliqué au panier.
-	// Sans ça, un code saisi dans le panier (« Réduction (SUMMER20) −20,00 € »
-	// affichée dans le cart-sheet) était PERDU à l'arrivée sur /paiement :
-	// `_appliedDiscount` démarrait à null, le PaymentIntent restait au plein
-	// tarif et le client payait sans remise s'il ne re-saisissait pas le code.
-	//
-	// On repasse volontairement par `validateDiscountCode` (au lieu de faire
-	// confiance au montant stocké sur le panier) : la remise est ainsi
-	// re-dérivée serveur, avec la session courante — donc les limites par
-	// utilisateur et l'éligibilité sont revérifiées ici aussi. Un code devenu
-	// invalide est simplement ignoré, sans bloquer le paiement.
-	const cartDiscountCode = cart.appliedDiscountCode;
-	const hydratedDiscountRef = useRef(false);
-
-	useEffect(() => {
-		if (hydratedDiscountRef.current || !cartDiscountCode) return;
-		hydratedDiscountRef.current = true;
-
-		let cancelled = false;
-		void validateDiscountCode(cartDiscountCode).then((result) => {
-			if (cancelled) return;
-
-			if (result.valid && result.discount) {
-				form.setFieldValue("_appliedDiscount", result.discount);
-				form.setFieldValue("_discountOpen", true);
-				return;
-			}
-
-			// L'échec était totalement muet : la remise annoncée dans la cart-sheet
-			// (« Réduction (SUMMER20) −20,00 € ») disparaissait du récapitulatif sans un
-			// mot, et le client découvrait le plein tarif sur son relevé. Le motif n'est
-			// pas nécessairement « code expiré » — le rate limit de `validateDiscountCode`
-			// répond ici aussi, et un 429 ne dit rien de la validité du code (son compteur
-			// était partagé avec le reste du tunnel, cf. F3).
-			//
-			// On informe SANS bloquer : notice (`_discountNotice`) et pas erreur de champ.
-			// Une erreur sur `discountCode` rendrait `canSubmit` faux et empêcherait de
-			// payer, et pré-remplir le champ ferait re-valider le code à la soumission
-			// (`getFormData`), qui refuse alors la commande — un blocage complet là où
-			// l'ancien comportement laissait au moins passer le paiement.
-			form.setFieldValue("_discountOpen", true);
-			form.setFieldValue(
-				"_discountNotice",
-				result.error
-					? `Le code ${cartDiscountCode} n'a pas pu être appliqué : ${result.error.toLowerCase()}`
-					: `Le code ${cartDiscountCode} n'a pas pu être appliqué.`,
-			);
-		});
-
-		return () => {
-			cancelled = true;
-		};
-	}, [cartDiscountCode, form]);
-
 	/**
 	 * La commande vient d'être liée au PaymentIntent : on gèle l'affichage sur le
 	 * montant autoritaire, et on annule d'abord toute mise à jour de montant encore en
@@ -175,7 +119,6 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 	 * Builds ConfirmCheckoutData from the current form state.
 	 * Called by PayButton before submission.
 	 * Returns null if validation fails (triggers form errors).
-	 * Validates unapplied discount codes before submission.
 	 */
 	async function getFormData(): Promise<ConfirmCheckoutData | null> {
 		const values = form.state.values;
@@ -200,36 +143,12 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 			return null;
 		}
 
-		let appliedDiscount = values._appliedDiscount as AppliedDiscount | null;
-		const rawDiscountCode = (values.discountCode as string).trim().toUpperCase();
-
-		// If there's an unapplied discount code, validate it before submission
-		if (!appliedDiscount && rawDiscountCode) {
-			const result = await validateDiscountCode(rawDiscountCode);
-			if (result.valid && result.discount) {
-				appliedDiscount = result.discount;
-				form.setFieldValue("_appliedDiscount", result.discount);
-				form.setFieldValue("discountCode", "");
-			} else {
-				// Open the discount section and show the error
-				form.setFieldValue("_discountOpen", true);
-				form.setFieldMeta("discountCode", (prev) => ({
-					...prev,
-					errors: [result.error ?? "Code invalide"],
-				}));
-				return null;
-			}
-		}
-
-		const discountCode = appliedDiscount?.code ?? undefined;
-
 		// Montant réellement affiché sur le CTA au moment du clic — garde de
 		// consentement côté serveur (CHECKOUT-CONSENT-001), jamais une base de
 		// facturation. Recalculé ici avec les mêmes entrées que le récapitulatif.
 		const country = ((s.country as string) || "FR") as ShippingCountry;
 		const displayedShipping = calculateShipping(country, s.postalCode) ?? 0;
-		const displayedTotal =
-			lockedAmount ?? subtotal - (appliedDiscount?.discountAmount ?? 0) + displayedShipping;
+		const displayedTotal = lockedAmount ?? subtotal + displayedShipping;
 
 		return {
 			cartItems,
@@ -243,7 +162,6 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 				phoneNumber: s.phoneNumber,
 			},
 			email: isGuest ? (values.email as string) || undefined : undefined,
-			discountCode,
 			paymentIntentId: pi.paymentIntentId!,
 			displayedTotal,
 		};
@@ -254,16 +172,14 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 			selector={(s) => ({
 				country: s.values.shipping.country,
 				postalCode: s.values.shipping.postalCode,
-				appliedDiscount: s.values._appliedDiscount,
 			})}
 		>
-			{({ country: rawCountry, postalCode, appliedDiscount }) => {
+			{({ country: rawCountry, postalCode }) => {
 				const country = ((rawCountry as string) || "FR") as ShippingCountry;
 				const shippingRaw = calculateShipping(country, postalCode as string);
 				const shippingUnavailable = shippingRaw === null;
 				const shipping = shippingRaw ?? 0;
-				const discountAmount = (appliedDiscount as AppliedDiscount | null)?.discountAmount ?? 0;
-				const total = subtotal - discountAmount + shipping;
+				const total = subtotal + shipping;
 				const shippingInfo = getShippingInfo(country, postalCode as string);
 
 				return (
@@ -280,8 +196,6 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 						shippingInfo={shippingInfo}
 						shippingUnavailable={shippingUnavailable}
 						total={total}
-						discountAmount={discountAmount}
-						appliedDiscount={appliedDiscount as AppliedDiscount | null}
 						country={country}
 						postalCode={postalCode as string}
 						lockedAmount={lockedAmount}

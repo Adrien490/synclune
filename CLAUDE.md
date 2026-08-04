@@ -80,7 +80,7 @@ app/
 ├── suivi-commande/          # Suivi de commande invite (token HMAC) — SEUL acces client a une commande
 └── sitemap-images.xml/      # Generation sitemap images
 
-modules/                     # DDD - 22 modules
+modules/                     # DDD - 21 modules
 ├── [module]/
 │   ├── actions/             # Server Actions (mutations)
 │   ├── data/                # Data fetching + cache ("use cache")
@@ -548,7 +548,7 @@ Pas de rétroactif sur les migrations existantes (risque trop élevé). En cas d
 **Structure de `0_init`** — deux parties, et la seconde est la plus importante :
 
 1. DDL généré par `prisma migrate diff --from-empty --to-schema` (tables, colonnes, enums, FK, index normaux).
-2. **Annexe des gardes bruts** — copie de `prisma/sql/raw-guards.sql` : 32 CHECK, 8 index partiels/expression, 2 extensions, 2 fonctions, 2 triggers. **`prisma migrate diff` n'en génère AUCUN.** Un baseline régénéré sans recoller cette annexe perdrait en silence le format de numéro de facture (Art. 286 CGI), le trigger d'unicité cross-table des avoirs, le CHECK singleton `StoreSettings`, la formule de total de commande…
+2. **Annexe des gardes bruts** — copie de `prisma/sql/raw-guards.sql` : 24 CHECK, 8 index partiels/expression, 2 extensions, 2 fonctions, 2 triggers. **`prisma migrate diff` n'en génère AUCUN.** Un baseline régénéré sans recoller cette annexe perdrait en silence le format de numéro de facture (Art. 286 CGI), le trigger d'unicité cross-table des avoirs, le CHECK singleton `StoreSettings`, la formule de total de commande…
 
 **`prisma/sql/raw-guards.sql` est la SSOT des gardes**, consommée par deux chemins qui doivent rester d'accord : l'annexe de `0_init`, et `test/integration/setup.ts` (appliqué après `db push`). Le fichier est **idempotent** (chaque garde précédé d'un `DROP … IF EXISTS`). Ajouter un garde là ne l'applique pas aux bases existantes : écrire aussi une migration normale.
 
@@ -694,9 +694,9 @@ const form = useAppForm<MyInput>({
 
 ⚠️ **Il n'y a plus de job `e2e-smoke` en CI** — il refaisait build + seed + install Playwright (~10 min) pour rejouer ce que le job `e2e` couvre déjà. Les tags `@smoke` restent utiles **en local** (`pnpm e2e --grep @smoke`). Corollaire : `e2e-smoke` ne doit pas figurer dans les required status checks GitHub — un check requis que plus aucun job ne rapporte **bloque toutes les PR**.
 
-### Critical path (8 modules)
+### Critical path (7 modules)
 
-Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refunds`, `invoices` sont les flows transactionnels revenus/sécurité (le module `invoices` porte la numérotation séquentielle gap-free et l'archivage PDF immuable — toute régression y est un risque réglementaire). Leurs tests s'exécutent :
+Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `refunds`, `invoices` sont les flows transactionnels revenus/sécurité (le module `invoices` porte la numérotation séquentielle gap-free et l'archivage PDF immuable — toute régression y est un risque réglementaire). Leurs tests s'exécutent :
 
 - **Pre-commit local** (hook husky) : uniquement si `git diff --cached` contient un fichier sous ces modules — commit instantané sinon.
 - **CI** : job `tests-critical` dédié en parallèle de `quality` pour feedback rapide.
@@ -736,7 +736,7 @@ Toute copie utilisateur tutoie. Le mélange n'est pas cosmétique : sur `/paieme
 
 **Seule exception — les messages d'erreur de Stripe.** `stripe.confirmPayment` renvoie pour `card_error`/`validation_error` une `error.message` produite par Stripe en `locale: "fr"`, donc vouvoyante (« Votre carte a été refusée. »). C'est elle qui porte le **motif** du refus, et en card-only c'est le chemin d'erreur le plus fréquent : on l'affiche telle quelle (`use-checkout-submit.ts`, `mapStripeErrorMessage`). Nos propres fallbacks, eux, tutoient. `checkout-voice-tutoiement.regression.test.ts` verrouille le tunnel avec cette allowlist.
 
-⚠️ Les libellés de rate limit (« Trop de tentatives. Veuillez réessayer plus tard. ») sont encore vouvoyants dans une vingtaine de fichiers (`discounts`, `payments`) — dette connue, à traiter en une passe transverse, pas fichier par fichier. Cf. [`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md).
+⚠️ Les libellés de rate limit (« Trop de tentatives. Veuillez réessayer plus tard. ») sont encore vouvoyants dans plusieurs fichiers (`payments`) — dette connue, à traiter en une passe transverse, pas fichier par fichier. Cf. [`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md).
 
 ## Constats connus, non corrigés
 

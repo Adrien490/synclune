@@ -241,12 +241,6 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	doc.text(formatSignedAmount(data.totals.subtotalExclTax), colX.total, y);
 	y += 5;
 
-	if (data.totals.totalDiscount > 0) {
-		doc.text("Réduction", totalsX, y);
-		doc.text(`-${formatEuro(data.totals.totalDiscount)}`, colX.total, y);
-		y += 5;
-	}
-
 	doc.text("Frais de livraison", totalsX, y);
 	doc.text(
 		data.totals.shippingExclTax === 0 ? "Offerts" : formatEuro(data.totals.shippingExclTax),

@@ -63,7 +63,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	customerEmail: true,
 	customerName: true,
 	subtotal: true,
-	discountAmount: true,
 	shippingCost: true,
 	total: true,
 	shippingFirstName: true,
@@ -92,7 +91,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	creditNoteGeneratedAt: true,
 	// DLQ facturation (EINV-UI-105) — escalade archivage/avoir en échec
 	invoiceRetryDeferred: true,
-	invoiceReconcileAttempts: true,
 	// Archivage PDF immuable (Art. L102 B LPF) — admin only (URL/hash sensibles)
 	invoicePdfUrl: true,
 	invoicePdfHash: true,
@@ -138,7 +136,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
-	discountCode: true,
 	history: {
 		select: {
 			id: true,
@@ -174,7 +171,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	customerEmail: true,
 	customerName: true,
 	subtotal: true,
-	discountAmount: true,
 	shippingCost: true,
 	total: true,
 	shippingFirstName: true,
@@ -234,7 +230,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
-	discountCode: true,
 	history: {
 		select: {
 			id: true,

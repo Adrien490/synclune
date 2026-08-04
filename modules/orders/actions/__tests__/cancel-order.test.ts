@@ -407,33 +407,6 @@ describe("cancelOrder", () => {
 	});
 
 	// Discount usage release — ORD-BIZ-009 requires autoRefund=true on PAID orders
-	it("should release discount usages when cancelling an order", async () => {
-		const order = createTxOrder({
-			paymentStatus: "PAID",
-		});
-		// Un seul code par commande depuis le repli de `DiscountUsage` en colonnes
-		// (audit V2, Lot 2) : le cas « deux codes libérés » que vérifiait cette
-		// assertion est devenu INEXPRIMABLE, pas seulement non testé — `Order.discountId`
-		// est une colonne scalaire. Il défendait une forme que la base autorisait mais
-		// que le checkout ne produisait jamais (cookie panier à un seul code).
-		mockPrisma.order.findUnique.mockResolvedValue({ ...order, discountId: "disc-A" });
-
-		await cancelOrder(undefined, createMockFormData({ id: VALID_CUID, autoRefund: "true" }));
-
-		// [[DISC-USAGE-002]] Libération via `releaseOrderDiscountUsageTx` : le
-		// décrément est un `updateMany` GARDÉ par `usageCount > 0` (un `update` nu
-		// laissait le compteur passer négatif → code redeemable au-delà de
-		// maxUsageCount).
-		expect(mockPrisma.discount.updateMany).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
-			where: { id: "disc-A", usageCount: { gt: 0 } },
-			data: { usageCount: { decrement: 1 } },
-		});
-		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
-			where: { id: VALID_CUID, discountId: { not: null } },
-			data: { discountId: null, discountCode: null },
-		});
-	});
 
 	it("ne libère rien quand la commande ne porte aucun code promo", async () => {
 		const order = createTxOrder();

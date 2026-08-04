@@ -155,7 +155,6 @@ describe("cleanupPendingOrders", () => {
 				metadata: expect.objectContaining({
 					reason: "abandoned_checkout",
 					itemsCount: 1,
-					releasedDiscountsCount: 0,
 				}),
 			}),
 		);
@@ -178,39 +177,6 @@ describe("cleanupPendingOrders", () => {
 		expect(mockPrisma.order.update).not.toHaveBeenCalled();
 		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
 		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
-	});
-
-	it("releases discount usages atomically when present", async () => {
-		mockPrisma.order.findMany.mockResolvedValue([buildStaleOrder()]);
-		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockPrisma) => unknown) => {
-			// UN SEUL objet pour DEUX lectures successives sur le même mock : la garde
-			// d'état fraîche (status/paymentStatus/stripePaymentIntentId) puis
-			// `releaseOrderDiscountUsageTx`, qui lit `discountId` — le code promo vit
-			// en colonnes sur `Order` depuis l'audit V2, Lot 2. Deux
-			// `mockResolvedValue` successifs se seraient écrasés, la garde aurait lu un
-			// objet sans `status` et serait sortie avant la libération.
-			mockPrisma.order.findUnique.mockResolvedValue({
-				status: "PENDING",
-				paymentStatus: "PENDING",
-				stripePaymentIntentId: null,
-				discountId: "discount-1",
-			});
-			mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
-			return cb(mockPrisma);
-		});
-
-		await cleanupPendingOrders();
-
-		// [[DISC-USAGE-002]] Libération via `releaseOrderDiscountUsageTx` : décrément
-		// `updateMany` GARDÉ par `usageCount > 0` (borne basse).
-		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
-			where: { id: "discount-1", usageCount: { gt: 0 } },
-			data: { usageCount: { decrement: 1 } },
-		});
-		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
-			where: { id: "order-1", discountId: { not: null } },
-			data: { discountId: null, discountCode: null },
-		});
 	});
 
 	it("invalidates LIST, ADMIN_ORDERS_LIST, ADMIN_BADGES when at least one order is cancelled", async () => {

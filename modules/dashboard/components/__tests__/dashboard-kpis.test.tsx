@@ -7,16 +7,16 @@ vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: (amount: number) => `${amount.toFixed(2)} €`,
 }));
 
-vi.mock("lucide-react", () => ({
-	Euro: () => <span data-testid="icon-euro" />,
-	ShoppingBag: () => <span data-testid="icon-shopping-bag" />,
-	Receipt: () => <span data-testid="icon-receipt" />,
-	Package: () => <span data-testid="icon-package" />,
-	Target: () => <span data-testid="icon-target" />,
-	Star: () => <span data-testid="icon-star" />,
-	Mail: () => <span data-testid="icon-mail" />,
-	Clock: () => <span data-testid="icon-clock" />,
-	UserPlus: () => <span data-testid="icon-user-plus" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CurrencyEurIcon: () => <span data-testid="icon-euro" />,
+	ShoppingBagIcon: () => <span data-testid="icon-shopping-bag" />,
+	ReceiptIcon: () => <span data-testid="icon-receipt" />,
+	PackageIcon: () => <span data-testid="icon-package" />,
+	TargetIcon: () => <span data-testid="icon-target" />,
+	StarIcon: () => <span data-testid="icon-star" />,
+	EnvelopeIcon: () => <span data-testid="icon-mail" />,
+	ClockIcon: () => <span data-testid="icon-clock" />,
+	UserPlusIcon: () => <span data-testid="icon-user-plus" />,
 }));
 
 const mockKpiCard = vi.fn();
@@ -47,7 +47,6 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 		averageOrderValue: { amount: 200 },
 		conversionRate: { rate: 65.0, abandoned: 8 },
 		pendingShipment: { count: 3 },
-		discountImpact: { amount: 150 },
 		newCustomers: { count: 12 },
 		...overrides,
 	};
@@ -312,30 +311,6 @@ describe("DashboardKpis", () => {
 		);
 	});
 
-	it("shows discount and refund info in revenue subtitle", () => {
-		render(
-			<DashboardKpis
-				kpis={makeKpis({
-					monthlyRevenue: {
-						amount: 5000,
-						netAmount: 4700,
-						refundAmount: 150,
-						refundCount: 1,
-						refundRate: 4,
-					},
-					discountImpact: { amount: 200 },
-				})}
-			/>,
-		);
-
-		expect(mockKpiCard).toHaveBeenCalledWith(
-			expect.objectContaining({
-				title: "CA net du mois",
-				subtitle: expect.stringContaining("remises"),
-			}),
-		);
-	});
-
 	it("renders compact KPIs in a 4-column grid on lg+", () => {
 		const { container } = render(<DashboardKpis kpis={makeKpis()} />);
 
@@ -375,7 +350,6 @@ describe("DashboardKpis", () => {
 			averageOrderValue: { amount: 0 },
 			conversionRate: { rate: 0, abandoned: 0 },
 			pendingShipment: { count: 0 },
-			discountImpact: { amount: 0 },
 			newCustomers: { count: 0 },
 		};
 

@@ -23,14 +23,10 @@ export function cartReducer(state: GetCartReturn, action: CartOptimisticAction):
 				),
 			};
 		case "clear":
-			// Mirror `clearCart` server action : items + discount metadata reset.
-			// Côté serveur, `clearCart` supprime le cookie d'un bloc — les deux
-			// partent donc bien ensemble.
+			// Miroir de la Server Action `clearCart`, qui supprime le cookie d'un bloc.
 			return {
 				...state,
 				items: [],
-				appliedDiscountCode: null,
-				discountAmountCache: null,
 			};
 		default: {
 			const _exhaustiveCheck: never = action;

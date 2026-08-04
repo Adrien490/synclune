@@ -32,7 +32,7 @@ interface PaymentIntentState {
 }
 
 /**
- * Creates a Payment Intent on mount and provides updateAmount for country/discount changes.
+ * Creates a Payment Intent on mount and provides updateAmount for country changes.
  * Uses 500ms debounce on updateAmount to avoid excessive Stripe API calls.
  */
 export function usePaymentIntent(params: UsePaymentIntentParams) {
@@ -187,7 +187,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 		return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
 	}, [state.paymentIntentId, router]);
 
-	function updateAmount(country: string, postalCode: string, discountCode: string | null) {
+	function updateAmount(country: string, postalCode: string) {
 		if (!state.paymentIntentId) return;
 
 		if (debounceTimerRef.current) {
@@ -196,13 +196,12 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 
 		const piIdAtSchedule = state.paymentIntentId;
 		debounceTimerRef.current = setTimeout(async () => {
-			// Subtotal AND discount are recomputed server-side (audit F1) — the client
-			// only sends the applied promo code, never an amount.
+			// Le sous-total est recalculé côté serveur (audit F1) — le client n'envoie
+			// jamais de montant.
 			const result = await updatePaymentAmount({
 				paymentIntentId: piIdAtSchedule,
 				country,
 				postalCode,
-				discountCode,
 			});
 
 			if (result.success) {

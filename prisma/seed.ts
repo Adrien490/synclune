@@ -3,7 +3,6 @@ import { fakerFR } from "@faker-js/faker";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import {
 	CollectionStatus,
-	DiscountType,
 	MediaType,
 	OrderAction,
 	OrderStatus,
@@ -176,7 +175,6 @@ async function cleanup(): Promise<void> {
 	await prisma.order.deleteMany();
 
 	await prisma.webhookEvent.deleteMany();
-	await prisma.discount.deleteMany();
 
 	await prisma.session.deleteMany();
 	await prisma.account.deleteMany();
@@ -1875,140 +1873,6 @@ async function main(): Promise<void> {
 	console.log(`✅ ${sessionsData.length} sessions créées`);
 
 	// ============================================
-	// CODES PROMO (DISCOUNT)
-	// ============================================
-	const currentYear = new Date().getFullYear();
-
-	const pastDate = new Date();
-	pastDate.setMonth(pastDate.getMonth() - 2);
-
-	const futureDate = new Date();
-	futureDate.setMonth(futureDate.getMonth() + 6);
-
-	const discountsData: Prisma.DiscountCreateManyInput[] = [
-		{
-			code: "BIENVENUE10",
-			type: DiscountType.PERCENTAGE,
-			value: 10,
-			isActive: true,
-			endsAt: futureDate,
-		},
-		{
-			code: "OFFRE5",
-			type: DiscountType.FIXED_AMOUNT,
-			value: 500,
-			isActive: true,
-			endsAt: futureDate,
-		},
-		{
-			code: `ARCHIVE${currentYear - 1}`,
-			type: DiscountType.PERCENTAGE,
-			value: 15,
-			isActive: false,
-			endsAt: pastDate,
-		},
-		{
-			code: "VIP20",
-			type: DiscountType.PERCENTAGE,
-			value: 20,
-			isActive: true,
-			maxUsageCount: 50,
-			endsAt: futureDate,
-		},
-		{
-			code: "PREMIERE",
-			type: DiscountType.FIXED_AMOUNT,
-			value: 1000,
-			isActive: true,
-			maxUsagePerUser: 1,
-			endsAt: futureDate,
-		},
-		{
-			code: "MINIMUM50",
-			type: DiscountType.PERCENTAGE,
-			value: 10,
-			isActive: true,
-			minOrderAmount: 5000,
-			endsAt: futureDate,
-		},
-		{
-			code: `ETE${currentYear}`,
-			type: DiscountType.PERCENTAGE,
-			value: 25,
-			isActive: true,
-			endsAt: futureDate,
-		},
-		{
-			code: "FLASH30",
-			type: DiscountType.PERCENTAGE,
-			value: 30,
-			isActive: true,
-			maxUsageCount: 100,
-			endsAt: futureDate,
-		},
-	];
-
-	await prisma.discount.createMany({ data: discountsData });
-	const discounts = await prisma.discount.findMany();
-	console.log(`✅ ${discounts.length} codes promo créés`);
-
-	// ============================================
-	// UTILISATIONS CODES PROMO (batch)
-	// ============================================
-	// ⚠️ Le filtre `userId: { not: null }` qui vivait ici portait sur une colonne
-	// `Order.userId` DROPPÉE au Lot C (2026-08-05) : `pnpm seed` aurait levé une
-	// `PrismaClientValidationError`. Ni `tsc` ni le lint ne le voyaient — c'est
-	// l'angle mort documenté dans CLAUDE.md (une clé inconnue dans un `select` ou un
-	// `where` Prisma passe le typage). Le parcours est 100 % invité : il n'y a plus
-	// de commande « rattachée à un compte » à filtrer.
-	const paidOrders = await prisma.order.findMany({
-		where: { paymentStatus: PaymentStatus.PAID },
-		select: { id: true, subtotal: true, shippingCost: true },
-		take: 25,
-	});
-
-	const activeDiscounts = discounts.filter((d) => d.isActive);
-	const discountUsageCounts = new Map<string, number>();
-	let discountedOrderCount = 0;
-
-	// Le code promo vit maintenant EN COLONNES sur `Order` (audit V2, Lot 2) :
-	// une seule écriture par commande, au lieu d'un `DiscountUsage.createMany`
-	// suivi d'une passe de mise à jour des montants.
-	for (const order of paidOrders) {
-		if (!sampleBoolean(0.4)) continue;
-
-		const discount = faker.helpers.arrayElement(activeDiscounts);
-		const rawAmount =
-			discount.type === DiscountType.PERCENTAGE
-				? Math.round(order.subtotal * (discount.value / 100))
-				: discount.value;
-		const discountAmount = Math.min(rawAmount, order.subtotal);
-
-		await prisma.order.update({
-			where: { id: order.id },
-			data: {
-				discountId: discount.id,
-				discountCode: discount.code,
-				discountAmount,
-				total: Math.max(0, order.subtotal - discountAmount + order.shippingCost),
-			},
-		});
-
-		discountUsageCounts.set(discount.id, (discountUsageCounts.get(discount.id) ?? 0) + 1);
-		discountedOrderCount++;
-	}
-
-	// Batch update discount usage counts
-	for (const [discountId, count] of discountUsageCounts) {
-		await prisma.discount.update({
-			where: { id: discountId },
-			data: { usageCount: { increment: count } },
-		});
-	}
-
-	console.log(`✅ ${discountedOrderCount} utilisations de codes promo créées`);
-
-	// ============================================
 	// PANIERS — plus rien à semer
 	// ============================================
 	// Le panier vit dans le cookie `cart` de chaque navigateur depuis le
@@ -2053,7 +1917,7 @@ async function main(): Promise<void> {
 		const reason = faker.helpers.arrayElement(refundReasons);
 		const isPartial = sampleBoolean(0.3);
 		const itemsToRefund = isPartial ? [order.items[0]!] : order.items;
-		// Cap refund amount to order total to avoid refund > total after discounts
+		// Cap refund amount to order total
 		const rawRefundAmount = itemsToRefund.reduce(
 			(sum, item) => sum + item.price * item.quantity,
 			0,
@@ -2133,7 +1997,7 @@ async function main(): Promise<void> {
 
 	for (const order of cancelledRefundedOrders) {
 		if (order.items.length === 0) continue;
-		// Use order.total to avoid refund > total after discounts
+		// Use order.total as the refund ceiling
 		const refundAmount = order.total;
 		const refundDate = new Date(order.createdAt);
 		refundDate.setHours(refundDate.getHours() + faker.number.int({ min: 1, max: 48 }));
@@ -2586,30 +2450,6 @@ async function main(): Promise<void> {
 
 		console.log("✅ 3 utilisateurs edge-case créés (suspendu, suppression en attente, anonymisé)");
 	}
-
-	// ============================================
-	// EDGE CASE DISCOUNTS (maxed usage, manually deactivated)
-	// ============================================
-	const edgeCaseDiscounts: Prisma.DiscountCreateManyInput[] = [
-		{
-			code: "MAXED_OUT",
-			type: DiscountType.PERCENTAGE,
-			value: 15,
-			isActive: true,
-			maxUsageCount: 10,
-			usageCount: 10,
-			endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-		},
-		{
-			code: "ADMIN_DISABLED",
-			type: DiscountType.PERCENTAGE,
-			value: 20,
-			isActive: true,
-			endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-		},
-	];
-	await prisma.discount.createMany({ data: edgeCaseDiscounts });
-	console.log(`✅ ${edgeCaseDiscounts.length} codes promo edge-case créés`);
 
 	// ============================================
 	// SOFT-DELETED RECORDS (for testing filters)

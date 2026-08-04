@@ -15,7 +15,13 @@ import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { ROUTES } from "@/shared/constants/urls";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateLong } from "@/shared/utils/dates";
-import { Clock, Heart, Package, Sparkles, TruckIcon } from "lucide-react";
+import {
+	ClockIcon,
+	HeartIcon,
+	PackageIcon,
+	SparkleIcon,
+	TruckIcon,
+} from "@phosphor-icons/react/ssr";
 import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -160,7 +166,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							    cours de settlement (card-only — pas de SEPA/Klarna). */}
 							{showPendingState && (
 								<Alert>
-									<Clock />
+									<ClockIcon />
 									<AlertTitle>Paiement en cours de vérification</AlertTitle>
 									<AlertDescription>
 										Ton paiement est en cours de vérification. Tu recevras un email de confirmation
@@ -239,12 +245,6 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										<dt className="text-muted-foreground">Sous-total</dt>
 										<dd className="tabular-nums">{formatEuro(order.subtotal)}</dd>
 									</div>
-									{order.discountAmount > 0 && (
-										<div className="text-success flex justify-between">
-											<dt>Réduction</dt>
-											<dd className="tabular-nums">-{formatEuro(order.discountAmount)}</dd>
-										</div>
-									)}
 									<div className="space-y-1">
 										<div className="flex justify-between">
 											<dt className="text-muted-foreground">Livraison</dt>
@@ -287,7 +287,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Message personnalisé */}
 							<Alert>
-								<Heart />
+								<HeartIcon />
 								<AlertTitle>
 									Merci du fond du cœur <span aria-hidden="true">💕</span>
 								</AlertTitle>
@@ -303,7 +303,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									id="next-steps-heading"
 									className="font-display flex items-center gap-2 text-base font-normal"
 								>
-									<Sparkles className="text-primary size-5" aria-hidden="true" />
+									<SparkleIcon className="text-primary size-5" aria-hidden="true" />
 									Que va-t-il se passer maintenant ?
 								</h2>
 
@@ -344,7 +344,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									size="lg"
 									className="flex-1"
 								>
-									<Package className="mr-2 size-4" />
+									<PackageIcon className="mr-2 size-4" />
 									Suivre ma commande
 								</Button>
 								<Button
