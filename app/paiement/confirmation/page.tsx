@@ -3,6 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Fade } from "@/shared/components/animations/fade";
 import { PurchaseTracker } from "@/shared/components/analytics/purchase-tracker";
+import { CartCleaner } from "./_components/cart-cleaner";
 import { PendingPaymentWatcher } from "./_components/pending-payment-watcher";
 import { ReceiptButton } from "./_components/receipt-button";
 import { SuccessIcon } from "./_components/success-icon";
@@ -121,6 +122,12 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 	return (
 		<div className="relative min-h-dvh">
+			{/*
+			 * Vidage du panier : le cookie `cart` ne peut être supprimé ni ici (un
+			 * Server Component n'écrit pas de cookie) ni par le webhook Stripe (appel
+			 * serveur-à-serveur, sans cookie client). Cf. `clearCartAfterOrder`.
+			 */}
+			<CartCleaner />
 			<section className="py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:py-10 sm:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
@@ -336,14 +343,21 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							 * confirmation, donc les deux surfaces restent cohérentes.
 							 */}
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
-								<Button asChild size="lg" className="flex-1">
-									<Link href={buildOrderTrackingUrl(order)}>
-										<Package className="mr-2 size-4" />
-										Suivre ma commande
-									</Link>
+								<Button
+									render={<Link href={buildOrderTrackingUrl(order)} />}
+									size="lg"
+									className="flex-1"
+								>
+									<Package className="mr-2 size-4" />
+									Suivre ma commande
 								</Button>
-								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href={ROUTES.SHOP.PRODUCTS}>Continuer mes achats</Link>
+								<Button
+									render={<Link href={ROUTES.SHOP.PRODUCTS} />}
+									variant="outline"
+									size="lg"
+									className="flex-1"
+								>
+									Continuer mes achats
 								</Button>
 							</div>
 						</CardContent>
@@ -352,8 +366,8 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 					{/* Message de support */}
 					<div className="mt-8 space-y-2 text-center">
 						<p className="text-muted-foreground text-sm">Une question sur ta commande ?</p>
-						<Button asChild variant="link">
-							<Link href={`mailto:${BRAND.contact.email}`}>Écris-moi</Link>
+						<Button render={<Link href={`mailto:${BRAND.contact.email}`} />} variant="link">
+							Écris-moi
 						</Button>
 					</div>
 				</div>

@@ -11,8 +11,12 @@ import type { Prisma } from "@/app/generated/prisma/browser";
 export const MAX_QUANTITY_PER_ORDER = 10;
 
 /**
- * Nombre maximal d'articles distincts dans un panier
- * Evite les paniers excessivement grands qui ralentiraient les queries
+ * Nombre maximal d'articles distincts dans un panier.
+ *
+ * ⚠️ Depuis le passage du panier en cookie (2026-08-04), cette borne est aussi
+ * la borne de TAILLE du cookie `cart` : une ligne pèse ~54 octets une fois
+ * URL-encodée, donc 50 lignes plafonnent le cookie vers 2,7 Ko sur un budget de
+ * 4 Ko. Ne pas relever sans refaire le calcul (cf. `lib/cart-cookie.ts`).
  */
 export const MAX_CART_ITEMS = 50;
 
@@ -20,108 +24,72 @@ export const MAX_CART_ITEMS = 50;
 // SELECT DEFINITIONS
 // ============================================================================
 
-// `sku.priceInclTax` ici peut être stale jusqu'à 5min (cache profile "checkout").
-// Acceptable : (1) `priceAtAdd` (snapshot) reste la source de vérité prix dans le panier ;
-// (2) checkout final re-valide via `payments/services/order-creation.service.ts` ;
-// (3) `updateCartPrices` permet un refresh manuel UI.
-export const GET_CART_SELECT = {
+/**
+ * Colonnes SKU nécessaires au rendu du panier.
+ *
+ * Le panier lui-même vit dans le cookie (`lib/cart-cookie.ts`) : la base ne
+ * fournit plus que la matérialisation des lignes — libellé, image, prix courant,
+ * stock. `priceInclTax` peut être stale jusqu'à 5 min (profil `checkout`), ce qui
+ * reste acceptable : (1) `priceAtAdd` (témoin du cookie) est la valeur affichée
+ * dans le panier ; (2) le checkout re-valide au prix DB via
+ * `payments/services/order-creation.service.ts` ; (3) `updateCartPrices` permet
+ * un refresh manuel côté UI.
+ */
+export const CART_SKU_SELECT = {
 	id: true,
-	userId: true,
-	sessionId: true,
-	expiresAt: true,
-	createdAt: true,
-	updatedAt: true,
-	appliedDiscountCode: true,
-	discountAmountCache: true,
-	items: {
-		where: {
-			sku: {
-				deletedAt: null,
-				product: { deletedAt: null },
-			},
-		},
+	sku: true,
+	priceInclTax: true,
+	compareAtPrice: true,
+	inventory: true,
+	isActive: true,
+	product: {
 		select: {
 			id: true,
-			quantity: true,
-			priceAtAdd: true,
-			createdAt: true,
-			updatedAt: true,
-			sku: {
+			title: true,
+			slug: true,
+			status: true,
+		},
+	},
+	images: {
+		where: { isPrimary: true },
+		take: 1,
+		orderBy: { createdAt: "asc" as const },
+		select: {
+			id: true,
+			url: true,
+			blurDataUrl: true,
+			thumbnailUrl: true,
+			altText: true,
+			mediaType: true,
+			isPrimary: true,
+		},
+	},
+	colors: {
+		select: {
+			colorId: true,
+			position: true,
+			color: {
 				select: {
 					id: true,
-					sku: true,
-					priceInclTax: true,
-					compareAtPrice: true,
-					inventory: true,
-					isActive: true,
-					product: {
-						select: {
-							id: true,
-							title: true,
-							slug: true,
-							status: true,
-						},
-					},
-					images: {
-						where: { isPrimary: true },
-						take: 1,
-						orderBy: { createdAt: "asc" as const },
-						select: {
-							id: true,
-							url: true,
-							blurDataUrl: true,
-							thumbnailUrl: true,
-							altText: true,
-							mediaType: true,
-							isPrimary: true,
-						},
-					},
-					colors: {
-						select: {
-							colorId: true,
-							position: true,
-							color: {
-								select: {
-									id: true,
-									name: true,
-									hex: true,
-								},
-							},
-						},
-						orderBy: { position: "asc" as const },
-					},
-					materials: {
-						select: {
-							materialId: true,
-							position: true,
-							material: {
-								select: {
-									id: true,
-									name: true,
-								},
-							},
-						},
-						orderBy: { position: "asc" as const },
-					},
-					size: true,
+					name: true,
+					hex: true,
 				},
 			},
 		},
-		orderBy: { createdAt: "desc" as const },
+		orderBy: { position: "asc" as const },
 	},
-} as const satisfies Prisma.CartSelect;
-
-export const GET_CART_SUMMARY_SELECT = {
-	items: {
-		where: {
-			sku: {
-				deletedAt: null,
-				product: { deletedAt: null },
+	materials: {
+		select: {
+			materialId: true,
+			position: true,
+			material: {
+				select: {
+					id: true,
+					name: true,
+				},
 			},
 		},
-		select: {
-			quantity: true,
-			priceAtAdd: true,
-		},
+		orderBy: { position: "asc" as const },
 	},
-} as const satisfies Prisma.CartSelect;
+	size: true,
+} as const satisfies Prisma.ProductSkuSelect;

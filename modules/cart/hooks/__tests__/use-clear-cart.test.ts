@@ -1,5 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type * as NextNavigation from "next/navigation";
 
 // ============================================================================
 // Hoisted mocks
@@ -27,7 +28,10 @@ vi.mock("@/modules/cart/actions/clear-cart", () => ({
 
 vi.mock("@/shared/utils/toast", () => ({ toast: mockToast }));
 
-vi.mock("next/navigation", () => ({
+// Mock partiel : `unstable_rethrow` (appelé par withCallbacks sur exception)
+// reste la vraie implémentation — seule la navigation est stubée.
+vi.mock("next/navigation", async (importOriginal) => ({
+	...(await importOriginal<typeof NextNavigation>()),
 	useRouter: () => ({ refresh: mockRouterRefresh }),
 }));
 
@@ -47,6 +51,7 @@ vi.mock("next/headers", () => ({ headers: vi.fn(), cookies: vi.fn() }));
 
 import { useClearCart } from "../use-clear-cart";
 import { ActionStatus } from "@/shared/types/server-action";
+import { GENERIC_ERROR_MESSAGE } from "@/shared/constants/error-messages";
 
 // ============================================================================
 // Helpers
@@ -214,7 +219,9 @@ describe("useClearCart", () => {
 
 			expect(result.current.state?.status).toBe(ActionStatus.ERROR);
 			expect(onSuccess).not.toHaveBeenCalled();
-			expect(mockToast.error).toHaveBeenCalledWith("DB error");
+			// Le message brut de l'exception ne fuite plus (withCallbacks fabrique
+			// un état générique — en prod le message serait l'anglais masqué de Next).
+			expect(mockToast.error).toHaveBeenCalledWith(GENERIC_ERROR_MESSAGE);
 		});
 	});
 

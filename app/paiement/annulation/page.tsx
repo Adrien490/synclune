@@ -20,10 +20,14 @@ export const metadata: Metadata = {
 	},
 };
 
+// Parse tolérant champ par champ (`.catch`) : un `reason` hors enum (URL
+// modifiée, nouveau code Stripe) ne doit invalider que LUI — sans le `.catch`,
+// l'échec du parse de l'objet entier faisait aussi disparaître la référence de
+// commande (`order_id`/`order_number`) de l'affichage.
 const cancelParamsSchema = z.object({
-	order_id: z.string().optional(),
-	order_number: z.string().optional(),
-	reason: z.enum(CHECKOUT_CANCEL_REASONS).optional(),
+	order_id: z.string().optional().catch(undefined),
+	order_number: z.string().optional().catch(undefined),
+	reason: z.enum(CHECKOUT_CANCEL_REASONS).optional().catch(undefined),
 });
 
 interface CheckoutCancelPageProps {
@@ -117,14 +121,17 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 
 							{/* Actions */}
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
-								<Button asChild size="lg" className="flex-1">
-									<Link href="/paiement">
-										<ShoppingBag className="mr-2 size-4" />
-										Reprendre ma commande
-									</Link>
+								<Button render={<Link href="/paiement" />} size="lg" className="flex-1">
+									<ShoppingBag className="mr-2 size-4" />
+									Reprendre ma commande
 								</Button>
-								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href={`mailto:${BRAND.contact.email}`}>M&apos;écrire</Link>
+								<Button
+									render={<Link href={`mailto:${BRAND.contact.email}`} />}
+									variant="outline"
+									size="lg"
+									className="flex-1"
+								>
+									M&apos;écrire
 								</Button>
 							</div>
 

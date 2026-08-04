@@ -1,10 +1,7 @@
-import { cacheLife, cacheTag } from "next/cache";
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getCartSessionId } from "@/modules/cart/lib/cart-session";
-import { prisma } from "@/shared/lib/prisma";
+import { unstable_rethrow } from "next/navigation";
 import { logger } from "@/shared/lib/logger";
-import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
-import { CART_CACHE_TAGS } from "../constants/cache";
+
+import { readCartCookie } from "../lib/cart-cookie";
 
 // ============================================================================
 // TYPES
@@ -17,66 +14,24 @@ type GetCartItemCountReturn = number;
 // ============================================================================
 
 /**
- * Récupère le nombre total d'articles dans le panier
+ * Récupère le nombre total d'articles dans le panier (badge de navigation).
  *
- * Query optimisée qui ne récupère que le compteur sans charger tous les items.
- * Utile pour afficher un badge dans la navigation.
+ * Somme des quantités du cookie `cart` — aucune requête, donc aucun cache : lire
+ * un cookie est déjà l'opération la moins chère du rendu, et un `"use cache"` sur
+ * une source dynamique n'aurait de toute façon pas été permis.
  *
- * @returns Le nombre total d'articles (0 si pas de panier)
+ * ⚠️ Dérive assumée, comme pour le badge favoris : une ligne dont le SKU a été
+ * supprimé ou dépublié depuis l'ajout compte encore ici alors que `getCart()`
+ * l'écarte. Le badge peut donc annoncer un article de plus que ce que la
+ * cart-sheet affiche, jusqu'à la prochaine mutation du panier.
  */
 export async function getCartItemCount(): Promise<GetCartItemCountReturn> {
 	try {
-		const session = await getSession().catch(() => null);
-		const userId = session?.user.id;
-		const sessionId = !userId ? await getCartSessionId().catch(() => null) : null;
-
-		return await fetchCartItemCount(userId, sessionId ?? undefined);
+		const cart = await readCartCookie();
+		return cart.items.reduce((sum, item) => sum + item.quantity, 0);
 	} catch (e) {
-		// "use cache: private" rejette à la clôture du prerender — attendu, sans log.
-		if (isPrerenderInterrupt(e)) return 0;
+		unstable_rethrow(e);
 		logger.error("Failed to get cart item count", e, { service: "cart" });
 		return 0;
 	}
-}
-
-/**
- * Récupère le nombre total d'articles dans le panier depuis la DB avec cache
- *
- * Utilise "use cache" pour:
- * - Isoler les données par utilisateur/session (pas de fuite)
- * - Permettre le prefetching runtime (stale >= 30s)
- * - Stockage côté client uniquement (sécurité)
- * - Invalidation lors de modifications du panier
- *
- * @param userId - ID de l'utilisateur connecté (prioritaire)
- * @param sessionId - ID de session pour les visiteurs
- * @returns Le nombre total d'articles (0 si pas de panier)
- */
-export async function fetchCartItemCount(
-	userId?: string,
-	sessionId?: string,
-): Promise<GetCartItemCountReturn> {
-	"use cache: private";
-	cacheLife("checkout");
-	cacheTag(CART_CACHE_TAGS.COUNT(userId, sessionId));
-
-	if (!userId && !sessionId) {
-		return 0;
-	}
-
-	// Single query: agrégation directe sur CartItem via relation cart
-	// Exclude expired guest carts to stay consistent with getCart()
-	const result = await prisma.cartItem.aggregate({
-		where: {
-			cart: {
-				...(userId ? { userId } : { sessionId }),
-				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-			},
-		},
-		_sum: {
-			quantity: true,
-		},
-	});
-
-	return result._sum.quantity ?? 0;
 }

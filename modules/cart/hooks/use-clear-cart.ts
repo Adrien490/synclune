@@ -32,6 +32,9 @@ export function useClearCart(onSuccess?: () => void) {
 	const pendingCountRef = useRef(0);
 
 	const [state, formAction, isPending] = useActionState(
+		// L'arrow diffère la création des callbacks au submit : ils lisent une ref
+		// (`pendingCountRef`), interdit pendant le rendu (react-hooks/refs).
+		// Ne pas « simplifier » en passage direct de withCallbacks.
 		async (prev: ActionState | undefined, formData: FormData) =>
 			withCallbacks(
 				clearCart,

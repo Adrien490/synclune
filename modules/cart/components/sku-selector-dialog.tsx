@@ -48,11 +48,10 @@ interface SkuSelectorDialogProps {
  * Utilise TanStack Form (useAppForm) pour la gestion du formulaire
  */
 export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
-	const cartItems =
-		cart?.items.map((item) => ({
-			skuId: item.sku.id,
-			quantity: item.quantity,
-		})) ?? [];
+	const cartItems = cart.items.map((item) => ({
+		skuId: item.sku.id,
+		quantity: item.quantity,
+	}));
 
 	const { isOpen, data, close } = useDialog<SkuSelectorDialogData>(SKU_SELECTOR_DIALOG_ID);
 	const { state, action, isPending } = useAddToCart({

@@ -122,7 +122,7 @@ function renderSelector(
 	overrides: Partial<React.ComponentProps<typeof CartItemQuantitySelector>> = {},
 ) {
 	const props = {
-		cartItemId: "item-1",
+		skuId: "item-1",
 		currentQuantity: 2,
 		maxQuantity: 5,
 		isInactive: false,

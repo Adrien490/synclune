@@ -1,260 +1,221 @@
+/**
+ * `getCart` depuis le passage du panier au cookie (2026-08-04).
+ *
+ * Remplace la suite de l'architecture DB, qui vérifiait le `findFirst` sur la
+ * table `Cart`, le filtre `expiresAt`, la résolution userId/sessionId et le tag
+ * de cache par identité — tout cela a disparu avec les tables.
+ */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ============================================================================
-// Hoisted mocks
-// ============================================================================
-
 const {
-	mockPrisma,
-	mockGetSession,
-	mockGetCartSessionId,
-	mockConnection,
+	mockFindMany,
+	mockReadCartCookie,
+	mockGetDiscountByCode,
+	mockResolveCartDiscount,
 	mockCacheLife,
 	mockCacheTag,
+	mockLoggerError,
 } = vi.hoisted(() => ({
-	mockPrisma: {
-		cart: { findFirst: vi.fn() },
-	},
-	mockGetSession: vi.fn(),
-	mockGetCartSessionId: vi.fn(),
-	mockConnection: vi.fn(),
+	mockFindMany: vi.fn(),
+	mockReadCartCookie: vi.fn(),
+	mockGetDiscountByCode: vi.fn(),
+	mockResolveCartDiscount: vi.fn(),
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
+	mockLoggerError: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/prisma", () => ({
-	prisma: mockPrisma,
+vi.mock("next/cache", () => ({ cacheLife: mockCacheLife, cacheTag: mockCacheTag }));
+vi.mock("next/navigation", () => ({ unstable_rethrow: vi.fn() }));
+vi.mock("@/shared/lib/prisma", () => ({ prisma: { productSku: { findMany: mockFindMany } } }));
+vi.mock("@/shared/lib/logger", () => ({ logger: { error: mockLoggerError } }));
+vi.mock("../../lib/cart-cookie", () => ({ readCartCookie: mockReadCartCookie }));
+vi.mock("@/modules/discounts/data/get-discount-by-code", () => ({
+	getDiscountByCode: mockGetDiscountByCode,
 }));
-
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
+vi.mock("../../services/resolve-cart-discount.service", () => ({
+	resolveCartDiscount: mockResolveCartDiscount,
 }));
-
-vi.mock("@/modules/cart/lib/cart-session", () => ({
-	getCartSessionId: mockGetCartSessionId,
+vi.mock("@/modules/products/constants/cache", () => ({
+	PRODUCTS_CACHE_TAGS: { LIST: "products-list", SKUS_LIST: "skus-list" },
 }));
+vi.mock("../../constants/cart", () => ({ CART_SKU_SELECT: { id: true } }));
 
-vi.mock("next/server", () => ({
-	connection: mockConnection,
-}));
+import { getCart } from "../get-cart";
 
-vi.mock("next/cache", () => ({
-	cacheLife: mockCacheLife,
-	cacheTag: mockCacheTag,
-	updateTag: vi.fn(),
-}));
+const SKU_A = "cm1234567890abcdefghijk12";
+const SKU_B = "cm1234567890abcdefghijk34";
 
-vi.mock("../../constants/cart", () => ({
-	GET_CART_SELECT: { id: true, items: true },
-}));
+const skuRow = (id: string) => ({ id, priceInclTax: 4990, compareAtPrice: null });
 
-vi.mock("../../constants/cache", () => ({
-	CART_CACHE_TAGS: {
-		CART: (userId?: string, sessionId?: string) =>
-			userId ? `cart-user-${userId}` : sessionId ? `cart-session-${sessionId}` : "cart-anonymous",
-	},
-}));
-
-import { getCart, fetchCart } from "../get-cart";
-
-// ============================================================================
-// Factories
-// ============================================================================
-
-function makeCart(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "cart-1",
-		items: [],
-		expiresAt: null,
-		...overrides,
-	};
-}
-
-function setupDefaults() {
-	mockConnection.mockResolvedValue(undefined);
-	mockGetSession.mockResolvedValue(null);
-	mockGetCartSessionId.mockResolvedValue("session-abc");
-	mockPrisma.cart.findFirst.mockResolvedValue(null);
-}
-
-// ============================================================================
-// Tests: getCart
-// ============================================================================
-
-describe("getCart", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		setupDefaults();
-	});
-
-	it("returns cart for authenticated user using userId", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: "user-1" } });
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
-
-		const result = await getCart();
-
-		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
-		expect(call.where.userId).toBe("user-1");
-		expect(call.where.OR).toBeDefined();
-		expect(result).toEqual(makeCart());
-	});
-
-	it("returns cart for guest using sessionId", async () => {
-		mockGetSession.mockResolvedValue(null);
-		mockGetCartSessionId.mockResolvedValue("session-abc");
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart({ id: "guest-cart" }));
-
-		const result = await getCart();
-
-		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
-		expect(call.where.sessionId).toBe("session-abc");
-		expect(call.where.OR).toBeDefined();
-		expect(result).toEqual(makeCart({ id: "guest-cart" }));
-	});
-
-	it("returns null on error thrown inside try block", async () => {
-		mockGetSession.mockRejectedValue(new Error("Session service unavailable"));
-
-		const result = await getCart();
-
-		expect(result).toBeNull();
-	});
-
-	it("does not fetch sessionId when user is authenticated", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: "user-1" } });
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
-
-		await getCart();
-
-		expect(mockGetCartSessionId).not.toHaveBeenCalled();
-	});
-
-	it("fetches sessionId when user is not authenticated", async () => {
-		mockGetSession.mockResolvedValue(null);
-		mockPrisma.cart.findFirst.mockResolvedValue(null);
-
-		await getCart();
-
-		expect(mockGetCartSessionId).toHaveBeenCalledOnce();
-	});
-
-	it("returns null when no session and no sessionId", async () => {
-		mockGetSession.mockResolvedValue(null);
-		mockGetCartSessionId.mockResolvedValue(null);
-
-		const result = await getCart();
-
-		expect(result).toBeNull();
-		expect(mockPrisma.cart.findFirst).not.toHaveBeenCalled();
+beforeEach(() => {
+	vi.clearAllMocks();
+	mockReadCartCookie.mockResolvedValue({ items: [], discountCode: null });
+	mockFindMany.mockResolvedValue([]);
+	mockResolveCartDiscount.mockReturnValue({
+		appliedDiscountCode: null,
+		discountAmountCache: null,
 	});
 });
 
-// ============================================================================
-// Tests: fetchCart
-// ============================================================================
-
-describe("fetchCart", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockPrisma.cart.findFirst.mockResolvedValue(null);
+describe("getCart", () => {
+	it("rend un panier VIDE (jamais null) sans cookie", async () => {
+		expect(await getCart()).toEqual({
+			items: [],
+			appliedDiscountCode: null,
+			discountAmountCache: null,
+		});
+		expect(mockFindMany).not.toHaveBeenCalled();
 	});
 
-	it("returns null when no userId and no sessionId", async () => {
-		const result = await fetchCart(undefined, undefined);
+	it("matérialise les lignes du cookie en joignant les SKUs", async () => {
+		mockReadCartCookie.mockResolvedValue({
+			items: [{ skuId: SKU_A, quantity: 2, priceAtAdd: 4990 }],
+			discountCode: null,
+		});
+		mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
 
-		expect(result).toBeNull();
-		expect(mockPrisma.cart.findFirst).not.toHaveBeenCalled();
+		const cart = await getCart();
+
+		expect(cart.items).toEqual([{ id: SKU_A, quantity: 2, priceAtAdd: 4990, sku: skuRow(SKU_A) }]);
 	});
 
-	it("queries by userId when userId is provided", async () => {
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
+	/** `findMany` ne garantit pas l'ordre du `in` — l'ordre du cookie fait foi. */
+	it("respecte l'ordre du cookie, pas celui de la base", async () => {
+		mockReadCartCookie.mockResolvedValue({
+			items: [
+				{ skuId: SKU_B, quantity: 1, priceAtAdd: 100 },
+				{ skuId: SKU_A, quantity: 1, priceAtAdd: 200 },
+			],
+			discountCode: null,
+		});
+		mockFindMany.mockResolvedValue([skuRow(SKU_A), skuRow(SKU_B)]);
 
-		await fetchCart("user-1", undefined);
+		const cart = await getCart();
 
-		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
-		expect(call.where.userId).toBe("user-1");
-		expect(call.where.OR).toBeDefined();
+		expect(cart.items.map((i) => i.id)).toEqual([SKU_B, SKU_A]);
 	});
 
-	it("queries by sessionId when no userId is provided", async () => {
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
+	it("écarte silencieusement une ligne dont le SKU n'est plus lisible", async () => {
+		mockReadCartCookie.mockResolvedValue({
+			items: [
+				{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 },
+				{ skuId: SKU_B, quantity: 1, priceAtAdd: 200 },
+			],
+			discountCode: null,
+		});
+		mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
 
-		await fetchCart(undefined, "session-xyz");
+		const cart = await getCart();
 
-		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
-		expect(call.where.sessionId).toBe("session-xyz");
-		expect(call.where.OR).toBeDefined();
+		expect(cart.items.map((i) => i.id)).toEqual([SKU_A]);
 	});
 
-	it("filters expired carts via WHERE clause", async () => {
-		// Expired carts are now filtered at DB level (OR: expiresAt null or gt now)
-		mockPrisma.cart.findFirst.mockResolvedValue(null);
+	it("filtre les SKUs et produits soft-deleted côté requête", async () => {
+		mockReadCartCookie.mockResolvedValue({
+			items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
+			discountCode: null,
+		});
+		mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
 
-		const result = await fetchCart("user-1", undefined);
+		await getCart();
 
-		expect(result).toBeNull();
-		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
-		expect(call.where.OR).toEqual([{ expiresAt: null }, { expiresAt: { gt: expect.any(Date) } }]);
-	});
-
-	it("returns cart when expiresAt is null (no expiration)", async () => {
-		const cart = makeCart({ expiresAt: null });
-		mockPrisma.cart.findFirst.mockResolvedValue(cart);
-
-		const result = await fetchCart("user-1", undefined);
-
-		expect(result).toEqual(cart);
-	});
-
-	it("returns cart when not expired", async () => {
-		const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
-		const cart = makeCart({ expiresAt: futureDate });
-		mockPrisma.cart.findFirst.mockResolvedValue(cart);
-
-		const result = await fetchCart("user-1", undefined);
-
-		expect(result).toEqual(cart);
-	});
-
-	it("returns null when cart is not found in DB", async () => {
-		mockPrisma.cart.findFirst.mockResolvedValue(null);
-
-		const result = await fetchCart("user-1", undefined);
-
-		expect(result).toBeNull();
-	});
-
-	it("uses GET_CART_SELECT for the DB query", async () => {
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
-
-		await fetchCart("user-1", undefined);
-
-		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ select: { id: true, items: true } }),
+		expect(mockFindMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: {
+					id: { in: [SKU_A] },
+					deletedAt: null,
+					product: { deletedAt: null },
+				},
+			}),
 		);
 	});
 
-	it("calls cacheLife with cart profile", async () => {
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
+	describe("cache de matérialisation", () => {
+		beforeEach(() => {
+			mockReadCartCookie.mockResolvedValue({
+				items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
+				discountCode: null,
+			});
+			mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
+		});
 
-		await fetchCart("user-1", undefined);
+		/**
+		 * Profil `checkout` et non `catalog` : le panier affiche le stock et pilote
+		 * les alertes de rupture, il ne peut pas tolérer 15 min de péremption.
+		 */
+		it("utilise le profil checkout", async () => {
+			await getCart();
+			expect(mockCacheLife).toHaveBeenCalledWith("checkout");
+		});
 
-		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
+		it("pose les tags catalogue (produits ET SKUs)", async () => {
+			await getCart();
+			expect(mockCacheTag).toHaveBeenCalledWith("products-list");
+			expect(mockCacheTag).toHaveBeenCalledWith("skus-list");
+		});
 	});
 
-	it("calls cacheTag with user-specific tag when userId provided", async () => {
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
+	describe("code promo", () => {
+		beforeEach(() => {
+			mockReadCartCookie.mockResolvedValue({
+				items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 4990 }],
+				discountCode: "BIENVENUE10",
+			});
+			mockFindMany.mockResolvedValue([skuRow(SKU_A)]);
+		});
 
-		await fetchCart("user-1", undefined);
+		it("re-dérive la remise à la lecture depuis les articles COURANTS", async () => {
+			mockGetDiscountByCode.mockResolvedValue({ code: "BIENVENUE10" });
+			mockResolveCartDiscount.mockReturnValue({
+				appliedDiscountCode: "BIENVENUE10",
+				discountAmountCache: 499,
+			});
 
-		expect(mockCacheTag).toHaveBeenCalledWith("cart-user-user-1");
+			const cart = await getCart();
+
+			expect(mockGetDiscountByCode).toHaveBeenCalledWith({ code: "BIENVENUE10" });
+			expect(cart.appliedDiscountCode).toBe("BIENVENUE10");
+			expect(cart.discountAmountCache).toBe(499);
+		});
+
+		it("efface l'affichage d'un code devenu inéligible", async () => {
+			mockGetDiscountByCode.mockResolvedValue(null);
+
+			const cart = await getCart();
+
+			expect(cart.appliedDiscountCode).toBeNull();
+			expect(cart.discountAmountCache).toBeNull();
+			expect(cart.items).toHaveLength(1);
+		});
+
+		it("ne consulte aucun discount sans code appliqué", async () => {
+			mockReadCartCookie.mockResolvedValue({
+				items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 4990 }],
+				discountCode: null,
+			});
+
+			await getCart();
+
+			expect(mockGetDiscountByCode).not.toHaveBeenCalled();
+		});
 	});
 
-	it("calls cacheTag with session-specific tag when sessionId provided", async () => {
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
+	/**
+	 * CACHE-DEGRADED-VALUE-001 : le repli vit HORS du scope `"use cache"` de
+	 * `fetchCartSkus`, sinon le panier vide d'une panne serait mis en cache pour
+	 * toute la fenêtre du profil.
+	 */
+	it("rend un panier vide et loggue sur erreur de base", async () => {
+		mockReadCartCookie.mockResolvedValue({
+			items: [{ skuId: SKU_A, quantity: 1, priceAtAdd: 100 }],
+			discountCode: null,
+		});
+		mockFindMany.mockRejectedValue(new Error("db down"));
 
-		await fetchCart(undefined, "session-xyz");
+		const cart = await getCart();
 
-		expect(mockCacheTag).toHaveBeenCalledWith("cart-session-session-xyz");
+		expect(cart).toEqual({ items: [], appliedDiscountCode: null, discountAmountCache: null });
+		expect(mockLoggerError).toHaveBeenCalled();
 	});
 });

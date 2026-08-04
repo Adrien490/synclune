@@ -33,6 +33,9 @@ export const useUpdateCartItem = (options?: UseUpdateCartItemOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 
 	const [state, formAction, isActionPending] = useActionState(
+		// L'arrow diffère la création des callbacks au submit : ils lisent une ref
+		// (`pendingDeltaRef`), interdit pendant le rendu (react-hooks/refs).
+		// Ne pas « simplifier » en passage direct de withCallbacks.
 		async (prev: ActionState | undefined, formData: FormData) =>
 			withCallbacks(
 				updateCartItem,
@@ -63,7 +66,7 @@ export const useUpdateCartItem = (options?: UseUpdateCartItemOptions) => {
 
 	/**
 	 * Soumet le changement de quantité avec optimistic UI
-	 * @param formData - Les données du formulaire (cartItemId, quantity)
+	 * @param formData - Les données du formulaire (skuId, quantity)
 	 * @param delta - La différence de quantité pour le badge (ex: +1 ou -1)
 	 */
 	const action = (formData: FormData, delta: number) => {

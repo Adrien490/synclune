@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_QUANTITY_PER_ORDER } from "../constants/cart";
+import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "../constants/cart";
 
 // ============================================================================
 // CART ITEM SCHEMAS
@@ -19,11 +19,16 @@ export const addToCartSchema = z.object({
 // CART ACTION SCHEMAS
 // ============================================================================
 
+// ⚠️ Les lignes du panier sont identifiées par leur `skuId` depuis le passage en
+// cookie (2026-08-04) : il n'existe plus de table `CartItem`, donc plus
+// d'identifiant propre à la ligne. Le cookie dédoublonne par SKU, comme le
+// faisait la contrainte `@@unique([cartId, skuId])`.
+
 /**
  * Schéma de validation pour la mise à jour d'un item
  */
 export const updateCartItemSchema = z.object({
-	cartItemId: z.cuid2("ID de l'article invalide"),
+	skuId: z.cuid2("ID de l'article invalide"),
 	quantity: z
 		.number()
 		.int()
@@ -35,7 +40,7 @@ export const updateCartItemSchema = z.object({
  * Schéma de validation pour la suppression d'un item
  */
 export const removeFromCartSchema = z.object({
-	cartItemId: z.cuid2("ID de l'article invalide"),
+	skuId: z.cuid2("ID de l'article invalide"),
 });
 
 // ============================================================================
@@ -71,10 +76,10 @@ export const applyCartDiscountSchema = z.object({
  * Schema pour supprimer plusieurs items en une fois
  */
 export const removeMultipleItemsSchema = z.object({
-	cartItemIds: z
+	skuIds: z
 		.array(z.cuid2("ID de l'article invalide"))
 		.min(1, "Au moins un article à supprimer")
-		.max(50, "Maximum 50 articles supprimables en une fois"),
+		.max(MAX_CART_ITEMS, `Maximum ${MAX_CART_ITEMS} articles supprimables en une fois`),
 });
 
 // `reorderFromOrderSchema` retiré avec l'action `reorder-from-order.ts` : son

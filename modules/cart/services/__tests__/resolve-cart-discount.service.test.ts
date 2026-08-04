@@ -28,7 +28,6 @@ function makeDiscount(overrides: Partial<DiscountValidation> = {}): DiscountVali
 		maxUsagePerUser: null,
 		usageCount: 0,
 		isActive: true,
-		startsAt: new Date("2020-01-01T00:00:00Z"),
 		endsAt: null,
 		...overrides,
 	} as DiscountValidation;
@@ -64,7 +63,6 @@ describe("resolveCartDiscount", () => {
 		const cases: Array<Partial<DiscountValidation>> = [
 			{ isActive: false },
 			{ endsAt: new Date("2020-06-01T00:00:00Z") },
-			{ startsAt: new Date("2999-01-01T00:00:00Z") },
 			{ maxUsageCount: 5, usageCount: 5 },
 		];
 

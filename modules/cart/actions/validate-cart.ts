@@ -1,13 +1,12 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { readCartWithSkus } from "@/modules/cart/services/read-cart-with-skus.service";
 import { validateCartItems } from "../services/item-availability.service";
 import type { ValidateCartResult } from "../types/cart.types";
 
-// Re-export pour retrocompatibilite
 /**
  * Valide l'intégralité du panier avant la commande
  *
@@ -22,15 +21,14 @@ import type { ValidateCartResult } from "../types/cart.types";
  * - Vérification atomique au moment du checkout
  * - Messages d'erreur explicites pour l'utilisateur
  *
- * Sécurité :
- * - Le panier est récupéré par userId/sessionId (pas de paramètre cartId)
- * - Empêche les attaques IDOR (accès aux paniers d'autres utilisateurs)
+ * Sécurité : le panier vient du cookie de l'appelant, jamais d'un identifiant
+ * passé en paramètre — il n'y a aucun panier d'autrui à atteindre.
  *
  * @returns ValidateCartResult avec liste des problèmes détectés
  */
 export async function validateCart(): Promise<ValidateCartResult> {
 	try {
-		// 0a. Rate limiting + récupération contexte
+		// 0. Rate limiting
 		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.VALIDATE);
 		if (!rateLimitResult.success) {
 			return {
@@ -39,51 +37,11 @@ export async function validateCart(): Promise<ValidateCartResult> {
 				rateLimited: true,
 			};
 		}
-		const { userId, sessionId } = rateLimitResult.context;
 
-		// 0b. Vérifier qu'on a au moins un identifiant (userId ou sessionId)
-		if (!userId && !sessionId) {
-			return {
-				isValid: false,
-				issues: [],
-			};
-		}
+		// 1. Panier du cookie + SKUs frais
+		const { cookie, items } = await readCartWithSkus();
 
-		// 1. Recuperer le panier par userId ou sessionId (sécurisé - pas de cartId externe)
-		const cart = await prisma.cart.findFirst({
-			where: {
-				...(userId ? { userId } : { sessionId: sessionId! }),
-				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-			},
-			select: {
-				id: true,
-				items: {
-					select: {
-						id: true,
-						skuId: true,
-						quantity: true,
-						sku: {
-							select: {
-								id: true,
-								isActive: true,
-								inventory: true,
-								deletedAt: true,
-								product: {
-									select: {
-										id: true,
-										title: true,
-										status: true,
-										deletedAt: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		});
-
-		if (!cart) {
+		if (cookie.items.length === 0) {
 			return {
 				isValid: false,
 				issues: [],
@@ -91,7 +49,7 @@ export async function validateCart(): Promise<ValidateCartResult> {
 		}
 
 		// 2. Valider chaque item via le service
-		const issues = validateCartItems(cart.items);
+		const issues = validateCartItems(items);
 
 		// 3. Retourner le résultat
 		return {
@@ -109,7 +67,7 @@ export async function validateCart(): Promise<ValidateCartResult> {
 					skuId: "unknown",
 					productTitle: "",
 					issueType: "UNKNOWN" as const,
-					message: "Une erreur est survenue lors de la validation du panier. Veuillez réessayer.",
+					message: "Une erreur est survenue lors de la validation du panier. Réessaie.",
 				},
 			],
 		};

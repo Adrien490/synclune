@@ -88,7 +88,6 @@ export function CartSheetItemRow({
 
 	const handleSwipeRemove = () => {
 		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
-			cartItemId: item.id,
 			skuId: item.sku.id,
 			itemName: item.sku.product.title,
 			quantity: item.quantity,
@@ -235,12 +234,16 @@ export function CartSheetItemRow({
 				) : null}
 			</div>
 
-			<div className="flex items-center justify-between gap-2" data-no-swipe data-vaul-no-drag>
+			<div
+				className="flex items-center justify-between gap-2"
+				data-no-swipe
+				data-base-ui-swipe-ignore=""
+			>
 				{item.sku.inventory === 1 && !hasIssue ? (
 					<span className="text-warning text-xs font-medium">Dernière pièce !</span>
 				) : (
 					<CartItemQuantitySelector
-						cartItemId={item.id}
+						skuId={item.sku.id}
 						currentQuantity={item.quantity}
 						maxQuantity={item.sku.inventory}
 						isInactive={isInactive}
@@ -248,7 +251,6 @@ export function CartSheetItemRow({
 				)}
 
 				<CartItemRemoveButton
-					cartItemId={item.id}
 					skuId={item.sku.id}
 					itemName={item.sku.product.title}
 					quantity={item.quantity}

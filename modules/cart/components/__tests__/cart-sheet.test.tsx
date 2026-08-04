@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -178,18 +180,7 @@ vi.mock("@/shared/components/ui/empty", () => ({
 
 // Mock Button
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		asChild,
-		...props
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-		[key: string]: unknown;
-	}) => {
-		if (asChild) return <>{children}</>;
-		return <button {...props}>{children}</button>;
-	},
+	Button: (props: RenderPropMockProps) => renderPropMock("button", props),
 }));
 
 // Mock next/link
@@ -356,8 +347,8 @@ describe("CartSheet", () => {
 	// Empty state
 	// ------------------------------------------------------------------
 	describe("empty cart", () => {
-		it("renders empty state when cart is null", () => {
-			render(<CartSheet cart={null} />);
+		it("renders empty state when the cart is empty", () => {
+			render(<CartSheet cart={createCart([])} />);
 			expect(screen.getByText("Votre panier est vide !")).toBeInTheDocument();
 		});
 
@@ -367,19 +358,19 @@ describe("CartSheet", () => {
 		});
 
 		it("renders 'Panier vide' in the screen reader live region", () => {
-			render(<CartSheet cart={null} />);
+			render(<CartSheet cart={createCart([])} />);
 			const liveRegion = screen.getByText("Panier vide");
 			expect(liveRegion).toBeInTheDocument();
 			expect(liveRegion.closest("[aria-live]")).toHaveAttribute("aria-live", "polite");
 		});
 
 		it("has role='status' on empty container", () => {
-			render(<CartSheet cart={null} />);
+			render(<CartSheet cart={createCart([])} />);
 			expect(screen.getByRole("status")).toBeInTheDocument();
 		});
 
 		it("renders shopping links", () => {
-			render(<CartSheet cart={null} />);
+			render(<CartSheet cart={createCart([])} />);
 			expect(screen.getByRole("link", { name: /Découvrir la boutique/i })).toHaveAttribute(
 				"href",
 				"/produits",
@@ -527,19 +518,19 @@ describe("CartSheet", () => {
 	// ------------------------------------------------------------------
 	describe("header", () => {
 		it("renders title 'Mon panier'", () => {
-			render(<CartSheet cart={null} />);
+			render(<CartSheet cart={createCart([])} />);
 			expect(screen.getByText("Mon panier")).toBeInTheDocument();
 		});
 
 		it("renders sr-only description", () => {
-			render(<CartSheet cart={null} />);
+			render(<CartSheet cart={createCart([])} />);
 			const description = screen.getByTestId("sheet-description");
 			expect(description).toHaveTextContent("Gérez les articles de votre panier");
 			expect(description).toHaveClass("sr-only");
 		});
 
 		it("does not show item count when cart is empty", () => {
-			render(<CartSheet cart={null} />);
+			render(<CartSheet cart={createCart([])} />);
 			const title = screen.getByTestId("sheet-title");
 			expect(title.textContent).toBe("Mon panier");
 		});
@@ -591,7 +582,7 @@ describe("CartSheet", () => {
 
 		it("renders empty state under the Drawer shell on mobile", () => {
 			mockIsMobile.value = true;
-			render(<CartSheet cart={null} />);
+			render(<CartSheet cart={createCart([])} />);
 			expect(screen.getByTestId("drawer")).toBeInTheDocument();
 			expect(screen.getByText("Votre panier est vide !")).toBeInTheDocument();
 		});

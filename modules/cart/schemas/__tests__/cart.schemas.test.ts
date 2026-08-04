@@ -96,9 +96,9 @@ describe("addToCartSchema", () => {
 // ============================================================================
 
 describe("updateCartItemSchema", () => {
-	it("accepts a valid cartItemId and quantity", () => {
+	it("accepts a valid skuId and quantity", () => {
 		const result = updateCartItemSchema.safeParse({
-			cartItemId: VALID_CUID,
+			skuId: VALID_CUID,
 			quantity: 3,
 		});
 		expect(result.success).toBe(true);
@@ -106,7 +106,7 @@ describe("updateCartItemSchema", () => {
 
 	it("rejects quantity 0 (below minimum)", () => {
 		const result = updateCartItemSchema.safeParse({
-			cartItemId: VALID_CUID,
+			skuId: VALID_CUID,
 			quantity: 0,
 		});
 		expect(result.success).toBe(false);
@@ -114,7 +114,7 @@ describe("updateCartItemSchema", () => {
 
 	it("rejects quantity above MAX_QUANTITY_PER_ORDER (10)", () => {
 		const result = updateCartItemSchema.safeParse({
-			cartItemId: VALID_CUID,
+			skuId: VALID_CUID,
 			quantity: 11,
 		});
 		expect(result.success).toBe(false);
@@ -122,7 +122,7 @@ describe("updateCartItemSchema", () => {
 
 	it("accepts quantity exactly equal to MAX_QUANTITY_PER_ORDER (10)", () => {
 		const result = updateCartItemSchema.safeParse({
-			cartItemId: VALID_CUID,
+			skuId: VALID_CUID,
 			quantity: 10,
 		});
 		expect(result.success).toBe(true);
@@ -130,15 +130,15 @@ describe("updateCartItemSchema", () => {
 
 	it("rejects a non-integer quantity", () => {
 		const result = updateCartItemSchema.safeParse({
-			cartItemId: VALID_CUID,
+			skuId: VALID_CUID,
 			quantity: 2.5,
 		});
 		expect(result.success).toBe(false);
 	});
 
-	it("rejects an invalid cartItemId", () => {
+	it("rejects an invalid skuId", () => {
 		const result = updateCartItemSchema.safeParse({
-			cartItemId: "invalid-id",
+			skuId: "invalid-id",
 			quantity: 1,
 		});
 		expect(result.success).toBe(false);
@@ -150,24 +150,24 @@ describe("updateCartItemSchema", () => {
 // ============================================================================
 
 describe("removeFromCartSchema", () => {
-	it("accepts a valid cartItemId", () => {
-		const result = removeFromCartSchema.safeParse({ cartItemId: VALID_CUID });
+	it("accepts a valid skuId", () => {
+		const result = removeFromCartSchema.safeParse({ skuId: VALID_CUID });
 		expect(result.success).toBe(true);
 	});
 
-	it("rejects an invalid cartItemId", () => {
+	it("rejects an invalid skuId", () => {
 		const result = removeFromCartSchema.safeParse({
-			cartItemId: "not-a-valid-cuid2",
+			skuId: "not-a-valid-cuid2",
 		});
 		expect(result.success).toBe(false);
 	});
 
-	it("rejects an empty cartItemId", () => {
-		const result = removeFromCartSchema.safeParse({ cartItemId: "" });
+	it("rejects an empty skuId", () => {
+		const result = removeFromCartSchema.safeParse({ skuId: "" });
 		expect(result.success).toBe(false);
 	});
 
-	it("rejects when cartItemId is missing", () => {
+	it("rejects when skuId is missing", () => {
 		const result = removeFromCartSchema.safeParse({});
 		expect(result.success).toBe(false);
 	});

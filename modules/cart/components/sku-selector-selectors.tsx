@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { Check, Minus, Plus } from "lucide-react";
 import { m } from "motion/react";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
@@ -91,11 +92,7 @@ export function ColorSelector({
 					<m.div
 						initial={{ scale: 0.5, opacity: 0 }}
 						animate={{ scale: 1, opacity: 1 }}
-						transition={{
-							type: "spring",
-							stiffness: 400,
-							damping: 15,
-						}}
+						transition={MOTION_CONFIG.spring.bouncy}
 					>
 						<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
 					</m.div>
@@ -234,11 +231,7 @@ export function MaterialSelector({
 								<m.div
 									initial={{ scale: 0.85, opacity: 0 }}
 									animate={{ scale: 1, opacity: 1 }}
-									transition={{
-										type: "spring",
-										stiffness: 400,
-										damping: 15,
-									}}
+									transition={MOTION_CONFIG.spring.bouncy}
 								>
 									<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
 								</m.div>
@@ -348,11 +341,7 @@ export function SizeSelectorGroup({
 								<m.div
 									initial={{ scale: 0.85, opacity: 0 }}
 									animate={{ scale: 1, opacity: 1 }}
-									transition={{
-										type: "spring",
-										stiffness: 400,
-										damping: 15,
-									}}
+									transition={MOTION_CONFIG.spring.bouncy}
 									className="absolute top-1.5 right-1.5"
 								>
 									<Check className="text-primary size-3.5" aria-hidden="true" />

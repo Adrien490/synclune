@@ -16,6 +16,7 @@ vi.mock("@/modules/cart/data/get-sku-for-validation", () => ({
 
 vi.mock("@/modules/cart/constants/cart", () => ({
 	MAX_QUANTITY_PER_ORDER: 10,
+	MAX_CART_ITEMS: 50,
 }));
 
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";

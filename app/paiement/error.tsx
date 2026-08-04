@@ -69,12 +69,12 @@ export default function CheckoutError({
 									Réessayer le paiement
 								</Button>
 								<Button
-									asChild
+									render={<Link href="/produits" />}
 									variant="secondary"
 									size="lg"
 									onClick={() => triggerHaptic("light")}
 								>
-									<Link href="/produits">Continuer mes achats</Link>
+									Continuer mes achats
 								</Button>
 							</div>
 							<p className="text-muted-foreground inline-flex flex-wrap items-center justify-center gap-x-1 text-sm">

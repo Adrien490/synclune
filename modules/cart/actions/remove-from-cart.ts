@@ -1,23 +1,20 @@
 "use server";
 
-import { updateTag } from "next/cache";
-import {
-	validateInput,
-	handleActionError,
-	success,
-	forbidden,
-	safeFormGet,
-} from "@/shared/lib/actions";
-import { prisma } from "@/shared/lib/prisma";
-import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
+import { validateInput, handleActionError, success, safeFormGet } from "@/shared/lib/actions";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
+import { readCartCookie, writeCartCookie } from "@/modules/cart/lib/cart-cookie";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { removeFromCartSchema } from "../schemas/cart.schemas";
 
 /**
  * Server Action pour supprimer un article du panier
  * Compatible with useActionState de React 19
+ *
+ * ⚠️ Plus de garde d'ownership : le panier vit dans le cookie de l'appelant, il
+ * ne peut par construction supprimer que sa propre ligne. L'IDOR que gardait
+ * l'ancien `forbidden()` (deviner l'id d'un `CartItem` d'autrui) n'existe plus —
+ * il n'y a plus de table où deviner un id.
  *
  * Rate limiting configuré via CART_LIMITS.REMOVE
  */
@@ -26,72 +23,30 @@ export async function removeFromCart(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting + récupération contexte
+		// 1. Rate limiting
 		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.REMOVE);
 		if (!rateLimitResult.success) {
 			return rateLimitResult.errorState;
 		}
-		const { userId, sessionId } = rateLimitResult.context;
 
-		// 2. Extraction des données du FormData
-		const rawData = {
-			cartItemId: safeFormGet(formData, "cartItemId"),
-		};
-
-		// 3. Validation avec Zod
-		const validated = validateInput(removeFromCartSchema, rawData);
+		// 2. Validation avec Zod
+		const validated = validateInput(removeFromCartSchema, {
+			skuId: safeFormGet(formData, "skuId"),
+		});
 		if ("error" in validated) return validated.error;
 
-		const validatedData = validated.data;
+		const { skuId } = validated.data;
 
-		// 4. Récupérer l'item avec son panier et le productId du SKU
-		const cartItem = await prisma.cartItem.findUnique({
-			where: { id: validatedData.cartItemId },
-			select: {
-				id: true,
-				cartId: true,
-				cart: { select: { userId: true, sessionId: true } },
-				sku: { select: { productId: true } },
-			},
-		});
+		// 3. Retrait de la ligne. Une ligne absente n'est pas une erreur : le geste
+		// est idempotent (double clic, onglet resté ouvert sur un panier déjà vidé).
+		const cart = await readCartCookie();
+		const items = cart.items.filter((item) => item.skuId !== skuId);
 
-		// 5. Uniform forbidden() for both "not found" and "wrong owner" to prevent IDOR enumeration
-		// (no information leak about whether the cartItem id exists)
-		if (!cartItem) {
-			return forbidden();
+		if (items.length !== cart.items.length) {
+			await writeCartCookie({ ...cart, items });
 		}
 
-		const isOwner = userId
-			? cartItem.cart.userId === userId
-			: cartItem.cart.sessionId === sessionId;
-
-		if (!isOwner) {
-			return forbidden();
-		}
-
-		// 6. Supprimer l'item du panier
-		await prisma.$transaction(async (tx) => {
-			await tx.cartItem.delete({
-				where: { id: validatedData.cartItemId },
-			});
-
-			await tx.cart.update({
-				where: { id: cartItem.cartId },
-				data: {
-					updatedAt: new Date(),
-				},
-			});
-		});
-
-		// 7. Invalider le cache
-		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
-		tags.forEach((tag) => updateTag(tag));
-
-		// 8. Invalider le cache du compteur de paniers pour ce produit (FOMO "dans X paniers")
-		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(cartItem.sku.productId));
-
-		// 9. Success - Return ActionState format
-		return success("Article supprime du panier");
+		return success("Article supprimé du panier");
 	} catch (e) {
 		return handleActionError(e, "Impossible de supprimer l'article du panier");
 	}

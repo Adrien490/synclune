@@ -10,16 +10,16 @@ const {
 	mockGetClientIp,
 	mockGetRateLimitIdentifier,
 	mockCheckRateLimit,
-	mockGetCartSessionId,
-	mockGetOrCreateCartSessionId,
+	mockGetGuestSessionId,
+	mockGetOrCreateGuestSessionId,
 } = vi.hoisted(() => ({
 	mockGetSession: vi.fn(),
 	mockHeaders: vi.fn(),
 	mockGetClientIp: vi.fn(),
 	mockGetRateLimitIdentifier: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
-	mockGetCartSessionId: vi.fn(),
-	mockGetOrCreateCartSessionId: vi.fn(),
+	mockGetGuestSessionId: vi.fn(),
+	mockGetOrCreateGuestSessionId: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/get-current-session", () => ({
@@ -36,9 +36,9 @@ vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
 }));
 
-vi.mock("../cart-session", () => ({
-	getCartSessionId: mockGetCartSessionId,
-	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
+vi.mock("../guest-session", () => ({
+	getGuestSessionId: mockGetGuestSessionId,
+	getOrCreateGuestSessionId: mockGetOrCreateGuestSessionId,
 }));
 
 import { checkCartRateLimit } from "../cart-rate-limit";
@@ -102,11 +102,11 @@ describe("checkCartRateLimit", () => {
 			}
 		});
 
-		it("does not call getCartSessionId when user is authenticated", async () => {
+		it("does not call getGuestSessionId when user is authenticated", async () => {
 			await checkCartRateLimit(MOCK_LIMIT_CONFIG);
 
-			expect(mockGetCartSessionId).not.toHaveBeenCalled();
-			expect(mockGetOrCreateCartSessionId).not.toHaveBeenCalled();
+			expect(mockGetGuestSessionId).not.toHaveBeenCalled();
+			expect(mockGetOrCreateGuestSessionId).not.toHaveBeenCalled();
 		});
 
 		it("sets sessionId to null for authenticated user", async () => {
@@ -147,22 +147,22 @@ describe("checkCartRateLimit", () => {
 	describe("anonymous user (no session)", () => {
 		beforeEach(() => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetCartSessionId.mockResolvedValue(MOCK_SESSION_ID);
+			mockGetGuestSessionId.mockResolvedValue(MOCK_SESSION_ID);
 			mockGetRateLimitIdentifier.mockReturnValue(`session:${MOCK_SESSION_ID}`);
 		});
 
-		it("calls getCartSessionId when createSessionIfMissing is false (default)", async () => {
+		it("calls getGuestSessionId when createSessionIfMissing is false (default)", async () => {
 			await checkCartRateLimit(MOCK_LIMIT_CONFIG);
 
-			expect(mockGetCartSessionId).toHaveBeenCalledOnce();
-			expect(mockGetOrCreateCartSessionId).not.toHaveBeenCalled();
+			expect(mockGetGuestSessionId).toHaveBeenCalledOnce();
+			expect(mockGetOrCreateGuestSessionId).not.toHaveBeenCalled();
 		});
 
-		it("calls getCartSessionId when createSessionIfMissing is explicitly false", async () => {
+		it("calls getGuestSessionId when createSessionIfMissing is explicitly false", async () => {
 			await checkCartRateLimit(MOCK_LIMIT_CONFIG, { createSessionIfMissing: false });
 
-			expect(mockGetCartSessionId).toHaveBeenCalledOnce();
-			expect(mockGetOrCreateCartSessionId).not.toHaveBeenCalled();
+			expect(mockGetGuestSessionId).toHaveBeenCalledOnce();
+			expect(mockGetOrCreateGuestSessionId).not.toHaveBeenCalled();
 		});
 
 		it("returns success with sessionId from cookie", async () => {
@@ -185,17 +185,17 @@ describe("checkCartRateLimit", () => {
 	describe("createSessionIfMissing option", () => {
 		beforeEach(() => {
 			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue(MOCK_SESSION_ID);
+			mockGetOrCreateGuestSessionId.mockResolvedValue(MOCK_SESSION_ID);
 		});
 
-		it("calls getOrCreateCartSessionId when createSessionIfMissing is true", async () => {
+		it("calls getOrCreateGuestSessionId when createSessionIfMissing is true", async () => {
 			await checkCartRateLimit(MOCK_LIMIT_CONFIG, { createSessionIfMissing: true });
 
-			expect(mockGetOrCreateCartSessionId).toHaveBeenCalledOnce();
-			expect(mockGetCartSessionId).not.toHaveBeenCalled();
+			expect(mockGetOrCreateGuestSessionId).toHaveBeenCalledOnce();
+			expect(mockGetGuestSessionId).not.toHaveBeenCalled();
 		});
 
-		it("returns the session ID created by getOrCreateCartSessionId", async () => {
+		it("returns the session ID created by getOrCreateGuestSessionId", async () => {
 			const result = await checkCartRateLimit(MOCK_LIMIT_CONFIG, { createSessionIfMissing: true });
 
 			expect(result.success).toBe(true);

@@ -7,8 +7,8 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { Trash2 } from "lucide-react";
 
 interface CartItemRemoveButtonProps {
-	cartItemId: string;
-	skuId?: string;
+	/** Identité de la ligne — le skuId depuis le passage du panier en cookie. */
+	skuId: string;
 	itemName: string;
 	quantity: number;
 }
@@ -20,19 +20,13 @@ interface CartItemRemoveButtonProps {
  * Ouvre un AlertDialog de confirmation avant suppression.
  * Pas de state disabled/loader : la suppression est optimistic.
  */
-export function CartItemRemoveButton({
-	cartItemId,
-	skuId,
-	itemName,
-	quantity,
-}: CartItemRemoveButtonProps) {
+export function CartItemRemoveButton({ skuId, itemName, quantity }: CartItemRemoveButtonProps) {
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
 	const haptic = useHaptic();
 
 	const handleRemove = () => {
 		haptic("light");
 		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
-			cartItemId,
 			skuId,
 			itemName,
 			quantity,

@@ -5,7 +5,7 @@ import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/li
 import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCartSessionId, getOrCreateCartSessionId } from "./cart-session";
+import { getGuestSessionId, getOrCreateGuestSessionId } from "./guest-session";
 
 /**
  * Contexte retourné après vérification du rate limiting
@@ -93,8 +93,8 @@ export async function checkCartRateLimit(
 	let sessionId: string | null = null;
 	if (!userId) {
 		sessionId = createSessionIfMissing
-			? await getOrCreateCartSessionId()
-			: await getCartSessionId();
+			? await getOrCreateGuestSessionId()
+			: await getGuestSessionId();
 	}
 
 	// 3. Récupérer l'IP client

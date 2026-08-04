@@ -1,22 +1,20 @@
 "use server";
 
-import { updateTag } from "next/cache";
-import { Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { writeCartCookie } from "@/modules/cart/lib/cart-cookie";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { readCartWithSkus } from "@/modules/cart/services/read-cart-with-skus.service";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { detectPriceChanges } from "../services/cart-pricing-calculator.service";
 
 /**
- * Met à jour les prix snapshot (priceAtAdd) de tous les articles du panier
+ * Met à jour les prix témoins (priceAtAdd) de tous les articles du panier
  * au prix actuel (sku.priceInclTax)
  *
  * Cas d'usage : L'utilisateur voit que des prix ont baissé et souhaite
- * bénéficier des nouveaux prix au lieu des prix snapshot.
+ * bénéficier des nouveaux prix au lieu des prix témoins.
  *
  * @returns ActionState avec nombre d'articles mis à jour
  */
@@ -25,61 +23,24 @@ export async function updateCartPrices(
 	__formData?: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting + récupération contexte
+		// 1. Rate limiting
 		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.UPDATE);
 		if (!rateLimitResult.success) {
 			return rateLimitResult.errorState;
 		}
-		const { userId, sessionId } = rateLimitResult.context;
 
-		if (!userId && !sessionId) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun panier trouvé",
-			};
-		}
+		// 2. Lecture directe (sans cache de rendu) pour des prix frais
+		const { cookie, items } = await readCartWithSkus();
 
-		// 2. Direct DB read (bypasses cache for fresh prices)
-		const cart = await prisma.cart.findFirst({
-			where: {
-				...(userId ? { userId } : { sessionId: sessionId! }),
-				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-			},
-			select: {
-				id: true,
-				items: {
-					select: {
-						id: true,
-						priceAtAdd: true,
-						quantity: true,
-						sku: {
-							select: {
-								priceInclTax: true,
-								isActive: true,
-								deletedAt: true,
-								product: {
-									select: {
-										title: true,
-										status: true,
-										deletedAt: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		});
-
-		if (!cart || cart.items.length === 0) {
+		if (items.length === 0) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Panier vide",
 			};
 		}
 
-		// 3. Identifier les items où le prix a changé (exclure les soft-deleted)
-		const itemsToUpdate = cart.items.filter(
+		// 3. Identifier les items où le prix a changé (exclure les indisponibles)
+		const itemsToUpdate = items.filter(
 			(item) =>
 				item.priceAtAdd !== item.sku.priceInclTax &&
 				item.sku.isActive &&
@@ -119,24 +80,27 @@ export async function updateCartPrices(
 			delta: (item.priceAtAdd - item.sku.priceInclTax) * item.quantity,
 		}));
 
-		// 5. Batch update prices in a single query (CASE/WHEN)
-		const caseFragments = itemsToUpdate.map(
-			(item) => Prisma.sql`WHEN id = ${item.id} THEN ${item.sku.priceInclTax}`,
+		// 5. Réécriture du cookie avec les prix frais.
+		// Les lignes non concernées (indisponibles, prix inchangé) sont conservées
+		// telles quelles — ce n'est pas le rôle de cette action de les retirer.
+		const freshPriceBySkuId = new Map(
+			itemsToUpdate.map((item) => [item.skuId, item.sku.priceInclTax]),
 		);
-		const idFragments = itemsToUpdate.map((item) => Prisma.sql`${item.id}`);
-		await prisma.$executeRaw`UPDATE "CartItem" SET "priceAtAdd" = CASE ${Prisma.join(caseFragments, " ")} END, "updatedAt" = NOW() WHERE id IN (${Prisma.join(idFragments)})`;
+		await writeCartCookie({
+			...cookie,
+			items: cookie.items.map((item) => {
+				const freshPrice = freshPriceBySkuId.get(item.skuId);
+				return freshPrice === undefined ? item : { ...item, priceAtAdd: freshPrice };
+			}),
+		});
 
-		// 6. Invalider le cache
-		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
-		tags.forEach((tag) => updateTag(tag));
-
-		// 7. Message user (hausse = avertissement, baisse = économie)
+		// 6. Message user (hausse = avertissement, baisse = économie)
 		const count = itemsToUpdate.length;
 		let message: string;
 		if (increased.length > 0 && decreased.length > 0) {
 			message = `Prix mis à jour (${increased.length} hausse${increased.length > 1 ? "s" : ""}, ${decreased.length} baisse${decreased.length > 1 ? "s" : ""})`;
 		} else if (increased.length > 0) {
-			message = `${count} prix en hausse (+${formatEuro(priceChanges.totalIncrease)}). Vérifiez votre panier.`;
+			message = `${count} prix en hausse (+${formatEuro(priceChanges.totalIncrease)}). Vérifie ton panier.`;
 		} else {
 			message = `Bonne nouvelle : ${count} prix en baisse (-${formatEuro(priceChanges.totalSavings)})`;
 		}

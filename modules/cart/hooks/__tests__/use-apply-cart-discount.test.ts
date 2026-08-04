@@ -32,6 +32,7 @@ vi.mock("next/headers", () => ({ headers: vi.fn(), cookies: vi.fn() }));
 
 import { useApplyCartDiscount } from "../use-apply-cart-discount";
 import { ActionStatus } from "@/shared/types/server-action";
+import { GENERIC_ERROR_MESSAGE } from "@/shared/constants/error-messages";
 
 // ============================================================================
 // Helpers
@@ -172,7 +173,10 @@ describe("useApplyCartDiscount", () => {
 			});
 
 			expect(result.current.state?.status).toBe(ActionStatus.ERROR);
-			expect(mockToast.error).toHaveBeenCalledWith("Network error");
+			// Le message brut de l'exception ne fuite plus (withCallbacks fabrique
+			// un état générique — « Network error » aurait de toute façon été réécrit
+			// par sanitizeErrorMessage, que le mock du toast court-circuite ici).
+			expect(mockToast.error).toHaveBeenCalledWith(GENERIC_ERROR_MESSAGE);
 		});
 	});
 });

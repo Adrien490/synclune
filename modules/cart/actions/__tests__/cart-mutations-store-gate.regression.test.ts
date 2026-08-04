@@ -41,6 +41,9 @@ const MUST_GATE = [
  */
 const INTENTIONALLY_UNGATED: Record<string, string> = {
 	"clear-cart.ts": "vider son panier doit rester possible boutique fermée",
+	"clear-cart-after-order.ts":
+		"vidage post-paiement (page de confirmation) — la commande est déjà passée, " +
+		"gater ici laisserait un panier fantôme si la boutique ferme entre-temps",
 	"remove-from-cart.ts": "retrait d'article — jamais bloquant",
 	"remove-multiple-items.ts": "retrait d'articles — jamais bloquant",
 	"remove-unavailable-items.ts": "nettoyage d'articles indisponibles",

@@ -27,26 +27,24 @@ function createCart(
 	}));
 
 	return {
-		id: "cart-1",
-		userId: "user-1",
-		sessionId: null,
-		expiresAt: new Date(),
-		createdAt: new Date(),
-		updatedAt: new Date(),
 		appliedDiscountCode: null,
 		discountAmountCache: null,
 		items,
-	} as NonNullable<GetCartReturn>;
+	} as GetCartReturn;
 }
 
 describe("cartReducer", () => {
-	describe("null state", () => {
-		it("should return null for any action", () => {
-			expect(cartReducer(null, { type: "remove", itemId: "item-1" })).toBeNull();
+	// Plus de cas « état null » : depuis le passage du panier au cookie
+	// (2026-08-04), `getCart()` rend toujours un objet — un visiteur sans cookie
+	// a simplement un panier vide, et le reducer n'a plus de garde `if (!state)`.
+	describe("panier vide", () => {
+		it("traverse toutes les actions sans lever", () => {
+			const empty = createCart([]);
+			expect(cartReducer(empty, { type: "remove", itemId: "item-1" }).items).toEqual([]);
 			expect(
-				cartReducer(null, { type: "updateQuantity", itemId: "item-1", quantity: 3 }),
-			).toBeNull();
-			expect(cartReducer(null, { type: "clear" })).toBeNull();
+				cartReducer(empty, { type: "updateQuantity", itemId: "item-1", quantity: 3 }).items,
+			).toEqual([]);
+			expect(cartReducer(empty, { type: "clear" }).items).toEqual([]);
 		});
 	});
 
@@ -64,13 +62,6 @@ describe("cartReducer", () => {
 			const result = cartReducer(cart, { type: "clear" });
 			expect(result!.appliedDiscountCode).toBeNull();
 			expect(result!.discountAmountCache).toBeNull();
-		});
-
-		it("should preserve cart identity fields (id, userId, sessionId)", () => {
-			const cart = createCart([{ id: "item-1" }]);
-			const result = cartReducer(cart, { type: "clear" });
-			expect(result!.id).toBe("cart-1");
-			expect(result!.userId).toBe("user-1");
 		});
 
 		it("should not mutate the original state", () => {

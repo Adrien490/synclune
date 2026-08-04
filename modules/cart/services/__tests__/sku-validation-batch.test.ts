@@ -34,6 +34,7 @@ vi.mock("@/modules/cart/constants/error-messages", () => ({
 
 vi.mock("@/modules/cart/constants/cart", () => ({
 	MAX_QUANTITY_PER_ORDER: 10,
+	MAX_CART_ITEMS: 50,
 }));
 
 import { batchValidateSkusForMerge, validateCartItemsWithDb } from "../sku-validation.service";

@@ -110,3 +110,34 @@ test.describe("Panier", { tag: ["@critical"] }, () => {
 		expect(count).toBe(0);
 	});
 });
+
+test.describe("Panier — reduced motion", { tag: ["@regression"] }, () => {
+	// @regression sheet-reduced-motion — le panneau glisse par TRANSITION (Base UI
+	// partage la propriété `transform` entre l'entrée, la sortie et le suivi du
+	// doigt). Or le killswitch d'`animations.css` ne neutralise que `animation` :
+	// c'est la règle `[data-slot="sheet-content"] { transition: none !important }`
+	// d'`app/styles/pwa.css` qui doit couper le glissement sous réduction.
+	// (Avant la migration, le même test gardait le style injecté par Vaul.)
+	test("le cart sheet s'ouvre sans transition sous prefers-reduced-motion", async ({
+		page,
+		cartPage,
+	}) => {
+		await page.emulateMedia({ reducedMotion: "reduce" });
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		await cartPage.open();
+		const drawer = page.locator('[data-slot="sheet-content"]').first();
+		await expect(drawer).toBeVisible();
+
+		const styles = await drawer.evaluate((el) => {
+			const cs = getComputedStyle(el);
+			return {
+				transitionProperty: cs.transitionProperty,
+				animationName: cs.animationName,
+			};
+		});
+		expect(styles.transitionProperty).toBe("none");
+		expect(styles.animationName).toBe("none");
+	});
+});

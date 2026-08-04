@@ -53,7 +53,12 @@ export function CartSheetFooter({
 						aria-busy={isPending}
 						className="text-lg font-bold tabular-nums transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:motion-safe:animate-pulse"
 					>
-						<AnimatedNumber value={subtotal} formatter={formatEuro} />
+						{/* startValue={subtotal} : sans lui le spring part de 0 et le
+						    sous-total COMPTE de 0,00 € au montant réel à chaque ouverture
+						    du panier (montant transactionnel faux ~1 s). Ainsi le mount
+						    affiche la vraie valeur ; seuls les changements de quantité
+						    animent, de l'ancien montant vers le nouveau. */}
+						<AnimatedNumber value={subtotal} startValue={subtotal} formatter={formatEuro} />
 					</span>
 				</div>
 				{/* Réduction appliquée — visible quand un code promo est actif */}
@@ -68,10 +73,9 @@ export function CartSheetFooter({
 					Frais postaux dès {formatEuro(SHIPPING_RATES.FR.amount)} — calculés à l&apos;étape
 					suivante.
 				</p>
-				{/* SR-only live region for subtotal changes */}
-				<div aria-live="polite" aria-atomic="true" className="sr-only">
-					Sous-total : {formatEuro(subtotal)}
-				</div>
+				{/* Pas de région live ici : la région différée de cart-sheet.tsx annonce
+				    déjà « N articles, sous-total X » — deux régions sur la même valeur
+				    = double vocalisation. */}
 
 				{/* Primary CTA */}
 				{hasStockIssues ? (
@@ -86,13 +90,11 @@ export function CartSheetFooter({
 					</Button>
 				) : (
 					<Button
-						asChild
+						render={<Link href="/paiement" onClick={handleCheckoutClick} />}
 						size="lg"
 						className="can-hover:hover:shadow-lg w-full shadow-md transition-shadow group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 					>
-						<Link href="/paiement" onClick={handleCheckoutClick}>
-							Passer commande
-						</Link>
+						Passer commande
 					</Button>
 				)}
 

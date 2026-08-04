@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
+
 // Hoisted mocks must be declared before vi.mock calls
 const { mockAnimatedNumber, mockHaptic } = vi.hoisted(() => ({
 	mockAnimatedNumber: vi.fn(
@@ -54,35 +56,7 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 
 // Mock Button
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		disabled,
-		asChild,
-		"aria-disabled": ariaDisabled,
-		"aria-describedby": ariaDescribedby,
-		...props
-	}: {
-		children: React.ReactNode;
-		disabled?: boolean;
-		asChild?: boolean;
-		"aria-disabled"?: boolean | "true" | "false";
-		"aria-describedby"?: string;
-	}) => {
-		if (asChild) {
-			// Render children directly when asChild is true (Slot-like behaviour)
-			return <>{children}</>;
-		}
-		return (
-			<button
-				disabled={disabled}
-				aria-disabled={ariaDisabled}
-				aria-describedby={ariaDescribedby}
-				{...props}
-			>
-				{children}
-			</button>
-		);
-	},
+	Button: (props: RenderPropMockProps) => renderPropMock("button", props),
 }));
 
 // Mock cn

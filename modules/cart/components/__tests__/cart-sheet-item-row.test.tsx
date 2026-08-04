@@ -124,18 +124,18 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 
 vi.mock("../cart-item-quantity-selector", () => ({
 	CartItemQuantitySelector: ({
-		cartItemId,
+		skuId,
 		currentQuantity,
 		maxQuantity,
 	}: {
-		cartItemId: string;
+		skuId: string;
 		currentQuantity: number;
 		maxQuantity: number;
 		isInactive: boolean;
 	}) => (
 		<div
 			data-testid="quantity-selector"
-			data-item-id={cartItemId}
+			data-item-id={skuId}
 			data-quantity={currentQuantity}
 			data-max={maxQuantity}
 		/>
@@ -144,14 +144,14 @@ vi.mock("../cart-item-quantity-selector", () => ({
 
 vi.mock("../cart-item-remove-button", () => ({
 	CartItemRemoveButton: ({
-		cartItemId,
+		skuId,
 		itemName,
 	}: {
-		cartItemId: string;
+		skuId: string;
 		itemName: string;
 		quantity: number;
 	}) => (
-		<button data-testid="remove-button" data-item-id={cartItemId}>
+		<button data-testid="remove-button" data-item-id={skuId}>
 			Supprimer {itemName}
 		</button>
 	),
@@ -419,7 +419,6 @@ describe("CartSheetItemRow", () => {
 			render(<CartSheetItemRow item={createCartItem({ id: "item-7", quantity: 3 })} isMobile />);
 			screen.getByTestId("swipeable-card").click();
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith("remove-cart-item", {
-				cartItemId: "item-7",
 				skuId: "sku-1",
 				itemName: "Bague Lune",
 				quantity: 3,

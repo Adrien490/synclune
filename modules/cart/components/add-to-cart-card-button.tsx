@@ -26,14 +26,17 @@ interface AddToCartCardButtonProps {
 }
 
 /**
- * Bouton d'ajout au panier pour les cartes produit
+ * Bouton d'ajout au panier pour les cartes produit (redesign Atelier 2026-08-03)
  *
- * Comportement responsive:
- * - Mobile: Icône ShoppingBag rose avec drop-shadow renforcé (sans fond)
- * - Desktop: Bouton pleine largeur "Ajouter au panier" avec fond primary
+ * Deux variants:
+ * - "icon" (desktop, masqué < sm par le call site) : pastille arrondie
+ *   « Ajouter au panier » posée sur la photo, révélée au survol ET au
+ *   focus clavier (parité WCAG 2.4.7, verrouillée par hover-focus-parity) ;
+ *   toujours visible sur tactile ≥ sm sans hover fin (iPad, paysage)
+ * - "mobile-full" : pleine largeur en pilule primary, cohérent avec le
+ *   bouton primaire du site
  *
  * - Disabled pendant le pending pour éviter double-click
- * - Toujours visible sur mobile, apparaît au hover sur desktop
  * - Ouvre le dialog de sélection SKU uniquement si le produit a plusieurs variantes
  * - Ajoute directement au panier si le produit n'a qu'un seul SKU
  */
@@ -75,12 +78,15 @@ export function AddToCartCardButton({
 				isMobileFull
 					? // Mobile full-width: position relative dans le flux
 						"relative w-full"
-					: // Icon variant: position absolue overlay
+					: // Icon variant: pastille centrée en bas de la photo, révélée au
+						// survol de la carte et au focus clavier (translate + opacity).
+						// Le MASQUAGE est gaté `can-hover:` (pas seulement le reveal) : sur
+						// tactile ≥ sm (iPad, téléphone paysage) aucun survol ne peut révéler
+						// la pastille, et un bouton opacity-0 resterait cliquable au-dessus
+						// du stretched link — elle reste donc visible en permanence là-bas.
 						cn(
-							"absolute z-30",
-							"right-2.5 bottom-2.5",
-							"sm:inset-x-0 sm:right-0 sm:bottom-0",
-							"sm:can-hover:group-hover:translate-y-0 sm:can-hover:group-hover:opacity-100 opacity-100 sm:translate-y-2 sm:opacity-0 sm:focus-within:translate-y-0 sm:focus-within:opacity-100",
+							"absolute bottom-2.5 left-1/2 z-30 -translate-x-1/2",
+							"sm:can-hover:group-hover:translate-y-0 sm:can-hover:group-hover:opacity-100 sm:can-hover:translate-y-2 sm:can-hover:opacity-0 opacity-100 sm:focus-within:translate-y-0 sm:focus-within:opacity-100",
 							"duration-300 motion-safe:transition-[opacity,transform]",
 						),
 				className,
@@ -93,34 +99,27 @@ export function AddToCartCardButton({
 				disabled={isPending}
 				aria-busy={isPending}
 				onClick={handleClick}
-				size={isMobileFull ? "default" : "icon"}
+				size="default"
 				className={cn(
 					isMobileFull
-						? // Mobile full-width: bouton minimaliste — bordure seule, zero background
-							// pour alléger la densité visuelle en grille 2 colonnes (WCAG 2.5.5 tap target conservé h-11)
+						? // Mobile full-width: pilule primary pleine largeur — le CTA le plus
+							// vu de la boutique porte la couleur du bouton primaire du site
+							// (WCAG 2.5.5 tap target conservé h-11)
 							cn(
-								"h-11 w-full rounded-md",
-								"text-muted-foreground bg-transparent",
-								"border-border/80 border",
-								"can-hover:hover:border-primary/60 can-hover:hover:text-foreground can-hover:hover:bg-primary/5",
-								"active:scale-[0.98]",
+								"h-11 w-full rounded-full",
+								"bg-primary text-primary-foreground",
+								"can-hover:hover:bg-primary/85",
+								"active:bg-primary/90 active:scale-[0.98]",
 								"text-sm font-medium",
 								"motion-safe:transition-all motion-safe:duration-200",
 							)
-						: // Icon variant: styles responsive existants
+						: // Icon variant: pastille arrondie posée sur la photo
 							cn(
-								// Mobile: fond transparent comme WishlistButton (cohérence)
-								"size-11 rounded-full",
-								"bg-transparent",
-								"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
-								// Desktop: pleine largeur avec fond primary opaque + min-h-11 (WCAG 2.5.5)
-								"sm:h-auto sm:min-h-11 sm:w-full sm:rounded-none sm:px-4 sm:py-3",
-								"sm:bg-primary sm:text-primary-foreground",
-								"sm:shadow-lg sm:shadow-black/20",
-								// Active/hover desktop - feedback visuel clair
-								"sm:can-hover:hover:bg-primary/85 sm:can-hover:hover:-translate-y-0.5 sm:can-hover:hover:shadow-xl",
-								"sm:active:bg-primary/90 sm:active:translate-y-0 sm:active:shadow-md",
-								// Transitions
+								"h-11 gap-2 rounded-full px-4",
+								"bg-primary text-primary-foreground",
+								"shadow-lg shadow-black/20",
+								"can-hover:hover:bg-primary/85 can-hover:hover:-translate-y-0.5 can-hover:hover:shadow-xl",
+								"active:bg-primary/90 active:translate-y-0 active:shadow-md",
 								"motion-safe:transition-all motion-safe:duration-200",
 							),
 					// Disabled (commun)
@@ -136,26 +135,19 @@ export function AddToCartCardButton({
 						<Spinner presentational />
 					) : (
 						<span className="inline-flex items-center gap-2">
-							<ShoppingCart size={18} className="text-foreground/70" aria-hidden="true" />
+							<ShoppingCart size={18} aria-hidden="true" />
 							<span className="text-sm font-medium">Ajouter</span>
 						</span>
 					)
 				) : (
 					<>
-						{/* Mobile icon: icone ShoppingCart + drop-shadow */}
 						<ShoppingCart
-							size={20}
+							size={18}
 							strokeWidth={2}
-							className={cn(
-								"text-primary sm:hidden",
-								"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
-								"motion-safe:transition-all motion-safe:duration-200",
-								isPending && "opacity-60",
-							)}
+							className={cn("shrink-0", isPending && "opacity-60")}
 							aria-hidden="true"
 						/>
-						{/* Desktop: texte */}
-						<span className="hidden text-sm font-medium sm:inline">Ajouter au panier</span>
+						<span className="text-sm font-medium">Ajouter au panier</span>
 					</>
 				)}
 			</Button>

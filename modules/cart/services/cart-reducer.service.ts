@@ -6,7 +6,9 @@ import type { CartOptimisticAction } from "../contexts/cart-optimistic-context";
  * Handles item removal and quantity changes
  */
 export function cartReducer(state: GetCartReturn, action: CartOptimisticAction): GetCartReturn {
-	if (!state) return state;
+	// Plus de garde `if (!state)` : depuis le passage du panier en cookie
+	// (2026-08-04), `getCart()` ne rend plus jamais `null` — un visiteur sans
+	// cookie a simplement un panier vide.
 	switch (action.type) {
 		case "remove":
 			return {
@@ -22,7 +24,8 @@ export function cartReducer(state: GetCartReturn, action: CartOptimisticAction):
 			};
 		case "clear":
 			// Mirror `clearCart` server action : items + discount metadata reset.
-			// `notes` n'est pas exposé par GET_CART_SELECT → rien à faire côté UI.
+			// Côté serveur, `clearCart` supprime le cookie d'un bloc — les deux
+			// partent donc bien ensemble.
 			return {
 				...state,
 				items: [],

@@ -36,13 +36,18 @@ export async function ReceiptButton({ stripePaymentIntentId }: ReceiptButtonProp
 
 	return (
 		<div className="flex justify-center pt-2">
-			<Button asChild variant="outline" size="sm">
-				<a href={receiptUrl} target="_blank" rel="noopener noreferrer">
-					<Receipt className="size-4" />
-					Télécharger mon reçu
-					<ExternalLink className="size-3" aria-hidden="true" />
-					<span className="sr-only">(ouvre dans un nouvel onglet)</span>
-				</a>
+			<Button
+				render={
+					// eslint-disable-next-line jsx-a11y/anchor-has-content -- prop `render` Base UI : le contenu accessible est porté par les enfants du Button
+					<a href={receiptUrl} target="_blank" rel="noopener noreferrer" />
+				}
+				variant="outline"
+				size="sm"
+			>
+				<Receipt className="size-4" />
+				Télécharger mon reçu
+				<ExternalLink className="size-3" aria-hidden="true" />
+				<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 			</Button>
 		</div>
 	);

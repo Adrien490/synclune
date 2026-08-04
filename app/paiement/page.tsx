@@ -8,6 +8,7 @@ import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-ac
 import { ShoppingBag, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { CheckoutForm } from "@/modules/payments/components/checkout-form";
+import { OpenCartButton } from "./_components/open-cart-button";
 
 import type { Metadata } from "next";
 
@@ -21,21 +22,19 @@ export const metadata: Metadata = {
 };
 
 /**
- * Page de checkout
+ * Page de checkout — parcours invité (la seule session possible est celle de
+ * l'administratrice, qui peut acheter sur sa propre boutique).
  *
- * Fonctionnalités :
- * - Détection automatique utilisateur connecté/guest
- * - Validation du panier (stock, disponibilité)
- * - Pré-remplissage des données si utilisateur connecté
- * - Création de compte optionnelle pour les guests
- * - Redirection vers Stripe Checkout après validation
+ * - Validation du panier (stock, disponibilité) avant d'afficher le formulaire
+ * - Paiement par Stripe Elements dans la page (pas de redirection vers
+ *   Stripe Checkout)
  */
 export default async function CheckoutPage() {
 	const [cart, session] = await Promise.all([getCart(), getSession()]);
 
 	// Empty cart — render a friendly empty state instead of a silent redirect.
 	// Cart is a Sheet, not a route, so we surface the situation here with clear next steps.
-	if (!cart || cart.items.length === 0) {
+	if (cart.items.length === 0) {
 		return (
 			<div className="min-h-dvh" style={{ viewTransitionName: "shop-paiement" }}>
 				<section className="bg-background py-8 sm:py-10">
@@ -59,11 +58,11 @@ export default async function CheckoutPage() {
 									</p>
 								</div>
 								<div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-									<Button asChild size="lg">
-										<Link href="/produits">Voir le catalogue</Link>
+									<Button render={<Link href="/produits" />} size="lg">
+										Voir le catalogue
 									</Button>
-									<Button asChild variant="outline" size="lg">
-										<Link href="/">Retour à l&apos;accueil</Link>
+									<Button render={<Link href="/" />} variant="outline" size="lg">
+										Retour à l&apos;accueil
 									</Button>
 								</div>
 							</CardContent>
@@ -112,11 +111,14 @@ export default async function CheckoutPage() {
 								</ul>
 
 								<div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
-									<Button asChild>
-										<Link href="/produits">Voir le catalogue</Link>
+									{/* Action principale : corriger le panier sans quitter /paiement —
+									    le Sheet panier est monté par le layout (CartAndSkuWrapper). */}
+									<OpenCartButton>Modifier mon panier</OpenCartButton>
+									<Button render={<Link href="/produits" />} variant="outline">
+										Voir le catalogue
 									</Button>
-									<Button asChild variant="outline">
-										<Link href="/">Retour à l&apos;accueil</Link>
+									<Button render={<Link href="/" />} variant="outline">
+										Retour à l&apos;accueil
 									</Button>
 								</div>
 							</AlertDescription>

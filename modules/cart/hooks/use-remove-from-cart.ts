@@ -32,6 +32,9 @@ export const useRemoveFromCart = (options?: UseRemoveFromCartOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 
 	const [state, formAction, isActionPending] = useActionState(
+		// L'arrow diffère la création des callbacks au submit : ils lisent une ref
+		// (`pendingQuantityRef`), interdit pendant le rendu (react-hooks/refs).
+		// Ne pas « simplifier » en passage direct de withCallbacks.
 		async (prev: ActionState | undefined, formData: FormData) =>
 			withCallbacks(
 				removeFromCart,

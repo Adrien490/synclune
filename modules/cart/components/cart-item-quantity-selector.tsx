@@ -10,7 +10,8 @@ import { useOptimistic, useTransition } from "react";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 
 interface CartItemQuantitySelectorProps {
-	cartItemId: string;
+	/** Identité de la ligne — le skuId depuis le passage du panier en cookie. */
+	skuId: string;
 	currentQuantity: number;
 	maxQuantity: number;
 	isInactive: boolean;
@@ -26,7 +27,7 @@ interface CartItemQuantitySelectorProps {
  * - Badge navbar mis à jour via le hook useUpdateCartItem
  */
 export function CartItemQuantitySelector({
-	cartItemId,
+	skuId,
 	currentQuantity,
 	maxQuantity,
 	isInactive,
@@ -54,7 +55,7 @@ export function CartItemQuantitySelector({
 
 		// Créer le FormData
 		const formData = new FormData();
-		formData.set("cartItemId", cartItemId);
+		formData.set("skuId", skuId);
 		formData.set("quantity", String(clampedQuantity));
 
 		// Tout dans la même transition : optimistic UI + action
@@ -64,7 +65,7 @@ export function CartItemQuantitySelector({
 			if (cartOptimistic) {
 				cartOptimistic.updateOptimisticCart({
 					type: "updateQuantity",
-					itemId: cartItemId,
+					itemId: skuId,
 					quantity: clampedQuantity,
 				});
 			}

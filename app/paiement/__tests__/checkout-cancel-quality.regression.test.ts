@@ -50,6 +50,15 @@ describe("checkout cancel page quality (regression)", () => {
 		expect(cancelPage).toMatch(/import \{[^}]*CHECKOUT_CANCEL_REASONS[^}]*\}/);
 	});
 
+	it("le parse des searchParams est tolérant champ par champ (reason invalide ≠ référence perdue)", () => {
+		// Sans `.catch(undefined)` par champ, un `reason` hors enum faisait échouer
+		// le parse de l'objet ENTIER : la référence de commande disparaissait de
+		// l'affichage alors qu'elle était valide. Audit UI/UX 2026-08-03.
+		expect(cancelPage).toMatch(
+			/reason:\s*z\.enum\(CHECKOUT_CANCEL_REASONS\)\.optional\(\)\.catch\(undefined\)/,
+		);
+	});
+
 	it('ne contient plus de chaîne de reason === "..." inline (advice colocalisé)', () => {
 		// Plus aucune occurrence de chaîne reason === "X" dans la page
 		expect(cancelPage).not.toMatch(/reason === "card_declined"/);

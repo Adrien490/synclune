@@ -69,8 +69,12 @@ export default function CheckoutCancelError({
 					actions={
 						<div className="space-y-4">
 							<div className="flex flex-col justify-center gap-4 sm:flex-row">
-								<Button asChild size="lg" onClick={() => triggerHaptic("medium")}>
-									<Link href="/paiement">Reprendre ma commande</Link>
+								<Button
+									render={<Link href="/paiement" />}
+									size="lg"
+									onClick={() => triggerHaptic("medium")}
+								>
+									Reprendre ma commande
 								</Button>
 								<Button
 									variant="secondary"

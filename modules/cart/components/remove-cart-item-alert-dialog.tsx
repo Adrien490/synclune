@@ -27,8 +27,12 @@ export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
 const UNDO_TOAST_DURATION_MS = 5000;
 
 interface RemoveCartItemData {
-	cartItemId: string;
-	skuId?: string;
+	/**
+	 * Identité de la ligne — le skuId. Depuis le passage du panier en cookie
+	 * (2026-08-04) il n'y a plus de `CartItem.id` distinct : `cartItemId` et
+	 * `skuId` étaient devenus la même valeur, portée deux fois.
+	 */
+	skuId: string;
 	itemName: string;
 	quantity: number;
 	[key: string]: unknown;
@@ -92,13 +96,13 @@ export function RemoveCartItemAlertDialog() {
 		e.preventDefault();
 		haptic("error");
 		const formData = new FormData(e.currentTarget);
-		const { cartItemId } = removeDialog.data ?? {};
+		const { skuId } = removeDialog.data ?? {};
 
-		if (cartItemId && cartOptimistic) {
+		if (skuId && cartOptimistic) {
 			// Optimistic remove immédiat → l'item disparaît avant l'action,
 			// puis (desktop) toast Sonner avec bouton "Annuler" en bas-droite.
 			cartOptimistic.startTransition(() => {
-				cartOptimistic.updateOptimisticCart({ type: "remove", itemId: cartItemId });
+				cartOptimistic.updateOptimisticCart({ type: "remove", itemId: skuId });
 				action(formData);
 			});
 			return;
@@ -116,7 +120,7 @@ export function RemoveCartItemAlertDialog() {
 		>
 			<ResponsiveAlertDialogContent>
 				<form onSubmit={handleSubmit} aria-label="Supprimer l'article du panier">
-					<input type="hidden" name="cartItemId" value={removeDialog.data?.cartItemId ?? ""} />
+					<input type="hidden" name="skuId" value={removeDialog.data?.skuId ?? ""} />
 
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>

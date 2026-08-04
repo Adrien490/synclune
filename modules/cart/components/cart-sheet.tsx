@@ -113,22 +113,18 @@ function CartSheetBody({
 						</EmptyDescription>
 						<EmptyActions>
 							<Button
-								asChild
+								render={<Link href="/produits" onClick={close} />}
 								size="lg"
 								className="group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 							>
-								<Link href="/produits" onClick={close}>
-									Découvrir la boutique
-								</Link>
+								Découvrir la boutique
 							</Button>
 							<Button
-								asChild
+								render={<Link href="/collections" onClick={close} />}
 								variant="link"
 								className="text-muted-foreground group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 							>
-								<Link href="/collections" onClick={close}>
-									Voir les collections
-								</Link>
+								Voir les collections
 							</Button>
 						</EmptyActions>
 					</Empty>
@@ -159,7 +155,7 @@ function CartSheetBody({
 						</div>
 					)}
 
-					<div className="shrink-0" data-vaul-no-drag>
+					<div className="shrink-0" data-base-ui-swipe-ignore="">
 						<CartPriceChangeAlert items={items} />
 					</div>
 
@@ -221,7 +217,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 
 	const [optimisticCart, updateOptimisticCart] = useOptimistic(cart, cartReducer);
 
-	const items = optimisticCart?.items ?? [];
+	const items = optimisticCart.items;
 	const hasItems = items.length > 0;
 	const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 	const subtotal = items.reduce((sum, item) => sum + getCartItemSubtotal(item), 0);
@@ -281,8 +277,8 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		close,
 		recommendations: isMobile ? undefined : recommendations,
 		shouldReduceMotion,
-		appliedDiscountCode: optimisticCart?.appliedDiscountCode ?? null,
-		discountAmount: optimisticCart?.discountAmountCache ?? null,
+		appliedDiscountCode: optimisticCart.appliedDiscountCode,
+		discountAmount: optimisticCart.discountAmountCache,
 	};
 
 	return (

@@ -192,6 +192,7 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 
 vi.mock("@/modules/cart/constants/cart", () => ({
 	MAX_QUANTITY_PER_ORDER: 10,
+	MAX_CART_ITEMS: 50,
 }));
 
 // ============================================================================
@@ -215,7 +216,11 @@ describe("SkuSelectorDialog", () => {
 
 	it("renders nothing when dialog is closed", () => {
 		mockIsOpen.value = false;
-		const { container } = render(<SkuSelectorDialog cart={null} />);
+		const { container } = render(
+			<SkuSelectorDialog
+				cart={{ items: [], appliedDiscountCode: null, discountAmountCache: null }}
+			/>,
+		);
 		expect(container.firstChild).toBeNull();
 	});
 
@@ -240,7 +245,11 @@ describe("SkuSelectorDialog", () => {
 			},
 			preselectedColor: null,
 		};
-		render(<SkuSelectorDialog cart={null} />);
+		render(
+			<SkuSelectorDialog
+				cart={{ items: [], appliedDiscountCode: null, discountAmountCache: null }}
+			/>,
+		);
 		expect(screen.getByTestId("responsive-dialog")).toBeInTheDocument();
 	});
 
@@ -265,7 +274,11 @@ describe("SkuSelectorDialog", () => {
 			},
 			preselectedColor: null,
 		};
-		render(<SkuSelectorDialog cart={null} />);
+		render(
+			<SkuSelectorDialog
+				cart={{ items: [], appliedDiscountCode: null, discountAmountCache: null }}
+			/>,
+		);
 		expect(screen.getByTestId("dialog-title")).toHaveTextContent("Bague étoile");
 	});
 });

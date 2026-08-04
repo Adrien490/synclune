@@ -76,12 +76,12 @@ export default function CheckoutReturnError({
 									Vérifier le statut de ma commande
 								</Button>
 								<Button
-									asChild
+									render={<Link href="/" />}
 									variant="secondary"
 									size="lg"
 									onClick={() => triggerHaptic("light")}
 								>
-									<Link href="/">Retour à la boutique</Link>
+									Retour à la boutique
 								</Button>
 							</div>
 							<p className="text-muted-foreground inline-flex flex-wrap items-center justify-center gap-x-1 text-sm">
