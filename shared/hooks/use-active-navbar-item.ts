@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { ROUTES } from "@/shared/constants/urls";
+import { isProductDetailRoute } from "@/shared/lib/navigation";
 
 /**
  * Hook pour déterminer si un item de navigation est actif
@@ -58,11 +59,10 @@ export function useActiveNavbarItem() {
 			}
 		}
 
-		// Cas spécial: les pages de détail produit (/creations/*) sont liées à /produits
-		if (
-			itemPath === ROUTES.SHOP.PRODUCTS &&
-			pathname.startsWith(ROUTES.SHOP.PRODUCT_DETAIL_PREFIX + "/")
-		) {
+		// Cas spécial: les pages de détail produit (/creations/*) sont liées à /produits.
+		// La correspondance vit dans `shared/lib/navigation` — la barre du bas en a
+		// besoin aussi, et l'écrire deux fois est ce qui l'a laissée diverger.
+		if (itemPath === ROUTES.SHOP.PRODUCTS && isProductDetailRoute(pathname)) {
 			return true;
 		}
 
@@ -75,10 +75,7 @@ export function useActiveNavbarItem() {
 	 */
 	const getCurrentScope = (): { label: string; href: string } | null => {
 		// Pages produits et créations
-		if (
-			pathname.startsWith(ROUTES.SHOP.PRODUCTS) ||
-			pathname.startsWith(ROUTES.SHOP.PRODUCT_DETAIL_PREFIX + "/")
-		) {
+		if (pathname.startsWith(ROUTES.SHOP.PRODUCTS) || isProductDetailRoute(pathname)) {
 			return { label: "Les créations", href: ROUTES.SHOP.PRODUCTS };
 		}
 

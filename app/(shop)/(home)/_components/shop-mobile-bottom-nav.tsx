@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
+	FlowerIcon,
 	HeartIcon,
 	HouseIcon,
 	MagnifyingGlassIcon,
@@ -31,7 +32,7 @@ import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { ROUTES } from "@/shared/constants/urls";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { isRouteActive } from "@/shared/lib/navigation";
+import { isCatalogueRoute, isRouteActive } from "@/shared/lib/navigation";
 import { cn } from "@/shared/utils/cn";
 
 /**
@@ -72,7 +73,7 @@ export function tabAriaLabel(
 
 /**
  * Bottom navigation tabs pour la boutique (mobile/tablet portrait).
- * 4 onglets : Accueil • Recherche • Favoris • Panier.
+ * 5 onglets : Accueil • Créations • Rechercher • Favoris • Panier.
  *
  * L'onglet « Compte » a disparu avec l'espace client (2026-07-31) : il menait soit
  * à `/commandes`, soit à `/connexion` pour un visiteur — deux destinations qui
@@ -149,6 +150,30 @@ export function ShopMobileBottomNav() {
 			href: ROUTES.SHOP.HOME,
 			icon: HouseIcon,
 			isActive: pathname === ROUTES.SHOP.HOME,
+			type: "link" as const,
+		},
+		{
+			// L'onglet qui manquait : sans lui, AUCUN onglet ne pouvait représenter
+			// `/produits`, `/creations/*` ni `/collections/*` — c'est-à-dire
+			// l'essentiel du parcours. Mesuré le 2026-08-04 : sur `/produits` la
+			// barre n'affichait aucun `aria-current` et aucune pastille, alors que la
+			// nav desktop et le menu sheet savaient tous deux où on se trouvait.
+			//
+			// « Créations » et non « Produits » : « produits » est le mot de l'admin
+			// (un inventaire, des SKU) ; « créations » est celui de la boutique — le
+			// mega-menu dit déjà « Les créations » et l'URL d'une pièce est
+			// `/creations/<slug>`.
+			//
+			// `FlowerIcon` est DÉJÀ dans le bundle de la route (mega-menu-collections),
+			// donc gratuite — chaque module Phosphor embarquant ses 6 graisses, le seul
+			// levier de poids est le nombre d'icônes DISTINCTES. Et une fleur dit le
+			// bon registre : une pierre ou un diamant signifieraient la joaillerie
+			// précieuse, exactement le contre-pied de la marque.
+			id: "products",
+			label: "Créations",
+			href: ROUTES.SHOP.PRODUCTS,
+			icon: FlowerIcon,
+			isActive: isCatalogueRoute(pathname),
 			type: "link" as const,
 		},
 		{

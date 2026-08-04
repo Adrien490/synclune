@@ -10,6 +10,7 @@ import { lastTrigger } from "@/modules/products/components/quick-search-dialog/l
 
 const {
 	mockIsRouteActive,
+	mockIsCatalogueRoute,
 	mockTriggerHaptic,
 	mockUseMounted,
 	mockUseDialog,
@@ -20,6 +21,7 @@ const {
 	mockBadgeState,
 } = vi.hoisted(() => ({
 	mockIsRouteActive: vi.fn(),
+	mockIsCatalogueRoute: vi.fn(),
 	mockTriggerHaptic: vi.fn(),
 	mockUseMounted: vi.fn(),
 	mockUseDialog: vi.fn(),
@@ -43,7 +45,10 @@ vi.mock("react-dom", async () => {
 
 vi.mock("next/navigation", () => ({ usePathname: mockUsePathname }));
 
-vi.mock("@/shared/lib/navigation", () => ({ isRouteActive: mockIsRouteActive }));
+vi.mock("@/shared/lib/navigation", () => ({
+	isRouteActive: mockIsRouteActive,
+	isCatalogueRoute: mockIsCatalogueRoute,
+}));
 
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -235,18 +240,41 @@ describe("ShopMobileBottomNav", () => {
 		 * répartissent plus la largeur.
 		 *
 		 * 5 → 4 au retrait de l'espace client (2026-07-31) : l'onglet « Compte » n'a
-		 * plus de destination.
+		 * plus de destination. 4 → 5 à la refonte « L'intercalaire » (2026-08-04) :
+		 * ajout de « Créations », sans quoi aucun onglet ne représentait le catalogue.
 		 */
 		it("expose les onglets comme une liste", () => {
 			render(<ShopMobileBottomNav />);
 
 			const list = screen.getByRole("list");
 			const items = screen.getAllByRole("listitem");
-			expect(items).toHaveLength(4);
+			expect(items).toHaveLength(5);
 			for (const item of items) {
 				expect(item.parentElement).toBe(list);
 				expect(item.className).toContain("item-wrapper");
 			}
+		});
+
+		/**
+		 * Le P1 de l'audit design du 2026-08-04 : sur `/produits`, `/creations/*` et
+		 * `/collections/*`, AUCUN onglet n'était marqué courant — la barre ne
+		 * répondait jamais à « où suis-je » sur les pages où la cliente passe le plus
+		 * de temps. Le prédicat vit dans `isCatalogueRoute`, partagé avec la nav.
+		 */
+		it("l'onglet Créations est courant sur tout le rayon catalogue", () => {
+			mockIsCatalogueRoute.mockReturnValue(true);
+			render(<ShopMobileBottomNav />);
+
+			const tab = screen.getByRole("link", { name: "Créations" });
+			expect(tab).toHaveAttribute("aria-current", "page");
+			expect(tab).toHaveAttribute("href", "/produits");
+		});
+
+		it("l'onglet Créations n'est PAS courant hors catalogue", () => {
+			mockIsCatalogueRoute.mockReturnValue(false);
+			render(<ShopMobileBottomNav />);
+
+			expect(screen.getByRole("link", { name: "Créations" })).not.toHaveAttribute("aria-current");
 		});
 
 		/**
