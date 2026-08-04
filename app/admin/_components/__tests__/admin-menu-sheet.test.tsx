@@ -1,6 +1,5 @@
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type * as LucideReact from "lucide-react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -14,6 +13,7 @@ const {
 	mockRouterPush,
 	mockTriggerHaptic,
 	mockSheetContentProps,
+	mockSheetOnOpenChange,
 } = vi.hoisted(() => ({
 	mockIsOpen: { current: false },
 	mockOpenMenu: vi.fn(),
@@ -24,22 +24,28 @@ const {
 	// Capture handler props passed to SheetContent so tests can invoke them with a
 	// synthetic event (otherwise unreachable without a real Vaul portal).
 	mockSheetContentProps: { current: null as null | { initialFocus?: unknown } },
+	// `SheetClose` doit passer par la primitive : c'est elle qui reprend l'entrée
+	// d'historique posée par `useBackButtonClose`. Le mock capture donc le
+	// `onOpenChange` du Root pour que le bouton Fermer l'appelle vraiment.
+	mockSheetOnOpenChange: { current: null as null | ((open: boolean) => void) },
 }));
 
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("lucide-react", async (importOriginal) => {
-	const actual = await importOriginal<typeof LucideReact>();
+vi.mock("@phosphor-icons/react/ssr", async (importOriginal) => {
+	const actual = await importOriginal<typeof PhosphorIcons>();
 	return {
 		...actual,
-		ExternalLink: (props: Record<string, unknown>) => (
+		ArrowSquareOutIcon: (props: Record<string, unknown>) => (
 			<svg data-testid="icon-external-link" {...props} />
 		),
-		LogOut: (props: Record<string, unknown>) => <svg data-testid="icon-logout" {...props} />,
-		SearchX: (props: Record<string, unknown>) => <svg data-testid="icon-search-x" {...props} />,
-		X: (props: Record<string, unknown>) => <svg data-testid="icon-x" {...props} />,
+		SignOutIcon: (props: Record<string, unknown>) => <svg data-testid="icon-logout" {...props} />,
+		MagnifyingGlassMinusIcon: (props: Record<string, unknown>) => (
+			<svg data-testid="icon-search-x" {...props} />
+		),
+		XIcon: (props: Record<string, unknown>) => <svg data-testid="icon-x" {...props} />,
 	};
 });
 
@@ -74,10 +80,10 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	}),
 }));
 
-vi.mock("@/shared/lib/navigation", () => ({
-	isRouteActive: (pathname: string, url: string) =>
-		pathname === url || pathname.startsWith(url + "/"),
-}));
+// PAS de mock d'`isRouteActive` : fonction pure sans dépendance, et son mock
+// historique DIVERGEAIT de l'implémentation (il ignorait la règle « `/admin`
+// n'est actif qu'en correspondance exacte »). Sur cette surface, cette règle
+// décide quel groupe s'ouvre d'office : la mocker rendait le test aveugle.
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: mockTriggerHaptic,
@@ -104,15 +110,17 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 		onOpenChange?: (v: boolean) => void;
 		preventScrollRestoration?: boolean;
 		scrollLockTimeout?: number;
-	}) =>
-		open ? (
+	}) => {
+		mockSheetOnOpenChange.current = onOpenChange ?? null;
+		return open ? (
 			<div data-testid="sheet" data-scroll-lock-timeout={scrollLockTimeout ?? ""}>
 				<button type="button" data-testid="sheet-dismiss" onClick={() => onOpenChange?.(false)}>
 					dismiss
 				</button>
 				{children}
 			</div>
-		) : null,
+		) : null;
+	},
 	SheetContent: ({
 		children,
 		className,
@@ -144,6 +152,23 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	SheetHandle: ({ className }: { className?: string }) => (
 		<div data-testid="sheet-handle" className={className} />
 	),
+	// `render` déplace l'ÉLÉMENT, pas les enfants : le mock reprend donc les props
+	// du bouton passé en `render` et lui greffe les children de `SheetClose`.
+	SheetClose: ({
+		render,
+		children,
+	}: {
+		render?: React.ReactElement<Record<string, unknown>>;
+		children?: React.ReactNode;
+	}) => (
+		<button
+			type="button"
+			{...(render?.props ?? {})}
+			onClick={() => mockSheetOnOpenChange.current?.(false)}
+		>
+			{children}
+		</button>
+	),
 }));
 
 vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
@@ -162,6 +187,7 @@ vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
 }));
 
 import { AdminMenuSheet } from "../admin-menu-sheet";
+import type * as PhosphorIcons from "@phosphor-icons/react/ssr";
 
 // ============================================================================
 // SETUP
@@ -171,8 +197,14 @@ const defaultUser = { name: "Admin User", email: "admin@synclune.fr" };
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	// `clearAllMocks` n'efface PAS les implémentations : sans ce reset, un
+	// `mockReturnValue` posé dans un test fuit dans tous les suivants. Depuis que
+	// le vrai `isRouteActive` est utilisé, la route décide quel groupe est déplié
+	// — une fuite rendait donc des tests verts ou rouges selon leur ordre.
+	mockUsePathname.mockReturnValue("/admin");
 	mockIsOpen.current = false;
 	mockSheetContentProps.current = null;
+	mockSheetOnOpenChange.current = null;
 	vi.useFakeTimers();
 });
 
@@ -204,14 +236,18 @@ describe("AdminMenuSheet", () => {
 			expect(screen.getByTestId("sheet")).toBeInTheDocument();
 		});
 
-		it("displays user name", () => {
+		// La carte utilisateur en tête de panneau a disparu : elle occupait la zone
+		// la moins atteignable sans porter aucune action. L'identité du compte vit
+		// désormais là où elle sert — au moment de fermer la session.
+		it("n'affiche plus de carte utilisateur en tête de panneau", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
-			expect(screen.getByText("Admin User")).toBeInTheDocument();
+			expect(screen.queryByText("Admin User")).not.toBeInTheDocument();
 		});
 
-		it("displays user email", () => {
+		it("expose l'email du compte DANS le bouton de déconnexion", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
-			expect(screen.getByText("admin@synclune.fr")).toBeInTheDocument();
+			const logoutBtn = screen.getByText("Déconnexion").closest("button");
+			expect(logoutBtn).toHaveTextContent("admin@synclune.fr");
 		});
 
 		it("renders search input", () => {
@@ -242,19 +278,49 @@ describe("AdminMenuSheet", () => {
 			expect(nav).toBeInTheDocument();
 		});
 
-		it("renders navigation items (shop-live mode)", () => {
+		// Les groupes sont REPLIÉS par défaut, sauf celui de la route courante.
+		// Sur `/admin`, seul `Pilotage` est ouvert : ses items sont dans le DOM,
+		// ceux de `Catalogue` ne le sont pas (Base UI démonte le panneau fermé).
+		it("ne rend que les items du groupe de la route courante", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
-			expect(screen.getByText("Produits")).toBeInTheDocument();
-			expect(screen.getByText("Boutique")).toBeInTheDocument();
-			// Visible en mode boutique en ligne
 			expect(screen.getByText("Commandes")).toBeInTheDocument();
+			expect(screen.getByText("Tableau de bord")).toBeInTheDocument();
+			expect(screen.queryByText("Produits")).not.toBeInTheDocument();
+		});
+
+		it("déplie un groupe au clic sur son déclencheur", () => {
+			render(<AdminMenuSheet user={defaultUser} />);
+			const trigger = screen.getByRole("button", { name: /Catalogue/i });
+			expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+			fireEvent.click(trigger);
+
+			expect(trigger).toHaveAttribute("aria-expanded", "true");
+			expect(screen.getByText("Produits")).toBeInTheDocument();
 		});
 
 		it("marks active route with aria-current", () => {
 			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			render(<AdminMenuSheet user={defaultUser} />);
-			const activeLink = screen.getByRole("link", { name: /Produits/i });
+			// `/^Produits$/` et non `/Produits/i` : « Types de produits » matcherait aussi.
+			const activeLink = screen.getByRole("link", { name: /^Produits$/ });
 			expect(activeLink).toHaveAttribute("aria-current", "page");
+		});
+
+		// Le groupe de la route courante s'ouvre seul — même règle que la sidebar
+		// desktop (`collapsible-nav-group.tsx`). Sans ça, arriver sur une page du
+		// catalogue laissait son groupe fermé.
+		it("ouvre d'office le groupe qui contient la route courante", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
+			render(<AdminMenuSheet user={defaultUser} />);
+			expect(screen.getByRole("button", { name: /Catalogue/i })).toHaveAttribute(
+				"aria-expanded",
+				"true",
+			);
+			expect(screen.getByRole("button", { name: /Pilotage/i })).toHaveAttribute(
+				"aria-expanded",
+				"false",
+			);
 		});
 
 		it("renders external link to site", () => {
@@ -278,16 +344,25 @@ describe("AdminMenuSheet", () => {
 	describe("badges", () => {
 		// Badges are keyed by item.id. In shop-closed mode "orders" is hidden, so
 		// these tests use "products" (always visible) to exercise the rendering logic.
+		// `products` n'est PAS une file actionnable : il ne remonte pas dans
+		// l'ardoise, donc « 5 » n'apparaît qu'une fois, sur la rangée. On se place
+		// sur la route du catalogue pour que le groupe soit déplié.
+		beforeEach(() => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
+		});
+
+		// Ciblé par le nom accessible du badge, pas par son texte : les déclencheurs
+		// de groupe affichent eux aussi un nombre (le compte de pages du groupe).
 		it("displays badge count on items", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} badges={{ products: 5 }} />);
-			expect(screen.getByText("5")).toBeInTheDocument();
+			expect(screen.getByLabelText("5 en attente")).toHaveTextContent("5");
 		});
 
 		it("caps badge at 99+", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} badges={{ products: 150 }} />);
-			expect(screen.getByText("99+")).toBeInTheDocument();
+			expect(screen.getByLabelText("150 en attente")).toHaveTextContent("99+");
 		});
 
 		it("does not show badge when count is 0", () => {
@@ -344,10 +419,10 @@ describe("AdminMenuSheet", () => {
 	});
 
 	describe("sheet title", () => {
-		it("renders accessible title", () => {
+		it("renders a VISIBLE title (l'en-tête n'est plus sr-only)", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
-			expect(screen.getByText("Menu d'administration")).toBeInTheDocument();
+			expect(screen.getByText("Menu")).toBeInTheDocument();
 		});
 	});
 
@@ -379,8 +454,9 @@ describe("AdminMenuSheet", () => {
 			const input = screen.getByLabelText("Filtrer les pages de navigation");
 			fireEvent.change(input, { target: { value: "command" } });
 
-			const region = screen.getByRole("region");
-			expect(region.getAttribute("aria-label")).toMatch(/résultats? de navigation/);
+			// `{ name }` obligatoire : l'ardoise est elle aussi une region nommée.
+			const region = screen.getByRole("region", { name: /résultats? de navigation/ });
+			expect(region).toBeInTheDocument();
 		});
 	});
 
@@ -476,42 +552,64 @@ describe("AdminMenuSheet", () => {
 		});
 	});
 
-	describe("opening live region (P1.3)", () => {
-		it("announces 'Menu ouvert, N options de navigation' on open", () => {
+	/**
+	 * @regression admin-menu-live-region-mounted-empty
+	 *
+	 * La région d'annonce est montée EN PERMANENCE (hors du portal de la sheet) et
+	 * naît VIDE : c'est la seule forme qu'un lecteur d'écran vocalise ensuite. Elle
+	 * vivait auparavant DANS la sheet, montée conditionnellement avec son texte
+	 * déjà écrit — soit exactement le défaut corrigé sur la bottom bar admin le
+	 * 2026-07-30 (`admin-mobile-bottom-bar.tsx`), dont la correction n'avait jamais
+	 * été reportée ici.
+	 *
+	 * ⚠️ Ces tests DOIVENT jouer la transition fermé → ouvert. Rendre directement
+	 * avec `isOpen = true` ne prouverait rien : c'est précisément le cas où
+	 * l'ancienne implémentation semblait correcte.
+	 */
+	describe("@regression opening live region (montée vide, texte dérivé au rendu)", () => {
+		function openSheet(props: Partial<React.ComponentProps<typeof AdminMenuSheet>> = {}) {
+			mockIsOpen.current = false;
+			const view = render(<AdminMenuSheet user={defaultUser} {...props} />);
+			const region = screen
+				.getAllByRole("status")
+				.find((n) => n.className.includes("sr-only") && n.textContent === "");
 			mockIsOpen.current = true;
+			view.rerender(<AdminMenuSheet user={defaultUser} {...props} />);
+			return { region, ...view };
+		}
+
+		it("est montée et VIDE tant que la sheet est fermée", () => {
+			mockIsOpen.current = false;
 			render(<AdminMenuSheet user={defaultUser} />);
-			const statusNodes = screen.getAllByRole("status");
-			const opening = statusNodes.find((n) => n.textContent.includes("Menu ouvert"));
-			expect(opening).toBeDefined();
-			expect(opening?.textContent).toMatch(/Menu ouvert, \d+ options? de navigation/);
-			expect(opening).toHaveAttribute("aria-live", "polite");
+			const regions = screen.getAllByRole("status");
+			expect(regions.length).toBeGreaterThan(0);
+			expect(regions.every((n) => n.textContent === "")).toBe(true);
+			expect(regions[0]).toHaveAttribute("aria-live", "polite");
+		});
+
+		it("annonce « Menu ouvert, N options de navigation » à l'ouverture", () => {
+			const { region } = openSheet();
+			expect(region?.textContent).toMatch(/Menu ouvert, \d+ options? de navigation/);
 		});
 
 		it("surfaces the actionable pending total when badges are present", () => {
-			mockIsOpen.current = true;
-			render(<AdminMenuSheet user={defaultUser} badges={{ orders: 3, refunds: 2 }} />);
-			const statusNodes = screen.getAllByRole("status");
-			const opening = statusNodes.find((n) => n.textContent.includes("Menu ouvert"));
-			expect(opening?.textContent).toMatch(/5 éléments à traiter/);
+			const { region } = openSheet({ badges: { orders: 3, refunds: 2 } });
+			expect(region?.textContent).toMatch(/5 éléments à traiter/);
 		});
 
 		it("omits the pending total when there is nothing to handle", () => {
-			mockIsOpen.current = true;
-			render(<AdminMenuSheet user={defaultUser} badges={{ orders: 0 }} />);
-			const statusNodes = screen.getAllByRole("status");
-			const opening = statusNodes.find((n) => n.textContent.includes("Menu ouvert"));
-			expect(opening?.textContent).not.toMatch(/à traiter/);
+			const { region } = openSheet({ badges: { orders: 0 } });
+			expect(region?.textContent).not.toMatch(/à traiter/);
 		});
 
-		it("hides the opening live region while searching", () => {
-			mockIsOpen.current = true;
-			render(<AdminMenuSheet user={defaultUser} />);
-			const input = screen.getByLabelText("Filtrer les pages de navigation");
-			fireEvent.change(input, { target: { value: "command" } });
+		it("se tait pendant la recherche (pour ne pas concurrencer le compte de résultats)", () => {
+			const { region } = openSheet();
+			expect(region?.textContent).not.toBe("");
 
-			const statusNodes = screen.queryAllByRole("status");
-			const opening = statusNodes.find((n) => n.textContent.includes("Menu ouvert"));
-			expect(opening).toBeUndefined();
+			fireEvent.change(screen.getByLabelText("Filtrer les pages de navigation"), {
+				target: { value: "command" },
+			});
+			expect(region?.textContent).toBe("");
 		});
 	});
 
@@ -551,11 +649,12 @@ describe("AdminMenuSheet", () => {
 		});
 
 		it('fires "selection" haptic when clicking a group navigation link', () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
 			mockTriggerHaptic.mockClear();
 
-			fireEvent.click(screen.getByRole("link", { name: /Produits/i }));
+			fireEvent.click(screen.getByRole("link", { name: /^Produits$/ }));
 			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
 		});
 
@@ -571,9 +670,10 @@ describe("AdminMenuSheet", () => {
 
 	describe("tactile classes (P1.2)", () => {
 		it("applies touch-manipulation + motion-safe scale on group nav links", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
-			const link = screen.getByRole("link", { name: /Produits/i });
+			const link = screen.getByRole("link", { name: /^Produits$/ });
 			expect(link.className).toContain("touch-manipulation");
 			expect(link.className).toContain("motion-safe:active:scale-[0.97]");
 		});
@@ -653,9 +753,10 @@ describe("AdminMenuSheet", () => {
 		});
 
 		it("passes prefetch={null} on group navigation links", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
-			const products = screen.getByRole("link", { name: /Produits/i });
+			const products = screen.getByRole("link", { name: /^Produits$/ });
 			expect(products).toHaveAttribute("data-prefetch", "null");
 		});
 
@@ -687,13 +788,24 @@ describe("AdminMenuSheet", () => {
 			expect(mockSheetContentProps.current?.initialFocus).toBe(false);
 		});
 
-		it("focuses the first nav link after the open animation (fallback timer)", () => {
+		// Sans file en attente, le premier élément actionnable du nav est le
+		// DÉCLENCHEUR du premier groupe — d'où le sélecteur `a, button` : viser `a`
+		// seul projetait le focus jusqu'à « Voir le site », tout en bas.
+		it("focuses the first actionable element after the open animation (fallback timer)", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
-			// transitionend ne fire pas en JSDOM ; le fallback @ VAUL_EXIT_DURATION_MS applique le focus
+			// transitionend ne fire pas en JSDOM ; le fallback @ SHEET_EXIT_DURATION_MS applique le focus
 			vi.advanceTimersByTime(450);
-			const dashboardLink = screen.getByRole("link", { name: /Tableau de bord/i });
-			expect(document.activeElement).toBe(dashboardLink);
+			expect(document.activeElement).toBe(screen.getByRole("button", { name: /Pilotage/i }));
+		});
+
+		it("focuse la première FILE quand il y a du travail en attente", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} badges={{ orders: 3 }} />);
+			vi.advanceTimersByTime(450);
+			expect(document.activeElement).toBe(
+				screen.getByRole("link", { name: /3 commandes à expédier/i }),
+			);
 		});
 
 		it("scrolls the active route link into view on open", () => {
@@ -763,9 +875,10 @@ describe("AdminMenuSheet", () => {
 		});
 
 		it("wraps each nav group link in a <li>", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
-			const productsLink = screen.getByRole("link", { name: /Produits/i });
+			const productsLink = screen.getByRole("link", { name: /^Produits$/ });
 			expect(productsLink.closest("li")).not.toBeNull();
 		});
 
@@ -812,6 +925,83 @@ describe("AdminMenuSheet", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
 			const btn = screen.getByText("Déconnexion").closest("button")!;
 			expect(btn).toHaveAttribute("aria-haspopup", "dialog");
+		});
+	});
+
+	/**
+	 * @regression admin-menu-single-dashboard
+	 *
+	 * Le tableau de bord était rendu DEUX fois : une carte proéminente en tête de
+	 * panneau, puis le premier item du groupe `Pilotage`, affiché « Accueil » via
+	 * `shortTitle`. Même `href="/admin"` — donc sur `/admin`, deux
+	 * `aria-current="page"` dans le même `<nav>`.
+	 *
+	 * ⚠️ **C'est le renommage qui rendait le doublon invisible**, à l'œil comme au
+	 * test : `getByText("Tableau de bord")` n'en trouvait qu'une occurrence, et la
+	 * suite restait verte. `getAllNavItems()` documentait pourtant avoir corrigé ce
+	 * doublon POUR LA RECHERCHE ; la vue par défaut ne l'avait jamais été.
+	 *
+	 * On assert donc sur la DESTINATION, jamais sur le libellé.
+	 */
+	describe("@regression admin-menu-single-dashboard", () => {
+		it("ne rend qu'un seul lien vers /admin", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const toDashboard = screen
+				.getAllByRole("link")
+				.filter((link) => link.getAttribute("href") === "/admin");
+			expect(toDashboard).toHaveLength(1);
+		});
+
+		it("ne marque qu'un seul élément aria-current=page sur /admin", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const nav = screen.getByLabelText("Navigation administration");
+			expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+		});
+
+		it("ne marque qu'un seul élément aria-current=page sur une route de catalogue", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const nav = screen.getByLabelText("Navigation administration");
+			expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+		});
+	});
+
+	/**
+	 * @regression admin-menu-visible-exit
+	 *
+	 * `handleOnly` + `showCloseButton={false}` + un en-tête `sr-only` + la bottom
+	 * bar qui se dépublie à l'ouverture : sur un panneau de 92 dvh, les deux seules
+	 * cibles de fermeture (poignée de 8 px, bande de scrim) vivaient dans les 8 %
+	 * HAUTS de l'écran — hors de portée du pouce. Les deux autres sheets du dépôt
+	 * qui excluaient le contenu du geste rendaient chacune un « Fermer » explicite.
+	 *
+	 * La fermeture DOIT passer par la primitive : un changement du prop contrôlé ne
+	 * rejoue pas `onOpenChange`, donc l'entrée d'historique posée par
+	 * `useBackButtonClose` resterait derrière (un « retour » mort par cycle).
+	 */
+	describe("@regression admin-menu-visible-exit", () => {
+		it("rend une sortie visible dans l'en-tête", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const close = screen.getByRole("button", { name: "Fermer le menu" });
+			expect(close).toBeInTheDocument();
+			expect(close.className).toContain("focus-ring");
+			// Cible tactile ≥ 44 px (WCAG 2.5.8) — `size-11` = 2.75rem.
+			expect(close.className).toContain("size-11");
+		});
+
+		it("ferme PAR LA PRIMITIVE (reprise de l'entrée d'historique)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+
+			fireEvent.click(screen.getByRole("button", { name: "Fermer le menu" }));
+
+			// `onOpenChange(false)` du Root, et non un `closeMenu()` direct.
+			expect(mockCloseMenu).toHaveBeenCalled();
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
 		});
 	});
 });

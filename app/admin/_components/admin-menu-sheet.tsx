@@ -2,28 +2,37 @@
 
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import ScrollFade from "@/shared/components/scroll-fade";
+import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/shared/components/ui/collapsible";
 import {
 	Sheet,
+	SheetClose,
 	SheetContent,
 	SheetDescription,
 	SheetHandle,
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
+import { ROUTES } from "@/shared/constants/urls";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import {
-	ChevronRight,
-	ExternalLink,
-	Keyboard,
-	LayoutDashboard,
-	LogOut,
-	Search,
-	SearchX,
-	X,
-} from "lucide-react";
+	ArrowSquareOutIcon,
+	CaretRightIcon,
+	CheckCircleIcon,
+	KeyboardIcon,
+	MagnifyingGlassIcon,
+	MagnifyingGlassMinusIcon,
+	SignOutIcon,
+	StorefrontIcon,
+	XIcon,
+} from "@phosphor-icons/react/ssr";
 // `m` (et non `motion`) : l'app est enveloppée dans <LazyMotion> — importer
 // `motion` embarque le bundle complet des features (~30 kB) en plus.
 import { m, useReducedMotion } from "motion/react";
@@ -37,8 +46,14 @@ import {
 	ADMIN_MENU_SHEET_CONTENT_ID,
 	badgeAriaLabel,
 	getAllNavItems,
+	getQueueItems,
 	navigationData,
+	queueLabel,
+	type NavItem,
 } from "./navigation-config";
+
+/** Props d'animation produites par `fadeUp` — `{}` sous prefers-reduced-motion. */
+type FadeUpProps = Partial<React.ComponentProps<typeof m.div>>;
 
 interface AdminMenuSheetProps {
 	user: {
@@ -46,27 +61,40 @@ interface AdminMenuSheetProps {
 		email: string;
 	};
 	badges?: Record<string, number>;
+	/**
+	 * Boutique fermée (`StoreSettings.isClosed`, résolu côté layout).
+	 *
+	 * C'est le seul endroit du chrome MOBILE qui le signale : ni le header ni la
+	 * bottom bar ne le portent, et une boutique fermée par erreur ne se voit donc
+	 * qu'en ouvrant `/admin/configuration/boutique`.
+	 */
+	storeClosed?: boolean;
 }
 
 const allNavItems = getAllNavItems();
+const queueItems = getQueueItems();
 
 /**
- * Durée approximative de l'animation de sortie Vaul (transform slide-out).
+ * Durée approximative de l'animation de sortie du panneau (transform slide-out).
  * Utilisée comme fallback timer pour différer l'ouverture du LogoutAlertDialog
  * jusqu'à ce que la sheet ait fini sa transition — évite les conflits
- * focus-trap / aria-hidden entre overlays superposés. Source : défauts Vaul
- * (~300 ms) + marge. Parité avec menu-sheet storefront.
+ * focus-trap / aria-hidden entre overlays superposés. Source : `PANEL_TRANSITION`
+ * (300 ms) + marge. Parité avec menu-sheet storefront.
  */
-const VAUL_EXIT_DURATION_MS = 450;
+const SHEET_EXIT_DURATION_MS = 450;
 
 /**
  * Classes tactiles communes à tous les Links de navigation du menu :
  * touch-manipulation supprime le 300 ms delay tap mobile, scale active
  * fournit le feedback visuel.
- * focus-ring (app/globals.css:17) = SSOT anneau focus clavier WCAG 2.4.7.
+ * focus-ring (app/globals.css) = SSOT anneau focus clavier WCAG 2.4.7.
  */
 const NAV_ITEM_TACTILE_CLASS =
 	"touch-manipulation motion-safe:active:scale-[0.97] [-webkit-tap-highlight-color:transparent] focus-ring";
+
+/** Rangée de navigation — géométrie partagée par la liste filtrée et les groupes. */
+const NAV_ROW_CLASS =
+	"flex min-h-11 items-center gap-3 px-4 py-3 transition-colors active:bg-accent";
 
 function handleNavClick() {
 	triggerHaptic("selection");
@@ -78,14 +106,14 @@ const stripDiacritics = (s: string) =>
 		.replace(/\p{Diacritic}/gu, "")
 		.toLowerCase();
 
-export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
+export function AdminMenuSheet({ user, badges, storeClosed = false }: AdminMenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const { open: openShortcuts } = useDialog(KEYBOARD_SHORTCUTS_DIALOG_ID);
 	const [showLogout, setShowLogout] = useState(false);
 	/**
 	 * Action à exécuter APRÈS la fermeture du sheet. Généralisée depuis le seul cas
 	 * « logout » : tout dialogue ouvert depuis le sheet doit attendre la fin de la
-	 * transition Vaul, sinon les deux overlays se chevauchent et le scroll-lock du
+	 * transition, sinon les deux overlays se chevauchent et le scroll-lock du
 	 * sheet sortant casse celui du dialogue entrant.
 	 */
 	const [pendingAction, setPendingAction] = useState<"logout" | "shortcuts" | null>(null);
@@ -96,7 +124,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const router = useRouter();
 	const shouldReduceMotion = useReducedMotion();
 
-	// Stagger léger des cartes de la vue par défaut (fade + slide-up 8px), no-op
+	// Stagger léger des blocs de la vue par défaut (fade + slide-up 8px), no-op
 	// si prefers-reduced-motion. Parité menu-sheet-nav.tsx storefront (delay 20ms/index).
 	const fadeUp = (index: number) =>
 		shouldReduceMotion
@@ -116,11 +144,11 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 		if (isOpen) closeMenu();
 	}, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// Focus management à l'ouverture (WCAG 2.4.3 + parité menu-sheet-nav.tsx:77-114).
-	// Vaul/Radix auto-focuse le 1er élément focusable du portal — la search input —
-	// ce qui pop le clavier iOS sur ouverture. `onOpenAutoFocus` preventDefault
-	// suspend ce comportement ; on applique notre propre focus après l'animation
-	// d'entrée : scroll l'item actif au centre puis focus le 1er lien du nav.
+	// Focus management à l'ouverture (WCAG 2.4.3 + parité menu-sheet-nav.tsx).
+	// Base UI auto-focuse le 1er élément focusable du portal — le champ de filtre —
+	// ce qui pop le clavier iOS sur ouverture. `initialFocus={false}` suspend ce
+	// comportement ; on applique notre propre focus après l'animation d'entrée :
+	// scroll l'item actif au centre puis focus le 1er élément actionnable du nav.
 	useEffect(() => {
 		if (!isOpen) return;
 		const nav = navRef.current;
@@ -139,7 +167,11 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 				block: "center",
 				behavior: shouldReduceMotion ? "auto" : "smooth",
 			});
-			n.querySelector<HTMLAnchorElement>("a")?.focus();
+			// `a, button` et non `a` seul : les groupes sont repliés par défaut, donc
+			// le premier élément actionnable du nav est souvent un DÉCLENCHEUR de
+			// groupe. Cibler `a` seul faisait sauter le focus jusqu'à « Voir le site »,
+			// tout en bas, quand aucune file n'était en attente.
+			n.querySelector<HTMLElement>("a, button")?.focus();
 		}
 
 		if (shouldReduceMotion) {
@@ -160,17 +192,17 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 		};
 
 		sheetContent.addEventListener("transitionend", onTransitionEnd);
-		const fallback = window.setTimeout(applyFocus, VAUL_EXIT_DURATION_MS);
+		const fallback = window.setTimeout(applyFocus, SHEET_EXIT_DURATION_MS);
 		return () => {
 			sheetContent.removeEventListener("transitionend", onTransitionEnd);
 			clearTimeout(fallback);
 		};
 	}, [isOpen, shouldReduceMotion]);
 
-	// Defer the pending dialog until Vaul finishes its exit transition. Écouter
+	// Defer the pending dialog until the sheet finishes its exit transition. Écouter
 	// transitionend (transform) sur sheet-content est plus robuste qu'un
-	// setTimeout fixe — le fallback couvre prefers-reduced-motion (Vaul peut
-	// court-circuiter la transition). Un seul sheet admin ouvert à la fois,
+	// setTimeout fixe — le fallback couvre prefers-reduced-motion (la transition
+	// peut être court-circuitée). Un seul sheet admin ouvert à la fois,
 	// donc querySelector est sûr.
 	useEffect(() => {
 		if (!pendingAction || isOpen) return;
@@ -188,7 +220,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 			if (event.propertyName === "transform" && event.target === sheetContent) finish();
 		};
 		sheetContent?.addEventListener("transitionend", onEnd);
-		const fallback = window.setTimeout(finish, VAUL_EXIT_DURATION_MS);
+		const fallback = window.setTimeout(finish, SHEET_EXIT_DURATION_MS);
 		return () => {
 			sheetContent?.removeEventListener("transitionend", onEnd);
 			clearTimeout(fallback);
@@ -224,15 +256,43 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 		}
 	}
 
-	const isDashboardActive = pathname === "/admin";
 	// When the sheet is closed via navigation (effect), the query resets on next open via handleOpenChange.
 	// Normalisation accent-insensitive : "materiaux" matche "Matériaux", etc.
 	const normalizedQuery = stripDiacritics((isOpen ? searchQuery : "").trim());
 	const isSearching = normalizedQuery.length > 0;
 
-	// Total des files actionnables (commandes + remboursements) pour l'annonce
-	// d'ouverture lecteur d'écran — surface l'info badge dès l'ouverture.
-	const pendingTotal = Object.values(badges ?? {}).reduce((sum, n) => sum + n, 0);
+	// ── L'ardoise : les files réellement actionnables ─────────────────────────
+	// Dérivées des compteurs de `getAdminNavBadges`, dans l'ordre de la navigation.
+	// Chaque ligne mène à `badgeUrl` — la file FILTRÉE, pas la liste complète.
+	const queues = queueItems
+		.map((item) => ({ item, count: badges?.[item.id] ?? 0 }))
+		.filter(({ count }) => count > 0);
+	const pendingTotal = queues.reduce((sum, q) => sum + q.count, 0);
+
+	/**
+	 * Annonce d'ouverture, dérivée PENDANT LE RENDU — pas dans un effet, et
+	 * surtout pas dans un nœud monté avec son texte.
+	 *
+	 * La région vit HORS du `<Sheet>` : elle est donc montée en permanence, vide
+	 * au premier rendu, et c'est le seul état qu'un lecteur d'écran vocalise
+	 * ensuite. Montée à l'intérieur du portal, elle naissait avec son contenu et
+	 * l'annonce ne partait probablement jamais — exactement le défaut corrigé sur
+	 * la bottom bar admin le 2026-07-30 (`admin-mobile-bottom-bar.tsx`), dont la
+	 * correction n'avait pas été reportée ici.
+	 */
+	const [prevOpen, setPrevOpen] = useState(isOpen);
+	const [announcement, setAnnouncement] = useState("");
+	if (prevOpen !== isOpen) {
+		setPrevOpen(isOpen);
+		setAnnouncement(
+			isOpen
+				? `Menu ouvert, ${allNavItems.length} option${allNavItems.length > 1 ? "s" : ""} de navigation` +
+						(pendingTotal > 0
+							? `, ${pendingTotal} élément${pendingTotal > 1 ? "s" : ""} à traiter`
+							: "")
+				: "",
+		);
+	}
 
 	// Filter nav items when searching
 	const filteredItems = isSearching
@@ -262,115 +322,185 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 				direction="bottom"
 				open={isOpen}
 				onOpenChange={handleOpenChange}
-				// Sur iOS Safari, la search input prend le focus → clavier remonte sans
-				// repositionner le contenu : input masqué. repositionInputs corrige.
+				// Sur iOS Safari, le champ de filtre prend le focus → clavier remonte sans
+				// repositionner le contenu : champ masqué. repositionInputs corrige.
 				repositionInputs
-				// Navigation longue et scrollable sur 92 dvh : un scroll vers le bas
-				// depuis le haut de la liste fermait la sheet. La `SheetHandle` visible
-				// reste le seul point de drag.
-				handleOnly
+				// Le mode « poignée seule » a été RETIRÉ le 2026-08-04 : le swipe
+				// redevient possible depuis tout le contenu, et l'en-tête porte
+				// désormais une sortie visible. Motif complet dans
+				// `shared/components/ui/__tests__/handle-only-allowlist.regression.test.ts`,
+				// qui scanne les call sites — ne pas y réécrire le nom de la prop, il
+				// suffirait à faire échouer le garde-fou.
 			>
 				<SheetContent
 					id={ADMIN_MENU_SHEET_CONTENT_ID}
-					className="bg-muted flex h-[92dvh] flex-col rounded-t-2xl border-t p-0!"
+					// Hauteur AUTO plafonnée, et non 92 dvh fixes : replié, ce menu tient
+					// largement sous le plafond — un panneau de 776 px pour quatre
+					// résultats de recherche était du vide payé au prix du pouce.
+					// `flex-auto` sur la zone défilante (et non `flex-1`) : avec une
+					// hauteur auto, `flex-basis: 0` ferait collapser la zone.
+					className="bg-muted flex max-h-[92dvh] flex-col gap-0 rounded-t-2xl border-t p-0!"
 					overlayClassName="bg-black/50"
 					showCloseButton={false}
 					onOverlayClick={() => triggerHaptic("selection")}
-					// Suspend l'auto-focus par défaut (qui ciblerait la search input →
+					// Suspend l'auto-focus par défaut (qui ciblerait le champ de filtre →
 					// pop clavier iOS). Le focus est appliqué après l'animation d'entrée
 					// par l'effect [isOpen, shouldReduceMotion] (cf. supra).
-					// `initialFocus={false}` remplace l'ancien `onOpenAutoFocus` + preventDefault.
 					initialFocus={false}
 				>
-					<SheetHeader className="sr-only p-0!">
-						<SheetTitle>Menu d&apos;administration</SheetTitle>
-						<SheetDescription>Navigation du tableau de bord administrateur</SheetDescription>
-					</SheetHeader>
+					{/* Poignée de drag — repère visuel du geste, qui est de nouveau
+					 * disponible depuis tout le panneau. */}
+					<SheetHandle className="mt-3 mb-1" />
 
-					{/* Poignée de drag — affordance toujours draggable malgré le ScrollFade
-					 * en dessous, sinon le swipe est intercepté par le scroll interne. */}
-					<SheetHandle className="mt-3 mb-2" />
-
-					{/* Live region d'ouverture : annonce le total d'options dispo aux
-					 * lecteurs d'écran à chaque ouverture, masquée pendant la recherche
-					 * pour ne pas concurrencer la live region des résultats. */}
-					{isOpen && !isSearching && (
-						<p role="status" aria-live="polite" className="sr-only">
-							Menu ouvert, {allNavItems.length} option
-							{allNavItems.length > 1 ? "s" : ""} de navigation
-							{pendingTotal > 0
-								? `, ${pendingTotal} élément${pendingTotal > 1 ? "s" : ""} à traiter`
-								: ""}
-						</p>
-					)}
-
-					{/* Search bar — filtre la liste des pages de navigation admin
-					 * (titre + shortTitle, accent-insensitive). Ce n'est PAS une
-					 * recherche de contenu : pour trouver une commande/produit/client,
-					 * ouvrir la page concernée et utiliser sa recherche dédiée. */}
-					<div className="px-4 pb-2">
-						<div className="relative">
-							<Search
-								className="text-muted-foreground/60 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
-								aria-hidden="true"
-							/>
-							<input
-								ref={searchInputRef}
-								type="search"
-								inputMode="search"
-								// "go" si un résultat existe (Entrée navigue), sinon "done" ferme
-								// juste le clavier (filtre live, pas de submit classique).
-								enterKeyHint={isSearching && filteredItems.length > 0 ? "go" : "done"}
-								data-base-ui-swipe-ignore=""
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								onKeyDown={handleSearchKeyDown}
-								placeholder="Filtrer les pages…"
-								aria-label="Filtrer les pages de navigation"
-								className={cn(
-									"bg-background/80 border-border/60 placeholder:text-muted-foreground/70",
-									"flex h-11 w-full rounded-xl border py-2 pl-9 text-sm",
-									// pr-11 quand le bouton clear est visible, pr-3 sinon — évite que
-									// le texte de la requête passe sous l'icône.
-									searchQuery.length > 0 ? "pr-11" : "pr-3",
-									// SSOT focus-ring (globals.css:17). Suppression du cancel X natif
-									// iOS Safari (sinon double X avec le clear button explicite).
-									"focus-ring",
-									"[&::-webkit-search-cancel-button]:appearance-none",
-									"motion-safe:transition-colors",
-								)}
-							/>
-							{searchQuery.length > 0 && (
+					{/* En-tête VISIBLE. Il portait auparavant `sr-only` : combiné à
+					 * `showCloseButton={false}` et à la bottom bar qui se dépublie à
+					 * l'ouverture, le panneau n'avait plus AUCUNE sortie visible, et les
+					 * deux cibles restantes (poignée, scrim) vivaient dans les 8 % hauts
+					 * de l'écran — hors de portée du pouce sur un panneau ancré en bas. */}
+					{/* `p-0` et NON `p-0!` : tailwind-merge conserve les deux groupes (`p-*` et
+					 * `pt-*`/`pl-*`…), donc un `!important` sur le raccourci écraserait les
+					 * paddings latéraux qui le suivent. Sans le `!`, la fusion retire bien
+					 * le `p-4` de la primitive et les quatre côtés reprennent la main. */}
+					<SheetHeader className="flex-row items-center gap-2 p-0 pt-1 pr-2 pb-2 pl-4">
+						<div className="relative flex-1">
+							<SheetTitle className="text-lg leading-tight">Menu</SheetTitle>
+							{/* Le seul geste manuscrit de la surface : une fois, et pas trois. */}
+							<SquiggleUnderline drawn className="-bottom-1 w-12" />
+						</div>
+						<SheetDescription className="sr-only">
+							Files à traiter et navigation du tableau de bord administrateur
+						</SheetDescription>
+						{/* Fermeture par la primitive, jamais par `closeMenu()` en direct :
+						 * un changement du prop contrôlé ne rejoue pas `onOpenChange`, donc
+						 * l'entrée d'historique posée par `useBackButtonClose` resterait
+						 * derrière (un « retour » mort par cycle, cumulatif). */}
+						<SheetClose
+							render={
 								<button
 									type="button"
-									onClick={() => {
-										triggerHaptic("light");
-										setSearchQuery("");
-										searchInputRef.current?.focus();
-									}}
-									aria-label="Effacer la recherche"
+									aria-label="Fermer le menu"
 									className={cn(
-										"text-muted-foreground/70 can-hover:hover:text-foreground absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full",
-										"touch-manipulation [-webkit-tap-highlight-color:transparent] motion-safe:active:scale-[0.92]",
-										"focus-ring",
+										"text-muted-foreground can-hover:hover:text-foreground active:bg-accent inline-flex size-11 shrink-0 items-center justify-center rounded-full",
+										"focus-ring touch-manipulation [-webkit-tap-highlight-color:transparent]",
 									)}
-								>
-									<X className="size-4" aria-hidden="true" />
-								</button>
-							)}
-						</div>
-					</div>
+								/>
+							}
+						>
+							<XIcon className="size-5" aria-hidden="true" />
+						</SheetClose>
+					</SheetHeader>
 
 					{/* Scrollable content — ScrollFade porte le scroll, fade top/bottom
-					 * indique affordance de scroll sur iOS-like hidden scrollbar.
+					 * indique l'affordance de scroll sur barre masquée iOS-like.
 					 * fadeFromClass="from-muted" matche le fond du sheet (bg-muted). */}
-					<div className="min-h-0 flex-1">
+					<div className="min-h-0 flex-auto">
 						<ScrollFade axis="vertical" fadeFromClass="from-muted" className="overscroll-contain">
 							<nav
 								ref={navRef}
 								aria-label="Navigation administration"
+								// ⚠️ Ce `max()` est LOAD-BEARING, et il ne double PAS la
+								// safe-area — contrairement à ce que la lecture des deux
+								// fichiers laisse croire.
+								//
+								// La primitive pose bien `pb-[max(0px,env(safe-area-inset-bottom))]`
+								// sur le popup ancré en bas, mais le `p-0!` de `SheetContent`
+								// ci-dessus l'écrase (tailwind-merge garde les deux classes, et
+								// `padding: 0 !important` l'emporte au rendu). Le seul retrait
+								// bas effectif est donc celui-ci : le supprimer collerait
+								// « Déconnexion » à la barre d'accueil de l'iPhone.
+								//
+								// Vérifié à la fusion, pas déduit : `twMerge` rend bien le
+								// `pb-[…]` de la primitive et `p-0!` côte à côte.
+								//
+								// ⚠️ Ne JAMAIS abréger une classe arbitraire avec des points de
+								// suspension dans un commentaire : Tailwind v4 scanne les fichiers
+								// source sans distinguer code et commentaire, prend l'abréviation
+								// pour un candidat, et génère une déclaration invalide qui fait
+								// échouer le parsing de TOUTE la feuille — chaque page du site
+								// répond alors 500 en dev. Écrire la classe en entier, ou ne pas
+								// l'écrire.
 								className="px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
 							>
+								{/* ── Ce qui t'attend ─────────────────────────────────────── */}
+								<m.section {...fadeUp(0)} aria-labelledby="admin-menu-queues" className="mb-4">
+									<p
+										id="admin-menu-queues"
+										className="text-muted-foreground mb-1.5 px-1 text-[11px] font-semibold tracking-[0.12em] uppercase"
+									>
+										Ce qui t&apos;attend
+									</p>
+									<QueueBoard
+										queues={queues}
+										storeClosed={storeClosed}
+										onNavigate={handleNavClick}
+									/>
+								</m.section>
+
+								{/* ── Où aller ────────────────────────────────────────────── */}
+								<p className="text-muted-foreground mb-1.5 px-1 text-[11px] font-semibold tracking-[0.12em] uppercase">
+									Où aller
+								</p>
+
+								{/* Le champ de filtre reste AU-DESSUS de ce qu'il filtre et ne
+								 * bouge jamais entre les deux vues : tout ce qui le précède est
+								 * invariant. Ce n'est PAS une recherche de contenu — pour
+								 * trouver une commande ou un produit, ouvrir la page concernée
+								 * et utiliser sa recherche dédiée. */}
+								<div className="relative mb-3">
+									<MagnifyingGlassIcon
+										className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+										aria-hidden="true"
+									/>
+									<input
+										ref={searchInputRef}
+										type="search"
+										inputMode="search"
+										// "go" si un résultat existe (Entrée navigue), sinon "done" ferme
+										// juste le clavier (filtre live, pas de submit classique).
+										enterKeyHint={isSearching && filteredItems.length > 0 ? "go" : "done"}
+										data-base-ui-swipe-ignore=""
+										value={searchQuery}
+										onChange={(e) => setSearchQuery(e.target.value)}
+										onKeyDown={handleSearchKeyDown}
+										placeholder="Filtrer les pages…"
+										aria-label="Filtrer les pages de navigation"
+										className={cn(
+											"bg-background border-border",
+											// Texte indicatif au token PLEIN : l'alpha /70 le faisait
+											// tomber à 3,45:1 sur ce fond, sous les 4,5:1 d'AA, alors
+											// que le token nu est à 7,23:1.
+											"placeholder:text-muted-foreground",
+											"flex h-11 w-full rounded-xl border py-2 pl-9 text-sm",
+											// pr-11 quand le bouton clear est visible, pr-3 sinon — évite que
+											// le texte de la requête passe sous l'icône.
+											searchQuery.length > 0 ? "pr-11" : "pr-3",
+											// SSOT focus-ring (globals.css). Suppression du cancel X natif
+											// iOS Safari (sinon double X avec le clear button explicite).
+											"focus-ring",
+											"[&::-webkit-search-cancel-button]:appearance-none",
+											"motion-safe:transition-colors",
+										)}
+									/>
+									{searchQuery.length > 0 && (
+										<button
+											type="button"
+											onClick={() => {
+												triggerHaptic("light");
+												setSearchQuery("");
+												searchInputRef.current?.focus();
+											}}
+											aria-label="Effacer la recherche"
+											className={cn(
+												"text-muted-foreground can-hover:hover:text-foreground absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full",
+												"touch-manipulation [-webkit-tap-highlight-color:transparent] motion-safe:active:scale-[0.92]",
+												"focus-ring",
+											)}
+										>
+											<XIcon className="size-4" aria-hidden="true" />
+										</button>
+									)}
+								</div>
+
 								{isSearching ? (
 									/* Search results — flat list */
 									<div
@@ -386,7 +516,10 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 										</div>
 										{filteredItems.length === 0 ? (
 											<div className="flex flex-col items-center gap-3 px-4 py-8">
-												<SearchX className="text-muted-foreground/40 size-8" aria-hidden="true" />
+												<MagnifyingGlassMinusIcon
+													className="text-muted-foreground/40 size-8"
+													aria-hidden="true"
+												/>
 												<p className="text-muted-foreground text-center text-sm">
 													Aucun résultat pour &laquo;&nbsp;{searchQuery}&nbsp;&raquo;
 												</p>
@@ -396,203 +529,51 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 											// quand list-style:none (reset Tailwind). Cf. cart-sheet-item-row-audit-2026-05-24.
 											// eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none
 											<ul role="list">
-												{filteredItems.map((item, i) => {
-													const isActive = isRouteActive(pathname, item.url);
-													const badgeCount = badges?.[item.id];
-													const isLast = i === filteredItems.length - 1;
-
-													return (
-														<li key={item.id}>
-															<Link
-																href={item.url}
-																prefetch={null}
-																onClick={handleNavClick}
-																className={cn(
-																	"flex items-center gap-3 px-4 py-3 transition-colors",
-																	"active:bg-accent",
-																	NAV_ITEM_TACTILE_CLASS,
-																	isActive && "bg-accent",
-																	!isLast && "border-border/60 border-b",
-																)}
-																aria-current={isActive ? "page" : undefined}
-															>
-																<item.icon
-																	className={cn(
-																		"size-5 shrink-0",
-																		isActive ? "text-foreground" : "text-muted-foreground",
-																	)}
-																	aria-hidden="true"
-																/>
-																<span
-																	className={cn(
-																		"flex-1 text-sm font-medium",
-																		isActive && "font-semibold",
-																	)}
-																>
-																	{item.title}
-																</span>
-																{badgeCount != null && badgeCount > 0 && (
-																	<span
-																		className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-																		aria-label={badgeAriaLabel(item.id, badgeCount)}
-																	>
-																		{badgeCount > 99 ? "99+" : badgeCount}
-																	</span>
-																)}
-																<ChevronRight
-																	className="text-muted-foreground/50 size-4 shrink-0"
-																	aria-hidden="true"
-																/>
-															</Link>
-														</li>
-													);
-												})}
+												{filteredItems.map((item, i) => (
+													<li key={item.id}>
+														<NavRow
+															item={item}
+															pathname={pathname}
+															badgeCount={badges?.[item.id]}
+															isLast={i === filteredItems.length - 1}
+														/>
+													</li>
+												))}
 											</ul>
 										)}
 									</div>
 								) : (
-									/* Default view — grouped cards */
 									<>
-										{/* User card */}
-										<div className="bg-background mb-3 overflow-hidden rounded-xl border">
-											<div className="px-4 py-3">
-												<p className="truncate text-sm font-semibold">{user.name}</p>
-												<p className="text-muted-foreground truncate text-xs">{user.email}</p>
-											</div>
-										</div>
-
-										{/* Dashboard — standalone prominent card */}
-										<m.div
-											{...fadeUp(0)}
-											className={cn(
-												"bg-background mb-3 overflow-hidden rounded-xl border",
-												isDashboardActive && "ring-border ring-2",
-											)}
-										>
-											<Link
-												href="/admin"
-												prefetch={null}
-												onClick={handleNavClick}
-												className={cn(
-													"flex items-center gap-3 px-4 py-3.5 transition-colors",
-													"active:bg-accent",
-													NAV_ITEM_TACTILE_CLASS,
-													isDashboardActive && "bg-accent",
-												)}
-												aria-current={isDashboardActive ? "page" : undefined}
-											>
-												<div
-													className={cn(
-														"flex size-9 shrink-0 items-center justify-center rounded-lg",
-														isDashboardActive
-															? "bg-foreground text-background"
-															: "bg-muted text-muted-foreground",
-													)}
-												>
-													<LayoutDashboard className="size-5" aria-hidden="true" />
-												</div>
-												<div className="min-w-0 flex-1">
-													<span
-														className={cn(
-															"text-sm font-medium",
-															isDashboardActive && "font-semibold",
-														)}
-													>
-														Tableau de bord
-													</span>
-													<p className="text-muted-foreground text-xs">Vue d&apos;ensemble</p>
-												</div>
-												<ChevronRight
-													className="text-muted-foreground/50 size-4 shrink-0"
-													aria-hidden="true"
-												/>
-											</Link>
-										</m.div>
-
-										{/* Navigation groups — iOS Settings style */}
 										{navigationData.navGroups.map((group, groupIndex) => (
-											<m.div key={group.label} {...fadeUp(groupIndex + 1)} className="mb-3">
-												<p className="text-muted-foreground mb-1 px-1 text-xs font-medium">
-													{group.label}
-												</p>
-												{/* role="list" explicite : iOS Safari + VO retire le rôle implicite
-												 * sous list-style:none (reset Tailwind). */}
-												{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
-												<ul role="list" className="bg-background overflow-hidden rounded-xl border">
-													{group.items.map((item, itemIndex) => {
-														const isActive = isRouteActive(pathname, item.url);
-														const badgeCount = badges?.[item.id];
-														const isLast = itemIndex === group.items.length - 1;
-
-														return (
-															<li key={item.id}>
-																<Link
-																	href={item.url}
-																	prefetch={null}
-																	onClick={handleNavClick}
-																	className={cn(
-																		"flex items-center gap-3 px-4 py-3 transition-colors",
-																		"active:bg-accent",
-																		NAV_ITEM_TACTILE_CLASS,
-																		isActive && "bg-accent",
-																		!isLast && "border-border/60 border-b",
-																	)}
-																	aria-current={isActive ? "page" : undefined}
-																>
-																	<item.icon
-																		className={cn(
-																			"size-5 shrink-0",
-																			isActive ? "text-foreground" : "text-muted-foreground",
-																		)}
-																		aria-hidden="true"
-																	/>
-																	<span
-																		className={cn(
-																			"flex-1 text-sm font-medium",
-																			isActive && "font-semibold",
-																		)}
-																	>
-																		{item.shortTitle ?? item.title}
-																	</span>
-																	{badgeCount != null && badgeCount > 0 && (
-																		<span
-																			className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-																			aria-label={badgeAriaLabel(item.id, badgeCount)}
-																		>
-																			{badgeCount > 99 ? "99+" : badgeCount}
-																		</span>
-																	)}
-																	<ChevronRight
-																		className="text-muted-foreground/50 size-4 shrink-0"
-																		aria-hidden="true"
-																	/>
-																</Link>
-															</li>
-														);
-													})}
-												</ul>
-											</m.div>
+											<NavGroupRow
+												key={group.label}
+												group={group}
+												pathname={pathname}
+												badges={badges}
+												motionProps={fadeUp(groupIndex + 1)}
+											/>
 										))}
 
 										{/* Actions card */}
 										<m.ul
 											role="list"
 											{...fadeUp(navigationData.navGroups.length + 1)}
-											className="bg-background mt-1 overflow-hidden rounded-xl border"
+											className="bg-background mt-4 overflow-hidden rounded-xl border"
 										>
 											<li>
 												<Link
-													href="/"
+													href={ROUTES.SHOP.HOME}
 													prefetch={false}
 													target="_blank"
 													rel="noopener noreferrer"
 													onClick={handleNavClick}
 													className={cn(
-														"border-border/60 active:bg-accent flex items-center gap-3 border-b px-4 py-3 transition-colors",
+														NAV_ROW_CLASS,
 														NAV_ITEM_TACTILE_CLASS,
+														"border-border/60 border-b",
 													)}
 												>
-													<ExternalLink
+													<ArrowSquareOutIcon
 														className="text-muted-foreground size-5 shrink-0"
 														aria-hidden="true"
 													/>
@@ -600,7 +581,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 														Voir le site
 														<span className="sr-only"> (ouvre dans un nouvel onglet)</span>
 													</span>
-													<ChevronRight
+													<CaretRightIcon
 														className="text-muted-foreground/50 size-4 shrink-0"
 														aria-hidden="true"
 													/>
@@ -616,18 +597,19 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 													onClick={handleShortcutsClick}
 													aria-haspopup="dialog"
 													className={cn(
-														"border-border/60 active:bg-accent flex w-full items-center gap-3 border-b px-4 py-3 transition-colors",
+														NAV_ROW_CLASS,
 														NAV_ITEM_TACTILE_CLASS,
+														"border-border/60 w-full border-b",
 													)}
 												>
-													<Keyboard
+													<KeyboardIcon
 														className="text-muted-foreground size-5 shrink-0"
 														aria-hidden="true"
 													/>
 													<span className="flex-1 text-left text-sm font-medium">
 														Raccourcis clavier
 													</span>
-													<ChevronRight
+													<CaretRightIcon
 														className="text-muted-foreground/50 size-4 shrink-0"
 														aria-hidden="true"
 													/>
@@ -641,13 +623,26 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 													className={cn(
 														// active:bg-destructive/10 (vs nav links en active:bg-accent) — feedback
 														// visuel cohérent avec la sémantique destructive (icône+label text-destructive).
-														"active:bg-destructive/10 flex w-full items-center gap-3 px-4 py-3 transition-colors",
+														"flex min-h-11 w-full items-center gap-3 px-4 py-3 transition-colors",
+														"active:bg-destructive/10",
 														NAV_ITEM_TACTILE_CLASS,
 													)}
 												>
-													<LogOut className="text-destructive size-5 shrink-0" aria-hidden="true" />
-													<span className="text-destructive flex-1 text-left text-sm font-medium">
-														Déconnexion
+													<SignOutIcon
+														className="text-destructive size-5 shrink-0"
+														aria-hidden="true"
+													/>
+													<span className="min-w-0 flex-1 text-left">
+														<span className="text-destructive block text-sm font-medium">
+															Déconnexion
+														</span>
+														{/* L'identité du compte, là où elle sert vraiment : au moment
+														 * de fermer la session. Elle occupait auparavant une carte
+														 * entière en tête de panneau, dans la zone la moins
+														 * atteignable, sans porter aucune action. */}
+														<span className="text-muted-foreground block truncate text-xs">
+															{user.email}
+														</span>
 													</span>
 												</button>
 											</li>
@@ -660,10 +655,299 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 				</SheetContent>
 			</Sheet>
 
+			{/* Région live d'ouverture — montée EN PERMANENCE et vide au premier rendu.
+			 * Cf. le commentaire de `announcement` : une région qui naît avec son texte
+			 * n'est pas annoncée. */}
+			<p role="status" aria-live="polite" className="sr-only">
+				{isSearching ? "" : announcement}
+			</p>
+
 			{/* Rendu hors du Sheet pour éviter overlays empilés / focus-trap
 			 * concurrents : l'AlertDialog n'apparaît qu'après que la sheet a
 			 * terminé sa transition de sortie (cf. useEffect transitionend). */}
 			<LogoutAlertDialog open={showLogout} onOpenChange={setShowLogout} />
 		</>
+	);
+}
+
+// ============================================================================
+// L'ARDOISE
+// ============================================================================
+
+/**
+ * Les files réellement actionnables, en tête du panneau.
+ *
+ * C'est le changement de sujet du menu : il ne répond plus « où aller » mais
+ * « ce qu'il reste à faire ». Chaque ligne mène à `badgeUrl` — la file FILTRÉE,
+ * qui existait dans la SSOT depuis le début sans que cette surface la consomme.
+ *
+ * Rangée à 56 px (contre 44 pour la navigation) : la hiérarchie est portée par
+ * la hauteur, donc elle survit sans couleur (WCAG 1.4.1).
+ */
+function QueueBoard({
+	queues,
+	storeClosed,
+	onNavigate,
+}: {
+	queues: Array<{ item: NavItem; count: number }>;
+	storeClosed: boolean;
+	onNavigate: () => void;
+}) {
+	if (!storeClosed && queues.length === 0) {
+		return (
+			<div className="border-border bg-background flex min-h-11 items-center gap-3 rounded-xl border px-4 py-3">
+				<CheckCircleIcon className="text-success size-5 shrink-0" aria-hidden="true" />
+				<p className="text-sm">
+					<span className="font-semibold">Rien à traiter.</span>{" "}
+					<span className="text-muted-foreground">Tu es à jour.</span>
+				</p>
+			</div>
+		);
+	}
+
+	return (
+		// Le filet d'accent est un ÉLÉMENT, pas un `border-left-color` : `bg-(--var)`
+		// est la forme déjà employée dans le dépôt (navbar-wrapper), là où
+		// `border-l-(--var)` laisserait Tailwind arbitrer entre couleur et largeur.
+		<div
+			data-accent="mint"
+			className="border-border bg-background flex overflow-hidden rounded-xl border"
+		>
+			<span
+				aria-hidden="true"
+				className={cn(
+					"w-[3px] shrink-0",
+					// Boutique fermée = tout le bloc passe en alerte : un filet menthe
+					// à côté d'une rangée rouge dirait deux choses à la fois.
+					storeClosed ? "bg-destructive" : "bg-(--section-accent)",
+				)}
+			/>
+			{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+			<ul role="list" className="min-w-0 flex-1">
+				{storeClosed && (
+					<li>
+						<Link
+							href={ROUTES.ADMIN.STORE_CONFIG}
+							prefetch={null}
+							onClick={onNavigate}
+							className={cn(
+								"bg-destructive/5 flex min-h-14 items-center gap-3.5 px-4 py-3 transition-colors",
+								"active:bg-destructive/10",
+								// Pas de filet quand rien ne suit — sinon une bordure pendante
+								// sous la dernière rangée du bloc.
+								queues.length > 0 && "border-border/60 border-b",
+								NAV_ITEM_TACTILE_CLASS,
+							)}
+						>
+							<StorefrontIcon className="text-destructive size-5 shrink-0" aria-hidden="true" />
+							<span className="min-w-0 flex-1">
+								<span className="block text-[15px] leading-tight font-semibold">
+									La boutique est fermée
+								</span>
+								<span className="text-muted-foreground block text-xs">
+									Personne ne peut commander — rouvrir
+								</span>
+							</span>
+							<CaretRightIcon
+								className="text-muted-foreground/50 size-4 shrink-0"
+								aria-hidden="true"
+							/>
+						</Link>
+					</li>
+				)}
+				{queues.map(({ item, count }, i) => {
+					const label = queueLabel(item.id, count);
+					const Icon = item.icon;
+					return (
+						<li key={item.id}>
+							<Link
+								href={item.badgeUrl ?? item.url}
+								prefetch={null}
+								onClick={onNavigate}
+								// Le compte est déjà dans le nom accessible via le texte visible ;
+								// pas d'aria-label qui le dupliquerait.
+								className={cn(
+									"active:bg-accent flex min-h-14 items-center gap-3.5 px-4 py-3 transition-colors",
+									NAV_ITEM_TACTILE_CLASS,
+									i < queues.length - 1 && "border-border/60 border-b",
+								)}
+							>
+								{/* Largeur FIXE : « 3 » et « 12 » doivent tomber sur la même
+								 * verticale, sinon les deux lignes ne se lisent pas comme une
+								 * colonne. Et surtout PAS `tabular-nums` ici : la table GSUB de
+								 * Fraunces ne porte ni `tnum` ni `pnum` (mesuré le 2026-08-04),
+								 * l'utilitaire y est inerte et ferait croire que l'alignement en
+								 * vient. C'est la largeur fixe qui aligne. */}
+								<span
+									aria-hidden="true"
+									className="font-display w-8 shrink-0 text-right text-2xl leading-none font-normal"
+								>
+									{count > 99 ? "99+" : count}
+								</span>
+								<span className="min-w-0 flex-1">
+									<span className="block text-[15px] leading-tight font-semibold">{label}</span>
+									<span className="text-muted-foreground block text-xs">Ouvrir la file</span>
+								</span>
+								<Icon className="text-muted-foreground/60 size-5 shrink-0" aria-hidden="true" />
+								<CaretRightIcon
+									className="text-muted-foreground/50 size-4 shrink-0"
+									aria-hidden="true"
+								/>
+							</Link>
+						</li>
+					);
+				})}
+			</ul>
+		</div>
+	);
+}
+
+// ============================================================================
+// LA CARTE DU SITE
+// ============================================================================
+
+/**
+ * Un groupe de navigation, replié par défaut et déplié en place.
+ *
+ * Déplié « sur place » et jamais en second écran : le drill-down maître-détail a
+ * été arbitré DEUX fois le 2026-05-20 sur le panneau de filtres, au profit de
+ * l'accordéon sur écran unique.
+ *
+ * `defaultOpen={hasActiveItem}` — même règle que la sidebar desktop
+ * (`collapsible-nav-group.tsx`) : arriver sur une page du groupe ne doit pas
+ * laisser son groupe fermé.
+ */
+function NavGroupRow({
+	group,
+	pathname,
+	badges,
+	motionProps,
+}: {
+	group: (typeof navigationData.navGroups)[number];
+	pathname: string;
+	badges?: Record<string, number>;
+	motionProps: FadeUpProps;
+}) {
+	const hasActiveItem = group.items.some((item) => isRouteActive(pathname, item.url));
+	const GroupIcon = group.icon;
+
+	return (
+		<m.div {...motionProps} className="mb-2">
+			<Collapsible defaultOpen={hasActiveItem} className="group/grp">
+				<div
+					data-accent={group.accent}
+					className="bg-background border-border overflow-hidden rounded-xl border"
+				>
+					<CollapsibleTrigger
+						onClick={() => triggerHaptic("selection")}
+						className={cn(
+							"flex min-h-13 w-full items-center gap-3 pr-4 text-left transition-colors",
+							"active:bg-accent",
+							"focus-ring touch-manipulation [-webkit-tap-highlight-color:transparent]",
+						)}
+					>
+						<span aria-hidden="true" className="w-1 shrink-0 self-stretch bg-(--section-accent)" />
+						{GroupIcon && (
+							<GroupIcon
+								className="text-muted-foreground ml-2 size-5 shrink-0"
+								aria-hidden="true"
+							/>
+						)}
+						<span className="flex-1 text-[15px] font-semibold">{group.label}</span>
+						{/* Le compte évite de déplier pour savoir ce qu'il y a dedans.
+						 * `aria-hidden` : l'état déplié/replié est déjà porté par
+						 * `aria-expanded` de la primitive, et le nombre de pages n'est
+						 * pas une information dont un lecteur d'écran a besoin ici. */}
+						<span aria-hidden="true" className="text-muted-foreground text-xs tabular-nums">
+							{group.items.length}
+						</span>
+						<CaretRightIcon
+							className="text-muted-foreground/50 size-4 shrink-0 transition-transform group-data-open/grp:rotate-90"
+							aria-hidden="true"
+						/>
+					</CollapsibleTrigger>
+					<CollapsibleContent>
+						{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+						<ul role="list" className="border-border/60 border-t">
+							{group.items.map((item, itemIndex) => (
+								<li key={item.id}>
+									<NavRow
+										item={item}
+										pathname={pathname}
+										badgeCount={badges?.[item.id]}
+										isLast={itemIndex === group.items.length - 1}
+										indented
+									/>
+								</li>
+							))}
+						</ul>
+					</CollapsibleContent>
+				</div>
+			</Collapsible>
+		</m.div>
+	);
+}
+
+/**
+ * Rangée de page — partagée par la liste filtrée et les groupes dépliés.
+ *
+ * Toujours `item.title`, jamais `shortTitle` : afficher « Promos » dans la liste
+ * et « Codes promo » dans la recherche faisait changer de nom le même item d'une
+ * vue à l'autre. Le filtre continue de matcher les DEUX champs, donc rien n'est
+ * perdu côté recherche.
+ *
+ * La pastille reste dans le lien, décorative pour l'œil et exposée via
+ * `aria-label` : elle n'a plus à porter `badgeUrl`, c'est l'ardoise qui mène
+ * désormais à la file filtrée — et deux cibles tactiles imbriquées sur une
+ * rangée de 44 px produisent surtout des taps ambigus.
+ */
+function NavRow({
+	item,
+	pathname,
+	badgeCount,
+	isLast,
+	indented = false,
+}: {
+	item: (typeof navigationData.navGroups)[number]["items"][number];
+	pathname: string;
+	badgeCount?: number;
+	isLast: boolean;
+	indented?: boolean;
+}) {
+	const isActive = isRouteActive(pathname, item.url);
+	const count = typeof badgeCount === "number" && badgeCount > 0 ? badgeCount : null;
+	const Icon = item.icon;
+
+	return (
+		<Link
+			href={item.url}
+			prefetch={null}
+			onClick={handleNavClick}
+			className={cn(
+				NAV_ROW_CLASS,
+				NAV_ITEM_TACTILE_CLASS,
+				indented && "pl-6",
+				isActive && "bg-accent",
+				!isLast && "border-border/60 border-b",
+			)}
+			aria-current={isActive ? "page" : undefined}
+		>
+			<Icon
+				className={cn("size-5 shrink-0", isActive ? "text-foreground" : "text-muted-foreground")}
+				aria-hidden="true"
+			/>
+			<span className={cn("flex-1 text-sm font-medium", isActive && "font-semibold")}>
+				{item.title}
+			</span>
+			{count !== null && (
+				<span
+					className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+					aria-label={badgeAriaLabel(item.id, count)}
+				>
+					{count > 99 ? "99+" : count}
+				</span>
+			)}
+			<CaretRightIcon className="text-muted-foreground/50 size-4 shrink-0" aria-hidden="true" />
+		</Link>
 	);
 }

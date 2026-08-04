@@ -2,7 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
-import type * as LucideReact from "lucide-react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -36,11 +35,13 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("lucide-react", async (importOriginal) => {
-	const actual = await importOriginal<typeof LucideReact>();
+vi.mock("@phosphor-icons/react/ssr", async (importOriginal) => {
+	const actual = await importOriginal<typeof PhosphorIcons>();
 	return {
 		...actual,
-		Ellipsis: (props: Record<string, unknown>) => <svg data-testid="ellipsis-icon" {...props} />,
+		DotsThreeIcon: (props: Record<string, unknown>) => (
+			<svg data-testid="ellipsis-icon" {...props} />
+		),
 	};
 });
 
@@ -129,6 +130,7 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 
 import { DashboardBreadcrumb } from "../dashboard-breadcrumb";
 import { generateBreadcrumbs } from "../generate-breadcrumbs";
+import type * as PhosphorIcons from "@phosphor-icons/react/ssr";
 
 // ============================================================================
 // SETUP

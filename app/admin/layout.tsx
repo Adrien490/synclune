@@ -2,6 +2,7 @@ import { SIDEBAR_COOKIE_NAME, SidebarInset, SidebarProvider } from "@/shared/com
 import { SkipLink } from "@/shared/components/skip-link";
 import { cookies } from "next/headers";
 import { getAdminNavBadges } from "@/modules/orders/data/get-admin-nav-badges";
+import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { ActionStatus } from "@/shared/types/server-action";
 import type { Metadata } from "next";
@@ -54,7 +55,10 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 	// Compteurs de files actionnables (commandes à préparer, remboursements en
 	// attente) — pastilles de navigation mobile. Cache partagé tagué ADMIN_BADGES,
 	// déjà invalidé par les mutations orders/refunds.
-	const badges = await getAdminNavBadges();
+	// `storeStatus` alimente l'ardoise du menu mobile : c'est le SEUL endroit du
+	// chrome sous `md` qui signale une boutique fermée. Les deux lectures sont
+	// cachées et indépendantes — en parallèle plutôt qu'en cascade.
+	const [badges, storeStatus] = await Promise.all([getAdminNavBadges(), getStoreStatus()]);
 
 	// État replié/déplié de la sidebar : `SidebarProvider` écrit le cookie mais ne
 	// le relisait jamais, donc la préférence était perdue à chaque chargement dur.
@@ -100,7 +104,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 					<AdminMobileBottomBar badges={badges} />
 				</SidebarInset>
 			</AdminPageTitleProvider>
-			<AdminMenuSheet user={user} badges={badges} />
+			<AdminMenuSheet user={user} badges={badges} storeClosed={storeStatus.isClosed} />
 			<KeyboardShortcutsDialog />
 		</SidebarProvider>
 	);

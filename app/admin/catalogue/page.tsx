@@ -1,5 +1,11 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { Gem, Layers, Package, Palette, Tag } from "lucide-react";
+import {
+	PackageIcon,
+	PaletteIcon,
+	StackIcon,
+	SwatchesIcon,
+	TagIcon,
+} from "@phosphor-icons/react/ssr";
 import { type Metadata } from "next";
 import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
@@ -22,31 +28,31 @@ export default async function CatalogPage() {
 						title: "Bijoux",
 						description: "Gérer les bijoux et leurs variantes",
 						href: "/admin/catalogue/produits",
-						icon: <Package className="size-5" />,
+						icon: <PackageIcon className="size-5" />,
 					},
 					{
 						title: "Types de bijoux",
 						description: "Gérer les types de bijoux",
 						href: "/admin/catalogue/types-de-produits",
-						icon: <Tag className="size-5" />,
+						icon: <TagIcon className="size-5" />,
 					},
 					{
 						title: "Collections",
 						description: "Organiser les bijoux en collections",
 						href: "/admin/catalogue/collections",
-						icon: <Layers className="size-5" />,
+						icon: <StackIcon className="size-5" />,
 					},
 					{
 						title: "Couleurs",
 						description: "Gérer les couleurs disponibles",
 						href: "/admin/catalogue/couleurs",
-						icon: <Palette className="size-5" />,
+						icon: <PaletteIcon className="size-5" />,
 					},
 					{
 						title: "Matériaux",
 						description: "Gérer les matériaux (or, argent, plastique…)",
 						href: "/admin/catalogue/materiaux",
-						icon: <Gem className="size-5" />,
+						icon: <SwatchesIcon className="size-5" />,
 					},
 				]}
 			/>

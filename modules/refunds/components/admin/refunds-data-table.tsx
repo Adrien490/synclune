@@ -19,22 +19,22 @@ import type { GetRefundsReturn } from "@/modules/refunds/types/refund.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 import {
-	AlertCircle,
-	BadgeCheck,
-	CheckCircle,
-	CircleOff,
-	Clock,
-	ReceiptText,
-	type LucideIcon,
-} from "lucide-react";
+	CheckCircleIcon,
+	ClockIcon,
+	ProhibitIcon,
+	ReceiptIcon,
+	SealCheckIcon,
+	WarningCircleIcon,
+} from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
 import Link from "next/link";
 
-const REFUND_STATUS_ICONS: Record<RefundStatus, LucideIcon> = {
-	[RefundStatus.PENDING]: Clock,
-	[RefundStatus.APPROVED]: CheckCircle,
-	[RefundStatus.COMPLETED]: BadgeCheck,
-	[RefundStatus.FAILED]: AlertCircle,
-	[RefundStatus.CANCELLED]: CircleOff,
+const REFUND_STATUS_ICONS: Record<RefundStatus, Icon> = {
+	[RefundStatus.PENDING]: ClockIcon,
+	[RefundStatus.APPROVED]: CheckCircleIcon,
+	[RefundStatus.COMPLETED]: SealCheckIcon,
+	[RefundStatus.FAILED]: WarningCircleIcon,
+	[RefundStatus.CANCELLED]: ProhibitIcon,
 };
 
 interface RefundsDataTableProps {
@@ -54,7 +54,7 @@ export async function RefundsDataTable({
 		return (
 			<TableEmptyState
 				className="hidden md:flex"
-				icon={ReceiptText}
+				icon={ReceiptIcon}
 				title="Aucun remboursement trouvé"
 				description="Aucun remboursement ne correspond aux critères de recherche."
 				noItemsDescription="Aucun remboursement à traiter pour l'instant."

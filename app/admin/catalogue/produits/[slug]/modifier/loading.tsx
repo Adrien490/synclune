@@ -1,4 +1,5 @@
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { FORM_SECTION_CARD_CLASS } from "@/shared/components/forms/form-section-styles";
 import { PageHeaderSkeleton } from "@/shared/components/page-header-skeleton";
 import {
 	Breadcrumb,
@@ -9,13 +10,11 @@ import {
 } from "@/shared/components/ui/breadcrumb";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-const CARD_SHELL =
-	"lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md";
-const CARD_INNER = "px-0 sm:px-0 lg:px-6";
+const CARD_INNER = "px-0 sm:px-0 md:px-6";
 
 function CardSkeleton({ children }: { children: React.ReactNode }) {
 	return (
-		<div className={CARD_SHELL}>
+		<div className={FORM_SECTION_CARD_CLASS}>
 			<div className={`${CARD_INNER} space-y-4`}>{children}</div>
 		</div>
 	);

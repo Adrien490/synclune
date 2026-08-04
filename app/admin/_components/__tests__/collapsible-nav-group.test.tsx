@@ -2,7 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
-import type * as LucideReact from "lucide-react";
 
 // ============================================================================
 // MODULE MOCKS
@@ -16,11 +15,13 @@ vi.mock("next/navigation", () => ({
 	usePathname: mockUsePathname,
 }));
 
-vi.mock("lucide-react", async (importOriginal) => {
-	const actual = await importOriginal<typeof LucideReact>();
+vi.mock("@phosphor-icons/react/ssr", async (importOriginal) => {
+	const actual = await importOriginal<typeof PhosphorIcons>();
 	return {
 		...actual,
-		ChevronRight: (props: Record<string, unknown>) => <svg data-testid="chevron-icon" {...props} />,
+		CaretRightIcon: (props: Record<string, unknown>) => (
+			<svg data-testid="chevron-icon" {...props} />
+		),
 	};
 });
 
@@ -108,6 +109,7 @@ vi.mock("../nav-main-client", () => ({
 }));
 
 import { CollapsibleNavGroup } from "../collapsible-nav-group";
+import type * as PhosphorIcons from "@phosphor-icons/react/ssr";
 
 // ============================================================================
 // SETUP

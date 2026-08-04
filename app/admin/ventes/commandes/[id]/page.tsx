@@ -62,11 +62,6 @@ const MarkAsFullyRefundedAlertDialog = dynamic(() =>
 		(mod) => mod.MarkAsFullyRefundedAlertDialog,
 	),
 );
-const OrderNotesDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/order-notes-dialog").then(
-		(mod) => mod.OrderNotesDialog,
-	),
-);
 const EditCustomerInfoDialog = dynamic(() =>
 	import("@/modules/orders/components/admin/edit-customer-info-dialog").then(
 		(mod) => mod.EditCustomerInfoDialog,
@@ -152,7 +147,6 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 			<MarkAsReturnedAlertDialog />
 			<UndoReturnAlertDialog />
 			<MarkAsFullyRefundedAlertDialog />
-			<OrderNotesDialog />
 			<EditCustomerInfoDialog />
 			<EditShippingAddressDialog />
 		</div>
