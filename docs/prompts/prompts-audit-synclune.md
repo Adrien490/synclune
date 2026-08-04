@@ -43,7 +43,7 @@ Contexte rapide :
 > (lien tokenisé HMAC — cf. prompts 158/159).
 > **Le filesystem fait foi** : vérifie chaque chemin cité dans un prompt avant de t'y fier.
 
-### Positionnement vs `docs/AUDIT-PROMPTS.md`
+### Positionnement vs `docs/prompts/AUDIT-PROMPTS.md`
 
 Les deux fichiers sont complémentaires et ne s'utilisent pas dans la même session :
 
@@ -55,6 +55,11 @@ Les deux fichiers sont complémentaires et ne s'utilisent pas dans la même sess
 Règle simple : utilise **ce fichier** pour savoir _où ça fait mal_ (rapport, pas de refonte), et
 `AUDIT-PROMPTS.md` quand tu veux qu'une surface soit **effectivement refondue**. Un audit de ce fichier est
 un bon point d'entrée avant de lancer la mission large correspondante.
+
+Deux catalogues complètent la paire, côté design : [`DESIGN-ARTIFACT-PROMPT.md`](DESIGN-ARTIFACT-PROMPT.md)
+**maquette 3-4 directions** sur une page publiée, pour arbitrer une refonte visuelle avant d'écrire une ligne
+de code ; [`REDESIGN-PROMPT.md`](REDESIGN-PROMPT.md) refond **une seule surface**, implémentée dans la
+session — et sait recevoir la direction arbitrée sur l'artifact.
 
 ---
 
@@ -599,7 +604,7 @@ Note /100, propose corrections/améliorations si pertinent.
 > ⚠️ **Retiré du code le 2026-07-26** (right-sizing) : l'implémentation était en dry-run intégral,
 > écrite contre une spec non figée. Ce prompt n'a plus d'objet tant que l'arrêté définitif n'est pas
 > publié et qu'aucune Plateforme Agréée n'est contractualisée. Voir la mission `INVOICE-GOLIVE` de
-> [`docs/AUDIT-PROMPTS.md`](AUDIT-PROMPTS.md) et [`docs/RUNBOOK.md § e-reporting`](RUNBOOK.md).
+> [`docs/prompts/AUDIT-PROMPTS.md`](AUDIT-PROMPTS.md) et [`docs/RUNBOOK.md § e-reporting`](../RUNBOOK.md).
 
 ---
 
@@ -622,7 +627,9 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « Cron jobs » dans Synclune.
 
-Vérifie les 9 crons (tous quotidiens ou moins fréquents — plafond du plan Vercel Hobby), cohérence `vercel.json` vs `modules/cron/constants/schedules.ts`, guard cron, Sentry Cron Monitoring (4 jobs seulement, via `SENTRY_MONITORED_CRONS`), idempotence, logs, et les services de cron ORPHELINS jamais planifiés (`cleanup-carts.service.ts`, `reconcile-voided-invoices.service.ts`) : brancher ou supprimer.
+Vérifie les **3** crons restants (`reconcile-invoices`, `cleanup-pending-orders`, `hard-delete-retention` — tous quotidiens ou moins fréquents, plafond du plan Vercel Hobby), la cohérence `vercel.json` vs `modules/cron/constants/schedules.ts`, le guard cron, le Sentry Cron Monitoring (**un seul** monitor : `reconcile-invoices`, via `SENTRY_MONITORED_CRONS` — le plan Developer n'en inclut qu'un), l'idempotence et les logs.
+
+Depuis le Lot 1 (2026-08-03), les autres rattrapages sont des **boutons** sur `/admin/configuration/maintenance` (SSOT `modules/cron/constants/maintenance-tasks.ts`, action `run-maintenance-task.ts`) : vérifie que chaque service de `modules/cron/services/` a bien un déclencheur — cron OU bouton — et traque les ORPHELINS (ex. `reconcile-voided-invoices.service.ts`) : brancher ou supprimer. Interroge aussi le revers du Lot 1 : un rattrapage qui dépend d'un clic humain est-il acceptable pour ce qu'il garde ?
 
 Inspecte `app/api/cron/**`, `modules/cron/**`, `vercel.json`, tests schedules.
 
@@ -2345,7 +2352,7 @@ Puis rends un PLAN, pas une liste de bugs :
 1. carte des surfaces avec verdict (GARDER / CORRIGER / REFONDRE) et note /100 par surface ;
 2. les 3 refontes qui rapportent le plus, avec pour chacune : le problème de fond, la forme cible,
    les fichiers touchés, l'ordre d'exécution, le risque de régression et la mission correspondante
-   dans `docs/AUDIT-PROMPTS.md` (`UIUX-01` → `UIUX-06`, `FEEDBACK`, `AUTH-UX`, `A11Y`) ;
+   dans `docs/prompts/AUDIT-PROMPTS.md` (`UIUX-01` → `UIUX-06`, `FEEDBACK`, `AUTH-UX`, `A11Y`) ;
 3. ce qu'il faut SUPPRIMER (composants morts, sections sans valeur, variantes de patterns en trop) —
    une interface s'améliore aussi en retirant ;
 4. le filet de tests à poser avant de toucher quoi que ce soit.
@@ -2561,10 +2568,10 @@ Vérifie :
   « 30 derniers jours » — début de journée en heure de Paris ou en UTC ? Un écart de 2 h en été déplace
   des commandes d'un jour à l'autre ;
 - l'heure d'été / d'hiver : les jours de bascule (23 h ou 25 h), et les crons planifiés en UTC par
-  Vercel dont l'heure locale se décale de mars à octobre (fenêtres réelles : 2:00
-  `retry-post-webhook-tasks` + `retry-webhooks` + `reconcile-invoices` · 3:00 `reopen-store` +
-  `cleanup-pending-orders` · 4:00 hebdo/mensuel · 5:00 · 8:00 — regroupements DÉLIBÉRÉS pour
-  mutualiser les réveils Neon, cf. `schedules.ts` : les juger comme un choix, pas un accident) ;
+  Vercel dont l'heure locale se décale de mars à octobre (fenêtres réelles depuis le Lot 1 : 2:00
+  `reconcile-invoices` · 3:00 `cleanup-pending-orders` · 4:00 le 2 du mois `hard-delete-retention` —
+  regroupements DÉLIBÉRÉS pour mutualiser les réveils Neon, cf. `schedules.ts` : les juger comme un
+  choix, pas un accident) ;
 - les échéances légales : rétention 10 ans (`paidAt + 10 ans`), délai de rétractation, dates de facture
   et d'avoir — toute erreur y est une erreur de conformité ;
 - le rendu déterministe des PDF (un test de régression y veille déjà) ;
@@ -2906,8 +2913,8 @@ Note /100, classe toute redirection ouverte en P0 et toute fuite de jeton par `R
 ```text
 Audit le point « Tests de régression verrouillés et garde-fous » dans Synclune.
 
-Le repo compte ~175 fichiers `*.regression.test.ts(x)` — et 271 fichiers portant `@regression`, dont 96
-SANS le suffixe conventionnel (donc modifiables sans review : commence par là) — plus un dossier
+Le repo compte ~197 fichiers `*.regression.test.ts(x)` — et ~296 fichiers portant `@regression`, dont
+~100 SANS le suffixe conventionnel (donc modifiables sans review : commence par là) — plus un dossier
 `test/conventions/`. C'est le filet qui empêche les invariants métier de se déliter. Un filet qui a
 l'air vert sans rien garder est pire que pas de filet.
 
@@ -2989,13 +2996,14 @@ Audit le point « Scripts d'outillage et maintenance » dans Synclune.
 Vérifie, pour chacun :
 - est-il encore utilisé ? Par un script `package.json`, par la CI, par un humain, ou par personne ?
   Un script mort donne l'illusion d'un contrôle qui n'existe pas ;
-- est-il sûr ? `cleanup-expired-carts.ts` et `backfill-media-metadata.ts` écrivent en base : quelle
-  base ciblent-ils, y a-t-il un garde-fou contre une exécution sur la production, sont-ils idempotents,
-  que se passe-t-il si on les interrompt à la moitié ?
-- pourquoi ce nettoyage de paniers est-il un script manuel alors que le nettoyage des commandes et des
-  médias orphelins sont des crons ? Un nettoyage qu'il faut penser à lancer n'est pas un nettoyage.
-  Note : `modules/cron/services/cleanup-carts.service.ts` existe mais n'est branché sur AUCUN planning
-  (`vercel.json`) — purge promise jamais exécutée, à trancher : brancher ou supprimer ;
+- est-il sûr ? `backfill-media-metadata.ts` et `generate-video-thumbnails.ts` écrivent en base ou sur
+  UploadThing : quelle base ciblent-ils, y a-t-il un garde-fou contre une exécution sur la production,
+  sont-ils idempotents, que se passe-t-il si on les interrompt à la moitié ? Compare au précédent du
+  seed, dont la garde `SEED_ALLOW` est explicite (EINV-CASH-004) ;
+- la frontière script / cron / bouton admin est-elle cohérente ? Depuis le Lot 1 (2026-08-03) il y a
+  **trois** modes de déclenchement : cron Vercel (3 jobs), bouton `/admin/configuration/maintenance`
+  (4 tâches), script `tsx`. Un même besoin ne devrait pas exister sous deux formes, et un nettoyage
+  qu'il faut penser à lancer n'est pas un nettoyage — juge chaque script à cette aune ;
 - `test-database.ts` : peut-il toucher une base réelle ? Vérifie le refus explicite sur une URL
   contenant « prod » (le runner d'intégration a cette garde — le script l'a-t-il ?) ;
 - les scripts d'audit (`audit-alt-text`, `check-blur-placeholders`, `validate-html-structure`) : leurs
@@ -3155,14 +3163,15 @@ Note /100, liste les questions manquantes et toute contradiction avec les CGV (P
 
 ---
 
-## 150 — Documentation & onboarding
+## 150 — Documentation & onboarding : DONE
 
 ```text
 Audit le point « Documentation et onboarding » dans Synclune.
 
 La documentation de ce projet est dense : `CLAUDE.md` (instructions d'agent, invariants de facturation,
 patterns), `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`,
-`docs/{BUSINESS,RUNBOOK,AUDIT-PROMPTS,KNOWN-ISSUES,REDESIGN-PROMPT,todo,prompts-audit-synclune}.md`.
+`docs/{BUSINESS,RUNBOOK,KNOWN-ISSUES,SIMPLIFICATION,UI-CONVENTIONS,atelier-story}.md` et
+`docs/prompts/{README,AUDIT-PROMPTS,prompts-audit-synclune,REDESIGN-PROMPT,DESIGN-ARTIFACT-PROMPT}.md`.
 Une documentation fausse est plus coûteuse qu'une documentation absente : elle fait prendre de mauvaises
 décisions avec assurance.
 
@@ -3246,9 +3255,10 @@ Vérifie :
   l'usage ou coupure) ? Sais-tu le dire, ou est-ce une zone d'ombre ?
 - les postes qui grossissent tout seuls : transformations `next/image` (nombre de tailles × nombre de
   produits), volume d'événements Sentry (`tracesSampleRate` — un taux à 1 en production explose vite),
-  stockage UploadThing qui n'est jamais purgé, temps de calcul Neon réveillé par les 9 crons ;
-- les crons : la question de la fréquence a déjà été tranchée (9 jobs, tous quotidiens+, ~4 réveils
-  Neon/jour — plafond du plan Vercel Hobby, analyse de coût complète dans `schedules.ts`) ; vérifie
+  stockage UploadThing (purge devenue manuelle : bouton « Purger les médias orphelins »), temps de calcul Neon réveillé par les crons ;
+- les crons : la question de la fréquence a déjà été tranchée (**3** jobs depuis le Lot 1, tous
+  quotidiens+, ~2 réveils Neon/jour — plafond du plan Vercel Hobby, analyse de coût complète dans
+  `schedules.ts`) ; vérifie
   que ce réglage TIENT : aucune cadence infra-journalière réintroduite, fenêtres regroupées
   maintenues, garde `cron-wakeup-budget.regression.test.ts` intacte ;
 - les emails : le volume a déjà été réduit volontairement (8 templates, plus aucun émetteur

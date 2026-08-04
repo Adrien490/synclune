@@ -4,11 +4,27 @@
 
 ## Profil de l'activité
 
-- **Statut** : entrepreneur individuel, **micro-entreprise en franchise de TVA** (art. 293 B CGI / futur art. L.223-3 CIBS).
-- **Activité** : vente de bijoux artisanaux (vente de **biens**), B2C exclusivement.
+- **Statut** : entrepreneur individuel, **petite micro-entreprise en franchise de TVA** (art. 293 B CGI / futur art. L.223-3 CIBS).
+- **Produit** : **bijoux créatifs et colorés, faits main**, vendus à l'unité (vente de **biens**), B2C exclusivement.
 - **Volume cible** : ~**20 commandes/mois** (~240/an).
-- **Clientèle** : France + Union Européenne (livraison 27 États UE + Monaco).
-- **Opération** : **1 personne** (la créatrice), pas d'équipe technique.
+- **Clientèle** : **France + Union Européenne** (livraison 27 États UE + Monaco), en français et en euros.
+- **Opération** : **1 personne** (Léane, la créatrice), pas d'équipe technique.
+
+### ⚠️ Positionnement : bijoux colorés, PAS joaillerie précieuse
+
+C'est la donnée de marque la plus souvent mal comprise, et elle a déjà produit des propositions à
+jeter. La marque exprime la **créativité colorée** de la créatrice — joyeux, personnel, artisanal.
+Elle ne vend ni or, ni pierres précieuses, ni « luxe discret ».
+
+Toute direction artistique bâtie sur le métal précieux, la gravure, le sérif de haute joaillerie ou
+le minimalisme froid est le **contre-pied exact** du brief. « Bijoux » ≠ « joaillerie ». La SSOT
+est `shared/constants/brand.ts` + `BUSINESS_INFO` (`shared/constants/seo-config.ts`), dont la
+description dit déjà : « Bijoux artisanaux **colorés et originaux** pour le quotidien et les
+occasions spéciales. »
+
+Conséquence pratique pour les prompts de design : viser le **soin artisanal et la joie**, pas le
+prestige. Un ton « maison de joaillerie premium » désaligne la copie, la palette et la typo d'un
+coup.
 
 ## Seuils fiscaux à surveiller (SSOT : `shared/constants/vat-franchise.ts`)
 
@@ -53,7 +69,7 @@ Le dépôt ne peut pas configurer ces protections ; elles vivent dans les consol
 
 - [ ] **Vercel → Spend Management** : plafond de dépense avec **pause automatique du projet**. C'est le SEUL vrai coupe-circuit contre une facture surprise — sans lui, le pire cas d'une journée d'abus se chiffre en centaines/milliers d'euros. **Priorité absolue.**
 - [ ] **Neon → alerte d'usage** sur les compute-hours (l'épuisement coupe la base, donc la boutique).
-- [ ] **Sentry → Crons** : vérifier combien de monitors le plan autorise réellement. Le code n'en déclare plus que 5 (`SENTRY_MONITORED_CRONS`) au lieu de 11 ; si le plan n'en inclut qu'un, arbitrer entre payer ~0,78 $/monitor et se limiter à `reconcile-invoices`.
+- [x] **Sentry → Crons** : arbitré au Lot 1 (2026-08-03). Le code ne déclare plus qu'**un seul** monitor (`SENTRY_MONITORED_CRONS` = `reconcile-invoices`), exactement ce que le plan Developer inclut — plus aucun check-in n'est rejeté. Les deux autres jobs gardent la capture d'exception + l'alerte admin, mais pas la détection de run manqué. Ne rouvrir que si le plan change.
 - [ ] **GitHub → quota Actions** : alerte à 75 % des minutes incluses.
 
 ## Choix de périmètre assumés (≠ manques)
@@ -63,6 +79,46 @@ Le dépôt ne peut pas configurer ces protections ; elles vivent dans les consol
 - **e-reporting DGFiP : retiré du code (2026-07-26).** La machinerie était en dry-run intégral (flag jamais activé, aucune Plateforme Agréée branchée) et écrite contre une spec non figée : ~7 200 lignes maintenues 18 mois pour une réécriture certaine au go-live. À reconstruire en **T1 2027** contre l'arrêté définitif (obligation 1ᵉʳ sept. 2027). Voir RUNBOOK.
 - **Pas d'avis produits.** Le système entier (4 tables, dépôt client, modération admin, notes en JSON-LD, filtre et tri par note) a été retiré le 2026-07-30 : la surface client de dépôt n'avait jamais été montée, donc le levier de conversion ne s'est jamais matérialisé. Migration `20260730120000_drop_reviews_system` (`down.sql` recrée la structure, pas les données).
 - **Pas de relance panier abandonné / cross-sell / click&collect.** Scaffolding retiré (audit §4.4). À reconstruire proprement (avec consentement RGPD) si un besoin marketing émerge.
+
+## § Conditions de réouverture — adresse de facturation et identité vendeur
+
+_Déporté de `CLAUDE.md` (invariants 5 et 10), qui garde l'énoncé de la règle. Ici : le motif du
+retrait et ce qui déclencherait la réouverture. Ce sont des **échéances**, pas des idées._
+
+### Adresse de facturation (invariant 5)
+
+Les 9 colonnes `Order.billing*` ont été retirées le 2026-08-04. Motif : leur seul writer était une
+action admin verrouillée dès `invoiceNumber != NULL`, or la facture est émise **dans les secondes**
+qui suivent le paiement (webhook → `ensureInvoiceNumberPersisted`). Sur une commande réelle, elles
+restaient donc NULL à jamais — des colonnes que rien ne remplissait, pas une fonctionnalité.
+
+L'art. 242 nonies A ann. II CGI demande l'adresse du **client** (1°) **et** celle de livraison si
+elle diffère (7° bis). Tant que l'acheteuse se fait livrer chez elle, les deux coïncident et une
+seule adresse suffit.
+
+**Deux déclencheurs de réouverture** :
+
+1. le jour où les commandes **cadeau** cessent d'être marginales ;
+2. au plus tard pour l'**émission structurée du 1ᵉʳ septembre 2027**, où l'adresse de livraison est
+   un bloc séparé (BT-75→79) que la Plateforme Agréée ne peut pas dériver.
+
+⚠️ La réouverture consiste à **capter l'adresse de l'acheteuse au checkout** — surtout pas à
+ré-ajouter des colonnes que rien ne remplit.
+
+### Identité vendeur (invariant 10)
+
+Les 12 colonnes `Order.vendor*` sont parties le 2026-08-05. Leur écrivain était
+`persistInvoiceNumber` ; leur seul lecteur en base, la Passe 0 de `reconcile-invoices`
+(`backfillInvoiceDataSnapshot`), qui reconstruisait le snapshot des factures **antérieures** à son
+introduction — cas devenu impossible, puisque numéro et `invoiceDataSnapshot` sont posés par le
+**même** `UPDATE`. Les deux autres chemins vers `buildSellerInfo` (route facture, avoir de commande)
+chargeaient en `GET_ORDER_SELECT_CUSTOMER`, qui ne portait pas ces colonnes : ils retombaient déjà
+silencieusement sur l'env.
+
+⚠️ Le verdict « garder » rendu par un audit antérieur tenait sur une prémisse fausse (il supposait
+le snapshot écrit dans une transaction distincte). **La condition de réouverture est exactement
+celle-là** : si `invoiceDataSnapshot` cessait d'être écrit dans la même transaction que
+`invoiceNumber`, un snapshot vendeur redeviendrait nécessaire.
 
 ## Dépendance plateforme (lock-in)
 
@@ -75,7 +131,7 @@ Ces bornes sont verrouillées par des tests de régression. Les desserrer, c'est
 | Poste                           | Borne                                                                                     | Verrouillé par                                                                               |
 | ------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | Transformations d'images Vercel | Hôtes épinglés sur les app-ids Synclune ; 2 paliers de qualité                            | `image-remote-patterns.regression.test.ts`, `image-config.constants.test.ts`                 |
-| Compute Neon                    | Aucun cron sous 30 min ; réveils alignés (≤ 2/heure)                                      | `cron-wakeup-budget.regression.test.ts`                                                      |
+| Compute Neon                    | Aucune cadence infra-journalière (plafond Hobby) ; réveils groupés — ~2/jour aujourd'hui  | `cron-wakeup-budget.regression.test.ts`, `cron-hobby-plan-daily-limit.regression.test.ts`    |
 | Quota e-mail Resend             | 0 envoi marketing (émetteurs supprimés 2026-07-30) ; 100/jour entièrement transactionnels | — (tout futur émetteur marketing devra re-créer le budget partagé, cf. `CLAUDE.md` § Emails) |
 | Stockage UploadThing            | 224 Mo max par upload (< 1/8 du quota gratuit)                                            | `upload-size-limits.regression.test.ts`                                                      |
 

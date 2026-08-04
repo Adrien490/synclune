@@ -4,6 +4,22 @@
 
 Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prisma 7, Stripe).
 
+**Qui c'est, et pourquoi ça change les arbitrages** — SSOT `shared/constants/brand.ts` +
+`BUSINESS_INFO` (`shared/constants/seo-config.ts`), détail dans [`docs/BUSINESS.md`](docs/BUSINESS.md) :
+
+- **Petite micro-entreprise française**, entrepreneur individuel en **franchise de TVA** (art. 293 B
+  CGI), **une seule personne** (Léane, la créatrice) — pas d'équipe technique, pas d'astreinte.
+- **Bijoux créatifs et colorés, faits main.** ⚠️ **Pas de la joaillerie précieuse.** La marque
+  exprime la créativité colorée de Léane : joyeux, personnel, artisanal. Toute proposition de
+  design bâtie sur le métal précieux, la gravure ou le « luxe discret » est le **contre-pied** du
+  brief — c'est une erreur déjà commise, ne pas la refaire. « Bijoux » ≠ « joaillerie ».
+- **B2C, France + Union Européenne** (27 États + Monaco), **français et EUR uniquement** (choix
+  assumés, pas des manques), ~**20 commandes/mois** visées.
+
+Ce profil est ce qui justifie la plupart des choix qui suivent : boutons admin plutôt que crons,
+rate limiting en mémoire, pas de i18n, pas de multi-devise, un seul compte administrateur. Une
+recommandation qui présuppose une équipe, un trafic ou un catalogue plus gros passe à côté.
+
 - **Storefront** (`/`, groupe de routes `(shop)`) - Produits, panier, paiement
 - **Admin** (`/admin`) - Catalogue, commandes, analytics
 - **Stripe** - Paiements, webhooks, remboursements
@@ -12,24 +28,43 @@ Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prism
 
 ## Commands
 
+**Avant toute PR : `pnpm validate`.**
+
 ```bash
+pnpm validate               # lint + typecheck + format:check + vitest run — LE gate
 pnpm dev                    # Dev server
 pnpm build                  # Build (prisma generate + next build --turbopack)
 pnpm start                  # Production server
-pnpm test                   # Vitest
-pnpm lint                   # ESLint
-pnpm typecheck              # TypeScript type checking (tsc --noEmit)
-pnpm format                 # Prettier (format)
-pnpm format:check           # Prettier (check only)
-pnpm size                   # Bundle size check (size-limit)
-pnpm size:check             # Bundle size check (JSON output)
-pnpm seed                   # Seed database
-pnpm db:studio              # Prisma Studio GUI
-pnpm email:dev              # Preview emails (port 3001)
-pnpm analyse                # Bundle analysis
-pnpm e2e                    # Playwright E2E tests
+
+# Tests
+pnpm test                   # Vitest (suite complète)
+pnpm test <chemin>          # Une seule suite / un seul fichier
+pnpm test:critical          # 8 modules transactionnels (= ce que lance le hook pre-commit)
+pnpm test:coverage          # Suite complète + couverture
+pnpm test:integration       # Requiert INTEGRATION_DATABASE_URL (skip silencieux sinon)
+pnpm e2e                    # Playwright E2E
 pnpm e2e:ui                 # Playwright UI mode
-pnpm prisma migrate dev     # Create/apply migrations
+
+# Qualité
+pnpm lint                   # ESLint
+pnpm typecheck              # tsc --noEmit
+pnpm format                 # Prettier (write)
+pnpm format:check           # Prettier (check only)
+pnpm knip                   # Exports morts (traite "use server" comme point d'entrée)
+pnpm doctor                 # react-doctor --offline  (`doctor:full` pour le rapport complet)
+pnpm size                   # size-limit (`size:check` pour la sortie JSON)
+pnpm analyse                # Bundle analysis
+
+# Base de données
+pnpm seed                   # Seed
+pnpm db:studio              # Prisma Studio GUI
+pnpm db:push                # Schéma → base, sans migration (dev)
+pnpm db:migrate             # prisma migrate dev — requiert SHADOW_DATABASE_URL, cf. § Migrations
+pnpm db:reset               # migrate reset + seed  ⚠️ DESTRUCTIF
+
+# Divers
+pnpm email:dev              # Preview emails (port 3001)
+pnpm docs:stripe            # Mirror local de la doc Stripe → docs/stripe/
 ```
 
 ## Architecture
@@ -40,7 +75,7 @@ app/
 ├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris, aide)
 ├── (legal)/                 # Pages legales (CGV, mentions, confidentialite)
 ├── admin/                   # Dashboard admin (catalogue, commandes, marketing, contenu)
-├── api/                     # Routes API (auth, cron, webhooks, search, uploadthing)
+├── api/                     # admin, auth, cron, csp-report, health, noop, orders, uploadthing, webhooks
 ├── paiement/                # Pages paiement (confirmation, annulation, retour)
 ├── suivi-commande/          # Suivi de commande invite (token HMAC) — SEUL acces client a une commande
 └── sitemap-images.xml/      # Generation sitemap images
@@ -56,7 +91,7 @@ modules/                     # DDD - 22 modules
 │   ├── hooks/               # Custom React hooks
 │   ├── types/               # TypeScript types
 │   ├── utils/               # Helpers, query builders
-│   └── lib/                 # Module-specific config (auth, cart, media, refunds, wishlist)
+│   └── lib/                 # Module-specific config (auth, cart, cron, media, refunds, wishlist)
 │
 │   Specialized modules:
 │   ├── cron/                # constants, lib, services (+ __tests__)
@@ -69,7 +104,7 @@ shared/                      # Cross-cutting concerns
 ├── constants/               # Cache tags, countries, currency, brand, SEO, navigation, limits
 ├── contexts/                # React Context definitions
 ├── data/                    # Shared data fetching with cache
-├── hooks/                   # ~20 hooks (pagination, , filter, media queries, touch)
+├── hooks/                   # ~30 hooks (filtres, media queries, touch, overlays, formulaires)
 ├── lib/                     # Core: prisma, stripe, email-config, cache, rate-limit, actions/
 ├── providers/               # Root providers, dialog/sheet/store providers
 ├── schemas/                 # Shared Zod schemas (address, email, pagination, media, phone)
@@ -90,104 +125,21 @@ shared/                      # Cross-cutting concerns
 - **Uploads**: UploadThing
 - **Monitoring**: Sentry (error tracking, tunnel via `/monitoring`)
 
-### Breakpoints — rem partout, jamais px
+### Conventions UI — le détail vit dans [`docs/UI-CONVENTIONS.md`](docs/UI-CONVENTIONS.md)
 
-SSOT : `shared/constants/breakpoints.ts` (`BREAKPOINTS` + `mediaBelow()` / `mediaAtLeast()` / `mediaBetween()`). Échelle alignée sur les défauts Tailwind v4, **en rem** : `xs 23.4375` · `sm 40` · `md 48` · `lg 64` · `xl 80` · `2xl 96`.
+**À lire avant de toucher à un composant.** Les règles ci-dessous sont les invariants ; leur
+_pourquoi_, les contre-exemples et les pièges de migration Radix → Base UI sont dans ce document.
 
-**Règle : aucune largeur en px dans un `matchMedia()`, ni dans une media query CSS écrite à la main, ni dans un `--breakpoint-*`.** Verrouillé repo-wide par `shared/constants/__tests__/no-px-media-query.regression.test.ts`.
-
-Pourquoi : Tailwind exprime ses breakpoints en rem. Un seuil JS en px coïncide avec eux uniquement tant que la police racine vaut 16px — dès que l'utilisateur change ce réglage (accessibilité, WCAG 1.4.4), les deux divergent. Les composants **hybrides** (branche choisie en JS, branche rendue avec une classe `md:`) tombent alors dans le vide : à police racine 14px, `md:` = 672px, et la plage 672-767px laissait `/admin` **sans aucune surface de navigation** — `useIsMobile()` disait « mobile » (sidebar → `null` via `disableMobileSheet`) pendant que le CSS disait déjà « desktop ». Audit responsive 2026-07-26, P1-1.
-
-Les media queries **sans largeur** (`prefers-reduced-motion`, `hover`, `pointer`, `orientation`, `forced-colors`) s'écrivent en clair — seules les largeurs se désynchronisent. La syntaxe range MQ4 (`(width < 48rem)`) est préférée à `(max-width: …)` : c'est l'équivalent exact de ce que Tailwind compile pour `max-md:`, sans la fenêtre de désaccord d'~1px sur les DPR fractionnaires.
-
-**Seuils de navigation** (décision explicite, pas un accident) :
-
-| Surface                    | Seuil | Relais au-dessus                |
-| -------------------------- | ----- | ------------------------------- |
-| Bottom-nav boutique        | `lg`  | `DesktopNav` (`hidden lg:flex`) |
-| Bottom bar + sidebar admin | `md`  | Sidebar (`hidden md:block`)     |
-
-La bottom-nav boutique suit `lg` pour couvrir l'iPad portrait (768×1024) : avec un seuil `md` la plage 48-64rem perdait le panier et les favoris sans gagner le mega-menu. `BottomBar` prend un prop `breakpoint: "md" | "lg"` d'où il dérive **à la fois** la classe Tailwind et la `matchMedia` — et ne publie `--bottom-bar-height` que lorsque la barre est réellement visible. Corollaire : les consommateurs de cette variable ne doivent **pas** préfixer leur offset d'un breakpoint (la variable vaut déjà 0 quand il n'y a pas de barre).
-
-### Largeurs de contenu et grilles
-
-| Surface    | Plafond                   | Note                                                                                                             |
-| ---------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Storefront | `max-w-6xl` (1152px)      | Appliqué page par page, pas par le layout. Aucun palier `2xl:` — le hero faisait exception et décrochait de 64px |
-| Checkout   | `max-w-5xl` (1024px)      | États intermédiaires en `max-w-3xl`                                                                              |
-| Admin      | `max-w-[100rem]` (1600px) | **Sans `mx-auto`** : centrer ferait varier la gouttière gauche avec la largeur de fenêtre                        |
-
-**Un palier de colonnes ne s'ajoute que si le conteneur grandit avec lui.** Les variants de grille se déclenchent sur la largeur du **viewport**, pas du conteneur : au-delà du plafond, une colonne de plus répartit le _même_ espace en plus de parts. `2xl:grid-cols-5` sur la grille produit faisait tomber les cartes de 248px à 192px (-22%) — retiré. Au-dessus du plafond, l'espace est de la marge, pas des colonnes.
-
-### Survol vs focus
-
-Toute affordance **porteuse d'information** révélée au survol doit l'être au focus clavier (WCAG 2.4.7) : soulignement de lien, chevron de navigation, bouton d'action qui s'éclaircit. Les effets purement décoratifs (scale d'image, halo) n'ont pas cette obligation.
-
-⚠️ **Ne jamais placer une règle de focus derrière `can-hover:`** — ce variant vaut `(hover: hover) and (pointer: fine)` et existe pour neutraliser le sticky-hover iOS ; une règle de focus derrière lui ne s'appliquerait jamais au clavier sur tactile. Le gate va sur le hover seul :
-
-```tsx
-"can-hover:group-hover:opacity-100 group-focus-visible:opacity-100";
-```
-
-Composants verrouillés par `shared/components/__tests__/hover-focus-parity.regression.test.ts` (liste à étendre, volontairement pas un scan repo-wide : un garde-fou qui hurle sur chaque `group-hover:scale-105` décoratif serait désactivé en une semaine).
-
-### Overlays — quelle primitive choisir
-
-| Besoin                                           | Primitive                                                                           | Rendu                                          |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Confirmer, action destructive                    | `ResponsiveAlertDialog`                                                             | `AlertDialog`, **identique mobile et desktop** |
-| Formulaire, édition                              | `ResponsiveDialog`                                                                  | `Drawer` < `md`, `Dialog` ≥ `md`               |
-| Navigation, filtres, panier — panneau persistant | `Sheet`                                                                             | `Drawer` Base UI, latéral par défaut           |
-| Menu d'actions, picker, tri — feuille éphémère   | `Drawer`                                                                            | `Drawer` Base UI, bottom par défaut            |
-| `Dialog` / `AlertDialog` bruts                   | seulement si la surface n'existe pas en mobile (raccourcis clavier, export desktop) |                                                |
-
-⚠️ **`ResponsiveAlertDialog` ne bascule pas** malgré son préfixe : il rend la même primitive sur tous les viewports (`tone` ne pilote que la couleur du bouton d'action et le pattern haptic). Seul `ResponsiveDialog` bascule, sur `useIsMobile()` = `mediaBelow("md")`.
-
-`Sheet` et `Drawer` enveloppent le **même** `Drawer` de Base UI. Le critère est l'intention, pas la technique : un panneau qu'on consulte (Sheet) vs une feuille qu'on referme aussitôt l'action faite (Drawer). Ils dérivent `swipeDirection` de leur prop `direction` (Vaul nommait le bord d'ancrage, Base UI nomme le geste qui ferme).
-
-**Les 4 familles sont des couches Base UI**, donc un seul verrou de scroll et une seule pile de dismiss — pas de double verrou concurrent, y compris sur un `AlertDialog` empilé dans un `Sheet`. ⚠️ **Cet invariant interdit de migrer une famille sans les autres** : pendant la migration Radix → Base UI, la `Sheet` est restée un cycle sur Vaul alors que l'`AlertDialog` était déjà passé — deux piles indépendantes, et Échap fermait la confirmation ET la sheet. Attrapé par `nested-overlay-stacking.regression.test.tsx`, qui le verrouille désormais.
-
-**Imbrication** : un overlay ouvert depuis un `Sheet`/`Drawer` doit être rendu **dans** son arbre JSX. L'empilement (scale du parent, focus chaîné, `--nested-drawers`) est natif — le `vaul-nested-context` maison a disparu. Ne jamais fermer le parent avant d'ouvrir l'enfant. Deux surfaces dérogent encore (`admin-menu-sheet`, `menu-sheet` diffèrent l'ouverture après la transition) — dette connue, pas un modèle à suivre.
-
-⚠️ **Jamais `<SheetClose render={…}>` / `<DrawerClose render={…}>` autour d'un `<Link>`.** Le Close fait atterrir son `onClick` sur le `<Link>`, et Next l'invoque **avant** `linkClicked` : `onOpenChange(false)` → `handleClose()` → `history.back()` synchrone, qui race le `router.push` et annule la navigation (l'utilisateur reste sur la page, sans erreur). La garde `isTopOfHistory` ne couvre PAS ce cas — elle détecte « un push a eu lieu **pendant** l'ouverture », pas « le push est queué dans le même clic, après la fermeture », où `history.length` est encore intact.
-
-Fermer par la **prop contrôlée** à la place (`open={isOpen}` + un handler qui `close()`), ce qui court-circuite `onOpenChange`. Et naviguer en **`replace`** : l'entrée poussée à l'ouverture porte la même URL que la page, la consommer évite une pression de retour morte par cycle ouvrir → naviguer (cumulative). Deux régressions verrouillent le pattern : `responsive-action-menu/__tests__/link-history-back.regression.test.tsx` (2026-05-15) et `app/(shop)/(home)/_components/navbar/__tests__/menu-sheet-link-navigation.regression.test.tsx` (2026-07-26, monte le **vrai** `ui/sheet` — un mock du wrapper rend le test aveugle à cette chaîne). Cas non couverts restants : `dashboard-period-sheet`, `dashboard-refresh-sheet`, `filter-sheet-wrapper`.
-
-**Historique** : `useBackButtonClose` pousse une entrée à l'ouverture pour que le retour matériel ferme l'overlay. Les 4 wrappers reprennent cette entrée sur **toutes** les fermetures via `handleClose` — un wrapper qui l'oublierait laisserait une entrée orpheline de même URL, avalant une pression de retour par cycle. `handleClose` ne recule que si l'entrée est encore au sommet (`history.length` inchangée depuis le push) : sinon une navigation a eu lieu entre-temps et reculer la défairait.
-
-**`handleOnly`** : autorisé uniquement sur une collision de gestes constatée et décrite en commentaire sur le call site, jamais par défaut — il supprime le swipe-to-dismiss depuis le contenu. Verrouillé par `shared/components/ui/__tests__/handle-only-allowlist.regression.test.ts`. ⚠️ Le prop survit à la migration, son **mécanisme s'est inversé** : Vaul avait une liste blanche (« seule la poignée drague »), Base UI a une liste noire — les wrappers enveloppent le contenu dans un conteneur `display:contents` porteur de `data-base-ui-swipe-ignore` (invisible pour le flex, trouvé par le `closest()` de Base UI). Même attribut, à la main, pour exclure une zone ponctuelle : il a remplacé `data-vaul-no-drag`.
-
-**Animation des panneaux : une TRANSITION, pas une animation keyframes.** Entrée, sortie et suivi du doigt partagent la propriété `transform` ; une `animate-in` écraserait le translate piloté par le geste (les keyframes l'emportent, puis `fill-mode: both` fige la valeur finale). Corollaire à ne pas perdre : le killswitch `prefers-reduced-motion` de `app/styles/animations.css` ne coupe que `animation` — c'est `app/styles/pwa.css` qui neutralise ces transitions-là, et `e2e/cart.spec.ts` qui le garde.
-
-Autres partis pris : pas de `Drawer` pour une confirmation, pas de View Transition sur une fermeture de panneau.
-
-### Composition : `render`, jamais `asChild`
-
-Base UI n'a pas de `Slot`. Pour rendre un autre élément à la place de celui du composant, on passe un **élément** au prop `render` :
-
-```tsx
-// ❌ Radix — n'existe plus nulle part dans le repo
-<Button asChild><Link href="/produits">Voir</Link></Button>
-// ✅ Base UI — les enfants restent portés par le composant
-<Button render={<Link href="/produits" />}>Voir</Button>
-```
-
-⚠️ Ce n'est **pas un renommage** : `render` déplace l'ÉLÉMENT, pas les enfants. Les props de l'élément passé gagnent sur celles du composant ; `children` participe à cette fusion comme n'importe quelle autre prop.
-
-Nos propres composants (`Button`, `Item`, `SidebarMenuButton`, `ResponsiveActionMenuTrigger`…) exposent le même prop via `useRender` + `mergeProps` de `@base-ui/react`. `useRender` n'appelle son unique hook que si `document` existe : ces modules **restent utilisables depuis un composant serveur**, ne pas leur ajouter `"use client"` sans raison.
-
-Corollaires à connaître :
-
-- **Un mock de test qui ignore `render` fait disparaître l'élément du DOM.** Utiliser `renderPropMock` (`test/mocks/render-prop.tsx`), qui reproduit la fusion exacte. ⚠️ Ne jamais passer `children` en 3ᵉ argument de `cloneElement` : React remplace alors inconditionnellement les enfants, y compris par `undefined`.
-- `render={<a href="…" />}` déclenche un faux positif `jsx-a11y/anchor-has-content` (le nom accessible vient des enfants du composant) — annoter avec la justification, comme les 7 sites existants.
-
-### État : `data-*` booléens, plus de `data-state`
-
-Base UI expose les états en attributs **présents ou absents** : `data-open` / `data-closed`, `data-checked` / `data-unchecked`, `data-active`, `data-highlighted`, `data-panel-open` (trigger d'accordéon/collapsible), `data-popup-open` (trigger de popup). Les variants Tailwind s'écrivent donc `data-open:` et non `data-[state=open]:`.
-
-⚠️ **Piège des menus** : `Menu.Item` et `Select.Item` ne prennent PAS le focus DOM — le popup le garde et désigne l'item courant par `aria-activedescendant`. Un `focus:bg-accent` hérité de Radix ne se déclenche **jamais** ; c'est `data-highlighted:` qu'il faut. Verrouillé par `dropdown-menu-highlight.regression.test.tsx`.
-
-Autres correspondances qui ne sont pas des renommages : `onSelect` n'existe pas sur `Menu.Item` (utiliser `onClick` + `closeOnClick`), `onCloseAutoFocus`/`onOpenAutoFocus` deviennent `finalFocus`/`initialFocus` (qui attendent l'**élément** à focuser, ou `false`), et `onEscapeKeyDown` devient un arbitrage dans `onOpenChange` via `eventDetails.reason === "escape-key"` + `eventDetails.cancel()`.
+- **Breakpoints en rem, jamais en px** — aucune largeur en px dans un `matchMedia()`, une media query manuelle ou un `--breakpoint-*`. SSOT `shared/constants/breakpoints.ts`. Un seuil JS en px décroche du CSS Tailwind dès que la police racine n'est plus à 16px (WCAG 1.4.4), et les composants **hybrides** tombent alors dans le vide. Verrouillé par `no-px-media-query.regression.test.ts`.
+- **Seuils de navigation** : bottom-nav boutique à `lg` (couvre l'iPad portrait), bottom bar + sidebar admin à `md`. `--bottom-bar-height` vaut déjà 0 quand la barre est absente — ne pas préfixer son offset d'un breakpoint.
+- **Plafonds de contenu** : storefront `max-w-6xl`, checkout `max-w-5xl`, admin `max-w-[100rem]` **sans `mx-auto`**. ⚠️ **Un palier de colonnes ne s'ajoute que si le conteneur grandit avec lui** — au-delà du plafond, une colonne de plus rétrécit les cartes.
+- **Survol ⇒ focus** pour toute affordance porteuse d'information (WCAG 2.4.7). ⚠️ **Jamais de règle de focus derrière `can-hover:`** : elle ne s'appliquerait jamais au clavier sur tactile. Gater le hover seul — et gater le **masquage**, pas la révélation, sinon le CTA reste cliquable en `opacity-0` sur iPad.
+- **Overlays** : `ResponsiveAlertDialog` (confirmation — ⚠️ ne bascule pas), `ResponsiveDialog` (formulaire, bascule sur `md`), `Sheet` (panneau persistant), `Drawer` (feuille éphémère). Les 4 sont des couches Base UI : **une seule pile de dismiss**, donc migrer une famille sans les autres est interdit. Un overlay enfant se rend **dans** l'arbre JSX du parent.
+- ⚠️ **Jamais `<SheetClose render={…}>` / `<DrawerClose render={…}>` autour d'un `<Link>`** — `history.back()` race le `router.push` et annule la navigation, sans erreur visible. Fermer par la prop contrôlée, naviguer en `replace`.
+- **`render`, jamais `asChild`** — Base UI n'a pas de `Slot`, et la règle **n'a pas d'exception** : plus aucun `asChild` dans le dépôt. `render` déplace l'ÉLÉMENT, pas les enfants.
+- **`data-*` booléens, plus de `data-state`** — `data-open:` et non `data-[state=open]:`. ⚠️ `Menu.Item` / `Select.Item` ne prennent pas le focus DOM : c'est `data-highlighted:`, jamais `focus:`.
+- **`handleOnly`** : uniquement sur collision de gestes constatée et commentée sur le call site. Verrouillé par `handle-only-allowlist.regression.test.ts`.
+- **Panneaux : une TRANSITION, pas une animation keyframes** — une `animate-in` écraserait le translate piloté par le geste.
 
 ### React 19 - NO MEMOIZATION
 
@@ -199,11 +151,13 @@ Le compilateur React 19 optimise automatiquement. **NE PAS utiliser:**
 
 ### Tous les `select` Prisma du catalogue vivent dans `constants/`
 
-`GET_PRODUCT_SELECT`, `GET_PRODUCTS_SELECT`, `GET_PRODUCT_FOR_DUPLICATION_SELECT`, `PRODUCT_CAROUSEL_SELECT`, `QUICK_SEARCH_SELECT` dans `modules/products/constants/product.constants.ts` ; les 3 selects collection dans `modules/collections/constants/collection.constants.ts` ; les 2 selects type dans `modules/product-types/constants/product-type.constants.ts`. **Ne pas écrire un `select` en ligne dans une fonction `data/`** : c'est précisément ce qui a permis à celui de la duplication de rater la migration M2M de mai 2026 (les 4 selects rangés ici avaient été mis à jour, le sien — invisible — non), et « Dupliquer un produit » a répondu « Le produit source n'existe pas » pendant ~2,5 mois.
+Les 5 selects produit dans `modules/products/constants/product.constants.ts`, les 3 selects collection dans `modules/collections/constants/collection.constants.ts`, les 2 selects type dans `modules/product-types/constants/product-type.constants.ts`.
+
+**Ne pas écrire un `select` en ligne dans une fonction `data/`** : un select invisible rate les migrations de schéma. C'est arrivé à celui de la duplication (les autres, rangés ici, avaient été mis à jour) — « Dupliquer un produit » a répondu « Le produit source n'existe pas » pendant ~2,5 mois.
 
 Deux garde-fous, tous deux **sans base de données** :
 
-- `catalogue-selects-schema-validity.regression.test.ts` — soumet les 10 selects au validateur Prisma via un client sur port fermé. Prisma valide côté client **avant** de connecter : une clé inconnue lève `PrismaClientValidationError`, une clé valide échoue sur la connexion. C'est le seul filet qui couvre le trou entre `tsc` (qui accepte silencieusement une clé inexistante dans un `select` — vérifié : un `@ts-expect-error` y est signalé _inutile_) et les tests d'intégration (skippés sans `INTEGRATION_DATABASE_URL`, donc toujours en local).
+- `catalogue-selects-schema-validity.regression.test.ts` — soumet les selects au validateur Prisma via un client sur port fermé : Prisma valide côté client **avant** de connecter, donc une clé inconnue lève `PrismaClientValidationError` là où une clé valide échoue seulement sur la connexion. ⚠️ C'est le seul filet sur ce trou : **`tsc` accepte silencieusement une clé inexistante dans un `select`** (un `@ts-expect-error` y est signalé _inutile_), et les tests d'intégration sont skippés sans `INTEGRATION_DATABASE_URL`.
 - `catalogue-selects-media-filter.regression.test.ts` — voir ci-dessous.
 
 ### `mediaType` : une vidéo ne doit jamais atteindre un champ qui exige une image
@@ -279,19 +233,28 @@ export async function createSomething(
 
 ⚠️ **Créer un nouvel administrateur passe par `prisma/seed.ts` ou par la base — pas par l'application.** C'est assumé (opératrice unique). Corollaire : la vérification d'email est **conservée** (`requireEmailVerification: true` + `/verifier-email` + `/renvoyer-verification`), sinon un admin fraîchement créé n'aurait aucun moyen de débloquer son propre accès.
 
-Tout le parcours d'achat est **invité** : panier **entièrement en cookie** (`cart`, lignes SKU + quantité + prix témoin + code promo, httpOnly 7 j glissants — les tables `Cart`/`CartItem` sont droppées depuis le 2026-08-04, `modules/cart/lib/cart-cookie.ts` est la SSOT), favoris **entièrement en cookie** (`wishlist`, JSON array de Product IDs httpOnly 30 j glissants — les tables `Wishlist`/`WishlistItem` sont droppées depuis le 2026-08-03, `modules/wishlist/lib/wishlist-cookie.ts` est la SSOT), checkout sans session (`confirmCheckout`), et consultation de commande par le lien tokenisé de l'email de confirmation (`/suivi-commande`, HMAC via `buildOrderTrackingUrl` — **SSOT à une seule branche**, cf. `order-tracking-url.regression.test.ts`). Il n'y a plus de fusion post-login : une donnée invitée **reste** invitée.
+Tout le parcours d'achat est **invité** :
 
-Ce qui n'a **pas** disparu et pourquoi : `Order.userId` (l'administratrice reste un `User` qui peut acheter — `Cart.userId` est parti avec la table le 2026-08-04 ; `Order.userId` porte en outre le rattachement historique lu par `isInvoiceOwnerErased()` — `DiscountUsage.userId` et `Wishlist.userId` sont partis, le premier au Lot 0 2026-08-03 : `maxUsagePerUser` se vérifie par email de commande, le second avec les tables wishlist le 2026-08-03), `AccountStatus` (surface de révocation du compte admin, re-vérifiée en base par les helpers ci-dessous), et `Session`/`Account`/`Verification` (Better Auth y range le hash du mot de passe et les tokens de reset).
+- **panier en cookie** (`cart`, lignes SKU + quantité + prix témoin + code promo, httpOnly 7 j glissants). Plus de tables `Cart`/`CartItem` — SSOT `modules/cart/lib/cart-cookie.ts` ;
+- **favoris en cookie** (`wishlist`, array de Product IDs, httpOnly 30 j glissants). Plus de tables `Wishlist`/`WishlistItem` — SSOT `modules/wishlist/lib/wishlist-cookie.ts` ;
+- **checkout sans session** (`confirmCheckout`) ;
+- **consultation de commande par lien tokenisé** de l'email de confirmation (`/suivi-commande`, HMAC via `buildOrderTrackingUrl` — SSOT à une seule branche, cf. `order-tracking-url.regression.test.ts`).
+
+Il n'y a plus de fusion post-login : une donnée invitée **reste** invitée.
+
+⚠️ **`Order.userId` a disparu le 2026-08-05** (audit schéma V1, Lot C) : toujours NULL en achat invité, et ses deux gardes court-circuitaient déjà dessus. Trois conséquences à connaître — les routes facture/avoir n'ont plus qu'un seul chemin client, le **token HMAC signé** ; `/credit-note/[refundId]` devient **admin-only** (elle n'a jamais eu de token invité) ; `isInvoiceOwnerErased` a disparu avec elle. **Si un compte client revient, il faut réintroduire la colonne ET cette garde avant tout chemin d'anonymisation RGPD.**
+
+Ce qui n'a **pas** disparu, et qu'il ne faut donc pas « nettoyer » : `AccountStatus` (surface de révocation du compte admin — `ANONYMIZED` reste lu par la garde de connexion d'`auth.ts` même si plus rien ne l'écrit), et `Session`/`Account`/`Verification` (Better Auth y range le hash du mot de passe et les tokens de reset — son adapter écrit ET relit leurs `createdAt`/`updatedAt`, hors de portée de tout dégraissage).
 
 ### Panier en cookie — trois corollaires qui ne se devinent pas
 
 **1. `cart_session` n'est plus une session PANIER.** Le cookie survit au drop des tables, et sous son ancien nom : il porte la garde d'ownership du PaymentIntent (`metadata.guestSessionId`, CHECKOUT-IDOR-001) et l'identité de rate limiting. Le renommer invaliderait la garde de tout PI créé avant le déploiement — le client verrait « Accès non autorisé au paiement » en cliquant Payer. SSOT `modules/cart/lib/guest-session.ts`.
 
-**2. Un webhook ne peut PAS vider le panier.** `payment_intent.succeeded` purgeait les `CartItem` ; un appel serveur-à-serveur ne porte aucun cookie du client. Le vidage est repris par `clearCartAfterOrder`, déclenché au montage de `/paiement/confirmation`. ⚠️ Surtout **pas** depuis `confirmCheckout` : elle s'exécute AVANT la confirmation Stripe, donc une carte refusée y viderait le panier d'un client qui doit justement pouvoir réessayer. Angle mort assumé : qui ferme l'onglet sans revenir garde son cookie (les articles redeviennent simplement re-achetables, le stock ayant déjà été décrémenté).
+**2. Un webhook ne peut PAS vider le panier** — un appel serveur-à-serveur ne porte aucun cookie du client. Le vidage revient à `clearCartAfterOrder`, au montage de `/paiement/confirmation`. ⚠️ Surtout **pas** depuis `confirmCheckout` : elle s'exécute AVANT la confirmation Stripe, donc une carte refusée y viderait le panier d'un client qui doit justement pouvoir réessayer. Angle mort assumé : qui ferme l'onglet sans revenir garde son cookie.
 
-**3. `priceAtAdd` vit dans le cookie sans être une faille — mais seulement grâce à une garde amont.** C'est un **témoin d'affichage**, jamais une base de facturation : `computeCartSubtotal` re-lit `sku.priceInclTax` en base, et `confirmCheckout` **refuse** la commande si le témoin diverge du prix DB. Ne jamais dériver un montant facturé de cette valeur. Corollaire symétrique : `addToCart` relit toujours le prix en base et **ignore** tout `priceAtAdd` soumis par le client.
+**3. `priceAtAdd` vit dans le cookie sans être une faille — grâce à une garde amont.** C'est un **témoin d'affichage**, jamais une base de facturation : `computeCartSubtotal` re-lit `sku.priceInclTax` en base, et `confirmCheckout` **refuse** la commande si le témoin diverge du prix DB. Ne jamais dériver un montant facturé de cette valeur ; `addToCart` relit toujours le prix en base et **ignore** tout `priceAtAdd` soumis par le client.
 
-Deux conséquences de portée plus large : le compteur FOMO « Dans X paniers » a été **supprimé** (il agrégeait les paniers des AUTRES visiteurs — structurellement impossible avec un cookie), et `delete-sku` ne refuse plus une variante « présente dans N paniers » (aucune visibilité serveur ; la ligne du cookie devient inerte). La garde `orderItems`, elle, reste — c'est celle qui protège l'historique comptable.
+Conséquence de portée plus large : rien côté serveur ne voit les paniers. Pas de compteur « Dans X paniers » (il agrégerait les paniers des AUTRES visiteurs), et `delete-sku` ne refuse plus une variante « présente dans N paniers » — la ligne du cookie devient simplement inerte. La garde `orderItems`, elle, reste : c'est celle qui protège l'historique comptable.
 
 **Auth helpers** (`modules/auth/lib/require-auth`):
 
@@ -305,28 +268,25 @@ Deux conséquences de portée plus large : le compteur FOMO « Dans X paniers »
 
 > ⚠️ Ne JAMAIS faire confiance à `session.user.role` pour un chemin de privilège. Toujours passer par un helper `requireAdmin*` / `isVerifiedAdmin()` / `isAdmin()` qui re-vérifie en DB. Verrouillé par le garde-fou statique `modules/auth/utils/__tests__/no-raw-session-role-trust.regression.test.ts` (allowlist explicite pour le pré-filtre de `require-auth` et l'affichage cosmétique), doublé d'une assertion qui interdit à tout autre fichier de ré-implémenter le re-check en base.
 
-**Pourquoi la fenêtre existe** : tant que le cookie-cache Better Auth est valide, `auth.api.getSession()` répond depuis le cookie signé **sans aucune lecture en base** — le plugin `customSession`, celui qui dégrade le rôle à `USER` pour un compte révoqué, ne s'exécute même pas. La latence de révocation de toute l'application vaut donc exactement `AUTH_SESSION_CONFIG.cookieCache.maxAge` (**60 s**, `modules/auth/lib/auth-env.ts`). Corollaire à retenir : **supprimer les lignes `Session` ne coupe rien avant cette expiration**, et relever ce réglage rallonge d'autant la fenêtre.
+**Pourquoi la fenêtre existe** : tant que le cookie-cache Better Auth est valide, `auth.api.getSession()` répond depuis le cookie signé **sans aucune lecture en base** — le plugin `customSession`, celui qui dégrade le rôle à `USER` pour un compte révoqué, ne s'exécute même pas. La latence de révocation de toute l'application vaut donc exactement `AUTH_SESSION_CONFIG.cookieCache.maxAge` (**60 s**, `modules/auth/lib/auth-env.ts`). ⚠️ **Supprimer les lignes `Session` ne coupe rien avant cette expiration**, et relever ce réglage rallonge d'autant la fenêtre.
 
-**Le re-check doit porter sur le STATUT DE COMPTE, pas seulement sur le rôle.** `fetchUserForAuth()` filtre `deletedAt` + `suspendedAt` + `accountStatus = ACTIVE` — c'est la seule implémentation, mémoïsée par `cache()` (portée requête). `resolve-invoice-admin.ts` en avait une copie qui ne lisait que `role` : un admin _suspendu_ gardait le bypass d'ownership sur les PDF facture/avoir. Supprimé le 2026-07-31 ; les 3 routes appellent `isVerifiedAdmin()` directement.
+**Le re-check doit porter sur le STATUT DE COMPTE, pas seulement sur le rôle.** `fetchUserForAuth()` filtre `deletedAt` + `suspendedAt` + `accountStatus = ACTIVE` — c'est la **seule** implémentation, mémoïsée par `cache()` (portée requête). Une copie qui ne lisait que `role` laissait un admin _suspendu_ garder le bypass d'ownership sur les PDF facture/avoir ; d'où l'assertion qui interdit de ré-implémenter le re-check ailleurs.
 
-**Chaque `app/admin/**/page.tsx` appelle `assertAdminPage()`**, en plus du `requireAdminWithUser()` du layout. Un layout partagé n'est **pas** ré-exécuté lors d'une navigation client entre routes qui le partagent, et le pré-filtre de `proxy.ts` est fail-open dès que le cookie-cache a expiré — son commentaire promettait déjà que « les pages admin utilisent `requireAdmin()` » alors qu'aucune des 50 ne le faisait. Verrouillé par `app/admin/__tests__/admin-page-auth-guard.regression.test.ts`, volontairement **sans allowlist** : classer fetcher par fetcher ce qui est donnée publique (`getMaterialOptions` alimente aussi les filtres de `/produits`) ou donnée admin est un arbitrage qui se re-perd.
+**Chaque `app/admin/**/page.tsx` appelle `assertAdminPage()`**, en plus du `requireAdminWithUser()` du layout. Un layout partagé n'est **pas** ré-exécuté lors d'une navigation client entre routes qui le partagent, et le pré-filtre de `proxy.ts` est fail-open dès que le cookie-cache a expiré. Verrouillé par `app/admin/__tests__/admin-page-auth-guard.regression.test.ts`, volontairement **sans allowlist** : classer fetcher par fetcher ce qui est donnée publique (`getMaterialOptions` alimente aussi les filtres de `/produits`) ou donnée admin est un arbitrage qui se re-perd.
 
-**Révoquer une session** : `/admin/configuration/securite` (action `revokeAllSessions`), ou la procédure SQL de secours du [`RUNBOOK`](docs/RUNBOOK.md#-compte-admin-compromis--révoquer-les-sessions). Il n'existait plus aucun chemin applicatif de révocation depuis le retrait de `modules/users`.
+**Révoquer une session** : `/admin/configuration/securite` (action `revokeAllSessions`), ou la procédure SQL de secours du [`RUNBOOK`](docs/RUNBOOK.md#-compte-admin-compromis--révoquer-les-sessions).
 
 **Action helpers** (`shared/lib/actions/`):
 
 - `success()`, `error()`, `notFound()`, `unauthorized()`, `forbidden()`, `validationError()` - Responses
-- `validateInput()` - Zod validation (`validateFormData()` retiré, 0 appelant — audit Zod 2026-07-31)
+- `validateInput()` - Zod validation
 - `handleActionError()`, `BusinessError` - Error handling
 - `enforceRateLimit()` - Rate limiting
 
 **Validation patterns** — deux patterns coexistent légitimement :
 
-- **`validateInput(schema, data)`** : pattern par défaut pour les Server Actions qui retournent `ActionState` avec un message d'erreur simple. Le wrapper retourne `{ data } | { error: ActionState }` — usage en `if ("error" in validation) return validation.error`.
-- **`schema.safeParse(data)` direct** : à conserver uniquement quand l'action :
-  1. Retourne un type custom (pas `ActionState`) — ex: `quick-search.ts` retourne `QuickSearchResult`, `validate-discount-code.ts` retourne `ValidateDiscountCodeReturn`.
-  2. A besoin du `path` Zod pour enrichir le message d'erreur — ex: `skus/{create,update}` retournent `validationError("${path}: ${message}")` pour cibler le champ fautif côté UI.
-     Toute nouvelle action `ActionState` simple doit utiliser `validateInput()`. Ajouter un cas safeParse direct requiert une raison documentée (path-aware ou retour custom). _(Le 3ᵉ cas historique — retry path-aware de `validate-discount-code` sans `userId` — a disparu au Lot 0 2026-08-03 avec `DiscountUsage.userId`.)_
+- **`validateInput(schema, data)`** — le défaut, pour toute Server Action qui retourne `ActionState`. Rend `{ data } | { error: ActionState }`, usage en `if ("error" in validation) return validation.error`.
+- **`schema.safeParse(data)` direct** — uniquement si l'action retourne un **type custom** (ex. `quick-search.ts`) ou a besoin du **`path` Zod** pour cibler le champ fautif (ex. `skus/{create,update}`). Tout nouveau cas exige une raison documentée.
 
 ### Une Server Action VALIDE son argument, elle ne se contente pas de l'annoter
 
@@ -342,7 +302,7 @@ Verrouillé par `test/contract/server-action-input-validation.contract.test.ts` 
 
 Toute string Zod persistée dans une colonne `@db.VarChar(n)` doit porter un `.max()` ≤ `n`, et être déclarée dans `test/contract/zod-prisma-length-parity.contract.test.ts`.
 
-Ni `tsc` ni les tests d'intégration ne voient ce trou : le type d'une colonne `VarChar(n)` est `string`, et `db push` accepte n'importe quelle longueur tant qu'aucune ligne trop longue n'est écrite. En production, c'est un `22001` Postgres **dans la transaction**, rendu à l'utilisateur en « Une erreur est survenue » sans indication du champ. L'audit du 2026-07-31 en a trouvé six d'un coup (`trackingNumber` 100 vs 50, `fullName` 101 vs `customerName` 100, `emailSchema` et `phoneSchema` sans borne — `z.email()` valide le format, jamais la longueur).
+Ni `tsc` ni les tests d'intégration ne voient ce trou : le type d'une colonne `VarChar(n)` est `string`, et `db push` accepte n'importe quelle longueur tant qu'aucune ligne trop longue n'est écrite. En production, c'est un `22001` Postgres **dans la transaction**, rendu à l'utilisateur en « Une erreur est survenue » sans indication du champ. Un seul audit en a trouvé six d'un coup. ⚠️ Piège classique : `z.email()` valide le format, **jamais la longueur**.
 
 ⚠️ Une borne posée par `.refine()` est invisible à ce contrat (fonction opaque) : utiliser `.max()`, ou `.pipe(z.string().max(…))` après un `.transform()` — c'est ce que fait `phoneSchema`, qui normalise en E.164 avant de borner.
 
@@ -376,7 +336,7 @@ async function fetchCartSkus(skuIds: string[]) {
 
 ### `"use cache"` vs `"use cache: private"` — la clé, ce sont les ARGUMENTS
 
-Next construit la clé d'une entrée à partir de « build ID + hash de la fonction + **arguments sérialisés** + variables de closure ». Une fonction publique qui reçoit `userId` en argument ne peut donc pas servir l'entrée d'un client à un autre : deux `userId` = deux entrées. ⚠️ **Un `cacheTag()` n'est pas la clé** — confondre les deux avait fait basculer 25 fetchers en `private` au nom d'un risque IDOR inexistant (audit 2026-07-31 ; motif corrigé dans `modules/auth/data/get-session.ts`).
+Next construit la clé d'une entrée à partir de « build ID + hash de la fonction + **arguments sérialisés** + variables de closure ». Une fonction publique qui reçoit `userId` en argument ne peut donc pas servir l'entrée d'un client à un autre : deux `userId` = deux entrées. ⚠️ **Un `cacheTag()` n'est pas la clé** — confondre les deux avait fait basculer 25 fetchers en `private` au nom d'un risque IDOR inexistant (audit 2026-07-31 ; motif corrigé dans `modules/auth/lib/get-current-session.ts`).
 
 Le vrai critère est la **confidentialité**, et il se paie :
 
@@ -401,11 +361,11 @@ Le vrai critère est la **confidentialité**, et il se paie :
 if (!workStore || workStore.page.endsWith("/route")) throw ...;
 ```
 
-Déléguer l'invalidation à un `services/` ne protège donc de rien — invoqué depuis `app/api/cron/<job>/route.ts`, il throw. C'est ce qui, entre le 2026-07-06 et le 2026-07-31, a fait qu'**aucune invalidation ne s'exécutait après un paiement Stripe** (tâche `INVALIDATE_CACHE` en `FAILED` silencieux → stock vitrine périmé jusqu'à 6 h) ni dans les 7 crons (500 + alerte admin les jours de travail réel).
+Déléguer l'invalidation à un `services/` ne protège donc de rien — invoqué depuis `app/api/cron/<job>/route.ts`, il throw. Ça a déjà coûté 3 semaines pendant lesquelles **aucune invalidation ne s'exécutait après un paiement Stripe** (échec silencieux → stock vitrine périmé jusqu'à 6 h).
 
 Ne pas utiliser `revalidateTag(tag, "max")` pour du stock ou un statut : le profil built-in `max` vaut `{ stale: 300, revalidate: 30j, expire: 365j }`, donc l'entrée périmée continue d'être servie.
 
-Trois filets verrouillent la règle, complémentaires : `local/no-update-tag-outside-server-action` (ESLint, à l'écriture) · `shared/lib/__tests__/update-tag-server-action-only.regression.test.ts` (scan repo) · `test/contract/cache-invalidation-context.contract.test.ts` (exerce la **vraie** implémentation Next, sans mock — les 247 fichiers qui font `vi.mock("next/cache")` sont aveugles à cette contrainte, c'est ce qui a laissé passer le bug pendant trois audits).
+Trois filets verrouillent la règle, complémentaires : `local/no-update-tag-outside-server-action` (ESLint, à l'écriture) · `shared/lib/__tests__/update-tag-server-action-only.regression.test.ts` (scan repo) · `test/contract/cache-invalidation-context.contract.test.ts` (exerce la **vraie** implémentation Next, sans mock — les très nombreux fichiers qui font `vi.mock("next/cache")` sont aveugles à cette contrainte, c'est ce qui a laissé passer le bug pendant trois audits).
 
 **4 cache profiles** (next.config.ts):
 
@@ -418,9 +378,9 @@ Trois filets verrouillent la règle, complémentaires : `local/no-update-tag-out
 
 **Invalidation des statuts commande (CACHE-AUDIT-010)** : toute mutation de `Order.status`/`paymentStatus` (Server Action, webhook handler, cron) DOIT invalider via `getOrderInvalidationTags(orderId)` (`modules/orders/constants/cache.ts`) — jamais une liste de tags écrite à la main. Le helper couvre les tags par-commande (`DETAIL`, `CONFIRMATION`, `HISTORY`) en plus de `LIST`/`ADMIN_ORDERS_LIST`/`ADMIN_BADGES` ; une liste partielle laisse le détail commande stale jusqu'à l'expiration du profil `user` (~10 min). Choisir l'API d'invalidation selon la matrice contexte → API ci-dessus.
 
-**Tags de cache toujours via une constante SSOT du module, jamais en littéral template.** Un tag écrit à la main ré-implémente une valeur définie ailleurs : renommer le préfixe casse la cascade en silence. Deux occurrences subsistaient dans les cascades couleur/matériau → PDP jusqu'à l'audit 2026-07-31.
+**Tags de cache toujours via une constante SSOT du module, jamais en littéral template.** Un tag écrit à la main ré-implémente une valeur définie ailleurs : renommer le préfixe casse la cascade en silence.
 
-**Un tag n'existe que s'il a un lecteur ET un mutateur.** Deux orphelins possibles, tous deux silencieux : un `cacheTag()` que personne n'invalide (l'entrée ne se rafraîchit qu'à expiration) et un `updateTag()` sur un tag que personne ne pose (invalidation dans le vide). Trois vagues d'audit en ont trouvé à chaque passage — `DASHBOARD_CACHE_TAGS` invalidait encore 2 tags fantômes sur 6 via `Object.values(...)`, et `auth-verifications-list` n'avait aucun mutateur. Attention particulière aux mutations passant par `auth.api.*` : elles écrivent en base sans appel Prisma visible, donc aucun garde-fou statique ne les voit.
+**Un tag n'existe que s'il a un lecteur ET un mutateur.** Deux orphelins possibles, tous deux silencieux : un `cacheTag()` que personne n'invalide (l'entrée ne se rafraîchit qu'à expiration) et un `updateTag()` sur un tag que personne ne pose (invalidation dans le vide). Trois vagues d'audit en ont trouvé à chaque passage — c'est une erreur qui se refait. ⚠️ Attention particulière aux mutations passant par `auth.api.*` : elles écrivent en base **sans appel Prisma visible**, donc aucun garde-fou statique ne les voit.
 
 ## Module Layers Pattern
 
@@ -448,46 +408,14 @@ async function fetchOrders(params: GetOrdersParams, userId?: string) {
 
 ### services/ - Logique metier pure
 
-Fonctions pures sans effets de bord. Pas de `"use server"`, pas de mutations DB.
-
-```typescript
-// modules/orders/services/order-query-builder.ts
-export function buildOrderWhereClause(params: GetOrdersParams): Prisma.OrderWhereInput {
-	const conditions: Prisma.OrderWhereInput[] = [];
-
-	if (params.search) {
-		conditions.push(buildOrderSearchConditions(params.search));
-	}
-	if (params.filters) {
-		conditions.push(buildOrderFilterConditions(params.filters));
-	}
-
-	return { AND: conditions, deletedAt: null };
-}
-```
+Fonctions pures sans effets de bord. Pas de `"use server"`, pas de mutations DB. C'est là que
+vivent les constructeurs de `where` (`buildOrderWhereClause` dans
+`modules/orders/services/order-query-builder.ts`), appelés depuis `data/`.
 
 ### actions/ - Server Actions (mutations)
 
-Mutations avec auth, validation, DB write, cache invalidation.
-
-```typescript
-"use server";
-
-export async function cancelOrder(
-	_: ActionState | undefined,
-	formData: FormData,
-): Promise<ActionState> {
-	const admin = await requireAdmin();
-	if ("error" in admin) return admin.error;
-
-	const validation = validateInput(schema, { id: formData.get("id") });
-	if (!validation.success) return error(validation.error.errors[0]?.message);
-
-	await prisma.order.update({ where: { id }, data: { status: "CANCELLED" } });
-	updateTag("orders-list");
-	return success("Commande annulee");
-}
-```
+Mutations avec auth, validation, rate limit, DB write, invalidation de cache — dans cet ordre.
+Squelette : cf. § [Server Actions Pattern](#server-actions-pattern) ci-dessus.
 
 ### Matrice de decision
 
@@ -517,14 +445,14 @@ Ces reads sont atomiques avec la mutation et ne beneficieraient pas du cache (do
 
 Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce sont des services transactionnels appeles depuis plusieurs contextes (cron, webhooks, server components) ou la logique doit rester atomique:
 
-| Fichier                                                | Raison                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `payments/services/stripe-customer.service.ts`         | Paire atomique Stripe + DB pour checkout                                                                                                                                                                                                                                                                                                                                                                  |
-| `payments/services/order-creation.service.ts`          | Transaction atomique stock lock + order + discount usage                                                                                                                                                                                                                                                                                                                                                  |
-| `cart/services/sku-validation.service.ts`              | Validation DB reads partagees entre actions + SKU selector                                                                                                                                                                                                                                                                                                                                                |
-| `refunds/services/send-refund-confirmation.service.ts` | Émetteur unique email remboursement — `refund.updateMany` claim atomique (`confirmationEmailSentAt`) partagé entre la tâche Maintenance `reconcile-refunds` + webhook `charge.refunded` (ORD-STRIPE-005 — l'action `processRefund` est partie au Lot 2 S3.3, remboursements Stripe-first)                                                                                                                 |
-| `refunds/services/finalize-refund.service.ts`          | Finalisation asynchrone d'un refund Stripe confirmé (claim APPROVED→COMPLETED + paymentStatus + avoir + email — le restock automatique est parti au Lot 6 avec RefundItem.restock : restock post-refund = ajustement manuel de stock SKU) — partagée webhook `refund.updated` + tâche Maintenance `reconcile-refunds` (P1-C audit 2026-08-01) ; retourne les tags, l'appelant invalide selon son contexte |
-| `orders/services/archive-credit-note-pdf.service.ts`   | E-invoicing — upload UploadThing + `Order.creditNotePdfHash` SHA-256 (avoir immuable)                                                                                                                                                                                                                                                                                                                     |
+| Fichier                                                | Raison                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `payments/services/stripe-customer.service.ts`         | Paire atomique Stripe + DB pour checkout                                                                                                                                                                                                                                                                               |
+| `payments/services/order-creation.service.ts`          | Transaction atomique stock lock + order + discount usage                                                                                                                                                                                                                                                               |
+| `cart/services/sku-validation.service.ts`              | Validation DB reads partagees entre actions + SKU selector                                                                                                                                                                                                                                                             |
+| `refunds/services/send-refund-confirmation.service.ts` | Émetteur **unique** de l'email de remboursement — claim atomique via `refund.updateMany` (`confirmationEmailSentAt`), partagé entre la tâche Maintenance `reconcile-refunds` et le webhook `charge.refunded`                                                                                                           |
+| `refunds/services/finalize-refund.service.ts`          | Finalisation asynchrone d'un refund Stripe confirmé (claim APPROVED→COMPLETED + paymentStatus + avoir + email). Partagée webhook `refund.updated` / tâche `reconcile-refunds` ; **retourne les tags, l'appelant invalide selon son contexte**. ⚠️ Pas de restock automatique : c'est un ajustement manuel de stock SKU |
+| `orders/services/archive-credit-note-pdf.service.ts`   | E-invoicing — upload UploadThing + `Order.creditNotePdfHash` SHA-256 (avoir immuable)                                                                                                                                                                                                                                  |
 
 ## API Routes
 
@@ -542,24 +470,27 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 | `cleanup-pending-orders` | Daily 3:00       | ops/RGPD  | —              |
 | `hard-delete-retention`  | Monthly 2nd 4:00 | RGPD      | —              |
 
-**Tâches manuelles** (page Maintenance) : `retry-webhooks` (Stripe retente déjà 3 j tout seul), `reconcile-refunds` (le nominal passe par le webhook), `sync-async-payments` (checkout card-only, quasi jamais utile), `retry-post-webhook-tasks` (transitoire — disparaît au Lot 2 avec la file PostWebhookTask), `cleanup-orphan-media` (hygiène pure). _Supprimé sans remplacement : `reopen-store` — la lecture (`get-store-status.ts`) traite déjà un `reopensAt` échu comme boutique ouverte, la ligne DB périmée est inoffensive. Retirés antérieurement : `alert-dispute-deadlines` (2026-07-30), `process-account-deletions` (2026-07-31 — la purge RGPD reste portée par `hard-delete-retention`)._
+**Tâches manuelles** (page Maintenance, SSOT `modules/cron/constants/maintenance-tasks.ts`) — elles sont **4** : `retry-webhooks` (Stripe retente déjà 3 j tout seul), `reconcile-refunds` (le nominal passe par le webhook), `sync-async-payments` (checkout card-only, quasi jamais utile), `cleanup-orphan-media` (hygiène pure). ⚠️ Le nom `PostWebhookTask` qui subsiste dans `modules/webhooks/` est un **type TypeScript**, plus un modèle Prisma.
 
 `reconcile-invoices` assure la DLQ facture (numérotation / PDF / avoir — obligation **LIVE** Art. 286/289-I) + les passes de continuité de séquence et d'intégrité des PDF archivés. Logic in `modules/cron/services/` (or domain modules for transactional services).
 
-**⛔ Plafond dur — plan Vercel Hobby : un run par jour et par cron.** Une seule expression infra-journalière (`*/30 * * * *`, `0 * * * *`, `0 */4 * * *`…) fait **refuser le déploiement entier** par l'API Vercel, avant le build : « Hobby accounts are limited to daily cron jobs ». Ce n'est pas une dégradation silencieuse mais une porte fermée, invisible au build local comme au typecheck — la production est restée bloquée dessus (dernier déploiement réussi 38 jours plus tôt) jusqu'au 2026-07-27. Verrouillé par `cron-hobby-plan-daily-limit.regression.test.ts`, qui assert sur `vercel.json` **et** sur la SSOT. Repasser à une cadence infra-journalière exige un plan Pro — et alors ce test doit être supprimé, pas contourné.
+**⛔ Plafond dur — plan Vercel Hobby : un run par jour et par cron.** Une seule expression infra-journalière (`*/30 * * * *`, `0 * * * *`, `0 */4 * * *`…) fait **refuser le déploiement entier** par l'API Vercel, avant le build : « Hobby accounts are limited to daily cron jobs ». Ce n'est pas une dégradation silencieuse mais une porte fermée, invisible au build local comme au typecheck (elle a déjà bloqué la production 38 jours). Verrouillé par `cron-hobby-plan-daily-limit.regression.test.ts`, qui assert sur `vercel.json` **et** sur la SSOT. Repasser à une cadence infra-journalière exige un plan Pro — et alors ce test doit être supprimé, pas contourné.
 
 Conséquences fonctionnelles assumées : le rejeu des webhooks et des tâches post-paiement dépend désormais d'un **clic de Léane** (au lieu d'un rattrapage quotidien) — Stripe retente lui-même 3 jours, l'alerte admin email signale les échecs, et à ~20 commandes/mois le reliquat se compte en unités.
 
-**⚠️ Budget de réveils DB (audit coûts P1-2)** — chaque exécution réveille Neon, dont le scale-to-zero se déclenche après **5 min** d'inactivité. Un cron plus fréquent que ça maintient la base allumée 24/7 : à `*/5`, `retry-post-webhook-tasks` consommait à lui seul ~95 % des 191,9 compute-hours du plan Free, et au dépassement Neon **suspend la base — boutique KO**. Deux règles, verrouillées par `cron-wakeup-budget.regression.test.ts` : (1) jamais de cadence < 30 min ; (2) grouper les réveils plutôt que de les décaler. Depuis le Lot 1, les 3 jobs tiennent sur **2 fenêtres quotidiennes** (2h, 3h) + la mensuelle (4h le 2), soit ~2 réveils/jour.
+**⚠️ Budget de réveils DB** — chaque exécution réveille Neon, dont le scale-to-zero se déclenche après **5 min** d'inactivité. Un cron plus fréquent que ça maintient la base allumée 24/7 ; au dépassement du plan Free, Neon **suspend la base — boutique KO**. Deux règles, verrouillées par `cron-wakeup-budget.regression.test.ts` : (1) jamais de cadence < 30 min ; (2) grouper les réveils plutôt que de les décaler. Les 3 jobs tiennent sur **2 fenêtres quotidiennes** (2h, 3h) + la mensuelle (4h le 2), soit ~2 réveils/jour.
 
 **Monitors Sentry** — le monitoring cron est facturé **par monitor** (plan Developer : 1 seul inclus). Depuis le Lot 1, un seul monitor est émis : `reconcile-invoices` (`SENTRY_MONITORED_CRONS` dans `schedules.ts`) — exactement ce que le plan couvre. Les deux autres jobs gardent la capture d'exception + l'alerte admin, mais pas la détection de run manqué.
 
-`cleanup-pending-orders` porte deux passes ops quotidiennes (commandes PENDING, puis sessions Better Auth expirées, Lot 0 2026-08-03) plutôt que deux crons — chaque cron supplémentaire est un réveil DB de plus. _Les passes « purge des paniers guest expirés » et « purge des wishlists guest inactives » sont parties avec leurs tables (2026-08-04 et 2026-08-03) : panier et favoris vivent dans des cookies, qui expirent tout seuls côté client ; la passe « drainage de la file retour en stock » avec le back-in-stock (2026-07-30)._
+`cleanup-pending-orders` porte deux passes ops quotidiennes (commandes PENDING, puis sessions Better Auth expirées) plutôt que deux crons — chaque cron supplémentaire est un réveil DB de plus.
 
 ### Other API Routes
 
+- `api/orders/[orderNumber]/` - `invoice`, `credit-note[/refundId]`, `status` — **les seules routes qui servent un PDF fiscal** (cf. § Facturation électronique). Accès invité par token HMAC, ou bypass admin via `isVerifiedAdmin()`.
+- `api/admin/orders/export/` - Export CSV du livre de recettes (Art. 50-0 CGI)
 - `api/auth/` - Better Auth handler
 - `api/uploadthing/` - UploadThing file upload handler
+- `api/health/`, `api/csp-report/`, `api/noop/` - Sonde, collecte des violations CSP, no-op
 
 ## Emails
 
@@ -567,11 +498,9 @@ Conséquences fonctionnelles assumées : le rejeu des webhooks et des tâches po
 
 **Clients (7)** : order-confirmation, shipping-confirmation, cancel-order-confirmation, refund-confirmed, payment-failed (5 transactionnels) + verification, password-reset (2 auth — **admin uniquement**, cf. § Auth).
 
-⚠️ **Il n'existe plus AUCUN émetteur marketing.** `back-in-stock` est parti avec la catégorie marketing entière (2026-07-30) et `account-deletion` avec le cron d'anonymisation (2026-07-31). Corollaires : plus de `MARKETING_DAILY_EMAIL_BUDGET`, plus d'en-têtes `List-Unsubscribe`, plus d'endpoint `/notifications/desinscription`, et la colonne `User.marketingOptOutAt` a été droppée (migration 20260731100000) — elle n'avait plus de lecteur. Tout futur émetteur marketing devra **re-créer** ce triptyque (budget partagé + en-têtes RFC 8058 + opt-out persisté), pas s'en passer.
+⚠️ **Il n'existe plus AUCUN émetteur marketing** — donc plus de `MARKETING_DAILY_EMAIL_BUDGET`, plus d'en-têtes `List-Unsubscribe`, plus d'endpoint de désinscription, plus de `User.marketingOptOutAt`. Tout futur émetteur marketing devra **re-créer** ce triptyque (budget partagé + en-têtes RFC 8058 + opt-out persisté), pas s'en passer.
 
-_Retirés antérieurement (volume e-mail) : tracking-update + delivery-confirmation (redondants/informatifs), welcome + oauth-account-linked (faible valeur), review-request (déclencheur dormant + colonne `Order.reviewRequestSentAt` absente en base — audit schéma 2026-07-26 ; le système d'avis entier a été retiré le 2026-07-30)._
-
-**Admin (1 template polyvalent)** : `admin-alert-email` paramétré par `type` (refund-failed, webhook-failed, order-processing, dispute, invoice, pdf-archive-failed, credit-note-failed, sequence-overflow, stuck-orders, cron). _Retirés : `admin-new-order-email` (1 mail/commande, dashboard suffit) + sous-type `checkout` (code mort). Le litige n'émet plus qu'une alerte à l'ouverture (pas à la clôture)._
+**Admin (1 template polyvalent)** : `admin-alert-email` paramétré par `type` (refund-failed, webhook-failed, order-processing, dispute, invoice, pdf-archive-failed, credit-note-failed, sequence-overflow, stuck-orders, cron). Le litige n'émet qu'une alerte à l'ouverture, pas à la clôture.
 
 **Anti-doublon** : `idempotencyKey` Resend (24h cross-instance, ex: `order-confirm-${orderId}`, `order-cancel:${orderId}`) + cache LRU in-process 10 min via `send-email.ts`. Pas de flag DB côté Order (KISS).
 
@@ -585,30 +514,38 @@ import { notDeleted, softDelete } from "@/shared/lib/prisma";
 // Exclude soft-deleted
 await prisma.order.findMany({ where: { ...notDeleted } });
 
-// Soft delete (10 ans retention legale)
-await softDelete.order(orderId);
+// Soft delete — un SEUL helper, `discount`
+await softDelete.discount(discountId);
 ```
+
+⚠️ `softDelete` n'expose plus qu'une entrée, et **n'en rajouter une que le jour où un appelant
+existe**. Chaque module pose son `deletedAt` dans sa propre transaction, avec les écritures qui
+l'accompagnent (purge des liaisons, audit, promotion d'un nouveau défaut) ; un helper mono-ligne
+à côté ne fait que suggérer un raccourci qui sauterait ces étapes.
 
 **Key enums**: `ProductStatus`, `OrderStatus`, `PaymentStatus`, `RefundStatus`, `FulfillmentStatus`
 
+**Il n'y a plus de journal d'inventaire** (`StockMovement` supprimé : 7 écrivains, zéro lecteur).
+Le registre obligatoire d'une micro-entreprise est le livre de recettes (export CSV filtré sur
+`paidAt`, Art. 50-0 CGI), pas un journal de stock. Décrément et restock sont inchangés.
+**Le rouvrir demanderait d'abord une surface de LECTURE** — c'est son absence qui l'a condamné.
+
 ### Migrations & rollback
 
-Chaque nouvelle migration **doit** ajouter un `down.sql` paire dans le même dossier (`prisma/migrations/<timestamp>_<name>/down.sql`) pour permettre un rollback rapide en cas d'incident production. Exemple : `prisma/migrations/20251124_add_inventory_non_negative_constraint/down.sql`.
+Chaque nouvelle migration **doit** ajouter un `down.sql` paire dans le même dossier (`prisma/migrations/<timestamp>_<name>/down.sql`) pour permettre un rollback rapide en cas d'incident production. Exemple : `prisma/migrations/20260804200000_add_order_stripe_charge_id/down.sql`. (Les 21 migrations en ont une — c'est le contract test de parité qui l'exige, pas une convention molle.)
 
 Pas de rétroactif sur les migrations existantes (risque trop élevé). En cas de besoin de rollback historique : restore Neon PITR.
 
-#### Historique baseliné — `0_init` est la PREMIÈRE migration (audit schéma 2026-07-26, amendé 2026-07-30)
+#### Historique baseliné — `0_init` est la PREMIÈRE migration
 
-`prisma/migrations/` part de `0_init`, qui reconstruit toute la base ; les migrations suivantes sont incrémentales et normales. Les 143 migrations d'avant le baseline sont archivées dans `prisma/migrations-archive/` — conservées comme documentation (chacune porte sa justification légale/technique), mais hors du chemin de Prisma.
+`prisma/migrations/` part de `0_init`, qui reconstruit toute la base ; les migrations suivantes sont incrémentales et normales. Les migrations d'avant le baseline sont archivées dans `prisma/migrations-archive/` — documentation seulement, hors du chemin de Prisma. Contexte du baselining : [`RUNBOOK`](docs/RUNBOOK.md#-baselining-du-schéma--pourquoi-0_init-existe).
 
-⚠️ **Ne JAMAIS éditer `0_init`.** Son checksum est enregistré dans `_prisma_migrations` sur toute base où il a été marqué appliqué : le modifier fait échouer `migrate deploy` (« migration was modified after it was applied »). Une évolution du schéma s'écrit **toujours** dans une nouvelle migration, jamais dans le baseline — y compris pour ajouter un garde brut. Le contract test de parité a lui-même dû être corrigé pour ça (il assertait `dirs === ["0_init"]`, donc rougissait sur la première migration légitime et poussait à éditer le baseline).
-
-**Pourquoi** : l'historique incrémental n'était pas rejouable. 21 tables (`User`, `Session`, `Refund`, `Discount`, `SkuMedia`, `OrderHistory`…) étaient `ALTER`ées sans qu'aucune migration ne les `CREATE` — le renommage `user` → `User` avait été fait hors migrations, et `20260209_schema_sync_and_hardening` s'intitulait elle-même « Syncs schema.prisma with DB state ». `prisma migrate deploy` sur une base vide échouait, et le seul recovery était Neon PITR. Cause racine : `prisma migrate dev` est cassé ici (shadow DB, `P3006`), et le contournement `db execute` + `migrate resolve --applied` marque une migration appliquée **sans vérifier qu'elle reproduit le schéma**.
+⚠️ **Ne JAMAIS éditer `0_init`.** Son checksum est enregistré dans `_prisma_migrations` sur toute base où il a été marqué appliqué : le modifier fait échouer `migrate deploy` (« migration was modified after it was applied »). Une évolution du schéma s'écrit **toujours** dans une nouvelle migration, jamais dans le baseline — y compris pour ajouter un garde brut.
 
 **Structure de `0_init`** — deux parties, et la seconde est la plus importante :
 
 1. DDL généré par `prisma migrate diff --from-empty --to-schema` (tables, colonnes, enums, FK, index normaux).
-2. **Annexe des gardes bruts** — copie de `prisma/sql/raw-guards.sql` : 52 CHECK, 14 index partiels/expression, 2 extensions, 2 fonctions, 2 triggers. **`prisma migrate diff` n'en génère AUCUN.** Un baseline régénéré sans recoller cette annexe perdrait en silence le format de numéro de facture (Art. 286 CGI), le trigger d'unicité cross-table des avoirs, le CHECK singleton `StoreSettings`, la formule de total de commande…
+2. **Annexe des gardes bruts** — copie de `prisma/sql/raw-guards.sql` : 32 CHECK, 8 index partiels/expression, 2 extensions, 2 fonctions, 2 triggers. **`prisma migrate diff` n'en génère AUCUN.** Un baseline régénéré sans recoller cette annexe perdrait en silence le format de numéro de facture (Art. 286 CGI), le trigger d'unicité cross-table des avoirs, le CHECK singleton `StoreSettings`, la formule de total de commande…
 
 **`prisma/sql/raw-guards.sql` est la SSOT des gardes**, consommée par deux chemins qui doivent rester d'accord : l'annexe de `0_init`, et `test/integration/setup.ts` (appliqué après `db push`). Le fichier est **idempotent** (chaque garde précédé d'un `DROP … IF EXISTS`). Ajouter un garde là ne l'applique pas aux bases existantes : écrire aussi une migration normale.
 
@@ -648,44 +585,59 @@ Sans override : risque P2024 timeout + rollback partiel.
 
 ## Facturation électronique — invariants
 
-Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). **Seuil de franchise applicable : 85 000 € HT/an (ventes de marchandises — bijoux ; majoré 93 500 €)** ; 37 500 € ne vaut que pour les prestations de services (le `/personnalisation` sur-mesure est une zone grise à arbitrer avec le comptable). Seuil piloté par `VAT_FRANCHISE_THRESHOLD_EUR` (SSOT `shared/constants/vat-franchise.ts`, défaut 85 000 €, validé par `env.schema.ts`) ; le majoré en est dérivé × 1,1 via `getMajoredFranchiseThresholdCents()`. ⚠️ **Les deux seuils n'ont pas la même conséquence** — franchir le seuil de base laisse la franchise acquise jusqu'au 31 décembre, franchir le majoré rend la TVA due dès le 1ᵉʳ du mois de dépassement. `VatProgressCard` annonçait le second dès le premier (audit franchise TVA 2026-07-27, verrouillé par `vat-progress-card.regression.test.tsx`). La mention légale ne s'écrit **jamais en littéral** : toutes les surfaces (PDF facture/avoir, checkout, CGV, mentions légales, email) dérivent de `DEFAULT_FRANCHISE_VAT_MENTION`, verrouillé par `vat-mention-ssot.regression.test.ts` — c'est ce qui rendra la bascule CGI → CIBS (échéance 31/12/2027) atomique. Calendrier réforme : émission/e-reporting B2C obligatoire au **1ᵉʳ septembre 2027**, **réception** au **1ᵉʳ septembre 2026** (échéance la plus proche — obligation **back-office** : s'inscrire auprès d'une PA pour recevoir les factures fournisseurs, pas du code storefront). ⚠️ **L'e-reporting a été RETIRÉ du code le 2026-07-26** (right-sizing) : la machinerie était en dry-run intégral, écrite contre une spec non figée, sans Plateforme Agréée branchée. **À réécrire au go-live** contre l'arrêté définitif et une PA réelle — cf. [`docs/RUNBOOK.md`](docs/RUNBOOK.md). Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
+Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). Les
+montants des seuils et leurs conséquences vivent dans [`docs/BUSINESS.md`](docs/BUSINESS.md#seuils-fiscaux-à-surveiller-ssot--sharedconstantsvat-franchiseets) ;
+le calendrier de la réforme et l'e-reporting à réécrire, dans [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+Ce qui relève du **code** :
+
+- Le seuil est piloté par `VAT_FRANCHISE_THRESHOLD_EUR` (SSOT `shared/constants/vat-franchise.ts`) ; le majoré en dérive × 1,1 via `getMajoredFranchiseThresholdCents()`.
+- ⚠️ **Les deux seuils n'ont pas la même conséquence** — le base laisse la franchise acquise jusqu'au 31 décembre, le majoré rend la TVA due dès le 1ᵉʳ du mois de dépassement. Ne pas annoncer le second dès le premier (`vat-progress-card.regression.test.tsx`).
+- La mention légale ne s'écrit **jamais en littéral** : PDF facture/avoir, checkout, CGV, mentions légales et email dérivent tous de `DEFAULT_FRANCHISE_VAT_MENTION` (`vat-mention-ssot.regression.test.ts`) — c'est ce qui rendra la bascule CGI → CIBS atomique.
+- ⚠️ **L'e-reporting a été RETIRÉ du code** (dry-run intégral contre une spec non figée, sans Plateforme Agréée). **À réécrire au go-live**, pas à réactiver.
+
+Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
 
 ### Invariants intangibles
 
 1. **Aucune création manuelle de facture** depuis l'admin ou ailleurs. Toute facture (`invoiceNumber`) doit passer par `persist-invoice-number.service.ts`, déclenché uniquement par le webhook `payment_intent.succeeded` (eager via `ensure-invoice-number.service.ts`) ou en lazy fallback dans `app/api/orders/[orderNumber]/invoice/route.ts`. Aucune Server Action ne doit écrire `invoiceNumber` ou `creditNoteNumber`. Défense en profondeur (EINV-SEQ-008) : `persistInvoiceNumber` refuse en interne toute commande jamais encaissée (`paidAt` NULL **et** `paymentStatus ≠ PAID`) — Art. 289-I, la garde ne dépend plus des callers.
 2. **Aucun avoir manuel.** `creditNoteNumber` (`A-YYYY-NNNNN`) est généré uniquement par `void-invoice.service.ts` (full void Order — appelé depuis `cancel-order`, `mark-as-fully-refunded` et le webhook `charge.refunded`) et `issue-credit-note.service.ts` (avoir partiel Refund), tous deux via la séquence SSOT `credit-note-sequence.service.ts`. Les écritures `Refund.creditNote*` sont verrouillées par leur propre assertion dans `no-manual-invoice-creation.regression.test.ts`.
-3. **`OrderHistory` est immuable PENDANT la rétention 10 ans** — pas de `deletedAt`, pas d'`update`/`delete` applicatif. Audit trail comptable Art. L123-22. **Unique exception (arbitrage 2026-08-03)** : passée l'échéance, la purge `hard-delete-retention` neutralise `note` + `metadata` (`ORDER_HISTORY_PII_SCRUB`, comme `OrderNote.content`) — la ligne survit (action, statuts, dates, auteur staff). Allowlist fermée dans `order-history-immutability.regression.test.ts` : tout autre writer reste une régression. Corollaire RGPD inchangé : un audit `source: CUSTOMER` ne doit JAMAIS dériver `authorName` du client (`user.name`/`user.email`) — libellé neutre `"Client"` + `authorId` (la PII y survivrait toute la rétention ; régression `order-history-no-customer-pii`).
+3. **`OrderHistory` est immuable PENDANT la rétention 10 ans** — pas de `deletedAt`, pas d'`update`/`delete` applicatif (Art. L123-22). **Unique exception** : passée l'échéance, `hard-delete-retention` neutralise `note` + `metadata` (`ORDER_HISTORY_PII_SCRUB`) ; la ligne survit (action, statuts, dates, auteur staff). Allowlist fermée dans `order-history-immutability.regression.test.ts` — tout autre writer est une régression. Corollaire RGPD : un audit `source: CUSTOMER` ne doit JAMAIS dériver `authorName` du client — libellé neutre `"Client"` + `authorId`, car la PII y survivrait toute la rétention (`order-history-no-customer-pii`).
 4. **Snapshots OrderItem figés** au moment du checkout (`productTitle`, `productImageUrl`, `skuColor`, `skuMaterial`, `skuSize`, `price`). Une mutation Product/Sku ne doit jamais modifier un OrderItem existant.
-5. **Snapshots adresses figés** sur Order au checkout : les `shipping*` (+ `customer*`) sont copiés champ-à-champ depuis le formulaire dans la tx de création (`order-creation.service.ts`). **Il n'existe qu'UNE adresse par commande depuis le 2026-08-04** : les 9 colonnes `billing*` ont été retirées, et `buildBillingAddress` rend l'adresse de livraison — c'est elle qu'imprime le PDF sous « Facturé à ». Motif : leur seul writer était une action admin verrouillée dès `invoiceNumber != NULL`, or la facture est émise dans les secondes suivant le paiement (webhook → `ensureInvoiceNumberPersisted`) ; sur une commande réelle elles restaient NULL à jamais. ⚠️ **Condition de réouverture datée** : l'art. 242 nonies A ann. II CGI demande l'adresse du CLIENT (1°) **et** celle de livraison si elle diffère (7° bis). Tant que l'acheteuse se fait livrer chez elle les deux coïncident ; dès que les commandes CADEAU cessent d'être marginales — et au plus tard pour l'émission structurée du **1er septembre 2027**, où l'adresse de livraison est un bloc séparé (BT-75→79) que la plateforme agréée ne peut pas dériver — il faudra capter l'adresse de l'acheteuse **au checkout**, pas ré-ajouter des colonnes que rien ne remplit.
-6. **PDF immuable post-émission (factures ET avoirs)** : `archive-invoice-pdf.service.ts` upload UploadThing + SHA-256 (`Order.invoicePdfHash`). La route `/api/orders/[orderNumber]/invoice` sert le PDF archivé en priorité (régénération seulement en fallback si fetch UploadThing échoue). **Avoirs (EINV-CREDIT-020)** : l'avoir n'a PAS de snapshot de données (contenu reconstruit depuis les colonnes Order) — son PDF est donc archivé **eagerly à l'émission** (`voidInvoice` → `ensureOrderCreditNoteArchived` ; `issueCreditNoteForRefund` → `ensureRefundCreditNoteArchived`), et rattrapé par `reconcile-invoices` (Passes 3b + 7). ⚠️ Le **troisième filet a disparu** : `ensureUserCreditNotesArchived` bloquait l'anonymisation RGPD tant qu'un avoir émis n'était pas archivé, mais ses deux seuls appelants (`process-account-deletions`, `anonymize-user-immediately`) sont partis avec l'espace client (2026-07-31), donc le service aussi. L'invariant tient sur l'archivage eager + les passes de rattrapage ; **si un chemin d'anonymisation d'utilisateur revient, il DOIT réintroduire cette garde avant son scrub** (verrouillé par `credit-note-eager-archive.regression.test.ts`). Tout rendu d'avoir passe par les SSOT `render-order-credit-note.service.ts` / `render-refund-credit-note.service.ts` (routes + eager + cron : PDF bit-identique au hash archivé). **Intégrité proactive** : la Passe 8 de `reconcile-invoices` (`verify-pdf-archive-integrity.service.ts`) re-hash chaque artefact archivé (rotation ~30 j via `pdfIntegrityCheckedAt` sur Order/Refund) et auto-répare une copie UploadThing corrompue UNIQUEMENT si la régénération est bit-identique au hash DB — le hash, preuve d'immutabilité, n'est JAMAIS réécrit (divergence → alerte admin, intervention manuelle).
+5. **Snapshots adresses figés** sur Order au checkout : `shipping*` (+ `customer*`) copiés champ-à-champ depuis le formulaire dans la tx de création (`order-creation.service.ts`). **Il n'existe qu'UNE adresse par commande** — pas de colonnes `billing*`, et `buildBillingAddress` rend l'adresse de livraison, celle qu'imprime le PDF sous « Facturé à ». ⚠️ **Condition de réouverture** (Art. 242 nonies A ann. II CGI, et au plus tard l'émission structurée de sept. 2027 où la livraison est un bloc séparé BT-75→79) : il faudra capter l'adresse de l'acheteuse **au checkout** — surtout pas ré-ajouter des colonnes que rien ne remplit, ce qui était précisément le défaut des anciennes. Détail : [`docs/BUSINESS.md`](docs/BUSINESS.md#-conditions-de-réouverture--adresse-de-facturation-et-identité-vendeur).
+   6bis. **Un avoir porte UNE ligne, au montant remboursé.** `RefundItem` est parti le 2026-08-05 : l'itemisation d'un remboursement était FABRIQUÉE — depuis le passage Stripe-first on rembourse un **montant**, jamais des articles, et l'allocation pro-rata gardait `quantity` = quantité commandée ENTIÈRE. La ligne imprimée affichait donc « 2 × 30,00 € » pour un total de « 20,00 € » : une ligne qui ne s'additionne pas, canonicalisée et figée sous SHA-256 pour dix ans. `buildCreditNoteLine` émet désormais une ligne unique « Remboursement sur facture F-YYYY-NNNNN » au montant `refund.amount` — l'Art. 272-I CGI demande la référence à la facture corrigée et le montant, pas le détail des articles. Verrouillé par une assertion d'arithmétique (`quantity × unitPrice === lineTotal`) dans `build-credit-note-data.regression.test.ts`.
+
+6. **PDF immuable post-émission (factures ET avoirs)** : `archive-invoice-pdf.service.ts` upload UploadThing + SHA-256 (`Order.invoicePdfHash`). Les routes servent l'archive en priorité, la régénération n'est qu'un fallback. **Avoirs** : ils n'ont PAS de snapshot de données (contenu reconstruit depuis les colonnes Order), donc leur PDF est archivé **eagerly à l'émission**, rattrapé par `reconcile-invoices`. Tout rendu passe par les SSOT `render-order-credit-note.service.ts` / `render-refund-credit-note.service.ts` — sinon le PDF cesse d'être bit-identique au hash. ⚠️ **Si un chemin d'anonymisation d'utilisateur revient, il DOIT bloquer sur « avoir émis non archivé » avant son scrub** : cette garde a été retirée avec l'espace client, l'invariant ne tient plus que sur l'archivage eager (`credit-note-eager-archive.regression.test.ts`). **Le hash n'est JAMAIS réécrit** : la passe d'intégrité auto-répare une copie UploadThing corrompue uniquement si la régénération est bit-identique ; sinon alerte admin (cf. [`RUNBOOK`](docs/RUNBOOK.md#-intégrité-pdf-archivés-art-l102-b-lpf)).
 7. **Numérotation séquentielle gap-free** : `F-YYYY-NNNNN` pour factures, `A-YYYY-NNNNN` pour avoirs. CHECK constraints DB strictes (`^F-[0-9]{4}-[0-9]{5}$`). Advisory locks Postgres `1_000_000+year` (facture) et `2_000_000+year` (avoir). Sérialisation totale par année. L'unicité cross-table des avoirs (Order ∪ Refund) est en plus verrouillée côté DB par le trigger `check_credit_note_cross_table_unique` (migration 20260709, rejette en 23505/P2002 les écritures contournant le lock). Les 3 tx de séquence utilisent `TX_TIMEOUT_LONG`/`TX_MAX_WAIT_LONG` (l'attente advisory lock compte dans le timeout) et retentent les codes transitoires `RETRYABLE_SEQUENCE_TX_ERROR_CODES` (P2002/P2024/P2028 — sûr car garde d'idempotence re-vérifiée sous lock).
 8. **Pas de vente manuelle / pas de caisse.** Aucune Server Action ne doit créer une commande payée sans passer par Stripe (PaymentIntent). Tout flow alternatif (`recordCashSale`, `createManualOrder`, etc.) requiert validation comptable préalable — sinon risque "logiciel de caisse" NF 525 non conforme.
-9. **Rétention PII vs RGPD.** ⚠️ Le premier temps du cycle a disparu : l'anonymisation de COMPTE (`anonymize-user.service.ts`) est partie avec l'espace client (2026-07-31) — sans compte client, rien à anonymiser. Ce qu'elle faisait, pour mémoire et pour le jour où un tel chemin reviendrait : scrubber seulement les surfaces _opérationnelles_ (`customer*`, `shipping*`) et NON l'identité légale de la facture (`invoiceDataSnapshot`, PDF) — conservée au titre de l'exemption RGPD Art. 17(3)(b) (obligation Art. 289 CGI / L102 B LPF). Cette identité n'est purgée qu'à `paidAt + 10 ans` par `hard-delete-retention` (`purgeExpiredOrderPii`, marqueur `Order.piiPurgedAt`), respectant la limitation de conservation RGPD Art. 5.1.e. La règle « ne JAMAIS scrubber l'identité figée de la facture à l'anonymisation » n'a plus de test dédié — `rgpd-anonymize-preserves-invoice-snapshot` est parti avec le service qu'il gardait. Elle reste valable pour tout futur chemin d'anonymisation. Périmètre de la purge 10 ans (SSOT `modules/orders/constants/pii-scrub.ts`, contrat verrouillé par `purge-pii-scrub-contract.regression.test.ts`) : `Order` (opérationnel + snapshot/PDF + `stripePaymentIntentId` + `trackingNumber`/`trackingUrl`) **+ `Refund`** (avoirs partiels `creditNotePdfUrl/Hash` + `note` libre) **+ `OrderNote.content`** (texte libre) **+ `OrderHistory.note`/`metadata`** (neutralisés à l'échéance — arbitrage 2026-08-03, cf. invariant 3). Corollaire : ne JAMAIS écrire de **valeurs** d'adresse client dans `OrderHistory.metadata` (table immuable pendant toute la rétention — la neutralisation n'arrive qu'à 10 ans) — contrat `changedFields` uniquement (régression `order-history-no-customer-pii`). Les commandes jamais payées (aucune base fiscale) sont scrubées à 3 ans (`UNPAID_ORDER_PII_RETENTION_DAYS`).
+9. **Rétention PII vs RGPD.** Deux temps, et l'app n'en porte plus qu'un — l'anonymisation de COMPTE est partie avec l'espace client. **Règle qui survit, pour tout futur chemin d'anonymisation** : scrubber les surfaces _opérationnelles_ (`customer*`, `shipping*`) et **JAMAIS** l'identité légale de la facture (`invoiceDataSnapshot`, PDF), conservée au titre de l'exemption RGPD Art. 17(3)(b). Cette identité n'est purgée qu'à `paidAt + 10 ans` par `hard-delete-retention` (marqueur `Order.piiPurgedAt`) ; les commandes jamais payées, à 3 ans (`UNPAID_ORDER_PII_RETENTION_DAYS`). Périmètre exact : SSOT `modules/orders/constants/pii-scrub.ts`, verrouillé par `purge-pii-scrub-contract.regression.test.ts`. ⚠️ Corollaire : ne JAMAIS écrire de **valeurs** d'adresse client dans `OrderHistory.metadata` — `changedFields` uniquement, car la neutralisation n'arrive qu'à 10 ans.
 
-10. **Le snapshot de facture est VERSIONNÉ, et validé avant d'être figé.** `Order.invoiceDataSnapshot` porte `InvoiceData.formatVersion` — SSOT `INVOICE_DATA_FORMAT_VERSION` (`modules/invoices/constants/invoice-data-format.ts`), **dans le payload donc sous le SHA-256**, jamais dans une colonne (elle serait hors hash et pourrait dériver du contenu qu'elle décrit). Tout changement de forme du payload (ajout, retrait, renommage, changement d'unité ou de sémantique) DOIT incrémenter cette constante et traiter l'ancienne version en lecture : `verifyInvoiceSnapshot` rend le JSONB relu par un `as InvoiceData` — un cast, pas une validation — donc sans marqueur, un champ ajouté vaut `undefined` en silence sur les lignes anciennes, dont le hash reste pourtant valide. Snapshot sans `formatVersion` ⇒ version 1 ; version supérieure à celle du build ⇒ `InvoiceSnapshotVersionError` (503), on refuse de servir plutôt que de réinterpréter. Deux changements sont datés : mention CGI → CIBS au 31/12/2027, réécriture e-reporting au go-live. Le snapshot est en outre validé par `invoiceDataSchema` (cohérence somme des lignes == totaux) **au seul point où il devient immuable** (`persist-invoice-number.service.ts`) : ce refine était documenté comme le filet du renderer mais n'était appelé nulle part en production. Un échec diffère la facture (`invoiceRetryDeferred` → `reconcile-invoices` → alerte admin) au lieu de figer 10 ans un document faux.
+10. **L'identité vendeur ne vit QUE dans le snapshot.** Il n'y a pas de colonnes `Order.vendor*` : `buildSellerInfo()` lit l'env, mais son résultat est canonicalisé et hashé SHA-256 dans `invoiceDataSnapshot` **à l'émission**, et c'est ce snapshot que relit tout rendu ultérieur (`resolveInvoiceDataForRender`). L'Art. L102 B LPF tient par là. ⚠️ **Condition de réouverture** : si `invoiceDataSnapshot` cessait d'être écrit dans la **même transaction** que `invoiceNumber`, il faudrait réintroduire un snapshot vendeur — sans lui, une facture ancienne se régénérerait avec l'identité COURANTE.
+
+11. **Le snapshot de facture est VERSIONNÉ, et validé avant d'être figé.** `Order.invoiceDataSnapshot` porte `InvoiceData.formatVersion` (SSOT `modules/invoices/constants/invoice-data-format.ts`), **dans le payload donc sous le SHA-256** — jamais dans une colonne, qui serait hors hash et pourrait dériver du contenu qu'elle décrit. Tout changement de forme du payload (ajout, retrait, renommage, unité, sémantique) DOIT incrémenter cette constante **et** traiter l'ancienne version en lecture : `verifyInvoiceSnapshot` fait un `as InvoiceData` — un cast, pas une validation — donc sans marqueur, un champ ajouté vaut `undefined` en silence sur les lignes anciennes, dont le hash reste pourtant valide. Absence de `formatVersion` ⇒ version 1 ; version supérieure au build ⇒ `InvoiceSnapshotVersionError` (503) : on refuse de servir plutôt que de réinterpréter. Le snapshot est en outre validé par `invoiceDataSchema` (somme des lignes == totaux) **au seul point où il devient immuable** (`persist-invoice-number.service.ts`) ; un échec diffère la facture vers `reconcile-invoices` + alerte admin, au lieu de figer 10 ans un document faux.
 
 ### Tests régression dédiés
 
-| Test                                                                                                        | Fichier                                                                                                                                           | Garde                               |
-| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| OrderHistory n'a pas `deletedAt`                                                                            | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                 | Audit trail immuable (Art. L123-22) |
-| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                  | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                 | Invariant 1 + 2                     |
-| Numérotation : pas de rollover silencieux au-delà de 99999/an                                               | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                | Invariant 7                         |
-| Unicité cross-table des numéros d'avoir (trigger DB rejette un doublon Order↔Refund)                        | `modules/invoices/services/__tests__/credit-note-cross-table-unique.integration.test.ts`                                                          | Invariant 7 (EINV-PRISMA-001)       |
-| Snapshots adresses Order : writers allowlistés (write-side)                                                 | `order-address-snapshot-immutability.regression.test.ts` (le garde read-side scannait le modèle `Address`, supprimé — retiré au Lot 0 2026-08-03) | Invariant 5                         |
-| Purge PII 10 ans : contrat de champs (PII scrubée / comptable préservé) sur Order + Refund + unpaid + notes | `modules/cron/services/__tests__/purge-pii-scrub-contract.regression.test.ts`                                                                     | Invariant 9                         |
+Chaque invariant ci-dessus nomme le test qui le verrouille. Deux gardes n'ont pas de site naturel
+dans le texte : le **rollover silencieux au-delà de 99999/an** (sous-suite « overflow » de
+`persist-invoice-number.service.test.ts`, invariant 7) et l'**unicité cross-table des numéros
+d'avoir** vérifiée par le trigger DB (`credit-note-cross-table-unique.integration.test.ts`,
+invariant 7 — c'est un test d'intégration, donc muet sans `INTEGRATION_DATABASE_URL`).
 
 ### Conformité réglementaire (référencement)
 
-| Article                                    | Localisation                                                           | Statut |
-| ------------------------------------------ | ---------------------------------------------------------------------- | ------ |
-| Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                  | ✓      |
-| Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)              | ✓      |
-| Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                      | ✓      |
-| Art. 293 B CGI — mention franchise TVA     | `render-invoice-pdf.ts:258-263` + SSOT `DEFAULT_FRANCHISE_VAT_MENTION` | ✓      |
-| Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)                | ✓      |
-| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                  | ✓      |
-| Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007)  | ✓      |
+Chemins sans numéro de ligne, délibérément : les ancres `fichier:ligne` de cette table avaient
+toutes dérivé (l'ancre Art. 293 B tombait sur un commentaire), et rien ne les gardait.
+`test/contract/claude-md-accuracy.contract.test.ts` interdit désormais d'en réintroduire.
+
+| Article                                    | Localisation                                                                             | Statut |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- | ------ |
+| Art. 286 CGI — séquentialité gap-free      | `modules/orders/services/persist-invoice-number.service.ts` + CHECK DB                   | ✓      |
+| Art. 289-I CGI — émission à l'encaissement | `modules/orders/services/ensure-invoice-number.service.ts` (ORD-COMPLY-002)              | ✓      |
+| Art. 272-I CGI — avoir post-facture        | `modules/orders/services/void-invoice.service.ts` (ORD-COMPLY-003)                       | ✓      |
+| Art. 293 B CGI — mention franchise TVA     | `modules/invoices/services/render-invoice-pdf.ts` + SSOT `DEFAULT_FRANCHISE_VAT_MENTION` | ✓      |
+| Art. L102 B LPF — immutabilité 10 ans      | `modules/orders/services/archive-invoice-pdf.service.ts` (ORD-COMPLY-005)                | ✓      |
+| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                                    | ✓      |
+| Art. 50-0 CGI — CA à l'encaissement        | `modules/orders/services/export-orders-csv.service.ts`, filtre `paidAt` (ORD-COMPLY-007) | ✓      |
 
 Modèle d'activité, seuils & périmètre assumé : [`docs/BUSINESS.md`](docs/BUSINESS.md). Procédures opérationnelles (crons, seuils TVA/OSS) : [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
@@ -705,9 +657,13 @@ const form = useAppForm<MyInput>({
 
 ## Security
 
-- **Rate limiting**: in-memory per-action via `shared/lib/rate-limit.ts` (**fixed counter window** — un `{count,resetAt}` par clé, reset complet à expiry, pas de log d'événements sliding ; 100 req/min IP global + per-action limits). IP extraction Vercel-first : `x-vercel-forwarded-for` → `x-real-ip` → `x-forwarded-for` (les deux premiers sont non-spoofables via l'edge Vercel). Single-instance Node.js : sur Vercel serverless chaque instance a son propre Map, reset au cold-start → protection best-effort contre abus simples, **insuffisant pour DDoS sérieux**. Pour cohérence cross-instance : Upstash Redis ou Arcjet (non installés à ce jour).
+- **Rate limiting**: in-memory per-action via `shared/lib/rate-limit.ts` (**fixed counter window**, pas de sliding ; 100 req/min IP global + limites par action). IP extraction Vercel-first : `x-vercel-forwarded-for` → `x-real-ip` → `x-forwarded-for` (les deux premiers non-spoofables via l'edge). ⚠️ Chaque instance serverless a son propre Map, remis à zéro au cold-start : protection best-effort contre l'abus simple, **insuffisante contre un DDoS**. Cohérence cross-instance = Upstash ou Arcjet, non installés.
 
-  **La clé est `ratelimit:<name>:<identifier>`, et `name` est REQUIS** (`RateLimitConfig.name`, SSOT dans `shared/lib/rate-limit-config.ts` + `modules/media/constants/upload-limits.ts` + `modules/products/constants/search.constants.ts`). Convention : identifiant du const sans `_LIMIT`, en kebab-case. **Lot 4 SIMPLIFICATION.md (2026-08-03)** : les ~55 presets admin ont été consolidés sur un preset **PARTAGÉ** unique `ADMIN_LIMIT` (`name: "admin"`, 120/min — partage par identité d'objet via les agrégats `ADMIN_*_LIMITS`, le pattern WISHLIST) ; restent dédiés côté admin `admin-order-export`, `admin-maintenance`, `admin-search` et `admin-invoice-download`. Les presets publics/auth/checkout/webhook gardent leur granularité — les fondre dans le compteur admin rendrait leurs protections (brute force, énumération de codes, pics Stripe) décoratives. Jusqu'au 2026-07-31 la clé ne portait que l'identifiant : la limite effective de chaque action était alors le **minimum** des limites de toutes celles partageant cet identifiant, avec la fenêtre de la première entrée créée — 5 consultations de fiche produit (`PRODUCT_COOKIE_ACTION`, 30/min) suffisaient à faire répondre 429 au formulaire de connexion (`AUTH_LOGIN`, 5/15 min, sur un `ip:` nu), verrouillant l'unique compte d'administration. Le champ est requis par le type et non optionnel avec repli : un preset qui l'oublierait retomberait en silence sur le compteur partagé. Deux appelants d'un **même** preset partagent toujours une entrée — correct, ils ont les mêmes `limit`/`windowMs` par construction. Verrouillé par `rate-limit-preset-naming.regression.test.ts`.
+  **La clé est `ratelimit:<name>:<identifier>`, et `name` est REQUIS** (`RateLimitConfig.name`, SSOT dans `shared/lib/rate-limit-config.ts` + `modules/media/constants/upload-limits.ts` + `modules/products/constants/search.constants.ts`). Convention : identifiant du const sans `_LIMIT`, en kebab-case.
+
+  **Pourquoi `name` n'est pas optionnel** : sans lui, la limite effective d'une action serait le **minimum** des limites de toutes celles partageant l'identifiant, avec la fenêtre de la première entrée créée. C'est ce qui laissait 5 consultations de fiche produit (30/min) faire répondre 429 au formulaire de connexion (5/15 min sur un `ip:` nu) — **verrouillant l'unique compte d'administration**. Le champ est donc requis par le type, sans repli silencieux. Deux appelants d'un **même** preset partagent toujours une entrée : correct, ils ont les mêmes `limit`/`windowMs` par construction. Verrouillé par `rate-limit-preset-naming.regression.test.ts`.
+
+  Côté admin, les presets sont consolidés sur un preset **PARTAGÉ** unique `ADMIN_LIMIT` (`name: "admin"`, 120/min — partage par identité d'objet via les agrégats `ADMIN_*_LIMITS`) ; restent dédiés `admin-order-export`, `admin-maintenance`, `admin-search` et `admin-invoice-download`. Les presets publics/auth/checkout/webhook gardent leur granularité — les fondre dans le compteur admin rendrait leurs protections (brute force, énumération de codes, pics Stripe) décoratives.
 
   ⚠️ **Le 3ᵉ argument `ipAddress` de `checkRateLimit` n'est pas optionnel en pratique.** Sans lui — et le préfixe d'un identifiant non-`ip:` défait aussi l'extraction automatique — `effectiveIp` vaut `null`, donc whitelist, blacklist **et plafond global 100/min/IP** sont tous inertes. Les 3 routes PDF (facture/avoir) l'omettaient, sur l'opération la plus coûteuse en CPU de l'app.
 
@@ -725,14 +681,15 @@ const form = useAppForm<MyInput>({
 
 ### Hiérarchie
 
-| Scope               | Déclencheur                                                                                   | Commande                 | Durée cible |
-| ------------------- | --------------------------------------------------------------------------------------------- | ------------------------ | ----------- |
-| **Critical path**   | Pre-commit (si modules touchés) + CI PR                                                       | `pnpm test:critical`     | < 10s       |
-| **Full unit suite** | CI PR + push main                                                                             | `pnpm test:coverage`     | ~2 min      |
-| **Integration DB**  | CI PR (job `tests-integration`, service Postgres) + opt-in local (`INTEGRATION_DATABASE_URL`) | `pnpm test:integration`  | ~30s        |
-| **Contract Stripe** | Inclus dans full unit suite                                                                   | (incluse)                | < 5s        |
-| **E2E smoke**       | CI PR + push main                                                                             | `pnpm e2e --grep @smoke` | ~3 min      |
-| **E2E complet**     | CI PR + push main (sharded ×4)                                                                | `pnpm e2e`               | ~15 min     |
+| Scope               | Déclencheur                                                                                   | Commande                | Durée cible |
+| ------------------- | --------------------------------------------------------------------------------------------- | ----------------------- | ----------- |
+| **Critical path**   | Pre-commit (si modules touchés) + CI PR                                                       | `pnpm test:critical`    | < 10s       |
+| **Full unit suite** | CI PR + push main                                                                             | `pnpm test:coverage`    | ~2 min      |
+| **Integration DB**  | CI PR (job `tests-integration`, service Postgres) + opt-in local (`INTEGRATION_DATABASE_URL`) | `pnpm test:integration` | ~30s        |
+| **Contract Stripe** | Inclus dans full unit suite                                                                   | (incluse)               | < 5s        |
+| **E2E complet**     | CI PR + push main (sharded ×4)                                                                | `pnpm e2e`              | ~15 min     |
+
+⚠️ **Il n'y a plus de job `e2e-smoke` en CI** — il refaisait build + seed + install Playwright (~10 min) pour rejouer ce que le job `e2e` couvre déjà. Les tags `@smoke` restent utiles **en local** (`pnpm e2e --grep @smoke`). Corollaire : `e2e-smoke` ne doit pas figurer dans les required status checks GitHub — un check requis que plus aucun job ne rapporte **bloque toutes les PR**.
 
 ### Critical path (8 modules)
 
@@ -780,4 +737,4 @@ Toute copie utilisateur tutoie. Le mélange n'est pas cosmétique : sur `/paieme
 
 ## Constats connus, non corrigés
 
-[`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md) recense les défauts reproduits et localisés qu'on a **délibérément** laissés en place parce qu'ils demandent une conception à part entière. Chaque entrée est doublée d'un commentaire `@see docs/KNOWN-ISSUES.md` au site du code. À lire avant de retravailler la resoumission de checkout (KI-001) ou la persistance du formulaire de paiement (KI-002) — pas pour les découvrir une seconde fois.
+[`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md) recense les défauts reproduits et localisés qu'on a **délibérément** laissés en place parce qu'ils demandent une conception à part entière. Les entrées qui ont un point d'ancrage dans le code sont doublées d'un commentaire `@see docs/KNOWN-ISSUES.md` à ce site (KI-002, KI-004) ; celles qui décrivent une dette diffuse n'en ont pas (KI-003, libellés de rate limit vouvoyants sur ~20 fichiers ; KI-005, double SSOT du numéro d'avoir). À lire avant de retravailler la resoumission de checkout (KI-001) ou la persistance du formulaire de paiement (KI-002) — pas pour les découvrir une seconde fois.

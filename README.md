@@ -1,6 +1,8 @@
 # Synclune - Boutique E-commerce Artisanale
 
-> Boutique en ligne de bijoux faits main par une creatrice independante basee en France.
+> Boutique en ligne de **bijoux createurs et colores, faits main** par une creatrice independante
+> basee en France. Petite **micro-entreprise** (entrepreneur individuel en franchise de TVA),
+> operee par **une seule personne**, qui vend en **France et dans l'Union europeenne**.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue?logo=typescript)](https://www.typescriptlang.org/)
@@ -9,16 +11,30 @@
 
 ---
 
+## Le contexte, avant le code
+
+Ce depot est dimensionne pour **~20 commandes/mois** et **une opératrice unique**. Ce n'est pas un
+manque d'ambition : c'est ce qui justifie la plupart des choix que vous allez croiser (boutons
+d'administration plutot que crons, rate limiting en memoire, un seul compte admin, ni i18n ni
+multi-devise). Une contribution qui presuppose une equipe ou un gros trafic passe a cote.
+
+⚠️ **Bijoux colores et creatifs — pas de la joaillerie precieuse.** La marque exprime la creativite
+coloree de la createrice : joyeux, personnel, artisanal. C'est un piege recurrent en design : toute
+direction batie sur le metal precieux, la gravure ou le « luxe discret » est le contre-pied du
+brief. Positionnement complet et chiffre : [`docs/BUSINESS.md`](./docs/BUSINESS.md).
+
+---
+
 ## Stack Technique
 
 - **Frontend** : Next.js 16 (App Router), React 19, TypeScript
-- **Styling** : Tailwind CSS 4, Radix UI, Motion (v12)
+- **Styling** : Tailwind CSS 4, shadcn/ui sur **Base UI** (`@base-ui/react`), Motion (v12)
 - **Backend** : Next.js Server Actions, Prisma 7
 - **Database** : PostgreSQL (Neon)
-- **Auth** : Better Auth (email/password, Google)
-- **Paiements** : Stripe
+- **Auth** : Better Auth (email/password) — **connexion reservee a l'administration**, inscription fermee, pas de provider OAuth
+- **Paiements** : Stripe (parcours d'achat 100 % invite)
 - **Uploads** : UploadThing
-- **Emails** : React Email + Resend (10 templates)
+- **Emails** : React Email + Resend (8 templates)
 - **Monitoring** : Sentry
 
 ---
@@ -45,16 +61,22 @@ cd synclune
 pnpm install
 
 # Copier les variables d'environnement et remplir les valeurs
-cp .env.example .env.local
+# ⚠️ .env, PAS .env.local : le CLI Prisma passe par prisma.config.ts, qui fait
+# `import "dotenv/config"` — dotenv ne charge que `.env`. Avec un seul .env.local,
+# `prisma generate` echoue en PrismaConfigEnvError sur DATABASE_URL.
+cp .env.example .env
 
 # Generer Prisma client
 pnpm prisma generate
 
-# Initialiser la base de donnees
-pnpm prisma migrate dev
+# Initialiser la base de donnees (base VIDE : deploy, pas dev)
+# `prisma migrate dev` echoue en P3006 ici tant que SHADOW_DATABASE_URL n'est pas
+# defini — cf. le commentaire dans prisma.config.ts et CLAUDE.md § Migrations.
+pnpm prisma migrate deploy
 
-# Seed data (optionnel)
-pnpm seed
+# Seed data (optionnel) — ⚠️ DESTRUCTIF : wipe la base avant de la re-remplir
+# (SEED_CLEANUP vaut true par defaut). L'opt-in SEED_ALLOW est une garde anti-prod.
+SEED_ALLOW=true pnpm seed
 
 # Demarrer en developpement
 pnpm dev
@@ -62,21 +84,25 @@ pnpm dev
 
 Ouvrir [http://localhost:3000](http://localhost:3000)
 
+> Next.js, lui, lit bien `.env.local` (et il a priorite sur `.env`). Si vous tenez aux deux
+> fichiers, gardez au minimum `DATABASE_URL` dans `.env` pour le CLI Prisma.
+
 ---
 
 ## Structure Projet
 
 ```
 app/
-├── (auth)/                  # Connexion, inscription, mot de passe
-├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris)
-├── (account)/               # Espace client (compte, commandes)
+├── (auth)/                  # Connexion (admin), mot de passe, verification email
+├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris, aide)
 ├── (legal)/                 # Pages legales (CGV, mentions, confidentialite)
-├── admin/                   # Dashboard admin (catalogue, commandes, marketing)
-├── api/                     # Routes API (auth, cron, webhooks, search, uploadthing)
-└── paiement/                # Pages paiement (confirmation, annulation)
+├── admin/                   # Dashboard admin (catalogue, ventes, marketing, contenu, configuration)
+├── api/                     # Routes API (auth, cron, webhooks, uploadthing)
+├── paiement/                # Pages paiement (confirmation, annulation, retour)
+├── suivi-commande/          # Suivi de commande invite (token HMAC) — seul acces client
+└── sitemap-images.xml/      # Generation sitemap images
 
-modules/                     # DDD - 24 modules metier
+modules/                     # DDD - 22 modules metier
 ├── [module]/
 │   ├── actions/             # Server Actions (mutations)
 │   ├── data/                # Data fetching + cache ("use cache")
@@ -86,15 +112,19 @@ modules/                     # DDD - 24 modules metier
 │   └── hooks/               # Custom React hooks
 
 shared/                      # Cross-cutting concerns
-├── components/              # UI (shadcn/ui), animations, forms, icons
-├── constants/               # Cache tags, SEO, navigation
-├── hooks/                   # ~20 hooks
+├── components/              # UI (shadcn/ui sur Base UI), animations, forms, icons
+├── constants/               # Cache tags, breakpoints, SEO, navigation
+├── hooks/                   # ~30 hooks
 ├── lib/                     # Core: prisma, stripe, email, cache, rate-limit
 ├── providers/               # Root providers
 ├── schemas/                 # Shared Zod schemas
-├── stores/                  # Zustand stores (8 stores)
+├── stores/                  # Zustand stores (6 stores)
 └── utils/                   # Formatting, slug, date, currency
 ```
+
+> Il n'y a **pas** d'espace client (retire le 2026-07-31) : panier et favoris vivent dans des
+> cookies, le checkout est invite, et une commande se consulte par le lien tokenise de l'email de
+> confirmation (`/suivi-commande`).
 
 ---
 
@@ -122,10 +152,15 @@ pnpm size                   # Bundle size check (size-limit)
 ### Database
 
 ```bash
-pnpm prisma migrate dev     # Creer/appliquer migration
-pnpm prisma studio          # Interface graphique DB (alias: pnpm db:studio)
-pnpm seed                   # Seed data
+pnpm prisma migrate deploy  # Appliquer les migrations (base vide : dev, staging, CI)
+pnpm db:migrate             # Creer une migration — exige SHADOW_DATABASE_URL, sinon P3006
+pnpm db:studio              # Interface graphique DB (prisma studio)
+SEED_ALLOW=true pnpm seed   # Seed data — ⚠️ DESTRUCTIF (wipe puis re-remplit)
 ```
+
+> ⚠️ Ne **jamais** editer `prisma/migrations/0_init` : son checksum est enregistre dans
+> `_prisma_migrations`, le modifier casse `migrate deploy`. Toute evolution de schema passe par une
+> nouvelle migration, accompagnee de son `down.sql`. Cf. `CLAUDE.md` § Migrations & rollback.
 
 ### Emails
 
@@ -137,13 +172,15 @@ pnpm email:dev              # Preview emails (port 3001)
 
 ## Variables d'Environnement
 
-Copier `.env.example` vers `.env.local` et remplir les valeurs :
+Copier `.env.example` vers `.env` et remplir les valeurs :
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Voir [`.env.example`](./.env.example) pour la liste complete des variables.
+Voir [`.env.example`](./.env.example) pour la liste complete des variables. Toutes sont validees au
+boot par Zod (`shared/schemas/env.schema.ts`) : une variable requise absente fait echouer le
+demarrage plutot que de degrader en silence.
 
 ---
 
@@ -166,7 +203,7 @@ Voir [`.env.example`](./.env.example) pour la liste complete des variables.
 | Composants  | `PascalCase`                          |
 | Fonctions   | `camelCase`                           |
 | Constantes  | `UPPER_SNAKE_CASE`                    |
-| UI texte    | Francais                              |
+| UI texte    | Francais, **tutoiement**              |
 | Code        | Anglais                               |
 | Commits     | `feat:`, `fix:`, `docs:`, `refactor:` |
 | Indentation | Tabs                                  |
@@ -177,7 +214,8 @@ Voir [`.env.example`](./.env.example) pour la liste complete des variables.
 
 - **[CLAUDE.md](./CLAUDE.md)** — Architecture detaillee, patterns, cache profiles, conventions
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Guide de contribution (modules, Git workflow, tests)
-- **[docs/](./docs/)** — Modele d'activite ([BUSINESS.md](./docs/BUSINESS.md)), runbook operations ([RUNBOOK.md](./docs/RUNBOOK.md)), catalogue de missions ([AUDIT-PROMPTS.md](./docs/AUDIT-PROMPTS.md))
+- **[docs/](./docs/)** — Modele d'activite ([BUSINESS.md](./docs/BUSINESS.md)), runbook operations ([RUNBOOK.md](./docs/RUNBOOK.md)), constats connus ([KNOWN-ISSUES.md](./docs/KNOWN-ISSUES.md))
+- **[docs/prompts/](./docs/prompts/)** — Les 4 catalogues de prompts (audit, refonte, maquettage) et leur [mode d'emploi](./docs/prompts/README.md)
 
 ---
 
@@ -185,7 +223,13 @@ Voir [`.env.example`](./.env.example) pour la liste complete des variables.
 
 Deploye sur [Vercel](https://vercel.com). Push sur `main` declenche le deploiement automatique.
 
-10 cron jobs definis dans `vercel.json` (mirror SSOT `modules/cron/constants/schedules.ts`, monitores via Sentry Cron).
+**3 cron jobs** definis dans `vercel.json` (mirror SSOT `modules/cron/constants/schedules.ts`,
+coherence verrouillee par `cron-schedules-match-vercel.test.ts`) : `reconcile-invoices` (quotidien,
+seul monitore via Sentry Cron), `cleanup-pending-orders` (quotidien), `hard-delete-retention`
+(mensuel). Les autres rattrapages sont des **boutons** sur `/admin/configuration/maintenance`.
+
+⛔ **Plafond dur Vercel Hobby : une execution par jour et par cron.** Une seule expression
+infra-journalière fait refuser le deploiement entier, avant le build.
 
 ---
 

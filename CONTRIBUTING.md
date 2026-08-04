@@ -6,7 +6,7 @@ See [README.md](./README.md#demarrage-rapide) for initial setup.
 
 ## Architecture
 
-The codebase follows **Domain-Driven Design** with 24 modules under `modules/`. Each module has a layered structure:
+The codebase follows **Domain-Driven Design** with 22 modules under `modules/`. Each module has a layered structure:
 
 | Layer         | Purpose                    | Rules                                             |
 | ------------- | -------------------------- | ------------------------------------------------- |
@@ -167,7 +167,7 @@ Husky + lint-staged runs automatically on commit:
 
 The `main` branch is protected with the following rules:
 
-- **Required status checks**: `commitlint`, `quality`, `tests`, `e2e-smoke` must pass before merge
+- **Required status checks**: the jobs of `.github/workflows/ci.yml` — `commitlint`, `quality`, `tests-critical`, `tests-integration`, `build`, `tests`, `e2e`. ⚠️ There is **no `e2e-smoke` job**: it was removed (cost audit P2-3 — it rebuilt and reseeded everything just to replay `--grep @smoke`). If `E2E smoke tests` is still listed as a required check in the GitHub settings, remove it there — a required check that no job reports blocks every PR forever.
 - **Required reviews**: At least 1 approving review
 - **Force push**: Disabled on `main`
 - **Up-to-date branches**: Required before merging

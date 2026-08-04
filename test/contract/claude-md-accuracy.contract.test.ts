@@ -1,0 +1,305 @@
+/**
+ * @regression claude-md-accuracy
+ *
+ * `CLAUDE.md` est rechargé INTÉGRALEMENT à chaque session : c'est le document le plus
+ * lu du dépôt, et le seul dont aucune affirmation n'était vérifiée. Le repo verrouille
+ * chaque invariant par un test, mais pas la doc qui les décrit — et c'est exactement là
+ * que la dérive s'installe.
+ *
+ * L'audit du 2026-08-04 y a trouvé 8 dérives, dont une DANGEREUSE : le fichier
+ * autorisait explicitement `asChild` dans `mega-menu-column.tsx` (« `asChild` **là** est
+ * correct ») alors que ce fichier était passé à `render` et que
+ * `@radix-ui/react-navigation-menu` n'était plus installé. Une instruction qui fait
+ * RÉINTRODUIRE la régression qu'elle prétend documenter est pire qu'une absence de
+ * documentation.
+ *
+ * Les autres : `52 CHECK / 14 index` (réel 32/8), « 247 fichiers », « 50 pages admin »,
+ * les 6 ancres `fichier:ligne` de la table Conformité toutes périmées, `app/api/search`
+ * inexistant, `pnpm prisma migrate dev` recommandé puis déclaré cassé 600 lignes plus
+ * bas, et un exemple de `down.sql` pointant sur une migration archivée.
+ *
+ * Ce que ce test verrouille :
+ *   1. tout chemin de fichier cité existe ;
+ *   2. tout lien markdown `[x](cible.md)` résout, relativement au document qui l'écrit ;
+ *   3. toute SECTION citée existe sous ce titre dans le document visé ;
+ *   4. aucune ancre `fichier.ts:12-34` (elles dérivent à la première édition) ;
+ *   5. les comptages annoncés correspondent au dépôt ;
+ *   6. toute commande `pnpm <x>` citée existe dans `package.json`.
+ *
+ * Le périmètre a été étendu le 2026-08-05 de `CLAUDE.md` seul à la CHAÎNE DESIGN
+ * (`docs/UI-CONVENTIONS.md` + les prompts collables). Motif : `REDESIGN-PROMPT.md`
+ * envoyait lire « les sections Breakpoints / Overlays / Survol vs focus de `CLAUDE.md` »
+ * alors que ces sections venaient d'être extraites dans `docs/UI-CONVENTIONS.md` — le
+ * CHEMIN existait toujours, c'est le TITRE qui avait disparu, et aucune assertion ne
+ * regardait les titres. D'où le point 3, qui est le seul à attraper ce cas.
+ * Le point 2 vient du même audit : un lien vers un fichier voisin (`](AUDIT-PROMPTS.md)`)
+ * n'a pas de `/`, donc l'extracteur de chemins du point 1 ne le voit pas.
+ *
+ * ⚠️ Ne JAMAIS corriger un échec en élargissant l'allowlist sans motif écrit : c'est le
+ * seul filet sur ces fichiers. Le réflexe correct est de mettre le DOCUMENT à jour.
+ */
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+const REPO_ROOT = join(__dirname, "..", "..");
+const CLAUDE_MD = join(REPO_ROOT, "CLAUDE.md");
+const src = readFileSync(CLAUDE_MD, "utf-8");
+
+/**
+ * Les documents sous contrat. `minCited` est le garde-fou du garde-fou : si une refonte
+ * du format cassait l'extraction, les assertions passeraient sur une liste vide en
+ * donnant une fausse assurance.
+ *
+ * Volontairement PAS étendu à `prompts-audit-synclune.md` (3 550 l.) ni à son voisin de
+ * missions : les y soumettre remonterait un backlog de chemins morts d'un coup, ce qui
+ * bloquerait `pnpm validate` pour une dette qui n'est pas celle de cette passe.
+ */
+const CONTRACTED_DOCS: ReadonlyArray<{ path: string; minCited: number }> = [
+	{ path: "CLAUDE.md", minCited: 40 },
+	{ path: "docs/UI-CONVENTIONS.md", minCited: 5 },
+	{ path: "docs/prompts/REDESIGN-PROMPT.md", minCited: 5 },
+	{ path: "docs/prompts/DESIGN-ARTIFACT-PROMPT.md", minCited: 5 },
+];
+
+/**
+ * Les SECTIONS citées d'un document à l'autre. Tenue à la main, comme `PATH_ALLOWLIST` :
+ * une extraction automatique des noms de section en prose produirait trop de bruit pour
+ * rester crédible. Chaque entrée est une promesse faite au lecteur d'un prompt.
+ */
+const DOC_SECTION_REFERENCES: ReadonlyArray<{
+	citedIn: string;
+	file: string;
+	heading: string;
+}> = [
+	// `REDESIGN-PROMPT.md` §1 et sa liste des « 5 points » renvoient nommément ici.
+	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Breakpoints" },
+	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Largeurs de contenu" },
+	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Survol vs focus" },
+	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Overlays" },
+	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Composition" },
+	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "animate-out" },
+	{ citedIn: "REDESIGN-PROMPT", file: "CLAUDE.md", heading: "Voix" },
+];
+
+/* -------------------------------------------------------------------------- */
+/* Extraction                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Chemins non résolvables, avec leur motif. Chaque entrée est un chemin CITÉ
+ * délibérément sous une forme qui n'existe pas sur le disque.
+ */
+const PATH_ALLOWLIST: ReadonlyArray<{ pattern: RegExp; why: string }> = [
+	{
+		pattern: /\*/,
+		why: "glob volontaire (ex. `app/admin/**/page.tsx`, `test/fixtures/stripe/*.json`)",
+	},
+	{ pattern: /[<>]/, why: "placeholder (ex. `app/api/cron/<job>/route.ts`)" },
+	{ pattern: /^node_modules\//, why: "extrait de code Next cité pour documenter son comportement" },
+	{
+		pattern: /^e2e\/\.auth\//,
+		why: "artefact GÉNÉRÉ par le projet Playwright `setup` (`e2e/auth.setup.ts`) et gitignoré (`.gitignore:19`) — il n'existe qu'après un run, mais le citer est correct : c'est ainsi qu'on explique d'où vient l'état admin",
+	},
+];
+
+/**
+ * Un chemin cité peut être relatif à `modules/` : la table des services
+ * transactionnels écrit `payments/services/x.service.ts` sans le préfixe, parce que la
+ * section entière parle de `modules/`. On tente donc les deux racines.
+ */
+const IMPLICIT_ROOTS = ["", "modules/"] as const;
+
+function citedPaths(markdown: string): string[] {
+	const found = new Set<string>();
+	for (const match of markdown.matchAll(/`([^`\n]+)`/g)) {
+		const raw = match[1]!.trim();
+		// `@see docs/X.md` : la citation porte un préfixe, on garde le dernier mot.
+		const candidate = raw.split(/\s+/).pop() ?? raw;
+		if (!candidate.includes("/")) continue;
+		if (!/\.(ts|tsx|sql|json|css|md|toml)$/.test(candidate)) continue;
+		found.add(candidate);
+	}
+	return [...found];
+}
+
+function resolves(path: string): boolean {
+	return IMPLICIT_ROOTS.some((root) => existsSync(join(REPO_ROOT, root + path)));
+}
+
+function allowlistReason(path: string): string | undefined {
+	return PATH_ALLOWLIST.find(({ pattern }) => pattern.test(path))?.why;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 1. Chemins                                                                  */
+/* -------------------------------------------------------------------------- */
+
+describe.each(CONTRACTED_DOCS)("$path — les chemins cités existent", ({ path, minCited }) => {
+	const doc = readFileSync(join(REPO_ROOT, path), "utf-8");
+
+	it("ne cite aucun fichier absent du dépôt", () => {
+		const broken = citedPaths(doc)
+			.filter((p) => !allowlistReason(p))
+			.filter((p) => !resolves(p));
+
+		expect(
+			broken,
+			`${path} cite ${broken.length} chemin(s) qui n'existe(nt) pas. ` +
+				"Corriger le document — ne pas ajouter d'entrée à PATH_ALLOWLIST sans motif écrit.",
+		).toEqual([]);
+	});
+
+	it("cite un nombre plausible de chemins (l'extracteur n'est pas devenu aveugle)", () => {
+		// Garde-fou du garde-fou : si une refonte du format cassait la regex, le test
+		// ci-dessus passerait sur une liste vide en donnant une fausse assurance.
+		expect(citedPaths(doc).length).toBeGreaterThan(minCited);
+	});
+
+	it("ne pointe aucun lien markdown mort", () => {
+		// Un lien vers un fichier VOISIN (`](AUDIT-PROMPTS.md)`) n'a pas de `/` : il est
+		// invisible à `citedPaths`. C'est pourtant la forme la plus fragile, parce qu'un
+		// déplacement de dossier la casse sans toucher au texte.
+		const dir = dirname(join(REPO_ROOT, path));
+		const broken = [...doc.matchAll(/\]\(([^)#][^)]*)\)/g)]
+			.map((m) => m[1]!.split("#")[0]!)
+			.filter((target) => target && !/^https?:/.test(target))
+			.filter((target) => !existsSync(resolve(dir, target)));
+
+		expect(
+			[...new Set(broken)],
+			`${path} contient un ou plusieurs liens vers un fichier qui n'existe plus.`,
+		).toEqual([]);
+	});
+});
+
+/* -------------------------------------------------------------------------- */
+/* 1bis. Sections citées                                                       */
+/* -------------------------------------------------------------------------- */
+
+describe("Chaîne design — les SECTIONS citées existent sous ce titre", () => {
+	it.each(DOC_SECTION_REFERENCES)(
+		"$citedIn renvoie à $file § $heading",
+		({ file, heading, citedIn }) => {
+			const target = readFileSync(join(REPO_ROOT, file), "utf-8");
+			const headings = [...target.matchAll(/^#{2,}\s+(.*)$/gm)].map((m) => m[1]!);
+
+			expect(
+				headings.some((h) => h.includes(heading)),
+				`${citedIn} envoie lire « ${heading} » dans ${file}, qui n'a aucune section de ce nom.\n` +
+					`Titres présents :\n  ${headings.join("\n  ")}\n` +
+					"C'est le défaut du 2026-08-05 : le chemin existait, la section avait déménagé.",
+			).toBe(true);
+		},
+	);
+});
+
+/* -------------------------------------------------------------------------- */
+/* 2. Ancres fichier:ligne                                                     */
+/* -------------------------------------------------------------------------- */
+
+describe("CLAUDE.md — pas d'ancre `fichier:ligne`", () => {
+	it("ne référence aucun numéro de ligne", () => {
+		// Les 6 ancres de la table « Conformité réglementaire » avaient TOUTES dérivé :
+		// l'ancre Art. 293 B tombait sur un commentaire. Un numéro de ligne est faux dès
+		// la première édition du fichier cible, et rien ne le signale.
+		const anchors = Array.from(
+			src.matchAll(/`?([A-Za-z0-9._/-]+\.tsx?):(\d+)(?:-(\d+))?/g),
+			(m) => m[0],
+		);
+
+		expect(
+			anchors,
+			"Citer le chemin seul. Un `fichier.ts:50-140` est faux dès la prochaine édition.",
+		).toEqual([]);
+	});
+});
+
+/* -------------------------------------------------------------------------- */
+/* 3. Comptages                                                                */
+/* -------------------------------------------------------------------------- */
+
+function countMatches(path: string, re: RegExp): number {
+	return (readFileSync(join(REPO_ROOT, path), "utf-8").match(re) ?? []).length;
+}
+
+/** Extrait l'entier annoncé par la 1ʳᵉ ligne de CLAUDE.md qui matche `re`. */
+function claimedNumber(re: RegExp): number {
+	const match = src.match(re);
+	expect(match, `CLAUDE.md ne contient plus la phrase attendue : ${re}`).not.toBeNull();
+	return Number(match![1]);
+}
+
+describe("CLAUDE.md — les comptages correspondent au dépôt", () => {
+	it("annonce le bon nombre de modules", () => {
+		const real = readdirSync(join(REPO_ROOT, "modules"), { withFileTypes: true }).filter((e) =>
+			e.isDirectory(),
+		).length;
+		expect(claimedNumber(/DDD - (\d+) modules/)).toBe(real);
+	});
+
+	it("annonce le bon nombre de templates email", () => {
+		const real = readdirSync(join(REPO_ROOT, "emails")).filter((f) => f.endsWith(".tsx")).length;
+		expect(claimedNumber(/^(\d+) templates React Email/m)).toBe(real);
+	});
+
+	it("annonce le bon nombre de crons Vercel", () => {
+		const vercel = JSON.parse(readFileSync(join(REPO_ROOT, "vercel.json"), "utf-8")) as {
+			crons?: unknown[];
+		};
+		expect(claimedNumber(/\*\*(\d+) Vercel cron jobs\*\*/)).toBe(vercel.crons?.length ?? 0);
+	});
+
+	it("annonce le bon nombre de CHECK et d'index dans l'annexe des gardes bruts", () => {
+		// C'est la dérive la plus coûteuse : l'annexe de `0_init` est la seule chose qui
+		// protège le format de numéro de facture (Art. 286 CGI) et le trigger d'unicité
+		// des avoirs. Un comptage faux laisse croire que la copie est complète.
+		const checks = countMatches(
+			"prisma/sql/raw-guards.sql",
+			/ADD\s+CONSTRAINT\s+"[^"]+"\s+CHECK/gi,
+		);
+		const indexes = countMatches("prisma/sql/raw-guards.sql", /^\s*CREATE\s+(UNIQUE\s+)?INDEX/gim);
+
+		expect(claimedNumber(/raw-guards\.sql` : (\d+) CHECK/)).toBe(checks);
+		expect(claimedNumber(/raw-guards\.sql` : \d+ CHECK, (\d+) index/)).toBe(indexes);
+	});
+
+	it("annonce le bon nombre de profils cacheLife", () => {
+		const config = readFileSync(join(REPO_ROOT, "next.config.ts"), "utf-8");
+		const profiles = new Set(Array.from(config.matchAll(/^\t*(\w+): \{ stale: /gm), (m) => m[1]!));
+		expect(claimedNumber(/\*\*(\d+) cache profiles\*\*/)).toBe(profiles.size);
+	});
+});
+
+/* -------------------------------------------------------------------------- */
+/* 4. Commandes                                                                */
+/* -------------------------------------------------------------------------- */
+
+describe("CLAUDE.md — les commandes citées existent", () => {
+	it("ne cite aucun script pnpm absent de package.json", () => {
+		const pkg = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf-8")) as {
+			scripts: Record<string, string>;
+		};
+		const scripts = new Set(Object.keys(pkg.scripts));
+
+		// Le bloc ```bash de la section Commands. On ne scanne QUE lui : le reste du
+		// document cite des invocations en prose (`pnpm prisma migrate resolve …`) qui
+		// sont des commandes Prisma passthrough, pas des scripts npm.
+		const block = src.match(/## Commands\n[\s\S]*?```bash\n([\s\S]*?)```/);
+		expect(block, "La section Commands n'a plus de bloc bash").not.toBeNull();
+
+		const unknown = Array.from(block![1]!.matchAll(/^pnpm ([\w:]+)/gm), (m) => m[1]!)
+			.filter((name) => !scripts.has(name))
+			// `pnpm test <chemin>` et `pnpm prisma …` : `test` et `prisma` sont couverts
+			// par le Set ou sont le binaire Prisma lui-même.
+			.filter((name) => name !== "prisma");
+
+		expect(
+			unknown,
+			"Script(s) cité(s) dans § Commands mais absent(s) de package.json. " +
+				"C'est ainsi que `pnpm prisma migrate dev` est resté recommandé alors " +
+				"que le même document le déclarait cassé (P3006).",
+		).toEqual([]);
+	});
+});
