@@ -28,8 +28,8 @@ vi.mock("@/modules/payments/components/checkout-section", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	Mail: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	EnvelopeIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-mail" className={className} />
 	),
 }));

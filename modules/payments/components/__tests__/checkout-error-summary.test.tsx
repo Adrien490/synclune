@@ -36,8 +36,8 @@ vi.mock("@/shared/components/ui/alert", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
-	CircleAlert: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	WarningCircleIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-circle-alert" className={className} />
 	),
 }));

@@ -98,14 +98,14 @@ vi.mock("@/shared/components/ui/alert", () => ({
 	AlertDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("lucide-react", () => ({
-	Loader2Icon: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	SpinnerIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-loader" className={className} />
 	),
-	Lock: ({ className }: { className?: string }) => (
+	LockIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-lock" className={className} />
 	),
-	ShieldCheck: ({ className }: { className?: string }) => (
+	ShieldCheckIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-shield" className={className} />
 	),
 }));

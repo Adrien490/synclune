@@ -8,8 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
-vi.mock("lucide-react", () => ({
-	Package: ({ className }: { className?: string }) => (
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	PackageIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-package" className={className} />
 	),
 }));

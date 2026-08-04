@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 /**
  * @regression checkout-external-link-a11y-2026-07-26
  *
- * Un `aria-label` posé sur une icône lucide est INERTE : lucide-react rend un
+ * Un `aria-label` posé sur une icône est INERTE : la librairie d'icônes rend un
  * `<svg>` sans `role="img"`, donc en `role=graphics-*` / générique selon l'AT —
  * un rôle qui interdit le nommage par l'auteur. Les 4 liens externes du tunnel
  * de paiement portaient `<ExternalLink aria-label="(nouvelle fenêtre)" />` :
@@ -19,6 +19,17 @@ import { describe, expect, it } from "vitest";
  * Ce test étend le même verrou au tunnel.
  *
  * Audit UI/UX paiement 2026-07-26, F8.
+ *
+ * ## Migration Phosphor (2026-08-04)
+ *
+ * `ExternalLink` est devenu `ArrowSquareOutIcon`. Le défaut de cette classe de
+ * garde-fou est de devenir VACUEMENT vert quand l'icône est renommée : plus aucun
+ * `<ExternalLink>` à trouver, donc zéro contrevenant, donc tout passe. D'où
+ * l'assertion de dénombrement ci-dessous.
+ *
+ * Phosphor ajoute par ailleurs une prop `alt` qui injecte un `<title>` dans le
+ * SVG — un SECOND chemin de nommage, concurrent du `sr-only` que ce test
+ * verrouille. Elle est donc interdite sur le tunnel.
  */
 
 const REPO_ROOT = process.cwd();
@@ -51,6 +62,12 @@ function stripComments(source: string): string {
 		.replace(/\/\/.*$/gm, "");
 }
 
+/** Nom de l'icône de lien externe (Phosphor). */
+const EXTERNAL_LINK_ICON = "ArrowSquareOutIcon";
+
+/** Les 4 liens du tunnel (CGV, retours, CGV Stripe, confidentialité) + 1 sur le récapitulatif. */
+const EXPECTED_EXTERNAL_LINK_ICONS = 5;
+
 const FILES = SCANNED_DIRS.flatMap(collectTsxFiles);
 
 describe("Checkout — liens externes annoncés aux lecteurs d'écran", () => {
@@ -62,22 +79,43 @@ describe("Checkout — liens externes annoncés aux lecteurs d'écran", () => {
 		expect(FILES).toContain(join("modules/payments/components", "checkout-stripe-section.tsx"));
 	});
 
-	it("aucun aria-label n'est posé sur une icône ExternalLink", () => {
+	it("aucun aria-label n'est posé sur une icône de lien externe", () => {
 		const offenders = FILES.filter((file) => {
 			const stripped = stripComments(readFileSync(join(REPO_ROOT, file), "utf-8"));
-			return /<ExternalLink[^>]*aria-label=/.test(stripped);
+			return new RegExp(`<${EXTERNAL_LINK_ICON}[^>]*aria-label=`).test(stripped);
 		});
 
 		expect(offenders).toEqual([]);
 	});
 
-	it("chaque ExternalLink est aria-hidden et suivi du texte sr-only", () => {
+	it("aucune prop `alt` de Phosphor sur le tunnel (second chemin de nommage)", () => {
+		const offenders: string[] = [];
+
 		for (const file of FILES) {
 			const stripped = stripComments(readFileSync(join(REPO_ROOT, file), "utf-8"));
-			const icons = stripped.match(/<ExternalLink[^>]*\/>/g) ?? [];
+			for (const icon of stripped.match(/<[A-Z][A-Za-z]*Icon[^>]*\/>/g) ?? []) {
+				if (/\salt=/.test(icon)) offenders.push(`${file} — ${icon.trim()}`);
+			}
+		}
+
+		expect(
+			offenders,
+			"La prop `alt` de Phosphor injecte un <title> dans le SVG : c'est un nom " +
+				'accessible concurrent du <span className="sr-only"> que ce test verrouille.\n' +
+				offenders.join("\n"),
+		).toEqual([]);
+	});
+
+	it("chaque icône de lien externe est aria-hidden et suivie du texte sr-only", () => {
+		let total = 0;
+
+		for (const file of FILES) {
+			const stripped = stripComments(readFileSync(join(REPO_ROOT, file), "utf-8"));
+			const icons = stripped.match(new RegExp(`<${EXTERNAL_LINK_ICON}[^>]*/>`, "g")) ?? [];
+			total += icons.length;
 
 			for (const icon of icons) {
-				expect(icon, `${file} — ExternalLink doit être aria-hidden`).toMatch(
+				expect(icon, `${file} — ${EXTERNAL_LINK_ICON} doit être aria-hidden`).toMatch(
 					/aria-hidden=\{?["']?true["']?\}?/,
 				);
 			}
@@ -92,5 +130,12 @@ describe("Checkout — liens externes annoncés aux lecteurs d'écran", () => {
 				).toBe(icons.length);
 			}
 		}
+
+		// Sans ce dénombrement, renommer l'icône rendrait tout le fichier vert en
+		// n'inspectant plus rien — c'est exactement ce qu'a failli produire la
+		// migration Phosphor.
+		expect(total, `aucun <${EXTERNAL_LINK_ICON}> trouvé — le nom de l'icône a-t-il changé ?`).toBe(
+			EXPECTED_EXTERNAL_LINK_ICONS,
+		);
 	});
 });

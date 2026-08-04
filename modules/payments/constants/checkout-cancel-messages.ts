@@ -1,4 +1,5 @@
-import { CircleAlert, CreditCard, CircleX, type LucideIcon } from "lucide-react";
+import { CreditCardIcon, WarningCircleIcon, XCircleIcon } from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
 
 export const CHECKOUT_CANCEL_REASONS = [
 	"card_declined",
@@ -15,7 +16,7 @@ interface CheckoutCancelMessage {
 	title: string;
 	description: string;
 	advice?: string;
-	icon: LucideIcon;
+	icon: Icon;
 }
 
 /**
@@ -29,50 +30,50 @@ export const CHECKOUT_CANCEL_MESSAGES: Record<string, CheckoutCancelMessage> = {
 			"Ta carte bancaire a été refusée par ta banque. Vérifie tes informations ou utilise une autre carte.",
 		advice:
 			"Vérifie que ta carte est activée pour les paiements en ligne, ou contacte ta banque si le problème persiste.",
-		icon: CreditCard,
+		icon: CreditCardIcon,
 	},
 	expired_card: {
 		title: "Carte expirée",
 		description: "Ta carte bancaire a expiré. Utilise une carte valide.",
-		icon: CreditCard,
+		icon: CreditCardIcon,
 	},
 	insufficient_funds: {
 		title: "Fonds insuffisants",
 		description:
 			"Ton compte ne dispose pas de fonds suffisants pour cette transaction. Vérifie ton solde ou utilise une autre carte.",
 		advice: "Vérifie ton solde ou utilise une autre carte bancaire.",
-		icon: CreditCard,
+		icon: CreditCardIcon,
 	},
 	authentication_failed: {
 		title: "Authentification échouée",
 		description: "L'authentification 3D Secure a échoué. Réessaie ou contacte ta banque.",
 		advice:
 			"Assure-toi d'avoir accès à ton application bancaire ou SMS pour valider l'authentification 3D Secure.",
-		icon: CircleX,
+		icon: XCircleIcon,
 	},
 	processing_error: {
 		title: "Erreur de traitement",
 		description:
 			"Une erreur s'est produite lors du traitement de ton paiement. Réessaie dans quelques instants.",
-		icon: CircleX,
+		icon: XCircleIcon,
 	},
 	payment_failed: {
 		title: "Paiement échoué",
 		description:
 			"Le paiement n'a pas pu aboutir. Réessaie avec une autre carte ou contacte ta banque.",
-		icon: CircleX,
+		icon: XCircleIcon,
 	},
 	expired: {
 		title: "Session expirée",
 		description: "Le délai de paiement a expiré. Reprends ta commande pour la finaliser.",
-		icon: CircleAlert,
+		icon: WarningCircleIcon,
 	},
 	canceled: {
 		title: "Paiement annulé",
 		description:
 			"Tu as annulé le processus de paiement. Aucun montant n'a été débité de ton compte.",
 		advice: "Si tu as rencontré un problème lors du paiement, n'hésite pas à me contacter !",
-		icon: CircleAlert,
+		icon: WarningCircleIcon,
 	},
 };
 
