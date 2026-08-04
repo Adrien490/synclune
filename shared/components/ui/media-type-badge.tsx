@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { Video } from "lucide-react";
+import { VideoCameraIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 
 const mediaTypeBadgeVariants = cva(
@@ -37,7 +37,7 @@ export function MediaTypeBadge({ type, size, className }: MediaTypeBadgeProps) {
 			className={cn(mediaTypeBadgeVariants({ size }), className)}
 			aria-label="Type de média : vidéo"
 		>
-			<Video aria-hidden="true" />
+			<VideoCameraIcon aria-hidden="true" />
 			<span>VIDÉO</span>
 		</div>
 	);

@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy } from "lucide-react";
+import { CopyIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/shared/utils/toast";
 import { Button } from "@/shared/components/ui/button";
 
@@ -29,7 +29,7 @@ export function CopyButton({ text, label, className, size = "sm" }: CopyButtonPr
 			aria-label={`Copier ${label.toLowerCase()}`}
 			onClick={handleCopy}
 		>
-			<Copy className="size-4" aria-hidden="true" />
+			<CopyIcon className="size-4" aria-hidden="true" />
 		</Button>
 	);
 }

@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { ShieldAlert, Store, Wrench } from "lucide-react";
+import { ShieldWarningIcon, StorefrontIcon, WrenchIcon } from "@phosphor-icons/react/ssr";
 import { type Metadata } from "next";
 import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
@@ -21,19 +21,19 @@ export default async function ConfigurationPage() {
 					title: "Boutique",
 					description: "Fermeture temporaire, messages clients",
 					href: "/admin/configuration/boutique",
-					icon: <Store className="size-5" />,
+					icon: <StorefrontIcon className="size-5" />,
 				},
 				{
 					title: "Sécurité",
 					description: "Sessions ouvertes, déconnexion de tous les appareils",
 					href: "/admin/configuration/securite",
-					icon: <ShieldAlert className="size-5" />,
+					icon: <ShieldWarningIcon className="size-5" />,
 				},
 				{
 					title: "Maintenance",
 					description: "Tâches de rattrapage à lancer manuellement",
 					href: "/admin/configuration/maintenance",
-					icon: <Wrench className="size-5" />,
+					icon: <WrenchIcon className="size-5" />,
 				},
 			]}
 		/>

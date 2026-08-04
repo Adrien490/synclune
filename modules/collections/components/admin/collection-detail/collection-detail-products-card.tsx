@@ -1,4 +1,4 @@
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 
 import { CollectionProductsList } from "@/modules/collections/components/admin/collection-products-list";
 import { GET_COLLECTION_PRODUCTS_LIMIT } from "@/modules/collections/constants/collection.constants";
@@ -19,7 +19,7 @@ export function CollectionDetailProductsCard({ collection }: CollectionDetailPro
 			<CardHeader>
 				<CardTitle className="flex items-center justify-between gap-2">
 					<span className="flex items-center gap-2">
-						<Package className="size-5" aria-hidden="true" />
+						<PackageIcon className="size-5" aria-hidden="true" />
 						Produits
 					</span>
 					<span className="text-muted-foreground text-sm font-normal">

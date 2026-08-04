@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { DownloadSimpleIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 import { useAppForm } from "@/shared/components/forms";
@@ -118,7 +118,7 @@ export function ExportComptableForm() {
 						{isExporting ? (
 							<Spinner presentational />
 						) : (
-							<Download className="size-4" aria-hidden="true" />
+							<DownloadSimpleIcon className="size-4" aria-hidden="true" />
 						)}
 						{isExporting ? "Export…" : "Exporter CSV"}
 					</Button>

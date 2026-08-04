@@ -2,7 +2,7 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Ellipsis, Pencil } from "lucide-react";
+import { DotsThreeIcon, PencilSimpleIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -86,7 +86,7 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 					size="sm"
 					className="min-h-11 flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
 				>
-					<Pencil className="size-4" aria-hidden="true" />
+					<PencilSimpleIcon className="size-4" aria-hidden="true" />
 					Modifier
 				</Button>
 
@@ -101,7 +101,7 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 							/>
 						}
 					>
-						<Ellipsis className="size-4" aria-hidden="true" />
+						<DotsThreeIcon className="size-4" aria-hidden="true" />
 					</ResponsiveActionMenuTrigger>
 					<ResponsiveActionMenuContent
 						title="Actions"

@@ -1,6 +1,6 @@
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
-import { RotateCcw } from "lucide-react";
+import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react/ssr";
 
 interface MediaErrorFallbackProps {
 	type: "image" | "video";
@@ -29,7 +29,7 @@ export function MediaErrorFallback({ type, size = "default", onRetry }: MediaErr
 					<>
 						{onRetry ? (
 							<Button variant="ghost" size="sm" onClick={onRetry} className="gap-1.5 text-xs">
-								<RotateCcw className="size-3" />
+								<ArrowCounterClockwiseIcon className="size-3" />
 								Réessayer
 							</Button>
 						) : (

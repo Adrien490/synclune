@@ -7,7 +7,7 @@ import { useFieldContext } from "@/shared/lib/form-context";
 import { useFieldErrorVisibility } from "./use-field-error-visibility";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
-import { Eye, EyeOff } from "lucide-react";
+import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 
 interface PasswordInputFieldProps extends Omit<
@@ -72,9 +72,9 @@ export const PasswordInputField = ({
 			aria-pressed={showPassword}
 		>
 			{showPassword ? (
-				<EyeOff className="size-4" aria-hidden="true" />
+				<EyeSlashIcon className="size-4" aria-hidden="true" />
 			) : (
-				<Eye className="size-4" aria-hidden="true" />
+				<EyeIcon className="size-4" aria-hidden="true" />
 			)}
 		</button>
 	);

@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin } from "lucide-react";
+import { MapPinIcon } from "@phosphor-icons/react/ssr";
 
 import {
 	ResponsiveDialog,
@@ -37,7 +37,7 @@ export function EditShippingAddressDialog() {
 			<ResponsiveDialogContent className="sm:max-w-lg">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle className="flex items-center gap-2">
-						<MapPin className="size-5" aria-hidden="true" />
+						<MapPinIcon className="size-5" aria-hidden="true" />
 						Modifier l'adresse de livraison
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>

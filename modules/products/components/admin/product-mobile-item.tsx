@@ -1,6 +1,6 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 
 import type { MediaType } from "@/app/generated/prisma/client";
@@ -126,7 +126,7 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 						className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border"
 						style={{ viewTransitionName: `product-image-${product.id}` }}
 					>
-						<Package className="text-muted-foreground size-5" aria-hidden="true" />
+						<PackageIcon className="text-muted-foreground size-5" aria-hidden="true" />
 					</div>
 				)}
 				<ItemContent className="min-w-0">

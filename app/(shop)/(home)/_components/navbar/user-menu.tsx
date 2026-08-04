@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, LogOut, User } from "lucide-react";
+import { SignOutIcon, SquaresFourIcon, UserIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useState } from "react";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
@@ -60,7 +60,7 @@ export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
 							/>
 						}
 					>
-						<User
+						<UserIcon
 							size={20}
 							// `group-data-popup-open:` et non `group-data-[state=open]:` : reliquat
 							// Radix resté après la migration Base UI, qui n'expose pas `data-state`
@@ -99,7 +99,7 @@ export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
 							<Link href={ROUTES.ADMIN.DASHBOARD} prefetch={null} className="cursor-pointer" />
 						}
 					>
-						<LayoutDashboard aria-hidden="true" />
+						<SquaresFourIcon aria-hidden="true" />
 						<span>Tableau de bord admin</span>
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
@@ -109,7 +109,7 @@ export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
 						onClick={() => setLogoutOpen(true)}
 						className="cursor-pointer"
 					>
-						<LogOut aria-hidden="true" />
+						<SignOutIcon aria-hidden="true" />
 						<span>Se déconnecter</span>
 					</DropdownMenuItem>
 				</DropdownMenuContent>

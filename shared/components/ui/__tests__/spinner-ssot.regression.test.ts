@@ -7,16 +7,21 @@
  *
  * Avant remédiation, 5 implémentations coexistaient : la primitive `Spinner`
  * (2 consommateurs), ~25 sites instanciant `LoaderCircle` en direct, ~12 sites
- * instanciant `Loader2` (deux icônes lucide différentes pour le même rôle),
+ * instanciant `Loader2` (deux icônes différentes pour le même rôle),
  * `MiniDotsLoader` et 2 SVG maison. Sur ces sites inline, 42 occurrences
  * d'`animate-spin` n'étaient PAS gatées `motion-safe:` — la rotation tournait
  * sous `prefers-reduced-motion` (WCAG 2.3.3).
  *
  * ## Les règles
  *
- * 1. Aucun import de `Loader2` / `LoaderCircle` / `Loader2Icon` hors de la
- *    primitive — utiliser `<Spinner />` (ou `<Spinner presentational />` dans
- *    un élément déjà `aria-busy`).
+ * 1. Aucun import d'une icône de chargement Phosphor (`SpinnerIcon`,
+ *    `SpinnerGapIcon`, `SpinnerBallIcon`, `CircleNotchIcon`) hors de la primitive
+ *    — utiliser `<Spinner />` (ou `<Spinner presentational />` dans un élément
+ *    déjà `aria-busy`). Les noms lucide historiques (`Loader2`, `LoaderCircle`)
+ *    restent interdits : leur réapparition signalerait un retour en arrière.
+ *
+ *    ⚠️ Phosphor rend une icône PLEINE (`fill="currentColor"`), pas un tracé :
+ *    l'illusion de rotation vient de `animate-spin`, jamais d'un `strokeWidth`.
  * 2. Tout `animate-spin` restant (icône métier qu'on fait tourner, ex.
  *    `RefreshCw`) est gaté `motion-safe:`.
  */
@@ -30,7 +35,7 @@ const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
 const SCAN_DIRS = ["app", "modules", "shared"] as const;
 const SKIP_DIRS = new Set(["node_modules", ".next", "generated", "__snapshots__"]);
 
-/** Fichiers autorisés à importer l'icône lucide brute. */
+/** Fichiers autorisés à importer l'icône de chargement brute. */
 const LOADER_IMPORT_ALLOWLIST = new Set<string>([
 	// La primitive elle-même.
 	"shared/components/ui/spinner.tsx",
@@ -71,7 +76,7 @@ describe("@regression spinner-ssot", () => {
 			if (LOADER_IMPORT_ALLOWLIST.has(relativePath)) continue;
 			const content = readFileSync(join(REPO_ROOT, relativePath), "utf-8");
 			if (
-				/import\s[^;]*\b(Loader2Icon|LoaderCircle|Loader2)\b[^;]*from\s+["']lucide-react["']/s.test(
+				/import\s[^;]*\b(SpinnerIcon|SpinnerGapIcon|SpinnerBallIcon|CircleNotchIcon|Loader2Icon|LoaderCircle|Loader2)\b[^;]*from\s+["'](@phosphor-icons\/react\/ssr|lucide-react)["']/s.test(
 					content,
 				)
 			) {
@@ -81,7 +86,7 @@ describe("@regression spinner-ssot", () => {
 
 		expect(
 			offenders,
-			"Icône loader lucide importée en direct — utiliser <Spinner /> " +
+			"Icône de chargement importée en direct — utiliser <Spinner /> " +
 				"(shared/components/ui/spinner.tsx), ou <Spinner presentational /> dans " +
 				"un élément déjà aria-busy.\n" +
 				offenders.join("\n"),

@@ -14,7 +14,7 @@ import {
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
-import { Archive, FileText, Globe } from "lucide-react";
+import { ArchiveIcon, FileTextIcon, GlobeIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { ComponentType } from "react";
 
@@ -40,21 +40,21 @@ const STATUS_CONFIG: Record<
 	[CollectionStatus.DRAFT]: {
 		label: "Brouillon",
 		tone: "neutral",
-		icon: FileText,
+		icon: FileTextIcon,
 		description:
 			"La collection sera sauvegardee comme brouillon. Elle ne sera pas visible sur la boutique mais restera accessible dans le dashboard pour modifications.",
 	},
 	[CollectionStatus.PUBLIC]: {
 		label: "Public",
 		tone: "success",
-		icon: Globe,
+		icon: GlobeIcon,
 		description:
 			"La collection sera publiee sur la boutique et visible par tous les visiteurs. Assurez-vous que toutes les informations sont correctes.",
 	},
 	[CollectionStatus.ARCHIVED]: {
 		label: "Archivee",
 		tone: "warning",
-		icon: Archive,
+		icon: ArchiveIcon,
 		description:
 			"La collection sera archivee. Elle ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Vous pourrez la restaurer a tout moment.",
 	},

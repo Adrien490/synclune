@@ -13,7 +13,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, m } from "motion/react";
-import { Search, X } from "lucide-react";
+import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react/ssr";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { mediaBelow } from "@/shared/constants/breakpoints";
@@ -356,7 +356,7 @@ function SearchInputInner({
 								exit={{ opacity: 0 }}
 								transition={{ duration: MOTION_CONFIG.duration.fast }}
 							>
-								<Search className="size-4" aria-hidden="true" />
+								<MagnifyingGlassIcon className="size-4" aria-hidden="true" />
 							</m.span>
 						)}
 					</AnimatePresence>
@@ -433,7 +433,7 @@ function SearchInputInner({
 											)}
 											aria-label="Effacer la recherche"
 										>
-											<X className={styles.clearIcon} aria-hidden="true" />
+											<XIcon className={styles.clearIcon} aria-hidden="true" />
 										</Button>
 									</m.div>
 								)}

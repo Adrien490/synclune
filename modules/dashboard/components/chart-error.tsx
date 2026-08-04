@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
-import { CircleAlert, RotateCcw } from "lucide-react";
+import { ArrowCounterClockwiseIcon, WarningCircleIcon } from "@phosphor-icons/react/ssr";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface ChartErrorProps {
@@ -40,13 +40,13 @@ export function ChartError({
 					aria-live="polite"
 				>
 					<div className="bg-destructive/10 mb-4 flex size-12 items-center justify-center rounded-full">
-						<CircleAlert className="text-destructive size-6" aria-hidden="true" />
+						<WarningCircleIcon className="text-destructive size-6" aria-hidden="true" />
 					</div>
 					<h3 className="text-foreground mb-1 text-base font-semibold">{title}</h3>
 					<p className="text-muted-foreground mb-4 max-w-70 text-sm">{description}</p>
 					{onRetry && (
 						<Button variant="outline" size="sm" onClick={onRetry} className="h-10 min-w-30 gap-2">
-							<RotateCcw className="size-4" aria-hidden="true" />
+							<ArrowCounterClockwiseIcon className="size-4" aria-hidden="true" />
 							Réessayer
 						</Button>
 					)}

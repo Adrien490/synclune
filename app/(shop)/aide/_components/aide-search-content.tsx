@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SearchX, X } from "lucide-react";
+import { MagnifyingGlassIcon, MagnifyingGlassMinusIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { useRef, useState } from "react";
 
 import {
@@ -47,7 +47,7 @@ export function AideSearchContent({ items }: AideSearchContentProps) {
 	return (
 		<div className="mx-auto max-w-3xl space-y-8">
 			<div className="relative">
-				<Search
+				<MagnifyingGlassIcon
 					className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
 					aria-hidden="true"
 				/>
@@ -81,7 +81,7 @@ export function AideSearchContent({ items }: AideSearchContentProps) {
 						aria-label="Effacer la recherche"
 						className="text-muted-foreground hover:text-foreground absolute top-1/2 right-0 size-11 -translate-y-1/2"
 					>
-						<X className="size-4" aria-hidden="true" />
+						<XIcon className="size-4" aria-hidden="true" />
 					</Button>
 				)}
 				<ResultCountLiveRegion
@@ -96,7 +96,7 @@ export function AideSearchContent({ items }: AideSearchContentProps) {
 				<Empty>
 					<EmptyHeader>
 						<EmptyMedia variant="icon">
-							<SearchX className="size-6" aria-hidden="true" />
+							<MagnifyingGlassMinusIcon className="size-6" aria-hidden="true" />
 						</EmptyMedia>
 						<EmptyTitle>Aucune réponse pour « {trimmed} »</EmptyTitle>
 						<EmptyDescription>

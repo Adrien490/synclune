@@ -9,7 +9,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import type { GetProductTypesReturn } from "@/modules/product-types/data/get-product-types";
-import { Lock, Tags } from "lucide-react";
+import { LockIcon, ShapesIcon } from "@phosphor-icons/react/ssr";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
 import { CreateProductTypeButton } from "./create-product-type-button";
@@ -31,7 +31,7 @@ export async function ProductTypesDataTable({
 		return (
 			<TableEmptyState
 				className="hidden md:flex"
-				icon={Tags}
+				icon={ShapesIcon}
 				title="Aucun type trouvé"
 				description="Aucun type de bijou ne correspond aux critères de recherche."
 				noItemsDescription="Aucun type de bijou pour l'instant."
@@ -88,7 +88,7 @@ export async function ProductTypesDataTable({
 										{productType.label}
 									</Link>
 									{productType.isSystem ? (
-										<Lock
+										<LockIcon
 											className="text-muted-foreground size-4 shrink-0"
 											aria-label="Type système verrouillé"
 										/>

@@ -2,7 +2,7 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
-import { Search, X } from "lucide-react";
+import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react/ssr";
 
 // ============================================================================
 // SectionHeader - Accordion trigger content with count badge and reset button
@@ -45,7 +45,7 @@ export function SectionHeader({
 					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring ml-auto flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 					aria-label={`Effacer le filtre ${label}`}
 				>
-					<X className="size-3" />
+					<XIcon className="size-3" />
 				</span>
 			)}
 		</div>
@@ -67,7 +67,7 @@ export function SectionSearch({
 }) {
 	return (
 		<div className="relative mb-2">
-			<Search className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
+			<MagnifyingGlassIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
 			<Input
 				type="text"
 				value={value}

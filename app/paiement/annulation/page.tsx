@@ -6,7 +6,7 @@ import {
 	getCheckoutCancelMessage,
 } from "@/modules/payments/constants/checkout-cancel-messages";
 import { BRAND } from "@/shared/constants/brand";
-import { Info, ShoppingBag } from "lucide-react";
+import { InfoIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { z } from "zod";
@@ -77,7 +77,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 						<CardContent className="space-y-6">
 							{/* Message d'erreur spécifique */}
 							<Alert variant={reason && reason !== "canceled" ? "destructive" : "default"}>
-								<Info className="size-4" />
+								<InfoIcon className="size-4" />
 								<AlertDescription>{errorInfo.description}</AlertDescription>
 							</Alert>
 
@@ -122,7 +122,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							{/* Actions */}
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
 								<Button render={<Link href="/paiement" />} size="lg" className="flex-1">
-									<ShoppingBag className="mr-2 size-4" />
+									<ShoppingBagIcon className="mr-2 size-4" />
 									Reprendre ma commande
 								</Button>
 								<Button

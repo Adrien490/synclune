@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { Check, X } from "lucide-react";
+import { CheckIcon, XIcon } from "@phosphor-icons/react/ssr";
 
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -253,7 +253,7 @@ function SortDrawerInner({
 						className="absolute top-4 right-4 size-11"
 						aria-label="Fermer"
 					>
-						<X className="size-4" />
+						<XIcon className="size-4" />
 					</Button>
 				</DrawerHeader>
 				<DrawerBody>
@@ -294,7 +294,7 @@ function SortDrawerInner({
 									)}
 								>
 									<span className="flex items-center gap-2">
-										{isResetOption && <X className="size-4" aria-hidden="true" />}
+										{isResetOption && <XIcon className="size-4" aria-hidden="true" />}
 										{option.label}
 									</span>
 									<AnimatePresence mode="wait">
@@ -305,7 +305,7 @@ function SortDrawerInner({
 												exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.8 }}
 												transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 											>
-												<Check className="text-primary size-5 shrink-0" aria-hidden="true" />
+												<CheckIcon className="text-primary size-5 shrink-0" aria-hidden="true" />
 											</m.div>
 										)}
 									</AnimatePresence>

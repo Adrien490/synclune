@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { SparkleIcon } from "@phosphor-icons/react/ssr";
 
 import { Tap } from "@/shared/components/animations/tap";
 import { cn } from "@/shared/utils/cn";
@@ -61,7 +61,7 @@ export function CategoryCard({ type, onSelect, variant = "full", query }: Catego
 				)}
 			>
 				{isCompact && (
-					<Sparkles className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+					<SparkleIcon className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
 				)}
 				<span className={isCompact ? "truncate" : undefined}>
 					{isCompact && query ? <HighlightMatch text={type.label} query={query} /> : type.label}

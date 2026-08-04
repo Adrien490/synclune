@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { Info, PackageOpen } from "lucide-react";
+import { InfoIcon, PackageIcon } from "@phosphor-icons/react/ssr";
 import { usePathname, useRouter } from "next/navigation";
 
 interface ProductTabsProps {
@@ -28,11 +28,11 @@ export function ProductTabs({ slug, variantsCount }: ProductTabsProps) {
 		<Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
 			<TabsList className="grid w-full max-w-md grid-cols-2">
 				<TabsTrigger value="modifier" className="flex items-center gap-2">
-					<Info className="h-4 w-4" />
+					<InfoIcon className="h-4 w-4" />
 					Informations
 				</TabsTrigger>
 				<TabsTrigger value="variantes" className="flex items-center gap-2">
-					<PackageOpen className="h-4 w-4" />
+					<PackageIcon className="h-4 w-4" />
 					Variantes ({variantsCount})
 				</TabsTrigger>
 			</TabsList>

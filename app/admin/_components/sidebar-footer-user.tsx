@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, Keyboard, LogOut } from "lucide-react";
+import { CaretUpDownIcon, KeyboardIcon, SignOutIcon } from "@phosphor-icons/react/ssr";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -71,7 +71,7 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 									{user.email}
 								</span>
 							</div>
-							<ChevronsUpDown className="ml-auto size-4" aria-hidden="true" />
+							<CaretUpDownIcon className="ml-auto size-4" aria-hidden="true" />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent
 							className="w-[--anchor-width] min-w-56 rounded-lg"
@@ -83,7 +83,7 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 							    dont seul le survol révélait la fonction, ou en connaissant `?`
 							    d'avance. Une entrée nommée dans le menu la rend découvrable. */}
 							<DropdownMenuItem className="cursor-pointer" onClick={() => openShortcuts()}>
-								<Keyboard aria-hidden="true" />
+								<KeyboardIcon aria-hidden="true" />
 								Raccourcis clavier
 								<KbdGroup className="ml-auto">
 									<Kbd>?</Kbd>
@@ -96,7 +96,7 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 									variant="destructive"
 									className="cursor-pointer"
 								>
-									<LogOut aria-hidden="true" />
+									<SignOutIcon aria-hidden="true" />
 									Déconnexion
 								</DropdownMenuItem>
 							</LogoutAlertDialog>

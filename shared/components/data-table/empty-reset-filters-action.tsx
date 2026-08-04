@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterX } from "lucide-react";
+import { FunnelXIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { Button } from "@/shared/components/ui/button";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -33,7 +33,7 @@ export function EmptyResetFiltersAction({
 			}
 			variant="outline"
 		>
-			<FilterX aria-hidden="true" />
+			<FunnelXIcon aria-hidden="true" />
 			{label}
 		</Button>
 	);

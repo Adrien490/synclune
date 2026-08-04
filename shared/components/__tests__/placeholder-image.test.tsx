@@ -13,7 +13,7 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("lucide-react", () => ({
+vi.mock("@phosphor-icons/react/ssr", () => ({
 	ImageIcon: ({
 		className,
 		"aria-hidden": ariaHidden,

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { ResponsiveDialogFooter } from "@/shared/components/responsive-dialog";
@@ -307,7 +307,7 @@ export function SkuSelectorFormContent({
 					className="text-muted-foreground can-hover:hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
 				>
 					Voir la fiche produit
-					<ArrowRight className="size-3.5" aria-hidden="true" />
+					<ArrowRightIcon className="size-3.5" aria-hidden="true" />
 				</Link>
 
 				{/* Color selector */}

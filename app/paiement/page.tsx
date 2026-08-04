@@ -5,7 +5,7 @@ import { getCart } from "@/modules/cart/data/get-cart";
 import { validateCart } from "@/modules/cart/actions/validate-cart";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
-import { ShoppingBag, TriangleAlert } from "lucide-react";
+import { ShoppingBagIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { CheckoutForm } from "@/modules/payments/components/checkout-form";
 import { OpenCartButton } from "./_components/open-cart-button";
@@ -47,7 +47,7 @@ export default async function CheckoutPage() {
 						<Card className="border-primary/10 rounded-2xl shadow-md">
 							<CardContent className="space-y-6 p-6 sm:p-8 sm:text-center">
 								<div className="bg-muted/80 mx-auto flex size-16 items-center justify-center rounded-full">
-									<ShoppingBag className="text-muted-foreground size-8" aria-hidden="true" />
+									<ShoppingBagIcon className="text-muted-foreground size-8" aria-hidden="true" />
 								</div>
 								<div className="space-y-2">
 									<h2 className="font-display text-xl font-normal sm:text-2xl">
@@ -88,7 +88,7 @@ export default async function CheckoutPage() {
 							</h1>
 						</div>
 						<Alert variant="destructive" className="mb-6">
-							<TriangleAlert className="size-4" />
+							<WarningIcon className="size-4" />
 							<AlertTitle>Un petit ajustement est nécessaire</AlertTitle>
 							<AlertDescription className="mt-2 space-y-4">
 								<p className="text-sm">

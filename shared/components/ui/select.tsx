@@ -2,7 +2,7 @@
 
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { CaretDownIcon, CaretUpIcon, CheckIcon } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/shared/utils/cn";
 
@@ -65,7 +65,7 @@ function SelectTrigger({
 			{children}
 			<SelectPrimitive.Icon
 				data-slot="select-icon"
-				render={<ChevronDownIcon className="size-4 opacity-70" />}
+				render={<CaretDownIcon className="size-4 opacity-70" />}
 			/>
 		</SelectPrimitive.Trigger>
 	);
@@ -150,7 +150,7 @@ function SelectScrollUpButton({ className, ...props }: SelectPrimitive.ScrollUpA
 			className={cn("flex cursor-default items-center justify-center py-2", className)}
 			{...props}
 		>
-			<ChevronUpIcon className="size-4" aria-hidden="true" />
+			<CaretUpIcon className="size-4" aria-hidden="true" />
 		</SelectPrimitive.ScrollUpArrow>
 	);
 }
@@ -163,7 +163,7 @@ function SelectScrollDownButton({ className, ...props }: SelectPrimitive.ScrollD
 			className={cn("flex cursor-default items-center justify-center py-2", className)}
 			{...props}
 		>
-			<ChevronDownIcon className="size-4" aria-hidden="true" />
+			<CaretDownIcon className="size-4" aria-hidden="true" />
 		</SelectPrimitive.ScrollDownArrow>
 	);
 }

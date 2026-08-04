@@ -1,5 +1,5 @@
 import { use } from "react";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
@@ -27,7 +27,7 @@ export function OrdersMobileList({
 		return (
 			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
-					icon={ShoppingBag}
+					icon={ShoppingBagIcon}
 					title="Aucune commande trouvée"
 					description={
 						hasActiveFilters

@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2Icon } from "lucide-react";
+import { SpinnerIcon } from "@phosphor-icons/react/ssr";
 
 import { cn } from "@/shared/utils/cn";
 
@@ -44,7 +44,7 @@ function Spinner({
 	...props
 }: SpinnerProps) {
 	const icon = (
-		<Loader2Icon
+		<SpinnerIcon
 			aria-hidden="true"
 			data-slot="spinner"
 			className={cn(spinnerVariants({ size }), className)}

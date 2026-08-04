@@ -7,7 +7,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
-import { Palette } from "lucide-react";
+import { PaletteIcon } from "@phosphor-icons/react/ssr";
 import { use } from "react";
 import { ColorActiveToggle } from "@/modules/colors/components/admin/color-active-toggle";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
@@ -30,7 +30,7 @@ export function ColorsDataTable({
 		return (
 			<TableEmptyState
 				className="hidden md:flex"
-				icon={Palette}
+				icon={PaletteIcon}
 				title="Aucune couleur trouvée"
 				description="Aucune couleur ne correspond aux critères de recherche."
 				noItemsDescription="Aucune couleur pour l'instant."

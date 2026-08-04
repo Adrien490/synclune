@@ -1,5 +1,5 @@
 import { use } from "react";
-import { FolderOpen } from "lucide-react";
+import { FolderOpenIcon } from "@phosphor-icons/react/ssr";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
@@ -30,7 +30,7 @@ export function CollectionsMobileList({
 		return (
 			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
-					icon={FolderOpen}
+					icon={FolderOpenIcon}
 					title="Aucune collection trouvée"
 					description={
 						hasActiveFilters

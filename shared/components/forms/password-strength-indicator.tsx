@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { Check, X } from "lucide-react";
+import { CheckIcon, XIcon } from "@phosphor-icons/react/ssr";
 import {
 	PASSWORD_RULES,
 	getStrengthLevel,
@@ -79,9 +79,9 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
 							)}
 						>
 							{isValid ? (
-								<Check className="size-3" aria-hidden="true" />
+								<CheckIcon className="size-3" aria-hidden="true" />
 							) : (
-								<X className="size-3" aria-hidden="true" />
+								<XIcon className="size-3" aria-hidden="true" />
 							)}
 							<span>
 								{rule.label}

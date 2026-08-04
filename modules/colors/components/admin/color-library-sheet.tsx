@@ -1,6 +1,6 @@
 "use client";
 
-import { BookMarked, Search } from "lucide-react";
+import { BookBookmarkIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
 
 import {
@@ -80,7 +80,7 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 					/>
 				}
 			>
-				<BookMarked className="size-4" aria-hidden="true" />
+				<BookBookmarkIcon className="size-4" aria-hidden="true" />
 				Choisir depuis le catalogue
 			</ResponsiveDialogTrigger>
 			<ResponsiveDialogContent className="sm:max-w-2xl">
@@ -94,7 +94,7 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 
 				<div className="bg-background sticky top-0 z-10 space-y-3 pb-2">
 					<div className="relative">
-						<Search
+						<MagnifyingGlassIcon
 							className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
 							aria-hidden="true"
 						/>

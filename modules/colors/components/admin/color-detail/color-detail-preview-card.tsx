@@ -1,4 +1,4 @@
-import { Palette } from "lucide-react";
+import { PaletteIcon } from "@phosphor-icons/react/ssr";
 
 import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
 import { CopyButton } from "@/shared/components/copy-button";
@@ -13,7 +13,7 @@ export function ColorDetailPreviewCard({ color }: ColorDetailPreviewCardProps) {
 		<Card>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Palette className="size-5" aria-hidden="true" />
+					<PaletteIcon className="size-5" aria-hidden="true" />
 					Aperçu
 				</CardTitle>
 			</CardHeader>

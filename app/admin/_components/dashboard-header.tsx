@@ -8,7 +8,7 @@ import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { ExternalLink, Keyboard } from "lucide-react";
+import { ArrowSquareOutIcon, KeyboardIcon } from "@phosphor-icons/react/ssr";
 // GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
 // pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
 import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
@@ -63,7 +63,7 @@ export function DashboardHeader() {
 							/>
 						}
 					>
-						<Keyboard className="size-4" aria-hidden="true" />
+						<KeyboardIcon className="size-4" aria-hidden="true" />
 					</TooltipTrigger>
 					<TooltipContent side="bottom">
 						<span>Raccourcis clavier</span>
@@ -84,7 +84,7 @@ export function DashboardHeader() {
 							/>
 						}
 					>
-						<ExternalLink className="size-4" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 					</TooltipTrigger>
 					<TooltipContent side="bottom">Voir le site</TooltipContent>
 				</Tooltip>

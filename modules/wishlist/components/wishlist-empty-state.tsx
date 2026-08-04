@@ -7,7 +7,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
-import { Heart } from "lucide-react";
+import { HeartIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 /**
@@ -25,7 +25,7 @@ export function WishlistEmptyState() {
 		<Empty className="mt-4 mb-12 sm:my-12">
 			<EmptyHeader>
 				<EmptyMedia variant="icon">
-					<Heart className="size-6" />
+					<HeartIcon className="size-6" />
 				</EmptyMedia>
 				<EmptyTitle>Ta liste de favoris est vide</EmptyTitle>
 			</EmptyHeader>

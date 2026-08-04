@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { LockIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
@@ -142,7 +142,7 @@ export function CloseStoreForm() {
 								{isPending ? (
 									<Spinner presentational className="mr-2" />
 								) : (
-									<Lock className="mr-2 size-4" />
+									<LockIcon className="mr-2 size-4" />
 								)}
 								{isPending ? "Fermeture…" : "Fermer la boutique"}
 							</Button>

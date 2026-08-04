@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarBlankIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -221,7 +221,7 @@ export function DateTimeField({
 						className="min-h-11 shrink-0"
 						aria-label="Effacer la date"
 					>
-						<X className="size-4" />
+						<XIcon className="size-4" />
 					</Button>
 				)}
 			</div>
@@ -246,7 +246,7 @@ export function DateTimeField({
 							/>
 						}
 					>
-						<CalendarIcon className="mr-2 size-4" />
+						<CalendarBlankIcon className="mr-2 size-4" />
 						{displayValue || placeholder}
 					</PopoverTrigger>
 					<PopoverContent className="w-auto p-0" align="start">
@@ -285,7 +285,7 @@ export function DateTimeField({
 						className="min-h-11 shrink-0"
 						aria-label="Effacer la date"
 					>
-						<X className="size-4" />
+						<XIcon className="size-4" />
 					</Button>
 				)}
 			</div>

@@ -260,3 +260,59 @@ Autres correspondances qui ne sont pas des renommages :
 | `onEscapeKeyDown`                      | arbitrage dans `onOpenChange` : `eventDetails.reason === "escape-key"` + `eventDetails.cancel()` |
 
 ⚠️ Base UI **ignore `preventDefault`** sur ses handlers : utiliser `preventBaseUIHandler`.
+
+## Icônes — Phosphor, entrée `/ssr`, `weight` et non `strokeWidth`
+
+Migration `lucide-react` → `@phosphor-icons/react` du 2026-08-04. Le motif n'est pas la mode : le
+trait par défaut de lucide vaut **2** alors que tous les SVG maison du dépôt
+(`shared/components/icons/icon-sprite.tsx`, `shared/components/ui/toast-icons.tsx`,
+`hamburger-icon.tsx`, `animated-heart-icon.tsx`) sont à **1,5**, et trois call sites lucide
+rétablissaient 1,5/1,6 à la main. Le poids `regular` de Phosphor vaut exactement 1,5 sur grille 24
+équivalente (16/256) : le défaut de la librairie est désormais la convention de la maison.
+
+### Les quatre règles
+
+1. **Les imports de VALEUR passent par `@phosphor-icons/react/ssr`**, jamais par la racine.
+   `dist/index.es.js` importe _eagerly_ les ~1512 modules CSR **plus** tout l'arbre SSR ; et les
+   composants `dist/csr/*` lisent `IconContext` sans porter de directive `"use client"`, donc un
+   import racine dans un Server Component casse **au rendu**, pas à l'analyse. Les variantes
+   `dist/ssr/*` passent par `SSRBase`, sans contexte : elles fonctionnent des deux côtés.
+2. **Les imports de TYPE viennent de la racine, en `import type`** — les typings de l'entrée `/ssr`
+   ne ré-exportent pas `Icon` / `IconProps` / `IconWeight`. Un `import type` est effacé au build.
+3. **`weight`, jamais `strokeWidth`.** Phosphor peint en `fill="currentColor"` sur un tracé fermé :
+   la prop `strokeWidth` n'a aucun effet, et une classe `fill-*` ne remplit pas l'icône. Une coche
+   plus grasse s'écrit `weight="bold"` ; une étoile pleine, `weight="fill"`.
+4. **Nommage suffixé `*Icon`** (`HeartIcon`, `MagnifyingGlassIcon`) — convention Phosphor 2.1.x.
+
+| Graisse   | Trait équivalent /24 | Usage                                            |
+| --------- | -------------------- | ------------------------------------------------ |
+| `thin`    | 0,75                 | —                                                |
+| `light`   | 1,125                | —                                                |
+| `regular` | **1,5**              | défaut, aligné sur les SVG maison                |
+| `bold`    | 2,25                 | pastilles denses, coches sur fond coloré         |
+| `fill`    | aplat                | état actif : cœur favori, étoile principale      |
+| `duotone` | aplat + contour      | accent : un 2ᵉ ton depuis un seul `currentColor` |
+
+### Ce qui ne change pas
+
+Les 15 composants SVG maison restent la couche « signature » de la marque et sont **hors migration** :
+`shared/components/icons/` (sprite, cœur animé, hamburger, logos de paiement, Instagram, TikTok,
+Google), `shared/components/ui/toast-icons.tsx`, `shared/components/squiggle-underline.tsx`,
+`shared/components/animations/hand-drawn-accent.tsx`, `shared/components/masking-tape.tsx`.
+Ils étaient déjà à 1,5 : ils sont désormais cohérents avec le trait par défaut, au lieu de trancher.
+
+### Deux pièges vérifiés pendant la migration
+
+- **Le défaut de taille passe de 24 px à `1em`.** Sans classe de taille, une icône Phosphor hérite
+  de la taille de police. Ce n'est un problème nulle part aujourd'hui parce que les primitives qui
+  accueillent des icônes nues les contraignent en CSS (`Alert` : `[&>svg]:size-4` ; `Button`,
+  `DropdownMenuItem`, `Attachment` : `[&_svg:not([class*='size-'])]:size-4`) — mais un nouveau
+  conteneur maison doit poser la contrainte ou la classe.
+- **Ne pas fondre deux icônes co-visibles.** La migration a dédoublonné 157 noms lucide en
+  128 icônes, mais `Search`/`SearchX` (champ de recherche + état « aucun résultat » juste dessous)
+  et `PackageX`/`CircleX` (« Marquer comme retourné » et « Annuler la commande », deux entrées du
+  même menu) devaient rester distincts. Le critère n'est pas « même sens », c'est « jamais visibles
+  ensemble ».
+
+Verrouillé par `shared/components/__tests__/phosphor-ssr-entry.regression.test.ts` (entrée `/ssr`,
+cible des `vi.mock`, absence de `lucide-react`).

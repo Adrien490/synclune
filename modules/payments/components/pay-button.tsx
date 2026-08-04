@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { Lock, ShieldCheck } from "lucide-react";
+import { LockIcon, ShieldCheckIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -237,7 +237,7 @@ export function PayButton({
 
 			{isAwaiting3ds && (
 				<Alert role="status" aria-live="polite">
-					<ShieldCheck className="size-4" />
+					<ShieldCheckIcon className="size-4" />
 					<AlertDescription>
 						Vérification 3D Secure en cours, une fenêtre de ta banque va s&apos;ouvrir.
 					</AlertDescription>
@@ -293,7 +293,7 @@ export function PayButton({
 					</>
 				) : (
 					<>
-						<Lock className="size-4" aria-hidden="true" />
+						<LockIcon className="size-4" aria-hidden="true" />
 						<span>Commander et payer {formatEuro(amountToPay)}</span>
 					</>
 				)}

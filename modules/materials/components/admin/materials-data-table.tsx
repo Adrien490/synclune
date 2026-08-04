@@ -8,7 +8,7 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetMaterialsReturn } from "@/modules/materials/data/get-materials";
 import { MaterialActiveToggle } from "@/modules/materials/components/admin/material-active-toggle";
-import { Gem } from "lucide-react";
+import { SwatchesIcon } from "@phosphor-icons/react/ssr";
 import { use } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
@@ -30,7 +30,7 @@ export function MaterialsDataTable({
 		return (
 			<TableEmptyState
 				className="hidden md:flex"
-				icon={Gem}
+				icon={SwatchesIcon}
 				title="Aucun matériau trouvé"
 				description="Aucun matériau ne correspond aux critères de recherche."
 				noItemsDescription="Aucun matériau pour l'instant."

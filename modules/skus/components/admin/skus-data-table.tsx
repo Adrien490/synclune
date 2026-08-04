@@ -20,7 +20,7 @@ import { buildSwatchStyle, getSwatchAriaLabel } from "@/modules/colors/utils/swa
 import { formatEuro } from "@/shared/utils/format-euro";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -66,7 +66,7 @@ export async function ProductVariantsDataTable({
 			<Card className="hidden md:block">
 				<CardContent className="py-12">
 					<TableEmptyState
-						icon={Package}
+						icon={PackageIcon}
 						title="Aucune variante"
 						description="Aucune variante ne correspond aux critères."
 						noItemsDescription="Ce produit n'a pas encore de variante. Créez-en une pour commencer."
@@ -148,7 +148,7 @@ export async function ProductVariantsDataTable({
 										)
 									) : (
 										<div className="bg-muted flex h-full w-full items-center justify-center rounded-md">
-											<Package className="text-muted-foreground size-8" />
+											<PackageIcon className="text-muted-foreground size-8" />
 										</div>
 									)}
 								</div>

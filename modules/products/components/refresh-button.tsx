@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { ArrowsClockwiseIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/shared/components/ui/button";
@@ -10,7 +10,7 @@ export function RefreshButton() {
 
 	return (
 		<Button variant="outline" size="sm" onClick={() => router.refresh()} className="shrink-0">
-			<RefreshCw className="size-4" aria-hidden="true" />
+			<ArrowsClockwiseIcon className="size-4" aria-hidden="true" />
 			Réessayer
 		</Button>
 	);

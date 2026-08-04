@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldAlert } from "lucide-react";
+import { ShieldWarningIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
@@ -58,7 +58,7 @@ export function RevokeSessionsCard() {
 		>
 			<div className="flex items-start gap-3">
 				<div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-full">
-					<ShieldAlert className="text-muted-foreground size-5" aria-hidden="true" />
+					<ShieldWarningIcon className="text-muted-foreground size-5" aria-hidden="true" />
 				</div>
 				<div className="space-y-1">
 					<h2 id="revoke-sessions-heading" className="font-medium">

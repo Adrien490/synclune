@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Layers } from "lucide-react";
+import { StackIcon } from "@phosphor-icons/react/ssr";
 
 import { Tap } from "@/shared/components/animations/tap";
 import { cn } from "@/shared/utils/cn";
@@ -94,7 +94,7 @@ export function CollectionCard({
 									/>
 								</div>
 							) : (
-								<Layers className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+								<StackIcon className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
 							)}
 							<span className="truncate font-medium">
 								{query ? <HighlightMatch text={collection.name} query={query} /> : collection.name}
@@ -123,7 +123,7 @@ export function CollectionCard({
 							</div>
 						) : (
 							<div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
-								<Layers className="text-muted-foreground/40 size-4" aria-hidden="true" />
+								<StackIcon className="text-muted-foreground/40 size-4" aria-hidden="true" />
 							</div>
 						)}
 						<div className="min-w-0">

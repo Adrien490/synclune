@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { HeartIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
@@ -50,7 +50,7 @@ export function NavbarIconButtons({ isAdmin, userName, userEmail }: NavbarIconBu
 						/>
 					}
 				>
-					<Heart
+					<HeartIcon
 						size={20}
 						className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105"
 						aria-hidden="true"

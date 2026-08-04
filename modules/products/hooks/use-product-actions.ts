@@ -1,16 +1,16 @@
 "use client";
 
 import {
-	Archive,
-	ArchiveRestore,
-	Copy,
-	Eye,
-	FolderPlus,
-	LayoutList,
-	Pencil,
-	Trash2,
-	Upload,
-} from "lucide-react";
+	ArchiveIcon,
+	BoxArrowUpIcon,
+	CopyIcon,
+	EyeIcon,
+	FolderPlusIcon,
+	ListDashesIcon,
+	PencilSimpleIcon,
+	TrashIcon,
+	UploadSimpleIcon,
+} from "@phosphor-icons/react/ssr";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -64,7 +64,7 @@ export function useProductActions({
 							{
 								key: "view",
 								label: "Voir la fiche",
-								icon: Eye,
+								icon: EyeIcon,
 								href: `/creations/${productSlug}`,
 								external: true,
 							},
@@ -73,26 +73,26 @@ export function useProductActions({
 				{
 					key: "edit",
 					label: "Modifier",
-					icon: Pencil,
+					icon: PencilSimpleIcon,
 					href: `/admin/catalogue/produits/${productSlug}/modifier`,
 				},
 				{
 					key: "duplicate",
 					label: "Dupliquer",
-					icon: Copy,
+					icon: CopyIcon,
 					closesMenu: false,
 					onSelect: () => duplicateDialog.open({ productId, productTitle }),
 				},
 				{
 					key: "variants",
 					label: "Gérer variantes",
-					icon: LayoutList,
+					icon: ListDashesIcon,
 					href: `/admin/catalogue/produits/${productSlug}/variantes`,
 				},
 				{
 					key: "collections",
 					label: "Gérer collections",
-					icon: FolderPlus,
+					icon: FolderPlusIcon,
 					closesMenu: false,
 					onSelect: () => collectionsDialog.open({ productId, productTitle }),
 				},
@@ -105,7 +105,7 @@ export function useProductActions({
 				{
 					key: "draft",
 					label: "Marquer comme brouillon",
-					icon: Pencil,
+					icon: PencilSimpleIcon,
 					disabled: isDraft,
 					hidden: isArchived,
 					closesMenu: false,
@@ -121,7 +121,7 @@ export function useProductActions({
 					key: "public",
 					label: "Publier",
 					description: "Rendre visible sur la boutique",
-					icon: Upload,
+					icon: UploadSimpleIcon,
 					disabled: isPublic,
 					hidden: isArchived,
 					closesMenu: false,
@@ -141,7 +141,7 @@ export function useProductActions({
 				{
 					key: "archive",
 					label: "Archiver",
-					icon: Archive,
+					icon: ArchiveIcon,
 					hidden: isArchived,
 					closesMenu: false,
 					onSelect: () => archiveDialog.open({ productId, productTitle, productStatus }),
@@ -149,7 +149,7 @@ export function useProductActions({
 				{
 					key: "restore",
 					label: "Restaurer",
-					icon: ArchiveRestore,
+					icon: BoxArrowUpIcon,
 					hidden: !isArchived,
 					closesMenu: false,
 					onSelect: () => archiveDialog.open({ productId, productTitle, productStatus }),
@@ -163,7 +163,7 @@ export function useProductActions({
 					key: "delete",
 					label: "Supprimer définitivement",
 					description: "Action irréversible",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive",
 					hidden: !isArchived,
 					closesMenu: false,

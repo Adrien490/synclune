@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import { ChevronUp } from "lucide-react";
+import { CaretUpIcon } from "@phosphor-icons/react/ssr";
 import { AnimatePresence, m, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 
@@ -135,7 +135,7 @@ export function ScrollToTop() {
 						)}
 					>
 						{!reducedMotion && <ScrollRing />}
-						<ChevronUp className="size-5" aria-hidden="true" />
+						<CaretUpIcon className="size-5" aria-hidden="true" />
 					</m.button>
 				)}
 			</AnimatePresence>

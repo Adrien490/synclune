@@ -1,6 +1,6 @@
 import { cleanup, render, screen, fireEvent, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { Archive, Eye, Pencil, Trash2 } from "lucide-react";
+import { ArchiveIcon, EyeIcon, PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react/ssr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockTriggerHaptic = vi.fn();
@@ -51,8 +51,8 @@ function buildSections(opts: { includeHidden?: boolean } = {}): ActionMenuSectio
 		{
 			key: "manage",
 			items: [
-				{ key: "view", label: "Voir", icon: Eye, href: "/creations/test", external: true },
-				{ key: "edit", label: "Modifier", icon: Pencil, onSelect: vi.fn() },
+				{ key: "view", label: "Voir", icon: EyeIcon, href: "/creations/test", external: true },
+				{ key: "edit", label: "Modifier", icon: PencilSimpleIcon, onSelect: vi.fn() },
 				...(opts.includeHidden
 					? [{ key: "hidden", label: "Caché", onSelect: vi.fn(), hidden: true as const }]
 					: []),
@@ -61,7 +61,7 @@ function buildSections(opts: { includeHidden?: boolean } = {}): ActionMenuSectio
 		{
 			key: "status",
 			label: "Statut",
-			items: [{ key: "archive", label: "Archiver", icon: Archive, onSelect: vi.fn() }],
+			items: [{ key: "archive", label: "Archiver", icon: ArchiveIcon, onSelect: vi.fn() }],
 		},
 		{
 			key: "danger",
@@ -70,7 +70,7 @@ function buildSections(opts: { includeHidden?: boolean } = {}): ActionMenuSectio
 					key: "delete",
 					label: "Supprimer",
 					description: "Action irréversible",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive" as const,
 					onSelect: vi.fn(),
 				},
@@ -158,7 +158,7 @@ describe("ResponsiveActionMenu — desktop", () => {
 		sections[2]!.items[0] = {
 			key: "delete",
 			label: "Supprimer",
-			icon: Trash2,
+			icon: TrashIcon,
 			variant: "destructive",
 			onSelect: onDelete,
 		};
@@ -209,7 +209,7 @@ describe("ResponsiveActionMenu — desktop", () => {
 		const sections: ActionMenuSection[] = [
 			{
 				key: "x",
-				items: [{ key: "edit", label: "Modifier", icon: Pencil, onSelect: onEdit }],
+				items: [{ key: "edit", label: "Modifier", icon: PencilSimpleIcon, onSelect: onEdit }],
 			},
 		];
 
@@ -269,7 +269,7 @@ describe("ResponsiveActionMenu — desktop", () => {
 					{
 						key: "duplicate",
 						label: "Dupliquer",
-						icon: Pencil,
+						icon: PencilSimpleIcon,
 						onSelect: onDuplicate,
 						pending: true,
 					},
@@ -372,7 +372,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 		const sections: ActionMenuSection[] = [
 			{
 				key: "x",
-				items: [{ key: "edit", label: "Modifier", icon: Pencil, onSelect: onEdit }],
+				items: [{ key: "edit", label: "Modifier", icon: PencilSimpleIcon, onSelect: onEdit }],
 			},
 		];
 
@@ -400,7 +400,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 					{
 						key: "delete",
 						label: "Supprimer",
-						icon: Trash2,
+						icon: TrashIcon,
 						variant: "destructive",
 						onSelect: onDelete,
 					},
@@ -442,7 +442,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 		const sections: ActionMenuSection[] = [
 			{
 				key: "x",
-				items: [{ key: "edit", label: "Modifier", icon: Pencil, onSelect: vi.fn() }],
+				items: [{ key: "edit", label: "Modifier", icon: PencilSimpleIcon, onSelect: vi.fn() }],
 			},
 		];
 
@@ -500,7 +500,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 					{
 						key: "duplicate",
 						label: "Dupliquer",
-						icon: Pencil,
+						icon: PencilSimpleIcon,
 						onSelect: onDuplicate,
 						pending: true,
 					},
@@ -530,7 +530,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 		const sections: ActionMenuSection[] = [
 			{
 				key: "x",
-				items: [{ key: "edit", label: "Modifier", icon: Pencil, onSelect: vi.fn() }],
+				items: [{ key: "edit", label: "Modifier", icon: PencilSimpleIcon, onSelect: vi.fn() }],
 			},
 		];
 
@@ -555,7 +555,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 					{
 						key: "delete",
 						label: "Supprimer",
-						icon: Trash2,
+						icon: TrashIcon,
 						variant: "destructive",
 						closesMenu: false,
 						onSelect: vi.fn(),
@@ -586,7 +586,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 					{
 						key: "delete",
 						label: "Supprimer",
-						icon: Trash2,
+						icon: TrashIcon,
 						variant: "destructive",
 						closesMenu: false,
 						onSelect,
@@ -613,7 +613,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 		const sections: ActionMenuSection[] = [
 			{
 				key: "x",
-				items: [{ key: "view", label: "Voir", icon: Eye, href: "/creations/test" }],
+				items: [{ key: "view", label: "Voir", icon: EyeIcon, href: "/creations/test" }],
 			},
 		];
 
@@ -637,7 +637,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 		const sections: ActionMenuSection[] = [
 			{
 				key: "x",
-				items: [{ key: "view", label: "Voir", icon: Eye, href: "/creations/test" }],
+				items: [{ key: "view", label: "Voir", icon: EyeIcon, href: "/creations/test" }],
 			},
 		];
 
@@ -664,7 +664,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 					{
 						key: "view",
 						label: "Voir",
-						icon: Eye,
+						icon: EyeIcon,
 						href: "/creations/test",
 						closesMenu: false,
 					},
@@ -693,7 +693,7 @@ describe("ResponsiveActionMenu — mobile", () => {
 					{
 						key: "view",
 						label: "Voir",
-						icon: Eye,
+						icon: EyeIcon,
 						href: "/creations/test",
 						disabled: true,
 					},

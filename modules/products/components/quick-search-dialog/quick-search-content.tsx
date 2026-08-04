@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Search } from "lucide-react";
+import { CaretRightIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
 import { Button } from "@/shared/components/ui/button";
@@ -99,7 +99,7 @@ export function QuickSearchContent({
 							<Empty variant="borderless" size="sm" role="status" aria-live="polite">
 								<EmptyHeader>
 									<EmptyMedia variant="icon">
-										<Search className="size-5" aria-hidden="true" />
+										<MagnifyingGlassIcon className="size-5" aria-hidden="true" />
 									</EmptyMedia>
 									<EmptyTitle className="wrap-break-words w-full text-base">
 										Aucun résultat pour &ldquo;{query}&rdquo;
@@ -286,7 +286,7 @@ export function QuickSearchContent({
 						{totalCount === 0
 							? `Rechercher « ${query} » dans tout le catalogue`
 							: "Voir tous les résultats"}
-						<ChevronRight className="size-4" aria-hidden="true" />
+						<CaretRightIcon className="size-4" aria-hidden="true" />
 					</Button>
 				</div>
 			)}

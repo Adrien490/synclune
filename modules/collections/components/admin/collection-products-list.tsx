@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
-import { TriangleAlert, Package, Star } from "lucide-react";
+import { PackageIcon, StarIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import type { GetCollectionReturn } from "../../types/collection.types";
@@ -59,7 +59,7 @@ export function CollectionProductsList({
 	if (products.length === 0) {
 		return (
 			<TableEmptyState
-				icon={Package}
+				icon={PackageIcon}
 				title="Aucun produit dans cette collection"
 				description="Ajoutez des produits a cette collection depuis la page d'edition des produits."
 				action={{
@@ -111,7 +111,7 @@ export function CollectionProductsList({
 													/>
 												}
 											>
-												<Star
+												<StarIcon
 													className={cn(
 														"size-5 transition-colors",
 														pc.isFeatured
@@ -142,7 +142,7 @@ export function CollectionProductsList({
 											</div>
 										) : (
 											<div className="bg-muted flex size-12 items-center justify-center rounded-md">
-												<Package className="text-muted-foreground size-5" />
+												<PackageIcon className="text-muted-foreground size-5" />
 											</div>
 										)}
 									</TableCell>
@@ -172,7 +172,7 @@ export function CollectionProductsList({
 											{pc.isFeatured && product.status !== ProductStatus.PUBLIC && (
 												<Tooltip>
 													<TooltipTrigger render={<span className="text-amber-500" />}>
-														<TriangleAlert className="size-4" />
+														<WarningIcon className="size-4" />
 													</TooltipTrigger>
 													<TooltipContent>
 														<p>Ce produit vedette n'est pas visible sur le site</p>

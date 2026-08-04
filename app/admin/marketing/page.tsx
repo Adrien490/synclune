@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { Ticket } from "lucide-react";
+import { TicketIcon } from "@phosphor-icons/react/ssr";
 import { type Metadata } from "next";
 import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
@@ -21,7 +21,7 @@ export default async function MarketingPage() {
 					title: "Codes promo",
 					description: "Gérer les codes de réduction",
 					href: "/admin/marketing/discounts",
-					icon: <Ticket className="size-5" />,
+					icon: <TicketIcon className="size-5" />,
 				},
 			]}
 		/>

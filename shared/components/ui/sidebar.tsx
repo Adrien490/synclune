@@ -3,7 +3,7 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
+import { SidebarSimpleIcon } from "@phosphor-icons/react/ssr";
 import * as React from "react";
 
 import { Button } from "@/shared/components/ui/button";
@@ -285,7 +285,7 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
 			}}
 			{...props}
 		>
-			<PanelLeftIcon />
+			<SidebarSimpleIcon />
 			<span className="sr-only">
 				{state === "expanded" ? "Masquer le menu" : "Afficher le menu"}
 			</span>

@@ -10,7 +10,7 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
-import { ArrowUpDown, X } from "lucide-react";
+import { ArrowsDownUpIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { useRef } from "react";
 import { useUrlParam } from "@/shared/hooks/use-url-param";
 import type { SelectFilterProps } from "@/shared/types/component.types";
@@ -75,7 +75,7 @@ export function SelectFilter({
 
 						{/* Mobile icon with active value indicator */}
 						<div className="flex items-center justify-center gap-1 sm:hidden">
-							<ArrowUpDown className="size-4" />
+							<ArrowsDownUpIcon className="size-4" />
 							{value && <span className="bg-primary size-1.5 rounded-full" aria-hidden="true" />}
 						</div>
 					</SelectTrigger>
@@ -106,7 +106,7 @@ export function SelectFilter({
 						onClick={handleClear}
 						disabled={isPending}
 					>
-						<X className="size-4" />
+						<XIcon className="size-4" />
 					</Button>
 				)}
 			</div>

@@ -6,7 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import * as Sentry from "@sentry/nextjs";
-import { CircleAlert } from "lucide-react";
+import { WarningCircleIcon } from "@phosphor-icons/react/ssr";
 import { useEffect } from "react";
 
 /**
@@ -50,7 +50,7 @@ export default function CheckoutConfirmationError({
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={
-						<CircleAlert
+						<WarningCircleIcon
 							className="text-muted-foreground/50 mx-auto mb-4 size-20"
 							aria-hidden="true"
 						/>

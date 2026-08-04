@@ -7,7 +7,7 @@ import { arrayMove } from "@dnd-kit/helpers";
 import type { DragEndEvent } from "@dnd-kit/react";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useReducedMotion } from "motion/react";
-import { Ban, Play, Upload } from "lucide-react";
+import { PlayIcon, ProhibitIcon, UploadSimpleIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import { useId, useState } from "react";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -385,7 +385,7 @@ export function MediaUploadGrid({
 								aria-hidden="true"
 								className="border-primary bg-background/85 text-primary pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed backdrop-blur-sm"
 							>
-								<Upload className="size-8" aria-hidden="true" />
+								<UploadSimpleIcon className="size-8" aria-hidden="true" />
 								<p className="text-sm font-medium">Dépose pour ajouter</p>
 							</div>
 						) : (
@@ -393,7 +393,7 @@ export function MediaUploadGrid({
 								aria-hidden="true"
 								className="border-warning bg-background/85 text-warning pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed backdrop-blur-sm"
 							>
-								<Ban className="size-8" aria-hidden="true" />
+								<ProhibitIcon className="size-8" aria-hidden="true" />
 								<p className="text-sm font-medium">Limite de {maxItems} médias atteinte</p>
 							</div>
 						))}
@@ -421,12 +421,12 @@ export function MediaUploadGrid({
 											/>
 										) : (
 											<div className="bg-muted flex h-full w-full items-center justify-center">
-												<Play className="text-muted-foreground size-8" />
+												<PlayIcon className="text-muted-foreground size-8" />
 											</div>
 										)}
 										<div className="absolute inset-0 flex items-center justify-center">
 											<div className="rounded-full bg-black/70 p-2">
-												<Play className="size-5 text-white" fill="white" />
+												<PlayIcon className="size-5 text-white" fill="white" />
 											</div>
 										</div>
 									</div>

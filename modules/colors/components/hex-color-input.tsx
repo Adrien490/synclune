@@ -1,6 +1,6 @@
 "use client";
 
-import { Pipette, X } from "lucide-react";
+import { EyedropperIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { useState, useSyncExternalStore } from "react";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
@@ -190,7 +190,7 @@ export function HexColorInput({
 							title="Piocher une couleur à l'écran"
 							className="focus-ring border-border bg-background hover:bg-muted inline-flex size-full items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-50 motion-safe:transition-colors"
 						>
-							<Pipette className="size-4" aria-hidden="true" />
+							<EyedropperIcon className="size-4" aria-hidden="true" />
 						</button>
 					)}
 				</span>
@@ -234,7 +234,7 @@ export function HexColorInput({
 							aria-label="Effacer le code couleur"
 							className="focus-ring text-muted-foreground hover:text-foreground absolute top-1/2 right-2 inline-flex size-6 -translate-y-1/2 items-center justify-center rounded"
 						>
-							<X className="size-3.5" aria-hidden="true" />
+							<XIcon className="size-3.5" aria-hidden="true" />
 						</button>
 					)}
 				</div>

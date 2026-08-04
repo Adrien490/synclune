@@ -1,4 +1,4 @@
-import { Info, Star } from "lucide-react";
+import { InfoIcon, StarIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -15,7 +15,7 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 		<Card style={{ viewTransitionName: "sku-edit-variant" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Info className="size-5" aria-hidden="true" />
+					<InfoIcon className="size-5" aria-hidden="true" />
 					Attributs
 				</CardTitle>
 			</CardHeader>
@@ -47,7 +47,7 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 							<dt className="text-muted-foreground">Variante par défaut</dt>
 							<dd>
 								<Badge variant="secondary">
-									<Star className="size-3" aria-hidden="true" />
+									<StarIcon className="size-3" aria-hidden="true" />
 									Oui
 								</Badge>
 							</dd>

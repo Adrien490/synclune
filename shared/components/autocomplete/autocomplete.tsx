@@ -7,7 +7,7 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, m } from "motion/react";
-import { SearchIcon } from "lucide-react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 import { useEffect, useId, useRef, useState } from "react";
 import { AutocompleteLiveRegion } from "./autocomplete-live-region";
 import { AutocompleteListContent } from "./autocomplete-list-content";
@@ -267,7 +267,7 @@ export function Autocomplete<T>({
 							isLoading ? (
 								<Spinner presentational />
 							) : (
-								<SearchIcon className="text-muted-foreground size-4" />
+								<MagnifyingGlassIcon className="text-muted-foreground size-4" />
 							)
 						) : undefined
 					}

@@ -29,7 +29,7 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { mediaBetween } from "@/shared/constants/breakpoints";
-import { Filter, X } from "lucide-react";
+import { FunnelIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
@@ -120,7 +120,7 @@ export function FilterSheetWrapper({
 					: "Filtres"
 			}
 		>
-			<Filter className="size-4" aria-hidden="true" />
+			<FunnelIcon className="size-4" aria-hidden="true" />
 			<span>Filtres</span>
 			{activeFiltersCount > 0 && (
 				<Badge
@@ -208,7 +208,7 @@ export function FilterSheetWrapper({
 									aria-label="Effacer tous les filtres"
 									data-base-ui-swipe-ignore=""
 								>
-									<X className="mr-1 size-3" aria-hidden="true" />
+									<XIcon className="mr-1 size-3" aria-hidden="true" />
 									<span className="hidden md:inline">Tout effacer</span>
 									<span className="md:hidden">Effacer</span>
 								</Button>
@@ -224,7 +224,7 @@ export function FilterSheetWrapper({
 									/>
 								}
 							>
-								<X className="size-4" />
+								<XIcon className="size-4" />
 							</SheetClose>
 						</div>
 					</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { TrashIcon } from "@phosphor-icons/react/ssr";
 
 import { SwipeableCard } from "@/shared/components/swipeable-card";
 import { useGestureHintOnce } from "@/shared/hooks/use-gesture-hint-once";
@@ -61,7 +61,7 @@ export function SwipeableWishlistItem({
 			className="rounded-lg"
 			peek={peek}
 			leftAction={{
-				children: <Trash2 className="text-destructive-foreground size-5" aria-hidden="true" />,
+				children: <TrashIcon className="text-destructive-foreground size-5" aria-hidden="true" />,
 				label: itemName ? `${itemName} retiré des favoris` : "Article retiré des favoris",
 				onAction: handleRemove,
 			}}

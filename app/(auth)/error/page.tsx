@@ -1,7 +1,7 @@
 import { AuthPageLayout } from "@/modules/auth/components/auth-page-layout";
 import { Button } from "@/shared/components/ui/button";
 import { getAuthErrorMessage } from "@/modules/auth/constants/error-messages";
-import { CircleAlert } from "lucide-react";
+import { WarningCircleIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -27,7 +27,7 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 			description={errorInfo.description}
 			icon={
 				<div className="bg-destructive/10 flex size-16 items-center justify-center rounded-full">
-					<CircleAlert className="text-destructive size-8" aria-hidden="true" />
+					<WarningCircleIcon className="text-destructive size-8" aria-hidden="true" />
 				</div>
 			}
 		>

@@ -1,4 +1,4 @@
-import { ExternalLink, FileWarning, Info } from "lucide-react";
+import { ArrowSquareOutIcon, FileXIcon, InfoIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { CopyButton } from "@/shared/components/copy-button";
@@ -37,7 +37,7 @@ export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 					<Card style={{ viewTransitionName: "refund-detail-info" }}>
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
-								<Info className="size-5" aria-hidden="true" />
+								<InfoIcon className="size-5" aria-hidden="true" />
 								Informations
 							</CardTitle>
 						</CardHeader>
@@ -90,7 +90,7 @@ export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 						<Card>
 							<CardHeader>
 								<CardTitle className="flex items-center gap-2">
-									<FileWarning className="text-warning size-5" aria-hidden="true" />
+									<FileXIcon className="text-warning size-5" aria-hidden="true" />
 									Avoir comptable
 								</CardTitle>
 							</CardHeader>
@@ -129,7 +129,7 @@ export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 					<Card style={{ viewTransitionName: "refund-detail-customer" }}>
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
-								<Info className="size-5" aria-hidden="true" />
+								<InfoIcon className="size-5" aria-hidden="true" />
 								Commande &amp; client
 							</CardTitle>
 						</CardHeader>
@@ -174,7 +174,7 @@ export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 								variant="outline"
 								className="h-11 w-full justify-start gap-3"
 							>
-								<ExternalLink className="size-4" aria-hidden="true" />
+								<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 								Voir la commande
 							</Button>
 						</CardContent>

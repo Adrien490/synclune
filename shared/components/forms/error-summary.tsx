@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert } from "lucide-react";
+import { WarningCircleIcon } from "@phosphor-icons/react/ssr";
 
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { findFirstVisible } from "@/shared/hooks/use-focus-first-error";
@@ -79,7 +79,7 @@ export function ErrorSummary({
 
 	return (
 		<Alert variant="destructive" role="alert" aria-live={ariaLive} className={className}>
-			<CircleAlert className="size-4" />
+			<WarningCircleIcon className="size-4" />
 			<AlertTitle>
 				{title ??
 					(fieldErrors.length === 1

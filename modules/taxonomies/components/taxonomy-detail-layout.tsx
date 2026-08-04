@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BarChart3 } from "lucide-react";
+import { ChartBarIcon } from "@phosphor-icons/react/ssr";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -90,7 +90,7 @@ function StatsCardHeader() {
 	return (
 		<CardHeader>
 			<CardTitle className="flex items-center gap-2">
-				<BarChart3 className="size-5" aria-hidden="true" />
+				<ChartBarIcon className="size-5" aria-hidden="true" />
 				Statistiques
 			</CardTitle>
 		</CardHeader>

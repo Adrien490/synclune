@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Plus } from "lucide-react";
+import { InfoIcon, PlusIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import { COLOR_DIALOG_ID } from "@/modules/colors/components/color-form-dialog";
@@ -148,12 +148,12 @@ export function ColorMultiSelectField({
 					aria-label="Créer une nouvelle couleur"
 					disabled={isAtCap}
 				>
-					<Plus className="size-4" aria-hidden="true" />
+					<PlusIcon className="size-4" aria-hidden="true" />
 				</Button>
 			</div>
 			<SortableColorChips chips={selectedChips} onReorder={handleReorder} onRemove={handleRemove} />
 			<p className="text-muted-foreground flex items-start gap-1 text-xs">
-				<Info className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
+				<InfoIcon className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
 				<span>
 					{safeValue.length}/{maxSelected} — la première teinte est la principale (vignette boutique
 					et facture).

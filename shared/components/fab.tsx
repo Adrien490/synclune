@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft, X } from "lucide-react";
+import { CaretLeftIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import {
 	useActionState,
@@ -321,7 +321,7 @@ export function Fab({
 								aria-label={showTooltip}
 								aria-pressed={true}
 							>
-								<ChevronLeft
+								<CaretLeftIcon
 									className={cn("size-4", isPending && "animate-pulse")}
 									aria-hidden="true"
 								/>
@@ -379,7 +379,7 @@ export function Fab({
 								aria-label={hideTooltip}
 								aria-pressed={false}
 							>
-								<X className={cn("size-4", isPending && "animate-pulse")} aria-hidden="true" />
+								<XIcon className={cn("size-4", isPending && "animate-pulse")} aria-hidden="true" />
 							</Button>
 						</TooltipMaybe>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpDown, X } from "lucide-react";
+import { ArrowsDownUpIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { Suspense } from "react";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -57,7 +57,7 @@ function ProductsSortBadgeInner() {
 					className="flex touch-manipulation items-center gap-1.5 text-left [-webkit-tap-highlight-color:transparent]"
 					aria-label={`Modifier le tri (actuel : ${label})`}
 				>
-					<ArrowUpDown className="size-3" aria-hidden="true" />
+					<ArrowsDownUpIcon className="size-3" aria-hidden="true" />
 					<span className="text-xs">
 						Trié par : <strong>{label}</strong>
 					</span>
@@ -68,7 +68,7 @@ function ProductsSortBadgeInner() {
 					aria-label="Effacer le tri"
 					className="text-muted-foreground can-hover:hover:text-foreground focus-ring relative inline-flex size-7 touch-manipulation items-center justify-center rounded-full [-webkit-tap-highlight-color:transparent] before:absolute before:-inset-2 before:content-['']"
 				>
-					<X className="size-3.5" aria-hidden="true" />
+					<XIcon className="size-3.5" aria-hidden="true" />
 				</button>
 			</Badge>
 		</div>

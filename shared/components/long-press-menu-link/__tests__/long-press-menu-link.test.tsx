@@ -1,4 +1,4 @@
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { EyeIcon, PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react/ssr";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -87,8 +87,8 @@ const SECTIONS: ActionMenuSection[] = [
 	{
 		key: "manage",
 		items: [
-			{ key: "view", label: "Voir", icon: Eye, href: "/admin/items/1" },
-			{ key: "edit", label: "Modifier", icon: Pencil, onSelect: vi.fn() },
+			{ key: "view", label: "Voir", icon: EyeIcon, href: "/admin/items/1" },
+			{ key: "edit", label: "Modifier", icon: PencilSimpleIcon, onSelect: vi.fn() },
 		],
 	},
 	{
@@ -97,7 +97,7 @@ const SECTIONS: ActionMenuSection[] = [
 			{
 				key: "delete",
 				label: "Supprimer",
-				icon: Trash2,
+				icon: TrashIcon,
 				variant: "destructive",
 				onSelect: vi.fn(),
 			},

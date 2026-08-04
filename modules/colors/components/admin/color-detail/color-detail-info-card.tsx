@@ -1,4 +1,4 @@
-import { Info } from "lucide-react";
+import { InfoIcon } from "@phosphor-icons/react/ssr";
 
 import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
 import { CopyButton } from "@/shared/components/copy-button";
@@ -15,7 +15,7 @@ export function ColorDetailInfoCard({ color }: ColorDetailInfoCardProps) {
 		<Card style={{ viewTransitionName: "color-edit-info" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Info className="size-5" aria-hidden="true" />
+					<InfoIcon className="size-5" aria-hidden="true" />
 					Informations
 				</CardTitle>
 			</CardHeader>

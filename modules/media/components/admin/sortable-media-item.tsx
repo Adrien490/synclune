@@ -17,16 +17,16 @@ import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 import { EditAltTextDialog } from "@/modules/media/components/admin/edit-alt-text-dialog";
 import {
-	ArrowDown,
-	ArrowUp,
-	Expand,
-	GripVertical,
-	EllipsisVertical,
-	FileText,
-	Play,
-	Star,
-	Trash2,
-} from "lucide-react";
+	ArrowDownIcon,
+	ArrowUpIcon,
+	ArrowsOutIcon,
+	DotsSixVerticalIcon,
+	DotsThreeVerticalIcon,
+	FileTextIcon,
+	PlayIcon,
+	StarIcon,
+	TrashIcon,
+} from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { MediaItem } from "@/modules/media/types/hooks.types";
@@ -220,7 +220,7 @@ export function SortableMediaItem({
 					onClick={handleSetAsPrimaryFromDrawer}
 					className="hover:bg-warning/10 active:bg-warning/15 flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 				>
-					<Star className="text-warning size-5" fill="currentColor" aria-hidden="true" />
+					<StarIcon className="text-warning size-5" fill="currentColor" aria-hidden="true" />
 					<span className="text-sm font-medium">Définir comme principale</span>
 				</button>
 			)}
@@ -229,7 +229,7 @@ export function SortableMediaItem({
 				onClick={handleOpenLightbox}
 				className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 			>
-				<Expand className="text-muted-foreground size-5" aria-hidden="true" />
+				<ArrowsOutIcon className="text-muted-foreground size-5" aria-hidden="true" />
 				<span className="text-sm font-medium">Agrandir</span>
 			</button>
 			{onUpdateAltText && (
@@ -238,7 +238,7 @@ export function SortableMediaItem({
 					onClick={handleOpenEditAlt}
 					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 				>
-					<FileText className="text-muted-foreground size-5" aria-hidden="true" />
+					<FileTextIcon className="text-muted-foreground size-5" aria-hidden="true" />
 					<span className="text-sm font-medium">Modifier la description</span>
 				</button>
 			)}
@@ -248,7 +248,7 @@ export function SortableMediaItem({
 					onClick={handleMoveUp}
 					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 				>
-					<ArrowUp className="text-muted-foreground size-5" aria-hidden="true" />
+					<ArrowUpIcon className="text-muted-foreground size-5" aria-hidden="true" />
 					<span className="text-sm font-medium">Déplacer vers le haut</span>
 				</button>
 			)}
@@ -258,7 +258,7 @@ export function SortableMediaItem({
 					onClick={handleMoveDown}
 					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 				>
-					<ArrowDown className="text-muted-foreground size-5" aria-hidden="true" />
+					<ArrowDownIcon className="text-muted-foreground size-5" aria-hidden="true" />
 					<span className="text-sm font-medium">Déplacer vers le bas</span>
 				</button>
 			)}
@@ -267,7 +267,7 @@ export function SortableMediaItem({
 				onClick={handleOpenDeleteDialog}
 				className="hover:bg-destructive/10 active:bg-destructive/15 text-destructive flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 			>
-				<Trash2 className="size-5" aria-hidden="true" />
+				<TrashIcon className="size-5" aria-hidden="true" />
 				<span className="text-sm font-semibold">Supprimer</span>
 			</button>
 			<DrawerClose
@@ -436,7 +436,7 @@ export function SortableMediaItem({
 							aria-label={`Lire la vidéo ${index + 1}`}
 						>
 							<div className="rounded-full bg-black/70 p-3 shadow-xl transition-colors hover:bg-black/90 active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-[var(--duration-fast)]">
-								<Play className="size-6 text-white" fill="white" />
+								<PlayIcon className="size-6 text-white" fill="white" />
 							</div>
 						</button>
 					</div>
@@ -467,7 +467,7 @@ export function SortableMediaItem({
 			{isPrimary && (
 				<div className="pointer-events-none absolute bottom-2 left-2 z-10 sm:top-2 sm:bottom-auto sm:left-2">
 					<div className="bg-warning text-warning-foreground flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-bold shadow-md">
-						<Star className="size-3" fill="currentColor" aria-hidden="true" />
+						<StarIcon className="size-3" fill="currentColor" aria-hidden="true" />
 						<span className="sm:hidden">1</span>
 						<span className="hidden sm:inline">Principal</span>
 					</div>
@@ -494,7 +494,7 @@ export function SortableMediaItem({
 					)}
 					aria-label={`Définir ${isVideo ? "la vidéo" : "l'image"} ${index + 1} comme principale`}
 				>
-					<Star className="size-4" aria-hidden="true" />
+					<StarIcon className="size-4" aria-hidden="true" />
 				</button>
 			)}
 
@@ -511,7 +511,7 @@ export function SortableMediaItem({
 				)}
 			>
 				<div className="flex size-11 items-center justify-center rounded-full bg-black/70 shadow-lg">
-					<GripVertical className="size-5 text-white" aria-hidden="true" />
+					<DotsSixVerticalIcon className="size-5 text-white" aria-hidden="true" />
 				</div>
 			</div>
 
@@ -540,7 +540,7 @@ export function SortableMediaItem({
 								"after:absolute after:-inset-1 after:content-['']",
 							)}
 						>
-							<ArrowUp className="size-4 text-white" aria-hidden="true" />
+							<ArrowUpIcon className="size-4 text-white" aria-hidden="true" />
 						</button>
 					)}
 					{canMoveDown && (
@@ -561,7 +561,7 @@ export function SortableMediaItem({
 								"after:absolute after:-inset-1 after:content-['']",
 							)}
 						>
-							<ArrowDown className="size-4 text-white" aria-hidden="true" />
+							<ArrowDownIcon className="size-4 text-white" aria-hidden="true" />
 						</button>
 					)}
 				</div>
@@ -595,7 +595,7 @@ export function SortableMediaItem({
 								/>
 							}
 						>
-							<FileText className="size-4 text-white" aria-hidden="true" />
+							<FileTextIcon className="size-4 text-white" aria-hidden="true" />
 						</TooltipTrigger>
 						<TooltipContent>Modifier la description</TooltipContent>
 					</Tooltip>
@@ -617,7 +617,7 @@ export function SortableMediaItem({
 							/>
 						}
 					>
-						<Expand className="size-4 text-white" aria-hidden="true" />
+						<ArrowsOutIcon className="size-4 text-white" aria-hidden="true" />
 					</TooltipTrigger>
 					<TooltipContent>Agrandir</TooltipContent>
 				</Tooltip>
@@ -638,7 +638,7 @@ export function SortableMediaItem({
 							/>
 						}
 					>
-						<Trash2 className="size-4 text-white" aria-hidden="true" />
+						<TrashIcon className="size-4 text-white" aria-hidden="true" />
 					</TooltipTrigger>
 					<TooltipContent>Supprimer</TooltipContent>
 				</Tooltip>
@@ -660,7 +660,7 @@ export function SortableMediaItem({
 							/>
 						}
 					>
-						<EllipsisVertical className="size-5 text-white" />
+						<DotsThreeVerticalIcon className="size-5 text-white" />
 					</DrawerTrigger>
 					<DrawerContent onOverlayClick={() => haptic("light")} className="max-h-[80vh]">
 						<DrawerHeader>
@@ -677,7 +677,7 @@ export function SortableMediaItem({
 										/>
 									) : isVideo ? (
 										<div className="bg-muted flex h-full w-full items-center justify-center">
-											<Play
+											<PlayIcon
 												className="text-muted-foreground size-4"
 												fill="currentColor"
 												aria-hidden="true"

@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { Landmark, RefreshCcw, ShoppingCart } from "lucide-react";
+import { ArrowsClockwiseIcon, BankIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
@@ -21,13 +21,13 @@ export default async function VentesPage() {
 					title: "Commandes",
 					description: "Suivre et gérer les commandes clients",
 					href: "/admin/ventes/commandes",
-					icon: <ShoppingCart className="size-5" />,
+					icon: <ShoppingBagIcon className="size-5" />,
 				},
 				{
 					title: "Remboursements",
 					description: "Gérer les demandes de remboursement",
 					href: "/admin/ventes/remboursements",
-					icon: <RefreshCcw className="size-5" />,
+					icon: <ArrowsClockwiseIcon className="size-5" />,
 				},
 				{
 					title: "Facturation",
@@ -35,7 +35,7 @@ export default async function VentesPage() {
 					// spec non figée + aucune Plateforme Agréée branchée) — cf. CLAUDE.md.
 					description: "État de la facturation électronique et des avoirs",
 					href: "/admin/ventes/facturation",
-					icon: <Landmark className="size-5" />,
+					icon: <BankIcon className="size-5" />,
 				},
 			]}
 		/>

@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { Trash2 } from "lucide-react";
+import { TrashIcon } from "@phosphor-icons/react/ssr";
 import { CLEAR_CART_DIALOG_ID } from "./clear-cart-dialog-id";
 
 interface CartClearButtonProps {
@@ -33,7 +33,7 @@ export function CartClearButton({ disabled = false }: CartClearButtonProps) {
 			aria-label="Vider le panier"
 			className="text-muted-foreground can-hover:hover:text-destructive active:text-destructive/80 size-11 shrink-0 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 		>
-			<Trash2 className="size-4" aria-hidden="true" />
+			<TrashIcon className="size-4" aria-hidden="true" />
 		</Button>
 	);
 }

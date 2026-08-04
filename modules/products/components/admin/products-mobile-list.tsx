@@ -1,5 +1,5 @@
 import { use } from "react";
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
@@ -30,7 +30,7 @@ export function ProductsMobileList({
 		return (
 			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
-					icon={Package}
+					icon={PackageIcon}
 					title="Aucun produit trouvé"
 					description={
 						hasActiveFilters

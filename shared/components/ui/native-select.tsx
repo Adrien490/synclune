@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { ChevronDownIcon } from "lucide-react";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
@@ -48,7 +48,7 @@ function NativeSelect({
 				className={cn(nativeSelectVariants({ size }), className)}
 				{...props}
 			/>
-			<ChevronDownIcon
+			<CaretDownIcon
 				className="text-muted-foreground can-hover:group-hover/native-select:text-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 opacity-70 transition-colors select-none"
 				aria-hidden="true"
 				data-slot="native-select-icon"

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Check, Minus, Plus } from "lucide-react";
+import { CheckIcon, MinusIcon, PlusIcon } from "@phosphor-icons/react/ssr";
 import { m } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
@@ -94,7 +94,7 @@ export function ColorSelector({
 						animate={{ scale: 1, opacity: 1 }}
 						transition={MOTION_CONFIG.spring.bouncy}
 					>
-						<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
+						<CheckIcon className="text-primary size-4 shrink-0" aria-hidden="true" />
 					</m.div>
 				)}
 				{!isAvailable && (
@@ -233,7 +233,7 @@ export function MaterialSelector({
 									animate={{ scale: 1, opacity: 1 }}
 									transition={MOTION_CONFIG.spring.bouncy}
 								>
-									<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
+									<CheckIcon className="text-primary size-4 shrink-0" aria-hidden="true" />
 								</m.div>
 							)}
 							{!isAvailable && (
@@ -344,7 +344,7 @@ export function SizeSelectorGroup({
 									transition={MOTION_CONFIG.spring.bouncy}
 									className="absolute top-1.5 right-1.5"
 								>
-									<Check className="text-primary size-3.5" aria-hidden="true" />
+									<CheckIcon className="text-primary size-3.5" aria-hidden="true" />
 								</m.div>
 							)}
 							{!isAvailable && (
@@ -396,7 +396,7 @@ export function QuantitySection({
 					disabled={isPending || quantity <= 1}
 					aria-label="Diminuer la quantité"
 				>
-					<Minus className="size-4" />
+					<MinusIcon className="size-4" />
 				</Button>
 				<input
 					type="text"
@@ -425,7 +425,7 @@ export function QuantitySection({
 					disabled={isPending || quantity >= maxQuantity}
 					aria-label="Augmenter la quantité"
 				>
-					<Plus className="size-4" />
+					<PlusIcon className="size-4" />
 				</Button>
 			</div>
 			{/* Subtotal when quantity > 1 */}

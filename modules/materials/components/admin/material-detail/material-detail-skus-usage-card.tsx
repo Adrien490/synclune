@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, LayoutList, Package, Star } from "lucide-react";
+import { ArrowRightIcon, ListDashesIcon, PackageIcon, StarIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -25,7 +25,7 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 			<CardHeader>
 				<CardTitle className="flex items-center justify-between gap-2">
 					<span className="flex items-center gap-2">
-						<LayoutList className="size-5" aria-hidden="true" />
+						<ListDashesIcon className="size-5" aria-hidden="true" />
 						Variantes
 					</span>
 					<span className="text-muted-foreground text-sm font-normal">
@@ -63,7 +63,7 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 											/>
 										) : (
 											<div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md border">
-												<Package className="text-muted-foreground size-4" aria-hidden="true" />
+												<PackageIcon className="text-muted-foreground size-4" aria-hidden="true" />
 											</div>
 										)}
 										<div className="min-w-0 flex-1">
@@ -73,7 +73,7 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 												</span>
 												{sku.isDefault ? (
 													<Badge variant="secondary">
-														<Star className="size-3" aria-hidden="true" />
+														<StarIcon className="size-3" aria-hidden="true" />
 													</Badge>
 												) : null}
 											</div>
@@ -132,7 +132,7 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 					className="w-full transition-transform duration-150 active:scale-[0.98]"
 				>
 					Voir toutes les variantes
-					<ArrowRight className="size-4" aria-hidden="true" />
+					<ArrowRightIcon className="size-4" aria-hidden="true" />
 				</Button>
 			</CardContent>
 		</Card>

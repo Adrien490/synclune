@@ -3,7 +3,7 @@
 import { CART_TARGET_ATTR } from "@/modules/cart/lib/fly-to-cart";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { CartBadge } from "./cart-badge";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 
 interface CartSheetTriggerProps {
@@ -28,7 +28,7 @@ export function CartSheetTrigger({ className, ref }: CartSheetTriggerProps) {
 			aria-haspopup="dialog"
 			{...{ [CART_TARGET_ATTR]: "" }}
 		>
-			<ShoppingCart
+			<ShoppingBagIcon
 				size={20}
 				className="transition-transform duration-300 ease-out group-hover:scale-105"
 				aria-hidden="true"

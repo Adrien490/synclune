@@ -3,7 +3,7 @@
 import { useIsScrolled } from "@/shared/hooks/use-is-scrolled";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft } from "lucide-react";
+import { CaretLeftIcon } from "@phosphor-icons/react/ssr";
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminPageTitle } from "./admin-page-title-context";
 import { generateBreadcrumbs } from "./generate-breadcrumbs";
@@ -110,7 +110,7 @@ export function AdminMobileHeader() {
 							"motion-safe:transition-colors",
 						)}
 					>
-						<ChevronLeft className="size-5" aria-hidden="true" />
+						<CaretLeftIcon className="size-5" aria-hidden="true" />
 					</button>
 				)}
 

@@ -1,4 +1,4 @@
-import { Info, Lock } from "lucide-react";
+import { InfoIcon, LockIcon } from "@phosphor-icons/react/ssr";
 
 import type { ProductTypeDetailReturn } from "@/modules/product-types/data/get-product-type";
 import { CopyButton } from "@/shared/components/copy-button";
@@ -15,7 +15,7 @@ export function ProductTypeDetailInfoCard({ productType }: ProductTypeDetailInfo
 		<Card style={{ viewTransitionName: "product-type-edit-info" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Info className="size-5" aria-hidden="true" />
+					<InfoIcon className="size-5" aria-hidden="true" />
 					Informations
 				</CardTitle>
 			</CardHeader>
@@ -37,7 +37,7 @@ export function ProductTypeDetailInfoCard({ productType }: ProductTypeDetailInfo
 							<dt className="text-muted-foreground">Type</dt>
 							<dd>
 								<Badge variant="outline">
-									<Lock className="size-3" aria-hidden="true" />
+									<LockIcon className="size-3" aria-hidden="true" />
 									Système (protégé)
 								</Badge>
 							</dd>

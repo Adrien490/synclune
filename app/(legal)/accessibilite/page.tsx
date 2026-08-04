@@ -2,7 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { Kbd } from "@/shared/components/ui/kbd";
-import { Check } from "lucide-react";
+import { CheckIcon } from "@phosphor-icons/react/ssr";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
@@ -161,7 +161,7 @@ export default async function AccessibilityPage() {
 									},
 								].map((item) => (
 									<div key={item.title} className="bg-muted/20 flex gap-3 rounded-lg border p-4">
-										<Check className="text-secondary mt-0.5 size-5 shrink-0" />
+										<CheckIcon className="text-secondary mt-0.5 size-5 shrink-0" />
 										<div>
 											<p className="text-foreground font-medium">{item.title}</p>
 											<p className="text-muted-foreground text-sm">{item.description}</p>
@@ -256,7 +256,7 @@ export default async function AccessibilityPage() {
 									"Navigation au clavier uniquement",
 								].map((tech) => (
 									<li key={tech} className="flex gap-2">
-										<Check className="text-secondary size-5 shrink-0" />
+										<CheckIcon className="text-secondary size-5 shrink-0" />
 										<span>{tech}</span>
 									</li>
 								))}

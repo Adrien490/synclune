@@ -1,6 +1,6 @@
 import { Button } from "@/shared/components/ui/button";
 import { stripe } from "@/shared/lib/stripe";
-import { ExternalLink, Receipt } from "lucide-react";
+import { ArrowSquareOutIcon, ReceiptIcon } from "@phosphor-icons/react/ssr";
 import type Stripe from "stripe";
 
 interface ReceiptButtonProps {
@@ -44,9 +44,9 @@ export async function ReceiptButton({ stripePaymentIntentId }: ReceiptButtonProp
 				variant="outline"
 				size="sm"
 			>
-				<Receipt className="size-4" />
+				<ReceiptIcon className="size-4" />
 				Télécharger mon reçu
-				<ExternalLink className="size-3" aria-hidden="true" />
+				<ArrowSquareOutIcon className="size-3" aria-hidden="true" />
 				<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 			</Button>
 		</div>

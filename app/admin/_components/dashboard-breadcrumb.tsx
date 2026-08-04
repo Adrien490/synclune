@@ -14,7 +14,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Ellipsis } from "lucide-react";
+import { DotsThreeIcon } from "@phosphor-icons/react/ssr";
 // GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
 // pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
 import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
@@ -89,7 +89,7 @@ export function DashboardBreadcrumb() {
 									className="hover:text-foreground focus-ring inline-flex items-center gap-1 rounded-sm px-1 transition-colors"
 									aria-label="Afficher plus de segments"
 								>
-									<Ellipsis className="size-4" />
+									<DotsThreeIcon className="size-4" />
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="start">
 									{collapsedSegments.map((segment) => (

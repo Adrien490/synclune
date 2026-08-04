@@ -1,4 +1,4 @@
-import { Info } from "lucide-react";
+import { InfoIcon } from "@phosphor-icons/react/ssr";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -19,7 +19,7 @@ export function ProductDetailInfoCard({ product }: ProductDetailInfoCardProps) {
 		<Card style={{ viewTransitionName: "product-edit-info" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Info className="size-5" aria-hidden="true" />
+					<InfoIcon className="size-5" aria-hidden="true" />
 					Informations
 				</CardTitle>
 			</CardHeader>

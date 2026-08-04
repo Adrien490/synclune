@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Package } from "lucide-react";
+import { CaretRightIcon, PackageIcon } from "@phosphor-icons/react/ssr";
 
 import type { MediaType } from "@/app/generated/prisma/client";
 import { ProductStatus } from "@/app/generated/prisma/enums";
@@ -79,7 +79,7 @@ export function VariantsProductContext({ product }: VariantsProductContextProps)
 				/>
 			) : (
 				<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
-					<Package className="text-muted-foreground size-5" aria-hidden="true" />
+					<PackageIcon className="text-muted-foreground size-5" aria-hidden="true" />
 				</div>
 			)}
 			<div className="min-w-0 flex-1">
@@ -92,7 +92,7 @@ export function VariantsProductContext({ product }: VariantsProductContextProps)
 					<span className="text-muted-foreground">{countLabel}</span>
 				</div>
 			</div>
-			<ChevronRight className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
+			<CaretRightIcon className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
 		</Link>
 	);
 }

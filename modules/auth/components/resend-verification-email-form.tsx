@@ -15,7 +15,7 @@ import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useResendCooldown } from "@/modules/auth/hooks/use-resend-cooldown";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { CircleX, CircleCheck, Mail } from "lucide-react";
+import { CheckCircleIcon, EnvelopeIcon, XCircleIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useResendVerificationEmail } from "@/modules/auth/hooks/use-resend-verification-email";
 import { useEffect, useRef } from "react";
@@ -109,7 +109,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 				{/* Message de succès */}
 				{state?.status === ActionStatus.SUCCESS && state.message && (
 					<Alert role="status" aria-live="polite">
-						<CircleCheck aria-hidden="true" />
+						<CheckCircleIcon aria-hidden="true" />
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>
 				)}
@@ -126,7 +126,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 							role="alert"
 							aria-live="assertive"
 						>
-							<CircleX aria-hidden="true" />
+							<XCircleIcon aria-hidden="true" />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					)}
@@ -173,7 +173,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 							{isPending ? (
 								<Spinner presentational />
 							) : (
-								<Mail className="size-4" aria-hidden="true" />
+								<EnvelopeIcon className="size-4" aria-hidden="true" />
 							)}
 							{isPending
 								? "Envoi en cours…"

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { EllipsisVertical } from "lucide-react";
+import { DotsThreeVerticalIcon } from "@phosphor-icons/react/ssr";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import {
@@ -60,7 +60,7 @@ interface LongPressMenuLinkProps {
  */
 export function DefaultLongPressAffordance() {
 	return (
-		<EllipsisVertical
+		<DotsThreeVerticalIcon
 			className="text-muted-foreground/50 pointer-events-none absolute top-1/2 right-1 size-4 -translate-y-1/2"
 			aria-hidden="true"
 		/>

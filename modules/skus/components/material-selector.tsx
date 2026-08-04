@@ -5,7 +5,7 @@ import { cn } from "@/shared/utils/cn";
 import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
-import { Check } from "lucide-react";
+import { CheckIcon } from "@phosphor-icons/react/ssr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
@@ -158,7 +158,7 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 											: { type: "spring", stiffness: 400, damping: 15 }
 									}
 								>
-									<Check className="text-primary h-4 w-4" aria-hidden="true" />
+									<CheckIcon className="text-primary h-4 w-4" aria-hidden="true" />
 								</m.div>
 							)}
 						</button>

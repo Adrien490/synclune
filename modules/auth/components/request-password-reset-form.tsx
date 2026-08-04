@@ -15,7 +15,7 @@ import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useResendCooldown } from "@/modules/auth/hooks/use-resend-cooldown";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { CircleCheck, CircleX } from "lucide-react";
+import { CheckCircleIcon, XCircleIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useRequestPasswordReset } from "@/modules/auth/hooks/use-request-password-reset";
 import { useEffect, useRef } from "react";
@@ -104,7 +104,7 @@ export function RequestPasswordResetForm() {
 				{/* Message de succès */}
 				{state?.status === ActionStatus.SUCCESS && state.message && (
 					<Alert role="status" aria-live="polite">
-						<CircleCheck aria-hidden="true" />
+						<CheckCircleIcon aria-hidden="true" />
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>
 				)}
@@ -121,7 +121,7 @@ export function RequestPasswordResetForm() {
 							role="alert"
 							aria-live="assertive"
 						>
-							<CircleX aria-hidden="true" />
+							<XCircleIcon aria-hidden="true" />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					)}

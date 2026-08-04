@@ -1,6 +1,6 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
@@ -80,7 +80,7 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 					/>
 				) : (
 					<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
-						<Package className="text-muted-foreground size-5" aria-hidden="true" />
+						<PackageIcon className="text-muted-foreground size-5" aria-hidden="true" />
 					</div>
 				)}
 				<ItemContent className="min-w-0">

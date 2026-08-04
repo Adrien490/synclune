@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { CaretRightIcon } from "@phosphor-icons/react/ssr";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -48,7 +48,7 @@ export function CollapsibleNavGroup({ groupLabel, groupId, badges }: Collapsible
 					}
 				>
 					{group.label}
-					<ChevronRight
+					<CaretRightIcon
 						className="ml-auto size-4 transition-transform group-data-open/collapsible:rotate-90"
 						aria-hidden="true"
 					/>

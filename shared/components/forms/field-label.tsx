@@ -9,7 +9,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { CircleHelp } from "lucide-react";
+import { QuestionIcon } from "@phosphor-icons/react/ssr";
 
 interface FieldLabelProps {
 	/**
@@ -62,7 +62,7 @@ export function FieldLabel({
 								/>
 							}
 						>
-							<CircleHelp className="size-3.5" />
+							<QuestionIcon className="size-3.5" />
 						</TooltipTrigger>
 						<TooltipContent side="right" className="max-w-xs">
 							{tooltip}

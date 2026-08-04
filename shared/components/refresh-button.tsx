@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { RefreshCw } from "lucide-react";
+import { ArrowsClockwiseIcon } from "@phosphor-icons/react/ssr";
 
 interface RefreshButtonProps {
 	onRefresh: () => void;
@@ -40,7 +40,7 @@ export function RefreshButton({
 					/>
 				}
 			>
-				<RefreshCw
+				<ArrowsClockwiseIcon
 					className={cn("size-4", isPending && "motion-safe:animate-spin")}
 					aria-hidden="true"
 				/>

@@ -1,7 +1,7 @@
 "use client";
 
 import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react/ssr";
 import * as React from "react";
 import { useEffectEvent } from "react";
 
@@ -364,7 +364,7 @@ function CarouselPrevious({
 			onClick={scrollPrev}
 			{...props}
 		>
-			<ChevronLeft className="size-5" />
+			<CaretLeftIcon className="size-5" />
 			<span className="sr-only">Diapositive précédente</span>
 		</Button>
 	);
@@ -413,7 +413,7 @@ function CarouselNext({
 			onClick={scrollNext}
 			{...props}
 		>
-			<ChevronRight className="size-5" />
+			<CaretRightIcon className="size-5" />
 			<span className="sr-only">Diapositive suivante</span>
 		</Button>
 	);

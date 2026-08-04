@@ -14,7 +14,7 @@ import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Autoplay from "embla-carousel-autoplay";
 import { useReducedMotion } from "motion/react";
-import { Sparkles } from "lucide-react";
+import { SparkleIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -87,7 +87,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 			<div className="bg-muted relative flex h-full min-h-80 flex-col items-center justify-center gap-3 rounded-2xl sm:min-h-100 lg:min-h-120">
 				{/* R7: Icône SVG au lieu d'emoji */}
 				<div className="bg-muted-foreground/10 flex size-12 items-center justify-center rounded-full">
-					<Sparkles className="text-muted-foreground size-6" aria-hidden="true" />
+					<SparkleIcon className="text-muted-foreground size-6" aria-hidden="true" />
 				</div>
 				<p className="text-muted-foreground px-4 text-center">
 					Aucun produit disponible pour le moment

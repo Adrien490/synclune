@@ -2,7 +2,7 @@
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { m, useReducedMotion } from "motion/react";
-import { CircleCheck } from "lucide-react";
+import { CheckCircleIcon } from "@phosphor-icons/react/ssr";
 
 /**
  * Animated success icon for the order confirmation page.
@@ -20,7 +20,7 @@ export function SuccessIcon() {
 	if (shouldReduceMotion) {
 		return (
 			<div className="bg-primary/10 mx-auto flex size-16 items-center justify-center rounded-full">
-				<CircleCheck className="text-primary size-10" />
+				<CheckCircleIcon className="text-primary size-10" />
 			</div>
 		);
 	}
@@ -45,7 +45,7 @@ export function SuccessIcon() {
 					delay: 0.5,
 				}}
 			>
-				<CircleCheck className="text-primary size-10" />
+				<CheckCircleIcon className="text-primary size-10" />
 			</m.div>
 		</m.div>
 	);

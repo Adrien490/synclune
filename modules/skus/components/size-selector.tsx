@@ -16,7 +16,7 @@ const SizeGuideDialog = dynamic(() =>
 );
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { Check } from "lucide-react";
+import { CheckIcon } from "@phosphor-icons/react/ssr";
 import { m, useReducedMotion } from "motion/react";
 
 interface SizeSelectorProps {
@@ -184,7 +184,7 @@ function SizeSelectorInner({
 									}
 									className="absolute top-1.5 right-1.5"
 								>
-									<Check className="text-primary h-3.5 w-3.5" aria-hidden="true" />
+									<CheckIcon className="text-primary h-3.5 w-3.5" aria-hidden="true" />
 								</m.div>
 							)}
 						</button>

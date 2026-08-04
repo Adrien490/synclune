@@ -14,7 +14,7 @@ import { NativeSelect, NativeSelectOption } from "@/shared/components/ui/native-
 import { Button } from "@/shared/components/ui/button";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { useFieldErrorVisibility } from "./use-field-error-visibility";
-import { X } from "lucide-react";
+import { XIcon } from "@phosphor-icons/react/ssr";
 
 interface SelectFieldProps<T extends string> {
 	disabled?: boolean;
@@ -200,7 +200,7 @@ export const SelectField = <T extends string>({
 						}}
 						aria-label="Effacer la sélection"
 					>
-						<X className="size-4" aria-hidden="true" />
+						<XIcon className="size-4" aria-hidden="true" />
 					</Button>
 				)}
 			</div>

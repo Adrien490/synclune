@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Wrench } from "lucide-react";
+import { WrenchIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/shared/components/ui/button";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
@@ -56,7 +56,7 @@ export function MaintenanceTasksCard() {
 		>
 			<div className="flex items-start gap-3">
 				<div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-full">
-					<Wrench className="text-muted-foreground size-5" aria-hidden="true" />
+					<WrenchIcon className="text-muted-foreground size-5" aria-hidden="true" />
 				</div>
 				<div className="space-y-1">
 					<h2 id="maintenance-tasks-heading" className="font-medium">

@@ -2,7 +2,7 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Ellipsis, Pencil, Star } from "lucide-react";
+import { DotsThreeIcon, PencilSimpleIcon, StarIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import {
@@ -69,7 +69,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 				<div className="flex flex-wrap items-center gap-2">
 					{sku.isDefault ? (
 						<Badge variant="secondary">
-							<Star className="size-3" aria-hidden="true" />
+							<StarIcon className="size-3" aria-hidden="true" />
 							Par défaut
 						</Badge>
 					) : null}
@@ -96,7 +96,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 					size="sm"
 					className="min-h-11 flex-1 transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
 				>
-					<Pencil className="size-4" aria-hidden="true" />
+					<PencilSimpleIcon className="size-4" aria-hidden="true" />
 					Modifier
 				</Button>
 
@@ -111,7 +111,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 							/>
 						}
 					>
-						<Ellipsis className="size-4" aria-hidden="true" />
+						<DotsThreeIcon className="size-4" aria-hidden="true" />
 					</ResponsiveActionMenuTrigger>
 					<ResponsiveActionMenuContent
 						title="Actions variante"

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReceiptText } from "lucide-react";
+import { ReceiptIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/enums";
@@ -60,7 +60,7 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 				aria-roledescription="carte remboursement"
 			>
 				<ItemMedia variant="icon">
-					<ReceiptText
+					<ReceiptIcon
 						className="text-muted-foreground size-5"
 						aria-hidden="true"
 						style={{ viewTransitionName: `refund-icon-${refund.id}` }}

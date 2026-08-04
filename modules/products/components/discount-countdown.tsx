@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { ClockIcon } from "@phosphor-icons/react/ssr";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { useCountdown } from "@/shared/hooks/use-countdown";
@@ -57,7 +57,7 @@ export function DiscountCountdown({ endDate, maxDaysToShow = 7 }: DiscountCountd
 			aria-live="off"
 			aria-label={`Fin de l'offre dans ${label}`}
 		>
-			<Clock className="size-3.5" aria-hidden="true" />
+			<ClockIcon className="size-3.5" aria-hidden="true" />
 			Fin de l'offre dans <span className="font-semibold">{label}</span>
 		</Badge>
 	);

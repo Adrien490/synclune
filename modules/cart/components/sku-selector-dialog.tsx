@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import type { GetCartReturn } from "@/modules/cart/types/cart.types";
 import { useReducedMotion } from "motion/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
 	ResponsiveDialog,
@@ -222,7 +222,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 							className="text-muted-foreground can-hover:hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
 						>
 							Voir la fiche produit
-							<ArrowRight className="size-3.5" aria-hidden="true" />
+							<ArrowRightIcon className="size-3.5" aria-hidden="true" />
 						</Link>
 					</div>
 				)}

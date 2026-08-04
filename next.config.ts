@@ -16,7 +16,10 @@ const nextConfig: NextConfig = {
 		optimizePackageImports: [
 			"@base-ui/react",
 			"motion/react",
-			"lucide-react",
+			// Sous-chemin `/ssr` volontaire, et pas la racine du paquet : `dist/index.es.js`
+			// importe EAGERLY les ~1512 modules CSR *plus* tout l'arbre SSR. Verrouillé par
+			// `shared/components/__tests__/phosphor-ssr-entry.regression.test.ts`.
+			"@phosphor-icons/react/ssr",
 			"react-day-picker",
 			"@dnd-kit/react",
 			"@dnd-kit/dom",

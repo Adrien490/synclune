@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterX, SearchX } from "lucide-react";
+import { FunnelXIcon, MagnifyingGlassMinusIcon } from "@phosphor-icons/react/ssr";
 import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/shared/components/ui/button";
@@ -44,7 +44,7 @@ export function ResetSearchFiltersAction() {
 	if (!hasFilters && !hasSearch) return null;
 
 	const label = hasFilters ? "Réinitialiser les filtres" : "Effacer la recherche";
-	const Icon = hasFilters ? FilterX : SearchX;
+	const Icon = hasFilters ? FunnelXIcon : MagnifyingGlassMinusIcon;
 
 	return (
 		<Button

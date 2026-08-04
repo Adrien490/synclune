@@ -1,6 +1,6 @@
 "use client";
 
-import { Gem } from "lucide-react";
+import { SwatchesIcon } from "@phosphor-icons/react/ssr";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
@@ -54,7 +54,7 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 				aria-roledescription="carte matériau"
 			>
 				<ItemMedia variant="icon">
-					<Gem
+					<SwatchesIcon
 						className="text-muted-foreground size-5"
 						aria-hidden="true"
 						style={{ viewTransitionName: `material-icon-${material.id}` }}

@@ -11,7 +11,7 @@ import {
 } from "@/shared/components/ui/select";
 import { useUrlParam } from "@/shared/hooks/use-url-param";
 import { cn } from "@/shared/utils/cn";
-import { X } from "lucide-react";
+import { XIcon } from "@phosphor-icons/react/ssr";
 import { useRef } from "react";
 import type { SortSelectProps } from "@/shared/types/component.types";
 
@@ -82,7 +82,7 @@ export function SortSelect({
 							aria-label={`Effacer le tri ${selectedOption?.label ?? "actuel"}`}
 							title={`Effacer le tri ${selectedOption?.label ?? "actuel"}`}
 						>
-							<X className="size-4" />
+							<XIcon className="size-4" />
 						</Button>
 					)}
 				</div>

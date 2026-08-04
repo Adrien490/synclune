@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
+import { XIcon } from "@phosphor-icons/react/ssr";
 import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
@@ -116,7 +116,7 @@ function Input({
 							className="focus-ring text-muted-foreground hover:text-foreground -mr-2 flex size-11 items-center justify-center rounded-md transition-colors"
 							aria-label="Effacer le champ"
 						>
-							<X className="size-4" aria-hidden="true" />
+							<XIcon className="size-4" aria-hidden="true" />
 						</button>
 					) : hasEndIcon ? (
 						<div className="[&>svg]:size-4" aria-hidden={endIconInteractive ? undefined : "true"}>

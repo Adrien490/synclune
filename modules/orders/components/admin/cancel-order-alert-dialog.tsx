@@ -14,7 +14,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
 import type { InvoiceStatus } from "@/app/generated/prisma/browser";
-import { FileWarning } from "lucide-react";
+import { FileXIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 
@@ -106,7 +106,7 @@ export function CancelOrderAlertDialog() {
 									role="alert"
 								>
 									<p className="text-foreground flex items-center gap-2 text-sm font-medium">
-										<FileWarning className="text-warning size-4" aria-hidden="true" />
+										<FileXIcon className="text-warning size-4" aria-hidden="true" />
 										Émission d&apos;un avoir comptable
 									</p>
 									<p className="text-muted-foreground text-sm">

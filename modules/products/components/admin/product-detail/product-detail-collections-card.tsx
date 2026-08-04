@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen, Star } from "lucide-react";
+import { FolderOpenIcon, StarIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -18,7 +18,7 @@ export function ProductDetailCollectionsCard({ collections }: ProductDetailColle
 		<Card style={{ viewTransitionName: "product-detail-collections" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<FolderOpen className="size-5" aria-hidden="true" />
+					<FolderOpenIcon className="size-5" aria-hidden="true" />
 					Collections
 				</CardTitle>
 			</CardHeader>
@@ -39,7 +39,7 @@ export function ProductDetailCollectionsCard({ collections }: ProductDetailColle
 									<span className="min-w-0 truncate">{entry.collection.name}</span>
 									{entry.isFeatured ? (
 										<Badge variant="default" className="shrink-0">
-											<Star className="size-3" aria-hidden="true" />À la une
+											<StarIcon className="size-3" aria-hidden="true" />À la une
 										</Badge>
 									) : null}
 								</Link>

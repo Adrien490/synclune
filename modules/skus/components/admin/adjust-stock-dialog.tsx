@@ -1,6 +1,6 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 
 import { AdjustStockForm } from "@/modules/skus/components/admin/adjust-stock-form";
 import {
@@ -29,7 +29,7 @@ export function AdjustStockDialog() {
 			<ResponsiveDialogContent className="sm:max-w-100">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle className="flex items-center gap-2">
-						<Package className="text-primary size-5" />
+						<PackageIcon className="text-primary size-5" />
 						Ajuster le stock
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>

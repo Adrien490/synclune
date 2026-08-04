@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, type ComponentProps } from "react";
-import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
+import { ArrowsDownUpIcon, PlusIcon, SlidersHorizontalIcon } from "@phosphor-icons/react/ssr";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
@@ -42,7 +42,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 	const items: StickyActionBarItem[] = [
 		{
 			key: "filter",
-			icon: SlidersHorizontal,
+			icon: SlidersHorizontalIcon,
 			label: "Filtrer",
 			ariaLabel: "Ouvrir les filtres",
 			onClick: () => open("filter"),
@@ -58,7 +58,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 		{
 			kind: "link",
 			key: "add",
-			icon: Plus,
+			icon: PlusIcon,
 			label: "Ajouter",
 			ariaLabel: "Créer une nouvelle variante",
 			href: `/admin/catalogue/produits/${productSlug}/variantes/nouveau`,
@@ -66,7 +66,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 		},
 		{
 			key: "sort",
-			icon: ArrowUpDown,
+			icon: ArrowsDownUpIcon,
 			label: "Trier",
 			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
 			onClick: () => open("sort"),

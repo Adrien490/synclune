@@ -1,5 +1,5 @@
 import { use } from "react";
-import { Palette } from "lucide-react";
+import { PaletteIcon } from "@phosphor-icons/react/ssr";
 
 import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
 import { TaxonomyMobileList } from "@/modules/taxonomies/components/taxonomy-mobile-list";
@@ -29,7 +29,7 @@ export function ColorsMobileList({
 			totalCount={totalCount}
 			perPage={perPage}
 			hasActiveFilters={hasActiveFilters}
-			icon={Palette}
+			icon={PaletteIcon}
 			emptyDescription="Aucune teinte à la palette pour l'instant."
 			createButton={<CreateColorButton />}
 			renderItem={(item) => <ColorMobileItem color={item} />}

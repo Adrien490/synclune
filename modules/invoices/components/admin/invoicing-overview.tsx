@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, FileWarning, Receipt } from "lucide-react";
+import { FileXIcon, ReceiptIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ExportComptableForm } from "@/modules/invoices/components/admin/export-comptable-form";
@@ -36,14 +36,14 @@ export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionP
 				</h2>
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					<CounterCard
-						icon={<Receipt className="text-success size-5" aria-hidden="true" />}
+						icon={<ReceiptIcon className="text-success size-5" aria-hidden="true" />}
 						label="Émises"
 						value={overview.invoiceCounters.GENERATED}
 						hint="Numéro F-YYYY-NNNNN attribué (Art. 286 CGI)"
 						href="/admin/ventes/commandes?filter_invoiceStatus=GENERATED"
 					/>
 					<CounterCard
-						icon={<FileWarning className="text-warning size-5" aria-hidden="true" />}
+						icon={<FileXIcon className="text-warning size-5" aria-hidden="true" />}
 						label="Annulées (avoir)"
 						value={overview.invoiceCounters.VOIDED}
 						hint="VOIDED + avoir A-YYYY-NNNNN émis (Art. 272-I CGI)"
@@ -51,7 +51,7 @@ export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionP
 					/>
 					<CounterCard
 						icon={
-							<AlertTriangle
+							<WarningIcon
 								className={hasAnomaly ? "text-destructive size-5" : "text-muted-foreground size-5"}
 								aria-hidden="true"
 							/>

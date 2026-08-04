@@ -1,6 +1,6 @@
 "use client";
 
-import { EllipsisVertical } from "lucide-react";
+import { DotsThreeVerticalIcon } from "@phosphor-icons/react/ssr";
 
 import {
 	ResponsiveActionMenu,
@@ -37,7 +37,7 @@ export function ProductSkuRowActions(props: ProductSkuRowActionsProps) {
 					/>
 				}
 			>
-				<EllipsisVertical className="size-4" />
+				<DotsThreeVerticalIcon className="size-4" />
 				<span className="sr-only">Ouvrir le menu d&apos;actions</span>
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent

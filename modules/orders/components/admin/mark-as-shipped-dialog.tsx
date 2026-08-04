@@ -32,7 +32,7 @@ import {
 	type Carrier,
 } from "@/modules/orders/utils/carrier.utils";
 import { useStore } from "@tanstack/react-form";
-import { Link2, Mail, Truck } from "lucide-react";
+import { EnvelopeIcon, LinkIcon, TruckIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useMarkAsShippedForm } from "@/modules/orders/hooks/use-mark-as-shipped-form";
 import { TRACKING_NUMBER_MAX_LENGTH } from "@/modules/orders/constants/order.constants";
@@ -118,7 +118,7 @@ function MarkAsShippedFormContent({
 		<>
 			<ResponsiveDialogHeader>
 				<ResponsiveDialogTitle className="flex items-center gap-2">
-					<Truck className="size-5" />
+					<TruckIcon className="size-5" />
 					Marquer comme expédiée
 				</ResponsiveDialogTitle>
 				<ResponsiveDialogDescription>
@@ -223,7 +223,7 @@ function MarkAsShippedFormContent({
 								htmlFor="customUrlMode"
 								className="flex cursor-pointer items-center gap-2 text-sm"
 							>
-								<Link2 className="size-4" />
+								<LinkIcon className="size-4" />
 								URL personnalisée
 							</Label>
 							<p className="text-muted-foreground text-xs">Saisir manuellement l'URL de suivi</p>
@@ -240,7 +240,7 @@ function MarkAsShippedFormContent({
 						/>
 						<div className="space-y-1 leading-none">
 							<Label htmlFor="sendEmailCheckbox" className="flex cursor-pointer items-center gap-2">
-								<Mail className="size-4" />
+								<EnvelopeIcon className="size-4" />
 								Envoyer l'email de confirmation
 							</Label>
 							<p className="text-muted-foreground text-xs">

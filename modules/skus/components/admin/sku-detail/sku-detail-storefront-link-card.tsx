@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, EyeOff } from "lucide-react";
+import { ArrowSquareOutIcon, EyeSlashIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { Button } from "@/shared/components/ui/button";
@@ -37,9 +37,9 @@ export function SkuDetailStorefrontLinkCard({ sku }: SkuDetailStorefrontLinkCard
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					{isVisible ? (
-						<ExternalLink className="size-5" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-5" aria-hidden="true" />
 					) : (
-						<EyeOff className="size-5" aria-hidden="true" />
+						<EyeSlashIcon className="size-5" aria-hidden="true" />
 					)}
 					Aperçu boutique
 				</CardTitle>
@@ -59,7 +59,7 @@ export function SkuDetailStorefrontLinkCard({ sku }: SkuDetailStorefrontLinkCard
 						variant="outline"
 						className="w-full transition-transform duration-150 active:scale-[0.98]"
 					>
-						<ExternalLink className="size-4" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 						Voir sur la boutique
 					</Button>
 				) : (
@@ -70,7 +70,7 @@ export function SkuDetailStorefrontLinkCard({ sku }: SkuDetailStorefrontLinkCard
 							disabled
 							aria-describedby="sku-storefront-help"
 						>
-							<ExternalLink className="size-4" aria-hidden="true" />
+							<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 							Voir sur la boutique
 						</Button>
 						<p id="sku-storefront-help" className="text-muted-foreground text-xs">

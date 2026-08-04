@@ -17,7 +17,7 @@ import {
 	getAllCollections,
 	getProductCollections,
 } from "@/modules/products/data/get-product-collections";
-import { FolderOpen } from "lucide-react";
+import { FolderOpenIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { toast } from "@/shared/utils/toast";
 
@@ -102,7 +102,7 @@ export function ManageCollectionsDialog() {
 							</div>
 						) : collections.length === 0 ? (
 							<div className="text-muted-foreground py-8 text-center">
-								<FolderOpen className="mx-auto mb-2 size-8" />
+								<FolderOpenIcon className="mx-auto mb-2 size-8" />
 								<p>Aucune collection disponible</p>
 							</div>
 						) : (

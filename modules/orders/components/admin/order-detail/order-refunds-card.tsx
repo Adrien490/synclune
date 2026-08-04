@@ -8,7 +8,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { formatDateShort } from "@/shared/utils/dates";
-import { RotateCcw, ExternalLink } from "lucide-react";
+import { ArrowCounterClockwiseIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderRefundsCardProps } from "./types";
@@ -27,7 +27,7 @@ export function OrderRefundsCard({
 		<Card>
 			<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
 				<CardTitle className="flex items-center gap-2 text-base">
-					<RotateCcw className="size-5" aria-hidden="true" />
+					<ArrowCounterClockwiseIcon className="size-5" aria-hidden="true" />
 					Remboursements
 					{refunds.length > 0 && (
 						<Badge variant="secondary" className="ml-1">
@@ -53,7 +53,7 @@ export function OrderRefundsCard({
 						}
 					>
 						Rembourser dans Stripe
-						<ExternalLink className="size-4" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 					</Button>
 				)}
 			</CardHeader>
@@ -88,7 +88,7 @@ export function OrderRefundsCard({
 									size="sm"
 									render={<Link href={`/admin/ventes/remboursements/${refund.id}`} />}
 								>
-									<ExternalLink className="size-4" aria-hidden="true" />
+									<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 									<span className="sr-only">Voir le détail du remboursement</span>
 								</Button>
 							</div>

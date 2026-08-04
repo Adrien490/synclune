@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Package } from "lucide-react";
+import { ArrowRightIcon, PackageIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -43,7 +43,7 @@ export function SkuDetailStockCard({ sku }: SkuDetailStockCardProps) {
 		<Card style={{ viewTransitionName: "sku-edit-stock" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Package className="size-5" aria-hidden="true" />
+					<PackageIcon className="size-5" aria-hidden="true" />
 					Stock
 				</CardTitle>
 			</CardHeader>
@@ -75,7 +75,7 @@ export function SkuDetailStockCard({ sku }: SkuDetailStockCardProps) {
 					onClick={handleAdjustStock}
 				>
 					Ajuster le stock
-					<ArrowRight className="size-4" aria-hidden="true" />
+					<ArrowRightIcon className="size-4" aria-hidden="true" />
 				</Button>
 			</CardContent>
 		</Card>

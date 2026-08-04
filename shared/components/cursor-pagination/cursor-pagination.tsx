@@ -10,7 +10,7 @@ import {
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
 import { isInteractiveTarget } from "@/shared/utils/is-interactive-target";
-import { ChevronLeft, ChevronRight, ChevronsLeft } from "lucide-react";
+import { CaretDoubleLeftIcon, CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import {
 	useEffect,
@@ -339,7 +339,7 @@ function CursorPaginationInner({
 					{isPending && lastAction === "reset" ? (
 						<Spinner presentational className="size-5 md:size-4" />
 					) : (
-						<ChevronsLeft className="size-5 md:size-4" />
+						<CaretDoubleLeftIcon className="size-5 md:size-4" />
 					)}
 					<span className="hidden sm:inline">Début</span>
 				</Button>
@@ -357,7 +357,7 @@ function CursorPaginationInner({
 						{isPending && lastAction === "prev" ? (
 							<Spinner presentational className="size-5 md:size-4" />
 						) : (
-							<ChevronLeft className="size-5 md:size-4" />
+							<CaretLeftIcon className="size-5 md:size-4" />
 						)}
 					</Button>
 
@@ -392,7 +392,7 @@ function CursorPaginationInner({
 						{isPending && lastAction === "next" ? (
 							<Spinner presentational className="size-5 md:size-4" />
 						) : (
-							<ChevronRight className="size-5 md:size-4" />
+							<CaretRightIcon className="size-5 md:size-4" />
 						)}
 					</Button>
 				</ButtonGroup>

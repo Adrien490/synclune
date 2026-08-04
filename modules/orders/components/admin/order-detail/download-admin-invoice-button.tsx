@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { DownloadSimpleIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
@@ -68,7 +68,7 @@ export function DownloadAdminInvoiceButton({
 			{isDownloading ? (
 				<Spinner presentational />
 			) : (
-				<Download className="size-4" aria-hidden="true" />
+				<DownloadSimpleIcon className="size-4" aria-hidden="true" />
 			)}
 			{isDownloading ? "Téléchargement…" : "Télécharger le PDF"}
 		</Button>

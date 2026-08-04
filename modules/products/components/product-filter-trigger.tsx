@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, type ComponentProps } from "react";
-import { Filter } from "lucide-react";
+import { FunnelIcon } from "@phosphor-icons/react/ssr";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -65,7 +65,7 @@ function ProductFilterTriggerInner({ className, variant = "full" }: ProductFilte
 				className={cn("relative size-11", className)}
 				aria-label={`Filtres${hasActiveFilters ? ` (${activeFiltersCount} actifs)` : ""}`}
 			>
-				<Filter className="size-5" />
+				<FunnelIcon className="size-5" />
 				{hasActiveFilters && (
 					<span
 						className="bg-primary ring-background absolute -top-0.5 -right-0.5 size-3 rounded-full ring-2"
@@ -89,7 +89,7 @@ function ProductFilterTriggerInner({ className, variant = "full" }: ProductFilte
 			)}
 			aria-label={`Filtres${hasActiveFilters ? ` (${activeFiltersCount} actifs)` : ""}`}
 		>
-			<Filter className="h-4 w-4" />
+			<FunnelIcon className="h-4 w-4" />
 			<span>Filtres</span>
 			{hasActiveFilters && (
 				<Badge

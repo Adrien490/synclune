@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleX } from "lucide-react";
+import { XCircleIcon } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef } from "react";
 
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
@@ -41,7 +41,7 @@ export function FormServerErrorAlert({ errors, className }: FormServerErrorAlert
 			aria-live="assertive"
 			className={className}
 		>
-			<CircleX aria-hidden="true" />
+			<XCircleIcon aria-hidden="true" />
 			<AlertDescription>
 				{errors.length === 1 ? (
 					errors[0]

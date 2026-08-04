@@ -1,16 +1,16 @@
 "use client";
 
 import {
-	Check,
-	Copy,
-	DollarSign,
-	Eye,
-	Package,
-	Pencil,
-	Power,
-	PowerOff,
-	Trash2,
-} from "lucide-react";
+	CheckIcon,
+	CopyIcon,
+	CurrencyDollarIcon,
+	EyeIcon,
+	PackageIcon,
+	PencilSimpleIcon,
+	ToggleLeftIcon,
+	ToggleRightIcon,
+	TrashIcon,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -87,19 +87,19 @@ export function useSkuActions({
 				{
 					key: "view",
 					label: "Voir les détails",
-					icon: Eye,
+					icon: EyeIcon,
 					href: `/admin/catalogue/produits/${productSlug}/variantes/${skuId}`,
 				},
 				{
 					key: "edit",
 					label: "Modifier",
-					icon: Pencil,
+					icon: PencilSimpleIcon,
 					href: `/admin/catalogue/produits/${productSlug}/variantes/${skuId}/modifier`,
 				},
 				{
 					key: "toggle",
 					label: isActive ? "Désactiver" : "Activer",
-					icon: isActive ? PowerOff : Power,
+					icon: isActive ? ToggleLeftIcon : ToggleRightIcon,
 					disabled: isToggling,
 					hidden: isDefault,
 					onSelect: () => toggleStatus(skuId, !isActive),
@@ -107,7 +107,7 @@ export function useSkuActions({
 				{
 					key: "adjust-stock",
 					label: "Ajuster le stock",
-					icon: Package,
+					icon: PackageIcon,
 					closesMenu: false,
 					onSelect: () =>
 						isMobile
@@ -117,7 +117,7 @@ export function useSkuActions({
 				{
 					key: "update-price",
 					label: "Modifier le prix",
-					icon: DollarSign,
+					icon: CurrencyDollarIcon,
 					closesMenu: false,
 					onSelect: () =>
 						isMobile
@@ -132,7 +132,7 @@ export function useSkuActions({
 				{
 					key: "duplicate",
 					label: "Dupliquer",
-					icon: Copy,
+					icon: CopyIcon,
 					disabled: isDuplicating,
 					onSelect: () => duplicate(skuId, skuName),
 				},
@@ -144,7 +144,7 @@ export function useSkuActions({
 				{
 					key: "set-default",
 					label: "Définir par défaut",
-					icon: Check,
+					icon: CheckIcon,
 					disabled: isPending,
 					hidden: isDefault,
 					onSelect: () => setAsDefault(skuId),
@@ -165,7 +165,7 @@ export function useSkuActions({
 				{
 					key: "delete",
 					label: "Supprimer",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive",
 					hidden: isDefault,
 					closesMenu: false,

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { FileTextIcon } from "@phosphor-icons/react/ssr";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -32,7 +32,7 @@ export function InvoicesListTable({ invoices }: InvoicesListTableProps) {
 	if (invoices.length === 0) {
 		return (
 			<TableEmptyState
-				icon={FileText}
+				icon={FileTextIcon}
 				title="Aucune facture émise"
 				description="Les factures sont générées automatiquement à l'encaissement (Art. 289-I CGI)."
 			/>

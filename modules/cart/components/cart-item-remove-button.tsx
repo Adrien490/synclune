@@ -4,7 +4,7 @@ import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provi
 import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { Trash2 } from "lucide-react";
+import { TrashIcon } from "@phosphor-icons/react/ssr";
 
 interface CartItemRemoveButtonProps {
 	/** Identité de la ligne — le skuId depuis le passage du panier en cookie. */
@@ -41,7 +41,7 @@ export function CartItemRemoveButton({ skuId, itemName, quantity }: CartItemRemo
 			className="text-foreground hover:text-destructive active:text-destructive/80 min-h-11 min-w-11 px-2 text-sm"
 			aria-label={`Supprimer ${itemName} du panier`}
 		>
-			<Trash2 className="size-4 sm:hidden" aria-hidden="true" />
+			<TrashIcon className="size-4 sm:hidden" aria-hidden="true" />
 			<span className="hidden sm:inline">Supprimer</span>
 		</Button>
 	);

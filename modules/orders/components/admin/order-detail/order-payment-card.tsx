@@ -1,4 +1,4 @@
-import { CreditCard, ExternalLink } from "lucide-react";
+import { ArrowSquareOutIcon, CreditCardIcon } from "@phosphor-icons/react/ssr";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -12,7 +12,7 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 		<Card>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<CreditCard className="size-5" aria-hidden="true" />
+					<CreditCardIcon className="size-5" aria-hidden="true" />
 					Paiement
 				</CardTitle>
 			</CardHeader>
@@ -54,7 +54,7 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 										/>
 									}
 								>
-									<ExternalLink className="size-3" aria-hidden="true" />
+									<ArrowSquareOutIcon className="size-3" aria-hidden="true" />
 								</Button>
 							</div>
 						</DetailInfoRow>

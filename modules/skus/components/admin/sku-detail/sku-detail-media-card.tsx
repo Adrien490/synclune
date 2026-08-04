@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageOff, ImagePlus, Images } from "lucide-react";
+import { ImageBrokenIcon, ImageSquareIcon, ImagesIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import { lazy, Suspense, useState } from "react";
@@ -74,7 +74,7 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 		<Card style={{ viewTransitionName: "sku-edit-media" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Images className="size-5" aria-hidden="true" />
+					<ImagesIcon className="size-5" aria-hidden="true" />
 					Médias
 				</CardTitle>
 			</CardHeader>
@@ -160,7 +160,7 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 						className="bg-muted/40 text-muted-foreground flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-4 text-center"
 						role="status"
 					>
-						<ImageOff className="size-8" aria-hidden="true" />
+						<ImageBrokenIcon className="size-8" aria-hidden="true" />
 						<p className="text-sm">Aucun média</p>
 						<Button
 							render={<Link href={editHref} onClick={() => haptic("light")} />}
@@ -168,7 +168,7 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 							variant="outline"
 							className="transition-transform duration-150 active:scale-[0.98]"
 						>
-							<ImagePlus className="size-4" aria-hidden="true" />
+							<ImageSquareIcon className="size-4" aria-hidden="true" />
 							Ajouter des médias
 						</Button>
 					</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, Tags } from "lucide-react";
+import { LockIcon, ShapesIcon } from "@phosphor-icons/react/ssr";
 
 import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
 import { TaxonomyDetailHeader } from "@/modules/taxonomies/components/taxonomy-detail-header";
@@ -32,12 +32,12 @@ export function ProductTypeDetailHeader({ productType }: ProductTypeDetailHeader
 			createdAt={productType.createdAt}
 			updatedAt={productType.updatedAt}
 			sections={sections}
-			visual={<Tags className="text-muted-foreground size-7 shrink-0" aria-hidden="true" />}
+			visual={<ShapesIcon className="text-muted-foreground size-7 shrink-0" aria-hidden="true" />}
 			editDisabled={productType.isSystem}
 			extraBadges={
 				productType.isSystem ? (
 					<Badge variant="outline" className="shrink-0 gap-1">
-						<Lock className="size-3" aria-hidden="true" />
+						<LockIcon className="size-3" aria-hidden="true" />
 						Système
 					</Badge>
 				) : null

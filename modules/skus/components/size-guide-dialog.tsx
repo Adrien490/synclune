@@ -11,7 +11,7 @@ import {
 import type { ReactElement } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { Ruler, Info } from "lucide-react";
+import { InfoIcon, RulerIcon } from "@phosphor-icons/react/ssr";
 
 interface SizeGuideDialogProps {
 	productTypeSlug?: string | null;
@@ -42,7 +42,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 							className="border-primary/30 hover:border-primary hover:bg-primary/5 h-10 gap-1.5 px-3 text-xs"
 							type="button"
 						>
-							<Ruler className="size-3.5" aria-hidden="true" />
+							<RulerIcon className="size-3.5" aria-hidden="true" />
 							Guide des tailles
 						</Button>
 					)) as ReactElement
@@ -51,7 +51,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 			<ResponsiveDialogContent className="flex max-h-[85vh] flex-col sm:max-w-lg">
 				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle className="flex items-center gap-2">
-						<Ruler className="text-primary size-5" aria-hidden="true" />
+						<RulerIcon className="text-primary size-5" aria-hidden="true" />
 						Guide des tailles
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
@@ -151,7 +151,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						</div>
 
 						<div className="bg-accent/50 flex items-start gap-2 rounded-lg p-3 text-sm">
-							<Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+							<InfoIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
 							<p className="text-muted-foreground">
 								<strong className="text-foreground">Astuce :</strong> Mesurez en fin de journée
 								quand vos doigts sont légèrement gonflés. En cas de doute, choisissez la taille
@@ -219,7 +219,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						</div>
 
 						<div className="bg-accent/50 flex items-start gap-2 rounded-lg p-3 text-sm">
-							<Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+							<InfoIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
 							<p className="text-muted-foreground">
 								<strong className="text-foreground">Astuce :</strong> Si vous hésitez entre deux
 								tailles, choisissez la plus grande pour un confort optimal.

@@ -1,4 +1,4 @@
-import { Gem } from "lucide-react";
+import { SwatchesIcon } from "@phosphor-icons/react/ssr";
 
 import type { MaterialDetailReturn } from "@/modules/materials/data/get-material";
 import { CopyButton } from "@/shared/components/copy-button";
@@ -15,7 +15,7 @@ export function MaterialDetailInfoCard({ material }: MaterialDetailInfoCardProps
 		<Card style={{ viewTransitionName: "material-edit-info" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Gem className="size-5" aria-hidden="true" />
+					<SwatchesIcon className="size-5" aria-hidden="true" />
 					Informations
 				</CardTitle>
 			</CardHeader>

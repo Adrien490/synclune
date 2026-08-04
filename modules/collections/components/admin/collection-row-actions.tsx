@@ -1,6 +1,6 @@
 "use client";
 
-import { EllipsisVertical } from "lucide-react";
+import { DotsThreeVerticalIcon } from "@phosphor-icons/react/ssr";
 
 import type { CollectionStatus } from "@/app/generated/prisma/enums";
 import {
@@ -37,7 +37,7 @@ export function CollectionRowActions(props: CollectionRowActionsProps) {
 				}
 			>
 				<span className="sr-only">Ouvrir le menu d&apos;actions</span>
-				<EllipsisVertical className="size-4" />
+				<DotsThreeVerticalIcon className="size-4" />
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent
 				title="Actions collection"

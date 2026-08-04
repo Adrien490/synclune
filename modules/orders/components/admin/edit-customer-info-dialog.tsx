@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "lucide-react";
+import { UserIcon } from "@phosphor-icons/react/ssr";
 
 import {
 	ResponsiveDialog,
@@ -31,7 +31,7 @@ export function EditCustomerInfoDialog() {
 			<ResponsiveDialogContent className="sm:max-w-md">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle className="flex items-center gap-2">
-						<User className="size-5" aria-hidden="true" />
+						<UserIcon className="size-5" aria-hidden="true" />
 						Modifier les informations client
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>

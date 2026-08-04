@@ -10,7 +10,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form";
-import { CheckCircle2, ExternalLink, Link2 } from "lucide-react";
+import { ArrowSquareOutIcon, CheckCircleIcon, LinkIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 import {
@@ -268,7 +268,7 @@ export function UpdateTrackingForm({
 					</Select>
 					{wasAutoDetected && (
 						<p className="text-success flex items-center gap-1.5 text-xs">
-							<CheckCircle2 className="size-3.5" aria-hidden="true" />
+							<CheckCircleIcon className="size-3.5" aria-hidden="true" />
 							<span>
 								Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
 							</span>
@@ -315,7 +315,7 @@ export function UpdateTrackingForm({
 										}
 										className="h-9 w-9 shrink-0"
 									>
-										<ExternalLink className="size-4" aria-hidden="true" />
+										<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 									</Button>
 								)}
 							</>
@@ -341,7 +341,7 @@ export function UpdateTrackingForm({
 							htmlFor="customUrlMode"
 							className="flex cursor-pointer items-center gap-2 text-sm"
 						>
-							<Link2 className="size-4" aria-hidden="true" />
+							<LinkIcon className="size-4" aria-hidden="true" />
 							URL personnalisée
 						</Label>
 						<p className="text-muted-foreground text-xs">

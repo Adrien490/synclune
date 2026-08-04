@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { Button } from "@/shared/components/ui/button";
@@ -75,7 +75,7 @@ export function QuickSearchTrigger({
 					className,
 				)}
 			>
-				<Search className="size-5 shrink-0 lg:size-4" aria-hidden="true" />
+				<MagnifyingGlassIcon className="size-5 shrink-0 lg:size-4" aria-hidden="true" />
 				<span className="hidden flex-1 text-left text-sm lg:inline">Rechercher</span>
 				<ShortcutKbd keyLabel="K" className="hidden lg:inline-flex" />
 			</button>
@@ -95,7 +95,7 @@ export function QuickSearchTrigger({
 			aria-haspopup="dialog"
 			aria-keyshortcuts="Meta+K Control+K"
 		>
-			<Search className="size-5" />
+			<MagnifyingGlassIcon className="size-5" />
 		</Button>
 	);
 }

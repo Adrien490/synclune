@@ -1,7 +1,7 @@
 import { AuthPageLayout } from "@/modules/auth/components/auth-page-layout";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
 import { Button } from "@/shared/components/ui/button";
-import { Mail } from "lucide-react";
+import { EnvelopeIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -27,7 +27,7 @@ export default function ResendVerificationPage() {
 			<div className="space-y-6">
 				<div className="bg-card rounded-lg border p-6 shadow-sm">
 					<div className="mb-4 flex items-start gap-3">
-						<Mail className="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
+						<EnvelopeIcon className="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
 						<div className="space-y-1">
 							<p className="text-sm font-medium">Email non reçu ?</p>
 							<p className="text-muted-foreground text-sm">

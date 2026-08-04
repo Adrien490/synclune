@@ -5,7 +5,7 @@ import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { Input } from "@/shared/components/ui/input";
 import { useUpdateCartItem } from "@/modules/cart/hooks/use-update-cart-item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { Minus, Plus } from "lucide-react";
+import { MinusIcon, PlusIcon } from "@phosphor-icons/react/ssr";
 import { useOptimistic, useTransition } from "react";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 
@@ -105,7 +105,7 @@ export function CartItemQuantitySelector({
 						optimisticQuantity <= 1 ? "Quantité minimale atteinte" : "Diminuer la quantité"
 					}
 				>
-					<Minus className="size-4" aria-hidden="true" />
+					<MinusIcon className="size-4" aria-hidden="true" />
 				</Button>
 
 				<Input
@@ -146,7 +146,7 @@ export function CartItemQuantitySelector({
 							: "Augmenter la quantité"
 					}
 				>
-					<Plus className="size-4" aria-hidden="true" />
+					<PlusIcon className="size-4" aria-hidden="true" />
 				</Button>
 			</ButtonGroup>
 		</div>

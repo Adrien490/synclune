@@ -1,6 +1,6 @@
 "use client";
 
-import { Gem } from "lucide-react";
+import { SwatchesIcon } from "@phosphor-icons/react/ssr";
 
 import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
 import { TaxonomyDetailHeader } from "@/modules/taxonomies/components/taxonomy-detail-header";
@@ -30,7 +30,7 @@ export function MaterialDetailHeader({ material }: MaterialDetailHeaderProps) {
 			createdAt={material.createdAt}
 			updatedAt={material.updatedAt}
 			sections={sections}
-			visual={<Gem className="text-muted-foreground size-7 shrink-0" aria-hidden="true" />}
+			visual={<SwatchesIcon className="text-muted-foreground size-7 shrink-0" aria-hidden="true" />}
 		/>
 	);
 }

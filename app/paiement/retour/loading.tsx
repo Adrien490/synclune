@@ -1,5 +1,5 @@
 import { Spinner } from "@/shared/components/ui/spinner";
-import { Lock } from "lucide-react";
+import { LockIcon } from "@phosphor-icons/react/ssr";
 
 /**
  * État de chargement pendant la vérification du paiement.
@@ -28,7 +28,7 @@ export default function CheckoutReturnLoading() {
 					</p>
 				</div>
 				<p className="text-muted-foreground inline-flex items-center justify-center gap-1.5 text-xs">
-					<Lock className="size-3" aria-hidden="true" />
+					<LockIcon className="size-3" aria-hidden="true" />
 					Connexion sécurisée par Stripe
 				</p>
 			</div>

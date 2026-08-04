@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, User } from "lucide-react";
+import { PencilSimpleIcon, UserIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -39,7 +39,7 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 		<Card>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<CardTitle className="flex items-center gap-2">
-					<User className="size-5" aria-hidden="true" />
+					<UserIcon className="size-5" aria-hidden="true" />
 					Client
 				</CardTitle>
 				{canEdit && (
@@ -49,7 +49,7 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 						onClick={handleEdit}
 						className="min-h-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9"
 					>
-						<Pencil className="size-4" aria-hidden="true" />
+						<PencilSimpleIcon className="size-4" aria-hidden="true" />
 						Modifier
 					</Button>
 				)}

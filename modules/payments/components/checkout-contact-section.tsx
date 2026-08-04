@@ -17,7 +17,7 @@ import { CheckoutSection } from "./checkout-section";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
 import { logout } from "@/modules/auth/actions/logout";
 import { toast } from "@/shared/utils/toast";
-import { Mail } from "lucide-react";
+import { EnvelopeIcon } from "@phosphor-icons/react/ssr";
 
 interface CheckoutContactSectionProps {
 	form: CheckoutFormInstance;
@@ -88,7 +88,7 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 				{/* Email display for logged-in users */}
 				{!isGuest && session.user.email && (
 					<div className="border-primary/10 bg-primary/5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5 text-sm">
-						<Mail className="text-muted-foreground size-4 shrink-0" />
+						<EnvelopeIcon className="text-muted-foreground size-4 shrink-0" />
 						<span className="text-muted-foreground">Email :</span>
 						<span className="font-medium">{session.user.email}</span>
 						<button

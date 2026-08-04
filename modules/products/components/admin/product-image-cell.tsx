@@ -3,7 +3,7 @@
 import { useState, lazy, Suspense } from "react";
 import Image from "next/image";
 
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 import { useReducedMotion } from "motion/react";
 
 import { useLightbox } from "@/shared/hooks";
@@ -95,7 +95,7 @@ export function ProductImageCell({ images, productTitle }: ProductImageCellProps
 						role="img"
 						aria-label="Aucune image disponible"
 					>
-						<Package className="text-muted-foreground size-8" aria-hidden="true" />
+						<PackageIcon className="text-muted-foreground size-8" aria-hidden="true" />
 					</div>
 				)}
 			</div>

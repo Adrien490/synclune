@@ -4,7 +4,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardDescription, CardHeader } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
-import { ChevronRight } from "lucide-react";
+import { CaretRightIcon } from "@phosphor-icons/react/ssr";
 // GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
 // pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
 import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
@@ -81,7 +81,7 @@ export function SectionNavigation({
 									</div>
 									<div className="flex shrink-0 items-center gap-2">
 										{link.badge && <Badge variant="secondary">{link.badge}</Badge>}
-										<ChevronRight
+										<CaretRightIcon
 											className="text-muted-foreground/70 group-hover:text-primary size-5 shrink-0 transition-[transform,color] group-hover:translate-x-0.5"
 											aria-hidden="true"
 										/>

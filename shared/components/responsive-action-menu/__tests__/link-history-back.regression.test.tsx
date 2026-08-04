@@ -18,7 +18,7 @@
  * via la prop contrôlée mais NE pousse PAS `history.back()`.
  */
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
-import { Eye } from "lucide-react";
+import { EyeIcon } from "@phosphor-icons/react/ssr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockTriggerHaptic = vi.fn();
@@ -75,7 +75,7 @@ import {
 const SECTIONS: ActionMenuSection[] = [
 	{
 		key: "manage",
-		items: [{ key: "view", label: "Voir le produit", icon: Eye, href: "/creations/test" }],
+		items: [{ key: "view", label: "Voir le produit", icon: EyeIcon, href: "/creations/test" }],
 	},
 ];
 

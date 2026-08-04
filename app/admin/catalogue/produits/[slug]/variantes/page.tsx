@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { PencilSimpleIcon } from "@phosphor-icons/react/ssr";
 
 import { SkusAdminDialogs } from "./_components/skus-admin-dialogs";
 import { VariantsProductContext } from "./_components/variants-product-context";
@@ -218,7 +218,7 @@ export default async function ProductVariantsPage({
 						>
 							{/* `Pencil` et non `ArrowLeft` : c'est une action d'édition, pas un
 								    retour — la flèche gauche annonçait un retour en arrière. */}
-							<Pencil className="mr-2 size-4" />
+							<PencilSimpleIcon className="mr-2 size-4" />
 							Modifier le produit
 						</Button>
 						<Button render={<Link href={`/admin/catalogue/produits/${slug}/variantes/nouveau`} />}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Package } from "lucide-react";
+import { ArrowRightIcon, PackageIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -36,7 +36,7 @@ export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetail
 			<CardHeader>
 				<CardTitle className="flex items-center justify-between gap-2">
 					<span className="flex items-center gap-2">
-						<Package className="size-5" aria-hidden="true" />
+						<PackageIcon className="size-5" aria-hidden="true" />
 						Produits
 					</span>
 					<span className="text-muted-foreground text-sm font-normal">
@@ -74,7 +74,7 @@ export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetail
 											/>
 										) : (
 											<div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md border">
-												<Package className="text-muted-foreground size-4" aria-hidden="true" />
+												<PackageIcon className="text-muted-foreground size-4" aria-hidden="true" />
 											</div>
 										)}
 										<div className="min-w-0 flex-1">
@@ -103,7 +103,7 @@ export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetail
 					className="w-full transition-transform duration-150 active:scale-[0.98]"
 				>
 					Voir tous les produits
-					<ArrowRight className="size-4" aria-hidden="true" />
+					<ArrowRightIcon className="size-4" aria-hidden="true" />
 				</Button>
 			</CardContent>
 		</Card>

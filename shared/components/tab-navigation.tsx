@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { Button } from "@/shared/components/ui/button";
@@ -122,7 +122,7 @@ export function TabNavigation({
 							aria-haspopup="dialog"
 						>
 							<span className="truncate">{activeOverflowItem?.label ?? "Plus"}</span>
-							<ChevronDownIcon
+							<CaretDownIcon
 								className={cn(
 									"size-4 shrink-0 transition-transform duration-200",
 									isDrawerOpen && "rotate-180",

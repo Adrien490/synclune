@@ -1,4 +1,4 @@
-import { Info } from "lucide-react";
+import { InfoIcon } from "@phosphor-icons/react/ssr";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
@@ -23,7 +23,7 @@ export function CollectionDetailInfoCard({ collection }: CollectionDetailInfoCar
 		<Card style={{ viewTransitionName: "collection-edit-info" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Info className="size-5" aria-hidden="true" />
+					<InfoIcon className="size-5" aria-hidden="true" />
 					Informations
 				</CardTitle>
 			</CardHeader>

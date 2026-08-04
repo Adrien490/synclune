@@ -1,4 +1,4 @@
-import { Lock } from "lucide-react";
+import { LockIcon } from "@phosphor-icons/react/ssr";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
 
 /**
@@ -10,7 +10,7 @@ export function CheckoutTrustBadge() {
 	return (
 		<div className="text-muted-foreground absolute left-1/2 hidden -translate-x-1/2 items-center gap-2 text-xs sm:inline-flex">
 			<span className="inline-flex items-center gap-1.5">
-				<Lock className="size-3" aria-hidden="true" />
+				<LockIcon className="size-3" aria-hidden="true" />
 				<span>Paiement sécurisé</span>
 			</span>
 			<span aria-hidden="true" className="text-border">

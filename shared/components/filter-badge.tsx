@@ -5,7 +5,7 @@ import { type FilterDefinition } from "@/shared/hooks/use-filter";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
-import { X } from "lucide-react";
+import { XIcon } from "@phosphor-icons/react/ssr";
 import { m, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 
 const ANIMATION_PROPS = {
@@ -170,7 +170,7 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 					"sm:bg-destructive/10 sm:text-destructive",
 				)}
 			>
-				<X className="size-3.5 sm:size-3" />
+				<XIcon className="size-3.5 sm:size-3" />
 			</span>
 		</m.button>
 	);

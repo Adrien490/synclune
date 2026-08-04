@@ -1,7 +1,7 @@
 "use client";
 
 import { Drawer as SheetPrimitive } from "@base-ui/react/drawer";
-import { XIcon } from "lucide-react";
+import { XIcon } from "@phosphor-icons/react/ssr";
 import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";

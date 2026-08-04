@@ -2,7 +2,7 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ExternalLink, Receipt } from "lucide-react";
+import { ArrowSquareOutIcon, ReceiptIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -31,7 +31,7 @@ export function RefundDetailHeader({ refund }: RefundDetailHeaderProps) {
 		<DetailHeaderShell>
 			<div className="min-w-0">
 				<h1 className="font-display text-foreground flex flex-wrap items-center gap-2 text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
-					<Receipt className="size-6 shrink-0 sm:size-7" aria-hidden="true" />
+					<ReceiptIcon className="size-6 shrink-0 sm:size-7" aria-hidden="true" />
 					Remboursement
 					<span className="text-muted-foreground text-base sm:text-lg">
 						· {formatEuro(refund.amount)}
@@ -66,7 +66,7 @@ export function RefundDetailHeader({ refund }: RefundDetailHeaderProps) {
 						className="text-primary inline-flex items-center gap-1 hover:underline"
 					>
 						{refund.order.orderNumber}
-						<ExternalLink className="size-3" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-3" aria-hidden="true" />
 					</Link>
 				</p>
 			</div>

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw } from "lucide-react";
+import { ArrowsClockwiseIcon } from "@phosphor-icons/react/ssr";
 import { useReducedMotion } from "motion/react";
 
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
@@ -204,7 +204,7 @@ export function PullToRefresh() {
 					hasReachedThreshold && !isRefreshing && "border-primary/60",
 				)}
 			>
-				<RefreshCw
+				<ArrowsClockwiseIcon
 					className={cn(
 						"size-4 transition-colors",
 						hasReachedThreshold ? "text-primary" : "text-muted-foreground",

@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
+import { ArrowsDownUpIcon, SlidersHorizontalIcon } from "@phosphor-icons/react/ssr";
 
 import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
@@ -30,7 +30,7 @@ function RefundsBottomBarInner() {
 	const items: StickyActionBarItem[] = [
 		{
 			key: "filter",
-			icon: SlidersHorizontal,
+			icon: SlidersHorizontalIcon,
 			label: "Filtrer",
 			ariaLabel: "Ouvrir les filtres",
 			onClick: () => open("filter"),
@@ -47,7 +47,7 @@ function RefundsBottomBarInner() {
 		// dashboard Stripe (Lot 2 S3.3), la synchro webhook crée la ligne ici.
 		{
 			key: "sort",
-			icon: ArrowUpDown,
+			icon: ArrowsDownUpIcon,
 			label: "Trier",
 			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
 			onClick: () => open("sort"),

@@ -3,7 +3,7 @@ import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-ve
 import { Button } from "@/shared/components/ui/button";
 import { auth } from "@/modules/auth/lib/auth";
 import { cn } from "@/shared/utils/cn";
-import { CircleAlert, CircleCheck, Sparkles } from "lucide-react";
+import { CheckCircleIcon, SparkleIcon, WarningCircleIcon } from "@phosphor-icons/react/ssr";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -84,7 +84,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 				title="Bienvenue"
 				icon={
 					<div className="bg-success/15 flex size-16 items-center justify-center rounded-full">
-						<Sparkles className="text-success size-8" aria-hidden="true" />
+						<SparkleIcon className="text-success size-8" aria-hidden="true" />
 					</div>
 				}
 			>
@@ -94,7 +94,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 						role="status"
 						aria-live="polite"
 					>
-						<CircleCheck className="text-success size-12" aria-hidden="true" />
+						<CheckCircleIcon className="text-success size-12" aria-hidden="true" />
 						<div className="space-y-2 text-center">
 							<p className={cn("font-display text-success text-lg font-normal")}>
 								Email vérifié avec succès
@@ -131,7 +131,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 			title="Vérification d'email"
 			icon={
 				<div className="bg-destructive/10 flex size-16 items-center justify-center rounded-full">
-					<CircleAlert className="text-destructive size-8" aria-hidden="true" />
+					<WarningCircleIcon className="text-destructive size-8" aria-hidden="true" />
 				</div>
 			}
 		>
@@ -141,7 +141,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 					role="alert"
 					aria-live="assertive"
 				>
-					<CircleAlert className="text-destructive size-12" aria-hidden="true" />
+					<WarningCircleIcon className="text-destructive size-12" aria-hidden="true" />
 					<div className="space-y-2 text-center">
 						<p className="text-destructive text-lg font-medium">
 							{!token && !error ? "Lien incomplet" : "Erreur de vérification"}

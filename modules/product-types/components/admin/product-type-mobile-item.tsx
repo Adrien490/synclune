@@ -1,6 +1,6 @@
 "use client";
 
-import { Tag } from "lucide-react";
+import { TagIcon } from "@phosphor-icons/react/ssr";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
@@ -59,7 +59,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 				aria-roledescription="carte type de produit"
 			>
 				<ItemMedia variant="icon">
-					<Tag
+					<TagIcon
 						className="text-muted-foreground size-5"
 						aria-hidden="true"
 						style={{ viewTransitionName: `product-type-icon-${productType.id}` }}

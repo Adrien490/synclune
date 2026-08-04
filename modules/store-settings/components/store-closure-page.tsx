@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react";
+import { EnvelopeIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -75,7 +75,7 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 							variant="secondary"
 							size="lg"
 						>
-							<Mail className="size-4" />
+							<EnvelopeIcon className="size-4" />
 							Nous contacter
 						</Button>
 					</div>

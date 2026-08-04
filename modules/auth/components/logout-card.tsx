@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { SignOutIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/shared/components/ui/button";
 import { LogoutAlertDialog } from "./logout-alert-dialog";
 
@@ -13,7 +13,7 @@ export function LogoutCard() {
 			<div className="border-border/60 border-t pt-4">
 				<LogoutAlertDialog>
 					<Button variant="outline" className="w-full">
-						<LogOut className="mr-2 size-4" />
+						<SignOutIcon className="mr-2 size-4" />
 						Se déconnecter
 					</Button>
 				</LogoutAlertDialog>

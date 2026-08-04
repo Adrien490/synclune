@@ -14,7 +14,7 @@ import {
 	type VideoMetadataPreview,
 } from "@/modules/media/hooks/use-video-thumbnail";
 import { cn } from "@/shared/utils/cn";
-import { Play, X } from "lucide-react";
+import { PlayIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useEffect, useId, useRef, useState } from "react";
 import { DragDropProvider, KeyboardSensor, PointerSensor, type DragEndEvent } from "@dnd-kit/react";
@@ -405,7 +405,7 @@ function PendingUploadItem({
 					className="pointer-events-none absolute inset-0 flex items-center justify-center"
 					aria-hidden="true"
 				>
-					<Play className="size-5 text-white drop-shadow-md" fill="currentColor" />
+					<PlayIcon className="size-5 text-white drop-shadow-md" fill="currentColor" />
 				</div>
 			)}
 
@@ -422,7 +422,7 @@ function PendingUploadItem({
 					"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 				)}
 			>
-				<X className="size-3.5" aria-hidden="true" />
+				<XIcon className="size-3.5" aria-hidden="true" />
 			</button>
 
 			{/* Info pills: duration (videos) + file size */}

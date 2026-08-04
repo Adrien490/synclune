@@ -1,4 +1,4 @@
-import { Construction } from "lucide-react";
+import { TrafficConeIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { formatParisDateTime } from "@/modules/store-settings/utils/paris-datetime";
@@ -31,7 +31,7 @@ export function MaintenanceBanner({ closureMessage, reopensAt }: MaintenanceBann
 			className="border-warning-foreground/20 bg-warning/95 text-warning-foreground fixed inset-x-0 bottom-[max(var(--bottom-bar-height,0px),env(safe-area-inset-bottom,0px))] z-(--z-bar) border-t px-4 py-2.5 text-center text-sm font-medium shadow-[0_-2px_10px_rgba(0,0,0,0.1)]"
 		>
 			<div className="mx-auto flex items-center justify-center gap-2">
-				<Construction className="size-4 shrink-0" aria-hidden="true" />
+				<TrafficConeIcon className="size-4 shrink-0" aria-hidden="true" />
 				<span className="min-w-0 truncate">
 					<span className="md:hidden">Boutique fermée</span>
 					<span className="hidden md:inline">

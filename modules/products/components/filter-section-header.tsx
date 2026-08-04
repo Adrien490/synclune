@@ -7,7 +7,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
-import { Search, X } from "lucide-react";
+import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react/ssr";
 import type { ReactNode } from "react";
 
 // ============================================================================
@@ -68,7 +68,7 @@ export function FilterSection({
 						className="text-muted-foreground can-hover:hover:text-destructive can-hover:hover:bg-destructive/10 focus-ring absolute top-1/2 right-8 flex size-11 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
 						aria-label={`Effacer le filtre ${label}`}
 					>
-						<X className="size-3" aria-hidden="true" />
+						<XIcon className="size-3" aria-hidden="true" />
 					</button>
 				)}
 			</div>
@@ -98,7 +98,7 @@ export function SectionSearch({
 }: SectionSearchProps) {
 	return (
 		<div className="relative mb-2">
-			<Search
+			<MagnifyingGlassIcon
 				className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
 				aria-hidden="true"
 			/>

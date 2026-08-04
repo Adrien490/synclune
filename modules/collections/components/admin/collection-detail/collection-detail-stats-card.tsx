@@ -1,4 +1,4 @@
-import { BarChart3, Star } from "lucide-react";
+import { ChartBarIcon, StarIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
@@ -25,7 +25,7 @@ export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsC
 		<Card>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<BarChart3 className="size-5" aria-hidden="true" />
+					<ChartBarIcon className="size-5" aria-hidden="true" />
 					Statistiques
 				</CardTitle>
 			</CardHeader>
@@ -61,7 +61,7 @@ export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsC
 								/>
 							) : (
 								<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
-									<Star className="text-muted-foreground size-5" aria-hidden="true" />
+									<StarIcon className="text-muted-foreground size-5" aria-hidden="true" />
 								</div>
 							)}
 							<div className="min-w-0">

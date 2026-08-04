@@ -11,7 +11,7 @@ import "yet-another-react-lightbox/plugins/counter.css";
 
 import type { Slide } from "yet-another-react-lightbox";
 import { useReducedMotion } from "motion/react";
-import { Keyboard } from "lucide-react";
+import { KeyboardIcon } from "@phosphor-icons/react/ssr";
 import { LIGHTBOX_CONFIG, UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
@@ -122,7 +122,7 @@ export default function MediaLightbox({
 						left: "calc(env(safe-area-inset-left, 0px) + 16px)",
 					}}
 				>
-					<Keyboard className="size-4" aria-hidden="true" />
+					<KeyboardIcon className="size-4" aria-hidden="true" />
 				</button>
 
 				{helpOpen && (

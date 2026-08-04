@@ -5,7 +5,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { ChevronRight, Info } from "lucide-react";
+import { CaretRightIcon, InfoIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { KpiValue } from "./kpi-value";
 
@@ -118,7 +118,7 @@ export function KpiCard({
 				 * une décoration. `group-focus-within:` en parité du hover, sinon
 				 * l'utilisateur au clavier ne reçoit pas l'indication que la souris
 				 * reçoit (audit responsive 2026-07-26, P2). */
-				<ChevronRight
+				<CaretRightIcon
 					className="text-muted-foreground/70 group-hover:text-primary group-focus-within:text-primary absolute right-3 bottom-3 size-4 transition-[transform,color] group-focus-within:translate-x-0.5 group-hover:translate-x-0.5"
 					aria-hidden="true"
 				/>
@@ -138,7 +138,7 @@ export function KpiCard({
 									/>
 								}
 							>
-								<Info className="size-3.5" aria-hidden="true" />
+								<InfoIcon className="size-3.5" aria-hidden="true" />
 							</TooltipTrigger>
 							<TooltipContent side="top" className="max-w-xs">
 								<p className="text-sm">{tooltip}</p>
@@ -147,7 +147,7 @@ export function KpiCard({
 					)}
 					{tooltip && href && (
 						<>
-							<Info className="text-muted-foreground/60 size-3.5" aria-hidden="true" />
+							<InfoIcon className="text-muted-foreground/60 size-3.5" aria-hidden="true" />
 							<span id={tooltipDescriptionId} className="sr-only">
 								{tooltip}
 							</span>

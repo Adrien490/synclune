@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import { Clock, Info, MapPin } from "lucide-react";
+import { ClockIcon, InfoIcon, MapPinIcon } from "@phosphor-icons/react/ssr";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -78,7 +78,7 @@ async function OrderTrackingPageContent({ searchParams }: OrderTrackingPageProps
 		return (
 			<TrackingShell>
 				<Alert variant="destructive" role="alert">
-					<Info className="size-4" />
+					<InfoIcon className="size-4" />
 					<AlertTitle>Trop de requêtes</AlertTitle>
 					<AlertDescription>
 						Merci de patienter quelques minutes avant de recharger cette page.
@@ -107,7 +107,7 @@ async function OrderTrackingPageContent({ searchParams }: OrderTrackingPageProps
 
 				{order.paymentStatus === "PENDING" && (
 					<Alert>
-						<Clock />
+						<ClockIcon />
 						<AlertTitle>Paiement en cours de vérification</AlertTitle>
 						<AlertDescription>
 							Ton paiement est en cours de vérification. Tu recevras un email de confirmation dès
@@ -120,7 +120,7 @@ async function OrderTrackingPageContent({ searchParams }: OrderTrackingPageProps
 
 				{order.status === "CANCELLED" && order.paymentStatus === "PAID" && (
 					<Alert>
-						<Info />
+						<InfoIcon />
 						<AlertTitle>Remboursement en cours</AlertTitle>
 						<AlertDescription>
 							Ta commande est annulée : son remboursement est en cours de traitement. Tu recevras un
@@ -170,7 +170,7 @@ function RefundNotice({ order }: { order: { paymentStatus: string } }) {
 	const isFullRefund = order.paymentStatus === "REFUNDED";
 	return (
 		<Alert>
-			<Info />
+			<InfoIcon />
 			<AlertTitle>
 				{isFullRefund ? "Commande remboursée" : "Commande partiellement remboursée"}
 			</AlertTitle>
@@ -212,7 +212,7 @@ function ShippingAddress({
 	return (
 		<section className="space-y-4">
 			<h2 className="flex items-center gap-2 text-base font-semibold">
-				<MapPin className="text-muted-foreground size-4" aria-hidden="true" />
+				<MapPinIcon className="text-muted-foreground size-4" aria-hidden="true" />
 				Adresse de livraison
 			</h2>
 			<div className="border-border/60 space-y-0.5 border-t pt-4 text-sm">

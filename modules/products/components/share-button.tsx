@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Mail, Share2 } from "lucide-react";
+import { CheckIcon, CopyIcon, EnvelopeIcon, ShareNetworkIcon } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import {
@@ -135,7 +135,7 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 		}
 	}
 
-	const FeedbackIcon = feedback === "copied" ? Copy : feedback === "shared" ? Check : null;
+	const FeedbackIcon = feedback === "copied" ? CopyIcon : feedback === "shared" ? CheckIcon : null;
 
 	const buttonClassName = cn(
 		"relative inline-flex items-center justify-center rounded-xl transition-[transform,color,background-color] duration-300 ease-out",
@@ -149,7 +149,7 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 	const buttonContent = FeedbackIcon ? (
 		<FeedbackIcon size={iconSize} className="text-primary" aria-hidden="true" />
 	) : (
-		<Share2
+		<ShareNetworkIcon
 			size={iconSize}
 			className="transition-transform duration-300 ease-out group-hover:scale-105"
 			aria-hidden="true"
@@ -228,11 +228,11 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 						<a href={mailtoHref} onClick={() => triggerHaptic("selection")} />
 					}
 				>
-					<Mail className="size-4" aria-hidden="true" />
+					<EnvelopeIcon className="size-4" aria-hidden="true" />
 					Envoyer par e-mail
 				</DropdownMenuItem>
 				<DropdownMenuItem onClick={handleCopy}>
-					<Copy className="size-4" aria-hidden="true" />
+					<CopyIcon className="size-4" aria-hidden="true" />
 					Copier le lien
 				</DropdownMenuItem>
 			</DropdownMenuContent>

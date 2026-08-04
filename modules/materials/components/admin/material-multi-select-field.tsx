@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Plus } from "lucide-react";
+import { InfoIcon, PlusIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import { MATERIAL_DIALOG_ID } from "@/modules/materials/components/material-form-dialog";
@@ -114,11 +114,11 @@ export function MaterialMultiSelectField({
 					aria-label="Créer un nouveau matériau"
 					disabled={isAtCap}
 				>
-					<Plus className="size-4" aria-hidden="true" />
+					<PlusIcon className="size-4" aria-hidden="true" />
 				</Button>
 			</div>
 			<p className="text-muted-foreground flex items-start gap-1 text-xs">
-				<Info className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
+				<InfoIcon className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
 				<span>
 					{value.length}/{maxSelected} — le premier matériau est le principal (utilisé pour les
 					conseils d'entretien et la fiche produit).

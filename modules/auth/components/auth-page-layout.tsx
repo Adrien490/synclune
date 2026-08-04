@@ -1,6 +1,6 @@
 import { LogoAnimated } from "@/shared/components/logo-animated";
 import { cn } from "@/shared/utils/cn";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeftIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AuthFadeIn } from "./auth-fade-in";
@@ -30,7 +30,7 @@ export function AuthPageLayout({
 					href={backHref}
 					className="text-muted-foreground hover:text-foreground group -ml-2 inline-flex min-h-11 min-w-11 items-center gap-2 pl-2 text-sm transition-colors duration-200"
 				>
-					<ArrowLeft
+					<ArrowLeftIcon
 						size={16}
 						className="transition-transform duration-200 group-hover:-translate-x-1"
 						aria-hidden="true"

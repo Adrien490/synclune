@@ -3,7 +3,7 @@ import { getFabVisibility } from "@/shared/data/get-fab-visibility";
 import { FAB_KEYS } from "@/shared/constants/fab";
 import { ROUTES } from "@/shared/constants/urls";
 import { Fab } from "@/shared/components/fab";
-import { LayoutDashboard } from "lucide-react";
+import { SquaresFourIcon } from "@phosphor-icons/react/ssr";
 
 /**
  * Server component wrapper for the admin dashboard FAB
@@ -24,7 +24,7 @@ export async function AdminDashboardFab() {
 		<Fab
 			fabKey={FAB_KEYS.ADMIN_DASHBOARD}
 			initialHidden={isHidden}
-			icon={<LayoutDashboard className="size-6" aria-hidden="true" />}
+			icon={<SquaresFourIcon className="size-6" aria-hidden="true" />}
 			tooltip={{ title: "Tableau de bord" }}
 			ariaLabel="Accéder au tableau de bord administrateur"
 			href={ROUTES.ADMIN.ROOT}

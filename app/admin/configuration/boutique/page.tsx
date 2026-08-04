@@ -1,4 +1,4 @@
-import { Settings2 } from "lucide-react";
+import { GearIcon } from "@phosphor-icons/react/ssr";
 import { type Metadata } from "next";
 import { Suspense } from "react";
 
@@ -47,7 +47,7 @@ function StoreSettingsEmptyState() {
 	return (
 		<div className="border-border bg-card flex flex-col items-center gap-3 rounded-xl border p-10 text-center">
 			<div className="bg-muted flex size-12 items-center justify-center rounded-full">
-				<Settings2 className="text-muted-foreground size-6" aria-hidden="true" />
+				<GearIcon className="text-muted-foreground size-6" aria-hidden="true" />
 			</div>
 			<h2 className="text-foreground text-base font-medium">
 				Paramètres de la boutique non initialisés

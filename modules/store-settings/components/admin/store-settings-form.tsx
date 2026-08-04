@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, Unlock } from "lucide-react";
+import { LockIcon, LockOpenIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
@@ -62,7 +62,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 								className="gap-1"
 								style={{ viewTransitionName: "store-status-badge" }}
 							>
-								<Lock className="size-3" aria-hidden="true" />
+								<LockIcon className="size-3" aria-hidden="true" />
 								Fermée
 							</Badge>
 						) : (
@@ -71,7 +71,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 								className="gap-1"
 								style={{ viewTransitionName: "store-status-badge" }}
 							>
-								<Unlock className="size-3" aria-hidden="true" />
+								<LockOpenIcon className="size-3" aria-hidden="true" />
 								Ouverte
 							</Badge>
 						)}
@@ -107,7 +107,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 									onClick={handleOpenReopenDialog}
 									className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
 								>
-									<Unlock className="mr-2 size-4" />
+									<LockOpenIcon className="mr-2 size-4" />
 									Réouvrir la boutique
 								</Button>
 							</div>
@@ -139,7 +139,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 								}
 								className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
 							>
-								<Lock className="mr-2 size-4" />
+								<LockIcon className="mr-2 size-4" />
 								Fermer la boutique
 							</Button>
 						</div>

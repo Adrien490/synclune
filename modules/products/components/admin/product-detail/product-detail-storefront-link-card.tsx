@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Eye, EyeOff } from "lucide-react";
+import { ArrowSquareOutIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
 import { Button } from "@/shared/components/ui/button";
@@ -26,11 +26,11 @@ export function ProductDetailStorefrontLinkCard({
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					{isPublic ? (
-						<ExternalLink className="size-5" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-5" aria-hidden="true" />
 					) : isDraft ? (
-						<Eye className="size-5" aria-hidden="true" />
+						<EyeIcon className="size-5" aria-hidden="true" />
 					) : (
-						<EyeOff className="size-5" aria-hidden="true" />
+						<EyeSlashIcon className="size-5" aria-hidden="true" />
 					)}
 					Aperçu boutique
 				</CardTitle>
@@ -50,7 +50,7 @@ export function ProductDetailStorefrontLinkCard({
 						variant="outline"
 						className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 					>
-						<ExternalLink className="size-4" aria-hidden="true" />
+						<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 						Voir sur la boutique
 					</Button>
 				) : isDraft ? (
@@ -69,7 +69,7 @@ export function ProductDetailStorefrontLinkCard({
 							variant="outline"
 							className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 						>
-							<Eye className="size-4" aria-hidden="true" />
+							<EyeIcon className="size-4" aria-hidden="true" />
 							Aperçu (brouillon)
 						</Button>
 						<p id="storefront-link-help" className="text-muted-foreground text-xs">
@@ -85,7 +85,7 @@ export function ProductDetailStorefrontLinkCard({
 							disabled
 							aria-describedby="storefront-link-help"
 						>
-							<ExternalLink className="size-4" aria-hidden="true" />
+							<ArrowSquareOutIcon className="size-4" aria-hidden="true" />
 							Voir sur la boutique
 						</Button>
 						<p id="storefront-link-help" className="text-muted-foreground text-xs">

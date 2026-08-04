@@ -1,4 +1,4 @@
-import { ChevronRight, Ellipsis } from "lucide-react";
+import { CaretRightIcon, DotsThreeIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import * as React from "react";
 
@@ -64,7 +64,7 @@ function BreadcrumbSeparator({ children, className, ...props }: React.ComponentP
 			className={cn("[&>svg]:size-3.5", className)}
 			{...props}
 		>
-			{children ?? <ChevronRight />}
+			{children ?? <CaretRightIcon />}
 		</li>
 	);
 }
@@ -78,7 +78,7 @@ function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<"span"
 			className={cn("flex size-9 items-center justify-center", className)}
 			{...props}
 		>
-			<Ellipsis className="size-4" />
+			<DotsThreeIcon className="size-4" />
 			<span className="sr-only">Plus</span>
 		</span>
 	);

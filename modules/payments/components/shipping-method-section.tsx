@@ -1,6 +1,6 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { PackageIcon } from "@phosphor-icons/react/ssr";
 import type { ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { SHIPPING_UNAVAILABLE } from "../constants/shipping-unavailable";
@@ -32,7 +32,7 @@ export function ShippingMethodSection({
 
 	return (
 		<div className="border-primary/10 bg-primary/5 flex items-center gap-3 rounded-xl border p-4">
-			<Package className="text-muted-foreground size-5 shrink-0" />
+			<PackageIcon className="text-muted-foreground size-5 shrink-0" />
 			<div className="flex-1 text-sm">
 				<div className="flex items-center justify-between">
 					<span className="font-medium">{shippingInfo?.displayName ?? "Livraison standard"}</span>

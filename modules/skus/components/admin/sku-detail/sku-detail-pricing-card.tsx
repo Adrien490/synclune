@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, DollarSign } from "lucide-react";
+import { ArrowRightIcon, CurrencyDollarIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -43,7 +43,7 @@ export function SkuDetailPricingCard({ sku }: SkuDetailPricingCardProps) {
 		<Card style={{ viewTransitionName: "sku-edit-pricing" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<DollarSign className="size-5" aria-hidden="true" />
+					<CurrencyDollarIcon className="size-5" aria-hidden="true" />
 					Tarification
 				</CardTitle>
 			</CardHeader>
@@ -72,7 +72,7 @@ export function SkuDetailPricingCard({ sku }: SkuDetailPricingCardProps) {
 					onClick={handleUpdatePrice}
 				>
 					Modifier le prix
-					<ArrowRight className="size-4" aria-hidden="true" />
+					<ArrowRightIcon className="size-4" aria-hidden="true" />
 				</Button>
 			</CardContent>
 		</Card>

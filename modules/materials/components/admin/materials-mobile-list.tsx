@@ -1,5 +1,5 @@
 import { use } from "react";
-import { Gem } from "lucide-react";
+import { SwatchesIcon } from "@phosphor-icons/react/ssr";
 
 import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
 import { TaxonomyMobileList } from "@/modules/taxonomies/components/taxonomy-mobile-list";
@@ -29,7 +29,7 @@ export function MaterialsMobileList({
 			totalCount={totalCount}
 			perPage={perPage}
 			hasActiveFilters={hasActiveFilters}
-			icon={Gem}
+			icon={SwatchesIcon}
 			emptyDescription="Aucune matière à l'atelier pour l'instant."
 			createButton={<CreateMaterialButton />}
 			renderItem={(item) => <MaterialMobileItem material={item} />}

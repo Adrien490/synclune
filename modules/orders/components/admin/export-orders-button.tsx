@@ -19,7 +19,7 @@ import {
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { Download } from "lucide-react";
+import { DownloadSimpleIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useReducer } from "react";
 import { toast } from "@/shared/utils/toast";
@@ -164,7 +164,7 @@ export function ExportOrdersButton() {
 			onOpenChange={(open) => dispatch({ type: "SET_OPEN", open })}
 		>
 			<ResponsiveDialogTrigger render={<Button variant="outline" size="sm" />}>
-				<Download className="mr-2 size-4" />
+				<DownloadSimpleIcon className="mr-2 size-4" />
 				Exporter
 			</ResponsiveDialogTrigger>
 			<ResponsiveDialogContent className="sm:max-w-md">
@@ -272,7 +272,7 @@ export function ExportOrdersButton() {
 						{state.isExporting ? (
 							<Spinner presentational className="mr-2" />
 						) : (
-							<Download className="mr-2 size-4" />
+							<DownloadSimpleIcon className="mr-2 size-4" />
 						)}
 						{state.isExporting ? "Export en cours…" : "Télécharger CSV"}
 					</Button>

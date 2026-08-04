@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { X } from "lucide-react";
+import { XIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 
@@ -362,7 +362,7 @@ export function QuickSearchDialog({
 								/>
 							}
 						>
-							<X className="size-5" />
+							<XIcon className="size-5" />
 						</DialogClose>
 
 						<DialogTitle className="font-display flex-1 text-center text-lg font-medium md:text-left">

@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen } from "lucide-react";
+import { FolderOpenIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
@@ -86,7 +86,7 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 						className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border"
 						style={{ viewTransitionName: `collection-image-${collection.id}` }}
 					>
-						<FolderOpen className="text-muted-foreground size-5" aria-hidden="true" />
+						<FolderOpenIcon className="text-muted-foreground size-5" aria-hidden="true" />
 					</div>
 				)}
 				<ItemContent className="min-w-0">

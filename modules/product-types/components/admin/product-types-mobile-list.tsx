@@ -1,5 +1,5 @@
 import { use } from "react";
-import { Tags } from "lucide-react";
+import { ShapesIcon } from "@phosphor-icons/react/ssr";
 
 import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
 import { TaxonomyMobileList } from "@/modules/taxonomies/components/taxonomy-mobile-list";
@@ -29,7 +29,7 @@ export function ProductTypesMobileList({
 			totalCount={totalCount}
 			perPage={perPage}
 			hasActiveFilters={hasActiveFilters}
-			icon={Tags}
+			icon={ShapesIcon}
 			emptyDescription="Aucun type de bijou pour l'instant."
 			createButton={<CreateProductTypeButton />}
 			renderItem={(item) => <ProductTypeMobileItem productType={item} />}

@@ -1,4 +1,4 @@
-import { ImageIcon } from "lucide-react";
+import { ImageIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 
 /**

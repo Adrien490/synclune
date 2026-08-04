@@ -1,6 +1,6 @@
 import { use } from "react";
 import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/client";
-import { ReceiptText } from "lucide-react";
+import { ReceiptIcon } from "@phosphor-icons/react/ssr";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
@@ -29,7 +29,7 @@ export function RefundsMobileList({
 		return (
 			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
-					icon={ReceiptText}
+					icon={ReceiptIcon}
 					title="Aucun remboursement trouvé"
 					description={
 						hasActiveFilters

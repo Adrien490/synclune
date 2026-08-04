@@ -1,6 +1,6 @@
 "use client";
 
-import { Truck } from "lucide-react";
+import { TruckIcon } from "@phosphor-icons/react/ssr";
 
 import {
 	ResponsiveDialog,
@@ -39,7 +39,7 @@ export function UpdateTrackingDialog() {
 			<ResponsiveDialogContent className="sm:max-w-md">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle className="flex items-center gap-2">
-						<Truck className="size-5" />
+						<TruckIcon className="size-5" />
 						Modifier le suivi
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>

@@ -15,7 +15,7 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarBlankIcon } from "@phosphor-icons/react/ssr";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, Suspense, type ComponentProps } from "react";
 
@@ -220,7 +220,7 @@ function RefundsFilterSheetInner({
 												/>
 											}
 										>
-											<CalendarIcon className="mr-2 h-4 w-4" />
+											<CalendarBlankIcon className="mr-2 h-4 w-4" />
 											{field.state.value ? (
 												format(new Date(field.state.value), "PPP", { locale: fr })
 											) : (
@@ -259,7 +259,7 @@ function RefundsFilterSheetInner({
 												/>
 											}
 										>
-											<CalendarIcon className="mr-2 h-4 w-4" />
+											<CalendarBlankIcon className="mr-2 h-4 w-4" />
 											{field.state.value ? (
 												format(new Date(field.state.value), "PPP", { locale: fr })
 											) : (

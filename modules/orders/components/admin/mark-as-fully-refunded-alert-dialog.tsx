@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsFullyRefunded } from "@/modules/orders/hooks/use-mark-as-fully-refunded";
 import type { InvoiceStatus } from "@/app/generated/prisma/browser";
-import { FileWarning } from "lucide-react";
+import { FileXIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 import { FieldLabel } from "@/shared/components/forms/field-label";
@@ -115,7 +115,7 @@ export function MarkAsFullyRefundedAlertDialog() {
 									role="alert"
 								>
 									<p className="text-foreground flex items-center gap-2 text-sm font-medium">
-										<FileWarning className="text-warning size-4" aria-hidden="true" />
+										<FileXIcon className="text-warning size-4" aria-hidden="true" />
 										Émission d&apos;un avoir comptable
 									</p>
 									<p className="text-muted-foreground text-sm">

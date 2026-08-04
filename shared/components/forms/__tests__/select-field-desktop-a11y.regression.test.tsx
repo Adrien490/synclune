@@ -87,7 +87,7 @@ vi.mock("./field-label", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({ X: () => <span /> }));
+vi.mock("@phosphor-icons/react/ssr", () => ({ XIcon: () => <span /> }));
 
 import { SelectField } from "../select-field";
 

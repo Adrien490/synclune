@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { type ReactNode } from "react";
-import { ChevronLeft } from "lucide-react";
+import { CaretLeftIcon } from "@phosphor-icons/react/ssr";
 import { GuardedLink } from "@/shared/components/navigation/guarded-link";
 
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
@@ -193,7 +193,7 @@ export function PageHeader({
 												: "Accueil"
 										}`}
 									>
-										<ChevronLeft className="size-5" />
+										<CaretLeftIcon className="size-5" />
 									</GuardedLink>
 									<span
 										aria-hidden="true"

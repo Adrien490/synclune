@@ -6,7 +6,7 @@ import { type FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react/ssr";
 import { useRef, useState } from "react";
 import { FilterBadge } from "./filter-badge";
 
@@ -197,12 +197,12 @@ export function FilterBadges({
 							{showAll ? (
 								<>
 									Voir moins
-									<ChevronUp className="size-3" />
+									<CaretUpIcon className="size-3" />
 								</>
 							) : (
 								<>
 									+{activeFilters.length - effectiveMaxFilters} autres
-									<ChevronDown className="size-3" />
+									<CaretDownIcon className="size-3" />
 								</>
 							)}
 						</Button>

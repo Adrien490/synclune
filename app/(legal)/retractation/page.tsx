@@ -2,7 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import { Info, Mail } from "lucide-react";
+import { EnvelopeIcon, InfoIcon } from "@phosphor-icons/react/ssr";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -65,7 +65,7 @@ export default async function RetractationPage() {
 						<section className="space-y-8">
 							{/* Information préliminaire */}
 							<Alert>
-								<Info className="size-4" />
+								<InfoIcon className="size-4" />
 								<AlertTitle>Votre droit de rétractation</AlertTitle>
 								<AlertDescription className="mt-2 space-y-2">
 									<p>
@@ -103,7 +103,7 @@ export default async function RetractationPage() {
 										<p>44100 Nantes</p>
 										<p>France</p>
 										<div className="mt-2 flex items-center gap-2">
-											<Mail className="size-4" />
+											<EnvelopeIcon className="size-4" />
 											<a href={`mailto:${contactEmail}`} className="underline">
 												{contactEmail}
 											</a>
@@ -201,7 +201,7 @@ export default async function RetractationPage() {
 								</h2>
 
 								<Alert>
-									<Info className="size-4" />
+									<InfoIcon className="size-4" />
 									<AlertDescription>
 										<ol className="list-inside list-decimal space-y-2 text-sm">
 											<li>

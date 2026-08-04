@@ -14,7 +14,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { PRODUCT_STATUS_LABELS } from "@/modules/products/constants/product-status-display";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
-import { Archive, FileText, Globe } from "lucide-react";
+import { ArchiveIcon, FileTextIcon, GlobeIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import type { ComponentType } from "react";
 
@@ -42,21 +42,21 @@ const STATUS_CONFIG: Record<
 	DRAFT: {
 		label: PRODUCT_STATUS_LABELS.DRAFT,
 		tone: "neutral",
-		icon: FileText,
+		icon: FileTextIcon,
 		description:
 			"Le bijou sera sauvegardé comme brouillon. Il ne sera pas visible sur la boutique mais restera accessible dans le dashboard pour modifications.",
 	},
 	PUBLIC: {
 		label: PRODUCT_STATUS_LABELS.PUBLIC,
 		tone: "success",
-		icon: Globe,
+		icon: GlobeIcon,
 		description:
 			"Le bijou sera publié sur la boutique et visible par tous les visiteurs. Assurez-vous que toutes les informations sont correctes.",
 	},
 	ARCHIVED: {
 		label: PRODUCT_STATUS_LABELS.ARCHIVED,
 		tone: "warning",
-		icon: Archive,
+		icon: ArchiveIcon,
 		description:
 			"Le bijou sera archivé. Il ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Toutes ses variantes seront désactivées. Vous pourrez le restaurer à tout moment (il reviendra en brouillon).",
 	},

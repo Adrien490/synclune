@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
+import { ArrowsDownUpIcon, PlusIcon, SlidersHorizontalIcon } from "@phosphor-icons/react/ssr";
 
 import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
@@ -29,7 +29,7 @@ function TaxonomyBottomBarInner({ config }: { config: TaxonomyConfig }) {
 	const items: StickyActionBarItem[] = [
 		{
 			key: "filter",
-			icon: SlidersHorizontal,
+			icon: SlidersHorizontalIcon,
 			label: "Filtrer",
 			ariaLabel: "Ouvrir les filtres",
 			onClick: () => open("filter"),
@@ -45,7 +45,7 @@ function TaxonomyBottomBarInner({ config }: { config: TaxonomyConfig }) {
 		{
 			kind: "link",
 			key: "add",
-			icon: Plus,
+			icon: PlusIcon,
 			label: "Ajouter",
 			ariaLabel: config.createAriaLabel,
 			href: `${config.basePath}/nouveau`,
@@ -53,7 +53,7 @@ function TaxonomyBottomBarInner({ config }: { config: TaxonomyConfig }) {
 		},
 		{
 			key: "sort",
-			icon: ArrowUpDown,
+			icon: ArrowsDownUpIcon,
 			label: "Trier",
 			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
 			onClick: () => open("sort"),

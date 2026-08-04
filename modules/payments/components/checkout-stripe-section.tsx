@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Elements, PaymentElement } from "@stripe/react-stripe-js";
 import Link from "next/link";
-import { ExternalLink, Lock } from "lucide-react";
+import { ArrowSquareOutIcon, LockIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 import { ROUTES } from "@/shared/constants/urls";
 import { getStripe } from "@/shared/lib/stripe-client";
@@ -131,7 +131,7 @@ export function CheckoutStripeSection({
 					{/* Trust strip — kept above the sticky CTA on mobile so it stays visible */}
 					<div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
 						<span className="inline-flex items-center gap-1">
-							<Lock className="size-3" aria-hidden="true" />
+							<LockIcon className="size-3" aria-hidden="true" />
 							Paiement sécurisé
 						</span>
 						<span aria-hidden="true" className="text-border hidden sm:inline">
@@ -153,7 +153,7 @@ export function CheckoutStripeSection({
 								rel="noopener noreferrer"
 							>
 								conditions générales de vente
-								<ExternalLink className="size-3" aria-hidden="true" />
+								<ArrowSquareOutIcon className="size-3" aria-hidden="true" />
 								<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 							</Link>{" "}
 							et notre{" "}
@@ -164,7 +164,7 @@ export function CheckoutStripeSection({
 								rel="noopener noreferrer"
 							>
 								politique de confidentialité
-								<ExternalLink className="size-3" aria-hidden="true" />
+								<ArrowSquareOutIcon className="size-3" aria-hidden="true" />
 								<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 							</Link>
 							.

@@ -5,7 +5,7 @@ import {
 import { parseEstimatedDays } from "@/modules/orders/services/shipping.service";
 import { addBusinessDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Truck } from "lucide-react";
+import { TruckIcon } from "@phosphor-icons/react/ssr";
 
 /**
  * DeliveryEstimator - Estimated delivery date range on product page
@@ -32,7 +32,7 @@ export function DeliveryEstimator() {
 
 	return (
 		<div className="text-muted-foreground flex items-center gap-2.5 text-sm">
-			<Truck className="text-foreground size-4 shrink-0" aria-hidden="true" />
+			<TruckIcon className="text-foreground size-4 shrink-0" aria-hidden="true" />
 			<p>
 				Livraison estimée entre le{" "}
 				<span className="text-foreground font-medium">{formatDeliveryDate(minDate)}</span> et le{" "}
