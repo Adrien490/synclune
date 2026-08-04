@@ -12,7 +12,6 @@ const SECONDARY_IMAGE_QUALITY = IMAGE_QUALITY.THUMBNAIL;
 
 interface CollectionImageItemProps {
 	image: CollectionImage;
-	collectionName: string;
 	index: number;
 	isAboveFold?: boolean;
 	/**
@@ -37,11 +36,16 @@ interface CollectionImageItemProps {
  * OPTIMISATIONS:
  * - Priority loading pour above-fold
  * - Blur placeholder si disponible
- * - Quality differenciee (85 pour principale, 75 pour secondaires)
+ * - Quality differenciee (`STANDARD` pour la principale, `THUMBNAIL` pour les
+ *   secondaires — cf. `IMAGE_QUALITY`, ne pas recopier les valeurs ici : le
+ *   commentaire annonçait « 85 / 75 » quand elles valaient déjà 80 / 65)
+ *
+ * ⚠️ `alt=""` est un CHOIX, pas un oubli : la vignette est un aperçu décoratif
+ * d'une carte dont le nom accessible est porté par son titre. Cf. le JSDoc de
+ * `CollectionImagesGrid` pour le raisonnement complet (audit 2026-08-04).
  */
 export function CollectionImageItem({
 	image,
-	collectionName,
 	index,
 	isAboveFold = false,
 	isLcpCandidate = false,
@@ -49,9 +53,6 @@ export function CollectionImageItem({
 	staggerIndex = 0,
 	collectionSlug,
 }: CollectionImageItemProps) {
-	// Alt text: utiliser celui fourni, sinon generer un descriptif contextuel
-	const altText = image.alt ?? `Bijou artisanal ${index + 1} de la collection ${collectionName}`;
-
 	const delayClass = STAGGER_DELAYS[staggerIndex % STAGGER_DELAYS.length];
 
 	// `preload` + fetchPriority=high : PAIRE indissociable reservee a l'image LCP
@@ -63,16 +64,19 @@ export function CollectionImageItem({
 	return (
 		<Image
 			src={image.url}
-			alt={altText}
+			alt=""
 			fill
 			className={cn(
 				"object-cover",
-				"transition-transform duration-300 ease-out",
+				// `motion-safe:` sur la TRANSITION comme sur les transforms : le tap
+				// feedback ci-dessous n'était pas gaté et restait animé sous
+				// `prefers-reduced-motion` (parité ProductCard, WCAG 2.3.3).
+				"ease-out motion-safe:transition-transform motion-safe:duration-300",
 				delayClass,
 				// Desktop: hover zoom avec stagger
 				"motion-safe:can-hover:group-hover:scale-[1.08]",
 				// Mobile: tap feedback enrichi (coherence ProductCard)
-				"active:scale-[0.97] active:brightness-95 active:saturate-110",
+				"active:brightness-95 active:saturate-110 motion-safe:active:scale-[0.97]",
 			)}
 			style={
 				collectionSlug && index === 0

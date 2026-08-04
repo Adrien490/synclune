@@ -33,18 +33,18 @@ vi.mock("@/shared/utils/format-euro", () => ({
 
 vi.mock("../collection-images-grid", () => ({
 	CollectionImagesGrid: ({
-		collectionName,
 		images,
 		framed,
+		collectionSlug,
 	}: {
 		images: unknown[];
-		collectionName: string;
 		isAboveFold?: boolean;
 		framed?: boolean;
+		collectionSlug?: string;
 	}) => (
 		<div
 			data-testid="collection-images-grid"
-			data-collection={collectionName}
+			data-collection-slug={collectionSlug}
 			data-framed={framed ? "true" : "false"}
 		>
 			{images.length} images
@@ -57,8 +57,16 @@ vi.mock("@/modules/collections/constants/image-sizes.constants", () => ({
 }));
 
 vi.mock("@/shared/components/placeholder-image", () => ({
+	// Miroir du vrai composant : sans `label`, il se marque `aria-hidden` et ne
+	// prend pas le rôle `img`.
 	PlaceholderImage: ({ className, label }: { className?: string; label?: string }) => (
-		<div data-testid="placeholder-image" className={className} aria-label={label} role="img" />
+		<div
+			data-testid="placeholder-image"
+			className={className}
+			aria-label={label}
+			role={label ? "img" : undefined}
+			aria-hidden={label ? undefined : true}
+		/>
 	),
 }));
 
@@ -112,19 +120,28 @@ describe("CollectionCard", () => {
 		renderCard({ images: mockImages });
 		expect(screen.getByTestId("collection-images-grid")).toBeInTheDocument();
 		expect(screen.getByTestId("collection-images-grid")).toHaveAttribute(
-			"data-collection",
-			"Bagues Artisanales",
+			"data-collection-slug",
+			"bagues-artisanales",
 		);
 	});
 
-	it("renders the shared placeholder when no images are provided", () => {
+	/**
+	 * @regression collection-card-placeholder-is-decorative
+	 *
+	 * Révision 2026-08-04 (audit UI/UX) : le placeholder ne porte PLUS de label.
+	 * L'ancien — « {nom} — Bientôt disponible » — cumulait deux défauts : il
+	 * répétait aux lecteurs d'écran le nom déjà porté par l'`aria-labelledby` de
+	 * l'article, et il annonçait « Bientôt disponible » y compris quand l'eyebrow
+	 * disait « Collection · 12 créations » (collection peuplée dont aucun produit
+	 * n'a de média IMAGE). L'absence de photo n'est pas une information : le bloc
+	 * est décoratif.
+	 */
+	it("renders the shared placeholder as decorative when no images are provided", () => {
 		renderCard({ images: [] });
 		const placeholder = screen.getByTestId("placeholder-image");
 		expect(placeholder).toBeInTheDocument();
-		expect(placeholder).toHaveAttribute(
-			"aria-label",
-			expect.stringContaining("Bagues Artisanales"),
-		);
+		expect(placeholder).not.toHaveAttribute("aria-label");
+		expect(placeholder).toHaveAttribute("aria-hidden", "true");
 	});
 
 	it("renders product count in the eyebrow when provided and greater than zero", () => {
@@ -324,6 +341,33 @@ describe("CollectionCard", () => {
 			renderCard();
 			const heading = screen.getByRole("heading");
 			expect(heading.className).toMatch(/font-display/);
+		});
+
+		/**
+		 * @regression collection-card-rows-align-in-grid
+		 *
+		 * Audit 2026-08-04 : `description` et `priceRange` sont tous deux
+		 * conditionnels, et l'article ne remplissait pas son `<li>` — les bas de
+		 * cartes d'une même rangée ne s'alignaient donc pas. `h-full` +
+		 * `grid-rows-[auto_1fr]` (légende élastique) + `mt-auto` sur le prix, comme
+		 * ProductCard. Retirer l'un des trois suffit à faire réapparaître le défaut.
+		 */
+		it("fills its grid cell and pushes the price to the bottom of the caption", () => {
+			const { container } = renderCard({ priceRange: { min: 2000, max: 5000 } });
+			const article = container.querySelector("article")!;
+			expect(article.className).toContain("h-full");
+			expect(article.className).toContain("grid-rows-[auto_1fr]");
+
+			const fromPrefix = Array.from(container.querySelectorAll("span")).find((s) =>
+				s.textContent.includes("À partir de"),
+			);
+			expect(fromPrefix?.closest("p")!.className).toMatch(/mt-auto/);
+		});
+
+		it("stretches the squiggle to the title width", () => {
+			const { container } = renderCard();
+			const squiggle = container.querySelector('[data-testid="squiggle"], svg');
+			expect(squiggle?.getAttribute("class")).toMatch(/w-full/);
 		});
 
 		it("tilts left on even index and right on odd index (hover, motion-safe + can-hover)", () => {

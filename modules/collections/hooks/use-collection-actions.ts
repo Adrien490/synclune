@@ -1,6 +1,14 @@
 "use client";
 
-import { Archive, ArchiveRestore, Eye, Package, Pencil, Trash2, Upload } from "lucide-react";
+import {
+	ArchiveIcon,
+	BoxArrowUpIcon,
+	EyeIcon,
+	PackageIcon,
+	PencilSimpleIcon,
+	TrashIcon,
+	UploadSimpleIcon,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
@@ -57,14 +65,14 @@ export function useCollectionActions({
 				{
 					key: "view",
 					label: "Voir la page publique",
-					icon: Eye,
+					icon: EyeIcon,
 					href: `/collections/${collectionSlug}`,
 					external: true,
 				},
 				{
 					key: "edit",
 					label: "Modifier",
-					icon: Pencil,
+					icon: PencilSimpleIcon,
 					onSelect: () => {
 						if (isMobile) {
 							router.push(`/admin/catalogue/collections/${collectionSlug}/modifier`);
@@ -84,7 +92,7 @@ export function useCollectionActions({
 				{
 					key: "manage",
 					label: "Gérer les produits",
-					icon: Package,
+					icon: PackageIcon,
 					href: `/admin/catalogue/collections/${collectionSlug}`,
 				},
 			],
@@ -96,7 +104,7 @@ export function useCollectionActions({
 				{
 					key: "draft",
 					label: "Marquer comme brouillon",
-					icon: Pencil,
+					icon: PencilSimpleIcon,
 					disabled: isDraft,
 					hidden: isArchived,
 					closesMenu: false,
@@ -111,7 +119,7 @@ export function useCollectionActions({
 				{
 					key: "public",
 					label: "Publier",
-					icon: Upload,
+					icon: UploadSimpleIcon,
 					disabled: isPublic,
 					hidden: isArchived,
 					closesMenu: false,
@@ -131,7 +139,7 @@ export function useCollectionActions({
 				{
 					key: "archive",
 					label: "Archiver",
-					icon: Archive,
+					icon: ArchiveIcon,
 					hidden: isArchived,
 					closesMenu: false,
 					onSelect: () => openArchiveDialog({ collectionId, collectionName, collectionStatus }),
@@ -139,7 +147,7 @@ export function useCollectionActions({
 				{
 					key: "restore",
 					label: "Restaurer",
-					icon: ArchiveRestore,
+					icon: BoxArrowUpIcon,
 					hidden: !isArchived,
 					closesMenu: false,
 					onSelect: () => openArchiveDialog({ collectionId, collectionName, collectionStatus }),
@@ -153,7 +161,7 @@ export function useCollectionActions({
 					key: "delete",
 					label: "Supprimer définitivement",
 					description: "Action irréversible",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive",
 					hidden: !isArchived,
 					closesMenu: false,

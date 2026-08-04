@@ -11,14 +11,11 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import { type GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import {
-	extractCollectionImages,
-	extractPriceRange,
-} from "@/modules/collections/utils/collection-images.utils";
+import { getCollectionPriceRanges } from "@/modules/collections/data/get-collection-price-ranges";
+import { extractCollectionImages } from "@/modules/collections/utils/collection-images.utils";
 import { getOfferAvailability } from "@/shared/utils/offer-availability";
-import { Gem } from "lucide-react";
+import { FlowerIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
-import { use } from "react";
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
@@ -28,8 +25,8 @@ interface CollectionGridProps {
 	perPage: number;
 }
 
-export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridProps) {
-	const { collections, pagination, totalCount } = use(collectionsPromise);
+export async function CollectionGrid({ collectionsPromise, perPage }: CollectionGridProps) {
+	const { collections, pagination, totalCount } = await collectionsPromise;
 
 	// Afficher le composant Empty si aucune collection
 	if (collections.length === 0) {
@@ -37,7 +34,7 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 			<Empty role="status" aria-live="polite" className="mt-4 mb-12 sm:my-12">
 				<EmptyHeader>
 					<EmptyMedia variant="icon">
-						<Gem className="size-6" />
+						<FlowerIcon className="size-6" />
 					</EmptyMedia>
 					<EmptyTitle>Aucune collection disponible</EmptyTitle>
 					<EmptyDescription>Aucune collection disponible pour le moment.</EmptyDescription>
@@ -53,13 +50,25 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
 
+	// Fourchettes de prix exactes (tous les produits publiés, tous les SKUs actifs) :
+	// le payload de la liste ne porte que 4 produits × leur SKU par défaut, il ne
+	// peut pas fonder un « À partir de ». Cf. get-collection-price-ranges.ts.
+	const priceRanges = await getCollectionPriceRanges(collections.map((c) => c.id));
+
+	// Une seule dérivation par collection : images et prix étaient recalculés deux
+	// fois par item (une passe JSON-LD, une passe rendu).
+	const cards = collections.map((collection) => ({
+		collection,
+		images: extractCollectionImages(collection.products),
+		priceRange: priceRanges[collection.id],
+	}));
+
 	const itemListJsonLd = {
 		"@context": "https://schema.org",
 		"@type": "ItemList",
 		numberOfItems: collections.length,
-		itemListElement: collections.map((collection, index) => {
-			const priceRange = extractPriceRange(collection.products);
-			const featuredImage = extractCollectionImages(collection.products)[0];
+		itemListElement: cards.map(({ collection, images, priceRange }, index) => {
+			const featuredImage = images[0];
 			const productCount = collection._count.products;
 			const collectionUrl = `${SITE_URL}/collections/${collection.slug}`;
 			return {
@@ -98,30 +107,42 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 				}}
 			/>
 
-			{/* Grille des collections */}
+			{/* Grille des collections.
+			 *
+			 * Plafonnée à 3 colonnes, et le palier arrive à `md` — deux corrections du
+			 * même audit (CollectionCard 2026-08-04), aux deux extrémités :
+			 *
+			 * - `xl:grid-cols-4` AJOUTAIT une colonne alors que le conteneur
+			 *   (`max-w-6xl`) ne grandit plus au-delà de 1152px : les cartes tombaient
+			 *   de 341px à 248px (−27%). Même anti-pattern que le `2xl:grid-cols-5`
+			 *   retiré de la grille produit, cf. docs/UI-CONVENTIONS.md.
+			 * - il n'y avait AUCUN palier entre 375 et 1024px : à 1023px les cartes
+			 *   faisaient 475px de large, hors du rythme du reste du site.
+			 *
+			 * ⚠️ La chaîne doit rester identique dans `collection-grid-skeleton.tsx`,
+			 * sinon le squelette et la grille ne se recouvrent pas. Verrouillé par
+			 * `collection-skeleton-parity.regression.test.ts`. */}
 			<Stagger
 				as="ul"
 				itemAs="li"
 				aria-label="Liste des collections"
-				className="xs:grid-cols-2 grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3 lg:gap-8 xl:grid-cols-4"
+				className="xs:grid-cols-2 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3 lg:gap-8"
 				stagger={0.05}
 				delay={0.1}
 			>
-				{collections.map((collection, index) => {
-					return (
-						<CollectionCard
-							key={collection.id}
-							slug={collection.slug}
-							name={collection.name}
-							images={extractCollectionImages(collection.products)}
-							index={index}
-							headingLevel="h2"
-							productCount={collection._count.products}
-							description={collection.description}
-							priceRange={extractPriceRange(collection.products)}
-						/>
-					);
-				})}
+				{cards.map(({ collection, images, priceRange }, index) => (
+					<CollectionCard
+						key={collection.id}
+						slug={collection.slug}
+						name={collection.name}
+						images={images}
+						index={index}
+						headingLevel="h2"
+						productCount={collection._count.products}
+						description={collection.description}
+						priceRange={priceRange}
+					/>
+				))}
 			</Stagger>
 
 			{/* Pagination */}

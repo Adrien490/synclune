@@ -4,8 +4,11 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function CollectionGridSkeleton() {
 	return (
 		<div className="space-y-8">
-			{/* Grille des collections - structure alignée avec CollectionGrid */}
-			<div className="xs:grid-cols-2 grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3 lg:gap-8 xl:grid-cols-4">
+			{/* Grille des collections — la chaîne de classes est un MIROIR EXACT de
+			    celle de `collection-grid.tsx` (verrouillé par
+			    `collection-skeleton-parity.regression.test.ts`) : deux chaînes
+			    différentes, et le squelette ne recouvre plus la grille qu'il annonce. */}
+			<div className="xs:grid-cols-2 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3 lg:gap-8">
 				{Array.from({ length: 8 }).map((_, i) => (
 					/* Cadre planche-contact — miroir de CollectionCard (redesign 2026-08-03) :
 					   `rounded-md border-2 p-2 pb-0 sm:p-2.5 sm:pb-0`, tirage `rounded-sm`,
@@ -21,8 +24,12 @@ export function CollectionGridSkeleton() {
 							{/* Eyebrow « Collection · N créations » */}
 							<Skeleton className="h-3 w-28" />
 
-							{/* Title (line-clamp-2, une ligne dans le cas nominal) */}
-							<Skeleton className="h-5 w-3/4 sm:h-6" />
+							{/* Titre — DEUX lignes réservées sous `sm`, une seule au-dessus.
+							    Même arbitrage mesuré que `product-card-skeleton` : à 163px de
+							    large (2 colonnes dès 375px), un nom de collection wrappe
+							    presque toujours. Le squelette n'en réservait qu'une, et la
+							    grille sautait d'une ligne à l'arrivée des données. */}
+							<Skeleton className="h-12 w-3/4 sm:h-7" />
 
 							{/* Description */}
 							<Skeleton className="h-4 w-full" />

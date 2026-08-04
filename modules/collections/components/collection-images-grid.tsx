@@ -1,6 +1,9 @@
 import { cn } from "@/shared/utils/cn";
 import type { CollectionImage } from "../types/collection.types";
-import { COLLECTION_IMAGE_SIZES_COMPACT } from "../constants/image-sizes.constants";
+import {
+	COLLECTION_IMAGE_SIZES_CARD,
+	COLLECTION_IMAGE_SIZES_COMPACT,
+} from "../constants/image-sizes.constants";
 import { CollectionImageItem } from "./collection-image-item";
 
 type CollectionImagesVariant = "default" | "compact";
@@ -15,9 +18,21 @@ type CollectionImagesVariant = "default" | "compact";
 const GRID_CHROME_DEFAULT = "overflow-hidden rounded-t-lg lg:rounded-t-xl";
 const GRID_CHROME_FRAMED = "overflow-hidden rounded-sm";
 
+/**
+ * Le bloc média est CARRÉ dans les quatre layouts, et le ratio est porté par le
+ * CONTENEUR — pas par les cellules.
+ *
+ * Dérivé des cellules, il ne l'était pas : deux `aspect-square` côte à côte
+ * (layout 2 images) donnaient un bandeau `W × W/2`, deux fois plus plat que les
+ * trois autres layouts. Dans une rangée de grille, une collection à deux
+ * créations était donc nettement plus courte que ses voisines, et le squelette
+ * — qui réservait un carré — décalait la mise en page à l'arrivée des données.
+ * Audit CollectionCard 2026-08-04.
+ */
+const GRID_RATIO = "aspect-square";
+
 interface CollectionImagesGridProps {
 	images: CollectionImage[];
-	collectionName: string;
 	isAboveFold?: boolean;
 	/** LCP candidate (1re carte) — seule l'image principale recoit fetchPriority=high. */
 	isLcpCandidate?: boolean;
@@ -36,10 +51,19 @@ interface CollectionImagesGridProps {
  * - 2 images : 2 colonnes egales
  * - 3 images : 1 grande + 2 petites
  * - 4+ images : Bento Grid (1 grande + 3 petites)
+ *
+ * ## Le bento est DÉCORATIF pour les technologies d'assistance
+ *
+ * Ni `role="group"` ni `alt` porteur : c'est un aperçu, pas un contenu. Avant
+ * (audit CollectionCard 2026-08-04), un lecteur d'écran entendait le libellé du
+ * groupe puis les quatre `alt` de bijoux **avant même le titre de la carte** —
+ * une dizaine d'éléments par carte, vingt cartes sur `/collections`, pour des
+ * bijoux qui ne sont pas atteignables depuis la carte. Ils le sont sur la page
+ * de la collection, où ils sont cliquables. La carte, elle, s'annonce par son
+ * `aria-labelledby`.
  */
 export function CollectionImagesGrid({
 	images,
-	collectionName,
 	isAboveFold = false,
 	isLcpCandidate = false,
 	variant = "default",
@@ -47,16 +71,13 @@ export function CollectionImagesGrid({
 	collectionSlug,
 }: CollectionImagesGridProps) {
 	const count = images.length;
-	const ariaLabel = `Aperçu de ${count} produit${count > 1 ? "s" : ""} de la collection ${collectionName}`;
 
 	if (count === 1) {
 		return (
 			<SingleImageLayout
 				image={images[0]!}
-				collectionName={collectionName}
 				isAboveFold={isAboveFold}
 				isLcpCandidate={isLcpCandidate}
-				ariaLabel={ariaLabel}
 				variant={variant}
 				framed={framed}
 				collectionSlug={collectionSlug}
@@ -68,10 +89,8 @@ export function CollectionImagesGrid({
 		return (
 			<TwoImagesLayout
 				images={images}
-				collectionName={collectionName}
 				isAboveFold={isAboveFold}
 				isLcpCandidate={isLcpCandidate}
-				ariaLabel={ariaLabel}
 				variant={variant}
 				framed={framed}
 				collectionSlug={collectionSlug}
@@ -83,10 +102,8 @@ export function CollectionImagesGrid({
 		return (
 			<ThreeImagesLayout
 				images={images}
-				collectionName={collectionName}
 				isAboveFold={isAboveFold}
 				isLcpCandidate={isLcpCandidate}
-				ariaLabel={ariaLabel}
 				variant={variant}
 				framed={framed}
 				collectionSlug={collectionSlug}
@@ -97,10 +114,8 @@ export function CollectionImagesGrid({
 	return (
 		<BentoGridLayout
 			images={images}
-			collectionName={collectionName}
 			isAboveFold={isAboveFold}
 			isLcpCandidate={isLcpCandidate}
-			ariaLabel={ariaLabel}
 			variant={variant}
 			framed={framed}
 			collectionSlug={collectionSlug}
@@ -113,10 +128,8 @@ export function CollectionImagesGrid({
 // ============================================================================
 
 interface LayoutProps {
-	collectionName: string;
 	isAboveFold: boolean;
 	isLcpCandidate: boolean;
-	ariaLabel: string;
 	variant: CollectionImagesVariant;
 	framed: boolean;
 	collectionSlug?: string;
@@ -125,10 +138,8 @@ interface LayoutProps {
 /** 1 image : pleine largeur */
 function SingleImageLayout({
 	image,
-	collectionName,
 	isAboveFold,
 	isLcpCandidate,
-	ariaLabel,
 	variant,
 	framed,
 	collectionSlug,
@@ -136,20 +147,18 @@ function SingleImageLayout({
 	const sizes =
 		variant === "compact"
 			? COLLECTION_IMAGE_SIZES_COMPACT.SINGLE
-			: "(max-width: 374px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw";
+			: COLLECTION_IMAGE_SIZES_CARD.FULL;
 
 	return (
 		<div
-			role="group"
-			aria-label={ariaLabel}
 			className={cn(
-				"bg-muted relative aspect-square",
+				"bg-muted relative",
+				GRID_RATIO,
 				framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT,
 			)}
 		>
 			<CollectionImageItem
 				image={image}
-				collectionName={collectionName}
 				index={0}
 				isAboveFold={isAboveFold}
 				isLcpCandidate={isLcpCandidate}
@@ -164,10 +173,8 @@ function SingleImageLayout({
 /** 2 images : 2 colonnes egales */
 function TwoImagesLayout({
 	images,
-	collectionName,
 	isAboveFold,
 	isLcpCandidate,
-	ariaLabel,
 	variant,
 	framed,
 	collectionSlug,
@@ -175,19 +182,20 @@ function TwoImagesLayout({
 	const sizes =
 		variant === "compact"
 			? COLLECTION_IMAGE_SIZES_COMPACT.TWO_IMAGES
-			: "(max-width: 640px) 50vw, 25vw";
+			: COLLECTION_IMAGE_SIZES_CARD.HALF;
 
 	return (
 		<div
-			role="group"
-			aria-label={ariaLabel}
-			className={cn("grid grid-cols-2 gap-0.5", framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT)}
+			className={cn(
+				"grid grid-cols-2 gap-0.5",
+				GRID_RATIO,
+				framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT,
+			)}
 		>
 			{images.map((image, i) => (
-				<div key={image.url} className="bg-muted relative aspect-square overflow-hidden">
+				<div key={image.url} className="bg-muted relative overflow-hidden">
 					<CollectionImageItem
 						image={image}
-						collectionName={collectionName}
 						index={i}
 						isAboveFold={isAboveFold && i === 0}
 						isLcpCandidate={isLcpCandidate && i === 0}
@@ -204,29 +212,23 @@ function TwoImagesLayout({
 /** 3 images : 1 grande a gauche + 2 petites a droite */
 function ThreeImagesLayout({
 	images,
-	collectionName,
 	isAboveFold,
 	isLcpCandidate,
-	ariaLabel,
 	variant,
 	framed,
 	collectionSlug,
 }: LayoutProps & { images: CollectionImage[] }) {
-	const mainSizes =
+	// Grande et petites occupent la même colonne (1/2 du média) — une seule taille.
+	const sizes =
 		variant === "compact"
 			? COLLECTION_IMAGE_SIZES_COMPACT.THREE_IMAGES
-			: "(max-width: 640px) 50vw, 33vw";
-	const secondarySizes =
-		variant === "compact"
-			? COLLECTION_IMAGE_SIZES_COMPACT.THREE_IMAGES
-			: "(max-width: 640px) 50vw, 25vw";
+			: COLLECTION_IMAGE_SIZES_CARD.HALF;
 
 	return (
 		<div
-			role="group"
-			aria-label={ariaLabel}
 			className={cn(
 				"grid grid-cols-2 grid-rows-2 gap-0.5",
+				GRID_RATIO,
 				framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT,
 			)}
 		>
@@ -234,23 +236,23 @@ function ThreeImagesLayout({
 			<div className="bg-muted relative row-span-2 overflow-hidden">
 				<CollectionImageItem
 					image={images[0]!}
-					collectionName={collectionName}
 					index={0}
 					isAboveFold={isAboveFold}
 					isLcpCandidate={isLcpCandidate}
-					sizes={mainSizes}
+					sizes={sizes}
 					staggerIndex={0}
 					collectionSlug={collectionSlug}
 				/>
 			</div>
-			{/* 2 petites images */}
+			{/* 2 petites images — `isAboveFold` propagé comme dans le bento : sur la
+			    première rangée de la grille, elles sont visibles au chargement. */}
 			{images.slice(1, 3).map((image, i) => (
-				<div key={image.url} className="bg-muted relative aspect-square overflow-hidden">
+				<div key={image.url} className="bg-muted relative overflow-hidden">
 					<CollectionImageItem
 						image={image}
-						collectionName={collectionName}
 						index={i + 1}
-						sizes={secondarySizes}
+						isAboveFold={isAboveFold}
+						sizes={sizes}
 						staggerIndex={i + 1}
 					/>
 				</div>
@@ -262,33 +264,28 @@ function ThreeImagesLayout({
 /** 4+ images : Bento Grid (1 grande + 3 petites) */
 function BentoGridLayout({
 	images,
-	collectionName,
 	isAboveFold,
 	isLcpCandidate,
-	ariaLabel,
 	variant,
 	framed,
 	collectionSlug,
 }: LayoutProps & { images: CollectionImage[] }) {
-	const mainSizes =
-		variant === "compact"
-			? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_MAIN
-			: "(max-width: 640px) 50vw, 33vw";
-	const secondarySizes =
-		variant === "compact"
-			? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
-			: "(max-width: 640px) 25vw, 15vw";
-	const hiddenSecondarySizes =
-		variant === "compact"
-			? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
-			: "(max-width: 640px) 0px, 15vw";
+	const isCompact = variant === "compact";
+	const mainSizes = isCompact
+		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_MAIN
+		: COLLECTION_IMAGE_SIZES_CARD.BENTO_MAIN;
+	const secondarySizes = isCompact
+		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
+		: COLLECTION_IMAGE_SIZES_CARD.BENTO_SECONDARY;
+	const hiddenSecondarySizes = isCompact
+		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
+		: COLLECTION_IMAGE_SIZES_CARD.BENTO_SECONDARY_HIDDEN_MOBILE;
 
 	return (
 		<div
-			role="group"
-			aria-label={ariaLabel}
 			className={cn(
 				"grid gap-0.5",
+				GRID_RATIO,
 				framed ? GRID_CHROME_FRAMED : GRID_CHROME_DEFAULT,
 				// Mobile : 2x2
 				"grid-cols-2 grid-rows-2",
@@ -300,7 +297,6 @@ function BentoGridLayout({
 			<div className={cn("bg-muted relative overflow-hidden", "row-span-2 sm:row-span-3")}>
 				<CollectionImageItem
 					image={images[0]!}
-					collectionName={collectionName}
 					index={0}
 					isAboveFold={isAboveFold}
 					isLcpCandidate={isLcpCandidate}
@@ -320,14 +316,13 @@ function BentoGridLayout({
 					<div
 						key={`${image.url}-${i}`}
 						className={cn(
-							"bg-muted relative aspect-square overflow-hidden",
+							"bg-muted relative overflow-hidden",
 							// Image 4 visible uniquement sur desktop (sm+)
 							isImage4 && "hidden sm:block",
 						)}
 					>
 						<CollectionImageItem
 							image={image}
-							collectionName={collectionName}
 							index={actualIndex}
 							isAboveFold={isSecondaryAboveFold}
 							sizes={isImage4 ? hiddenSecondarySizes : secondarySizes}

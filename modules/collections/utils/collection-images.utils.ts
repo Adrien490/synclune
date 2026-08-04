@@ -25,19 +25,10 @@ export function extractCollectionImages(products: Collection["products"]): Colle
 		});
 }
 
-/** Extract min/max price range from collection products (in cents) */
-export function extractPriceRange(
-	products: Collection["products"],
-): { min: number; max: number } | undefined {
-	if (!products.length) return undefined;
-	const prices = products
-		.map((p) => p.product.skus[0]?.priceInclTax)
-		.filter((price): price is number => typeof price === "number");
-
-	if (prices.length === 0) return undefined;
-
-	return {
-		min: Math.min(...prices),
-		max: Math.max(...prices),
-	};
-}
+// `extractPriceRange` a été RETIRÉ (audit CollectionCard 2026-08-04) : il dérivait
+// « À partir de X € » du payload de la liste, qui ne porte que 4 produits (`take: 4`,
+// les vignettes du bento) × leur SKU par défaut. Le prix d'entrée affiché était donc
+// faux dès la 5ᵉ création, et republié tel quel dans l'`AggregateOffer` JSON-LD.
+// La SSOT est `modules/collections/data/get-collection-price-ranges.ts`, qui agrège
+// sur TOUS les produits publiés et TOUS leurs SKUs actifs. Ne pas le réintroduire :
+// aucun payload de liste ne peut fonder cette valeur.

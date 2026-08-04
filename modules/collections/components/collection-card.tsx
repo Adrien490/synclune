@@ -30,10 +30,12 @@ interface CollectionCardProps {
 	productCount?: number;
 	/** Description courte de la collection */
 	description?: string | null;
-	/** Fourchette de prix de la collection */
+	/**
+	 * Fourchette de prix de la collection, calculée sur TOUS ses produits publiés
+	 * — cf. `data/get-collection-price-ranges.ts`. Ne jamais la dériver du payload
+	 * de la liste, qui ne porte que 4 produits.
+	 */
 	priceRange?: { min: number; max: number };
-	/** Disable above-fold preload (for cards inside Suspense boundaries) */
-	disablePreload?: boolean;
 }
 
 /**
@@ -55,6 +57,11 @@ interface CollectionCardProps {
  * aucun element decoratif ne doit intercepter les clics : tape et grain sont
  * `pointer-events-none`, sous le ::after.
  *
+ * Le bento est DÉCORATIF pour les technologies d'assistance (`alt=""`, pas de
+ * `role="group"`) : la carte s'annonce par son `aria-labelledby`, et les bijoux
+ * de l'aperçu ne sont atteignables que sur la page de la collection. Cf. le
+ * JSDoc de `CollectionImagesGrid`.
+ *
  * z-index stack (documented):
  * - z-1: grain papier (`.polaroid-paper::before`, pointer-events-none)
  * - z-10: Stretched link (title link ::after covers the entire card)
@@ -69,13 +76,15 @@ export function CollectionCard({
 	productCount,
 	description,
 	priceRange,
-	disablePreload = false,
 }: CollectionCardProps) {
 	const titleId = `collection-title-${slug}`;
-	const isAboveFold = !disablePreload && index !== undefined && index < ABOVE_FOLD_THRESHOLD;
+	// Parité ProductCard : `(index ?? 0)`, et plus de `disablePreload` — la prop
+	// existait pour les cartes rendues dans une frontière Suspense mais n'a jamais
+	// été passée par l'unique call site (audit 2026-08-04).
+	const isAboveFold = (index ?? 0) < ABOVE_FOLD_THRESHOLD;
 	// LCP candidate : seule la 1re carte priorise son image principale (fetchPriority=high)
 	// pour eviter la concurrence bande passante sur 4G (cf ProductCard).
-	const isLcpCandidate = !disablePreload && index === 0;
+	const isLcpCandidate = index === 0;
 
 	const collectionUrl = `/collections/${slug}`;
 	const hasImages = images !== undefined && images.length > 0;
@@ -96,6 +105,12 @@ export function CollectionCard({
 		<article
 			aria-labelledby={titleId}
 			className={cn(
+				// `h-full` + `grid-rows-[auto_1fr]` : les `<li>` de la grille s'étirent
+				// déjà à la hauteur de leur rangée, la carte non — les bas de cartes
+				// d'une même rangée ne s'alignaient donc pas dès qu'une collection
+				// n'avait ni description ni prix. La légende absorbe le mou, et le
+				// `mt-auto` du prix le pousse en pied. Parité ProductCard.
+				"grid h-full grid-rows-[auto_1fr]",
 				CARD_SURFACE_POLAROID,
 				// Grain papier de la planche (::before z-1, pointer-events-none)
 				"polaroid-paper",
@@ -115,17 +130,18 @@ export function CollectionCard({
 			{hasImages ? (
 				<CollectionImagesGrid
 					images={images}
-					collectionName={name}
 					isAboveFold={isAboveFold}
 					isLcpCandidate={isLcpCandidate}
 					collectionSlug={slug}
 					framed
 				/>
 			) : (
-				<PlaceholderImage
-					className="rounded-sm border-0"
-					label={`${name} — ${COLLECTION_TEXTS.PLACEHOLDER.COMING_SOON}`}
-				/>
+				/* Sans `label`, `PlaceholderImage` se marque `aria-hidden` — voulu :
+				   l'ancien libellé « {nom} — Bientôt disponible » répétait le nom déjà
+				   porté par `aria-labelledby`, ET se contredisait avec l'eyebrow quand
+				   la collection a bien des créations mais aucun média IMAGE (audit
+				   2026-08-04). L'absence de photo n'est pas une information. */
+				<PlaceholderImage className="rounded-sm border-0" />
 			)}
 
 			{/* Légende de la planche — no position:relative so stretched link ::after
@@ -148,16 +164,21 @@ export function CollectionCard({
 						>
 							{name}
 						</HeadingTag>
-						<SquiggleUnderline />
+						{/* `w-full` : le trait épouse la largeur du titre. À sa largeur fixe
+						    de 80px il dépassait de moitié les noms courts (« Noël » mesure
+						    ~45px en Fraunces text-lg) — un trait détaché du mot. */}
+						<SquiggleUnderline className="w-full" />
 					</span>
 				</Link>
 
 				{/* Description : visible sur tous les viewports */}
 				{description && <p className="text-muted-foreground line-clamp-2 text-xs">{description}</p>}
 
-				{/* From-price — signal de scan prioritaire (apres le titre, cf Baymard) */}
+				{/* From-price — signal de scan prioritaire (apres le titre, cf Baymard).
+				    `mt-auto` : poussé en pied de légende pour que les prix d'une même
+				    rangée s'alignent, quelles que soient les descriptions au-dessus. */}
 				{priceRange && (
-					<p className="text-foreground mt-0.5 text-sm font-medium">
+					<p className="text-foreground mt-auto pt-0.5 text-sm font-medium">
 						<span className="text-muted-foreground font-normal">
 							{COLLECTION_TEXTS.PRICING.FROM_LABEL}{" "}
 						</span>

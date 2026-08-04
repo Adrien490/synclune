@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractCollectionImages, extractPriceRange } from "../collection-images.utils";
+import { extractCollectionImages } from "../collection-images.utils";
 
 // ============================================================================
 // Helpers
@@ -109,46 +109,8 @@ describe("extractCollectionImages", () => {
 	});
 });
 
-// ============================================================================
-// extractPriceRange
-// ============================================================================
-
-describe("extractPriceRange", () => {
-	it("returns undefined for empty products", () => {
-		expect(extractPriceRange([])).toBeUndefined();
-	});
-
-	it("returns undefined when no SKUs have prices", () => {
-		const products = [{ product: { skus: [] } } as never];
-		expect(extractPriceRange(products)).toBeUndefined();
-	});
-
-	it("returns same min/max for single product", () => {
-		const products = [makeCollectionProduct([], 3500)];
-		const result = extractPriceRange(products);
-
-		expect(result).toEqual({ min: 3500, max: 3500 });
-	});
-
-	it("returns correct min/max across multiple products", () => {
-		const products = [
-			makeCollectionProduct([], 2500),
-			makeCollectionProduct([], 5000),
-			makeCollectionProduct([], 1500),
-		];
-		const result = extractPriceRange(products);
-
-		expect(result).toEqual({ min: 1500, max: 5000 });
-	});
-
-	it("skips products without SKU prices", () => {
-		const products = [
-			makeCollectionProduct([], 3000),
-			{ product: { id: "p-empty", skus: [] } } as never, // no SKU
-			makeCollectionProduct([], 1000),
-		];
-		const result = extractPriceRange(products);
-
-		expect(result).toEqual({ min: 1000, max: 3000 });
-	});
-});
+// La suite `extractPriceRange` a été retirée avec la fonction (audit CollectionCard
+// 2026-08-04) : elle vérifiait fidèlement un calcul dont la SOURCE était fausse — le
+// min de 4 produits sur leur SKU par défaut, présenté comme le prix d'entrée de la
+// collection. Le remplaçant est `modules/collections/data/get-collection-price-ranges.ts`,
+// qui agrège en base ; il se teste en intégration, pas sur un payload de liste.

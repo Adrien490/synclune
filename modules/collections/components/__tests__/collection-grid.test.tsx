@@ -107,18 +107,23 @@ vi.mock("@/modules/collections/components/collection-card", () => ({
 
 vi.mock("@/modules/collections/utils/collection-images.utils", () => ({
 	extractCollectionImages: vi.fn(() => []),
-	extractPriceRange: vi.fn(() => undefined),
 }));
 
-vi.mock("lucide-react", () => ({
-	Gem: () => <svg data-testid="gem-icon" />,
+// La fourchette de prix ne se dérive plus du payload de la liste (elle y était
+// fausse dès le 5ᵉ produit) : c'est une data fn cachée à part.
+// Cf. `modules/collections/data/get-collection-price-ranges.ts`.
+vi.mock("@/modules/collections/data/get-collection-price-ranges", () => ({
+	getCollectionPriceRanges: vi.fn(() => Promise.resolve({})),
+}));
+
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	FlowerIcon: () => <svg data-testid="gem-icon" />,
 }));
 
 // ============================================================================
 // IMPORT AFTER MOCKS
 // ============================================================================
 
-import { Suspense } from "react";
 import { CollectionGrid } from "../collection-grid";
 import type { GetCollectionsReturn } from "../../data/get-collections";
 
@@ -155,14 +160,16 @@ function makePromise(
 	return Promise.resolve({ totalCount: data.collections.length, ...data });
 }
 
+/**
+ * `CollectionGrid` est un Server Component **async** depuis qu'il agrège les
+ * fourchettes de prix (2ᵉ lecture, dépendante de la 1re). Le renderer client de
+ * React ne sait pas rendre une fonction async : on l'appelle et on rend son
+ * résultat, comme `cart-recommendations.test.tsx`.
+ */
 async function renderGrid(promise: Promise<GetCollectionsReturn>, perPage = 12) {
+	const ui = await CollectionGrid({ collectionsPromise: promise, perPage });
 	await act(async () => {
-		render(
-			<Suspense fallback={<div data-testid="loading" />}>
-				<CollectionGrid collectionsPromise={promise} perPage={perPage} />
-			</Suspense>,
-		);
-		await promise;
+		render(ui);
 	});
 }
 
@@ -217,9 +224,9 @@ describe("CollectionGrid", () => {
 
 	it("emits enriched ItemList JSON-LD with AggregateOffer when priceRange is set", async () => {
 		const utils = await import("@/modules/collections/utils/collection-images.utils");
-		(utils.extractPriceRange as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-			min: 1500,
-			max: 4500,
+		const priceData = await import("@/modules/collections/data/get-collection-price-ranges");
+		(priceData.getCollectionPriceRanges as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+			"1": { min: 1500, max: 4500 },
 		});
 		(utils.extractCollectionImages as unknown as ReturnType<typeof vi.fn>).mockReturnValue([
 			{ url: "https://cdn/img.jpg", alt: "img" },
