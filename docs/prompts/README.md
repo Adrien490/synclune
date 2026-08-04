@@ -7,8 +7,8 @@ interfaces possibles. Ce fichier est le point d'entrée : les quatre autres sont
 | -------------------------------------------------------- | ---------------------------------------------------------------- | ---------------- | --------- |
 | [`prompts-audit-synclune.md`](prompts-audit-synclune.md) | **159 audits ciblés** — un rapport noté /100 + P0-P3             | non (rapport)    | 3 556 l.  |
 | [`AUDIT-PROMPTS.md`](AUDIT-PROMPTS.md)                   | **26 missions larges** par domaine — audit, conception, merge    | oui, largement   | 571 l. ⚠️ |
-| [`DESIGN-ARTIFACT-PROMPT.md`](DESIGN-ARTIFACT-PROMPT.md) | **3-4 directions MAQUETTÉES** sur une page publiée, pour choisir | **non**          | 477 l.    |
-| [`REDESIGN-PROMPT.md`](REDESIGN-PROMPT.md)               | **Une refonte implémentée** d'une seule surface                  | oui, sur 1 cible | 260 l.    |
+| [`DESIGN-ARTIFACT-PROMPT.md`](DESIGN-ARTIFACT-PROMPT.md) | **3-4 directions MAQUETTÉES** sur une page publiée, pour choisir | **non**          | 578 l.    |
+| [`REDESIGN-PROMPT.md`](REDESIGN-PROMPT.md)               | **Une refonte implémentée** d'une seule surface                  | oui, sur 1 cible | 351 l.    |
 
 ---
 
@@ -161,6 +161,17 @@ l'avertissement.
 Audit du 2026-08-04 : `DESIGN-ARTIFACT-PROMPT.md` noté **71/100** puis remédié (4 équivalents hex faux issus
 d'une conversion CIE Lab au lieu d'OKLab, handoff non branché, aucune bascule pour une surface qui n'existe
 pas encore, `data-theme` jamais vérifié). Le détail vit dans `memory/`.
+
+Seconde passe le 2026-08-04 (477 → 578 l.), qui corrige le **P0 hérité de son voisin** : le §3 envoyait
+encore lire les sections Breakpoints / Overlays / Survol vs focus dans `CLAUDE.md`, alors qu'elles avaient
+été extraites dans [`../UI-CONVENTIONS.md`](../UI-CONVENTIONS.md) — un modèle lisait dix puces au lieu de
+262 lignes. `REDESIGN-PROMPT.md` avait été remédié le 05/08, pas celui-ci : les entrées
+`DOC_SECTION_REFERENCES` du contract test couvrent désormais **les deux** (34 assertions, contre 26).
+Ajouté dans la foulée : le brief de marque réécrit **en positif** (palette des 4 accents, vocabulaire
+dessiné à la main, voix à la première personne), le bloc « tu ne pourras peut-être pas voir la surface »,
+le **banc d'essai** qui rend les directions comparables à géométrie constante, une table de tokens portée
+de 7 à 16 lignes avec la règle de contraste qui débloque les directions colorées, et la mise hors-jeu
+explicite des capacités runtime d'un artifact (MCP, AI-powered, stockage persistant).
 
 Prochaine cible naturelle : **la landing**, vidée le 2026-08-03 et en attente de refonte
 (`app/(shop)/(home)/page.tsx`). C'est aussi le seul moyen d'éprouver la bascule « surface neuve » de

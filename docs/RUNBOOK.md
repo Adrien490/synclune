@@ -4,11 +4,11 @@
 
 ## Quotidien / à chaque connexion admin
 
-1. **Dashboard « À traiter »** (`/admin`) — widget qui remplace les anciens crons d'alerte (audit §4.2). Surface en lecture seule, 5 compteurs (`modules/dashboard/data/get-action-items.ts`) :
-   - commandes sur-facturées non résolues (`overbilledAmountCents` non nul, non résolu) ;
+1. **Dashboard « À traiter »** (`/admin`) — widget qui remplace les anciens crons d'alerte (audit §4.2). Surface en lecture seule, 4 compteurs (`modules/dashboard/data/get-action-items.ts`) :
    - commandes bloquées : `PROCESSING` > 7 j, `SHIPPED` sans livraison > 14 j, facture manquante > 7 j, paiement `PENDING` orphelin > 14 j.
      → Agir directement depuis la commande concernée (les anciens e-mails d'alerte quotidiens ont été retirés).
      ⚠️ **Les litiges n'y figurent pas** : le modèle `Dispute` a été droppé le 2026-08-01 (le litige se gère dans le **dashboard Stripe**). L'app n'émet plus qu'une alerte e-mail à l'ouverture du litige — la suite du traitement est côté Stripe.
+     ⚠️ **La sur-facturation non plus** (retrait 2026-08-05) : le compteur ne pouvait s'éteindre qu'au clic d'un bouton de maintenance et son lien menait à la liste non filtrée. Un trop-perçu Stripe reste détecté et **notifié par e-mail d'alerte admin**.
 2. **Commandes payées à préparer** : expédier, saisir le suivi.
 
 ## Hebdomadaire
@@ -197,10 +197,9 @@ c'est cette variable — pas un job sans travail à faire.
 
 ## § Intégrité PDF archivés (Art. L102 B LPF)
 
-- **Contrôles en place** : (a) hash SHA-256 re-vérifié à **chaque téléchargement** (routes facture/avoir, EINV-PDF-006) ; (b) passe **proactive** quotidienne (`reconcile-invoices` Passe 8, `verify-pdf-archive-integrity.service.ts`) — re-hash de chaque artefact archivé tous les ~30 j (curseur `pdfIntegrityCheckedAt`).
-- **Auto-réparation** : si la copie UploadThing diverge du hash DB mais que la régénération (snapshot facture / SSOT rendu avoir) est **bit-identique** au hash, le fichier est ré-uploadé et l'URL remplacée — le hash DB n'est **jamais** réécrit.
-- **Alerte `reconcile-invoices:pdf-integrity`** (email admin + Sentry `pdf-archive-integrity-mismatch`) : corruption NON réparable — la régénération diverge du hash d'origine (drift de template jsPDF, données mutées). Intervention manuelle : identifier la version du template à la date d'émission (`invoiceGeneratedAt` + historique git de `render-invoice-pdf.ts`), reconstituer le document, et documenter l'incident (l'écart de hash doit être explicable en contrôle).
-- L'alerte se ré-émet chaque jour tant que l'artefact n'est pas traité (le curseur n'avance pas sur échec).
+- **Contrôle en place** : le hash SHA-256 (`invoicePdfHash` / `creditNotePdfHash`) est re-vérifié à **chaque téléchargement**, dans les routes facture/avoir (EINV-PDF-006). C'est lui qui porte la garantie d'intégrité, et il n'est **jamais** réécrit.
+- ⚠️ **Il n'y a plus de passe proactive.** La passe 8 de `reconcile-invoices` (`verify-pdf-archive-integrity.service.ts`, 368 l. + curseurs `pdfIntegrityCheckedAt`) re-téléchargeait et re-hashait chaque artefact tous les ~30 j ; elle a été retirée à l'audit du module `orders` (2026-08-05). Elle ne faisait qu'avancer la détection sur un corpus de ~240 documents/an, et l'auto-réparation qu'elle portait n'a jamais eu à s'exécuter.
+- **Conséquence à connaître** : une corruption UploadThing n'est désormais découverte qu'**au premier téléchargement** de l'artefact. La réponse est la même qu'avant : identifier la version du template à la date d'émission (`invoiceGeneratedAt` + historique git de `render-invoice-pdf.ts`), reconstituer le document, et documenter l'incident — l'écart de hash doit être explicable en contrôle.
 
 ## § Baselining du schéma — pourquoi `0_init` existe
 

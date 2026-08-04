@@ -32,8 +32,8 @@ tout seul, sans avoir à remonter dans le texte.
 > n'est pas le bon : prends `prompts-audit-synclune.md`. Ici, tout ce qui n'est pas dessiné est perdu.
 >
 > **Si la cible n'existe pas encore** (une page vidée en attente de refonte, une surface à créer), ce prompt
-> reste le bon — mais bascule en mode « surface neuve », décrit au §5. C'est le cas de la landing depuis le
-> 2026-08-03.
+> reste le bon — mais bascule en mode « surface neuve », décrit au §5. C'est le cas de la landing
+> (`app/(shop)/(home)/page.tsx`) depuis le 2026-08-03.
 >
 > ⚠️ **Les maquettes du §6 ne sont pas des composants de référence, et ne doivent jamais servir de tels.**
 > Tout ce que le §6 prescrit est une divergence **volontaire** d'avec le rendu réel : hex littéraux au lieu
@@ -43,6 +43,14 @@ tout seul, sans avoir à remonter dans le texte.
 > en fait un bon support d'arbitrage, et ce qui les disqualifie comme échantillon. Si un catalogue de
 > composants voyait le jour un jour, il serait alimenté par la sortie de `REDESIGN-PROMPT.md` — le composant
 > réel implémenté —, jamais par ces plaques. Cf. `README.md` § « Un artifact de design n'est pas Claude Design ».
+>
+> **Ce que la plateforme Artifact permet, et ce qu'on n'utilise pas ici.** Un artifact publié peut être
+> AI-powered (appeler Claude depuis la page), se brancher sur des serveurs MCP, ou persister de l'état entre
+> sessions. **Aucune des trois n'a sa place dans cette page**, et c'est délibéré : un support d'arbitrage doit
+> rendre exactement la même chose à chaque ouverture, y compris dans six mois quand on rouvrira le lien pour
+> comprendre une décision. Le seul JavaScript admis est le **banc d'essai** du §5.4 — un sélecteur qui
+> permute des directions déjà présentes dans le DOM. Un artifact est **privé par défaut** : le publier ne
+> l'expose à personne, le partager est un geste séparé.
 
 ---
 
@@ -68,22 +76,58 @@ Quatre refus par avance :
 - N'invente aucun chiffre commercial. Pas de « + 2 000 clientes », pas de faux avis, pas de fausse note.
   C'est une boutique à ~20 commandes/mois : une preuve sociale inventée est un mensonge, et ça se voit.
 
+Et un cinquième, qui est le mode d'échec réel de ce prompt : **le risque ici n'est pas d'aller trop loin,
+c'est de livrer du propre et vide.** Je peux refuser une direction trop vive ; je ne peux pas deviner celle
+que tu n'as pas osé dessiner.
+
 ═══════════════════════════════════════════════════════════════════════════════
 1 — CE QU'EST SYNCLUNE (lis ça avant de dessiner quoi que ce soit)
 ═══════════════════════════════════════════════════════════════════════════════
-⚠️ **Bijoux créatifs et COLORÉS, faits main. PAS de la joaillerie précieuse.** C'est la donnée de marque la
-plus souvent mal comprise, et elle a déjà produit des propositions à jeter sur ce projet. La marque exprime
-la créativité colorée de Léane : joyeux, personnel, artisanal. Elle ne vend ni or, ni pierres précieuses,
-ni « luxe discret ».
+**Ce qu'elle vend** : des bijoux **créatifs, colorés, faits main** — des pièces uniques, pas une gamme. Léane,
+qui est seule derrière la boutique, décrit elle-même son point de départ ainsi : « une couleur dans la rue, un
+motif sur un tissu, un rêve », et ses bijoux comme une extension de sa passion, où « chaque couleur, forme,
+ligne est pensée et choisie avec soin » (`docs/atelier-story.md`). C'est ÇA le produit : de la couleur, de la
+main, de la joie, et une personne.
 
-Toute direction bâtie sur le métal précieux, le noir et or, la gravure, le sérif de haute joaillerie ou le
-minimalisme froid est le **contre-pied exact** du brief — même exécutée parfaitement, elle est à jeter.
-Vise le **soin artisanal et la joie**, pas le prestige. SSOT : `docs/BUSINESS.md` § Positionnement,
-`shared/constants/brand.ts`, `BUSINESS_INFO` (`shared/constants/seo-config.ts`).
+⚠️ **Corollaire, et pas l'inverse : ce n'est PAS de la joaillerie précieuse** — ni or, ni pierres, ni « luxe
+discret ». Toute direction bâtie sur le métal précieux, le noir et or, la gravure, le sérif de haute
+joaillerie ou le minimalisme froid est le **contre-pied exact** du brief — même exécutée parfaitement, elle
+est à jeter. C'est la donnée de marque la plus souvent mal comprise, et elle a déjà produit des propositions
+jetées sur ce projet. Vise le **soin artisanal et la joie**, jamais le prestige. SSOT :
+`docs/BUSINESS.md` § Positionnement, `shared/constants/brand.ts`,
+`BUSINESS_INFO` (`shared/constants/seo-config.ts`).
+
+🎨 **La couleur et la main sont le SUJET, pas la décoration.** C'est la partie du brief la plus sous-jouée :
+à force d'éviter le luxe, on livre du rose pâle sur du blanc, propre et sans personne dedans. Une boutique de
+bijoux colorés faits main qui ressemble à un template neutre a raté le brief aussi sûrement qu'une qui ferait
+de la haute joaillerie.
+- **La palette existe et elle est franche.** Quatre accents de marque, avec un récit :
+  `[data-accent="rose|lavender|mint|sun"]` (`app/styles/section-accents.css`) exposent `--section-accent` /
+  `--section-glow` / `--section-soft`. Le rose EST `--primary` (jamais dupliqué) ; les trois autres sont
+  `--color-brand-{lavender,mint,sun}`, doublés de halos translucides `--color-glow-*`. Les valeurs exactes,
+  et la règle de lisibilité qui va avec, sont au §6. Si ta maquette n'emploie que `--primary` et des gris,
+  demande-toi si c'est de la retenue ou de la timidité.
+- **Le geste à la main est la signature**, et il est déjà en SSOT : `HandDrawnAccent` et `HandDrawnUnderline`
+  (`shared/components/animations/hand-drawn-accent.tsx`), `shared/components/squiggle-underline.tsx`,
+  `shared/components/masking-tape.tsx`, `CARD_SURFACE_POLAROID` (`shared/components/card-surface.constants.ts`),
+  `.polaroid-paper` / `.polaroid-hover` (`app/styles/components.css`). Ce vocabulaire dit « fait par
+  quelqu'un » mieux que n'importe quel adjectif. Prolonge-le, tends-le, ou argumente contre — mais ne
+  l'ignore pas : une ligne parfaitement droite là où le reste du site trace à la main est une rupture, pas
+  une sobriété.
+- **La voix est à la première personne.** Léane parle d'elle (« je », « mon atelier ») ; la copie tutoie la
+  cliente. Un ton corporate impersonnel (« nos artisans », « notre maison ») est faux : il n'y a qu'elle.
+  ⚠️ **Piège actif : `docs/atelier-story.md` est intégralement au VOUVOIEMENT** (« Chaque bijou que vous
+  retrouverez ici… », « Je vais vous faire une confidence »), alors que le §8 et `CLAUDE.md` § Voix imposent
+  le tutoiement partout. Le fichier est une réserve de copie, pas un texte prêt à poser : le §2 te demande le
+  VRAI texte, et le prendre tel quel introduirait du vouvoiement dans la maquette. **Repasse-le au
+  tutoiement** en gardant le « je » de Léane (« Chaque bijou que tu trouveras ici… »), et signale la bascule
+  en légende. Ne le laisse pas en l'état sous prétexte que c'est une citation.
+- **Le test** : si ta direction pouvait servir telle quelle à n'importe quelle boutique de bijoux, elle est
+  ratée — pas parce qu'elle est laide, parce qu'elle ne raconte personne.
 
 **L'échelle fait partie du brief, et elle t'ouvre des portes autant qu'elle en ferme.**
-- ~20 commandes/mois, **une seule personne** (Léane, la créatrice — pas d'équipe technique), catalogue
-  petit, B2C France + UE, en français, en euros.
+- ~20 commandes/mois, **une seule personne** (pas d'équipe technique), catalogue petit, B2C France + UE,
+  en français, en euros.
 - Ce que ça FERME : pas de compte client, pas d'avis, pas de recommandations personnalisées, pas de
   programme de fidélité, pas d'e-mail marketing, pas de FOMO chiffré. Ces surfaces ont été retirées
   (2026-07-30 → 08-04) — ne les réveille pas, même « en pointillé ».
@@ -120,38 +164,42 @@ Une seule direction, dessinée à trois endroits, vaut mieux que trois direction
 
 **Garde-fou de volume** : 4 directions × 3 formats × les états durs, c'est 30+ plaques écrites à la main —
 personne ne les lira et tu les bâcleras toutes. Plafond : **une direction est dessinée à fond (tous les
-formats de sa ligne + au moins un état dur), les autres au format principal seulement.** Celle qu'on dessine
-à fond n'est pas forcément celle qu'on recommande — dis laquelle et pourquoi.
+formats de sa ligne + au moins un état dur), les autres au format principal seulement**, plus le banc d'essai
+du §5.4 qui les met toutes à la même échelle. Celle qu'on dessine à fond n'est pas forcément celle qu'on
+recommande — dis laquelle et pourquoi.
 
 ═══════════════════════════════════════════════════════════════════════════════
 3 — ANCRAGE FACTUEL (avant toute critique)
 ═══════════════════════════════════════════════════════════════════════════════
 Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà écrit dans le projet :
-- `CLAUDE.md` : conventions, invariants React 19, et les sections Breakpoints / Largeurs de contenu /
-  Overlays / Survol vs focus / Voix
+- `CLAUDE.md` pour les conventions, les invariants React 19 et le § Voix — **et surtout
+  `docs/UI-CONVENTIONS.md`**, où le détail a été extrait : § Breakpoints (rem partout, jamais px) ·
+  § Largeurs de contenu · § Survol vs focus · § Overlays · § Composition (`render`, jamais `asChild`) ·
+  § « Un `animate-out` sans `fill-mode-forwards` est un bug ». `CLAUDE.md` n'en garde que dix puces : le
+  _pourquoi_, les contre-exemples et les pièges de migration Radix → Base UI ne sont QUE dans
+  `docs/UI-CONVENTIONS.md`. Ces cinq sections sont celles qui ont produit le plus de P0 sur ce projet.
 - `docs/BUSINESS.md` (§ Positionnement, obligatoire) et `docs/atelier-story.md` si la surface porte de la
   copie éditoriale
-- `app/globals.css` **et les 6 feuilles qu'il importe** (`app/styles/{pwa,utilities,section-accents,
-  animations,entrance,components}.css`). Attention à qui porte quoi : les **classes** vivent dans les
-  feuilles — `.enter-inview` et `.hand-draw-inview` (`entrance.css`), `.animate-shimmer` et
-  `.product-item` (`animations.css`), `[data-accent]` et ses 4 valeurs `rose|lavender|mint|sun`
-  (`section-accents.css`) — tandis que les **utilitaires et tokens** sont dans `globals.css` lui-même :
-  `@utility focus-ring`, `@utility hover-halo`, `@utility shimmer-text`, l'échelle `--z-*` et les
-  `--duration-*` (`fast 150ms`, `normal 200ms`, `slow 300ms`, `slower 500ms`)
-- les primitives « Atelier », déjà extraites en SSOT et déjà adoptées par les cartes produit et collection :
-  `shared/components/squiggle-underline.tsx`, `shared/components/masking-tape.tsx`,
-  `shared/components/card-surface.constants.ts` (`CARD_SURFACE_POLAROID`). C'est le langage visuel COURANT
-  de la boutique. Tu peux le prolonger, le tendre, ou argumenter contre — mais pas l'ignorer.
-- `shared/components/animations/motion.config.ts` (`MOTION_CONFIG` : **7** durées — `fast .15` ·
-  `normal .2` · `collapse .28` · `slow .3` · `medium .35` · `emphasis .4` · `slower .5` — plus 5 easings
-  et 9 ressorts nommés), `shared/styles/fonts.ts`, `shared/components/ui/`,
-  `shared/constants/breakpoints.ts`
+- `app/globals.css` **et les six feuilles qu'il importe** — attention à qui porte quoi. Les **classes** vivent
+  dans les feuilles : `.enter-inview` et `.hand-draw-inview` (`app/styles/entrance.css`), `.animate-shimmer`
+  et `.product-item` (`app/styles/animations.css`), `[data-accent]` et ses 4 valeurs
+  (`app/styles/section-accents.css`), `.polaroid-paper` et `.polaroid-hover` (`app/styles/components.css`) ;
+  les deux dernières sont `app/styles/pwa.css` et `app/styles/utilities.css`. Les **utilitaires et tokens**,
+  eux, sont dans `app/globals.css` lui-même : `@utility focus-ring`, `@utility hover-halo`,
+  `@utility shimmer-text`, l'échelle `--z-*`, les `--duration-*` (`fast 150ms`, `normal 200ms`, `slow 300ms`,
+  `slower 500ms`) et les `--ease-*` (`spring`, `smooth-out`, `premium`).
+- `shared/components/animations/motion.config.ts` — `MOTION_CONFIG` porte **7 durées** (`fast .15` ·
+  `normal .2` · `collapse .28` · `slow .3` · `medium .35` · `emphasis .4` · `slower .5`), **5 easings** et
+  **8 ressorts nommés** (`gentle`, `snappy`, `bouncy`, `list`, `bar`, `success`, `number`, `toast`)
+- `shared/styles/fonts.ts`, `shared/components/ui/`, `shared/constants/breakpoints.ts`
 - les données et contenus RÉELS de la cible — jamais de lorem, jamais de prix inventé. Si la base est vide
   ou indisponible, prends les libellés du seed ou du code, et dis-le en légende.
 - `docs/KNOWN-ISSUES.md` si la cible touche le panier ou le checkout
 
 Puis trois passes de mémoire, dans cet ordre :
-1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier (339 fichiers).
+1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier : **303 fichiers
+   de test** en portent (mesuré le 2026-08-04 ; c'est un nombre qui bouge à chaque passe de tests, ne le
+   crois pas au fichier près — il n'est là que pour te dissuader de grepper la racine).
    Chacun verrouille un bug déjà payé une fois, et devient une ligne de la section Garde-fous.
 2. `grep -rn "<libellé accessible de la cible>" e2e/` — les noms accessibles pilotent des tests E2E. Toute
    direction qui renomme un libellé doit le dire.
@@ -160,6 +208,30 @@ Puis trois passes de mémoire, dans cet ordre :
 
 ⚠️ N'utilise jamais un `find`/`grep` depuis la racine sans exclure `.claude/worktrees/` : ce dossier contient
 une copie périmée du repo et fait « exister » tous les chemins morts.
+
+**⚠️ Tu ne pourras peut-être pas VOIR la surface — sache-le avant de planifier, pas à la fin.** C'est le vrai
+plafond de qualité de ce prompt, pas sa rédaction. Et ça pèse ici plus qu'ailleurs : la section `#actuel`
+prétend montrer l'existant. Une plaque « existant » dessinée d'après le seul JSX est une reconstitution, pas
+une observation — dis-le dans son `<figcaption>` si c'est le cas, sous peine de faire arbitrer sur une
+prémisse fausse.
+- La base de dev **n'a aucun produit `PUBLIC`**. Toute surface catalogue (PDP, `/produits`, `ProductCard`,
+  collections, recherche) se rend donc **vide**.
+- **Ne lance JAMAIS `pnpm seed` de toi-même** : il fait un wipe complet et refuse de tourner sans
+  `SEED_ALLOW="true"`. Cette garde est délibérée. Si tu as besoin de données, **demande-les**.
+- **Ce qui se rend quand même**, et qui suffit souvent : les **sept** pages de `app/(legal)/` (`/cgv`,
+  `/mentions-legales`, `/informations-legales`, `/confidentialite`, `/cookies`, `/accessibilite`,
+  `/retractation`), `/connexion`, et
+  les **états vides** de `/panier` et `/favoris`. Un composant partagé — navbar, footer, overlay, bouton,
+  champ de formulaire — s'observe parfaitement sur `/cgv`, qui ne dépend d'aucun produit. Cherche l'hôte le
+  moins exigeant avant de conclure que c'est impossible.
+- Pour l'admin, le projet Playwright **`authenticated-admin`** existe (state `e2e/.auth/admin.json`, produit
+  par le projet `setup`, cf. `e2e/auth.setup.ts`). `playwright.config.ts` déclare `webServer` avec
+  `reuseExistingServer` hors CI : lance `pnpm dev`, tes captures réutiliseront ce serveur.
+- **Si vraiment rien ne se rend**, le repli est le CSS COMPILÉ, pas le JSX. ⚠️ Piège : le CSS compilé échappe
+  les crochets **et les points** — chercher `lg:[&_>_div]:size-12` littéralement ne trouve rien et fait
+  conclure à tort « la classe n'a pas compilé ».
+- Et un scope `"use cache"` peut te servir du **HTML périmé en dev** : si une édition semble sans effet,
+  redémarre le serveur avant de chercher un bug qui n'existe pas.
 
 **Faits du projet — vérifiés le 2026-08-04. Ne les réinvente pas, ne les contredis pas ; mais si l'un
 d'eux ne correspond plus à ce que tu lis dans le repo, LE REPO GAGNE — corrige-toi et signale la dérive
@@ -178,8 +250,12 @@ pourrissent ; un catalogue voisin s'est déjà retrouvé avec ~25 % de chemins m
 - Le rose se référence par `--primary`, jamais en hex — dans le CODE. Dans les maquettes de l'artifact,
   c'est l'inverse (cf. §6).
 - Pas de `useMemo` / `useCallback` / `React.memo` / `forwardRef`, et pas de `setState` dans un `useEffect`.
+- `next/image` : la prop de préchargement est **`preload`** (booléen). `priority` a été RETIRÉE en Next 16 —
+  si une direction justifie de précharger la photo d'ouverture, dis `preload`, jamais `priority`.
 - Largeurs : storefront `max-w-6xl`, checkout `max-w-5xl`, admin `max-w-[100rem]` sans `mx-auto`. Un palier
   de colonnes en plus au-delà du plafond rétrécit les cartes au lieu d'ajouter de la place.
+- Si la surface est commerciale, l'état **boutique fermée** existe et se gère
+  (`modules/store-settings/services/store-closure-guard.ts`) — il fait partie des états durs du §4.6.
 
 ═══════════════════════════════════════════════════════════════════════════════
 4 — LE NIVEAU D'EXIGENCE (c'est ici que se joue la différence entre correct et excellent)
@@ -205,9 +281,17 @@ réellement utilisées · la base de son rythme d'espacement · l'épaisseur de 
 et la courbe de ses transitions (prises dans `MOTION_CONFIG`, pas inventées) · et toute correction optique
 assumée (un alignement qui n'est pas mathématique parce qu'il ne se VOIT pas aligné).
 
+**Sa palette en fait partie, et c'est le nombre le plus souvent omis** sur une marque dont le positionnement
+EST la couleur. Chaque direction déclare : lesquels des quatre accents elle mobilise (rose, lavande, menthe,
+soleil), en aplat ou en trait, et dans quel **rapport de surface** approximatif — « rose sur ~5 % de la
+page, en soulignement seulement » et « un aplat menthe plein cadre derrière la grille » sont deux directions
+différentes, pas deux nuances de la même. Rappel du §6 : ces accents portent des surfaces, jamais du texte.
+Une direction qui ne nomme aucun accent choisit le rose par défaut — dis-le si c'est un choix, corrige-le si
+c'est un oubli.
+
 **4.4 — Un seul geste fort, tenu jusqu'au bout, bat trois effets tièdes.** Ce qui n'aide ni à lire, ni à
 comprendre, ni à désirer : coupe-le, même si c'est joli. Casse une symétrie, contraste l'échelle typo, sors
-de la grille — mais une fois, et partout.
+de la grille, **ose la couleur** — mais une fois, et partout.
 
 **4.5 — Les mots sont du design.** Chaque direction propose sa copie réelle (titres, libellés de boutons,
 états vides), au tutoiement. « Découvrez notre collection » n'est pas de la copie, c'est un emplacement de
@@ -217,6 +301,16 @@ copie. Un bouton se nomme par ce qu'il fait pour la cliente.
 le montrer au moins une fois : un titre de produit à 60 caractères · un prix à quatre chiffres · l'état vide ·
 l'état chargement · l'erreur · la rupture de stock ET la promo en même temps · une seule ligne, et quarante.
 Une maquette qui ne marche qu'avec « Collier Aurore — 38 € » ment.
+
+**Et la PHOTO, qui est le contenu le plus laid de cette boutique-ci** — c'est l'angle mort structurel de ce
+format, parce que le §6 simule les images en `linear-gradient` et qu'un dégradé est toujours propre, bien
+cadré et du ratio qu'on a choisi. Léane photographie ses pièces elle-même : il n'y a ni studio, ni charte de
+prise de vue, ni retouche systématique. Toute direction dont la beauté repose sur l'image doit donc être
+montrée au moins une fois avec **une photo hostile**, simulée franchement : un fond qui n'est pas le blanc
+des autres · une pièce claire sur fond clair (le bijou se perd, la carte semble vide) · un cadrage portrait
+tombant dans une grille carrée · deux vignettes voisines dont les fonds ne s'accordent pas. Si ta direction
+ne tient que sur une série homogène, dis-le dans son critère d'échec (§4.7) : c'est une dépendance à un
+travail photo que personne n'a budgété.
 
 **4.7 — Déclare ce qui tuerait ta direction.** Une ligne par direction : le critère d'échec. « Si Léane
 trouve que ça fait fouillis, elle tombe » · « si le catalogue passe à 200 pièces, elle ne tient plus ».
@@ -272,6 +366,15 @@ saute pas les sections non plus :
    (§4.2) · les nombres (§4.3) · **au moins une maquette**, plus une des états durs (§4.6) · deux colonnes
    « Ce que ça règle » / « Ce que ça ne règle pas » — ou « Pourquoi je la déconseille », franchement, quand
    c'est le cas · et le critère d'échec (§4.7).
+
+   **Puis, en fin de section, le BANC D'ESSAI — c'est lui qui fait arbitrer.** Une même scène, strictement
+   identique d'une direction à l'autre (mêmes libellés, mêmes prix, même largeur, même hauteur de plaque),
+   rendue dans chacune des directions. Deux formes possibles : les plaques côte à côte si elles tiennent, ou
+   **une plaque unique et un sélecteur** (`<input type="radio">` + CSS, ou 10 lignes de JS qui permutent une
+   classe sur un conteneur — le contenu des N directions est déjà dans le DOM, on ne fait que le montrer).
+   Sans ce banc, comparer A et D demande de scroller entre deux sections séparées par vingt plaques : on
+   arbitre alors sur le souvenir, pas sur la comparaison. Ce sélecteur est le SEUL interactif réel autorisé
+   dans la page (§6 : les maquettes, elles, restent `inert`) — il pilote le document, pas une maquette.
 5. `#reco` — une seule recommandation, argumentée **contre** les autres (pourquoi pas A, pourquoi pas B),
    découpée en **lots livrables** dans un tableau `Lot | Contenu | Dépend de`. Le lot 0 regroupe les correctifs
    **indépendants de la direction** : ils se font quoi qu'il arrive. Termine par un encadré **« Ce que ça ne
@@ -281,7 +384,8 @@ saute pas les sections non plus :
    C'est la section qui empêche la session d'implémentation suivante de re-payer un bug.
 
 Footer : nature du document · chemin de la cible · date · **et l'aveu de ce que les maquettes ne rendent pas
-fidèlement** (polices substituées, animations statiques, données du seed…).
+fidèlement** (polices substituées, animations statiques, données du seed, existant reconstitué sans avoir pu
+le rendre…).
 
 ═══════════════════════════════════════════════════════════════════════════════
 6 — LES MAQUETTES (le cœur, et l'endroit où ça rate)
@@ -290,24 +394,41 @@ Chaque maquette est du **HTML/CSS écrit à la main dans la page**, qui reprodui
 capture, pas une description, pas un wireframe en boîtes grises.
 
 - **Traduis les tokens réels en valeurs littérales**, dans un bloc `.mk` portant un commentaire qui donne la
-  correspondance. Dérivation **OKLab → sRGB** faite le 2026-08-04 sur `app/globals.css` :
+  correspondance. Dérivation **OKLab → sRGB** refaite le 2026-08-04 sur `app/globals.css` :
 
-  | Token | `oklch()` en base | hex |
-  |---|---|---|
-  | `--primary` | `0.8593 0.097 340.78` | `#fdb8e4` |
-  | `--background` | `0.99 0.005 270` | `#fafcff` |
-  | `--foreground` | `0.13 0.01 270` | `#06070b` |
-  | `--muted-foreground` | `0.45 0.01 270` | `#53555b` |
-  | `--border` | `0.92 0.01 270` | `#e2e4eb` |
-  | `--card` | `1 0 0` | `#ffffff` |
-  | `--radius` | `0.75rem` | 12 px |
+  | Token | `oklch()` en base | hex | Note |
+  |---|---|---|---|
+  | `--background` | `0.99 0.005 270` | `#fafcff` | |
+  | `--foreground` | `0.13 0.01 270` | `#06070b` | 19,5:1 sur le fond |
+  | `--card` | `1 0 0` | `#ffffff` | |
+  | `--muted` / `--accent` / `--input` | `0.94 0.01 270` | `#e8ebf2` | |
+  | `--muted-foreground` | `0.45 0.01 270` | `#53555b` | 7,23:1 sur le fond |
+  | `--border` | `0.92 0.01 270` | `#e2e4eb` | |
+  | `--primary` (= `--ring`) | `0.8593 0.097 340.78` | `#fdb8e4` | le rose signature |
+  | `--secondary` | `0.9221 0.0871 86.29` | `#ffe2a2` | jaune pastel |
+  | `--color-brand-lavender` | `0.72 0.11 295` | `#a996e2` | |
+  | `--color-brand-mint` | `0.78 0.11 165` | `#6ccea6` | |
+  | `--color-brand-sun` | `0.85 0.11 86` | `#eec976` | |
+  | `--destructive` | `0.59 0.17 25` | `#cf4946` | |
+  | `--success` | `0.52 0.14 145` | `#267d30` | |
+  | `--warning` | `0.75 0.15 85` | `#d9a514` | |
+  | `--info` | `0.55 0.15 250` | `#0f74c5` | |
+  | `--radius` | `0.75rem` | 12 px | `sm .5rem` · `md 1rem` · `lg 1.25rem` · `xl 2rem` |
+
+  **Règle de couleur qui découle de ces valeurs, et qui débloque les directions colorées** : les quatre
+  accents (rose, lavande, menthe, soleil) sont **trop clairs pour porter du texte** sur le fond — 1,5 à
+  2,5:1, très en dessous d'AA. Mais avec `--foreground` POSÉ DESSUS, ils donnent 7,8 à 12,7:1. Donc :
+  **les accents sont des aplats, des traits, des halos et des fonds de badge — jamais une couleur de texte
+  sur fond clair.** Une direction franchement colorée est possible et conforme ; elle passe par la surface,
+  pas par l'encre. (Le couple `--destructive` + blanc plafonne à 4,47:1 : bon pour un bouton, juste en
+  dessous d'AA pour du petit texte — évite-le en corps de texte dans tes maquettes.)
 
   ⚠️ **Convertis en OKLab, pas en CIE Lab.** Les deux espaces ont un `L` qui ne veut pas dire la même
   chose, et la confusion est silencieuse : elle rend des gris **trop clairs et trop violacés**. Une
   version antérieure de ce prompt donnait `#1c1a21` et `#6c6577` pour les deux premiers gris — soit un
-  `--muted-foreground` à 5,4:1 sur le fond, alors que le vrai est à **7,25:1** (et que `globals.css`
+  `--muted-foreground` à 5,4:1 sur le fond, alors que le vrai est à **7,23:1** (et que `app/globals.css`
   documente « ratio 6:1+ »). Des maquettes bâties là-dessus font échouer un audit de contraste que la
-  vraie boutique passe. Pour tout autre token, relis `globals.css` et convertis — ne devine pas une
+  vraie boutique passe. Pour tout autre token, relis `app/globals.css` et convertis — ne devine pas une
   couleur « à peu près rose », et si une valeur `oklch` a changé depuis la date ci-dessus, c'est le
   fichier qui fait foi (cf. §3).
 - **Les polices ne sont pas chargeables** (CSP stricte, aucun hôte externe) : substitue une pile locale
@@ -338,12 +459,36 @@ capture, pas une description, pas un wireframe en boîtes grises.
   — écris-le en conséquence, il porte l'information pour qui ne voit pas l'image. Pour montrer un état de
   focus, fais une **plaque statique séparée** légendée « état focus » plutôt que de rendre la maquette
   focusable. Les `:hover` de démonstration, eux, marchent très bien sur un `<div>` — et si l'argument d'une
-  direction est un micro-mouvement, il doit se laisser essayer à la souris.
+  direction est un micro-mouvement, il doit se laisser essayer à la souris. Seule exception à `inert` : le
+  sélecteur du banc d'essai (§5.4), qui appartient au document et doit donc être un vrai contrôle, étiqueté
+  et atteignable au clavier.
+- **Le mouvement se maquette — mais jamais SEULEMENT en mouvement.** L'artifact est une page vivante : une
+  `transition` CSS au `:hover` d'un `<div>` fonctionne, une `@keyframes` en boucle aussi. Sers-t'en, parce
+  qu'une direction dont l'argument EST un geste (un trait qui se dessine, un panneau qui glisse, une carte
+  qui se redresse) est indémontrable en prose — c'est même le seul type d'argument que ce format perdait
+  entièrement. Trois contraintes, cumulatives :
+  · **la durée et la courbe sortent de `MOTION_CONFIG` et des `--duration-*`/`--ease-*`** (§4.3), jamais
+    d'un `0.3s ease` improvisé : une démo réglée sur des valeurs qui n'existent pas dans le repo promet un
+    rendu que l'implémentation ne pourra pas tenir ;
+  · **double toujours la démo animée d'un triptyque STATIQUE** — trois plaques côte à côte, « départ ·
+    milieu · fin ». Trois lecteurs ne verront jamais l'animation : celui qui a activé
+    `prefers-reduced-motion`, celui qui lit une capture d'écran, et **toi-même au §7** — tes captures
+    Playwright sont des images fixes, donc un argument qui n'existe qu'en mouvement échappe à ta propre
+    vérification et arrive non relu jusqu'à l'arbitrage ;
+  · **toute animation de la page a son repli `prefers-reduced-motion: reduce`** (le §7 en fait une passe de
+    capture, et le §8 l'exige des directions) : sous ce réglage une boucle décorative s'ARRÊTE, elle ne
+    ralentit pas — et l'information qu'elle portait doit rester lisible dans le triptyque.
 - **Les cibles tactiles ≥ 44 px se mesurent dans la coordonnée de la maquette, AVANT `zoom`.** À `zoom: 0.5`,
   un carré de 44 px en mesure 22 à l'écran : c'est normal et ce n'est pas un défaut de la direction. Ne
   « corrige » pas une maquette sur ce qu'affiche ta règle à l'écran.
 - Les images de produits se simulent en dégradés (`linear-gradient`) : pas d'asset externe, pas de data-URI
   lourde. Un artifact de ce type tient en moins de 150 Ko ; la limite dure est 16 Mo.
+  ⚠️ **Un dégradé flatte, et c'est le biais intégré de ce format** : il est toujours net, centré, du bon
+  ratio, et harmonisé avec ses voisins — quatre choses que les vraies photos de la boutique ne sont pas
+  (§4.6). Au moins une plaque doit donc simuler une photo HOSTILE : un dégradé quasi blanc pour la pièce
+  claire sur fond clair, un dégradé d'une famille de teinte étrangère à côté des autres pour le fond qui
+  jure, une boîte au ratio portrait dans une case carrée. Légende-la comme telle — c'est la plaque qui
+  décide, et si tu ne la dessines pas, l'arbitrage se fait sur une série idéale qui n'existe pas.
 
 ═══════════════════════════════════════════════════════════════════════════════
 7 — LE DOCUMENT LUI-MÊME, ET SA VÉRIFICATION
@@ -358,8 +503,10 @@ thème — `prefers-color-scheme` **et** `:root[data-theme]`, les deux.
 
 Écris le fichier dans le scratchpad, puis **REGARDE-LE AVANT DE PUBLIER**. C'est non négociable : le JSX ne
 dit rien du rythme d'espacement ni du contraste réel, et une maquette qui déborde ne se voit que rendue.
-Script Playwright jetable (le repo a `@playwright/test`), sur `file://<chemin du fichier>` :
-  · captures pleine page à 1440, 768 et 390 px ;
+Script Playwright jetable (le repo a `@playwright/test`), sur `file://<chemin du fichier>`, aux largeurs de
+la SSOT `VIEWPORTS` (`e2e/constants.ts`) plutôt qu'à des valeurs re-dérivées — `MOBILE` 390, `TABLET_PORTRAIT`
+768, `DESKTOP` 1280 :
+  · captures pleine page aux trois largeurs ;
   · **les DEUX mécanismes de thème, pas un seul** — une passe `colorScheme: "dark"` / `"light"` (qui ne
     pilote que `prefers-color-scheme`) ET une passe qui force `document.documentElement.dataset.theme`
     à `"dark"` puis `"light"`. C'est `data-theme` que stampe le sélecteur de thème du lecteur, et il doit
@@ -378,8 +525,10 @@ moins la capture 390 px — c'est le seul rendu qui fait foi.
 
 Publie avec `Artifact` : `<title>` dans le HTML, `description` d'une phrase, `favicon` en emoji. Pas de
 `<!doctype>`, `<html>`, `<head>` ni `<body>` — la page est enveloppée à la publication. Aucune ressource
-externe : tout inline. Republier le MÊME chemin de fichier met à jour la MÊME URL — donc corrige et
-republie autant de fois qu'il faut, le lien ne change pas.
+externe : tout inline, et **aucune capacité runtime** (pas de `capabilities`, pas d'appel `window.claude.*`,
+pas de MCP, pas de stockage persistant) — un support d'arbitrage doit rendre la même chose dans six mois.
+Republier le MÊME chemin de fichier met à jour la MÊME URL — donc corrige et republie autant de fois qu'il
+faut, le lien ne change pas.
 
 ⚠️ Cette dernière phrase ne vaut que **dans la session courante**. Si je te demande de reprendre un artifact
 publié lors d'une conversation antérieure, republier le même chemin crée une URL NEUVE et abandonne
@@ -395,11 +544,13 @@ tu n'as pas faite.
 ═══════════════════════════════════════════════════════════════════════════════
 Aucune direction ne contredit un `@regression` sans le dire explicitement dans sa colonne « ce qu'il faut
 accepter ». Aucune nouvelle dépendance, aucune police de plus. Cibles tactiles ≥ 44 px dans toutes les
-maquettes. Contraste AA sur le texte, et un état qui ne se distingue QUE par la couleur n'existe pas. Toute
-animation proposée a un repli `prefers-reduced-motion` — dis-le dans la direction, pas seulement dans le code
-futur. Toute affordance porteuse d'information révélée au survol doit l'être au focus clavier, et la règle de
-focus ne se met JAMAIS derrière `can-hover:`. Si la cible est un composant partagé, dis pour chaque direction
-si elle se propage à tous ses usages ou reste locale : « on verra » n'est pas une réponse.
+maquettes. **Contraste AA : 4,5:1 sur le texte, 3:1 sur les éléments d'interface et les états de focus** — et
+un état qui ne se distingue QUE par la couleur n'existe pas. Toute animation proposée a un repli
+`prefers-reduced-motion` — dis-le dans la direction, pas seulement dans le code futur. Toute affordance
+porteuse d'information révélée au survol doit l'être au focus clavier, et la règle de focus ne se met JAMAIS
+derrière `can-hover:` (c'est le **masquage** qu'on gate, pas la révélation — sinon le CTA reste cliquable en
+`opacity-0` sur iPad). Si la cible est un composant partagé, dis pour chaque direction si elle se propage à
+tous ses usages ou reste locale : « on verra » n'est pas une réponse.
 
 **Déjà proposé et refusé sur ce projet — ne le repropose pas.** Cette liste est le **sur-ensemble** des refus
 dispersés dans les trois autres catalogues de `docs/` ; la source de vérité reste un fichier par refus dans
@@ -415,6 +566,16 @@ signale-le pour qu'il soit ajouté ici.
   remets pas sur la table).
 - **Admin** : double bouton retour en mobile · bouton Cancel sur les formulaires de création.
 - **Formulaires** : `autoFocus`.
+- **Filtres** : refondre le pattern du `ProductFilterSheet`. Son état courant — **accordéon sur écran
+  unique**, sections repliables, « Appliquer » en pied — a été arbitré DEUX FOIS le même jour
+  (2026-05-20) : rejet de l'accordéon → drill-down master-detail « ux native like mobile » → rejet du
+  drill-down et retour à l'accordéon, « je préfère avoir tout sur la même interface », les 4 fichiers
+  supprimés. Le drill-down est donc une direction déjà écrite, déjà montrée et déjà refusée. Ne la
+  represente pas sans me poser explicitement la question.
+- **Plateforme** : PWA — manifest, service worker, page hors ligne, invite « installer l'app ». Refus
+  définitif du 2026-07-26 (« pas de pwa pas besoin ») ; 15 assets et une spec E2E entière sont partis avec.
+  ⚠️ Ça mord sur la ligne **Matrice d'états** du §2 : l'état « hors ligne » n'existe pas ici, ne le dessine
+  pas dans une matrice sous prétexte de complétude.
 - **Haptique** : parcimonieuse — jamais sur une action passive ni sur un simple affichage.
 
 Et une préférence de fond, qui n'est pas un refus mais tranche les cas limites : **patterns natifs plutôt
@@ -427,17 +588,18 @@ Quatre choses, courtes — pas un résumé de la page, je vais la lire :
 1. **L'URL de l'artifact.**
 2. **Ta recommandation en une phrase**, et le défaut principal qu'elle corrige.
 3. **La direction que tu as tuée à regret**, et pourquoi. Je veux savoir ce que j'ai failli avoir.
-4. **Ce que tu n'as pas pu vérifier** : un fichier non lu, une donnée substituée, un comportement que la
-   maquette ne rend pas, une capture que tu n'as pas pu prendre. Ne présente jamais comme observé ce que tu
-   as déduit.
+4. **Ce que tu n'as pas pu vérifier, et les dérives constatées** : un fichier non lu, une donnée substituée,
+   un comportement que la maquette ne rend pas, une capture que tu n'as pas pu prendre — et tout fait de ce
+   prompt qui ne correspondait plus au repo. Ne présente jamais comme observé ce que tu as déduit. Ce point
+   est ce qui empêche ce fichier de pourrir ; ne le saute pas parce qu'il paraît vide.
 
 ═══════════════════════════════════════════════════════════════════════════════
 BARÈME — tu seras noté là-dessus, auto-évalue-toi avant de rendre
 ═══════════════════════════════════════════════════════════════════════════════
-25  Les directions divergent vraiment, et l'une d'elles ose.
+25  Les directions divergent vraiment, l'une d'elles ose, et le banc d'essai les rend comparables.
 20  Tout ce qui est affirmé est dessiné, et les maquettes tiennent sur le contenu le plus laid.
 20  Le diagnostic est ancré (fichier:ligne, @regression, refus passés) et calibré honnêtement.
-15  L'alignement de marque : coloré et artisanal, jamais joaillerie précieuse ; échelle solo assumée.
+15  L'alignement de marque : coloré, fait main, avec quelqu'un derrière — jamais joaillerie précieuse.
 10  Le document est lui-même bien composé, thémé, sans débordement, et tu l'as REGARDÉ.
 10  La recommandation est tranchée, lotie, et dit ce qu'elle ne réglera pas.
 

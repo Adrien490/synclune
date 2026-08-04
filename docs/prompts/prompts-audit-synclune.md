@@ -902,7 +902,10 @@ Note /100, propose optimisations.
 ```text
 Audit le point « Taille du bundle » dans Synclune.
 
-Vérifie imports lourds : Stripe, Recharts, jspdf, UploadThing, heic-to, sharp, lightbox, Embla, Motion, Radix, lucide-react.
+Vérifie imports lourds : Stripe, Recharts, jspdf, UploadThing, heic-to, sharp, lightbox, Embla,
+Motion, Base UI, `@phosphor-icons/react` (chaque icône embarque ses 6 graisses dans un module
+unique : ~5× le poids gzip d'une icône lucide, et aucun sous-chemin par graisse ne permet de
+les élaguer — le seul levier est le NOMBRE d'icônes distinctes par route).
 
 Inspecte imports, routes concernées, `size-limit`, `analyse`.
 

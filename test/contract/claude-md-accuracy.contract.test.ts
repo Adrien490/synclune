@@ -81,6 +81,23 @@ const DOC_SECTION_REFERENCES: ReadonlyArray<{
 	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Composition" },
 	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "animate-out" },
 	{ citedIn: "REDESIGN-PROMPT", file: "CLAUDE.md", heading: "Voix" },
+	// `DESIGN-ARTIFACT-PROMPT.md` §3 renvoie aux mêmes sections extraites : il portait le
+	// défaut du 2026-08-05 (envoyer lire « Breakpoints » dans `CLAUDE.md`, qui n'en garde
+	// que dix puces) trois jours de plus que son voisin, faute d'être couvert ici.
+	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Breakpoints" },
+	{
+		citedIn: "DESIGN-ARTIFACT-PROMPT",
+		file: "docs/UI-CONVENTIONS.md",
+		heading: "Largeurs de contenu",
+	},
+	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Survol vs focus" },
+	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Overlays" },
+	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Composition" },
+	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "animate-out" },
+	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "CLAUDE.md", heading: "Voix" },
+	// Le brief de marque du §1 est adossé à cette section — c'est la SSOT du « colorés, PAS
+	// joaillerie précieuse », l'erreur de brief la plus coûteuse du projet.
+	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/BUSINESS.md", heading: "Positionnement" },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -269,6 +286,76 @@ describe("CLAUDE.md — les comptages correspondent au dépôt", () => {
 		const config = readFileSync(join(REPO_ROOT, "next.config.ts"), "utf-8");
 		const profiles = new Set(Array.from(config.matchAll(/^\t*(\w+): \{ stale: /gm), (m) => m[1]!));
 		expect(claimedNumber(/\*\*(\d+) cache profiles\*\*/)).toBe(profiles.size);
+	});
+});
+
+/* -------------------------------------------------------------------------- */
+/* 3bis. Comptages de la chaîne design                                         */
+/* -------------------------------------------------------------------------- */
+
+const SKIP_DIRS = new Set([
+	"node_modules",
+	".git",
+	".next",
+	".claude",
+	"coverage",
+	"playwright-report",
+	"test-results",
+	"dist",
+	".turbo",
+]);
+
+/** Fichiers de test portant un `@regression`, à l'exclusion des copies de `.claude/worktrees/`. */
+function countRegressionTestFiles(dir: string = REPO_ROOT): number {
+	let total = 0;
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		if (SKIP_DIRS.has(entry.name)) continue;
+		const full = join(dir, entry.name);
+		if (entry.isDirectory()) total += countRegressionTestFiles(full);
+		else if (
+			/\.test\.tsx?$/.test(entry.name) &&
+			readFileSync(full, "utf-8").includes("@regression")
+		)
+			total++;
+	}
+	return total;
+}
+
+/**
+ * Les assertions de comptage ci-dessus ne regardaient que `CLAUDE.md` — et c'est très
+ * exactement par ce trou que le nombre de fichiers `@regression` de
+ * `DESIGN-ARTIFACT-PROMPT.md` §3 est resté faux DEUX passes de suite : 339, puis 338 après
+ * une remédiation, pour un réel de 303. Personne ne le re-mesurait ; il était décrémenté à
+ * vue, ce qui donne à un nombre inventé l'apparence d'un fait entretenu — le pire des deux
+ * mondes, puisque le prompt s'en sert pour asseoir sa crédibilité factuelle.
+ *
+ * Tolérance de 10 % assumée, et cohérente avec le texte du prompt, qui dit lui-même « ne le
+ * crois pas au fichier près » : ce compte bouge à chaque test ajouté. On vise la dérive
+ * INSTALLÉE, pas le fichier près. L'écart 338 → 303 valait 11,6 % : il tombe.
+ */
+describe("Chaîne design — les comptages annoncés correspondent au dépôt", () => {
+	it("DESIGN-ARTIFACT-PROMPT annonce un nombre de fichiers `@regression` plausible", () => {
+		const doc = readFileSync(join(REPO_ROOT, "docs/prompts/DESIGN-ARTIFACT-PROMPT.md"), "utf-8");
+		const match = doc.match(/\*\*(\d+) fichiers\s+de test\*\*/);
+
+		expect(
+			match,
+			"DESIGN-ARTIFACT-PROMPT.md §3 ne contient plus la phrase « **N fichiers de test** ». " +
+				"Si la formulation a changé, mets ce regex à jour plutôt que de retirer l'assertion.",
+		).not.toBeNull();
+
+		const claimed = Number(match![1]);
+		const real = countRegressionTestFiles();
+		const drift = Math.abs(claimed - real) / real;
+
+		expect(
+			drift,
+			`DESIGN-ARTIFACT-PROMPT.md §3 annonce ${claimed} fichiers \`@regression\`, le dépôt en a ${real} ` +
+				`(${(drift * 100).toFixed(1)} % d'écart).\n` +
+				"Re-mesure, ne décrémente pas à vue :\n" +
+				'  grep -rl "@regression" --include="*.test.ts" --include="*.test.tsx" . \\\n' +
+				"    --exclude-dir=node_modules --exclude-dir=.claude | wc -l",
+		).toBeLessThanOrEqual(0.1);
 	});
 });
 
