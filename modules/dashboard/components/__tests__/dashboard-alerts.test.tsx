@@ -7,11 +7,11 @@ import type { DashboardActionItems, DashboardAlerts } from "../../types/dashboar
 // MOCKS
 // ============================================================================
 
-vi.mock("lucide-react", () => ({
-	CalendarClock: () => <span data-testid="icon-calendar-clock" />,
-	RotateCcw: () => <span data-testid="icon-rotate-ccw" />,
-	AlertTriangle: () => <span data-testid="icon-alert-triangle" />,
-	Clock: () => <span data-testid="icon-clock" />,
+vi.mock("@phosphor-icons/react/ssr", () => ({
+	CalendarDotIcon: () => <span data-testid="icon-calendar-clock" />,
+	ArrowCounterClockwiseIcon: () => <span data-testid="icon-rotate-ccw" />,
+	WarningIcon: () => <span data-testid="icon-alert-triangle" />,
+	ClockIcon: () => <span data-testid="icon-clock" />,
 }));
 
 vi.mock("next/link", () => ({
@@ -47,7 +47,6 @@ function makeAlerts(overrides: Partial<DashboardAlerts> = {}): DashboardAlerts {
 
 function makeActionItems(overrides: Partial<DashboardActionItems> = {}): DashboardActionItems {
 	return {
-		overbilledOrders: 0,
 		stuckProcessing: 0,
 		stuckShipped: 0,
 		stuckInvoices: 0,
@@ -106,11 +105,11 @@ describe("DashboardAlerts", () => {
 			render(
 				<DashboardAlertsComponent
 					alerts={makeAlerts()}
-					actionItems={makeActionItems({ overbilledOrders: 1, stuckProcessing: 2 })}
+					actionItems={makeActionItems({ stuckInvoices: 1, stuckProcessing: 2 })}
 				/>,
 			);
 
-			expect(screen.getByText("1 commande sur-facturée")).toBeInTheDocument();
+			expect(screen.getByText("1 facture manquante (+7 j)")).toBeInTheDocument();
 			expect(screen.getByText("2 commandes en préparation depuis +7 j")).toBeInTheDocument();
 		});
 

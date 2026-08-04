@@ -71,7 +71,7 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 			if (validationErrors.length > 0) {
 				return validationErrors[0];
 			}
-			return "Choisissez vos options pour voir la disponibilité";
+			return "Choisis tes options pour voir la disponibilité";
 		}
 		const prefix = getSelectedVariantPrefix();
 		if (selectedSku.inventory === 0 || !selectedSku.isActive) {
@@ -90,7 +90,7 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 		if (variantInfo.availableMaterials.length > 1) parts.push("le matériau");
 		if (requiresSize && variantInfo.availableSizes.length > 0) parts.push("la taille");
 		if (parts.length === 0) return "";
-		return `Choisissez ${parts.join(" et ")} pour continuer`;
+		return `Choisis ${parts.join(" et ")} pour continuer`;
 	};
 
 	// Vérifier si on doit afficher le sélecteur (plusieurs SKUs)
@@ -111,10 +111,10 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 					id="variant-selector-title"
 					className="flex items-center gap-2 text-base/6 tracking-tight antialiased"
 				>
-					Choisissez vos options
+					Choisis tes options
 				</CardTitle>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">
-					{getDescription() || "Choisissez la variante de votre choix"}
+					{getDescription() || "Choisis la variante que tu préfères"}
 				</CardDescription>
 				{/* ARIA live region pour annoncer les changements de disponibilite */}
 				<div aria-live="polite" aria-atomic="true" className="sr-only">

@@ -62,9 +62,14 @@ describe("getSkuInvalidationTags", () => {
 		expect(tags).toContain("admin-badges");
 		// Le sitemap images lit `skus.images` : toute mutation SKU doit le buster.
 		expect(tags).toContain("sitemap-images");
+		// Les cartes de collection lisent des données de SKU sous `collections-list` :
+		// le bento est fait d'images de SKU, et le « À partir de X € » d'un agrégat de
+		// `priceInclTax`. `getProductInvalidationTags` posait déjà ce tag, pas celui-ci
+		// — `update-sku-price` laissait donc la carte périmée 24 h (audit 2026-08-04).
+		expect(tags).toContain("collections-list");
 		// `sku-SKU-001` (`SKU_DETAIL`) a été retiré : aucun lecteur ne l'a jamais posé.
 		expect(tags).not.toContain("sku-SKU-001");
-		expect(tags).toHaveLength(5);
+		expect(tags).toHaveLength(6);
 	});
 
 	it("includes SKU_STOCK and SKU_DETAIL_BY_ID when skuId is provided", () => {
@@ -72,14 +77,14 @@ describe("getSkuInvalidationTags", () => {
 
 		expect(tags).toContain("sku-stock-id-123");
 		expect(tags).toContain("sku-id-id-123");
-		expect(tags).toHaveLength(7);
+		expect(tags).toHaveLength(8);
 	});
 
 	it("includes SKUS(productId) when productId is provided", () => {
 		const tags = getSkuInvalidationTags("SKU-001", "prod-123");
 
 		expect(tags).toContain("product-prod-123-skus");
-		expect(tags).toHaveLength(6);
+		expect(tags).toHaveLength(7);
 	});
 
 	it("includes DETAIL and LIST when productSlug is provided", () => {
@@ -87,7 +92,7 @@ describe("getSkuInvalidationTags", () => {
 
 		expect(tags).toContain("product-bague-or");
 		expect(tags).toContain("products-list");
-		expect(tags).toHaveLength(7);
+		expect(tags).toHaveLength(8);
 	});
 
 	it("includes all optional tags when all params provided", () => {
@@ -103,7 +108,7 @@ describe("getSkuInvalidationTags", () => {
 		expect(tags).toContain("product-prod-123-skus");
 		expect(tags).toContain("product-bague-or");
 		expect(tags).toContain("products-list");
-		expect(tags).toHaveLength(10);
+		expect(tags).toHaveLength(11);
 	});
 
 	it("cascades to colors-list + color-${slug} when affectedColorSlugs provided", () => {
@@ -164,8 +169,8 @@ describe("getSkuInvalidationTags", () => {
 
 		expect(tags).not.toContain("colors-list");
 		expect(tags).not.toContain("materials-list");
-		// Base set unchanged (4 depuis le retrait de `SKU_DETAIL`, tag sans lecteur)
-		expect(tags).toHaveLength(5);
+		// Base set inchangé : les 6 tags inconditionnels, sans cascade couleur/matériau.
+		expect(tags).toHaveLength(6);
 	});
 });
 

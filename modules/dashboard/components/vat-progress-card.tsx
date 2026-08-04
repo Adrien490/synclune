@@ -1,10 +1,10 @@
 "use client";
 
-import { Receipt } from "lucide-react";
+import { InfoIcon, ReceiptIcon } from "@phosphor-icons/react/ssr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Progress } from "@/shared/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { Info } from "lucide-react";
+
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { CSSProperties } from "react";
@@ -81,7 +81,7 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 								/>
 							}
 						>
-							<Info className="size-3.5" aria-hidden="true" />
+							<InfoIcon className="size-3.5" aria-hidden="true" />
 						</TooltipTrigger>
 						<TooltipContent side="top" className="max-w-xs">
 							<p className="text-sm">
@@ -101,7 +101,7 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 						status === "default" && "border-info/30 bg-info/15 text-info",
 					)}
 				>
-					<Receipt className="size-4" aria-hidden="true" />
+					<ReceiptIcon className="size-4" aria-hidden="true" />
 				</div>
 			</CardHeader>
 

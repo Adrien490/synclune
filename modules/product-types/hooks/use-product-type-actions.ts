@@ -1,6 +1,13 @@
 "use client";
 
-import { Copy, ExternalLink, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import {
+	ArrowSquareOutIcon,
+	CopyIcon,
+	PencilSimpleIcon,
+	ToggleLeftIcon,
+	ToggleRightIcon,
+	TrashIcon,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -77,7 +84,7 @@ export function useProductTypeActions({
 				{
 					key: "edit",
 					label: isSystem ? "Voir (lecture seule)" : "Éditer",
-					icon: Pencil,
+					icon: PencilSimpleIcon,
 					disabled: isSystem,
 					onSelect: () => {
 						if (isMobile) {
@@ -97,13 +104,13 @@ export function useProductTypeActions({
 				{
 					key: "products",
 					label: "Voir les produits",
-					icon: ExternalLink,
+					icon: ArrowSquareOutIcon,
 					href: `/admin/catalogue/produits?filter_typeId=${slug}`,
 				},
 				{
 					key: "duplicate",
 					label: "Dupliquer",
-					icon: Copy,
+					icon: CopyIcon,
 					disabled: isDuplicating,
 					onSelect: () => duplicate(productTypeId),
 				},
@@ -118,7 +125,7 @@ export function useProductTypeActions({
 							{
 								key: "toggle",
 								label: isActive ? "Désactiver" : "Activer",
-								icon: isActive ? PowerOff : Power,
+								icon: isActive ? ToggleLeftIcon : ToggleRightIcon,
 								disabled: isToggling,
 								onSelect: () => toggleStatus(productTypeId, !isActive),
 							},
@@ -131,7 +138,7 @@ export function useProductTypeActions({
 				{
 					key: "delete",
 					label: "Supprimer",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive",
 					hidden: isSystem,
 					closesMenu: false,

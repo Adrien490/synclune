@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
@@ -27,7 +27,7 @@ interface TaxonomyMobileListProps<T extends { id: string }> {
 	perPage: number;
 	hasActiveFilters?: boolean;
 	/** Icône de l'état vide (une palette, une gemme, des étiquettes…). */
-	icon: LucideIcon;
+	icon: Icon;
 	/** Phrase d'état vide hors filtres — propre à chaque taxonomie. */
 	emptyDescription: string;
 	/** Bouton de création, rendu dans l'état vide. */

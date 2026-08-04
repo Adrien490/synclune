@@ -1,4 +1,9 @@
-import { AlertTriangle, CalendarClock, Clock, RotateCcw } from "lucide-react";
+import {
+	ArrowCounterClockwiseIcon,
+	CalendarDotIcon,
+	ClockIcon,
+	WarningIcon,
+} from "@phosphor-icons/react/ssr";
 import type {
 	DashboardActionItems,
 	DashboardAlerts as DashboardAlertsData,
@@ -25,12 +30,6 @@ type ActionItemDescriptor = {
 
 // Descripteurs des éléments « à traiter ». L'ordre = priorité d'affichage.
 const ACTION_ITEMS: readonly ActionItemDescriptor[] = [
-	{
-		key: "overbilledOrders",
-		href: "/admin/ventes/commandes",
-		icon: "alert",
-		label: (n) => `${n} commande${n > 1 ? "s" : ""} sur-facturée${n > 1 ? "s" : ""}`,
-	},
 	{
 		key: "stuckInvoices",
 		href: "/admin/ventes/facturation",
@@ -98,7 +97,7 @@ export function DashboardAlerts({ alerts, actionItems, urssafDeadline }: Dashboa
 					href="https://www.autoentrepreneur.urssaf.fr"
 					external
 					tone="info"
-					icon={<CalendarClock className="text-info size-4" aria-hidden="true" />}
+					icon={<CalendarDotIcon className="text-info size-4" aria-hidden="true" />}
 				>
 					Déclaration URSSAF {urssafAlert.quarterLabel} dans {urssafAlert.daysUntil} jour
 					{urssafAlert.daysUntil > 1 ? "s" : ""}
@@ -109,7 +108,7 @@ export function DashboardAlerts({ alerts, actionItems, urssafDeadline }: Dashboa
 				<DashboardAlertLink
 					href="/admin/ventes/remboursements"
 					tone="warning"
-					icon={<RotateCcw className="text-warning size-4" aria-hidden="true" />}
+					icon={<ArrowCounterClockwiseIcon className="text-warning size-4" aria-hidden="true" />}
 				>
 					{refundsNeedingAttention} remboursement{refundsNeedingAttention > 1 ? "s" : ""} à
 					rattraper — lance « Réconcilier » depuis la page Maintenance
@@ -123,9 +122,9 @@ export function DashboardAlerts({ alerts, actionItems, urssafDeadline }: Dashboa
 					tone="warning"
 					icon={
 						item.icon === "alert" ? (
-							<AlertTriangle className="text-warning size-4" aria-hidden="true" />
+							<WarningIcon className="text-warning size-4" aria-hidden="true" />
 						) : (
-							<Clock className="text-warning size-4" aria-hidden="true" />
+							<ClockIcon className="text-warning size-4" aria-hidden="true" />
 						)
 					}
 				>

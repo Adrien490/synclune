@@ -1,6 +1,13 @@
 "use client";
 
-import { Copy, ExternalLink, Power, PowerOff, SquarePen, Trash2 } from "lucide-react";
+import {
+	ArrowSquareOutIcon,
+	CopyIcon,
+	NotePencilIcon,
+	ToggleLeftIcon,
+	ToggleRightIcon,
+	TrashIcon,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -67,7 +74,7 @@ export function useMaterialActions({
 				{
 					key: "edit",
 					label: "Éditer",
-					icon: SquarePen,
+					icon: NotePencilIcon,
 					onSelect: () => {
 						if (isMobile) {
 							router.push(`/admin/catalogue/materiaux/${materialSlug}/modifier`);
@@ -87,20 +94,20 @@ export function useMaterialActions({
 				{
 					key: "duplicate",
 					label: "Dupliquer",
-					icon: Copy,
+					icon: CopyIcon,
 					disabled: isDuplicating,
 					onSelect: () => duplicate(materialId),
 				},
 				{
 					key: "variants",
 					label: "Voir les variantes",
-					icon: ExternalLink,
+					icon: ArrowSquareOutIcon,
 					href: `/admin/catalogue/inventaire?materialId=${materialId}`,
 				},
 				{
 					key: "toggle",
 					label: materialIsActive ? "Désactiver" : "Activer",
-					icon: materialIsActive ? PowerOff : Power,
+					icon: materialIsActive ? ToggleLeftIcon : ToggleRightIcon,
 					disabled: isToggling,
 					onSelect: () => toggleStatus(materialId, !materialIsActive),
 				},
@@ -112,7 +119,7 @@ export function useMaterialActions({
 				{
 					key: "delete",
 					label: "Supprimer",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive",
 					closesMenu: false,
 					onSelect: () => openAlert({ id: materialId, displayName: materialName }),

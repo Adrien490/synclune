@@ -1,6 +1,13 @@
 "use client";
 
-import { Copy, ExternalLink, Power, PowerOff, SquarePen, Trash2 } from "lucide-react";
+import {
+	ArrowSquareOutIcon,
+	CopyIcon,
+	NotePencilIcon,
+	ToggleLeftIcon,
+	ToggleRightIcon,
+	TrashIcon,
+} from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -73,7 +80,7 @@ export function useColorActions({
 				{
 					key: "edit",
 					label: "Éditer",
-					icon: SquarePen,
+					icon: NotePencilIcon,
 					onSelect: () => {
 						if (isMobile) {
 							router.push(`/admin/catalogue/couleurs/${colorSlug}/modifier`);
@@ -93,14 +100,14 @@ export function useColorActions({
 				{
 					key: "duplicate",
 					label: "Dupliquer",
-					icon: Copy,
+					icon: CopyIcon,
 					disabled: isDuplicating,
 					onSelect: () => duplicate(colorId),
 				},
 				{
 					key: "variants",
 					label: "Voir les variantes",
-					icon: ExternalLink,
+					icon: ArrowSquareOutIcon,
 					href: `/admin/catalogue/inventaire?colorId=${colorId}`,
 				},
 				// En mobile, la liste n'affiche l'état que sous forme de badge en lecture
@@ -113,7 +120,7 @@ export function useColorActions({
 							{
 								key: "toggle",
 								label: colorIsActive ? "Désactiver" : "Activer",
-								icon: colorIsActive ? PowerOff : Power,
+								icon: colorIsActive ? ToggleLeftIcon : ToggleRightIcon,
 								disabled: isToggling,
 								onSelect: () => toggleStatus(colorId, !colorIsActive),
 							},
@@ -126,7 +133,7 @@ export function useColorActions({
 				{
 					key: "delete",
 					label: "Supprimer",
-					icon: Trash2,
+					icon: TrashIcon,
 					variant: "destructive",
 					closesMenu: false,
 					onSelect: () => openAlert({ id: colorId, displayName: colorName }),
