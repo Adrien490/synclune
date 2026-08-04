@@ -8,7 +8,6 @@ import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as
 import { MarkAsProcessingAlertDialog } from "@/modules/orders/components/admin/mark-as-processing-alert-dialog";
 import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mark-as-returned-alert-dialog";
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
-import { OrderNotesDialog } from "@/modules/orders/components/admin/order-notes-dialog";
 import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
 import { UndoReturnAlertDialog } from "@/modules/orders/components/admin/undo-return-alert-dialog";
 
@@ -25,7 +24,6 @@ export function OrdersAdminDialogs() {
 			<MarkAsReturnedAlertDialog />
 			<UndoReturnAlertDialog />
 			<MarkAsFullyRefundedAlertDialog />
-			<OrderNotesDialog />
 		</>
 	);
 }

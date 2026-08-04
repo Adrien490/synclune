@@ -102,8 +102,9 @@ elle seule, qui fixe la latence de révocation de toute l'application.
 ## Cron RGPD critique — `hard-delete-retention` (mensuel)
 
 - Purge les PII des commandes à `paidAt + 10 ans` (RGPD Art. 5.1.e). Un échec silencieux = PII conservée trop longtemps (risque CNIL).
-- Périmètre : ligne `Order` (opérationnel + snapshot/PDF + `stripePaymentIntentId` + `trackingNumber`/`trackingUrl`), **avoirs partiels `Refund`** (PDF + note libre), **`OrderNote.content`**, **`OrderHistory.note`/`metadata`** (neutralisés à l'échéance — arbitrage 2026-08-03, cf. `CLAUDE.md` invariant 3), + commandes jamais payées à 3 ans. SSOT : `modules/orders/constants/pii-scrub.ts` — ne jamais recopier la liste ailleurs, la lire.
-  _Il n'y a plus de colonnes `billing*` (retirées le 2026-08-04) : l'adresse portée par la facture est l'adresse de livraison, déjà couverte par le scrub `shipping*`._
+- Périmètre : ligne `Order` (opérationnel + snapshot/PDF + `stripePaymentIntentId` + `trackingNumber`/`trackingUrl`), **avoirs partiels `Refund`** (PDF + note libre), **`OrderHistory.note`/`metadata`** (neutralisés à l'échéance — arbitrage 2026-08-03, cf. `CLAUDE.md` invariant 3), + commandes jamais payées à 3 ans. SSOT : `modules/orders/constants/pii-scrub.ts` — ne jamais recopier la liste ailleurs, la lire.
+  - ⚠️ `OrderNote.content` figurait ici jusqu'au 2026-08-05 : le modèle `OrderNote` a été retiré (audit V2, Lot 1). `OrderHistory.note` est désormais la **seule** surface de texte libre attachée à une commande — sa neutralisation à l'échéance n'a plus de doublure.
+    _Il n'y a plus de colonnes `billing*` (retirées le 2026-08-04) : l'adresse portée par la facture est l'adresse de livraison, déjà couverte par le scrub `shipping*`._
 - Une **alerte admin** est émise en cas d'échec (audit §4.3). Vérifier mensuellement qu'aucune alerte n'est remontée ; sinon, **relancer le job à la main** (§ ci-dessous — il n'est PAS sur la page Maintenance).
 
 ### Demande d'effacement RGPD d'un client (procédure manuelle — SEUL chemin)
