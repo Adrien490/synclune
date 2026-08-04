@@ -124,7 +124,10 @@ model ProductType {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([isActive])
+  // Pas d'`@@index([isActive])` (audit schéma V4) : une dizaine de lignes, que
+  // Postgres parcourt en moins d'une milliseconde. Même arbitrage que les 5 index
+  // d'`Order` retirés à la V1 — ce qu'ils coûtaient, c'était de l'écriture et du
+  // bruit de schéma, pas une performance mesurable.
 }
 
 model Color {
@@ -139,7 +142,7 @@ model Color {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([isActive])
+  // Pas d'`@@index([isActive])` — cf. `ProductType`.
 }
 
 model Material {
@@ -153,7 +156,7 @@ model Material {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([isActive])
+  // Pas d'`@@index([isActive])` — cf. `ProductType`.
 }
 
 model ProductSkuColor {
@@ -166,9 +169,12 @@ model ProductSkuColor {
 
   // PK composite : la clé surrogate `id` n'était sélectionnée nulle part, et
   // `@@unique([skuId, colorId])` portait déjà l'identité de la ligne.
+  // Pas d'`@@index([skuId, position])` (audit schéma V4) : depuis la PK composite,
+  // le préfixe `skuId` est déjà indexé, et `position` ne trie que 2 à 3 lignes par
+  // SKU (`ARRAY_LIMITS.SKU_COLORS`). `[colorId]` reste : c'est lui que consulte le
+  // contrôle d'intégrité d'`onDelete: Restrict` à chaque suppression de couleur.
   @@id([skuId, colorId])
   @@index([colorId])
-  @@index([skuId, position])
 }
 
 model ProductSkuMaterial {
@@ -181,9 +187,9 @@ model ProductSkuMaterial {
 
   // PK composite : la clé surrogate `id` n'était sélectionnée nulle part, et
   // `@@unique([skuId, materialId])` portait déjà l'identité de la ligne.
+  // Pas d'`@@index([skuId, position])` — cf. `ProductSkuColor`.
   @@id([skuId, materialId])
   @@index([materialId])
-  @@index([skuId, position])
 }
 
 model Collection {
@@ -197,7 +203,8 @@ model Collection {
   updatedAt DateTime            @updatedAt
   products  ProductCollection[]
 
-  @@index([status])
+  // Pas d'`@@index([status])` — cf. `ProductType`. Le filtre par statut de la liste
+  // admin porte sur une poignée de lignes.
 }
 
 model ProductCollection {
@@ -243,9 +250,13 @@ model Product {
   //   Product_description_unaccent_trgm_idx
   //   Product_title_unaccent_trgm_idx
 
+  // Pas d'`@@index([status, deletedAt])` (audit schéma V4) : `[status, createdAt]`
+  // ci-dessous sert déjà l'égalité sur `status` ET le tri de toutes les listes
+  // catalogue ; `deletedAt` se filtre ensuite sur un ensemble déjà réduit. Deux
+  // index composites qui se recouvrent sur une table de quelques centaines de
+  // lignes, c'est du bruit.
   @@index([typeId])
   @@index([status, createdAt(sort: Desc)])
-  @@index([status, deletedAt])
 }
 
 model ProductSku {
@@ -302,8 +313,11 @@ model SkuMedia {
   //   SkuMedia_dimensions_positive
   //   SkuMedia_one_primary_per_sku
 
+  // Pas d'`@@index([skuId, isPrimary])` (audit schéma V4) : l'index UNIQUE PARTIEL
+  // `SkuMedia_one_primary_per_sku` — (skuId) WHERE isPrimary = true — sert déjà
+  // « le média principal de ce SKU », et en mieux. L'ordre canonique du dépôt
+  // (`isPrimary desc, position asc, id asc`) n'était servi par aucun des deux.
   @@index([skuId, position])
-  @@index([skuId, isPrimary])
 }
 
 enum OrderStatus {
@@ -718,9 +732,12 @@ model Refund {
   // Stripe passent par la contrainte `@unique`, et les deux requêtes qui
   // combinent les colonnes ne testent qu'une NULLITÉ, la sélectivité venant de
   // `status`, déjà couvert en préfixe par `[status, processedAt]`.
+  // Pas d'`@@index([createdAt])` (audit schéma V4) : la liste admin trie sur
+  // `[{createdAt}, {id: "asc"}]` (pagination par curseur), que cet index ne couvrait
+  // pas — et `Refund` atteint quelques centaines de lignes en dix ans. `[orderId]` et
+  // `[status, processedAt]` restent : eux servent des `where` (garde SAGA, DLQ).
   @@index([orderId])
   @@index([status, processedAt])
-  @@index([createdAt(sort: Desc)])
 }
 
 enum WebhookEventStatus {
