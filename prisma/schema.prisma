@@ -402,18 +402,44 @@ model Order {
   invoiceNumber      String?        @unique @db.VarChar(30)
   invoiceStatus      InvoiceStatus?
   invoiceGeneratedAt DateTime?
-  invoiceVoidedAt    DateTime?
+
+  // Pas d'`invoiceVoidedAt` : `void-invoice.service.ts` l'écrivait dans le MÊME
+  // `update` et avec la MÊME valeur que `creditNoteGeneratedAt` — deux colonnes
+  // pour une date. La date d'annulation, c'est celle de l'avoir qui l'annule
+  // (Art. 272-I : c'est l'avoir qui porte la correction), et `invoiceStatus`
+  // dit qu'elle est annulée.
 
   creditNoteNumber      String?   @unique @db.VarChar(30)
   creditNoteGeneratedAt DateTime?
   creditNotePdfUrl      String?   @db.VarChar(2048)
   creditNotePdfHash     String?   @db.VarChar(64)
 
+  // Le PDF archivé EST la facture au sens de l'Art. L102 B LPF, et son SHA-256
+  // est re-vérifié à CHAQUE téléchargement contre l'artefact réellement servi
+  // (EINV-PDF-006, routes facture/avoir) : c'est lui qui détecte une copie
+  // UploadThing corrompue. Ne jamais réécrire un `*PdfHash` après émission.
   invoicePdfUrl  String? @db.VarChar(2048)
   invoicePdfHash String? @db.VarChar(64)
 
-  invoiceDataSnapshot Json?
-  invoiceDataHash     String? @db.VarChar(64)
+  // Pas d'`invoiceDataSnapshot`/`invoiceDataHash` (retirés 2026-08-05) : c'était
+  // une SECONDE preuve du même document — le JSON canonicalisé des données de
+  // facture, figé sous son propre SHA-256, à côté du PDF déjà archivé et déjà
+  // hashé. Deux pièces probantes pour un seul document, chacune avec sa
+  // machinerie (canonicalisation, versionnement de format, vérification
+  // d'intégrité, backfill).
+  //
+  // ⚠️ CE QUE ÇA DÉPLACE, et qu'il faut tenir : l'identité VENDEUR n'est plus
+  // figée nulle part en base (`Order.vendor*` avait été droppé en s'appuyant sur
+  // ce snapshot). Elle ne survit que DANS LE PDF ARCHIVÉ. Conséquence directe :
+  //   - le PDF archivé fait foi, toujours ;
+  //   - une régénération est un DÉPANNAGE best-effort qui porte l'identité
+  //     vendeur COURANTE, et ne doit jamais être présentée comme l'original ;
+  //   - donc l'archivage n'est pas optionnel — c'est `reconcile-invoices`
+  //     (seul cron monitoré Sentry) qui garantit qu'aucune facture ne reste sans
+  //     archive, via un prédicat DÉRIVÉ : `invoiceNumber != null AND
+  //     invoicePdfUrl == null`.
+  // Rouvrir un snapshot de données exigerait de re-verser l'identité vendeur
+  // dedans, dans la MÊME transaction que `invoiceNumber`.
 
   shippingCarrier   String?   @db.VarChar(30)
   trackingNumber    String?   @db.VarChar(50)
@@ -489,8 +515,6 @@ model Order {
   //   Order_creditNotePdfHash_format_check
   //   Order_customerEmail_unaccent_trgm_idx
   //   Order_customerName_unaccent_trgm_idx
-  //   Order_invoiceDataHash_format_check
-  //   Order_invoiceDataSnapshot_hash_coherence_check
   //   Order_invoiceNumber_format
   //   Order_invoicePdfHash_format_check
   //   Order_overbilledAmountCents_positive_check
@@ -565,11 +589,15 @@ model OrderItem {
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
 
-  productTitle       String  @db.VarChar(200)
-  productDescription String? @db.Text
-  productImageUrl    String? @db.VarChar(2048)
+  // Pas de `productDescription` ni de `skuSku` : tous deux n'alimentaient que le
+  // payload de facture (`InvoiceData.lines[].productDescription` / `.skuCode`),
+  // qu'aucun rendu ne dessine — `render-invoice-pdf.ts` ne trace que
+  // `productTitle` et `variantInfo`. Sans le snapshot, ils n'ont plus aucun
+  // consommateur. Les autres colonnes `product*`/`sku*` restent le SNAPSHOT figé
+  // au checkout (invariant 4).
+  productTitle    String  @db.VarChar(200)
+  productImageUrl String? @db.VarChar(2048)
 
-  skuSku        String? @db.VarChar(100)
   skuColor      String? @db.VarChar(100)
   skuColorHexes String? @db.VarChar(200)
   skuMaterial   String? @db.VarChar(100)

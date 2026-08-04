@@ -73,10 +73,6 @@ export const ORDER_PII_SCRUB = {
 	// Pas de `billing*` : les 9 colonnes ont été retirées le 2026-08-04 (jamais
 	// renseignées sur une commande réelle — cf. `buildBillingAddress`). L'adresse
 	// portée par la facture est l'adresse de livraison, déjà scrubée ci-dessus.
-	// Snapshot facture figé : la base légale ayant expiré, on efface la PII qu'il
-	// contient (buyer + adresses). Les colonnes non-PII (numéros, montants) restent.
-	invoiceDataSnapshot: Prisma.DbNull,
-	invoiceDataHash: null,
 	// PDF immuables : on nulle les pointeurs (fichiers UploadThing supprimés hors tx).
 	invoicePdfUrl: null,
 	invoicePdfHash: null,
@@ -114,25 +110,22 @@ export const REFUND_PII_SCRUB = {
 } as const;
 
 /**
- * Contenu de remplacement des `OrderNote.content` à la purge 10 ans : notes
- * internes en texte libre (échanges clients, incidents) = PII potentielle sans
- * base légale au-delà de l'échéance. La ligne (auteur staff, dates) survit.
- */
-export const PURGED_ORDER_NOTE_CONTENT =
-	"Contenu purgé — rétention légale 10 ans échue (RGPD Art. 5.1.e)";
-
-/**
  * Neutralisation des `OrderHistory` à la purge d'échéance (arbitrage 2026-08-03,
  * audit rétention PII). L'invariant « OrderHistory est immuable » vaut PENDANT
  * la rétention 10 ans (Art. L123-22) — pas au-delà : passée l'échéance, la base
- * légale des lignes expire comme celle des `OrderNote`.
+ * légale des lignes expire.
+ *
+ * ⚠️ Depuis le retrait d'`OrderNote` (2026-08-05), c'est la SEULE surface de texte
+ * libre attachée à une commande : `note` est donc le seul réceptacle des raisons
+ * d'annulation et autres saisies admin, et sa neutralisation à l'échéance n'a plus
+ * de doublure.
  *
  * Seuls les deux champs à valeurs libres sont neutralisés : `note` (texte libre
  * admin — raisons d'annulation, numéro de suivi interpolé par l'historique des
  * écritures pré-2026-08) et `metadata` (le contrat `changedFields` est sans
  * valeurs d'adresse, mais `previousTrackingNumber`/`newTrackingNumber` y portent
- * des valeurs). La ligne survit : `action`, statuts, dates, `authorId`/
- * `authorName` (staff, pas client — régression `order-history-no-customer-pii`).
+ * des valeurs). La ligne survit : `action`, statuts, dates, `authorName` (staff,
+ * pas client — régression `order-history-no-customer-pii`).
  *
  * Unique writer autorisé : `hard-delete-retention.service.ts` — allowlisté dans
  * `order-history-immutability.regression.test.ts`, qui continue de rougir sur

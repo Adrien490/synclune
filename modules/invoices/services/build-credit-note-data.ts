@@ -1,5 +1,4 @@
 import { DEFAULT_TAX_CATEGORY, type TaxCategoryCode } from "@/shared/constants/tax-categories";
-import { INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 import type {
 	InvoiceData,
@@ -88,7 +87,6 @@ export function buildCreditNoteData(
 	};
 
 	return {
-		formatVersion: INVOICE_DATA_FORMAT_VERSION,
 		invoiceNumber: refund.creditNoteNumber,
 		invoiceFormat: format,
 		issuedAt: refund.creditNoteGeneratedAt,
@@ -153,8 +151,6 @@ function buildCreditNoteLine(
 	return {
 		lineNumber: 1,
 		productTitle: `Remboursement sur facture ${originalInvoiceNumber}`,
-		productDescription: refund.reason ? `Motif : ${refund.reason}` : null,
-		skuCode: null,
 		variantInfo: { color: null, material: null, size: null },
 		quantity: 1,
 		unitPriceExclTax: lineTotal,

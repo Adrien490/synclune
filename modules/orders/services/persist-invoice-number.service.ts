@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { Prisma, HistorySource, PaymentStatus } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { BusinessError } from "@/shared/lib/actions/business-error";
@@ -11,7 +10,6 @@ import {
 import { logger } from "@/shared/lib/logger";
 import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { invoiceDataSchema } from "@/modules/invoices/schemas/invoice.schema";
-import { canonicalJsonStringify } from "@/modules/invoices/utils/canonical-json";
 import { getParisDateParts } from "@/shared/utils/timezone";
 import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import { sendAdminSequenceOverflowAlert } from "@/modules/emails/services/admin-emails";
@@ -23,17 +21,10 @@ import type { GetOrderReturn } from "../types/order.types";
 interface PersistInvoiceNumberResult {
 	invoiceNumber: string;
 	invoiceGeneratedAt: Date;
-	/**
-	 * SHA-256 du snapshot InvoiceData figé (canonical-JSON, clés triées). `null`
-	 * uniquement dans le retour idempotent (EINV-SEQ-006) si le numéro existait
-	 * déjà sur une facture legacy sans snapshot (rattrapée par `reconcile-invoices`).
-	 */
-	invoiceDataHash: string | null;
 }
 
 interface PersistInvoiceNumberOptions {
 	source?: HistorySource;
-	authorId?: string;
 	authorName?: string;
 }
 
@@ -95,7 +86,7 @@ export async function persistInvoiceNumber(
 	orderId: string,
 	options: PersistInvoiceNumberOptions = {},
 ): Promise<PersistInvoiceNumberResult | null> {
-	const { source = HistorySource.SYSTEM, authorId, authorName } = options;
+	const { source = HistorySource.SYSTEM, authorName } = options;
 
 	// Lecture unique HORS section critique (EINV-SEQ-002 + EINV-SEQ-005). Sert à la
 	// fois à résoudre le millésime d'encaissement ET à figer le snapshot comptable,
@@ -177,7 +168,6 @@ export async function persistInvoiceNumber(
 						select: {
 							invoiceNumber: true,
 							invoiceGeneratedAt: true,
-							invoiceDataHash: true,
 						},
 					});
 					if (existing?.invoiceNumber) {
@@ -188,7 +178,6 @@ export async function persistInvoiceNumber(
 							// (sémantiquement la plus proche de l'émission, Art. 289-I) pour
 							// honorer le contrat de retour `invoiceGeneratedAt: Date`.
 							invoiceGeneratedAt: existing.invoiceGeneratedAt ?? order.paidAt ?? order.createdAt,
-							invoiceDataHash: existing.invoiceDataHash,
 							idempotent: true as const,
 						};
 					}
@@ -259,30 +248,25 @@ export async function persistInvoiceNumber(
 						invoiceStatus: "GENERATED",
 						invoiceGeneratedAt: now,
 					} as GetOrderReturn;
-					const invoiceSnapshot = buildInvoiceData(orderForBuild);
+					const invoiceDraft = buildInvoiceData(orderForBuild);
 
-					// Le refine de `invoiceDataSchema` (somme des lignes == totaux) était
-					// documenté comme le filet du renderer mais n'était appelé NULLE PART en
-					// production (audit schéma 2026-07-30) : une commande aux totaux
-					// incohérents produisait une facture figée, immuable et fausse. Il tourne
-					// désormais au seul point où le snapshot devient définitif. Échouer ici
-					// est le bon comportement : l'exception est captée plus bas, la fonction
-					// rend `null`, le caller pose `invoiceRetryDeferred` et le cron
-					// `reconcile-invoices` alerte l'admin après 3 tentatives. Mieux vaut une
+					// Garde de COHÉRENCE COMPTABLE, conservée après le retrait du snapshot
+					// (2026-08-05) — et elle compte davantage depuis : le document n'est plus
+					// figé en base, mais il l'est dans le PDF archivé, dont le SHA-256 est
+					// scellé pour dix ans. Sans ce refine (somme des lignes == totaux), une
+					// commande aux totaux incohérents produirait une facture archivée,
+					// immuable et fausse. Échouer ici est le bon comportement : l'exception
+					// est captée plus bas, la fonction rend `null`, le caller pose
+					// `invoiceRetryDeferred` et `reconcile-invoices` reprend. Mieux vaut une
 					// facture différée qu'une facture fausse conservée 10 ans (Art. 289 CGI).
-					const validation = invoiceDataSchema.safeParse(invoiceSnapshot);
+					const validation = invoiceDataSchema.safeParse(invoiceDraft);
 					if (!validation.success) {
 						throw new BusinessError(
-							`Snapshot de facture invalide pour la commande ${orderId} : ` +
+							`Données de facture incohérentes pour la commande ${orderId} : ` +
 								validation.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join(" ; "),
 							"INVOICE_SNAPSHOT_INVALID",
 						);
 					}
-
-					// Le hash porte sur l'objet construit, pas sur la sortie de Zod : aucune
-					// transformation du validateur ne doit pouvoir déplacer l'empreinte.
-					const canonicalJson = canonicalJsonStringify(invoiceSnapshot);
-					const invoiceDataHash = createHash("sha256").update(canonicalJson).digest("hex");
 
 					const updated = await tx.order.update({
 						where: { id: orderId },
@@ -290,8 +274,6 @@ export async function persistInvoiceNumber(
 							invoiceNumber,
 							invoiceStatus: "GENERATED",
 							invoiceGeneratedAt: now,
-							invoiceDataSnapshot: JSON.parse(canonicalJson) as Prisma.InputJsonValue,
-							invoiceDataHash,
 						},
 						select: { invoiceNumber: true, invoiceGeneratedAt: true },
 					});
@@ -302,18 +284,16 @@ export async function persistInvoiceNumber(
 					await createOrderAuditTx(tx, {
 						orderId,
 						action: "INVOICE_GENERATED",
-						authorId,
 						authorName,
 						source,
 						note: `Facture ${invoiceNumber} générée`,
 						metadata: {
 							invoiceNumber,
 							invoiceGeneratedAt: now.toISOString(),
-							invoiceDataHash,
 						},
 					});
 
-					return { ...updated, invoiceDataHash };
+					return updated;
 				},
 				{
 					// L'attente sur pg_advisory_xact_lock compte dans le timeout de la
@@ -339,7 +319,6 @@ export async function persistInvoiceNumber(
 			return {
 				invoiceNumber: result.invoiceNumber!,
 				invoiceGeneratedAt: result.invoiceGeneratedAt!,
-				invoiceDataHash: result.invoiceDataHash,
 			};
 		} catch (e) {
 			if (

@@ -86,7 +86,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	invoiceNumber: true,
 	invoiceStatus: true,
 	invoiceGeneratedAt: true,
-	invoiceVoidedAt: true,
 	creditNoteNumber: true,
 	creditNoteGeneratedAt: true,
 	// DLQ facturation (EINV-UI-105) — escalade archivage/avoir en échec
@@ -94,15 +93,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	// Archivage PDF immuable (Art. L102 B LPF) — admin only (URL/hash sensibles)
 	invoicePdfUrl: true,
 	invoicePdfHash: true,
-	// Snapshot InvoiceData figé (Art. L102 B LPF) — source de vérité unique du
-	// rendu PDF/XML (EINV-PDF-001). `resolveInvoiceDataForRender` préfère ce
-	// snapshot à toute recomputation depuis les colonnes Order.
-	invoiceDataSnapshot: true,
-	invoiceDataHash: true,
-	// L'identité vendeur ne vit plus en colonnes : les 12 `vendor*` sont parties le
-	// 2026-08-05. Elle est figée dans `invoiceDataSnapshot`, écrit par le MÊME
-	// `update` que `invoiceNumber` — donc aucune facture ne peut naître sans elle,
-	// et c'est le snapshot que relit tout rendu ultérieur (cf. `buildSellerInfo`).
 	createdAt: true,
 	updatedAt: true,
 	items: {
@@ -110,9 +100,7 @@ export const GET_ORDER_SELECT_ADMIN = {
 			id: true,
 			skuId: true,
 			productTitle: true,
-			productDescription: true,
 			productImageUrl: true,
-			skuSku: true,
 			skuColor: true,
 			skuColorHexes: true,
 			skuMaterial: true,
@@ -194,7 +182,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	invoiceNumber: true,
 	invoiceStatus: true,
 	invoiceGeneratedAt: true,
-	invoiceVoidedAt: true,
 	creditNoteNumber: true,
 	creditNoteGeneratedAt: true,
 	createdAt: true,
@@ -204,9 +191,7 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			id: true,
 			skuId: true,
 			productTitle: true,
-			productDescription: true,
 			productImageUrl: true,
-			skuSku: true,
 			skuColor: true,
 			skuColorHexes: true,
 			skuMaterial: true,

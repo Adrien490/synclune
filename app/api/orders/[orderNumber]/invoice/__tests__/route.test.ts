@@ -289,7 +289,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 				paymentStatus: "REFUNDED",
 				paidAt: new Date("2026-03-30"),
 				invoiceStatus: "VOIDED",
-				invoiceVoidedAt: new Date("2026-05-10"),
+				creditNoteGeneratedAt: new Date("2026-05-10"),
 				creditNoteNumber: "A-2026-00007",
 			});
 			mockPrisma.order.findUnique.mockResolvedValue({
@@ -396,14 +396,14 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 	 * voidInvoice ne le réécrit jamais. Sans ré-injection, une facture VOIDED
 	 * régénérée sortait SANS le bandeau « FACTURE ANNULÉE », laissant un client
 	 * télécharger une facture annulée d'apparence valide. La route ré-injecte
-	 * voidedInfo depuis les colonnes vivantes (creditNoteNumber/invoiceVoidedAt)
+	 * voidedInfo depuis les colonnes vivantes (creditNoteNumber/creditNoteGeneratedAt)
 	 * SANS toucher au snapshot ni à son hash.
 	 */
 	describe("@regression voided-invoice-banner-from-snapshot — EINV-SEC-007", () => {
 		const VOIDED_ORDER = {
 			...PAID_ORDER,
 			invoiceStatus: "VOIDED" as const,
-			invoiceVoidedAt: new Date("2026-05-10"),
+			creditNoteGeneratedAt: new Date("2026-05-10"),
 			creditNoteNumber: "A-2026-00007",
 		};
 
@@ -429,7 +429,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 				expect.objectContaining({
 					voidedInfo: {
 						creditNoteNumber: "A-2026-00007",
-						voidedAt: VOIDED_ORDER.invoiceVoidedAt,
+						voidedAt: VOIDED_ORDER.creditNoteGeneratedAt,
 					},
 				}),
 			);

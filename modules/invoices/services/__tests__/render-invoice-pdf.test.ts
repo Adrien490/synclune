@@ -107,8 +107,6 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 			{
 				lineNumber: 1,
 				productTitle: "Collier Lune d'Argent",
-				productDescription: null,
-				skuCode: "COL-LUN-001",
 				variantInfo: { color: "Argent", material: "Argent 925", size: null },
 				quantity: 2,
 				unitPriceExclTax: 4500,
@@ -380,8 +378,6 @@ describe("renderInvoicePdf — lines and totals", () => {
 					{
 						lineNumber: 1,
 						productTitle: "Item",
-						productDescription: null,
-						skuCode: null,
 						variantInfo: { color: null, material: null, size: null },
 						quantity: 1,
 						unitPriceExclTax: 10000,

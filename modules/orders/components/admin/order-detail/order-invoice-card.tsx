@@ -173,15 +173,6 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 									{formatDateTime(order.creditNoteGeneratedAt)}
 								</DetailInfoRow>
 							)}
-							{order.invoiceVoidedAt && (
-								<DetailInfoRow
-									label="Facture annulée le"
-									labelClassName="text-xs"
-									valueClassName="mt-1 text-sm"
-								>
-									{formatDateTime(order.invoiceVoidedAt)}
-								</DetailInfoRow>
-							)}
 						</DetailInfoList>
 						<DownloadAdminCreditNoteButton
 							orderNumber={order.orderNumber}

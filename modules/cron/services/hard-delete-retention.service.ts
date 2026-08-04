@@ -8,7 +8,6 @@ import type { CronResult } from "@/modules/cron/lib/cron-result";
 import {
 	ORDER_HISTORY_PII_SCRUB,
 	ORDER_PII_SCRUB,
-	PURGED_ORDER_NOTE_CONTENT,
 	REFUND_PII_SCRUB,
 	UNPAID_ORDER_PII_SCRUB,
 } from "@/modules/orders/constants/pii-scrub";
@@ -23,7 +22,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  *
  * IMPORTANT: Accounting data (Order, Refund, OrderHistory) is NEVER hard-deleted —
  * order numbers, amounts and dates are kept for audit (Art. L123-22). But the PII it
- * carries (invoiceDataSnapshot + billing/customer/shipping + archived PDFs) is only
+ * carries (customer/shipping snapshot + archived PDFs) is only
  * retained under the legal obligation to keep the customer-identifying invoice
  * (Art. 289 CGI / RGPD Art. 17(3)(b) erasure exemption). That basis expires at
  * paidAt + 10 years, after which the PII is scrubbed (RGPD Art. 5.1.e storage
@@ -37,7 +36,6 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * - Product (and ProductSku, SkuMedia, etc. via cascade) — hard delete
  * - Order (paid) — PII purge only (row kept, PII scrubbed, invoice/credit-note PDFs deleted)
  * - Refund — per-refund credit-note PDFs deleted + pointers/note scrubbed with the parent order
- * - OrderNote — free-text content scrubbed with the parent order (row + staff author kept)
  * - OrderHistory — free-value fields (`note`, `metadata`) neutralised with the parent order
  *   (row + action/statuses/dates/staff author kept). Immutability (invariant 3) holds DURING
  *   the 10-year retention; past it the audit-trail legal basis expires too (arbitrage 2026-08-03)
@@ -67,8 +65,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * Les avoirs PARTIELS (`Refund.creditNotePdfUrl`, un par refund COMPLETED) portent
  * la même identité acheteur que la facture : leurs fichiers sont supprimés dans le
  * même lot et leurs pointeurs + note libre scrubés dans la même transaction
- * (REFUND_PII_SCRUB). Les `OrderNote.content` (texte libre, PII potentielle) sont
- * remplacés par `PURGED_ORDER_NOTE_CONTENT`.
+ * (REFUND_PII_SCRUB).
  */
 async function purgeExpiredOrderPii(
 	deadline: number,
@@ -170,19 +167,15 @@ async function purgeExpiredOrderPii(
 	}
 
 	// 2. Scrub PII + drop PDF pointers in a single transaction (compliance-critical).
-	// Refunds (avoirs partiels + note libre), OrderNotes (texte libre) et OrderHistory
-	// (note + metadata à valeurs libres) des mêmes commandes sont scrubés atomiquement
-	// avec la ligne Order : une purge partielle (Order scrubé mais avoir intact)
-	// serait invisible au retry (`piiPurgedAt` posé).
+	// Refunds (avoirs partiels + note libre) et OrderHistory (note + metadata à
+	// valeurs libres) des mêmes commandes sont scrubés atomiquement avec la ligne
+	// Order : une purge partielle (Order scrubé mais avoir intact) serait invisible
+	// au retry (`piiPurgedAt` posé).
 	const purged = await prisma.$transaction(
 		async (tx) => {
 			await tx.refund.updateMany({
 				where: { orderId: { in: orderIds } },
 				data: { ...REFUND_PII_SCRUB },
-			});
-			await tx.orderNote.updateMany({
-				where: { orderId: { in: orderIds } },
-				data: { content: PURGED_ORDER_NOTE_CONTENT },
 			});
 			// Seule mutation OrderHistory autorisée du dépôt (immuable PENDANT la
 			// rétention, pas au-delà — arbitrage 2026-08-03) : neutralise les champs
@@ -250,16 +243,7 @@ async function purgeAbandonedOrderPii(cutoff: Date): Promise<{
 
 	const purged = await prisma.$transaction(
 		async (tx) => {
-			// Les notes internes (texte libre — téléphone, adresse alternative dictée
-			// au support…) portent de la PII au même titre que les colonnes Order.
-			// Cette passe les oubliait : une commande jamais payée n'atteint JAMAIS la
-			// purge 10 ans (clé `paidAt`), donc ses notes survivaient indéfiniment,
-			// sans base légale (aucune facture) — Art. 5.1.e. Audit 2026-08-01, P2.
 			// Pas de scrub Refund ici : un refund n'existe que sur commande encaissée.
-			await tx.orderNote.updateMany({
-				where: { orderId: { in: orderIds } },
-				data: { content: PURGED_ORDER_NOTE_CONTENT },
-			});
 			// Même neutralisation OrderHistory que la purge 10 ans : une commande
 			// jamais payée n'atteint jamais la clé `paidAt`, ses lignes d'historique
 			// (raison d'annulation en texte libre…) survivraient sinon indéfiniment.

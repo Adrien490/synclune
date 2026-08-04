@@ -19,7 +19,7 @@ import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf
 import { ensureOrderCreditNoteArchived } from "@/modules/orders/services/ensure-credit-note-archived.service";
 import { ensureRefundCreditNoteArchived } from "@/modules/refunds/services/ensure-credit-note-archived.service";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
-import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve-invoice-data";
+import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { GET_ORDER_SELECT_ADMIN } from "@/modules/orders/constants/order.constants";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
@@ -263,7 +263,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 			// EINV-PDF-001 : rendre depuis le snapshot figé (Passe 0 l'a chargé en
 			// mémoire si backfill, sinon il était déjà présent ; fallback legacy
 			// uniquement si snapshot toujours absent).
-			const pdf = renderInvoicePdf(resolveInvoiceDataForRender(order));
+			const pdf = renderInvoicePdf(buildInvoiceData(order));
 			const archived = await archiveInvoicePdf(order.id, order.invoiceNumber, pdf);
 			if (archived) {
 				pdfArchiveRecovered = true;

@@ -21,7 +21,6 @@ vi.mock("@/shared/lib/stripe", () => ({
 }));
 
 import { buildInvoiceData } from "../build-invoice-data";
-import { INVOICE_DATA_FORMAT_VERSION } from "../../constants/invoice-data-format";
 import { invoiceDataSchema } from "../../schemas/invoice.schema";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 
@@ -62,7 +61,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		invoiceNumber: "F-2026-00001",
 		invoiceStatus: "GENERATED",
 		invoiceGeneratedAt: new Date("2026-05-27T18:00:00Z"),
-		invoiceVoidedAt: null,
 		creditNoteNumber: null,
 		creditNoteGeneratedAt: null,
 		invoicePdfUrl: null,
@@ -76,9 +74,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 				skuId: "sku-1",
 				productId: "product-1",
 				productTitle: "Collier Lune d'Argent",
-				productDescription: null,
 				productImageUrl: null,
-				skuSku: "COL-LUN-001",
 				skuColor: "Argent",
 				skuColorHexes: "#C0C0C0",
 				skuMaterial: "Argent 925",
@@ -109,9 +105,6 @@ describe("buildInvoiceData — B2C franchise", () => {
 	// sans marqueur de version dans le payload, un changement de forme rend
 	// `undefined` en silence sur les lignes anciennes. Cf. la régression
 	// invoice-data-format-version.
-	it("stamps the payload with the current format version", () => {
-		expect(buildInvoiceData(makeOrder()).formatVersion).toBe(INVOICE_DATA_FORMAT_VERSION);
-	});
 
 	it("snapshots invoice number + issuedAt from the Order", () => {
 		const data = buildInvoiceData(makeOrder());
@@ -168,7 +161,6 @@ describe("buildInvoiceData — B2C franchise", () => {
 		expect(data.lines).toHaveLength(1);
 		expect(data.lines[0]!.lineNumber).toBe(1);
 		expect(data.lines[0]!.productTitle).toBe("Collier Lune d'Argent");
-		expect(data.lines[0]!.skuCode).toBe("COL-LUN-001");
 		// Franchise : TVA toujours nulle, total ligne = price × quantity.
 		expect(data.lines[0]!.taxRate).toBe(0);
 		expect(data.lines[0]!.taxAmount).toBe(0);

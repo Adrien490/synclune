@@ -46,7 +46,6 @@ const GET_ORDER_TRACKING_SELECT = {
 		select: {
 			id: true,
 			productTitle: true,
-			productDescription: true,
 			productImageUrl: true,
 			skuColor: true,
 			skuMaterial: true,

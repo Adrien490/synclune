@@ -523,7 +523,6 @@ describe("createOrderInTransaction — order creation", () => {
 		expect(itemCall.data.orderId).toBe("order_1");
 		expect(itemCall.data.skuId).toBe("sku_1");
 		expect(itemCall.data.productTitle).toBe("Bague Étoile");
-		expect(itemCall.data.skuSku).toBe("SKU-001");
 		expect(itemCall.data.price).toBe(2990);
 		expect(itemCall.data.quantity).toBe(2);
 	});

@@ -60,10 +60,6 @@ ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_creditNoteNumber_format_che
 ALTER TABLE "Order" ADD CONSTRAINT "Order_creditNoteNumber_format_check" CHECK ("creditNoteNumber" IS NULL OR "creditNoteNumber" ~ '^A-[0-9]{4}-[0-9]{5}$');
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_creditNotePdfHash_format_check";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_creditNotePdfHash_format_check" CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceDataHash_format_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_invoiceDataHash_format_check" CHECK ("invoiceDataHash" IS NULL OR "invoiceDataHash" ~ '^[a-f0-9]{64}$');
-ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceDataSnapshot_hash_coherence_check";
-ALTER TABLE "Order" ADD CONSTRAINT "Order_invoiceDataSnapshot_hash_coherence_check" CHECK ( ("invoiceDataSnapshot" IS NULL AND "invoiceDataHash" IS NULL) OR ("invoiceDataSnapshot" IS NOT NULL AND "invoiceDataHash" IS NOT NULL) );
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceNumber_format";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_invoiceNumber_format" CHECK ("invoiceNumber" IS NULL OR "invoiceNumber" ~ '^F-[0-9]{4}-[0-9]{5}$');
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoicePdfHash_format_check";

@@ -1,5 +1,5 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 
 import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
@@ -7,9 +7,7 @@ import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants"
 
 interface OrderItem {
 	id: string;
-	productId: string | null;
 	productTitle: string;
-	productDescription: string | null;
 	productImageUrl: string | null;
 	skuColor: string | null;
 	skuMaterial: string | null;
@@ -26,7 +24,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 	return (
 		<section className="space-y-4">
 			<h2 className="flex items-center gap-2 text-base font-semibold">
-				<ShoppingBag className="text-muted-foreground size-4" />
+				<ShoppingBagIcon className="text-muted-foreground size-4" />
 				Articles commandés ({items.length})
 			</h2>
 			<div className="border-border/60 border-t pt-4">

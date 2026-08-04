@@ -1,12 +1,8 @@
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import * as Sentry from "@sentry/nextjs";
-import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve-invoice-data";
-import {
-	InvoiceSnapshotIntegrityError,
-	InvoiceSnapshotVersionError,
-} from "@/modules/invoices/services/verify-invoice-snapshot";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
+import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { flagInvoiceFailureForReconcile } from "@/modules/orders/services/ensure-invoice-number.service";
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
@@ -54,14 +50,12 @@ const UPLOADTHING_FETCH_TIMEOUT_MS = 5_000;
 async function recordInvoiceDownload(params: {
 	orderId: string;
 	invoiceNumber: string | null;
-	authorId: string | undefined;
 	source: HistorySource;
 }): Promise<void> {
 	try {
 		await createOrderAudit({
 			orderId: params.orderId,
 			action: OrderAction.INVOICE_DOWNLOADED,
-			authorId: params.authorId,
 			source: params.source,
 			metadata: {
 				invoiceNumber: params.invoiceNumber,
@@ -263,10 +257,6 @@ export async function GET(
 		select: {
 			invoicePdfUrl: true,
 			invoicePdfHash: true,
-			// EINV-PDF-001 : snapshot figé pour le rendu de fallback (cf. plus bas).
-			// Pas dans GET_ORDER_SELECT_CUSTOMER (minimisation) — select ciblé ici.
-			invoiceDataSnapshot: true,
-			invoiceDataHash: true,
 			// F6 (RGPD-PII-AUDIT 2026-05-30) : marqueur de purge PII à 10 ans.
 			piiPurgedAt: true,
 		},
@@ -287,7 +277,6 @@ export async function GET(
 
 	// Source de l'audit-trail EINV-SEC-002.
 	const auditSource: HistorySource = isAdmin ? HistorySource.ADMIN : HistorySource.CUSTOMER;
-	const auditAuthorId = session?.user.id;
 
 	// EINV-SEC-007 : si la facture est VOIDED, on régénère systématiquement
 	// pour incruster le bandeau "FACTURE ANNULÉE — Avoir A-YYYY-NNNNN" (Art. 272-I CGI).
@@ -377,7 +366,6 @@ export async function GET(
 					await recordInvoiceDownload({
 						orderId: order.id,
 						invoiceNumber: invoiceOrder.invoiceNumber,
-						authorId: auditAuthorId,
 						source: auditSource,
 					});
 					return new Response(buffer, {
@@ -403,80 +391,37 @@ export async function GET(
 		invoicePath = "lazy_regenerate";
 	}
 
-	// EINV-PDF-001 : rendre depuis le snapshot figé (`invoiceDataSnapshot`) en
-	// priorité, jamais depuis une recomputation des colonnes Order live. Le
-	// resolver vérifie aussi l'intégrité (SHA-256 canonical-JSON vs
-	// `invoiceDataHash`) — EINV-PDF-003.
+	// ⚠️ CHEMIN DE DÉPANNAGE, pas le chemin nominal. Le document qui fait foi est
+	// le PDF ARCHIVÉ, servi plus haut et vérifié contre `invoicePdfHash`
+	// (EINV-PDF-006). On n'arrive ici que si l'archive manque ou est illisible.
+	//
+	// Depuis le retrait du snapshot de données (2026-08-05), cette régénération
+	// reconstruit la facture depuis les colonnes VIVANTES et depuis l'identité
+	// vendeur COURANTE (env) : elle peut donc diverger de l'original si l'une ou
+	// l'autre a changé. C'est assumé — mais c'est ce qui rend l'archivage
+	// non-négociable, et c'est pourquoi `reconcile-invoices` reprend en boucle
+	// toute facture numérotée sans `invoicePdfUrl`.
 	let pdfBuffer: ArrayBuffer;
 	try {
-		let invoiceData = resolveInvoiceDataForRender(invoiceOrder, {
-			invoiceDataSnapshot: archive?.invoiceDataSnapshot,
-			invoiceDataHash: archive?.invoiceDataHash,
-		});
-		// EINV-SEC-007 (fix régression) : le snapshot figé l'a été à l'état
-		// GENERATED (persist-invoice-number), donc `voidedInfo = null` par
-		// construction. `voidInvoice` ne réécrit jamais le snapshot. À la
-		// régénération d'une facture VOIDED, le resolver sert donc le snapshot tel
-		// quel → PDF SANS bandeau « FACTURE ANNULÉE », neutralisant l'intention de
-		// EINV-SEC-007 (bypass archive + bypass check hash plus haut). On ré-injecte
-		// `voidedInfo` dérivé des colonnes VIVANTES (creditNoteNumber/invoiceVoidedAt)
-		// — sans muter `invoiceDataSnapshot` ni `invoiceDataHash` : la donnée
-		// comptable figée (Art. L102 B LPF) reste intacte, seul le rendu est estampillé.
+		let invoiceData = buildInvoiceData(invoiceOrder);
+		// Le bandeau « FACTURE ANNULÉE » est dérivé des colonnes vivantes : la date
+		// d'annulation est celle de l'avoir qui la porte (`creditNoteGeneratedAt`).
 		if (
 			isVoidedInvoice &&
 			invoiceData.voidedInfo === null &&
 			invoiceOrder.creditNoteNumber &&
-			invoiceOrder.invoiceVoidedAt
+			invoiceOrder.creditNoteGeneratedAt
 		) {
 			invoiceData = {
 				...invoiceData,
 				voidedInfo: {
 					creditNoteNumber: invoiceOrder.creditNoteNumber,
-					voidedAt: invoiceOrder.invoiceVoidedAt,
+					voidedAt: invoiceOrder.creditNoteGeneratedAt,
 				},
 			};
 		}
 		pdfBuffer = renderInvoicePdf(invoiceData);
 	} catch (error) {
-		if (error instanceof InvoiceSnapshotVersionError) {
-			// Snapshot écrit par un déploiement plus récent : le hash est bon mais la
-			// forme des données est inconnue de ce build (rollback, instance en retard).
-			// Rendre reviendrait à réinterpréter des champs — refus + 503 le temps que
-			// l'instance rattrape. Cf. INVOICE_DATA_FORMAT_VERSION.
-			logger.error("Invoice snapshot format version unsupported — refusing to render", error, {
-				service: "invoice-route",
-				orderId: order.id,
-				invoiceNumber: invoiceOrder.invoiceNumber ?? undefined,
-			});
-			Sentry.captureException(error, {
-				fingerprint: ["invoice", "snapshot-version", String(error.snapshotVersion)],
-				tags: { service: "invoice-route" },
-				extra: { orderId: order.id, invoiceNumber: invoiceOrder.invoiceNumber },
-			});
-			return new Response("Facture temporairement indisponible (mise à jour en cours).", {
-				status: 503,
-				headers: { "Retry-After": "60" },
-			});
-		}
-		if (error instanceof InvoiceSnapshotIntegrityError) {
-			// Snapshot comptable corrompu/altéré : refuser de servir un document
-			// non conforme (Art. L102 B LPF) plutôt que de rendre des données
-			// divergentes. Alerte Sentry pour investigation manuelle.
-			logger.error("Invoice snapshot integrity check failed — refusing to render", error, {
-				service: "invoice-route",
-				orderId: order.id,
-				invoiceNumber: invoiceOrder.invoiceNumber ?? undefined,
-			});
-			Sentry.captureException(error, {
-				fingerprint: ["invoice", "snapshot-integrity", invoiceOrder.invoiceNumber ?? "unknown"],
-				tags: { service: "invoice-route" },
-				extra: { orderId: order.id, invoiceNumber: invoiceOrder.invoiceNumber },
-			});
-			return new Response(
-				"Facture temporairement indisponible (vérification d'intégrité en cours).",
-				{ status: 503, headers: { "Retry-After": "60" } },
-			);
-		}
 		throw error;
 	}
 
@@ -537,7 +482,6 @@ export async function GET(
 	await recordInvoiceDownload({
 		orderId: order.id,
 		invoiceNumber: invoiceOrder.invoiceNumber,
-		authorId: auditAuthorId,
 		source: auditSource,
 	});
 

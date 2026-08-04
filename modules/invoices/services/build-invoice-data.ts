@@ -1,5 +1,4 @@
 import { getVendorLegalInfo } from "@/shared/lib/stripe";
-import { INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 import { normalizeFiscalIdentifier } from "@/shared/schemas/b2b-identifiers.schema";
 import {
@@ -74,7 +73,6 @@ export function buildInvoiceData(
 	const voidedInfo = buildVoidedInfo(order);
 
 	return {
-		formatVersion: INVOICE_DATA_FORMAT_VERSION,
 		invoiceNumber: order.invoiceNumber,
 		invoiceFormat: format,
 		issuedAt: order.invoiceGeneratedAt,
@@ -96,13 +94,11 @@ export function buildInvoiceData(
 			// Le `?? null` n'est pas cosmétique : ce builder est appelé sur deux formes
 			// d'order. Le chemin qui COMPTE — l'écriture du snapshot figé par
 			// `persistInvoiceNumber` — charge en `GET_ORDER_SELECT_ADMIN`, donc la vraie
-			// valeur. Les chemins de RENDU (`resolveInvoiceDataForRender` en fallback
-			// legacy, `renderOrderCreditNotePdf`) chargent en `GET_ORDER_SELECT_CUSTOMER`
-			// puis castent : la propriété est alors absente, `undefined`, et sans ce
-			// coalescing elle DISPARAÎTRAIT du JSON au lieu de valoir `null` — une
-			// divergence de forme du payload, exactement ce que `formatVersion` sert à
-			// interdire. Avec, ces chemins rendent `null`, à l'octet ce qu'ils rendaient
-			// avant la migration.
+			// valeur. Les chemins de RENDU chargent en `GET_ORDER_SELECT_CUSTOMER` puis
+			// castent : la propriété est alors absente, `undefined`. Le coalescing la
+			// ramène à `null` pour que le PDF rendu soit identique quel que soit le
+			// select d'origine — c'est ce qui rend `renderInvoicePdf` déterministe, et
+			// donc le SHA-256 de l'archive reproductible.
 			stripeChargeId: order.stripeChargeId ?? null,
 		},
 		precedingInvoice,
@@ -124,10 +120,12 @@ export function buildInvoiceData(
  */
 function buildVoidedInfo(order: GetOrderReturn): VoidedInfo | null {
 	if (order.invoiceStatus !== "VOIDED") return null;
-	if (!order.creditNoteNumber || !order.invoiceVoidedAt) return null;
+	// La date d'annulation, c'est celle de l'avoir qui la porte : `invoiceVoidedAt`
+	// a été retirée (2026-08-05), elle recevait la MÊME valeur dans le MÊME update.
+	if (!order.creditNoteNumber || !order.creditNoteGeneratedAt) return null;
 	return {
 		creditNoteNumber: order.creditNoteNumber,
-		voidedAt: order.invoiceVoidedAt,
+		voidedAt: order.creditNoteGeneratedAt,
 	};
 }
 
@@ -138,12 +136,12 @@ function buildVoidedInfo(order: GetOrderReturn): VoidedInfo | null {
 /**
  * Construit le SellerInfo depuis l'identite vendeur courante (env).
  *
- * ⚠️ Ce n'est PAS un raccourci au regard de l'Art. L102 B LPF : le resultat est
- * fige, canonicalise et hashe dans `Order.invoiceDataSnapshot` au moment meme de
- * l'attribution du numero (`persistInvoiceNumber`), et c'est ce snapshot — pas
- * cette fonction — que tout rendu ulterieur relit (`resolveInvoiceDataForRender`).
- * Une facture emise conserve donc l'identite vendeur de son emission meme si l'env
- * change ensuite.
+ * ⚠️ Depuis le retrait du snapshot de donnees (2026-08-05), cette fonction lit
+ * TOUJOURS l'env COURANT. L'identite vendeur d'une facture emise n'est donc figee
+ * que dans le PDF ARCHIVE, imprime a l'emission. Corollaire : une regeneration est
+ * un depannage, jamais l'original — et l'archivage n'est pas optionnel (cf. la
+ * passe derivee `invoiceNumber != null AND invoicePdfUrl == null` de
+ * `reconcile-invoices`). Cf. invariant 10 de CLAUDE.md.
  *
  * Les 12 colonnes `Order.vendor*` qui doublaient ce calcul en base sont parties le
  * 2026-08-05 : leur unique lecteur etait le backfill des factures anterieures au
@@ -224,8 +222,6 @@ export function buildBuyerInfo(order: GetOrderReturn): BuyerInfo {
 		email: order.customerEmail,
 		// Le téléphone du client vient du snapshot d'adresse : `Order.customerPhone`
 		// a été retirée le 2026-08-04, elle n'était jamais renseignée au checkout.
-		// La forme du payload est inchangée (`buyer.phone` existe toujours), donc
-		// pas de bump de INVOICE_DATA_FORMAT_VERSION — seule la valeur devient réelle.
 		phone: order.shippingPhone,
 		siret: null,
 		vatNumber: null,
@@ -301,8 +297,6 @@ function buildInvoiceLine(item: GetOrderReturn["items"][number], lineNumber: num
 	return {
 		lineNumber,
 		productTitle: item.productTitle,
-		productDescription: item.productDescription,
-		skuCode: item.skuSku,
 		variantInfo: {
 			color: item.skuColor,
 			material: item.skuMaterial,

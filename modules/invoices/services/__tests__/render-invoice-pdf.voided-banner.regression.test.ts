@@ -80,7 +80,6 @@ function makeVoidedOrder(): Order {
 		invoiceGeneratedAt: new Date("2026-05-20T10:00:00Z"),
 		// ... puis annulée avec émission d'un avoir
 		invoiceStatus: "VOIDED",
-		invoiceVoidedAt: new Date("2026-05-25T14:00:00Z"),
 		creditNoteNumber: "A-2026-00007",
 		creditNoteGeneratedAt: new Date("2026-05-25T14:00:00Z"),
 		invoicePdfUrl: null,
@@ -93,9 +92,7 @@ function makeVoidedOrder(): Order {
 				skuId: "sku-1",
 				productId: "product-1",
 				productTitle: "Pendentif Argent",
-				productDescription: null,
 				productImageUrl: null,
-				skuSku: "PEN-ARG-001",
 				skuColor: "Argent",
 				skuColorHexes: "#C0C0C0",
 				skuMaterial: "Argent 925",
@@ -128,7 +125,6 @@ describe("EINV-SEC-007 — VOIDED invoice banner regression", () => {
 	it("buildInvoiceData leaves voidedInfo null when invoiceStatus === GENERATED", () => {
 		const order = makeVoidedOrder();
 		order.invoiceStatus = "GENERATED";
-		order.invoiceVoidedAt = null;
 		order.creditNoteNumber = null;
 		order.creditNoteGeneratedAt = null;
 		const data = buildInvoiceData(order);

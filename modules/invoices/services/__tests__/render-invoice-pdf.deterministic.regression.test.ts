@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import type { InvoiceData } from "../../types/invoice-data";
-import { INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 
 // IMPORTANT : ce test n'utilise PAS le mock jsPDF de `render-invoice-pdf.test.ts`.
 // Le déterminisme se vérifie au niveau du buffer binaire produit par la vraie
@@ -23,7 +22,6 @@ import { renderInvoicePdf } from "../render-invoice-pdf";
  */
 function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 	return {
-		formatVersion: INVOICE_DATA_FORMAT_VERSION,
 		invoiceNumber: "F-2026-00042",
 		invoiceFormat: "PDF",
 		issuedAt: new Date("2026-05-28T10:30:00Z"),
@@ -79,8 +77,6 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 			{
 				lineNumber: 1,
 				productTitle: "Collier Lune d'Argent",
-				productDescription: null,
-				skuCode: "COL-LUN-001",
 				variantInfo: { color: "Argent", material: "Argent 925", size: null },
 				quantity: 2,
 				unitPriceExclTax: 4500,
@@ -152,8 +148,6 @@ describe("renderInvoicePdf — déterminisme bit-à-bit (Art. L102 B LPF)", () =
 				{
 					lineNumber: 1,
 					productTitle: "Article TVA 20",
-					productDescription: null,
-					skuCode: "ART-001",
 					variantInfo: { color: null, material: null, size: null },
 					quantity: 1,
 					unitPriceExclTax: 10000,

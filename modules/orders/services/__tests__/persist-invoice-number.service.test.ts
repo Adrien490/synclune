@@ -174,45 +174,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			expect(result?.invoiceNumber).toContain(`F-${year}-`);
 		});
 
-		it("écrit invoiceDataSnapshot (Json) + invoiceDataHash (SHA-256) dans la même tx — Art. L102 B LPF", async () => {
-			runTx();
-			mockTx.$queryRaw.mockResolvedValue([]);
-			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
-				invoiceNumber: args.data.invoiceNumber,
-				invoiceGeneratedAt: new Date(),
-			}));
 
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
-
-			expect(result?.invoiceDataHash).toMatch(/^[a-f0-9]{64}$/);
-			expect(mockTx.order.update).toHaveBeenCalledOnce();
-			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
-				data: { invoiceDataSnapshot?: unknown; invoiceDataHash?: string };
-			};
-			expect(updateArgs.data.invoiceDataHash).toBe(result?.invoiceDataHash);
-			expect(updateArgs.data.invoiceDataSnapshot).toBeDefined();
-			expect(typeof updateArgs.data.invoiceDataSnapshot).toBe("object");
-			expect(
-				(updateArgs.data.invoiceDataSnapshot as { invoiceNumber?: string }).invoiceNumber,
-			).toBe(result?.invoiceNumber);
-		});
-
-		it("hash invoiceDataHash inclus dans OrderHistory metadata (audit trail Art. L123-22)", async () => {
-			runTx();
-			mockTx.$queryRaw.mockResolvedValue([]);
-			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
-				invoiceNumber: args.data.invoiceNumber,
-				invoiceGeneratedAt: new Date(),
-			}));
-
-			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
-
-			expect(mockTx.orderHistory.create).toHaveBeenCalledOnce();
-			const historyArgs = mockTx.orderHistory.create.mock.calls[0]?.[0] as {
-				data: { metadata?: { invoiceDataHash?: string } };
-			};
-			expect(historyArgs.data.metadata?.invoiceDataHash).toBe(result?.invoiceDataHash);
-		});
 
 		it("pads the sequence to 5 digits", async () => {
 			runTx();
@@ -229,13 +191,14 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		});
 	});
 
-	describe("snapshot comptable (Art. L102 B LPF — facture reconstituable a l'identique)", () => {
-		// Depuis le 2026-08-05 l'identite vendeur ne vit plus en colonnes `Order.vendor*`
-		// mais UNIQUEMENT dans `invoiceDataSnapshot`. Ce qui doit rester vrai : le
-		// snapshot est ecrit dans le MEME `update` que le numero — sinon une facture
-		// pourrait exister sans identite figee, et sa regeneration relirait un env
-		// susceptible d'avoir change entre-temps.
-		it("fige le snapshot dans le MEME prisma.order.update que invoiceNumber (atomicite)", async () => {
+	describe("emission atomique (Art. 286 CGI)", () => {
+		// Le snapshot de donnees a ete retire le 2026-08-05 : la piece probante est le
+		// PDF archive, et l'identite vendeur n'y vit que parce qu'elle y est imprimee.
+		// Ce qui doit rester vrai ICI : les trois colonnes d'emission sont ecrites
+		// ENSEMBLE, en un seul `update`. Une facture numerotee sans `invoiceStatus`
+		// ni `invoiceGeneratedAt` serait un document a moitie ne, que ni la DLQ ni
+		// l'ecran Facturation ne sauraient classer.
+		it("ecrit numero + statut + date d'emission dans un SEUL prisma.order.update", async () => {
 			runTx();
 			mockTx.$queryRaw.mockResolvedValue([]);
 			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
@@ -249,15 +212,13 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
 				data: {
 					invoiceNumber: string;
-					invoiceDataSnapshot?: { seller?: { siren?: string; siret?: string } };
-					invoiceDataHash?: string;
+					invoiceStatus?: string;
+					invoiceGeneratedAt?: Date;
 				};
 			};
 			expect(updateArgs.data.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
-			expect(updateArgs.data.invoiceDataHash).toMatch(/^[a-f0-9]{64}$/);
-			// L'identite vendeur normalisee est bien DANS le payload hashe.
-			expect(updateArgs.data.invoiceDataSnapshot?.seller?.siren).toMatch(/^[0-9]{9}$/);
-			expect(updateArgs.data.invoiceDataSnapshot?.seller?.siret).toMatch(/^[0-9]{14}$/);
+			expect(updateArgs.data.invoiceStatus).toBe("GENERATED");
+			expect(updateArgs.data.invoiceGeneratedAt).toBeInstanceOf(Date);
 		});
 	});
 
@@ -439,13 +400,11 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			mockTx.order.findUnique.mockResolvedValue({
 				invoiceNumber: "F-2026-00007",
 				invoiceGeneratedAt: existingDate,
-				invoiceDataHash: "a".repeat(64),
 			});
 
 			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");
 
 			expect(result?.invoiceNumber).toBe("F-2026-00007");
-			expect(result?.invoiceDataHash).toBe("a".repeat(64));
 			// Pas de génération : ni lookup MAX, ni UPDATE, ni audit.
 			expect(mockTx.$queryRaw).not.toHaveBeenCalled();
 			expect(mockTx.order.update).not.toHaveBeenCalled();
@@ -459,7 +418,6 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			mockTx.order.findUnique.mockResolvedValue({
 				invoiceNumber: "F-2026-00007",
 				invoiceGeneratedAt: new Date(),
-				invoiceDataHash: "b".repeat(64),
 			});
 
 			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy");

@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { invoiceDataSchema } from "../invoice.schema";
 import type { InvoiceData } from "../../types/invoice-data";
-import { INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 
 function makeValidB2cInvoice(): InvoiceData {
 	return {
-		formatVersion: INVOICE_DATA_FORMAT_VERSION,
 		invoiceNumber: "F-2026-00001",
 		invoiceFormat: "PDF",
 		issuedAt: new Date("2026-05-27T18:00:00Z"),
@@ -61,8 +59,6 @@ function makeValidB2cInvoice(): InvoiceData {
 			{
 				lineNumber: 1,
 				productTitle: "Collier Lune d'Argent",
-				productDescription: null,
-				skuCode: "COL-LUN-001",
 				variantInfo: { color: "Argent", material: "Argent 925", size: null },
 				quantity: 2,
 				unitPriceExclTax: 4500,

@@ -11,13 +11,12 @@ import type { TaxCategoryCode } from "@/shared/constants/tax-categories";
  * la facture archivée bit-à-bit).
  *
  * ⚠️ INVARIANT « ENTIERS SEULS » (EINV-PDF-008) — tous les montants/taux/quantités
- * DOIVENT rester des **entiers** (centimes, points de base, unités). Le snapshot est
- * persisté en JSONB puis son intégrité re-vérifiée à chaque lecture via
- * `sha256(canonicalJsonStringify(snapshot_relu)) === invoiceDataHash`
- * (verify-invoice-snapshot.ts). Ce contrôle ne tient que si le round-trip JSONB
- * Postgres est byte-stable, ce qui est garanti pour entiers/strings/bool/null/arrays
- * mais PAS pour les flottants (ex. `5.50`→`5.5`, dérive de précision/notation).
- * Introduire un champ flottant casserait l'égalité de hash et lèverait
+ * DOIVENT rester des **entiers** (centimes, points de base, unités). Depuis le
+ * retrait du snapshot JSONB (2026-08-05), ce n'est plus le round-trip Postgres qui
+ * l'impose mais le **rendu déterministe** : `invoicePdfHash` est calculé sur les
+ * octets du PDF et re-vérifié à chaque téléchargement (EINV-PDF-006). Un flottant
+ * (ex. `5.50`→`5.5`) formaterait différemment d'un build à l'autre, ferait diverger
+ * le PDF régénéré de son archive et lèverait
  * `InvoiceSnapshotIntegrityError` (503) sur TOUTES les factures concernées.
  * Un taux fractionnaire doit être encodé en points de base entiers (5,5 % = `550`).
  *
@@ -28,14 +27,6 @@ import type { TaxCategoryCode } from "@/shared/constants/tax-categories";
  *  - Art. 272-I CGI (avoir) → variant via `precedingInvoice`
  */
 export interface InvoiceData {
-	/**
-	 * Version de la FORME de ce payload — SSOT `INVOICE_DATA_FORMAT_VERSION`
-	 * (`constants/invoice-data-format.ts`). À ne pas confondre avec `invoiceFormat`,
-	 * qui est le format de rendu. Absent des snapshots antérieurs à son
-	 * introduction (audit schéma 2026-07-30) ⇒ lus comme version 1.
-	 * Tout changement de forme du payload doit l'incrémenter.
-	 */
-	formatVersion: number;
 
 	// === IDENTIFIANTS ===
 	invoiceNumber: string;
@@ -99,7 +90,7 @@ export interface VoidedInfo {
  * un renderer XML existe (go-live e-reporting, cf. docs/RUNBOOK.md), pas avant.
  *
  * ⚠️ Narrowing de TYPE uniquement : ni la forme de l'objet ni l'ordre des champs ne
- * changent, donc `invoiceDataHash` (et les PDF archivés) restent inchangés.
+ * changent, donc les PDF archivés restent inchangés.
  */
 export type InvoiceFormat = "PDF";
 
@@ -156,8 +147,6 @@ export interface StructuredAddress {
 export interface InvoiceLine {
 	lineNumber: number;
 	productTitle: string;
-	productDescription: string | null;
-	skuCode: string | null;
 	variantInfo: {
 		color: string | null;
 		material: string | null;

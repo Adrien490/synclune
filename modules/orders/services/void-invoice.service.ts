@@ -74,7 +74,6 @@ export type VoidInvoiceResult =
 			kind: "voided";
 			creditNoteNumber: string;
 			creditNoteGeneratedAt: Date;
-			invoiceVoidedAt: Date;
 	  }
 	| {
 			kind: "noop";
@@ -88,7 +87,6 @@ export type VoidInvoiceResult =
 
 interface VoidInvoiceParams {
 	orderId: string;
-	authorId: string | null;
 	authorName: string;
 	source: HistorySource;
 	reason?: string;
@@ -117,7 +115,7 @@ const MAX_RETRIES = 5;
  * Cf. audits ORD-COMPLY-003 (2026-05-27) + EINV-CREDIT-008 (2026-05-28)
  */
 export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoiceResult> {
-	const { orderId, authorId, authorName, source, reason } = params;
+	const { orderId, authorName, source, reason } = params;
 
 	let lastError: unknown = null;
 
@@ -146,7 +144,6 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 							id: true,
 							invoiceNumber: true,
 							invoiceStatus: true,
-							invoiceVoidedAt: true,
 							creditNoteNumber: true,
 						},
 					});
@@ -179,12 +176,10 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 						where: { id: orderId },
 						data: {
 							invoiceStatus: InvoiceStatus.VOIDED,
-							invoiceVoidedAt: now,
 							creditNoteNumber,
 							creditNoteGeneratedAt: now,
 						},
 						select: {
-							invoiceVoidedAt: true,
 							creditNoteNumber: true,
 							creditNoteGeneratedAt: true,
 						},
@@ -193,7 +188,6 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 					await createOrderAuditTx(tx, {
 						orderId,
 						action: OrderAction.INVOICE_VOIDED,
-						authorId: authorId ?? undefined,
 						authorName,
 						source,
 						note: reason,
@@ -257,7 +251,6 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 				kind: "voided",
 				creditNoteNumber: updated.creditNoteNumber!,
 				creditNoteGeneratedAt: updated.creditNoteGeneratedAt!,
-				invoiceVoidedAt: updated.invoiceVoidedAt!,
 			};
 		} catch (e) {
 			lastError = e;

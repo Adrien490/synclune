@@ -6,7 +6,7 @@ import { getBaseUrl } from "@/shared/constants/urls";
 import { GET_ORDER_SELECT_ADMIN } from "../constants/order.constants";
 import { archiveInvoicePdf } from "./archive-invoice-pdf.service";
 import { persistInvoiceNumber } from "./persist-invoice-number.service";
-import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve-invoice-data";
+import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { createOrderAudit } from "../utils/order-audit";
 import type { GetOrderReturn } from "../types/order.types";
@@ -165,9 +165,9 @@ async function archiveAfterGeneration(orderId: string, invoiceNumber: string): P
 		}
 		// EINV-PDF-001 : l'archive doit refléter le snapshot figé, pas une
 		// recomputation. `persistInvoiceNumber` vient d'écrire le snapshot, donc
-		// `resolveInvoiceDataForRender` le lit ici (fallback buildInvoiceData
+		// `buildInvoiceData` reconstruit le payload de rendu depuis les colonnes
 		// uniquement pour les rares legacy sans snapshot).
-		const pdf = renderInvoicePdf(resolveInvoiceDataForRender(order as GetOrderReturn));
+		const pdf = renderInvoicePdf(buildInvoiceData(order as GetOrderReturn));
 		await archiveInvoicePdf(orderId, invoiceNumber, pdf);
 	} catch (error) {
 		// Archive échoue → le PDF sera archivé au premier download. Pas d'incident

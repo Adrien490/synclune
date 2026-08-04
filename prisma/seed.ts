@@ -1687,9 +1687,7 @@ async function main(): Promise<void> {
 			itemsData.push({
 				skuId: sku.id,
 				productTitle: product.title,
-				productDescription: product.description,
 				productImageUrl: sku.images[0]?.url ?? null,
-				skuSku: sku.sku,
 				skuColor: sku.colors.length > 0 ? sku.colors.map((c) => c.color.name).join(" · ") : null,
 				skuMaterial: sku.materials[0]?.material.name ?? null,
 				skuSize: sku.size ?? null,

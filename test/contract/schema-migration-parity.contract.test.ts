@@ -397,7 +397,14 @@ describe("gardes SQL bruts — SSOT ↔ migrations ↔ documentation", () => {
 		// partent avec leur table, et `Order_discountAmount_non_negative` avec sa
 		// colonne. `Order_total_formula` n'est PAS retiré mais RÉÉCRIT — il perd son
 		// terme de remise et continue de verrouiller `total = subtotal + shippingCost`.
-		expect(ssot.checks.size).toBeGreaterThanOrEqual(24);
+		//
+		// Puis à 22 (le PDF archivé devient la seule pièce probante, 2026-08-05) :
+		// `Order_invoiceDataHash_format_check` et
+		// `Order_invoiceDataSnapshot_hash_coherence_check` partent avec le snapshot de
+		// données. ⚠️ `Order_invoicePdfHash_format_check`, `Order_creditNotePdfHash_*`
+		// et `Refund_creditNotePdfHash_*` RESTENT : ces hash-là sont re-vérifiés à
+		// chaque téléchargement (EINV-PDF-006), ce sont eux la preuve d'intégrité.
+		expect(ssot.checks.size).toBeGreaterThanOrEqual(22);
 	});
 
 	// LE point critique : `prisma migrate diff` ne génère AUCUN garde brut. Un

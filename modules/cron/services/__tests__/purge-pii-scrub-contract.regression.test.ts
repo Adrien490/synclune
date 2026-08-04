@@ -6,7 +6,6 @@ import {
 	CUSTOMER_SHIPPING_PII_SCRUB,
 	ORDER_HISTORY_PII_SCRUB,
 	ORDER_PII_SCRUB,
-	PURGED_ORDER_NOTE_CONTENT,
 	REFUND_PII_SCRUB,
 	UNPAID_ORDER_PII_SCRUB,
 } from "@/modules/orders/constants/pii-scrub";
@@ -23,11 +22,11 @@ import {
  *
  *  (a) Les surfaces PII DOIVENT être scrubées — base légale de conservation
  *      expirée ⇒ limitation de conservation RGPD Art. 5.1.e :
- *      shipping* + invoiceDataSnapshot/Hash + pointeurs PDF facture/avoir +
+ *      shipping* + pointeurs PDF facture/avoir +
  *      identifiants Stripe pseudonymes (cus_/pi_) + tracking (trackingNumber/Url,
  *      audit 2026-08-03) + avoirs par-refund (Refund.creditNotePdf*) + textes
- *      libres (Refund.note, OrderNote.content, OrderHistory.note/metadata —
- *      arbitrage 2026-08-03 : immuable PENDANT la rétention, pas au-delà).
+ *      libres (Refund.note, OrderHistory.note/metadata — arbitrage 2026-08-03 :
+ *      immuable PENDANT la rétention, pas au-delà).
  *  (b) Les champs comptables non-PII NE DOIVENT JAMAIS figurer dans le scrub —
  *      la ligne survit (Art. L123-22) : numéros (invoiceNumber/creditNoteNumber),
  *      montants (total/subtotal/discountAmount/shippingCost/amount) et
@@ -70,8 +69,6 @@ const MUST_BE_SCRUBBED = [
 	// livraison d'une personne nommée — scrubé comme l'adresse et le téléphone.
 	"trackingNumber",
 	"trackingUrl",
-	"invoiceDataSnapshot",
-	"invoiceDataHash",
 	"invoicePdfUrl",
 	"invoicePdfHash",
 	"creditNotePdfUrl",
@@ -114,11 +111,6 @@ describe("ORDER_PII_SCRUB — contrat de champs (purge 10 ans, commandes payées
 		expect(Object.prototype.hasOwnProperty.call(SCRUB, field)).toBe(false);
 	});
 
-	it("efface le snapshot facture via Prisma.DbNull (champ Json) et non null", () => {
-		// invoiceDataSnapshot est un champ Json? → l'effacement passe par DbNull,
-		// pas `null` (qui poserait JsonNull). Régression silencieuse sinon.
-		expect(SCRUB.invoiceDataSnapshot).toBe(Prisma.DbNull);
-	});
 
 	it("nulle les pointeurs PDF (URL + hash) pour les deux documents", () => {
 		expect(SCRUB.invoicePdfUrl).toBeNull();
@@ -147,8 +139,6 @@ describe("UNPAID_ORDER_PII_SCRUB — contrat de champs (commandes jamais payées
 
 	it("ne touche AUCUNE surface facture (inexistante sur une commande non payée)", () => {
 		const invoiceSurfaces = [
-			"invoiceDataSnapshot",
-			"invoiceDataHash",
 			"invoicePdfUrl",
 			"invoicePdfHash",
 			"creditNotePdfUrl",
@@ -209,7 +199,6 @@ describe("ORDER_HISTORY_PII_SCRUB — contrat de champs (neutralisation à l'éc
 		"newStatus",
 		"previousPaymentStatus",
 		"newPaymentStatus",
-		"authorId",
 		"authorName",
 		"source",
 		"createdAt",
@@ -230,20 +219,17 @@ describe("ORDER_HISTORY_PII_SCRUB — contrat de champs (neutralisation à l'éc
 	});
 });
 
-describe("PURGED_ORDER_NOTE_CONTENT — contenu de remplacement des notes internes", () => {
-	it("est un libellé neutre sans interpolation (aucune PII possible)", () => {
-		expect(typeof PURGED_ORDER_NOTE_CONTENT).toBe("string");
-		expect(PURGED_ORDER_NOTE_CONTENT.length).toBeGreaterThan(0);
-		expect(PURGED_ORDER_NOTE_CONTENT).not.toMatch(/\$\{/);
-	});
-});
-
 describe("tables couvertes par chaque passe de purge (source scan)", () => {
 	// P2 (audit « Admin commandes » 2026-08-01) : le contrat ci-dessus verrouille
 	// la FORME des payloads, mais pas QUELLES tables chaque passe scrube.
 	// `purgeAbandonedOrderPii` (commandes jamais payées, 3 ans) ne scrubait que les
-	// colonnes Order : les notes internes (texte libre) survivaient indéfiniment —
-	// une commande `paidAt: null` n'atteint JAMAIS la purge 10 ans (clé `paidAt`).
+	// colonnes Order : le texte libre survivait indéfiniment — une commande
+	// `paidAt: null` n'atteint JAMAIS la purge 10 ans (clé `paidAt`).
+	//
+	// ⚠️ Le modèle `OrderNote` a été retiré (2026-08-05) : `OrderHistory.note` est
+	// désormais la SEULE surface de texte libre d'une commande, donc la seule que
+	// ces deux passes ont à neutraliser. Retirer son assertion ci-dessous rouvrirait
+	// exactement le trou que ce test verrouille.
 	const source = readFileSync(join(__dirname, "..", "hard-delete-retention.service.ts"), "utf8");
 
 	function bodyOf(fnName: string): string {
@@ -255,19 +241,15 @@ describe("tables couvertes par chaque passe de purge (source scan)", () => {
 		return source.slice(start, nextFn === -1 ? undefined : nextFn);
 	}
 
-	it("purgeExpiredOrderPii (10 ans) scrube Order + Refund + OrderNote + OrderHistory", () => {
+	it("purgeExpiredOrderPii (10 ans) scrube Order + Refund + OrderHistory", () => {
 		const body = bodyOf("purgeExpiredOrderPii");
 		expect(body).toContain("refund.updateMany");
-		expect(body).toContain("orderNote.updateMany");
-		expect(body).toContain("PURGED_ORDER_NOTE_CONTENT");
 		expect(body).toContain("orderHistory.updateMany");
 		expect(body).toContain("ORDER_HISTORY_PII_SCRUB");
 	});
 
-	it("purgeAbandonedOrderPii (jamais payées, 3 ans) scrube Order + OrderNote + OrderHistory", () => {
+	it("purgeAbandonedOrderPii (jamais payées, 3 ans) scrube Order + OrderHistory", () => {
 		const body = bodyOf("purgeAbandonedOrderPii");
-		expect(body).toContain("orderNote.updateMany");
-		expect(body).toContain("PURGED_ORDER_NOTE_CONTENT");
 		expect(body).toContain("orderHistory.updateMany");
 		expect(body).toContain("ORDER_HISTORY_PII_SCRUB");
 	});

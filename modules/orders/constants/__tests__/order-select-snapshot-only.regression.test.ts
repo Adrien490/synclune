@@ -61,7 +61,6 @@ describe("Sélecteurs d'affichage commandes — snapshots uniquement (Invariant 
 			expect(select.items.select).toMatchObject({
 				productTitle: true,
 				productImageUrl: true,
-				skuSku: true,
 				skuColor: true,
 				skuMaterial: true,
 				skuSize: true,
