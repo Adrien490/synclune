@@ -1,5 +1,9 @@
 "use client";
 
+import { CaretDoubleLeftIcon, CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react/ssr";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useEffectEvent, useId, type ComponentProps } from "react";
+
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import {
 	Select,
@@ -8,40 +12,27 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/shared/components/ui/select";
-import { cn } from "@/shared/utils/cn";
-import { isInteractiveTarget } from "@/shared/utils/is-interactive-target";
-import { CaretDoubleLeftIcon, CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
-import {
-	useEffect,
-	useEffectEvent,
-	useId,
-	useRef,
-	useState,
-	useTransition,
-	Suspense,
-	type ComponentProps,
-} from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "../ui/button";
-import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
-import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
+import { FINE_POINTER_QUERY } from "@/shared/constants/pointer";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
+import { cn } from "@/shared/utils/cn";
+import { isInteractiveTarget } from "@/shared/utils/is-interactive-target";
 
-// `focus-ring` SSOT (`app/globals.css`) hérité du `<Button>` parent — pas de
-// surcharge `focus-visible:ring-*` ici (drift convention repo).
-// `can-hover:` préfixe anti sticky-hover iOS (hover figé après tap).
-const PAGINATION_BUTTON_CLASSES = [
-	"backdrop-blur-sm",
-	"border-primary/20",
-	"can-hover:hover:bg-primary/10 can-hover:hover:text-primary can-hover:hover:border-primary/40",
-	"motion-safe:can-hover:hover:scale-[1.02]",
-	"motion-safe:active:scale-[0.98]",
-	"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none",
-] as const;
+import { Button } from "../ui/button";
+import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
+import { useCursorPaginationNav } from "./use-cursor-pagination-nav";
 
+/**
+ * Barre de pagination des listes ADMIN (la boutique a la sienne :
+ * `StorefrontPaginationBand`). Registre outil : encre neutre, densité 32 px
+ * sur pointeur fin — le survol, le focus-ring et leurs gates `can-hover:`
+ * sont ceux du `<Button variant="outline">`, sans surcharge (audit
+ * 2026-08-05 : l'ancienne couche rose/verre/zoom était le costume boutique
+ * égaré dans l'outil, et son `backdrop-blur` ne floutait rien).
+ */
 function CursorPaginationInner({
 	perPage: perPageProp,
 	hasNextPage,
@@ -56,98 +47,38 @@ function CursorPaginationInner({
 	secondary = false,
 }: CursorPaginationProps) {
 	const perPageId = useId();
+	// `useId`, pas un littéral : les listes admin montent DEUX instances (table
+	// desktop + liste mobile) — un id fixe était dupliqué dans le DOM, et
+	// l'instance secondaire décrivait des raccourcis qu'elle n'installe pas.
+	const shortcutsId = useId();
 	const haptic = useHaptic();
-	const router = useRouter();
-	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const [isPending, startTransition] = useTransition();
 	// P1-3 : annonce SR des raccourcis clavier (Alt+Flèche) uniquement quand le
 	// device a un pointer fine (souris/trackpad). Sur tactile, les raccourcis
 	// n'existent pas → bruit cognitif pour VoiceOver iOS.
-	const hasFinePointer = useMediaQuery("(pointer: fine)");
-	// Tracker du dernier bouton cliqué pour afficher un spinner ciblé pendant
-	// `isPending`. Lu pendant le render (la condition `isPending && ...` redevient
-	// false naturellement à la fin de la transition donc le spinner disparaît).
-	const [lastAction, setLastAction] = useState<"prev" | "next" | "reset" | "perPage" | null>(null);
+	// ⚠️ `FINE_POINTER_QUERY`, pas `HOVER_CAPABLE_QUERY` : la question ici est
+	// « les raccourcis ont-ils un sens ? », pas « puis-je révéler au survol ? ».
+	const hasFinePointer = useMediaQuery(FINE_POINTER_QUERY);
+
+	const { cursor, isPending, lastAction, goNext, goPrevious, reset, startNavigation } =
+		useCursorPaginationNav({ nextCursor, prevCursor, prefetch: !secondary, focusTargetRef });
 
 	// Sans `?perPage` en URL, on reflète la valeur réellement résolue côté serveur
 	// (prop) plutôt qu'un défaut global codé en dur — sinon le select se désync du
 	// nombre réellement chargé (ex. Clients=50, listes admin=20).
 	const perPage = Number(searchParams.get("perPage")) || perPageProp || DEFAULT_PER_PAGE;
-	const cursor = searchParams.get("cursor") ?? undefined;
-
-	// Initialisée à la valeur COURANTE du curseur (doit donc être déclarée APRÈS
-	// `cursor`) : le premier rendu est un no-op, seuls les changements ultérieurs
-	// déclenchent le scroll-to-top. `useRef` ignore son argument après le premier
-	// rendu, l'initialisation ne « suit » donc pas le curseur — c'est exactement
-	// le comportement voulu.
-	//
-	// Une sentinelle (différente de toute valeur de curseur par construction)
-	// faisait l'inverse de ce qu'annonçait son commentaire : elle GARANTISSAIT un
-	// scroll-to-top à chaque montage, y compris au retour navigateur depuis une
-	// page de détail — Next.js restaurait la position, le composant la renvoyait
-	// aussitôt en haut, et `focusTargetRef` volait le focus au passage.
-	const previousCursorRef = useRef<string | undefined>(cursor);
-
-	const onCursorChange = useEffectEvent(() => {
-		// Default behavior: scroll to top, respecting prefers-reduced-motion
-		const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-		window.scrollTo({
-			top: 0,
-			behavior: prefersReducedMotion ? "instant" : "smooth",
-		});
-
-		if (focusTargetRef?.current) {
-			requestAnimationFrame(() => {
-				focusTargetRef.current?.focus({ preventScroll: true });
-			});
-		}
-	});
-
-	useEffect(() => {
-		if (previousCursorRef.current !== cursor) {
-			previousCursorRef.current = cursor;
-			onCursorChange();
-		}
-	}, [cursor]);
-
-	function preserveParams() {
-		return new URLSearchParams(searchParams.toString());
-	}
-
-	function navigateNext(nc: string | null) {
-		if (!nc) return;
-		setLastAction("next");
-		const params = preserveParams();
-		params.set("cursor", nc);
-		params.set("direction", "forward");
-		startTransition(() => {
-			router.push("?" + params.toString(), { scroll: false });
-		});
-	}
-
-	function navigatePrevious(pc: string | null) {
-		if (!pc) return;
-		setLastAction("prev");
-		const params = preserveParams();
-		params.set("cursor", pc);
-		params.set("direction", "backward");
-		startTransition(() => {
-			router.push("?" + params.toString(), { scroll: false });
-		});
-	}
 
 	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
 		if (isInteractiveTarget(e.target)) return;
 
 		if (e.altKey && e.key === "ArrowLeft" && prevCursor) {
 			e.preventDefault();
-			navigatePrevious(prevCursor);
+			goPrevious();
 		}
 
 		if (e.altKey && e.key === "ArrowRight" && nextCursor) {
 			e.preventDefault();
-			navigateNext(nextCursor);
+			goNext();
 		}
 	});
 
@@ -157,63 +88,16 @@ function CursorPaginationInner({
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [secondary]);
 
-	const onPrefetch = useEffectEvent((pCursor: string | null, direction: string) => {
-		if (!pCursor) return;
-		const params = new URLSearchParams(searchParams.toString());
-		params.set("cursor", pCursor);
-		params.set("direction", direction);
-		router.prefetch("?" + params.toString());
-	});
-
-	useEffect(() => {
-		if (secondary) return;
-		onPrefetch(nextCursor, "forward");
-		onPrefetch(prevCursor, "backward");
-	}, [nextCursor, prevCursor, secondary]);
-
-	function handleNext() {
-		navigateNext(nextCursor);
-	}
-	function handlePrevious() {
-		navigatePrevious(prevCursor);
-	}
-	function handleReset() {
-		setLastAction("reset");
-		const params = preserveParams();
-		params.delete("cursor");
-		params.delete("direction");
-		startTransition(() => {
-			router.push("?" + params.toString(), { scroll: false });
-		});
-	}
-	function handlePerPageChange(newPerPage: number) {
+	function handlePerPageChange(value: string) {
+		const newPerPage = Number(value);
 		if (newPerPage === perPage) return;
-		setLastAction("perPage");
-		const params = preserveParams();
-		params.set("perPage", String(newPerPage));
-		params.delete("cursor");
-		params.delete("direction");
-		startTransition(() => {
-			router.push("?" + params.toString(), { scroll: false });
+		haptic("selection");
+		startNavigation("perPage", (params) => {
+			params.set("perPage", String(newPerPage));
+			params.delete("cursor");
+			params.delete("direction");
 		});
 	}
-
-	const onPrevious = () => {
-		haptic("light");
-		handlePrevious();
-	};
-	const onNext = () => {
-		haptic("light");
-		handleNext();
-	};
-	const onReset = () => {
-		haptic("selection");
-		handleReset();
-	};
-	const onPerPageChange = (value: string) => {
-		haptic("selection");
-		handlePerPageChange(Number(value));
-	};
 
 	const isFirstPage = !cursor;
 	const canNavigate = hasNextPage || hasPreviousPage;
@@ -223,22 +107,15 @@ function CursorPaginationInner({
 	// des hooks. Masque toute la barre (sélecteur « par page » + compteur + nav).
 	if (!canNavigate) return null;
 
-	// Build rel="prev"/"next" URLs for SEO crawl hints
-	const buildPaginationUrl = (paginationCursor: string | null, direction: string) => {
-		if (!paginationCursor) return null;
-		const params = new URLSearchParams(searchParams.toString());
-		params.set("cursor", paginationCursor);
-		params.set("direction", direction);
-		return `${pathname}?${params.toString()}`;
-	};
-
-	const prevUrl = hasPreviousPage ? buildPaginationUrl(prevCursor, "backward") : null;
-	const nextUrl = hasNextPage ? buildPaginationUrl(nextCursor, "forward") : null;
-
 	// Affiche le total uniquement s'il dépasse la page courante (sinon redondant
 	// avec le compteur "X résultats" déjà rendu — la liste tient sur une page).
 	const showTotal = typeof totalCount === "number" && totalCount > currentPageSize;
 	const pluralRef = totalCount ?? currentPageSize;
+
+	// L'aide raccourcis n'appartient qu'à l'instance qui les INSTALLE : la
+	// secondaire (liste mobile admin) saute le listener, elle ne doit donc ni la
+	// rendre ni la référencer.
+	const showShortcutsHint = !secondary && hasFinePointer;
 
 	// Message pour les screen readers — une phrase concise. La position
 	// (première/dernière) est déjà annoncée par le `<div role="status">`
@@ -255,16 +132,13 @@ function CursorPaginationInner({
 		<div
 			className={cn(
 				"flex flex-row items-center justify-center gap-2 sm:justify-between sm:gap-3",
-				// Opacity réduite pendant le chargement avec transition smooth pour UX fluide
-				// opacity-80 (au lieu de 70) pour meilleur contraste WCAG AA (4.5:1)
-				isPending && "pointer-events-none opacity-80 transition-opacity duration-200",
+				// Hors du conditionnel pour que le fondu joue aussi au RETOUR de
+				// l'état chargement (dans le conditionnel, la classe disparaissait
+				// avec `isPending` et l'opacité revenait d'un coup sec).
+				"transition-opacity duration-200",
+				isPending && "pointer-events-none opacity-80",
 			)}
 		>
-			{/* SEO crawl hints — React 19 hoists these to <head>. Une seule
-			    instance les émet : deux `<link rel="next">` identiques dans le
-			    <head> sont du bruit pour les crawlers. */}
-			{!secondary && prevUrl && <link rel="prev" href={prevUrl} />}
-			{!secondary && nextUrl && <link rel="next" href={nextUrl} />}
 			{/* Live region pour screen readers */}
 			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 				{ariaLiveMessage}
@@ -276,10 +150,10 @@ function CursorPaginationInner({
 					<label htmlFor={perPageId} className="text-muted-foreground hidden text-xs sm:block">
 						Par page
 					</label>
-					<Select value={String(perPage)} onValueChange={onPerPageChange} disabled={isPending}>
+					<Select value={String(perPage)} onValueChange={handlePerPageChange} disabled={isPending}>
 						<SelectTrigger
 							id={perPageId}
-							className="h-11 w-20 sm:h-9"
+							className="h-11 w-20 sm:h-9 md:h-8"
 							aria-label="Nombre de résultats par page"
 						>
 							<SelectValue>{perPage}</SelectValue>
@@ -318,11 +192,11 @@ function CursorPaginationInner({
 			    (early-return ci-dessus quand il n'y a qu'une page). */}
 			<nav
 				aria-label="Pagination"
-				aria-describedby={hasFinePointer ? "pagination-shortcuts" : undefined}
+				aria-describedby={showShortcutsHint ? shortcutsId : undefined}
 				className="flex items-center gap-2"
 			>
-				{hasFinePointer && (
-					<span id="pagination-shortcuts" className="sr-only">
+				{showShortcutsHint && (
+					<span id={shortcutsId} className="sr-only">
 						Raccourcis : Alt+Flèche gauche pour page précédente, Alt+Flèche droite pour page
 						suivante
 					</span>
@@ -332,8 +206,8 @@ function CursorPaginationInner({
 					variant="outline"
 					size="sm"
 					disabled={isFirstPage || isPending}
-					onClick={onReset}
-					className={cn(RESET_BUTTON_SIZE, "cursor-pointer gap-1", ...PAGINATION_BUTTON_CLASSES)}
+					onClick={reset}
+					className={cn(RESET_BUTTON_SIZE, "cursor-pointer gap-1 md:text-xs")}
 					aria-label="Retour au début"
 				>
 					{isPending && lastAction === "reset" ? (
@@ -350,8 +224,8 @@ function CursorPaginationInner({
 						variant="outline"
 						size="icon"
 						disabled={!hasPreviousPage || isPending}
-						onClick={onPrevious}
-						className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
+						onClick={goPrevious}
+						className={cn(NAV_BUTTON_SIZE, "cursor-pointer")}
 						aria-label="Page précédente"
 					>
 						{isPending && lastAction === "prev" ? (
@@ -363,20 +237,17 @@ function CursorPaginationInner({
 
 					<div
 						className={cn(
-							"bg-muted/50 flex items-center justify-center px-3 text-center text-xs sm:text-sm",
+							"bg-muted flex items-center justify-center px-3 text-center text-xs",
 							PAGE_INDICATOR_SIZE,
 						)}
 						role="status"
 						aria-label="Position actuelle dans la pagination"
 					>
 						<span className="text-foreground font-medium">
-							{!hasPreviousPage && !hasNextPage
-								? "Page unique"
-								: !hasPreviousPage
-									? "Première page"
-									: !hasNextPage
-										? "Dernière page"
-										: "Suite"}
+							{/* Pas de cas « Page unique » : ni précédent ni suivant, c'est
+							    l'early-return `!canNavigate` plus haut — la branche était
+							    inatteignable (audit 2026-08-05). */}
+							{!hasPreviousPage ? "Première page" : !hasNextPage ? "Dernière page" : "Suite"}
 						</span>
 					</div>
 
@@ -385,8 +256,8 @@ function CursorPaginationInner({
 						variant="outline"
 						size="icon"
 						disabled={!hasNextPage || isPending}
-						onClick={onNext}
-						className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
+						onClick={goNext}
+						className={cn(NAV_BUTTON_SIZE, "cursor-pointer")}
 						aria-label="Page suivante"
 					>
 						{isPending && lastAction === "next" ? (
@@ -396,6 +267,20 @@ function CursorPaginationInner({
 						)}
 					</Button>
 				</ButtonGroup>
+
+				{/* Les raccourcis, enfin visibles là où ils s'appliquent (pointeur
+				    fin, instance primaire). Décoratif : l'annonce SR est portée par
+				    le span sr-only ci-dessus. */}
+				{showShortcutsHint && (
+					<span aria-hidden="true" className="ml-1 hidden items-center gap-1 md:flex">
+						<kbd className="text-muted-foreground border-border bg-card rounded-sm border px-1.5 py-0.5 font-mono text-[10px]">
+							⌥←
+						</kbd>
+						<kbd className="text-muted-foreground border-border bg-card rounded-sm border px-1.5 py-0.5 font-mono text-[10px]">
+							⌥→
+						</kbd>
+					</span>
+				)}
 			</nav>
 		</div>
 	);
@@ -408,5 +293,3 @@ export function CursorPagination(props: ComponentProps<typeof CursorPaginationIn
 		</Suspense>
 	);
 }
-
-// Re-export pagination utilities for convenience

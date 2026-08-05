@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { areAllColorsLight, buildSwatchStyle, getSwatchAriaLabel } from "../swatch-style";
+import {
+	areAllColorsLight,
+	buildSwatchStyle,
+	buildTintBarStyle,
+	getSwatchAriaLabel,
+} from "../swatch-style";
 
 describe("buildSwatchStyle", () => {
 	it("returns a muted background when no color is provided", () => {
@@ -69,5 +74,45 @@ describe("areAllColorsLight", () => {
 
 	it("returns false when at least one color is dark", () => {
 		expect(areAllColorsLight(["#FFFFFF", "#000000"], lightnessAbove90)).toBe(false);
+	});
+});
+
+describe("buildTintBarStyle", () => {
+	it("returns a muted background when no color is provided", () => {
+		expect(buildTintBarStyle([])).toEqual({ backgroundColor: "var(--muted)" });
+	});
+
+	it("returns a solid backgroundColor for a single color", () => {
+		expect(buildTintBarStyle(["#F5CF3C"])).toEqual({ backgroundColor: "#F5CF3C" });
+	});
+
+	/**
+	 * Une BARRE, pas un disque : `buildSwatchStyle` peint en 135° (bicolore) puis
+	 * en conique — sur 4 px de large, l'un comme l'autre ne rendent qu'une
+	 * bouillie. Les bandes doivent être horizontales et à arrêts francs.
+	 */
+	it("empile des bandes horizontales à arrêts francs", () => {
+		expect(buildTintBarStyle(["#F0568F", "#C0C0C0"])).toEqual({
+			background: "linear-gradient(#F0568F 0.00% 50.00%, #C0C0C0 50.00% 100.00%)",
+		});
+	});
+
+	it("répartit trois teintes en tiers égaux", () => {
+		const { background } = buildTintBarStyle(["#F0568F", "#C0C0C0", "#E8B4B8"]) as {
+			background: string;
+		};
+
+		expect(background).toContain("#F0568F 0.00% 33.33%");
+		expect(background).toContain("#C0C0C0 33.33% 66.67%");
+		expect(background).toContain("#E8B4B8 66.67% 100.00%");
+	});
+
+	it("n'emploie NI conic-gradient NI angle — ce serait le style d'un disque", () => {
+		const { background } = buildTintBarStyle(["#F0568F", "#C0C0C0", "#E8B4B8"]) as {
+			background: string;
+		};
+
+		expect(background).not.toContain("conic-gradient");
+		expect(background).not.toContain("deg");
 	});
 });

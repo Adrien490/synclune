@@ -2,13 +2,17 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { Separator } from "@/shared/components/ui/separator";
 import { getProductBySlug } from "@/modules/products/data/get-product";
+import { getRecentProductSlugs } from "@/modules/products/data/get-recent-product-slugs";
 import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
 import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
+import {
+	extractVariantInfo,
+	requiresSizeSelection,
+} from "@/modules/skus/services/sku-info-extraction.service";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
-import { PageHeader } from "@/shared/components/page-header";
+import { BreadcrumbNav } from "@/shared/components/breadcrumb-nav";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { ProductAccentScope } from "@/modules/products/components/product-accent-scope";
 import { ProductDetails } from "@/modules/products/components/product-details";
@@ -24,7 +28,10 @@ import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/re
 import { RecordProductView } from "@/modules/products/components/record-product-view";
 import { ViewItemTracker } from "@/shared/components/analytics/view-item-tracker";
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
-import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
+import {
+	generateStructuredData,
+	getPriceValidUntil,
+} from "@/modules/products/utils/seo/generate-structured-data";
 
 // Pas de `generateStaticParams` : Cache Components refuse un tableau vide
 // (`EmptyGenerateStaticParamsError` fait échouer le build entier), donc aucun
@@ -50,11 +57,16 @@ export default async function ProductPage({
 }) {
 	const [{ slug }, urlParams] = await Promise.all([params, searchParams]);
 
-	// Paralléliser toutes les requêtes pour optimiser le TTFB
-	const [admin, product, wishlistProductIds] = await Promise.all([
+	// Paralléliser toutes les requêtes pour optimiser le TTFB.
+	// `getRecentProductSlugs` est une simple lecture de cookie (aucune requête DB) :
+	// elle sert à savoir s'il faut MONTER la section « Récemment vus », sans attendre
+	// sa résolution — cf. `hasRecentlyViewed` plus bas.
+	const [admin, product, wishlistProductIds, priceValidUntil, recentSlugs] = await Promise.all([
 		isAdmin(),
 		getProductBySlug({ slug, includeDraft: true }),
 		getWishlistProductIds(),
+		getPriceValidUntil(),
+		getRecentProductSlugs(),
 	]);
 
 	// Vérifier existence produit
@@ -123,10 +135,31 @@ export default async function ProductPage({
 	const structuredData = generateStructuredData({
 		product,
 		selectedSku,
+		priceValidUntil,
 	});
 
 	// Vérifier si le produit est dans la wishlist (lookup O(1) local)
 	const isInWishlist = wishlistProductIds.has(product.id);
+
+	// La section « Récemment vus » n'est montée que si le cookie contient au moins
+	// un AUTRE produit. Sans ce garde, la première fiche de chaque visite affichait
+	// un squelette de 4 cartes pour une section qui résolvait à `null` — un fantôme,
+	// puisque `RecordProductView` n'écrit le cookie qu'après ce rendu et que la fiche
+	// courante est exclue de la liste.
+	const hasRecentlyViewed = recentSlugs.some((s) => s !== product.slug);
+	const recentlyViewedLimit = Math.min(4, recentSlugs.filter((s) => s !== product.slug).length);
+
+	// Réserves EXACTES du squelette de la colonne d'achat. Le produit est déjà
+	// résolu ici, donc on n'a pas à deviner : les mêmes prédicats que
+	// `VariantSelector` (carte affichée si > 1 SKU ; axe secondaire si plusieurs
+	// matériaux, ou si une taille est requise). Sans ça le squelette dessinait
+	// toujours une carte à trois plaquettes plus un axe secondaire — sur une fiche
+	// mono-SKU, ~250 px réservés pour rien, que le contenu remontait au swap.
+	const variantInfo = extractVariantInfo(product);
+	const hasSecondaryAxis =
+		variantInfo.availableMaterials.length > 1 ||
+		(requiresSizeSelection(product, variantInfo) && variantInfo.availableSizes.length > 0);
+	const skeletonVariantAxisCount = product.skus.length > 1 ? (hasSecondaryAxis ? 2 : 1) : 0;
 
 	return (
 		<div className="relative min-h-dvh">
@@ -150,25 +183,30 @@ export default async function ProductPage({
 			/>
 
 			<div className="relative z-10">
-				{/* noStructuredData: BreadcrumbList déjà inclus dans generateStructuredData @graph (Product+Breadcrumb) */}
-				<PageHeader
-					title={product.title}
-					breadcrumbs={breadcrumbs}
-					className="hidden sm:block"
-					accent="underline"
-					noStructuredData
-				/>
-
-				{/* Contenu principal */}
-				<div className="bg-background pt-20 pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">
+				{/* Shell « L'étal continue » — plus de bande d'en-tête : le h1 vit dans
+				    `ProductInfo`, visible à tous les viewports. Le `BreadcrumbList` de
+				    la page est déjà dans le @graph de `generateStructuredData` ;
+				    `BreadcrumbNav` est visuel pur. */}
+				<div className="bg-background pt-[calc(var(--navbar-height-static)+0.75rem)] pb-6 sm:pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+						<BreadcrumbNav
+							items={breadcrumbs}
+							className="text-muted-foreground hidden pb-5 text-sm leading-normal md:block"
+						/>
 						{/* `ProductAccentScope` pose `--piece-accent` (la couleur de la variante
 						    affichée) sur l'article : la galerie, l'aplat du prix, le nuancier et
 						    le CTA la partagent au lieu de la voir s'arrêter au carton photo. */}
 						<ProductAccentScope product={product} className="space-y-12">
 							{/* Section principale - Galerie fixe et Informations scrollables */}
 							{/* group/product-details permet aux enfants de réagir au data-pending des sélecteurs */}
-							<Suspense fallback={<ProductMainSkeleton />}>
+							<Suspense
+								fallback={
+									<ProductMainSkeleton
+										variantAxisCount={skeletonVariantAxisCount}
+										swatchCount={Math.max(1, variantInfo.availableCombos.length)}
+									/>
+								}
+							>
 								<div className="group/product-details grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
 									{/* Galerie sticky sur desktop uniquement.
 									    L'offset RÉSERVE la barre d'achat collante (`--pdp-cta-bar-height`,
@@ -196,16 +234,18 @@ export default async function ProductPage({
 							{/* Sticky add-to-cart desktop (apparaît quand le CTA principal sort du viewport) */}
 							<StickyCartCTADesktop product={product} defaultSku={selectedSku} />
 
-							{/* Separator avant produits recemment vus */}
-							<Separator className="bg-border" />
-
-							{/* 7. RecentlyViewedProducts - Produits recemment consultes */}
-							<Suspense fallback={<RecentlyViewedProductsSkeleton limit={4} />}>
-								<RecentlyViewedProducts currentProductSlug={product.slug} limit={4} />
-							</Suspense>
-
-							{/* Separator avant produits similaires */}
-							<Separator className="bg-border" />
+							{/* 7. RecentlyViewedProducts — produits récemment consultés.
+							    Le séparateur d'ouverture vit DANS la section (et dans son
+							    squelette) : rendu ici, il ne pouvait pas disparaître avec
+							    elle, et les deux filets de la page se retrouvaient collés. */}
+							{hasRecentlyViewed && (
+								<Suspense fallback={<RecentlyViewedProductsSkeleton limit={recentlyViewedLimit} />}>
+									<RecentlyViewedProducts
+										currentProductSlug={product.slug}
+										limit={recentlyViewedLimit}
+									/>
+								</Suspense>
+							)}
 
 							{/* 8. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
 							<Suspense fallback={<RelatedProductsSkeleton limit={4} />}>

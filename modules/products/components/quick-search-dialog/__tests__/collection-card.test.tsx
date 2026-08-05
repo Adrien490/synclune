@@ -34,7 +34,7 @@ vi.mock("@/shared/components/animations/tap", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+	useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 
 vi.mock("@/shared/utils/view-transition", () => ({

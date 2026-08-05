@@ -27,6 +27,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	COLLECTION_CHAPTER_PRINT_SIZES,
 	COLLECTION_IMAGE_SIZES_CARD,
 	COLLECTION_IMAGE_SIZES_COMPACT,
 } from "../image-sizes.constants";
@@ -66,6 +67,20 @@ describe("@regression collection-image-sizes-capped", () => {
 			});
 		},
 	);
+
+	it("les tirages du carnet déclarent des largeurs entièrement fixes", () => {
+		// « Le carnet des séries » (2026-08-05) : les tirages ont des largeurs par
+		// palier (`size-24` / `size-30` / `size-45`), jamais fluides — TOUTES les
+		// clauses sont donc en px, intermédiaires comprises. Paliers : 640 (`sm`)
+		// et 1024 (`lg`), donc bornes hautes 639 / 1023.
+		for (const clause of COLLECTION_CHAPTER_PRINT_SIZES.split(",")) {
+			expect(clause.trim(), "clause fluide dans un sizes de tirage fixe").toMatch(/\d+px$/);
+		}
+		const thresholds = [...COLLECTION_CHAPTER_PRINT_SIZES.matchAll(/max-width:\s*(\d+)px/g)].map(
+			(m) => Number(m[1]),
+		);
+		expect(thresholds).toEqual([639, 1023]);
+	});
 
 	it("les tailles du mega-menu restent entièrement fixes", () => {
 		// Le mega-menu a une largeur connue (`w-[min(46rem,…)]`, 3 colonnes figées) :

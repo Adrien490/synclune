@@ -88,7 +88,17 @@ export function StickyCartCTADesktop({
 	 * taille de police racine (WCAG 1.4.4), la hauteur n'est pas une constante px.
 	 *
 	 * ⚠️ Sous `lg` l'aside est `display:none`, donc mesuré à 0 : le garde
-	 * `height === 0` laisse la variable absente et la galerie garde son offset nu.
+	 * `height === 0` laisse la variable inchangée et la galerie garde son offset nu.
+	 *
+	 * ⚠️ **La remise à zéro passe par `onExitComplete`, pas par le cleanup de cet
+	 * effet.** Le cleanup s'exécute au passage `isVisible: true → false`, mais
+	 * `AnimatePresence` garde l'aside monté le temps de la sortie : `barRef.current`
+	 * existe encore, le corps de l'effet se rejoue et RÉÉCRIT la hauteur. Le nœud
+	 * disparaît ensuite sans que l'effet soit relancé (`isVisible` n'a pas
+	 * rechangé), et le garde `height === 0` neutralise le seul rattrapage — la
+	 * variable restait donc collée à ~64 px pour le reste de la visite, la galerie
+	 * réservant un vide sous la navbar avec un `max-h` raboté d'autant, alors que
+	 * la barre n'était plus là.
 	 */
 	useEffect(() => {
 		const el = barRef.current;
@@ -107,9 +117,21 @@ export function StickyCartCTADesktop({
 
 		return () => {
 			observer.disconnect();
-			root.style.removeProperty("--pdp-cta-bar-height");
 		};
 	}, [isVisible]);
+
+	// Démontage définitif (navigation) : on ne laisse pas la variable derrière nous.
+	useEffect(() => {
+		const root = document.documentElement;
+		return () => {
+			root.style.removeProperty("--pdp-cta-bar-height");
+		};
+	}, []);
+
+	/** La barre a fini de sortir : la galerie récupère son offset nu. */
+	const releaseBarHeight = () => {
+		document.documentElement.style.setProperty("--pdp-cta-bar-height", "0px");
+	};
 
 	const slideVariants = {
 		hidden: prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -100 },
@@ -127,7 +149,7 @@ export function StickyCartCTADesktop({
 	const variantSummary = variantSummaryParts.join(" · ");
 
 	return (
-		<AnimatePresence mode="wait">
+		<AnimatePresence mode="wait" onExitComplete={releaseBarHeight}>
 			{isVisible && (
 				<m.aside
 					ref={barRef}
@@ -187,7 +209,7 @@ export function StickyCartCTADesktop({
 
 						{/* Prix */}
 						<div className="flex shrink-0 items-baseline gap-2">
-							<span className="text-foreground text-lg font-bold">
+							<span className="text-foreground text-lg font-semibold">
 								{formatEuro(currentSku.priceInclTax)}
 							</span>
 							{currentSku.compareAtPrice && currentSku.compareAtPrice > currentSku.priceInclTax && (

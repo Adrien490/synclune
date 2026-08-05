@@ -38,7 +38,7 @@ interface ProductPriceProps {
  * - **la rupture garde son `Badge destructive`** : c'est le seul état où la
  *   sémantique doit primer sur l'harmonie de l'aplat.
  *
- * Le prix passe en `font-display` (Fraunces) : c'était jusqu'ici la seule
+ * Le prix passe en `font-display` (Winky Sans) : c'était jusqu'ici la seule
  * information importante de la page rendue dans la police de corps.
  */
 export function ProductPriceDisplay({ selectedSku, product, children }: ProductPriceProps) {
@@ -68,8 +68,6 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 			<div
 				role="region"
 				aria-labelledby="product-price-title"
-				aria-live="polite"
-				aria-atomic="true"
 				className="piece-field space-y-2 rounded-lg p-5 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 			>
 				<div className="flex flex-wrap items-baseline gap-3">
@@ -91,9 +89,7 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 					</p>
 				</div>
 				{priceInfo.hasMultiplePrices && (
-					<p className="text-xs opacity-80" role="status">
-						Choisis tes options pour voir le prix exact
-					</p>
+					<p className="text-xs opacity-80">Choisis tes options pour voir le prix exact</p>
 				)}
 				{children}
 			</div>
@@ -104,14 +100,23 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 		<div
 			role="region"
 			aria-labelledby="product-price-selected"
-			aria-live="polite"
-			aria-atomic="true"
 			className="piece-field space-y-2 rounded-lg p-5 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 		>
-			{/* SR-only announce — explicit text read on variant change (complements aria-label) */}
-			<span className="sr-only">
+			{/* UN SEUL porteur d'annonce pour tout le bloc.
+			    La région entière était `aria-live="polite"` + `aria-atomic="true"`, et
+			    contenait à la fois ce résumé sr-only ET un `<p aria-label="Prix …">` :
+			    une région atomique restitue TOUT son contenu, donc le prix était lu
+			    deux fois, suivi du stock et de la date de livraison. S'y ajoutaient
+			    cinq `role="status"` imbriqués — chacun une live region de plus — dont
+			    plusieurs sur du contenu qui ne change jamais (badge de remise, message
+			    d'économie). Le changement de variante s'annonce ici, une fois, avec
+			    l'état de stock ; le reste est du texte lisible à la demande. */}
+			<span aria-live="polite" aria-atomic="true" className="sr-only">
 				Prix mis à jour : {formatEuro(selectedSku.priceInclTax)}
 				{hasDiscount ? `, réduit de ${discountPercent} pourcent` : ""}
+				{stockStatus === "in_stock" ? ", en stock" : ""}
+				{stockStatus === "low_stock" ? `, plus que ${inventory} en stock` : ""}
+				{stockStatus === "out_of_stock" ? ", en rupture de stock" : ""}
 			</span>
 
 			<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -136,7 +141,6 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 				{hasDiscount && (
 					<span
 						className="bg-foreground text-background rounded-full px-2.5 py-1 text-xs font-semibold"
-						role="status"
 						aria-label={`Réduction de ${discountPercent} pourcent`}
 					>
 						-{discountPercent}%
@@ -145,12 +149,12 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 
 				{/* Disponibilité : distinguée par le LIBELLÉ, pas par la couleur */}
 				<span className="ms-auto text-sm font-semibold">
-					{stockStatus === "in_stock" && <span role="status">{PRODUCT_TEXTS.STOCK.IN_STOCK}</span>}
+					{/* Pas de `role="status"` sur ces trois états : ce sont des libellés, pas
+					    des annonces. Le changement de variante est annoncé une seule fois,
+					    par la live region unique en tête de bloc. */}
+					{stockStatus === "in_stock" && <span>{PRODUCT_TEXTS.STOCK.IN_STOCK}</span>}
 					{stockStatus === "low_stock" && (
-						<span
-							role="status"
-							aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
-						>
+						<span aria-label={`Attention, plus que ${inventory} exemplaires en stock`}>
 							{PRODUCT_TEXTS.STOCK.LOW_STOCK_LEFT(inventory)}
 						</span>
 					)}
@@ -158,7 +162,6 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 						<Badge
 							variant="destructive"
 							className="text-xs/5 tracking-normal antialiased"
-							role="status"
 							aria-label="Produit en rupture de stock"
 						>
 							{PRODUCT_TEXTS.STOCK.OUT_OF_STOCK}
@@ -169,14 +172,18 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 
 			{/* Message d'économie */}
 			{hasDiscount && (
-				<p className="text-sm font-medium" role="status">
+				<p className="text-sm font-medium">
 					{PRODUCT_TEXTS.PRICING.SAVINGS(
 						formatEuro(selectedSku.compareAtPrice! - selectedSku.priceInclTax),
 					)}
 				</p>
 			)}
 
-			{children}
+			{/* La date de livraison n'est rendue QUE si la pièce est achetable : elle
+			    s'affichait auparavant dans les deux branches, donc juste au-dessus de
+			    « Cette petite merveille sera bientôt de retour ! » — on promettait une
+			    livraison pour une variante épuisée. */}
+			{stockStatus !== "out_of_stock" && children}
 
 			{/* Section rupture de stock */}
 			{stockStatus === "out_of_stock" && (

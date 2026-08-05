@@ -1,12 +1,17 @@
 import type { ProductFiltersSearchParams } from "@/app/(shop)/produits/_utils/types";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
+import { accentForSlug } from "@/modules/products/components/catalog-accents.constants";
+import { CATALOG_GRID } from "@/modules/products/components/catalog-grid.constants";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
-import type { SortField } from "@/modules/products/data/get-products";
+import type { GetProductsReturn, SortField } from "@/modules/products/data/get-products";
 import { GET_PRODUCTS_DEFAULT_PER_PAGE, getProducts } from "@/modules/products/data/get-products";
-import { PageHeader } from "@/shared/components/page-header";
+import { BreadcrumbNav } from "@/shared/components/breadcrumb-nav";
+import { StorefrontHeading } from "@/shared/components/storefront-heading";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { BRAND } from "@/shared/constants/brand";
 import { getFirstParam } from "@/shared/utils/params";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -36,6 +41,26 @@ type CollectionPageProps = {
 	params: Promise<{ slug: string }>;
 	searchParams: Promise<CollectionSearchParams>;
 };
+
+/** Compte streamé de la collection — seule cette ligne attend la promesse, jamais le `h1`. */
+async function CollectionCount({
+	productsPromise,
+}: {
+	productsPromise: Promise<GetProductsReturn>;
+}) {
+	const { totalCount } = await productsPromise;
+
+	if (totalCount === 0) return null;
+
+	const noun = totalCount > 1 ? "pièces" : "pièce";
+
+	return (
+		<>
+			<span className="text-foreground font-semibold tabular-nums">{totalCount}</span> {noun} dans
+			cette collection.
+		</>
+	);
+}
 
 export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
 	// Note: Pas de "use cache" ici car la page utilise searchParams (filtres dynamiques)
@@ -117,40 +142,60 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 				}}
 			/>
 
-			{/* noStructuredData : le BreadcrumbList est déjà dans le @graph de
-				`generateCollectionStructuredData` injecté ci-dessus. Sans cet opt-out, cette
-				page en publiait DEUX. Même parti pris que la PDP et /produits. */}
-			<PageHeader
-				title={collection.name}
-				description={collection.description ?? undefined}
-				breadcrumbs={breadcrumbs}
-				noStructuredData
-			/>
+			{/* Shell sans bande d'en-tête — même montage que /produits : fil d'Ariane
+			    → bloc titre en tête de page → grille (le titre n'est PLUS une cellule
+			    de la grille, re-tranché le 2026-08-05). Le `BreadcrumbList` de la page
+			    est déjà dans le @graph de `generateCollectionStructuredData` injecté
+			    ci-dessus ; `BreadcrumbNav` est visuel pur. */}
+			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
+				<div className="mx-auto max-w-6xl space-y-5 px-4 sm:px-6 lg:px-8">
+					<BreadcrumbNav items={breadcrumbs} />
 
-			{/* Section principale avec catalogue */}
-			<section className="bg-background relative isolate overflow-hidden pt-6 pb-12 lg:pt-8 lg:pb-16">
-				<div
-					aria-hidden="true"
-					className="bg-primary/15 pointer-events-none absolute -top-8 right-4 -z-10 size-48 rounded-full blur-3xl motion-safe:animate-pulse sm:right-12"
-				/>
-				<div
-					aria-hidden="true"
-					className="bg-secondary/25 pointer-events-none absolute top-40 left-4 -z-10 size-36 rounded-full blur-3xl [animation-delay:1.5s] motion-safe:animate-pulse sm:left-12"
-				/>
-				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					{/* H2 sr-only — comble le saut h1 → h3 (titres des cartes produit) pour
-					    une hiérarchie séquentielle (WCAG 1.3.1, audit `heading-order`). */}
-					<h2 className="sr-only">Produits de la collection {collection.name}</h2>
+					<StorefrontHeading
+						title={collection.name}
+						// La couleur de la collection : un seul segment, dérivé du slug.
+						accent={accentForSlug(collection.slug)}
+						// Chapô masqué sous `sm` par le `<p>` hôte (lot 0, audit 2026-08-05) —
+						// la description de collection (base) suit le même régime que le
+						// repli : c'est le budget vertical mobile qui coupe, uniformément.
+						description={
+							collection.description ??
+							`Les pièces de cette collection, faites une par une dans mon atelier à ${BRAND.contact.location.city}.`
+						}
+						descriptionClassName="hidden sm:block"
+						countSlot={
+							<Suspense
+								fallback={
+									<Skeleton as="span" className="inline-block h-4 w-44 rounded align-[-2px]" />
+								}
+							>
+								<CollectionCount productsPromise={productsPromise} />
+							</Suspense>
+						}
+						// Les cartes portent des h3 : ce libellé comble le saut de niveau
+						// (WCAG 1.3.1, audit `heading-order`).
+						listLabel={`Produits de la collection ${collection.name}`}
+					/>
 
-					<Suspense fallback={<ProductListSkeleton />}>
-						<ProductList
-							productsPromise={productsPromise}
-							perPage={perPage}
-							wishlistProductIdsPromise={wishlistProductIdsPromise}
-							sortBy={sortBy as SortField}
-							filters={parseFilters(searchParamsData, slug)}
-						/>
-					</Suspense>
+					{/*
+					 * ⚠️ `CATALOG_GRID` est OBLIGATOIRE ici. `ProductList` ne rend AUCUN
+					 * conteneur : ses cellules sont des enfants directs de la grille de
+					 * l'hôte. Cette page était restée sur un simple `<div>` — ses cartes
+					 * s'empilaient donc en blocs pleine largeur, une par ligne, pendant
+					 * que le bloc « voir plus » (qui portait sa propre grille) était la
+					 * seule zone correctement disposée de la page.
+					 */}
+					<div className={CATALOG_GRID}>
+						<Suspense fallback={<ProductListSkeleton />}>
+							<ProductList
+								productsPromise={productsPromise}
+								perPage={perPage}
+								wishlistProductIdsPromise={wishlistProductIdsPromise}
+								sortBy={sortBy as SortField}
+								filters={parseFilters(searchParamsData, slug)}
+							/>
+						</Suspense>
+					</div>
 				</div>
 			</section>
 		</div>

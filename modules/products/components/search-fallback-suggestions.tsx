@@ -65,8 +65,10 @@ export async function SearchFallbackSuggestions({
 
 	return (
 		<div className="mt-4 mb-12 space-y-8 sm:my-12">
-			{/* Section principale avec message et actions */}
-			<Empty>
+			{/* Section principale avec message et actions. `bg-primary/5` : le wash de
+			    « la salle rose » (audit /produits 2026-08-05, direction B) — l'état
+			    vide est une ZONE de la salle, pas une carte, il prend la teinte du mur. */}
+			<Empty className="bg-primary/5">
 				<EmptyHeader>
 					<EmptyMedia variant="icon">
 						<MagnifyingGlassIcon className="size-6" />
@@ -114,9 +116,11 @@ export async function SearchFallbackSuggestions({
 					<h2 id="latest-products-heading" className="text-center text-lg font-semibold">
 						Mes dernières créations
 					</h2>
-					{/* `lg:gap-8` comme la grille principale (`product-list.tsx`) : sans lui,
-					    la gouttière changeait au moment où la recherche ne rend plus rien. */}
-					<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8">
+					{/* `lg:grid-cols-3 lg:gap-8` comme la grille principale (SSOT
+					    `catalog-grid.constants.ts`) : l'état vide rendait les mêmes cartes
+					    en 4 colonnes dans une page qui n'en a que 3 — deux largeurs de
+					    carte co-visibles sans raison lisible (audit /produits 2026-08-05). */}
+					<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-3 lg:gap-8">
 						{latestProducts.map((product, index) => (
 							<ProductCard
 								key={product.id}
@@ -173,7 +177,7 @@ export function SearchFallbackSuggestionsSkeleton() {
 			{/* Popular products skeleton */}
 			<div className="space-y-4">
 				<Skeleton className="mx-auto h-6 w-48" />
-				<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+				<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-3 lg:gap-8">
 					{/* SSOT ProductCardSkeleton — l'ancien skeleton inline gardait le
 					    ratio 3/4 mobile d'avant l'unification 4/5 (CLS au swap) */}
 					{Array.from({ length: 4 }).map((_, i) => (

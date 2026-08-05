@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StackIcon } from "@phosphor-icons/react/ssr";
@@ -45,7 +46,9 @@ export function CollectionCard({
 		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
 		event.preventDefault();
 		onSelect();
-		withViewTransition(() => router.push(href));
+		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
+		// de lire la prop `replace` du `<Link>`. C'est ici que la navigation se décide.
+		withViewTransition(() => router.replace(href));
 	};
 
 	return (
@@ -88,6 +91,7 @@ export function CollectionCard({
 										alt=""
 										width={32}
 										height={32}
+										quality={IMAGE_QUALITY.THUMBNAIL}
 										className="size-full object-cover"
 										placeholder={collection.image.blurDataUrl ? "blur" : "empty"}
 										blurDataURL={collection.image.blurDataUrl ?? undefined}
@@ -116,6 +120,7 @@ export function CollectionCard({
 									alt=""
 									width={40}
 									height={40}
+									quality={IMAGE_QUALITY.THUMBNAIL}
 									className="size-full object-cover"
 									placeholder={collection.image.blurDataUrl ? "blur" : "empty"}
 									blurDataURL={collection.image.blurDataUrl ?? undefined}

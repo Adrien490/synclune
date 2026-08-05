@@ -13,21 +13,26 @@ vi.mock("../constants/price-filter", () => ({
 	sliderToPrice: (position: number, maxPrice: number) => Math.round((position / 100) * maxPrice),
 }));
 
-// Mock Slider to a simple div with data-testid, forwarding onValueChange as a data attribute
+// Mock Slider to a simple div with data-testid, forwarding onValueChange as a data attribute.
+// `formatValue` est capturé en data-attribute (échantillon à la position 50) pour
+// vérifier la conversion position → euros sans rendre la primitive Base UI.
 vi.mock("@/shared/components/ui/slider", () => ({
 	Slider: ({
 		value,
 		onValueChange,
+		formatValue,
 		...props
 	}: {
 		value: [number, number];
 		onValueChange: (v: number[]) => void;
+		formatValue?: (v: number) => string;
 		[key: string]: unknown;
 	}) => (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div
 			data-testid="slider"
 			data-value={JSON.stringify(value)}
+			data-format-50={formatValue?.(50)}
 			onClick={() => onValueChange([10, 90])}
 			{...props}
 		/>
@@ -361,5 +366,19 @@ describe("PriceRangeInputs – accessibility", () => {
 		renderComponent();
 		expect(screen.getByLabelText("Prix minimum")).toBeInTheDocument();
 		expect(screen.getByLabelText("Prix maximum")).toBeInTheDocument();
+	});
+
+	it("le placeholder du champ maximum est le prix max réel, pas 0", () => {
+		const { maxInput } = renderComponent([0, 400], 400);
+		expect(maxInput).toHaveAttribute("placeholder", "400");
+	});
+
+	it("les thumbs annoncent un prix en euros, pas une position d'échelle interne", () => {
+		// Sans formatValue, Base UI annonce « 50 sur 100 » — la POSITION de
+		// l'échelle quadratique, pas un prix. Conversion réelle : (50/100)² × 400
+		// = 100 €. (Le vi.mock de ../constants/price-filter ne matche pas le
+		// specifier du composant — c'est la vraie échelle qui s'applique ici.)
+		renderComponent([0, 400], 400);
+		expect(screen.getByTestId("slider")).toHaveAttribute("data-format-50", "100 euros");
 	});
 });

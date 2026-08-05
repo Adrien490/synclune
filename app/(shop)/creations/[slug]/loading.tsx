@@ -1,15 +1,21 @@
-import { PageHeaderSkeleton } from "@/shared/components/page-header";
 import { ProductMainSkeleton } from "@/modules/products/components/product-main-skeleton";
-import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/recently-viewed-products-skeleton";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
+import { BreadcrumbNavSkeleton } from "@/shared/components/breadcrumb-nav";
 
 /**
  * Loading state for product detail page
- * Structure exacte : PageHeader → Gallery + ProductInfo/ProductDetails → RecentlyViewed → Related
+ * Structure exacte : BreadcrumbNav → Gallery + ProductInfo/ProductDetails → Related
  *
  * IMPORTANT: L'ordre des composants doit correspondre exactement à page.tsx pour éviter le CLS.
  * Le subtree gallery+info+details est extrait dans `ProductMainSkeleton` (single source of truth
  * partagé entre ce loading.tsx et le Suspense fallback de page.tsx).
+ *
+ * ⚠️ **Pas de squelette « Récemment vus » ici.** Cette section n'existe que si le
+ * cookie de vues récentes contient un autre produit, et ce fichier est le repli de
+ * ROUTE : il ne peut pas lire de cookie sans devenir dynamique. Le dessiner
+ * revenait à promettre une section qui, sur la première fiche d'une visite,
+ * n'arrive jamais. `page.tsx` décide de la monter, et le séparateur d'ouverture
+ * voyage avec elle (cf. `RecentlyViewedProducts`).
  */
 export default function ProductDetailLoading() {
 	return (
@@ -22,25 +28,16 @@ export default function ProductDetailLoading() {
 			<span className="sr-only">Chargement du produit…</span>
 
 			<div className="relative z-10">
-				{/* PageHeader Skeleton - Caché sur mobile comme le vrai PageHeader */}
-				<PageHeaderSkeleton hasDescription={false} className="hidden sm:block" />
-
 				{/* Main Content - Paddings alignés sur page.tsx */}
-				<div className="bg-background pt-20 pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">
+				<div className="bg-background pt-[calc(var(--navbar-height-static)+0.75rem)] pb-6 sm:pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+						<BreadcrumbNavSkeleton className="pb-5" />
+
 						<article className="space-y-12">
 							<ProductMainSkeleton />
 
-							{/* Separator avant produits recemment vus */}
-							<div className="bg-border h-px" />
-
-							{/* RecentlyViewedProducts Skeleton */}
-							<RecentlyViewedProductsSkeleton limit={4} />
-
-							{/* Separator avant produits similaires */}
-							<div className="bg-border h-px" />
-
-							{/* RelatedProducts Skeleton */}
+							{/* RelatedProducts Skeleton — il porte son propre séparateur
+							    d'ouverture, comme la section qu'il double. */}
 							<RelatedProductsSkeleton limit={4} />
 						</article>
 					</div>

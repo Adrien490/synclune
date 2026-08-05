@@ -9,6 +9,7 @@ import { QUICK_SEARCH_DIALOG_ID } from "./constants";
 import { QuickSearchKeyboardShortcut } from "./quick-search-keyboard-shortcut";
 import type {
 	QuickSearchCollection,
+	QuickSearchColor,
 	QuickSearchProductType,
 	RecentlyViewedProduct,
 } from "./constants";
@@ -26,6 +27,7 @@ interface QuickSearchDialogLazyProps {
 	collections: QuickSearchCollection[];
 	productTypes: QuickSearchProductType[];
 	recentlyViewed?: RecentlyViewedProduct[];
+	colors?: QuickSearchColor[];
 }
 
 /**

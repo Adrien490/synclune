@@ -12,14 +12,14 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import { Stagger } from "@/shared/components/animations/stagger";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { matchesWordStart } from "@/modules/products/utils/match-word-start";
 
 import type { QuickSearchResult } from "../../data/quick-search-products";
 import { CategoryCard } from "./category-card";
 import { CollectionCard } from "./collection-card";
+import { ColorWall } from "./color-wall";
 import { LISTBOX_ID, MAX_MATCHED_COLLECTIONS, MAX_MATCHED_TYPES } from "./constants";
-import type { QuickSearchCollection, QuickSearchProductType } from "./constants";
+import type { QuickSearchCollection, QuickSearchColor, QuickSearchProductType } from "./constants";
 import { QuickTagPills } from "./quick-tag-pills";
 import { SearchErrorState } from "./search-error-state";
 import { SearchResultItem } from "./search-result-item";
@@ -28,6 +28,7 @@ interface QuickSearchContentProps {
 	results: QuickSearchResult;
 	query: string;
 	collections: QuickSearchCollection[];
+	colors: QuickSearchColor[];
 	productTypes: QuickSearchProductType[];
 	onSearch: (query: string) => void;
 	onClose: () => void;
@@ -41,6 +42,7 @@ export function QuickSearchContent({
 	results,
 	query,
 	collections,
+	colors,
 	productTypes,
 	onSearch,
 	onClose,
@@ -86,17 +88,28 @@ export function QuickSearchContent({
 				{isRateLimited
 					? "Trop de requêtes — réessaie dans quelques instants."
 					: isSuccess
-						? `${totalCount} résultat${totalCount !== 1 ? "s" : ""} trouvé${totalCount !== 1 ? "s" : ""}.`
+						? // `> 1`, et non `!== 1` : en français, zéro appelle le SINGULIER
+							// (« 0 résultat trouvé »). La forme anglaise donnait « 0 résultats
+							// trouvés » — seule occurrence du module, tout le reste accorde bien.
+							`${totalCount} résultat${totalCount > 1 ? "s" : ""} trouvé${totalCount > 1 ? "s" : ""}.`
 						: ""}
 			</div>
 
 			<div className="min-h-0 flex-1">
-				<ScrollFade axis="vertical" hideScrollbar={false} className="h-full overscroll-contain">
+				<div
+					data-slot="scroll-fade-container"
+					className="scroll-fade-y h-full overflow-x-hidden overflow-y-auto overscroll-contain"
+				>
 					<div className="space-y-4 p-4">
 						{/* Empty state — rendu AVANT la suggestion : l'ordre de lecture doit
 							être « rien trouvé » puis « voici une alternative », pas l'inverse. */}
+						{/* Pas de `role="status"` ici : ce bloc est inséré AVEC son contenu,
+							pattern connu pour ne pas être vocalisé de façon fiable — et la
+							région sr-only permanente en tête annonce déjà « 0 résultat
+							trouvé ». Deux régions feraient une double annonce. Même arbitrage
+							que le bloc rate-limit plus bas. */}
 						{showEmptyState && (
-							<Empty variant="borderless" size="sm" role="status" aria-live="polite">
+							<Empty variant="borderless" size="sm">
 								<EmptyHeader>
 									<EmptyMedia variant="icon">
 										<MagnifyingGlassIcon className="size-5" aria-hidden="true" />
@@ -106,15 +119,29 @@ export function QuickSearchContent({
 									</EmptyTitle>
 								</EmptyHeader>
 								<EmptyContent>
+									{/* La question doit désigner l'affordance RÉELLEMENT rendue en
+										dessous : sous `QUICK_SEARCH_MIN_COLORS` teintes actives le mur ne
+										se rend pas, et ce sont des pills de catégories qui suivent. La
+										phrase était écrite en dur — elle promettait un nuancier absent,
+										précisément dans le cas que le seuil sert. */}
 									<p className="text-muted-foreground text-center text-xs">
-										Essaie avec moins de mots ou parcours nos catégories
+										Je n&rsquo;ai rien de ce nom-là.{" "}
+										{colors.length > 0 ? "Regarde par couleur ?" : "Regarde par catégorie ?"}
 									</p>
-									<QuickTagPills
-										productTypes={productTypes}
-										onSelect={onSearch}
-										size="xs"
-										centered
-									/>
+									{/* `navigable={false}` : ce mur est rendu HORS du `role="listbox"`,
+										en mode recherche où le roving désigne l'option courante par
+										`aria-activedescendant`. Le laisser navigable ferait pointer cet
+										attribut sur un nœud extérieur au listbox qui le porte. */}
+									{colors.length > 0 ? (
+										<ColorWall colors={colors} onSelect={onClose} navigable={false} />
+									) : (
+										<QuickTagPills
+											productTypes={productTypes}
+											onSelect={onSearch}
+											size="xs"
+											centered
+										/>
+									)}
 								</EmptyContent>
 							</Empty>
 						)}
@@ -134,7 +161,10 @@ export function QuickSearchContent({
 										triggerHaptic("selection");
 										onSearch(suggestion);
 									}}
-									className="text-foreground decoration-primary/40 hover:decoration-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+									// `focus-ring` — un `ring-ring` nu avec `outline-none` laissait le
+									// pastel `--ring` (≈1,6:1) seul indicateur de focus, sous les 3:1
+									// de WCAG 1.4.11. L'utilitaire rétablit l'outline `--foreground`.
+									className="text-foreground decoration-primary/40 hover:decoration-primary focus-ring rounded-sm font-medium underline underline-offset-4 transition-colors"
 								>
 									{suggestion}
 								</button>
@@ -243,7 +273,7 @@ export function QuickSearchContent({
 										// `quick-search-products.ts`), donc le total pouvait contredire
 										// /produits?search=. On n'affiche plus que ce qu'on garantit.
 										<p aria-hidden="true" className="text-muted-foreground mb-2 text-xs">
-											{products.length} affichés
+											{products.length} affiché{products.length > 1 ? "s" : ""}
 										</p>
 									)}
 									<Stagger className="space-y-0.5" stagger={0.02} delay={0.03} y={4}>
@@ -260,7 +290,7 @@ export function QuickSearchContent({
 							)}
 						</div>
 					</div>
-				</ScrollFade>
+				</div>
 			</div>
 
 			{/* Footer — rendu dès que la recherche a abouti, y compris à 0 résultat.

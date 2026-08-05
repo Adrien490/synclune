@@ -30,7 +30,9 @@ export function CategoryCard({ type, onSelect, variant = "full", query }: Catego
 		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
 		event.preventDefault();
 		onSelect();
-		withViewTransition(() => router.push(href));
+		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
+		// de lire la prop `replace` du `<Link>`. C'est ici que la navigation se décide.
+		withViewTransition(() => router.replace(href));
 	};
 
 	return (

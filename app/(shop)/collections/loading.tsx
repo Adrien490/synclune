@@ -1,10 +1,8 @@
-import { PageHeaderSkeleton } from "@/shared/components/page-header";
-import { CollectionGridSkeleton } from "@/modules/collections/components/collection-grid-skeleton";
+import { CollectionChaptersSkeleton } from "@/modules/collections/components/collection-chapters-skeleton";
+import { BreadcrumbNavSkeleton } from "@/shared/components/breadcrumb-nav";
+import { StorefrontHeadingSkeleton } from "@/shared/components/storefront-heading";
 
-/**
- * Loading state for collections list page
- * Structure alignée avec page.tsx : PageHeader → CollectionGrid
- */
+/** Miroir 1:1 du shell de `page.tsx` — même section, mêmes espacements (CLS). */
 export default function CollectionsLoading() {
 	return (
 		<div
@@ -15,14 +13,16 @@ export default function CollectionsLoading() {
 		>
 			<span className="sr-only">Chargement des collections…</span>
 
-			{/* PageHeaderSkeleton */}
-			<PageHeaderSkeleton hasDescription={false} className="hidden sm:block" />
-
-			{/* Main Content - Aligné avec page.tsx */}
-			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
-				<div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
-					<CollectionGridSkeleton />
+			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
+				<div className="mx-auto max-w-6xl space-y-5 px-4 pb-5 sm:px-6 lg:px-8">
+					<BreadcrumbNavSkeleton />
+					{/* `descriptionLines={2}` : la copie du chapô de `page.tsx` est
+					    statique (117 caractères) et rend DEUX lignes dans son
+					    `max-w-[42ch]` à `sm+` — une seule ligne réservée décalait tout
+					    le contenu de 26 px au swap (audit 79/100 du 2026-08-05). */}
+					<StorefrontHeadingSkeleton descriptionLines={2} />
 				</div>
+				<CollectionChaptersSkeleton />
 			</section>
 		</div>
 	);

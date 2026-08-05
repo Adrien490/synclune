@@ -358,4 +358,49 @@ describe("useKeyboardNavigation", () => {
 			expect(focusSearchInput).not.toHaveBeenCalled();
 		});
 	});
+
+	/**
+	 * Le nuancier est une GRILLE (`grid-cols-4 sm:grid-cols-6`) : ← et → doivent y
+	 * déplacer le roving. Elles ne faisaient rien du tout — seules ↑/↓/Home/End
+	 * étaient câblées. Audit UI/UX 2026-08-05 (P2-6).
+	 *
+	 * ⚠️ Mais elles n'appartiennent au roving QUE hors du champ : `handleArrowNavigation`
+	 * est aussi branché sur l'`onKeyDown` de l'input, où ← et → sont au curseur de
+	 * saisie.
+	 */
+	describe("déplacement horizontal (grille du nuancier)", () => {
+		it("→ avance le focus en idle, depuis le conteneur", () => {
+			const { container } = setupIdle();
+
+			act(() => hookResultRef.current!.handleContentKeyDown(makeEvent("ArrowRight")));
+			expect(document.activeElement).toBe(container.children[0]);
+
+			act(() => hookResultRef.current!.handleContentKeyDown(makeEvent("ArrowRight")));
+			expect(document.activeElement).toBe(container.children[1]);
+		});
+
+		it("← recule le focus en idle", () => {
+			const { container } = setupIdle();
+
+			act(() => hookResultRef.current!.handleContentKeyDown(makeEvent("ArrowDown")));
+			act(() => hookResultRef.current!.handleContentKeyDown(makeEvent("ArrowDown")));
+			expect(document.activeElement).toBe(container.children[1]);
+
+			act(() => hookResultRef.current!.handleContentKeyDown(makeEvent("ArrowLeft")));
+			expect(document.activeElement).toBe(container.children[0]);
+		});
+
+		it("← et → sont IGNORÉES quand le handler est celui du champ de saisie", () => {
+			setup();
+
+			// Câblage réel : `onKeyDown={handleArrowNavigation}` — React n'appelle
+			// jamais le handler avec le second argument, donc `allowHorizontal` reste
+			// `false`. Les intercepter ici déplacerait le focus au lieu du curseur.
+			const right = makeEvent("ArrowRight");
+			act(() => hookResultRef.current!.handleArrowNavigation(right));
+
+			expect(right.preventDefault).not.toHaveBeenCalled();
+			expect(hookResultRef.current!.activeDescendantId).toBeUndefined();
+		});
+	});
 });

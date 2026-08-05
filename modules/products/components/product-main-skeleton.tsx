@@ -1,5 +1,24 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
+/** Réserves par défaut, pour `loading.tsx` — qui n'a AUCUNE donnée produit. */
+export const PRODUCT_MAIN_SKELETON_DEFAULTS = {
+	swatchCount: 3,
+	/** Axes de variante réservés : 0 = pas de carte du tout. */
+	variantAxisCount: 2,
+} as const;
+
+interface ProductMainSkeletonProps {
+	/**
+	 * Nombre d'axes de variante que `VariantSelector` va RÉELLEMENT rendre.
+	 * `0` retire toute la carte : sur une fiche mono-SKU, `VariantSelector`
+	 * retourne `null` et le squelette réservait quand même ~250 px — le contenu
+	 * remontait d'autant au swap.
+	 */
+	variantAxisCount?: number;
+	/** Plaquettes du nuancier à réserver. */
+	swatchCount?: number;
+}
+
 /**
  * Skeleton matching the product detail main region (gallery + product info + product details).
  * Used as Suspense fallback in `page.tsx` AND inside `loading.tsx` to guarantee a single
@@ -7,9 +26,16 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  *
  * Layout mirrors `app/(shop)/creations/[slug]/page.tsx` and `ProductDetails`.
  * ⚠️ Toute modification de rythme ou de structure de la colonne droite doit être
- * répercutée ICI, sinon décalage de mise en page au streaming.
+ * répercutée ICI, sinon décalage de mise en page au streaming. La parité est
+ * verrouillée par `product-main-skeleton-parity.regression.test.tsx`.
+ *
+ * `page.tsx` dispose du produit AVANT la frontière `Suspense` : il passe donc les
+ * réserves exactes. `loading.tsx`, repli de route sans données, garde les défauts.
  */
-export function ProductMainSkeleton() {
+export function ProductMainSkeleton({
+	variantAxisCount = PRODUCT_MAIN_SKELETON_DEFAULTS.variantAxisCount,
+	swatchCount = PRODUCT_MAIN_SKELETON_DEFAULTS.swatchCount,
+}: ProductMainSkeletonProps = {}) {
 	return (
 		<div
 			className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16"
@@ -101,40 +127,50 @@ export function ProductMainSkeleton() {
 							<Skeleton className="bg-foreground/10 h-4 w-56" />
 						</div>
 
-						{/* 2b. VariantSelector — Card + nuancier (plaquettes 88 × 56 + libellé) */}
-						<div className="border-primary/20 rounded-xl border-2 shadow-sm">
-							<div className="space-y-2 p-6 pb-0">
-								<Skeleton className="bg-muted/40 h-5 w-44" />
-								<Skeleton className="bg-muted/30 h-4 w-64" />
-							</div>
-							<div className="space-y-6 p-6">
-								<div className="space-y-3">
-									<Skeleton className="bg-muted/30 h-4 w-20" />
-									<div className="flex flex-wrap gap-2.5">
-										{Array.from({ length: 3 }).map((_, i) => (
-											<Skeleton key={i} className="bg-muted/40 h-21 w-22 rounded-md" />
-										))}
-									</div>
+						{/* 2b. VariantSelector — Card + nuancier (plaquettes 88 × 56 + libellé).
+						    Absent quand le produit n'a qu'un SKU : `VariantSelector` rend
+						    `null`, et une carte réservée pour rien fait remonter tout le bas
+						    de la colonne au swap. */}
+						{variantAxisCount > 0 && (
+							<div className="border-primary/20 rounded-xl border-2 shadow-sm">
+								<div className="space-y-2 p-6 pb-0">
+									<Skeleton className="bg-muted/40 h-5 w-44" />
+									<Skeleton className="bg-muted/30 h-4 w-64" />
 								</div>
-
-								<div className="bg-border h-px" />
-
-								<div className="space-y-3">
-									<Skeleton className="bg-muted/30 h-4 w-24" />
-									<div className="grid grid-cols-2 gap-2">
-										{Array.from({ length: 2 }).map((_, i) => (
-											<Skeleton key={i} className="bg-muted/40 h-11 rounded-lg" />
-										))}
+								<div className="space-y-6 p-6">
+									<div className="space-y-3">
+										<Skeleton className="bg-muted/30 h-4 w-20" />
+										<div className="flex flex-wrap gap-2.5">
+											{Array.from({ length: swatchCount }).map((_, i) => (
+												<Skeleton key={i} className="bg-muted/40 h-21 w-22 rounded-md" />
+											))}
+										</div>
 									</div>
+
+									{/* Axe secondaire (matériau ou taille) — seulement s'il est rendu. */}
+									{variantAxisCount > 1 && (
+										<>
+											<div className="bg-border h-px" />
+
+											<div className="space-y-3">
+												<Skeleton className="bg-muted/30 h-4 w-24" />
+												<div className="grid grid-cols-2 gap-2">
+													{Array.from({ length: 2 }).map((_, i) => (
+														<Skeleton key={i} className="bg-muted/40 h-11 rounded-lg" />
+													))}
+												</div>
+											</div>
+										</>
+									)}
 								</div>
 							</div>
-						</div>
+						)}
 
 						{/* 2c. AddToCartForm */}
 						<Skeleton className="bg-primary/30 h-12 w-full rounded-lg" />
 					</div>
 
-					{/* 3. Description — prose Fraunces, mesure bornée */}
+					{/* 3. Description — prose display, mesure bornée */}
 					<div className="max-w-[34rem] space-y-3">
 						<Skeleton className="bg-muted/30 h-6 w-full" />
 						<Skeleton className="bg-muted/30 h-6 w-full" />

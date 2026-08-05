@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { SYSTEM_PRODUCT_TYPE_SLUGS } from "@/modules/product-types/constants/system-product-type-slugs";
 import {
 	PRODUCT_TEXTS,
 	PRODUCT_TYPES_REQUIRING_SIZE,
@@ -49,16 +50,24 @@ describe("product-texts.constants", () => {
 	});
 
 	describe("PRODUCT_TYPES_REQUIRING_SIZE", () => {
+		// ⚠️ Les trois assertions précédentes — `toContain("ring")`,
+		// `toContain("bracelet")` — étaient VERTES pour la mauvaise raison : elles ne
+		// rencontraient jamais un slug réel, et la constante a pointé des mois durant
+		// vers des types qui n'existent dans aucune ligne. On confronte donc à la SSOT.
 		it("is a non-empty array", () => {
 			expect(PRODUCT_TYPES_REQUIRING_SIZE.length).toBeGreaterThan(0);
 		});
 
-		it("contains ring", () => {
-			expect(PRODUCT_TYPES_REQUIRING_SIZE).toContain("ring");
+		it("ne contient que des slugs de types système existants", () => {
+			const known = Object.values(SYSTEM_PRODUCT_TYPE_SLUGS);
+			for (const slug of PRODUCT_TYPES_REQUIRING_SIZE) {
+				expect(known).toContain(slug);
+			}
 		});
 
-		it("contains bracelet", () => {
-			expect(PRODUCT_TYPES_REQUIRING_SIZE).toContain("bracelet");
+		it("couvre les bagues et les bracelets", () => {
+			expect(PRODUCT_TYPES_REQUIRING_SIZE).toContain(SYSTEM_PRODUCT_TYPE_SLUGS.RINGS);
+			expect(PRODUCT_TYPES_REQUIRING_SIZE).toContain(SYSTEM_PRODUCT_TYPE_SLUGS.BRACELETS);
 		});
 	});
 

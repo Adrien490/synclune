@@ -179,10 +179,12 @@ function SortDrawerInner({
 			params.delete(filterKey);
 		}
 
-		// Reset pagination
+		// Reset pagination — curseur uniquement : aucun parseur ne lit `page`
+		// (pagination à curseur partout), et `generateMetadata` de /produits
+		// comptait ce paramètre fantôme comme un filtre actif → `noindex` sur
+		// une URL triée, pourtant voulue indexable (audit /produits 2026-08-05).
 		params.delete("cursor");
 		params.delete("direction");
-		params.set("page", "1");
 
 		startTransition(() => {
 			setOptimisticValue(value);
@@ -284,7 +286,11 @@ function SortDrawerInner({
 										"-mx-1 px-4 py-3.5",
 										"text-left text-base",
 										"transition-colors duration-150",
-										"focus-visible:ring-primary focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+										// `focus-ring` et non un ring `--primary` nu : le rose seul est à
+										// ~1,5:1 sur fond blanc (WCAG 1.4.11 exige 3:1). L'utilitaire
+										// peint un outline `--foreground` sous le halo rose — le pastel
+										// reste une marque, jamais l'information.
+										"focus-ring focus-visible:rounded-lg",
 										isSelected && !isResetOption
 											? "bg-primary/5 rounded-lg font-medium"
 											: isSelected && isResetOption

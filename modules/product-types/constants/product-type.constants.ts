@@ -37,6 +37,67 @@ export const GET_PRODUCT_TYPES_SELECT = {
 	},
 } as const satisfies Prisma.ProductTypeSelect;
 
+/**
+ * Select du menu mobile (« L'étal de poche ») : chaque famille y montre UNE
+ * vignette + son compte de pièces. Étend `GET_PRODUCT_TYPES_SELECT` d'un
+ * produit représentatif — le plus récent publié qui possède au moins une image.
+ *
+ * Famille « vignette unique » (cf. CLAUDE.md § mediaType) : `mediaType: "IMAGE"`
+ * est filtré DANS le select, car l'appelant prend une seule image sans pouvoir
+ * trier. Le choix final passe quand même par `pickPrimaryImage()` côté appelant
+ * (SSOT), d'où `mediaType` + `isPrimary` dans la projection.
+ */
+export const GET_PRODUCT_TYPES_MENU_SELECT = {
+	...GET_PRODUCT_TYPES_SELECT,
+	products: {
+		where: {
+			status: "PUBLIC",
+			deletedAt: null,
+			skus: {
+				some: {
+					isActive: true,
+					deletedAt: null,
+					images: { some: { mediaType: "IMAGE" } },
+				},
+			},
+		},
+		orderBy: [{ createdAt: "desc" as const }, { id: "asc" as const }],
+		take: 1,
+		select: {
+			id: true,
+			skus: {
+				// Le même filtre `images.some` que la garde produit ci-dessus : sans
+				// lui, un SKU par défaut sans image rendait une tuile vide alors
+				// qu'un autre SKU du produit en possède une.
+				where: {
+					isActive: true,
+					deletedAt: null,
+					images: { some: { mediaType: "IMAGE" } },
+				},
+				orderBy: [{ isDefault: "desc" as const }],
+				take: 1,
+				select: {
+					images: {
+						where: { mediaType: "IMAGE" as const },
+						select: {
+							url: true,
+							blurDataUrl: true,
+							mediaType: true,
+							isPrimary: true,
+						},
+						orderBy: [
+							{ isPrimary: "desc" as const },
+							{ position: "asc" as const },
+							{ id: "asc" as const },
+						],
+						take: 1,
+					},
+				},
+			},
+		},
+	},
+} as const satisfies Prisma.ProductTypeSelect;
+
 export const GET_PRODUCT_TYPE_SELECT = {
 	id: true,
 	slug: true,

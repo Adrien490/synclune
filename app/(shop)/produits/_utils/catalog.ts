@@ -123,7 +123,7 @@ export function fetchProducts(
  * NB (audit filtres S3) : il existe un jumeau CÔTÉ CLIENT dans
  * `modules/products/services/product-filter-params.service.ts` (`countActiveFilters`,
  * signature `(URLSearchParams)`), utilisé par les composants client
- * (`product-filter-trigger`, `product-sort-bar`). Les deux doivent rester
+ * (`product-sort-bar`). Les deux doivent rester
  * cohérents : toute évolution de la logique de comptage est à répercuter ici ET là.
  */
 export function countActiveFilters(

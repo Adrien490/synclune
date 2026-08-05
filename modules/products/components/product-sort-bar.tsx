@@ -19,7 +19,12 @@ import {
 	countActiveFilters,
 	isProductCategoryPage,
 } from "@/modules/products/services/product-filter-params.service";
-import { SearchInput } from "@/shared/components/search-input";
+import {
+	shelfAccentForPathname,
+	sortTriggerLabelFor,
+} from "@/modules/products/components/catalog-shelf-accent";
+import { ShelfBar, ShelfBarButton, ShelfBarToolbar } from "@/shared/components/shelf-bar/shelf-bar";
+import { useToolbarRovingFocus } from "@/shared/components/shelf-bar/use-toolbar-roving-focus";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
@@ -27,8 +32,6 @@ import { cn } from "@/shared/utils/cn";
 interface ProductSortBarProps {
 	/** Options de tri disponibles */
 	sortOptions: SortOption[];
-	/** Placeholder du champ de recherche déplié à partir de `md`. */
-	searchPlaceholder?: string;
 	/** Classes CSS additionnelles */
 	className?: string;
 }
@@ -41,52 +44,67 @@ interface ProductSortBarProps {
 const SORT_DRAWER_ID = "product-sort-drawer";
 
 /**
- * La barre unique du catalogue — tri / recherche / filtres, à TOUS les viewports.
+ * La barre du catalogue — le meuble `< lg` (tri / recherche / filtres).
  *
  * @description
- * Direction « L'étal continue » (artifact du 2026-08-05, lot 1). Le catalogue
- * avait **deux** barres mutuellement exclusives : celle-ci sous `md`, et une
- * `Toolbar` en carte blanche à bordure, ombre et rayon au-dessus — non collante,
- * avec un autre vocabulaire (« Trier par » / « Filtres » contre « Trier » /
- * « Filtrer ») et un champ de recherche qui s'étalait sur ~1 050 px à 1280 pour
- * accueillir le mot « bague ». Un même geste ne se faisait ni au même endroit ni
- * avec le même mot selon la largeur.
+ * Direction « L'étal continue » (artifact du 2026-08-05, lot 1), recadrée le
+ * même jour (retour user) : la bande sticky, coupée au conteneur `max-w-6xl`,
+ * flottait au milieu des grands écrans pour n'y porter qu'un champ capé et un
+ * bouton « Trier ». À partir de `md`, la recherche vit dans la RANGÉE DU TITRE
+ * (`CatalogToolbarInline`) — jamais deux `SearchInput` dans le DOM (un corps
+ * monté deux fois partagerait ses `id`) — et à `lg` le menu de tri ancré la
+ * rejoint : la barre entière disparaît (`lg:hidden`), le rail de filtres et le
+ * cluster prennent le relais.
  *
- * Une seule barre désormais, qui change de FORME et non de nature :
- * - `< md` : trois cellules pleine largeur, séparées par des filets ;
- * - `≥ md` : la même réglette, avec le champ de recherche déplié à gauche et le
- *   bouton « Rechercher » retiré (il ouvrirait un dialog par-dessus un champ
- *   déjà visible). Le champ inline est un **contrat E2E** — `e2e/pages/search.page.ts`
- *   épingle le viewport desktop et attend un `role="searchbox"`.
+ * Ce qui reste ici, par viewport :
+ * - `< md` : trois étiquettes pleine largeur sur le rebord — Trier (tiroir),
+ *   Rechercher (quick-search), Filtrer (panneau) ;
+ * - `md–lg` : Trier (tiroir) + Filtrer — le bouton « Rechercher » s'efface
+ *   (`md:hidden`), le champ étant déjà visible dans la rangée titre.
+ *
+ * La peau « tranche d'étagère » (papier, grain, ombre, étiquettes, ruban
+ * d'état, matérialisation au défilement) est portée par la coque partagée
+ * `ShelfBar` (`shared/components/shelf-bar/`) — ce composant n'apporte que la
+ * logique catalogue : dialogs, compteurs d'état, annonce, tiroir de tri.
  *
  * Collante sous `--navbar-height-static` — **jamais** `--navbar-height**, qui se
  * contracte de 5rem à 4rem au défilement et ferait remonter la barre de 16 px au
  * premier pixel scrollé.
  *
  * Accessibilité :
- * - `role="toolbar"` avec navigation par flèches gauche/droite ; le nombre de
- *   boutons est dérivé du breakpoint pour que la boucle ne passe pas par un
- *   bouton masqué en `display: none` (il n'est pas focusable, la touche serait
- *   morte).
- * - Live region pour annoncer les changements d'état
+ * - `role="toolbar"` avec navigation par flèches (`useToolbarRovingFocus`) ;
+ *   l'anneau est dérivé des boutons réellement rendus, pas d'un compte figé.
+ * - Live region pour annoncer les changements d'état — en SIBLING du `<nav>`,
+ *   pas dedans : sous l'ancêtre `lg:hidden` (`display: none`), elle sortirait
+ *   de l'arbre d'accessibilité à desktop, alors que l'annonce (dérivée de
+ *   l'URL) doit survivre à tous les viewports.
  * - Cibles tactiles 44px (WCAG 2.5.5)
  */
-function ProductSortBarInner({ sortOptions, searchPlaceholder, className }: ProductSortBarProps) {
+function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 	const [sortOpen, setSortOpen] = useState(false);
-	const [focusedIndex, setFocusedIndex] = useState(0);
 	const {
 		open: openSearch,
 		close: closeSearch,
 		isOpen: isSearchOpen,
 	} = useDialog(QUICK_SEARCH_DIALOG_ID);
-	const { open: openFilter, close: closeFilter } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+	const {
+		open: openFilter,
+		close: closeFilter,
+		isOpen: isFilterOpen,
+	} = useDialog(PRODUCT_FILTER_DIALOG_ID);
 
 	const searchParams = useSearchParams();
 
+	// Le roving tabindex saute les boutons en `display: none` (`offsetParent`),
+	// donc l'anneau ne compte que les étiquettes visibles au viewport courant.
 	const sortButtonRef = useRef<HTMLButtonElement>(null);
 	const searchButtonRef = useRef<HTMLButtonElement>(null);
 	const filterButtonRef = useRef<HTMLButtonElement>(null);
-	const buttonRefs = [sortButtonRef, searchButtonRef, filterButtonRef];
+	const { getRovingProps } = useToolbarRovingFocus([
+		sortButtonRef,
+		searchButtonRef,
+		filterButtonRef,
+	]);
 
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
 	const sortByValue = searchParams.get("sortBy");
@@ -152,205 +170,143 @@ function ProductSortBarInner({ sortOptions, searchPlaceholder, className }: Prod
 		sortByValue,
 	]);
 
-	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
-		/*
-		 * Le bouton « Rechercher » est masqué à partir de `md` (le champ y est
-		 * déplié). Un élément en `display: none` n'est pas focusable : boucler sur
-		 * un compte figé à 3 ferait une flèche morte sur desktop. On dérive donc
-		 * l'anneau de navigation des boutons RÉELLEMENT rendus — `offsetParent` est
-		 * `null` exactement dans ce cas, ce qui gate par capacité et non par une
-		 * largeur re-dérivée en JS.
-		 */
-		const visibleIndexes = buttonRefs
-			.map((ref, index) => ({ ref, index }))
-			.filter(({ ref }) => ref.current?.offsetParent != null)
-			.map(({ index }) => index);
+	// WCAG 2.5.3 : même nom accessible que le déclencheur du menu ancré du
+	// cluster (`CatalogToolbarInline`) — SSOT `sortTriggerLabelFor`.
+	const sortTriggerLabel = sortTriggerLabelFor(sortByValue);
 
-		if (visibleIndexes.length === 0) return;
-
-		const position = visibleIndexes.indexOf(currentIndex);
-		const count = visibleIndexes.length;
-		let nextIndex: number | null = null;
-
-		switch (e.key) {
-			case "ArrowRight":
-			case "ArrowDown":
-				e.preventDefault();
-				nextIndex = visibleIndexes[(position + 1) % count]!;
-				break;
-			case "ArrowLeft":
-			case "ArrowUp":
-				e.preventDefault();
-				nextIndex = visibleIndexes[(position - 1 + count) % count]!;
-				break;
-			case "Home":
-				e.preventDefault();
-				nextIndex = visibleIndexes[0]!;
-				break;
-			case "End":
-				e.preventDefault();
-				nextIndex = visibleIndexes[count - 1]!;
-				break;
-		}
-
-		if (nextIndex !== null) {
-			setFocusedIndex(nextIndex);
-			buttonRefs[nextIndex]?.current?.focus();
-		}
-	};
-
-	const buttonBase = cn(
-		"flex flex-1 items-center justify-center gap-1.5 h-11 min-w-0 px-2",
-		"md:flex-none md:gap-2 md:px-3.5 md:text-[0.8125rem]",
-		"text-xs font-medium text-muted-foreground",
-		"hover:text-foreground",
-		"active:bg-primary/5 active:scale-[0.98]",
-		"md:rounded-full md:hover:bg-accent/60",
-		"transition-[color,background-color,transform] duration-150",
-		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset md:focus-visible:ring-offset-0",
-	);
-	const buttonActive = "text-foreground";
+	// L'accent de la page peint le ruban et le fond des étiquettes actives —
+	// le slug donne la teinte, comme sur le bloc titre (SSOT partagée avec le
+	// cluster de la rangée titre).
+	const accent = shelfAccentForPathname(pathname);
 
 	return (
 		<>
-			<nav
-				aria-label="Tri, recherche et filtres"
-				className={cn(
-					// `--navbar-height-static` et NON `--navbar-height` : la seconde se
-					// contracte de 5rem à 4rem au défilement, ce qui ferait remonter la
-					// barre de 16px au premier pixel scrollé.
-					"sticky top-[var(--navbar-height-static)] z-30",
-					"bg-background/80 backdrop-blur-md",
-					"border-border/50 border-b",
-					// Full-bleed dans le conteneur : la bande colle d'un bord à l'autre,
-					// le padding est réinjecté pour aligner son contenu sur la grille.
-					"-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
-					className,
-				)}
-			>
-				<div className="flex items-stretch gap-3">
-					{/* Champ déplié à partir de `md`. Contrat E2E : `search.page.ts`
-					    épingle le viewport desktop et attend un `role="searchbox"`. */}
-					<div className="hidden min-w-0 flex-1 items-center py-2 md:flex">
-						<SearchInput
-							size="sm"
-							paramName="search"
-							placeholder={searchPlaceholder ?? "Rechercher un bijou…"}
-							className="w-full max-w-md"
-						/>
-					</div>
-
-					<div
-						role="toolbar"
-						aria-orientation="horizontal"
-						aria-label="Tri, recherche et filtres"
-						className="divide-border/30 flex flex-1 items-stretch divide-x md:flex-none md:items-center md:gap-1 md:divide-x-0"
+			{/* `lg:hidden` : à partir de `lg`, le rail de filtres (colonne gauche) et
+			    le cluster de la rangée titre (recherche + menu de tri) couvrent les
+			    trois gestes — la bande n'aurait plus rien à porter. */}
+			<ShelfBar aria-label="Tri, recherche et filtres" className={cn("lg:hidden", className)}>
+				{/* `md:ml-auto` : depuis que le champ de recherche vit dans la rangée
+				    titre, la barre n'a plus de `flex-1` à gauche — sans lui, les deux
+				    étiquettes `md–lg` se colleraient au bord gauche. */}
+				<ShelfBarToolbar aria-label="Tri, recherche et filtres" className="md:ml-auto">
+					{/* Tri, tiroir bas — la barre étant `lg:hidden`, le menu ancré du
+					    cluster de la rangée titre (`CatalogToolbarInline`) prend le
+					    relais à desktop : un tiroir de téléphone pleine largeur pour un
+					    geste de souris était le meuble de la mauvaise vue (audit
+					    /produits 2026-08-05, lot 1). Le ruban remplace la pastille 6 px
+					    à 1,55:1 (P1 de l'audit barre) : l'état se voit par la forme.
+					    WCAG 2.5.3 Label in Name : sans tri actif, pas d'aria-label — le
+					    nom accessible EST le libellé visible « Trier » ; avec tri, le nom
+					    COMMENCE par lui (même pattern que « Filtrer »). */}
+					<ShelfBarButton
+						ref={sortButtonRef}
+						{...getRovingProps(0)}
+						onClick={() => {
+							triggerHaptic("selection");
+							closeSearch();
+							closeFilter();
+							setSortOpen(true);
+						}}
+						active={hasActiveSort}
+						accent={accent}
+						showTape
+						// Redondant avec le `lg:hidden` de la barre — gardé en défense en
+						// profondeur : si la barre réapparaissait à `lg`, ce tiroir ferait
+						// doublon avec le menu ancré du cluster.
+						className="lg:hidden"
+						aria-label={sortTriggerLabel}
+						aria-haspopup="dialog"
+						aria-controls={SORT_DRAWER_ID}
+						aria-expanded={sortOpen}
 					>
-						{/* Tri */}
-						<button
-							ref={sortButtonRef}
-							type="button"
-							onClick={() => {
-								triggerHaptic("selection");
-								closeSearch();
-								closeFilter();
-								setSortOpen(true);
-							}}
-							onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
-							onFocus={() => setFocusedIndex(0)}
-							tabIndex={focusedIndex === 0 ? 0 : -1}
-							className={cn(buttonBase, hasActiveSort && buttonActive)}
-							aria-label={
-								hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"
-							}
-							aria-haspopup="dialog"
-							aria-controls={SORT_DRAWER_ID}
-							aria-expanded={sortOpen}
-						>
-							<ArrowsDownUpIcon className="size-4" aria-hidden="true" />
-							<span className="truncate">Trier</span>
-							{hasActiveSort && (
-								<span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden="true" />
-							)}
-						</button>
+						<ArrowsDownUpIcon className="size-4" aria-hidden="true" />
+						<span className="truncate">Trier</span>
+					</ShelfBarButton>
 
-						{/* Recherche */}
-						<button
-							ref={searchButtonRef}
-							type="button"
-							onClick={(e) => {
-								triggerHaptic("selection");
-								setSortOpen(false);
-								// Sans ce handoff, `onCloseAutoFocus` refocalise le dernier
-								// déclencheur connu (souvent celui d'un autre breakpoint) ou laisse
-								// le focus sur <body>. Audit recherche 2026-07-26.
-								setLastTrigger(e.currentTarget);
-								openSearch();
-							}}
-							onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
-							onFocus={() => setFocusedIndex(1)}
-							tabIndex={focusedIndex === 1 ? 0 : -1}
-							// Masqué à partir de `md` : le champ y est déjà déplié à gauche, et
-							// ouvrir un dialog de recherche par-dessus un champ visible serait
-							// deux entrées pour un seul geste.
-							className={cn(buttonBase, "md:hidden", hasActiveSearch && buttonActive)}
-							aria-label={
-								hasActiveSearch
-									? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
-									: "Ouvrir la recherche"
-							}
-							aria-haspopup="dialog"
-							aria-expanded={isSearchOpen}
-						>
-							<MagnifyingGlassIcon className="size-4" aria-hidden="true" />
-							<span className="truncate">Rechercher</span>
-							{hasActiveSearch && (
-								<span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden="true" />
-							)}
-						</button>
+					{/* Recherche — WCAG 2.5.3 : le nom accessible commence par le libellé
+					    visible « Rechercher » (une commande vocale « clique Rechercher »
+					    doit matcher), et disparaît sans état pour laisser le libellé seul. */}
+					<ShelfBarButton
+						ref={searchButtonRef}
+						{...getRovingProps(1)}
+						onClick={(e) => {
+							triggerHaptic("selection");
+							setSortOpen(false);
+							// Sans ce handoff, `onCloseAutoFocus` refocalise le dernier
+							// déclencheur connu (souvent celui d'un autre breakpoint) ou laisse
+							// le focus sur <body>. Audit recherche 2026-07-26.
+							setLastTrigger(e.currentTarget);
+							openSearch();
+						}}
+						active={hasActiveSearch}
+						accent={accent}
+						showTape
+						// Masqué à partir de `md` : le champ est déplié dans la rangée du
+						// titre (`CatalogToolbarInline`), et ouvrir un dialog de recherche
+						// par-dessus un champ visible serait deux entrées pour un seul geste.
+						className="md:hidden"
+						aria-label={
+							hasActiveSearch
+								? `Rechercher — recherche active : "${searchParams.get("search")}"`
+								: undefined
+						}
+						aria-haspopup="dialog"
+						aria-expanded={isSearchOpen}
+					>
+						<MagnifyingGlassIcon className="size-4" aria-hidden="true" />
+						<span className="truncate">Rechercher</span>
+					</ShelfBarButton>
 
-						{/* Filtres */}
-						<button
-							ref={filterButtonRef}
-							type="button"
-							onClick={() => {
-								triggerHaptic("selection");
-								setSortOpen(false);
-								openFilter();
-							}}
-							onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
-							onFocus={() => setFocusedIndex(2)}
-							tabIndex={focusedIndex === 2 ? 0 : -1}
-							className={cn(buttonBase, hasActiveFilters && buttonActive)}
-							aria-label={
-								hasActiveFilters
-									? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}. Modifier les filtres`
-									: "Ouvrir les filtres"
-							}
-							aria-haspopup="dialog"
-						>
-							<SlidersHorizontalIcon className="size-4" aria-hidden="true" />
-							<span className="truncate">Filtrer</span>
-							{hasActiveFilters && (
-								<span
-									className="bg-primary text-primary-foreground text-2xs inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 font-bold"
-									aria-hidden="true"
-								>
-									{activeFiltersCount}
-								</span>
-							)}
-						</button>
-					</div>
-				</div>
+					{/* Filtres — badge compteur plutôt que ruban : les deux ensemble
+					    feraient double signal. */}
+					<ShelfBarButton
+						ref={filterButtonRef}
+						{...getRovingProps(2)}
+						onClick={() => {
+							triggerHaptic("selection");
+							setSortOpen(false);
+							openFilter();
+						}}
+						active={hasActiveFilters}
+						accent={accent}
+						count={hasActiveFilters ? activeFiltersCount : undefined}
+						// Masqué à partir de `lg` : le rail de filtres y est déplié en colonne
+						// gauche du catalogue (« Le plan de travail ») — un bouton qui ouvre un
+						// panneau par-dessus des filtres déjà visibles serait deux entrées pour
+						// un seul geste, comme la recherche sous `md`. Le roving tabindex saute
+						// les boutons en `display: none` (`offsetParent`), la flèche reste vive.
+						className="lg:hidden"
+						// WCAG 2.5.3 Label in Name : sans filtre actif, pas d'aria-label — le
+						// nom accessible EST le libellé visible « Filtrer » ; avec filtres, le
+						// nom COMMENCE par lui. Pas d'aria-controls : le sheet est portalisé
+						// et démonté fermé, l'idref serait pendante.
+						aria-label={
+							hasActiveFilters
+								? `Filtrer — ${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}`
+								: undefined
+						}
+						aria-haspopup="dialog"
+						aria-expanded={isFilterOpen}
+					>
+						<SlidersHorizontalIcon className="size-4" aria-hidden="true" />
+						<span className="truncate">Filtrer</span>
+					</ShelfBarButton>
+				</ShelfBarToolbar>
+			</ShelfBar>
 
-				<span
-					ref={announcementRef}
-					role="status"
-					aria-live="polite"
-					aria-atomic="true"
-					className="sr-only"
-				/>
-			</nav>
+			{/* SIBLING du `<nav>`, pas dedans : sous l'ancêtre `lg:hidden`
+			    (`display: none`), la live region sortirait de l'arbre
+			    d'accessibilité à desktop. Le composant reste monté à tous les
+			    viewports, l'annonce (dérivée de l'URL, quel que soit le contrôle
+			    qui a déclenché) survit donc partout. `sr-only` = hors flux, aucune
+			    incidence sur le `space-y-5` du conteneur. */}
+			<span
+				ref={announcementRef}
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+				className="sr-only"
+			/>
 
 			<SortDrawer
 				open={sortOpen}

@@ -17,6 +17,33 @@ export type QuickSearchProductType = {
 	label: string;
 };
 
+/** Une teinte du nuancier — sort vers `/produits?color=<slug>`. */
+export type QuickSearchColor = {
+	slug: string;
+	name: string;
+	hex: string;
+};
+
+/**
+ * Sous ce nombre de teintes actives, le mur ne se rend pas et le panneau
+ * retombe sur son contenu textuel.
+ *
+ * Un nuancier de 3 pastilles n'est pas un nuancier : il annonce un catalogue
+ * coloré et montre le contraire. Le seuil est une GARDE DE DONNÉES, pas un
+ * réglage esthétique — il permet à la boutique de démarrer avec deux teintes
+ * sans afficher une vitrine qui ment, et de gagner le mur automatiquement dès
+ * que la palette est saisie, sans redéploiement.
+ */
+export const QUICK_SEARCH_MIN_COLORS = 6;
+
+/**
+ * Plafond du mur. Au-delà, il mange le panneau et repousse collections et CTA
+ * sous la ligne de flottaison — or le mur est censé RÉDUIRE le vide, pas
+ * déplacer le problème. Les teintes retenues sont les plus portées du catalogue
+ * (tri DB), puis réordonnées en nuancier (`sortColorsByHue`).
+ */
+export const QUICK_SEARCH_MAX_COLORS = 12;
+
 export const QUICK_SEARCH_DIALOG_ID = "quick-search";
 
 /**

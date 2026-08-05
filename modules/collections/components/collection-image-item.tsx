@@ -31,7 +31,8 @@ interface CollectionImageItemProps {
  *
  * MICRO-INTERACTIONS:
  * - Stagger delay: images zooment en cascade au hover du groupe
- * - Tap feedback: scale-down + brightness sur mobile
+ * - Tap feedback: scale-down + brightness — ⚠️ mega-menu UNIQUEMENT, cf. le
+ *   commentaire sur les classes `active:` plus bas
  *
  * OPTIMISATIONS:
  * - Priority loading pour above-fold
@@ -75,7 +76,14 @@ export function CollectionImageItem({
 				delayClass,
 				// Desktop: hover zoom avec stagger
 				"motion-safe:can-hover:group-hover:scale-[1.08]",
-				// Mobile: tap feedback enrichi (coherence ProductCard)
+				// Tap feedback — ⚠️ INERTE sur `CollectionCard`, et c'est structurel :
+				// `:active` ne se pose que sur la cible du tap et ses ANCÊTRES. Là-bas la
+				// cible est le `::after` du lien étiré (z-10), qui vit dans la légende ;
+				// les images sont un sous-arbre FRÈRE, donc rien ne s'active. Ces classes
+				// ne servent que dans le mega-menu (`mega-menu-collections.tsx`), où la
+				// grille est rendue DANS le `NavigationMenuLink` — d'où leur maintien.
+				// Le commentaire précédent invoquait une « cohérence ProductCard » qui
+				// n'existe pas : ProductCard n'a aucun tap feedback sur ses images.
 				"active:brightness-95 active:saturate-110 motion-safe:active:scale-[0.97]",
 			)}
 			style={

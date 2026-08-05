@@ -1,42 +1,43 @@
 "use client";
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
-import { Accordion } from "@/shared/components/ui/accordion";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { mediaAtLeast } from "@/shared/constants/breakpoints";
+import { useStore } from "@tanstack/react-form";
 import { withViewTransition } from "@/shared/utils/view-transition";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-	useDeferredValue,
+	use,
 	useEffect,
 	useEffectEvent,
 	useRef,
-	useState,
 	useTransition,
 	Suspense,
 	type ComponentProps,
 } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
-import { PriceRangeInputs } from "./price-range-inputs";
-import { FilterSection } from "./filter-section-header";
-import { TypeFilterSection } from "./filter-section-types";
-import { ColorFilterSection } from "./filter-section-colors";
-import { MaterialFilterSection } from "./filter-section-materials";
-import { AvailabilityFilterSection } from "./filter-section-availability";
+import { ProductFilterCompartments } from "./product-filter-compartments";
+import { useLiveFilterCount } from "@/modules/products/hooks/use-live-filter-count";
 import {
 	parseFilterValuesFromURL,
 	buildFilterURL,
 	buildClearFiltersURL,
+	emptyStateHint,
 	getDefaultFilterValues,
 	getSectionActiveCount,
 	isProductCategoryPage,
 	getCategorySlugFromPath,
+	resetFilterGroup,
 	type FilterFormData,
+	type FilterSectionId,
 } from "@/modules/products/services/product-filter-params.service";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { ProductTypeOption } from "./filter-section-types";
+import type { LiveFilterCount } from "@/modules/products/hooks/use-live-filter-count";
 
 // ============================================================================
 // CONSTANTS
@@ -60,6 +61,12 @@ interface FilterSheetProps {
 	maxPriceInEuros: number;
 	/** Type de produit actif (depuis le path segment /produits/[type]) */
 	activeProductTypeSlug?: string;
+	/**
+	 * Catalogue courant, pour semer le compteur vivant avec un chiffre que le
+	 * serveur a DÉJÀ calculé (cf. `initialCount` de `useLiveFilterCount`).
+	 * Optionnelle : sans elle, comportement inchangé (un aller-retour à l'ouverture).
+	 */
+	initialCountPromise?: Promise<{ totalCount: number }>;
 }
 
 // ============================================================================
@@ -80,17 +87,42 @@ function scrollToProductsGrid() {
 	}
 }
 
+/**
+ * Libellé du bouton d'application — le compte est connu AVANT de fermer.
+ *
+ * ⚠️ Le bouton est la source UNIQUE du chiffre : il n'annonce un nombre que
+ * lorsque ce nombre répond aux critères courants. Sur un échec de recomptage
+ * (`countUnavailable`), il retombe sur le libellé neutre plutôt que de promettre
+ * un total calculé pour d'autres critères.
+ */
+function applyButtonLabel(live: LiveFilterCount): string {
+	if (live.count === null || live.countUnavailable) return "Voir les pièces";
+	if (live.count === 0) return "Aucune pièce";
+	if (live.count === 1) return "Voir la pièce";
+	return `Voir les ${live.count} pièces`;
+}
+
+/*
+ * La ligne d'information du footer (sortie de l'état vide) vit désormais dans
+ * `emptyStateHint` (couche services) : le pied du rail (« Le comptoir ») rend
+ * la même copie, et deux copies locales auraient dérivé. Historique conservé
+ * là-bas : le recalcul en vol ne s'y écrit pas — il est porté par le `Spinner`
+ * du bouton (`applyBusy`), au même endroit que le nombre.
+ */
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 /**
- * Filtre produit : coquille responsive (`FilterSheetWrapper`) + accordéon de
- * sections sur un écran unique.
+ * Filtre produit : coquille responsive (`FilterSheetWrapper`) + les 5
+ * compartiments non repliables du « trieur » sur un écran unique.
  *
- * Toutes les catégories sont visibles d'un coup d'œil ; chacune se déplie sur
- * place. Le formulaire TanStack est appliqué en bloc via le bouton
- * « Appliquer » du footer (ou ⌘/Ctrl+Entrée).
+ * Plus d'accordéon : tout est visible, ce sont les LISTES qui se bornent
+ * (6 entrées + « + N autres », cf. `FilterOverflowList`). Le formulaire
+ * TanStack est appliqué en bloc via le bouton du footer — dont le libellé
+ * « Voir les N pièces » est alimenté par un compteur vivant serveur
+ * (`useLiveFilterCount`), si bien que le résultat est connu avant de fermer.
  */
 function ProductFilterSheetInner({
 	colors = EMPTY_COLORS,
@@ -98,6 +130,7 @@ function ProductFilterSheetInner({
 	productTypes = EMPTY_PRODUCT_TYPES,
 	maxPriceInEuros,
 	activeProductTypeSlug,
+	initialCountPromise,
 }: FilterSheetProps) {
 	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 
@@ -111,14 +144,6 @@ function ProductFilterSheetInner({
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
-
-	// Search state for long lists
-	const [colorSearch, setColorSearch] = useState("");
-	const [materialSearch, setMaterialSearch] = useState("");
-
-	// Defer search values to avoid jank on slow devices
-	const deferredColorSearch = useDeferredValue(colorSearch);
-	const deferredMaterialSearch = useDeferredValue(materialSearch);
 
 	const getValuesFromURL = (): FilterFormData =>
 		parseFilterValuesFromURL({
@@ -136,16 +161,38 @@ function ProductFilterSheetInner({
 		},
 	});
 
-	// Effect Event: resync formulaire + recherche sans re-déclencher l'effet.
+	// `useStore` et non `form.Subscribe` : le compteur vivant est un hook, et un
+	// hook ne peut pas vivre dans le children d'un render-prop.
+	const values = useStore(form.store, (state) => state.values);
+
+	const isDesktop = useMediaQuery(mediaAtLeast("lg"));
+
+	const searchTerm = searchParams.get("search") ?? undefined;
+	// Le compte des valeurs INITIALES est déjà connu du serveur — la grille vient
+	// de le rendre. Le semer évite une Server Action (et un réveil Neon) à chaque
+	// ouverture du panneau pour un chiffre qu'on avait déjà.
+	//
+	// ⚠️ `use()` et non `await` chez l'appelant : awaiter la promesse dans
+	// `ProductCatalog` ferait attendre le shell, ce que la frontière `Suspense` de
+	// `CatalogHeading` existe précisément pour éviter. Ici le panneau est fermé au
+	// montage, donc suspendre ne coûte rien de visible.
+	const initialCount = initialCountPromise ? use(initialCountPromise).totalCount : null;
+
+	const liveCount = useLiveFilterCount({
+		values,
+		maxPriceInEuros,
+		search: searchTerm,
+		enabled: isOpen,
+		initialCount,
+	});
+
+	// Effect Event: resync formulaire sans re-déclencher l'effet.
 	const onSheetSync = useEffectEvent(() => {
 		form.reset(getValuesFromURL());
-		setColorSearch("");
-		setMaterialSearch("");
 	});
 
 	useEffect(() => {
 		if (isOpen) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
 			onSheetSync();
 		}
 	}, [isOpen, searchParams]);
@@ -192,174 +239,74 @@ function ProductFilterSheetInner({
 	/** Bascule un slug dans une sélection multi-valeurs. */
 	const toggleToken = (
 		name: "productTypes" | "colors" | "materials",
-		current: string[],
 		slug: string,
 		checked: boolean,
 	) => {
+		const current = form.state.values[name];
 		form.setFieldValue(name, checked ? [...current, slug] : current.filter((s) => s !== slug));
 	};
 
-	// Sections ouvertes par défaut : types + prix + toute section avec un filtre
-	// actif au montage. Lazy init pour garder le tableau stable.
-	const [defaultOpenSections] = useState<string[]>(() => {
-		const sections = ["types", "price"];
-		if (initialValues.colors.length > 0) sections.push("colors");
-		if (initialValues.materials.length > 0) sections.push("materials");
-		if (initialValues.inStockOnly || initialValues.onSale) sections.push("availability");
-		return sections;
-	});
+	/** Réinitialise un compartiment à sa valeur par défaut. */
+	const handleSectionReset = (section: FilterSectionId) => {
+		const next = resetFilterGroup(form.state.values, section, DEFAULT_PRICE_RANGE);
+		form.setFieldValue("productTypes", next.productTypes);
+		form.setFieldValue("colors", next.colors);
+		form.setFieldValue("materials", next.materials);
+		form.setFieldValue("priceRange", next.priceRange);
+		form.setFieldValue("inStockOnly", next.inStockOnly);
+		form.setFieldValue("onSale", next.onSale);
+	};
 
-	// Sort colors / materials / types by count (descending)
-	const sortedColors = colors.toSorted((a, b) => b._count.skus - a._count.skus);
-	const sortedMaterials = materials.toSorted(
-		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0),
-	);
-	const sortedProductTypes = productTypes.toSorted(
-		(a, b) => (b._count?.products ?? 0) - (a._count?.products ?? 0),
-	);
+	const counts = getSectionActiveCount(values, DEFAULT_PRICE_RANGE);
+	const pendingFilterCount = Object.values(counts).reduce((sum, n) => sum + n, 0);
 
-	// Filter lists by deferred search term
-	const filteredColors = deferredColorSearch
-		? sortedColors.filter((c) => c.name.toLowerCase().includes(deferredColorSearch.toLowerCase()))
-		: sortedColors;
-	const filteredMaterials = deferredMaterialSearch
-		? sortedMaterials.filter((m) =>
-				m.name.toLowerCase().includes(deferredMaterialSearch.toLowerCase()),
-			)
-		: sortedMaterials;
+	// À partir de `lg`, le filtre EST le rail (« Le plan de travail ») : le
+	// panneau n'a plus lieu d'être. Démonté après les hooks, jamais avant — et
+	// sans flash : au SSR la sheet est rendue fermée, donc invisible.
+	if (isDesktop) return null;
 
-	// `form.Subscribe` garantit le re-render du sheet (badges + total
-	// `pendingFilterCount`) à chaque mutation du formulaire.
 	return (
-		<form.Subscribe selector={(state) => state.values}>
-			{(values) => {
-				const counts = getSectionActiveCount(values, DEFAULT_PRICE_RANGE);
-				const pendingFilterCount = Object.values(counts).reduce((sum, n) => sum + n, 0);
+		<FilterSheetWrapper
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+			hideTrigger
+			activeFiltersCount={pendingFilterCount}
+			hasActiveFilters={pendingFilterCount > 0}
+			onApply={() => void form.handleSubmit()}
+			onClearAll={clearAllFilters}
+			isPending={isPending}
+			title="Filtres"
+			description="Affine ta recherche"
+			applyButtonText={applyButtonLabel(liveCount)}
+			footerHint={emptyStateHint(liveCount)}
+			// Ne barre le passage que sur un zéro CERTAIN : un recomptage en vol ou
+			// indisponible (rate limit) laisse le bouton actif — mieux vaut appliquer
+			// et voir la grille que bloquer sur un chiffre qu'on n'a pas.
+			applyDisabled={!liveCount.isUpdating && !liveCount.countUnavailable && liveCount.count === 0}
+			applyBusy={liveCount.isUpdating}
+		>
+			<ProductFilterCompartments
+				host="sheet"
+				productTypes={productTypes}
+				colors={colors}
+				materials={materials}
+				maxPriceInEuros={maxPriceInEuros}
+				values={values}
+				counts={counts}
+				onToggle={toggleToken}
+				onPriceChange={(value) => form.setFieldValue("priceRange", value)}
+				onAvailabilityChange={(field, checked) => form.setFieldValue(field, checked)}
+				onSectionReset={handleSectionReset}
+			/>
 
-				return (
-					<FilterSheetWrapper
-						open={isOpen}
-						onOpenChange={handleOpenChange}
-						hideTrigger
-						activeFiltersCount={pendingFilterCount}
-						hasActiveFilters={pendingFilterCount > 0}
-						onApply={() => void form.handleSubmit()}
-						onClearAll={clearAllFilters}
-						isPending={isPending}
-						title="Filtres"
-						description="Affine ta recherche"
-					>
-						<Accordion defaultValue={defaultOpenSections} className="w-full">
-							{/* 1. Types de bijoux (masqué si aucun type) */}
-							{sortedProductTypes.length > 0 && (
-								<FilterSection
-									value="types"
-									label="Types de bijoux"
-									count={counts.types}
-									onReset={() => form.setFieldValue("productTypes", [])}
-								>
-									<TypeFilterSection
-										productTypes={sortedProductTypes}
-										selectedValues={values.productTypes}
-										onToggle={(slug, checked) =>
-											toggleToken("productTypes", values.productTypes, slug, checked)
-										}
-									/>
-								</FilterSection>
-							)}
-
-							{/* 2. Prix (toujours visible) */}
-							<FilterSection
-								value="price"
-								label="Prix"
-								count={counts.price}
-								badgeContent={
-									counts.price > 0
-										? `${values.priceRange[0]}€ - ${values.priceRange[1]}€`
-										: undefined
-								}
-								onReset={() => form.setFieldValue("priceRange", DEFAULT_PRICE_RANGE)}
-							>
-								<PriceRangeInputs
-									value={values.priceRange}
-									onChange={(value) => form.setFieldValue("priceRange", value)}
-									maxPrice={maxPriceInEuros}
-								/>
-							</FilterSection>
-
-							{/* 3. Couleurs (masqué si aucune couleur) */}
-							{sortedColors.length > 0 && (
-								<FilterSection
-									value="colors"
-									label="Couleurs"
-									count={counts.colors}
-									onReset={() => form.setFieldValue("colors", [])}
-								>
-									<ColorFilterSection
-										colors={sortedColors}
-										filteredColors={filteredColors}
-										selectedValues={values.colors}
-										colorSearch={colorSearch}
-										onColorSearchChange={setColorSearch}
-										onToggle={(slug, checked) =>
-											toggleToken("colors", values.colors, slug, checked)
-										}
-									/>
-								</FilterSection>
-							)}
-
-							{/* 4. Matériaux (masqué si aucun matériau) */}
-							{sortedMaterials.length > 0 && (
-								<FilterSection
-									value="materials"
-									label="Matériaux"
-									count={counts.materials}
-									onReset={() => form.setFieldValue("materials", [])}
-								>
-									<MaterialFilterSection
-										materials={sortedMaterials}
-										filteredMaterials={filteredMaterials}
-										selectedValues={values.materials}
-										materialSearch={materialSearch}
-										onMaterialSearchChange={setMaterialSearch}
-										onToggle={(slug, checked) =>
-											toggleToken("materials", values.materials, slug, checked)
-										}
-									/>
-								</FilterSection>
-							)}
-
-							{/* 5. Disponibilité (toujours visible) */}
-							<FilterSection
-								value="availability"
-								label="Disponibilité"
-								count={counts.availability}
-								onReset={() => {
-									form.setFieldValue("inStockOnly", false);
-									form.setFieldValue("onSale", false);
-								}}
-								className="border-b-0"
-							>
-								<AvailabilityFilterSection
-									inStockOnly={values.inStockOnly}
-									onSale={values.onSale}
-									onInStockChange={(checked) => form.setFieldValue("inStockOnly", checked)}
-									onSaleChange={(checked) => form.setFieldValue("onSale", checked)}
-								/>
-							</FilterSection>
-						</Accordion>
-
-						{/* Live region : annonce le nombre de filtres en attente à chaque
-						    changement du formulaire (toggle, reset). */}
-						<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-							{pendingFilterCount === 0
-								? "Aucun filtre sélectionné"
-								: `${pendingFilterCount} filtre${pendingFilterCount > 1 ? "s" : ""} sélectionné${pendingFilterCount > 1 ? "s" : ""}`}
-						</div>
-					</FilterSheetWrapper>
-				);
-			}}
-		</form.Subscribe>
+			{/* Live region : annonce le nombre de filtres en attente à chaque
+			    changement du formulaire (toggle, reset). */}
+			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+				{pendingFilterCount === 0
+					? "Aucun filtre sélectionné"
+					: `${pendingFilterCount} filtre${pendingFilterCount > 1 ? "s" : ""} sélectionné${pendingFilterCount > 1 ? "s" : ""}`}
+			</div>
+		</FilterSheetWrapper>
 	);
 }
 

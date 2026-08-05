@@ -14,7 +14,7 @@ describe("RecentlyViewedProductsSkeleton", () => {
 	it("renders an aside with the correct aria-label", () => {
 		render(<RecentlyViewedProductsSkeleton />);
 		const aside = screen.getByRole("complementary");
-		expect(aside).toHaveAttribute("aria-label", "Chargement des produits recemment vus");
+		expect(aside).toHaveAttribute("aria-label", "Chargement des produits récemment vus");
 	});
 
 	it("renders the default number of product card skeletons (4)", () => {

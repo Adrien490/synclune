@@ -1,13 +1,18 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import { PageHeader } from "@/shared/components/page-header";
-import { CollectionGrid } from "@/modules/collections/components/collection-grid";
-import { CollectionGridSkeleton } from "@/modules/collections/components/collection-grid-skeleton";
+import { CollectionChapters } from "@/modules/collections/components/collection-chapters";
+import { CollectionChaptersSkeleton } from "@/modules/collections/components/collection-chapters-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { GET_COLLECTIONS_DEFAULT_PER_PAGE } from "@/modules/collections/data/get-collections";
-import { getFirstParam } from "@/shared/utils/params";
-import { Suspense } from "react";
-import type { Metadata } from "next";
+import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
+import { BreadcrumbNav } from "@/shared/components/breadcrumb-nav";
+import { StorefrontHeading } from "@/shared/components/storefront-heading";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { BRAND } from "@/shared/constants/brand";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { getFirstParam } from "@/shared/utils/params";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
+import type { Metadata } from "next";
+import { Suspense } from "react";
 
 type CollectionsPageProps = {
 	searchParams: Promise<{
@@ -15,6 +20,21 @@ type CollectionsPageProps = {
 		direction?: string;
 		perPage?: string;
 	}>;
+};
+
+/**
+ * `BreadcrumbList` page-level — l'ancien émetteur était `PageHeader`, retiré
+ * avec le passage au shell « L'étal continue ». L'`ItemList` de la page, lui,
+ * reste émis par `CollectionGrid` : 2 scripts, mais UN `BreadcrumbList` et UN
+ * `ItemList` par URL (@regression catalogue-single-breadcrumb).
+ */
+const COLLECTIONS_BREADCRUMB_JSONLD = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	itemListElement: [
+		{ "@type": "ListItem", position: 1, name: "Accueil", item: SITE_URL },
+		{ "@type": "ListItem", position: 2, name: "Collections", item: `${SITE_URL}/collections` },
+	],
 };
 
 export async function generateMetadata({ searchParams }: CollectionsPageProps): Promise<Metadata> {
@@ -52,6 +72,26 @@ export async function generateMetadata({ searchParams }: CollectionsPageProps): 
 	};
 }
 
+/** Compte streamé — seule cette ligne attend la promesse, jamais le `h1`. */
+async function CollectionsCount({
+	collectionsPromise,
+}: {
+	collectionsPromise: Promise<GetCollectionsReturn>;
+}) {
+	const { totalCount } = await collectionsPromise;
+
+	if (totalCount === 0) return null;
+
+	const noun = totalCount > 1 ? "collections" : "collection";
+
+	return (
+		<>
+			<span className="text-foreground font-semibold tabular-nums">{totalCount}</span> {noun} en
+			ligne en ce moment.
+		</>
+	);
+}
+
 export default async function CollectionsPage({ searchParams }: CollectionsPageProps) {
 	// Note: Pas de "use cache" ici car la page utilise searchParams (pagination)
 	// Le cache est géré au niveau de fetchCollections() qui utilise déjà "use cache"
@@ -77,28 +117,43 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 
 	return (
 		<div className="relative min-h-dvh">
-			<PageHeader
-				title="Les collections"
-				breadcrumbs={[{ label: "Collections", href: "/collections" }]}
-				className="hidden sm:block"
-				accent="underline"
+			{/* JSON-LD Structured Data — SAFE: serialized via safeJsonLd (no user HTML) */}
+			{/* react-doctor-disable-next-line react/no-danger */}
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: safeJsonLd(COLLECTIONS_BREADCRUMB_JSONLD) }}
 			/>
 
-			{/* Section principale avec catalogue */}
-			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
-				<div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
-					{/* H1 mobile sr-only — le PageHeader ci-dessus est `hidden sm:block`, donc en
-					    dessous de 40rem cette page n'avait AUCUN h1 : la première en-tête était
-					    le h2 d'une carte de collection (WCAG 2.4.6 / 1.3.1). Même repli que
-					    `product-catalog.tsx`, qui l'avait et dont /collections avait été oubliée. */}
-					<h1 className="sr-only sm:hidden" data-testid="collections-mobile-title">
-						Les collections
-					</h1>
+			{/* Shell « L'étal continue » + « Le carnet des séries » (2026-08-05) :
+			    le bloc titre vit dans le conteneur standard, mais les CHAPITRES en
+			    sortent — leurs voiles `--section-soft` vont bord à bord, et chaque
+			    bande re-contraint son contenu (CHAPTER_CONTAINER_CLASSES). */}
+			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
+				<div className="mx-auto max-w-6xl space-y-5 px-4 pb-5 sm:px-6 lg:px-8">
+					<BreadcrumbNav items={[{ label: "Collections", href: "/collections" }]} />
 
-					<Suspense fallback={<CollectionGridSkeleton />}>
-						<CollectionGrid collectionsPromise={collectionsPromise} perPage={perPage} />
-					</Suspense>
+					<StorefrontHeading
+						title="Les collections"
+						// Chapô masqué sous `sm` par le `<p>` hôte (lot 0, audit 2026-08-05).
+						description={`Chaque collection a son univers. Je les imagine comme des petites séries, pièce par pièce, dans mon atelier à ${BRAND.contact.location.city}.`}
+						descriptionClassName="hidden sm:block"
+						countSlot={
+							<Suspense
+								fallback={
+									<Skeleton as="span" className="inline-block h-4 w-44 rounded align-[-2px]" />
+								}
+							>
+								<CollectionsCount collectionsPromise={collectionsPromise} />
+							</Suspense>
+						}
+						// Pas de listLabel : les bandes de collection portent des h2, la
+						// hiérarchie h1 → h2 est déjà séquentielle.
+					/>
 				</div>
+
+				<Suspense fallback={<CollectionChaptersSkeleton />}>
+					<CollectionChapters collectionsPromise={collectionsPromise} />
+				</Suspense>
 			</section>
 		</div>
 	);

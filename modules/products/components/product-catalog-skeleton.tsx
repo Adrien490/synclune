@@ -1,22 +1,28 @@
 import { CatalogHeadingSkeleton } from "@/modules/products/components/catalog-heading";
 import { CATALOG_GRID } from "@/modules/products/components/catalog-grid.constants";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
+import { MaskingTape } from "@/shared/components/masking-tape";
+import { SHELF_BAR_SHELL } from "@/shared/components/shelf-bar/shelf-bar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { cn } from "@/shared/utils/cn";
 
 /**
  * Squelette du `ProductCatalog` (page racine `/produits` + catégorie
  * `/produits/[productTypeSlug]`).
  *
  * Miroir 1:1 de `ProductCatalog` pour éviter tout CLS au swap Suspense →
- * contenu final, direction « L'étal continue » (2026-08-05) :
+ * contenu final :
  * - fil d'Ariane desktop (`hidden md:block`)
- * - barre unique collante (3 cellules sous `md`, champ déplié au-dessus)
- * - grille unique : bloc titre en première cellule, puis les cartes
+ * - rangée titre : bloc titre à gauche + cluster recherche/tri à droite dès
+ *   `md` (re-tranché le 2026-08-05 — le titre n'est plus une cellule de la
+ *   grille, et le champ de recherche vit dans sa rangée, plus dans la barre)
+ * - barre collante `lg:hidden` (3 cellules sous `md`, 2 entre `md` et `lg`)
+ * - grille : uniquement les cartes
  *
  * ⚠️ La géométrie de la grille vient de la SSOT `catalog-grid.constants.ts` — la
  * réécrire ici la laisserait dériver au premier changement de gouttière.
  */
-export function ProductCatalogSkeleton() {
+export function ProductCatalogSkeleton({ accent = "rail" }: { accent?: "rail" | "mono" }) {
 	return (
 		/*
 		 * `role="status"` + `aria-busy` : ce squelette est le `loading.tsx` complet de
@@ -28,28 +34,46 @@ export function ProductCatalogSkeleton() {
 		<div className="min-h-dvh" role="status" aria-busy="true" aria-label="Chargement du catalogue">
 			<span className="sr-only">Chargement du catalogue…</span>
 
-			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
+			<section
+				data-accent="rose"
+				className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pb-16"
+			>
 				<div className="group/container mx-auto max-w-6xl space-y-5 px-4 sm:px-6 lg:px-8">
 					{/* Fil d'Ariane desktop */}
 					<div aria-hidden className="hidden md:block">
 						<Skeleton className="h-5 w-44 rounded" />
 					</div>
 
-					{/* Barre unique — miroir de `ProductSortBar` */}
-					<div
-						aria-hidden
-						className="bg-background/80 border-border/50 -mx-4 border-b px-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
-					>
+					{/* Rangée titre — même montage que le shell réel : bloc titre à gauche,
+					    cluster recherche/tri (`CatalogToolbarInline`) à droite dès `md`,
+					    calé en bas de rangée. Ghost du cluster à la géométrie exacte
+					    (champ h-11 w-64/w-72 + étiquette Trier ≥ lg), sinon CLS au swap. */}
+					<div className="md:flex md:items-end md:justify-between md:gap-6">
+						<div className="min-w-0 md:flex-1">
+							<CatalogHeadingSkeleton accent={accent} />
+						</div>
+						<div aria-hidden className="hidden shrink-0 items-center gap-2 md:flex">
+							<Skeleton className="h-11 w-64 rounded-md lg:w-72" />
+							<div className="border-border bg-background hidden h-11 w-[5.5rem] rounded-sm border lg:block" />
+						</div>
+					</div>
+
+					{/* Barre collante — miroir de `ProductSortBar`, `lg:hidden` comme elle
+					    (à desktop, le rail et le cluster couvrent les trois gestes). La
+					    peau vient de la SSOT partagée `SHELF_BAR_SHELL` (coque sans le
+					    sticky — un squelette n'a pas besoin de coller, mais doit avoir la
+					    même peau et la même hauteur, sinon CLS au swap Suspense). */}
+					<div aria-hidden className={cn(SHELF_BAR_SHELL, "lg:hidden")}>
 						<div className="flex items-stretch gap-3">
-							<div className="hidden min-w-0 flex-1 items-center py-2 md:flex">
-								<Skeleton className="h-11 w-full max-w-md rounded-md" />
-							</div>
-							<div className="divide-border/30 flex flex-1 items-stretch divide-x md:flex-none md:items-center md:gap-1 md:divide-x-0">
+							<div className="flex flex-1 items-center gap-2 py-2 md:ml-auto md:flex-none md:py-0">
+								{/* Cellule 1 (« Rechercher ») masquée à `md`, cellule 2 (« Filtrer »)
+								    à `lg` — miroir exact des gates de `ProductSortBar`, sinon la
+								    barre change de largeur au swap Suspense. */}
 								{[0, 1, 2].map((i) => (
 									<div
 										key={i}
-										className={`flex h-11 flex-1 items-center justify-center gap-1.5 px-2 md:flex-none md:px-3.5 ${
-											i === 1 ? "md:hidden" : ""
+										className={`border-border bg-background flex h-11 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2 md:flex-none md:px-3.5 ${
+											i === 1 ? "md:hidden" : i === 2 ? "lg:hidden" : ""
 										}`}
 									>
 										<Skeleton className="size-4 rounded" />
@@ -60,9 +84,40 @@ export function ProductCatalogSkeleton() {
 						</div>
 					</div>
 
-					<div className={CATALOG_GRID}>
-						<CatalogHeadingSkeleton />
-						<ProductListSkeleton />
+					{/* Miroir du wrapper à deux colonnes du rail (« Le plan de travail ») :
+					    sans lui, la grille du squelette est pleine largeur et saute de
+					    16rem au swap — sur la page dont le CLS est budgété en CI. */}
+					<div className="lg:grid lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-8">
+						{/* Plaque « salle rose » du rail (mêmes classes que le rail réel,
+						    tape comprise) : sans elle, le meuble teinté apparaîtrait d'un
+						    coup au swap Suspense. */}
+						<div aria-hidden className="hidden lg:block">
+							<div className="border-primary/25 bg-primary/5 relative rounded-md border">
+								{/* L'étiquette du meuble (« Le comptoir ») : tape porte-étiquette
+								    + titre display — mêmes cotes que l'en-tête réel du rail. Pas
+								    de pied : il n'apparaît qu'avec des filtres actifs. */}
+								<div className="relative px-4 pt-3 pb-1.5">
+									<MaskingTape className="top-3.5 left-3 h-[1.125rem] w-[4.5rem] -rotate-2" />
+									<Skeleton className="relative h-6 w-16 rounded" />
+								</div>
+								<div className="space-y-7 px-3 pt-1 pb-2">
+									{[0, 1, 2].map((i) => (
+										<div key={i} className="space-y-2">
+											<Skeleton className="h-3 w-24 rounded" />
+											{[0, 1, 2, 3].map((row) => (
+												<Skeleton key={row} className="h-11 w-full rounded-lg" />
+											))}
+										</div>
+									))}
+								</div>
+							</div>
+						</div>
+
+						<div className="min-w-0">
+							<div className={CATALOG_GRID}>
+								<ProductListSkeleton />
+							</div>
+						</div>
 					</div>
 				</div>
 			</section>

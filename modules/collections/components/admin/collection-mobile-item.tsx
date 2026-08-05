@@ -1,6 +1,7 @@
 "use client";
 
 import { FolderOpenIcon } from "@phosphor-icons/react/ssr";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
@@ -76,6 +77,7 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 						width={48}
 						height={48}
 						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
+						quality={IMAGE_QUALITY.THUMBNAIL}
 						className="size-12 shrink-0 rounded-md border object-cover"
 						style={{ viewTransitionName: `collection-image-${collection.id}` }}
 						{...(preload ? { preload: true } : {})}

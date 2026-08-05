@@ -356,38 +356,17 @@ describe("CursorPagination", () => {
 	});
 
 	// ========================================================================
-	// SEO LINKS
+	// SEO LINKS — supprimés (audit 2026-08-05)
 	// ========================================================================
 
-	describe("SEO links", () => {
-		it("renders rel='next' link when hasNextPage", () => {
-			renderPagination({ hasNextPage: true });
-			const nextLink = document.querySelector('link[rel="next"]');
-			expect(nextLink).toBeInTheDocument();
-			expect(nextLink?.getAttribute("href")).toContain("direction=forward");
-		});
-
-		it("does NOT render rel='next' when hasNextPage is false", () => {
+	describe("SEO links (retirés)", () => {
+		it("renders no rel='prev'/'next' links (Google les ignore depuis 2019)", () => {
 			renderPagination({
-				hasNextPage: false,
+				hasNextPage: true,
 				hasPreviousPage: true,
 				prevCursor: "cm1abc2def3ghi4jkl5mnop",
 			});
 			expect(document.querySelector('link[rel="next"]')).not.toBeInTheDocument();
-		});
-
-		it("renders rel='prev' link when hasPreviousPage", () => {
-			renderPagination({
-				hasPreviousPage: true,
-				prevCursor: "cm1abc2def3ghi4jkl5mnop",
-			});
-			const prevLink = document.querySelector('link[rel="prev"]');
-			expect(prevLink).toBeInTheDocument();
-			expect(prevLink?.getAttribute("href")).toContain("direction=backward");
-		});
-
-		it("does NOT render rel='prev' when hasPreviousPage is false", () => {
-			renderPagination({ hasPreviousPage: false });
 			expect(document.querySelector('link[rel="prev"]')).not.toBeInTheDocument();
 		});
 	});
@@ -443,11 +422,24 @@ describe("CursorPagination", () => {
 			expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
 		});
 
-		it("renders nav with aria-describedby pointing to shortcuts", () => {
+		it("renders nav with aria-describedby resolving to the shortcuts hint", () => {
+			// L'id vient de `useId()` (deux instances montées sur les listes admin :
+			// un id fixe était dupliqué dans le DOM) — on vérifie la RÉSOLUTION,
+			// pas une valeur littérale.
 			renderPagination();
 			const nav = screen.getByRole("navigation");
-			expect(nav).toHaveAttribute("aria-describedby", "pagination-shortcuts");
-			expect(document.getElementById("pagination-shortcuts")).toBeInTheDocument();
+			const describedById = nav.getAttribute("aria-describedby");
+			expect(describedById).toBeTruthy();
+			const hint = document.getElementById(describedById!);
+			expect(hint).toBeInTheDocument();
+			expect(hint?.textContent).toMatch(/Raccourcis/);
+		});
+
+		it("secondary instance renders no shortcuts hint and no aria-describedby (it installs no listener)", () => {
+			renderPagination({ secondary: true, hasPreviousPage: true });
+			const nav = screen.getByRole("navigation");
+			expect(nav).not.toHaveAttribute("aria-describedby");
+			expect(screen.queryByText(/Raccourcis.*Alt\+Flèche/)).not.toBeInTheDocument();
 		});
 
 		it("renders page indicator with role='status'", () => {

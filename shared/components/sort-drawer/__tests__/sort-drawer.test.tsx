@@ -415,8 +415,8 @@ describe("SortDrawer", () => {
 			expect(params.get("sortBy")).toBe("price-ascending");
 		});
 
-		it("selecting resets pagination (deletes cursor/direction, sets page=1)", () => {
-			setSearchParams({ sortBy: "price-descending", cursor: "abc", direction: "next", page: "3" });
+		it("selecting resets cursor pagination without writing a phantom `page` param", () => {
+			setSearchParams({ sortBy: "price-descending", cursor: "abc", direction: "next" });
 			renderDrawer();
 
 			const radios = screen.getAllByRole("radio");
@@ -426,7 +426,9 @@ describe("SortDrawer", () => {
 			const params = new URLSearchParams(url.replace(/^\?/, ""));
 			expect(params.has("cursor")).toBe(false);
 			expect(params.has("direction")).toBe(false);
-			expect(params.get("page")).toBe("1");
+			// `page` n'est lu par AUCUN parseur (pagination à curseur) : l'écrire
+			// faisait basculer /produits en `noindex` (audit 2026-08-05).
+			expect(params.has("page")).toBe(false);
 		});
 
 		it("autoCloseOnSelect=false does not call onOpenChange after selection", () => {

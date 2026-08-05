@@ -11,7 +11,7 @@ import type { ProductSku } from "@/modules/products/types/product-services.types
 import type { ColorCombo } from "@/shared/types/product-sku.types";
 import { MaskingTape } from "@/shared/components/masking-tape";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
+import { useId, useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -54,6 +54,7 @@ function ColorSelectorInner({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+	const legendId = useId();
 
 	const defaultComboKey =
 		defaultSku && defaultSku.colors.length > 0
@@ -120,16 +121,24 @@ function ColorSelectorInner({
 		});
 	};
 
-	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
+	const { containerRef, handleKeyDown, getTabIndex } = useRadioGroupKeyboard({
 		options: combos,
 		getOptionId: (combo) => combo.comboKey,
 		// Pas de gate `isOptionDisabled` ici : on laisse le focus traverser les
 		// options indisponibles pour qu'elles soient annoncées par les lecteurs
 		// d'écran (cf. WCAG 1.3.1). La mutation d'URL reste bloquée par le guard
 		// `isComboAvailable` ci-dessous + le no-op `onClick` côté bouton.
+		//
+		// ⚠️ Cette traversée n'a RIEN FAIT jusqu'au 2026-08-05 : `focusOption`
+		// excluait `[aria-disabled="true"]` de sa requête, donc la flèche vers une
+		// plaquette « épuisée » ne déplaçait pas le focus — un cul-de-sac muet, et
+		// ce commentaire décrivait l'inverse du comportement réel.
 		onSelect: (combo) => {
 			if (isComboAvailable(combo.comboKey)) updateCombo(combo.comboKey);
 		},
+		// Le groupe est UN seul arrêt de tabulation (ARIA APG) : les plaquettes
+		// épuisées se rejoignent aux flèches, pas au TAB.
+		activeOptionId: optimisticCombo,
 	});
 
 	if (combos.length === 0) {
@@ -147,10 +156,12 @@ function ColorSelectorInner({
 			data-pending={isPending ? "" : undefined}
 			aria-busy={isPending || undefined}
 			className="space-y-3"
-			aria-label="Sélection de la variante"
 		>
+			{/* Pas d'`aria-label` sur le `fieldset` : il ÉCRASAIT la `<legend>`, seule
+			    porteuse de l'information utile (« Couleur / Matériau : Perle »). Le nom
+			    du groupe de radios est repris de cette légende via `aria-labelledby`. */}
 			<div className="flex items-center justify-between">
-				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
+				<legend id={legendId} className="text-sm/6 font-semibold tracking-tight antialiased">
 					{showMaterialLabel ? "Couleur / Matériau" : "Couleur"}
 					{currentLabel && (
 						<span className="text-muted-foreground ml-1 font-normal">: {currentLabel}</span>
@@ -176,7 +187,12 @@ function ColorSelectorInner({
 			    dessous, et la sélection est tenue par un bout de scotch (`MaskingTape`,
 			    la primitive partagée avec les cartes et le carton de la galerie).
 			    La cible tactile fait ≈ 88 × 84, très au-dessus des 44 px requis. */}
-			<div ref={containerRef} className="flex flex-wrap gap-2.5">
+			<div
+				ref={containerRef}
+				role="radiogroup"
+				aria-labelledby={legendId}
+				className="flex flex-wrap gap-2.5"
+			>
 				{combos.map((combo, index) => {
 					const isSelected = combo.comboKey === optimisticCombo;
 					const isAvailable = isComboAvailable(combo.comboKey);
@@ -191,6 +207,7 @@ function ColorSelectorInner({
 							aria-disabled={!isAvailable}
 							aria-label={`${combo.ariaLabel}${!isAvailable ? " (indisponible)" : ""}`}
 							data-option-id={combo.comboKey}
+							tabIndex={getTabIndex(combo, index)}
 							onClick={() => {
 								if (!isAvailable) return;
 								updateCombo(combo.comboKey);

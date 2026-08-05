@@ -85,7 +85,12 @@ export function WishlistButton({
 			className={cn(
 				buttonSize,
 				"rounded-full",
-				"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
+				// ⚠️ `can-hover:active:` en plus d'`active:` — le variant `can-hover` est
+				// émis APRÈS les variants intégrés de Tailwind v4, donc le hover à 1,10
+				// gagnait sur l'enfoncement pendant le `mousedown` : le cœur n'avait
+				// aucun retour presse à la souris.
+				"can-hover:hover:scale-110 can-hover:hover:bg-transparent",
+				"can-hover:active:scale-95 active:scale-95",
 				"motion-safe:transition-all motion-safe:duration-200",
 				// Optimistic UI : le cœur reflète déjà le nouvel état → on garde le bouton
 				// vivant (pas de dim `opacity-50`) ; `disabled` ne sert qu'à bloquer le spam

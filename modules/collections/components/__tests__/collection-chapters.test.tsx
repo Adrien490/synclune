@@ -40,13 +40,12 @@ vi.mock("@/shared/components/animations", () => ({
 }));
 
 vi.mock("@/shared/components/cursor-pagination", () => ({
-	CursorPagination: ({
+	StorefrontPaginationBand: ({
 		hasNextPage,
 		hasPreviousPage,
 	}: {
 		hasNextPage: boolean;
 		hasPreviousPage: boolean;
-		perPage: number;
 		currentPageSize: number;
 		nextCursor?: string | null;
 		prevCursor?: string | null;
@@ -87,8 +86,13 @@ vi.mock("@/shared/components/ui/empty", () => ({
 	EmptyContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@/modules/collections/components/collection-card", () => ({
-	CollectionCard: ({
+vi.mock("@/modules/collections/components/collection-chapter", () => ({
+	// STUB volontaire, pas une copie de la SSOT : ce fichier n'assert rien sur
+	// l'empilement, et c'est `collection-skeleton-parity.regression.test.ts` qui
+	// vérifie — au SOURCE, donc à l'abri de ce mock — que l'assembleur consomme
+	// bien `CHAPTER_STACK_CLASSES`. Le rendu réel du chapitre est mocké ci-dessous.
+	CHAPTER_STACK_CLASSES: "stub-chapter-stack",
+	CollectionChapter: ({
 		slug,
 		name,
 		productCount,
@@ -98,7 +102,7 @@ vi.mock("@/modules/collections/components/collection-card", () => ({
 		productCount?: number;
 		[key: string]: unknown;
 	}) => (
-		<article data-testid={`collection-card-${slug}`}>
+		<article data-testid={`collection-chapter-${slug}`}>
 			<h2>{name}</h2>
 			{productCount !== undefined && <span>{productCount} articles</span>}
 		</article>
@@ -124,7 +128,7 @@ vi.mock("@phosphor-icons/react/ssr", () => ({
 // IMPORT AFTER MOCKS
 // ============================================================================
 
-import { CollectionGrid } from "../collection-grid";
+import { CollectionChapters } from "../collection-chapters";
 import type { GetCollectionsReturn } from "../../data/get-collections";
 
 // ============================================================================
@@ -161,13 +165,13 @@ function makePromise(
 }
 
 /**
- * `CollectionGrid` est un Server Component **async** depuis qu'il agrège les
- * fourchettes de prix (2ᵉ lecture, dépendante de la 1re). Le renderer client de
+ * `CollectionChapters` est un Server Component **async** (il agrège les
+ * fourchettes de prix — 2ᵉ lecture, dépendante de la 1re). Le renderer client de
  * React ne sait pas rendre une fonction async : on l'appelle et on rend son
  * résultat, comme `cart-recommendations.test.tsx`.
  */
-async function renderGrid(promise: Promise<GetCollectionsReturn>, perPage = 12) {
-	const ui = await CollectionGrid({ collectionsPromise: promise, perPage });
+async function renderChapters(promise: Promise<GetCollectionsReturn>) {
+	const ui = await CollectionChapters({ collectionsPromise: promise });
 	await act(async () => {
 		render(ui);
 	});
@@ -177,40 +181,40 @@ async function renderGrid(promise: Promise<GetCollectionsReturn>, perPage = 12) 
 // TESTS
 // ============================================================================
 
-describe("CollectionGrid", () => {
+describe("CollectionChapters", () => {
 	it("renders empty state when there are no collections", async () => {
 		const promise = makePromise({ collections: [], pagination: emptyPagination });
-		await renderGrid(promise);
+		await renderChapters(promise);
 		expect(screen.getByTestId("empty")).toBeInTheDocument();
 		expect(screen.getByText("Aucune collection disponible")).toBeInTheDocument();
 	});
 
 	it("renders a link to /produits in the empty state", async () => {
 		const promise = makePromise({ collections: [], pagination: emptyPagination });
-		await renderGrid(promise);
+		await renderChapters(promise);
 		expect(screen.getByRole("link", { name: /Découvrir la boutique/i })).toHaveAttribute(
 			"href",
 			"/produits",
 		);
 	});
 
-	it("renders a card for each collection", async () => {
+	it("renders a chapter for each collection", async () => {
 		const collections = [
 			createCollection("1", "bagues", "Bagues"),
 			createCollection("2", "colliers", "Colliers"),
 			createCollection("3", "bracelets", "Bracelets"),
 		];
 		const promise = makePromise({ collections: collections as never, pagination: emptyPagination });
-		await renderGrid(promise);
-		expect(screen.getByTestId("collection-card-bagues")).toBeInTheDocument();
-		expect(screen.getByTestId("collection-card-colliers")).toBeInTheDocument();
-		expect(screen.getByTestId("collection-card-bracelets")).toBeInTheDocument();
+		await renderChapters(promise);
+		expect(screen.getByTestId("collection-chapter-bagues")).toBeInTheDocument();
+		expect(screen.getByTestId("collection-chapter-colliers")).toBeInTheDocument();
+		expect(screen.getByTestId("collection-chapter-bracelets")).toBeInTheDocument();
 	});
 
-	it("renders the grid list with aria-label", async () => {
+	it("renders the chapters list with aria-label", async () => {
 		const collections = [createCollection("1", "bagues", "Bagues")];
 		const promise = makePromise({ collections: collections as never, pagination: emptyPagination });
-		await renderGrid(promise);
+		await renderChapters(promise);
 		expect(screen.getByRole("list", { name: "Liste des collections" })).toBeInTheDocument();
 	});
 
@@ -218,15 +222,21 @@ describe("CollectionGrid", () => {
 		const collections = [createCollection("1", "bagues", "Bagues")];
 		const pagination = { ...emptyPagination, hasNextPage: true };
 		const promise = makePromise({ collections: collections as never, pagination });
-		await renderGrid(promise);
+		await renderChapters(promise);
 		expect(screen.getByTestId("cursor-pagination")).toHaveAttribute("data-has-next", "true");
 	});
 
 	it("emits enriched ItemList JSON-LD with AggregateOffer when priceRange is set", async () => {
 		const utils = await import("@/modules/collections/utils/collection-images.utils");
 		const priceData = await import("@/modules/collections/data/get-collection-price-ranges");
+		// `offerCount: 7` ≠ `_count.products` (3) : c'est ce qui rend l'assertion
+		// capable de VOIR la source. Audit 2026-08-05 — l'`AggregateOffer` publiait
+		// `offerCount: productCount`, un ensemble plus large (produits publiés) que
+		// le `lowPrice`/`highPrice` qui l'accompagne (produits à SKU actif). Tant que
+		// la fixture faisait coïncider les deux, le test restait vert quelle que soit
+		// la source lue.
 		(priceData.getCollectionPriceRanges as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-			"1": { min: 1500, max: 4500 },
+			"1": { min: 1500, max: 4500, offerCount: 7 },
 		});
 		(utils.extractCollectionImages as unknown as ReturnType<typeof vi.fn>).mockReturnValue([
 			{ url: "https://cdn/img.jpg", alt: "img" },
@@ -234,7 +244,7 @@ describe("CollectionGrid", () => {
 
 		const collections = [createCollection("1", "bagues", "Bagues")];
 		const promise = makePromise({ collections: collections as never, pagination: emptyPagination });
-		await renderGrid(promise);
+		await renderChapters(promise);
 
 		const script = document.querySelector('script[type="application/ld+json"]');
 		expect(script).not.toBeNull();
@@ -264,7 +274,7 @@ describe("CollectionGrid", () => {
 			priceCurrency: "EUR",
 			lowPrice: "15.00",
 			highPrice: "45.00",
-			offerCount: 3,
+			offerCount: 7,
 			availability: "https://schema.org/InStock",
 		});
 	});

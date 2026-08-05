@@ -31,10 +31,6 @@ vi.mock("next/image", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/scroll-fade", () => ({
-	default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock("@/shared/components/animations/tap", () => ({
 	Tap: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -50,7 +46,7 @@ vi.mock("@/shared/utils/format-euro", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+	useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 
 vi.mock("@/shared/utils/view-transition", () => ({
@@ -69,7 +65,7 @@ vi.mock("@/modules/products/constants/search-synonyms", () => ({
 // ─── Import after mocks ──────────────────────────────────────────────────────
 
 import { QuickSearchContent } from "../quick-search-content";
-import type { QuickSearchCollection, QuickSearchProductType } from "../constants";
+import type { QuickSearchCollection, QuickSearchColor, QuickSearchProductType } from "../constants";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -137,6 +133,10 @@ const mockProductTypes: QuickSearchProductType[] = [
 const defaultProps = {
 	query: "bague",
 	collections: mockCollections,
+	// Défaut à vide : le nuancier de l'état « aucun résultat » a sa propre suite
+	// (`color-wall-not-an-option.regression.test.tsx`), et le laisser ici ferait
+	// dépendre chaque assertion de comptage d'un mur de liens.
+	colors: [] as QuickSearchColor[],
 	productTypes: mockProductTypes,
 	onSearch: vi.fn(),
 	onClose: vi.fn(),
@@ -313,6 +313,55 @@ describe("QuickSearchContent", () => {
 		const position = emptyTitle.compareDocumentPosition(suggestionText);
 		expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 		expect(container).toBeTruthy();
+	});
+
+	/**
+	 * L'état d'échec était mieux dessiné que l'état par défaut, et renvoyait vers
+	 * les CATÉGORIES — alors que le panneau au repos, lui, propose désormais un
+	 * nuancier. Direction « C — Le nuancier », lot 4.
+	 */
+	describe("état vide — repli sur le nuancier", () => {
+		const colors = [
+			{ slug: "framboise", name: "Framboise", hex: "#F0568F" },
+			{ slug: "citron", name: "Citron", hex: "#F5CF3C" },
+		];
+
+		function renderEmpty(over: Partial<typeof defaultProps> = {}) {
+			return render(
+				<QuickSearchContent
+					results={makeResults({ products: [], totalCount: 0 })}
+					{...defaultProps}
+					query="zzzz"
+					collections={[]}
+					productTypes={[]}
+					{...over}
+				/>,
+			);
+		}
+
+		it("propose de regarder par couleur", () => {
+			renderEmpty({ colors });
+			expect(screen.getByText(/regarde par couleur/i)).toBeInTheDocument();
+		});
+
+		it("rend le mur, avec ses sorties vers le filtre couleur", () => {
+			const { container } = renderEmpty({ colors });
+			expect(container.querySelector('a[href="/produits?color=framboise"]')).toBeInTheDocument();
+		});
+
+		/**
+		 * Le mur y vit HORS du `role="listbox"`, en mode recherche : le laisser
+		 * navigable ferait pointer `aria-activedescendant` hors du listbox.
+		 */
+		it("rend ce mur NON navigable au roving", () => {
+			const { container } = renderEmpty({ colors });
+			expect(container.querySelectorAll("[data-qs-option]")).toHaveLength(0);
+		});
+
+		it("retombe sur les pills catégories quand il n'y a pas de nuancier", () => {
+			renderEmpty({ colors: [], productTypes: mockProductTypes });
+			expect(screen.getByRole("group", { name: /suggestions de catégories/i })).toBeInTheDocument();
+		});
 	});
 
 	it("calls onSearch when suggestion is clicked", async () => {

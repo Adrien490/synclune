@@ -4,6 +4,7 @@
  */
 
 import { PREPARATION_DELAY_LABEL } from "@/modules/orders/constants/shipping-rates";
+import { SYSTEM_PRODUCT_TYPE_SLUGS } from "@/modules/product-types/constants/system-product-type-slugs";
 import { prefixWithProductType } from "@/modules/products/utils/product-type-prefix";
 
 export const PRODUCT_TEXTS = {
@@ -128,9 +129,17 @@ export const PRODUCT_TEXTS = {
 /**
  * Types de produits qui nécessitent obligatoirement une taille
  * (sauf si la taille est ajustable)
- * ⚠️ Aligné avec les slugs en base de données (lowercase)
+ *
+ * ⚠️ Les valeurs DÉRIVENT de la SSOT `SYSTEM_PRODUCT_TYPE_SLUGS`, elles ne sont
+ * jamais réécrites en littéral : la version précédente disait `["ring", "bracelet"]`
+ * — en anglais, au singulier — sous un commentaire « aligné avec les slugs en base »
+ * qui était faux. L'intersection avec `bagues` / `bracelets` étant vide, le sélecteur
+ * de taille n'était JAMAIS rendu, et le SKU envoyé au panier était le premier venu.
  */
-export const PRODUCT_TYPES_REQUIRING_SIZE = ["ring", "bracelet"] as const;
+export const PRODUCT_TYPES_REQUIRING_SIZE = [
+	SYSTEM_PRODUCT_TYPE_SLUGS.RINGS,
+	SYSTEM_PRODUCT_TYPE_SLUGS.BRACELETS,
+] as const;
 
 /**
  * Configuration des tailles d'images optimisées pour performance

@@ -1,27 +1,42 @@
 "use client";
 
 import { CaretRightIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react/ssr";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { AnimatePresence, m } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
+import {
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+	ResponsiveAlertDialogTrigger,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { CollectionCard } from "./collection-card";
-import type { QuickSearchCollection, RecentlyViewedProduct } from "./constants";
+import { ColorWall } from "./color-wall";
+import type { QuickSearchCollection, QuickSearchColor, RecentlyViewedProduct } from "./constants";
 
 interface IdleContentProps {
 	recentlyViewed: RecentlyViewedProduct[];
 	searches: string[];
 	collections: QuickSearchCollection[];
+	/** Le nuancier — déjà vide côté serveur si le catalogue a trop peu de teintes. */
+	colors: QuickSearchColor[];
 	onClose: () => void;
 	onRecentSearch: (term: string) => void;
 	onRemoveSearch: (term: string) => void;
@@ -33,16 +48,27 @@ export function IdleContent({
 	recentlyViewed,
 	searches,
 	collections,
+	colors,
 	onClose,
 	onRecentSearch,
 	onRemoveSearch,
 	onClearSearches,
 	isPending,
 }: IdleContentProps) {
-	const hasContent = searches.length > 0 || collections.length > 0 || recentlyViewed.length > 0;
+	const hasContent =
+		searches.length > 0 || collections.length > 0 || recentlyViewed.length > 0 || colors.length > 0;
 	const router = useRouter();
+	const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
 
-	// Defer dialog close to next frame so <Link> navigation starts first
+	/**
+	 * Fermeture différée d'une frame, pour que la navigation démarre avant que
+	 * l'arbre ne soit démonté.
+	 *
+	 * **C'est la SEULE stratégie de fermeture du panneau au repos.** Les deux CTA
+	 * de sortie appelaient `onClose()` en direct : trois affordances pour une même
+	 * intention, dont deux se comportaient différemment sans qu'aucune raison ne
+	 * soit écrite. Audit UI/UX 2026-08-05 (P3-10).
+	 */
 	const handleNavigateClose = () => {
 		requestAnimationFrame(() => onClose());
 	};
@@ -51,34 +77,75 @@ export function IdleContent({
 		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
 		event.preventDefault();
 		triggerHaptic("light");
-		onClose();
-		withViewTransition(() => router.push("/collections"));
+		handleNavigateClose();
+		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
+		// de lire la prop `replace` du `<Link>`. C'est ici que la navigation se décide.
+		withViewTransition(() => router.replace("/collections"));
 	};
 
 	const handleViewAllProducts = (event: React.MouseEvent<HTMLAnchorElement>) => {
 		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
 		event.preventDefault();
 		triggerHaptic("light");
-		onClose();
-		withViewTransition(() => router.push("/produits"));
+		handleNavigateClose();
+		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
+		// de lire la prop `replace` du `<Link>`. C'est ici que la navigation se décide.
+		withViewTransition(() => router.replace("/produits"));
 	};
 
 	return (
-		<ScrollFade axis="vertical" hideScrollbar={false} className="h-full overscroll-contain">
+		<div
+			data-slot="scroll-fade-container"
+			className="scroll-fade-y h-full overflow-x-hidden overflow-y-auto overscroll-contain"
+		>
 			<div className="space-y-6 p-4">
+				{/* Le nuancier — PREMIÈRE section du panneau au repos.
+					Quelqu'un qui appuie sur la loupe de la barre du bas ne cherche pas un
+					mot : il regarde. Le mur répond avec la seule chose que cette boutique
+					possède en propre — ses couleurs. Le champ reste épinglé au-dessus (il
+					garde son `autoFocus`) : ce qui change, c'est ce que le panneau MONTRE,
+					pas l'ordre des affordances. Direction « C — Le nuancier », 2026-08-05. */}
+				{colors.length > 0 && (
+					<section aria-labelledby="colors-heading">
+						<div className="mb-3 flex items-center">
+							{/* `h3` et non `h2` : `DialogTitle` (« Rechercher ») rend déjà un `<h2>`
+								chez Base UI. Au même niveau, les quatre sections du panneau étaient
+								SŒURS du titre du dialog au lieu d'en être filles. Audit UI/UX
+								2026-08-05 (P3-8). */}
+							<h3
+								id="colors-heading"
+								// Encre pleine, et non `--muted-foreground` comme avant sur les trois
+								// titres du panneau : ils étaient au MÊME gris que ce qu'ils titrent —
+								// la police d'affichage employée, puis désaturée au niveau de la
+								// légende. Un titre doit peser plus que son contenu. Audit DA
+								// 2026-08-05 (P2-5).
+								className="font-display text-base font-medium tracking-wide"
+							>
+								Par couleur
+							</h3>
+						</div>
+						<ColorWall colors={colors} onSelect={handleNavigateClose} />
+					</section>
+				)}
+
 				{/* Recently Viewed Products */}
 				{recentlyViewed.length > 0 && (
 					<section aria-labelledby="recently-viewed-heading">
 						<div className="mb-3 flex items-center">
-							<h2
+							<h3
 								id="recently-viewed-heading"
-								className="font-display text-muted-foreground text-base font-medium tracking-wide"
+								// Encre pleine — cf. le commentaire du titre « Par couleur ».
+								className="font-display text-base font-medium tracking-wide"
 							>
 								Vus récemment
-							</h2>
+							</h3>
 						</div>
-						<ScrollFade axis="horizontal" rootClassName="-mx-4" className="px-4">
-							<div className="flex snap-x snap-mandatory gap-3">
+						<div
+							data-slot="scroll-fade-container"
+							data-no-edge-swipe=""
+							className="scroll-fade-x no-scrollbar -mx-4 w-full overflow-x-auto overflow-y-hidden px-4"
+						>
+							<div className="flex w-fit min-w-full snap-x snap-mandatory gap-3">
 								{recentlyViewed.map((product) => (
 									<Tap key={product.slug} scale={0.97} className="snap-start">
 										<Link
@@ -107,6 +174,7 @@ export function IdleContent({
 														alt={product.title}
 														width={80}
 														height={80}
+														quality={IMAGE_QUALITY.THUMBNAIL}
 														className="size-full object-cover"
 														placeholder={product.image.blurDataUrl ? "blur" : "empty"}
 														blurDataURL={product.image.blurDataUrl ?? undefined}
@@ -123,7 +191,7 @@ export function IdleContent({
 									</Tap>
 								))}
 							</div>
-						</ScrollFade>
+						</div>
 					</section>
 				)}
 
@@ -131,25 +199,65 @@ export function IdleContent({
 				{searches.length > 0 && (
 					<section aria-labelledby="recent-searches-heading">
 						<div className="mb-3 flex items-center justify-between">
-							<h2
+							<h3
 								id="recent-searches-heading"
-								className="font-display text-muted-foreground text-base font-medium tracking-wide"
+								// Encre pleine — cf. le commentaire du titre « Par couleur ».
+								className="font-display text-base font-medium tracking-wide"
 							>
 								Recherches récentes
-							</h2>
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => {
-									triggerHaptic("medium");
-									onClearSearches();
-								}}
-								disabled={isPending}
-								className="hover:text-destructive -mr-2 h-11 touch-manipulation px-3 text-sm sm:h-9"
-								aria-label="Effacer toutes les recherches récentes"
+							</h3>
+							{/* Confirmation — le geste supprime TOUT, d'un tap, sans retour
+								arrière : `useRecentSearches` n'expose aucun chemin de
+								restauration, une annulation demanderait une Server Action de
+								plus. `ResponsiveAlertDialog` est le SSOT du dépôt pour ce cas,
+								et le seul des quatre overlays qui NE BASCULE PAS en drawer sous
+								`md` — une confirmation ne se prend pas dans une feuille
+								éphémère. Audit DA 2026-08-05 (P3-6). */}
+							<ResponsiveAlertDialog
+								open={isClearConfirmOpen}
+								onOpenChange={setIsClearConfirmOpen}
+								tone="destructive"
 							>
-								Effacer
-							</Button>
+								<ResponsiveAlertDialogTrigger
+									render={
+										<Button
+											variant="ghost"
+											size="sm"
+											disabled={isPending}
+											className="hover:text-destructive -mr-2 h-11 touch-manipulation px-3 text-sm sm:h-9"
+											aria-label="Effacer toutes les recherches récentes"
+										/>
+									}
+								>
+									Effacer
+								</ResponsiveAlertDialogTrigger>
+								<ResponsiveAlertDialogContent>
+									<ResponsiveAlertDialogHeader>
+										<ResponsiveAlertDialogTitle>
+											Effacer tes recherches récentes&nbsp;?
+										</ResponsiveAlertDialogTitle>
+										<ResponsiveAlertDialogDescription>
+											{searches.length === 1
+												? "Le seul terme enregistré sera supprimé. C'est sans retour."
+												: `Les ${searches.length} termes enregistrés seront supprimés. C'est sans retour.`}
+										</ResponsiveAlertDialogDescription>
+									</ResponsiveAlertDialogHeader>
+									<ResponsiveAlertDialogFooter>
+										<ResponsiveAlertDialogCancel type="button" disabled={isPending}>
+											Annuler
+										</ResponsiveAlertDialogCancel>
+										<ResponsiveAlertDialogAction
+											disabled={isPending}
+											onClick={() => {
+												onClearSearches();
+												setIsClearConfirmOpen(false);
+											}}
+										>
+											Effacer
+										</ResponsiveAlertDialogAction>
+									</ResponsiveAlertDialogFooter>
+								</ResponsiveAlertDialogContent>
+							</ResponsiveAlertDialog>
 						</div>
 						<ul className="space-y-1">
 							<AnimatePresence mode="popLayout">
@@ -196,7 +304,34 @@ export function IdleContent({
 											type="button"
 											onClick={() => onRemoveSearch(term)}
 											disabled={isPending}
-											className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-xl transition-[color,background-color,opacity] group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
+											className={cn(
+												"flex size-11 shrink-0 items-center justify-center rounded-xl",
+												"text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
+												"touch-manipulation transition-[color,background-color,opacity]",
+												// `focus-ring`, et non un `ring-ring` nu : `--ring` reste pastel À
+												// DESSEIN (≈1,6:1, cf. globals.css § ROSE PROFOND) — c'est
+												// l'`outline: 2px var(--foreground)` de l'utilitaire qui porte
+												// l'état, à 19,5:1. Ce call site l'éteignait explicitement
+												// (`focus-visible:outline-none`), laissant l'anneau pastel seul
+												// indicateur : sous les 3:1 de WCAG 1.4.11.
+												"focus-ring",
+												"disabled:opacity-50",
+												// ⚠️ Masquage gaté sur la CAPACITÉ DE SURVOL, pas sur la largeur.
+												// C'était `md:opacity-0 md:group-hover/item:opacity-100` : un iPad
+												// (≥ 768 px, `hover: none`) tombait dans le masquage sans jamais
+												// pouvoir déclencher la révélation — le bouton restait à
+												// `opacity: 0`, tout en restant cliquable et focusable. Défaut
+												// documenté dans CLAUDE.md § Conventions UI, déjà rencontré sur
+												// `ProductCard` (2026-08-03). Même forme que
+												// `sortable-media-item.tsx` : hors `can-hover`, le bouton est
+												// simplement TOUJOURS visible, donc aucune règle de révélation
+												// n'est nécessaire là — et aucune n'est enterrée sous le gate.
+												"opacity-100",
+												"can-hover:opacity-0",
+												"can-hover:group-focus-within/item:opacity-100",
+												"can-hover:group-hover/item:opacity-100",
+												"can-hover:focus-visible:opacity-100",
+											)}
 											aria-label={`Supprimer "${term}"`}
 										>
 											<XIcon className="size-5 sm:size-4" />
@@ -212,12 +347,13 @@ export function IdleContent({
 				{collections.length > 0 && (
 					<section aria-labelledby="collections-heading">
 						<div className="mb-3 flex items-center">
-							<h2
+							<h3
 								id="collections-heading"
-								className="font-display text-muted-foreground text-base font-medium tracking-wide"
+								// Encre pleine — cf. le commentaire du titre « Par couleur ».
+								className="font-display text-base font-medium tracking-wide"
 							>
 								Collections
-							</h2>
+							</h3>
 						</div>
 						<Stagger
 							as="ul"
@@ -241,7 +377,9 @@ export function IdleContent({
 								// `replace` : consomme l'entrée d'historique du dialog (CLAUDE.md § Overlays).
 								replace
 								onClick={handleViewAllCollections}
-								className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:min-h-9"
+								// `focus-ring` — cf. le commentaire du × de suppression : un `ring-ring`
+								// nu avec `outline-none` laisse le pastel seul indicateur (≈1,6:1).
+								className="text-muted-foreground hover:text-foreground focus-ring inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors sm:min-h-9"
 							>
 								Voir toutes les collections
 								<CaretRightIcon className="size-4" aria-hidden="true" />
@@ -263,9 +401,12 @@ export function IdleContent({
 
 				{/* Accès catalogue — rendu en PERMANENCE, pas seulement dans la branche
 					`!hasContent` (quasi morte en production : les collections sont
-					toujours chargées). Depuis que l'onglet 2 de la bottom-nav ouvre ce
-					dialog au lieu de pointer vers /produits, c'est le seul chemin mobile
-					vers le catalogue complet. Audit recherche 2026-07-26. */}
+					toujours chargées).
+					⚠️ Sa justification d'origine (« seul chemin mobile vers le catalogue »)
+					est TOMBÉE le 2026-08-04 : la barre du bas a gagné un onglet
+					« Créations » → /produits. Ce qui la remplace : une fois le panneau
+					parcouru sans rien trouver, ce bouton est la sortie de SECOURS in situ —
+					refermer le dialog pour viser un onglet est un détour, pas un chemin. */}
 				<div className="text-center">
 					{/* `replace` : consomme l'entrée d'historique du dialog (CLAUDE.md § Overlays). */}
 					<Button
@@ -277,6 +418,6 @@ export function IdleContent({
 					</Button>
 				</div>
 			</div>
-		</ScrollFade>
+		</div>
 	);
 }

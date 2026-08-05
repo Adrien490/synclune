@@ -60,15 +60,23 @@ vi.mock("@/shared/components/filter-badges", () => ({
 		onRemove,
 		onClearAll,
 		className,
+		isPending,
+		appearance,
 	}: {
 		activeFilters: FilterDefinitionType[];
 		onRemove: (key: string, value?: string) => void;
 		onClearAll: () => void;
 		formatFilter: unknown;
 		className?: string;
-		compactMobile?: boolean;
+		isPending?: boolean;
+		appearance?: string;
 	}) => (
-		<div data-testid="filter-badges" className={className}>
+		<div
+			data-testid="filter-badges"
+			className={className}
+			data-pending={isPending ? "" : undefined}
+			data-appearance={appearance}
+		>
 			{activeFilters.map((f) => (
 				<div key={f.id} data-testid={`filter-${f.key}`}>
 					<span>{f.displayValue ?? String(f.value ?? "")}</span>
@@ -230,6 +238,46 @@ describe("ProductFilterBadges", () => {
 			fireEvent.click(removeBtn);
 
 			expect(mockRemoveFiltersOptimistic).toHaveBeenCalledWith(["priceMin", "priceMax"]);
+		});
+
+		it("excludes the priceMax entry from the list passed to FilterBadges (single price badge)", () => {
+			// Le formatter rendait déjà null pour priceMax, mais l'ENTRÉE restait
+			// dans la liste : elle gonflait le compte sr-only (« 10 filtres actifs »
+			// quand la pastille disait 9) et consommait un slot d'affichage à vide
+			// (audit 2026-08-05, P1 « trois compteurs »).
+			mockOptimisticActiveFilters.push(
+				makeFilter({ id: "priceMin-val", key: "priceMin", value: "1000", label: "Prix" }),
+				makeFilter({ id: "priceMax-val", key: "priceMax", value: "6500", label: "Prix max" }),
+				makeFilter(),
+			);
+
+			render(
+				<ProductFilterBadges
+					colors={defaultColors as Parameters<typeof ProductFilterBadges>[0]["colors"]}
+					materials={defaultMaterials}
+				/>,
+			);
+
+			expect(screen.getByTestId("filter-priceMin")).toBeInTheDocument();
+			expect(screen.queryByTestId("filter-priceMax")).not.toBeInTheDocument();
+			expect(screen.getByTestId("filter-color")).toBeInTheDocument();
+		});
+
+		it("passes its own isPending and the etiquette appearance to FilterBadges", () => {
+			mockOptimisticActiveFilters.push(makeFilter());
+
+			render(
+				<ProductFilterBadges
+					colors={defaultColors as Parameters<typeof ProductFilterBadges>[0]["colors"]}
+					materials={defaultMaterials}
+				/>,
+			);
+
+			const badges = screen.getByTestId("filter-badges");
+			expect(badges).toHaveAttribute("data-appearance", "etiquette");
+			// isPending vient du hook LOCAL de ProductFilterBadges (mocké false ici) —
+			// l'important est que la prop soit câblée, pas sa valeur.
+			expect(badges).not.toHaveAttribute("data-pending");
 		});
 
 		it("calls removeFilterOptimistic for standard filters", () => {

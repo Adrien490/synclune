@@ -316,7 +316,7 @@ export function getProductCardData(
 	const primaryImage = getPrimaryImageFromSku(defaultSku, product, activeSkus);
 
 	// Secondary image for hover effect (different from primary)
-	const secondaryImage = getSecondaryImage(defaultSku, activeSkus, product.title, primaryImage.id);
+	const secondaryImage = getSecondaryImage(defaultSku, activeSkus, product.title, primaryImage);
 
 	// Si au moins un SKU multi-couleur existe, la carte présente des combos
 	// (pastilles split-gradient, lien `?variant=`). Sinon, mode legacy avec
@@ -339,17 +339,25 @@ export function getProductCardData(
 /**
  * Extracts a secondary image different from the primary one (for hover effect).
  * Priority: non-primary image from default SKU, then image from another active SKU.
+ *
+ * The comparison is on id AND url: two media rows can point at the same file
+ * (typical of SKUs sharing a photo). A same-url "alternative view" makes the
+ * hover swap a visual no-op, and its `loading="lazy"` instance overwrites the
+ * eager one in Next's per-URL LCP bookkeeping (`allImgs` in get-img-props),
+ * triggering a false "detected as LCP, add loading=eager" warning on the card
+ * that IS preloaded.
  */
 function getSecondaryImage(
 	defaultSku: SkuFromList | null,
 	activeSkus: SkuFromList[],
 	productTitle: string,
-	primaryImageId: string,
+	primaryImage: Pick<ExtractedImage, "id" | "url">,
 ): ExtractedImage | null {
 	// Priority 1: Another image from the default SKU
 	if (defaultSku?.images) {
 		const secondaryFromDefaultSku = defaultSku.images.find(
-			(img) => img.mediaType === "IMAGE" && img.id !== primaryImageId,
+			(img) =>
+				img.mediaType === "IMAGE" && img.id !== primaryImage.id && img.url !== primaryImage.url,
 		);
 		if (secondaryFromDefaultSku) {
 			return {
@@ -368,7 +376,7 @@ function getSecondaryImage(
 	for (const sku of activeSkus) {
 		if (sku.id === defaultSku?.id) continue;
 		const image = extractImageFromSku(sku, productTitle);
-		if (image && image.id !== primaryImageId) return image;
+		if (image && image.id !== primaryImage.id && image.url !== primaryImage.url) return image;
 	}
 
 	return null;

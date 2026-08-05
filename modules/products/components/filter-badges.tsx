@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, type ComponentProps } from "react";
+import { badgeAccentForFilterKey } from "@/modules/products/components/catalog-accents.constants";
 import { createProductFilterFormatter } from "@/modules/products/utils/format-product-filter";
 import { FilterBadges } from "@/shared/components/filter-badges";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
@@ -42,9 +43,25 @@ function ProductFilterBadgesInner({
 		removeFilterOptimistic,
 		removeFiltersOptimistic,
 		clearAllFiltersOptimistic,
+		isPending,
 	} = useFilter({ filterPrefix: "" });
 
 	const formatFilter = createProductFilterFormatter(colors, materials, productTypes, searchParams);
+
+	// priceMin, quand il est présent, porte la plage entière (« Prix : 20 € -
+	// 65 € ») et sa suppression retire la paire : l'entrée priceMax est alors
+	// retirée de la LISTE, pas seulement du rendu (le formatter rendait null
+	// mais l'entrée gonflait le compte sr-only et consommait un slot
+	// d'affichage à vide — c'était le « 10 » du trio de compteurs
+	// contradictoires 9/10/5, audit 2026-08-05). ⚠️ Mais borne haute SEULE
+	// (glisser uniquement la poignée droite laisse la borne basse au défaut,
+	// donc hors URL), priceMax est l'unique trace du filtre : l'exclure
+	// inconditionnellement faisait un filtre actif sans aucun badge — le
+	// formatter le rend en « Prix : jusqu'à Y € ».
+	const hasPriceMin = optimisticActiveFilters.some((filter) => filter.key === "priceMin");
+	const visibleFilters = optimisticActiveFilters.filter(
+		(filter) => filter.key !== "priceMax" || !hasPriceMin,
+	);
 
 	// Inject synthetic filter for path-based product type
 	const allActiveFilters: FilterDefinition[] = activeProductType
@@ -56,16 +73,16 @@ function ProductFilterBadgesInner({
 					label: "Type",
 					displayValue: activeProductType.label,
 				},
-				...optimisticActiveFilters,
+				...visibleFilters,
 			]
-		: optimisticActiveFilters;
+		: visibleFilters;
 
 	const handleRemove = (key: string, value?: string) => {
 		if (key === "categoryType") {
-			// Navigate back to /produits with current search params
+			// Retour à /produits en conservant les autres filtres actifs de l'URL.
+			// Pas de `page=1` : aucun parseur ne lit `page` (pagination à curseur),
+			// et ce paramètre fantôme faisait basculer la page en `noindex`.
 			const params = new URLSearchParams(searchParams.toString());
-			// Re-add the type as a query param so existing filters are preserved
-			params.set("page", "1");
 			const query = params.toString();
 			router.replace(query ? `/produits?${query}` : "/produits", { scroll: false });
 		} else if (key === "priceMin") {
@@ -98,7 +115,9 @@ function ProductFilterBadgesInner({
 			activeFilters={allActiveFilters}
 			onRemove={handleRemove}
 			onClearAll={handleClearAll}
-			compactMobile
+			isPending={isPending}
+			appearance="etiquette"
+			getBadgeAccentClassName={(filter) => badgeAccentForFilterKey(filter.key)}
 		/>
 	);
 }

@@ -5,6 +5,7 @@ import { ProductCatalog } from "@/modules/products/components/product-catalog";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
 import { SITE_URL } from "@/shared/constants/seo-config";
+import type { SortField } from "@/modules/products/data/get-products";
 import type { ProductSearchParams } from "./_utils/types";
 import { parseFilters } from "./_utils/params";
 import {
@@ -122,7 +123,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const { productTypes, colors, materials, maxPriceInEuros } = await getCatalogData();
 
 	// Parser les paramètres
-	const { perPage, searchTerm } = parsePaginationParams(searchParamsData);
+	const { perPage, searchTerm, sortBy } = parsePaginationParams(searchParamsData);
 	const filters = parseFilters(searchParamsData);
 
 	// Récupérer les produits et la wishlist en parallèle
@@ -150,6 +151,11 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			productsPromise={productsPromise}
 			perPage={perPage}
 			searchTerm={searchTerm}
+			// Le tri et les filtres SERVEUR de cette page — exactement ceux que
+			// `fetchProducts` vient d'appliquer. Le load-more mobile pagine la même
+			// requête, pas une requête par défaut.
+			sortBy={sortBy as SortField}
+			filters={filters}
 			wishlistProductIdsPromise={wishlistProductIdsPromise}
 			productTypes={productTypes}
 			colors={colors}

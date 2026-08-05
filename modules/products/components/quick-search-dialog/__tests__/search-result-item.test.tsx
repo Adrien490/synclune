@@ -50,7 +50,7 @@ vi.mock("@/modules/products/constants/search-synonyms", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+	useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 
 vi.mock("@/shared/utils/view-transition", () => ({
@@ -264,12 +264,48 @@ describe("SearchResultItem", () => {
 			],
 		});
 		render(<SearchResultItem product={product} query="" onSelect={onSelect} />);
-		const colorGroup = screen.getByRole("img", { name: /couleurs/i });
-		expect(colorGroup).toBeInTheDocument();
-		expect(colorGroup).toHaveAttribute("aria-label", "Couleurs : Or, Argent");
+		expect(screen.getByText("Or, Argent")).toBeInTheDocument();
 	});
 
-	it("shows extra colors count when more than 3 unique colors", () => {
+	/**
+	 * La barre de teinte est DÉCORATIVE. Elle a porté `role="img"` +
+	 * `aria-label="Couleurs : …"` jusqu'à l'audit du 2026-08-05 : étant le PREMIER
+	 * enfant du lien depuis le redesign du même jour, son libellé ouvrait le nom
+	 * accessible de l'option — « Couleurs : Or, Argent, Bague Lune, 45,00 € ». Le
+	 * titre, seul discriminant entre deux résultats, arrivait en 3ᵉ position.
+	 */
+	it("la barre de teinte ne participe PAS au nom accessible de l'option", () => {
+		const product = makeProduct({
+			skus: [
+				{
+					priceInclTax: 4500,
+					compareAtPrice: null,
+					inventory: 2,
+					isDefault: true,
+					colors: [
+						{ colorId: "or", position: 0, color: { slug: "or", name: "Or", hex: "#FFD700" } },
+					],
+					images: [],
+				},
+			],
+		});
+		render(<SearchResultItem product={product} query="" onSelect={onSelect} />);
+
+		expect(screen.queryByRole("img")).not.toBeInTheDocument();
+		// Le titre ouvre l'annonce ; les teintes suivent, depuis la ligne de prix.
+		const option = screen.getByRole("option");
+		expect(option.textContent.startsWith("Bague Lune")).toBe(true);
+		expect(option.textContent).toContain("Or");
+	});
+
+	/**
+	 * Le compteur « +N » a disparu avec les pastilles de 8 px (direction
+	 * « C — Le nuancier », 2026-08-05) : il comptait un reste qui n'est plus caché
+	 * nulle part. La barre de teinte ne porte que les 3 premières couleurs, mais
+	 * la ligne de prix les NOMME toutes — et c'est elle, depuis l'audit du même
+	 * jour, qui porte le seul énoncé lisible par un lecteur d'écran.
+	 */
+	it("nomme TOUTES les teintes au-delà des 3 portées par la barre", () => {
 		const colors = [
 			{ slug: "or", name: "Or", hex: "#FFD700" },
 			{ slug: "argent", name: "Argent", hex: "#C0C0C0" },
@@ -287,7 +323,9 @@ describe("SearchResultItem", () => {
 			})),
 		});
 		render(<SearchResultItem product={product} query="" onSelect={onSelect} />);
-		expect(screen.getByText("+1")).toBeInTheDocument();
+
+		expect(screen.getByText("Or, Argent, Rose, Noir")).toBeInTheDocument();
+		expect(screen.queryByText("+1")).not.toBeInTheDocument();
 	});
 
 	it("deduplicates colors with the same slug", () => {
@@ -316,13 +354,13 @@ describe("SearchResultItem", () => {
 			],
 		});
 		render(<SearchResultItem product={product} query="" onSelect={onSelect} />);
-		// Only one unique color → aria-label mentions just "Or"
-		expect(screen.getByRole("img", { name: "Couleurs : Or" })).toBeInTheDocument();
+		// Une seule teinte unique → la ligne de prix n'en nomme qu'une.
+		expect(screen.getByText("Or")).toBeInTheDocument();
 	});
 
 	it("does not render color swatches group when no colors", () => {
 		render(<SearchResultItem product={makeProduct()} query="" onSelect={onSelect} />);
-		expect(screen.queryByRole("img", { name: /couleurs/i })).not.toBeInTheDocument();
+		expect(document.querySelector("[data-slot='tint-bar']")).toBeNull();
 	});
 
 	it("highlights matching query text in the title", () => {

@@ -4,13 +4,11 @@
 export type ProductFiltersSearchParams = {
 	priceMin?: string;
 	priceMax?: string;
-	inStock?: string;
 	type?: string | string[];
 	color?: string | string[];
 	material?: string | string[];
 	collectionId?: string;
 	collectionSlug?: string;
-	rating?: string;
 	stockStatus?: string;
 	onSale?: string;
 };

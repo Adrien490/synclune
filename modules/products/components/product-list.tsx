@@ -4,8 +4,7 @@ import { WarningIcon } from "@phosphor-icons/react/ssr";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
 import type { ProductFilters, SortField } from "@/modules/products/types/product.types";
-import { CursorPagination } from "@/shared/components/cursor-pagination";
-import { PUBLIC_PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
+import { StorefrontPaginationBand } from "@/shared/components/cursor-pagination";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { RefreshButton } from "./refresh-button";
 import { ProductsLoadMore } from "./products-load-more";
@@ -84,6 +83,30 @@ export function ProductList({
 	 * `startTransition`, et React ne réaffiche pas le fallback d'une frontière
 	 * déjà révélée pendant une transition — c'est bien pour ça que
 	 * `product-catalog.tsx` grise les cartes existantes au lieu du skeleton.)
+	 *
+	 * C'est le `<div>` ci-dessous, partagé par les trois branches, qui porte cette
+	 * stabilité : React y réutilise le même nœud DOM d'une branche à l'autre, donc
+	 * la région n'est jamais recréée avec son texte. ⚠️ Il est en `display:
+	 * contents`, **JAMAIS** une cellule de la grille.
+	 *
+	 * Il l'a été (`CATALOG_ROW_CELL`) — et comme la région est `sr-only`, donc
+	 * `position: absolute`, hors flux, cette cellule mesurait 0 px de haut tout en
+	 * consommant une RANGÉE ENTIÈRE de la grille du catalogue, juste sous le bloc
+	 * titre qui en est la première cellule. Deux conséquences, aucune signalée :
+	 *
+	 * - à `lg`, le bloc titre (`lg:col-span-2` sur 3 colonnes) ne partageait plus
+	 *   sa rangée avec une pièce — la rangée était fermée par la cellule vide, la
+	 *   3ᵉ colonne restait blanche (~245 px) et les cartes tombaient toutes d'une
+	 *   rangée ;
+	 * - à tous les paliers, cette rangée fantôme coûtait une gouttière de plus
+	 *   (16 / 24 / 32 px) que `ProductListSkeleton`, qui ne rend aucune cellule de
+	 *   ce genre : le swap Suspense → contenu décalait la grille sur la seule page
+	 *   dont le CLS est budgété en CI (`e2e/performance.spec.ts`).
+	 *
+	 * `contents` retire le nœud de la DISPOSITION sans le retirer du DOM : les
+	 * deux invariants tiennent ensemble. Toute cellule VISIBLE se met donc à
+	 * l'intérieur, et elle n'existe que si elle a du contenu
+	 * (`catalog-live-region-not-a-cell.regression.test.tsx`).
 	 */
 	const liveRegion = (
 		<ResultCountLiveRegion
@@ -97,15 +120,17 @@ export function ProductList({
 	// Afficher une erreur si la requete a echoue
 	if (error) {
 		return (
-			<div className={CATALOG_ROW_CELL}>
+			<div className="contents">
 				{liveRegion}
-				<Alert variant="destructive">
-					<WarningIcon className="size-4" />
-					<AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center">
-						<span>Je n&apos;arrive pas à charger les créations pour le moment.</span>
-						<RefreshButton />
-					</AlertDescription>
-				</Alert>
+				<div className={CATALOG_ROW_CELL}>
+					<Alert variant="destructive">
+						<WarningIcon className="size-4" />
+						<AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center">
+							<span>Je n&apos;arrive pas à charger les créations pour le moment.</span>
+							<RefreshButton />
+						</AlertDescription>
+					</Alert>
+				</div>
 			</div>
 		);
 	}
@@ -113,11 +138,13 @@ export function ProductList({
 	// Afficher les suggestions de repli si aucun produit (Baymard UX)
 	if (products.length === 0) {
 		return (
-			<div className={CATALOG_ROW_CELL}>
+			<div className="contents">
 				{liveRegion}
-				<Suspense fallback={<SearchFallbackSuggestionsSkeleton />}>
-					<SearchFallbackSuggestions searchTerm={searchTerm} suggestion={suggestion} />
-				</Suspense>
+				<div className={CATALOG_ROW_CELL}>
+					<Suspense fallback={<SearchFallbackSuggestionsSkeleton />}>
+						<SearchFallbackSuggestions searchTerm={searchTerm} suggestion={suggestion} />
+					</Suspense>
+				</div>
 			</div>
 		);
 	}
@@ -138,10 +165,16 @@ export function ProductList({
 
 	return (
 		<>
-			<div className={CATALOG_ROW_CELL}>
+			<div className="contents">
 				{liveRegion}
-				{/* Suggestion de correction si peu de resultats */}
-				{suggestion && <SearchCorrectionSuggestion suggestion={suggestion} />}
+				{/* Suggestion de correction si peu de resultats. Sa cellule n'existe que
+				    quand elle a quelque chose à dire : une cellule inconditionnelle
+				    fermait la rangée du bloc titre (cf. le commentaire ci-dessus). */}
+				{suggestion && (
+					<div className={CATALOG_ROW_CELL}>
+						<SearchCorrectionSuggestion suggestion={suggestion} />
+					</div>
+				)}
 			</div>
 
 			{/* Le compteur VISUEL a rejoint le bloc titre (`catalog-heading.tsx`) : il
@@ -170,36 +203,40 @@ export function ProductList({
 				</div>
 			))}
 
-			<div className={`${CATALOG_ROW_CELL} ${CATALOG_PENDING_DIM}`}>
-				{/* Mobile: load-more hybride (bouton + IntersectionObserver 80%) */}
-				<div className="mt-6 md:hidden">
-					<ProductsLoadMore
-						key={`${sortBy ?? "default"}-${searchTerm ?? ""}-${JSON.stringify(filters ?? {})}`}
-						initialCursor={nextCursor}
-						initialHasMore={hasNextPage}
-						initialDisplayedCount={products.length}
-						totalCount={totalCount}
-						wishlistProductIds={wishlistProductIds}
-						sortBy={sortBy}
-						search={searchTerm}
-						filters={filters}
-						preferOnSale={preferOnSale}
-					/>
-				</div>
+			{/* Mobile : les cartes ajoutées et le carton d'étal sont des CELLULES de
+			 * cette grille — pas un bloc posé dessous. `ProductsLoadMore` ne rend
+			 * aucun conteneur et porte son gate `md:hidden` cellule par cellule :
+			 * un wrapper coûterait un nœud DOM, donc la couture de 40 px qu'on
+			 * vient précisément de supprimer. */}
+			<ProductsLoadMore
+				key={`${sortBy ?? "default"}-${searchTerm ?? ""}-${JSON.stringify(filters ?? {})}`}
+				initialCursor={nextCursor}
+				initialHasMore={hasNextPage}
+				initialDisplayedCount={products.length}
+				totalCount={totalCount}
+				perPage={perPage}
+				wishlistProductIds={wishlistProductIds}
+				sortBy={sortBy}
+				search={searchTerm}
+				filters={filters}
+				preferOnSale={preferOnSale}
+			/>
 
-				{/* Desktop: cursor pagination URL-driven (deep-link, SEO, back/forward) */}
-				<div className="mt-8 hidden justify-end md:flex lg:mt-12">
-					<CursorPagination
-						perPage={perPage}
-						hasNextPage={hasNextPage}
-						hasPreviousPage={hasPreviousPage}
-						currentPageSize={products.length}
-						nextCursor={nextCursor}
-						prevCursor={prevCursor}
-						totalCount={totalCount}
-						perPageOptions={PUBLIC_PER_PAGE_OPTIONS}
-					/>
-				</div>
+			{/* Desktop : pagination URL-driven (deep-link, back/forward), rendue en
+			 * bande « fin de l'étal » — le mobile continue au scroll via
+			 * `ProductsLoadMore` ci-dessus. Plus de sélecteur « par page » côté
+			 * boutique (audit cursor-pagination 2026-08-05, direction C). */}
+			<div className={`${CATALOG_ROW_CELL} ${CATALOG_PENDING_DIM} mt-8 hidden md:block lg:mt-12`}>
+				<StorefrontPaginationBand
+					title="La suite de l'étal"
+					noun={{ singular: "bijou", plural: "bijoux" }}
+					hasNextPage={hasNextPage}
+					hasPreviousPage={hasPreviousPage}
+					currentPageSize={products.length}
+					nextCursor={nextCursor}
+					prevCursor={prevCursor}
+					totalCount={totalCount}
+				/>
 			</div>
 		</>
 	);

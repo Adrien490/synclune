@@ -1,8 +1,6 @@
-import { CursorPaginationSkeleton } from "@/shared/components/cursor-pagination";
-import { LoadMoreSkeleton } from "@/shared/components/load-more";
 import type { CSSProperties } from "react";
 
-import { CATALOG_PENDING_DIM, CATALOG_ROW_CELL } from "./catalog-grid.constants";
+import { EtalCardSkeleton } from "./etal-card";
 import { ProductCardSkeleton } from "./product-card-skeleton";
 
 /**
@@ -14,12 +12,18 @@ import { ProductCardSkeleton } from "./product-card-skeleton";
  * le bloc titre visible pendant que la grille se peuple, au lieu de le voir
  * disparaître avec elle.
  *
- * ⚠️ Les gates de pagination doivent rester STRICTEMENT ceux de
- * `product-list.tsx`. Sans le `hidden … md:flex`, ce squelette réservait sous
- * 48 rem une barre de pagination alignée à droite là où le contenu réel sert un
- * bloc « voir plus » centré et plus haut : la grille sautait au moment exact du
- * swap Suspense → contenu, sur la seule page dont le CLS est budgété en CI
+ * ⚠️ La bande de pagination desktop (`StorefrontPaginationBand`) n'est PAS
+ * réservée ici : le squelette ne peut pas savoir s'il y aura une page 2 (la
+ * bande ne se rend que si la liste dépasse une page), et elle vit sous le pli
+ * d'une grille pleine — le swap Suspense → contenu n'y produit aucun décalage
+ * VISIBLE, seul comptabilisé par le CLS budgété en CI
  * (`e2e/performance.spec.ts`, « page produits - CLS under 0.15 »).
+ *
+ * ⚠️ Le carton d'étal est une **cellule**, plus un pied centré : son squelette
+ * en est une lui aussi, à la même place dans le flux. La parité de géométrie
+ * vit dans `etal-card.tsx`, où le carton et son miroir partagent leurs
+ * constantes — pas dans une copie posée ici, qui dériverait au premier
+ * changement.
  *
  * La carte est le SSOT `ProductCardSkeleton` — la parité anti-CLS avec
  * `ProductCard` (ratio, cadre, légende) est structurelle, plus une copie à
@@ -36,14 +40,7 @@ export function ProductListSkeleton() {
 				</div>
 			))}
 
-			<div className={`${CATALOG_ROW_CELL} ${CATALOG_PENDING_DIM}`}>
-				<div className="mt-6 md:hidden">
-					<LoadMoreSkeleton />
-				</div>
-				<div className="mt-8 hidden justify-end md:flex lg:mt-12">
-					<CursorPaginationSkeleton />
-				</div>
-			</div>
+			<EtalCardSkeleton className="md:hidden" />
 		</>
 	);
 }

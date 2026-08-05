@@ -8,6 +8,8 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 // ============================================================================
 
 interface AvailabilityFilterSectionProps {
+	/** Préfixe des `id` DOM — cf. `ProductFilterCompartments.host`. */
+	idPrefix: string;
 	inStockOnly: boolean;
 	onSale: boolean;
 	onInStockChange: (checked: boolean) => void;
@@ -19,10 +21,20 @@ interface AvailabilityFilterSectionProps {
 // ============================================================================
 
 /**
- * Corps de la section "Disponibilité" du filtre produit.
- * Rendu dans un panneau du menu drill-down (sans coquille accordéon).
+ * Corps du compartiment « Disponibilité » du panneau de filtres.
+ *
+ * Les deux lignes portent la même parité survol ⇔ focus que les lignes à cases
+ * (`checkbox-filter-item`) : le survol est gaté `can-hover:` (sticky-hover iOS)
+ * et le focus clavier reçoit la même teinte, jamais derrière ce gate.
+ *
+ * ⚠️ Le nom accessible des interrupteurs vient du libellé VISIBLE, par
+ * `aria-labelledby`. Un `aria-label` rédigé (« Afficher uniquement les produits
+ * en stock ») écrasait l'association `<label htmlFor>` et ne contenait pas le
+ * texte visible « En stock uniquement » — donc WCAG 2.5.3 Label in Name en
+ * échec, et une commande vocale « clique sur En stock uniquement » sans cible.
  */
 export function AvailabilityFilterSection({
+	idPrefix,
 	inStockOnly,
 	onSale,
 	onInStockChange,
@@ -30,36 +42,40 @@ export function AvailabilityFilterSection({
 }: AvailabilityFilterSectionProps) {
 	const haptic = useHaptic();
 
+	const rowClassName =
+		"can-hover:hover:bg-accent/50 has-focus-visible:bg-accent/50 -mx-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors duration-150";
+
+	const inStockId = `${idPrefix}-filter-in-stock`;
+	const onSaleId = `${idPrefix}-filter-on-sale`;
+
 	return (
 		<div className="space-y-1">
-			<label
-				htmlFor="filter-in-stock"
-				className="hover:bg-accent/50 -mx-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors duration-150"
-			>
-				<span className="text-sm font-normal">En stock uniquement</span>
+			<label htmlFor={inStockId} className={rowClassName}>
+				<span id={`${inStockId}-label`} className="text-sm font-normal">
+					En stock uniquement
+				</span>
 				<Switch
-					id="filter-in-stock"
+					id={inStockId}
 					checked={inStockOnly}
 					onCheckedChange={(checked) => {
 						haptic("selection");
 						onInStockChange(checked);
 					}}
-					aria-label="Afficher uniquement les produits en stock"
+					aria-labelledby={`${inStockId}-label`}
 				/>
 			</label>
-			<label
-				htmlFor="filter-on-sale"
-				className="hover:bg-accent/50 -mx-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors duration-150"
-			>
-				<span className="text-sm font-normal">En promotion</span>
+			<label htmlFor={onSaleId} className={rowClassName}>
+				<span id={`${onSaleId}-label`} className="text-sm font-normal">
+					En promotion
+				</span>
 				<Switch
-					id="filter-on-sale"
+					id={onSaleId}
 					checked={onSale}
 					onCheckedChange={(checked) => {
 						haptic("selection");
 						onSaleChange(checked);
 					}}
-					aria-label="Afficher uniquement les produits en promotion"
+					aria-labelledby={`${onSaleId}-label`}
 				/>
 			</label>
 		</div>

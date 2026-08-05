@@ -61,6 +61,21 @@ interface CollectionImagesGridProps {
  * bijoux qui ne sont pas atteignables depuis la carte. Ils le sont sur la page
  * de la collection, où ils sont cliquables. La carte, elle, s'annonce par son
  * `aria-labelledby`.
+ *
+ * ## `isAboveFold` ne va QU'À l'image principale
+ *
+ * `ABOVE_FOLD_THRESHOLD` (= 4) est un budget **par carte**, hérité des produits
+ * où une carte porte **une** image. Une planche-contact en porte quatre : marquer
+ * les vignettes above-fold portait le budget réel à 4 cartes × 3 images = **12**
+ * `loading="eager"` concurrentes, dont onze disputaient la bande passante à
+ * l'unique image qui porte `preload` + `fetchPriority="high"`. C'est la version
+ * atténuée du défaut que `isLcpCandidate` corrige — cf. `collection-image-item.tsx`.
+ *
+ * Les vignettes secondaires sont **décoratives** (`alt=""`) et mesurent 115px :
+ * rien ne justifie de les charger avant le scroll. Les quatre layouts sont donc
+ * alignés sur la même règle, et le budget revient à 4 — la parité ProductCard.
+ * Verrouillé par `@regression collection-images-eager-budget` (bloc « budget eager »
+ * de `__tests__/collection-images-grid.test.tsx`).
  */
 export function CollectionImagesGrid({
 	images,
@@ -244,17 +259,11 @@ function ThreeImagesLayout({
 					collectionSlug={collectionSlug}
 				/>
 			</div>
-			{/* 2 petites images — `isAboveFold` propagé comme dans le bento : sur la
-			    première rangée de la grille, elles sont visibles au chargement. */}
+			{/* 2 petites images — jamais above-fold : le budget eager est PAR CARTE,
+			    cf. le JSDoc du composant exporté. */}
 			{images.slice(1, 3).map((image, i) => (
 				<div key={image.url} className="bg-muted relative overflow-hidden">
-					<CollectionImageItem
-						image={image}
-						index={i + 1}
-						isAboveFold={isAboveFold}
-						sizes={sizes}
-						staggerIndex={i + 1}
-					/>
+					<CollectionImageItem image={image} index={i + 1} sizes={sizes} staggerIndex={i + 1} />
 				</div>
 			))}
 		</div>
@@ -306,11 +315,13 @@ function BentoGridLayout({
 				/>
 			</div>
 
-			{/* 3 petites images a droite (2 sur mobile, 3 sur desktop) */}
+			{/* 3 petites images a droite (2 sur mobile, 3 sur desktop) — aucune n'est
+			    above-fold : le budget eager est PAR CARTE, cf. le JSDoc du composant
+			    exporté. La 4ᵉ garde en plus son `sizes` à `0px` sous `sm`, où elle est
+			    `hidden`. */}
 			{images.slice(1, 4).map((image, i) => {
 				const actualIndex = i + 1;
 				const isImage4 = actualIndex === 3;
-				const isSecondaryAboveFold = isAboveFold && !isImage4;
 
 				return (
 					<div
@@ -324,7 +335,6 @@ function BentoGridLayout({
 						<CollectionImageItem
 							image={image}
 							index={actualIndex}
-							isAboveFold={isSecondaryAboveFold}
 							sizes={isImage4 ? hiddenSecondarySizes : secondarySizes}
 							staggerIndex={actualIndex}
 						/>

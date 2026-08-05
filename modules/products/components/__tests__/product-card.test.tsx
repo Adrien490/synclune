@@ -145,16 +145,28 @@ describe("ProductCard — rendu réel", () => {
 		it("affiche l'eyebrow type produit, la matière et un alt descriptif", () => {
 			render(<ProductCard product={createProduct()} index={0} />);
 
-			expect(screen.getByText("Bague · fait main")).toBeInTheDocument();
+			expect(screen.getByText("Bague")).toBeInTheDocument();
 			expect(screen.getByText("Argent 925")).toBeInTheDocument();
 			// altText null → le service génère « titre - matière »
 			expect(screen.getByAltText("Test Product - Argent 925")).toBeInTheDocument();
 		});
 
-		it("retombe sur « Fait main » sans type produit", () => {
+		it("retombe sur « Création » sans type produit", () => {
 			render(<ProductCard product={createProduct({ type: null })} index={0} />);
 
-			expect(screen.getByText("Fait main")).toBeInTheDocument();
+			expect(screen.getByText("Création")).toBeInTheDocument();
+		});
+
+		/**
+		 * L'eyebrow disait « Bague · fait main ». Retiré le 2026-08-05 : toute la
+		 * boutique est faite main, donc dans une grille la mention ne discrimine rien
+		 * — elle se répétait 12 fois sur la ligne la plus contrainte de la carte, et
+		 * autant pour un lecteur d'écran. `catalog-heading.tsx` la porte une fois.
+		 */
+		it("ne répète PAS « fait main » sur chaque carte", () => {
+			const { container } = render(<ProductCard product={createProduct()} index={0} />);
+
+			expect(container.textContent).not.toMatch(/fait main/i);
 		});
 	});
 
@@ -244,6 +256,100 @@ describe("ProductCard — rendu réel", () => {
 			render(<ProductCard product={createProduct()} index={0} />);
 
 			expect(screen.getByTestId("wishlist-button")).toHaveAttribute("data-product-id", "product-1");
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// Garde-fous de l'audit UI/UX du 2026-08-05. Chacun verrouille un défaut
+	// REPRODUIT, pas une préférence de style.
+	// -------------------------------------------------------------------------
+	describe("@regression product-card-audit-2026-08-05", () => {
+		/**
+		 * Le badge est en `z-20`, le lien étiré en `after:z-10`, et
+		 * la zone média (relative sans z-index) ne crée pas de contexte
+		 * d'empilement qui les isolerait : sans `pointer-events-none`, le badge
+		 * découpait ~100 × 20 px de zone morte au clic sur l'élément le plus cliqué
+		 * de la boutique. Même règle que `MaskingTape`, où elle est déjà documentée
+		 * comme « non négociable ».
+		 */
+		it("les badges de stock n'interceptent pas le clic du lien étiré", () => {
+			const { container } = render(
+				<ProductCard product={createProduct({}, [createSku({ inventory: 0 })])} index={0} />,
+			);
+
+			const badge = container.querySelector('[data-slot="badge"]');
+			expect(badge).not.toBeNull();
+			expect(badge).toHaveClass("pointer-events-none");
+		});
+
+		/**
+		 * `opacity-0` n'empêche PAS le chargement `loading="lazy"` : il se déclenche à
+		 * l'intersection du viewport. La photo secondaire n'étant révélée que par
+		 * `can-hover:group-hover`, chaque carte téléchargeait sur tactile une image
+		 * structurellement inaffichable (~0,5–0,8 Mo par grille de 12, plus une
+		 * transformation Vercel facturée par source). En `display: none` l'élément n'a
+		 * pas de boîte, n'intersecte jamais, et n'est jamais requis.
+		 */
+		it("la photo secondaire est en display:none hors des pointeurs fins", () => {
+			const skuWithTwoImages = createSku({
+				images: [
+					{
+						id: "img-1",
+						url: "/image.jpg",
+						thumbnailUrl: "/image-thumb.jpg",
+						altText: null,
+						isPrimary: true,
+						mediaType: "IMAGE",
+						blurDataUrl: null,
+						width: null,
+						height: null,
+					},
+					{
+						id: "img-2",
+						url: "/image-2.jpg",
+						thumbnailUrl: "/image-2-thumb.jpg",
+						altText: null,
+						isPrimary: false,
+						mediaType: "IMAGE",
+						blurDataUrl: null,
+						width: null,
+						height: null,
+					},
+				],
+			});
+			const { container } = render(
+				<ProductCard product={createProduct({}, [skuWithTwoImages])} index={0} />,
+			);
+
+			// `next/image` est mocké en <img> nu (className perdu) : c'est le conteneur
+			// rendu par ProductCard elle-même qui porte le gate, et qu'on assert.
+			const secondary = container.querySelector('img[src="/image-2.jpg"]');
+			expect(secondary).not.toBeNull();
+
+			const gate = secondary?.parentElement;
+			expect(gate).toHaveClass("hidden");
+			expect(gate).toHaveClass("can-hover:block");
+		});
+
+		/**
+		 * Le badge seul est un signal trop faible à la vitesse de scan d'une grille.
+		 * ⚠️ Le voile est en `bg-card` et NON une désaturation : la couleur est
+		 * l'argument de ces bijoux, un `grayscale` serait le contre-pied du brief.
+		 */
+		it("voile de rupture rendu si et seulement si le produit est épuisé", () => {
+			const veil = "span.bg-card\\/45";
+
+			const epuise = render(
+				<ProductCard product={createProduct({}, [createSku({ inventory: 0 })])} index={0} />,
+			);
+			const rendered = epuise.container.querySelector(veil);
+			expect(rendered).not.toBeNull();
+			// Ne doit jamais capter le clic du lien étiré.
+			expect(rendered).toHaveClass("pointer-events-none");
+			cleanup();
+
+			const enStock = render(<ProductCard product={createProduct()} index={0} />);
+			expect(enStock.container.querySelector(veil)).toBeNull();
 		});
 	});
 });

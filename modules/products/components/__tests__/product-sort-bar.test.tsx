@@ -55,19 +55,6 @@ vi.mock("@/modules/products/services/product-filter-params.service", () => ({
 	isProductCategoryPage: mockIsProductCategoryPage,
 }));
 
-/**
- * La barre déplie un vrai `SearchInput` à partir de `md` (lot 1 de « L'étal
- * continue »). On le stube : ce fichier teste la BARRE — sa structure, ses trois
- * cellules, sa mécanique clavier — pas le champ, qui a sa propre suite. Sans ce
- * mock, `SearchInput` réclame `useRouter`, absent du mock `next/navigation`
- * ci-dessus, et les 15 tests tombent d'un coup.
- */
-vi.mock("@/shared/components/search-input", () => ({
-	SearchInput: ({ placeholder }: { placeholder?: string }) => (
-		<input data-testid="search-input" placeholder={placeholder} />
-	),
-}));
-
 vi.mock("@/modules/products/constants/product.constants", () => ({
 	PRODUCT_FILTER_DIALOG_ID: "product-filter-sheet",
 	PRODUCTS_SORT_LABELS: {
@@ -159,8 +146,10 @@ describe("ProductSortBar", () => {
 			).toBeInTheDocument();
 		});
 
-		it("renders the three action buttons: Trier, Rechercher, Filtrer", () => {
+		it("renders the action buttons: Trier (tiroir), Rechercher, Filtrer", () => {
 			renderDefault();
+			// UN seul « Trier » : le déclencheur du tiroir. Le menu ancré desktop
+			// vit dans la rangée titre (`CatalogToolbarInline`), plus dans la barre.
 			expect(screen.getByText("Trier")).toBeInTheDocument();
 			expect(screen.getByText("Rechercher")).toBeInTheDocument();
 			expect(screen.getByText("Filtrer")).toBeInTheDocument();
@@ -186,49 +175,62 @@ describe("ProductSortBar", () => {
 			expect(nav.className).not.toContain("var(--navbar-height)]");
 		});
 
-		it("n'est plus réservée au mobile — c'est la barre unique du catalogue", () => {
+		it("est le meuble < lg : masquée à desktop, jamais sous md", () => {
 			render(<ProductSortBar sortOptions={sortOptions} />);
 			const nav = screen.getByRole("navigation", { name: "Tri, recherche et filtres" });
 
-			// La `Toolbar` desktop concurrente a disparu du shell : masquer celle-ci
-			// sous `md` laisserait le catalogue sans aucun contrôle sur desktop.
+			// À `lg`, le rail de filtres et le cluster de la rangée titre
+			// (`CatalogToolbarInline`) couvrent les trois gestes — la bande, coupée
+			// au conteneur `max-w-6xl`, flottait au milieu des grands écrans.
+			expect(nav.className).toContain("lg:hidden");
+			// Masquer la barre sous `md` laisserait mobile/tablette sans Trier ni
+			// Filtrer — le cluster ne porte que la recherche avant `lg`.
 			expect(nav.className).not.toContain("md:hidden");
 		});
 
-		it("déplie un champ de recherche à partir de md, et y masque le bouton", () => {
-			render(
-				<ProductSortBar sortOptions={sortOptions} searchPlaceholder="Rechercher des bagues…" />,
-			);
+		it("ne monte AUCUN champ de recherche, mais masque le bouton dès md (champ dans la rangée titre)", () => {
+			renderDefault();
 
-			expect(screen.getByTestId("search-input")).toHaveAttribute(
-				"placeholder",
-				"Rechercher des bagues…",
-			);
+			// Le champ vit dans `CatalogToolbarInline` (rangée titre) : un second
+			// `SearchInput` ici partagerait ses `id` (corps monté deux fois) et
+			// casserait le strict mode Playwright de `search.page.ts`.
+			expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
 			// Le bouton reste rendu (il sert sous `md`) mais s'efface là où le champ
-			// est déplié — sinon deux entrées pour un seul geste.
+			// de la rangée titre est visible — sinon deux entrées pour un seul geste.
 			expect(screen.getByRole("button", { name: /recherche/i }).className).toContain("md:hidden");
 		});
 	});
 
 	describe("sort button", () => {
+		const drawerTrigger = () => screen.getByText("Trier");
+
 		it("opens the sort drawer when sort button is clicked", () => {
 			renderDefault();
-			fireEvent.click(screen.getByText("Trier"));
+			fireEvent.click(drawerTrigger());
 			expect(screen.getByTestId("sort-drawer")).toHaveAttribute("data-open", "true");
 		});
 
 		it("closes search and filter dialogs before opening the sort drawer", () => {
 			renderDefault();
-			fireEvent.click(screen.getByText("Trier"));
+			fireEvent.click(drawerTrigger());
 			expect(mockCloseSearch).toHaveBeenCalledOnce();
 			expect(mockCloseFilter).toHaveBeenCalledOnce();
 		});
 
-		it("uses active aria-label on sort button when sort is active", () => {
+		it("WCAG 2.5.3 : sans tri actif le nom accessible EST « Trier », avec tri il COMMENCE par lui", () => {
+			renderDefault();
+			// Sans état : pas d'aria-label, le libellé visible fait le nom.
+			expect(screen.getByRole("button", { name: /^Trier$/ })).toBeInTheDocument();
+			cleanup();
+
 			mockSearchParams.set("sortBy", "price-ascending");
 			renderDefault();
-			const sortButton = screen.getByRole("button", { name: /Tri actif/ });
-			expect(sortButton).toBeInTheDocument();
+			// Le nom commence par le libellé visible — une commande vocale « clique
+			// Trier » matche. Même SSOT (`sortTriggerLabelFor`) que le menu ancré
+			// du cluster : les deux déclencheurs partagent le nom à l'identique.
+			expect(
+				screen.getByRole("button", { name: /^Trier — tri actif : Prix croissant/ }),
+			).toBeInTheDocument();
 			mockSearchParams.delete("sortBy");
 		});
 	});
@@ -256,7 +258,9 @@ describe("ProductSortBar", () => {
 			lastTrigger.el = null;
 			renderDefault();
 
-			const searchButton = screen.getByRole("button", { name: /ouvrir la recherche/i });
+			// WCAG 2.5.3 : sans recherche active, le nom accessible EST le libellé
+			// visible « Rechercher » (plus d'« Ouvrir la recherche »).
+			const searchButton = screen.getByRole("button", { name: /^Rechercher$/ });
 			fireEvent.click(searchButton);
 
 			expect(lastTrigger.el).toBe(searchButton);
@@ -265,7 +269,7 @@ describe("ProductSortBar", () => {
 		it("expose aria-expanded comme son frère « Trier »", () => {
 			renderDefault();
 
-			expect(screen.getByRole("button", { name: /ouvrir la recherche/i })).toHaveAttribute(
+			expect(screen.getByRole("button", { name: /^Rechercher$/ })).toHaveAttribute(
 				"aria-expanded",
 				"false",
 			);
@@ -291,6 +295,29 @@ describe("ProductSortBar", () => {
 			expect(filterButton).toBeInTheDocument();
 			expect(filterButton.textContent).toContain("2");
 		});
+
+		it("sans filtre actif, le nom accessible EST le libellé visible « Filtrer » (WCAG 2.5.3)", () => {
+			// L'ancien aria-label « Ouvrir les filtres » ne contenait pas le libellé
+			// visible : la commande vocale « clique Filtrer » ne trouvait rien.
+			renderDefault();
+			expect(screen.getByRole("button", { name: "Filtrer" })).toBeInTheDocument();
+		});
+
+		it("avec filtres actifs, le nom accessible COMMENCE par le libellé visible", () => {
+			mockCountActiveFilters.mockReturnValue({ hasActiveFilters: true, activeFiltersCount: 2 });
+			renderDefault();
+			expect(
+				screen.getByRole("button", { name: /^Filtrer — 2 filtres actifs$/ }),
+			).toBeInTheDocument();
+		});
+
+		it("expose aria-expanded reflétant l'état du sheet (fermé par défaut)", () => {
+			renderDefault();
+			expect(screen.getByRole("button", { name: "Filtrer" })).toHaveAttribute(
+				"aria-expanded",
+				"false",
+			);
+		});
 	});
 
 	describe("live region", () => {
@@ -299,6 +326,15 @@ describe("ProductSortBar", () => {
 			const liveRegion = screen.getByRole("status");
 			expect(liveRegion).toBeInTheDocument();
 			expect(liveRegion).toHaveAttribute("aria-live", "polite");
+		});
+
+		it("vit HORS du <nav> lg:hidden — l'annonce doit survivre à desktop", () => {
+			renderDefault();
+			// Sous un ancêtre `display: none`, une live region sort de l'arbre
+			// d'accessibilité : dans le `<nav>` masqué à `lg`, les annonces
+			// (recherche, tri, filtres — dérivées de l'URL) mouraient à desktop.
+			const nav = screen.getByRole("navigation", { name: "Tri, recherche et filtres" });
+			expect(nav).not.toContainElement(screen.getByRole("status"));
 		});
 	});
 });

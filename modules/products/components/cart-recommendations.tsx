@@ -60,10 +60,16 @@ export async function CartRecommendations({ limit = 4 }: CartRecommendationsProp
 				inView
 				y={30}
 			>
-				{recommendations.map((product) => (
+				{recommendations.map((product, index) => (
 					<ProductCard
 						key={product.id}
 						product={product}
+						// `index` pilote le SENS de l'inclinaison au survol (une carte sur deux).
+						// Sans lui le défaut `?? 0` faisait pencher toutes les cartes du même
+						// côté — la signature « planche de tirages » tombait précisément là où
+						// elles sont côte à côte. Aucun effet perf ici : `disablePreload`
+						// neutralise les deux autres usages d'`index`.
+						index={index}
 						isInWishlist={wishlistProductIds.has(product.id)}
 						sectionId="cart-reco"
 						disablePreload

@@ -66,6 +66,28 @@ export const COLLECTION_IMAGE_SIZES_CARD = {
 } as const;
 
 /**
+ * Tirages du chapitre « Le carnet des séries » (`/collections`, 2026-08-05).
+ *
+ * Les tirages ont des largeurs FIXES par palier (jamais fluides) : `size-24`
+ * (96px) sous `sm`, `size-30` (120px) jusqu'à `lg`, `size-45` (180px) au-delà —
+ * cf. `CHAPTER_PRINT_MEDIA_CLASSES` (`collection-chapter.tsx`). Toutes les
+ * clauses sont donc en px, y compris les intermédiaires : il n'y a aucun palier
+ * où le tirage suive le viewport. Bornes : 639 (`sm` − 1) et 1023 (`lg` − 1).
+ */
+export const COLLECTION_CHAPTER_PRINT_SIZES =
+	"(max-width: 639px) 96px, (max-width: 1023px) 120px, 180px";
+
+/**
+ * Nombre de tirages posés sur la bande.
+ *
+ * Vit ici, avec la géométrie des tirages, et non dans `collection.constants.ts` :
+ * ce module est du nombre pur, celui-là porte les `select` Prisma — et le
+ * composant ne doit pas les tirer dans son graphe. C'est `collection.constants.ts`
+ * qui l'importe pour dimensionner son `take`.
+ */
+export const COLLECTION_CHAPTER_PRINT_COUNT = 3;
+
+/**
  * Qualite d'image standardisee pour les collections
  * Balance entre qualite visuelle et taille du fichier
  */

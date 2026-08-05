@@ -5,8 +5,19 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 
-/** Fourchette de prix TTC d'une collection, en centimes. */
-export type CollectionPriceRange = { min: number; max: number };
+/**
+ * Fourchette de prix TTC d'une collection, en centimes.
+ *
+ * `offerCount` = nombre de SKUs actifs ayant contribué à la fourchette. Il est
+ * porté ici, et pas dérivé du compteur de produits de la carte, parce que les
+ * deux ensembles DIFFÈRENT : `_count.products` compte les produits `PUBLIC` sans
+ * aucune condition sur leurs SKUs, alors que la fourchette ne retient que ceux
+ * qui ont au moins un SKU `isActive`. L'`AggregateOffer` publiait donc un
+ * `offerCount` plus large que le `lowPrice`/`highPrice` qui l'accompagne (audit
+ * CollectionCard 2026-08-05) — et au sens de schema.org, une offre est un SKU
+ * achetable, pas un produit.
+ */
+export type CollectionPriceRange = { min: number; max: number; offerCount: number };
 
 /**
  * Fourchette de prix par collection — calculée sur TOUS les produits publiés et
@@ -73,12 +84,13 @@ export async function getCollectionPriceRanges(
 			const current = ranges[row.collectionId];
 
 			if (!current) {
-				ranges[row.collectionId] = { min: priceInclTax, max: priceInclTax };
+				ranges[row.collectionId] = { min: priceInclTax, max: priceInclTax, offerCount: 1 };
 				continue;
 			}
 
 			if (priceInclTax < current.min) current.min = priceInclTax;
 			if (priceInclTax > current.max) current.max = priceInclTax;
+			current.offerCount += 1;
 		}
 	}
 

@@ -2,6 +2,7 @@
 
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { FilterOverflowList } from "./filter-overflow-list";
 
 // ============================================================================
 // TYPES
@@ -14,6 +15,9 @@ export interface ProductTypeOption {
 }
 
 interface TypeFilterSectionProps {
+	/** Préfixe des `id` DOM — cf. `ProductFilterCompartments.host`. */
+	idPrefix: string;
+	/** Types complets, déjà triés par nombre de pièces décroissant. */
 	productTypes: ProductTypeOption[];
 	selectedValues: string[];
 	onToggle: (slug: string, checked: boolean) => void;
@@ -24,10 +28,11 @@ interface TypeFilterSectionProps {
 // ============================================================================
 
 /**
- * Corps de la section "Types de bijoux" du filtre produit.
- * Rendu dans un panneau du menu drill-down (sans coquille accordéon).
+ * Corps du compartiment « Types de bijoux » du panneau de filtres — liste
+ * bornée à 6 entrées + « + N autres » (cf. `FilterOverflowList`).
  */
 export function TypeFilterSection({
+	idPrefix,
 	productTypes,
 	selectedValues,
 	onToggle,
@@ -40,24 +45,25 @@ export function TypeFilterSection({
 	const selectedSet = new Set(selectedValues);
 
 	return (
-		<div className="space-y-1">
-			{productTypes.map((type) => {
-				const isSelected = selectedSet.has(type.slug);
-				return (
-					<CheckboxFilterItem
-						key={type.slug}
-						id={`type-${type.slug}`}
-						checked={isSelected}
-						onCheckedChange={(checked) => {
-							haptic("selection");
-							onToggle(type.slug, checked === true);
-						}}
-						count={type._count?.products}
-					>
-						{type.label}
-					</CheckboxFilterItem>
-				);
-			})}
-		</div>
+		<FilterOverflowList
+			items={productTypes}
+			itemKey={(type) => type.slug}
+			moreLabel={(n) => `+ ${n} autre${n > 1 ? "s" : ""} type${n > 1 ? "s" : ""}`}
+			matchesSearch={(type, query) => type.label.toLowerCase().includes(query)}
+			searchPlaceholder="Rechercher un type…"
+			renderItem={(type) => (
+				<CheckboxFilterItem
+					id={`${idPrefix}-type-${type.slug}`}
+					checked={selectedSet.has(type.slug)}
+					onCheckedChange={(checked) => {
+						haptic("selection");
+						onToggle(type.slug, checked === true);
+					}}
+					count={type._count?.products}
+				>
+					{type.label}
+				</CheckboxFilterItem>
+			)}
+		/>
 	);
 }

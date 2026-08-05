@@ -70,6 +70,8 @@ vi.mock("@/shared/hooks/use-radio-group-keyboard", () => ({
 	useRadioGroupKeyboard: vi.fn(() => ({
 		containerRef: { current: null },
 		handleKeyDown: vi.fn(),
+		// Tabindex roving : le groupe est UN seul arrêt de tabulation (ARIA APG).
+		getTabIndex: (_option: unknown, index: number) => (index === 0 ? 0 : -1),
 	})),
 }));
 
@@ -161,9 +163,14 @@ describe("ColorSelector", () => {
 	});
 
 	describe("rendering", () => {
-		it("renders fieldset with aria-label for variant selection", () => {
+		// Le conteneur des `role="radio"` porte `role="radiogroup"` et EMPRUNTE son
+		// nom à la légende. Auparavant : aucun radiogroup du tout, et un
+		// `aria-label` sur le `fieldset` qui écrasait la légende — laquelle porte la
+		// seule information utile (« Couleur / Matériau : Perle »).
+		it("expose un radiogroup nommé par la légende", () => {
 			render(<ColorSelector combos={[createCombo()]} product={createProduct()} />);
-			expect(screen.getByRole("group", { name: /Sélection de la variante/ })).toBeInTheDocument();
+			expect(screen.getByRole("radiogroup", { name: /Couleur/ })).toBeInTheDocument();
+			expect(screen.queryByRole("group", { name: /Sélection de la variante/ })).toBeNull();
 		});
 
 		it("renders the 'Couleur' legend by default", () => {
@@ -314,6 +321,14 @@ describe("ColorSelector", () => {
 	 * d'origine : `disabled` HTML retirait le bouton du flux focusable +
 	 * `useRadioGroupKeyboard` les skippait → invisible pour SR (violation
 	 * WCAG 1.3.1).
+	 *
+	 * ⚠️ Ces assertions ne portent QUE sur les attributs du bouton, et c'est ce qui
+	 * a laissé le trou ouvert quatorze semaines : le `focusOption` du hook excluait
+	 * toujours `[aria-disabled="true"]` de sa requête, donc la flèche ne déplaçait
+	 * rien. Le déplacement RÉEL du focus est verrouillé côté hook, par
+	 * `@regression radio-group-keyboard-traverses-aria-disabled`
+	 * (`shared/hooks/__tests__/use-radio-group-keyboard.test.ts`) — un test de
+	 * composant qui mocke le hook ne peut pas, par construction, l'attraper.
 	 */
 	describe("@regression aria-disabled focusable", () => {
 		it("unavailable combo button is NOT HTML disabled (stays focusable)", () => {

@@ -38,8 +38,8 @@ export default function ProduitsCatalogError({
 					}
 					description={
 						<p className="text-muted-foreground text-lg md:text-xl">
-							Une erreur est survenue lors du chargement. Vous pouvez réessayer ou explorer une
-							catégorie spécifique.
+							Une erreur est survenue lors du chargement. Tu peux réessayer, ou explorer une
+							catégorie en attendant.
 						</p>
 					}
 					actions={

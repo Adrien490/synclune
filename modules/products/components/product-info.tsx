@@ -38,15 +38,18 @@ export function ProductInfo({ product, isInWishlist }: ProductInfoProps) {
 					</p>
 				)}
 
-				{/* h1 sr-only mobile : PageHeader (h1 desktop) est `hidden sm:block`, donc absent du DOM mobile.
-				    Mobile-first indexing Google + lecteurs d'écran iOS/Android attendent un h1. */}
-				<h1 className="sr-only sm:hidden">{product.title}</h1>
-				<p
-					className="font-display text-foreground text-3xl/10 font-normal tracking-tight text-balance sm:text-4xl/12"
-					itemProp="name"
-				>
+				{/* L'UNIQUE h1 de la fiche, visible à tous les viewports. L'ancien
+				    montage le partageait avec un PageHeader desktop (`hidden sm:block`)
+				    et un repli `sr-only sm:hidden` ici — deux porteurs pour un titre.
+				    Depuis l'harmonisation sur « L'étal continue », la page n'a plus
+				    de bande d'en-tête : le titre appartient à la fiche. */}
+				{/* Pas d'`itemProp` : la page n'a aucun `itemScope`/`itemType`, donc
+				    l'attribut était de la microdata orpheline, inerte pour tout
+				    consommateur. Le nom du produit est porté par le JSON-LD
+				    (`generateStructuredData`, `Product.name`). */}
+				<h1 className="font-display text-foreground text-3xl/10 font-normal tracking-tight text-balance sm:text-4xl/12">
 					{product.title}
-				</p>
+				</h1>
 
 				<p className="text-muted-foreground flex items-center gap-1.5 text-xs sm:text-sm">
 					<HandIcon className="size-3.5 shrink-0" aria-hidden="true" />

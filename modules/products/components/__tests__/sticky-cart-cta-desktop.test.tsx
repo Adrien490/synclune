@@ -36,7 +36,20 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("motion/react", () => ({
-	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	// `onExitComplete` est appelé dès qu'il n'y a plus d'enfant : c'est là que le
+	// composant relâche `--pdp-cta-bar-height` (cf. la suite de régression en bas
+	// de fichier). Le vrai `AnimatePresence` l'appelle à la fin de l'animation de
+	// sortie ; ce double le fait au démontage, ce qui suffit à vérifier le câblage.
+	AnimatePresence: ({
+		children,
+		onExitComplete,
+	}: {
+		children: React.ReactNode;
+		onExitComplete?: () => void;
+	}) => {
+		if (!children) onExitComplete?.();
+		return <>{children}</>;
+	},
 	m: {
 		aside: ({
 			children,
@@ -349,5 +362,91 @@ describe("StickyCartCTADesktop", () => {
 			expect(skuInput.value).toBe("sku-xyz");
 			expect(qtyInput.value).toBe("1");
 		});
+	});
+});
+
+// ============================================================================
+// REGRESSION SUITE
+// ============================================================================
+
+/**
+ * @regression pdp-cta-bar-height-released
+ *
+ * `--pdp-cta-bar-height` restait collée à la hauteur de la barre APRÈS sa
+ * disparition, pour le reste de la visite.
+ *
+ * L'effet de mesure dépend de `[isVisible]` : au passage `true → false`, React
+ * exécutait le cleanup (`removeProperty`) PUIS relançait le corps de l'effet — or
+ * `AnimatePresence` garde l'aside monté le temps de la sortie, donc `barRef.current`
+ * existait encore et la hauteur était RÉÉCRITE. Le nœud disparaissait ensuite sans
+ * relance de l'effet (`isVisible` n'avait pas rechangé), et le garde
+ * `if (height === 0) return` neutralisait le seul rattrapage possible.
+ *
+ * Conséquence visible : la galerie épinglée (`page.tsx`, offset et `max-h` dérivés
+ * de cette variable) réservait ~64 px de vide sous la navbar, avec une hauteur
+ * maximale rabotée d'autant, alors que la barre n'était plus à l'écran.
+ *
+ * Toute modification exige une review explicite.
+ */
+describe("@regression --pdp-cta-bar-height", () => {
+	const BAR_HEIGHT = 64;
+
+	function stubMeasurement() {
+		class MockResizeObserver {
+			constructor(private callback: () => void) {}
+			observe = () => this.callback();
+			disconnect = vi.fn();
+			unobserve = vi.fn();
+		}
+		vi.stubGlobal("ResizeObserver", MockResizeObserver);
+		vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+			height: BAR_HEIGHT,
+			width: 1152,
+			top: 0,
+			left: 0,
+			right: 1152,
+			bottom: BAR_HEIGHT,
+			x: 0,
+			y: 0,
+			toJSON: () => ({}),
+		} as DOMRect);
+	}
+
+	function barHeight() {
+		return document.documentElement.style.getPropertyValue("--pdp-cta-bar-height");
+	}
+
+	afterEach(() => {
+		document.documentElement.style.removeProperty("--pdp-cta-bar-height");
+		vi.restoreAllMocks();
+	});
+
+	it("publie la hauteur mesurée quand la barre est visible", () => {
+		stubMeasurement();
+		renderVisible();
+		expect(barHeight()).toBe(`${BAR_HEIGHT}px`);
+	});
+
+	it("REVIENT à 0px quand la barre a fini de sortir", () => {
+		stubMeasurement();
+		// La barre n'apparaît pas (observateur muet) : `AnimatePresence` reçoit un
+		// enfant vide, donc `onExitComplete` se déclenche — le chemin exact que
+		// prenait la variable pour rester collée.
+		document.documentElement.style.setProperty("--pdp-cta-bar-height", `${BAR_HEIGHT}px`);
+		setupSilentObserver();
+		const sku = createSku();
+		render(<StickyCartCTADesktop product={createProduct({ skus: [sku] })} defaultSku={sku} />);
+
+		expect(barHeight()).toBe("0px");
+	});
+
+	it("retire la variable au démontage (navigation)", () => {
+		stubMeasurement();
+		const { unmount } = renderVisible();
+		expect(barHeight()).toBe(`${BAR_HEIGHT}px`);
+
+		unmount();
+
+		expect(barHeight()).toBe("");
 	});
 });

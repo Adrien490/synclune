@@ -9,6 +9,7 @@ import { PRODUCT_LOAD_MORE_LIMIT } from "@/shared/lib/rate-limit-config";
 import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
 	GET_PRODUCTS_DEFAULT_SORT_BY,
+	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 } from "../constants/product.constants";
 import { getProducts } from "../data/get-products";
 import { cursorValueSchema } from "@/shared/schemas/pagination-schema";
@@ -24,6 +25,22 @@ const loadMoreProductsSchema = z.object({
 	sortBy: z.string().optional(),
 	search: z.string().max(200).optional(),
 	filters: productFiltersSchema.optional(),
+	/**
+	 * Taille de lot — reprise du `?perPage=` de l'URL.
+	 *
+	 * Codée en dur auparavant : un visiteur arrivé en `?perPage=50` voyait
+	 * 50 pièces rendues par le serveur puis des lots de 20. Bornée ici comme
+	 * dans `parsePaginationParams`, et non « fail-safe par défaut » : une
+	 * valeur hors bornes retombe sur le défaut plutôt que de faire échouer
+	 * la requête.
+	 */
+	perPage: z.coerce
+		.number()
+		.int()
+		.min(1)
+		.max(GET_PRODUCTS_MAX_RESULTS_PER_PAGE)
+		.catch(GET_PRODUCTS_DEFAULT_PER_PAGE)
+		.optional(),
 });
 
 interface LoadMoreProductsResult {
@@ -65,11 +82,11 @@ export async function loadMoreProducts(
 			};
 		}
 
-		const { cursor, sortBy, search, filters } = validation.data;
+		const { cursor, sortBy, search, filters, perPage } = validation.data;
 
 		const data = await getProducts({
 			cursor,
-			perPage: GET_PRODUCTS_DEFAULT_PER_PAGE,
+			perPage: perPage ?? GET_PRODUCTS_DEFAULT_PER_PAGE,
 			direction: "forward",
 			sortBy: (sortBy as SortField | undefined) ?? GET_PRODUCTS_DEFAULT_SORT_BY,
 			search,

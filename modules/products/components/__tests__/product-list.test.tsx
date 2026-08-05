@@ -50,18 +50,18 @@ vi.mock("@/modules/products/components/product-card", () => ({
 }));
 
 vi.mock("@/shared/components/cursor-pagination", () => ({
-	CursorPagination: ({
+	StorefrontPaginationBand: ({
 		hasNextPage,
 		hasPreviousPage,
 		nextCursor,
 		prevCursor,
-		perPage,
+		title,
 	}: {
 		hasNextPage: boolean;
 		hasPreviousPage: boolean;
 		nextCursor?: string | null;
 		prevCursor?: string | null;
-		perPage: number;
+		title: string;
 		currentPageSize: number;
 	}) => (
 		<nav
@@ -70,7 +70,7 @@ vi.mock("@/shared/components/cursor-pagination", () => ({
 			data-has-prev={hasPreviousPage}
 			data-next-cursor={nextCursor}
 			data-prev-cursor={prevCursor}
-			data-per-page={perPage}
+			data-title={title}
 			aria-label="Pagination"
 		/>
 	),
@@ -410,14 +410,17 @@ describe("ProductList", () => {
 	});
 
 	describe("pagination", () => {
-		it("renders CursorPagination", async () => {
+		it("renders the storefront pagination band", async () => {
 			await renderList({ productsPromise: makeSuccessResult(), perPage: 24 });
 			expect(screen.getByTestId("cursor-pagination")).toBeInTheDocument();
 		});
 
-		it("passes perPage to CursorPagination", async () => {
-			await renderList({ productsPromise: makeSuccessResult(), perPage: 48 });
-			expect(screen.getByTestId("cursor-pagination")).toHaveAttribute("data-per-page", "48");
+		it("titles the band « La suite de l'étal » (copie boutique, pas un widget)", async () => {
+			await renderList({ productsPromise: makeSuccessResult(), perPage: 24 });
+			expect(screen.getByTestId("cursor-pagination")).toHaveAttribute(
+				"data-title",
+				"La suite de l'étal",
+			);
 		});
 
 		it("passes hasNextPage=true when next page exists", async () => {

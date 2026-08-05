@@ -207,4 +207,46 @@ describe("CollectionImagesGrid", () => {
 			expect(screen.getAllByTestId("collection-image")).toHaveLength(4);
 		});
 	});
+
+	/**
+	 * @regression collection-images-eager-budget
+	 *
+	 * Audit CollectionCard 2026-08-05 — `ABOVE_FOLD_THRESHOLD` (= 4) est un budget
+	 * **par carte**, hérité des produits où une carte porte UNE image. Une
+	 * planche-contact en porte quatre, et les layouts marquaient leurs vignettes
+	 * above-fold : le bento n'excluait que la 4ᵉ (`isAboveFold && !isImage4`), et le
+	 * layout à 3 images n'excluait rien du tout. Le budget réel valait donc
+	 * 4 cartes × 3 images = **12** `loading="eager"` concurrentes, dont onze
+	 * disputaient la bande passante à la seule image qui porte `preload` +
+	 * `fetchPriority="high"` — la version atténuée du défaut que `isLcpCandidate`
+	 * corrige.
+	 *
+	 * Les vignettes secondaires sont décoratives (`alt=""`) et font 115px : rien ne
+	 * justifie de les charger avant le scroll. Les quatre layouts doivent donc
+	 * n'accorder `eager` qu'à l'image principale.
+	 */
+	describe("budget eager (audit 2026-08-05)", () => {
+		it.each([
+			["1 image", 1],
+			["2 images", 2],
+			["3 images", 3],
+			["bento", 4],
+		])("n'accorde loading=eager qu'à l'image principale — %s", (_label, count) => {
+			render(<CollectionImagesGrid images={makeImages(count)} isAboveFold framed />);
+
+			const images = screen.getAllByTestId("collection-image");
+			const eager = images.filter((img) => img.getAttribute("loading") === "eager");
+
+			expect(eager).toHaveLength(1);
+			expect(eager[0]).toBe(images[0]);
+		});
+
+		it("laisse toutes les images en lazy hors above-fold", () => {
+			render(<CollectionImagesGrid images={makeImages(4)} framed />);
+
+			for (const img of screen.getAllByTestId("collection-image")) {
+				expect(img.getAttribute("loading")).toBe("lazy");
+			}
+		});
+	});
 });

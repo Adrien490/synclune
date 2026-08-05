@@ -9,6 +9,10 @@ import {
 	isProductCategoryPage,
 	getCategorySlugFromPath,
 	getSectionActiveCount,
+	filterFormDataToProductFilters,
+	productFiltersToFilterFormData,
+	formatActiveFilterSummary,
+	resetFilterGroup,
 	type FilterFormData,
 	type ParseFilterParams,
 	type BuildFilterURLParams,
@@ -506,5 +510,189 @@ describe("getSectionActiveCount", () => {
 			getSectionActiveCount(makeFormData({ inStockOnly: true, onSale: true }), DEFAULT_PRICE_RANGE)
 				.availability,
 		).toBe(2);
+	});
+});
+
+// ============================================================================
+// FORM DATA ↔ PRODUCT FILTERS (parité avec le chemin URL)
+// ============================================================================
+
+describe("filterFormDataToProductFilters", () => {
+	it("n'émet aucun filtre pour un formulaire vierge", () => {
+		expect(filterFormDataToProductFilters(makeFormData(), DEFAULT_PRICE_RANGE)).toEqual({});
+	});
+
+	it("convertit les prix d'euros en centimes", () => {
+		const filters = filterFormDataToProductFilters(
+			makeFormData({ priceRange: [10, 60] }),
+			DEFAULT_PRICE_RANGE,
+		);
+		expect(filters.priceMin).toBe(1000);
+		expect(filters.priceMax).toBe(6000);
+	});
+
+	it("omet un priceMin de 0 — comme le fait `parseFilters` côté URL", () => {
+		// Les deux chemins doivent produire le MÊME where, sinon le compteur vivant
+		// du panneau annonce un nombre que la grille ne rend pas.
+		const filters = filterFormDataToProductFilters(
+			makeFormData({ priceRange: [0, 60] }),
+			DEFAULT_PRICE_RANGE,
+		);
+		expect(filters.priceMin).toBeUndefined();
+		expect(filters.priceMax).toBe(6000);
+	});
+
+	it("trie les slugs pour maximiser les hits de cache", () => {
+		const filters = filterFormDataToProductFilters(
+			makeFormData({ colors: ["rose", "argent", "or"] }),
+			DEFAULT_PRICE_RANGE,
+		);
+		expect(filters.color).toEqual(["argent", "or", "rose"]);
+	});
+
+	it("traduit la disponibilité en stockStatus / onSale", () => {
+		const filters = filterFormDataToProductFilters(
+			makeFormData({ inStockOnly: true, onSale: true }),
+			DEFAULT_PRICE_RANGE,
+		);
+		expect(filters.stockStatus).toBe("in_stock");
+		expect(filters.onSale).toBe(true);
+	});
+});
+
+describe("productFiltersToFilterFormData", () => {
+	it("est l'inverse exact de filterFormDataToProductFilters", () => {
+		const original = makeFormData({
+			productTypes: ["bagues"],
+			colors: ["argent", "or"],
+			materials: ["acier"],
+			priceRange: [10, 60],
+			inStockOnly: true,
+			onSale: true,
+		});
+		const roundTrip = productFiltersToFilterFormData(
+			filterFormDataToProductFilters(original, DEFAULT_PRICE_RANGE),
+			DEFAULT_PRICE_RANGE,
+		);
+		expect(roundTrip).toEqual(original);
+	});
+
+	it("normalise une valeur scalaire en tableau", () => {
+		const values = productFiltersToFilterFormData({ color: "or" }, DEFAULT_PRICE_RANGE);
+		expect(values.colors).toEqual(["or"]);
+	});
+
+	it("retombe sur la plage par défaut quand aucun prix n'est filtré", () => {
+		expect(productFiltersToFilterFormData({}, DEFAULT_PRICE_RANGE).priceRange).toEqual(
+			DEFAULT_PRICE_RANGE,
+		);
+	});
+});
+
+// ============================================================================
+// RÉSUMÉ DES FILTRES ACTIFS
+// ============================================================================
+
+describe("formatActiveFilterSummary", () => {
+	const labels = {
+		types: { bagues: "Bagues", papilloux: "Papilloux" },
+		colors: { "or-jaune": "Or jaune" },
+		materials: { acier: "Acier" },
+	};
+
+	it("retourne null quand rien n'est filtré", () => {
+		expect(formatActiveFilterSummary(makeFormData(), labels, DEFAULT_PRICE_RANGE)).toBeNull();
+	});
+
+	it("compose types, couleurs et borne haute de prix dans l'ordre", () => {
+		expect(
+			formatActiveFilterSummary(
+				makeFormData({ productTypes: ["papilloux"], colors: ["or-jaune"], priceRange: [0, 65] }),
+				labels,
+				DEFAULT_PRICE_RANGE,
+			),
+		).toBe("Papilloux, Or jaune, jusqu'à 65 €");
+	});
+
+	it("dit « de X à Y » quand les DEUX bornes bougent", () => {
+		expect(
+			formatActiveFilterSummary(
+				makeFormData({ priceRange: [20, 60] }),
+				labels,
+				DEFAULT_PRICE_RANGE,
+			),
+		).toBe("de 20 à 60 €");
+	});
+
+	it("dit « à partir de X » quand seule la borne basse bouge", () => {
+		expect(
+			formatActiveFilterSummary(
+				makeFormData({ priceRange: [20, DEFAULT_PRICE_RANGE[1]] }),
+				labels,
+				DEFAULT_PRICE_RANGE,
+			),
+		).toBe("à partir de 20 €");
+	});
+
+	it("retombe sur le slug quand le libellé est inconnu", () => {
+		// Un slug d'URL peut désigner une option retirée du catalogue : mieux vaut
+		// le slug brut qu'un trou dans la phrase.
+		expect(
+			formatActiveFilterSummary(
+				makeFormData({ colors: ["teinte-disparue"] }),
+				labels,
+				DEFAULT_PRICE_RANGE,
+			),
+		).toBe("teinte-disparue");
+	});
+
+	it("nomme la disponibilité en clair", () => {
+		expect(
+			formatActiveFilterSummary(
+				makeFormData({ inStockOnly: true, onSale: true }),
+				labels,
+				DEFAULT_PRICE_RANGE,
+			),
+		).toBe("en stock, en promotion");
+	});
+});
+
+// ============================================================================
+// RESET D'UN GROUPE
+// ============================================================================
+
+describe("resetFilterGroup", () => {
+	const filled = makeFormData({
+		productTypes: ["bagues"],
+		colors: ["or"],
+		materials: ["acier"],
+		priceRange: [20, 60],
+		inStockOnly: true,
+		onSale: true,
+	});
+
+	it("ne vide QUE le groupe visé", () => {
+		const next = resetFilterGroup(filled, "colors", DEFAULT_PRICE_RANGE);
+		expect(next.colors).toEqual([]);
+		expect(next.productTypes).toEqual(["bagues"]);
+		expect(next.materials).toEqual(["acier"]);
+		expect(next.priceRange).toEqual([20, 60]);
+	});
+
+	it("rétablit la plage par défaut pour le prix", () => {
+		expect(resetFilterGroup(filled, "price", DEFAULT_PRICE_RANGE).priceRange).toEqual(
+			DEFAULT_PRICE_RANGE,
+		);
+	});
+
+	it("remet les DEUX bascules de disponibilité à faux", () => {
+		const next = resetFilterGroup(filled, "availability", DEFAULT_PRICE_RANGE);
+		expect(next.inStockOnly).toBe(false);
+		expect(next.onSale).toBe(false);
+	});
+
+	it("ne mute pas l'objet d'entrée", () => {
+		resetFilterGroup(filled, "colors", DEFAULT_PRICE_RANGE);
+		expect(filled.colors).toEqual(["or"]);
 	});
 });

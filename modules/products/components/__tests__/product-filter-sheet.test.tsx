@@ -27,6 +27,7 @@ const {
 	mockSetFieldValue,
 	mockHandleSubmit,
 	mockReset,
+	mockLiveCount,
 } = vi.hoisted(() => ({
 	mockDialog: { isOpen: true, open: vi.fn(), close: vi.fn() },
 	mockRouter: { push: vi.fn() },
@@ -49,6 +50,12 @@ const {
 	mockSetFieldValue: vi.fn(),
 	mockHandleSubmit: vi.fn(),
 	mockReset: vi.fn(),
+	mockLiveCount: {
+		count: null as number | null,
+		isUpdating: false,
+		relaxed: null as { group: string; count: number } | null,
+		countUnavailable: false,
+	},
 }));
 
 // ============================================================================
@@ -65,20 +72,31 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => mockDialog,
 }));
 
-// useAppForm mock — `Subscribe` renders children with the form values snapshot.
+// useAppForm mock — `store.state.values` alimente le `useStore` mocké ci-dessous.
 vi.mock("@/shared/components/forms", () => ({
-	useAppForm: ({ defaultValues }: { defaultValues: FilterFormData }) => ({
-		Subscribe: ({
-			selector,
-			children,
-		}: {
-			selector: (state: { values: FilterFormData }) => FilterFormData;
-			children: (values: FilterFormData) => React.ReactNode;
-		}) => children(selector({ values: defaultValues })),
-		setFieldValue: mockSetFieldValue,
-		reset: mockReset,
-		handleSubmit: mockHandleSubmit,
-	}),
+	useAppForm: ({ defaultValues }: { defaultValues: FilterFormData }) => {
+		const state = { values: defaultValues };
+		return {
+			store: { state },
+			state,
+			setFieldValue: mockSetFieldValue,
+			reset: mockReset,
+			handleSubmit: mockHandleSubmit,
+		};
+	},
+}));
+
+vi.mock("@tanstack/react-form", () => ({
+	useStore: (
+		store: { state: { values: FilterFormData } },
+		selector: (state: { values: FilterFormData }) => FilterFormData,
+	) => selector(store.state),
+}));
+
+// Le compteur vivant appelle une Server Action (prisma) — hors de portée de
+// jsdom : mocké, sa mécanique a sa propre suite (use-live-filter-count).
+vi.mock("@/modules/products/hooks/use-live-filter-count", () => ({
+	useLiveFilterCount: () => ({ ...mockLiveCount }),
 }));
 
 vi.mock("@/shared/components/filter-sheet-wrapper", () => ({
@@ -90,6 +108,10 @@ vi.mock("@/shared/components/filter-sheet-wrapper", () => ({
 		hasActiveFilters,
 		open,
 		onOpenChange,
+		applyButtonText,
+		footerHint,
+		applyDisabled,
+		applyBusy,
 	}: {
 		children: React.ReactNode;
 		onApply?: () => void;
@@ -98,6 +120,10 @@ vi.mock("@/shared/components/filter-sheet-wrapper", () => ({
 		hasActiveFilters?: boolean;
 		open?: boolean;
 		onOpenChange?: (open: boolean) => void;
+		applyButtonText?: string;
+		footerHint?: React.ReactNode;
+		applyDisabled?: boolean;
+		applyBusy?: boolean;
 	}) => (
 		<div
 			data-testid="filter-wrapper"
@@ -105,9 +131,15 @@ vi.mock("@/shared/components/filter-sheet-wrapper", () => ({
 			data-has-active={hasActiveFilters}
 			data-open={open}
 		>
-			<button data-testid="apply-btn" onClick={onApply}>
-				Apply
+			<button
+				data-testid="apply-btn"
+				onClick={onApply}
+				disabled={applyDisabled}
+				data-busy={applyBusy ? "true" : undefined}
+			>
+				{applyButtonText ?? "Apply"}
 			</button>
+			{footerHint && <div data-testid="footer-hint">{footerHint}</div>}
 			{onClearAll && (
 				<button data-testid="clear-btn" onClick={onClearAll}>
 					Clear
@@ -121,37 +153,6 @@ vi.mock("@/shared/components/filter-sheet-wrapper", () => ({
 			{children}
 		</div>
 	),
-}));
-
-vi.mock("@/shared/components/ui/accordion", () => ({
-	Accordion: ({
-		children,
-		defaultValue,
-	}: {
-		children: React.ReactNode;
-		defaultValue?: string[];
-	}) => (
-		<div data-testid="accordion" data-default-value={JSON.stringify(defaultValue)}>
-			{children}
-		</div>
-	),
-	AccordionItem: ({
-		children,
-		value,
-		className,
-	}: {
-		children: React.ReactNode;
-		value: string;
-		className?: string;
-	}) => (
-		<div data-testid={`section-${value}`} data-class={className}>
-			{children}
-		</div>
-	),
-	AccordionTrigger: ({ children }: { children: React.ReactNode }) => (
-		<div data-slot="accordion-trigger">{children}</div>
-	),
-	AccordionContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("@/shared/components/forms/checkbox-filter-item", () => ({
@@ -180,36 +181,6 @@ vi.mock("@/shared/components/forms/checkbox-filter-item", () => ({
 			{indicator && <span data-testid={`indicator-${id}`}>{indicator}</span>}
 			<span>{children}</span>
 			{count !== undefined && <span data-testid={`count-${id}`}>({count})</span>}
-		</label>
-	),
-}));
-
-vi.mock("@/shared/components/forms/radio-filter-item", () => ({
-	RadioFilterItem: ({
-		id,
-		name,
-		value,
-		checked,
-		onCheckedChange,
-		children,
-	}: {
-		id: string;
-		name: string;
-		value: string;
-		checked: boolean;
-		onCheckedChange: (checked: boolean) => void;
-		children: React.ReactNode;
-	}) => (
-		<label data-testid={`radio-${id}`} data-checked={checked}>
-			<input
-				type="radio"
-				id={id}
-				name={name}
-				value={value}
-				checked={checked}
-				onChange={(e) => onCheckedChange(e.target.checked)}
-			/>
-			<span>{children}</span>
 		</label>
 	),
 }));
@@ -256,6 +227,8 @@ vi.mock("@/shared/utils/cn", () => ({
 vi.mock("@phosphor-icons/react/ssr", () => ({
 	CheckIcon: () => <span data-testid="check-icon" />,
 	MagnifyingGlassIcon: () => <span data-testid="search-icon" />,
+	CaretDownIcon: () => <span data-testid="caret-down-icon" />,
+	CaretUpIcon: () => <span data-testid="caret-up-icon" />,
 	XIcon: ({ className }: { className?: string }) => (
 		<span data-testid="x-icon" className={className} />
 	),
@@ -345,7 +318,7 @@ const mockProductTypes = [
 	{ slug: "colliers", label: "Colliers", _count: { products: 15 } },
 ];
 
-// 9 entries to exceed SEARCH_THRESHOLD (8)
+// 9 entrées : dépasse COMPARTMENT_VISIBLE_COUNT (6) ET SEARCH_THRESHOLD (8)
 const manyColors = [
 	makeColor("c1", "Rouge", "#FF0000", 10),
 	makeColor("c2", "Bleu", "#0000FF", 9),
@@ -356,18 +329,6 @@ const manyColors = [
 	makeColor("c7", "Rose", "#FF69B4", 4),
 	makeColor("c8", "Blanc", "#FFFFFF", 3),
 	makeColor("c9", "Noir", "#000000", 2),
-];
-
-const manyMaterials = [
-	{ id: "m1", slug: "m1", name: "Acier", _count: { skus: 10 } },
-	{ id: "m2", slug: "m2", name: "Titane", _count: { skus: 9 } },
-	{ id: "m3", slug: "m3", name: "Or blanc", _count: { skus: 8 } },
-	{ id: "m4", slug: "m4", name: "Or jaune", _count: { skus: 7 } },
-	{ id: "m5", slug: "m5", name: "Argent", _count: { skus: 6 } },
-	{ id: "m6", slug: "m6", name: "Platine", _count: { skus: 5 } },
-	{ id: "m7", slug: "m7", name: "Cuivre", _count: { skus: 4 } },
-	{ id: "m8", slug: "m8", name: "Laiton", _count: { skus: 3 } },
-	{ id: "m9", slug: "m9", name: "Bronze", _count: { skus: 2 } },
 ];
 
 // ============================================================================
@@ -392,6 +353,18 @@ function renderDefault(overrides: Partial<React.ComponentProps<typeof ProductFil
 	);
 }
 
+/**
+ * L'élément <section> d'un compartiment du PANNEAU, repéré par son en-tête.
+ *
+ * ⚠️ Le préfixe `sheet-` n'est pas cosmétique : le rail et le panneau sont
+ * montés simultanément dans l'app (le rail est masqué en CSS, pas démonté), donc
+ * chaque `id` porte son hôte. Un sélecteur non préfixé attraperait la copie du
+ * rail — c'est le défaut que ce préfixe a corrigé.
+ */
+function compartment(id: string): HTMLElement | null {
+	return document.querySelector(`section[aria-labelledby="filter-compartment-sheet-${id}"]`);
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -407,6 +380,10 @@ afterEach(() => {
 	});
 	mockBuildClearFiltersURL.mockReturnValue("/produits");
 	mockDialog.isOpen = true;
+	mockLiveCount.count = null;
+	mockLiveCount.isUpdating = false;
+	mockLiveCount.relaxed = null;
+	mockLiveCount.countUnavailable = false;
 });
 
 describe("ProductFilterSheet", () => {
@@ -436,25 +413,20 @@ describe("ProductFilterSheet", () => {
 			expect(screen.getByTestId("apply-btn")).toBeInTheDocument();
 			expect(screen.getByTestId("clear-btn")).toBeInTheDocument();
 		});
-
-		it("renders the accordion", () => {
-			renderDefault();
-			expect(screen.getByTestId("accordion")).toBeInTheDocument();
-		});
 	});
 
 	// --------------------------------------------------------------------------
-	// SECTION PRESENCE
+	// COMPARTMENTS (« Le trieur » — rien ne se replie)
 	// --------------------------------------------------------------------------
 
-	describe("Section presence", () => {
-		it("renders all 5 sections by default", () => {
+	describe("Compartments", () => {
+		it("renders the 5 compartments, all visible at once (no accordion)", () => {
 			renderDefault();
-			expect(screen.getByTestId("section-types")).toBeInTheDocument();
-			expect(screen.getByTestId("section-price")).toBeInTheDocument();
-			expect(screen.getByTestId("section-colors")).toBeInTheDocument();
-			expect(screen.getByTestId("section-materials")).toBeInTheDocument();
-			expect(screen.getByTestId("section-availability")).toBeInTheDocument();
+			for (const id of ["types", "price", "colors", "materials", "availability"]) {
+				expect(compartment(id), `compartiment ${id}`).not.toBeNull();
+			}
+			// Plus d'accordéon : aucun trigger de repli.
+			expect(document.querySelector("[data-slot='accordion-trigger']")).toBeNull();
 		});
 
 		it("shows the section labels", () => {
@@ -465,61 +437,78 @@ describe("ProductFilterSheet", () => {
 			expect(screen.getByText("Matériaux")).toBeInTheDocument();
 			expect(screen.getByText("Disponibilité")).toBeInTheDocument();
 		});
+
+		it("les en-têtes de compartiment sont collants dans la zone de scroll", () => {
+			renderDefault();
+			const header = compartment("colors")?.firstElementChild as HTMLElement;
+			expect(header.className).toContain("sticky");
+			expect(header.className).toContain("top-0");
+		});
 	});
 
 	describe("Sections hidden when empty", () => {
-		it("hides the Types section when productTypes is empty", () => {
+		it("hides the Types compartment when productTypes is empty", () => {
 			renderDefault({ productTypes: [] });
-			expect(screen.queryByTestId("section-types")).not.toBeInTheDocument();
+			expect(compartment("types")).toBeNull();
 		});
 
-		it("hides the Couleurs section when colors is empty", () => {
+		it("hides the Couleurs compartment when colors is empty", () => {
 			renderDefault({ colors: [] });
-			expect(screen.queryByTestId("section-colors")).not.toBeInTheDocument();
+			expect(compartment("colors")).toBeNull();
 		});
 
-		it("hides the Matériaux section when materials is empty", () => {
+		it("hides the Matériaux compartment when materials is empty", () => {
 			renderDefault({ materials: [] });
-			expect(screen.queryByTestId("section-materials")).not.toBeInTheDocument();
+			expect(compartment("materials")).toBeNull();
 		});
 
 		it("still renders Prix / Disponibilité when token sections are empty", () => {
 			renderDefault({ colors: [], materials: [], productTypes: [] });
-			expect(screen.getByTestId("section-price")).toBeInTheDocument();
-			expect(screen.getByTestId("section-availability")).toBeInTheDocument();
-		});
-
-		it("marks the Disponibilité section as the last one (border-b-0)", () => {
-			renderDefault();
-			expect(screen.getByTestId("section-availability")).toHaveAttribute(
-				"data-class",
-				"border-b-0",
-			);
+			expect(compartment("price")).not.toBeNull();
+			expect(compartment("availability")).not.toBeNull();
 		});
 	});
 
 	// --------------------------------------------------------------------------
-	// DEFAULT OPEN SECTIONS
+	// LISTES BORNÉES (« + N autres »)
 	// --------------------------------------------------------------------------
 
-	describe("Default open accordion sections", () => {
-		it("opens types + price by default", () => {
+	describe("Overflow lists (6 + « + N autres »)", () => {
+		it("shows all items without a toggle when the list fits (≤ 6)", () => {
 			renderDefault();
-			const defaultValue = JSON.parse(
-				screen.getByTestId("accordion").getAttribute("data-default-value") ?? "[]",
-			) as string[];
-			expect(defaultValue).toContain("types");
-			expect(defaultValue).toContain("price");
+			expect(screen.queryByRole("button", { name: /autre/ })).toBeNull();
+			expect(screen.getByTestId("checkbox-sheet-color-rose")).toBeInTheDocument();
 		});
 
-		it("also opens sections that have an active filter at mount", () => {
-			mockParseFilterValues.mockReturnValue({ ...EMPTY_FORM, colors: ["or"] });
-			renderDefault();
-			const defaultValue = JSON.parse(
-				screen.getByTestId("accordion").getAttribute("data-default-value") ?? "[]",
-			) as string[];
-			expect(defaultValue).toContain("colors");
-			expect(defaultValue).not.toContain("materials");
+		it("caps the list at 6 entries and shows « + N autres »", () => {
+			renderDefault({ colors: manyColors });
+			// 6 premières visibles (déjà triées par compte), les 3 dernières masquées
+			expect(screen.getByTestId("checkbox-sheet-color-c6")).toBeInTheDocument();
+			expect(screen.queryByTestId("checkbox-sheet-color-c7")).toBeNull();
+			expect(screen.getByRole("button", { name: "+ 3 autres couleurs" })).toBeInTheDocument();
+		});
+
+		it("déplie SUR PLACE et garde le bouton monté (focus non perdu)", () => {
+			renderDefault({ colors: manyColors });
+			const toggle = screen.getByRole("button", { name: "+ 3 autres couleurs" });
+			fireEvent.click(toggle);
+			expect(screen.getByTestId("checkbox-sheet-color-c9")).toBeInTheDocument();
+			// Le bouton devient « Réduire la liste » sans quitter le DOM.
+			expect(screen.getByRole("button", { name: "Réduire la liste" })).toBeInTheDocument();
+		});
+
+		it("does not show the search input while collapsed", () => {
+			renderDefault({ colors: manyColors });
+			const section = compartment("colors")!;
+			expect(section.querySelectorAll("input[type='search']").length).toBe(0);
+		});
+
+		it("shows the search input once expanded (>8 entries), sans autoFocus", () => {
+			renderDefault({ colors: manyColors });
+			fireEvent.click(screen.getByRole("button", { name: "+ 3 autres couleurs" }));
+			const search = compartment("colors")!.querySelector("input[type='search']");
+			expect(search).toBeInTheDocument();
+			expect(document.activeElement).not.toBe(search);
 		});
 	});
 
@@ -530,13 +519,13 @@ describe("ProductFilterSheet", () => {
 	describe("Types section", () => {
 		it("shows a checkbox for each product type", () => {
 			renderDefault();
-			expect(screen.getByTestId("checkbox-type-bagues")).toBeInTheDocument();
-			expect(screen.getByTestId("checkbox-type-colliers")).toBeInTheDocument();
+			expect(screen.getByTestId("checkbox-sheet-type-bagues")).toBeInTheDocument();
+			expect(screen.getByTestId("checkbox-sheet-type-colliers")).toBeInTheDocument();
 		});
 
 		it("shows the product count for each type", () => {
 			renderDefault();
-			expect(screen.getByTestId("count-type-bagues")).toBeInTheDocument();
+			expect(screen.getByTestId("count-sheet-type-bagues")).toBeInTheDocument();
 		});
 
 		it("sorts product types by count descending", () => {
@@ -549,9 +538,9 @@ describe("ProductFilterSheet", () => {
 			});
 			const checkboxes = screen
 				.getAllByRole("checkbox")
-				.filter((el) => (el as HTMLInputElement).id.startsWith("type-"));
-			expect((checkboxes[0] as HTMLInputElement).id).toBe("type-high");
-			expect((checkboxes[2] as HTMLInputElement).id).toBe("type-low");
+				.filter((el) => (el as HTMLInputElement).id.startsWith("sheet-type-"));
+			expect((checkboxes[0] as HTMLInputElement).id).toBe("sheet-type-high");
+			expect((checkboxes[2] as HTMLInputElement).id).toBe("sheet-type-low");
 		});
 	});
 
@@ -570,55 +559,37 @@ describe("ProductFilterSheet", () => {
 	describe("Couleurs section", () => {
 		it("shows a checkbox for each color", () => {
 			renderDefault();
-			expect(screen.getByTestId("checkbox-color-or")).toBeInTheDocument();
-			expect(screen.getByTestId("checkbox-color-argent")).toBeInTheDocument();
+			expect(screen.getByTestId("checkbox-sheet-color-or")).toBeInTheDocument();
+			expect(screen.getByTestId("checkbox-sheet-color-argent")).toBeInTheDocument();
 		});
 
 		it("renders color swatch indicators", () => {
 			renderDefault();
-			expect(screen.getByTestId("indicator-color-or")).toBeInTheDocument();
+			expect(screen.getByTestId("indicator-sheet-color-or")).toBeInTheDocument();
 		});
 
 		it("sorts colors by SKU count descending", () => {
 			renderDefault();
 			const checkboxes = screen
 				.getAllByRole("checkbox")
-				.filter((el) => (el as HTMLInputElement).id.startsWith("color-"));
-			expect((checkboxes[0] as HTMLInputElement).id).toBe("color-or");
-		});
-
-		it("does not show the search input below the threshold", () => {
-			renderDefault();
-			const section = screen.getByTestId("section-colors");
-			expect(section.querySelectorAll("input[type='search']").length).toBe(0);
-		});
-
-		it("shows the search input above the threshold (>8 colors)", () => {
-			renderDefault({ colors: manyColors });
-			const section = screen.getByTestId("section-colors");
-			expect(section.querySelector("input[type='search']")).toBeInTheDocument();
+				.filter((el) => (el as HTMLInputElement).id.startsWith("sheet-color-"));
+			expect((checkboxes[0] as HTMLInputElement).id).toBe("sheet-color-or");
 		});
 	});
 
 	describe("Matériaux section", () => {
 		it("shows a checkbox for each material", () => {
 			renderDefault();
-			expect(screen.getByTestId("checkbox-material-acier")).toBeInTheDocument();
-			expect(screen.getByTestId("checkbox-material-titane")).toBeInTheDocument();
-		});
-
-		it("shows the search input above the threshold (>8 materials)", () => {
-			renderDefault({ materials: manyMaterials });
-			const section = screen.getByTestId("section-materials");
-			expect(section.querySelector("input[type='search']")).toBeInTheDocument();
+			expect(screen.getByTestId("checkbox-sheet-material-acier")).toBeInTheDocument();
+			expect(screen.getByTestId("checkbox-sheet-material-titane")).toBeInTheDocument();
 		});
 	});
 
 	describe("Disponibilité section", () => {
 		it("shows the in-stock and on-sale switches", () => {
 			renderDefault();
-			expect(screen.getByTestId("switch-filter-in-stock")).toBeInTheDocument();
-			expect(screen.getByTestId("switch-filter-on-sale")).toBeInTheDocument();
+			expect(screen.getByTestId("switch-sheet-filter-in-stock")).toBeInTheDocument();
+			expect(screen.getByTestId("switch-sheet-filter-on-sale")).toBeInTheDocument();
 		});
 	});
 
@@ -669,21 +640,85 @@ describe("ProductFilterSheet", () => {
 	describe("Toggling filters", () => {
 		it("adds a slug to the field when a checkbox is checked", () => {
 			renderDefault();
-			fireEvent.click(screen.getByTestId("checkbox-type-bagues").querySelector("input")!);
+			fireEvent.click(screen.getByTestId("checkbox-sheet-type-bagues").querySelector("input")!);
 			expect(mockSetFieldValue).toHaveBeenCalledWith("productTypes", ["bagues"]);
 		});
 
 		it("removes a slug from the field when a checkbox is unchecked", () => {
 			mockParseFilterValues.mockReturnValue({ ...EMPTY_FORM, colors: ["or", "argent"] });
 			renderDefault();
-			fireEvent.click(screen.getByTestId("checkbox-color-or").querySelector("input")!);
+			fireEvent.click(screen.getByTestId("checkbox-sheet-color-or").querySelector("input")!);
 			expect(mockSetFieldValue).toHaveBeenCalledWith("colors", ["argent"]);
 		});
 
 		it("sets the in-stock field when the switch is toggled", () => {
 			renderDefault();
-			fireEvent.click(screen.getByTestId("switch-filter-in-stock"));
+			fireEvent.click(screen.getByTestId("switch-sheet-filter-in-stock"));
 			expect(mockSetFieldValue).toHaveBeenCalledWith("inStockOnly", true);
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// COMPTEUR VIVANT → FOOTER
+	// --------------------------------------------------------------------------
+
+	describe("Live count in the footer (« Voir les N pièces »)", () => {
+		it("uses a neutral label before the first response", () => {
+			renderDefault();
+			expect(screen.getByTestId("apply-btn")).toHaveTextContent("Voir les pièces");
+		});
+
+		it("shows the live count in the apply button", () => {
+			mockLiveCount.count = 9;
+			renderDefault();
+			expect(screen.getByTestId("apply-btn")).toHaveTextContent("Voir les 9 pièces");
+		});
+
+		it("uses the singular at 1", () => {
+			mockLiveCount.count = 1;
+			renderDefault();
+			expect(screen.getByTestId("apply-btn")).toHaveTextContent("Voir la pièce");
+		});
+
+		it("pendant un recomptage, aucune SECONDE réponse au « combien ? »", () => {
+			// Le recalcul est signalé par le spinner du bouton (`applyBusy`), au même
+			// endroit que le nombre. Un indice de footer « — pièces · mise à jour… »
+			// cohabitait avec un bouton affichant encore l'ancien chiffre : deux
+			// réponses simultanées et divergentes.
+			mockLiveCount.count = 9;
+			mockLiveCount.isUpdating = true;
+			renderDefault();
+			expect(screen.queryByTestId("footer-hint")).toBeNull();
+			expect(screen.getByTestId("apply-btn")).toHaveAttribute("data-busy", "true");
+			// Et il reste cliquable : on ne bloque pas sur un chiffre provisoire.
+			expect(screen.getByTestId("apply-btn")).not.toBeDisabled();
+		});
+
+		it("un compte indisponible (rate limit) retombe sur le libellé neutre", () => {
+			mockLiveCount.count = 9;
+			mockLiveCount.countUnavailable = true;
+			renderDefault();
+			expect(screen.getByTestId("apply-btn")).toHaveTextContent("Voir les pièces");
+			expect(screen.getByTestId("apply-btn")).not.toBeDisabled();
+		});
+
+		it("disables apply and proposes a numbered exit at 0 results", () => {
+			mockLiveCount.count = 0;
+			mockLiveCount.relaxed = { group: "colors", count: 24 };
+			renderDefault();
+			expect(screen.getByTestId("apply-btn")).toBeDisabled();
+			expect(screen.getByTestId("apply-btn")).toHaveTextContent("Aucune pièce");
+			expect(screen.getByTestId("footer-hint")).toHaveTextContent(
+				"Aucune pièce ne réunit ces critères. Retire la couleur pour en voir 24.",
+			);
+		});
+
+		it("degrades the empty-state copy without a number when no relaxed count exists", () => {
+			mockLiveCount.count = 0;
+			renderDefault();
+			expect(screen.getByTestId("footer-hint")).toHaveTextContent(
+				"Retire un critère pour élargir.",
+			);
 		});
 	});
 

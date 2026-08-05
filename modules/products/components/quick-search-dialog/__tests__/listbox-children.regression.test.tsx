@@ -42,10 +42,6 @@ vi.mock("next/image", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/scroll-fade", () => ({
-	default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock("@/shared/components/animations/tap", () => ({
 	Tap: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -59,7 +55,7 @@ vi.mock("@/shared/components/animations/stagger", () => ({
 vi.mock("@/shared/utils/format-euro", () => ({ formatEuro: (n: number) => `${n / 100} €` }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+	useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 
 vi.mock("@/shared/utils/view-transition", () => ({
@@ -99,6 +95,7 @@ const productTypes: QuickSearchProductType[] = [{ slug: "bague", label: "Bagues"
 const baseProps = {
 	query: "bague",
 	collections,
+	colors: [],
 	productTypes,
 	onSearch: vi.fn(),
 	onClose: vi.fn(),

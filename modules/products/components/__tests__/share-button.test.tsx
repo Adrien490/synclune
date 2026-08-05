@@ -188,12 +188,28 @@ describe("ShareButton", () => {
 			});
 		});
 
-		it("shows copy icon feedback when falling back to clipboard", async () => {
+		// Une confirmation se signale par une COCHE, y compris après une copie :
+		// l'ancien `CopyIcon` rendait l'icône de l'ACTION, pas de son aboutissement,
+		// donc le bouton semblait attendre encore un clic.
+		it("shows a check icon — not a copy icon — when falling back to clipboard", async () => {
 			mockNavigatorShare.mockRejectedValue(new Error("unknown"));
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
 			await waitFor(() => {
-				expect(screen.getByTestId("copy-icon")).toBeInTheDocument();
+				expect(screen.getByTestId("check-icon")).toBeInTheDocument();
+			});
+			expect(screen.queryByTestId("copy-icon")).not.toBeInTheDocument();
+		});
+
+		// La confirmation était invisible (rose pastel à 1,6:1) ET muette : le seul
+		// autre signal était le renommage de l'`aria-label`, qu'aucun lecteur d'écran
+		// n'annonce sur un élément déjà rendu.
+		it("annonce la copie dans une live region", async () => {
+			mockNavigatorShare.mockRejectedValue(new Error("unknown"));
+			renderDefault();
+			fireEvent.click(screen.getByRole("button"));
+			await waitFor(() => {
+				expect(screen.getByRole("status")).toHaveTextContent("Lien copié");
 			});
 		});
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageBrokenIcon, ImageSquareIcon, ImagesIcon } from "@phosphor-icons/react/ssr";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 import Link from "next/link";
 import { lazy, Suspense, useState } from "react";
@@ -153,6 +154,7 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 									alt={primary.altText ?? product.title}
 									fill
 									sizes="(max-width: 768px) 100vw, 384px"
+									quality={IMAGE_QUALITY.STANDARD}
 									className="object-cover"
 									preload
 									fetchPriority="high"
@@ -187,6 +189,7 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 														alt={image.altText ?? ""}
 														fill
 														sizes="120px"
+														quality={IMAGE_QUALITY.THUMBNAIL}
 														className="object-cover"
 														{...(image.blurDataUrl
 															? { placeholder: "blur" as const, blurDataURL: image.blurDataUrl }

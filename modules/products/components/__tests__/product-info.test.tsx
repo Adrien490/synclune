@@ -116,11 +116,16 @@ describe("ProductInfo", () => {
 		expect(shareBtns.length).toBeGreaterThan(0);
 	});
 
-	it("exposes a sr-only h1 with the product title (mobile-first indexing fallback)", () => {
+	it("exposes ONE h1 with the product title, visible at every viewport", () => {
 		render(<ProductInfo product={makeProduct()} />);
 
-		const heading = screen.getByRole("heading", { level: 1, name: "Collier Étoile" });
-		expect(heading).toHaveClass("sr-only");
+		// Depuis l'harmonisation « L'étal continue », la fiche n'a plus de
+		// PageHeader : ce h1 est l'unique porteur du titre, jamais masqué.
+		const headings = screen.getAllByRole("heading", { level: 1 });
+		expect(headings).toHaveLength(1);
+		expect(headings[0]).toHaveTextContent("Collier Étoile");
+		expect(headings[0]!.className).not.toMatch(/\bsr-only\b/);
+		expect(headings[0]!.className).not.toMatch(/\bhidden\b/);
 	});
 
 	it("renders the handmade provenance line above-the-fold, in the first person", () => {

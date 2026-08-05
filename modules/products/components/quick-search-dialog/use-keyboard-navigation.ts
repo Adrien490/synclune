@@ -27,12 +27,27 @@ interface UseKeyboardNavigationOptions {
  * focus réel est le pattern natif : zéro ARIA, annonce garantie, et `Enter`
  * redevient l'activation native du lien/bouton.
  */
-/** Déplacement commun aux deux modes ; renvoie l'index retenu, ou `null`. */
+/**
+ * Déplacement commun aux deux modes ; renvoie l'index retenu, ou `null`.
+ *
+ * ← et → sont des synonymes de ↑ et ↓ : le nuancier est une GRILLE
+ * (`grid-cols-4 sm:grid-cols-6`), et l'APG attend qu'on puisse s'y déplacer
+ * horizontalement. Sans eux, les deux touches ne faisaient rien du tout sur le
+ * mur. Le déplacement reste linéaire — passer à un vrai parcours 2-D
+ * demanderait de dériver les lignes de la géométrie rendue, que jsdom ne
+ * connaît pas.
+ *
+ * ⚠️ Ces deux touches ne sont acceptées QUE lorsque le focus a déjà quitté le
+ * champ (cf. `allowHorizontal`) : dans le champ, ← et → appartiennent au curseur
+ * de saisie.
+ */
 const computeNextIndex = (key: string, count: number, current: number): number | null => {
 	switch (key) {
 		case "ArrowDown":
+		case "ArrowRight":
 			return current < count - 1 ? current + 1 : 0;
 		case "ArrowUp":
+		case "ArrowLeft":
 			return current > 0 ? current - 1 : count - 1;
 		case "Home":
 			return 0;
@@ -42,6 +57,9 @@ const computeNextIndex = (key: string, count: number, current: number): number |
 			return null;
 	}
 };
+
+/** Touches de déplacement horizontal — réservées au focus hors du champ. */
+const HORIZONTAL_KEYS = new Set(["ArrowLeft", "ArrowRight"]);
 
 export function useKeyboardNavigation({
 	isSearchMode,
@@ -74,9 +92,19 @@ export function useKeyboardNavigation({
 				const el = elements[i];
 				if (!el) continue;
 				el.dataset.qsNavId = String(i);
-				if (!el.id) {
-					el.id = `qs-nav-${i}`;
-				}
+				// ⚠️ Réécriture INCONDITIONNELLE. C'était `if (!el.id)`, et l'`id`
+				// devenait donc collant alors qu'`activeDescendantId` est dérivé de
+				// l'INDEX (`qs-nav-${activeIndex}`). React réutilise les nœuds des
+				// enfants keyés (`products` keyé par `product.id`, `Stagger` préserve la
+				// clé) : dès qu'une frappe change le CLASSEMENT en gardant un produit,
+				// le nœud réutilisé conservait l'`id` de son ancienne position pendant
+				// qu'un nœud neuf prenait le même — deux `id` identiques, et un
+				// `aria-activedescendant` qui pointait soit le mauvais résultat, soit
+				// rien du tout. Le surlignage visuel (`data-active`, piloté par
+				// `dataset.qsNavId`) restait juste : le défaut n'existait QUE pour les
+				// lecteurs d'écran. Aucun de ces éléments ne porte d'`id` d'auteur, la
+				// garde ne protégeait donc rien. Audit UI/UX 2026-08-05 (P1-1).
+				el.id = `qs-nav-${i}`;
 			}
 		};
 
@@ -136,9 +164,17 @@ export function useKeyboardNavigation({
 	// Bound to the search <input> onKeyDown: the input keeps focus (ARIA 1.2
 	// combobox / aria-activedescendant pattern), so the handler must live on the
 	// element that actually receives the keydown — not on the listbox container.
-	const handleArrowNavigation = (e: React.KeyboardEvent<HTMLElement>) => {
+	const handleArrowNavigation = (e: React.KeyboardEvent<HTMLElement>, allowHorizontal = false) => {
 		const focusables = focusablesRef.current;
 		if (focusables.length === 0) return;
+
+		// ← et → n'appartiennent au roving que si le focus a QUITTÉ le champ. Bound
+		// à l'`onKeyDown` de l'input, ce handler les recevrait sinon en pleine
+		// saisie — et déplacerait le focus au lieu du curseur de texte. Seul
+		// `handleContentKeyDown` (conteneur, mode idle, focus déjà sur un item) les
+		// autorise. React n'appelle un `onKeyDown` qu'avec l'événement : le défaut
+		// `false` est donc bien celui du câblage sur l'input.
+		if (!allowHorizontal && HORIZONTAL_KEYS.has(e.key)) return;
 
 		// Mode recherche : Enter active l'option courante (le focus reste au champ).
 		// En idle, on ne l'intercepte pas : le focus est déjà SUR l'élément, donc
@@ -192,8 +228,14 @@ export function useKeyboardNavigation({
 			return;
 		}
 
-		if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Home" || e.key === "End") {
-			handleArrowNavigation(e);
+		if (
+			e.key === "ArrowDown" ||
+			e.key === "ArrowUp" ||
+			e.key === "Home" ||
+			e.key === "End" ||
+			HORIZONTAL_KEYS.has(e.key)
+		) {
+			handleArrowNavigation(e, true);
 		}
 	};
 

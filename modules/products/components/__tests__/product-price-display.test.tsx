@@ -136,8 +136,12 @@ describe("ProductPriceDisplay", () => {
 			const sku = makeSku({ inventory: 2, isActive: true });
 			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} />);
 
-			expect(screen.getByText(/Plus que/i)).toBeInTheDocument();
-			expect(screen.getByText(/2/)).toBeInTheDocument();
+			// Le libellé visible ET son équivalent lu (l'annonce unique du bloc) portent
+			// tous deux « plus que 2 » : on cible le libellé accessible du visible.
+			expect(
+				screen.getByLabelText("Attention, plus que 2 exemplaires en stock"),
+			).toBeInTheDocument();
+			expect(screen.getAllByText(/Plus que/i).length).toBeGreaterThan(0);
 		});
 
 		it("shows the out-of-stock badge and message when inventory is 0", () => {
@@ -152,6 +156,34 @@ describe("ProductPriceDisplay", () => {
 			);
 		});
 
+		// `children`, c'est le `DeliveryEstimator` : il était rendu dans les DEUX
+		// branches, donc une variante épuisée affichait « Livraison estimée entre le
+		// X et le Y » juste au-dessus de « Cette petite merveille sera bientôt de
+		// retour ! ». On ne promet pas une date de livraison pour une pièce qu'on ne
+		// peut pas acheter.
+		it("n'affiche pas l'estimation de livraison quand la variante est en rupture", () => {
+			const sku = makeSku({ inventory: 0, isActive: true });
+			render(
+				<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])}>
+					<p>Livraison estimée entre le 11 août et le 17 août</p>
+				</ProductPriceDisplay>,
+			);
+
+			expect(screen.queryByText(/livraison estimée/i)).not.toBeInTheDocument();
+			expect(screen.getByRole("alert")).toBeInTheDocument();
+		});
+
+		it("affiche l'estimation de livraison quand la variante est disponible", () => {
+			const sku = makeSku({ inventory: 10, isActive: true });
+			render(
+				<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])}>
+					<p>Livraison estimée entre le 11 août et le 17 août</p>
+				</ProductPriceDisplay>,
+			);
+
+			expect(screen.getByText(/livraison estimée/i)).toBeInTheDocument();
+		});
+
 		// Le badge FOMO « Dans X paniers » a été RETIRÉ avec le passage du panier en
 		// cookie (2026-08-04) : il comptait les paniers des AUTRES visiteurs, ce
 		// qu'un cookie ne permet structurellement pas — le serveur ne voit que le
@@ -164,7 +196,12 @@ describe("ProductPriceDisplay", () => {
 			expect(screen.queryByText(/panier/i)).not.toBeInTheDocument();
 		});
 
-		it("exposes aria-live=polite on the price region for variant transitions", () => {
+		// UN SEUL porteur d'annonce. La région entière était `aria-live` +
+		// `aria-atomic`, et une région atomique restitue TOUT son contenu : le prix y
+		// était écrit deux fois (résumé sr-only + `aria-label` du prix), suivi du
+		// stock et de la date de livraison, avec cinq `role="status"` imbriqués
+		// par-dessus. L'annonce vit maintenant dans le seul `span.sr-only`.
+		it("n'expose qu'UNE live region, hors de la région prix elle-même", () => {
 			const sku = makeSku({ priceInclTax: 4999 });
 			const { container } = render(
 				<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} />,
@@ -172,8 +209,13 @@ describe("ProductPriceDisplay", () => {
 			const region = container.querySelector(
 				'[role="region"][aria-labelledby="product-price-selected"]',
 			);
-			expect(region).toHaveAttribute("aria-live", "polite");
-			expect(region).toHaveAttribute("aria-atomic", "true");
+			expect(region).not.toHaveAttribute("aria-live");
+			expect(region).not.toHaveAttribute("aria-atomic");
+
+			const liveRegions = container.querySelectorAll('[aria-live], [role="status"]');
+			expect(liveRegions).toHaveLength(1);
+			expect(liveRegions[0]).toHaveClass("sr-only");
+			expect(liveRegions[0]?.textContent).toMatch(/prix mis à jour/i);
 		});
 
 		it("includes an sr-only announce with the updated price on variant change", () => {

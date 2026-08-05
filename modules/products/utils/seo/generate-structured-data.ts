@@ -1,15 +1,37 @@
+import { cacheLife } from "next/cache";
+
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
 
+// Price valid for 90 days — Google requires a future date for rich results eligibility,
+// short enough to force recrawl after price changes (avoids stale snippet in SERPs).
+// `"use cache"` sur la seule valeur dérivée : `Date.now()` est interdit pendant le
+// prerender (blocking-prerender-current-time), et la clé sans argument fait une entrée
+// unique rafraîchie par le profil `catalog` — largement assez pour une date à J+90.
+export async function getPriceValidUntil(): Promise<string> {
+	"use cache";
+	cacheLife("catalog");
+	const PRICE_VALIDITY_DAYS = 90;
+	return new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000)
+		.toISOString()
+		.split("T")[0]!;
+}
+
 interface StructuredDataOptions {
 	product: GetProductReturn;
 	selectedSku: ProductSku | null;
+	/** Date AAAA-MM-JJ issue de `getPriceValidUntil()` — injectée car dérivée de l'horloge. */
+	priceValidUntil: string;
 }
 
-export function generateStructuredData({ product, selectedSku }: StructuredDataOptions) {
+export function generateStructuredData({
+	product,
+	selectedSku,
+	priceValidUntil,
+}: StructuredDataOptions) {
 	// Calculer le prix minimum et maximum pour les offres agrégées
 	const activePrices = product.skus.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax);
 
@@ -121,13 +143,6 @@ export function generateStructuredData({ product, selectedSku }: StructuredDataO
 			transitTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 4, unitCode: "DAY" },
 		},
 	};
-
-	// Price valid for 90 days — Google requires a future date for rich results eligibility,
-	// short enough to force recrawl after price changes (avoids stale snippet in SERPs).
-	const PRICE_VALIDITY_DAYS = 90;
-	const priceValidUntil = new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000)
-		.toISOString()
-		.split("T")[0];
 
 	// Utiliser AggregateOffer pour les produits multi-variantes
 	const offers =

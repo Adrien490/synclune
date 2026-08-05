@@ -1,4 +1,5 @@
 import { ChartBarIcon, StarIcon } from "@phosphor-icons/react/ssr";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
@@ -54,6 +55,7 @@ export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsC
 									width={48}
 									height={48}
 									sizes="48px"
+									quality={IMAGE_QUALITY.THUMBNAIL}
 									className="size-12 shrink-0 rounded-md border object-cover"
 									{...(featuredImage.blurDataUrl
 										? { placeholder: "blur" as const, blurDataURL: featuredImage.blurDataUrl }

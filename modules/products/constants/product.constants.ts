@@ -479,22 +479,28 @@ export const PRODUCT_FILTER_DIALOG_ID = "product-filter-sheet";
 // UI OPTIONS
 // ============================================================================
 
+/**
+ * L'ordre des clés EST l'ordre du tiroir et du menu de tri (`Object.values`).
+ * « Plus récents » ouvre la liste : c'est le tri par défaut réel
+ * (`parsePaginationParams`) — il était classé en dernière ligne, sous un
+ * « Par défaut » qui en était le doublon anonyme (audit /produits 2026-08-05).
+ */
 export const PRODUCTS_SORT_OPTIONS = {
-	TITLE_ASC: "title-ascending",
-	TITLE_DESC: "title-descending",
+	CREATED_DESC: "created-descending",
 	PRICE_ASC: "price-ascending",
 	PRICE_DESC: "price-descending",
 	CREATED_ASC: "created-ascending",
-	CREATED_DESC: "created-descending",
+	TITLE_ASC: "title-ascending",
+	TITLE_DESC: "title-descending",
 } as const;
 
 export const PRODUCTS_SORT_LABELS = {
-	[PRODUCTS_SORT_OPTIONS.TITLE_ASC]: "Alphabétique (A-Z)",
-	[PRODUCTS_SORT_OPTIONS.TITLE_DESC]: "Alphabétique (Z-A)",
+	[PRODUCTS_SORT_OPTIONS.CREATED_DESC]: "Plus récents",
 	[PRODUCTS_SORT_OPTIONS.PRICE_ASC]: "Prix croissant",
 	[PRODUCTS_SORT_OPTIONS.PRICE_DESC]: "Prix décroissant",
 	[PRODUCTS_SORT_OPTIONS.CREATED_ASC]: "Plus anciens",
-	[PRODUCTS_SORT_OPTIONS.CREATED_DESC]: "Plus récents",
+	[PRODUCTS_SORT_OPTIONS.TITLE_ASC]: "Alphabétique (A-Z)",
+	[PRODUCTS_SORT_OPTIONS.TITLE_DESC]: "Alphabétique (Z-A)",
 } as const;
 
 // ============================================================================

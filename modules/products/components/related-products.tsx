@@ -3,6 +3,7 @@ import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { Reveal } from "@/shared/components/animations";
+import { Separator } from "@/shared/components/ui/separator";
 import {
 	Carousel,
 	CarouselContent,
@@ -30,6 +31,11 @@ interface RelatedProductsProps {
  *
  * Utilise getRelatedProducts avec algorithme contextuel pour maximiser la pertinence
  *
+ * ⚠️ **Le séparateur qui précède la section vit ICI, pas dans `page.tsx`** — même
+ * raison que pour `RecentlyViewedProducts` : cette section retourne `null` sur un
+ * produit isolé (aucune collection, aucun voisin de type), et un filet rendu par
+ * la page ne pouvait pas disparaître avec elle.
+ *
  * @example
  * ```tsx
  * <RelatedProducts currentProductSlug="boucles-oreilles-rose" limit={8} />
@@ -45,85 +51,93 @@ export async function RelatedProducts({ currentProductSlug, limit = 8 }: Related
 		getWishlistProductIds(),
 	]);
 
-	// Ne rien afficher si pas de produits similaires
+	// Ne rien afficher si pas de produits similaires — séparateur compris.
 	if (relatedProducts.length === 0) {
 		return null;
 	}
 
 	return (
-		<aside className="space-y-6" aria-labelledby="related-products-heading">
-			{/* En-tête de section avec animation reveal */}
-			<Reveal y={20} amount={0.3}>
-				<div className="space-y-2">
-					<h2 id="related-products-heading" className="text-2xl font-semibold tracking-tight">
-						Dans la même veine
-					</h2>
-					<p className="text-muted-foreground text-sm">
-						Sélectionnées pour compléter cette création.
-					</p>
-				</div>
-			</Reveal>
+		<>
+			<Separator className="bg-border" />
+			<aside className="space-y-6" aria-labelledby="related-products-heading">
+				{/* En-tête de section avec animation reveal */}
+				<Reveal y={20} amount={0.3}>
+					<div className="space-y-2">
+						<h2 id="related-products-heading" className="text-2xl font-semibold tracking-tight">
+							Dans la même veine
+						</h2>
+						<p className="text-muted-foreground text-sm">
+							Sélectionnées pour compléter cette création.
+						</p>
+					</div>
+				</Reveal>
 
-			{/* Carousel de produits similaires */}
-			<Reveal delay={0.2} duration={0.8} y={20} once={true}>
-				<Carousel
-					opts={{
-						align: "center",
-						containScroll: "trimSnaps",
-					}}
-					className="group/carousel w-full"
-					aria-label="Carousel de produits similaires"
-				>
-					<CarouselContent className="-ml-4 py-4 sm:-ml-6" showFade>
-						{relatedProducts.map((product, index) => (
-							<CarouselItem
-								key={product.id}
-								className="basis-[47%] pl-4 sm:basis-[clamp(200px,48vw,280px)] sm:pl-6 md:basis-1/3 lg:basis-1/4"
-							>
-								{/* `index` restaure l'alternance d'inclinaison au survol (une carte
-								    sur deux) — `disablePreload` neutralise ses effets eager/LCP */}
-								<ProductCard
-									product={product}
-									index={index}
-									isInWishlist={wishlistProductIds.has(product.id)}
-									sectionId="related"
-									disablePreload
-								/>
-							</CarouselItem>
-						))}
-					</CarouselContent>
-
-					{/* Flèches de navigation - Desktop uniquement */}
-					{relatedProducts.length > 3 && (
-						<>
-							<CarouselPrevious
-								className="top-[40%] left-4 hidden opacity-0 transition-opacity duration-300 group-hover/carousel:opacity-100 focus-visible:opacity-100 disabled:opacity-0 md:flex"
-								aria-label="Voir les produits précédents"
-							/>
-							<CarouselNext
-								className="top-[40%] right-4 hidden opacity-0 transition-opacity duration-300 group-hover/carousel:opacity-100 focus-visible:opacity-100 disabled:opacity-0 md:flex"
-								aria-label="Voir les produits suivants"
-							/>
-						</>
-					)}
-
-					{/* Dots - Mobile uniquement */}
-					<CarouselDots className="md:hidden" />
-				</Carousel>
-			</Reveal>
-
-			{/* CTA pour voir plus de produits */}
-			{relatedProducts.length >= limit && (
-				<div className="flex justify-center pt-4">
-					<Link
-						href="/produits"
-						className="text-foreground inline-flex items-center gap-2 text-sm font-medium underline-offset-4 transition-[gap] duration-200 hover:gap-3 hover:underline"
+				{/* Carousel de produits similaires */}
+				<Reveal delay={0.2} duration={0.8} y={20} once={true}>
+					<Carousel
+						opts={{
+							align: "center",
+							containScroll: "trimSnaps",
+						}}
+						className="group/carousel w-full"
+						aria-label="Carousel de produits similaires"
 					>
-						Découvrir toutes les créations
-						<span className="text-xs">→</span>
-					</Link>
-				</div>
-			)}
-		</aside>
+						<CarouselContent className="-ml-4 py-4 sm:-ml-6" showFade>
+							{relatedProducts.map((product, index) => (
+								<CarouselItem
+									key={product.id}
+									className="basis-[47%] pl-4 sm:basis-[clamp(200px,48vw,280px)] sm:pl-6 md:basis-1/3 lg:basis-1/4"
+								>
+									{/* `index` restaure l'alternance d'inclinaison au survol (une carte
+								    sur deux) — `disablePreload` neutralise ses effets eager/LCP */}
+									<ProductCard
+										product={product}
+										index={index}
+										isInWishlist={wishlistProductIds.has(product.id)}
+										sectionId="related"
+										disablePreload
+									/>
+								</CarouselItem>
+							))}
+						</CarouselContent>
+
+						{/* Flèches de navigation — révélées au survol SOUS POINTEUR FIN seulement.
+						    C'est le MASQUAGE qui est gaté (`can-hover:opacity-0`), pas la
+						    révélation : `md` = 48 rem couvre l'iPad portrait, où il n'existe
+						    aucun survol — les deux flèches y restaient donc à `opacity-0`
+						    tout en étant cliquables et tabulables. C'est l'angle mort que
+						    `docs/UI-CONVENTIONS.md` dit avoir déjà payé deux fois. */}
+						{relatedProducts.length > 3 && (
+							<>
+								<CarouselPrevious
+									className="can-hover:opacity-0 can-hover:group-hover/carousel:opacity-100 top-[40%] left-4 hidden transition-opacity duration-300 focus-visible:opacity-100 disabled:opacity-0 md:flex"
+									aria-label="Voir les produits précédents"
+								/>
+								<CarouselNext
+									className="can-hover:opacity-0 can-hover:group-hover/carousel:opacity-100 top-[40%] right-4 hidden transition-opacity duration-300 focus-visible:opacity-100 disabled:opacity-0 md:flex"
+									aria-label="Voir les produits suivants"
+								/>
+							</>
+						)}
+
+						{/* Dots - Mobile uniquement */}
+						<CarouselDots className="md:hidden" />
+					</Carousel>
+				</Reveal>
+
+				{/* CTA pour voir plus de produits */}
+				{relatedProducts.length >= limit && (
+					<div className="flex justify-center pt-4">
+						<Link
+							href="/produits"
+							className="text-foreground can-hover:hover:gap-3 can-hover:hover:underline inline-flex items-center gap-2 text-sm font-medium underline-offset-4 transition-[gap] duration-200"
+						>
+							Découvrir toutes les créations
+							<span className="text-xs">→</span>
+						</Link>
+					</div>
+				)}
+			</aside>
+		</>
 	);
 }

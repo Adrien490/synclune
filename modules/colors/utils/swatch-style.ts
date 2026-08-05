@@ -48,6 +48,36 @@ export function buildSwatchStyle(hexes: ReadonlyArray<string>): CSSProperties {
 }
 
 /**
+ * Fabrique le style d'une BARRE de teinte — segments empilés à arrêts francs,
+ * lus de haut en bas dans l'ordre de priorité métier.
+ *
+ * Distinct de `buildSwatchStyle`, qui dessine un DISQUE (135° en bicolore,
+ * conique au-delà) : sur une barre de 4 px de large, un dégradé diagonal ou
+ * conique ne rend qu'une bouillie de 4 px. Une barre veut des bandes nettes.
+ *
+ * @example
+ * buildTintBarStyle(["#F5CF3C"])
+ * // { backgroundColor: "#F5CF3C" }
+ *
+ * @example
+ * buildTintBarStyle(["#F0568F", "#C0C0C0"])
+ * // { background: "linear-gradient(#F0568F 0% 50%, #C0C0C0 50% 100%)" }
+ */
+export function buildTintBarStyle(hexes: ReadonlyArray<string>): CSSProperties {
+	if (hexes.length === 0) {
+		return { backgroundColor: "var(--muted)" };
+	}
+	if (hexes.length === 1) {
+		return { backgroundColor: hexes[0] };
+	}
+	const step = 100 / hexes.length;
+	const stops = hexes
+		.map((hex, i) => `${hex} ${(i * step).toFixed(2)}% ${((i + 1) * step).toFixed(2)}%`)
+		.join(", ");
+	return { background: `linear-gradient(${stops})` };
+}
+
+/**
  * Construit le libellé aria-label combinant les noms de couleurs.
  * « Or rose », « Or rose et Argent », « Or rose, Argent et Or blanc ».
  */

@@ -7,3 +7,6 @@ export * from "./constants";
 export * from "./cursor-pagination-skeleton";
 // Export admin mobile list wrapper
 export * from "./admin-mobile-list-pagination";
+// Export storefront band (pagination boutique) + shared nav mechanics
+export * from "./storefront-pagination-band";
+export * from "./use-cursor-pagination-nav";

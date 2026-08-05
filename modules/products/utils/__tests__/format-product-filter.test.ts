@@ -33,18 +33,6 @@ const productTypes = [
 // ============================================================================
 
 describe("createProductFilterFormatter", () => {
-	it("formats rating filter with stars", () => {
-		const format = createProductFilterFormatter(
-			colors,
-			materials,
-			productTypes,
-			makeSearchParams(),
-		);
-		const result = format(filter("rating", "4"));
-
-		expect(result).toEqual({ label: "Notes", displayValue: "4+ \u2605" });
-	});
-
 	it("formats priceMin filter as euro range", () => {
 		const format = createProductFilterFormatter(
 			colors,
@@ -59,7 +47,9 @@ describe("createProductFilterFormatter", () => {
 		expect(result!.displayValue).toContain("50");
 	});
 
-	it("uses default priceMax of 200 when not in searchParams", () => {
+	it("formats priceMin alone as an open range — never a hardcoded ceiling", () => {
+		// L'ancien repli affichait « 20 € - 200 € » avec un plafond écrit en dur,
+		// faux dès que le catalogue plafonne ailleurs (100 € aujourd'hui).
 		const format = createProductFilterFormatter(
 			colors,
 			materials,
@@ -68,19 +58,37 @@ describe("createProductFilterFormatter", () => {
 		);
 		const result = format(filter("priceMin", "20"));
 
-		expect(result!.displayValue).toContain("200");
+		expect(result!.displayValue).toContain("à partir de");
+		expect(result!.displayValue).toContain("20");
+		expect(result!.displayValue).not.toContain("200");
 	});
 
-	it("returns null for priceMax key (hidden)", () => {
+	it("hides priceMax when priceMin carries the pair", () => {
 		const format = createProductFilterFormatter(
 			colors,
 			materials,
 			productTypes,
-			makeSearchParams(),
+			makeSearchParams({ priceMin: "10", priceMax: "50" }),
 		);
 		const result = format(filter("priceMax", "50"));
 
 		expect(result).toBeNull();
+	});
+
+	it("formats priceMax alone as « jusqu'à Y € » (upper bound only, min at default)", () => {
+		// Glisser uniquement la poignée droite laisse la borne basse au défaut,
+		// donc hors URL : priceMax est alors l'unique trace du filtre de prix.
+		const format = createProductFilterFormatter(
+			colors,
+			materials,
+			productTypes,
+			makeSearchParams({ priceMax: "50" }),
+		);
+		const result = format(filter("priceMax", "50"));
+
+		expect(result).toHaveProperty("label", "Prix");
+		expect(result!.displayValue).toContain("jusqu'à");
+		expect(result!.displayValue).toContain("50");
 	});
 
 	it("maps color slug to name", () => {
@@ -131,16 +139,26 @@ describe("createProductFilterFormatter", () => {
 		expect(result).toEqual({ label: "Couleur", displayValue: "unknown-slug" });
 	});
 
-	it("formats stockStatus boolean filter with empty displayValue", () => {
+	it("formats stockStatus with its REAL url token — never leaks it as a value", () => {
+		// La valeur d'URL est `in_stock`, pas `true` : l'ancienne branche
+		// « booléenne » ne matchait que "true" et le bandeau affichait
+		// « En stock : in_stock » à la cliente (audit rail 2026-08-05, P2).
+		// L'ancien test passait avec "true" — vert pour la mauvaise raison.
 		const format = createProductFilterFormatter(
 			colors,
 			materials,
 			productTypes,
 			makeSearchParams(),
 		);
-		const result = format(filter("stockStatus", "true"));
 
-		expect(result).toEqual({ label: "En stock", displayValue: "" });
+		expect(format(filter("stockStatus", "in_stock"))).toEqual({
+			label: "En stock",
+			displayValue: "",
+		});
+		expect(format(filter("stockStatus", "true"))).toEqual({
+			label: "En stock",
+			displayValue: "",
+		});
 	});
 
 	it("formats search filter with quoted value", () => {

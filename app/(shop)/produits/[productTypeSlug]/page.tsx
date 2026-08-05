@@ -6,6 +6,7 @@ import { ProductCatalog } from "@/modules/products/components/product-catalog";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
 import { SITE_URL } from "@/shared/constants/seo-config";
+import type { SortField } from "@/modules/products/data/get-products";
 import type { ProductSearchParams } from "../_utils/types";
 import { parseFilters } from "../_utils/params";
 import {
@@ -120,8 +121,14 @@ export default async function ProductTypeCategoryPage({
 	const { productTypes, colors, materials, maxPriceInEuros } = catalogData;
 
 	// Parser les paramètres
-	const { perPage, searchTerm } = parsePaginationParams(searchParamsData);
+	const { perPage, searchTerm, sortBy } = parsePaginationParams(searchParamsData);
 	const filters = parseFilters(searchParamsData);
+
+	// Le type vient du PATH, pas des searchParams : `fetchProducts` le fusionne
+	// en interne. Le load-more, lui, reçoit les filtres par prop — il lui faut
+	// donc la version FUSIONNÉE, sinon « voir plus » sur une page catégorie
+	// ramènerait tout le catalogue.
+	const mergedFilters = { ...filters, type: [productTypeSlug] };
 
 	// Récupérer les produits et la wishlist en parallèle
 	const productsPromise = fetchProducts(searchParamsData, {
@@ -162,6 +169,8 @@ export default async function ProductTypeCategoryPage({
 			productsPromise={productsPromise}
 			perPage={perPage}
 			searchTerm={searchTerm}
+			sortBy={sortBy as SortField}
+			filters={mergedFilters}
 			wishlistProductIdsPromise={wishlistProductIdsPromise}
 			activeProductType={{
 				slug: productType.slug,

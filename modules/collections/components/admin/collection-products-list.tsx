@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -138,6 +139,7 @@ export function CollectionProductsList({
 													fill
 													className="object-cover"
 													sizes="48px"
+													quality={IMAGE_QUALITY.THUMBNAIL}
 												/>
 											</div>
 										) : (

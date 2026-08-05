@@ -148,7 +148,7 @@ function SortableColorChipItem({ chip, index, isPrimary, onRemove }: SortableCol
 						handleRemove(e);
 					}
 				}}
-				className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-ring inline-flex size-6 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-1"
+				className="text-muted-foreground hover:bg-muted hover:text-foreground focus-ring inline-flex size-6 items-center justify-center rounded-full transition-colors"
 				aria-label={`Retirer ${chip.name} de la palette`}
 			>
 				<XIcon className="size-3" aria-hidden="true" />

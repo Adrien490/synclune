@@ -3,7 +3,6 @@ import {
 	CARD_SURFACE_HOVER,
 	CARD_SURFACE_POLAROID,
 } from "@/shared/components/card-surface.constants";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
@@ -46,6 +45,14 @@ interface ProductCardProps {
  * Badge positionne en haut a gauche de la carte.
  * Marque aria-hidden car l'information est transmise via le sr-only span
  * associe a l'article (aria-describedby).
+ *
+ * ⚠️ `pointer-events-none` est non négociable : à `z-20` le badge passe AU-DESSUS du lien étiré
+ * (`::after` z-10), et la zone média étant `relative` sans `z-index`, elle
+ * ne crée pas de contexte d'empilement qui isolerait les deux. Sans cette
+ * classe, « Rupture de stock » / « Plus que 3 ! » découpait ~100 × 20 px de zone
+ * morte au clic en haut à gauche de la photo — sur l'élément le plus cliqué de
+ * la boutique. Le badge est décoratif (`aria-hidden`, doublé du sr-only) : il
+ * n'a aucune raison de capter un clic.
  */
 function CardBadge({
 	variant,
@@ -60,7 +67,10 @@ function CardBadge({
 		<Badge
 			aria-hidden="true"
 			variant={variant}
-			className={cn("absolute top-2 left-2 z-20 rounded-full shadow-md", className)}
+			className={cn(
+				"pointer-events-none absolute top-2 left-2 z-20 rounded-full shadow-md",
+				className,
+			)}
 		>
 			{children}
 		</Badge>
@@ -71,9 +81,9 @@ function CardBadge({
  * Carte produit pour l'affichage dans les grilles (catalogue, collections, recherche).
  *
  * @description
- * Redesign « Atelier » (2026-08-03) : la carte est un tirage polaroid épinglé —
- * cadre blanc avec ruban de masking tape rose, photo insérée (ratio 4/5 unifié
- * tous viewports), légende dessous (eyebrow type produit, titre en Fraunces
+ * Redesign « Atelier » (2026-08-03) : la carte est un tirage polaroid —
+ * cadre blanc, photo insérée (ratio 4/5 unifié
+ * tous viewports), légende dessous (eyebrow type produit, titre en display
  * souligné d'un trait dessiné à la main au survol/focus, matière, prix avec
  * remise inline). Au survol la carte s'incline légèrement (sens alterné par
  * index) ; le CTA panier desktop est une pastille posée sur la photo.
@@ -87,14 +97,18 @@ function CardBadge({
  * Note: Schema.org JSON-LD est genere sur la page produit detaillee uniquement
  * (pas de microdata dans les grilles pour eviter la redondance)
  *
- * Surface via CARD_SURFACE_POLAROID (SSOT partagée avec CollectionCard,
- * sans `overflow-hidden` : le tape déborde du cadre, c'est la zone média qui
- * clippe). Tape et trait dessiné sont les primitives partagées MaskingTape /
- * SquiggleUnderline.
+ * Surface via CARD_SURFACE_POLAROID (SSOT partagée avec CollectionCard, sans
+ * `overflow-hidden` — des cartes sœurs y ancrent encore un ruban qui déborde,
+ * cf. EtalCard / EtalEmptyCard) ; c'est la zone média qui clippe. Le ruban de
+ * cette carte a été retiré (2026-08-05, densité rose en série sur la grille) ;
+ * le trait dessiné reste la primitive partagée SquiggleUnderline.
  *
  * z-index stack (documented):
+ * - (aucun) : voile de rupture de stock — peint au-dessus des photos par l'ordre
+ *   du DOM, sous tout le reste
  * - z-10: Stretched link (title link ::after covers the entire card)
- * - z-20: Badges (stock) + tape décoratif (pointer-events-none)
+ * - z-20: Badges (stock) — en `pointer-events-none`, sans quoi ils découpent
+ *   une zone morte au clic dans le lien étiré
  * - z-30: Interactive buttons (wishlist, add to cart, color swatches)
  *
  * @example
@@ -207,9 +221,6 @@ export function ProductCard({
 				CARD_SURFACE_FOCUS,
 			)}
 		>
-			{/* Masking tape décoratif, centré en haut (silhouette du tirage épinglé) */}
-			<MaskingTape className="-top-2 left-1/2 z-20 h-4 w-14 -translate-x-1/2 -rotate-2" />
-
 			{/* sr-only badge descriptions for screen readers */}
 			{badgeDescId && (
 				<span id={badgeDescId} className="sr-only">
@@ -219,7 +230,7 @@ export function ProductCard({
 
 			{/* Photo insérée dans le cadre — ratio 4/5 unifié tous viewports */}
 			{/* bg-muted acts as CSS-only fallback if image fails to load */}
-			<div className="product-card-media bg-muted relative aspect-4/5 overflow-hidden rounded-sm">
+			<div className="bg-muted relative aspect-4/5 overflow-hidden rounded-sm">
 				{/* Status badges — stock badges take priority */}
 				{stockStatus === "out_of_stock" && (
 					<CardBadge
@@ -258,21 +269,56 @@ export function ProductCard({
 						preload={isLcpCandidate}
 						loading={isAboveFold ? "eager" : "lazy"}
 						fetchPriority={isLcpCandidate ? "high" : "auto"}
+						// Explicite alors que Next résout DÉJÀ le défaut 75 sur 80 via
+						// `findClosestQuality` (`qualities: [65, 80]`) : le comportement
+						// correct d'aujourd'hui ne tient qu'à cet écart arithmétique. Qu'un
+						// palier proche de 75 entre un jour dans `qualities` et le candidat
+						// LCP basculerait dessus en silence, en facturant une 3ᵉ variante par
+						// source. L'image secondaire déclarait déjà la sienne.
+						quality={IMAGE_QUALITY.STANDARD}
 						sizes={IMAGE_SIZES.PRODUCT_CARD}
 					/>
 					{secondaryImage && (
-						<Image
-							src={secondaryImage.url}
-							alt=""
-							aria-hidden="true"
-							fill
-							className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-sm object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500"
-							loading="lazy"
-							quality={IMAGE_QUALITY.STANDARD}
-							sizes={IMAGE_SIZES.PRODUCT_CARD}
-						/>
+						// ⚠️ `hidden can-hover:block` et NON un simple `opacity-0` : la photo
+						// n'est révélée que par `can-hover:group-hover`, donc sur tactile elle
+						// est structurellement inatteignable — mais `opacity: 0` n'empêche pas
+						// le chargement `lazy`, qui se déclenche à l'intersection du viewport.
+						// Chaque carte téléchargeait ainsi une image que l'appareil ne peut pas
+						// montrer : ~0,5–0,8 Mo par grille de 12 sur un viewport de 390 px
+						// (`45vw` × DPR 3 → variante 640 px), plus une transformation Vercel
+						// facturée par source. En `display: none` l'élément n'a pas de boîte,
+						// n'intersecte jamais, et n'est jamais requis.
+						//
+						// Gater le MASQUAGE sur `can-hover:` est ici sans risque — contrairement
+						// à une affordance, ce calque est purement décoratif (`aria-hidden`,
+						// aucun rôle de focus) : rien à mettre en parité clavier.
+						<div className="can-hover:block absolute inset-0 hidden">
+							<Image
+								src={secondaryImage.url}
+								alt=""
+								aria-hidden="true"
+								fill
+								className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-sm object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500"
+								loading="lazy"
+								quality={IMAGE_QUALITY.STANDARD}
+								sizes={IMAGE_SIZES.PRODUCT_CARD}
+							/>
+						</div>
 					)}
 				</div>
+
+				{/* Rupture de stock : voile de « tirage passé ». Le badge seul est un signal
+				    trop faible à la vitesse de scan d'une grille — mais surtout PAS de
+				    `grayscale`/`saturate-*` : la couleur est l'argument de ces bijoux, la
+				    désaturation serait le contre-pied du brief. Un voile `bg-card` baisse la
+				    présence en conservant la teinte.
+
+				    Sans `z-index`, il se peint au-dessus des photos (ordre du DOM) mais reste
+				    sous le lien étiré (z-10), les badges (z-20) et la wishlist (z-30) ;
+				    `pointer-events-none` garantit qu'il n'intercepte pas le clic. */}
+				{stockStatus === "out_of_stock" && (
+					<span aria-hidden="true" className="bg-card/45 pointer-events-none absolute inset-0" />
+				)}
 
 				{/* Add to cart button - Desktop (client island) : pastille posée sur la photo */}
 				{defaultSku && stockStatus !== "out_of_stock" && (
@@ -287,9 +333,16 @@ export function ProductCard({
 
 			{/* Légende du polaroid — no position:relative so stretched link ::after reaches the article */}
 			<div className="flex flex-col gap-1.5 overflow-hidden px-1.5 pt-2.5 pb-3 sm:px-2 sm:pt-3 sm:pb-4">
-				{/* Eyebrow type produit — première question de l'acheteuse dans une grille */}
+				{/* Eyebrow type produit — première question de l'acheteuse dans une grille.
+				    « · fait main » a été retiré (2026-08-05) : toute la boutique est faite
+				    main, donc dans la grille la mention ne discriminait RIEN tout en occupant
+				    la ligne la plus contrainte de la carte (10 px, `tracking-widest`) et en se
+				    répétant 12 fois — y compris pour un lecteur d'écran. La promesse est déjà
+				    portée une fois, juste au-dessus de la grille, par `catalog-heading.tsx`.
+				    Repli « Création » plutôt que rien : le squelette réserve cette ligne
+				    (`h-3`), un eyebrow vide désalignerait la carte de ~14 px. */}
 				<span className="text-2xs text-muted-foreground font-semibold tracking-widest uppercase">
-					{productType ? `${productType} · fait main` : "Fait main"}
+					{productType ?? "Création"}
 				</span>
 
 				{/* Stretched link: title link with ::after covering the entire card.
@@ -306,7 +359,11 @@ export function ProductCard({
 						>
 							{title}
 						</h3>
-						<SquiggleUnderline />
+						{/* `w-full` : sans lui le trait garde son défaut `w-20` (80 px fixes),
+						    qui déborde dans le vide sous un titre court et n'en souligne que la
+						    moitié sous un titre long clampé sur 2 lignes. Correctif appliqué à
+						    CollectionCard le 2026-08-04, jamais répercuté ici. */}
+						<SquiggleUnderline className="w-full" />
 					</span>
 				</Link>
 

@@ -45,12 +45,14 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 					<li>Pour l&apos;or : de l&apos;eau tiède avec un peu de savon fait l&apos;affaire</li>
 				)}
 			</ul>
+			{/* ⚠️ Ce mot n'est PLUS paraphé « — Léane » en cursive : le storefront ne
+			    signe qu'UNE fois par page, dans le pied de page. Ce qui en fait un mot
+			    et pas un encart, c'est la voix — première personne, tutoiement, « j'ai
+			    passé des heures sur celui-là » —, pas le paraphe, qui tombait à un
+			    écran de celui du pied de page. */}
 			<p className="text-muted-foreground mt-3">
 				Je l&apos;ai fait avec passion — prends-en soin et il te le rendra.
 			</p>
-			{/* Sacramento est réservée au décoratif (cf. `shared/styles/fonts.ts`) :
-			    une signature en est l'emploi canonique, comme sur `catalog-heading`. */}
-			<p className="font-cursive text-foreground mt-1 text-[1.75rem] leading-none">— Léane</p>
 		</section>
 	);
 }

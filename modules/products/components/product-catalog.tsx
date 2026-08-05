@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 
-import type { GetProductsReturn } from "@/modules/products/data/get-products";
+import type {
+	GetProductsReturn,
+	ProductFilters,
+	SortField,
+} from "@/modules/products/data/get-products";
 import type { ProductType } from "@/modules/product-types/types/product-type.types";
 import type { Color } from "@/modules/colors/types/color.types";
 import type { MaterialOption } from "@/modules/materials/types/materials.types";
@@ -13,13 +16,20 @@ import {
 } from "@/modules/products/constants/product.constants";
 
 import { CatalogHeading } from "@/modules/products/components/catalog-heading";
+import { CatalogToolbarInline } from "@/modules/products/components/catalog-toolbar-inline";
 import { CATALOG_GRID } from "@/modules/products/components/catalog-grid.constants";
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
 import { ProductSortBar } from "@/modules/products/components/product-sort-bar";
+import { ProductFilterRail } from "@/modules/products/components/product-filter-rail";
+import {
+	formatActiveFilterSummary,
+	productFiltersToFilterFormData,
+} from "@/modules/products/services/product-filter-params.service";
 
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
+import { BreadcrumbNav } from "@/shared/components/breadcrumb-nav";
 import { ScrollRestoration } from "@/shared/components/scroll-restoration";
 
 const ProductFilterSheet = dynamic(() =>
@@ -35,6 +45,21 @@ export type ProductCatalogProps = {
 	perPage: number;
 	/** Terme de recherche actif */
 	searchTerm?: string;
+	/**
+	 * Tri actif, et filtres serveur **déjà fusionnés** (type du path compris).
+	 *
+	 * ⚠️ Ces deux props ne sont PAS décoratives : sans elles, `ProductList` ne
+	 * peut pas les transmettre au load-more mobile, qui retombe alors sur
+	 * `created-descending` + `{}`. Un curseur issu de la requête filtrée
+	 * paginait donc une requête DIFFÉRENTE — sur `/produits` comme sur
+	 * `/produits/[productTypeSlug]`, descendre sous une page filtrée y ajoutait
+	 * des pièces hors filtre, et le compteur pouvait afficher « 29 sur 9 ».
+	 * Elles pilotent aussi la `key` de remount de `ProductsLoadMore` : sans
+	 * elles, changer de tri ou de filtre ne réinitialisait plus l'accumulation.
+	 * Verrouillé par `catalog-loadmore-filter-parity.regression.test.tsx`.
+	 */
+	sortBy?: SortField;
+	filters?: ProductFilters;
 	/** Wishlist product IDs (pre-fetched at page level to avoid inline promise) */
 	wishlistProductIdsPromise?: Promise<Set<string>>;
 	/** Type de produit filtré (pour la page catégorie) */
@@ -65,21 +90,24 @@ export type ProductCatalogProps = {
  * Shell des deux pages catalogue — `/produits` et `/produits/[productTypeSlug]`.
  *
  * @description
- * Direction « L'étal continue » (artifact du 2026-08-05, reco B). Le catalogue
- * n'a plus de bande d'en-tête : son bloc titre est la **première cellule de la
- * grille des créations**, exactement comme sur la page d'accueil. On ne franchit
- * pas une frontière entre la boutique et son catalogue — on continue de
- * descendre le même étal.
+ * Le catalogue n'a pas de bande d'en-tête (« L'étal continue », 2026-08-05) mais
+ * son bloc titre est l'**en-tête de page** (re-tranché le 2026-08-05) : fil
+ * d'Ariane → titre → barre d'outils → [rail | grille]. Le titre n'est PLUS une
+ * cellule de `CATALOG_GRID` — ce montage plaçait le `h1` après la barre de tri
+ * et après le `h2` « Filtres » du rail, et lui faisait partager sa rangée avec
+ * une carte à `lg`. Même montage que `/collections` et `/favoris`.
  *
  * ## Ce que la structure garantit
  *
- * - **Une seule grille.** Le `Suspense` et le fragment de `ProductList` ne
- *   produisent aucun nœud DOM : les cartes sont des enfants directs de la même
- *   grille que le bloc titre. C'est tout le concept — sans ça, on retombe sur
- *   une bande + une grille.
- * - **Une seule barre.** `ProductSortBar` sert les deux breakpoints ; l'ancienne
- *   `Toolbar` en carte blanche (et son `SelectFilter` dont le libellé bégayait
- *   « Trier par  Trier par ») a disparu.
+ * - **La grille ne contient que la liste.** Le `Suspense` et le fragment de
+ *   `ProductList` ne produisent aucun nœud DOM : les cartes (et les cellules
+ *   pleine rangée de la liste) sont des enfants directs de `CATALOG_GRID`.
+ * - **Un seul meuble par geste et par viewport.** La barre sticky
+ *   (`ProductSortBar`) est le meuble `< lg` ; dès `md` la recherche vit dans la
+ *   rangée du titre (`CatalogToolbarInline`), rejointe à `lg` par le menu de
+ *   tri — la barre disparaît alors (`lg:hidden`), le rail couvrant les filtres.
+ *   Jamais deux `SearchInput` dans le DOM (corps monté deux fois = `id`
+ *   partagés + strict mode Playwright).
  * - **Le `h1` est visible partout**, et ne dépend d'aucun `await` : seul le
  *   compte de pièces est derrière une frontière `Suspense`.
  * - **Aucune longueur dérivée de `--navbar-height`**, qui se contracte au
@@ -95,6 +123,8 @@ export function ProductCatalog({
 	productsPromise,
 	perPage,
 	searchTerm,
+	sortBy,
+	filters,
 	wishlistProductIdsPromise,
 	activeProductType,
 	productTypes,
@@ -123,6 +153,21 @@ export function ProductCatalog({
 		? `Rechercher des ${activeProductType.label.toLowerCase()}…`
 		: "Rechercher des bijoux…";
 
+	// Résumé lisible des filtres actifs, rendu à la suite du compte de pièces.
+	// C'est le seul rappel de ce qui est coché au rail desktop, où la grille se
+	// recompose sans quitter la page.
+	const filterSummary = filters
+		? formatActiveFilterSummary(
+				productFiltersToFilterFormData(filters, [0, maxPriceInEuros]),
+				{
+					types: Object.fromEntries(productTypes.map((t) => [t.slug, t.label])),
+					colors: Object.fromEntries(colors.map((c) => [c.slug, c.name])),
+					materials: Object.fromEntries(materials.map((m) => [m.slug, m.name])),
+				},
+				[0, maxPriceInEuros],
+			)
+		: null;
+
 	return (
 		<div className="min-h-dvh">
 			<ScrollRestoration />
@@ -130,7 +175,18 @@ export function ProductCatalog({
 			{/* react-doctor-disable-next-line react/no-danger */}
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
 
-			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
+			{/*
+			 * `data-accent="rose"` : le catalogue déclare sa « salle » (audit /produits
+			 * 2026-08-05, direction B) — les consommateurs de `--section-*` la trouvent
+			 * déclarée au lieu de retomber en silence sur le fallback. Rose sur les DEUX
+			 * pages catalogue : c'est la couleur que tout le vocabulaire de la surface
+			 * dérive déjà (ruban des étiquettes, tape des cartes, souligné des titres) ;
+			 * l'identité d'une famille reste sa touche unique et l'accent de sa barre.
+			 */}
+			<section
+				data-accent="rose"
+				className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pb-16"
+			>
 				<div
 					id="product-container"
 					className="group/container mx-auto max-w-6xl space-y-5 px-4 sm:px-6 lg:px-8"
@@ -140,69 +196,101 @@ export function ProductCatalog({
 					 * Celui de la page est déjà émis par `buildCatalogJsonLd`, imbriqué
 					 * dans son `CollectionPage` ; c'est le double émetteur (`PageHeader`
 					 * + générateur de page) qui publiait deux `BreadcrumbList` par URL.
-					 * Masqué sous `md` : la barre y occupe déjà toute la ligne, et le
-					 * bloc titre juste en dessous dit où l'on est.
 					 */}
-					<nav
-						aria-label="Fil d'Ariane"
-						className="text-muted-foreground hidden text-sm leading-normal md:block"
-					>
-						<ol className="m-0 flex list-none items-center gap-2 p-0">
-							<li>
-								<Link href="/" className="focus-ring rounded-sm hover:underline">
-									Accueil
-								</Link>
-							</li>
-							{breadcrumbs.map((crumb, index) => {
-								const isLast = index === breadcrumbs.length - 1;
-								return (
-									<li key={crumb.href} className="flex items-center gap-2">
-										<span aria-hidden="true">/</span>
-										{isLast ? (
-											<span className="text-foreground font-medium" aria-current="page">
-												{crumb.label}
-											</span>
-										) : (
-											<Link href={crumb.href} className="focus-ring rounded-sm hover:underline">
-												{crumb.label}
-											</Link>
-										)}
-									</li>
-								);
-							})}
-						</ol>
-					</nav>
+					<BreadcrumbNav items={breadcrumbs} />
 
+					{/*
+					 * Le bloc titre est l'EN-TÊTE DE PAGE, hors de la grille et avant la
+					 * barre d'outils (re-tranché le 2026-08-05) : l'ancien montage « L'étal
+					 * continue » le rendait première cellule de `CATALOG_GRID`, donc le `h1`
+					 * arrivait APRÈS la barre de tri et après le `h2` « Filtres » du rail,
+					 * et partageait sa rangée avec une carte à `lg`. Le `h1` reste
+					 * synchrone : seul le compte passe par la Suspense interne du bloc.
+					 *
+					 * À partir de `md`, la rangée porte AUSSI le cluster recherche + tri
+					 * (`CatalogToolbarInline`, retour user 2026-08-05) : titre à gauche
+					 * (`min-w-0 md:flex-1` absorbe le wrap), cluster calé en bas à droite
+					 * (`md:items-end` — sur la ligne du compteur). Le `SearchInput` vit
+					 * là et UNIQUEMENT là dès `md` : un second dans la barre partagerait
+					 * ses `id` (corps monté deux fois) et casserait le strict mode
+					 * Playwright de `e2e/pages/search.page.ts`.
+					 */}
+					<div className="md:flex md:items-end md:justify-between md:gap-6">
+						<div className="min-w-0 md:flex-1">
+							<CatalogHeading
+								title={pageTitle}
+								productsPromise={productsPromise}
+								activeProductType={activeProductType}
+								searchTerm={searchTerm}
+								filterSummary={filterSummary}
+							/>
+						</div>
+						<CatalogToolbarInline sortOptions={sortOptions} searchPlaceholder={searchPlaceholder} />
+					</div>
+
+					{/* La barre d'outils sticky — le meuble `< lg` (à desktop, le rail et
+					    le cluster de la rangée titre couvrent les trois gestes). */}
 					<Suspense fallback={null}>
-						<ProductSortBar sortOptions={sortOptions} searchPlaceholder={searchPlaceholder} />
+						<ProductSortBar sortOptions={sortOptions} />
 					</Suspense>
 
-					{hasActiveFilters && (
-						<ProductFilterBadges
+					{/*
+					 * « Le plan de travail » (2026-08-05) : à partir de `lg`, le filtre
+					 * n'est plus un overlay posé SUR le catalogue — il en devient la
+					 * colonne gauche (16rem), et la grille passe à 3 colonnes. Le rail
+					 * est rendu ICI, sous `group/container`, ce qui lui donne
+					 * gratuitement le grisage `data-pending` cellule par cellule que le
+					 * panneau portalisé ne pouvait pas atteindre.
+					 */}
+					<div className="lg:grid lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-8">
+						<ProductFilterRail
 							colors={colors}
 							materials={materials}
-							productTypes={productTypes}
-							activeProductType={activeProductType}
+							productTypes={productTypes.map((t) => ({
+								slug: t.slug,
+								label: t.label,
+								_count: t._count,
+							}))}
+							maxPriceInEuros={maxPriceInEuros}
+							activeProductTypeSlug={activeProductType?.slug}
+							// Sème le pied « N pièces » du rail (« Le comptoir », audit rail
+							// 2026-08-05, dir. D) avec le total que la grille affiche déjà —
+							// même promesse, même règle que le panneau plus bas : consommée
+							// par `use()` dans une frontière Suspense, jamais awaitée ici.
+							resultCountPromise={productsPromise}
 						/>
-					)}
 
-					<div className={CATALOG_GRID}>
-						<CatalogHeading
-							title={pageTitle}
-							productsPromise={productsPromise}
-							activeProductType={activeProductType}
-							searchTerm={searchTerm}
-						/>
+						<div className="min-w-0 space-y-5">
+							{hasActiveFilters && (
+								<ProductFilterBadges
+									colors={colors}
+									materials={materials}
+									productTypes={productTypes}
+									activeProductType={activeProductType}
+									// À `lg`, le rail est l'unique surface d'état des filtres
+									// (« Le comptoir ») : coches + pied « N pièces ». Le bandeau
+									// y répétait la même information une deuxième fois (et le
+									// résumé du compteur une troisième), en coûtant sa rangée à
+									// la première ligne de cartes. Il reste la surface d'état
+									// SOUS `lg`, où le panneau est fermé entre deux réglages.
+									className="lg:hidden"
+								/>
+							)}
 
-						<Suspense fallback={<ProductListSkeleton />}>
-							<ProductList
-								productsPromise={productsPromise}
-								perPage={perPage}
-								searchTerm={searchTerm}
-								wishlistProductIdsPromise={wishlistProductIdsPromise}
-								preferOnSale={preferOnSale}
-							/>
-						</Suspense>
+							<div className={CATALOG_GRID}>
+								<Suspense fallback={<ProductListSkeleton />}>
+									<ProductList
+										productsPromise={productsPromise}
+										perPage={perPage}
+										searchTerm={searchTerm}
+										wishlistProductIdsPromise={wishlistProductIdsPromise}
+										preferOnSale={preferOnSale}
+										sortBy={sortBy}
+										filters={filters}
+									/>
+								</Suspense>
+							</div>
+						</div>
 					</div>
 				</div>
 			</section>
@@ -218,6 +306,12 @@ export function ProductCatalog({
 					}))}
 					maxPriceInEuros={maxPriceInEuros}
 					activeProductTypeSlug={activeProductType?.slug}
+					// Sème le compteur vivant : le total des filtres COURANTS est déjà
+					// calculé par cette promesse (la grille l'affiche), donc ouvrir le
+					// panneau sans rien toucher n'a pas à le redemander au serveur.
+					// La promesse est passée telle quelle — l'awaiter ici retarderait le
+					// shell, le panneau la consomme par `use()` dans sa propre frontière.
+					initialCountPromise={productsPromise}
 				/>
 			</Suspense>
 		</div>

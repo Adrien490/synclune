@@ -1,5 +1,6 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 import { ProductStatus } from "@/app/generated/prisma/enums";
+import { COLLECTION_CHAPTER_PRINT_COUNT } from "./image-sizes.constants";
 
 // ============================================================================
 // SELECT DEFINITIONS
@@ -217,7 +218,11 @@ export const GET_COLLECTIONS_SELECT = {
 			},
 		},
 		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
-		take: 4, // 4 products for the Bento Grid
+		// 3 tirages rendus sur la bande + 1 de rab : `extractCollectionImages`
+		// écarte en aval tout produit dont le SKU par défaut n'a aucun média IMAGE,
+		// donc lire exactement 3 produits rendrait parfois 2 tirages.
+		// (L'ancien commentaire parlait d'un « Bento Grid » retiré le 2026-08-05.)
+		take: COLLECTION_CHAPTER_PRINT_COUNT + 1,
 	},
 	_count: {
 		select: {

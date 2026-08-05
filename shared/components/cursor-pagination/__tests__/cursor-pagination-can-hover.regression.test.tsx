@@ -1,13 +1,19 @@
 /**
  * @regression cursor-pagination-can-hover
  *
- * Verrouille P1-1 : toutes les classes `hover:*` du composant `CursorPagination`
- * sont préfixées par `can-hover:` pour éviter le bug iOS Safari où le hover
- * state reste collé après tap (sticky-hover). Convention repo confirmée par
- * `[[admin-mobile-header-audit-2026-05-25]]` F4 et applications transverses.
+ * Verrouille P1-1 (sticky-hover iOS) puis son épilogue (audit 2026-08-05,
+ * direction C) : la couche `PAGINATION_BUTTON_CLASSES` — survol rose
+ * translucide, `backdrop-blur` inerte, zoom 1,02, durée 300 ms — a été
+ * RETIRÉE. Les états de survol et le focus-ring sont désormais ceux du
+ * `<Button variant="outline">` parent, dont les `hover:` sont déjà gatés
+ * `can-hover:` à la source.
  *
- * Si ce test casse, un nouveau `hover:` brut a été ajouté → préfixer par
- * `can-hover:hover:`.
+ * Ce test fige donc deux choses :
+ * 1. le composant n'ajoute AUCUNE classe `hover:` en propre (a fortiori
+ *    aucune non gatée) — si un survol custom revient, il doit être
+ *    `can-hover:hover:*` ET justifié face au registre neutre admin ;
+ * 2. la couche supprimée ne réapparaît pas (rose/verre/zoom sur les boutons
+ *    de pagination = le costume boutique égaré dans l'outil).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
@@ -72,75 +78,57 @@ vi.mock("@phosphor-icons/react/ssr", () => ({
 
 import { CursorPagination } from "../cursor-pagination";
 
-describe("CursorPagination — sticky-hover regression (P1-1)", () => {
+function renderBar() {
+	render(
+		<CursorPagination
+			perPage={20}
+			hasNextPage
+			hasPreviousPage
+			currentPageSize={20}
+			nextCursor="cm1abc2def3ghi4jkl5mnop"
+			prevCursor="cm0abc2def3ghi4jkl5mnop"
+		/>,
+	);
+	return [
+		screen.getByLabelText("Retour au début"),
+		screen.getByLabelText("Page précédente"),
+		screen.getByLabelText("Page suivante"),
+	];
+}
+
+describe("CursorPagination — sticky-hover regression (P1-1) & registre neutre", () => {
 	beforeEach(() => {
 		mockSearchParams.current = new URLSearchParams();
 	});
 	afterEach(cleanup);
 
-	// Note : le `<Button>` shadcn parent porte ses propres `hover:bg-accent` sans
-	// `can-hover:` (drift hors-scope, refactor systémique séparé). On vérifie ici
-	// uniquement les classes ajoutées par `PAGINATION_BUTTON_CLASSES` :
-	//  - `can-hover:hover:bg-primary/10`, `can-hover:hover:text-primary`,
-	//    `can-hover:hover:border-primary/40`
-	//  - `motion-safe:can-hover:hover:scale-[1.02]`
-	it("custom pagination hover classes must be can-hover: gated", () => {
-		render(
-			<CursorPagination
-				perPage={20}
-				hasNextPage
-				hasPreviousPage
-				currentPageSize={20}
-				nextCursor="cm1abc2def3ghi4jkl5mnop"
-				prevCursor="cm0abc2def3ghi4jkl5mnop"
-			/>,
-		);
-
-		const buttons = [
-			screen.getByLabelText("Retour au début"),
-			screen.getByLabelText("Page précédente"),
-			screen.getByLabelText("Page suivante"),
-		];
-
-		for (const button of buttons) {
+	it("adds no hover class of its own — hover states come from Button, already can-hover: gated", () => {
+		for (const button of renderBar()) {
 			const className = button.className;
-			// Les classes spécifiques au PAGINATION_BUTTON_CLASSES doivent être
-			// présentes ET préfixées par `can-hover:` (gating iOS).
-			expect(className).toContain("can-hover:hover:bg-primary/10");
-			expect(className).toContain("can-hover:hover:text-primary");
-			expect(className).toContain("can-hover:hover:border-primary/40");
-			expect(className).toContain("motion-safe:can-hover:hover:scale-[1.02]");
-			// Garde-fou : aucune variante "hover:bg-primary" ou "hover:scale" SANS
-			// le préfixe can-hover: (regex négative ciblée sur les tokens ajoutés).
-			expect(className).not.toMatch(/(?:^|\s)hover:bg-primary/);
-			expect(className).not.toMatch(/(?:^|\s)hover:text-primary/);
-			expect(className).not.toMatch(/(?:^|\s)hover:border-primary/);
-			expect(className).not.toMatch(/(?:^|\s)motion-safe:hover:scale/);
+			// Les seuls tokens `hover:` autorisés sur ces boutons sont ceux du
+			// variant `outline` du Button, tous préfixés `can-hover:`.
+			const hoverTokens = className.split(/\s+/).filter((token) => token.includes("hover:"));
+			for (const token of hoverTokens) {
+				expect(token, `token hover non gaté : ${token}`).toMatch(/^can-hover:/);
+			}
+		}
+	});
+
+	it("the removed boutique layer (rose/blur/scale/300ms) must not come back", () => {
+		for (const button of renderBar()) {
+			const className = button.className;
+			expect(className).not.toMatch(/hover:bg-primary/);
+			expect(className).not.toMatch(/hover:text-primary/);
+			expect(className).not.toMatch(/hover:border-primary/);
+			expect(className).not.toMatch(/backdrop-blur/);
+			expect(className).not.toMatch(/hover:scale/);
+			expect(className).not.toMatch(/duration-300/);
 		}
 	});
 
 	it("nav buttons inherit focus-ring SSOT from Button parent (no naked focus-visible:ring-* override)", () => {
-		render(
-			<CursorPagination
-				perPage={20}
-				hasNextPage
-				hasPreviousPage
-				currentPageSize={20}
-				nextCursor="cm1abc2def3ghi4jkl5mnop"
-				prevCursor="cm0abc2def3ghi4jkl5mnop"
-			/>,
-		);
-
-		const buttons = [
-			screen.getByLabelText("Retour au début"),
-			screen.getByLabelText("Page précédente"),
-			screen.getByLabelText("Page suivante"),
-		];
-
-		for (const button of buttons) {
+		for (const button of renderBar()) {
 			expect(button.className).toContain("focus-ring");
-			// Le wrapper PAGINATION_BUTTON_CLASSES ne doit PAS empiler ses propres
-			// focus-visible:ring-* (sinon override du focus-ring SSOT du Button).
 			expect(button.className).not.toMatch(/focus-visible:ring-2/);
 			expect(button.className).not.toMatch(/focus-visible:ring-primary/);
 			expect(button.className).not.toMatch(/focus-visible:ring-offset-/);

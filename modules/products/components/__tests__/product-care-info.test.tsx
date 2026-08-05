@@ -28,10 +28,14 @@ describe("ProductCareInfo", () => {
 		expect(screen.queryByText(/vous le rendra/i)).not.toBeInTheDocument();
 	});
 
-	it("est signé — c'est ce qui en fait un mot et pas un encart", () => {
-		render(<ProductCareInfo />);
+	it("n'est PAS paraphé — c'est la voix qui en fait un mot, pas la cursive", () => {
+		const { container } = render(<ProductCareInfo />);
 
-		expect(screen.getByText("— Léane")).toBeInTheDocument();
+		// Le storefront ne signe qu'une fois par page, dans le pied de page : ce
+		// paraphe-ci tombait à ~un écran de celui du footer. Ce qui reste, et qui
+		// suffit, c'est la première personne + le tutoiement (assertions ci-dessus).
+		expect(screen.queryByText("— Léane")).not.toBeInTheDocument();
+		expect(container.querySelector(".font-cursive")).toBeNull();
 	});
 
 	it("ne duplique plus les tarifs de livraison de ProductReassurance", () => {

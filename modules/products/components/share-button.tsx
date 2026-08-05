@@ -135,49 +135,74 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 		}
 	}
 
-	const FeedbackIcon = feedback === "copied" ? CopyIcon : feedback === "shared" ? CheckIcon : null;
+	// Une confirmation se signale par une COCHE, dans les deux cas. L'état
+	// « copied » rendait un `CopyIcon` — l'icône de l'action, pas de son
+	// aboutissement : le bouton semblait attendre encore un clic.
+	const FeedbackIcon = feedback === null ? null : CheckIcon;
 
 	const buttonClassName = cn(
 		"relative inline-flex items-center justify-center rounded-xl transition-[transform,color,background-color] duration-300 ease-out",
-		"text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-		"motion-safe:hover:scale-105 motion-safe:active:scale-95",
+		// `can-hover:` sur tout le survol : non gaté, l'état survolé RESTAIT COLLÉ
+		// après un tap sur tactile, jusqu'au tap suivant ailleurs.
+		"text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground",
+		"motion-safe:can-hover:hover:scale-105",
+		"motion-safe:active:scale-95 motion-safe:can-hover:active:scale-95",
 		"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 		size === "sm" ? "size-9" : "size-11",
 		className,
 	);
 
 	const buttonContent = FeedbackIcon ? (
-		<FeedbackIcon size={iconSize} className="text-primary" aria-hidden="true" />
+		// Rose PROFOND, pas `--primary` : la coche était le seul signe visible que la
+		// copie avait eu lieu, à 1,6:1 sur le fond du bouton — donc invisible.
+		<FeedbackIcon size={iconSize} className="text-brand-rose-strong" aria-hidden="true" />
 	) : (
 		<ShareNetworkIcon
 			size={iconSize}
-			className="transition-transform duration-300 ease-out group-hover:scale-105"
+			className="can-hover:group-hover:scale-105 transition-transform duration-300 ease-out"
 			aria-hidden="true"
 		/>
 	);
 
 	const ariaLabel = feedback === "copied" ? "Lien copié" : "Partager";
 
+	/**
+	 * L'annonce de la confirmation.
+	 *
+	 * Le seul autre signal était le RENOMMAGE du bouton (`aria-label` → « Lien
+	 * copié ») : un changement de nom accessible sur un élément déjà rendu n'est
+	 * annoncé par aucun lecteur d'écran. La confirmation était donc invisible à
+	 * l'œil (1,6:1) ET muette. Une live region hors du bouton la restitue.
+	 */
+	const feedbackAnnounce = (
+		<span role="status" aria-live="polite" className="sr-only">
+			{feedback === "copied" ? "Lien copié" : feedback === "shared" ? "Lien partagé" : ""}
+		</span>
+	);
+
 	// Native Web Share path (mobile browsers) — single button.
 	if (canShare) {
 		return (
-			<Tooltip>
-				<TooltipTrigger
-					render={
-						<button
-							type="button"
-							onClick={handleNativeShare}
-							aria-label={ariaLabel}
-							className={buttonClassName}
-						/>
-					}
-				>
-					{buttonContent}
-				</TooltipTrigger>
-				<TooltipContent className="hidden sm:block">
-					{feedback === "copied" ? "Lien copié !" : "Partager"}
-				</TooltipContent>
-			</Tooltip>
+			<>
+				{feedbackAnnounce}
+				<Tooltip>
+					<TooltipTrigger
+						render={
+							<button
+								type="button"
+								onClick={handleNativeShare}
+								aria-label={ariaLabel}
+								className={buttonClassName}
+							/>
+						}
+					>
+						{buttonContent}
+					</TooltipTrigger>
+					<TooltipContent className="hidden sm:block">
+						{feedback === "copied" ? "Lien copié !" : "Partager"}
+					</TooltipContent>
+				</Tooltip>
+			</>
 		);
 	}
 
@@ -193,6 +218,7 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 
 	return (
 		<DropdownMenu>
+			{feedbackAnnounce}
 			<DropdownMenuTrigger
 				render={
 					<button

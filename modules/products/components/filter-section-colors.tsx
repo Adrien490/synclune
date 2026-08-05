@@ -5,7 +5,7 @@ import { cn } from "@/shared/utils/cn";
 import { CheckIcon } from "@phosphor-icons/react/ssr";
 import { isLightColor, getContrastTextColor } from "@/modules/colors/utils/color-contrast.utils";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { SectionSearch, SEARCH_THRESHOLD } from "./filter-section-header";
+import { FilterOverflowList } from "./filter-overflow-list";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 
@@ -14,11 +14,11 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 // ============================================================================
 
 interface ColorFilterSectionProps {
+	/** Préfixe des `id` DOM — cf. `ProductFilterCompartments.host`. */
+	idPrefix: string;
+	/** Couleurs complètes, déjà triées par nombre de pièces décroissant. */
 	colors: GetColorsReturn["colors"];
-	filteredColors: GetColorsReturn["colors"];
 	selectedValues: string[];
-	colorSearch: string;
-	onColorSearchChange: (value: string) => void;
 	onToggle: (slug: string, checked: boolean) => void;
 }
 
@@ -27,15 +27,13 @@ interface ColorFilterSectionProps {
 // ============================================================================
 
 /**
- * Corps de la section "Couleurs" du filtre produit.
- * Rendu dans un panneau du menu drill-down (sans coquille accordéon).
+ * Corps du compartiment « Couleurs » du panneau de filtres — liste bornée à
+ * 6 entrées + « + N autres », recherche au dépli (cf. `FilterOverflowList`).
  */
 export function ColorFilterSection({
+	idPrefix,
 	colors,
-	filteredColors,
 	selectedValues,
-	colorSearch,
-	onColorSearchChange,
 	onToggle,
 }: ColorFilterSectionProps) {
 	const haptic = useHaptic();
@@ -46,62 +44,59 @@ export function ColorFilterSection({
 	const selectedSet = new Set(selectedValues);
 
 	return (
-		<>
-			{colors.length > SEARCH_THRESHOLD && (
-				<SectionSearch
-					value={colorSearch}
-					onChange={onColorSearchChange}
-					placeholder="Rechercher une couleur…"
-				/>
-			)}
-			<div className="space-y-1">
-				{filteredColors.length === 0 ? (
-					<p className="text-muted-foreground py-2 text-center text-xs">Aucun résultat</p>
-				) : (
-					filteredColors.map((color) => {
-						const isSelected = selectedSet.has(color.slug);
-						const light = isLightColor(color.hex, 0.85);
-						return (
-							<CheckboxFilterItem
-								key={color.slug}
-								id={`color-${color.slug}`}
-								checked={isSelected}
-								onCheckedChange={(checked) => {
-									haptic("selection");
-									onToggle(color.slug, checked === true);
+		<FilterOverflowList
+			items={colors}
+			itemKey={(color) => color.slug}
+			moreLabel={(n) => `+ ${n} autre${n > 1 ? "s" : ""} couleur${n > 1 ? "s" : ""}`}
+			matchesSearch={(color, query) => color.name.toLowerCase().includes(query)}
+			searchPlaceholder="Rechercher une couleur…"
+			renderItem={(color) => {
+				const isSelected = selectedSet.has(color.slug);
+				const light = isLightColor(color.hex, 0.85);
+				return (
+					<CheckboxFilterItem
+						id={`${idPrefix}-color-${color.slug}`}
+						checked={isSelected}
+						onCheckedChange={(checked) => {
+							haptic("selection");
+							onToggle(color.slug, checked === true);
+						}}
+						indicator={
+							<span
+								className={cn(
+									// `block` obligatoire : un <span> inline ignore width/height —
+									// la pastille se peignait 2px de large (audit 2026-08-04).
+									// 32px (« La réglette », lot 1) : la couleur est le PRODUIT,
+									// elle ne se juge pas sur un disque de 24px.
+									"relative block size-8 rounded-full shadow-sm",
+									light ? "border-border border" : "border-border/50 border",
+									// L'anneau interne permanent fait exister les teintes quasi
+									// blanches (Or blanc / Cristal / Perle : 1,06-1,09:1 nues).
+									isSelected
+										? "ring-brand-rose-strong ring-2 ring-offset-1"
+										: "ring-1 ring-black/10 ring-inset",
+								)}
+								style={{
+									backgroundColor: color.hex,
 								}}
-								indicator={
-									<span
-										className={cn(
-											"relative size-6 rounded-full shadow-sm",
-											light ? "border-border border" : "border-border/50 border",
-											isSelected
-												? "ring-primary ring-2 ring-offset-1"
-												: "ring-1 ring-black/5 ring-inset",
-										)}
-										style={{
-											backgroundColor: color.hex,
-										}}
-									>
-										{isSelected && (
-											<CheckIcon
-												className="absolute inset-0 m-auto size-3"
-												style={{
-													color: getContrastTextColor(color.hex),
-												}}
-												weight="bold"
-											/>
-										)}
-									</span>
-								}
-								count={color._count.skus}
 							>
-								{color.name}
-							</CheckboxFilterItem>
-						);
-					})
-				)}
-			</div>
-		</>
+								{isSelected && (
+									<CheckIcon
+										className="absolute inset-0 m-auto size-4"
+										style={{
+											color: getContrastTextColor(color.hex),
+										}}
+										weight="bold"
+									/>
+								)}
+							</span>
+						}
+						count={color._count.skus}
+					>
+						{color.name}
+					</CheckboxFilterItem>
+				);
+			}}
+		/>
 	);
 }

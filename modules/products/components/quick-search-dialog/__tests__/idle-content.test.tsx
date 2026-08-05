@@ -30,10 +30,6 @@ vi.mock("next/image", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/scroll-fade", () => ({
-	default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock("@/shared/components/animations/tap", () => ({
 	Tap: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -67,7 +63,7 @@ vi.mock("@/shared/utils/format-euro", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+	useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 
 vi.mock("@/shared/utils/view-transition", () => ({
@@ -118,7 +114,7 @@ vi.mock("motion/react", () => ({
 // ─── Import after mocks ──────────────────────────────────────────────────────
 
 import { IdleContent } from "../idle-content";
-import type { QuickSearchCollection, RecentlyViewedProduct } from "../constants";
+import type { QuickSearchCollection, QuickSearchColor, RecentlyViewedProduct } from "../constants";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -141,10 +137,17 @@ const mockCollections: QuickSearchCollection[] = [
 	{ slug: "colliers", name: "Colliers", productCount: 8, image: null },
 ];
 
+const mockColors: QuickSearchColor[] = [
+	{ slug: "framboise", name: "Framboise", hex: "#F0568F" },
+	{ slug: "citron", name: "Citron", hex: "#F5CF3C" },
+	{ slug: "lagon", name: "Lagon", hex: "#3BA8B8" },
+];
+
 const defaultProps = {
 	recentlyViewed: [],
 	searches: [],
 	collections: [],
+	colors: [],
 	onClose: vi.fn(),
 	onRecentSearch: vi.fn(),
 	onRemoveSearch: vi.fn(),
@@ -311,15 +314,51 @@ describe("IdleContent", () => {
 			expect(onRemoveSearch).toHaveBeenCalledWith("bague");
 		});
 
-		it("calls onClearSearches when Effacer button is clicked", async () => {
+		/**
+		 * « Effacer » supprimait TOUT d'un tap, sans confirmation ni annulation,
+		 * au poids visuel d'un titre de section — et `useRecentSearches` n'expose
+		 * aucun chemin de restauration. Le tap ouvre désormais une confirmation.
+		 * Audit DA 2026-08-05 (P3-6).
+		 */
+		it("n'efface PAS au premier tap : il ouvre une confirmation", async () => {
 			render(
 				<IdleContent {...defaultProps} onClearSearches={onClearSearches} searches={["bague"]} />,
 			);
-			const clearBtn = screen.getByRole("button", {
-				name: "Effacer toutes les recherches récentes",
-			});
-			await userEvent.click(clearBtn);
+			await userEvent.click(
+				screen.getByRole("button", { name: "Effacer toutes les recherches récentes" }),
+			);
+
+			expect(onClearSearches).not.toHaveBeenCalled();
+			expect(
+				screen.getByRole("heading", { name: /effacer tes recherches récentes/i }),
+			).toBeInTheDocument();
+		});
+
+		it("calls onClearSearches once the confirmation is accepted", async () => {
+			render(
+				<IdleContent {...defaultProps} onClearSearches={onClearSearches} searches={["bague"]} />,
+			);
+			await userEvent.click(
+				screen.getByRole("button", { name: "Effacer toutes les recherches récentes" }),
+			);
+			// `name: /^Effacer$/` — le déclencheur porte l'aria-label long
+			// (« Effacer toutes les recherches récentes »), l'action de la
+			// confirmation porte exactement « Effacer ».
+			await userEvent.click(screen.getByRole("button", { name: /^Effacer$/ }));
+
 			expect(onClearSearches).toHaveBeenCalledOnce();
+		});
+
+		it("n'efface rien si la confirmation est annulée", async () => {
+			render(
+				<IdleContent {...defaultProps} onClearSearches={onClearSearches} searches={["bague"]} />,
+			);
+			await userEvent.click(
+				screen.getByRole("button", { name: "Effacer toutes les recherches récentes" }),
+			);
+			await userEvent.click(screen.getByRole("button", { name: "Annuler" }));
+
+			expect(onClearSearches).not.toHaveBeenCalled();
 		});
 
 		it("disables search buttons when isPending is true", () => {
@@ -393,6 +432,57 @@ describe("IdleContent", () => {
 		it("renders role='listitem' for each collection card", () => {
 			render(<IdleContent {...defaultProps} collections={mockCollections} />);
 			expect(screen.getAllByRole("listitem")).toHaveLength(mockCollections.length);
+		});
+	});
+
+	// ─── Nuancier ─────────────────────────────────────────────────────────────
+
+	describe("nuancier", () => {
+		it("montre la section « Par couleur » quand des teintes arrivent", () => {
+			render(<IdleContent {...defaultProps} colors={mockColors} />);
+			expect(screen.getByText("Par couleur")).toBeInTheDocument();
+		});
+
+		it("ne montre RIEN quand la liste est vide (garde de seuil côté serveur)", () => {
+			render(<IdleContent {...defaultProps} colors={[]} collections={mockCollections} />);
+			expect(screen.queryByText("Par couleur")).not.toBeInTheDocument();
+		});
+
+		it("rend un lien par teinte, vers le filtre couleur du catalogue", () => {
+			const { container } = render(<IdleContent {...defaultProps} colors={mockColors} />);
+			expect(container.querySelector('a[href="/produits?color=framboise"]')).toBeInTheDocument();
+			expect(container.querySelector('a[href="/produits?color=citron"]')).toBeInTheDocument();
+			expect(container.querySelector('a[href="/produits?color=lagon"]')).toBeInTheDocument();
+		});
+
+		it("a un aria-labelledby sur la section", () => {
+			const { container } = render(<IdleContent {...defaultProps} colors={mockColors} />);
+			expect(container.querySelector('[aria-labelledby="colors-heading"]')).toBeInTheDocument();
+		});
+
+		/**
+		 * Le mur COMPTE comme du contenu : sans ça, un panneau qui n'a que des
+		 * couleurs afficherait quand même « Trouve ton prochain bijou » au-dessus
+		 * d'elles.
+		 */
+		it("supprime l'état vide à lui seul", () => {
+			render(<IdleContent {...defaultProps} colors={mockColors} />);
+			expect(screen.queryByText("Trouve ton prochain bijou")).not.toBeInTheDocument();
+		});
+
+		it("est la PREMIÈRE section du panneau", () => {
+			const { container } = render(
+				<IdleContent
+					{...defaultProps}
+					colors={mockColors}
+					collections={mockCollections}
+					recentlyViewed={[mockProduct]}
+					searches={["bague"]}
+				/>,
+			);
+			const sections = Array.from(container.querySelectorAll("section"));
+
+			expect(sections[0]).toHaveAttribute("aria-labelledby", "colors-heading");
 		});
 	});
 

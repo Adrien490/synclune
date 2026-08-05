@@ -592,6 +592,103 @@ describe("getProductCardData", () => {
 			expect(result.secondaryImage).toBeNull();
 		});
 
+		it("should return null secondary image when the other media points at the same URL", () => {
+			// Two media rows, same file: the hover swap would be a visual no-op, and
+			// the lazy duplicate poisons Next's per-URL LCP bookkeeping in dev.
+			const sku = createMockSku({
+				images: [
+					{
+						id: "img-1",
+						url: "/same.jpg",
+						thumbnailUrl: null,
+						altText: null,
+						isPrimary: true,
+						mediaType: "IMAGE",
+						blurDataUrl: null,
+						width: null,
+						height: null,
+					},
+					{
+						id: "img-2",
+						url: "/same.jpg",
+						thumbnailUrl: null,
+						altText: null,
+						isPrimary: false,
+						mediaType: "IMAGE",
+						blurDataUrl: null,
+						width: null,
+						height: null,
+					},
+				],
+			});
+			const product = createMockProduct({}, [sku]);
+
+			const result = getProductCardData(product);
+
+			expect(result.secondaryImage).toBeNull();
+		});
+
+		it("should skip another SKU whose image shares the primary URL", () => {
+			const defaultSku = createMockSku({
+				id: "sku-1",
+				isDefault: true,
+				images: [
+					{
+						id: "img-1",
+						url: "/shared.jpg",
+						thumbnailUrl: null,
+						altText: null,
+						isPrimary: true,
+						mediaType: "IMAGE",
+						blurDataUrl: null,
+						width: null,
+						height: null,
+					},
+				],
+			});
+			// Same file under a different media id (SKUs sharing one photo)
+			const siblingSameUrl = createMockSku({
+				id: "sku-2",
+				isDefault: false,
+				images: [
+					{
+						id: "img-2",
+						url: "/shared.jpg",
+						thumbnailUrl: null,
+						altText: null,
+						isPrimary: true,
+						mediaType: "IMAGE",
+						blurDataUrl: null,
+						width: null,
+						height: null,
+					},
+				],
+			});
+			const siblingDistinct = createMockSku({
+				id: "sku-3",
+				isDefault: false,
+				images: [
+					{
+						id: "img-3",
+						url: "/distinct.jpg",
+						thumbnailUrl: null,
+						altText: null,
+						isPrimary: true,
+						mediaType: "IMAGE",
+						blurDataUrl: null,
+						width: null,
+						height: null,
+					},
+				],
+			});
+			const product = getProductCardData(
+				createMockProduct({}, [defaultSku, siblingSameUrl, siblingDistinct]),
+			);
+
+			expect(product.secondaryImage?.id).toBe("img-3");
+			expect(product.secondaryImage?.url).toBe("/distinct.jpg");
+		});
+
 		it("should skip VIDEO media types when finding images", () => {
 			const sku = createMockSku({
 				images: [

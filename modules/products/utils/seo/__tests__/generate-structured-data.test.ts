@@ -10,6 +10,10 @@ import { generateStructuredData } from "../generate-structured-data";
 // HELPERS
 // ============================================================================
 
+// La date vient de `getPriceValidUntil()` (dérivée de l'horloge, donc injectée) —
+// ici une valeur fixe suffit, on vérifie juste le passthrough dans les offres.
+const PRICE_VALID_UNTIL = "2026-11-03";
+
 function makeProduct(overrides: Record<string, unknown> = {}) {
 	return {
 		title: "Bracelet Lune",
@@ -61,6 +65,7 @@ function graph(result: ReturnType<typeof generateStructuredData>): any[] {
 describe("generateStructuredData", () => {
 	it("returns a valid @graph with Product and BreadcrumbList", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku(),
 		});
@@ -73,6 +78,7 @@ describe("generateStructuredData", () => {
 
 	it("uses single Offer when all prices are equal", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct({
 				skus: [
 					{
@@ -105,6 +111,7 @@ describe("generateStructuredData", () => {
 
 	it("uses AggregateOffer for products with multiple prices", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct({
 				skus: [
 					{
@@ -139,12 +146,14 @@ describe("generateStructuredData", () => {
 
 	it("sets availability based on SKU inventory", () => {
 		const inStock = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 5 }),
 		});
 		expect(graph(inStock)[0].offers.availability).toBe("https://schema.org/InStock");
 
 		const outOfStock = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 0 }),
 		});
@@ -153,6 +162,7 @@ describe("generateStructuredData", () => {
 
 	it("includes breadcrumb with product type when available", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct({ type: { label: "Bracelet", slug: "bracelets" } }),
 			selectedSku: makeSku(),
 		});
@@ -164,6 +174,7 @@ describe("generateStructuredData", () => {
 
 	it("includes breadcrumb without product type when not available", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct({ type: null }),
 			selectedSku: makeSku(),
 		});
@@ -175,11 +186,13 @@ describe("generateStructuredData", () => {
 
 	it("includes merchant return policy and shipping details in offers", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku(),
 		});
 
 		const offers = graph(result)[0].offers;
+		expect(offers.priceValidUntil).toBe(PRICE_VALID_UNTIL);
 		expect(offers.hasMerchantReturnPolicy).toBeDefined();
 		expect(offers.hasMerchantReturnPolicy.merchantReturnDays).toBe(14);
 		expect(offers.shippingDetails).toBeDefined();
@@ -188,6 +201,7 @@ describe("generateStructuredData", () => {
 
 	it("includes material and color from selected SKU", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku({
 				materials: [{ materialId: "mat-1", position: 0, material: { name: "Argent 925" } }],
@@ -202,6 +216,7 @@ describe("generateStructuredData", () => {
 
 	it("includes stock level in additionalProperty", () => {
 		const unique = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 1 }),
 		});
@@ -211,6 +226,7 @@ describe("generateStructuredData", () => {
 		expect(stockProp.value).toBe("Pièce unique");
 
 		const low = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 3 }),
 		});
@@ -220,6 +236,7 @@ describe("generateStructuredData", () => {
 		expect(lowStockProp.value).toBe("Stock limité");
 
 		const normal = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 10 }),
 		});
@@ -231,6 +248,7 @@ describe("generateStructuredData", () => {
 
 	it("includes image objects with dimensions", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku(),
 		});
@@ -244,6 +262,7 @@ describe("generateStructuredData", () => {
 
 	it("does NOT include MPN (would duplicate SKU — handmade products have no manufacturer part number)", () => {
 		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
 			product: makeProduct(),
 			selectedSku: makeSku({ sku: "BRC-CUSTOM-001" }),
 		});

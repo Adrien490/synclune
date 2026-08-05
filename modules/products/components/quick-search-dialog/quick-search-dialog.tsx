@@ -39,6 +39,7 @@ import {
 } from "./constants";
 import type {
 	QuickSearchCollection,
+	QuickSearchColor,
 	QuickSearchProductType,
 	RecentlyViewedProduct,
 } from "./constants";
@@ -53,12 +54,18 @@ import { isSearchError, useQuickSearch } from "./use-quick-search";
 
 const EMPTY_RECENT_SEARCHES: string[] = [];
 const EMPTY_RECENTLY_VIEWED: RecentlyViewedProduct[] = [];
+const EMPTY_COLORS: QuickSearchColor[] = [];
 
 interface QuickSearchDialogProps {
 	recentSearches?: string[];
 	collections: QuickSearchCollection[];
 	productTypes: QuickSearchProductType[];
 	recentlyViewed?: RecentlyViewedProduct[];
+	/**
+	 * Le nuancier. Déjà vide côté serveur quand le catalogue porte trop peu de
+	 * teintes pour qu'un mur veuille dire quelque chose (cf. `getQuickSearchData`).
+	 */
+	colors?: QuickSearchColor[];
 }
 
 export function QuickSearchDialog({
@@ -66,6 +73,7 @@ export function QuickSearchDialog({
 	collections,
 	productTypes,
 	recentlyViewed = EMPTY_RECENTLY_VIEWED,
+	colors = EMPTY_COLORS,
 }: QuickSearchDialogProps) {
 	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const router = useRouter();
@@ -319,18 +327,52 @@ export function QuickSearchDialog({
 				finalFocus={() => lastTrigger.el ?? false}
 				aria-busy={isPending}
 				ref={dialogContentRef}
+				// Le wrapper anime un dialog CENTRÉ (zoom 95 % + sortie vers le HAUT).
+				// Sous `md` cette surface est une feuille plein écran qu'on ferme d'un
+				// swipe vers le BAS : ses transitions sont déclarées ici, et le défaut
+				// doit être ÉTEINT à la source. Le surcharger ne suffirait pas —
+				// `tailwind-merge` ne fusionne pas les utilitaires de `tw-animate-css`,
+				// les deux jeux coexisteraient et l'ordre de la feuille de style
+				// trancherait (cf. la prop côté `ui/dialog`).
+				defaultTransformAnimation={false}
 				className={cn(
 					"group/search",
 					// Mobile: bottom-sheet pleine hauteur (suit le clavier via --vvh, fallback 100dvh)
 					"fixed inset-0 top-0 right-0 bottom-0 left-0 h-[var(--vvh,100dvh)] w-full max-w-none translate-x-0 translate-y-0",
 					"overflow-hidden rounded-none border-0",
-					"motion-safe:data-[state=open]:slide-in-from-bottom motion-safe:data-[state=closed]:slide-out-to-bottom",
-					"motion-safe:data-[state=open]:zoom-in-100 motion-safe:data-[state=closed]:zoom-out-100",
+					// Base UI expose ses états en attributs BOOLÉENS (`data-open` /
+					// `data-closed`), pas en `data-state`. Ces trois lignes ont porté la
+					// forme Radix pendant toute la vie du composant : elles ne matchaient
+					// rien, et rien ne le signalait (aucun conflit détecté par
+					// tailwind-merge, `motion` mocké par tous les tests). La feuille
+					// entrait donc en zoomant au centre et sortait VERS LE HAUT, à
+					// contre-sens du geste qui la ferme. Audit DA 2026-08-05.
+					"motion-safe:data-open:slide-in-from-bottom motion-safe:data-closed:slide-out-to-bottom",
 					"flex flex-col",
-					// Desktop: centered dialog, hauteur constante 640px (capée à 85vh pour petits écrans)
+					// Desktop: centered dialog, hauteur CONSTANTE 640px (capée à 85vh).
+					//
+					// ⚠️ Cette hauteur doit rester DÉFINIE — `md:h-auto md:max-h-[…]` a été
+					// essayé et MESURÉ : la zone scrollable meurt. Toute la chaîne interne
+					// (le `<div>` de `Fade`, puis le conteneur `scroll-fade-y`) est en
+					// `h-full`, et un pourcentage se résout contre la hauteur SPÉCIFIÉE du
+					// parent. Avec `height: auto` sur le panneau, `flex-1` donne bien à
+					// `#qs-results` une hauteur calculée (387 px relevés), mais `h-full`
+					// retombe sur `auto` et vaut la hauteur du CONTENU (544 px) : le scroller
+					// ne déborde plus, donc ne scrolle plus, et `overflow-hidden` coupe
+					// 157 px — dont le CTA « Voir tous les produits », devenu INATTEIGNABLE.
+					// Rendre le panneau à la taille de son contenu demanderait de passer
+					// toute cette chaîne en flex.
+					//
+					// Le vide de fin que le lot 3 visait (234 px à 390 px sans recherches
+					// récentes) est de toute façon comblé par le nuancier : contenu mesuré à
+					// 576 px pour 545 de zone visible, il déborde et scrolle.
 					"md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2",
 					"md:h-[min(640px,85vh)] md:w-full md:max-w-160 md:overflow-hidden md:rounded-xl md:border",
-					"motion-safe:md:data-[state=open]:slide-in-from-top-4 motion-safe:md:data-[state=open]:zoom-in-95",
+					// Au-dessus de `md` on retrouve un dialog centré. Les variantes `md:`
+					// trient APRÈS les non-préfixées, donc elles écrasent bien la
+					// translation plein écran ci-dessus.
+					"motion-safe:md:data-open:slide-in-from-top-4 motion-safe:md:data-closed:slide-out-to-top-4",
+					"motion-safe:md:data-open:zoom-in-95 motion-safe:md:data-closed:zoom-out-95",
 				)}
 			>
 				{/* Header */}
@@ -356,7 +398,12 @@ export function QuickSearchDialog({
 									ref={closeButtonRef}
 									variant="ghost"
 									size="icon"
-									disabled={isPending}
+									// ⚠️ JAMAIS `disabled={isPending}`. Pendant une navigation lente
+									// (Neon froid, compilation dev), c'était la seule affordance
+									// VISIBLE de sortie — et elle était morte exactement au moment où
+									// l'on veut en sortir. Escape et le swipe restent disponibles mais
+									// ne s'annoncent nulle part sur mobile. Fermer n'annule pas la
+									// navigation en cours : elle aboutit, dialog fermé.
 									className="order-first size-11 shrink-0 md:order-last"
 									aria-label="Fermer"
 								/>
@@ -443,10 +490,21 @@ export function QuickSearchDialog({
 					</div>
 				</div>
 
-				{/* Quick suggestion tags (idle only) */}
+				{/* Quick suggestion tags (idle only).
+					`layout="row"` — UNE ligne défilante, pas un enroulement. Mesuré au
+					navigateur : en enroulement, 7 catégories prenaient 3 lignes (152 px), la
+					moitié du chrome au-dessus de la zone de contenu, pour une dernière ligne
+					portant une seule pilule. Clavier ouvert (`--vvh` ≈ 508 px) il ne restait
+					alors que 209 px pour TOUT le contenu, et le nuancier lui-même y était
+					coupé. Cf. le commentaire de la prop. Audit UI/UX 2026-08-05, lot 5. */}
 				{!isSearchMode && productTypes.length > 0 && (
 					<div className="bg-background shrink-0 px-4 pb-2">
-						<QuickTagPills productTypes={productTypes} onSelect={handleQuickTagClick} size="sm" />
+						<QuickTagPills
+							productTypes={productTypes}
+							onSelect={handleQuickTagClick}
+							size="sm"
+							layout="row"
+						/>
 					</div>
 				)}
 
@@ -507,48 +565,53 @@ export function QuickSearchDialog({
 					)}
 					onMouseLeave={resetActiveIndex}
 				>
-					<AnimatePresence mode="wait">
-						{isSearchMode ? (
-							<Fade key="search-results" y={6} className="h-full">
-								{isSearching && (!searchResults || isSearchError(searchResults)) ? (
-									<SearchResultsSkeleton />
-								) : isSearchError(searchResults) ? (
-									// Erreur CLIENT/RÉSEAU. L'erreur SERVEUR (`kind: "error"`) est
-									// rendue par `QuickSearchContent` — deux chemins distincts,
-									// même UI, mutualisée pour qu'elle ne diverge plus.
-									<SearchErrorState onRetry={() => handleLiveSearch(searchQuery)} />
-								) : searchResults ? (
-									<QuickSearchContent
-										results={searchResults}
-										query={searchQuery}
-										collections={collections}
-										productTypes={productTypes}
-										onSearch={handleSearchFromSuggestion}
-										onClose={handleClose}
-										onSelectResult={handleSelectResult}
-										onViewAllResults={handleViewAllResults}
-										onRetry={() => handleLiveSearch(searchQuery)}
-									/>
-								) : (
-									<SearchResultsSkeleton />
-								)}
-							</Fade>
-						) : (
-							/* ====== IDLE MODE ====== */
-							<Fade key="idle-content" y={6} className="h-full">
-								<IdleContent
-									recentlyViewed={recentlyViewed}
-									searches={searches}
+					{/* Pas d'`AnimatePresence` ici : il n'envelopperait que des `<Fade>`,
+						qui rendent un `<div>` nu piloté par une keyframe CSS. Or
+						`AnimatePresence` ne peut différer un démontage que pour un composant
+						`motion` — il était donc INERTE, et montait `motion/react` pour rien
+						dans le chemin chaud. Audit DA 2026-08-05. */}
+					{isSearchMode ? (
+						<Fade key="search-results" y={6} className="h-full">
+							{isSearching && (!searchResults || isSearchError(searchResults)) ? (
+								<SearchResultsSkeleton />
+							) : isSearchError(searchResults) ? (
+								// Erreur CLIENT/RÉSEAU. L'erreur SERVEUR (`kind: "error"`) est
+								// rendue par `QuickSearchContent` — deux chemins distincts,
+								// même UI, mutualisée pour qu'elle ne diverge plus.
+								<SearchErrorState onRetry={() => handleLiveSearch(searchQuery)} />
+							) : searchResults ? (
+								<QuickSearchContent
+									results={searchResults}
+									query={searchQuery}
+									colors={colors}
 									collections={collections}
+									productTypes={productTypes}
+									onSearch={handleSearchFromSuggestion}
 									onClose={handleClose}
-									onRecentSearch={handleRecentSearch}
-									onRemoveSearch={handleRemoveRecent}
-									onClearSearches={handleClearRecent}
-									isPending={isPending}
+									onSelectResult={handleSelectResult}
+									onViewAllResults={handleViewAllResults}
+									onRetry={() => handleLiveSearch(searchQuery)}
 								/>
-							</Fade>
-						)}
-					</AnimatePresence>
+							) : (
+								<SearchResultsSkeleton />
+							)}
+						</Fade>
+					) : (
+						/* ====== IDLE MODE ====== */
+						<Fade key="idle-content" y={6} className="h-full">
+							<IdleContent
+								recentlyViewed={recentlyViewed}
+								searches={searches}
+								colors={colors}
+								collections={collections}
+								onClose={handleClose}
+								onRecentSearch={handleRecentSearch}
+								onRemoveSearch={handleRemoveRecent}
+								onClearSearches={handleClearRecent}
+								isPending={isPending}
+							/>
+						</Fade>
+					)}
 				</div>
 				{/* eslint-enable jsx-a11y/no-static-element-interactions */}
 

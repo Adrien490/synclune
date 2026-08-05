@@ -56,6 +56,7 @@ import {
 	GET_COLLECTIONS_SELECT,
 } from "@/modules/collections/constants/collection.constants";
 import {
+	GET_PRODUCT_TYPES_MENU_SELECT,
 	GET_PRODUCT_TYPES_SELECT,
 	GET_PRODUCT_TYPE_SELECT,
 } from "@/modules/product-types/constants/product-type.constants";
@@ -107,6 +108,7 @@ const collectionSelects: Array<[string, Prisma.CollectionSelect]> = [
 
 const productTypeSelects: Array<[string, Prisma.ProductTypeSelect]> = [
 	["GET_PRODUCT_TYPES_SELECT", GET_PRODUCT_TYPES_SELECT],
+	["GET_PRODUCT_TYPES_MENU_SELECT", GET_PRODUCT_TYPES_MENU_SELECT],
 	["GET_PRODUCT_TYPE_SELECT", GET_PRODUCT_TYPE_SELECT],
 ];
 

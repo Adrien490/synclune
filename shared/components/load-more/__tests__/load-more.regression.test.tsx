@@ -2,7 +2,7 @@
  * @regression load-more-state-and-focus
  *
  * Verrouille la refonte d'état de `LoadMore` (5 `useState` → un `useActionState`
- * keyé sur les lots) et les trois défauts qu'elle a corrigés :
+ * keyé sur les lots) et les défauts qu'elle a corrigés :
  *
  * 1. **Annonce périmée** — la phrase lue au lecteur d'écran dérivait de
  *    `additionalItems.length` capturé dans la closure du rendu, pas de l'état
@@ -12,10 +12,21 @@
  *    repartait AU-DESSUS des nouveaux items.
  * 3. **Focus volé au défilement** — le même `.focus()` s'exécutait sur un
  *    chargement déclenché par l'IntersectionObserver, en plein scroll.
+ * 4. **Focus perdu en cas d'ÉCHEC** (2026-08-05) — l'effet était gardé sur
+ *    `loadCount`, qui ne bouge pas quand le lot échoue : le focus, parti de
+ *    l'affordance pendant l'attente, n'était rendu à personne et l'utilisateur
+ *    au clavier repartait du premier lien de la page.
  *
- * Plus deux invariants de rendu : `--item-index` redémarre à 0 à chaque lot (sinon
- * `animation-delay` change sur des nœuds déjà animés), et un `result.error`
- * n'avance pas le curseur.
+ * Plus les invariants de rendu : `--item-index` redémarre à 0 à chaque lot
+ * (sinon `animation-delay` change sur des nœuds déjà animés), un `result.error`
+ * n'avance pas le curseur, et l'erreur vit dans l'ÉTAT — plus dans un toast qui
+ * s'évapore alors que l'auto-load, lui, s'est arrêté définitivement.
+ *
+ * ⚠️ Ce composant ne rend plus AUCUN conteneur ni AUCUNE copie : ses cellules et
+ * son affordance sont des enfants directs de la grille appelante, et
+ * l'apparence de l'affordance appartient à cette grille (`renderAffordance`).
+ * Le harnais ci-dessous fournit donc sa propre affordance minimale — les
+ * libellés qu'il emploie lui appartiennent, ils ne décrivent pas la boutique.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -26,18 +37,13 @@ import userEvent from "@testing-library/user-event";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockToastError, mockInView } = vi.hoisted(() => ({
-	mockToastError: vi.fn(),
+const { mockInView } = vi.hoisted(() => ({
 	mockInView: { value: false, listeners: new Set<() => void>() },
 }));
 
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
-
-vi.mock("@/shared/utils/toast", () => ({
-	toast: { error: mockToastError, success: vi.fn(), warning: vi.fn(), info: vi.fn() },
-}));
 
 /*
  * jsdom n'implémente pas IntersectionObserver : le vrai `useInView`
@@ -68,10 +74,6 @@ vi.mock("@/shared/hooks/use-in-view", async () => {
 			),
 	};
 });
-
-vi.mock("@/shared/components/ui/spinner", () => ({
-	Spinner: () => null,
-}));
 
 // ============================================================================
 // IMPORT UNDER TEST
@@ -107,13 +109,22 @@ interface SetupOptions {
 	initialDisplayedCount?: number;
 	totalCount?: number;
 	enableAutoLoad?: boolean;
+	itemsGender?: "m" | "f";
+	itemsLabel?: string;
+	itemsLabelPlural?: string;
 }
+
+/** Le libellé de l'affordance appartient AU HARNAIS, pas à la boutique. */
+const AFFORDANCE_LABEL = "Charger la suite";
 
 function setup({
 	responses,
 	initialDisplayedCount = 20,
 	totalCount = 60,
 	enableAutoLoad = false,
+	itemsGender,
+	itemsLabel = "produit",
+	itemsLabelPlural = "produits",
 }: SetupOptions) {
 	const seenCursors: string[] = [];
 	let call = 0;
@@ -133,12 +144,24 @@ function setup({
 			loadFn={loadFn}
 			getItemKey={(item) => item.id}
 			renderItem={(item) => <span data-testid="item">{item.label}</span>}
-			itemsLabel="produit"
-			itemsLabelPlural="produits"
-			itemsContainerClassName="grid"
+			itemsLabel={itemsLabel}
+			itemsLabelPlural={itemsLabelPlural}
+			itemsGender={itemsGender}
 			itemClassName="product-item"
-			buttonLabel="Voir plus de produits"
 			enableAutoLoad={enableAutoLoad}
+			renderAffordance={(state, handlers) => (
+				<button
+					type="button"
+					ref={handlers.ref}
+					onClick={handlers.onLoad}
+					aria-disabled={state.isPending}
+					data-testid="affordance"
+					data-remaining={state.remainingCount}
+					data-loadcount={state.loadCount}
+				>
+					{state.error ?? AFFORDANCE_LABEL}
+				</button>
+			)}
 		/>,
 	);
 
@@ -154,7 +177,11 @@ function cells(): HTMLElement[] {
 	return screen.getAllByTestId("item").map((node) => node.parentElement as HTMLElement);
 }
 
-/** Le bouton entre (ou sort) du viewport — l'observer notifie APRÈS le montage. */
+function affordance(): HTMLElement {
+	return screen.getByTestId("affordance");
+}
+
+/** L'affordance entre (ou sort) du viewport — l'observer notifie APRÈS le montage. */
 async function setViewport(visible: boolean): Promise<void> {
 	await act(async () => {
 		mockInView.value = visible;
@@ -175,7 +202,6 @@ const leaveViewport = () => setViewport(false);
 
 describe("LoadMore", () => {
 	beforeEach(() => {
-		mockToastError.mockClear();
 		mockInView.value = false;
 	});
 
@@ -196,10 +222,10 @@ describe("LoadMore", () => {
 		// apparaît déjà remplie n'est pas annoncée.
 		expect(status()).toBe("");
 
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		await user.click(affordance());
 		await waitFor(() => expect(status()).toContain("40 sur 60"));
 
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		await user.click(affordance());
 		// Le défaut historique annonçait « 40 sur 60 » une seconde fois : la closure
 		// lisait la longueur d'AVANT le premier lot.
 		await waitFor(() => expect(status()).toContain("60 sur 60"));
@@ -214,12 +240,37 @@ describe("LoadMore", () => {
 			],
 		});
 
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		await user.click(affordance());
 		await waitFor(() => expect(status()).toContain("1 nouveau produit chargé."));
 		expect(status()).not.toContain("nouvel");
 
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		await user.click(affordance());
 		await waitFor(() => expect(status()).toContain("3 nouveaux produits chargés."));
+	});
+
+	it("accorde au FÉMININ quand le libellé l'est — « 1 nouvelle pièce chargée »", async () => {
+		const user = userEvent.setup();
+		setup({
+			responses: [
+				{ items: batch("a", 1), nextCursor: "cursor-1", hasMore: true },
+				{ items: batch("b", 3), nextCursor: null, hasMore: false },
+			],
+			itemsGender: "f",
+			itemsLabel: "pièce",
+			itemsLabelPlural: "pièces",
+			initialDisplayedCount: 20,
+			totalCount: 60,
+		});
+
+		// Le catalogue dit « pièce ». Sans `itemsGender`, le gabarit masculin
+		// produisait « 1 nouveau pièce chargé » — une faute invisible en revue
+		// visuelle, puisque la phrase est `sr-only`.
+		await user.click(affordance());
+		await waitFor(() => expect(status()).toContain("1 nouvelle pièce chargée."));
+		expect(status()).toContain("21 sur 60 pièces affichées.");
+
+		await user.click(affordance());
+		await waitFor(() => expect(status()).toContain("3 nouvelles pièces chargées."));
 	});
 
 	it("donne le focus au premier item du NOUVEAU lot, pas du premier lot", async () => {
@@ -231,11 +282,11 @@ describe("LoadMore", () => {
 			],
 		});
 
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		await user.click(affordance());
 		await waitFor(() => expect(cells()).toHaveLength(3));
 		expect(document.activeElement).toBe(cells()[0]);
 
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		await user.click(affordance());
 		await waitFor(() => expect(cells()).toHaveLength(6));
 		// Défaut historique : le focus revenait sur `cells()[0]` (« a 0 »).
 		expect(document.activeElement).toBe(cells()[3]);
@@ -259,7 +310,22 @@ describe("LoadMore", () => {
 		expect(status()).toContain("3 nouveaux produits chargés.");
 	});
 
-	it("auto-charge le curseur SUIVANT quand le bouton revient dans le viewport", async () => {
+	it("rend le focus à l'affordance quand le chargement DEMANDÉ échoue", async () => {
+		const user = userEvent.setup();
+		setup({
+			responses: [{ items: [], nextCursor: null, hasMore: false, error: "Trop de requêtes." }],
+		});
+
+		await user.click(affordance());
+
+		// Défaut historique : l'effet de focus était gardé sur `loadCount`, qui ne
+		// bouge pas en cas d'échec. Le focus, parti du bouton pendant l'attente,
+		// n'était rendu à personne — Tab repartait du haut du document.
+		await waitFor(() => expect(document.activeElement).toBe(affordance()));
+		expect(affordance()).toHaveTextContent("Trop de requêtes.");
+	});
+
+	it("auto-charge le curseur SUIVANT quand l'affordance revient dans le viewport", async () => {
 		const { loadFn, seenCursors } = setup({
 			responses: [
 				{ items: batch("a", 3), nextCursor: "cursor-1", hasMore: true },
@@ -279,7 +345,7 @@ describe("LoadMore", () => {
 		expect(screen.getAllByTestId("item")).toHaveLength(5);
 	});
 
-	it("arrête l'auto-load après un échec, sans condamner le bouton", async () => {
+	it("arrête l'auto-load après un échec, sans condamner l'affordance", async () => {
 		const user = userEvent.setup();
 		const { loadFn, seenCursors } = setup({
 			responses: [
@@ -291,18 +357,24 @@ describe("LoadMore", () => {
 
 		await enterViewport();
 		expect(loadFn).toHaveBeenCalledTimes(1);
-		expect(mockToastError).toHaveBeenCalledWith("Trop de requêtes.");
+
+		// L'erreur vit dans l'ÉTAT et reste à l'écran : c'est ce qui remplace le
+		// toast, qui s'évaporait alors que l'auto-load, lui, s'était arrêté
+		// définitivement — le catalogue paraissait simplement fini.
+		expect(affordance()).toHaveTextContent("Trop de requêtes.");
 
 		// Le curseur n'a pas avancé : re-rentrer dans le viewport ne doit PAS
-		// relancer une boucle de retry tant que le bouton est à l'écran.
+		// relancer une boucle de retry tant que l'affordance est à l'écran.
 		await leaveViewport();
 		await enterViewport();
 		expect(loadFn).toHaveBeenCalledTimes(1);
 
-		// Le bouton, lui, ne consulte pas cette garde : il reste opérant.
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		// L'affordance, elle, ne consulte pas cette garde : elle reste opérante.
+		await user.click(affordance());
 		await waitFor(() => expect(screen.getAllByTestId("item")).toHaveLength(2));
 		expect(seenCursors).toEqual(["cursor-0", "cursor-0"]);
+		// Et le message disparaît dès que le rattrapage réussit.
+		expect(affordance()).toHaveTextContent(AFFORDANCE_LABEL);
 	});
 
 	it("redémarre --item-index à 0 à chaque lot", async () => {
@@ -314,9 +386,9 @@ describe("LoadMore", () => {
 			],
 		});
 
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		await user.click(affordance());
 		await waitFor(() => expect(cells()).toHaveLength(3));
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		await user.click(affordance());
 		await waitFor(() => expect(cells()).toHaveLength(6));
 
 		const indexes = cells().map((cell) => cell.style.getPropertyValue("--item-index"));
@@ -335,18 +407,52 @@ describe("LoadMore", () => {
 			],
 		});
 
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
-		await waitFor(() => expect(mockToastError).toHaveBeenCalledWith("Trop de requêtes."));
+		await user.click(affordance());
+		await waitFor(() => expect(affordance()).toHaveTextContent("Trop de requêtes."));
 
 		// Ni items ajoutés, ni annonce, ni `hasMore` retombé à false.
 		expect(screen.queryAllByTestId("item")).toHaveLength(0);
 		expect(status()).toBe("");
 
-		// Le bouton reste opérant et rejoue le MÊME curseur.
-		await user.click(screen.getByRole("button", { name: /voir plus/i }));
+		// L'affordance reste opérante et rejoue le MÊME curseur.
+		await user.click(affordance());
 		await waitFor(() => expect(screen.getAllByTestId("item")).toHaveLength(2));
 		expect(loadFn).toHaveBeenCalledTimes(2);
 		expect(seenCursors).toEqual(["cursor-0", "cursor-0"]);
+	});
+
+	it("dérive `remainingCount` de l'état commité, jamais d'un compteur parallèle", async () => {
+		const user = userEvent.setup();
+		setup({
+			responses: [{ items: batch("a", 20), nextCursor: "cursor-1", hasMore: true }],
+			initialDisplayedCount: 20,
+			totalCount: 60,
+		});
+
+		expect(affordance()).toHaveAttribute("data-remaining", "40");
+		expect(affordance()).toHaveAttribute("data-loadcount", "0");
+
+		await user.click(affordance());
+		await waitFor(() => expect(affordance()).toHaveAttribute("data-remaining", "20"));
+		expect(affordance()).toHaveAttribute("data-loadcount", "1");
+	});
+
+	it("garde l'affordance après le DERNIER lot — c'est là qu'elle dit « c'est tout »", async () => {
+		const user = userEvent.setup();
+		setup({
+			responses: [{ items: batch("a", 2), nextCursor: null, hasMore: false }],
+			initialDisplayedCount: 20,
+			totalCount: 22,
+		});
+
+		await user.click(affordance());
+		await waitFor(() => expect(screen.getAllByTestId("item")).toHaveLength(2));
+
+		// `hasMore` est retombé à false, mais des lots ont été chargés : sans cette
+		// branche la page s'arrêtait sur du blanc, sans dire si elle était finie
+		// ou cassée.
+		expect(affordance()).toBeInTheDocument();
+		expect(affordance()).toHaveAttribute("data-remaining", "0");
 	});
 
 	it("ne rend rien quand il n'y a ni page suivante ni item ajouté", () => {
@@ -361,7 +467,7 @@ describe("LoadMore", () => {
 				renderItem={(item) => <span>{item.label}</span>}
 				itemsLabel="produit"
 				itemsLabelPlural="produits"
-				itemsContainerClassName="grid"
+				renderAffordance={() => <button type="button">jamais rendu</button>}
 			/>,
 		);
 

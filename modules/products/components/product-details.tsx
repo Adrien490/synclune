@@ -68,8 +68,8 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 			    des tarifs de port, coincée entre deux blocs de service. Or il n'y a
 			    pas de `metaDescription` en base : cette description EST la copie
 			    vitrine, le seul endroit où Léane décrit CETTE pièce. Elle passe donc
-			    en encre pleine et en Fraunces — un serif à axe optique, sur trois
-			    phrases éditoriales, pas sur du texte courant. */}
+			    en encre pleine et en Winky Sans (la display) — un trait d'encre expressif,
+			    sur trois phrases éditoriales, pas sur du texte courant. */}
 			{product.description && (
 				<div id="product-description" className="max-w-[34rem] space-y-3">
 					<h2 className="sr-only">Description</h2>
