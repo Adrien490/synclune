@@ -1,6 +1,7 @@
 "use client";
 
 import { PackageIcon } from "@phosphor-icons/react/ssr";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
@@ -72,6 +73,7 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 						width={48}
 						height={48}
 						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
+						quality={IMAGE_QUALITY.THUMBNAIL}
 						className="size-12 shrink-0 rounded-md border object-cover"
 						{...(preload ? { preload: true } : {})}
 						{...(primaryImage.blurDataUrl

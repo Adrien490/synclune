@@ -9,6 +9,10 @@ import {
 	ResponsiveDialogTrigger,
 } from "@/shared/components/responsive-dialog";
 import type { ReactElement } from "react";
+import {
+	SYSTEM_PRODUCT_TYPE_SLUGS,
+	isProductType,
+} from "@/modules/product-types/constants/system-product-type-slugs";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { InfoIcon, RulerIcon } from "@phosphor-icons/react/ssr";
@@ -27,9 +31,13 @@ interface SizeGuideDialogProps {
  * - Conseils personnalisés selon le type de produit
  */
 export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogProps) {
-	const isRing = productTypeSlug?.toLowerCase().includes("ring");
-	const isBracelet = productTypeSlug?.toLowerCase().includes("bracelet");
-	const defaultTab = isRing ? "rings" : isBracelet ? "bracelets" : "rings";
+	// SSOT des slugs : la version précédente cherchait une sous-chaîne anglaise, qui
+	// ne reconnaissait pas « bagues » et matchait « bracelets » par accident.
+	// ⚠️ Les valeurs d'onglet ci-dessous (`rings`, `bracelets`) ne sont PAS des slugs
+	// de type : ce sont des identifiants de `Tabs`, sans lien avec la base.
+	const isRing = isProductType(productTypeSlug, SYSTEM_PRODUCT_TYPE_SLUGS.RINGS);
+	const isBracelet = isProductType(productTypeSlug, SYSTEM_PRODUCT_TYPE_SLUGS.BRACELETS);
+	const defaultTab = isBracelet && !isRing ? "bracelets" : "rings";
 
 	return (
 		<ResponsiveDialog>

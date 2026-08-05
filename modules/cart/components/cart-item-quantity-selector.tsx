@@ -92,6 +92,20 @@ export function CartItemQuantitySelector({
 			role="group"
 			aria-label={`Quantité de l'article, actuellement ${optimisticQuantity}`}
 			aria-busy={isLoading}
+			/*
+			 * `data-pending` est le JUMEAU DE STYLE d'`aria-busy` ci-dessus : même
+			 * condition, mais lisible par les variantes Tailwind de la ligne parente
+			 * (`group-has-[[data-pending]]/item:` sur la vignette, le titre et le prix
+			 * dans `cart-sheet-item-row.tsx`).
+			 *
+			 * ⚠️ Il doit rester sur un DESCENDANT de `group/item`, jamais sur l'hôte du
+			 * groupe : `group-has-*` compile en `:has()`, qui ne matche jamais son propre
+			 * sujet. C'est précisément le défaut qui rendait les 17 variantes
+			 * `group-data-pending/sheet:` du panier inertes — l'attribut y était posé sur
+			 * l'élément qui portait `group/sheet`. Sans ce producteur, le prix de la ligne
+			 * était le SEUL élément à changer au tap de quantité sans aucun retour visuel.
+			 */
+			data-pending={isLoading ? "" : undefined}
 		>
 			<ButtonGroup aria-label="Quantité">
 				<Button

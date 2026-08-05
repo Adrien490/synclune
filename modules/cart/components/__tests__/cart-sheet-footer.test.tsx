@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
@@ -69,6 +69,7 @@ vi.mock("../cart-promo-code-form", () => ({
 }));
 
 import { CartSheetFooter } from "../cart-sheet-footer";
+import { STOCK_ISSUES_ALERT_ID } from "../stock-issues-alert-id";
 
 afterEach(() => {
 	cleanup();
@@ -110,11 +111,24 @@ describe("CartSheetFooter", () => {
 		expect(link.getAttribute("href")).toBe("/paiement");
 	});
 
-	it("renders disabled button instead of link when stock issues exist", () => {
+	/**
+	 * @regression cart-blocked-cta-stays-focusable-2026-08-05
+	 *
+	 * Le CTA bloqué doit rester ATTEIGNABLE. Avec un `disabled` natif il sortait du tab
+	 * order, si bien que son `aria-describedby` — l'unique énoncé du motif de blocage —
+	 * n'était jamais annoncé, et qu'aucun survol ni tap ne pouvait le révéler non plus.
+	 *
+	 * ⚠️ `toBeDisabled()` de jest-dom ne regarde que l'attribut NATIF : il ignore
+	 * `aria-disabled`. C'est pourquoi l'assertion est inversée ici — et pourquoi elle ne
+	 * dispense pas de vérifier `aria-disabled` juste en dessous.
+	 */
+	it("rend un bouton bloqué mais focusable, jamais un `disabled` natif", () => {
 		render(<CartSheetFooter {...createProps({ hasStockIssues: true })} />);
-		const disabledButton = screen.getByRole("button", { name: /Passer commande/i });
-		expect(disabledButton).toBeInTheDocument();
-		expect(disabledButton).toBeDisabled();
+		const blocked = screen.getByRole("button", { name: /Passer commande/i });
+		expect(blocked).toBeInTheDocument();
+		expect(blocked).not.toBeDisabled();
+		blocked.focus();
+		expect(blocked).toHaveFocus();
 	});
 
 	it("sets aria-disabled on the stock-issue button", () => {
@@ -126,7 +140,31 @@ describe("CartSheetFooter", () => {
 	it("references stock-issues-alert via aria-describedby on disabled button", () => {
 		render(<CartSheetFooter {...createProps({ hasStockIssues: true })} />);
 		const disabledButton = screen.getByRole("button", { name: /Passer commande/i });
-		expect(disabledButton.getAttribute("aria-describedby")).toBe("stock-issues-alert");
+		expect(disabledButton.getAttribute("aria-describedby")).toBe(STOCK_ISSUES_ALERT_ID);
+	});
+
+	it("le clic sur le CTA bloqué déplace le focus sur l'alerte", () => {
+		// L'alerte vit dans `CartSheet`, pas dans le footer : on la simule pour prouver que
+		// le handler la cible bien par son id partagé.
+		const alert = document.createElement("div");
+		alert.id = STOCK_ISSUES_ALERT_ID;
+		alert.tabIndex = -1;
+		alert.scrollIntoView = vi.fn();
+		document.body.appendChild(alert);
+
+		render(<CartSheetFooter {...createProps({ hasStockIssues: true })} />);
+		fireEvent.click(screen.getByRole("button", { name: /Passer commande/i }));
+
+		expect(alert).toHaveFocus();
+		expect(alert.scrollIntoView).toHaveBeenCalled();
+		alert.remove();
+	});
+
+	it("le clic sur le CTA bloqué ne jette pas si l'alerte est absente", () => {
+		render(<CartSheetFooter {...createProps({ hasStockIssues: true })} />);
+		expect(() =>
+			fireEvent.click(screen.getByRole("button", { name: /Passer commande/i })),
+		).not.toThrow();
 	});
 
 	it("does not render a link when stock issues exist", () => {
@@ -196,6 +234,10 @@ describe("CartSheetFooter", () => {
 	 * Le sous-total est animé par `AnimatedNumber`, donc il traverse toutes les
 	 * valeurs intermédiaires : en display, il se serait mis à gigoter de ~16 px à
 	 * chaque changement de quantité, sur le seul chiffre transactionnel du panneau.
+	 *
+	 * Migration S5 (2026-08-05) : la garde reste NÉCESSAIRE et VALIDE — Winky Sans
+	 * (display actuelle) n'expose pas `tnum` non plus, et Onest (sans actuelle)
+	 * l'expose (GSUB vérifié, docs/FONTS-AUDIT-2026-08-05.md).
 	 */
 	it("@regression n'associe pas la police display à tabular-nums sur le total", () => {
 		render(<CartSheetFooter {...createProps()} />);

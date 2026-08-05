@@ -1,53 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
-import type { GetCartReturn } from "@/modules/cart/types/cart.types";
 import { useReducedMotion } from "motion/react";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+
+import type { GetCartReturn } from "@/modules/cart/types/cart.types";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
 	ResponsiveDialogDescription,
-	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { useAppForm } from "@/shared/components/forms";
+// Chemin direct, comme les deux autres consommateurs (`footer.tsx`,
+// `section-heading.tsx`) : le barrel `animations/index.ts` n'a aucun importeur.
+import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
-import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
-import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
-import { slugify } from "@/shared/utils/generate-slug";
+import { SKU_SELECTOR_TEXTS } from "@/modules/cart/constants/sku-selector-texts";
 
 import type { SkuSelectorDialogData } from "../types/dialog-data.types";
-import { SKU_SELECTOR_DIALOG_ID, extractVariantOptions } from "./sku-selector-utils";
-import { SkuSelectorFormContent } from "./sku-selector-form-content";
+import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-utils";
+import { SkuSelectorPieces } from "./sku-selector-pieces";
 
 export type { SkuSelectorDialogData };
-export { SKU_SELECTOR_DIALOG_ID };
-
-// ============================================================================
-// Main Component
-// ============================================================================
 
 interface SkuSelectorDialogProps {
-	/** Cart data for checking available quantities */
+	/** Panier serveur — sert à soustraire ce qui est déjà pris de chaque pièce. */
 	cart: GetCartReturn;
+	isStoreClosed?: boolean;
+	storeClosureMessage?: string | null;
 }
 
 /**
- * Dialog de sélection de variante pour ajout rapide au panier
+ * Dialog de choix de variante, ouvert depuis une carte produit à plusieurs SKU.
  *
- * S'affiche quand l'utilisateur clique sur "Ajouter au panier"
- * sur une ProductCard avec plusieurs variantes.
+ * Direction « Une pièce à la fois » (audit design 2026-08-04) : une ligne par SKU
+ * réel — sa photo, sa combinaison, son prix, son stock — au lieu de trois axes
+ * croisés à recombiner. À ~20 commandes/mois et deux à six variantes par bijou,
+ * croiser des attributs était un problème de gros catalogue qu'on n'a pas.
  *
- * Utilise TanStack Form (useAppForm) pour la gestion du formulaire
+ * Conséquence non cosmétique : **la taille est écrite sur chaque ligne**, qu'une
+ * constante la déclare requise ou non. `PRODUCT_TYPES_REQUIRING_SIZE` a pointé
+ * pendant des mois vers des slugs inexistants (`ring` vs `bagues`) — on pouvait
+ * acheter une bague sans jamais voir sa taille. La correction est faite par ailleurs ;
+ * ici, il n'y a plus de constante à croire.
  */
-export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
+export function SkuSelectorDialog({
+	cart,
+	isStoreClosed = false,
+	storeClosureMessage = null,
+}: SkuSelectorDialogProps) {
 	const cartItems = cart.items.map((item) => ({
 		skuId: item.sku.id,
 		quantity: item.quantity,
@@ -64,201 +69,87 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 	const serverErrors = useServerFieldErrors({ state });
 	const shouldReduceMotion = useReducedMotion();
 
-	const form = useAppForm({
-		defaultValues: {
-			color: "",
-			material: "",
-			size: "",
-			quantity: 1,
-		},
-	});
-
 	const product = data?.product;
-	const preselectedColor = data?.preselectedColor;
 
-	// Reset form when dialog opens with a new product
-	// Pre-selects default SKU variants for better UX
-	useEffect(() => {
-		if (isOpen && product) {
-			const activeSkus = product.skus.filter((sku) => sku.isActive);
-			const defaultSku =
-				activeSkus.find((sku) => sku.isDefault && sku.inventory > 0) ??
-				activeSkus.find((sku) => sku.inventory > 0) ??
-				activeSkus.find((sku) => sku.isDefault) ??
-				activeSkus[0];
-			const { colors, materials, sizes } = extractVariantOptions(activeSkus);
-
-			// Validate preselectedColor exists in active colors
-			const validPreselectedColor =
-				preselectedColor && colors.some((c) => c.slug === preselectedColor)
-					? preselectedColor
-					: null;
-
-			// Priority: validPreselectedColor > default SKU primary color > auto-select if unique
-			const defaultPrimaryColorSlug = defaultSku?.colors[0]?.color.slug;
-			const initialColor =
-				validPreselectedColor ??
-				defaultPrimaryColorSlug ??
-				(colors.length === 1 ? colors[0]!.slug : "");
-
-			// Matériau initial : matériau principal du defaultSku (1er de la liste M2M)
-			const defaultPrimaryMaterialName = defaultSku?.materials[0]?.material.name;
-			const initialMaterial =
-				(defaultPrimaryMaterialName ? slugify(defaultPrimaryMaterialName) : "") ||
-				(materials.length === 1 ? materials[0]!.slug : "") ||
-				"";
-
-			const initialSize = defaultSku?.size ?? (sizes.length === 1 ? sizes[0] : "") ?? "";
-
-			form.reset({
-				color: initialColor,
-				material: initialMaterial,
-				size: initialSize,
-				quantity: 1,
-			});
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- form.reset is stable
-	}, [isOpen, product, preselectedColor]);
-
-	const handleClose = () => {
-		form.reset();
-		close();
-	};
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open) {
-			handleClose();
-		}
-	};
-
-	// Skeleton state with aria-busy and accessible title
-	if (!product) {
-		return (
-			<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-				<ResponsiveDialogContent className="sm:max-w-130" aria-busy="true">
-					<ResponsiveDialogHeader>
-						<ResponsiveDialogTitle className="sr-only">
-							Chargement des options du produit
-						</ResponsiveDialogTitle>
-						<Skeleton className="h-6 w-40" aria-hidden="true" />
-						<ResponsiveDialogDescription className="sr-only">
-							Chargement en cours
-						</ResponsiveDialogDescription>
-						<Skeleton className="mt-1 h-4 w-32" aria-hidden="true" />
-					</ResponsiveDialogHeader>
-					<div className="space-y-6 py-4">
-						{/* Image + Prix skeleton */}
-						<div className="flex gap-4">
-							<Skeleton className="size-24 shrink-0 rounded-lg sm:size-40" />
-							<div className="flex flex-col justify-center gap-2">
-								<Skeleton className="h-8 w-20" />
-							</div>
-						</div>
-						{/* Sélecteurs skeleton */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-16" />
-							<div className="flex flex-wrap gap-2">
-								<Skeleton className="h-11 w-24 rounded-lg" />
-								<Skeleton className="h-11 w-28 rounded-lg" />
-								<Skeleton className="h-11 w-20 rounded-lg" />
-							</div>
-						</div>
-						{/* Quantité skeleton */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-16" />
-							<div className="flex items-center gap-3">
-								<Skeleton className="size-11 rounded-md" />
-								<Skeleton className="h-6 w-8" />
-								<Skeleton className="size-11 rounded-md" />
-							</div>
-						</div>
-					</div>
-					<ResponsiveDialogFooter>
-						<Skeleton className="h-11 w-full rounded-md" />
-					</ResponsiveDialogFooter>
-				</ResponsiveDialogContent>
-			</ResponsiveDialog>
-		);
-	}
+	// Le store n'est jamais ouvert sans produit : `openSkuSelector({ product })` les
+	// pose ensemble. L'ancien squelette de 48 lignes gardé par cette condition était
+	// structurellement inatteignable — l'attente réelle est le chunk, et elle se voit
+	// désormais sur le bouton de la carte.
+	if (!product) return null;
 
 	const activeSkus = product.skus.filter((sku) => sku.isActive);
-	const { colors, materials, sizes } = extractVariantOptions(activeSkus);
+	const allSoldOut = activeSkus.length > 0 && activeSkus.every((sku) => sku.inventory <= 0);
 
-	// Check for product unavailability
-	const noActiveSkus = activeSkus.length === 0;
-	const allOutOfStock = activeSkus.length > 0 && activeSkus.every((sku) => sku.inventory <= 0);
-
-	const hasAdjustableSizes = sizes.some((s) => s.toLowerCase().includes("ajustable"));
-	const requiresSize =
-		!hasAdjustableSizes &&
-		sizes.length > 0 &&
-		PRODUCT_TYPES_REQUIRING_SIZE.includes(
-			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number],
-		);
+	const description =
+		activeSkus.length === 0
+			? SKU_SELECTOR_TEXTS.NO_ACTIVE_SKUS
+			: allSoldOut
+				? SKU_SELECTOR_TEXTS.ALL_SOLD_OUT
+				: SKU_SELECTOR_TEXTS.pieceCount(activeSkus.length);
 
 	return (
-		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveDialogContent className="group/sku-selector sm:max-h-[85vh] sm:max-w-130">
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+			{/* ⚠️ `md:flex md:flex-col md:overflow-y-hidden` : le DialogContent desktop est
+			    une GRILLE `overflow-y-auto` — `min-h-0 flex-1` (form) et `mt-auto shrink-0`
+			    (footer) sont des propriétés d'enfant flex, inertes en grille. Sans ces trois
+			    classes, au-delà de 85vh c'est le dialog ENTIER qui scrolle et le CTA prix
+			    part sous le pli ; avec elles, la liste des pièces scrolle en interne et le
+			    footer reste visible — comme sur mobile, où le wrapper du drawer est déjà
+			    flex-col. */}
+			<ResponsiveDialogContent className="group/sku-selector md:flex md:max-h-[85vh] md:max-w-130 md:flex-col md:overflow-y-hidden">
 				<ResponsiveDialogHeader className="shrink-0">
-					<ResponsiveDialogTitle className="line-clamp-1">{product.title}</ResponsiveDialogTitle>
-					<ResponsiveDialogDescription>
-						Choisissez vos options pour ajouter au panier
-					</ResponsiveDialogDescription>
+					<ResponsiveDialogTitle className="line-clamp-2 text-balance">
+						{product.title}
+					</ResponsiveDialogTitle>
+					{/* ⚠️ `inView={false}` obligatoire : le dialog est portalisé, et
+					    `animation-timeline: view()` n'y déclenche jamais.
+					    `self-start` : le header est un `flex flex-col`, dont le stretch
+					    étirerait le tracé sur toute la largeur.
+					    `length="l"` : le tracé long (11:1) — l'ancien couple 130×9 sur le
+					    tracé 6:1 letterboxait à l'échelle 0,45 (54 px d'encre rendus sur
+					    130, le pire cas du dépôt — audit 2026-08-05). Couleur : défaut
+					    cascadé (repli --primary) — `rose-strong` était le ton dont le
+					    JSDoc de squiggle-underline documente le retrait. */}
+					<HandDrawnUnderline
+						inView={false}
+						length="l"
+						width={130}
+						className="-mt-1 block shrink-0 self-start"
+					/>
+					<ResponsiveDialogDescription>{description}</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
-				<RequiredFieldsNote />
 
-				{/* Unavailable product message */}
-				{(noActiveSkus || allOutOfStock) && (
+				{activeSkus.length === 0 ? (
 					<div className="space-y-3 py-8 text-center">
-						<p role="alert" className="text-muted-foreground">
-							{noActiveSkus
-								? "Ce produit n'est actuellement pas disponible"
-								: "Ce produit est actuellement en rupture de stock"}
-						</p>
 						<Link
 							href={`/creations/${product.slug}`}
-							onClick={handleClose}
-							aria-label={`Voir la fiche produit : ${product.title}`}
-							className="text-muted-foreground can-hover:hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+							onClick={close}
+							aria-label={SKU_SELECTOR_TEXTS.viewProductAriaLabel(product.title)}
+							className="text-muted-foreground can-hover:hover:text-foreground focus-ring inline-flex items-center gap-1 rounded-sm text-sm transition-colors"
 						>
-							Voir la fiche produit
+							{SKU_SELECTOR_TEXTS.VIEW_PRODUCT}
 							<ArrowRightIcon className="size-3.5" aria-hidden="true" />
 						</Link>
 					</div>
-				)}
-
-				{/* Normal form - only when SKUs are available */}
-				{!noActiveSkus && !allOutOfStock && (
+				) : (
 					<form
 						action={action}
 						className="flex min-h-0 flex-1 flex-col"
 						data-pending={isPending ? "" : undefined}
 					>
 						<FormServerErrorAlert errors={serverErrors} className="mb-4" />
-
-						{/* Variant fields subscribe -- isolated from quantity changes */}
-						<form.Subscribe selector={(state) => state.values}>
-							{(values) => (
-								<SkuSelectorFormContent
-									key={product.id}
-									values={values}
-									onColorChange={(c) => form.setFieldValue("color", c)}
-									onMaterialChange={(m) => form.setFieldValue("material", m)}
-									onSizeChange={(s) => form.setFieldValue("size", s)}
-									onQuantityChange={(q) => form.setFieldValue("quantity", q)}
-									product={product}
-									activeSkus={activeSkus}
-									colors={colors}
-									materials={materials}
-									sizes={sizes}
-									requiresSize={requiresSize}
-									cartItems={cartItems}
-									isPending={isPending}
-									shouldReduceMotion={shouldReduceMotion}
-									handleClose={handleClose}
-								/>
-							)}
-						</form.Subscribe>
+						<SkuSelectorPieces
+							key={product.id}
+							product={product}
+							activeSkus={activeSkus}
+							cartItems={cartItems}
+							preselectedColor={data.preselectedColor}
+							isPending={isPending}
+							shouldReduceMotion={!!shouldReduceMotion}
+							isStoreClosed={isStoreClosed}
+							storeClosureMessage={storeClosureMessage}
+							onClose={close}
+						/>
 					</form>
 				)}
 			</ResponsiveDialogContent>

@@ -31,7 +31,7 @@ export function CartClearButton({ disabled = false }: CartClearButtonProps) {
 			onClick={handleClick}
 			disabled={disabled}
 			aria-label="Vider le panier"
-			className="text-muted-foreground can-hover:hover:text-destructive active:text-destructive/80 size-11 shrink-0 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+			className="text-muted-foreground can-hover:hover:text-destructive active:text-destructive/80 size-11 shrink-0 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50"
 		>
 			<TrashIcon className="size-4" aria-hidden="true" />
 		</Button>

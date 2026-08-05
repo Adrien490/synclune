@@ -85,12 +85,16 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 				className={cn(
 					"w-full tracking-wide shadow-lg",
 					// Style amélioré pour meilleur contraste
-					"bg-primary hover:bg-primary/90",
+					"bg-primary can-hover:hover:bg-primary/90",
 					"text-primary-foreground font-semibold",
 					// Animation fluide
 					"transform-gpu transition-[transform,box-shadow] duration-300",
 					"can-hover:hover:scale-[1.02] can-hover:hover:shadow-xl",
-					"active:scale-[0.98]",
+					// ⚠️ L'enfoncement DOIT être doublé en `can-hover:active:` : le variant
+					// `can-hover` est émis APRÈS les variants intégrés de Tailwind v4, donc
+					// à specificity égale il gagne pendant le `mousedown` — le clic sur le
+					// CTA principal ne produisait aucun retour presse à la souris.
+					"can-hover:active:scale-[0.98] active:scale-[0.98]",
 					// Anneau de focus accessible
 					"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2",
 				)}

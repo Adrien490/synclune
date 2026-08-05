@@ -30,14 +30,6 @@ vi.mock("@/modules/products/data/get-related-products", () => ({
 	getRelatedProducts: async () => mockRecommendations.value,
 }));
 
-vi.mock("@/shared/components/scroll-fade", () => ({
-	default: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-		<div data-testid="scroll-fade" className={className}>
-			{children}
-		</div>
-	),
-}));
-
 vi.mock("next/image", () => ({
 	default: ({ src, alt }: { src: string; alt: string }) => (
 		// eslint-disable-next-line @next/next/no-img-element
@@ -148,7 +140,9 @@ describe("CartSheetRecommendations", () => {
 		expect(link).toHaveAttribute("href", "/creations/bague-etoile");
 	});
 
-	it("shows 'N/A' when product has no image", async () => {
+	// « Pas d'image » et non `N/A` : même placeholder que la ligne du panier
+	// (`cart-sheet-item-row.tsx`), sur un site en français uniquement.
+	it("affiche « Pas d'image » quand le produit n'a pas de visuel", async () => {
 		mockRecommendations.value = [
 			{
 				id: "p1",
@@ -159,6 +153,6 @@ describe("CartSheetRecommendations", () => {
 		];
 		const jsx = await CartSheetRecommendations();
 		render(jsx!);
-		expect(screen.getByText("N/A")).toBeInTheDocument();
+		expect(screen.getByText("Pas d'image")).toBeInTheDocument();
 	});
 });

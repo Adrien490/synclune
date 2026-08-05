@@ -206,6 +206,31 @@ describe("CartItemQuantitySelector", () => {
 		expect(group).toHaveAttribute("aria-busy", "true");
 	});
 
+	/**
+	 * @regression group-has-pending-on-self-2026-08-05
+	 *
+	 * `data-pending` est le jumeau de STYLE d'`aria-busy` : c'est lui qui alimente les
+	 * variantes `group-has-[[data-pending]]/item:` de `cart-sheet-item-row.tsx` (vignette,
+	 * titre, et surtout le PRIX). Elles n'avaient aucun producteur, donc le prix de la
+	 * ligne — la seule valeur qui change au tap de quantité — ne signalait rien.
+	 *
+	 * Les deux attributs doivent bouger ENSEMBLE : `aria-busy` seul rend l'état au lecteur
+	 * d'écran et à personne d'autre, ce qui était exactement le symptôme.
+	 */
+	it("publie `data-pending` exactement quand `aria-busy` est vrai", () => {
+		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
+		expect(screen.getByRole("group", { name: /Quantité de l'article/ })).not.toHaveAttribute(
+			"data-pending",
+		);
+
+		cleanup();
+		mockIsPending.value = true;
+		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
+		const busy = screen.getByRole("group", { name: /Quantité de l'article/ });
+		expect(busy).toHaveAttribute("aria-busy", "true");
+		expect(busy).toHaveAttribute("data-pending", "");
+	});
+
 	it("input has correct aria-label with min and max bounds", () => {
 		renderSelector({ currentQuantity: 2, maxQuantity: 8 });
 		const input = screen.getByTestId("quantity-input");

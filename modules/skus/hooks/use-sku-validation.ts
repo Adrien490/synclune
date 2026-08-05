@@ -1,6 +1,8 @@
-import { extractVariantInfo } from "@/modules/skus/services/sku-info-extraction.service";
+import {
+	extractVariantInfo,
+	requiresSizeSelection,
+} from "@/modules/skus/services/sku-info-extraction.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
 import type { VariantSelection, UseVariantValidationReturn } from "../types/sku.types";
 
 interface UseVariantValidationOptions {
@@ -25,32 +27,27 @@ export function useVariantValidation({
 
 	const requiresMaterial = product.skus.length > 1 && variantInfo.availableMaterials.length > 1;
 
-	const hasAdjustableSizes = variantInfo.availableSizes.some((s) =>
-		s.size.toLowerCase().includes("ajustable"),
-	);
-
-	const requiresSize =
-		product.skus.length > 1 &&
-		!hasAdjustableSizes &&
-		variantInfo.availableSizes.length > 0 &&
-		PRODUCT_TYPES_REQUIRING_SIZE.includes(
-			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number],
-		);
+	// SSOT du prédicat : le squelette de la colonne d'achat le lit AUSSI, côté
+	// serveur, pour ne pas réserver un axe qui ne sera pas rendu.
+	const requiresSize = requiresSizeSelection(product, variantInfo);
 
 	// Calculer les erreurs de validation
 	const validationErrors = (() => {
 		const errors: string[] = [];
 
+		// Tutoiement : ces messages partent dans la live region du sélecteur
+		// (`sku-selector.tsx`), donc ils sont LUS à un utilisateur de lecteur
+		// d'écran — sur une page dont tout le reste tutoie (CLAUDE.md § Voix).
 		if (requiresColor && !selection.color) {
-			errors.push("Veuillez sélectionner une couleur");
+			errors.push("Choisis une couleur");
 		}
 
 		if (requiresMaterial && !selection.material) {
-			errors.push("Veuillez sélectionner un matériau");
+			errors.push("Choisis un matériau");
 		}
 
 		if (requiresSize && !selection.size) {
-			errors.push("Veuillez sélectionner une taille");
+			errors.push("Choisis une taille");
 		}
 
 		return errors;

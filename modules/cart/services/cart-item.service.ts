@@ -74,11 +74,26 @@ export function getCartItemDiscountPercent(item: CartItem): number {
 }
 
 /**
- * Returns the issue label suffix for a cart item with stock/availability problems
+ * SSOT du libellé d'un problème de disponibilité, pour TOUTES les surfaces.
+ *
+ * ⚠️ Il y avait trois formulations pour deux états : cette fonction rendait
+ * `"rupture"` / `"indisponible"` (minuscules) pour la liste de l'en-tête du panier,
+ * tandis que les pastilles de `cart-sheet-item-row.tsx` codaient en dur `"Rupture"` /
+ * `"Plus disponible"`. Même état, trois mots — le client lisait « rupture » en haut et
+ * « Rupture » à côté de l'article, et « indisponible » vs « Plus disponible ».
+ *
+ * Les libellés sont désormais ceux des pastilles (les plus explicites) et servent les
+ * deux surfaces. La casse est portée par le libellé lui-même : l'en-tête l'insère entre
+ * parenthèses, ce qui accepte une capitale.
  */
+export const CART_ITEM_ISSUE_LABELS = {
+	inactive: "Plus disponible",
+	outOfStock: "Rupture",
+} as const;
+
 export function getCartItemIssueLabel(item: CartItem): string | null {
-	if (isCartItemInactive(item)) return "indisponible";
-	if (isCartItemOutOfStock(item)) return "rupture";
+	if (isCartItemInactive(item)) return CART_ITEM_ISSUE_LABELS.inactive;
+	if (isCartItemOutOfStock(item)) return CART_ITEM_ISSUE_LABELS.outOfStock;
 	return null;
 }
 

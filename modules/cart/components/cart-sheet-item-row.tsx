@@ -30,6 +30,7 @@ import {
 	hasCartItemDiscount,
 	getCartItemDiscountPercent,
 	getCartItemPrimaryImage,
+	CART_ITEM_ISSUE_LABELS,
 } from "../services/cart-item.service";
 import { TrashIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
@@ -86,13 +87,7 @@ export function CartSheetItemRow({
 	const colorsLabel = getSkuColorsDisplayLabel(item.sku.colors);
 	const colorHexes = getColorHexes(item.sku.colors);
 	const colorNames = getColorNames(item.sku.colors);
-	const ariaLabelParts = [
-		item.sku.product.title,
-		colorsLabel,
-		materialsLabel,
-		`quantité ${item.quantity}`,
-		formatEuro(subtotal),
-	].filter(Boolean);
+	const titleId = `cart-item-title-${item.id}`;
 
 	const handleSwipeRemove = () => {
 		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
@@ -108,20 +103,38 @@ export function CartSheetItemRow({
 	const article = (
 		<article
 			className={cn(
-				"group/item bg-card rounded-md border p-3 shadow-sm sm:p-3.5",
+				"group/item bg-card shadow-paper rounded-md border p-3 sm:p-3.5",
 				"grid grid-cols-[5rem_1fr] gap-3.5 sm:grid-cols-[6rem_1fr]",
 				"transition-[border-color,box-shadow] duration-300 ease-out motion-reduce:transition-colors",
 				CARD_SURFACE_HOVER,
 				CARD_SURFACE_FOCUS,
+				// `border-transparent` au repos : c'est `shadow-paper` qui sépare la ligne du
+				// panneau, pas un filet.
+				//
+				// ⚠️ Le `border-border` posé le matin du 2026-08-05 était un correctif
+				// sous-dimensionné : sur `bg-card`, `--border` ne rend que **1,27:1**, donc il
+				// ne séparait presque rien tout en consommant le 1 px que le survol réserve à
+				// `border-primary/40`. L'ombre rétablit la séparation d'origine (ΔL 0,0602,
+				// contre 0,0600 pour l'ancien fond `bg-muted`) et rend le filet disponible pour
+				// ce qu'il signale vraiment : le survol, le focus, et l'état fautif ci-dessous.
 				hasIssue ? "border-destructive/50" : "border-transparent",
 			)}
 			style={{ transform: index % 2 === 0 ? "rotate(-0.4deg)" : "rotate(0.4deg)" }}
-			aria-label={ariaLabelParts.join(", ")}
+			/*
+			 * `aria-labelledby` vers le titre, et NON un `aria-label` reconstruit.
+			 *
+			 * ⚠️ L'ancien `aria-label` concaténait titre + couleurs + matière + quantité +
+			 * prix — c'est-à-dire exactement ce que les enfants rendent déjà. Le rôle
+			 * `article` accepte un nom SANS masquer son contenu : le lecteur d'écran
+			 * annonçait donc le nom composé à l'entrée, puis relisait les mêmes cinq
+			 * informations une par une. Précédent propre du dépôt : `product-card.tsx`.
+			 */
+			aria-labelledby={titleId}
 		>
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
-				className="bg-muted focus-visible:ring-ring relative row-span-2 size-20 overflow-hidden rounded-md transition-opacity group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:opacity-80 sm:size-24"
+				className="bg-muted focus-visible:ring-ring relative row-span-2 size-20 overflow-hidden rounded-md transition-opacity group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:opacity-80 sm:size-24"
 				aria-label={`Voir ${item.sku.product.title}`}
 			>
 				{primaryImage && thumbSrc ? (
@@ -142,12 +155,21 @@ export function CartSheetItemRow({
 				)}
 			</Link>
 
-			<div className="min-w-0 flex-1 gap-y-1">
-				<h3 className="text-sm">
+			{/*
+			 * `grid`, et pas seulement `min-w-0` : le parent `<article>` est lui-même une
+			 * grille, donc ce div en est une CELLULE — un conteneur de bloc. Les `flex-1`
+			 * et `gap-y-1` qu'il portait n'avaient aucun effet (l'un ne vaut que pour un
+			 * enfant de flex, l'autre que pour un conteneur flex/grid), si bien que le
+			 * rythme de 4 px voulu entre le titre, le `<dl>` et le prix n'existait pas.
+			 * En `grid`, `gap-y-1` devient réel et devient le SEUL propriétaire de cet
+			 * espacement — d'où le retrait des `mt-1` posés plus bas en compensation.
+			 */}
+			<div className="grid min-w-0 gap-y-1">
+				<h3 className="text-sm" id={titleId}>
 					<Link
 						href={`/creations/${item.sku.product.slug}`}
 						onClick={onClose}
-						className="can-hover:hover:text-foreground active:text-muted-foreground focus-visible:ring-ring line-clamp-2 block rounded font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:line-clamp-1"
+						className="can-hover:hover:text-foreground active:text-muted-foreground focus-visible:ring-ring line-clamp-2 block rounded font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:line-clamp-1"
 					>
 						{item.sku.product.title}
 					</Link>
@@ -216,25 +238,33 @@ export function CartSheetItemRow({
 							<Badge
 								variant="secondary"
 								className="bg-accent/20 text-2xs px-1 py-0"
-								aria-label={`Reduction de ${discountPercent} pourcent`}
+								aria-label={`Réduction de ${discountPercent} pour cent`}
 							>
 								-{discountPercent}%
 							</Badge>
 							<span className="sr-only">
-								Prix reduit de {formatEuro(item.sku.compareAtPrice!)} a{" "}
+								Prix réduit de {formatEuro(item.sku.compareAtPrice!)} à{" "}
 								{formatEuro(item.priceAtAdd)}
 							</span>
 						</span>
 					)}
 				</div>
 
+				{/* Libellés via `CART_ITEM_ISSUE_LABELS` : la liste de l'en-tête du panier
+				    (`cart-sheet.tsx`) affiche le même état via `getCartItemIssueLabel`, qui lit
+				    la même SSOT. Les deux pastilles peuvent coexister — un SKU désactivé ET en
+				    rupture — ce que le libellé unique du service ne peut pas exprimer. */}
 				{hasIssue ? (
-					<div className="mt-1 flex flex-wrap gap-1">
-						{isOutOfStock && <CartStateChip tone="danger">Rupture</CartStateChip>}
-						{isInactive && <CartStateChip tone="danger">Plus disponible</CartStateChip>}
+					<div className="flex flex-wrap gap-1">
+						{isOutOfStock && (
+							<CartStateChip tone="danger">{CART_ITEM_ISSUE_LABELS.outOfStock}</CartStateChip>
+						)}
+						{isInactive && (
+							<CartStateChip tone="danger">{CART_ITEM_ISSUE_LABELS.inactive}</CartStateChip>
+						)}
 					</div>
 				) : item.sku.inventory > 1 && item.sku.inventory <= STOCK_THRESHOLDS.LOW ? (
-					<p className="mt-1">
+					<p>
 						<CartStateChip tone="warning">Plus que {item.sku.inventory} en stock</CartStateChip>
 					</p>
 				) : null}

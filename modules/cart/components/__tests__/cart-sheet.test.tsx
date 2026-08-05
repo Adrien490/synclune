@@ -222,13 +222,6 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-// Mock ScrollFade
-vi.mock("@/shared/components/scroll-fade", () => ({
-	default: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="scroll-fade">{children}</div>
-	),
-}));
-
 // Mock des icônes Phosphor
 vi.mock("@phosphor-icons/react/ssr", () => ({
 	ShoppingBagIcon: () => <svg data-testid="shopping-bag-icon" />,
@@ -307,6 +300,7 @@ vi.mock("../../lib/fly-to-cart", () => ({
 // ============================================================================
 
 import { CartSheet } from "../cart-sheet";
+import { STOCK_ISSUES_ALERT_ID } from "../stock-issues-alert-id";
 import type { GetCartReturn } from "../../types/cart.types";
 
 // ============================================================================
@@ -513,6 +507,32 @@ describe("CartSheet", () => {
 			expect(alert).toBeInTheDocument();
 			expect(alert).toHaveAttribute("aria-label", "Problèmes de stock dans le panier");
 			expect(screen.getByText("Ajuste ton panier pour continuer")).toBeInTheDocument();
+		});
+
+		/**
+		 * @regression cart-blocked-cta-stays-focusable-2026-08-05
+		 *
+		 * L'autre moitié du correctif du CTA bloqué. `CartSheetFooter` pointe son
+		 * `aria-describedby` sur cet id et y déplace le focus au clic ; il faut donc que
+		 * l'alerte porte bien cet id ET soit focusable programmatiquement. Sans
+		 * `tabIndex={-1}`, `focus()` sur un `<div>` est un no-op silencieux — et un
+		 * `aria-describedby` vers un id absent ne lève rien non plus : les deux moitiés
+		 * échouent en silence, d'où une assertion de chaque côté.
+		 */
+		it("rend l'alerte de stock focusable et sous l'id partagé", () => {
+			const outOfStockItem = createCartItem({
+				id: "item-oos",
+				quantity: 5,
+				sku: { ...createCartItem().sku, inventory: 0 },
+			});
+			render(<CartSheet cart={createCart([outOfStockItem])} />);
+
+			const alert = screen.getByRole("alert");
+			expect(alert).toHaveAttribute("id", STOCK_ISSUES_ALERT_ID);
+			expect(alert).toHaveAttribute("tabindex", "-1");
+
+			alert.focus();
+			expect(alert).toHaveFocus();
 		});
 
 		it("passes hasStockIssues=true to footer", () => {

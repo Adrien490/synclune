@@ -7,7 +7,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { CheckIcon } from "@phosphor-icons/react/ssr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
+import { useId, useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -37,6 +37,7 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 	const shouldReduceMotion = useReducedMotion();
+	const legendId = useId();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur le matériau principal du defaultSku
 	const rawMaterial =
@@ -83,12 +84,18 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 	// options indisponibles pour qu'elles soient annoncées par les lecteurs
 	// d'écran (cf. WCAG 1.3.1). La mutation reste bloquée par le guard
 	// `isMaterialAvailable` ci-dessous + le no-op `onClick` côté bouton.
-	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
+	// ⚠️ Cette traversée n'a RIEN FAIT jusqu'au 2026-08-05 : `focusOption` excluait
+	// `[aria-disabled="true"]` de sa requête, donc une flèche vers un matériau
+	// indisponible ne déplaçait pas le focus (cul-de-sac muet).
+	const { containerRef, handleKeyDown, getTabIndex } = useRadioGroupKeyboard({
 		options: materials,
 		getOptionId: (material) => material.name,
 		onSelect: (material) => {
 			if (isMaterialAvailable(material.name)) updateMaterial(material.name);
 		},
+		// Un seul arrêt de tabulation pour le groupe (ARIA APG) : les options
+		// indisponibles se rejoignent aux flèches.
+		activeOptionId: optimisticMaterial,
 	});
 
 	// Ne pas afficher si un seul matériau ou aucun
@@ -99,10 +106,12 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 			data-pending={isPending ? "" : undefined}
 			aria-busy={isPending || undefined}
 			className="space-y-3"
-			aria-label="Sélection de matériau"
 		>
+			{/* Pas d'`aria-label` sur le `fieldset` : il écrasait la `<legend>`. */}
 			<div className="flex items-center justify-between">
-				<legend className="text-sm/6 font-semibold tracking-tight antialiased">Matériau</legend>
+				<legend id={legendId} className="text-sm/6 font-semibold tracking-tight antialiased">
+					Matériau
+				</legend>
 				{optimisticMaterial && (
 					<Button
 						variant="ghost"
@@ -116,7 +125,12 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 					</Button>
 				)}
 			</div>
-			<div ref={containerRef} className="grid grid-cols-2 gap-2">
+			<div
+				ref={containerRef}
+				role="radiogroup"
+				aria-labelledby={legendId}
+				className="grid grid-cols-2 gap-2"
+			>
 				{materials.map((material, index) => {
 					// Comparaison insensible à la casse pour éviter les problèmes de matching
 					const isSelected = material.name.toLowerCase() === optimisticMaterial?.toLowerCase();
@@ -131,6 +145,7 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 							aria-disabled={!isAvailable}
 							aria-label={`${material.name}${!isAvailable ? " (indisponible)" : ""}`}
 							data-option-id={material.name}
+							tabIndex={getTabIndex(material, index)}
 							onClick={() => {
 								if (!isAvailable) return;
 								updateMaterial(material.name);
@@ -138,11 +153,16 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 							onKeyDown={(e) => handleKeyDown(e, index)}
 							className={cn(
 								"flex min-h-13 items-center justify-between rounded-lg border p-3 text-left transition-all sm:min-h-11",
-								"hover:shadow-sm active:scale-95",
+								"can-hover:hover:shadow-sm active:scale-95",
 								"aria-disabled:cursor-not-allowed aria-disabled:opacity-70 aria-disabled:saturate-50",
+								// Rose PROFOND, pas `--primary` : la bordure et la coche sont les
+								// porteuses de l'état « sélectionné », et le pastel ne mesure que
+								// 1,6:1 sur la carte — WCAG 1.4.11 demande 3:1 pour un composant.
+								// Même arbitrage que `shared/components/ui/radio-group.tsx`, qui
+								// l'avait déjà tranché ; ce sélecteur maison était resté en arrière.
 								isSelected
-									? "border-primary bg-primary/5"
-									: "border-border hover:border-primary/50",
+									? "border-brand-rose-strong bg-primary/5"
+									: "border-border can-hover:hover:border-brand-rose-strong",
 							)}
 						>
 							<span className="text-sm/6 font-medium tracking-normal antialiased">
@@ -158,7 +178,7 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 											: { type: "spring", stiffness: 400, damping: 15 }
 									}
 								>
-									<CheckIcon className="text-primary h-4 w-4" aria-hidden="true" />
+									<CheckIcon className="text-brand-rose-strong h-4 w-4" aria-hidden="true" />
 								</m.div>
 							)}
 						</button>

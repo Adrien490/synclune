@@ -1,6 +1,5 @@
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Image from "next/image";
 import { CartCloseLink } from "./cart-close-link";
@@ -34,11 +33,18 @@ export async function CartSheetRecommendations() {
 			>
 				Ça irait bien avec
 			</h3>
-			{/* `fadeFromClass` : le panneau du panier est en `bg-muted`, pas en
-			    `bg-background` (le défaut de `ScrollFade`) — un fondu latéral partant
-			    du blanc laisserait deux liserés clairs sur les bords de la rangée. */}
-			<ScrollFade axis="horizontal" className="px-6" fadeFromClass="from-muted">
-				<div className="flex gap-3 pb-1">
+			{/* Plus rien à accorder à la couleur du panneau : `scroll-fade-x` est un
+			    `mask-image`, il DISSOUT la rangée au lieu de superposer un dégradé. Le
+			    défunt `fadeFromClass` devait, lui, matcher la surface réelle — sinon
+			    deux liserés d'une autre couleur apparaissaient sur les bords.
+			    L'affordance de défilement reste portée par les cartes elles-mêmes,
+			    toutes des liens focusables : le Tab fait défiler la rangée. */}
+			<div
+				data-slot="scroll-fade-container"
+				data-no-edge-swipe=""
+				className="scroll-fade-x no-scrollbar w-full overflow-x-auto overflow-y-hidden px-6"
+			>
+				<div className="flex w-fit min-w-full gap-3 pb-1">
 					{recommendations.map((product) => {
 						const primarySku = product.skus[0];
 						const image = primarySku?.images[0];
@@ -66,8 +72,11 @@ export async function CartSheetRecommendations() {
 											className="object-cover transition-transform duration-200 group-hover/reco:scale-105"
 										/>
 									) : (
+										// « Pas d'image », comme la ligne du panier — `N/A` était le seul
+										// placeholder non traduit de la surface, sur un site en français
+										// uniquement.
 										<div className="text-muted-foreground flex h-full w-full items-center justify-center text-xs">
-											N/A
+											Pas d&apos;image
 										</div>
 									)}
 								</div>
@@ -85,7 +94,7 @@ export async function CartSheetRecommendations() {
 						);
 					})}
 				</div>
-			</ScrollFade>
+			</div>
 		</section>
 	);
 }

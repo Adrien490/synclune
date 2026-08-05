@@ -186,7 +186,7 @@ describe("AddToCartForm", () => {
 		it("shows 'Choisis la couleur' when color is required and not selected", () => {
 			mockUseAddToCart.mockReturnValue({ action: vi.fn(), isPending: false, state: undefined });
 			mockUseVariantValidation.mockReturnValue({
-				validationErrors: ["Veuillez sélectionner une couleur"],
+				validationErrors: ["Choisis une couleur"],
 				isValid: false,
 				requiresColor: true,
 				requiresMaterial: false,
@@ -204,7 +204,7 @@ describe("AddToCartForm", () => {
 		it("shows 'Choisis le matériau' when material is required and not selected", () => {
 			mockUseAddToCart.mockReturnValue({ action: vi.fn(), isPending: false, state: undefined });
 			mockUseVariantValidation.mockReturnValue({
-				validationErrors: ["Veuillez sélectionner un matériau"],
+				validationErrors: ["Choisis un matériau"],
 				isValid: false,
 				requiresColor: false,
 				requiresMaterial: true,

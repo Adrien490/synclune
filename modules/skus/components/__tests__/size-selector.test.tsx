@@ -115,7 +115,7 @@ function makeProduct() {
 				images: [],
 			},
 		],
-		type: { slug: "rings", label: "Bague" },
+		type: { slug: "bagues", label: "Bague" },
 	};
 }
 
@@ -131,6 +131,8 @@ beforeEach(() => {
 	mockUseRadioGroupKeyboard.mockReturnValue({
 		containerRef: { current: null },
 		handleKeyDown: vi.fn(),
+		// Tabindex roving : le groupe est UN seul arrêt de tabulation (ARIA APG).
+		getTabIndex: (_option: unknown, index: number) => (index === 0 ? 0 : -1),
 	});
 });
 
@@ -172,13 +174,12 @@ describe("SizeSelector", () => {
 			expect(screen.getByRole("radio", { name: /taille 54/i })).toBeInTheDocument();
 		});
 
-		it("renders a fieldset with radiogroup role via aria-label", () => {
+		it("expose un radiogroup nommé par la légende", () => {
 			const product = makeProduct() as unknown as Parameters<typeof SizeSelector>[0]["product"];
 			render(<SizeSelector sizes={SIZES} product={product} shouldShow={true} />);
 
-			const fieldset = screen.getByRole("group", { name: /sélection de taille/i });
-
-			expect(fieldset).toBeInTheDocument();
+			expect(screen.getByRole("radiogroup", { name: /taille/i })).toBeInTheDocument();
+			expect(screen.queryByRole("group", { name: /sélection de taille/i })).toBeNull();
 		});
 	});
 
@@ -193,10 +194,10 @@ describe("SizeSelector", () => {
 		it("shows 'Taille (Diametre)' for ring product type", () => {
 			const product = makeProduct() as unknown as Parameters<typeof SizeSelector>[0]["product"];
 			render(
-				<SizeSelector sizes={SIZES} product={product} productTypeSlug="rings" shouldShow={true} />,
+				<SizeSelector sizes={SIZES} product={product} productTypeSlug="bagues" shouldShow={true} />,
 			);
 
-			expect(screen.getByText("Taille (Diametre)")).toBeInTheDocument();
+			expect(screen.getByText("Taille (Diamètre)")).toBeInTheDocument();
 		});
 
 		it("shows 'Taille (Tour de poignet)' for bracelet product type", () => {

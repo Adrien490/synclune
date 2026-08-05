@@ -5,6 +5,7 @@ import {
 	isCartItemInactive,
 	hasCartItemIssue,
 	getCartItemIssueLabel,
+	CART_ITEM_ISSUE_LABELS,
 	hasCartItemDiscount,
 	getCartItemDiscountPercent,
 	getCartItemPrimaryImage,
@@ -140,26 +141,50 @@ describe("hasCartItemIssue", () => {
 });
 
 describe("getCartItemIssueLabel", () => {
-	it("should return 'indisponible' for inactive SKU", () => {
-		expect(getCartItemIssueLabel(createCartItem({ isActive: false }))).toBe("indisponible");
-	});
-
-	it("should return 'indisponible' for non-public product", () => {
-		expect(getCartItemIssueLabel(createCartItem({ status: "DRAFT" }))).toBe("indisponible");
-	});
-
-	it("should return 'rupture' for out of stock", () => {
-		expect(getCartItemIssueLabel(createCartItem({ inventory: 0, quantity: 1 }))).toBe("rupture");
-	});
-
-	it("should return 'rupture' for insufficient stock", () => {
-		expect(getCartItemIssueLabel(createCartItem({ inventory: 2, quantity: 5 }))).toBe("rupture");
-	});
-
-	it("should prioritize 'indisponible' over 'rupture'", () => {
-		expect(getCartItemIssueLabel(createCartItem({ isActive: false, inventory: 0 }))).toBe(
-			"indisponible",
+	/*
+	 * Les libellés viennent de `CART_ITEM_ISSUE_LABELS`, pas de littéraux : c'est la SSOT
+	 * partagée avec les pastilles de `cart-sheet-item-row.tsx`. Avant, cette fonction
+	 * rendait « rupture » / « indisponible » en minuscules pour la liste de l'en-tête du
+	 * panier tandis que les pastilles codaient « Rupture » / « Plus disponible » —
+	 * trois mots pour deux états, sur la même surface. Asserter la constante plutôt que
+	 * le texte fait échouer ce test si les deux surfaces re-divergent.
+	 */
+	it("rend le libellé « plus disponible » pour un SKU désactivé", () => {
+		expect(getCartItemIssueLabel(createCartItem({ isActive: false }))).toBe(
+			CART_ITEM_ISSUE_LABELS.inactive,
 		);
+	});
+
+	it("rend le libellé « plus disponible » pour un produit non public", () => {
+		expect(getCartItemIssueLabel(createCartItem({ status: "DRAFT" }))).toBe(
+			CART_ITEM_ISSUE_LABELS.inactive,
+		);
+	});
+
+	it("rend le libellé « rupture » quand le stock est nul", () => {
+		expect(getCartItemIssueLabel(createCartItem({ inventory: 0, quantity: 1 }))).toBe(
+			CART_ITEM_ISSUE_LABELS.outOfStock,
+		);
+	});
+
+	it("rend le libellé « rupture » quand le stock est insuffisant", () => {
+		expect(getCartItemIssueLabel(createCartItem({ inventory: 2, quantity: 5 }))).toBe(
+			CART_ITEM_ISSUE_LABELS.outOfStock,
+		);
+	});
+
+	it("priorise l'indisponibilité sur la rupture", () => {
+		expect(getCartItemIssueLabel(createCartItem({ isActive: false, inventory: 0 }))).toBe(
+			CART_ITEM_ISSUE_LABELS.inactive,
+		);
+	});
+
+	it("les deux libellés sont distincts et non vides", () => {
+		// Garde-fou de la SSOT elle-même : deux états qui partageraient un libellé
+		// redeviendraient indiscernables pour le client.
+		expect(CART_ITEM_ISSUE_LABELS.inactive).toBeTruthy();
+		expect(CART_ITEM_ISSUE_LABELS.outOfStock).toBeTruthy();
+		expect(CART_ITEM_ISSUE_LABELS.inactive).not.toBe(CART_ITEM_ISSUE_LABELS.outOfStock);
 	});
 
 	it("should return null for available items", () => {

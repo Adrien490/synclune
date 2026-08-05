@@ -22,6 +22,8 @@ const SkuSelectorDialog = dynamic(
 interface CartAndSkuLazyProps {
 	cart: GetCartReturn;
 	recommendations?: React.ReactNode;
+	isStoreClosed?: boolean;
+	storeClosureMessage?: string | null;
 }
 
 /**
@@ -37,7 +39,12 @@ interface CartAndSkuLazyProps {
  * `*HasOpened` flips during render (no effect) once the store becomes open.
  * React docs: storing information from previous renders.
  */
-export function CartAndSkuLazy({ cart, recommendations }: CartAndSkuLazyProps) {
+export function CartAndSkuLazy({
+	cart,
+	recommendations,
+	isStoreClosed = false,
+	storeClosureMessage = null,
+}: CartAndSkuLazyProps) {
 	const cartOpen = useSheet("cart").isOpen;
 	const skuOpen = useDialog(SKU_SELECTOR_DIALOG_ID).isOpen;
 
@@ -52,7 +59,14 @@ export function CartAndSkuLazy({ cart, recommendations }: CartAndSkuLazyProps) {
 			{cartHasOpened && (
 				<CartSheet key="cart-sheet" cart={cart} recommendations={recommendations} />
 			)}
-			{skuHasOpened && <SkuSelectorDialog key="sku-selector" cart={cart} />}
+			{skuHasOpened && (
+				<SkuSelectorDialog
+					key="sku-selector"
+					cart={cart}
+					isStoreClosed={isStoreClosed}
+					storeClosureMessage={storeClosureMessage}
+				/>
+			)}
 		</>
 	);
 }

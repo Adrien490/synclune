@@ -1,4 +1,5 @@
 import { getSwatchAriaLabel } from "@/modules/colors/utils/swatch-style";
+import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
 import { slugify } from "@/shared/utils/generate-slug";
 import type {
 	BaseProductSku,
@@ -187,4 +188,37 @@ export function extractVariantInfo<
 		},
 		totalStock,
 	};
+}
+
+/**
+ * Le sélecteur de taille est-il rendu pour ce produit ?
+ *
+ * SSOT du prédicat, appelée par `useVariantValidation` (côté client, pour la
+ * validation) ET par `app/(shop)/creations/[slug]/page.tsx` (côté serveur, pour
+ * dimensionner le squelette de la colonne d'achat). Réimplémenter la condition
+ * dans le squelette, c'était garantir qu'il dérive : il réservait une carte de
+ * variante même sur une fiche mono-SKU, où `VariantSelector` retourne `null`.
+ *
+ * Trois conditions cumulatives : plusieurs SKUs, au moins une taille, aucune
+ * taille « ajustable » (une pièce ajustable n'a pas de taille à choisir), et un
+ * type de produit qui appelle une taille (bague, bracelet).
+ */
+export function requiresSizeSelection<
+	TSku extends BaseProductSku,
+	TProduct extends { skus?: TSku[] | null; type?: { slug?: string | null } | null },
+>(product: TProduct, variantInfo?: ProductVariantInfo): boolean {
+	const info = variantInfo ?? extractVariantInfo(product);
+	const skuCount = product.skus?.length ?? 0;
+	const hasAdjustableSizes = info.availableSizes.some((s) =>
+		s.size.toLowerCase().includes("ajustable"),
+	);
+
+	return (
+		skuCount > 1 &&
+		!hasAdjustableSizes &&
+		info.availableSizes.length > 0 &&
+		PRODUCT_TYPES_REQUIRING_SIZE.includes(
+			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number],
+		)
+	);
 }

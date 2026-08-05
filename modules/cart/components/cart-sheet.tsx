@@ -18,7 +18,6 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/shared/components/ui/drawer";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBagIcon, XIcon } from "@phosphor-icons/react/ssr";
@@ -51,6 +50,7 @@ import { CartCloseContext } from "../contexts/cart-close-context";
 import { cartReducer } from "../services/cart-reducer.service";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { CART_TARGET_ATTR } from "../lib/fly-to-cart";
+import { STOCK_ISSUES_ALERT_ID } from "./stock-issues-alert-id";
 
 interface CartSheetProps {
 	cart: GetCartReturn;
@@ -102,7 +102,7 @@ function CartSheetHeaderContent({
 					{hasItems && (
 						<span
 							aria-hidden="true"
-							className="text-muted-foreground transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
+							className="text-muted-foreground transition-opacity duration-200 group-data-pending/sheet:opacity-50"
 						>
 							{" "}
 							({totalItems})
@@ -185,14 +185,14 @@ function CartSheetBody({
 							<Button
 								render={<Link href="/produits" onClick={close} />}
 								size="lg"
-								className="group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+								className="group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50"
 							>
 								Découvrir la boutique
 							</Button>
 							<Button
 								render={<Link href="/collections" onClick={close} />}
 								variant="link"
-								className="text-muted-foreground group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+								className="text-muted-foreground group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50"
 							>
 								Voir les collections
 							</Button>
@@ -206,10 +206,18 @@ function CartSheetBody({
 						   valait 3,81:1 et sa liste `text-destructive/80` en 12 px 2,93:1 —
 						   les deux sous AA. La barre pleine à gauche porte la sévérité. */
 						<div
-							id="stock-issues-alert"
+							id={STOCK_ISSUES_ALERT_ID}
 							className="bg-destructive/10 border-l-destructive text-foreground shrink-0 border-b border-l-4 px-6 py-2.5"
 							role="alert"
 							aria-label="Problèmes de stock dans le panier"
+							/*
+							 * `tabIndex={-1}` : cible de focus programmatique, pas d'arrêt de
+							 * tabulation. Le CTA « Passer commande » bloqué renvoie ici au clic
+							 * (`handleBlockedClick` dans `CartSheetFooter`) — sans quoi le motif du
+							 * blocage n'était atteignable par aucune modalité, le `disabled` natif
+							 * ayant sorti le bouton du tab order.
+							 */
+							tabIndex={-1}
 						>
 							<p className="text-sm font-semibold">Ajuste ton panier pour continuer</p>
 							<ul className="mt-1 space-y-0.5 text-xs">
@@ -230,21 +238,31 @@ function CartSheetBody({
 						<CartPriceChangeAlert items={items} />
 					</div>
 
-					<div className="min-h-0 flex-1">
-						{/* `fadeFromClass` : le défaut est `from-background`, or la liste est
-						    posée sur le panneau en `bg-muted`. Sans override, le fondu de
-						    haut et de bas partait d'une couleur qui n'est pas celle du fond. */}
-						<ScrollFade
-							axis="vertical"
-							className="h-full overscroll-contain"
-							fadeFromClass="from-muted"
-							hideScrollbar={false}
-						>
-							{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
-							<ul role="list" className="space-y-3 px-6 py-4">
-								<AnimatePresence mode="popLayout" initial={false}>
-									{items.map((item, index) => (
-										/* Pas d'animation de `height` (relayout à chaque frame) : `layout` +
+					{/*
+					 * Défilement nu — la liste portait un composant de fondu de bord, retiré le
+					 * 2026-08-05.
+					 *
+					 * Son dégradé partait de `--background` et se peignait par-dessus des lignes
+					 * `bg-card` : **1,03:1**. Il ne fondait donc rien du tout, tout en montant en
+					 * permanence 4 divs, un `ResizeObserver`, une boucle rAF et une SECONDE région
+					 * live polie qui se superposait à celle du panneau. L'affordance de défilement
+					 * est portée par la scrollbar et par les lignes elles-mêmes — toutes
+					 * focusables, donc le Tab défile la liste.
+					 *
+					 * ⚠️ `overscroll-contain` est load-bearing : sans lui, arriver en bout de liste
+					 * propage le scroll à la page derrière le panneau (chaînage iOS).
+					 *
+					 * ⚠️ `overflow-x-hidden` est EXPLICITE. Un `overflow-y-auto` seul ne laisse pas
+					 * `overflow-x` à `visible` : la spec le fait calculer à `auto` dès que l'autre
+					 * axe ne l'est plus. Les lignes débordant volontairement de ~1,19 px (rotation
+					 * ±0,4°), une barre de défilement horizontale parasite serait apparue.
+					 */}
+					<div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
+						{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+						<ul role="list" className="space-y-3 px-6 py-4">
+							<AnimatePresence mode="popLayout" initial={false}>
+								{items.map((item, index) => (
+									/* Pas d'animation de `height` (relayout à chaque frame) : `layout` +
 										   `mode="popLayout"` sortent l'item du flux et font glisser ses voisins
 										   via transform — même effet de collapse, sans jank.
 
@@ -256,27 +274,28 @@ function CartSheetBody({
 										   aussi une affordance CLAVIER, pas seulement de l'esthétique. Il
 										   ne protégeait rien : l'animation de sortie est `opacity + scale`,
 										   jamais `height`. Verrouillé par
-										   `cart-sheet-list-not-clipped.regression.test.tsx`. */
-										<m.li
-											key={item.id}
-											layout
-											initial={{ opacity: 0, scale: 0.95 }}
-											animate={{ opacity: 1, scale: 1 }}
-											exit={{ opacity: 0, scale: 0.95 }}
-											transition={shouldReduceMotion ? { duration: 0 } : MOTION_CONFIG.spring.list}
-											className="origin-top"
-										>
-											<CartSheetItemRow
-												item={item}
-												onClose={close}
-												isMobile={isMobile}
-												index={index}
-											/>
-										</m.li>
-									))}
-								</AnimatePresence>
-							</ul>
-						</ScrollFade>
+										   `@regression cart-sheet-list-not-clipped-2026-08-04` (référence par TAG :
+										   le garde-fou est un `describe` dans `__tests__/cart-sheet.test.tsx`, il n'a
+										   jamais existé de fichier à ce nom — un chemin cité ici a déjà dérivé). */
+									<m.li
+										key={item.id}
+										layout
+										initial={{ opacity: 0, scale: 0.95 }}
+										animate={{ opacity: 1, scale: 1 }}
+										exit={{ opacity: 0, scale: 0.95 }}
+										transition={shouldReduceMotion ? { duration: 0 } : MOTION_CONFIG.spring.list}
+										className="origin-top"
+									>
+										<CartSheetItemRow
+											item={item}
+											onClose={close}
+											isMobile={isMobile}
+											index={index}
+										/>
+									</m.li>
+								))}
+							</AnimatePresence>
+						</ul>
 					</div>
 				</>
 			)}
@@ -392,13 +411,16 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 							// formule `max(1rem, safe-area)` — sinon retirer celle-ci ici ferait
 							// passer le CTA sous la barre d'accueil iPhone.
 							//
-							// ⚠️ `bg-muted` OPAQUE, jamais `bg-muted/40` : cette classe écrase le
-							// `bg-background` de la primitive (tailwind-merge, même groupe
-							// `bg-color`), et c'est la SEULE surface pleine du panneau. Une
-							// alpha ici ne « teinte » rien : elle laisse voir le scrim
-							// `bg-black/50` et la page derrière, ce qui composite le panneau en
-							// gris sale (~#AAA) et le fait varier selon le contenu de la page.
-							className="group/sheet bg-muted mt-0 flex h-[85dvh] max-h-[85dvh] flex-col gap-0 px-0 pb-0"
+							// Aucune classe de fond : le panneau garde le `bg-background` OPAQUE
+							// de la primitive. Il était en `bg-muted` (gris « plan de travail »
+							// tenant des tirages blancs) — jugé moche, retiré le 2026-08-05 ;
+							// les lignes portent désormais seules leur relief (bordure + ombre).
+							//
+							// ⚠️ Si une surface propre revient ici, elle doit être OPAQUE :
+							// toute alpha laisse voir le scrim `bg-black/50` et la page derrière,
+							// ce qui composite le panneau en gris sale (~#AAA) et le fait varier
+							// selon le contenu de la page.
+							className="group/sheet mt-0 flex h-[85dvh] max-h-[85dvh] flex-col gap-0 px-0 pb-0"
 							data-pending={isPending ? "" : undefined}
 							aria-busy={isPending}
 							onOverlayClick={handleOverlayClick}
@@ -422,8 +444,8 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 					<Sheet direction="right" open={isOpen} onOpenChange={handleOpenChange}>
 						<SheetContent
 							// `pb-0` : la marge basse appartient au footer, sur les deux formats.
-							// `bg-muted` OPAQUE : cf. le commentaire de la branche mobile ci-dessus.
-							className="group/sheet bg-muted flex w-full flex-col gap-0 p-0 pb-0 sm:max-w-lg"
+							// Pas de classe de fond : cf. le commentaire de la branche mobile.
+							className="group/sheet flex w-full flex-col gap-0 p-0 pb-0 sm:max-w-lg"
 							data-pending={isPending ? "" : undefined}
 							aria-busy={isPending}
 							onOverlayClick={handleOverlayClick}

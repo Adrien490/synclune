@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { dispatchFlyToCart } from "@/modules/cart/lib/fly-to-cart";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
-import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
+// ⚠️ Depuis le module FEUILLE, pas depuis `./sku-selector-dialog` : ce bouton est
+// rendu sur chaque carte de la grille, et importer l'identifiant du dialog tirait
+// tout son graphe (motion, ResponsiveDialog) dans le bundle du catalogue.
+import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-utils";
 import { cn } from "@/shared/utils/cn";
 import { ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -49,8 +53,16 @@ export function AddToCartCardButton({
 	className,
 }: AddToCartCardButtonProps) {
 	const isMobileFull = variant === "mobile-full";
-	const { action, isPending } = useAddToCart();
+	const { action, isPending: isAdding } = useAddToCart();
 	const { open: openSkuSelector } = useDialog(SKU_SELECTOR_DIALOG_ID);
+
+	// Le dialog est chargé en `dynamic(…, { loading: () => null })` : entre le tap et
+	// son apparition, il y a le téléchargement d'un chunk de plusieurs dizaines de
+	// kilo-octets. Sans cet état, le bouton ne bougeait pas et le réflexe était de
+	// retaper. On précharge AVANT d'ouvrir : le `import()` partage le chunk de
+	// `dynamic()`, donc le second tap est instantané.
+	const [isOpeningSelector, setIsOpeningSelector] = useState(false);
+	const isPending = isAdding || isOpeningSelector;
 
 	// Détermine si le produit a plusieurs variantes actives (SKUs)
 	// Note: On filtre par isActive car le dialog ne montre que les SKUs actifs
@@ -62,9 +74,13 @@ export function AddToCartCardButton({
 		e.stopPropagation();
 
 		if (hasMultipleVariants) {
-			// Plusieurs variantes : ouvrir le dialog de sélection
+			// Plusieurs variantes : précharger le chunk du dialog, puis l'ouvrir.
 			e.preventDefault();
-			openSkuSelector({ product, preselectedColor });
+			setIsOpeningSelector(true);
+			void import("./sku-selector-dialog").finally(() => {
+				setIsOpeningSelector(false);
+				openSkuSelector({ product, preselectedColor });
+			});
 		} else {
 			// Single SKU: trigger fly-to-cart animation
 			dispatchFlyToCart(e.currentTarget);

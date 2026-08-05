@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,14 +6,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAction, mockIsPending, mockOpenSkuSelector, mockDispatchFlyToCart } = vi.hoisted(
-	() => ({
-		mockAction: vi.fn(),
-		mockIsPending: { value: false },
-		mockOpenSkuSelector: vi.fn(),
-		mockDispatchFlyToCart: vi.fn(),
-	}),
-);
+const { mockAction, mockIsPending, mockOpenSkuSelector, mockDispatchFlyToCart, chunkGate } =
+	vi.hoisted(() => {
+		let release: () => void = () => {};
+		const gate = {
+			promise: Promise.resolve() as Promise<void>,
+			open: () => release(),
+			hold() {
+				this.promise = new Promise<void>((resolve) => {
+					release = resolve;
+				});
+			},
+		};
+		return {
+			mockAction: vi.fn(),
+			mockIsPending: { value: false },
+			mockOpenSkuSelector: vi.fn(),
+			mockDispatchFlyToCart: vi.fn(),
+			chunkGate: gate,
+		};
+	});
 
 // ============================================================================
 // MODULE MOCKS
@@ -34,9 +46,14 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenSkuSelector }),
 }));
 
-vi.mock("@/modules/cart/components/sku-selector-dialog", () => ({
-	SKU_SELECTOR_DIALOG_ID: "sku-selector",
-}));
+// Le bouton ne l'importe plus que dynamiquement, pour PRÉCHARGER le chunk avant
+// d'ouvrir le panneau (l'identifiant du dialog, lui, vient du module feuille
+// `sku-selector-utils`). `chunkGate` permet de tenir ce chargement en suspens et
+// d'observer l'état d'attente que le bouton doit afficher pendant ce temps.
+vi.mock("@/modules/cart/components/sku-selector-dialog", async () => {
+	await chunkGate.promise;
+	return { SkuSelectorDialog: () => null };
+});
 
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
@@ -160,6 +177,35 @@ describe("AddToCartCardButton", () => {
 		expect(screen.getByTestId("icon-shopping-cart")).toBeInTheDocument();
 	});
 
+	// ⚠️ Ce test doit rester AVANT tout autre qui ouvre le sélecteur : la factory du
+	// mock ne s'exécute qu'au PREMIER `import()`, ensuite le module est servi depuis
+	// le cache de Vitest et `chunkGate.hold()` n'a plus aucune prise.
+	it("montre l'attente pendant le chargement du chunk du dialog", async () => {
+		// Le tap mort : le chunk du panneau (plusieurs dizaines de kilo-octets) se
+		// télécharge APRÈS le clic. Sans état d'attente, le bouton ne bougeait pas et
+		// le réflexe était de retaper.
+		chunkGate.hold();
+		const product = createProduct({
+			skus: [
+				{ id: "sku-1", isActive: true, priceInclTax: 9900, images: [] },
+				{ id: "sku-2", isActive: true, priceInclTax: 12000, images: [] },
+			] as unknown as Product["skus"],
+		});
+		render(<AddToCartCardButton skuId="sku-1" product={product} />);
+
+		await userEvent.click(screen.getByRole("button"));
+
+		const button = screen.getByRole("button");
+		expect(button).toBeDisabled();
+		expect(button).toHaveAttribute("aria-busy", "true");
+		expect(mockOpenSkuSelector).not.toHaveBeenCalled();
+
+		chunkGate.open();
+
+		await waitFor(() => expect(mockOpenSkuSelector).toHaveBeenCalledOnce());
+		expect(screen.getByRole("button")).not.toBeDisabled();
+	});
+
 	it("opens sku selector when product has multiple active SKUs", async () => {
 		const product = createProduct({
 			skus: [
@@ -169,7 +215,7 @@ describe("AddToCartCardButton", () => {
 		});
 		render(<AddToCartCardButton skuId="sku-1" product={product} />);
 		await userEvent.click(screen.getByRole("button"));
-		expect(mockOpenSkuSelector).toHaveBeenCalledOnce();
+		await waitFor(() => expect(mockOpenSkuSelector).toHaveBeenCalledOnce());
 	});
 
 	it("dispatches fly-to-cart when product has a single SKU", async () => {

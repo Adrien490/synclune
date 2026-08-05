@@ -223,7 +223,7 @@ export async function ProductVariantsDataTable({
 								)}
 							</TableCell>
 							<TableCell className="text-right">
-								<span className="text-sm font-bold">{formatEuro(sku.priceInclTax)}</span>
+								<span className="text-sm font-medium">{formatEuro(sku.priceInclTax)}</span>
 							</TableCell>
 							<TableCell className="text-center">
 								<Badge

@@ -37,9 +37,13 @@ interface VariantSelectorProps {
 function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 	const searchParams = useSearchParams();
 
-	// Lire l'état depuis l'URL pour la validation
+	// Lire l'état depuis l'URL pour la validation.
+	// La couleur est pilotée par `?variant=<comboKey>` (M2M depuis 2026-05-15) ;
+	// `?color=` est le paramètre legacy, lu en repli pour les vieux liens. Ne lire
+	// que `color` revenait à valider un paramètre mort — même défaut que celui
+	// corrigé dans `add-to-cart-form.tsx`, resté ici pendant ce temps.
 	const variants = {
-		color: searchParams.get("color"),
+		color: searchParams.get("variant") ?? searchParams.get("color"),
 		material: searchParams.get("material"),
 		size: searchParams.get("size"),
 	};
@@ -83,14 +87,51 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 		return `${prefix}en stock`;
 	};
 
-	// Description dynamique selon les selecteurs affiches
+	/**
+	 * Les axes sur lesquels un choix est OUVERT — pas ceux qui existent.
+	 *
+	 * La version précédente énumérait la structure du produit, jamais la sélection :
+	 * comme une variante est auto-sélectionnée à l'arrivée (`page.tsx`, `skus[0]`),
+	 * la carte affichait en permanence « Choisis la couleur pour continuer » alors
+	 * que la pastille portait déjà son scotch, que le prix était exact et que le CTA
+	 * disait « Ajouter au panier ». « pour continuer » annonçait un blocage inexistant.
+	 *
+	 * Le seuil de la couleur passe aussi de `> 0` à `> 1`, pour coller à
+	 * `useVariantValidation.requiresColor` : une fiche à couleur unique et plusieurs
+	 * tailles réclamait « la couleur », qui n'est pas un choix.
+	 */
+	const getChoosableAxes = () => {
+		const axes: Array<{ missing: string; changeable: string }> = [];
+		if (variantInfo.availableColors.length > 1)
+			axes.push({ missing: "la couleur", changeable: "de couleur" });
+		if (variantInfo.availableMaterials.length > 1)
+			axes.push({ missing: "le matériau", changeable: "de matériau" });
+		if (requiresSize && variantInfo.availableSizes.length > 0)
+			axes.push({ missing: "la taille", changeable: "de taille" });
+		return axes;
+	};
+
+	/** « a », « a et b », « a, b et c » — un `join` nu donnait « a et b et c ». */
+	const enumerate = (parts: string[], last: string) =>
+		parts.length <= 1
+			? (parts[0] ?? "")
+			: `${parts.slice(0, -1).join(", ")} ${last} ${parts[parts.length - 1]}`;
+
 	const getDescription = () => {
-		const parts = [];
-		if (variantInfo.availableColors.length > 0) parts.push("la couleur");
-		if (variantInfo.availableMaterials.length > 1) parts.push("le matériau");
-		if (requiresSize && variantInfo.availableSizes.length > 0) parts.push("la taille");
-		if (parts.length === 0) return "";
-		return `Choisis ${parts.join(" et ")} pour continuer`;
+		const axes = getChoosableAxes();
+		if (axes.length === 0) return "";
+		// Rien de sélectionné (aucun SKU ne correspond) : on redemande les axes.
+		if (!selectedSku) {
+			return `Choisis ${enumerate(
+				axes.map((a) => a.missing),
+				"et",
+			)} pour continuer`;
+		}
+		// Une variante est retenue : on dit ce qui reste modifiable, sans injonction.
+		return `Tu peux changer ${enumerate(
+			axes.map((a) => a.changeable),
+			"ou",
+		)} quand tu veux.`;
 	};
 
 	// Vérifier si on doit afficher le sélecteur (plusieurs SKUs)

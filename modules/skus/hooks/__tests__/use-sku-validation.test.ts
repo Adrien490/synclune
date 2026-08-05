@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
+import type * as SkuInfoExtraction from "@/modules/skus/services/sku-info-extraction.service";
+
 // ---------------------------------------------------------------------------
 // Mock sku-info-extraction so we control what extractVariantInfo returns
 // ---------------------------------------------------------------------------
@@ -8,7 +10,14 @@ const { mockExtractVariantInfo } = vi.hoisted(() => ({
 	mockExtractVariantInfo: vi.fn(),
 }));
 
-vi.mock("@/modules/skus/services/sku-info-extraction.service", () => ({
+// `extractVariantInfo` est mocké (les fixtures de variantes sont fournies par le
+// test), mais `requiresSizeSelection` reste la VRAIE implémentation : c'est le
+// prédicat que ces tests vérifient. Le hook la lui passe le `variantInfo` mocké,
+// donc elle opère bien sur les fixtures. Depuis le 2026-08-05 ce prédicat est une
+// SSOT partagée avec le squelette de la colonne d'achat (`page.tsx`), au lieu
+// d'être dupliqué dans le hook.
+vi.mock("@/modules/skus/services/sku-info-extraction.service", async (importOriginal) => ({
+	...(await importOriginal<typeof SkuInfoExtraction>()),
 	extractVariantInfo: mockExtractVariantInfo,
 }));
 
@@ -88,7 +97,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 1, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 1, typeSlug: "bagues" });
 			const { isValid, validationErrors } = useVariantValidation({
 				product,
 				selection: noSelection,
@@ -156,7 +165,7 @@ describe("useVariantValidation", () => {
 			});
 
 			expect(isValid).toBe(false);
-			expect(validationErrors).toContain("Veuillez sélectionner une couleur");
+			expect(validationErrors).toContain("Choisis une couleur");
 		});
 
 		it("does not produce a color error when color is selected", () => {
@@ -175,7 +184,7 @@ describe("useVariantValidation", () => {
 				selection: { color: "or-rose", material: null, size: null },
 			});
 
-			expect(validationErrors).not.toContain("Veuillez sélectionner une couleur");
+			expect(validationErrors).not.toContain("Choisis une couleur");
 		});
 	});
 
@@ -236,7 +245,7 @@ describe("useVariantValidation", () => {
 			});
 
 			expect(isValid).toBe(false);
-			expect(validationErrors).toContain("Veuillez sélectionner un matériau");
+			expect(validationErrors).toContain("Choisis un matériau");
 		});
 
 		it("does not produce a material error when material is selected", () => {
@@ -255,7 +264,7 @@ describe("useVariantValidation", () => {
 				selection: { color: null, material: "argent-925", size: null },
 			});
 
-			expect(validationErrors).not.toContain("Veuillez sélectionner un matériau");
+			expect(validationErrors).not.toContain("Choisis un matériau");
 		});
 	});
 
@@ -264,7 +273,7 @@ describe("useVariantValidation", () => {
 	// -------------------------------------------------------------------------
 
 	describe("requiresSize", () => {
-		it("is true for a ring (slug: ring) with multiple sizes and multiple SKUs", () => {
+		it("is true for a ring (slug: bagues) with multiple sizes and multiple SKUs", () => {
 			mockExtractVariantInfo.mockReturnValue(
 				makeVariantInfo({
 					availableSizes: [
@@ -274,7 +283,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 2, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 2, typeSlug: "bagues" });
 			const { requiresSize } = useVariantValidation({
 				product,
 				selection: noSelection,
@@ -283,7 +292,7 @@ describe("useVariantValidation", () => {
 			expect(requiresSize).toBeTruthy();
 		});
 
-		it("is true for a bracelet (slug: bracelet) with multiple sizes", () => {
+		it("is true for a bracelet (slug: bracelets) with multiple sizes", () => {
 			mockExtractVariantInfo.mockReturnValue(
 				makeVariantInfo({
 					availableSizes: [
@@ -293,7 +302,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 2, typeSlug: "bracelet" });
+			const product = makeProduct({ skusCount: 2, typeSlug: "bracelets" });
 			const { requiresSize } = useVariantValidation({
 				product,
 				selection: noSelection,
@@ -302,7 +311,7 @@ describe("useVariantValidation", () => {
 			expect(requiresSize).toBeTruthy();
 		});
 
-		it("is false for a necklace (slug: necklace) even with multiple sizes", () => {
+		it("is false for a necklace (slug: colliers) even with multiple sizes", () => {
 			mockExtractVariantInfo.mockReturnValue(
 				makeVariantInfo({
 					availableSizes: [
@@ -312,7 +321,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 2, typeSlug: "necklace" });
+			const product = makeProduct({ skusCount: 2, typeSlug: "colliers" });
 			const { requiresSize } = useVariantValidation({
 				product,
 				selection: noSelection,
@@ -350,14 +359,14 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 2, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 2, typeSlug: "bagues" });
 			const { validationErrors, isValid } = useVariantValidation({
 				product,
 				selection: noSelection,
 			});
 
 			expect(isValid).toBe(false);
-			expect(validationErrors).toContain("Veuillez sélectionner une taille");
+			expect(validationErrors).toContain("Choisis une taille");
 		});
 
 		it("does not produce a size error when size is selected", () => {
@@ -370,13 +379,13 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 2, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 2, typeSlug: "bagues" });
 			const { validationErrors } = useVariantValidation({
 				product,
 				selection: { color: null, material: null, size: "52" },
 			});
 
-			expect(validationErrors).not.toContain("Veuillez sélectionner une taille");
+			expect(validationErrors).not.toContain("Choisis une taille");
 		});
 	});
 
@@ -395,7 +404,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 2, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 2, typeSlug: "bagues" });
 			const { requiresSize } = useVariantValidation({
 				product,
 				selection: noSelection,
@@ -414,7 +423,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 2, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 2, typeSlug: "bagues" });
 			const { requiresSize } = useVariantValidation({
 				product,
 				selection: noSelection,
@@ -431,7 +440,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 2, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 2, typeSlug: "bagues" });
 			const { requiresSize } = useVariantValidation({
 				product,
 				selection: noSelection,
@@ -465,7 +474,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 3, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 3, typeSlug: "bagues" });
 			const { validationErrors, isValid } = useVariantValidation({
 				product,
 				selection: noSelection,
@@ -473,9 +482,9 @@ describe("useVariantValidation", () => {
 
 			expect(isValid).toBe(false);
 			expect(validationErrors).toHaveLength(3);
-			expect(validationErrors).toContain("Veuillez sélectionner une couleur");
-			expect(validationErrors).toContain("Veuillez sélectionner un matériau");
-			expect(validationErrors).toContain("Veuillez sélectionner une taille");
+			expect(validationErrors).toContain("Choisis une couleur");
+			expect(validationErrors).toContain("Choisis un matériau");
+			expect(validationErrors).toContain("Choisis une taille");
 		});
 
 		it("is valid when all required variants are provided", () => {
@@ -496,7 +505,7 @@ describe("useVariantValidation", () => {
 				}),
 			);
 
-			const product = makeProduct({ skusCount: 3, typeSlug: "ring" });
+			const product = makeProduct({ skusCount: 3, typeSlug: "bagues" });
 			const { validationErrors, isValid } = useVariantValidation({
 				product,
 				selection: fullSelection,

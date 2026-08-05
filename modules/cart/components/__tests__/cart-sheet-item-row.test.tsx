@@ -1,6 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+// Import de TYPE uniquement (effacé à la compilation, donc sans effet sur le hoisting des
+// `vi.mock` ci-dessous) : il type l'`importOriginal` du mock du service sans recourir à une
+// annotation `import()` en ligne, interdite par `consistent-type-imports`.
+import type * as CartItemServiceModule from "../../services/cart-item.service";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -157,7 +162,12 @@ vi.mock("../cart-item-remove-button", () => ({
 	),
 }));
 
-vi.mock("@/modules/cart/services/cart-item.service", () => ({
+// `importOriginal` : seuls les PRÉDICATS sont mockés, les constantes restent réelles.
+// Sans le spread, `CART_ITEM_ISSUE_LABELS` valait `undefined` dans ce fichier — et un
+// test de libellé qui lit un libellé mocké serait vert pour la mauvaise raison : il
+// n'assurerait plus que la pastille et la liste de l'en-tête disent le même mot.
+vi.mock("@/modules/cart/services/cart-item.service", async (importOriginal) => ({
+	...(await importOriginal<typeof CartItemServiceModule>()),
 	getCartItemSubtotal: vi.fn(
 		(item: { priceAtAdd: number; quantity: number }) => item.priceAtAdd * item.quantity,
 	),
@@ -345,18 +355,51 @@ describe("CartSheetItemRow", () => {
 		expect(screen.getByTestId("remove-button")).toBeInTheDocument();
 	});
 
-	it("shows 'Rupture' badge when item is out of stock", () => {
+	/**
+	 * @regression cart-row-relief-carries-figure-ground-2026-08-05
+	 *
+	 * Direction « Relief réel ». La ligne est en `bg-card` (oklch 1) sur un panneau
+	 * `bg-background` (oklch 0.99) : **1,03:1**, donc la surface ne peut PAS porter la
+	 * séparation. C'est `shadow-paper` qui la porte — calibrée pour rendre ΔL 0,0602, soit
+	 * exactement ce que l'ancien fond `bg-muted` fournissait (0,0600).
+	 *
+	 * Deux choses à ne pas laisser revenir :
+	 *  - `shadow-sm` (10 % de noir sur 3 px) : invisible sur blanc, et c'est ce qui restait
+	 *    seul après le retrait de `bg-muted` ;
+	 *  - `border-border` au repos : correctif sous-dimensionné (1,27:1 sur `bg-card`) qui
+	 *    consommait en plus le 1 px que le survol réserve à `border-primary/40`.
+	 */
+	it("porte le relief par l'ombre papier, pas par un filet", () => {
+		const { container } = render(<CartSheetItemRow item={createCartItem()} />);
+		const article = container.querySelector("article")!;
+		expect(article.className).toContain("shadow-paper");
+		expect(article.className).not.toMatch(/\bshadow-sm\b/);
+		expect(article.className).toContain("border-transparent");
+		expect(article.className).not.toContain("border-border");
+	});
+
+	it("garde le filet pour l'état fautif, qui est le seul à le colorer", () => {
+		vi.mocked(cartItemService.hasCartItemIssue).mockReturnValue(true);
+		const { container } = render(<CartSheetItemRow item={createCartItem()} />);
+		const article = container.querySelector("article")!;
+		expect(article.className).toContain("border-destructive/50");
+		expect(article.className).not.toContain("border-transparent");
+	});
+
+	// Les deux pastilles lisent `CART_ITEM_ISSUE_LABELS` (réel, cf. le spread du mock),
+	// la même SSOT que la liste de l'en-tête du panier.
+	it("affiche la pastille de rupture quand le stock est insuffisant", () => {
 		vi.mocked(cartItemService.isCartItemOutOfStock).mockReturnValue(true);
 		vi.mocked(cartItemService.hasCartItemIssue).mockReturnValue(true);
 		render(<CartSheetItemRow item={createCartItem()} />);
-		expect(screen.getByText("Rupture")).toBeInTheDocument();
+		expect(screen.getByText(cartItemService.CART_ITEM_ISSUE_LABELS.outOfStock)).toBeInTheDocument();
 	});
 
-	it("shows 'Indisponible' badge when item is inactive", () => {
+	it("affiche la pastille d'indisponibilité quand le SKU est désactivé", () => {
 		vi.mocked(cartItemService.isCartItemInactive).mockReturnValue(true);
 		vi.mocked(cartItemService.hasCartItemIssue).mockReturnValue(true);
 		render(<CartSheetItemRow item={createCartItem()} />);
-		expect(screen.getByText("Plus disponible")).toBeInTheDocument();
+		expect(screen.getByText(cartItemService.CART_ITEM_ISSUE_LABELS.inactive)).toBeInTheDocument();
 	});
 
 	it("renders color attribute when present", () => {

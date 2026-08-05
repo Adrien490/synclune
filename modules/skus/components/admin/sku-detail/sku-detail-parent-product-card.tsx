@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRightIcon, PackageIcon } from "@phosphor-icons/react/ssr";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -40,6 +41,7 @@ export function SkuDetailParentProductCard({ sku }: SkuDetailParentProductCardPr
 							width={56}
 							height={56}
 							sizes="56px"
+							quality={IMAGE_QUALITY.THUMBNAIL}
 							className="size-14 shrink-0 rounded-md border object-cover"
 							{...(parentImage.blurDataUrl
 								? { placeholder: "blur" as const, blurDataURL: parentImage.blurDataUrl }

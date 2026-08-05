@@ -117,6 +117,8 @@ beforeEach(() => {
 	mockUseRadioGroupKeyboard.mockReturnValue({
 		containerRef: { current: null },
 		handleKeyDown: vi.fn(),
+		// Tabindex roving : le groupe est UN seul arrêt de tabulation (ARIA APG).
+		getTabIndex: (_option: unknown, index: number) => (index === 0 ? 0 : -1),
 	});
 });
 
@@ -146,13 +148,12 @@ describe("MaterialSelector", () => {
 			expect(screen.getByText("Or 18k")).toBeInTheDocument();
 		});
 
-		it("renders a fieldset with role radiogroup via aria-label", () => {
+		it("expose un radiogroup nommé par la légende", () => {
 			const product = makeProduct() as unknown as Parameters<typeof MaterialSelector>[0]["product"];
 			render(<MaterialSelector materials={MATERIALS} product={product} />);
 
-			const fieldset = screen.getByRole("group", { name: /sélection de matériau/i });
-
-			expect(fieldset).toBeInTheDocument();
+			expect(screen.getByRole("radiogroup", { name: /matériau/i })).toBeInTheDocument();
+			expect(screen.queryByRole("group", { name: /sélection de matériau/i })).toBeNull();
 		});
 	});
 

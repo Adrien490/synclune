@@ -19,11 +19,15 @@ export function CartSheetSkeleton() {
 		>
 			{/* Géométrie strictement alignée sur `CartSheetItemRow` — surface `bg-card`
 			    en rayon `rounded-md`, bordure transparente, ombre, et la MÊME rotation
-			    alternée : un skeleton qui ne pivote pas produirait un saut au montage. */}
+			    alternée : un skeleton qui ne pivote pas produirait un saut au montage.
+
+			    ⚠️ L'ombre doit être `shadow-paper`, la même que la ligne : c'est elle qui
+			    décolle un tirage blanc d'un panneau blanc. Avec `shadow-sm` ici, le relief
+			    changeait à l'hydratation — le défaut même que ce commentaire prétend éviter. */}
 			{Array.from({ length: 3 }).map((_, i) => (
 				<div
 					key={i}
-					className="bg-card grid grid-cols-[5rem_1fr] gap-3.5 rounded-md border border-transparent p-3 shadow-sm sm:grid-cols-[6rem_1fr] sm:p-3.5"
+					className="bg-card shadow-paper grid grid-cols-[5rem_1fr] gap-3.5 rounded-md border border-transparent p-3 sm:grid-cols-[6rem_1fr] sm:p-3.5"
 					style={{ transform: i % 2 === 0 ? "rotate(-0.4deg)" : "rotate(0.4deg)" }}
 				>
 					{/* Image placeholder - row-span-2 matching actual layout */}

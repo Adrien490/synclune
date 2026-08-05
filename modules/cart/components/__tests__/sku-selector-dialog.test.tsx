@@ -27,48 +27,16 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 }));
 
 vi.mock("@/modules/cart/hooks/use-add-to-cart", () => ({
-	useAddToCart: () => ({ action: vi.fn(), isPending: false }),
-}));
-
-vi.mock("@/shared/components/forms", () => ({
-	useAppForm: () => ({
-		Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-		AppField: ({ children }: { name: string; children: (field: unknown) => React.ReactNode }) =>
-			children({
-				state: { value: null, meta: { errors: [] } },
-				handleChange: vi.fn(),
-			}),
-		Subscribe: ({
-			children,
-		}: {
-			children: (v: unknown) => React.ReactNode;
-			selector?: (s: unknown) => unknown;
-		}) =>
-			children({ color: null, material: null, size: null, quantity: 1, _validationError: null }),
-		handleSubmit: vi.fn(),
-		reset: vi.fn(),
-		setFieldValue: vi.fn(),
-		state: {
-			values: { color: null, material: null, size: null, quantity: 1, _validationError: null },
-		},
-	}),
+	useAddToCart: () => ({ state: undefined, action: vi.fn(), isPending: false }),
 }));
 
 vi.mock("@/shared/components/responsive-dialog", () => ({
-	ResponsiveDialog: ({
-		open,
-		children,
-	}: {
-		open: boolean;
-		onOpenChange?: (v: boolean) => void;
-		children: React.ReactNode;
-	}) => (open ? <div data-testid="responsive-dialog">{children}</div> : null),
+	ResponsiveDialog: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
+		open ? <div data-testid="responsive-dialog">{children}</div> : null,
 	ResponsiveDialogContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="dialog-content">{children}</div>
 	),
-	ResponsiveDialogHeader: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="dialog-header">{children}</div>
-	),
+	ResponsiveDialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ResponsiveDialogTitle: ({ children }: { children: React.ReactNode }) => (
 		<h2 data-testid="dialog-title">{children}</h2>
 	),
@@ -80,42 +48,9 @@ vi.mock("@/shared/components/responsive-dialog", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		disabled,
-		type,
-		onClick,
-		"aria-busy": ariaBusy,
-	}: {
-		children: React.ReactNode;
-		disabled?: boolean;
-		type?: string;
-		onClick?: () => void;
-		"aria-busy"?: boolean;
-	}) => (
-		<button
-			disabled={disabled}
-			type={type as "button" | "submit" | "reset"}
-			onClick={onClick}
-			aria-busy={ariaBusy}
-		>
-			{children}
-		</button>
-	),
-}));
-
-vi.mock("@/shared/components/ui/skeleton", () => ({
-	Skeleton: ({ className }: { className?: string }) => (
-		<div data-testid="skeleton" className={className} />
-	),
-}));
-
 vi.mock("next/image", () => ({
-	default: ({ src, alt }: { src: string; alt: string }) => (
-		// eslint-disable-next-line @next/next/no-img-element
-		<img src={src} alt={alt} />
-	),
+	// eslint-disable-next-line @next/next/no-img-element
+	default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }));
 
 vi.mock("next/link", () => ({
@@ -125,28 +60,29 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("next/dynamic", () => ({
-	default: () => () => <div data-testid="dynamic-component" />,
+	default: () => () => <div data-testid="size-guide" />,
 }));
 
 vi.mock("motion/react", () => ({
 	m: {
-		div: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-			<div className={className}>{children}</div>
+		span: ({ children, className }: { children?: React.ReactNode; className?: string }) => (
+			<span className={className}>{children}</span>
 		),
 	},
-	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 	useReducedMotion: () => false,
 }));
 
 vi.mock("@phosphor-icons/react/ssr", () => ({
 	ArrowRightIcon: () => <svg data-testid="icon-arrow-right" />,
-	CheckIcon: () => <svg data-testid="icon-check" />,
 	MinusIcon: () => <svg data-testid="icon-minus" />,
 	PlusIcon: () => <svg data-testid="icon-plus" />,
+	WarningIcon: () => <svg data-testid="icon-warning" />,
+	XCircleIcon: () => <svg data-testid="icon-x-circle" />,
 }));
 
-vi.mock("@/shared/components/scroll-fade", () => ({
-	default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: vi.fn(),
+	useHaptic: () => vi.fn(),
 }));
 
 vi.mock("@/modules/products/services/product-display.service", () => ({
@@ -157,49 +93,12 @@ vi.mock("@/modules/products/services/product-display.service", () => ({
 	}),
 }));
 
-vi.mock("@/modules/products/services/product-pricing.service", () => ({
-	hasActiveDiscount: () => false,
-	calculateDiscountPercent: () => 0,
-}));
-
-vi.mock("@/modules/colors/utils/color-contrast.utils", () => ({
-	isLightColor: () => false,
-}));
-
-vi.mock("@/shared/hooks/use-radio-group-keyboard", () => ({
-	useRadioGroupKeyboard: () => ({ handleKeyDown: vi.fn() }),
-}));
-
-vi.mock("@/shared/utils/format-euro", () => ({
-	formatEuro: (cents: number) => `${(cents / 100).toFixed(2)} €`,
-}));
-
-vi.mock("@/shared/utils/cn", () => ({
-	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
-vi.mock("@/shared/utils/generate-slug", () => ({
-	slugify: (s: string) => s,
-}));
-
-vi.mock("@/modules/products/constants/product-texts.constants", () => ({
-	PRODUCT_TYPES_REQUIRING_SIZE: [],
-}));
-
-vi.mock("@/shared/constants/cache-tags", () => ({
-	STOCK_THRESHOLDS: { LOW: 3 },
-}));
-
-vi.mock("@/modules/cart/constants/cart", () => ({
-	MAX_QUANTITY_PER_ORDER: 10,
-	MAX_CART_ITEMS: 50,
-}));
-
 // ============================================================================
 // IMPORT AFTER MOCKS
 // ============================================================================
 
 import { SkuSelectorDialog } from "../sku-selector-dialog";
+import { makeCart, makeProduct, makeSku } from "./sku-selector-fixtures";
 
 // ============================================================================
 // TESTS
@@ -214,59 +113,85 @@ describe("SkuSelectorDialog", () => {
 		mockDialogData.value = null;
 	});
 
-	it("renders nothing when dialog is closed", () => {
-		mockIsOpen.value = false;
-		const { container } = render(<SkuSelectorDialog cart={{ items: [] }} />);
+	function open(product = makeProduct()) {
+		mockIsOpen.value = true;
+		mockDialogData.value = { product, preselectedColor: null };
+	}
+
+	it("ne rend rien quand le dialog est fermé", () => {
+		const { container } = render(<SkuSelectorDialog cart={makeCart()} />);
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("renders dialog when open with product data", () => {
+	it("ne rend rien quand le store est ouvert sans produit", () => {
+		// L'ancien squelette de 48 lignes vivait derrière cette condition —
+		// `openSkuSelector({ product })` pose les deux ensemble, elle est inatteignable.
 		mockIsOpen.value = true;
-		mockDialogData.value = {
-			product: {
-				id: "p-1",
-				title: "Bague étoile",
-				slug: "bague-etoile",
-				skus: [
-					{
-						id: "sku-1",
-						isActive: true,
-						priceInclTax: 9900,
-						images: [],
-						colors: [],
-						materials: [],
-						size: null,
-					},
-				],
-			},
-			preselectedColor: null,
-		};
-		render(<SkuSelectorDialog cart={{ items: [] }} />);
-		expect(screen.getByTestId("responsive-dialog")).toBeInTheDocument();
+		mockDialogData.value = null;
+		const { container } = render(<SkuSelectorDialog cart={makeCart()} />);
+		expect(container.firstChild).toBeNull();
 	});
 
-	it("renders dialog title with product name", () => {
-		mockIsOpen.value = true;
-		mockDialogData.value = {
-			product: {
-				id: "p-1",
-				title: "Bague étoile",
-				slug: "bague-etoile",
+	it("rend le titre du produit", () => {
+		open();
+		render(<SkuSelectorDialog cart={makeCart()} />);
+		expect(screen.getByTestId("dialog-title")).toHaveTextContent("Bague Fleur de Cristal");
+	});
+
+	it("annonce le nombre de pièces réellement en vitrine, au tutoiement", () => {
+		open();
+		render(<SkuSelectorDialog cart={makeCart()} />);
+		expect(screen.getByTestId("dialog-description")).toHaveTextContent(
+			"Trois pièces existent en ce moment. Prends la tienne.",
+		);
+	});
+
+	it("passe au singulier quand une seule pièce reste active", () => {
+		open(makeProduct({ skus: [makeSku({ id: "sku-1" })] as never }));
+		render(<SkuSelectorDialog cart={makeCart()} />);
+		expect(screen.getByTestId("dialog-description")).toHaveTextContent(
+			"Une seule pièce existe en ce moment.",
+		);
+	});
+
+	it("dit « Tout est parti » quand plus rien n'est en stock, sans masquer les pièces", () => {
+		open(
+			makeProduct({
 				skus: [
-					{
-						id: "sku-1",
-						isActive: true,
-						priceInclTax: 9900,
-						images: [],
-						colors: [],
-						materials: [],
-						size: null,
-					},
-				],
-			},
-			preselectedColor: null,
-		};
-		render(<SkuSelectorDialog cart={{ items: [] }} />);
-		expect(screen.getByTestId("dialog-title")).toHaveTextContent("Bague étoile");
+					makeSku({ id: "sku-1", inventory: 0, size: "52" }),
+					makeSku({ id: "sku-2", inventory: 0, size: "54" }),
+				] as never,
+			}),
+		);
+		render(<SkuSelectorDialog cart={makeCart()} />);
+
+		expect(screen.getByTestId("dialog-description")).toHaveTextContent(
+			"Tout est parti pour le moment.",
+		);
+		// Les lignes restent visibles : on montre ce qui existe, on ne le cache pas.
+		expect(screen.getAllByRole("radio")).toHaveLength(2);
+		expect(screen.getByRole("button", { name: /Ajouter au panier/i })).toBeDisabled();
+	});
+
+	it("dessine la fermeture de la boutique AVANT le clic, et désactive le CTA", () => {
+		open();
+		render(
+			<SkuSelectorDialog
+				cart={makeCart()}
+				isStoreClosed
+				storeClosureMessage="Je suis en congés jusqu'au 20."
+			/>,
+		);
+
+		expect(screen.getByText("Je suis en congés jusqu'au 20.")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /Ajouter au panier/i })).toBeDisabled();
+	});
+
+	it("retombe sur un message de fermeture tutoyé quand la boutique n'en fournit pas", () => {
+		open();
+		render(<SkuSelectorDialog cart={makeCart()} isStoreClosed storeClosureMessage={null} />);
+		expect(
+			screen.getByText("La boutique est fermée en ce moment — tu peux regarder, pas commander."),
+		).toBeInTheDocument();
 	});
 });
