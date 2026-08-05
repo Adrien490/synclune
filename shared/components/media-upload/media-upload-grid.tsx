@@ -1,6 +1,7 @@
 "use client";
 
 import { DragDropProvider, DragOverlay, KeyboardSensor, PointerSensor } from "@dnd-kit/react";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { PointerActivationConstraints } from "@dnd-kit/dom";
 import { RestrictToWindow } from "@dnd-kit/dom/modifiers";
 import { arrayMove } from "@dnd-kit/helpers";
@@ -416,6 +417,7 @@ export function MediaUploadGrid({
 												fill
 												className="object-cover"
 												sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
+												quality={IMAGE_QUALITY.STANDARD}
 												placeholder="blur"
 												blurDataURL={IMAGE_BLUR_FALLBACK}
 											/>
@@ -437,6 +439,7 @@ export function MediaUploadGrid({
 										fill
 										className="object-cover"
 										sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
+										quality={IMAGE_QUALITY.STANDARD}
 										placeholder="blur"
 										blurDataURL={IMAGE_BLUR_FALLBACK}
 									/>

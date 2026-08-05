@@ -76,7 +76,7 @@ function Slider({
 					<SliderPrimitive.Indicator
 						data-slot="slider-range"
 						className={cn(
-							"bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
+							"bg-brand-rose-strong absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
 							"transition-all duration-150",
 						)}
 					/>
@@ -90,7 +90,7 @@ function Slider({
 							className={cn(
 								"relative block size-5 shrink-0 rounded-full",
 								"before:absolute before:-inset-3 before:content-['']",
-								"border-primary bg-background border-2",
+								"border-brand-rose-strong bg-background border-3",
 								"shadow-md hover:shadow-lg",
 								"ring-ring/50 transition-all duration-150",
 								"hover:scale-110 hover:ring-4",

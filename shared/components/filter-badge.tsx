@@ -7,6 +7,7 @@ import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
 import { XIcon } from "@phosphor-icons/react/ssr";
 import { m, useMotionValue, useReducedMotion, useTransform } from "motion/react";
+import { useRef } from "react";
 
 const ANIMATION_PROPS = {
 	initial: { opacity: 0 },
@@ -16,6 +17,11 @@ const ANIMATION_PROPS = {
 
 const DRAG_CONSTRAINTS = { left: 0, right: 0 } as const;
 const DRAG_DISMISS_THRESHOLD = 80;
+// Un flick (geste court mais vif) supprime aussi — la convention iOS combine
+// distance ET vélocité. Le plancher de distance évite qu'un micro-tremblement
+// rapide compte comme une intention.
+const DRAG_FLICK_MIN_OFFSET = 24;
+const DRAG_FLICK_MIN_VELOCITY = 500;
 
 interface FilterBadgeProps {
 	filter: FilterDefinition;
@@ -24,12 +30,38 @@ interface FilterBadgeProps {
 		displayValue?: string;
 	} | null;
 	onRemove: (key: string, value?: string) => void;
-	compactMobile?: boolean;
+	/**
+	 * Habillage. `pill` (défaut) : la pilule neutre historique — c'est elle que
+	 * rend l'admin. `etiquette` : « L'étiquette de bocal » (artifact
+	 * filter-badges 2026-08-05, lot 1) — rayon de la ShelfBar, liseré gauche à
+	 * l'accent de la facette (fourni via `accentClassName`).
+	 */
+	appearance?: "pill" | "etiquette";
+	/**
+	 * Classes d'accent de facette (liseré + lavis), `etiquette` uniquement.
+	 * SSOT : `FILTER_BADGE_ACCENTS` (`catalog-accents.constants.ts`). La couleur
+	 * DOUBLE le label visible, elle ne le remplace jamais (WCAG 1.4.1).
+	 */
+	accentClassName?: string;
 }
 
-export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: FilterBadgeProps) {
+export function FilterBadge({
+	filter,
+	formatFilter,
+	onRemove,
+	appearance = "pill",
+	accentClassName,
+}: FilterBadgeProps) {
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
+
+	// Motion ne supprime que SON geste press (`onTap` teste `isDragActive()`),
+	// jamais le `click` natif : sur un hybride (iPad + trackpad — `TOUCH_QUERY`
+	// matche, le drag est armé, et un drag souris émet un vrai `click` au
+	// relâchement), `onDragEnd` puis `onClick` appelleraient handleRemove DEUX
+	// fois. Le pur tactile n'est pas concerné (pas de click synthétique après
+	// un swipe). Ré-audit FilterBadge 2026-08-05.
+	const wasDragged = useRef(false);
 
 	// Left-only swipe-to-dismiss (iOS convention) — right rubberband stays full-opacity by design.
 	const x = useMotionValue(0);
@@ -53,7 +85,9 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 
 	const displayLabel = formatted?.label ?? filter.label;
 	const displayValue = formatted?.displayValue ?? filter.displayValue;
-	const filterDescription = `${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
+	// Le nom accessible CONTIENT le texte visible (« Label : Valeur ») —
+	// WCAG 2.5.3 Label in Name, une commande vocale peut viser ce qu'elle voit.
+	const filterDescription = displayValue ? `${displayLabel} : ${displayValue}` : displayLabel;
 	const ariaLabelRemove = `Supprimer le filtre ${filterDescription}`;
 
 	// Parent `FilterBadges` has aria-live=polite — removal is announced via list update.
@@ -95,13 +129,30 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 			type="button"
 			{...animationProps}
 			transition={transitionProps}
-			onClick={handleRemove}
+			onPointerDown={() => {
+				wasDragged.current = false;
+			}}
+			onClick={(event) => {
+				// `event.detail === 0` = activation clavier (Entrée/Espace), jamais
+				// précédée d'un drag — seule la paire drag → click pointeur est avalée.
+				if (wasDragged.current && event.detail !== 0) {
+					wasDragged.current = false;
+					return;
+				}
+				handleRemove();
+			}}
 			aria-label={ariaLabelRemove}
 			drag={enableDrag ? "x" : false}
 			dragConstraints={DRAG_CONSTRAINTS}
 			dragElastic={0.3}
+			onDragStart={() => {
+				wasDragged.current = true;
+			}}
 			onDragEnd={(_, info) => {
-				if (info.offset.x < -DRAG_DISMISS_THRESHOLD) {
+				const isDismiss = info.offset.x < -DRAG_DISMISS_THRESHOLD;
+				const isFlick =
+					info.offset.x < -DRAG_FLICK_MIN_OFFSET && info.velocity.x < -DRAG_FLICK_MIN_VELOCITY;
+				if (isDismiss || isFlick) {
 					handleRemove();
 				}
 			}}
@@ -111,39 +162,48 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 				scale: enableDrag ? dragScale : undefined,
 			}}
 			className={cn(
-				// Layout
+				// Layout — 44 px à TOUS les paliers : `sm:` couvre l'iPad, qui est
+				// tactile (le swipe de ce même bouton s'y active). Lot 0 2026-08-05.
 				"group flex items-center gap-1.5",
-				"h-11 sm:h-8",
+				"min-h-11",
 				"px-3",
-				// Pill shape
-				"rounded-full border",
 				// Typography
 				"text-sm",
 				// Max width
 				"max-w-70 sm:max-w-80",
 				// States
 				"can-hover:cursor-pointer touch-manipulation",
-				"motion-safe:transition-colors motion-safe:duration-150",
-				"can-hover:hover:bg-accent can-hover:hover:border-primary/40",
-				// Active (mobile)
 				"active:scale-[0.95] sm:active:scale-[0.98]",
 				"active:bg-destructive/15 active:border-destructive/30",
 				// Focus ring (SSOT — app/globals.css @utility focus-ring)
 				"focus-ring",
+				appearance === "etiquette"
+					? cn(
+							// « L'étiquette de bocal » : rayon de la ShelfBar, liseré de
+							// facette, lavis 10 % (surfaces, jamais l'encre). Le lift au
+							// survol est décoratif — l'affordance porteuse (le ×) a déjà
+							// sa parité focus plus bas.
+							"bg-card rounded-sm border border-l-3 shadow-2xs",
+							"motion-safe:transition-[color,background-color,border-color,box-shadow,translate] motion-safe:duration-150",
+							"can-hover:hover:shadow-md can-hover:hover:-translate-y-px",
+							accentClassName,
+						)
+					: cn(
+							// Pilule historique (admin)
+							"rounded-full border",
+							"motion-safe:transition-colors motion-safe:duration-150",
+							"can-hover:hover:bg-accent can-hover:hover:border-primary/40",
+						),
 			)}
 		>
-			{/* Text: label + value */}
+			{/* Text: label + value. Le label reste visible à TOUS les paliers :
+			 * c'est lui qui désambiguïse « Argent » (couleur) de « Argent 925 »
+			 * (matériau) — la couleur de facette de l'étiquette ne fait que le
+			 * doubler. L'ancien `compactMobile` le masquait sous `sm`. */}
 			<span className="truncate">
 				{displayValue && displayValue.length > 0 ? (
 					<>
-						<span
-							className={cn(
-								"text-muted-foreground font-normal",
-								compactMobile && "hidden sm:inline",
-							)}
-						>
-							{displayLabel} :
-						</span>{" "}
+						<span className="text-muted-foreground font-normal">{displayLabel} :</span>{" "}
 						<span className="font-medium">{displayValue}</span>
 					</>
 				) : (
@@ -165,12 +225,14 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 					"can-hover:group-hover:opacity-100",
 					"group-focus-visible:opacity-100",
 					"motion-safe:transition-opacity motion-safe:duration-150",
-					"sm:flex sm:items-center sm:justify-center",
-					"sm:size-5 sm:rounded-full",
-					"sm:bg-destructive/10 sm:text-destructive",
+					// Pastille à TOUS les paliers (l'icône ne rapetisse plus là où la
+					// pastille apparaissait — incohérence relevée à l'audit 2026-08-05).
+					"flex items-center justify-center",
+					"size-5 rounded-full",
+					"bg-destructive/10 text-destructive",
 				)}
 			>
-				<XIcon className="size-3.5 sm:size-3" />
+				<XIcon className="size-3" />
 			</span>
 		</m.button>
 	);

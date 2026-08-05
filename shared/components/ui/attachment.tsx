@@ -29,19 +29,25 @@ import { cn } from "@/shared/utils/cn";
  *    28px la cible satisfait DÉJÀ WCAG 2.5.8 (AA, 24×24) sans lui — il ne sert
  *    que le 2.5.5 (AAA), qu'il ne faut pas payer d'une régression du AA.
  * 4. PAS de `AttachmentGroup` (l'amont en a un) : il serait un conteneur de
- *    défilement, or `ScrollFade` en est déjà un — les emboîter neutralise le
- *    fondu (son `ResizeObserver` ne voit plus aucun débordement, les overlays
- *    restent à `opacity-0`) ET l'annonce `aria-live` « Faites défiler pour voir
- *    plus de contenu ». Une rangée de pièces jointes s'écrit donc :
+ *    défilement de plus, emboîté dans celui qui porte le fondu — or
+ *    `scroll-fade-x` lit le débordement du conteneur sur lequel il est POSÉ
+ *    (`animation-timeline: scroll(self inline)`). Un scroller intercalé absorbe
+ *    le débordement, la timeline reste inactive et le fondu ne se déclenche
+ *    jamais. Une rangée de pièces jointes s'écrit donc :
  *
- *      <ScrollFade scrollRegionLabel="Pièces jointes">
- *        <div className="flex snap-x snap-mandatory gap-3 *:flex-none *:snap-start">
+ *      <div
+ *        role="region"
+ *        aria-label="Pièces jointes"
+ *        tabIndex={0}
+ *        className="scroll-fade-x no-scrollbar w-full overflow-x-auto overflow-y-hidden"
+ *      >
+ *        <div className="flex w-fit min-w-full snap-x snap-mandatory gap-3 *:flex-none *:snap-start">
  *
- *    ⚠️ `scrollRegionLabel` n'y est pas cosmétique : il pose `role="region"` +
- *    `tabIndex={0}`, seul moyen d'atteindre au clavier des pièces jointes
- *    PRÉSENTATIONNELLES hors écran (amont, § Keyboard scrolling). L'omettre
- *    quand chaque carte porte un trigger ou des actions — celles-ci sont déjà
- *    dans l'ordre de tabulation, un arrêt de plus serait redondant.
+ *    ⚠️ `role="region"` + `tabIndex={0}` n'y sont pas cosmétiques : c'est le seul
+ *    moyen d'atteindre au clavier des pièces jointes PRÉSENTATIONNELLES hors
+ *    écran (amont, § Keyboard scrolling). Les omettre quand chaque carte porte un
+ *    trigger ou des actions — celles-ci sont déjà dans l'ordre de tabulation, un
+ *    arrêt de plus serait redondant.
  */
 
 // `has-[:focus-visible]` et non `focus-within` : ce dernier n'a pas de pendant

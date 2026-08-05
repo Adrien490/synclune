@@ -10,12 +10,10 @@ export const BRAND = {
 		"Créatrice de bijoux artisanaux faits main - Créations uniques pour occasions particulières",
 
 	logo: {
-		url: "/logo.webp",
+		// Le mark se dessine en SVG inline (`shared/components/logo-mark.tsx`) ;
+		// `url` et `blurDataURL` sont partis avec le raster — le `/logo.webp`
+		// résiduel des emails et du JSON-LD est référencé là-bas en littéral.
 		alt: "Synclune — Créations artisanales faites main",
-		// SVG 10×10 flouté, fill = BRAND_PINK.primary (#fdb8e4, cf. brand-colors.ts).
-		// Régénérer via node (décoder le base64, remplacer le fill, ré-encoder) à toute retouche du rose.
-		blurDataURL:
-			"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGZpbHRlciBpZD0iYiI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMiIvPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmRiOGU0IiBmaWx0ZXI9InVybCgjYikiLz48L3N2Zz4=",
 	},
 
 	social: {

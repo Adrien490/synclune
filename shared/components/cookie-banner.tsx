@@ -4,6 +4,7 @@ import {
 	useCookieConsentStore,
 	useHasConsented,
 } from "@/shared/providers/cookie-consent-store-provider";
+import { useHasOverlay } from "@/shared/stores/use-overlay-stack-store";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
@@ -35,9 +36,16 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
  * - Safe area iOS pour iPhone avec barre de navigation
  * - Support prefers-reduced-motion via maybeReduceMotion (SSOT motion.config)
  *
- * Partis pris assumés (audit 2026-08-03) :
- * - z-(--z-alert) (80) > scrims Sheet/Drawer (--z-overlay 75) : l'encart reste
- *   visible et actionnable même panier ouvert — cohérent avec le non-bloquant.
+ * Partis pris assumés (audit 2026-08-03, révisé 2026-08-05) :
+ * - L'encart se SUSPEND tant qu'un overlay modal est enregistré (overlay-stack,
+ *   alimenté par Sheet/Drawer/Dialog/AlertDialog) et réapparaît à la fermeture.
+ *   L'ancien parti pris — rester peint au-dessus des scrims — recouvrait 285 px
+ *   du menu mobile ouvert à la première visite (audit menu-sheet 2026-08-05,
+ *   P1) : le tiers inférieur du volet devenait inatteignable sans traiter le
+ *   bandeau d'abord. La suspension n'écrit RIEN dans le store (ni consentement
+ *   ni bannerVisible) : le non-bloquant est préservé, le choix reste posé.
+ * - z-(--z-alert) (80) est conservé : hors overlay, l'encart doit encore passer
+ *   au-dessus des barres fixes (--z-bar 70, --z-header 72).
  * - Les toasts Sonner (z hors échelle) partagent la même bande basse mobile
  *   (même offset --bottom-bar-height) : recouvrement transitoire accepté.
  */
@@ -47,9 +55,10 @@ export function CookieBanner() {
 	const rejectCookies = useCookieConsentStore((state) => state.rejectCookies);
 	const _hasHydrated = useCookieConsentStore((state) => state._hasHydrated);
 	const hasConsented = useHasConsented();
+	const hasOverlay = useHasOverlay();
 	const prefersReducedMotion = useReducedMotion() ?? false;
 
-	const shouldShow = _hasHydrated && !hasConsented && bannerVisible;
+	const shouldShow = _hasHydrated && !hasConsented && bannerVisible && !hasOverlay;
 
 	return (
 		<AnimatePresence>

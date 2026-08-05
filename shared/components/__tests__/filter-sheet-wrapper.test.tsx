@@ -99,14 +99,6 @@ vi.mock("@/shared/components/ui/button-group", () => ({
 	ButtonGroup: ({ children, ...props }: any) => <div {...props}>{children}</div>,
 }));
 
-vi.mock("@/shared/components/ui/scroll-area", () => ({
-	ScrollArea: ({ children, ...props }: any) => (
-		<div data-testid="scroll-area" {...props}>
-			{children}
-		</div>
-	),
-}));
-
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
@@ -268,7 +260,7 @@ describe("FilterSheetWrapper", () => {
 				</FilterSheetWrapper>,
 			);
 
-			expect(screen.getByRole("button", { name: "Effacer tous les filtres" })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Tout effacer les filtres" })).toBeInTheDocument();
 		});
 
 		it("calls onClearAll when 'Tout effacer' button is clicked", () => {
@@ -279,7 +271,7 @@ describe("FilterSheetWrapper", () => {
 				</FilterSheetWrapper>,
 			);
 
-			fireEvent.click(screen.getByRole("button", { name: "Effacer tous les filtres" }));
+			fireEvent.click(screen.getByRole("button", { name: "Tout effacer les filtres" }));
 			expect(onClearAll).toHaveBeenCalledTimes(1);
 		});
 
@@ -292,7 +284,7 @@ describe("FilterSheetWrapper", () => {
 			);
 
 			expect(
-				screen.queryByRole("button", { name: "Effacer tous les filtres" }),
+				screen.queryByRole("button", { name: "Tout effacer les filtres" }),
 			).not.toBeInTheDocument();
 		});
 
@@ -300,7 +292,7 @@ describe("FilterSheetWrapper", () => {
 			render(<FilterSheetWrapper hasActiveFilters>content</FilterSheetWrapper>);
 
 			expect(
-				screen.queryByRole("button", { name: "Effacer tous les filtres" }),
+				screen.queryByRole("button", { name: "Tout effacer les filtres" }),
 			).not.toBeInTheDocument();
 		});
 	});
@@ -542,7 +534,7 @@ describe("FilterSheetWrapper", () => {
 					content
 				</FilterSheetWrapper>,
 			);
-			fireEvent.click(screen.getByRole("button", { name: "Effacer tous les filtres" }));
+			fireEvent.click(screen.getByRole("button", { name: "Tout effacer les filtres" }));
 			expect(mockHaptic).toHaveBeenCalledWith("light");
 			expect(onClearAll).toHaveBeenCalledTimes(1);
 		});
@@ -560,7 +552,7 @@ describe("FilterSheetWrapper", () => {
 					content
 				</FilterSheetWrapper>,
 			);
-			fireEvent.click(screen.getByRole("button", { name: "Effacer tous les filtres" }));
+			fireEvent.click(screen.getByRole("button", { name: "Tout effacer les filtres" }));
 			expect(mockHaptic).toHaveBeenCalledWith("error");
 			// onClearAll must NOT have fired yet — user must confirm first
 			expect(onClearAll).not.toHaveBeenCalled();
@@ -587,7 +579,7 @@ describe("FilterSheetWrapper", () => {
 					content
 				</FilterSheetWrapper>,
 			);
-			fireEvent.click(screen.getByRole("button", { name: "Effacer tous les filtres" }));
+			fireEvent.click(screen.getByRole("button", { name: "Tout effacer les filtres" }));
 			expect(mockHaptic).toHaveBeenCalledWith("light");
 			expect(onClearAll).toHaveBeenCalledTimes(1);
 		});
@@ -621,7 +613,7 @@ describe("FilterSheetWrapper", () => {
 					content
 				</FilterSheetWrapper>,
 			);
-			const clearBtn = screen.getByRole("button", { name: "Effacer tous les filtres" });
+			const clearBtn = screen.getByRole("button", { name: "Tout effacer les filtres" });
 			expect(clearBtn.className).toContain("min-h-11");
 		});
 	});
@@ -684,10 +676,32 @@ describe("FilterSheetWrapper", () => {
 			expect(sheet).toHaveAttribute("data-reposition-inputs", "true");
 		});
 
-		it("ScrollArea content region carries data-base-ui-swipe-ignore (defensive isolation of internal scroll)", () => {
+		it("le conteneur de scroll porte data-base-ui-swipe-ignore et le fondu scroll-driven", () => {
+			const { container } = render(<FilterSheetWrapper>content</FilterSheetWrapper>);
+			const scrollContainer = container.querySelector('[data-slot="scroll-fade-container"]');
+			expect(scrollContainer).not.toBeNull();
+			expect(scrollContainer).toHaveAttribute("data-base-ui-swipe-ignore");
+			// `scroll-fade-y` conditionne le fondu au débordement RÉEL (jsdom ne
+			// mesure pas — on verrouille le mécanisme, pas le rendu).
+			expect(scrollContainer?.className).toContain("scroll-fade-y");
+			expect(scrollContainer?.className).toContain("no-scrollbar");
+		});
+
+		it("le popup neutralise le gap-4 de la base SheetContent (gap-0)", () => {
 			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
-			const scrollArea = screen.getByTestId("scroll-area");
-			expect(scrollArea).toHaveAttribute("data-base-ui-swipe-ignore");
+			expect(screen.getByTestId("sheet-content").className).toContain("gap-0");
+		});
+
+		it("la confirmation ne prétend plus être irréversible", () => {
+			mockUseIsMobile.mockReturnValue(false);
+			render(
+				<FilterSheetWrapper activeFiltersCount={3} hasActiveFilters onClearAll={() => {}}>
+					content
+				</FilterSheetWrapper>,
+			);
+			fireEvent.click(screen.getByRole("button", { name: "Tout effacer les filtres" }));
+			expect(screen.queryByText(/ne peut pas être annulée/)).not.toBeInTheDocument();
+			expect(screen.getByText(/revenant en arrière dans ton navigateur/)).toBeInTheDocument();
 		});
 	});
 });

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { StructuredData } from "../structured-data";
 import type { Product } from "@/modules/products/types/product.types";
+import { ATELIER_HOWTO, ATELIER_IMAGE, ATELIER_STEPS } from "@/shared/constants/atelier-content";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 /**
  * Le JSON-LD de l'accueil. Deux choses s'y vérifient et nulle part ailleurs :
@@ -111,5 +113,52 @@ describe("StructuredData — ItemList de l'accueil", () => {
 		const product = first!.item as Record<string, unknown>;
 
 		expect(product.image).toBe("https://cdn.test/photo.jpg");
+	});
+});
+
+describe("StructuredData — HowTo de l'atelier", () => {
+	it("émet un nœud HowTo dans le @graph avec les schémas d'accueil, jamais un second script", () => {
+		const { container } = render(<StructuredData includeHomepageSchemas />);
+
+		// TOUT vit dans un script unique : le montage à deux scripts de
+		// l'ancienne section atelier est exactement ce qu'on ne refait pas.
+		expect(container.querySelectorAll('script[type="application/ld+json"]')).toHaveLength(1);
+
+		const howTo = findNode(container, "HowTo") as Record<string, unknown>;
+		expect(howTo).toBeDefined();
+		// L'@id pointe la section réellement rendue (le précédent du FAQPage →
+		// #faq) : le balisage doit correspondre à du contenu visible.
+		expect(howTo["@id"]).toBe(`${SITE_URL}/#atelier`);
+		expect(howTo.name).toBe(ATELIER_HOWTO.name);
+		expect(howTo.totalTime).toBe(ATELIER_HOWTO.totalTime);
+		expect(howTo.image).toBe(ATELIER_IMAGE);
+		expect(howTo.supply).toHaveLength(ATELIER_HOWTO.supplies.length);
+		expect(howTo.tool).toHaveLength(ATELIER_HOWTO.tools.length);
+	});
+
+	it("émet un HowToStep par étape de la SSOT, positionné et ancré sur la section", () => {
+		const { container } = render(<StructuredData includeHomepageSchemas />);
+
+		const howTo = findNode(container, "HowTo") as Record<string, unknown>;
+		const steps = howTo.step as Record<string, unknown>[];
+		expect(steps).toHaveLength(ATELIER_STEPS.length);
+
+		ATELIER_STEPS.forEach((step, index) => {
+			const node = steps[index]!;
+			expect(node.position).toBe(index + 1);
+			// `name`/`text` strictement égaux à la SSOT : la section rend les
+			// mêmes chaînes — si l'une des deux consommations dérive, ce test ou
+			// celui de la section casse.
+			expect(node.name).toBe(step.title);
+			expect(node.text).toBe(step.description);
+			// L'ancre réelle du <li> correspondant (vérifiée côté section).
+			expect(node.url).toBe(`${SITE_URL}/#atelier-step-${step.id}`);
+		});
+	});
+
+	it("n'émet pas de HowTo hors accueil", () => {
+		const { container } = render(<StructuredData />);
+
+		expect(findNode(container, "HowTo")).toBeUndefined();
 	});
 });

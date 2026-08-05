@@ -17,7 +17,9 @@
  *   emails transactionnels redirigeait vers l'accueil (default-deny).
  * - `/aide` était liée depuis le footer, le sitemap et un JSON-LD `FAQPage`,
  *   mais absente de `publicRoutes` : toute la FAQ (livraison, retours) était
- *   inatteignable — le proxy renvoyait l'accueil.
+ *   inatteignable — le proxy renvoyait l'accueil. La page a depuis été absorbée
+ *   par la landing (2026-08-05) ; l'URL survit en redirection 308, et c'est
+ *   TOUJOURS `publicRoutes` qui décide si elle atteint son ancre.
  *
  * Dans les deux cas, chaque source était plausible isolément ; seule la
  * confrontation des trois révèle le trou. C'est le même motif que
@@ -82,17 +84,46 @@ describe("@regression legal-urls-coherence", () => {
 		).toEqual([]);
 	});
 
-	it("chaque route légale + /aide est dans l'allowlist publicRoutes du proxy", () => {
-		// C'est la garde qui aurait attrapé `/aide` absente de `publicRoutes` :
-		// default-deny → redirect accueil sur une page liée depuis le footer,
-		// le sitemap et un JSON-LD FAQPage.
-		const expected = [...LEGAL_PATHS, ROUTES.SHOP.HELP];
-		const missing = expected.filter((path) => !publicRoutes.includes(path));
+	it("chaque route légale est dans l'allowlist publicRoutes du proxy", () => {
+		const missing = LEGAL_PATHS.filter((path) => !publicRoutes.includes(path));
 		expect(
 			missing,
 			`Route(s) publique(s) absente(s) de publicRoutes (proxy.ts) : ${missing.join(", ")}. ` +
 				"Le default-deny du proxy les redirige vers l'accueil.",
 		).toEqual([]);
+	});
+
+	/**
+	 * `/aide` n'est plus une page : la FAQ a rejoint la landing le 2026-08-05.
+	 * L'URL était indexée (sitemap, canonical, JSON-LD `FAQPage`), donc elle
+	 * redirige — et il faut LES DEUX moitiés du montage pour que la redirection
+	 * arrive à destination :
+	 *
+	 * - la règle 308 dans `next.config.ts`, sinon l'URL tombe en 404 ;
+	 * - `/aide` dans `publicRoutes`, sinon le default-deny du proxy la renvoie
+	 *   vers `/` — donc en haut de la page, SANS l'ancre `#faq`. C'est la même
+	 *   moitié manquante que le bug d'origine, avec un symptôme plus discret :
+	 *   la page s'ouvre, juste pas au bon endroit.
+	 *
+	 * Et l'ancre elle-même doit exister : un fragment inconnu ne produit aucune
+	 * erreur, le navigateur reste simplement en haut.
+	 */
+	it("l'ancienne URL /aide redirige vers l'ancre de la FAQ, et le proxy la laisse passer", () => {
+		expect(publicRoutes).toContain("/aide");
+
+		const nextConfig = readFileSync(join(REPO_ROOT, "next.config.ts"), "utf-8");
+		expect(nextConfig).toContain('source: "/aide", destination: "/#faq", permanent: true');
+
+		// La SSOT de lien du storefront pointe la même ancre que la redirection.
+		expect(ROUTES.SHOP.HELP).toBe("/#faq");
+
+		// …et la section qui porte cette ancre existe, avec cet `id`.
+		const faqSection = readFileSync(
+			join(REPO_ROOT, "app", "(shop)", "(home)", "_components", "faq", "faq-section.tsx"),
+			"utf-8",
+		);
+		expect(faqSection).toContain('FAQ_SECTION_ID = "faq"');
+		expect(faqSection).toContain("id={FAQ_SECTION_ID}");
 	});
 
 	it("le logo email existe dans public/", () => {

@@ -3,7 +3,6 @@ import { type ReactNode } from "react";
 import { CaretLeftIcon } from "@phosphor-icons/react/ssr";
 import { GuardedLink } from "@/shared/components/navigation/guarded-link";
 
-import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { cn } from "@/shared/utils/cn";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
@@ -38,42 +37,33 @@ interface PageHeaderProps {
 	 * Default: false (JSON-LD émis si variant=default + breadcrumbs.length > 0).
 	 */
 	noStructuredData?: boolean;
-	/**
-	 * Accent décoratif "fait main" affiché sous le h1 desktop (mode default uniquement).
-	 * Réservé aux pages storefront. Default: false (admin/compact reste sobre).
-	 */
-	accent?: "underline" | "circle" | false;
 }
 
 /**
- * Header standardisé pour toutes les pages (publiques, dashboard, protected)
+ * Header standardisé des pages LÉGALES et de l'ADMIN.
+ *
+ * ⚠️ **Plus un composant storefront.** Depuis l'harmonisation sur « L'étal
+ * continue » (2026-08-05), les pages boutique (/produits, /collections,
+ * /favoris, PDP) montent `StorefrontHeading` + `BreadcrumbNav`
+ * (`shared/components/`) — pas de bande border-b, h1 visible à tous les
+ * viewports. Son périmètre restant : `app/(legal)/*` (mode default) et
+ * l'admin (`variant="compact"`).
  *
  * - Background remonte jusqu'en haut de la page (sous la navbar fixe `var(--navbar-height)` 4rem/5rem)
  * - Contenu avec `pt-20 sm:pt-32` (compense navbar 64/80px + marge respiration)
  * - Section avec border-bottom
  * - Breadcrumbs avec schema.org BreadcrumbList (rich snippets Google) — JSON-LD émis
- *   automatiquement par le composant, opt-out via `noStructuredData`
+ *   automatiquement par le composant, opt-out via `noStructuredData` (les pages
+ *   légales comptent sur cette émission par défaut)
  * - Titre h1 unique + description optionnelle
  * - Actions optionnelles à droite (responsive)
- * - Accent décoratif "fait main" opt-in via `accent` (storefront, hidden mobile)
  *
  * @example
- * Exemple basique (contact)
+ * Page légale
  * ```tsx
  * <PageHeader
- *   title="Contactez-nous"
- *   description="Une question ? Nous sommes là pour vous accompagner."
- *   breadcrumbs={[{ label: "Contact", href: "/contact" }]}
- * />
- * ```
- *
- * @example
- * Storefront avec accent atelier
- * ```tsx
- * <PageHeader
- *   title="Les collections"
- *   breadcrumbs={[{ label: "Collections", href: "/collections" }]}
- *   accent="underline"
+ *   title="Conditions générales de vente"
+ *   breadcrumbs={[{ label: "CGV", href: "/cgv" }]}
  * />
  * ```
  *
@@ -98,7 +88,6 @@ export function PageHeader({
 	className,
 	variant = "default",
 	noStructuredData = false,
-	accent = false,
 }: PageHeaderProps) {
 	const isCompact = variant === "compact";
 
@@ -255,18 +244,10 @@ export function PageHeader({
 								{title}
 							</h1>
 
-							{/* Accent décoratif "fait main" — desktop only, opt-in storefront */}
-							{accent && (
-								<div className="mt-1 hidden sm:block" aria-hidden="true">
-									<HandDrawnAccent
-										variant={accent}
-										color="var(--primary)"
-										width={accent === "underline" ? 140 : 60}
-										height={accent === "underline" ? 16 : 40}
-										delay={0.15}
-									/>
-								</div>
-							)}
+							{/* Plus d'accent « fait main » ici : la prop `accent` n'était passée
+							    par AUCUN des ~60 appelants (legal + admin) — branche morte purgée
+							    au lot 0 de l'audit HandDrawnAccent (2026-08-05). Le storefront,
+							    seul territoire du geste, passe par StorefrontHeading. */}
 
 							{/* Description optionnelle */}
 							{description && (

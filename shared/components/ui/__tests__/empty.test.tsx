@@ -147,6 +147,30 @@ describe("EmptyMedia", () => {
 		render(<EmptyMedia data-testid="media" variant="icon" />);
 		expect(screen.getByTestId("media")).toHaveAttribute("data-variant", "icon");
 	});
+
+	/**
+	 * @regression empty-media-finite-sparkle-2026-08-05
+	 *
+	 * Un état vide PERSISTE — le panneau du panier vide peut rester ouvert indéfiniment —
+	 * et son icône tournait de 15° en boucle `infinite`. WCAG 2.2.2 exige un mécanisme de
+	 * pause pour tout mouvement automatique de plus de 5 s ; la variante bornée fait
+	 * 2 itérations (4 s) et passe donc sous le seuil, sans contrôle à fournir.
+	 *
+	 * ⚠️ La porte `motion-safe:` ne dispensait de rien : la préférence système est un
+	 * confort, pas le mécanisme demandé par 2.2.2.
+	 *
+	 * Les toasts (`toast-icons.tsx`) gardent délibérément la variante infinie : ils se
+	 * démontent au bout de quelques secondes, leur animation est transitoire par
+	 * construction. C'est pourquoi ce test vise `EmptyMedia` et pas la classe elle-même.
+	 */
+	it("borne l'animation d'étincelle, qui ne doit jamais être infinie", () => {
+		render(<EmptyMedia data-testid="media" />);
+		const media = screen.getByTestId("media");
+		expect(media.className).toContain("motion-safe:animate-sparkle-pulse-once");
+		// La variante infinie ne doit pas rester en plus : `tailwind-merge` ne fusionne pas
+		// deux classes d'animation distinctes, les deux animations coexisteraient.
+		expect(media.className).not.toMatch(/animate-sparkle-pulse(?!-once)/);
+	});
 });
 
 // ============================================================================

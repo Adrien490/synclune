@@ -17,10 +17,6 @@ vi.mock("@/shared/hooks/use-touch-device", () => ({
 	useIsTouchDevice: () => false,
 }));
 
-vi.mock("@/shared/components/scroll-fade", () => ({
-	default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock("@/modules/media/utils/upload-helpers", () => ({
 	formatFileSize: (bytes: number) => `${bytes} o`,
 }));

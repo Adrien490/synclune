@@ -500,8 +500,9 @@ function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
 									"hover:bg-muted/20 active:bg-muted/30",
 									// Animation with reduced motion respect
 									"motion-safe:transition-all motion-safe:duration-100 motion-safe:active:scale-95",
-									// Focus visible
-									"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
+									// Focus visible — SSOT `@utility focus-ring` : `outline-ring` peignait
+									// en `--ring`, le rose pastel à 1,55:1 sur `--background`.
+									"focus-ring",
 								)}
 							>
 								<span

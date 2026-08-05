@@ -1,73 +1,82 @@
 import type { CSSProperties } from "react";
 
+import {
+	HAND_DRAWN_DURATIONS_MS,
+	HAND_DRAWN_STROKES,
+} from "@/shared/components/hand-drawn/constants";
+import { ACCENT_SHAPE_PATHS, UNDERLINE_PATHS } from "@/shared/components/hand-drawn/paths";
 import { cn } from "@/shared/utils/cn";
-import { MOTION_CONFIG } from "./motion.config";
 
-type HandDrawnVariant = "underline" | "circle" | "star" | "heart" | "arrow";
+type HandDrawnVariant = "underline" | "circle" | "star" | "heart";
+type HandDrawnLength = keyof typeof UNDERLINE_PATHS;
 
 /** Opacité de remplissage pour les variants pleins (star, heart) après dessin du contour. */
 const FILLED_VARIANT_OPACITY = 0.15;
 
-export interface HandDrawnAccentProps {
+interface HandDrawnAccentBaseProps {
 	/** Type d'accent dessiné */
 	variant?: HandDrawnVariant;
-	/** Couleur de l'accent (CSS color value) */
+	/**
+	 * Longueur du GESTE pour `underline` : trois tracés dessinés à leur ratio
+	 * (`s` 60×12 · `m` 120×20 · `l` 176×16), pas un path étiré. Ignorée par les
+	 * autres variants. Défaut : `m`.
+	 */
+	length?: HandDrawnLength;
+	/**
+	 * Couleur du tracé. Défaut : l'accent de section (`--section-accent`, posé
+	 * par `data-accent` — cf. app/styles/section-accents.css), repli sur le rose
+	 * signature hors section accentuée.
+	 */
 	color?: string;
-	/** Épaisseur du trait */
+	/**
+	 * Épaisseur du trait — un cran de l'échelle `HAND_DRAWN_STROKES`
+	 * (fin 1,5 · trait 2 · marqueur 2,5 · pinceau 5), pas une valeur au juger.
+	 */
 	strokeWidth?: number;
-	/** Largeur du SVG */
+	/**
+	 * Largeur rendue. La hauteur est TOUJOURS dérivée du ratio du tracé — un
+	 * couple width×height désaccordé letterboxait l'encre en silence
+	 * (`preserveAspectRatio` par défaut : tracé rétréci ET centré, payé sur
+	 * 7 appelants — audit 2026-08-05).
+	 */
 	width?: number;
-	/** Hauteur du SVG */
-	height?: number;
 	/** Durée de l'animation de dessin (en secondes) */
 	duration?: number;
-	/** Délai avant le début de l'animation (en secondes, mode load uniquement) */
-	delay?: number;
-	/** Déclencher le dessin au scroll (true) ou au montage (false). Défaut: true. */
-	inView?: boolean;
 	/** Classe CSS personnalisée */
 	className?: string;
 }
 
 /**
- * Paths SVG pour chaque variante d'accent dessiné à la main.
- * Tendance 2026: Hand-drawn aesthetic + artisanal authenticity.
+ * `delay` n'est lu que par `.hand-draw-load` (entrance.css) : en mode `inView`,
+ * le dessin est piloté par `animation-timeline: view()`, où un délai n'a aucun
+ * sens — la prop y était un réglage fantôme (deux sites en prod). Le type ne
+ * l'accepte donc qu'avec `inView={false}`.
  */
-const svgPaths: Record<
-	HandDrawnVariant,
-	{ path: string; viewBox: string; defaultWidth: number; defaultHeight: number }
-> = {
-	underline: {
-		path: "M2 15 Q30 8, 60 12 Q90 16, 118 10",
-		viewBox: "0 0 120 20",
-		defaultWidth: 120,
-		defaultHeight: 20,
-	},
-	circle: {
-		path: "M40 5 Q75 2, 90 25 Q105 50, 85 70 Q65 90, 35 85 Q5 80, 5 50 Q5 20, 40 5",
-		viewBox: "0 0 100 95",
-		defaultWidth: 100,
-		defaultHeight: 95,
-	},
-	star: {
-		path: "M25 2 L30 18 L48 18 L34 28 L40 45 L25 35 L10 45 L16 28 L2 18 L20 18 Z",
-		viewBox: "0 0 50 50",
-		defaultWidth: 50,
-		defaultHeight: 50,
-	},
-	heart: {
-		path: "M25 45 Q5 30, 5 18 Q5 5, 15 5 Q25 5, 25 15 Q25 5, 35 5 Q45 5, 45 18 Q45 30, 25 45",
-		viewBox: "0 0 50 50",
-		defaultWidth: 50,
-		defaultHeight: 50,
-	},
-	arrow: {
-		path: "M2 25 Q50 20, 90 25 M75 12 L90 25 L75 38",
-		viewBox: "0 0 95 50",
-		defaultWidth: 95,
-		defaultHeight: 50,
-	},
-};
+type HandDrawnTriggerProps =
+	| {
+			/** Dessin au scroll (`animation-timeline: view()`). Défaut. */
+			inView?: true;
+			delay?: never;
+	  }
+	| {
+			/**
+			 * Dessin au montage — OBLIGATOIRE pour tout contenu above-fold ou
+			 * portalisé (dialog, panneau) : une timeline `view()` ne joue pas sans
+			 * traversée du viewport, et ne rejoue pas au montage.
+			 */
+			inView: false;
+			/** Délai avant le début du dessin (en secondes). */
+			delay?: number;
+	  };
+
+export type HandDrawnAccentProps = HandDrawnAccentBaseProps & HandDrawnTriggerProps;
+
+/**
+ * `Omit` non distributif APLATIRAIT l'union de déclenchement (`delay`
+ * redeviendrait acceptable sans `inView={false}`) — la garde de type du
+ * raccourci passe par cette variante distributive.
+ */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
 /**
  * Composant SVG décoratif "fait main" avec animation de dessin.
@@ -75,32 +84,35 @@ const svgPaths: Record<
  * Universal component (no "use client"): le tracé est dessiné via une
  * animation CSS `stroke-dashoffset` (`hand-draw`). Le `<path>` porte
  * `pathLength="1"` — la longueur est normalisée, aucune mesure JS requise.
- * Zéro motion-react.
+ * Zéro motion-react. Les tracés vivent dans la SSOT
+ * `shared/components/hand-drawn/paths.ts`.
  *
  * `inView` (défaut true) lie le dessin au scroll (`animation-timeline: view()`) ;
- * `inView=false` le joue au montage. Reduced motion + Safari <= 18 affichent
- * l'accent fini, sans animation.
+ * Safari ≤ 18 (sans `view()`) et reduced-motion affichent alors l'accent fini.
+ * `inView=false` joue le dessin au montage — c'est une animation CSS classique,
+ * qui joue sur TOUS les navigateurs ; seul reduced-motion l'affiche fini.
  *
  * @example
  * ```tsx
  * <h2>Nos créations</h2>
- * <HandDrawnAccent variant="underline" color="var(--primary)" />
+ * <HandDrawnAccent variant="underline" />
  * ```
  */
 export function HandDrawnAccent({
 	variant = "underline",
-	color = "currentColor",
-	strokeWidth = 2,
+	length = "m",
+	color = "var(--section-accent, var(--primary))",
+	strokeWidth = HAND_DRAWN_STROKES.trait,
 	width,
-	height,
-	duration = MOTION_CONFIG.duration.slower,
+	duration = HAND_DRAWN_DURATIONS_MS.trait / 1000,
 	delay = 0,
 	inView = true,
 	className,
 }: HandDrawnAccentProps) {
-	const config = svgPaths[variant];
-	const finalWidth = width ?? config.defaultWidth;
-	const finalHeight = height ?? config.defaultHeight;
+	const config = variant === "underline" ? UNDERLINE_PATHS[length] : ACCENT_SHAPE_PATHS[variant];
+	const finalWidth = width ?? config.width;
+	// Hauteur DÉRIVÉE du ratio natif — jamais fournie par l'appelant (letterbox).
+	const finalHeight = Math.round((finalWidth * config.height * 100) / config.width) / 100;
 
 	const isFilledVariant = variant === "star" || variant === "heart";
 	const fillValue = isFilledVariant ? color : "none";
@@ -117,7 +129,7 @@ export function HandDrawnAccent({
 			focusable="false"
 		>
 			<path
-				d={config.path}
+				d={config.d}
 				pathLength={1}
 				stroke={color}
 				strokeWidth={strokeWidth}
@@ -140,14 +152,9 @@ export function HandDrawnAccent({
 /**
  * Composant raccourci pour souligner un titre.
  *
- * Le défaut hérite de l'accent de section (`--section-accent`, posé par
- * `data-accent` — cf. app/styles/section-accents.css) et retombe sur le
- * rose signature hors section accentuée.
+ * Hérite du défaut cascadé du composant : accent de section
+ * (`--section-accent`), repli rose signature hors section accentuée.
  */
-export function HandDrawnUnderline({
-	color = "var(--section-accent, var(--primary))",
-	className,
-	...props
-}: Omit<HandDrawnAccentProps, "variant">) {
-	return <HandDrawnAccent variant="underline" color={color} className={className} {...props} />;
+export function HandDrawnUnderline(props: DistributiveOmit<HandDrawnAccentProps, "variant">) {
+	return <HandDrawnAccent variant="underline" {...props} />;
 }

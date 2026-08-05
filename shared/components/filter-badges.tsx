@@ -3,7 +3,6 @@
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { type FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react/ssr";
@@ -56,9 +55,22 @@ interface FilterBadgesProps {
 	 */
 	onClearAll?: () => void;
 	/**
-	 * Sur mobile, masque le label et n'affiche que la valeur
+	 * État pending externe (aria-busy). OBLIGATOIRE quand le parent contrôle
+	 * via `activeFilters`/`onRemove` : les transitions courent alors dans SON
+	 * instance de hook, et celle d'ici ne bouge jamais — `aria-busy` mentait
+	 * en permanence sur le storefront (audit 2026-08-05, P2).
 	 */
-	compactMobile?: boolean;
+	isPending?: boolean;
+	/**
+	 * Habillage des badges et boutons. `pill` (défaut, admin) ou `etiquette`
+	 * (storefront — « L'étiquette de bocal », artifact 2026-08-05).
+	 */
+	appearance?: "pill" | "etiquette";
+	/**
+	 * Classes d'accent de facette par badge (`etiquette` uniquement) —
+	 * SSOT `FILTER_BADGE_ACCENTS`.
+	 */
+	getBadgeAccentClassName?: (filter: FilterDefinition) => string | undefined;
 }
 
 /**
@@ -74,33 +86,56 @@ export function FilterBadges({
 	activeFilters: activeFiltersProp,
 	onRemove,
 	onClearAll,
-	compactMobile,
+	isPending: isPendingProp,
+	appearance = "pill",
+	getBadgeAccentClassName,
 }: FilterBadgesProps) {
-	const { optimisticActiveFilters, removeFilterOptimistic, clearAllFiltersOptimistic, isPending } =
-		useFilter(filterOptions);
+	const {
+		optimisticActiveFilters,
+		removeFilterOptimistic,
+		clearAllFiltersOptimistic,
+		isPending: internalIsPending,
+	} = useFilter(filterOptions);
 
 	// Use external filters if provided, otherwise use internal hook
 	const activeFilters = activeFiltersProp ?? optimisticActiveFilters;
 	const handleRemove = onRemove ?? removeFilterOptimistic;
 	const handleClearAll = onClearAll ?? clearAllFiltersOptimistic;
+	const isPending = isPendingProp ?? internalIsPending;
 
 	const [showAll, setShowAll] = useState(false);
-	const isMobile = useIsMobile();
 	const shouldReduceMotion = useReducedMotion();
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	// Move focus to next badge after removal, or to "Clear all" if none left
+	// Move focus to the NEIGHBOUR badge after removal (same index, clamped),
+	// or to "Clear all" if none left — le renvoi au PREMIER badge perdait la
+	// position dans une longue liste (audit 2026-08-05, P3).
 	const handleRemoveWithFocus = (key: string, value?: string) => {
+		const before = containerRef.current?.querySelectorAll<HTMLButtonElement>(
+			'button[aria-label^="Supprimer"]',
+		);
+		// L'élément supprimé RESTE dans le DOM pendant sa sortie AnimatePresence
+		// (fondu 150 ms) : il faut l'exclure des cibles, sinon le focus se pose
+		// sur un nœud en cours de démontage et retombe sur <body>.
+		const removedElement = document.activeElement;
+		const removedIndex = before ? Array.prototype.indexOf.call(before, removedElement) : -1;
 		handleRemove(key, value);
 		requestAnimationFrame(() => {
 			const buttons = containerRef.current?.querySelectorAll<HTMLButtonElement>(
 				'button[aria-label^="Supprimer"]',
 			);
-			if (buttons && buttons.length > 0) {
-				buttons[0]?.focus();
+			const candidates = buttons
+				? Array.prototype.filter.call(
+						buttons,
+						(button: HTMLButtonElement) => button !== removedElement,
+					)
+				: [];
+			if (candidates.length > 0) {
+				const index = removedIndex >= 0 ? Math.min(removedIndex, candidates.length - 1) : 0;
+				(candidates[index] as HTMLButtonElement | undefined)?.focus();
 			} else {
 				containerRef.current
-					?.querySelector<HTMLButtonElement>('button[aria-label="Effacer tous les filtres"]')
+					?.querySelector<HTMLButtonElement>("button[data-clear-filters]")
 					?.focus();
 			}
 		});
@@ -124,18 +159,15 @@ export function FilterBadges({
 		return null;
 	}
 
-	// Hybrid layout: 2 lines max on mobile (~6 badges), more on desktop
-	const mobileMaxFilters = 6;
-	const effectiveMaxFilters = isMobile
-		? Math.min(mobileMaxFilters, maxVisibleFilters)
-		: maxVisibleFilters;
-
-	// Filters to display (limited or all)
+	// Filters to display (limited or all). L'ancien plafond mobile
+	// `Math.min(6, maxVisibleFilters)` était une branche MORTE (min(6,5)=5,
+	// aucun appelant ne passait la prop) et son `useIsMobile()` (md, 48rem)
+	// divergeait du seuil CSS (sm, 40rem) — composant hybride interdit.
 	const displayedFilters =
-		showAll || activeFilters.length <= effectiveMaxFilters
+		showAll || activeFilters.length <= maxVisibleFilters
 			? activeFilters
-			: activeFilters.slice(0, effectiveMaxFilters);
-	const hasMoreFilters = activeFilters.length > effectiveMaxFilters;
+			: activeFilters.slice(0, maxVisibleFilters);
+	const hasMoreFilters = activeFilters.length > maxVisibleFilters;
 
 	const motionTransition = maybeReduceMotion(
 		{ duration: MOTION_CONFIG.duration.fast },
@@ -169,11 +201,13 @@ export function FilterBadges({
 						filter={filter}
 						formatFilter={formatFilter}
 						onRemove={handleRemoveWithFocus}
-						compactMobile={compactMobile}
+						appearance={appearance}
+						accentClassName={getBadgeAccentClassName?.(filter)}
 					/>
 				))}
 
-				{/* "Show more/less" button */}
+				{/* "Show more/less" button — 44 px, même échelle typo que les badges
+				 * qu'il pilote ; nom accessible CONTENANT le libellé visible (2.5.3). */}
 				{hasMoreFilters && (
 					<m.div
 						key="show-more-button"
@@ -187,11 +221,15 @@ export function FilterBadges({
 							variant="outline"
 							size="sm"
 							onClick={() => setShowAll(!showAll)}
-							className={cn("h-11 gap-1.5 px-3 sm:h-8", "rounded-full", "text-xs font-medium")}
+							className={cn(
+								"min-h-11 gap-1.5 px-3.5",
+								"text-sm font-medium",
+								appearance === "etiquette" ? "rounded-sm" : "rounded-full",
+							)}
 							aria-label={
 								showAll
-									? "Afficher moins de filtres"
-									: `Afficher ${activeFilters.length - effectiveMaxFilters} filtres supplémentaires`
+									? "Voir moins de filtres"
+									: `+${activeFilters.length - maxVisibleFilters} autres filtres`
 							}
 						>
 							{showAll ? (
@@ -201,7 +239,7 @@ export function FilterBadges({
 								</>
 							) : (
 								<>
-									+{activeFilters.length - effectiveMaxFilters} autres
+									+{activeFilters.length - maxVisibleFilters} autres
 									<CaretDownIcon className="size-3" />
 								</>
 							)}
@@ -209,7 +247,8 @@ export function FilterBadges({
 					</m.div>
 				)}
 
-				{/* "Clear all" button */}
+				{/* "Clear all" button — le nom accessible EST le libellé visible
+				 * (2.5.3) ; le hover destructif est gaté `can-hover:` (sticky iOS). */}
 				{activeFilters.length >= 1 && (
 					<m.div
 						key="clear-all-button"
@@ -223,14 +262,14 @@ export function FilterBadges({
 							variant="ghost"
 							size="sm"
 							onClick={handleClearAllWithFocus}
+							data-clear-filters=""
 							className={cn(
-								"h-11 px-3 sm:h-8",
-								"text-muted-foreground text-xs",
-								"hover:text-destructive hover:bg-destructive/10",
+								"min-h-11 px-3",
+								"text-muted-foreground text-sm",
+								"can-hover:hover:text-destructive can-hover:hover:bg-destructive/10",
 								"underline underline-offset-2",
 								"transition-colors",
 							)}
-							aria-label="Effacer tous les filtres"
 						>
 							Tout effacer
 						</Button>

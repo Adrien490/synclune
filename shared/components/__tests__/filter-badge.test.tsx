@@ -12,7 +12,11 @@ const { mockReducedMotion, mockIsTouchDevice, lastMotionProps, mockTriggerHaptic
 		lastMotionProps: {
 			value: null as {
 				drag?: unknown;
-				onDragEnd?: (event: unknown, info: { offset: { x: number; y: number } }) => void;
+				onDragStart?: () => void;
+				onDragEnd?: (
+					event: unknown,
+					info: { offset: { x: number; y: number }; velocity: { x: number; y: number } },
+				) => void;
 				whileHover?: unknown;
 				style?: Record<string, unknown>;
 			} | null,
@@ -41,6 +45,7 @@ vi.mock("motion/react", () => {
 						drag,
 						dragConstraints: _dc,
 						dragElastic: _de,
+						onDragStart,
 						onDragEnd,
 						style,
 						variants: _v,
@@ -50,6 +55,7 @@ vi.mock("motion/react", () => {
 				) => {
 					lastMotionProps.value = {
 						drag,
+						onDragStart: onDragStart as never,
 						onDragEnd: onDragEnd as never,
 						whileHover,
 						style: style as Record<string, unknown> | undefined,
@@ -144,11 +150,11 @@ describe("FilterBadge", () => {
 		expect(screen.getByText("Rouge")).toBeInTheDocument();
 	});
 
-	it("has correct aria-label for removal", () => {
+	it("has correct aria-label for removal (contains the visible « Label : Valeur » — WCAG 2.5.3)", () => {
 		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
 		expect(screen.getByRole("button")).toHaveAttribute(
 			"aria-label",
-			"Supprimer le filtre Couleur Rouge",
+			"Supprimer le filtre Couleur : Rouge",
 		);
 	});
 
@@ -253,7 +259,7 @@ describe("FilterBadge", () => {
 		mockIsTouchDevice.value = true;
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -120, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -120, y: 0 }, velocity: { x: 0, y: 0 } });
 		expect(onRemove).toHaveBeenCalledWith("color", "red");
 		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
 	});
@@ -262,7 +268,7 @@ describe("FilterBadge", () => {
 		mockIsTouchDevice.value = true;
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -50, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -50, y: 0 }, velocity: { x: 0, y: 0 } });
 		expect(onRemove).not.toHaveBeenCalled();
 		expect(mockTriggerHaptic).not.toHaveBeenCalled();
 	});
@@ -293,5 +299,107 @@ describe("FilterBadge", () => {
 		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
 		const button = screen.getByRole("button");
 		expect(button.className).toContain("focus-ring");
+	});
+
+	// ========================================================================
+	// APPEARANCE — pilule (défaut, admin) vs « étiquette de bocal » (storefront)
+	// ========================================================================
+
+	it("renders the neutral pill by default (rounded-full, no facet liseré)", () => {
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
+		const button = screen.getByRole("button");
+		expect(button.className).toContain("rounded-full");
+		expect(button.className).not.toContain("border-l-3");
+	});
+
+	it("renders the etiquette appearance with its accentClassName (liseré + lavis de facette)", () => {
+		render(
+			<FilterBadge
+				filter={baseFilter}
+				onRemove={vi.fn()}
+				appearance="etiquette"
+				accentClassName="border-l-brand-lavender bg-brand-lavender/10 focus-visible:border-l-brand-lavender"
+			/>,
+		);
+		const button = screen.getByRole("button");
+		expect(button.className).toContain("rounded-sm");
+		expect(button.className).toContain("border-l-3");
+		expect(button.className).toContain("border-l-brand-lavender");
+		expect(button.className).toContain("bg-brand-lavender/10");
+		// Parité focus du liseré : l'utilitaire focus-ring recolore les 4 bordures,
+		// l'accent doit se ré-affirmer côté gauche (ré-audit 2026-08-05).
+		expect(button.className).toContain("focus-visible:border-l-brand-lavender");
+		expect(button.className).not.toContain("rounded-full");
+	});
+
+	it("etiquette without accentClassName still renders the base etiquette shell", () => {
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} appearance="etiquette" />);
+		const button = screen.getByRole("button");
+		expect(button.className).toContain("rounded-sm");
+		expect(button.className).toContain("bg-card");
+	});
+
+	// ========================================================================
+	// DOUBLE-FIRE GUARD — un drag souris (hybride iPad+trackpad) émet un click
+	// natif au relâchement ; Motion ne supprime que son geste press, pas onClick.
+	// ========================================================================
+
+	it("swallows the native click that follows a dismissing drag (single onRemove)", () => {
+		mockIsTouchDevice.value = true;
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+		const button = screen.getByRole("button");
+
+		fireEvent.pointerDown(button);
+		lastMotionProps.value?.onDragStart?.();
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -120, y: 0 }, velocity: { x: 0, y: 0 } });
+		fireEvent.click(button, { detail: 1 });
+
+		expect(onRemove).toHaveBeenCalledTimes(1);
+	});
+
+	it("swallows the native click after an aborted drag (below threshold — a drag is not a tap)", () => {
+		mockIsTouchDevice.value = true;
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+		const button = screen.getByRole("button");
+
+		fireEvent.pointerDown(button);
+		lastMotionProps.value?.onDragStart?.();
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -50, y: 0 }, velocity: { x: 0, y: 0 } });
+		fireEvent.click(button, { detail: 1 });
+
+		expect(onRemove).not.toHaveBeenCalled();
+	});
+
+	it("does NOT swallow a keyboard activation (detail === 0) even after an aborted drag", () => {
+		mockIsTouchDevice.value = true;
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+		const button = screen.getByRole("button");
+
+		fireEvent.pointerDown(button);
+		lastMotionProps.value?.onDragStart?.();
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -50, y: 0 }, velocity: { x: 0, y: 0 } });
+		// Entrée/Espace produisent un click avec detail=0 — jamais précédé d'un drag.
+		fireEvent.click(button, { detail: 0 });
+
+		expect(onRemove).toHaveBeenCalledTimes(1);
+	});
+
+	it("a fresh tap after an aborted drag removes normally (pointerdown resets the guard)", () => {
+		mockIsTouchDevice.value = true;
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+		const button = screen.getByRole("button");
+
+		fireEvent.pointerDown(button);
+		lastMotionProps.value?.onDragStart?.();
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -50, y: 0 }, velocity: { x: 0, y: 0 } });
+		// Nouveau geste : pointerdown ré-arme, pas de drag cette fois.
+		fireEvent.pointerDown(button);
+		fireEvent.click(button, { detail: 1 });
+
+		expect(onRemove).toHaveBeenCalledTimes(1);
 	});
 });

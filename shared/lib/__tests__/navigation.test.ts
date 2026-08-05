@@ -63,7 +63,7 @@ describe("isCatalogueRoute", () => {
 		expect(isCatalogueRoute(pathname)).toBe(true);
 	});
 
-	it.each([["/"], ["/favoris"], ["/panier"], ["/cgv"], ["/aide"], ["/paiement"]])(
+	it.each([["/"], ["/favoris"], ["/panier"], ["/cgv"], ["/paiement"]])(
 		"ne couvre pas %s",
 		(pathname) => {
 			expect(isCatalogueRoute(pathname)).toBe(false);

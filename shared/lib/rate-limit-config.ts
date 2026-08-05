@@ -237,6 +237,19 @@ export const PRODUCT_SEARCH_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour le compteur vivant du panneau de filtres (« Voir les N pièces »)
+ *
+ * Un count SQL par pause de saisie (débounce 300ms côté client) : aligné sur
+ * PRODUCT_SEARCH_LIMIT — même fréquence légitime, même surface publique, et le
+ * résultat est un `"use cache"` partagé qui absorbe les répétitions.
+ */
+export const PRODUCT_FILTER_COUNT_LIMIT: RateLimitConfig = {
+	name: "product-filter-count",
+	limit: 50,
+	windowMs: minutes(1),
+};
+
+/**
  * Limite pour le chargement paginé du catalogue produits (load more mobile)
  *
  * Permissif car action de lecture fréquente sur catalogue mobile avec

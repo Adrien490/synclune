@@ -7,14 +7,13 @@ import type { FilterDefinition } from "@/shared/hooks/use-filter";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockFilterHook, mockIsMobile } = vi.hoisted(() => ({
+const { mockFilterHook } = vi.hoisted(() => ({
 	mockFilterHook: {
 		optimisticActiveFilters: [] as FilterDefinition[],
 		removeFilterOptimistic: vi.fn(),
 		clearAllFiltersOptimistic: vi.fn(),
 		isPending: false,
 	},
-	mockIsMobile: { value: false },
 }));
 
 // ============================================================================
@@ -57,10 +56,6 @@ vi.mock("@/shared/hooks/use-filter", () => ({
 	useFilter: () => mockFilterHook,
 }));
 
-vi.mock("@/shared/hooks/use-mobile", () => ({
-	useIsMobile: () => mockIsMobile.value,
-}));
-
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
@@ -74,6 +69,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 }));
 
 vi.mock("../filter-badge", () => ({
+	// aria-label aligné sur le vrai composant : la gestion de focus du wrapper
+	// cible `button[aria-label^="Supprimer"]`.
 	FilterBadge: ({
 		filter,
 		onRemove,
@@ -83,6 +80,7 @@ vi.mock("../filter-badge", () => ({
 	}) => (
 		<button
 			data-testid={`filter-badge-${filter.id}`}
+			aria-label={`Supprimer le filtre ${filter.label}`}
 			onClick={() => onRemove(filter.key, String(filter.value))}
 		>
 			{filter.label}
@@ -105,7 +103,6 @@ describe("FilterBadges", () => {
 		vi.clearAllMocks();
 		mockFilterHook.optimisticActiveFilters = [];
 		mockFilterHook.isPending = false;
-		mockIsMobile.value = false;
 	});
 	afterEach(cleanup);
 
@@ -186,7 +183,8 @@ describe("FilterBadges", () => {
 	it("renders 'Tout effacer' button that calls clearAll", () => {
 		mockFilterHook.optimisticActiveFilters = [makeFilter("1", "k", "L")];
 		render(<FilterBadges />);
-		const clearBtn = screen.getByLabelText("Effacer tous les filtres");
+		// Le nom accessible EST le libellé visible (WCAG 2.5.3) — plus d'aria-label.
+		const clearBtn = screen.getByRole("button", { name: "Tout effacer" });
 		expect(clearBtn).toBeInTheDocument();
 		fireEvent.click(clearBtn);
 		expect(mockFilterHook.clearAllFiltersOptimistic).toHaveBeenCalled();
@@ -206,8 +204,26 @@ describe("FilterBadges", () => {
 		);
 
 		expect(screen.getByTestId("filter-badge-ext")).toBeInTheDocument();
-		fireEvent.click(screen.getByLabelText("Effacer tous les filtres"));
+		fireEvent.click(screen.getByRole("button", { name: "Tout effacer" }));
 		expect(onClearAll).toHaveBeenCalled();
+	});
+
+	it("external isPending drives aria-busy when the parent controls the list", () => {
+		// Le hook INTERNE ne bouge jamais quand le parent contrôle : sans la prop,
+		// aria-busy mentait en permanence sur le storefront (audit 2026-08-05).
+		mockFilterHook.isPending = false;
+		render(
+			<FilterBadges
+				activeFilters={[makeFilter("ext", "key", "External")]}
+				onRemove={vi.fn()}
+				onClearAll={vi.fn()}
+				isPending
+			/>,
+		);
+		expect(screen.getByRole("region", { name: "Filtres actifs" })).toHaveAttribute(
+			"aria-busy",
+			"true",
+		);
 	});
 
 	// ============================================================================
@@ -223,16 +239,39 @@ describe("FilterBadges", () => {
 	});
 
 	// ============================================================================
-	// MOBILE
+	// FOCUS MANAGEMENT
 	// ============================================================================
 
-	it("limits visible filters to min(6, maxVisibleFilters) on mobile", () => {
-		mockIsMobile.value = true;
-		mockFilterHook.optimisticActiveFilters = Array.from({ length: 10 }, (_, i) =>
-			makeFilter(`${i}`, `k${i}`, `L${i}`),
+	it("moves focus to the neighbour badge (same index) after a removal", async () => {
+		const filters = [
+			makeFilter("a", "ka", "A"),
+			makeFilter("b", "kb", "B"),
+			makeFilter("c", "kc", "C"),
+		];
+		const onRemove = vi.fn();
+		const { rerender } = render(
+			<FilterBadges activeFilters={filters} onRemove={onRemove} onClearAll={vi.fn()} />,
 		);
-		render(<FilterBadges maxVisibleFilters={8} />);
-		// effectiveMax = min(6, 8) = 6 → +4 autres
-		expect(screen.getByText("+4 autres")).toBeInTheDocument();
+
+		// La cliente supprime le badge du MILIEU (index 1)…
+		const badgeB = screen.getByTestId("filter-badge-b");
+		badgeB.focus();
+		fireEvent.click(badgeB);
+		expect(onRemove).toHaveBeenCalledWith("kb", "");
+
+		// …le parent re-rend sans lui (l'update optimiste est synchrone en vrai,
+		// le rAF du composant ne part qu'à la frame suivante — après ce rerender)…
+		rerender(
+			<FilterBadges
+				activeFilters={[filters[0]!, filters[2]!]}
+				onRemove={onRemove}
+				onClearAll={vi.fn()}
+			/>,
+		);
+		await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+		// …le focus va au VOISIN (nouvel index 1), pas au premier badge
+		// (régression de position, audit 2026-08-05).
+		expect(document.activeElement).toBe(screen.getByTestId("filter-badge-c"));
 	});
 });

@@ -133,24 +133,32 @@ function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
 /**
  * Poignée des bottom-sheets mobile. Base UI n'a pas de primitive `Handle` — tout
  * le popup est préhensible ; la poignée n'est qu'un repère visuel, sauf en mode
- * `handleOnly` où elle redevient la seule zone non exclue du geste. Pill visible
- * avec zone tactile étendue.
+ * `handleOnly` où elle redevient la seule zone non exclue du geste.
+ *
+ * **Alignée sur `DrawerHandle` le 2026-08-05** — les deux poignées avaient divergé, et
+ * c'est celle du Drawer qui a révélé les deux défauts. Le raisonnement complet (contraste
+ * mesuré palier par palier, pourquoi une bande en flux plutôt qu'un pseudo-élément,
+ * pourquoi `aria-hidden` sans `role` ni `tabIndex`) est documenté une seule fois, sur
+ * `DrawerHandle` dans `drawer.tsx` — ne pas le dupliquer ici, s'y référer.
+ *
+ * Ce qui change ici : `/45` (1,63:1) → `/80` (3,22:1, seuil WCAG 1.4.11), et la zone
+ * tactile passe du `before:` en position absolue à une bande en flux. Le pseudo-élément
+ * débordait de ±40 px horizontalement et ±24 px verticalement par-dessus ses voisins :
+ * sur un `handleOnly` (`filter-sheet-wrapper`) il couvrait le haut du panneau.
  */
 function SheetHandle({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
-			data-slot="sheet-handle"
+			data-slot="sheet-handle-grip"
+			aria-hidden="true"
 			className={cn(
-				// Visuel agrandi pour repère pouce : 8×56 (vs 6×40 avant)
-				// Contraste renforcé (/45 vs /30) — affordance évidente
-				"bg-muted-foreground/45 relative mx-auto mt-3 mb-1 h-2 w-14 shrink-0 rounded-full",
-				"cursor-grab active:cursor-grabbing",
-				// Zone tactile étendue ~56×144px (vs ~36×88 avant) — confortable pour pouce
-				"before:absolute before:-inset-x-10 before:-inset-y-6 before:content-['']",
+				"flex w-full shrink-0 cursor-grab justify-center py-3 active:cursor-grabbing",
 				className,
 			)}
 			{...props}
-		/>
+		>
+			<div data-slot="sheet-handle" className="bg-muted-foreground/80 h-2 w-14 rounded-full" />
+		</div>
 	);
 }
 
@@ -253,7 +261,19 @@ function SheetContent({
 					data-slot="sheet-content"
 					data-direction={direction}
 					className={cn(
-						// Base + group pour permettre group-has-[[data-pending]]/sheet sur les descendants
+						// Base + `group/sheet`, pour que les descendants puissent réagir à un état
+						// de chargement porté par le popup.
+						//
+						// ⚠️ **Depuis le call site, c'est `group-data-pending/sheet:`, PAS
+						// `group-has-[[data-pending]]/sheet:`.** L'endroit naturel où poser
+						// `data-pending` est l'élément auquel on passe `className` — donc CET
+						// élément, celui qui porte `group/sheet`. Or `group-has-*` compile en
+						// `:has()`, qui ne matche jamais son propre sujet : la variante est alors
+						// silencieusement morte. `group-data-*` lit l'attribut sur l'hôte lui-même.
+						// Le panier a perdu 17 variantes ainsi (aucun retour visuel sur aucune
+						// mutation) ; `group-has-*` ne reste correct que si l'attribut vit sur un
+						// DESCENDANT du groupe. Verrouillé par
+						// `test/conventions/group-has-pending-on-self.regression.test.ts`.
 						"group/sheet bg-background flex flex-col gap-4 shadow-lg",
 						PANEL_TRANSITION,
 						SWIPE_TRANSFORM[direction],

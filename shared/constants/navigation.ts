@@ -153,6 +153,11 @@ export const footerNavItems = [
 
 // Footer, colonne « Écrire à l'atelier » : le libre-service AVANT l'adresse e-mail
 // (une question de délai de livraison se répond seule ; un message, non).
+//
+// ⚠️ `ROUTES.SHOP.HELP` vaut `/#faq` depuis le 2026-08-05 — une ANCRE de la
+// landing, plus une page. Le lien reste un `next/link` (la navigation vers `/`
+// passe bien par le routeur, qui honore le fragment), mais aucun helper de
+// « route active » ne peut le matcher : il n'y a pas de pathname `/#faq`.
 export const footerHelpNavItems = [{ href: ROUTES.SHOP.HELP, label: "Aide et FAQ" }] as const;
 
 // Liens légaux — libellés courts, pour tenir en deux colonnes sous `sm` sans

@@ -10,6 +10,11 @@
  *
  * Si ces tests cassent : ne PAS les "fixer" en restaurant le comportement bidirectionnel.
  * Re-discuter la spec produit avant d'élargir.
+ *
+ * Extension 2026-08-05 (ré-audit FilterBadge) : le seuil accepte aussi le FLICK
+ * (geste court mais vif — distance ET vélocité, la vraie convention iOS), toujours
+ * gauche uniquement : offset < -24px ET vélocité < -500px/s. Un flick DROIT ou un
+ * micro-geste rapide (< 24px) ne suppriment jamais.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,7 +25,10 @@ const { mockReducedMotion, mockIsTouchDevice, lastMotionProps } = vi.hoisted(() 
 	mockIsTouchDevice: { value: true },
 	lastMotionProps: {
 		value: null as {
-			onDragEnd?: (event: unknown, info: { offset: { x: number; y: number } }) => void;
+			onDragEnd?: (
+				event: unknown,
+				info: { offset: { x: number; y: number }; velocity: { x: number; y: number } },
+			) => void;
 		} | null,
 	},
 }));
@@ -110,7 +118,7 @@ describe("@regression filter-badge-swipe-left-only", () => {
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
 
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -120, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -120, y: 0 }, velocity: { x: 0, y: 0 } });
 
 		expect(onRemove).toHaveBeenCalledWith("color", "red");
 	});
@@ -119,7 +127,7 @@ describe("@regression filter-badge-swipe-left-only", () => {
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
 
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 120, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 120, y: 0 }, velocity: { x: 0, y: 0 } });
 
 		expect(onRemove).not.toHaveBeenCalled();
 	});
@@ -128,7 +136,7 @@ describe("@regression filter-badge-swipe-left-only", () => {
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
 
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 300, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 300, y: 0 }, velocity: { x: 0, y: 0 } });
 
 		expect(onRemove).not.toHaveBeenCalled();
 	});
@@ -137,7 +145,7 @@ describe("@regression filter-badge-swipe-left-only", () => {
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
 
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -50, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -50, y: 0 }, velocity: { x: 0, y: 0 } });
 
 		expect(onRemove).not.toHaveBeenCalled();
 	});
@@ -146,7 +154,7 @@ describe("@regression filter-badge-swipe-left-only", () => {
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
 
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -81, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -81, y: 0 }, velocity: { x: 0, y: 0 } });
 
 		expect(onRemove).toHaveBeenCalledWith("color", "red");
 	});
@@ -155,7 +163,55 @@ describe("@regression filter-badge-swipe-left-only", () => {
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
 
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -80, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -80, y: 0 }, velocity: { x: 0, y: 0 } });
+
+		expect(onRemove).not.toHaveBeenCalled();
+	});
+	// ========================================================================
+	// FLICK — distance + vélocité (extension 2026-08-05, gauche uniquement)
+	// ========================================================================
+
+	it("supprime sur FLICK gauche court mais vif (-50px, -600px/s)", () => {
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+
+		lastMotionProps.value?.onDragEnd?.(
+			{},
+			{ offset: { x: -50, y: 0 }, velocity: { x: -600, y: 0 } },
+		);
+
+		expect(onRemove).toHaveBeenCalledWith("color", "red");
+	});
+
+	it("NE supprime PAS un geste court et lent (-50px, -300px/s)", () => {
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+
+		lastMotionProps.value?.onDragEnd?.(
+			{},
+			{ offset: { x: -50, y: 0 }, velocity: { x: -300, y: 0 } },
+		);
+
+		expect(onRemove).not.toHaveBeenCalled();
+	});
+
+	it("NE supprime PAS un micro-geste même très vif (-20px, -900px/s) — plancher de distance", () => {
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+
+		lastMotionProps.value?.onDragEnd?.(
+			{},
+			{ offset: { x: -20, y: 0 }, velocity: { x: -900, y: 0 } },
+		);
+
+		expect(onRemove).not.toHaveBeenCalled();
+	});
+
+	it("NE supprime PAS sur FLICK DROIT (+50px, +900px/s) — la convention reste gauche-only", () => {
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 50, y: 0 }, velocity: { x: 900, y: 0 } });
 
 		expect(onRemove).not.toHaveBeenCalled();
 	});

@@ -35,8 +35,9 @@ export function RadioFilterItem({
 			className={cn(
 				"-mx-3 flex min-h-11 cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5",
 				"transition-colors duration-150",
-				"hover:bg-accent/50",
-				"focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2",
+				// Parité survol ⇔ focus sans anneau de ligne — même arbitrage que
+				// `checkbox-filter-item.tsx` : le contrôle interne porte `focus-ring`.
+				"can-hover:hover:bg-accent/50 has-focus-visible:bg-accent/50",
 				checked && "bg-primary/5",
 				disabled && "cursor-not-allowed opacity-50",
 			)}
@@ -50,8 +51,8 @@ export function RadioFilterItem({
 				disabled={disabled}
 				onChange={(e) => onCheckedChange(e.target.checked)}
 				className={cn(
-					"border-primary text-primary mt-0.5 size-4 shrink-0 rounded-full border",
-					"focus-visible:ring-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+					"border-muted-foreground text-primary mt-0.5 size-4 shrink-0 rounded-full border",
+					"focus-ring",
 					"disabled:cursor-not-allowed disabled:opacity-50",
 					"accent-primary",
 				)}

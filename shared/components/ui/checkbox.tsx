@@ -28,7 +28,11 @@ function Checkbox({ className, indeterminate, onCheckedChange, ...props }: Check
 				// Rose PROFOND sur les états cochés : la pastille pleine EST le signal, et
 				// en pastel elle ne se détachait du fond blanc qu'à 1,6:1. L'encre reste
 				// `--primary-foreground` (quasi-noir), à 5,7:1 sur ce rose-là.
-				"peer border-input data-checked:bg-brand-rose-strong data-checked:text-primary-foreground data-checked:border-brand-rose-strong data-indeterminate:bg-brand-rose-strong data-indeterminate:text-primary-foreground data-indeterminate:border-brand-rose-strong can-hover:hover:border-ring/70 focus-ring aria-invalid:ring-destructive/20 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-[box-shadow,border-color,transform] disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-95",
+				// Bordure au repos en muted-foreground : dérivée de --input elle mesurait
+				// 1,16:1 sur --background — la case non cochée était invisible (WCAG
+				// 1.4.11 exige 3:1 pour un contrôle). Le survol assombrit vers le rose
+				// profond, pas vers --ring pastel qui ÉCLAIRCIRAIT la bordure.
+				"peer border-muted-foreground data-checked:bg-brand-rose-strong data-checked:text-primary-foreground data-checked:border-brand-rose-strong data-indeterminate:bg-brand-rose-strong data-indeterminate:text-primary-foreground data-indeterminate:border-brand-rose-strong can-hover:hover:border-brand-rose-strong focus-ring aria-invalid:ring-destructive/20 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-[box-shadow,border-color,transform] disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-95",
 				className,
 			)}
 			{...props}

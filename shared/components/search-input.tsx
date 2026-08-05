@@ -315,7 +315,18 @@ function SearchInputInner({
 					"hover:border-muted-foreground/40",
 					// Focus ring aligné au SSOT `focus-ring` (app/globals.css) —
 					// `focus-within` car le conteneur n'est pas focusable, l'<input> l'est.
+					//
+					// ⚠️ Le halo rose ne suffit PAS à lui seul : `--ring` vaut `--primary`,
+					// un pastel à 1,55:1 sur le fond, quand WCAG 1.4.11 demande 3:1 pour un
+					// indicateur d'état. `globals.css` § ROSE PROFOND le dit explicitement —
+					// `--ring` reste pastel À DESSEIN, le contraste étant porté par
+					// l'outline `--foreground` de `@utility focus-ring`. C'est cette
+					// seconde moitié qui manquait ici : l'utilitaire est en `focus-visible`,
+					// inapplicable à un conteneur non focusable. On la recopie donc en forme
+					// `focus-within` — le rose porte la marque, l'outline porte l'état
+					// (19,5:1). Audit DA recherche rapide 2026-08-05.
 					"focus-within:border-ring focus-within:ring-ring focus-within:ring-[3px]",
+					"focus-within:outline-foreground focus-within:outline-2",
 					"transition-[border-color,box-shadow] duration-200",
 					isPending && "border-ring/50",
 					maxLengthFlash && "ring-destructive/50 ring-2",

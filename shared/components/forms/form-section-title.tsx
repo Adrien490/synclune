@@ -11,7 +11,7 @@ import { FORM_SECTION_TITLE_CLASS } from "./form-section-styles";
  *
  * Le tableau de bord admin écrit déjà ses titres au trait dessiné à la main
  * (`SectionHeading` → `HandDrawnAccent` + `HandDrawnUnderline`) et la barre latérale
- * signe en Sacramento. Les FORMULAIRES, eux, restaient en `CardTitle` shadcn nu :
+ * signe en cursive (Kalam). Les FORMULAIRES, eux, restaient en `CardTitle` shadcn nu :
  * le vocabulaire de la marque entrait dans `/admin` et s'arrêtait à la porte de
  * l'endroit où Léane passe réellement son temps. C'était le diagnostic d'origine de
  * l'audit, et il n'avait été traité qu'à moitié — composition et couleur, jamais le

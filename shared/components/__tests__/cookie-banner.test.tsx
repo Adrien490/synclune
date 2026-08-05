@@ -18,6 +18,10 @@ const { mockHasConsented } = vi.hoisted(() => ({
 	mockHasConsented: { value: false },
 }));
 
+const { mockHasOverlay } = vi.hoisted(() => ({
+	mockHasOverlay: { value: false },
+}));
+
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
@@ -25,6 +29,10 @@ const { mockHasConsented } = vi.hoisted(() => ({
 vi.mock("@/shared/providers/cookie-consent-store-provider", () => ({
 	useCookieConsentStore: (selector: (state: typeof mockStore) => unknown) => selector(mockStore),
 	useHasConsented: () => mockHasConsented.value,
+}));
+
+vi.mock("@/shared/stores/use-overlay-stack-store", () => ({
+	useHasOverlay: () => mockHasOverlay.value,
 }));
 
 vi.mock("motion/react", () => {
@@ -97,6 +105,7 @@ beforeEach(() => {
 	mockStore.bannerVisible = true;
 	mockStore._hasHydrated = true;
 	mockHasConsented.value = false;
+	mockHasOverlay.value = false;
 });
 
 afterEach(() => {
@@ -135,6 +144,41 @@ describe("CookieBanner", () => {
 			render(<CookieBanner />);
 
 			expect(screen.getByText("Cookies")).toBeInTheDocument();
+		});
+	});
+
+	/**
+	 * @regression cookie-banner-overlay-2026-08-05
+	 *
+	 * Bug : l'encart (`--z-alert: 80`) se peignait PAR-DESSUS les overlays modaux
+	 * (`--z-overlay: 75`). À la première visite — sans consentement posé — il
+	 * couvrait 285 px du menu mobile ouvert : tout le bas du volet était
+	 * inatteignable sans traiter le bandeau d'abord (P1, audit menu-sheet
+	 * 2026-08-05). Correctif : suspension tant qu'un overlay est enregistré dans
+	 * l'overlay-stack, sans toucher au z-index.
+	 */
+	describe("suspension pendant un overlay modal (@regression cookie-banner-overlay)", () => {
+		it("ne rend rien tant qu'un overlay est enregistré, même les 3 conditions réunies", () => {
+			mockHasOverlay.value = true;
+			const { container } = render(<CookieBanner />);
+
+			expect(container.innerHTML).toBe("");
+		});
+
+		it("réapparaît à la fermeture de l'overlay — la suspension n'écrit RIEN dans le store", () => {
+			mockHasOverlay.value = true;
+			const { container, rerender } = render(<CookieBanner />);
+			expect(container.innerHTML).toBe("");
+
+			mockHasOverlay.value = false;
+			rerender(<CookieBanner />);
+
+			// Le bandeau revient : le choix reste posé, seul l'affichage était suspendu.
+			expect(screen.getByText("Cookies")).toBeInTheDocument();
+			// Aucune écriture de consentement ni de bannerVisible pendant la suspension.
+			expect(mockStore.acceptCookies).not.toHaveBeenCalled();
+			expect(mockStore.rejectCookies).not.toHaveBeenCalled();
+			expect(mockStore.bannerVisible).toBe(true);
 		});
 	});
 

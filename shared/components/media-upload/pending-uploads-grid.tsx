@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
@@ -46,7 +45,7 @@ interface PendingUploadsGridProps {
  * Preview grid for files awaiting upload confirmation.
  * Lets the user remove individual files before sending the batch to UploadThing.
  *
- * Mobile: horizontal scroll with ScrollFade gradients (avoids 2 stacked rows on 375w viewport).
+ * Mobile: horizontal scroll with `scroll-fade-x` edge fades (avoids 2 stacked rows on 375w viewport).
  * Desktop: flex-wrap.
  *
  * Generates `URL.createObjectURL` previews and revokes them on unmount.
@@ -245,9 +244,13 @@ export function PendingUploadsGrid({
 	});
 
 	const list = isMobile ? (
-		<ScrollFade axis="horizontal" fadeFromClass="from-background">
-			<div className="flex gap-2 pb-1">{items}</div>
-		</ScrollFade>
+		<div
+			data-slot="scroll-fade-container"
+			data-no-edge-swipe=""
+			className="scroll-fade-x no-scrollbar w-full overflow-x-auto overflow-y-hidden"
+		>
+			<div className="flex w-fit min-w-full gap-2 pb-1">{items}</div>
+		</div>
 	) : (
 		<div className="flex flex-wrap gap-2">{items}</div>
 	);

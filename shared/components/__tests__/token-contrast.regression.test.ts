@@ -32,49 +32,17 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { oklchToLinearSrgb, readOklch, relativeLuminance } from "@/test/utils/oklch";
+
 const ROOT = join(__dirname, "../../..");
-const GLOBALS = readFileSync(join(ROOT, "app/globals.css"), "utf8");
 
-/** `--token: oklch(L C H)` → [L, C, H]. Ignore une éventuelle composante alpha. */
-function readOklch(token: string): [number, number, number] {
-	const match = new RegExp(`${token}:\\s*oklch\\(([^)/]+)\\)`).exec(GLOBALS);
-	if (!match?.[1]) throw new Error(`Jeton introuvable ou non littéral dans globals.css : ${token}`);
-	const parts = match[1].trim().split(/\s+/).map(Number);
-	if (parts.length < 2 || parts.some(Number.isNaN)) {
-		throw new Error(`Valeur oklch illisible pour ${token} : « ${match[1]} »`);
-	}
-	// La teinte est omise sur les gris purs (`oklch(1 0 0)` s'écrit parfois `oklch(1 0)`).
-	return [parts[0] as number, parts[1] as number, parts[2] ?? 0];
-}
-
-/**
- * oklch → sRGB LINÉAIRE.
- *
- * On s'arrête au linéaire à dessein : la luminance relative WCAG se calcule sur des
- * composantes linéaires, donc ré-encoder en gamma pour les décoder aussitôt
- * n'ajouterait qu'une source d'erreur d'arrondi.
+/*
+ * ⚠️ La conversion OKLab → sRGB et le calcul de contraste vivent en SSOT dans
+ * `test/utils/oklch.ts`. Ils étaient en copie locale ici ; une seconde
+ * implémentation ailleurs (l'apparence Stripe en avait besoin) aurait garanti
+ * qu'un jour les deux divergent et qu'un seuil mente quelque part.
  */
-function oklchToLinearSrgb(L: number, C: number, hDeg: number): [number, number, number] {
-	const h = (hDeg * Math.PI) / 180;
-	const a = C * Math.cos(h);
-	const b = C * Math.sin(h);
-
-	const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
-	const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
-	const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
-
-	const clamp = (v: number) => Math.min(1, Math.max(0, v));
-	return [
-		clamp(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
-		clamp(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
-		clamp(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
-	];
-}
-
-function luminance(token: string): number {
-	const [r, g, b] = oklchToLinearSrgb(...readOklch(token));
-	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
+const luminance = (token: string) => relativeLuminance(oklchToLinearSrgb(...readOklch(token)));
 
 function contrast(tokenA: string, tokenB: string): number {
 	const a = luminance(tokenA);
@@ -120,6 +88,28 @@ describe("@regression token-contrast", () => {
 		});
 	});
 
+	/*
+	 * ⚠️ Le bloc « mot d'accent du h1 — seuil 3:1 grand texte » a été RETIRÉ le
+	 * 2026-08-05 avec la direction B « Le surligneur » : les tokens
+	 * `--gradient-hero-*`, l'utility `.text-gradient-multicolor` et son halo
+	 * n'existent plus — la couleur du mot vit dans un trait de pinceau pastel
+	 * DERRIÈRE une encre `--foreground` (`etal/brush-highlight.tsx`).
+	 *
+	 * Il n'y a donc plus d'encre spéciale à borner : le cas « encre sur pastel »
+	 * du trait est exactement le bloc « aplats de marque » ci-dessus
+	 * (`--foreground` ≥ 4,5:1 sur chacun des quatre accents), et le trait
+	 * lui-même est décoratif (aria-hidden, masqué sous prefers-contrast: more
+	 * et forced-colors).
+	 *
+	 * Ne pas réintroduire un dégradé DANS un glyphe sans recréer ce bloc — ses
+	 * trois leçons, payées une par une : (1) un dégradé se mesure sur toute sa
+	 * COURSE, pas sur ses stops (menthe à 2,63:1 sur les ~10 % finaux du mot) ;
+	 * (2) le fond réel d'un glyphe à text-shadow est le HALO, pas la page
+	 * (menthe 2,964:1 sur halo à l'alpha 0,4) ; (3) le helper lit ~0,10 point
+	 * trop haut hors gamut — seuil à 3,1, jamais 3,0. Le bloc complet est dans
+	 * git à ce commit.
+	 */
+
 	describe("les contrôles à état n'ont pas re-glissé vers le pastel", () => {
 		it.each([
 			["shared/components/ui/radio-group.tsx", "text-brand-rose-strong"],
@@ -132,6 +122,28 @@ describe("@regression token-contrast", () => {
 		it("le point du radio n'est plus en text-primary", () => {
 			const code = readFileSync(join(ROOT, "shared/components/ui/radio-group.tsx"), "utf8");
 			expect(code).not.toMatch(/className="[^"]*\btext-primary\b/);
+		});
+
+		/**
+		 * ⚠️ Ce test a été écrit POUR ce défaut — « le point du radio et la case cochée
+		 * peints en `--primary`, un rose pastel à 1,6:1 » — mais il n'assertait que sur
+		 * `ui/radio-group.tsx` et `ui/checkbox.tsx`. Le sélecteur de variante du panier
+		 * réimplémentait ses propres radios à la main : il a gardé le bug intact
+		 * pendant toute la vie du correctif (`border-primary`, `bg-primary/5`,
+		 * `CheckIcon text-primary`, plus un focus en `outline-ring`).
+		 *
+		 * La leçon vaut au-delà du panier : sur toute correction de composant partagé,
+		 * la question à poser est « où sont les copies ? ». Depuis le passage à une
+		 * ligne par pièce, l'état s'y lit par la FORME — anneau `--foreground` (19,54:1)
+		 * + scotch — donc aucun rose n'a plus à porter d'information.
+		 */
+		it.each([
+			"modules/cart/components/sku-selector-pieces.tsx",
+			"modules/cart/components/sku-selector-piece-row.tsx",
+			"modules/cart/components/sku-selector-quantity.tsx",
+		])("%s ne peint aucun état en --primary", (relPath) => {
+			const code = readFileSync(join(ROOT, relPath), "utf8");
+			expect(code).not.toMatch(/\b(border|bg|text|ring|outline)-primary\b/);
 		});
 	});
 });

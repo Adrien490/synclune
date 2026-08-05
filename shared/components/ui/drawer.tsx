@@ -132,24 +132,50 @@ function DrawerClose({ ...props }: DrawerPrimitive.Close.Props) {
 /**
  * Poignée de drag. Base UI n'a pas de primitive `Handle` — la totalité du popup
  * est préhensible, la poignée n'est donc qu'un repère visuel… sauf en mode
- * `handleOnly`, où elle redevient la seule zone non exclue du geste.
+ * `handleOnly`, où elle redevient la seule zone non exclue du geste. C'est ce
+ * mode qui dicte tout ce qui suit : quand elle est la SEULE sortie au doigt, une
+ * pastille décorative de 8 px ne suffit plus.
+ *
+ * **Trois corrections du 2026-08-05, chacune mesurée :**
+ *
+ * 1. **Contraste `/80` et non `/30`.** Sur `--background`, `--muted-foreground` rend
+ *    1,35:1 à `/30` — échec WCAG 1.4.11, qui exige 3:1 pour identifier un composant
+ *    d'interface. ⚠️ Les paliers intermédiaires ne suffisent PAS, et l'œil se trompe
+ *    largement ici : `/45` = 1,63:1, `/60` = 2,07:1, `/70` = 2,52:1. **`/80` = 3,22:1**
+ *    est le premier palier conforme.
+ *
+ * 2. **Une bande de préhension EN FLUX**, au lieu d'agrandir la cible par un
+ *    pseudo-élément. La pastille seule fait 8 px de haut : bien trop peu pour un pouce.
+ *    ⚠️ Ne PAS copier le `before:-inset-x-10 before:-inset-y-6` de `SheetHandle` : les
+ *    popups du bas portent `overflow-hidden` (cf. `DrawerContent`), donc la moitié haute
+ *    du pseudo serait clippée ; et la pastille étant `relative`, le reste peindrait
+ *    par-dessus l'en-tête en y avalant les clics — sur un écran de 390 px, la bande
+ *    atteindrait le bouton d'action situé en haut à droite. La bande consomme donc de la
+ *    mise en page (~32 px) au lieu de recouvrir : rien à clipper, aucun clic volé.
+ *
+ * 3. **`aria-hidden`, et surtout PAS `role`/`tabIndex`.** L'ancienne version portait un
+ *    `aria-label` et `focus-ring` : sur un `<div>` sans rôle, l'`aria-label` est ignoré
+ *    des technologies d'assistance, et `focus-ring` est intégralement `:focus-visible`
+ *    donc inapplicable à un élément non focusable. Toute cette couche était décorative.
+ *    La rendre focusable serait pire : une poignée qui prend le focus sans action clavier
+ *    est un cul-de-sac. Le geste a déjà son équivalent — le bouton « Fermer » de l'en-tête
+ *    (44×44) — et c'est lui qui porte l'accessibilité de la fermeture.
+ *
+ * Verrouillé par `shared/components/ui/__tests__/drawer-handle.regression.test.tsx`.
  */
-function DrawerHandle({
-	className,
-	"aria-label": ariaLabel = "Glisser pour fermer",
-	...props
-}: React.ComponentProps<"div">) {
+function DrawerHandle({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
-			data-slot="drawer-handle"
-			aria-label={ariaLabel}
+			data-slot="drawer-handle-grip"
+			aria-hidden="true"
 			className={cn(
-				"bg-muted-foreground/30 mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full",
-				"focus-ring",
+				"flex w-full shrink-0 cursor-grab justify-center py-3 active:cursor-grabbing",
 				className,
 			)}
 			{...props}
-		/>
+		>
+			<div data-slot="drawer-handle" className="bg-muted-foreground/80 h-2 w-14 rounded-full" />
+		</div>
 	);
 }
 

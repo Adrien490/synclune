@@ -159,9 +159,20 @@ function NavigationMenuPopup({
 						"bg-popover text-popover-foreground",
 						"h-(--popup-height) w-(--popup-width)",
 						// Pas d'`overflow-hidden` ici : c'est le `Viewport` qui clippe le
-						// contenu (avec le même rayon), ce qui laisse un décor volontairement
-						// débordant — le ruban de masking tape — sortir du cadre.
-						"origin-(--transform-origin) rounded-xl border shadow-lg",
+						// contenu (avec le même rayon), ce qui laisserait sortir du cadre un
+						// décor volontairement débordant. ⚠️ Aucun appelant n'en pose plus :
+						// le ruban qui justifiait cette liberté se posait sur la rangée de nav
+						// (cf. `desktop-nav.tsx`). Un débord VERS LE HAUT recouvre le trigger.
+						//
+						// Chrome PAPIER (direction B « La boîte à perles », artifact
+						// 2026-08-05) : le grain de `.polaroid-paper` et l'ombre
+						// `--shadow-paper` — les mêmes que le sol du header — font du panneau
+						// un morceau du même objet, plus un popover générique. Le `relative`
+						// ancre le ::before du grain (inset-0, z-1, pointer-events-none) ;
+						// à 3,5 % en multiply il se pose sur tout le panneau, photos incluses,
+						// comme sur les cartes Atelier.
+						"polaroid-paper relative",
+						"shadow-paper origin-(--transform-origin) rounded-xl border",
 						"max-w-(--available-width)",
 						// Transition, pas keyframes : entrée, sortie ET morphing entre deux
 						// panneaux partagent les mêmes propriétés.

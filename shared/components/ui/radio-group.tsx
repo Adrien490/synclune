@@ -25,7 +25,9 @@ function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
 		<RadioPrimitive.Root
 			data-slot="radio-group-item"
 			className={cn(
-				"border-input text-primary can-hover:hover:border-ring/70 focus-ring aria-invalid:ring-destructive/20 aria-invalid:border-destructive aspect-square size-4 shrink-0 rounded-full border shadow-xs transition-[color,box-shadow,transform] disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-95",
+				// Même arbitrage de bordure que checkbox.tsx : dérivée de --input (1,16:1)
+				// le cercle non sélectionné était invisible ; survol vers le rose profond.
+				"border-muted-foreground text-primary can-hover:hover:border-brand-rose-strong focus-ring aria-invalid:ring-destructive/20 aria-invalid:border-destructive aspect-square size-4 shrink-0 rounded-full border shadow-xs transition-[color,box-shadow,transform] disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-95",
 				className,
 			)}
 			{...props}

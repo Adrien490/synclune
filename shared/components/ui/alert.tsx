@@ -9,8 +9,18 @@ const alertVariants = cva(
 		variants: {
 			variant: {
 				default: "bg-card text-card-foreground",
+				/*
+				 * `bg-destructive/5 border-destructive/30` aligne enfin la variante
+				 * destructive sur ses trois sœurs. Elle rendait `bg-card` et la bordure
+				 * neutre de la base : une alerte d'erreur était donc STRICTEMENT
+				 * identique à une alerte d'information, à la couleur du texte près —
+				 * un état qui ne se distingue que par la couleur n'existe pas
+				 * (WCAG 1.4.1). Constaté au rendu sur /paiement/annulation.
+				 * ⚠️ Le texte reste à pleine force : `text-destructive/90` sur la teinte
+				 * du MÊME jeton retombait sous AA. Ne pas réintroduire l'opacité.
+				 */
 				destructive:
-					"text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
+					"text-destructive bg-destructive/5 border-destructive/30 [&>svg]:text-current *:data-[slot=alert-description]:text-destructive",
 				success:
 					"text-success bg-success/10 border-success/30 [&>svg]:text-current *:data-[slot=alert-description]:text-success/90",
 				warning:

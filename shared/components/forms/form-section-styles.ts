@@ -40,7 +40,7 @@ export const FORM_SECTION_CARD_CLASS =
  *
  * `md:font-normal` est requis, et pas cosmétique : `CardTitle` pose
  * `md:font-display md:font-normal`, et sans le rappeler ici le `font-semibold`
- * mobile fuitait vers le desktop. Fraunces s'y serait rendu en semi-gras, seul
+ * mobile fuitait vers le desktop. La display s'y serait rendue en semi-gras, seul
  * endroit du dépôt où la police display n'est pas en graisse normale.
  */
 export const FORM_SECTION_TITLE_CLASS =

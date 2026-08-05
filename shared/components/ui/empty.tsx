@@ -61,7 +61,13 @@ function EmptyHeader({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const emptyMediaVariants = cva(
-	"flex shrink-0 items-center justify-center mb-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-all duration-300 motion-safe:animate-sparkle-pulse shadow-[0_0_24px_var(--color-glow-pink)]",
+	// `animate-sparkle-pulse-once` et non `-pulse` : un état vide PERSISTE (le panneau du
+	// panier vide peut rester ouvert indéfiniment), or l'icône tournait de 15° en boucle
+	// pour toujours — mouvement automatique de durée illimitée, WCAG 2.2.2. La variante
+	// bornée fait 2 itérations, soit 4 s, sous le seuil de 5 s au-delà duquel un mécanisme
+	// de pause serait dû. Les toasts (`toast-icons.tsx`) gardent la variante infinie : ils
+	// se démontent, donc leur animation est transitoire par construction.
+	"flex shrink-0 items-center justify-center mb-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-all duration-300 motion-safe:animate-sparkle-pulse-once shadow-[0_0_24px_var(--color-glow-pink)]",
 	{
 		variants: {
 			variant: {

@@ -84,6 +84,19 @@ export interface FilterSheetWrapperProps {
 	description?: string;
 	/** Custom apply button text */
 	applyButtonText?: string;
+	/**
+	 * Ligne d'information au-dessus du bouton Appliquer (compteur vivant,
+	 * état vide chiffré). Annoncée en région live polie.
+	 */
+	footerHint?: ReactNode;
+	/** Désactive le bouton Appliquer (ex : 0 résultat pour les valeurs en attente). */
+	applyDisabled?: boolean;
+	/**
+	 * Un recomptage est en vol : le bouton montre un `Spinner` SANS se désactiver.
+	 * Distinct d'`isPending`, qui signale une navigation et grise tout le panneau —
+	 * ici seul le CHIFFRE du libellé est provisoire.
+	 */
+	applyBusy?: boolean;
 	/** Controlled open state */
 	open?: boolean;
 	/** Callback when open state changes (for controlled mode) */

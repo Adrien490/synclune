@@ -1,5 +1,7 @@
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import type { Product } from "@/modules/products/types/product.types";
+import { ATELIER_HOWTO, ATELIER_IMAGE, ATELIER_STEPS } from "@/shared/constants/atelier-content";
+import { FAQ_DATE_MODIFIED, FAQ_ITEMS } from "@/shared/constants/faq-items";
 import {
 	getFounderSchema,
 	getLocalBusinessSchema,
@@ -106,6 +108,57 @@ export function StructuredData({ includeHomepageSchemas, featuredProducts }: Str
 				),
 			});
 		}
+
+		// FAQPage — la FAQ a rejoint la landing (absorption de `/aide`, 2026-08-05).
+		//
+		// Elle est un NŒUD DE CE @graph, pas un second script : la home n'en émet
+		// qu'un, et `/aide` en avait deux (FAQPage + BreadcrumbList) faute de
+		// générateur. L'`@id` pointe le fragment de la section réellement rendue
+		// (`#faq`), ce que Google attend d'un FAQPage sur une page qui n'est pas
+		// QUE de la FAQ : le balisage doit correspondre à du contenu visible.
+		graphSchemas.push({
+			"@type": "FAQPage",
+			"@id": `${SITE_URL}/#faq`,
+			inLanguage: "fr-FR",
+			dateModified: FAQ_DATE_MODIFIED,
+			mainEntity: FAQ_ITEMS.map((item) => ({
+				"@type": "Question",
+				name: item.question,
+				acceptedAnswer: {
+					"@type": "Answer",
+					text: item.answerText,
+				},
+			})),
+		});
+
+		// HowTo — le processus de création de la section « Viens voir l'atelier »
+		// (retour sur la landing, 2026-08-05). Même principe que le FAQPage : un
+		// NŒUD de ce @graph, jamais un second <script> (le montage à deux scripts
+		// de l'ancienne section atelier est exactement ce qu'on ne refait pas).
+		// L'`@id` pointe la section réellement rendue (`#atelier`), et chaque
+		// `url` de step pointe l'ancre réelle de son <li> — la SSOT
+		// `atelier-content.ts` est bi-consommée précisément pour que balisage et
+		// contenu visible ne puissent pas diverger. Statique et inconditionnel :
+		// émis identiquement par les deux rendus autour de la frontière Suspense
+		// de la home (ne JAMAIS le conditionner à `featuredProducts`).
+		graphSchemas.push({
+			"@type": "HowTo",
+			"@id": `${SITE_URL}/#atelier`,
+			inLanguage: "fr-FR",
+			name: ATELIER_HOWTO.name,
+			description: ATELIER_HOWTO.description,
+			image: ATELIER_IMAGE,
+			totalTime: ATELIER_HOWTO.totalTime,
+			supply: ATELIER_HOWTO.supplies.map((name) => ({ "@type": "HowToSupply", name })),
+			tool: ATELIER_HOWTO.tools.map((name) => ({ "@type": "HowToTool", name })),
+			step: ATELIER_STEPS.map((step, index) => ({
+				"@type": "HowToStep",
+				position: index + 1,
+				name: step.title,
+				text: step.description,
+				url: `${SITE_URL}/#atelier-step-${step.id}`,
+			})),
+		});
 	}
 
 	const jsonLd = {

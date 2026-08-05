@@ -57,7 +57,19 @@ function ResponsiveDialog({ children, open, onOpenChange }: ResponsiveDialogProp
 	return (
 		<Ctx.Provider value={{ isMobile }}>
 			{isMobile ? (
-				<Drawer open={open} onOpenChange={onOpenChange}>
+				// `handleOnly` : collision de gestes constatée — le contenu de CHAQUE
+				// ResponsiveDialog est un scroller vertical (`overflow-y-auto` sur le
+				// wrapper de `ResponsiveDialogContent`), et un drag vertical dedans
+				// refermait le panneau au lieu de le faire défiler. La fermeture au doigt
+				// reste possible depuis la poignée.
+				//
+				// ⚠️ Cet effet était obtenu jusqu'au 2026-08-05 par un
+				// `data-base-ui-swipe-ignore` posé à la main sur ce wrapper — soit
+				// exactement ce que fait la prop, mais **invisible au garde-fou**, qui
+				// cherche le mot `handleOnly`. La règle du dépôt paraissait respectée sur
+				// tous les ResponsiveDialog du site alors qu'elle était contournée par
+				// l'orthographe. Cf. `handle-only-allowlist.regression.test.ts`.
+				<Drawer open={open} onOpenChange={onOpenChange} handleOnly>
 					{children}
 				</Drawer>
 			) : (
@@ -100,10 +112,7 @@ function ResponsiveDialogContent({
 				style={overlayStyle}
 				{...(props as React.ComponentProps<typeof DrawerContent>)}
 			>
-				<div
-					className="-mx-4 flex min-h-0 flex-1 [scrollbar-gutter:stable] flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-2"
-					data-base-ui-swipe-ignore=""
-				>
+				<div className="-mx-4 flex min-h-0 flex-1 [scrollbar-gutter:stable] flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-2">
 					{children}
 				</div>
 			</DrawerContent>

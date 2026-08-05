@@ -75,7 +75,31 @@ const ALLOWED = new Map<string, string>([
 		"shared/components/filter-sheet-wrapper.tsx",
 		"sliders de prix et accordéons — un drag sur un slider fermait la sheet",
 	],
+	[
+		"shared/components/responsive-dialog.tsx",
+		"le contenu de tout ResponsiveDialog est un scroller vertical — un drag dedans refermait le panneau",
+	],
 ]);
+
+/**
+ * Wrappers d'overlay GÉNÉRIQUES : ils rendent le `{children}` de n'importe quelle
+ * surface appelante, donc y poser l'attribut brut revient à décider `handleOnly`
+ * pour tout le site, en une ligne que personne ne relit.
+ *
+ * ⚠️ C'est exactement ce qui s'est produit : `responsive-dialog.tsx` a porté
+ * `data-base-ui-swipe-ignore` à la main sur le conteneur de tous ses enfants, avec
+ * l'effet EXACT de `handleOnly` — mais invisible à l'allowlist ci-dessus, qui cherche
+ * le mot. La règle paraissait respectée partout alors qu'elle était contournée par
+ * l'orthographe (audit design du sélecteur de variante, 2026-08-04).
+ *
+ * Ailleurs, l'attribut reste parfaitement légitime : posé sur un sous-élément précis
+ * (une ligne swipe-to-delete, un slider, une zone de défilement), il résout une
+ * collision locale sans neutraliser le geste sur tout le panneau.
+ */
+const GENERIC_OVERLAY_WRAPPERS = ["shared/components/responsive-dialog.tsx"] as const;
+
+/** L'attribut POSÉ sur un élément — le `=` évite de compter les mentions en prose. */
+const RAW_SWIPE_IGNORE_ATTRIBUTE = /data-base-ui-swipe-ignore=/;
 
 function collectSourceFiles(): string[] {
 	const files: string[] = [];
@@ -125,6 +149,24 @@ describe("@regression overlay-handle-only-allowlist", () => {
 				unexpected.join("\n"),
 		).toEqual([]);
 	});
+
+	it.each(GENERIC_OVERLAY_WRAPPERS)(
+		"%s décide le handle-only par la prop, jamais par l'attribut brut",
+		(file) => {
+			const code = readFileSync(join(REPO_ROOT, file), "utf-8");
+
+			expect(
+				RAW_SWIPE_IGNORE_ATTRIBUTE.test(code),
+				`${file} rend le \`{children}\` de toutes les surfaces appelantes : y poser ` +
+					"`data-base-ui-swipe-ignore` décide `handleOnly` pour tout le site sans " +
+					"apparaître dans ALLOWED. Passer la prop au `<Drawer>` racine à la place " +
+					"(c'est lui qui la porte, pas `DrawerContent` — elle transite par le contexte).",
+			).toBe(false);
+
+			// Corollaire : si le wrapper neutralise bien le geste, il doit le dire.
+			expect(code).toMatch(/\bhandleOnly\b/);
+		},
+	);
 
 	it("garde l'allowlist exacte — une entrée devenue morte doit être retirée", () => {
 		const stale = [...ALLOWED.keys()].filter((file) => !callSites.includes(file));

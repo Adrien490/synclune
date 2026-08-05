@@ -32,18 +32,6 @@ vi.mock("@phosphor-icons/react/ssr", () => {
 	};
 });
 
-vi.mock("@/shared/components/animations/hand-drawn-accent", () => {
-	const { createElement } = require("react");
-	return {
-		HandDrawnAccent: ({ variant }: { variant: string }) =>
-			createElement("svg", {
-				"data-testid": "hand-drawn-accent",
-				"data-variant": variant,
-				"aria-hidden": "true",
-			}),
-	};
-});
-
 // Import AFTER mocks
 import { PageHeader } from "../page-header";
 import { SITE_URL } from "@/shared/constants/seo-config";
@@ -306,35 +294,18 @@ describe("PageHeader", () => {
 	});
 
 	// ============================================================================
-	// TESTS — ACCENT (HandDrawnAccent)
+	// TESTS — PAS D'ACCENT « FAIT MAIN »
 	// ============================================================================
 
-	describe("decorative accent", () => {
-		it("renders HandDrawnAccent SVG when accent='underline' is passed", () => {
-			render(<PageHeader title="Les collections" accent="underline" />);
+	describe("no decorative accent", () => {
+		// La prop `accent` a été PURGÉE (lot 0, audit HandDrawnAccent 2026-08-05) :
+		// aucun des ~60 appelants (legal + admin) ne la passait — la branche de
+		// rendu était inatteignable en production. Le geste manuscrit appartient au
+		// storefront (StorefrontHeading), pas à ce header.
+		it("never renders a hand-drawn SVG accent", () => {
+			const { container } = render(<PageHeader title="Les collections" />);
 
-			const accent = screen.getByTestId("hand-drawn-accent");
-			expect(accent).toBeInTheDocument();
-			expect(accent).toHaveAttribute("data-variant", "underline");
-			expect(accent).toHaveAttribute("aria-hidden", "true");
-		});
-
-		it("renders HandDrawnAccent with variant='circle' when accent='circle'", () => {
-			render(<PageHeader title="Test" accent="circle" />);
-
-			expect(screen.getByTestId("hand-drawn-accent")).toHaveAttribute("data-variant", "circle");
-		});
-
-		it("does not render accent when accent prop is omitted", () => {
-			render(<PageHeader title="Test" />);
-
-			expect(screen.queryByTestId("hand-drawn-accent")).not.toBeInTheDocument();
-		});
-
-		it("does not render accent in compact variant", () => {
-			render(<PageHeader title="Dashboard" variant="compact" accent="underline" />);
-
-			expect(screen.queryByTestId("hand-drawn-accent")).not.toBeInTheDocument();
+			expect(container.querySelector("svg.pointer-events-none")).not.toBeInTheDocument();
 		});
 	});
 

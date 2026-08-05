@@ -113,6 +113,15 @@ describe("CheckboxFilterItem", () => {
 		expect(wrapper).toHaveAttribute("aria-hidden", "true");
 	});
 
+	it("le wrapper d'indicateur est un conteneur flex (blockifie une pastille inline)", () => {
+		// jsdom ne fait pas de layout : on verrouille le MÉCANISME, pas la mesure.
+		// Sans `flex`, un <span size-6> passé en indicator reste inline et se peint
+		// 2px de large, `width` ignorée (audit panneau de filtres 2026-08-04, P0).
+		render(<CheckboxFilterItem {...defaultProps} indicator={<span data-testid="color-dot" />} />);
+		const wrapper = screen.getByTestId("color-dot").parentElement;
+		expect(wrapper?.className).toContain("flex");
+	});
+
 	it("does not render indicator wrapper when indicator is not provided", () => {
 		render(<CheckboxFilterItem {...defaultProps} />);
 		const ariaHiddenSpan = document.querySelector("[aria-hidden='true']");

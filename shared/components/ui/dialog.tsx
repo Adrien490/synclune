@@ -115,6 +115,7 @@ function DialogContent({
 	children,
 	showCloseButton = true,
 	registerOverlay = true,
+	defaultTransformAnimation = true,
 	...props
 }: Omit<DialogPrimitive.Popup.Props, "className"> & {
 	className?: string;
@@ -125,6 +126,22 @@ function DialogContent({
 	 * @default true
 	 */
 	registerOverlay?: boolean;
+	/**
+	 * Quand `false`, le popup ne porte PAS le zoom + slide par défaut (ceux d'un
+	 * dialog CENTRÉ). L'appelant déclare alors les siens.
+	 *
+	 * ⚠️ **Ce n'est pas une commodité : c'est le SEUL moyen de les neutraliser.**
+	 * `cn()` est `twMerge`, et `tailwind-merge` ne connaît pas les utilitaires de
+	 * `tw-animate-css` — `slide-out-to-top-[2%]` (ici) et `slide-out-to-bottom`
+	 * (chez l'appelant) survivent tous les deux au merge, et tous les deux
+	 * écrivent `--tw-exit-translate-y`. Le gagnant est décidé par l'ordre de la
+	 * feuille de style, pas par l'ordre des classes.
+	 *
+	 * À passer par toute surface qui redessine sa géométrie : une feuille plein
+	 * écran doit sortir vers le BAS, pas rétrécir vers le haut.
+	 * @default true
+	 */
+	defaultTransformAnimation?: boolean;
 }) {
 	// Si className contient une classe max-w-*, on ne met pas la classe par défaut sm:max-w-lg
 	const hasMaxWidth = className?.includes("max-w-");
@@ -140,8 +157,10 @@ function DialogContent({
 					// Animations avec scale + slide-in-from-bottom
 					"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
 					"motion-safe:data-closed:fade-out-0 motion-safe:data-open:fade-in-0",
-					"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
-					"motion-safe:data-closed:slide-out-to-top-[2%] motion-safe:data-open:slide-in-from-bottom-[2%]",
+					defaultTransformAnimation && [
+						"motion-safe:data-closed:zoom-out-95 motion-safe:data-open:zoom-in-95",
+						"motion-safe:data-closed:slide-out-to-top-[2%] motion-safe:data-open:slide-in-from-bottom-[2%]",
+					],
 					"motion-safe:duration-200",
 					// ⚠️ `animate-out` est INUTILISABLE sans fill mode. Les keyframes
 					// `exit` de tw-animate-css n'ont qu'un `to` (`opacity: 0`), et le

@@ -2,16 +2,18 @@
 
 import { useSyncExternalStore } from "react";
 
-// Media query to detect touch devices (smartphones, tablets).
-// - hover: none = no hover capability (no mouse)
-// - pointer: coarse = imprecise pointer (finger vs mouse cursor)
-//
-// Limitation: does not detect switch/eye-tracking devices (pointer: none).
-// Users of these devices are expected to have prefers-reduced-motion enabled,
-// which disables motion-heavy effects independently.
-// Exportée : SSOT partagée avec `use-haptic.ts`, qui doit interroger la même
-// capacité sans pouvoir appeler un hook (`triggerHaptic` est une fonction module).
-export const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
+import { TOUCH_QUERY } from "@/shared/constants/pointer";
+
+/**
+ * Ré-export sous son nom historique — `use-haptic.ts` et plusieurs tests
+ * l'importent d'ici, et `triggerHaptic` doit interroger la même capacité sans
+ * pouvoir appeler un hook (c'est une fonction module).
+ *
+ * La chaîne elle-même vit désormais dans `shared/constants/pointer.ts`, avec ses
+ * deux voisines : elle y est documentée comme n'étant **pas** la négation de
+ * `HOVER_CAPABLE_QUERY` (un portable tactile ne matche ni l'une ni l'autre).
+ */
+export const TOUCH_MEDIA_QUERY = TOUCH_QUERY;
 
 /**
  * Hook pour detecter si l'appareil est tactile (smartphone, tablette)

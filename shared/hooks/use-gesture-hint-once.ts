@@ -34,6 +34,20 @@ interface UseGestureHintOnceOptions {
 	 * sur les items qui ne doivent pas jouer le hint. @default true
 	 */
 	enabled?: boolean;
+	/**
+	 * Coupe le hint sous `prefers-reduced-motion`. @default true
+	 *
+	 * ⚠️ Ce défaut existe pour les appelants qui **animent** leur hint (peek nudge,
+	 * coachmark qui glisse) : là, la préférence porte sur le mouvement, et la
+	 * couper est correct.
+	 *
+	 * Un hint purement TEXTUEL doit passer `false`. Le supprimer reviendrait à
+	 * retirer de l'information à quelqu'un qui n'a demandé qu'à réduire le
+	 * mouvement — « moins de mouvement » n'est pas « moins d'information », c'est
+	 * la règle appliquée par ailleurs au retour de survol du chrome de la galerie
+	 * (`shared/components/gallery/token.styles.ts`).
+	 */
+	respectsReducedMotion?: boolean;
 }
 
 /**
@@ -48,19 +62,20 @@ interface UseGestureHintOnceOptions {
  * Conditions (toutes requises) :
  * - composant monté côté client (`useMounted`, évite tout mismatch d'hydratation)
  * - appareil tactile (`useIsTouchDevice`)
- * - `prefers-reduced-motion` désactivé
+ * - `prefers-reduced-motion` désactivé — **sauf** `respectsReducedMotion: false`
  * - `options.enabled !== false`
  * - flag localStorage `synclune:gesture-hint:<hintKey>` absent
  */
 export function useGestureHintOnce(
 	hintKey: string,
-	{ enabled = true }: UseGestureHintOnceOptions = {},
+	{ enabled = true, respectsReducedMotion = true }: UseGestureHintOnceOptions = {},
 ): boolean {
 	const mounted = useMounted();
 	const isTouch = useIsTouchDevice();
 	const prefersReducedMotion = useReducedMotion();
 
-	const eligible = mounted && enabled && isTouch && !prefersReducedMotion;
+	const eligible =
+		mounted && enabled && isTouch && !(respectsReducedMotion && prefersReducedMotion);
 
 	const [state, setState] = useState({ resolved: false, show: false });
 

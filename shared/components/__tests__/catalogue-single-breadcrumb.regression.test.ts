@@ -4,11 +4,13 @@
  * Une URL ne doit publier qu'UN `BreadcrumbList` et qu'UN `ItemList`.
  *
  * `PageHeader` émet automatiquement un `BreadcrumbList` dès qu'on lui passe des
- * `breadcrumbs` (`shared/components/page-header.tsx`, opt-out `noStructuredData`). Les
- * trois surfaces catalogue injectent DÉJÀ leur propre JSON-LD contenant un
- * `BreadcrumbList` — elles doivent donc toutes passer l'opt-out. La PDP le faisait ;
- * /produits, /produits/[type] et /collections/[slug] ne le faisaient pas et publiaient
- * deux `BreadcrumbList` chacune.
+ * `breadcrumbs` (`shared/components/page-header.tsx`, opt-out `noStructuredData`).
+ * C'est ce double émetteur (`PageHeader` + JSON-LD de page) qui publiait deux
+ * `BreadcrumbList` par URL sur /produits, /produits/[type] et /collections/[slug].
+ * Depuis l'harmonisation du storefront sur « L'étal continue », plus AUCUNE page
+ * boutique ne rend de `PageHeader` : le fil d'Ariane visuel est `BreadcrumbNav`
+ * (zéro JSON-LD), et le balisage appartient au seul émetteur page-level.
+ * `PageHeader` survit pour les pages légales et l'admin.
  *
  * S'y ajoutait un second `ItemList` émis par `ProductList`, avec un `numberOfItems`
  * (total réel) différent de celui du JSON-LD de page (30 sérialisés). Google en retient
@@ -33,24 +35,22 @@ function read(relativePath: string): string {
 }
 
 /**
- * Isole l'élément JSX `<PageHeader ... />` d'une source.
- *
- * ⚠️ Indispensable : chercher `noStructuredData` dans la source ENTIÈRE passe au vert
- * sur le simple commentaire qui explique la présence du prop. Cette version du test a
- * été essayée, et elle restait verte après suppression du prop — un faux positif complet.
- * On extrait donc l'élément et on n'interroge que lui. Lève si l'élément est introuvable,
- * pour qu'un changement de forme du composant ne rende pas l'assertion vacuously true.
+ * Surfaces migrées sur le shell « L'étal continue » : plus de `PageHeader` du
+ * tout, fil d'Ariane visuel via `BreadcrumbNav`, au plus UN émetteur
+ * `BreadcrumbList` dans la source de page (0 quand un générateur `_utils/`
+ * l'émet, ou quand la page est noindex). Étendue lot par lot pendant
+ * l'harmonisation du storefront.
  */
-function pageHeaderElement(source: string): string {
-	const match = /<PageHeader\b[\s\S]*?\/>/.exec(source);
-	if (!match) throw new Error("élément <PageHeader ... /> introuvable");
-	return match[0];
-}
-
-/** Sources rendant un `PageHeader` avec `breadcrumbs`, en plus d'un JSON-LD de page. */
-const SURFACES_WITH_PAGE_LEVEL_JSONLD = [
+const MIGRATED_SHELL_SURFACES = [
 	"app/(shop)/collections/[slug]/page.tsx",
+	"app/(shop)/collections/page.tsx",
+	"app/(shop)/favoris/page.tsx",
 	"app/(shop)/creations/[slug]/page.tsx",
+	// Plus d'`app/(shop)/aide/page.tsx` : la FAQ a rejoint la landing le
+	// 2026-08-05 et la route a été supprimée (redirection 308 vers `/#faq`).
+	// Son `BreadcrumbList` page-level est parti avec elle ; c'est désormais
+	// l'accueil qui héberge la FAQ, et son unicité est couverte par
+	// « l'accueil n'émet qu'UN script… » plus bas.
 ];
 
 /**
@@ -64,11 +64,21 @@ const SURFACES_WITH_PAGE_LEVEL_JSONLD = [
 const CATALOG_SHELL = "modules/products/components/product-catalog.tsx";
 
 describe("catalogue — un seul BreadcrumbList par page (@regression catalogue-single-breadcrumb)", () => {
-	it.each(SURFACES_WITH_PAGE_LEVEL_JSONLD)("%s passe noStructuredData à PageHeader", (path) => {
-		const element = pageHeaderElement(read(path));
+	it.each(MIGRATED_SHELL_SURFACES)(
+		"%s ne rend plus de PageHeader et monte BreadcrumbNav",
+		(path) => {
+			const source = read(path);
 
-		expect(element).toContain("noStructuredData");
-	});
+			// Ré-introduire `PageHeader` avec des `breadcrumbs` republierait un second
+			// `BreadcrumbList` — le défaut d'origine.
+			expect(source).not.toMatch(/<PageHeader\b/);
+			expect(source).toMatch(/<BreadcrumbNav\b/);
+
+			// Au plus UN émetteur `BreadcrumbList` dans la source de page (celui du
+			// script page-level, quand le balisage n'est pas délégué à un générateur).
+			expect((source.match(/"@type":\s*"BreadcrumbList"/g) ?? []).length).toBeLessThanOrEqual(1);
+		},
+	);
 
 	it("le shell du catalogue n'a AUCUN émetteur de BreadcrumbList concurrent", () => {
 		const source = read(CATALOG_SHELL);
@@ -85,6 +95,20 @@ describe("catalogue — un seul BreadcrumbList par page (@regression catalogue-s
 
 		// Prémisse : il rend bien un fil d'Ariane VISUEL, sinon l'assertion
 		// ci-dessus passerait au vert sur une page qui n'en a plus du tout.
+		expect(source).toMatch(/<BreadcrumbNav\b/);
+	});
+
+	it("BreadcrumbNav est un fil d'Ariane VISUEL — aucun JSON-LD, jamais", () => {
+		const source = read("shared/components/breadcrumb-nav.tsx");
+
+		// Le composant partagé sert toutes les surfaces migrées : s'il se mettait
+		// à émettre un `BreadcrumbList`, CHAQUE page en publierait deux d'un coup.
+		expect(source).not.toContain("application/ld+json");
+		expect(source).not.toContain("safeJsonLd");
+		expect(source).not.toContain("<script");
+		expect(source).not.toMatch(/"@type":\s*"BreadcrumbList"/);
+
+		// Prémisse anti-vacuité : c'est bien lui qui porte le nav étiqueté.
 		expect(source).toContain('aria-label="Fil d\'Ariane"');
 	});
 
@@ -114,17 +138,52 @@ describe("catalogue — un seul BreadcrumbList par page (@regression catalogue-s
 		}
 	});
 
-	// Garde-fou du garde-fou : prouve que l'extraction sait échouer, donc que les
-	// assertions ci-dessus interrogent bien un vrai élément JSX.
-	it("l'extraction de l'élément lève quand PageHeader est absent", () => {
-		expect(() => pageHeaderElement("const x = 1; // noStructuredData")).toThrow(/introuvable/);
+	/**
+	 * L'accueil est le cas le plus chargé : il porte la `BreadcrumbList` de la
+	 * home, l'`ItemList` de l'étal ET, depuis l'absorption de `/aide`
+	 * (2026-08-05), le `FAQPage` de la section « Des questions ? ». Trois nœuds
+	 * de types distincts, donc aucune ambiguïté pour Google — à condition qu'ils
+	 * restent dans le MÊME `@graph`, avec un seul de chaque type.
+	 *
+	 * C'est précisément le trou que `/aide` avait : faute de générateur, elle
+	 * émettait DEUX `<script>` (FAQPage + BreadcrumbList). Reproduire ce montage
+	 * sur l'accueil — un second script pour la FAQ, à côté de `StructuredData` —
+	 * y ajouterait une `BreadcrumbList` concurrente au premier copier-coller.
+	 */
+	it("l'accueil n'émet qu'UN script, et un seul nœud de chaque type", () => {
+		const homePage = read("app/(shop)/(home)/page.tsx");
+		const generator = read("shared/components/structured-data.tsx");
+
+		// La page ne balise rien elle-même : elle délègue à `StructuredData`.
+		expect(homePage).not.toContain("application/ld+json");
+		expect(homePage).not.toContain("safeJsonLd");
+		expect(homePage).toContain("StructuredData");
+
+		// Un seul `<script>` dans le générateur, et un `@graph` — pas des scripts
+		// juxtaposés.
+		expect(generator.match(/application\/ld\+json/g)).toHaveLength(1);
+		expect(generator).toContain('"@graph"');
+
+		// Un nœud de chaque type, pas deux.
+		for (const type of ["BreadcrumbList", "ItemList", "FAQPage"]) {
+			expect(
+				generator.match(new RegExp(`"@type":\\s*"${type}"`, "g")),
+				`${type} doit apparaître exactement une fois dans le @graph de l'accueil`,
+			).toHaveLength(1);
+		}
+
+		// Prémisse anti-vacuité : la section FAQ que ce balisage décrit existe, et
+		// son ancre est bien celle que cible la redirection de `/aide`.
+		const faqSection = read("app/(shop)/(home)/_components/faq/faq-section.tsx");
+		expect(faqSection).toContain('FAQ_SECTION_ID = "faq"');
+		expect(read("next.config.ts")).toContain('source: "/aide", destination: "/#faq"');
 	});
 
 	it("PageHeader émet toujours son BreadcrumbList quand l'opt-out est absent", () => {
 		const source = read("shared/components/page-header.tsx");
 
-		// L'opt-out doit rester un opt-out : par défaut le balisage est émis, sinon les
-		// pages hors catalogue (aide, légal…) perdraient silencieusement leur fil d'Ariane.
+		// L'opt-out doit rester un opt-out : par défaut le balisage est émis, sinon
+		// les pages légales perdraient silencieusement leur fil d'Ariane.
 		expect(source).toContain("noStructuredData = false");
 		expect(source).toContain("breadcrumbs.length > 0 && !noStructuredData");
 	});

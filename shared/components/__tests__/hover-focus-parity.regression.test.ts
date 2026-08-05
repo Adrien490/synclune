@@ -95,6 +95,29 @@ const GUARDS: readonly Guard[] = [
 		hover: "sm:can-hover:group-hover:opacity-100",
 		focus: "sm:focus-within:opacity-100",
 	},
+	// « Le carnet des séries » (2026-08-05) : le redressement des tirages est
+	// l'affordance du lien de bande — l'équivalent du trait dessiné des cartes.
+	{
+		file: "modules/collections/components/collection-chapter.tsx",
+		affordance: "les tirages du chapitre se redressent (affordance du lien de bande)",
+		hover: "motion-safe:can-hover:group-hover:rotate-0",
+		focus: "group-focus-within:rotate-0",
+	},
+	// Lot 0 filtres 2026-08-05 : l'anneau de ligne `focus-within:ring-ring`
+	// (rose 1,55:1, doublait le `focus-ring` du contrôle interne et survivait au
+	// clic souris) est remplacé par la même teinte de fond que le survol.
+	{
+		file: "shared/components/forms/checkbox-filter-item.tsx",
+		affordance: "la ligne de filtre se teinte au survol",
+		hover: "can-hover:hover:bg-accent/50",
+		focus: "has-focus-visible:bg-accent/50",
+	},
+	{
+		file: "shared/components/forms/radio-filter-item.tsx",
+		affordance: "la ligne de filtre se teinte au survol",
+		hover: "can-hover:hover:bg-accent/50",
+		focus: "has-focus-visible:bg-accent/50",
+	},
 ];
 
 describe("@regression hover-focus-parity", () => {

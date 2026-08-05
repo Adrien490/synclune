@@ -2,7 +2,6 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
 	Sheet,
 	SheetClose,
@@ -45,6 +44,9 @@ export function FilterSheetWrapper({
 	title = "Filtres",
 	description,
 	applyButtonText = "Appliquer",
+	footerHint,
+	applyDisabled = false,
+	applyBusy = false,
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	trigger,
@@ -162,7 +164,9 @@ export function FilterSheetWrapper({
 			<SheetContent
 				id={id}
 				className={cn(
-					"flex w-full flex-col overflow-hidden p-0",
+					// `gap-0` : la base de `SheetContent` pose `gap-4`, que le `p-0` ne
+					// neutralise pas — trois trous de 16-20px entre header, scroll et footer.
+					"flex w-full flex-col gap-0 overflow-hidden p-0",
 					// Desktop paysage (right-side sheet) : width constrained, full height
 					!useBottomSheet && "h-full sm:w-100 md:w-110",
 					// Mobile / tablette portrait (bottom-sheet) : 92dvh aligne la
@@ -182,7 +186,9 @@ export function FilterSheetWrapper({
 
 				<SheetHeader
 					className="border-primary/10 from-background via-primary/2 to-background relative shrink-0 border-b bg-linear-to-r px-6 py-5"
-					aria-labelledby="filter-sheet-title"
+					// Pas d'`aria-labelledby` ici : posé sur un `<div>` sans `role`, il
+					// n'était rattaché à rien. La boîte de dialogue est nommée par le
+					// `title` de `SheetContent`.
 				>
 					<div className="flex items-center justify-between gap-4">
 						<div className="space-y-0.5">
@@ -205,7 +211,9 @@ export function FilterSheetWrapper({
 									size="sm"
 									onClick={handleClearAll}
 									className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive min-h-11 shrink-0 text-xs transition-colors"
-									aria-label="Effacer tous les filtres"
+									// WCAG 2.5.3 Label in Name : le nom accessible doit CONTENIR le
+									// libellé visible — « Tout effacer » (md+) comme « Effacer » (mobile).
+									aria-label="Tout effacer les filtres"
 									data-base-ui-swipe-ignore=""
 								>
 									<XIcon className="mr-1 size-3" aria-hidden="true" />
@@ -241,7 +249,14 @@ export function FilterSheetWrapper({
 					)}
 				</SheetHeader>
 
-				<ScrollArea className="min-h-0 flex-1 overscroll-contain" data-base-ui-swipe-ignore="">
+				{/* `scroll-fade-y` (app/styles/scroll-fade.css) : fondu scroll-driven qui
+				    n'apparaît QUE quand le contenu déborde — l'ancien dégradé sticky était
+				    peint en permanence et délavait la dernière section de la liste. */}
+				<div
+					data-slot="scroll-fade-container"
+					className="scroll-fade-y no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain"
+					data-base-ui-swipe-ignore=""
+				>
 					<div
 						className={cn("px-6 py-4", isPending && "pointer-events-none")}
 						role="region"
@@ -250,27 +265,38 @@ export function FilterSheetWrapper({
 					>
 						{children}
 					</div>
-					{/* Gradient indicateur de scroll */}
-					<div
-						className="from-background pointer-events-none sticky bottom-0 h-8 bg-linear-to-t to-transparent"
-						aria-hidden="true"
-					/>
-				</ScrollArea>
+				</div>
 
 				<SheetFooter
 					className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
 					data-base-ui-swipe-ignore=""
 				>
+					{footerHint && (
+						<div role="status" aria-live="polite" className="text-muted-foreground pb-3 text-sm">
+							{footerHint}
+						</div>
+					)}
 					<Button
 						type="button"
 						onClick={handleApply}
-						disabled={isPending}
+						disabled={isPending || applyDisabled}
 						className="h-11 w-full text-base sm:h-10 sm:text-sm"
 						data-base-ui-swipe-ignore=""
 					>
-						{isPending && <Spinner presentational />}
+						{/* `applyBusy` : le CHIFFRE du libellé est en cours de recalcul — le
+						    spinner vit au même endroit que le nombre, et le bouton reste
+						    cliquable (contrairement à `isPending`, qui est une navigation). */}
+						{(isPending || applyBusy) && <Spinner presentational />}
 						{applyButtonText}
-						<Kbd className="text-muted-foreground/60 text-2xs ml-1.5 hidden font-normal lg:inline">
+						{/*
+						 * `can-hover:` et non `lg:` — le panneau produit se DÉMONTE à `lg`
+						 * (le rail prend le relais), donc un indice `lg:inline` n'était
+						 * visible à aucun viewport où ce panneau existe. Le raccourci
+						 * `Cmd/Ctrl+Enter` fonctionnait, sans être découvrable. Gaté sur le
+						 * pointeur fin, il apparaît là où un clavier est plausible
+						 * (tablette avec clavier, sheets admin qui vivent à `lg`).
+						 */}
+						<Kbd className="text-muted-foreground/60 text-2xs can-hover:inline ml-1.5 hidden font-normal">
 							⌘↵
 						</Kbd>
 					</Button>
@@ -287,8 +313,10 @@ export function FilterSheetWrapper({
 					<AlertDialogHeader>
 						<AlertDialogTitle>Effacer tous les filtres ?</AlertDialogTitle>
 						<AlertDialogDescription>
+							{/* Pas de « cette action ne peut pas être annulée » : c'est un
+							    router.push, le retour navigateur restaure les filtres. */}
 							{activeFiltersCount} filtre{activeFiltersCount > 1 ? "s sont actifs" : " est actif"}.
-							Cette action ne peut pas être annulée.
+							Tu pourras les rétablir en revenant en arrière dans ton navigateur.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
