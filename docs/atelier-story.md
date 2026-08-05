@@ -1,5 +1,13 @@
 # Atelier story — copie sauvegardée avant refonte de la landing
 
+> **Section relivrée le 2026-08-05** — « Viens voir l'atelier »
+> (`app/(shop)/(home)/_components/atelier/atelier-section.tsx`), copie
+> **réécrite au tutoiement** dans la SSOT `shared/constants/atelier-content.ts`
+> (bi-consommée par la section et le nœud `HowTo` du `@graph`). Ce document
+> reste l'ARCHIVE de la copie d'origine (⚠️ elle vouvoie — ne pas la recopier)
+> et le plan de swap des photos : le `TODO(photos-atelier)` en fin de fichier
+> est toujours d'actualité, le point de swap est `ATELIER_IMAGE`.
+>
 > Sauvegarde du 2026-08-03, avant suppression des sections de la page d'accueil
 > (refonte landing à venir). Source : `app/(shop)/(home)/_components/atelier-section/`
 > (fichiers `atelier-content.ts`, `process-steps.ts`, `polaroid-config.ts`,

@@ -334,6 +334,109 @@ Quatrième passe, posée aux DEUX grains à la fois : « ce modèle est-il oblig
 
 **État du schéma après V4** : 20 modèles, 14 enums, 22 CHECK, **22 `@@index`**.
 
+### Vague V5 (2026-08-05) — la notation, et la confirmation que le schéma ne bouge plus
+
+Cinquième passe, demandée avec un livrable neuf : **noter /10 chaque modèle et chaque champ**
+(20 modèles, 14 enums, 238 champs). Les quatre vagues précédentes ne répondaient que par
+oui/non ; la notation laisse une carte qu'elles n'ont pas produite.
+
+**Trois arbitrages pris avant l'exécution** (Adrien, 2026-08-05) — ils bornent le périmètre et
+expliquent que la récolte schéma soit nulle :
+
+1. **Socle légal intact** — « V1 » = la version 1 de _cette_ boutique, pas un schéma
+   réutilisable. Numérotation `F-`/`A-`, avoirs, `OrderHistory` 10 ans, purge PII : conservés.
+2. **Périmètre auth non rouvert** — arbitrage V4 reconduit, on ne touche pas au chemin de
+   connexion.
+3. **KI-005 reste assumé** — pas de migration du full-void vers `Refund.creditNoteNumber`.
+
+**Résultat : aucune modification de `prisma/schema.prisma`, donc aucune migration.** Les ~13
+colonnes encore retirables tombent toutes dans les périmètres 2 et 3 — **5,5 %** des 238
+champs. C'est la mesure de ce qu'il reste.
+
+#### La catégorie que les quatre vagues précédentes ne pouvaient pas voir
+
+Elles demandaient « cette colonne a-t-elle un **lecteur** ? ». Il existe une troisième
+catégorie : **des lecteurs, mais aucun écrivain**. Elle passe le filtre V1 (elle est lue) et
+elle est pourtant morte en pratique (jamais peuplée).
+
+- **`User.image` — 3 lecteurs, 0 écrivain.** Rendue par `app/admin/layout.tsx` → le footer de
+  sidebar admin (`AvatarImage`) et par la navbar boutique. Mais `prisma.user.create/update`
+  n'existe **nulle part** dans le code applicatif, il n'y a plus de `socialProviders` depuis
+  le 2026-07-31, et aucune UI de profil. La colonne est **toujours NULL** : l'avatar retombe
+  sur les initiales à 100 %. Seul l'endpoint générique `update-user` de Better Auth pourrait
+  l'écrire — il n'a aucune surface dans l'app.
+
+C'est la seule prise de cette catégorie sur les 238 champs. Elle relève du périmètre auth,
+donc non exécutée.
+
+#### Notation des modèles — aucun sous 7/10
+
+| /10    | Modèles                                                                                                                    |
+| ------ | -------------------------------------------------------------------------------------------------------------------------- |
+| **10** | `Product`, `ProductSku`, `Order`, `OrderItem`                                                                              |
+| **9**  | `SkuMedia`, `OrderHistory`, `Refund`, `WebhookEvent`                                                                       |
+| **8**  | `Color`, `Material`, `Collection`, `ProductCollection`, `ProductSkuColor`, `ProductSkuMaterial`, `Session`, `Verification` |
+| **7**  | `ProductType`, `User`, `Account`, `StoreSettings`                                                                          |
+
+#### Notation des enums
+
+| /10    | Enums                                                                     |
+| ------ | ------------------------------------------------------------------------- |
+| **10** | `ProductStatus`, `OrderStatus`, `PaymentStatus`                           |
+| **9**  | `MediaType`, `OrderAction`                                                |
+| **8**  | `CollectionStatus`, `HistorySource`, `RefundStatus`, `WebhookEventStatus` |
+| **7**  | `InvoiceStatus`, `PaymentMethod`, `RefundReason`                          |
+| **6**  | `Role` (`USER` inatteignable, mais `@default` et socle du re-check)       |
+| **3**  | `AccountStatus` (aucun écrivain applicatif — filtre défensif)             |
+
+**Fusion `ProductStatus` / `CollectionStatus` — instruite, verdict NE PAS FAIRE.** Les deux
+portent les mêmes 3 valeurs (`DRAFT`/`PUBLIC`/`ARCHIVED`). Fusionner ferait 14 → 13 enums, au
+prix d'une migration de type Postgres sur les colonnes `status` de **deux** tables, et
+**coupler définitivement** les cycles de vie produit et collection. La duplication réellement
+coûteuse est côté UI (deux dialogs de statut, deux jeux de libellés) — c'est du code, pas du
+schéma.
+
+#### Les seuls champs notés ≤ 5 — tous conservés, avec leur motif
+
+| Champ                                                               | /10 | Pourquoi il reste                                                                       |
+| ------------------------------------------------------------------- | --- | --------------------------------------------------------------------------------------- |
+| `Account.accessToken`/`refreshToken`/`idToken`/`*ExpiresAt`/`scope` | 1   | Ni écrites ni lues depuis le retrait de `socialProviders` — **périmètre auth**          |
+| `User.image`                                                        | 2   | Lecteurs, zéro écrivain (ci-dessus) — **périmètre auth**                                |
+| `Session.ipAddress`/`userAgent`                                     | 2   | Écrites par Better Auth, zéro lecteur applicatif — **périmètre auth**                   |
+| `User.deletedAt`/`suspendedAt`/`accountStatus`                      | 3   | Filtres défensifs de `fetchUserForAuth()` — **périmètre auth**                          |
+| `WebhookEvent.processedAt`                                          | 3   | Write-only assumé : la table n'a aucune page admin, son lecteur est un `psql`           |
+| `WebhookEvent.eventType`                                            | 4   | Idem (instruit et conservé en V4)                                                       |
+| `StoreSettings.orphanMediaScanOffset`                               | 4   | État de tâche squattant le singleton de config (S3.9c) — jamais relogé                  |
+| `ProductType`/`Color`/`Material.createdAt`/`updatedAt`              | 4   | Horodatage de taxonomie, coût nul                                                       |
+| `Color.description`, `Material.description`                         | 5   | Rendues en admin seulement                                                              |
+| `ProductSkuMaterial.position`                                       | 5   | Index 0 pilote PDP/SEO/`build-sku-url`, mais aucune UI de réordonnancement — **KI-007** |
+| `StoreSettings.closedBy`                                            | 5   | Une seule opératrice : l'information est constante                                      |
+| `Session`/`Account`/`Verification.createdAt`/`updatedAt`            | 5   | L'adapter Better Auth les écrit ET les relit                                            |
+| `OrderItem.createdAt`, `ProductSku.createdAt`/`updatedAt`           | 5   | Horodatage, coût nul                                                                    |
+
+#### Gisement gelé — ce qui partirait si un arbitrage changeait
+
+À garder sous la main plutôt qu'à redécouvrir une sixième fois. **Rien de ceci n'est exécuté.**
+
+| Si on rouvre…               | Ce qui part                                                                             |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| **Périmètre auth**          | 6 colonnes OAuth d'`Account` · `Session.ipAddress`/`userAgent` · `User.image`           |
+| **Périmètre auth (étendu)** | `User.deletedAt`/`suspendedAt`/`accountStatus` + enum `AccountStatus`                   |
+| **KI-005**                  | Les 4 colonnes `creditNote*` d'`Order` + 1 `@unique` + 1 branche du trigger cross-table |
+
+#### Ce qui a été exécuté (hors schéma)
+
+| Item                                                                                                                                                                                                                                                                                                                                                                        | Nature     |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `shared/constants/currency.ts` : le JSDoc affirmait que le mono-devise était « verrouillé en DB par le CHECK `Order_currency_eur_check` » — **ce CHECK n'existe pas**, et il n'y a aucune colonne `Order.currency`. Commentaire réécrit pour dire le vrai (convention de code, pas garantie DB)                                                                             | correction |
+| `prisma/seed.ts` : suppression des 29 comptes clients + 2 admins de figuration, de leurs `Account`/`Session` et des 3 « edge case users ». Le seed ne crée plus que l'administratrice — comme en production. **Effet principal** : il était le seul écrivain de `User.suspendedAt`/`accountStatus`/`deletedAt`, dont l'inertie est désormais visible au lieu d'être masquée | alignement |
+| `.env.example` : retrait du knob `SEED_USER_COUNT`, devenu sans objet                                                                                                                                                                                                                                                                                                       | hygiène    |
+
+**Conclusion de la V5, à prendre au sérieux avant d'ouvrir une V6** : quatre vagues avaient
+conclu « la veine est épuisée » ; la cinquième le confirme **avec une mesure** (5,5 % de champs
+théoriquement retirables, tous derrière un arbitrage explicite). La prochaine réduction de
+surface ne viendra pas du schéma.
+
 ## 13. Ordre d'exécution suggéré (après arbitrage)
 
 | Lot                                            | Contenu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Préalable |

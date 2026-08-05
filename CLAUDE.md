@@ -72,7 +72,7 @@ pnpm docs:stripe            # Mirror local de la doc Stripe → docs/stripe/
 ```
 app/
 ├── (auth)/                  # Connexion (admin), mot-de-passe, verification email
-├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris, aide)
+├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris)
 ├── (legal)/                 # Pages legales (CGV, mentions, confidentialite)
 ├── admin/                   # Dashboard admin (catalogue, commandes, marketing, contenu)
 ├── api/                     # admin, auth, cron, csp-report, health, noop, orders, uploadthing, webhooks
@@ -141,6 +141,7 @@ _pourquoi_, les contre-exemples et les pièges de migration Radix → Base UI so
 - **`handleOnly`** : uniquement sur collision de gestes constatée et commentée sur le call site. Verrouillé par `handle-only-allowlist.regression.test.ts`.
 - **Panneaux : une TRANSITION, pas une animation keyframes** — une `animate-in` écraserait le translate piloté par le geste.
 - **Aucune couleur de token dans une prop d'animation Motion** (`animate`, `initial`, `exit`, `while*`, objets `*Variants`) — Motion n'interpole que hex / `rgb()` / `hsl()`, et **tous** nos tokens sont des `oklch()`. Il résout le `var(--…)` via `getComputedStyle`, ne sait pas mélanger le résultat, et retombe sur `mixImmediate` : la couleur **saute à la frame 1**. Le fondu n'existe pas, alors que l'état change bien — le défaut ne se voit qu'en console. ⚠️ Les moteurs sérialisent la valeur calculée d'un `oklch()` en **`lab(…)`** — vérifié sur Chromium comme sur WebKit, à la virgule près (`lab(82.3361% …)` vs `lab(82.3361 …)`) : chercher « oklch » dans la console ne ramène rien, c'est le même token sous un autre nom. Le correctif n'est **jamais** un hex dupliqué (`--primary` est SSOT) : superposer des tracés aux couleurs **statiques** et animer leur `opacity`. Verrouillé par `motion-animatable-colors.regression.test.ts`.
+- **Graisse des montants : deux crans, jamais `font-bold`** — total à payer d'un récap client en `font-semibold`, tout le reste (ligne d'article, sous-total, prix unitaire, ligne de tableau admin) en `font-medium`. Le prix héros d'une PDP est à part : `font-display` + **`font-normal`**, il tient par la taille et la fonte (même logique que les h1 en `font-light`). ⚠️ **Le rôle ne se déduit pas de l'expression** : `order.total` dans une ligne de tableau admin est un montant parmi vingt, il reste en `font-medium`. Un montant en `font-bold` casse l'échelle — il ne reste plus de cran au-dessus pour distinguer le total de sa ligne. Avant l'audit du 2026-08-05, un montant se rendait sous **quatre** graisses selon le fichier, avec deux paires co-visibles à la suite (récap de paiement → suivi de commande). `emails/` est hors périmètre (styles inline, pas de classes). Verrouillé par `amount-font-weight.regression.test.ts`.
 - **Icônes : Phosphor, importées depuis `@phosphor-icons/react/ssr`** (migration du 2026-08-04 ; `lucide-react` est retiré). La racine du paquet tire ~9000 modules et ses composants CSR lisent `IconContext` — ils cassent **au rendu** en Server Component ; seuls les `import type` (`Icon`, `IconProps`) la visent. Le poids `regular` vaut exactement le trait **1,5** des SVG maison, donc **`weight`, jamais `strokeWidth`** : Phosphor peint en `fill`, la prop de trait n'a aucun effet et une classe `fill-*` ne remplit rien. ⚠️ Chaque icône embarque ses **6 graisses** dans un module unique, intreeshakable (~5× le gzip d'une icône lucide) : le seul levier de poids est le nombre d'icônes **distinctes** par route. Verrouillé par `phosphor-ssr-entry.regression.test.ts`.
 
 ### React 19 - NO MEMOIZATION
@@ -177,7 +178,9 @@ Côté appelant, la SSOT est **`pickPrimaryImage()`** (`modules/products/service
 
 ### Une seule `BreadcrumbList` et une seule `ItemList` par URL
 
-`PageHeader` émet un `BreadcrumbList` dès qu'on lui passe des `breadcrumbs`. Les surfaces qui injectent **déjà** leur propre JSON-LD (PDP, /produits, /produits/[type], /collections/[slug]) doivent donc passer **`noStructuredData`** — sinon deux `BreadcrumbList`. L'`ItemList` appartient au **générateur de page** (`buildCatalogJsonLd`, `generateCollectionStructuredData`), imbriquée dans son `CollectionPage` via `mainEntity` : `ProductList` n'en émet plus. Deux `ItemList` aux `numberOfItems` divergents sur une même URL laissent Google en choisir une arbitrairement. Verrouillé par `shared/components/__tests__/catalogue-single-breadcrumb.regression.test.ts`.
+Depuis l'harmonisation du storefront sur « L'étal continue » (2026-08-05), **aucune page boutique ne rend plus `PageHeader`** — il survit pour `app/(legal)/*` (où il émet le `BreadcrumbList`, sans opt-out) et l'admin (`variant="compact"`). Côté storefront : le bloc titre est **`StorefrontHeading`** (`shared/components/storefront-heading.tsx`, h1 visible à tous les viewports, jamais derrière un `await` — le compteur passe par `countSlot` avec la frontière `Suspense` chez l'appelant), le fil d'Ariane visuel est **`BreadcrumbNav`** (zéro JSON-LD, jamais), et le `BreadcrumbList` appartient au **seul émetteur page-level** (`@graph` du générateur, ou script statique dédié sur /collections). L'`ItemList` appartient au **générateur de page** (`buildCatalogJsonLd`, `generateCollectionStructuredData`), imbriquée dans son `CollectionPage` via `mainEntity` : `ProductList` n'en émet plus. Deux `ItemList` aux `numberOfItems` divergents sur une même URL laissent Google en choisir une arbitrairement. Verrouillé par `shared/components/__tests__/catalogue-single-breadcrumb.regression.test.ts`.
+
+**La landing est le cas le plus chargé, et le seul à trois nœuds** : depuis l'absorption de `/aide` (2026-08-05), `StructuredData` émet dans un `@graph` unique la `BreadcrumbList` de l'accueil, l'`ItemList` de l'étal **et** le `FAQPage` de la section « Des questions ? » (`app/(shop)/(home)/_components/faq/faq-section.tsx`). ⚠️ La FAQ ne doit **jamais** revenir à un `<script>` séparé — c'était le montage de `/aide` (deux scripts, faute de générateur), et le recopier sur `/` y ajouterait une seconde `BreadcrumbList` au premier copier-coller. `/aide` n'existe plus : elle redirige en **308 vers `/#faq`** (`next.config.ts`), reste dans les `publicRoutes` du proxy — sinon le default-deny la renvoie vers `/` **nu**, sans l'ancre — et `ROUTES.SHOP.HELP` vaut désormais `/#faq`, donc n'est plus un pathname passable à `resolveNavbarSection` ou `isCatalogueRoute`.
 
 ### Visibilité : les data fns forcent, elles ne font pas confiance à l'appelant
 
@@ -743,3 +746,13 @@ Toute copie utilisateur tutoie. Le mélange n'est pas cosmétique : sur `/paieme
 ## Constats connus, non corrigés
 
 [`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md) recense les défauts reproduits et localisés qu'on a **délibérément** laissés en place parce qu'ils demandent une conception à part entière. Les entrées qui ont un point d'ancrage dans le code sont doublées d'un commentaire `@see docs/KNOWN-ISSUES.md` à ce site (KI-002, KI-004) ; celles qui décrivent une dette diffuse n'en ont pas (KI-003, libellés de rate limit vouvoyants sur ~20 fichiers ; KI-005, double SSOT du numéro d'avoir). À lire avant de retravailler la resoumission de checkout (KI-001) ou la persistance du formulaire de paiement (KI-002) — pas pour les découvrir une seconde fois.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

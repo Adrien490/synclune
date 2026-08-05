@@ -37,7 +37,7 @@ tout seul, sans avoir à remonter dans le texte.
 >
 > ⚠️ **Les maquettes du §6 ne sont pas des composants de référence, et ne doivent jamais servir de tels.**
 > Tout ce que le §6 prescrit est une divergence **volontaire** d'avec le rendu réel : hex littéraux au lieu
-> des tokens, variables `--a-*` choisies pour être inconfondables, Georgia à la place de Fraunces (la CSP
+> des tokens, variables `--a-*` choisies pour être inconfondables, une pile système à la place de Winky Sans (la CSP
 > d'un artifact bloque tout hôte externe), `zoom` sur une boîte de largeur fixe, plaques `inert` en `<div>`
 > plutôt que de vrais interactifs, et des classes `.mk--bug` qui **reproduisent l'état cassé**. C'est ce qui
 > en fait un bon support d'arbitrage, et ce qui les disqualifie comme échantillon. Si un catalogue de
@@ -109,8 +109,10 @@ de la haute joaillerie.
   demande-toi si c'est de la retenue ou de la timidité.
 - **Le geste à la main est la signature**, et il est déjà en SSOT : `HandDrawnAccent` et `HandDrawnUnderline`
   (`shared/components/animations/hand-drawn-accent.tsx`), `shared/components/squiggle-underline.tsx`,
-  `shared/components/masking-tape.tsx`, `CARD_SURFACE_POLAROID` (`shared/components/card-surface.constants.ts`),
-  `.polaroid-paper` / `.polaroid-hover` (`app/styles/components.css`). Ce vocabulaire dit « fait par
+  `shared/components/masking-tape.tsx`, `CARD_SURFACE_POLAROID` (`shared/components/card-surface.constants.ts` —
+  c'est LUI qui porte le lift/tilt au survol), `.polaroid-paper` (`app/styles/components.css` — uniquement un
+  `::before` de grain, pas de règle de base). ⚠️ `.polaroid-hover` a été SUPPRIMÉE le 2026-08-04, pierre
+  tombale in-situ « ne pas réintroduire sans consommateur » — ne la cite pas. Ce vocabulaire dit « fait par
   quelqu'un » mieux que n'importe quel adjectif. Prolonge-le, tends-le, ou argumente contre — mais ne
   l'ignore pas : une ligne parfaitement droite là où le reste du site trace à la main est une rupture, pas
   une sobriété.
@@ -154,8 +156,8 @@ page (§5) ne change pas ; c'est ce qu'on dessine qui change.
 | **Overlay** (sheet, drawer, dialog, alert-dialog, popover, menu) | L'overlay **ouvert sur son hôte**, avec le scrim et la géométrie réelle — jamais détouré | 390 **et** 1280 (la primitive change de forme entre les deux) | Le dessiner seul sur fond blanc. Tout son problème est le rapport à ce qu'il recouvre : hauteur occupée, lisibilité du dessous, empilement quand un second s'ouvre par-dessus. Montre au moins une fois l'état empilé. |
 | Surface admin               | HTML/CSS, mais grille 1600 px sans `mx-auto`, densité réelle, 30+ lignes        | 1680 (montre le plafond) · 1280 (le cas courant) | Juger la beauté. C'est un outil : compte les clics et les allers-retours de l'œil. ⚠️ Ne dessine pas une grille de 1600 px dans une plaque de 1440 : à 1440 de viewport, `max-w-[100rem]` est plafonné **par le viewport**, et le plafond ne se voit jamais. |
 | **E-mail transactionnel**   | Maquette en **tables**, largeur 600 px, pas de flex/grid, pas de `@media` fiable | 600 · 320, **clair ET sombre** | Gmail et Apple Mail **imposent** l'inversion sombre. Un e-mail non testé en sombre est à moitié audité. |
-| **PDF facture / avoir**     | Une page A4 (210×297 mm) à l'échelle, mentions légales réelles                  | A4                     | Le rendu est **déterministe et hashé SHA-256** (`jspdf`, Art. L102 B LPF). Toute proposition doit dire qu'elle ne s'applique qu'aux documents FUTURS, jamais aux archivés. |
-| **Copie éditoriale** (`/aide`, CGV, mentions, page atelier) | Une maquette **typographique** : mesure réelle, rythme vertical, respiration, ancrages — avec le VRAI texte | 1280 · 390             | Maquetter la mise en page sans écrire le texte. Ici la copie EST le design : une colonne magnifique remplie de faux paragraphes n'a rien prouvé. Et une page légale se scanne pour trouver une clause, elle ne se lit pas au fil. |
+| **PDF facture / avoir**     | Une page A4 (210×297 mm) à l'échelle, mentions légales réelles                  | A4                     | Le rendu (`jspdf`) est **déterministe**, et l'archivage le scelle sous SHA-256 (`modules/orders/services/archive-invoice-pdf.service.ts`, Art. L102 B LPF). Toute proposition doit dire qu'elle ne s'applique qu'aux documents FUTURS, jamais aux archivés. |
+| **Copie éditoriale** (CGV, mentions, FAQ de la landing, page atelier) | Une maquette **typographique** : mesure réelle, rythme vertical, respiration, ancrages — avec le VRAI texte | 1280 · 390             | Maquetter la mise en page sans écrire le texte. Ici la copie EST le design : une colonne magnifique remplie de faux paragraphes n'a rien prouvé. Et une page légale se scanne pour trouver une clause, elle ne se lit pas au fil. |
 | Système transverse (design system, motion, icônes, états de formulaire) | Une **planche de spécimens** : chaque variante côte à côte, avant/après en regard | selon le système       | Montrer un exemplaire. La cohérence ne se juge qu'en série.                                          |
 | **Matrice d'états** (vide, chargement, erreur, succès) | La matrice complète, pas un écran                              | celui de l'hôte        | Un skeleton qui n'a pas la géométrie exacte du contenu réel produit un saut de layout — dessine-les superposés. |
 
@@ -180,11 +182,12 @@ Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà éc
   `docs/UI-CONVENTIONS.md`. Ces cinq sections sont celles qui ont produit le plus de P0 sur ce projet.
 - `docs/BUSINESS.md` (§ Positionnement, obligatoire) et `docs/atelier-story.md` si la surface porte de la
   copie éditoriale
-- `app/globals.css` **et les six feuilles qu'il importe** — attention à qui porte quoi. Les **classes** vivent
+- `app/globals.css` **et les sept feuilles qu'il importe** — attention à qui porte quoi. Les **classes** vivent
   dans les feuilles : `.enter-inview` et `.hand-draw-inview` (`app/styles/entrance.css`), `.animate-shimmer`
   et `.product-item` (`app/styles/animations.css`), `[data-accent]` et ses 4 valeurs
-  (`app/styles/section-accents.css`), `.polaroid-paper` et `.polaroid-hover` (`app/styles/components.css`) ;
-  les deux dernières sont `app/styles/pwa.css` et `app/styles/utilities.css`. Les **utilitaires et tokens**,
+  (`app/styles/section-accents.css`), `.polaroid-paper` (`app/styles/components.css`) ;
+  les trois dernières sont `app/styles/pwa.css`, `app/styles/scroll-fade.css` (fondus de défilement,
+  ex-composant JS devenu CSS le 2026-08-05) et `app/styles/utilities.css`. Les **utilitaires et tokens**,
   eux, sont dans `app/globals.css` lui-même : `@utility focus-ring`, `@utility hover-halo`,
   `@utility shimmer-text`, l'échelle `--z-*`, les `--duration-*` (`fast 150ms`, `normal 200ms`, `slow 300ms`,
   `slower 500ms`) et les `--ease-*` (`spring`, `smooth-out`, `premium`).
@@ -197,8 +200,8 @@ Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà éc
 - `docs/KNOWN-ISSUES.md` si la cible touche le panier ou le checkout
 
 Puis trois passes de mémoire, dans cet ordre :
-1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier : **303 fichiers
-   de test** en portent (mesuré le 2026-08-04 ; c'est un nombre qui bouge à chaque passe de tests, ne le
+1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier : **342 fichiers
+   de test** en portent (re-mesuré le 2026-08-05 ; c'est un nombre qui bouge à chaque passe de tests, ne le
    crois pas au fichier près — il n'est là que pour te dissuader de grepper la racine).
    Chacun verrouille un bug déjà payé une fois, et devient une ligne de la section Garde-fous.
 2. `grep -rn "<libellé accessible de la cible>" e2e/` — les noms accessibles pilotent des tests E2E. Toute
@@ -233,13 +236,13 @@ prémisse fausse.
 - Et un scope `"use cache"` peut te servir du **HTML périmé en dev** : si une édition semble sans effet,
   redémarre le serveur avant de chercher un bug qui n'existe pas.
 
-**Faits du projet — vérifiés le 2026-08-04. Ne les réinvente pas, ne les contredis pas ; mais si l'un
+**Faits du projet — vérifiés le 2026-08-05. Ne les réinvente pas, ne les contredis pas ; mais si l'un
 d'eux ne correspond plus à ce que tu lis dans le repo, LE REPO GAGNE — corrige-toi et signale la dérive
 dans ta restitution (§9.4).** Ce bloc et les valeurs du §6 sont les seules choses de ce prompt qui
 pourrissent ; un catalogue voisin s'est déjà retrouvé avec ~25 % de chemins morts faute de cette règle.
 
-- Polices (SSOT `shared/styles/fonts.ts`) : **Fraunces** (`--font-display`), **Figtree** (`--font-sans`),
-  **Sacramento** (`--font-cursive`) — cette dernière est RÉSERVÉE au décoratif : jamais un prix, un libellé
+- Polices (SSOT `shared/styles/fonts.ts`) : **Winky Sans** (`--font-display`), **Onest** (`--font-sans`),
+  **Kalam** (`--font-cursive`) — cette dernière est RÉSERVÉE au décoratif : jamais un prix, un libellé
   de formulaire, de la nav ou du body ; ni `font-bold` ni `italic`. Caveat et Bricolage n'existent pas ici.
 - **Aucun thème sombre dans l'application** : pas de bloc `.dark`, pas de `next-themes`, aucun variant
   `dark:`. N'en invente pas un. **Deux exceptions, et elles sont réelles** — (a) le client e-mail, qui
@@ -250,8 +253,10 @@ pourrissent ; un catalogue voisin s'est déjà retrouvé avec ~25 % de chemins m
 - Le rose se référence par `--primary`, jamais en hex — dans le CODE. Dans les maquettes de l'artifact,
   c'est l'inverse (cf. §6).
 - Pas de `useMemo` / `useCallback` / `React.memo` / `forwardRef`, et pas de `setState` dans un `useEffect`.
-- `next/image` : la prop de préchargement est **`preload`** (booléen). `priority` a été RETIRÉE en Next 16 —
-  si une direction justifie de précharger la photo d'ouverture, dis `preload`, jamais `priority`.
+- `next/image` : la prop de préchargement est **`preload`** (booléen), que le repo traite en **paire
+  indissociable avec `fetchPriority="high"`** — `preload` seul émet un hint en priorité BASSE qui ne
+  précharge presque rien. `priority` a été RETIRÉE en Next 16 — si une direction justifie de précharger
+  la photo d'ouverture, dis la paire `preload` + `fetchPriority`, jamais `priority`.
 - Largeurs : storefront `max-w-6xl`, checkout `max-w-5xl`, admin `max-w-[100rem]` sans `mx-auto`. Un palier
   de colonnes en plus au-delà du plafond rétrécit les cartes au lieu d'ajouter de la place.
 - Si la surface est commerciale, l'état **boutique fermée** existe et se gère
@@ -394,7 +399,7 @@ Chaque maquette est du **HTML/CSS écrit à la main dans la page**, qui reprodui
 capture, pas une description, pas un wireframe en boîtes grises.
 
 - **Traduis les tokens réels en valeurs littérales**, dans un bloc `.mk` portant un commentaire qui donne la
-  correspondance. Dérivation **OKLab → sRGB** refaite le 2026-08-04 sur `app/globals.css` :
+  correspondance. Dérivation **OKLab → sRGB** refaite le 2026-08-05 sur `app/globals.css` :
 
   | Token | `oklch()` en base | hex | Note |
   |---|---|---|---|
@@ -409,7 +414,7 @@ capture, pas une description, pas un wireframe en boîtes grises.
   | `--color-brand-lavender` | `0.72 0.11 295` | `#a996e2` | |
   | `--color-brand-mint` | `0.78 0.11 165` | `#6ccea6` | |
   | `--color-brand-sun` | `0.85 0.11 86` | `#eec976` | |
-  | `--destructive` | `0.59 0.17 25` | `#cf4946` | |
+  | `--destructive` | `0.54 0.17 25` | `#bd3838` | assombri le 2026-08-05 pour passer AA |
   | `--success` | `0.52 0.14 145` | `#267d30` | |
   | `--warning` | `0.75 0.15 85` | `#d9a514` | |
   | `--info` | `0.55 0.15 250` | `#0f74c5` | |
@@ -420,8 +425,10 @@ capture, pas une description, pas un wireframe en boîtes grises.
   2,5:1, très en dessous d'AA. Mais avec `--foreground` POSÉ DESSUS, ils donnent 7,8 à 12,7:1. Donc :
   **les accents sont des aplats, des traits, des halos et des fonds de badge — jamais une couleur de texte
   sur fond clair.** Une direction franchement colorée est possible et conforme ; elle passe par la surface,
-  pas par l'encre. (Le couple `--destructive` + blanc plafonne à 4,47:1 : bon pour un bouton, juste en
-  dessous d'AA pour du petit texte — évite-le en corps de texte dans tes maquettes.)
+  pas par l'encre. (Le couple `--destructive` + blanc donne 5,55:1 — et 5,40:1 sur le fond — depuis
+  l'assombrissement du 2026-08-05, verrouillé par `destructive-ink-contrast.regression.test.ts` : AA passe,
+  y compris en encre. Une maquette bâtie sur l'ancien `#cf4946` reproduirait le défaut que cette correction
+  a résorbé.)
 
   ⚠️ **Convertis en OKLab, pas en CIE Lab.** Les deux espaces ont un `L` qui ne veut pas dire la même
   chose, et la confusion est silencieuse : elle rend des gris **trop clairs et trop violacés**. Une
@@ -432,7 +439,7 @@ capture, pas une description, pas un wireframe en boîtes grises.
   couleur « à peu près rose », et si une valeur `oklch` a changé depuis la date ci-dessus, c'est le
   fichier qui fait foi (cf. §3).
 - **Les polices ne sont pas chargeables** (CSP stricte, aucun hôte externe) : substitue une pile locale
-  proche — serif pour Fraunces (`Georgia, "Iowan Old Style", serif`), script pour Sacramento
+  proche — sans pour Winky Sans (`"Trebuchet MS", "Segoe UI", sans-serif`), script pour Kalam
   (`"Snell Roundhand", "Apple Chancery", cursive`) — et **écris-le dans le footer**. Ne prétends jamais
   montrer la vraie typographie.
 - **Le document est thémé, les maquettes ne le sont JAMAIS.** L'app n'a pas de thème sombre : un aperçu qui
@@ -505,7 +512,8 @@ thème — `prefers-color-scheme` **et** `:root[data-theme]`, les deux.
 dit rien du rythme d'espacement ni du contraste réel, et une maquette qui déborde ne se voit que rendue.
 Script Playwright jetable (le repo a `@playwright/test`), sur `file://<chemin du fichier>`, aux largeurs de
 la SSOT `VIEWPORTS` (`e2e/constants.ts`) plutôt qu'à des valeurs re-dérivées — `MOBILE` 390, `TABLET_PORTRAIT`
-768, `DESKTOP` 1280 :
+768, `DESKTOP` 1280 ; la SSOT en porte d'autres quand la cible l'exige (`REFLOW_320` 320 — WCAG 1.4.10 —,
+`TABLET_LANDSCAPE` 1024, `ADMIN_DESKTOP` 1680, la seule largeur où le plafond admin `max-w-[100rem]` se voit) :
   · captures pleine page aux trois largeurs ;
   · **les DEUX mécanismes de thème, pas un seul** — une passe `colorScheme: "dark"` / `"light"` (qui ne
     pilote que `prefers-color-scheme`) ET une passe qui force `document.documentElement.dataset.theme`
@@ -553,17 +561,28 @@ derrière `can-hover:` (c'est le **masquage** qu'on gate, pas la révélation �
 tous ses usages ou reste locale : « on verra » n'est pas une réponse.
 
 **Déjà proposé et refusé sur ce projet — ne le repropose pas.** Cette liste est le **sur-ensemble** des refus
-dispersés dans les trois autres catalogues de `docs/` ; la source de vérité reste un fichier par refus dans
-`memory/` (§3, passe 3), où figure aussi le motif. Si tu en trouves un de plus là-bas, il compte, et
-signale-le pour qu'il soit ajouté ici.
+dispersés dans les trois autres catalogues de `docs/` ; la source de vérité reste `memory/` (§3, passe 3) —
+un fichier `feedback-*` par refus, ou la section « décisions » du fichier d'audit qui l'a enregistré —, où
+figure aussi le motif. Si tu en trouves un de plus là-bas, il compte, et signale-le pour qu'il soit ajouté
+ici : cette liste a déjà divergé TROIS fois, c'est son mode de panne.
 
 - **Mouvement** : View Transition sur une fermeture Vaul, sur l'ouverture d'un sheet, sur `onSelect` d'Embla,
-  ou du hero flottant vers la PDP · curseur qui suit dans le hero · chevron de scroll dans le hero ·
-  micro-animation sans fonction · hook `useMotionAllowed`.
+  ou du hero flottant vers la PDP · curseur qui suit — dans le hero ET dans `ParticleBackground` (les props
+  souris ont été supprimées : tout suivi de curseur est refusé, pas seulement celui du hero) · chevron de
+  scroll dans le hero · micro-animation sans fonction · hook `useMotionAllowed`.
 - **Overlays** : `Drawer` pour une confirmation (c'est `AlertDialog`) · `handleOnly` par défaut.
 - **Storefront** : CTA sticky mobile sur la PDP · icônes dans le bandeau réassurance du hero · troisième
-  entrée dans la nav desktop · persistance du formulaire de paiement (KI-002, **refusé deux fois** — ne le
-  remets pas sur la table).
+  entrée dans la nav desktop — du même arbitrage (2026-05-30) : bande de réassurance des méga-menus RETIRÉE
+  et carte « spotlight » large ANNULÉE · toast à l'ajout au panier (les ~24 `showSuccessToast: false` sont un
+  choix, pas un oubli) · `bg-muted` — ou tout gris de séparation — sur le panneau du panier (« jugé moche » ;
+  le correctif retenu est une ombre, `--shadow-paper`) · cue tactile sur `CollectionCard` (le trait rose
+  reste hover/focus seulement, assumé sur tactile — 2026-08-05) · « · fait main » dans l'eyebrow des cartes
+  (retiré DEUX fois le même jour, ProductCard puis CollectionCard : type de produit seul).
+- **Checkout** : champs et bouton en PILULES — ASSUMÉS, Stripe a été aligné dessus (`borderRadius: "2rem"`) :
+  ne les re-signale plus · délais de préparation atelier volontairement non affichés (« 2-4 jours ouvrés » =
+  transport seul) · pas de case à cocher CGV (acceptation passive choisie) · persistance du formulaire de
+  paiement (KI-002, **refusé deux fois** — ne le remets pas sur la table).
+- **Légal** : numéro de téléphone absent des mentions légales — assumé.
 - **Admin** : double bouton retour en mobile · bouton Cancel sur les formulaires de création.
 - **Formulaires** : `autoFocus`.
 - **Filtres** : refondre le pattern du `ProductFilterSheet`. Son état courant — **accordéon sur écran

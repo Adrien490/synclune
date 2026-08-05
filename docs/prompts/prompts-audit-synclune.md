@@ -834,7 +834,7 @@ Audit le point « Pages légales » dans Synclune.
 
 Vérifie CGV, mentions légales, confidentialité, cookies, livraison, retours, micro-entreprise, TVA non applicable et conformité e-commerce.
 
-Inspecte `app/(legal)/**`, `app/(shop)/aide/**` + `shared/constants/faq-items.tsx` (livraison et retours n'ont PAS de page légale dédiée — ils vivent dans l'aide et `/retractation`), `shared/constants/legal-urls.ts` (SSOT des liens), contenus, liens footer et checkout.
+Inspecte `app/(legal)/**`, `app/(shop)/(home)/_components/faq/faq-section.tsx` + `shared/constants/faq-items.tsx` (livraison et retours n'ont PAS de page légale dédiée — ils vivent dans la FAQ de la landing et `/retractation` ; `/aide` a été absorbée le 2026-08-05 et redirige en 308 vers `/#faq`), `shared/constants/legal-urls.ts` (SSOT des liens), contenus, liens footer et checkout.
 
 Note /100, propose corrections/améliorations si pertinent.
 ```
@@ -1688,8 +1688,7 @@ Signale les sections qui n'apportent rien (à supprimer, pas à améliorer) et c
 
 Inspecte `app/(shop)/(home)/page.tsx`, `app/(shop)/(home)/_components/**` (`hero-section.tsx`,
 `floating-images/**`, `atelier-section/**`, `collections-section.tsx`, `latest-creations.tsx`,
-`home-faq*.tsx`, `footer.tsx`), `shared/components/{section-title,scroll-fade,polaroid-frame}.tsx`,
-`e2e/scroll-driven-animations.spec.ts`, `e2e/performance.spec.ts`.
+`home-faq*.tsx`, `footer.tsx`), `e2e/scroll-driven-animations.spec.ts`, `e2e/performance.spec.ts`.
 
 Note /100, donne le verdict section par section, et dis explicitement laquelle refondre en premier.
 ```
@@ -3134,32 +3133,39 @@ débit en P1/P2.
 
 ---
 
-## 149 — Page d'aide & FAQ
+## 149 — FAQ de la landing (ex-page d'aide)
 
 ```text
-Audit le point « Page d'aide et FAQ » dans Synclune.
+Audit le point « FAQ » dans Synclune.
 
-`app/(shop)/aide/page.tsx` et son composant de recherche `_components/aide-search-content.tsx`, alimentés
-par `shared/constants/faq-items.tsx`, constituent le seul service après-vente en libre-service. La FAQ
-d'accueil (`app/(shop)/(home)/_components/home-faq*.tsx`) puise-t-elle dans la même source ?
+`app/(shop)/(home)/_components/faq/faq-section.tsx`, alimentée par `shared/constants/faq-items.tsx`,
+constitue le seul service après-vente en libre-service. ⚠️ Il n'y a PLUS de page `/aide` : elle a été
+absorbée par la landing le 2026-08-05 et redirige en 308 vers `/#faq` (`next.config.ts`). Il n'y a donc
+plus qu'UNE surface FAQ, plus de champ de recherche interne, et le `FAQPage` est un nœud du `@graph`
+de `shared/components/structured-data.tsx` — pas un script à lui.
 
 Vérifie :
-- le SSOT : une seule liste de questions, ou deux copies qui divergent (accueil vs page d'aide) ?
 - la couverture : les questions qui déclenchent réellement un contact — délais de fabrication et de
   livraison, entretien des bijoux, taille et ajustement, retour et rétractation, paiement sécurisé,
   commande sans compte, suivi, personnalisation — sont-elles traitées ? Liste celles qui manquent ;
-- la recherche interne : tolère-t-elle les fautes, que montre-t-elle sans résultat, propose-t-elle une
-  sortie (contact) ?
+- la parité `answer` ↔ `answerText` : le second alimente le JSON-LD et doit rester le décalque du
+  premier. Google compare le balisage au contenu VISIBLE, et une dérive y est muette ;
 - l'articulation avec les pages légales (prompt 56) : la FAQ doit expliquer, les CGV engagent. Aucune
   contradiction n'est acceptable entre les deux — vérifie délais, frais de retour et exclusions ;
-- le contact : est-il atteignable depuis l'aide, et depuis le tunnel d'achat ?
-- le SEO : données structurées `FAQPage` (la page injecte déjà un `faqPageSchema`), une seule
-  déclaration par page, cohérence avec le contenu visible ;
+- le contact : est-il atteignable depuis la FAQ, et depuis le tunnel d'achat ?
+- le SEO : une seule déclaration `FAQPage` sur `/`, dans le même `@graph` que la `BreadcrumbList` et
+  l'`ItemList` de l'étal (cf. CLAUDE.md § une seule BreadcrumbList par URL) ;
+- l'atteignabilité de l'ancre : `/aide` doit arriver sur `#faq` et pas sur `/` nu — donc redirection
+  ET présence dans les `publicRoutes` du proxy ;
+- la hiérarchie de titres : le `h1` appartient à l'étal, la section prend un `h2`, ses groupes des
+  `h3` et les questions des `h4` (`headingLevel={4}`) ;
 - l'accessibilité de l'accordéon : clavier, `aria-expanded`, ancres partageables ;
-- le ton : réponses courtes, concrètes, dans la voix de la marque.
+- le ton : réponses courtes, concrètes, au TUTOIEMENT — elles vouvoyaient tant que la FAQ vivait sur
+  sa propre page, et sont désormais co-visibles avec le chapô de l'étal.
 
-Inspecte `app/(shop)/aide/**`, `shared/constants/faq-items.tsx`,
-`app/(shop)/(home)/_components/home-faq*.tsx`, `app/(legal)/**`, `shared/components/structured-data.tsx`.
+Inspecte `app/(shop)/(home)/_components/faq/faq-section.tsx`, `shared/constants/faq-items.tsx`,
+`app/(shop)/(home)/page.tsx`, `app/(legal)/**`, `shared/components/structured-data.tsx`,
+`next.config.ts`, `proxy.ts`.
 
 Note /100, liste les questions manquantes et toute contradiction avec les CGV (P1).
 ```

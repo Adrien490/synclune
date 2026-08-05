@@ -316,3 +316,63 @@ Ils étaient déjà à 1,5 : ils sont désormais cohérents avec le trait par d�
 
 Verrouillé par `shared/components/__tests__/phosphor-ssr-entry.regression.test.ts` (entrée `/ssr`,
 cible des `vi.mock`, absence de `lucide-react`).
+
+## Typographie — Winky Sans / Onest / Kalam (SSOT `shared/styles/fonts.ts`)
+
+Migration S5 « Encre et papier » du 2026-08-05 — audit, mesures et candidats écartés dans
+`docs/FONTS-AUDIT-2026-08-05.md`. Les classes s'appuient sur `--font-display` /
+`--font-sans` / `--font-cursive`, qui ne changent jamais : c'est `fonts.ts` qui migre.
+
+- **La display n'a PAS de chiffres tabulaires** (Winky Sans, comme Fraunces avant elle :
+  GSUB sans `tnum`). Tout montant qui bouge (totaux animés, compteurs alignés) se compose
+  dans la sans (`Onest`, `tnum` vérifié) — verrouillé par
+  `modules/cart/components/__tests__/cart-sheet-footer.test.tsx`. `tabular-nums` sous
+  `font-display` est un no-op silencieux.
+- **`font-cursive` est RÉSERVÉE au décoratif** (logotype, signatures « — Léane »,
+  légendes) — jamais prix, libellés de formulaire, navigation ni body. Ni `font-bold`
+  ni `italic` dessus : Kalam n'est chargée qu'en 400, et un script est déjà incliné.
+- **Graisse plancher display : 300.** Les h1 du storefront sont en `font-light` — toute
+  future display doit couvrir 300, sinon le navigateur clampe au min de l'axe sans
+  avertissement (c'est ce qui a écarté Gabarito et Baloo 2 à l'audit).
+- ⚠️ **Jamais d'utilitaire custom dans le namespace `font-`** s'il n'est pas une famille :
+  `cn()` est un `twMerge` nu (`shared/utils/cn.ts`), et tailwind-merge classe tout
+  `font-<x>` inconnu en font-family — il supprime alors le `font-display` voisin,
+  invisible au lint, au typecheck et aux tests (incident `fraunces-wonk` vs `font-wonk`,
+  2026-07-27). Nommer `<famille>-<variante>`, jamais `font-<variante>`.
+
+### Graisse des montants — deux crans, et `font-bold` n'en est pas un
+
+| Rôle du montant                                                    | Graisse            |
+| ------------------------------------------------------------------ | ------------------ |
+| Total à payer / total commande, dans un récap **client**           | `font-semibold`    |
+| Ligne d'article, sous-total, prix unitaire, ligne de tableau admin | `font-medium`      |
+| n'importe quel montant                                             | jamais `font-bold` |
+
+Le prix héros d'une PDP est à part : il se compose en `font-display` **`font-normal`**
+(`modules/products/components/product-price-display.tsx`) — il tient par la taille et la
+fonte, pas par la graisse. C'est la même logique qui donne les h1 en `font-light`.
+
+**Pourquoi deux crans et pas trois.** Audit typographique 2026-08-05 : un montant se rendait
+sous **quatre** graisses selon le fichier. Le total était `font-semibold` dans
+`modules/payments/components/checkout-summary.tsx` et `font-bold` dans
+`modules/orders/components/customer/order-summary-card.tsx` ; la ligne d'article était
+`font-medium` dans le premier et `font-semibold` dans
+`modules/orders/components/customer/order-items-list.tsx`. Ces deux paires sont vues **à la
+suite** par la même personne (récap de paiement → page de suivi), donc l'écart se voit. La
+règle n'a pas été inventée : elle est reprise des deux surfaces les plus travaillées du
+tunnel (`checkout-summary` et `app/paiement/confirmation/page.tsx`), déjà d'accord entre
+elles ; les huit sites divergents ont été alignés dessus.
+
+⚠️ **Le rôle ne se déduit pas de l'expression.** `order.total` est bien « un total », mais
+dans une LIGNE de tableau admin c'est un montant parmi vingt : il reste en `font-medium`,
+sinon toute la colonne passe en relief. C'est pourquoi le versant `font-semibold` du
+garde-fou est une liste explicite de récaps client, pas un motif.
+
+`font-bold` reste légitime **hors montants** : pastilles de compteur en `text-2xs` (où c'est
+de la lisibilité, pas de la hiérarchie) et chiffres décoratifs `aria-hidden`. Sur un montant
+il casse l'échelle — il ne reste plus de cran au-dessus pour distinguer le total de sa ligne.
+
+Les templates `emails/` sont hors périmètre : pas de classes utilitaires, des `style={{
+fontWeight }}` inline sur une échelle contrainte par les clients de messagerie.
+
+Verrouillé par `shared/components/__tests__/amount-font-weight.regression.test.ts`.

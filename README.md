@@ -94,7 +94,7 @@ Ouvrir [http://localhost:3000](http://localhost:3000)
 ```
 app/
 ├── (auth)/                  # Connexion (admin), mot de passe, verification email
-├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris, aide)
+├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris)
 ├── (legal)/                 # Pages legales (CGV, mentions, confidentialite)
 ├── admin/                   # Dashboard admin (catalogue, ventes, marketing, contenu, configuration)
 ├── api/                     # Routes API (auth, cron, webhooks, uploadthing)

@@ -25,7 +25,10 @@ export const onRequestError: Instrumentation.onRequestError = (err, request, con
 	const label = `${context.routeType}:${method} ${path}`;
 
 	const payload: Record<string, unknown> = {
-		timestamp: new Date().toISOString(),
+		// Timing API et non `new Date()` nu : ce hook s'exécute aussi PENDANT un prerender
+		// (quand il rapporte l'erreur d'une route), où l'horloge nue re-déclenche
+		// blocking-prerender-current-time en cascade par-dessus l'erreur d'origine.
+		timestamp: new Date(performance.timeOrigin + performance.now()).toISOString(),
 		error: {
 			message: error.message,
 			name: error.name,

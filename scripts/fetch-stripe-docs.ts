@@ -21,7 +21,7 @@
  * ferait ~10 Mo pour rien. Cf. `docs/stripe/INDEX.md` pour le détail des exclusions.
  *
  * ============================================================================
- * TROIS PIÈGES ENCODÉS ICI
+ * CINQ PIÈGES ENCODÉS ICI
  * ============================================================================
  *
  * 1. **Une 404 de docs.stripe.com renvoie un corps de ~24 Ko**, pas un corps vide.
@@ -29,13 +29,30 @@
  *    et elle se noie dans un bundle de 855 Ko. On rejette sur `!res.ok` et on
  *    sort en code 1 avec la liste des URLs mortes — c'est le signal qu'une page
  *    Stripe a été déplacée et que le manifeste doit être corrigé.
- * 2. **Concurrence bornée** : 64 fetches séquentiels sont lents, 64 en parallèle
+ *
+ * 2. **Une 200 peut rendre un INDEX DE VARIANTES de ~500 o au lieu du contenu.**
+ *    Symétrique du piège 1, et plus vicieux : rien ne signale l'anomalie. Stripe
+ *    sert, pour les pages déclinées par intégration ou par langage, un stub
+ *    « This article has multiple variants. Fetch one of the following URLs… ».
+ *    L'audit du 2026-08-05 en a trouvé QUATRE au mirror, dont
+ *    `payments/accept-a-payment` — la page d'intégration de référence du tunnel —
+ *    stockée en 1053 o là où la variante Elements + PaymentIntents en fait 77 695.
+ *    Soit ~110 Ko de doc absents, invisibles à la lecture d'un bundle de 860 Ko.
+ *    D'où `assertNotVariantIndex()` et les entrées de manifeste porteuses de query.
+ *
+ * 3. **La langue suit la GÉO de l'appelant** si on ne l'épingle pas : le mirror a
+ *    été généré en français depuis la France, un run CI l'aurait rendu en anglais
+ *    — 1,9 Mo de diff pour zéro changement de contenu. D'où `DOC_LOCALE`.
+ *
+ * 4. **Concurrence bornée** : 68 fetches séquentiels sont lents, 68 en parallèle
  *    sont impolis.
- * 3. **En-tête de provenance par page** : sans URL source ni date, une page
+ *
+ * 5. **En-tête de provenance par page** : sans URL source ni date, une page
  *    périmée au milieu d'un bundle est intraçable.
  *
- * Sortie idempotente : deux exécutions produisent des fichiers identiques hors
- * la ligne de date de l'en-tête de bundle.
+ * Sortie idempotente, y compris entre machines depuis que la locale est épinglée :
+ * deux exécutions produisent des fichiers identiques hors la ligne de date de
+ * l'en-tête de bundle.
  *
  * Usage :
  *   pnpm docs:stripe
@@ -43,12 +60,20 @@
 
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 // ============================================================================
 // MANIFESTE — SSOT des pages récupérées
 // ============================================================================
 
-/** Chemin relatif à `https://docs.stripe.com/`, SANS le suffixe `.md`. */
+/**
+ * Chemin relatif à `https://docs.stripe.com/`, SANS le suffixe `.md`.
+ *
+ * Peut porter une **query de variante** pour les pages que Stripe décline par
+ * intégration ou par langage — sans elle, l'URL nue rend un index de variantes de
+ * ~500 o au lieu du contenu (piège 2 en tête de fichier) :
+ *   `payments/accept-a-payment?payment-ui=elements&api-integration=paymentintents`
+ */
 type StripeDocPath = string;
 
 type Bundle = {
@@ -61,7 +86,7 @@ type Bundle = {
 	readonly pages: readonly StripeDocPath[];
 };
 
-const BUNDLES: readonly Bundle[] = [
+export const BUNDLES: readonly Bundle[] = [
 	{
 		file: "01-payments.md",
 		title: "Paiements — PaymentIntents",
@@ -69,11 +94,17 @@ const BUNDLES: readonly Bundle[] = [
 			"Le flow réel de Synclune : PaymentIntents card-only, 3DS en settlement, codes de refus. " +
 			"Voir modules/payments/actions/initialize-payment.ts et confirm-checkout.ts.",
 		pages: [
-			"payments/accept-a-payment",
+			// Variante Elements + PaymentIntents : l'URL nue rend un index de 7 variantes
+			// (Checkout hébergé, Checkout intégré, Elements×2, iOS, Android, React Native)
+			// en 1053 o. C'est CETTE variante qui décrit notre tunnel, et elle fait 78 Ko.
+			"payments/accept-a-payment?payment-ui=elements&api-integration=paymentintents",
 			"payments/payment-intents",
 			"payments/payment-intents/verifying-status",
 			"payments/payment-intents/asynchronous-capture",
 			"payments/quickstart",
+			// Conservée bien qu'aucun `capture_method` n'existe au dépôt (vérifié 2026-08-05) :
+			// c'est la page à lire le jour où une précommande imposerait une autorisation
+			// différée. Gardée délibérément, ne pas la « découvrir » comme morte.
 			"payments/place-a-hold-on-a-payment-method",
 			"payments/payment-methods",
 			"payments/payment-methods/integration-options",
@@ -88,6 +119,15 @@ const BUNDLES: readonly Bundle[] = [
 			"api/payment_methods",
 			"api/payment_methods/object",
 			"payments-api/tour",
+			// Ajoutées le 2026-08-05 : `getOrCreateStripeCustomer` dédupe désormais par
+			// `customers.list({ email })`, et le code dépend de DEUX propriétés que ces
+			// deux pages sont seules à énoncer — le filtre `email` de `list` est
+			// case-sensitive, et `search` s'exclut lui-même des flux read-after-write
+			// (« data is searchable in less than a minute… up to an hour behind during
+			// outages »). Sans elles au mirror, ces deux contraintes ne sont vérifiables
+			// nulle part dans le dépôt.
+			"api/customers/list",
+			"api/customers/search",
 		],
 	},
 	{
@@ -100,14 +140,29 @@ const BUNDLES: readonly Bundle[] = [
 			"payments/payment-element",
 			"payments/payment-element/control-billing-details-collection",
 			"payments/payment-element/migration-ct",
+			// Conservées bien qu'AUCUN `AddressElement` ne soit monté (vérifié 2026-08-05) :
+			// elles décrivent la collecte des coordonnées que `pay-button.tsx` fait à la main
+			// via `confirmParams.payment_method_data.billing_details`.
 			"elements/address-element",
-			"payments/advanced/collect-addresses",
+			"payments/advanced/collect-addresses?payment-ui=elements",
+			// Ajoutée le 2026-08-05 : `modules/payments/constants/stripe-appearance.ts` écrit
+			// à la main 102 lignes d'objet Appearance — thème, variables, et 5 sélecteurs de
+			// règles (`.Input`, `.Input:focus`, `.Label`, `.Tab`, `.Tab--selected`) doublés
+			// pour le dark. Cette page est la SEULE référence de ces sélecteurs : sans elle,
+			// une faute de nom est indétectable (Stripe ignore silencieusement une règle
+			// inconnue). L'URL nue rend un index de 2 variantes en 452 o.
+			"elements/appearance-api?api-integration=paymentintents",
 			"js/initializing",
 			"js/elements_object/create_payment_element",
+			// Ajoutée le 2026-08-05 : `elements.submit()` (use-checkout-submit.ts, étape 2/4)
+			// n'a PAS de page dédiée — `js/elements_object/submit` est une 404. Sa contrainte
+			// d'ordre (« call elements.submit() before confirming, and wait for the promise »)
+			// n'était documentée nulle part au mirror.
+			"js/elements_object",
 			"js/payment_intents/confirm_payment",
 			"payments/link/payment-element-link",
 			"payments/link/link-payment-integrations",
-			"testing/wallets",
+			"testing/wallets?ui=payment-element",
 		],
 	},
 	{
@@ -157,7 +212,7 @@ const BUNDLES: readonly Bundle[] = [
 			"cli/trigger",
 			"get-started/checklist/go-live",
 			"get-started/test-developer-integration",
-			"get-started/development-environment",
+			"get-started/development-environment?lang=node",
 		],
 	},
 	{
@@ -189,7 +244,18 @@ const BUNDLES: readonly Bundle[] = [
 const BASE_URL = "https://docs.stripe.com";
 const OUTPUT_DIR = path.join(process.cwd(), "docs", "stripe");
 
-/** Requêtes simultanées. Assez pour que les 64 pages tiennent en ~10 s, assez peu pour rester poli. */
+/**
+ * Locale ÉPINGLÉE. Sans ce paramètre, Stripe négocie la langue sur la géo de
+ * l'appelant : le mirror a été généré en français depuis la France, un run CI ou
+ * derrière un VPN l'aurait rendu en anglais — 1,9 Mo de diff pour zéro changement
+ * de contenu, et la promesse d'idempotence ci-dessus serait fausse entre machines.
+ *
+ * Le paramètre gagne contre un en-tête `accept-language` contraire (vérifié), donc
+ * il suffit à lui seul.
+ */
+const DOC_LOCALE = "fr-FR";
+
+/** Requêtes simultanées. Assez pour que les 68 pages tiennent en ~10 s, assez peu pour rester poli. */
 const CONCURRENCY = 4;
 
 /** Une page de doc met normalement < 2 s ; au-delà, c'est un incident réseau. */
@@ -216,8 +282,43 @@ class StripeDocFetchError extends Error {
 	}
 }
 
+/**
+ * `payments/accept-a-payment?payment-ui=elements`
+ *   → `https://docs.stripe.com/payments/accept-a-payment.md?payment-ui=elements&locale=fr-FR`
+ *
+ * Le `.md` se glisse entre le chemin et la query : c'est le chemin qui est suffixé,
+ * pas l'URL complète.
+ */
+function buildDocUrl(entry: StripeDocPath): string {
+	const [docPath, query] = entry.split("?", 2);
+	const params = new URLSearchParams(query);
+	params.set("locale", DOC_LOCALE);
+	return `${BASE_URL}/${docPath}.md?${params}`;
+}
+
+/** Le marqueur reste en anglais même sur une page servie en français (vérifié). */
+const VARIANT_INDEX_MARKER = "This article has multiple variants";
+
+/**
+ * PIÈGE 2 : une 200 de ~500 o qui n'est pas de la doc mais un sommaire de variantes.
+ * On échoue en listant les variantes disponibles — le manifeste doit en désigner une.
+ */
+function assertNotVariantIndex(docPath: StripeDocPath, markdown: string, bytes: number): void {
+	if (!markdown.includes(VARIANT_INDEX_MARKER)) return;
+
+	const variants = [...markdown.matchAll(/\((https:\/\/docs\.stripe\.com\/[^)]+\?[^)]+)\)/g)].map(
+		(match) => `      ${match[1]}`,
+	);
+
+	throw new StripeDocFetchError(
+		docPath,
+		`index de variantes (${bytes} o), pas du contenu — choisir une variante :\n` +
+			variants.join("\n"),
+	);
+}
+
 async function fetchDocPage(docPath: StripeDocPath): Promise<FetchedPage> {
-	const url = `${BASE_URL}/${docPath}.md`;
+	const url = buildDocUrl(docPath);
 
 	let response: Response;
 	try {
@@ -241,12 +342,10 @@ async function fetchDocPage(docPath: StripeDocPath): Promise<FetchedPage> {
 		throw new StripeDocFetchError(docPath, "corps vide");
 	}
 
-	return {
-		docPath,
-		url,
-		markdown,
-		bytes: Buffer.byteLength(markdown, "utf8"),
-	};
+	const bytes = Buffer.byteLength(markdown, "utf8");
+	assertNotVariantIndex(docPath, markdown, bytes);
+
+	return { docPath, url, markdown, bytes };
 }
 
 /**
@@ -341,8 +440,9 @@ async function main(): Promise<void> {
 			);
 		}
 		console.error(
-			`\nUne page a probablement été déplacée côté Stripe : corriger le manifeste` +
-				` en tête de scripts/fetch-stripe-docs.ts.`,
+			`\nSoit une page a été déplacée côté Stripe, soit elle est désormais déclinée` +
+				` en variantes (choisir l'URL listée ci-dessus).` +
+				`\nDans les deux cas : corriger le manifeste en tête de scripts/fetch-stripe-docs.ts.`,
 		);
 		process.exitCode = 1;
 		return;
@@ -379,4 +479,9 @@ async function main(): Promise<void> {
 	console.log(`  (bundles gitignorés — seul INDEX.md est versionné)`);
 }
 
-await main();
+// Garde de point d'entrée : `BUNDLES` est importé par
+// `test/contract/stripe-docs-mirror.contract.test.ts`, et sans ce garde un simple
+// `import` déclencherait les 68 fetches réseau.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+	await main();
+}

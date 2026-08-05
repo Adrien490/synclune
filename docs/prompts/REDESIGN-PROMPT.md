@@ -9,7 +9,8 @@ section** de Synclune.
 collé en ligne de commande, le curseur y atterrit tout seul.
 
 > Positionnement vs les autres catalogues : [`AUDIT-PROMPTS.md`](AUDIT-PROMPTS.md) couvre des **missions
-> larges** par domaine (26 missions prédéfinies : 21 + 5 du Track Croissance) ; [`prompts-audit-synclune.md`](prompts-audit-synclune.md)
+> larges** par domaine (26 missions prédéfinies : 21 + 5 du Track Croissance — ⚠️ fichier restauré depuis
+> HEAD le 2026-08-05, marqué incomplet en tête) ; [`prompts-audit-synclune.md`](prompts-audit-synclune.md)
 > couvre des **audits notés /100** (rapport, pas de refonte) ; [`DESIGN-ARTIFACT-PROMPT.md`](DESIGN-ARTIFACT-PROMPT.md)
 > **maquette 3-4 directions** sur une page publiée, pour arbitrer AVANT d'écrire du code. Ce fichier comble
 > l'entre-deux : une refonte complète et implémentée, scopée à **une surface que tu désignes toi-même**.
@@ -49,24 +50,28 @@ re-litige pas et n'en propose pas d'autre. Trois choses changent :
 Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà écrit dans le projet :
 - `CLAUDE.md` : conventions, invariants React 19, § Voix — et surtout `docs/UI-CONVENTIONS.md`, où le détail
   a été extrait (Breakpoints · Largeurs de contenu · Survol vs focus · Overlays · `render` vs `asChild` ·
-  `data-*` booléens). `CLAUDE.md` n'en garde que 10 puces : le _pourquoi_, les contre-exemples et les pièges
+  `data-*` booléens). `CLAUDE.md` n'en garde qu'une douzaine de puces : le _pourquoi_, les contre-exemples et les pièges
   de migration Radix → Base UI ne sont QUE dans `UI-CONVENTIONS.md`
-- `app/globals.css` **et les 6 feuilles qu'il importe** (`app/styles/{pwa,utilities,section-accents,
-  animations,entrance,components}.css`). Attention à qui porte quoi : les **classes** sont dans les feuilles
-  — `.enter-inview` et `.hand-draw-inview` (`entrance.css`), `.animate-shimmer` et `.product-item`
-  (`animations.css`), `[data-accent]` (`section-accents.css`) — les **utilitaires et tokens** sont dans
-  `globals.css` lui-même : `@utility focus-ring`, `@utility hover-halo`, `--z-*`, `--duration-*`
+- `app/globals.css` **et les 7 feuilles qu'il importe** (`app/styles/{pwa,scroll-fade,utilities,
+  section-accents,animations,entrance,components}.css`). Attention à qui porte quoi : les **classes** sont
+  dans les feuilles — `.enter-inview` et `.hand-draw-inview` (`entrance.css`), `.animate-shimmer` et
+  `.product-item` (`animations.css`), `[data-accent]` (`section-accents.css`) — les **utilitaires et
+  tokens** sont dans `globals.css` lui-même : `@utility focus-ring`, `@utility hover-halo`,
+  `@utility shimmer-text`, `--z-*`, `--duration-*`
 - `shared/components/animations/motion.config.ts` (`MOTION_CONFIG` : 7 durées — `fast .15` · `normal .2` ·
   `collapse .28` · `slow .3` · `medium .35` · `emphasis .4` · `slower .5`), `shared/styles/fonts.ts`,
   `shared/components/ui/`, `shared/constants/breakpoints.ts`
 - le **vocabulaire visuel courant**, extrait en SSOT et déjà employé : `shared/components/squiggle-underline.tsx`,
-  `masking-tape.tsx`, `CARD_SURFACE_POLAROID` (`card-surface.constants.ts`), `.polaroid-paper` /
-  `.polaroid-hover` (`components.css`). Une refonte qui les ignore fabrique un îlot
+  `masking-tape.tsx`, `CARD_SURFACE_POLAROID` (`card-surface.constants.ts`), `.polaroid-paper`
+  (`components.css`). Une refonte qui les ignore fabrique un îlot — mais ne ressuscite pas une classe
+  retirée : `.polaroid-hover` a été supprimée faute de consommateur, le commentaire à son ancien
+  emplacement fait foi
 - les données et contenus RÉELS de la cible — jamais de lorem, de faux avis ni de prix inventés
 - `docs/BUSINESS.md` § Positionnement (SSOT du brief de marque) ; `docs/atelier-story.md` si la surface porte
   de la copie éditoriale ; `docs/KNOWN-ISSUES.md` si la cible touche le panier ou le checkout
 
-Puis `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier (~330 fichiers).
+Puis `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier
+(**342 fichiers de test** le portent).
 Liste ce que chacun protège : un `@regression` verrouille un bug déjà payé une fois.
 
 Puis liste `~/.claude/projects/-Users-adrienpoirier-Projets-synclune/memory/` et grep par sujet. La liste de
@@ -90,8 +95,8 @@ faute de cette règle.
   « luxe discret ». Une direction bâtie sur le métal précieux, la gravure, le noir et or ou le minimalisme
   froid est le **contre-pied du brief** (erreur déjà commise et jetée). Vise le soin artisanal et la joie,
   jamais le prestige.
-- Polices (SSOT `shared/styles/fonts.ts`) : **Fraunces** (`--font-display`), **Figtree** (`--font-sans`),
-  **Sacramento** (`--font-cursive`) — cette dernière est RÉSERVÉE au décoratif : jamais un prix, un libellé de
+- Polices (SSOT `shared/styles/fonts.ts`) : **Winky Sans** (`--font-display`), **Onest** (`--font-sans`),
+  **Kalam** (`--font-cursive`) — cette dernière est RÉSERVÉE au décoratif : jamais un prix, un libellé de
   formulaire, de la nav ou du body ; ni `font-bold` ni `italic`. Caveat et Bricolage n'existent pas ici.
 - **Aucun thème sombre dans l'application** : pas de bloc `.dark`, pas de `next-themes`, aucun variant
   `dark:`. N'en invente pas un. **Deux exceptions réelles** : le client e-mail, qui impose l'inversion ; et
@@ -144,7 +149,8 @@ plafond de qualité de ce prompt, pas sa rédaction.
 - **Ne lance JAMAIS `pnpm seed` de toi-même** : il fait un wipe complet et refuse de tourner sans
   `SEED_ALLOW="true"`. Cette garde est délibérée. Si tu as besoin de données, **demande-les**.
 - **Ce qui se rend quand même**, et qui suffit souvent : les pages de `app/(legal)/` (`/cgv`,
-  `/mentions-legales`, `/confidentialite`, `/cookies`, `/accessibilite`, `/retractation`), `/connexion`, et
+  `/mentions-legales`, `/confidentialite`, `/cookies`, `/accessibilite`, `/retractation`,
+  `/informations-legales`), `/connexion`, et
   les **états vides** de `/panier` et `/favoris`. Un composant partagé — navbar, footer, overlay, bouton,
   champ de formulaire — se juge parfaitement sur `/cgv`, qui ne dépend d'aucun produit. Cherche l'hôte le
   moins exigeant avant de conclure que c'est impossible.
@@ -171,7 +177,7 @@ fixe tes largeurs de capture pour le §Vérification et te dit où tu vas te tro
 | Surface admin | Densité réelle, 30+ lignes, grille sans `mx-auto` | **1680** (montre le plafond) · 1280 | Viser la beauté : c'est un **outil de travail**, on compte les clics et les allers-retours de l'œil. ⚠️ À 1280, `max-w-[100rem]` est plafonné par le viewport — le plafond ne se voit **jamais** |
 | E-mail transactionnel | Tables, largeur 600, pas de flex/grid, pas de `@media` fiable | 600 · 320, **clair ET sombre** | Gmail et Apple Mail **imposent** l'inversion sombre. Non testé en sombre = à moitié vérifié |
 | PDF facture / avoir | Une page A4 à l'échelle, mentions légales réelles | A4 | Le rendu est **déterministe et hashé SHA-256** (Art. L102 B LPF) : toute évolution ne vaut que pour les documents **FUTURS**, jamais pour un archivé |
-| Copie éditoriale (`/aide`, CGV, mentions, atelier) | Mesure, rythme vertical, ancrages — avec le VRAI texte | 1280 · 390 | Traiter la mise en page sans écrire le texte : ici la copie EST le design. Et une page légale se **scanne** pour trouver une clause, elle ne se lit pas au fil |
+| Copie éditoriale (CGV, mentions, FAQ de la landing, atelier) | Mesure, rythme vertical, ancrages — avec le VRAI texte | 1280 · 390 | Traiter la mise en page sans écrire le texte : ici la copie EST le design. Et une page légale se **scanne** pour trouver une clause, elle ne se lit pas au fil |
 | Système transverse (design system, motion, icônes) | Une planche de spécimens, avant/après en regard | selon le système | N'en montrer qu'un exemplaire : la cohérence ne se juge qu'en série |
 | Matrice d'états (vide, chargement, erreur, succès) | La matrice complète, pas un écran | celles de l'hôte | Un skeleton sans la géométrie exacte du contenu réel produit un saut de layout |
 
@@ -261,7 +267,7 @@ de chacun. Si tu en trouves un de plus là-bas, il compte : applique-le et signa
 ### Garde-fous
 - **Tokens** — aucune couleur, ombre, durée ou rayon en dur. Les familles existent, sers-t'en :
   `--duration-{fast,normal,slow,slower}` · `--ease-{spring,smooth-out,premium}` · `--shadow-{2xs…2xl}` +
-  `--shadow-header` · `--radius{,-sm,-md,-lg,-xl,-full}` · `--tracking-{tighter…widest}` · `--z-*`.
+  `--shadow-{header,paper}` · `--radius{,-sm,-md,-lg,-xl,-full}` · `--tracking-{tighter…widest}` · `--z-*`.
   **Ne forke jamais un token.**
 - **Dépendances** — pas une de plus pour un effet mineur. Si tu en ajoutes une (ou un asset, ou une police),
   `pnpm size` : ⚠️ **il est déjà rouge sur `main`** (chunks plats Turbopack), juge ton **delta**, pas le vert
@@ -297,7 +303,7 @@ un provider, un contexte ou un import Prisma, lance `pnpm build` en entier — u
 
 ### Vérification (aucun point laissé « à confirmer »)
 `pnpm validate` (= lint + typecheck + format:check + vitest) — et `pnpm test:critical` si la cible est dans
-cart, orders, payments, webhooks, auth, discounts, refunds, invoices, `app/api/webhooks/stripe` ou
+cart, orders, payments, webhooks, auth, refunds, invoices, `app/api/webhooks/stripe` ou
 `test/contract`. Si tu as supprimé des composants, `pnpm knip` : les exports morts qu'une refonte laisse
 derrière elle ne sont visibles par rien d'autre.
 
@@ -331,7 +337,7 @@ tu n'as donc pas pu juger. Ne présente jamais une vérification visuelle que tu
    point qui empêche ce fichier de pourrir ; ne le saute pas parce qu'il paraît vide.
 7. **Pour le ré-audit** — ce que tu regarderais en premier si tu devais casser ton propre travail : la
    décision la plus fragile, l'état que tu as le moins vérifié, le viewport où tu es le moins serein. Le
-   ré-audit en session fraîche n'est pas optionnel sur ce projet (cf. `README.md`) ; ces trois lignes sont
+   ré-audit en session fraîche n'est pas optionnel sur ce projet (cf. `docs/prompts/README.md`) ; ces trois lignes sont
    son point de départ. Et si tu as découvert un refus, un piège ou un invariant qui n'était écrit nulle
    part, dis-le explicitement pour qu'il rejoigne `memory/` — c'est ce cliquet qui fait que personne ne
    repropose deux fois la même chose.

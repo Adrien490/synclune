@@ -14,8 +14,9 @@ import {
 	RefundStatus,
 	HistorySource,
 	WebhookEventStatus,
-	AccountStatus,
 } from "../app/generated/prisma/client";
+// Chemin relatif volontaire : le seed tourne sous `tsx` et n'utilise aucun alias `@/`.
+import { SYSTEM_PRODUCT_TYPE_SLUGS } from "../modules/product-types/constants/system-product-type-slugs";
 
 // ============================================
 // PRODUCTION GUARD
@@ -31,7 +32,8 @@ if (process.env.NODE_ENV === "production") {
 const CONFIG = {
 	cleanup: process.env.SEED_CLEANUP !== "false",
 	orderCount: parseInt(process.env.SEED_ORDER_COUNT ?? "50", 10),
-	userCount: parseInt(process.env.SEED_USER_COUNT ?? "29", 10),
+	// Pas de `userCount` : il n'y a plus qu'UN compte, celui de l'administratrice
+	// (cf. le bloc UTILISATEURS). L'inscription est fermée depuis le 2026-07-31.
 	adminEmail: process.env.SEED_ADMIN_EMAIL ?? "admin@synclune.fr",
 	orderPrefix: process.env.SEED_ORDER_PREFIX ?? "DEV",
 };
@@ -223,45 +225,48 @@ const materialsData: Prisma.MaterialCreateManyInput[] = [
 	{ slug: "cristal-swarovski", name: "Cristal Swarovski", description: "Cristaux autrichiens" },
 ];
 
+// Les slugs viennent de la SSOT applicative : le seed était leur seule définition,
+// et une constante métier (`PRODUCT_TYPES_REQUIRING_SIZE`) avait dérivé vers des
+// valeurs anglaises qui n'existaient dans aucune ligne.
 const productTypesData: Prisma.ProductTypeCreateManyInput[] = [
 	{
-		slug: "colliers",
+		slug: SYSTEM_PRODUCT_TYPE_SLUGS.NECKLACES,
 		label: "Colliers",
 		description: "Ornez votre décolleté avec nos colliers artisanaux",
 		isSystem: true,
 	},
 	{
-		slug: "bracelets",
+		slug: SYSTEM_PRODUCT_TYPE_SLUGS.BRACELETS,
 		label: "Bracelets",
 		description: "Bracelets délicats pour votre poignet",
 		isSystem: true,
 	},
 	{
-		slug: "bagues",
+		slug: SYSTEM_PRODUCT_TYPE_SLUGS.RINGS,
 		label: "Bagues",
 		description: "Bagues uniques, symboles de beauté",
 		isSystem: true,
 	},
 	{
-		slug: "chaines-corps",
+		slug: SYSTEM_PRODUCT_TYPE_SLUGS.BODY_CHAINS,
 		label: "Chaînes de corps",
 		description: "Sublimez votre silhouette",
 		isSystem: true,
 	},
 	{
-		slug: "papilloux",
+		slug: SYSTEM_PRODUCT_TYPE_SLUGS.PAPILLOUX,
 		label: "Papilloux",
 		description: "Bijoux papillons pour le visage",
 		isSystem: true,
 	},
 	{
-		slug: "chaines-cheveux",
+		slug: SYSTEM_PRODUCT_TYPE_SLUGS.HAIR_CHAINS,
 		label: "Chaînes de cheveux",
 		description: "Accessoires capillaires précieux",
 		isSystem: true,
 	},
 	{
-		slug: "porte-cles",
+		slug: SYSTEM_PRODUCT_TYPE_SLUGS.KEYRINGS,
 		label: "Porte-clés",
 		description: "Petits bijoux du quotidien",
 		isSystem: true,
@@ -272,25 +277,25 @@ const collectionsData: Prisma.CollectionCreateManyInput[] = [
 	{
 		slug: "nouveautes",
 		name: "Nouveautés",
-		description: "Nos dernières créations",
+		description: "Mes dernières créations, encore chaudes de l'établi",
 		status: CollectionStatus.PUBLIC,
 	},
 	{
 		slug: "best-sellers",
 		name: "Best Sellers",
-		description: "Les favoris de nos clientes",
+		description: "Les favoris de mes clientes",
 		status: CollectionStatus.PUBLIC,
 	},
 	{
 		slug: "mariage",
 		name: "Mariage",
-		description: "Pour le plus beau jour de votre vie",
+		description: "Pour le plus beau jour de ta vie",
 		status: CollectionStatus.PUBLIC,
 	},
 	{
 		slug: "fetes",
 		name: "Fêtes",
-		description: "Brillez pour les occasions spéciales",
+		description: "Brille pour les occasions spéciales",
 		status: CollectionStatus.PUBLIC,
 	},
 ];
@@ -1462,7 +1467,11 @@ async function main(): Promise<void> {
 						const colorPrefix = skuData.colorSlug.replace(/-/g, "").slice(0, 2).toUpperCase();
 						const productIndex = pIdx + 1;
 						const skuCode = `${typePrefix}-${colorPrefix}-${productIndex.toString().padStart(2, "0")}${index + 1}`;
-						const imageUrl = images[index % images.length]!;
+						// Offset by product index: keyed on SKU index alone, every default SKU
+						// of a category got the SAME first image — and a URL shared entre une
+						// carte eager et une carte lazy fait faux-positiver l'avertissement LCP
+						// de next/image (bookkeeping par URL, dernier rendu gagne).
+						const imageUrl = images[(pIdx + index) % images.length]!;
 
 						// 20% of SKUs get a compareAtPrice (strikethrough price)
 						const compareAtPrice = sampleBoolean(0.2)
@@ -1570,8 +1579,25 @@ async function main(): Promise<void> {
 	console.log(`✅ ${productCollectionLinks.length} liens produit-collection créés`);
 
 	// ============================================
-	// UTILISATEURS
+	// UTILISATEURS — une seule ligne, l'administratrice
 	// ============================================
+	// Le seed créait 29 comptes `USER` supplémentaires (+ 2 admins de figuration),
+	// leurs `Account`, 10 `Session`, puis mutait 3 « edge case users » (suspendu,
+	// INACTIVE, anonymisé). C'était du décor pour un espace client SUPPRIMÉ le
+	// 2026-07-31 : `emailAndPassword.disableSignUp` ferme l'API d'inscription, il
+	// n'y a plus de `socialProviders`, et le parcours d'achat est 100 % invité
+	// (`Order.userId` a été droppée le 2026-08-05). En production, `User` a
+	// exactement UNE ligne.
+	//
+	// Ces comptes étaient auto-référentiels — leurs seuls consommateurs étaient
+	// leurs propres `Account`/`Session` et les 3 mutations d'edge case. Aucune
+	// commande n'y était rattachée.
+	//
+	// ⚠️ Effet de bord qui compte plus que le nettoyage : ce sont ces mutations qui
+	// faisaient PARAÎTRE écrites `User.suspendedAt`, `accountStatus` et
+	// `deletedAt`. Ces trois colonnes n'ont plus aucun écrivain applicatif — elles
+	// ne subsistent que comme filtres défensifs de `fetchUserForAuth()`. Leur
+	// inertie est désormais visible au lieu d'être masquée par le seed.
 	const adminUser = {
 		id: faker.string.nanoid(12),
 		role: "ADMIN" as const,
@@ -1580,32 +1606,10 @@ async function main(): Promise<void> {
 		emailVerified: true,
 	} satisfies Prisma.UserCreateManyInput;
 
-	const usersData = [
-		adminUser,
-		...Array.from({ length: CONFIG.userCount }).map((_, index) => {
-			const firstName = faker.person.firstName();
-			const lastName = faker.person.lastName();
-			const fullName = `${firstName} ${lastName}`;
-			const emailSlug = fullName
-				.normalize("NFD")
-				.replace(/\p{Diacritic}/gu, "")
-				.toLowerCase()
-				.replace(/[^a-z0-9]+/g, ".");
-
-			const isVerified = sampleBoolean(0.7);
-			return {
-				id: faker.string.nanoid(12),
-				role: index < 2 ? "ADMIN" : "USER",
-				name: fullName,
-				email: `${emailSlug}${index}@synclune.fr`,
-				emailVerified: isVerified,
-			} satisfies Prisma.UserCreateManyInput;
-		}),
-	];
+	const usersData = [adminUser];
 
 	await prisma.user.createMany({ data: usersData });
-	const verifiedUsers = usersData.filter((u) => u.emailVerified && u.role === "USER");
-	console.log(`✅ ${usersData.length} utilisateurs créés`);
+	console.log(`✅ ${usersData.length} utilisateur créé (administratrice)`);
 
 	// ============================================
 	// COMPTES BETTER AUTH (credential accounts)
@@ -1857,7 +1861,8 @@ async function main(): Promise<void> {
 	// ============================================
 	// SESSIONS (batch)
 	// ============================================
-	const sessionsData: Prisma.SessionCreateManyInput[] = usersData.slice(0, 10).map((user) => ({
+	// Plus de `.slice(0, 10)` : `usersData` ne porte plus qu'une ligne.
+	const sessionsData: Prisma.SessionCreateManyInput[] = usersData.map((user) => ({
 		id: faker.string.nanoid(12),
 		userId: user.id,
 		token: faker.string.alphanumeric({ length: 32 }),
@@ -1870,7 +1875,7 @@ async function main(): Promise<void> {
 	}));
 
 	await prisma.session.createMany({ data: sessionsData });
-	console.log(`✅ ${sessionsData.length} sessions créées`);
+	console.log(`✅ ${sessionsData.length} session créée`);
 
 	// ============================================
 	// PANIERS — plus rien à semer
@@ -2008,8 +2013,6 @@ async function main(): Promise<void> {
 	// ============================================
 	// HISTORIQUE DES COMMANDES (batch)
 	// ============================================
-	const adminUsers = usersData.filter((u) => u.role === "ADMIN");
-
 	const allOrders = await prisma.order.findMany({
 		select: {
 			id: true,
@@ -2068,7 +2071,7 @@ async function main(): Promise<void> {
 				action: OrderAction.PROCESSING,
 				previousStatus: OrderStatus.PENDING,
 				newStatus: OrderStatus.PROCESSING,
-				authorName: faker.helpers.arrayElement(adminUsers).name,
+				authorName: adminUser.name,
 				source: HistorySource.ADMIN,
 				createdAt: currentDate,
 			});
@@ -2084,7 +2087,7 @@ async function main(): Promise<void> {
 				action: OrderAction.SHIPPED,
 				previousStatus: OrderStatus.PROCESSING,
 				newStatus: OrderStatus.SHIPPED,
-				authorName: faker.helpers.arrayElement(adminUsers).name,
+				authorName: adminUser.name,
 				source: HistorySource.ADMIN,
 				createdAt: currentDate,
 			});
@@ -2116,7 +2119,7 @@ async function main(): Promise<void> {
 				previousStatus: OrderStatus.PENDING,
 				newStatus: OrderStatus.CANCELLED,
 				note: "Annulation à la demande du client",
-				authorName: faker.helpers.arrayElement(adminUsers).name,
+				authorName: adminUser.name,
 				source: HistorySource.ADMIN,
 				createdAt: currentDate,
 			});
@@ -2150,7 +2153,7 @@ async function main(): Promise<void> {
 			orderId: shippedForHistory[0].id,
 			action: OrderAction.TRACKING_UPDATED,
 			note: "Numéro de suivi mis à jour : 6A12345678901",
-			authorName: faker.helpers.arrayElement(adminUsers).name,
+			authorName: adminUser.name,
 			source: HistorySource.ADMIN,
 			createdAt: trackDate,
 		});
@@ -2190,7 +2193,7 @@ async function main(): Promise<void> {
 			orderId: deliveredForHistory[3].id,
 			action: OrderAction.REFUND_CREATED,
 			note: "Remboursement demandé par le client",
-			authorName: faker.helpers.arrayElement(adminUsers).name,
+			authorName: adminUser.name,
 			source: HistorySource.ADMIN,
 			createdAt: refDate,
 		});
@@ -2248,7 +2251,7 @@ async function main(): Promise<void> {
 			previousStatus: OrderStatus.SHIPPED,
 			newStatus: OrderStatus.PROCESSING,
 			note: "Statut rétabli - erreur d'expédition",
-			authorName: faker.helpers.arrayElement(adminUsers).name,
+			authorName: adminUser.name,
 			source: HistorySource.ADMIN,
 			createdAt: revertDate,
 		});
@@ -2379,39 +2382,23 @@ async function main(): Promise<void> {
 	console.log(`✅ ${verificationData.length} tokens de vérification créés`);
 
 	// ============================================
-	// EDGE CASE USERS (suspended, pending deletion, anonymized)
+	// EDGE CASE USERS — supprimés (2026-08-05)
 	// ============================================
-	const edgeCaseUsers = verifiedUsers.slice(-3);
-	if (edgeCaseUsers.length >= 3) {
-		// Suspended user
-		await prisma.user.update({
-			where: { id: edgeCaseUsers[0]!.id },
-			data: { suspendedAt: faker.date.recent({ days: 7 }) },
-		});
-
-		// Compte verrouillé hérité — `PENDING_DELETION` a été purgé au Lot 0 (migration
-		// 20260803) ; `INACTIVE` couvre la même dégradation de session (cf. `customSession`).
-		await prisma.user.update({
-			where: { id: edgeCaseUsers[1]!.id },
-			data: { accountStatus: AccountStatus.INACTIVE },
-		});
-
-		// Anonymized user — idem pour `anonymizedAt`. Le scrub du nom et de l'email
-		// reste représenté, c'est lui que les gardes de connexion observent.
-		await prisma.user.update({
-			where: { id: edgeCaseUsers[2]!.id },
-			data: {
-				accountStatus: AccountStatus.ANONYMIZED,
-				name: "Utilisateur anonymisé",
-				// `casing: "lower"` obligatoire : le seed écrit en Prisma direct, donc
-				// sans les `databaseHooks` Better Auth qui normalisent la casse — et le
-				// CHECK `User_email_lowercase` rejette la moindre majuscule (23514).
-				email: `anonymized-${faker.string.alphanumeric({ length: 8, casing: "lower" })}@anon.synclune.fr`,
-			},
-		});
-
-		console.log("✅ 3 utilisateurs edge-case créés (suspendu, suppression en attente, anonymisé)");
-	}
+	// Trois comptes clients étaient mutés ici pour représenter un suspendu, un
+	// INACTIVE et un anonymisé. Aucun de ces états n'est plus ATTEIGNABLE par
+	// l'application : il n'existe plus de chemin d'anonymisation (parti avec
+	// l'espace client), aucune UI de suspension, et `prisma.user.update` n'apparaît
+	// nulle part hors de ce fichier. Le seed était donc le seul écrivain de
+	// `suspendedAt` / `accountStatus` / `deletedAt` — il documentait un cycle de vie
+	// qui n'existe plus, et masquait l'inertie de ces colonnes aux audits de schéma.
+	//
+	// ⚠️ Si un chemin d'anonymisation RGPD revient un jour, c'est ce bloc qu'il faut
+	// restaurer EN MÊME TEMPS que lui — pas l'inverse. Deux détails coûteux à
+	// redécouvrir : (1) le seed écrit en Prisma direct, donc sans les
+	// `databaseHooks` Better Auth qui normalisent la casse de l'e-mail, et le CHECK
+	// `User_email_lowercase` rejette la moindre majuscule (23514) — d'où le
+	// `casing: "lower"` obligatoire sur l'e-mail scrubé ; (2) `AccountStatus`
+	// reste lu par la garde de connexion d'`auth.ts` même sans écrivain.
 
 	// ============================================
 	// SOFT-DELETED RECORDS (for testing filters)

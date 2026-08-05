@@ -83,7 +83,7 @@ la refait — d'où cette section.
    de dev réaliste rend plus, pour beaucoup moins.
 3. **Les maquettes d'un artifact ne peuvent pas servir de cartes de référence** : le §6 leur demande d'être
    approximatives exprès — hex littéraux au lieu des tokens, variables `--a-*`, Georgia à la place de
-   Fraunces (la CSP d'un artifact bloque tout hôte externe), plaques `inert`, et des classes `.mk--bug` qui
+   Winky Sans (la CSP d'un artifact bloque tout hôte externe), plaques `inert`, et des classes `.mk--bug` qui
    reproduisent l'état cassé. Excellent pour arbitrer, disqualifiant comme référence.
 
 **Condition de réouverture, et une seule** : un groupe **Fondations** isolé (~8-10 previews générés depuis
