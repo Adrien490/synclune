@@ -30,6 +30,41 @@ const REPO_ROOT = join(__dirname, "..", "..", "..");
 const API_VERSION_LITERAL = /\b\d{4}-\d{2}-\d{2}\.[a-z]+\b/g;
 
 /**
+ * ⚠️ Un nom de fichier daté — `docs/FONTS-AUDIT-2026-08-05.md` — a EXACTEMENT la
+ * forme d'une version d'API Stripe. Le scan porte volontairement sur la prose des
+ * commentaires (une des quatre copies historiques en était une), et ces
+ * références datées y abondent : sans ce filtre, deux commentaires citant une note
+ * d'audit faisaient échouer le test sans qu'aucune version soit en dur.
+ *
+ * Aucun codename Stripe (`dahlia`, `clover`, `basil`, `acacia`…) ne collisionne
+ * avec une extension de fichier, donc le filtre ne masque aucun vrai positif.
+ */
+const FILE_EXTENSION_SUFFIXES = new Set([
+	"css",
+	"html",
+	"jpg",
+	"js",
+	"json",
+	"jsx",
+	"md",
+	"mdx",
+	"png",
+	"sql",
+	"svg",
+	"ts",
+	"tsx",
+	"txt",
+	"webp",
+	"yaml",
+	"yml",
+]);
+
+/** `2026-08-05.md` (nom de fichier) → écarté ; `2026-06-24.dahlia` → conservé. */
+function isApiVersionLiteral(match: string): boolean {
+	return !FILE_EXTENSION_SUFFIXES.has(match.slice(match.indexOf(".") + 1));
+}
+
+/**
  * Seuls fichiers autorisés à contenir le littéral :
  *  · la SSOT elle-même ;
  *  · ce test (il décrit le motif) ;
@@ -69,8 +104,10 @@ describe("version d'API Stripe — SSOT (@regression stripe-api-version-ssot)", 
 			const rel = relative(REPO_ROOT, file);
 			if (ALLOWLIST.has(rel)) continue;
 
-			const matches = readFileSync(file, "utf-8").match(API_VERSION_LITERAL);
-			if (matches) offenders.push(`${rel} — ${[...new Set(matches)].join(", ")}`);
+			const matches = (readFileSync(file, "utf-8").match(API_VERSION_LITERAL) ?? []).filter(
+				isApiVersionLiteral,
+			);
+			if (matches.length > 0) offenders.push(`${rel} — ${[...new Set(matches)].join(", ")}`);
 		}
 
 		expect(
