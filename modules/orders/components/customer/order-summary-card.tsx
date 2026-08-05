@@ -56,7 +56,7 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 				{/* Total */}
 				<div className="flex items-center justify-between">
 					<span className="font-semibold">Total</span>
-					<span className="text-lg font-bold">{formatEuro(order.total)}</span>
+					<span className="text-lg font-semibold">{formatEuro(order.total)}</span>
 				</div>
 			</div>
 		</section>

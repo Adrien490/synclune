@@ -518,15 +518,19 @@ async function processOrderAtomically(
  * Processes order from a Payment Intent (new PI flow).
  * Shipping info is already stored in the Order (set during confirmCheckout).
  *
- * @param paymentMethod (optionnel) — type Stripe extrait via
- *   `extractPaymentMethodFromPaymentIntent`. Persisté sur Order.paymentMethod
- *   pour conformité e-reporting B2C (EINV-EREPORT-001). Si omis, la valeur
- *   par défaut Prisma (CARD) reste appliquée.
+ * @param captured (optionnel) — ce que la Charge Stripe apprend de l'encaissement,
+ *   extrait via `extractPaymentDetailsFromPaymentIntent` :
+ *   - `method` → persisté sur `Order.paymentMethod` pour conformité e-reporting
+ *     B2C (EINV-EREPORT-001). Omis ⇒ le défaut Prisma (CARD) reste appliqué.
+ *   - `capturedAt` → persisté sur `Order.paidAt`. Omis ⇒ repli sur l'horloge
+ *     serveur, qui garde le CHECK `Order_paid_requires_paidAt` satisfait quand
+ *     l'API Stripe est injoignable. Cf. `CapturedPaymentDetails` pour ce que
+ *     cette date porte de fiscal.
  */
 export async function processOrderFromPaymentIntent(
 	orderId: string,
 	paymentIntent: Stripe.PaymentIntent,
-	paymentMethod?: PaymentMethod,
+	captured?: { method?: PaymentMethod | null; capturedAt?: Date | null },
 ): Promise<OrderWithItems> {
 	// ORD-BIZ-011 : pré-check CANCELLED hors transaction (throws CancelledOrderRaceError).
 	await detectCancelledOrderRace(
@@ -543,15 +547,16 @@ export async function processOrderFromPaymentIntent(
 				orderId,
 				{
 					status: "PROCESSING",
-					// Sans cette ligne, (PROCESSING, UNFULFILLED) était l'état de 100 %
-					// des commandes payées : badge admin « Non traitée » à côté de
-					// « En préparation », et aucun chemin de correction (markAsProcessing
-					// exige status=PENDING). Pas de backfill des lignes antérieures —
-					// TO_SHIP_FULFILLMENT_STATUSES et la timeline client les absorbent.
 					paymentStatus: "PAID",
-					paidAt: new Date(),
+					// Horodatage de Stripe (`Charge.created`), pas l'horloge du serveur :
+					// c'est la date d'encaissement au sens fiscal, et elle diverge du
+					// traitement dès qu'un webhook est redélivré ou que le rattrapage
+					// manuel `sync-async-payments` s'en charge. Repli sur `new Date()`
+					// uniquement quand la Charge est illisible — le CHECK
+					// `Order_paid_requires_paidAt` interdit de laisser le champ vide.
+					paidAt: captured?.capturedAt ?? new Date(),
 					stripePaymentIntentId: paymentIntent.id,
-					...(paymentMethod !== undefined && { paymentMethod }),
+					...(captured?.method != null && { paymentMethod: captured.method }),
 				},
 				"PI flow",
 				paymentIntent.amount_received,

@@ -55,15 +55,17 @@ export const EMAIL_COLORS_DARK = {
 } as const;
 
 /**
- * Font families pour les emails — alignées sur la marque storefront (Fraunces serif,
- * Figtree sans, Sacramento script signature). Les web fonts sont chargées via @import
- * Google Fonts dans EMAIL_HEAD_STYLES. Outlook Desktop ignore @import et tombe sur les
- * fallbacks (Georgia/Brush Script MT) — dégradation gracieuse.
+ * Font families pour les emails — alignées sur la marque storefront (Winky Sans en
+ * display, corps en pile système — migration S5 « Encre et papier » 2026-08-05).
+ * La web font display est chargée via @import Google Fonts dans EMAIL_HEAD_STYLES.
+ * Outlook Desktop ignore @import et tombe sur le fallback — d'où une pile fallback
+ * SANS-SERIF (Winky Sans est une sans : un fallback Georgia changerait de catégorie,
+ * pas seulement de dessin). Pas d'entrée `cursive` : elle n'avait aucun consommateur
+ * (constat de l'audit — l'@import chargeait Sacramento pour rien).
  */
 const EMAIL_FONT_FAMILY = {
 	body: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-	display: "'Fraunces', Georgia, 'Times New Roman', serif",
-	cursive: "'Sacramento', 'Brush Script MT', 'Lucida Handwriting', cursive",
+	display: "'Winky Sans', 'Trebuchet MS', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
 } as const;
 
 /**
@@ -85,9 +87,9 @@ export const EMAIL_STYLES = {
 
 	heading: {
 		/**
-		 * Premier titre de contenu — Fraunces (display serif Soft+Wonk),
+		 * Premier titre de contenu — Winky Sans (display « trait d'encre »),
 		 * porte la signature typographique de la marque en email.
-		 * Fallback Georgia/Times pour clients sans web fonts (Outlook Desktop).
+		 * Fallback pile sans-serif pour clients sans web fonts (Outlook Desktop).
 		 */
 		h1: {
 			margin: 0,

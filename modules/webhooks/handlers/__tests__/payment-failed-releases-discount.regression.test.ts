@@ -91,7 +91,9 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 }));
 
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
-	extractPaymentMethodFromPaymentIntent: vi.fn().mockResolvedValue(null),
+	extractPaymentDetailsFromPaymentIntent: vi
+		.fn()
+		.mockResolvedValue({ method: null, capturedAt: null }),
 }));
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({

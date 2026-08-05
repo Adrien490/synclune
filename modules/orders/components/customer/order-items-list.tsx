@@ -66,7 +66,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 
 								{/* Price */}
 								<div className="shrink-0 text-right">
-									<p className="text-sm font-semibold">{formatEuro(item.price * item.quantity)}</p>
+									<p className="text-sm font-medium">{formatEuro(item.price * item.quantity)}</p>
 									{item.quantity > 1 && (
 										<p className="text-muted-foreground text-xs">
 											{formatEuro(item.price)} / unité

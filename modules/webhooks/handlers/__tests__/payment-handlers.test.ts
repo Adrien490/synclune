@@ -17,7 +17,7 @@ const {
 	mockProcessOrderFromPaymentIntent,
 	mockBuildPostCheckoutTasksFromPI,
 	mockEnsureInvoiceNumberPersisted,
-	mockExtractPaymentMethod,
+	mockExtractPaymentDetails,
 	mockSendAdminOrderProcessingFailedAlert,
 	mockSendWebhookFailedAlertEmail,
 	mockRefundsCreate,
@@ -37,7 +37,7 @@ const {
 	mockProcessOrderFromPaymentIntent: vi.fn(),
 	mockBuildPostCheckoutTasksFromPI: vi.fn(),
 	mockEnsureInvoiceNumberPersisted: vi.fn().mockResolvedValue(undefined),
-	mockExtractPaymentMethod: vi.fn().mockResolvedValue(null),
+	mockExtractPaymentDetails: vi.fn().mockResolvedValue({ method: null, capturedAt: null }),
 	mockSendAdminOrderProcessingFailedAlert: vi.fn(),
 	mockSendWebhookFailedAlertEmail: vi.fn(),
 	mockRefundsCreate: vi.fn(),
@@ -122,7 +122,7 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 }));
 
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
-	extractPaymentMethodFromPaymentIntent: mockExtractPaymentMethod,
+	extractPaymentDetailsFromPaymentIntent: mockExtractPaymentDetails,
 }));
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({
@@ -191,21 +191,30 @@ describe("handlePaymentSuccess", () => {
 		});
 		await handlePaymentSuccess(pi);
 
-		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", pi, undefined);
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", pi, {
+			method: null,
+			capturedAt: null,
+		});
 		expect(mockEnsureInvoiceNumberPersisted).toHaveBeenCalledWith("order-1");
 	});
 
 	it("propagates the extracted payment_method to processOrderFromPaymentIntent (EINV-EREPORT-001)", async () => {
 		mockProcessOrderFromPaymentIntent.mockResolvedValue({});
 		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
-		mockExtractPaymentMethod.mockResolvedValueOnce("SEPA_DEBIT");
+		// `WALLET` et non `SEPA_DEBIT` : cette valeur a été retirée de l'enum Prisma
+		// (audit V2, Lot 1 — checkout card-only). Un test qui propage une valeur morte
+		// vérifie une plomberie que le type interdit.
+		mockExtractPaymentDetails.mockResolvedValueOnce({ method: "WALLET", capturedAt: null });
 
 		const pi = makePaymentIntent({
 			metadata: { order_id: "order-1", checkoutSessionId: "cs_123" },
 		});
 		await handlePaymentSuccess(pi);
 
-		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", pi, "SEPA_DEBIT");
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", pi, {
+			method: "WALLET",
+			capturedAt: null,
+		});
 	});
 
 	/**

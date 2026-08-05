@@ -7,7 +7,7 @@ const {
 	mockGetStripeClient,
 	mockProcessOrderFromPaymentIntent,
 	mockEnsureInvoiceNumberPersisted,
-	mockExtractPaymentMethodFromPaymentIntent,
+	mockExtractPaymentDetailsFromPaymentIntent,
 	mockMarkOrderAsFailed,
 	mockExtractPaymentFailureDetails,
 	mockRestoreStockForOrder,
@@ -25,7 +25,7 @@ const {
 	mockGetStripeClient: vi.fn(),
 	mockProcessOrderFromPaymentIntent: vi.fn(),
 	mockEnsureInvoiceNumberPersisted: vi.fn(),
-	mockExtractPaymentMethodFromPaymentIntent: vi.fn(),
+	mockExtractPaymentDetailsFromPaymentIntent: vi.fn(),
 	mockMarkOrderAsFailed: vi.fn(),
 	mockExtractPaymentFailureDetails: vi.fn(),
 	mockRestoreStockForOrder: vi.fn(),
@@ -70,7 +70,7 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 }));
 
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
-	extractPaymentMethodFromPaymentIntent: mockExtractPaymentMethodFromPaymentIntent,
+	extractPaymentDetailsFromPaymentIntent: mockExtractPaymentDetailsFromPaymentIntent,
 }));
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({
@@ -106,7 +106,10 @@ describe("syncAsyncPayments", () => {
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockProcessOrderFromPaymentIntent.mockResolvedValue(undefined);
 		mockEnsureInvoiceNumberPersisted.mockResolvedValue(undefined);
-		mockExtractPaymentMethodFromPaymentIntent.mockResolvedValue(undefined);
+		mockExtractPaymentDetailsFromPaymentIntent.mockResolvedValue({
+			method: null,
+			capturedAt: null,
+		});
 		mockSendPaymentFailedEmail.mockResolvedValue(undefined);
 		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
 		mockExecutePostWebhookTasks.mockResolvedValue({ successful: 0, failed: 0 });
@@ -166,11 +169,10 @@ describe("syncAsyncPayments", () => {
 		const result = await syncAsyncPayments();
 
 		// ORD-STRIPE-001 : décrément stock garanti via processOrderFromPaymentIntent
-		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith(
-			"order-1",
-			paymentIntent,
-			undefined,
-		);
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", paymentIntent, {
+			method: null,
+			capturedAt: null,
+		});
 		expect(mockEnsureInvoiceNumberPersisted).toHaveBeenCalledWith("order-1");
 		expect(result!.updated).toBe(1);
 		expect(result!.checked).toBe(1);
@@ -265,15 +267,46 @@ describe("syncAsyncPayments", () => {
 		const paymentIntent = { id: "pi_card_success", status: "succeeded" };
 		mockPrisma.order.findMany.mockResolvedValue([order]);
 		mockStripe.paymentIntents.retrieve.mockResolvedValue(paymentIntent);
-		mockExtractPaymentMethodFromPaymentIntent.mockResolvedValue("CARD");
+		mockExtractPaymentDetailsFromPaymentIntent.mockResolvedValue({
+			method: "CARD",
+			capturedAt: null,
+		});
 
 		await syncAsyncPayments();
 
-		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith(
-			"order-card",
-			paymentIntent,
-			"CARD",
-		);
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-card", paymentIntent, {
+			method: "CARD",
+			capturedAt: null,
+		});
+	});
+
+	/**
+	 * @regression paid-at-from-stripe-capture-2026-08-05
+	 *
+	 * C'est le chemin où l'écart est le plus large : cette tâche est MANUELLE
+	 * (page Maintenance), donc elle peut rattraper un paiement vieux de plusieurs
+	 * jours. Poser l'horloge du run daterait la recette du jour du clic — faux
+	 * dans le livre de recettes (Art. 50-0) comme sur le PDF de facture.
+	 */
+	it("propage la date de capture Stripe, pas l'heure du rattrapage manuel", async () => {
+		const capturedAt = new Date("2025-12-31T23:59:59.000Z");
+		const order = {
+			id: "order-late",
+			orderNumber: "SYN-LATE",
+			stripePaymentIntentId: "pi_late",
+			paymentStatus: "PENDING",
+		};
+		const paymentIntent = { id: "pi_late", status: "succeeded" };
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue(paymentIntent);
+		mockExtractPaymentDetailsFromPaymentIntent.mockResolvedValue({ method: "CARD", capturedAt });
+
+		await syncAsyncPayments();
+
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-late", paymentIntent, {
+			method: "CARD",
+			capturedAt,
+		});
 	});
 
 	it("should mark order as failed and restore stock when Stripe shows canceled", async () => {
@@ -418,11 +451,10 @@ describe("syncAsyncPayments", () => {
 
 		const result = await syncAsyncPayments();
 
-		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith(
-			"order-race",
-			succeededPi,
-			undefined,
-		);
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-race", succeededPi, {
+			method: null,
+			capturedAt: null,
+		});
 		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
 		expect(result!.updated).toBe(1);
 		expect(result!.errors).toBe(0);

@@ -144,7 +144,7 @@ export async function RefundsDataTable({
 								})()}
 							</TableCell>
 							<TableCell className="text-right">
-								<span className="text-sm font-bold">{formatEuro(refund.amount)}</span>
+								<span className="text-sm font-medium">{formatEuro(refund.amount)}</span>
 							</TableCell>
 						</TableRow>
 					);

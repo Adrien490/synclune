@@ -90,7 +90,7 @@ vi.mock("../../utils/capture-webhook-error", () => ({
 }));
 
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
-	extractPaymentMethodFromPaymentIntent: vi.fn(() => "CARD"),
+	extractPaymentDetailsFromPaymentIntent: vi.fn(() => ({ method: "CARD", capturedAt: null })),
 }));
 
 import { handlePaymentSuccess } from "../payment-handlers";

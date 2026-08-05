@@ -165,7 +165,14 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 	}
 
 	// AM-5 — tripwire SPOF : détecte les commandes PENDING à PI anormalement
-	// vieilles, signe que `sync-async-payments` (leur unique filet) est en panne.
+	// vieilles, signe que `sync-async-payments` (leur unique filet) n'a pas tourné.
+	//
+	// ⚠️ Le diagnostic a changé de nature au Lot 1 (2026-08-03) : `sync-async-payments`
+	// n'est plus un cron Vercel mais un BOUTON de la page Maintenance. Un compteur
+	// non nul ne veut donc plus dire « le cron est en panne » mais « personne n'a
+	// cliqué » — c'est précisément pour ça que ce tripwire compte davantage
+	// qu'avant, puisqu'il est le seul à rappeler qu'un clic est dû.
+	//
 	// Lecture seule : on n'agit jamais sur ces commandes ici (cela racerait
 	// sync-async). On compte et on alerte l'admin.
 	const spofCutoff = new Date(Date.now() - SYNC_ASYNC_SPOF_THRESHOLD_MS);
@@ -191,7 +198,7 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 				issue: "stale-pending-pi-orders",
 				thresholdDays: 7,
 				count: stalePiPendingCount,
-				hint: "Vérifier que le cron sync-async-payments s'exécute (Vercel) — il est le seul filet de réconciliation des commandes PENDING à PaymentIntent.",
+				hint: "Lancer « Synchroniser les paiements asynchrones » depuis /admin/configuration/maintenance — c'est le seul filet de réconciliation des commandes PENDING à PaymentIntent, et c'est une tâche MANUELLE depuis le Lot 1 (2026-08-03), plus un cron Vercel.",
 			},
 		}).catch((e) =>
 			logger.error("Failed to send SPOF tripwire alert", e, {

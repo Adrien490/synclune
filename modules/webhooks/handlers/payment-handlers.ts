@@ -27,7 +27,7 @@ import {
 } from "../services/checkout-order-processing.service";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
-import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
+import { extractPaymentDetailsFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 
 /**
@@ -161,12 +161,15 @@ export async function handlePaymentSuccess(
 		}
 	}
 
-	// Extraction du type de paiement effectif depuis Stripe (EINV-EREPORT-001).
-	// Best-effort (null si Stripe API échoue) — ne bloque pas le flow paiement.
-	const paymentMethod = (await extractPaymentMethodFromPaymentIntent(paymentIntent)) ?? undefined;
+	// Un seul `charges.retrieve` pour DEUX informations : le type de paiement
+	// effectif (EINV-EREPORT-001) et la date d'encaissement autoritaire
+	// (`Charge.created`, qui devient `Order.paidAt` — clé du livre de recettes).
+	// Best-effort (les deux champs à `null` si l'API Stripe échoue) — ne bloque
+	// pas le flow paiement.
+	const captured = await extractPaymentDetailsFromPaymentIntent(paymentIntent);
 
 	try {
-		const order = await processOrderFromPaymentIntent(orderId, paymentIntent, paymentMethod);
+		const order = await processOrderFromPaymentIntent(orderId, paymentIntent, captured);
 
 		// Audit F2 (2026-05-29) : sur-facturation détectée APRÈS traitement réussi.
 		// `processOrderAtomically` honore la commande (le client a payé) mais ne
@@ -176,23 +179,29 @@ export async function handlePaymentSuccess(
 		// refund manuel + ajustement e-reporting. Best-effort, ne bloque pas le flow.
 		if (paymentIntent.amount_received > order.total) {
 			const delta = paymentIntent.amount_received - order.total;
-			// AM-2 : persiste le trop-perçu (boucle de réconciliation fermée), pour que
-			// l'incident ne dépende plus d'un email volatil. Le guard
-			// `overbilledAmountCents: null` rend l'écriture idempotente sur les retries
-			// webhook. La surface de suivi est le dashboard (get-action-items, en PULL) ;
-			// l'auto-résolution (poser `overbillingResolvedAt` sur refund COMPLETED du
-			// montant EXACT du delta, ou restitution totale — OVERBILL-RESOLVE-02) est
-			// faite par la passe `reconcileOverbilledOrders` du cron `reconcile-refunds`
-			// (OVERBILL-RESOLVE-01 — ex-cron alert-overbilled-orders, retiré au
-			// right-sizing). PAS d'avoir/refund automatique ici (Invariant 9).
+			// AM-2 : persiste le trop-perçu, pour que l'incident ne dépende plus d'un
+			// email volatil. Le guard `overbilledAmountCents: null` rend l'écriture
+			// idempotente sur les retries webhook.
+			//
+			// ⚠️ Le champ n'est JAMAIS remis à zéro : la passe d'auto-résolution
+			// `reconcileOverbilledOrders` et la colonne `overbillingResolvedAt` ont été
+			// retirées le 2026-08-05 (elles n'éteignaient qu'un compteur de dashboard,
+			// derrière un bouton qu'il fallait cliquer). Son lecteur vivant est la garde
+			// anti-sur-remboursement de `refund-handlers.ts`, qui borne le remboursement
+			// à `total + overbilled` — et c'est bien un montant ENCAISSÉ, donc il n'a pas
+			// à s'éteindre. La notification réelle reste l'e-mail d'alerte ci-dessous.
+			//
+			// PAS d'avoir ni de refund automatique ici (Invariant 9).
 			try {
 				await prisma.order.updateMany({
 					where: { id: order.id, overbilledAmountCents: null },
 					data: { overbilledAmountCents: delta },
 				});
 			} catch (persistError) {
-				// Audit F5 : sans `overbilledAmountCents` persisté, la passe
-				// `reconcileOverbilledOrders` ne verra jamais le trop-perçu — Sentry requis.
+				// Audit F5 : sans `overbilledAmountCents` persisté, la garde
+				// anti-sur-remboursement de `refund-handlers.ts` bornera le remboursement
+				// à `order.total` seul et alertera à tort sur la restitution d'un
+				// trop-perçu légitime — Sentry requis.
 				logger.error("Failed to persist overbilling delta", persistError, {
 					service: "webhook",
 				});
@@ -239,8 +248,7 @@ export async function handlePaymentSuccess(
 		// ORD-STRIPE-009 : oversell (perdant d'une race sur le dernier exemplaire).
 		// Le paiement est encaissé mais le stock est indisponible — un retry Stripe
 		// ne résoudra rien (le stock ne reviendra pas). On rembourse automatiquement,
-		// on marque la commande FAILED (ce qui libère aussi le code promo attaché,
-		// cf. drift usageCount) et on renvoie 200 pour stopper les retries.
+		// on marque la commande FAILED et on renvoie 200 pour stopper les retries.
 		if (error instanceof OversellError) {
 			return handleOversell(orderId, paymentIntent);
 		}
@@ -306,9 +314,7 @@ export async function handlePaymentSuccess(
  * encaissé mais la re-validation FOR UPDATE au webhook a trouvé le stock
  * indisponible (`OversellError`), AVANT tout décrément → rien à restaurer côté
  * loser. On :
- *   1. marque la commande FAILED (idempotent) — ce qui libère aussi le code promo
- *      attaché (`releaseOrderDiscountUsageTx`), sinon `usageCount` dérive sur une
- *      commande fantôme jamais servie ;
+ *   1. marque la commande FAILED (idempotent) ;
  *   2. déclenche un remboursement automatique Stripe (idempotent via clé
  *      `auto-refund-${paymentIntentId}`) ;
  *   3. alerte l'admin + invalide les caches order ;
@@ -371,7 +377,7 @@ async function handleOversell(
  * `processOrderAtomically` a trouvé `amount_received < order.total` (AVANT tout
  * décrément stock / passage PAID). Le client a été débité d'un montant inférieur
  * au total commande. Comme l'oversell, un retry Stripe ne corrigera rien. On :
- *   1. marque la commande FAILED (idempotent) — libère aussi le code promo attaché ;
+ *   1. marque la commande FAILED (idempotent) ;
  *   2. rembourse automatiquement le montant encaissé (idempotent via clé
  *      `auto-refund-${paymentIntentId}`) ;
  *   3. alerte l'admin (incident métier — divergence PI/order à investiguer) ;

@@ -14,7 +14,7 @@ import { buildPostCheckoutTasksFromPI } from "@/modules/webhooks/services/checko
 import { executePostWebhookTasks } from "@/modules/webhooks/services/execute-post-webhook-tasks.service";
 import type { PostWebhookTask } from "@/modules/webhooks/types/webhook.types";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
-import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
+import { extractPaymentDetailsFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import {
 	collectStockInvalidationTags,
@@ -109,8 +109,12 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 	// que le webhook (décrément stock + désactivation SKU + clear cart + facture).
 	// Idempotent via le guard `paymentStatus === "PAID"`.
 	const processPaidOrder = async (orderId: string, pi: Stripe.PaymentIntent): Promise<void> => {
-		const paymentMethod = (await extractPaymentMethodFromPaymentIntent(pi)) ?? undefined;
-		const order = await processOrderFromPaymentIntent(orderId, pi, paymentMethod);
+		// ⚠️ C'est ICI que la date d'encaissement Stripe compte le plus : cette tâche
+		// est MANUELLE (page Maintenance), donc elle peut rattraper un paiement
+		// vieux de plusieurs jours. Poser l'horloge du run mettrait cette recette à
+		// la date du clic — faux dans le livre de recettes, et faux sur la facture.
+		const captured = await extractPaymentDetailsFromPaymentIntent(pi);
+		const order = await processOrderFromPaymentIntent(orderId, pi, captured);
 		await ensureInvoiceNumberPersisted(orderId);
 		// CACHE-AUDIT-004 : détail commande (plus de tags user-scopés — cf. cache.ts).
 		for (const tag of getOrderInvalidationTags(orderId)) {

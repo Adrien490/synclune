@@ -162,7 +162,7 @@ export async function OrdersDataTable({
 								})()}
 							</TableCell>
 							<TableCell className="text-right">
-								<span className="text-sm font-bold">{formatEuro(order.total)}</span>
+								<span className="text-sm font-medium">{formatEuro(order.total)}</span>
 							</TableCell>
 							<TableCell className="text-right">
 								<OrderRowActions

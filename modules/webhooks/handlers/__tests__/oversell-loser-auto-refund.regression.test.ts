@@ -26,7 +26,7 @@ const {
 	mockProcessOrderFromPaymentIntent,
 	mockBuildPostCheckoutTasksFromPI,
 	mockEnsureInvoiceNumberPersisted,
-	mockExtractPaymentMethod,
+	mockExtractPaymentDetails,
 	mockSendAdminOrderProcessingFailedAlert,
 	mockLogger,
 	OversellError,
@@ -68,7 +68,7 @@ const {
 		mockProcessOrderFromPaymentIntent: vi.fn(),
 		mockBuildPostCheckoutTasksFromPI: vi.fn(),
 		mockEnsureInvoiceNumberPersisted: vi.fn().mockResolvedValue(undefined),
-		mockExtractPaymentMethod: vi.fn().mockResolvedValue(null),
+		mockExtractPaymentDetails: vi.fn().mockResolvedValue({ method: null, capturedAt: null }),
 		mockSendAdminOrderProcessingFailedAlert: vi.fn(),
 		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 		OversellError,
@@ -126,7 +126,7 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: mockEnsureInvoiceNumberPersisted,
 }));
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
-	extractPaymentMethodFromPaymentIntent: mockExtractPaymentMethod,
+	extractPaymentDetailsFromPaymentIntent: mockExtractPaymentDetails,
 }));
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminOrderProcessingFailedAlert: mockSendAdminOrderProcessingFailedAlert,
