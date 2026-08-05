@@ -189,7 +189,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 									</p>
 								</div>
 								<div className="text-right">
-									<p className="font-bold tabular-nums">{formatEuro(order.total)}</p>
+									<p className="font-medium tabular-nums">{formatEuro(order.total)}</p>
 								</div>
 							</Link>
 						</Fade>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 import { CaretRightIcon, PackageIcon } from "@phosphor-icons/react/ssr";
 
@@ -74,6 +75,7 @@ export function VariantsProductContext({ product }: VariantsProductContextProps)
 					width={48}
 					height={48}
 					sizes="48px"
+					quality={IMAGE_QUALITY.THUMBNAIL}
 					className="size-12 shrink-0 rounded-md border object-cover"
 					{...(image.blurDataUrl ? { placeholder: "blur", blurDataURL: image.blurDataUrl } : {})}
 				/>

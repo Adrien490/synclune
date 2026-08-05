@@ -493,18 +493,27 @@ describe("AdminMenuSheet", () => {
 	});
 
 	describe("scroll fade (P2.4)", () => {
-		it("wraps nav in ScrollFade with vertical axis and fadeFromClass=from-muted", () => {
+		/**
+		 * Requête par `data-slot` et non par `data-testid` : depuis la bascule sur les
+		 * utilities `scroll-fade` de shadcn (2026-08-05), `data-slot` n'est plus une
+		 * commodité de test mais le CONTRAT — `app/styles/pwa.css` s'en sert pour
+		 * rendre au conteneur son `touch-action` à l'intérieur d'un sheet latéral,
+		 * sans quoi le drag-to-close du panneau avale le défilement.
+		 */
+		const getScrollContainer = () =>
+			document.querySelector<HTMLElement>('[data-slot="scroll-fade-container"]');
+
+		it("wraps nav in a vertical scroll-fade container", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
 
-			const scrollFadeRoot = screen.getByTestId("scroll-fade-root");
-			expect(scrollFadeRoot).toBeInTheDocument();
-
-			const scrollContainer = screen.getByTestId("scroll-fade-container");
-			// ScrollFade vertical axis gives h-full + overflow-y-auto
-			expect(scrollContainer.className).toContain("overflow-y-auto");
-			// overscroll-contain passed through via className
-			expect(scrollContainer.className).toContain("overscroll-contain");
+			const scrollContainer = getScrollContainer();
+			expect(scrollContainer).not.toBeNull();
+			// Le fondu haut/bas est un `mask-image` piloté par le scroll — plus
+			// d'overlay coloré, donc plus de `fadeFromClass` à accorder à `bg-muted`.
+			expect(scrollContainer?.className).toContain("scroll-fade-y");
+			expect(scrollContainer?.className).toContain("overflow-y-auto");
+			expect(scrollContainer?.className).toContain("overscroll-contain");
 		});
 
 		it("nav is inside scroll-fade container (landmark preserved)", () => {
@@ -512,8 +521,7 @@ describe("AdminMenuSheet", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
 
 			const nav = screen.getByLabelText("Navigation administration");
-			const scrollContainer = screen.getByTestId("scroll-fade-container");
-			expect(scrollContainer.contains(nav)).toBe(true);
+			expect(getScrollContainer()?.contains(nav)).toBe(true);
 		});
 	});
 

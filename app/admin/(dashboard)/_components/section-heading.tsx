@@ -2,21 +2,29 @@ import {
 	HandDrawnAccent,
 	HandDrawnUnderline,
 } from "@/shared/components/animations/hand-drawn-accent";
+import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 
-export type SectionAccent = "star" | "circle" | "arrow" | "heart";
+/**
+ * ⚠️ `arrow` a été PURGÉ (lot 0, audit HandDrawnAccent 2026-08-05) : le variant
+ * n'avait aucun call site, mais son path, son type et ses dimensions étaient
+ * entretenus à trois étages. Ne pas le ré-introduire sans consommateur.
+ */
+export type SectionAccent = "star" | "circle" | "heart";
 
 const ACCENT_COLOR_MAP: Record<SectionAccent, string> = {
 	star: "var(--secondary)",
 	circle: "var(--primary)",
-	arrow: "var(--secondary)",
 	heart: "var(--primary)",
 };
 
-const ACCENT_DIMENSIONS: Record<SectionAccent, { width: number; height: number }> = {
-	star: { width: 22, height: 22 },
-	circle: { width: 22, height: 21 },
-	arrow: { width: 28, height: 14 },
-	heart: { width: 22, height: 22 },
+/**
+ * Largeur rendue de chaque glyphe — la hauteur est dérivée du ratio natif par
+ * le composant (l'ancien couple width×height letterboxait dès qu'il déviait).
+ */
+const ACCENT_WIDTHS: Record<SectionAccent, number> = {
+	star: 22,
+	circle: 22,
+	heart: 22,
 };
 
 export function SectionHeading({
@@ -28,16 +36,14 @@ export function SectionHeading({
 	label: string;
 	accent: SectionAccent;
 }) {
-	const { width, height } = ACCENT_DIMENSIONS[accent];
 	return (
 		<div className="flex flex-col items-start gap-1">
 			<div className="flex items-center gap-2">
 				<HandDrawnAccent
 					variant={accent}
 					color={ACCENT_COLOR_MAP[accent]}
-					width={width}
-					height={height}
-					strokeWidth={1.5}
+					width={ACCENT_WIDTHS[accent]}
+					strokeWidth={HAND_DRAWN_STROKES.fin}
 					inView
 				/>
 				<h2
@@ -49,8 +55,7 @@ export function SectionHeading({
 			</div>
 			<HandDrawnUnderline
 				width={80}
-				height={14}
-				strokeWidth={2}
+				strokeWidth={HAND_DRAWN_STROKES.trait}
 				className="mt-0 ml-7 opacity-70"
 				inView
 			/>

@@ -24,10 +24,19 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/shared/components/logo", () => ({
-	Logo: ({ size }: { size?: number }) => (
+	Logo: ({ size, showText }: { size?: number; showText?: boolean }) => (
 		// eslint-disable-next-line @next/next/no-img-element -- test mock, not real image
-		<img data-testid="logo" data-size={size} alt="" />
+		<img
+			data-testid="logo"
+			data-size={size}
+			data-show-text={showText ? "true" : undefined}
+			alt=""
+		/>
 	),
+	// Le rail admin dérive son tooltip ET son aria-label du gabarit unique : mocker
+	// `Logo` seul faisait échouer le module entier sur un export manquant.
+	brandLinkLabel: (href: string) =>
+		href === "/admin" ? "Synclune - Administration" : "Synclune - Accueil",
 }));
 
 vi.mock("@/shared/components/ui/sidebar", () => ({
@@ -81,12 +90,17 @@ vi.mock("@/shared/components/ui/sidebar", () => ({
 			{children}
 		</ul>
 	),
-	SidebarMenuButton: ({ children, tooltip, render, size: _size }: RenderPropMockProps) =>
+	// ⚠️ Le reste des props est SPREADÉ, comme le fait le vrai composant
+	// (`mergeProps<"button">({…}, props)` dans `ui/sidebar.tsx`). Un mock qui les
+	// jetait rendait `aria-label` invisible aux tests alors qu'il atteint bien
+	// l'ancre en production — l'angle mort classique du mock trop simple.
+	SidebarMenuButton: ({ children, tooltip, render, size: _size, ...rest }: RenderPropMockProps) =>
 		renderPropMock("div", {
 			"data-testid": "sidebar-menu-button",
 			title: tooltip,
 			render,
 			children,
+			...rest,
 		}),
 	SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
 		<li data-testid="sidebar-menu-item">{children}</li>
@@ -147,11 +161,27 @@ afterEach(cleanup);
 // ============================================================================
 
 describe("AdminSidebar — rendering", () => {
-	it("renders brand link pointing to /admin with BRAND.name", () => {
+	it("delegates the wordmark to Logo instead of redrawing it", () => {
 		render(<AdminSidebar />);
+
 		const brandLink = screen.getByRole("link");
 		expect(brandLink).toHaveAttribute("href", "/admin");
-		expect(brandLink).toHaveTextContent(BRAND.name);
+
+		// Le rail recopiait un <span class="font-cursive … tracking-wide"> à côté du
+		// logo : deuxième dessin du même mot, à maintenir en parallèle. Il demande
+		// désormais le wordmark à `Logo`, qui en est la SSOT.
+		expect(screen.getByTestId("logo")).toHaveAttribute("data-show-text", "true");
+	});
+
+	it("names the brand link by its destination, pas seulement par la marque", () => {
+		render(<AdminSidebar />);
+
+		// Avec `showText`, l'image passe en alt="" + aria-hidden : sans libellé
+		// explicite le nom accessible tomberait à « Synclune » et ne dirait plus où
+		// le lien mène. Il contient le texte visible (WCAG 2.5.3).
+		const brandLink = screen.getByRole("link");
+		expect(brandLink).toHaveAttribute("aria-label", `${BRAND.name} - Administration`);
+		expect(brandLink.getAttribute("aria-label")).toContain(BRAND.name);
 	});
 
 	it("renders every navGroup from navigationData", () => {

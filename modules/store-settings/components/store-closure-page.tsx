@@ -1,7 +1,7 @@
 import { EnvelopeIcon } from "@phosphor-icons/react/ssr";
-import Image from "next/image";
 import Link from "next/link";
 
+import { Logo } from "@/shared/components/logo";
 import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
 import { ROUTES } from "@/shared/constants/urls";
@@ -42,14 +42,14 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 							🔒
 						</p>
 
-						<Image
-							src={BRAND.logo.url}
-							alt={BRAND.logo.alt}
-							width={96}
-							height={96}
-							className="mx-auto rounded-full"
-							preload
-						/>
+						{/* Passe par `Logo` plutôt que par un `<Image>` à soi.
+						    C'était la SEULE surface qui dessinait la marque hors du composant,
+						    et c'est là que le défaut a vécu : sans `quality`, `next/image`
+						    émettait `q=75`, absent d'`images.qualities` — 400, image cassée,
+						    et zéro avertissement. Ce chemin ne peut plus l'oublier.
+						    Le logo n'est pas cliquable ici (la boutique est fermée) : `Logo`
+						    n'ajoute donc aucun survol, cf. la garde sur `href`. */}
+						<Logo size={96} className="mx-auto w-fit" />
 
 						<h1 className="font-display text-foreground text-3xl font-semibold md:text-4xl">
 							Boutique temporairement fermée

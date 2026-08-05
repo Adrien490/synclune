@@ -1,13 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 
-vi.mock("next/image", () => ({
-	default: (props: Record<string, unknown>) => (
-		// eslint-disable-next-line @next/next/no-img-element
-		<img {...props} alt={props.alt as string} />
-	),
-}));
-
 vi.mock("next/link", () => ({
 	default: ({ children, href }: { children: React.ReactNode; href: string }) => (
 		<a href={href}>{children}</a>

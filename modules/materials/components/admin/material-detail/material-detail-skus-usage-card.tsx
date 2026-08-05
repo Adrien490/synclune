@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRightIcon, ListDashesIcon, PackageIcon, StarIcon } from "@phosphor-icons/react/ssr";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -56,6 +57,7 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 												width={40}
 												height={40}
 												sizes="40px"
+												quality={IMAGE_QUALITY.THUMBNAIL}
 												className="size-10 shrink-0 rounded-md border object-cover"
 												{...(image.blurDataUrl
 													? { placeholder: "blur" as const, blurDataURL: image.blurDataUrl }

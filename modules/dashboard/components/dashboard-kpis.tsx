@@ -7,7 +7,6 @@ import {
 	UserPlusIcon,
 } from "@phosphor-icons/react/ssr";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { KpiCard } from "./kpi-card";
 import { KpiCardAnimated } from "./kpi-card-animated";
@@ -46,12 +45,25 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 		<div className="space-y-4">
 			{/* Row 1: 4 featured KPIs — horizontal scroll on mobile (with edge fades), grid on sm+. */}
 			<div>
-				<ScrollFade
-					axis="horizontal"
-					className="overscroll-x-contain"
-					scrollRegionLabel="Indicateurs clés ventes"
+				{/* `role="region"` + `tabIndex` : les cartes KPI ne sont pas toutes
+				 * focusables (seules celles qui portent un `href` le sont), donc sans ce
+				 * point d'entrée la rangée ne serait pas atteignable aux flèches.
+				 *
+				 * `sm:scroll-fade-none` : à partir de `sm` la rangée devient une GRILLE,
+				 * qui ne déborde plus. Les navigateurs qui gèrent `animation-timeline`
+				 * n'affichent alors aucun fondu d'eux-mêmes, mais le repli
+				 * `@supports not` de `scroll-fade.css` peint un fondu STATIQUE — il
+				 * estomperait les bords d'une grille qui ne défile pas. */}
+				<div
+					data-slot="scroll-fade-container"
+					data-no-edge-swipe=""
+					role="region"
+					aria-label="Indicateurs clés ventes"
+					// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must be focusable to be scrollable by keyboard (WCAG 2.1.1); the rule only whitelists `tabpanel`
+					tabIndex={0}
+					className="scroll-fade-x no-scrollbar focus-visible:ring-ring sm:scroll-fade-none w-full overflow-x-auto overflow-y-hidden overscroll-x-contain focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
 				>
-					<div className="flex snap-x snap-mandatory gap-4 pb-2 sm:grid sm:grid-cols-2 sm:pb-0 lg:grid-cols-4">
+					<div className="flex w-fit min-w-full snap-x snap-mandatory gap-4 pb-2 sm:grid sm:grid-cols-2 sm:pb-0 lg:grid-cols-4">
 						<KpiCardAnimated index={0}>
 							<div className="min-w-[72vw] shrink-0 snap-start sm:min-w-0 sm:shrink">
 								<KpiCard
@@ -124,7 +136,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 							</div>
 						</KpiCardAnimated>
 					</div>
-				</ScrollFade>
+				</div>
 			</div>
 
 			{/* Row 2: Compact operational KPIs — 2-col on mobile (flat), lg+ full card */}

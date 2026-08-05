@@ -1,7 +1,6 @@
 "use client";
 
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
 import {
 	Collapsible,
@@ -349,8 +348,14 @@ export function AdminMenuSheet({ user, badges, storeClosed = false }: AdminMenuS
 					initialFocus={false}
 				>
 					{/* Poignée de drag — repère visuel du geste, qui est de nouveau
-					 * disponible depuis tout le panneau. */}
-					<SheetHandle className="mt-3 mb-1" />
+					 * disponible depuis tout le panneau.
+					 *
+					 * ⚠️ Plus de `className="mt-3 mb-1"` : depuis le 2026-08-05 la poignée est
+					 * une bande de préhension en flux qui porte son espacement en `py-3`. Les
+					 * marges d'ici s'AJOUTAIENT au padding (24 px de marge + 24 px de padding)
+					 * au lieu de le remplacer — elles reproduisaient l'ancien défaut, où le
+					 * même espacement était déclaré des deux côtés. */}
+					<SheetHandle />
 
 					{/* En-tête VISIBLE. Il portait auparavant `sr-only` : combiné à
 					 * `showCloseButton={false}` et à la bottom bar qui se dépublie à
@@ -390,11 +395,16 @@ export function AdminMenuSheet({ user, badges, storeClosed = false }: AdminMenuS
 						</SheetClose>
 					</SheetHeader>
 
-					{/* Scrollable content — ScrollFade porte le scroll, fade top/bottom
+					{/* Scrollable content — `scroll-fade-y` porte le fondu haut/bas, qui
 					 * indique l'affordance de scroll sur barre masquée iOS-like.
-					 * fadeFromClass="from-muted" matche le fond du sheet (bg-muted). */}
+					 * Plus de couleur à accorder au fond du sheet (`bg-muted`) : le fondu
+					 * est un `mask-image`, il dissout le contenu au lieu de superposer un
+					 * dégradé. Cf. `app/styles/scroll-fade.css`. */}
 					<div className="min-h-0 flex-auto">
-						<ScrollFade axis="vertical" fadeFromClass="from-muted" className="overscroll-contain">
+						<div
+							data-slot="scroll-fade-container"
+							className="scroll-fade-y no-scrollbar h-full overflow-x-hidden overflow-y-auto overscroll-contain"
+						>
 							<nav
 								ref={navRef}
 								aria-label="Navigation administration"
@@ -650,7 +660,7 @@ export function AdminMenuSheet({ user, badges, storeClosed = false }: AdminMenuS
 									</>
 								)}
 							</nav>
-						</ScrollFade>
+						</div>
 					</div>
 				</SheetContent>
 			</Sheet>
@@ -775,7 +785,7 @@ function QueueBoard({
 								{/* Largeur FIXE : « 3 » et « 12 » doivent tomber sur la même
 								 * verticale, sinon les deux lignes ne se lisent pas comme une
 								 * colonne. Et surtout PAS `tabular-nums` ici : la table GSUB de
-								 * Fraunces ne porte ni `tnum` ni `pnum` (mesuré le 2026-08-04),
+								 * la display ne porte ni `tnum` ni `pnum` (mesuré sur Fraunces le 2026-08-04 ; Winky Sans est pareille),
 								 * l'utilitaire y est inerte et ferait croire que l'alignement en
 								 * vient. C'est la largeur fixe qui aligne. */}
 								<span

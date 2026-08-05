@@ -9,8 +9,7 @@ import {
 	SidebarMenuItem,
 	SidebarSeparator,
 } from "@/shared/components/ui/sidebar";
-import { BRAND } from "@/shared/constants/brand";
-import { Logo } from "@/shared/components/logo";
+import { brandLinkLabel, Logo } from "@/shared/components/logo";
 import type { AdminNavBadges } from "@/modules/orders/data/get-admin-nav-badges";
 // GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
 // pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
@@ -47,12 +46,22 @@ export function AdminSidebar({ user, badges }: AdminSidebarProps) {
 						<SidebarMenuButton
 							size="lg"
 							render={<Link href="/admin" />}
-							tooltip={`${BRAND.name} - Administration`}
+							tooltip={brandLinkLabel("/admin")}
+							// Sans ce libellé, le nom accessible du bouton serait le seul texte
+							// visible — « Synclune » — et ne dirait plus où il mène. Il CONTIENT
+							// le texte visible, comme l'exige WCAG 2.5.3 (Label in Name).
+							aria-label={brandLinkLabel("/admin")}
 						>
-							<Logo size={40} rounded="lg" />
-							<span className="font-cursive flex-1 truncate text-2xl font-normal tracking-wide group-data-[collapsible=icon]:hidden">
-								{BRAND.name}
-							</span>
+							{/* `showText` : le wordmark vient de `LogoWordmark`, plus d'un <span>
+							    recopié à côté. Il met aussi l'image en `alt=""` + `aria-hidden`,
+							    ce qui règle un défaut au passage — le nom accessible du bouton
+							    valait « Synclune — Créations artisanales faites main Synclune ». */}
+							<Logo
+								size={40}
+								showText
+								className="min-w-0 flex-1 gap-2"
+								textClassName="flex-1 truncate text-2xl group-data-[collapsible=icon]:hidden"
+							/>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
