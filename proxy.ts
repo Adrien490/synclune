@@ -31,6 +31,12 @@ const publicRoutes = [
 	"/informations-legales",
 	"/retractation",
 	// Autres pages publiques
+	//
+	// `/a-propos` et `/aide` n'ont plus de page : les deux sont des redirections
+	// permanentes (`next.config.ts`) vers `/` et `/#faq`. Elles restent
+	// allowlistées parce que le default-deny ci-dessous les renverrait sinon
+	// vers l'accueil SANS l'ancre — et parce qu'un jour où l'ordre de routage
+	// changerait, une URL indexée se mettrait à mentir en silence.
 	"/a-propos",
 	"/aide",
 	"/favoris",

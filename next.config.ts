@@ -5,6 +5,15 @@ import { UPLOADTHING_APP_IDS } from "./shared/constants/uploadthing";
 const nextConfig: NextConfig = {
 	poweredByHeader: false,
 	cacheComponents: true,
+	// Partial Prefetching (16.3) — EXIGE `cacheComponents`, sinon `next dev` et
+	// `next build` throwent à la validation de config. Next prefetch UNE coquille
+	// (App Shell) réutilisable par route, au lieu d'un prefetch par lien visible :
+	// une page avec N liens vers la même route la télécharge 1 fois, pas N.
+	// ⚠️ Une route qui lit `cookies()`/`headers()` produit une coquille qui embarque
+	// la session — Next le détecte et la cache PAR SESSION côté client.
+	// Le dépôt n'a ni `<Link prefetch={true}>` ni `export const prefetch` : rien à
+	// arbitrer, et les 2 `prefetch={false}` restent des opt-out par lien.
+	partialPrefetching: true,
 	reactCompiler: true,
 	experimental: {
 		authInterrupts: true,
@@ -51,6 +60,15 @@ const nextConfig: NextConfig = {
 		return [
 			// Page À propos temporairement masquée — préserve le link equity externe
 			{ source: "/a-propos", destination: "/", permanent: true },
+			// La FAQ a rejoint la landing (2026-08-05) : `/aide` était indexée
+			// (sitemap, canonical, JSON-LD FAQPage) — un 404 aurait jeté son
+			// référencement et cassé les liens externes. 308 vers l'ancre de la
+			// section, dont l'`id` est la SSOT `FAQ_SECTION_ID`.
+			//
+			// ⚠️ `/aide` RESTE dans `publicRoutes` (proxy.ts) : si le proxy passe
+			// avant cette table, son default-deny renverrait vers `/` — donc vers
+			// le haut de la page, sans l'ancre. Même montage que `/a-propos`.
+			{ source: "/aide", destination: "/#faq", permanent: true },
 		];
 	},
 
