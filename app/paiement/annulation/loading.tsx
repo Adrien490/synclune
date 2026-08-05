@@ -19,7 +19,7 @@ export default function CheckoutCancelLoading() {
 
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-					<Card className="border-primary/10 rounded-2xl shadow-md">
+					<Card className="border-primary/10 rounded-lg shadow-md md:rounded-lg">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							{/* Error icon */}
 							<Skeleton className="bg-muted/80 mx-auto size-18 rounded-full" />

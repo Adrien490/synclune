@@ -1,8 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
+import { MaskingTape } from "@/shared/components/masking-tape";
 import {
 	Tooltip,
 	TooltipContent,
@@ -17,7 +17,7 @@ import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { getSkuColorsLabel } from "@/modules/skus/utils/sku-colors-label";
-import { ArrowSquareOutIcon, CaretDownIcon, InfoIcon, ShieldIcon } from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon, CaretDownIcon, InfoIcon } from "@phosphor-icons/react/ssr";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import Image from "next/image";
 import Link from "next/link";
@@ -68,8 +68,16 @@ function SummaryContent({
 				{cart.items.map((item) => (
 					<div key={item.id} className="flex gap-3 text-sm">
 						{/* Image */}
+						{/*
+						 * `rounded-sm` (8px), le rayon de la fiche qui la contient — PAS
+						 * `rounded-xl`. L'échelle du dépôt est non standard (`--radius-xl`
+						 * vaut 2rem) : sur une boîte de `size-16` (64px), 32px est
+						 * exactement la moitié, donc la vignette était un CERCLE parfait —
+						 * la seule forme ronde d'une page bâtie sur du papier et du ruban
+						 * adhésif, et quatre coins de bijou rognés au passage.
+						 */}
 						<div
-							className="bg-muted border-primary/10 relative size-16 shrink-0 overflow-hidden rounded-xl border"
+							className="bg-muted border-primary/10 relative size-16 shrink-0 overflow-hidden rounded-sm border"
 							style={{ viewTransitionName: `checkout-item-${item.id}` }}
 						>
 							{item.sku.images[0] ? (
@@ -137,7 +145,7 @@ function SummaryContent({
 				</button>
 			</div>
 
-			<Separator />
+			<Separator className="border-border border-t border-dashed bg-transparent" />
 
 			{/* Détails du panier */}
 			<div className="space-y-3 text-sm/6 tracking-normal antialiased">
@@ -168,13 +176,13 @@ function SummaryContent({
 				)}
 			</div>
 
-			<Separator />
+			<Separator className="border-border border-t border-dashed bg-transparent" />
 
 			{/*
 			 * Total — PAS de région live ici.
 			 *
 			 * Ce bloc n'est monté que quand le résumé mobile est DÉPLIÉ (il est replié
-			 * par défaut), et l'instance desktop est en `display:none` sous `md` donc
+			 * par défaut), et l'instance desktop est en `display:none` sous `lg` donc
 			 * ignorée des lecteurs d'écran : l'`aria-live` posé ici n'annonçait donc rien
 			 * sur mobile, y compris l'apparition des frais de port après saisie du code
 			 * postal. Il était de surcroît monté AVEC son contenu (jamais vocalisé, cf.
@@ -183,7 +191,10 @@ function SummaryContent({
 			 * La région vit désormais dans `CheckoutSummary`, hors des deux branches.
 			 * Audit UI/UX paiement 2026-07-26, F3.
 			 */}
-			<div className="bg-primary/5 -mx-1 space-y-2 rounded-xl p-3">
+			{/* `rounded-md` (16px) : un enfant ne doit pas être plus arrondi que son
+			    conteneur, or la fiche scotchée est à `rounded-sm` (8px). `rounded-xl`
+			    valait ici 32px. */}
+			<div className="bg-primary/5 -mx-1 space-y-2 rounded-md p-3">
 				<div className="flex items-center justify-between text-lg/7 font-semibold tracking-tight antialiased sm:text-xl/7">
 					<span>Total</span>
 					<span className="text-xl/7 tabular-nums sm:text-2xl/8">{formatEuro(total)}</span>
@@ -212,19 +223,19 @@ function SummaryContent({
 				</TooltipProvider>
 			</div>
 
-			{/* Badges de confiance (Baymard: icônes CB + message sécurité) */}
-			<div className="border-primary/5 space-y-3 border-t pt-4">
-				{/* Icônes cartes acceptées */}
+			{/*
+			 * Les logos de cartes restent : ils portent une INFORMATION (« ma carte
+			 * est-elle acceptée ? »). En revanche « Paiement 100% sécurisé » et son
+			 * bouclier sont partis — c'était l'une des QUATRE mentions de sécurité
+			 * co-visibles sur desktop, dont deux quasi identiques. Une seule subsiste
+			 * dans le bloc paiement, et elle dit ce qui se passe réellement.
+			 * Le filet est tireté : le résumé est une fiche, pas une carte d'interface.
+			 */}
+			<div className="border-border space-y-3 border-t border-dashed pt-4">
 				<div className="flex items-center justify-center gap-2">
 					<VisaIcon className="text-muted-foreground h-5 w-auto" />
 					<MastercardIcon className="text-muted-foreground h-5 w-auto" />
 					<CBIcon className="text-muted-foreground h-5 w-auto" />
-				</div>
-
-				{/* Message sécurité */}
-				<div className="text-muted-foreground flex items-center justify-center gap-1.5 text-xs">
-					<ShieldIcon className="text-success size-3.5" />
-					<span>Paiement 100% sécurisé</span>
 				</div>
 
 				{/* Trust links */}
@@ -333,63 +344,72 @@ export function CheckoutSummary({
 				{totalAnnouncement}
 			</span>
 
-			{/* Mobile: collapsible summary (collapsed by default — F6 — pour réduire le scroll
-			    jusqu'au formulaire ; le mini-total reste visible dans le header). */}
+			{/*
+			 * Le récapitulatif n'est plus une `Card` — c'est une FICHE SCOTCHÉE.
+			 *
+			 * Il était l'objet le plus lourd de la page (carte blanche, ombre portée,
+			 * grands coins) pendant que les quatre étapes du formulaire n'avaient
+			 * aucune surface : la hiérarchie visuelle désignait ce qu'on LIT comme
+			 * l'objet principal, alors que la seule chose à faire ici est de REMPLIR.
+			 * Le poids est passé aux sections (`CheckoutSection`) ; ce bloc s'allège.
+			 *
+			 * Bénéfice de bord : plus de `Card`, donc plus le télescopage
+			 * `rounded-2xl` (16px) du call site contre `md:rounded-xl` (32px) du
+			 * composant — `tailwind-merge` ne fusionne pas deux préfixes de variante,
+			 * et le rayon DOUBLAIT au breakpoint. Mesuré avant correction.
+			 */}
 			<section className="lg:hidden" aria-labelledby={mobileHeadingId}>
 				<h2 id={mobileHeadingId} className="sr-only">
 					Récapitulatif de ta commande
 				</h2>
 
-				<Card className="border-primary/10 rounded-2xl shadow-md">
-					<button
-						type="button"
-						onClick={() => {
-							haptic("selection");
-							setIsMobileOpen((prev) => !prev);
-						}}
-						aria-expanded={isMobileOpen}
-						aria-controls="checkout-summary-mobile-content"
-						className="w-full text-left"
-					>
-						<CardHeader className="pb-0">
-							<div className="flex items-center justify-between">
-								<CardTitle className="text-base">
-									{totalItems} article{totalItems > 1 ? "s" : ""}
-								</CardTitle>
-								<div className="flex items-center gap-2">
-									<span className="text-lg font-semibold tabular-nums">{formatEuro(total)}</span>
-									<CaretDownIcon
-										className={`text-muted-foreground size-4 transition-transform ${
-											isMobileOpen ? "rotate-180" : ""
-										}`}
-									/>
-								</div>
+				<div className="relative pt-3">
+					<MaskingTape className="top-0 left-1/2 h-5 w-20 -translate-x-1/2 -rotate-2" />
+					<div className="polaroid-paper border-border bg-card relative rounded-sm border shadow-sm">
+						<button
+							type="button"
+							onClick={() => {
+								haptic("selection");
+								setIsMobileOpen((prev) => !prev);
+							}}
+							aria-expanded={isMobileOpen}
+							aria-controls="checkout-summary-mobile-content"
+							className="focus-ring flex w-full items-center justify-between rounded-sm p-4 text-left"
+						>
+							<span className="text-base font-medium">
+								{totalItems} article{totalItems > 1 ? "s" : ""}
+							</span>
+							<span className="flex items-center gap-2">
+								<span className="text-lg font-semibold tabular-nums">{formatEuro(total)}</span>
+								<CaretDownIcon
+									className={`text-muted-foreground size-4 transition-transform ${
+										isMobileOpen ? "rotate-180" : ""
+									}`}
+									aria-hidden="true"
+								/>
+							</span>
+						</button>
+						{isMobileOpen && (
+							<div id="checkout-summary-mobile-content" className="space-y-4 px-4 pt-2 pb-5">
+								<SummaryContent {...contentProps} />
 							</div>
-						</CardHeader>
-					</button>
-					{isMobileOpen && (
-						<CardContent id="checkout-summary-mobile-content" className="space-y-4 pt-4 pb-6">
-							<SummaryContent {...contentProps} />
-						</CardContent>
-					)}
-				</Card>
+						)}
+					</div>
+				</div>
 			</section>
 
-			{/* Desktop: sticky sidebar */}
-			<Card className="border-primary/10 hidden rounded-2xl shadow-md lg:sticky lg:top-8 lg:block">
-				{/* Le titre VISIBLE est le heading — plus de `sr-only` doublon au libellé
-				    différent du texte affiché. `CardTitle` rend un <div> : il ne peut pas
-				    tenir ce rôle (même raison que `checkout-cancel-heading-hierarchy`). */}
-				<CardHeader className="pb-4">
+			{/* Desktop: fiche collante */}
+			<div className="relative hidden pt-3 lg:sticky lg:top-8 lg:block">
+				<MaskingTape className="top-0 left-1/2 h-6 w-24 -translate-x-1/2 -rotate-2" />
+				<div className="polaroid-paper border-border bg-card relative space-y-4 rounded-sm border p-5 shadow-sm">
+					{/* Le titre VISIBLE est le heading — plus de `sr-only` doublon au libellé
+					    différent du texte affiché. */}
 					<h2 className="font-display text-lg/7 font-normal tracking-wide antialiased">
 						Ta commande
 					</h2>
-				</CardHeader>
-
-				<CardContent className="space-y-4 pb-6">
 					<SummaryContent {...contentProps} />
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 		</>
 	);
 }

@@ -19,7 +19,7 @@ export default function CheckoutSuccessLoading() {
 
 			<section className="py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:py-10 sm:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
+					<Card className="border-primary/20 from-primary/5 to-background rounded-lg border-2 bg-linear-to-br shadow-md md:rounded-lg">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							{/* Success icon */}
 							<Skeleton className="bg-primary/20 mx-auto size-16 rounded-full" />

@@ -49,6 +49,55 @@ export function buildCheckoutFieldErrors(
 }
 
 /**
+ * Champs REQUIS par section, pour l'état « complété » du filet d'accent.
+ *
+ * ⚠️ Sous-ensemble volontaire de `CHECKOUT_FIELD_TO_SECTION` : `addressLine2`
+ * est optionnel et n'y figure pas — l'inclure empêcherait à jamais la section
+ * Livraison d'être marquée complète.
+ */
+const CHECKOUT_SECTION_REQUIRED: Record<string, readonly string[]> = {
+	Contact: ["email"],
+	Livraison: [
+		"shipping.fullName",
+		"shipping.addressLine1",
+		"shipping.postalCode",
+		"shipping.city",
+		"shipping.country",
+		"shipping.phoneNumber",
+	],
+};
+
+/**
+ * Sections dont TOUS les champs requis sont renseignés et sans erreur.
+ *
+ * Fonction pure sur deux listes de paths plutôt que sur l'état du formulaire :
+ * c'est ce qui la rend testable sans monter `CheckoutFormBody` (Stripe Elements
+ * en import dynamique, récapitulatif, quatre sections).
+ *
+ * ⚠️ « Aucune erreur » ne suffit PAS : la validation est en `mode: "blur"`, donc
+ * un formulaire vierge n'a aucune erreur et afficherait « complété » partout.
+ * D'où la double condition — rempli ET valide.
+ *
+ * `isGuest: false` ⇒ la section Contact n'a aucune saisie (l'email est affiché,
+ * pas demandé) : elle est complète par construction.
+ */
+export function getCompletedSections(
+	filledPaths: readonly string[],
+	invalidPaths: readonly string[],
+	isGuest: boolean,
+): string[] {
+	const filled = new Set(filledPaths);
+	const invalid = new Set(invalidPaths);
+
+	return Object.entries(CHECKOUT_SECTION_REQUIRED)
+		.filter(([section, required]) => {
+			if (section === "Contact" && !isGuest) return true;
+			return required.every((path) => filled.has(path) && !invalid.has(path));
+		})
+		.map(([section]) => section);
+}
+
+/**
  * Retourne la liste ordonnée des sections (sans doublons) à corriger
  * à partir d'une liste de paths de champs en erreur.
  */

@@ -203,9 +203,12 @@ export async function initializePayment(
 			}
 			const total = subtotal + shipping;
 
-			// Get or create Stripe customer. Dedupe relies on the email-based
-			// idempotency key inside the service — User.stripeCustomerId was dropped
-			// (Lot 0 S1.1) : le parcours est 100 % invité, rien à persister côté User.
+			// Get or create Stripe customer. La dédupe vit dans le service et tient sur
+			// DEUX mécanismes : `customers.list({ email })` pour une cliente qui
+			// recommande des jours plus tard, la clé d'idempotence pour deux requêtes
+			// concurrentes. Aucune colonne locale ne porte le `cus_*` — parcours 100 %
+			// invité, et les deux colonnes qui l'avaient (`User.stripeCustomerId`,
+			// `Order.stripeCustomerId`) ont été droppées faute de lecteur.
 			const finalEmail = input.email ?? userEmail;
 			let stripeCustomerId: string | null = null;
 

@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
@@ -15,10 +14,33 @@ function SectionHeading({ width }: { width: string }) {
 	return <Skeleton className={`h-6 ${width}`} />;
 }
 
+/**
+ * Reproduit la géométrie de `CheckoutSection` : surface, filet d'accent de 3px,
+ * rayon `lg`, padding `p-5 sm:p-6`. Le squelette suit la page — c'est la
+ * décision assumée de `checkout-loading-parity.regression.test.ts`.
+ */
+function SectionSkeleton({
+	accent,
+	children,
+}: {
+	accent: "rose" | "lavender" | "mint" | "sun";
+	children: React.ReactNode;
+}) {
+	return (
+		<section
+			data-accent={accent}
+			className="border-border bg-card flex rounded-lg border shadow-sm"
+		>
+			<span aria-hidden="true" className="w-[3px] shrink-0 rounded-l-lg bg-(--section-accent)" />
+			<div className="min-w-0 flex-1 space-y-5 p-5 sm:p-6">{children}</div>
+		</section>
+	);
+}
+
 function SummaryItemSkeleton() {
 	return (
 		<div className="flex gap-3">
-			<Skeleton className="size-16 shrink-0 rounded-xl" />
+			<Skeleton className="size-16 shrink-0 rounded-sm" />
 			<div className="min-w-0 flex-1 gap-y-1.5">
 				<Skeleton className="h-4 w-32" />
 				<Skeleton className="h-3 w-20" />
@@ -43,7 +65,7 @@ function SummaryContent() {
 				<Skeleton className="mx-auto h-4 w-28" />
 			</div>
 
-			<Separator />
+			<Separator className="border-border border-t border-dashed bg-transparent" />
 
 			{/* Pricing */}
 			<div className="space-y-3">
@@ -57,10 +79,10 @@ function SummaryContent() {
 				</div>
 			</div>
 
-			<Separator />
+			<Separator className="border-border border-t border-dashed bg-transparent" />
 
 			{/* Total */}
-			<div className="bg-primary/5 -mx-1 space-y-2 rounded-xl p-3">
+			<div className="bg-primary/5 -mx-1 space-y-2 rounded-md p-3">
 				<div className="flex items-center justify-between">
 					<Skeleton className="h-6 w-12" />
 					<Skeleton className="h-7 w-20" />
@@ -70,16 +92,16 @@ function SummaryContent() {
 				</div>
 			</div>
 
-			{/* Trust badges */}
-			<div className="border-primary/5 space-y-3 border-t pt-4">
+			{/* Trust badges — DEUX rangées, comme `CheckoutSummary` : les logos de
+			    cartes puis les liens de confiance. Une troisième rangée (pastille +
+			    libellé) y survivait au retrait de « Paiement 100% sécurisé », l'une des
+			    quatre mentions de sécurité ramenées à deux : le squelette réservait donc
+			    une ligne qui ne se peignait jamais. Filet tireté comme la fiche. */}
+			<div className="border-border space-y-3 border-t border-dashed pt-4">
 				<div className="flex items-center justify-center gap-2">
 					<Skeleton className="h-5 w-8" />
 					<Skeleton className="h-5 w-8" />
 					<Skeleton className="h-5 w-8" />
-				</div>
-				<div className="flex items-center justify-center gap-1.5">
-					<Skeleton className="size-3.5 rounded-full" />
-					<Skeleton className="h-3 w-32" />
 				</div>
 				<div className="flex items-center justify-center gap-3">
 					<Skeleton className="h-3 w-24" />
@@ -147,14 +169,13 @@ export default function CheckoutLoading() {
 							<Skeleton className="h-4 w-56" />
 
 							{/* Contact */}
-							<section className="space-y-5">
+							<SectionSkeleton accent="rose">
 								<SectionHeading width="w-20" />
 								<InputSkeleton labelWidth="w-28" />
-								<Skeleton className="h-4 w-64" />
-							</section>
+							</SectionSkeleton>
 
 							{/* Livraison */}
-							<section className="space-y-5">
+							<SectionSkeleton accent="lavender">
 								<SectionHeading width="w-24" />
 								<InputSkeleton labelWidth="w-24" />
 								<InputSkeleton labelWidth="w-20" />
@@ -169,27 +190,22 @@ export default function CheckoutLoading() {
 									<Skeleton className="h-10 w-full rounded-md" />
 									<Skeleton className="h-3 w-52" />
 								</div>
-							</section>
+							</SectionSkeleton>
 
 							{/* Frais et délai de livraison */}
-							<section className="space-y-5">
+							<SectionSkeleton accent="mint">
 								<SectionHeading width="w-44" />
-								<Skeleton className="h-16 w-full rounded-xl" />
-							</section>
-
-							{/* Code promo — collapsed link */}
-							<div className="-mx-3 flex min-h-11 items-center px-3">
-								<Skeleton className="h-4 w-44" />
-							</div>
+								<Skeleton className="h-16 w-full rounded-lg" />
+							</SectionSkeleton>
 
 							{/* Paiement */}
-							<section className="space-y-5">
+							<SectionSkeleton accent="sun">
 								<SectionHeading width="w-24" />
 								<Skeleton className="h-4 w-72" />
 
 								{/* Stripe PaymentElement placeholder — min-h identique à
 								    `PaymentSectionSkeleton` (CLS) */}
-								<div className="min-h-[360px] space-y-4 rounded-xl border p-6 motion-safe:animate-pulse">
+								<div className="min-h-[360px] space-y-4 rounded-lg border p-6 motion-safe:animate-pulse">
 									<Skeleton className="h-4 w-40" />
 									<Skeleton className="h-11 w-full rounded" />
 									<div className="grid grid-cols-2 gap-4">
@@ -199,19 +215,12 @@ export default function CheckoutLoading() {
 									<Skeleton className="h-11 w-full rounded" />
 								</div>
 
-								{/* Trust strip — non encadré, comme `checkout-stripe-section` */}
-								<div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-									<Skeleton className="h-3 w-28" />
-									<Skeleton className="hidden h-3 w-px sm:inline" />
-									<Skeleton className="h-3 w-24" />
-								</div>
-
 								{/* Terms + button */}
 								<div className="space-y-3">
 									<Skeleton className="mx-auto h-4 w-72" />
 									<Skeleton className="h-12 w-full rounded-md" />
 								</div>
-							</section>
+							</SectionSkeleton>
 						</div>
 
 						{/* Right column — Summary */}
@@ -219,29 +228,29 @@ export default function CheckoutLoading() {
 							className="order-first lg:order-0"
 							style={{ viewTransitionName: "shop-paiement-summary" }}
 						>
-							{/* Mobile: collapsed card — `lg:` comme `CheckoutSummary` (la grille ne
-							    passe à deux colonnes qu'à `lg`) */}
-							<Card className="border-primary/10 rounded-2xl shadow-md lg:hidden">
-								<CardHeader className="pb-0">
-									<div className="flex items-center justify-between">
-										<Skeleton className="h-5 w-24" />
-										<div className="flex items-center gap-2">
-											<Skeleton className="h-6 w-16" />
-											<Skeleton className="size-4" />
-										</div>
+							{/* Le résumé n'est plus une `Card` mais une fiche scotchée
+							    (cf. `CheckoutSummary`) : papier, rayon `sm`, filet plein,
+							    scotch au-dessus. Le squelette suit la page.
+							    Le seuil reste `lg:` — la grille ne passe à deux colonnes
+							    qu'à `lg`, jamais à `md` (iPad portrait). */}
+							<div className="relative pt-3 lg:hidden">
+								<Skeleton className="absolute top-0 left-1/2 h-5 w-20 -translate-x-1/2 -rotate-2 rounded-[2px]" />
+								<div className="border-border bg-card flex items-center justify-between rounded-sm border p-4 shadow-sm">
+									<Skeleton className="h-5 w-24" />
+									<div className="flex items-center gap-2">
+										<Skeleton className="h-6 w-16" />
+										<Skeleton className="size-4" />
 									</div>
-								</CardHeader>
-							</Card>
+								</div>
+							</div>
 
-							{/* Desktop: sticky sidebar */}
-							<Card className="border-primary/10 hidden rounded-2xl shadow-md lg:sticky lg:top-8 lg:block">
-								<CardHeader className="pb-4">
+							<div className="relative hidden pt-3 lg:sticky lg:top-8 lg:block">
+								<Skeleton className="absolute top-0 left-1/2 h-6 w-24 -translate-x-1/2 -rotate-2 rounded-[2px]" />
+								<div className="border-border bg-card relative space-y-4 rounded-sm border p-5 shadow-sm">
 									<Skeleton className="h-6 w-40" />
-								</CardHeader>
-								<CardContent className="space-y-4 pb-6">
 									<SummaryContent />
-								</CardContent>
-							</Card>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

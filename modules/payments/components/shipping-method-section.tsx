@@ -22,7 +22,7 @@ export function ShippingMethodSection({
 }: ShippingMethodSectionProps) {
 	if (shippingUnavailable) {
 		return (
-			<div className="border-destructive/20 bg-destructive/5 rounded-xl border p-4">
+			<div className="border-destructive/30 bg-destructive/5 rounded-lg border p-4">
 				<p className="text-destructive text-sm">
 					{SHIPPING_UNAVAILABLE.section} {SHIPPING_UNAVAILABLE.contactCta}
 				</p>
@@ -30,8 +30,10 @@ export function ShippingMethodSection({
 		);
 	}
 
+	// La teinte vient de `--section-soft`, posée par le `data-accent="mint"` de la
+	// section parente : la tuile ne redéclare aucune couleur et suit l'étape.
 	return (
-		<div className="border-primary/10 bg-primary/5 flex items-center gap-3 rounded-xl border p-4">
+		<div className="border-border flex items-center gap-3 rounded-lg border bg-(--section-soft) p-4">
 			<PackageIcon className="text-muted-foreground size-5 shrink-0" />
 			<div className="flex-1 text-sm">
 				<div className="flex items-center justify-between">

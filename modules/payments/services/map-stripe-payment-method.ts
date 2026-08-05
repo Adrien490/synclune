@@ -53,39 +53,73 @@ export function mapPaymentMethodFromCharge(charge: Stripe.Charge | null): Paymen
 }
 
 /**
- * Extrait le `PaymentMethod` à partir d'un `PaymentIntent` webhook. Stripe
- * n'expand pas `latest_charge` par défaut → on retrieve quand nécessaire.
+ * Ce que la Charge Stripe nous apprend sur l'encaissement.
  *
- * Best-effort : en cas d'échec API Stripe, fallback `null` (le caller garde
- * la valeur Order.paymentMethod existante = default `CARD`). Ne throw jamais
- * — un paiement valide ne doit pas être bloqué par une mauvaise mesure.
+ * Les deux champs viennent du MÊME objet `Charge` : les séparer en deux
+ * fonctions coûterait un second `charges.retrieve` sur le chemin chaud du
+ * webhook, pour une donnée déjà en main.
  */
-export async function extractPaymentMethodFromPaymentIntent(
+export interface CapturedPaymentDetails {
+	/** Mode de règlement effectif (arrêté 2022-1299 §4.3). `null` si indéterminable. */
+	method: PaymentMethod | null;
+	/**
+	 * Date d'encaissement AUTORITAIRE — `Charge.created`, l'horodatage de Stripe.
+	 *
+	 * ⚠️ Ce n'est pas un détail cosmétique : `Order.paidAt` filtre le livre de
+	 * recettes (Art. 50-0 CGI), borne la fenêtre annuelle du seuil de franchise
+	 * TVA et s'imprime en « Payé le : … » dans le PDF de facture, archivé et
+	 * scellé sous SHA-256 pour dix ans. L'horloge du serveur ne convient pas :
+	 * elle marque le TRAITEMENT, qui peut arriver bien après la capture — Stripe
+	 * redélivre un webhook en échec pendant 3 jours, et le filet
+	 * `sync-async-payments` est une tâche MANUELLE, donc déclenchée par un clic.
+	 * Au passage d'un 31 décembre, l'écart met le chiffre d'affaires sur le
+	 * mauvais exercice.
+	 */
+	capturedAt: Date | null;
+}
+
+function readCapturedAt(charge: Stripe.Charge | null): Date | null {
+	// `created` est en SECONDES Unix côté Stripe (cf. `api/charges/object`).
+	return charge?.created ? new Date(charge.created * 1000) : null;
+}
+
+/**
+ * Extrait le mode de règlement ET la date d'encaissement à partir d'un
+ * `PaymentIntent` webhook. Stripe n'expand pas `latest_charge` par défaut → on
+ * retrieve quand nécessaire.
+ *
+ * Best-effort : en cas d'échec API Stripe, les deux champs valent `null` — le
+ * caller garde alors `Order.paymentMethod` à son défaut `CARD` et retombe sur
+ * l'horloge serveur pour `paidAt`. Ne throw jamais : un paiement valide ne doit
+ * pas être bloqué par une mauvaise mesure.
+ */
+export async function extractPaymentDetailsFromPaymentIntent(
 	paymentIntent: Stripe.PaymentIntent,
-): Promise<PaymentMethod | null> {
+): Promise<CapturedPaymentDetails> {
 	try {
 		// Cas 1 : latest_charge est déjà expandé (rare en webhook standard).
 		if (paymentIntent.latest_charge && typeof paymentIntent.latest_charge === "object") {
-			return mapPaymentMethodFromCharge(paymentIntent.latest_charge);
+			const charge = paymentIntent.latest_charge;
+			return { method: mapPaymentMethodFromCharge(charge), capturedAt: readCapturedAt(charge) };
 		}
 
 		// Cas 2 : retrieve la Charge depuis l'API.
 		if (typeof paymentIntent.latest_charge === "string") {
 			const charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
-			return mapPaymentMethodFromCharge(charge);
+			return { method: mapPaymentMethodFromCharge(charge), capturedAt: readCapturedAt(charge) };
 		}
 
 		// Cas 3 : pas de charge associée (rare — PI succeeded sans capture).
 		logger.warn(
-			`extractPaymentMethodFromPaymentIntent — PI ${paymentIntent.id} has no latest_charge`,
+			`extractPaymentDetailsFromPaymentIntent — PI ${paymentIntent.id} has no latest_charge`,
 			{ service: "payments", paymentIntentId: paymentIntent.id },
 		);
-		return null;
+		return { method: null, capturedAt: null };
 	} catch (e) {
-		logger.error("extractPaymentMethodFromPaymentIntent failed (Stripe API)", e, {
+		logger.error("extractPaymentDetailsFromPaymentIntent failed (Stripe API)", e, {
 			service: "payments",
 			paymentIntentId: paymentIntent.id,
 		});
-		return null;
+		return { method: null, capturedAt: null };
 	}
 }

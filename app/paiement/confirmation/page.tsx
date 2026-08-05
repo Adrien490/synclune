@@ -2,6 +2,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/aler
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Fade } from "@/shared/components/animations/fade";
+import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
 import { PurchaseTracker } from "@/shared/components/analytics/purchase-tracker";
 import { CartCleaner } from "./_components/cart-cleaner";
 import { PendingPaymentWatcher } from "./_components/pending-payment-watcher";
@@ -133,13 +134,21 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 			<section className="py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:py-10 sm:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
-					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
+					<Card className="border-primary/20 from-primary/5 to-background rounded-lg border-2 bg-linear-to-br shadow-md md:rounded-lg">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<SuccessIcon />
 							<Fade y={10} delay={0.1}>
+								{/* Le trait dessiné à la main remplace l'emoji ✨ : c'est le
+								    vocabulaire de la boutique (`HandDrawnUnderline`), pas un glyphe
+								    système qui change de forme selon l'OS. Il ne survivait nulle
+								    part ailleurs dans le tunnel — 80px de trait sous le h1 de
+								    /paiement, puis plus rien pendant quatre écrans. */}
 								<h1 className="font-display text-2xl leading-none font-normal sm:text-3xl">
-									Merci pour ta confiance ! <span aria-hidden="true">✨</span>
+									Merci pour ta confiance !
 								</h1>
+								<div className="mt-2 flex justify-center">
+									<HandDrawnUnderline width={96} strokeWidth={1.5} inView={false} />
+								</div>
 							</Fade>
 							<Fade y={10} delay={0.15}>
 								<div className="space-y-2">
@@ -176,12 +185,18 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 								</Alert>
 							)}
 
-							{/* Articles commandés */}
+							{/*
+							 * Articles commandés — premier groupe, donc pas de filet : il suit
+							 * directement le header de la carte.
+							 *
+							 * Les trois blocs de ce bloc-ci portaient tous
+							 * `bg-muted/50 border-primary/5 rounded-xl border p-4`, empilés DANS
+							 * une Card : trois boîtes grises identiques dans une boîte, sans
+							 * hiérarchie, sur l'écran de la joie. Ils sont désormais séparés par
+							 * un filet tireté — même regroupement, une épaisseur de moins.
+							 */}
 							{order.items.length > 0 && (
-								<section
-									aria-labelledby="confirmation-items-heading"
-									className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4"
-								>
+								<section aria-labelledby="confirmation-items-heading" className="space-y-3">
 									<h2 id="confirmation-items-heading" className="text-base font-semibold">
 										Articles commandés
 									</h2>
@@ -235,7 +250,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							{/* Récapitulatif montants */}
 							<section
 								aria-labelledby="confirmation-summary-heading"
-								className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4"
+								className="border-border space-y-3 border-t border-dashed pt-5"
 							>
 								<h2 id="confirmation-summary-heading" className="text-base font-semibold">
 									Récapitulatif
@@ -267,7 +282,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							{/* Adresse de livraison */}
 							<section
 								aria-labelledby="confirmation-address-heading"
-								className="bg-muted/50 border-primary/5 space-y-2 rounded-xl border p-4"
+								className="border-border space-y-2 border-t border-dashed pt-5"
 							>
 								<h2 id="confirmation-address-heading" className="text-base font-semibold">
 									Adresse de livraison
@@ -288,9 +303,9 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							{/* Message personnalisé */}
 							<Alert>
 								<HeartIcon />
-								<AlertTitle>
-									Merci du fond du cœur <span aria-hidden="true">💕</span>
-								</AlertTitle>
+								{/* Plus d'emoji : l'Alert porte déjà `HeartIcon`, la même icône,
+								    en vectoriel et à la bonne graisse. */}
+								<AlertTitle>Merci du fond du cœur</AlertTitle>
 								<AlertDescription>
 									Je vais préparer ta commande avec le plus grand soin ! Chaque bijou est emballé
 									avec amour dans mon atelier.

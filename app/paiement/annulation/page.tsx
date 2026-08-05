@@ -6,7 +6,7 @@ import {
 	getCheckoutCancelMessage,
 } from "@/modules/payments/constants/checkout-cancel-messages";
 import { BRAND } from "@/shared/constants/brand";
-import { InfoIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
+import { InfoIcon, LightbulbIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { z } from "zod";
@@ -61,7 +61,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 		<div className="relative min-h-dvh">
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-					<Card className="border-primary/10 rounded-2xl shadow-md">
+					<Card className="border-primary/10 rounded-lg shadow-md md:rounded-lg">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<div className="bg-muted/80 mx-auto flex size-18 items-center justify-center rounded-full">
 								<ErrorIcon className="text-muted-foreground size-10" aria-hidden="true" />
@@ -87,9 +87,11 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									aria-label="Conseil"
 									className="text-muted-foreground flex items-start gap-2 text-sm"
 								>
-									<span className="mt-0.5" aria-hidden="true">
-										💡
-									</span>
+									{/* Icône Phosphor et non un emoji : un glyphe couleur rendu par
+									    l'OS, à côté de deux icônes vectorielles monochromes réglées sur
+									    le trait maison, changeait de forme d'une plateforme à l'autre —
+									    et c'était l'élément le plus coloré d'un écran d'échec. */}
+									<LightbulbIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 									<span>
 										<strong className="text-foreground">Que faire ?</strong> {errorInfo.advice}
 									</span>

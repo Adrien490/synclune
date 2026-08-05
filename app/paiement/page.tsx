@@ -5,6 +5,7 @@ import { getCart } from "@/modules/cart/data/get-cart";
 import { validateCart } from "@/modules/cart/actions/validate-cart";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
+import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 import { ShoppingBagIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { CheckoutForm } from "@/modules/payments/components/checkout-form";
@@ -44,7 +45,7 @@ export default async function CheckoutPage() {
 								Finaliser ma commande
 							</h1>
 						</div>
-						<Card className="border-primary/10 rounded-2xl shadow-md">
+						<Card className="border-primary/10 rounded-lg shadow-md md:rounded-lg">
 							<CardContent className="space-y-6 p-6 sm:p-8 sm:text-center">
 								<div className="bg-muted/80 mx-auto flex size-16 items-center justify-center rounded-full">
 									<ShoppingBagIcon className="text-muted-foreground size-8" aria-hidden="true" />
@@ -143,21 +144,15 @@ export default async function CheckoutPage() {
 							Finaliser ma commande
 						</h1>
 						<div className="mt-2 max-sm:flex max-sm:justify-center">
+							{/* UN SVG pour un trait (il y en avait deux, un masqué par
+							    breakpoint). La largeur est responsive en CSS ; `h-auto`
+							    dérive la hauteur du ratio natif 6:1 — pas de letterbox.
+							    Couleur : défaut cascadé (repli --primary, même rendu). */}
 							<HandDrawnUnderline
-								color="var(--primary)"
-								width={60}
-								strokeWidth={1.5}
+								strokeWidth={HAND_DRAWN_STROKES.fin}
 								inView={false}
-								className="sm:hidden"
+								className="h-auto w-15 sm:w-20"
 							/>
-							<div className="hidden sm:block">
-								<HandDrawnUnderline
-									color="var(--primary)"
-									width={80}
-									strokeWidth={1.5}
-									inView={false}
-								/>
-							</div>
 						</div>
 					</div>
 					<CheckoutForm cart={cart} session={session} />

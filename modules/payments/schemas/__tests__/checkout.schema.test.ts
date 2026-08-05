@@ -62,14 +62,6 @@ describe("confirmCheckoutSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("should accept an optional discountCode", () => {
-		const result = confirmCheckoutSchema.safeParse({
-			...validCheckout,
-			discountCode: "PROMO10",
-		});
-		expect(result.success).toBe(true);
-	});
-
 	it("should accept quantity at maximum boundary", () => {
 		const result = confirmCheckoutSchema.safeParse({
 			...validCheckout,

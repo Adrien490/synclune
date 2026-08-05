@@ -66,10 +66,6 @@ vi.mock("@/modules/payments/components/checkout-summary", () => ({
 	CheckoutSummary: () => <div data-testid="checkout-summary" />,
 }));
 
-vi.mock("@/modules/discounts/actions/validate-discount-code", () => ({
-	validateDiscountCode: vi.fn(),
-}));
-
 vi.mock("@/modules/payments/hooks/use-payment-intent", () => ({
 	usePaymentIntent: vi.fn(),
 }));
@@ -198,13 +194,13 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			expect(screen.getByText("Montant verrouillé")).toBeInTheDocument();
 		});
 
-		it("gèle les sections qui portent le montant (frais de livraison, code promo)", () => {
+		it("gèle les sections qui portent le montant (frais de livraison)", () => {
 			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
 
 			// Ciblé par sa <legend> : depuis KI-001 il y a DEUX fieldsets (celui de
 			// l'adresse, jamais désactivé, vient en premier dans le DOM) — un
 			// `querySelector("fieldset")` nu testerait le mauvais.
-			const legend = screen.getByText("Frais de livraison et code promo");
+			const legend = screen.getByText("Frais de livraison");
 			expect(legend.closest("fieldset")).toBeDisabled();
 			expect(container.querySelectorAll("fieldset[disabled]")).toHaveLength(1);
 		});
@@ -224,9 +220,10 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			const shippingSection = screen.getByTestId("section-Livraison");
 			expect(shippingSection.closest("fieldset[disabled]")).toBeNull();
 
-			// Contrôle de sens : la section code promo, elle, EST sous le gel.
-			const discountSection = screen.getByText("Frais de livraison et code promo");
-			expect(discountSection.closest("fieldset")).toBeDisabled();
+			// Contrôle de sens : la section des frais, elle, EST sous le gel — c'est
+			// elle qui porte le montant.
+			const shippingCostSection = screen.getByText("Frais de livraison");
+			expect(shippingCostSection.closest("fieldset")).toBeDisabled();
 		});
 
 		it("n'appelle JAMAIS updateAmount (sinon « Commande déjà initiée » en boucle)", () => {

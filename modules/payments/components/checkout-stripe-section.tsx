@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Elements, PaymentElement } from "@stripe/react-stripe-js";
 import Link from "next/link";
-import { ArrowSquareOutIcon, LockIcon } from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/shared/utils/cn";
 import { ROUTES } from "@/shared/constants/urls";
 import { getStripe } from "@/shared/lib/stripe-client";
@@ -11,7 +11,6 @@ import { useStripeAppearance } from "../hooks/use-stripe-appearance";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { PayButton } from "./pay-button";
 import { PaymentSectionSkeleton } from "./payment-section-skeleton";
-import { StripeWordmark } from "./stripe-wordmark";
 
 interface CheckoutStripeSectionProps {
 	clientSecret: string;
@@ -114,32 +113,34 @@ export function CheckoutStripeSection({
 			}}
 		>
 			<div className="space-y-6">
+				{/*
+				 * UNE promesse de sécurité dans le bloc paiement, au lieu de trois.
+				 * Le tunnel en affichait QUATRE simultanément sur desktop — en-tête,
+				 * résumé (« Paiement 100% sécurisé »), cette intro, et un strip sous les
+				 * champs (« Paiement sécurisé | Propulsé par Stripe ») — dont deux
+				 * quasi identiques, et aucune ne disait ce qui rassure vraiment.
+				 * Celle-ci le dit, à la première personne : c'est Léane qui parle, et
+				 * c'est vrai (les champs vivent dans une iframe Stripe).
+				 * L'en-tête garde la sienne : elle répond à une autre question — « suis-je
+				 * dans un tunnel sûr ? » — pas à celle-ci, « que devient ma carte ? ».
+				 */}
 				<p className="text-muted-foreground text-sm">
-					Toutes les transactions sont sécurisées et chiffrées.
+					Paiement sécurisé par Stripe. Tes coordonnées bancaires ne passent jamais par mon site —
+					je ne les vois pas.
 				</p>
 
 				{!isPaymentReady && <PaymentSectionSkeleton />}
 
 				<div className={cn("space-y-6", !isPaymentReady && "hidden")}>
+					{/* Rayon aligné sur celui des sections (`rounded-lg`) : le conteneur
+					    était à `rounded-2xl` (16px) autour de champs Stripe à 12px, eux-mêmes
+					    voisins de champs maison clampés à 22px. Trois formes, trois blocs
+					    verticalement adjacents. */}
 					<div
 						ref={cardContainerRef}
-						className="bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm"
+						className="border-border bg-card overflow-hidden rounded-lg border p-4"
 					>
 						<PaymentElement onReady={() => setIsPaymentReady(true)} onFocus={scrollCardIntoView} />
-					</div>
-
-					{/* Trust strip — kept above the sticky CTA on mobile so it stays visible */}
-					<div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
-						<span className="inline-flex items-center gap-1">
-							<LockIcon className="size-3" aria-hidden="true" />
-							Paiement sécurisé
-						</span>
-						<span aria-hidden="true" className="text-border hidden sm:inline">
-							|
-						</span>
-						<span className="inline-flex items-center gap-1">
-							Propulsé par <StripeWordmark className="h-4 w-auto opacity-50" />
-						</span>
 					</div>
 
 					{/* Terms notice + Pay button */}

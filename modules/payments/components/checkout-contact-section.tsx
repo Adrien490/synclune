@@ -22,9 +22,11 @@ import { EnvelopeIcon } from "@phosphor-icons/react/ssr";
 interface CheckoutContactSectionProps {
 	form: CheckoutFormInstance;
 	session: Session | null;
+	/** Première étape du tunnel — accent rose, cf. `CheckoutSection`. */
+	isComplete?: boolean;
 }
 
-export function CheckoutContactSection({ form, session }: CheckoutContactSectionProps) {
+export function CheckoutContactSection({ form, session, isComplete }: CheckoutContactSectionProps) {
 	const isGuest = !session;
 	const router = useRouter();
 	const [isLogoutPending, startLogoutTransition] = useTransition();
@@ -50,7 +52,7 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 	};
 
 	return (
-		<CheckoutSection title="Contact">
+		<CheckoutSection title="Contact" accent="rose" isComplete={isComplete}>
 			<div className="space-y-5">
 				{/* Email (guests only) */}
 				{isGuest && (
@@ -85,9 +87,12 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 					</form.AppField>
 				)}
 
-				{/* Email display for logged-in users */}
+				{/* Email display for logged-in users.
+				    `rounded-md` (16px) : l'encart vit dans une `CheckoutSection` à
+				    `rounded-lg` (20px). `rounded-xl` valait 32px — un enfant plus
+				    arrondi que son conteneur. */}
 				{!isGuest && session.user.email && (
-					<div className="border-primary/10 bg-primary/5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5 text-sm">
+					<div className="border-primary/10 bg-primary/5 flex flex-wrap items-center gap-2 rounded-md border p-3.5 text-sm">
 						<EnvelopeIcon className="text-muted-foreground size-4 shrink-0" />
 						<span className="text-muted-foreground">Email :</span>
 						<span className="font-medium">{session.user.email}</span>
@@ -95,7 +100,14 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 							type="button"
 							onClick={() => setIsSwitchConfirmOpen(true)}
 							disabled={isLogoutPending}
-							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring ml-auto rounded-sm text-xs underline hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
+							// `focus-ring`, l'utility SSOT — et surtout pas la séquence
+							// `focus-visible:outline-none` + `focus-visible:ring-ring` qui vivait
+							// ici : elle annulait l'outline `--foreground` (19,5:1) posé par le
+							// base layer de `globals.css` pour ne laisser que l'anneau `--ring`,
+							// rose pastel à ~1,55:1 — sous les 3:1 de WCAG 1.4.11. `--ring` reste
+							// pastel à dessein, il ne porte que la marque ; c'est l'outline qui
+							// porte l'information.
+							className="text-muted-foreground hover:text-foreground focus-ring ml-auto rounded-sm text-xs underline hover:no-underline disabled:opacity-50"
 							aria-busy={isLogoutPending}
 						>
 							{isLogoutPending ? "Déconnexion…" : "Ce n'est pas moi"}

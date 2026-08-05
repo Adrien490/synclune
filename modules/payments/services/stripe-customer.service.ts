@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
 import { buildIdempotencyKey } from "@/shared/lib/stripe-idempotency";
+import { normalizeEmail } from "@/shared/utils/normalize-email";
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
@@ -23,24 +24,55 @@ type CreateStripeCustomerResult = { customerId: string } | { customerId: null; e
 /**
  * Creates or retrieves a Stripe customer for checkout.
  *
- * Uses an idempotency key based on email to prevent duplicate customers —
- * that key is the ONLY dedupe mechanism since the guest-only checkout
- * (User.stripeCustomerId dropped, Lot 0 S1.1).
+ * **Deux mécanismes de dédupe, et il faut les deux** — le checkout étant 100 %
+ * invité, aucune colonne locale ne porte le `cus_*` (`User.stripeCustomerId`
+ * droppée au Lot 0 S1.1, `Order.stripeCustomerId` au right-sizing du 2026-08-04,
+ * toutes deux faute de lecteur) :
+ *
+ *  1. **`customers.list({ email })` en amont** — couvre le cas long. C'est le
+ *     seul chemin fortement cohérent : `customers.search` s'en exclut
+ *     explicitement (« Don't use search in read-after-write flows where strict
+ *     consistency is necessary… data is searchable in less than a minute…
+ *     up to an hour behind during outages »), or un ré-init de checkout arrive
+ *     précisément dans la minute.
+ *  2. **La clé d'idempotence** — couvre la rafale : deux requêtes concurrentes
+ *     passent toutes deux le `list` à vide, et c'est la clé qui empêche alors
+ *     les deux `create` d'aboutir. ⚠️ Elle **expire au bout de 24 h** côté
+ *     Stripe : à elle seule elle ne dédupe qu'une journée, ce qui laissait une
+ *     cliente qui recommande la semaine suivante repartir sur un second `cus_*`.
+ *
+ * Best-effort de bout en bout : un échec de lecture ne bloque jamais le
+ * checkout, il retombe sur la création (au pire un doublon, jamais un paiement
+ * perdu).
  */
 export async function getOrCreateStripeCustomer(
 	params: CreateStripeCustomerParams,
 ): Promise<CreateStripeCustomerResult> {
 	return Sentry.startSpan({ name: "stripe.customers.create", op: "stripe.customer" }, async () => {
+		// ⚠️ La MÊME valeur normalisée doit servir aux trois usages : la recherche,
+		// le corps du `create` et la clé d'idempotence. Le filtre `email` de
+		// `customers.list` est **case-sensitive** (`api/customers/list`) — envoyer
+		// l'email brut au `create` stockerait « Jane@X.com » chez Stripe, que la
+		// recherche « jane@x.com » du checkout suivant ne retrouverait jamais. La
+		// dédupe ne tient donc que si la valeur STOCKÉE est déjà canonique.
+		const email = normalizeEmail(params.email);
+
 		try {
-			// Lowercase + trim so case variations of the same email reuse the same Stripe customer.
+			const existingId = await findStripeCustomerByEmail(email);
+			if (existingId) return { customerId: existingId };
+
 			// L'email est HASHÉ, pas concaténé : `api/idempotent_requests` déconseille
 			// explicitement d'y mettre un identifiant personnel, et cette clé partait dans
 			// un en-tête HTTP que Stripe conserve 24 h. Le digest préserve la
 			// déduplication à l'identique (même email normalisé ⇒ même clé) et borne la
 			// longueur, un email pouvant aller jusqu'à 255 c. à lui seul.
-			const customerIdempotencyKey = buildIdempotencyKey("customer-create", [
-				params.email.toLowerCase().trim(),
-			]);
+			//
+			// Préfixe `-v2` : le corps du `create` a changé (email normalisé au lieu de
+			// brut). Réutiliser l'ancien préfixe ferait rejeter par Stripe, pendant les
+			// 24 h suivant le déploiement, tout replay d'une clé émise avec l'ancienne
+			// casse — « Keys for idempotent requests can only be used with the same
+			// parameters ». Même parade que le suffixe `-r2` d'`initialize-payment`.
+			const customerIdempotencyKey = buildIdempotencyKey("customer-create-v2", [email]);
 
 			// `initializePayment` appelle ce service AVANT toute saisie d'adresse : il
 			// passe des chaînes vides. On omet alors `name` et `address` au lieu
@@ -55,7 +87,7 @@ export async function getOrCreateStripeCustomer(
 
 			const customer = await stripe.customers.create(
 				{
-					email: params.email,
+					email,
 					...(fullName && { name: fullName }),
 					...(hasAddress && {
 						address: {
@@ -84,13 +116,41 @@ export async function getOrCreateStripeCustomer(
 			logger.warn(
 				"[STRIPE_CUSTOMER] Transient error creating Stripe customer, continuing without",
 				{
-					email: params.email,
+					email,
 					error: e instanceof Error ? e.message : String(e),
 				},
 			);
 			return { customerId: null };
 		}
 	});
+}
+
+/**
+ * Retrouve un client Stripe existant par son email exact.
+ *
+ * `customers.list` et non `customers.search` : la doc de Search exclut
+ * elle-même les flux read-after-write (index à la minute, jusqu'à une heure de
+ * retard en incident), ce qui est exactement le rythme d'un checkout.
+ *
+ * `limit: 1` suffit : la liste est triée par date de création décroissante, donc
+ * on récupère la fiche la plus récente — celle que `enrichStripeCustomer` a
+ * enrichie en dernier. Un compte peut porter plusieurs `cus_*` pour un même
+ * email (doublons créés avant cette dédupe) ; on n'essaie pas de les fusionner,
+ * c'est une opération Dashboard.
+ *
+ * Best-effort : toute erreur rend `null`, le caller crée alors normalement.
+ */
+async function findStripeCustomerByEmail(email: string): Promise<string | null> {
+	try {
+		const { data } = await stripe.customers.list({ email, limit: 1 });
+		return data[0]?.id ?? null;
+	} catch (e) {
+		logger.warn("[STRIPE_CUSTOMER] Lookup by email failed, falling back to create", {
+			email,
+			error: e instanceof Error ? e.message : String(e),
+		});
+		return null;
+	}
 }
 
 interface EnrichStripeCustomerParams {

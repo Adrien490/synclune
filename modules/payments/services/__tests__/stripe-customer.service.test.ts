@@ -5,6 +5,7 @@ const { mockStripe } = vi.hoisted(() => ({
 		customers: {
 			create: vi.fn(),
 			update: vi.fn(),
+			list: vi.fn(),
 		},
 	},
 }));
@@ -53,6 +54,9 @@ function makeParams(overrides = {}) {
 describe("getOrCreateStripeCustomer", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// Par défaut : aucune fiche existante → le service crée. Les tests de dédupe
+		// ci-dessous surchargent ce retour.
+		mockStripe.customers.list.mockResolvedValue({ data: [] });
 	});
 
 	it("should create a Stripe customer and return its id", async () => {
@@ -64,7 +68,7 @@ describe("getOrCreateStripeCustomer", () => {
 		expect(mockStripe.customers.create).toHaveBeenCalledTimes(1);
 	});
 
-	it("should use email-based idempotency key (the ONLY dedupe since Lot 0 S1.1)", async () => {
+	it("should use an email-based idempotency key (dédupe des requêtes CONCURRENTES)", async () => {
 		mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
 
 		await getOrCreateStripeCustomer(makeParams({ email: "test@synclune.fr" }));
@@ -73,7 +77,11 @@ describe("getOrCreateStripeCustomer", () => {
 		// L'email est HASHÉ depuis l'audit Stripe (`api/idempotent_requests` déconseille
 		// tout identifiant personnel dans la clé). On assert la FORME et l'absence de
 		// fuite, pas un digest en dur — figer la valeur ne vérifierait que le SHA-256.
-		expect(options.idempotencyKey).toMatch(/^customer-create-[0-9a-f]{64}$/);
+		//
+		// `-v2` : le corps du `create` envoie désormais l'email NORMALISÉ. Garder
+		// l'ancien préfixe ferait rejeter par Stripe, pendant 24 h, tout replay d'une
+		// clé émise avec l'ancienne casse (« same parameters »).
+		expect(options.idempotencyKey).toMatch(/^customer-create-v2-[0-9a-f]{64}$/);
 		expect(options.idempotencyKey).not.toContain("test@synclune.fr");
 	});
 
@@ -84,10 +92,74 @@ describe("getOrCreateStripeCustomer", () => {
 		await getOrCreateStripeCustomer(makeParams({ email: "test@synclune.fr" }));
 
 		// La propriété qui compte n'est pas la valeur de la clé mais le fait que deux
-		// écritures d'un même email CONVERGENT — sinon la dédupe (seul mécanisme
-		// depuis le checkout 100 % invité) laisserait passer un doublon de client.
+		// écritures d'un même email CONVERGENT — sinon la dédupe laisserait passer un
+		// doublon de client.
 		const [firstCall, secondCall] = mockStripe.customers.create.mock.calls;
 		expect(firstCall![1].idempotencyKey).toBe(secondCall![1].idempotencyKey);
+	});
+
+	/**
+	 * @regression stripe-customer-dedupe-beyond-idempotency-window-2026-08-05
+	 *
+	 * Audit de conformité du modèle `Order` (Stripe 2026), constat P2.
+	 *
+	 * La clé d'idempotence était présentée comme « the ONLY dedupe mechanism »
+	 * depuis le checkout 100 % invité. Mais **une clé d'idempotence Stripe expire
+	 * au bout de 24 h** : une cliente qui recommandait la semaine suivante
+	 * repartait sur un second `cus_*`. Conséquence : fiches dupliquées au
+	 * Dashboard, historique fragmenté pour Radar.
+	 *
+	 * Parade : `customers.list({ email })` AVANT le `create`. Pas
+	 * `customers.search`, que sa propre doc exclut des flux read-after-write
+	 * (index à la minute, jusqu'à une heure de retard en incident) — or un
+	 * ré-init de checkout arrive dans la minute.
+	 *
+	 * ⚠️ La dédupe ne tient que si la valeur STOCKÉE est canonique : le filtre
+	 * `email` de `customers.list` est **case-sensitive**. D'où la normalisation
+	 * du corps du `create`, et pas seulement de la clé.
+	 */
+	describe("dédupe au-delà de la fenêtre d'idempotence de 24 h (@regression)", () => {
+		it("réutilise la fiche existante et ne crée RIEN", async () => {
+			mockStripe.customers.list.mockResolvedValue({ data: [{ id: "cus_returning" }] });
+
+			const result = await getOrCreateStripeCustomer(makeParams());
+
+			expect(result).toEqual({ customerId: "cus_returning" });
+			expect(mockStripe.customers.create).not.toHaveBeenCalled();
+		});
+
+		it("cherche sur l'email NORMALISÉ (le filtre Stripe est case-sensitive)", async () => {
+			mockStripe.customers.list.mockResolvedValue({ data: [] });
+			mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
+
+			await getOrCreateStripeCustomer(makeParams({ email: "  Marie@Synclune.FR " }));
+
+			expect(mockStripe.customers.list).toHaveBeenCalledWith({
+				email: "marie@synclune.fr",
+				limit: 1,
+			});
+		});
+
+		it("stocke l'email NORMALISÉ chez Stripe — sinon la recherche suivante le manque", async () => {
+			mockStripe.customers.list.mockResolvedValue({ data: [] });
+			mockStripe.customers.create.mockResolvedValue({ id: "cus_new" });
+
+			await getOrCreateStripeCustomer(makeParams({ email: "  Marie@Synclune.FR " }));
+
+			// C'est l'assertion qui ferme la boucle : la fiche créée aujourd'hui doit
+			// être retrouvable par la recherche exacte de la commande suivante.
+			expect(mockStripe.customers.create.mock.calls[0]![0].email).toBe("marie@synclune.fr");
+		});
+
+		it("crée normalement quand la recherche échoue (best-effort, jamais bloquant)", async () => {
+			mockStripe.customers.list.mockRejectedValue(new Error("Stripe down"));
+			mockStripe.customers.create.mockResolvedValue({ id: "cus_fallback" });
+
+			const result = await getOrCreateStripeCustomer(makeParams());
+
+			expect(result).toEqual({ customerId: "cus_fallback" });
+			expect(mockStripe.customers.create).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	it("should map address correctly to Stripe format", async () => {

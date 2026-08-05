@@ -21,7 +21,11 @@ import { CheckoutErrorSummary } from "./checkout-error-summary";
 import { PaymentSectionSkeleton } from "./payment-section-skeleton";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { BRAND } from "@/shared/constants/brand";
-import { buildCheckoutFieldErrors, getIncompleteSections } from "../constants/checkout-fields";
+import {
+	buildCheckoutFieldErrors,
+	getCompletedSections,
+	getIncompleteSections,
+} from "../constants/checkout-fields";
 
 // Lazy-load the ~100 KB `@stripe/react-stripe-js` bundle. Keeps `/paiement`
 // initial JS below the 130 KB size-limit budget and lets the address/summary
@@ -231,15 +235,68 @@ export function CheckoutFormBody({
 					 * D'où deux périmètres distincts : `lockDestination` sur les 2 champs
 					 * tarifaires, `<fieldset disabled>` sur les sections qui portent le montant.
 					 */}
-					<div className="flex min-w-0 flex-col gap-8">
-						{/* === SECTION 1: Contact === */}
-						<CheckoutContactSection form={form} session={session} />
+					{/*
+					 * La progression est portée par les QUATRE accents de marque — rose,
+					 * lavande, menthe, soleil — en filet de 3px sur le flanc de chaque
+					 * section. Ils dormaient depuis le vidage de la landing ; ici ils
+					 * font un travail : dire où l'on en est. Jamais en encre (1,5 à
+					 * 2,5:1 sur le fond), toujours en surface.
+					 */}
+					{/*
+					 * ⚠️ Le sélecteur rend une CHAÎNE, pas un objet — et surtout pas
+					 * `s.values`. Une souscription à `values` change à chaque frappe : elle
+					 * re-rendrait `CheckoutAddressFields`, donc TOUS les champs, sur chaque
+					 * caractère saisi. C'est le même piège que celui qui a fait extraire
+					 * `AddressAutocompleteField` de son parent (« Must live outside
+					 * CheckoutAddressFields to avoid re-mounting on every keystroke »).
+					 * Le calcul est fait DANS le sélecteur, qui n'émet que la liste des
+					 * sections complétées : le rendu ne repart que quand une étape bascule.
+					 */}
+					<form.Subscribe
+						selector={(s) => {
+							const meta = s.fieldMeta as Record<string, { errors: string[] }>;
+							const invalidPaths = Object.entries(meta)
+								.filter(([, m]) => m.errors.length > 0)
+								.map(([name]) => name);
+							const values = s.values as { email?: unknown; shipping: Record<string, unknown> };
+							const filledPaths = [
+								...(String(values.email ?? "").trim() ? ["email"] : []),
+								...Object.entries(values.shipping)
+									.filter(([, v]) => String(v ?? "").trim().length > 0)
+									.map(([key]) => `shipping.${key}`),
+							];
+							// Objet plutôt que chaîne nue : `Subscribe` type son sélecteur ainsi.
+							// La comparaison shallow de TanStack porte alors sur la CHAÎNE, donc
+							// le bénéfice reste entier — pas de re-rendu tant qu'aucune étape ne bascule.
+							return {
+								completedKey: getCompletedSections(filledPaths, invalidPaths, isGuest).join("|"),
+							};
+						}}
+					>
+						{({ completedKey }) => {
+							const completed = new Set(completedKey ? completedKey.split("|") : []);
 
-						{/* === SECTION 2: Shipping Address === */}
-						<CheckoutSection title="Livraison">
-							<CheckoutAddressFields form={form} lockDestination={isAmountLocked} />
-						</CheckoutSection>
-					</div>
+							return (
+								<div className="flex min-w-0 flex-col gap-8">
+									{/* === SECTION 1: Contact === */}
+									<CheckoutContactSection
+										form={form}
+										session={session}
+										isComplete={completed.has("Contact")}
+									/>
+
+									{/* === SECTION 2: Shipping Address === */}
+									<CheckoutSection
+										title="Livraison"
+										accent="lavender"
+										isComplete={completed.has("Livraison")}
+									>
+										<CheckoutAddressFields form={form} lockDestination={isAmountLocked} />
+									</CheckoutSection>
+								</div>
+							);
+						}}
+					</form.Subscribe>
 
 					{/*
 					 * `min-w-0` neutralise le `min-width: min-content` par défaut du fieldset.
@@ -248,14 +305,29 @@ export function CheckoutFormBody({
 					 * marge fantôme sur la première section. Un enfant absolu ne prend pas de `gap`.
 					 */}
 					<fieldset disabled={isAmountLocked} className="flex min-w-0 flex-col gap-8">
-						<legend className="sr-only">Frais de livraison et code promo</legend>
+						{/* Le « et code promo » a survécu au retrait du modèle `Discount`
+							    (2026-08-05) : un lecteur d'écran cherchait un champ de remise dans
+							    un groupe qui ne contient qu'un tarif d'expédition. */}
+						<legend className="sr-only">Frais de livraison</legend>
 
 						{/* === SECTION 3: Shipping cost & lead time === */}
 						{/* Pas « Mode d'expédition » : le tarif est unique par zone, la section
 						    est en lecture seule et n'offre aucun choix — le titre promettait une
 						    sélection inexistante. Pas « Livraison » non plus : la section 2
 						    (adresse) porte déjà ce titre. */}
-						<CheckoutSection title="Frais et délai de livraison">
+						{/*
+						 * `isComplete` dérivé du TARIF RÉSOLU, pas de l'état des champs — d'où
+						 * un calcul en ligne plutôt qu'une entrée dans `getCompletedSections`,
+						 * qui raisonne sur des paths de formulaire. Cette section n'a aucune
+						 * saisie, mais elle a bien un état résolu (un tarif et un délai) et un
+						 * état non résolu (code postal absent, ou zone non livrable) : sans ça,
+						 * seules 2 des 4 étapes pouvaient porter le repère.
+						 */}
+						<CheckoutSection
+							title="Frais et délai de livraison"
+							accent="mint"
+							isComplete={!shippingUnavailable && shippingInfo !== null}
+						>
 							<ShippingMethodSection
 								shipping={shipping}
 								shippingUnavailable={shippingUnavailable}
@@ -265,7 +337,7 @@ export function CheckoutFormBody({
 					</fieldset>
 
 					{/* === SECTION 4: Payment === */}
-					<CheckoutSection title="Paiement">
+					<CheckoutSection title="Paiement" accent="sun">
 						{pi.isLoading ? (
 							<PaymentSectionSkeleton />
 						) : pi.clientSecret ? (

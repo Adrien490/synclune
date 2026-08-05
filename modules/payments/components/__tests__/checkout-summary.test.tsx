@@ -462,12 +462,19 @@ describe("CheckoutSummary", () => {
 			expect(screen.getAllByTestId("cb-icon").length).toBeGreaterThanOrEqual(1);
 		});
 
-		it("renders secure payment message", () => {
+		it("ne réintroduit PAS de mention de sécurité dans le résumé", () => {
+			// Le tunnel affichait QUATRE promesses de sécurité simultanément sur
+			// desktop — en-tête, ce résumé, l'intro de la section Paiement et un strip
+			// sous les champs — dont deux quasi identiques. Il en reste deux, aux rôles
+			// distincts : l'en-tête (« suis-je dans un tunnel sûr ? ») et la section
+			// Paiement (« que devient ma carte ? »). Le résumé n'en porte plus.
+			// Les logos de cartes RESTENT : ils portent une information, pas un slogan.
 			const cart = createCart([createCartItem()]);
 
 			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
-			expect(screen.getAllByText("Paiement 100% sécurisé").length).toBeGreaterThanOrEqual(1);
+			expect(screen.queryByText(/sécurisé/i)).not.toBeInTheDocument();
+			expect(screen.getAllByTestId("visa-icon").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("renders return policy and CGV links", () => {

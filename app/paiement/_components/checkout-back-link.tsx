@@ -24,7 +24,11 @@ export function CheckoutBackLink({
 				className="motion-safe:can-hover:group-hover:-translate-x-0.5 size-4 motion-safe:transition-transform"
 				aria-hidden="true"
 			/>
-			<span className="hidden sm:inline">{label}</span>
+			{/* Visible à TOUTES les largeurs : le libellé était `hidden sm:inline` et le
+			    badge de confiance `hidden sm:inline-flex`, si bien que sous 640px l'en-tête
+			    du tunnel ne contenait AUCUN mot — une flèche qui ne dit pas où elle ramène,
+			    et plus aucun signal de sécurité, exactement là où l'anxiété est maximale. */}
+			<span>{label}</span>
 		</Link>
 	);
 }

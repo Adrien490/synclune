@@ -73,8 +73,8 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 							<CheckoutTrustBadge />
 
 							{/* Logo - right (single render, responsive 28→36px) */}
-							<div className="ml-auto" style={{ viewTransitionName: "shop-logo-paiement" }}>
-								<Logo href="/" size={28} sizeMd={36} />
+							<div className="ml-auto">
+								<Logo href="/" size={28} sizeMd={36} viewTransitionName="shop-logo-paiement" />
 							</div>
 						</div>
 					</div>
