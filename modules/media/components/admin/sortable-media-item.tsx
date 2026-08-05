@@ -673,6 +673,7 @@ export function SortableMediaItem({
 											fill
 											className="object-cover"
 											sizes="40px"
+											quality={IMAGE_QUALITY.THUMBNAIL}
 											aria-hidden="true"
 										/>
 									) : isVideo ? (
@@ -690,6 +691,7 @@ export function SortableMediaItem({
 											fill
 											className="object-cover"
 											sizes="40px"
+											quality={IMAGE_QUALITY.THUMBNAIL}
 											aria-hidden="true"
 										/>
 									)}

@@ -83,7 +83,7 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 						haptic("light");
 						onRetry();
 					}}
-					className="bg-primary text-primary-foreground hover:bg-primary/90 flex min-h-11 touch-manipulation items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+					className="bg-primary text-primary-foreground can-hover:hover:bg-primary/90 flex min-h-11 touch-manipulation items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
 				>
 					<ArrowsClockwiseIcon className="size-4" aria-hidden="true" />
 					Réessayer

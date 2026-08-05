@@ -22,7 +22,7 @@ export function GalleryCounter({ current, total }: GalleryCounterProps) {
 			// sélecteur accessible, et l'ancien e2e cherchait un `[class*="counter"]`
 			// qui n'a jamais existé — il passait par son repli sur la région live.
 			data-testid="gallery-counter"
-			// Pas de `tabular-nums` : Fraunces (`font-display`) n'expose pas de feature
+			// Pas de `tabular-nums` : la display n'expose pas de feature — Winky Sans comme Fraunces avant elle, GSUB sans
 			// `tnum` en GSUB, la classe n'y produit RIEN — mesuré sur la refonte du
 			// panier (Δ 16,14 px). Sans conséquence ici de toute façon : la loupe est
 			// calée par `ms-auto`, la largeur du numéro n'entraîne aucun voisin.

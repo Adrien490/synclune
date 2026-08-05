@@ -37,11 +37,20 @@ import { describe, expect, it } from "vitest";
 const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
 const GALLERY_DIR = "shared/components/gallery";
 
-/** Fichiers de chrome — `hover-zoom.tsx` est l'image elle-même, pas du chrome. */
+/**
+ * Fichiers de chrome — `hover-zoom.tsx` est l'image elle-même, pas du chrome.
+ *
+ * `token.styles.ts` en fait partie depuis l'extraction de la SSOT du jeton : les
+ * classes de SURFACE (celles que les interdits ci-dessous visent) y ont déménagé.
+ * Sans lui dans cette liste, un `bg-primary` réintroduit dans la SSOT passerait
+ * sous le radar tout en s'appliquant aux deux jetons à la fois — le garde-fou
+ * serait devenu vide au moment précis où il devenait le plus utile.
+ */
 const CHROME_FILES = [
 	`${GALLERY_DIR}/counter.tsx`,
 	`${GALLERY_DIR}/navigation.tsx`,
 	`${GALLERY_DIR}/zoom-button.tsx`,
+	`${GALLERY_DIR}/token.styles.ts`,
 ] as const;
 
 /**
@@ -166,6 +175,68 @@ describe("@regression gallery-chrome-off-photo", () => {
 				).toBe(true);
 			});
 		}
+	});
+
+	// Le jeton porte `motion-reduce:transform-none`, qui supprime d'un coup
+	// `can-hover:hover:scale-105` ET `active:scale-95`. Quand il ne restait que
+	// `can-hover:hover:bg-muted`, le seul retour de survol tombait à un écart de
+	// 1,19:1 (`--card` → `--muted`) : celui qui a demandé « moins de mouvement »
+	// se retrouvait avec le retour le PLUS FAIBLE sur les deux seules commandes
+	// desktop de la galerie. Le retour doit donc être porté aussi par une
+	// propriété que la préférence ne coupe pas.
+	describe("6. le retour de survol ne dépend pas d'un transform", () => {
+		const TOKEN_FILE = `${GALLERY_DIR}/token.styles.ts`;
+
+		it("le survol modifie une propriété non-transform", () => {
+			const source = read(TOKEN_FILE);
+
+			expect(
+				/can-hover:hover:\[--token-ring:/.test(source),
+				`${TOKEN_FILE} ne fait plus varier \`--token-ring\` au survol.\n` +
+					"Le jeton neutralise ses `scale` sous `motion-reduce` : sans un retour porté\n" +
+					"par une autre propriété (ici l'épaisseur du bord d'encre), il ne reste qu'un\n" +
+					"écart de remplissage de 1,19:1, soit rien de perceptible.",
+			).toBe(true);
+		});
+
+		it("l'appui aussi", () => {
+			expect(read(TOKEN_FILE)).toMatch(/active:\[--token-ring:/);
+		});
+
+		// `can-hover` est un `@custom-variant`, que Tailwind v4 émet APRÈS les variants
+		// intégrés : mesuré sur le CSS compilé du dépôt, `.active:…` sort à ~231 000 et
+		// `.can-hover:hover:…` à ~334 000. À spécificité égale c'est donc le survol qui
+		// gagne — et à la souris `:active` implique toujours `:hover`. Tout état d'appui
+		// doit être déclaré DEUX fois : `active:` (tactile) et `can-hover:active:`
+		// (~334 362, soit après le survol) pour reprendre la main sur un pointeur fin.
+		it("chaque état d'appui est doublé en can-hover:active: (sinon mort à la souris)", () => {
+			const source = read(TOKEN_FILE);
+			const pressed = [...source.matchAll(/(?<![\w:-])active:([\w[\]:.\-−]+)/g)].map((m) => m[1]);
+
+			expect(pressed.length, "Aucun état d'appui trouvé — le scan a dû casser.").toBeGreaterThan(0);
+
+			for (const value of new Set(pressed)) {
+				expect(
+					source.includes(`can-hover:active:${value}`),
+					`\`active:${value}\` n'a pas de jumeau \`can-hover:active:${value}\`.\n` +
+						"Sur un pointeur fin, `can-hover:hover:` est émis APRÈS `active:` et gagne à\n" +
+						"spécificité égale : l'état d'appui ne s'appliquerait jamais à la souris.",
+				).toBe(true);
+			}
+		});
+
+		// Une seule déclaration `box-shadow` par état, pilotée par la variable. Deux
+		// règles concurrentes (`can-hover:hover:shadow-[…]` + `focus-visible:shadow-[…]`)
+		// se disputeraient l'ordre d'émission, et un jeton survolé PENDANT qu'il a le
+		// focus pourrait perdre son anneau.
+		it("le survol n'écrit pas une seconde règle box-shadow", () => {
+			expect(
+				/can-hover:hover:shadow-\[/.test(read(TOKEN_FILE)),
+				`${TOKEN_FILE} ajoute un \`can-hover:hover:shadow-[…]\`. L'épaisseur doit passer\n` +
+					"par `--token-ring` : deux déclarations `box-shadow` sur le même élément\n" +
+					"entrent en concurrence avec le sandwich de `focus-visible`.",
+			).toBe(false);
+		});
 	});
 
 	describe("le chrome vit dans la réserve, pas sur la photo", () => {

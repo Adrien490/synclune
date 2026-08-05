@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { HOVER_CAPABLE_QUERY } from "@/shared/constants/pointer";
 import {
 	GALLERY_MAIN_SIZES,
 	MAIN_IMAGE_QUALITY,
@@ -26,10 +27,6 @@ interface GalleryHoverZoomProps {
 	/** @public Image sizes for responsive — dormant : le défaut SSOT suffit aux appelants. */
 	sizes?: string;
 }
-
-// Même capacité que le variant `can-hover:` de globals.css. Requête sans largeur
-// → littéral autorisé (seuls les seuils de largeur passent par le SSOT breakpoints).
-const HOVER_CAPABLE_QUERY = "(hover: hover) and (pointer: fine)";
 
 export function GalleryHoverZoom({
 	src,
@@ -161,10 +158,18 @@ export function GalleryHoverZoom({
 				src={src}
 				alt={alt}
 				fill
-				className={cn("object-cover", transitionClass)}
+				// ⚠️ `origin-center` en CLASSE, pas dans le `style` ci-dessous.
+				// `transformOrigin` y était déclaré à « center center » pendant
+				// qu'`applyOrigin()` écrit la MÊME propriété en impératif sur
+				// `imageRef.current.style` : deux sources pour une propriété, dont une
+				// inerte. Elle ne l'était que par un détail d'implémentation — React ne
+				// réécrit pas une clé de `style` dont la valeur n'a pas changé entre deux
+				// rendus, donc la valeur impérative survivait par chance, pas par contrat.
+				// En classe, la cascade tranche pour de bon : le style inline gagne dès
+				// qu'`applyOrigin` a écrit, et la classe fournit l'origine au repos.
+				className={cn("origin-center object-cover", transitionClass)}
 				style={{
 					transform: isZooming ? `scale(${zoomLevel})` : "scale(1)",
-					transformOrigin: "center center",
 				}}
 				preload={preload}
 				fetchPriority={preload ? "high" : undefined}

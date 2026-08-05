@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
 
+import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
@@ -19,7 +20,12 @@ import { parseGalleryParams } from "@/modules/media/schemas/gallery-params.schem
 import { buildGallery } from "@/modules/media/services/gallery-builder.service";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
 
-import { GalleryCounter, GalleryNavigation, GalleryZoomButton } from "@/shared/components/gallery";
+import {
+	GalleryCounter,
+	GalleryNavigation,
+	GalleryTapHint,
+	GalleryZoomButton,
+} from "@/shared/components/gallery";
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { MaskingTape } from "@/shared/components/masking-tape";
@@ -27,7 +33,6 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { useLightbox } from "@/shared/hooks";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { mediaBelow } from "@/shared/constants/breakpoints";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
 
@@ -136,20 +141,22 @@ function GalleryThumbnailList({
 				title={title}
 				onClick={() => onScrollTo(index)}
 				onError={() => onError(media.id)}
-				className={isDesktop ? "hover:shadow-sm" : "size-14"}
+				className={isDesktop ? "can-hover:hover:shadow-sm" : "size-14"}
 				isLCPCandidate={index === 0}
 			/>
 			{index === current && (
 				// Monté/démonté au changement de vue : l'animation `hand-draw-load`
 				// rejoue donc à chaque fois, et le trait SE DESSINE au lieu
 				// d'apparaître. Neutralisée sous `prefers-reduced-motion`.
+				// Width seule (hauteur dérivée — l'ancien couple ×9 letterboxait) ;
+				// graisse au cran `marqueur` de l'échelle (l'ancien 3 était hors échelle).
+				// `--piece-accent` : l'exception documentée à la cascade de section.
 				<HandDrawnAccent
 					variant="underline"
 					inView={false}
 					color="var(--piece-accent, var(--primary))"
-					strokeWidth={3}
+					strokeWidth={HAND_DRAWN_STROKES.marqueur}
 					width={isDesktop ? 52 : 40}
-					height={9}
 					duration={MOTION_CONFIG.duration.slow}
 					className="absolute inset-x-0 bottom-0 mx-auto"
 				/>
@@ -176,19 +183,23 @@ function GalleryThumbnailList({
 		);
 	}
 
-	// Mobile: horizontal scroll avec ScrollFade (gradient indique overflow)
+	// Mobile: horizontal scroll avec `scroll-fade-x` (le fondu de bord indique l'overflow)
 	return (
 		<div className="order-3 mt-3 md:hidden">
-			<ScrollFade axis="horizontal">
+			<div
+				data-slot="scroll-fade-container"
+				data-no-edge-swipe=""
+				className="scroll-fade-x no-scrollbar w-full overflow-x-auto overflow-y-hidden"
+			>
 				<div
 					ref={tablistRef}
-					className="flex flex-nowrap gap-2 py-1 pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]"
+					className="flex w-fit min-w-full flex-nowrap gap-2 py-1 pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]"
 					role="tablist"
 					aria-label="Vignettes du produit"
 				>
 					{thumbnails}
 				</div>
-			</ScrollFade>
+			</div>
 		</div>
 	);
 }
@@ -206,6 +217,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const [current, setCurrent] = useState(0);
 	const [thumbnailErrors, setThumbnailErrors] = useState<Set<string>>(new Set());
 	const { isOpen, open, close } = useLightbox();
+	// L'indice « Appuie pour agrandir » ne sert qu'avant la première ouverture.
+	// Suivi ici plutôt que dans `GalleryTapHint` : c'est la galerie qui possède les
+	// deux chemins d'ouverture (tap sur le slide et loupe desktop).
+	const [hasOpenedLightbox, setHasOpenedLightbox] = useState(false);
+	const openLightbox = () => {
+		setHasOpenedLightbox(true);
+		open();
+	};
 	const prefersReduced = useReducedMotion();
 	const haptic = useHaptic();
 	const galleryRef = useRef<HTMLDivElement>(null);
@@ -376,7 +395,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 						>
 							✨
 						</span>
-						<p className="text-primary text-sm font-medium">Photos en préparation</p>
+						{/* `text-primary` ici, c'était du TEXTE à 1,6:1 sur la carte (WCAG 1.4.3
+						    demande 4,5:1). Le rose pastel est un aplat, jamais une encre. */}
+						<p className="text-foreground text-sm font-medium">Photos en préparation</p>
 						<p className="text-muted-foreground text-sm leading-normal">Un peu de patience !</p>
 					</div>
 				</div>
@@ -403,9 +424,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 				aria-label={`Galerie photos ${title}`}
 				aria-roledescription="carrousel"
 			>
-				{/* Screen reader announcement (WCAG 4.1.3) */}
+				{/* Screen reader announcement (WCAG 4.1.3).
+				    Le libellé suit le TYPE du média courant, comme le fait déjà
+				    `media-lightbox.tsx` : sur un produit `[IMAGE, IMAGE, VIDÉO]`, la 3ᵉ vue
+				    s'annonçait « Image 3 sur 3 », et le plein écran ouvert depuis cette même
+				    vue disait « Vidéo 3 sur 3 ». Une seule galerie, deux vocabulaires. */}
 				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-					Image {current + 1} sur {images.length}
+					{currentMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image"} {current + 1} sur{" "}
+					{images.length}
 				</div>
 
 				<div
@@ -463,7 +489,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 												productType={productType}
 												totalImages={images.length}
 												isActive={index === current}
-												onOpen={open}
+												onOpen={openLightbox}
 												viewTransitionName={index === 0 ? `product-${product.id}` : undefined}
 											/>
 										))}
@@ -490,11 +516,20 @@ function GalleryContent({ product, title }: GalleryProps) {
 							    streaming. */}
 							<div className="mt-3 flex items-center gap-3 md:min-h-11">
 								{images.length > 1 && <GalleryCounter current={current} total={images.length} />}
+								{/* Sous `md`, aucune commande n'annonçait le plein écran (loupe et
+								    chevrons sont `hidden md:flex`, le numéro de vue est `aria-hidden`).
+								    L'indice vit ICI, dans la réserve, et pas sur la photo : le chrome
+								    reste sur le carton, et la ligne porte déjà un texte de même taille —
+								    son apparition/disparition ne change donc pas la hauteur, aucun CLS,
+								    rien à répercuter dans `product-main-skeleton.tsx`.
+								    ⚠️ Ce n'est PAS une cible tactile (`<p aria-hidden>`) : `md:min-h-11`
+								    reste juste, ne pas le repasser en `min-h-11`. */}
+								<GalleryTapHint enabled={!hasOpenedLightbox} />
 								{/* Inconditionnelle : gatée sur `mediaType === "IMAGE"`, elle se
 								    démontait SOUS le focus en arrivant sur un slide vidéo, et la
 								    navigation au clavier mourait avec elle. Cf. `zoom-button.tsx`. */}
 								<GalleryZoomButton
-									onOpen={open}
+									onOpen={openLightbox}
 									mediaType={currentMedia?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE"}
 									isOpen={isOpen}
 								/>

@@ -44,10 +44,15 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@/modules/media/constants/image-config.constants", () => ({
-	GALLERY_MAIN_SIZES: "(max-width: 768px) 100vw, 50vw",
-	MAIN_IMAGE_QUALITY: 80,
-}));
+// ⚠️ `image-config.constants` n'est PAS mocké, et ne doit pas le redevenir.
+// Il l'était, avec `GALLERY_MAIN_SIZES: "(max-width: 768px) 100vw, 50vw"` et
+// `MAIN_IMAGE_QUALITY: 80` — deux valeurs qui n'existent nulle part dans le dépôt
+// (le vrai `sizes` a trois paliers et plafonne à `min(55vw, 640px)`). Le test
+// n'exerçait donc jamais le `sizes` réellement servi, et un changement de la SSOT
+// serait passé sans un rouge. Défaut jumeau de celui relevé sur `slide.test.tsx`,
+// qui mockait `GALLERY_ZOOM_LEVEL: 2` à sa propre valeur.
+// Le module est du constant pur : rien à isoler. Corollaire agréable — plus besoin
+// d'ajouter chaque nouvel import du composant à un mock qui l'ignorait en silence.
 
 // ============================================================================
 // RAF / getBoundingClientRect HARNESS
@@ -67,6 +72,10 @@ function flushRAF() {
 // IMPORT AFTER MOCKS
 // ============================================================================
 
+import {
+	GALLERY_MAIN_SIZES,
+	MAIN_IMAGE_QUALITY,
+} from "@/modules/media/constants/image-config.constants";
 import { GalleryHoverZoom } from "../hover-zoom";
 
 // ============================================================================
@@ -228,6 +237,22 @@ describe("GalleryHoverZoom", () => {
 			);
 			const wrapper = container.firstChild as HTMLElement;
 			expect(wrapper.className).toContain("cursor-zoom-in");
+		});
+
+		// Le `sizes`/`quality` par défaut viennent de la SSOT `image-config.constants`,
+		// désormais importée pour de vrai (cf. l'entête). Ces deux assertions sont ce
+		// qui rend le dé-mockage utile : elles échouent si la SSOT change sous le
+		// composant, là où la version mockée aurait continué à passer.
+		it("sert le sizes de la SSOT, pas une valeur locale", () => {
+			render(<GalleryHoverZoom src="/x.jpg" alt="sizes" />);
+
+			expect(screen.getByAltText("sizes")).toHaveAttribute("sizes", GALLERY_MAIN_SIZES);
+		});
+
+		it("sert la qualité de la SSOT, pas un palier hors échelle", () => {
+			render(<GalleryHoverZoom src="/x.jpg" alt="quality" />);
+
+			expect(screen.getByAltText("quality")).toHaveAttribute("quality", String(MAIN_IMAGE_QUALITY));
 		});
 
 		it("applies transition-transform class when prefersReducedMotion=false", () => {

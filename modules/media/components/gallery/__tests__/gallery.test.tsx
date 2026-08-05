@@ -305,6 +305,17 @@ describe("Gallery", () => {
 			expect(status).toBeInTheDocument();
 			expect(status.textContent).toContain("Image 1 sur 2");
 		});
+
+		// Le libellé suit le TYPE du média courant, comme `media-lightbox.tsx` le fait
+		// déjà de son côté. Sans ça, la 3ᵉ vue d'un `[IMAGE, IMAGE, VIDÉO]` s'annonçait
+		// « Image 3 sur 3 » pendant que le plein écran ouvert depuis cette même vue
+		// disait « Vidéo 3 sur 3 » : une galerie, deux vocabulaires.
+		it("annonce « Vidéo » quand le média courant en est une", () => {
+			vi.mocked(buildGallery).mockReturnValue([createMedia("m-1", { mediaType: "VIDEO" })]);
+			render(<Gallery product={createProduct()} title="Bague étoile" />);
+
+			expect(screen.getByRole("status").textContent).toContain("Vidéo 1 sur 1");
+		});
 	});
 
 	describe("aria-roledescription", () => {

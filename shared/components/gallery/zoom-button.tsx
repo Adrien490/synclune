@@ -2,6 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { prefetchLightbox } from "./prefetch-lightbox";
+import { GALLERY_TOKEN_CLASS } from "./token.styles";
 
 interface GalleryZoomButtonProps {
 	onOpen: () => void;
@@ -22,8 +23,19 @@ interface GalleryZoomButtonProps {
  * annoncent déjà via `aria-controls`), et ce bouton porte le libellé unique.
  *
  * Permanente, comme les chevrons : plus de `opacity-0` révélé au survol.
- * Desktop seulement — au doigt, on tape la photo, et le pincement natif de
- * `GalleryPinchZoom` couvre l'agrandissement sur place.
+ *
+ * ⚠️ `hidden md:flex` est un seuil de LARGEUR, pas de capacité — d'où trois
+ * régimes, et non deux :
+ *
+ * - **< 48 rem** : pas de loupe. On tape la photo, et le pincement natif de
+ *   `GalleryPinchZoom` couvre l'agrandissement sur place.
+ * - **≥ 48 rem, pointeur fin** : loupe + zoom au survol (`GalleryHoverZoom`).
+ * - **≥ 48 rem, tactile** (iPad) : loupe visible, mais **aucun zoom sur place** —
+ *   `slide.tsx` ne monte `GalleryPinchZoom` que SOUS `md`, et `GalleryHoverZoom`
+ *   se désactive tout seul faute de `hover: hover`. Il ne reste que le plein
+ *   écran, dont le plugin Zoom de la lightbox rattrape l'agrandissement.
+ *   Conséquence assumée ; ne pas la re-déduire comme un bug, et ne pas écrire que
+ *   « le pincement couvre l'agrandissement » — il n'est pas là.
  *
  * ⚠️ **Toujours montée, y compris sur un slide vidéo.** Elle était gatée sur
  * `mediaType === "IMAGE"` : sur un produit `[IMAGE, IMAGE, VIDÉO]`, deux
@@ -53,21 +65,13 @@ export function GalleryZoomButton({
 			onMouseEnter={prefetchLightbox}
 			onFocus={prefetchLightbox}
 			className={cn(
-				// `ms-auto` : la loupe se cale à droite de la réserve basse, le numéro
-				// de vue restant à gauche. Elle est toujours le dernier enfant du flex.
-				"ms-auto hidden size-11 shrink-0 items-center justify-center rounded-full md:flex",
-				"bg-card text-foreground shadow-[0_0_0_1.5px_var(--foreground)]",
-				"can-hover:hover:bg-muted",
-				"motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]",
-				"can-hover:hover:scale-105 active:scale-95 motion-reduce:transform-none",
-				// Sandwich encre/rose/encre — cf. le commentaire de `navigation.tsx`.
-				"outline-none focus-visible:shadow-[0_0_0_1.5px_var(--foreground),0_0_0_4.5px_var(--ring),0_0_0_6px_var(--foreground)]",
-				// Contraste forcé (Windows High Contrast) : les `box-shadow` y sont
-				// supprimés, donc le bord ET l'anneau de focus ci-dessus disparaissent —
-				// le jeton devient un aplat `Canvas` sur `Canvas`. Repli en `outline`,
-				// aligné sur `bottom-bar.styles.ts` / `count-badge.tsx`.
-				"forced-colors:outline forced-colors:outline-1 forced-colors:outline-[CanvasText]",
-				"forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[Highlight]",
+				// Géométrie propre à la loupe. `ms-auto` : elle se cale à droite de la
+				// réserve basse, le numéro de vue restant à gauche. Elle est toujours le
+				// dernier enfant du flex. La surface (bord d'encre, survol, anneau de
+				// focus, repli contraste forcé) vient de `token.styles.ts`, partagée avec
+				// les chevrons.
+				"ms-auto hidden shrink-0 md:flex",
+				GALLERY_TOKEN_CLASS,
 			)}
 			aria-label={
 				mediaType === "VIDEO" ? "Voir la vidéo en plein écran" : "Voir la photo en plein écran"

@@ -1,6 +1,9 @@
 "use client";
 
+import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
+import { CHEVRON_LEFT_PATH, CHEVRON_RIGHT_PATH } from "@/shared/components/hand-drawn/paths";
 import { cn } from "@/shared/utils/cn";
+import { GALLERY_TOKEN_CLASS } from "./token.styles";
 
 interface GalleryNavigationProps {
 	onPrev: () => void;
@@ -29,29 +32,27 @@ interface GalleryNavigationProps {
  *    l'iPad Mini portrait, 744 px — recevait le chrome souris par-dessus un
  *    slide tactile qui attend un pincement.
  *
- * ⚠️ L'anneau de focus est un sandwich encre/rose/encre plutôt que l'utility
- * `focus-ring` : celle-ci pose `--ring` (le rose) seul, qui souffre exactement
- * du défaut corrigé au point 2 dès qu'il entoure un jeton blanc.
+ * La surface du jeton (bord d'encre, survol, anneau de focus, repli contraste
+ * forcé) vit dans `token.styles.ts`, partagée avec la loupe — c'est là qu'est
+ * expliqué le choix du sandwich de focus plutôt que de l'utility `focus-ring`.
+ * Ici, seule la GÉOMÉTRIE.
+ *
+ * ⚠️ **« Vue », pas « Image »** : la galerie mélange photos et vidéos, et une
+ * flèche ne sait pas ce qu'elle va atteindre — la nommer « Image suivante »
+ * ment une fois sur trois sur un produit `[IMAGE, IMAGE, VIDÉO]`. Le libellé
+ * SPÉCIFIQUE appartient à ce qui connaît le média courant : la région live de
+ * `gallery.tsx` et le déclencheur de plein écran (`zoom-button.tsx`), qui
+ * dérivent tous deux du `mediaType`, comme `media-lightbox.tsx`.
  */
 
-/** Tracés volontairement irréguliers (léger décrochage au coude) — cf. `HandDrawnAccent`. */
-const CHEVRON_LEFT = "M16.1 4.4 Q10.1 7.6 8.5 11.2 Q8 12.5 8.9 13.6 Q11.4 17.1 15.4 19.7";
-const CHEVRON_RIGHT = "M7.9 4.4 Q13.9 7.6 15.5 11.2 Q16 12.5 15.1 13.6 Q12.6 17.1 8.6 19.7";
+// Tracés dans la SSOT du vocabulaire main (shared/components/hand-drawn/paths.ts).
+const CHEVRON_LEFT = CHEVRON_LEFT_PATH;
+const CHEVRON_RIGHT = CHEVRON_RIGHT_PATH;
 
-const TOKEN_CLASS = cn(
+/** Géométrie propre aux chevrons : à cheval sur le bord du carton, à mi-hauteur. */
+const CHEVRON_TOKEN_CLASS = cn(
 	"absolute top-1/2 z-10 hidden -translate-y-1/2 md:flex",
-	"bg-card size-11 items-center justify-center rounded-full",
-	"text-foreground shadow-[0_0_0_1.5px_var(--foreground)]",
-	"can-hover:hover:bg-muted",
-	"motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]",
-	"can-hover:hover:scale-105 active:scale-95 motion-reduce:transform-none",
-	"outline-none focus-visible:shadow-[0_0_0_1.5px_var(--foreground),0_0_0_4.5px_var(--ring),0_0_0_6px_var(--foreground)]",
-	// Contraste forcé (Windows High Contrast) : les `box-shadow` y sont supprimés,
-	// donc l'anneau d'encre du point 2 ET le sandwich de focus disparaissent d'un
-	// coup — le jeton devient un aplat `Canvas` sur `Canvas`, sans bord ni focus
-	// visible. Repli en `outline`, aligné sur `bottom-bar.styles.ts`.
-	"forced-colors:outline forced-colors:outline-1 forced-colors:outline-[CanvasText]",
-	"forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-offset-2 forced-colors:focus-visible:outline-[Highlight]",
+	GALLERY_TOKEN_CLASS,
 );
 
 function DrawnChevron({ d }: { d: string }) {
@@ -64,7 +65,12 @@ function DrawnChevron({ d }: { d: string }) {
 			aria-hidden="true"
 			focusable="false"
 		>
-			<path d={d} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+			<path
+				d={d}
+				stroke="currentColor"
+				strokeWidth={HAND_DRAWN_STROKES.marqueur}
+				strokeLinecap="round"
+			/>
 		</svg>
 	);
 }
@@ -74,18 +80,18 @@ export function GalleryNavigation({ onPrev, onNext, controlsId }: GalleryNavigat
 		<>
 			<button
 				type="button"
-				className={cn(TOKEN_CLASS, "-left-3.5")}
+				className={cn(CHEVRON_TOKEN_CLASS, "-left-3.5")}
 				onClick={onPrev}
-				aria-label="Image précédente"
+				aria-label="Vue précédente"
 				aria-controls={controlsId}
 			>
 				<DrawnChevron d={CHEVRON_LEFT} />
 			</button>
 			<button
 				type="button"
-				className={cn(TOKEN_CLASS, "-right-3.5")}
+				className={cn(CHEVRON_TOKEN_CLASS, "-right-3.5")}
 				onClick={onNext}
-				aria-label="Image suivante"
+				aria-label="Vue suivante"
 				aria-controls={controlsId}
 			>
 				<DrawnChevron d={CHEVRON_RIGHT} />

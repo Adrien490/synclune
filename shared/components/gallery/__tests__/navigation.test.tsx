@@ -32,16 +32,16 @@ describe("GalleryNavigation", () => {
 	afterEach(cleanup);
 
 	describe("rendering", () => {
-		it("renders prev button with aria-label 'Image précédente'", () => {
+		it("renders prev button with aria-label 'Vue précédente'", () => {
 			render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
 
-			expect(screen.getByRole("button", { name: "Image précédente" })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Vue précédente" })).toBeInTheDocument();
 		});
 
-		it("renders next button with aria-label 'Image suivante'", () => {
+		it("renders next button with aria-label 'Vue suivante'", () => {
 			render(<GalleryNavigation onPrev={vi.fn()} onNext={vi.fn()} />);
 
-			expect(screen.getByRole("button", { name: "Image suivante" })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Vue suivante" })).toBeInTheDocument();
 		});
 
 		it("chaque bouton porte un chevron décoratif", () => {
@@ -83,7 +83,7 @@ describe("GalleryNavigation", () => {
 			const onPrev = vi.fn();
 			render(<GalleryNavigation onPrev={onPrev} onNext={vi.fn()} />);
 
-			fireEvent.click(screen.getByRole("button", { name: "Image précédente" }));
+			fireEvent.click(screen.getByRole("button", { name: "Vue précédente" }));
 
 			expect(onPrev).toHaveBeenCalledTimes(1);
 		});
@@ -92,7 +92,7 @@ describe("GalleryNavigation", () => {
 			const onNext = vi.fn();
 			render(<GalleryNavigation onPrev={vi.fn()} onNext={onNext} />);
 
-			fireEvent.click(screen.getByRole("button", { name: "Image suivante" }));
+			fireEvent.click(screen.getByRole("button", { name: "Vue suivante" }));
 
 			expect(onNext).toHaveBeenCalledTimes(1);
 		});
@@ -101,7 +101,7 @@ describe("GalleryNavigation", () => {
 			const onNext = vi.fn();
 			render(<GalleryNavigation onPrev={vi.fn()} onNext={onNext} />);
 
-			fireEvent.click(screen.getByRole("button", { name: "Image précédente" }));
+			fireEvent.click(screen.getByRole("button", { name: "Vue précédente" }));
 
 			expect(onNext).not.toHaveBeenCalled();
 		});
@@ -110,7 +110,7 @@ describe("GalleryNavigation", () => {
 			const onPrev = vi.fn();
 			render(<GalleryNavigation onPrev={onPrev} onNext={vi.fn()} />);
 
-			fireEvent.click(screen.getByRole("button", { name: "Image suivante" }));
+			fireEvent.click(screen.getByRole("button", { name: "Vue suivante" }));
 
 			expect(onPrev).not.toHaveBeenCalled();
 		});

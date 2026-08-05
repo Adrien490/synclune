@@ -65,7 +65,7 @@ export function GalleryThumbnail({
 				"focus-visible:ring-primary outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
 				isActive
 					? "border-primary ring-primary/20 shadow-md ring-2"
-					: "border-border hover:border-primary/50",
+					: "border-border can-hover:hover:border-primary/50",
 				className,
 			)}
 			aria-label={
