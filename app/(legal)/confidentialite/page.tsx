@@ -367,8 +367,8 @@ export default async function PrivacyPolicyPage() {
 									<strong>cart :</strong> contenu du panier - Créé uniquement lors de l'ajout d'un
 									produit au panier. Durée : 7 jours après la dernière interaction (httpOnly,
 									secure). Stocke directement les articles du panier (variante, quantité, prix
-									constaté) et le code promo appliqué, dans votre navigateur uniquement — aucun
-									panier n'est conservé en base de données.
+									constaté), dans votre navigateur uniquement — aucun panier n'est conservé en base
+									de données.
 								</li>
 								<li>
 									<strong>cart_session :</strong> identifiant technique de commande - Créé

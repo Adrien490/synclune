@@ -14,7 +14,7 @@ import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-st
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { MotionProvider } from "@/shared/providers/motion-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
-import { fraunces, figtree, sacramento } from "@/shared/styles/fonts";
+import { winkySans, winkySansItalic, onest, kalam } from "@/shared/styles/fonts";
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
@@ -30,7 +30,7 @@ export default function RootLayout({
 	return (
 		<html
 			lang="fr"
-			className={`${figtree.variable} ${fraunces.variable} ${sacramento.variable}`}
+			className={`${onest.variable} ${winkySans.variable} ${winkySansItalic.variable} ${kalam.variable}`}
 			data-scroll-behavior="smooth"
 			suppressHydrationWarning
 		>
@@ -44,7 +44,7 @@ export default function RootLayout({
 					<link key={host} rel="preconnect" href={host} />
 				))}
 			</head>
-			<body className={`${figtree.className} antialiased`} suppressHydrationWarning>
+			<body className={`${onest.className} antialiased`} suppressHydrationWarning>
 				<SkipLink />
 				<IconSprite />
 				{/* Pont visualViewport → `--vvh` + `<html data-keyboard>`. Monté ici (et nulle

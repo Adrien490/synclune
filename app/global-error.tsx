@@ -1,6 +1,6 @@
 "use client";
 
-import { sacramento, figtree, fraunces } from "@/shared/styles/fonts";
+import { kalam, onest, winkySans } from "@/shared/styles/fonts";
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import "./globals.css";
@@ -20,8 +20,8 @@ export default function GlobalError({
 	}, [error]);
 
 	return (
-		<html lang="fr" className={`${figtree.variable} ${fraunces.variable} ${sacramento.variable}`}>
-			<body className={`${figtree.className} antialiased`}>
+		<html lang="fr" className={`${onest.variable} ${winkySans.variable} ${kalam.variable}`}>
+			<body className={`${onest.className} antialiased`}>
 				<main className="bg-background flex min-h-dvh items-center justify-center px-4">
 					<div className="mx-auto max-w-2xl space-y-8 text-center">
 						<p className="text-muted-foreground/30 text-8xl font-bold" aria-hidden="true">

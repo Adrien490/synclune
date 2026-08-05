@@ -41,7 +41,7 @@ export function AuthPageLayout({
 
 			{/* Logo */}
 			<div className="absolute top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-20 sm:top-[max(1.5rem,env(safe-area-inset-top))] sm:right-[max(1.5rem,env(safe-area-inset-right))]">
-				<LogoAnimated size={44} preload href="/" />
+				<LogoAnimated size={44} href="/" />
 			</div>
 
 			{/* Main content */}

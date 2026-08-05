@@ -2,7 +2,10 @@ import { OG_GRADIENT } from "@/shared/constants/brand-colors";
 import { BUSINESS_INFO } from "@/shared/constants/seo-config";
 import { ImageResponse } from "next/og";
 
-export const dynamic = "force-static";
+// Pas de `export const dynamic = "force-static"` ici : sous `cacheComponents`,
+// Next 16.3 REFUSE ce segment config et fait échouer le build. Il est inutile —
+// cette image ne lit que des constantes de module (aucun fetch, aucune donnée
+// requête), donc le prerender extrait la coquille statique tout seul.
 
 // Image metadata
 export const alt = "Synclune - Créatrice de bijoux faits main";
