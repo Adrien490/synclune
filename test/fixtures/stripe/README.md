@@ -37,6 +37,11 @@ Conséquence à connaître : un champ que `dahlia` aurait renommé, retiré ou d
 changé la sémantique ne serait PAS attrapé ici. Une passe `stripe trigger` sur les
 12 types reste à faire.
 
+**La CLI s'installe sans Homebrew** (constaté 2026-08-05 dans la doc fraîchement mirrorée) :
+`npm i -g @stripe/cli`, publiée et à jour. Le seul obstacle restant est donc le
+`stripe login` interactif contre le compte test — plus l'installation elle-même, qui avait
+été notée comme le blocage.
+
 ## Contract test
 
 `test/contract/stripe-events.test.ts` charge chaque fixture, vérifie qu'elle a la

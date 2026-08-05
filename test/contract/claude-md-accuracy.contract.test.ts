@@ -81,6 +81,9 @@ const DOC_SECTION_REFERENCES: ReadonlyArray<{
 	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Composition" },
 	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "animate-out" },
 	{ citedIn: "REDESIGN-PROMPT", file: "CLAUDE.md", heading: "Voix" },
+	// `REDESIGN-PROMPT.md` §1 adosse son brief de marque à la même SSOT que son voisin —
+	// l'entrée n'existait que pour DESIGN-ARTIFACT, trou relevé par l'audit du 2026-08-05.
+	{ citedIn: "REDESIGN-PROMPT", file: "docs/BUSINESS.md", heading: "Positionnement" },
 	// `DESIGN-ARTIFACT-PROMPT.md` §3 renvoie aux mêmes sections extraites : il portait le
 	// défaut du 2026-08-05 (envoyer lire « Breakpoints » dans `CLAUDE.md`, qui n'en garde
 	// que dix puces) trois jours de plus que son voisin, faute d'être couvert ici.
@@ -334,28 +337,153 @@ function countRegressionTestFiles(dir: string = REPO_ROOT): number {
  * INSTALLÉE, pas le fichier près. L'écart 338 → 303 valait 11,6 % : il tombe.
  */
 describe("Chaîne design — les comptages annoncés correspondent au dépôt", () => {
-	it("DESIGN-ARTIFACT-PROMPT annonce un nombre de fichiers `@regression` plausible", () => {
-		const doc = readFileSync(join(REPO_ROOT, "docs/prompts/DESIGN-ARTIFACT-PROMPT.md"), "utf-8");
-		const match = doc.match(/\*\*(\d+) fichiers\s+de test\*\*/);
+	// REDESIGN-PROMPT a rejoint la liste le 2026-08-05 : son « ~330 fichiers » n'était
+	// assert par rien et valait 342 au moment de l'audit — même mécanique de dérive à vue.
+	it.each(["docs/prompts/DESIGN-ARTIFACT-PROMPT.md", "docs/prompts/REDESIGN-PROMPT.md"])(
+		"%s annonce un nombre de fichiers `@regression` plausible",
+		(docPath) => {
+			const doc = readFileSync(join(REPO_ROOT, docPath), "utf-8");
+			const match = doc.match(/\*\*(\d+) fichiers\s+de test\*\*/);
 
+			expect(
+				match,
+				`${docPath} ne contient plus la phrase « **N fichiers de test** ». ` +
+					"Si la formulation a changé, mets ce regex à jour plutôt que de retirer l'assertion.",
+			).not.toBeNull();
+
+			const claimed = Number(match![1]);
+			const real = countRegressionTestFiles();
+			const drift = Math.abs(claimed - real) / real;
+
+			expect(
+				drift,
+				`${docPath} annonce ${claimed} fichiers \`@regression\`, le dépôt en a ${real} ` +
+					`(${(drift * 100).toFixed(1)} % d'écart).\n` +
+					"Re-mesure, ne décrémente pas à vue :\n" +
+					'  grep -rl "@regression" --include="*.test.ts" --include="*.test.tsx" . \\\n' +
+					"    --exclude-dir=node_modules --exclude-dir=.claude | wc -l",
+			).toBeLessThanOrEqual(0.1);
+		},
+	);
+});
+
+/* -------------------------------------------------------------------------- */
+/* 3ter. La liste de refus — le §8 de DESIGN-ARTIFACT est le sur-ensemble      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Le §8 de `DESIGN-ARTIFACT-PROMPT.md` se déclare « sur-ensemble » des refus déjà
+ * exprimés, et `REDESIGN-PROMPT.md` écrit « La liste fait foi dans
+ * DESIGN-ARTIFACT-PROMPT.md §8 ». Cette promesse a cassé TROIS fois (2026-08-04 ×2,
+ * 2026-08-05 : ~9 refus de `memory/` absents), toujours par le même mécanisme :
+ * liste tenue à la main, rien ne la re-vérifie.
+ *
+ * `memory/` vit HORS du dépôt (répertoire utilisateur, non versionné) : la synchro
+ * memory → §8 reste manuelle par construction. Ce qu'on PEUT verrouiller, c'est le
+ * cliquet interne au dépôt :
+ *   1. chaque marqueur canonique figure au §8 — retirer un refus du §8 échoue ;
+ *   2. chaque item des DEUX listes est couvert par un marqueur — ajouter un refus
+ *      dans l'une sans l'inscrire ici (donc sans se poser la question de l'autre)
+ *      échoue aussi.
+ * Ajouter un refus = 1 item au §8 + 1 entrée REFUSAL_MARKERS (+ l'item REDESIGN
+ * s'il concerne l'implémentation, avec `inRedesign: true`).
+ */
+const REFUSAL_MARKERS: ReadonlyArray<{ marker: string; inRedesign: boolean }> = [
+	{ marker: "View Transition", inRedesign: true },
+	{ marker: "useMotionAllowed", inRedesign: true },
+	{ marker: "micro-animation sans fonction", inRedesign: true },
+	{ marker: "pour une confirmation", inRedesign: true },
+	{ marker: "handleOnly", inRedesign: true },
+	{ marker: "curseur qui suit", inRedesign: true },
+	{ marker: "chevron de scroll", inRedesign: true },
+	{ marker: "CTA sticky", inRedesign: true },
+	{ marker: "réassurance", inRedesign: true },
+	{ marker: "troisième entrée", inRedesign: true },
+	{ marker: "double bouton retour", inRedesign: true },
+	{ marker: "Cancel", inRedesign: true },
+	{ marker: "autoFocus", inRedesign: true },
+	{ marker: "KI-002", inRedesign: true },
+	{ marker: "Haptique", inRedesign: true },
+	// Refus portés par le seul sur-ensemble §8 (pas dans l'extrait REDESIGN).
+	{ marker: "drill-down", inRedesign: false },
+	{ marker: "PWA", inRedesign: false },
+	{ marker: "ParticleBackground", inRedesign: false },
+	{ marker: "PILULES", inRedesign: false },
+	{ marker: "bg-muted", inRedesign: false },
+	{ marker: "cue tactile", inRedesign: false },
+	{ marker: "fait main", inRedesign: false },
+	{ marker: "délais de préparation", inRedesign: false },
+	{ marker: "case à cocher CGV", inRedesign: false },
+	{ marker: "toast à l'ajout au panier", inRedesign: false },
+	{ marker: "spotlight", inRedesign: false },
+	{ marker: "téléphone", inRedesign: false },
+];
+
+/**
+ * Items de la liste « Déjà proposé et refusé », un fragment par refus. Les deux
+ * documents closent leur liste par le paragraphe « Et une préférence » — c'est le
+ * terminateur. Le point médian est le séparateur d'items ; celui qui est CITÉ
+ * (« · fait main », précédé d'un guillemet ouvrant) n'en est pas un.
+ */
+function refusalItems(path: string): string[] {
+	const doc = readFileSync(join(REPO_ROOT, path), "utf-8");
+	const start = doc.indexOf("Déjà proposé et refusé sur ce projet");
+	expect(
+		start,
+		`${path} : la liste « Déjà proposé et refusé » a disparu ou a été renommée`,
+	).toBeGreaterThanOrEqual(0);
+	const end = doc.indexOf("Et une préférence", start);
+	expect(
+		end,
+		`${path} : le paragraphe « Et une préférence » qui clôt la liste a disparu`,
+	).toBeGreaterThan(start);
+
+	const bullets: string[] = [];
+	for (const line of doc.slice(start, end).split("\n")) {
+		if (/^- /.test(line)) bullets.push(line.slice(2));
+		else if (/^ {2}\S/.test(line) && bullets.length > 0)
+			bullets[bullets.length - 1] += ` ${line.trim()}`;
+	}
+	return bullets
+		.flatMap((b) => b.split(/(?<!«\s)·/))
+		.map((s) => s.trim())
+		.filter((s) => s.length > 0);
+}
+
+describe("Chaîne design — la liste de refus reste un sur-ensemble cohérent", () => {
+	const dapItems = refusalItems("docs/prompts/DESIGN-ARTIFACT-PROMPT.md");
+	const redesignItems = refusalItems("docs/prompts/REDESIGN-PROMPT.md");
+	const dapText = dapItems.join(" · ");
+	const redesignText = redesignItems.join(" · ");
+
+	it("chaque marqueur canonique figure au §8 de DESIGN-ARTIFACT-PROMPT", () => {
+		const missing = REFUSAL_MARKERS.filter(({ marker }) => !dapText.includes(marker));
 		expect(
-			match,
-			"DESIGN-ARTIFACT-PROMPT.md §3 ne contient plus la phrase « **N fichiers de test** ». " +
-				"Si la formulation a changé, mets ce regex à jour plutôt que de retirer l'assertion.",
-		).not.toBeNull();
+			missing.map((m) => m.marker),
+			"Refus retiré du §8 alors qu'il reste canonique. Si le refus a été LEVÉ par " +
+				"l'utilisateur, retire aussi son marqueur ici, avec le motif en commentaire.",
+		).toEqual([]);
+	});
 
-		const claimed = Number(match![1]);
-		const real = countRegressionTestFiles();
-		const drift = Math.abs(claimed - real) / real;
+	it("chaque marqueur `inRedesign` figure dans la liste de REDESIGN-PROMPT", () => {
+		const missing = REFUSAL_MARKERS.filter(
+			({ marker, inRedesign }) => inRedesign && !redesignText.includes(marker),
+		);
+		expect(missing.map((m) => m.marker)).toEqual([]);
+	});
 
+	it.each([
+		{ path: "docs/prompts/DESIGN-ARTIFACT-PROMPT.md", items: dapItems },
+		{ path: "docs/prompts/REDESIGN-PROMPT.md", items: redesignItems },
+	])("$path : chaque item de la liste est couvert par un marqueur canonique", ({ items }) => {
+		const uncovered = items.filter(
+			(item) => !REFUSAL_MARKERS.some(({ marker }) => item.includes(marker)),
+		);
 		expect(
-			drift,
-			`DESIGN-ARTIFACT-PROMPT.md §3 annonce ${claimed} fichiers \`@regression\`, le dépôt en a ${real} ` +
-				`(${(drift * 100).toFixed(1)} % d'écart).\n` +
-				"Re-mesure, ne décrémente pas à vue :\n" +
-				'  grep -rl "@regression" --include="*.test.ts" --include="*.test.tsx" . \\\n' +
-				"    --exclude-dir=node_modules --exclude-dir=.claude | wc -l",
-		).toBeLessThanOrEqual(0.1);
+			uncovered,
+			"Refus ajouté à une liste sans entrée REFUSAL_MARKERS : l'autre document peut " +
+				"diverger en silence. Ajoute le marqueur (et l'item au §8 si ce n'est pas déjà fait).",
+		).toEqual([]);
 	});
 });
 

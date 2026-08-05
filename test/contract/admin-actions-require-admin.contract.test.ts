@@ -71,6 +71,10 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	// Recherche rapide publique de la boutique (lecture seule, retour custom
 	// QuickSearchResult, pas ActionState).
 	"modules/products/actions/quick-search.ts",
+	// Compteur vivant du panneau de filtres public (« Voir les N pièces ») —
+	// lecture seule d'un count PUBLIC forcé côté data, retour custom
+	// CountFilteredProductsResult, rate limit nommé product-filter-count.
+	"modules/products/actions/count-filtered-products.ts",
 	// Pagination « voir plus » du catalogue public (lecture seule).
 	"modules/products/actions/load-more-products.ts",
 	// Historique de recherche / produits vus du visiteur — stocké en cookie,
