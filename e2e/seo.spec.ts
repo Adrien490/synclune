@@ -73,8 +73,27 @@ test.describe("SEO et métadonnées - Homepage", { tag: ["@slow"] }, () => {
 		await expect(twitterTitle).toBeAttached();
 	});
 
-	// Le test « section FAQ + JSON-LD FAQPage » a été retiré avec la section FAQ
-	// de la home (refonte landing, 2026-08-03). La FAQ vit sur /aide.
+	// La FAQ est REVENUE sur la home le 2026-08-05 (absorption de `/aide`) —
+	// elle avait été retirée à la refonte landing du 2026-08-03.
+	test("la homepage porte la section FAQ et son JSON-LD FAQPage", async ({ page }) => {
+		await expect(page.locator("#faq")).toBeVisible();
+
+		// Le FAQPage est un NŒUD du `@graph` de `StructuredData`, pas un second
+		// script : c'est ce montage qui garantit une seule BreadcrumbList sur `/`.
+		// ⚠️ Le HTML streamé contient l'écho du repli `Suspense` en plus du rendu
+		// résolu — on cherche donc le nœud dans N'IMPORTE lequel des scripts,
+		// sans compter combien il y en a.
+		const graphs = await page.locator('script[type="application/ld+json"]').allTextContents();
+		const faqPage = graphs
+			.map((raw) => JSON.parse(raw))
+			.flatMap((json) => json["@graph"] ?? [json])
+			.find((node) => node["@type"] === "FAQPage");
+
+		expect(faqPage, "aucun nœud FAQPage dans le JSON-LD de l'accueil").toBeDefined();
+		expect(faqPage.mainEntity.length).toBeGreaterThan(0);
+		expect(faqPage.mainEntity[0]["@type"]).toBe("Question");
+		expect(faqPage.mainEntity[0].acceptedAnswer.text.length).toBeGreaterThan(10);
+	});
 });
 
 test.describe("SEO et métadonnées - Page produits", { tag: ["@slow"] }, () => {

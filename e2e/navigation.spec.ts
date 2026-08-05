@@ -104,15 +104,14 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		await expect(menuDialog).toBeVisible();
 
 		// Le menu doit contenir les items de navigation.
-		// ⚠️ `exact: true` : en regex, `/Accueil/i` matchait AUSSI le lien de marque
-		// du panneau, dont le nom accessible est « Synclune - Retour à l'accueil » —
-		// deux éléments, donc violation du strict mode.
+		// ⚠️ `exact: true` : en regex, `/Accueil/i` matcherait AUSSI le lien de marque
+		// du panneau, dont le nom accessible est « Synclune - Accueil » (gabarit unique
+		// `brandLinkLabel()`) — deux éléments, donc violation du strict mode.
 		await expect(menuDialog.getByRole("link", { name: "Accueil", exact: true })).toBeVisible();
 
-		// Fermer par Échap. Le bouton « × » par défaut du SheetContent a été retiré
-		// (2026-08-04) : il posait une quatrième affordance de fermeture dans la zone
-		// du titre, en plus du scrim, du swipe et du burger. Échap est le chemin
-		// clavier, et c'est celui qui doit rester garanti.
+		// Fermer par Échap. Le bouton « × » du SheetContent existe (rétabli le
+		// 2026-08-04 — le panneau recouvre le burger au doigt, cf. menu-sheet.tsx),
+		// mais Échap est le chemin CLAVIER, et c'est celui qui doit rester garanti.
 		await page.keyboard.press("Escape");
 
 		// Le menu doit être fermé

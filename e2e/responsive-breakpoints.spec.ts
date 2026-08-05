@@ -117,6 +117,51 @@ test.describe("Responsive — cohérence des seuils rem/px", () => {
 	}
 });
 
+/**
+ * La bande 768-1024 px du PANIER — jamais couverte avant le 2026-08-05.
+ *
+ * Le shell du panier bascule sur `useIsMobile()`, dont le seuil est `md` (48 rem), alors
+ * que la bottom-nav boutique est gatée à `lg` (64 rem) et que `CartSheetTrigger` est en
+ * `hidden lg:inline-flex`. Entre les deux seuils, il en résulte une combinaison qu'aucun
+ * projet Playwright n'exerçait : le seul ouvreur est l'onglet de la bottom-nav, et il
+ * ouvre le `Sheet` LATÉRAL desktop.
+ *
+ * `cart.spec.ts` ne comble pas ce trou : il tourne à 390/412 px et à 1280 px, et les deux
+ * projets `tablet-*` sont en `testMatch: /responsive-breakpoints/` — donc ce fichier est
+ * le seul endroit d'où ces assertions peuvent s'exécuter à 768 px.
+ */
+test.describe("Responsive — panier dans la bande 48-64rem", () => {
+	test("s'ouvre depuis la bottom-nav et se ferme, en iPad portrait", async ({ page, cartPage }) => {
+		await page.setViewportSize(VIEWPORTS.TABLET_PORTRAIT);
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		// À cette largeur, `CartSheetTrigger` est en `display:none` : c'est bien l'onglet de
+		// la bottom-nav que `CartPage.openButton` doit résoudre (motif `^Panier`).
+		const bottomNav = page.getByRole("navigation", {
+			name: /Navigation principale de la boutique/i,
+		});
+		await expect(bottomNav).toBeVisible();
+
+		await cartPage.open();
+		await expect(cartPage.title).toBeVisible();
+
+		// Le panneau doit laisser une bande de scrim tapable. À cette largeur c'est le
+		// `Sheet` ancré à droite, donc la bande vit à GAUCHE — d'où un test sur `x`, là où
+		// la branche mobile laisse la sienne en haut (`y`).
+		const panel = await cartPage.dialog.first().boundingBox();
+		expect(panel).not.toBeNull();
+		if (panel) {
+			expect(
+				panel.x,
+				"le Sheet latéral doit laisser du scrim à sa gauche, sinon plus rien n'est tapable",
+			).toBeGreaterThan(0);
+		}
+
+		await cartPage.close();
+	});
+});
+
 test.describe("Responsive — navigation admin", () => {
 	// L'admin bascule à `md`. Sans authentification on ne peut pas atteindre
 	// `/admin`, mais la redirection elle-même doit rester navigable : le vrai

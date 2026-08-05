@@ -2,18 +2,55 @@ import { test, expect } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 /**
+ * L'entrée LCP retenue : son instant, mais aussi QUI la porte.
+ *
+ * ⚠️ L'identité de l'élément n'est pas du confort de debug. Plusieurs décisions de
+ * perf du dépôt sont justifiées par une hypothèse sur le porteur du LCP — le
+ * `preload: true` de la display (Winky Sans) dans `shared/styles/fonts.ts` l'est « parce que le h1
+ * de l'étal porte le LCP », et le refus de précharger le corps (Onest) l'est par le même
+ * raisonnement. Tant qu'on ne mesurait que l'INSTANT, cette hypothèse ne pouvait
+ * ni se confirmer ni se démentir : un budget vert la laissait vivre intacte.
+ */
+interface LcpMeasurement {
+	/** Instant du LCP, en ms depuis le début de la navigation. 0 si rien n'a été capté. */
+	startTime: number;
+	/** Balise du porteur (`H1`, `IMG`, …), ou `null` s'il a quitté le DOM depuis. */
+	tagName: string | null;
+	/** Chaîne vide si le porteur n'a pas d'`id` — c'est déjà la convention du DOM. */
+	id: string;
+	/** Renseigné pour une image ; chaîne vide pour un bloc de texte. */
+	url: string;
+	/** Aire en px² retenue par le navigateur — c'est elle qui départage les candidats. */
+	size: number;
+}
+
+/**
  * Measures LCP using PerformanceObserver with buffered entries.
  * Uses requestAnimationFrame to ensure paint entries are flushed
  * before reading, instead of unreliable setTimeout.
  */
-async function measureLCP(page: Page): Promise<number> {
+async function measureLCP(page: Page): Promise<LcpMeasurement> {
 	return page.evaluate(() => {
-		return new Promise<number>((resolve) => {
-			let lcpValue = 0;
+		return new Promise<LcpMeasurement>((resolve) => {
+			// `element` est une référence DOM vivante : elle ne franchit pas la
+			// frontière d'évaluation. On extrait ce qu'on veut savoir ici.
+			let latest: LcpMeasurement = { startTime: 0, tagName: null, id: "", url: "", size: 0 };
 
 			const observer = new PerformanceObserver((entryList) => {
 				for (const entry of entryList.getEntries()) {
-					lcpValue = entry.startTime;
+					const lcp = entry as PerformanceEntry & {
+						element?: Element | null;
+						id?: string;
+						url?: string;
+						size?: number;
+					};
+					latest = {
+						startTime: lcp.startTime,
+						tagName: lcp.element?.tagName ?? null,
+						id: lcp.element?.id ?? "",
+						url: lcp.url ?? "",
+						size: lcp.size ?? 0,
+					};
 				}
 			});
 			observer.observe({ type: "largest-contentful-paint", buffered: true });
@@ -25,7 +62,7 @@ async function measureLCP(page: Page): Promise<number> {
 				requestAnimationFrame(() => {
 					requestAnimationFrame(() => {
 						observer.disconnect();
-						resolve(lcpValue);
+						resolve(latest);
 					});
 				});
 			};
@@ -95,10 +132,34 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 	test("homepage - LCP under budget", async ({ page }) => {
 		await page.goto("/");
 
+		const { startTime } = await measureLCP(page);
+
+		expect(startTime, "LCP measurement was 0 - observer may not have captured it").toBeGreaterThan(
+			0,
+		);
+		expect(startTime, `LCP was ${startTime}ms, budget is ${LCP_BUDGET}ms`).toBeLessThan(LCP_BUDGET);
+	});
+
+	test("homepage - le porteur du LCP est un candidat connu", async ({ page }) => {
+		await page.goto("/");
+
 		const lcp = await measureLCP(page);
 
-		expect(lcp, "LCP measurement was 0 - observer may not have captured it").toBeGreaterThan(0);
-		expect(lcp, `LCP was ${lcp}ms, budget is ${LCP_BUDGET}ms`).toBeLessThan(LCP_BUDGET);
+		// Consigné dans le rapport Playwright : c'est la donnée qui tranche le
+		// `preload` de la display, et elle change avec le viewport.
+		const identity = `${lcp.tagName ?? "?"}${lcp.id ? `#${lcp.id}` : ""} — ${Math.round(lcp.size)} px² à ${Math.round(lcp.startTime)} ms${lcp.url ? ` (${lcp.url})` : ""}`;
+		test.info().annotations.push({ type: "lcp-element", description: identity });
+
+		test.skip(
+			(await page.locator("#etal article").count()) === 0,
+			"Catalogue vide : l'étal rend la carte de contact, la question du porteur ne se pose pas.",
+		);
+
+		// Les deux seuls candidats de l'étal : le `h1` (texte, hors frontière
+		// Suspense) et la photo de la première carte. Tout autre porteur — un
+		// squelette, le pied de page, le ruban d'une carte — est une régression :
+		// il signifie que le premier écran a cessé de peindre ce qu'il annonce.
+		expect(["H1", "IMG"], `Porteur inattendu du LCP : ${identity}`).toContain(lcp.tagName);
 	});
 
 	test("homepage - CLS under 0.15", async ({ page }) => {
@@ -112,14 +173,36 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 	test("page produits - LCP under budget", async ({ page }) => {
 		await page.goto("/produits");
 
-		const lcp = await measureLCP(page);
+		const { startTime } = await measureLCP(page);
 
-		expect(lcp, "LCP measurement was 0 - observer may not have captured it").toBeGreaterThan(0);
-		expect(lcp, `LCP was ${lcp}ms, budget is ${LCP_BUDGET}ms`).toBeLessThan(LCP_BUDGET);
+		expect(startTime, "LCP measurement was 0 - observer may not have captured it").toBeGreaterThan(
+			0,
+		);
+		expect(startTime, `LCP was ${startTime}ms, budget is ${LCP_BUDGET}ms`).toBeLessThan(LCP_BUDGET);
 	});
 
 	test("page produits - CLS under 0.15", async ({ page }) => {
 		await page.goto("/produits");
+
+		const cls = await measureCLS(page);
+
+		expect(cls, `CLS was ${cls}, should be under ${CLS_BUDGET}`).toBeLessThan(CLS_BUDGET);
+	});
+
+	/**
+	 * @regression collection-skeleton-parity — le volet mesuré.
+	 *
+	 * `/collections` empile des bandes derrière un `<Suspense>` dont le fallback
+	 * (`CollectionChaptersSkeleton`) doit recouvrir le carnet qu'il annonce. Sa
+	 * colonne texte réservait 112px pour ~202px de réel — description sur 4 lignes
+	 * annoncée sur une, trait dessiné non réservé, `gap-3` là où le réel a des
+	 * marges — soit ~90px de décalage PAR BANDE au swap.
+	 *
+	 * Le test de parité est statique (il compare des classes) : lui seul ne verrait
+	 * pas un décalage venu d'ailleurs. Celui-ci mesure le résultat.
+	 */
+	test("page collections - CLS under 0.15", async ({ page }) => {
+		await page.goto("/collections");
 
 		const cls = await measureCLS(page);
 

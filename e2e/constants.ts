@@ -32,6 +32,11 @@ export const VIEWPORTS = {
 	TABLET_LANDSCAPE: { width: 1024, height: 768 },
 	/** Desktop de référence. */
 	DESKTOP: { width: 1280, height: 800 },
+	/**
+	 * Desktop large — seule largeur où le plafond admin `max-w-[100rem]` (1600px)
+	 * est atteint : à 1280, il est plafonné par le viewport et ne se voit jamais.
+	 */
+	ADMIN_DESKTOP: { width: 1680, height: 1050 },
 } as const;
 
 /** Shared selectors used across page objects */

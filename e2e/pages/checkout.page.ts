@@ -9,11 +9,6 @@ export class CheckoutPage {
 	readonly phoneInput: Locator;
 	readonly termsCheckbox: Locator;
 	readonly continueButton: Locator;
-	readonly discountTrigger: Locator;
-	readonly discountInput: Locator;
-	readonly discountApplyButton: Locator;
-	readonly discountError: Locator;
-	readonly discountRemoveButton: Locator;
 
 	constructor(readonly page: Page) {
 		this.fullNameInput = page.getByLabel(/Nom complet|Prénom et nom/i);
@@ -23,11 +18,6 @@ export class CheckoutPage {
 		this.phoneInput = page.getByLabel(/Téléphone/i);
 		this.termsCheckbox = page.getByLabel(/conditions générales|J'accepte/i);
 		this.continueButton = page.getByRole("button", { name: /Continuer|Valider|Payer/i });
-		this.discountTrigger = page.getByText(/J'ai un code promo/i);
-		this.discountInput = page.getByLabel(/Code promo/i);
-		this.discountApplyButton = page.getByRole("button", { name: /Appliquer/i });
-		this.discountError = page.locator("#discount-error");
-		this.discountRemoveButton = page.getByLabel(/Supprimer le code promo/i);
 	}
 
 	async fillAddress(data?: {
@@ -96,17 +86,11 @@ export class CheckoutPage {
 		await payButton.click();
 	}
 
-	async openDiscountSection() {
-		await this.discountTrigger.click();
-		await expect(this.discountInput).toBeVisible();
-	}
-
-	async applyDiscountCode(code: string) {
-		await this.discountInput.fill(code);
-		await this.discountApplyButton.click();
-	}
-
-	async removeDiscountCode() {
-		await this.discountRemoveButton.click();
-	}
+	/*
+	 * Plus de méthodes de code promo : le modèle `Discount`, l'enum `DiscountType`
+	 * et les colonnes `discountCode`/`discountId`/`discountAmount` ont été retirés
+	 * le 2026-08-05 (cf. prisma/schema.prisma). Les 5 locators et les 3 méthodes qui
+	 * les pilotaient ciblaient une surface qui n'existe plus — aucune spec ne les
+	 * appelait, donc rien ne le signalait.
+	 */
 }

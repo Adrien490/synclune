@@ -209,6 +209,19 @@ test.describe("A11y Mobile — WCAG 1.4.10 Reflow (320 CSS px)", () => {
 		const h1 = page.getByRole("heading", { level: 1 }).first();
 		await expect(h1).toBeVisible();
 	});
+
+	test("le h1 du catalogue reste visible à 320 CSS px", async ({ page }) => {
+		// Bug historique du storefront : le PageHeader était masqué sous `sm` avec
+		// au mieux un repli sr-only — la page n'affichait plus un seul mot en
+		// mobile. `catalogue-mobile-h1.regression.test.ts` verrouille la SOURCE de
+		// `StorefrontHeading` ; ceci verrouille le RENDU (un seul spec suffit :
+		// même composant sur /produits, /collections[/slug] et /favoris).
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		const h1 = page.getByRole("heading", { level: 1 }).first();
+		await expect(h1).toBeVisible();
+	});
 });
 
 test.describe("A11y Mobile — Touch targets WCAG 2.5.5 (viewport 390x844)", () => {

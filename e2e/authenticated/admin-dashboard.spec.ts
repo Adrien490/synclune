@@ -304,7 +304,9 @@ test.describe("Admin - Dashboard mobile UX 2026", { tag: ["@regression"] }, () =
 	test("un conteneur de scroll-fade enveloppe la section KPIs (UX 2026 anti-CLS)", async ({
 		page,
 	}) => {
-		// ScrollFade renders role="region" wrappers — at least one should exist for KPIs
+		// La rangée de KPIs porte `role="region"` + `tabIndex` en propre (le fondu,
+		// lui, est purement CSS depuis la bascule sur `scroll-fade-x`) — au moins
+		// une région doit donc exister.
 		const scrollRegions = page.getByRole("region");
 		await expect(scrollRegions.first()).toBeVisible();
 	});

@@ -93,7 +93,9 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 		const liveRegion = gallery.locator('[role="status"][aria-live="polite"]');
 
 		await expect(liveRegion).toBeAttached();
-		await expect(liveRegion).toContainText(/Image \d+ sur \d+/);
+		// « Image » ou « Vidéo » : le libellé suit le type du média courant, comme
+		// dans `media-lightbox.tsx`. Le seed peut placer une vidéo en première vue.
+		await expect(liveRegion).toContainText(/(?:Image|Vidéo) \d+ sur \d+/);
 	});
 
 	test("la navigation clavier fonctionne dans la galerie", async ({ page }) => {

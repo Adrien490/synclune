@@ -19,11 +19,21 @@ export class SearchPage {
 	}
 
 	async open() {
-		// Le champ inline est dans une toolbar `hidden md:flex` (product-catalog.tsx).
-		// Sans viewport épinglé, il n'existe pas sur les projets mobiles.
+		// Le champ inline vit dans le cluster `hidden md:flex` de la rangée titre
+		// (catalog-toolbar-inline.tsx) — unique instance du DOM, la barre sticky
+		// n'en monte plus. Sans viewport épinglé, il n'existe pas sur mobile.
 		await this.page.setViewportSize(VIEWPORTS.DESKTOP);
 		await this.page.goto("/produits");
 		await this.page.waitForLoadState("domcontentloaded");
+		// Attendre l'hydratation React du champ : un `fill()` avant elle est
+		// AVALÉ — la valeur reste dans le DOM mais React n'a pas encore posé ses
+		// listeners, le debounce ne part jamais et l'URL ne change pas. Prouvé au
+		// dev server (hydratation > latence du fill) ; `networkidle` n'est pas une
+		// option, il ne se résout jamais sous `next dev`.
+		await this.page.waitForFunction(() => {
+			const input = document.querySelector('form[role="search"] input');
+			return !!input && Object.keys(input).some((key) => key.startsWith("__reactProps"));
+		});
 	}
 
 	async search(query: string) {

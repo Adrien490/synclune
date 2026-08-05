@@ -251,12 +251,16 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Find NavigationMenu triggers (Les créations, Les collections)
+		// Triggers Base UI (migration Radix → Base UI du 2026-08-04) : de vraies
+		// ancres avec `role="button"` (`nativeButton={false}`), identifiées par
+		// `data-slot` — les attributs `data-radix-*` que ce test ciblait avant ont
+		// disparu, et son garde le faisait se skip en silence à chaque run.
 		const navTriggers = page.locator(
-			'nav[aria-label="Navigation principale"] button[data-radix-navigation-menu-trigger]',
+			'nav[aria-label="Navigation principale"] [data-slot="navigation-menu-trigger"]',
 		);
 		if ((await navTriggers.count()) === 0) {
-			test.skip(true, "Pas de mega menu desktop");
+			// Catalogue vide : hasDropdown=false, le trigger est rendu en lien simple.
+			test.skip(true, "Pas de mega menu desktop (catalogue vide)");
 			return;
 		}
 
@@ -264,26 +268,26 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		await trigger.focus();
 		await expect(trigger).toBeFocused();
 
-		// Enter/Space opens the mega menu content
+		// Enter opens the mega menu panel (the click carries detail===0 →
+		// preventDefault + Base UI opens; navigation must NOT happen).
+		const urlBefore = page.url();
 		await page.keyboard.press("Enter");
 
-		const menuContent = page.locator("[data-radix-navigation-menu-content]").first();
-		await menuContent.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
-		if ((await menuContent.count()) > 0) {
-			await expect(menuContent).toBeVisible();
+		const menuPopup = page.locator('[data-slot="navigation-menu-popup"]');
+		await expect(menuPopup).toBeVisible({ timeout: 3000 });
+		expect(page.url()).toBe(urlBefore);
 
-			// Tab navigates inside the mega menu links
-			await page.keyboard.press("Tab");
-			const focusedInMenu = await page.evaluate(() => {
-				const content = document.querySelector("[data-radix-navigation-menu-content]");
-				return content?.contains(document.activeElement);
-			});
-			expect(focusedInMenu).toBe(true);
+		// Tab moves focus INSIDE the panel links
+		await page.keyboard.press("Tab");
+		const focusedInMenu = await page.evaluate(() => {
+			const popup = document.querySelector('[data-slot="navigation-menu-popup"]');
+			return popup?.contains(document.activeElement) ?? false;
+		});
+		expect(focusedInMenu).toBe(true);
 
-			// Escape closes the mega menu
-			await page.keyboard.press("Escape");
-			await expect(menuContent).not.toBeVisible();
-		}
+		// Escape closes the mega menu
+		await page.keyboard.press("Escape");
+		await expect(menuPopup).not.toBeVisible();
 	});
 
 	test("pagination - Tab vers boutons page, Enter change de page", async ({ page }) => {
