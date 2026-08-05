@@ -18,8 +18,15 @@
 #   - chokidar : provenance perdue en 4.0.2/4.0.3 (déc. 2024, version ubiquitaire
 #     depuis), revenue en 5.0.0 — hors du range de react-email.
 #     À retirer quand react-email acceptera chokidar 5.
+#   - semver : la lignée 6.x n'a JAMAIS eu de provenance — 6.3.1 (juil. 2023) est sa
+#     DERNIÈRE version et précède l'attestation npm ; seule la 7.x en publie. Le range
+#     est imposé par `semver: ^6.3.1` chez @babel/core, @babel/helper-compilation-targets
+#     et node-exports-info, donc inatteignable tant que Babel est là (React Compiler).
+#     6.3.1 est déjà dans le lockfile et sur le disque : c'est une re-résolution qui la
+#     re-signale, pas une nouvelle version. À retirer quand Babel passera à semver 7.
 minimumReleaseAge: 10080
 trustPolicy: no-downgrade
 trustPolicyExclude:
   - eslint-import-resolver-typescript
   - chokidar
+  - semver
