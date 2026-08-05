@@ -19,6 +19,22 @@
 		animation: sparkle-pulse 2s ease-in-out infinite;
 	}
 
+	/* Variante BORNÉE, pour le contenu qui PERSISTE à l'écran.
+
+	   `infinite` est légitime sur un toast (il se démonte au bout de quelques secondes,
+	   l'animation est transitoire par construction) mais pas sur un état vide : le
+	   panneau du panier vide peut rester ouvert indéfiniment, et son icône tournait
+	   alors de 15° en boucle pour toujours. WCAG 2.2.2 demande un mécanisme de
+	   pause/arrêt pour tout mouvement automatique qui dure plus de 5 s ; 2 itérations
+	   = 4 s passent sous ce seuil, donc aucun contrôle n'est dû.
+
+	   La porte `motion-safe:` et le killswitch ci-dessous restent nécessaires : ils
+	   couvrent la préférence système, qui est un CONFORT et non le mécanisme exigé
+	   par 2.2.2. */
+	.animate-sparkle-pulse-once {
+		animation: sparkle-pulse 2s ease-in-out 2;
+	}
+
 	/* Animation heart-beat pour toast error.
 	   Aucun call site produit : conservée comme CANARI e2e — toast-ui.spec.ts
 	   l'injecte sous emulateMedia({reducedMotion}) pour prouver que le
@@ -189,6 +205,7 @@
 
 		.animate-pulse,
 		.animate-sparkle-pulse,
+		.animate-sparkle-pulse-once,
 		/* heart-beat = canari e2e (cf. définition ci-dessus) */
 		.animate-heart-beat,
 		.animate-badge-pulse,

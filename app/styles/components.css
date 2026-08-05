@@ -144,6 +144,92 @@
 	   `focus-ring`. Ne pas la réintroduire sans consommateur. */
 
 	/* ==========================================
+	   MEGA MENU — « La boîte à perles » (direction B, artifact 2026-08-05)
+
+	   Perle d'échantillon devant chaque famille de bijoux du panneau Créations.
+	   DÉCORATIVE (aria-hidden côté JSX) : la couleur tourne sur les 4 accents de
+	   marque par index et ne code AUCUNE sémantique — c'est la réponse au retrait
+	   d'ITEM_ICON_MAP (cf. JSDoc de mega-menu-column.tsx) : il n'existe pas
+	   d'icône honnête pour « Papilloux », mais une tache de couleur est honnête
+	   pour toutes, et pèse zéro octet de bundle. Le rayon irrégulier vit ici :
+	   une valeur arbitraire Tailwind avec « / » se lirait comme un modificateur.
+	   ========================================== */
+	.mega-menu-perle {
+		width: 0.875rem;
+		height: 0.875rem;
+		flex-shrink: 0;
+		border-radius: 47% 53% 55% 45% / 52% 46% 54% 48%;
+	}
+
+	/* ==========================================
+	   LA TRANCHE D'ÉTAGÈRE — matérialisation au défilement
+	   (coque partagée `ShelfBar`, shared/components/shelf-bar/)
+
+	   Lot 2 de la direction B (artifact « La barre de l'étal », 2026-08-05) :
+	   en haut de page la barre est une lisière fantôme (fond transparent, un
+	   simple filet) ; dès que l'étal glisse dessous, le papier prend corps —
+	   fond, grain, ombre. Piloté par `animation-timeline: scroll(root)`,
+	   zéro JS — même famille que `entrance.css` et `scroll-fade.css`.
+	   (Le chant d'accent de 3 px a été retiré sur retour du 2026-08-05.)
+
+	   Les keyframes sont des `from`-only : l'état d'arrivée implicite est la
+	   valeur de BASE posée par les classes Tailwind du composant (bg-card,
+	   shadow-paper, opacité du grain) — cette feuille n'a donc aucune couleur
+	   à dupliquer, et un changement de peau côté composant ne peut pas la
+	   faire dériver.
+
+	   Replis, tous « état final en permanence » (on perd la transition, jamais
+	   la lisibilité) : navigateur sans timeline de défilement (hors du
+	   `@supports`), `prefers-reduced-motion` (animation coupée ci-dessous), et
+	   mobile — sous `md` la barre colle après ~12 px de défilement : il n'y a
+	   pas de « repos » à jouer, et une plage commune aux deux mondes laisserait
+	   l'étal glisser sous une barre encore semi-transparente. La plage 0→48 px
+	   s'achève AVANT le point d'accroche le plus précoce au-dessus de `md`
+	   (~53 px à 768) : rien ne passe jamais sous une tranche inachevée. */
+	@media (width >= 48rem) {
+		@supports (animation-timeline: scroll(root)) {
+			@keyframes shelf-paper {
+				from {
+					background-color: transparent;
+					box-shadow: none;
+					border-bottom-color: color-mix(in oklab, var(--border) 50%, transparent);
+				}
+			}
+
+			@keyframes shelf-detail-in {
+				from {
+					opacity: 0;
+				}
+			}
+
+			.shelf-materialize,
+			.shelf-materialize::before {
+				animation-timeline: scroll(root);
+				animation-range: 0px 48px;
+				animation-fill-mode: both;
+				animation-timing-function: linear;
+			}
+
+			.shelf-materialize {
+				animation-name: shelf-paper;
+			}
+
+			/* Le grain (::before hérité de `.polaroid-paper`) fond vers son
+			   opacité de base. */
+			.shelf-materialize::before {
+				animation-name: shelf-detail-in;
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				.shelf-materialize,
+				.shelf-materialize::before {
+					animation: none;
+				}
+			}
+		}
+	}
+
+	/* ==========================================
 	   PIECE FIELD — l'aplat de la pièce (fiche produit, « Le nuancier »)
 
 	   L'aplat qui porte le prix et la disponibilité prend la couleur du bijou

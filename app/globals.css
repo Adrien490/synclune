@@ -6,6 +6,7 @@
 
 /* Split CSS imports for maintainability */
 @import "./styles/pwa.css";
+@import "./styles/scroll-fade.css";
 @import "./styles/utilities.css";
 @import "./styles/section-accents.css";
 @import "./styles/animations.css";
@@ -290,6 +291,16 @@ main#main-content {
 
 	--font-sans: var(--font-sans);
 	--font-display: var(--font-display);
+	/* ⚠️ Il n'y a PAS de `--font-display-italic`, et c'est vérifié plutôt que supposé.
+	 * L'italique display est chargée par un second loader `next/font` (le seul moyen
+	 * de ne pas la précharger : 40 572 o de chemin critique pour zéro glyphe au
+	 * premier paint), mais les deux loaders émettent la MÊME `font-family`
+	 * (`@font-face{font-family:Winky Sans;font-style:italic}` — relevé dans le CSS
+	 * bâti). Les deux faces cohabitent donc sous une seule famille, et un `italic`
+	 * posé sur `font-display` sélectionne la vraie italique dessinée.
+	 * Une variable dédiée ici aurait la valeur EXACTEMENT identique à
+	 * `--font-display` : elle ferait croire à une distinction qui n'existe pas.
+	 * Verrouillé par `display-italic-family.regression.test.ts`. */
 	--font-cursive: var(--font-cursive);
 
 	--blur-1: 1px;
@@ -317,6 +328,11 @@ main#main-content {
 	--ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 	--ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
 	--ease-premium: cubic-bezier(0.25, 0.1, 0.25, 1);
+	/* — hand : le dessin des tracés « fait main » (entrance.css). Doit rester
+	   égal à MOTION_CONFIG.easing.easeOut — la même courbe vivait en deux
+	   sources non synchronisées (audit HandDrawnAccent 2026-08-05) ; parité
+	   verrouillée par entrance-reduced-motion.regression.test.ts. */
+	--ease-hand: cubic-bezier(0, 0, 0.2, 1);
 
 	/* ==========================================
 	   TEXT SHADOWS POUR TITRES ÉLÉGANTS
@@ -428,6 +444,27 @@ main#main-content {
 	   ========================================== */
 	--shadow-header: 0 10px 15px -3px oklch(0 0 0 / 0.08), 0 4px 6px -4px oklch(0 0 0 / 0.08);
 
+	/* Ombre « papier » — décolle un tirage BLANC d'un fond BLANC.
+	   Direction « Relief réel », 2026-08-05.
+
+	   Le panneau du panier posait ses lignes `bg-card` (oklch 1) sur un fond `bg-muted`
+	   (oklch 0.94) : une séparation de seulement 1,19:1, soit ΔL 0,060 — faible, mais
+	   suffisante. `bg-muted` a été retiré (jugé moche) et les lignes se sont retrouvées à
+	   **1,03:1** de leur panneau : plus aucune figure sur son fond. `--shadow-sm` ne
+	   rattrapait rien (10 % de noir sur 3 px de flou).
+
+   	   Cette ombre rétablit exactement la même séparation, mais LOCALEMENT, au bord où le
+	   papier la projette vraiment. Les deux couches composent une alpha effective de
+	   1 − (1−0,08)(1−0,10) = 0,172, ce qui rend **ΔL 0,0602** au pixel le plus sombre
+	   contre `--background` — la cible étant 0,0600. Calculé, pas approché à l'œil.
+
+	   ⚠️ Ne pas « renforcer » ces alphas pour viser 3:1 : le seuil de contraste non
+	   textuel ne s'applique pas à une ombre décorative, et le gris franc qu'il imposerait
+	   est précisément ce qui a été refusé. C'est aussi elle qui rend la rotation ±0,4° des
+	   lignes lisible comme du papier plutôt que comme une bordure de travers. */
+	--shadow-paper:
+		0 1px 2px 0 oklch(0.13 0.01 270 / 0.08), 0 6px 16px -6px oklch(0.13 0.01 270 / 0.1);
+
 	/* Échelle d'ombres UI (shadcn) — vivait dans :root, seule famille de tokens
 	   hors @theme (audit UI design system 2026-08-01). */
 	--shadow-2xs: 0 1px 2px 0 oklch(0 0 0 / 0.05);
@@ -496,23 +533,17 @@ main#main-content {
 	--secondary: oklch(0.9221 0.0871 86.29); /* Jaune pastel */
 	--secondary-foreground: oklch(0.13 0.01 270);
 
-	/* ==========================================
-	   HERO GRADIENT WORD (mot d'accent du h1 de la home)
-	   SSOT des 3 stops du dégradé rose → violet → menthe, consommés par
-	   `.text-gradient-multicolor` (app/styles/utilities.css).
-
-	   ⚠️ Ce ne sont PAS les accents de marque (--primary,
-	   --color-brand-lavender/mint/sun) : ceux-là sont des pastels conçus pour
-	   l'APLAT (7,8–12,7:1 sous --foreground) et tombent à 1,5–2,5:1 en TEXTE.
-	   Les valeurs ci-dessous sont leurs pendants assombris, seuls tenables sur
-	   un glyphe — elles restent malgré tout sous 3:1 sur les stops rose et
-	   menthe (arbitrage de marque assumé). Le filet est la bascule
-	   `prefers-contrast: more` / `forced-colors` portée par l'utility : ne
-	   jamais la retirer en même temps que ces tokens.
-	   ========================================== */
-	--gradient-hero-from: oklch(0.66 0.2 350); /* rose/magenta */
-	--gradient-hero-via: oklch(0.58 0.18 295); /* violet/lavande */
-	--gradient-hero-to: oklch(0.68 0.14 175); /* teal/menthe */
+	/* ⚠️ Les tokens --gradient-hero-* (mot d'accent dégradé du h1) ont été RETIRÉS
+	   le 2026-08-05 — direction B « Le surligneur » : le mot « colorés » est
+	   passé d'une encre dégradée (pendants assombris des accents, seuls tenables
+	   sur un glyphe) à une encre --foreground sur un trait de pinceau pastel
+	   (`brush-highlight.tsx`). Si une encre colorée revient un jour : les
+	   pastels de marque tombent à 1,5–2,5:1 en texte, il faudra recréer des
+	   pendants assombris, les mesurer sur TOUTE la course du dégradé (pas
+	   seulement les stops), et savoir que la menthe est HORS GAMUT sRGB (le
+	   navigateur réduit le chroma à L et H constants — un calcul qui écrête
+	   les canaux mesure une autre couleur). Historique complet dans git et
+	   dans le bloc retiré de token-contrast.regression.test.ts. */
 
 	/* ==========================================
 	   ACCENT (Gris neutre — hover/surfaces, aligné sur --muted)
@@ -525,7 +556,18 @@ main#main-content {
 		0.45 0.01 270
 	); /* WCAG AA (ratio 6:1+ sur --background) — aligné sur --sidebar-muted-foreground */
 
-	--destructive: oklch(0.59 0.17 25);
+	/* ⚠️ Assombri de L 0.59 → 0.54 le 2026-08-05. À 0.59 (`#cf4946`) le jeton
+	   ne passait AA sur AUCUNE des trois surfaces où il sert d'ENCRE :
+	   4,08:1 sur `bg-destructive/5`, 4,35:1 sur `--background`, 4,47:1 sur
+	   `--card`. Le seuil est 4,5:1, et ces trois surfaces sont tout le chemin
+	   d'erreur du tunnel de paiement.
+	   À 0.54 (`#bd3838`) : 5,01 / 5,40 / 5,55:1, et 4,77:1 sur `destructive/10`.
+	   Le rôle d'APLAT y gagne aussi — `--destructive-foreground` est blanc, donc
+	   assombrir le fond monte le texte de 4,47 à 5,55:1.
+	   Teinte et chroma inchangés : seule la luminosité descend.
+	   Même arbitrage que `--color-brand-rose-strong` pour le rose : un pastel ne
+	   porte pas de glyphe. Verrouillé par `destructive-ink-contrast.regression.test.ts`. */
+	--destructive: oklch(0.54 0.17 25);
 	--destructive-foreground: oklch(1 0 0);
 
 	--success: oklch(0.52 0.14 145);

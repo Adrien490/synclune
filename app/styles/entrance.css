@@ -69,10 +69,13 @@
 		}
 	}
 
+	/* Défaut 500 ms = HAND_DRAWN_DURATIONS_MS.trait (le composant pose toujours
+	   --hand-duration en inline ; l'ancien défaut 800ms était MORT — il ne
+	   servait qu'à mentir sur la vitesse réelle). Courbe : --ease-hand
+	   (globals.css), une seule source avec MOTION_CONFIG.easing.easeOut. */
 	.hand-draw-load {
 		stroke-dasharray: 1;
-		animation: hand-draw var(--hand-duration, 800ms) cubic-bezier(0, 0, 0.2, 1)
-			var(--hand-delay, 0ms) both;
+		animation: hand-draw var(--hand-duration, 500ms) var(--ease-hand) var(--hand-delay, 0ms) both;
 	}
 
 	/* Default drawn — Safari <= 18 shows the finished accent (no animation). */
@@ -83,7 +86,7 @@
 
 	@supports (animation-timeline: view()) {
 		.hand-draw-inview {
-			animation: hand-draw var(--hand-duration, 800ms) cubic-bezier(0, 0, 0.2, 1) both;
+			animation: hand-draw var(--hand-duration, 500ms) var(--ease-hand) both;
 			animation-timeline: view();
 			animation-range: entry 0% cover 40%;
 		}

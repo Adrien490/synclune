@@ -148,6 +148,44 @@ describe("@regression reduced-motion-killswitch", () => {
 		).toEqual([]);
 	});
 
+	/**
+	 * Le SENS INVERSE de la règle (a), ajouté le 2026-08-05.
+	 *
+	 * Le contrat ne vérifiait que « killswitch → consommateur » : il attrapait les
+	 * sélecteurs morts, mais pas l'oubli symétrique — une classe `.animate-*` DÉFINIE ici
+	 * et absente du killswitch. Prouvé en retirant `.animate-sparkle-pulse-once` du bloc :
+	 * la suite restait verte, alors que l'animation continuait de tourner sous
+	 * `prefers-reduced-motion: reduce`.
+	 *
+	 * C'est le même motif bidirectionnel que l'allowlist de `handleOnly` et que la parité
+	 * de schéma : un contrat à sens unique laisse toujours passer l'oubli de l'autre côté.
+	 */
+	it("chaque classe .animate-* définie dans le fichier est neutralisée par le killswitch", () => {
+		const declaration = /^[ \t]*\.(animate-[a-z0-9-]+)[\s,{]/gm;
+		const defined = new Set(
+			[...animationsCss.matchAll(declaration)]
+				.map((m) => m[1])
+				.filter((s): s is string => s !== undefined),
+		);
+		const neutralized = new Set(
+			[...killswitch.matchAll(/\.(animate-[a-z0-9-]+)/g)]
+				.map((m) => m[1])
+				.filter((s): s is string => s !== undefined),
+		);
+
+		const unguarded = [...defined].filter((c) => !neutralized.has(c)).sort();
+		expect(
+			unguarded,
+			"Classe d'animation définie mais NON neutralisée sous `prefers-reduced-motion` — " +
+				"l'ajouter au bloc du killswitch :\n" +
+				unguarded.map((c) => `  .${c}`).join("\n"),
+		).toEqual([]);
+
+		// Filet du filet : si la regex de collecte cesse de matcher, le test passerait
+		// vide et ne garderait plus rien.
+		expect(defined.size).toBeGreaterThanOrEqual(6);
+	});
+
 	it(".animate-in ET .animate-out sont neutralisés en !important", () => {
 		// Les deux classes doivent partager la règle `animation: none !important` :
 		// tw-animate-css ne gère pas reduced-motion, et sans !important un

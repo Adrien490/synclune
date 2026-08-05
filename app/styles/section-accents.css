@@ -1,34 +1,77 @@
 /* ==========================================
-   SECTION ACCENTS — accent de marque par section de la home
+   SECTION ACCENTS — accent de marque par section
    Posé via data-accent sur une <section>, consommé en cascade par :
    - SectionHalo (var(--section-glow))
    - HandDrawnUnderline / HandDrawnAccent (défaut var(--section-accent))
    - CursorGlow (var(--section-glow), cf. modules/products/components/cursor-glow.css)
-   - fonds teintés bg-(--section-soft)
-   Fil conducteur : la page traverse le dégradé du hero
-   (rose → lavande → menthe, + or « sun » pour les mieux notées).
+   - fonds teintés bg-(--section-soft) (contrôles) et bg-(--section-band) (bandes)
+   Fil conducteur : la page traverse le dégradé du hero, rose → lavande →
+   menthe → soleil. C'est cet ordre que suivent les quatre étapes du tunnel
+   de paiement (Contact, Livraison, Frais, Paiement), où l'accent ne décore
+   pas : il dit où l'on en est.
+   (Le « sun » distinguait autrefois les créations les mieux notées — le
+   système d'avis a été retiré le 2026-07-30.)
    Hors [data-accent], chaque consommateur retombe sur le rose signature.
    ========================================== */
 @layer utilities {
+	/* Lavages d'accent — aplats lisibles SOUS l'encre --foreground (les accents
+	   valent 7,8–12,7:1 en aplat, 1,5–2,5:1 en encre : ils ne colorent que des
+	   surfaces). --section-soft (5 %) teinte une SALLE ; les lavages teintent un
+	   CONTRÔLE (CTA et item actif des panneaux du méga-menu, 2026-08-05). */
+	[data-accent] {
+		--section-wash: color-mix(in oklab, var(--section-accent) 10%, var(--card));
+		--section-wash-strong: color-mix(in oklab, var(--section-accent) 18%, var(--card));
+	}
+	/* --section-band — fond d'une BANDE pleine largeur (« Le carnet des séries »,
+	   /collections). Distinct de --section-soft, qui reste à 5 % pour ses
+	   consommateurs de CONTRÔLE (item de nav actif, méthode de livraison).
+
+		   ⚠️ Les quatre alphas sont VOLONTAIREMENT inégaux. À alpha égal les accents
+	   ne pèsent pas pareil : à 5 %, le rose donne ΔE OKLab 0,008 et la lavande
+	   0,014 — un facteur 1,7 pour une même intention. Ils sont donc normalisés en
+	   ΔE contre --background, entre --card (0,0112 mesuré, invisible : les cartes
+	   s'appuient sur leur ombre) et --muted (0,0502, qui lit comme un panneau).
+	   Une salle teintée, pas un aplat.
+
+	   Mesures (@regression section-band-contrast, qui les recalcule) :
+
+	   | accent   | alpha | surface  |    ΔE  | --muted-fg | --foreground |
+	   | rose     |  18 % | #fcf0fa  | 0,0291 |    6,71:1  |     18,14:1  |
+	   | lavender |  11 % | #f1f0fd  | 0,0319 |    6,62:1  |     17,88:1  |
+	   | mint     |  12 % | #ebf6f4  | 0,0285 |    6,75:1  |     18,25:1  |
+	   | sun      |  16 % | #f8f4ea  | 0,0290 |    6,78:1  |     18,32:1  |
+
+	   Le contrat de catalog-accents.constants.ts (« ces aplats ne portent aucun
+	   texte ») vise l'accent PUR ; à ces alphas la surface reste du quasi-blanc,
+	   et --muted-foreground n'y perd que 0,5 point (7,23:1 sur --background).
+
+	   OPAQUE (mix vers --background, pas vers transparent) : deux bandes empilées
+	   ne peuvent pas s'additionner, et les valeurs ci-dessus sont exactement
+	   celles rendues. Hors [data-accent] la var est indéfinie — le
+	   `background-color` est alors invalide, donc transparent : dégradation propre. */
 	[data-accent="rose"] {
 		/* L'accent rose EST --primary : dérivé, jamais dupliqué. */
 		--section-accent: var(--primary);
 		--section-glow: var(--color-glow-pink);
 		--section-soft: color-mix(in oklab, var(--primary) 5%, transparent);
+		--section-band: color-mix(in oklab, var(--section-accent) 18%, var(--background));
 	}
 	[data-accent="lavender"] {
 		--section-accent: var(--color-brand-lavender);
 		--section-glow: var(--color-glow-lavender);
 		--section-soft: oklch(0.72 0.11 295 / 0.05);
+		--section-band: color-mix(in oklab, var(--section-accent) 11%, var(--background));
 	}
 	[data-accent="mint"] {
 		--section-accent: var(--color-brand-mint);
 		--section-glow: var(--color-glow-mint);
 		--section-soft: oklch(0.78 0.11 165 / 0.05);
+		--section-band: color-mix(in oklab, var(--section-accent) 12%, var(--background));
 	}
 	[data-accent="sun"] {
 		--section-accent: var(--color-brand-sun);
 		--section-glow: var(--color-glow-yellow);
 		--section-soft: oklch(0.85 0.11 86 / 0.06);
+		--section-band: color-mix(in oklab, var(--section-accent) 16%, var(--background));
 	}
 }
