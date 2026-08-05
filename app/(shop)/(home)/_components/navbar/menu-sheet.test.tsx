@@ -28,9 +28,9 @@ vi.mock("next/font/google", () => {
 		style: { fontFamily: "mock" },
 	});
 	return {
-		Figtree: fontMock,
-		Fraunces: fontMock,
-		Sacramento: fontMock,
+		Onest: fontMock,
+		Winky_Sans: fontMock,
+		Kalam: fontMock,
 	};
 });
 
@@ -136,11 +136,6 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	SheetClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-// Mock ScrollFade
-vi.mock("@/shared/components/scroll-fade", () => ({
-	default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 // Mock LogoutAlertDialog — expose `open` as data attribute for assertions
 vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
 	LogoutAlertDialog: ({ open }: { open: boolean }) => (
@@ -150,10 +145,19 @@ vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
 
 // Mock sub-components
 vi.mock("./menu-sheet-nav", () => ({
-	MenuSheetNav: ({ onLogoutClick }: { onLogoutClick?: () => void }) => (
+	MenuSheetNav: ({
+		onLogoutClick,
+		onCartClick,
+	}: {
+		onLogoutClick?: () => void;
+		onCartClick?: () => void;
+	}) => (
 		<div data-testid="menu-sheet-nav">
 			<button type="button" data-testid="logout-button" onClick={onLogoutClick}>
 				logout
+			</button>
+			<button type="button" data-testid="cart-shortcut-button" onClick={onCartClick}>
+				panier
 			</button>
 		</div>
 	),
@@ -195,6 +199,14 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 		open: mockOpen,
 		close: mockClose,
 	}),
+}));
+
+// Mock sheet-store — le raccourci « Panier » ouvre le cart sheet après la
+// transition de sortie du menu (même mécanique différée que la déconnexion).
+const mockOpenSheet = vi.fn();
+vi.mock("@/shared/providers/sheet-store-provider", () => ({
+	useSheetStore: (selector: (s: { open: (id: string) => void }) => unknown) =>
+		selector({ open: mockOpenSheet }),
 }));
 
 // Mock useHaptic — capture all triggerHaptic calls for assertions
@@ -283,8 +295,10 @@ describe("MenuSheet", () => {
 		it("renders sr-only sheet header with title and description", () => {
 			render(<MenuSheet {...baseProps} />);
 
+			// Tutoiement + première personne — le vouvoiement « Découvrez nos
+			// bijoux » n'était servi qu'aux lecteurs d'écran (lot 0, 2026-08-05).
 			expect(
-				screen.getByText(/Menu de navigation - Découvrez nos bijoux et collections/),
+				screen.getByText(/Menu de navigation — découvre mes créations et mes collections/),
 			).toBeInTheDocument();
 		});
 
@@ -383,7 +397,7 @@ describe("MenuSheet", () => {
 
 			// SheetDescription is rendered sr-only and announced as dialog content.
 			expect(
-				screen.getByText("Menu de navigation - Découvrez nos bijoux et collections"),
+				screen.getByText("Menu de navigation — découvre mes créations et mes collections"),
 			).toBeInTheDocument();
 			// The former <p role="status"> live region announcing nav item count has been removed.
 			expect(screen.queryByText(/Menu ouvert,/)).not.toBeInTheDocument();
@@ -430,18 +444,78 @@ describe("MenuSheet", () => {
 				const dialog = screen.getByTestId("logout-alert-dialog");
 				expect(dialog.getAttribute("data-open")).toBe("false");
 
-				// 1. User taps logout — pendingLogout flips, closeMenu called
+				// 1. User taps logout — pendingAction flips, closeMenu called
 				act(() => screen.getByTestId("logout-button").click());
 				expect(mockClose).toHaveBeenCalled();
 				expect(dialog.getAttribute("data-open")).toBe("false");
 
-				// 2. Fast-forward past Vaul exit fallback (450ms)
+				// 2. Fast-forward past the exit fallback (450ms)
 				act(() => {
 					vi.advanceTimersByTime(500);
 				});
 
 				expect(screen.getByTestId("logout-alert-dialog").getAttribute("data-open")).toBe("true");
 			} finally {
+				vi.useRealTimers();
+			}
+		});
+	});
+
+	describe("cart shortcut deferred flow", () => {
+		it("ferme le menu PUIS ouvre le cart sheet après la transition de sortie", () => {
+			// Même mécanique différée que la déconnexion : ouvrir le panier pendant
+			// que le menu glisse encore empilerait deux overlays (M2).
+			vi.useFakeTimers();
+			try {
+				render(<MenuSheet {...baseProps} />);
+
+				act(() => screen.getByTestId("cart-shortcut-button").click());
+				expect(mockClose).toHaveBeenCalled();
+				expect(mockOpenSheet).not.toHaveBeenCalled();
+
+				act(() => {
+					vi.advanceTimersByTime(500);
+				});
+
+				expect(mockOpenSheet).toHaveBeenCalledWith("cart");
+				expect(mockOpenSheet).toHaveBeenCalledTimes(1);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		// Sous prefers-reduced-motion, `pwa.css` neutralise la transition transform
+		// du panneau : `transitionend` ne part jamais et seul le fallback de 450 ms
+		// déclenchait — le chemin le PLUS lent pour qui demande MOINS de mouvement
+		// (audit menu-sheet 2026-08-05). Le différé court-circuite en micro-délai.
+		it("ouvre le cart sheet en micro-délai (pas 450 ms) sous prefers-reduced-motion", () => {
+			vi.useFakeTimers();
+			const originalMatchMedia = window.matchMedia;
+			window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+				matches: query === "(prefers-reduced-motion: reduce)",
+				media: query,
+				onchange: null,
+				addListener: vi.fn(),
+				removeListener: vi.fn(),
+				addEventListener: vi.fn(),
+				removeEventListener: vi.fn(),
+				dispatchEvent: vi.fn(),
+			}));
+			try {
+				render(<MenuSheet {...baseProps} />);
+
+				act(() => screen.getByTestId("cart-shortcut-button").click());
+				expect(mockOpenSheet).not.toHaveBeenCalled();
+
+				// Micro-délai (setTimeout 0) : le volet démonté doit se peindre avant
+				// l'overlay suivant — mais aucun timer de 450 ms ne doit être nécessaire.
+				act(() => {
+					vi.advanceTimersByTime(0);
+				});
+
+				expect(mockOpenSheet).toHaveBeenCalledWith("cart");
+			} finally {
+				window.matchMedia = originalMatchMedia;
 				vi.useRealTimers();
 			}
 		});

@@ -66,8 +66,13 @@ export function EtalAllCreationsCard() {
 					Le catalogue
 				</span>
 
+				{/* `/produits` nue, PAS `?sortBy=created-descending` : ce tri est déjà
+				    le défaut (`productSortBySchema.default(GET_PRODUCTS_DEFAULT_SORT_BY)`),
+				    et `/produits` se canonicalise sur elle-même. Le paramètre faisait
+				    pointer le lien interne le plus fort du site vers une URL qui se
+				    canonicalise ailleurs, pour un résultat identique. */}
 				<Link
-					href="/produits?sortBy=created-descending"
+					href="/produits"
 					className="focus-ring block w-fit max-w-full after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
 				>
 					<span className="relative block">
@@ -82,7 +87,10 @@ export function EtalAllCreationsCard() {
 								className="can-hover:group-hover:translate-x-1 ml-1.5 inline size-4 align-[-0.1em] ease-out motion-safe:transition-transform motion-safe:duration-300"
 							/>
 						</span>
-						<SquiggleUnderline />
+						{/* `w-full` : le défaut `w-20` (80 px) ne couvrirait qu'environ la
+						    moitié de « Voir toutes les créations ». Même correctif que
+						    ProductCard et CollectionCard. */}
+						<SquiggleUnderline className="w-full" />
 					</span>
 				</Link>
 			</div>

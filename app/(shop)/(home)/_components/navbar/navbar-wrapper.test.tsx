@@ -7,7 +7,7 @@ vi.mock("next/font/google", () => {
 		variable: "--mock-font",
 		style: { fontFamily: "mock" },
 	});
-	return { Figtree: fontMock, Fraunces: fontMock, Sacramento: fontMock };
+	return { Onest: fontMock, Winky_Sans: fontMock, Kalam: fontMock };
 });
 
 let mockPathname = "/";

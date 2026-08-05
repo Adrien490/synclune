@@ -1,12 +1,15 @@
 "use client";
 
 import { useId } from "react";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NavItemChild, MegaMenuProduct } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { LoadingIndicator } from "@/shared/components/navigation";
+import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
+import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 import { CollectionImagesGrid } from "@/modules/collections/components/collection-images-grid";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ROUTES } from "@/shared/constants/urls";
@@ -28,6 +31,13 @@ interface MegaMenuCreationsProps {
  * nouveautés sans allonger le panneau.
  */
 const RAIL_WIDTH = "w-60";
+
+/**
+ * Tirages du rail Nouveautés (« La boîte à perles », artifact 2026-08-05) :
+ * inclinaison alternée par index, classes LITTÉRALES. Le tilt est une pose
+ * STATIQUE (pas un mouvement), donc pas de `motion-safe:`.
+ */
+const TIRAGE_TILT = ["-rotate-1", "rotate-[0.8deg]"] as const;
 
 export function MegaMenuCreations({
 	productTypes,
@@ -51,26 +61,46 @@ export function MegaMenuCreations({
 	return (
 		// Le panneau porte sa propre largeur (cf. `DesktopNav`) : 46rem avec le rail,
 		// nettement moins sans lui — sinon les catégories s'étirent dans le vide.
+		// `data-accent="lavender"` : le panneau est portalisé hors du <header>, il
+		// n'hérite donc pas de l'accent de salle posé par navbar-wrapper — il pose
+		// le SIEN (même SSOT navbar-section.ts : créations = lavande). Consommé par
+		// les lavages du CTA/item actif et par HandDrawnUnderline.
 		<div
 			role="region"
 			aria-labelledby={regionHeadingId}
+			data-accent="lavender"
 			className={cn(
 				"px-6 py-5",
 				hasRail ? "w-[min(46rem,var(--available-width))]" : "w-[min(28rem,var(--available-width))]",
 			)}
 		>
-			<h2 id={regionHeadingId} className="sr-only">
-				Créations
-			</h2>
 			<div className="flex gap-6">
 				{/* Left zone: categories */}
 				<div className="min-w-0 flex-1">
-					<MegaMenuColumn
-						title="Catégories"
-						subtitle="Bijoux par type"
-						items={productTypes}
-						columns={2}
+					{/* h2 VISIBLE (harmonisation avec le panneau Collections — les deux
+					    panneaux s'ouvrent sur leur nom, même structure pour un lecteur
+					    d'écran). ⚠️ Le nom accessible du landmark doit continuer de
+					    matcher /Créations/i (e2e/mega-menu-desktop.spec.ts). */}
+					<h2
+						id={regionHeadingId}
+						className="text-foreground font-display text-sm leading-tight font-medium"
+					>
+						Créations
+					</h2>
+					{/* Le trait se dessine au montage du panneau (keepMounted:false →
+					    à chaque ouverture), 500 ms ; reduced-motion l'affiche fini. */}
+					{/* Width seule (hauteur dérivée — l'ancien 76×12 letterboxait) ;
+					    durée et graisse : les défauts de l'échelle. */}
+					<HandDrawnUnderline
+						width={76}
+						strokeWidth={HAND_DRAWN_STROKES.marqueur}
+						inView={false}
+						className="mt-0.5"
 					/>
+					<p className="text-muted-foreground font-display mt-1 mb-3 text-xs italic">
+						Tout sort du même établi
+					</p>
+					<MegaMenuColumn items={productTypes} columns={2} />
 				</div>
 
 				{/* Right zone: nouveautés (prioritaire) */}
@@ -82,65 +112,79 @@ export function MegaMenuCreations({
 					// lecteur d'écran sans rien apporter, le `<h3>` ci-dessous portant déjà
 					// la navigation par en-têtes. Un seul landmark subsiste, sur la racine.
 					<div className={cn("border-border shrink-0 border-l pl-6", RAIL_WIDTH)}>
-						<h3 className="text-foreground font-display mb-1 text-sm leading-tight font-medium">
+						<h3 className="text-foreground font-display text-sm leading-tight font-medium">
 							Nouveautés
 						</h3>
-						<p className="text-muted-foreground font-display mb-3 text-xs italic">
-							Pièces récentes de l&apos;atelier
+						<HandDrawnUnderline
+							width={64}
+							strokeWidth={HAND_DRAWN_STROKES.marqueur}
+							inView={false}
+							className="mt-0.5"
+						/>
+						<p className="text-muted-foreground font-display mt-1 mb-3 text-xs italic">
+							Les dernières sorties de l&apos;atelier
 						</p>
-						<div className="grid gap-1">
-							{featuredProducts.map((product) => (
+						{/* Deux TIRAGES (« La boîte à perles ») : le vocabulaire des cartes
+						    Atelier — cadre blanc, grain, tilt — posé À L'INTÉRIEUR du
+						    panneau. ⚠️ Rien ne doit déborder du cadre du popup — les deux
+						    rubans qui ont vécu ici (sur le bord du popup, puis sur les
+						    tirages) ont été retirés le 2026-08-05. */}
+						<div className="grid gap-4 pt-1.5">
+							{featuredProducts.map((product, index) => (
 								<NavigationMenuLink
 									key={product.slug}
 									render={<Link href={ROUTES.SHOP.PRODUCT(product.slug)} />}
 									className={cn(
 										// `relative` : ancre du `LoadingIndicator` en bas du lien.
-										"group/product relative flex items-center gap-3",
-										"rounded-lg p-1.5",
-										"ease-out motion-safe:transition-colors motion-safe:duration-[var(--duration-slow)]",
-										"hover:bg-accent/50",
+										"group/product relative block rounded-md p-1",
 										"focus-ring",
 									)}
 								>
-									<div
+									<span
 										className={cn(
-											"bg-muted relative size-14 shrink-0 overflow-hidden rounded-md",
-											"ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)]",
-											"motion-safe:can-hover:group-hover/product:-translate-y-0.5",
+											"polaroid-paper bg-card relative block rounded-md p-1.5 pb-2 shadow-2xs",
+											TIRAGE_TILT[index % TIRAGE_TILT.length],
+											"ease-out motion-safe:transition-[translate,box-shadow] motion-safe:duration-[var(--duration-slow)]",
+											// Lift décoratif : même renoncement documenté que les
+											// cartes du panneau (pas de parité focus exigée, le
+											// focus-ring du lien porte l'état).
+											"motion-safe:can-hover:group-hover/product:-translate-y-1",
 											"can-hover:group-hover/product:shadow-premium-rose",
 										)}
 									>
-										<Image
-											src={product.imageUrl}
-											alt=""
-											fill
-											sizes="56px"
-											className="object-cover"
-											placeholder={product.blurDataUrl ? "blur" : "empty"}
-											blurDataURL={product.blurDataUrl ?? undefined}
-											aria-hidden="true"
-										/>
-									</div>
-									<div className="min-w-0">
-										<p className="text-foreground line-clamp-1 text-sm font-medium">
-											{product.title}
-										</p>
-										<p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-											{formatEuro(product.priceInclTax, { compact: true })}
-											{product.isNew && (
-												// Le badge a quitté la vignette : à 56px il la mangeait.
-												<span
-													className={cn(
-														"rounded-full px-1.5 py-0.5",
-														"bg-primary/90 text-primary-foreground",
-														"text-[0.625rem] leading-none font-medium tracking-wide",
-													)}
-												>
-													Nouveau
-												</span>
-											)}
-										</p>
-									</div>
+										<span className="bg-muted relative block h-24 overflow-hidden rounded-[3px]">
+											<Image
+												src={product.imageUrl}
+												alt=""
+												fill
+												sizes="200px"
+												quality={IMAGE_QUALITY.THUMBNAIL}
+												className="object-cover"
+												placeholder={product.blurDataUrl ? "blur" : "empty"}
+												blurDataURL={product.blurDataUrl ?? undefined}
+												aria-hidden="true"
+											/>
+										</span>
+										<span className="mt-1.5 flex items-baseline justify-between gap-2 px-0.5">
+											<span className="text-foreground line-clamp-1 min-w-0 text-[0.8125rem] font-medium">
+												{product.title}
+											</span>
+											<span className="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs">
+												{formatEuro(product.priceInclTax, { compact: true })}
+												{product.isNew && (
+													<span
+														className={cn(
+															"rounded-full px-1.5 py-0.5",
+															"bg-primary/90 text-primary-foreground",
+															"text-[0.625rem] leading-none font-medium tracking-wide",
+														)}
+													>
+														Nouveau
+													</span>
+												)}
+											</span>
+										</span>
+									</span>
 									<LoadingIndicator />
 								</NavigationMenuLink>
 							))}
@@ -152,10 +196,16 @@ export function MegaMenuCreations({
 				{hasSpotlight && spotlightCollection && (
 					// Pas de `role="region"` ici non plus — cf. le rail « Nouveautés ».
 					<div className={cn("border-border shrink-0 border-l pl-6", RAIL_WIDTH)}>
-						<h3 className="text-foreground font-display mb-1 text-sm leading-tight font-medium">
+						<h3 className="text-foreground font-display text-sm leading-tight font-medium">
 							À découvrir
 						</h3>
-						<p className="text-muted-foreground font-display mb-3 text-xs italic">
+						<HandDrawnUnderline
+							width={64}
+							strokeWidth={HAND_DRAWN_STROKES.marqueur}
+							inView={false}
+							className="mt-0.5"
+						/>
+						<p className="text-muted-foreground font-display mt-1 mb-3 text-xs italic">
 							Une collection à explorer
 						</p>
 						<NavigationMenuLink

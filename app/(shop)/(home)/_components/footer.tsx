@@ -9,12 +9,13 @@ import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
 import { footerHelpNavItems, footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { CONTAINER_CLASS, FOOTER_PADDING } from "@/shared/constants/spacing";
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
 import { cacheLife, cacheTag } from "next/cache";
 import { ManageCookiesButton } from "@/shared/components/manage-cookies-button";
-import { FooterLink } from "./footer-link";
+import { BASE_TACTILE_CLASSES, FooterLink } from "./footer-link";
 import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 /**
  * Coquille partagée par le footer et son squelette.
@@ -37,37 +38,53 @@ const FOOTER_SHELL_CLASS =
 const FOOTER_LABEL = "Informations et liens utiles";
 
 const COLUMN_TITLE_CLASS = "font-display text-foreground mb-4 text-lg font-normal antialiased";
+// ⚠️ Aucune des trois constantes ci-dessous ne déclare de `transition-*` ni de
+// `duration-*` : c'est `BASE_TACTILE_CLASSES` qui les porte, pour tout le footer.
+// En déclarer une ici la mettrait en concurrence avec la sienne, et le gagnant
+// serait décidé par l'ordre d'émission Tailwind — pas par l'ordre d'écriture.
+// Cf. le docblock de `footer-link.tsx`, et la régression qui le verrouille.
 const COLUMN_LINK_CLASS =
-	"text-muted-foreground can-hover:hover:bg-primary/5 inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]";
+	"text-muted-foreground can-hover:hover:bg-primary/5 inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased";
 // `px-2` et non `px-3` : à 1280 px les 7 entrées tiennent alors sur UNE ligne à
 // côté du bloc paiement (elles débordaient de ~30 px). La hauteur de cible reste
 // 44 px — c'est `min-h-11` qui la porte, pas le padding horizontal.
 const LEGAL_LINK_CLASS =
-	"text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground inline-flex min-h-11 items-center rounded-lg px-2 py-2 text-sm antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]";
+	"text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground inline-flex min-h-11 items-center rounded-lg px-2 py-2 text-sm antialiased";
 const SOCIAL_PASTILLE_CLASS =
-	"border-border/70 text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-foreground inline-flex size-11 items-center justify-center rounded-full border motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]";
+	"border-border/70 text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-foreground inline-flex size-11 items-center justify-center rounded-full border";
 
 /**
  * Lightweight skeleton matching Footer's outer shell to prevent CLS during streaming.
  *
- * Les trois hauteurs sont MESURÉES (Playwright, /cgv, 2026-08-04), pas estimées —
- * le jeu précédent (990/640/480) datait d'une estimation jamais reprise depuis le
- * retrait du bloc réassurance, et sous-réservait ~226 px en mobile. Chacune couvre
- * le pire cas de sa plage, pas un point confortable au milieu :
+ * Les trois hauteurs sont MESURÉES (Playwright, /cgv, 2026-08-05), pas estimées.
+ * Chacune couvre le pire cas de sa plage, pas un point confortable au milieu :
  *
- *   < 640 px   1078 px  (identique de 320 à 390 ; 1066 à 639)
- *   640-1023   749 px   (à 768 ; 743 à 640, 701 à 1023)
- *   >= 1024    481 px   (à 1024, où le bandeau légal tient encore sur DEUX lignes —
- *                        il n'en fait plus qu'une à partir de ~1200, d'où 433 à 1280)
+ *   < 640 px   1373 px à 320  (1349 de 360 à 390 ; 1309 à 639)   → 87.5rem
+ *   640-1023    992 px à 768  (986 à 640 ; 944 à 1023)           → 63.5rem
+ *   >= 1024     667 px à 1024 (619 dès 1280 — le bandeau légal
+ *               tient encore sur DEUX lignes à 1024)             → 42.5rem
  *
  * Marge de ~2 % au-dessus : une réserve trop grande fait remonter le contenu (le
  * scroll ne bouge pas), une réserve trop courte le pousse vers le bas sous le doigt.
+ *
+ * ⚠️ **En REM, pas en px** — et ce n'est pas cosmétique. Presque tout ce que réserve
+ * cette boîte (`py-12`, `gap-*`, les tailles de texte) est déjà en rem chez Tailwind :
+ * à 200 % de police racine (WCAG 1.4.4) le footer réel double, alors qu'une réserve en
+ * px reste figée. Les anciennes valeurs `1090/760/495` sous-réservaient déjà de 35 à
+ * 143 px à 100 %, et de ~2 000 px à 200 % — le commentaire annonçait « ~2 % au-dessus »
+ * alors que la marge était NÉGATIVE partout. Une réserve en rem suit l'agrandissement.
+ *
+ * ⚠️ `--bottom-bar-height` (57 px) est publiée au RUNTIME, et `FOOTER_PADDING` l'ajoute
+ * à son `padding-bottom` : mesurer avant hydratation sous-estime le footer d'autant.
+ * C'est l'essentiel de la dérive des anciennes valeurs. Mesurer APRÈS `networkidle`.
+ *
+ * Verrouillé par `__tests__/footer-skeleton-height.regression.test.tsx`.
  */
 export function FooterSkeleton() {
 	return (
 		<footer className={FOOTER_SHELL_CLASS} aria-label={FOOTER_LABEL} aria-busy="true">
 			<div className={`${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
-				<div className="min-h-[1090px] sm:min-h-[760px] lg:min-h-[495px]" />
+				<div className="min-h-[87.5rem] sm:min-h-[63.5rem] lg:min-h-[42.5rem]" />
 			</div>
 		</footer>
 	);
@@ -77,7 +94,7 @@ export function FooterSkeleton() {
  * Footer statique de l'application — direction « La signature ».
  *
  * Le pied de page est l'endroit où l'atelier signe : une zone de signature
- * (phrase de marque en Fraunces, « — Léane », réseaux), deux colonnes serrées,
+ * (phrase de marque en display, « — Léane », réseaux), deux colonnes serrées,
  * puis un rail unique qui rassemble légal et paiement. Contenu entièrement
  * statique, caché au niveau composant avec le profil "reference".
  *
@@ -117,13 +134,7 @@ export async function Footer() {
 					<div className="mb-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.25fr_0.85fr_0.9fr] lg:gap-10">
 						{/* Zone 1 : la signature de l'atelier */}
 						<div className="order-1 sm:col-span-2 lg:col-span-1">
-							<Logo
-								href="/"
-								size={40}
-								sizeMd={48}
-								quality={IMAGE_QUALITY.STANDARD}
-								viewTransitionName="shop-logo-footer"
-							/>
+							<Logo href="/" size={40} sizeMd={48} viewTransitionName="shop-logo-footer" />
 
 							{/* `text-balance` : sans lui, « Des bijoux colorés créés / avec passion »
 							    coupait entre le verbe et son complément à 390 px, et l'accent
@@ -132,13 +143,22 @@ export async function Footer() {
 								Des bijoux{" "}
 								<span className="relative inline-block">
 									colorés
+									{/* Pas de `delay` : il serait INERTE ici, comme `once` /
+									    `disableOnTouch` sur le <Fade> ci-dessus. `--hand-delay` n'est lu
+									    que par `.hand-draw-load` (app/styles/entrance.css) ; la branche
+									    `inView` est pilotée par `animation-timeline: view()`, où
+									    `animation-delay` n'a de toute façon aucun sens.
+									    La cascade entre cet accent et celui de « — Léane » existe quand
+									    même : chaque tracé suit SA propre position au scroll, et celui de
+									    la signature est ~90 px plus bas. C'est le scroll qui l'échelonne,
+									    pas une durée — ne pas réintroduire de `delay` pour « régler » ça. */}
+									{/* Géométrie : width seule, hauteur dérivée du ratio 6:1 — le
+									    couple 96×14 letterboxait l'encre (81,2 px rendus sur 96,
+									    mesure au navigateur, audit 2026-08-05). Couleur : le défaut
+									    cascadé (hors [data-accent], repli --primary — même rendu). */}
 									<HandDrawnAccent
 										variant="underline"
-										color="var(--primary)"
 										width={96}
-										height={14}
-										strokeWidth={2}
-										delay={0.8}
 										inView
 										className="absolute inset-x-0 -bottom-1.5"
 									/>
@@ -151,13 +171,13 @@ export async function Footer() {
 							<p className="mt-6">
 								<span className="font-cursive text-foreground relative inline-block text-2xl font-normal">
 									— Léane
+									{/* `delay` retiré ici aussi — cf. l'accent de « colorés » ci-dessus. */}
+									{/* Même correctif que l'accent de « colorés » : l'ancien 92×12
+									    rendait 69,6 px d'encre décalés de 11,2 px — le trait
+									    commençait sous le « L » et ignorait le tiret. */}
 									<HandDrawnAccent
 										variant="underline"
-										color="var(--primary)"
 										width={92}
-										height={12}
-										strokeWidth={2}
-										delay={1.1}
 										inView
 										className="absolute inset-x-0 -bottom-1"
 									/>
@@ -235,7 +255,7 @@ export async function Footer() {
 								<FooterLink
 									href={`mailto:${BRAND.contact.email}`}
 									external
-									className="text-foreground can-hover:hover:bg-primary/8 wrap-break-words inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+									className="text-foreground can-hover:hover:bg-primary/8 wrap-break-words inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased"
 									aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 								>
 									{BRAND.contact.email}
@@ -254,10 +274,46 @@ export async function Footer() {
 						</section>
 					</div>
 
-					{/* Réassurance : SSOT = HeroReassuranceBanner (sous le hero, près du point de
-					    décision — Baymard). Le footer se spécialise sur la confiance
-					    transactionnelle (bloc Paiement sécurisé ci-dessous), sans dupliquer
-					    livraison/retours une seconde fois sur la même page. */}
+					{/* Réassurance — livraison + retours.
+
+					    Elle vit ICI, et pas « sous le hero » : le `HeroReassuranceBanner` que
+					    cet emplacement citait comme SSOT a été supprimé avec le vidage de la
+					    landing (2026-08-03). Elle ne survivait donc plus que sur la PDP
+					    (`ProductReassurance`) et le checkout (`CheckoutTrustBadge`) — ni la
+					    home, ni /produits, ni /collections, ni /favoris n'en portaient trace.
+					    Le footer est la seule surface commune à toutes ces pages.
+
+					    Volontairement TERSE, et sans icônes (refus enregistré sur le bandeau
+					    du hero) : la version détaillée reste celle de la PDP, près du point de
+					    décision (Baymard). Ici on rassure une visiteuse qui parcourt, on ne
+					    répète pas une fiche.
+
+					    Montants dérivés de `SHIPPING_RATES` — jamais de littéral : la même
+					    valeur est déjà affichée par `ProductReassurance`, les deux ne peuvent
+					    pas divorcer. « Retours et échanges sous 14 jours » reprend la chaîne
+					    EXACTE de ce composant : les 14 jours n'ont pas de constante (~14 sites
+					    en dur, tous légaux), une chaîne identique laisse un seul motif à
+					    grepper le jour d'une passe SSOT. */}
+					<section
+						aria-labelledby="footer-reassurance-title"
+						className="border-border/60 mb-8 border-t pt-8"
+					>
+						<h3 id="footer-reassurance-title" className="sr-only">
+							Livraison et retours
+						</h3>
+						{/* `gap-x-6` sépare les deux faits, sans caractère séparateur entre elles :
+						    un « · » en `text-border` y était invisible en desktop (0,92 de clarté
+						    sur un fond à 0,99) et, en mobile, restait pendu en fin de ligne au
+						    retour à la ligne. Le « · » qui subsiste est du TEXTE, entre France et
+						    UE — il se lit, lui, et ne peut pas se retrouver orphelin. */}
+						<p className="text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-1 text-sm/6 antialiased">
+							<span>
+								Livraison France {formatShippingPrice(SHIPPING_RATES.FR.amount)} · Union européenne{" "}
+								{formatShippingPrice(SHIPPING_RATES.EU.amount)}
+							</span>
+							<span>Retours et échanges sous 14 jours</span>
+						</p>
+					</section>
 
 					{/* Rail bas : tout ce qui n'est pas de la navigation tient sur une ligne
 					    en desktop, et cesse d'empiler sept cibles pleine largeur en mobile. */}
@@ -284,10 +340,13 @@ export async function Footer() {
 									</li>
 								))}
 								<li>
-									{/* Pas un FooterLink : `focus-ring` doit donc être posé ici. */}
-									<ManageCookiesButton
-										className={`${LEGAL_LINK_CLASS} focus-ring cursor-pointer`}
-									/>
+									{/* Pas un FooterLink, donc rien ne lui injecte le socle tactile : on
+									    le compose ici, à l'identique de ses six voisins. Il lui manquait
+									    `touch-manipulation` et `active:scale-[0.98]` — seule cible de la
+									    rangée à ne pas répondre à l'appui. (`focus-ring` et
+									    `cursor-pointer` sont dans le socle et dans `pwa.css`
+									    respectivement : ne pas les redonner ici.) */}
+									<ManageCookiesButton className={`${LEGAL_LINK_CLASS} ${BASE_TACTILE_CLASSES}`} />
 								</li>
 							</ul>
 						</nav>

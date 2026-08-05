@@ -12,7 +12,6 @@ import {
 	navigationMenuTriggerStyle,
 } from "@/shared/components/ui/navigation-menu";
 import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
@@ -30,7 +29,7 @@ interface DesktopNavProps {
 }
 
 /**
- * Libellés en Fraunces (`font-display`) et non plus en Figtree : le header était
+ * Libellés en display (`font-display`) et non plus en sans : le header était
  * la dernière surface du storefront à parler shadcn-neutre, entre des cartes
  * « Atelier » (tirage polaroid, masking tape, trait dessiné) et un footer à
  * l'accent manuscrit.
@@ -205,9 +204,14 @@ export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: 
 			</NavigationMenuList>
 
 			{/* Le panneau, monté une seule fois. Base UI y déplace le contenu de l'item
-			    actif et morphe la taille d'un panneau à l'autre. Le ruban de masking
-			    tape remplace le filet rose : même vocabulaire que les cartes Atelier,
-			    et il déborde du cadre — d'où l'absence d'`overflow-hidden` ici. */}
+			    actif et morphe la taille d'un panneau à l'autre.
+
+			    ⚠️ **Aucun décor débordant ici, et surtout pas au-dessus du cadre.** Un
+			    ruban de masking tape y vivait en `-top-2` ; avec le `sideOffset={8}` du
+			    popup, ces 8 px de débord le posaient EXACTEMENT sur la rangée de nav,
+			    à la hauteur du `SquiggleUnderline` (`-bottom-0.5`) — donc un aplat rose
+			    opaque par-dessus le marqueur de la page courante, à chaque survol d'une
+			    autre entrée. Le décor masquait l'état. Retiré le 2026-08-05. */}
 			{/* ⚠️ `align="start"` est la CONSÉQUENCE MÉCANIQUE du déplacement de la nav à
 			    gauche (2026-08-04), pas une préférence. Mesuré à 1280 px avec le défaut
 			    `align="center"` : le panneau de 738 px centré sur un trigger désormais
@@ -219,9 +223,7 @@ export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: 
 			    Ancré sur le bord gauche du trigger, il redevient lisible comme SON
 			    panneau. Tant que la nav était centrée sur la page, `center` était le bon
 			    défaut — c'est bien le déplacement qui l'a invalidé. */}
-			<NavigationMenuPopup align="start" className="overflow-visible">
-				<MaskingTape className="-top-2 left-10 h-4 w-20 -rotate-2" />
-			</NavigationMenuPopup>
+			<NavigationMenuPopup align="start" />
 		</NavigationMenu>
 	);
 }

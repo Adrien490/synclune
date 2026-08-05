@@ -28,10 +28,16 @@ const NONE: NavbarSection = { accent: null, label: null };
  * et inutilisables en encre (1,5 à 2,5:1). Reste à ne pas rendre la
  * correspondance arbitraire — sinon le bandeau devient de la décoration.
  *
- * Elle suit **l'ordre du dégradé du titre de l'accueil** (`--gradient-hero-from`
- * → `via` → `to`, rose → lavande → menthe, `app/globals.css`) : accueil rose,
- * créations lavande, collections menthe. Le soleil, quatrième accent et seul
- * hors dégradé, va à l'aide — la salle qui n'est pas du catalogue.
+ * Elle suit **l'ordre des touches de pinceau du bloc titre** (`RAIL_ACCENTS`,
+ * rose → lavande → menthe → soleil — le même fil que portait le dégradé du
+ * titre avant son passage au surligneur, 2026-08-05) : accueil rose,
+ * créations lavande, collections menthe.
+ *
+ * ⚠️ Le soleil — quatrième accent, seul hors dégradé — allait à l'aide. Depuis
+ * que la FAQ a rejoint la landing (2026-08-05), il n'est plus attribué à AUCUNE
+ * salle : `NavbarAccent` le garde parce que `section-accents.css` l'expose et
+ * que la section FAQ le porte sur son contenu, mais `resolveNavbarSection` ne le
+ * rend plus jamais. C'est donc lui, le candidat naturel d'une cinquième salle.
  *
  * ## Ce qui n'a délibérément PAS d'accent
  *
@@ -55,7 +61,7 @@ const NONE: NavbarSection = { accent: null, label: null };
  *
  * La colonne droite de la barre est `flex-1` à base 0 — elle reçoit donc
  * `(largeur utile − logo mobile − gouttières) / 2`, soit ~92 px à 390 px et
- * ~57 px à 320 px. « Les collections » en Fraunces `text-sm` en demande ~105 :
+ * ~57 px à 320 px. « Les collections » en display `text-sm` en demande ~105 (mesuré sous Fraunces ; ordre de grandeur inchangé sous Winky Sans) :
  * le repère qui existe pour dire où l'on est rendait « Les collec… » sur TOUS les
  * téléphones courants.
  *
@@ -83,10 +89,11 @@ export function resolveNavbarSection(pathname: string | null): NavbarSection {
 		return { accent: "mint", label: "Collections" };
 	}
 
-	if (isUnder(pathname, ROUTES.SHOP.HELP)) {
-		return { accent: "sun", label: "Aide" };
-	}
-
+	// ⚠️ Plus de salle « Aide ». La FAQ a rejoint la landing le 2026-08-05, et
+	// `ROUTES.SHOP.HELP` vaut désormais `/#faq` : ce n'est plus un pathname, donc
+	// un `isUnder(pathname, ROUTES.SHOP.HELP)` ne matcherait JAMAIS — une branche
+	// morte qui laisserait croire que l'accent soleil est encore attribué. Il ne
+	// survit que sur le contenu (la touche de pinceau de `FaqSection`).
 	if (isUnder(pathname, ROUTES.SHOP.FAVORITES)) {
 		return { accent: "rose", label: "Favoris" };
 	}

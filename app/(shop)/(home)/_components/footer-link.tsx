@@ -1,8 +1,30 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-const BASE_TACTILE_CLASSES =
-	"focus-ring touch-manipulation motion-safe:transition-transform motion-safe:duration-150 active:scale-[0.98]";
+/**
+ * Socle partagé par tous les contrôles du footer — liens ET le bouton
+ * « Modifier mes préférences », qui n'est pas un `FooterLink` mais doit
+ * répondre à l'appui comme ses six voisins de la même `<ul>`.
+ *
+ * ⚠️ **Une seule déclaration de `transition-*` et de `duration-*` dans tout le
+ * footer, et c'est celle-ci.** Les constantes de `footer.tsx` déclaraient de leur
+ * côté `motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]` :
+ * comme la composition ci-dessous est une CONCATÉNATION de chaîne (pas un `cn()`),
+ * les deux jeux arrivaient intacts dans le `class`, et c'est l'ordre d'ÉMISSION
+ * Tailwind qui tranchait — `transition-transform` étant émis après
+ * `transition-colors`, le fond de survol de TOUS les liens claquait sans fondu.
+ * Défaut invisible au lint, au typecheck et à jsdom ; vérifié dans le CSS compilé.
+ *
+ * La liste de propriétés reprend celle de la navbar (`navbar-styles.ts`), qui
+ * avait déjà résolu le même problème. `--duration-normal` et non `--duration-fast` :
+ * 200 ms est ce qui tournait déjà (la durée gagnante était celle du footer), donc
+ * le retour d'appui ne change pas — seul le fondu de couleur, mort jusqu'ici,
+ * s'ajoute.
+ *
+ * Verrouillé par `__tests__/footer-link-single-transition.regression.test.tsx`.
+ */
+export const BASE_TACTILE_CLASSES =
+	"focus-ring touch-manipulation motion-safe:transition-[transform,color,background-color] motion-safe:duration-[var(--duration-normal)] active:scale-[0.98]";
 
 type FooterLinkBaseProps = {
 	href: string;

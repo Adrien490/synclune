@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import type { NavItemChild } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { LoadingIndicator } from "@/shared/components/navigation";
+import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
+import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 import { CollectionImagesGrid } from "@/modules/collections/components/collection-images-grid";
 import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
@@ -46,49 +48,61 @@ function panelLayout(count: number) {
 }
 
 /**
- * Carte collection de la grille du mega menu.
+ * Inclinaison alternée des tirages (« La boîte à perles », artifact 2026-08-05).
+ * Pose STATIQUE (pas un mouvement) → pas de `motion-safe:`. Classes LITTÉRALES.
  */
-function CollectionCard({ collection, isActive }: { collection: NavItemChild; isActive: boolean }) {
+const CARD_TILT = ["-rotate-[0.8deg]", "rotate-[0.7deg]"] as const;
+
+/**
+ * Carte collection de la grille du mega menu — un TIRAGE encadré : le
+ * passe-partout blanc (padding du cadre) absorbe les photos aux fonds
+ * discordants, et l'état sans image devient une promesse au lieu d'un carré
+ * gris muet (P3 de l'audit 2026-08-05). Le filet décoratif d'avant (1 px à
+ * 40 %, compressé ×0.67) était invisible au repos — vérifié au rendu — et a
+ * été retiré plutôt que remplacé.
+ */
+function CollectionCard({
+	collection,
+	isActive,
+	index,
+}: {
+	collection: NavItemChild;
+	isActive: boolean;
+	index: number;
+}) {
 	const displayImages = collection.images ?? [];
 	return (
 		<NavigationMenuLink
 			render={<Link href={collection.href} aria-current={isActive ? "page" : undefined} />}
 			className={cn(
 				// `relative` : ancre du `LoadingIndicator`, qui se peint en `absolute`.
-				"group/card bg-card relative flex flex-col overflow-hidden rounded-xl",
-				"border-2 border-transparent shadow-sm",
-				"ease-out motion-safe:transition-[transform,border-color,box-shadow] motion-safe:duration-[var(--duration-slow)]",
+				"group/card polaroid-paper bg-card relative flex flex-col rounded-md p-1.5",
+				"border-2 border-transparent shadow-2xs",
+				CARD_TILT[index % CARD_TILT.length],
+				"ease-out motion-safe:transition-[translate,border-color,box-shadow] motion-safe:duration-[var(--duration-slow)]",
 				"motion-reduce:transition-colors",
 				"motion-safe:can-hover:hover:border-primary/40",
 				"can-hover:hover:shadow-premium-rose",
-				"motion-safe:can-hover:hover:-translate-y-1 motion-safe:can-hover:hover:scale-[1.02]",
+				"motion-safe:can-hover:hover:-translate-y-1",
 				"focus-ring",
 				"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
 				isActive && "border-primary/40",
 			)}
 		>
-			{/* Images bento grid */}
-			{displayImages.length > 0 ? (
-				<CollectionImagesGrid images={displayImages} variant="compact" />
-			) : (
-				<div className="bg-muted relative flex aspect-square items-center justify-center overflow-hidden rounded-t-xl">
-					<FlowerIcon className="text-muted-foreground/40 size-6" aria-hidden="true" />
-				</div>
-			)}
+			{/* Passe-partout : la photo vit dans une fenêtre clipée DANS le cadre. */}
+			<span className="relative block overflow-hidden rounded-sm">
+				{displayImages.length > 0 ? (
+					<CollectionImagesGrid images={displayImages} variant="compact" />
+				) : (
+					<span className="relative flex aspect-square flex-col items-center justify-center gap-1.5 bg-(--section-wash)">
+						<FlowerIcon className="text-muted-foreground size-6" aria-hidden="true" />
+						<span className="text-muted-foreground text-xs">Photos à venir</span>
+					</span>
+				)}
+			</span>
 
-			{/* Centered title + description with decorative line — reserve height for CLS */}
-			<div className="min-h-[3.25rem] px-3 pb-3 text-center">
-				<div
-					className={cn(
-						"mx-auto mb-2 h-px w-10",
-						"via-primary/40 bg-linear-to-r from-transparent to-transparent",
-						"origin-center motion-safe:transition-[transform,opacity] motion-safe:duration-[var(--duration-slow)]",
-						"scale-x-[0.67]",
-						"motion-reduce:scale-x-100",
-						"motion-safe:can-hover:group-hover/card:scale-x-100 motion-safe:can-hover:group-hover/card:via-primary/60",
-					)}
-					aria-hidden="true"
-				/>
+			{/* Centered title + description — reserve height for CLS */}
+			<div className="min-h-[3.25rem] px-2 pt-2 pb-1.5 text-center">
 				<span className={cn("text-foreground line-clamp-1 text-sm", isActive && "font-medium")}>
 					{collection.label}
 				</span>
@@ -121,15 +135,29 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 		// Le panneau porte sa propre largeur (cf. `DesktopNav`) : une carte de
 		// collection mesure ~215px, plus les gouttières. Base UI morphe d'une
 		// largeur à l'autre — il n'y a rien à animer ici.
-		<div className={cn(layout.width, "px-6 py-5")} role="region" aria-labelledby={headingId}>
-			<h2
-				id={headingId}
-				className="text-foreground font-display mb-1 text-sm leading-tight font-medium"
-			>
+		// `data-accent="mint"` : accent de salle des collections (SSOT
+		// navbar-section.ts) — le panneau portalisé pose le sien, cf. le panneau
+		// Créations. ⚠️ Le nom accessible du landmark doit continuer de matcher
+		// /Collections/i (e2e/mega-menu-desktop.spec.ts).
+		<div
+			className={cn(layout.width, "px-6 py-5")}
+			role="region"
+			aria-labelledby={headingId}
+			data-accent="mint"
+		>
+			<h2 id={headingId} className="text-foreground font-display text-sm leading-tight font-medium">
 				Collections
 			</h2>
-			<p className="text-muted-foreground font-display mb-3 text-xs italic">
-				L&apos;univers Synclune
+			{/* Width seule (hauteur dérivée du ratio — l'ancien 76×12 letterboxait) ;
+			    durée et graisse : les défauts de l'échelle (trait 500 ms, marqueur). */}
+			<HandDrawnUnderline
+				width={76}
+				strokeWidth={HAND_DRAWN_STROKES.marqueur}
+				inView={false}
+				className="mt-0.5"
+			/>
+			<p className="text-muted-foreground font-display mt-1 mb-3 text-xs italic">
+				Petites séries, grandes couleurs
 			</p>
 
 			{/* CTA "Toutes les collections" */}
@@ -143,13 +171,13 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 				className={cn(
 					// `relative` : ancre du `LoadingIndicator`, comme son jumeau exact de
 					// `mega-menu-column.tsx`. Les deux CTA sont rigoureusement le même
-					// contrôle ; seul celui-ci n'annonçait pas sa transition.
+					// contrôle — mêmes lavages d'accent de salle (SSOT section-accents.css).
 					"relative flex min-h-11 items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
-					"bg-accent/40 hover:bg-accent",
+					"bg-(--section-wash) hover:bg-(--section-wash-strong)",
 					"text-foreground",
 					"focus-ring",
 					"mb-4 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
-					isViewAllActive && "bg-accent font-medium",
+					isViewAllActive && "bg-(--section-wash-strong) font-medium",
 				)}
 			>
 				Toutes les collections
@@ -159,11 +187,12 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 
 			{/* Grille uniforme de collections */}
 			<div className={cn("grid gap-4", layout.columns)}>
-				{filteredCollections.map((collection) => (
+				{filteredCollections.map((collection, index) => (
 					<CollectionCard
 						key={collection.href}
 						collection={collection}
 						isActive={pathname === collection.href}
+						index={index}
 					/>
 				))}
 			</div>

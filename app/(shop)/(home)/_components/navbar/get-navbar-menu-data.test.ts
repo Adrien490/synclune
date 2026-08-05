@@ -7,8 +7,8 @@ const mockGetProductTypes = vi.hoisted(() => vi.fn());
 vi.mock("@/modules/collections/data/get-collections", () => ({
 	getCollections: mockGetCollections,
 }));
-vi.mock("@/modules/product-types/data/get-product-types", () => ({
-	getProductTypes: mockGetProductTypes,
+vi.mock("@/modules/product-types/data/get-product-types-for-menu", () => ({
+	getProductTypesForMenu: mockGetProductTypes,
 }));
 
 // Minimal mock matching Collection["products"] shape from GET_COLLECTIONS_SELECT

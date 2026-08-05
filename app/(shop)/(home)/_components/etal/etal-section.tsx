@@ -31,18 +31,42 @@ const HEADING_ENTER: CSSProperties = {
  *
  * - **Le `<h1>` ne dépend d'aucun `await`.** Il est rendu hors de la frontière
  *   `Suspense` qui isole la grille : la lecture catalogue ne peut pas retarder
- *   l'élément qui porte le LCP, et c'est pour lui que Fraunces est préchargée.
+ *   l'élément qui porte le LCP **sur mobile**, et c'est pour lui que la display (Winky Sans) est
+ *   préchargée (`shared/styles/fonts.ts`).
+ *
+ *   ⚠️ Le porteur du LCP DÉPEND DU VIEWPORT, et la marge est mince — mesuré le
+ *   2026-08-05 : à 390 px le `h1` fait 32 571 px² contre 28 501 pour la première
+ *   photo (il gagne) ; à 1280 px c'est l'inverse, 64 278 contre 66 125 (la photo
+ *   gagne). Précharger la display reste donc juste là où ça compte — le mobile,
+ *   seul chemin réellement contraint en bande passante. Ne pas transformer ça en
+ *   « le h1 porte le LCP » tout court : c'est faux au-delà de `lg`, et c'est
+ *   l'écart de ~3 % qui le décide, pas un principe.
+ *
+ *   Le porteur est désormais mesuré par `e2e/performance.spec.ts` (« le porteur du
+ *   LCP est un candidat connu ») plutôt qu'affirmé ici.
  * - **Une seule grille.** Le `Suspense` et le fragment de `EtalGrid` ne
  *   produisent aucun nœud DOM : les cartes sont des enfants directs de la même
  *   grille que le bloc titre. C'est tout le concept — sans ça, on retombe sur
  *   une bande + une grille.
  * - **`align-items: start`.** Deux cartes d'une même rangée ne se réalignent
  *   pas sur la plus haute : un étal n'est pas justifié.
- * - **Aucune longueur dérivée de `--navbar-height`.** Elle retombe de 5rem à
- *   4rem quand la navbar de la home se compacte : une hauteur (ou un offset
- *   haut) qui en dérive fait REMONTER le contenu de 16 px au premier pixel
- *   scrollé. L'étal n'a pas de hauteur imposée, et compense la barre fixe avec
- *   `--navbar-height-static`, qui ne bouge pas.
+ * - **Aucune longueur dérivée de `--navbar-height`.** L'étal n'a pas de hauteur
+ *   imposée, et compense la barre fixe avec `--navbar-height-static`.
+ *
+ *   ⚠️ La raison n'est plus celle qu'on croit, et c'est ce qui rend cet invariant
+ *   fragile à relire : le MODE COMPACT DE LA NAVBAR N'EXISTE PLUS (retiré le
+ *   2026-08-04, refonte « La devanture » — cf. `app/globals.css`, la note sous le
+ *   palier `40rem`). `--navbar-height` ne retombe plus de 5rem à 4rem au premier
+ *   pixel scrollé, donc les deux variables valent aujourd'hui exactement la même
+ *   chose, et le défaut d'origine — un contenu qui remonte de 16 px dès qu'on
+ *   scrolle — n'est plus atteignable par ce chemin.
+ *
+ *   La distinction reste, et ne doit pas être « nettoyée » : `--navbar-height` est
+ *   la variable qui SUIT la barre, donc celle qui redeviendra dynamique le jour où
+ *   la barre rebouge (elle l'a déjà été). S'y raccrocher, c'est reprendre le pari
+ *   perdu une fois ; `--navbar-height-static` dit ce qu'on veut — la hauteur au
+ *   repos. C'est cette intention que verrouille `etal-section-structure.test.tsx`,
+ *   pas une valeur.
  * - **Pas de `<ul>`.** La grille mélange un bloc titre et des cartes ; en faire
  *   une liste demanderait soit un `display: contents` sur le `<ul>` (qui fait
  *   tomber la sémantique de liste sur plusieurs moteurs), soit d'annoncer le

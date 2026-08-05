@@ -129,6 +129,24 @@ export async function EtalGrid({
  * Fallback de `EtalGrid` — même nombre de cellules, mêmes dimensions
  * (anti-CLS). Le bloc titre, lui, n'est jamais derrière ce fallback : il est
  * rendu hors de la frontière `Suspense`.
+ *
+ * ## Écarté après MESURE : la parité avec les branches dégradées
+ *
+ * Ce squelette rend `ETAL_PRODUCTS_COUNT + 1` cellules quand les branches erreur
+ * et catalogue-vide n'en rendent qu'UNE, pleine largeur. La conclusion évidente —
+ * « donc un CLS de plusieurs centaines de px au swap » — est FAUSSE, et il ne faut
+ * pas la « corriger » par une hauteur minimale sur la cellule dégradée.
+ *
+ * Le CLS ne compte que les éléments VISIBLES dans le viewport qui changent de
+ * position ; un élément hors écran qui bouge, ou qui entre dans le viewport pour la
+ * première fois, ne compte pas. Mesuré le 2026-08-05 : ce qui suit `#etal` commence
+ * à **1719 px** à 390×844 et à **1155 px** à 1280×900 — hors viewport dans les deux
+ * cas. La contraction de la grille ne déplace donc aucun élément visible : elle fait
+ * seulement remonter, hors écran, ce qui vient après.
+ *
+ * Et dégrader ce squelette pour « faire la paire » pénaliserait le cas nominal
+ * (celui de 99,9 % des chargements) au profit de deux branches rares — une panne de
+ * lecture et un catalogue à zéro.
  */
 export function EtalGridSkeleton() {
 	return (

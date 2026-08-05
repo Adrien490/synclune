@@ -1,6 +1,9 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
+
 // ---------------------------------------------------------------------------
 // Hoisted mocks
 // ---------------------------------------------------------------------------
@@ -221,7 +224,9 @@ describe("Footer", () => {
 		expect(links).toHaveLength(2);
 
 		// L'aide d'abord — déflexion avant le message (refonte 2026-08-04).
-		expect(links[0]).toHaveAttribute("href", "/aide");
+		// Depuis le 2026-08-05, c'est une ANCRE de la landing et non plus une
+		// page : `/aide` a été absorbée (308 vers `/#faq`).
+		expect(links[0]).toHaveAttribute("href", "/#faq");
 		expect(links[0]).toHaveTextContent("Aide et FAQ");
 
 		expect(links[1]).toHaveAttribute("href", "mailto:contact@synclune.fr");
@@ -275,15 +280,39 @@ describe("Footer", () => {
 
 	// --- Reassurance items ---
 
-	it("does NOT duplicate the reassurance block (SSOT = HeroReassuranceBanner under the hero)", async () => {
+	/**
+	 * Ce test asserait l'INVERSE jusqu'au 2026-08-05 : il verrouillait l'ABSENCE de
+	 * réassurance dans le footer, au motif que la SSOT était `HeroReassuranceBanner`.
+	 * Ce composant avait été supprimé deux jours plus tôt avec le vidage de la
+	 * landing (d8da04fec) — livraison et retours ne survivaient plus que sur la PDP
+	 * et le checkout. Le test verrouillait donc un trou au lieu d'un invariant.
+	 *
+	 * Retargeté plutôt que supprimé : c'est la même question (« la réassurance est-elle
+	 * au bon endroit, une seule fois ? »), la réponse a changé de camp.
+	 */
+	it("carries the delivery + returns reassurance, with amounts derived from SHIPPING_RATES", async () => {
 		await renderFooter();
 
-		// Le bloc « Engagements et garanties » a été retiré du footer : la réassurance
-		// livraison/retours vit uniquement dans le bandeau sous le hero. Le footer ne
-		// garde que la confiance transactionnelle (bloc Paiement sécurisé).
-		expect(screen.queryByRole("region", { name: /engagements/i })).not.toBeInTheDocument();
-		expect(screen.queryByText("Retours sous 14 jours")).not.toBeInTheDocument();
-		expect(screen.queryByText(/Livraison France/)).not.toBeInTheDocument();
+		const reassurance = screen.getByRole("region", { name: /livraison et retours/i });
+		expect(reassurance).toBeInTheDocument();
+
+		// Montants DÉRIVÉS, jamais des littéraux : le jour où un tarif bouge, ce test
+		// suit tout seul — et il échoue si le footer se met à afficher autre chose que
+		// ce que `ProductReassurance` affiche depuis la même source.
+		expect(reassurance.textContent).toContain(formatShippingPrice(SHIPPING_RATES.FR.amount));
+		expect(reassurance.textContent).toContain(formatShippingPrice(SHIPPING_RATES.EU.amount));
+
+		// Chaîne identique à `product-reassurance.tsx` — un seul motif à grepper le
+		// jour où les 14 jours deviendront une constante.
+		expect(within(reassurance).getByText("Retours et échanges sous 14 jours")).toBeInTheDocument();
+	});
+
+	it("does not repeat the reassurance twice inside the footer", async () => {
+		await renderFooter();
+
+		// Une seule mention de chacun : le footer rassure, il ne re-décrit pas la fiche.
+		expect(screen.getAllByText(/Retours et échanges sous 14 jours/)).toHaveLength(1);
+		expect(screen.getAllByText(/Livraison France/)).toHaveLength(1);
 	});
 
 	// --- Payment icons ---

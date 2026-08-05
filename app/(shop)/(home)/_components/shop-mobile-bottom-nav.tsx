@@ -71,10 +71,13 @@ const TAB_ACCENT = {
 const CART_SHEET_ID = "cart" as const;
 
 // Pas d'`aria-controls` sur ces deux onglets (contrairement au bouton Menu de
-// l'admin) : le panier rend DEUX contenus selon le viewport (`Drawer` mobile /
-// `Sheet` desktop, `cart-sheet.tsx:298` et `:339`) et le quick-search un dialog
-// portalé. Désigner un id absent est plus nuisible que de l'omettre —
-// `aria-haspopup` + `aria-expanded` suffisent au pattern disclosure.
+// l'admin) : le panier rend DEUX contenus selon le viewport (les branches `Drawer`
+// mobile / `Sheet` desktop de `CartSheet`) et le quick-search un dialog portalé.
+// Désigner un id absent est plus nuisible que de l'omettre — `aria-haspopup` +
+// `aria-expanded` suffisent au pattern disclosure.
+//
+// ⚠️ Référence par SYMBOLE, pas par numéro de ligne : ce commentaire citait
+// `cart-sheet.tsx:298` et `:339`, devenus 386 et 431 — il avait déjà dérivé deux fois.
 
 /**
  * Compteur → nom accessible, pour que l'onglet annonce son badge.

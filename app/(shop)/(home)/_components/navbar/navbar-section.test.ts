@@ -39,9 +39,16 @@ describe("resolveNavbarSection", () => {
 		});
 	});
 
-	it("réserve le soleil à l'aide et le rose aux favoris", () => {
-		expect(resolveNavbarSection("/aide")).toEqual({ accent: "sun", label: "Aide" });
+	it("réserve le rose aux favoris", () => {
 		expect(resolveNavbarSection("/favoris")).toEqual({ accent: "rose", label: "Favoris" });
+	});
+
+	// La FAQ a rejoint la landing le 2026-08-05 : `/aide` redirige en 308 vers
+	// `/#faq`, donc ce pathname n'atteint plus jamais la barre. Le soleil
+	// n'est plus attribué à aucune salle — c'est ce que cette assertion fixe,
+	// pour que la branche morte ne revienne pas par recopie.
+	it("ne peint plus l'aide : /aide n'est plus une salle", () => {
+		expect(resolveNavbarSection("/aide")).toEqual({ accent: null, label: null });
 	});
 
 	it("ne peint AUCUN accent hors des salles de la boutique", () => {
@@ -73,7 +80,7 @@ describe("resolveNavbarSection", () => {
 
 	it("ne rend jamais un accent inconnu de section-accents.css", () => {
 		const KNOWN = new Set(["rose", "lavender", "mint", "sun"]);
-		for (const path of ["/", "/produits", "/collections/mariage", "/aide", "/favoris", "/cgv"]) {
+		for (const path of ["/", "/produits", "/collections/mariage", "/favoris", "/cgv"]) {
 			const { accent } = resolveNavbarSection(path);
 			if (accent !== null) expect(KNOWN.has(accent), `${path} → ${accent}`).toBe(true);
 		}

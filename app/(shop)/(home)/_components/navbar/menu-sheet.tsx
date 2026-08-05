@@ -3,7 +3,6 @@
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { NavbarSessionData } from "@/shared/types/session.types";
-import ScrollFade from "@/shared/components/scroll-fade";
 import { HamburgerIcon } from "@/shared/components/icons/hamburger-icon";
 import {
 	Sheet,
@@ -14,16 +13,19 @@ import {
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
+import { brandLinkLabel, LogoWordmark } from "@/shared/components/logo";
 import { ROUTES } from "@/shared/constants/urls";
 import Link from "next/link";
 import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { usePathname } from "next/navigation";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { EdgeSwipeIndicator } from "./edge-swipe-indicator";
 import { MenuSheetFooter } from "./menu-sheet-footer";
+import type { MenuProductTypeItem } from "./menu-sheet-nav-sections";
 import { MenuSheetNav } from "./menu-sheet-nav";
 import { MenuSheetNavigateProvider } from "./menu-sheet-navigate-context";
 import { iconButtonClassName, VAUL_TRANSITION_DURATION_MS } from "./navbar-styles";
@@ -49,15 +51,18 @@ const triggerClassName = cn(
 	"touch-manipulation motion-safe:transition-transform motion-safe:duration-150 active:scale-[0.95]",
 );
 
+/** Id du sheet panier dans le `sheet-store` (cf. `SheetId`). */
+const CART_SHEET_ID = "cart" as const;
+
 /**
  * navItems (flat list from getMobileNavItems) is used to resolve the top-level
- * destinations by href (home, about, account, favorites). productTypes/collections
+ * destinations by href (home, about, favorites). productTypes/collections
  * are consumed directly by their respective sections for hierarchical display —
  * the children embedded in navItems are not used by the sheet.
  */
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
-	productTypes?: Array<{ slug: string; label: string }>;
+	productTypes?: MenuProductTypeItem[];
 	collections?: Array<{
 		slug: string;
 		label: string;
@@ -66,6 +71,13 @@ interface MenuSheetProps {
 	isAdmin?: boolean;
 	session?: NavbarSessionData | null;
 }
+
+/**
+ * Action différée jusqu'à la fin de la transition de SORTIE du volet — ouvrir
+ * un second overlay (dialog de déconnexion, cart sheet) pendant que le premier
+ * glisse encore empilerait deux modales (M2).
+ */
+type PendingAction = "logout" | "cart" | null;
 
 export function MenuSheet({
 	navItems,
@@ -76,8 +88,9 @@ export function MenuSheet({
 }: MenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("menu-sheet");
 	const [showLogout, setShowLogout] = useState(false);
-	const [pendingLogout, setPendingLogout] = useState(false);
+	const [pendingAction, setPendingAction] = useState<PendingAction>(null);
 	const [swipeProgress, setSwipeProgress] = useState(0);
+	const openCartSheet = useSheetStore((state) => state.open);
 	const haptic = useHaptic();
 
 	// Le trigger est blurré avant l'ouverture (cf. onOpenChange) : à ce moment
@@ -130,12 +143,14 @@ export function MenuSheet({
 		};
 	}, [isOpen]);
 
-	// Defer LogoutAlertDialog until the sheet finishes its exit transition. Listening
-	// for transitionend (transform property) on sheet-content is more robust
-	// than a hardcoded setTimeout — fallback timer kicks in only if the event
-	// is interrupted (e.g. reduced-motion unmounts the content before paint).
+	// Defer the follow-up overlay (logout dialog OR cart sheet) until the menu
+	// finishes its exit transition. Listening for transitionend (transform
+	// property) on sheet-content is more robust than a hardcoded setTimeout —
+	// fallback timer kicks in only if the event is interrupted (e.g.
+	// reduced-motion unmounts the content before paint).
 	useEffect(() => {
-		if (!pendingLogout || isOpen) return;
+		if (!pendingAction || isOpen) return;
+		const action = pendingAction;
 		// Scopé par id : un `[data-slot="sheet-content"]` nu attrapait le PREMIER
 		// sheet du document (panier, filtres) et attendait SA transition.
 		const sheetContent = document.getElementById(MENU_SHEET_CONTENT_ID);
@@ -144,23 +159,42 @@ export function MenuSheet({
 			if (done) return;
 			done = true;
 			sheetContent?.removeEventListener("transitionend", onEnd);
-			setPendingLogout(false);
-			setShowLogout(true);
+			setPendingAction(null);
+			if (action === "logout") setShowLogout(true);
+			else openCartSheet(CART_SHEET_ID);
 		};
 		const onEnd = (event: TransitionEvent) => {
 			if (event.propertyName === "transform" && event.target === sheetContent) finish();
 		};
+		// Reduced motion : `pwa.css` neutralise la transition transform du panneau
+		// (cf. `sheet.tsx`, PANEL_TRANSITION), donc `transitionend` ne part jamais et
+		// seul le fallback de 450 ms déclenchait — le chemin le PLUS lent pour qui
+		// demande MOINS de mouvement. Micro-délai plutôt qu'appel direct : le volet
+		// doit être démonté/peint avant que l'overlay suivant ne s'empile (M2).
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			const immediate = window.setTimeout(finish, 0);
+			return () => clearTimeout(immediate);
+		}
 		sheetContent?.addEventListener("transitionend", onEnd);
 		const fallback = window.setTimeout(finish, VAUL_TRANSITION_DURATION_MS);
 		return () => {
 			sheetContent?.removeEventListener("transitionend", onEnd);
 			clearTimeout(fallback);
 		};
-	}, [pendingLogout, isOpen]);
+	}, [pendingAction, isOpen, openCartSheet]);
 
 	function handleLogoutClick() {
 		haptic("light");
-		setPendingLogout(true);
+		setPendingAction("logout");
+		closeMenu();
+	}
+
+	// Le raccourci « Panier » de la bande d'accès rapide : le panier est un sheet,
+	// pas une route — fermer le menu d'abord, ouvrir le panier une fois la
+	// transition de sortie terminée (même mécanique que la déconnexion).
+	function handleCartClick() {
+		haptic("light");
+		setPendingAction("cart");
 		closeMenu();
 	}
 
@@ -221,7 +255,7 @@ export function MenuSheet({
 					// ⚠️ Le « × » par défaut est RÉTABLI (2026-08-04). Il avait été retiré au
 					// motif de « TROIS affordances de fermeture concurrentes : ce bouton, le
 					// scrim et le swipe — plus le burger lui-même ». La prémisse était fausse
-					// au doigt : le panneau mesure `min(88vw, 340px)` et RECOUVRE intégralement
+					// au doigt : le panneau mesure `min(92vw, 360px)` et RECOUVRE intégralement
 					// le burger, qui vit à ≤ 56 px du bord gauche. « Plus le burger » ne valait
 					// que pour le clavier, où `finalFocus` y ramène.
 					//
@@ -239,11 +273,13 @@ export function MenuSheet({
 					// branche `direction="left"`, laissant le contenu sous l'encoche en
 					// paysage. On neutralise les trois autres côtés et on laisse l'inset
 					// gauche vivre, additionné au padding propre de chaque bloc.
-					// Plus de `sm:w-80 sm:max-w-md` : le panneau RÉTRÉCISSAIT de 340 à 320 px
-					// en passant à `sm`, soit l'inverse du sens attendu. `min(88vw, 340px)`
-					// plafonne seul à 340 px dès 387 px de large — les deux variantes ne
-					// faisaient que le contredire.
-					className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r pt-0! pr-0! pb-0!"
+					// Largeur « étal de poche » (2026-08-05) : 92vw plafonné à 360 px sous
+					// `sm`, puis 70vw plafonné à 520 px — le volet grandit AVEC l'écran (à
+					// 768 l'ancien plafond de 340 px laissait 56 % de scrim inutile), et la
+					// grille des familles gagne sa 3ᵉ colonne au même palier. Le plafond
+					// intégré de `sheet.tsx` sur la branche gauche (24rem à partir de `sm`)
+					// est neutralisé ici, sinon il tronquait le palier en silence.
+					className="bg-background/95 flex w-[min(92vw,360px)] flex-col border-r pt-0! pr-0! pb-0! sm:w-[min(70vw,520px)] sm:max-w-none"
 					// ⚠️ Plus de `onOverlayClick={() => haptic("light")}` ici. Un tap sur le
 					// scrim déclenche le `onClick` du `Backdrop` PUIS le dismiss de Base UI,
 					// donc `onOpenChange` — qui vibre déjà. Deux pulsations pour un geste,
@@ -257,29 +293,42 @@ export function MenuSheet({
 					{/* `pr-16` : réserve la place du « × » (size-11 posé à `right-4`, soit de
 					    16 à 60 px du bord). Sans lui le titre passerait dessous. */}
 					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pr-16 pb-2 pl-5">
-						<SheetTitle className="font-cursive flex items-center text-xl">
+						<SheetTitle className="flex items-center">
 							{/* `min-h-11` : sans lui la cible ne mesurait que la line-height de
-							    `text-xl`, soit 28px — sous le minimum WCAG 2.5.5 (44px). */}
+							    `text-xl`, soit 28px — sous le minimum WCAG 2.5.5 (44px).
+							    Le lien reste écrit ICI, et non délégué à `<Logo href>` : il porte
+							    `replace` (consomme l'entrée d'historique du panneau) et
+							    `onClick={handleNavigate}` (fermeture par la prop contrôlée), deux
+							    comportements verrouillés par
+							    `menu-sheet-link-navigation.regression.test.tsx`. Seuls le DESSIN du
+							    nom et son LIBELLÉ sont mutualisés. */}
 							<Link
 								href={ROUTES.SHOP.HOME}
 								replace
 								prefetch={null}
 								onClick={handleNavigate}
 								className="focus-ring inline-flex min-h-11 items-center rounded-md"
-								aria-label="Synclune - Retour à l'accueil"
+								aria-label={brandLinkLabel(ROUTES.SHOP.HOME)}
 							>
-								Synclune
+								<LogoWordmark className="text-xl" />
 							</Link>
 						</SheetTitle>
+						{/* Tutoiement + première personne — la voix du dépôt ne s'arrête pas
+						    aux lecteurs d'écran (le vouvoiement « Découvrez nos bijoux »
+						    n'était servi qu'à eux, audit menu-sheet 2026-08-05). */}
 						<SheetDescription className="sr-only">
-							Menu de navigation - Découvrez nos bijoux et collections
+							Menu de navigation — découvre mes créations et mes collections
 						</SheetDescription>
 					</SheetHeader>
 
-					{/* Scrollable content */}
-					<div className="min-h-0 flex-1">
-						<ScrollFade axis="vertical" className="h-full" hideScrollbar={false}>
-							<MenuSheetNavigateProvider value={handleNavigate}>
+					{/* Scrollable content. Le provider englobe AUSSI le footer : ses liens
+					    « Aide » / « Écrire à Léane » ferment par la même prop contrôlée. */}
+					<MenuSheetNavigateProvider value={handleNavigate}>
+						<div className="min-h-0 flex-1">
+							<div
+								data-slot="scroll-fade-container"
+								className="scroll-fade-y h-full overflow-x-hidden overflow-y-auto"
+							>
 								<MenuSheetNav
 									navItems={navItems}
 									productTypes={productTypes}
@@ -287,12 +336,13 @@ export function MenuSheet({
 									session={session}
 									isAdmin={isAdmin}
 									onLogoutClick={handleLogoutClick}
+									onCartClick={handleCartClick}
 								/>
-							</MenuSheetNavigateProvider>
-						</ScrollFade>
-					</div>
+							</div>
+						</div>
 
-					<MenuSheetFooter />
+						<MenuSheetFooter />
+					</MenuSheetNavigateProvider>
 				</SheetContent>
 			</Sheet>
 

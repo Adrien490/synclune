@@ -37,8 +37,13 @@ import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
  */
 
 interface MegaMenuColumnProps {
-	/** Column title displayed as section header */
-	title: string;
+	/**
+	 * Column title displayed as section header. Optional depuis « La boîte à
+	 * perles » (2026-08-05) : le panneau Créations porte désormais son h2
+	 * VISIBLE (« Créations »), et un h3 « Catégories » qui le doublait ne disait
+	 * rien de plus — la colonne peut donc être muette.
+	 */
+	title?: string;
 	/** Optional subtitle rendered under the title (italic, atelier microcopy) */
 	subtitle?: string;
 	/** Navigation items to display in the column */
@@ -46,6 +51,19 @@ interface MegaMenuColumnProps {
 	/** Display items in a multi-column grid */
 	columns?: 2 | 3;
 }
+
+/**
+ * Perles d'échantillon (cf. `.mega-menu-perle`, app/styles/components.css) :
+ * les 4 accents de marque en rotation par index, rotation du blob comprise —
+ * classes LITTÉRALES, jamais interpolées (Tailwind ne compose que ce qu'il lit).
+ * Décoratif pur : `aria-hidden`, aucune sémantique par couleur.
+ */
+const PERLE_STYLES = [
+	"bg-primary -rotate-12",
+	"bg-brand-lavender rotate-6",
+	"bg-brand-mint rotate-[20deg]",
+	"bg-brand-sun -rotate-3",
+] as const;
 
 /**
  * Reusable mega menu column component for desktop navigation.
@@ -75,15 +93,21 @@ export function MegaMenuColumn({ title, subtitle, items, columns }: MegaMenuColu
 		// menu saturaient la liste de landmarks d'un lecteur d'écran ; le `<h3>`
 		// ci-dessous suffit à la navigation par en-têtes.
 		<div>
-			<h3
-				className={cn(
-					"text-foreground font-display text-sm leading-tight font-medium",
-					subtitle ? "mb-1" : "mb-3",
-				)}
-			>
-				{title}
-			</h3>
-			{subtitle && (
+			{title && (
+				<h3
+					className={cn(
+						"text-foreground font-display text-sm leading-tight font-medium",
+						subtitle ? "mb-1" : "mb-3",
+					)}
+				>
+					{title}
+				</h3>
+			)}
+			{/* Vraie italique dessinée, pas un faux-oblique : la face italique de Winky
+			    Sans est chargée par un second loader NON préchargé, sous la MÊME
+			    `font-family` (cf. `shared/styles/fonts.ts`). `italic` la sélectionne
+			    donc normalement, sans rien coûter au premier paint. */}
+			{title && subtitle && (
 				<p className="text-muted-foreground font-display mb-3 text-xs italic">{subtitle}</p>
 			)}
 
@@ -101,11 +125,14 @@ export function MegaMenuColumn({ title, subtitle, items, columns }: MegaMenuColu
 					}
 					className={cn(
 						"relative flex min-h-11 items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
-						"bg-accent/40 hover:bg-accent",
+						// Lavage d'accent de salle (SSOT section-accents.css) : le panneau
+						// pose `data-accent`, le CTA prend sa couleur — en APLAT sous
+						// l'encre --foreground, jamais en encre (1,5–2,5:1 sinon).
+						"bg-(--section-wash) hover:bg-(--section-wash-strong)",
 						"text-foreground",
 						"focus-ring",
 						"mb-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
-						pathname === primaryItem.href && "bg-accent font-medium",
+						pathname === primaryItem.href && "bg-(--section-wash-strong) font-medium",
 					)}
 				>
 					{primaryItem.label}
@@ -122,20 +149,27 @@ export function MegaMenuColumn({ title, subtitle, items, columns }: MegaMenuColu
 					columns === 3 && "grid grid-cols-3 space-y-0 gap-x-4 gap-y-0.5",
 				)}
 			>
-				{restItems.map((item) => {
+				{restItems.map((item, index) => {
 					const isActive = pathname === item.href;
 					return (
 						<li key={item.href}>
 							<NavigationMenuLink
 								render={<Link href={item.href} aria-current={isActive ? "page" : undefined} />}
 								className={cn(
-									"relative flex min-h-11 items-center rounded-sm px-3 py-2.5 text-sm",
+									"relative flex min-h-11 items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm",
 									"hover:bg-accent hover:text-accent-foreground",
 									"focus-ring",
 									"motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
-									isActive && "bg-accent/50 font-medium",
+									// Item actif : lavage d'accent de salle — visible d'un coup
+									// d'œil là où l'ancien gris à 50 % demandait de comparer
+									// les graisses (P2 « page courante muette », audit 08-05).
+									isActive && "bg-(--section-wash-strong) font-medium",
 								)}
 							>
+								<span
+									className={cn("mega-menu-perle", PERLE_STYLES[index % PERLE_STYLES.length])}
+									aria-hidden="true"
+								/>
 								<span className="truncate">{item.label}</span>
 								<LoadingIndicator />
 							</NavigationMenuLink>

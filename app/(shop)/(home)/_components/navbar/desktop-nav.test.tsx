@@ -1,3 +1,15 @@
+/**
+ * @regression desktop-nav-trigger-link-contract-2026-08-04
+ *
+ * Verrouille le contrat de clic des triggers du méga-menu (P1 de l'audit navbar
+ * 2026-08-04) : les deux entrées principales sont de VRAIS liens (`<a href>` via
+ * `render={<Link/>}` + `nativeButton={false}`), Entrée/Espace ouvrent le panneau
+ * sans naviguer, un tap tactile ouvre sans naviguer, et un clic souris navigue
+ * par l'ancre (⌘-clic, clic milieu, prefetch, LoadingIndicator préservés) en
+ * court-circuitant Base UI via `preventBaseUIHandler` — qui ne consulte PAS
+ * `defaultPrevented`. Fige aussi la parité survol/focus du SquiggleUnderline et
+ * trois classes littérales : toute modification requiert une review explicite.
+ */
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderPropMock, type RenderPropMockProps } from "@/test/mocks/render-prop";
@@ -10,9 +22,9 @@ vi.mock("next/font/google", () => {
 		style: { fontFamily: "mock" },
 	});
 	return {
-		Figtree: fontMock,
-		Fraunces: fontMock,
-		Sacramento: fontMock,
+		Onest: fontMock,
+		Winky_Sans: fontMock,
+		Kalam: fontMock,
 	};
 });
 
@@ -345,7 +357,7 @@ describe("DesktopNav", () => {
 	});
 
 	describe("habillage Atelier", () => {
-		it("compose les libellés en Fraunces (font-display) sur les liens comme sur les triggers", () => {
+		it("compose les libellés en display (font-display) sur les liens comme sur les triggers", () => {
 			render(<DesktopNav navItems={navItems} />);
 
 			const link = screen.getByRole("link", { name: "L'atelier" });

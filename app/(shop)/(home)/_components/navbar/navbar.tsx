@@ -9,6 +9,7 @@ import { getProducts } from "@/modules/products/data/get-products";
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-provider";
 import { AppBadgeSync } from "@/shared/components/app-badge-sync";
+import { cacheLife } from "next/cache";
 import { cn } from "@/shared/utils/cn";
 import { isRecent } from "@/shared/utils/dates";
 import { DesktopNav } from "./desktop-nav";
@@ -20,6 +21,30 @@ import { NavbarWrapper } from "./navbar-wrapper";
 
 /** "Nouveau" badge eligibility window — published within the last N days. */
 const NEW_PRODUCT_BADGE_DAYS = 14;
+
+/**
+ * Éligibilité au badge « Nouveau », dans un scope `"use cache"`.
+ *
+ * ⚠️ Le scope n'est PAS du confort : `isRecent()` lit `new Date()`, et sous
+ * `cacheComponents` une lecture de l'heure courante pendant un prerender est une
+ * erreur (`blocking-prerender-current-time`). La `Navbar` vit dans `ShopLayout`,
+ * donc sur TOUTES les routes boutique — la laisser bloquer déporterait chaque
+ * coquille statique au temps de requête.
+ *
+ * ⚠️ Et surtout : ne PAS élargir ce scope au `getProducts()` ci-dessous pour
+ * « tout cacher d'un coup ». Cette fn a un repli « page vide » qui retourne
+ * NORMALEMENT en cas d'échec DB, délibérément gardé hors du `"use cache"` de
+ * `fetchProducts` (cf. le commentaire de `get-products.ts`) : une panne DB d'une
+ * seconde pendant un miss figerait un rail « Nouveautés » VIDE pour toute la
+ * fenêtre `catalog`. Ici l'argument est un `createdAt`, la clé de cache est donc
+ * du catalogue pur et il n'y a aucune valeur dégradée à figer.
+ */
+async function isNewArrival(createdAt: Date): Promise<boolean> {
+	"use cache";
+	cacheLife("catalog");
+
+	return isRecent(createdAt, NEW_PRODUCT_BADGE_DAYS);
+}
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
@@ -42,10 +67,18 @@ export async function Navbar() {
 	// Dériver isAdmin depuis la session (évite un appel DB redondant)
 	const userIsAdmin = session?.user.role === "ADMIN";
 
-	const productTypes = productTypesData.productTypes.map((t) => ({
-		slug: t.slug,
-		label: t.label,
-	}));
+	// `_count.products` et le produit-vignette sont enfin CONSOMMÉS : le menu
+	// mobile (« L'étal de poche ») affiche une photo et « N pièces » par famille.
+	// Le choix du média passe par la SSOT pickPrimaryImage (jamais `images[0]` nu).
+	const productTypes = productTypesData.productTypes.map((t) => {
+		const image = pickPrimaryImage(t.products[0]?.skus[0]?.images ?? []);
+		return {
+			slug: t.slug,
+			label: t.label,
+			productCount: t._count.products,
+			image: image ? { url: image.url, blurDataUrl: image.blurDataUrl } : null,
+		};
+	});
 
 	// Collections avec images[] pour les menus (Bento Grid - jusqu'à 4 images)
 	const menuCollections = collectionsData.collections.map((c) => ({
@@ -68,20 +101,22 @@ export async function Navbar() {
 	// le choix du média passe par la SSOT pickPrimaryImage — ce select ne filtre pas
 	// `mediaType`, réécrire `find(isPrimary) ?? images[0]` mettrait un .mp4 dans <Image src>.
 	// Un produit sans image réelle est écarté du rail plutôt que rendu en placeholder.
-	const featuredProducts = newestProducts.products
-		.map((p) => {
-			const sku = p.skus[0];
-			const image = pickPrimaryImage(sku?.images);
-			return {
-				slug: p.slug,
-				title: p.title,
-				priceInclTax: sku?.priceInclTax ?? 0,
-				imageUrl: image?.url ?? "",
-				blurDataUrl: image?.blurDataUrl ?? null,
-				isNew: isRecent(p.createdAt, NEW_PRODUCT_BADGE_DAYS),
-			};
-		})
-		.filter((p) => p.imageUrl);
+	const featuredProducts = (
+		await Promise.all(
+			newestProducts.products.map(async (p) => {
+				const sku = p.skus[0];
+				const image = pickPrimaryImage(sku?.images);
+				return {
+					slug: p.slug,
+					title: p.title,
+					priceInclTax: sku?.priceInclTax ?? 0,
+					imageUrl: image?.url ?? "",
+					blurDataUrl: image?.blurDataUrl ?? null,
+					isNew: await isNewArrival(p.createdAt),
+				};
+			}),
+		)
+	).filter((p) => p.imageUrl);
 
 	// Restrict session data passed to client components (exclude token, ipAddress, userAgent)
 	const sessionData = session
@@ -190,7 +225,7 @@ export async function Navbar() {
 										size={48}
 										className="max-w-full min-w-0"
 										shadow
-										sizes="64px"
+										sparkles="escaping"
 										showText
 										textClassName="text-xl lg:text-2xl text-foreground truncate"
 									/>
@@ -210,7 +245,7 @@ export async function Navbar() {
 										size={40}
 										className="min-w-0"
 										shadow
-										sizes="40px"
+										sparkles="escaping"
 										showText
 										textClassName="text-foreground truncate text-xl"
 									/>

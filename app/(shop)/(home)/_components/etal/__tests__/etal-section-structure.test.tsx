@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
  * contenu :
  *
  * 1. Le `<h1>` est rendu HORS de la frontière `Suspense` de la grille. C'est
- *    lui qui porte le LCP, et c'est pour lui seul que Fraunces est préchargée
+ *    lui qui porte le LCP, et c'est pour lui seul que la display est préchargée
  *    (`shared/styles/fonts.ts`) : le déplacer dans la frontière ferait dépendre
  *    le texte LCP d'une lecture catalogue, sans qu'aucun rendu ne change.
  * 2. Le bloc titre et les cellules produit sont enfants de la MÊME grille.
@@ -65,10 +65,16 @@ describe("EtalSection — structure", () => {
 		expect(section!.getAttribute("aria-labelledby")).toBe(
 			screen.getByRole("heading", { level: 1 }).id,
 		);
-		// `--navbar-height` passe de 5rem à 4rem quand la navbar de la home se
-		// compacte : une longueur qui en dérive fait remonter le contenu de 16 px
-		// au premier pixel scrollé. L'offset de la barre fixe passe donc par
-		// `--navbar-height-static`, que le mode compact ne touche pas.
+		// ⚠️ Ce test garde une INTENTION, pas une valeur — et son ancien commentaire
+		// décrivait un mécanisme disparu. Le mode compact de la navbar a été retiré le
+		// 2026-08-04 (« La devanture ») : `--navbar-height` ne retombe plus de 5rem à
+		// 4rem au premier pixel scrollé, et les deux variables valent aujourd'hui la
+		// même chose. Relire ce test à la lettre menait donc à conclure qu'il garde un
+		// doublon, et à le supprimer.
+		// Ce qu'il garde vraiment : l'étal compense la barre fixe avec la hauteur AU
+		// REPOS. `--navbar-height` est la variable qui suit la barre, donc celle qui
+		// redeviendra dynamique si la barre rebouge — s'y raccrocher, c'est reprendre
+		// le pari déjà perdu une fois (le contenu remontait de 16 px en scrollant).
 		expect(section!.className).not.toMatch(/var\(--navbar-height\)/);
 		expect(section!.className).toMatch(/var\(--navbar-height-static\)/);
 	});

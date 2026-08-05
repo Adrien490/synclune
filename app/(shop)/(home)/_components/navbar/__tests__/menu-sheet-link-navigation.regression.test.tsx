@@ -85,6 +85,13 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	}),
 }));
 
+// Hors sujet ici (le raccourci Panier est un <button>, pas un lien) mais requis
+// au montage : `MenuSheet` lit le sheet-store pour le différé cart.
+vi.mock("@/shared/providers/sheet-store-provider", () => ({
+	useSheetStore: (selector: (s: { open: (id: string) => void }) => unknown) =>
+		selector({ open: vi.fn() }),
+}));
+
 vi.mock("@/shared/stores/badge-counts-store", () => ({
 	useBadgeCountsStore: (selector: (s: Record<string, number>) => unknown) =>
 		selector({ cartCount: 0, wishlistCount: 0 }),
@@ -186,7 +193,10 @@ describe("MenuSheet — navigation des liens (regression locked)", () => {
 	it("le lien de marque du header respecte la cible tactile de 44px (WCAG 2.5.5)", () => {
 		renderOpenMenu();
 
-		const brand = screen.getByRole("link", { name: /Retour à l'accueil/ });
+		// Libellé issu du gabarit unique `brandLinkLabel()` (`shared/components/logo`).
+		// Il valait « Synclune - Retour à l'accueil » tant que le panneau écrivait son
+		// propre nom accessible ; c'est cette divergence que le lot 0.2 a fermée.
+		const brand = screen.getByRole("link", { name: "Synclune - Accueil" });
 		expect(brand.className).toContain("min-h-11");
 	});
 });

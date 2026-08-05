@@ -83,7 +83,7 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 					"polaroid-paper",
 					// ⚠️ `/95` et pas moins. En passant le sol en permanent j'avais
 					// descendu l'alpha à `/92` « pour que le flou serve à quelque chose » :
-					// mesuré à 768, le titre d'une page (Fraunces 36px) redevenait
+					// mesuré à 768, le titre d'une page (display 36px) redevenait
 					// franchement lisible SOUS la barre. 5 % de fuite sur du texte se
 					// mesure à ~1,05:1 — imperceptible ; 8 % ne l'est plus. Le flou garde
 					// son utilité sur ces 5 %.

@@ -52,6 +52,8 @@ vi.mock("@/modules/wishlist/data/get-wishlist-product-ids", () => ({
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
 
+import { STOREFRONT_EYEBROW } from "@/shared/components/storefront-heading";
+
 import { EtalGrid, ETAL_PRODUCTS_COUNT } from "../etal-grid";
 import { EtalHeading } from "../etal-heading";
 
@@ -133,7 +135,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("EtalHeading — le bloc titre est la première cellule de la grille", () => {
-	it("rend un h1 unique qui porte le mot d'accent dégradé", () => {
+	it("rend un h1 unique qui porte le mot d'accent surligné", () => {
 		render(<EtalHeading id="etal-title" />);
 
 		const headings = screen.getAllByRole("heading", { level: 1 });
@@ -143,54 +145,121 @@ describe("EtalHeading — le bloc titre est la première cellule de la grille", 
 		expect(h1).toHaveAttribute("id", "etal-title");
 		expect(h1.textContent).toBe("Des bijoux colorés, faits un par un");
 
-		// Le mot dégradé passe par l'utility SSOT (tokens --gradient-hero-*),
-		// jamais par une couleur littérale : c'est elle qui porte les bascules
-		// `forced-colors` et `prefers-contrast: more`.
-		const accent = h1.querySelector(".text-gradient-multicolor");
+		// Direction B « Le surligneur » (2026-08-05, ex-`.text-gradient-multicolor`) :
+		// la couleur du mot vit dans un trait de pinceau DERRIÈRE l'encre, pas dans
+		// le glyphe. Le trait est décoratif (`aria-hidden`) et l'encre reste
+		// `--foreground` : le texte du h1 ne doit dépendre de lui ni pour la lecture
+		// (textContent intact ci-dessus) ni pour l'accessibilité.
+		const accent = h1.querySelector("[data-slot='brush-highlight']");
 		expect(accent).not.toBeNull();
 		expect(accent!.textContent).toBe("colorés");
+		expect(accent!.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
 	});
 
-	it("affiche l'eyebrow situé et la signature manuscrite", () => {
+	it("le trait du surligneur garde sa période de dash 3 (« 1 2 »), pas le « 1 » de hand-draw-load", () => {
 		render(<EtalHeading id="etal-title" />);
+
+		const path = screen
+			.getByRole("heading", { level: 1 })
+			.querySelector("[data-slot='brush-highlight'] svg path");
+		expect(path).not.toBeNull();
+
+		// Défaut attrapé : `.hand-draw-load` pose `stroke-dasharray: 1` (période 2,
+		// « 1 1 » implicite). Sur ce tracé à `pathLength={1}` et dashoffset 1, le
+		// dash SUIVANT commence exactement en fin de tracé et son cap arrondi peint
+		// un POINT parasite (rayon ~8 px, trait épais) pendant tout le délai de
+		// 480 ms. La période 3 (« 1 2 ») ne laisse rien de visible à l'offset 1,
+		// avec une course 1 → 0 identique. L'override est INLINE — c'est ce qui le
+		// fait gagner sur la classe, et c'est ce que ce test verrouille : un
+		// refactor qui le déplacerait dans une classe utilitaire perdrait
+		// l'arbitrage de spécificité sans qu'aucun autre filet ne le voie.
+		expect(path).toHaveClass("hand-draw-load");
+		expect((path as SVGPathElement).style.strokeDasharray).toBe("1 2");
+	});
+
+	it("affiche l'eyebrow situé, et NE paraphe PAS le bloc titre", () => {
+		const { container } = render(<EtalHeading id="etal-title" />);
 
 		expect(screen.getByText(/L'atelier de Léane · Nantes/)).toBeInTheDocument();
 
-		const signature = screen.getByText("— Léane");
-		// Sacramento est décorative : ni graisse ni italique (mono-poids).
-		expect(signature.className).toContain("font-cursive");
-		expect(signature.className).not.toMatch(/font-(bold|semibold)|italic/);
+		// …et c'est bien la SSOT partagée qui le rend, pas une copie de la même
+		// chaîne : la home avait son littéral, les six autres routes prenaient le
+		// défaut de `StorefrontHeading`. Un test qui ne vérifie que le TEXTE laisse
+		// les deux copies diverger dès qu'on reformule le sur-titre d'un seul côté.
+		expect(screen.getByText(STOREFRONT_EYEBROW)).toBeInTheDocument();
+
+		// Le storefront ne signe qu'une fois par page, dans le pied de page. Avec
+		// ce paraphe-ci, la home en portait TROIS (bloc titre, carton de fin de
+		// grille, pied de page). Le « quelqu'un derrière » est porté par le chapô
+		// à la première personne, vérifié plus bas.
+		expect(screen.queryByText("— Léane")).not.toBeInTheDocument();
+		expect(container.querySelector(".font-cursive")).toBeNull();
 	});
 
-	it("garde la copie mobile ET desktop dans le DOM, une seule visible à la fois", () => {
+	it("n'a qu'UNE copie du chapô, ses compléments desktop masqués sous sm", () => {
 		const { container } = render(<EtalHeading id="etal-title" />);
 
-		const desktop = screen.getByText(/dans mon atelier à Nantes/);
-		const mobile = screen.getByText(/à la main, à Nantes\./);
+		// Le chapô existait en DEUX paragraphes quasi identiques : deux endroits où
+		// corriger une coquille, et rien pour signaler qu'ils avaient divergé.
+		const chapo = Array.from(container.querySelectorAll("p")).filter((paragraph) =>
+			paragraph.textContent.includes("Je peins et j'assemble"),
+		);
+		expect(chapo).toHaveLength(1);
 
 		// `display: none` retire aussi de l'arbre d'accessibilité : pas de
 		// double lecture par un lecteur d'écran.
-		expect(desktop.className).toContain("hidden");
-		expect(desktop.className).toContain("sm:block");
-		expect(mobile.className).toContain("sm:hidden");
+		const desktopOnly = Array.from(chapo[0]!.querySelectorAll("span"));
+		expect(desktopOnly).not.toHaveLength(0);
+		for (const complement of desktopOnly) {
+			expect(complement.className).toContain("hidden");
+			expect(complement.className).toContain("sm:inline");
+		}
 
-		// Aucune des deux ne vouvoie (CLAUDE.md § Voix — la copie sauvegardée
-		// dans docs/atelier-story.md vouvoie, elle a été réécrite).
+		// Ce que lit un mobile = la phrase privée de ses compléments. On l'assemble
+		// plutôt que de la ré-écrire en dur : une copie de plus dans un test est une
+		// copie de plus à garder en phase, c'est le défaut qu'on vient de retirer.
+		const mobileCopy = Array.from(chapo[0]!.childNodes)
+			.filter((node) => node.nodeType === Node.TEXT_NODE)
+			.map((node) => node.textContent)
+			.join("");
+		expect(normalize(mobileCopy)).toBe(
+			"Je peins et j'assemble chaque pièce à la main. Aucune n'est identique à une autre.",
+		);
+
+		// ⚠️ Ce que la coupe mobile GARDE est le sujet du test, pas un détail de
+		// formulation. Avant le 2026-08-05 elle gardait « à Nantes » et jetait
+		// l'unicité — or l'eyebrow juste au-dessus dit déjà « · Nantes ». Le premier
+		// écran répétait donc le lieu et taisait le seul motif d'acheter tout de suite.
+		expect(normalize(mobileCopy)).toContain("Aucune n'est identique");
+		expect(normalize(mobileCopy)).not.toContain("Nantes");
+		// …et le lieu reste dit UNE fois, par l'eyebrow.
+		expect(normalize(container.textContent)).toContain("L'atelier de Léane · Nantes");
+
+		// La copie ne vouvoie pas (CLAUDE.md § Voix — celle sauvegardée dans
+		// docs/atelier-story.md vouvoie, elle a été réécrite).
 		expect(normalize(container.textContent)).not.toMatch(/\bvous\b|\bvotre\b|\bvos\b/i);
 	});
 
-	it("rend le rail de 4 couleurs de marque, décoratif", () => {
+	it("rend les quatre touches de pinceau de marque, décoratives", () => {
 		const { container } = render(<EtalHeading id="etal-title" />);
 
+		// `HandDrawnRail` (SSOT du geste, `shared/components/storefront-heading`) :
+		// l'ancien rail dupliquait les 4 classes bg-* en littéral — la home pouvait
+		// diverger d'un changement de palette sans qu'aucun test ne le voie.
 		const rail = container.querySelector('[aria-hidden="true"]');
 		expect(rail).not.toBeNull();
-		expect(rail!.children).toHaveLength(4);
+		const paths = rail!.querySelectorAll("svg path");
+		expect(paths).toHaveLength(4);
 
-		const classes = Array.from(rail!.children).map((segment) => segment.className);
-		expect(classes[0]).toContain("bg-primary");
-		expect(classes[1]).toContain("bg-brand-lavender");
-		expect(classes[2]).toContain("bg-brand-mint");
-		expect(classes[3]).toContain("bg-brand-sun");
+		const classes = Array.from(paths).map((stroke) => stroke.getAttribute("class") ?? "");
+		expect(classes[0]).toContain("stroke-primary");
+		expect(classes[1]).toContain("stroke-brand-lavender");
+		expect(classes[2]).toContain("stroke-brand-mint");
+		expect(classes[3]).toContain("stroke-brand-sun");
+
+		// Le dessin au montage fait partie du geste (repli reduced-motion dans
+		// entrance.css : touches déjà sèches).
+		for (const cls of classes) expect(cls).toContain("hand-draw-load");
 	});
 
 	it("comble le saut h1 → h3 avec un h2 masqué, APRÈS le h1 dans l'ordre DOM", () => {
@@ -303,9 +372,11 @@ describe("EtalGrid — états durs", () => {
 		render(await EtalGrid({ productsPromise: productsResult([createProduct()]) }));
 
 		expect(screen.getAllByRole("article")).toHaveLength(1);
+		// URL nue : le tri par défaut n'a pas à être répété dans l'URL, et la version
+		// paramétrée se canonicalisait vers celle-ci.
 		expect(screen.getByRole("link", { name: /Voir toutes les créations/ })).toHaveAttribute(
 			"href",
-			"/produits?sortBy=created-descending",
+			"/produits",
 		);
 		expect(screen.queryByText("L'atelier remplit ses étagères")).not.toBeInTheDocument();
 	});

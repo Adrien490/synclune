@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock next/link — preserves prefetch as data-prefetch attr (DOM-warning-safe + testable)
@@ -24,13 +24,21 @@ vi.mock("next/link", () => ({
 	),
 }));
 
+// Mock next/image — la grille rend des vignettes `fill`
+vi.mock("next/image", () => ({
+	default: ({ src, alt }: { src: string; alt: string }) => (
+		// eslint-disable-next-line @next/next/no-img-element
+		<img src={src} alt={alt} data-testid="tile-image" />
+	),
+}));
+
 // Mock SheetClose to render children directly
 vi.mock("@/shared/components/ui/sheet", () => ({
 	SheetClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-// Mock CountBadge — favorites link uses the SSOT CountBadge with type="count"
-// and variant="inline" in the menu sheet flow.
+// Mock CountBadge — shortcuts band uses the SSOT CountBadge (dot pour les
+// favoris, count pour le panier).
 vi.mock("@/shared/components/ui/count-badge", () => ({
 	CountBadge: ({ count }: { count: number }) =>
 		count > 0 ? <span data-testid="count-badge">{count}</span> : null,
@@ -49,10 +57,12 @@ vi.mock("./menu-sheet-nav-sections", async (importOriginal) => {
 	};
 });
 
-// Mock hooks
+// Mock hooks — prédicat réassignable par test (cas « entrée active » du focus).
+// Lu à l'appel, jamais à l'évaluation du factory : pas de souci de hoisting.
+let mockIsMenuItemActive: (href: string) => boolean = () => false;
 vi.mock("@/shared/hooks/use-active-navbar-item", () => ({
 	useActiveNavbarItem: () => ({
-		isMenuItemActive: () => false,
+		isMenuItemActive: (href: string) => mockIsMenuItemActive(href),
 	}),
 }));
 
@@ -63,11 +73,19 @@ vi.mock("@/shared/stores/badge-counts-store", () => ({
 
 import { MenuSheetNav } from "./menu-sheet-nav";
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	mockIsMenuItemActive = () => false;
+});
 
 const productTypes = [
-	{ slug: "bagues", label: "Bagues" },
-	{ slug: "colliers", label: "Colliers" },
+	{
+		slug: "bagues",
+		label: "Bagues",
+		productCount: 4,
+		image: { url: "/bague.jpg", blurDataUrl: null },
+	},
+	{ slug: "colliers", label: "Colliers", productCount: 2, image: null },
 ];
 
 const collections = [
@@ -92,159 +110,155 @@ const baseNavItems = [
 	{ href: "/favoris", label: "Mes favoris", icon: "heart" as const },
 ];
 
+function renderNav(props: Partial<React.ComponentProps<typeof MenuSheetNav>> = {}) {
+	return render(
+		<MenuSheetNav
+			navItems={baseNavItems}
+			productTypes={productTypes}
+			collections={collections}
+			session={null}
+			{...props}
+		/>,
+	);
+}
+
 describe("MenuSheetNav", () => {
-	describe("sections", () => {
-		it("renders creations, collections, and favorites sections", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
+	describe("sections — l'étal de poche", () => {
+		it("renders the editorial head note, creations grid and collections band", () => {
+			renderNav();
 
-			expect(screen.getByText("Nos créations")).toBeInTheDocument();
+			// Tête éditoriale greffée de la direction C — copie statique.
+			expect(
+				screen.getByText("Chaque pièce est faite à la main, dans mon atelier."),
+			).toBeInTheDocument();
+			// « Mes créations » (première personne) et non « Nos créations » —
+			// pluriel d'entreprise banni, une seule créatrice.
+			expect(screen.getByText("Mes créations")).toBeInTheDocument();
+			expect(screen.queryByText("Nos créations")).toBeNull();
 			expect(screen.getByText("Collections")).toBeInTheDocument();
-			expect(screen.getByRole("link", { name: /Mes favoris/ })).toBeInTheDocument();
 		});
 
-		// Même raison exactement que l'en-tête « Découvrir » ci-dessous : il coiffait
-		// UN seul lien pour tout le trafic public — et il s'appelait « Favoris »
-		// au-dessus de « Mes favoris ». Le nom de la région survit en `aria-label`.
-		it("n'affiche plus l'en-tête « Favoris », mais garde la région nommée", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
+		it("expose la bande « Accès rapide » : Accueil, Favoris, Panier", () => {
+			renderNav();
 
-			expect(screen.queryByRole("heading", { name: "Favoris" })).toBeNull();
-			expect(screen.getByRole("region", { name: "Favoris et compte" })).toBeInTheDocument();
-		});
-
-		// L'en-tête « Découvrir » coiffait DEUX entrées ; depuis que « L'atelier »
-		// ne sort plus de `getMobileNavItems`, il n'en restait qu'une — un titre de
-		// section pour le seul lien « Accueil ». Le lien reste, l'en-tête part.
-		it("n'affiche plus l'en-tête « Découvrir », mais garde le lien Accueil en tête", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
-
-			expect(screen.queryByText("Découvrir")).toBeNull();
+			expect(screen.getByRole("region", { name: "Accès rapide" })).toBeInTheDocument();
 			expect(screen.getByRole("link", { name: "Accueil" })).toBeInTheDocument();
+			// Le compteur passe par le nom accessible (le badge `dot` est muet).
+			expect(screen.getByRole("link", { name: "Favoris, 2 favoris" })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: /Panier/ })).toBeInTheDocument();
+		});
+
+		it("le raccourci Panier est un bouton aria-haspopup qui délègue à onCartClick", () => {
+			const onCartClick = vi.fn();
+			renderNav({ onCartClick });
+
+			const cartButton = screen.getByRole("button", { name: /Panier/ });
+			expect(cartButton.getAttribute("aria-haspopup")).toBe("dialog");
+			fireEvent.click(cartButton);
+			expect(onCartClick).toHaveBeenCalledTimes(1);
 		});
 
 		// "L'atelier" (ROUTES.SHOP.ABOUT) retiré temporairement de getMobileNavItems
 		// (à réintégrer plus tard) → ne doit plus apparaître dans le menu mobile.
 		it("does not render the 'L'atelier' link", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
+			renderNav();
 
 			expect(screen.queryByRole("link", { name: "L'atelier" })).toBeNull();
 		});
 
-		it("renders product type links using ROUTES", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
+		it("renders product type tiles using ROUTES, avec le compte de pièces dans le nom accessible", () => {
+			renderNav();
 
-			const baguesLink = screen.getByRole("link", { name: "Bagues" });
+			// Le compte visible est aria-hidden ; il est replié dans l'aria-label du
+			// lien pour ne pas casser le nom accessible d'un retour à la ligne.
+			const baguesLink = screen.getByRole("link", { name: "Bagues, 4 pièces" });
 			expect(baguesLink.getAttribute("href")).toBe("/produits/bagues");
 
-			const colliersLink = screen.getByRole("link", { name: "Colliers" });
+			const colliersLink = screen.getByRole("link", { name: "Colliers, 2 pièces" });
 			expect(colliersLink.getAttribute("href")).toBe("/produits/colliers");
 		});
 
-		it("renders collection links using ROUTES", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
+		it("rend la tuile « Voir tout » vers /produits (remplace « Tous les bijoux »)", () => {
+			renderNav();
+
+			expect(screen.queryByRole("link", { name: "Tous les bijoux" })).toBeNull();
+			const viewAll = screen.getByRole("link", { name: "Voir tout" });
+			expect(viewAll.getAttribute("href")).toBe("/produits");
+		});
+
+		it("renders collection cards + « Toutes les collections » using ROUTES", () => {
+			renderNav();
 
 			const mariageLink = screen.getByRole("link", { name: /Mariage/ });
 			expect(mariageLink.getAttribute("href")).toBe("/collections/mariage");
+
+			const allCollections = screen.getByRole("link", { name: "Toutes les collections" });
+			expect(allCollections.getAttribute("href")).toBe("/collections");
+		});
+
+		it("affiche l'encart « L'atelier est en pause » quand aucune famille n'est publiée", () => {
+			renderNav({ productTypes: [], collections: [] });
+
+			expect(screen.getByText("L'atelier est en pause")).toBeInTheDocument();
+			expect(screen.getByText(/Je remets des pièces en ligne très vite/)).toBeInTheDocument();
+			expect(screen.queryByRole("link", { name: "Voir tout" })).toBeNull();
 		});
 	});
 
 	describe("focus management", () => {
 		// @regression menu-mobile-focus-preventscroll
-		// applyFocus() centers the active item then focuses the first link. Without
-		// preventScroll, focus() re-scrolls to top and negates the centering. The
-		// first link must be focused with { preventScroll: true }.
-		it("focuses the first nav link with preventScroll (preserves scroll-to-active)", () => {
+		// applyFocus() centre l'entrée active puis focalise (l'entrée active, ou le
+		// premier lien à défaut). Sans preventScroll, focus() re-défile et annule le
+		// centrage — l'élément focalisé, quel qu'il soit, doit passer
+		// { preventScroll: true }.
+		it("focuses the first nav link with preventScroll when nothing is active", () => {
 			const focusSpy = vi.spyOn(HTMLAnchorElement.prototype, "focus");
 			try {
-				render(
-					<MenuSheetNav
-						navItems={baseNavItems}
-						productTypes={productTypes}
-						collections={collections}
-						session={null}
-					/>,
-				);
+				renderNav();
 
 				expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
 			} finally {
 				focusSpy.mockRestore();
 			}
 		});
+
+		// L'entrée active reçoit le focus ELLE-MÊME (audit menu-sheet 2026-08-05) :
+		// scrollIntoView la centre, et un focus posé sur le premier lien vivait
+		// hors-écran dès qu'elle était sous le pli — le premier Tab re-défilait
+		// alors vers le haut, défaisant le scroll-to-active pour le clavier.
+		it("focuses the active entry itself when one exists", () => {
+			// jsdom n'implémente pas scrollIntoView (appelé dès qu'une entrée est active).
+			window.HTMLElement.prototype.scrollIntoView = vi.fn();
+			mockIsMenuItemActive = (href) => href === "/produits/bagues";
+			renderNav();
+
+			expect(document.activeElement).toBe(screen.getByRole("link", { name: "Bagues, 4 pièces" }));
+		});
 	});
 
 	describe("logged out", () => {
 		/**
-		 * Garde du retrait de l'espace client (2026-07-31) : la section ne doit plus
+		 * Garde du retrait de l'espace client (2026-07-31) : le menu ne doit plus
 		 * proposer « Se connecter » ni « Créer un compte » à un visiteur. `/connexion`
 		 * n'est plus qu'une porte d'administration, joignable par URL directe.
 		 */
 		it("ne propose ni connexion ni inscription", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
+			renderNav();
 
 			expect(screen.queryByRole("link", { name: "Se connecter" })).toBeNull();
 			expect(screen.queryByRole("link", { name: "Créer un compte" })).toBeNull();
 		});
 
 		it("does not render user header", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
+			renderNav();
 
 			expect(screen.queryByTestId("user-header")).toBeNull();
+		});
+
+		it("rend le raccourci Favoris même sans session (parité bottom bar / navbar)", () => {
+			renderNav();
+
+			expect(screen.getByRole("link", { name: /Favoris/ })).toBeInTheDocument();
 		});
 	});
 
@@ -259,60 +273,32 @@ describe("MenuSheetNav", () => {
 		};
 
 		it("renders user header", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={session}
-				/>,
-			);
+			renderNav({ session });
 
 			expect(screen.getByTestId("user-header")).toBeInTheDocument();
 		});
 
-		it("renders favorites with badge count", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={session}
-				/>,
-			);
+		it("renders wishlist AND cart badges in the shortcuts band", () => {
+			renderNav({ session });
 
-			const badge = screen.getByTestId("count-badge");
-			expect(badge.textContent).toBe("2");
+			// Deux badges : le dot des favoris (2) et le compteur du panier (1).
+			const badges = screen.getAllByTestId("count-badge");
+			expect(badges.map((b) => b.textContent).sort()).toEqual(["1", "2"]);
 		});
 
 		it("renders the logout button", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={session}
-				/>,
-			);
+			renderNav({ session });
 
 			expect(screen.getByRole("button", { name: "Déconnexion" })).toBeInTheDocument();
 		});
 
 		/**
 		 * Garde du retrait de l'espace client (2026-07-31). Ce test vérifiait qu'on ne
-		 * rendait pas DEUX entrées vers `/commandes` (l'entrée « Mon compte » et
-		 * « Mes commandes » pointaient toutes deux la même URL). Il n'y a plus aucune
-		 * entrée d'espace client à dédupliquer : la section ne porte que les favoris.
+		 * rendait pas DEUX entrées vers `/commandes`. Il n'y a plus aucune entrée
+		 * d'espace client à dédupliquer.
 		 */
 		it("ne rend plus aucune entrée d'espace client", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={session}
-				/>,
-			);
+			renderNav({ session });
 
 			expect(screen.queryByRole("link", { name: "Mes commandes" })).not.toBeInTheDocument();
 			expect(screen.queryByRole("link", { name: "Mon compte" })).not.toBeInTheDocument();
@@ -320,19 +306,6 @@ describe("MenuSheetNav", () => {
 			expect(
 				screen.getAllByRole("link").filter((l) => l.getAttribute("href") === "/commandes"),
 			).toHaveLength(0);
-		});
-
-		it("rend « Mes favoris » même sans session (parité bottom bar / navbar)", () => {
-			render(
-				<MenuSheetNav
-					navItems={baseNavItems}
-					productTypes={productTypes}
-					collections={collections}
-					session={null}
-				/>,
-			);
-
-			expect(screen.getByRole("link", { name: /Mes favoris/ })).toBeInTheDocument();
 		});
 	});
 });
