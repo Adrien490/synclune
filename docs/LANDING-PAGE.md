@@ -172,12 +172,13 @@ nouvelle landing ». Le smoke et le SEO ont été partiellement recâblés, mais
   nœud `HowTo` dans `e2e/seo.spec.ts` — rattachée au lot 0 de
   `docs/LANDING-SECTION-ATELIER.md`.
 
-### 4.4 Ancre sur la section Collections
+### 4.4 Ancre sur la section Collections — ✅ fait (2026-08-06)
 
-L'étal a `#etal`, la FAQ a `#faq` (cible d'une redirection 308) ; la section
-Collections n'a **pas d'`id`** — aucun lien profond possible. Petite retouche
-(`id="collections"` + `scroll-mt` dérivé de `--navbar-height-static`, comme la
-FAQ), à faire au prochain passage sur le fichier.
+`id="collections"` + `scroll-mt` dérivé de `--navbar-height-static` sont posés
+sur la section (même passe que la parité de la grammaire d'arrivée : rail
+`inView` + `.enter-inview` sur le bloc titre, constat n° 6 de l'audit).
+Les quatre sections sont adressables : `#etal`, `#collections`, `#atelier`,
+`#faq`. L'ancre est publiée — c'est un contrat, ne plus la renommer.
 
 ## 5. Quoi MODIFIER — améliorations sur l'existant
 

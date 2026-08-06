@@ -38,6 +38,7 @@ import {
 	CollectionsGridSkeleton,
 	LANDING_COLLECTIONS_COUNT,
 } from "../collections-grid";
+import { CollectionsSection } from "../collections-section";
 
 type CollectionItem = GetCollectionsReturn["collections"][number];
 
@@ -231,6 +232,34 @@ describe("CollectionsGrid", () => {
 		expect(screen.getByText(/s'assemblent sur l'établi/)).toBeInTheDocument();
 		expect(screen.queryByRole("link")).toBeNull();
 		expect(screen.queryByRole("article")).toBeNull();
+	});
+});
+
+describe("CollectionsSection — coquille", () => {
+	// Promesse muette : la grille (composant async) reste suspendue, seul le
+	// squelette se rend — c'est la coquille qu'on teste, pas les cartes.
+	function renderShell() {
+		return render(<CollectionsSection collectionsPromise={new Promise(() => {})} />);
+	}
+
+	it("porte l'ancre #collections avec son scroll-mt dérivé de la barre STATIQUE", () => {
+		renderShell();
+
+		const section = document.querySelector("section");
+		expect(section).toHaveAttribute("id", "collections");
+		// `--navbar-height-static`, jamais `--navbar-height` (qui retombe au
+		// premier pixel scrollé) — le pattern atelier/FAQ.
+		expect(section?.className).toContain("scroll-mt-[calc(var(--navbar-height-static)+1.5rem)]");
+	});
+
+	it("parité de la grammaire d'arrivée : bloc titre en enter-inview, rail dessiné à l'ARRIVÉE", () => {
+		renderShell();
+
+		// Constat n° 6 de l'audit 2026-08-06 : cette section était la seule au
+		// rail inerte (`animated={false}`) et au bloc titre sans entrée.
+		const title = screen.getByRole("heading", { level: 2, name: "Choisis ton univers" });
+		expect(title.closest(".enter-inview")).not.toBeNull();
+		expect(document.querySelector("path.hand-draw-inview")).not.toBeNull();
 	});
 });
 
