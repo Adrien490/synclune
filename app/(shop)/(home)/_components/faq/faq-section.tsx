@@ -122,11 +122,12 @@ export function FaqSection() {
 			// retombe de 5rem à 4rem au premier pixel scrollé.
 			className={`${CONTAINER_CLASS} scroll-mt-[calc(var(--navbar-height-static)+1.5rem)] pb-16 lg:pb-24`}
 		>
-			{/* Le filet haut est le seul séparateur : la section suit la grille de
-			    l'étal, et un fond plein en ferait une bande — le contre-pied de la
-			    direction « L'étal continue ». L'accent soleil passe par les
+			{/* AUCUN séparateur entre les sections de la landing (2026-08-06) : ni
+			    filet, ni fond plein — une bande serait le contre-pied de la direction
+			    « L'étal continue », et le filet haut a fini par en être une version
+			    faible. Seul le rythme vertical sépare. L'accent soleil passe par les
 			    SURFACES INTERNES (note ouverte, carte), jamais par une bande. */}
-			<div className="border-border/60 border-t pt-12 lg:pt-16">
+			<div className="pt-12 lg:pt-16">
 				<div className="enter-inview max-w-[46ch]">
 					<h2
 						id={TITLE_ID}

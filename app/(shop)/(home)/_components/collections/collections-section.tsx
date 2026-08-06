@@ -22,8 +22,9 @@ const TITLE_ID = "collections-title";
  * couvert la première, cette section couvre la seconde. Placement entre l'étal
  * et la FAQ : accroche produit → orientation → réassurance.
  *
- * Même grammaire que la FAQ (« L'étal continue ») : un filet haut pour seul
- * séparateur, un bloc titre `h2` + `HandDrawnRail`, jamais de bande à fond
+ * Même grammaire que la FAQ (« L'étal continue ») : AUCUN séparateur entre
+ * sections — c'est le rythme vertical seul qui les sépare (2026-08-06) —, un
+ * bloc titre `h2` + `HandDrawnRail`, jamais de bande à fond
  * plein. L'accent est la MENTHE — c'est celui de la salle Collections dans la
  * barre (`data-accent="mint"` du méga-menu, SSOT navbar-section.ts) : la salle
  * et sa section de landing partagent la même touche.
@@ -46,7 +47,7 @@ export function CollectionsSection({
 }) {
 	return (
 		<section aria-labelledby={TITLE_ID} className={`${CONTAINER_CLASS} pb-12 lg:pb-16`}>
-			<div className="border-border/60 border-t pt-12 lg:pt-16">
+			<div className="pt-12 lg:pt-16">
 				<div className="max-w-[46ch]">
 					<h2
 						id={TITLE_ID}

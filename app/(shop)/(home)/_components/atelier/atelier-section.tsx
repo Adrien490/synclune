@@ -31,34 +31,21 @@ const TITLE_ID = "atelier-title";
  * Encres des quatre étapes — les quatre touches de marque, dans l'ORDRE DU
  * RAIL (rose → lavande → menthe → soleil) : le processus de création descend
  * la même gamme que le trait de pinceau des titres. Contrat des accents
- * respecté : les tokens ne touchent QUE des surfaces (le tape) et des tracés
- * SVG décoratifs (le cercle du numéro), jamais l'encre du texte — un token de
- * marque est un rose/violet de SURFACE, pas une couleur de lecture.
+ * respecté : les tokens ne touchent QUE des tracés SVG décoratifs (le cercle
+ * du numéro), jamais l'encre du texte — un token de marque est un rose/violet
+ * de SURFACE, pas une couleur de lecture.
  *
- * L'étape 1 n'a pas de `tapeTint` : le défaut de `MaskingTape` EST déjà la
- * recette rose à 45 % (`bg-primary/45`). Les trois autres appliquent la même
- * recette `color-mix(… 45 %, transparent)` sur leur token.
- *
- * ⚠️ Les tapes des notes sont une exception ASSUMÉE à la règle « jamais de
- * ruban par item » (purge des rubans en série du 2026-08-05) : l'atelier est
- * l'habitat scrapbook du motif, et la JSDoc de `masking-tape.tsx` cite ces
- * `tapeTint` comme consommateur légitime. Ne pas exporter ce motif vers
- * d'autres grilles.
+ * ⚠️ Les notes portaient chacune un `MaskingTape` teinté (`tapeTint`). Les
+ * quatre ont été retirés le 2026-08-06 : c'était le dernier ruban EN SÉRIE du
+ * storefront, gardé en 2026-08-05 au motif « l'atelier est l'habitat scrapbook
+ * du motif » — l'exception n'a pas tenu, elle concentrait 6 des 7 rubans de la
+ * landing. Ne pas les remettre : l'encre des étapes, c'est le cercle du numéro.
  */
-const STEP_ACCENTS: ReadonlyArray<{ token: string; tapeTint?: string }> = [
+const STEP_ACCENTS: ReadonlyArray<{ token: string }> = [
 	{ token: "var(--primary)" },
-	{
-		token: "var(--color-brand-lavender)",
-		tapeTint: "color-mix(in oklab, var(--color-brand-lavender) 45%, transparent)",
-	},
-	{
-		token: "var(--color-brand-mint)",
-		tapeTint: "color-mix(in oklab, var(--color-brand-mint) 45%, transparent)",
-	},
-	{
-		token: "var(--color-brand-sun)",
-		tapeTint: "color-mix(in oklab, var(--color-brand-sun) 45%, transparent)",
-	},
+	{ token: "var(--color-brand-lavender)" },
+	{ token: "var(--color-brand-mint)" },
+	{ token: "var(--color-brand-sun)" },
 ];
 
 /**
@@ -67,7 +54,6 @@ const STEP_ACCENTS: ReadonlyArray<{ token: string; tapeTint?: string }> = [
  * pas de `motion-safe:` ; classes LITTÉRALES, jamais interpolées).
  */
 const NOTE_TILT = ["-rotate-[0.5deg]", "rotate-[0.5deg]"] as const;
-const TAPE_TILT = ["-rotate-2", "rotate-2"] as const;
 
 /** Décalage de la cascade d'entrée, en % de la plage `entry` (cf. collections-grid). */
 const ENTER_STAGGER_STEP_PCT = 6;
@@ -87,9 +73,9 @@ function noteStyle(index: number): CSSProperties {
  * Direction « L'établi de Léane » (2026-08-05) : la seule section de la page
  * avec un visage humain, et la seule qui raconte au lieu de vendre. Placement
  * entre les collections et la FAQ — accroche produit → orientation → récit →
- * réassurance. Même grammaire que les voisines (« L'étal continue ») : filet
- * haut pour seul séparateur, bloc titre `h2` + `HandDrawnRail`, jamais de
- * bande à fond plein.
+ * réassurance. Même grammaire que les voisines (« L'étal continue ») : AUCUN
+ * séparateur entre sections — ni filet, ni bande à fond plein (2026-08-06) —,
+ * bloc titre `h2` + `HandDrawnRail`, le rythme vertical seul sépare.
  *
  * Trois pièces, toutes dans le vocabulaire « papier » existant :
  *
@@ -107,7 +93,7 @@ function noteStyle(index: number): CSSProperties {
  *   quatre touches. Pas de signature « — Léane » : le storefront ne signe
  *   qu'une fois par page, dans le footer ; la légende cursive du polaroid est
  *   une légende de photo, pas une signature.
- * - **Le processus** — un `<ol>` de quatre notes papier scotchées, chacune à
+ * - **Le processus** — un `<ol>` de quatre notes papier, chacune à
  *   l'encre d'une touche de marque (cf. `STEP_ACCENTS`). Les titres d'étapes
  *   sont des `<p>`, pas des `h4` : quatre items d'une ligne dans une liste
  *   ordonnée n'ont pas besoin de jalons de navigation (la FAQ met des `h4` sur
@@ -136,7 +122,7 @@ export function AtelierSection() {
 			// `--navbar-height` (qui retombe au premier pixel scrollé) — cf. FAQ.
 			className={`${CONTAINER_CLASS} scroll-mt-[calc(var(--navbar-height-static)+1.5rem)] pb-12 lg:pb-16`}
 		>
-			<div className="border-border/60 border-t pt-12 lg:pt-16">
+			<div className="pt-12 lg:pt-16">
 				<div className="enter-inview max-w-[46ch]">
 					<h2
 						id={TITLE_ID}
@@ -203,7 +189,6 @@ export function AtelierSection() {
 							className="enter-inview shadow-paper relative mt-10 rotate-[0.4deg] rounded-2xl border bg-(--section-wash) p-5 sm:p-6 lg:mt-0"
 							style={{ "--enter-y": "16px" } as CSSProperties}
 						>
-							<MaskingTape className="-top-2 left-8 z-10 h-4 w-14 rotate-2" />
 							<p className="text-muted-foreground text-base leading-relaxed">
 								Au début, je créais juste pour moi. Puis pour ma famille, mes amies, des amies
 								d&apos;amies… et Synclune est né. Rien de tout ça n&apos;était prévu — et pourtant,
@@ -236,13 +221,6 @@ export function AtelierSection() {
 									)}
 									style={noteStyle(index)}
 								>
-									<MaskingTape
-										className={cn(
-											"-top-2 left-1/2 z-10 h-4 w-12 -translate-x-1/2",
-											TAPE_TILT[index % TAPE_TILT.length],
-										)}
-										tint={STEP_ACCENTS[index]?.tapeTint}
-									/>
 									<div className="flex gap-3">
 										{/* Le numéro encerclé à la main — décoratif : l'<ol> porte
 										    déjà l'ordre pour les technologies d'assistance. Chiffre
