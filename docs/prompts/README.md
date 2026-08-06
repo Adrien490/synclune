@@ -10,6 +10,10 @@ interfaces possibles. Ce fichier est le point d'entrée : les quatre autres sont
 | [`DESIGN-ARTIFACT-PROMPT.md`](DESIGN-ARTIFACT-PROMPT.md) | **3-4 directions MAQUETTÉES** sur une page publiée, pour choisir | **non**          | 578 l.    |
 | [`REDESIGN-PROMPT.md`](REDESIGN-PROMPT.md)               | **Une refonte implémentée** d'une seule surface                  | oui, sur 1 cible | 351 l.    |
 
+> **Raccourci** : `DESIGN-ARTIFACT` s'invoque aussi par la commande **`/design-artifact <cible>`**
+> (`.claude/commands/design-artifact.md`), qui charge la SSOT et branche la cible — plus de
+> copier-coller. Le wrapper est volontairement mince : le prompt lui-même ne vit QU'ICI.
+
 ---
 
 ## Comment on colle un prompt

@@ -8,6 +8,11 @@
 > et le plan de swap des photos : le `TODO(photos-atelier)` en fin de fichier
 > est toujours d'actualité, le point de swap est `ATELIER_IMAGE`.
 >
+> **La décision figée et la cible visuelle de la section vivent dans
+> `LANDING-SECTION-ATELIER.md` (2026-08-06)** — c'est là que se lisent l'état
+> des lieux, les lots (portrait, surligneur, photos) et les refus ; ce fichier
+> n'est que la matière première.
+>
 > Sauvegarde du 2026-08-03, avant suppression des sections de la page d'accueil
 > (refonte landing à venir). Source : `app/(shop)/(home)/_components/atelier-section/`
 > (fichiers `atelier-content.ts`, `process-steps.ts`, `polaroid-config.ts`,

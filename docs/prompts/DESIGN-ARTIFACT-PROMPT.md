@@ -116,6 +116,21 @@ de la haute joaillerie.
   quelqu'un » mieux que n'importe quel adjectif. Prolonge-le, tends-le, ou argumente contre — mais ne
   l'ignore pas : une ligne parfaitement droite là où le reste du site trace à la main est une rupture, pas
   une sobriété.
+- **Les motifs identitaires sont un territoire, pas un décor** — SSOT `CLAUDE.md` § « Direction
+  artistique — lexique de marque » (lis-la, elle porte aussi le vocabulaire émotionnel et les matières).
+  Deux familles dominent, lisibles dans les noms mêmes des pièces (Starry Night Ring, Green Grape
+  Necklace, Rainbow Drop Necklace, Water Lilies, Rain Loops) : le **ciel de nuit** — lune, étoiles,
+  constellation ; le nom *Synclune* contient la lune, et une identité qui s'appelle comme ça sans jamais
+  la dessiner laisse son meilleur motif à la concurrence — et le **jardin fruité** — grappes, fleurs,
+  gouttes, arc-en-ciel. S'y ajoute une **filiation à l'art** que personne d'autre ne peut revendiquer :
+  Starry Night Ring EST « La Nuit étoilée » de Van Gogh, Water Lilies, les Nymphéas de Monet — un
+  registre narratif à part entière (la pièce raconte un tableau), et le pinceau va avec le trait : des
+  cabochons sont **peints à la main**, le geste de la marque n'est pas que dessiné. C'est de la matière
+  pour les registres du §4.1, les noms de directions et la copie : UN motif par direction, tenu
+  jusqu'au bout, jamais des étoiles saupoudrées partout. Une direction qui ne mobilise ni la palette,
+  ni le geste, ni un motif n'a que des gris pour raconter Synclune. En face, une limite délibérée :
+  **irisé, pailleté, translucide décrivent les bijoux, jamais l'interface** — traduits en paillettes
+  ou en verre dépoli, ils retombent dans le décoratif interdit au §4.8.
 - **La voix est à la première personne.** Léane parle d'elle (« je », « mon atelier ») ; la copie tutoie la
   cliente. Un ton corporate impersonnel (« nos artisans », « notre maison ») est faux : il n'y a qu'elle.
   ⚠️ **Piège actif : `docs/atelier-story.md` est intégralement au VOUVOIEMENT** (« Chaque bijou que vous
@@ -125,7 +140,11 @@ de la haute joaillerie.
   tutoiement** en gardant le « je » de Léane (« Chaque bijou que tu trouveras ici… »), et signale la bascule
   en légende. Ne le laisse pas en l'état sous prétexte que c'est une citation.
 - **Le test** : si ta direction pouvait servir telle quelle à n'importe quelle boutique de bijoux, elle est
-  ratée — pas parce qu'elle est laide, parce qu'elle ne raconte personne.
+  ratée — pas parce qu'elle est laide, parce qu'elle ne raconte personne. Le noyau lexical contre lequel ce
+  test se joue : **couleur + poésie + fantaisie + fait main + singularité + Nantes** (formule de référence :
+  « Création artisanale de bijoux colorés, originaux et poétiques »). L'atelier est à Nantes et c'est une
+  singularité, pas une mention légale — une direction peut s'en servir ; aucune n'a le droit de l'ignorer en
+  inventant un ailleurs.
 
 **L'échelle fait partie du brief, et elle t'ouvre des portes autant qu'elle en ferme.**
 - ~20 commandes/mois, **une seule personne** (pas d'équipe technique), catalogue petit, B2C France + UE,
@@ -268,12 +287,13 @@ pourrissent ; un catalogue voisin s'est déjà retrouvé avec ~25 % de chemins m
 **4.1 — Diverge avant de converger.** Cherche 8 à 10 pistes pour toi-même, puis n'en publie que 3 ou 4.
 Fais-les diverger sur DEUX axes, pas un :
   · l'**ampleur** — rhabiller / recomposer / changer le modèle mental de la surface ;
-  · le **registre** — quel geste artisanal porte la direction (le tirage papier, l'établi, la vitrine, le
-    carnet, l'atelier en désordre rangé…). Deux directions de même ampleur mais de même registre sont un
-    doublon.
-Au moins une direction doit être **plus risquée que ce que je demanderais spontanément**. Si les quatre sont
-confortables, tu as sous-livré : je peux refuser une direction audacieuse, je ne peux pas inventer celle que
-tu n'as pas montrée.
+  · le **registre** — quel geste artisanal ou quel motif identitaire (§1) porte la direction (le tirage
+    papier, l'établi, la vitrine, le carnet, l'atelier en désordre rangé, le ciel de nuit, le jardin
+    fruité…). Deux directions de même ampleur mais de même registre sont un doublon.
+Au moins une direction doit être **plus risquée que ce que je demanderais spontanément** — et l'audace a une
+couverture officielle : le lexique de marque (§1) assume « pop », « maximaliste », « statement ». Si les
+quatre sont confortables, tu as sous-livré : je peux refuser une direction audacieuse, je ne peux pas
+inventer celle que tu n'as pas montrée.
 
 **4.2 — Un concept falsifiable avant les pixels.** Chaque direction s'ouvre sur UNE phrase qui pourrait être
 fausse. Test : remplace « Synclune » par n'importe quelle autre boutique — si la phrase tient encore, elle
@@ -300,7 +320,11 @@ de la grille, **ose la couleur** — mais une fois, et partout.
 
 **4.5 — Les mots sont du design.** Chaque direction propose sa copie réelle (titres, libellés de boutons,
 états vides), au tutoiement. « Découvrez notre collection » n'est pas de la copie, c'est un emplacement de
-copie. Un bouton se nomme par ce qu'il fait pour la cliente.
+copie. Un bouton se nomme par ce qu'il fait pour la cliente. Le registre des mots est dans le lexique du §1
+(joyeux, espiègle, poétique, solaire, féerique…) — pas dans le vocabulaire e-commerce générique. Et la même
+règle que pour les chiffres : **ne cite une matière (résine, acrylique, acier, perles…) que si elle est
+vraie pour la pièce montrée** — un libellé qui invente une matière est un faux au même titre qu'un prix
+inventé (§0).
 
 **4.6 — Tiens sur le contenu le plus laid, pas sur le plus beau.** Chaque direction doit survivre, et tu dois
 le montrer au moins une fois : un titre de produit à 60 caractères · un prix à quatre chiffres · l'état vide ·
@@ -618,7 +642,8 @@ BARÈME — tu seras noté là-dessus, auto-évalue-toi avant de rendre
 25  Les directions divergent vraiment, l'une d'elles ose, et le banc d'essai les rend comparables.
 20  Tout ce qui est affirmé est dessiné, et les maquettes tiennent sur le contenu le plus laid.
 20  Le diagnostic est ancré (fichier:ligne, @regression, refus passés) et calibré honnêtement.
-15  L'alignement de marque : coloré, fait main, avec quelqu'un derrière — jamais joaillerie précieuse.
+15  L'alignement de marque : coloré, fait main, avec quelqu'un derrière, le lexique et les motifs du §1
+    mobilisés à bon escient — jamais joaillerie précieuse.
 10  Le document est lui-même bien composé, thémé, sans débordement, et tu l'as REGARDÉ.
 10  La recommandation est tranchée, lotie, et dit ce qu'elle ne réglera pas.
 

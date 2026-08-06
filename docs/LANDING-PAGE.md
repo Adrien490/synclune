@@ -37,22 +37,25 @@
 au niveau page, pas de `loading.tsx` — assumé). Navbar, `<main>`, footer et
 bottom-nav mobile viennent du layout `app/(shop)/layout.tsx`, pas de la page.
 
-| #   | Section                                                             | Rôle                                                                                                                                                                                                       |
-| --- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0   | `HomepageStructuredData` (Suspense)                                 | JSON-LD `@graph` unique ; repli `<StructuredData includeHomepageSchemas />` sans produits — deux `<script>` streamés, un seul survit dans le DOM final                                                     |
-| 1   | **L'étal** — `_components/etal/etal-section.tsx`                    | Premier écran : `h1` (LCP mobile) + les 5 créations les plus récentes (`getProducts` sur-alloué de +3, `sortSoldOutLast` pour garantir de l'achetable) + carte « Voir toutes les créations » → `/produits` |
-| 2   | **Collections** — `_components/collections/collections-section.tsx` | Orientation « Choisis ton univers » : 4 collections (`getCollections`, `products-descending` + `hasProducts`), CTA → `/collections`. Décision : `docs/LANDING-SECTION-COLLECTIONS.md`                      |
-| 3   | **FAQ** — `_components/faq/faq-section.tsx`                         | Réassurance « Des questions ? » : 5 groupes / 11 questions (SSOT `shared/constants/faq-items.tsx`), cible de la 308 `/aide` → `/#faq`, carte « Écris-moi » sticky ≥ lg                                     |
-| —   | Footer (layout)                                                     | Signature « — Léane » (la SEULE de la page), navigation, contact, rail légal                                                                                                                               |
+| #   | Section                                                             | Rôle                                                                                                                                                                                                                                       |
+| --- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0   | `HomepageStructuredData` (Suspense)                                 | JSON-LD `@graph` unique ; repli `<StructuredData includeHomepageSchemas />` sans produits — deux `<script>` streamés, un seul survit dans le DOM final                                                                                     |
+| 1   | **L'étal** — `_components/etal/etal-section.tsx`                    | Premier écran : `h1` (LCP mobile) + les 5 créations les plus récentes (`getProducts` sur-alloué de +3, `sortSoldOutLast` pour garantir de l'achetable) + carte « Voir toutes les créations » → `/produits`                                 |
+| 2   | **Collections** — `_components/collections/collections-section.tsx` | Orientation « Choisis ton univers » : 4 collections (`getCollections`, `products-descending` + `hasProducts`), CTA → `/collections`. Décision : `docs/LANDING-SECTION-COLLECTIONS.md`                                                      |
+| 3   | **Atelier** — `_components/atelier/atelier-section.tsx`             | Récit « Viens voir l'atelier » (2026-08-05) : portrait polaroid sticky ≥ lg, confidence, 4 étapes ancrées `#atelier-step-<id>` (SSOT `shared/constants/atelier-content.ts`). Décision & cible visuelle : `docs/LANDING-SECTION-ATELIER.md` |
+| 4   | **FAQ** — `_components/faq/faq-section.tsx`                         | Réassurance « Des questions ? » : 5 groupes / 11 questions (SSOT `shared/constants/faq-items.tsx`), cible de la 308 `/aide` → `/#faq`, carte « Écris-moi » sticky ≥ lg                                                                     |
+| —   | Footer (layout)                                                     | Signature « — Léane » (la SEULE de la page), navigation, contact, rail légal                                                                                                                                                               |
 
 ### JSON-LD
 
 Émetteur unique : `shared/components/structured-data.tsx` — un seul `<script>`
-contenant un `@graph`. Sur `/`, jusqu'à 7 nœuds : `Organization`, `WebSite`,
+contenant un `@graph`. Sur `/`, jusqu'à 8 nœuds : `Organization`, `WebSite`,
 `LocalBusiness`, `Person` (fondatrice), `BreadcrumbList` (`#homepage-breadcrumb`),
-`ItemList` (`#etal`, alimentée par **la même promesse** que la grille de l'étal)
-et `FAQPage` (`#faq`). La landing est la page la plus chargée du site en
-structured data — et la seule à trois nœuds conditionnels.
+`ItemList` (`#etal`, alimentée par **la même promesse** que la grille de l'étal),
+`FAQPage` (`#faq`) et `HowTo` (`#atelier`, SSOT
+`shared/constants/atelier-content.ts`, steps ancrés sur les `<li>` réels de la
+section). La landing est la page la plus chargée du site en structured data —
+et la seule à quatre nœuds conditionnels.
 
 ### Metadata
 
@@ -64,11 +67,12 @@ la main, dérivées d'aucune SSOT — cf. § 5.
 
 ### Couverture de tests
 
-- Unit/RTL : `etal/__tests__/`, `collections/__tests__/`, `faq/__tests__/`.
+- Unit/RTL : `etal/__tests__/`, `collections/__tests__/`, `atelier/__tests__/`,
+  `faq/__tests__/`.
 - E2E : `e2e/seo.spec.ts` (metadata + `@graph` + FAQ), `e2e/performance.spec.ts`
   (LCP/CLS), `e2e/shop-mobile.spec.ts` (budget vertical), smoke
   `e2e/navigation.spec.ts` (navbar + étal + footer). ⚠️ **Aucune assertion E2E
-  sur la section Collections** — cf. § 4.
+  sur les sections Collections et Atelier** — cf. § 4.
 
 ## 3. Invariants — à respecter dans toute évolution
 
@@ -81,8 +85,9 @@ Chaque ligne nomme son verrou quand il existe.
   divergents laissent Google en choisir une arbitrairement
   (`catalogue-single-breadcrumb.regression.test.ts`).
 - **Tout nouveau nœud rejoint le `@graph`** — jamais un `<script>` séparé.
-  Précédent : l'absorption de `/aide`, dont le `FAQPage` est devenu un nœud du
-  `@graph`. Les futurs `HowTo`/`Article` de l'atelier suivront le même chemin.
+  Précédents : l'absorption de `/aide` (`FAQPage`) et le `HowTo` de l'atelier
+  (2026-08-05), tous deux nœuds du `@graph`. Un futur `Article` suivrait le
+  même chemin.
 - **La grille de l'étal et l'`ItemList` consomment la même promesse**, triée
   (`sortSoldOutLast`) AVANT le partage — réordonner dans la grille seule ferait
   annoncer à Google un ordre que la page ne rend pas (commentaire au call site
@@ -129,57 +134,31 @@ Chaque ligne nomme son verrou quand il existe.
 - Pas de couleur de token dans une prop d'animation Motion — tous les tokens
   sont des `oklch()` (`motion-animatable-colors.regression.test.ts`).
 - Pas de `PageHeader` sur le storefront (réservé legal/admin) : le bloc titre
-  d'une section est un `h2` dans le langage du shell (filet haut +
-  `HandDrawnRail`).
+  d'une section est un `h2` dans le langage du shell (`h2` + `HandDrawnRail`).
+- **Aucun séparateur entre les sections de la landing** (2026-08-06) : ni filet
+  haut, ni bande à fond plein — seul le rythme vertical (`pt-12 lg:pt-16` +
+  `pb-*` de section) les sépare. Le filet haut a existé jusqu'à cette date sur
+  Collections, Atelier et FAQ ; il a été retiré, ne pas le reproposer.
 
 ## 4. Quoi CRÉER — feuille de route priorisée
 
 ### 4.1 Committer l'existant (préalable)
 
-La landing actuelle (sections `collections/`, `faq/`, `etal/brush-highlight.tsx`,
-les docs associées, plus les modifications de `etal/` et `footer.tsx`) vit en
-grande partie **non commitée** dans le working tree. La committer est le
-préalable à toute suite. ⚠️ L'index git est partagé entre sessions — ajouts
-ciblés uniquement, jamais de `git add -A`.
+Les sections des 2026-08-04/05 (collections, atelier, FAQ, brush-highlight)
+sont **commitées**. Reste, au 2026-08-06, le diff de la purge des séparateurs
+et des rubans en série (`atelier-section.tsx`, `collections-section.tsx`,
+`faq-section.tsx`, `shared/components/masking-tape.tsx`, ce document) — à
+committer avant toute suite. ⚠️ L'index git est partagé entre sessions —
+ajouts ciblés uniquement, jamais de `git add -A`.
 
-### 4.2 La section Atelier — le manque n°1
+### 4.2 La section Atelier — livrée, cible visuelle ouverte
 
-C'est la dernière section prévue (JSDoc de `page.tsx` : « Il reste UNE section à
-écrire, l'atelier »). Rôle : le différenciateur « fait main à Nantes » — la
-personne derrière les pièces, ce qu'aucune autre section ne raconte.
-
-**Deux bloqueurs, à lever AVANT d'ouvrir le chantier :**
-
-1. **Les vraies photos** — le plan de swap en 4 étapes est dans
-   `docs/atelier-story.md` (`TODO(photos-atelier)`). Le seul asset actuel est un
-   placeholder UploadThing (le portrait FOUNDER) : une section « atelier » sur
-   placeholder serait contre-productive pour une marque dont l'argument est le
-   geste réel.
-2. **La copie réécrite au tutoiement** — la sauvegarde (`docs/atelier-story.md` :
-   confidence, 4 étapes du process, captions polaroid, alts prêts) **vouvoie
-   intégralement**. Elle est la matière première, pas le texte final.
-
-**Ce qui l'attend déjà dans le code :** les primitives génériques ont survécu au
-vidage du 2026-08-03 (`HandDrawnAccent`, `Fade`, `AnimatedNumber`,
-`SECTION_SPACING`, `--color-glow-*`, `section-accents.css`). Les composants
-supprimés (polaroids, stats, timeline) se récupèrent dans l'historique git
-(dernier commit avant retrait, branche `chore/v1-schema-simplification`) — à
-réadapter au shell « L'étal continue », pas à recoller tels quels.
-
-**SEO :** les schémas `HowTo` (« Comment je crée vos bijoux ») et `Article`
-documentés dans `atelier-story.md` renaissent comme **nœuds du `@graph`** de
-`StructuredData` — jamais en scripts séparés. L'`ItemList` de la galerie
-polaroid ne revient que si chaque photo a un `contentUrl` distinct (schema
-retiré à l'époque parce que les 4 pointaient vers la même image — signal SEO
-trompeur).
-
-**Placement pressenti :** entre Collections et FAQ (l'ordre de lecture reste
-accroche → orientation → histoire → réassurance → signature) — à confirmer au
-moment du design.
-
-**Process :** comme l'étal, le bloc titre et les collections avant elle, la
-section passe par le pipeline `docs/prompts/` (DESIGN-ARTIFACT → implémentation
-→ ré-audit). Pas de spécification pixel dans ce document.
+**Livrée le 2026-08-05** (direction « L'établi de Léane », copie réécrite au
+tutoiement dans `shared/constants/atelier-content.ts`), entre Collections et
+FAQ, `HowTo` dans le `@graph`. La décision figée, l'état des lieux et la
+feuille de route visuelle (portrait FOUNDER en 404 — le P1 de l'audit du
+2026-08-06 —, part atelier du « surligneur passe », plan photos, refus) vivent
+dans `docs/LANDING-SECTION-ATELIER.md` — ce document ne les duplique pas.
 
 ### 4.3 Tests E2E de la landing — le trou de couverture le plus net
 
@@ -189,8 +168,9 @@ nouvelle landing ». Le smoke et le SEO ont été partiellement recâblés, mais
 - **Aucune assertion sur la section Collections** (`collections-title` n'apparaît
   nulle part sous `e2e/`) : à ajouter au smoke (`e2e/navigation.spec.ts`) —
   présence du `h2`, des cartes, du CTA vers `/collections`.
-- À l'arrivée de l'atelier : réintroduire la part qui le concerne (smoke +
-  nœuds `HowTo`/`Article` dans `e2e/seo.spec.ts`).
+- **L'atelier est arrivé sans sa part E2E** : présence `#atelier` au smoke +
+  nœud `HowTo` dans `e2e/seo.spec.ts` — rattachée au lot 0 de
+  `docs/LANDING-SECTION-ATELIER.md`.
 
 ### 4.4 Ancre sur la section Collections
 

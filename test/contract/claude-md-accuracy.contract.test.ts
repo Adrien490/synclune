@@ -61,6 +61,10 @@ const CONTRACTED_DOCS: ReadonlyArray<{ path: string; minCited: number }> = [
 	{ path: "docs/UI-CONVENTIONS.md", minCited: 5 },
 	{ path: "docs/prompts/REDESIGN-PROMPT.md", minCited: 5 },
 	{ path: "docs/prompts/DESIGN-ARTIFACT-PROMPT.md", minCited: 5 },
+	// Le wrapper `/design-artifact` ne contient RIEN d'autre que des renvois : si le chemin
+	// du prompt SSOT qu'il charge se casse, la commande exécute du vide en silence — c'est
+	// tout son mode de panne, donc tout son contrat.
+	{ path: ".claude/commands/design-artifact.md", minCited: 2 },
 ];
 
 /**
@@ -101,6 +105,10 @@ const DOC_SECTION_REFERENCES: ReadonlyArray<{
 	// Le brief de marque du §1 est adossé à cette section — c'est la SSOT du « colorés, PAS
 	// joaillerie précieuse », l'erreur de brief la plus coûteuse du projet.
 	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/BUSINESS.md", heading: "Positionnement" },
+	// Le §1 adosse motifs identitaires, noyau lexical et registre de copie au lexique DA
+	// ajouté le 2026-08-06 — sans cette entrée, renommer la section casserait le renvoi
+	// en silence (le défaut du 2026-08-05 : le chemin existait, la section avait déménagé).
+	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "CLAUDE.md", heading: "Direction artistique" },
 ];
 
 /* -------------------------------------------------------------------------- */

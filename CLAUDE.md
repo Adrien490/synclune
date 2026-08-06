@@ -26,6 +26,39 @@ recommandation qui présuppose une équipe, un trafic ou un catalogue plus gros 
 - **Emails** - React Email + Resend (8 templates)
 - **Auth** - Connexion **réservée à l'administration** : pas de compte client, inscription fermée (retrait de l'espace client 2026-07-31)
 
+### Direction artistique — lexique de marque
+
+Formule de référence : **« Création artisanale de bijoux colorés, originaux et poétiques »**.
+Noyau lexical : **couleur + poésie + fantaisie + fait main + singularité + Nantes**. Le territoire
+distinctif n'est pas « bijoux artisanaux » (générique) mais son croisement avec le coloré et le
+joyeusement décalé, créé à la main à Nantes.
+
+- **Mots-clés centraux** : bijoux colorés · artisanaux · faits main · fantaisie · originaux ·
+  de créatrice · fabriqués en France · nantais · atelier nantais · créations uniques · petites
+  séries · pièce unique · commande personnalisée · assemblé/peint à la main · fait avec amour.
+- **Univers émotionnel** : coloré, joyeux, lumineux, pétillant, ludique, poétique, rêveur,
+  solaire, fantaisiste, audacieux, expressif, décalé, enchanteur, féerique, magique, créatif,
+  singulier, inattendu, vivant, espiègle.
+- **Style visuel** : pop, arty, maximaliste, statement, rétro, inspiré de l'art, céleste,
+  fruité, floral, arc-en-ciel, graphique, sculptural, asymétrique, multicolore, irisé,
+  pailleté, translucide.
+- **Savoir-faire** : fabrication artisanale, peinture miniature, assemblage de perles,
+  composition/recherche chromatique, association de matières, création en atelier, finitions
+  à la main, expérimentation des formes.
+- **Motifs identitaires** : arc-en-ciel, nuit étoilée, ciel nocturne, étoiles, lune,
+  constellation, gouttes de couleur, grappes de raisin, fruits, nuages, pluie, fleurs, jardin
+  imaginaire, reflets irisés, nature fantastique — cohérents avec les noms existants (Green
+  Grape Necklace, Starry Night Ring, Rainbow Drop Necklace, Orange Grape Curls, Water Lilies,
+  Rain Loops).
+- **Produits & matières** — ⚠️ uniquement quand c'est vrai pour la pièce : boucles pendantes,
+  créoles colorées, boucles asymétriques, collier de perles/à breloques/gouttes, bague
+  ajustable, bague cabochon, cabochon peint à la main, perles colorées/irisées, résine,
+  acrylique, acier inoxydable, plastique coloré, chaîne argentée/dorée.
+- **Expressions SEO à privilégier** : « bijoux colorés faits main », « bijoux de créatrice
+  française », « bijoux faits main à Nantes », « boucles d'oreilles colorées artisanales »,
+  « bague peinte à la main », « bijoux inspirés de Van Gogh », « bijoux arc-en-ciel
+  artisanaux », « cadeau artisanal pour femme », « bijou statement coloré ».
+
 ## Commands
 
 **Avant toute PR : `pnpm validate`.**
