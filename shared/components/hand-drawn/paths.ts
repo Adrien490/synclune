@@ -80,6 +80,73 @@ export const RAIL_MONO_STROKE_PATH = "M2 6.6 Q88 5.2 174 6.8";
 export const RAIL_VIEWBOX = "0 0 176 12";
 
 /**
+ * Le fil de l'atelier (direction « Le fil », `docs/LANDING-SECTION-ATELIER.md`)
+ * — les tracés de la colonne enfilée de la section atelier, et EUX SEULS : la
+ * plaque « sans photo » du portrait réutilise `ACCENT_SHAPE_PATHS` (pas de
+ * tracé neuf sans besoin).
+ *
+ * - `segmentA`/`segmentB` : les deux formes de segment ALTERNÉES du fil
+ *   (amendement A5 — un fil est un fil, sa variation vient de l'alternance,
+ *   pas de quatre tracés uniques). Verticaux, dessinés à leur ratio : un
+ *   segment est posé à sa hauteur NATIVE dans une gouttière fixe, jamais
+ *   étiré sur la hauteur d'une note (letterboxing + critère d'échec du doc).
+ * - 4 vignettes de geste (~40 px rendus), une par étape : `sparkle` (l'idée),
+ *   `drop` (la perle/le matériel), `heat` (la cuisson — trois traits de
+ *   chaleur sur un rond de four : la volute à 40 px faisait des spires de
+ *   ~6 px pour 2 px d'encre, rejetée d'avance par le critère A5),
+ *   `bow` (la finition, le nœud-ruban).
+ * - `knot` : le nœud FINAL du fil, après la quatrième note — le bijou est fini.
+ *
+ * Consommés par `atelier-thread.tsx` en `fill="none"` + `pathLength={1}` +
+ * `hand-draw-inview`, épaisseur via `HAND_DRAWN_STROKES` — un SVG par tracé
+ * (deux paths dans un même SVG se dessineraient d'un seul geste).
+ */
+export const ATELIER_THREAD_PATHS = {
+	segmentA: {
+		d: "M12 2 Q8.6 25, 13 48 Q16.8 72, 11.4 94",
+		viewBox: "0 0 24 96",
+		width: 24,
+		height: 96,
+	},
+	segmentB: {
+		d: "M12 2 Q15.6 26, 11 50 Q7.4 74, 12.8 94",
+		viewBox: "0 0 24 96",
+		width: 24,
+		height: 96,
+	},
+	sparkle: {
+		d: "M24 5 Q24.7 11, 24 16.5 M24 31.5 Q23.3 37, 24 43 M5 24 Q11 23.3, 16.5 24 M31.5 24 Q37 24.7, 43 24 M11.5 11.5 Q14.5 14, 17 17 M31 31 Q33.5 33.5, 36.5 36.5",
+		viewBox: "0 0 48 48",
+		width: 48,
+		height: 48,
+	},
+	drop: {
+		d: "M24 5 Q30.5 17, 34.5 26 Q38.5 37.5, 24 42.5 Q9.5 37.5, 13.5 26 Q17.5 17, 23.4 6.2",
+		viewBox: "0 0 48 48",
+		width: 48,
+		height: 48,
+	},
+	heat: {
+		d: "M15 20.5 Q12.4 16.5, 15 12.5 Q17.2 9, 15 5.5 M24 21.5 Q21.4 17.5, 24 13.5 Q26.4 10, 24 6 M33 20.5 Q30.4 16.5, 33 12.5 Q35.2 9, 33 5.5 M19.5 27.5 Q30 25.5, 32.5 33.5 Q34 41.5, 24 42.5 Q14.5 41.5, 15.5 33.5 Q16.5 28.5, 19.5 27.5",
+		viewBox: "0 0 48 48",
+		width: 48,
+		height: 48,
+	},
+	bow: {
+		d: "M23 26 Q8.5 15.5, 11.5 26.5 Q14 34, 23 27.2 M25 26 Q39.5 15.5, 36.5 26.5 Q34 34, 25 27.2 M22.2 28.5 Q18.5 35.5, 15 41 M25.8 28.5 Q29.5 35.5, 33 41",
+		viewBox: "0 0 48 48",
+		width: 48,
+		height: 48,
+	},
+	knot: {
+		d: "M5 9 Q15 3.5, 21.5 9 Q27 14, 21 19 Q15 23.5, 11.5 18.5 Q8.5 13.5, 15.5 11.5 Q23 9.5, 27 16.5",
+		viewBox: "0 0 32 32",
+		width: 32,
+		height: 32,
+	},
+} as const;
+
+/**
  * Le squiggle des cartes — l'AFFORDANCE de lien (hover/focus), pas un ornement
  * de titre : il garde son déclencheur et son dash en unités utilisateur dans
  * `squiggle-underline.tsx` ; seul le tracé vit ici.

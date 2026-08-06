@@ -21,7 +21,11 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { ACCENT_SHAPE_PATHS, UNDERLINE_PATHS } from "@/shared/components/hand-drawn/paths";
+import {
+	ACCENT_SHAPE_PATHS,
+	ATELIER_THREAD_PATHS,
+	UNDERLINE_PATHS,
+} from "@/shared/components/hand-drawn/paths";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
 const SCAN_ROOTS = ["app", "modules", "shared"] as const;
@@ -43,6 +47,7 @@ describe("SSOT des tracés — ratio natif exact", () => {
 	const entries = [
 		...Object.entries(UNDERLINE_PATHS).map(([key, cfg]) => [`underline/${key}`, cfg] as const),
 		...Object.entries(ACCENT_SHAPE_PATHS),
+		...Object.entries(ATELIER_THREAD_PATHS).map(([key, cfg]) => [`atelier/${key}`, cfg] as const),
 	];
 
 	it.each(entries)("%s : width/height natifs === ratio du viewBox", (_name, cfg) => {
