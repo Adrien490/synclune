@@ -1,11 +1,7 @@
-import Image from "next/image";
 import type { CSSProperties } from "react";
 
-import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
-import { CARD_SURFACE_POLAROID } from "@/shared/components/card-surface.constants";
 import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { HandDrawnRail } from "@/shared/components/storefront-heading";
 import {
 	ATELIER_HOWTO,
@@ -15,6 +11,9 @@ import {
 } from "@/shared/constants/atelier-content";
 import { CONTAINER_CLASS } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
+
+import { AtelierPortrait } from "./atelier-portrait";
+import { AtelierThreadStroke, type AtelierThreadPathName } from "./atelier-thread";
 
 /**
  * Ancre de la section — c'est aussi le fragment que pointe l'`@id` du nœud
@@ -32,14 +31,13 @@ const TITLE_ID = "atelier-title";
  * RAIL (rose → lavande → menthe → soleil) : le processus de création descend
  * la même gamme que le trait de pinceau des titres. Contrat des accents
  * respecté : les tokens ne touchent QUE des tracés SVG décoratifs (le cercle
- * du numéro), jamais l'encre du texte — un token de marque est un rose/violet
- * de SURFACE, pas une couleur de lecture.
+ * du numéro, la vignette de geste), jamais l'encre du texte — un token de
+ * marque est un rose/violet de SURFACE, pas une couleur de lecture.
  *
  * ⚠️ Les notes portaient chacune un `MaskingTape` teinté (`tapeTint`). Les
  * quatre ont été retirés le 2026-08-06 : c'était le dernier ruban EN SÉRIE du
- * storefront, gardé en 2026-08-05 au motif « l'atelier est l'habitat scrapbook
- * du motif » — l'exception n'a pas tenu, elle concentrait 6 des 7 rubans de la
- * landing. Ne pas les remettre : l'encre des étapes, c'est le cercle du numéro.
+ * storefront. Ne pas les remettre : l'encre des étapes, c'est le cercle du
+ * numéro et sa vignette.
  */
 const STEP_ACCENTS: ReadonlyArray<{ token: string }> = [
 	{ token: "var(--primary)" },
@@ -49,9 +47,35 @@ const STEP_ACCENTS: ReadonlyArray<{ token: string }> = [
 ];
 
 /**
+ * La vignette de geste de chaque étape (SSOT des tracés :
+ * `ATELIER_THREAD_PATHS`) — l'étincelle de l'idée, la goutte-perle du
+ * matériel, la chaleur du four, le nœud-ruban de la finition. Keyée sur les
+ * `id` de la SSOT de contenu : ajouter une étape sans vignette casse ici, au
+ * typecheck du repli, pas en silence.
+ */
+const STEP_VIGNETTES: Record<string, AtelierThreadPathName> = {
+	idea: "sparkle",
+	materials: "drop",
+	assembly: "heat",
+	finishing: "bow",
+};
+
+/**
+ * L'encre du FIL — mono-lavande (arbitrage A3 du gate maquette, 2026-08-06) :
+ * les segments restent à l'accent de la salle pendant que perles et vignettes
+ * descendent la gamme quadri. Évite le segment lavande-sur-lavande redondant
+ * ET la finale soleil (l'encre la plus pâle) juste avant la FAQ soleil.
+ * Explicite plutôt que `--section-accent` : c'est une décision de direction,
+ * pas une cascade.
+ */
+const THREAD_INK = "var(--color-brand-lavender)";
+
+/**
  * Poses statiques alternées des notes d'étapes (mêmes arbitrages que
  * `CARD_TILT` des cartes collection : une pose n'est pas un mouvement, donc
- * pas de `motion-safe:` ; classes LITTÉRALES, jamais interpolées).
+ * pas de `motion-safe:` ; classes LITTÉRALES, jamais interpolées). En colonne
+ * unique le décalage de coin passe de ~2,9 à ~4,4 px — la pose redevient
+ * lisible, là où la grille 2×2 l'écrasait (validé au gate maquette).
  */
 const NOTE_TILT = ["-rotate-[0.5deg]", "rotate-[0.5deg]"] as const;
 
@@ -70,46 +94,54 @@ function noteStyle(index: number): CSSProperties {
  * « Viens voir l'atelier » — le récit de Léane, sur la landing.
  *
  * @description
- * Direction « L'établi de Léane » (2026-08-05) : la seule section de la page
- * avec un visage humain, et la seule qui raconte au lieu de vendre. Placement
- * entre les collections et la FAQ — accroche produit → orientation → récit →
- * réassurance. Même grammaire que les voisines (« L'étal continue ») : AUCUN
- * séparateur entre sections — ni filet, ni bande à fond plein (2026-08-06) —,
- * bloc titre `h2` + `HandDrawnRail`, le rythme vertical seul sépare.
+ * Direction « Le fil de l'atelier » (2026-08-06, SSOT
+ * `docs/LANDING-SECTION-ATELIER.md`, géométrie validée au gate maquette) : un
+ * bijou Synclune, c'est des perles enfilées une à une — la section fait
+ * pareil. Un fil dessiné à la main descend le récit, chaque étape du
+ * processus est une perle posée dessus. Le fil est le MÉCANISME de la
+ * section, pas un décor : c'est la seule colonne vertébrale de la page, ce
+ * qui casse le « métronome » des trois ouvertures identiques (audit landing
+ * du 2026-08-06) — le surligneur du h1 reste héros-seul, le bloc titre garde
+ * la grammaire `h2` + rail.
  *
- * Trois pièces, toutes dans le vocabulaire « papier » existant :
+ * **La géométrie qui fait foi** (gate maquette) : gouttière de 3,5 rem
+ * (`pl-14`), axe du fil à 2,75 rem (`left-11`) — 12 px À GAUCHE du bord des
+ * cartes —, perle de 38 px centrée sur l'axe donc à cheval de ~7 px sur la
+ * carte, colonne enfilée plafonnée à 36 rem (A1 : la réserve à droite est
+ * l'emplacement NOMMÉ des polaroids futurs), segments logés dans le gap FIXE
+ * de 3,25 rem de l'`<ol>` — indifférents à la hauteur des notes (critère
+ * d'échec du doc : si une retouche de copie oblige à retoucher un segment, le
+ * montage est mauvais).
  *
- * - **Le portrait polaroid** — sticky ≥ `lg` en colonne GAUCHE (le miroir de
- *   la carte « Écris-moi » sticky droite de la FAQ) : Léane te regarde pendant
- *   que tu lis sa confidence. Sticky porté par la CELLULE (`self-start`),
- *   jamais par un enfant — le sticky mort du rail de filtres. La photo est le
- *   portrait FOUNDER en placeholder : le point de swap vers les vraies photos
- *   est `ATELIER_IMAGE` (SSOT), pas ce fichier.
- * - **La confidence** — deux paragraphes sur un papier `--section-wash` : ce
- *   lavis est CE QUI JUSTIFIE le `data-accent="lavender"` de la section (un
- *   accent sans consommateur ment sur l'existence d'une cascade — cf.
- *   `EtalSection`). Lavande : le seul accent que la landing n'avait pas encore
- *   revendiqué (collections = menthe, FAQ = soleil) — la page complète ses
- *   quatre touches. Pas de signature « — Léane » : le storefront ne signe
- *   qu'une fois par page, dans le footer ; la légende cursive du polaroid est
- *   une légende de photo, pas une signature.
- * - **Le processus** — un `<ol>` de quatre notes papier, chacune à
- *   l'encre d'une touche de marque (cf. `STEP_ACCENTS`). Les titres d'étapes
- *   sont des `<p>`, pas des `h4` : quatre items d'une ligne dans une liste
- *   ordonnée n'ont pas besoin de jalons de navigation (la FAQ met des `h4` sur
- *   des items INTERACTIFS repliés — pas le cas ici). Le `h3` est la seule
- *   sous-tête, et c'est mot pour mot le `name` du nœud `HowTo` du `@graph`
- *   (SSOT `ATELIER_HOWTO`) ; chaque `<li>` porte l'ancre `#atelier-step-<id>`
- *   que les `url` des `HowToStep` référencent.
+ * Les pièces, dans l'ordre de lecture :
+ *
+ * - **Le portrait polaroid** (`AtelierPortrait`) — sticky ≥ `lg` en colonne
+ *   gauche, porté par la CELLULE (`self-start`), jamais par un enfant. La
+ *   colonne enfilée rallonge la course sticky : le portrait accompagne la
+ *   lecture. Deux états (photo / plaque dessinée) branchés sur la SSOT
+ *   `ATELIER_IMAGE`.
+ * - **La confidence** — deux paragraphes sur papier `--section-wash` : le
+ *   consommateur PRINCIPAL du lavis lavande (la plaque du portrait en est le
+ *   second). C'est sous ce papier que le fil prend sa source — le récit se
+ *   déverse dans le geste.
+ * - **Le processus enfilé** — l'`<ol>` en colonne unique (la grille 2×2 est
+ *   morte : quatre cartes en grille, c'est un inventaire ; quatre perles sur
+ *   un fil, c'est un geste qui avance). Un segment de fil mono-lavande entre
+ *   chaque perle — UN `<svg>` par segment (`AtelierThreadStroke`), en
+ *   `hand-draw-inview` : le tracé progressif EST la métaphore (on enfile), et
+ *   le dessin par-segment est assumé (pas d'`animation-range` par segment,
+ *   A5). Perle = numéro encerclé à cheval sur la carte ; vignette de geste à
+ *   l'encre de l'étape ; nœud final après la quatrième note — le bijou est
+ *   fini, pas de CTA derrière.
  *
  * Ce qui est délibérément ABSENT : tout fetch (contenu 100 % statique — donc
- * ni `"use cache"` ni cacheTag ni Suspense), les stats live (recréer les
- * compteurs supprimés = du fetch pour trois chiffres qu'un petit catalogue
- * rend peu flatteurs), la galerie polaroid (quatre cadres sur le MÊME asset
- * placeholder = le signal trompeur qui avait fait retirer l'ItemList galerie),
- * un CTA de sortie (rien à lier — la FAQ qui suit porte la sortie mailto), et
- * tout JSON-LD local (le `HowTo` est un nœud du `@graph`, jamais un
- * `<script>` de section).
+ * ni `"use cache"` ni cacheTag ni Suspense), les stats live, la galerie
+ * polaroid tant que les photos n'existent pas, un CTA de sortie (la FAQ qui
+ * suit porte la sortie mailto), et tout JSON-LD local (le `HowTo` est un nœud
+ * du `@graph`, jamais un `<script>` de section). Fil, perles, vignettes,
+ * nœud : tous `aria-hidden` — l'ordre et le contenu sont portés par l'`<ol>`
+ * et ses `<li>` ancrés `#atelier-step-<id>`, que les `url` des `HowToStep`
+ * référencent.
  */
 export function AtelierSection() {
 	return (
@@ -150,41 +182,16 @@ export function AtelierSection() {
 				    2026-08-05). Sous `lg`, tout empile : titre → portrait → récit. */}
 				<div className="mt-8 sm:mt-10 lg:grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-16">
 					<div className="lg:sticky lg:top-[calc(var(--navbar-height-static)+1.5rem)] lg:self-start">
-						{/* Le tirage : enveloppe polaroid des cartes Atelier, SANS les
-						    variantes hover/focus — ce n'est pas un lien, le cadre n'a pas
-						    à réagir. `polaroid-paper` pose le grain mat. Pose penchée
-						    littérale, tape rose signature (défaut, sans `tint`). */}
-						<figure
-							className={cn(
-								CARD_SURFACE_POLAROID,
-								"polaroid-paper enter-inview max-w-[15rem] -rotate-[1.2deg] sm:max-w-[17rem] lg:max-w-none",
-							)}
-							style={{ "--enter-y": "20px" } as CSSProperties}
-						>
-							<MaskingTape className="-top-2 left-1/2 z-20 h-4 w-14 -translate-x-1/2 -rotate-2" />
-							<div className="relative aspect-4/5 overflow-hidden rounded-sm">
-								<Image
-									src={ATELIER_IMAGE}
-									alt={ATELIER_IMAGE_ALT}
-									fill
-									// Colonne `22rem` moins la marge du tirage à `lg`, `15-17rem`
-									// empilé en dessous. Section sous la ligne de flottaison :
-									// `lazy` (défaut), aucun `preload`.
-									sizes="(min-width: 1024px) 21rem, 16rem"
-									className="object-cover"
-									quality={IMAGE_QUALITY.STANDARD}
-								/>
-							</div>
-							<figcaption className="font-cursive text-muted-foreground px-1.5 pt-2.5 pb-3 text-center text-[0.9375rem] sm:px-2">
-								C&apos;est moi, Léane&nbsp;!
-							</figcaption>
-						</figure>
+						<AtelierPortrait src={ATELIER_IMAGE} alt={ATELIER_IMAGE_ALT} />
 					</div>
 
-					<div>
-						{/* La confidence — un papier lavé posé sur la page (le langage de
-						    la note soleil de la FAQ : surface interne, jamais une bande).
-						    C'est LE consommateur du lavis lavande de la section. */}
+					{/* A1 : la colonne enfilée est PLAFONNÉE — les ~10 rem restants de
+					    la cellule sont la réserve nommée des polaroids futurs (« en
+					    regard des notes », § photos du doc), un vide destiné, pas subi. */}
+					<div className="max-w-[36rem]">
+						{/* La confidence — un papier lavé posé sur la page. Le consommateur
+						    PRINCIPAL du lavis lavande de la section (la plaque du portrait
+						    en est le second). */}
 						<div
 							className="enter-inview shadow-paper relative mt-10 rotate-[0.4deg] rounded-2xl border bg-(--section-wash) p-5 sm:p-6 lg:mt-0"
 							style={{ "--enter-y": "16px" } as CSSProperties}
@@ -201,15 +208,27 @@ export function AtelierSection() {
 							</p>
 						</div>
 
+						{/* La SOURCE du fil : le premier segment part du bord bas de la
+						    confidence et descend dans la gouttière, À GAUCHE du h3 (jamais
+						    à travers — A2) : le récit se déverse dans le geste. Le bloc
+						    déborde volontairement sur la zone du h3 (marge négative). */}
+						<div aria-hidden="true" className="relative mt-3 -mb-11 h-24">
+							<span className="absolute left-11 -translate-x-1/2">
+								<AtelierThreadStroke name="segmentA" width={16} color={THREAD_INK} />
+							</span>
+						</div>
+
 						{/* = ATELIER_HOWTO.name, mot pour mot : c'est le `name` du nœud
-						    HowTo du @graph — le balisage doit correspondre au visible. */}
-						<h3 className="font-display text-foreground mt-10 text-xl font-normal sm:mt-12">
+						    HowTo du @graph — le balisage doit correspondre au visible.
+						    Aligné sur le bord gauche des CARTES (`pl-14`), pas de la
+						    gouttière (A2). */}
+						<h3 className="font-display text-foreground pl-14 text-xl font-normal">
 							{ATELIER_HOWTO.name}
 						</h3>
 
-						{/* `items-start`, comme les grilles voisines : deux notes d'une
-						    même rangée ne se réalignent pas sur la plus haute. */}
-						<ol className="mt-4 grid items-start gap-4 sm:grid-cols-2">
+						{/* Le processus enfilé — colonne unique, gap FIXE de 3,25 rem : le
+						    logement des segments, indifférent à la hauteur des notes. */}
+						<ol className="mt-5 flex flex-col gap-y-13 pl-14">
 							{ATELIER_STEPS.map((step, index) => (
 								<li
 									key={step.id}
@@ -221,35 +240,68 @@ export function AtelierSection() {
 									)}
 									style={noteStyle(index)}
 								>
-									<div className="flex gap-3">
-										{/* Le numéro encerclé à la main — décoratif : l'<ol> porte
-										    déjà l'ordre pour les technologies d'assistance. Chiffre
-										    en ENCRE (`--foreground`), cercle au token de l'étape
-										    (tracé SVG décoratif — un token de marque ne colore
-										    jamais du texte), dessiné à l'arrivée (`inView`). */}
+									{/* Le segment qui AMÈNE cette perle — logé dans le gap fixe
+									    au-dessus de la carte, sur l'axe du fil, recadré (jamais
+									    étiré) à la hauteur du gap. Deux formes alternées (A5). */}
+									{index > 0 && (
 										<span
 											aria-hidden="true"
-											className="relative inline-flex size-9 shrink-0 items-center justify-center"
+											className="absolute bottom-full -left-3 grid h-13 w-6 -translate-x-1/2 place-items-center overflow-hidden"
 										>
-											<span className="font-display text-foreground text-lg">{index + 1}</span>
-											<HandDrawnAccent
-												variant="circle"
-												width={38}
-												color={STEP_ACCENTS[index]?.token}
-												strokeWidth={HAND_DRAWN_STROKES.trait}
-												className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+											<AtelierThreadStroke
+												name={index % 2 ? "segmentB" : "segmentA"}
+												width={16}
+												color={THREAD_INK}
 											/>
 										</span>
-										<div>
+									)}
+
+									{/* La PERLE : le numéro encerclé, À CHEVAL sur le bord gauche
+									    de la carte — centré sur l'axe du fil (A2). Décorative :
+									    l'<ol> porte déjà l'ordre. Chiffre en ENCRE
+									    (`--foreground`), cercle au token de l'étape. */}
+									<span
+										aria-hidden="true"
+										className="absolute top-4 -left-[1.875rem] inline-flex size-9 items-center justify-center"
+									>
+										<span className="font-display text-foreground text-lg">{index + 1}</span>
+										<HandDrawnAccent
+											variant="circle"
+											width={38}
+											color={STEP_ACCENTS[index]?.token}
+											strokeWidth={HAND_DRAWN_STROKES.trait}
+											className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+										/>
+									</span>
+
+									{/* `pl-8` : la copie dégage le débord de la perle. La
+									    vignette de geste illustre l'étape à son encre — la
+									    section est DESSINÉE, pas photographiée. */}
+									<div className="flex items-center gap-4 pl-8">
+										<div className="min-w-0 flex-1">
 											<p className="text-foreground font-medium">{step.title}</p>
 											<p className="text-muted-foreground mt-0.5 text-[0.9375rem] leading-relaxed">
 												{step.description}
 											</p>
 										</div>
+										<AtelierThreadStroke
+											name={STEP_VIGNETTES[step.id] ?? "sparkle"}
+											width={40}
+											color={STEP_ACCENTS[index]?.token}
+											className="shrink-0"
+										/>
 									</div>
 								</li>
 							))}
 						</ol>
+
+						{/* Le NŒUD final : après la quatrième note, le fil se termine — le
+						    bijou est fini. Pas de CTA derrière (l'atelier ne vend pas). */}
+						<div aria-hidden="true" className="relative h-14">
+							<span className="absolute top-2 left-11 -translate-x-1/2">
+								<AtelierThreadStroke name="knot" width={32} color={THREAD_INK} />
+							</span>
+						</div>
 					</div>
 				</div>
 			</div>

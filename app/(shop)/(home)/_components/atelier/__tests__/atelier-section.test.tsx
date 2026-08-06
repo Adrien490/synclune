@@ -85,15 +85,101 @@ describe("AtelierSection — accent lavande", () => {
 });
 
 describe("AtelierSection — portrait", () => {
-	it("rend le portrait SSOT avec son alt, et une légende cursive", () => {
+	// Deux états, branchés sur la SSOT (`docs/LANDING-SECTION-ATELIER.md`,
+	// pièce 2) : tant que `ATELIER_IMAGE` est null (asset FOUNDER en 404), le
+	// cadre rend la plaque dessinée — jamais un trou blanc publié avec son
+	// alt ; le jour du ré-upload, la branche photo reprend seule. Les DEUX
+	// branches restent écrites pour que le contrat survive au swap.
+	if (ATELIER_IMAGE) {
+		it("rend le portrait SSOT avec son alt, et une légende cursive", () => {
+			const { container } = render(<AtelierSection />);
+
+			const img = screen.getByRole("img", { name: ATELIER_IMAGE_ALT });
+			expect(img.getAttribute("src")).toBe(ATELIER_IMAGE);
+
+			// Une légende de photo, pas une signature (cf. le test de voix).
+			const caption = container.querySelector("figcaption");
+			expect(caption?.textContent).toContain("C'est moi, Léane");
+		});
+	} else {
+		it("rend la plaque dessinée — aucun <img>, et la légende assume l'attente", () => {
+			const { container } = render(<AtelierSection />);
+
+			// Aucune image publiée : ni l'URL morte, ni son alt.
+			expect(screen.queryByRole("img")).toBeNull();
+
+			// La plaque est le 2ᵉ consommateur du lavis, APRÈS la confidence —
+			// « au moins un » laisserait la confidence perdre le sien en silence
+			// (écart e du doc).
+			expect(container.querySelectorAll(".bg-\\(--section-wash\\)")).toHaveLength(2);
+
+			const caption = container.querySelector("figcaption");
+			// Copie validée au gate maquette du 2026-08-06.
+			expect(caption?.textContent).toContain("Le portrait arrive");
+		});
+	}
+});
+
+describe("AtelierSection — le fil (direction 2026-08-06, gate maquette)", () => {
+	// Les tracés s'assertent par leur GÉOMÉTRIE NATIVE (viewBox de la SSOT
+	// `ATELIER_THREAD_PATHS`) — pas par des test-ids : segments 24×96,
+	// vignettes 48×48, nœud 32×32.
+
+	it("enfile un segment par perle (source + inter-perles), chacun dans SON propre svg", () => {
 		const { container } = render(<AtelierSection />);
 
-		const img = screen.getByRole("img", { name: ATELIER_IMAGE_ALT });
-		expect(img.getAttribute("src")).toBe(ATELIER_IMAGE);
+		// 1 segment source (confidence → première perle) + 1 segment entre
+		// chaque paire de notes = autant de segments que d'étapes.
+		const segments = container.querySelectorAll('svg[viewBox="0 0 24 96"]');
+		expect(segments).toHaveLength(ATELIER_STEPS.length);
 
-		// Une légende de photo, pas une signature (cf. le test de voix).
-		const caption = container.querySelector("figcaption");
-		expect(caption?.textContent).toContain("C'est moi, Léane");
+		// « Un svg par segment, sans exception » : deux paths sous un même svg
+		// partageraient la timeline `view()` et se dessineraient d'un seul
+		// geste (§ Mouvement du doc).
+		segments.forEach((segment) => {
+			const paths = segment.querySelectorAll("path");
+			expect(paths).toHaveLength(1);
+			expect(paths[0]!.classList.contains("hand-draw-inview")).toBe(true);
+			// A3 (gate maquette) : le fil est MONO-LAVANDE — perles et
+			// vignettes descendent la gamme, pas les segments.
+			expect(paths[0]!.getAttribute("stroke")).toBe("var(--color-brand-lavender)");
+		});
+	});
+
+	it("termine le fil par le nœud, en lavande, sans CTA derrière", () => {
+		const { container } = render(<AtelierSection />);
+
+		const knots = container.querySelectorAll('svg[viewBox="0 0 32 32"]');
+		expect(knots).toHaveLength(1);
+		expect(knots[0]!.querySelector("path")?.getAttribute("stroke")).toBe(
+			"var(--color-brand-lavender)",
+		);
+	});
+
+	it("chaque note porte SA vignette de geste, à l'encre de son étape", () => {
+		const { container } = render(<AtelierSection />);
+
+		const items = container.querySelectorAll("ol > li");
+		const expectedInks = [
+			"var(--primary)",
+			"var(--color-brand-lavender)",
+			"var(--color-brand-mint)",
+			"var(--color-brand-sun)",
+		];
+
+		items.forEach((item, index) => {
+			const vignettes = item.querySelectorAll('svg[viewBox="0 0 48 48"]');
+			expect(vignettes).toHaveLength(1);
+			expect(vignettes[0]!.querySelector("path")?.getAttribute("stroke")).toBe(expectedInks[index]);
+		});
+	});
+
+	it("le processus est une COLONNE unique — la grille 2×2 est morte", () => {
+		const { container } = render(<AtelierSection />);
+
+		const list = container.querySelector("ol")!;
+		expect(list.className).toContain("flex-col");
+		expect(list.className).not.toContain("grid-cols-2");
 	});
 });
 
