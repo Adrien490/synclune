@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context";
@@ -93,9 +93,11 @@ interface UseAdminFormKeyboardOptions {
  *   `requestNavigation` pour ouvrir l'`UnsavedChangesDialog` stylé (même UX que
  *   le chevron retour et la sidebar) plutôt qu'un `window.confirm` natif.
  *
- * Extrait de create/edit color & material forms (DRY). Lit l'état mutable via
- * une ref mise à jour à chaque render pour garder des dépendances d'effet
- * stables (pas de re-attachement des listeners à chaque frappe).
+ * Extrait de create/edit color & material forms (DRY). Le corps des deux
+ * raccourcis vit dans des `useEffectEvent` : l'état mutable (`isPending`,
+ * `extraBusy`, callbacks de l'appelant) y est LU sans entrer dans les
+ * dépendances, donc les listeners `window` ne sont jamais rattachés après le
+ * montage. @regression admin-form-shortcut-listener-churn
  */
 export function useAdminFormKeyboard({
 	formRef,
@@ -111,9 +113,11 @@ export function useAdminFormKeyboard({
 	const haptic = useHaptic();
 	const navigationGuard = useNavigationGuardOptional();
 
-	const liveRef = useRef({ allowNavigation, getIsDirty, getCanSubmit, navigationGuard });
-	useEffect(() => {
-		liveRef.current = { allowNavigation, getIsDirty, getCanSubmit, navigationGuard };
+	const onSaveShortcut = useEffectEvent(() => {
+		if (isPending || extraBusy) return;
+		if (getCanSubmit && !getCanSubmit()) return;
+		haptic("medium");
+		formRef.current?.requestSubmit();
 	});
 
 	// ⌘S / Ctrl+S → submit
@@ -122,54 +126,60 @@ export function useAdminFormKeyboard({
 		const handler = (event: KeyboardEvent) => {
 			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
 			if (!isSaveShortcut) return;
+			// ⚠️ `preventDefault` reste ICI, AVANT la garde `isPending`/`extraBusy` :
+			// ⌘S doit neutraliser la boîte « Enregistrer » du navigateur même pendant
+			// une soumission. Le déplacer dans l'effect event le rendrait conditionnel.
 			event.preventDefault();
-			if (isPending || extraBusy) return;
-			if (liveRef.current.getCanSubmit && !liveRef.current.getCanSubmit()) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
+			onSaveShortcut();
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, extraBusy, formRef, haptic]);
+	}, [isMobile]);
+
+	const onEscape = useEffectEvent((event: KeyboardEvent) => {
+		// `listPath` est déjà garanti par l'effet — sans lui aucun listener n'existe.
+		// Le re-tester ne sert qu'à le narrower pour TypeScript.
+		if (isPending || !listPath) return;
+		const target = event.target as HTMLElement | null;
+		const isInsideOverlay = target?.closest(OVERLAY_SELECTOR) != null;
+		if (isInsideOverlay || hasOpenOverlay()) {
+			return;
+		}
+		event.preventDefault();
+
+		const navigate = () => {
+			haptic("light");
+			allowNavigation();
+			withViewTransition(() => router.push(listPath));
+		};
+
+		if (!navigationGuard) {
+			// Hors NavigationGuardProvider : repli sur la confirmation native.
+			if (
+				getIsDirty() &&
+				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
+			) {
+				return;
+			}
+			navigate();
+			return;
+		}
+
+		// Guard actif (formulaire dirty) → `requestNavigation` renvoie false et
+		// ouvre le dialogue, qui rappellera `navigate` via `proceed`.
+		if (navigationGuard.requestNavigation(listPath, navigate)) {
+			navigate();
+		}
+	});
 
 	// Échap → retour liste (confirm si dirty)
 	useEffect(() => {
 		if (isMobile || !listPath) return;
 		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			const isInsideOverlay = target?.closest(OVERLAY_SELECTOR) != null;
-			if (isInsideOverlay || hasOpenOverlay()) {
-				return;
-			}
-			event.preventDefault();
-
-			const navigate = () => {
-				haptic("light");
-				liveRef.current.allowNavigation();
-				withViewTransition(() => router.push(listPath));
-			};
-
-			const guard = liveRef.current.navigationGuard;
-			if (!guard) {
-				// Hors NavigationGuardProvider : repli sur la confirmation native.
-				if (
-					liveRef.current.getIsDirty() &&
-					!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-				) {
-					return;
-				}
-				navigate();
-				return;
-			}
-
-			// Guard actif (formulaire dirty) → `requestNavigation` renvoie false et
-			// ouvre le dialogue, qui rappellera `navigate` via `proceed`.
-			if (guard.requestNavigation(listPath, navigate)) {
-				navigate();
-			}
+			if (event.key !== "Escape") return;
+			onEscape(event);
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, haptic, router, listPath]);
+	}, [isMobile, listPath]);
 }

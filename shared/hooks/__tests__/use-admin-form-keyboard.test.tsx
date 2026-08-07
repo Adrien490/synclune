@@ -79,6 +79,15 @@ describe("useAdminFormKeyboard", () => {
 			expect(submit).not.toHaveBeenCalled();
 		});
 
+		// `preventDefault` doit précéder la garde `isPending` : sinon ⌘S pendant une
+		// soumission ouvre la boîte « Enregistrer la page » du navigateur.
+		it("still swallows the browser Save dialog while pending", () => {
+			HTMLFormElement.prototype.requestSubmit = vi.fn();
+			render(<Harness isPending />);
+			// fireEvent renvoie false quand l'événement a été annulé (preventDefault).
+			expect(fireEvent.keyDown(document.body, { key: "s", metaKey: true })).toBe(false);
+		});
+
 		it("does nothing on mobile (shortcuts disabled)", () => {
 			const submit = vi.fn();
 			HTMLFormElement.prototype.requestSubmit = submit;
