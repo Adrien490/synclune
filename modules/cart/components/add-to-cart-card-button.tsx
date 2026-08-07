@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition } from "react";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { dispatchFlyToCart } from "@/modules/cart/lib/fly-to-cart";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -61,7 +61,12 @@ export function AddToCartCardButton({
 	// kilo-octets. Sans cet état, le bouton ne bougeait pas et le réflexe était de
 	// retaper. On précharge AVANT d'ouvrir : le `import()` partage le chunk de
 	// `dynamic()`, donc le second tap est instantané.
-	const [isOpeningSelector, setIsOpeningSelector] = useState(false);
+	//
+	// L'attente vient de `useTransition` et non d'un booléen fait main : React
+	// tient `isPending` vrai sur tout le corps async, ce qui supprime le `.finally`
+	// de remise à zéro. Il reste distinct de `isAdding` (`useAddToCart`, qui couvre
+	// la Server Action) — les deux sont unis ci-dessous, volontairement.
+	const [isOpeningSelector, startOpenSelector] = useTransition();
 	const isPending = isAdding || isOpeningSelector;
 
 	// Détermine si le produit a plusieurs variantes actives (SKUs)
@@ -76,9 +81,11 @@ export function AddToCartCardButton({
 		if (hasMultipleVariants) {
 			// Plusieurs variantes : précharger le chunk du dialog, puis l'ouvrir.
 			e.preventDefault();
-			setIsOpeningSelector(true);
-			void import("./sku-selector-dialog").finally(() => {
-				setIsOpeningSelector(false);
+			startOpenSelector(async () => {
+				await import("./sku-selector-dialog").catch(() => {
+					// Un échec de chargement du chunk ne doit pas empêcher l'ouverture :
+					// `dynamic()` retentera son propre import au montage.
+				});
 				openSkuSelector({ product, preselectedColor });
 			});
 		} else {

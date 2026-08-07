@@ -11,13 +11,13 @@ import {
 	useEffectEvent,
 	useOptimistic,
 	useRef,
-	useState,
 	useTransition,
 	type ReactNode,
 	type ReactElement,
 } from "react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { mediaAtLeast } from "@/shared/constants/breakpoints";
 import { setFabVisibility } from "@/shared/actions/set-fab-visibility";
@@ -121,16 +121,14 @@ export function Fab({
 	// "toggle" | "main" — set on toggle, consumed by the callback ref when the target
 	// button mounts. Survives the AnimatePresence mode="wait" exit-animation delay.
 	const pendingFocusRef = useRef<"toggle" | "main" | null>(null);
-	const [hasMounted, setHasMounted] = useState(false);
+	// `useMounted()` (SSOT `shared/hooks/use-mounted.ts`, en `useSyncExternalStore`)
+	// plutôt qu'un `useState` + effet réécrits ici : c'est la même primitive, déjà
+	// utilisée par `autocomplete`, `use-gesture-hint-once` et les deux barres basses.
+	const hasMounted = useMounted();
 
 	// Stable IDs for aria-controls relationship
 	const visibleId = `fab-visible-${fabKey}`;
 	const hiddenId = `fab-hidden-${fabKey}`;
-
-	// Marquer que le premier rendu est passé
-	useEffect(() => {
-		queueMicrotask(() => setHasMounted(true));
-	}, []);
 
 	// Cleanup du timeout au démontage
 	useEffect(() => {

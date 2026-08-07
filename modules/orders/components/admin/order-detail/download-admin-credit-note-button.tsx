@@ -2,7 +2,7 @@
 
 import { DownloadSimpleIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
-import { useState } from "react";
+import { useTransition } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { toast } from "@/shared/utils/toast";
 
@@ -26,43 +26,43 @@ export function DownloadAdminCreditNoteButton({
 	creditNoteNumber,
 	refundId,
 }: DownloadAdminCreditNoteButtonProps) {
-	const [isDownloading, setIsDownloading] = useState(false);
+	// Voir `download-admin-invoice-button.tsx` : `isPending` de `useTransition`
+	// couvre tout le corps async, donc plus de booléen ni de `try/catch` tenant
+	// lieu de `finally`.
+	const [isDownloading, startDownload] = useTransition();
 
-	async function handleDownload() {
+	function handleDownload() {
 		if (isDownloading) return;
-		setIsDownloading(true);
 		const endpoint = refundId
 			? `/api/orders/${orderNumber}/credit-note/${refundId}`
 			: `/api/orders/${orderNumber}/credit-note`;
-		const task = (async () => {
-			const response = await fetch(endpoint);
-			if (!response.ok) {
-				throw new Error(
-					response.status === 404
-						? "Avoir indisponible — aucun avoir comptable émis pour cette commande"
-						: "Erreur lors du téléchargement de l'avoir",
-				);
-			}
-			const blob = await response.blob();
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = `avoir-${creditNoteNumber}.pdf`;
-			link.click();
-			URL.revokeObjectURL(url);
-		})();
-		toast.promise(task, {
-			loading: "Téléchargement…",
-			success: "Avoir téléchargé",
-			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+		startDownload(async () => {
+			const task = (async () => {
+				const response = await fetch(endpoint);
+				if (!response.ok) {
+					throw new Error(
+						response.status === 404
+							? "Avoir indisponible — aucun avoir comptable émis pour cette commande"
+							: "Erreur lors du téléchargement de l'avoir",
+					);
+				}
+				const blob = await response.blob();
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `avoir-${creditNoteNumber}.pdf`;
+				link.click();
+				URL.revokeObjectURL(url);
+			})();
+			toast.promise(task, {
+				loading: "Téléchargement…",
+				success: "Avoir téléchargé",
+				error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+			});
+			await task.catch(() => {
+				// surfaced by toast.promise
+			});
 		});
-		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
-		try {
-			await task;
-		} catch {
-			// surfaced by toast.promise
-		}
-		setIsDownloading(false);
 	}
 
 	return (

@@ -167,10 +167,13 @@ vi.mock("./menu-sheet-footer", () => ({
 	MenuSheetFooter: () => <div data-testid="menu-sheet-footer" />,
 }));
 
-// Mock EdgeSwipeIndicator — expose progress + hidden as data attributes
+// Mock EdgeSwipeIndicator — le vrai composant ne prend PAS de prop `progress` :
+// le parent écrit `style.opacity` sur le nœud depuis `onProgress` (un `useState`
+// re-rendait tout le sheet à chaque frame de `touchmove`). Le mock doit donc
+// exposer le même ref pour que l'écriture ait une cible.
 vi.mock("./edge-swipe-indicator", () => ({
-	EdgeSwipeIndicator: ({ progress, hidden }: { progress: number; hidden?: boolean }) => (
-		<div data-testid="edge-swipe-indicator" data-progress={progress} data-hidden={hidden} />
+	EdgeSwipeIndicator: ({ ref, hidden }: { ref?: React.Ref<HTMLDivElement>; hidden?: boolean }) => (
+		<div ref={ref} data-testid="edge-swipe-indicator" data-hidden={hidden} style={{ opacity: 0 }} />
 	),
 }));
 
@@ -410,7 +413,7 @@ describe("MenuSheet", () => {
 
 			const indicator = screen.getByTestId("edge-swipe-indicator");
 			expect(indicator.getAttribute("data-hidden")).toBe("false");
-			expect(indicator.getAttribute("data-progress")).toBe("0");
+			expect((indicator as HTMLElement).style.opacity).toBe("0");
 		});
 
 		it("forwards onProgress from useEdgeSwipe to the indicator", () => {
@@ -420,8 +423,9 @@ describe("MenuSheet", () => {
 			expect(lastOnProgress).toBeTypeOf("function");
 			act(() => lastOnProgress?.(0.5));
 
+			// L'opacité est écrite sur le nœud, sans passer par un rendu React.
 			const indicator = screen.getByTestId("edge-swipe-indicator");
-			expect(indicator.getAttribute("data-progress")).toBe("0.5");
+			expect((indicator as HTMLElement).style.opacity).toBe("0.5");
 		});
 
 		// Le geste doit être désactivé exactement là où le trigger burger disparaît

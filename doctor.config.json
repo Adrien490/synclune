@@ -15,8 +15,6 @@
 			"react-doctor/design-no-space-on-flex-children",
 			"react-doctor/design-no-three-period-ellipsis",
 			"react-doctor/prefer-useReducer",
-			"react-doctor/no-cascading-set-state",
-			"react-doctor/no-derived-useState",
 			"react-doctor/no-effect-event-handler",
 			"react-doctor/async-await-in-loop",
 			"react-doctor/async-parallel",
@@ -33,9 +31,6 @@
 			"react-doctor/no-side-tab-border",
 			"react-doctor/server-sequential-independent-await",
 			"react-doctor/prefer-use-effect-event",
-			"react-doctor/no-prop-callback-in-effect",
-			"react-doctor/no-derived-state-effect",
-			"react-doctor/no-effect-chain",
 			"react-doctor/js-batch-dom-css",
 			"react-doctor/jsx-no-constructed-context-values",
 			"react-doctor/context-provider-value-from-unmemoized-local-literal"
@@ -75,10 +70,12 @@
 			},
 			{
 				"files": ["modules/media/components/gallery/pinch-zoom.tsx"],
-				"rules": [
-					"react-doctor/client-passive-event-listeners",
-					"react-doctor/no-permanent-will-change"
-				]
+				"rules": ["react-doctor/client-passive-event-listeners"]
+			},
+			{
+				"_comment": "`setApi` est l'échappatoire documentée de shadcn pour exposer l'api Embla à un ANCÊTRE (`product-carousel-ui.tsx`). Le remède de la règle — « remonter l'état dans un Provider » — est inapplicable : le Provider est créé PAR ce composant, donc SOUS le consommateur. L'api arrive de façon asynchrone depuis `useEmblaCarousel`, un effet est le seul endroit d'où la publier.",
+				"files": ["shared/components/ui/carousel.tsx"],
+				"rules": ["react-doctor/no-prop-callback-in-effect"]
 			},
 			{
 				"files": ["**/opengraph-image.tsx"],

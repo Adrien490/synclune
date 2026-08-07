@@ -2,7 +2,7 @@
 
 import { DownloadSimpleIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
-import { useState } from "react";
+import { useTransition } from "react";
 import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { toast } from "@/shared/utils/toast";
@@ -36,7 +36,11 @@ const INVOICE_STATUS_OPTIONS: { value: InvoiceStatusFilter; label: string }[] = 
  */
 export function ExportComptableForm() {
 	const availableYears = getAvailableYears();
-	const [isExporting, setIsExporting] = useState(false);
+	// L'export est un bouton, pas un submit : `useAppForm` n'a donc pas de
+	// `isSubmitting` à réutiliser, et c'est `useTransition` qui fournit le drapeau
+	// d'attente — pas un booléen fait main doublé d'un `try/catch` tenant lieu de
+	// `finally` (bail-out React Compiler sur TryStatement + finalizer).
+	const [isExporting, startExport] = useTransition();
 
 	const form = useAppForm({
 		defaultValues: {
@@ -45,46 +49,43 @@ export function ExportComptableForm() {
 		},
 	});
 
-	async function handleExport() {
+	function handleExport() {
 		if (isExporting) return;
-		setIsExporting(true);
 		const { year, invoiceStatus } = form.state.values;
 		const params = new URLSearchParams({
 			periodType: "year",
 			year,
 			invoiceStatus,
 		});
-		const task = (async () => {
-			const response = await fetch(`/api/admin/orders/export?${params.toString()}`, {
-				method: "POST",
+		startExport(async () => {
+			const task = (async () => {
+				const response = await fetch(`/api/admin/orders/export?${params.toString()}`, {
+					method: "POST",
+				});
+				if (!response.ok) {
+					const message =
+						response.status === 429
+							? "Trop d'exports — réessayer dans quelques minutes"
+							: "Erreur lors de l'export";
+					throw new Error(message);
+				}
+				const blob = await response.blob();
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `livre-recettes-${year}.csv`;
+				link.click();
+				URL.revokeObjectURL(url);
+			})();
+			toast.promise(task, {
+				loading: "Génération de l'export…",
+				success: "Export téléchargé",
+				error: (e) => (e instanceof Error ? e.message : "Export impossible"),
 			});
-			if (!response.ok) {
-				const message =
-					response.status === 429
-						? "Trop d'exports — réessayer dans quelques minutes"
-						: "Erreur lors de l'export";
-				throw new Error(message);
-			}
-			const blob = await response.blob();
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = `livre-recettes-${year}.csv`;
-			link.click();
-			URL.revokeObjectURL(url);
-		})();
-		toast.promise(task, {
-			loading: "Génération de l'export…",
-			success: "Export téléchargé",
-			error: (e) => (e instanceof Error ? e.message : "Export impossible"),
+			await task.catch(() => {
+				// surfaced by toast.promise
+			});
 		});
-		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
-		try {
-			await task;
-		} catch {
-			// surfaced by toast.promise
-		}
-		setIsExporting(false);
 	}
 
 	return (

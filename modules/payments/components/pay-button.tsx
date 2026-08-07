@@ -63,8 +63,11 @@ export function PayButton({
 	const elements = useElements();
 	const haptic = useHaptic();
 	const [phase, setPhase] = useState<Phase>("idle");
-	const [error, setError] = useState<string | null>(null);
-	const [showReloadAction, setShowReloadAction] = useState(false);
+	// UN seul state pour l'erreur et son action de reprise : les deux étaient
+	// toujours écrits sur les mêmes chemins (même ligne à chaque fois), donc ils ne
+	// pouvaient pas diverger. Les tenir séparément laissait la porte ouverte à un
+	// bouton « Recharger la page » orphelin, sans message.
+	const [error, setError] = useState<{ message: string; canReload: boolean } | null>(null);
 	const errorRef = useRef<HTMLDivElement>(null);
 	const barRef = useRef<HTMLDivElement>(null);
 	const hintId = useId();
@@ -158,8 +161,8 @@ export function PayButton({
 					: "Remplis tous les champs obligatoires pour continuer."
 				: null;
 
-	function showError(message: string) {
-		setError(message);
+	function showError(message: string, canReload = false) {
+		setError({ message, canReload });
 		haptic("error");
 	}
 
@@ -172,7 +175,6 @@ export function PayButton({
 
 		haptic("medium");
 		setError(null);
-		setShowReloadAction(false);
 
 		try {
 			const result = await submit({
@@ -190,13 +192,14 @@ export function PayButton({
 				case "submit-error":
 				case "checkout-error":
 				case "stripe-error":
-					if (result.status !== "form-invalid") showError(result.message);
 					// La famille `checkout-error` regroupe les refus serveur dont la
 					// plupart prescrivent « Actualise la page » (panier modifié, prix
 					// changés, commande déjà initiée…) : fournir le contrôle au lieu de
 					// décrire un geste. Pas sur `stripe-error` (refus de carte) : là,
 					// réessayer SANS recharger est le bon chemin.
-					setShowReloadAction(result.status === "checkout-error");
+					if (result.status !== "form-invalid") {
+						showError(result.message, result.status === "checkout-error");
+					}
 					setPhase("idle");
 					return;
 				case "redirecting":
@@ -254,8 +257,8 @@ export function PayButton({
 					className="focus-visible:outline-none"
 				>
 					<AlertDescription className="space-y-3">
-						<p>{error}</p>
-						{showReloadAction && (
+						<p>{error.message}</p>
+						{error.canReload && (
 							<Button
 								type="button"
 								size="sm"

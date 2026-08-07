@@ -70,6 +70,11 @@ export function PullToRefresh() {
 	// listeners `window` à chaque frame de `touchmove` (un re-render par pixel).
 	const pullDistanceRef = useRef(0);
 	const isRefreshingRef = useRef(false);
+	// Détection du franchissement de seuil, hors de tout updater `setState` : un
+	// updater doit être PUR, or il portait le `triggerHaptic("medium")`. React peut
+	// le rejouer (StrictMode, rendu concurrent) — donc vibrer deux fois pour un
+	// seul franchissement.
+	const hasReachedThresholdRef = useRef(false);
 
 	useEffect(() => {
 		if (!isTouch) return;
@@ -113,13 +118,14 @@ export function PullToRefresh() {
 			setPull(eased);
 
 			const reached = eased >= TRIGGER_DISTANCE;
-			setHasReachedThreshold((prev) => {
-				// Tick unique au franchissement du seuil — l'instant où le geste devient
-				// « validé si tu relâches ». Ni au relâchement, ni à la fin du refresh :
-				// c'étaient 3 vibrations pour un seul tirage.
-				if (reached && !prev) triggerHaptic("medium");
-				return reached;
-			});
+			// Tick unique au franchissement du seuil — l'instant où le geste devient
+			// « validé si tu relâches ». Ni au relâchement, ni à la fin du refresh :
+			// c'étaient 3 vibrations pour un seul tirage. Le front montant se détecte
+			// sur le ref (dans le gestionnaire, donc une seule fois par geste), jamais
+			// dans l'updater `setState`, que React est libre de rejouer.
+			if (reached && !hasReachedThresholdRef.current) triggerHaptic("medium");
+			hasReachedThresholdRef.current = reached;
+			setHasReachedThreshold(reached);
 		}
 
 		function handleTouchEnd() {
@@ -128,6 +134,7 @@ export function PullToRefresh() {
 			startYRef.current = null;
 			const wasOverThreshold = pullDistanceRef.current >= TRIGGER_DISTANCE;
 			setPull(0);
+			hasReachedThresholdRef.current = false;
 			setHasReachedThreshold(false);
 			if (!wasOverThreshold || isRefreshingRef.current) return;
 

@@ -10,7 +10,7 @@ import {
 	MagnifyingGlassIcon,
 	ShoppingBagIcon,
 } from "@phosphor-icons/react/ssr";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import {
 	BottomBar,
@@ -125,24 +125,25 @@ export function ShopMobileBottomNav() {
 	// Delay mount until after hydration to avoid createPortal SSR mismatch.
 	const mounted = useMounted();
 
-	// Announce badge count changes to assistive tech (skip first render).
-	const prevCountsRef = useRef<{ cart: number; wishlist: number } | null>(null);
+	// Annonce des changements de pastille, dérivée PENDANT LE RENDU (pas dans un
+	// effet) — même grammaire que `admin-mobile-bottom-bar.tsx` et
+	// `admin-menu-sheet.tsx`, dont ce fichier était le dernier retardataire.
+	// Au premier rendu les deux clés sont égales, donc la région naît vide : c'est
+	// la seule forme qu'un lecteur d'écran vocalise ensuite. Un effet imposait un
+	// `useRef` sentinelle pour sauter le montage, et un rendu de plus après paint.
+	const [prevCounts, setPrevCounts] = useState({ cart: cartCount, wishlist: wishlistCount });
 	const [announcement, setAnnouncement] = useState<string>("");
-	useEffect(() => {
-		const prev = prevCountsRef.current;
-		if (prev === null) {
-			prevCountsRef.current = { cart: cartCount, wishlist: wishlistCount };
-			return;
-		}
+	if (prevCounts.cart !== cartCount || prevCounts.wishlist !== wishlistCount) {
+		setPrevCounts({ cart: cartCount, wishlist: wishlistCount });
 		const messages: string[] = [];
-		if (cartCount !== prev.cart) {
+		if (cartCount !== prevCounts.cart) {
 			messages.push(
 				cartCount === 0
 					? "Panier vide"
 					: `Panier : ${cartCount} article${cartCount > 1 ? "s" : ""}`,
 			);
 		}
-		if (wishlistCount !== prev.wishlist) {
+		if (wishlistCount !== prevCounts.wishlist) {
 			messages.push(
 				wishlistCount === 0
 					? "Favoris vides"
@@ -150,11 +151,9 @@ export function ShopMobileBottomNav() {
 			);
 		}
 		if (messages.length > 0) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setAnnouncement(messages.join(", "));
 		}
-		prevCountsRef.current = { cart: cartCount, wishlist: wishlistCount };
-	}, [cartCount, wishlistCount]);
+	}
 
 	const handleSearchClick = (e: React.MouseEvent<HTMLButtonElement>) => {
 		// Handoff obligatoire : le dialog blur son déclencheur, donc

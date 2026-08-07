@@ -66,11 +66,14 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	// On annonce file par file, et seulement celles qui ont BOUGÉ : un compteur de
 	// remboursements inchangé n'a pas à être re-vocalisé parce qu'une commande est
 	// arrivée.
+	//
+	// Un SEUL instantané en state : `countsSignature` est une fonction pure de
+	// `counts` (ligne ci-dessus), donc la signature du rendu précédent se
+	// recalcule au lieu d'être stockée une deuxième fois.
 	const [prevCounts, setPrevCounts] = useState<Record<string, number>>(counts);
-	const [prevSignature, setPrevSignature] = useState(countsSignature);
 	const [announcement, setAnnouncement] = useState("");
+	const prevSignature = BADGED_ITEM_IDS.map((id) => `${id}:${prevCounts[id] ?? 0}`).join("|");
 	if (prevSignature !== countsSignature) {
-		setPrevSignature(countsSignature);
 		setPrevCounts(counts);
 		const changed = BADGED_ITEM_IDS.filter((id) => (prevCounts[id] ?? 0) !== counts[id]).map(
 			(id) => (counts[id]! > 0 ? badgeAriaLabel(id, counts[id]!) : badgeEmptyLabel(id)),

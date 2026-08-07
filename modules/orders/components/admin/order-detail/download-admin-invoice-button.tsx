@@ -2,7 +2,7 @@
 
 import { DownloadSimpleIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
-import { useState } from "react";
+import { useTransition } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { toast } from "@/shared/utils/toast";
 
@@ -20,40 +20,42 @@ export function DownloadAdminInvoiceButton({
 	orderNumber,
 	invoiceNumber,
 }: DownloadAdminInvoiceButtonProps) {
-	const [isDownloading, setIsDownloading] = useState(false);
+	// `useTransition` plutôt qu'un booléen fait main : en React 19 `isPending`
+	// reste vrai pendant tout le corps async de `startTransition`, ce qui supprime
+	// à la fois le `setState` de fin et le `try { await task } catch {}` qui
+	// remplaçait un `finally` (bail-out React Compiler sur TryStatement +
+	// finalizer). Le rejet reste porté par `toast.promise`.
+	const [isDownloading, startDownload] = useTransition();
 
-	async function handleDownload() {
+	function handleDownload() {
 		if (isDownloading) return;
-		setIsDownloading(true);
-		const task = (async () => {
-			const response = await fetch(`/api/orders/${orderNumber}/invoice`);
-			if (!response.ok) {
-				throw new Error(
-					response.status === 400
-						? "Facture indisponible — commande non payée"
-						: "Erreur lors du téléchargement de la facture",
-				);
-			}
-			const blob = await response.blob();
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = `facture-${invoiceNumber}.pdf`;
-			link.click();
-			URL.revokeObjectURL(url);
-		})();
-		toast.promise(task, {
-			loading: "Téléchargement…",
-			success: "Facture téléchargée",
-			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+		startDownload(async () => {
+			const task = (async () => {
+				const response = await fetch(`/api/orders/${orderNumber}/invoice`);
+				if (!response.ok) {
+					throw new Error(
+						response.status === 400
+							? "Facture indisponible — commande non payée"
+							: "Erreur lors du téléchargement de la facture",
+					);
+				}
+				const blob = await response.blob();
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `facture-${invoiceNumber}.pdf`;
+				link.click();
+				URL.revokeObjectURL(url);
+			})();
+			toast.promise(task, {
+				loading: "Téléchargement…",
+				success: "Facture téléchargée",
+				error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+			});
+			await task.catch(() => {
+				// surfaced by toast.promise
+			});
 		});
-		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
-		try {
-			await task;
-		} catch {
-			// surfaced by toast.promise
-		}
-		setIsDownloading(false);
 	}
 
 	return (

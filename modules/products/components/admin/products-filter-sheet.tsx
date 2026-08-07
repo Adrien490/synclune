@@ -141,16 +141,16 @@ function ProductsFilterSheetInner({
 		},
 	});
 
+	// Resynchronise le FORMULAIRE sur l'URL. `form.reset` n'est pas un state React
+	// (TanStack Form est un store externe), donc cet effet ne dérive rien : il
+	// pousse une source externe (searchParams) vers une autre. Les deux `useState`
+	// locaux qui étaient vidés ici, eux, sont partis dans `handleOpenChange`.
 	const onSheetSync = useEffectEvent(() => {
-		const values = getValuesFromURL();
-		form.reset(values);
-		setColorSearch("");
-		setMaterialSearch("");
+		form.reset(getValuesFromURL());
 	});
 
 	useEffect(() => {
 		if (isOpen) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
 			onSheetSync();
 		}
 	}, [isOpen, searchParams]);
@@ -158,6 +158,14 @@ function ProductsFilterSheetInner({
 	const handleOpenChange = (nextOpen: boolean) => {
 		if (nextOpen) {
 			previousFocusRef.current = document.activeElement as HTMLElement | null;
+			// Vider les champs de recherche de section à l'OUVERTURE, dans le
+			// gestionnaire d'événement — c'est une interaction utilisateur, pas une
+			// dérivation. Le faire depuis l'effet de synchronisation obligeait à
+			// `setState` dedans (d'où l'ancien `eslint-disable`) et re-rendait une
+			// fois de plus après paint. Ce handler est le point de passage UNIQUE
+			// des deux modes (contrôlé par la barre basse, ou interne).
+			setColorSearch("");
+			setMaterialSearch("");
 		}
 		(controlledOnOpenChange ?? setInternalOpen)(nextOpen);
 		if (!nextOpen) {

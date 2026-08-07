@@ -1,13 +1,6 @@
 "use client";
 
-import {
-	useEffect,
-	useRef,
-	useState,
-	type CSSProperties,
-	type MouseEvent,
-	type TouchEvent,
-} from "react";
+import { useEffect, useRef, type CSSProperties, type MouseEvent, type TouchEvent } from "react";
 
 import { useHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 
@@ -41,12 +34,6 @@ interface UseLongPressOptions {
 	 * here instead of writing it inline on the element.
 	 */
 	onClick?: (e: MouseEvent) => void;
-	/**
-	 * Opt-in to the `isPressing` flag (visual press feedback). Disabled by
-	 * default to avoid 1 re-render per touchstart/end on consumers that don't
-	 * use it. @default false
-	 */
-	trackPressing?: boolean;
 }
 
 export interface UseLongPressReturn {
@@ -63,11 +50,6 @@ export interface UseLongPressReturn {
 		onClick: (e: MouseEvent) => void;
 		style: CSSProperties;
 	};
-	/**
-	 * True while the user is holding (between touchstart and threshold/release).
-	 * Always `false` unless `options.trackPressing === true`.
-	 */
-	isPressing: boolean;
 }
 
 /**
@@ -100,12 +82,10 @@ export function useLongPress(
 		moveTolerance = DEFAULT_MOVE_TOLERANCE,
 		haptic = "medium",
 		onClick,
-		trackPressing = false,
 	} = options;
 
 	const triggerHapticFn = useHaptic();
 
-	const [isPressing, setIsPressing] = useState(false);
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const startPosRef = useRef<{ x: number; y: number } | null>(null);
 	const firedRef = useRef(false);
@@ -124,20 +104,17 @@ export function useLongPress(
 			timerRef.current = null;
 		}
 		startPosRef.current = null;
-		if (trackPressing) setIsPressing(false);
 	}
 
-	useEffect(() => () => clear(), []); // eslint-disable-line react-hooks/exhaustive-deps -- mount/unmount only
+	useEffect(() => () => clear(), []);
 
 	const handleTouchStart = (e: TouchEvent) => {
 		const t = e.touches[0];
 		if (!t) return;
 		firedRef.current = false;
 		startPosRef.current = { x: t.clientX, y: t.clientY };
-		if (trackPressing) setIsPressing(true);
 		timerRef.current = setTimeout(() => {
 			firedRef.current = true;
-			if (trackPressing) setIsPressing(false);
 			if (haptic !== false) triggerHapticFn(haptic);
 			onLongPressRef.current();
 		}, delay);
@@ -183,6 +160,5 @@ export function useLongPress(
 			onClick: handleClick,
 			style: LONG_PRESS_STYLE,
 		},
-		isPressing,
 	};
 }

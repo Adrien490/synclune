@@ -73,7 +73,11 @@ export function GalleryPinchZoom({
 	// États réactifs (déclenchent re-render)
 	const [scale, setScale] = useState<number>(config.minScale);
 	const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
-	const [isInteracting, setIsInteracting] = useState(false);
+	// Pas d'état `isInteracting` : `will-change` est un INDICE au navigateur, et il
+	// se pose en CSS (`group-active:will-change-transform`). Le tenir en state
+	// coûtait un rendu React complet au début ET à la fin de chaque geste, pour une
+	// propriété que personne ne lit. Le conteneur porte déjà `active:scale-[0.99]`,
+	// donc `:active` couvre exactement la même fenêtre que touchstart → touchend.
 
 	// Refs pour tracking touch (pas de re-render)
 	const initialDistance = useRef(0);
@@ -98,7 +102,6 @@ export function GalleryPinchZoom({
 		if (!isActive) {
 			setScale(config.minScale);
 			setPosition({ x: 0, y: 0 });
-			setIsInteracting(false);
 		}
 	}
 
@@ -206,7 +209,6 @@ export function GalleryPinchZoom({
 
 	const handleTouchStart = useEffectEvent((e: TouchEvent) => {
 		hasMoved.current = false;
-		setIsInteracting(true);
 
 		if (e.touches.length === 2) {
 			isPinching.current = true;
@@ -313,7 +315,6 @@ export function GalleryPinchZoom({
 
 		isPinching.current = false;
 		isPanning.current = false;
-		setIsInteracting(false);
 
 		if (containerRef.current && e.touches.length === 0) {
 			containerRef.current.focus();
@@ -438,7 +439,7 @@ export function GalleryPinchZoom({
 			tabIndex={-1}
 			onKeyDown={handleKeyDown}
 			className={cn(
-				"relative h-full w-full overflow-hidden",
+				"group relative h-full w-full overflow-hidden",
 				"outline-none",
 				"focus-visible:ring-primary focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2",
 				"transition-transform active:scale-[0.99]", // Touch feedback
@@ -451,12 +452,12 @@ export function GalleryPinchZoom({
 			<div
 				className={cn(
 					"relative h-full w-full",
+					"group-active:will-change-transform",
 					transitionClass, // Always applied for smooth double-tap
 				)}
 				style={{
 					transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
 					transformOrigin: "center center",
-					willChange: isInteracting ? "transform" : undefined,
 				}}
 			>
 				<Image

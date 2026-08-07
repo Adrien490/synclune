@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
@@ -48,13 +47,13 @@ interface MarkAsShippedData {
 function MarkAsShippedFormContent({
 	orderId,
 	orderNumber,
+	open,
 	onClose,
-	onPendingChange,
 }: {
 	orderId: string;
 	orderNumber: string;
+	open: boolean;
 	onClose: () => void;
-	onPendingChange: (pending: boolean) => void;
 }) {
 	const { form, state, action, isPending } = useMarkAsShippedForm({
 		orderId,
@@ -67,12 +66,17 @@ function MarkAsShippedFormContent({
 	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
 	const serverErrors = useServerFieldErrors({ state });
 
-	// Lift `isPending` au parent pour bloquer la fermeture du dialog
-	// pendant la mutation (click outside / Escape). Pattern aligné sur
-	// `cancel-order-alert-dialog.tsx` (`!open && !isPending`).
-	useEffect(() => {
-		onPendingChange(isPending);
-	}, [isPending, onPendingChange]);
+	// Le `ResponsiveDialog` est rendu ICI, et non chez le parent, parce que c'est
+	// ce composant qui possède `isPending` : il faut le lire pour bloquer la
+	// fermeture (clic extérieur / Échap) pendant la mutation. Le parent le
+	// recevait auparavant via `onPendingChange` appelé depuis un `useEffect` de
+	// pur passe-plat, qui recopiait dans un `useState` une valeur que
+	// `useActionState` possédait déjà.
+	const handleOpenChange = (nextOpen: boolean) => {
+		if (!nextOpen && !isPending) {
+			onClose();
+		}
+	};
 
 	// Watch form values
 	const trackingNumber = useStore(form.store, (state) => state.values.trackingNumber);
@@ -115,182 +119,180 @@ function MarkAsShippedFormContent({
 	};
 
 	return (
-		<>
-			<ResponsiveDialogHeader>
-				<ResponsiveDialogTitle className="flex items-center gap-2">
-					<TruckIcon className="size-5" />
-					Marquer comme expédiée
-				</ResponsiveDialogTitle>
-				<ResponsiveDialogDescription>
-					Commande <strong>{orderNumber}</strong>
-				</ResponsiveDialogDescription>
-			</ResponsiveDialogHeader>
+		<ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+			<ResponsiveDialogContent className="sm:max-w-md">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle className="flex items-center gap-2">
+						<TruckIcon className="size-5" />
+						Marquer comme expédiée
+					</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
+						Commande <strong>{orderNumber}</strong>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
-			<form action={action} className="space-y-6">
-				{/* Hidden fields */}
-				<input type="hidden" name="id" value={orderId} />
-				<input type="hidden" name="trackingUrl" value={trackingUrl} />
-				<input type="hidden" name="sendEmail" value={sendEmail ? "true" : "false"} />
+				<form action={action} className="space-y-6">
+					{/* Hidden fields */}
+					<input type="hidden" name="id" value={orderId} />
+					<input type="hidden" name="trackingUrl" value={trackingUrl} />
+					<input type="hidden" name="sendEmail" value={sendEmail ? "true" : "false"} />
 
-				<FormServerErrorAlert errors={serverErrors} />
+					<FormServerErrorAlert errors={serverErrors} />
 
-				<RequiredFieldsNote />
+					<RequiredFieldsNote />
 
-				<div className="space-y-4">
-					{/* Tracking Number Field */}
-					<div className="space-y-2">
-						<FieldLabel htmlFor="trackingNumber" required>
-							Numéro de suivi
-						</FieldLabel>
-						<Input
-							id="trackingNumber"
-							name="trackingNumber"
-							value={trackingNumber}
-							onChange={handleTrackingNumberChange}
-							placeholder="Ex: 8N00234567890"
-							disabled={isPending}
-							maxLength={TRACKING_NUMBER_MAX_LENGTH}
-							required
-						/>
-						<p className="text-muted-foreground text-xs">
-							Le transporteur sera détecté automatiquement selon le format du numéro
-						</p>
-					</div>
+					<div className="space-y-4">
+						{/* Tracking Number Field */}
+						<div className="space-y-2">
+							<FieldLabel htmlFor="trackingNumber" required>
+								Numéro de suivi
+							</FieldLabel>
+							<Input
+								id="trackingNumber"
+								name="trackingNumber"
+								value={trackingNumber}
+								onChange={handleTrackingNumberChange}
+								placeholder="Ex: 8N00234567890"
+								disabled={isPending}
+								maxLength={TRACKING_NUMBER_MAX_LENGTH}
+								required
+							/>
+							<p className="text-muted-foreground text-xs">
+								Le transporteur sera détecté automatiquement selon le format du numéro
+							</p>
+						</div>
 
-					{/* Carrier Field */}
-					<div className="space-y-2">
-						<FieldLabel htmlFor="carrier" required>
-							Transporteur
-						</FieldLabel>
-						<Select
-							value={carrier}
-							onValueChange={(value) => handleCarrierChange(value as Carrier)}
-							disabled={isPending}
-							name="carrier"
-						>
-							<SelectTrigger id="carrier">
-								<SelectValue placeholder="Sélectionner un transporteur" />
-							</SelectTrigger>
-							<SelectContent>
-								{CARRIERS.map((c) => (
-									<SelectItem key={c.value} value={c.value}>
-										{c.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-						{trackingNumber.length >= 8 &&
-							!customUrlMode &&
-							carrier !== "" &&
-							carrier !== "autre" && (
-								<p className="text-success text-xs">
-									Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
+						{/* Carrier Field */}
+						<div className="space-y-2">
+							<FieldLabel htmlFor="carrier" required>
+								Transporteur
+							</FieldLabel>
+							<Select
+								value={carrier}
+								onValueChange={(value) => handleCarrierChange(value as Carrier)}
+								disabled={isPending}
+								name="carrier"
+							>
+								<SelectTrigger id="carrier">
+									<SelectValue placeholder="Sélectionner un transporteur" />
+								</SelectTrigger>
+								<SelectContent>
+									{CARRIERS.map((c) => (
+										<SelectItem key={c.value} value={c.value}>
+											{c.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							{trackingNumber.length >= 8 &&
+								!customUrlMode &&
+								carrier !== "" &&
+								carrier !== "autre" && (
+									<p className="text-success text-xs">
+										Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
+									</p>
+								)}
+						</div>
+
+						{/* Tracking URL */}
+						<div className="space-y-2">
+							<Label htmlFor="trackingUrlDisplay">
+								URL de suivi {isUrlEditable ? "" : "(générée)"}
+							</Label>
+							<Input
+								id="trackingUrlDisplay"
+								value={trackingUrl}
+								onChange={(e) => form.setFieldValue("trackingUrl", e.target.value)}
+								readOnly={!isUrlEditable}
+								placeholder={isUrlEditable ? "https://..." : ""}
+								className={!isUrlEditable ? "bg-muted text-muted-foreground text-sm" : ""}
+								disabled={isPending}
+							/>
+							{carrier === "autre" && !trackingUrl && (
+								<p className="text-warning text-xs">
+									Saisissez l'URL de suivi manuellement pour ce transporteur
 								</p>
 							)}
-					</div>
+						</div>
 
-					{/* Tracking URL */}
-					<div className="space-y-2">
-						<Label htmlFor="trackingUrlDisplay">
-							URL de suivi {isUrlEditable ? "" : "(générée)"}
-						</Label>
-						<Input
-							id="trackingUrlDisplay"
-							value={trackingUrl}
-							onChange={(e) => form.setFieldValue("trackingUrl", e.target.value)}
-							readOnly={!isUrlEditable}
-							placeholder={isUrlEditable ? "https://..." : ""}
-							className={!isUrlEditable ? "bg-muted text-muted-foreground text-sm" : ""}
-							disabled={isPending}
-						/>
-						{carrier === "autre" && !trackingUrl && (
-							<p className="text-warning text-xs">
-								Saisissez l'URL de suivi manuellement pour ce transporteur
-							</p>
-						)}
-					</div>
+						{/* Custom URL Mode Checkbox */}
+						<div className="bg-muted/20 flex items-start gap-x-3 rounded-lg border p-3">
+							<Checkbox
+								id="customUrlMode"
+								checked={customUrlMode}
+								onCheckedChange={(checked) => form.setFieldValue("customUrlMode", checked === true)}
+								disabled={isPending}
+							/>
+							<div className="space-y-1 leading-none">
+								<Label
+									htmlFor="customUrlMode"
+									className="flex cursor-pointer items-center gap-2 text-sm"
+								>
+									<LinkIcon className="size-4" />
+									URL personnalisée
+								</Label>
+								<p className="text-muted-foreground text-xs">Saisir manuellement l'URL de suivi</p>
+							</div>
+						</div>
 
-					{/* Custom URL Mode Checkbox */}
-					<div className="bg-muted/20 flex items-start gap-x-3 rounded-lg border p-3">
-						<Checkbox
-							id="customUrlMode"
-							checked={customUrlMode}
-							onCheckedChange={(checked) => form.setFieldValue("customUrlMode", checked === true)}
-							disabled={isPending}
-						/>
-						<div className="space-y-1 leading-none">
-							<Label
-								htmlFor="customUrlMode"
-								className="flex cursor-pointer items-center gap-2 text-sm"
-							>
-								<LinkIcon className="size-4" />
-								URL personnalisée
-							</Label>
-							<p className="text-muted-foreground text-xs">Saisir manuellement l'URL de suivi</p>
+						{/* Send Email Checkbox */}
+						<div className="bg-muted/30 flex items-start gap-x-3 rounded-lg border p-4">
+							<Checkbox
+								id="sendEmailCheckbox"
+								checked={sendEmail}
+								onCheckedChange={(checked) => form.setFieldValue("sendEmail", checked === true)}
+								disabled={isPending}
+							/>
+							<div className="space-y-1 leading-none">
+								<Label
+									htmlFor="sendEmailCheckbox"
+									className="flex cursor-pointer items-center gap-2"
+								>
+									<EnvelopeIcon className="size-4" />
+									Envoyer l'email de confirmation
+								</Label>
+								<p className="text-muted-foreground text-xs">
+									Un email avec le numéro de suivi sera envoyé au client
+								</p>
+							</div>
 						</div>
 					</div>
 
-					{/* Send Email Checkbox */}
-					<div className="bg-muted/30 flex items-start gap-x-3 rounded-lg border p-4">
-						<Checkbox
-							id="sendEmailCheckbox"
-							checked={sendEmail}
-							onCheckedChange={(checked) => form.setFieldValue("sendEmail", checked === true)}
-							disabled={isPending}
-						/>
-						<div className="space-y-1 leading-none">
-							<Label htmlFor="sendEmailCheckbox" className="flex cursor-pointer items-center gap-2">
-								<EnvelopeIcon className="size-4" />
-								Envoyer l'email de confirmation
-							</Label>
-							<p className="text-muted-foreground text-xs">
-								Un email avec le numéro de suivi sera envoyé au client
-							</p>
-						</div>
-					</div>
-				</div>
-
-				{/* Submit buttons */}
-				<ResponsiveDialogFooter>
-					<Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-						Annuler
-					</Button>
-					<Button
-						type="submit"
-						disabled={isPending || !trackingNumber.trim() || !carrier}
-						aria-busy={isPending}
-					>
-						{isPending && <Spinner presentational />}
-						{isPending ? "Expédition…" : "Valider l'expédition"}
-					</Button>
-				</ResponsiveDialogFooter>
-			</form>
-		</>
+					{/* Submit buttons */}
+					<ResponsiveDialogFooter>
+						<Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
+							Annuler
+						</Button>
+						<Button
+							type="submit"
+							disabled={isPending || !trackingNumber.trim() || !carrier}
+							aria-busy={isPending}
+						>
+							{isPending && <Spinner presentational />}
+							{isPending ? "Expédition…" : "Valider l'expédition"}
+						</Button>
+					</ResponsiveDialogFooter>
+				</form>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }
 
 export function MarkAsShippedDialog() {
 	const dialog = useAlertDialog<MarkAsShippedData>(MARK_AS_SHIPPED_DIALOG_ID);
-	const [isPending, setIsPending] = useState(false);
 
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			dialog.close();
-		}
-	};
+	// `closeEntry` CONSERVE la `data` à la fermeture (elle n'est vidée que par
+	// `clearData`) : monter sur `data` plutôt que sur `isOpen` garde donc
+	// l'animation de sortie, tout en remontant le formulaire à chaque commande.
+	if (!dialog.data) return null;
 
 	return (
-		<ResponsiveDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveDialogContent className="sm:max-w-md">
-				{dialog.data && (
-					<MarkAsShippedFormContent
-						orderId={dialog.data.orderId}
-						orderNumber={dialog.data.orderNumber}
-						onClose={dialog.close}
-						onPendingChange={setIsPending}
-					/>
-				)}
-			</ResponsiveDialogContent>
-		</ResponsiveDialog>
+		<MarkAsShippedFormContent
+			key={dialog.data.orderId}
+			orderId={dialog.data.orderId}
+			orderNumber={dialog.data.orderNumber}
+			open={dialog.isOpen}
+			onClose={dialog.close}
+		/>
 	);
 }

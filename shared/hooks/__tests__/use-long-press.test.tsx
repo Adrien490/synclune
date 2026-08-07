@@ -12,18 +12,10 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 
 import { useLongPress } from "../use-long-press";
 
-function Probe({
-	onLongPress,
-	onClick,
-	trackPressing,
-}: {
-	onLongPress: () => void;
-	onClick?: () => void;
-	trackPressing?: boolean;
-}) {
-	const { bind, isPressing } = useLongPress(onLongPress, { onClick, trackPressing });
+function Probe({ onLongPress, onClick }: { onLongPress: () => void; onClick?: () => void }) {
+	const { bind } = useLongPress(onLongPress, { onClick });
 	return (
-		<button type="button" data-testid="probe" data-pressing={isPressing} {...bind}>
+		<button type="button" data-testid="probe" {...bind}>
 			probe
 		</button>
 	);
@@ -45,11 +37,10 @@ describe("useLongPress", () => {
 
 	it("fires onLongPress + haptic 'medium' after 500ms hold", () => {
 		const onLongPress = vi.fn();
-		render(<Probe onLongPress={onLongPress} trackPressing />);
+		render(<Probe onLongPress={onLongPress} />);
 		const el = screen.getByTestId("probe");
 
 		fireEvent.touchStart(el, { touches: touch(10, 10) });
-		expect(el.dataset.pressing).toBe("true");
 
 		act(() => {
 			vi.advanceTimersByTime(500);
@@ -57,7 +48,6 @@ describe("useLongPress", () => {
 
 		expect(onLongPress).toHaveBeenCalledTimes(1);
 		expect(mockHaptic).toHaveBeenCalledWith("medium");
-		expect(el.dataset.pressing).toBe("false");
 	});
 
 	it("does not fire when released before 500ms threshold", () => {
@@ -183,13 +173,6 @@ describe("useLongPress", () => {
 			vi.advanceTimersByTime(1);
 		});
 		expect(onLongPress).toHaveBeenCalledTimes(1);
-	});
-
-	it("isPressing stays false by default (opt-in via trackPressing)", () => {
-		render(<Probe onLongPress={() => {}} />);
-		const el = screen.getByTestId("probe");
-		fireEvent.touchStart(el, { touches: touch(0, 0) });
-		expect(el.dataset.pressing).toBe("false");
 	});
 
 	it("bind.style injects touch-action + user-select", () => {

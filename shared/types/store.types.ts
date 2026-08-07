@@ -17,7 +17,7 @@ import type { ReactNode } from "react";
  * qui n'ont pas besoin de cette coordination (menu nav, filter-sheet per-page)
  * peuvent gérer leur propre état via Vaul directement.
  */
-export type SheetId = "cart" | "menu" | "filters" | "search";
+export type SheetId = "cart" | "menu" | "filters" | "search" | "sort" | "filter";
 
 export type SheetState = {
 	openSheet: SheetId | null;

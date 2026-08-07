@@ -30,6 +30,13 @@ type CarouselContextProps = {
 	canScrollNext: boolean;
 	carouselId: string;
 	scrollSnaps: number[];
+	/**
+	 * Index du snap actif, publié par `<Carousel>`. ⚠️ Les descendants le LISENT
+	 * ici — ils ne re-souscrivent pas à `api.on("select")` pour le recalculer :
+	 * `CarouselDots` maintenait ainsi un second abonnement Embla qui produisait
+	 * exactement le même entier que celui déjà présent dans ce contexte.
+	 */
+	selectedIndex: number;
 } & CarouselProps;
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
@@ -175,6 +182,7 @@ function Carousel({
 				canScrollNext,
 				carouselId,
 				scrollSnaps,
+				selectedIndex,
 			}}
 		>
 			<div
@@ -420,29 +428,12 @@ function CarouselNext({
 }
 
 function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
-	const { api, scrollSnaps } = useCarousel();
-	const [selectedIndex, setSelectedIndex] = React.useState(0);
-
-	// Effect Event pour gérer onSelect sans re-registration
-	const onSelectDot = useEffectEvent(() => {
-		if (api) {
-			setSelectedIndex(api.selectedScrollSnap());
-		}
-	});
-
-	React.useEffect(() => {
-		if (!api) return;
-
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		onSelectDot();
-		api.on("select", onSelectDot);
-		api.on("reInit", onSelectDot);
-
-		return () => {
-			api.off("select", onSelectDot);
-			api.off("reInit", onSelectDot);
-		};
-	}, [api]);
+	// `selectedIndex` vient du contexte : `<Carousel>` s'abonne DÉJÀ à
+	// `select`/`reInit` pour le tenir à jour. Ce composant en maintenait une copie
+	// via un second abonnement Embla — même événement, même appel
+	// `api.selectedScrollSnap()`, même entier — au prix d'un `useState`, d'un
+	// effet et d'un `eslint-disable react-hooks/set-state-in-effect`.
+	const { api, scrollSnaps, selectedIndex } = useCarousel();
 
 	if (scrollSnaps.length <= 1) return null;
 

@@ -1,8 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const MINUTE_MS = 60_000;
+
+/**
+ * Le « store externe » d'un compte à rebours, c'est l'horloge. On s'y abonne au
+ * lieu de forcer un re-rendu via un `useState` dont la valeur n'était jamais lue
+ * (`const [, setTick]`) : `useSyncExternalStore` est la primitive faite pour ça,
+ * et c'est déjà celle de `use-media-query` / `use-mobile` / `use-touch-device`.
+ *
+ * L'instantané est le NUMÉRO DE MINUTE, pas l'objet `CountdownSnapshot` : React
+ * exige de `getSnapshot` une valeur `Object.is`-stable tant que rien n'a changé,
+ * or un objet frais à chaque appel ferait boucler le rendu à l'infini.
+ */
+function subscribeToMinuteTick(onStoreChange: () => void) {
+	const interval = setInterval(onStoreChange, MINUTE_MS);
+	return () => clearInterval(interval);
+}
+
+/** Pas de date cible : aucun timer à armer. */
+function subscribeToNothing() {
+	return () => {};
+}
+
+const getMinuteBucket = () => Math.floor(Date.now() / MINUTE_MS);
+const getServerMinuteBucket = () => 0;
 
 /**
  * Remaining time breakdown; `isExpired` fires when `target <= now`.
@@ -42,20 +65,14 @@ function parseTarget(endDate: Date | string | null | undefined): number | null {
  */
 export function useCountdown(endDate: Date | string | null | undefined): CountdownSnapshot | null {
 	const target = parseTarget(endDate);
-	const snapshot = target === null ? null : computeSnapshot(target);
-	const [, setTick] = useState(0);
 
-	useEffect(() => {
-		if (target === null) return;
-		if (Date.now() >= target) return;
-		const interval = setInterval(() => {
-			if (Date.now() >= target) {
-				clearInterval(interval);
-			}
-			setTick((t) => t + 1);
-		}, MINUTE_MS);
-		return () => clearInterval(interval);
-	}, [target]);
+	// Le tic sert de SIGNAL de changement ; le temps restant reste calculé sur
+	// `Date.now()` pour garder la précision entre deux tics.
+	useSyncExternalStore(
+		target === null ? subscribeToNothing : subscribeToMinuteTick,
+		getMinuteBucket,
+		getServerMinuteBucket,
+	);
 
-	return snapshot;
+	return target === null ? null : computeSnapshot(target);
 }

@@ -89,7 +89,11 @@ export function MenuSheet({
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("menu-sheet");
 	const [showLogout, setShowLogout] = useState(false);
 	const [pendingAction, setPendingAction] = useState<PendingAction>(null);
-	const [swipeProgress, setSwipeProgress] = useState(0);
+	// L'opacité de l'indicateur de bord s'écrit sur le nœud, pas via un `useState` :
+	// `onProgress` tire une fois par `touchmove`, ce qui re-rendait tout ce sheet à
+	// chaque frame du geste. Voir `edge-swipe-indicator.tsx` et le même arbitrage,
+	// déjà commenté, dans `quick-search-dialog.tsx`.
+	const swipeIndicatorRef = useRef<HTMLDivElement>(null);
 	const openCartSheet = useSheetStore((state) => state.open);
 	const haptic = useHaptic();
 
@@ -111,7 +115,14 @@ export function MenuSheet({
 			openMenu();
 		},
 		isOpen,
-		{ disabledFrom: "lg", onProgress: setSwipeProgress },
+		{
+			disabledFrom: "lg",
+			onProgress: (progress) => {
+				if (swipeIndicatorRef.current) {
+					swipeIndicatorRef.current.style.opacity = String(progress);
+				}
+			},
+		},
 	);
 
 	// Filet : fermer sur changement de route. Le `sheet-store` possède déjà son
@@ -208,7 +219,7 @@ export function MenuSheet({
 
 	return (
 		<>
-			<EdgeSwipeIndicator progress={swipeProgress} hidden={isOpen} />
+			<EdgeSwipeIndicator ref={swipeIndicatorRef} hidden={isOpen} />
 			<Sheet
 				direction="left"
 				open={isOpen}

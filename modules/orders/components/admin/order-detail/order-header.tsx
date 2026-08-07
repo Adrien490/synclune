@@ -12,7 +12,7 @@ import {
 	TruckIcon,
 } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
-import { useActionState, useState } from "react";
+import { useActionState, useTransition } from "react";
 import { exportSingleOrder } from "@/modules/orders/actions/export-single-order";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
@@ -98,7 +98,11 @@ export function OrderHeader({ order }: OrderHeaderProps) {
 		},
 	};
 
-	const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+	// `useTransition` et non un booléen fait main : `isExporting` ci-dessus vient
+	// déjà de `useActionState`, ces deux-là en étaient les jumeaux artisanaux.
+	// `isPending` couvre tout le corps async, donc plus de `setState` final ni de
+	// `try { await task } catch {}` en guise de `finally`.
+	const [isDownloadingInvoice, startInvoiceDownload] = useTransition();
 	// Miroir de la garde route : la facture d'une commande ENCAISSÉE reste
 	// téléchargeable après remboursement (partiel : facture valide ; total :
 	// facture VOIDED servie avec bandeau « FACTURE ANNULÉE »).
@@ -110,49 +114,46 @@ export function OrderHeader({ order }: OrderHeaderProps) {
 		disabled: !canDownloadInvoice || isDownloadingInvoice,
 		pending: isDownloadingInvoice,
 		onSelect: () => {
-			void downloadInvoice();
+			downloadInvoice();
 		},
 	};
 
-	async function downloadInvoice() {
+	function downloadInvoice() {
 		if (!canDownloadInvoice || isDownloadingInvoice) return;
-		setIsDownloadingInvoice(true);
-		const task = (async () => {
-			const response = await fetch(`/api/orders/${order.orderNumber}/invoice`);
-			if (!response.ok) {
-				throw new Error(
-					response.status === 400
-						? "Facture indisponible — commande non payée"
-						: "Erreur lors du téléchargement de la facture",
-				);
-			}
-			const blob = await response.blob();
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = order.invoiceNumber
-				? `facture-${order.invoiceNumber}.pdf`
-				: `facture-${order.orderNumber}.pdf`;
-			link.click();
-			URL.revokeObjectURL(url);
-		})();
-		toast.promise(task, {
-			loading: "Téléchargement…",
-			success: "Facture téléchargée",
-			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+		startInvoiceDownload(async () => {
+			const task = (async () => {
+				const response = await fetch(`/api/orders/${order.orderNumber}/invoice`);
+				if (!response.ok) {
+					throw new Error(
+						response.status === 400
+							? "Facture indisponible — commande non payée"
+							: "Erreur lors du téléchargement de la facture",
+					);
+				}
+				const blob = await response.blob();
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = order.invoiceNumber
+					? `facture-${order.invoiceNumber}.pdf`
+					: `facture-${order.orderNumber}.pdf`;
+				link.click();
+				URL.revokeObjectURL(url);
+			})();
+			toast.promise(task, {
+				loading: "Téléchargement…",
+				success: "Facture téléchargée",
+				error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+			});
+			await task.catch(() => {
+				// Surfaced by toast.promise
+			});
 		});
-		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
-		try {
-			await task;
-		} catch {
-			// Surfaced by toast.promise
-		}
-		setIsDownloadingInvoice(false);
 	}
 
 	// EINV-UI-101 : avoir comptable téléchargeable (Art. 272-I CGI) quand la
 	// facture a été annulée (VOIDED). Le numéro d'avoir A-YYYY-NNNNN sert de label.
-	const [isDownloadingCreditNote, setIsDownloadingCreditNote] = useState(false);
+	const [isDownloadingCreditNote, startCreditNoteDownload] = useTransition();
 	const canDownloadCreditNote = order.invoiceStatus === "VOIDED" && Boolean(order.creditNoteNumber);
 	const downloadCreditNoteItem: ActionMenuItem = {
 		key: "download-credit-note",
@@ -161,44 +162,41 @@ export function OrderHeader({ order }: OrderHeaderProps) {
 		disabled: !canDownloadCreditNote || isDownloadingCreditNote,
 		pending: isDownloadingCreditNote,
 		onSelect: () => {
-			void downloadCreditNote();
+			downloadCreditNote();
 		},
 	};
 
-	async function downloadCreditNote() {
+	function downloadCreditNote() {
 		if (!canDownloadCreditNote || isDownloadingCreditNote) return;
-		setIsDownloadingCreditNote(true);
-		const task = (async () => {
-			const response = await fetch(`/api/orders/${order.orderNumber}/credit-note`);
-			if (!response.ok) {
-				throw new Error(
-					response.status === 404
-						? "Avoir indisponible — aucun avoir comptable émis"
-						: "Erreur lors du téléchargement de l'avoir",
-				);
-			}
-			const blob = await response.blob();
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = order.creditNoteNumber
-				? `avoir-${order.creditNoteNumber}.pdf`
-				: `avoir-${order.orderNumber}.pdf`;
-			link.click();
-			URL.revokeObjectURL(url);
-		})();
-		toast.promise(task, {
-			loading: "Téléchargement…",
-			success: "Avoir téléchargé",
-			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+		startCreditNoteDownload(async () => {
+			const task = (async () => {
+				const response = await fetch(`/api/orders/${order.orderNumber}/credit-note`);
+				if (!response.ok) {
+					throw new Error(
+						response.status === 404
+							? "Avoir indisponible — aucun avoir comptable émis"
+							: "Erreur lors du téléchargement de l'avoir",
+					);
+				}
+				const blob = await response.blob();
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = order.creditNoteNumber
+					? `avoir-${order.creditNoteNumber}.pdf`
+					: `avoir-${order.orderNumber}.pdf`;
+				link.click();
+				URL.revokeObjectURL(url);
+			})();
+			toast.promise(task, {
+				loading: "Téléchargement…",
+				success: "Avoir téléchargé",
+				error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+			});
+			await task.catch(() => {
+				// Surfaced by toast.promise
+			});
 		});
-		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
-		try {
-			await task;
-		} catch {
-			// Surfaced by toast.promise
-		}
-		setIsDownloadingCreditNote(false);
 	}
 
 	const sections: ActionMenuSection[] = baseSections

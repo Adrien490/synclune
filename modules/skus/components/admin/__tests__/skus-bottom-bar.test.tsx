@@ -16,6 +16,9 @@ vi.mock("next/navigation", () => ({
 		has: (key: string) => mockSearchParamsHas(key),
 		get: (key: string) => mockSearchParamsGet(key),
 	}),
+	// `SheetStoreProvider` (requis ci-dessous) lit `usePathname` pour refermer
+	// les tiroirs au changement de route.
+	usePathname: () => "/admin/catalogue/produits/anneau-lune/variantes",
 }));
 
 vi.mock("../skus-filter-sheet", () => ({
@@ -95,6 +98,7 @@ vi.mock("@/shared/components/sticky-action-bar", () => ({
 // IMPORTS (after mocks)
 // ============================================================================
 
+import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
 import { SkusBottomBar } from "../skus-bottom-bar";
 
 // ============================================================================
@@ -112,20 +116,32 @@ beforeEach(() => {
 	mockSearchParamsGet.mockReturnValue(null);
 });
 
+// `useToolbarDrawer` tient l'état des tiroirs dans le `SheetStore` PARTAGÉ (et
+// non dans un `useState` local) pour que le badge « Trié par : X », monté dans un
+// autre sous-arbre de la page, puisse ouvrir le tiroir de la barre basse. Le
+// provider est global (`app/layout.tsx`) ; ici il faut le fournir explicitement.
+function renderBottomBar(ui: React.ReactElement) {
+	return render(<SheetStoreProvider>{ui}</SheetStoreProvider>);
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe("SkusBottomBar", () => {
 	it("renders the 3 actions Filtrer / Ajouter / Trier", () => {
-		render(<SkusBottomBar productSlug="anneau-lune" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(
+			<SkusBottomBar productSlug="anneau-lune" colorOptions={[]} materialOptions={[]} />,
+		);
 		expect(screen.getByTestId("bar-item-filter")).toHaveAttribute("data-label", "Filtrer");
 		expect(screen.getByTestId("bar-item-add")).toHaveAttribute("data-label", "Ajouter");
 		expect(screen.getByTestId("bar-item-sort")).toHaveAttribute("data-label", "Trier");
 	});
 
 	it("Add item is a link to /admin/catalogue/produits/{slug}/variantes/nouveau", () => {
-		render(<SkusBottomBar productSlug="anneau-lune" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(
+			<SkusBottomBar productSlug="anneau-lune" colorOptions={[]} materialOptions={[]} />,
+		);
 		expect(screen.getByTestId("bar-item-add")).toHaveAttribute(
 			"href",
 			"/admin/catalogue/produits/anneau-lune/variantes/nouveau",
@@ -139,7 +155,7 @@ describe("SkusBottomBar", () => {
 			["sortBy", "name-asc"],
 			["cursor", "10"],
 		]);
-		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("bar-item-filter")).toHaveAttribute("data-badge", "2");
 	});
 
@@ -148,43 +164,43 @@ describe("SkusBottomBar", () => {
 			["sortBy", "name-asc"],
 			["cursor", "10"],
 		]);
-		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("bar-item-filter")).toHaveAttribute("data-badge", "0");
 	});
 
 	it("Sort item is active when sortBy URL param is present", () => {
 		mockSearchParamsGet.mockImplementation((key) => (key === "sortBy" ? "name-asc" : null));
-		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("bar-item-sort")).toHaveAttribute("data-active", "true");
 	});
 
 	it("Sort item not active when sortBy URL param is absent", () => {
 		mockSearchParamsGet.mockReturnValue(null);
-		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("bar-item-sort")).toHaveAttribute("data-active", "false");
 	});
 
 	it("clicking Filter opens the FilterSheet", () => {
-		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("skus-filter-sheet")).toHaveAttribute("data-open", "false");
 		fireEvent.click(screen.getByTestId("bar-item-filter"));
 		expect(screen.getByTestId("skus-filter-sheet")).toHaveAttribute("data-open", "true");
 	});
 
 	it("clicking Sort opens the SortDrawer", () => {
-		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("sort-drawer")).toHaveAttribute("data-open", "false");
 		fireEvent.click(screen.getByTestId("bar-item-sort"));
 		expect(screen.getByTestId("sort-drawer")).toHaveAttribute("data-open", "true");
 	});
 
 	it("FilterSheet receives hideTrigger=true (controlled mode)", () => {
-		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("skus-filter-sheet")).toHaveAttribute("data-hide-trigger", "true");
 	});
 
 	it("SortDrawer renders all 8 sort options", () => {
-		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
+		renderBottomBar(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("sort-drawer")).toHaveAttribute("data-options-count", "8");
 	});
 });
