@@ -362,18 +362,28 @@ export function SwipeableCard({
 	// teach the swipe gesture on first visit. Silent demo — no haptic, no action fires.
 	// Reuses the existing offset/snap-back machinery (CSS transition runs when not
 	// actively swiping, and the colored zones already track `swipeOffset`).
+	//
+	// ⚠️ La magnitude est lue AU MOMENT DU TIR, via une effect event. Les seuils
+	// effectifs dérivent de `containerWidth`, que le `ResizeObserver` ci-dessus met à
+	// jour — les lister en dépendances relançait les DEUX timers à chaque
+	// redimensionnement (montage compris, où la largeur passe de 0 à sa mesure) : la
+	// fermeture programmée était annulée et la carte restait ouverte un cycle de plus
+	// avant de se rouvrir. Bonus : la magnitude n'est plus figée sur un
+	// `containerWidth` encore à 0. @regression swipe-peek-survives-resize
+	const onPeekOpen = useEffectEvent(() => {
+		// Skip if the user already grabbed the card — never hijack a real gesture.
+		if (isTrackingRef.current) return;
+		// Prefer the right action (card slides →); fall back to the left action (←).
+		const magnitude =
+			(hasRight ? effectiveRightThreshold : effectiveLeftThreshold) * PEEK_OFFSET_RATIO;
+		setSwipeOffset(hasRight ? magnitude : -magnitude);
+	});
+
 	useEffect(() => {
 		if (!peek || !enabled || prefersReducedMotion) return;
 		if (!hasLeft && !hasRight) return;
 
-		const open = setTimeout(() => {
-			// Skip if the user already grabbed the card — never hijack a real gesture.
-			if (isTrackingRef.current) return;
-			// Prefer the right action (card slides →); fall back to the left action (←).
-			const magnitude =
-				(hasRight ? effectiveRightThreshold : effectiveLeftThreshold) * PEEK_OFFSET_RATIO;
-			setSwipeOffset(hasRight ? magnitude : -magnitude);
-		}, PEEK_DELAY_MS);
+		const open = setTimeout(onPeekOpen, PEEK_DELAY_MS);
 
 		const close = setTimeout(() => {
 			if (isTrackingRef.current) return;
@@ -384,15 +394,7 @@ export function SwipeableCard({
 			clearTimeout(open);
 			clearTimeout(close);
 		};
-	}, [
-		peek,
-		enabled,
-		prefersReducedMotion,
-		hasLeft,
-		hasRight,
-		effectiveLeftThreshold,
-		effectiveRightThreshold,
-	]);
+	}, [peek, enabled, prefersReducedMotion, hasLeft, hasRight]);
 
 	// Apply iOS-style rubber-band compression past the active-direction threshold.
 	const activeThreshold =
