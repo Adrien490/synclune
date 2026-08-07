@@ -174,7 +174,7 @@ export function ColorFormFields({ form, isPending, showStatus = false }: ColorFo
 										}
 										haptic("light");
 									}}
-									className="text-primary inline-flex items-center text-xs underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none"
+									className="focus-ring text-primary inline-flex items-center text-xs underline-offset-2 hover:underline focus-visible:underline"
 								>
 									Utiliser « {libraryMatch.name} » comme nom
 								</button>
@@ -220,7 +220,7 @@ export function ColorFormFields({ form, isPending, showStatus = false }: ColorFo
 													aria-label={`Réutiliser ${hex}`}
 													aria-pressed={isSelected}
 													className={cn(
-														"focus-visible:ring-ring size-9 rounded-md border-2 transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
+														"focus-ring size-9 rounded-md border-2 transition-transform duration-150 ease-out active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
 														isSelected
 															? "border-foreground"
 															: "border-border hover:border-foreground/60",
@@ -255,7 +255,7 @@ export function ColorFormFields({ form, isPending, showStatus = false }: ColorFo
 												aria-label={`Sélectionner ${suggestion.name} (${suggestion.hex})`}
 												aria-pressed={isSelected}
 												className={cn(
-													"focus-visible:ring-ring relative flex h-12 w-full items-center justify-center rounded-md border-2 transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
+													"focus-ring relative flex h-12 w-full items-center justify-center rounded-md border-2 transition-transform duration-150 ease-out active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
 													isSelected
 														? "border-foreground"
 														: "border-border hover:border-foreground/60",

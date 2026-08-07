@@ -1,3 +1,10 @@
+import {
+	CreateTaxonomyButton,
+	TaxonomySortBadge,
+} from "@/modules/taxonomies/components/taxonomy-list-controls";
+import { TaxonomyFilterBadges } from "@/modules/taxonomies/components/taxonomy-filter-badges";
+import { TaxonomyBottomBar } from "@/modules/taxonomies/components/taxonomy-bottom-bar";
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
@@ -12,10 +19,6 @@ import { ColorsDataTable } from "@/modules/colors/components/admin/colors-data-t
 import { ColorsDataTableSkeleton } from "@/modules/colors/components/admin/colors-data-table-skeleton";
 import { ColorsMobileList } from "@/modules/colors/components/admin/colors-mobile-list";
 import { ColorsMobileListSkeleton } from "@/modules/colors/components/admin/colors-mobile-list-skeleton";
-import { ColorsFilterBadges } from "@/modules/colors/components/admin/colors-filter-badges";
-import { ColorsFilterSheet } from "@/modules/colors/components/admin/colors-filter-sheet";
-import { ColorsSortBadge } from "@/modules/colors/components/admin/colors-sort-badge";
-import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 import dynamic from "next/dynamic";
 
 // Lazy loading - form dialog page-level (CreateColorButton)
@@ -24,7 +27,6 @@ const ColorFormDialog = dynamic(() =>
 );
 import { ColorsAdminDialogs } from "./_components/colors-admin-dialogs";
 import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
-import { ColorsBottomBar } from "@/modules/colors/components/admin/colors-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
@@ -78,7 +80,7 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 			<PageHeader
 				variant="compact"
 				title="Couleurs"
-				actions={<CreateColorButton />}
+				actions={<CreateTaxonomyButton kind="color" />}
 				className="hidden md:block"
 			/>
 
@@ -92,7 +94,7 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 					/>
 				</Suspense>
 
-				<ColorsBottomBar />
+				<TaxonomyBottomBar kind="color" />
 
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
@@ -122,17 +124,17 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 							noPrefix
 						/>
 						<ButtonGroup aria-label="Filtres et actions">
-							<ColorsFilterSheet />
+							<FilterTriggerButton />
 							<RefreshColorsButton />
 						</ButtonGroup>
 					</Toolbar>
 
 					{/* Badges de filtres actifs (visible mobile + desktop) */}
-					<ColorsFilterBadges />
+					<TaxonomyFilterBadges kind="color" />
 				</Suspense>
 
 				{/* Sort badge mobile (visible si sortBy URL défini) */}
-				<ColorsSortBadge />
+				<TaxonomySortBadge kind="color" />
 
 				{/* Liste mobile */}
 				<Suspense

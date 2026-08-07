@@ -4,10 +4,10 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
-import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { setFeaturedProductSchema } from "../schemas/collection.schemas";
 
@@ -54,7 +54,10 @@ export async function setFeaturedProduct(
 		});
 
 		if (!productCollection) {
-			return notFound("Produit dans cette collection");
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: "Ce produit n'appartient pas à cette collection.",
+			};
 		}
 
 		// 3.1 Un produit vedette doit être visible sur le storefront (garde serveur :
@@ -138,7 +141,10 @@ export async function removeFeaturedProduct(
 		});
 
 		if (!productCollection) {
-			return notFound("Produit dans cette collection");
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: "Ce produit n'appartient pas à cette collection.",
+			};
 		}
 
 		// 4. Retirer le statut featured

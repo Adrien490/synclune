@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useSheet } from "@/shared/providers/sheet-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
+import { useSheet } from "@/shared/providers/overlay-store-provider";
 
 import type { GetCartReturn } from "../types/cart.types";
 import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-utils";

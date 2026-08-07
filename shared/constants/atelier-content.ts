@@ -11,8 +11,8 @@ import { IMAGES } from "@/shared/constants/images";
  * DOIVENT lire la même source, sinon le schéma dérive de la page en silence.
  *
  * ⚠️ **Copie au TUTOIEMENT** (CLAUDE.md, § Voix) — y compris `name` et
- * `description` du HowTo : la copie historique (`docs/atelier-story.md`)
- * vouvoyait, elle a été réécrite ici, pas recopiée.
+ * `description` du HowTo : la copie historique vouvoyait, elle a été réécrite
+ * ici, pas recopiée.
  */
 
 /**
@@ -21,8 +21,7 @@ import { IMAGES } from "@/shared/constants/images";
  * TODO(photos-atelier) : c'est le portrait FOUNDER en placeholder (le même
  * asset que le schéma Founder) en attendant les vraies photos d'atelier. Le
  * jour où elles arrivent : remplacer cette URL et `ATELIER_IMAGE_ALT`, rien
- * d'autre — la section et le JSON-LD suivent. Le plan complet (galerie 4
- * scènes, alts prêts) est conservé dans `docs/atelier-story.md`.
+ * d'autre — la section et le JSON-LD suivent.
  *
  * ⚠️ `null` tant que l'asset FOUNDER est mort (404 — cf. `IMAGES.FOUNDER`) :
  * la section rend alors la plaque dessinée et le nœud HowTo omet son `image`.

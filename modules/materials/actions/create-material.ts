@@ -53,7 +53,7 @@ export async function createMaterial(
 		});
 
 		if (existingName) {
-			return error("Ce nom de materiau existe deja. Veuillez en choisir un autre.");
+			return error("Ce nom de matériau existe déjà. Choisis-en un autre.");
 		}
 
 		// Generer un slug unique automatiquement
@@ -77,7 +77,7 @@ export async function createMaterial(
 		// Race TOC: même si le pre-check passe, deux créations concurrentes peuvent violer
 		// la contrainte `@unique` sur `name` au niveau DB. On retourne un message clair.
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-			return error("Ce nom de materiau existe deja. Veuillez en choisir un autre.");
+			return error("Ce nom de matériau existe déjà. Choisis-en un autre.");
 		}
 		return handleActionError(e, "Une erreur est survenue lors de la création du matériau");
 	}

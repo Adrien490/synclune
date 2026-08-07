@@ -15,7 +15,7 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { StoreSettingsAdmin } from "../../types/store-settings.types";

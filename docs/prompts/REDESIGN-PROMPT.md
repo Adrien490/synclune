@@ -48,10 +48,8 @@ re-litige pas et n'en propose pas d'autre. Trois choses changent :
 
 ### 1 — Ancrage factuel (avant toute critique)
 Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà écrit dans le projet :
-- `CLAUDE.md` : conventions, invariants React 19, § Voix — et surtout `docs/UI-CONVENTIONS.md`, où le détail
-  a été extrait (Breakpoints · Largeurs de contenu · Survol vs focus · Overlays · `render` vs `asChild` ·
-  `data-*` booléens). `CLAUDE.md` n'en garde qu'une douzaine de puces : le _pourquoi_, les contre-exemples et les pièges
-  de migration Radix → Base UI ne sont QUE dans `UI-CONVENTIONS.md`
+- `CLAUDE.md` : conventions, invariants React 19, § Voix, § Conventions UI (Breakpoints · Largeurs de
+  contenu · Survol vs focus · Overlays · `render` vs `asChild` · `data-*` booléens)
 - `app/globals.css` **et les 7 feuilles qu'il importe** (`app/styles/{pwa,scroll-fade,utilities,
   section-accents,animations,entrance,components}.css`). Attention à qui porte quoi : les **classes** sont
   dans les feuilles — `.enter-inview` et `.hand-draw-inview` (`entrance.css`), `.animate-shimmer` et
@@ -67,8 +65,8 @@ Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà éc
   retirée : `.polaroid-hover` a été supprimée faute de consommateur, le commentaire à son ancien
   emplacement fait foi
 - les données et contenus RÉELS de la cible — jamais de lorem, de faux avis ni de prix inventés
-- `docs/BUSINESS.md` § Positionnement (SSOT du brief de marque) ; `docs/atelier-story.md` si la surface porte
-  de la copie éditoriale ; `docs/KNOWN-ISSUES.md` si la cible touche le panier ou le checkout
+- `CLAUDE.md` § Direction artistique et `shared/constants/brand.ts` (SSOT du brief de marque) ;
+  `shared/constants/atelier-content.ts` si la surface porte de la copie éditoriale
 
 Puis `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier
 (**382 fichiers de test** le portent).
@@ -127,7 +125,7 @@ brief aussi sûrement qu'une qui ferait de la haute joaillerie.
 - **Le test** : si ta surface pouvait servir telle quelle à n'importe quelle boutique de bijoux, elle est
   ratée — pas parce qu'elle est laide, parce qu'elle ne raconte personne.
 
-Si la cible touche l'un de ces 5 points, relis la section correspondante de **`docs/UI-CONVENTIONS.md`** — ce
+Si la cible touche l'un de ces 5 points, relis la puce correspondante de **`CLAUDE.md` § Conventions UI** — ce
 sont les pièges qui ont produit le plus de P0 sur ce projet, pas des risques théoriques :
 - un seuil responsive en JS ou en CSS → **Breakpoints** (rem partout, jamais px) ;
 - un panneau modal ou latéral → **Overlays** (quelle primitive, et jamais `<SheetClose render={<Link/>}>` —

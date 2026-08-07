@@ -9,7 +9,7 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 
 import { EditShippingAddressForm } from "./edit-shipping-address-form";
 
@@ -26,6 +26,7 @@ interface EditShippingAddressData {
 	shippingCity: string;
 	shippingCountry: string;
 	shippingPhone?: string | null;
+	invoiceIssued: boolean;
 	[key: string]: unknown;
 }
 
@@ -58,6 +59,7 @@ export function EditShippingAddressDialog() {
 						shippingCity={dialog.data.shippingCity}
 						shippingCountry={dialog.data.shippingCountry}
 						shippingPhone={dialog.data.shippingPhone}
+						invoiceIssued={dialog.data.invoiceIssued}
 						onSuccess={dialog.close}
 					/>
 				)}

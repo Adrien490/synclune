@@ -23,7 +23,7 @@ vi.mock("@/shared/stores/badge-counts-store", () => ({
 }));
 
 // Mock sheet store provider
-vi.mock("@/shared/providers/sheet-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useSheetStore: (selector: (state: { open: typeof mockOpenSheet }) => unknown) =>
 		selector({ open: mockOpenSheet }),
 }));

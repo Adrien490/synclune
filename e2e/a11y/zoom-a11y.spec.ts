@@ -1,7 +1,7 @@
 import { test, expect } from "../fixtures";
 import type { Page } from "@playwright/test";
 import { expectNoA11yViolations } from "../helpers/axe";
-import { SELECTORS } from "../constants";
+import { requireSeedData, SELECTORS } from "../constants";
 
 /**
  * Zoom texte 200 % (WCAG 1.4.4 Resize Text).
@@ -151,6 +151,26 @@ test.describe("Accessibilité - Zoom 200%", { tag: ["@slow"] }, () => {
 
 		await expectNoHorizontalScroll(page, "Panier");
 		await expectNoFixedBarCoveringControls(page, "Panier");
+	});
+
+	test("Checkout reste utilisable à 200% zoom", async ({
+		page,
+		checkoutPage,
+		productCatalogPage,
+		cartPage,
+	}) => {
+		// Le commentaire ci-dessus DÉSIGNE cette page comme « la surface la plus
+		// chargée en chrome fixe » — elle n'était pourtant testée nulle part. La
+		// barre CTA `fixed bottom-0` est exactement ce que `expectNoFixedBarCovering
+		// Controls` sait attraper.
+		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
+		requireSeedData(test, !seeded.skipped, seeded.skipped ? seeded.reason : "");
+		if (seeded.skipped) return;
+
+		await zoomTo200(page);
+
+		await expectNoHorizontalScroll(page, "Checkout");
+		await expectNoFixedBarCoveringControls(page, "Checkout");
 	});
 });
 

@@ -18,7 +18,7 @@ const { mockIsOpen, mockDialogData, mockClose } = vi.hoisted(() => ({
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({
 		isOpen: mockIsOpen.value,
 		data: mockDialogData.value,

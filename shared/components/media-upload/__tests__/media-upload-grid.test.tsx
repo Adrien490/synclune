@@ -21,7 +21,7 @@ const { mockOpen, mockUseReducedMotion, mockOpenLightbox, mockCloseLightbox, moc
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({
 		isOpen: false,
 		open: mockOpen,

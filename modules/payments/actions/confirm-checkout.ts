@@ -9,6 +9,7 @@ import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
@@ -135,7 +136,7 @@ export async function confirmCheckout(
 				select: IDEMPOTENT_ORDER_SELECT,
 			});
 			if (existingOrder) {
-				return await resolveIdempotentHit(existingOrder, v, span);
+				return await resolveIdempotentHit(existingOrder, v, span, userEmail);
 			}
 
 			// 3c. CHECKOUT-IDOR-001 — ownership du PaymentIntent.
@@ -324,7 +325,7 @@ export async function confirmCheckout(
 						select: IDEMPOTENT_ORDER_SELECT,
 					});
 					if (winner) {
-						return await resolveIdempotentHit(winner, v, span);
+						return await resolveIdempotentHit(winner, v, span, userEmail);
 					}
 				}
 				throw createError;
@@ -345,7 +346,7 @@ export async function confirmCheckout(
 			// SOUS-facturation : sans cette passe, une divergence à la hausse entre
 			// l'écran et la commande était débitée sans être vue.
 			if (typeof v.displayedTotal === "number" && order.total > v.displayedTotal) {
-				await cleanupFailedCheckout(order.id);
+				await cleanupFailedCheckoutSafely(order.id);
 				Sentry.withScope((scope) => {
 					scope.setLevel("warning");
 					scope.setTag("checkout", "primary-overcharge-refused");
@@ -441,7 +442,7 @@ export async function confirmCheckout(
 						(stripeError.code === undefined && stripeError.message.includes("canceled"));
 
 					if (isAlreadySucceeded || isAlreadyCanceled) {
-						await cleanupFailedCheckout(order.id);
+						await cleanupFailedCheckoutSafely(order.id);
 						return {
 							success: false,
 							error: isAlreadySucceeded
@@ -451,7 +452,7 @@ export async function confirmCheckout(
 					}
 				}
 				// Cleanup orphan order on Stripe failure
-				await cleanupFailedCheckout(order.id);
+				await cleanupFailedCheckoutSafely(order.id);
 				if (stripeError instanceof CircuitBreakerError) {
 					return {
 						success: false,
@@ -531,6 +532,9 @@ const IDEMPOTENT_ORDER_SELECT = {
 	total: true,
 	shippingCountry: true,
 	shippingPostalCode: true,
+	// Repli quand la resoumission n'apporte aucun email : on réécrit alors la valeur
+	// déjà en base plutôt que de la vider (cf. `resolveIdempotentHit`).
+	customerEmail: true,
 	items: { select: { skuId: true, quantity: true } },
 } as const satisfies Prisma.OrderSelect;
 
@@ -585,6 +589,10 @@ async function resolveIdempotentHit(
 	order: IdempotentOrder,
 	v: ConfirmCheckoutData,
 	span: { setAttribute: (key: string, value: string | number | boolean) => void },
+	// Email de session (l'administratrice achetant sur sa propre boutique). Ce chemin
+	// s'exécute AVANT la résolution d'email du chemin nominal (étape 4) : il n'a que
+	// `v.email` brut, il doit donc refaire lui-même le `?? userEmail` + `normalizeEmail`.
+	sessionEmail: string | null,
 ): Promise<ConfirmCheckoutResult | ConfirmCheckoutError> {
 	const itemsDiverge = buildItemsFingerprint(v.cartItems) !== buildItemsFingerprint(order.items);
 	// Ne compare QUE le pays et le code postal — les deux seules composantes dont dépend
@@ -637,17 +645,24 @@ async function resolveIdempotentHit(
 		});
 	}
 
-	// KI-001 (fermé) — répercuter une correction d'adresse hors-montant.
+	// KI-001 (fermé) — répercuter une correction hors-montant.
 	// À ce point : lignes identiques, pays et code postal identiques, aucun risque de
 	// sur-facturation. Une différence sur la rue / le complément / la ville / le nom / le
-	// téléphone est donc une CORRECTION du client, pas une divergence à refuser. Le
-	// service ne réécrit le snapshot que si la commande est encore PENDING, sous le même
+	// téléphone / l'email est donc une CORRECTION du client, pas une divergence à refuser.
+	// Le service ne réécrit le snapshot que si la commande est encore PENDING, sous le même
 	// advisory lock que la transition PAID, avec entrée d'audit obligatoire.
 	//
 	// Best-effort assumé : un échec ici ne doit pas empêcher de payer une commande par
 	// ailleurs cohérente. Il est remonté à Sentry, l'admin garde `ADDRESS_UPDATED` comme
 	// trace de ce qui a été appliqué, et le snapshot reste celui d'origine.
 	const { firstName, lastName } = parseFullName(v.shippingAddress.fullName);
+	// Repli sur la valeur déjà en base — surtout PAS de refus « email requis » ici : la
+	// commande existe déjà avec un email valide, bloquer un paiement parce qu'une
+	// resoumission ne le reporte pas serait une régression.
+	const rawResubmittedEmail = v.email ?? sessionEmail;
+	const customerEmail = rawResubmittedEmail
+		? normalizeEmail(rawResubmittedEmail)
+		: order.customerEmail;
 	try {
 		const snapshotOutcome = await updatePendingOrderShippingSnapshot({
 			orderId: order.id,
@@ -663,12 +678,28 @@ async function resolveIdempotentHit(
 				// (contrairement à `order-creation.service.ts`, dont le type de paramètre
 				// l'accepte optionnel).
 				phone: v.shippingAddress.phoneNumber,
+				// Même recomposition qu'`order-creation.service.ts` : le nom vient du MÊME
+				// `fullName` que `firstName`/`lastName`, il doit donc bouger avec eux.
+				customerName: `${firstName} ${lastName}`.trim(),
+				customerEmail,
 			},
 		});
 
 		if (snapshotOutcome.updated) {
 			span.setAttribute("checkout.shipping_snapshot_corrected", true);
 			getOrderMetadataInvalidationTags(order.id).forEach((tag) => updateTag(tag));
+
+			// ⚠️ Corriger `Order.customerEmail` NE SUFFIT PAS : `checkout-post-tasks`
+			// envoie la confirmation à `paymentIntent.receipt_email ?? order.customerEmail`
+			// — le PI GAGNE. Et son `receipt_email` n'est posé que sur le chemin de
+			// création (étape 9), jamais ici. Sans ce push, l'email de confirmation (donc
+			// l'unique lien de suivi HMAC) repartirait à l'adresse fautive.
+			if (snapshotOutcome.changedFields.includes("customerEmail")) {
+				await withStripeCircuitBreaker(() =>
+					stripe.paymentIntents.update(v.paymentIntentId, { receipt_email: customerEmail }),
+				);
+				span.setAttribute("checkout.receipt_email_corrected", true);
+			}
 		}
 	} catch (snapshotError) {
 		Sentry.captureException(snapshotError, {
@@ -718,34 +749,79 @@ async function cleanupFailedCheckout(orderId: string) {
 	// webhook ne résout aucun order (metadata PI sans orderId puisque l'update
 	// a échoué) → chemin orphan-charge ORD-STRIPE-010 → auto-refund. Les deux
 	// issues sont sûres.
-	const outcome = await prisma.$transaction(async (tx) => {
-		await acquireOrderPaidLockTx(tx, orderId);
-		const fresh = await tx.order.findUnique({
-			where: { id: orderId },
-			select: { paymentStatus: true, stripePaymentIntentId: true },
-		});
-		if (!fresh) {
-			// Déjà supprimée (cleanup concurrent) — rien à faire.
-			return {
-				deleted: false,
-				paidRace: false,
-				stripePaymentIntentId: null,
-			};
-		}
-		if (fresh.paymentStatus === "PAID") {
-			return {
-				deleted: false,
-				paidRace: true,
-				stripePaymentIntentId: fresh.stripePaymentIntentId,
-			};
-		}
-		await tx.order.delete({ where: { id: orderId } });
-		return { deleted: true, paidRace: false, stripePaymentIntentId: null };
-	});
+	const outcome = await prisma.$transaction(
+		async (tx) => {
+			await acquireOrderPaidLockTx(tx, orderId);
+			const fresh = await tx.order.findUnique({
+				where: { id: orderId },
+				select: { paymentStatus: true, stripePaymentIntentId: true },
+			});
+			if (!fresh) {
+				// Déjà supprimée (cleanup concurrent) — rien à faire.
+				return {
+					deleted: false,
+					paidRace: false,
+					stripePaymentIntentId: null,
+				};
+			}
+			if (fresh.paymentStatus === "PAID") {
+				return {
+					deleted: false,
+					paidRace: true,
+					stripePaymentIntentId: fresh.stripePaymentIntentId,
+				};
+			}
+			await tx.order.delete({ where: { id: orderId } });
+			return { deleted: true, paidRace: false, stripePaymentIntentId: null };
+		},
+		// ORD-CLEANUP-TIMEOUT-001 : cette transaction attend le MÊME advisory lock que
+		// `processOrderAtomically`, qui le tient jusqu'à 30 s (TX_TIMEOUT_LONG). Aux
+		// défauts Prisma (5 s / maxWait 2 s), le cleanup rendait donc un P2024 dès que
+		// le webhook travaillait en parallèle — précisément le cas qu'il est censé
+		// arbitrer. Il faut au moins la fenêtre du détenteur pour espérer l'obtenir.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+	);
 
 	if (outcome.paidRace) {
 		reportCleanupAbortedPaid(orderId, outcome.stripePaymentIntentId);
 		return;
+	}
+}
+
+/**
+ * Compensation best-effort après un échec Stripe.
+ *
+ * ⚠️ `cleanupFailedCheckout` peut échouer (contention sur l'advisory lock, DB
+ * indisponible). Ses trois sites d'appel n'étaient pas protégés : l'erreur partait
+ * au catch global, le client recevait « Une erreur est survenue » — et surtout la
+ * commande RESTAIT `PENDING` avec son `stripePaymentIntentId`, donc **hors de portée
+ * de tout job automatique** : `cleanup-pending-orders` exclut volontairement les
+ * commandes à PI, et `sync-async-payments` est un bouton manuel depuis le
+ * 2026-08-03. L'orphelin n'était réclamé que par l'alerte AM-5, à J+7.
+ *
+ * On ne peut pas faire mieux que réessayer plus tard — mais on peut refuser que ça
+ * se produise en SILENCE. L'échec devient un signal, et l'appelant poursuit son
+ * chemin d'erreur nominal.
+ */
+async function cleanupFailedCheckoutSafely(orderId: string): Promise<void> {
+	try {
+		await cleanupFailedCheckout(orderId);
+	} catch (cleanupError) {
+		Sentry.withScope((scope) => {
+			scope.setLevel("error");
+			scope.setTag("checkout", "cleanup-failed");
+			scope.setFingerprint(["confirm-checkout", "cleanup-failed"]);
+			scope.setContext("order", { orderId });
+			Sentry.captureException(cleanupError);
+		});
+		logger.error(
+			"cleanupFailedCheckout failed — order left PENDING with a PaymentIntent",
+			cleanupError,
+			{
+				service: "checkout",
+				orderId,
+			},
+		);
 	}
 }
 

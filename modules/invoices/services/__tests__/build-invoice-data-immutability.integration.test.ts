@@ -17,7 +17,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { buildInvoiceData } from "../build-invoice-data";
 import { GET_ORDER_SELECT_ADMIN } from "@/modules/orders/constants/order.constants";
@@ -37,49 +37,28 @@ describeIntegration(
 		});
 
 		it("mutation Product.title + Sku.priceInclTax ne modifie PAS l'InvoiceData reconstruit", async () => {
-			const user = await createTestUser();
 			const product = await createTestProduct({ title: "Collier Original" });
 			const sku = await createTestSku(product.id, {
 				priceInclTax: 4999,
 			});
 
-			const order = await prisma.order.create({
-				data: {
-					userId: user.id,
-					orderNumber: `SYN-IMM-${Date.now()}`,
-					customerEmail: "imm@test.local",
-					customerName: "Imm Test",
-					shippingFirstName: "Im",
-					shippingLastName: "M",
-					shippingAddress1: "1 rue",
-					shippingPostalCode: "75001",
-					shippingCity: "Paris",
-					shippingCountry: "FR",
-					shippingPhone: "+33600000000",
+			const order = await createTestOrder(
+				[
+					{
+						skuId: sku.id,
+						// Snapshots figés au checkout (pas relus depuis Product.current)
+						productTitle: "Collier Original",
+						skuColor: "Argent",
+						skuMaterial: "Argent 925",
+						price: 4999,
+					},
+				],
+				{
 					status: OrderStatus.PROCESSING,
 					paymentStatus: PaymentStatus.PAID,
-					paidAt: new Date(),
-					stripePaymentIntentId: `pi_imm_${Date.now()}`,
-					subtotal: 4999,
-					total: 4999,
-					currency: "EUR",
-					paymentMethod: "CARD",
 					invoiceStatus: null,
-					items: {
-						create: [
-							{
-								skuId: sku.id,
-								quantity: 1,
-								// Snapshots figés au checkout (pas relus depuis Product.current)
-								productTitle: "Collier Original",
-								skuColor: "Argent",
-								skuMaterial: "Argent 925",
-								price: 4999,
-							},
-						],
-					},
 				},
-			});
+			);
 			await persistInvoiceNumber(order.id);
 
 			// Snapshot AVANT mutation
@@ -118,45 +97,24 @@ describeIntegration(
 		});
 
 		it("suppression Product (soft delete) ne casse pas la régénération de la facture", async () => {
-			const user = await createTestUser();
 			const product = await createTestProduct({ title: "Bague Discontinuée" });
 			const sku = await createTestSku(product.id);
 
-			const order = await prisma.order.create({
-				data: {
-					userId: user.id,
-					orderNumber: `SYN-IMM-DEL-${Date.now()}`,
-					customerEmail: "del@test.local",
-					customerName: "Del Test",
-					shippingFirstName: "D",
-					shippingLastName: "E",
-					shippingAddress1: "1 rue",
-					shippingPostalCode: "75001",
-					shippingCity: "Paris",
-					shippingCountry: "FR",
-					shippingPhone: "+33600000000",
+			const order = await createTestOrder(
+				[
+					{
+						skuId: sku.id,
+						productTitle: "Bague Discontinuée",
+						skuMaterial: "Or jaune",
+						price: 4999,
+					},
+				],
+				{
 					status: OrderStatus.PROCESSING,
 					paymentStatus: PaymentStatus.PAID,
-					paidAt: new Date(),
-					stripePaymentIntentId: `pi_imm_del_${Date.now()}`,
-					subtotal: 4999,
-					total: 4999,
-					currency: "EUR",
-					paymentMethod: "CARD",
 					invoiceStatus: null,
-					items: {
-						create: [
-							{
-								skuId: sku.id,
-								quantity: 1,
-								productTitle: "Bague Discontinuée",
-								skuMaterial: "Or jaune",
-								price: 4999,
-							},
-						],
-					},
 				},
-			});
+			);
 			await persistInvoiceNumber(order.id);
 
 			// Soft delete du Product (admin retire le produit du catalogue)

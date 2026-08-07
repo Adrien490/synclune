@@ -1,4 +1,5 @@
 import { CheckCircleIcon } from "@phosphor-icons/react/ssr";
+import { slugify } from "@/shared/utils/generate-slug";
 
 /**
  * Les quatre accents de marque, dans l'ordre du tunnel.
@@ -8,7 +9,7 @@ import { CheckCircleIcon } from "@phosphor-icons/react/ssr";
  * `--section-accent` et `--section-soft`. On ne redéclare donc aucune teinte,
  * et le rose reste dérivé de `--primary` sans doublon.
  */
-export type CheckoutSectionAccent = "rose" | "lavender" | "mint" | "sun";
+type CheckoutSectionAccent = "rose" | "lavender" | "mint" | "sun";
 
 interface CheckoutSectionProps {
 	title: string;
@@ -40,15 +41,27 @@ interface CheckoutSectionProps {
  * focus des champs, qui déborde de 5px.
  */
 export function CheckoutSection({ title, accent, isComplete, children }: CheckoutSectionProps) {
+	// Nommer la `<section>` par son propre titre : une `<section>` SANS nom
+	// accessible n'est pas exposée comme landmark `region`. Les quatre étapes du
+	// tunnel n'étaient donc navigables que par les titres, jamais par les régions
+	// — alors qu'elles sont précisément la structure de la page.
+	//
+	// Id DÉRIVÉ du titre plutôt que `useId()` : les quatre titres du tunnel sont
+	// distincts par construction, et ça garde le composant utilisable sans hook.
+	const headingId = `checkout-section-${slugify(title)}`;
+
 	return (
 		<section
 			data-accent={accent}
+			aria-labelledby={headingId}
 			className="border-border bg-card flex scroll-mt-24 scroll-mb-32 rounded-lg border shadow-sm md:scroll-mt-28 lg:scroll-mb-0"
 		>
 			<span aria-hidden="true" className="w-[3px] shrink-0 rounded-l-lg bg-(--section-accent)" />
 			<div className="min-w-0 flex-1 space-y-5 p-5 sm:p-6">
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-					<h2 className="font-display text-lg font-medium tracking-wide sm:text-xl">{title}</h2>
+					<h2 id={headingId} className="font-display text-lg font-medium tracking-wide sm:text-xl">
+						{title}
+					</h2>
 					{isComplete && (
 						/*
 						 * Icône + mot, jamais la couleur seule (WCAG 1.4.1). `--success`

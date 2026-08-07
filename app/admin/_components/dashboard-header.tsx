@@ -6,7 +6,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { ArrowSquareOutIcon, KeyboardIcon } from "@phosphor-icons/react/ssr";
 // GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,

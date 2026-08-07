@@ -48,7 +48,7 @@ export async function deleteUploadThingFile(
 		const result = await deleteUploadThingFilesFromUrls([fileUrl]);
 
 		if (result.failed > 0) {
-			return error("La suppression du fichier a echoue cote UploadThing");
+			return error("La suppression du fichier a échoué côté UploadThing");
 		}
 
 		return success("Fichier supprime", { deletedFile: extractFileKeyFromUrl(fileUrl) });

@@ -56,7 +56,7 @@ describe("@regression cron-services-have-callers", () => {
 	// il n'y a plus rien à purger en base). Puis à 8 le 2026-08-05 (audit V2,
 	// Lot 3) : `retry-webhooks.service.ts` était un TROISIÈME système de reprise
 	// empilé sur le retry Stripe de 3 jours (la route renvoie 500) et sur les
-	// tâches de réconciliation métier — cf. `docs/KNOWN-ISSUES.md`, KI-006.
+	// tâches de réconciliation métier.
 	it("détecte bien les services et le corpus de recherche", () => {
 		expect(serviceFiles.length).toBeGreaterThanOrEqual(8);
 		expect(searchFiles.length).toBeGreaterThan(500);

@@ -51,19 +51,30 @@ export function error(message: string): ActionState & { status: ActionStatus.ERR
 /**
  * Crée un ActionState NOT_FOUND
  *
- * @param resource - Nom de la ressource non trouvée
- * @returns ActionState avec status NOT_FOUND
+ * ⚠️ Le genre est DÉCLARÉ, jamais deviné. La version précédente accordait sur
+ * `resource.endsWith("e")` — une heuristique qui se trompait dans les deux sens :
+ * « Collection », « Couleur » et « Variante de produit » rendaient « non trouvé »
+ * (masculin sur un nom féminin), et « Le produit source » rendait « non trouvée »
+ * parce que le `e` final appartenait à l'ÉPITHÈTE, pas au nom. Le suffixe se
+ * concaténant sans condition, deux sites qui passaient déjà une phrase complète
+ * produisaient « Produit non trouvé non trouvé ».
+ *
+ * @param resource - Nom de la ressource, au SINGULIER et sans article
+ * @param genre - Genre grammatical du nom ("m" par défaut)
  *
  * @example
  * ```ts
- * return notFound("Produit");
- * // => "Produit non trouvé"
+ * return notFound("Produit");            // "Produit non trouvé"
+ * return notFound("Collection", "f");    // "Collection non trouvée"
  * ```
  */
-export function notFound(resource: string): ActionState & { status: ActionStatus.NOT_FOUND } {
+export function notFound(
+	resource: string,
+	genre: "m" | "f" = "m",
+): ActionState & { status: ActionStatus.NOT_FOUND } {
 	return {
 		status: ActionStatus.NOT_FOUND,
-		message: `${resource} non trouvé${resource.endsWith("e") ? "e" : ""}`,
+		message: `${resource} non trouvé${genre === "f" ? "e" : ""}`,
 	};
 }
 
@@ -76,11 +87,11 @@ export function notFound(resource: string): ActionState & { status: ActionStatus
  * @example
  * ```ts
  * return unauthorized();
- * // => "Vous devez être connecté pour effectuer cette action"
+ * // => "Connecte-toi pour effectuer cette action."
  * ```
  */
 export function unauthorized(
-	message = "Vous devez être connecté pour effectuer cette action",
+	message = "Connecte-toi pour effectuer cette action.",
 ): ActionState & { status: ActionStatus.UNAUTHORIZED } {
 	return {
 		status: ActionStatus.UNAUTHORIZED,

@@ -70,7 +70,7 @@ export async function createCollection(
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
 			const target = (e.meta?.target as string[] | undefined) ?? [];
 			if (target.includes("name") || target.includes("Collection_name_key")) {
-				return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
+				return error("Ce nom de collection existe déjà. Choisis-en un autre.");
 			}
 		}
 		return handleActionError(e, "Erreur lors de la création de la collection");

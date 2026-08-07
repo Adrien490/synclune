@@ -13,6 +13,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createMockFormData, createMockOrder, VALID_CUID } from "@/test/factories";
 import type * as SharedActions from "@/shared/lib/actions";
+import type * as OrderConstantsModule from "../../constants/order.constants";
 
 const {
 	mockPrisma,
@@ -91,7 +92,11 @@ vi.mock("@/shared/constants/urls", () => ({
 		ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` },
 	},
 }));
-vi.mock("../../constants/order.constants", () => ({
+// Cf. la note dans `mark-as-paid.test.ts` : `importOriginal` évite qu'un nouvel
+// export du module de constantes (ici `MARK_AS_PAID_ORDER_SELECT`) arrive à
+// `undefined` dans l'action sous test.
+vi.mock("../../constants/order.constants", async (importOriginal) => ({
+	...(await importOriginal<typeof OrderConstantsModule>()),
 	ORDER_ERROR_MESSAGES: {
 		NOT_FOUND: "La commande n'existe pas.",
 		ALREADY_PAID: "Cette commande est deja payee.",

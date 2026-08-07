@@ -179,17 +179,13 @@ export type OverlayStackStore = OverlayStackState & OverlayStackActions;
 // PROVIDER TYPES
 // =============================================================================
 
-export interface SheetStoreProviderProps {
-	children: ReactNode;
-}
-
-export interface DialogStoreProviderProps {
-	children: ReactNode;
-}
-
-export interface AlertDialogStoreProviderProps {
-	children: ReactNode;
-}
+/*
+ * ⚠️ `SheetStoreProviderProps`, `DialogStoreProviderProps` et
+ * `AlertDialogStoreProviderProps` ont été retirés le 2026-08-07 : leurs trois
+ * providers ont fusionné dans `overlay-store-provider.tsx`, qui déclare son
+ * `{ children }` en ligne. Trois interfaces identiques d'un champ chacune, pour
+ * trois composants qui n'en font plus qu'un.
+ */
 
 export interface CookieConsentStoreProviderProps {
 	children: ReactNode;

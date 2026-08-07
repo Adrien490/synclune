@@ -109,9 +109,9 @@ describe("deleteProductType", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockNotFound.mockImplementation((label: string) => ({
+		mockNotFound.mockImplementation((label: string, genre: "m" | "f" = "m") => ({
 			status: ActionStatus.NOT_FOUND,
-			message: `${label} non trouvé`,
+			message: `${label} non trouvé${genre === "f" ? "e" : ""}`,
 		}));
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,

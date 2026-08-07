@@ -149,7 +149,7 @@ interface CollectionChapterProps {
  * Bande de collection — « Le carnet des séries » (redesign 2026-08-05, artifact
  * 4ᵉ passe ; remplace la carte « Planche-contact » sur `/collections`).
  *
- * @see docs/COLLECTION-CARD.md — la doctrine de la carte collection. C'est la
+ * Doctrine de la carte collection : elle doit montrer un ENSEMBLE. C'est la
  *   surface la PLUS conforme des trois (6/7, § 11) : 3 tirages, les deux
  *   nombres, une description, et une géométrie qui n'emprunte rien au polaroid.
  *   Sa silhouette (« la pile décalée ») est la S2 du § 5 — retenue ICI et pas

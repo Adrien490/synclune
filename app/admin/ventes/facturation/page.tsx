@@ -48,7 +48,7 @@ export default async function FacturationAdminPage() {
 
 			{/* Plus de mention e-reporting : la machinerie DGFiP a été retirée du
 			    code le 2026-07-26 (à réécrire au go-live contre l'arrêté définitif
-			    et une Plateforme Agréée réelle — cf. docs/RUNBOOK.md). */}
+			    et une Plateforme Agréée réelle). */}
 			<PageHeader
 				variant="compact"
 				title="Facturation"

@@ -2,7 +2,7 @@
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useTransition } from "react";

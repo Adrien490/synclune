@@ -38,15 +38,17 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 }));
-vi.mock("../constants/cache", () => ({
-	COLLECTIONS_CACHE_TAGS: {
-		LIST: "collections-list",
-		COUNTS: "collection-counts",
-	},
-}));
+// ⚠️ Pas de mock de `COLLECTIONS_CACHE_TAGS`. Il y en avait un, sur le chemin
+// `"../constants/cache"` — résolu depuis CE fichier, donc vers
+// `modules/collections/actions/constants/cache`, qui n'existe pas : un no-op
+// silencieux depuis toujours. Le test lisait déjà la vraie SSOT, et ne passait que
+// parce qu'elle codait le littéral en dur. Depuis le 2026-08-07 elle alias
+// `SHARED_CACHE_TAGS.COLLECTIONS_LIST`, d'où l'entrée ci-dessous : un mock partiel
+// de `cache-tags` rendait `COLLECTIONS_CACHE_TAGS.LIST` `undefined`.
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
 		ADMIN_BADGES: "admin-badges",
+		COLLECTIONS_LIST: "collections-list",
 	},
 }));
 

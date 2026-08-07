@@ -1,9 +1,26 @@
 "use client";
 
 import PhoneInput, { type FlagProps } from "react-phone-number-input";
+import fr from "react-phone-number-input/locale/fr.json";
 import "react-phone-number-input/style.css";
 
 type PhoneInputProps = React.ComponentProps<typeof PhoneInput>;
+
+/**
+ * Libellés FRANÇAIS du sélecteur de pays.
+ *
+ * ⚠️ Sans `labels`, la lib retombe sur `locale/en.json` : le `<select>` des
+ * indicatifs prenait `aria-label="Phone number country"` et listait ses **245
+ * options en anglais** (« Germany », « Spain »…) au milieu d'un formulaire
+ * `lang="fr"` — mesuré au rendu le 2026-08-07. C'était le seul contrôle du
+ * tunnel de paiement sans libellé visible ET le seul nommé en anglais
+ * (WCAG 3.1.2 Langue d'un passage, 2.4.6 En-têtes et étiquettes).
+ *
+ * `fr.json` fournit « Numéro de téléphone pays », une traduction littérale peu
+ * intelligible à l'oreille : on ne garde que sa table de pays et on réécrit la
+ * clé `country`, qui est ce qu'annonce le lecteur d'écran.
+ */
+const PHONE_LABELS_FR = { ...fr, country: "Pays de l'indicatif téléphonique" };
 
 /**
  * Décalage entre une lettre ASCII majuscule et son INDICATEUR RÉGIONAL Unicode :
@@ -49,5 +66,5 @@ function FlagEmoji({ country, countryName }: FlagProps) {
  * Garde react-phone-number-input (~30 Ko) hors du bundle initial.
  */
 export default function PhoneInputWithFlags(props: PhoneInputProps) {
-	return <PhoneInput {...props} flagComponent={FlagEmoji} />;
+	return <PhoneInput labels={PHONE_LABELS_FR} {...props} flagComponent={FlagEmoji} />;
 }

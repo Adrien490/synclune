@@ -15,8 +15,13 @@ import { COUNTRY_ERROR_MESSAGE, SHIPPING_COUNTRIES } from "@/shared/constants/co
  *  | ------------------------------------ | -------------------- | ------------ |
  *  | Checkout (`checkout.schema.ts`)      | `fullName` (Baymard) | aucun        |
  *  | Livraison admin (`order.schemas.ts`) | first/last séparés   | `shipping*`  |
- *  | Facturation admin                    | first/last séparés   | `billing*`   |
  *  | Facture (`invoice.schema.ts`)        | `recipientName`      | `line1/line2`|
+ *
+ * ⚠️ Il y avait une 4ᵉ surface « Facturation admin » en `billing*` : elle est partie
+ * avec les 9 colonnes `Order.billing*` le 2026-08-04. En B2C de vente à distance
+ * l'adresse de facturation EST l'adresse de livraison, et `buildBillingAddress`
+ * (`modules/invoices/services/build-invoice-data.ts`) est désormais l'identité — son
+ * JSDoc porte la condition de réouverture, datée (e-reporting B2C, 1er sept. 2027).
  *
  * Ce qui DOIT être partagé, ce sont les contraintes : longueurs alignées sur les
  * colonnes Prisma et regex de code postal. Elles vivent dans `ADDRESS_CONSTANTS` ;

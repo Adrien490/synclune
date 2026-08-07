@@ -23,7 +23,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { persistInvoiceNumber } from "../persist-invoice-number.service";
 import { OrderStatus, PaymentStatus, type Order } from "@/app/generated/prisma/client";
 
@@ -35,53 +35,16 @@ const describeIntegration = integrationEnabled ? describe : describe.skip;
 const PAID_AT_2026 = new Date("2026-12-31T22:30:00.000Z");
 const PAID_AT_2027 = new Date("2027-01-01T00:30:00.000Z");
 
-async function createPaidOrder(
-	prisma: ReturnType<typeof getIntegrationPrismaClient>,
-	userId: string,
-	skuId: string,
-	suffix: string,
-	paidAt: Date,
-): Promise<Order> {
-	return prisma.order.create({
-		data: {
-			userId,
-			orderNumber: `SYN-YB-${suffix}`,
-			customerEmail: "yearboundary@test.local",
-			customerName: "Test YearBoundary",
-			shippingFirstName: "Test",
-			shippingLastName: "YearBoundary",
-			shippingAddress1: "1 rue test",
-			shippingPostalCode: "75001",
-			shippingCity: "Paris",
-			shippingCountry: "FR",
-			shippingPhone: "+33600000000",
-			status: OrderStatus.PROCESSING,
-			paymentStatus: PaymentStatus.PAID,
-			paidAt,
-			stripePaymentIntentId: `pi_yb_${suffix}`,
-			subtotal: 4999,
-			discountAmount: 0,
-			shippingCost: 0,
-			taxAmount: 0,
-			total: 4999,
-			paymentMethod: "CARD",
-			invoiceStatus: null,
-			items: {
-				create: [
-					{
-						skuId,
-						quantity: 1,
-						productTitle: "Collier Test",
-						price: 4999,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: 4999,
-						lineTotalIncludingTax: 4999,
-						taxCategoryCode: "ZB",
-					},
-				],
-			},
-		},
+async function createPaidOrder(skuId: string, suffix: string, paidAt: Date): Promise<Order> {
+	// `paidAt` explicite : c'est LUI qui porte le millésime de la facture
+	// (EINV-SEQ-002), donc le sujet même de cette suite.
+	return createTestOrder([{ skuId, productTitle: "Collier Test" }], {
+		orderNumber: `SYN-YB-${suffix}`,
+		status: OrderStatus.PROCESSING,
+		paymentStatus: PaymentStatus.PAID,
+		paidAt,
+		stripePaymentIntentId: `pi_yb_${suffix}`,
+		invoiceStatus: null,
 	});
 }
 
@@ -116,7 +79,6 @@ describeIntegration(
 		});
 
 		it("10 tx concurrentes mêlant paidAt 2026 et 2027 → 2 séquences disjointes gap-free, 0 collision", async () => {
-			const user = await createTestUser();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
 
@@ -126,8 +88,8 @@ describeIntegration(
 			const runId = Date.now();
 			for (let i = 0; i < COUNT_PER_YEAR; i++) {
 				const tag = `${i}-${runId}`;
-				orders2026.push(await createPaidOrder(prisma, user.id, sku.id, `26-${tag}`, PAID_AT_2026));
-				orders2027.push(await createPaidOrder(prisma, user.id, sku.id, `27-${tag}`, PAID_AT_2027));
+				orders2026.push(await createPaidOrder(sku.id, `26-${tag}`, PAID_AT_2026));
+				orders2027.push(await createPaidOrder(sku.id, `27-${tag}`, PAID_AT_2027));
 			}
 
 			// Entrelace les deux cohortes et lance TOUT en parallèle : les tx 2026

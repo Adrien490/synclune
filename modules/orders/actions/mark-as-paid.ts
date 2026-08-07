@@ -20,7 +20,7 @@ import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emai
 import { generateInvoiceAccessToken } from "../utils/invoice-token";
 import { buildOrderTrackingUrl } from "../utils/build-order-tracking-url";
 import { buildUrl } from "@/shared/constants/urls";
-import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
+import { MARK_AS_PAID_ORDER_SELECT, ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
@@ -121,36 +121,7 @@ export async function markAsPaid(
 
 			const found = await tx.order.findUnique({
 				where: { id, ...notDeleted },
-				select: {
-					id: true,
-					orderNumber: true,
-					status: true,
-					paymentStatus: true,
-					customerEmail: true,
-					customerName: true,
-					subtotal: true,
-					shippingCost: true,
-					total: true,
-					shippingFirstName: true,
-					shippingLastName: true,
-					shippingAddress1: true,
-					shippingAddress2: true,
-					shippingPostalCode: true,
-					shippingCity: true,
-					shippingCountry: true,
-					stripePaymentIntentId: true,
-					items: {
-						select: {
-							skuId: true,
-							quantity: true,
-							productTitle: true,
-							skuColor: true,
-							skuMaterial: true,
-							skuSize: true,
-							price: true,
-						},
-					},
-				},
+				select: MARK_AS_PAID_ORDER_SELECT,
 			});
 
 			if (!found) return null;

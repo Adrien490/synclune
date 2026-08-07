@@ -196,21 +196,19 @@ vi.mock("@/shared/hooks/use-edge-swipe", () => ({
 const mockOpen = vi.fn();
 const mockClose = vi.fn();
 let mockIsOpen = false;
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({
 		isOpen: mockIsOpen,
 		open: mockOpen,
 		close: mockClose,
 	}),
+	useSheetStore: (selector: (s: { open: (id: string) => void }) => unknown) =>
+		selector({ open: mockOpenSheet }),
 }));
 
 // Mock sheet-store — le raccourci « Panier » ouvre le cart sheet après la
 // transition de sortie du menu (même mécanique différée que la déconnexion).
 const mockOpenSheet = vi.fn();
-vi.mock("@/shared/providers/sheet-store-provider", () => ({
-	useSheetStore: (selector: (s: { open: (id: string) => void }) => unknown) =>
-		selector({ open: mockOpenSheet }),
-}));
 
 // Mock useHaptic — capture all triggerHaptic calls for assertions
 const mockHaptic = vi.fn();

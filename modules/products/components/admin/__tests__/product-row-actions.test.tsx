@@ -14,11 +14,8 @@ const { mockOpenAlertDialog, mockOpenDialog } = vi.hoisted(() => ({
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({ open: mockOpenAlertDialog }),
-}));
-
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenDialog }),
 }));
 

@@ -17,6 +17,24 @@ import {
 } from "../app/generated/prisma/client";
 // Chemin relatif volontaire : le seed tourne sous `tsx` et n'utilise aucun alias `@/`.
 import { SYSTEM_PRODUCT_TYPE_SLUGS } from "../modules/product-types/constants/system-product-type-slugs";
+import { getSkuMaterialsLabel } from "../modules/skus/utils/sku-materials-label";
+
+/**
+ * Largeur de `OrderItem.skuColor` / `.skuMaterial` (`@db.VarChar(100)`).
+ *
+ * Le seed doit produire des lignes que la PRODUCTION pourrait produire :
+ * `order-creation.service.ts` tronque ces deux libellés agrégés avant écriture
+ * (cf. `SKU_LABEL_SNAPSHOT_MAX_LENGTH`), et la parité des deux valeurs est
+ * verrouillée par `order-item-snapshot-immutability.regression.test.ts`.
+ */
+const SEED_SKU_LABEL_MAX_LENGTH = 100;
+
+function truncateSeedLabel(value: string | null): string | null {
+	if (value === null) return null;
+	return value.length > SEED_SKU_LABEL_MAX_LENGTH
+		? value.slice(0, SEED_SKU_LABEL_MAX_LENGTH)
+		: value;
+}
 
 // ============================================
 // PRODUCTION GUARD
@@ -1645,10 +1663,17 @@ async function main(): Promise<void> {
 						select: { material: { select: { name: true } }, position: true },
 						orderBy: { position: "asc" },
 					},
+					// ⚠️ Pas de `where: { isPrimary: true }` — ce filtre seul est banni :
+					// sur un SKU sans média primaire il rend 0 image alors que le SKU
+					// en a. Et sans `mediaType`, une VIDÉO primaire finissait figée
+					// dans `OrderItem.productImageUrl` : exactement le défaut
+					// EINV-SNAPSHOT-MEDIA-001 corrigé en production. Le tri + le choix
+					// ci-dessous reproduisent `pickPrimaryImage()`
+					// (`modules/products/services/product-display.service.ts`), qui
+					// n'est pas importable ici — le seed tourne sous `tsx`, sans alias.
 					images: {
-						where: { isPrimary: true },
-						select: { url: true },
-						take: 1,
+						select: { url: true, isPrimary: true, mediaType: true },
+						orderBy: [{ isPrimary: "desc" }, { position: "asc" }, { id: "asc" }],
 					},
 				},
 			},
@@ -1688,12 +1713,21 @@ async function main(): Promise<void> {
 			const lineAmount = sku.priceInclTax * quantity;
 			subtotal += lineAmount;
 
+			// Priorité `pickPrimaryImage` : média primaire de type IMAGE → première
+			// IMAGE → null. `null` plutôt qu'une vidéo — le snapshot est figé 10 ans.
+			const primaryImage =
+				sku.images.find((img) => img.isPrimary && img.mediaType === MediaType.IMAGE) ??
+				sku.images.find((img) => img.mediaType === MediaType.IMAGE) ??
+				null;
+
 			itemsData.push({
 				skuId: sku.id,
 				productTitle: product.title,
-				productImageUrl: sku.images[0]?.url ?? null,
-				skuColor: sku.colors.length > 0 ? sku.colors.map((c) => c.color.name).join(" · ") : null,
-				skuMaterial: sku.materials[0]?.material.name ?? null,
+				productImageUrl: primaryImage?.url ?? null,
+				skuColor: truncateSeedLabel(sku.colors.map((c) => c.color.name).join(" · ") || null),
+				// `getSkuMaterialsLabel` joint TOUS les matériaux, comme la production —
+				// `materials[0]` seul perdait les SKU multi-matières.
+				skuMaterial: truncateSeedLabel(getSkuMaterialsLabel(sku.materials)),
 				skuSize: sku.size ?? null,
 				price: sku.priceInclTax,
 				quantity,
@@ -2301,10 +2335,10 @@ async function main(): Promise<void> {
 		const receivedAt = new Date(order.createdAt);
 		receivedAt.setMinutes(receivedAt.getMinutes() + faker.number.int({ min: 1, max: 10 }));
 
-		// checkout.session.completed
+		// payment_intent.succeeded
 		webhookEventsData.push({
 			stripeEventId: `evt_${faker.string.alphanumeric(24)}`,
-			eventType: "checkout.session.completed",
+			eventType: "payment_intent.succeeded",
 			status: WebhookEventStatus.COMPLETED,
 			attempts: 1,
 			receivedAt,
@@ -2345,7 +2379,7 @@ async function main(): Promise<void> {
 	// Add PROCESSING event (stuck mid-processing)
 	webhookEventsData.push({
 		stripeEventId: `evt_${faker.string.alphanumeric(24)}`,
-		eventType: "checkout.session.completed",
+		eventType: "payment_intent.succeeded",
 		status: WebhookEventStatus.PROCESSING,
 		attempts: 1,
 		receivedAt: faker.date.recent({ days: 1 }),

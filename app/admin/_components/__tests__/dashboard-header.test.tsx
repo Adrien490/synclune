@@ -18,7 +18,7 @@ vi.mock("@/app/admin/_components/keyboard-shortcuts.constants", () => ({
 	KEYBOARD_SHORTCUTS_DIALOG_ID: "admin-keyboard-shortcuts",
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({
 		isOpen: false,
 		open: vi.fn(),

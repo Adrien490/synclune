@@ -33,7 +33,7 @@ vi.mock("sonner", () => ({
 	toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({ open: vi.fn(), close: vi.fn(), isOpen: false }),
 }));
 

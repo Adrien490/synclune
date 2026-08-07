@@ -100,12 +100,31 @@ export function PendingPaymentWatcher({ orderId, orderNumber }: PendingPaymentWa
 		};
 	}, [orderId, orderNumber, router]);
 
-	if (!timedOut) return null;
-
+	/*
+	 * ⚠️ Ce composant rendait `null` pendant TOUTE la phase de vérification.
+	 *
+	 * Le sondage dure jusqu'à 30 s, au terme desquelles il peut `router.refresh()`
+	 * (la page se réécrit sous l'utilisateur) ou `router.replace()` vers
+	 * /annulation (changement de route depuis un timer). Rien n'était annoncé :
+	 * un lecteur d'écran n'avait aucun signal qu'une vérification était en cours,
+	 * puis la page changeait sans préavis.
+	 *
+	 * La région est montée EN PERMANENCE et ne change que son texte : une région
+	 * live créée avec son contenu n'est pas fiablement annoncée.
+	 *
+	 * `aria-live="polite"` sans `role="status"` : le conteneur est déjà une
+	 * `<Alert role="alert">` (`confirmation/page.tsx`), un rôle imbriqué de plus
+	 * ferait doublon.
+	 */
 	return (
-		<p className="text-muted-foreground mt-3 text-xs">
-			Le paiement prend plus de temps que prévu. Tu recevras un email de confirmation dès qu&apos;il
-			sera validé.
+		<p
+			aria-live="polite"
+			aria-atomic="true"
+			className={timedOut ? "text-muted-foreground mt-3 text-xs" : "sr-only"}
+		>
+			{timedOut
+				? "Le paiement prend plus de temps que prévu. Tu recevras un email de confirmation dès qu'il sera validé."
+				: "Vérification du paiement en cours…"}
 		</p>
 	);
 }

@@ -14,7 +14,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { persistInvoiceNumber } from "../persist-invoice-number.service";
 import { voidInvoice } from "../void-invoice.service";
 import {
@@ -29,50 +29,14 @@ const describeIntegration = integrationEnabled ? describe : describe.skip;
 
 async function createPaidOrderWithInvoice(
 	prisma: ReturnType<typeof getIntegrationPrismaClient>,
-	userId: string,
 	skuId: string,
 	suffix: string,
 ): Promise<Order> {
-	const order = await prisma.order.create({
-		data: {
-			userId,
-			orderNumber: `SYN-VOID-${suffix}`,
-			customerEmail: "void@test.local",
-			customerName: "Void Test",
-			shippingFirstName: "Test",
-			shippingLastName: "Void",
-			shippingAddress1: "1 rue",
-			shippingPostalCode: "75001",
-			shippingCity: "Paris",
-			shippingCountry: "FR",
-			shippingPhone: "+33600000000",
-			status: OrderStatus.PROCESSING,
-			paymentStatus: PaymentStatus.PAID,
-			paidAt: new Date(),
-			stripePaymentIntentId: `pi_void_${suffix}_${Date.now()}`,
-			subtotal: 4999,
-			discountAmount: 0,
-			shippingCost: 0,
-			taxAmount: 0,
-			total: 4999,
-			paymentMethod: "CARD",
-			invoiceStatus: null,
-			items: {
-				create: [
-					{
-						skuId,
-						quantity: 1,
-						productTitle: "Bague Void",
-						price: 4999,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: 4999,
-						lineTotalIncludingTax: 4999,
-						taxCategoryCode: "ZB",
-					},
-				],
-			},
-		},
+	const order = await createTestOrder([{ skuId, productTitle: "Bague Void" }], {
+		orderNumber: `SYN-VOID-${suffix}`,
+		status: OrderStatus.PROCESSING,
+		paymentStatus: PaymentStatus.PAID,
+		invoiceStatus: null,
 	});
 	const persisted = await persistInvoiceNumber(order.id);
 	if (!persisted) {
@@ -89,13 +53,12 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 	});
 
 	it("10 transactions concurrentes → 10 creditNoteNumber distincts gap-free", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
 		const orders: Order[] = [];
 		for (let i = 0; i < 10; i++) {
-			const o = await createPaidOrderWithInvoice(prisma, user.id, sku.id, `B-${i}-${Date.now()}`);
+			const o = await createPaidOrderWithInvoice(prisma, sku.id, `B-${i}-${Date.now()}`);
 			orders.push(o);
 		}
 
@@ -137,10 +100,9 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 	});
 
 	it("idempotence — 2 voidInvoice concurrents sur le MÊME order → 1 avoir + 1 noop already-voided", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		const order = await createPaidOrderWithInvoice(prisma, user.id, sku.id, `SAME-${Date.now()}`);
+		const order = await createPaidOrderWithInvoice(prisma, sku.id, `SAME-${Date.now()}`);
 
 		const [result1, result2] = await Promise.all([
 			voidInvoice({
@@ -171,15 +133,12 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 	});
 
 	it("OrderHistory contient 1 entry INVOICE_VOIDED par order voided", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
 		const orders: Order[] = [];
 		for (let i = 0; i < 5; i++) {
-			orders.push(
-				await createPaidOrderWithInvoice(prisma, user.id, sku.id, `HIST-${i}-${Date.now()}`),
-			);
+			orders.push(await createPaidOrderWithInvoice(prisma, sku.id, `HIST-${i}-${Date.now()}`));
 		}
 
 		await Promise.all(
@@ -201,7 +160,6 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 	});
 
 	it("voidInvoice + persistInvoiceNumber concurrents sur des orders distincts (advisory locks séparés)", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
@@ -209,49 +167,17 @@ describeIntegration("voidInvoice — concurrence Postgres réelle (EINV-TEST-002
 		const ordersForVoid: Order[] = [];
 		for (let i = 0; i < 5; i++) {
 			ordersForVoid.push(
-				await createPaidOrderWithInvoice(prisma, user.id, sku.id, `MIX-V-${i}-${Date.now()}`),
+				await createPaidOrderWithInvoice(prisma, sku.id, `MIX-V-${i}-${Date.now()}`),
 			);
 		}
 
 		const ordersForPersist: Order[] = [];
 		for (let i = 0; i < 5; i++) {
-			const o = await prisma.order.create({
-				data: {
-					userId: user.id,
-					orderNumber: `SYN-MIX-P-${i}-${Date.now()}`,
-					customerEmail: "mix@test.local",
-					customerName: "Mix Test",
-					shippingFirstName: "X",
-					shippingLastName: "Y",
-					shippingAddress1: "1 r",
-					shippingPostalCode: "75001",
-					shippingCity: "Paris",
-					shippingCountry: "FR",
-					shippingPhone: "+33600000000",
-					status: OrderStatus.PROCESSING,
-					paymentStatus: PaymentStatus.PAID,
-					paidAt: new Date(),
-					stripePaymentIntentId: `pi_mix_p_${i}_${Date.now()}`,
-					subtotal: 4999,
-					total: 4999,
-					paymentMethod: "CARD",
-					invoiceStatus: null,
-					items: {
-						create: [
-							{
-								skuId: sku.id,
-								quantity: 1,
-								productTitle: "Test",
-								price: 4999,
-								taxRate: 0,
-								taxAmount: 0,
-								lineTotalExcludingTax: 4999,
-								lineTotalIncludingTax: 4999,
-								taxCategoryCode: "ZB",
-							},
-						],
-					},
-				},
+			const o = await createTestOrder([{ skuId: sku.id }], {
+				orderNumber: `SYN-MIX-P-${i}-${Date.now()}`,
+				status: OrderStatus.PROCESSING,
+				paymentStatus: PaymentStatus.PAID,
+				invoiceStatus: null,
 			});
 			ordersForPersist.push(o);
 		}

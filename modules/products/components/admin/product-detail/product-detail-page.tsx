@@ -11,9 +11,18 @@ interface ProductDetailPageProps {
 	product: GetProductReturn;
 }
 
+/**
+ * ⚠️ Rend un FRAGMENT, pas un `<div className="space-y-6">`.
+ *
+ * `[slug]/page.tsx` enveloppe déjà fil d'Ariane + ce bloc + les dialogs dans un
+ * `space-y-6` : le div interne dupliquait exactement la même classe un niveau
+ * plus bas. En fragment, l'en-tête et la grille deviennent frères du fil
+ * d'Ariane et héritent du MÊME espacement — rendu identique, un palier de moins.
+ * Ne pas y remettre de conteneur sans en changer l'espacement.
+ */
 export function ProductDetailPage({ product }: ProductDetailPageProps) {
 	return (
-		<div className="space-y-6">
+		<>
 			<ProductDetailHeader product={product} />
 
 			<div className="grid gap-6 lg:grid-cols-3 lg:items-start">
@@ -28,6 +37,6 @@ export function ProductDetailPage({ product }: ProductDetailPageProps) {
 					<ProductDetailCollectionsCard collections={product.collections} />
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }

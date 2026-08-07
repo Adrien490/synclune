@@ -76,7 +76,7 @@ export async function deleteProduct(
 		});
 
 		if (!existingProduct) {
-			return notFound("Le produit");
+			return notFound("Produit");
 		}
 
 		// 5. Verifier si le produit a des commandes associees

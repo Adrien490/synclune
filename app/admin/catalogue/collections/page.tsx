@@ -1,3 +1,4 @@
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
@@ -15,7 +16,6 @@ import { CollectionsDataTableSkeleton } from "@/modules/collections/components/a
 import { CollectionsMobileList } from "@/modules/collections/components/admin/collections-mobile-list";
 import { CollectionsMobileListSkeleton } from "@/modules/collections/components/admin/collections-mobile-list-skeleton";
 import { CollectionsFilterBadges } from "@/modules/collections/components/admin/collections-filter-badges";
-import { CollectionsFilterSheet } from "@/modules/collections/components/admin/collections-filter-sheet";
 import { CollectionsSortBadge } from "@/modules/collections/components/admin/collections-sort-badge";
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
 import { RefreshCollectionsButton } from "@/modules/collections/components/admin/refresh-collections-button";
@@ -142,7 +142,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 							noPrefix
 						/>
 						<ButtonGroup aria-label="Filtres et actions">
-							<CollectionsFilterSheet />
+							<FilterTriggerButton />
 							<RefreshCollectionsButton />
 						</ButtonGroup>
 					</Toolbar>

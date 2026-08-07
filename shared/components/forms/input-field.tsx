@@ -78,7 +78,7 @@ export const InputField = ({
 	...rest
 }: InputFieldProps) => {
 	const field = useFieldContext<string | number | null>();
-	const hasError = useFieldErrorVisibility(field);
+	const { visible: hasError, announce } = useFieldErrorVisibility(field);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (type === "number") {
@@ -132,6 +132,7 @@ export const InputField = ({
 			{withCounter ? (
 				<div className="text-muted-foreground flex justify-between text-xs">
 					<FieldError
+						live={announce}
 						id={`${field.name}-error`}
 						errors={hasError ? field.state.meta.errors : undefined}
 					/>
@@ -141,6 +142,7 @@ export const InputField = ({
 				</div>
 			) : (
 				<FieldError
+					live={announce}
 					id={`${field.name}-error`}
 					errors={hasError ? field.state.meta.errors : undefined}
 				/>

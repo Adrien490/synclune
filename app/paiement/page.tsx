@@ -89,7 +89,7 @@ export default async function CheckoutPage() {
 							</h1>
 						</div>
 						<Alert variant="destructive" className="mb-6">
-							<WarningIcon className="size-4" />
+							<WarningIcon className="size-4" aria-hidden="true" />
 							<AlertTitle>Un petit ajustement est nécessaire</AlertTitle>
 							<AlertDescription className="mt-2 space-y-4">
 								<p className="text-sm">

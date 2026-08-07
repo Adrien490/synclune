@@ -159,6 +159,11 @@ function makeParams(overrides: Record<string, unknown> = {}) {
 
 function makeSkuRow(overrides: Record<string, unknown> = {}) {
 	return {
+		// Le verrou est pris en UN SEUL `$queryRaw` (`WHERE ps.id = ANY(…)`), et le
+		// service indexe les lignes rendues par `row.id`. Sans cet `id`, la Map de
+		// correspondance est vide et TOUT échoue en « Produit introuvable » — le
+		// fixture doit donc porter la colonne que le SELECT ramène.
+		id: "sku_1",
 		isActive: true,
 		inventory: 10,
 		productTitle: "Bague Étoile",
@@ -236,7 +241,13 @@ describe("createOrderInTransaction — stock verification", () => {
 		expect(sql).toContain("FOR UPDATE");
 	});
 
-	it("should call FOR UPDATE query for each successful cart item when multiple items", async () => {
+	// Le verrou est BATCHÉ : un seul `WHERE ps.id = ANY(…) FOR UPDATE`, pas une requête
+	// par article. Compter les appels ne dit donc plus rien de la couverture — c'est le
+	// tableau d'ids passé au `$queryRaw` qui la porte, et c'est lui qu'on assert. Un
+	// article oublié de ce tableau repart non verrouillé, donc survendable.
+	it("verrouille TOUS les articles du panier en une seule requête", async () => {
+		mockTx.$queryRaw.mockResolvedValue([makeSkuRow({ id: "sku_1" }), makeSkuRow({ id: "sku_2" })]);
+
 		const params = makeParams({
 			cartItems: [
 				{ skuId: "sku_1", quantity: 1 },
@@ -249,7 +260,9 @@ describe("createOrderInTransaction — stock verification", () => {
 
 		await createOrderInTransaction(params);
 
-		expect(mockTx.$queryRaw).toHaveBeenCalledTimes(2);
+		expect(mockTx.$queryRaw).toHaveBeenCalledTimes(1);
+		// Second argument du tagged template : le tableau d'ids interpolé dans `ANY(…)`.
+		expect(mockTx.$queryRaw.mock.calls[0]![1]).toEqual(["sku_1", "sku_2"]);
 	});
 
 	/**
@@ -447,6 +460,12 @@ describe("createOrderInTransaction — order creation", () => {
 	// le scan statique order-address-snapshot-immutability.regression.test.ts ne
 	// couvre pas (un swap city↔postalCode ou la perte d'addressLine2 passerait
 	// inaperçu avec la seule allowlist de writers).
+	//
+	// ⚠️ `toMatchObject` autorise le SUR-ENSEMBLE et les 9 clés sont écrites à la
+	// main : une colonne de snapshot ajoutée au schéma et non écrite ici resterait
+	// invisible. C'est
+	// `modules/payments/services/__tests__/order-snapshot-column-parity.regression.test.ts`
+	// qui tient cette direction-là, en dérivant la liste de `prisma/schema.prisma`.
 	it("should snapshot the shipping address field-by-field on the order", async () => {
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 
@@ -479,19 +498,12 @@ describe("createOrderInTransaction — order creation", () => {
 		});
 	});
 
-	it("should not write any billing* field at checkout (billingSameAsShipping schema default)", async () => {
-		// Design B2C assumé : aucun billing* n'est écrit au checkout — les défauts
-		// schema s'appliquent (billingSameAsShipping=true, billing*=NULL) et la
-		// facture retombe sur le shipping via buildBillingAddress. Seul writer
-		// billing : l'action admin update-order-billing-address.
-		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
-
-		await createOrderInTransaction(makeParams());
-
-		const createCall = mockTx.order.create.mock.calls[0]![0];
-		const billingKeys = Object.keys(createCall.data).filter((key) => key.startsWith("billing"));
-		expect(billingKeys).toEqual([]);
-	});
+	// ⚠️ L'assertion « aucune clé billing* écrite » a vécu ici jusqu'au 2026-08-07.
+	// Elle est devenue VACUE au drop des 9 colonnes `billing*` (2026-08-04) : elle ne
+	// pouvait plus échouer, et son commentaire citait `update-order-billing-address`,
+	// supprimé dans le même commit. Elle vit désormais dans
+	// `order-snapshot-column-parity.regression.test.ts`, doublée d'un contrôle du
+	// SCHÉMA — c'est ce second volet qui lui redonne un objet.
 
 	it("should coalesce missing addressLine2 to null and missing phone to empty string", async () => {
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
@@ -525,6 +537,78 @@ describe("createOrderInTransaction — order creation", () => {
 		expect(itemCall.data.productTitle).toBe("Bague Étoile");
 		expect(itemCall.data.price).toBe(2990);
 		expect(itemCall.data.quantity).toBe(2);
+		// Les 3 libellés de variante étaient écrits sans qu'aucun test ne les
+		// regarde (audit 2026-08-07) : supprimer `skuColor:` du `create` ne cassait
+		// rien, alors que la facture archivée sous SHA-256 les imprime pour 10 ans.
+		expect(itemCall.data.skuColor).toBe("Or");
+		expect(itemCall.data.skuMaterial).toBe("Argent");
+		expect(itemCall.data.skuSize).toBeNull();
+	});
+
+	it("joint les couleurs multiples en un seul libellé snapshot", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+
+		const multiColor = makeSkuResult({
+			colors: [
+				{ id: "c1", name: "Or", hex: "#FFD700" },
+				{ id: "c2", name: "Lavande", hex: "#B57EDC" },
+				{ id: "c3", name: "Menthe", hex: "#98FF98" },
+			],
+			size: "M",
+		});
+
+		await createOrderInTransaction(makeParams({ skuDetailsResults: [multiColor] }));
+
+		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
+		expect(itemCall.data.skuColor).toBe("Or · Lavande · Menthe");
+		expect(itemCall.data.skuSize).toBe("M");
+	});
+
+	it("préserve null quand le SKU n'a ni couleur, ni matière, ni taille", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+
+		const bare = makeSkuResult({ colors: [], material: null, size: null });
+
+		await createOrderInTransaction(makeParams({ skuDetailsResults: [bare] }));
+
+		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
+		// `join("")` sur un tableau vide rend `""` — le `|| null` du service évite
+		// d'écrire une chaîne vide là où la colonne est nullable.
+		expect(itemCall.data.skuColor).toBeNull();
+		expect(itemCall.data.skuMaterial).toBeNull();
+		expect(itemCall.data.skuSize).toBeNull();
+	});
+
+	/**
+	 * `OrderItem.skuColor` et `.skuMaterial` sont des `@db.VarChar(100)`, mais leur
+	 * source est AGRÉGÉE : trois noms de couleur joints par « · » dépassent
+	 * facilement 100 caractères. Sans troncature, c'est un `22001` Postgres levé
+	 * DANS la transaction de checkout — donc une commande refusée avec un
+	 * « Une erreur est survenue » qui ne nomme aucun champ.
+	 *
+	 * Tronquer plutôt que rejeter est le bon arbitrage : un libellé d'affichage
+	 * abrégé n'a aucune conséquence comptable (il ne porte ni prix ni quantité).
+	 */
+	it("tronque les libellés de variante à la largeur de la colonne (VarChar(100))", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+
+		const longColorNames = ["A".repeat(40), "B".repeat(40), "C".repeat(40)];
+		const overlong = makeSkuResult({
+			colors: longColorNames.map((name, i) => ({ id: `c${i}`, name, hex: "#000000" })),
+			material: "M".repeat(180),
+		});
+
+		await createOrderInTransaction(makeParams({ skuDetailsResults: [overlong] }));
+
+		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
+		// 3 × 40 + 2 séparateurs de 3 = 126 caractères avant troncature ; les 100
+		// premiers s'arrêtent au 14ᵉ « C ».
+		expect(itemCall.data.skuColor).toHaveLength(100);
+		expect(itemCall.data.skuColor).toBe(
+			`${"A".repeat(40)} · ${"B".repeat(40)} · ${"C".repeat(14)}`,
+		);
+		expect(itemCall.data.skuMaterial).toHaveLength(100);
+		expect(itemCall.data.skuMaterial).toBe("M".repeat(100));
 	});
 
 	it("should use primary image URL for order item", async () => {

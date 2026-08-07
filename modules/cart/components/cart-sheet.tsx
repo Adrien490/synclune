@@ -30,7 +30,7 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import Link from "next/link";
-import { useSheet } from "@/shared/providers/sheet-store-provider";
+import { useSheet } from "@/shared/providers/overlay-store-provider";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { CartSheetItemRow } from "./cart-sheet-item-row";
@@ -173,7 +173,7 @@ function CartSheetBody({
 					<Empty variant="borderless" className="flex-1">
 						<EmptyHeader>
 							<EmptyMedia variant="icon">
-								<ShoppingBagIcon className="size-6" />
+								<ShoppingBagIcon className="size-6" aria-hidden="true" />
 							</EmptyMedia>
 							<EmptyTitle>Ton panier est encore vide</EmptyTitle>
 						</EmptyHeader>
@@ -386,8 +386,8 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 	};
 
 	return (
-		<CartCloseContext.Provider value={close}>
-			<CartOptimisticContext.Provider value={cartOptimisticValue}>
+		<CartCloseContext value={close}>
+			<CartOptimisticContext value={cartOptimisticValue}>
 				{isMobile ? (
 					// `handleOnly` : trois gestes se disputaient les mêmes pixels — swipe
 					// horizontal de suppression d'article, scroll vertical de la liste, et
@@ -470,7 +470,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 						<ClearCartAlertDialog />
 					</Sheet>
 				)}
-			</CartOptimisticContext.Provider>
-		</CartCloseContext.Provider>
+			</CartOptimisticContext>
+		</CartCloseContext>
 	);
 }

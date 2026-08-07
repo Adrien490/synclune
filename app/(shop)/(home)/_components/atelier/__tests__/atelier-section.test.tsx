@@ -331,7 +331,7 @@ describe("AtelierSection — le fil (rail continu, 2026-08-06)", () => {
 
 describe("AtelierSection — voix et périmètre", () => {
 	it("tutoie — aucun lexique vouvoyant dans le rendu", () => {
-		// La copie historique (`docs/atelier-story.md`) VOUVOYAIT : ce test est
+		// La copie historique de l'atelier VOUVOYAIT : ce test est
 		// ce qui empêche de la recopier telle quelle (même défaut co-visible que
 		// celui corrigé sur /paiement, `checkout-voice-tutoiement`).
 		const { container } = render(<AtelierSection />);

@@ -15,7 +15,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { PackageIcon, StarIcon, WarningIcon } from "@phosphor-icons/react/ssr";

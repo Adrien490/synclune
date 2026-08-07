@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 
-import { ProductDetailPage } from "@/modules/products/components/admin/product-detail";
+import { ProductDetailPage } from "@/modules/products/components/admin/product-detail/product-detail-page";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import {
 	Breadcrumb,

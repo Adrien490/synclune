@@ -9,7 +9,8 @@ import { getProducts } from "@/modules/products/data/get-products";
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-provider";
 import { AppBadgeSync } from "@/shared/components/app-badge-sync";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { cn } from "@/shared/utils/cn";
 import { isRecent } from "@/shared/utils/dates";
 import { extractCollectionImages } from "@/modules/collections/utils/collection-images.utils";
@@ -39,10 +40,15 @@ const NEW_PRODUCT_BADGE_DAYS = 14;
  * seconde pendant un miss figerait un rail « Nouveautés » VIDE pour toute la
  * fenêtre `catalog`. Ici l'argument est un `createdAt`, la clé de cache est donc
  * du catalogue pur et il n'y a aucune valeur dégradée à figer.
+ *
+ * Tag `PRODUCTS_LIST` : sans lui l'entrée n'avait AUCUN levier d'invalidation et ne
+ * se rafraîchissait qu'à l'expiration du profil (6 h). Le badge est dérivé du
+ * catalogue — republier une création doit pouvoir le remettre à jour tout de suite.
  */
 async function isNewArrival(createdAt: Date): Promise<boolean> {
 	"use cache";
 	cacheLife("catalog");
+	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
 	return isRecent(createdAt, NEW_PRODUCT_BADGE_DAYS);
 }

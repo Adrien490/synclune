@@ -9,7 +9,7 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 
 import type { Carrier } from "@/modules/orders/utils/carrier.utils";
 import { UpdateTrackingForm } from "./update-tracking-form";

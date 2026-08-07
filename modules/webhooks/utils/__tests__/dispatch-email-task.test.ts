@@ -17,7 +17,6 @@ const {
 	mockSendRefundConfirmationOnce,
 	mockSendAdminRefundFailedAlert,
 	mockSendAdminDisputeAlert,
-	mockSendAdminInvoiceFailedAlert,
 	mockSendAdminOrderProcessingFailedAlert,
 	mockSendAdminDashboardRefundAttentionAlert,
 } = vi.hoisted(() => ({
@@ -26,7 +25,6 @@ const {
 	mockSendRefundConfirmationOnce: vi.fn(),
 	mockSendAdminRefundFailedAlert: vi.fn(),
 	mockSendAdminDisputeAlert: vi.fn(),
-	mockSendAdminInvoiceFailedAlert: vi.fn(),
 	mockSendAdminOrderProcessingFailedAlert: vi.fn(),
 	mockSendAdminDashboardRefundAttentionAlert: vi.fn(),
 }));
@@ -37,7 +35,6 @@ vi.mock("@/modules/emails/services/order-emails", () => ({
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminRefundFailedAlert: mockSendAdminRefundFailedAlert,
 	sendAdminDisputeAlert: mockSendAdminDisputeAlert,
-	sendAdminInvoiceFailedAlert: mockSendAdminInvoiceFailedAlert,
 	sendAdminOrderProcessingFailedAlert: mockSendAdminOrderProcessingFailedAlert,
 	sendAdminDashboardRefundAttentionAlert: mockSendAdminDashboardRefundAttentionAlert,
 }));
@@ -59,7 +56,6 @@ describe("dispatchEmailTask", () => {
 		mockSendRefundConfirmationOnce.mockResolvedValue({ success: true });
 		mockSendAdminRefundFailedAlert.mockResolvedValue({ success: true });
 		mockSendAdminDisputeAlert.mockResolvedValue({ success: true });
-		mockSendAdminInvoiceFailedAlert.mockResolvedValue({ success: true });
 		mockSendAdminOrderProcessingFailedAlert.mockResolvedValue({ success: true });
 		mockSendAdminDashboardRefundAttentionAlert.mockResolvedValue({ success: true });
 	});
@@ -77,10 +73,6 @@ describe("dispatchEmailTask", () => {
 			[
 				{ type: "ADMIN_DISPUTE_ALERT", data: { d: 6 } } as unknown as PostWebhookTask,
 				() => expect(mockSendAdminDisputeAlert).toHaveBeenCalledWith({ d: 6 }),
-			],
-			[
-				{ type: "ADMIN_INVOICE_FAILED_ALERT", data: { d: 7 } } as unknown as PostWebhookTask,
-				() => expect(mockSendAdminInvoiceFailedAlert).toHaveBeenCalledWith({ d: 7 }),
 			],
 			[
 				{

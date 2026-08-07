@@ -66,7 +66,7 @@ et le transfert d'échelle est signalé partout où il casse.
 ### 0.3 Ce qui ne s'applique PAS ici — à lire avant le reste
 
 Contexte : micro-entreprise française, une personne, bijoux colorés faits main, B2C France + UE,
-français et EUR, ~20 commandes/mois (SSOT `docs/BUSINESS.md`). À ce format, une part importante du
+français et EUR, ~20 commandes/mois (SSOT `shared/constants/brand.ts` + `CLAUDE.md`). À ce format, une part importante du
 canon CRO est inapplicable — pas « difficile », **inapplicable**.
 
 | Conseil standard                           | Verdict ici                                                                                                      |
@@ -649,8 +649,8 @@ CLS).
 - `fetchpriority="high"` sur **une ou deux images au maximum** — au-delà le signal ne signifie plus
   rien. Le `preload` ne se justifie que si la ressource LCP est référencée depuis du CSS ou du JS
   externe, pas depuis le HTML.
-  > **Ici, c'est UNE**, pas deux : [`docs/COLLECTION-CARD.md`](COLLECTION-CARD.md) § « Un seul
-  > candidat LCP par page » a chiffré la règle pour ce dépôt et fait de `preload` +
+  > **Ici, c'est UNE**, pas deux : la règle « un seul candidat LCP par page » est chiffrée pour ce
+  > dépôt et fait de `preload` +
   > `fetchPriority="high"` une **paire indissociable**. Deux images en priorité haute sur une grille
   > de vignettes, c'est deux candidats LCP qui se disputent le même budget. La règle générale
   > tolère ; la décision locale tranche — et c'est elle qui s'applique.
@@ -690,7 +690,7 @@ police exige `crossorigin`, **même auto-hébergée**.
 > `adjustFontFallback` d'une table de métriques embarquée
 > (`node_modules/next/dist/server/capsize-font-metrics.json`) ; **une police absente de cette table ne peut pas
 > avoir de fallback compensé**, quel que soit le soin apporté. C'est le cas de la display de ce
-> dépôt, établi et daté dans [`docs/FONTS-AUDIT-2026-08-05.md`](FONTS-AUDIT-2026-08-05.md) — d'où
+> dépôt, établi et daté à l'audit typo du 2026-08-05 — d'où
 > le choix assumé de `display: "swap"` partout (`shared/styles/fonts.ts`) plutôt que d'`optional`.
 > Le critère auditable n'est donc pas « les overrides sont là » mais **« ils sont là, ou leur
 > impossibilité est documentée et datée »**. Auditer contre la règle générale ici fabrique un faux
@@ -747,9 +747,9 @@ rendement réel, pas par niveau WCAG.
 > **Trois de ces critères sont devenus des règles d'interface du dépôt**, parce qu'ils se décident
 > en écrivant un composant et pas en auditant une page : **2.5.8 (cible 24 × 24)**, **1.4.10 (reflow
 > 320 px)** et le trio mobile du § 6.4 (`svh`/`dvh`, `inputmode`, plancher 16 px). Ils vivent
-> désormais dans [`docs/UI-CONVENTIONS.md`](UI-CONVENTIONS.md) § « Cibles tactiles, reflow et
-> saisie », qui est le document lu **avant de toucher à un composant**. Ce qui suit en reste la
-> source et la justification — pas le lieu où on va les chercher.
+> désormais dans `CLAUDE.md` § Conventions UI, qui est la section lue **avant de toucher à un
+> composant**. Ce qui suit en reste la source et la justification — pas le lieu où on va les
+> chercher.
 
 Les critères qui mordent vraiment sur une landing 🟢 :
 
@@ -993,8 +993,8 @@ non.
   > compensation en `transform: scale()`, jamais une restriction du viewport.
 
 > Ces trois règles (`svh`/`dvh`, `inputmode`, plancher 16 px) sont **appliquées** depuis
-> [`docs/UI-CONVENTIONS.md`](UI-CONVENTIONS.md) § « Cibles tactiles, reflow et saisie » — c'est là
-> qu'un développeur les rencontre au bon moment. Ici vit leur justification.
+> `CLAUDE.md` § Conventions UI — c'est là qu'un développeur les rencontre au bon moment. Ici vit
+> leur justification.
 
 ---
 
@@ -1238,7 +1238,7 @@ un point acquis à vie** : elle porte la date de la passe.
 | --- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --- |
 | ☐   | Quatre sections ou moins ; aucune ne compte sur une audience > 15 % au-delà de la 4ᵉ    | `inspect` — compter les sections de `app/(shop)/(home)/page.tsx`    | 3.1 |
 | ☐   | Le récit d'atelier vient **après** le périmètre catalogue                               | `inspect` — ordre de rendu dans `page.tsx`                          | 3.3 |
-| ☐   | Sur la page d'accueil, le récit est une **accroche**, pas l'histoire complète           | 👁 — la version longue vit dans `docs/atelier-story.md`              | 3.3 |
+| ☐   | Sur la page d'accueil, le récit est une **accroche**, pas l'histoire complète           | 👁 — la copie longue vit dans `shared/constants/atelier-content.ts`  | 3.3 |
 | ☐   | Aucune section ne se termine sans chemin de sortie **ni** débord visible de la suivante | 👁 — le débord compte comme sortie ; un bouton n'est pas obligatoire | 3.4 |
 | ☐   | Aucun CTA n'est répété là où il n'est pas le terminus naturel de sa section             | 👁                                                                   | 3.5 |
 
@@ -1295,12 +1295,12 @@ premières lignes le remplacent — budget de laboratoire, puis RUM collecté pa
 | ☐   | Le poids de la route reste sous budget                                                                 | `test` `pnpm size` — `.size-limit.json`, entrée `Homepage`                                      | 6.1 |
 | ☐   | Le p75 de terrain est **regardé** là où il existe : le RUM maison                                      | `inspect` `app/_components/web-vitals-reporter.tsx` — CrUX restera vide, ce n'est pas un défaut | 6.1 |
 | ☐   | **L'image LCP n'est pas lazy-loadée** — vérifié dans le **HTML servi**                                 | `inspect` `curl -s localhost:3000 \| grep -o 'loading="[a-z]*"' \| head` — pas la console       | 6.1 |
-| ☐   | **Une seule** image en priorité haute, et son `preload` va avec                                        | `inspect` — décision locale (`docs/COLLECTION-CARD.md`) plus stricte que la règle générale      | 6.1 |
+| ☐   | **Une seule** image en priorité haute, et son `preload` va avec                                        | `inspect` — décision locale (doctrine carte collection) plus stricte que la règle générale      | 6.1 |
 | ☐   | Toutes les images sous la flottaison sont en `lazy`                                                    | `inspect` — le seuil Chrome charge à 1250 px en 4G, bien avant la visibilité                    | 6.1 |
 | ☐   | Toute image porte `width`/`height` ou `aspect-ratio`                                                   | `inspect` — 1ʳᵉ source de CLS                                                                   | 6.1 |
 | ☐   | Aucune animation d'entrée ne maintient le contenu LCP invisible                                        | `inspect` — ⚠️ `fill-mode: both` tient le LCP à `opacity: 0` ; défaut **mesuré**, pas de goût   | 8.8 |
 | ☐   | Les seules propriétés animées au chargement sont `transform` et `opacity`                              | `inspect` — `top`, `left`, `box-shadow` déclenchent du CLS                                      | 6.1 |
-| ☐   | Le fallback de police porte des overrides de métriques, **ou l'impossibilité est documentée et datée** | `inspect` — voir `docs/FONTS-AUDIT-2026-08-05.md` : hors table capsize ⇒ impossible             | 6.1 |
+| ☐   | Le fallback de police porte des overrides de métriques, **ou l'impossibilité est documentée et datée** | `inspect` — display hors table capsize ⇒ compensation impossible, cf. § 6.1                     | 6.1 |
 
 ### Accessibilité — 10 pts
 

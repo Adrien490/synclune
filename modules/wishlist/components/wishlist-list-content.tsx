@@ -73,14 +73,14 @@ export function WishlistListContent({ items }: WishlistListContentProps) {
 	// Empty state when all items have been optimistically removed
 	if (isEmpty) {
 		return (
-			<WishlistListOptimisticContext.Provider value={contextValue}>
+			<WishlistListOptimisticContext value={contextValue}>
 				<WishlistEmptyState />
-			</WishlistListOptimisticContext.Provider>
+			</WishlistListOptimisticContext>
 		);
 	}
 
 	return (
-		<WishlistListOptimisticContext.Provider value={contextValue}>
+		<WishlistListOptimisticContext value={contextValue}>
 			<div className="space-y-8">
 				{/* Header with count */}
 				<p className="text-muted-foreground text-sm">
@@ -129,6 +129,6 @@ export function WishlistListContent({ items }: WishlistListContentProps) {
 					{optimisticTotalCount} article{optimisticTotalCount > 1 ? "s" : ""} dans tes favoris
 				</div>
 			</div>
-		</WishlistListOptimisticContext.Provider>
+		</WishlistListOptimisticContext>
 	);
 }

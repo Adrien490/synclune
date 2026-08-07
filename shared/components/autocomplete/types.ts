@@ -20,6 +20,18 @@ export interface AutocompleteProps<T> {
 	disabled?: boolean;
 	/** Callback appele lors du changement de valeur */
 	onChange: (value: string) => void;
+	/**
+	 * Callback appele quand le champ est REELLEMENT quitte (apres le delai qui
+	 * laisse passer un clic sur une suggestion).
+	 *
+	 * ⚠️ Sans lui, `AutocompleteField` ne pouvait pas remonter `field.handleBlur`
+	 * a TanStack Form : `meta.isBlurred` restait faux a jamais, donc
+	 * `useFieldErrorVisibility` ne revelait l'erreur du champ qu'a la SOUMISSION.
+	 * Le champ Adresse du tunnel etait le seul a ne pas signaler « requis » quand
+	 * on le quittait vide, alors que les six autres le faisaient (audit a11y
+	 * 2026-08-07).
+	 */
+	onBlur?: () => void;
 	/** Callback appele lors de la selection d'un item */
 	onSelect: (item: T) => void;
 	/** Liste des items a afficher */

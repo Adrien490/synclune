@@ -14,10 +14,36 @@ const nextConfig: NextConfig = {
 	// Le dépôt n'a ni `<Link prefetch={true}>` ni `export const prefetch` : rien à
 	// arbitrer, et les 2 `prefetch={false}` restent des opt-out par lien.
 	partialPrefetching: true,
+	// C'est la CONTREPARTIE de la convention « NO MEMOIZATION » (CLAUDE.md) : le
+	// dépôt n'a aucun `useMemo`/`useCallback`/`React.memo` parce que le compilateur
+	// les produit lui-même. Le retirer ne casserait rien de visible — l'application
+	// perdrait simplement toute auto-mémoïsation, en silence. D'où l'assertion de
+	// `test/conventions/no-react-memoization.regression.test.ts`, qui verrouille la
+	// CAUSE en plus de la conséquence.
+	// ⚠️ Pas de `compilationMode: "annotation"` : le dépôt n'a aucun `"use memo"`,
+	// ce mode reviendrait à ne rien compiler.
 	reactCompiler: true,
 	experimental: {
 		authInterrupts: true,
 		turbopackFileSystemCacheForBuild: true,
+		// Port Rust du React Compiler, exécuté DANS Turbopack en natif au lieu de
+		// passer par Babel via Node (16.3). Il ne fait que CHOISIR l'implémentation :
+		// c'est `reactCompiler: true` ci-dessus qui allume le compilateur, ce flag
+		// seul ne compile rien. ⚠️ Turbopack uniquement : avec webpack, Next throw à
+		// la validation.
+		//
+		// MESURÉ le 2026-08-07, builds à froid (`rm -rf .next` avant chacun) :
+		// **21,2 s et 26,4 s avec, 26,9 s sans**. La dispersion entre deux runs
+		// identiques couvre l'écart entre les deux implémentations : à cette taille
+		// de projet, le gain annoncé n'est PAS démontrable — la pré-sélection SWC de
+		// Next limite déjà Babel aux fichiers pertinents. La sortie compilée, elle,
+		// est équivalente (mêmes caches `$[N]`, mêmes `Symbol.for("react.memo_cache_sentinel")`
+		// dans les chunks applicatifs ; 96 vs 99 sentinelles sur la home, à découpage
+		// de chunks près). C'est donc un pari sur l'avenir de l'option, pas une
+		// optimisation acquise : le rollback est cette seule ligne, et
+		// `babel-plugin-react-compiler` RESTE en devDep tant qu'elle est
+		// expérimentale — c'est lui qui reprend la main.
+		turbopackRustReactCompiler: true,
 		// NOTE PERF : `inlineCss: true` a été testé (audit Lighthouse 2026-05-29) et
 		// REJETÉ — inliner le bundle CSS (~64 KiB) dans le <head> gonfle le document
 		// critique et dégrade nettement le FCP mobile sur 4G (/produits +19 %,

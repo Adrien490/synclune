@@ -17,7 +17,7 @@ const { mockIsMobile } = vi.hoisted(() => ({
 
 const { mockOpenShortcuts } = vi.hoisted(() => ({ mockOpenShortcuts: vi.fn() }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({ isOpen: false, open: mockOpenShortcuts, close: vi.fn() }),
 }));
 

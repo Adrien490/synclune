@@ -15,7 +15,7 @@
  * ## Pourquoi `md:` et non `lg:`
  *
  * Le seuil est celui du **chrome admin** (barre latérale + bottom bar, `md` =
- * 48rem — cf. `docs/UI-CONVENTIONS.md` § Breakpoints). Tant que ces sections
+ * 48rem — cf. CLAUDE.md § Conventions UI). Tant que ces sections
  * basculaient à `lg` (64rem), la plage 768–1023px — l'iPad en portrait — rendait
  * le chrome desktop AVEC un formulaire encore en mode téléphone : pas de carte,
  * pas de bordure, titres gris en capitales. Deux seuils sur le même écran se

@@ -125,6 +125,54 @@ describe("confirmCheckoutSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
+	/**
+	 * ⚠️ Les trois bornes ci-dessous sont posées par des `.refine()`, donc **invisibles**
+	 * au contrat `test/contract/zod-prisma-length-parity.contract.test.ts` : il introspecte
+	 * les `.max()` déclarés, et une fonction de refine est opaque. Ces trois assertions
+	 * sont le SEUL filet sur ce trio — sans elles, rien ne vérifie que
+	 * `Order.shippingFirstName`/`shippingLastName` (`VarChar(50)`) et
+	 * `Order.customerName` (`VarChar(100)`) sont tenus.
+	 *
+	 * Le mode d'échec est un `22001` Postgres DANS la transaction de paiement, rendu à la
+	 * cliente en « Une erreur est survenue », sans indication du champ à corriger.
+	 */
+	it("rejette un prénom de plus de 50 caractères (colonne shippingFirstName)", () => {
+		const result = confirmCheckoutSchema.safeParse({
+			...validCheckout,
+			shippingAddress: { ...validAddress, fullName: `${"A".repeat(51)} Doe` },
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("rejette un nom de plus de 50 caractères (colonne shippingLastName)", () => {
+		const result = confirmCheckoutSchema.safeParse({
+			...validCheckout,
+			shippingAddress: { ...validAddress, fullName: `Jane ${"B".repeat(51)}` },
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("accepte exactement 50 + 50 caractères — la borne du nom complet est 100, pas 101", () => {
+		// `MAX_FULL_NAME_LENGTH` vaut 100 : « prénom(50) + espace + nom(50) » = 101 doit
+		// donc être REFUSÉ ici, par la borne du nom recomposé et non par le refine des
+		// parties. C'est la borne de la colonne `Order.customerName` qui prime.
+		const result = confirmCheckoutSchema.safeParse({
+			...validCheckout,
+			shippingAddress: { ...validAddress, fullName: `${"A".repeat(50)} ${"B".repeat(50)}` },
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("rejette un fullName sans espace — shippingLastName ne doit jamais être vide", () => {
+		// `parseFullName("Leane")` rend `lastName: ""`, qui partirait figé dix ans dans le
+		// snapshot et s'imprimerait tel quel sur la facture (Art. 286 CGI).
+		const result = confirmCheckoutSchema.safeParse({
+			...validCheckout,
+			shippingAddress: { ...validAddress, fullName: "Leane" },
+		});
+		expect(result.success).toBe(false);
+	});
+
 	it("should reject an empty addressLine1", () => {
 		const result = confirmCheckoutSchema.safeParse({
 			...validCheckout,

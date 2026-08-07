@@ -1,7 +1,7 @@
 "use client";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 import { useClearCart } from "../hooks/use-clear-cart";

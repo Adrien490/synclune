@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/view-transition";
 import type { CreateProductFormProps } from "./create-product-form-types";
-import { CreateProductMediaCard } from "./create-product-media-card";
+import { MediaArrayCard } from "./shared/media-array-card";
 import { CreateProductInfoCard } from "./create-product-info-card";
 import { CreateProductPriceStockCard } from "./create-product-price-stock-card";
 import { CreateProductEtabliBar } from "./create-product-etabli-bar";
@@ -229,7 +229,14 @@ export function CreateProductForm({
 			 * devient de la marge, jamais une colonne de plus.
 			 */}
 			<fieldset disabled={isPending} className="max-w-[46rem] space-y-10">
-				<CreateProductMediaCard
+				<MediaArrayCard
+					fieldName="initialSku.media"
+					viewTransitionName="product-create-media"
+					title="Les photos"
+					// Le nom annoncé suit le titre visible : la région s'appelait encore
+					// « Médias du bijou » alors que la section affiche « Les photos ».
+					ariaLabel="Les photos"
+					accent="sun"
 					form={form}
 					isMediaUploading={isMediaUploading}
 					uploadProgress={uploadProgress}

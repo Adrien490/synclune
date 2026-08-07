@@ -1,6 +1,6 @@
 "use client";
 
-import { useSheetStore } from "@/shared/providers/sheet-store-provider";
+import { useSheetStore } from "@/shared/providers/overlay-store-provider";
 import type { SheetId } from "@/shared/types/store.types";
 
 /**

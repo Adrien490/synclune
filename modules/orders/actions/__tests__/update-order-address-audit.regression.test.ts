@@ -74,7 +74,8 @@ vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
 		NOT_FOUND: "Commande introuvable.",
 		CANNOT_UPDATE_ADDRESS_SHIPPED: "Commande déjà expédiée.",
-		CANNOT_UPDATE_BILLING_INVOICED: "Facture déjà émise.",
+		CANNOT_UPDATE_ADDRESS_CREDIT_NOTE: "Avoir déjà émis.",
+		CANNOT_UPDATE_ADDRESS_INVOICE_ARCHIVING: "Facture en cours d'archivage.",
 		UPDATE_SHIPPING_ADDRESS_FAILED: "Erreur shipping.",
 	},
 }));
@@ -88,7 +89,9 @@ vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderA
 
 import { updateOrderShippingAddress } from "../update-order-shipping-address";
 
-describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDATED", () => {
+// `update-order-billing-address` a été supprimé avec les 9 colonnes `billing*`
+// (2026-08-04) : il ne reste qu'UNE action d'adresse.
+describe("ORD-BIZ-005 — update-order-shipping-address crée OrderHistory.ADDRESS_UPDATED", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-7", name: "Lucie" } });
@@ -111,12 +114,18 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 					shippingPostalCode: "75001",
 					shippingCity: "Paris",
 					shippingCountry: "FR",
+					shippingPhone: "+33612345678",
 				},
 			});
 			mockPrisma.order.findUnique.mockResolvedValue({
 				id: VALID_CUID,
 				orderNumber: "SYN-2026-0001",
 				status: "PROCESSING",
+				// Aucune pièce comptable encore émise : les deux gardes comptables
+				// d'`update-order-shipping-address` laissent passer.
+				invoiceNumber: null,
+				invoicePdfUrl: null,
+				creditNoteNumber: null,
 				shippingFirstName: "Marie",
 				shippingLastName: "OldName",
 				shippingAddress1: "1 Rue Ancienne",
@@ -124,6 +133,7 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 				shippingPostalCode: "75002",
 				shippingCity: "Paris",
 				shippingCountry: "FR",
+				shippingPhone: "+33600000000",
 			});
 
 			const result = await updateOrderShippingAddress(
@@ -154,6 +164,9 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 							"shippingAddress1",
 							"shippingCity",
 						]),
+						// Booléen, jamais une valeur : trace l'écart éventuel entre la
+						// facture scellée et la colonne vivante (audit 2026-08-07).
+						invoiceAlreadyIssued: false,
 					}),
 				}),
 			);

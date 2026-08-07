@@ -12,4 +12,7 @@ export { Fade } from "./fade";
 export { Reveal } from "./reveal";
 export { Stagger } from "./stagger";
 
-export { HandDrawnAccent, HandDrawnUnderline } from "./hand-drawn-accent";
+// `HandDrawnAccent` n'est PAS réexporté ici : ses 4 appelants l'importent tous
+// depuis `./hand-drawn-accent` en direct. Un barrel qui réexporte ce que personne
+// n'y prend est une deuxième porte sur la même pièce.
+export { HandDrawnUnderline } from "./hand-drawn-accent";

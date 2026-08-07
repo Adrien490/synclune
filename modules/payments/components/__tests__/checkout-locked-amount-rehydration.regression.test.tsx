@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AMOUNT_LOCK_ALERT_ID } from "../../constants/checkout-fields";
 
 /**
  * @regression checkout-locked-amount-rehydration-2026-07-26
@@ -194,36 +195,35 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			expect(screen.getByText("Montant verrouillé")).toBeInTheDocument();
 		});
 
-		it("gèle les sections qui portent le montant (frais de livraison)", () => {
+		it("expose l'alerte du verrou avec l'id que les champs gelés référencent", () => {
 			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
 
-			// Ciblé par sa <legend> : depuis KI-001 il y a DEUX fieldsets (celui de
-			// l'adresse, jamais désactivé, vient en premier dans le DOM) — un
-			// `querySelector("fieldset")` nu testerait le mauvais.
-			const legend = screen.getByText("Frais de livraison");
-			expect(legend.closest("fieldset")).toBeDisabled();
-			expect(container.querySelectorAll("fieldset[disabled]")).toHaveLength(1);
+			// ⚠️ Ce test exigeait naguère `<fieldset disabled>` autour de « Frais de
+			// livraison ». Ce fieldset ne gelait RIEN : la section est en lecture seule,
+			// et le `disabled` d'un fieldset n'agit que sur les contrôles qu'il contient.
+			// Retiré à l'audit a11y du 2026-08-07, avec sa `<legend>` sr-only qui
+			// annonçait un groupe de saisie inexistant.
+			//
+			// Ce qui compte désormais : l'alerte porte l'`id` auquel les deux champs
+			// tarifaires se rattachent.
+			expect(screen.getByText("Montant verrouillé")).toBeInTheDocument();
+			expect(container.querySelector(`#${AMOUNT_LOCK_ALERT_ID}`)).not.toBeNull();
 		});
 
-		it("ne place PAS la section Livraison sous le fieldset gelé (KI-001)", () => {
+		it("ne gèle AUCUNE section entière (KI-001)", () => {
 			// Le serveur répercute une correction de rue / ville / nom sur la commande encore
-			// PENDING. L'enfermer sous le gel rendait ce recours inatteignable — c'est le
+			// PENDING. L'enfermer sous un gel rendait ce recours inatteignable — c'est le
 			// scénario du défaut : faute de frappe dans la rue, carte refusée, plus aucun
 			// moyen de corriger.
 			//
-			// Ce suite-là ne rend aucun `<input>` (le mock de `AppField` renvoie `null`) : le
-			// gel champ par champ — `disabled={lockDestination}` sur code postal + pays, et
+			// Cette suite ne rend aucun `<input>` (le mock de `AppField` renvoie `null`) : le
+			// gel champ par champ — `readOnly` sur le code postal, `disabled` sur le pays, et
 			// eux seuls — est verrouillé par
 			// `locked-amount-address-editable.regression.test.ts`.
-			render(<CheckoutForm cart={cart as never} session={null} />);
+			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
 
-			const shippingSection = screen.getByTestId("section-Livraison");
-			expect(shippingSection.closest("fieldset[disabled]")).toBeNull();
-
-			// Contrôle de sens : la section des frais, elle, EST sous le gel — c'est
-			// elle qui porte le montant.
-			const shippingCostSection = screen.getByText("Frais de livraison");
-			expect(shippingCostSection.closest("fieldset")).toBeDisabled();
+			expect(screen.getByTestId("section-Livraison").closest("fieldset[disabled]")).toBeNull();
+			expect(container.querySelectorAll("fieldset[disabled]")).toHaveLength(0);
 		});
 
 		it("n'appelle JAMAIS updateAmount (sinon « Commande déjà initiée » en boucle)", () => {
@@ -282,10 +282,11 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			expect(screen.queryByText("Montant verrouillé")).not.toBeInTheDocument();
 		});
 
-		it("laisse le fieldset actif", () => {
+		it("n'expose ni alerte de verrou ni fieldset désactivé", () => {
 			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
 
-			expect(container.querySelector("fieldset")).not.toBeDisabled();
+			expect(container.querySelector(`#${AMOUNT_LOCK_ALERT_ID}`)).toBeNull();
+			expect(container.querySelectorAll("fieldset[disabled]")).toHaveLength(0);
 		});
 	});
 });

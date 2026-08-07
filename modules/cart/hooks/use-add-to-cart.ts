@@ -5,7 +5,7 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useRef, useTransition } from "react";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
-import { useSheetStore } from "@/shared/providers/sheet-store-provider";
+import { useSheetStore } from "@/shared/providers/overlay-store-provider";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { FUNNEL_EVENTS, trackEvent } from "@/shared/lib/analytics/track";
 import { announce } from "@/shared/utils/announce";

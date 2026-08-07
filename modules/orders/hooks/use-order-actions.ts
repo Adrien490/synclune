@@ -17,7 +17,7 @@ import {
 
 import { OrderStatus, PaymentStatus, type InvoiceStatus } from "@/app/generated/prisma/browser";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 
 import { useResendOrderEmail } from "./use-resend-order-email";
 

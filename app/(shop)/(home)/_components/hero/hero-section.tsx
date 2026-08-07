@@ -126,10 +126,9 @@ const HEADING_ENTER: CSSProperties = {
  */
 export function HeroSection({ productsPromise }: { productsPromise: Promise<GetProductsReturn> }) {
 	// Pas de `data-accent` sur la section : il ne sert qu'à publier
-	// `--section-accent` / `--section-glow` pour SectionHalo, HandDrawnAccent et
-	// CursorGlow — l'étal n'en monte aucun. Un attribut d'accent sans
-	// consommateur laisse croire qu'une cascade existe. À reposer le jour où
-	// l'un d'eux revient.
+	// `--section-accent` pour HandDrawnAccent / HandDrawnUnderline — l'étal n'en
+	// monte aucun. Un attribut d'accent sans consommateur laisse croire qu'une
+	// cascade existe. À reposer le jour où l'un d'eux revient.
 	return (
 		<section
 			id="hero"

@@ -78,7 +78,7 @@ export async function loadMoreProducts(
 				products: [],
 				nextCursor: null,
 				hasMore: false,
-				error: "Trop de requêtes. Veuillez patienter.",
+				error: "Trop de requêtes. Patiente un instant.",
 			};
 		}
 

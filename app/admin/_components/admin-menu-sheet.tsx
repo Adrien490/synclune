@@ -19,7 +19,7 @@ import {
 import { ROUTES } from "@/shared/constants/urls";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { isRouteActive } from "@/shared/lib/navigation";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { cn } from "@/shared/utils/cn";
 import {
 	ArrowSquareOutIcon,

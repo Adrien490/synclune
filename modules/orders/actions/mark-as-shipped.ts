@@ -169,7 +169,7 @@ export async function markAsShipped(
 		});
 
 		if (!order) {
-			return notFound("Commande");
+			return notFound("Commande", "f");
 		}
 
 		if ("_error" in order) {

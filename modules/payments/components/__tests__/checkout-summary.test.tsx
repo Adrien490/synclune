@@ -14,7 +14,7 @@ vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: mockFormatEuro,
 }));
 
-vi.mock("@/shared/providers/sheet-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useSheet: vi.fn(() => ({ open: mockOpenCart })),
 }));
 

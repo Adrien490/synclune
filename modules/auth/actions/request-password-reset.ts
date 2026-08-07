@@ -1,7 +1,10 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import {
+	enforceRateLimitForCurrentUser,
+	getRateLimitId,
+} from "@/modules/auth/lib/rate-limit-helpers";
 import { handleActionError, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
@@ -10,7 +13,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { requestPasswordResetSchema } from "../schemas/auth.schemas";
 
 const GENERIC_SUCCESS_MESSAGE =
-	"Si cet email existe dans notre base, vous recevrez un lien de réinitialisation.";
+	"Si cet email existe dans notre base, tu recevras un lien de réinitialisation.";
 
 export const requestPasswordReset = async (
 	_: ActionState | undefined,
@@ -34,8 +37,13 @@ export const requestPasswordReset = async (
 		// 3. Rate limit per email-target (3/h) — empêche le mail bombing d'une victime
 		// via rotation d'IP (Tor, botnet). Identifier dédié, indépendant du RL IP/user.
 		// Réponse générique pour ne PAS révéler que l'email existe ou est sous attaque.
+		// ⚠️ Le 3ᵉ argument n'est pas optionnel en pratique : l'extraction automatique de
+		// l'IP ne marche que sur un identifiant préfixé `ip:`. Sans lui, `effectiveIp`
+		// vaut `null` et whitelist, blacklist ET plafond global 100/min/IP sont inertes
+		// pour cet appel — le motif corrigé le 2026-07-31 sur les routes PDF.
+		const { ipAddress } = await getRateLimitId();
 		const emailKey = `password-reset-email:${email.toLowerCase().trim()}`;
-		const emailCheck = await checkRateLimit(emailKey, AUTH_LIMITS.PASSWORD_RESET);
+		const emailCheck = await checkRateLimit(emailKey, AUTH_LIMITS.PASSWORD_RESET, ipAddress);
 		if (!emailCheck.success) {
 			return success(GENERIC_SUCCESS_MESSAGE);
 		}

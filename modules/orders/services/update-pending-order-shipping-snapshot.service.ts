@@ -13,6 +13,18 @@ export interface PendingShippingSnapshot {
 	city: string;
 	country: string;
 	phone: string;
+	/**
+	 * Identité client — le MÊME `fullName` que `firstName`/`lastName` (recomposé par
+	 * `order-creation.service.ts`) et l'email normalisé.
+	 *
+	 * ⚠️ Ils font partie du snapshot au même titre que l'adresse : les laisser figés
+	 * pendant qu'on corrige `shipping*` produisait un `customerName` divergent de
+	 * `shippingFirstName + shippingLastName` (donc une recherche admin qui ne trouve
+	 * que l'ancien nom) et surtout un `customerEmail` fautif — l'email de confirmation,
+	 * donc l'UNIQUE lien de suivi HMAC de la cliente, partait à l'adresse erronée.
+	 */
+	customerName: string;
+	customerEmail: string;
 }
 
 export type UpdatePendingShippingSnapshotOutcome =
@@ -20,19 +32,29 @@ export type UpdatePendingShippingSnapshotOutcome =
 	| { updated: false; reason: "not-found" | "not-pending" | "no-change" };
 
 /**
- * Corrige le snapshot d'adresse de livraison d'une commande **encore PENDING**, à la
- * demande du client qui resoumet le tunnel après un échec de paiement.
+ * Corrige le snapshot d'adresse de livraison **et d'identité client** d'une commande
+ * **encore PENDING**, à la demande du client qui resoumet le tunnel après un échec de
+ * paiement.
  *
  * ## Le défaut que ce service ferme (KI-001)
  *
  * `resolveIdempotentHit` refuse une resoumission dont les lignes, le pays ou le code
  * postal divergent de la commande liée au PaymentIntent — mais pas `addressLine1`,
- * `addressLine2`, `city`, le nom ou le téléphone. Une resoumission qui corrigeait la RUE
- * était donc acceptée, la commande gardant son snapshot figé : le client croyait avoir
- * corrigé son adresse, l'étiquette portait l'ancienne, et rien ne le signalait ni côté
- * client ni côté admin. Scénario réel : faute de frappe dans le numéro → carte refusée
- * pour une raison quelconque → correction de la rue en réessayant → paiement accepté →
- * colis expédié à l'adresse fautive.
+ * `addressLine2`, `city`, le nom, le téléphone ni l'email. Une resoumission qui corrigeait
+ * la RUE était donc acceptée, la commande gardant son snapshot figé : le client croyait
+ * avoir corrigé son adresse, l'étiquette portait l'ancienne, et rien ne le signalait ni
+ * côté client ni côté admin. Scénario réel : faute de frappe dans le numéro → carte
+ * refusée pour une raison quelconque → correction de la rue en réessayant → paiement
+ * accepté → colis expédié à l'adresse fautive.
+ *
+ * ⚠️ **Le nom et l'email ont été ajoutés le 2026-08-07** (audit invariant 5) : la
+ * première version ne réécrivait que les 8 `shipping*`, ce qui laissait exactement le
+ * même défaut sur deux autres champs. `customerName` divergeait alors de
+ * `shippingFirstName + shippingLastName` — il est recomposé du MÊME `fullName` — et
+ * `customerEmail` restait fautif, donc l'email de confirmation (et avec lui l'UNIQUE
+ * lien de suivi HMAC, seul accès de la cliente à sa commande) partait à l'adresse
+ * erronée, en silence. Corriger l'adresse mais pas l'email fermait le symptôme le plus
+ * visible en laissant le plus grave.
  *
  * ## Pourquoi réécrire un snapshot est ici légitime
  *
@@ -54,10 +76,10 @@ export type UpdatePendingShippingSnapshotOutcome =
  *
  * ⚠️ RGPD — l'audit trail est immuable 10 ans et n'est jamais scrubé : `authorName` est
  * le libellé neutre `"Client"` (jamais `user.name`/`user.email`) et la metadata ne porte
- * que des NOMS de champs, jamais de valeurs d'adresse. Cf. invariant 3 + régressions
- * `order-history-no-customer-pii`.
+ * que des NOMS de champs, jamais de valeurs d'adresse, de nom ou d'email. Cf. invariant 3
+ * + régressions `order-history-no-customer-pii`.
  *
- * ⚠️ Ce service est un writer allowlisté de `shipping*` : il est nommé dans
+ * ⚠️ Ce service est un writer allowlisté de `shipping*` et `customer*` : il est nommé dans
  * `order-address-snapshot-immutability.regression.test.ts`, qui exige aussi qu'il pose
  * un `createOrderAuditTx` avec `action: "ADDRESS_UPDATED"`. L'écriture est **inline**
  * (`data: { shippingFirstName: … }`) délibérément, pour rester visible du scanner de ce
@@ -78,6 +100,8 @@ export async function updatePendingOrderShippingSnapshot(params: {
 			where: { id: orderId },
 			select: {
 				paymentStatus: true,
+				customerName: true,
+				customerEmail: true,
 				shippingFirstName: true,
 				shippingLastName: true,
 				shippingAddress1: true,
@@ -100,6 +124,8 @@ export async function updatePendingOrderShippingSnapshot(params: {
 
 		const changedFields = (
 			[
+				["customerName", shipping.customerName, current.customerName],
+				["customerEmail", shipping.customerEmail, current.customerEmail],
 				["shippingFirstName", shipping.firstName, current.shippingFirstName],
 				["shippingLastName", shipping.lastName, current.shippingLastName],
 				["shippingAddress1", shipping.address1, current.shippingAddress1],
@@ -120,6 +146,8 @@ export async function updatePendingOrderShippingSnapshot(params: {
 		await tx.order.update({
 			where: { id: orderId },
 			data: {
+				customerName: shipping.customerName,
+				customerEmail: shipping.customerEmail,
 				shippingFirstName: shipping.firstName,
 				shippingLastName: shipping.lastName,
 				shippingAddress1: shipping.address1,
@@ -137,7 +165,7 @@ export async function updatePendingOrderShippingSnapshot(params: {
 			source: HistorySource.CUSTOMER,
 			// Libellé neutre imposé : cette table survit à l'effacement RGPD.
 			authorName: "Client",
-			note: "Adresse de livraison corrigee par le client avant paiement",
+			note: "Coordonnees corrigees par le client avant paiement",
 			metadata: {
 				addressType: "shipping",
 				changedFields,

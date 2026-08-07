@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { EDIT_CUSTOMER_INFO_DIALOG_ID } from "../edit-customer-info-dialog";
 import type { OrderCustomerCardProps } from "./types";

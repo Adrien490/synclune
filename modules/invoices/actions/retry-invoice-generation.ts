@@ -70,7 +70,7 @@ export async function retryInvoiceGeneration(
 			return success(`Facture rattrapée (${parts.join(", ") || "aucune action"})`);
 		}
 		if (result.kind === "failed") {
-			return error("Le rattrapage a échoué — voir Sentry et docs/RUNBOOK.md");
+			return error("Le rattrapage a échoué — voir Sentry");
 		}
 		return success("Rien à reconcilier (commande déjà saine)");
 	} catch (e) {

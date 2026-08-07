@@ -12,11 +12,13 @@
  * `updateOrderShippingAddress`. Toute modification de la regle doit etre
  * faite des deux cotes. Cf. ORD-MAP-002.
  */
+import { InfoIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { useUpdateOrderShippingAddress } from "@/modules/orders/hooks/use-update-order-shipping-address";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { useAppForm } from "@/shared/components/forms";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
@@ -43,6 +45,15 @@ interface EditShippingAddressFormProps {
 	shippingCity: string;
 	shippingCountry: string;
 	shippingPhone?: string | null;
+	/**
+	 * Une facture a déjà été émise pour cette commande (`Order.invoiceNumber`).
+	 *
+	 * Purement informatif : l'édition reste permise (un colis mal adressé est un
+	 * préjudice réel), mais la facture ARCHIVÉE conserve l'adresse d'origine — elle
+	 * est scellée sous SHA-256 pour dix ans (Art. L102 B LPF). Sans cet avertissement,
+	 * l'admin corrige une adresse en croyant corriger le document.
+	 */
+	invoiceIssued?: boolean;
 	onSuccess?: () => void;
 	redirectOnSuccess?: boolean;
 	successPath?: string;
@@ -69,6 +80,7 @@ export function EditShippingAddressForm({
 	shippingCity,
 	shippingCountry,
 	shippingPhone,
+	invoiceIssued = false,
 	onSuccess,
 	redirectOnSuccess = false,
 	successPath,
@@ -149,6 +161,17 @@ export function EditShippingAddressForm({
 			</p>
 
 			<FormServerErrorAlert errors={serverErrors} />
+
+			{invoiceIssued && (
+				<Alert variant="info">
+					<InfoIcon className="size-4" aria-hidden="true" />
+					<AlertTitle>Une facture a déjà été émise</AlertTitle>
+					<AlertDescription>
+						La facture archivée conserve l&apos;adresse précédente — elle est figée pour dix ans.
+						Cette correction ne vaut que pour l&apos;expédition.
+					</AlertDescription>
+				</Alert>
+			)}
 
 			<RequiredFieldsNote />
 

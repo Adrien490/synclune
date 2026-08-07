@@ -1,7 +1,7 @@
 /**
  * @regression theme-token-consumers-2026-08-06
  *
- * Critère d'admission des variables CSS (docs/UI-CONVENTIONS.md § Variables CSS) :
+ * Critère d'admission des variables CSS (CLAUDE.md § Conventions UI) :
  * **un token custom du bloc `@theme` doit avoir au moins un lecteur hors `globals.css`.**
  *
  * ⚠️ **Pourquoi ce test existe** : un token sans consommateur ne casse rien — ni `tsc`,
@@ -102,7 +102,7 @@ describe("@regression theme-token-consumers", () => {
 		expect(
 			orphans,
 			"Tokens @theme sans aucun lecteur (un token sans lecteur est du poids mort — " +
-				"l'inliner au call site ou le supprimer, cf. docs/UI-CONVENTIONS.md § Variables CSS)",
+				"l'inliner au call site ou le supprimer, cf. CLAUDE.md § Conventions UI)",
 		).toEqual([]);
 	});
 });

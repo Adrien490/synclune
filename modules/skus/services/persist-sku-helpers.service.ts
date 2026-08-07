@@ -5,7 +5,8 @@
  * (validation existence color/material + uniqueness check) appelés depuis 2 actions
  * mutations. Atomicité requise (read-then-write dans la même transaction).
  *
- * Cf. `docs/audit/01-conventions.md` § Services transactionnels partagés.
+ * Cf. `CLAUDE.md` § Module Layers Pattern → « Exception: Services transactionnels
+ * partages ».
  */
 
 import type { Prisma } from "@/app/generated/prisma/client";

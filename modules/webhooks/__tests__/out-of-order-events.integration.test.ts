@@ -14,7 +14,7 @@
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import {
 	OrderStatus,
 	PaymentStatus,
@@ -31,29 +31,13 @@ describeIntegration("Webhooks — out-of-order delivery (integration)", () => {
 
 	beforeEach(async () => {
 		prisma = getIntegrationPrismaClient();
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		order = await prisma.order.create({
-			data: {
-				userId: user.id,
-				orderNumber: `SYN-OOO-${Date.now()}`,
-				customerEmail: user.email,
-				customerName: "Marie",
-				shippingFirstName: "Marie",
-				shippingLastName: "Dupont",
-				shippingAddress1: "1 rue",
-				shippingPostalCode: "75001",
-				shippingCity: "Paris",
-				shippingCountry: "FR",
-				shippingPhone: "+33600000000",
-				status: OrderStatus.PROCESSING,
-				paymentStatus: PaymentStatus.PAID,
-				stripePaymentIntentId: "pi_test_ooo",
-				total: 5000,
-				subtotal: 5000,
-				items: { create: [{ skuId: sku.id, quantity: 1, productTitle: "X", price: 5000 }] },
-			},
+		// `paidAt` est posé d'office par la factory sur un PAID — sans lui, le CHECK
+		// `Order_paid_requires_paidAt` rejette la ligne.
+		order = await createTestOrder([{ skuId: sku.id, productTitle: "X", price: 5000 }], {
+			status: OrderStatus.PROCESSING,
+			paymentStatus: PaymentStatus.PAID,
 		});
 	});
 

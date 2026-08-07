@@ -2,7 +2,6 @@ import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emai
 import {
 	sendAdminRefundFailedAlert,
 	sendAdminDisputeAlert,
-	sendAdminInvoiceFailedAlert,
 	sendAdminOrderProcessingFailedAlert,
 	sendAdminDashboardRefundAttentionAlert,
 	sendAdminCreditNoteOverlapAlert,
@@ -73,9 +72,6 @@ export async function dispatchEmailTask(task: EmailTask): Promise<void> {
 			break;
 		case "ADMIN_DISPUTE_ALERT":
 			await sendAdminDisputeAlert(task.data);
-			break;
-		case "ADMIN_INVOICE_FAILED_ALERT":
-			await sendAdminInvoiceFailedAlert(task.data);
 			break;
 		case "ADMIN_ORDER_PROCESSING_FAILED_ALERT":
 			await sendAdminOrderProcessingFailedAlert(task.data);

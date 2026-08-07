@@ -92,7 +92,7 @@ const HOME_EYEBROW_CLASS = "text-muted-foreground text-[0.8125rem] tracking-[0.0
  *   remettre une branche responsive.
  *
  * ⚠️ Copie au TUTOIEMENT et à la première personne. Elle est RÉÉCRITE, pas
- * recopiée de `docs/atelier-story.md`, qui vouvoie (« Je vais vous faire une
+ * recopiée de la copie historique, qui vouvoyait (« Je vais vous faire une
  * confidence ») — la recopier réintroduirait le défaut de voix mixte corrigé
  * sur le tunnel de paiement (`checkout-voice-tutoiement.regression.test.ts`).
  */

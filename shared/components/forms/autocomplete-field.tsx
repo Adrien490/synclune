@@ -54,7 +54,7 @@ export function AutocompleteField<T>({
 }: AutocompleteFieldProps<T>) {
 	const field = useFieldContext<string>();
 
-	const hasError = useFieldErrorVisibility(field);
+	const { visible: hasError, announce } = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -70,6 +70,11 @@ export function AutocompleteField<T>({
 				name={field.name}
 				value={field.state.value}
 				onChange={(value) => field.handleChange(value)}
+				// ⚠️ Sans ce câblage, `meta.isBlurred` restait faux à jamais et
+				// `useFieldErrorVisibility` ne révélait l'erreur qu'à la SOUMISSION :
+				// le champ Adresse du checkout était le seul à ne rien dire quand on
+				// le quittait vide (audit a11y 2026-08-07).
+				onBlur={field.handleBlur}
 				onSelect={onSelect}
 				disabled={disabled}
 				aria-invalid={hasError}
@@ -83,6 +88,7 @@ export function AutocompleteField<T>({
 				</p>
 			)}
 			<FieldError
+				live={announce}
 				id={`${field.name}-error`}
 				errors={hasError ? field.state.meta.errors : undefined}
 			/>

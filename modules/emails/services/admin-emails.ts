@@ -436,7 +436,7 @@ export async function sendAdminInvoiceFailedAlert({
 		AdminAlertEmail({
 			type: "invoice",
 			context: contextLines.join("\n"),
-			summary: `La génération automatique de la facture pour la commande ${orderNumber} a échoué. Conformité légale : générer la facture manuellement et l'envoyer au client. Voir docs/RUNBOOK.md.`,
+			summary: `La génération automatique de la facture pour la commande ${orderNumber} a échoué. Conformité légale : générer la facture manuellement et l'envoyer au client.`,
 			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
@@ -569,7 +569,7 @@ export async function sendAdminCreditNoteFailedAlert({
 		AdminAlertEmail({
 			type: "invoice",
 			context: contextLines.join("\n"),
-			summary: `L'émission de l'avoir post-remboursement pour la facture ${invoiceNumber} a échoué. État comptable incohérent : facture émise + remboursement enregistré + pas d'avoir. Le cron reconcile-invoices rejouera dans la nuit. Voir docs/RUNBOOK.md.`,
+			summary: `L'émission de l'avoir post-remboursement pour la facture ${invoiceNumber} a échoué. État comptable incohérent : facture émise + remboursement enregistré + pas d'avoir. Le cron reconcile-invoices rejouera dans la nuit.`,
 			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
@@ -621,7 +621,7 @@ export async function sendAdminCreditNoteOverlapAlert({
 		AdminAlertEmail({
 			type: "invoice",
 			context: contextLines.join("\n"),
-			summary: `Un avoir TOTAL (${creditNoteNumber}) a été émis sur la commande ${orderNumber} alors que ${partialCreditNoteCount} avoir(s) partiel(s) existaient déjà. Les avoirs se chevauchent sur le montant déjà remboursé (sur-crédit potentiel, Art. 272-I CGI). À réconcilier manuellement. Voir docs/RUNBOOK.md.`,
+			summary: `Un avoir TOTAL (${creditNoteNumber}) a été émis sur la commande ${orderNumber} alors que ${partialCreditNoteCount} avoir(s) partiel(s) existaient déjà. Les avoirs se chevauchent sur le montant déjà remboursé (sur-crédit potentiel, Art. 272-I CGI). À réconcilier manuellement.`,
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
 		}),
@@ -656,7 +656,7 @@ export async function sendAdminSequenceOverflowAlert({
 		AdminAlertEmail({
 			type: "invoice",
 			context: [`Type    : ${label}`, `Année   : ${year}`, `Limite  : 99 999`].join("\n"),
-			summary: `La séquence ${label} a atteint sa limite annuelle de 99 999. Toute nouvelle émission est bloquée. Action requise : étendre la CHECK regex DB à 6 chiffres puis déployer. Voir docs/RUNBOOK.md.`,
+			summary: `La séquence ${label} a atteint sa limite annuelle de 99 999. Toute nouvelle émission est bloquée. Action requise : étendre la CHECK regex DB à 6 chiffres puis déployer.`,
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir le dashboard",
 		}),

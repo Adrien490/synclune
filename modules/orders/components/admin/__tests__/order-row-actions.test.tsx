@@ -60,11 +60,8 @@ vi.mock("@/modules/orders/services/order-status-validation.service", () => ({
 	getOrderPermissions: mockGetOrderPermissions,
 }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: mockUseAlertDialog,
-}));
-
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: mockUseDialog,
 }));
 

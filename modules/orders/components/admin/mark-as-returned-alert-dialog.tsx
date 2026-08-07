@@ -1,7 +1,7 @@
 "use client";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
 
 export const MARK_AS_RETURNED_DIALOG_ID = "mark-as-returned";

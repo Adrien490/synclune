@@ -8,6 +8,7 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { FilterDefinition } from "@/shared/hooks/use-filter";
 import { useFilter } from "@/shared/hooks/use-filter";
+import { getCategorySlugFromPath } from "@/modules/products/services/product-filter-params.service";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface ProductTypeOption {
@@ -22,7 +23,9 @@ interface ProductFilterBadgesProps {
 	materials: MaterialOption[];
 	productTypes?: ProductTypeOption[];
 	className?: string;
-	activeProductType?: { slug: string; label: string };
+	// Plus de prop `activeProductType` : elle venait d'un `await params` de la
+	// page, ce qui enfermait le bandeau dans son trou dynamique. Il se dérive du
+	// pathname + de la liste (cachée) des types, cf. plus bas.
 }
 
 /**
@@ -34,11 +37,29 @@ function ProductFilterBadgesInner({
 	materials,
 	productTypes = EMPTY_PRODUCT_TYPES,
 	className,
-	activeProductType,
 }: ProductFilterBadgesProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
+
+	/**
+	 * Type venant du PATH (`/produits/[productTypeSlug]`), et son libellé lu dans
+	 * la liste des types — celle-là même qui alimente les cases du meuble.
+	 *
+	 * ⚠️ Repli sur le slug plutôt que sur `undefined` : `activeProductType` ne
+	 * porte pas que l'affichage, il décide aussi que « Tout effacer » navigue
+	 * vers `/produits` (plus bas). Un type sans aucun bijou publié est absent de
+	 * la liste (`hasProducts: true` côté `getCatalogData`) ; sur SA page, mieux
+	 * vaut une étiquette au slug brut qu'un bandeau muet dont on ne peut plus
+	 * sortir. Ce cas est déjà `noindex` (thin content).
+	 */
+	const categorySlug = getCategorySlugFromPath(pathname);
+	const activeProductType = categorySlug
+		? {
+				slug: categorySlug,
+				label: productTypes.find((type) => type.slug === categorySlug)?.label ?? categorySlug,
+			}
+		: undefined;
 	const {
 		optimisticActiveFilters,
 		removeFilterOptimistic,

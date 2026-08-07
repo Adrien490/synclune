@@ -131,7 +131,7 @@ export function ScrollToTop() {
 							"bg-background/90 size-12 rounded-full shadow-md backdrop-blur-md",
 							"hidden cursor-pointer items-center justify-center md:flex",
 							"hover:bg-background hover:shadow-lg",
-							"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+							"focus-ring",
 						)}
 					>
 						{!reducedMotion && <ScrollRing />}

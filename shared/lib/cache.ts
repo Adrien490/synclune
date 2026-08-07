@@ -17,7 +17,10 @@
  *
  * ⚠️ Un `cacheTag()` n'est PAS la clé. Confondre les deux avait fait basculer 25
  * fetchers en `private` au nom d'un risque IDOR qui n'existait pas (audit
- * 2026-07-31 — le motif d'origine est corrigé dans `modules/auth/data/get-session.ts`).
+ * 2026-07-31 — le motif d'origine vivait dans `modules/auth/data/get-session.ts`,
+ * supprimé avec l'espace client le 2026-08-01 ; la résolution de session vit
+ * désormais dans `modules/auth/lib/get-current-session.ts`, mémoïsée par `cache()`
+ * de React et non par une directive Next).
  *
  * Le vrai critère est donc la CONFIDENTIALITÉ, et il se paie :
  *
@@ -28,10 +31,18 @@
  *
  * `private` n'est jamais stocké côté serveur (mémoire du navigateur uniquement,
  * non persistée au rechargement) : la requête repart en base à CHAQUE rendu
- * serveur. À réserver aux données nominatives (panier, commandes client, favoris,
- * comptes, sessions). Pour du catalogue ou un agrégat, préférer `"use cache"`
- * même quand l'identité sert de paramètre — cf. l'allowlist
+ * serveur. À réserver aux données nominatives. Pour du catalogue ou un agrégat,
+ * préférer `"use cache"` même quand l'identité sert de paramètre — cf. l'allowlist
  * `PUBLIC_IDENTITY_SCOPED_CACHES` de `cache-scoping.regression.test.ts`.
+ *
+ * ⚠️ Le dépôt ne compte AUCUN `"use cache: private"` en production (état vérifié
+ * au 2026-08-07), et ce n'est pas un oubli. Ni le panier ni les favoris n'en
+ * relèvent depuis leur passage en cookie (2026-08-04 / 2026-08-03) : le cookie
+ * porte les ids, et seule leur matérialisation catalogue est cachée — en PUBLIC,
+ * keyée sur ces ids. Il n'y a plus de compte client, donc plus de « commandes
+ * client », et la session admin n'est pas cachée du tout (`cache()` de React,
+ * portée requête). Corollaire : toute entrée du dépôt est joignable par un
+ * `updateTag`/`revalidateTag`, y compris depuis un cron ou un webhook.
  *
  * Deux corollaires sur `private` :
  * - `cacheLife()` n'y gouverne que le cache client (le routeur impose 30 s de

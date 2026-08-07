@@ -27,11 +27,7 @@ const AdminPageTitleContext = createContext<AdminPageTitleValue | null>(null);
 export function AdminPageTitleProvider({ children }: { children: React.ReactNode }) {
 	const [title, setTitle] = useState<string | null>(null);
 
-	return (
-		<AdminPageTitleContext.Provider value={{ title, setTitle }}>
-			{children}
-		</AdminPageTitleContext.Provider>
-	);
+	return <AdminPageTitleContext value={{ title, setTitle }}>{children}</AdminPageTitleContext>;
 }
 
 /** Lecture côté chrome (header mobile, fil d'Ariane). */

@@ -24,7 +24,7 @@ const { mockDialog, mockFormStore, mockFormHook } = vi.hoisted(() => ({
 	},
 }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => mockDialog,
 }));
 

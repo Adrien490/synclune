@@ -56,7 +56,7 @@ export async function duplicateMaterial(
 		});
 
 		if (!original) {
-			return notFound("Materiau");
+			return notFound("Matériau");
 		}
 
 		// 5. Generer un nouveau nom unique via la SSOT (parité couleurs/types —
@@ -95,6 +95,6 @@ export async function duplicateMaterial(
 			slug: duplicate.slug,
 		});
 	} catch (e) {
-		return handleActionError(e, "Impossible de dupliquer le materiau");
+		return handleActionError(e, "Impossible de dupliquer le matériau");
 	}
 }

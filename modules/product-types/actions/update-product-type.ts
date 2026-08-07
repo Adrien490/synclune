@@ -68,7 +68,7 @@ export async function updateProductType(
 			});
 
 			if (labelExists) {
-				return error("Ce label de type existe deja. Veuillez en choisir un autre.");
+				return error("Ce label de type existe déjà. Choisis-en un autre.");
 			}
 		}
 

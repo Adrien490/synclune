@@ -2,7 +2,7 @@
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { Button } from "@/shared/components/ui/button";
 import { ShortcutKbd } from "@/shared/components/ui/shortcut-kbd";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";

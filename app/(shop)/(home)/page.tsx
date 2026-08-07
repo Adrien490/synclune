@@ -64,10 +64,9 @@ export const metadata: Metadata = {
  * Page d'accueil — premier écran refondu en « L'étal » (2026-08-04).
  *
  * L'ordre de lecture est délibéré : accroche produit (étal) → orientation
- * (collections, 2026-08-05 — cf. `docs/LANDING-SECTION-COLLECTIONS.md`) →
+ * (collections, 2026-08-05) →
  * récit (atelier, 2026-08-05 — copie RÉÉCRITE au tutoiement dans la SSOT
- * `shared/constants/atelier-content.ts` ; `docs/atelier-story.md` reste
- * l'archive de la copie d'origine et le plan de swap des photos) →
+ * `shared/constants/atelier-content.ts`) →
  * réassurance (FAQ) → signature (footer). L'atelier est 100 % statique
  * (aucun fetch) : il se monte sans promesse ni Suspense, et son nœud `HowTo`
  * vit dans le `@graph` de `StructuredData`, comme le `FAQPage`.

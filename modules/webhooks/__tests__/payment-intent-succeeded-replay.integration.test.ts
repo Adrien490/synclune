@@ -19,55 +19,19 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 import { OrderStatus, PaymentStatus, type Order } from "@/app/generated/prisma/client";
 
 const integrationEnabled = Boolean(process.env.INTEGRATION_DATABASE_URL);
 const describeIntegration = integrationEnabled ? describe : describe.skip;
 
-async function createPaidOrder(
-	prisma: ReturnType<typeof getIntegrationPrismaClient>,
-	userId: string,
-	skuId: string,
-): Promise<Order> {
-	return prisma.order.create({
-		data: {
-			userId,
-			orderNumber: `SYN-RPLY-${Date.now()}`,
-			customerEmail: "replay@test.local",
-			customerName: "Replay Test",
-			shippingFirstName: "R",
-			shippingLastName: "Y",
-			shippingAddress1: "1 rue",
-			shippingPostalCode: "75001",
-			shippingCity: "Paris",
-			shippingCountry: "FR",
-			shippingPhone: "+33600000000",
-			status: OrderStatus.PROCESSING,
-			paymentStatus: PaymentStatus.PAID,
-			paidAt: new Date(),
-			stripePaymentIntentId: `pi_replay_${Date.now()}`,
-			subtotal: 4999,
-			total: 4999,
-			paymentMethod: "CARD",
-			invoiceStatus: null,
-			items: {
-				create: [
-					{
-						skuId,
-						quantity: 1,
-						productTitle: "Test",
-						price: 4999,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: 4999,
-						lineTotalIncludingTax: 4999,
-						taxCategoryCode: "ZB",
-					},
-				],
-			},
-		},
+/** `paidAt` et `stripePaymentIntentId` sont remplis d'office par la factory sur un PAID. */
+async function createPaidOrder(skuId: string): Promise<Order> {
+	return createTestOrder([{ skuId }], {
+		status: OrderStatus.PROCESSING,
+		paymentStatus: PaymentStatus.PAID,
+		invoiceStatus: null,
 	});
 }
 
@@ -79,10 +43,9 @@ describeIntegration("payment_intent.succeeded — replay idempotent (EINV-TEST-0
 	});
 
 	it("5 replays ensureInvoiceNumberPersisted parallèles → 1 seul invoiceNumber persisté", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		const order = await createPaidOrder(prisma, user.id, sku.id);
+		const order = await createPaidOrder(sku.id);
 
 		// Simule 5 instances Vercel recevant le même webhook event
 		await Promise.all(Array.from({ length: 5 }, () => ensureInvoiceNumberPersisted(order.id)));
@@ -98,10 +61,9 @@ describeIntegration("payment_intent.succeeded — replay idempotent (EINV-TEST-0
 	});
 
 	it("ensureInvoice puis 4 replays → noop sur les 4 (skip si déjà set)", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		const order = await createPaidOrder(prisma, user.id, sku.id);
+		const order = await createPaidOrder(sku.id);
 
 		// 1er appel séquentiel (pose le numéro)
 		await ensureInvoiceNumberPersisted(order.id);

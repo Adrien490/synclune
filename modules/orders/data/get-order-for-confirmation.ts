@@ -1,42 +1,13 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { z } from "zod";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
-
-// Lightweight select for the confirmation page
-const CONFIRMATION_ORDER_SELECT = {
-	id: true,
-	// EINV-SEC-001 : nécessaire pour l'ownership check côté wrapper non-caché.
-	// Ne PAS exposer userId à un composant client (server-only).
-	orderNumber: true,
-	createdAt: true,
-	customerEmail: true,
-	subtotal: true,
-	shippingCost: true,
-	total: true,
-	paymentStatus: true,
-	stripePaymentIntentId: true,
-	shippingFirstName: true,
-	shippingLastName: true,
-	shippingAddress1: true,
-	shippingAddress2: true,
-	shippingPostalCode: true,
-	shippingCity: true,
-	shippingCountry: true,
-	items: {
-		select: {
-			id: true,
-			productTitle: true,
-			productImageUrl: true,
-			skuColor: true,
-			skuMaterial: true,
-			skuSize: true,
-			price: true,
-			quantity: true,
-		},
-	},
-} as const;
+// Sélecteur allégé de la page de confirmation. Il vit dans `constants/` — c'est
+// ce qui le rend visible à `order-select-snapshot-only.regression.test.ts`
+// (garde read-side de l'invariant #4).
+import { CONFIRMATION_ORDER_SELECT } from "../constants/order.constants";
 
 const confirmationParamsSchema = z.object({
 	orderId: z.cuid2(),
@@ -60,13 +31,27 @@ export async function getOrderForConfirmation(orderId: string, orderNumber: stri
 	const validation = confirmationParamsSchema.safeParse({ orderId, orderNumber });
 	if (!validation.success) return null;
 
-	const order = await fetchOrderForConfirmation(
-		validation.data.orderId,
-		validation.data.orderNumber,
-	);
-	if (!order) return null;
+	try {
+		const order = await fetchOrderForConfirmation(
+			validation.data.orderId,
+			validation.data.orderNumber,
+		);
+		if (!order) return null;
 
-	return order;
+		return order;
+	} catch (error) {
+		unstable_rethrow(error);
+		// Le repli vit ICI, HORS du scope "use cache" de `fetchOrderForConfirmation`
+		// (CACHE-DEGRADED-VALUE-001). Il y était jusqu'au 2026-08-07 : un hoquet DB
+		// d'une seconde figeait « commande introuvable » pour toute la fenêtre du
+		// profil `checkout` (5 min), et la page de confirmation redirige sur `/` — soit
+		// l'acheteuse renvoyée à l'accueil juste après avoir payé, sans recours autre
+		// que d'attendre. Même motif que `get-cart.ts`.
+		logger.error("Failed to fetch order for confirmation", error, {
+			service: "getOrderForConfirmation",
+		});
+		return null;
+	}
 }
 
 /**
@@ -79,19 +64,13 @@ async function fetchOrderForConfirmation(orderId: string, orderNumber: string) {
 	cacheLife("checkout");
 	cacheTag(ORDERS_CACHE_TAGS.CONFIRMATION(orderId));
 
-	try {
-		return await prisma.order.findFirst({
-			where: {
-				id: orderId,
-				orderNumber,
-				...notDeleted,
-			},
-			select: CONFIRMATION_ORDER_SELECT,
-		});
-	} catch (error) {
-		logger.error("Failed to fetch order for confirmation", error, {
-			service: "getOrderForConfirmation",
-		});
-		return null;
-	}
+	// ⚠️ AUCUN try/catch dans ce scope : le repli appartient au wrapper ci-dessus.
+	return await prisma.order.findFirst({
+		where: {
+			id: orderId,
+			orderNumber,
+			...notDeleted,
+		},
+		select: CONFIRMATION_ORDER_SELECT,
+	});
 }

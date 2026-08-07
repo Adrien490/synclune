@@ -18,6 +18,15 @@ interface CheckboxFilterItemProps {
 	 * Compteur optionnel (ex: nombre de produits)
 	 */
 	count?: number;
+	/**
+	 * Signal d'INTENTION — survol ou focus, avant tout clic.
+	 *
+	 * Sert au préchargement de la route qu'une coche va ouvrir (filtre « type »
+	 * du catalogue, seul filtre qui change de path). Doit rester idempotent et
+	 * sans effet visible : il peut se déclencher plusieurs fois, et ne jamais
+	 * être suivi d'un clic.
+	 */
+	onIntent?: () => void;
 }
 
 /**
@@ -32,10 +41,19 @@ export function CheckboxFilterItem({
 	description,
 	indicator,
 	count,
+	onIntent,
 }: CheckboxFilterItemProps) {
 	return (
 		<label
 			htmlFor={id}
+			// Le SURVOL porte sur la rangée entière — c'est elle que la souris vise.
+			// Sur tactile il n'y a pas de survol : `onPointerDown` précède le clic
+			// d'assez pour valoir un temps d'avance.
+			// ⚠️ Le pendant clavier (`onFocus`) vit sur la Checkbox, pas ici : un
+			// `<label>` n'est pas focusable, et `jsx-a11y` refuse à juste titre un
+			// gestionnaire de focus sur un élément non interactif.
+			onPointerEnter={onIntent}
+			onPointerDown={onIntent}
 			className={cn(
 				"-mx-3 flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5",
 				"transition-colors duration-150",
@@ -47,7 +65,13 @@ export function CheckboxFilterItem({
 				checked && "bg-primary/5",
 			)}
 		>
-			<Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} className="shrink-0" />
+			<Checkbox
+				id={id}
+				checked={checked}
+				onCheckedChange={onCheckedChange}
+				onFocus={onIntent}
+				className="shrink-0"
+			/>
 			<div className="flex min-w-0 flex-1 items-center gap-2">
 				{indicator && (
 					// `flex` et non un simple `shrink-0` : ce wrapper est blockifié (flex

@@ -3,7 +3,6 @@ import type { sendOrderConfirmationEmail } from "@/modules/emails/services/order
 import type {
 	sendAdminRefundFailedAlert,
 	sendAdminDisputeAlert,
-	sendAdminInvoiceFailedAlert,
 	sendAdminOrderProcessingFailedAlert,
 	sendAdminDashboardRefundAttentionAlert,
 	sendAdminCreditNoteOverlapAlert,
@@ -53,7 +52,11 @@ export type PostWebhookTask =
 	| { type: "REFUND_CONFIRMATION_EMAIL"; data: Parameters<typeof sendRefundConfirmationEmail>[0] }
 	| { type: "ADMIN_REFUND_FAILED_ALERT"; data: Parameters<typeof sendAdminRefundFailedAlert>[0] }
 	| { type: "ADMIN_DISPUTE_ALERT"; data: Parameters<typeof sendAdminDisputeAlert>[0] }
-	| { type: "ADMIN_INVOICE_FAILED_ALERT"; data: Parameters<typeof sendAdminInvoiceFailedAlert>[0] }
+	// ⚠️ Pas de tâche « facture Stripe en échec » : `invoice.payment_failed` a été
+	// retiré du registry (aucun émetteur possible — cf. `SupportedStripeEvent`).
+	// `sendAdminInvoiceFailedAlert` existe toujours et reste vivante, mais elle sert
+	// la DLQ de NOTRE numérotation (Art. 289-I, `ensure-invoice-number.service.ts`),
+	// appelée en direct — jamais par une tâche post-webhook.
 	| {
 			type: "ADMIN_ORDER_PROCESSING_FAILED_ALERT";
 			data: Parameters<typeof sendAdminOrderProcessingFailedAlert>[0];
@@ -99,5 +102,13 @@ export type SupportedStripeEvent =
 	| "charge.refund.updated"
 	| "refund.failed"
 	| "charge.dispute.created"
-	| "charge.dispute.closed"
-	| "invoice.payment_failed";
+	| "charge.dispute.closed";
+// ⚠️ `invoice.payment_failed` a été retiré le 2026-08-07 : il ne pouvait PAS se
+// déclencher. Aucune Checkout Session n'est créée, `invoice_creation` n'existe nulle
+// part au dépôt, et les factures sont maison (jspdf + numérotation gap-free) — Stripe
+// Invoicing n'est pas utilisé. Son handler ouvrait d'ailleurs sur « When
+// invoice_creation.enabled is true in checkout », prémisse fausse depuis le retrait des
+// Checkout Sessions. Même motif que les 3 events Dispute retirés en V1 : un handler qui
+// ne peut pas s'exécuter se maintient à jamais sans jamais être exercé.
+// Le rouvrir supposerait d'abord d'adopter Stripe Invoicing, ce qui est exclu (cf.
+// `docs/stripe/INDEX.md`, § « Ce qui est délibérément exclu »).

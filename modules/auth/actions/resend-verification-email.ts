@@ -1,7 +1,10 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import {
+	enforceRateLimitForCurrentUser,
+	getRateLimitId,
+} from "@/modules/auth/lib/rate-limit-helpers";
 import { handleActionError, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
@@ -11,7 +14,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { resendVerificationEmailSchema } from "../schemas/auth.schemas";
 
 const GENERIC_SUCCESS_MESSAGE =
-	"Si cet email est enregistré et non vérifié, vous recevrez un nouveau lien de vérification.";
+	"Si cet email est enregistré et non vérifié, tu recevras un nouveau lien de vérification.";
 
 export const resendVerificationEmail = async (
 	_: ActionState | undefined,
@@ -37,8 +40,13 @@ export const resendVerificationEmail = async (
 		// Symétrique de `request-password-reset.ts` : sans lui, l'unique adresse admin
 		// était bombardable sans plafond, aux frais Resend et de la réputation d'envoi.
 		// Réponse générique pour ne PAS révéler que l'email existe ou est sous attaque.
+		// ⚠️ Le 3ᵉ argument n'est pas optionnel en pratique : l'extraction automatique de
+		// l'IP ne marche que sur un identifiant préfixé `ip:`. Sans lui, `effectiveIp`
+		// vaut `null` et whitelist, blacklist ET plafond global 100/min/IP sont inertes
+		// pour cet appel — le motif corrigé le 2026-07-31 sur les routes PDF.
+		const { ipAddress } = await getRateLimitId();
 		const emailKey = `verification-email:${email.toLowerCase().trim()}`;
-		const emailCheck = await checkRateLimit(emailKey, AUTH_LIMITS.EMAIL_VERIFICATION);
+		const emailCheck = await checkRateLimit(emailKey, AUTH_LIMITS.EMAIL_VERIFICATION, ipAddress);
 		if (!emailCheck.success) {
 			return success(GENERIC_SUCCESS_MESSAGE);
 		}

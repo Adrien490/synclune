@@ -10,7 +10,8 @@ import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { TaxonomyFilterSheet } from "./taxonomy-filter-sheet";
-import type { TaxonomyConfig } from "../types/taxonomy.types";
+import { TAXONOMY_CONFIG } from "../config/taxonomy.config";
+import type { TaxonomyConfig, TaxonomyKind } from "../types/taxonomy.types";
 
 /**
  * Sous-header sticky (mobile, admin) des listes de taxonomies.
@@ -100,10 +101,22 @@ function TaxonomyBottomBarInner({ config }: { config: TaxonomyConfig }) {
 	);
 }
 
-export function TaxonomyBottomBar({ config }: { config: TaxonomyConfig }) {
+/**
+ * ⚠️ Prend un `kind` (chaîne), pas l'objet `config`.
+ *
+ * Ce composant est `"use client"` et monté depuis des Server Components : un
+ * `TaxonomyConfig` passé en prop traverserait la frontière RSC — ~40 champs
+ * sérialisés à chaque rendu, pour une valeur que le client peut lire seul dans
+ * le registre. Le `kind` fait cinq caractères sur le fil.
+ *
+ * C'est aussi ce qui a permis de supprimer les fichiers-liants d'un composant
+ * (`colors-bottom-bar.tsx` et ses quatorze jumeaux, 8 à 13 lignes chacun) dont
+ * le corps entier était `return <Taxonomy… config={TAXONOMY_CONFIG.x} />`.
+ */
+export function TaxonomyBottomBar({ kind }: { kind: TaxonomyKind }) {
 	return (
 		<Suspense fallback={null}>
-			<TaxonomyBottomBarInner config={config} />
+			<TaxonomyBottomBarInner config={TAXONOMY_CONFIG[kind]} />
 		</Suspense>
 	);
 }

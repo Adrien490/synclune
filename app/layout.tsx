@@ -1,3 +1,7 @@
+import {
+	OverlayStoreProvider,
+	SheetAutoCloseOnNavigation,
+} from "@/shared/providers/overlay-store-provider";
 import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
 import { FlyToCartOverlay } from "@/modules/cart/components/fly-to-cart-overlay";
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
@@ -9,11 +13,8 @@ import { VisualViewportBridge } from "@/shared/components/visual-viewport-bridge
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
 import { UPLOADTHING_CDN_HOSTS } from "@/shared/constants/uploadthing";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
-import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
-import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { MotionProvider } from "@/shared/providers/motion-provider";
-import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
 import { winkySans, winkySansItalic, onest, kalam } from "@/shared/styles/fonts";
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
@@ -57,15 +58,21 @@ export default function RootLayout({
 				<MotionProvider>
 					<CookieConsentStoreProvider>
 						<NavigationGuardProvider>
-							<DialogStoreProvider>
-								<SheetStoreProvider>
-									<AlertDialogStoreProvider>
-										{children}
-										<FlyToCartOverlay />
-										<UnsavedChangesDialog />
-									</AlertDialogStoreProvider>
-								</SheetStoreProvider>
-							</DialogStoreProvider>
+							{/* Les trois stores d'overlay (dialog, sheet, alert-dialog) sont
+							    réunis depuis le 2026-08-07 : c'étaient trois providers au
+							    code IDENTIQUE, empilés ici sur toutes les routes. Les stores
+							    restent trois — espaces d'identifiants distincts, et le sheet
+							    est mono-ouvert là où les deux autres sont multi-entrées. */}
+							<OverlayStoreProvider>
+								{/* Frère et non enfant du provider : il lit `usePathname()`, une
+								    source dynamique — sa frontière Suspense lui appartient. */}
+								<Suspense fallback={null}>
+									<SheetAutoCloseOnNavigation />
+								</Suspense>
+								{children}
+								<FlyToCartOverlay />
+								<UnsavedChangesDialog />
+							</OverlayStoreProvider>
 						</NavigationGuardProvider>
 					</CookieConsentStoreProvider>
 					<AppToaster />

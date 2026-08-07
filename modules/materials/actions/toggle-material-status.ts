@@ -41,7 +41,7 @@ export async function toggleMaterialStatus(
 		});
 
 		if (!existingMaterial) {
-			return error("Ce materiau n'existe pas");
+			return error("Ce matériau n'existe pas");
 		}
 
 		// Court-circuit idempotent (parité couleurs/types) : un re-clic sur l'état

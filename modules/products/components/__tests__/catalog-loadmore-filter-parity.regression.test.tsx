@@ -183,12 +183,33 @@ describe("parité filtres catalogue ↔ load-more", () => {
 		expect(loadMore.parentElement).toBe(card.parentElement?.parentElement);
 	});
 
-	it("ProductCatalog déclare les deux props et les fait descendre", async () => {
-		// On lit le TYPE et le point de montage plutôt que de rendre tout le
-		// shell (qui tire la sort bar, la filter sheet et le JSON-LD) : ce qui
-		// s'était perdu, c'est la DÉCLARATION — `ProductCatalogProps` ne
-		// connaissait pas ces deux noms, donc les pages ne pouvaient même pas les
-		// passer, et `tsc` ne pouvait rien dire.
+	/**
+	 * ⚠️ Le point de DÉCLARATION a bougé le 2026-08-07, la chaîne non.
+	 *
+	 * Les deux pages ne calculent plus leurs filtres en ligne : un
+	 * `await searchParams` au niveau supérieur rendait la page entièrement
+	 * dynamique et vidait son App Shell (le squelette pleine page s'affichait à
+	 * chaque changement de type). Tri et filtres transitent désormais par UNE
+	 * promesse — `CatalogListProps`, résolue dans l'enfant suspendu
+	 * `CatalogList` — et c'est ce chemin-là qu'il faut garder ouvert.
+	 *
+	 * Trois maillons, chacun vérifié séparément : le TYPE les déclare, le
+	 * RÉSOLVEUR les remplit (type du path fusionné compris), et le shell les
+	 * pose sur `<ProductList>`.
+	 */
+	it("le type de transport déclare les deux noms", async () => {
+		const { readFileSync } = await import("node:fs");
+		const { join } = await import("node:path");
+		const source = readFileSync(
+			join(process.cwd(), "modules/products/types/catalog-shell.types.ts"),
+			"utf8",
+		);
+
+		expect(source).toMatch(/sortBy\?:\s*SortField/);
+		expect(source).toMatch(/filters\?:\s*ProductFilters/);
+	});
+
+	it("le shell les fait descendre sur ProductList", async () => {
 		const { readFileSync } = await import("node:fs");
 		const { join } = await import("node:path");
 		const source = readFileSync(
@@ -196,35 +217,49 @@ describe("parité filtres catalogue ↔ load-more", () => {
 			"utf8",
 		);
 
-		expect(source).toMatch(/sortBy\?:\s*SortField/);
-		expect(source).toMatch(/filters\?:\s*ProductFilters/);
-		// …et elles doivent effectivement atterrir sur `<ProductList>`.
 		const listMount = source.slice(source.indexOf("<ProductList"));
 		expect(listMount).toContain("sortBy={sortBy}");
 		expect(listMount).toContain("filters={filters}");
 	});
 
-	it("les trois pages qui montent le catalogue passent tri et filtres", async () => {
+	it("les trois montages du catalogue alimentent tri et filtres", async () => {
 		const { readFileSync } = await import("node:fs");
 		const { join } = await import("node:path");
 
 		const mounts = [
-			// `mergedFilters` sur la page catégorie : le type vient du PATH, pas des
-			// searchParams — passer `filters` nu ramènerait TOUT le catalogue.
-			["app/(shop)/produits/page.tsx", "<ProductCatalog", "filters={filters}"],
+			// Les deux routes `/produits` passent par le même résolveur ; `params`
+			// n'est fourni que par la page catégorie, et c'est LUI qui déclenche la
+			// fusion du type du path (sans quoi « voir plus » y ramènerait tout le
+			// catalogue).
+			["app/(shop)/produits/page.tsx", "<ProductCatalog", "resolveCatalogListProps(searchParams)"],
 			[
 				"app/(shop)/produits/[productTypeSlug]/page.tsx",
 				"<ProductCatalog",
-				"filters={mergedFilters}",
+				"resolveCatalogListProps(searchParams, params)",
 			],
+			// `/collections/[slug]` monte `ProductList` en direct, sans le shell.
 			["app/(shop)/collections/[slug]/page.tsx", "<ProductList", "filters={parseFilters("],
 		] as const;
 
 		for (const [file, mountTag, expectedFilters] of mounts) {
 			const source = readFileSync(join(process.cwd(), file), "utf8");
 			const mount = source.slice(source.indexOf(mountTag));
-			expect(mount, `${file} — tri non transmis`).toContain("sortBy={sortBy");
 			expect(mount, `${file} — filtres non transmis`).toContain(expectedFilters);
 		}
+
+		// Le résolveur partagé est le seul endroit où tri et filtres se calculent
+		// pour les deux routes : s'il cessait de les rendre, les deux montages
+		// ci-dessus resteraient verts pour rien.
+		const resolver = readFileSync(
+			join(process.cwd(), "app/(shop)/produits/_utils/catalog.ts"),
+			"utf8",
+		);
+		const listResolver = resolver.slice(
+			resolver.indexOf("export async function resolveCatalogListProps"),
+		);
+		expect(listResolver, "le résolveur ne rend plus le tri").toContain("sortBy");
+		expect(listResolver, "le résolveur ne fusionne plus le type du path").toContain(
+			"type: [pathParams.productTypeSlug]",
+		);
 	});
 });

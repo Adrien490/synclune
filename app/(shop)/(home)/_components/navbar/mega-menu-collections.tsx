@@ -58,7 +58,7 @@ function panelLayout(count: number) {
  * 40 %, compressé ×0.67) était invisible au repos — vérifié au rendu — et a
  * été retiré plutôt que remplacé.
  *
- * @see docs/COLLECTION-CARD.md — la doctrine de la carte collection (4/7, § 11).
+ * Doctrine de la carte collection : elle doit montrer un ENSEMBLE, pas un objet.
  *   ⚠️ Ses deux manques (compteur, fourchette d'entrée) sont un trou de DONNÉES,
  *   pas un choix de design : `NavItemChild` ne les transporte pas. Ne pas
  *   « corriger » la carte sans étendre ce type d'abord — il n'y a rien à

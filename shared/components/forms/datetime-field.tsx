@@ -88,7 +88,7 @@ export function DateTimeField({
 	max,
 }: DateTimeFieldProps) {
 	const field = useFieldContext<string>();
-	const hasError = useFieldErrorVisibility(field);
+	const { visible: hasError, announce } = useFieldErrorVisibility(field);
 	const helpTextId = helpText ? `${field.name}-help` : undefined;
 	const describedBy =
 		[helpTextId, hasError ? `${field.name}-error` : null].filter(Boolean).join(" ") || undefined;
@@ -300,6 +300,7 @@ export function DateTimeField({
 			)}
 
 			<FieldError
+				live={announce}
 				id={`${field.name}-error`}
 				errors={hasError ? field.state.meta.errors : undefined}
 			/>

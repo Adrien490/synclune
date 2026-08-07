@@ -150,8 +150,6 @@ function mapToOrderWithItems(order: {
 		skuId: string;
 		sku: {
 			id: string;
-			inventory: number;
-			sku: string;
 			product: { id: string; slug: string };
 		} | null;
 	}>;
@@ -213,11 +211,13 @@ async function processOrderAtomically(
 		include: {
 			items: {
 				include: {
+					// Identifiants SEULEMENT — le stock est lu et verrouillé plus bas
+					// par le `SELECT … FOR UPDATE`, jamais ici. `inventory` et le code
+					// `sku` étaient sélectionnés sans lecteur et voyageaient jusqu'au
+					// payload de l'e-mail de confirmation (audit 2026-08-07).
 					sku: {
 						select: {
 							id: true,
-							inventory: true,
-							sku: true,
 							product: { select: { id: true, slug: true } },
 						},
 					},

@@ -42,7 +42,7 @@ export function SectionHeader({
 							onReset();
 						}
 					}}
-					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring ml-auto flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+					className="focus-ring text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-sm transition-colors"
 					aria-label={`Effacer le filtre ${label}`}
 				>
 					<XIcon className="size-3" />

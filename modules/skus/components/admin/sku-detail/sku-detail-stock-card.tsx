@@ -7,7 +7,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import {
 	getStockAriaLabel,
 	getStockStatusLabel,

@@ -1,3 +1,4 @@
+import { CreateTaxonomyButton } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { use } from "react";
 import { ShapesIcon } from "@phosphor-icons/react/ssr";
 
@@ -5,7 +6,6 @@ import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
 import { TaxonomyMobileList } from "@/modules/taxonomies/components/taxonomy-mobile-list";
 
 import type { GetProductTypesReturn } from "@/modules/product-types/types/product-type.types";
-import { CreateProductTypeButton } from "./create-product-type-button";
 import { ProductTypeMobileItem } from "./product-type-mobile-item";
 
 interface ProductTypesMobileListProps {
@@ -31,7 +31,7 @@ export function ProductTypesMobileList({
 			hasActiveFilters={hasActiveFilters}
 			icon={ShapesIcon}
 			emptyDescription="Aucun type de bijou pour l'instant."
-			createButton={<CreateProductTypeButton />}
+			createButton={<CreateTaxonomyButton kind="product-type" />}
 			renderItem={(item) => <ProductTypeMobileItem productType={item} />}
 		/>
 	);

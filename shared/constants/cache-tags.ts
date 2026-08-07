@@ -123,7 +123,3 @@ export const STOCK_THRESHOLDS = {
 	/** Stock normal max : <= NORMAL_MAX */
 	NORMAL_MAX: 50,
 } as const;
-
-// ============================================
-// SESSION CACHE TAGS (évite cycle auth ↔ users)
-// ============================================

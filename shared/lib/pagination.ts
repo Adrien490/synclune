@@ -11,16 +11,13 @@ export type { PaginationInfo } from "@/shared/types/pagination.types";
 export const DEFAULT_PER_PAGE = 20;
 
 /**
- * Per-page options par contexte (P2-3).
+ * Per-page options des tables admin (data-tables, mobile-lists). Cap aligné sur
+ * `PAGINATION_LIMITS.MAX_ADMIN = 200` (power-users).
  *
- * - `PUBLIC_PER_PAGE_OPTIONS` : storefront (catalogue, collections, recherche).
- *   Cap aligné sur `PAGINATION_LIMITS.MAX_PUBLIC = 50` — au-delà, Zod clampe
- *   silencieusement et l'utilisateur voit un nombre qui ne se reflète pas dans
- *   la requête (UX confuse).
- * - `PER_PAGE_OPTIONS` : tables admin (data-tables, mobile-lists). Cap aligné
- *   sur `PAGINATION_LIMITS.MAX_ADMIN = 200` (power-users).
+ * ⚠️ Le pendant storefront `PUBLIC_PER_PAGE_OPTIONS` a été retiré le 2026-08-07 :
+ * aucun appelant. Le catalogue pagine au « Voir plus », pas par un sélecteur de
+ * taille de page — il n'y a donc pas de liste d'options à offrir côté boutique.
  */
-export const PUBLIC_PER_PAGE_OPTIONS = [20, 50] as const;
 export const PER_PAGE_OPTIONS = [20, 50, 100, 200] as const;
 
 /**

@@ -17,7 +17,7 @@ import { AtelierThreadStroke } from "./atelier-thread";
  * @description
  * Extrait de `atelier-section.tsx` (lot 2 du « fil ») pour que ses DEUX états
  * soient testables indépendamment de la valeur du moment de la SSOT
- * `ATELIER_IMAGE` (écart d de `docs/LANDING-SECTION-ATELIER.md`) :
+ * `ATELIER_IMAGE` :
  *
  * - **`src` renseignée** — le tirage : enveloppe polaroid, grain
  *   `polaroid-paper`, légende cursive « C'est moi, Léane ! ». Section sous la

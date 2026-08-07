@@ -104,7 +104,7 @@ describe("checkRateLimit (in-memory)", () => {
 	// KI-004 : deux presets distincts sur le MÊME identifiant avaient un compteur
 	// commun, si bien que la limite effective de chacun était le minimum en présence.
 	// Concrètement, quelques consultations de fiche produit suffisaient à faire
-	// répondre 429 au formulaire de connexion. @see docs/KNOWN-ISSUES.md
+	// répondre 429 au formulaire de connexion.
 	it("isole les compteurs de deux presets partageant un identifiant", async () => {
 		const id = "ip:10.0.0.102";
 		const browsing = { name: "product-cookie-action", limit: 30, windowMs: 60000 };

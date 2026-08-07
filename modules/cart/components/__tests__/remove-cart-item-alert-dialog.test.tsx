@@ -72,7 +72,7 @@ vi.mock("@/shared/stores/badge-counts-store", () => ({
 		selector({ adjustCart: mockAdjustCart }),
 }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({
 		isOpen: mockIsOpen.value,
 		close: mockClose,

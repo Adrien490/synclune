@@ -69,7 +69,7 @@ describe("loadMoreProducts — rate limiting", () => {
 
 		const result = await loadMoreProducts({ cursor: VALID_CUID });
 
-		expect(result).toEqual({ ...EMPTY_RESULT, error: "Trop de requêtes. Veuillez patienter." });
+		expect(result).toEqual({ ...EMPTY_RESULT, error: "Trop de requêtes. Patiente un instant." });
 		expect(mockGetProducts).not.toHaveBeenCalled();
 	});
 });

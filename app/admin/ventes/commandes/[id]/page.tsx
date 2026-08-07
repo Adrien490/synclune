@@ -2,7 +2,7 @@ import { getOrderById } from "@/modules/orders/data/get-order-by-id";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
-import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail";
+import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail/order-detail-page";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const CancelOrderAlertDialog = dynamic(() =>

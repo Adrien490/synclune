@@ -29,7 +29,7 @@ C'est ce périmètre, et lui seul, qui détermine le contenu du mirror.
 | Version d'API         | **`2026-06-24.dahlia`**, SSOT `shared/constants/stripe-api-version.ts` |
 | Flow de paiement      | **PaymentIntents + Elements**, card-only. **Zéro Checkout Session.**   |
 | Méthodes SDK appelées | 12                                                                     |
-| Events webhook routés | 12                                                                     |
+| Events webhook routés | 11                                                                     |
 | Facturation           | PDF maison (jspdf) — **pas** Stripe Invoicing                          |
 | Remboursements        | **Stripe-first** : émis depuis le Dashboard, ingérés par webhook       |
 
@@ -49,7 +49,7 @@ C'est ce périmètre, et lui seul, qui détermine le contenu du mirror.
 | `webhooks.constructEvent`                | `app/api/webhooks/stripe/route.ts`                                                                                                                          |
 | `balance.retrieve`                       | `app/api/health/route.ts` (ping de connectivité)                                                                                                            |
 
-### Les 12 events webhook routés
+### Les 11 events webhook routés
 
 Registry unique : `modules/webhooks/utils/event-registry.ts`. Chaque event a sa fixture
 dans `test/fixtures/stripe/` et son assertion de routing dans
@@ -58,12 +58,20 @@ dans `test/fixtures/stripe/` et son assertion de routing dans
 | Event                                                                                               | Handler                        |
 | --------------------------------------------------------------------------------------------------- | ------------------------------ |
 | `payment_intent.succeeded` · `.payment_failed` · `.canceled` · `.processing`                        | `handlers/payment-handlers.ts` |
-| `invoice.payment_failed`                                                                            | `handlers/payment-handlers.ts` |
 | `charge.refunded` · `refund.created` · `refund.updated` · `charge.refund.updated` · `refund.failed` | `handlers/refund-handlers.ts`  |
 | `charge.dispute.created` · `charge.dispute.closed`                                                  | `handlers/dispute-handlers.ts` |
 
 `charge.refund.updated` est l'alias legacy de `refund.updated`, routé volontairement
 au même handler pour ne pas dépendre de la version d'API souscrite par l'endpoint.
+
+⚠️ **`invoice.payment_failed` a été retiré le 2026-08-07** (l'audit qui a fait passer ce
+périmètre à 90/100). Il était routé sans pouvoir se déclencher : Stripe Invoicing n'est
+pas utilisé (§ « Ce qui est délibérément exclu » ci-dessous), aucune Checkout Session
+n'est créée, et `invoice_creation` n'existe nulle part au dépôt. Son handler ouvrait sur
+« When `invoice_creation.enabled` is true in checkout » — prémisse morte depuis le
+retrait des Checkout Sessions. Le rouvrir supposerait d'abord d'adopter Stripe Invoicing.
+⚠️ Ne pas confondre avec `sendAdminInvoiceFailedAlert`, **vivante** : c'est l'alerte de la
+DLQ de NOTRE numérotation (Art. 289-I), appelée par `ensure-invoice-number.service.ts`.
 
 ### ⏳ Montée de version en attente — `2026-07-29.dahlia`
 
@@ -76,19 +84,49 @@ les métadonnées sectorielles `taxes`, Connect, Treasury et les shared payment 
 client / moyen de paiement sur `Refund`, réseau de carte sur `Dispute`, résultat 3DS
 « Data Share Only ».
 
-**Pourquoi ce n'est pas fait** : `pnpm-workspace.yaml` impose `minimumReleaseAge: 10080`
-(7 jours de quarantaine supply-chain). `stripe@22.4.0` devient installable le
-**2026-07-30 23:38 UTC + 7 j**, `@stripe/stripe-js@9.13.0` le **2026-08-11**. L'échappatoire
-`--config.minimumReleaseAge=0` est réservée au patch de sécurité urgent — ce bump n'en est
-pas un, et le forcer viserait la dépendance la plus sensible du dépôt.
-
 **Le bump est ATOMIQUE**, `Stripe.LatestApiVersion` étant un littéral unique et non une
-union — bumper le SDK sans la constante (ou l'inverse) casse `tsc` :
+union — bumper le SDK sans la constante (ou l'inverse) casse `tsc`. Vérifié le 2026-08-07 en
+le faisant : avec `stripe@22.4.0` installé, la constante restée en arrière produit
+`TS2322: Type '"2026-06-24.dahlia"' is not assignable to type '"2026-07-29.dahlia"'`.
 
-1. `pnpm add stripe@22.4.0` ;
-2. `STRIPE_API_VERSION` → `"2026-07-29.dahlia"` ;
-3. les 12 `test/fixtures/stripe/*.json` (`api_version`) — deux tests l'assertent ;
-4. cette section et le tableau ci-dessus.
+1. `pnpm add stripe@22.4.0` (⚠️ `pnpm add <pkg>@<version>`, jamais `pnpm up stripe`) ;
+2. `pnpm add @stripe/stripe-js@9.13.0` ;
+3. `STRIPE_API_VERSION` → `"2026-07-29.dahlia"` ;
+4. les 11 `test/fixtures/stripe/*.json` (`api_version`) — deux tests l'assertent ;
+5. cette section et le tableau ci-dessus.
+
+**⚠️ Pourquoi ce n'est TOUJOURS pas fait — et le motif a changé le 2026-08-07.**
+
+Le motif écrit ici jusque-là (« `stripe@22.4.0` est en quarantaine 7 j ») a **expiré** :
+22.4.0 est publié le 2026-07-29 23:38 UTC, donc installable depuis le 2026-08-05 23:38 UTC.
+Le bump a été tenté et **annulé** — le blocage réel est ailleurs, et il ne se voit qu'en
+lisant le diff du lockfile :
+
+> **Tout `pnpm add` re-résout l'arbre entier, et `minimumReleaseAge: 10080` fait alors
+> tomber en silence les 8 `@next/swc-*@16.3.0`** — les binaires natifs de Next. Publiés le
+> **2026-08-03 20:29 UTC** avec le reste de la famille 16.3.0, ils sont encore en
+> quarantaine. Étant des dépendances **optionnelles**, pnpm ne lève aucune erreur : il les
+> retire du lockfile. Résultat mesuré : `pnpm add stripe@22.4.0` produit **13 insertions et
+> 97 suppressions**, dont les 8 binaires — et la CI Linux a besoin de
+> `@next/swc-linux-x64-gnu`.
+
+Le symétrique se voit à l'œil nu avec `--lockfile-only`, qui échoue franchement sur
+`eslint-config-next@16.3.0` (dépendance **directe**, donc erreur dure au lieu d'un abandon
+silencieux) : `ERR_PNPM_NO_MATCHING_VERSION … was released at Mon Aug 03 2026`. C'est le
+même mécanisme, rendu visible parce que le paquet n'est pas optionnel.
+
+⚠️ **Le motif général** : une quarantaine supply-chain échoue **bruyamment** sur une
+dépendance directe et **silencieusement** sur une optionnelle. Un `pnpm add` pendant la
+fenêtre de quarantaine d'un paquet TIERS mutile donc le lockfile sans rien dire.
+
+**Débloqué le 2026-08-10 20:34 UTC** (fin de quarantaine de la famille Next 16.3.0). Refaire
+le bump après cette date, et **vérifier que `git diff pnpm-lock.yaml` ne touche que les deux
+lignes Stripe** — c'est la seule preuve que la re-résolution s'est bien passée.
+`@stripe/stripe-js@9.13.0` (publié le 2026-08-04) sort de quarantaine le **2026-08-11** :
+attendre cette date permet de tout faire en un seul passage.
+
+L'échappatoire `--config.minimumReleaseAge=0` reste réservée au patch de sécurité urgent —
+ce bump n'en est pas un, et le forcer viserait la dépendance la plus sensible du dépôt.
 
 ---
 
@@ -223,6 +261,5 @@ contenu. L'idempotence annoncée par le script n'était vraie que sur une seule 
 ## Sources complémentaires dans le repo
 
 - `CLAUDE.md` — invariants métier (facturation électronique, anti-replay, cache, panier cookie)
-- `docs/RUNBOOK.md` — procédures opérationnelles, encaissement hors Stripe (`mark-as-paid`)
 - `test/fixtures/stripe/README.md` — régénération des fixtures webhook
 - `.claude/skills/stripe-integration/SKILL.md` — patterns du repo (non versionné)

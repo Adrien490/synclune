@@ -17,7 +17,10 @@ import { calculateShipping, getShippingInfo } from "@/modules/orders/services/sh
 import { type ShippingCountry } from "@/shared/constants/countries";
 import { STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
-import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
+import {
+	isVerifiedAdmin,
+	requireActiveAccountIfAuthenticated,
+} from "@/modules/auth/lib/require-auth";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { headers } from "next/headers";
 import { logger } from "@/shared/lib/logger";
@@ -68,6 +71,17 @@ export async function updatePaymentAmount(
 
 			if (!userId && !sessionId) {
 				return { success: false, error: "Session invalide." };
+			}
+
+			// 1b. AUTHZ-1 (AM-3) : re-vérifie en DB que le compte est ACTIVE. Les invités
+			// passent (pas de session) ; une session suspendue/INACTIVE est rejetée.
+			// Cette action était la SEULE des trois du tunnel à ne pas poser la garde que
+			// `initializePayment` et `confirmCheckout` posent déjà — asymétrie sans
+			// conséquence connue (aucune écriture DB ici), mais c'est exactement le trou
+			// que l'audit AUTHZ-1 avait fermé sur ses deux sœurs.
+			const accountGate = await requireActiveAccountIfAuthenticated();
+			if ("error" in accountGate) {
+				return { success: false, error: accountGate.error.message };
 			}
 
 			// 2. Store-open guard (admin bypass for live checkout testing —

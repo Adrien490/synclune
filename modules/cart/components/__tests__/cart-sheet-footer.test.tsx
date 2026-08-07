@@ -237,7 +237,7 @@ describe("CartSheetFooter", () => {
 	 *
 	 * Migration S5 (2026-08-05) : la garde reste NÉCESSAIRE et VALIDE — Winky Sans
 	 * (display actuelle) n'expose pas `tnum` non plus, et Onest (sans actuelle)
-	 * l'expose (GSUB vérifié, docs/FONTS-AUDIT-2026-08-05.md).
+	 * l'expose (GSUB vérifié à la migration).
 	 */
 	it("@regression n'associe pas la police display à tabular-nums sur le total", () => {
 		render(<CartSheetFooter {...createProps()} />);

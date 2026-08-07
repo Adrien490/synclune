@@ -14,7 +14,6 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult } from "../types/webhook.types";
 import {
 	processOrderFromPaymentIntent,
@@ -44,13 +43,18 @@ function resolveOrderId(metadata: Stripe.Metadata): string | undefined {
 /**
  * Handles successful payment via Payment Intent.
  *
- * ORD-STRIPE-002 (2026-05-28) — unifié : on emprunte toujours
- * `processOrderFromPaymentIntent` (qui décrémente le stock + clear cart + désactive
- * SKU épuisés). L'ancien chemin "old CS flow" appelait `markOrderAsPaid` seul,
- * qui omettait le décrément stock — bug latent si `payment_intent.succeeded`
- * arrivait avant `checkout.session.completed` (l'ordre des webhooks Stripe
- * n'est pas garanti). `processOrderFromPaymentIntent` est idempotent via le
- * guard `paymentStatus === "PAID"` (checkout-order-processing.service.ts:114).
+ * ORD-STRIPE-002 (2026-05-28) — chemin UNIQUE : `processOrderFromPaymentIntent`,
+ * qui décrémente le stock, vide le panier et désactive les SKU épuisés. Il est
+ * idempotent via le guard `paymentStatus === "PAID"`
+ * (`checkout-order-processing.service.ts`), ce qui rend une redélivrance Stripe
+ * inoffensive.
+ *
+ * ⚠️ Cet en-tête justifiait l'unification par un second chemin « old CS flow » qui
+ * appelait `markOrderAsPaid` seul et par une course avec
+ * `checkout.session.completed`. Les deux ont disparu : aucune Checkout Session
+ * n'est créée (le tunnel est PaymentIntents + Elements) et les events
+ * `checkout.session.*` ont été retirés du registry. Il n'y a plus de second chemin
+ * à unifier — seulement celui-ci à garder idempotent.
  */
 export async function handlePaymentSuccess(
 	paymentIntent: Stripe.PaymentIntent,
@@ -666,81 +670,17 @@ export async function handlePaymentCanceled(
 	}
 }
 
-/**
- * Handles invoice payment failure
+/*
+ * ⚠️ `handleInvoicePaymentFailed` a été retiré le 2026-08-07 avec l'event
+ * `invoice.payment_failed` qui l'alimentait — il ne pouvait PAS se déclencher.
  *
- * When invoice_creation.enabled is true in checkout, Stripe creates invoices.
- * If a payment retry on those invoices fails, this handler sends an admin alert.
+ * Son en-tête annonçait « When invoice_creation.enabled is true in checkout » : une
+ * prémisse morte depuis le retrait des Checkout Sessions. Le tunnel est PaymentIntents
+ * + Elements, `invoice_creation` n'existe nulle part au dépôt, et les factures sont
+ * maison (jspdf, numérotation gap-free, archivage SHA-256) — Stripe Invoicing n'est
+ * pas utilisé, et son exclusion est délibérée (`docs/stripe/INDEX.md`).
+ *
+ * ⚠️ Ne pas confondre avec `sendAdminInvoiceFailedAlert`, qui reste VIVANTE : elle sert
+ * la DLQ de notre propre numérotation (Art. 289-I) et est appelée en direct par
+ * `modules/orders/services/ensure-invoice-number.service.ts`.
  */
-export async function handleInvoicePaymentFailed(
-	invoice: Stripe.Invoice,
-): Promise<WebhookHandlerResult> {
-	const orderId = invoice.metadata?.orderId;
-
-	try {
-		// Try to find the related order via invoice metadata or customer email
-		const order = orderId
-			? await prisma.order.findFirst({
-					where: { id: orderId, ...notDeleted },
-					select: {
-						id: true,
-						orderNumber: true,
-						customerEmail: true,
-						stripePaymentIntentId: true,
-					},
-				})
-			: null;
-
-		const orderNumber = order?.orderNumber ?? invoice.number ?? "N/A";
-		const customerEmail = order?.customerEmail ?? invoice.customer_email ?? "N/A";
-		const amount = invoice.amount_due || 0;
-
-		// Extract error message from the invoice
-		const errorMessage =
-			invoice.last_finalization_error?.message ??
-			`Invoice payment failed (status: ${invoice.status})`;
-
-		const dashboardUrl = order
-			? buildUrl(ROUTES.ADMIN.ORDER_DETAIL(order.id))
-			: buildUrl(ROUTES.ADMIN.ORDERS);
-
-		logger.info(`❌ [WEBHOOK] Invoice payment failed for order ${orderNumber} (${amount} cents)`, {
-			service: "webhook",
-		});
-
-		return {
-			success: true,
-			tasks: [
-				{
-					type: "ADMIN_INVOICE_FAILED_ALERT",
-					data: {
-						orderNumber,
-						customerEmail,
-						amount,
-						errorMessage,
-						stripePaymentIntentId: order?.stripePaymentIntentId ?? undefined,
-						dashboardUrl,
-					},
-				},
-				{
-					type: "INVALIDATE_CACHE",
-					// Helper canonique : la liste manuelle reproduisait mot pour mot la sortie
-					// sans `orderId`, tout en ayant `order` sous la main. Ce handler ne mute
-					// rien (alerte seule), mais passer par le helper couvre le détail commande
-					// et supprime une copie qui aurait dérivé au premier tag ajouté.
-					tags: getOrderInvalidationTags(order?.id),
-				},
-			],
-		};
-	} catch (error) {
-		logger.error(`❌ [WEBHOOK] Error handling invoice.payment_failed:`, error, {
-			service: "webhook",
-		});
-		captureWebhookError(error, {
-			handler: "handleInvoicePaymentFailed",
-			eventType: "invoice.payment_failed",
-			orderId,
-		});
-		throw error;
-	}
-}

@@ -18,8 +18,8 @@ import { ROUTES } from "@/shared/constants/urls";
 import Link from "next/link";
 import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useSheetStore } from "@/shared/providers/sheet-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
+import { useSheetStore } from "@/shared/providers/overlay-store-provider";
 import { usePathname } from "next/navigation";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
@@ -126,7 +126,7 @@ export function MenuSheet({
 	);
 
 	// Filet : fermer sur changement de route. Le `sheet-store` possède déjà son
-	// `SheetAutoCloseOnNavigation` (`sheet-store-provider.tsx`), mais le
+	// `SheetAutoCloseOnNavigation` (`overlay-store-provider.tsx`), mais le
 	// `dialog-store` — qui porte ce menu — n'en a AUCUN : toute navigation non
 	// initiée par un lien du menu (redirection, `router.push` d'un autre
 	// composant) laissait le panneau ouvert par-dessus la nouvelle page.

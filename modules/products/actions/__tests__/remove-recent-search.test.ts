@@ -163,7 +163,7 @@ describe("removeRecentSearch", () => {
 
 	it("should return updated searches list in success data", async () => {
 		await removeRecentSearch(undefined, validFormData);
-		expect(mockSuccess).toHaveBeenCalledWith("Recherche supprimee", {
+		expect(mockSuccess).toHaveBeenCalledWith("Recherche supprimée", {
 			searches: ["bracelet lune", "bague"],
 		});
 	});

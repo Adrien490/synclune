@@ -117,6 +117,6 @@ export async function updateCartPrices(
 			},
 		};
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la mise a jour des prix");
+		return handleActionError(e, "Erreur lors de la mise à jour des prix");
 	}
 }

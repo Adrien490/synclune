@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from "react";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 

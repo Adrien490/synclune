@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { WarningCircleIcon } from "@phosphor-icons/react/ssr";
 
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
@@ -29,6 +30,15 @@ interface ErrorSummaryProps {
 	 * - `"assertive"`: interrupts — use only for critical failures.
 	 */
 	ariaLive?: "polite" | "assertive";
+	/**
+	 * Déplacer le focus sur le résumé dès qu'il apparaît (WCAG 3.3.1).
+	 *
+	 * C'est le motif canonique du résumé d'erreurs : une seule annonce, un point
+	 * d'entrée unique, et les boutons de saut vers chaque champ à portée de Tab.
+	 * L'alternative — focuser le premier champ invalide — reste le bon choix pour
+	 * les formulaires SANS résumé (`useFocusFirstError`).
+	 */
+	focusOnAppear?: boolean;
 	className?: string;
 }
 
@@ -53,8 +63,26 @@ export function ErrorSummary({
 	formId,
 	title,
 	ariaLive = "polite",
+	focusOnAppear = false,
 	className,
 }: ErrorSummaryProps) {
+	const summaryRef = useRef<HTMLDivElement>(null);
+	const errorCount = fieldErrors.length;
+
+	// Le résumé prend le focus à son APPARITION (et à chaque nouvelle salve, le
+	// nombre d'erreurs servant de clé). Même motif que l'alerte d'erreur du
+	// PayButton : `scrollIntoView` respectant `prefers-reduced-motion`, puis
+	// `focus({ preventScroll: true })`.
+	useEffect(() => {
+		if (!focusOnAppear || errorCount === 0) return;
+		const el = summaryRef.current;
+		if (!el) return;
+
+		const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+		el.focus({ preventScroll: true });
+	}, [focusOnAppear, errorCount]);
+
 	const focusField = (name: string) => {
 		const scope = formId ? document.getElementById(formId) : document;
 		// `querySelectorAll` + filtre de visibilité, pas `getElementById` : `SelectField`
@@ -78,8 +106,18 @@ export function ErrorSummary({
 	if (fieldErrors.length === 0) return null;
 
 	return (
-		<Alert variant="destructive" role="alert" aria-live={ariaLive} className={className}>
-			<WarningCircleIcon className="size-4" />
+		<Alert
+			ref={summaryRef}
+			// `tabIndex={-1}` : cible de focus programmatique, jamais dans l'ordre de
+			// tabulation. Pas de `focus-visible:outline-none` ici — on ne masque pas
+			// l'indicateur d'un élément qu'on vient de focuser.
+			tabIndex={-1}
+			variant="destructive"
+			role="alert"
+			aria-live={ariaLive}
+			className={className}
+		>
+			<WarningCircleIcon className="size-4" aria-hidden="true" />
 			<AlertTitle>
 				{title ??
 					(fieldErrors.length === 1

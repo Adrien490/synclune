@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createMockFormData, createMockOrder, VALID_CUID } from "@/test/factories";
 import type * as SharedActions from "@/shared/lib/actions";
+import type * as OrderConstantsModule from "../../constants/order.constants";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -93,7 +94,13 @@ vi.mock("@/shared/constants/urls", () => ({
 		ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` },
 	},
 }));
-vi.mock("../../constants/order.constants", () => ({
+// `importOriginal` plutôt qu'un remplacement total : le module ne porte que des
+// constantes (aucun effet de bord à l'import), et un remplacement laissait tout
+// nouvel export à `undefined`. C'est ce qui a cassé ces suites quand
+// `MARK_AS_PAID_ORDER_SELECT` y a été centralisé — un `select: undefined` silencieux,
+// diagnostiqué comme une régression de l'action alors que seul le mock mentait.
+vi.mock("../../constants/order.constants", async (importOriginal) => ({
+	...(await importOriginal<typeof OrderConstantsModule>()),
 	ORDER_ERROR_MESSAGES: {
 		NOT_FOUND: "La commande n'existe pas.",
 		ALREADY_PAID: "Cette commande est deja payee.",

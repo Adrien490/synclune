@@ -9,7 +9,7 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 
 import { EditCustomerInfoForm } from "./edit-customer-info-form";
 

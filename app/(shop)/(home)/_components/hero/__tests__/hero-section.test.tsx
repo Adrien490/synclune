@@ -227,8 +227,8 @@ describe("HeroHeading — le bloc titre est la première cellule de la grille", 
 		// d'acheter tout de suite sur une boutique de pièces uniques.
 		expect(normalize(chapo[0]!.textContent)).toContain("Aucune n'est identique");
 
-		// La copie ne vouvoie pas (CLAUDE.md § Voix — celle sauvegardée dans
-		// docs/atelier-story.md vouvoie, elle a été réécrite).
+		// La copie ne vouvoie pas (CLAUDE.md § Voix — la copie historique
+		// vouvoyait, elle a été réécrite).
 		expect(normalize(container.textContent)).not.toMatch(/\bvous\b|\bvotre\b|\bvos\b/i);
 	});
 

@@ -69,6 +69,20 @@ export function useCheckoutSubmit({
 			return { status: "form-invalid" };
 		}
 
+		// ⚠️ `elements.submit()` est appelé ici alors que `<Elements>` est monté AVEC un
+		// `clientSecret` (flux intent-first). `js/elements_object` — la seule page du
+		// mirror qui documente `submit()`, il n'en a pas de dédiée — le décrit « when
+		// creating the Elements object WITHOUT an Intent ». Ce n'est pas un écart : ce
+		// flux-ci n'y est simplement pas décrit.
+		//
+		// L'appel est STRUCTUREL, pas décoratif : `confirmCheckout` crée une commande en
+		// base et la lie au PaymentIntent. Valider la saisie carte APRÈS coup laisserait
+		// une commande PENDING orpheline à chaque champ mal rempli — le cas le plus
+		// fréquent du tunnel. On valide donc d'abord, on écrit ensuite.
+		//
+		// La doc impose en revanche d'ATTENDRE sa promesse avant toute autre opération :
+		// c'est ce que fait le `await` ci-dessous, et c'est non négociable.
+		// Ne pas « simplifier » en supprimant cet appel.
 		const { error: submitError } = await elements.submit();
 		if (submitError) {
 			return {

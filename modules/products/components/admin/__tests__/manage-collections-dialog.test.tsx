@@ -27,7 +27,7 @@ const {
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({
 		isOpen: mockIsOpen.value,
 		data: mockDialogData.value,

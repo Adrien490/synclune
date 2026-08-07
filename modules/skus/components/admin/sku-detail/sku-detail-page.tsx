@@ -12,9 +12,14 @@ interface SkuDetailPageProps {
 	sku: SkuDetailReturn;
 }
 
+/**
+ * ⚠️ Rend un FRAGMENT — même raison que `ProductDetailPage` : la page
+ * `variantes/[skuId]/page.tsx` porte déjà le `space-y-6` autour du fil d'Ariane,
+ * de ce bloc et des dialogs. Rendu identique, un palier de moins.
+ */
 export function SkuDetailPage({ sku }: SkuDetailPageProps) {
 	return (
-		<div className="space-y-6">
+		<>
 			<SkuDetailHeader sku={sku} />
 
 			<div className="grid gap-6 lg:grid-cols-3 lg:items-start">
@@ -30,6 +35,6 @@ export function SkuDetailPage({ sku }: SkuDetailPageProps) {
 					<SkuDetailParentProductCard sku={sku} />
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }

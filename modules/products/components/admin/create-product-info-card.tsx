@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { COLLECTION_DIALOG_ID } from "@/modules/collections/components/admin/collection-form-dialog";
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { PlusIcon } from "@phosphor-icons/react/ssr";

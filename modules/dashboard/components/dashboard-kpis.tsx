@@ -61,7 +61,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 					aria-label="Indicateurs clés ventes"
 					// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must be focusable to be scrollable by keyboard (WCAG 2.1.1); the rule only whitelists `tabpanel`
 					tabIndex={0}
-					className="scroll-fade-x no-scrollbar focus-visible:ring-ring sm:scroll-fade-none w-full overflow-x-auto overflow-y-hidden overscroll-x-contain focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
+					className="focus-ring scroll-fade-x no-scrollbar sm:scroll-fade-none w-full overflow-x-auto overflow-y-hidden overscroll-x-contain"
 				>
 					<div className="flex w-fit min-w-full snap-x snap-mandatory gap-4 pb-2 sm:grid sm:grid-cols-2 sm:pb-0 lg:grid-cols-4">
 						<KpiCardAnimated index={0}>

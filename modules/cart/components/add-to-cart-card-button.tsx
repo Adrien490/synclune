@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { dispatchFlyToCart } from "@/modules/cart/lib/fly-to-cart";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 // ⚠️ Depuis le module FEUILLE, pas depuis `./sku-selector-dialog` : ce bouton est
 // rendu sur chaque carte de la grille, et importer l'identifiant du dialog tirait

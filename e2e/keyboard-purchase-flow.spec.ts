@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures";
-import { VISIBLE_ALERT } from "./helpers/assertions";
+import { requireSeedData } from "./constants";
 
 test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 	test("navigation clavier de la liste produits au checkout", async ({ page, cartPage }) => {
@@ -8,24 +8,35 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 
 		const productLinks = page.locator("article a[href*='/creations/']");
+		// La grille arrive en streaming derrière un `Suspense` : compter juste après
+		// `domcontentloaded` rend 0 par intermittence, et ce test se SKIPPAIT alors
+		// en annonçant « pas de produits dans la base ».
+		await productLinks.first().waitFor({ state: "attached", timeout: 15000 });
 		const count = await productLinks.count();
-		if (count === 0) {
-			test.skip(true, "Pas de produits dans la base");
-			return;
-		}
+		requireSeedData(test, count > 0, "Pas de produits dans la base");
 
 		// Tab to the first product card and Enter
 		const firstProduct = productLinks.first();
 		await firstProduct.focus();
 		await expect(firstProduct).toBeFocused();
 		await page.keyboard.press("Enter");
-		await page.waitForLoadState("domcontentloaded");
 
 		// 2. Product detail page
-		expect(page.url()).toContain("/creations/");
+		// ⚠️ `waitForLoadState("domcontentloaded")` rend la main IMMÉDIATEMENT quand
+		// le document courant est déjà chargé — donc avant même que la navigation
+		// déclenchée par Enter ne démarre. L'assertion d'URL qui suivait courait
+		// contre /produits et échouait par intermittence, sur un parcours clavier
+		// pourtant fonctionnel (vérifié au rendu : Enter navigue bien).
+		await page.waitForURL(/\/creations\//);
 
 		// Tab to add-to-cart button
-		const addToCartButton = page.getByRole("button", { name: /Ajouter au panier/i }).first();
+		// Le bloc d'achat est un client component : sans attendre son montage,
+		// `count()` rend 0 et le test se skippe en annonçant « produit
+		// indisponible » — un motif faux, le produit étant en stock.
+		const addToCartButton = page.getByRole("button", { name: /ajouter.*au panier/i }).first();
+		await addToCartButton.waitFor({ state: "attached", timeout: 15000 }).catch(() => {
+			/* produit réellement indisponible */
+		});
 		if ((await addToCartButton.count()) === 0) {
 			test.skip(true, "Pas de bouton ajout panier (produit indisponible)");
 			return;
@@ -63,10 +74,12 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 			await checkoutLink.focus();
 			await expect(checkoutLink).toBeFocused();
 			await page.keyboard.press("Enter");
-			await page.waitForLoadState("domcontentloaded");
 
 			// 4. Checkout page
-			expect(page.url()).toContain("/paiement");
+			// Même race que plus haut : `waitForLoadState` rend la main avant que la
+			// navigation ne démarre, et l'assertion courait contre l'URL de la fiche
+			// produit.
+			await page.waitForURL(/\/paiement/);
 
 			// Tab through checkout form fields
 			const fullNameInput = page.getByLabel(/Nom complet|Prénom et nom/i);
@@ -81,47 +94,51 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 				expect(["input", "select", "textarea"]).toContain(activeTag);
 			}
 
-			// Find terms checkbox and verify Space toggles it
-			const termsCheckbox = page.getByLabel(/conditions générales|J'accepte/i);
-			if ((await termsCheckbox.count()) > 0) {
-				await termsCheckbox.focus();
-				await expect(termsCheckbox).toBeFocused();
-				await page.keyboard.press("Space");
-				await expect(termsCheckbox).toBeChecked();
-			}
+			// ⚠️ Il n'y a PAS de case « j'accepte les CGV » dans ce tunnel :
+			// l'acceptation est implicite (« En commandant, tu acceptes… » + lien).
+			// Le bloc qui cherchait `getByLabel(/conditions générales|J'accepte/i)`
+			// retombait donc sur le LIEN CGV — non cochable — et n'a jamais pu rien
+			// prouver. Vérifié au rendu : les 10 contrôles du formulaire sont 8
+			// champs de saisie et 2 selects, aucune case à cocher.
 		}
 	});
 
-	test("validation des erreurs de formulaire checkout au clavier", async ({ page }) => {
-		await page.goto("/paiement");
-		await page.waitForLoadState("domcontentloaded");
+	test("validation des erreurs de formulaire checkout au clavier", async ({
+		page,
+		checkoutPage,
+		productCatalogPage,
+		cartPage,
+	}) => {
+		// ⚠️ Ce test skippait EN SILENCE : `/paiement` ne redirige pas sur panier
+		// vide, donc la garde d'URL ne se déclenchait jamais, mais l'état « panier
+		// vide » n'a aucun bouton de soumission — d'où un `test.skip` systématique.
+		// Le panier doit être semé pour que le formulaire existe.
+		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
+		requireSeedData(test, !seeded.skipped, seeded.skipped ? seeded.reason : "");
+		if (seeded.skipped) return;
 
-		if (page.url().includes("connexion") || !page.url().includes("paiement")) {
-			test.skip(true, "Authentification requise ou panier vide");
-			return;
-		}
-
-		// Find the submit button and try submitting empty form
-		const submitButton = page.getByRole("button", { name: /Payer|Valider|Commander/i }).first();
-		if ((await submitButton.count()) === 0) {
-			test.skip(true, "Pas de bouton de soumission");
-			return;
-		}
-
-		await submitButton.focus();
+		await checkoutPage.payButton.focus();
 		await page.keyboard.press("Enter");
 
-		// After failed validation, focus should move to first error field
-		await page.waitForTimeout(500);
+		// Les champs invalides sont marqués et reliés à leur message.
+		const summary = page.getByRole("alert").filter({ hasText: /erreurs? trouvée/ });
+		await expect(summary).toBeVisible();
+		expect(await page.locator('[aria-invalid="true"]').count()).toBeGreaterThan(0);
 
-		const focusedTag = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
-		const hasErrorMessage = await page.locator(`${VISIBLE_ALERT}, [aria-invalid="true"]`).count();
+		// ⚠️ UNE seule région live doit parler. Avant le 2026-08-07, sept se
+		// peuplaient dans le même tick (le résumé `assertive` + une `role="alert"`
+		// par champ) et le lecteur d'écran les bousculait toutes.
+		const speaking = await page.evaluate(
+			() =>
+				Array.from(document.querySelectorAll("[aria-live],[role=status],[role=alert]")).filter(
+					(el) => el.textContent.trim().length > 0,
+				).length,
+		);
+		expect(speaking, "Une seule région live doit vocaliser à la soumission").toBe(1);
 
-		// Either focus moved to an input or error messages appeared
-		expect(
-			focusedTag === "input" || focusedTag === "select" || hasErrorMessage > 0,
-			"Le formulaire doit montrer des erreurs ou déplacer le focus vers le premier champ invalide",
-		).toBe(true);
+		// Et le focus atterrit sur le résumé, pas sur un champ : c'est lui qui porte
+		// les boutons de saut vers chaque erreur.
+		await expect(summary).toBeFocused();
 	});
 
 	test("navigation clavier dans la galerie produit", async ({ page }) => {
@@ -129,10 +146,8 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 
 		const productLink = page.locator("article a[href*='/creations/']").first();
-		if ((await productLink.count()) === 0) {
-			test.skip(true, "Pas de produits dans la base");
-			return;
-		}
+		// Idem : la grille est streamée, `count()` immédiat rend 0 par intermittence.
+		await productLink.waitFor({ state: "attached", timeout: 15000 });
 		const href = await productLink.getAttribute("href");
 		if (!href) return;
 		await page.goto(href);
@@ -165,25 +180,23 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		expect(["button", "a", "img"]).toContain(focusedTag);
 	});
 
-	test("le focus ne sort pas du formulaire checkout pendant la saisie", async ({ page }) => {
-		await page.goto("/paiement");
-		await page.waitForLoadState("domcontentloaded");
-
-		// If redirected to login, skip
-		if (page.url().includes("connexion")) {
-			test.skip(true, "Authentification requise pour le checkout");
-			return;
-		}
-
-		// If redirected because cart is empty, skip
-		if (!page.url().includes("paiement")) {
-			test.skip(true, "Panier vide - redirection");
-			return;
-		}
+	test("le focus ne sort pas du formulaire checkout pendant la saisie", async ({
+		page,
+		checkoutPage,
+		productCatalogPage,
+		cartPage,
+	}) => {
+		// Même défaut que ci-dessus, doublé d'un `if (inputCount === 0) return`
+		// qui rendait le test VERT sur l'état « panier vide » (zéro champ).
+		// `/paiement` ne redirige pas non plus vers `/connexion` : le parcours
+		// d'achat est entièrement invité depuis le 2026-07-31.
+		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
+		requireSeedData(test, !seeded.skipped, seeded.skipped ? seeded.reason : "");
+		if (seeded.skipped) return;
 
 		const formInputs = page.locator("form input, form select, form textarea");
 		const inputCount = await formInputs.count();
-		if (inputCount === 0) return;
+		expect(inputCount, "Le formulaire de checkout doit exposer des champs").toBeGreaterThan(0);
 
 		// Focus the first input
 		await formInputs.first().focus();

@@ -2,6 +2,7 @@
 
 exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list of admin actions audited (drift detection) 1`] = `
 [
+  "modules/auth/actions/revoke-all-sessions.ts",
   "modules/collections/actions/create-collection.ts",
   "modules/collections/actions/delete-collection.ts",
   "modules/collections/actions/refresh-collections.ts",
@@ -14,6 +15,7 @@ exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list o
   "modules/colors/actions/refresh-colors.ts",
   "modules/colors/actions/toggle-color-status.ts",
   "modules/colors/actions/update-color.ts",
+  "modules/cron/actions/run-maintenance-task.ts",
   "modules/dashboard/actions/refresh-dashboard.ts",
   "modules/invoices/actions/retry-invoice-generation.ts",
   "modules/materials/actions/create-material.ts",

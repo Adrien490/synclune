@@ -2,7 +2,7 @@
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-product";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/view-transition";

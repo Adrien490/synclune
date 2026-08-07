@@ -8,7 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { UPDATE_PRICE_DIALOG_ID } from "@/modules/skus/components/admin/update-price-dialog";
 import type { SkuDetailReturn } from "@/modules/skus/data/get-sku";
 

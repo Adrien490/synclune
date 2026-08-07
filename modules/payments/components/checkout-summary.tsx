@@ -13,7 +13,7 @@ import type { ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
-import { useSheet } from "@/shared/providers/sheet-store-provider";
+import { useSheet } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { getSkuColorsLabel } from "@/modules/skus/utils/sku-colors-label";
@@ -232,10 +232,22 @@ function SummaryContent({
 			 * Le filet est tireté : le résumé est une fiche, pas une carte d'interface.
 			 */}
 			<div className="border-border space-y-3 border-t border-dashed pt-4">
-				<div className="flex items-center justify-center gap-2">
-					<VisaIcon className="text-muted-foreground h-5 w-auto" />
-					<MastercardIcon className="text-muted-foreground h-5 w-auto" />
-					<CBIcon className="text-muted-foreground h-5 w-auto" />
+				{/*
+				 * Un SEUL nom accessible pour les trois marques, porté par le groupe.
+				 *
+				 * Les trois SVG n'avaient ni `aria-hidden` ni `role` : selon le moteur,
+				 * ils s'annonçaient « graphique » trois fois de suite, ou disparaissaient
+				 * — alors qu'ils répondent à une vraie question (« ma carte est-elle
+				 * acceptée ? »). Le groupe la porte une fois, les icônes se taisent.
+				 */}
+				<div
+					role="img"
+					aria-label="Cartes acceptées : Visa, Mastercard, Carte Bancaire"
+					className="flex items-center justify-center gap-2"
+				>
+					<VisaIcon className="text-muted-foreground h-5 w-auto" aria-hidden="true" />
+					<MastercardIcon className="text-muted-foreground h-5 w-auto" aria-hidden="true" />
+					<CBIcon className="text-muted-foreground h-5 w-auto" aria-hidden="true" />
 				</div>
 
 				{/* Trust links */}

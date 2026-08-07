@@ -107,7 +107,7 @@ export async function RelatedProducts({ currentProductSlug, limit = 8 }: Related
 						    révélation : `md` = 48 rem couvre l'iPad portrait, où il n'existe
 						    aucun survol — les deux flèches y restaient donc à `opacity-0`
 						    tout en étant cliquables et tabulables. C'est l'angle mort que
-						    `docs/UI-CONVENTIONS.md` dit avoir déjà payé deux fois. */}
+						    ce projet a déjà payé deux fois. */}
 						{relatedProducts.length > 3 && (
 							<>
 								<CarouselPrevious

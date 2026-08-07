@@ -38,14 +38,14 @@ export default function GlobalError({
 							<button
 								type="button"
 								onClick={reset}
-								className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex h-11 items-center justify-center rounded-md px-8 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								className="focus-ring bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-md px-8 text-sm font-medium transition-colors"
 							>
 								Réessayer
 							</button>
 							{/* eslint-disable-next-line @next/next/no-html-link-for-pages -- global-error renders outside the Next router context */}
 							<a
 								href="/"
-								className="border-input bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-11 items-center justify-center rounded-md border px-8 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								className="focus-ring border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-11 items-center justify-center rounded-md border px-8 text-sm font-medium transition-colors"
 							>
 								Retour à l&apos;accueil
 							</a>

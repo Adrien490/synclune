@@ -456,8 +456,13 @@ describe("ResponsiveActionMenu — mobile", () => {
 		);
 
 		const item = screen.getByRole("menuitem", { name: /Modifier/ });
-		expect(item.className).toMatch(/focus-visible:ring-ring/);
-		expect(item.className).toMatch(/focus-visible:ring-2/);
+		// Le focus est peint par l'utilitaire SSOT `focus-ring`, pas par un stack
+		// `ring-ring`/`ring-2` monté à la main. Ce test EXIGEAIT l'ancien motif —
+		// il verrouillait donc un focus à 1,55:1 (l'`outline-none` qui l'accompagne
+		// annule l'outline `--foreground` à 19,5:1). Cf.
+		// `focus-ring-is-the-only-focus-ink.regression.test.ts`.
+		expect(item.className).toMatch(/\bfocus-ring\b/);
+		expect(item.className).not.toMatch(/focus-visible:ring-ring/);
 	});
 
 	it("fires haptic `selection` when the overlay/scrim is tapped", () => {

@@ -25,6 +25,20 @@ import { useTransition, Suspense, type ComponentProps } from "react";
 
 interface OrdersFilterSheetProps {
 	className?: string;
+	/**
+	 * Contrat CONTRÔLÉ, aligné sur les sept autres `*FilterSheet` (2026-08-07).
+	 *
+	 * Il manquait ici, et c'est ce qui avait fait naître `orders-filter-drawer.tsx`
+	 * (331 l.) : faute de pouvoir piloter cette feuille depuis la barre basse, une
+	 * seconde implémentation avait été écrite pour le mobile. Les deux traitaient
+	 * exactement les **mêmes onze** `filter_*` — 1 004 lignes pour un seul filtre,
+	 * et deux endroits où ajouter tout nouveau critère.
+	 */
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
+	/** `id` DOM du contenu de la feuille (appairé à `aria-controls`). */
+	id?: string;
 }
 
 interface FilterFormData {
@@ -59,7 +73,13 @@ const toDayParam = (date: Date): string =>
 		date.getDate(),
 	).padStart(2, "0")}`;
 
-function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
+function OrdersFilterSheetInner({
+	className,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	hideTrigger,
+	id,
+}: OrdersFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -317,6 +337,10 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
 			triggerClassName={className}
+			open={controlledOpen}
+			onOpenChange={controlledOnOpenChange}
+			hideTrigger={hideTrigger}
+			id={id}
 		>
 			<form
 				onSubmit={(e) => {

@@ -97,7 +97,7 @@ export function getStripeClient(): Stripe | null {
  *
  * Note : les identifiants de routage PDP/annuaire central (émetteur et destinataire)
  * ont été retirés avec l'e-reporting (2026-07-26) — à réintroduire au go-live contre
- * l'arrêté définitif et une Plateforme Agréée réelle. Cf. docs/RUNBOOK.md.
+ * l'arrêté définitif et une Plateforme Agréée réelle.
  */
 export function getVendorLegalInfo() {
 	return {

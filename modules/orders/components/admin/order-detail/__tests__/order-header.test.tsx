@@ -23,7 +23,7 @@ const { mockPermissions, mockAlertDialogOpen, mockHaptic, mockBaseSections } = v
 vi.mock("@/modules/orders/services/order-status-validation.service", () => ({
 	getOrderPermissions: () => mockPermissions,
 }));
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({ open: mockAlertDialogOpen, close: vi.fn(), isOpen: false, data: null }),
 }));
 vi.mock("@/shared/hooks/use-haptic", () => ({

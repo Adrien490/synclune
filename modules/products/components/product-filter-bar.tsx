@@ -4,7 +4,7 @@ import { useEffect, useRef, Suspense, type ComponentProps } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { SlidersHorizontalIcon } from "@phosphor-icons/react/ssr";
 
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import {
 	PRODUCT_FILTER_DIALOG_ID,
 	PRODUCTS_SORT_LABELS,

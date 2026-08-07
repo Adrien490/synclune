@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/view-transition";
 import type { EditProductFormProps } from "./edit-product-form-types";
-import { EditProductMediaCard } from "./edit-product-media-card";
+import { MediaArrayCard } from "./shared/media-array-card";
 import { EditProductInfoCard } from "./edit-product-info-card";
 import { EditProductSidebarCards } from "./edit-product-sidebar-cards";
 import { runAfterValidation } from "@/shared/utils/run-after-validation";
@@ -227,7 +227,10 @@ export function EditProductForm({
 				className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start"
 			>
 				<div className="space-y-6 lg:col-span-2">
-					<EditProductMediaCard
+					<MediaArrayCard
+						fieldName="defaultSku.media"
+						viewTransitionName="product-edit-media"
+						skipUtapiDelete
 						form={form}
 						isMediaUploading={isMediaUploading}
 						uploadProgress={uploadProgress}

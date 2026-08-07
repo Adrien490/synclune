@@ -12,8 +12,12 @@ const {
 	mockRemoveFiltersOptimistic,
 	mockClearAllFiltersOptimistic,
 	mockCreateProductFilterFormatter,
+	pathnameRef,
 } = vi.hoisted(() => {
 	const mockRouter = { replace: vi.fn() };
+	// Le type actif n'est plus une prop : il se DÉRIVE du pathname. Le mock doit
+	// donc être mutable, une page catégorie ne se simule plus qu'ainsi.
+	const pathnameRef = { current: "/produits" };
 	const mockSearchParams = {
 		toString: vi.fn(() => ""),
 		forEach: vi.fn(),
@@ -34,12 +38,13 @@ const {
 		mockRemoveFiltersOptimistic,
 		mockClearAllFiltersOptimistic,
 		mockCreateProductFilterFormatter,
+		pathnameRef,
 	};
 });
 
 vi.mock("next/navigation", () => ({
 	useRouter: () => mockRouter,
-	usePathname: () => "/produits",
+	usePathname: () => pathnameRef.current,
 	useSearchParams: () => mockSearchParams,
 }));
 
@@ -132,6 +137,7 @@ describe("ProductFilterBadges", () => {
 		vi.resetAllMocks();
 		// Reset the shared mutable array
 		mockOptimisticActiveFilters.length = 0;
+		pathnameRef.current = "/produits";
 		mockSearchParams.toString = vi.fn(() => "");
 		mockCreateProductFilterFormatter.mockReturnValue(
 			vi.fn(() => ({ label: "Couleur", displayValue: "Argent" })),
@@ -174,18 +180,38 @@ describe("ProductFilterBadges", () => {
 		expect(screen.getByTestId("filter-color")).toBeInTheDocument();
 	});
 
-	describe("with activeProductType", () => {
-		it("prepends a synthetic categoryType filter when activeProductType is provided", () => {
+	describe("type venant du path", () => {
+		it("préfixe une étiquette categoryType sur une page catégorie", () => {
+			pathnameRef.current = "/produits/bagues";
+
 			render(
 				<ProductFilterBadges
 					colors={defaultColors as Parameters<typeof ProductFilterBadges>[0]["colors"]}
 					materials={defaultMaterials}
-					activeProductType={{ slug: "bagues", label: "Bagues" }}
+					productTypes={[{ slug: "bagues", label: "Bagues" }]}
 				/>,
 			);
 
 			expect(screen.getByTestId("filter-categoryType")).toBeInTheDocument();
 			expect(screen.getByText("Bagues")).toBeInTheDocument();
+		});
+
+		it("retombe sur le slug quand le type n'est pas dans la liste (aucun bijou publié)", () => {
+			// `getCatalogData` filtre `hasProducts: true` : sur la page d'un type
+			// vidé de ses bijoux, le libellé n'est pas disponible. L'étiquette DOIT
+			// quand même se rendre — c'est elle qui ramène à `/produits`.
+			pathnameRef.current = "/produits/bagues";
+
+			render(
+				<ProductFilterBadges
+					colors={defaultColors as Parameters<typeof ProductFilterBadges>[0]["colors"]}
+					materials={defaultMaterials}
+					productTypes={[]}
+				/>,
+			);
+
+			expect(screen.getByTestId("filter-categoryType")).toBeInTheDocument();
+			expect(screen.getByText("bagues")).toBeInTheDocument();
 		});
 
 		it("does not show categoryType filter when activeProductType is not provided", () => {
@@ -203,12 +229,13 @@ describe("ProductFilterBadges", () => {
 	describe("handleRemove", () => {
 		it("navigates to /produits when categoryType filter is removed", () => {
 			mockSearchParams.toString = vi.fn(() => "color=argent");
+			pathnameRef.current = "/produits/bagues";
 
 			render(
 				<ProductFilterBadges
 					colors={defaultColors as Parameters<typeof ProductFilterBadges>[0]["colors"]}
 					materials={defaultMaterials}
-					activeProductType={{ slug: "bagues", label: "Bagues" }}
+					productTypes={[{ slug: "bagues", label: "Bagues" }]}
 				/>,
 			);
 
@@ -302,14 +329,15 @@ describe("ProductFilterBadges", () => {
 	});
 
 	describe("handleClearAll", () => {
-		it("navigates to /produits when clearing all with activeProductType", () => {
+		it("navigates to /produits when clearing all on a category page", () => {
 			mockOptimisticActiveFilters.push(makeFilter());
+			pathnameRef.current = "/produits/bagues";
 
 			render(
 				<ProductFilterBadges
 					colors={defaultColors as Parameters<typeof ProductFilterBadges>[0]["colors"]}
 					materials={defaultMaterials}
-					activeProductType={{ slug: "bagues", label: "Bagues" }}
+					productTypes={[{ slug: "bagues", label: "Bagues" }]}
 				/>,
 			);
 
@@ -375,13 +403,15 @@ describe("ProductFilterBadges", () => {
 	});
 
 	describe("categoryType filter formatting", () => {
-		it("formats categoryType filter with label 'Type' and displayValue from activeProductType", () => {
+		it("formats categoryType filter with label 'Type' and the label read from productTypes", () => {
 			// We verify the synthetic filter injected has correct properties
+			pathnameRef.current = "/produits/colliers";
+
 			render(
 				<ProductFilterBadges
 					colors={defaultColors as Parameters<typeof ProductFilterBadges>[0]["colors"]}
 					materials={defaultMaterials}
-					activeProductType={{ slug: "colliers", label: "Colliers" }}
+					productTypes={[{ slug: "colliers", label: "Colliers" }]}
 				/>,
 			);
 

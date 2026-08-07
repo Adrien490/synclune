@@ -7,13 +7,10 @@ import { LockIcon } from "@phosphor-icons/react/ssr";
  * Texte rassurant + indication "ne fermez pas" pour réduire l'anxiété post-paiement.
  */
 export default function CheckoutReturnLoading() {
+	// Pas d'`aria-live` : `role="status"` l'implique déjà en `polite`. Poser les deux
+	// est la redondance déjà corrigée dans `cart-price-change-alert.tsx`.
 	return (
-		<div
-			role="status"
-			aria-live="polite"
-			aria-busy="true"
-			className="flex min-h-dvh items-center justify-center px-4"
-		>
+		<div role="status" aria-busy="true" className="flex min-h-dvh items-center justify-center px-4">
 			<div className="max-w-sm space-y-5 text-center">
 				<Spinner className="mx-auto size-10" />
 				<div className="space-y-2">

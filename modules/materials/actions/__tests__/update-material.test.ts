@@ -234,7 +234,7 @@ describe("updateMaterial", () => {
 		const result = await updateMaterial(undefined, makeFormData({ name: "Or 14k" }));
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("existe deja");
+		expect(result.message).toContain("existe déjà");
 		expect(mockPrisma.material.update).not.toHaveBeenCalled();
 	});
 

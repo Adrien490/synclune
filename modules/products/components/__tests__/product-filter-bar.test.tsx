@@ -24,7 +24,7 @@ vi.mock("next/navigation", () => ({
 	usePathname: () => "/produits",
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: (id: string) => {
 		if (id === "product-filter-sheet") {
 			return { open: mockOpenFilter, close: vi.fn(), isOpen: false };

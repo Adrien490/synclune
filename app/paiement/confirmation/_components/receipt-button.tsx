@@ -44,7 +44,7 @@ export async function ReceiptButton({ stripePaymentIntentId }: ReceiptButtonProp
 				variant="outline"
 				size="sm"
 			>
-				<ReceiptIcon className="size-4" />
+				<ReceiptIcon className="size-4" aria-hidden="true" />
 				Télécharger mon reçu
 				<ArrowSquareOutIcon className="size-3" aria-hidden="true" />
 				<span className="sr-only">(ouvre dans un nouvel onglet)</span>

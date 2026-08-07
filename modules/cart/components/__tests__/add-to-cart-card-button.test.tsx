@@ -42,7 +42,7 @@ vi.mock("@/modules/cart/lib/fly-to-cart", () => ({
 	dispatchFlyToCart: mockDispatchFlyToCart,
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenSkuSelector }),
 }));
 

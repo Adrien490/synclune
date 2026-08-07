@@ -38,8 +38,13 @@ export default async function ShippingAddressPage({
 		notFound();
 	}
 
-	// Miroir EXACT de la garde de `update-order-shipping-address.ts` — lue sur
-	// `status` depuis le Lot 4, mêmes trois valeurs.
+	// Miroir de la garde d'EXPÉDITION de `update-order-shipping-address.ts` — lue
+	// sur `status` depuis le Lot 4, mêmes trois valeurs.
+	//
+	// ⚠️ Les deux gardes COMPTABLES de l'action (avoir émis, facture en cours
+	// d'archivage) ne sont volontairement PAS mirrorées ici : elles sont
+	// transitoires ou rares, et un `notFound()` ne dirait pas pourquoi. L'action
+	// les refuse avec un message explicite, ce qui est le bon retour.
 	const canEditShipping =
 		order.status !== OrderStatus.SHIPPED &&
 		order.status !== OrderStatus.DELIVERED &&
@@ -63,6 +68,7 @@ export default async function ShippingAddressPage({
 				shippingCity={order.shippingCity}
 				shippingCountry={order.shippingCountry}
 				shippingPhone={order.shippingPhone}
+				invoiceIssued={order.invoiceNumber !== null}
 				redirectOnSuccess
 				successPath={`/admin/ventes/commandes/${order.id}`}
 				className="max-w-2xl"

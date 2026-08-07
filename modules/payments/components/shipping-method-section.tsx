@@ -34,7 +34,7 @@ export function ShippingMethodSection({
 	// section parente : la tuile ne redéclare aucune couleur et suit l'étape.
 	return (
 		<div className="border-border flex items-center gap-3 rounded-lg border bg-(--section-soft) p-4">
-			<PackageIcon className="text-muted-foreground size-5 shrink-0" />
+			<PackageIcon className="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
 			<div className="flex-1 text-sm">
 				<div className="flex items-center justify-between">
 					<span className="font-medium">{shippingInfo?.displayName ?? "Livraison standard"}</span>

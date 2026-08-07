@@ -168,7 +168,7 @@ pas encore, `data-theme` jamais vérifié). Le détail vit dans `memory/`.
 
 Seconde passe le 2026-08-04 (477 → 578 l.), qui corrige le **P0 hérité de son voisin** : le §3 envoyait
 encore lire les sections Breakpoints / Overlays / Survol vs focus dans `CLAUDE.md`, alors qu'elles avaient
-été extraites dans [`../UI-CONVENTIONS.md`](../UI-CONVENTIONS.md) — un modèle lisait dix puces au lieu de
+été extraites dans un document tiers (depuis supprimé) — un modèle lisait dix puces au lieu de
 262 lignes. `REDESIGN-PROMPT.md` avait été remédié le 05/08, pas celui-ci : les entrées
 `DOC_SECTION_REFERENCES` du contract test couvrent désormais **les deux** (34 assertions, contre 26).
 Ajouté dans la foulée : le brief de marque réécrit **en positif** (palette des 4 accents, vocabulaire

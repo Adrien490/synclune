@@ -107,10 +107,10 @@ export async function updateCollection(
 		// Gerer les erreurs metier de la transaction
 		if (e instanceof Error) {
 			if (e.message === "NOT_FOUND") {
-				return notFound("Collection");
+				return notFound("Collection", "f");
 			}
 			if (e.message === "NAME_EXISTS") {
-				return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
+				return error("Ce nom de collection existe déjà. Choisis-en un autre.");
 			}
 			if (e.message === "PUBLIC_RENAME_BLOCKED") {
 				return error(
@@ -123,7 +123,7 @@ export async function updateCollection(
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
 			const target = (e.meta?.target as string[] | undefined) ?? [];
 			if (target.includes("name") || target.includes("Collection_name_key")) {
-				return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
+				return error("Ce nom de collection existe déjà. Choisis-en un autre.");
 			}
 		}
 		return handleActionError(e, "Erreur lors de la modification de la collection");

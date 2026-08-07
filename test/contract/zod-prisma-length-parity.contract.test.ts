@@ -250,6 +250,18 @@ const PAIRS: readonly Pair[] = [
 		path: ["email"],
 		column: "Order.customerEmail",
 	},
+	{
+		// La colonne la plus ÉTROITE du bloc adresse (`VarChar(2)`), et la seule qui
+		// n'avait aucune paire jusqu'au 2026-08-07. Sa borne ne vient pas d'un `.max()`
+		// mais de l'enum fermé `SHIPPING_COUNTRIES` — d'où le passage par la branche
+		// `enum` de `maxLengthOf`. Ajouter un code non-ISO à l'enum (« FRA ») rougirait
+		// ici, là où `tsc` et le `create` de checkout resteraient muets.
+		label: "checkout · country → Order.shippingCountry",
+		schema: confirmCheckoutSchema,
+		path: ["shippingAddress", "country"],
+		column: "Order.shippingCountry",
+		note: "Borné par l'enum ISO-3166-1 alpha-2, pas par un .max()",
+	},
 
 	// ── Schémas partagés, pris à la racine (ils alimentent auth + admin) ────────
 	{ label: "emailSchema → User.email", schema: emailSchema, path: [], column: "User.email" },

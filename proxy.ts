@@ -94,9 +94,76 @@ function matchesAnyRoute(pathname: string, routes: readonly string[]): boolean {
 	});
 }
 
+// ===== NORMALISATION D'URL =====
+
+/**
+ * Paramètres qui n'ont PAS valeur de filtre sur `/produits` : leur présence
+ * n'empêche pas la consolidation `?type=X` → `/produits/X`.
+ */
+const CATALOG_NON_FILTER_PARAMS = new Set([
+	"cursor",
+	"direction",
+	"perPage",
+	"sortBy",
+	"search",
+	"type",
+]);
+
+/** Ceux que la page catégorie sait relire — `perPage` est délibérément abandonné. */
+const CATALOG_FORWARDED_PARAMS = ["search", "sortBy", "cursor", "direction"] as const;
+
+/** Un slug de type est `[a-z0-9-]` : tout le reste sort du chemin de redirection. */
+const PRODUCT_TYPE_SLUG_PATTERN = /^[a-z0-9-]+$/;
+
+/**
+ * `/produits?type=X` → **308** `/produits/X`, quand `type` est le SEUL filtre.
+ *
+ * @description
+ * Consolidation SEO : la page catégorie est l'URL canonique d'une famille
+ * (sitemap, méga-menu, `opengraph-image`), la facette en query ne doit pas la
+ * dupliquer.
+ *
+ * ⚠️ **Ceci vivait dans `app/(shop)/produits/page.tsx`** (`permanentRedirect`),
+ * ce qui forçait un `await searchParams` au niveau supérieur de la page — donc
+ * un rendu entièrement dynamique, donc un App Shell réduit au squelette pleine
+ * page de `loading.tsx`, affiché à CHAQUE navigation de filtre. Une
+ * normalisation d'URL n'a pas besoin du moteur de rendu : elle appartient ici.
+ *
+ * Le garde de slug n'est pas décoratif : la valeur atterrit dans un CHEMIN, et
+ * `type=../../admin` y construirait une redirection interne arbitraire. Une
+ * valeur non conforme n'est pas redirigée — la page la traite comme un filtre
+ * qui ne matche rien.
+ */
+export function catalogTypeRedirect(nextUrl: NextRequest["nextUrl"]): URL | null {
+	if (nextUrl.pathname !== "/produits") return null;
+
+	const types = nextUrl.searchParams.getAll("type");
+	const slug = types.length === 1 ? types[0] : undefined;
+	if (!slug || !PRODUCT_TYPE_SLUG_PATTERN.test(slug)) return null;
+
+	// Un autre filtre actif (couleur, matière, prix, dispo, promo) : la page reste
+	// `/produits`, et son `generateMetadata` la passe en noindex.
+	for (const key of nextUrl.searchParams.keys()) {
+		if (!CATALOG_NON_FILTER_PARAMS.has(key)) return null;
+	}
+
+	const target = new URL(`/produits/${slug}`, nextUrl.origin);
+	for (const key of CATALOG_FORWARDED_PARAMS) {
+		const value = nextUrl.searchParams.get(key);
+		if (value) target.searchParams.set(key, value);
+	}
+	return target;
+}
+
 export async function proxy(request: NextRequest) {
 	const { nextUrl } = request;
 	const pathname = nextUrl.pathname;
+
+	// ===== 0. NORMALISATION D'URL (avant toute décision d'accès) =====
+	const catalogRedirect = catalogTypeRedirect(nextUrl);
+	if (catalogRedirect) {
+		return NextResponse.redirect(catalogRedirect, 308);
+	}
 
 	// AVERTISSEMENT DE SÉCURITÉ:
 	// La fonction getSessionCookie() vérifie uniquement l'EXISTENCE du cookie de session,

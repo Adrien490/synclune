@@ -13,10 +13,6 @@
 export const BRAND_PINK = {
 	/** #fdb8e4 = conversion exacte oklch→sRGB de `--primary` (vérifiée par script). */
 	primary: "#fdb8e4",
-	/** Stops du dégradé OG on-brand (clair → soutenu, contraste texte blanc en zone via/to). */
-	ogFrom: "#f0b4c8",
-	ogVia: "#e493b3",
-	ogTo: "#c75b8f",
 	/** Chrome UI mobile (status bar / tuile) — mid-tone lisible, plus soutenu que primary. */
 	theme: "#e493b3",
 } as const;
@@ -71,15 +67,10 @@ export const OG_ACCENTS = [
 	BRAND_HEX.sun,
 ] as const;
 
-/**
- * Dégradé de fond des OG images de PIÈCE (créations, collections, familles) —
- * là où une photo occupe la moitié de la carte et a besoin d'un fond soutenu
- * pour s'en détacher.
- *
- * ⚠️ Il ne sert plus la carte d'ACCUEIL : elle est passée au papier du storefront le
- * 2026-08-06 (audit de conformité DA). Un aplat rose plein est monochrome là où
- * la marque est polychrome, et il n'a ni trait dessiné ni motif — c'était la
- * seule surface 100 % maîtrisée par le dépôt, et elle ne racontait personne.
+/*
+ * ⚠️ `OG_GRADIENT` (+ les stops `BRAND_PINK.ogFrom/ogVia/ogTo` qui n'existaient
+ * que pour lui) a été retiré le 2026-08-07 : plus aucune des 4 OG images ne
+ * l'importait. Sa JSDoc affirmait pourtant servir « les cartes de PIÈCE » — elle
+ * décrivait une intention, pas un appelant. Le fond des cartes est le papier du
+ * storefront depuis l'audit DA du 2026-08-06.
  */
-export const OG_GRADIENT =
-	`linear-gradient(135deg, ${BRAND_PINK.ogFrom} 0%, ${BRAND_PINK.ogVia} 40%, ${BRAND_PINK.ogTo} 100%)` as const;

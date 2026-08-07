@@ -27,8 +27,7 @@ const TITLE_ID = "collections-title";
  * « Choisis ton univers » — les collections, sur la landing.
  *
  * @description
- * Section ajoutée le 2026-08-05 (décision documentée dans
- * `docs/LANDING-SECTION-COLLECTIONS.md`) : le ré-audit de l'étal avait
+ * Section ajoutée le 2026-08-05 : le ré-audit de l'étal avait
  * conclu que la page ne portait « ni réassurance ni orientation » — la FAQ a
  * couvert la première, cette section couvre la seconde. Placement entre l'étal
  * et la FAQ : accroche produit → orientation → réassurance.

@@ -180,7 +180,7 @@ describe("toggleProductStatus — régression zombie (soft-deleted ressuscité)"
 
 		const result = await toggleProductStatus(undefined, restoreFormData);
 
-		expect(mockNotFound).toHaveBeenCalledWith("Le produit");
+		expect(mockNotFound).toHaveBeenCalledWith("Produit");
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 		// Aucune résurrection : ni transaction, ni update de statut
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();

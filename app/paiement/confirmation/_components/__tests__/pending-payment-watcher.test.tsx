@@ -40,12 +40,29 @@ function setupFetch(payload: { paymentStatus: string; status: string }) {
 }
 
 describe("PendingPaymentWatcher", () => {
-	it("renders nothing before first poll resolves", () => {
+	/**
+	 * @regression pending-payment-watcher-announces-2026-08-07
+	 *
+	 * ⚠️ Ce test exigeait `container.firstChild === null` : le composant ne rendait
+	 * RIEN pendant toute la vérification. C'est précisément le défaut — le sondage
+	 * dure jusqu'à 30 s, au terme desquelles il peut réécrire la page
+	 * (`router.refresh()`) ou changer de route (`router.replace()`), sans qu'un
+	 * lecteur d'écran ait jamais su qu'une vérification était en cours.
+	 *
+	 * La région est désormais montée EN PERMANENCE — une région live créée avec son
+	 * contenu n'est pas annoncée de façon fiable — et seul son texte change.
+	 */
+	it("annonce la vérification en cours, sans rien afficher", () => {
 		setupFetch({ paymentStatus: "PENDING", status: "PENDING" });
 		const { container } = render(
 			<PendingPaymentWatcher orderId={ORDER_ID} orderNumber={ORDER_NUMBER} />,
 		);
-		expect(container.firstChild).toBeNull();
+
+		const region = container.firstChild as HTMLElement;
+		expect(region).not.toBeNull();
+		expect(region).toHaveAttribute("aria-live", "polite");
+		expect(region.className).toContain("sr-only");
+		expect(region.textContent).toMatch(/vérification du paiement en cours/i);
 	});
 
 	it("calls router.refresh() when polling detects PAID", async () => {

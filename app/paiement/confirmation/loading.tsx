@@ -7,13 +7,12 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
  */
 export default function CheckoutSuccessLoading() {
 	return (
-		<div
-			role="status"
-			aria-busy="true"
-			aria-label="Chargement de la confirmation de commande"
-			className="relative min-h-dvh"
-		>
-			<span className="sr-only">Chargement de la confirmation…</span>
+		<div role="status" aria-busy="true" className="relative min-h-dvh">
+			{/* Un SEUL canal de nommage. Un `aria-label` était posé sur la région EN PLUS
+			    de ce texte : deux formulations concurrentes pour la même annonce. Sur un
+			    `role="status"`, c'est le CONTENU qui est vocalisé — l'`aria-label` ne
+			    faisait que brouiller. Audit a11y 2026-08-07. */}
+			<span className="sr-only">Chargement de la confirmation de commande…</span>
 			{/* Decorative background (matches page) */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 

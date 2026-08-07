@@ -6,7 +6,7 @@ const { mockOpenAlertDialog, mockHaptic } = vi.hoisted(() => ({
 	mockHaptic: vi.fn(),
 }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialogStore: (selector: (s: unknown) => unknown) =>
 		selector({ openAlertDialog: mockOpenAlertDialog }),
 }));

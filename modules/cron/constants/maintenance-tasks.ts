@@ -16,7 +16,7 @@
  * donc Stripe redélivre tout seul pendant 3 jours — et chaque redélivrance
  * ré-incrémente `WebhookEvent.attempts`, qui alimente toujours l'alerte admin.
  * Les conséquences métier, elles, sont rattrapées par les tâches de réconciliation
- * ci-dessous. Angle mort assumé, cf. `docs/KNOWN-ISSUES.md` (KI-006).
+ * ci-dessous. Angle mort assumé.
  */
 export const MAINTENANCE_TASK_IDS = [
 	"reconcile-refunds",

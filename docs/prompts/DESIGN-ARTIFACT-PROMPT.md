@@ -86,7 +86,7 @@ que tu n'as pas osé dessiner.
 **Ce qu'elle vend** : des bijoux **créatifs, colorés, faits main** — des pièces uniques, pas une gamme. Léane,
 qui est seule derrière la boutique, décrit elle-même son point de départ ainsi : « une couleur dans la rue, un
 motif sur un tissu, un rêve », et ses bijoux comme une extension de sa passion, où « chaque couleur, forme,
-ligne est pensée et choisie avec soin » (`docs/atelier-story.md`). C'est ÇA le produit : de la couleur, de la
+ligne est pensée et choisie avec soin » (`shared/constants/atelier-content.ts`). C'est ÇA le produit : de la couleur, de la
 main, de la joie, et une personne.
 
 ⚠️ **Corollaire, et pas l'inverse : ce n'est PAS de la joaillerie précieuse** — ni or, ni pierres, ni « luxe
@@ -94,7 +94,7 @@ discret ». Toute direction bâtie sur le métal précieux, le noir et or, la gr
 joaillerie ou le minimalisme froid est le **contre-pied exact** du brief — même exécutée parfaitement, elle
 est à jeter. C'est la donnée de marque la plus souvent mal comprise, et elle a déjà produit des propositions
 jetées sur ce projet. Vise le **soin artisanal et la joie**, jamais le prestige. SSOT :
-`docs/BUSINESS.md` § Positionnement, `shared/constants/brand.ts`,
+`CLAUDE.md` § Direction artistique, `shared/constants/brand.ts`,
 `BUSINESS_INFO` (`shared/constants/seo-config.ts`).
 
 🎨 **La couleur et la main sont le SUJET, pas la décoration.** C'est la partie du brief la plus sous-jouée :
@@ -146,12 +146,12 @@ de la haute joaillerie.
   paillettes ou en verre dépoli, ils retombent dans le décoratif interdit au §4.8.
 - **La voix est à la première personne.** Léane parle d'elle (« je », « mon atelier ») ; la copie tutoie la
   cliente. Un ton corporate impersonnel (« nos artisans », « notre maison ») est faux : il n'y a qu'elle.
-  ⚠️ **Piège actif : `docs/atelier-story.md` est intégralement au VOUVOIEMENT** (« Chaque bijou que vous
-  retrouverez ici… », « Je vais vous faire une confidence »), alors que le §8 et `CLAUDE.md` § Voix imposent
-  le tutoiement partout. Le fichier est une réserve de copie, pas un texte prêt à poser : le §2 te demande le
-  VRAI texte, et le prendre tel quel introduirait du vouvoiement dans la maquette. **Repasse-le au
-  tutoiement** en gardant le « je » de Léane (« Chaque bijou que tu trouveras ici… »), et signale la bascule
-  en légende. Ne le laisse pas en l'état sous prétexte que c'est une citation.
+  ⚠️ **Piège actif : la copie éditoriale HISTORIQUE de l'atelier était au VOUVOIEMENT** (« Chaque bijou que
+  vous retrouverez ici… », « Je vais vous faire une confidence »), alors que le §8 et `CLAUDE.md` § Voix
+  imposent le tutoiement partout. Si tu récupères une formulation dans un commit ancien ou un commentaire,
+  c'est une réserve de copie, pas un texte prêt à poser : le §2 te demande le VRAI texte, et la reprendre
+  telle quelle introduirait du vouvoiement dans la maquette. **Repasse-la au tutoiement** en gardant le « je »
+  de Léane (« Chaque bijou que tu trouveras ici… »), et signale la bascule en légende.
 - **Le test** : si ta direction pouvait servir telle quelle à n'importe quelle boutique de bijoux, elle est
   ratée — pas parce qu'elle est laide, parce qu'elle ne raconte personne. Le noyau lexical contre lequel ce
   test se joue : **couleur (polychromie) + goutte + récit + fait main + miniature + Nantes** (formule de
@@ -208,14 +208,12 @@ recommande — dis laquelle et pourquoi.
 3 — ANCRAGE FACTUEL (avant toute critique)
 ═══════════════════════════════════════════════════════════════════════════════
 Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà écrit dans le projet :
-- `CLAUDE.md` pour les conventions, les invariants React 19 et le § Voix — **et surtout
-  `docs/UI-CONVENTIONS.md`**, où le détail a été extrait : § Breakpoints (rem partout, jamais px) ·
-  § Largeurs de contenu · § Survol vs focus · § Overlays · § Composition (`render`, jamais `asChild`) ·
-  § « Un `animate-out` sans `fill-mode-forwards` est un bug ». `CLAUDE.md` n'en garde que dix puces : le
-  _pourquoi_, les contre-exemples et les pièges de migration Radix → Base UI ne sont QUE dans
-  `docs/UI-CONVENTIONS.md`. Ces cinq sections sont celles qui ont produit le plus de P0 sur ce projet.
-- `docs/BUSINESS.md` (§ Positionnement, obligatoire) et `docs/atelier-story.md` si la surface porte de la
-  copie éditoriale
+- `CLAUDE.md` pour les conventions, les invariants React 19, le § Voix et le § Conventions UI :
+  breakpoints (rem partout, jamais px) · plafonds de contenu · survol ⇒ focus · overlays ·
+  `render`, jamais `asChild` · `data-*` booléens. Ce sont les points qui ont produit le plus de P0 sur
+  ce projet.
+- `CLAUDE.md` § Direction artistique (obligatoire) et `shared/constants/atelier-content.ts` si la surface
+  porte de la copie éditoriale
 - `app/globals.css` **et les sept feuilles qu'il importe** — attention à qui porte quoi. Les **classes** vivent
   dans les feuilles : `.enter-inview` et `.hand-draw-inview` (`app/styles/entrance.css`), `.animate-shimmer`
   et `.product-item` (`app/styles/animations.css`), `[data-accent]` et ses 4 valeurs
@@ -231,7 +229,6 @@ Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà éc
 - `shared/styles/fonts.ts`, `shared/components/ui/`, `shared/constants/breakpoints.ts`
 - les données et contenus RÉELS de la cible — jamais de lorem, jamais de prix inventé. Si la base est vide
   ou indisponible, prends les libellés du seed ou du code, et dis-le en légende.
-- `docs/KNOWN-ISSUES.md` si la cible touche le panier ou le checkout
 
 Puis trois passes de mémoire, dans cet ordre :
 1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier : **382 fichiers

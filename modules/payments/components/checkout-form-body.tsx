@@ -22,6 +22,7 @@ import { PaymentSectionSkeleton } from "./payment-section-skeleton";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { BRAND } from "@/shared/constants/brand";
 import {
+	AMOUNT_LOCK_ALERT_ID,
 	buildCheckoutFieldErrors,
 	getCompletedSections,
 	getIncompleteSections,
@@ -112,9 +113,13 @@ export function CheckoutFormBody({
 				 * Résumé d'erreurs — en TÊTE de formulaire, au-dessus de la section
 				 * Contact. Il agrège les erreurs de TOUTES les sections (email compris) :
 				 * rendu plus bas, il se retrouvait sous les champs qu'il désigne.
-				 * Le focus part quand même sur le premier champ invalide
-				 * (`focusFirstInvalid`, WCAG 3.3.1) ; ce bloc est la vue d'ensemble
-				 * annoncée en `aria-live="assertive"` et le point d'entrée cliquable.
+				 *
+				 * C'est LUI qui reçoit le focus à la soumission (WCAG 3.3.1), pas le
+				 * premier champ invalide : les deux se disputaient le focus pendant que
+				 * sept régions live parlaient en même temps. Depuis, les champs se
+				 * taisent après une soumission et ce bloc est le canal unique — vue
+				 * d'ensemble annoncée en `aria-live="assertive"`, avec un bouton de saut
+				 * par erreur. Audit a11y checkout 2026-08-07.
 				 */}
 				<form.Subscribe
 					selector={(s) => ({
@@ -143,7 +148,7 @@ export function CheckoutFormBody({
 
 				{!isOnline && (
 					<Alert variant="destructive" role="alert" aria-live="assertive">
-						<WifiSlashIcon className="size-4" />
+						<WifiSlashIcon className="size-4" aria-hidden="true" />
 						<AlertTitle>Connexion internet perdue</AlertTitle>
 						<AlertDescription>
 							Vérifie ta connexion internet avant de continuer. Le paiement nécessite une connexion
@@ -154,7 +159,7 @@ export function CheckoutFormBody({
 
 				{pi.error && (
 					<Alert variant="destructive" role="alert">
-						<WarningCircleIcon className="size-4" />
+						<WarningCircleIcon className="size-4" aria-hidden="true" />
 						<AlertDescription className="flex flex-wrap items-center gap-3">
 							<span>{pi.error}</span>
 							<Button
@@ -173,8 +178,11 @@ export function CheckoutFormBody({
 
 				<div className="space-y-8">
 					{isAmountLocked && (
-						<Alert role="status">
-							<LockIcon className="size-4" />
+						// `id` : c'est la cible de l'`aria-describedby` des deux champs gelés
+						// (pays, code postal). Sans ce lien, un utilisateur au clavier voyait
+						// simplement les deux champs DISPARAÎTRE de son parcours, sans motif.
+						<Alert id={AMOUNT_LOCK_ALERT_ID} role="status">
+							<LockIcon className="size-4" aria-hidden="true" />
 							<AlertTitle>Montant verrouillé</AlertTitle>
 							{/*
 							 * La copie promettait « Actualise la page si tu veux modifier ta livraison
@@ -299,17 +307,20 @@ export function CheckoutFormBody({
 					</form.Subscribe>
 
 					{/*
-					 * `min-w-0` neutralise le `min-width: min-content` par défaut du fieldset.
-					 * `flex flex-col gap-8` et pas `space-y-8` : la <legend> sr-only est en
-					 * `position:absolute` et `space-y-*` (`& > * + *`) lui aurait collé 32px de
-					 * marge fantôme sur la première section. Un enfant absolu ne prend pas de `gap`.
+					 * ⚠️ Plus de `<fieldset disabled={isAmountLocked}>` ici.
+					 *
+					 * Il n'enveloppait que « Frais et délai de livraison », section en LECTURE
+					 * SEULE : `ShippingMethodSection` ne rend pas un seul contrôle de
+					 * formulaire. Or le `disabled` d'un fieldset ne désactive que les contrôles
+					 * qu'il contient — il n'en désactivait donc AUCUN, tandis que sa `<legend>`
+					 * annonçait au lecteur d'écran un groupe de saisie inexistant.
+					 *
+					 * Le vrai gel du montant porte sur les deux champs qui déterminent le tarif
+					 * (pays, code postal) via `lockDestination` — et ceux-là sont désormais
+					 * reliés à l'alerte « Montant verrouillé » par `aria-describedby`.
+					 * Audit a11y checkout 2026-08-07.
 					 */}
-					<fieldset disabled={isAmountLocked} className="flex min-w-0 flex-col gap-8">
-						{/* Le « et code promo » a survécu au retrait du modèle `Discount`
-							    (2026-08-05) : un lecteur d'écran cherchait un champ de remise dans
-							    un groupe qui ne contient qu'un tarif d'expédition. */}
-						<legend className="sr-only">Frais de livraison</legend>
-
+					<div className="flex min-w-0 flex-col gap-8">
 						{/* === SECTION 3: Shipping cost & lead time === */}
 						{/* Pas « Mode d'expédition » : le tarif est unique par zone, la section
 						    est en lecture seule et n'offre aucun choix — le titre promettait une
@@ -334,7 +345,7 @@ export function CheckoutFormBody({
 								shippingInfo={shippingInfo}
 							/>
 						</CheckoutSection>
-					</fieldset>
+					</div>
 
 					{/* === SECTION 4: Payment === */}
 					<CheckoutSection title="Paiement" accent="sun">

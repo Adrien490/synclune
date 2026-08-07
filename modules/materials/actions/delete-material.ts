@@ -80,7 +80,7 @@ export async function deleteMaterial(
 		});
 
 		if (!existingMaterial) {
-			return error("Ce materiau n'existe pas");
+			return error("Ce matériau n'existe pas");
 		}
 
 		// Invalider le cache
@@ -98,6 +98,6 @@ export async function deleteMaterial(
 				"Ce matériau reste rattaché à au moins une variante (éventuellement celle d'un bijou supprimé). Il ne peut pas être supprimé — désactivez-le pour le retirer des choix proposés.",
 			);
 		}
-		return handleActionError(e, "Impossible de supprimer le materiau");
+		return handleActionError(e, "Impossible de supprimer le matériau");
 	}
 }

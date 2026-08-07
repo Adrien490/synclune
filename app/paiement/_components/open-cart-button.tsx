@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import { useSheet } from "@/shared/providers/sheet-store-provider";
+import { useSheet } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 
 /**
@@ -12,12 +12,18 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
  * les retirer — il fallait retourner en boutique pour rouvrir le panier.
  */
 export function OpenCartButton({ children }: { children: React.ReactNode }) {
-	const { open: openCart } = useSheet("cart");
+	const { isOpen, open: openCart } = useSheet("cart");
 	const haptic = useHaptic();
 
 	return (
 		<Button
 			type="button"
+			// Ce bouton ouvre le MÊME Sheet que `CartSheetTrigger`, qui annonce bien
+			// sa nature de dialogue et son état. Sans ces deux attributs, celui-ci se
+			// présentait comme une action ordinaire : rien ne disait qu'un panneau
+			// allait s'ouvrir, ni qu'il était déjà ouvert.
+			aria-haspopup="dialog"
+			aria-expanded={isOpen}
 			onClick={() => {
 				haptic("light");
 				openCart();

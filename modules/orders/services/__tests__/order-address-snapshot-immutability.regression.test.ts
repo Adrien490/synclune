@@ -5,28 +5,38 @@ import { describe, expect, it } from "vitest";
 /**
  * @regression order-address-snapshot-immutability-2026-05-28
  *
- * Garantit que les snapshots adresses sur Order (`shipping*`) restent
- * isolés du modèle `Address` du client. Une mise à jour d'Address ne doit jamais
- * propager vers les Order historiques (Art. L102 B LPF — facture comme données
- * figées). Une commande créée en mars avec adresse X doit rester avec adresse X
- * même si le client modifie son Address en juillet.
+ * Garantit que le snapshot d'identité et de destination d'une `Order`
+ * (`customer*` + `shipping*`) ne soit réécrit QUE par les writers audités.
+ * Une commande créée en mars avec l'adresse X doit rester avec l'adresse X
+ * (Art. L102 B LPF — la facture est une donnée figée).
+ *
+ * ⚠️ Il n'y a jamais eu de modèle `Address` en base, et il n'y a plus de carnet
+ * d'adresses client depuis le retrait de l'espace client (2026-07-31) :
+ * `modules/addresses` ne porte que l'autocomplétion (BAN + Geoapify), qui n'écrit
+ * rien. Le snapshot dénormalisé sur `Order` est la SEULE forme d'adresse du
+ * domaine — la 3ᵉ assertion en fait un invariant plutôt qu'un état de fait.
  *
  * Cf. CLAUDE.md § "Facturation électronique — invariants" #5.
  *
- * Risque réglementaire si la garde saute : sync automatique Address → Order
- * casserait la facture comptable (PDF régénéré diverge → 503 hash mismatch sur
- * la route /api/orders/[orderNumber]/invoice) et invaliderait l'audit Art.
- * L123-22 C. com. (l'adresse de facturation est figée par l'émission).
+ * Risque réglementaire si la garde saute : une réécriture non auditée fait
+ * diverger la commande de sa facture ARCHIVÉE — laquelle est scellée sous SHA-256
+ * et re-vérifiée à chaque téléchargement (EINV-PDF-006) — et prive l'Art. L123-22
+ * C. com. de sa trace.
  *
  * Allowlist documentée (exceptions légitimes auditées) :
  *  - `order-creation.service.ts` : snapshot initial au checkout (post-PaymentIntent
  *    succeeded) — figé une fois pour toutes.
- *  - `update-order-shipping-address.ts` : correction admin pre-shipment uniquement
- *    (bloque si `status IN (SHIPPED, DELIVERED, RETURNED)`), audit trail
- *    `ADDRESS_UPDATED` obligatoire — fix typo livraison avant expédition.
- *  - `anonymize-user.service.ts` : anonymisation RGPD (droit à l'oubli Art. 17 GDPR),
- *    remplace PII par "X" / "Adresse supprimée" — conserve l'audit comptable
- *    (montants/dates) mais purge l'identité.
+ *  - `update-pending-order-shipping-snapshot.service.ts` : correction CLIENT d'une
+ *    commande encore PENDING (KI-001), sous l'advisory lock `orderPaid`.
+ *  - `update-order-customer-info.ts` : correction admin de l'identité (typo email/nom),
+ *    bloquée dès `invoiceNumber !== null`.
+ *  - `update-order-shipping-address.ts` : correction admin pre-shipment (bloque si
+ *    `status IN (SHIPPED, DELIVERED, RETURNED)`, si un avoir est émis, ou si la
+ *    facture est numérotée sans archive) — écrit par indirection de variable, donc
+ *    hors du champ du scanner ; couvert par les assertions dédiées plus bas.
+ *
+ * ⚠️ `anonymize-user.service.ts` a quitté cette liste avec le module `users`
+ * (2026-07-31) : sans compte client, aucun compte à anonymiser.
  */
 
 const REPO_ROOT = process.cwd();
@@ -70,8 +80,27 @@ function relPath(abs: string): string {
 	return relative(REPO_ROOT, abs).replaceAll("\\", "/");
 }
 
+/**
+ * Les 10 colonnes de snapshot d'identité/destination d'`Order` (`prisma/schema.prisma`).
+ *
+ * ⚠️ Il n'y a PLUS de bloc `billing*` : les 9 colonnes ont été droppées le 2026-08-04
+ * (`20260804160000_order_rightsizing_drop_dead_columns`) — en B2C de vente à distance
+ * l'adresse de facturation EST l'adresse de livraison, et `buildBillingAddress` est
+ * l'identité. Ne pas les ré-ajouter ici sans ré-ajouter les colonnes.
+ *
+ * ⚠️ `customerEmail`/`customerName` ont été ajoutés le 2026-08-07 (audit invariant 5) :
+ * ce scanner ne couvrait que `shipping*`, si bien qu'`update-order-customer-info.ts`
+ * réécrivait l'identité figée d'une commande **inline**, sans être allowlisté — parce
+ * qu'il était invisible. Tout nouveau writer de l'identité l'aurait été aussi.
+ *
+ * La parité de cette liste avec le schéma est verrouillée par
+ * `modules/payments/services/__tests__/order-snapshot-column-parity.regression.test.ts`.
+ */
 const ADDRESS_FIELDS = [
-	// Shipping snapshot
+	// Identité client
+	"customerEmail",
+	"customerName",
+	// Destination
 	"shippingFirstName",
 	"shippingLastName",
 	"shippingAddress1",
@@ -80,52 +109,77 @@ const ADDRESS_FIELDS = [
 	"shippingCity",
 	"shippingCountry",
 	"shippingPhone",
-	// Billing snapshot
 ];
 
+function stripCommentsForScan(content: string): string {
+	return content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+
 /**
- * Détecte les `data: { ... }` inline contenant un champ adresse non-primitif.
- * Approche brace-matching : pour chaque `data: {`, on extrait le bloc balancé,
- * puis on cherche un `<addr_field>: <value>` où value n'est pas `true|false|null`
- * (filtre les select clauses si jamais imbriquées).
+ * Extrait le fragment délimité par la paire ouvrante/fermante commençant à `openIdx`.
+ * Rend `null` si la source est déséquilibrée (fichier tronqué).
+ */
+function extractBalanced(source: string, openIdx: number, open: string, close: string) {
+	let depth = 0;
+	for (let i = openIdx; i < source.length; i++) {
+		if (source[i] === open) depth++;
+		else if (source[i] === close) {
+			depth--;
+			if (depth === 0) return source.slice(openIdx, i + 1);
+		}
+	}
+	return null;
+}
+
+/** Tous les blocs `data: { … }` balancés contenus dans `source`. */
+function extractDataBlocks(source: string): string[] {
+	const blocks: string[] = [];
+	const dataOpenRegex = /\bdata\s*:\s*\{/g;
+	let match: RegExpExecArray | null;
+	while ((match = dataOpenRegex.exec(source)) !== null) {
+		const block = extractBalanced(source, match.index + match[0].length - 1, "{", "}");
+		if (block) blocks.push(block);
+	}
+	return blocks;
+}
+
+/**
+ * Détecte les `data: { ... }` inline contenant un champ de snapshot non-primitif,
+ * **dans les arguments d'un appel d'écriture Prisma sur `Order`**.
+ *
+ * ⚠️ La portée est le point délicat, et il a coûté un faux positif : la première
+ * version se contentait de vérifier qu'un `prisma|tx.order.<write>(` existait
+ * QUELQUE PART dans le fichier, puis scannait TOUS les `data: {` du fichier.
+ * Tant que la liste ne portait que des `shipping*`, aucun payload non-Prisma ne
+ * les nommait. En y ajoutant `customerEmail`/`customerName` (2026-08-07), le
+ * scanner a immédiatement accusé `modules/webhooks/handlers/dispute-handlers.ts`,
+ * dont le `data:` incriminé est la charge utile d'une **alerte email**
+ * (`type: "ADMIN_DISPUTE_ALERT"`), pas une écriture. L'allowlister aurait été le
+ * mauvais réflexe : ça aurait masqué une VRAIE écriture ultérieure dans ce fichier.
+ * On extrait donc d'abord les arguments de chaque appel d'écriture, et on ne
+ * cherche les blocs `data:` QUE dedans.
  *
  * Le cas `data: sanitizedData` (variable extraite) N'EST PAS détecté par ce
- * scanner — c'est intentionnel, car les 2 actions d'update d'adresse admin
- * utilisent ce pattern. Elles sont sécurisées par l'audit trail (test plus bas).
+ * scanner — c'est intentionnel, car l'action d'update d'adresse admin utilise ce
+ * pattern. Elle est sécurisée par l'audit trail (test plus bas).
  *
  * Le risque réel à prévenir = un dev qui inline `data: { shippingFirstName: x }`
  * dans une nouvelle action / cron / service non-allowlisté.
  */
 function findInlineAddressWritesInOrderData(content: string): boolean {
-	const stripped = content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-	if (!/\b(?:prisma|tx)\.order\.(?:create|update|updateMany|upsert)\s*\(/.test(stripped))
-		return false;
+	const stripped = stripCommentsForScan(content);
 
 	const fieldPattern = new RegExp(
 		`\\b(?:${ADDRESS_FIELDS.join("|")})\\s*:\\s*(?!true\\b|false\\b|null\\b)`,
 	);
 
-	const dataOpenRegex = /\bdata\s*:\s*\{/g;
+	const writeCallRegex = /\b(?:prisma|tx)\.order\.(?:create|update|updateMany|upsert)\s*\(/g;
 	let match: RegExpExecArray | null;
-	while ((match = dataOpenRegex.exec(stripped)) !== null) {
-		// Extract balanced block starting at the `{` we just matched.
-		const openIdx = match.index + match[0].length - 1; // position of `{`
-		let depth = 0;
-		let endIdx = -1;
-		for (let i = openIdx; i < stripped.length; i++) {
-			const ch = stripped[i];
-			if (ch === "{") depth++;
-			else if (ch === "}") {
-				depth--;
-				if (depth === 0) {
-					endIdx = i;
-					break;
-				}
-			}
-		}
-		if (endIdx === -1) continue;
-		const block = stripped.slice(openIdx, endIdx + 1);
-		if (fieldPattern.test(block)) return true;
+	while ((match = writeCallRegex.exec(stripped)) !== null) {
+		// Arguments de l'appel uniquement — pas le reste du fichier.
+		const args = extractBalanced(stripped, match.index + match[0].length - 1, "(", ")");
+		if (!args) continue;
+		if (extractDataBlocks(args).some((block) => fieldPattern.test(block))) return true;
 	}
 	return false;
 }
@@ -138,9 +192,11 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 			.sort();
 
 		// Allowlist documentée — inline writes uniquement (data: { ... }).
-		// Le pattern `data: variableName` (sanitizedData) est utilisé par les 2
-		// actions update-order-*-address.ts — non détecté par ce scanner mais
+		// Le pattern `data: variableName` (sanitizedData) est utilisé par
+		// `update-order-shipping-address.ts` — non détecté par ce scanner mais
 		// sécurisé par le test audit trail ci-dessous.
+		// (Il n'y a plus qu'UNE action d'adresse : `update-order-billing-address.ts`
+		// est parti avec les 9 colonnes `billing*` le 2026-08-04.)
 		const allowed = [
 			// Snapshot initial au checkout (post-PaymentIntent succeeded)
 			"modules/payments/services/order-creation.service.ts",
@@ -149,6 +205,10 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 			// touché, audit `ADDRESS_UPDATED` obligatoire. Une commande PENDING n'est pas
 			// encore une pièce comptable — c'est ce qui rend la réécriture légitime.
 			"modules/orders/services/update-pending-order-shipping-snapshot.service.ts",
+			// Correction admin de l'identité client (typo email/nom au support), gatée sur
+			// `invoiceNumber !== null` : une fois la facture émise, l'identité imprimée est
+			// figée (Art. 286 CGI) et l'avoir est rendu depuis ces mêmes colonnes.
+			"modules/orders/actions/update-order-customer-info.ts",
 			// ⚠️ `modules/users/services/anonymize-user.service.ts` (anonymisation RGPD
 			// Art. 17) a quitté cette allowlist avec le module `users` entier, au retrait
 			// de l'espace client (2026-07-31) : sans compte client, aucun compte à
@@ -163,7 +223,7 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 	});
 
 	it("address update actions exist and write via variable indirection (allowlisted)", () => {
-		// Vérifie l'existence des 2 actions admin et leur pattern attendu : un
+		// Vérifie l'existence de l'action admin d'adresse et son pattern attendu : un
 		// `data: <variableName>` (jamais inline). Si quelqu'un refactore vers
 		// `data: { shippingFirstName: ... }` inline, le test précédent l'attrapera
 		// comme nouveau writer → forcera mise à jour de l'allowlist.
@@ -195,14 +255,16 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 	});
 
 	it("address mutation actions enforce audit trail (createOrderAuditTx call)", () => {
-		// Sécurité supplémentaire : si `update-order-*-address.ts` perd son
-		// `createOrderAuditTx`, la modification serait silencieuse — violation
-		// Art. L123-22 C. com. (audit trail obligatoire pour toute mutation
-		// post-paiement). On vérifie que les 2 actions critiques continuent à
-		// poser un audit log.
+		// Sécurité supplémentaire : si un writer perd son `createOrderAuditTx`, la
+		// modification serait silencieuse — violation Art. L123-22 C. com. (audit
+		// trail obligatoire pour toute mutation post-paiement). On vérifie que les
+		// 3 writers réécrivant un snapshot existant continuent à poser un audit log.
+		// (`order-creation.service.ts` en est exclu : il CRÉE le snapshot, et
+		// l'absence d'`OrderHistory` à la création est délibérée — cf. son docblock.)
 		const actionFiles = [
 			"modules/orders/actions/update-order-shipping-address.ts",
-			// Writer client (KI-001) : même exigence d'audit trail que les 2 actions admin.
+			"modules/orders/actions/update-order-customer-info.ts",
+			// Writer client (KI-001) : même exigence d'audit trail que les actions admin.
 			"modules/orders/services/update-pending-order-shipping-snapshot.service.ts",
 		];
 		for (const rel of actionFiles) {
@@ -224,8 +286,17 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 		// 2. Statut re-vérifié (et non pas seulement lu par l'appelant).
 		expect(content).toMatch(/paymentStatus\s*!==\s*"PENDING"/);
 		// 3. Aucun champ de montant dans l'écriture.
+		//
+		// ⚠️ Extraction par accolades BALANCÉES, pas par regex. La version d'avant
+		// fermait le bloc sur `/\n\t\t\t\}/` — soit exactement trois tabulations :
+		// un simple reformat (ou l'ajout d'un niveau d'imbrication) rendait
+		// `dataBlock === ""`, et `expect("").not.toMatch(…)` passe au vert sans rien
+		// vérifier. Une assertion qui ne peut plus échouer ne protège rien.
 		const forbiddenMoneyFields = /\b(?:total|subtotal|shippingCost|discountAmount|taxAmount)\s*:/;
-		const dataBlock = /data:\s*\{[\s\S]*?\n\t\t\t\}/.exec(content)?.[0] ?? "";
-		expect(dataBlock).not.toMatch(forbiddenMoneyFields);
+		const dataBlocks = extractDataBlocks(stripCommentsForScan(content));
+		expect(dataBlocks.length).toBeGreaterThan(0);
+		for (const block of dataBlocks) {
+			expect(block).not.toMatch(forbiddenMoneyFields);
+		}
 	});
 });

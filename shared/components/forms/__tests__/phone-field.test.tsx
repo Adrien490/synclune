@@ -224,4 +224,18 @@ describe("PhoneField", () => {
 		render(<PhoneField description="Format international requis" />);
 		expect(screen.getByText("Format international requis")).toBeInTheDocument();
 	});
+
+	it("RELIE la description au champ par aria-describedby", () => {
+		// ⚠️ « Le texte s'affiche » ne prouve rien : le texte d'aide du téléphone au
+		// checkout s'affichait déjà — dans un `<p>` FRÈRE, rattaché à rien. Un
+		// lecteur d'écran ne l'entendait jamais. C'est le LIEN qui est le contrat.
+		vi.mocked(useFieldContext).mockReturnValue(makeFieldContext() as any);
+		render(<PhoneField label="Téléphone" description="Format international requis" />);
+
+		const described = screen.getByText("Format international requis");
+		expect(described.id).toBeTruthy();
+
+		const input = document.querySelector(`[aria-describedby~="${described.id}"]`);
+		expect(input, "aucun champ ne référence la description").not.toBeNull();
+	});
 });

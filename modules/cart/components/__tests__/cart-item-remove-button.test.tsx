@@ -19,7 +19,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialogStore: vi.fn(
 		(selector: (state: { openAlertDialog: typeof mockOpenAlertDialog }) => unknown) =>
 			selector({ openAlertDialog: mockOpenAlertDialog }),

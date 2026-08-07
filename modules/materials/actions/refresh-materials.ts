@@ -26,6 +26,6 @@ export async function refreshMaterials(
 
 		return success("Matériaux rafraîchis");
 	} catch (e) {
-		return handleActionError(e, "Impossible de rafraichir les materiaux");
+		return handleActionError(e, "Impossible de rafraîchir les matériaux");
 	}
 }

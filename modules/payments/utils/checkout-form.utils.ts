@@ -11,7 +11,6 @@ import type { Session } from "@/modules/auth/lib/auth";
  * « Draft restoration happens in useCheckoutForm via useEffect » — `use-checkout-form.ts`
  * n'a jamais contenu cet effet ni aucun accès à `localStorage`. Un invité perd donc
  * tout son formulaire à chaque rechargement de page.
- * @see docs/KNOWN-ISSUES.md — KI-002
  *
  * @param session - User session (null if guest)
  * @returns Form options with pre-filled defaultValues

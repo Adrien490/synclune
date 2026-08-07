@@ -6,10 +6,16 @@ interface OrderItem {
 	quantity: number;
 	price: number;
 	skuId: string;
+	// ⚠️ Identifiants SEULEMENT. Cette structure est celle qui alimente l'e-mail
+	// de confirmation, dont TOUS les champs d'affichage viennent des colonnes
+	// snapshot ci-dessus (invariant #4). Y transporter une valeur VIVANTE du SKU
+	// (son stock, son code, a fortiori son titre ou son prix) met la donnée
+	// courante à portée d'un `item.sku.…` dans un template — c'est exactement le
+	// risque pour lequel `OrderItem.productId` a été retiré du schéma.
+	// `inventory` et le code `sku` y voyageaient sans aucun lecteur : le stock est
+	// validé depuis le `SELECT … FOR UPDATE`, pas d'ici (audit 2026-08-07).
 	sku: {
 		id: string;
-		inventory: number;
-		sku: string;
 		// CACHE-CATALOG-002 : nécessaire pour invalider la page produit (tag
 		// `product-${slug}`) quand le stock change au paiement.
 		product: {

@@ -57,26 +57,42 @@ function stripCommentsAndStrings(source: string): string {
 }
 
 /**
- * Paramètres consommés par les fonctions exportées d'un fichier.
+ * Signatures d'export d'un fichier `"use server"`, dans les DEUX formes du dépôt.
+ *
+ * ⚠️ La version d'origine ne matchait que `export async function`. Or les cinq
+ * actions de `modules/auth/actions/` sont déclarées
+ * `export const signInEmail = async (…) => {…}` : elles sortaient **entièrement**
+ * du contrat. Toutes validaient, mais rien ne l'imposait — et c'est précisément
+ * la garantie qu'on croit avoir qui est dangereuse (cf. le `readdirSync` plat de
+ * `admin-actions-require-admin.contract.test.ts`, même leçon).
+ */
+const EXPORT_SIGNATURES = [
+	/export\s+async\s+function\s+(\w+)\s*\(([^)]*)\)/g,
+	/export\s+const\s+(\w+)\s*(?::[^=]+?)?=\s*async\s*\(([^)]*)\)/g,
+];
+
+/**
+ * Paramètres consommés par un export.
  *
  * Convention du repo : un paramètre présent pour la signature `useActionState` mais
  * jamais lu est préfixé d'un `_` (`_prevState`, `_formData`). Les ~20 actions
  * `refresh-*` / `clear-*` n'ont ainsi aucun paramètre consommé et sortent du champ.
  */
-function consumedParams(strippedSource: string): string[] {
+function consumedParamsOf(rawParams: string): string[] {
 	const params: string[] = [];
-	const signature = /export\s+async\s+function\s+\w+\s*\(([^)]*)\)/g;
-
-	for (const match of strippedSource.matchAll(signature)) {
-		const rawParams = match[1] ?? "";
-		for (const part of rawParams.split(",")) {
-			const name = part.trim().split(/[:=]/)[0]?.trim();
-			if (!name || name.startsWith("_") || name.startsWith("{")) continue;
-			params.push(name);
-		}
+	for (const part of rawParams.split(",")) {
+		const name = part.trim().split(/[:=]/)[0]?.trim();
+		if (!name || name.startsWith("_") || name.startsWith("{")) continue;
+		params.push(name);
 	}
-
 	return params;
+}
+
+/** Tous les paramètres consommés d'un fichier, toutes formes d'export confondues. */
+function consumedParams(strippedSource: string): string[] {
+	return EXPORT_SIGNATURES.flatMap((signature) =>
+		[...strippedSource.matchAll(signature)].flatMap((match) => consumedParamsOf(match[2] ?? "")),
+	);
 }
 
 function collectSourceFiles(dir: string, acc: string[] = []): string[] {
@@ -125,6 +141,36 @@ describe("contrat · validation des entrées de Server Actions", () => {
 			expect(consumedParams("export async function b(_: X, __formData?: FormData) {}")).toEqual([]);
 			expect(consumedParams("export async function c() {}")).toEqual([]);
 			expect(consumedParams("export async function d(data: unknown) {}")).toEqual(["data"]);
+		});
+
+		it("le détecteur voit AUSSI la forme fléchée `export const x = async (…)`", () => {
+			// Les 5 actions de `modules/auth/actions/` utilisent cette forme. Sans ce cas,
+			// elles sortaient du contrat sans que rien ne le signale.
+			expect(
+				consumedParams("export const signInEmail = async (_: X, formData: FormData) => {}"),
+			).toEqual(["formData"]);
+			expect(
+				consumedParams("export const x: Handler = async (_prev: X, formData: FormData) => {}"),
+			).toEqual(["formData"]);
+			expect(consumedParams("export const y = async () => {}")).toEqual([]);
+		});
+
+		it("le scan couvre réellement les actions en forme fléchée du dépôt", () => {
+			// Plancher de non-régression : si quelqu'un resserre la regex, ces fichiers
+			// redeviennent invisibles au contrat et la suite repasse au vert à tort.
+			const arrowFormActions = SERVER_ACTION_FILES.filter((file) => {
+				const stripped = stripCommentsAndStrings(readFileSync(file, "utf8"));
+				return /export\s+const\s+\w+\s*(?::[^=]+?)?=\s*async\s*\(/.test(stripped);
+			});
+
+			expect(arrowFormActions.length).toBeGreaterThanOrEqual(5);
+			for (const file of arrowFormActions) {
+				const stripped = stripCommentsAndStrings(readFileSync(file, "utf8"));
+				expect(
+					consumedParams(stripped).length,
+					`${file} : aucun paramètre détecté`,
+				).toBeGreaterThan(0);
+			}
 		});
 
 		it("le stripper neutralise un marqueur cité en commentaire", () => {

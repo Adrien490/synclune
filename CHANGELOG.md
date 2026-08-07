@@ -8,14 +8,13 @@
 
 **Où trouver l'information à la place :**
 
-| Question                                       | Source                                                                                    |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Qu'est-ce qui a changé, et quand ?             | `git log` — l'historique fait foi (Conventional Commits, cf. `CONTRIBUTING.md`)           |
-| Pourquoi telle surface a-t-elle disparu ?      | [`docs/SIMPLIFICATION.md`](docs/SIMPLIFICATION.md) — lots de retrait, avec les arbitrages |
-| Quel périmètre est assumé, et pourquoi ?       | [`docs/BUSINESS.md`](docs/BUSINESS.md) — modèle d'activité, coûts, choix de périmètre     |
-| Comment le système est-il censé se comporter ? | [`CLAUDE.md`](CLAUDE.md) — architecture, invariants, patterns                             |
-| Quels défauts sont connus et assumés ?         | [`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md)                                            |
-| Comment exploiter la boutique au quotidien ?   | [`docs/RUNBOOK.md`](docs/RUNBOOK.md)                                                      |
+| Question                                       | Source                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| Qu'est-ce qui a changé, et quand ?             | `git log` — l'historique fait foi (Conventional Commits, cf. `CONTRIBUTING.md`) |
+| Pourquoi telle surface a-t-elle disparu ?      | `git log` — le commit de retrait porte l'arbitrage                              |
+| Quel périmètre est assumé, et pourquoi ?       | [`CLAUDE.md`](CLAUDE.md) — profil d'entreprise et choix de périmètre            |
+| Comment le système est-il censé se comporter ? | [`CLAUDE.md`](CLAUDE.md) — architecture, invariants, patterns                   |
+| Quels défauts sont connus et assumés ?         | [`CLAUDE.md`](CLAUDE.md) § Constats connus                                      |
 
 ---
 
@@ -37,5 +36,4 @@ branchée) écrites contre une spec non figée, pour une obligation au 1ᵉʳ se
 contre l'arrêté définitif. Les obligations **actuelles** (numérotation gap-free, PDF immuable,
 avoirs, rétention 10 ans) sont intactes.
 
-**Reconstruction** : cible T1 2027, procédure dans
-[`docs/RUNBOOK.md` § e-reporting DGFiP](docs/RUNBOOK.md).
+**Reconstruction** : cible T1 2027, contre l'arrêté définitif et une Plateforme Agréée réelle.

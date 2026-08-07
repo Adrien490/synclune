@@ -46,9 +46,21 @@
  * **B. Scan AST + `schema.prisma`.** Les `data:` des mutations sont des littéraux
  * EN LIGNE, jamais exportés : l'oracle A ne peut pas les atteindre. On les lit donc
  * à la source — AST TypeScript (pas de regex : les littéraux imbriqués et les
- * spreads conditionnels la mettraient en défaut), clés de premier niveau
- * uniquement, confrontées aux champs déclarés dans `schema.prisma`. C'est cet
- * oracle-là qui aurait attrapé les 4 `currency:`.
+ * spreads conditionnels la mettraient en défaut), confrontés aux champs déclarés
+ * dans `schema.prisma`. C'est cet oracle-là qui aurait attrapé les 4 `currency:`.
+ *
+ * Le scan **descend dans les écritures imbriquées** (`items: { create: [...] }`,
+ * `createMany.data`) en résolvant le modèle cible depuis le schéma. S'arrêter au
+ * premier niveau laisserait passer la moitié d'une dérive de colonnes.
+ *
+ * **B'. Le même scan, appliqué aux fixtures `*.integration.test.ts`.** Elles
+ * écrivent en base réelle, donc le même schéma les gouverne — mais elles étaient
+ * exclues (`skipDir` contenait `__tests__`). C'est exactement par là qu'est passée
+ * la dérive du 2026-08-05 : `Order.{userId, discountAmount, taxAmount, currency}` et
+ * les cinq colonnes fiscales d'`OrderItem` droppées, DOUZE suites continuant de les
+ * écrire. Toute la preuve de concurrence du dépôt (FOR UPDATE anti-survente,
+ * numérotation gap-free Art. 286 CGI, trigger d'unicité cross-table des avoirs)
+ * était morte, et rien ne le disait — le job CI mourait avant, sur `prisma generate`.
  *
  * ⚠️ Ne PAS mocker `@/shared/lib/prisma` ni `@/app/generated/prisma/*` ici : le
  * client réel EST le sujet de l'oracle A.
@@ -97,23 +109,47 @@ const schemaSrc = readFileSync(join(REPO_ROOT, "prisma", "schema.prisma"), "utf-
 /**
  * `Modèle -> champs` déclarés dans schema.prisma, **relations comprises** : un
  * `create` légitime passe `order: { connect: … }` ou `items: { create: [...] }`.
+ *
+ * La seconde carte donne le modèle CIBLE de chaque champ de relation, ce qui
+ * permet de descendre dans les payloads imbriqués (cf. `collectPayloadSites`).
  */
-function schemaFields(): Map<string, Set<string>> {
-	const out = new Map<string, Set<string>>();
+function parseSchema(): {
+	fields: Map<string, Set<string>>;
+	relations: Map<string, Map<string, string>>;
+} {
+	const fields = new Map<string, Set<string>>();
+	const rawTypes = new Map<string, Map<string, string>>();
+
 	for (const model of schemaSrc.matchAll(/^model\s+(\w+)\s*\{([\s\S]*?)^\}/gm)) {
-		const fields = new Set<string>();
+		const names = new Set<string>();
+		const types = new Map<string, string>();
 		for (const raw of model[2]!.split("\n")) {
 			const line = raw.replace(/\/\/.*$/, "").trim();
 			if (!line || line.startsWith("@@") || line.startsWith("///")) continue;
-			const f = line.match(/^(\w+)\s+\w+/);
-			if (f) fields.add(f[1]!);
+			const f = line.match(/^(\w+)\s+(\w+)/);
+			if (f) {
+				names.add(f[1]!);
+				types.set(f[1]!, f[2]!);
+			}
 		}
-		out.set(model[1]!, fields);
+		fields.set(model[1]!, names);
+		rawTypes.set(model[1]!, types);
 	}
-	return out;
+
+	// Un champ est une relation si son type est lui-même un modèle déclaré.
+	const relations = new Map<string, Map<string, string>>();
+	for (const [model, types] of rawTypes) {
+		const rel = new Map<string, string>();
+		for (const [field, type] of types) {
+			if (fields.has(type)) rel.set(field, type);
+		}
+		relations.set(model, rel);
+	}
+
+	return { fields, relations };
 }
 
-const MODEL_FIELDS = schemaFields();
+const { fields: MODEL_FIELDS, relations: MODEL_RELATIONS } = parseSchema();
 
 /** `refund` -> `Refund`. Construit depuis le schéma, donc jamais désynchronisé. */
 const ACCESSOR_TO_MODEL = new Map(
@@ -138,24 +174,52 @@ interface WriteSite {
 	keys: string[];
 }
 
+const SKIP_DIR = new Set(["node_modules", "generated", ".next", "coverage"]);
+
+function walkTs(dir: string, keep: (name: string) => boolean, out: string[]): void {
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		const full = join(dir, entry.name);
+		if (entry.isDirectory()) {
+			if (SKIP_DIR.has(entry.name)) continue;
+			walkTs(full, keep, out);
+		} else if (/\.tsx?$/.test(entry.name) && keep(entry.name)) {
+			out.push(full);
+		}
+	}
+}
+
 /** Fichiers source à scanner (hors tests, hors généré, hors node_modules). */
 function sourceFiles(): string[] {
-	const roots = ["modules", "app", "shared"];
 	const out: string[] = [];
-	const skipDir = new Set(["node_modules", "generated", "__tests__", ".next"]);
+	for (const root of ["modules", "app", "shared"]) {
+		walkTs(join(REPO_ROOT, root), (n) => !/\.test\.tsx?$/.test(n) && !/^__tests__$/.test(n), out);
+	}
+	// Les répertoires `__tests__` sont conservés par `walkTs` (ils portent les
+	// fixtures d'intégration) : on filtre les fichiers de test par leur NOM.
+	return out.filter((f) => !/\.test\.tsx?$/.test(f));
+}
 
-	const walk = (dir: string): void => {
-		for (const entry of readdirSync(dir, { withFileTypes: true })) {
-			const full = join(dir, entry.name);
-			if (entry.isDirectory()) {
-				if (skipDir.has(entry.name)) continue;
-				walk(full);
-			} else if (/\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)) {
-				out.push(full);
-			}
-		}
-	};
-	for (const root of roots) walk(join(REPO_ROOT, root));
+/**
+ * Fixtures d'intégration : elles écrivent en base réelle, donc elles sont soumises
+ * au même schéma que la production.
+ *
+ * ⚠️ Elles étaient exclues du scan (`skipDir` contenait `__tests__`) — et c'est
+ * exactement par là qu'est passée la dérive du 2026-08-05 : `Order.userId`,
+ * `Order.discountAmount`, `Order.taxAmount`, `Order.currency` et les cinq colonnes
+ * fiscales d'`OrderItem` ont été droppées, DOUZE suites ont continué de les écrire,
+ * et personne ne l'a vu. `tsc` ne peut pas aider (le `SelectSubset` de Prisma type
+ * `data` depuis l'argument lui-même), les suites skippent en local sans
+ * `INTEGRATION_DATABASE_URL`, et le job CI mourait avant sur `prisma generate`.
+ *
+ * `test/integration/factories.ts` est inclus : c'est désormais la SSOT des fixtures
+ * de commande, donc le seul site à protéger pour toute la famille.
+ */
+function integrationFixtureFiles(): string[] {
+	const out: string[] = [];
+	for (const root of ["modules", "app", "test"]) {
+		walkTs(join(REPO_ROOT, root), (n) => /\.integration\.test\.tsx?$/.test(n), out);
+	}
+	out.push(join(REPO_ROOT, "test", "integration", "factories.ts"));
 	return out;
 }
 
@@ -178,58 +242,111 @@ function literalKeys(node: ts.ObjectLiteralExpression): string[] {
 	return keys;
 }
 
-function collectWriteSites(): WriteSite[] {
-	const sites: WriteSite[] = [];
+/** Les payloads d'un initialiseur `create:` — objet unique ou tableau. */
+function payloadsOf(node: ts.Expression): ts.ObjectLiteralExpression[] {
+	if (ts.isArrayLiteralExpression(node)) return node.elements.filter(ts.isObjectLiteralExpression);
+	return ts.isObjectLiteralExpression(node) ? [node] : [];
+}
 
-	for (const file of sourceFiles()) {
+/**
+ * Enregistre un payload, puis DESCEND dans ses écritures imbriquées.
+ *
+ * Sans cette descente, le scan ne verrait que le premier niveau — or les cinq
+ * colonnes fiscales fantômes d'`OrderItem` vivaient dans `items: { create: [...] }`.
+ * Un guard qui s'arrête à la racine aurait laissé passer la moitié du défaut.
+ *
+ * Seul `create` (et `createMany.data`) est suivi : `connect` et le `where` d'un
+ * `connectOrCreate` ne sont pas des payloads d'écriture.
+ */
+function collectPayloadSites(
+	model: string,
+	method: string,
+	payload: ts.ObjectLiteralExpression,
+	file: string,
+	sf: ts.SourceFile,
+	sites: WriteSite[],
+): void {
+	sites.push({
+		file: relative(REPO_ROOT, file),
+		line: sf.getLineAndCharacterOfPosition(payload.getStart(sf)).line + 1,
+		model,
+		method,
+		keys: literalKeys(payload),
+	});
+
+	const relations = MODEL_RELATIONS.get(model);
+	if (!relations) return;
+
+	for (const prop of payload.properties) {
+		if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) continue;
+		const related = relations.get(prop.name.text);
+		if (!related || !ts.isObjectLiteralExpression(prop.initializer)) continue;
+
+		for (const nested of prop.initializer.properties) {
+			if (!ts.isPropertyAssignment(nested) || !ts.isIdentifier(nested.name)) continue;
+
+			if (nested.name.text === "create") {
+				for (const inner of payloadsOf(nested.initializer)) {
+					collectPayloadSites(related, `${method}>create`, inner, file, sf, sites);
+				}
+			} else if (
+				nested.name.text === "createMany" &&
+				ts.isObjectLiteralExpression(nested.initializer)
+			) {
+				for (const many of nested.initializer.properties) {
+					if (!ts.isPropertyAssignment(many) || !ts.isIdentifier(many.name)) continue;
+					if (many.name.text !== "data") continue;
+					for (const inner of payloadsOf(many.initializer)) {
+						collectPayloadSites(related, `${method}>createMany`, inner, file, sf, sites);
+					}
+				}
+			}
+		}
+	}
+}
+
+function collectWriteSites(files: string[]): WriteSite[] {
+	return files.flatMap((file) => {
 		const src = readFileSync(file, "utf-8");
 		// Pré-filtre bon marché : la majorité des fichiers ne touchent pas Prisma.
-		if (!/\b(prisma|tx)\s*\.\s*\w+\s*\.\s*(create|update|upsert)/.test(src)) continue;
+		if (!/\b(prisma|tx)\s*\.\s*\w+\s*\.\s*(create|update|upsert)/.test(src)) return [];
+		return collectFromSource(file, src);
+	});
+}
 
-		const sf = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true);
+function collectFromSource(file: string, src: string): WriteSite[] {
+	const sites: WriteSite[] = [];
+	const sf = ts.createSourceFile(file, src, ts.ScriptTarget.Latest, true);
 
-		const visit = (node: ts.Node): void => {
-			if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
-				const method = node.expression.name.text;
-				const receiver = node.expression.expression;
+	const visit = (node: ts.Node): void => {
+		if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+			const method = node.expression.name.text;
+			const receiver = node.expression.expression;
 
-				if (
-					WRITE_METHODS.has(method) &&
-					ts.isPropertyAccessExpression(receiver) &&
-					ts.isIdentifier(receiver.expression) &&
-					PRISMA_ROOTS.has(receiver.expression.text)
-				) {
-					const model = ACCESSOR_TO_MODEL.get(receiver.name.text);
-					const arg = node.arguments[0];
-					if (model && arg && ts.isObjectLiteralExpression(arg)) {
-						for (const prop of arg.properties) {
-							if (!ts.isPropertyAssignment(prop)) continue;
-							if (!ts.isIdentifier(prop.name) || prop.name.text !== "data") continue;
-							// `createMany` prend `data: [...]` ; on inspecte chaque entrée.
-							const payloads = ts.isArrayLiteralExpression(prop.initializer)
-								? prop.initializer.elements.filter(ts.isObjectLiteralExpression)
-								: ts.isObjectLiteralExpression(prop.initializer)
-									? [prop.initializer]
-									: [];
-							for (const payload of payloads) {
-								sites.push({
-									file: relative(REPO_ROOT, file),
-									line: sf.getLineAndCharacterOfPosition(payload.getStart(sf)).line + 1,
-									model,
-									method,
-									keys: literalKeys(payload),
-								});
-							}
+			if (
+				WRITE_METHODS.has(method) &&
+				ts.isPropertyAccessExpression(receiver) &&
+				ts.isIdentifier(receiver.expression) &&
+				PRISMA_ROOTS.has(receiver.expression.text)
+			) {
+				const model = ACCESSOR_TO_MODEL.get(receiver.name.text);
+				const arg = node.arguments[0];
+				if (model && arg && ts.isObjectLiteralExpression(arg)) {
+					for (const prop of arg.properties) {
+						if (!ts.isPropertyAssignment(prop)) continue;
+						if (!ts.isIdentifier(prop.name) || prop.name.text !== "data") continue;
+						// `createMany` prend `data: [...]` ; on inspecte chaque entrée.
+						for (const payload of payloadsOf(prop.initializer)) {
+							collectPayloadSites(model, method, payload, file, sf, sites);
 						}
 					}
 				}
 			}
-			ts.forEachChild(node, visit);
-		};
+		}
+		ts.forEachChild(node, visit);
+	};
 
-		visit(sf);
-	}
-
+	visit(sf);
 	return sites;
 }
 
@@ -264,7 +381,7 @@ describe("écritures Prisma — validité schéma (@regression transactional-wri
 	});
 
 	describe("oracle B — littéraux `data` en ligne vs schema.prisma", () => {
-		const sites = collectWriteSites();
+		const sites = collectWriteSites(sourceFiles());
 
 		it("le scan trouve effectivement des sites d'écriture", () => {
 			// Filet du filet : si le scan casse (renommage de `tx`, refonte de l'AST),
@@ -274,17 +391,73 @@ describe("écritures Prisma — validité schéma (@regression transactional-wri
 		});
 
 		it("aucun `data` n'écrit un champ absent du schéma", () => {
-			const offenders = sites.flatMap((site) => {
-				const fields = MODEL_FIELDS.get(site.model);
-				if (!fields) return [];
-				return site.keys
-					.filter((key) => !fields.has(key))
-					.map(
-						(key) => `${site.file}:${site.line} — ${site.model}.${site.method} écrit « ${key} »`,
-					);
-			});
+			expect(offendersOf(sites).join("\n")).toBe("");
+		});
+	});
 
-			expect(offenders, `Champs inexistants au schéma :\n${offenders.join("\n")}`).toEqual([]);
+	describe("oracle B' — fixtures d'intégration vs schema.prisma", () => {
+		const sites = collectWriteSites(integrationFixtureFiles());
+
+		it("le scan atteint bien les fixtures d'intégration", () => {
+			expect(sites.some((s) => s.model === "Order")).toBe(true);
+			expect(sites.some((s) => s.file === "test/integration/factories.ts")).toBe(true);
+		});
+
+		it("aucune fixture n'écrit un champ absent du schéma", () => {
+			expect(offendersOf(sites).join("\n")).toBe("");
+		});
+
+		// Contre-épreuve de la DESCENTE. Elle ne peut pas s'appuyer sur le dépôt :
+		// depuis que `createTestOrder` est la SSOT, plus aucune fixture n'écrit un
+		// `items: { create: [...] }` littéral — le chemin imbriqué n'aurait donc plus
+		// aucun sujet, et une régression du scan passerait inaperçue. On lui en donne
+		// un, synthétique, qui reproduit EXACTEMENT la forme du défaut du 2026-08-05.
+		it("détecte une colonne fantôme IMBRIQUÉE dans `items: { create: … }`", () => {
+			const drifted = `
+				await prisma.order.create({
+					data: {
+						orderNumber: "X",
+						discountAmount: 0,
+						items: {
+							create: [{ skuId: "s", quantity: 1, price: 1, taxRate: 0, taxCategoryCode: "ZB" }],
+						},
+					},
+				});
+			`;
+			const offenders = offendersOf(collectFromSource("synthetic.ts", drifted));
+
+			expect(offenders.some((o) => o.includes("Order.create écrit « discountAmount »"))).toBe(true);
+			// Le cœur : sans la descente, ces deux-là seraient invisibles.
+			expect(offenders.some((o) => o.includes("OrderItem.create>create écrit « taxRate »"))).toBe(
+				true,
+			);
+			expect(
+				offenders.some((o) => o.includes("OrderItem.create>create écrit « taxCategoryCode »")),
+			).toBe(true);
+		});
+
+		it("ne signale RIEN sur la forme conforme au schéma courant", () => {
+			const clean = `
+				await prisma.order.create({
+					data: {
+						orderNumber: "X",
+						subtotal: 1,
+						total: 1,
+						items: { create: [{ skuId: "s", quantity: 1, price: 1, productTitle: "T" }] },
+					},
+				});
+			`;
+			expect(offendersOf(collectFromSource("synthetic.ts", clean))).toEqual([]);
 		});
 	});
 });
+
+function offendersOf(sites: WriteSite[]): string[] {
+	return sites.flatMap((site) => {
+		const fields = MODEL_FIELDS.get(site.model);
+		if (!fields) return [];
+		return site.keys
+			.filter((key) => !fields.has(key))
+			.map((key) => `${site.file}:${site.line} — ${site.model}.${site.method} écrit « ${key} »`);
+	});
+}

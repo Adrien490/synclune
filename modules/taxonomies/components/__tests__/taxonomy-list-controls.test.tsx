@@ -18,7 +18,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/shared/hooks/use-mobile", () => ({
 	useIsMobile: mockUseIsMobile,
 }));
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({ open: mockOpen, close: vi.fn(), isOpen: false, data: undefined }),
 }));
 
@@ -44,7 +44,7 @@ afterEach(cleanup);
 
 describe("CreateTaxonomyButton", () => {
 	it("affiche le libellé de création de la taxonomie", () => {
-		render(<CreateTaxonomyButton config={TAXONOMY_CONFIG.material} />);
+		render(<CreateTaxonomyButton kind="material" />);
 
 		expect(screen.getByRole("button", { name: "Créer un matériau" })).toBeInTheDocument();
 	});
@@ -52,7 +52,7 @@ describe("CreateTaxonomyButton", () => {
 	it("desktop : ouvre le dialogue de formulaire sans naviguer", async () => {
 		mockUseIsMobile.mockReturnValue(false);
 		const user = userEvent.setup();
-		render(<CreateTaxonomyButton config={TAXONOMY_CONFIG.color} />);
+		render(<CreateTaxonomyButton kind="color" />);
 
 		await user.click(screen.getByRole("button", { name: "Créer une couleur" }));
 
@@ -64,7 +64,7 @@ describe("CreateTaxonomyButton", () => {
 		// Le dialogue est trop à l'étroit sur mobile : la page `/nouveau` prend le relais.
 		mockUseIsMobile.mockReturnValue(true);
 		const user = userEvent.setup();
-		render(<CreateTaxonomyButton config={TAXONOMY_CONFIG.color} />);
+		render(<CreateTaxonomyButton kind="color" />);
 
 		await user.click(screen.getByRole("button", { name: "Créer une couleur" }));
 
@@ -79,7 +79,7 @@ describe("CreateTaxonomyButton", () => {
 	] as const)("mobile %s : cible %s", async (kind, expectedPath) => {
 		mockUseIsMobile.mockReturnValue(true);
 		const user = userEvent.setup();
-		render(<CreateTaxonomyButton config={TAXONOMY_CONFIG[kind]} />);
+		render(<CreateTaxonomyButton kind={kind} />);
 
 		await user.click(screen.getByRole("button"));
 

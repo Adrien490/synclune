@@ -1,3 +1,4 @@
+import { CreateTaxonomyButton } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { use } from "react";
 import { SwatchesIcon } from "@phosphor-icons/react/ssr";
 
@@ -5,7 +6,6 @@ import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
 import { TaxonomyMobileList } from "@/modules/taxonomies/components/taxonomy-mobile-list";
 
 import type { GetMaterialsReturn } from "@/modules/materials/types/materials.types";
-import { CreateMaterialButton } from "./create-material-button";
 import { MaterialMobileItem } from "./material-mobile-item";
 
 interface MaterialsMobileListProps {
@@ -31,7 +31,7 @@ export function MaterialsMobileList({
 			hasActiveFilters={hasActiveFilters}
 			icon={SwatchesIcon}
 			emptyDescription="Aucune matière à l'atelier pour l'instant."
-			createButton={<CreateMaterialButton />}
+			createButton={<CreateTaxonomyButton kind="material" />}
 			renderItem={(item) => <MaterialMobileItem material={item} />}
 		/>
 	);

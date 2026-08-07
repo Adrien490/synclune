@@ -129,7 +129,7 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 										haptic("light");
 									}}
 									className={cn(
-										"focus-visible:ring-ring inline-flex shrink-0 items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+										"focus-ring inline-flex shrink-0 items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
 										isActive
 											? "border-foreground bg-foreground text-background"
 											: "border-border bg-background hover:bg-muted",
@@ -161,7 +161,7 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 								<button
 									type="button"
 									onClick={() => handleSelect(entry)}
-									className="border-border hover:bg-muted/40 focus-visible:ring-ring active:bg-muted/60 group flex w-full items-center gap-2.5 rounded-lg border p-2.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
+									className="focus-ring border-border hover:bg-muted/40 active:bg-muted/60 group flex w-full items-center gap-2.5 rounded-lg border p-2.5 text-left transition-colors"
 									aria-label={`Utiliser ${entry.name} (${entry.hex})`}
 								>
 									<span

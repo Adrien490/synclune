@@ -352,7 +352,11 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		{ path: "/favoris", name: "Favoris" },
 		{ path: "/mot-de-passe-oublie", name: "Mot de passe oublié" },
 		{ path: "/paiement/annulation", name: "Checkout annulation" },
-		{ path: "/paiement/retour", name: "Checkout retour" },
+		// ⚠️ Pas de `/paiement/retour` : cette page ne rend RIEN. Elle se termine
+		// toujours par un `redirect()` (vers /paiement/confirmation, /annulation ou
+		// /), donc axe analysait la page d'ARRIVÉE — quand il ne plantait pas sur
+		// « Execution context was destroyed » en course avec la navigation. Seul
+		// `retour/loading.tsx` est visible par l'utilisateur.
 		// Auth pages
 		{ path: "/reinitialiser-mot-de-passe", name: "Réinitialiser mot de passe" },
 		{ path: "/renvoyer-verification", name: "Renvoyer vérification" },

@@ -23,7 +23,41 @@ import { createOrderAuditTx } from "../utils/order-audit";
  * Business rules:
  * - Order must not already be shipped or delivered
  * - Only pre-shipment orders can have their address corrected
+ *
+ * ## Pourquoi cette action porte AUSSI deux gardes comptables (audit 2026-08-07)
+ *
+ * Depuis le retrait des 9 colonnes `Order.billing*` (2026-08-04), `buildBillingAddress`
+ * est l'identité : `shipping*` EST l'adresse imprimée sous « Facturé à »
+ * (`modules/invoices/services/build-invoice-data.ts`). L'adresse de livraison est donc
+ * devenue une donnée FISCALE sans que sa garde d'écriture ne suive — elle ne se
+ * verrouillait qu'à l'expédition, soit des jours après l'émission de la facture.
+ *
+ * ⚠️ Un gate dur `invoiceNumber !== null` serait le mauvais correctif : la facture est
+ * posée dans les secondes suivant le paiement (webhook → `ensureInvoiceNumberPersisted`),
+ * donc l'adresse ne serait JAMAIS corrigeable. C'est exactement ce qui rendait l'ancienne
+ * action `update-order-billing-address` inutile — ses colonnes sont restées NULL sur
+ * toute commande réelle, puis ont été droppées. Corriger une rue avant expédition reste
+ * le cas d'usage légitime et prioritaire : un colis mal adressé est un préjudice réel.
+ *
+ * On ne bloque donc que les deux fenêtres où l'édition CORROMPRAIT une pièce comptable :
+ *  1. `creditNoteNumber` posé — l'avoir est rendu depuis ces colonnes VIVANTES
+ *     (`render-order-credit-note.service.ts`) et archivé eagerly : rééditer ferait
+ *     diverger l'avoir de la facture qu'il corrige (Art. 272-I CGI).
+ *  2. `invoiceNumber` posé mais `invoicePdfUrl` NULL — l'archivage eager a échoué, et
+ *     `reconcile-invoices` va REGÉNÉRER le PDF depuis ces colonnes puis le sceller sous
+ *     SHA-256 pour dix ans (Art. L102 B LPF). Le cron passe une fois par jour (plafond
+ *     Hobby) : la fenêtre vaut jusqu'à 24 h. Refus TEMPORAIRE, pas définitif.
+ *
+ * Hors de ces deux fenêtres, l'édition reste autorisée jusqu'à l'expédition — la facture
+ * déjà archivée fait foi et conserve l'adresse d'origine, ce que l'admin est averti dans
+ * `edit-shipping-address-form.tsx` et ce que trace `metadata.invoiceAlreadyIssued`.
  */
+const REFUSAL_MESSAGES = {
+	already_shipped: ORDER_ERROR_MESSAGES.CANNOT_UPDATE_ADDRESS_SHIPPED,
+	credit_note_issued: ORDER_ERROR_MESSAGES.CANNOT_UPDATE_ADDRESS_CREDIT_NOTE,
+	invoice_archiving: ORDER_ERROR_MESSAGES.CANNOT_UPDATE_ADDRESS_INVOICE_ARCHIVING,
+} as const;
+
 export async function updateOrderShippingAddress(
 	_prevState: ActionState | undefined,
 	formData: FormData,
@@ -61,6 +95,10 @@ export async function updateOrderShippingAddress(
 					// Portait `fulfillmentStatus` jusqu'au Lot 4 : la garde « pas après
 					// expédition » lit désormais l'axe unique.
 					status: true,
+					// Les trois colonnes des gardes comptables (cf. docblock).
+					invoiceNumber: true,
+					invoicePdfUrl: true,
+					creditNoteNumber: true,
 					shippingFirstName: true,
 					shippingLastName: true,
 					shippingAddress1: true,
@@ -82,6 +120,18 @@ export async function updateOrderShippingAddress(
 				found.status === OrderStatus.RETURNED
 			) {
 				return { ...found, _error: "already_shipped" as const };
+			}
+
+			// Garde comptable 1 — un avoir est déjà scellé sur ces colonnes (Art. 272-I).
+			if (found.creditNoteNumber !== null) {
+				return { ...found, _error: "credit_note_issued" as const };
+			}
+
+			// Garde comptable 2 — facture numérotée dont l'archive n'est pas encore
+			// écrite : `reconcile-invoices` régénère le PDF depuis ces colonnes et le
+			// scelle (Art. L102 B LPF). Refus TEMPORAIRE, levé dès que l'archive existe.
+			if (found.invoiceNumber !== null && found.invoicePdfUrl === null) {
+				return { ...found, _error: "invoice_archiving" as const };
 			}
 
 			const sanitizedData = {
@@ -118,10 +168,14 @@ export async function updateOrderShippingAddress(
 				orderId: id,
 				action: "ADDRESS_UPDATED",
 				authorName: auth.user.name ?? "Admin",
-				note: "Adresse de livraison modifiee",
+				note: "Adresse de livraison modifiée",
 				metadata: {
 					addressType: "shipping",
 					changedFields: Object.keys(sanitizedData),
+					// Booléen, jamais une valeur : trace qu'une facture ARCHIVÉE conserve
+					// l'adresse précédente. C'est le seul endroit où l'écart entre la pièce
+					// scellée et la colonne vivante reste lisible dix ans plus tard.
+					invoiceAlreadyIssued: found.invoiceNumber !== null,
 				},
 			});
 
@@ -138,7 +192,7 @@ export async function updateOrderShippingAddress(
 		if ("_error" in order) {
 			return {
 				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_UPDATE_ADDRESS_SHIPPED,
+				message: REFUSAL_MESSAGES[order._error],
 			};
 		}
 

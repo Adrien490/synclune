@@ -67,7 +67,7 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			});
 
 			if (nameExists) {
-				return error("Ce nom de couleur existe deja. Veuillez en choisir un autre.");
+				return error("Ce nom de couleur existe déjà. Choisis-en un autre.");
 			}
 		}
 

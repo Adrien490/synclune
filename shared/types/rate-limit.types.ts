@@ -23,7 +23,6 @@ export interface RateLimitConfig {
 	 * avoir, même profil CPU). Convention : identifiant du const sans `_LIMIT`,
 	 * en kebab-case (`CART_ADD_LIMIT` → `"cart-add"`).
 	 *
-	 * @see docs/KNOWN-ISSUES.md — KI-004 (corrigé le 2026-07-31)
 	 */
 	name: string;
 

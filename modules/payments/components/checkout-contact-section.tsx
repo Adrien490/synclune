@@ -84,7 +84,7 @@ export function CheckoutContactSection({ form, session, isComplete }: CheckoutCo
 				    arrondi que son conteneur. */}
 				{!isGuest && session.user.email && (
 					<div className="border-primary/10 bg-primary/5 flex flex-wrap items-center gap-2 rounded-md border p-3.5 text-sm">
-						<EnvelopeIcon className="text-muted-foreground size-4 shrink-0" />
+						<EnvelopeIcon className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
 						<span className="text-muted-foreground">Email :</span>
 						<span className="font-medium">{session.user.email}</span>
 						<button

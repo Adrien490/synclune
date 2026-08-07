@@ -11,9 +11,9 @@
  * rien : chaque ouvreur typait son `useAlertDialog` avec sa forme locale.
  *
  * Ce test exerce la chaîne RÉELLE ouvreur → store → dialog : le hook d'actions
- * publie son payload dans le VRAI `AlertDialogStoreProvider`, et le VRAI
+ * publie son payload dans le VRAI `OverlayStoreProvider`, et le VRAI
  * `ConfirmDialog` doit en dériver le champ caché et le nom affiché.
- * ⚠️ Ne JAMAIS mocker `alert-dialog-store-provider` ici : c'est précisément le
+ * ⚠️ Ne JAMAIS mocker `overlay-store-provider` ici : c'est précisément le
  * mock du store qui rendait ce défaut invisible aux tests existants. Seule la
  * primitive Radix est remplacée par des pass-through.
  *
@@ -42,7 +42,20 @@ vi.mock("@/shared/hooks/use-mobile", () => ({
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => vi.fn(),
 }));
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+/*
+ * Mock PARTIEL, et il doit le rester.
+ *
+ * Seul `useDialog` (formulaire d'édition) est neutralisé ; `useAlertDialog` et
+ * `OverlayStoreProvider` restent les VRAIS — c'est tout l'objet de ce test.
+ *
+ * ⚠️ Avant le 2026-08-07, `useDialog` et `useAlertDialog` vivaient dans deux
+ * modules distincts, et un `vi.mock` total de l'un n'atteignait pas l'autre. Leur
+ * fusion dans `overlay-store-provider` a transformé ce mock total en mock de TOUT
+ * le store d'overlay : `OverlayStoreProvider` est devenu `undefined` et les cinq
+ * assertions sont tombées d'un coup. D'où `importOriginal`.
+ */
+vi.mock("@/shared/providers/overlay-store-provider", async (importOriginal) => ({
+	...(await importOriginal<typeof OverlayStoreModuleNs>()),
 	useDialog: () => ({ open: vi.fn(), close: vi.fn(), isOpen: false, data: undefined }),
 }));
 vi.mock("@/shared/hooks/use-back-to-list-on-delete", () => ({
@@ -114,7 +127,8 @@ vi.mock("@/modules/product-types/hooks/use-toggle-product-type-status", () => ({
 // ============================================================================
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
+import type * as OverlayStoreModuleNs from "@/shared/providers/overlay-store-provider";
+import { OverlayStoreProvider } from "@/shared/providers/overlay-store-provider";
 
 import { DeleteColorAlertDialog } from "@/modules/colors/components/admin/delete-color-alert-dialog";
 import { useColorActions } from "@/modules/colors/hooks/use-color-actions";
@@ -176,10 +190,10 @@ function ProductTypeScenario({ productsCount = 0 }: { productsCount?: number }) 
 
 function renderScenario(scenario: ReactNode, dialog: ReactNode) {
 	return render(
-		<AlertDialogStoreProvider>
+		<OverlayStoreProvider>
 			{scenario}
 			{dialog}
-		</AlertDialogStoreProvider>,
+		</OverlayStoreProvider>,
 	);
 }
 

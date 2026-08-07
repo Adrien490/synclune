@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import type { Session } from "@/modules/auth/lib/auth";
@@ -43,7 +44,9 @@ interface CheckoutFormProps {
  */
 export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 	const isGuest = !session;
-	const { formRef, focusFirstInvalid } = useFocusFirstError();
+	// Seul `formRef` sert ici : le focus post-soumission appartient à
+	// `CheckoutErrorSummary`. Le hook reste pour le câblage `onInvalidCapture`.
+	const { formRef } = useFocusFirstError();
 
 	const { form } = useCheckoutForm({ session });
 
@@ -136,10 +139,13 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 			// l'early-return.
 			await form.validateAllFields("submit");
 
-			// Focus + scroll to first invalid field (a11y WCAG 3.3.1) + error haptic
-			requestAnimationFrame(() => {
-				focusFirstInvalid();
-			});
+			// ⚠️ Pas de `focusFirstInvalid()` ici : c'est `CheckoutErrorSummary` qui
+			// prend le focus (`focusOnAppear`), motif canonique du résumé d'erreurs.
+			// Les deux ensemble se disputaient le focus tout en laissant sept régions
+			// live parler en même temps (audit a11y 2026-08-07). `focusFirstInvalid`
+			// reste le chemin des formulaires SANS résumé.
+			// L'haptique d'erreur, elle, appartient bien à la soumission.
+			triggerHaptic("error");
 			return null;
 		}
 

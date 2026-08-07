@@ -87,7 +87,7 @@ vi.mock("@/modules/collections/components/admin/collection-form-dialog", () => (
 	CollectionFormDialog: () => null,
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({
 		open: mockOpenDialog,
 		close: vi.fn(),

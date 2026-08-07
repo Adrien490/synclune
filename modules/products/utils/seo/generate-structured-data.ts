@@ -1,5 +1,6 @@
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { LEGAL_WITHDRAWAL_DAYS } from "@/shared/constants/consumer-law";
 import { SITE_URL } from "@/shared/constants/seo-config";
@@ -13,9 +14,14 @@ import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label
 // `"use cache"` sur la seule valeur dérivée : `Date.now()` est interdit pendant le
 // prerender (blocking-prerender-current-time), et la clé sans argument fait une entrée
 // unique rafraîchie par le profil `catalog` — largement assez pour une date à J+90.
+//
+// Tag `PRODUCTS_LIST` : sans lui, l'entrée n'avait AUCUN levier d'invalidation et ne
+// se rafraîchissait qu'à l'expiration du profil (6 h). Une correction de prix veut
+// justement forcer le recrawl — c'est l'argument du commentaire ci-dessus.
 export async function getPriceValidUntil(): Promise<string> {
 	"use cache";
 	cacheLife("catalog");
+	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 	const PRICE_VALIDITY_DAYS = 90;
 	return new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000)
 		.toISOString()

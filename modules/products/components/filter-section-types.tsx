@@ -21,6 +21,14 @@ interface TypeFilterSectionProps {
 	productTypes: ProductTypeOption[];
 	selectedValues: string[];
 	onToggle: (slug: string, checked: boolean) => void;
+	/**
+	 * Intention de coche (survol / focus / pointer down), AVANT le clic.
+	 *
+	 * Le type est le seul filtre qui change de path (`/produits` ↔
+	 * `/produits/[slug]`) : c'est le seul dont la cible mérite un préchargement.
+	 * Absent dans le panneau mobile, qui n'applique qu'au bouton.
+	 */
+	onIntent?: (slug: string, checked: boolean) => void;
 }
 
 // ============================================================================
@@ -36,6 +44,7 @@ export function TypeFilterSection({
 	productTypes,
 	selectedValues,
 	onToggle,
+	onIntent,
 }: TypeFilterSectionProps) {
 	const haptic = useHaptic();
 	if (productTypes.length === 0) return null;
@@ -59,6 +68,7 @@ export function TypeFilterSection({
 						haptic("selection");
 						onToggle(type.slug, checked === true);
 					}}
+					onIntent={onIntent && (() => onIntent(type.slug, !selectedSet.has(type.slug)))}
 					count={type._count?.products}
 				>
 					{type.label}

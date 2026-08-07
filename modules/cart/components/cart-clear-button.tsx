@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialogStore } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { TrashIcon } from "@phosphor-icons/react/ssr";
 import { CLEAR_CART_DIALOG_ID } from "./clear-cart-dialog-id";

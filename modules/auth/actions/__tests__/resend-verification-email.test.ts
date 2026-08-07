@@ -14,6 +14,7 @@ const {
 	mockBuildUrl,
 	mockEnforceRateLimit,
 	mockCheckRateLimit,
+	mockGetRateLimitId,
 } = vi.hoisted(() => ({
 	mockAuth: {
 		api: {
@@ -26,11 +27,18 @@ const {
 	mockBuildUrl: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
+	mockGetRateLimitId: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+	// Le compteur par email-cible passe l'IP en 3ᵉ argument de `checkRateLimit` :
+	// sans elle, `effectiveIp` vaut `null` et whitelist, blacklist ET plafond
+	// global 100/min/IP sont inertes pour cet appel (l'identifiant
+	// `verification-email:` défait l'extraction automatique, qui n'opère que sur
+	// un préfixe `ip:`).
+	getRateLimitId: mockGetRateLimitId,
 }));
 // ⚠️ Mocker le compteur par email-cible est OBLIGATOIRE : sans ce mock, le vrai
 // `checkRateLimit` s'exécutait, et comme le mock de config ci-dessous fournit une
@@ -65,7 +73,7 @@ import { resendVerificationEmail } from "../resend-verification-email";
 // ============================================================================
 
 const EXPECTED_SUCCESS_MESSAGE =
-	"Si cet email est enregistré et non vérifié, vous recevrez un nouveau lien de vérification.";
+	"Si cet email est enregistré et non vérifié, tu recevras un nouveau lien de vérification.";
 
 const validFormData = createMockFormData({ email: "user@example.com" });
 const validatedData = { email: "user@example.com" };
@@ -79,6 +87,7 @@ describe("resendVerificationEmail", () => {
 		vi.resetAllMocks();
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
+		mockGetRateLimitId.mockResolvedValue({ identifier: "ip:192.0.2.1", ipAddress: "192.0.2.1" });
 		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 4, limit: 5, reset: 0 });
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.sendVerificationEmail.mockResolvedValue(undefined);
@@ -100,10 +109,15 @@ describe("resendVerificationEmail", () => {
 
 			await resendVerificationEmail(undefined, validFormData);
 
-			expect(mockCheckRateLimit).toHaveBeenCalledWith("verification-email:user@example.com", {
-				limit: 5,
-				windowMs: 3_600_000,
-			});
+			expect(mockCheckRateLimit).toHaveBeenCalledWith(
+				"verification-email:user@example.com",
+				{ limit: 5, windowMs: 3_600_000 },
+				// ⚠️ 3ᵉ argument OBLIGATOIRE : l'identifiant `verification-email:` défait
+				// l'extraction automatique de l'IP (qui n'opère que sur un préfixe `ip:`),
+				// donc sans lui `effectiveIp` vaut `null` et whitelist, blacklist ET
+				// plafond global 100/min/IP deviennent inertes pour cet appel.
+				"192.0.2.1",
+			);
 		});
 
 		it("n'envoie AUCUN email quand le quota de la cible est épuisé", async () => {

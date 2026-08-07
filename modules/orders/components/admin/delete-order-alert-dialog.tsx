@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { FieldLabel } from "@/shared/components/forms/field-label";
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useDeleteOrder } from "@/modules/orders/hooks/use-delete-order";
 
 export const DELETE_ORDER_DIALOG_ID = "delete-order";

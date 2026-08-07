@@ -33,7 +33,7 @@ export const ADDRESS_CONSTANTS = {
 } as const;
 
 export const ADDRESS_ERROR_MESSAGES = {
-	NOT_AUTHENTICATED: "Vous devez être connecté",
+	NOT_AUTHENTICATED: "Connecte-toi pour continuer",
 	NOT_FOUND: "Adresse non trouvée",
 	UNAUTHORIZED: "Vous n'êtes pas autorisé à modifier cette adresse",
 	FIRST_NAME_TOO_SHORT: `Le prénom doit contenir au moins ${ADDRESS_CONSTANTS.MIN_NAME_LENGTH} caractères`,

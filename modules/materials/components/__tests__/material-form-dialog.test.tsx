@@ -28,7 +28,7 @@ const { mockDialog, mockCreateMaterialForm, mockEditMaterialForm } = vi.hoisted(
 	mockEditMaterialForm: vi.fn(),
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => mockDialog.current,
 }));
 

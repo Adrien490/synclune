@@ -214,11 +214,11 @@ interface CollectionsCardProps {
 /**
  * Carte collection de la section « Choisis ton univers » (landing).
  *
- * @see docs/COLLECTION-CARD.md — la doctrine de la carte collection.
+ * Doctrine de la carte collection : elle doit montrer un ENSEMBLE, pas un objet.
  *   Cette carte rendait UN visuel carré dans l'enveloppe polaroid, ce que le
  *   § 3 (« au moins deux visuels ») et le § 5 (« ne pas reprendre la géométrie
  *   de la carte produit ») interdisaient tous les deux. Le désaccord entre la
- *   doctrine et `docs/LANDING-SECTION-COLLECTIONS.md` — qui avait acté ce média
+ *   doctrine et la décision de section du 2026-08-05 — qui avait acté ce média
  *   carré unique AVANT elle — a été **tranché le 2026-08-06 en faveur de la
  *   doctrine**, après avoir rendu les quatre silhouettes candidates de son § 5.
  *   Motif : hors ratio et squiggle, la carte était une carte produit — même

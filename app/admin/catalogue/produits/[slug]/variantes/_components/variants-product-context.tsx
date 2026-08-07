@@ -65,7 +65,7 @@ export function VariantsProductContext({ product }: VariantsProductContextProps)
 	return (
 		<Link
 			href={`/admin/catalogue/produits/${product.slug}`}
-			className="bg-card text-card-foreground hover:bg-accent/40 focus-visible:ring-ring flex items-center gap-3 rounded-lg border p-3 transition-colors focus-visible:ring-2 focus-visible:outline-none md:hidden"
+			className="focus-ring bg-card text-card-foreground hover:bg-accent/40 flex items-center gap-3 rounded-lg border p-3 transition-colors md:hidden"
 			aria-label={`Fiche produit ${product.title}`}
 		>
 			{image && thumbSrc ? (

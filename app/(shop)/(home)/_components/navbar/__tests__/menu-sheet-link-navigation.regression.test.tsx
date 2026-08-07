@@ -74,7 +74,7 @@ vi.mock("next/link", () => ({
 
 // Le sheet est contrôlé et OUVERT : on veut que le contenu (donc les liens) soit
 // monté par le portail Vaul.
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({
 		isOpen: true,
 		data: undefined,
@@ -83,14 +83,12 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 		toggle: vi.fn(),
 		clearData: vi.fn(),
 	}),
+	useSheetStore: (selector: (s: { open: (id: string) => void }) => unknown) =>
+		selector({ open: vi.fn() }),
 }));
 
 // Hors sujet ici (le raccourci Panier est un <button>, pas un lien) mais requis
 // au montage : `MenuSheet` lit le sheet-store pour le différé cart.
-vi.mock("@/shared/providers/sheet-store-provider", () => ({
-	useSheetStore: (selector: (s: { open: (id: string) => void }) => unknown) =>
-		selector({ open: vi.fn() }),
-}));
 
 vi.mock("@/shared/stores/badge-counts-store", () => ({
 	useBadgeCountsStore: (selector: (s: Record<string, number>) => unknown) =>

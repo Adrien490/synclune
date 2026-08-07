@@ -7,7 +7,7 @@
  *
  * ## Le bug que ce test verrouille
  *
- * `docs/RUNBOOK.md § Mention TVA` promet de basculer la mention CGI → CIBS
+ * La bascule de la mention CGI → CIBS est promise
  * (ordonnance 2025-1247, tolérance jusqu'au 31/12/2027) « via la variable d'env
  * `VENDOR_VAT_EXEMPTION_TEXT`, override sans déploiement ».
  *

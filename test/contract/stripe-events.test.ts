@@ -26,7 +26,6 @@ const {
 	mockHandlePaymentFailure,
 	mockHandlePaymentCanceled,
 	mockHandlePaymentProcessing,
-	mockHandleInvoicePaymentFailed,
 } = vi.hoisted(() => ({
 	mockHandleChargeRefunded: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleRefundUpdated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
@@ -37,7 +36,6 @@ const {
 	mockHandlePaymentFailure: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandlePaymentCanceled: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandlePaymentProcessing: vi.fn().mockResolvedValue({ success: true, skipped: true }),
-	mockHandleInvoicePaymentFailed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 }));
 
 vi.mock("@/modules/webhooks/handlers/refund-handlers", () => ({
@@ -54,7 +52,6 @@ vi.mock("@/modules/webhooks/handlers/payment-handlers", () => ({
 	handlePaymentFailure: mockHandlePaymentFailure,
 	handlePaymentCanceled: mockHandlePaymentCanceled,
 	handlePaymentProcessing: mockHandlePaymentProcessing,
-	handleInvoicePaymentFailed: mockHandleInvoicePaymentFailed,
 }));
 
 import {
@@ -77,7 +74,6 @@ const EXPECTED_HANDLERS: Record<string, ReturnType<typeof vi.fn>> = {
 	"payment_intent.payment_failed": mockHandlePaymentFailure,
 	"payment_intent.canceled": mockHandlePaymentCanceled,
 	"payment_intent.processing": mockHandlePaymentProcessing,
-	"invoice.payment_failed": mockHandleInvoicePaymentFailed,
 };
 
 function loadFixtures(): Array<{ name: string; event: Stripe.Event }> {

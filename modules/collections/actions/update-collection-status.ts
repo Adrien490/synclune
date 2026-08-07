@@ -97,7 +97,7 @@ export async function updateCollectionStatus(
 		});
 	} catch (e) {
 		if (e instanceof Error && e.message === "NOT_FOUND") {
-			return notFound("Collection");
+			return notFound("Collection", "f");
 		}
 		return handleActionError(e, "Erreur lors de la mise à jour du statut");
 	}

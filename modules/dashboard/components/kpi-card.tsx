@@ -133,7 +133,7 @@ export function KpiCard({
 								render={
 									<button
 										type="button"
-										className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex size-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
+										className="focus-ring text-muted-foreground/60 hover:text-muted-foreground -m-3 inline-flex size-11 cursor-help items-center justify-center rounded-full"
 										aria-label={`Info: ${title}`}
 									/>
 								}

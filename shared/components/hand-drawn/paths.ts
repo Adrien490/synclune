@@ -139,7 +139,9 @@ export const BRUSH_STROKE_PATH = "M5 14 Q52 10 100 13 T195 12";
 export const BRUSH_VIEWBOX = "0 0 200 26";
 
 /**
- * Le fil de l'atelier (direction « Le fil », `docs/LANDING-SECTION-ATELIER.md`)
+ * Le fil de l'atelier (direction « Le fil », 2026-08-06 — le document qui la
+ * portait a été supprimé ; le montage vivant est `atelier-thread.tsx` +
+ * `app/styles/atelier-thread.css`)
  * — les tracés de la colonne enfilée de la section atelier, et EUX SEULS : la
  * plaque « sans photo » du portrait réutilise `ACCENT_SHAPE_PATHS` (pas de
  * tracé neuf sans besoin).

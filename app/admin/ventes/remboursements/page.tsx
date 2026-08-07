@@ -1,3 +1,4 @@
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
@@ -11,7 +12,6 @@ import { RefundsFilterBadges } from "@/modules/refunds/components/admin/refunds-
 import { RefundsMobileList } from "@/modules/refunds/components/admin/refunds-mobile-list";
 import { RefundsMobileListSkeleton } from "@/modules/refunds/components/admin/refunds-mobile-list-skeleton";
 import { RefreshRefundsButton } from "@/modules/refunds/components/admin/refresh-refunds-button";
-import { RefundsFilterSheet } from "@/modules/refunds/components/admin/refunds-filter-sheet";
 import { RefundsSortBadge } from "@/modules/refunds/components/admin/refunds-sort-badge";
 import { parseRefundParams, parseRefundFilters } from "./_utils/params";
 
@@ -115,7 +115,7 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 							className="w-full sm:min-w-45"
 							noPrefix
 						/>
-						<RefundsFilterSheet />
+						<FilterTriggerButton />
 						<RefreshRefundsButton />
 					</Toolbar>
 

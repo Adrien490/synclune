@@ -47,6 +47,19 @@ const ADMIN_ACTION_DIRS = [
 	// (`actions/admin/`), d'où le scan récursif ci-dessous.
 	"modules/media/actions",
 	"modules/dashboard/actions",
+	// Audit « Server Actions sécurisées » 2026-08-07 : deux dossiers portant chacun
+	// une action admin restaient hors contrat.
+	//
+	// `cron/actions` → `runMaintenanceTask` déclenche la réconciliation des
+	// remboursements Stripe, la synchro des paiements asynchrones et la purge des
+	// médias orphelins. Un déclencheur d'opérations lourdes et irréversibles.
+	//
+	// `auth/actions` → `revokeAllSessions` est le bouton « ma session est volée » du
+	// compte UNIQUE qui administre la boutique (cf. RUNBOOK § Compte admin compromis).
+	// Le reste du dossier est public par nature : d'où la whitelist ci-dessous, la
+	// plus fournie du contrat.
+	"modules/cron/actions",
+	"modules/auth/actions",
 ];
 
 /**
@@ -89,6 +102,22 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	// `ValidateDiscountCodeReturn`, donc incompatible avec l'early-return ActionState.
 	// Fin wrapper de lecture au-dessus de `validateDiscountCode` : hérite de sa
 	// garde et de son rate limit, n'écrit rien en base.
+	// --- Auth : le dossier est public par nature, `revoke-all-sessions` excepté ---
+	// Les cinq premières sont les surfaces NON authentifiées du parcours de connexion :
+	// exiger `requireAdmin()` y serait un contresens (on n'est pas encore connecté).
+	// Leur garde propre est le rate limit + la réponse générique anti-énumération.
+	"modules/auth/actions/sign-in-email.ts",
+	"modules/auth/actions/request-password-reset.ts",
+	"modules/auth/actions/reset-password.ts",
+	"modules/auth/actions/resend-verification-email.ts",
+	// Exige une session (`requireAuth()`), pas le rôle ADMIN : c'est le changement de
+	// mot de passe de son PROPRE compte. `requireAdmin()` y serait redondant — depuis
+	// le retrait de l'espace client, la seule session possible EST l'administratrice —
+	// mais le helper doit rester celui qui décrit l'intention.
+	"modules/auth/actions/change-password.ts",
+	// Déconnexion : détruire sa propre session ne demande aucun privilège, et
+	// l'exiger empêcherait un compte rétrogradé de se déconnecter proprement.
+	"modules/auth/actions/logout.ts",
 ]);
 
 interface ActionFile {

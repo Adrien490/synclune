@@ -26,7 +26,7 @@ export const signInEmail = async (
 		// Vérifier si l'utilisateur est déjà connecté
 		const session = await auth.api.getSession({ headers: headersList });
 		if (session?.user.id) {
-			return unauthorized("Vous êtes déjà connecté");
+			return unauthorized("Tu as déjà une session ouverte");
 		}
 
 		// Validation AVANT rate limit : un payload malformé n'est pas une tentative

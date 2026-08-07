@@ -45,8 +45,8 @@ const DAB = CREATION_PATHS.dab;
  *
  * Direction « F — Le nuancier, au bon calibre » (2026-08-06), qui remplace
  * « E — L'échantillonnier » du même jour : le lavis de famille sur les onze
- * rangées a été jugé trop fort, et c'est l'arbitrage que le § 5 de
- * `docs/LANDING-SECTION-FAQ.md` laissait ouvert entre les deux. La marque de
+ * rangées a été jugé trop fort, et c'est l'arbitrage qui restait ouvert
+ * entre les deux. La marque de
  * famille redevient donc une TOUCHE (cf. `FamilyDab`), et la rangée redevient
  * nue au repos — mais au calibre du voisin, pas à celui de « B — Le nuancier »,
  * qui la sous-dosait d'un ordre de grandeur.
@@ -188,8 +188,7 @@ const MAILTO_ANCHOR = <a href={`mailto:${BRAND.contact.email}`} />;
  *   bloc titre entre en `.enter-inview` : la section n'apparaît plus « déjà
  *   finie ».
  *
- * Puis **« F — Le nuancier, au bon calibre »** (2026-08-06, direction et lots
- * dans [`docs/LANDING-SECTION-FAQ.md`](../../../../../docs/LANDING-SECTION-FAQ.md)),
+ * Puis **« F — Le nuancier, au bon calibre »** (2026-08-06),
  * qui traite le défaut que « La note soleil » laissait entier — la couleur
  * n'existait qu'APRÈS un clic, donc sur un item sur onze, et sur aucun tant que
  * le visiteur n'avait rien ouvert — et qui succède à « E — L'échantillonnier »,

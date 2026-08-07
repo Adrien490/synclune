@@ -32,7 +32,7 @@ vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: mockPush }),
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => mockDialogState,
 }));
 

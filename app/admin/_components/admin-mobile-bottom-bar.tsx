@@ -13,7 +13,7 @@ import {
 	bottomBarBadgeClass,
 } from "@/shared/components/bottom-bar";
 import { LoadingIndicator } from "@/shared/components/navigation/loading-indicator";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useMounted } from "@/shared/hooks/use-mounted";

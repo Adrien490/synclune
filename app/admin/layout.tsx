@@ -14,7 +14,7 @@ import { AdminMobileBottomBar } from "./_components/admin-mobile-bottom-bar";
 import { AdminMobileHeader } from "./_components/admin-mobile-header";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { AdminSidebarSkeleton } from "./_components/admin-sidebar-skeleton";
-import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
+import { DashboardHeader } from "./_components/dashboard-header";
 import { KeyboardShortcutsDialog } from "./_components/keyboard-shortcuts-dialog";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
@@ -77,7 +77,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 			    contenu : les pages de détail publient leur titre, le chrome le lit. */}
 			<AdminPageTitleProvider>
 				<SidebarInset data-admin-layout>
-					<DashboardHeaderWrapper />
+					<DashboardHeader />
 					<AdminMobileHeader />
 					<main
 						id="admin-main-content"

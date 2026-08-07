@@ -142,7 +142,7 @@ const NOW_SECONDS = Math.floor(FIXED_NOW_MS / 1000);
 function makeStripeEvent(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "evt_test_concurrent_1",
-		type: "checkout.session.completed",
+		type: "payment_intent.succeeded",
 		created: NOW_SECONDS - 10,
 		data: { object: {} },
 		...overrides,
@@ -153,7 +153,7 @@ function makeWebhookRecord(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "wh-1",
 		eventId: "evt_test_concurrent_1",
-		eventType: "checkout.session.completed",
+		eventType: "payment_intent.succeeded",
 		status: "PROCESSING",
 		attempts: 0,
 		// Colonne DB (default now()) lue par la route depuis WEBHOOK-AUDIT-001
@@ -164,7 +164,7 @@ function makeWebhookRecord(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-function makeRequest(body = '{"type":"checkout.session.completed"}') {
+function makeRequest(body = '{"type":"payment_intent.succeeded"}') {
 	return {
 		text: vi.fn().mockResolvedValue(body),
 	} as unknown as Request;

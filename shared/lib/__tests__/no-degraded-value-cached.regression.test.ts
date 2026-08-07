@@ -48,6 +48,21 @@ const MUST_NOT_CATCH_INSIDE_CACHE = [
 	"modules/collections/data/get-collection-options.ts",
 	"modules/collections/data/get-collection-counts-by-status.ts",
 	"modules/skus/data/fetch-skus.ts",
+	// ────────────────────────────────────────────────────────────────────────────
+	// Chemin CHECKOUT — ajouts de l'audit « cache utilisateur et checkout »
+	// (2026-08-07). Les deux premiers portaient le défaut ; les deux derniers ont
+	// toujours eu le bon motif mais RIEN ne le verrouillait — y redescendre le
+	// `try/catch` passait la CI, alors que leurs commentaires citent déjà
+	// CACHE-DEGRADED-VALUE-001 comme la raison de sa place.
+	// ────────────────────────────────────────────────────────────────────────────
+	// « Commande introuvable » figé 5 min → redirection vers `/` juste après paiement.
+	"modules/orders/data/get-order-for-confirmation.ts",
+	// Fail-open « boutique ouverte » figé 5 min → commandes passées boutique fermée.
+	"modules/store-settings/data/get-store-status.ts",
+	// Panier vide figé : indiscernable d'un panier réellement vide.
+	"modules/cart/data/get-cart.ts",
+	// Favoris vides figés : idem.
+	"modules/wishlist/data/get-wishlist.ts",
 ];
 
 /**
@@ -108,8 +123,15 @@ describe("CACHE-DEGRADED-VALUE-001 — aucune valeur dégradée mise en cache", 
 		"%s n'a ni catch ni allSettled dans son scope caché",
 		(rel) => {
 			const source = stripComments(readFileSync(join(REPO_ROOT, rel), "utf8"));
+			// ⚠️ `catch\s*[({]` et pas `catch\s*\(` : la liaison d'erreur est OPTIONNELLE
+			// depuis ES2019, et `} catch {` — la forme idiomatique quand on ignore
+			// l'erreur, utilisée ailleurs dans le dépôt (`auth/utils/guards.ts`) — n'a
+			// aucune parenthèse. Le motif d'origine était donc aveugle à la moitié des
+			// formes, sur les 8 fichiers surveillés depuis 2026-07-31 comme sur les 4
+			// ajoutés le 2026-08-07. Prouvé par sonde : un `} catch { return []; }`
+			// planté dans `fetchCartSkus` passait le garde-fou.
 			const offending = cachedFunctionBodies(source).filter((body) =>
-				/\bcatch\s*\(|\ballSettled\b/.test(body),
+				/\bcatch\s*[({]|\ballSettled\b/.test(body),
 			);
 
 			expect(

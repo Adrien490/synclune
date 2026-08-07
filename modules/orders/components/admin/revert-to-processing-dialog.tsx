@@ -12,7 +12,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { FieldLabel } from "@/shared/components/forms/field-label";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
 import { Spinner } from "@/shared/components/ui/spinner";
 

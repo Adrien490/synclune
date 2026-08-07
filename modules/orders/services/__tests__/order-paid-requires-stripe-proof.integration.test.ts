@@ -23,7 +23,7 @@
 
 import { describe, it, expect } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { OrderStatus, PaymentStatus, type Order } from "@/app/generated/prisma/client";
 
 const integrationEnabled = Boolean(process.env.INTEGRATION_DATABASE_URL);
@@ -35,46 +35,11 @@ type IntegrationPrisma = ReturnType<typeof getIntegrationPrismaClient>;
  * Crée une commande PENDING conforme (aucun CHECK ne s'applique hors de l'état
  * PAID), prête à être poussée dans un état interdit par les tests.
  */
-async function createPendingOrder(
-	prisma: IntegrationPrisma,
-	skuId: string,
-	suffix: string,
-): Promise<Order> {
-	return prisma.order.create({
-		data: {
-			orderNumber: `SYN-PAIDGUARD-${suffix}`,
-			customerEmail: "paidguard@test.local",
-			customerName: "Test PaidGuard",
-			shippingFirstName: "Test",
-			shippingLastName: "PaidGuard",
-			shippingAddress1: "1 rue test",
-			shippingPostalCode: "75001",
-			shippingCity: "Paris",
-			shippingCountry: "FR",
-			shippingPhone: "+33600000000",
-			status: OrderStatus.PENDING,
-			paymentStatus: PaymentStatus.PENDING,
-			subtotal: 4999,
-			discountAmount: 0,
-			shippingCost: 0,
-			taxAmount: 0,
-			total: 4999,
-			items: {
-				create: [
-					{
-						skuId,
-						quantity: 1,
-						productTitle: "Collier Test",
-						price: 4999,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: 4999,
-						lineTotalIncludingTax: 4999,
-						taxCategoryCode: "ZB",
-					},
-				],
-			},
-		},
+async function createPendingOrder(skuId: string, suffix: string): Promise<Order> {
+	return createTestOrder([{ skuId, productTitle: "Collier Test" }], {
+		orderNumber: `SYN-PAIDGUARD-${suffix}`,
+		status: OrderStatus.PENDING,
+		paymentStatus: PaymentStatus.PENDING,
 	});
 }
 
@@ -106,7 +71,7 @@ describeIntegration(
 			const prisma = getIntegrationPrismaClient();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
-			const order = await createPendingOrder(prisma, sku.id, `A-${Date.now()}`);
+			const order = await createPendingOrder(sku.id, `A-${Date.now()}`);
 
 			const thrown = await captureError(() =>
 				prisma.order.update({
@@ -136,43 +101,16 @@ describeIntegration(
 
 			// C'est le scénario « vente manuelle » exact : un script qui fabrique une
 			// commande déjà encaissée sans être passé par le checkout Stripe.
+			// `stripePaymentIntentId: null` EXPLICITE : la factory le remplit d'office
+			// sur un PAID, et c'est précisément son absence qu'on veut faire rejeter.
 			const thrown = await captureError(() =>
-				prisma.order.create({
-					data: {
-						orderNumber: `SYN-PAIDGUARD-CASH-${Date.now()}`,
-						customerEmail: "cash@test.local",
-						customerName: "Vente Comptoir",
-						shippingFirstName: "Vente",
-						shippingLastName: "Comptoir",
-						shippingAddress1: "1 rue test",
-						shippingPostalCode: "75001",
-						shippingCity: "Paris",
-						shippingCountry: "FR",
-						shippingPhone: "+33600000000",
-						status: OrderStatus.PROCESSING,
-						paymentStatus: PaymentStatus.PAID,
-						paidAt: new Date(),
-						subtotal: 4999,
-						discountAmount: 0,
-						shippingCost: 0,
-						taxAmount: 0,
-						total: 4999,
-						items: {
-							create: [
-								{
-									skuId: sku.id,
-									quantity: 1,
-									productTitle: "Collier Test",
-									price: 4999,
-									taxRate: 0,
-									taxAmount: 0,
-									lineTotalExcludingTax: 4999,
-									lineTotalIncludingTax: 4999,
-									taxCategoryCode: "ZB",
-								},
-							],
-						},
-					},
+				createTestOrder([{ skuId: sku.id, productTitle: "Collier Test" }], {
+					orderNumber: `SYN-PAIDGUARD-CASH-${Date.now()}`,
+					customerName: "Vente Comptoir",
+					status: OrderStatus.PROCESSING,
+					paymentStatus: PaymentStatus.PAID,
+					paidAt: new Date(),
+					stripePaymentIntentId: null,
 				}),
 			);
 			expectCheckRejection(thrown, "Order_paid_requires_stripe_proof");
@@ -182,7 +120,7 @@ describeIntegration(
 			const prisma = getIntegrationPrismaClient();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
-			const order = await createPendingOrder(prisma, sku.id, `B-${Date.now()}`);
+			const order = await createPendingOrder(sku.id, `B-${Date.now()}`);
 
 			const thrown = await captureError(() =>
 				prisma.order.update({
@@ -203,7 +141,7 @@ describeIntegration(
 			const prisma = getIntegrationPrismaClient();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
-			const order = await createPendingOrder(prisma, sku.id, `C-${Date.now()}`);
+			const order = await createPendingOrder(sku.id, `C-${Date.now()}`);
 
 			const updated = await prisma.order.update({
 				where: { id: order.id },
@@ -222,7 +160,7 @@ describeIntegration(
 			const prisma = getIntegrationPrismaClient();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
-			const order = await createPendingOrder(prisma, sku.id, `D-${Date.now()}`);
+			const order = await createPendingOrder(sku.id, `D-${Date.now()}`);
 
 			await prisma.order.update({
 				where: { id: order.id },
@@ -251,7 +189,7 @@ describeIntegration(
 			const prisma = getIntegrationPrismaClient();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
-			const order = await createPendingOrder(prisma, sku.id, `E-${Date.now()}`);
+			const order = await createPendingOrder(sku.id, `E-${Date.now()}`);
 
 			await prisma.order.update({
 				where: { id: order.id },

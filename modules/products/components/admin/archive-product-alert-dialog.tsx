@@ -1,7 +1,7 @@
 "use client";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 
 export const ARCHIVE_PRODUCT_DIALOG_ID = "archive-product";

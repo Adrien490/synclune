@@ -30,7 +30,7 @@ const REPO_ROOT = join(__dirname, "..", "..", "..");
 const API_VERSION_LITERAL = /\b\d{4}-\d{2}-\d{2}\.[a-z]+\b/g;
 
 /**
- * ⚠️ Un nom de fichier daté — `docs/FONTS-AUDIT-2026-08-05.md` — a EXACTEMENT la
+ * ⚠️ Un nom de fichier daté — du type `AUDIT-2026-08-05.md` — a EXACTEMENT la
  * forme d'une version d'API Stripe. Le scan porte volontairement sur la prose des
  * commentaires (une des quatre copies historiques en était une), et ces
  * références datées y abondent : sans ce filtre, deux commentaires citant une note

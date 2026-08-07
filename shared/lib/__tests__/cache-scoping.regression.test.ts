@@ -48,6 +48,20 @@ const NEXT_CONFIG_PATH = join(REPO_ROOT, "next.config.ts");
 // n'ayant plus d'historique à lire dans un parcours 100 % invité.
 const PUBLIC_IDENTITY_SCOPED_CACHES = new Set<string>([]);
 
+/**
+ * Un paramètre de fonction cachée porte-t-il une identité ?
+ *
+ * SSOT partagée par le check 3 et sa contre-épreuve — les deux portaient le même
+ * littéral dupliqué, donc élargir l'un sans l'autre rendait l'allowlist incohérente.
+ *
+ * ⚠️ `guestSessionId` est le vocabulaire propre du dépôt (`metadata.guestSessionId`,
+ * `modules/cart/lib/guest-session.ts`) et n'était couvert par AUCUN des deux motifs :
+ * `\bsessionId\b` ne matche pas un `S` majuscule en milieu de mot (audit 2026-08-07).
+ */
+function carriesIdentityParam(params: string): boolean {
+	return /\buserId\b|\bsessionId\b|\bguestSessionId\b/i.test(params);
+}
+
 function collectDataFiles(dir: string, acc: string[] = []): string[] {
 	let entries: string[];
 	try {
@@ -165,7 +179,7 @@ describe("Cache — scoping et profiles sur modules/ + shared/ + app/", () => {
 			);
 			for (const fn of cachedFns) {
 				const [, name, params, privateSuffix] = fn;
-				const carriesIdentity = /\buserId\b|\bsessionId\b/.test(params ?? "");
+				const carriesIdentity = carriesIdentityParam(params ?? "");
 				if (!carriesIdentity || privateSuffix) continue;
 				if (PUBLIC_IDENTITY_SCOPED_CACHES.has(name as string)) continue;
 				offenders.push(`${file} -> ${name}(${(params ?? "").trim()})`);
@@ -192,7 +206,7 @@ describe("Cache — scoping et profiles sur modules/ + shared/ + app/", () => {
 			)) {
 				const [, name, params, privateSuffix] = fn;
 				if (privateSuffix) continue;
-				if (!/\buserId\b|\bsessionId\b/.test(params ?? "")) continue;
+				if (!carriesIdentityParam(params ?? "")) continue;
 				publicIdentityFns.add(name as string);
 			}
 		}
@@ -212,10 +226,18 @@ describe("Cache — scoping et profiles sur modules/ + shared/ + app/", () => {
 			if (!/"use cache(: private)?";/.test(source)) continue;
 
 			const callsCacheTag = /\bcacheTag\(/.test(source);
-			// Helpers de module (cacheProducts, cacheDashboard(tag), cacheCart, …)
-			// importés depuis constants/cache, utils/cache ou shared/lib/cache.
-			const importsCacheHelper = /import\s*(?:type\s*)?\{[^}]*\bcache[A-Z]\w*/.test(source);
-			if (!callsCacheTag && !importsCacheHelper) {
+			// Helpers de module (cacheProducts, cacheDashboard(tag), cacheStoreStatus, …)
+			// définis dans constants/cache, utils/cache ou shared/lib/cache.
+			//
+			// ⚠️ On teste l'APPEL, pas l'import, et on exclut explicitement `cacheLife`
+			// et `cacheTag` de la famille `cacheXxx`. Le motif précédent portait sur
+			// l'import et matchait `cacheLife` — or la règle ESLint
+			// `local/require-cache-life` IMPOSE d'importer `cacheLife` dans tout fichier
+			// caché : l'assertion était donc satisfaite par construction et ne pouvait
+			// plus jamais échouer. Elle certifiait conformes deux entrées réellement
+			// sans tag (`navbar.tsx`, `generate-structured-data.ts`, audit 2026-08-07).
+			const callsCacheHelper = /\bcache(?!Life\b|Tag\b|Components\b)[A-Z]\w*\s*\(/.test(source);
+			if (!callsCacheTag && !callsCacheHelper) {
 				offenders.push(file);
 			}
 		}
@@ -245,8 +267,16 @@ describe("Cache — scoping et profiles sur modules/ + shared/ + app/", () => {
 	it("aucune résolution d'identité (cookies/headers/getSession) dans un corps caché", () => {
 		// `await` requis : évite les faux positifs sur la prose (« cookies (traceurs) »
 		// des pages légales) — les APIs identité sont toutes async.
+		//
+		// ⚠️ Les WRAPPERS comptent autant que les APIs brutes. Depuis le passage du
+		// panier (2026-08-04) et des favoris (2026-08-03) en cookie, plus aucun appel
+		// `cookies()` ne s'écrit sur un chemin de données : il vit dans `lib/*-cookie.ts`,
+		// et ce sont ces wrappers que les fetchers appellent. Un motif limité aux APIs
+		// brutes ne couvrait donc PLUS AUCUN des lecteurs de cookie réels du dépôt
+		// (audit 2026-08-07). Idem pour les gardes `requireAdmin*` / `isVerifiedAdmin`,
+		// qui lisent `headers()` transitivement.
 		const FORBIDDEN_IN_CACHED_BODY =
-			/\bawait\s+(cookies|headers|getSession|getCurrentSession|isAdmin)\s*\(/g;
+			/\bawait\s+(cookies|headers|getSession|getCurrentSession|isAdmin|readCartCookie|readWishlistCookie|getGuestSessionId|getOrCreateGuestSessionId|getRecentSearches|getFabVisibility|requireAdmin|requireAdminWithUser|requireAdminApiRoute|requireAuth|requireActiveAccountIfAuthenticated|isVerifiedAdmin)\s*\(/g;
 		const offenders: string[] = [];
 		for (const file of dataFiles) {
 			const source = stripComments(readFileSync(file, "utf-8"));

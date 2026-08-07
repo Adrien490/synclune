@@ -8,7 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { CopyButton } from "@/shared/components/copy-button";
 import { COUNTRY_NAMES } from "@/shared/constants/countries";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { EDIT_SHIPPING_ADDRESS_DIALOG_ID } from "../edit-shipping-address-dialog";
 import type { OrderAddressCardProps } from "./types";
@@ -64,6 +64,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 			shippingCity: order.shippingCity,
 			shippingCountry: order.shippingCountry,
 			shippingPhone: order.shippingPhone,
+			invoiceIssued: order.invoiceNumber !== null,
 		});
 	};
 

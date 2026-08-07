@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { getProductTypeBySlug } from "@/modules/product-types/data/get-product-type";
@@ -6,16 +5,16 @@ import { ProductCatalog } from "@/modules/products/components/product-catalog";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
 import { SITE_URL } from "@/shared/constants/seo-config";
-import type { SortField } from "@/modules/products/data/get-products";
+import type { ActiveProductType } from "@/modules/products/types/catalog-shell.types";
 import type { ProductSearchParams } from "../_utils/types";
-import { parseFilters } from "../_utils/params";
 import {
 	getCatalogData,
-	parsePaginationParams,
-	fetchProducts,
-	countActiveFilters,
-	buildCatalogJsonLd,
+	resolveActiveProductType,
+	resolveCatalogListProps,
+	resolveCatalogProducts,
+	resolveCategoryBreadcrumbs,
 } from "../_utils/catalog";
+import { CatalogJsonLd, type CatalogJsonLdOptions } from "../_components/catalog-json-ld";
 
 // ============================================================================
 // STATIC GENERATION — volontairement absente
@@ -102,89 +101,63 @@ export async function generateMetadata({
 // PAGE
 // ============================================================================
 
+/** Libellés du `CollectionPage` — ils portent le nom de la famille, donc `params`. */
+async function resolveJsonLdOptions(
+	activeProductTypePromise: Promise<ActiveProductType>,
+): Promise<CatalogJsonLdOptions> {
+	const { slug, label, description } = await activeProductTypePromise;
+
+	return {
+		name: `${label} artisanaux faits main`,
+		description: description ?? `Découvrez mes ${label.toLowerCase()} colorés créés à la main.`,
+		url: `${SITE_URL}/produits/${slug}`,
+		breadcrumbs: [
+			{ name: "Accueil", url: SITE_URL },
+			{ name: "Créations", url: `${SITE_URL}/produits` },
+			{ name: label },
+		],
+	};
+}
+
+/**
+ * ⚠️ **Cette page n'awaite ni `params` ni `searchParams`** — cf. le commentaire
+ * jumeau de `../page.tsx`. C'est la condition pour que le meuble de filtres
+ * entre dans l'App Shell de la route, au lieu que la navigation depuis
+ * `/produits` affiche le squelette pleine page de `loading.tsx`.
+ *
+ * Les deux lectures d'URL sont poussées dans des enfants suspendus par les
+ * résolveurs de `../_utils/catalog.ts`, tous appelés SANS `await`.
+ * `resolveActiveProductType` porte aussi le `notFound()` du slug inconnu.
+ */
 export default async function ProductTypeCategoryPage({
 	params,
 	searchParams,
 }: ProductTypeCategoryPageProps) {
-	const [{ productTypeSlug }, searchParamsData] = await Promise.all([params, searchParams]);
+	const { productTypes, colors, materials, maxPriceInEuros } = await getCatalogData();
 
-	// Récupérer le type de produit et les données du catalogue en parallèle
-	const [productType, catalogData] = await Promise.all([
-		getProductTypeBySlug({ slug: productTypeSlug }),
-		getCatalogData(),
-	]);
-
-	if (!productType) {
-		notFound();
-	}
-
-	const { productTypes, colors, materials, maxPriceInEuros } = catalogData;
-
-	// Parser les paramètres
-	const { perPage, searchTerm, sortBy } = parsePaginationParams(searchParamsData);
-	const filters = parseFilters(searchParamsData);
-
-	// Le type vient du PATH, pas des searchParams : `fetchProducts` le fusionne
-	// en interne. Le load-more, lui, reçoit les filtres par prop — il lui faut
-	// donc la version FUSIONNÉE, sinon « voir plus » sur une page catégorie
-	// ramènerait tout le catalogue.
-	const mergedFilters = { ...filters, type: [productTypeSlug] };
-
-	// Récupérer les produits et la wishlist en parallèle
-	const productsPromise = fetchProducts(searchParamsData, {
-		type: [productTypeSlug],
-	});
-	const wishlistProductIdsPromise = getWishlistProductIds();
-
-	// Compter les filtres actifs (exclure le type car il vient du path)
-	const activeFiltersCount = countActiveFilters(searchParamsData, filters, true);
-
-	// Breadcrumbs
-	const breadcrumbs = [
-		{ label: "Créations", href: "/produits" },
-		{ label: productType.label, href: `/produits/${productTypeSlug}` },
-	];
-
-	// Snapshot products pour enrichir le JSON-LD avec ItemList (rich result Product carousel).
-	// Await partagé avec ProductCatalog — pas de double-fetch (même promise object).
-	const productsSnapshot = await productsPromise;
-
-	// JSON-LD
-	const jsonLd = buildCatalogJsonLd({
-		name: `${productType.label} artisanaux faits main`,
-		description:
-			productType.description ??
-			`Découvrez mes ${productType.label.toLowerCase()} colorés créés à la main.`,
-		url: `${SITE_URL}/produits/${productTypeSlug}`,
-		breadcrumbs: [
-			{ name: "Accueil", url: SITE_URL },
-			{ name: "Créations", url: `${SITE_URL}/produits` },
-			{ name: productType.label },
-		],
-		products: productsSnapshot.products,
-	});
+	const activeProductTypePromise = resolveActiveProductType(params);
+	// Le type vient du PATH : les résolveurs le fusionnent aux filtres. Le
+	// load-more reçoit la version FUSIONNÉE, sinon « voir plus » sur une page
+	// catégorie ramènerait tout le catalogue.
+	const productsPromise = resolveCatalogProducts(searchParams, params);
 
 	return (
 		<ProductCatalog
 			productsPromise={productsPromise}
-			perPage={perPage}
-			searchTerm={searchTerm}
-			sortBy={sortBy as SortField}
-			filters={mergedFilters}
-			wishlistProductIdsPromise={wishlistProductIdsPromise}
-			activeProductType={{
-				slug: productType.slug,
-				label: productType.label,
-				description: productType.description,
-			}}
+			listPropsPromise={resolveCatalogListProps(searchParams, params)}
+			breadcrumbsPromise={resolveCategoryBreadcrumbs(activeProductTypePromise)}
+			activeProductTypePromise={activeProductTypePromise}
+			wishlistProductIdsPromise={getWishlistProductIds()}
 			productTypes={productTypes}
 			colors={colors}
 			materials={materials}
 			maxPriceInEuros={maxPriceInEuros}
-			activeFiltersCount={activeFiltersCount}
-			preferOnSale={filters.onSale}
-			jsonLd={jsonLd}
-			breadcrumbs={breadcrumbs}
+			jsonLdSlot={
+				<CatalogJsonLd
+					productsPromise={productsPromise}
+					optionsPromise={resolveJsonLdOptions(activeProductTypePromise)}
+				/>
+			}
 		/>
 	);
 }

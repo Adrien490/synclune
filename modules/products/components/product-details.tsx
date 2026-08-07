@@ -4,17 +4,28 @@ import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { ProductPriceDisplay } from "./product-price-display";
 import { ProductCharacteristics } from "./product-characteristics";
 import { ProductReassurance } from "./product-reassurance";
-import { DeliveryEstimator } from "./delivery-estimator";
 import { ProductHighlights } from "./product-highlights";
 import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
 
+import type { ReactNode } from "react";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 interface ProductDetailsProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
+	/**
+	 * `<DeliveryEstimator />`, monté par la PAGE (Server Component) et relayé ici.
+	 *
+	 * Il lit l'horloge (`new Date()`) pour dériver la fenêtre de livraison : le
+	 * faire dans ce composant client rendait le rendu non déterministe (SSR et
+	 * hydratation ne tombent pas forcément le même jour) et donnait au compilateur
+	 * une valeur qu'il ne peut pas mémoïser honnêtement. Rendu côté serveur, le
+	 * calcul est fait une fois, la sortie est du HTML figé, et le composant sort
+	 * du bundle client.
+	 */
+	deliveryEstimate: ReactNode;
 }
 
 /**
@@ -40,7 +51,7 @@ interface ProductDetailsProps {
  * `.piece-field`). Deux mouvements pour un seul événement : on garde celui qui
  * porte l'information, la couleur.
  */
-export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
+export function ProductDetails({ product, defaultSku, deliveryEstimate }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 
 	const currentSku = selectedSku ?? defaultSku;
@@ -53,7 +64,7 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 				    Pas de wrapper aria-live ici : ProductPriceDisplay possède déjà ses
 				    propres annonces SR. */}
 				<ProductPriceDisplay selectedSku={currentSku} product={product}>
-					<DeliveryEstimator />
+					{deliveryEstimate}
 				</ProductPriceDisplay>
 
 				{/* 2. Le nuancier + les autres axes de variante */}

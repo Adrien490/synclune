@@ -154,7 +154,7 @@ export function oklchToHex(L: number, C: number, hDeg: number): string {
 }
 
 /** `#rrggbb` → sRGB linéaire. */
-export function hexToLinearSrgb(hex: string): [number, number, number] {
+function hexToLinearSrgb(hex: string): [number, number, number] {
 	const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
 	if (!m?.[1]) throw new Error(`Hex illisible : « ${hex} »`);
 	const int = parseInt(m[1], 16);

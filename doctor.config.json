@@ -2,9 +2,7 @@
 	"ignore": {
 		"rules": [
 			"react-doctor/server-auth-actions",
-			"react-doctor/rendering-hydration-mismatch-time",
 			"react-doctor/no-prevent-default",
-			"react-doctor/react-compiler-destructure-method",
 			"react-doctor/no-giant-component",
 			"react-doctor/no-generic-handler-names",
 			"react-doctor/no-many-boolean-props",
@@ -26,7 +24,6 @@
 			"react-doctor/prefer-dynamic-import",
 			"react-doctor/rerender-state-only-in-handlers",
 			"react-doctor/rerender-defer-reads-hook",
-			"react-doctor/no-render-in-render",
 			"react-doctor/no-scale-from-zero",
 			"react-doctor/no-side-tab-border",
 			"react-doctor/server-sequential-independent-await",

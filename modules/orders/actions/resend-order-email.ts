@@ -11,6 +11,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { RESEND_EMAIL_ORDER_SELECT } from "@/modules/orders/constants/order.constants";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
@@ -73,41 +74,7 @@ export async function resendOrderEmail(
 		// 4. Récupérer la commande avec uniquement les champs nécessaires
 		const order = await prisma.order.findUnique({
 			where: { id: orderId, ...notDeleted },
-			select: {
-				orderNumber: true,
-				status: true,
-				id: true,
-				// AUDIT-BIZ-001 : requis par `buildOrderTrackingUrl` pour router les
-				// commandes invité (userId null) vers le suivi tokenisé.
-				customerEmail: true,
-				customerName: true,
-				subtotal: true,
-				shippingCost: true,
-				total: true,
-				shippingFirstName: true,
-				shippingLastName: true,
-				shippingAddress1: true,
-				shippingAddress2: true,
-				shippingPostalCode: true,
-				shippingCity: true,
-				shippingCountry: true,
-				shippedAt: true,
-				shippingCarrier: true,
-				trackingNumber: true,
-				trackingUrl: true,
-				// Sans cette colonne le renvoi perdait la ligne « Livraison estimée » :
-				// le mail renvoyé n'était pas une copie fidèle de l'original.
-				items: {
-					select: {
-						productTitle: true,
-						skuColor: true,
-						skuMaterial: true,
-						skuSize: true,
-						quantity: true,
-						price: true,
-					},
-				},
-			},
+			select: RESEND_EMAIL_ORDER_SELECT,
 		});
 
 		if (!order) {
@@ -225,11 +192,11 @@ export async function resendOrderEmail(
 				metadata: { resent: true },
 			});
 
-			// HISTORY() ne tague que `getOrderHistory()`. La timeline de la page détail lit
-			// `order.history` via `GET_ORDER_SELECT_ADMIN` dans `getOrderById()`, dont le
-			// cache est tagué DETAIL(id) : sans cette seconde invalidation, l'entrée
-			// d'audit qu'on vient d'écrire n'apparaissait pas sur la page.
-			updateTag(ORDERS_CACHE_TAGS.HISTORY(orderId));
+			// La timeline de la page détail lit `order.history` via `GET_ORDER_SELECT_ADMIN`
+			// dans `getOrderById()`, dont le cache est tagué DETAIL(id) : c'est LE tag qui
+			// fait apparaître l'entrée d'audit qu'on vient d'écrire. Un `HISTORY(orderId)`
+			// l'accompagnait, retiré le 2026-08-07 — orphelin, aucun `cacheTag()` ne le
+			// posait et son lecteur supposé `getOrderHistory()` n'a jamais existé.
 			updateTag(ORDERS_CACHE_TAGS.DETAIL(orderId));
 		}
 

@@ -55,8 +55,9 @@ interface ProductFilterRailProps {
 	/** Options du compartiment « Trier par » (SSOT `PRODUCTS_SORT_OPTIONS`). */
 	sortOptions: SortOption[];
 	maxPriceInEuros: number;
-	/** Type de produit actif (depuis le path segment /produits/[type]) */
-	activeProductTypeSlug?: string;
+	// Plus de `activeProductTypeSlug` : le type actif se dérive du pathname dans
+	// `useImmediateProductFilters`. Le rail ne reçoit ainsi que des données
+	// `"use cache"`, ce qui lui permet d'entrer dans l'App Shell de la route.
 	/**
 	 * Catalogue courant — le pied du rail y lit `totalCount`, le chiffre que la
 	 * grille affiche déjà. Même contrat que `initialCountPromise` du panneau :
@@ -196,7 +197,6 @@ function ProductFilterRailInner({
 	productTypes = EMPTY_PRODUCT_TYPES,
 	sortOptions,
 	maxPriceInEuros,
-	activeProductTypeSlug,
 	resultCountPromise,
 }: ProductFilterRailProps) {
 	const [confirmClearOpen, setConfirmClearOpen] = useState(false);
@@ -205,12 +205,13 @@ function ProductFilterRailInner({
 		values,
 		isPending,
 		toggleToken,
+		prefetchToken,
 		setPriceRange,
 		setAvailability,
 		setSortBy,
 		resetSection,
 		clearAll,
-	} = useImmediateProductFilters({ maxPriceInEuros, activeProductTypeSlug });
+	} = useImmediateProductFilters({ maxPriceInEuros });
 
 	/**
 	 * Prix en cours de glissement, AVANT commit. Le rail n'applique le prix qu'au
@@ -306,6 +307,10 @@ function ProductFilterRailInner({
 						values={displayValues}
 						counts={counts}
 						onToggle={toggleToken}
+						// Cocher un type change de PAGE : on réchauffe sa coquille au survol
+						// (et au pointer down sur tactile, faute de survol) pour que le clic
+						// n'attende plus l'aller-retour serveur.
+						onTypeIntent={(slug, checked) => prefetchToken("productTypes", slug, checked)}
 						// Le drag ne navigue pas : il n'avance que le brouillon, donc le
 						// badge de l'en-tête suit la poignée. Seul le relâchement applique.
 						onPriceChange={setDraftPriceRange}

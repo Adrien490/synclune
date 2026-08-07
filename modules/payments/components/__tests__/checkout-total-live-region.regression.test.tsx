@@ -27,7 +27,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
-vi.mock("@/shared/providers/sheet-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useSheet: () => ({ open: vi.fn() }),
 }));
 

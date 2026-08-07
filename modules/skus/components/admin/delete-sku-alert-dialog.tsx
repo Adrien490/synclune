@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useDeleteProductSku } from "@/modules/skus/hooks/use-delete-sku";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
 export const DELETE_PRODUCT_SKU_DIALOG_ID = "delete-product-sku";

@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mockOpen = vi.hoisted(() => vi.fn());
 const mockIsOpen = vi.hoisted(() => ({ value: false }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: vi.fn(() => ({
 		open: mockOpen,
 		isOpen: mockIsOpen.value,
@@ -17,7 +17,7 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 // ─── Import after mocks ──────────────────────────────────────────────────────
 
 import { QuickSearchTrigger } from "../quick-search-trigger";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 
 afterEach(() => {
 	cleanup();

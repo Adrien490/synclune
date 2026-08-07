@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import {
 	OrderStatus,
 	PaymentStatus,
@@ -41,53 +41,12 @@ const describeIntegration = integrationEnabled ? describe : describe.skip;
 const creditNote = (seq: number): string =>
 	"A-" + new Date().getFullYear() + "-" + String(seq).padStart(5, "0");
 
-async function createPaidOrder(
-	prisma: ReturnType<typeof getIntegrationPrismaClient>,
-	userId: string,
-	skuId: string,
-	suffix: string,
-): Promise<Order> {
-	return prisma.order.create({
-		data: {
-			userId,
-			orderNumber: `SYN-XTBL-${suffix}`,
-			customerEmail: "crosstable@test.local",
-			customerName: "Test CrossTable",
-			shippingFirstName: "Test",
-			shippingLastName: "CrossTable",
-			shippingAddress1: "1 rue test",
-			shippingPostalCode: "75001",
-			shippingCity: "Paris",
-			shippingCountry: "FR",
-			shippingPhone: "+33600000000",
-			status: OrderStatus.PROCESSING,
-			paymentStatus: PaymentStatus.PAID,
-			paidAt: new Date(),
-			stripePaymentIntentId: `pi_xtbl_${suffix}_${Date.now()}`,
-			subtotal: 4999,
-			discountAmount: 0,
-			shippingCost: 0,
-			taxAmount: 0,
-			total: 4999,
-			currency: "EUR",
-			paymentMethod: "CARD",
-			invoiceStatus: null,
-			items: {
-				create: [
-					{
-						skuId,
-						quantity: 1,
-						productTitle: "Collier Test",
-						price: 4999,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: 4999,
-						lineTotalIncludingTax: 4999,
-						taxCategoryCode: "ZB",
-					},
-				],
-			},
-		},
+async function createPaidOrder(skuId: string, suffix: string): Promise<Order> {
+	return createTestOrder([{ skuId, productTitle: "Collier Test" }], {
+		orderNumber: `SYN-XTBL-${suffix}`,
+		status: OrderStatus.PROCESSING,
+		paymentStatus: PaymentStatus.PAID,
+		invoiceStatus: null,
 	});
 }
 
@@ -121,10 +80,9 @@ describeIntegration(
 	() => {
 		it("Order porte un numéro → l'écrire sur un Refund est rejeté (23505/P2002)", async () => {
 			const prisma = getIntegrationPrismaClient();
-			const user = await createTestUser();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
-			const order = await createPaidOrder(prisma, user.id, sku.id, `A-${Date.now()}`);
+			const order = await createPaidOrder(sku.id, `A-${Date.now()}`);
 			const refund = await createCompletedRefund(prisma, order.id);
 
 			const number = creditNote(1);
@@ -155,10 +113,9 @@ describeIntegration(
 
 		it("Refund porte un numéro → l'écrire sur un Order est rejeté (23505/P2002)", async () => {
 			const prisma = getIntegrationPrismaClient();
-			const user = await createTestUser();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
-			const order = await createPaidOrder(prisma, user.id, sku.id, `B-${Date.now()}`);
+			const order = await createPaidOrder(sku.id, `B-${Date.now()}`);
 			const refund = await createCompletedRefund(prisma, order.id);
 
 			const number = creditNote(2);
@@ -188,10 +145,9 @@ describeIntegration(
 
 		it("pas de faux positif : numéros distincts acceptés dans les deux tables + réécriture idempotente du même numéro sur la même ligne", async () => {
 			const prisma = getIntegrationPrismaClient();
-			const user = await createTestUser();
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
-			const order = await createPaidOrder(prisma, user.id, sku.id, `C-${Date.now()}`);
+			const order = await createPaidOrder(sku.id, `C-${Date.now()}`);
 			const refund = await createCompletedRefund(prisma, order.id);
 
 			const orderNumber = creditNote(3);

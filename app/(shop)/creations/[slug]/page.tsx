@@ -14,6 +14,7 @@ import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-prod
 import { BreadcrumbNav } from "@/shared/components/breadcrumb-nav";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { ProductAccentScope } from "@/modules/products/components/product-accent-scope";
+import { DeliveryEstimator } from "@/modules/products/components/delivery-estimator";
 import { ProductDetails } from "@/modules/products/components/product-details";
 import { ProductMainSkeleton } from "@/modules/products/components/product-main-skeleton";
 import { StickyCartCTADesktop } from "@/modules/products/components/sticky-cart-cta-desktop";
@@ -206,8 +207,15 @@ export default async function ProductPage({
 										<ProductInfo product={product} isInWishlist={isInWishlist} />
 
 										{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
-										{/* Composant client qui synchronise le SKU avec les paramètres URL */}
-										<ProductDetails product={product} defaultSku={selectedSku} />
+										{/* Composant client qui synchronise le SKU avec les paramètres URL.
+										    `deliveryEstimate` est monté ICI, côté serveur : il lit l'horloge,
+										    ce qu'un composant client ne peut pas faire de façon déterministe
+										    entre le SSR et l'hydratation. */}
+										<ProductDetails
+											product={product}
+											defaultSku={selectedSku}
+											deliveryEstimate={<DeliveryEstimator />}
+										/>
 									</section>
 								</div>
 							</Suspense>

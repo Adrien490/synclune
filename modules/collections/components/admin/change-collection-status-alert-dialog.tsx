@@ -3,7 +3,7 @@
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import type { AlertActionTone } from "@/shared/components/ui/alert-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
 import { ArchiveIcon, FileTextIcon, GlobeIcon } from "@phosphor-icons/react/ssr";
 import type { ComponentType } from "react";

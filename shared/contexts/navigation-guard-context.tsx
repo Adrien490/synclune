@@ -157,7 +157,7 @@ export function NavigationGuardProvider({ children }: NavigationGuardProviderPro
 	};
 
 	return (
-		<NavigationGuardContext.Provider
+		<NavigationGuardContext
 			value={{
 				registerGuard,
 				unregisterGuard,
@@ -170,7 +170,7 @@ export function NavigationGuardProvider({ children }: NavigationGuardProviderPro
 			}}
 		>
 			{children}
-		</NavigationGuardContext.Provider>
+		</NavigationGuardContext>
 	);
 }
 

@@ -44,7 +44,12 @@ interface ReconcileBreakdown {
  *
  * Cron daily 02:00 qui rattrape les Orders en état pathologique :
  *   1. PAID + invoiceNumber NULL + paidAt > 6h → persistInvoiceNumber
- *   2. invoiceNumber + invoicePdfUrl NULL → archiveInvoicePdf (régénère PDF depuis snapshot)
+ *   2. invoiceNumber + invoicePdfUrl NULL → archiveInvoicePdf
+ *      ⚠️ Régénère le PDF depuis les colonnes **VIVANTES** d'`Order`, pas depuis un
+ *      snapshot : `invoiceDataSnapshot` a été retiré le 2026-08-05, le seul artefact
+ *      conservé est le PDF lui-même. C'est ce qui rend cette passe capable de sceller
+ *      une adresse modifiée APRÈS l'émission — d'où la garde « facture numérotée sans
+ *      archive » d'`update-order-shipping-address.ts` (audit invariant 5, 2026-08-07).
  *   3. REFUNDED + invoiceStatus GENERATED + creditNoteNumber NULL → voidInvoice
  *   3b. creditNoteNumber + creditNotePdfUrl NULL → ensureOrderCreditNoteArchived (EINV-CREDIT-020)
  * Puis les passes globales : 4 (continuité séquences) et 7 (PDF avoirs Refund
@@ -434,8 +439,7 @@ async function runContinuityCheck(now: number): Promise<number> {
 					missing: i.missing.slice(0, 50),
 					duplicates: i.duplicates.slice(0, 50),
 				})),
-				action:
-					"Trou/doublon de séquence légale (Art. 286 CGI) — investigation immédiate, voir docs/RUNBOOK.md",
+				action: "Trou/doublon de séquence légale (Art. 286 CGI) — investigation immédiate",
 			},
 		}).catch((alertError) =>
 			logger.error("Failed to send continuity breach alert", alertError, { cronJob: CRON_JOB }),

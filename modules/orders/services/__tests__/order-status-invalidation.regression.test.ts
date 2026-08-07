@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -289,9 +289,13 @@ describe("CACHE-AUDIT-010 — invalidation des mutations de statut commande", ()
 	 */
 	it("every cached fetcher querying prisma.order posts a tag the helper emits", () => {
 		// Miroir de la sortie de `getOrderInvalidationTags` (cf. constants/cache.ts).
+		//
+		// ⚠️ N'y remettre un marqueur que si le helper l'émet ET qu'un `cacheTag()` le
+		// pose. `ORDERS_CACHE_TAGS.HISTORY(` a figuré ici alors qu'AUCUN lecteur ne le
+		// posait : un fetcher tagué de ce seul tag aurait passé cette assertion en étant
+		// injoignable — la garde certifiait l'orphelin (retiré le 2026-08-07).
 		const REACHABLE_TAG_MARKERS = [
 			"ORDERS_CACHE_TAGS.LIST",
-			"ORDERS_CACHE_TAGS.HISTORY(",
 			"ORDERS_CACHE_TAGS.CONFIRMATION(",
 			"ORDERS_CACHE_TAGS.DETAIL(",
 			"ADMIN_BADGES",
@@ -299,25 +303,30 @@ describe("CACHE-AUDIT-010 — invalidation des mutations de statut commande", ()
 		];
 
 		/**
-		 * Exemption nommée — un fetcher qui lit `Order` SANS lire de statut.
+		 * Exemptions nommées — des fetchers qui lisent `Order` SANS lire de statut.
 		 *
-		 * `getDiscountUsageCounts` compte les commandes portant un `discountId` + un
-		 * email donnés (limite `maxUsagePerUser`, parcours invité). Il n'interroge
-		 * `prisma.order` que depuis le repli de `DiscountUsage` en colonnes sur
-		 * `Order` (audit V2, Lot 2) — avant, la même requête passait par la table de
-		 * liaison et ce garde ne la voyait pas.
+		 * ⚠️ Exempter le FICHIER, pas le motif : si un fetcher exempté se met à lire
+		 * `status`/`paymentStatus`, retirer sa ligne — il retombera sous la règle.
 		 *
-		 * La règle ci-dessus ne s'applique pas : aucune TRANSITION DE STATUT ne change
-		 * ce compte. Seules la création d'une commande avec le code et la libération
-		 * du code le font, et les deux invalident `DISCOUNT_CACHE_TAGS.USAGE(id)` —
-		 * 4 mutateurs vivants (`confirm-checkout.ts` ×2, `payment-intent.service.ts`
-		 * ×2). L'entrée est donc joignable, par le tag du DISCOUNT et non de la
-		 * commande.
-		 *
-		 * ⚠️ Exempter le FICHIER, pas le motif : si ce fetcher se met un jour à lire
-		 * `status`/`paymentStatus`, retirer cette ligne — il retombera sous la règle.
+		 * ⚠️ Vide depuis le 2026-08-07. Sa seule entrée,
+		 * `modules/discounts/data/get-discount-usage-counts.ts`, exemptait un fichier
+		 * d'un module SUPPRIMÉ (`modules/discounts/` n'existe plus, `DISCOUNT_CACHE_TAGS`
+		 * non plus) : une exemption morte, invisible parce que rien ne vérifiait que
+		 * ses chemins existent encore. D'où l'assertion d'obsolescence ci-dessous,
+		 * copiée de `stock-writers-use-invalidation-ssot.regression.test.ts`.
 		 */
-		const NON_STATUS_ORDER_FETCHERS = ["modules/discounts/data/get-discount-usage-counts.ts"];
+		const NON_STATUS_ORDER_FETCHERS: string[] = [];
+
+		const staleExemptions = NON_STATUS_ORDER_FETCHERS.filter(
+			(rel) => !existsSync(join(REPO_ROOT, rel)),
+		);
+		expect(
+			staleExemptions,
+			`Exemptions pointant un fichier inexistant — elles ne couvrent plus rien et ` +
+				`masqueraient la prochaine vraie violation portant le même chemin :\n  ${staleExemptions.join(
+					"\n  ",
+				)}`,
+		).toEqual([]);
 
 		const unreachable = allSourceFiles
 			.filter((f) => relPath(f).includes("/data/"))

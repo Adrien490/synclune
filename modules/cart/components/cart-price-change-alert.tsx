@@ -117,12 +117,15 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 				>
 					{isPending ? (
 						<>
-							<ArrowsClockwiseIcon className="mr-1.5 size-3.5 motion-safe:animate-spin" />
+							<ArrowsClockwiseIcon
+								className="mr-1.5 size-3.5 motion-safe:animate-spin"
+								aria-hidden="true"
+							/>
 							Mise à jour…
 						</>
 					) : (
 						<>
-							<ArrowsClockwiseIcon className="mr-1.5 size-3.5" />
+							<ArrowsClockwiseIcon className="mr-1.5 size-3.5" aria-hidden="true" />
 							Actualiser les prix
 						</>
 					)}

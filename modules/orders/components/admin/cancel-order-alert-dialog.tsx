@@ -5,7 +5,7 @@ import { FileXIcon } from "@phosphor-icons/react/ssr";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
 import type { InvoiceStatus } from "@/app/generated/prisma/browser";
 

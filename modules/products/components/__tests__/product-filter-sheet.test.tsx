@@ -35,7 +35,9 @@ const {
 	mockDialog: { isOpen: true, open: vi.fn(), close: vi.fn() },
 	mockRouter: { push: vi.fn() },
 	mockSearchParams: new URLSearchParams(),
-	mockPathname: "/produits",
+	// Mutable : le type actif se DÉRIVE désormais du pathname
+	// (`getCategorySlugFromPath`), il n'arrive plus en prop.
+	mockPathname: { current: "/produits" },
 	mockParseFilterValues: vi.fn().mockReturnValue({
 		colors: [],
 		materials: [],
@@ -68,10 +70,10 @@ const {
 vi.mock("next/navigation", () => ({
 	useRouter: () => mockRouter,
 	useSearchParams: () => mockSearchParams,
-	usePathname: () => mockPathname,
+	usePathname: () => mockPathname.current,
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => mockDialog,
 }));
 
@@ -390,6 +392,7 @@ afterEach(() => {
 		fullUrl: "/produits",
 	});
 	mockBuildClearFiltersURL.mockReturnValue("/produits");
+	mockPathname.current = "/produits";
 	mockDialog.isOpen = true;
 	mockLiveCount.count = null;
 	mockLiveCount.isUpdating = false;
@@ -810,8 +813,12 @@ describe("ProductFilterSheet", () => {
 			).not.toThrow();
 		});
 
-		it("renders without throwing when activeProductTypeSlug is provided", () => {
-			expect(() => renderDefault({ activeProductTypeSlug: "bagues" })).not.toThrow();
+		it("renders without throwing on a category page", () => {
+			// Le type actif n'est plus une prop : il se dérive du pathname
+			// (`getCategorySlugFromPath`), pour que le panneau ne dépende que de
+			// données cachées et puisse entrer dans l'App Shell de la route.
+			mockPathname.current = "/produits/bagues";
+			expect(() => renderDefault()).not.toThrow();
 		});
 	});
 });

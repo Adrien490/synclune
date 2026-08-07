@@ -2,7 +2,7 @@
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import type { AlertActionTone } from "@/shared/components/ui/alert-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { PRODUCT_STATUS_LABELS } from "@/modules/products/constants/product-status-display";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 import { ArchiveIcon, FileTextIcon, GlobeIcon } from "@phosphor-icons/react/ssr";

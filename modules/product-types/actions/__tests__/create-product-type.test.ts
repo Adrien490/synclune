@@ -131,9 +131,7 @@ describe("createProductType", () => {
 	it("should return error when label already exists", async () => {
 		mockPrisma.productType.findFirst.mockResolvedValue({ id: "pt-existing", label: "Bague" });
 		const result = await createProductType(undefined, validFormData);
-		expect(mockError).toHaveBeenCalledWith(
-			"Ce label de type existe deja. Veuillez en choisir un autre.",
-		);
+		expect(mockError).toHaveBeenCalledWith("Ce label de type existe déjà. Choisis-en un autre.");
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 

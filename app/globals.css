@@ -404,12 +404,15 @@ main#main-content {
 	--color-ring: var(--ring);
 
 	/* ==========================================
-	   GLOW COLORS (Value Proposition Bar)
+	   GLOW COLORS — halos translucides
+	   Lus par card-surface.constants.ts, empty.tsx et products-mobile-list.tsx.
+	   `mint` et `yellow` ont été retirés le 2026-08-07 : leur seul lecteur était
+	   `--section-glow` (section-accents.css), lui-même consommé par le seul
+	   CursorGlow — supprimé faute de montage. Une chaîne de quatre niveaux dont
+	   le dernier consommateur avait disparu.
 	   ========================================== */
 	--color-glow-pink: oklch(0.86 0.1 341 / 0.4);
 	--color-glow-lavender: oklch(0.75 0.12 280 / 0.35);
-	--color-glow-mint: oklch(0.82 0.14 160 / 0.4);
-	--color-glow-yellow: oklch(0.92 0.09 86 / 0.5);
 
 	/* ==========================================
 	   BRAND ACCENTS (accent par section — traits, underlines, bordures)

@@ -1,3 +1,4 @@
+import { CreateTaxonomyButton } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import {
 	TableBody,
@@ -11,7 +12,6 @@ import { MaterialActiveToggle } from "@/modules/materials/components/admin/mater
 import { SwatchesIcon } from "@phosphor-icons/react/ssr";
 import { use } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
-import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 
 interface MaterialsDataTableProps {
 	materialsPromise: Promise<GetMaterialsReturn>;
@@ -36,7 +36,7 @@ export function MaterialsDataTable({
 				noItemsDescription="Aucun matériau pour l'instant."
 				hasActiveFilters={hasActiveFilters}
 				resetFiltersHref="/admin/catalogue/materiaux"
-				actionElement={<CreateMaterialButton />}
+				actionElement={<CreateTaxonomyButton kind="material" />}
 			/>
 		);
 	}

@@ -36,8 +36,10 @@ export default function CheckoutReturnError({
 		});
 	}, [error]);
 
+	// `<div>`, pas `<main>` : le layout du segment en rend déjà un, et une frontière
+	// d'erreur s'affiche à l'intérieur — deux landmarks `main` imbriqués.
 	return (
-		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-[60dvh] items-start justify-center bg-linear-to-br px-4 pt-12 md:items-center md:pt-24">
+		<div className="from-background via-primary/5 to-secondary/10 relative flex min-h-[60dvh] items-start justify-center bg-linear-to-br px-4 pt-12 md:items-center md:pt-24">
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={
@@ -98,6 +100,6 @@ export default function CheckoutReturnError({
 					}
 				/>
 			</div>
-		</main>
+		</div>
 	);
 }

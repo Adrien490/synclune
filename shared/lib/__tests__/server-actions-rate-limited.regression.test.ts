@@ -128,11 +128,29 @@ describe("Server Actions — couverture rate limit", () => {
 	it("chaque fichier `use server` applique un rate limit, ou est allowlisté", () => {
 		const nonProteges = SERVER_ACTION_FILES.filter((rel) => {
 			if (rel in ALLOWLIST) return false;
-			const src = readFileSync(join(REPO_ROOT, rel), "utf8");
+			// ⚠️ `stripComments` AVANT le `includes` : la version d'origine cherchait dans
+			// la source BRUTE, donc une simple MENTION de `checkRateLimit` en JSDoc
+			// suffisait à déclarer un fichier plafonné. Le même piège que celui déjà
+			// documenté au-dessus pour la détection de la directive — `shared/lib/cache.ts`
+			// et `modules/skus/data/get-skus-list.ts` en parlent tous deux en prose —,
+			// mais du côté de l'assertion PRINCIPALE, là où il vaut un faux vert.
+			const src = stripComments(readFileSync(join(REPO_ROOT, rel), "utf8"));
 			return !RATE_LIMIT_CALLS.some((call) => src.includes(call));
 		});
 
 		expect(nonProteges).toEqual([]);
+	});
+
+	it("une mention en commentaire ne vaut PAS un rate limit", () => {
+		// Garde-fou du garde-fou, prouvé sur une source synthétique : sans le
+		// `stripComments` ci-dessus, ce fichier passerait pour plafonné.
+		const faussementProtege = `"use server";
+			/** Cette action n'appelle PAS checkRateLimit — voir l'allowlist. */
+			export async function danger(id: string) { return id; }`;
+
+		const stripped = stripComments(faussementProtege);
+		expect(RATE_LIMIT_CALLS.some((call) => stripped.includes(call))).toBe(false);
+		expect(RATE_LIMIT_CALLS.some((call) => faussementProtege.includes(call))).toBe(true);
 	});
 
 	it("l'allowlist ne contient aucune entrée périmée", () => {

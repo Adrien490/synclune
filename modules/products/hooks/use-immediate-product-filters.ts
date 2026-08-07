@@ -25,6 +25,18 @@ export interface ImmediateProductFilters {
 		slug: string,
 		checked: boolean,
 	) => void;
+	/**
+	 * Réchauffe la route qu'une coche VA ouvrir, au survol ou au focus.
+	 *
+	 * N'agit que si la coche change de PATH — c'est-à-dire, en pratique, sur le
+	 * groupe « type ». Un raffinement de couleur ou de prix reste sur la même
+	 * route : il n'y a rien à précharger.
+	 */
+	prefetchToken: (
+		group: "productTypes" | "colors" | "materials",
+		slug: string,
+		checked: boolean,
+	) => void;
 	setPriceRange: (range: [number, number]) => void;
 	setAvailability: (field: "inStockOnly" | "onSale", checked: boolean) => void;
 	/** Tri appliqué immédiatement, par le même chemin d'URL que les filtres. */
@@ -51,15 +63,25 @@ export interface ImmediateProductFilters {
  */
 export function useImmediateProductFilters(params: {
 	maxPriceInEuros: number;
-	/** Type actif issu du segment de path, sur `/produits/[productTypeSlug]`. */
-	activeProductTypeSlug?: string;
 }): ImmediateProductFilters {
-	const { maxPriceInEuros, activeProductTypeSlug } = params;
+	const { maxPriceInEuros } = params;
 
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+
+	/**
+	 * Type actif issu du segment de path, sur `/produits/[productTypeSlug]`.
+	 *
+	 * ⚠️ Il arrivait en PROP depuis la page, donc d'un `await params` : ça
+	 * rattachait tout le meuble de filtres à une lecture d'URL serveur, et
+	 * l'enfermait dans le trou dynamique de la page — il ne pouvait plus faire
+	 * partie de l'App Shell. Le hook a déjà le `pathname` (il s'en sert plus bas
+	 * pour `buildFilterURL`) : la valeur est la même, calculée un cran plus bas,
+	 * et le rail se peint désormais dès la coquille.
+	 */
+	const activeProductTypeSlug = getCategorySlugFromPath(pathname) ?? undefined;
 
 	const defaultPriceRange: [number, number] = [0, maxPriceInEuros];
 
@@ -76,14 +98,29 @@ export function useImmediateProductFilters(params: {
 		(_current: FilterFormData, next: FilterFormData) => next,
 	);
 
-	const navigate = (next: FilterFormData) => {
-		const { targetPath, fullUrl } = buildFilterURL({
+	const urlFor = (next: FilterFormData) =>
+		buildFilterURL({
 			formData: next,
 			currentSearchParams: searchParams,
 			defaultPriceRange,
 			isOnCategoryPage: isProductCategoryPage(pathname),
 			currentCategorySlug: getCategorySlugFromPath(pathname),
 		});
+
+	const withToken = (
+		group: "productTypes" | "colors" | "materials",
+		slug: string,
+		checked: boolean,
+	): FilterFormData => {
+		const current = values[group];
+		return {
+			...values,
+			[group]: checked ? [...current, slug] : current.filter((s) => s !== slug),
+		};
+	};
+
+	const navigate = (next: FilterFormData) => {
+		const { targetPath, fullUrl } = urlFor(next);
 
 		startTransition(() => {
 			applyOptimistic(next);
@@ -103,12 +140,24 @@ export function useImmediateProductFilters(params: {
 		values,
 		isPending,
 
-		toggleToken: (group, slug, checked) => {
-			const current = values[group];
-			navigate({
-				...values,
-				[group]: checked ? [...current, slug] : current.filter((s) => s !== slug),
-			});
+		toggleToken: (group, slug, checked) => navigate(withToken(group, slug, checked)),
+
+		/**
+		 * Prefetch d'INTENTION, pas au montage : `router.prefetch` réchauffe l'App
+		 * Shell de la route cible, ce qui coûte une invocation serveur. Une par
+		 * survol effectif, pas une par type affiché — à ~10 familles et un plan
+		 * Neon Free, la différence n'est pas cosmétique.
+		 *
+		 * ⚠️ Ne vaut que parce que l'App Shell des routes `/produits` porte
+		 * désormais le meuble de filtres (2026-08-07). Tant que les pages
+		 * awaitaient leurs `searchParams`, cette coquille se réduisait au squelette
+		 * pleine page : la réchauffer n'aurait rien avancé.
+		 */
+		prefetchToken: (group, slug, checked) => {
+			const { targetPath, fullUrl } = urlFor(withToken(group, slug, checked));
+			if (targetPath !== pathname) {
+				router.prefetch(fullUrl);
+			}
 		},
 
 		// Le slider n'appelle ceci qu'au relâchement (`onValueCommitted` côté

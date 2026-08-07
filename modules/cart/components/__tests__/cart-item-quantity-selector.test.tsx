@@ -126,6 +126,7 @@ function renderSelector(
 		currentQuantity: 2,
 		maxQuantity: 5,
 		isInactive: false,
+		itemName: "Papilloux Duo Symétrie",
 		...overrides,
 	};
 	return render(<CartItemQuantitySelector {...props} />);
@@ -151,32 +152,65 @@ describe("CartItemQuantitySelector", () => {
 
 	it("renders increment and decrement buttons", () => {
 		renderSelector();
-		expect(screen.getByLabelText("Augmenter la quantité")).toBeInTheDocument();
-		expect(screen.getByLabelText("Diminuer la quantité")).toBeInTheDocument();
+		expect(screen.getByLabelText(/Augmenter la quantité de /)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Diminuer la quantité de /)).toBeInTheDocument();
+	});
+
+	/**
+	 * @regression cart-quantity-buttons-named-per-item-2026-08-07
+	 *
+	 * ⚠️ Les deux boutons s'appelaient « Diminuer la quantité » / « Augmenter la
+	 * quantité » **à l'identique sur toutes les lignes** du panier. En lecture
+	 * linéaire le contexte existe (l'`<article>` de la ligne porte le titre), mais
+	 * dans un rotor « boutons » — la façon dont on navigue réellement un panier —
+	 * les paires étaient indiscernables. Le bouton Supprimer, lui, était déjà nommé
+	 * par article : c'est cette cohérence qu'on rétablit.
+	 */
+	it("nomme chaque commande PAR ARTICLE (rotor « boutons »)", () => {
+		renderSelector({ itemName: "Bague Étoile", currentQuantity: 2, maxQuantity: 5 });
+
+		for (const label of [
+			screen.getByLabelText(/Augmenter la quantité de /),
+			screen.getByLabelText(/Diminuer la quantité de /),
+		]) {
+			expect(label.getAttribute("aria-label")).toContain("Bague Étoile");
+		}
+
+		// Le groupe aussi : « Quantité de l'article » ne distinguait rien.
+		expect(
+			screen.getByRole("group", { name: /Quantité de / }).getAttribute("aria-label"),
+		).toContain("Bague Étoile");
+	});
+
+	it("nomme aussi les états de borne par article", () => {
+		renderSelector({ itemName: "Bague Étoile", currentQuantity: 1, maxQuantity: 5 });
+		expect(
+			screen.getByLabelText(/Quantité minimale atteinte pour /).getAttribute("aria-label"),
+		).toContain("Bague Étoile");
 	});
 
 	it("disables decrement button when quantity is at minimum (1)", () => {
 		renderSelector({ currentQuantity: 1, maxQuantity: 5 });
-		const decrementBtn = screen.getByLabelText("Quantité minimale atteinte");
+		const decrementBtn = screen.getByLabelText(/Quantité minimale atteinte pour /);
 		expect(decrementBtn).toBeDisabled();
 	});
 
 	it("disables increment button when quantity is at maximum", () => {
 		renderSelector({ currentQuantity: 5, maxQuantity: 5 });
-		const incrementBtn = screen.getByLabelText("Quantité maximale atteinte");
+		const incrementBtn = screen.getByLabelText(/Quantité maximale atteinte pour /);
 		expect(incrementBtn).toBeDisabled();
 	});
 
 	it("calls action when increment button is clicked", () => {
 		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
-		const incrementBtn = screen.getByLabelText("Augmenter la quantité");
+		const incrementBtn = screen.getByLabelText(/Augmenter la quantité de /);
 		fireEvent.click(incrementBtn);
 		expect(mockAction).toHaveBeenCalled();
 	});
 
 	it("calls action when decrement button is clicked", () => {
 		renderSelector({ currentQuantity: 3, maxQuantity: 5 });
-		const decrementBtn = screen.getByLabelText("Diminuer la quantité");
+		const decrementBtn = screen.getByLabelText(/Diminuer la quantité de /);
 		fireEvent.click(decrementBtn);
 		expect(mockAction).toHaveBeenCalled();
 	});
@@ -189,20 +223,20 @@ describe("CartItemQuantitySelector", () => {
 
 	it("has accessible group label with current quantity", () => {
 		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
-		const group = screen.getByRole("group", { name: /Quantité de l'article, actuellement 2/ });
+		const group = screen.getByRole("group", { name: /Quantité de .+, actuellement 2/ });
 		expect(group).toBeInTheDocument();
 	});
 
 	it("marks the group as not busy when idle", () => {
 		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
-		const group = screen.getByRole("group", { name: /Quantité de l'article/ });
+		const group = screen.getByRole("group", { name: /Quantité de / });
 		expect(group).toHaveAttribute("aria-busy", "false");
 	});
 
 	it("marks the group as busy while a quantity update is pending", () => {
 		mockIsPending.value = true;
 		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
-		const group = screen.getByRole("group", { name: /Quantité de l'article/ });
+		const group = screen.getByRole("group", { name: /Quantité de / });
 		expect(group).toHaveAttribute("aria-busy", "true");
 	});
 
@@ -219,14 +253,12 @@ describe("CartItemQuantitySelector", () => {
 	 */
 	it("publie `data-pending` exactement quand `aria-busy` est vrai", () => {
 		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
-		expect(screen.getByRole("group", { name: /Quantité de l'article/ })).not.toHaveAttribute(
-			"data-pending",
-		);
+		expect(screen.getByRole("group", { name: /Quantité de / })).not.toHaveAttribute("data-pending");
 
 		cleanup();
 		mockIsPending.value = true;
 		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
-		const busy = screen.getByRole("group", { name: /Quantité de l'article/ });
+		const busy = screen.getByRole("group", { name: /Quantité de / });
 		expect(busy).toHaveAttribute("aria-busy", "true");
 		expect(busy).toHaveAttribute("data-pending", "");
 	});
@@ -239,13 +271,13 @@ describe("CartItemQuantitySelector", () => {
 
 	it("triggers selection haptic when incrementing", () => {
 		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
-		fireEvent.click(screen.getByLabelText("Augmenter la quantité"));
+		fireEvent.click(screen.getByLabelText(/Augmenter la quantité de /));
 		expect(mockHaptic).toHaveBeenCalledWith("selection");
 	});
 
 	it("triggers selection haptic when decrementing", () => {
 		renderSelector({ currentQuantity: 3, maxQuantity: 5 });
-		fireEvent.click(screen.getByLabelText("Diminuer la quantité"));
+		fireEvent.click(screen.getByLabelText(/Diminuer la quantité de /));
 		expect(mockHaptic).toHaveBeenCalledWith("selection");
 	});
 

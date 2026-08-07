@@ -4,7 +4,7 @@ import { ROUTES } from "@/shared/constants/urls";
  * Les quatre accents de marque exposés par `app/styles/section-accents.css`.
  * `null` = pas d'accent : le bandeau ne se peint pas.
  */
-export type NavbarAccent = "rose" | "lavender" | "mint" | "sun";
+type NavbarAccent = "rose" | "lavender" | "mint" | "sun";
 
 export type NavbarSection = {
 	/** Valeur de `data-accent` à poser sur le `<header>`, ou `null`. */

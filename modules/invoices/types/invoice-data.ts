@@ -86,7 +86,7 @@ export interface VoidedInfo {
  * appelant ne passait autre chose que `"PDF"` et aucun renderer n'existe pour les 3
  * autres : le schéma Zod ACCEPTAIT donc `format: "FACTURX"` pour produire… un PDF.
  * Restreint à `"PDF"` — c'est le seul format réellement rendu. À réélargir le jour où
- * un renderer XML existe (go-live e-reporting, cf. docs/RUNBOOK.md), pas avant.
+ * un renderer XML existe (go-live e-reporting), pas avant.
  *
  * ⚠️ Narrowing de TYPE uniquement : ni la forme de l'objet ni l'ordre des champs ne
  * changent, donc les PDF archivés restent inchangés.
@@ -120,7 +120,7 @@ export interface SellerInfo {
  * apparaît un jour, la facture porte déjà l'identité société sans toucher au
  * template. Les identifiants de routage e-reporting (adresse électronique de
  * facturation, PDP/PA, Chorus Pro) ont été retirés avec l'e-reporting — ils
- * seront réintroduits contre l'arrêté définitif (cf. docs/RUNBOOK.md).
+ * seront réintroduits contre l'arrêté définitif.
  */
 export interface BuyerInfo {
 	/** null pour B2C (particulier). */

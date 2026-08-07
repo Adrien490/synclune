@@ -33,11 +33,10 @@ vi.mock("../../constants/order.constants", () => ({
 }));
 
 vi.mock("../../constants/cache", () => ({
+	// Miroir de la SSOT. `USER_ORDERS`/`LAST_ORDER` (retirés avec l'espace client le
+	// 2026-07-31) et `HISTORY` (orphelin, retiré le 2026-08-07) n'y figurent plus.
 	ORDERS_CACHE_TAGS: {
 		LIST: "orders-list",
-		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
-		LAST_ORDER: (userId: string) => `last-order-user-${userId}`,
-		HISTORY: (orderId: string) => `order-history-${orderId}`,
 		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
 		CONFIRMATION: (orderId: string) => `order-confirmation-${orderId}`,
 		DETAIL: (orderId: string) => `order-detail-${orderId}`,

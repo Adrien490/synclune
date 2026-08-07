@@ -604,7 +604,7 @@ Note /100, propose corrections/améliorations si pertinent.
 > ⚠️ **Retiré du code le 2026-07-26** (right-sizing) : l'implémentation était en dry-run intégral,
 > écrite contre une spec non figée. Ce prompt n'a plus d'objet tant que l'arrêté définitif n'est pas
 > publié et qu'aucune Plateforme Agréée n'est contractualisée. Voir la mission `INVOICE-GOLIVE` de
-> [`docs/prompts/AUDIT-PROMPTS.md`](AUDIT-PROMPTS.md) et [`docs/RUNBOOK.md § e-reporting`](../RUNBOOK.md).
+> [`docs/prompts/AUDIT-PROMPTS.md`](AUDIT-PROMPTS.md).
 
 ---
 
@@ -3065,7 +3065,7 @@ Vérifie :
 - la trace : sait-on après coup qui a appliqué quoi et quand ?
 
 Inspecte `.github/workflows/migrate-deploy.yml`, `prisma/migrations/**`, `prisma.config.ts`,
-`test/integration/setup.ts`, `docs/RUNBOOK.md`.
+`test/integration/setup.ts`.
 
 Note /100, classe l'absence d'approbation manuelle sur la production en P1, et documente la procédure de
 reprise après échec si elle manque.
@@ -3190,7 +3190,7 @@ Audit le point « Documentation et onboarding » dans Synclune.
 
 La documentation de ce projet est dense : `CLAUDE.md` (instructions d'agent, invariants de facturation,
 patterns), `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`,
-`docs/{BUSINESS,RUNBOOK,KNOWN-ISSUES,SIMPLIFICATION,UI-CONVENTIONS,atelier-story}.md` et
+`docs/{BRAND-DA,LANDING-BEST-PRACTICES}.md` et
 `docs/prompts/{README,AUDIT-PROMPTS,prompts-audit-synclune,REDESIGN-PROMPT,DESIGN-ARTIFACT-PROMPT}.md`.
 Une documentation fausse est plus coûteuse qu'une documentation absente : elle fait prendre de mauvaises
 décisions avec assurance.
@@ -3204,9 +3204,6 @@ Vérifie, en confrontant CHAQUE affirmation au filesystem :
   doc ne mentionne pas ;
 - les invariants de facturation de `CLAUDE.md` correspondent-ils au code et à leurs tests (croise avec
   le prompt 143) ?
-- `docs/RUNBOOK.md` : les procédures sont-elles exécutables telles quelles par quelqu'un qui n'a pas
-  écrit le code (commandes réelles, préconditions, vérification finale) ?
-- `docs/BUSINESS.md` : seuils, statut fiscal et périmètre à jour ?
 - `README` + `CONTRIBUTING` : un développeur qui arrive peut-il lancer le projet, la base, les tests et
   l'aperçu des emails sans aide ? Fais l'essai mentalement, étape par étape, et note le premier point
   de blocage ;
@@ -3228,8 +3225,8 @@ de faire violer un invariant métier.
 Audit le point « Sauvegarde, restauration et reprise » dans Synclune.
 
 Une boutique qui perd sa base perd ses commandes, ses factures et sa comptabilité — avec une obligation
-de conservation de 10 ans (Art. L102 B LPF). ⚠️ Constat préalable : `docs/RUNBOOK.md` ne contient
-AUCUNE procédure de sauvegarde ni de restauration (sa seule occurrence de « restaurer » parle de code
+de conservation de 10 ans (Art. L102 B LPF). ⚠️ Constat préalable : le dépôt ne documente
+AUCUNE procédure de sauvegarde ni de restauration (la seule occurrence de « restaurer » parle de code
 git) — la restauration PITR Neon n'est qu'une hypothèse orale. Cet audit vérifie ce qui existe
 vraiment et fait ÉCRIRE ce qui manque.
 
@@ -3251,7 +3248,7 @@ Vérifie :
 - les secrets et la configuration : reconstituables sans la personne qui les a créés ?
 - la documentation : la procédure de reprise est-elle rédigée pour être suivie en situation de stress ?
 
-Inspecte `docs/RUNBOOK.md`, `prisma/migrations/**`, `modules/invoices/services/**` (séquences, archivage,
+Inspecte `prisma/migrations/**`, `modules/invoices/services/**` (séquences, archivage,
 intégrité), `modules/cron/services/**` (réconciliation), `shared/lib/uploadthing.ts`, `.env.example`.
 
 Note /100, classe l'absence de procédure de restauration testée en P1, et le risque de réémission d'un
@@ -3329,12 +3326,12 @@ Vérifie :
 - les effets de bord : emails, alertes de retour en stock, sitemap et données structurées
   (`offer-availability`) doivent refléter l'indisponibilité — annoncer un produit `InStock` alors
   qu'on ne peut pas commander est trompeur ;
-- l'ouverture/fermeture opérée par l'administratrice : la procédure est-elle documentée (RUNBOOK) et
+- l'ouverture/fermeture opérée par l'administratrice : la procédure est-elle documentée et
   sans risque ?
 
 Inspecte `modules/store-settings/**` (dont `services/store-closure-guard.ts` et
 `data/get-store-status.ts`), `shared/utils/offer-availability.ts`, `modules/cart/actions/**`,
-`modules/payments/actions/**`, `app/api/cron/reopen-store/**`, `docs/RUNBOOK.md`.
+`modules/payments/actions/**`, `app/api/cron/reopen-store/**`.
 
 Note /100, classe toute action d'achat non gardée côté serveur en P0.
 ```
@@ -3355,7 +3352,7 @@ Vérifie :
   formulaire d'adresse, les frais de port, les validations de code postal et de téléphone en dérivent-ils ?
   Un pays sélectionnable sans tarif d'expédition est un piège ;
 - la devise : EUR unique. Un client hors zone euro comprend-il ce qu'il paie ?
-- le seuil OSS de 10 000 € (ventes à distance intra-UE, cf. `docs/RUNBOOK.md`) : est-il suivi ? Qu'est-ce
+- le seuil OSS de 10 000 € (ventes à distance intra-UE) : est-il suivi ? Qu'est-ce
   qui alerte quand on s'en approche ? Le franchissement change les obligations de TVA ;
 - le seuil de franchise (85 000 € pour les marchandises, majoré 93 500 €), piloté par
   `VAT_FRANCHISE_THRESHOLD_EUR` : le suivi est-il automatisé, et sur la bonne base (encaissements,
@@ -3373,7 +3370,7 @@ Vérifie :
 Inspecte `shared/constants/{countries,currency,tax-categories,vat-franchise}.ts`,
 `modules/payments/schemas/checkout.schema.ts`, `shared/schemas/{phone.schemas,b2b-identifiers.schema}.ts`,
 `modules/invoices/**`, `modules/orders/**` (frais de port, adresses),
-`modules/dashboard/services/urssaf-deadline.service.ts`, `docs/{BUSINESS,RUNBOOK}.md`.
+`modules/dashboard/services/urssaf-deadline.service.ts`.
 
 Note /100, classe tout franchissement de seuil non détecté en P1 (risque fiscal), et tout pays
 livrable sans tarif ni validation en P2.

@@ -1,3 +1,4 @@
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { Toolbar } from "@/shared/components/toolbar";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { PageHeader } from "@/shared/components/page-header";
@@ -16,7 +17,6 @@ import { OrdersAdminDialogs } from "./_components/orders-admin-dialogs";
 import { OrdersDataTable } from "@/modules/orders/components/admin/orders-data-table";
 import { OrdersDataTableSkeleton } from "@/modules/orders/components/admin/orders-data-table-skeleton";
 import { OrdersFilterBadges } from "@/modules/orders/components/admin/orders-filter-badges";
-import { OrdersFilterSheet } from "@/modules/orders/components/admin/orders-filter-sheet";
 import { OrdersSortBadge } from "@/modules/orders/components/admin/orders-sort-badge";
 import { RefreshOrdersButton } from "@/modules/orders/components/admin/refresh-orders-button";
 import { OrdersMobileList } from "@/modules/orders/components/admin/orders-mobile-list";
@@ -129,7 +129,7 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 							noPrefix
 						/>
 						<ButtonGroup aria-label="Filtres et actions">
-							<OrdersFilterSheet />
+							<FilterTriggerButton />
 							<ExportOrdersButton />
 							<RefreshOrdersButton />
 						</ButtonGroup>

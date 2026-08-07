@@ -78,6 +78,14 @@ jobs:
   tests-critical:
     name: Critical path tests
     runs-on: ubuntu-latest
+    # `prisma generate` charge `prisma.config.ts`, qui lit `env("DATABASE_URL")` —
+    # STRICT : variable absente ⇒ `PrismaConfigEnvError: Cannot resolve environment
+    # variable`, AVANT toute génération. Le job mourait donc sans exécuter un seul
+    # test, et ce depuis assez longtemps pour que la dérive de schéma des fixtures
+    # d'intégration passe inaperçue. Placeholder suffisant : `generate` ne se
+    # connecte à rien, il ne fait que lire le schéma. Même valeur que le job `build`.
+    env:
+      DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
@@ -114,6 +122,10 @@ jobs:
           --health-retries 10
     env:
       INTEGRATION_DATABASE_URL: postgresql://synclune:synclune@localhost:5432/synclune_integration
+      # Placeholder pour `prisma generate` uniquement (cf. `tests-critical`) : c'est
+      # `INTEGRATION_DATABASE_URL` ci-dessus qui porte la vraie base, et
+      # `test/integration/setup.ts` écrase `DATABASE_URL` par worker au démarrage.
+      DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
@@ -161,6 +173,10 @@ jobs:
   tests:
     name: Unit tests
     runs-on: ubuntu-latest
+    # Placeholder pour `prisma generate` (cf. `tests-critical`). Les suites unitaires
+    # mockent Prisma ou passent par le validateur sur port fermé : aucune ne se connecte.
+    env:
+      DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:

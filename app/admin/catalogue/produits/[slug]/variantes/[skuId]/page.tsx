@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { SkuDetailPage } from "@/modules/skus/components/admin/sku-detail";
+import { SkuDetailPage } from "@/modules/skus/components/admin/sku-detail/sku-detail-page";
 import { getSkuDetailById } from "@/modules/skus/data/get-sku";
 import {
 	Breadcrumb,

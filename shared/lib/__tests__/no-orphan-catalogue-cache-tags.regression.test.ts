@@ -76,10 +76,39 @@ function declaredMembers(source: string, objectName: string): string[] {
 const SOURCES = productionSources().map((path) => ({ path, text: readFileSync(path, "utf8") }));
 const ALL_TEXT = SOURCES.map((s) => s.text).join("\n");
 
-/** Le corps de tous les appels `cacheTag(...)` du repo — donc le côté LECTEUR. */
-const READER_TEXT = [...ALL_TEXT.matchAll(/cacheTag\(([\s\S]*?)\)\s*;/g)]
+/**
+ * Le corps de tous les appels qui POSENT un tag — le côté LECTEUR.
+ *
+ * `cacheTag(...)` direct, plus `cacheDashboard(tag)` : c'est le seul helper du repo
+ * qui prend un tag en ARGUMENT au lieu de le poser en dur, donc le seul dont
+ * l'argument est un nom de tag à récolter. Sans lui, les 4 `DASHBOARD_CACHE_TAGS`
+ * — posés uniquement par `cacheDashboard(...)` — passaient pour orphelins.
+ */
+const READER_TEXT = [...ALL_TEXT.matchAll(/(?:cacheTag|cacheDashboard)\(([\s\S]*?)\)\s*;/g)]
 	.map((m) => m[1]!)
 	.join("\n");
+
+/**
+ * Alias inter-SSOT : `PRODUCTS_CACHE_TAGS.LIST = SHARED_CACHE_TAGS.PRODUCTS_LIST`.
+ * Trois tags partagés sont déclarés dans `shared/constants/cache-tags.ts` (pour
+ * casser les cycles d'import) puis ré-exportés sous un autre nom symbolique, et
+ * c'est TOUJOURS l'alias qui est posé au point d'appel. Une comparaison de noms
+ * symboliques les voyait donc orphelins alors qu'ils sont les tags les plus lus
+ * du dépôt. On résout `X.MEMBER: Y.OTHER` en « poser X.MEMBER, c'est poser Y.OTHER ».
+ */
+const TAG_ALIASES = [...ALL_TEXT.matchAll(/^\t(\w+): (SHARED_CACHE_TAGS\.\w+),$/gm)].map((m) => ({
+	member: m[1]!,
+	target: m[2]!,
+}));
+
+/** Un tag est-il posé, directement ou via son alias inter-SSOT ? */
+function isPosted(qualifiedName: string): boolean {
+	if (READER_TEXT.includes(qualifiedName)) return true;
+	return TAG_ALIASES.some(
+		({ member, target }) =>
+			target === qualifiedName && new RegExp(`_CACHE_TAGS\\.${member}\\b`).test(READER_TEXT),
+	);
+}
 
 /**
  * Le côté MUTATEUR : les helpers `getXxxInvalidationTags` (qui composent les listes
@@ -134,6 +163,36 @@ const CATALOGUE_TAG_OBJECTS = [
 		knownPosterless: [] as string[],
 		knownMutatorless: [] as string[],
 	},
+	// ────────────────────────────────────────────────────────────────────────────
+	// Élargissement 2026-08-07 (audit « cache utilisateur et checkout »). Le filet
+	// ne couvrait que les 5 SSOT catalogue, et c'est EXACTEMENT ce qui a laissé
+	// `ORDERS_CACHE_TAGS.HISTORY` vivre : 4 sites l'invalidaient, zéro `cacheTag()`
+	// le posait, et son lecteur documenté (`getOrderHistory()`) n'a jamais existé.
+	// ────────────────────────────────────────────────────────────────────────────
+	{
+		name: "ORDERS_CACHE_TAGS",
+		file: join(REPO_ROOT, "modules/orders/constants/cache.ts"),
+		knownPosterless: [] as string[],
+		knownMutatorless: [] as string[],
+	},
+	{
+		name: "REFUNDS_CACHE_TAGS",
+		file: join(REPO_ROOT, "modules/refunds/constants/cache.ts"),
+		knownPosterless: [] as string[],
+		knownMutatorless: [] as string[],
+	},
+	{
+		name: "DASHBOARD_CACHE_TAGS",
+		file: join(REPO_ROOT, "modules/dashboard/constants/cache.ts"),
+		knownPosterless: [] as string[],
+		knownMutatorless: [] as string[],
+	},
+	{
+		name: "SHARED_CACHE_TAGS",
+		file: join(REPO_ROOT, "shared/constants/cache-tags.ts"),
+		knownPosterless: [] as string[],
+		knownMutatorless: [] as string[],
+	},
 ] as const;
 
 describe("CACHE-CATALOG-ORPHAN-TAGS-001 — aucun tag catalogue orphelin", () => {
@@ -150,7 +209,7 @@ describe("CACHE-CATALOG-ORPHAN-TAGS-001 — aucun tag catalogue orphelin", () =>
 		({ name, file, knownPosterless }) => {
 			const members = declaredMembers(readFileSync(file, "utf8"), name);
 			const orphans = members.filter(
-				(member) => !knownPosterless.includes(member) && !READER_TEXT.includes(`${name}.${member}`),
+				(member) => !knownPosterless.includes(member) && !isPosted(`${name}.${member}`),
 			);
 
 			expect(
@@ -168,8 +227,12 @@ describe("CACHE-CATALOG-ORPHAN-TAGS-001 — aucun tag catalogue orphelin", () =>
 		"$name — chaque tag déclaré est INVALIDÉ par au moins un mutateur",
 		({ name, file, knownMutatorless }) => {
 			const members = declaredMembers(readFileSync(file, "utf8"), name);
+			// Invalidation en bloc : `for (const tag of Object.values(X_CACHE_TAGS))`
+			// (refresh-dashboard.ts) buste TOUS les membres sans jamais les nommer.
+			const bustedWholesale = new RegExp(`Object\\.values\\(\\s*${name}\\s*\\)`).test(MUTATOR_TEXT);
+
 			const orphans = members.filter((member) => {
-				if (knownMutatorless.includes(member)) return false;
+				if (knownMutatorless.includes(member) || bustedWholesale) return false;
 				// Une mention dans un fichier d'invalidation / action / service.
 				return !new RegExp(`${name}\\.${member}\\b`).test(MUTATOR_TEXT);
 			});

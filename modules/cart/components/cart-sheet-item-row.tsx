@@ -8,7 +8,7 @@ import { SwipeableCard } from "@/shared/components/swipeable-card";
 import { CARD_SURFACE_FOCUS, CARD_SURFACE_HOVER } from "@/shared/components/card-surface.constants";
 import { useGestureHintOnce } from "@/shared/hooks/use-gesture-hint-once";
 import { CartStateChip } from "./cart-state-chip";
-import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialogStore } from "@/shared/providers/overlay-store-provider";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
 import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
@@ -134,7 +134,7 @@ export function CartSheetItemRow({
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
-				className="bg-muted focus-visible:ring-ring relative row-span-2 size-20 overflow-hidden rounded-md transition-opacity group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:opacity-80 sm:size-24"
+				className="focus-ring bg-muted relative row-span-2 size-20 overflow-hidden rounded-md transition-opacity group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 active:opacity-80 sm:size-24"
 				aria-label={`Voir ${item.sku.product.title}`}
 			>
 				{primaryImage && thumbSrc ? (
@@ -169,7 +169,7 @@ export function CartSheetItemRow({
 					<Link
 						href={`/creations/${item.sku.product.slug}`}
 						onClick={onClose}
-						className="can-hover:hover:text-foreground active:text-muted-foreground focus-visible:ring-ring line-clamp-2 block rounded font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:line-clamp-1"
+						className="focus-ring can-hover:hover:text-foreground active:text-muted-foreground line-clamp-2 block rounded font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 sm:line-clamp-1"
 					>
 						{item.sku.product.title}
 					</Link>
@@ -283,6 +283,7 @@ export function CartSheetItemRow({
 						currentQuantity={item.quantity}
 						maxQuantity={item.sku.inventory}
 						isInactive={isInactive}
+						itemName={item.sku.product.title}
 					/>
 				)}
 

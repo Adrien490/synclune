@@ -177,7 +177,7 @@ describe("deleteUploadThingFile", () => {
 
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("La suppression du fichier a echoue cote UploadThing");
+		expect(mockError).toHaveBeenCalledWith("La suppression du fichier a échoué côté UploadThing");
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 

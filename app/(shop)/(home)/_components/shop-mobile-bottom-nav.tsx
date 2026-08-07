@@ -26,8 +26,8 @@ import { LoadingIndicator } from "@/shared/components/navigation/loading-indicat
 import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
 import { setLastTrigger } from "@/modules/products/components/quick-search-dialog/last-trigger";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useSheetStore } from "@/shared/providers/sheet-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
+import { useSheetStore } from "@/shared/providers/overlay-store-provider";
 import { ROUTES } from "@/shared/constants/urls";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";

@@ -23,11 +23,8 @@ vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: vi.fn(), back: vi.fn(), refresh: vi.fn() }),
 }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({ isOpen: false, data: null, open: vi.fn(), close: vi.fn() }),
-}));
-
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ isOpen: false, data: null, open: vi.fn(), close: vi.fn() }),
 }));
 

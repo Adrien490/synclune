@@ -58,9 +58,8 @@ vi.mock("@/shared/hooks/use-haptic", () => ({ triggerHaptic: mockTriggerHaptic }
 
 vi.mock("@/shared/hooks/use-mounted", () => ({ useMounted: mockUseMounted }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({ useDialog: mockUseDialog }));
-
-vi.mock("@/shared/providers/sheet-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
+	useDialog: mockUseDialog,
 	useSheetStore: (selector: (s: { open: unknown; openSheet: string | null }) => unknown) =>
 		selector({ open: mockOpenSheet, openSheet: mockSheetState.openSheet }),
 }));

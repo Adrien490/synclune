@@ -1,7 +1,7 @@
 "use client";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 import { useDeleteProduct } from "@/modules/products/hooks/use-delete-product";
 

@@ -8,7 +8,7 @@
 >
 > **Ce document est du vocabulaire, pas une charte technique.** Il dit ce que la marque EST et avec
 > quels mots en parler. Les tokens, composants et règles d'implémentation restent régis par
-> `CLAUDE.md` § Conventions UI et `docs/UI-CONVENTIONS.md` ; le résumé opérationnel — celui qui
+> `CLAUDE.md` § Conventions UI ; le résumé opérationnel — celui qui
 > change un arbitrage de design — vit dans `CLAUDE.md` § « Direction artistique — lexique de
 > marque ». Ici, le détail.
 
@@ -251,8 +251,9 @@ réponds »).
 ⚠️ **Trois gardes de transposition :**
 
 - **Le site tutoie** (`CLAUDE.md` § Voix). Le « je » de Léane reste ; le « vous » ne revient pas.
-- **`docs/atelier-story.md` est intégralement au VOUVOIEMENT.** C'est une réserve de copie, pas un
-  texte prêt à poser : le repasser au tutoiement fait partie du travail de reprise.
+- **La copie éditoriale historique de l'atelier était intégralement au VOUVOIEMENT.** Si tu en
+  récupères une formulation, c'est une réserve de copie, pas un texte prêt à poser : la repasser au
+  tutoiement fait partie du travail de reprise.
 - **Les emojis d'Etsy ne sont pas un feu vert pour l'UI.** Ils appartiennent à une conversation de
   vendeuse à cliente ; l'interface porte le même registre par le **trait dessiné à la main**
   (`shared/components/hand-drawn/paths.ts`, `shared/components/animations/hand-drawn-accent.tsx`,
@@ -309,7 +310,7 @@ et des visuels issus d'une banque d'images. Cet univers vient du **jeu de donné
 (`prisma/seed.ts`, ~19 visuels de banque d'images, 2 mentions Swarovski, plusieurs « plaqué or ») : il
 ressemble à un catalogue de démo, pas à la boutique de Léane. **Ne jamais s'en servir comme
 référence de DA, ni y lire un signal de positionnement.** C'est l'erreur de brief la plus coûteuse du
-projet, et elle a déjà produit des propositions à jeter (`docs/BUSINESS.md` § Positionnement).
+projet, et elle a déjà produit des propositions à jeter (`CLAUDE.md` § Direction artistique).
 
 ## Les symboles identitaires, par potentiel distinctif
 
@@ -338,15 +339,21 @@ dans `shared/components/hand-drawn/paths.ts`) ; le cœur, l'étoile et la lune a
 (`ACCENT_SHAPE_PATHS`) ; et **le gisement le plus distinctif a été ouvert** — la grappe (via la
 baie), la feuille, le cabochon, l'œil, le cil, la volute peinte et l'arc-en-ciel (via la séquence
 de gouttes) vivent dans `CREATION_PATHS`, posés par
-`shared/components/hand-drawn/creations.ts` et consommés par le décor du premier écran
-(`app/(shop)/(home)/_components/hero/hero-creations.tsx`) **et** la carte de partage
+`shared/components/hand-drawn/creations.ts` et consommés par la carte de partage
 (`shared/components/og/og-marks.ts`, qui importe la scène au lieu d'en recopier les poses).
+
+⚠️ **La scène a quitté le premier écran le 2026-08-07** (`hero-creations.tsx` supprimé) : elle y
+mettait un DESSIN de bijoux à côté de PHOTOS de bijoux — le même sujet rendu deux fois, dont la
+version qui prouve le moins. Le critère qui en sort, et qui vaut pour toute proposition de décor :
+**on dessine ce qu'on ne peut pas photographier** (l'atelier, le geste, le meuble, un état vide),
+jamais ce qui est photographié 40 px plus loin. Les tracés, eux, restent employés là où ce critère
+tient : la carte de partage, la section atelier, la FAQ.
 
 Restent sans tracé, et c'est ce qu'il faut viser ensuite : le **présentoir illustré** et la
 **chaîne chargée de pampilles**.
 
 ⚠️ Une direction mobilise **UN** motif tenu jusqu'au bout, jamais des étoiles saupoudrées partout.
-Le décor du premier écran montre comment tenir la règle SANS s'appauvrir : quatre familles y
+La scène du présentoir montre comment tenir la règle SANS s'appauvrir : quatre familles y
 coexistent, mais trois d'entre elles sont faites de la MÊME goutte (le raisin, la pluie, la larme).
 Le motif unique n'est pas le nombre de formes, c'est l'unité de vocabulaire.
 

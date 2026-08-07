@@ -35,8 +35,7 @@ import { Winky_Sans, Onest, Kalam } from "next/font/google";
 // `font-fallback-declared.regression.test.ts` qui garde les deux copies d'accord.
 
 // Système S5 « Encre et papier » (migration du 2026-08-05, remplace
-// Fraunces / Figtree / Sacramento) — audit, mesures et candidats écartés dans
-// docs/FONTS-AUDIT-2026-08-05.md. Les variables CSS ne changent JAMAIS ici :
+// Fraunces / Figtree / Sacramento). Les variables CSS ne changent JAMAIS ici :
 // c'est ce qui rend les 113 `font-display` / 32 `font-cursive` du repo insensibles
 // à une migration de famille.
 

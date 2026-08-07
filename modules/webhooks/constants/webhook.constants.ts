@@ -25,6 +25,6 @@ export const MAX_WEBHOOK_RETRY_ATTEMPTS = 3;
  * ⚠️ C'est le SEUL consommateur depuis le retrait de `retry-webhooks` (audit V2,
  * Lot 3) — la reprise d'un PROCESSING périmé dépend donc entièrement d'une
  * redélivrance de Stripe. Passé sa fenêtre de 3 jours, la ligne reste figée en
- * PROCESSING (cf. `docs/KNOWN-ISSUES.md`, KI-006).
+ * PROCESSING.
  */
 export const STALE_PROCESSING_THRESHOLD_MS = 15 * 60 * 1000;

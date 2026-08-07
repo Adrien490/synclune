@@ -1,17 +1,35 @@
 import type { ErrorSummaryField } from "@/shared/components/forms/error-summary";
 
 /**
+ * `id` de l'alerte « Montant verrouillé ».
+ *
+ * Cible de l'`aria-describedby` des deux champs gelés par le verrou de montant
+ * (pays, code postal). Sans ce lien, un utilisateur au clavier voyait les deux
+ * champs sortir de son parcours de tabulation sans le moindre motif — l'alerte
+ * qui l'explique vit ailleurs dans le DOM, en amont, et n'est annoncée qu'à son
+ * apparition (jamais après un rechargement, où elle naît déjà montée).
+ */
+export const AMOUNT_LOCK_ALERT_ID = "checkout-amount-lock";
+
+/**
  * Mapping des champs du formulaire checkout vers leurs labels FR
  * et leur section parente (Contact, Livraison).
  *
  * Source unique partagée entre :
  * - `CheckoutFormBody` (ErrorSummary en tête de formulaire)
  * - `PayButton` (hint sections incomplètes)
+ *
+ * ⚠️ `addressLine2` DOIT y figurer bien qu'il soit optionnel : il porte un
+ * validateur (longueur max), donc il peut apparaître dans le résumé d'erreurs.
+ * Sans entrée ici, le fallback `?? name` y imprimait le path brut
+ * « shipping.addressLine2 ». Son absence de `CHECKOUT_SECTION_REQUIRED` reste
+ * volontaire — cf. le commentaire là-bas.
  */
 export const CHECKOUT_FIELD_LABELS: Record<string, string> = {
 	email: "Adresse email",
 	"shipping.fullName": "Nom complet",
 	"shipping.addressLine1": "Adresse",
+	"shipping.addressLine2": "Complément d'adresse",
 	"shipping.postalCode": "Code postal",
 	"shipping.city": "Ville",
 	"shipping.country": "Pays",
@@ -22,6 +40,7 @@ const CHECKOUT_FIELD_TO_SECTION: Record<string, string> = {
 	email: "Contact",
 	"shipping.fullName": "Livraison",
 	"shipping.addressLine1": "Livraison",
+	"shipping.addressLine2": "Livraison",
 	"shipping.postalCode": "Livraison",
 	"shipping.city": "Livraison",
 	"shipping.country": "Livraison",

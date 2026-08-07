@@ -2,7 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import {
 	validateInput,
 	success,
@@ -56,7 +56,7 @@ export async function updateProductCollections(
 		});
 
 		if (!product) {
-			return notFound("Produit non trouvé");
+			return notFound("Produit");
 		}
 
 		// 5. Vérifier que toutes les collections existent
@@ -67,7 +67,13 @@ export async function updateProductCollections(
 			});
 
 			if (existingCollections.length !== validation.data.collectionIds.length) {
-				return notFound("Une ou plusieurs collections n'existent pas");
+				// `notFound()` accorde UNE ressource au singulier : le pluriel se construit
+				// à la main, comme le font déjà les actions `orders/` pour leurs messages
+				// hors gabarit.
+				return {
+					status: ActionStatus.NOT_FOUND,
+					message: "Une ou plusieurs collections sont introuvables.",
+				};
 			}
 		}
 

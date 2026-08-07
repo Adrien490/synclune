@@ -51,7 +51,7 @@ export const PasswordInputField = ({
 	const field = useFieldContext<string>();
 	const [showPassword, setShowPassword] = useState(false);
 
-	const hasError = useFieldErrorVisibility(field);
+	const { visible: hasError, announce } = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -67,7 +67,7 @@ export const PasswordInputField = ({
 				triggerHaptic("selection");
 				setShowPassword(!showPassword);
 			}}
-			className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative inline-flex items-center justify-center rounded-sm p-0.5 transition-colors after:absolute after:inset-[-12px] after:content-[''] focus-visible:ring-2 focus-visible:outline-none motion-safe:transition-colors"
+			className="focus-ring text-muted-foreground hover:text-foreground relative inline-flex items-center justify-center rounded-sm p-0.5 transition-colors after:absolute after:inset-[-12px] after:content-[''] motion-safe:transition-colors"
 			aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
 			aria-pressed={showPassword}
 		>
@@ -118,6 +118,7 @@ export const PasswordInputField = ({
 				</p>
 			)}
 			<FieldError
+				live={announce}
 				id={`${field.name}-error`}
 				errors={hasError ? field.state.meta.errors : undefined}
 			/>

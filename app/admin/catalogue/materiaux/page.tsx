@@ -1,3 +1,10 @@
+import {
+	CreateTaxonomyButton,
+	TaxonomySortBadge,
+} from "@/modules/taxonomies/components/taxonomy-list-controls";
+import { TaxonomyFilterBadges } from "@/modules/taxonomies/components/taxonomy-filter-badges";
+import { TaxonomyBottomBar } from "@/modules/taxonomies/components/taxonomy-bottom-bar";
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
@@ -12,10 +19,6 @@ import { MaterialsDataTable } from "@/modules/materials/components/admin/materia
 import { MaterialsDataTableSkeleton } from "@/modules/materials/components/admin/materials-data-table-skeleton";
 import { MaterialsMobileList } from "@/modules/materials/components/admin/materials-mobile-list";
 import { MaterialsMobileListSkeleton } from "@/modules/materials/components/admin/materials-mobile-list-skeleton";
-import { MaterialsFilterBadges } from "@/modules/materials/components/admin/materials-filter-badges";
-import { MaterialsFilterSheet } from "@/modules/materials/components/admin/materials-filter-sheet";
-import { MaterialsSortBadge } from "@/modules/materials/components/admin/materials-sort-badge";
-import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 import dynamic from "next/dynamic";
 
 // Lazy loading - form dialog page-level (CreateMaterialButton)
@@ -26,7 +29,6 @@ const MaterialFormDialog = dynamic(() =>
 );
 import { MaterialsAdminDialogs } from "./_components/materials-admin-dialogs";
 import { RefreshMaterialsButton } from "@/modules/materials/components/admin/refresh-materials-button";
-import { MaterialsBottomBar } from "@/modules/materials/components/admin/materials-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
@@ -79,7 +81,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 			<PageHeader
 				variant="compact"
 				title="Matériaux"
-				actions={<CreateMaterialButton />}
+				actions={<CreateTaxonomyButton kind="material" />}
 				className="hidden md:block"
 			/>
 
@@ -93,7 +95,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 					/>
 				</Suspense>
 
-				<MaterialsBottomBar />
+				<TaxonomyBottomBar kind="material" />
 
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
@@ -123,17 +125,17 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 							noPrefix
 						/>
 						<ButtonGroup aria-label="Filtres et actions">
-							<MaterialsFilterSheet />
+							<FilterTriggerButton />
 							<RefreshMaterialsButton />
 						</ButtonGroup>
 					</Toolbar>
 
 					{/* Badges de filtres actifs (visible mobile + desktop) */}
-					<MaterialsFilterBadges />
+					<TaxonomyFilterBadges kind="material" />
 				</Suspense>
 
 				{/* Sort badge mobile (visible si sortBy URL défini) */}
-				<MaterialsSortBadge />
+				<TaxonomySortBadge kind="material" />
 
 				{/* Liste mobile */}
 				<Suspense fallback={<MaterialsMobileListSkeleton hasActiveFilters={hasActiveFilters} />}>

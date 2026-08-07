@@ -230,6 +230,210 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 } as const satisfies Prisma.OrderSelect;
 
 // ============================================================================
+// SELECT DEFINITIONS - SURFACES ÉTROITES (suivi, confirmation, e-mails)
+// ============================================================================
+//
+// Ces 4 sélecteurs vivaient en `const` LOCAL dans leur fichier appelant. Ils
+// étaient conformes, mais invisibles à `order-select-snapshot-only.regression.test.ts`,
+// qui ne peut garder que ce qu'il peut importer : la garde read-side de
+// l'invariant #4 (snapshots OrderItem figés) ne couvrait donc que 3 sélecteurs
+// d'affichage sur 7. Un `product: { select: { title } }` ajouté ici passait la CI
+// et faisait afficher le titre COURANT du produit sur une commande passée.
+//
+// ⚠️ Tout nouveau sélecteur qui expose `items` appartient à ce fichier, et doit
+// être ajouté au `DISPLAY_SELECTS` du test. Un select d'items en local est un
+// angle mort, pas un détail de style.
+// ============================================================================
+
+/**
+ * AUDIT-BIZ-001 — lecture de commande pour la page de suivi **invité**
+ * (`/suivi-commande?commande=…&token=…`).
+ *
+ * Périmètre PII volontairement plus étroit que `GET_ORDER_SELECT_CUSTOMER` : la
+ * page est authentifiée par un lien, pas par une session. On expose donc
+ * uniquement ce que le client a lui-même saisi ou reçu (articles, montants,
+ * adresse de livraison, statuts, suivi transporteur) et RIEN de l'identité
+ * légale de facturation ni des identifiants PSP (`stripe*`) ou des notes
+ * internes de remboursement.
+ */
+export const GET_ORDER_TRACKING_SELECT = {
+	id: true,
+	orderNumber: true,
+	createdAt: true,
+	status: true,
+	paymentStatus: true,
+	paidAt: true,
+	shippedAt: true,
+	actualDelivery: true,
+	subtotal: true,
+	shippingCost: true,
+	total: true,
+	paymentMethod: true,
+	shippingCarrier: true,
+	trackingNumber: true,
+	trackingUrl: true,
+	shippingFirstName: true,
+	shippingLastName: true,
+	shippingAddress1: true,
+	shippingAddress2: true,
+	shippingPostalCode: true,
+	shippingCity: true,
+	shippingCountry: true,
+	items: {
+		select: {
+			id: true,
+			productTitle: true,
+			productImageUrl: true,
+			skuColor: true,
+			skuMaterial: true,
+			skuSize: true,
+			price: true,
+			quantity: true,
+		},
+	},
+	// Statut seul (pas de montant, pas de `note` libre) : suffit à
+	// `getReturnIneligibilityReason` pour détecter `ALREADY_REQUESTED`.
+	refunds: {
+		select: { status: true },
+	},
+} as const satisfies Prisma.OrderSelect;
+
+/**
+ * Sélecteur allégé de la page de confirmation post-paiement.
+ *
+ * ⚠️ ARBITRAGE DE CONFIDENTIALITÉ (audit cache 2026-08-07) — ce select rend de la
+ * PII (`customerEmail`, `shipping*`, `stripePaymentIntentId`) depuis un scope
+ * `"use cache"` **public**, donc un cache SERVEUR partagé, pendant 5 min (profil
+ * `checkout`, cf. `data/get-order-for-confirmation.ts`).
+ *
+ * Ce n'est PAS une fuite cross-client : la clé d'une entrée `"use cache"` est
+ * construite sur les ARGUMENTS, ici le couple `(orderId, orderNumber)` — deux
+ * commandes donnent deux entrées, et `orderId` est un cuid2 cryptographiquement
+ * aléatoire. C'est un choix, et il est délibéré : `"use cache: private"` n'est
+ * jamais stocké côté serveur, donc chaque F5 de la page la plus rafraîchie du
+ * tunnel (attente du webhook Stripe) retaperait Neon.
+ *
+ * ⚠️ Ce choix est INVISIBLE au garde-fou `cache-scoping.regression.test.ts`, dont
+ * le check d'identité ne reconnaît que `userId`/`sessionId`/`guestSessionId` en
+ * paramètre — pas `orderId`. Il tient donc par ce commentaire : élargir ce select
+ * à d'autres champs personnels, c'est refaire l'arbitrage, pas l'hériter.
+ *
+ * (Le commentaire précédent invoquait ici un « ownership check côté wrapper » et
+ * un `userId` : les deux sont partis avec `Order.userId` le 2026-08-05.)
+ */
+export const CONFIRMATION_ORDER_SELECT = {
+	id: true,
+	orderNumber: true,
+	createdAt: true,
+	customerEmail: true,
+	subtotal: true,
+	shippingCost: true,
+	total: true,
+	paymentStatus: true,
+	stripePaymentIntentId: true,
+	shippingFirstName: true,
+	shippingLastName: true,
+	shippingAddress1: true,
+	shippingAddress2: true,
+	shippingPostalCode: true,
+	shippingCity: true,
+	shippingCountry: true,
+	items: {
+		select: {
+			id: true,
+			productTitle: true,
+			productImageUrl: true,
+			skuColor: true,
+			skuMaterial: true,
+			skuSize: true,
+			price: true,
+			quantity: true,
+		},
+	},
+} as const satisfies Prisma.OrderSelect;
+
+/**
+ * Renvoi manuel d'un e-mail de commande (`resendOrderEmail`).
+ *
+ * ⚠️ C'est le sélecteur le plus exposé de la famille : il alimente un e-mail
+ * renvoyé potentiellement des MOIS après la commande, censé être « une copie
+ * fidèle de l'original ». Un join live y ferait dire à la copie autre chose que
+ * l'original — et autre chose que la facture archivée.
+ */
+export const RESEND_EMAIL_ORDER_SELECT = {
+	id: true,
+	orderNumber: true,
+	status: true,
+	// AUDIT-BIZ-001 : requis par `buildOrderTrackingUrl` pour router les
+	// commandes invité vers le suivi tokenisé.
+	customerEmail: true,
+	customerName: true,
+	subtotal: true,
+	shippingCost: true,
+	total: true,
+	shippingFirstName: true,
+	shippingLastName: true,
+	shippingAddress1: true,
+	shippingAddress2: true,
+	shippingPostalCode: true,
+	shippingCity: true,
+	shippingCountry: true,
+	shippedAt: true,
+	shippingCarrier: true,
+	trackingNumber: true,
+	trackingUrl: true,
+	// Sans `shippedAt` le renvoi perdait la ligne « Livraison estimée » : le mail
+	// renvoyé n'était pas une copie fidèle de l'original.
+	items: {
+		select: {
+			productTitle: true,
+			skuColor: true,
+			skuMaterial: true,
+			skuSize: true,
+			quantity: true,
+			price: true,
+		},
+	},
+} as const satisfies Prisma.OrderSelect;
+
+/**
+ * Encaissement manuel (`markAsPaid`) — lu sous verrou advisory.
+ *
+ * `items.skuId` est un identifiant, pas un champ d'affichage : il sert au
+ * décrément de stock dans la même transaction.
+ */
+export const MARK_AS_PAID_ORDER_SELECT = {
+	id: true,
+	orderNumber: true,
+	status: true,
+	paymentStatus: true,
+	customerEmail: true,
+	customerName: true,
+	subtotal: true,
+	shippingCost: true,
+	total: true,
+	shippingFirstName: true,
+	shippingLastName: true,
+	shippingAddress1: true,
+	shippingAddress2: true,
+	shippingPostalCode: true,
+	shippingCity: true,
+	shippingCountry: true,
+	stripePaymentIntentId: true,
+	items: {
+		select: {
+			skuId: true,
+			quantity: true,
+			productTitle: true,
+			skuColor: true,
+			skuMaterial: true,
+			skuSize: true,
+			price: true,
+		},
+	},
+} as const satisfies Prisma.OrderSelect;
+
+// ============================================================================
 // PAGINATION & SORTING
 // ============================================================================
 
@@ -359,8 +563,15 @@ export const ORDER_ERROR_MESSAGES = {
 	UPDATE_SHIPPING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse de livraison.",
 	CANNOT_UPDATE_ADDRESS_SHIPPED:
 		"L'adresse ne peut plus être modifiée car la commande a été expédiée.",
-	// Update billing address
-	UPDATE_BILLING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse de facturation.",
+	// Depuis le retrait des colonnes `billing*` (2026-08-04), `shipping*` est
+	// l'adresse imprimée sur la facture et l'avoir — d'où ces deux refus
+	// comptables, documentés dans `update-order-shipping-address.ts`.
+	CANNOT_UPDATE_ADDRESS_CREDIT_NOTE:
+		"L'adresse ne peut plus être modifiée car un avoir a été émis pour cette commande.",
+	CANNOT_UPDATE_ADDRESS_INVOICE_ARCHIVING:
+		"La facture de cette commande est en cours d'archivage. Réessaie un peu plus tard.",
+	// Réutilisé par `update-order-customer-info` (les colonnes `billing*` et leur
+	// action ont été retirées le 2026-08-04, ce libellé leur a survécu).
 	CANNOT_UPDATE_BILLING_INVOICED:
 		"Ces informations ne peuvent plus être modifiées car une facture a été émise.",
 	// Update note

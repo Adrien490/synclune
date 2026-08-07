@@ -50,7 +50,7 @@ export const changePassword = async (
 
 		if (!userWithAccounts.emailVerified) {
 			return error(
-				"Votre email n'a pas été vérifié. Veuillez vérifier votre boîte mail avant de pouvoir changer votre mot de passe.",
+				"Ton email n'a pas été vérifié. Vérifie ta boîte mail avant de changer ton mot de passe.",
 			);
 		}
 
@@ -84,7 +84,7 @@ export const changePassword = async (
 		const breachCount = await checkPasswordBreached(newPassword);
 		if (breachCount > 0) {
 			return error(
-				"Ce mot de passe a été compromis dans une fuite de données. Veuillez en choisir un autre.",
+				"Ce mot de passe a été compromis dans une fuite de données. Choisis-en un autre.",
 			);
 		}
 

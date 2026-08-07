@@ -13,7 +13,12 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import {
+	createTestOrder,
+	createTestProduct,
+	createTestSku,
+	createTestUser,
+} from "@/test/integration/factories";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { buildInvoiceData } from "../build-invoice-data";
 import { GET_ORDER_SELECT_ADMIN } from "@/modules/orders/constants/order.constants";
@@ -37,39 +42,16 @@ describeIntegration(
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
 
-			const order = await prisma.order.create({
-				data: {
-					userId: user.id,
-					orderNumber: `SYN-CUST-${Date.now()}`,
-					customerEmail: user.email,
-					customerName: "Marie Dupont", // Snapshot figé
-					shippingFirstName: "Marie",
-					shippingLastName: "Dupont",
-					shippingAddress1: "12 rue de la Paix",
-					shippingPostalCode: "75001",
-					shippingCity: "Paris",
-					shippingCountry: "FR",
-					shippingPhone: "+33612345678",
-					status: OrderStatus.PROCESSING,
-					paymentStatus: PaymentStatus.PAID,
-					paidAt: new Date(),
-					stripePaymentIntentId: `pi_cust_${Date.now()}`,
-					subtotal: 4999,
-					total: 4999,
-					currency: "EUR",
-					paymentMethod: "CARD",
-					invoiceStatus: null,
-					items: {
-						create: [
-							{
-								skuId: sku.id,
-								quantity: 1,
-								productTitle: "Test",
-								price: 4999,
-							},
-						],
-					},
-				},
+			const order = await createTestOrder([{ skuId: sku.id }], {
+				customerEmail: user.email,
+				customerName: "Marie Dupont", // Snapshot figé
+				shippingFirstName: "Marie",
+				shippingLastName: "Dupont",
+				shippingAddress1: "12 rue de la Paix",
+				shippingPhone: "+33612345678",
+				status: OrderStatus.PROCESSING,
+				paymentStatus: PaymentStatus.PAID,
+				invoiceStatus: null,
 			});
 			await persistInvoiceNumber(order.id);
 
@@ -111,40 +93,18 @@ describeIntegration(
 
 			// L'Order capture l'adresse au checkout. Si le User a une Address dans
 			// son profil, elle peut être modifiée ensuite sans impacter l'Order.
-			const order = await prisma.order.create({
-				data: {
-					userId: user.id,
-					orderNumber: `SYN-ADDR-${Date.now()}`,
-					customerEmail: user.email,
-					customerName: "Test Addr",
-					shippingFirstName: "Address",
-					shippingLastName: "Test",
-					shippingAddress1: "10 rue de la Paix",
-					shippingAddress2: "Apt 3B",
-					shippingPostalCode: "75002",
-					shippingCity: "Paris",
-					shippingCountry: "FR",
-					shippingPhone: "+33611111111",
-					status: OrderStatus.PROCESSING,
-					paymentStatus: PaymentStatus.PAID,
-					paidAt: new Date(),
-					stripePaymentIntentId: `pi_addr_${Date.now()}`,
-					subtotal: 4999,
-					total: 4999,
-					currency: "EUR",
-					paymentMethod: "CARD",
-					invoiceStatus: null,
-					items: {
-						create: [
-							{
-								skuId: sku.id,
-								quantity: 1,
-								productTitle: "Test",
-								price: 4999,
-							},
-						],
-					},
-				},
+			const order = await createTestOrder([{ skuId: sku.id }], {
+				customerEmail: user.email,
+				customerName: "Test Addr",
+				shippingFirstName: "Address",
+				shippingLastName: "Test",
+				shippingAddress1: "10 rue de la Paix",
+				shippingAddress2: "Apt 3B",
+				shippingPostalCode: "75002",
+				shippingPhone: "+33611111111",
+				status: OrderStatus.PROCESSING,
+				paymentStatus: PaymentStatus.PAID,
+				invoiceStatus: null,
 			});
 			await persistInvoiceNumber(order.id);
 
@@ -177,39 +137,15 @@ describeIntegration(
 			const product = await createTestProduct();
 			const sku = await createTestSku(product.id);
 
-			const order = await prisma.order.create({
-				data: {
-					userId: user.id,
-					orderNumber: `SYN-DEL-USR-${Date.now()}`,
-					customerEmail: user.email,
-					customerName: "À supprimer",
-					shippingFirstName: "Ship",
-					shippingLastName: "Side",
-					shippingAddress1: "1 rue ship",
-					shippingPostalCode: "75001",
-					shippingCity: "Paris",
-					shippingCountry: "FR",
-					shippingPhone: "+33600000000",
-					status: OrderStatus.PROCESSING,
-					paymentStatus: PaymentStatus.PAID,
-					paidAt: new Date(),
-					stripePaymentIntentId: `pi_del_${Date.now()}`,
-					subtotal: 4999,
-					total: 4999,
-					currency: "EUR",
-					paymentMethod: "CARD",
-					invoiceStatus: null,
-					items: {
-						create: [
-							{
-								skuId: sku.id,
-								quantity: 1,
-								productTitle: "Test",
-								price: 4999,
-							},
-						],
-					},
-				},
+			const order = await createTestOrder([{ skuId: sku.id }], {
+				customerEmail: user.email,
+				customerName: "À supprimer",
+				shippingFirstName: "Ship",
+				shippingLastName: "Side",
+				shippingAddress1: "1 rue ship",
+				status: OrderStatus.PROCESSING,
+				paymentStatus: PaymentStatus.PAID,
+				invoiceStatus: null,
 			});
 			await persistInvoiceNumber(order.id);
 

@@ -86,7 +86,7 @@ export async function requireAuth(): Promise<{ user: RequireAuthUser } | { error
 		return {
 			error: {
 				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour effectuer cette action.",
+				message: "Connecte-toi pour effectuer cette action.",
 			},
 		};
 	}
@@ -97,7 +97,7 @@ export async function requireAuth(): Promise<{ user: RequireAuthUser } | { error
 		return {
 			error: {
 				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour effectuer cette action.",
+				message: "Connecte-toi pour effectuer cette action.",
 			},
 		};
 	}
@@ -334,7 +334,7 @@ export async function requireAdminWithUser(): Promise<
 		return {
 			error: {
 				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour effectuer cette action.",
+				message: "Connecte-toi pour effectuer cette action.",
 			},
 		};
 	}

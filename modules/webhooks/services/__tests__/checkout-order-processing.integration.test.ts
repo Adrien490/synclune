@@ -31,7 +31,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import type Stripe from "stripe";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import type {
 	processOrderFromPaymentIntent as ProcessOrderFn,
 	OversellError as OversellErrorClass,
@@ -68,37 +68,8 @@ describeIntegration("processOrderFromPaymentIntent — décrément de stock (DB 
 
 	/** Crée une commande PENDING prête à être encaissée, avec son OrderItem. */
 	async function seedPendingOrder(skuId: string, quantity: number, unitPrice: number) {
-		const total = unitPrice * quantity;
-		return prisma.order.create({
-			data: {
-				orderNumber: `SYN-TEST-${uniq()}`,
-				status: "PENDING",
-				paymentStatus: "PENDING",
-				subtotal: total,
-				discountAmount: 0,
-				shippingCost: 0,
-				taxAmount: 0,
-				total,
-				currency: "eur",
-				// Snapshots figés au checkout, tous NOT NULL au schéma (invariant 5).
-				customerEmail: "client@example.com",
-				customerName: "Marie Dupont",
-				shippingFirstName: "Marie",
-				shippingLastName: "Dupont",
-				shippingAddress1: "1 rue des Lilas",
-				shippingPostalCode: "75001",
-				shippingCity: "Paris",
-				shippingPhone: "+33600000000",
-				items: {
-					create: {
-						skuId,
-						quantity,
-						price: unitPrice,
-						productTitle: "Bague Test",
-					},
-				},
-			},
-			select: { id: true },
+		return createTestOrder([{ skuId, quantity, price: unitPrice, productTitle: "Bague Test" }], {
+			orderNumber: `SYN-TEST-${uniq()}`,
 		});
 	}
 

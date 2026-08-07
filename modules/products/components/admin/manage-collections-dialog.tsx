@@ -11,7 +11,7 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { useUpdateProductCollections } from "@/modules/products/hooks/use-update-product-collections";
 import {
 	getAllCollections,

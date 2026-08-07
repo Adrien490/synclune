@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures";
 import type { Page } from "@playwright/test";
 import { expectNoA11yViolations } from "./helpers/axe";
-import { SELECTORS, VIEWPORTS } from "./constants";
+import { requireSeedData, SELECTORS, VIEWPORTS } from "./constants";
 
 const MOBILE_VIEWPORT = VIEWPORTS.MOBILE;
 const REFLOW_VIEWPORT = VIEWPORTS.REFLOW_320;
@@ -200,6 +200,23 @@ test.describe("A11y Mobile — WCAG 1.4.10 Reflow (320 CSS px)", () => {
 		await expect(page.getByRole("dialog")).toBeVisible();
 
 		await expectNoHorizontalOverflow(page, "panier");
+	});
+
+	test("checkout — pas de scroll horizontal à 320 CSS px", async ({
+		page,
+		checkoutPage,
+		productCatalogPage,
+		cartPage,
+	}) => {
+		// Le docblock de ce bloc annonçait « ni fiche produit, ni panier, ni
+		// paiement » depuis l'audit 2026-07-26 ; les deux premiers ont été ajoutés,
+		// le paiement était resté en rade. C'est pourtant la page la plus dense du
+		// storefront : 8 champs, un récapitulatif et une barre CTA fixe.
+		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
+		requireSeedData(test, !seeded.skipped, seeded.skipped ? seeded.reason : "");
+		if (seeded.skipped) return;
+
+		await expectNoHorizontalOverflow(page, "checkout");
 	});
 
 	test("le h1 reste visible (pas de tronquage) à 320 CSS px", async ({ page }) => {

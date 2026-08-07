@@ -21,7 +21,7 @@ import {
 import { useAddRecentSearch } from "@/modules/products/hooks/use-add-recent-search";
 import { useRecentSearches } from "@/modules/products/hooks/use-recent-searches";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { toast } from "@/shared/utils/toast";
 

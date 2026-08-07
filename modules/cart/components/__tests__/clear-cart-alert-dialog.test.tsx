@@ -10,7 +10,7 @@ const { mockClearAction, mockClearPending, mockCloseDialog, mockDialogOpen, mock
 		mockHaptic: vi.fn(),
 	}));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({
 		isOpen: mockDialogOpen.current,
 		close: mockCloseDialog,

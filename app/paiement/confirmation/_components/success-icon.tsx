@@ -20,7 +20,7 @@ export function SuccessIcon() {
 	if (shouldReduceMotion) {
 		return (
 			<div className="bg-primary/10 mx-auto flex size-16 items-center justify-center rounded-full">
-				<CheckCircleIcon className="text-primary size-10" />
+				<CheckCircleIcon className="text-primary size-10" aria-hidden="true" />
 			</div>
 		);
 	}
@@ -45,7 +45,7 @@ export function SuccessIcon() {
 					delay: 0.5,
 				}}
 			>
-				<CheckCircleIcon className="text-primary size-10" />
+				<CheckCircleIcon className="text-primary size-10" aria-hidden="true" />
 			</m.div>
 		</m.div>
 	);

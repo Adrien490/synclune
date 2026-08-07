@@ -58,7 +58,7 @@ vi.mock("next/navigation", () => ({
 	useSearchParams: () => mockSearchParams,
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({
 		isOpen: true,
 		data: undefined,

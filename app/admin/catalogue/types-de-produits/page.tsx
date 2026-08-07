@@ -1,3 +1,10 @@
+import {
+	CreateTaxonomyButton,
+	TaxonomySortBadge,
+} from "@/modules/taxonomies/components/taxonomy-list-controls";
+import { TaxonomyFilterBadges } from "@/modules/taxonomies/components/taxonomy-filter-badges";
+import { TaxonomyBottomBar } from "@/modules/taxonomies/components/taxonomy-bottom-bar";
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
@@ -13,8 +20,6 @@ const ProductTypeFormDialog = dynamic(() =>
 	),
 );
 import { ProductTypesAdminDialogs } from "./_components/product-types-admin-dialogs";
-import { CreateProductTypeButton } from "@/modules/product-types/components/admin/create-product-type-button";
-import { ProductTypesBottomBar } from "@/modules/product-types/components/admin/product-types-bottom-bar";
 import { getProductTypes, SORT_LABELS } from "@/modules/product-types/data/get-product-types";
 import { getFirstParam } from "@/shared/utils/params";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
@@ -23,9 +28,6 @@ import { ProductTypesDataTable } from "@/modules/product-types/components/admin/
 import { ProductTypesDataTableSkeleton } from "@/modules/product-types/components/admin/product-types-data-table-skeleton";
 import { ProductTypesMobileList } from "@/modules/product-types/components/admin/product-types-mobile-list";
 import { ProductTypesMobileListSkeleton } from "@/modules/product-types/components/admin/product-types-mobile-list-skeleton";
-import { ProductTypesFilterBadges } from "@/modules/product-types/components/admin/product-types-filter-badges";
-import { ProductTypesFilterSheet } from "@/modules/product-types/components/admin/product-types-filter-sheet";
-import { ProductTypesSortBadge } from "@/modules/product-types/components/admin/product-types-sort-badge";
 import { RefreshProductTypesButton } from "@/modules/product-types/components/admin/refresh-product-types-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { parseFilters } from "./_utils/params";
@@ -99,7 +101,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 			<PageHeader
 				variant="compact"
 				title="Types de bijoux"
-				actions={<CreateProductTypeButton />}
+				actions={<CreateTaxonomyButton kind="product-type" />}
 				className="hidden md:block"
 			/>
 
@@ -113,7 +115,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 					/>
 				</Suspense>
 
-				<ProductTypesBottomBar />
+				<TaxonomyBottomBar kind="product-type" />
 
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
@@ -143,17 +145,17 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 							noPrefix
 						/>
 						<ButtonGroup aria-label="Filtres et actions">
-							<ProductTypesFilterSheet />
+							<FilterTriggerButton />
 							<RefreshProductTypesButton />
 						</ButtonGroup>
 					</Toolbar>
 
 					{/* Badges de filtres actifs (visible mobile + desktop) */}
-					<ProductTypesFilterBadges />
+					<TaxonomyFilterBadges kind="product-type" />
 				</Suspense>
 
 				{/* Sort badge mobile (visible si sortBy URL défini) */}
-				<ProductTypesSortBadge />
+				<TaxonomySortBadge kind="product-type" />
 
 				{/* Liste mobile */}
 				<Suspense fallback={<ProductTypesMobileListSkeleton hasActiveFilters={hasActiveFilters} />}>

@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { isInteractiveTarget } from "@/shared/utils/is-interactive-target";
 import { useEffect } from "react";
 import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "./keyboard-shortcuts.constants";

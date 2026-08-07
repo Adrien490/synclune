@@ -57,7 +57,17 @@ function AddressAutocompleteField({
 				<field.AutocompleteField<SearchAddressResult>
 					label="Adresse"
 					required
-					autoComplete="street-address"
+					/*
+					 * `address-line1`, PAS `street-address`.
+					 *
+					 * La spec HTML traite `street-address` comme le token de l'adresse
+					 * ENTIÈRE (champ multiligne) : il est mutuellement exclusif avec la
+					 * famille `address-line1/2/3`. Or le complément juste en dessous
+					 * déclare `address-line2` — la combinaison était incohérente, et un
+					 * autofill qui suit la spec pouvait verser toute l'adresse dans ce
+					 * seul champ tout en remplissant aussi la ligne 2.
+					 */
+					autoComplete="address-line1"
 					items={suggestions}
 					isLoading={isSearching}
 					error={error}
@@ -235,8 +245,22 @@ export function CheckoutAddressFields({
 									<field.InputField
 										label="Code postal"
 										required
-										// Gelé avec le montant : le tarif d'expédition en dépend.
-										disabled={lockDestination}
+										/*
+										 * Gelé avec le montant : le tarif d'expédition en dépend.
+										 *
+										 * ⚠️ `readOnly`, PAS `disabled` : un `<input disabled>` sort de
+										 * l'ordre de tabulation et son `aria-describedby` n'est pas lu en
+										 * mode formulaire. Au clavier, le champ s'ÉVAPORAIT — on passait
+										 * de « Complément d'adresse » à « Ville » sans le moindre motif.
+										 * `readOnly` le laisse atteignable, focusable et lisible, tout
+										 * en refusant la saisie.
+										 */
+										readOnly={lockDestination}
+										description={
+											lockDestination
+												? "Figé : il détermine les frais de livraison, donc le montant."
+												: undefined
+										}
 										inputMode={isNumericPostalCode ? "numeric" : "text"}
 										pattern={isNumericPostalCode ? "[0-9]*" : undefined}
 										autoComplete="postal-code"
@@ -294,8 +318,22 @@ export function CheckoutAddressFields({
 					<field.SelectField
 						label="Pays"
 						required
-						// Gelé avec le montant : le tarif d'expédition en dépend.
+						/*
+						 * Gelé avec le montant : le tarif d'expédition en dépend.
+						 *
+						 * ⚠️ Reste `disabled`, faute de mieux : `<select>` n'a pas de
+						 * `readOnly`, et le rendre focusable-mais-inerte demanderait
+						 * d'intercepter le changement en JS pour le défaire — un contrôle qui
+						 * ment sur son état. Le motif du gel est donc porté par la
+						 * `description` ci-dessous, rendue juste sous le champ : elle reste
+						 * dans le flux de lecture même quand le contrôle sort du parcours.
+						 */
 						disabled={lockDestination}
+						description={
+							lockDestination
+								? "Figé : il détermine les frais de livraison, donc le montant."
+								: undefined
+						}
 						options={countryOptions}
 						// `country` (code ISO), PAS `country-name` : les options ont pour
 						// value un code (`countryOptions` ci-dessus). Avec `country-name`
@@ -319,20 +357,25 @@ export function CheckoutAddressFields({
 						}}
 					>
 						{(field) => (
-							<div className="space-y-2">
-								<field.PhoneField
-									label="Téléphone"
-									required
-									defaultCountry={((country as string) || "FR") as ShippingCountry}
-									// Dernier champ texte du formulaire dans les DEUX branches : la
-									// case « enregistrer mes informations » qui suit (connecté)
-									// n'est pas une saisie clavier — « done », jamais « next ».
-									enterKeyHint="done"
-								/>
-								<p className="text-muted-foreground text-sm">
-									Utilisé uniquement par le transporteur en cas de problème de livraison.
-								</p>
-							</div>
+							<field.PhoneField
+								label="Téléphone"
+								required
+								defaultCountry={((country as string) || "FR") as ShippingCountry}
+								// Dernier champ texte du formulaire dans les DEUX branches : la
+								// case « enregistrer mes informations » qui suit (connecté)
+								// n'est pas une saisie clavier — « done », jamais « next ».
+								enterKeyHint="done"
+								/*
+								 * ⚠️ La prop `description`, PAS un `<p>` frère.
+								 *
+								 * Ce texte vivait dans un `<p>` posé à CÔTÉ du champ, hors du
+								 * `<Field>` : aucun `aria-describedby` ne le reliait, donc un
+								 * lecteur d'écran arrivant sur « Téléphone » n'apprenait jamais à
+								 * quoi sert le numéro. `PhoneField` compose l'id `${name}-desc` et
+								 * le rattache au champ.
+								 */
+								description="Utilisé uniquement par le transporteur en cas de problème de livraison."
+							/>
 						)}
 					</form.AppField>
 				)}

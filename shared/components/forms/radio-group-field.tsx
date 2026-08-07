@@ -36,7 +36,7 @@ export const RadioGroupField = ({
 	const field = useFieldContext<string>();
 	const labelId = `${field.name}-label`;
 	const errorId = `${field.name}-error`;
-	const hasErrors = useFieldErrorVisibility(field);
+	const { visible: hasErrors, announce } = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const describedBy = [descId, hasErrors ? errorId : null].filter(Boolean).join(" ") || undefined;
 
@@ -83,7 +83,11 @@ export const RadioGroupField = ({
 					{description}
 				</p>
 			)}
-			<FieldError id={errorId} errors={hasErrors ? field.state.meta.errors : undefined} />
+			<FieldError
+				live={announce}
+				id={errorId}
+				errors={hasErrors ? field.state.meta.errors : undefined}
+			/>
 		</FieldSet>
 	);
 };

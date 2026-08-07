@@ -175,7 +175,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							    cours de settlement (card-only — pas de SEPA/Klarna). */}
 							{showPendingState && (
 								<Alert>
-									<ClockIcon />
+									<ClockIcon aria-hidden="true" />
 									<AlertTitle>Paiement en cours de vérification</AlertTitle>
 									<AlertDescription>
 										Ton paiement est en cours de vérification. Tu recevras un email de confirmation
@@ -302,7 +302,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Message personnalisé */}
 							<Alert>
-								<HeartIcon />
+								<HeartIcon aria-hidden="true" />
 								{/* Plus d'emoji : l'Alert porte déjà `HeartIcon`, la même icône,
 								    en vectoriel et à la bonne graisse. */}
 								<AlertTitle>Merci du fond du cœur</AlertTitle>
@@ -359,7 +359,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									size="lg"
 									className="flex-1"
 								>
-									<PackageIcon className="mr-2 size-4" />
+									<PackageIcon className="mr-2 size-4" aria-hidden="true" />
 									Suivre ma commande
 								</Button>
 								<Button

@@ -13,8 +13,8 @@ import {
 } from "@phosphor-icons/react/ssr";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 
 import { ARCHIVE_PRODUCT_DIALOG_ID } from "../components/admin/archive-product-alert-dialog";
 import { CHANGE_PRODUCT_STATUS_DIALOG_ID } from "../components/admin/change-product-status-alert-dialog";

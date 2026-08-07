@@ -16,7 +16,7 @@ import { cn } from "@/shared/utils/cn";
  * distingue les deux tons pour qui ne perçoit pas la différence de couleur
  * (WCAG 1.4.1 — un état qui ne se distingue QUE par la couleur n'existe pas).
  */
-export type CartStateTone = "danger" | "warning";
+type CartStateTone = "danger" | "warning";
 
 const TONE_CLASSES: Record<CartStateTone, string> = {
 	danger: "border-l-destructive bg-destructive/15",

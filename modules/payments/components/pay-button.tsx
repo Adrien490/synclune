@@ -240,7 +240,7 @@ export function PayButton({
 
 			{isAwaiting3ds && (
 				<Alert role="status" aria-live="polite">
-					<ShieldCheckIcon className="size-4" />
+					<ShieldCheckIcon className="size-4" aria-hidden="true" />
 					<AlertDescription>
 						Vérification 3D Secure en cours, une fenêtre de ta banque va s&apos;ouvrir.
 					</AlertDescription>

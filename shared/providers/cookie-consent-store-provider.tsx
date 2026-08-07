@@ -31,11 +31,7 @@ export const CookieConsentStoreProvider = ({ children }: CookieConsentStoreProvi
 		}
 	}, [store]);
 
-	return (
-		<CookieConsentStoreContext.Provider value={store}>
-			{children}
-		</CookieConsentStoreContext.Provider>
-	);
+	return <CookieConsentStoreContext value={store}>{children}</CookieConsentStoreContext>;
 };
 
 export const useCookieConsentStore = <T,>(selector: (store: CookieConsentStore) => T): T => {

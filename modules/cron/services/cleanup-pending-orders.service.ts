@@ -17,16 +17,25 @@ import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
 /**
- * AM-5 — seuil de détection SPOF `sync-async-payments`.
+ * AM-5 — seuil de détection des commandes `PENDING` que personne ne réclame.
  *
- * Toute commande `PENDING` portant un `stripePaymentIntentId` est censée être
- * réconciliée par `sync-async-payments` (poll Stripe dès 1h, toutes les 4h).
- * Si une telle commande dépasse ce seuil (7 jours, très au-delà de la portée du
- * poll), c'est que `sync-async-payments` est en panne durable — et comme
- * `cleanup-pending-orders` exclut volontairement les commandes à PI (pour ne pas
- * racer ce cron), aucun second filet ne les ferme. On émet donc une alerte
- * monitoring (lecture seule, zéro mutation → race-safe par construction) pour
- * transformer ce SPOF silencieux en signal actionnable.
+ * Toute commande `PENDING` portant un `stripePaymentIntentId` relève de
+ * `sync-async-payments`, qui interroge Stripe et tranche (succeeded → PAID ;
+ * abandonné → cancel + FAILED). Ce cron-ci les exclut volontairement pour ne pas
+ * le racer.
+ *
+ * ⚠️ `sync-async-payments` n'est PLUS un cron : c'est un bouton de
+ * `/admin/configuration/maintenance` depuis le Lot 1 SIMPLIFICATION (2026-08-03),
+ * et `CLAUDE.md` le décrit comme « quasi jamais utile ». Le commentaire qui
+ * annonçait ici un « poll Stripe dès 1h, toutes les 4h » décrivait une cadence
+ * supprimée. Conséquence assumée : plus AUCUN job automatique ne ferme ces
+ * commandes — ni le cas nominal (client qui abandonne après le clic « Payer »),
+ * ni le cas dégradé (`cleanupFailedCheckout` qui échoue sur contention d'advisory
+ * lock, cf. ORD-CLEANUP-TIMEOUT-001 dans `confirm-checkout.ts`).
+ *
+ * Cette alerte est donc le SEUL filet, et son délai (7 jours) est désormais un
+ * choix, pas une marge au-dessus d'un poll. Lecture seule, zéro mutation →
+ * race-safe par construction.
  */
 const SYNC_ASYNC_SPOF_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -38,13 +47,19 @@ const SYNC_ASYNC_SPOF_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
  *
  * Why we exclude orders with stripePaymentIntentId: dans le flux Elements actuel,
  * TOUTE commande créée par `confirmCheckout` porte un `stripePaymentIntentId`
- * (order-creation.service.ts) — c'est `sync-async-payments` qui est désormais
- * propriétaire de leur réconciliation : il interroge Stripe et résout les PI
- * `succeeded` (→ PAID) comme les PI durablement non finalisés / abandonnés
+ * (order-creation.service.ts) — c'est `sync-async-payments` qui est propriétaire
+ * de leur réconciliation : il interroge Stripe et résout les PI `succeeded`
+ * (→ PAID) comme les PI durablement non finalisés / abandonnés
  * (`requires_action`/`requires_confirmation`/`requires_payment_method`/`canceled`
- * → cancel + FAILED, cf. F1 2026-05-29). Y toucher ici racerait ce cron.
+ * → cancel + FAILED, cf. F1 2026-05-29). Y toucher ici racerait cette tâche.
  * Ce cron ne couvre donc que les éventuelles commandes legacy à PI nul (aucune
  * dans la config actuelle — filet de sécurité conservé sans coût).
+ *
+ * ⚠️ Depuis le 2026-08-03, `sync-async-payments` est une tâche MANUELLE (bouton
+ * Maintenance), plus un cron : élargir ce `where` aux commandes à PI ne racerait
+ * donc plus grand-chose — mais ça reviendrait à annuler une commande dont Stripe
+ * détient peut-être un paiement réussi, sans jamais l'interroger. C'est un
+ * arbitrage à part entière, pas un élargissement de filtre. Cf. AM-5 ci-dessus.
  *
  * Effects per order (atomic):
  *  - status → CANCELLED
@@ -248,7 +263,7 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
  * un FAILED reste éligible à une redélivrance de Stripe (3 jours) et, au-delà,
  * documente un incident. (La purge des `PostWebhookTask` est partie avec la file,
  * Lot 2 S3.4 ; le bouton Maintenance `retry-webhooks` qui rejouait les FAILED est
- * parti à l'audit V2, Lot 3 — cf. `docs/KNOWN-ISSUES.md`, KI-006.)
+ * parti à l'audit V2, Lot 3.)
  *
  * Batches bornés (`BATCH_SIZE_LARGE`) : le rattrapage s'étale sur plusieurs runs
  * quotidiens plutôt que de tenir une transaction longue sur un backlog historique.

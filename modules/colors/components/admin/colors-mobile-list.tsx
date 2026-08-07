@@ -1,3 +1,4 @@
+import { CreateTaxonomyButton } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { use } from "react";
 import { PaletteIcon } from "@phosphor-icons/react/ssr";
 
@@ -5,7 +6,6 @@ import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
 import { TaxonomyMobileList } from "@/modules/taxonomies/components/taxonomy-mobile-list";
 
 import type { GetColorsReturn } from "@/modules/colors/types/color.types";
-import { CreateColorButton } from "./create-color-button";
 import { ColorMobileItem } from "./color-mobile-item";
 
 interface ColorsMobileListProps {
@@ -31,7 +31,7 @@ export function ColorsMobileList({
 			hasActiveFilters={hasActiveFilters}
 			icon={PaletteIcon}
 			emptyDescription="Aucune teinte à la palette pour l'instant."
-			createButton={<CreateColorButton />}
+			createButton={<CreateTaxonomyButton kind="color" />}
 			renderItem={(item) => <ColorMobileItem color={item} />}
 		/>
 	);

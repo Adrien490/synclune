@@ -93,6 +93,12 @@ export function createMockOrder(overrides: Record<string, unknown> = {}) {
 		discountAmount: 0,
 		shippingCost: 0,
 		invoiceNumber: null,
+		// Lues par les deux gardes comptables d'`update-order-shipping-address` : sans
+		// elles la valeur serait `undefined`, et `undefined !== null` ferait refuser
+		// l'édition partout. Prisma rend `null`, pas `undefined`, sur une colonne
+		// nullable non renseignée — la factory doit dire la même chose que la base.
+		invoicePdfUrl: null,
+		creditNoteNumber: null,
 		stripeCheckoutSessionId: null,
 		trackingNumber: null,
 		trackingUrl: null,
@@ -258,7 +264,7 @@ function createMockWebhookEvent(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "we_cm1234567890abcde",
 		stripeEventId: "evt_test_abc123",
-		eventType: "checkout.session.completed",
+		eventType: "payment_intent.succeeded",
 		status: "PENDING",
 		attempts: 0,
 		receivedAt: new Date("2026-01-15"),

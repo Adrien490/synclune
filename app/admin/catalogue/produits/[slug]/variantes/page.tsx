@@ -1,3 +1,4 @@
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -33,7 +34,6 @@ import { SkusMobileListSkeleton } from "@/modules/skus/components/admin/skus-mob
 import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { SkusBottomBar } from "@/modules/skus/components/admin/skus-bottom-bar";
-import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
@@ -255,7 +255,7 @@ export default async function ProductVariantsPage({
 							noPrefix
 						/>
 						<ButtonGroup aria-label="Filtres et actions">
-							<SkusFilterSheet colorOptions={colorOptions} materialOptions={materialOptions} />
+							<FilterTriggerButton />
 							<RefreshSkusButton productId={product.id} />
 						</ButtonGroup>
 					</Toolbar>

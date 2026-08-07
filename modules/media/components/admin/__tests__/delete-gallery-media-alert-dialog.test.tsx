@@ -28,7 +28,7 @@ const { mockIsOpen, mockClose, mockDialogData, mockAction, mockIsPending } = vi.
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({
 		isOpen: mockIsOpen.value,
 		close: mockClose,

@@ -2,7 +2,7 @@
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useDeleteCollection } from "@/modules/collections/hooks/use-delete-collection";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
 export const DELETE_COLLECTION_DIALOG_ID = "delete-collection";

@@ -140,7 +140,6 @@ import {
 	handlePaymentFailure,
 	handlePaymentCanceled,
 	handlePaymentProcessing,
-	handleInvoicePaymentFailed,
 } from "../payment-handlers";
 
 // ============================================================================
@@ -155,19 +154,6 @@ function makePaymentIntent(overrides: Record<string, unknown> = {}) {
 		amount_received: 0,
 		...overrides,
 	} as unknown as Stripe.PaymentIntent;
-}
-
-function makeInvoice(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "in_123",
-		number: "INV-001",
-		metadata: { orderId: "order-1" },
-		customer_email: "client@example.com",
-		amount_due: 10000,
-		status: "open",
-		last_finalization_error: null,
-		...overrides,
-	} as unknown as Stripe.Invoice;
 }
 
 // ============================================================================
@@ -660,91 +646,5 @@ describe("handlePaymentProcessing", () => {
 
 		expect(result.success).toBe(true);
 		expect(result.skipped).toBe(true);
-	});
-});
-
-// ============================================================================
-// handleInvoicePaymentFailed
-// ============================================================================
-
-describe("handleInvoicePaymentFailed", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBuildUrl.mockImplementation((path: string) => `https://synclune.fr${path}`);
-	});
-
-	it("should find order by metadata.orderId", async () => {
-		const order = {
-			id: "order-1",
-			orderNumber: "SYN-001",
-			customerEmail: "client@example.com",
-			stripePaymentIntentId: "pi_123",
-		};
-		mockPrisma.order.findFirst.mockResolvedValue(order);
-
-		const result = await handleInvoicePaymentFailed(makeInvoice());
-
-		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ id: "order-1" }),
-			}),
-		);
-		expect(result.success).toBe(true);
-	});
-
-	it("should work without order found (fallback on invoice data)", async () => {
-		mockPrisma.order.findFirst.mockResolvedValue(null);
-
-		const result = await handleInvoicePaymentFailed(
-			makeInvoice({ metadata: { orderId: "order-missing" } }),
-		);
-
-		expect(result.success).toBe(true);
-		const alertTask = result.tasks?.find((t) => t.type === "ADMIN_INVOICE_FAILED_ALERT");
-		if (alertTask?.type === "ADMIN_INVOICE_FAILED_ALERT") {
-			expect(alertTask.data.orderNumber).toBe("INV-001");
-			expect(alertTask.data.customerEmail).toBe("client@example.com");
-		}
-	});
-
-	it("should work without orderId in metadata", async () => {
-		const result = await handleInvoicePaymentFailed(makeInvoice({ metadata: {} }));
-
-		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
-		expect(result.success).toBe(true);
-	});
-
-	it("should return admin alert and cache invalidation tasks", async () => {
-		mockPrisma.order.findFirst.mockResolvedValue(null);
-
-		const result = await handleInvoicePaymentFailed(makeInvoice());
-
-		const alertTask = result.tasks?.find((t) => t.type === "ADMIN_INVOICE_FAILED_ALERT");
-		expect(alertTask).toBeDefined();
-		if (alertTask?.type === "ADMIN_INVOICE_FAILED_ALERT") {
-			expect(alertTask.data.amount).toBe(10000);
-		}
-
-		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
-		expect(cacheTask).toBeDefined();
-		if (cacheTask?.type === "INVALIDATE_CACHE") {
-			expect(cacheTask.tags).toContain("orders-list");
-			expect(cacheTask.tags).toContain("admin-badges");
-		}
-	});
-
-	it("should use last_finalization_error message when available", async () => {
-		mockPrisma.order.findFirst.mockResolvedValue(null);
-
-		const result = await handleInvoicePaymentFailed(
-			makeInvoice({
-				last_finalization_error: { message: "Card expired" },
-			}),
-		);
-
-		const alertTask = result.tasks?.find((t) => t.type === "ADMIN_INVOICE_FAILED_ALERT");
-		if (alertTask?.type === "ADMIN_INVOICE_FAILED_ALERT") {
-			expect(alertTask.data.errorMessage).toBe("Card expired");
-		}
 	});
 });

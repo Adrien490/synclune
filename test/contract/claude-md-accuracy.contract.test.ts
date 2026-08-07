@@ -27,11 +27,11 @@
  *   6. toute commande `pnpm <x>` citée existe dans `package.json`.
  *
  * Le périmètre a été étendu le 2026-08-05 de `CLAUDE.md` seul à la CHAÎNE DESIGN
- * (`docs/UI-CONVENTIONS.md` + les prompts collables). Motif : `REDESIGN-PROMPT.md`
- * envoyait lire « les sections Breakpoints / Overlays / Survol vs focus de `CLAUDE.md` »
- * alors que ces sections venaient d'être extraites dans `docs/UI-CONVENTIONS.md` — le
- * CHEMIN existait toujours, c'est le TITRE qui avait disparu, et aucune assertion ne
- * regardait les titres. D'où le point 3, qui est le seul à attraper ce cas.
+ * (les prompts collables). Motif : `REDESIGN-PROMPT.md` envoyait lire « les sections
+ * Breakpoints / Overlays / Survol vs focus de `CLAUDE.md` » alors que ces sections
+ * venaient d'être extraites dans un document tiers — le CHEMIN existait toujours,
+ * c'est le TITRE qui avait disparu, et aucune assertion ne regardait les titres.
+ * D'où le point 3, qui est le seul à attraper ce cas.
  * Le point 2 vient du même audit : un lien vers un fichier voisin (`](AUDIT-PROMPTS.md)`)
  * n'a pas de `/`, donc l'extracteur de chemins du point 1 ne le voit pas.
  *
@@ -58,7 +58,6 @@ const src = readFileSync(CLAUDE_MD, "utf-8");
  */
 const CONTRACTED_DOCS: ReadonlyArray<{ path: string; minCited: number }> = [
 	{ path: "CLAUDE.md", minCited: 40 },
-	{ path: "docs/UI-CONVENTIONS.md", minCited: 5 },
 	// La grille d'audit de la landing (§ 9) ne vaut que si ses ancrages tiennent : chaque
 	// ligne renvoie à un test ou à un fichier, et un renvoi mort transforme un critère
 	// vérifiable en intention. Ajouté le 2026-08-06, en même temps que le document est
@@ -70,13 +69,6 @@ const CONTRACTED_DOCS: ReadonlyArray<{ path: string; minCited: number }> = [
 	// du prompt SSOT qu'il charge se casse, la commande exécute du vide en silence — c'est
 	// tout son mode de panne, donc tout son contrat.
 	{ path: ".claude/commands/design-artifact.md", minCited: 2 },
-	// Ajouté le 2026-08-06, à l'audit du document. Il ne prescrit QUE par référence — chaque
-	// règle nomme sa constante, son service ou son test — donc un chemin mort n'y est pas une
-	// coquille : c'est une prescription qui ne s'applique plus à rien, et rien d'autre ne le
-	// dirait. Le document était orphelin (aucune référence entrante, aucun test) alors que ses
-	// chemins résolvaient déjà tous : l'entrée ne corrige pas une dette, elle empêche d'en
-	// créer une.
-	{ path: "docs/COLLECTION-CARD.md", minCited: 12 },
 ];
 
 /**
@@ -89,34 +81,14 @@ const DOC_SECTION_REFERENCES: ReadonlyArray<{
 	file: string;
 	heading: string;
 }> = [
-	// `REDESIGN-PROMPT.md` §1 et sa liste des « 5 points » renvoient nommément ici.
-	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Breakpoints" },
-	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Largeurs de contenu" },
-	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Survol vs focus" },
-	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Overlays" },
-	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Composition" },
-	{ citedIn: "REDESIGN-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "animate-out" },
+	// ⚠️ Les entrées `UI-CONVENTIONS` (6 par prompt) et `BUSINESS` § Positionnement
+	// ont été retirées le 2026-08-07 avec les documents eux-mêmes.
+	// Ce n'est PAS un élargissement d'allowlist : la cible n'existe plus, et les deux
+	// prompts ont perdu le renvoi dans le même passage. Les prompts restent sous
+	// contrat via `CONTRACTED_DOCS` (points 1 et 2) — seul le point 3 les lâche, faute
+	// de document tiers à citer.
 	{ citedIn: "REDESIGN-PROMPT", file: "CLAUDE.md", heading: "Voix" },
-	// `REDESIGN-PROMPT.md` §1 adosse son brief de marque à la même SSOT que son voisin —
-	// l'entrée n'existait que pour DESIGN-ARTIFACT, trou relevé par l'audit du 2026-08-05.
-	{ citedIn: "REDESIGN-PROMPT", file: "docs/BUSINESS.md", heading: "Positionnement" },
-	// `DESIGN-ARTIFACT-PROMPT.md` §3 renvoie aux mêmes sections extraites : il portait le
-	// défaut du 2026-08-05 (envoyer lire « Breakpoints » dans `CLAUDE.md`, qui n'en garde
-	// que dix puces) trois jours de plus que son voisin, faute d'être couvert ici.
-	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Breakpoints" },
-	{
-		citedIn: "DESIGN-ARTIFACT-PROMPT",
-		file: "docs/UI-CONVENTIONS.md",
-		heading: "Largeurs de contenu",
-	},
-	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Survol vs focus" },
-	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Overlays" },
-	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "Composition" },
-	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/UI-CONVENTIONS.md", heading: "animate-out" },
 	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "CLAUDE.md", heading: "Voix" },
-	// Le brief de marque du §1 est adossé à cette section — c'est la SSOT du « colorés, PAS
-	// joaillerie précieuse », l'erreur de brief la plus coûteuse du projet.
-	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "docs/BUSINESS.md", heading: "Positionnement" },
 	// Le §1 adosse motifs identitaires, noyau lexical et registre de copie au lexique DA
 	// ajouté le 2026-08-06 — sans cette entrée, renommer la section casserait le renvoi
 	// en silence (le défaut du 2026-08-05 : le chemin existait, la section avait déménagé).

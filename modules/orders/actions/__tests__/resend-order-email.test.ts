@@ -93,10 +93,10 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/modules/orders/constants/cache", () => ({
 	ORDERS_CACHE_TAGS: {
-		HISTORY: (id: string) => `order-history-${id}`,
 		// La timeline de la page détail lit `order.history` via `getOrderById()`,
 		// tagué DETAIL — sans cette invalidation l'entrée d'audit qu'on vient
-		// d'écrire n'apparaîtrait pas.
+		// d'écrire n'apparaîtrait pas. C'est le SEUL tag qui la rafraîchit :
+		// `HISTORY` était orphelin et a été retiré le 2026-08-07.
 		DETAIL: (id: string) => `order-detail-${id}`,
 	},
 }));

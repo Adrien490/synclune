@@ -1,6 +1,6 @@
 "use client";
 
-import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialogStore } from "@/shared/providers/overlay-store-provider";
 import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useHaptic } from "@/shared/hooks/use-haptic";

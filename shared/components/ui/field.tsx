@@ -141,9 +141,25 @@ function FieldError({
 	className,
 	children,
 	errors,
+	live = true,
 	...props
 }: React.ComponentProps<"div"> & {
 	errors?: Array<{ message?: string } | undefined> | Array<string | undefined>;
+	/**
+	 * La région a-t-elle le droit de VOCALISER son contenu ?
+	 *
+	 * Défaut `true` : un champ isolé n'a pas d'autre canal. Les field components
+	 * y passent l'`announce` de `useFieldErrorVisibility`, qui vaut `false` après
+	 * une tentative de soumission — là, six régions de champ se peuplaient en même
+	 * temps qu'un résumé d'erreurs `assertive` et qu'un déplacement de focus
+	 * (mesuré sur `/paiement` le 2026-08-07).
+	 *
+	 * ⚠️ Le nœud reste MONTÉ et garde son `id` dans les deux cas : c'est la cible
+	 * de l'`aria-describedby` du champ, donc ce que le lecteur d'écran lit quand
+	 * le focus arrive dessus. On retire les attributs de région live, pas le
+	 * message.
+	 */
+	live?: boolean;
 }) {
 	const content = (() => {
 		if (children) {
@@ -198,9 +214,9 @@ function FieldError({
 		>
 			<div className="min-h-0 overflow-hidden">
 				<div
-					role="alert"
-					aria-live="polite"
-					aria-atomic="true"
+					role={live ? "alert" : undefined}
+					aria-live={live ? "polite" : undefined}
+					aria-atomic={live ? "true" : undefined}
 					className="text-destructive wrap-break-words text-sm font-normal"
 					{...props}
 				>

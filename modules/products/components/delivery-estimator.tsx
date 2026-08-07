@@ -13,6 +13,16 @@ import { TruckIcon } from "@phosphor-icons/react/ssr";
  * Calculates dynamic delivery dates based on preparation time + shipping time,
  * skipping weekends via date-fns addBusinessDays.
  * Proven conversion driver (Baymard: 64% look for delivery info before add-to-cart).
+ *
+ * ⚠️ **C'est un Server Component, et ça doit le rester.** Il lit l'horloge
+ * (`new Date()`) pendant son rendu : monté depuis un composant client, ce rendu
+ * cesse d'être déterministe (le SSR et l'hydratation peuvent tomber de part et
+ * d'autre de minuit) et le React Compiler se voit confier une valeur impure.
+ * Il était rendu depuis `ProductDetails` (`"use client"`) jusqu'au 2026-08-07 ;
+ * il est désormais monté par `app/(shop)/creations/[slug]/page.tsx` et relayé en
+ * `ReactNode` via la prop `deliveryEstimate`. Ne pas le ré-importer depuis un
+ * fichier `"use client"` — verrouillé par
+ * `__tests__/delivery-estimator-stays-server.regression.test.ts`.
  */
 const formatDeliveryDate = (date: Date) => format(date, "d MMMM", { locale: fr });
 

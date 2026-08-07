@@ -226,7 +226,6 @@ function checkRateLimitInMemory(
 	// d'un MÊME preset partagent toujours une entrée — et c'est correct : ils ont
 	// par construction les mêmes `limit`/`windowMs`, donc l'anomalie « la fenêtre
 	// appartient à la première entrée » est structurellement impossible entre eux.
-	// @see docs/KNOWN-ISSUES.md — KI-004 (corrigé le 2026-07-31)
 	const key = buildRateLimitKey(name, identifier);
 
 	// Global IP limit — read/modify/write fully synchronous (no await between get/set)

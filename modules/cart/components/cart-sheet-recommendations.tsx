@@ -56,7 +56,7 @@ export async function CartSheetRecommendations() {
 							<CartCloseLink
 								key={product.id}
 								href={`/creations/${product.slug}`}
-								className="group/reco focus-visible:ring-ring bg-card flex w-28 shrink-0 flex-col gap-1.5 rounded-md border border-transparent p-1.5 shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								className="focus-ring group/reco bg-card flex w-28 shrink-0 flex-col gap-1.5 rounded-md border border-transparent p-1.5 shadow-sm"
 								aria-label={`Voir ${product.title}${price != null ? ` — ${formatEuro(price)}` : ""}`}
 							>
 								<div className="bg-muted relative aspect-square w-full overflow-hidden rounded-sm">

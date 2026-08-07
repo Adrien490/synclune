@@ -18,10 +18,8 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/shared/hooks/use-haptic", () => ({ useHaptic: () => vi.fn() }));
 vi.mock("@/shared/hooks/use-mobile", () => ({ useIsMobile: mockUseIsMobile }));
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({ open: vi.fn(), close: vi.fn(), isOpen: false }),
-}));
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => ({ open: vi.fn(), close: vi.fn(), isOpen: false }),
 }));
 vi.mock("@/shared/utils/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));

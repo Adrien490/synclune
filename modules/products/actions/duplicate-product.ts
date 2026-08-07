@@ -52,7 +52,7 @@ export async function duplicateProduct(
 		const sourceProduct = await getProductForDuplication(productId);
 
 		if (!sourceProduct) {
-			return notFound("Le produit source");
+			return notFound("Produit source");
 		}
 
 		// 5. Dupliquer le produit et ses SKUs dans une transaction

@@ -20,7 +20,7 @@
 import { createHash } from "node:crypto";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { OrderStatus, PaymentStatus, type Order } from "@/app/generated/prisma/client";
 
 const integrationEnabled = Boolean(process.env.INTEGRATION_DATABASE_URL);
@@ -51,50 +51,14 @@ vi.mock("@/modules/emails/services/admin-emails", () => ({
 
 import { archiveInvoicePdf } from "../archive-invoice-pdf.service";
 
-async function createPaidOrder(
-	prisma: ReturnType<typeof getIntegrationPrismaClient>,
-	userId: string,
-	skuId: string,
-): Promise<Order> {
-	return prisma.order.create({
-		data: {
-			userId,
-			orderNumber: `SYN-ARCH-${Date.now()}`,
-			customerEmail: "arch@test.local",
-			customerName: "Archive Test",
-			shippingFirstName: "Arc",
-			shippingLastName: "Hive",
-			shippingAddress1: "1 rue",
-			shippingPostalCode: "75001",
-			shippingCity: "Paris",
-			shippingCountry: "FR",
-			shippingPhone: "+33600000000",
-			status: OrderStatus.PROCESSING,
-			paymentStatus: PaymentStatus.PAID,
-			paidAt: new Date(),
-			stripePaymentIntentId: `pi_arch_${Date.now()}`,
-			subtotal: 4999,
-			total: 4999,
-			paymentMethod: "CARD",
-			invoiceNumber: `F-${new Date().getFullYear()}-${Date.now().toString().slice(-5).padStart(5, "0")}`,
-			invoiceStatus: "GENERATED",
-			invoiceGeneratedAt: new Date(),
-			items: {
-				create: [
-					{
-						skuId,
-						quantity: 1,
-						productTitle: "Archive Test",
-						price: 4999,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: 4999,
-						lineTotalIncludingTax: 4999,
-						taxCategoryCode: "ZB",
-					},
-				],
-			},
-		},
+async function createPaidOrder(skuId: string): Promise<Order> {
+	return createTestOrder([{ skuId, productTitle: "Archive Test" }], {
+		status: OrderStatus.PROCESSING,
+		paymentStatus: PaymentStatus.PAID,
+		// Facture déjà numérotée : c'est l'ARCHIVAGE du PDF qui est le sujet.
+		invoiceNumber: `F-${new Date().getFullYear()}-${Date.now().toString().slice(-5).padStart(5, "0")}`,
+		invoiceStatus: "GENERATED",
+		invoiceGeneratedAt: new Date(),
 	});
 }
 
@@ -106,10 +70,9 @@ describeIntegration("archiveInvoicePdf — hash verification (EINV-TEST-013)", (
 	});
 
 	it("hash persisté = SHA-256(buffer) — vérification déterministe", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		const order = await createPaidOrder(prisma, user.id, sku.id);
+		const order = await createPaidOrder(sku.id);
 
 		// Buffer test déterministe (4 bytes "PDF" header simulé)
 		const pdfBuffer = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37]);
@@ -132,10 +95,9 @@ describeIntegration("archiveInvoicePdf — hash verification (EINV-TEST-013)", (
 
 	it("idempotence — 2e appel sur même order retourne le hash existant SANS ré-uploader", async () => {
 		const { utapi } = await import("@/shared/lib/uploadthing");
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		const order = await createPaidOrder(prisma, user.id, sku.id);
+		const order = await createPaidOrder(sku.id);
 
 		const pdfBuffer = new Uint8Array([1, 2, 3, 4]);
 
@@ -155,10 +117,9 @@ describeIntegration("archiveInvoicePdf — hash verification (EINV-TEST-013)", (
 	});
 
 	it("idempotence — 2e appel avec buffer DIFFÉRENT retourne le hash original (immuabilité Art. L102 B)", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		const order = await createPaidOrder(prisma, user.id, sku.id);
+		const order = await createPaidOrder(sku.id);
 
 		const buf1 = new Uint8Array([0x00, 0x11, 0x22, 0x33]);
 		const hash1 = createHash("sha256").update(buf1).digest("hex");

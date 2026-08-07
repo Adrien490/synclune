@@ -13,6 +13,7 @@ const {
 	mockError,
 	mockEnforceRateLimit,
 	mockCheckRateLimit,
+	mockGetRateLimitId,
 } = vi.hoisted(() => ({
 	mockAuth: {
 		api: {
@@ -24,11 +25,17 @@ const {
 	mockError: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
+	mockGetRateLimitId: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+	// Le compteur par email-cible passe l'IP en 3ᵉ argument de `checkRateLimit` :
+	// sans elle, `effectiveIp` vaut `null` et whitelist, blacklist ET plafond
+	// global 100/min/IP sont inertes pour cet appel (l'identifiant `password-reset-email:`
+	// défait l'extraction automatique, qui n'opère que sur un préfixe `ip:`).
+	getRateLimitId: mockGetRateLimitId,
 }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
@@ -70,6 +77,7 @@ describe("requestPasswordReset", () => {
 		vi.resetAllMocks();
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
+		mockGetRateLimitId.mockResolvedValue({ identifier: "ip:192.0.2.1", ipAddress: "192.0.2.1" });
 		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 2, limit: 3, reset: 0 });
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.requestPasswordReset.mockResolvedValue({});
@@ -151,6 +159,11 @@ describe("requestPasswordReset", () => {
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"password-reset-email:victim@example.com",
 			expect.objectContaining({ limit: 3 }),
+			// ⚠️ 3ᵉ argument OBLIGATOIRE : l'identifiant `password-reset-email:` défait
+			// l'extraction automatique de l'IP (qui n'opère que sur un préfixe `ip:`),
+			// donc sans lui `effectiveIp` vaut `null` et whitelist, blacklist ET plafond
+			// global 100/min/IP deviennent inertes pour cet appel.
+			"192.0.2.1",
 		);
 	});
 });

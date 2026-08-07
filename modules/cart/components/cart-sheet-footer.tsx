@@ -153,7 +153,7 @@ export function CartSheetFooter({
 					<button
 						type="button"
 						onClick={onClose}
-						className="text-muted-foreground can-hover:hover:text-foreground focus-visible:ring-ring rounded-sm text-sm underline underline-offset-4 transition-colors group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+						className="focus-ring text-muted-foreground can-hover:hover:text-foreground rounded-sm text-sm underline underline-offset-4 transition-colors group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50"
 					>
 						Continuer mes achats
 					</button>

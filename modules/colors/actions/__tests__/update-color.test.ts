@@ -141,7 +141,7 @@ describe("updateColor", () => {
 			undefined,
 			createMockFormData({ id: COLOR_ID, name: "Or Rose", hex: "#B76E79" }),
 		);
-		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("existe deja"));
+		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("existe déjà"));
 	});
 
 	it("does not check uniqueness when name and hex unchanged", async () => {

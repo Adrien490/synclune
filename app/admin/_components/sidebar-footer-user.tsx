@@ -18,7 +18,7 @@ import {
 } from "@/shared/components/ui/sidebar";
 
 import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "./keyboard-shortcuts.constants";

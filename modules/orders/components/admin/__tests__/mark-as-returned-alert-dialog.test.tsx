@@ -24,7 +24,7 @@ let mockDialogState = {
 
 let mockIsPending = false;
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => mockDialogState,
 }));
 

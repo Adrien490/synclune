@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 
 import { QUICK_SEARCH_DIALOG_ID } from "./constants";
 import { QuickSearchKeyboardShortcut } from "./quick-search-keyboard-shortcut";

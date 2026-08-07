@@ -116,38 +116,12 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 	};
 }
 
-/**
- * Récupère le prix principal (priceInclTax pour affichage client)
- * Inclut compareAtPrice pour affichage des promotions
- *
- * @warning Retourne price: 0 si aucun SKU actif n'existe.
- * Cela peut indiquer un problème de données (produit sans variantes).
+/*
+ * ⚠️ `getPrimaryPriceForList` a été retiré le 2026-08-07 : son seul appelant
+ * était `ProductCarouselUI`, composant mort supprimé le même jour. Les cartes
+ * produit lisent le prix via `getProductDisplayData` ci-dessous, qui gère en
+ * plus la couleur préférée et la fourchette multi-SKU.
  */
-export function getPrimaryPriceForList(product: ProductFromList): {
-	price: number;
-	compareAtPrice: number | null;
-} {
-	// SKU principal depuis la liste
-	const primarySku = getPrimarySkuForList(product);
-	if (primarySku) {
-		return {
-			price: primarySku.priceInclTax,
-			compareAtPrice: primarySku.compareAtPrice ?? null,
-		};
-	}
-
-	// Pas de SKU actif - log warning en dev pour détecter les données manquantes
-	if (process.env.NODE_ENV === "development") {
-		logger.warn(`Product "${product.slug}" has no active SKU. Returning price: 0`, {
-			service: "product-display",
-		});
-	}
-
-	return {
-		price: 0,
-		compareAtPrice: null,
-	};
-}
 
 /**
  * Récupère l'image principale depuis le SKU principal ou SKUs

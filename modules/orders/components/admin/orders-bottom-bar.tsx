@@ -10,7 +10,7 @@ import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { SORT_LABELS } from "../../constants/order.constants";
-import { OrdersFilterDrawer } from "./orders-filter-drawer";
+import { OrdersFilterSheet } from "./orders-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, label]) => ({
 	value,
@@ -78,9 +78,15 @@ function OrdersBottomBarInner() {
 				id={IDS.sort}
 			/>
 
-			<OrdersFilterDrawer
+			{/* Feuille UNIQUE de la page — le déclencheur desktop est un
+			    `<FilterTriggerButton />` qui ouvre ce même tiroir du `SheetStore`.
+			    Elle remplace `orders-filter-drawer.tsx` (331 l., supprimé le
+			    2026-08-07) : les deux traitaient les mêmes onze `filter_*`, et
+			    `FilterSheetWrapper` bascule déjà bottom-sheet ↔ right-sheet. */}
+			<OrdersFilterSheet
 				open={isOpen("filter")}
 				onOpenChange={onOpenChange("filter")}
+				hideTrigger
 				id={IDS.filter}
 			/>
 		</>

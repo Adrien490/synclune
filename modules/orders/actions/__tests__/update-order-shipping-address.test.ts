@@ -90,6 +90,8 @@ vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
 		NOT_FOUND: "La commande n'existe pas.",
 		CANNOT_UPDATE_ADDRESS_SHIPPED: "Impossible de modifier l'adresse d'une commande deja expediee.",
+		CANNOT_UPDATE_ADDRESS_CREDIT_NOTE: "Un avoir a ete emis pour cette commande.",
+		CANNOT_UPDATE_ADDRESS_INVOICE_ARCHIVING: "La facture est en cours d'archivage.",
 		UPDATE_SHIPPING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse.",
 	},
 }));
@@ -126,6 +128,7 @@ const validFormData = createMockFormData({
 	shippingPostalCode: "75008",
 	shippingCity: "Paris",
 	shippingCountry: "FR",
+	shippingPhone: "+33612345678",
 });
 
 const validParsedData = {
@@ -137,6 +140,10 @@ const validParsedData = {
 	shippingPostalCode: "75008",
 	shippingCity: "Paris",
 	shippingCountry: "FR",
+	// Manquait jusqu'au 2026-08-07 : la colonne est NOT NULL et l'action applique un
+	// repli `""`, mais aucune fixture ne portait le champ — donc ni le mapping ni le
+	// repli n'étaient exercés.
+	shippingPhone: "+33612345678",
 };
 
 function createOrderForAddressUpdate(overrides: Record<string, unknown> = {}) {
@@ -290,16 +297,133 @@ describe("updateOrderShippingAddress", () => {
 		expect(result.message).toContain("expediee");
 	});
 
+	// ==========================================================================
+	// GARDES COMPTABLES (audit invariant 5, 2026-08-07)
+	//
+	// Depuis le drop des colonnes `billing*` (2026-08-04), `shipping*` EST l'adresse
+	// imprimée sous « Facturé à ». Deux fenêtres où la réécrire corromprait une pièce
+	// scellée — et UNE troisième, la plus fréquente, où elle doit rester permise.
+	// ==========================================================================
+
+	it("REFUSE l'édition quand un avoir a déjà été émis", async () => {
+		// L'avoir est rendu depuis ces colonnes VIVANTES puis archivé : le rééditer
+		// ferait diverger l'avoir de la facture qu'il corrige (Art. 272-I CGI).
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				mockPrisma.order.findUnique.mockResolvedValue(
+					createOrderForAddressUpdate({
+						status: "PROCESSING",
+						invoiceNumber: "F-2026-00042",
+						invoicePdfUrl: "https://uploadthing.example/f.pdf",
+						creditNoteNumber: "A-2026-00007",
+					}),
+				);
+				return fn(mockPrisma);
+			},
+		);
+
+		const result = await updateOrderShippingAddress(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("avoir");
+		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
+	});
+
+	it("REFUSE l'édition tant que la facture numérotée n'a pas d'archive", async () => {
+		// `reconcile-invoices` va REGÉNÉRER le PDF depuis ces colonnes et le sceller
+		// sous SHA-256 pour dix ans (Art. L102 B LPF). Le cron passe une fois par jour
+		// (plafond Hobby) : éditer dans cette fenêtre grave la correction dans la pièce
+		// comptable. Refus TEMPORAIRE — d'où le libellé « réessaie plus tard ».
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				mockPrisma.order.findUnique.mockResolvedValue(
+					createOrderForAddressUpdate({
+						status: "PROCESSING",
+						invoiceNumber: "F-2026-00042",
+						invoicePdfUrl: null,
+					}),
+				);
+				return fn(mockPrisma);
+			},
+		);
+
+		const result = await updateOrderShippingAddress(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("archivage");
+		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+	});
+
+	it("AUTORISE l'édition sur une facture émise ET archivée (le cas nominal)", async () => {
+		// ⚠️ L'assertion qui compte le plus de cette section. Un gate dur
+		// `invoiceNumber !== null` serait le mauvais correctif : le numéro est posé dans
+		// les SECONDES suivant le paiement, donc corriger une rue avant expédition — le
+		// cas d'usage réel, un colis mal adressé — deviendrait impossible. C'est ce qui
+		// avait rendu `update-order-billing-address` inutile avant sa suppression.
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				mockPrisma.order.findUnique.mockResolvedValue(
+					createOrderForAddressUpdate({
+						status: "PROCESSING",
+						invoiceNumber: "F-2026-00042",
+						invoicePdfUrl: "https://uploadthing.example/f.pdf",
+					}),
+				);
+				return fn(mockPrisma);
+			},
+		);
+
+		const result = await updateOrderShippingAddress(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.order.update).toHaveBeenCalled();
+		// La facture archivée conserve l'adresse précédente : l'audit immuable est le
+		// seul endroit où cet écart reste lisible dix ans plus tard.
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
+			mockPrisma,
+			expect.objectContaining({
+				metadata: expect.objectContaining({ invoiceAlreadyIssued: true }),
+			}),
+		);
+	});
+
 	// Success path
 	it("should update address and return success for UNFULFILLED order", async () => {
 		const result = await updateOrderShippingAddress(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("SYN-2026-0001");
+		// ⚠️ Le bloc `data` n'était PAS inspecté sur le chemin nominal jusqu'au
+		// 2026-08-07 : seul le `where` l'était. Une inversion de mapping (ville ↔ code
+		// postal) serait passée au vert. Les 8 colonnes, en valeur.
 		expect(mockPrisma.order.update).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: VALID_CUID },
+				data: {
+					shippingFirstName: "Jean",
+					shippingLastName: "Martin",
+					shippingAddress1: "5 Avenue des Champs",
+					shippingAddress2: "Apt 3",
+					shippingPostalCode: "75008",
+					shippingCity: "Paris",
+					shippingCountry: "FR",
+					shippingPhone: "+33612345678",
+				},
 			}),
+		);
+	});
+
+	it("retombe sur la chaîne vide quand le téléphone est vidé (colonne NOT NULL)", async () => {
+		mockSchemaSafeParse.mockReturnValue({
+			success: true,
+			data: { ...validParsedData, shippingPhone: undefined },
+		});
+
+		await updateOrderShippingAddress(undefined, validFormData);
+
+		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+			expect.objectContaining({ data: expect.objectContaining({ shippingPhone: "" }) }),
 		);
 	});
 
@@ -357,7 +481,7 @@ describe("updateOrderShippingAddress", () => {
 				orderId: VALID_CUID,
 				action: "ADDRESS_UPDATED",
 				authorName: "Admin",
-				note: "Adresse de livraison modifiee",
+				note: "Adresse de livraison modifiée",
 				metadata: expect.objectContaining({
 					addressType: "shipping",
 					changedFields: expect.arrayContaining(["shippingFirstName", "shippingAddress1"]),

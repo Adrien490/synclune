@@ -72,7 +72,7 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: () => ({
 		isOpen: mockIsOpen.current,
 		open: mockOpenMenu,

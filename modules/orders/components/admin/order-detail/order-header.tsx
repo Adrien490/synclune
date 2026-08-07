@@ -26,7 +26,7 @@ import {
 	type ActionMenuSection,
 } from "@/shared/components/responsive-action-menu";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { MARK_AS_PAID_DIALOG_ID } from "../mark-as-paid-alert-dialog";
 import { MARK_AS_SHIPPED_DIALOG_ID } from "../mark-as-shipped-dialog";
 import { MARK_AS_DELIVERED_DIALOG_ID } from "../mark-as-delivered-alert-dialog";

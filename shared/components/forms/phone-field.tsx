@@ -79,7 +79,7 @@ export const PhoneField = ({
 }: PhoneFieldProps) => {
 	const field = useFieldContext<string | undefined>();
 
-	const hasError = useFieldErrorVisibility(field);
+	const { visible: hasError, announce } = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -117,6 +117,7 @@ export const PhoneField = ({
 				</p>
 			)}
 			<FieldError
+				live={announce}
 				id={`${field.name}-error`}
 				errors={hasError ? field.state.meta.errors : undefined}
 			/>

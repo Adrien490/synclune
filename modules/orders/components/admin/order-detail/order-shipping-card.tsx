@@ -8,7 +8,7 @@ import { estimateDeliveryDate } from "@/modules/orders/services/shipping.service
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { UPDATE_TRACKING_DIALOG_ID } from "../update-tracking-dialog";
 import { CopyButton } from "@/shared/components/copy-button";

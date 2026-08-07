@@ -40,23 +40,25 @@ const BODY = "modules/payments/components/checkout-form-body.tsx";
 const FIELDS = "modules/payments/components/checkout-address-fields.tsx";
 
 describe("Verrou de montant — l'adresse reste corrigeable", () => {
-	it("le fieldset disabled n'enferme PLUS les sections Contact et Livraison", () => {
+	it("aucun <fieldset disabled> ne subsiste — il ne gelait RIEN", () => {
+		// ⚠️ Ce test exigeait naguère la PRÉSENCE d'un `<fieldset disabled={isAmountLocked}>`
+		// autour de « Frais et délai de livraison ». Il verrouillait un mécanisme mort :
+		// `ShippingMethodSection` est en LECTURE SEULE — pas un seul contrôle de
+		// formulaire — et le `disabled` d'un fieldset ne désactive que les contrôles
+		// qu'il contient. Il n'en désactivait donc aucun, tandis que sa `<legend>`
+		// sr-only annonçait un groupe de saisie inexistant (audit a11y 2026-08-07).
+		//
+		// Le gel réel n'a jamais vécu là : il vit sur les deux champs tarifaires.
 		const source = stripComments(readSource(BODY));
-		const fieldset = /<fieldset disabled=\{isAmountLocked\}[\s\S]*?<\/fieldset>/.exec(source);
-
-		expect(fieldset, "aucun <fieldset disabled={isAmountLocked}> trouvé").not.toBeNull();
-		expect(fieldset![0]).not.toMatch(/<CheckoutContactSection/);
-		expect(fieldset![0]).not.toMatch(/<CheckoutAddressFields/);
+		expect(source).not.toMatch(/<fieldset disabled=\{isAmountLocked\}/);
 	});
 
-	it("le fieldset disabled couvre TOUJOURS ce qui porte le montant", () => {
-		// L'autre moitié de l'invariant : relâcher le gel sur les frais de livraison
-		// laisserait le CTA suivre des modifications qui ne seront jamais débitées.
-		// (La section code promo a disparu avec les `Discount`, 2026-08-05.)
+	it("les sections Contact et Livraison ne sont enfermées dans AUCUN fieldset gelé", () => {
 		const source = stripComments(readSource(BODY));
-		const fieldset = /<fieldset disabled=\{isAmountLocked\}[\s\S]*?<\/fieldset>/.exec(source);
-
-		expect(fieldset![0]).toMatch(/<ShippingMethodSection/);
+		for (const fieldset of source.matchAll(/<fieldset[^>]*disabled[\s\S]*?<\/fieldset>/g)) {
+			expect(fieldset[0]).not.toMatch(/<CheckoutContactSection/);
+			expect(fieldset[0]).not.toMatch(/<CheckoutAddressFields/);
+		}
 	});
 
 	it("CheckoutAddressFields reçoit lockDestination piloté par le verrou", () => {
@@ -84,15 +86,36 @@ describe("Verrou de montant — l'adresse reste corrigeable", () => {
 			]),
 		);
 
-		// …et exactement deux `disabled={lockDestination}` sont posés.
-		const disabledCount = [...source.matchAll(/disabled=\{lockDestination\}/g)].length;
-		expect(disabledCount).toBe(2);
+		// …et exactement DEUX champs sont gelés — les deux tarifaires, pas un de plus.
+		const frozen = [...source.matchAll(/(?:disabled|readOnly)=\{lockDestination\}/g)].length;
+		expect(frozen).toBe(2);
 
-		// Chacun dans le bloc du champ tarifaire correspondant.
 		const postalBlock = /name="shipping\.postalCode"[\s\S]*?<\/form\.AppField>/.exec(source);
 		const countryBlock = /name="shipping\.country"[\s\S]*?<\/form\.AppField>/.exec(source);
-		expect(postalBlock![0]).toMatch(/disabled=\{lockDestination\}/);
+
+		// ⚠️ Le code postal est `readOnly`, PAS `disabled` : un `<input disabled>` sort
+		// de l'ordre de tabulation et son `aria-describedby` n'est pas lu en mode
+		// formulaire. Au clavier le champ s'évaporait, sans motif (audit a11y
+		// 2026-08-07). Le `<select>` du pays n'a pas d'équivalent `readOnly` et reste
+		// `disabled` — d'où l'exigence de `description` ci-dessous, qui porte le motif
+		// dans le flux de lecture.
+		expect(postalBlock![0]).toMatch(/readOnly=\{lockDestination\}/);
+		expect(postalBlock![0]).not.toMatch(/disabled=\{lockDestination\}/);
 		expect(countryBlock![0]).toMatch(/disabled=\{lockDestination\}/);
+	});
+
+	it("chaque champ gelé EXPLIQUE pourquoi il l'est", () => {
+		// Le motif vivait uniquement dans une alerte située ailleurs dans le DOM, en
+		// amont, sans aucun lien programmatique — et jamais annoncée après un
+		// rechargement (la région live y naît déjà peuplée).
+		const source = stripComments(readSource(FIELDS));
+		const postalBlock = /name="shipping\.postalCode"[\s\S]*?<\/form\.AppField>/.exec(source);
+		const countryBlock = /name="shipping\.country"[\s\S]*?<\/form\.AppField>/.exec(source);
+
+		for (const block of [postalBlock![0], countryBlock![0]]) {
+			expect(block).toMatch(/description=\{\s*lockDestination/);
+			expect(block).toMatch(/frais de livraison/);
+		}
 	});
 
 	it("aucun réécrivain d'adresse en bloc ne peut contourner le gel", () => {

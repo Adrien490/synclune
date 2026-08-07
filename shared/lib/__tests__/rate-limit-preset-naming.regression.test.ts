@@ -16,7 +16,6 @@
  * ce que le type ne peut pas voir : chaîne vide, casse incohérente, et surtout
  * collision de noms entre deux presets distincts.
  *
- * @see docs/KNOWN-ISSUES.md — KI-004
  */
 
 import { describe, it, expect } from "vitest";

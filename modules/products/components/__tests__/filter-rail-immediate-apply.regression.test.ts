@@ -78,6 +78,19 @@ describe("@regression filter-rail-immediate-apply", () => {
 		}
 	});
 
+	it("le prefetch d'intention ne se déclenche QUE sur un changement de path", () => {
+		// `router.prefetch` réchauffe l'App Shell de la route cible : une invocation
+		// serveur par survol. Sur un raffinement qui reste sur la même route
+		// (couleur, matière, prix), il n'y a rien à précharger — et à ~10 familles
+		// sur un plan Neon Free, un prefetch inconditionnel serait tout sauf gratuit.
+		const prefetch = HOOK.slice(HOOK.indexOf("prefetchToken:"));
+		expect(prefetch, "le prefetch d'intention a disparu du hook").toContain("router.prefetch");
+		expect(
+			prefetch.slice(0, prefetch.indexOf("router.prefetch")),
+			"`router.prefetch` doit être gardé par `targetPath !== pathname`.",
+		).toMatch(/targetPath !== pathname/);
+	});
+
 	it("push quand le PATH change, replace sinon (historique utilisable)", () => {
 		// `/produits` ↔ `/produits/[slug]` est un vrai changement de page, que le
 		// bouton Retour doit défaire ; un raffinement de filtre ne doit pas empiler

@@ -52,7 +52,7 @@ vi.mock("@/shared/hooks/use-mounted", () => ({
 	useMounted: mockUseMounted,
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: mockUseDialog,
 }));
 

@@ -82,6 +82,13 @@ export interface ProductFilterCompartmentsProps {
 		slug: string,
 		checked: boolean,
 	) => void;
+	/**
+	 * Intention de coche (survol / focus), AVANT le clic — câblée au seul
+	 * compartiment « Types de bijoux », qui est le seul à changer de path.
+	 * Fournie par l'hôte qui applique à la coche (le rail) ; le panneau mobile
+	 * n'applique qu'au bouton, il n'a rien à précharger d'avance.
+	 */
+	onTypeIntent?: (slug: string, checked: boolean) => void;
 	onPriceChange: (value: [number, number]) => void;
 	/**
 	 * Commit du prix au relâchement seulement — pour un hôte qui applique à la
@@ -124,6 +131,7 @@ export function ProductFilterCompartments({
 	values,
 	counts,
 	onToggle,
+	onTypeIntent,
 	onPriceChange,
 	onPriceCommit,
 	onAvailabilityChange,
@@ -190,6 +198,7 @@ export function ProductFilterCompartments({
 						productTypes={sortedProductTypes}
 						selectedValues={values.productTypes}
 						onToggle={(slug, checked) => onToggle("productTypes", slug, checked)}
+						onIntent={onTypeIntent}
 					/>
 				</FilterCompartment>
 			)}

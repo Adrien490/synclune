@@ -48,7 +48,7 @@ describe("responses", () => {
 	});
 
 	describe("notFound", () => {
-		it("returns NOT_FOUND status with masculine gendering", () => {
+		it("returns NOT_FOUND status with masculine gendering by default", () => {
 			const result = notFound("Produit");
 			expect(result).toEqual({
 				status: ActionStatus.NOT_FOUND,
@@ -56,14 +56,21 @@ describe("responses", () => {
 			});
 		});
 
-		it("adds feminine gendering when resource ends with 'e'", () => {
-			const result = notFound("Commande");
-			expect(result.message).toBe("Commande non trouvée");
+		it("agrees at the feminine when the genre is declared", () => {
+			expect(notFound("Commande", "f").message).toBe("Commande non trouvée");
 		});
 
-		it("keeps masculine for resource not ending in 'e'", () => {
-			const result = notFound("Coupon");
-			expect(result.message).toBe("Coupon non trouvé");
+		it("keeps the masculine on a noun ending with 'e'", () => {
+			// L'ancienne heuristique `resource.endsWith("e")` accordait au féminin ici :
+			// le `e` final appartenait à l'ÉPITHÈTE, pas au nom.
+			expect(notFound("Produit source").message).toBe("Produit source non trouvé");
+		});
+
+		it("agrees at the feminine on a noun NOT ending with 'e'", () => {
+			// Symétrique du cas précédent : « Collection » et « Couleur » rendaient
+			// « non trouvé » sur un nom féminin.
+			expect(notFound("Collection", "f").message).toBe("Collection non trouvée");
+			expect(notFound("Couleur", "f").message).toBe("Couleur non trouvée");
 		});
 	});
 
@@ -72,7 +79,7 @@ describe("responses", () => {
 			const result = unauthorized();
 			expect(result).toEqual({
 				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour effectuer cette action",
+				message: "Connecte-toi pour effectuer cette action.",
 			});
 		});
 

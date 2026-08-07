@@ -40,8 +40,11 @@ export default function CheckoutCancelError({
 		});
 	}, [error]);
 
+	// `<div>`, pas `<main>` : `app/paiement/layout.tsx` en rend déjà un, et une
+	// frontière d'erreur s'affiche À L'INTÉRIEUR du layout — d'où deux landmarks
+	// `main` imbriqués dès qu'elle se déclenche. Audit a11y 2026-08-07.
 	return (
-		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-[60dvh] items-start justify-center bg-linear-to-br px-4 pt-12 md:items-center md:pt-24">
+		<div className="from-background via-primary/5 to-secondary/10 relative flex min-h-[60dvh] items-start justify-center bg-linear-to-br px-4 pt-12 md:items-center md:pt-24">
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={
@@ -100,6 +103,6 @@ export default function CheckoutCancelError({
 					}
 				/>
 			</div>
-		</main>
+		</div>
 	);
 }

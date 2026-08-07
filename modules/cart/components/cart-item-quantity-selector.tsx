@@ -15,6 +15,18 @@ interface CartItemQuantitySelectorProps {
 	currentQuantity: number;
 	maxQuantity: number;
 	isInactive: boolean;
+	/**
+	 * Titre du produit, pour désambiguïser les commandes ligne par ligne.
+	 *
+	 * ⚠️ Sans lui, les boutons +/- s'appelaient « Diminuer la quantité » /
+	 * « Augmenter la quantité » **à l'identique sur toutes les lignes** du panier.
+	 * En lecture linéaire le contexte existe (l'`<article>` porte le titre), mais
+	 * dans un rotor « boutons » — la façon dont on navigue vraiment un panier — les
+	 * paires étaient indiscernables. Le bouton Supprimer, lui, était déjà nommé par
+	 * article (`Supprimer ${itemName} du panier`) : c'est cette cohérence qu'on
+	 * rétablit. Audit a11y checkout 2026-08-07.
+	 */
+	itemName: string;
 }
 
 /**
@@ -31,6 +43,7 @@ export function CartItemQuantitySelector({
 	currentQuantity,
 	maxQuantity,
 	isInactive,
+	itemName,
 }: CartItemQuantitySelectorProps) {
 	const [isPending, startTransition] = useTransition();
 	const [optimisticQuantity, setOptimisticQuantity] = useOptimistic(currentQuantity);
@@ -90,7 +103,7 @@ export function CartItemQuantitySelector({
 	return (
 		<div
 			role="group"
-			aria-label={`Quantité de l'article, actuellement ${optimisticQuantity}`}
+			aria-label={`Quantité de ${itemName}, actuellement ${optimisticQuantity}`}
 			aria-busy={isLoading}
 			/*
 			 * `data-pending` est le JUMEAU DE STYLE d'`aria-busy` ci-dessus : même
@@ -116,7 +129,9 @@ export function CartItemQuantitySelector({
 					onClick={() => handleQuantityChange(optimisticQuantity - 1)}
 					disabled={isInactive || isLoading || optimisticQuantity <= 1}
 					aria-label={
-						optimisticQuantity <= 1 ? "Quantité minimale atteinte" : "Diminuer la quantité"
+						optimisticQuantity <= 1
+							? `Quantité minimale atteinte pour ${itemName}`
+							: `Diminuer la quantité de ${itemName}`
 					}
 				>
 					<MinusIcon className="size-4" aria-hidden="true" />
@@ -156,8 +171,8 @@ export function CartItemQuantitySelector({
 					disabled={isInactive || isLoading || optimisticQuantity >= maxQuantity}
 					aria-label={
 						optimisticQuantity >= maxQuantity
-							? "Quantité maximale atteinte"
-							: "Augmenter la quantité"
+							? `Quantité maximale atteinte pour ${itemName}`
+							: `Augmenter la quantité de ${itemName}`
 					}
 				>
 					<PlusIcon className="size-4" aria-hidden="true" />

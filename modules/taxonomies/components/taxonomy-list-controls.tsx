@@ -8,9 +8,10 @@ import { AdminSortBadge } from "@/shared/components/admin/admin-sort-badge";
 import { RefreshButton } from "@/shared/components/refresh-button";
 import { Button } from "@/shared/components/ui/button";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 
-import type { TaxonomyConfig } from "../types/taxonomy.types";
+import { TAXONOMY_CONFIG } from "../config/taxonomy.config";
+import type { TaxonomyConfig, TaxonomyKind } from "../types/taxonomy.types";
 
 /**
  * Contrôles de liste partagés par les trois taxonomies.
@@ -24,7 +25,20 @@ import type { TaxonomyConfig } from "../types/taxonomy.types";
 // CHIP DE TRI (mobile)
 // ============================================================================
 
-export function TaxonomySortBadge({ config }: { config: TaxonomyConfig }) {
+/**
+ * ⚠️ Prend un `kind` (chaîne), pas l'objet `config`.
+ *
+ * Ce composant est `"use client"` et monté depuis des Server Components : un
+ * `TaxonomyConfig` passé en prop traverserait la frontière RSC — ~40 champs
+ * sérialisés à chaque rendu, pour une valeur que le client peut lire seul dans
+ * le registre. Le `kind` fait cinq caractères sur le fil.
+ *
+ * C'est aussi ce qui a permis de supprimer les fichiers-liants d'un composant
+ * (`colors-bottom-bar.tsx` et ses quatorze jumeaux, 8 à 13 lignes chacun) dont
+ * le corps entier était `return <Taxonomy… config={TAXONOMY_CONFIG.x} />`.
+ */
+export function TaxonomySortBadge({ kind }: { kind: TaxonomyKind }) {
+	const config = TAXONOMY_CONFIG[kind];
 	return <AdminSortBadge sortLabels={config.sortLabels} defaultSort={config.defaultSort} />;
 }
 
@@ -36,7 +50,8 @@ export function TaxonomySortBadge({ config }: { config: TaxonomyConfig }) {
  * Sur mobile on navigue vers la page dédiée (le dialog est trop à l'étroit) ;
  * sur desktop on ouvre le dialog de formulaire.
  */
-export function CreateTaxonomyButton({ config }: { config: TaxonomyConfig }) {
+export function CreateTaxonomyButton({ kind }: { kind: TaxonomyKind }) {
+	const config = TAXONOMY_CONFIG[kind];
 	const { open } = useDialog(config.formDialogId);
 	const isMobile = useIsMobile();
 	const router = useRouter();

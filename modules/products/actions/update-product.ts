@@ -132,7 +132,7 @@ export async function updateProduct(
 		});
 
 		if (!existingProduct) {
-			return notFound("Le produit");
+			return notFound("Produit");
 		}
 
 		// Verifier que le SKU existe et appartient au produit.
@@ -148,7 +148,7 @@ export async function updateProduct(
 		});
 
 		if (!existingSku) {
-			return notFound("La variante");
+			return notFound("Variante", "f");
 		}
 
 		// 5. Validation metier : refus de DESACTIVER la variante principale (alignement

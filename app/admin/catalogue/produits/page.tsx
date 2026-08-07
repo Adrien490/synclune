@@ -1,3 +1,4 @@
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { Toolbar } from "@/shared/components/toolbar";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { PageHeader } from "@/shared/components/page-header";
@@ -25,7 +26,6 @@ import { ProductsFilterBadges } from "@/modules/products/components/admin/produc
 import { ProductsBottomBar } from "@/modules/products/components/admin/products-bottom-bar";
 import { ProductsMobileList } from "@/modules/products/components/admin/products-mobile-list";
 import { ProductsMobileListSkeleton } from "@/modules/products/components/admin/products-mobile-list-skeleton";
-import { ProductsFilterSheet } from "@/modules/products/components/admin/products-filter-sheet";
 import { ProductsSortBadge } from "@/modules/products/components/admin/products-sort-badge";
 import { RefreshProductsButton } from "@/modules/products/components/admin/refresh-products-button";
 import { parseFilters } from "./_utils/params";
@@ -201,13 +201,7 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 					noPrefix
 				/>
 				<ButtonGroup aria-label="Filtres et actions">
-					<ProductsFilterSheet
-						productTypes={productTypes}
-						collections={collections}
-						colors={colors}
-						materials={materials}
-						maxPriceInCents={maxPriceInCents}
-					/>
+					<FilterTriggerButton />
 					<RefreshProductsButton />
 				</ButtonGroup>
 			</Toolbar>

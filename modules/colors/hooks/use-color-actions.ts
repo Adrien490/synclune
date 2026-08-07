@@ -13,8 +13,8 @@ import { useRouter } from "next/navigation";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/view-transition";
 

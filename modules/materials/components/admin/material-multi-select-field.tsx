@@ -9,7 +9,7 @@ import { MultiSelect } from "@/shared/components/multi-select/multi-select";
 import { Button } from "@/shared/components/ui/button";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 
 interface MaterialOption {
 	id: string;

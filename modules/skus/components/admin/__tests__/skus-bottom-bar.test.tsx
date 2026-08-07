@@ -16,7 +16,7 @@ vi.mock("next/navigation", () => ({
 		has: (key: string) => mockSearchParamsHas(key),
 		get: (key: string) => mockSearchParamsGet(key),
 	}),
-	// `SheetStoreProvider` (requis ci-dessous) lit `usePathname` pour refermer
+	// `OverlayStoreProvider` (requis ci-dessous) lit `usePathname` pour refermer
 	// les tiroirs au changement de route.
 	usePathname: () => "/admin/catalogue/produits/anneau-lune/variantes",
 }));
@@ -98,7 +98,7 @@ vi.mock("@/shared/components/sticky-action-bar", () => ({
 // IMPORTS (after mocks)
 // ============================================================================
 
-import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
+import { OverlayStoreProvider } from "@/shared/providers/overlay-store-provider";
 import { SkusBottomBar } from "../skus-bottom-bar";
 
 // ============================================================================
@@ -121,7 +121,7 @@ beforeEach(() => {
 // autre sous-arbre de la page, puisse ouvrir le tiroir de la barre basse. Le
 // provider est global (`app/layout.tsx`) ; ici il faut le fournir explicitement.
 function renderBottomBar(ui: React.ReactElement) {
-	return render(<SheetStoreProvider>{ui}</SheetStoreProvider>);
+	return render(<OverlayStoreProvider>{ui}</OverlayStoreProvider>);
 }
 
 // ============================================================================

@@ -35,7 +35,7 @@ const { mockDialog, mockUseMarkAsShippedForm, mockUseStore, capturedOpenChange }
 	}),
 );
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => mockDialog,
 }));
 

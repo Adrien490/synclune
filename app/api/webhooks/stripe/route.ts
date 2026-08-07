@@ -15,6 +15,7 @@ import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.servic
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { STRIPE_WEBHOOK_LIMIT } from "@/shared/lib/rate-limit-config";
+import { STRIPE_API_VERSION } from "@/shared/constants/stripe-api-version";
 import * as Sentry from "@sentry/nextjs";
 
 export const maxDuration = 60;
@@ -56,8 +57,13 @@ export const maxDuration = 60;
  *       - la reprise d'un PROCESSING périmé (lambda crashée) sans avaler le retry
  *         Stripe NI barger-in sur un traitement concurrent : la fraîcheur est
  *         mesurée sur `processingStartedAt` (WEBHOOK-AUDIT-002), (re)posé à chaque
- *         passage en PROCESSING par la route ET le cron retry-webhooks, de sorte
- *         qu'une reprise fraîche court-circuite les arrivants pendant son exécution.
+ *         passage en PROCESSING, de sorte qu'une reprise fraîche court-circuite les
+ *         arrivants pendant son exécution.
+ *         ⚠️ Ce paragraphe nommait le cron `retry-webhooks` comme second claimeur
+ *         jusqu'au 2026-08-07 — il est parti le 2026-08-05 (KI-006). Le mécanisme
+ *         reste nécessaire à l'identique : ce sont désormais deux INSTANCES Vercel
+ *         concurrentes (ou deux redélivrances Stripe qui se croisent) qui se
+ *         disputent l'event, pas la route et un cron.
  *
  *  4. **Idempotence métier** (downstream) :
  *       - `Order.stripePaymentIntentId @unique` → pas de double order par PI
@@ -177,6 +183,63 @@ export async function POST(req: Request) {
 			return NextResponse.json({ received: true, status: "skipped" });
 		}
 
+		// 2ter. Cohérence de VERSION D'API (endpoint ↔ SDK).
+		//
+		// `06-api-versioning.md` et la checklist de mise en production disent la même
+		// chose : « les événements webhook sont structurés selon la version de l'API de
+		// votre COMPTE, sauf si vous définissez une version d'API lors de la création du
+		// endpoint ». Or `event-registry.ts` caste `event.data.object` vers les types du
+		// SDK installé (`STRIPE_API_VERSION`) sur les 5 familles d'objets, et RIEN ne
+		// vérifiait que l'endpoint livre bien cette version-là.
+		//
+		// Les 12 fixtures assertent `api_version` — mais elles sont écrites à la main
+		// (leur README le documente) : elles n'assertent donc rien sur la production. Une
+		// dérive se manifesterait par un champ `undefined` au fond d'un handler, donc par
+		// une commande non traitée ou un remboursement non ingéré, SANS AUCUN SIGNAL.
+		// C'était le seul endroit du tunnel où toute la couche de types reposait sur une
+		// configuration externe (le Dashboard) jamais assertée.
+		//
+		// Trois décisions, et elles se tiennent :
+		//  1. **On ne rejette JAMAIS.** Même raisonnement que la garde `livemode`
+		//     ci-dessus : un 4xx/5xx ferait retenter Stripe jusqu'à épuisement sur un
+		//     event authentique, que le retry ne rendra pas plus lisible. Les shapes
+		//     Stripe sont massivement rétro-compatibles — ce qu'on veut ici est le
+		//     SIGNAL, pas le blocage.
+		//  2. **On n'arbitre que sur une chaîne non vide.** Certains events portent
+		//     `api_version: null` ; traiter l'absence comme un désaccord produirait un
+		//     bruit permanent, exactement le défaut qu'un `!== expectsLiveEvents` nu
+		//     avait déjà causé sur `livemode`.
+		//  3. **Le fingerprint inclut la version reçue.** Sans elle, une seconde dérive
+		//     (après un bump) atterrirait dans le groupe Sentry de la première, déjà
+		//     résolu — donc invisible.
+		//
+		// Placé APRÈS la garde de mode : un event de sandbox est déjà écarté, inutile de
+		// remonter en plus sa version.
+		//
+		// La contrepartie opératoire est dans le RUNBOOK : épingler la version d'API sur
+		// l'endpoint dans le Dashboard, et la ré-épingler à chaque bump — c'est ce qui
+		// rend cette alerte muette en nominal.
+		if (typeof event.api_version === "string" && event.api_version !== STRIPE_API_VERSION) {
+			logger.warn("Webhook API version drift", {
+				correlationId,
+				eventId: event.id,
+				eventType: event.type,
+				eventApiVersion: event.api_version,
+				expectedApiVersion: STRIPE_API_VERSION,
+			});
+			Sentry.withScope((scope) => {
+				scope.setLevel("warning");
+				scope.setTag("webhookApiVersionDrift", "true");
+				scope.setFingerprint(["webhook", "api-version-drift", event.api_version ?? "unknown"]);
+				scope.setContext("webhook", {
+					eventApiVersion: event.api_version,
+					expectedApiVersion: STRIPE_API_VERSION,
+					eventType: event.type,
+				});
+				Sentry.captureMessage("Webhook API version drift", "warning");
+			});
+		}
+
 		// 3. IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
 		const existingEvent = await prisma.webhookEvent.findUnique({
 			where: { stripeEventId: event.id },
@@ -191,7 +254,7 @@ export async function POST(req: Request) {
 		});
 
 		// WEBHOOK-AUDIT-001 : un PROCESSING « frais » signale un traitement live
-		// concurrent (autre instance Vercel ou cron retry-webhooks) → on court-circuite
+		// concurrent (autre instance Vercel) → on court-circuite
 		// pour éviter le double-dispatch. Mais un PROCESSING « périmé »
 		// (> STALE_PROCESSING_THRESHOLD_MS, soit bien au-delà du maxDuration=60s de la
 		// route) trahit une lambda crashée en plein dispatch : si on renvoyait 200
@@ -202,10 +265,10 @@ export async function POST(req: Request) {
 		// WEBHOOK-AUDIT-002 : la fraîcheur se mesure sur `processingStartedAt` (DÉBUT du
 		// traitement courant, (re)posé à chaque passage en PROCESSING), PAS sur
 		// `receivedAt` (1ère réception, jamais rafraîchie). Sinon un PROCESSING
-		// fraîchement repris par le cron retry-webhooks (receivedAt ancien) était vu
-		// « périmé » par une redélivrance Stripe concurrente, qui barge-in et
-		// double-dispatchait l'event pendant que le cron le traitait encore. Fallback
-		// `receivedAt` pour les lignes legacy (processingStartedAt NULL avant migration).
+		// fraîchement repris (receivedAt ancien) était vu « périmé » par une
+		// redélivrance Stripe concurrente, qui barge-in et double-dispatchait l'event
+		// pendant qu'il était encore en cours de traitement. Fallback `receivedAt`
+		// pour les lignes legacy (processingStartedAt NULL avant migration).
 		const processingSince = existingEvent?.processingStartedAt ?? existingEvent?.receivedAt ?? null;
 		const isStaleProcessing =
 			existingEvent?.status === WebhookEventStatus.PROCESSING &&

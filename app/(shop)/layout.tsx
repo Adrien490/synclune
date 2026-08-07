@@ -20,9 +20,29 @@ interface ShopLayoutProps {
 
 export default function ShopLayout({ children }: ShopLayoutProps) {
 	return (
-		<Suspense>
+		<Suspense fallback={<ShopShellSkeleton />}>
 			<ShopLayoutContent>{children}</ShopLayoutContent>
 		</Suspense>
+	);
+}
+
+/**
+ * Coque servie tant que `getStoreStatus() + getSession()` n'ont pas résolu — et
+ * c'est aussi ce que PPR prérend dans le shell statique.
+ *
+ * ⚠️ Cette frontière n'avait **aucun** `fallback` jusqu'au 2026-08-07. Les deux
+ * `<Suspense fallback={<NavbarSkeleton />}>` / `{<FooterSkeleton />}` ci-dessous
+ * sont à l'INTÉRIEUR de `ShopLayoutContent` : ils ne pouvaient donc jamais
+ * s'afficher, et la boutique rendait du vide au lieu de sa coque. Les deux
+ * squelettes existaient, personne ne les voyait.
+ */
+function ShopShellSkeleton() {
+	return (
+		<>
+			<NavbarSkeleton />
+			<main id="main-content" data-shop-shell tabIndex={-1} className="min-h-dvh" />
+			<FooterSkeleton />
+		</>
 	);
 }
 

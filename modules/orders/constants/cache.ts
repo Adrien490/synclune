@@ -14,8 +14,13 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * `USER_ORDERS(userId)`, `LAST_ORDER(userId)` et `USERS_CACHE_TAGS.USER_ORDERS_COUNT(userId)`
  * ont disparu avec les seules entrées de cache qu'ils invalidaient — `getUserOrders`,
  * `getLastOrder` et `getUserDetailAdmin`. Une commande n'a plus de propriétaire
- * connecté : le suivi passe par `/suivi-commande` (token HMAC, tag `CONFIRMATION`)
- * et le détail admin par `DETAIL`.
+ * connecté : le détail admin passe par `DETAIL`, et la page de confirmation
+ * post-paiement par `CONFIRMATION`.
+ *
+ * ⚠️ `/suivi-commande` ne pose AUCUN tag : `getOrderForTracking` n'est délibérément
+ * pas cachée (entrée = token HMAC opaque, une visite par lien — un cache partagé y
+ * serait un risque de fuite cross-commande pour zéro gain). Ne pas la croire
+ * couverte par `CONFIRMATION`, comme l'affirmait ce commentaire jusqu'au 2026-08-07.
  *
  * Corollaire sur CACHE-AUDIT-010 : les deux helpers ci-dessous ne prennent plus de
  * `userId`. Le garder en paramètre ignoré aurait laissé croire à une invalidation
@@ -25,8 +30,13 @@ export const ORDERS_CACHE_TAGS = {
 	/** Liste des commandes (dashboard admin) */
 	LIST: "orders-list",
 
-	/** Historique d'une commande spécifique (audit trail) */
-	HISTORY: (orderId: string) => `order-history-${orderId}`,
+	/**
+	 * ⚠️ `HISTORY(orderId)` a été RETIRÉ le 2026-08-07 (audit « cache utilisateur et
+	 * checkout ») : tag orphelin, invalidé par 4 sites et posé par AUCUN `cacheTag()`.
+	 * Son lecteur supposé, `getOrderHistory()`, n'a jamais existé — l'audit trail se
+	 * lit via `GET_ORDER_SELECT_ADMIN.history` dans `getOrderById()`, donc sous
+	 * `DETAIL(orderId)`. Ne pas le réintroduire sans écrire d'abord son lecteur.
+	 */
 
 	/** Remboursements d'une commande */
 	REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
@@ -56,11 +66,7 @@ export function getOrderInvalidationTags(orderId?: string): string[] {
 	];
 
 	if (orderId) {
-		tags.push(
-			ORDERS_CACHE_TAGS.HISTORY(orderId),
-			ORDERS_CACHE_TAGS.CONFIRMATION(orderId),
-			ORDERS_CACHE_TAGS.DETAIL(orderId),
-		);
+		tags.push(ORDERS_CACHE_TAGS.CONFIRMATION(orderId), ORDERS_CACHE_TAGS.DETAIL(orderId));
 	}
 
 	return tags;
@@ -77,11 +83,7 @@ export function getOrderMetadataInvalidationTags(orderId?: string): string[] {
 	const tags: string[] = [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST];
 
 	if (orderId) {
-		tags.push(
-			ORDERS_CACHE_TAGS.HISTORY(orderId),
-			ORDERS_CACHE_TAGS.CONFIRMATION(orderId),
-			ORDERS_CACHE_TAGS.DETAIL(orderId),
-		);
+		tags.push(ORDERS_CACHE_TAGS.CONFIRMATION(orderId), ORDERS_CACHE_TAGS.DETAIL(orderId));
 	}
 
 	return tags;

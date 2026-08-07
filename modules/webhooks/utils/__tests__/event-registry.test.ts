@@ -10,7 +10,6 @@ const {
 	mockHandlePaymentFailure,
 	mockHandlePaymentCanceled,
 	mockHandlePaymentProcessing,
-	mockHandleInvoicePaymentFailed,
 	mockHandleChargeRefunded,
 	mockHandleRefundUpdated,
 	mockHandleRefundFailed,
@@ -21,7 +20,6 @@ const {
 	mockHandlePaymentFailure: vi.fn(),
 	mockHandlePaymentCanceled: vi.fn(),
 	mockHandlePaymentProcessing: vi.fn(),
-	mockHandleInvoicePaymentFailed: vi.fn(),
 	mockHandleChargeRefunded: vi.fn(),
 	mockHandleRefundUpdated: vi.fn(),
 	mockHandleRefundFailed: vi.fn(),
@@ -34,7 +32,6 @@ vi.mock("@/modules/webhooks/handlers/payment-handlers", () => ({
 	handlePaymentFailure: mockHandlePaymentFailure,
 	handlePaymentCanceled: mockHandlePaymentCanceled,
 	handlePaymentProcessing: mockHandlePaymentProcessing,
-	handleInvoicePaymentFailed: mockHandleInvoicePaymentFailed,
 }));
 
 vi.mock("@/modules/webhooks/handlers/refund-handlers", () => ({
@@ -333,7 +330,6 @@ describe("isEventSupported", () => {
 			"refund.failed",
 			"charge.dispute.created",
 			"charge.dispute.closed",
-			"invoice.payment_failed",
 		];
 
 		for (const eventType of supportedEvents) {

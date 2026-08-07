@@ -221,8 +221,25 @@ const MOCK_SHIPPING_INFO = {
 // HELPERS
 // ============================================================================
 
+/**
+ * Une session ET la ligne DB qui va avec.
+ *
+ * ⚠️ `require-auth` n'est PAS mocké dans ce fichier — le test exerce le vrai
+ * `isVerifiedAdmin` (bypass boutique fermée). Depuis qu'`updatePaymentAmount`
+ * pose la garde AUTHZ-1 de ses deux actions sœurs,
+ * `requireActiveAccountIfAuthenticated()` interroge réellement
+ * `prisma.user.findUnique` : poser la session sans la ligne fait rejeter la garde
+ * et l'action sort avant Stripe. Même piège que `validate-discount-code.test.ts`.
+ */
 function setupAuthenticatedUser(userId = "cm3user0000123qz8v4h2j9d3") {
 	mockGetSession.mockResolvedValue({ user: { id: userId, role: "USER" } });
+	mockUserFindUnique.mockResolvedValue({
+		id: userId,
+		role: "USER",
+		accountStatus: "ACTIVE",
+		deletedAt: null,
+		suspendedAt: null,
+	});
 }
 
 function setupGuestUser(sessionId = "6f9619ff-8b86-4d11-b42d-00c04fc964ff") {
@@ -387,6 +404,52 @@ describe("updatePaymentAmount", () => {
 
 			expect(result.success).toBe(true);
 			expect(mockAssertStoreOpen).not.toHaveBeenCalled();
+		});
+	});
+
+	// ──────────────────────────────────────────────────────────────
+	// AUTHZ-1 — garde compte actif
+	// ──────────────────────────────────────────────────────────────
+
+	describe("garde compte actif (AUTHZ-1)", () => {
+		beforeEach(() => {
+			setupDefaults();
+		});
+
+		it("rejette une session dont le compte n'est plus ACTIVE", async () => {
+			// `fetchUserForAuth` filtre `deletedAt` / `suspendedAt` / `accountStatus`
+			// dans son WHERE : un compte révoqué ne rend simplement aucune ligne.
+			// Cette action était la seule des trois du tunnel à ne pas poser la garde
+			// que `initializePayment` et `confirmCheckout` posaient déjà.
+			mockUserFindUnique.mockResolvedValue(null);
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			expect(mockStripePaymentIntentsRetrieve).not.toHaveBeenCalled();
+			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
+		});
+
+		it("laisse passer un invité (pas de session à vérifier)", async () => {
+			setupGuestUser();
+			mockGetRateLimitIdentifier.mockReturnValue("session:6f9619ff-8b86-4d11-b42d-00c04fc964ff");
+			mockStripePaymentIntentsRetrieve.mockResolvedValue({
+				id: "pi_test_abc123",
+				status: "requires_payment_method",
+				metadata: { userId: "", guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff" },
+			});
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(true);
+		});
+
+		it("court-circuite AVANT le rate limit — la garde borne QUI, pas COMBIEN", async () => {
+			mockUserFindUnique.mockResolvedValue(null);
+
+			await updatePaymentAmount(VALID_PARAMS);
+
+			expect(mockCheckRateLimit).not.toHaveBeenCalled();
 		});
 	});
 

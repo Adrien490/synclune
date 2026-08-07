@@ -18,59 +18,19 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { persistInvoiceNumber } from "../persist-invoice-number.service";
 import { OrderStatus, PaymentStatus, type Order } from "@/app/generated/prisma/client";
 
 const integrationEnabled = Boolean(process.env.INTEGRATION_DATABASE_URL);
 const describeIntegration = integrationEnabled ? describe : describe.skip;
 
-async function createPaidOrder(
-	prisma: ReturnType<typeof getIntegrationPrismaClient>,
-	userId: string,
-	skuId: string,
-	suffix: string,
-): Promise<Order> {
-	return prisma.order.create({
-		data: {
-			userId,
-			orderNumber: `SYN-CONC-${suffix}`,
-			customerEmail: "concur@test.local",
-			customerName: "Test Concur",
-			shippingFirstName: "Test",
-			shippingLastName: "Concur",
-			shippingAddress1: "1 rue test",
-			shippingPostalCode: "75001",
-			shippingCity: "Paris",
-			shippingCountry: "FR",
-			shippingPhone: "+33600000000",
-			status: OrderStatus.PROCESSING,
-			paymentStatus: PaymentStatus.PAID,
-			paidAt: new Date(),
-			stripePaymentIntentId: `pi_conc_${suffix}_${Date.now()}`,
-			subtotal: 4999,
-			discountAmount: 0,
-			shippingCost: 0,
-			taxAmount: 0,
-			total: 4999,
-			paymentMethod: "CARD",
-			invoiceStatus: null,
-			items: {
-				create: [
-					{
-						skuId,
-						quantity: 1,
-						productTitle: "Collier Test",
-						price: 4999,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: 4999,
-						lineTotalIncludingTax: 4999,
-						taxCategoryCode: "ZB",
-					},
-				],
-			},
-		},
+async function createPaidOrder(skuId: string, suffix: string): Promise<Order> {
+	return createTestOrder([{ skuId, productTitle: "Collier Test" }], {
+		orderNumber: `SYN-CONC-${suffix}`,
+		status: OrderStatus.PROCESSING,
+		paymentStatus: PaymentStatus.PAID,
+		invoiceStatus: null,
 	});
 }
 
@@ -82,15 +42,12 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 	});
 
 	it("20 transactions concurrentes → 20 invoiceNumber distincts gap-free", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
 		const orders: Order[] = [];
 		for (let i = 0; i < 20; i++) {
 			const order = await createPaidOrder(
-				prisma,
-				user.id,
 				sku.id,
 				`T${i.toString().padStart(2, "0")}-${Date.now()}`,
 			);
@@ -127,13 +84,12 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 	});
 
 	it("toutes les factures sont en status GENERATED après les 20 transactions concurrentes", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
 		const orderIds: string[] = [];
 		for (let i = 0; i < 20; i++) {
-			const order = await createPaidOrder(prisma, user.id, sku.id, `STATUS-${i}-${Date.now()}`);
+			const order = await createPaidOrder(sku.id, `STATUS-${i}-${Date.now()}`);
 			orderIds.push(order.id);
 		}
 
@@ -151,13 +107,12 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 	});
 
 	it("OrderHistory contient 1 entry INVOICE_GENERATED par order (audit trail Art. L123-22)", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
 		const orderIds: string[] = [];
 		for (let i = 0; i < 10; i++) {
-			const order = await createPaidOrder(prisma, user.id, sku.id, `AUDIT-${i}-${Date.now()}`);
+			const order = await createPaidOrder(sku.id, `AUDIT-${i}-${Date.now()}`);
 			orderIds.push(order.id);
 		}
 
@@ -177,12 +132,11 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 	});
 
 	it("invoiceNumber unique constraint DB : 2 orders distincts ne peuvent partager le même numéro", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
-		const order1 = await createPaidOrder(prisma, user.id, sku.id, `UNIQ-A-${Date.now()}`);
-		const order2 = await createPaidOrder(prisma, user.id, sku.id, `UNIQ-B-${Date.now()}`);
+		const order1 = await createPaidOrder(sku.id, `UNIQ-A-${Date.now()}`);
+		const order2 = await createPaidOrder(sku.id, `UNIQ-B-${Date.now()}`);
 
 		const result1 = await persistInvoiceNumber(order1.id);
 		const result2 = await persistInvoiceNumber(order2.id);
@@ -191,11 +145,10 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 	});
 
 	it("idempotence séquentielle (EINV-SEQ-006) : 2e appel sur order déjà GENERATED retourne le MÊME numéro (pas d'overwrite ni de gap)", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
-		const order = await createPaidOrder(prisma, user.id, sku.id, `IDEMP-${Date.now()}`);
+		const order = await createPaidOrder(sku.id, `IDEMP-${Date.now()}`);
 
 		// 1er appel — attribue F-YYYY-NNNNN.
 		const result1 = await persistInvoiceNumber(order.id);
@@ -222,11 +175,10 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 	});
 
 	it("idempotence concurrente (EINV-SEQ-006) : N persistInvoiceNumber parallèles sur le MÊME order → 1 seul numéro, 0 gap (race eager webhook + lazy download)", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
-		const order = await createPaidOrder(prisma, user.id, sku.id, `RACE-${Date.now()}`);
+		const order = await createPaidOrder(sku.id, `RACE-${Date.now()}`);
 
 		// 5 appels concurrents simulant webhook eager + fallback lazy route + retry
 		// Stripe + cron sync-async tombant ensemble dans la fenêtre PAID-sans-numéro.

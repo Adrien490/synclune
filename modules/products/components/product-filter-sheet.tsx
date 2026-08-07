@@ -1,7 +1,7 @@
 "use client";
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { useAppForm } from "@/shared/components/forms";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { mediaAtLeast } from "@/shared/constants/breakpoints";
@@ -62,8 +62,9 @@ interface FilterSheetProps {
 	/** Options du compartiment « Trier par » (SSOT `PRODUCTS_SORT_OPTIONS`). */
 	sortOptions: SortOption[];
 	maxPriceInEuros: number;
-	/** Type de produit actif (depuis le path segment /produits/[type]) */
-	activeProductTypeSlug?: string;
+	// Plus de `activeProductTypeSlug` : le type actif se dérive du pathname
+	// (`getCategorySlugFromPath`), comme dans le rail. Le panneau ne reçoit ainsi
+	// que des données `"use cache"` et peut entrer dans l'App Shell de la route.
 	/**
 	 * Catalogue courant, pour semer le compteur vivant avec un chiffre que le
 	 * serveur a DÉJÀ calculé (cf. `initialCount` de `useLiveFilterCount`).
@@ -133,7 +134,6 @@ function ProductFilterSheetInner({
 	productTypes = EMPTY_PRODUCT_TYPES,
 	sortOptions,
 	maxPriceInEuros,
-	activeProductTypeSlug,
 	initialCountPromise,
 }: FilterSheetProps) {
 	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
@@ -148,6 +148,8 @@ function ProductFilterSheetInner({
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+
+	const activeProductTypeSlug = getCategorySlugFromPath(pathname) ?? undefined;
 
 	const getValuesFromURL = (): FilterFormData =>
 		parseFilterValuesFromURL({

@@ -2,7 +2,7 @@
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
 
 export const ARCHIVE_COLLECTION_DIALOG_ID = "archive-collection";

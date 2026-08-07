@@ -58,7 +58,7 @@ vi.mock("@/modules/orders/utils/carrier.utils", () => ({
 	},
 }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({ open: vi.fn(), close: vi.fn(), isOpen: false, data: null }),
 }));
 

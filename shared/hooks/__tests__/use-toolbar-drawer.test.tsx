@@ -18,12 +18,30 @@ vi.mock("next/navigation", () => ({
 	usePathname: () => mockPathname(),
 }));
 
-import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
+import {
+	OverlayStoreProvider,
+	SheetAutoCloseOnNavigation,
+} from "@/shared/providers/overlay-store-provider";
 import { useToolbarDrawer } from "../use-toolbar-drawer";
 
 type DrawerName = "sort" | "filter" | "search";
 
-const wrapper = SheetStoreProvider;
+/**
+ * ⚠️ `SheetAutoCloseOnNavigation` est monté EXPLICITEMENT dans le wrapper.
+ *
+ * Il vivait dans `SheetStoreProvider` jusqu'au 2026-08-07 ; depuis la fusion des
+ * trois providers d'overlay, il est un frère monté par `app/layout.tsx` — un
+ * provider ne doit pas traîner l'effet de bord (`usePathname()`) d'un seul de ses
+ * trois stores. La fermeture au changement de route reste un invariant de ce
+ * hook : c'est elle qui justifie que l'état des tiroirs vive dans le store
+ * partagé plutôt que dans un `useState` local, cf. sa JSDoc.
+ */
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+	<OverlayStoreProvider>
+		<SheetAutoCloseOnNavigation />
+		{children}
+	</OverlayStoreProvider>
+);
 
 function renderDrawer() {
 	return renderHook(() => useToolbarDrawer<DrawerName>(), { wrapper });
@@ -122,10 +140,10 @@ describe("useToolbarDrawer", () => {
 		}
 
 		render(
-			<SheetStoreProvider>
+			<OverlayStoreProvider>
 				<SortBadge />
 				<BottomBar />
-			</SheetStoreProvider>,
+			</OverlayStoreProvider>,
 		);
 
 		expect(screen.getByTestId("drawer")).toHaveTextContent("closed");

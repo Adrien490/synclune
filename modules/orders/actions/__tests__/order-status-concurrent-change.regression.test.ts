@@ -127,9 +127,9 @@ describe("@regression order-status-toctou — updateMany count===0 ⇒ abort pro
 		}));
 		mockGetOrderInvalidationTags.mockReturnValue(["orders-list"]);
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockNotFound.mockImplementation((r: string) => ({
+		mockNotFound.mockImplementation((r: string, genre: "m" | "f" = "m") => ({
 			status: ActionStatus.NOT_FOUND,
-			message: `${r} non trouvé`,
+			message: `${r} non trouvé${genre === "f" ? "e" : ""}`,
 		}));
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,

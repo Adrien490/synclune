@@ -69,7 +69,7 @@ export async function removeRecentSearch(
 		// `get-recent-searches.ts` n'est pas caché, `recent-searches-list` n'avait
 		// aucun poseur.
 
-		return success("Recherche supprimee", { searches: updated });
+		return success("Recherche supprimée", { searches: updated });
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression");
 	}

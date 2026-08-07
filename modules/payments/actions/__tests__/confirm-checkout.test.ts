@@ -322,6 +322,7 @@ function createBoundOrder(
 		userId: string | null;
 		shippingCountry: string;
 		shippingPostalCode: string;
+		customerEmail: string;
 		items: Array<{ skuId: string; quantity: number }>;
 	}> = {},
 ) {
@@ -332,6 +333,9 @@ function createBoundOrder(
 		userId: "cm3user0000123qz8v4h2j9d3",
 		shippingCountry: VALID_SHIPPING_ADDRESS.country,
 		shippingPostalCode: VALID_SHIPPING_ADDRESS.postalCode,
+		// Repli quand la resoumission n'apporte aucun email — sans lui, la correction
+		// d'identité écrirait `undefined` dans une colonne NOT NULL.
+		customerEmail: "cliente@example.com",
 		items: VALID_CART_ITEMS.map((item) => ({ skuId: item.skuId, quantity: item.quantity })),
 		...overrides,
 	};
@@ -850,6 +854,93 @@ describe("confirmCheckout", () => {
 			);
 		});
 
+		it("répercute AUSSI le nom et l'email corrigés (audit invariant 5, 2026-08-07)", async () => {
+			// Le service ne recevait que les 8 `shipping*` : `customerName` divergeait de
+			// `shippingFirstName + shippingLastName` — recomposé du MÊME `fullName` — et
+			// `customerEmail` restait fautif.
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: true,
+				changedFields: ["customerName", "customerEmail"],
+			});
+
+			await confirmCheckout(
+				createValidData({
+					email: "marion@example.com",
+					shippingAddress: { ...VALID_SHIPPING_ADDRESS, fullName: "Marion Duval" },
+				}),
+			);
+
+			expect(mockUpdatePendingShippingSnapshot).toHaveBeenCalledWith(
+				expect.objectContaining({
+					shipping: expect.objectContaining({
+						customerName: "Marion Duval",
+						customerEmail: "marion@example.com",
+					}),
+				}),
+			);
+		});
+
+		it("pousse le nouveau receipt_email sur le PaymentIntent quand l'email a changé", async () => {
+			// ⚠️ Corriger `Order.customerEmail` ne SUFFIT PAS : `checkout-post-tasks` envoie
+			// la confirmation à `paymentIntent.receipt_email ?? order.customerEmail` — le PI
+			// GAGNE — et son `receipt_email` n'est posé que sur le chemin de CRÉATION.
+			// Sans ce push, l'email de confirmation (donc l'unique lien de suivi HMAC)
+			// repartirait à l'adresse fautive malgré la correction en base.
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: true,
+				changedFields: ["customerEmail"],
+			});
+
+			await confirmCheckout(createValidData({ email: "marion@example.com" }));
+
+			expect(mockStripe.paymentIntents.update).toHaveBeenCalledWith("pi_test_123", {
+				receipt_email: "marion@example.com",
+			});
+		});
+
+		it("ne touche PAS au PaymentIntent quand seule l'adresse a changé", async () => {
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: true,
+				changedFields: ["shippingAddress1"],
+			});
+
+			await confirmCheckout(createValidData());
+
+			expect(mockStripe.paymentIntents.update).not.toHaveBeenCalled();
+		});
+
+		it("réutilise l'email déjà en base quand la resoumission n'en porte aucun", async () => {
+			// Surtout pas de refus « email requis » ici : la commande existe déjà avec un
+			// email valide, bloquer le paiement serait une régression. Invité (pas de
+			// session) ET pas d'email resoumis ⇒ c'est le repli DB qui doit jouer.
+			mockGetSession.mockResolvedValue(null);
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: false,
+				reason: "no-change",
+			});
+
+			const result = await confirmCheckout(createValidData({ email: undefined }));
+
+			expect(result.success).toBe(true);
+			expect(mockUpdatePendingShippingSnapshot).toHaveBeenCalledWith(
+				expect.objectContaining({
+					shipping: expect.objectContaining({ customerEmail: "cliente@example.com" }),
+				}),
+			);
+		});
+
+		it("un échec du push receipt_email ne bloque PAS le paiement (best-effort)", async () => {
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: true,
+				changedFields: ["customerEmail"],
+			});
+			mockStripe.paymentIntents.update.mockRejectedValue(new Error("stripe down"));
+
+			const result = await confirmCheckout(createValidData({ email: "marion@example.com" }));
+
+			expect(result.success).toBe(true);
+		});
+
 		it("invalide le cache commande quand le snapshot a réellement changé", async () => {
 			mockUpdatePendingShippingSnapshot.mockResolvedValue({
 				updated: true,
@@ -934,10 +1025,11 @@ describe("confirmCheckout", () => {
 					id: true,
 					orderNumber: true,
 					total: true,
-					// KI-001 : `userId` alimente l'audit + l'invalidation de cache de la
-					// correction d'adresse d'une commande encore PENDING.
 					shippingCountry: true,
 					shippingPostalCode: true,
+					// KI-001 (2026-08-07) : repli de la correction d'identité quand la
+					// resoumission n'apporte aucun email.
+					customerEmail: true,
 					items: { select: { skuId: true, quantity: true } },
 				},
 			});

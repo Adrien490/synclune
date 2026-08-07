@@ -1,3 +1,4 @@
+import { CreateTaxonomyButton } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import Link from "next/link";
 
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
@@ -12,7 +13,6 @@ import type { GetProductTypesReturn } from "@/modules/product-types/data/get-pro
 import { LockIcon, ShapesIcon } from "@phosphor-icons/react/ssr";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
-import { CreateProductTypeButton } from "./create-product-type-button";
 
 interface ProductTypesDataTableProps {
 	productTypesPromise: Promise<GetProductTypesReturn>;
@@ -37,7 +37,7 @@ export async function ProductTypesDataTable({
 				noItemsDescription="Aucun type de bijou pour l'instant."
 				hasActiveFilters={hasActiveFilters}
 				resetFiltersHref="/admin/catalogue/types-de-produits"
-				actionElement={<CreateProductTypeButton />}
+				actionElement={<CreateTaxonomyButton kind="product-type" />}
 			/>
 		);
 	}

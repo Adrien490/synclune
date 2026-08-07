@@ -55,7 +55,7 @@ function ResponsiveDialog({ children, open, onOpenChange }: ResponsiveDialogProp
 	const isMobile = useIsMobile();
 
 	return (
-		<Ctx.Provider value={{ isMobile }}>
+		<Ctx value={{ isMobile }}>
 			{isMobile ? (
 				// `handleOnly` : collision de gestes constatée — le contenu de CHAQUE
 				// ResponsiveDialog est un scroller vertical (`overflow-y-auto` sur le
@@ -77,7 +77,7 @@ function ResponsiveDialog({ children, open, onOpenChange }: ResponsiveDialogProp
 					{children}
 				</Dialog>
 			)}
-		</Ctx.Provider>
+		</Ctx>
 	);
 }
 

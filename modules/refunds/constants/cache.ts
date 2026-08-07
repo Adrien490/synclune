@@ -46,8 +46,10 @@ export const REFUNDS_CACHE_TAGS = {
  * `refund-<id>` : après une finalisation asynchrone côté Stripe, la liste admin, la
  * fiche et la pastille gardaient l'ancien statut jusqu'à expiration du profil `user`.
  *
- * `DETAIL(orderId)` + `HISTORY(orderId)` : le statut du remboursement et son entrée
- * d'audit s'affichent sur le détail commande.
+ * `DETAIL(orderId)` : le statut du remboursement ET son entrée d'audit s'affichent
+ * tous deux sur le détail commande, sous ce seul tag — la timeline lit
+ * `order.history` via `GET_ORDER_SELECT_ADMIN`. (`HISTORY(orderId)` figurait ici
+ * jusqu'au 2026-08-07 ; c'était un tag orphelin, cf. `orders/constants/cache.ts`.)
  */
 export function getRefundInvalidationTags(refundId: string, orderId: string): string[] {
 	return [
@@ -55,7 +57,6 @@ export function getRefundInvalidationTags(refundId: string, orderId: string): st
 		REFUNDS_CACHE_TAGS.DETAIL(refundId),
 		ORDERS_CACHE_TAGS.REFUNDS(orderId),
 		ORDERS_CACHE_TAGS.DETAIL(orderId),
-		ORDERS_CACHE_TAGS.HISTORY(orderId),
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
 }

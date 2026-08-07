@@ -1,6 +1,10 @@
 import { Suspense } from "react";
 
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
+import type {
+	ActiveProductType,
+	CatalogListProps,
+} from "@/modules/products/types/catalog-shell.types";
 import { BRAND } from "@/shared/constants/brand";
 import {
 	StorefrontHeading,
@@ -38,14 +42,15 @@ async function CatalogCount({
 }
 
 export type CatalogHeadingProps = {
-	/** Titre de la page — terme recherché, libellé du type, ou « Les créations ». */
-	title: string;
+	/**
+	 * Ce que le shell tire des `searchParams` — seul `searchTerm` est lu ici, mais
+	 * la promesse est partagée avec la grille : une entrée de cache, pas deux.
+	 */
+	listPropsPromise: Promise<CatalogListProps>;
 	/** Promesse du catalogue : le compte est streamé, le `h1` ne l'attend jamais. */
 	productsPromise: Promise<GetProductsReturn>;
 	/** Type filtré, sur une page catégorie. */
-	activeProductType?: { slug: string; label: string; description?: string | null };
-	/** Terme recherché : la copie d'atelier laisse alors la place au contexte de recherche. */
-	searchTerm?: string;
+	activeProductTypePromise?: Promise<ActiveProductType>;
 };
 
 /**
@@ -65,9 +70,15 @@ export type CatalogHeadingProps = {
  *
  * ## Ce que la composition garantit
  *
- * - **Le `h1` ne dépend d'AUCUN `await`.** Seul le compte est derrière la
+ * - **Le `h1` n'attend JAMAIS le catalogue.** Seul le compte est derrière la
  *   frontière `Suspense` fournie ici : la lecture catalogue ne peut pas retarder
  *   l'élément qui porte le LCP, et c'est pour lui que la display (Winky Sans) est préchargée.
+ *   Le bloc est en revanche asynchrone depuis le 2026-08-07 : son titre dépend
+ *   de l'URL (terme recherché, type du path), et c'est justement en SORTANT ces
+ *   lectures du niveau supérieur de la page que le meuble de filtres a pu entrer
+ *   dans l'App Shell. Les deux `await` ci-dessous sont sans I/O sur `/produits`
+ *   (résolution de `searchParams`) ; sur la route catégorie s'y ajoute la
+ *   lecture `"use cache"` du type.
  *
  * ## Budget vertical
  *
@@ -78,15 +89,25 @@ export type CatalogHeadingProps = {
  * deux pièces ENTIÈRES au-dessus de la bottom-nav sur un écran de 844 px. Si la
  * copie s'allonge, c'est elle qui cède — pas le budget.
  *
- * ⚠️ Copie au TUTOIEMENT et à la première personne. `docs/atelier-story.md`
- * vouvoie : c'est une réserve de copie, pas un texte prêt à poser.
+ * ⚠️ Copie au TUTOIEMENT et à la première personne. La copie historique
+ * vouvoyait : c'est une réserve, pas un texte prêt à poser.
  */
-export function CatalogHeading({
-	title,
+export async function CatalogHeading({
+	listPropsPromise,
 	productsPromise,
-	activeProductType,
-	searchTerm,
+	activeProductTypePromise,
 }: CatalogHeadingProps) {
+	const [{ searchTerm }, activeProductType] = await Promise.all([
+		listPropsPromise,
+		activeProductTypePromise,
+	]);
+
+	// Trois titres possibles, un seul rendu — la recherche l'emporte sur la
+	// famille, parce qu'elle est le contexte le plus étroit.
+	const title = searchTerm
+		? `Recherche "${searchTerm}"`
+		: (activeProductType?.label ?? "Les créations");
+
 	/**
 	 * Touches et chapô se rendent à TOUS les viewports ≥ `sm` — la compaction
 	 * desktop (`lg:hidden`) a été RETIRÉE le 2026-08-05 (décision user, audit

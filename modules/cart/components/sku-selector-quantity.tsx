@@ -47,7 +47,7 @@ export function QuantitySection({
 					disabled={isPending || quantity <= 1}
 					aria-label="Diminuer la quantité"
 				>
-					<MinusIcon className="size-4" />
+					<MinusIcon className="size-4" aria-hidden="true" />
 				</Button>
 				{/* Brouillon local : l'ancien clamp à chaque frappe rendait le champ
 				    invidable (effacer remettait 1, taper « 12 » passait par 1 puis sautait
@@ -86,7 +86,7 @@ export function QuantitySection({
 					disabled={isPending || quantity >= maxQuantity}
 					aria-label="Augmenter la quantité"
 				>
-					<PlusIcon className="size-4" />
+					<PlusIcon className="size-4" aria-hidden="true" />
 				</Button>
 			</div>
 			{/* Pas d'aria-label : sur un <p> sans rôle, il est ignoré par la plupart des

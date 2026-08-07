@@ -160,9 +160,9 @@ describe("markAsShipped", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockNotFound.mockImplementation((resource: string) => ({
+		mockNotFound.mockImplementation((resource: string, genre: "m" | "f" = "m") => ({
 			status: ActionStatus.NOT_FOUND,
-			message: `${resource} non trouvé`,
+			message: `${resource} non trouvé${genre === "f" ? "e" : ""}`,
 		}));
 		mockValidationError.mockImplementation((msg: string) => ({
 			status: ActionStatus.VALIDATION_ERROR,

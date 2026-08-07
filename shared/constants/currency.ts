@@ -14,7 +14,7 @@
  * Consommée par la chaîne Stripe (PaymentIntent, line items, refunds).
  * Les formatters d'affichage (`shared/utils/format-euro.ts`, PDF facture) et
  * plusieurs gardes hardcodent "EUR" volontairement : mono-devise assumé
- * (cf. `docs/BUSINESS.md`).
+ *.
  *
  * ⚠️ Le mono-devise est une CONVENTION DE CODE, pas une garantie de base.
  * Il n'existe ni colonne `Order.currency` ni CHECK associé — ce commentaire a

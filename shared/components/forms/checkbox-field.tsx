@@ -27,7 +27,7 @@ export const CheckboxField = ({
 	const field = useFieldContext<boolean>();
 	const hiddenRef = useRef<HTMLInputElement>(null);
 
-	const hasError = useFieldErrorVisibility(field);
+	const { visible: hasError, announce } = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -80,6 +80,7 @@ export const CheckboxField = ({
 				</p>
 			)}
 			<FieldError
+				live={announce}
 				id={`${field.name}-error`}
 				errors={hasError ? field.state.meta.errors : undefined}
 				className="ml-7"

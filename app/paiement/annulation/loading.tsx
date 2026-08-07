@@ -7,13 +7,9 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
  */
 export default function CheckoutCancelLoading() {
 	return (
-		<div
-			role="status"
-			aria-busy="true"
-			aria-label="Chargement de la page d'annulation"
-			className="relative min-h-dvh"
-		>
-			<span className="sr-only">Chargement…</span>
+		<div role="status" aria-busy="true" className="relative min-h-dvh">
+			{/* Un seul canal de nommage : cf. `confirmation/loading.tsx`. */}
+			<span className="sr-only">Chargement de la page d&apos;annulation…</span>
 			{/* Decorative background (matches page) */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 

@@ -116,9 +116,9 @@ describe("duplicateMaterial", () => {
 			data,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockNotFound.mockImplementation((label: string) => ({
+		mockNotFound.mockImplementation((label: string, genre: "m" | "f" = "m") => ({
 			status: ActionStatus.NOT_FOUND,
-			message: `${label} non trouvé`,
+			message: `${label} non trouvé${genre === "f" ? "e" : ""}`,
 		}));
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -153,7 +153,7 @@ describe("duplicateMaterial", () => {
 	it("should return not found when original material does not exist", async () => {
 		mockPrisma.material.findUnique.mockResolvedValue(null);
 		const result = await duplicateMaterial(undefined, validFormData);
-		expect(mockNotFound).toHaveBeenCalledWith("Materiau");
+		expect(mockNotFound).toHaveBeenCalledWith("Matériau");
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 	});
 

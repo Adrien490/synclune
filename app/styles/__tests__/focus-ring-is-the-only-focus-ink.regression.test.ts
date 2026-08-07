@@ -32,6 +32,28 @@ const SKIP_DIRS = new Set(["node_modules", ".next", "generated", "__snapshots__"
 /** Le motif proscrit : l'outline de focus peint en `--ring`. */
 const FORBIDDEN = /focus-visible:outline-ring/;
 
+/**
+ * La MÊME faute, peinte en anneau plutôt qu'en outline.
+ *
+ * `outline-none` annule l'outline `--foreground` (19,5:1) que le base layer de
+ * `globals.css` pose sur `:focus-visible` ; s'il ne reste qu'un `ring-ring`, le
+ * focus est peint en `--primary` — le rose pastel à **1,55:1**, sous les 3:1 de
+ * WCAG 1.4.11. C'est un indicateur de focus littéralement invisible.
+ *
+ * ⚠️ **Les deux variantes comptent.** Le premier scanner ne cherchait que
+ * `focus-visible:`, ce qui a laissé passer `skip-link.tsx` — écrit en `focus:` —
+ * pendant tout ce temps, sur le PREMIER élément tabbable de chaque page du site
+ * (mesuré au rendu le 2026-08-07 : `outline-style: none`).
+ *
+ * ⚠️ **C'est la COMBINAISON qui est interdite**, pas `outline-none` seul. Un
+ * `outline-none` SANS anneau de remplacement sur une cible `tabIndex={-1}` —
+ * focus programmatique, jamais atteignable au clavier — reste légitime : c'est le
+ * cas de l'alerte d'erreur de `pay-button.tsx`, qu'on focuse pour la faire lire
+ * sans vouloir la cercler.
+ */
+const FORBIDDEN_RING = /focus(?:-visible)?:outline-none/;
+const RING_INK = /focus(?:-visible)?:ring-ring/;
+
 function collectSourceFiles(dir: string, acc: string[] = []): string[] {
 	for (const entry of readdirSync(dir)) {
 		if (SKIP_DIRS.has(entry)) continue;
@@ -65,6 +87,25 @@ describe("@regression focus-ring-ssot", () => {
 			.map((file) => file.slice(ROOT.length + 1));
 
 		expect(offenders).toEqual([]);
+	});
+
+	it("aucun fichier n'annule l'outline pour le remplacer par un anneau `--ring`", () => {
+		const offenders = sourceFiles
+			.filter((file) => {
+				// Les commentaires CITENT le motif pour le proscrire (ce test le
+				// premier, `skip-link.tsx` ensuite) : scanner le code, pas la prose.
+				const code = readFileSync(file, "utf8")
+					.replace(/\/\*[\s\S]*?\*\//g, "")
+					.replace(/\/\/.*$/gm, "");
+				return FORBIDDEN_RING.test(code) && RING_INK.test(code);
+			})
+			.map((file) => file.slice(ROOT.length + 1));
+
+		expect(
+			offenders,
+			"Ces fichiers peignent leur focus en `--ring` (1,55:1) après avoir annulé " +
+				"l'outline `--foreground` (19,5:1). Utiliser `@utility focus-ring`.",
+		).toEqual([]);
 	});
 
 	it("`@utility focus-ring` existe toujours et porte l'outline en `--foreground`", () => {

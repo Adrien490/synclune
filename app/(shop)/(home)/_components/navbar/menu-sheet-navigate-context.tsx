@@ -34,7 +34,9 @@ import { createContext, use } from "react";
  */
 const MenuSheetNavigateContext = createContext<() => void>(() => {});
 
-export const MenuSheetNavigateProvider = MenuSheetNavigateContext.Provider;
+// React 19 : le contexte EST son propre provider (`<Ctx value={…}>`), `.Provider`
+// n'est plus qu'un alias déprécié. L'export garde son nom parlant côté appelant.
+export const MenuSheetNavigateProvider = MenuSheetNavigateContext;
 
 /**
  * Handler à brancher sur le `onClick` de chaque `<Link>` du menu sheet.

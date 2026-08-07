@@ -1,20 +1,12 @@
-import { permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { ProductCatalog } from "@/modules/products/components/product-catalog";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
 import { SITE_URL } from "@/shared/constants/seo-config";
-import type { SortField } from "@/modules/products/data/get-products";
 import type { ProductSearchParams } from "./_utils/types";
-import { parseFilters } from "./_utils/params";
-import {
-	getCatalogData,
-	parsePaginationParams,
-	fetchProducts,
-	countActiveFilters,
-	buildCatalogJsonLd,
-} from "./_utils/catalog";
+import { getCatalogData, resolveCatalogListProps, resolveCatalogProducts } from "./_utils/catalog";
+import { CatalogJsonLd } from "./_components/catalog-json-ld";
 
 // ============================================================================
 // METADATA
@@ -35,18 +27,11 @@ type BijouxPageProps = {
 export async function generateMetadata({ searchParams }: BijouxPageProps): Promise<Metadata> {
 	const searchParamsData = await searchParams;
 
-	// Si seul le type est présent, rediriger vers la page catégorie dédiée
-	const typeParam = searchParamsData.type;
-	if (typeParam && !Array.isArray(typeParam)) {
-		// Vérifier qu'il n'y a pas d'autres filtres actifs
-		const otherFilters = Object.keys(searchParamsData).filter(
-			(key) => !["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(key),
-		);
-		if (otherFilters.length === 0) {
-			// La redirection sera gérée dans le composant page
-			return {};
-		}
-	}
+	// Plus de branche « seul le type est présent » ici : la consolidation
+	// `?type=X` → 308 `/produits/X` est faite par `proxy.ts`, donc cette page
+	// n'est jamais rendue dans ce cas. La branche renvoyait `{}`, ce qui faisait
+	// hériter les métadonnées racine — sans conséquence puisque la page
+	// redirigeait, mais rien ne le garantissait.
 
 	// Vérifier si des filtres sont actifs
 	const hasActiveFilters = Object.keys(searchParamsData).some(
@@ -94,77 +79,52 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 // PAGE
 // ============================================================================
 
-const breadcrumbs = [{ label: "Créations", href: "/produits" }];
+/**
+ * Fil d'Ariane et libellés JSON-LD : STATIQUES sur cette route, donc
+ * `Promise.resolve` — le shell les attend comme ceux de la page catégorie, mais
+ * ils se résolvent en un microtask et entrent dans l'App Shell.
+ */
+const breadcrumbsPromise = Promise.resolve([{ label: "Créations", href: "/produits" }]);
 
+const jsonLdOptionsPromise = Promise.resolve({
+	name: "Bijoux artisanaux faits main",
+	description: "Découvrez toutes mes créations colorées faites main dans mon atelier.",
+	url: `${SITE_URL}/produits`,
+	breadcrumbs: [{ name: "Accueil", url: SITE_URL }, { name: "Bijoux" }],
+});
+
+/**
+ * ⚠️ **Cette page n'awaite RIEN qui dépende de l'URL.**
+ *
+ * `await searchParams` ici rendait la page entièrement dynamique : sous
+ * `cacheComponents`, son App Shell se réduisait alors au squelette PLEINE PAGE
+ * de `loading.tsx`. Comme le filtre « type » change de path (`/produits` ↔
+ * `/produits/[slug]`), cocher une famille affichait ce squelette — d'où
+ * l'impression de rechargement. Les lectures d'URL passent par les résolveurs de
+ * `_utils/catalog.ts`, appelés SANS `await` ; seul `getCatalogData()` est
+ * attendu, et c'est du `"use cache"` (donc prérendable).
+ *
+ * La redirection SEO `?type=X` → 308 `/produits/X` vit désormais dans
+ * `proxy.ts`, pour la même raison.
+ */
 export default async function BijouxPage({ searchParams }: BijouxPageProps) {
-	const searchParamsData = await searchParams;
-
-	// Redirection SEO: /produits?type=X → /produits/X
-	const typeParam = searchParamsData.type;
-	if (typeParam && !Array.isArray(typeParam)) {
-		// Vérifier qu'il n'y a pas d'autres filtres actifs (sauf pagination/tri)
-		const otherFilters = Object.keys(searchParamsData).filter(
-			(key) => !["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(key),
-		);
-		if (otherFilters.length === 0) {
-			// Construire l'URL de redirection avec les params de pagination/recherche
-			const redirectParams = new URLSearchParams();
-			if (searchParamsData.search) redirectParams.set("search", searchParamsData.search);
-			if (searchParamsData.sortBy) redirectParams.set("sortBy", searchParamsData.sortBy);
-			if (searchParamsData.cursor) redirectParams.set("cursor", searchParamsData.cursor);
-			if (searchParamsData.direction) redirectParams.set("direction", searchParamsData.direction);
-
-			const queryString = redirectParams.toString();
-			permanentRedirect(`/produits/${typeParam}${queryString ? `?${queryString}` : ""}`);
-		}
-	}
-
-	// Récupérer les données du catalogue
 	const { productTypes, colors, materials, maxPriceInEuros } = await getCatalogData();
 
-	// Parser les paramètres
-	const { perPage, searchTerm, sortBy } = parsePaginationParams(searchParamsData);
-	const filters = parseFilters(searchParamsData);
-
-	// Récupérer les produits et la wishlist en parallèle
-	const productsPromise = fetchProducts(searchParamsData);
-	const wishlistProductIdsPromise = getWishlistProductIds();
-
-	// Compter les filtres actifs
-	const activeFiltersCount = countActiveFilters(searchParamsData, filters);
-
-	// Snapshot products pour enrichir le JSON-LD avec ItemList (rich result Product carousel).
-	// Await partagé avec ProductCatalog — pas de double-fetch (même promise object).
-	const productsSnapshot = await productsPromise;
-
-	// JSON-LD
-	const jsonLd = buildCatalogJsonLd({
-		name: "Bijoux artisanaux faits main",
-		description: "Découvrez toutes mes créations colorées faites main dans mon atelier.",
-		url: `${SITE_URL}/produits`,
-		breadcrumbs: [{ name: "Accueil", url: SITE_URL }, { name: "Bijoux" }],
-		products: productsSnapshot.products,
-	});
+	const productsPromise = resolveCatalogProducts(searchParams);
 
 	return (
 		<ProductCatalog
 			productsPromise={productsPromise}
-			perPage={perPage}
-			searchTerm={searchTerm}
-			// Le tri et les filtres SERVEUR de cette page — exactement ceux que
-			// `fetchProducts` vient d'appliquer. Le load-more mobile pagine la même
-			// requête, pas une requête par défaut.
-			sortBy={sortBy as SortField}
-			filters={filters}
-			wishlistProductIdsPromise={wishlistProductIdsPromise}
+			listPropsPromise={resolveCatalogListProps(searchParams)}
+			breadcrumbsPromise={breadcrumbsPromise}
+			wishlistProductIdsPromise={getWishlistProductIds()}
 			productTypes={productTypes}
 			colors={colors}
 			materials={materials}
 			maxPriceInEuros={maxPriceInEuros}
-			activeFiltersCount={activeFiltersCount}
-			preferOnSale={filters.onSale}
-			jsonLd={jsonLd}
-			breadcrumbs={breadcrumbs}
+			jsonLdSlot={
+				<CatalogJsonLd productsPromise={productsPromise} optionsPromise={jsonLdOptionsPromise} />
+			}
 		/>
 	);
 }

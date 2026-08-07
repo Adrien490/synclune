@@ -21,7 +21,7 @@ multi-devise). Une contribution qui presuppose une equipe ou un gros trafic pass
 ⚠️ **Bijoux colores et creatifs — pas de la joaillerie precieuse.** La marque exprime la creativite
 coloree de la createrice : joyeux, personnel, artisanal. C'est un piege recurrent en design : toute
 direction batie sur le metal precieux, la gravure ou le « luxe discret » est le contre-pied du
-brief. Positionnement complet et chiffre : [`docs/BUSINESS.md`](./docs/BUSINESS.md).
+brief. Positionnement complet et chiffre : [`CLAUDE.md`](./CLAUDE.md).
 
 ---
 
@@ -214,7 +214,7 @@ demarrage plutot que de degrader en silence.
 
 - **[CLAUDE.md](./CLAUDE.md)** — Architecture detaillee, patterns, cache profiles, conventions
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Guide de contribution (modules, Git workflow, tests)
-- **[docs/](./docs/README.md)** — [Index complet des 10 documents](./docs/README.md) : modele d'activite ([BUSINESS.md](./docs/BUSINESS.md)), conventions UI ([UI-CONVENTIONS.md](./docs/UI-CONVENTIONS.md)), grille d'audit de la landing ([LANDING-BEST-PRACTICES.md](./docs/LANDING-BEST-PRACTICES.md)), constats connus ([KNOWN-ISSUES.md](./docs/KNOWN-ISSUES.md))
+- **[docs/](./docs/)** — lexique de marque ([BRAND-DA.md](./docs/BRAND-DA.md)), grille d'audit de la landing ([LANDING-BEST-PRACTICES.md](./docs/LANDING-BEST-PRACTICES.md)), mirror de la doc Stripe ([stripe/](./docs/stripe/))
 - **[docs/prompts/](./docs/prompts/)** — Les 4 catalogues de prompts (audit, refonte, maquettage) et leur [mode d'emploi](./docs/prompts/README.md)
 
 ---

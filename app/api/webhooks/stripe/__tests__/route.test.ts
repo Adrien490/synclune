@@ -146,10 +146,20 @@ import { POST } from "../route";
 const FIXED_NOW_MS = Date.UTC(2026, 0, 15, 12, 0, 0); // 2026-01-15T12:00:00Z
 const NOW_SECONDS = Math.floor(FIXED_NOW_MS / 1000);
 
+/**
+ * ⚠️ Le type doit être un event RÉELLEMENT enregistré au registry.
+ *
+ * Ces fixtures étaient bâties sur `checkout.session.completed` — un type
+ * délibérément retiré, dont `event-registry.test.ts` assert d'ailleurs qu'il rend
+ * `isEventSupported() === false`. La suite passait quand même parce que
+ * `isEventSupported` est mocké ici : elle exerçait donc la route avec un type que la
+ * production aurait classé `SKIPPED` avant tout dispatch. Un test vert sur un chemin
+ * que la prod ne prend pas.
+ */
 function makeStripeEvent(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "evt_test_123",
-		type: "checkout.session.completed",
+		type: "payment_intent.succeeded",
 		created: NOW_SECONDS - 10, // 10 seconds old - within the window
 		data: { object: {} },
 		...overrides,
@@ -166,7 +176,7 @@ function makeWebhookRecord(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-function makeRequest(body = '{"type":"checkout.session.completed"}') {
+function makeRequest(body = '{"type":"payment_intent.succeeded"}') {
 	return {
 		text: vi.fn().mockResolvedValue(body),
 	} as unknown as Request;
@@ -1135,7 +1145,7 @@ describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 		});
 		mockDispatchEvent.mockRejectedValue(new Error("Persistent failure"));
 
-		const event = makeStripeEvent({ id: "evt_alert", type: "checkout.session.completed" });
+		const event = makeStripeEvent({ id: "evt_alert", type: "payment_intent.succeeded" });
 		mockConstructEvent.mockReturnValue(event);
 
 		const req = makeRequest();
@@ -1144,7 +1154,7 @@ describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 		expect(mockAfter).toHaveBeenCalledOnce();
 		expect(mockSendWebhookFailedAlert).toHaveBeenCalledWith({
 			eventId: "evt_alert",
-			eventType: "checkout.session.completed",
+			eventType: "payment_intent.succeeded",
 			attempts: 3, // webhookRecord.attempts + 1
 			error: "Persistent failure",
 		});

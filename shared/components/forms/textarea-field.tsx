@@ -47,7 +47,7 @@ export const TextareaField = ({
 	...rest
 }: TextareaFieldProps) => {
 	const field = useFieldContext<string>();
-	const hasErrors = useFieldErrorVisibility(field);
+	const { visible: hasErrors, announce } = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasErrors ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -93,6 +93,7 @@ export const TextareaField = ({
 			{withCounter ? (
 				<div className="text-muted-foreground flex justify-between text-xs">
 					<FieldError
+						live={announce}
 						id={`${field.name}-error`}
 						errors={hasErrors ? field.state.meta.errors : undefined}
 					/>
@@ -102,6 +103,7 @@ export const TextareaField = ({
 				</div>
 			) : (
 				<FieldError
+					live={announce}
 					id={`${field.name}-error`}
 					errors={hasErrors ? field.state.meta.errors : undefined}
 				/>

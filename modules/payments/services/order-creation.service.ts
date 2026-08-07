@@ -152,14 +152,123 @@ export async function createOrderInTransaction(
 		throw new BusinessError("Le montant de ton panier a changé. Actualise la page.");
 	}
 
+	// Generate order number and compute shipping cost
+	//
+	// Ces deux étapes sont PURES et ne dépendent que de l'adresse : les tenir hors
+	// de la transaction évite de prendre N verrous de ligne pour, éventuellement,
+	// refuser aussitôt une zone non livrée. Le verrou ne doit couvrir que ce qui a
+	// besoin d'un état DB cohérent.
+	const orderNumber = generateOrderNumber();
+	const shippingCost = calculateShipping(
+		shippingAddress.country as ShippingCountry,
+		shippingAddress.postalCode,
+	);
+
+	if (shippingCost === null) {
+		throw new BusinessError("Livraison non disponible pour cette zone (Corse, DOM-TOM)");
+	}
+
+	// Micro-entreprise : TVA non applicable (art. 293 B du CGI). Aucune TVA
+	// n'est stockée — ni ici, ni par ligne : le total est HT = TTC et le CHECK
+	// `Order_total_formula` l'exclut. Sortir de la franchise (seuil 2026 :
+	// 85 000 € pour les ventes de biens) est un chantier à part entière, décrit
+	// à part — il exige des
+	// colonnes de TVA PAR LIGNE sur OrderItem, pas un agrégat sur Order.
+	// MIN-AMOUNT-DIVERGE-01 : `total` est le montant AUTORITAIRE posé sur le PI
+	// avant capture (confirm-checkout). Pas de plancher STRIPE_MIN_AMOUNT_EUR_CENTS
+	// ici (contrairement à update-payment-amount qui clampe pour l'affichage) —
+	// l'invariant qui le rend inutile : `shippingCost >= STRIPE_MIN_AMOUNT_EUR_CENTS`
+	// (frais FR par défaut = 499 c, jamais null en métropole) ⇒ total >= shipping >= min.
+	const total = Math.max(0, subtotal + shippingCost);
+
+	// Le rejet ci-dessous matérialise cet invariant au lieu de le documenter.
+	// Il n'est atteignable qu'après l'introduction d'un port gratuit ou d'un tarif
+	// < 50 c ; sans lui, ce jour-là, Stripe refusait l'`update` de `confirmCheckout`
+	// (montant sous le minimum EUR) et le client voyait « Une erreur est survenue »
+	// après un `cleanupFailedCheckout` — un cul-de-sac muet plutôt qu'un motif.
+	// Surtout : PAS de clamp silencieux à 50 c, qui sur-facturerait le client sans
+	// que rien ne le signale (le PI porterait 50 c, `order.total` autre chose).
+	if (total < STRIPE_MIN_AMOUNT_EUR_CENTS) {
+		Sentry.withScope((scope) => {
+			scope.setLevel("error");
+			scope.setTag("checkout", "total-below-stripe-minimum");
+			scope.setFingerprint(["order-creation", "total-below-stripe-minimum"]);
+			// Aucune PII : uniquement des montants.
+			scope.setContext("checkout", {
+				total,
+				subtotal,
+				shippingCost,
+				minimum: STRIPE_MIN_AMOUNT_EUR_CENTS,
+			});
+			Sentry.captureMessage(
+				"createOrderInTransaction: order total below the Stripe EUR minimum — configuration issue",
+				"error",
+			);
+		});
+		throw new BusinessError(
+			"Le montant de ta commande est trop faible pour être encaissé. Écris-nous, on règle ça.",
+		);
+	}
+
 	return prisma.$transaction(
 		async (tx) => {
 			// Verify stock with row locking to prevent race conditions (double-sell, oversell).
-			// Lock SKUs in a deterministic order (sorted by skuId) so two concurrent checkouts
-			// sharing the same SKUs in a different cart order can never deadlock (40P01) on the
-			// FOR UPDATE row locks — Postgres would otherwise abort one and fail the checkout.
-			const lockOrderedItems = [...cartItems].sort((a, b) => a.skuId.localeCompare(b.skuId));
-			for (const cartItem of lockOrderedItems) {
+			//
+			// UNE seule requête pour tous les SKU, `ANY(array)` — même forme que la
+			// re-validation du webhook (`checkout-order-processing.service.ts`). Trois
+			// raisons, dans cet ordre :
+			//
+			//  1. **Ordre de verrouillage.** La boucle précédente verrouillait ligne par
+			//     ligne dans l'ordre lexicographique des `skuId` ; le webhook, lui, prend
+			//     tout son ensemble en une requête. Les deux ordres n'ont aucune raison de
+			//     coïncider, donc l'anti-deadlock ne valait qu'entre deux checkouts — pas
+			//     entre un checkout et un webhook, qui touchent pourtant les mêmes lignes.
+			//     Une requête unique supprime la fenêtre d'entrelacement.
+			//  2. **`FOR UPDATE OF ps`.** Sans clause `OF`, Postgres verrouille les lignes
+			//     de TOUTES les tables du `FROM` — donc aussi `Product`, en contention
+			//     gratuite avec les mutations admin du catalogue.
+			//  3. **Coût.** N aller-retours réseau sous verrou (jusqu'à `MAX_CART_ITEMS`
+			//     = 50) deviennent un seul, dans une transaction bornée à 30 s.
+			//
+			// Le tri reste : il ne dicte pas le plan d'exécution, mais il rend la trace
+			// déterministe et coûte un `sort` sur au plus 50 éléments.
+			const skuIds = [...cartItems].map((item) => item.skuId).sort((a, b) => a.localeCompare(b));
+
+			// `deletedAt` (SKU et produit) fait partie de la relecture : la
+			// re-validation du webhook les vérifie, celle-ci les OMETTAIT. Un SKU
+			// soft-deleted entre l'ajout au panier et le checkout produisait donc une
+			// commande PENDING qui mourait plus tard en `OversellError` → encaissement
+			// puis remboursement automatique, là où un refus propre ici évite le
+			// débit. Asymétrie corrigée.
+			const lockedRows = await tx.$queryRaw<
+				Array<{
+					id: string;
+					isActive: boolean;
+					inventory: number;
+					productTitle: string;
+					productStatus: string;
+					skuDeletedAt: Date | null;
+					productDeletedAt: Date | null;
+					priceInclTax: number;
+				}>
+			>`
+				SELECT
+					ps.id,
+					ps."isActive",
+					ps.inventory,
+					p.title as "productTitle",
+					p.status as "productStatus",
+					ps."deletedAt" as "skuDeletedAt",
+					p."deletedAt" as "productDeletedAt",
+					ps."priceInclTax"
+				FROM "ProductSku" ps
+				INNER JOIN "Product" p ON ps."productId" = p.id
+				WHERE ps.id = ANY(${skuIds}::text[])
+				FOR UPDATE OF ps
+			`;
+			const lockedById = new Map(lockedRows.map((row) => [row.id, row]));
+
+			for (const cartItem of cartItems) {
 				const skuResult = skuDetailsResults.find(
 					(r) => r.success && r.data?.sku.id === cartItem.skuId,
 				);
@@ -170,42 +279,11 @@ export async function createOrderInTransaction(
 				}
 
 				const sku = skuResult.data.sku;
-				// `deletedAt` (SKU et produit) fait partie de la relecture : la
-				// re-validation du webhook les vérifie, celle-ci les OMETTAIT. Un SKU
-				// soft-deleted entre l'ajout au panier et le checkout produisait donc une
-				// commande PENDING qui mourait plus tard en `OversellError` → encaissement
-				// puis remboursement automatique, là où un refus propre ici évite le
-				// débit. Asymétrie corrigée.
-				const currentSkuRows = await tx.$queryRaw<
-					Array<{
-						isActive: boolean;
-						inventory: number;
-						productTitle: string;
-						productStatus: string;
-						skuDeletedAt: Date | null;
-						productDeletedAt: Date | null;
-						priceInclTax: number;
-					}>
-				>`
-				SELECT
-					ps."isActive",
-					ps.inventory,
-					p.title as "productTitle",
-					p.status as "productStatus",
-					ps."deletedAt" as "skuDeletedAt",
-					p."deletedAt" as "productDeletedAt",
-					ps."priceInclTax"
-				FROM "ProductSku" ps
-				INNER JOIN "Product" p ON ps."productId" = p.id
-				WHERE ps.id = ${cartItem.skuId}
-				FOR UPDATE
-			`;
+				const currentSku = lockedById.get(cartItem.skuId);
 
-				if (currentSkuRows.length === 0) {
+				if (!currentSku) {
 					throw new BusinessError(`Produit introuvable : ${sku.product.title}`);
 				}
-
-				const currentSku = currentSkuRows[0]!;
 				if (currentSku.skuDeletedAt || currentSku.productDeletedAt) {
 					throw new BusinessError(`Le produit ${currentSku.productTitle} n'est plus disponible`);
 				}
@@ -227,59 +305,6 @@ export async function createOrderInTransaction(
 				if (currentSku.priceInclTax !== sku.priceInclTax) {
 					throw new BusinessError("Le prix d'un article a changé. Actualise ton panier.");
 				}
-			}
-
-			// Generate order number and compute shipping cost
-			const orderNumber = generateOrderNumber();
-			const shippingCost = calculateShipping(
-				shippingAddress.country as ShippingCountry,
-				shippingAddress.postalCode,
-			);
-
-			if (shippingCost === null) {
-				throw new BusinessError("Livraison non disponible pour cette zone (Corse, DOM-TOM)");
-			}
-
-			// Micro-entreprise : TVA non applicable (art. 293 B du CGI). Aucune TVA
-			// n'est stockée — ni ici, ni par ligne : le total est HT = TTC et le CHECK
-			// `Order_total_formula` l'exclut. Sortir de la franchise (seuil 2026 :
-			// 85 000 € pour les ventes de biens) est un chantier à part entière, décrit
-			// dans docs/RUNBOOK.md § « si la franchise était perdue » — il exige des
-			// colonnes de TVA PAR LIGNE sur OrderItem, pas un agrégat sur Order.
-			// MIN-AMOUNT-DIVERGE-01 : `total` est le montant AUTORITAIRE posé sur le PI
-			// avant capture (confirm-checkout). Pas de plancher STRIPE_MIN_AMOUNT_EUR_CENTS
-			// ici (contrairement à update-payment-amount qui clampe pour l'affichage) —
-			// l'invariant qui le rend inutile : `shippingCost >= STRIPE_MIN_AMOUNT_EUR_CENTS`
-			// (frais FR par défaut = 499 c, jamais null en métropole) ⇒ total >= shipping >= min.
-			const total = Math.max(0, subtotal + shippingCost);
-
-			// Le rejet ci-dessous matérialise cet invariant au lieu de le documenter.
-			// Il n'est atteignable qu'après l'introduction d'un port gratuit ou d'un tarif
-			// < 50 c ; sans lui, ce jour-là, Stripe refusait l'`update` de `confirmCheckout`
-			// (montant sous le minimum EUR) et le client voyait « Une erreur est survenue »
-			// après un `cleanupFailedCheckout` — un cul-de-sac muet plutôt qu'un motif.
-			// Surtout : PAS de clamp silencieux à 50 c, qui sur-facturerait le client sans
-			// que rien ne le signale (le PI porterait 50 c, `order.total` autre chose).
-			if (total < STRIPE_MIN_AMOUNT_EUR_CENTS) {
-				Sentry.withScope((scope) => {
-					scope.setLevel("error");
-					scope.setTag("checkout", "total-below-stripe-minimum");
-					scope.setFingerprint(["order-creation", "total-below-stripe-minimum"]);
-					// Aucune PII : uniquement des montants.
-					scope.setContext("checkout", {
-						total,
-						subtotal,
-						shippingCost,
-						minimum: STRIPE_MIN_AMOUNT_EUR_CENTS,
-					});
-					Sentry.captureMessage(
-						"createOrderInTransaction: order total below the Stripe EUR minimum — configuration issue",
-						"error",
-					);
-				});
-				throw new BusinessError(
-					"Le montant de ta commande est trop faible pour être encaissé. Écris-nous, on règle ça.",
-				);
 			}
 
 			// Create order with denormalized shipping address snapshot (legal compliance — immutable)

@@ -12,17 +12,12 @@ import { type searchAddressSchema } from "../schemas/search-address.schema";
  */
 export type CompletionResult = z.infer<typeof banResultSchema>;
 
-/**
- * Type des paramètres d'entrée pour la recherche d'adresse
- * Les champs avec .default() sont optionnels dans l'input
+/*
+ * ⚠️ `SearchAddressParams` a été retiré le 2026-08-07 : plus aucun appelant.
+ * `search-address.ts` déclare volontairement `params: unknown` et parse en tête
+ * — `"use server"` publie un endpoint RPC, le type d'un paramètre est effacé à
+ * l'exécution. Le type décrivait donc une garantie que rien ne rendait.
  */
-export type SearchAddressParams = Omit<
-	z.infer<typeof searchAddressSchema>,
-	"type" | "maximumResponses"
-> & {
-	type?: string;
-	maximumResponses?: number;
-};
 
 /**
  * Type des paramètres validés avec les valeurs par défaut appliquées

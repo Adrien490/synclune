@@ -50,7 +50,7 @@ export async function createProductType(
 		});
 
 		if (existingLabel) {
-			return error("Ce label de type existe deja. Veuillez en choisir un autre.");
+			return error("Ce label de type existe déjà. Choisis-en un autre.");
 		}
 
 		// 6. Generer un slug unique automatiquement

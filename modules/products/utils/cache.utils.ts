@@ -223,6 +223,13 @@ export function collectStockInvalidationTags(skus: StockChangedSku[]): string[] 
 			entry.skuIds.push(skuId);
 			skuIdsByProduct.set(productId, entry);
 		} else {
+			// ⚠️ Repli DÉGRADÉ, pas équivalent : `SKU_STOCK(skuId)` n'est posé que par
+			// les fetchers de validation panier/checkout. La PDP ne le pose PAS (elle
+			// est sous `product-${slug}`), donc dans cette branche la vitrine garde son
+			// stock périmé toute la fenêtre `catalog` — 15 min stale, 6 h expire.
+			// Inatteignable sur le chemin nominal (le select du webhook rend toujours
+			// `product.id` + `product.slug`) ; c'est un filet pour un SKU dont le produit
+			// n'a pas été résolu, pas un chemin équivalent. Audit cache 2026-08-07.
 			tags.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 		}
 	}

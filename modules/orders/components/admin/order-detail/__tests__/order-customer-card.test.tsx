@@ -52,7 +52,7 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 	},
 }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => ({ open: mockEditOpen, close: vi.fn(), isOpen: false, data: null }),
 }));
 

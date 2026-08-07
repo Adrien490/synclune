@@ -99,7 +99,7 @@ export async function deleteProductSku(
 		});
 
 		if (!existingSku) {
-			return notFound("Variante de produit");
+			return notFound("Variante de produit", "f");
 		}
 
 		// 6. Verifier qu'il y a au moins 2 SKUs pour le produit
@@ -139,7 +139,7 @@ export async function deleteProductSku(
 
 			if (activeSkusCount <= 1) {
 				return error(
-					"Impossible de supprimer la dernière variante active d'un produit PUBLIC. Veuillez créer une autre variante active ou mettre le produit en DRAFT.",
+					"Impossible de supprimer la dernière variante active d'un produit PUBLIC. Crée une autre variante active, ou mets le produit en DRAFT.",
 				);
 			}
 		}

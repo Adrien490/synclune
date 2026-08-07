@@ -179,20 +179,20 @@ export function ResponsiveActionMenu({ open, onOpenChange, children }: Responsiv
 
 	if (isMobile) {
 		return (
-			<ResponsiveActionMenuContext.Provider value={ctx}>
+			<ResponsiveActionMenuContext value={ctx}>
 				<Drawer open={open} onOpenChange={handleOpenChange} direction="bottom">
 					{children}
 				</Drawer>
-			</ResponsiveActionMenuContext.Provider>
+			</ResponsiveActionMenuContext>
 		);
 	}
 
 	return (
-		<ResponsiveActionMenuContext.Provider value={ctx}>
+		<ResponsiveActionMenuContext value={ctx}>
 			<DropdownMenu open={open} onOpenChange={handleOpenChange}>
 				{children}
 			</DropdownMenu>
-		</ResponsiveActionMenuContext.Provider>
+		</ResponsiveActionMenuContext>
 	);
 }
 
@@ -433,8 +433,7 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 		</span>
 	);
 
-	const focusClasses =
-		"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none";
+	const focusClasses = "focus-ring ";
 
 	const closesMenu = item.closesMenu !== false;
 

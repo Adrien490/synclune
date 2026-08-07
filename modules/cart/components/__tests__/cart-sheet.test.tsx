@@ -36,7 +36,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 // ============================================================================
 
 // Mock sheet store
-vi.mock("@/shared/providers/sheet-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useSheet: mockUseSheet,
 }));
 

@@ -56,7 +56,7 @@ export async function duplicateColor(
 		});
 
 		if (!original) {
-			return notFound("Couleur");
+			return notFound("Couleur", "f");
 		}
 
 		// 5. Generate a unique name via the service

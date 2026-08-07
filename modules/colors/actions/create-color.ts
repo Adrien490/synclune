@@ -50,7 +50,7 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 		});
 
 		if (existingName) {
-			return error("Ce nom de couleur existe deja. Veuillez en choisir un autre.");
+			return error("Ce nom de couleur existe déjà. Choisis-en un autre.");
 		}
 
 		// Check hex uniqueness — empêche les doublons visuellement identiques

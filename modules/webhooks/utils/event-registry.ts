@@ -7,7 +7,6 @@ import {
 	handlePaymentFailure,
 	handlePaymentCanceled,
 	handlePaymentProcessing,
-	handleInvoicePaymentFailed,
 } from "../handlers/payment-handlers";
 import {
 	handleChargeRefunded,
@@ -38,10 +37,6 @@ function getRefund(event: Stripe.Event): Stripe.Refund {
 
 function getDispute(event: Stripe.Event): Stripe.Dispute {
 	return event.data.object as Stripe.Dispute;
-}
-
-function getInvoice(event: Stripe.Event): Stripe.Invoice {
-	return event.data.object as Stripe.Invoice;
 }
 
 /**
@@ -78,8 +73,11 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	"charge.dispute.created": async (e) => handleDisputeCreated(getDispute(e)),
 	"charge.dispute.closed": async (e) => handleDisputeClosed(getDispute(e)),
 
-	// === INVOICE ===
-	"invoice.payment_failed": async (e) => handleInvoicePaymentFailed(getInvoice(e)),
+	// ⚠️ Pas de famille INVOICE. `invoice.payment_failed` était routé ici jusqu'au
+	// 2026-08-07 sans pouvoir se déclencher : les factures sont maison (jspdf +
+	// numérotation gap-free), Stripe Invoicing n'est pas utilisé, et aucune Checkout
+	// Session — donc aucun `invoice_creation` — n'existe au dépôt. Cf. le commentaire
+	// de `SupportedStripeEvent` pour les conditions de réouverture.
 };
 
 /**

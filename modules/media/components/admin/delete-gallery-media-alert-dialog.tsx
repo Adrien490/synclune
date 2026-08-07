@@ -1,7 +1,7 @@
 "use client";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useDeleteUploadThingFile } from "@/modules/media/lib/uploadthing/use-delete-uploadthing-file";
 import { startTransition } from "react";
 import { useHaptic } from "@/shared/hooks/use-haptic";

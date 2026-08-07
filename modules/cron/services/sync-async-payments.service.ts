@@ -34,11 +34,24 @@ import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
- * Synchronizes async payment statuses by polling Stripe.
+ * Rapproche de Stripe les commandes restées `PENDING`.
  *
- * Async payment methods (SEPA Direct Debit, Sofort, etc.) can take
- * 3-5 business days to confirm. This cron polls Stripe to reconcile
- * statuses in case of webhook failure.
+ * ⚠️ Cet en-tête annonçait « async payment methods (SEPA Direct Debit, Sofort…) »
+ * et « this cron polls Stripe » — deux affirmations fausses depuis longtemps :
+ *
+ *  - **Le tunnel est card-only.** `initialize-payment.ts` pose
+ *    `payment_method_types: ["card"]`, donc ni SEPA ni Sofort ni aucune méthode à
+ *    redirection ne peut produire une commande. Ce qu'on rattrape réellement, c'est
+ *    un règlement 3DS qui traîne (`processing` / `requires_action`) et surtout un
+ *    webhook `payment_intent.succeeded` jamais arrivé.
+ *  - **Ce n'est plus un cron mais un BOUTON** (`/admin/configuration/maintenance`,
+ *    SSOT `modules/cron/constants/maintenance-tasks.ts`), depuis le Lot 1
+ *    SIMPLIFICATION du 2026-08-03. Personne ne le déclenche automatiquement.
+ *
+ * Conséquence à garder en tête : c'est l'unique émetteur de l'e-mail
+ * `payment-failed` (le webhook `payment_intent.payment_failed` est non-terminal et
+ * n'écrit rien), et l'unique chemin qui annule un PI durablement non finalisé.
+ * Son oubli laisse des commandes `PENDING` et des clientes sans nouvelle.
  */
 export async function syncAsyncPayments(): Promise<CronResult> {
 	logger.info("Starting async payment sync", { cronJob: "sync-async-payments" });

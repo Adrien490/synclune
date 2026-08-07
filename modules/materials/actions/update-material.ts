@@ -54,7 +54,7 @@ export async function updateMaterial(
 		});
 
 		if (!existingMaterial) {
-			return error("Ce materiau n'existe pas");
+			return error("Ce matériau n'existe pas");
 		}
 
 		// Verifier l'unicite du nom (sauf si c'est le meme) — insensible à la
@@ -70,7 +70,7 @@ export async function updateMaterial(
 			});
 
 			if (nameExists) {
-				return error("Ce nom de materiau existe deja. Veuillez en choisir un autre.");
+				return error("Ce nom de matériau existe déjà. Choisis-en un autre.");
 			}
 		}
 
@@ -129,8 +129,8 @@ export async function updateMaterial(
 		// Race TOC: même si le pre-check passe, deux mises à jour concurrentes peuvent
 		// violer la contrainte `@unique` sur `name`. Message aligné avec le pre-check.
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-			return error("Ce nom de materiau existe deja. Veuillez en choisir un autre.");
+			return error("Ce nom de matériau existe déjà. Choisis-en un autre.");
 		}
-		return handleActionError(e, "Impossible de modifier le materiau");
+		return handleActionError(e, "Impossible de modifier le matériau");
 	}
 }

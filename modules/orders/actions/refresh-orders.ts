@@ -21,7 +21,7 @@ export async function refreshOrders(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
-		// ⚠️ `getOrders()` (la liste admin) tague son cache privé avec ADMIN_ORDERS_LIST,
+		// ⚠️ `getOrders()` (la liste admin) tague son cache PUBLIC avec ADMIN_ORDERS_LIST,
 		// PAS avec ORDERS_CACHE_TAGS.LIST. Sans cette ligne, « Rafraîchir » et le
 		// pull-to-refresh affichaient « Commandes rafraîchies » sur des données périmées
 		// jusqu'à expiration du profil `user` (~10 min). Cf. `getOrderInvalidationTags`,

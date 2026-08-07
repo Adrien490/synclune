@@ -7,7 +7,7 @@ import { FaqSection } from "../faq-section";
  * Structure de la section FAQ — direction « F — Le nuancier, au bon calibre »
  * (2026-08-06), qui succède à « E — L'échantillonnier » du même jour (lavis de
  * famille sur les onze rangées, jugé trop fort) et à « B — La note soleil »
- * (2026-08-05). Direction et lots : `docs/LANDING-SECTION-FAQ.md`.
+ * (2026-08-05).
  *
  * Avant cette suite, RIEN ne couvrait le rendu de la section : seuls l'`id`
  * (`legal-urls-coherence`, lecture texte) et le titre (`legal-pages.spec.ts`,

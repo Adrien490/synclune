@@ -176,7 +176,7 @@ describe("CollectionsGrid", () => {
 		// Le payload en porte 4 (plafond dur du `take`, partagé avec le bento du
 		// méga-menu) ; la pile en rend 3. Avant l'arbitrage du 2026-08-06 la carte
 		// n'en lisait qu'UN — elle était alors indiscernable d'une carte produit
-		// dont on aurait retiré le prix (docs/COLLECTION-CARD.md § 3 et § 5).
+		// dont on aurait retiré le prix.
 		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(4) })} />);
 
 		const images = Array.from(document.querySelectorAll("img"));

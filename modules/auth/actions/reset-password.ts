@@ -38,7 +38,7 @@ export const resetPassword = async (
 		const breachCount = await checkPasswordBreached(password);
 		if (breachCount > 0) {
 			return error(
-				"Ce mot de passe a été compromis dans une fuite de données. Veuillez en choisir un autre.",
+				"Ce mot de passe a été compromis dans une fuite de données. Choisis-en un autre.",
 			);
 		}
 
@@ -46,14 +46,12 @@ export const resetPassword = async (
 			body: { newPassword: password, token },
 		});
 
-		return success(
-			"Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.",
-		);
+		return success("Ton mot de passe a été réinitialisé. Tu peux maintenant te connecter.");
 	} catch (err: unknown) {
 		if (err instanceof Error) {
 			if (err.message.includes("Invalid token") || err.message.includes("expired")) {
 				return error(
-					"Le lien de réinitialisation est invalide ou a expiré. Veuillez faire une nouvelle demande.",
+					"Le lien de réinitialisation est invalide ou a expiré. Fais une nouvelle demande.",
 				);
 			}
 		}

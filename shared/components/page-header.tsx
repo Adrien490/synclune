@@ -175,7 +175,7 @@ export function PageHeader({
 												? (breadcrumbs[breadcrumbs.length - 2]?.href ?? "/")
 												: "/"
 										}
-										className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -ml-3 inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+										className="focus-ring text-muted-foreground hover:text-foreground -ml-3 inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-colors duration-200"
 										aria-label={`Retour vers ${
 											breadcrumbs.length > 1
 												? (breadcrumbs[breadcrumbs.length - 2]?.label ?? "Accueil")
@@ -205,7 +205,7 @@ export function PageHeader({
 										<li>
 											<Link
 												href="/"
-												className="hover:text-foreground focus-visible:ring-ring rounded-md transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+												className="focus-ring hover:text-foreground rounded-md transition-colors duration-200"
 											>
 												Accueil
 											</Link>
@@ -221,7 +221,7 @@ export function PageHeader({
 												) : (
 													<Link
 														href={item.href}
-														className="hover:text-foreground focus-visible:ring-ring rounded-md transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+														className="focus-ring hover:text-foreground rounded-md transition-colors duration-200"
 													>
 														{item.label}
 													</Link>
@@ -281,6 +281,3 @@ export function PageHeader({
 		</>
 	);
 }
-
-// Re-export skeleton pour maintenir la compatibilité des imports existants
-export { PageHeaderSkeleton } from "./page-header-skeleton";

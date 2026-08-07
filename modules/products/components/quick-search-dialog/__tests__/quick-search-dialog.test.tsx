@@ -57,7 +57,7 @@ const {
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useDialog: (id: string) => {
 		if (id === "quick-search") {
 			return { isOpen: mockIsOpen.current, close: mockClose };

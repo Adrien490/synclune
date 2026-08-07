@@ -158,8 +158,6 @@ function makeOrderRow(overrides: Record<string, unknown> = {}) {
 				skuSize: "Unique",
 				sku: {
 					id: "sku-pi-1",
-					inventory: 5,
-					sku: "COL-AG-U",
 					product: { id: "prod-pi-1", slug: "collier-argent" },
 				},
 			},
@@ -195,8 +193,6 @@ function makeOrderWithItems(overrides: Partial<OrderWithItems> = {}): OrderWithI
 				skuSize: "Unique",
 				sku: {
 					id: "sku-pi-1",
-					inventory: 5,
-					sku: "COL-AG-U",
 					product: { id: "prod-pi-1", slug: "collier-argent" },
 				},
 			},
@@ -501,8 +497,6 @@ describe("buildPostCheckoutTasksFromPI", () => {
 					skuId: "sku-2",
 					sku: {
 						id: "sku-2",
-						inventory: 3,
-						sku: "SKU-2",
 						product: { id: "prod-2", slug: "produit-2" },
 					},
 				},

@@ -80,7 +80,7 @@ export const SelectField = <T extends string>({
 	const field = useFieldContext<T | undefined>();
 	const triggerRef = useRef<HTMLButtonElement>(null);
 
-	const hasError = useFieldErrorVisibility(field);
+	const { visible: hasError, announce } = useFieldErrorVisibility(field);
 	const descId = description ? `${field.name}-desc` : null;
 	const errorId = hasError ? `${field.name}-error` : null;
 	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
@@ -211,6 +211,7 @@ export const SelectField = <T extends string>({
 				</p>
 			)}
 			<FieldError
+				live={announce}
 				id={`${field.name}-error`}
 				errors={hasError ? field.state.meta.errors : undefined}
 			/>

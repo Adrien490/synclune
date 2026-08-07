@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useRouter } from "next/navigation";
 import { COLLECTION_DIALOG_ID } from "./collection-form-dialog";

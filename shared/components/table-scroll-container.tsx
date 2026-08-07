@@ -83,7 +83,7 @@ export function TableScrollContainer({
 			<div
 				ref={scrollRef}
 				className={cn(
-					"focus-visible:ring-ring overflow-x-auto focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
+					"focus-ring overflow-x-auto",
 					maxHeightClassName && `${maxHeightClassName} overflow-y-auto`,
 				)}
 				// Défilement horizontal jusqu'au bord gauche de l'écran, où vit le geste

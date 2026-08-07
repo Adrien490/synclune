@@ -119,9 +119,9 @@ describe("duplicateColor", () => {
 			data,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockNotFound.mockImplementation((label: string) => ({
+		mockNotFound.mockImplementation((label: string, genre: "m" | "f" = "m") => ({
 			status: ActionStatus.NOT_FOUND,
-			message: `${label} non trouvé`,
+			message: `${label} non trouvé${genre === "f" ? "e" : ""}`,
 		}));
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -156,7 +156,7 @@ describe("duplicateColor", () => {
 	it("should return not found when original color does not exist", async () => {
 		mockPrisma.color.findUnique.mockResolvedValue(null);
 		const result = await duplicateColor(undefined, validFormData);
-		expect(mockNotFound).toHaveBeenCalledWith("Couleur");
+		expect(mockNotFound).toHaveBeenCalledWith("Couleur", "f");
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 	});
 

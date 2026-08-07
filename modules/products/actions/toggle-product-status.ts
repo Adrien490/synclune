@@ -93,7 +93,7 @@ export async function toggleProductStatus(
 		});
 
 		if (!existingProduct) {
-			return notFound("Le produit");
+			return notFound("Produit");
 		}
 
 		// 5. Determiner le nouveau statut
@@ -145,7 +145,7 @@ export async function toggleProductStatus(
 			});
 
 			if (orderItemsCount > 0) {
-				warningMessage = `Ce produit a ${orderItemsCount} commande${orderItemsCount > 1 ? "s" : ""} associee${orderItemsCount > 1 ? "s" : ""}. Il restera visible dans l'historique des commandes.`;
+				warningMessage = `Ce produit a ${orderItemsCount} commande${orderItemsCount > 1 ? "s" : ""} associée${orderItemsCount > 1 ? "s" : ""}. Il restera visible dans l'historique des commandes.`;
 			}
 		}
 

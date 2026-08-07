@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 /**
  * Parité fonts.ts ↔ docs/emails — le filet qui N'EXISTAIT PAS.
  *
- * L'audit typo du 2026-08-05 (docs/FONTS-AUDIT-2026-08-05.md, friction 5) a
+ * L'audit typo du 2026-08-05 (friction 5) a
  * montré que `claude-md-accuracy.contract.test.ts` ne vérifie que des CHEMINS
  * de fichiers backtickés — jamais un nom de police : après une migration, les
  * prompts pouvaient continuer d'affirmer « Fraunces » sans qu'aucun test ne
@@ -36,15 +36,9 @@ const TRIO_DOCS = [
 	"docs/prompts/DESIGN-ARTIFACT-PROMPT.md",
 	"docs/prompts/REDESIGN-PROMPT.md",
 	"docs/prompts/AUDIT-PROMPTS.md",
-	"docs/UI-CONVENTIONS.md",
 ];
 
-/**
- * Documents d'état courant où les familles SORTIES n'ont plus leur place.
- * `docs/UI-CONVENTIONS.md` n'y figure pas : il porte des leçons HISTORIQUES
- * qui nomment les anciennes familles à dessein (incident fraunces-wonk,
- * candidats écartés à l'audit).
- */
+/** Documents d'état courant où les familles SORTIES n'ont plus leur place. */
 const NO_PAST_DOCS = [
 	"docs/prompts/DESIGN-ARTIFACT-PROMPT.md",
 	"docs/prompts/REDESIGN-PROMPT.md",

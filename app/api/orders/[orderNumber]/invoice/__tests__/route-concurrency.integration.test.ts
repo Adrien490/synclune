@@ -21,55 +21,18 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
-import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
+import { createTestOrder, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { OrderStatus, PaymentStatus, type Order } from "@/app/generated/prisma/client";
 
 const integrationEnabled = Boolean(process.env.INTEGRATION_DATABASE_URL);
 const describeIntegration = integrationEnabled ? describe : describe.skip;
 
-async function createPaidOrderWithoutInvoice(
-	prisma: ReturnType<typeof getIntegrationPrismaClient>,
-	userId: string,
-	skuId: string,
-): Promise<Order> {
-	return prisma.order.create({
-		data: {
-			userId,
-			orderNumber: `SYN-RT-${Date.now()}`,
-			customerEmail: "rt@test.local",
-			customerName: "Route Test",
-			shippingFirstName: "Route",
-			shippingLastName: "Test",
-			shippingAddress1: "1 rue",
-			shippingPostalCode: "75001",
-			shippingCity: "Paris",
-			shippingCountry: "FR",
-			shippingPhone: "+33600000000",
-			status: OrderStatus.PROCESSING,
-			paymentStatus: PaymentStatus.PAID,
-			paidAt: new Date(),
-			stripePaymentIntentId: `pi_rt_${Date.now()}`,
-			subtotal: 4999,
-			total: 4999,
-			paymentMethod: "CARD",
-			invoiceStatus: null,
-			items: {
-				create: [
-					{
-						skuId,
-						quantity: 1,
-						productTitle: "Test",
-						price: 4999,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: 4999,
-						lineTotalIncludingTax: 4999,
-						taxCategoryCode: "ZB",
-					},
-				],
-			},
-		},
+async function createPaidOrderWithoutInvoice(skuId: string): Promise<Order> {
+	return createTestOrder([{ skuId }], {
+		status: OrderStatus.PROCESSING,
+		paymentStatus: PaymentStatus.PAID,
+		invoiceStatus: null,
 	});
 }
 
@@ -81,10 +44,9 @@ describeIntegration("GET /api/orders/[orderNumber]/invoice — concurrence (EINV
 	});
 
 	it("double persistInvoiceNumber parallèle sur même order → séquence DB intacte (gap-free préservé)", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		const order = await createPaidOrderWithoutInvoice(prisma, user.id, sku.id);
+		const order = await createPaidOrderWithoutInvoice(sku.id);
 
 		// Simule 2 GET concurrents sur Order sans invoiceNumber
 		const [r1, r2] = await Promise.all([
@@ -117,10 +79,9 @@ describeIntegration("GET /api/orders/[orderNumber]/invoice — concurrence (EINV
 	});
 
 	it("5 persistInvoiceNumber parallèles → 5 numéros consécutifs sans P2002 surface au caller", async () => {
-		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
-		const order = await createPaidOrderWithoutInvoice(prisma, user.id, sku.id);
+		const order = await createPaidOrderWithoutInvoice(sku.id);
 
 		const results = await Promise.all(
 			Array.from({ length: 5 }, () => persistInvoiceNumber(order.id)),

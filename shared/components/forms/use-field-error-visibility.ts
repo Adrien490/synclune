@@ -29,9 +29,41 @@ import { useStore, type AnyFieldApi } from "@tanstack/react-form";
  * assumé : les contrôles qui ne câblent pas `handleBlur` (radio, multi-select,
  * autocomplete) ne révèlent leurs erreurs qu'à la soumission — leur erreur
  * type est « champ requis », qui n'a pas de sens avant.
+ *
+ * ## `announce` : qui a le droit de PARLER
+ *
+ * `visible` dit si l'erreur s'affiche ; `announce` dit si sa région live a le
+ * droit de la vocaliser. Les deux divergent exactement dans un cas : **après une
+ * tentative de soumission**.
+ *
+ * Mesuré sur `/paiement` le 2026-08-07, formulaire vide soumis : **sept** régions
+ * live se peuplaient dans le même tick — le résumé d'erreurs en `assertive` plus
+ * une `role="alert"` par champ invalide — pendant que le focus se déplaçait. Un
+ * lecteur d'écran interrompt les `polite` avec l'`assertive` et bouscule les
+ * `polite` entre elles : la vocalisation est brouillée au moment précis où
+ * l'utilisateur a besoin d'être guidé.
+ *
+ * D'où la règle : **hors soumission, le champ parle** (rien d'autre ne le ferait,
+ * l'utilisateur ayant déjà quitté le champ) ; **à la soumission, il se tait** —
+ * le message est alors porté soit par le résumé d'erreurs, soit par le
+ * déplacement du focus vers le premier champ invalide, dont le nom accessible et
+ * l'`aria-describedby` sont lus à l'arrivée. Dans les deux cas le message est
+ * transmis, une seule fois.
+ *
+ * ⚠️ Ne PAS rendre `announce` toujours vrai « pour être sûr » : c'est la
+ * redondance elle-même qui rend l'ensemble inaudible.
  */
-export function useFieldErrorVisibility(field: AnyFieldApi): boolean {
+export interface FieldErrorVisibility {
+	/** L'erreur est affichée (pilote `aria-invalid`, `data-invalid`, le contenu). */
+	visible: boolean;
+	/** La région live du champ a le droit de vocaliser (cf. docblock). */
+	announce: boolean;
+}
+
+export function useFieldErrorVisibility(field: AnyFieldApi): FieldErrorVisibility {
 	const submissionAttempts = useStore(field.form.store, (state) => state.submissionAttempts);
 	const { errors, isBlurred } = field.state.meta;
-	return (isBlurred || submissionAttempts > 0) && errors.length > 0;
+	const visible = (isBlurred || submissionAttempts > 0) && errors.length > 0;
+
+	return { visible, announce: visible && submissionAttempts === 0 };
 }

@@ -12,7 +12,26 @@ export class ProductCatalogPage {
 
 	constructor(private page: Page) {
 		this.productLinks = page.locator(SELECTORS.PRODUCT_LINK);
-		this.addToCartButton = page.getByRole("button", { name: /Ajouter au panier|Ajouter/i });
+		/**
+		 * ⚠️ **L'alternative `|Ajouter` matchait le bouton FAVORIS.**
+		 *
+		 * Le nom accessible du bouton de souhait est « Ajouter *&lt;produit&gt;* aux
+		 * favoris » (`wishlist-button.tsx`) : il contient « Ajouter », donc
+		 * `/Ajouter au panier|Ajouter/i` le matchait — et comme il précède le CTA
+		 * dans l'ordre DOM de la fiche produit, `.first()` désignait **le bouton
+		 * favoris**. `addFirstProductToCart` ajoutait donc aux favoris, jamais au
+		 * panier, et attendait un Sheet qui ne s'ouvrait pas.
+		 *
+		 * Le repli de `checkout.spec.ts` (`getByText(/ajouté|panier/i)`) rendait
+		 * l'échec invisible : le toast « Ajouté aux favoris » contient « ajouté »,
+		 * donc la spec passait pour la mauvaise raison.
+		 *
+		 * Deux formes légitimes coexistent, et « au panier » les distingue toutes
+		 * deux de « aux favoris » : la fiche produit rend « Ajouter au panier »
+		 * (texte nu), les cartes rendent « Ajouter *&lt;produit&gt;* au panier »
+		 * (aria-label). Verrouillé par `add-to-cart-locator.regression.test.ts`.
+		 */
+		this.addToCartButton = page.getByRole("button", { name: /ajouter.*au panier/i });
 		this.heading = page.getByRole("heading", { level: 1 });
 	}
 
@@ -20,12 +39,37 @@ export class ProductCatalogPage {
 		await this.page.goto("/produits");
 		await this.page.waitForLoadState("domcontentloaded");
 		await expect(this.heading).toBeVisible();
+
+		// ⚠️ Le h1 vit dans le SHELL statique (PPR) ; la grille de produits arrive
+		// en streaming derrière un `Suspense`. Compter les liens juste après le
+		// heading rendait donc `productLinks.count()` égal à 0 de façon
+		// intermittente — et comme tous les appelants traduisent « 0 produit » par
+		// « pas de données de seed », les specs se SKIPPAIENT au lieu d'échouer.
+		// Attendre le premier lien rend le compte fiable ; un catalogue réellement
+		// vide coûte simplement le timeout.
+		await this.productLinks
+			.first()
+			.waitFor({ state: "attached", timeout: 15000 })
+			.catch(() => {
+				/* catalogue vide : les appelants décident quoi en faire */
+			});
 	}
 
 	async gotoFirstProduct() {
 		const href = await this.productLinks.first().getAttribute("href");
 		await this.page.goto(href!);
 		await this.page.waitForLoadState("domcontentloaded");
+
+		// Même piège que sur la grille : le bloc d'achat de la fiche est un client
+		// component monté après hydratation. Compter le CTA juste après
+		// `domcontentloaded` rendait 0, que les appelants traduisent en « ce produit
+		// exige une sélection de SKU » — un skip qui décrivait un état inexistant.
+		await this.addToCartButton
+			.first()
+			.waitFor({ state: "attached", timeout: 15000 })
+			.catch(() => {
+				/* produit réellement indisponible : l'appelant décide */
+			});
 	}
 
 	async hasProducts() {

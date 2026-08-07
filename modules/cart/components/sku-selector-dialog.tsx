@@ -17,7 +17,7 @@ import {
 import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { SKU_SELECTOR_TEXTS } from "@/modules/cart/constants/sku-selector-texts";
 

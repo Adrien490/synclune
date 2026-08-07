@@ -263,6 +263,15 @@ export function buildShippingAddress(order: GetOrderReturn): StructuredAddress {
  * émise dans les secondes suivant le paiement (webhook `payment_intent.succeeded`
  * → `ensureInvoiceNumberPersisted`). La fenêtre d'édition valait zéro.
  *
+ * ⚠️ **Cet argument ne se transporte PAS à `shipping*`** — c'est le constat de
+ * l'audit du 2026-08-07. `update-order-shipping-address` ne se verrouille qu'à
+ * l'EXPÉDITION, soit des jours de fenêtre, pas zéro. Et depuis le retrait ci-dessus
+ * ces colonnes sont l'adresse imprimée sur la facture ET sur l'avoir, ce dernier
+ * étant rendu depuis les colonnes vivantes. L'action porte donc désormais deux
+ * gardes comptables propres (avoir émis · facture numérotée sans archive) —
+ * cf. son docblock. Ne pas conclure de ce paragraphe que `shipping*` est libre
+ * d'écriture parce que `billing*` l'était de fait.
+ *
  * ⚠️ CONDITION DE RÉOUVERTURE, DATÉE. L'art. 242 nonies A ann. II CGI demande
  * deux choses distinctes : l'adresse du CLIENT (1°) et, « si elle est différente
  * de l'adresse du client », l'adresse de LIVRAISON (7° bis). Tant que l'acheteuse

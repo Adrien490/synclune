@@ -6,7 +6,7 @@ import { PointerActivationConstraints } from "@dnd-kit/dom";
 import { RestrictToWindow } from "@dnd-kit/dom/modifiers";
 import { arrayMove } from "@dnd-kit/helpers";
 import type { DragEndEvent } from "@dnd-kit/react";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useReducedMotion } from "motion/react";
 import { PlayIcon, ProhibitIcon, UploadSimpleIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";

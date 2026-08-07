@@ -208,4 +208,4 @@ To add a new variable:
 ## Useful Resources
 
 - **[CLAUDE.md](./CLAUDE.md)** — Full architecture reference, cache profiles, module patterns
-- **[docs/](./docs/README.md)** — UX/UI audits and functional specs — see the [index](./docs/README.md), which marks which documents are authoritative and which are history
+- **[docs/](./docs/)** — brand lexicon ([BRAND-DA.md](./docs/BRAND-DA.md)), landing audit grid ([LANDING-BEST-PRACTICES.md](./docs/LANDING-BEST-PRACTICES.md)), Stripe doc mirror ([stripe/](./docs/stripe/))

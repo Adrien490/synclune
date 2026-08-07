@@ -117,9 +117,9 @@ describe("updateProductType", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockNotFound.mockImplementation((label: string) => ({
+		mockNotFound.mockImplementation((label: string, genre: "m" | "f" = "m") => ({
 			status: ActionStatus.NOT_FOUND,
-			message: `${label} non trouvé`,
+			message: `${label} non trouvé${genre === "f" ? "e" : ""}`,
 		}));
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -171,9 +171,7 @@ describe("updateProductType", () => {
 	it("should return error when new label already exists on another type", async () => {
 		mockPrisma.productType.findFirst.mockResolvedValue({ id: "pt-other", label: "Bague Updated" });
 		const result = await updateProductType(undefined, validFormData);
-		expect(mockError).toHaveBeenCalledWith(
-			"Ce label de type existe deja. Veuillez en choisir un autre.",
-		);
+		expect(mockError).toHaveBeenCalledWith("Ce label de type existe déjà. Choisis-en un autre.");
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 

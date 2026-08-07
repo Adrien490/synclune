@@ -19,6 +19,7 @@ export function Autocomplete<T>({
 	name,
 	value,
 	onChange,
+	onBlur,
 	disabled,
 	onSelect,
 	items,
@@ -158,6 +159,11 @@ export function Autocomplete<T>({
 			if (!containerRef.current?.contains(document.activeElement)) {
 				setIsOpen(false);
 				setActiveIndex(-1);
+				// Le champ est RÉELLEMENT quitté (le focus n'est plus nulle part dans
+				// le combobox) : c'est le seul moment où remonter le blur au
+				// formulaire. Le faire plus tôt marquerait le champ « visité » alors
+				// que l'utilisateur est en train de cliquer une suggestion.
+				onBlur?.();
 			}
 		}, effectiveBlurDelay);
 	};
@@ -318,6 +324,7 @@ export function Autocomplete<T>({
 				hasResults={hasResults}
 				hasValidQuery={hasValidQuery}
 				itemCount={items.length}
+				hasError={Boolean(error)}
 			/>
 
 			<AnimatePresence mode="popLayout">

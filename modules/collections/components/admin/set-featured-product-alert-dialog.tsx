@@ -1,7 +1,7 @@
 "use client";
 
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
 export const SET_FEATURED_PRODUCT_DIALOG_ID = "set-featured-product";

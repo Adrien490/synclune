@@ -16,12 +16,11 @@ import { Logo } from "@/shared/components/logo";
 export default function OrderTrackingLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<div className="bg-background flex min-h-dvh flex-col">
-			<a
-				href="#main-content"
-				className="focus-ring bg-background text-foreground border-primary sr-only z-50 rounded-md border px-4 py-2 text-sm font-medium shadow-md focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4"
-			>
-				Aller au contenu
-			</a>
+			{/*
+			 * Pas de lien d'évitement ici : `<SkipLink />` est monté à la RACINE
+			 * (`app/layout.tsx`) et couvre déjà cette route. Deux liens vers le même
+			 * `#main-content` se suivaient dans l'ordre de tabulation.
+			 */}
 
 			<div
 				aria-hidden="true"

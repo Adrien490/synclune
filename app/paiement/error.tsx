@@ -27,8 +27,11 @@ export default function CheckoutError({
 		Sentry.captureException(error);
 	}, [error]);
 
+	// `<div>`, pas `<main>` : `app/paiement/layout.tsx` en rend déjà un, et une
+	// frontière d'erreur s'affiche À L'INTÉRIEUR du layout — d'où deux landmarks
+	// `main` imbriqués dès qu'elle se déclenche. Audit a11y 2026-08-07.
 	return (
-		<main
+		<div
 			className="from-background via-primary/5 to-secondary/10 relative flex min-h-[60dvh] items-start justify-center bg-linear-to-br px-4 pt-12 md:min-h-[60vh] md:items-center md:pt-24"
 			style={{ viewTransitionName: "shop-paiement" }}
 		>
@@ -91,6 +94,6 @@ export default function CheckoutError({
 					}
 				/>
 			</div>
-		</main>
+		</div>
 	);
 }

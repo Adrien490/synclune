@@ -46,6 +46,8 @@ import { updatePendingOrderShippingSnapshot } from "../update-pending-order-ship
 
 const CURRENT = {
 	paymentStatus: "PENDING",
+	customerName: "Marie Dupont",
+	customerEmail: "marie@example.com",
 	shippingFirstName: "Marie",
 	shippingLastName: "Dupont",
 	shippingAddress1: "12 rue des Lilas",
@@ -65,6 +67,8 @@ const CORRECTED = {
 	city: "Nantes",
 	country: "FR",
 	phone: "+33600000000",
+	customerName: "Marie Dupont",
+	customerEmail: "marie@example.com",
 };
 
 const tx = {
@@ -148,6 +152,8 @@ describe("updatePendingOrderShippingSnapshot", () => {
 				city: CURRENT.shippingCity,
 				country: CURRENT.shippingCountry,
 				phone: CURRENT.shippingPhone,
+				customerName: CURRENT.customerName,
+				customerEmail: CURRENT.customerEmail,
 			},
 		});
 
@@ -209,12 +215,19 @@ describe("updatePendingOrderShippingSnapshot", () => {
 	});
 
 	it("détecte une correction sur chacun des champs hors-montant", async () => {
+		// ⚠️ Les 10 colonnes, sans exception. `postalCode` et `country` manquaient
+		// jusqu'au 2026-08-07 : un bug de mapping sur l'un des deux serait passé au vert
+		// alors même que le service les écrit. `address1` est couvert par le 1ᵉʳ test.
 		const cases: Array<[keyof typeof CORRECTED, unknown, string]> = [
 			["firstName", "Marion", "shippingFirstName"],
 			["lastName", "Duval", "shippingLastName"],
 			["address2", "Appartement 4", "shippingAddress2"],
+			["postalCode", "44100", "shippingPostalCode"],
 			["city", "Nantes Sud", "shippingCity"],
+			["country", "BE", "shippingCountry"],
 			["phone", "+33611111111", "shippingPhone"],
+			["customerName", "Marion Duval", "customerName"],
+			["customerEmail", "marion@example.com", "customerEmail"],
 		];
 
 		for (const [field, value, expectedColumn] of cases) {
@@ -229,5 +242,67 @@ describe("updatePendingOrderShippingSnapshot", () => {
 
 			expect(result).toEqual({ updated: true, changedFields: [expectedColumn] });
 		}
+	});
+
+	/**
+	 * @regression pending-snapshot-corrects-customer-identity-2026-08-07
+	 *
+	 * Le service ne réécrivait QUE les 8 `shipping*`. Il fermait donc KI-001 pour
+	 * l'adresse en laissant le même défaut sur l'identité : `customerName` divergeait de
+	 * `shippingFirstName + shippingLastName` (or il est recomposé du MÊME `fullName`), et
+	 * surtout `customerEmail` restait fautif — donc l'email de confirmation, et avec lui
+	 * l'UNIQUE lien de suivi HMAC de la cliente, repartait à l'adresse erronée.
+	 */
+	it("corrige AUSSI le nom et l'email quand le client les rectifie en resoumettant", async () => {
+		const result = await updatePendingOrderShippingSnapshot({
+			orderId: "order_1",
+			shipping: {
+				...CORRECTED,
+				address1: CURRENT.shippingAddress1,
+				firstName: "Marion",
+				lastName: "Duval",
+				customerName: "Marion Duval",
+				customerEmail: "marion@example.com",
+			},
+		});
+
+		expect(result).toEqual({
+			updated: true,
+			changedFields: ["customerName", "customerEmail", "shippingFirstName", "shippingLastName"],
+		});
+		expect(mockUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { id: "order_1" },
+				data: expect.objectContaining({
+					customerName: "Marion Duval",
+					customerEmail: "marion@example.com",
+					shippingFirstName: "Marion",
+					shippingLastName: "Duval",
+				}),
+			}),
+		);
+	});
+
+	it("ne laisse NI le nom NI l'email entrer dans l'audit immuable", async () => {
+		// Même exigence RGPD que pour l'adresse : `OrderHistory` survit 10 ans sans être
+		// scrubé avant l'échéance. Seuls des NOMS de champs peuvent y figurer.
+		await updatePendingOrderShippingSnapshot({
+			orderId: "order_1",
+			shipping: {
+				...CORRECTED,
+				address1: CURRENT.shippingAddress1,
+				customerName: "Marion Duval",
+				customerEmail: "marion@example.com",
+			},
+		});
+
+		const audit = mockCreateAudit.mock.calls[0]![1] as Record<string, unknown>;
+		const serialized = JSON.stringify(audit);
+		expect(serialized).not.toContain("Marion Duval");
+		expect(serialized).not.toContain("marion@example.com");
+		expect(audit.metadata).toEqual({
+			addressType: "shipping",
+			changedFields: ["customerName", "customerEmail"],
+		});
 	});
 });

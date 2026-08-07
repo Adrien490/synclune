@@ -153,6 +153,11 @@ function createMockForm(
 						enterKeyHint={
 							props.enterKeyHint as React.HTMLAttributes<HTMLInputElement>["enterKeyHint"]
 						}
+						// Le mock expose la `description` pour qu'un test puisse vérifier
+						// qu'elle est bien PASSÉE. Que la primitive la relie ensuite par
+						// `aria-describedby` est vérifié chez elle — un mock ne prouve
+						// jamais le comportement de ce qu'il remplace.
+						data-description={props.description as string}
 					/>
 				),
 				CheckboxField: (props: Record<string, unknown>) => (
@@ -288,9 +293,18 @@ describe("CheckoutAddressFields", () => {
 	// ─── Phone helper text ────────────────────────────────────────────────────
 
 	describe("phone field helper text", () => {
-		it("shows delivery notice below the phone field", () => {
+		it("passe le texte d'aide en `description` (donc relié par aria-describedby)", () => {
+			// ⚠️ Ce texte vivait dans un `<p>` FRÈRE du champ, hors du `<Field>` :
+			// visible, mais rattaché à rien. Un lecteur d'écran arrivant sur
+			// « Téléphone » n'apprenait jamais à quoi sert le numéro. Passé en
+			// `description`, `PhoneField` lui donne l'id `${name}-desc` et le référence
+			// depuis l'`aria-describedby` du champ (audit a11y 2026-08-07).
 			render(<CheckoutAddressFields form={createMockForm()} />);
-			expect(screen.getByText(/transporteur/i)).toBeInTheDocument();
+
+			expect(screen.getByTestId("phone-shipping.phoneNumber")).toHaveAttribute(
+				"data-description",
+				expect.stringMatching(/transporteur/i),
+			);
 		});
 	});
 

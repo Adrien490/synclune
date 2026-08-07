@@ -42,7 +42,7 @@ vi.mock("@/shared/components/admin-form-footer", () => ({
 	AdminFormFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+vi.mock("@/shared/providers/overlay-store-provider", () => ({
 	useAlertDialog: () => mockDialog,
 }));
 

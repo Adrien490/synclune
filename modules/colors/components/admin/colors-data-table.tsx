@@ -1,3 +1,4 @@
+import { CreateTaxonomyButton } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import {
 	TableBody,
@@ -11,7 +12,6 @@ import { PaletteIcon } from "@phosphor-icons/react/ssr";
 import { use } from "react";
 import { ColorActiveToggle } from "@/modules/colors/components/admin/color-active-toggle";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
-import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 
 interface ColorsDataTableProps {
 	colorsPromise: Promise<GetColorsReturn>;
@@ -36,7 +36,7 @@ export function ColorsDataTable({
 				noItemsDescription="Aucune couleur pour l'instant."
 				hasActiveFilters={hasActiveFilters}
 				resetFiltersHref="/admin/catalogue/couleurs"
-				actionElement={<CreateColorButton />}
+				actionElement={<CreateTaxonomyButton kind="color" />}
 			/>
 		);
 	}

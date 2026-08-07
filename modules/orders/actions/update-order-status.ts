@@ -263,7 +263,7 @@ export async function updateOrderStatus(
 			return found;
 		});
 
-		if (!order) return notFound("Commande");
+		if (!order) return notFound("Commande", "f");
 
 		if ("_error" in order) {
 			return error(

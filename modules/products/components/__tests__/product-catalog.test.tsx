@@ -90,29 +90,25 @@ vi.mock("@/modules/products/components/product-filter-rail", () => ({
 }));
 
 /**
- * Le bloc titre est un Server Component `async` (son compteur `await` la promesse
- * catalogue) : on le stube pour que ce fichier reste un test du SHELL — titre
- * calculé, props transmises, structure de grille. Le bloc lui-même a son propre
- * garde-fou statique (`@regression catalogue-mobile-h1`).
+ * Le bloc titre est un Server Component `async` : depuis le 2026-08-07 il résout
+ * lui-même le terme recherché et le type du path (c'est en SORTANT ces lectures
+ * d'URL du niveau supérieur des pages que le meuble de filtres a pu entrer dans
+ * l'App Shell). On le stube pour que ce fichier reste un test du SHELL —
+ * ce qui est monté, dans quel ordre, et ce qui descend aux enfants. Le titre
+ * lui-même est couvert par `catalog-heading.test.tsx`.
  */
 vi.mock("@/modules/products/components/catalog-heading", () => ({
 	CatalogHeading: ({
-		title,
-		activeProductType,
-		searchTerm,
+		activeProductTypePromise,
 	}: {
-		title: string;
-		activeProductType?: { slug: string; label: string; description?: string | null };
-		searchTerm?: string;
+		activeProductTypePromise?: Promise<unknown>;
 	}) => (
-		<div
-			data-testid="catalog-heading"
-			data-active-type={activeProductType?.slug}
-			data-search-term={searchTerm}
-			data-description={activeProductType?.description ?? undefined}
-		>
-			<h1>{title}</h1>
+		<div data-testid="catalog-heading" data-has-active-type={!!activeProductTypePromise}>
+			<h1>Les créations</h1>
 		</div>
+	),
+	CatalogHeadingSkeleton: ({ accent }: { accent?: string }) => (
+		<div data-testid="catalog-heading-skeleton" data-accent={accent} />
 	),
 }));
 
@@ -143,11 +139,21 @@ vi.mock("@/modules/products/constants/product.constants", () => ({
 // COMPONENT IMPORT (after mocks)
 // ============================================================================
 
-import { ProductCatalog, type ProductCatalogProps } from "../product-catalog";
+import {
+	CatalogBreadcrumbs,
+	CatalogList,
+	ProductCatalog,
+	type ProductCatalogProps,
+} from "../product-catalog";
+import type { CatalogListProps } from "@/modules/products/types/catalog-shell.types";
 
 // ============================================================================
 // FIXTURES
 // ============================================================================
+
+function makeListProps(overrides: Partial<CatalogListProps> = {}): CatalogListProps {
+	return { perPage: 24, ...overrides };
+}
 
 function makeProps(overrides: Partial<ProductCatalogProps> = {}): ProductCatalogProps {
 	return {
@@ -162,18 +168,38 @@ function makeProps(overrides: Partial<ProductCatalogProps> = {}): ProductCatalog
 			totalCount: 0,
 			suggestion: undefined,
 		}),
-		perPage: 24,
+		// Tout ce qui dérive des `searchParams` arrive en UNE promesse, résolue
+		// dans un enfant suspendu — le shell lui-même n'await rien.
+		listPropsPromise: Promise.resolve(makeListProps()),
 		productTypes: [],
 		colors: [],
 		materials: [],
 		maxPriceInEuros: 500,
-		activeFiltersCount: 0,
-		jsonLd: { "@type": "ItemList" },
+		// Le shell ne construit plus le balisage : il reçoit l'ÉMETTEUR et le rend
+		// derrière sa propre frontière `Suspense` (`CatalogJsonLd` porte l'`await`
+		// du catalogue, cf. `app/(shop)/produits/_components/catalog-json-ld.tsx`).
+		jsonLdSlot: (
+			<script
+				type="application/ld+json"
+				// react-doctor-disable-next-line react/no-danger
+				dangerouslySetInnerHTML={{ __html: '{"@type":"ItemList"}' }}
+			/>
+		),
 		// Forme RÉELLE : ni `/produits` ni `/produits/[type]` ne passent « Accueil »,
 		// c'est le fil d'Ariane qui l'ajoute en tête (comme le faisait `PageHeader`).
-		breadcrumbs: [{ label: "Créations", href: "/produits" }],
+		breadcrumbsPromise: Promise.resolve([{ label: "Créations", href: "/produits" }]),
 		...overrides,
 	};
+}
+
+/**
+ * Le fil d'Ariane et la grille sont des Server Components `async` : le renderer
+ * client de RTL ne sait pas les monter, ils restent donc en fallback dans le
+ * rendu du shell. On les exerce en les APPELANT, puis en rendant leur retour —
+ * c'est ce que fait `renderAsync` (même méthode que `catalog-heading.test.tsx`).
+ */
+async function renderAsync(element: Promise<React.ReactElement>) {
+	render(await element);
 }
 
 // ============================================================================
@@ -186,95 +212,58 @@ afterEach(() => {
 });
 
 describe("ProductCatalog", () => {
-	describe("page title", () => {
-		// Depuis « L'étal continue » (2026-08-05) il n'y a plus qu'UN h1 : celui du
-		// bloc titre, visible à tous les viewports. L'ancien montage en rendait deux
-		// (un `sr-only sm:hidden` + celui du PageHeader `hidden sm:block`).
-		it('shows "Les créations" by default', () => {
-			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByRole("heading", { name: "Les créations" })).toBeInTheDocument();
-		});
-
-		it("shows search term title when searchTerm is provided", () => {
-			render(<ProductCatalog {...makeProps({ searchTerm: "bague" })} />);
-			expect(screen.getByRole("heading", { name: 'Recherche "bague"' })).toBeInTheDocument();
-		});
-
-		it("shows product type label when activeProductType is provided", () => {
-			render(
-				<ProductCatalog
-					{...makeProps({
-						activeProductType: { slug: "bague", label: "Bagues", description: null },
-					})}
-				/>,
-			);
-			expect(screen.getByRole("heading", { name: "Bagues" })).toBeInTheDocument();
-		});
-
-		it("prioritises searchTerm title over activeProductType label", () => {
-			render(
-				<ProductCatalog
-					{...makeProps({
-						searchTerm: "argent",
-						activeProductType: { slug: "bague", label: "Bagues", description: null },
-					})}
-				/>,
-			);
-			expect(screen.getByRole("heading", { name: 'Recherche "argent"' })).toBeInTheDocument();
-		});
-
-		/**
-		 * L'ancien montage exposait un `h1` `sr-only sm:hidden` via
-		 * `data-testid="catalog-mobile-title"`, parce que le `PageHeader` était masqué
-		 * sous 40rem — la page n'affichait alors AUCUN mot en mobile. Le contournement
-		 * est parti avec la bande : il ne doit pas revenir.
-		 */
-		it("n'expose plus de h1 masqué en mobile — il n'y en a qu'un, et il est visible", () => {
+	/**
+	 * Ce que le shell garantit depuis le 2026-08-07, et qui est tout l'objet du
+	 * changement de contrat : le meuble de filtres se rend SANS attendre l'URL.
+	 * S'il repassait derrière une promesse, la navigation entre `/produits` et
+	 * `/produits/[type]` réafficherait le squelette pleine page de `loading.tsx`
+	 * — le défaut d'origine.
+	 */
+	describe("ce qui se peint sans attendre l'URL (App Shell)", () => {
+		it("monte le meuble de filtres au premier rendu, avant toute résolution", () => {
 			render(<ProductCatalog {...makeProps()} />);
 
-			expect(screen.queryByTestId("catalog-mobile-title")).not.toBeInTheDocument();
-			expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+			expect(screen.getByTestId("product-filter-bar")).toBeInTheDocument();
+			expect(screen.getByTestId("product-filter-rail")).toBeInTheDocument();
+			expect(screen.getByTestId("product-filter-sheet")).toBeInTheDocument();
+			expect(screen.getByTestId("product-filter-badges")).toBeInTheDocument();
 		});
-	});
 
-	describe("contexte transmis au bloc titre", () => {
-		// La description n'est plus une prop de bande : c'est le bloc titre qui décide
-		// quoi dire (copie d'atelier, description du type, ou contexte de recherche).
-		it("passe le type actif et sa description au bloc titre", () => {
+		it("la grille, elle, attend — c'est la seule à montrer un squelette", () => {
+			render(<ProductCatalog {...makeProps()} />);
+
+			expect(screen.getByTestId("product-list-skeleton")).toBeInTheDocument();
+			expect(screen.queryByTestId("product-list")).not.toBeInTheDocument();
+		});
+
+		it("transmet le type du path au bloc titre sur une page catégorie", () => {
 			render(
 				<ProductCatalog
 					{...makeProps({
-						activeProductType: {
-							slug: "bague",
-							label: "Bagues",
-							description: "Toutes mes bagues artisanales.",
-						},
+						activeProductTypePromise: Promise.resolve({ slug: "bague", label: "Bagues" }),
 					})}
 				/>,
 			);
-			const heading = screen.getByTestId("catalog-heading");
-			expect(heading).toHaveAttribute("data-active-type", "bague");
-			expect(heading).toHaveAttribute("data-description", "Toutes mes bagues artisanales.");
+			expect(screen.getByTestId("catalog-heading")).toHaveAttribute("data-has-active-type", "true");
 		});
 
-		it("passe le terme recherché au bloc titre", () => {
-			render(<ProductCatalog {...makeProps({ searchTerm: "argent" })} />);
-			expect(screen.getByTestId("catalog-heading")).toHaveAttribute("data-search-term", "argent");
+		it("sur /produits, aucun type n'est transmis", () => {
+			render(<ProductCatalog {...makeProps()} />);
+			expect(screen.getByTestId("catalog-heading")).toHaveAttribute(
+				"data-has-active-type",
+				"false",
+			);
 		});
 	});
 
 	describe("breadcrumbs", () => {
-		it("rend « Accueil » en tête, puis les breadcrumbs passés", () => {
-			render(
-				<ProductCatalog
-					{...makeProps({
-						breadcrumbs: [
-							{ label: "Créations", href: "/produits" },
-							{ label: "Bagues", href: "/produits/bagues" },
-						],
-					})}
-				/>,
-			);
+		const items = [
+			{ label: "Créations", href: "/produits" },
+			{ label: "Bagues", href: "/produits/bagues" },
+		];
+
+		it("rend « Accueil » en tête, puis les breadcrumbs résolus", async () => {
+			await renderAsync(CatalogBreadcrumbs({ breadcrumbsPromise: Promise.resolve(items) }));
 
 			// « Accueil » est ajouté par le fil d'Ariane, pas par l'appelant — même
 			// contrat que l'ancien `PageHeader`. Un appelant qui le passerait aussi
@@ -283,17 +272,8 @@ describe("ProductCatalog", () => {
 			expect(screen.getByRole("link", { name: "Créations" })).toHaveAttribute("href", "/produits");
 		});
 
-		it("marque le dernier maillon comme page courante, sans lien", () => {
-			render(
-				<ProductCatalog
-					{...makeProps({
-						breadcrumbs: [
-							{ label: "Créations", href: "/produits" },
-							{ label: "Bagues", href: "/produits/bagues" },
-						],
-					})}
-				/>,
-			);
+		it("marque le dernier maillon comme page courante, sans lien", async () => {
+			await renderAsync(CatalogBreadcrumbs({ breadcrumbsPromise: Promise.resolve(items) }));
 
 			expect(screen.queryByRole("link", { name: "Bagues" })).not.toBeInTheDocument();
 			expect(screen.getByText("Bagues")).toHaveAttribute("aria-current", "page");
@@ -301,36 +281,18 @@ describe("ProductCatalog", () => {
 	});
 
 	describe("filter badges", () => {
-		it("does not render filter badges when no active filters and no activeProductType", () => {
-			render(<ProductCatalog {...makeProps({ activeFiltersCount: 0 })} />);
-			expect(screen.queryByTestId("product-filter-badges")).not.toBeInTheDocument();
-		});
-
-		it("renders filter badges when activeFiltersCount > 0", () => {
-			render(<ProductCatalog {...makeProps({ activeFiltersCount: 2 })} />);
-			expect(screen.getByTestId("product-filter-badges")).toBeInTheDocument();
-		});
-
-		it("renders filter badges when activeProductType is set even with 0 active filters", () => {
-			render(
-				<ProductCatalog
-					{...makeProps({
-						activeFiltersCount: 0,
-						activeProductType: { slug: "bague", label: "Bagues", description: null },
-					})}
-				/>,
-			);
-			expect(screen.getByTestId("product-filter-badges")).toBeInTheDocument();
-		});
-
 		/**
-		 * @regression onsale-active-filters
-		 * preferOnSale alone must flip hasActiveFilters → badges row visible so the
-		 * "En promotion" filter can be removed from the grid. Before this fix,
-		 * `?onSale=true` alone left activeFiltersCount=0 and hid the badges row.
+		 * Le gate `hasActiveFilters` a quitté le shell le 2026-08-07 : il se
+		 * déduisait des `searchParams` AWAITÉS, donc il retenait le bandeau hors de
+		 * la coquille. C'est `FilterBadges` qui rend `null` sur une liste vide —
+		 * même résultat visible, sans dépendance à l'URL côté serveur.
+		 *
+		 * @regression onsale-active-filters — `?onSale=true` seul doit laisser le
+		 * bandeau se monter, pour qu'on puisse retirer « En promotion ». Le compte
+		 * serveur l'oubliait ; le composant client, lui, le voit dans l'URL.
 		 */
-		it("renders filter badges when preferOnSale is true even with 0 active filters", () => {
-			render(<ProductCatalog {...makeProps({ activeFiltersCount: 0, preferOnSale: true })} />);
+		it("monte le bandeau sans condition serveur — c'est lui qui décide de se taire", () => {
+			render(<ProductCatalog {...makeProps()} />);
 			expect(screen.getByTestId("product-filter-badges")).toBeInTheDocument();
 		});
 	});
@@ -355,47 +317,50 @@ describe("ProductCatalog", () => {
 
 	describe("layout", () => {
 		it("does not expose a static region label that would contradict the dynamic h1", () => {
-			render(<ProductCatalog {...makeProps({ searchTerm: "bague" })} />);
+			render(<ProductCatalog {...makeProps()} />);
 			expect(
 				screen.queryByRole("region", { name: "Catalogue des créations" }),
 			).not.toBeInTheDocument();
 		});
 
-		it("renders the ProductList component", () => {
+		/**
+		 * L'ancien montage exposait un `h1` `sr-only sm:hidden` via
+		 * `data-testid="catalog-mobile-title"`, parce que le `PageHeader` était masqué
+		 * sous 40rem — la page n'affichait alors AUCUN mot en mobile. Le contournement
+		 * est parti avec la bande : il ne doit pas revenir.
+		 */
+		it("n'expose plus de h1 masqué en mobile — il n'y en a qu'un, et il est visible", () => {
 			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByTestId("product-list")).toBeInTheDocument();
+
+			expect(screen.queryByTestId("catalog-mobile-title")).not.toBeInTheDocument();
+			expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
 		});
 
-		it("passes perPage to ProductList", () => {
-			render(<ProductCatalog {...makeProps({ perPage: 48 })} />);
-			expect(screen.getByTestId("product-list")).toHaveAttribute("data-per-page", "48");
-		});
+		it("fait descendre à ProductList ce que la promesse a résolu", async () => {
+			await renderAsync(
+				CatalogList({
+					listPropsPromise: Promise.resolve(
+						makeListProps({ perPage: 48, searchTerm: "collier", preferOnSale: true }),
+					),
+					productsPromise: makeProps().productsPromise,
+				}),
+			);
 
-		it("passes searchTerm to ProductList", () => {
-			render(<ProductCatalog {...makeProps({ searchTerm: "collier" })} />);
-			expect(screen.getByTestId("product-list")).toHaveAttribute("data-search-term", "collier");
-		});
-
-		it("passes preferOnSale to ProductList", () => {
-			render(<ProductCatalog {...makeProps({ preferOnSale: true })} />);
-			expect(screen.getByTestId("product-list")).toHaveAttribute("data-prefer-on-sale", "true");
-		});
-
-		it("renders the filter bar (le meuble < lg)", () => {
-			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByTestId("product-filter-bar")).toBeInTheDocument();
+			const list = screen.getByTestId("product-list");
+			expect(list).toHaveAttribute("data-per-page", "48");
+			expect(list).toHaveAttribute("data-search-term", "collier");
+			expect(list).toHaveAttribute("data-prefer-on-sale", "true");
 		});
 	});
 
 	describe("JSON-LD", () => {
-		it("renders the JSON-LD script tag", () => {
-			const { container } = render(
-				<ProductCatalog
-					{...makeProps({ jsonLd: { "@type": "CollectionPage", name: "Bijoux" } })}
-				/>,
-			);
+		it("monte l'émetteur de balisage reçu en slot", () => {
+			const { container } = render(<ProductCatalog {...makeProps()} />);
 			const scripts = container.querySelectorAll('script[type="application/ld+json"]');
-			expect(scripts.length).toBeGreaterThanOrEqual(1);
+			// UN seul script par URL : la `BreadcrumbList` et l'`ItemList` restent
+			// imbriquées dans le même `CollectionPage` (@regression
+			// catalogue-single-breadcrumb).
+			expect(scripts).toHaveLength(1);
 		});
 	});
 });
