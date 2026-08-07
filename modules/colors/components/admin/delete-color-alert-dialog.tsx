@@ -12,13 +12,7 @@ export const DELETE_COLOR_DIALOG_ID = TAXONOMY_CONFIG.color.deleteDialogId;
 
 export function DeleteColorAlertDialog() {
 	const onDeleted = useTaxonomyDeleteDialog(TAXONOMY_CONFIG.color);
-	const { action, isPending } = useDeleteColor({ onSuccess: onDeleted });
+	const { action } = useDeleteColor({ onSuccess: onDeleted });
 
-	return (
-		<TaxonomyDeleteAlertDialog
-			config={TAXONOMY_CONFIG.color}
-			action={action}
-			isPending={isPending}
-		/>
-	);
+	return <TaxonomyDeleteAlertDialog config={TAXONOMY_CONFIG.color} action={action} />;
 }

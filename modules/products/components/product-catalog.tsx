@@ -16,17 +16,12 @@ import {
 } from "@/modules/products/constants/product.constants";
 
 import { CatalogHeading } from "@/modules/products/components/catalog-heading";
-import { CatalogToolbarInline } from "@/modules/products/components/catalog-toolbar-inline";
 import { CATALOG_GRID } from "@/modules/products/components/catalog-grid.constants";
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
-import { ProductSortBar } from "@/modules/products/components/product-sort-bar";
+import { ProductFilterBar } from "@/modules/products/components/product-filter-bar";
 import { ProductFilterRail } from "@/modules/products/components/product-filter-rail";
-import {
-	formatActiveFilterSummary,
-	productFiltersToFilterFormData,
-} from "@/modules/products/services/product-filter-params.service";
 
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { BreadcrumbNav } from "@/shared/components/breadcrumb-nav";
@@ -103,11 +98,13 @@ export type ProductCatalogProps = {
  *   `ProductList` ne produisent aucun nœud DOM : les cartes (et les cellules
  *   pleine rangée de la liste) sont des enfants directs de `CATALOG_GRID`.
  * - **Un seul meuble par geste et par viewport.** La barre sticky
- *   (`ProductSortBar`) est le meuble `< lg` ; dès `md` la recherche vit dans la
- *   rangée du titre (`CatalogToolbarInline`), rejointe à `lg` par le menu de
- *   tri — la barre disparaît alors (`lg:hidden`), le rail couvrant les filtres.
- *   Jamais deux `SearchInput` dans le DOM (corps monté deux fois = `id`
- *   partagés + strict mode Playwright).
+ *   (`ProductFilterBar`, « Filtrer » seul) est le meuble `< lg` ; à `lg` elle
+ *   disparaît (`lg:hidden`), le rail couvrant filtres ET tri. Le tri vit dans
+ *   le compartiment « Trier par » du corps de filtres partagé
+ *   (`ProductFilterCompartments`) — rail desktop, panneau mobile. Il n'y a
+ *   plus de recherche inline sur le catalogue (2026-08-06) : l'entrée de
+ *   recherche est le quick-search navbar / bottom-nav, qui atterrit sur
+ *   `/produits?search=` — le support serveur du paramètre reste.
  * - **Le `h1` est visible partout**, et ne dépend d'aucun `await` : seul le
  *   compte de pièces est derrière une frontière `Suspense`.
  * - **Aucune longueur dérivée de `--navbar-height`**, qui se contracte au
@@ -136,7 +133,11 @@ export function ProductCatalog({
 	jsonLd,
 	breadcrumbs,
 }: ProductCatalogProps) {
-	const hasActiveFilters = activeFiltersCount > 0 || !!activeProductType || !!preferOnSale;
+	// `searchTerm` compte : depuis le retrait du champ inline (2026-08-06),
+	// l'étiquette « Recherche : "x" » du bandeau est la seule affordance qui
+	// efface `?search=` — le bandeau doit donc se monter pour elle aussi.
+	const hasActiveFilters =
+		activeFiltersCount > 0 || !!activeProductType || !!preferOnSale || !!searchTerm;
 
 	const pageTitle = searchTerm
 		? `Recherche "${searchTerm}"`
@@ -148,25 +149,6 @@ export function ProductCatalog({
 		value: option,
 		label: PRODUCTS_SORT_LABELS[option as keyof typeof PRODUCTS_SORT_LABELS],
 	}));
-
-	const searchPlaceholder = activeProductType
-		? `Rechercher des ${activeProductType.label.toLowerCase()}…`
-		: "Rechercher des bijoux…";
-
-	// Résumé lisible des filtres actifs, rendu à la suite du compte de pièces.
-	// C'est le seul rappel de ce qui est coché au rail desktop, où la grille se
-	// recompose sans quitter la page.
-	const filterSummary = filters
-		? formatActiveFilterSummary(
-				productFiltersToFilterFormData(filters, [0, maxPriceInEuros]),
-				{
-					types: Object.fromEntries(productTypes.map((t) => [t.slug, t.label])),
-					colors: Object.fromEntries(colors.map((c) => [c.slug, c.name])),
-					materials: Object.fromEntries(materials.map((m) => [m.slug, m.name])),
-				},
-				[0, maxPriceInEuros],
-			)
-		: null;
 
 	return (
 		<div className="min-h-dvh">
@@ -201,37 +183,28 @@ export function ProductCatalog({
 
 					{/*
 					 * Le bloc titre est l'EN-TÊTE DE PAGE, hors de la grille et avant la
-					 * barre d'outils (re-tranché le 2026-08-05) : l'ancien montage « L'étal
+					 * barre (re-tranché le 2026-08-05) : l'ancien montage « L'étal
 					 * continue » le rendait première cellule de `CATALOG_GRID`, donc le `h1`
 					 * arrivait APRÈS la barre de tri et après le `h2` « Filtres » du rail,
 					 * et partageait sa rangée avec une carte à `lg`. Le `h1` reste
 					 * synchrone : seul le compte passe par la Suspense interne du bloc.
 					 *
-					 * À partir de `md`, la rangée porte AUSSI le cluster recherche + tri
-					 * (`CatalogToolbarInline`, retour user 2026-08-05) : titre à gauche
-					 * (`min-w-0 md:flex-1` absorbe le wrap), cluster calé en bas à droite
-					 * (`md:items-end` — sur la ligne du compteur). Le `SearchInput` vit
-					 * là et UNIQUEMENT là dès `md` : un second dans la barre partagerait
-					 * ses `id` (corps monté deux fois) et casserait le strict mode
-					 * Playwright de `e2e/pages/search.page.ts`.
+					 * La rangée ne porte plus que le titre (2026-08-06) : la recherche
+					 * inline est retirée du catalogue (l'entrée de recherche est le
+					 * quick-search navbar / bottom-nav) et le tri vit dans le meuble de
+					 * filtres — compartiment « Trier par » du rail et du panneau.
 					 */}
-					<div className="md:flex md:items-end md:justify-between md:gap-6">
-						<div className="min-w-0 md:flex-1">
-							<CatalogHeading
-								title={pageTitle}
-								productsPromise={productsPromise}
-								activeProductType={activeProductType}
-								searchTerm={searchTerm}
-								filterSummary={filterSummary}
-							/>
-						</div>
-						<CatalogToolbarInline sortOptions={sortOptions} searchPlaceholder={searchPlaceholder} />
-					</div>
+					<CatalogHeading
+						title={pageTitle}
+						productsPromise={productsPromise}
+						activeProductType={activeProductType}
+						searchTerm={searchTerm}
+					/>
 
-					{/* La barre d'outils sticky — le meuble `< lg` (à desktop, le rail et
-					    le cluster de la rangée titre couvrent les trois gestes). */}
+					{/* La barre sticky — le meuble `< lg`, réduit au seul « Filtrer »
+					    (le panneau qu'il ouvre porte aussi le tri). */}
 					<Suspense fallback={null}>
-						<ProductSortBar sortOptions={sortOptions} />
+						<ProductFilterBar />
 					</Suspense>
 
 					{/*
@@ -251,6 +224,7 @@ export function ProductCatalog({
 								label: t.label,
 								_count: t._count,
 							}))}
+							sortOptions={sortOptions}
 							maxPriceInEuros={maxPriceInEuros}
 							activeProductTypeSlug={activeProductType?.slug}
 							// Sème le pied « N pièces » du rail (« Le comptoir », audit rail
@@ -267,13 +241,14 @@ export function ProductCatalog({
 									materials={materials}
 									productTypes={productTypes}
 									activeProductType={activeProductType}
-									// À `lg`, le rail est l'unique surface d'état des filtres
-									// (« Le comptoir ») : coches + pied « N pièces ». Le bandeau
-									// y répétait la même information une deuxième fois (et le
-									// résumé du compteur une troisième), en coûtant sa rangée à
-									// la première ligne de cartes. Il reste la surface d'état
-									// SOUS `lg`, où le panneau est fermé entre deux réglages.
-									className="lg:hidden"
+									// Visible à TOUS les viewports (re-tranché par l'user le
+									// 2026-08-06, en même temps que le retrait du résumé texte du
+									// compteur) : les étiquettes sont la surface de MANIPULATION
+									// des filtres actifs — chacune se supprime d'un geste, là où
+									// le résumé ne faisait que les décrire. Le gate `lg:hidden`
+									// de « Le comptoir » (2026-08-05) est annulé ; les libellés
+									// « Tout effacer » rail/bandeau restent DISTINCTS exprès
+									// (strict mode E2E).
 								/>
 							)}
 
@@ -304,6 +279,7 @@ export function ProductCatalog({
 						label: t.label,
 						_count: t._count,
 					}))}
+					sortOptions={sortOptions}
 					maxPriceInEuros={maxPriceInEuros}
 					activeProductTypeSlug={activeProductType?.slug}
 					// Sème le compteur vivant : le total des filtres COURANTS est déjà

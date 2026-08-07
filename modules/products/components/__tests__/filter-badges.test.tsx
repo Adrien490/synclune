@@ -14,9 +14,12 @@ const {
 	mockCreateProductFilterFormatter,
 } = vi.hoisted(() => {
 	const mockRouter = { replace: vi.fn() };
-	const mockSearchParams = { toString: vi.fn(() => ""), forEach: vi.fn() } as unknown as ReturnType<
-		typeof useSearchParams
-	>;
+	const mockSearchParams = {
+		toString: vi.fn(() => ""),
+		forEach: vi.fn(),
+		// Lu par l'étiquette synthétique « Recherche » (2026-08-06).
+		get: vi.fn(() => null),
+	} as unknown as ReturnType<typeof useSearchParams>;
 	const mockOptimisticActiveFilters: FilterDefinitionType[] = [];
 	const mockRemoveFilterOptimistic = vi.fn();
 	const mockRemoveFiltersOptimistic = vi.fn();
@@ -36,6 +39,7 @@ const {
 
 vi.mock("next/navigation", () => ({
 	useRouter: () => mockRouter,
+	usePathname: () => "/produits",
 	useSearchParams: () => mockSearchParams,
 }));
 

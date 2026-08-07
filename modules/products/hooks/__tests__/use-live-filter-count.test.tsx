@@ -24,6 +24,7 @@ const baseValues: FilterFormData = {
 	priceRange: [0, 500],
 	inStockOnly: false,
 	onSale: false,
+	sortBy: "created-descending",
 };
 
 function renderCount(initial?: Partial<Parameters<typeof useLiveFilterCount>[0]>) {

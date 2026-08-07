@@ -38,6 +38,7 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { ProductTypeOption } from "./filter-section-types";
 import type { LiveFilterCount } from "@/modules/products/hooks/use-live-filter-count";
+import type { SortOption } from "@/shared/types/sort.types";
 
 // ============================================================================
 // CONSTANTS
@@ -58,6 +59,8 @@ interface FilterSheetProps {
 	colors: GetColorsReturn["colors"];
 	materials: MaterialOption[];
 	productTypes?: ProductTypeOption[];
+	/** Options du compartiment « Trier par » (SSOT `PRODUCTS_SORT_OPTIONS`). */
+	sortOptions: SortOption[];
 	maxPriceInEuros: number;
 	/** Type de produit actif (depuis le path segment /produits/[type]) */
 	activeProductTypeSlug?: string;
@@ -128,6 +131,7 @@ function ProductFilterSheetInner({
 	colors = EMPTY_COLORS,
 	materials = EMPTY_MATERIALS,
 	productTypes = EMPTY_PRODUCT_TYPES,
+	sortOptions,
 	maxPriceInEuros,
 	activeProductTypeSlug,
 	initialCountPromise,
@@ -297,6 +301,11 @@ function ProductFilterSheetInner({
 				onPriceChange={(value) => form.setFieldValue("priceRange", value)}
 				onAvailabilityChange={(field, checked) => form.setFieldValue(field, checked)}
 				onSectionReset={handleSectionReset}
+				sortOptions={sortOptions}
+				// Comme les filtres : le tri choisi est EN ATTENTE jusqu'à « Voir les
+				// N pièces » — une navigation immédiate ferait resync le formulaire
+				// (effet `[isOpen, searchParams]`) et perdrait les coches en attente.
+				onSortChange={(value) => form.setFieldValue("sortBy", value)}
 			/>
 
 			{/* Live region : annonce le nombre de filtres en attente à chaque

@@ -8,13 +8,11 @@ type AddToCartResult = { skipped: false } | { skipped: true; reason: string; see
 export class ProductCatalogPage {
 	readonly productLinks: Locator;
 	readonly addToCartButton: Locator;
-	readonly searchInput: Locator;
 	readonly heading: Locator;
 
 	constructor(private page: Page) {
 		this.productLinks = page.locator(SELECTORS.PRODUCT_LINK);
 		this.addToCartButton = page.getByRole("button", { name: /Ajouter au panier|Ajouter/i });
-		this.searchInput = page.getByRole("searchbox");
 		this.heading = page.getByRole("heading", { level: 1 });
 	}
 

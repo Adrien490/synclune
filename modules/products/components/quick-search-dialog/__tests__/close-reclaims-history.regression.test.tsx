@@ -236,7 +236,6 @@ async function renderDialog() {
 		createElement(QuickSearchDialog, {
 			collections: [],
 			productTypes: [],
-			recentlyViewed: [],
 		}),
 	);
 	const input = (await screen.findByRole("combobox", {

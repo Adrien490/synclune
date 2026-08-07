@@ -11,7 +11,7 @@
 	/* ⚠️ `.text-gradient-multicolor` (mot d'accent dégradé du h1) a été RETIRÉE le
 	   2026-08-05 — direction B « Le surligneur » : la couleur du mot vit désormais
 	   dans un trait de pinceau DERRIÈRE une encre --foreground
-	   (`app/(shop)/(home)/_components/etal/brush-highlight.tsx`), plus dans le
+	   (`app/(shop)/(home)/_components/hero/brush-highlight.tsx`), plus dans le
 	   glyphe. Partis avec elle : les tokens --gradient-hero-* (globals.css), le
 	   halo text-shadow et sa calibration, les bascules forced-colors /
 	   prefers-contrast dédiées. Ne pas réintroduire un dégradé DANS un glyphe

@@ -1,27 +1,32 @@
 import type { Metadata, Viewport } from "next";
 import { BRAND_PINK } from "./brand-colors";
-import { SEO_DEFAULTS, SITE_URL } from "./seo-config";
+import {
+	BUSINESS_INFO,
+	HOME_DESCRIPTION,
+	HOME_OG_ALT,
+	HOME_TITLE,
+	SEO_DEFAULTS,
+	SITE_URL,
+} from "./seo-config";
 import { ICONS_CONFIG } from "./icons-config";
 
 export const rootMetadata: Metadata = {
+	/* ⚠️ Titre, description et alt viennent de la SSOT `seo-config` depuis le
+	 * 2026-08-06. Ils étaient écrits ici en CINQ littéraux disant « Bijoux
+	 * artisanaux faits main » — la copie que la marque a explicitement écartée —
+	 * avec deux variantes divergentes entre l'OG et Twitter. Le repli global est la
+	 * surface la plus HÉRITÉE du site : toute page qui ne redéfinit pas son OG en
+	 * hérite, donc c'est elle qu'il faut tenir en premier, pas en dernier. */
 	title: {
-		default: "Synclune - Bijoux artisanaux faits main",
+		default: HOME_TITLE,
 		template: "%s | Synclune",
 	},
-	description:
-		"Bijoux artisanaux faits main. Boucles d'oreilles, colliers, bracelets colorés. Créations uniques en éditions limitées.",
-	keywords: [
-		"bijoux faits main",
-		"bijoux artisanaux",
-		"bijoux colorés",
-		"boucles d'oreilles faites main",
-		"colliers artisanaux",
-		"bracelets faits main",
-		"bijoux français",
-		"création artisanale",
-		"bijoux originaux",
-		"Synclune",
-	],
+	description: HOME_DESCRIPTION,
+	// Repris de `BUSINESS_INFO.localKeywords`, eux-mêmes verbatim du § Expressions
+	// à privilégier de `docs/BRAND-DA.md`. L'ancienne liste (« bijoux artisanaux »,
+	// « bijoux français », « création artisanale ») ne portait ni le lieu, ni la
+	// peinture, ni la couleur comme sujet.
+	keywords: [...BUSINESS_INFO.localKeywords, "Synclune"],
 	authors: [{ name: "Synclune" }],
 	creator: "Synclune",
 	publisher: "Synclune",
@@ -39,23 +44,21 @@ export const rootMetadata: Metadata = {
 		locale: SEO_DEFAULTS.locale,
 		url: SITE_URL,
 		siteName: SEO_DEFAULTS.siteName,
-		title: "Synclune - Bijoux artisanaux faits main",
-		description:
-			"Bijoux artisanaux faits main. Boucles d'oreilles, colliers, bracelets colorés. Créations uniques en éditions limitées.",
+		title: HOME_TITLE,
+		description: HOME_DESCRIPTION,
 		images: [
 			{
 				url: SEO_DEFAULTS.images.default,
 				width: SEO_DEFAULTS.images.width,
 				height: SEO_DEFAULTS.images.height,
-				alt: "Synclune - Bijoux artisanaux faits main",
+				alt: HOME_OG_ALT,
 			},
 		],
 	},
 	twitter: {
 		card: SEO_DEFAULTS.twitter.card,
-		title: "Synclune - Bijoux artisanaux faits main",
-		description:
-			"Bijoux colorés faits main. Boucles d'oreilles, colliers, bracelets. Créations uniques en éditions limitées.",
+		title: HOME_TITLE,
+		description: HOME_DESCRIPTION,
 		images: [SEO_DEFAULTS.images.default],
 	},
 	robots: {

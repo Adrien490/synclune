@@ -85,7 +85,11 @@ export function useLiveFilterCount(params: {
 	// Clé sérialisée : l'objet `values` change d'identité à chaque render du
 	// form TanStack — l'effet ne doit se rejouer que sur un changement RÉEL.
 	// Calculée AVANT l'état : elle sert de clé à la graine initiale.
-	const valuesKey = JSON.stringify({ values, search });
+	// `sortBy` en est EXCLU : le tri ne change pas le compte, le sérialiser
+	// déclencherait un recomptage serveur (et un réveil Neon) par changement
+	// de tri — et invaliderait la graine `initialCount` pour rien.
+	const { sortBy: _sortBy, ...countedValues } = values;
+	const valuesKey = JSON.stringify({ values: countedValues, search });
 
 	const [resolved, setResolved] = useState<ResolvedCount | null>(() =>
 		initialCount == null ? null : { key: valuesKey, count: initialCount, relaxed: null },
@@ -117,7 +121,7 @@ export function useLiveFilterCount(params: {
 			prevValuesRef.current = values;
 
 			void countFilteredProducts({
-				...values,
+				...countedValues,
 				maxPriceInEuros,
 				search,
 				lastChangedGroup,

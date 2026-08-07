@@ -39,6 +39,48 @@ describe("IconSprite", () => {
 		});
 	});
 
+	describe("le corps du mark de marque", () => {
+		// Le mark est rendu trois fois par page storefront et ses chemins pèsent
+		// 3,4 Ko : c'est pour lui que ce sprite existe encore. Les assertions de
+		// SILHOUETTE vivent donc ici, pas dans `logo.test.tsx` — le composant `Logo`
+		// n'émet plus qu'un `<use>`.
+
+		it("PEINT son disque, au lieu de le laisser en fond CSS", () => {
+			// Un `background-color` est supprimé à l'impression (`print-color-adjust`)
+			// alors qu'un `fill` survit : la page de suivi de commande imprimée rendait
+			// l'initiale rose SANS son socle.
+			const { container } = render(<IconSprite />);
+
+			expect(container.querySelector("#logo-mark-body circle")).toHaveAttribute(
+				"fill",
+				"var(--logo-disc)",
+			);
+		});
+
+		it("laisse le call site maître des couleurs ET de l'épaisseur", () => {
+			// Un `<use>` fait hériter les custom properties de son point d'usage : c'est
+			// ce qui permet à `LogoMark` de continuer à gouverner le mark depuis le
+			// storefront. Une couleur écrite en dur ici la lui reprendrait en silence.
+			const { container } = render(<IconSprite />);
+			const body = container.querySelector("#logo-mark-body");
+
+			for (const path of body?.querySelectorAll("path") ?? []) {
+				expect(path.getAttribute("stroke")).toBe("var(--logo-ink)");
+				expect(path.getAttribute("style")).toContain("var(--logo-stroke)");
+				// `non-scaling-stroke` : sans lui le contour retombe sous le pixel aux
+				// tailles où la marque vit (0,33 px à 28 px) et le mark perd sa seule
+				// séparation de formes — cœur/disque ne valent que 1,27:1.
+				expect(path).toHaveAttribute("vector-effect", "non-scaling-stroke");
+			}
+		});
+
+		it("garde l'initiale en DÉCOUPE, pour laisser passer le socle", () => {
+			const { container } = render(<IconSprite />);
+
+			expect(container.querySelector("#logo-mark-body path[fill-rule='evenodd']")).not.toBeNull();
+		});
+	});
+
 	describe("symbol definitions", () => {
 		it("defines the icon-heart-outline symbol", () => {
 			const { container } = render(<IconSprite />);
@@ -76,10 +118,12 @@ describe("IconSprite", () => {
 			expect(container.querySelector("#icon-menu")).toBeInTheDocument();
 		});
 
-		it("defines 6 symbols in total", () => {
+		it("defines 7 symbols in total", () => {
+			// 6 icônes + le corps du mark de marque (`#logo-mark-body`, ajouté au titre
+			// de l'audit logo du 2026-08-06 — c'est le seul symbole qui a un `<use>`).
 			const { container } = render(<IconSprite />);
 
-			expect(container.querySelectorAll("symbol")).toHaveLength(6);
+			expect(container.querySelectorAll("symbol")).toHaveLength(7);
 		});
 	});
 

@@ -7,7 +7,7 @@ import { cn } from "@/shared/utils/cn";
  * La « tranche d'étagère » — barre d'outils collante au vocabulaire Atelier.
  *
  * @description
- * Née comme peau du `ProductSortBar` (direction B de l'artifact « La barre de
+ * Née comme peau de la barre du catalogue (direction B de l'artifact « La barre de
  * l'étal », 2026-08-05), extraite ici pour servir toute surface qui pose des
  * gestes sur un rebord collant : papier opaque + grain (`.polaroid-paper`) +
  * `--shadow-paper` (c'est l'ombre qui sépare la tranche du contenu qui glisse
@@ -19,17 +19,17 @@ import { cn } from "@/shared/utils/cn";
  * Composition type :
  *
  * ```tsx
- * <ShelfBar aria-label="Tri, recherche et filtres">
- *   <div className="hidden min-w-0 flex-1 items-center py-2 md:flex">…</div>
- *   <ShelfBarToolbar aria-label="Tri, recherche et filtres">
- *     <ShelfBarButton active accent="rose" showTape>…</ShelfBarButton>
- *   </ShelfBarToolbar>
+ * <ShelfBar aria-label="Filtres">
+ *   <div className="flex flex-1 items-center gap-2 py-2 md:ml-auto md:flex-none md:py-0">
+ *     <ShelfBarButton active accent="rose">…</ShelfBarButton>
+ *   </div>
  * </ShelfBar>
  * ```
  *
  * Aucun composant de ce fichier n'a de `"use client"` : la coque est
- * universelle. Le focus roving de la toolbar vit dans le hook client voisin
- * `use-toolbar-roving-focus.ts` — c'est l'appelant qui câble les deux.
+ * universelle. (`ShelfBarToolbar` et le roving focus ont été retirés le
+ * 2026-08-06 avec la réduction de la barre catalogue à un seul geste — un
+ * bouton unique n'est pas une toolbar.)
  */
 
 /**
@@ -103,7 +103,7 @@ const SHELF_BAR_BUTTON = cn(
  * Collante sous `--navbar-height-static` — **jamais** `--navbar-height`, qui
  * se contracte de 5rem à 4rem au défilement et ferait remonter la barre de
  * 16 px au premier pixel scrollé (deux bugs déjà payés, assertion négative
- * dans `product-sort-bar.test.tsx`). Le `sticky` est posé APRÈS la coque :
+ * dans `product-filter-bar.test.tsx`). Le `sticky` est posé APRÈS la coque :
  * `relative` (ancre du grain) et `sticky` sont le même groupe de position,
  * l'ordre de merge décide du gagnant.
  */
@@ -119,22 +119,6 @@ export function ShelfBar({
 		>
 			<div className="flex items-stretch gap-3">{children}</div>
 		</nav>
-	);
-}
-
-/**
- * Le groupe de boutons, en `role="toolbar"` horizontal. Le clavier (flèches,
- * Home/End) est fourni par `useToolbarRovingFocus`, à câbler bouton par
- * bouton — le groupe ne rend que la sémantique et la géométrie.
- */
-export function ShelfBarToolbar({ className, ...props }: ComponentProps<"div">) {
-	return (
-		<div
-			role="toolbar"
-			aria-orientation="horizontal"
-			className={cn("flex flex-1 items-center gap-2 py-2 md:flex-none md:py-0", className)}
-			{...props}
-		/>
 	);
 }
 

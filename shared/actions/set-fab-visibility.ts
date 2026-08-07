@@ -28,7 +28,7 @@ export async function setFabVisibility(
 	formData: FormData,
 ): Promise<ActionState> {
 	// Action publique non authentifiée : le rate limit est le seul plafond.
-	// Même préset que les autres préférences en cookie (`addRecentProduct` & co.),
+	// Même préset que les autres préférences en cookie (`addRecentSearch` & co.),
 	// même nature d'écriture. Audit rate limiting 2026-07-31.
 	const rateLimit = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION);
 	if ("error" in rateLimit) return rateLimit.error;

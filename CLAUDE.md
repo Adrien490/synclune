@@ -10,9 +10,10 @@ Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prism
 - **Petite micro-entreprise française**, entrepreneur individuel en **franchise de TVA** (art. 293 B
   CGI), **une seule personne** (Léane, la créatrice) — pas d'équipe technique, pas d'astreinte.
 - **Bijoux créatifs et colorés, faits main.** ⚠️ **Pas de la joaillerie précieuse.** La marque
-  exprime la créativité colorée de Léane : joyeux, personnel, artisanal. Toute proposition de
-  design bâtie sur le métal précieux, la gravure ou le « luxe discret » est le **contre-pied** du
-  brief — c'est une erreur déjà commise, ne pas la refaire. « Bijoux » ≠ « joaillerie ».
+  exprime la créativité colorée de Léane : des petits objets **polychromes, narratifs et
+  miniatures** — joyeux, un peu **décalé**, personnel, artisanal. Toute proposition de design bâtie
+  sur le métal précieux, la gravure ou le « luxe discret » est le **contre-pied** du brief — c'est
+  une erreur déjà commise, ne pas la refaire. « Bijoux » ≠ « joaillerie ».
 - **B2C, France + Union Européenne** (27 États + Monaco), **français et EUR uniquement** (choix
   assumés, pas des manques), ~**20 commandes/mois** visées.
 
@@ -28,36 +29,84 @@ recommandation qui présuppose une équipe, un trafic ou un catalogue plus gros 
 
 ### Direction artistique — lexique de marque
 
-Formule de référence : **« Création artisanale de bijoux colorés, originaux et poétiques »**.
-Noyau lexical : **couleur + poésie + fantaisie + fait main + singularité + Nantes**. Le territoire
-distinctif n'est pas « bijoux artisanaux » (générique) mais son croisement avec le coloré et le
-joyeusement décalé, créé à la main à Nantes.
+**Lexique complet : [`docs/BRAND-DA.md`](docs/BRAND-DA.md)** — les six territoires en détail, le
+vocabulaire des formes, la palette, l'univers photographique, le ton éditorial, le moodboard et le
+répertoire SEO. Ci-dessous le seul extrait qui change un arbitrage de design.
 
+Formule de référence : **« Synclune crée à Nantes des bijoux miniatures, colorés et expressifs,
+inspirés par les fruits, la pluie, les tableaux, le ciel et les souvenirs d'enfance »** — version
+courte, **« des petits mondes colorés à porter »**. Noyau lexical : **couleur (polychromie) + goutte
+
+- récit + fait main + miniature + Nantes**. ⚠️ « Bijoux artisanaux, colorés et poétiques » n'est pas
+  faux, il est **interchangeable** : n'importe quelle boutique de bijoux peut le signer.
+
+**La vibe, en une phrase : créatif, coloré, narratif, un peu décalé — jamais tiède.** L'audace a une
+couverture officielle — le lexique assume « pop », « maximaliste », « statement », « bonbon » — donc
+c'est la **sobriété qui doit se justifier**, pas l'inverse : une direction sage, neutre ou
+« intemporelle » rate le brief aussi sûrement qu'une direction en or.
+
+- **Six territoires, pas un sac de motifs** : jardin fantastique (raisins, grappes, feuilles, fleurs,
+  nénuphars) · ciel cosmique (lune, phases, étoiles, constellation, tourbillons) · arc-en-ciel
+  liquide (gouttes en séquence) · pluie et larmes joyeuses · peinture miniature (cabochon peint,
+  tableau à porter, filiation Van Gogh / Monet) · enfance et objet affectif (yeux, naïf,
+  porte-bonheur). Ils sont lisibles dans les noms existants (Green Grape Necklace, Starry Night Ring,
+  Rainbow Drop Necklace, Water Lilies, Rain Loops). ⚠️ Une direction mobilise **UN** motif tenu
+  jusqu'au bout, jamais des étoiles saupoudrées partout.
+- **La goutte est le signe transversal** : elle est le raisin, la pluie, la larme, la rosée et
+  l'arc-en-ciel — le meilleur candidat au glyphe de marque. C'est à ce titre qu'elle tient le décor
+  du premier écran : la grappe, la cascade arc-en-ciel et les larmes de l'œil sont **la même
+  goutte**, et c'est ce qui fait de ce décor UN motif tenu jusqu'au bout plutôt qu'un sac d'icônes.
+  Tracés : `ATELIER_THREAD_PATHS` et `CREATION_PATHS` (`shared/components/hand-drawn/paths.ts`), qui
+  a ouvert le 2026-08-06 le gisement resté inexploité — grappe, feuille, cabochon peint, œil,
+  volute. Il ne reste sans tracé que le **présentoir illustré** et la **chaîne à pampilles**.
+- **Le trio cœur · étoile · lune est le raccourci le plus court vers un « oui » de Léane** (verbatim
+  du 2026-08-06 : « si c'est rose et dans la DA cœur étoile lune ça va me plaire »). ⚠️ Il garde un
+  consommateur, mais en **détail** et non plus en sujet : la lune et les étoiles sont peintes dans
+  le ciel du cabochon du présentoir, le cœur y est la plus petite pièce
+  (`shared/components/hand-drawn/creations.ts`, rendu par `app/opengraph-image.tsx` via
+  `shared/components/og/og-marks.ts`). ⚠️ Le présentoir a quitté le premier écran le 2026-08-07 —
+  on ne dessine pas ce qui est photographié 40 px plus loin ; la carte de partage, elle, n'a
+  aucune photo en face.
+  Trois décors successifs l'avaient pris pour le sujet — c'est ce qui les a fait retirer, parce
+  qu'une lune et deux étoiles ne disent rien que Synclune fabrique. À privilégier quand une
+  direction doit choisir UN motif de PONCTUATION ; le sujet, ce sont les créations.
+- **Le rose est l'ancre tokenisée ; la DA, elle, est polychrome et saturée.** `--primary` **EST** un
+  rose (`app/globals.css`) et `--color-brand-rose-strong` sa version encre, pour les cas où le rose
+  doit être **lu** et pas seulement vu ; lavande, menthe et soleil (`--color-brand-lavender` /
+  `-mint` / `-sun`) tournent d'une section à l'autre via `[data-accent]`
+  (`app/styles/section-accents.css`). La polychromie se joue par cette **rotation d'accents**, pas
+  par un token de plus par couleur de bijou. Une surface qui raconte Synclune en gris avec un filet
+  de rose a manqué le brief.
+- **Maximalisme miniature** : répétition, accumulation, série, dégradé, symétrie imparfaite, effet de
+  grappe ou de frange. La marque **multiplie de petits éléments** — elle ne pose pas une grosse pierre
+  centrale, et ne verse pas pour autant dans le baroque luxueux.
 - **Mots-clés centraux** : bijoux colorés · artisanaux · faits main · fantaisie · originaux ·
-  de créatrice · fabriqués en France · nantais · atelier nantais · créations uniques · petites
-  séries · pièce unique · commande personnalisée · assemblé/peint à la main · fait avec amour.
-- **Univers émotionnel** : coloré, joyeux, lumineux, pétillant, ludique, poétique, rêveur,
-  solaire, fantaisiste, audacieux, expressif, décalé, enchanteur, féerique, magique, créatif,
-  singulier, inattendu, vivant, espiègle.
-- **Style visuel** : pop, arty, maximaliste, statement, rétro, inspiré de l'art, céleste,
-  fruité, floral, arc-en-ciel, graphique, sculptural, asymétrique, multicolore, irisé,
-  pailleté, translucide.
+  narratifs · de créatrice · fabriqués en France · nantais · atelier nantais · créations uniques ·
+  petites séries · pièce unique · commande personnalisée · assemblé/peint à la main.
 - **Savoir-faire** : fabrication artisanale, peinture miniature, assemblage de perles,
   composition/recherche chromatique, association de matières, création en atelier, finitions
   à la main, expérimentation des formes.
-- **Motifs identitaires** : arc-en-ciel, nuit étoilée, ciel nocturne, étoiles, lune,
-  constellation, gouttes de couleur, grappes de raisin, fruits, nuages, pluie, fleurs, jardin
-  imaginaire, reflets irisés, nature fantastique — cohérents avec les noms existants (Green
-  Grape Necklace, Starry Night Ring, Rainbow Drop Necklace, Orange Grape Curls, Water Lilies,
-  Rain Loops).
 - **Produits & matières** — ⚠️ uniquement quand c'est vrai pour la pièce : boucles pendantes,
   créoles colorées, boucles asymétriques, collier de perles/à breloques/gouttes, bague
-  ajustable, bague cabochon, cabochon peint à la main, perles colorées/irisées, résine,
-  acrylique, acier inoxydable, plastique coloré, chaîne argentée/dorée.
+  ajustable, bague cabochon, cabochon peint à la main, perles de verre colorées/irisées, résine,
+  acrylique, acier inoxydable, plastique (fou) coloré, chaîne argentée/dorée.
 - **Expressions SEO à privilégier** : « bijoux colorés faits main », « bijoux de créatrice
   française », « bijoux faits main à Nantes », « boucles d'oreilles colorées artisanales »,
-  « bague peinte à la main », « bijoux inspirés de Van Gogh », « bijoux arc-en-ciel
-  artisanaux », « cadeau artisanal pour femme », « bijou statement coloré ».
+  « bague peinte à la main », « bijoux inspirés de Van Gogh », « bijoux arc-en-ciel artisanaux »,
+  « collier gouttes de verre », « bijou statement coloré », « bijoux roses faits main ». ⚠️ La règle
+  « uniquement quand c'est vrai pour la pièce » vaut ici aussi : une expression descriptive (rose,
+  cœur, arc-en-ciel, peint à la main) ne se pose sur une fiche que si le bijou l'est.
+- **Trois gardes de transposition** : **irisé, pailleté, translucide décrivent les bijoux, jamais
+  l'interface** (en paillettes ou verre dépoli, ils retombent dans le décoratif gratuit) ; **le
+  pastel de marque ne porte pas de glyphe** (1,5–2,5:1 en texte) — il peint des aplats, des traits et
+  des motifs, il n'écrit pas ; **girly ≠ mièvre** — le mot est **rétrogradé en registre secondaire**
+  le 2026-08-06 (le centre est la polychromie narrative, pas le rose seul), mais quand il s'applique
+  c'est le décalé et le naïf assumé qui empêchent le rose de virer princesse.
+- ⚠️ **Les mots à ne pas mettre au centre** : minimaliste, sobre, épuré, neutre, intemporel, quiet
+  luxury, premium, prestige, joaillerie fine, pierre précieuse, mariage chic. Une pièce isolée peut
+  les mériter ; la marque, jamais. **Et le catalogue en base n'est pas la DA** — le jeu de
+  démonstration (`prisma/seed.ts`) est du plaqué or, du Swarovski et des visuels de banque d'images,
+  soit le contre-brief exact.
 
 ## Commands
 
@@ -158,16 +207,29 @@ shared/                      # Cross-cutting concerns
 - **Uploads**: UploadThing
 - **Monitoring**: Sentry (error tracking, tunnel via `/monitoring`)
 
+### Auditer ou refondre la landing — la grille vit dans [`docs/LANDING-BEST-PRACTICES.md`](docs/LANDING-BEST-PRACTICES.md)
+
+**Tout audit ou refonte de `/` part du § 9 de ce document**, pas de critères ré-inventés : c'est
+exactement ce qu'il existe pour empêcher (chaque passe précédente refabriquait sa grille, et un
+critère refabriqué peut s'inverser d'une session à l'autre). Chaque ligne y porte sa **méthode de
+vérification** et le test qui la verrouille, et la grille sort une **note /100 + P0-P3**. Le § 0.3
+liste ce qui, à ce format d'entreprise, ne s'applique **pas** — l'A/B testing y est
+arithmétiquement indisponible (§ 7). ⚠️ Le périmètre audité inclut `app/(shop)/layout.tsx`
+(navbar, pied de page, barre basse, bannière cookies), pas seulement les 4 sections de `page.tsx`.
+
 ### Conventions UI — le détail vit dans [`docs/UI-CONVENTIONS.md`](docs/UI-CONVENTIONS.md)
 
 **À lire avant de toucher à un composant.** Les règles ci-dessous sont les invariants ; leur
 _pourquoi_, les contre-exemples et les pièges de migration Radix → Base UI sont dans ce document.
 
 - **Breakpoints en rem, jamais en px** — aucune largeur en px dans un `matchMedia()`, une media query manuelle ou un `--breakpoint-*`. SSOT `shared/constants/breakpoints.ts`. Un seuil JS en px décroche du CSS Tailwind dès que la police racine n'est plus à 16px (WCAG 1.4.4), et les composants **hybrides** tombent alors dans le vide. Verrouillé par `no-px-media-query.regression.test.ts`.
+- **Variables CSS : critère d'admission** — un token n'entre dans `globals.css` que consommé depuis ≥ 2 fichiers, depuis JS **et** CSS (coordination runtime), ou verrouillé par un test (WCAG, parité `MOTION_CONFIG`) ; une valeur décorative mono-usage s'écrit en arbitraire au call site. Les tokens `@theme` sont la config Tailwind v4, pas « du CSS en plus » — ne pas les remplacer par de l'oklch dupliqué. Verrouillé par `theme-token-consumers.regression.test.ts`.
 - **Seuils de navigation** : bottom-nav boutique à `lg` (couvre l'iPad portrait), bottom bar + sidebar admin à `md`. `--bottom-bar-height` vaut déjà 0 quand la barre est absente — ne pas préfixer son offset d'un breakpoint.
 - **Plafonds de contenu** : storefront `max-w-6xl`, checkout `max-w-5xl`, admin `max-w-[100rem]` **sans `mx-auto`**. ⚠️ **Un palier de colonnes ne s'ajoute que si le conteneur grandit avec lui** — au-delà du plafond, une colonne de plus rétrécit les cartes.
 - **Survol ⇒ focus** pour toute affordance porteuse d'information (WCAG 2.4.7). ⚠️ **Jamais de règle de focus derrière `can-hover:`** : elle ne s'appliquerait jamais au clavier sur tactile. Gater le hover seul — et gater le **masquage**, pas la révélation, sinon le CTA reste cliquable en `opacity-0` sur iPad.
-- **Overlays** : `ResponsiveAlertDialog` (confirmation — ⚠️ ne bascule pas), `ResponsiveDialog` (formulaire, bascule sur `md`), `Sheet` (panneau persistant), `Drawer` (feuille éphémère). Les 4 sont des couches Base UI : **une seule pile de dismiss**, donc migrer une famille sans les autres est interdit. Un overlay enfant se rend **dans** l'arbre JSX du parent.
+- **Overlays** : `ConfirmDialog` (confirmation), `ResponsiveDialog` (formulaire, bascule sur `md`), `Sheet` (panneau persistant), `Drawer` (feuille éphémère). Les 4 sont des couches Base UI : **une seule pile de dismiss**, donc migrer une famille sans les autres est interdit. Un overlay enfant se rend **dans** l'arbre JSX du parent — ⚠️ et son `Backdrop` exige alors `forceRender`, sans quoi Base UI ne le rend PAS (`enabled: forceRender || !nested`) et le panneau reste net sous la modale, sans erreur.
+- **Règle d'admission `responsive-*`** : un fichier `responsive-*` n'existe **que** s'il rend une primitive différente selon le viewport. Tout autre wrapper porte un nom qui décrit ce qu'il **décide**, et n'existe que s'il change le rendu ou possède un état non trivial ; **un wrapper dont ≥ 50 % des exports sont des pass-through est un bug d'architecture**. `responsive-alert-dialog.tsx` (179 l., 7 pass-through sur 9, aucune bascule) a été supprimé le 2026-08-06 — son `tone` vit sur `AlertDialogAction`.
+- **Confirmations** : tout footer `[Annuler, Confirmer]` passe par `ConfirmDialog` (`shared/components/dialogs/`) ; on ne descend aux primitives que si un des 4 invariants de frontière est faux, avec dérogation motivée dans `confirm-dialog-boundary.regression.test.ts`. ⚠️ **Le bouton de confirmation ferme le dialog AU CLIC** (c'est un `Close` Base UI, la fermeture précède la mutation) : un libellé d'attente ou un spinner piloté par `isPending` n'est jamais vu — le retour d'attente est le toast — et une validation HTML (`required`) ne peut pas être rapportée, d'où `confirmDisabled`. Verrouillé par `alert-dialog-close-on-confirm.regression.test.tsx`.
 - ⚠️ **Jamais `<SheetClose render={…}>` / `<DrawerClose render={…}>` autour d'un `<Link>`** — `history.back()` race le `router.push` et annule la navigation, sans erreur visible. Fermer par la prop contrôlée, naviguer en `replace`.
 - **`render`, jamais `asChild`** — Base UI n'a pas de `Slot`, et la règle **n'a pas d'exception** : plus aucun `asChild` dans le dépôt. `render` déplace l'ÉLÉMENT, pas les enfants.
 - **`data-*` booléens, plus de `data-state`** — `data-open:` et non `data-[state=open]:`. ⚠️ `Menu.Item` / `Select.Item` ne prennent pas le focus DOM : c'est `data-highlighted:`, jamais `focus:`.
@@ -184,6 +246,15 @@ Le compilateur React 19 optimise automatiquement. **NE PAS utiliser:**
 - `useMemo()`, `useCallback()`, `React.memo()`
 
 ## Catalogue — invariants
+
+**La carte collection a sa doctrine à part : [`docs/COLLECTION-CARD.md`](docs/COLLECTION-CARD.md)** —
+ce qu'elle doit montrer, dans quel ordre, et ce qui la distingue d'une carte produit. La thèse tient
+en une phrase : **une carte produit montre UN objet, une carte collection doit montrer un ENSEMBLE**,
+et la distinction est **structurelle**, jamais ornementale. Trois faits y sont écrits qui ne le sont
+nulle part ailleurs : `Collection` n'a **aucun** champ image (elle emprunte ses visuels à ses
+produits, donc ≥ 2 visuels et « sans photo » est un état normal) ; `ProductCollection.isFeatured` est
+son **seul** levier éditorial ; et le `take` du select est **partagé** avec le bento du méga-menu,
+donc plafond dur de 4 visuels. Le document mesure aussi son propre écart au code (§ 11).
 
 ### Tous les `select` Prisma du catalogue vivent dans `constants/`
 

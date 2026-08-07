@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-	PRODUCTS_CACHE_TAGS,
-	RECENT_PRODUCTS_CACHE_TAGS,
-	getRecentProductsInvalidationTags,
-} from "../cache";
+import { PRODUCTS_CACHE_TAGS } from "../cache";
 
 describe("cache constants", () => {
 	describe("PRODUCTS_CACHE_TAGS", () => {
@@ -57,22 +53,10 @@ describe("cache constants", () => {
 		});
 	});
 
-	describe("RECENT_PRODUCTS_CACHE_TAGS", () => {
-		it("has a LIST tag", () => {
-			expect(typeof RECENT_PRODUCTS_CACHE_TAGS.LIST).toBe("string");
-			expect(RECENT_PRODUCTS_CACHE_TAGS.LIST.length).toBeGreaterThan(0);
-		});
-	});
-
-	describe("getRecentProductsInvalidationTags", () => {
-		it("returns an array containing the LIST tag", () => {
-			const tags = getRecentProductsInvalidationTags();
-			expect(tags).toContain(RECENT_PRODUCTS_CACHE_TAGS.LIST);
-			expect(tags.length).toBeGreaterThan(0);
-		});
-	});
-
 	/**
+	 * `RECENT_PRODUCTS_CACHE_TAGS` / `getRecentProductsInvalidationTags` étaient testés
+	 * ici — supprimés avec la feature « produits récemment vus » (2026-08-06).
+	 *
 	 * `getRecentSearchesInvalidationTags` était testé ici — et le test se contentait
 	 * de vérifier que le helper rendait un tableau non vide, sans jamais demander si
 	 * un lecteur posait le tag. Personne ne le posait : trois Server Actions

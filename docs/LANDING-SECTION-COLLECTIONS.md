@@ -1,10 +1,11 @@
 # La prochaine section de la landing — 2026-08-05
 
-> ⚠️ Nom de fichier volontairement SANS date : le scan
-> `stripe-api-version-ssot.regression.test.ts` faux-positive sur tout nom
-> `…-AAAA-MM-JJ.md` cité depuis un fichier source (piège déjà payé par
-> `fonts.ts` avec `FONTS-AUDIT-2026-08-05.md`), et ce document est cité par
-> `page.tsx` et `collections-section.tsx`.
+> ⚠️ Nom de fichier volontairement SANS date, parce que ce document est cité depuis
+> `page.tsx` et `collections-section.tsx` : un nom `…-AAAA-MM-JJ.md` dans un commentaire de
+> code ressemble à une version d'API Stripe. Le scan
+> `stripe-api-version-ssot.regression.test.ts` écarte désormais les extensions de fichier
+> connues (`md` incluse), donc le piège est neutralisé — la convention reste par prudence,
+> plus par nécessité.
 
 > Analyse et recommandation pour **une** nouvelle section de contenu sur `/`, demandée le
 > 2026-08-05. Ce document tranche le « quoi » et fixe les invariants du « comment » ; il ne
@@ -14,13 +15,31 @@
 >
 > **✅ IMPLÉMENTÉ (même jour)** : section « Choisis ton univers » dans
 > `app/(shop)/(home)/_components/collections/` (section + grille + carte + squelettes),
-> branchée entre l'étal et la FAQ dans `page.tsx`. Écarts assumés vis-à-vis de l'esquisse
-> ci-dessous : la carte n'est PAS le `CollectionCard` du méga-menu (composant client
-> `NavigationMenuLink`) mais une carte serveur qui reprend l'enveloppe des cartes de l'étal
-> (`CARD_SURFACE_POLAROID` + stretched link + `SquiggleUnderline`) avec un média CARRÉ
-> (le format collection) ; la requête reprend les critères mécaniques du méga-menu
-> (`products-descending` + `hasProducts`, 4 cartes) ; aucun JSON-LD émis, conformément
-> aux invariants. Tests : `collections-section.test.tsx`.
+> branchée entre l'étal et la FAQ dans `page.tsx`. La carte n'est PAS le `CollectionCard`
+> du méga-menu (composant client `NavigationMenuLink`) mais une carte serveur ; la requête
+> reprend les critères mécaniques du méga-menu (`products-descending` + `hasProducts`,
+> 4 cartes) ; aucun JSON-LD émis, conformément aux invariants. Tests :
+> `collections-section.test.tsx`.
+>
+> ⚠️ **La carte a changé de silhouette le 2026-08-06 — ce document ne fait plus autorité
+> sur son anatomie.** Elle rendait un **média carré unique** dans l'enveloppe
+> `CARD_SURFACE_POLAROID`, ce que les § 3 et § 5 de [`COLLECTION-CARD.md`](COLLECTION-CARD.md)
+> interdisaient tous les deux. Le désaccord — déclaré des deux côtés et laissé ouvert le temps
+> d'être tranché — **a été tranché en faveur de la doctrine**, après avoir rendu en navigateur
+> les quatre silhouettes candidates de son § 5. Motif : hors ratio et squiggle, la carte était
+> une carte produit (même enveloppe, même inclinaison, mêmes gouttières au pixel, même titre),
+> et une différence de ratio 4/5 contre 1/1 ne se perçoit pas au défilement sous la grille de
+> cinq `ProductCard` du hero qui la précède immédiatement.
+>
+> La carte porte désormais la silhouette **S2 « la pile décalée »** : trois tirages papier
+> chevauchés et de guingois, qui se redressent au survol et au focus — la même que le carnet
+> des séries de `/collections`, à l'échelle d'une carte. Elle a été retenue contre trois autres
+> parce qu'elle est la seule à n'emprunter **aucune forme** au décor du premier écran (le
+> présentoir dépense déjà la grappe, la goutte et le cabochon) : son vocabulaire est le papier
+> photo, pas le bijou. `CARD_SURFACE_POLAROID` et `CARD_TILT` ont quitté l'enveloppe — ce sont
+> les tirages qui les portent. **Ce qu'une carte collection doit montrer se lit désormais
+> uniquement dans `COLLECTION-CARD.md`** ; ce document ne dit plus que _où_ la section va et
+> _combien_ de cartes elle montre.
 
 ## Le brief, rappel
 
@@ -42,7 +61,7 @@ La landing a été vidée le 2026-08-03 (copie atelier sauvegardée dans
 
 | #   | Section                                          | Rôle porté                                                                                                                                                                 |
 | --- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **L'étal** (`_components/etal/etal-section.tsx`) | Premier écran : `h1` + LCP + les 5 créations les plus récentes (sur-allocation +3 et `sortSoldOutLast` pour garantir de l'achetable) + carte « Voir toutes les créations » |
+| 1   | **L'étal** (`_components/hero/hero-section.tsx`) | Premier écran : `h1` + LCP + les 5 créations les plus récentes (sur-allocation +3 et `sortSoldOutLast` pour garantir de l'achetable) + carte « Voir toutes les créations » |
 | 2   | **FAQ** (`_components/faq/faq-section.tsx`)      | **Réassurance** : livraison, retours, entretien — 5 groupes, 11 questions (SSOT `shared/constants/faq-items.tsx`), cible de la redirection 308 `/aide` → `/#faq`           |
 | —   | Footer (layout)                                  | Signature « — Léane », colonnes de navigation, rail légal                                                                                                                  |
 
@@ -91,8 +110,18 @@ n'est que de **13,1 px**, cf. audit du 2026-08-05).
   existe (`CollectionCard`, déjà auditée 2×) ; les `CollectionChapters` pleine largeur de
   `/collections` sont **trop lourds pour la landing** — c'est la page dédiée qui raconte,
   la landing oriente.
-- Aucune stat, aucun compteur : pas de « X collections » (le compte streamé est le pattern
-  de la page dédiée, pas de la landing).
+- Aucune stat, aucun compteur **de section** : pas de « X collections » en tête de bloc
+  (le compte streamé est le pattern de la page dédiée, pas de la landing).
+  ⚠️ **À ne pas confondre avec le compteur PAR CARTE** (« 12 créations »), qui est au
+  contraire prescrit : c'est l'un des deux nombres qui distinguent une carte collection
+  d'une carte produit (`docs/COLLECTION-CARD.md` § 4). Les deux ont porté le même mot
+  « compteur » dans deux documents voisins — ce n'est pas la même chose.
+
+> **Ce que la carte doit porter est fixé ailleurs.** Ce document dit **où** la section va et
+> **combien** de cartes elle montre ; `docs/COLLECTION-CARD.md` dit ce qu'une carte
+> collection **est**. ✅ Les deux étaient en désaccord jusqu'au 2026-08-06 (média carré unique
+> contre « au moins deux visuels ») ; le désaccord est **tranché en faveur de la doctrine**,
+> et la carte porte la silhouette S2 « la pile décalée » — cf. l'encart en tête de ce fichier.
 
 ### Données
 

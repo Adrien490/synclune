@@ -9,13 +9,6 @@ import { BreadcrumbNavSkeleton } from "@/shared/components/breadcrumb-nav";
  * IMPORTANT: L'ordre des composants doit correspondre exactement à page.tsx pour éviter le CLS.
  * Le subtree gallery+info+details est extrait dans `ProductMainSkeleton` (single source of truth
  * partagé entre ce loading.tsx et le Suspense fallback de page.tsx).
- *
- * ⚠️ **Pas de squelette « Récemment vus » ici.** Cette section n'existe que si le
- * cookie de vues récentes contient un autre produit, et ce fichier est le repli de
- * ROUTE : il ne peut pas lire de cookie sans devenir dynamique. Le dessiner
- * revenait à promettre une section qui, sur la première fiche d'une visite,
- * n'arrive jamais. `page.tsx` décide de la monter, et le séparateur d'ouverture
- * voyage avec elle (cf. `RecentlyViewedProducts`).
  */
 export default function ProductDetailLoading() {
 	return (

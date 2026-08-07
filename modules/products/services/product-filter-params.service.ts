@@ -5,6 +5,7 @@
  * des filtres de la boutique.
  */
 
+import { PRODUCTS_DEFAULT_SORT } from "../constants/product.constants";
 import type { ProductFilters } from "../types/product.types";
 
 // ============================================================================
@@ -18,6 +19,15 @@ export interface FilterFormData {
 	priceRange: [number, number];
 	inStockOnly: boolean;
 	onSale: boolean;
+	/**
+	 * Tri courant (`PRODUCTS_SORT_OPTIONS`). Il voyage avec le formulaire pour
+	 * que les DEUX hôtes du compartiment « Trier par » l'appliquent par le même
+	 * chemin que les filtres (rail : navigation immédiate ; panneau : « Voir les
+	 * N pièces »). Ce n'est PAS un filtre : il ne compte dans aucun
+	 * `getSectionActiveCount`, et `filterFormDataToProductFilters` l'ignore —
+	 * le compteur vivant ne recompte pas quand seul le tri change.
+	 */
+	sortBy: string;
 }
 
 export interface ParseFilterParams {
@@ -89,6 +99,7 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 	let priceMax = defaultPriceRange[1];
 	let inStockOnly = false;
 	let onSale = false;
+	let sortBy: string = PRODUCTS_DEFAULT_SORT;
 
 	// Ajouter le type actif depuis le path segment (page catégorie)
 	if (activeProductTypeSlug) {
@@ -118,6 +129,11 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 			case "onSale":
 				onSale = value === "true" || value === "1";
 				break;
+			case "sortBy":
+				// Valeur brute d'URL : un `sortBy` forgé retombe côté data sur le tri
+				// par défaut (`parsePaginationParams`), le formulaire n'a pas à valider.
+				sortBy = value || PRODUCTS_DEFAULT_SORT;
+				break;
 		}
 	});
 
@@ -132,6 +148,7 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 		priceRange: [priceMin, priceMax],
 		inStockOnly,
 		onSale,
+		sortBy,
 	};
 }
 
@@ -239,6 +256,14 @@ export function buildFilterURL(params: BuildFilterURLParams): {
 		urlParams.set("onSale", "true");
 	}
 
+	// Tri — même règle que l'ancien menu ancré : la valeur par défaut EFFACE le
+	// paramètre au lieu de l'écrire (`?sortBy=created-descending` et l'URL nue
+	// sont le même état ; écrire le défaut ferait basculer la page en noindex).
+	urlParams.delete("sortBy");
+	if (formData.sortBy && formData.sortBy !== PRODUCTS_DEFAULT_SORT) {
+		urlParams.set("sortBy", formData.sortBy);
+	}
+
 	const queryString = urlParams.toString();
 	const fullUrl = queryString ? `${targetPath}?${queryString}` : targetPath;
 
@@ -336,6 +361,7 @@ export function getDefaultFilterValues(defaultPriceRange: [number, number]): Fil
 		priceRange: defaultPriceRange,
 		inStockOnly: false,
 		onSale: false,
+		sortBy: PRODUCTS_DEFAULT_SORT,
 	};
 }
 
@@ -450,75 +476,8 @@ export function resetFilterGroup(
 	}
 }
 
-/**
- * Inverse de {@link filterFormDataToProductFilters} — pour un appelant SERVEUR
- * qui a déjà les `ProductFilters` parsés (les pages catalogue) et veut la forme
- * « formulaire », notamment pour en tirer un résumé lisible.
- *
- * Les deux fonctions vivent côte à côte volontairement : c'est ce qui garantit
- * que la conversion centimes ↔ euros ne dérive pas d'un côté seulement.
- */
-export function productFiltersToFilterFormData(
-	filters: ProductFilters,
-	defaultPriceRange: [number, number],
-): FilterFormData {
-	const toArray = (value: string | string[] | undefined): string[] =>
-		value === undefined ? [] : Array.isArray(value) ? value : [value];
-
-	return {
-		productTypes: toArray(filters.type),
-		colors: toArray(filters.color),
-		materials: toArray(filters.material),
-		priceRange: [
-			filters.priceMin !== undefined ? Math.round(filters.priceMin / 100) : defaultPriceRange[0],
-			filters.priceMax !== undefined ? Math.round(filters.priceMax / 100) : defaultPriceRange[1],
-		],
-		inStockOnly: filters.stockStatus === "in_stock",
-		onSale: filters.onSale === true,
-	};
-}
-
-/**
- * Résumé en clair des filtres actifs — la ligne « 9 pièces · Papilloux, Or
- * jaune, jusqu'à 65 € » sous le titre du catalogue (rail desktop).
- *
- * Fonction pure : les libellés viennent de l'appelant (le serveur les a déjà,
- * il n'y a pas de second fetch). Retourne `null` quand rien n'est filtré — la
- * ligne de compte reste alors telle quelle.
- */
-export function formatActiveFilterSummary(
-	values: FilterFormData,
-	labels: {
-		types?: Record<string, string>;
-		colors?: Record<string, string>;
-		materials?: Record<string, string>;
-	},
-	defaultPriceRange: [number, number],
-): string | null {
-	const parts: string[] = [];
-
-	const resolve = (slugs: string[], map?: Record<string, string>) =>
-		slugs.map((slug) => map?.[slug] ?? slug);
-
-	parts.push(...resolve(values.productTypes, labels.types));
-	parts.push(...resolve(values.colors, labels.colors));
-	parts.push(...resolve(values.materials, labels.materials));
-
-	const [min, max] = values.priceRange;
-	const minChanged = min !== defaultPriceRange[0];
-	const maxChanged = max !== defaultPriceRange[1];
-	if (minChanged && maxChanged) parts.push(`de ${min} à ${max} €`);
-	else if (maxChanged) parts.push(`jusqu'à ${max} €`);
-	else if (minChanged) parts.push(`à partir de ${min} €`);
-
-	if (values.inStockOnly) parts.push("en stock");
-	if (values.onSale) parts.push("en promotion");
-
-	return parts.length > 0 ? parts.join(", ") : null;
-}
-
 /** Libellé d'un groupe de filtres dans la copie de l'état vide (avec article). */
-export const FILTER_GROUP_EMPTY_STATE_LABELS: Record<FilterSectionId, string> = {
+const FILTER_GROUP_EMPTY_STATE_LABELS: Record<FilterSectionId, string> = {
 	types: "le type",
 	price: "le filtre de prix",
 	colors: "la couleur",

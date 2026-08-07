@@ -54,15 +54,21 @@ interface MegaMenuColumnProps {
 
 /**
  * Perles d'échantillon (cf. `.mega-menu-perle`, app/styles/components.css) :
- * les 4 accents de marque en rotation par index, rotation du blob comprise —
+ * un enfilage de perles ROSES dont seule la rotation du blob change par index —
  * classes LITTÉRALES, jamais interpolées (Tailwind ne compose que ce qu'il lit).
  * Décoratif pur : `aria-hidden`, aucune sémantique par couleur.
+ *
+ * ⚠️ C'était les quatre accents de marque en rotation (rose, lavande, menthe,
+ * soleil). Passées au mono-rose avec le reste de la navigation le 2026-08-06 :
+ * quatre teintes qui ne signifiaient rien mettaient plus de couleurs dans le
+ * menu que sur les bijoux qu'il indexe. Les blobs restent quatre — c'est la
+ * FORME qui porte le fait-main, pas la teinte.
  */
 const PERLE_STYLES = [
 	"bg-primary -rotate-12",
-	"bg-brand-lavender rotate-6",
-	"bg-brand-mint rotate-[20deg]",
-	"bg-brand-sun -rotate-3",
+	"bg-primary rotate-6",
+	"bg-primary rotate-[20deg]",
+	"bg-primary -rotate-3",
 ] as const;
 
 /**

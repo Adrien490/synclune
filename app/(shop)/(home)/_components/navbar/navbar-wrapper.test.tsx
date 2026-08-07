@@ -137,11 +137,17 @@ describe("NavbarWrapper (sol permanent, accent de salle, état de scroll)", () =
 	// barre changeait donc de couleur à chaque navigation — jugé instable
 	// (décision design 2026-08-04). Il est désormais la SIGNATURE de la marque :
 	// toujours peint, toujours `--primary`.
+	//
+	// Depuis le 2026-08-06 les salles elles-mêmes sont mono-rose (cf.
+	// `navbar-section.ts`), donc `data-accent` vaut « rose » partout dans la
+	// boutique — ce qui ne rend PAS ce test redondant : il vérifie que le
+	// bandeau ne re-dérive pas sa couleur de la cascade, l'attribut restant le
+	// canal de `--section-soft` pour l'entrée de nav courante.
 	describe("bandeau de marque", () => {
 		it.each([
 			["/", "rose"],
-			["/collections/mariage", "mint"],
-			["/produits", "lavender"],
+			["/collections/mariage", "rose"],
+			["/produits", "rose"],
 		])("peint le même filet primary sur %s (accent de salle : %s)", (pathname, accent) => {
 			mockPathname = pathname;
 			const { container } = render(

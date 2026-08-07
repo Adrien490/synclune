@@ -1,19 +1,9 @@
 "use client";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
-import { Spinner } from "@/shared/components/ui/spinner";
 
 export const ARCHIVE_COLLECTION_DIALOG_ID = "archive-collection";
 
@@ -26,18 +16,7 @@ interface ArchiveCollectionData {
 
 export function ArchiveCollectionAlertDialog() {
 	const archiveDialog = useAlertDialog<ArchiveCollectionData>(ARCHIVE_COLLECTION_DIALOG_ID);
-
-	const { action, isPending } = useUpdateCollectionStatus({
-		onSuccess: () => {
-			archiveDialog.close();
-		},
-	});
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			archiveDialog.close();
-		}
-	};
+	const { action } = useUpdateCollectionStatus();
 
 	const isArchiving = archiveDialog.data?.collectionStatus !== CollectionStatus.ARCHIVED;
 	const targetStatus: CollectionStatus = isArchiving
@@ -45,64 +24,43 @@ export function ArchiveCollectionAlertDialog() {
 		: CollectionStatus.PUBLIC;
 
 	return (
-		<ResponsiveAlertDialog
+		<ConfirmDialog
 			open={archiveDialog.isOpen}
-			onOpenChange={handleOpenChange}
+			onClose={archiveDialog.close}
+			action={action}
 			tone={isArchiving ? "warning" : "success"}
-		>
-			<ResponsiveAlertDialogContent>
-				<form action={action}>
-					<input type="hidden" name="id" value={archiveDialog.data?.collectionId ?? ""} />
-					<input type="hidden" name="status" value={targetStatus} />
-
-					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>
-							{isArchiving ? "Archiver la collection" : "Restaurer la collection"}
-						</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription render={<div className="space-y-3" />}>
-							{isArchiving ? (
-								<>
-									<p>
-										Êtes-vous sûr de vouloir archiver la collection{" "}
-										<strong>&quot;{archiveDialog.data?.collectionName}&quot;</strong> ?
-									</p>
-									<p>
-										La collection ne sera plus visible sur la boutique mais restera accessible dans
-										le dashboard.
-									</p>
-									<p className="text-muted-foreground text-xs">
-										Vous pourrez la restaurer a tout moment.
-									</p>
-								</>
-							) : (
-								<>
-									<p>
-										Êtes-vous sûr de vouloir restaurer la collection{" "}
-										<strong>&quot;{archiveDialog.data?.collectionName}&quot;</strong> ?
-									</p>
-									<p>
-										La collection sera remise en statut &quot;Public&quot; et redeviendra visible
-										sur la boutique.
-									</p>
-								</>
-							)}
-						</ResponsiveAlertDialogDescription>
-					</ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Spinner presentational />}
-							{isPending
-								? isArchiving
-									? "Archivage…"
-									: "Restauration…"
-								: isArchiving
-									? "Archiver"
-									: "Restaurer"}
-						</ResponsiveAlertDialogAction>
-					</ResponsiveAlertDialogFooter>
-				</form>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+			fields={{ id: archiveDialog.data?.collectionId, status: targetStatus }}
+			title={isArchiving ? "Archiver la collection" : "Restaurer la collection"}
+			confirmLabel={isArchiving ? "Archiver" : "Restaurer"}
+			descriptionClassName="space-y-3"
+			description={
+				isArchiving ? (
+					<>
+						<p>
+							Êtes-vous sûr de vouloir archiver la collection{" "}
+							<strong>&quot;{archiveDialog.data?.collectionName}&quot;</strong> ?
+						</p>
+						<p>
+							La collection ne sera plus visible sur la boutique mais restera accessible dans le
+							dashboard.
+						</p>
+						<p className="text-muted-foreground text-xs">
+							Vous pourrez la restaurer a tout moment.
+						</p>
+					</>
+				) : (
+					<>
+						<p>
+							Êtes-vous sûr de vouloir restaurer la collection{" "}
+							<strong>&quot;{archiveDialog.data?.collectionName}&quot;</strong> ?
+						</p>
+						<p>
+							La collection sera remise en statut &quot;Public&quot; et redeviendra visible sur la
+							boutique.
+						</p>
+					</>
+				)
+			}
+		/>
 	);
 }

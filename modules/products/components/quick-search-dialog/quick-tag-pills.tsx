@@ -76,7 +76,7 @@ export function QuickTagPills({
 				data-slot="scroll-fade-container"
 				// Le rail saigne jusqu'au bord de l'écran (`-mx-4`) : sans opt-out, un
 				// défilement au doigt parti de ce bord déclenche `useEdgeSwipe` (geste
-				// d'ouverture du menu). Même parade que « Vus récemment ».
+				// d'ouverture du menu).
 				data-no-edge-swipe=""
 				// `-mx-4 … px-4` : le rail occupe toute la largeur (le fondu de bord tombe
 				// donc sur le bord de l'écran, pas au milieu d'une gouttière) tandis que la

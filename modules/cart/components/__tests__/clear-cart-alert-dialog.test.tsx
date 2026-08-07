@@ -98,19 +98,14 @@ describe("ClearCartAlertDialog", () => {
 		expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
 	});
 
-	it("fires error haptic and calls action on submit, then closes dialog on success", () => {
+	// Le formulaire est nommé par le TITRE de la confirmation (`ConfirmDialog` le
+	// dérive), et la fermeture n'appartient plus au succès : le bouton est un
+	// `Close`, le dialog est déjà parti quand l'action aboutit.
+	it("fires error haptic and calls action on submit", () => {
 		render(<ClearCartAlertDialog />);
-		const form = screen.getByRole("form", { name: /vider le panier/i });
+		const form = screen.getByRole("form", { name: /vider ton panier/i });
 		fireEvent.submit(form);
 		expect(mockHaptic).toHaveBeenCalledWith("error");
 		expect(mockClearAction).toHaveBeenCalledTimes(1);
-		expect(mockCloseDialog).toHaveBeenCalled();
-	});
-
-	it("shows loader inside action button while pending", () => {
-		mockClearPending.current = true;
-		render(<ClearCartAlertDialog />);
-		expect(screen.getByTestId("loader-icon")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /suppression/i })).toBeDisabled();
 	});
 });

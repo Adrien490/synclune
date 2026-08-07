@@ -13,18 +13,33 @@
 ### ⚠️ Positionnement : bijoux colorés, PAS joaillerie précieuse
 
 C'est la donnée de marque la plus souvent mal comprise, et elle a déjà produit des propositions à
-jeter. La marque exprime la **créativité colorée** de la créatrice — joyeux, personnel, artisanal.
-Elle ne vend ni or, ni pierres précieuses, ni « luxe discret ».
+jeter. La marque exprime la **créativité colorée** de la créatrice — des petits objets
+**polychromes, narratifs et miniatures**, joyeux, un peu **décalé**, personnels, artisanaux. Elle ne
+vend ni or, ni pierres précieuses, ni « luxe discret ».
 
 Toute direction artistique bâtie sur le métal précieux, la gravure, le sérif de haute joaillerie ou
 le minimalisme froid est le **contre-pied exact** du brief. « Bijoux » ≠ « joaillerie ». La SSOT
-est `shared/constants/brand.ts` + `BUSINESS_INFO` (`shared/constants/seo-config.ts`), dont la
-description dit déjà : « Bijoux artisanaux **colorés et originaux** pour le quotidien et les
-occasions spéciales. »
+du positionnement est `shared/constants/brand.ts` + `BUSINESS_INFO`
+(`shared/constants/seo-config.ts`) ; celle de la **direction artistique** est
+[`docs/BRAND-DA.md`](BRAND-DA.md) (six territoires, palette, formes, ton), résumée dans
+`CLAUDE.md` § « Direction artistique — lexique de marque ».
 
 Conséquence pratique pour les prompts de design : viser le **soin artisanal et la joie**, pas le
 prestige. Un ton « maison de joaillerie premium » désaligne la copie, la palette et la typo d'un
 coup.
+
+Le second contre-pied est plus discret que le premier, et donc plus fréquent : **la tiédeur**. La
+vibe est créative, **colorée et polychrome**, narrative, un peu décalée — le rose n'est pas une
+touche, c'est `--primary`, et les trois autres accents de marque tournent autour. Une proposition
+sage, neutre ou « intemporelle » rate le brief exactement comme une proposition dorée ; c'est la
+sobriété qui doit s'argumenter, pas l'audace.
+
+Le troisième contre-pied est un piège de lecture : **le catalogue actuellement en base n'est pas la
+marque.** Le jeu de données de démonstration (`prisma/seed.ts`) décrit des collections Mariage et
+Fêtes, du plaqué or, du Swarovski, des « Bague Triple Anneau » et des visuels de banque d'images —
+exactement l'univers que la DA récuse. Il ne faut ni s'en servir comme référence, ni y lire un
+signal de positionnement : la boutique réelle de Léane est celle décrite dans
+[`docs/BRAND-DA.md`](BRAND-DA.md).
 
 ## Seuils fiscaux à surveiller (SSOT : `shared/constants/vat-franchise.ts`)
 

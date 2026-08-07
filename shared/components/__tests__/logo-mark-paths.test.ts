@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-	FIVE_PATH,
 	GLOSS_PATH,
 	HEART_PATH,
+	INITIAL_PATH,
 	SPARK_ANCHORS,
 	SPARK_LEFT_PATH,
 	SPARK_RIGHT_PATH,
@@ -28,7 +28,7 @@ const ANCHOR_EPSILON = VIEWBOX * 0.02;
 
 const ALL_PATHS = {
 	HEART_PATH,
-	FIVE_PATH,
+	INITIAL_PATH,
 	GLOSS_PATH,
 	SPARK_LEFT_PATH,
 	SPARK_RIGHT_PATH,

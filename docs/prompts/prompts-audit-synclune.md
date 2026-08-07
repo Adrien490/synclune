@@ -1671,26 +1671,37 @@ le verdict par élément (sheet / bottom bar / gestes).
 ```text
 Audit le point « Vitrine / page d'accueil » dans Synclune.
 
-C'est la première impression de la marque. Vérifie, en mobile ET en desktop, la hiérarchie narrative
-de la page : hero (promesse, CTA, images flottantes, bandeau de réassurance), section atelier
-(polaroids, stats), collections, dernières créations, FAQ, footer.
+⚠️ N'invente PAS tes critères. La grille de cette surface existe et fait autorité :
+`docs/LANDING-BEST-PRACTICES.md` § 9. Lis-la EN ENTIER avant de juger quoi que ce soit — chaque
+ligne y porte sa méthode de vérification (`test` / `inspect` / 👁 humain), son poids, et le § qui
+l'explique. Le § 0.3 liste ce qui, à ce format d'entreprise, ne s'applique PAS : ne recommande
+jamais un A/B test, une popup de capture email, un exit-intent ni un système d'avis partiel.
 
-Juge sur trois axes :
-1. Impression de marque — est-ce qu'on croit à une créatrice de bijoux artisanaux colorés dès le
-   premier écran ? (Le brief est la créativité et la couleur, PAS la joaillerie précieuse.)
-2. Chemin de conversion — combien de gestes entre l'arrivée et une fiche produit ? Le CTA principal
-   est-il évident sans scroller sur 375x667 ?
-3. Solidité technique — LCP et CLS du hero, images flottantes (poids, `sizes`, priorité), animations
-   scroll-driven qui ne cassent pas les captures ni `prefers-reduced-motion`, sections en `use cache`
-   dont le squelette correspond au rendu final.
+Passe la grille, bloc par bloc, en mobile ET en desktop. Le barème est celui du § 9.0 (premier
+écran 18 · copie 12 · structure 8 · confiance et légal 18 · cartes 12 · rareté 6 · perf 10 ·
+a11y 10 · SEO 8 · mobile 8), et il produit directement la note /100.
 
-Signale les sections qui n'apportent rien (à supprimer, pas à améliorer) et celles qui manquent.
+⚠️ Périmètre : « la landing » n'est pas `page.tsx` seul. Elle inclut `app/(shop)/layout.tsx`
+(navbar et méga-menus, pied de page, barre basse mobile, bannière cookies, recherche rapide),
+`app/opengraph-image.tsx` (vu avant la page par qui arrive d'un lien partagé), et la page de
+fermeture de boutique qui la remplace intégralement. Les critères de confiance (§ 4) et toutes les
+obligations légales (§ 4.6) vivent dans le pied de page — les oublier vide l'audit de sa moitié
+opposable. Inversement, pied de page et navbar vivent dans `(home)/_components/` mais sont montés
+par le layout : un changement là frappe TOUT le storefront, dis-le si tu en proposes un.
 
-Inspecte `app/(shop)/(home)/page.tsx`, `app/(shop)/(home)/_components/**` (`hero-section.tsx`,
-`floating-images/**`, `atelier-section/**`, `collections-section.tsx`, `latest-creations.tsx`,
-`home-faq*.tsx`, `footer.tsx`), `e2e/scroll-driven-animations.spec.ts`, `e2e/performance.spec.ts`.
+Trois points de jugement que la grille ne peut pas trancher seule, et qu'on attend de toi :
+1. Impression de marque — croit-on à une créatrice de bijoux colorés dès le premier écran ?
+   (Le brief est la créativité et la couleur, PAS la joaillerie précieuse — `docs/BRAND-DA.md`.)
+2. Chemin de conversion — combien de gestes entre l'arrivée et une fiche produit ?
+3. Les sections qui n'apportent rien (à SUPPRIMER, pas à améliorer) et celles qui manquent.
 
-Note /100, donne le verdict section par section, et dis explicitement laquelle refondre en premier.
+Inspecte `app/(shop)/(home)/page.tsx` et `app/(shop)/(home)/_components/**` (dossiers `hero/`,
+`collections/`, `atelier/`, `faq/`, `navbar/`, plus `footer.tsx` et `shop-mobile-bottom-nav.tsx`),
+`app/(shop)/layout.tsx`, `e2e/performance.spec.ts`, `e2e/accessibility.spec.ts`, `e2e/seo.spec.ts`.
+
+Rends la note /100 issue du barème, le verdict bloc par bloc, un backlog P0-P3, et dis
+explicitement quelle section refondre en premier. Signale toute case de la grille que tu n'as pas
+su trancher en moins de deux minutes : c'est un défaut de la grille, à remonter.
 ```
 
 ---
@@ -1712,7 +1723,7 @@ zoom ? Les informations affichées sur la carte sont-elles celles qui décident 
 
 Inspecte `app/(shop)/produits/**`, `app/(shop)/collections/**`, `app/(shop)/favoris/**`,
 `modules/products/components/{product-catalog,product-list,product-card,product-card-skeleton,
-product-card-color-swatches,product-price,product-sort-bar,products-load-more,product-list-skeleton,
+product-card-color-swatches,product-price,product-filter-bar,products-load-more,product-list-skeleton,
 product-catalog-skeleton}.tsx`, `shared/components/{load-more,cursor-pagination}/**`,
 `shared/components/{sort-select,scroll-restoration}.tsx`, `shared/components/ui/empty.tsx`,
 `e2e/product-browsing.spec.ts`.
@@ -1760,7 +1771,7 @@ C'est la page qui convertit. Vérifie en 1280x800, 1440x900 et 1920x1080 : la co
 colonnes (galerie / bloc d'achat), la hiérarchie de lecture (titre, prix, variantes, ajout au panier,
 réassurance, caractéristiques, entretien, produits liés), le comportement de la galerie
 (vignettes, zoom, lightbox, vidéo), la sticky CTA desktop, l'estimation de livraison, le partage,
-et les blocs secondaires (récemment vus, recommandations).
+et les blocs secondaires (produits liés, recommandations).
 
 Juge sans complaisance : est-ce que le prix, la variante et le bouton d'ajout sont visibles ensemble
 sans scroller ? Est-ce que les informations qui lèvent un doute d'achat (matériau, taille, délai,
@@ -1770,7 +1781,7 @@ bas sans rien apporter ?
 Inspecte `app/(shop)/creations/[slug]/{page.tsx,loading.tsx,error.tsx,not-found.tsx}`,
 `modules/products/components/{product-info,product-details,product-characteristics,
 product-highlights,product-reassurance,product-care-info,product-price-display,delivery-estimator,
-share-button,sticky-cart-cta-desktop,related-products,recently-viewed-products,product-main-skeleton}.tsx`,
+share-button,sticky-cart-cta-desktop,related-products,product-main-skeleton}.tsx`,
 `shared/components/gallery/**`.
 
 Note /100, rends le verdict bloc par bloc et propose l'ordre de lecture idéal si l'actuel est mauvais.

@@ -1,20 +1,10 @@
 "use client";
 
 import { ShieldWarningIcon } from "@phosphor-icons/react/ssr";
-import { Spinner } from "@/shared/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { ROUTES } from "@/shared/constants/urls";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
@@ -35,7 +25,7 @@ export function RevokeSessionsCard() {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
 
-	const [, formAction, isPending] = useActionState(
+	const [, formAction] = useActionState(
 		withCallbacks(
 			revokeAllSessions,
 			createToastCallbacks({
@@ -83,48 +73,26 @@ export function RevokeSessionsCard() {
 				</Button>
 			</div>
 
-			<ResponsiveAlertDialog
+			<ConfirmDialog
 				open={isOpen}
-				onOpenChange={(open) => {
-					if (!open && !isPending) setIsOpen(false);
-				}}
+				onClose={() => setIsOpen(false)}
+				action={formAction}
 				tone="destructive"
-			>
-				<ResponsiveAlertDialogContent>
-					<form action={formAction}>
-						<ResponsiveAlertDialogHeader>
-							<ResponsiveAlertDialogTitle>
-								Déconnecter tous les appareils
-							</ResponsiveAlertDialogTitle>
-							<ResponsiveAlertDialogDescription>
-								Toutes tes sessions vont être fermées, celle-ci comprise, et tu seras renvoyée vers
-								la page de connexion.
-								<span className="text-foreground mt-2 block text-sm">
-									Les autres appareils perdent l&apos;accès <strong>dans la minute</strong>, pas
-									instantanément.
-								</span>
-							</ResponsiveAlertDialogDescription>
-						</ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogFooter>
-							<ResponsiveAlertDialogCancel
-								disabled={isPending}
-								className="min-h-11 transition-transform duration-150 active:scale-[0.98]"
-							>
-								Annuler
-							</ResponsiveAlertDialogCancel>
-							<ResponsiveAlertDialogAction
-								type="submit"
-								disabled={isPending}
-								aria-busy={isPending}
-								className="min-h-11 transition-transform duration-150 active:scale-[0.98]"
-							>
-								{isPending && <Spinner presentational className="mr-2" />}
-								{isPending ? "Révocation…" : "Tout déconnecter"}
-							</ResponsiveAlertDialogAction>
-						</ResponsiveAlertDialogFooter>
-					</form>
-				</ResponsiveAlertDialogContent>
-			</ResponsiveAlertDialog>
+				title="Déconnecter tous les appareils"
+				confirmLabel="Tout déconnecter"
+				cancelClassName="min-h-11 transition-transform duration-150 active:scale-[0.98]"
+				confirmClassName="min-h-11 transition-transform duration-150 active:scale-[0.98]"
+				description={
+					<>
+						Toutes tes sessions vont être fermées, celle-ci comprise, et tu seras renvoyée vers la
+						page de connexion.
+						<span className="text-foreground mt-2 block text-sm">
+							Les autres appareils perdent l&apos;accès <strong>dans la minute</strong>, pas
+							instantanément.
+						</span>
+					</>
+				}
+			/>
 		</section>
 	);
 }

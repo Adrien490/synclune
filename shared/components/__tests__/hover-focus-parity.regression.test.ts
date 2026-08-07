@@ -103,6 +103,17 @@ const GUARDS: readonly Guard[] = [
 		hover: "motion-safe:can-hover:group-hover:rotate-0",
 		focus: "group-focus-within:rotate-0",
 	},
+	// Même affordance à l'échelle d'une carte (silhouette S2, 2026-08-06). Le
+	// focus est ici gaté `motion-safe:` — LICITE, et même requis : la pose de
+	// repos des tirages n'est plus gatée (une pose n'est pas un mouvement), donc
+	// sans ce gate un focus clavier sous reduced-motion mettrait la pile à plat
+	// d'un seul coup. Ce qui reste interdit, c'est `can-hover:` devant un focus.
+	{
+		file: "app/(shop)/(home)/_components/collections/collections-card.tsx",
+		affordance: "les tirages de la carte se redressent (affordance du lien étiré)",
+		hover: "motion-safe:can-hover:group-hover:rotate-0",
+		focus: "motion-safe:group-focus-within:rotate-0",
+	},
 	// Lot 0 filtres 2026-08-05 : l'anneau de ligne `focus-within:ring-ring`
 	// (rose 1,55:1, doublait le `focus-ring` du contrôle interne et survivait au
 	// clic souris) est remplacé par la même teinte de fond que le survol.

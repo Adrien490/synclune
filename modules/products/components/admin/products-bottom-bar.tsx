@@ -37,7 +37,7 @@ interface ProductsBottomBarProps {
  * Sous-header sticky (mobile, admin) pour la liste produits.
  *
  * 4 actions : Filtrer | Rechercher | Ajouter | Trier. Reproduit le pattern
- * `ProductSortBar` de la boutique : la barre reste collée sous le header admin
+ * `ProductFilterBar` de la boutique : la barre reste collée sous le header admin
  * au scroll. L'ancienne bottom-bar a migré en haut de page ; la nav globale
  * `AdminMobileBottomBar` reste visible en bas simultanément.
  */

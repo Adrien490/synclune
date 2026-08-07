@@ -248,50 +248,16 @@ describe("DeleteProductAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Supprimer");
 		});
 
-		it("shows 'Suppression…' label when pending", () => {
-			mockDeleteProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Suppression…");
-		});
-
-		it("shows loader icon when pending", () => {
-			mockDeleteProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("loader-circle")).toBeInTheDocument();
-		});
-
 		it("does not show loader icon when not pending", () => {
 			renderDialog();
 
 			expect(screen.queryByTestId("loader-circle")).not.toBeInTheDocument();
 		});
 
-		it("is disabled when pending", () => {
-			mockDeleteProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toBeDisabled();
-		});
-
 		it("is not disabled when not pending", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-action")).not.toBeDisabled();
-		});
-
-		it("sets aria-busy to true when pending", () => {
-			mockDeleteProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toHaveAttribute("aria-busy", "true");
-		});
-
-		it("sets aria-busy to false when not pending", () => {
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toHaveAttribute("aria-busy", "false");
 		});
 	});
 
@@ -304,13 +270,6 @@ describe("DeleteProductAlertDialog", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-cancel")).toHaveTextContent("Annuler");
-		});
-
-		it("is disabled when pending", () => {
-			mockDeleteProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-cancel")).toBeDisabled();
 		});
 
 		it("is not disabled when not pending", () => {
@@ -326,15 +285,6 @@ describe("DeleteProductAlertDialog", () => {
 
 			expect(mockDialog.close).toHaveBeenCalledTimes(1);
 		});
-
-		it("does NOT call dialog.close() when clicked while pending", () => {
-			mockDeleteProduct.isPending = true;
-			renderDialog();
-
-			fireEvent.click(screen.getByTestId("alert-dialog-cancel"));
-
-			expect(mockDialog.close).not.toHaveBeenCalled();
-		});
 	});
 
 	// --------------------------------------------------------------------------
@@ -348,15 +298,6 @@ describe("DeleteProductAlertDialog", () => {
 			fireEvent.click(screen.getByTestId("alert-dialog"));
 
 			expect(mockDialog.close).toHaveBeenCalledTimes(1);
-		});
-
-		it("does NOT call dialog.close() when closed while pending", () => {
-			mockDeleteProduct.isPending = true;
-			renderDialog();
-
-			fireEvent.click(screen.getByTestId("alert-dialog"));
-
-			expect(mockDialog.close).not.toHaveBeenCalled();
 		});
 	});
 });

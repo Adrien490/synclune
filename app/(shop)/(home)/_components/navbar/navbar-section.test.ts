@@ -7,13 +7,13 @@ describe("resolveNavbarSection", () => {
 		expect(resolveNavbarSection("/")).toEqual({ accent: "rose", label: null });
 	});
 
-	it("range les créations en lavande, listing comme sous-type", () => {
+	it("range les créations dans la salle Créations, listing comme sous-type", () => {
 		expect(resolveNavbarSection("/produits")).toEqual({
-			accent: "lavender",
+			accent: "rose",
 			label: "Créations",
 		});
 		expect(resolveNavbarSection("/produits/papilloux")).toEqual({
-			accent: "lavender",
+			accent: "rose",
 			label: "Créations",
 		});
 	});
@@ -23,24 +23,45 @@ describe("resolveNavbarSection", () => {
 		// l'entrée « Les créations » de la nav. Le bandeau dit la même SALLE — dans le
 		// registre court du repère, pas dans le libellé de la nav (cf. navbar-section).
 		expect(resolveNavbarSection("/creations/collier-papilloux-nacre")).toEqual({
-			accent: "lavender",
+			accent: "rose",
 			label: "Créations",
 		});
 	});
 
-	it("range les collections en menthe", () => {
+	it("range les collections dans leur salle", () => {
 		expect(resolveNavbarSection("/collections")).toEqual({
-			accent: "mint",
+			accent: "rose",
 			label: "Collections",
 		});
 		expect(resolveNavbarSection("/collections/mariage")).toEqual({
-			accent: "mint",
+			accent: "rose",
 			label: "Collections",
 		});
 	});
 
-	it("réserve le rose aux favoris", () => {
+	it("nomme la salle des favoris", () => {
 		expect(resolveNavbarSection("/favoris")).toEqual({ accent: "rose", label: "Favoris" });
+	});
+
+	/**
+	 * Le cœur de la décision du 2026-08-06, et la seule assertion qui la tient :
+	 * **toute la navigation est mono-rose**. Un `accent` autre que `"rose"` ici
+	 * ferait re-virer le bandeau du header d'une route à l'autre — c'est
+	 * exactement ce qui a été retiré. Ce que porte encore une couleur, c'est le
+	 * CONTENU (fil de l'atelier, étapes du tunnel, séries de collections).
+	 */
+	it("ne rend JAMAIS d'autre accent que le rose : la navigation est mono-rose", () => {
+		for (const path of [
+			"/",
+			"/produits",
+			"/produits/papilloux",
+			"/creations/collier-papilloux-nacre",
+			"/collections",
+			"/collections/mariage",
+			"/favoris",
+		]) {
+			expect(resolveNavbarSection(path).accent, path).toBe("rose");
+		}
 	});
 
 	// La FAQ a rejoint la landing le 2026-08-05 : `/aide` redirige en 308 vers
@@ -69,7 +90,7 @@ describe("resolveNavbarSection", () => {
 
 	it("n'attrape pas un chemin qui commence par le même préfixe SANS être dessous", () => {
 		// Sans le `/` de fin dans la comparaison, `/collections-privees` serait
-		// peint en menthe et annoncé « Collections ».
+		// peint et annoncé « Collections ».
 		expect(resolveNavbarSection("/collections-privees")).toEqual({ accent: null, label: null });
 		expect(resolveNavbarSection("/produits-archives")).toEqual({ accent: null, label: null });
 	});

@@ -1,5 +1,4 @@
 import { accentForSlug } from "@/modules/products/components/catalog-accents.constants";
-import { PRODUCTS_SORT_LABELS } from "@/modules/products/constants/product.constants";
 import { isProductCategoryPage } from "@/modules/products/services/product-filter-params.service";
 import type { ShelfBarAccent } from "@/shared/components/shelf-bar/shelf-bar";
 
@@ -17,9 +16,7 @@ const SHELF_ACCENT_BY_RAIL: Record<ReturnType<typeof accentForSlug>, ShelfBarAcc
 
 /**
  * L'accent de la page catalogue courante — le slug donne la teinte, comme sur
- * le bloc titre. Partagé entre la barre (`ProductSortBar`) et le cluster de la
- * rangée titre (`CatalogToolbarInline`) : les deux « Trier » doivent peindre le
- * même ruban, sinon la teinte change selon le viewport qui l'affiche.
+ * le bloc titre. Consommé par la barre (`ProductFilterBar`).
  */
 export function shelfAccentForPathname(pathname: string): ShelfBarAccent {
 	return SHELF_ACCENT_BY_RAIL[
@@ -27,19 +24,4 @@ export function shelfAccentForPathname(pathname: string): ShelfBarAccent {
 			? accentForSlug(decodeURIComponent(pathname.split("/")[2] ?? ""))
 			: "bg-primary"
 	];
-}
-
-/**
- * WCAG 2.5.3 Label in Name : le nom accessible d'un déclencheur « Trier »
- * commence par le libellé visible. Un `sortBy` forgé (URL) n'a pas de libellé —
- * le nom reste alors « Trier — tri actif », sans préciser. Sans tri actif,
- * `undefined` : pas d'aria-label, le libellé visible EST le nom.
- *
- * Partagé entre les deux déclencheurs (tiroir < lg, menu ancré ≥ lg) pour
- * qu'une commande vocale « clique Trier » matche aux deux viewports.
- */
-export function sortTriggerLabelFor(sortByValue: string | null): string | undefined {
-	if (!sortByValue) return undefined;
-	const activeSortLabel = (PRODUCTS_SORT_LABELS as Partial<Record<string, string>>)[sortByValue];
-	return `Trier — tri actif${activeSortLabel ? ` : ${activeSortLabel}` : ""}`;
 }

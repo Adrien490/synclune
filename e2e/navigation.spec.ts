@@ -16,7 +16,7 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		// Ancre de la home réintroduite avec le premier écran « L'étal »
 		// (2026-08-04) : le bloc titre est rendu hors de la frontière Suspense
 		// de la grille, il est donc là même catalogue vide.
-		const etal = page.locator("#etal");
+		const etal = page.locator("#hero");
 		await expect(etal).toBeVisible();
 		await expect(etal.getByRole("heading", { level: 1 })).toHaveText(/Des bijoux colorés/);
 

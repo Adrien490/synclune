@@ -151,22 +151,25 @@ test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 		await expect(searchDialog).toBeVisible();
 	});
 
-	test("la recherche depuis /produits filtre les résultats", async ({
-		page,
-		productCatalogPage,
-	}) => {
-		// La toolbar portant le champ inline est `hidden md:flex` (product-catalog.tsx) :
-		// sans viewport épinglé, ce test échoue sur mobile-chrome / mobile-webkit.
+	test("la recherche depuis /produits filtre les résultats", async ({ page }) => {
+		// Plus de champ inline sur le catalogue (2026-08-06) : la recherche passe
+		// par le quick-search de la navbar. Viewport épinglé : le déclencheur
+		// navbar « barre » n'existe qu'à desktop (mobile = bottom-nav).
 		await page.setViewportSize(VIEWPORTS.DESKTOP);
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		expect(
-			await productCatalogPage.searchInput.count(),
-			"No search input found on /produits page",
-		).toBeGreaterThan(0);
-
-		await productCatalogPage.searchInput.first().fill("bague");
+		await page.waitForFunction(() => {
+			const button = document.querySelector('button[aria-label="Ouvrir la recherche rapide"]');
+			return !!button && Object.keys(button).some((key) => key.startsWith("__reactProps"));
+		});
+		await page
+			.getByRole("button", { name: /ouvrir la recherche rapide/i })
+			.first()
+			.click();
+		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
+		await input.fill("bague");
+		await page.keyboard.press("Enter");
 		await expect(page).toHaveURL(/search=bague/, { timeout: 5000 });
 	});
 });

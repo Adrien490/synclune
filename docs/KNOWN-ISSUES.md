@@ -101,7 +101,7 @@ Ni le nom de l'action ni sa config n'entraient dans la clé. Formulation exacte 
 
 **Ce que l'entrée initiale avait manqué — le verrouillage de la connexion.** `signInEmail` appelle `enforceRateLimitForCurrentUser(AUTH_LIMITS.LOGIN)` ; hors session, cela produit un `ip:<ip>` nu, partagé avec toutes les actions publiques. `AUTH_LOGIN` ayant la limite la plus basse du lot (5/15 min), n'importe quelles 5 requêtes publiques préalables l'épuisaient :
 
-1. un visiteur consulte 5 fiches produit → `addRecentProduct` (`PRODUCT_COOKIE_ACTION`, 30/min) crée `ratelimit:ip:X` à `count: 5` ;
+1. un visiteur enchaîne 5 recherches → `addRecentSearch` (`PRODUCT_COOKIE_ACTION`, 30/min) crée `ratelimit:ip:X` à `count: 5` ; (à l'époque du défaut c'était `addRecentProduct`, même preset — la feature « produits récemment vus » a été retirée le 2026-08-06, le scénario reste reproductible à l'identique par ses voisines de preset)
 2. l'administratrice se connecte depuis cette IP → `count 5 >= limit 5` → 429 sur des identifiants pourtant valides.
 
 Pire variante : une entrée créée par un passage sur `/mot-de-passe-oublie` (fenêtre **1 h**) gelait la connexion pour l'heure entière. Depuis le retrait de l'espace client (2026-07-31), c'est le seul compte capable d'administrer la boutique. `/api/csp-report` (20/min) aggravait le tableau : les rapports CSP sont émis **automatiquement par le navigateur**, donc le compteur pouvait être épuisé sans aucune action de l'utilisateur.

@@ -2,16 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import type { Session } from "@/modules/auth/lib/auth";
 import { CheckoutSection } from "./checkout-section";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
@@ -32,7 +23,7 @@ export function CheckoutContactSection({ form, session, isComplete }: CheckoutCo
 	const [isLogoutPending, startLogoutTransition] = useTransition();
 	// Changer de compte déconnecte, quitte /paiement et perd TOUT le formulaire déjà
 	// saisi (adresse comprise) : c'est destructif, donc confirmation préalable —
-	// `ResponsiveAlertDialog` est la primitive imposée pour ce cas (cf. CLAUDE.md).
+	// `ConfirmDialog` est la surface imposée pour ce cas (cf. CLAUDE.md).
 	// Dialogue local plutôt que via le store : un seul call site, aucun besoin de
 	// piloter l'ouverture à distance.
 	const [isSwitchConfirmOpen, setIsSwitchConfirmOpen] = useState(false);
@@ -115,27 +106,16 @@ export function CheckoutContactSection({ form, session, isComplete }: CheckoutCo
 					</div>
 				)}
 
-				<ResponsiveAlertDialog
+				<ConfirmDialog
 					open={isSwitchConfirmOpen}
-					onOpenChange={setIsSwitchConfirmOpen}
+					onClose={() => setIsSwitchConfirmOpen(false)}
+					onConfirm={handleSwitchAccount}
 					tone="destructive"
-				>
-					<ResponsiveAlertDialogContent>
-						<ResponsiveAlertDialogHeader>
-							<ResponsiveAlertDialogTitle>Changer de compte ?</ResponsiveAlertDialogTitle>
-							<ResponsiveAlertDialogDescription>
-								Tu vas être déconnecté·e et redirigé·e vers la page de connexion. Les informations
-								déjà saisies dans ce formulaire seront perdues.
-							</ResponsiveAlertDialogDescription>
-						</ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogFooter>
-							<ResponsiveAlertDialogCancel>Rester connecté·e</ResponsiveAlertDialogCancel>
-							<ResponsiveAlertDialogAction onClick={handleSwitchAccount}>
-								Changer de compte
-							</ResponsiveAlertDialogAction>
-						</ResponsiveAlertDialogFooter>
-					</ResponsiveAlertDialogContent>
-				</ResponsiveAlertDialog>
+					title="Changer de compte ?"
+					cancelLabel="Rester connecté·e"
+					confirmLabel="Changer de compte"
+					description="Tu vas être déconnecté·e et redirigé·e vers la page de connexion. Les informations déjà saisies dans ce formulaire seront perdues."
+				/>
 			</div>
 		</CheckoutSection>
 	);

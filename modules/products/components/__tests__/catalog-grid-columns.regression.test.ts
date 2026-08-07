@@ -95,19 +95,18 @@ describe("@regression catalog-grid-columns", () => {
 		).toBe(true);
 	});
 
-	it("le bouton Filtrer de la barre s'efface à lg (le rail le remplace)", () => {
-		const sortBar = read("product-sort-bar.tsx");
-		// Le gate est écrit sur le bouton, au-dessus de son icône. Le bouton
-		// « Rechercher » qui le précède porte, lui, `md:hidden` — les deux gates
-		// coexistent, d'où le découpage à partir du bouton de filtre.
-		// `<` obligatoire : sans lui, `indexOf` attrape la ligne d'IMPORT de
-		// l'icône, avant tout `<ShelfBarButton` — la tranche est alors vide et le
-		// test échoue sans rien avoir lu.
-		const iconIndex = sortBar.indexOf("<SlidersHorizontalIcon");
-		expect(iconIndex, "bouton Filtrer introuvable — icône renommée ?").toBeGreaterThan(-1);
-		const buttonBlock = sortBar.slice(sortBar.lastIndexOf("<ShelfBarButton", iconIndex), iconIndex);
+	it("la barre Filtrer s'efface à lg (le rail la remplace)", () => {
+		// Depuis le retrait du tri et de la recherche de la barre (2026-08-06),
+		// le gate n'est plus sur le bouton mais sur la coque entière : la barre
+		// n'a qu'un geste (« Filtrer »), et le rail déplié le couvre à `lg`.
+		const filterBar = read("product-filter-bar.tsx");
+		const shelfBarIndex = filterBar.indexOf("<ShelfBar ");
+		expect(shelfBarIndex, "coque ShelfBar introuvable dans product-filter-bar.tsx").toBeGreaterThan(
+			-1,
+		);
+		const shelfBarTag = filterBar.slice(shelfBarIndex, filterBar.indexOf(">", shelfBarIndex));
 		expect(
-			buttonBlock.includes('className="lg:hidden"'),
+			shelfBarTag.includes("lg:hidden"),
 			"deux entrées pour un seul geste : un bouton qui ouvre un panneau par-dessus le rail déplié.",
 		).toBe(true);
 	});

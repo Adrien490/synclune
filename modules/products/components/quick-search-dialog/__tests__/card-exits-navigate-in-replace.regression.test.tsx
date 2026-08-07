@@ -207,7 +207,6 @@ describe("Sorties « carte » du quick search — navigation en REPLACE, jamais 
 		const user = userEvent.setup();
 		render(
 			<IdleContent
-				recentlyViewed={[]}
 				searches={[]}
 				collections={[collection]}
 				colors={[]}
@@ -229,7 +228,6 @@ describe("Sorties « carte » du quick search — navigation en REPLACE, jamais 
 		const user = userEvent.setup();
 		render(
 			<IdleContent
-				recentlyViewed={[]}
 				searches={[]}
 				collections={[]}
 				colors={[]}

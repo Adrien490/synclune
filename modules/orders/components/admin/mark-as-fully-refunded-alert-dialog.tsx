@@ -1,26 +1,15 @@
 "use client";
 
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { useState } from "react";
+import { FileXIcon } from "@phosphor-icons/react/ssr";
+
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsFullyRefunded } from "@/modules/orders/hooks/use-mark-as-fully-refunded";
 import type { InvoiceStatus } from "@/app/generated/prisma/browser";
-import { FileXIcon } from "@phosphor-icons/react/ssr";
-import { Spinner } from "@/shared/components/ui/spinner";
-import { useState } from "react";
 import { FieldLabel } from "@/shared/components/forms/field-label";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
-import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import {
 	Select,
 	SelectContent,
@@ -54,151 +43,130 @@ export function MarkAsFullyRefundedAlertDialog() {
 	const [reason, setReason] = useState("");
 	const [method, setMethod] = useState<ManualRefundMethod | "">("");
 
-	const { state, action, isPending } = useMarkAsFullyRefunded({
+	const { action } = useMarkAsFullyRefunded({
 		onSuccess: () => {
-			dialog.close();
 			setReason("");
 			setMethod("");
 		},
 	});
 
-	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
-	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
-	const serverErrors = useServerFieldErrors({ state });
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			dialog.close();
-			setReason("");
-			setMethod("");
-		}
+	const close = () => {
+		setReason("");
+		setMethod("");
+		dialog.close();
 	};
 
 	const hasGeneratedInvoice = dialog.data?.invoiceStatus === "GENERATED";
 	const invoiceNumber = dialog.data?.invoiceNumber;
 
 	return (
-		// `destructive` et non `warning` : l'opération annule la facture et émet un
-		// avoir gap-free — irréversible, conséquence comptable (Art. 272-I CGI).
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="destructive">
-			<ResponsiveAlertDialogContent>
-				<form action={action}>
-					<FormServerErrorAlert errors={serverErrors} className="mb-4" />
-					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
-					{reason.trim() ? <input type="hidden" name="reason" value={reason.trim()} /> : null}
-					<input type="hidden" name="manualRefundMethod" value={method} />
-
-					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>
-							Marquer comme entièrement remboursée
-						</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription render={<div />}>
-							<p>
-								Marquer la commande <strong>{dialog.data?.orderNumber}</strong> comme remboursée
-								manuellement hors Stripe.
-							</p>
-							<div className="bg-muted/50 mt-3 space-y-1 rounded-md border p-3 text-sm">
-								<p className="text-foreground font-medium">Cas d&apos;usage :</p>
-								<ul className="text-muted-foreground list-disc space-y-0.5 pl-5">
-									<li>Remboursement par virement bancaire ou chèque</li>
-									<li>Geste commercial (échange marchandise, avoir boutique)</li>
-									<li>Régularisation après PARTIALLY_REFUNDED Stripe</li>
-								</ul>
-								<p className="text-muted-foreground mt-2 text-xs">
-									<strong>Aucun appel Stripe ne sera effectué.</strong> Pour rembourser via Stripe,
-									utiliser plutôt le module Remboursements.
-								</p>
-							</div>
-							{hasGeneratedInvoice && (
-								<div
-									className="border-warning/40 bg-warning/5 mt-3 space-y-1 rounded-md border p-3"
-									role="alert"
-								>
-									<p className="text-foreground flex items-center gap-2 text-sm font-medium">
-										<FileXIcon className="text-warning size-4" aria-hidden="true" />
-										Émission d&apos;un avoir comptable
-									</p>
-									<p className="text-muted-foreground text-sm">
-										Cette commande est facturée
-										{invoiceNumber ? (
-											<>
-												{" "}
-												(
-												<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
-													{invoiceNumber}
-												</code>
-												)
-											</>
-										) : null}
-										. Un avoir{" "}
-										<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
-											A-YYYY-NNNNN
-										</code>{" "}
-										sera émis automatiquement (Art. 272-I CGI).
-									</p>
-								</div>
-							)}
-							<div className="mt-3 space-y-1.5">
-								<FieldLabel htmlFor="mark-as-fully-refunded-method" required>
-									Moyen du remboursement
-								</FieldLabel>
-								<Select
-									value={method}
-									onValueChange={(v) => setMethod(v as ManualRefundMethod)}
-									disabled={isPending}
-								>
-									<SelectTrigger id="mark-as-fully-refunded-method">
-										<SelectValue placeholder="Sélectionner…" />
-									</SelectTrigger>
-									<SelectContent>
-										{MANUAL_REFUND_METHODS.map((m) => (
-											<SelectItem key={m.value} value={m.value}>
-												{m.label}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-								<p className="text-muted-foreground text-xs">
-									Tracé dans l&apos;audit Art. L123-22 pour distinguer du remboursement Stripe.
-								</p>
-							</div>
-
-							<div className="mt-3 space-y-1.5">
-								<Label htmlFor="mark-as-fully-refunded-reason" className="text-sm">
-									Motif (optionnel)
-								</Label>
-								<Textarea
-									id="mark-as-fully-refunded-reason"
-									value={reason}
-									onChange={(e) => setReason(e.target.value)}
-									placeholder="Virement bancaire reçu le ../../...., geste commercial..."
-									rows={2}
-									disabled={isPending}
-									maxLength={500}
-									className="resize-none"
-								/>
-								<p className="text-muted-foreground text-xs">
-									Apparaîtra dans la timeline d&apos;audit et la note Refund.
-								</p>
-							</div>
-						</ResponsiveAlertDialogDescription>
-					</ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel disabled={isPending}>Fermer</ResponsiveAlertDialogCancel>
-						{/* Le moyen est obligatoire (audit Art. L123-22) : le bloquer ici plutôt
-						    que de laisser la seule validation serveur refuser l'envoi, comme le
-						    fait déjà `delete-order-alert-dialog` pour son motif. */}
-						<ResponsiveAlertDialogAction
-							type="submit"
-							disabled={isPending || !method}
-							aria-busy={isPending}
+		<ConfirmDialog
+			open={dialog.isOpen}
+			onClose={close}
+			action={action}
+			// `destructive` et non `warning` : l'opération annule la facture et émet un
+			// avoir gap-free — irréversible, conséquence comptable (Art. 272-I CGI).
+			tone="destructive"
+			fields={{
+				id: dialog.data?.orderId,
+				...(reason.trim() ? { reason: reason.trim() } : {}),
+				manualRefundMethod: method,
+			}}
+			title="Marquer comme entièrement remboursée"
+			cancelLabel="Fermer"
+			confirmLabel="Marquer comme remboursée"
+			// Le moyen est obligatoire (audit Art. L123-22) : le bloquer ici plutôt que
+			// de laisser la seule validation serveur refuser l'envoi, comme le fait déjà
+			// `delete-order-alert-dialog` pour son motif.
+			confirmDisabled={!method}
+			description={
+				<>
+					<p>
+						Marquer la commande <strong>{dialog.data?.orderNumber}</strong> comme remboursée
+						manuellement hors Stripe.
+					</p>
+					<div className="bg-muted/50 mt-3 space-y-1 rounded-md border p-3 text-sm">
+						<p className="text-foreground font-medium">Cas d&apos;usage :</p>
+						<ul className="text-muted-foreground list-disc space-y-0.5 pl-5">
+							<li>Remboursement par virement bancaire ou chèque</li>
+							<li>Geste commercial (échange marchandise, avoir boutique)</li>
+							<li>Régularisation après PARTIALLY_REFUNDED Stripe</li>
+						</ul>
+						<p className="text-muted-foreground mt-2 text-xs">
+							<strong>Aucun appel Stripe ne sera effectué.</strong> Pour rembourser via Stripe,
+							utiliser plutôt le module Remboursements.
+						</p>
+					</div>
+					{hasGeneratedInvoice && (
+						<div
+							className="border-warning/40 bg-warning/5 mt-3 space-y-1 rounded-md border p-3"
+							role="alert"
 						>
-							{isPending && <Spinner presentational />}
-							{isPending ? "Marquage…" : "Marquer comme remboursée"}
-						</ResponsiveAlertDialogAction>
-					</ResponsiveAlertDialogFooter>
-				</form>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+							<p className="text-foreground flex items-center gap-2 text-sm font-medium">
+								<FileXIcon className="text-warning size-4" aria-hidden="true" />
+								Émission d&apos;un avoir comptable
+							</p>
+							<p className="text-muted-foreground text-sm">
+								Cette commande est facturée
+								{invoiceNumber ? (
+									<>
+										{" "}
+										(
+										<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
+											{invoiceNumber}
+										</code>
+										)
+									</>
+								) : null}
+								. Un avoir{" "}
+								<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
+									A-YYYY-NNNNN
+								</code>{" "}
+								sera émis automatiquement (Art. 272-I CGI).
+							</p>
+						</div>
+					)}
+				</>
+			}
+		>
+			<div className="mt-3 space-y-1.5">
+				<FieldLabel htmlFor="mark-as-fully-refunded-method" required>
+					Moyen du remboursement
+				</FieldLabel>
+				<Select value={method} onValueChange={(v) => setMethod(v as ManualRefundMethod)}>
+					<SelectTrigger id="mark-as-fully-refunded-method">
+						<SelectValue placeholder="Sélectionner…" />
+					</SelectTrigger>
+					<SelectContent>
+						{MANUAL_REFUND_METHODS.map((m) => (
+							<SelectItem key={m.value} value={m.value}>
+								{m.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<p className="text-muted-foreground text-xs">
+					Tracé dans l&apos;audit Art. L123-22 pour distinguer du remboursement Stripe.
+				</p>
+			</div>
+
+			<div className="mt-3 space-y-1.5">
+				<Label htmlFor="mark-as-fully-refunded-reason" className="text-sm">
+					Motif (optionnel)
+				</Label>
+				<Textarea
+					id="mark-as-fully-refunded-reason"
+					value={reason}
+					onChange={(e) => setReason(e.target.value)}
+					placeholder="Virement bancaire reçu le ../../...., geste commercial..."
+					rows={2}
+					maxLength={500}
+					className="resize-none"
+				/>
+				<p className="text-muted-foreground text-xs">
+					Apparaîtra dans la timeline d&apos;audit et la note Refund.
+				</p>
+			</div>
+		</ConfirmDialog>
 	);
 }

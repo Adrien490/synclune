@@ -41,7 +41,7 @@ interface ProductListProps {
  * `Suspense` ne produisent pas de nœud DOM, donc ne cassent pas le placement en
  * grille). C'est ce qui permet au bloc titre d'être la première CELLULE de la
  * grille des créations plutôt qu'une bande posée au-dessus — direction
- * « L'étal continue », artifact du 2026-08-05. Même montage que `etal-grid.tsx`.
+ * « L'étal continue », artifact du 2026-08-05. Même montage que `hero-grid.tsx`.
  *
  * ⚠️ **Plus de `<ul>` / `<li>`.** La grille mélange désormais un bloc titre et
  * des cartes ; en faire une liste demanderait soit un `display: contents` sur le

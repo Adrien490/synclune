@@ -27,6 +27,8 @@ export interface ImmediateProductFilters {
 	) => void;
 	setPriceRange: (range: [number, number]) => void;
 	setAvailability: (field: "inStockOnly" | "onSale", checked: boolean) => void;
+	/** Tri appliqué immédiatement, par le même chemin d'URL que les filtres. */
+	setSortBy: (value: string) => void;
 	resetSection: (section: FilterSectionId) => void;
 	clearAll: () => void;
 }
@@ -114,6 +116,8 @@ export function useImmediateProductFilters(params: {
 		setPriceRange: (range) => navigate({ ...values, priceRange: range }),
 
 		setAvailability: (field, checked) => navigate({ ...values, [field]: checked }),
+
+		setSortBy: (value) => navigate({ ...values, sortBy: value }),
 
 		resetSection: (section) => navigate(resetFilterGroup(values, section, defaultPriceRange)),
 

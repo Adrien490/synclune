@@ -1,21 +1,11 @@
 "use client";
 
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-	type ResponsiveAlertTone,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
+import type { AlertActionTone } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { PRODUCT_STATUS_LABELS } from "@/modules/products/constants/product-status-display";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 import { ArchiveIcon, FileTextIcon, GlobeIcon } from "@phosphor-icons/react/ssr";
-import { Spinner } from "@/shared/components/ui/spinner";
 import type { ComponentType } from "react";
 
 export const CHANGE_PRODUCT_STATUS_DIALOG_ID = "change-product-status";
@@ -34,7 +24,7 @@ const STATUS_CONFIG: Record<
 	ProductStatus,
 	{
 		label: string;
-		tone: ResponsiveAlertTone;
+		tone: AlertActionTone;
 		icon: ComponentType<{ className?: string }>;
 		description: string;
 	}
@@ -65,17 +55,7 @@ const STATUS_CONFIG: Record<
 export function ChangeProductStatusAlertDialog() {
 	const dialog = useAlertDialog<ChangeProductStatusData>(CHANGE_PRODUCT_STATUS_DIALOG_ID);
 
-	const { action, isPending } = useToggleProductStatus({
-		onSuccess: () => {
-			dialog.close();
-		},
-	});
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			dialog.close();
-		}
-	};
+	const { action } = useToggleProductStatus();
 
 	const currentStatus = dialog.data?.currentStatus ?? "DRAFT";
 	const targetStatus = dialog.data?.targetStatus ?? "PUBLIC";
@@ -87,47 +67,41 @@ export function ChangeProductStatusAlertDialog() {
 		(currentStatus !== "PUBLIC" && targetStatus === "PUBLIC");
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone={config.tone}>
-			<ResponsiveAlertDialogContent>
-				<form action={action}>
-					<input type="hidden" name="productId" value={dialog.data?.productId ?? ""} />
-					<input type="hidden" name="currentStatus" value={currentStatus} />
-					<input type="hidden" name="targetStatus" value={targetStatus} />
+		<ConfirmDialog
+			open={dialog.isOpen}
+			onClose={dialog.close}
+			action={action}
+			tone={config.tone}
+			fields={{
+				productId: dialog.data?.productId,
+				currentStatus,
+				targetStatus,
+			}}
+			title={`Changer le statut en "${config.label}"`}
+			confirmLabel={`Changer en ${config.label}`}
+			descriptionClassName="space-y-4"
+			description={
+				<>
+					<div>
+						Vous êtes sur le point de changer le statut de{" "}
+						<strong>&quot;{dialog.data?.productTitle}&quot;</strong> de{" "}
+						<span className="font-semibold">{STATUS_CONFIG[currentStatus].label}</span> vers{" "}
+						<span className="font-semibold">{config.label}</span>.
+					</div>
 
-					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>
-							Changer le statut en &quot;{config.label}&quot;
-						</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription render={<div className="space-y-4" />}>
-							<div>
-								Vous êtes sur le point de changer le statut de{" "}
-								<strong>&quot;{dialog.data?.productTitle}&quot;</strong> de{" "}
-								<span className="font-semibold">{STATUS_CONFIG[currentStatus].label}</span> vers{" "}
-								<span className="font-semibold">{config.label}</span>.
-							</div>
+					<div className="bg-muted rounded-md p-3">
+						<div className="text-sm">{config.description}</div>
+					</div>
 
-							<div className="bg-muted rounded-md p-3">
-								<div className="text-sm">{config.description}</div>
-							</div>
-
-							{isSignificantChange && (
-								<div className="text-muted-foreground text-xs">
-									{targetStatus === "PUBLIC"
-										? "⚠️ Le bijou deviendra visible par tous les visiteurs de la boutique."
-										: "⚠️ Le bijou ne sera plus visible sur la boutique."}
-								</div>
-							)}
-						</ResponsiveAlertDialogDescription>
-					</ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Spinner presentational />}
-							{isPending ? "Changement en cours…" : `Changer en ${config.label}`}
-						</ResponsiveAlertDialogAction>
-					</ResponsiveAlertDialogFooter>
-				</form>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+					{isSignificantChange && (
+						<div className="text-muted-foreground text-xs">
+							{targetStatus === "PUBLIC"
+								? "⚠️ Le bijou deviendra visible par tous les visiteurs de la boutique."
+								: "⚠️ Le bijou ne sera plus visible sur la boutique."}
+						</div>
+					)}
+				</>
+			}
+		/>
 	);
 }

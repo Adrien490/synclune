@@ -1,0 +1,95 @@
+/* ========================================================================
+   LE FIL DE L'ATELIER — le rail continu de la section « Viens voir l'atelier »
+   (`app/(shop)/(home)/_components/atelier/`).
+
+   Ce qu'il remplace, et pourquoi il est en CSS plutôt qu'en SVG : le fil était
+   cinq `<svg>` posés dans les gaps de 52 px de l'`<ol>`, donc absent le long
+   de chaque note. Mesuré au rendu réel le 2026-08-06 : **44 % d'encre sur son
+   axe à 390 px, 55 % à 1280**, quatre trous de 63 à 130 px, et un ratio qui se
+   DÉGRADE quand le viewport rétrécit — l'inverse de ce que la métaphore exige.
+
+   Le montage tuilé règle les deux moitiés du problème d'un coup :
+   - `mask-repeat: repeat-y` sur une tuile au ratio natif : le fil s'allonge
+     sans jamais s'ÉTIRER (un path étiré letterboxe), donc il est indifférent à
+     la hauteur des notes PAR CONSTRUCTION ;
+   - une seconde couche de masque en dégradé, pilotée par le scroll, le
+     découvre de haut en bas : le dessin redevient UN geste (« on enfile »),
+     là où chaque segment se dessinait pour lui-même.
+
+   L'encre est un `background-color` : `mask-image` ne lit que l'alpha de sa
+   source, et une data-URI ne voit pas `var(--…)`. C'est le composant
+   `AtelierThreadRail` qui pose la tuile et sa hauteur de répétition (dérivée
+   du ratio du tracé, jamais saisie à la main).
+
+   Mécanique et préfixes repris de `app/styles/scroll-fade.css`, seul autre
+   consommateur de `mask-composite` du dépôt.
+   ======================================================================== */
+
+/* Une propriété custom doit être ENREGISTRÉE pour être interpolable : sans ce
+   bloc, l'animation ci-dessous sauterait de 0 % à 100 % à la frame 1 (même
+   piège que les couleurs `oklch()` de Motion). Repli à 100 % — c'est lui qui
+   sert Safari ≤ 18, sans `view()` : fil entier, pas de fil absent. */
+@property --atelier-thread-progress {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 100%;
+}
+
+@layer utilities {
+	@keyframes atelier-thread-draw {
+		from {
+			--atelier-thread-progress: 0%;
+		}
+		to {
+			--atelier-thread-progress: 100%;
+		}
+	}
+
+	.atelier-thread-rail {
+		background-color: var(--atelier-thread-ink, var(--primary));
+
+		/* Couche 1 : la tuile, répétée. Couche 2 : le curseur de dessin.
+		   `intersect` ne garde que l'intersection — le fil n'existe donc que là
+		   où la tuile ET la progression sont présentes. */
+		-webkit-mask-image:
+			var(--atelier-thread-tile),
+			linear-gradient(to bottom, #000 var(--atelier-thread-progress), transparent 0);
+		mask-image:
+			var(--atelier-thread-tile),
+			linear-gradient(to bottom, #000 var(--atelier-thread-progress), transparent 0);
+		-webkit-mask-composite: source-in;
+		mask-composite: intersect;
+		-webkit-mask-repeat: repeat-y, no-repeat;
+		mask-repeat: repeat-y, no-repeat;
+		-webkit-mask-size:
+			100% var(--atelier-thread-tile-height),
+			100% 100%;
+		mask-size:
+			100% var(--atelier-thread-tile-height),
+			100% 100%;
+		-webkit-mask-position:
+			top center,
+			top center;
+		mask-position:
+			top center,
+			top center;
+
+		/* La plage est plus COURTE que `cover` (0→100 %) : à `cover` plein, le
+		   fil n'aurait atteint que ~75 % de sa course quand la dernière perle
+		   arrive au milieu de l'écran — le nœud et la pampille resteraient
+		   vierges au moment précis où on les lit. Un fil qui prend de l'avance
+		   se lit comme un fil ; un fil en retard se lit comme un fil cassé. */
+		@supports (animation-timeline: view()) {
+			animation: atelier-thread-draw 1ms linear both;
+			animation-timeline: view();
+			animation-range: cover 0% cover 70%;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.atelier-thread-rail {
+			animation: none;
+			--atelier-thread-progress: 100%;
+		}
+	}
+}

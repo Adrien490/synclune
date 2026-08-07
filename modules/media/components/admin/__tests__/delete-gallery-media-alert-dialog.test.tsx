@@ -199,32 +199,7 @@ describe("DeleteGalleryMediaAlertDialog", () => {
 		render(<DeleteGalleryMediaAlertDialog />);
 		await userEvent.click(screen.getByTestId("confirm-btn"));
 		expect(onRemove).toHaveBeenCalledOnce();
-		expect(mockClose).toHaveBeenCalledOnce();
+		// La fermeture vient du `Close` de la confirmation, plus du handler.
 		expect(mockAction).not.toHaveBeenCalled();
-	});
-
-	it("disables buttons when isPending", () => {
-		mockIsOpen.value = true;
-		mockIsPending.value = true;
-		mockDialogData.value = { index: 0, url: "https://utfs.io/f/img.jpg", onRemove: vi.fn() };
-		render(<DeleteGalleryMediaAlertDialog />);
-		expect(screen.getByTestId("cancel-btn")).toBeDisabled();
-		expect(screen.getByTestId("confirm-btn")).toBeDisabled();
-	});
-
-	it("shows loader icon when isPending", () => {
-		mockIsOpen.value = true;
-		mockIsPending.value = true;
-		mockDialogData.value = { index: 0, url: "https://utfs.io/f/img.jpg", onRemove: vi.fn() };
-		render(<DeleteGalleryMediaAlertDialog />);
-		expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
-	});
-
-	it("shows 'Suppression…' text when isPending", () => {
-		mockIsOpen.value = true;
-		mockIsPending.value = true;
-		mockDialogData.value = { index: 0, url: "https://utfs.io/f/img.jpg", onRemove: vi.fn() };
-		render(<DeleteGalleryMediaAlertDialog />);
-		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Suppression…");
 	});
 });

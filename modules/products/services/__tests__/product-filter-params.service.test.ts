@@ -10,8 +10,6 @@ import {
 	getCategorySlugFromPath,
 	getSectionActiveCount,
 	filterFormDataToProductFilters,
-	productFiltersToFilterFormData,
-	formatActiveFilterSummary,
 	resetFilterGroup,
 	type FilterFormData,
 	type ParseFilterParams,
@@ -43,6 +41,7 @@ function makeFormData(overrides: Partial<FilterFormData> = {}): FilterFormData {
 		priceRange: DEFAULT_PRICE_RANGE,
 		inStockOnly: false,
 		onSale: false,
+		sortBy: "created-descending",
 		...overrides,
 	};
 }
@@ -72,7 +71,22 @@ describe("parseFilterValuesFromURL", () => {
 			priceRange: DEFAULT_PRICE_RANGE,
 			inStockOnly: false,
 			onSale: false,
+			sortBy: "created-descending",
 		});
+	});
+
+	it("should parse sortBy from the URL", () => {
+		const result = parseFilterValuesFromURL(makeParseParams("sortBy=price-ascending"));
+		expect(result.sortBy).toBe("price-ascending");
+	});
+
+	it("should normalise a missing sortBy to the default sort", () => {
+		// L'URL nue et `?sortBy=created-descending` sont le même état : la ligne
+		// par défaut du compartiment « Trier par » est cochée dans les deux cas.
+		expect(parseFilterValuesFromURL(makeParseParams("")).sortBy).toBe("created-descending");
+		expect(parseFilterValuesFromURL(makeParseParams("sortBy=created-descending")).sortBy).toBe(
+			"created-descending",
+		);
 	});
 
 	it("should parse a single color", () => {
@@ -282,11 +296,29 @@ describe("buildFilterURL", () => {
 	});
 
 	it("should remove cursor and direction from existing params", () => {
-		const currentParams = new URLSearchParams("cursor=abc&direction=forward&sortBy=price");
+		const currentParams = new URLSearchParams("cursor=abc&direction=forward");
 		const result = buildFilterURL(makeBuildParams({ currentSearchParams: currentParams }));
 		expect(result.queryString).not.toContain("cursor");
 		expect(result.queryString).not.toContain("direction");
-		expect(result.queryString).toContain("sortBy=price");
+	});
+
+	it("le tri vient du FORMULAIRE : écrit quand non-défaut, effacé au défaut", () => {
+		// Depuis que le tri vit dans le meuble de filtres (2026-08-06), `sortBy`
+		// appartient à `formData` — la valeur d'URL est ré-injectée par le parse,
+		// pas recopiée aveuglément. Le défaut EFFACE le paramètre (URL nue =
+		// `?sortBy=created-descending`, écrire le défaut ferait basculer noindex).
+		const nonDefault = buildFilterURL(
+			makeBuildParams({ formData: makeFormData({ sortBy: "price-ascending" }) }),
+		);
+		expect(nonDefault.queryString).toContain("sortBy=price-ascending");
+
+		const withStaleUrlSort = buildFilterURL(
+			makeBuildParams({
+				currentSearchParams: new URLSearchParams("sortBy=price-ascending"),
+				formData: makeFormData({ sortBy: "created-descending" }),
+			}),
+		);
+		expect(withStaleUrlSort.queryString).not.toContain("sortBy");
 	});
 
 	it("should clear old filter keys from existing params", () => {
@@ -404,6 +436,7 @@ describe("getDefaultFilterValues", () => {
 			priceRange: [10, 800],
 			inStockOnly: false,
 			onSale: false,
+			sortBy: "created-descending",
 		});
 	});
 
@@ -557,103 +590,6 @@ describe("filterFormDataToProductFilters", () => {
 		);
 		expect(filters.stockStatus).toBe("in_stock");
 		expect(filters.onSale).toBe(true);
-	});
-});
-
-describe("productFiltersToFilterFormData", () => {
-	it("est l'inverse exact de filterFormDataToProductFilters", () => {
-		const original = makeFormData({
-			productTypes: ["bagues"],
-			colors: ["argent", "or"],
-			materials: ["acier"],
-			priceRange: [10, 60],
-			inStockOnly: true,
-			onSale: true,
-		});
-		const roundTrip = productFiltersToFilterFormData(
-			filterFormDataToProductFilters(original, DEFAULT_PRICE_RANGE),
-			DEFAULT_PRICE_RANGE,
-		);
-		expect(roundTrip).toEqual(original);
-	});
-
-	it("normalise une valeur scalaire en tableau", () => {
-		const values = productFiltersToFilterFormData({ color: "or" }, DEFAULT_PRICE_RANGE);
-		expect(values.colors).toEqual(["or"]);
-	});
-
-	it("retombe sur la plage par défaut quand aucun prix n'est filtré", () => {
-		expect(productFiltersToFilterFormData({}, DEFAULT_PRICE_RANGE).priceRange).toEqual(
-			DEFAULT_PRICE_RANGE,
-		);
-	});
-});
-
-// ============================================================================
-// RÉSUMÉ DES FILTRES ACTIFS
-// ============================================================================
-
-describe("formatActiveFilterSummary", () => {
-	const labels = {
-		types: { bagues: "Bagues", papilloux: "Papilloux" },
-		colors: { "or-jaune": "Or jaune" },
-		materials: { acier: "Acier" },
-	};
-
-	it("retourne null quand rien n'est filtré", () => {
-		expect(formatActiveFilterSummary(makeFormData(), labels, DEFAULT_PRICE_RANGE)).toBeNull();
-	});
-
-	it("compose types, couleurs et borne haute de prix dans l'ordre", () => {
-		expect(
-			formatActiveFilterSummary(
-				makeFormData({ productTypes: ["papilloux"], colors: ["or-jaune"], priceRange: [0, 65] }),
-				labels,
-				DEFAULT_PRICE_RANGE,
-			),
-		).toBe("Papilloux, Or jaune, jusqu'à 65 €");
-	});
-
-	it("dit « de X à Y » quand les DEUX bornes bougent", () => {
-		expect(
-			formatActiveFilterSummary(
-				makeFormData({ priceRange: [20, 60] }),
-				labels,
-				DEFAULT_PRICE_RANGE,
-			),
-		).toBe("de 20 à 60 €");
-	});
-
-	it("dit « à partir de X » quand seule la borne basse bouge", () => {
-		expect(
-			formatActiveFilterSummary(
-				makeFormData({ priceRange: [20, DEFAULT_PRICE_RANGE[1]] }),
-				labels,
-				DEFAULT_PRICE_RANGE,
-			),
-		).toBe("à partir de 20 €");
-	});
-
-	it("retombe sur le slug quand le libellé est inconnu", () => {
-		// Un slug d'URL peut désigner une option retirée du catalogue : mieux vaut
-		// le slug brut qu'un trou dans la phrase.
-		expect(
-			formatActiveFilterSummary(
-				makeFormData({ colors: ["teinte-disparue"] }),
-				labels,
-				DEFAULT_PRICE_RANGE,
-			),
-		).toBe("teinte-disparue");
-	});
-
-	it("nomme la disponibilité en clair", () => {
-		expect(
-			formatActiveFilterSummary(
-				makeFormData({ inStockOnly: true, onSale: true }),
-				labels,
-				DEFAULT_PRICE_RANGE,
-			),
-		).toBe("en stock, en promotion");
 	});
 });
 

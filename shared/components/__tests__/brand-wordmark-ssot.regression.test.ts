@@ -67,10 +67,10 @@ function sourceFiles(): { path: string; source: string }[] {
 
 /**
  * Fenêtre volontairement étroite : un fichier peut légitimement contenir les
- * DEUX (le pied de page signe « — Léane » en `font-cursive` et cite `BRAND.name`
- * dans son copyright). Ce qui est interdit, c'est que le nom soit l'ENFANT d'un
- * élément en `font-cursive` — donc à quelques dizaines de caractères de la
- * classe, pas n'importe où dans le fichier.
+ * DEUX (`collection-chapter.tsx` pose une note manuscrite en `font-cursive` et
+ * cite `BRAND.name` ailleurs). Ce qui est interdit, c'est que le nom soit
+ * l'ENFANT d'un élément en `font-cursive` — donc à quelques dizaines de
+ * caractères de la classe, pas n'importe où dans le fichier.
  */
 const WORDMARK_WINDOW = 160;
 

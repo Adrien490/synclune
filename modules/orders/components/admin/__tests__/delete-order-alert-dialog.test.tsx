@@ -173,20 +173,23 @@ describe("DeleteOrderAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Suppression…' on submit button when isPending is true", () => {
+	/**
+	 * Ce dialogue ne décore plus l'attente (libellé « Suppression… », spinner,
+	 * `aria-busy`, `disabled` sur l'annulation) : le bouton de confirmation est un
+	 * `Close` Base UI, donc la surface part AU CLIC, avant que `isPending` ne
+	 * passe. La décoration se jouait dans un dialog déjà en sortie, et seuls ces
+	 * tests — qui forçaient `mockIsPending = true` à la main — la voyaient.
+	 * Prouvé par `shared/components/ui/__tests__/alert-dialog-close-on-confirm.regression.test.tsx` ;
+	 * le retour d'attente appartient au toast de la mutation.
+	 */
+	it("ne décore pas l'attente : rien ne dépend d'`isPending`", () => {
 		mockIsPending = true;
 
 		render(<DeleteOrderAlertDialog />);
 
-		expect(screen.getByText("Suppression…")).toBeInTheDocument();
-	});
-
-	it("disables cancel button when isPending is true", () => {
-		mockIsPending = true;
-
-		render(<DeleteOrderAlertDialog />);
-
-		expect(screen.getByTestId("cancel-button")).toBeDisabled();
+		// Le bouton reste désactivé, mais à cause du MOTIF manquant — pas d'`isPending`.
+		expect(screen.getByTestId("submit-button")).toHaveTextContent("Supprimer");
+		expect(screen.getByTestId("cancel-button")).not.toBeDisabled();
 	});
 
 	// ─── Redirection post-suppression ─────────────────────────────────────────
@@ -206,7 +209,9 @@ describe("DeleteOrderAlertDialog", () => {
 
 		capturedOnSuccess.current?.();
 
+		// La fermeture n'est plus l'affaire d'`onSuccess` : le bouton de confirmation
+		// est un `Close`, le dialog est déjà parti quand la mutation aboutit.
+		// `onSuccess` ne garde que ce qui lui appartient — ici, la redirection.
 		expect(mockRouterReplace).not.toHaveBeenCalled();
-		expect(mockClose).toHaveBeenCalled();
 	});
 });

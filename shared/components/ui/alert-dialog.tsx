@@ -4,6 +4,7 @@ import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog
 import type * as React from "react";
 
 import { buttonVariants } from "@/shared/components/ui/button";
+import { triggerHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
 import { cn } from "@/shared/utils/cn";
@@ -56,6 +57,17 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
 		<AlertDialogPrimitive.Backdrop
 			data-slot="alert-dialog-overlay"
 			aria-hidden="true"
+			// ⚠️ `forceRender` n'est PAS décoratif : Base UI n'active un `Backdrop`
+			// que sur `forceRender || !nested` (`dialog/backdrop/DialogBackdrop.js`),
+			// et `nested` vaut vrai dès qu'un `DialogRootContext` parent existe —
+			// donc pour TOUTE confirmation rendue dans l'arbre JSX d'une Sheet, d'un
+			// Drawer ou d'un Dialog, ce qui est la convention du dépôt (« un overlay
+			// enfant se rend DANS l'arbre du parent »). Sans lui, la confirmation
+			// destructive du panier ou du panneau de filtres s'affichait SANS scrim :
+			// le panneau restait net et à pleine luminosité sous elle, et rien ne
+			// signalait qu'il n'était plus interactif. Le scrim du parent, lui, ne
+			// couvre que la page — jamais le panneau.
+			forceRender
 			className={cn(
 				"fixed inset-0 z-(--z-alert) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				"motion-safe:data-open:animate-in motion-safe:data-closed:animate-out",
@@ -164,18 +176,65 @@ function AlertDialogDescription({ className, ...props }: AlertDialogPrimitive.De
 }
 
 /**
+ * Tonalité de l'action de confirmation. Pilote sa couleur ET son pattern haptic.
+ *
+ * ⚠️ `info` et `neutral` rendent la MÊME apparence (chaîne vide : le bouton
+ * garde le `buttonVariants()` par défaut) mais vibrent différemment — ne pas les
+ * fusionner « puisque c'est pareil », c'est un arbitrage produit sur l'haptique.
+ * Verrouillé par `alert-dialog-tone.regression.test.tsx`.
+ */
+export type AlertActionTone = "destructive" | "warning" | "info" | "success" | "neutral";
+
+const TONE_CLASSES: Record<AlertActionTone, string> = {
+	destructive: "bg-destructive text-white can-hover:hover:bg-destructive/90",
+	warning: "bg-warning text-warning-foreground can-hover:hover:bg-warning/90",
+	info: "",
+	success: "bg-success text-success-foreground can-hover:hover:bg-success/90",
+	neutral: "",
+};
+
+const TONE_HAPTIC: Record<AlertActionTone, HapticPattern> = {
+	destructive: "heavy",
+	warning: "medium",
+	info: "light",
+	success: "success",
+	neutral: "medium",
+};
+
+/**
  * ⚠️ Base UI n'a ni `Action` ni `Cancel` : les deux sont des `Close`. La
  * distinction n'est plus que visuelle (et sémantique pour l'appelant), ce qui a
  * une conséquence a11y — Radix donnait le focus initial au `Cancel`, garde-fou
  * classique d'une confirmation destructive. Les `data-slot` distincts et l'ordre
  * DOM (Cancel AVANT Action) portent désormais seuls cet invariant, verrouillé
  * par `alert-dialog-initial-focus.regression.test.tsx`.
+ *
+ * ⚠️ Ce bouton FERME le dialog au clic (c'est un `Close`), avant même que la
+ * mutation ne démarre — cf. `alert-dialog-close-on-confirm.regression.test.tsx`.
+ * Deux corollaires : un libellé d'attente ou un spinner piloté par `isPending`
+ * n'est jamais vu, et une validation HTML (`required`) posée dans le formulaire
+ * ne peut pas être rapportée à l'utilisatrice. Une garde de validation se pose
+ * en `disabled` sur cette action.
+ *
+ * ⚠️ `tone` n'a volontairement PAS de défaut : les confirmations qui montent la
+ * primitive nue (rail de filtres, panneau de filtres, garde de navigation) n'ont
+ * aucune vibration aujourd'hui, et un défaut leur en ajouterait une en silence.
  */
-function AlertDialogAction({ className, ...props }: AlertDialogPrimitive.Close.Props) {
+function AlertDialogAction({
+	className,
+	tone,
+	onClick,
+	...props
+}: AlertDialogPrimitive.Close.Props & { tone?: AlertActionTone }) {
 	return (
 		<AlertDialogPrimitive.Close
 			data-slot="alert-dialog-action"
-			className={cn(buttonVariants(), className)}
+			data-tone={tone}
+			className={cn(buttonVariants(), tone && TONE_CLASSES[tone], className)}
+			onClick={(event) => {
+				if (tone) triggerHaptic(TONE_HAPTIC[tone]);
+				onClick?.(event);
+			}}
 			{...props}
 		/>
 	);

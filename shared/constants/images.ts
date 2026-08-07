@@ -3,8 +3,19 @@
  * Centralise les URLs pour faciliter la maintenance et les mises à jour
  */
 export const IMAGES = {
-	/** Portrait de la creatrice Leane Taddei (schéma Founder, seo-config) */
-	FOUNDER: "https://x1ain1wpub.ufs.sh/f/nyHesfTydKuSeQyF8C1jtfJpdXPZs5OLTYnRUHcmrCx7wNWq",
+	/**
+	 * Portrait de la créatrice Léane Taddei — schéma Founder (`seo-config.ts`)
+	 * et section atelier de la landing (via `ATELIER_IMAGE`).
+	 *
+	 * ⚠️ `null` tant que l'asset n'est pas ré-uploadé : l'URL UploadThing
+	 * historique (`https://x1ain1wpub.ufs.sh/f/nyHesfTydKuSeQyF8C1jtfJpdXPZs5OLTYnRUHcmrCx7wNWq`)
+	 * répond 404 (re-vérifié le 2026-08-06). Publier une URL morte mettait un
+	 * cadre blanc dans la section atelier ET une image cassée dans les nœuds
+	 * `Person` et `HowTo` du @graph. Les consommateurs branchent sur `null` :
+	 * les schémas OMETTENT leur champ `image`, la section rend la plaque
+	 * dessinée. Ré-upload = coller la nouvelle URL ici, rien d'autre.
+	 */
+	FOUNDER: null as string | null,
 } as const;
 
 /**

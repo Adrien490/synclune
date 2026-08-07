@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Mocks — seules les primitives Next le sont : c'est le rendu RÉEL des cartes
-// (cadre polaroid, légende, squiggle) qu'on teste, comme `etal-section.test.tsx`.
+// (cadre polaroid, légende, squiggle) qu'on teste, comme `hero-section.test.tsx`.
 // ---------------------------------------------------------------------------
 
 vi.mock("next/image", () => ({
@@ -32,7 +32,12 @@ import { getCollectionPriceRanges } from "@/modules/collections/data/get-collect
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { dataAccentForSlug } from "@/modules/products/components/catalog-accents.constants";
 
-import { CollectionsCard } from "../collections-card";
+import {
+	CollectionsCard,
+	CollectionsCardSkeleton,
+	LANDING_PRINT_COUNT,
+	LANDING_PRINT_FRAME_CLASSES,
+} from "../collections-card";
 import {
 	CollectionsGrid,
 	CollectionsGridSkeleton,
@@ -75,6 +80,36 @@ function makeCollection(overrides: Partial<CollectionItem> = {}): CollectionItem
 		_count: { products: 7 },
 		...overrides,
 	} as CollectionItem;
+}
+
+/**
+ * N produits porteurs d'une image — c'est ce que la pile consomme. Le premier
+ * est le produit VITRINE (`isFeatured`), comme le rend l'`orderBy` du select.
+ */
+function makePrintProducts(count: number): CollectionItem["products"] {
+	return Array.from({ length: count }, (_, index) => ({
+		isFeatured: index === 0,
+		product: {
+			id: `prod-${index + 1}`,
+			title: `Pièce ${index + 1}`,
+			skus: [
+				{
+					priceInclTax: 3200,
+					images: [
+						{ url: `https://utfs.io/f/piece-${index + 1}.jpg`, altText: null, blurDataUrl: null },
+					],
+				},
+			],
+		},
+	})) as CollectionItem["products"];
+}
+
+/** Tous les cadres de tirage rendus — ils CONSOMMENT la constante exportée. */
+function printFrames(): HTMLElement[] {
+	const tokens = LANDING_PRINT_FRAME_CLASSES.split(" ");
+	return Array.from(document.querySelectorAll("div")).filter((node) =>
+		tokens.every((token) => node.classList.contains(token)),
+	);
 }
 
 function makeReturn(collections: CollectionItem[]): Promise<GetCollectionsReturn> {
@@ -137,13 +172,139 @@ describe("CollectionsGrid", () => {
 		expect(img).toHaveAttribute("alt", "");
 	});
 
+	it("empile TROIS tirages : une carte collection montre un ENSEMBLE, pas un objet", () => {
+		// Le payload en porte 4 (plafond dur du `take`, partagé avec le bento du
+		// méga-menu) ; la pile en rend 3. Avant l'arbitrage du 2026-08-06 la carte
+		// n'en lisait qu'UN — elle était alors indiscernable d'une carte produit
+		// dont on aurait retiré le prix (docs/COLLECTION-CARD.md § 3 et § 5).
+		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(4) })} />);
+
+		const images = Array.from(document.querySelectorAll("img"));
+		expect(images).toHaveLength(LANDING_PRINT_COUNT);
+
+		// L'ORDRE vient du payload, jamais d'un tri par date ni d'un tirage au
+		// sort : le premier tirage est le produit vitrine (`isFeatured`), le seul
+		// levier éditorial dont la carte dispose.
+		expect(images.map((image) => image.getAttribute("src"))).toEqual([
+			"https://utfs.io/f/piece-1.jpg",
+			"https://utfs.io/f/piece-2.jpg",
+			"https://utfs.io/f/piece-3.jpg",
+		]);
+
+		// Tous décoratifs : trois `alt` produiraient trois descriptions de bijoux
+		// avant d'atteindre le nom de la collection.
+		expect(images.every((image) => image.getAttribute("alt") === "")).toBe(true);
+	});
+
+	it("rend moins de tirages quand la série en a moins, sans cadre vide de remplissage", () => {
+		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(2) })} />);
+
+		expect(document.querySelectorAll("img")).toHaveLength(2);
+		expect(printFrames()).toHaveLength(2);
+	});
+
+	it("quitte la géométrie de la carte produit : ni marge polaroid ni tilt d'enveloppe", () => {
+		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(3) })} />);
+
+		// `CARD_SURFACE_POLAROID` pose `pb-0` (la légende colle au cadre) et
+		// `CARD_TILT` une rotation d'enveloppe par index. Les deux sont descendus
+		// sur les TIRAGES : les empiler aurait donné du papier sur du papier, et
+		// gardé à la carte la silhouette dont la doctrine veut la séparer.
+		const card = screen.getByRole("article");
+		expect(card.className).not.toContain("pb-0");
+		expect(card.className).not.toMatch(/-?rotate-\[0\.\d+deg\]/);
+
+		// Les tirages, eux, sont bien de guingois.
+		expect(printFrames().some((frame) => frame.className.includes("rotate"))).toBe(true);
+	});
+
+	it("redresse les tirages au survol ET au focus clavier, la règle de focus jamais derrière can-hover", () => {
+		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(3) })} />);
+
+		for (const frame of printFrames()) {
+			expect(frame.className).toContain("can-hover:group-hover:rotate-0");
+			expect(frame.className).toContain("group-focus-within:rotate-0");
+			// WCAG 2.4.7 : gater la RÉVÉLATION derrière `can-hover:` la rendrait
+			// inatteignable au clavier sur tactile — on ne gate que le masquage.
+			expect(frame.className).not.toContain("can-hover:group-focus-within");
+		}
+	});
+
+	it("garde la pose de repos HORS de motion-safe — sinon la pile rend plate sous reduced-motion", () => {
+		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(3) })} />);
+
+		// @regression collection-card-rest-pose-not-motion-gated
+		// Audit du 2026-08-06, trouvé au rendu : les trois rotations étaient
+		// derrière `motion-safe:`, donc sous `prefers-reduced-motion: reduce`
+		// `getComputedStyle(cadre).rotate` valait `none` — la pile rendait plate et
+		// régulière, c'est-à-dire la silhouette S3 « la bande filante » que le § 5
+		// de la doctrine a REJETÉE (risque déclaré : « la tiédeur », le mode
+		// d'échec que CLAUDE.md interdit). Une POSE n'est pas un mouvement : c'est
+		// déjà la règle écrite sur `CARD_TILT`, qui ne porte pas `motion-safe:`.
+		const restPoses = printFrames().map((frame) =>
+			frame.className.split(" ").filter((token) => /(^|:)-?rotate-(?!0\b)/.test(token)),
+		);
+
+		expect(restPoses.every((poses) => poses.length > 0)).toBe(true);
+		for (const poses of restPoses) {
+			for (const pose of poses) {
+				expect(pose).not.toContain("motion-safe:");
+			}
+		}
+
+		// Le GESTE, lui, reste gaté sur les deux branches : sans ça, un focus
+		// clavier sous reduced-motion mettrait la pile à plat d'un seul coup.
+		for (const frame of printFrames()) {
+			expect(frame.className).toContain("motion-safe:can-hover:group-hover:rotate-0");
+			expect(frame.className).toContain("motion-safe:group-focus-within:rotate-0");
+		}
+	});
+
+	it("peint le papier des tirages à l'accent de la série, au lieu de le laisser blanc", () => {
+		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(3) })} />);
+
+		// Audit du 2026-08-06 : l'accent ne touchait QUE le squiggle — 2,5px de
+		// trait à 1,58:1 sur blanc, ~0,45 % de la surface, et d'une longueur qui
+		// suivait celle du nom (38,5px pour « Fêtes »). Le § 6 de la doctrine veut
+		// que la grille de collections soit la surface où la polychromie se lit le
+		// mieux ; c'était celle où elle se lisait le moins.
+		for (const frame of printFrames()) {
+			expect(frame.className).toContain("bg-(--section-wash)");
+			expect(frame.className).not.toContain("bg-card");
+		}
+	});
+
+	it("ne montre que DEUX tirages sous sm, où la carte n'a que 120 à 155px utiles", () => {
+		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(3) })} />);
+
+		// Le § 5 a disqualifié la silhouette S3 en écrivant qu'à « 55px de côté un
+		// bijou n'est plus une pièce mais une pastille de couleur » — la pile
+		// rendait 44px sous `sm`, donc SOUS ce seuil, sur le viewport dominant.
+		// Masquer le 3ᵉ cadre finance les 56px du palier de base ; le plancher
+		// doctrinal est 2 visuels, pas 3.
+		const frames = printFrames();
+		expect(frames).toHaveLength(3);
+		expect(frames[0]?.className).not.toContain("max-sm:hidden");
+		expect(frames[1]?.className).not.toContain("max-sm:hidden");
+		expect(frames[2]?.className).toContain("max-sm:hidden");
+	});
+
 	it("montre une promesse (« Photos à venir ») quand aucun SKU actif ne porte d'image", () => {
 		const collection = makeCollection({ products: [] });
 
-		render(<CollectionsCard collection={collection} index={0} />);
+		render(<CollectionsCard collection={collection} />);
 
-		expect(screen.getByText("Photos à venir")).toBeInTheDocument();
+		const promise = screen.getByText("Photos à venir");
+		expect(promise).toBeInTheDocument();
 		expect(document.querySelector("img")).toBeNull();
+
+		// Langage d'état vide harmonisé (2026-08-06) : le wash teinté par le
+		// `data-accent` de la carte — même promesse que la carte du méga-menu,
+		// plus le `bg-muted` gris d'avant. Le puits est passé au wash FORT (18 %)
+		// le jour où le cadre a été teinté à 10 % : deux fois la même valeur
+		// aurait donné un aplat uniforme, là où la branche nominale garde un
+		// rapport cadre → fenêtre (la fenêtre y est la photo).
+		expect(promise.parentElement?.className).toContain("bg-(--section-wash-strong)");
 	});
 
 	it("porte l'encre de sa série : data-accent du MÊME hash que /collections et la page fille", async () => {
@@ -164,7 +325,7 @@ describe("CollectionsGrid", () => {
 	});
 
 	it("ne scotche PLUS de ruban (retrait 2026-08-05) : l'encre de la série ne teinte que le squiggle", () => {
-		render(<CollectionsCard collection={makeCollection()} index={0} />);
+		render(<CollectionsCard collection={makeCollection()} />);
 
 		// Le ruban était le seul élément à porter --section-accent en style
 		// inline. Sa répétition sur chaque carte de la grille saturait la
@@ -204,17 +365,17 @@ describe("CollectionsGrid", () => {
 	 * vitrine).
 	 */
 	it("rend le from-price à deux décimales, montant rond compris", () => {
-		render(<CollectionsCard collection={makeCollection()} index={0} priceRange={{ min: 4990 }} />);
+		render(<CollectionsCard collection={makeCollection()} priceRange={{ min: 4990 }} />);
 		expect(screen.getByText(/49,90\s*€/)).toBeInTheDocument();
 
 		cleanup();
 
-		render(<CollectionsCard collection={makeCollection()} index={0} priceRange={{ min: 5000 }} />);
+		render(<CollectionsCard collection={makeCollection()} priceRange={{ min: 5000 }} />);
 		expect(screen.getByText(/50,00\s*€/)).toBeInTheDocument();
 	});
 
 	it("omet la ligne prix sans fourchette (compteur sans SKU actif), carte rendue quand même", () => {
-		render(<CollectionsCard collection={makeCollection()} index={0} />);
+		render(<CollectionsCard collection={makeCollection()} />);
 
 		expect(screen.queryByText("À partir de")).toBeNull();
 		expect(screen.getByRole("article")).toBeInTheDocument();
@@ -242,14 +403,25 @@ describe("CollectionsSection — coquille", () => {
 		return render(<CollectionsSection collectionsPromise={new Promise(() => {})} />);
 	}
 
-	it("porte l'ancre #collections avec son scroll-mt dérivé de la barre STATIQUE", () => {
+	it("porte l'ancre #collections et AUCUN scroll-mt (la barre est compensée globalement)", () => {
 		renderShell();
 
 		const section = document.querySelector("section");
 		expect(section).toHaveAttribute("id", "collections");
-		// `--navbar-height-static`, jamais `--navbar-height` (qui retombe au
-		// premier pixel scrollé) — le pattern atelier/FAQ.
-		expect(section?.className).toContain("scroll-mt-[calc(var(--navbar-height-static)+1.5rem)]");
+
+		// ⚠️ Ce test exigeait l'INVERSE jusqu'au 2026-08-06
+		// (`scroll-mt-[calc(var(--navbar-height-static)+1.5rem)]`, « le pattern
+		// atelier/FAQ »). Il verrouillait un DOUBLE comptage : la barre fixe est déjà
+		// compensée une fois pour tout le document par
+		// `html { scroll-padding-top: var(--navbar-height) }` (`app/globals.css`), et
+		// scroll-padding + scroll-margin s'ADDITIONNENT.
+		//
+		// Mesuré à 1280 avant correction : `/#collections` atterrissait avec 104 px de
+		// blanc sous la navbar et son `h2` à 168 px ; après, 0 px et 64 px — soit
+		// exactement le `pt-12 lg:pt-16` de la section, qui EST l'air voulu.
+		// `#hero` n'a jamais porté de `scroll-mt` et atterrit juste : c'est la preuve
+		// que le réglage global suffit.
+		expect(section?.className).not.toContain("scroll-mt");
 	});
 
 	it("parité de la grammaire d'arrivée : bloc titre en enter-inview, rail dessiné à l'ARRIVÉE", () => {
@@ -276,6 +448,22 @@ describe("CollectionsGridSkeleton", () => {
 		expect(document.querySelectorAll('[aria-hidden="true"]')).toHaveLength(
 			LANDING_COLLECTIONS_COUNT,
 		);
+	});
+
+	it("réserve autant de tirages que la carte pleine, au MÊME cadre — il consomme, il ne recopie pas", () => {
+		render(<CollectionsCard collection={makeCollection({ products: makePrintProducts(4) })} />);
+		const realFrames = printFrames().length;
+		expect(realFrames).toBe(LANDING_PRINT_COUNT);
+
+		cleanup();
+		render(<CollectionsCardSkeleton />);
+
+		// Le squelette du carnet des séries avait réservé 112px pour ~202px de
+		// contenu — ~90px de saut par bande au swap du <Suspense>. Le correctif
+		// n'est pas un nombre plus juste, c'est un CONTRAT : la géométrie est
+		// exportée du composant réel et le squelette la consomme. Ce test échoue
+		// si un littéral recopié y est réintroduit.
+		expect(printFrames()).toHaveLength(realFrames);
 	});
 
 	it("réserve la ligne prix dans chaque cellule (parité anti-CLS avec la carte réelle)", () => {

@@ -1,3 +1,4 @@
+import { MediatorDetails } from "@/app/(legal)/_components/mediator-details";
 import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { Button } from "@/shared/components/ui/button";
@@ -185,20 +186,7 @@ export default async function LegalPage() {
 							</div>
 							<div>
 								<h3 className="text-foreground mb-2 font-medium">Médiation</h3>
-								<p className="text-muted-foreground text-sm">
-									<strong>CNPM</strong>
-									<br />
-									Centre National de la Médiation
-									<br />
-									<a
-										href="https://cnpm-mediation-consommation.eu"
-										target="_blank"
-										rel="noopener noreferrer"
-										className="underline hover:opacity-80"
-									>
-										cnpm-mediation-consommation.eu
-									</a>
-								</p>
+								<MediatorDetails variant="compact" />
 							</div>
 						</div>
 					</div>

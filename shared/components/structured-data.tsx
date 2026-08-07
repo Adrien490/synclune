@@ -81,25 +81,26 @@ export function StructuredData({ includeHomepageSchemas, featuredProducts }: Str
 	const graphSchemas: Record<string, unknown>[] = [...BASE_GRAPH_SCHEMAS];
 
 	if (includeHomepageSchemas) {
-		// BreadcrumbList for homepage
-		graphSchemas.push({
-			"@type": "BreadcrumbList",
-			"@id": `${SITE_URL}/#homepage-breadcrumb`,
-			itemListElement: [
-				{
-					"@type": "ListItem",
-					position: 1,
-					name: "Accueil",
-					item: SITE_URL,
-				},
-			],
-		});
+		/*
+		 * ⚠️ Pas de `BreadcrumbList` sur l'accueil, et c'est une SUPPRESSION du
+		 * 2026-08-06, pas un oubli.
+		 *
+		 * Il n'en portait qu'UN seul `ListItem` — « Accueil » pointant la racine.
+		 * Or Google exige au moins deux items ET demande explicitement d'omettre le
+		 * niveau racine comme la page courante : ce fil ne contenait donc
+		 * exactement, et uniquement, l'élément qu'il faut omettre. Il ne pouvait
+		 * s'afficher dans aucun cas.
+		 *
+		 * L'invariant « une seule BreadcrumbList par URL » (CLAUDE.md § Catalogue)
+		 * n'est pas affaibli : il interdit le DOUBLON, il n'impose pas d'en émettre
+		 * une. Les pages profondes gardent la leur, où elle a ≥ 2 maillons.
+		 */
 
 		// ItemList de l'étal — les créations réellement affichées sur l'accueil.
 		if (featuredProducts && featuredProducts.length > 0) {
 			graphSchemas.push({
 				"@type": "ItemList",
-				"@id": `${SITE_URL}/#etal`,
+				"@id": `${SITE_URL}/#hero`,
 				name: "Dernières créations Synclune",
 				numberOfItems: featuredProducts.length,
 				itemListOrder: "https://schema.org/ItemListOrderDescending",
@@ -147,7 +148,10 @@ export function StructuredData({ includeHomepageSchemas, featuredProducts }: Str
 			inLanguage: "fr-FR",
 			name: ATELIER_HOWTO.name,
 			description: ATELIER_HOWTO.description,
-			image: ATELIER_IMAGE,
+			// Champ OMIS tant que l'asset est mort (404, cf. `IMAGES.FOUNDER`) :
+			// même règle que l'`image` d'un nœud Product via `pickPrimaryImage` —
+			// on omet, on ne publie jamais une URL cassée.
+			...(ATELIER_IMAGE && { image: ATELIER_IMAGE }),
 			totalTime: ATELIER_HOWTO.totalTime,
 			supply: ATELIER_HOWTO.supplies.map((name) => ({ "@type": "HowToSupply", name })),
 			tool: ATELIER_HOWTO.tools.map((name) => ({ "@type": "HowToTool", name })),

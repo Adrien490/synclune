@@ -65,7 +65,7 @@ export const FILTER_SECTION_ACCENTS: Record<FilterSectionId, string> = {
  *   `focus-ring` pose `focus-visible:border-ring` sur les QUATRE côtés, et
  *   sans cette parité le liseré de facette disparaissait au focus clavier.
  */
-export const FILTER_BADGE_ACCENTS: Record<FilterSectionId, string> = {
+const FILTER_BADGE_ACCENTS: Record<FilterSectionId, string> = {
 	types: "border-l-brand-lavender bg-brand-lavender/10 focus-visible:border-l-brand-lavender",
 	price: "border-l-brand-sun bg-brand-sun/10 focus-visible:border-l-brand-sun",
 	colors: "border-l-primary bg-primary/10 focus-visible:border-l-primary",

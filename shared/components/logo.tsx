@@ -4,7 +4,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 
-import { LogoMark } from "./logo-mark";
+import { LogoMark, logoStrokeWidth } from "./logo-mark";
 
 /**
  * La marque est un DISQUE, toujours.
@@ -16,6 +16,16 @@ import { LogoMark } from "./logo-mark";
  * verrouillait décrivaient donc une distinction que personne n'a jamais pu voir.
  */
 const DISC_CLASS = "rounded-full";
+
+/**
+ * En dessous de cette taille de rendu, le mark passe en détail réduit.
+ *
+ * Le seuil est celui de `size`, pas de `sizeMd` : les deux appelants qui montent
+ * au breakpoint restent du même côté (28 → 36 en tunnel, 40 → 48 au footer), et
+ * un reflet de 2 px qui n'apparaîtrait qu'à partir de `md` ne se remarque pas.
+ * Cf. `LogoMark`, prop `detail`.
+ */
+const COMPACT_DETAIL_THRESHOLD_PX = 40;
 
 /**
  * Gabarit UNIQUE du nom accessible d'un lien de marque.
@@ -176,7 +186,13 @@ export function Logo({
 					...(sizeMd ? ({ "--logo-size-md": `${sizeMd}px` } as React.CSSProperties) : undefined),
 				}}
 			>
-				<LogoMark className="size-full" sparkles={sparkles} animated={Boolean(href)} />
+				<LogoMark
+					className="size-full"
+					sparkles={sparkles}
+					detail={size < COMPACT_DETAIL_THRESHOLD_PX ? "compact" : "full"}
+					strokePx={logoStrokeWidth(size)}
+					animated={Boolean(href)}
+				/>
 			</span>
 			{showText && <LogoWordmark className={textClassName} />}
 			{/* L'image portait le nom accessible via son `alt`. En SVG décoratif, il

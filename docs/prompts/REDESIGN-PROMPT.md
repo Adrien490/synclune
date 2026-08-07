@@ -71,7 +71,7 @@ Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà éc
   de la copie éditoriale ; `docs/KNOWN-ISSUES.md` si la cible touche le panier ou le checkout
 
 Puis `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier
-(**342 fichiers de test** le portent).
+(**382 fichiers de test** le portent).
 Liste ce que chacun protège : un `@regression` verrouille un bug déjà payé une fois.
 
 Puis liste `~/.claude/projects/-Users-adrienpoirier-Projets-synclune/memory/` et grep par sujet. La liste de

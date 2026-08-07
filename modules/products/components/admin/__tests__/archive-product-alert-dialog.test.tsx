@@ -86,17 +86,20 @@ vi.mock("@/shared/components/ui/alert-dialog", () => {
 			"aria-busy": ariaBusy,
 			type: _type,
 			className,
+			tone,
 		}: {
 			children?: unknown;
 			disabled?: boolean;
 			"aria-busy"?: boolean;
 			type?: string;
 			className?: string;
+			tone?: string;
 		}) =>
 			createElement(
 				"button",
 				{
 					"data-testid": "alert-dialog-action",
+					"data-tone": tone,
 					disabled,
 					"aria-busy": String(ariaBusy),
 					className,
@@ -206,7 +209,9 @@ describe("ArchiveProductAlertDialog", () => {
 		it("submit button has warning token styling for archiving", () => {
 			renderDialog();
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveClass("bg-warning");
+			// Le CHOIX du tone est à ce composant ; sa traduction en classes est
+			// verrouillée dans `alert-dialog-tone.regression.test.tsx`.
+			expect(screen.getByTestId("alert-dialog-action")).toHaveAttribute("data-tone", "warning");
 		});
 
 		it("sets targetStatus hidden field to ARCHIVED", () => {
@@ -318,45 +323,21 @@ describe("ArchiveProductAlertDialog", () => {
 			mockToggleProductStatus.isPending = true;
 		});
 
-		it("shows 'Archivage…' label when pending in archive mode", () => {
+		/**
+		 * Ce dialogue ne décore plus l'attente et ne bloque plus la fermeture pendant
+		 * la mutation : le bouton de confirmation est un `Close` Base UI, donc la
+		 * surface part AU CLIC, avant que `isPending` ne passe (prouvé par
+		 * `shared/components/ui/__tests__/alert-dialog-close-on-confirm.regression.test.tsx`).
+		 * Libellé d'attente, spinner, `aria-busy` et la garde `!isPending` se jouaient
+		 * tous dans un dialog déjà en sortie ; seuls ces tests, qui forçaient l'état à
+		 * la main, les voyaient. Le retour d'attente appartient au toast de la mutation.
+		 */
+		it("ne dépend plus d'`isPending` : ni libellé d'attente, ni bouton désactivé", () => {
 			renderDialog();
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Archivage…");
-		});
-
-		it("shows loader icon when pending", () => {
-			renderDialog();
-
-			expect(screen.getByTestId("loader-circle")).toBeInTheDocument();
-		});
-
-		it("disables cancel button when pending", () => {
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-cancel")).toBeDisabled();
-		});
-
-		it("disables submit button when pending", () => {
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toBeDisabled();
-		});
-
-		it("sets aria-busy to true when pending", () => {
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toHaveAttribute("aria-busy", "true");
-		});
-
-		it("shows 'Restauration…' label when pending in unarchive mode", () => {
-			mockDialog.data = {
-				productId: "prod-2",
-				productTitle: "Collier Étoile",
-				productStatus: "ARCHIVED",
-			};
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Restauration…");
+			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Archiver");
+			expect(screen.getByTestId("alert-dialog-action")).not.toBeDisabled();
+			expect(screen.getByTestId("alert-dialog-cancel")).not.toBeDisabled();
 		});
 	});
 
@@ -405,15 +386,6 @@ describe("ArchiveProductAlertDialog", () => {
 			fireEvent.click(screen.getByTestId("alert-dialog"));
 
 			expect(mockDialog.close).toHaveBeenCalledTimes(1);
-		});
-
-		it("does NOT call dialog.close() when dialog is closed while pending", () => {
-			mockToggleProductStatus.isPending = true;
-			renderDialog();
-
-			fireEvent.click(screen.getByTestId("alert-dialog"));
-
-			expect(mockDialog.close).not.toHaveBeenCalled();
 		});
 	});
 

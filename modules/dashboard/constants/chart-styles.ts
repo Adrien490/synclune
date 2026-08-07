@@ -31,8 +31,8 @@ export const CHART_STYLES = {
 	description: "text-sm text-muted-foreground",
 
 	evolution: {
-		positive: "text-evolution-positive",
-		negative: "text-evolution-negative",
+		positive: "text-success",
+		negative: "text-destructive",
 	},
 
 	touchTarget: {

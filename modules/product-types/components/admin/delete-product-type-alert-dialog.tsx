@@ -12,13 +12,7 @@ export const DELETE_PRODUCT_TYPE_DIALOG_ID = TAXONOMY_CONFIG["product-type"].del
 
 export function DeleteProductTypeAlertDialog() {
 	const onDeleted = useTaxonomyDeleteDialog(TAXONOMY_CONFIG["product-type"]);
-	const { action, isPending } = useDeleteProductType({ onSuccess: onDeleted });
+	const { action } = useDeleteProductType({ onSuccess: onDeleted });
 
-	return (
-		<TaxonomyDeleteAlertDialog
-			config={TAXONOMY_CONFIG["product-type"]}
-			action={action}
-			isPending={isPending}
-		/>
-	);
+	return <TaxonomyDeleteAlertDialog config={TAXONOMY_CONFIG["product-type"]} action={action} />;
 }

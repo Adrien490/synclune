@@ -31,6 +31,7 @@ import type { FilterFormData } from "@/modules/products/services/product-filter-
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { ProductTypeOption } from "./filter-section-types";
+import type { SortOption } from "@/shared/types/sort.types";
 
 // ============================================================================
 // CONSTANTS
@@ -51,6 +52,8 @@ interface ProductFilterRailProps {
 	colors: GetColorsReturn["colors"];
 	materials: MaterialOption[];
 	productTypes?: ProductTypeOption[];
+	/** Options du compartiment « Trier par » (SSOT `PRODUCTS_SORT_OPTIONS`). */
+	sortOptions: SortOption[];
 	maxPriceInEuros: number;
 	/** Type de produit actif (depuis le path segment /produits/[type]) */
 	activeProductTypeSlug?: string;
@@ -191,14 +194,23 @@ function ProductFilterRailInner({
 	colors = EMPTY_COLORS,
 	materials = EMPTY_MATERIALS,
 	productTypes = EMPTY_PRODUCT_TYPES,
+	sortOptions,
 	maxPriceInEuros,
 	activeProductTypeSlug,
 	resultCountPromise,
 }: ProductFilterRailProps) {
 	const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
-	const { values, isPending, toggleToken, setPriceRange, setAvailability, resetSection, clearAll } =
-		useImmediateProductFilters({ maxPriceInEuros, activeProductTypeSlug });
+	const {
+		values,
+		isPending,
+		toggleToken,
+		setPriceRange,
+		setAvailability,
+		setSortBy,
+		resetSection,
+		clearAll,
+	} = useImmediateProductFilters({ maxPriceInEuros, activeProductTypeSlug });
 
 	/**
 	 * Prix en cours de glissement, AVANT commit. Le rail n'applique le prix qu'au
@@ -303,6 +315,10 @@ function ProductFilterRailInner({
 						}}
 						onAvailabilityChange={setAvailability}
 						onSectionReset={resetSection}
+						sortOptions={sortOptions}
+						// Comme les coches : le tri navigue immédiatement, la vue optimiste
+						// peint la radio avant la réponse RSC.
+						onSortChange={setSortBy}
 					/>
 				</div>
 

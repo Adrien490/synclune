@@ -14,7 +14,10 @@ const EMPTY_FORM: FilterFormData = {
 	priceRange: [0, 500],
 	inStockOnly: false,
 	onSale: false,
+	sortBy: "created-descending",
 };
+
+const SORT_OPTIONS = [{ value: "created-descending", label: "Plus récents" }];
 
 const {
 	mockDialog,
@@ -226,6 +229,7 @@ vi.mock("@/shared/utils/cn", () => ({
 
 vi.mock("@phosphor-icons/react/ssr", () => ({
 	CheckIcon: () => <span data-testid="check-icon" />,
+	CircleIcon: () => <span data-testid="circle-icon" />,
 	MagnifyingGlassIcon: () => <span data-testid="search-icon" />,
 	CaretDownIcon: () => <span data-testid="caret-down-icon" />,
 	CaretUpIcon: () => <span data-testid="caret-up-icon" />,
@@ -246,6 +250,12 @@ vi.mock("@/modules/products/services/product-filter-params.service", async (impo
 
 vi.mock("@/modules/products/constants/product.constants", () => ({
 	PRODUCT_FILTER_DIALOG_ID: "product-filter",
+	// Consommés par le compartiment « Trier par » (`ProductFilterCompartments`).
+	PRODUCTS_DEFAULT_SORT: "created-descending",
+	PRODUCTS_SORT_LABELS: {
+		"created-descending": "Plus récents",
+		"price-ascending": "Prix croissant",
+	},
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({
@@ -347,6 +357,7 @@ function renderDefault(overrides: Partial<React.ComponentProps<typeof ProductFil
 			colors={mockColors}
 			materials={mockMaterials}
 			productTypes={mockProductTypes}
+			sortOptions={SORT_OPTIONS}
 			maxPriceInEuros={500}
 			{...overrides}
 		/>,
@@ -788,7 +799,14 @@ describe("ProductFilterSheet", () => {
 	describe("Edge cases", () => {
 		it("renders with minimal props (no colors / materials / types)", () => {
 			expect(() =>
-				render(<ProductFilterSheet colors={[]} materials={[]} maxPriceInEuros={200} />),
+				render(
+					<ProductFilterSheet
+						colors={[]}
+						materials={[]}
+						sortOptions={SORT_OPTIONS}
+						maxPriceInEuros={200}
+					/>,
+				),
 			).not.toThrow();
 		});
 

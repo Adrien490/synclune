@@ -41,31 +41,26 @@ import { cn } from "@/shared/utils/cn";
 const HIDDEN_ROUTES = [ROUTES.SHOP.CHECKOUT, ROUTES.SHOP.CHECKOUT_RETURN, ROUTES.AUTH.SIGN_IN];
 
 /**
- * Accent de marque par onglet — la couleur de sa languette quand il est courant.
+ * ⚠️ **Aucun `data-accent` n'est posé sur les onglets, et c'est délibéré.**
  *
- * Chaque rayon de la boutique a le sien, et les deux DÉCLENCHEURS (Rechercher,
- * Panier) partagent « soleil » : la languette d'un lieu dure tant qu'on y est,
- * celle d'un panneau ouvert est passagère. Deux natures, deux couleurs — c'est ce
- * qui remplace l'ancienne pastille unique, qui servait indistinctement à dire
- * « ta page » et « ce panneau est ouvert », et glissait de l'une à l'autre en
- * racontant une navigation qui n'avait pas eu lieu.
+ * La languette de l'onglet courant (`.bottom-bar-tab-current`, cf.
+ * `app/styles/components.css`) peint `var(--section-accent, var(--primary))` :
+ * hors d'un `[data-accent]`, elle retombe donc d'elle-même sur le rose
+ * signature. La barre étant `createPortal(…, document.body)`, elle ne vit sous
+ * aucune `<section data-accent>` — le repli est le régime NOMINAL, pas un
+ * filet de sécurité.
  *
- * ⚠️ Ces valeurs sont posées en `data-accent` sur le `<li>`, PAS héritées de la
- * cascade : la barre est `createPortal(…, document.body)`, donc elle ne vit dans
- * aucune `<section data-accent>` et `--section-accent` ne lui descend jamais.
- * `[data-accent="mint"]` étant un simple sélecteur d'attribut
- * (`app/styles/section-accents.css`), le poser sur l'élément suffit.
+ * Chaque onglet a porté sa propre couleur (créations lavande, favoris menthe,
+ * recherche et panier soleil). Abandonné le 2026-08-06 : la barre du bas est le
+ * seul objet co-visible avec toutes les pages du site, et la voir virer au
+ * violet puis au vert au fil des taps lisait comme une bascule de thème. Le
+ * repère « ta page » est déjà porté par trois signaux non colorés — l'aplat
+ * plein-hauteur, `weight="fill"` sur l'icône, `aria-current="page"`.
  *
- * Les quatre accents sont employés en APLAT sous `--foreground` (7,85 à 12,68:1)
- * et jamais en encre, où ils tomberaient à 1,54–2,49:1.
+ * Ne pas ré-introduire une couleur par onglet ici sans re-trancher ce point ;
+ * les trois autres accents restent vivants sur le CONTENU (fil de l'atelier,
+ * étapes du tunnel de paiement, séries de collections), pas sur la navigation.
  */
-const TAB_ACCENT = {
-	home: "rose",
-	products: "lavender",
-	search: "sun",
-	wishlist: "mint",
-	cart: "sun",
-} as const;
 
 /** Id du sheet panier dans le `sheet-store` (cf. `SheetId`). */
 const CART_SHEET_ID = "cart" as const;
@@ -304,13 +299,7 @@ export function ShopMobileBottomNav() {
 
 					if (tab.type === "button") {
 						return (
-							<li
-								key={tab.id}
-								className={bottomBarItemWrapperClass}
-								data-accent={
-									tab.isActive ? TAB_ACCENT[tab.id as keyof typeof TAB_ACCENT] : undefined
-								}
-							>
+							<li key={tab.id} className={bottomBarItemWrapperClass}>
 								<button
 									type="button"
 									onClick={(e) => {
@@ -330,11 +319,7 @@ export function ShopMobileBottomNav() {
 					}
 
 					return (
-						<li
-							key={tab.id}
-							className={bottomBarItemWrapperClass}
-							data-accent={tab.isActive ? TAB_ACCENT[tab.id as keyof typeof TAB_ACCENT] : undefined}
-						>
+						<li key={tab.id} className={bottomBarItemWrapperClass}>
 							<Link
 								href={tab.href}
 								// Les onglets-liens n'émettaient AUCUN haptique là où les

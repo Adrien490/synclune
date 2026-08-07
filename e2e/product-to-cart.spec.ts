@@ -123,19 +123,27 @@ test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 		expect(cartContent).toMatch(/\d+[,.]?\d*\s*€/);
 	});
 
-	test("le parcours recherche → produit fonctionne", async ({ page, productCatalogPage }) => {
+	test("le parcours recherche → produit fonctionne", async ({ page }) => {
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		const searchCount = await productCatalogPage.searchInput.count();
-
-		if (searchCount === 0) {
-			test.skip(true, "No search input on /produits page");
-			return;
-		}
-
-		// Type a search term and wait for URL to update (debounce-aware)
-		await productCatalogPage.searchInput.first().fill("bague");
+		// Plus de champ inline (2026-08-06) : la recherche passe par le
+		// quick-search — déclencheur navbar (desktop) ou bottom-nav (mobile),
+		// même aria-label sur les deux.
+		await page.waitForFunction(() => {
+			const buttons = document.querySelectorAll('button[aria-label*="echerch"]');
+			return (
+				buttons.length > 0 &&
+				[...buttons].some((b) => Object.keys(b).some((key) => key.startsWith("__reactProps")))
+			);
+		});
+		await page
+			.getByRole("button", { name: /ouvrir la recherche/i })
+			.first()
+			.click();
+		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
+		await input.fill("bague");
+		await page.keyboard.press("Enter");
 		await expect(page).toHaveURL(/search=bague/, { timeout: 5000 });
 
 		// Either products or empty state should be visible

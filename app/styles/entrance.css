@@ -92,6 +92,42 @@
 		}
 	}
 
+	/* Le décor de l'étal RESPIRE — `HeroGarland` (les quatre petits motifs
+	   suspendus au fil ; la LUNE et le FIL restent immobiles, c'est ce point
+	   d'ancrage qui rend le battement lisible, et une guirlande dont tout
+	   scintille clignote). Retour utilisateur du 2026-08-06 : un décor figé
+	   donne « le sentiment de manquer ».
+
+	   ⚠️ À poser sur un `<g>` ENVELOPPE, jamais sur l'élément `hand-draw-load` :
+	   deux `animation` ne se cumulent pas sur un même élément, celle-ci
+	   écraserait l'entrée. Le déphasage vient de --twinkle-delay, posé en
+	   inline par le composant. Compositor-only (opacity seule). */
+	@keyframes sky-twinkle {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.55;
+		}
+	}
+
+	/* ⚠️ BORNÉ, pas `infinite` — WCAG 2.2.2 « Pause, Stop, Hide » (niveau A).
+	   Le critère s'applique au mouvement qui démarre seul ET dure plus de 5 s ET
+	   coexiste avec d'autres contenus : une boucle infinie coche les trois, et
+	   au-dessus de la ligne de flottaison en plus. Le correctif proportionné est
+	   de rendre la 2ᵉ condition fausse, pas d'ajouter un bouton « mettre en
+	   pause » — c'est exactement le raisonnement déjà écrit et déjà appliqué par
+	   `.animate-sparkle-pulse-once` (`animations.css`).
+
+	   UNE itération, et pas deux : le cycle dure 4200 ms, donc 2 passages font
+	   8,4 s — au-dessus du seuil de 5 s, la correction serait vaine. Le décor
+	   respire une fois à l'arrivée, puis se pose. `forwards` le fige sur le 100 %
+	   (`opacity: 1`), l'état plein : un reflet ne reste jamais à mi-fondu. */
+	.sky-twinkle {
+		animation: sky-twinkle 4200ms ease-in-out var(--twinkle-delay, 0ms) 1 forwards;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.enter-load,
 		.enter-inview {
@@ -106,6 +142,11 @@
 			animation: none;
 			stroke-dashoffset: 0;
 			fill-opacity: var(--hand-fill-opacity, 0);
+		}
+
+		.sky-twinkle {
+			animation: none;
+			opacity: 1;
 		}
 	}
 }

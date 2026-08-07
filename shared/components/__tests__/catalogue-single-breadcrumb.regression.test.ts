@@ -165,12 +165,26 @@ describe("catalogue — un seul BreadcrumbList par page (@regression catalogue-s
 		expect(generator).toContain('"@graph"');
 
 		// Un nœud de chaque type, pas deux.
-		for (const type of ["BreadcrumbList", "ItemList", "FAQPage"]) {
+		for (const type of ["ItemList", "FAQPage"]) {
 			expect(
 				generator.match(new RegExp(`"@type":\\s*"${type}"`, "g")),
 				`${type} doit apparaître exactement une fois dans le @graph de l'accueil`,
 			).toHaveLength(1);
 		}
+
+		// ⚠️ `BreadcrumbList` fait exception, et l'assertion est INVERSÉE depuis le
+		// 2026-08-06 : l'accueil n'en émet plus AUCUNE. Celle qu'il émettait n'avait
+		// qu'un seul `ListItem` (« Accueil » → la racine), or Google en exige au
+		// moins deux et demande d'omettre la racine comme la page courante — le fil
+		// ne contenait donc que l'élément à omettre, et ne pouvait pas s'afficher.
+		//
+		// L'invariant que ce fichier garde reste entier : il interdit le DOUBLON sur
+		// une même URL, il n'oblige personne à émettre un fil. Les pages profondes
+		// gardent le leur, où il a bien ≥ 2 maillons.
+		expect(
+			generator.match(/"@type":\s*"BreadcrumbList"/g),
+			"l'accueil ne doit émettre aucune BreadcrumbList (un fil à 1 item ne s'affiche jamais)",
+		).toBeNull();
 
 		// Prémisse anti-vacuité : la section FAQ que ce balisage décrit existe, et
 		// son ancre est bien celle que cible la redirection de `/aide`.

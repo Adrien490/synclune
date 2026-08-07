@@ -12,13 +12,7 @@ export const DELETE_MATERIAL_DIALOG_ID = TAXONOMY_CONFIG.material.deleteDialogId
 
 export function DeleteMaterialAlertDialog() {
 	const onDeleted = useTaxonomyDeleteDialog(TAXONOMY_CONFIG.material);
-	const { action, isPending } = useDeleteMaterial({ onSuccess: onDeleted });
+	const { action } = useDeleteMaterial({ onSuccess: onDeleted });
 
-	return (
-		<TaxonomyDeleteAlertDialog
-			config={TAXONOMY_CONFIG.material}
-			action={action}
-			isPending={isPending}
-		/>
-	);
+	return <TaxonomyDeleteAlertDialog config={TAXONOMY_CONFIG.material} action={action} />;
 }

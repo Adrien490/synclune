@@ -1,6 +1,8 @@
+import { MediatorDetails } from "@/app/(legal)/_components/mediator-details";
 import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
+import { MEDIATION_CONDITIONS, MEDIATION_LEGAL_BASIS } from "@/shared/constants/consumer-law";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
@@ -264,17 +266,32 @@ export default async function MentionsLegalesPage() {
 							</p>
 						</section>
 
+						{/*
+						 * Art. L612-1 du Code de la consommation : les coordonnées du médiateur
+						 * doivent être visibles et lisibles sur le site, dans les CGV **et** dans
+						 * les mentions légales. Elles ne vivaient ici que dans `/cgv` jusqu'au
+						 * 2026-08-06 — la page que la DGCCRF regarde en premier ne les portait pas.
+						 * Rendu et libellés en SSOT (`shared/constants/mediation.ts`).
+						 */}
 						<section className="space-y-4">
-							<h2 className="text-xl font-semibold sm:text-2xl">9. Droit applicable</h2>
+							<h2 className="text-xl font-semibold sm:text-2xl">9. Médiation de la consommation</h2>
+							<p>{MEDIATION_LEGAL_BASIS}</p>
+							<MediatorDetails />
+							<p className="text-muted-foreground text-sm">{MEDIATION_CONDITIONS}</p>
+						</section>
+
+						<section className="space-y-4">
+							<h2 className="text-xl font-semibold sm:text-2xl">10. Droit applicable</h2>
 							<p>
 								Les présentes mentions légales sont régies par le droit français. En cas de litige
-								et à défaut d'accord amiable, le litige sera porté devant les tribunaux français
-								conformément aux règles de compétence en vigueur.
+								et à défaut d'accord amiable — et après recours à la médiation prévue au § 9 — le
+								litige sera porté devant les tribunaux français conformément aux règles de
+								compétence en vigueur.
 							</p>
 						</section>
 
 						<section className="space-y-4">
-							<h2 className="text-xl font-semibold sm:text-2xl">10. Contact</h2>
+							<h2 className="text-xl font-semibold sm:text-2xl">11. Contact</h2>
 							<p>
 								Pour toute question relative aux mentions légales, vous pouvez nous contacter :
 								<br />

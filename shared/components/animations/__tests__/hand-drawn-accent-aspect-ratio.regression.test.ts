@@ -24,6 +24,7 @@ import { describe, expect, it } from "vitest";
 import {
 	ACCENT_SHAPE_PATHS,
 	ATELIER_THREAD_PATHS,
+	CREATION_PATHS,
 	UNDERLINE_PATHS,
 } from "@/shared/components/hand-drawn/paths";
 
@@ -48,7 +49,24 @@ describe("SSOT des tracés — ratio natif exact", () => {
 		...Object.entries(UNDERLINE_PATHS).map(([key, cfg]) => [`underline/${key}`, cfg] as const),
 		...Object.entries(ACCENT_SHAPE_PATHS),
 		...Object.entries(ATELIER_THREAD_PATHS).map(([key, cfg]) => [`atelier/${key}`, cfg] as const),
+		// Posés par `transform` dans le SVG du décor du hero, jamais rendus en SVG
+		// autonome — mais leur boîte sert au CALCUL DE POSE (le point d'accroche
+		// est lu en coordonnées natives puis mis à l'échelle), donc une boîte au
+		// ratio faux décale le tracé au lieu de le letterboxer. Même exigence,
+		// autre symptôme — et ici l'erreur est MULTIPLIÉE : une même goutte est
+		// réemployée huit fois dans une seule grappe.
+		...Object.entries(CREATION_PATHS).map(([key, cfg]) => [`creation/${key}`, cfg] as const),
 	];
+
+	// Un `it.each` sur une collection VIDE passe en silence : ce plancher est ce
+	// qui distingue « tous les tracés sont conformes » de « le scan ne voit plus
+	// rien ». Il a un motif — la collection des créations est la seule dont les
+	// entrées se réemploient en série, donc celle dont une boîte fausse coûte le
+	// plus cher.
+	it("voit bien la collection des créations (sinon il protège dans le vide)", () => {
+		expect(Object.keys(CREATION_PATHS).length).toBeGreaterThanOrEqual(8);
+		expect(entries.length).toBeGreaterThanOrEqual(24);
+	});
 
 	it.each(entries)("%s : width/height natifs === ratio du viewBox", (_name, cfg) => {
 		const [, , vbWidth, vbHeight] = cfg.viewBox.split(" ").map(Number);

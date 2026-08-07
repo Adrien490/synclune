@@ -20,19 +20,22 @@ describe("StorefrontHeading", () => {
 		expect(headings[0]!.className).not.toMatch(/\bhidden\b/);
 	});
 
-	it("affiche l'eyebrow d'atelier par défaut, avec la ville", () => {
-		render(<StorefrontHeading title="T" />);
+	it("ne rend AUCUN sur-titre — le fil d'Ariane situe déjà la page (2026-08-06)", () => {
+		const { container } = render(<StorefrontHeading title="T" description="Mon chapô." />);
 
-		expect(
-			screen.getByText(new RegExp(`L'atelier de Léane · ${BRAND.contact.location.city}`)),
-		).toBeInTheDocument();
-	});
-
-	it("remplace l'eyebrow quand il est fourni", () => {
-		render(<StorefrontHeading title="T" eyebrow="Mon eyebrow" />);
-
-		expect(screen.getByText("Mon eyebrow")).toBeInTheDocument();
+		// « L'atelier de Léane · {ville} » était le défaut des CINQ routes boutique,
+		// rendu entre un fil d'Ariane qui dit déjà où on est et un chapô qui redit
+		// « dans mon atelier à {ville} » sur trois d'entre elles. Le sur-titre ne
+		// survit que sur la home (`HOME_EYEBROW`, hero-heading.tsx), qui n'a ni l'un
+		// ni l'autre au-dessus.
 		expect(screen.queryByText(/L'atelier de Léane/)).not.toBeInTheDocument();
+		expect(container.textContent).not.toContain(BRAND.contact.location.city);
+
+		// La première ligne du bloc est le bloc d'accents, plus un <p> de sur-titre :
+		// un `<p>` vide laissé en place rendrait sa marge et 26 px de CLS au swap.
+		const firstRow = (container.firstElementChild as HTMLElement).firstElementChild!;
+		expect(firstRow.tagName).toBe("DIV");
+		expect(firstRow.getAttribute("aria-hidden")).toBe("true");
 	});
 
 	it("rend les quatre touches de pinceau par défaut, en décoratif, qui se dessinent au montage", () => {

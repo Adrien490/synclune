@@ -61,14 +61,15 @@ export function MegaMenuCreations({
 	return (
 		// Le panneau porte sa propre largeur (cf. `DesktopNav`) : 46rem avec le rail,
 		// nettement moins sans lui — sinon les catégories s'étirent dans le vide.
-		// `data-accent="lavender"` : le panneau est portalisé hors du <header>, il
+		// `data-accent="rose"` : le panneau est portalisé hors du <header>, il
 		// n'hérite donc pas de l'accent de salle posé par navbar-wrapper — il pose
-		// le SIEN (même SSOT navbar-section.ts : créations = lavande). Consommé par
+		// le SIEN (même SSOT navbar-section.ts, passée au mono-rose le 2026-08-06 :
+		// c'était « lavande » quand chaque salle avait sa couleur). Consommé par
 		// les lavages du CTA/item actif et par HandDrawnUnderline.
 		<div
 			role="region"
 			aria-labelledby={regionHeadingId}
-			data-accent="lavender"
+			data-accent="rose"
 			className={cn(
 				"px-6 py-5",
 				hasRail ? "w-[min(46rem,var(--available-width))]" : "w-[min(28rem,var(--available-width))]",

@@ -66,7 +66,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	} = options;
 
 	const [progress, setProgress] = useState<UploadProgress | null>(null);
-	const [queuedCount, setQueuedCount] = useState(0);
 	const [failedFiles, setFailedFiles] = useState<FailedUpload[]>([]);
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const isProcessingRef = useRef(false);
@@ -675,7 +674,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		try {
 			while (queueRef.current.length > 0) {
 				const entry = queueRef.current.shift()!;
-				setQueuedCount(queueRef.current.length);
 
 				const queuedFileCount = queueRef.current.reduce((sum, e) => sum + e.files.length, 0);
 				updateProgress({ queued: queuedFileCount });
@@ -692,7 +690,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 							remaining.resolve([]);
 						}
 						queueRef.current = [];
-						setQueuedCount(0);
 						setProgress(null);
 						isProcessingRef.current = false;
 						if (keptCount > 0) {
@@ -745,7 +742,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 
 		return new Promise<MediaUploadResult[]>((resolve, reject) => {
 			queueRef.current.push({ files, resolve, reject });
-			setQueuedCount(queueRef.current.length);
 
 			if (!isProcessingRef.current) {
 				void processQueue();
@@ -766,7 +762,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			entry.resolve([]);
 		}
 		queueRef.current = [];
-		setQueuedCount(0);
 		setProgress(null);
 		cumulativeResultsRef.current = [];
 		cumulativeCompletedRef.current = 0;
@@ -829,7 +824,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		clearFailed,
 		isUploading: isUploadThingUploading || progress !== null,
 		progress,
-		queuedCount,
 		failedFiles,
 		getMediaType: getMediaTypeFromFile,
 		isOversized,

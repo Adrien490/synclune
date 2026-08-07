@@ -8,7 +8,6 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 vi.mock("@/shared/constants/brand", () => ({
 	BRAND: {
 		name: "Synclune",
-		tagline: "Créations uniques faites avec amour",
 		logo: {
 			alt: "Synclune — Créations artisanales faites main",
 		},
@@ -48,7 +47,7 @@ vi.mock("next/link", () => ({
 
 // ⚠️ `logo-mark` n'est PAS mocké : le passage au SVG inline est précisément ce
 // que ces tests doivent voir. Un mock ici rendrait la suite aveugle au fait que
-// le disque est devenu une surface CSS et le « 5 » une découpe.
+// le disque est devenu un cercle PEINT et l'initiale une découpe.
 import { Logo } from "../logo";
 
 // ============================================================================
@@ -88,6 +87,91 @@ describe("Logo", () => {
 		// L'encre n'a pas de jeton (brun feutre mesuré sur le raster, distinct de
 		// `--foreground`) : sa valeur en dur EST le contrat.
 		expect(style).toContain("--logo-ink: #4c2420");
+	});
+
+	// =========================================================================
+	// Lisibilité du trait (audit 2026-08-06)
+	// =========================================================================
+
+	it("garde son contour à l'épaisseur ÉCRAN, quelle que soit la taille de rendu", () => {
+		// Tout le mark tient sur son contour : cœur/disque 1,27:1, étincelle/cœur
+		// 1,26:1. Déclaré dans la viewBox 256, `strokeWidth={3}` rendait 0,33 px à
+		// 28 px — sous le pixel, un trait est peint en alpha partiel et les 8,32:1
+		// de `--logo-ink` s'évaporent. `non-scaling-stroke` sort l'épaisseur de
+		// l'espace utilisateur ; sans lui, tout le reste de ce fichier est décoratif.
+		// (Le socle et le cœur vivent dans le sprite : cf. `icon-sprite.test.tsx`.)
+		const { container } = render(<Logo size={28} />);
+
+		const stroked = container.querySelectorAll("path[vector-effect='non-scaling-stroke']");
+		expect(stroked.length).toBeGreaterThan(0);
+		for (const path of stroked) {
+			expect(path.getAttribute("stroke")).toBe("var(--logo-ink)");
+		}
+	});
+
+	it("tient son corps du sprite, au lieu de le réécrire à chaque rendu", () => {
+		// 3,4 Ko de `d=` × 3 marks par page storefront. Les jetons `--logo-*` posés
+		// par le mark traversent le `<use>` : c'est ce qui garde le call site maître
+		// des couleurs et de l'épaisseur.
+		const { container } = render(<Logo />);
+
+		expect(container.querySelector("use")).toHaveAttribute("href", "#logo-mark-body");
+	});
+
+	it("pose un PLANCHER au trait, sans jamais l'épaissir au-delà de l'original", () => {
+		// ⚠️ Réglage ARBITRÉ AU RENDU, pas déduit. Une épaisseur constante a été
+		// essayée et refusée dans les deux sens : 1,5 px (le trait de la maison)
+		// cerne le mark de noir et tue la douceur du feutre ; figer plus bas fait
+		// MAIGRIR la marque à 96 px, où le trait d'origine vaut déjà 1,13 px.
+		// Ne pas toucher à ces valeurs sans repasser par le navigateur.
+		const small = markRoot(render(<Logo size={28} />).container);
+		expect(small?.getAttribute("style")).toContain("--logo-stroke: 0.75px");
+		cleanup();
+
+		const mid = markRoot(render(<Logo size={48} />).container);
+		expect(mid?.getAttribute("style")).toContain("--logo-stroke: 0.75px");
+		cleanup();
+
+		// Au-delà du plancher, on retombe exactement sur le dessin d'origine.
+		const large = markRoot(render(<Logo size={96} />).container);
+		expect(large?.getAttribute("style")).toContain("--logo-stroke: 1.125px");
+	});
+
+	it("laisse tomber le REFLET sous le seuil, jamais l'initiale", () => {
+		// Le gloss mesure 1,8 × 4 px à 28 px : il ne peint plus un reflet, il salit
+		// le lobe. L'initiale, elle, est le « S » de Synclune — elle ne cède à
+		// aucune taille.
+		// Le socle, le cœur et l'initiale viennent du sprite : ce qui se compte ici,
+		// ce sont les chemins encore inline — le reflet et les deux étincelles.
+		const compact = render(<Logo size={28} />).container;
+		const compactPaths = compact.querySelectorAll("path").length;
+		expect(compactPaths).toBe(2);
+		// Et l'initiale, elle, est toujours là — dans le corps référencé.
+		expect(compact.querySelector("use")).not.toBeNull();
+		cleanup();
+
+		const full = render(<Logo size={48} />).container;
+		expect(full.querySelectorAll("path")).toHaveLength(compactPaths + 1);
+	});
+
+	it("ne pose plus AUCUN fond CSS pour son disque", () => {
+		// Un `background-color` est supprimé à l'impression (`print-color-adjust`)
+		// alors qu'un `fill` survit : la page de suivi de commande imprimée rendait
+		// l'initiale rose SANS son socle. Le socle est désormais un `<circle>` du
+		// sprite — ce test garde la contrepartie : plus personne ne le repeint en CSS.
+		const { container } = render(<Logo />);
+
+		expect(container.innerHTML).not.toContain("bg-(--logo-disc)");
+	});
+
+	it("garde ses couleurs en contraste forcé", () => {
+		// Un logo est le cas d'usage canonique de `forced-color-adjust: none` :
+		// repeint en deux tons système, le mark n'est plus qu'une tache.
+		const { container } = render(<Logo />);
+
+		expect(container.querySelector("svg")?.getAttribute("style")).toContain(
+			"forced-color-adjust: none",
+		);
 	});
 
 	it("porte le nom de la marque pour les lecteurs d'écran quand il n'y a pas de texte", () => {

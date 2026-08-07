@@ -91,6 +91,27 @@ const APPLE_SPLASH_SCREENS: Array<{ rel: string; url: string; media?: string }> 
  */
 export const ICONS_CONFIG: Metadata["icons"] = {
 	icon: [
+		// ⚠️ Le SVG D'ABORD, et il vit dans `public/` — pas en `app/icon.svg`.
+		//
+		// Les deux points tiennent au même mécanisme. Next n'injecte les icônes de
+		// convention QUE si l'objet `metadata` n'en déclare aucune :
+		//
+		//   if (leafSegmentStaticIcons.icon.length > 0 || …) {
+		//     if (!resolvedMetadata.icons) { … }      ← resolve-metadata.js
+		//
+		// Cette liste étant définie, un `app/icon.svg` serait purement ignoré. La doc
+		// de Next affirme l'inverse — « file-based metadata has the higher priority
+		// and will override the metadata object » —, c'est le code qui fait foi.
+		//
+		// ⚠️ `app/favicon.ico` fait exception : vérifié dans le HTML servi, il est
+		// injecté par un AUTRE chemin et sort en tête, avant cette liste. Un `.ico`
+		// ne se substitue donc pas au SVG mais le précède — les navigateurs
+		// modernes préfèrent quand même le SVG, les anciens gardent leur repli.
+		//
+		// Les navigateurs modernes préfèrent le premier format qu'ils savent lire :
+		// le SVG en tête leur donne un mark net à toute taille, et les PNG restent
+		// le repli. Il est GÉNÉRÉ depuis la SSOT des chemins, cf. son en-tête.
+		{ url: "/icons/logo-mark.svg", type: "image/svg+xml" },
 		{ url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
 		{ url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
 		{ url: "/icons/favicon-96x96.png", sizes: "96x96", type: "image/png" },

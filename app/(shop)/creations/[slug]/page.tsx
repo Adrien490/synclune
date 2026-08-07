@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { getRecentProductSlugs } from "@/modules/products/data/get-recent-product-slugs";
 import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
 import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
 import {
@@ -23,9 +22,6 @@ import { ProductInfo } from "@/modules/products/components/product-info";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
-import { RecentlyViewedProducts } from "@/modules/products/components/recently-viewed-products";
-import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/recently-viewed-products-skeleton";
-import { RecordProductView } from "@/modules/products/components/record-product-view";
 import { ViewItemTracker } from "@/shared/components/analytics/view-item-tracker";
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import {
@@ -58,15 +54,11 @@ export default async function ProductPage({
 	const [{ slug }, urlParams] = await Promise.all([params, searchParams]);
 
 	// Paralléliser toutes les requêtes pour optimiser le TTFB.
-	// `getRecentProductSlugs` est une simple lecture de cookie (aucune requête DB) :
-	// elle sert à savoir s'il faut MONTER la section « Récemment vus », sans attendre
-	// sa résolution — cf. `hasRecentlyViewed` plus bas.
-	const [admin, product, wishlistProductIds, priceValidUntil, recentSlugs] = await Promise.all([
+	const [admin, product, wishlistProductIds, priceValidUntil] = await Promise.all([
 		isAdmin(),
 		getProductBySlug({ slug, includeDraft: true }),
 		getWishlistProductIds(),
 		getPriceValidUntil(),
-		getRecentProductSlugs(),
 	]);
 
 	// Vérifier existence produit
@@ -141,14 +133,6 @@ export default async function ProductPage({
 	// Vérifier si le produit est dans la wishlist (lookup O(1) local)
 	const isInWishlist = wishlistProductIds.has(product.id);
 
-	// La section « Récemment vus » n'est montée que si le cookie contient au moins
-	// un AUTRE produit. Sans ce garde, la première fiche de chaque visite affichait
-	// un squelette de 4 cartes pour une section qui résolvait à `null` — un fantôme,
-	// puisque `RecordProductView` n'écrit le cookie qu'après ce rendu et que la fiche
-	// courante est exclue de la liste.
-	const hasRecentlyViewed = recentSlugs.some((s) => s !== product.slug);
-	const recentlyViewedLimit = Math.min(4, recentSlugs.filter((s) => s !== product.slug).length);
-
 	// Réserves EXACTES du squelette de la colonne d'achat. Le produit est déjà
 	// résolu ici, donc on n'a pas à deviner : les mêmes prédicats que
 	// `VariantSelector` (carte affichée si > 1 SKU ; axe secondaire si plusieurs
@@ -163,9 +147,6 @@ export default async function ProductPage({
 
 	return (
 		<div className="relative min-h-dvh">
-			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
-			<RecordProductView slug={product.slug} />
-
 			{/* Funnel analytics : view_item (consent-gated, fire-once) */}
 			<ViewItemTracker
 				productId={product.id}
@@ -234,20 +215,7 @@ export default async function ProductPage({
 							{/* Sticky add-to-cart desktop (apparaît quand le CTA principal sort du viewport) */}
 							<StickyCartCTADesktop product={product} defaultSku={selectedSku} />
 
-							{/* 7. RecentlyViewedProducts — produits récemment consultés.
-							    Le séparateur d'ouverture vit DANS la section (et dans son
-							    squelette) : rendu ici, il ne pouvait pas disparaître avec
-							    elle, et les deux filets de la page se retrouvaient collés. */}
-							{hasRecentlyViewed && (
-								<Suspense fallback={<RecentlyViewedProductsSkeleton limit={recentlyViewedLimit} />}>
-									<RecentlyViewedProducts
-										currentProductSlug={product.slug}
-										limit={recentlyViewedLimit}
-									/>
-								</Suspense>
-							)}
-
-							{/* 8. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
+							{/* 7. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
 							<Suspense fallback={<RelatedProductsSkeleton limit={4} />}>
 								<RelatedProducts currentProductSlug={product.slug} limit={4} />
 							</Suspense>

@@ -12,7 +12,7 @@
  *
  * Ce test exerce la chaîne RÉELLE ouvreur → store → dialog : le hook d'actions
  * publie son payload dans le VRAI `AlertDialogStoreProvider`, et le VRAI
- * `DeleteConfirmationDialog` doit en dériver le champ caché et le nom affiché.
+ * `ConfirmDialog` doit en dériver le champ caché et le nom affiché.
  * ⚠️ Ne JAMAIS mocker `alert-dialog-store-provider` ici : c'est précisément le
  * mock du store qui rendait ce défaut invisible aux tests existants. Seule la
  * primitive Radix est remplacée par des pass-through.
@@ -51,7 +51,7 @@ vi.mock("@/shared/hooks/use-back-to-list-on-delete", () => ({
 
 // Primitive Radix en pass-through : le contrat testé est le payload, pas le
 // portal. `open` reste respecté pour que le contenu ne monte qu'à l'ouverture.
-vi.mock("@/shared/components/ui/responsive-alert-dialog", () => {
+vi.mock("@/shared/components/ui/alert-dialog", () => {
 	const passthrough = (testId: string) => {
 		const Passthrough = ({ children }: { children?: ReactNode }) => (
 			<div data-testid={testId}>{children}</div>
@@ -60,19 +60,19 @@ vi.mock("@/shared/components/ui/responsive-alert-dialog", () => {
 		return Passthrough;
 	};
 	return {
-		ResponsiveAlertDialog: ({ open, children }: { open?: boolean; children?: ReactNode }) =>
+		AlertDialog: ({ open, children }: { open?: boolean; children?: ReactNode }) =>
 			open ? <div data-testid="alert-dialog">{children}</div> : null,
-		ResponsiveAlertDialogContent: passthrough("alert-dialog-content"),
-		ResponsiveAlertDialogHeader: passthrough("alert-dialog-header"),
-		ResponsiveAlertDialogFooter: passthrough("alert-dialog-footer"),
-		ResponsiveAlertDialogTitle: passthrough("alert-dialog-title"),
-		ResponsiveAlertDialogDescription: ({ children }: { children?: ReactNode }) => (
+		AlertDialogContent: passthrough("alert-dialog-content"),
+		AlertDialogHeader: passthrough("alert-dialog-header"),
+		AlertDialogFooter: passthrough("alert-dialog-footer"),
+		AlertDialogTitle: passthrough("alert-dialog-title"),
+		AlertDialogDescription: ({ children }: { children?: ReactNode }) => (
 			<div data-testid="alert-dialog-description">{children}</div>
 		),
-		ResponsiveAlertDialogCancel: ({ children }: { children?: ReactNode }) => (
+		AlertDialogCancel: ({ children }: { children?: ReactNode }) => (
 			<button type="button">{children}</button>
 		),
-		ResponsiveAlertDialogAction: ({ children }: { children?: ReactNode }) => (
+		AlertDialogAction: ({ children }: { children?: ReactNode }) => (
 			<button type="submit">{children}</button>
 		),
 	};

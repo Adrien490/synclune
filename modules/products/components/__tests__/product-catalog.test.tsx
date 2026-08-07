@@ -58,32 +58,12 @@ vi.mock("@/modules/products/components/product-list-skeleton", () => ({
 	ProductListSkeleton: () => <div data-testid="product-list-skeleton" />,
 }));
 
-vi.mock("@/modules/products/components/product-sort-bar", () => ({
-	ProductSortBar: ({ sortOptions }: { sortOptions: { value: string; label: string }[] }) => (
-		<div data-testid="product-sort-bar" data-options={sortOptions.length} />
-	),
-}));
-
 /**
- * Le cluster recherche + tri de la rangée titre est un client component
- * (`useSearchParams`/`usePathname` via son Inner) : on le stube pour que ce
- * fichier reste un test du SHELL — c'est LUI qui reçoit le placeholder de
- * recherche depuis le retour user du 2026-08-05 (le champ a quitté la barre).
+ * La barre « Filtrer » est un client component (`useSearchParams`/`usePathname`
+ * via son Inner) : on la stube pour que ce fichier reste un test du SHELL.
  */
-vi.mock("@/modules/products/components/catalog-toolbar-inline", () => ({
-	CatalogToolbarInline: ({
-		sortOptions,
-		searchPlaceholder,
-	}: {
-		sortOptions: { value: string; label: string }[];
-		searchPlaceholder?: string;
-	}) => (
-		<div
-			data-testid="catalog-toolbar-inline"
-			data-options={sortOptions.length}
-			data-search-placeholder={searchPlaceholder}
-		/>
-	),
+vi.mock("@/modules/products/components/product-filter-bar", () => ({
+	ProductFilterBar: () => <div data-testid="product-filter-bar" />,
 }));
 
 /**
@@ -94,8 +74,18 @@ vi.mock("@/modules/products/components/catalog-toolbar-inline", () => ({
  * desktop.
  */
 vi.mock("@/modules/products/components/product-filter-rail", () => ({
-	ProductFilterRail: ({ maxPriceInEuros }: { maxPriceInEuros: number }) => (
-		<div data-testid="product-filter-rail" data-max-price={maxPriceInEuros} />
+	ProductFilterRail: ({
+		maxPriceInEuros,
+		sortOptions,
+	}: {
+		maxPriceInEuros: number;
+		sortOptions: { value: string; label: string }[];
+	}) => (
+		<div
+			data-testid="product-filter-rail"
+			data-max-price={maxPriceInEuros}
+			data-sort-options={sortOptions.length}
+		/>
 	),
 }));
 
@@ -110,19 +100,16 @@ vi.mock("@/modules/products/components/catalog-heading", () => ({
 		title,
 		activeProductType,
 		searchTerm,
-		filterSummary,
 	}: {
 		title: string;
 		activeProductType?: { slug: string; label: string; description?: string | null };
 		searchTerm?: string;
-		filterSummary?: string | null;
 	}) => (
 		<div
 			data-testid="catalog-heading"
 			data-active-type={activeProductType?.slug}
 			data-search-term={searchTerm}
 			data-description={activeProductType?.description ?? undefined}
-			data-filter-summary={filterSummary ?? undefined}
 		>
 			<h1>{title}</h1>
 		</div>
@@ -143,6 +130,8 @@ vi.mock("@/modules/products/constants/product.constants", () => ({
 		PRICE_DESC: "price-descending",
 		NEWEST: "created-descending",
 	},
+	// Importée par `product-filter-params.service` (défaut de `sortBy`).
+	PRODUCTS_DEFAULT_SORT: "created-descending",
 	PRODUCTS_SORT_LABELS: {
 		"price-ascending": "Prix croissant",
 		"price-descending": "Prix décroissant",
@@ -346,37 +335,21 @@ describe("ProductCatalog", () => {
 		});
 	});
 
-	describe("search placeholder", () => {
-		// Le champ vit dans le cluster de la RANGÉE TITRE (`CatalogToolbarInline`,
-		// retour user 2026-08-05) — la barre ne monte plus aucun champ, donc ne
-		// reçoit plus de placeholder.
-		it("uses generic jewelry placeholder by default", () => {
+	describe("search & sort furniture", () => {
+		// La recherche inline et le cluster de la rangée titre sont partis
+		// (2026-08-06) : l'entrée de recherche est le quick-search navbar, le tri
+		// vit dans le compartiment « Trier par » du meuble de filtres.
+		it("ne rend plus de cluster recherche/tri ni de barre d'outils concurrente", () => {
 			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByTestId("catalog-toolbar-inline")).toHaveAttribute(
-				"data-search-placeholder",
-				"Rechercher des bijoux…",
-			);
-			expect(screen.getByTestId("product-sort-bar")).not.toHaveAttribute("data-search-placeholder");
-		});
-
-		it("uses product type specific placeholder when activeProductType is set", () => {
-			render(
-				<ProductCatalog
-					{...makeProps({
-						activeProductType: { slug: "bague", label: "Bagues", description: null },
-					})}
-				/>,
-			);
-			expect(screen.getByTestId("catalog-toolbar-inline")).toHaveAttribute(
-				"data-search-placeholder",
-				"Rechercher des bagues…",
-			);
-		});
-
-		it("ne rend plus de barre d'outils desktop concurrente", () => {
-			render(<ProductCatalog {...makeProps()} />);
+			expect(screen.queryByTestId("catalog-toolbar-inline")).not.toBeInTheDocument();
+			expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("toolbar")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("select-filter")).not.toBeInTheDocument();
+		});
+
+		it("passe les options de tri au rail (compartiment « Trier par »)", () => {
+			render(<ProductCatalog {...makeProps()} />);
+			expect(screen.getByTestId("product-filter-rail")).toHaveAttribute("data-sort-options", "3");
 		});
 	});
 
@@ -408,14 +381,9 @@ describe("ProductCatalog", () => {
 			expect(screen.getByTestId("product-list")).toHaveAttribute("data-prefer-on-sale", "true");
 		});
 
-		it("renders the sort bar", () => {
+		it("renders the filter bar (le meuble < lg)", () => {
 			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByTestId("product-sort-bar")).toBeInTheDocument();
-		});
-
-		it("renders 3 sort options in the sort bar", () => {
-			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByTestId("product-sort-bar")).toHaveAttribute("data-options", "3");
+			expect(screen.getByTestId("product-filter-bar")).toBeInTheDocument();
 		});
 	});
 

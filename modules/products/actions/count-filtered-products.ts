@@ -8,6 +8,7 @@ import { PRODUCT_FILTER_COUNT_LIMIT } from "@/shared/lib/rate-limit-config";
 import { PRICE_LIMITS } from "@/shared/constants/validation-limits";
 
 import { countPublicProducts } from "../data/count-products";
+import { PRODUCTS_DEFAULT_SORT } from "../constants/product.constants";
 import {
 	filterFormDataToProductFilters,
 	resetFilterGroup,
@@ -65,7 +66,9 @@ export async function countFilteredProducts(input: unknown): Promise<CountFilter
 
 		const { maxPriceInEuros, search, lastChangedGroup, ...values } = parsed.data;
 		const defaultPriceRange: [number, number] = [0, maxPriceInEuros];
-		const formData: FilterFormData = values;
+		// Le tri ne change pas le compte : il ne voyage pas dans le payload (cf.
+		// `use-live-filter-count`), on complète la forme avec le défaut.
+		const formData: FilterFormData = { ...values, sortBy: PRODUCTS_DEFAULT_SORT };
 
 		const count = await countPublicProducts({
 			filters: filterFormDataToProductFilters(formData, defaultPriceRange),

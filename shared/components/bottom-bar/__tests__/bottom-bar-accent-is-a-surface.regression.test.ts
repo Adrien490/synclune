@@ -67,10 +67,16 @@ describe("@regression bottom-bar-accent-is-a-surface — l'accent peint des fond
 	});
 
 	/**
-	 * Le repli n'est pas décoratif : hors d'un `[data-accent]` — toute la surface
-	 * admin — `--section-accent` n'existe pas. Sans repli la languette serait
-	 * TRANSPARENTE, donc l'onglet courant invisible, en silence. C'est aussi ce
-	 * repli qui permet un seul dessin pour les deux hôtes.
+	 * Le repli n'est pas décoratif : hors d'un `[data-accent]`, `--section-accent`
+	 * n'existe pas. Sans repli la languette serait TRANSPARENTE, donc l'onglet
+	 * courant invisible, en silence.
+	 *
+	 * ⚠️ Et depuis le passage de la navigation au mono-rose (2026-08-06), ce
+	 * repli est le régime NOMINAL des deux hôtes : plus aucun onglet ne pose
+	 * `data-accent` (la boutique déclinait une couleur par onglet). Cette
+	 * assertion est donc devenue le SEUL garant de la couleur de la languette —
+	 * la supprimer comme « défensive » laisserait la barre du bas sans état
+	 * courant visible, partout, sans qu'aucun autre test ne bouge.
 	 */
 	it("la languette retombe sur le rose signature hors [data-accent]", () => {
 		const css = read("app/styles/components.css");

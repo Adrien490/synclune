@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { RAIL_ACCENTS } from "@/modules/products/components/catalog-accents.constants";
-import { BRAND } from "@/shared/constants/brand";
 import {
 	HAND_DRAWN_DURATIONS_MS,
 	HAND_DRAWN_STROKES,
@@ -42,12 +41,16 @@ export const RAIL_STROKE_COUNT = RAIL_STROKE_PATHS.length;
 
 /**
  * Marges du bloc d'accents — partagées entre le composant et son squelette
- * (parité CLS), et calibrées pour que la hauteur totale du bloc soit CELLE DE
- * L'ANCIEN RAIL : 6+12+8 = 26 px sous `sm`, 8+12+12 = 32 px au-dessus —
- * l'ancien rail faisait 8+6+12 et 10+6+16. Zéro décalage au changement de
- * direction, zéro décalage au swap squelette → page.
+ * (parité CLS).
+ *
+ * ⚠️ La marge HAUTE est partie avec le sur-titre (2026-08-06) : les touches
+ * sont désormais la PREMIÈRE ligne du bloc, et l'écart au fil d'Ariane est déjà
+ * donné par le `space-y-5` du conteneur de page — un `mt-1.5` par-dessus n'y
+ * séparait plus rien de ce qui est au-dessus. Elle réglait l'écart eyebrow →
+ * touches ; la reposer sans eyebrow ne ferait qu'ajouter 6 px au gap de
+ * conteneur, des deux côtés du swap.
  */
-const RAIL_WRAPPER_CLASS = "mt-1.5 mb-2 flex sm:mt-2 sm:mb-3";
+const RAIL_WRAPPER_CLASS = "mb-2 flex sm:mb-3";
 
 /**
  * Le rail d'accents, version « Les quatre touches » : des touches de pinceau
@@ -57,7 +60,7 @@ const RAIL_WRAPPER_CLASS = "mt-1.5 mb-2 flex sm:mt-2 sm:mb-3";
  * `-inview`). Pour un rail SOUS la ligne de flottaison, `inView` bascule sur
  * la timeline `view()` — cf. la JSDoc de la prop.
  *
- * Consommé aussi par `EtalHeading` (home) : les marges du wrapper restent la
+ * Consommé aussi par `HeroHeading` (home) : les marges du wrapper restent la
  * décision de l'appelant — seul le storefront passe par `RAIL_WRAPPER_CLASS`.
  *
  * `preserveAspectRatio="none"` est sûr ici pour la même raison que dans
@@ -108,6 +111,12 @@ export function HandDrawnRail({
 
 	return (
 		<svg
+			// ⚠️ Repère STABLE pour les tests. Ils ciblaient le premier `[aria-hidden]`
+			// de leur bloc titre — ce qui a tenu tant que le rail était le seul signe
+			// décoratif de la home. Il ne l'est plus (le décor du présentoir en est un
+			// autre), et un décompte de tracés pris sur le mauvais nœud échoue en
+			// désignant le rail, à côté de la cause.
+			data-slot="rail"
 			viewBox={RAIL_VIEWBOX}
 			preserveAspectRatio="none"
 			fill="none"
@@ -138,37 +147,34 @@ export function HandDrawnRail({
 }
 
 /**
- * Sur-titre d'atelier — le défaut de TOUTES les pages boutique, home comprise.
+ * ⚠️ **Il n'y a plus de sur-titre ici, et ce n'est pas un oubli** (2026-08-06).
  *
- * ⚠️ SSOT récupérée le 2026-08-05. La chaîne vivait en DEUX littéraux sans lien :
- * ici comme valeur par défaut de `eyebrow`, et en dur dans `etal-heading.tsx`.
- * Cinq routes prenaient le défaut, la page d'accueil avait sa copie — donc reformuler
- * le sur-titre côté partagé laissait diverger, en silence, la seule page que tout le
- * monde regarde. C'est le motif que le dépôt venait de corriger deux fois : les deux
- * `<p>` du chapô, et les quatre classes du rail (passées à `RAIL_ACCENTS`).
+ * « L'atelier de Léane · Nantes » était le défaut de CINQ routes boutique, et il
+ * s'y rendait coincé entre deux lignes qui disaient déjà la même chose : le fil
+ * d'Ariane juste au-dessus (« Accueil › Collections ») situe la page, et le
+ * chapô juste en dessous redit « dans mon atelier à {ville} » sur trois d'entre
+ * elles (/produits, /collections, /collections/[slug]). Trois lignes de contexte
+ * empilées avant le `h1`.
  *
- * L'apostrophe est droite (U+0027), comme le rendait l'entité `&apos;` des deux
- * littéraux : la changer en apostrophe typographique casserait les assertions de
- * texte sans rien apporter au rendu.
+ * La page d'accueil garde SON sur-titre — cf. `HOME_EYEBROW` dans
+ * `hero-heading.tsx` — parce que c'est le seul endroit où il travaille : aucun
+ * fil d'Ariane au-dessus, aucun doublon en dessous. Il y vit en local et non
+ * ici : un seul consommateur, donc plus de SSOT à tenir (c'est cette unicité de
+ * consommateur qui a fait descendre les classes avec la chaîne).
+ *
+ * ⚠️ Ne pas recopier sa VALEUR ici : elle a changé deux fois le 2026-08-06
+ * (« L'atelier de Léane · Nantes » → « Bienvenue sur Synclune ! » → le libellé
+ * courant), et ce commentaire l'a citée périmée dès la seconde. Le pointeur
+ * suffit.
+ *
+ * Ne pas re-poser une prop `eyebrow` « au cas où » : elle serait morte à
+ * l'instant même, comme l'étaient `accentClassName` et le `descriptionClassName`
+ * du squelette avant l'audit 79/100 du 2026-08-05.
  */
-export const STOREFRONT_EYEBROW = `L'atelier de Léane · ${BRAND.contact.location.city}`;
-
-/**
- * Classes du `<p>` d'eyebrow — SSOT au même titre que la chaîne ci-dessus, et
- * pour la même raison : `etal-heading.tsx` (home) rend le même sur-titre hors
- * de `StorefrontHeading`, et une copie des classes divergerait en silence au
- * premier retuning typographique (le défaut exact que `STOREFRONT_EYEBROW` a
- * corrigé pour le texte, rejoué au niveau du style — audit 79/100 du
- * 2026-08-05).
- */
-export const STOREFRONT_EYEBROW_CLASS =
-	"text-muted-foreground text-[0.8125rem] tracking-[0.09em] uppercase";
 
 export type StorefrontHeadingProps = {
 	/** Titre de la page — l'unique `h1`, visible à TOUS les viewports. */
 	title: string;
-	/** Sur-titre. Défaut : « L'atelier de Léane · {ville} ». */
-	eyebrow?: string;
 	/**
 	 * Accents décoratifs (`aria-hidden`) :
 	 * - `"rail"` (défaut) : les quatre touches de pinceau de marque ;
@@ -223,9 +229,10 @@ export type StorefrontHeadingProps = {
  * Direction « L'étal continue » (artifact /produits du 2026-08-05), rail passé
  * aux « quatre touches » (artifact bloc titre du 2026-08-05, reco B) : une page
  * boutique n'a pas de bande d'en-tête. Son titre est du texte posé sur le
- * papier — eyebrow d'atelier, touches de pinceau, `h1`, chapô — monté en tête
- * de page, au-dessus du contenu (re-tranché le 2026-08-05 : plus aucune route
- * ne le rend en cellule de la grille de produits).
+ * papier — touches de pinceau, `h1`, chapô — monté en tête de page, au-dessus
+ * du contenu (re-tranché le 2026-08-05 : plus aucune route ne le rend en
+ * cellule de la grille de produits). Le sur-titre d'atelier, lui, est parti le
+ * 2026-08-06 : cf. la note ci-dessus sur `HOME_EYEBROW`.
  *
  * ## Ce que la structure garantit
  *
@@ -249,7 +256,6 @@ export type StorefrontHeadingProps = {
  */
 export function StorefrontHeading({
 	title,
-	eyebrow,
 	accent = "rail",
 	description,
 	descriptionClassName,
@@ -260,8 +266,6 @@ export function StorefrontHeading({
 }: StorefrontHeadingProps) {
 	return (
 		<div className={cn(className)}>
-			<p className={STOREFRONT_EYEBROW_CLASS}>{eyebrow ?? STOREFRONT_EYEBROW}</p>
-
 			{/* Les touches de pinceau : le dernier trait du storefront encore tiré à
 			    la règle est passé au vocabulaire main (squiggle, tape, hand-drawn).
 			    Une seule touche quand la page a une identité propre (couleur de
@@ -276,11 +280,11 @@ export function StorefrontHeading({
 			    mesuré : le bord d'encre du « D » de Winky Sans tombe à 0,7 % d'em à
 			    DROITE de l'origine du crayon (contre ~5,5 % à gauche pour Fraunces), soit
 			    0,2 px au corps de ce bloc. Sous le seuil de visibilité (mesure du
-			    2026-08-05, cf. `etal-heading.tsx`).
+			    2026-08-05, cf. `hero-heading.tsx`).
 			    L'échelle reste SOUS le `clamp(2.5rem, 4.6vw, 4rem)` de la page
 			    d'accueil : ce sont des pages filles, elles ne crient pas plus fort
 			    que leur mère.
-			    La borne `md:max-w-[20ch]` vient aussi de `etal-heading.tsx` : entre
+			    La borne `md:max-w-[20ch]` vient aussi de `hero-heading.tsx` : entre
 			    768 et ~870 px la cellule est pleine largeur pendant que le clamp
 			    colle à son plancher — sans borne, un titre long s'étire en une seule
 			    ligne d'un bord à l'autre (défaut déjà payé sur la home). */}
@@ -321,8 +325,8 @@ export function StorefrontHeading({
 			    /produits, /produits/[type], /collections, /collections/[slug] et
 			    /favoris — une signature au défaut en mettait donc une
 			    deuxième sur CINQ routes, à ~un écran de celle du footer, et le geste
-			    manuscrit cessait d'en être un. L'eyebrow d'atelier ci-dessus dit
-			    déjà qui tient la boutique. */}
+			    manuscrit cessait d'en être un. Le chapô de chaque page parle déjà à
+			    la première personne (« Je peins et j'assemble… »). */}
 
 			{/* Le seul titre visible est le `h1` ; les cartes portent des `h3`. Ce `h2`
 			    masqué comble le saut de niveau (WCAG 1.3.1). Il est en FIN de bloc :
@@ -367,8 +371,10 @@ export function StorefrontHeadingSkeleton({
 }) {
 	return (
 		<div className={cn(className)}>
-			{/* Eyebrow : 13 px × interligne 1.5 ≈ 19,5 px. */}
-			<Skeleton className="h-5 w-48 rounded" />
+			{/* ⚠️ Pas de ligne de sur-titre : le bloc réel n'en rend plus (2026-08-06).
+			    Les ~26 px qu'elle réservait (h-5 + mt-1.5 du rail) sont partis DES
+			    DEUX CÔTÉS le même jour — une ligne gardée d'un seul côté est
+			    exactement le défaut que le test de parité verrouille, au signe près. */}
 			<div aria-hidden="true" className={RAIL_WRAPPER_CLASS}>
 				{accent === "rail" ? (
 					<HandDrawnRail accent="rail" animated={false} className="opacity-40" />

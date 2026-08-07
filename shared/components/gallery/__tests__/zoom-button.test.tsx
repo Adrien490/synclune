@@ -84,7 +84,7 @@ describe("GalleryZoomButton", () => {
 		});
 
 		// Convention du dépôt pour tout déclencheur de dialogue — `cart-sheet-trigger`,
-		// `quick-search-trigger`, `product-sort-bar`. `MediaLightbox` est bien un
+		// `quick-search-trigger`, `product-filter-bar`. `MediaLightbox` est bien un
 		// `role="dialog" aria-modal="true"`.
 		it("s'annonce comme déclencheur de dialogue", () => {
 			render(<GalleryZoomButton onOpen={vi.fn()} />);

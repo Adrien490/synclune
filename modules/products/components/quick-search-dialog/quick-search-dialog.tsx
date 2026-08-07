@@ -37,12 +37,7 @@ import {
 	SWIPE_CLOSE_VELOCITY_PX_PER_MS,
 	SWIPE_RUBBER_BAND_FACTOR,
 } from "./constants";
-import type {
-	QuickSearchCollection,
-	QuickSearchColor,
-	QuickSearchProductType,
-	RecentlyViewedProduct,
-} from "./constants";
+import type { QuickSearchCollection, QuickSearchColor, QuickSearchProductType } from "./constants";
 import { lastTrigger } from "./last-trigger";
 import { IdleContent } from "./idle-content";
 import { QuickSearchContent } from "./quick-search-content";
@@ -53,14 +48,12 @@ import { useKeyboardNavigation } from "./use-keyboard-navigation";
 import { isSearchError, useQuickSearch } from "./use-quick-search";
 
 const EMPTY_RECENT_SEARCHES: string[] = [];
-const EMPTY_RECENTLY_VIEWED: RecentlyViewedProduct[] = [];
 const EMPTY_COLORS: QuickSearchColor[] = [];
 
 interface QuickSearchDialogProps {
 	recentSearches?: string[];
 	collections: QuickSearchCollection[];
 	productTypes: QuickSearchProductType[];
-	recentlyViewed?: RecentlyViewedProduct[];
 	/**
 	 * Le nuancier. Déjà vide côté serveur quand le catalogue porte trop peu de
 	 * teintes pour qu'un mur veuille dire quelque chose (cf. `getQuickSearchData`).
@@ -72,7 +65,6 @@ export function QuickSearchDialog({
 	recentSearches: initialSearches = EMPTY_RECENT_SEARCHES,
 	collections,
 	productTypes,
-	recentlyViewed = EMPTY_RECENTLY_VIEWED,
 	colors = EMPTY_COLORS,
 }: QuickSearchDialogProps) {
 	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID);
@@ -600,7 +592,6 @@ export function QuickSearchDialog({
 						/* ====== IDLE MODE ====== */
 						<Fade key="idle-content" y={6} className="h-full">
 							<IdleContent
-								recentlyViewed={recentlyViewed}
 								searches={searches}
 								colors={colors}
 								collections={collections}

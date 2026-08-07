@@ -23,14 +23,24 @@ import { IMAGES } from "@/shared/constants/images";
  * jour où elles arrivent : remplacer cette URL et `ATELIER_IMAGE_ALT`, rien
  * d'autre — la section et le JSON-LD suivent. Le plan complet (galerie 4
  * scènes, alts prêts) est conservé dans `docs/atelier-story.md`.
+ *
+ * ⚠️ `null` tant que l'asset FOUNDER est mort (404 — cf. `IMAGES.FOUNDER`) :
+ * la section rend alors la plaque dessinée et le nœud HowTo omet son `image`.
  */
-export const ATELIER_IMAGE = IMAGES.FOUNDER;
+export const ATELIER_IMAGE: string | null = IMAGES.FOUNDER;
 
 export const ATELIER_IMAGE_ALT = "Léane, créatrice des bijoux Synclune, dans son atelier à Nantes";
 
+/**
+ * Union LITTÉRALE des ids d'étapes — pas un `string` : c'est elle qui permet à
+ * la section de keyer ses vignettes de geste en `Record<AtelierStepId, …>`,
+ * donc d'échouer au typecheck si une étape arrive sans vignette.
+ */
+export type AtelierStepId = "idea" | "materials" | "assembly" | "finishing";
+
 export interface AtelierStep {
 	/** Fragment d'ancre : chaque `<li>` de la section porte `id="atelier-step-<id>"`. */
-	id: string;
+	id: AtelierStepId;
 	title: string;
 	description: string;
 }
@@ -68,15 +78,32 @@ export const ATELIER_STEPS: ReadonlyArray<AtelierStep> = [
 ] as const;
 
 /**
- * Champs du nœud `HowTo` qui n'apparaissent pas à l'écran (matériel, outils,
- * durée) — repris de la spec historique de `docs/atelier-story.md`. `name`
- * est AUSSI le `h3` rendu par la section : même chaîne, même source.
+ * Le nœud `HowTo` du `@graph` — et, depuis l'audit du 2026-08-06, **tout y est
+ * visible à l'écran**.
+ *
+ * ⚠️ Matériel, outils et durée étaient balisés sans exister nulle part sur la
+ * page : le principe qui gouverne `#atelier` et `#faq` (« le balisage doit
+ * pointer du contenu réellement visible ») était donc tenu pour les étapes et
+ * violé pour le reste du nœud. Ils sont désormais rendus par
+ * `atelier-worktable.tsx` (« Sur la table »), qui remplissait au passage les
+ * deux vides mesurés de la section — 362×476 px de plaque creuse à `lg`, et
+ * ~420×370 px de blanc à 768.
+ *
+ * `name` est AUSSI le `h3` rendu par la section : même chaîne, même source.
  */
 export const ATELIER_HOWTO = {
 	name: "Comment je crée tes bijoux",
 	description:
 		"De l'inspiration à la finition, les quatre étapes de création d'un bijou artisanal en plastique fou peint à la main, dans mon atelier à Nantes.",
 	totalTime: "PT3H",
+	/**
+	 * La même durée, en français et au tutoiement — le pendant LISIBLE de
+	 * `totalTime`. Les deux vivent côte à côte pour ne pas dériver : une durée
+	 * affichée qui contredirait la durée balisée est exactement le genre
+	 * d'incohérence que Google relève. Parité verrouillée par le test de la
+	 * section.
+	 */
+	totalTimeLabel: "environ 3 h par bijou",
 	supplies: [
 		"Plastique fou",
 		"Peinture acrylique",

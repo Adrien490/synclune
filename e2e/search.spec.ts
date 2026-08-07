@@ -2,19 +2,18 @@ import { VIEWPORTS, requireSeedData } from "./constants";
 import { test, expect } from "./fixtures";
 
 /**
- * Recherche produits — champ inline de `/produits`.
+ * Recherche produits — via le QUICK-SEARCH (le champ inline du catalogue a été
+ * retiré le 2026-08-06 ; l'entrée de recherche est le dialog de la navbar, la
+ * sortie l'étiquette « Recherche » du bandeau de filtres).
  *
- * ⚠️ Ce champ vit dans une toolbar `hidden md:flex` (`product-catalog.tsx`) :
- * `SearchPage.open()` épingle donc le viewport desktop. Les anciens
- * `test.skip(inputCount === 0)` désactivaient silencieusement TOUTE cette
- * couverture `@critical` sur mobile-chrome / mobile-webkit ; l'entrée mobile
- * réelle (barre de tri → dialog) est couverte par le dernier test du fichier.
+ * `SearchPage.open()` épingle le viewport desktop (déclencheur navbar) ;
+ * l'entrée mobile réelle est couverte par le dernier test du fichier.
  */
 test.describe("Recherche produits", { tag: ["@critical"] }, () => {
-	test("le champ de recherche est visible sur la page produits", async ({ searchPage }) => {
+	test("le quick-search s'ouvre depuis la page produits", async ({ searchPage }) => {
 		await searchPage.open();
 
-		await expect(searchPage.searchInput.first()).toBeVisible();
+		await expect(searchPage.searchInput).toBeVisible();
 	});
 
 	test("la recherche met a jour les resultats", async ({ searchPage }) => {
@@ -57,15 +56,17 @@ test.describe("Recherche produits", { tag: ["@critical"] }, () => {
 		await searchPage.open();
 
 		await searchPage.search("bague");
+		// L'étiquette « Recherche : "bague" » du bandeau est la seule affordance
+		// qui efface `?search=` depuis le retrait du champ inline.
 		await searchPage.clearSearch();
 
 		// URL should no longer contain search param
 		await expect(searchPage.page).not.toHaveURL(/search=/, { timeout: 5000 });
 	});
 
-	test("sur mobile, la barre de tri ouvre le dialog et la recherche aboutit", async ({ page }) => {
-		// Il n'y a PAS de champ inline sous md — l'entrée mobile de `/produits` est
-		// le bouton « Rechercher » de `ProductSortBar`, qui ouvre le quick search.
+	test("sur mobile, le quick search s'ouvre et la recherche aboutit", async ({ page }) => {
+		// Il n'y a aucun champ inline — l'entrée mobile de `/produits` est le
+		// déclencheur quick-search (navbar / bottom-nav).
 		await page.setViewportSize(VIEWPORTS.MOBILE);
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
@@ -20,7 +11,6 @@ import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
-import { Spinner } from "@/shared/components/ui/spinner";
 
 export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
 
@@ -76,7 +66,7 @@ export function RemoveCartItemAlertDialog() {
 		});
 	};
 
-	const { action, isPending } = useRemoveFromCart({
+	const { action } = useRemoveFromCart({
 		quantity: removeDialog.data?.quantity ?? 1,
 		onSuccess: () => {
 			const { skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
@@ -85,12 +75,6 @@ export function RemoveCartItemAlertDialog() {
 			showUndoToast(skuId, quantity, itemName);
 		},
 	});
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			removeDialog.close();
-		}
-	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -113,36 +97,19 @@ export function RemoveCartItemAlertDialog() {
 	};
 
 	return (
-		<ResponsiveAlertDialog
-			tone="destructive"
+		<ConfirmDialog
 			open={removeDialog.isOpen}
-			onOpenChange={handleOpenChange}
-		>
-			<ResponsiveAlertDialogContent>
-				<form onSubmit={handleSubmit} aria-label="Supprimer l'article du panier">
-					<input type="hidden" name="skuId" value={removeDialog.data?.skuId ?? ""} />
-
-					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>
-							Retirer cette pièce de ton panier ?
-						</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription>
-							{removeDialog.data?.itemName
-								? `Tu veux vraiment retirer ${removeDialog.data.itemName} de ton panier ? Tu pourras toujours la retrouver dans la boutique si tu changes d'avis !`
-								: "Tu veux vraiment retirer cette pièce de ton panier ? Tu pourras toujours la retrouver dans la boutique si tu changes d'avis !"}
-						</ResponsiveAlertDialogDescription>
-					</ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Spinner presentational />}
-							{isPending ? "Retrait…" : "Retirer"}
-						</ResponsiveAlertDialogAction>
-					</ResponsiveAlertDialogFooter>
-				</form>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+			onClose={removeDialog.close}
+			onSubmit={handleSubmit}
+			tone="destructive"
+			fields={{ skuId: removeDialog.data?.skuId }}
+			title="Retirer cette pièce de ton panier ?"
+			confirmLabel="Retirer"
+			description={
+				removeDialog.data?.itemName
+					? `Tu veux vraiment retirer ${removeDialog.data.itemName} de ton panier ? Tu pourras toujours la retrouver dans la boutique si tu changes d'avis !`
+					: "Tu veux vraiment retirer cette pièce de ton panier ? Tu pourras toujours la retrouver dans la boutique si tu changes d'avis !"
+			}
+		/>
 	);
 }

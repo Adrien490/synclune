@@ -1,5 +1,7 @@
 import { cacheLife } from "next/cache";
 
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { LEGAL_WITHDRAWAL_DAYS } from "@/shared/constants/consumer-law";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
@@ -116,21 +118,29 @@ export function generateStructuredData({
 	// Nombre de SKUs actifs pour AggregateOffer
 	const activeSkuCount = product.skus.filter((sku) => sku.isActive).length || 1;
 
-	// Return policy and shipping details shared by all offer types
+	// Return policy and shipping details shared by all offer types.
+	//
+	// ⚠️ Les deux valeurs corrigées le 2026-08-06 disaient à Google le CONTRAIRE
+	// des CGV — c'est une allégation commerciale, pas une inexactitude de balisage :
+	//   - `returnFees` affirmait `FreeReturn` là où les CGV § 6.3 et `/retractation`
+	//     disent « les frais de retour sont à votre charge » ;
+	//   - `shippingRate` était figé à « 6.00 » quand `SHIPPING_RATES.FR` facture 4,99 €.
+	// Les deux dérivent désormais des SSOT, comme le `hasShippingService` du nœud
+	// marchand (`getOrganizationSchema`), qui est l'endroit où Google veut les lire.
 	const returnPolicy = {
 		"@type": "MerchantReturnPolicy",
 		applicableCountry: "FR",
 		returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-		merchantReturnDays: 14,
+		merchantReturnDays: LEGAL_WITHDRAWAL_DAYS,
 		returnMethod: "https://schema.org/ReturnByMail",
-		returnFees: "https://schema.org/FreeReturn",
+		returnFees: "https://schema.org/ReturnShippingFees",
 	};
 
 	const shippingDetails = {
 		"@type": "OfferShippingDetails",
 		shippingRate: {
 			"@type": "MonetaryAmount",
-			value: "6.00",
+			value: (SHIPPING_RATES.FR.amount / 100).toFixed(2),
 			currency: "EUR",
 		},
 		shippingDestination: {

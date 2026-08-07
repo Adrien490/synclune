@@ -8,7 +8,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { COLORS_CACHE_TAGS } from "@/modules/colors/constants/cache";
 import { MATERIALS_CACHE_TAGS } from "@/modules/materials/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { PRODUCTS_CACHE_TAGS, RECENT_PRODUCTS_CACHE_TAGS } from "../constants/cache";
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 // ============================================
 // CACHE CONFIGURATION HELPERS
@@ -75,7 +75,6 @@ export function cacheProductDetailById(productId: string) {
  * - Les produits similaires contextuels (par produit)
  * - L'inventaire dashboard
  * - Les badges de la sidebar (affecte le count d'inventaire)
- * - Le carrousel « Vus récemment » (un produit archivé/supprimé doit en sortir)
  * - La liste des types de bijoux (leur `hasProducts` dépend des produits PUBLIC)
  */
 export function getProductInvalidationTags(
@@ -99,12 +98,6 @@ export function getProductInvalidationTags(
 		PRODUCTS_CACHE_TAGS.COUNTS,
 		PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,
 		PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL(productSlug),
-		// `get-recent-products.ts` documentait « Invalidé par:
-		// updateTag("recent-products-list") lors de mutations produits » — ce qui n'était
-		// vrai NULLE PART : seul le cron RGPD bustait ce tag (les avis aussi, jusqu'à
-		// leur retrait le 2026-07-30). Un produit archivé restait donc dans « Vus
-		// récemment » jusqu'à expiration du profil.
-		RECENT_PRODUCTS_CACHE_TAGS.LIST,
 		// `hasProducts` / `_count.products` des types de bijoux se calculent sur les
 		// produits PUBLIC : publier le premier bijou d'un type doit le faire apparaître
 		// au mega-menu et au sitemap sans attendre l'expiration du profil `user`.

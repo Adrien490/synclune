@@ -55,24 +55,25 @@ describe("@regression catalog-heading-above-toolbar", () => {
 	const collectionLoading = read("app/(shop)/collections/[slug]/loading.tsx");
 
 	it("le shell /produits monte le bloc titre AVANT la barre d'outils", () => {
-		expectBefore(shell, "product-catalog.tsx", "<CatalogHeading", "<ProductSortBar");
+		expectBefore(shell, "product-catalog.tsx", "<CatalogHeading", "<ProductFilterBar");
 	});
 
-	it("le shell /produits monte le bloc titre AVANT le cluster recherche/tri de sa rangée", () => {
-		expectBefore(shell, "product-catalog.tsx", "<CatalogHeading", "<CatalogToolbarInline");
-	});
-
-	it("la barre ne monte plus AUCUN champ de recherche (une seule instance de SearchInput)", () => {
-		// Un corps monté deux fois partage ses `id` (`<label htmlFor>` résout vers
-		// la première occurrence, même masquée) et fait échouer le strict mode
-		// Playwright (`e2e/pages/search.page.ts` attend UN `role="searchbox"`).
-		// Depuis le retour user du 2026-08-05, le champ vit dans la rangée titre
-		// (`CatalogToolbarInline`) — la barre n'en remonte jamais un second.
-		const sortBar = read("modules/products/components/product-sort-bar.tsx");
-		expect(
-			sortBar.includes("<SearchInput"),
-			"product-sort-bar.tsx ne doit plus monter de `<SearchInput` — le champ vit dans `CatalogToolbarInline`.",
-		).toBe(false);
+	it("le catalogue ne monte plus AUCUN champ de recherche inline", () => {
+		// La recherche inline a été retirée du catalogue (2026-08-06) : l'entrée
+		// de recherche est le quick-search navbar / bottom-nav, qui atterrit sur
+		// `/produits?search=`. Un `<SearchInput` qui reviendrait dans le shell ou
+		// la barre recréerait le doublon d'instances (`id` partagés + strict mode
+		// Playwright) que le montage précédent avait dû résoudre.
+		const filterBar = read("modules/products/components/product-filter-bar.tsx");
+		for (const [file, source] of [
+			["product-catalog.tsx", shell],
+			["product-filter-bar.tsx", filterBar],
+		] as const) {
+			expect(
+				source.includes("<SearchInput"),
+				`${file} ne doit pas monter de \`<SearchInput\` — la recherche du catalogue passe par le quick-search.`,
+			).toBe(false);
+		}
 	});
 
 	it("le shell /produits monte le bloc titre HORS de la grille", () => {

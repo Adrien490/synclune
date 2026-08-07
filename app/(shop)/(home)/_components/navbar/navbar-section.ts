@@ -21,23 +21,26 @@ const NONE: NavbarSection = { accent: null, label: null };
 /**
  * Résout la « salle » de la boutique à partir du chemin.
  *
- * ## Pourquoi une couleur par salle, et pourquoi CELLES-LÀ
+ * ## Une seule couleur : le rose signature (2026-08-06)
  *
  * Le bandeau de 4 px sous la barre est un APLAT : c'est la seule façon d'employer
  * les accents de marque, excellents en surface (7,8 à 12,7:1 sous `--foreground`)
- * et inutilisables en encre (1,5 à 2,5:1). Reste à ne pas rendre la
- * correspondance arbitraire — sinon le bandeau devient de la décoration.
+ * et inutilisables en encre (1,5 à 2,5:1). Ce régime-là ne change pas.
  *
- * Elle suit **l'ordre des touches de pinceau du bloc titre** (`RAIL_ACCENTS`,
- * rose → lavande → menthe → soleil — le même fil que portait le dégradé du
- * titre avant son passage au surligneur, 2026-08-05) : accueil rose,
- * créations lavande, collections menthe.
+ * Ce qui change, c'est le NOMBRE de couleurs. Chaque salle portait la sienne
+ * (accueil rose, créations lavande, collections menthe), dans l'ordre des touches
+ * de pinceau du bloc titre. **Toute la navigation est désormais mono-rose** —
+ * bandeau, languette de la barre du bas, item courant du volet, panneaux du
+ * méga-menu : la barre est le seul objet co-visible avec TOUTES les pages, et
+ * la voir changer de teinte à chaque route lisait comme une bascule de thème,
+ * pas comme un repère. Le rose est la couleur de la marque ; les trois autres
+ * accents restent vivants là où ils qualifient un CONTENU (fil de l'atelier,
+ * étapes du tunnel de paiement, bandes de sections, séries de collections).
  *
- * ⚠️ Le soleil — quatrième accent, seul hors dégradé — allait à l'aide. Depuis
- * que la FAQ a rejoint la landing (2026-08-05), il n'est plus attribué à AUCUNE
- * salle : `NavbarAccent` le garde parce que `section-accents.css` l'expose et
- * que la section FAQ le porte sur son contenu, mais `resolveNavbarSection` ne le
- * rend plus jamais. C'est donc lui, le candidat naturel d'une cinquième salle.
+ * ⚠️ Corollaire : `accent` ne rend plus que `"rose"` ou `null`. Le type garde les
+ * quatre valeurs parce que `section-accents.css` les expose toujours et que
+ * `navbar-wrapper` ne fait que les passer en `data-accent` — mais réintroduire
+ * une couleur par salle ici est un retour en arrière, pas une extension.
  *
  * ## Ce qui n'a délibérément PAS d'accent
  *
@@ -82,11 +85,11 @@ export function resolveNavbarSection(pathname: string | null): NavbarSection {
 		isUnder(pathname, ROUTES.SHOP.PRODUCT_DETAIL_PREFIX) ||
 		isUnder(pathname, ROUTES.SHOP.PRODUCTS)
 	) {
-		return { accent: "lavender", label: "Créations" };
+		return { accent: "rose", label: "Créations" };
 	}
 
 	if (isUnder(pathname, ROUTES.SHOP.COLLECTIONS)) {
-		return { accent: "mint", label: "Collections" };
+		return { accent: "rose", label: "Collections" };
 	}
 
 	// ⚠️ Plus de salle « Aide ». La FAQ a rejoint la landing le 2026-08-05, et

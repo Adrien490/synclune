@@ -20,7 +20,12 @@ export const CARD_SURFACE_POLAROID = [
 	"bg-card group relative touch-manipulation",
 	"rounded-md border-2 border-transparent shadow-sm",
 	"p-2 pb-0 sm:p-2.5 sm:pb-0",
-	"transition-[transform,border-color,box-shadow] duration-300 ease-out",
+	// `translate,rotate` et non `transform` : en Tailwind v4, `-translate-y-1` /
+	// `rotate-1` alimentent les propriétés CSS AUTONOMES `translate`/`rotate`
+	// (`.-rotate-1{rotate:-1deg}` dans le CSS compilé) — une liste qui ne
+	// déclarait que `transform` faisait sauter le lift/tilt à la frame 1,
+	// pendant que bordure et ombre s'animaient bien sur 300 ms.
+	"transition-[translate,rotate,border-color,box-shadow] duration-300 ease-out",
 	"motion-reduce:transition-colors",
 ].join(" ");
 
@@ -31,3 +36,14 @@ export const CARD_SURFACE_HOVER = [
 
 export const CARD_SURFACE_FOCUS =
 	"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg";
+
+/**
+ * Inclinaison alternée des tirages (par index de grille). Pose STATIQUE, pas
+ * un mouvement → pas de `motion-safe:`. Classes LITTÉRALES, jamais
+ * interpolées : Tailwind ne compose que ce qu'il lit tel quel dans les
+ * sources. Partagée entre la carte collection de la landing et celle du
+ * méga-menu (mêmes valeurs recopiées des deux côtés avant l'harmonisation
+ * 2026-08-06) — `TIRAGE_TILT` de `mega-menu-creations.tsx` reste à part,
+ * ses valeurs diffèrent volontairement.
+ */
+export const CARD_TILT = ["-rotate-[0.8deg]", "rotate-[0.7deg]"] as const;

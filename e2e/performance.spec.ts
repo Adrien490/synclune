@@ -151,7 +151,7 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 		test.info().annotations.push({ type: "lcp-element", description: identity });
 
 		test.skip(
-			(await page.locator("#etal article").count()) === 0,
+			(await page.locator("#hero article").count()) === 0,
 			"Catalogue vide : l'étal rend la carte de contact, la question du porteur ne se pose pas.",
 		);
 

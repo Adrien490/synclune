@@ -77,12 +77,11 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	"modules/products/actions/count-filtered-products.ts",
 	// Pagination « voir plus » du catalogue public (lecture seule).
 	"modules/products/actions/load-more-products.ts",
-	// Historique de recherche / produits vus du visiteur — stocké en cookie,
-	// scopé à son propre navigateur, aucune écriture DB.
+	// Historique de recherche du visiteur — stocké en cookie, scopé à son propre
+	// navigateur, aucune écriture DB.
 	"modules/products/actions/add-recent-search.ts",
 	"modules/products/actions/remove-recent-search.ts",
 	"modules/products/actions/clear-recent-searches.ts",
-	"modules/products/actions/add-recent-product.ts",
 	// --- Codes promo : les deux seules surfaces client du module ---
 	// Saisie d'un code au checkout par un invité. Garde volontairement faible mais
 	// RÉELLE : `requireActiveAccountIfAuthenticated()` (autorise l'invité, rejette

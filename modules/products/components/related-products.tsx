@@ -31,10 +31,11 @@ interface RelatedProductsProps {
  *
  * Utilise getRelatedProducts avec algorithme contextuel pour maximiser la pertinence
  *
- * ⚠️ **Le séparateur qui précède la section vit ICI, pas dans `page.tsx`** — même
- * raison que pour `RecentlyViewedProducts` : cette section retourne `null` sur un
- * produit isolé (aucune collection, aucun voisin de type), et un filet rendu par
- * la page ne pouvait pas disparaître avec elle.
+ * ⚠️ **Le séparateur qui précède la section vit ICI, pas dans `page.tsx`** : cette
+ * section retourne `null` sur un produit isolé (aucune collection, aucun voisin de
+ * type), et un filet rendu par la page ne pouvait pas disparaître avec elle — il
+ * restait alors seul en bas de fiche, sans rien à séparer. Le squelette porte le
+ * même filet, sinon le swap décale.
  *
  * @example
  * ```tsx

@@ -11,7 +11,7 @@ export const MOTION_CONFIG = {
 		medium: 0.35, // 350ms - text flips, rotating words, checkout steps
 		slow: 0.3, // 300ms - matches --duration-slow
 		emphasis: 0.4, // 400ms - logo entrance, scroll reveals
-		slower: 0.5, // 500ms - matches --duration-slower
+		slower: 0.5, // 500ms - hand-drawn trait, entrances
 		collapse: 0.28,
 	},
 

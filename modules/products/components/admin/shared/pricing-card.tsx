@@ -21,6 +21,36 @@ import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
  */
 const COMPARE_AT_PRICE_ERROR = "Le prix comparé doit être strictement supérieur au prix de vente";
 
+/**
+ * Le rappel légal du prix barré — art. L. 112-1-1 du Code de la consommation.
+ *
+ * ## Pourquoi ce texte existe, et pourquoi il n'est PAS une validation
+ *
+ * Toute annonce de réduction de prix doit référencer **le prix le plus bas
+ * pratiqué dans les 30 jours précédents**, et des remises successives ne
+ * réinitialisent pas cette référence. Les sanctions récentes ne sont pas
+ * théoriques : SHEIN 40 M€ (juillet 2025), PrettyLittleThing 1,3 M€ (septembre
+ * 2025), et la loi 2025-594 permet désormais aux agents d'exiger l'accès aux
+ * algorithmes de prix.
+ *
+ * Or `compareAtPrice` est un champ LIBRE : sa seule contrainte, côté client comme
+ * côté serveur, est d'être strictement supérieur au prix de vente. Rien dans le
+ * schéma Prisma ni dans le code ne le rattache à un historique de prix.
+ *
+ * ⚠️ **Le rendre vérifiable par la machine demanderait un historique de prix en
+ * base** (table `SkuPriceHistory`, calcul du plus-bas glissant, refus à
+ * l'écriture) — un chantier à part entière, disproportionné pour une opératrice
+ * unique qui saisit quelques promotions par an. L'arbitrage retenu le 2026-08-06
+ * est donc explicite : **un rappel au point de saisie**, là où la décision se
+ * prend, plutôt qu'un moteur. C'est un garde-fou humain, et il est assumé comme
+ * tel — pas un oubli de validation.
+ *
+ * Condition de réouverture : le jour où les promotions deviennent fréquentes ou
+ * automatisées, ce commentaire ne suffit plus et l'historique devient nécessaire.
+ */
+const COMPARE_AT_PRICE_LEGAL_HINT =
+	"Doit être le prix le plus bas pratiqué ces 30 derniers jours (art. L. 112-1-1) — pas un prix de référence gonflé.";
+
 export interface PricingFieldsProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	form: any;
@@ -144,7 +174,13 @@ export function PricingFields({
 						</field.InputGroupField>
 						<p id={`${hintIdPrefix}-compare-hint`} className="text-muted-foreground text-xs">
 							Sera affiché barré à côté du prix actuel (ex:{" "}
-							<span className="line-through">45€</span> → 39€)
+							<span className="line-through">45€</span> → 39€).
+							{/* Le rappel légal est dans le MÊME `aria-describedby` que l'exemple,
+							    pas dans un bloc à part : au lecteur d'écran, un encadré frère du
+							    champ ne s'annonce jamais à la saisie. */}
+							<span className="text-foreground mt-1 block font-medium">
+								{COMPARE_AT_PRICE_LEGAL_HINT}
+							</span>
 						</p>
 					</div>
 				)}

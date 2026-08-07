@@ -103,7 +103,10 @@ export function AddToCartCardButton({
 						cn(
 							"absolute bottom-2.5 left-1/2 z-30 -translate-x-1/2",
 							"sm:can-hover:group-hover:translate-y-0 sm:can-hover:group-hover:opacity-100 sm:can-hover:translate-y-2 sm:can-hover:opacity-0 opacity-100 sm:focus-within:translate-y-0 sm:focus-within:opacity-100",
-							"duration-300 motion-safe:transition-[opacity,transform]",
+							// `translate` et non `transform` : Tailwind v4 compile `translate-y-*`
+							// vers la propriété autonome `translate` — avec `transform` dans la
+							// liste, le slide-up sautait à la frame 1, seule l'opacity fondait.
+							"duration-300 motion-safe:transition-[opacity,translate]",
 						),
 				className,
 			)}

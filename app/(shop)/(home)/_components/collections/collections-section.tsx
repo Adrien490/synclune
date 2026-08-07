@@ -8,7 +8,11 @@ import { Button } from "@/shared/components/ui/button";
 import { CONTAINER_CLASS } from "@/shared/constants/spacing";
 import { ROUTES } from "@/shared/constants/urls";
 
-import { CollectionsGrid, CollectionsGridSkeleton } from "./collections-grid";
+import {
+	CollectionsGrid,
+	CollectionsGridSkeleton,
+	LANDING_COLLECTIONS_COUNT,
+} from "./collections-grid";
 
 /**
  * Ancre de la section — même arbitrage que `ATELIER_SECTION_ID` / `FAQ_SECTION_ID` :
@@ -56,10 +60,27 @@ export function CollectionsSection({
 		<section
 			id={COLLECTIONS_SECTION_ID}
 			aria-labelledby={TITLE_ID}
-			// `scroll-mt` : l'ancre `/#collections` ne doit pas coller le titre sous
-			// la barre fixe. `--navbar-height-static`, jamais `--navbar-height` (qui
-			// retombe au premier pixel scrollé) — le pattern atelier/FAQ.
-			className={`${CONTAINER_CLASS} scroll-mt-[calc(var(--navbar-height-static)+1.5rem)] pb-12 lg:pb-16`}
+			// ⚠️ `data-accent="mint"` ajouté le 2026-08-06 : le JSDoc ci-dessus
+			// ANNONÇAIT la menthe depuis la création de la section, mais aucun
+			// `data-accent` n'était posé — la cascade `--section-accent` /
+			// `--section-wash` n'existait donc pas ici, et le rail était peint en dur
+			// (`bg-brand-mint`) pendant que chaque carte fille reconstruisait sa
+			// couleur de son côté.
+			//
+			// Conséquence à l'échelle de la page : sur quatre salles, deux seulement
+			// portaient un accent (atelier `rose`, FAQ `sun`). Or la polychromie de la
+			// DA se joue par la ROTATION d'accents entre sections — pas par un token
+			// de plus par couleur. Deux salles sur quatre, c'est la moitié du
+			// mécanisme.
+			data-accent="mint"
+			// ⚠️ PAS de `scroll-mt` : la compensation de la barre fixe est déjà faite
+			// UNE fois, globalement, par `html { scroll-padding-top: var(--navbar-height) }`
+			// (`app/globals.css`). En ajouter un dérivé de la même hauteur la comptait
+			// DEUX fois — mesuré à 1280 : `/#collections` atterrissait avec 104 px de
+			// blanc sous la navbar et son `h2` à 168 px. Le `pt-12 lg:pt-16` ci-dessous
+			// EST l'air au-dessus du titre (h2 à 64 px de la barre). Cf. `#hero`, qui
+			// n'a jamais eu de `scroll-mt` et atterrit juste.
+			className={`${CONTAINER_CLASS} pb-12 lg:pb-16`}
 		>
 			<div className="pt-12 lg:pt-16">
 				<div className="enter-inview max-w-[46ch]">
@@ -83,11 +104,17 @@ export function CollectionsSection({
 					</p>
 				</div>
 
-				{/* `items-start`, comme la grille de l'étal : deux cartes d'une même
-				    rangée ne se réalignent pas sur la plus haute. */}
+				{/* Pas d'`items-start` ici, contrairement à la grille de l'étal : les
+				    cartes d'une rangée s'étirent à la plus haute (défaut `stretch`), et
+				    la carte remplit son `<li>` en `h-full`. Mesuré à l'audit du
+				    2026-08-06 : avec `items-start`, un nom qui passe à deux lignes rendait
+				    sa carte à 232px contre 204px pour sa voisine, et les lignes
+				    « À partir de… » d'une même rangée se retrouvaient à 28px d'écart.
+				    L'étal n'a pas le problème — ses cartes ont un média à ratio fixe et
+				    une seule ligne de prix, donc une hauteur naturellement constante. */}
 				<ul
 					aria-label="Les collections"
-					className="mt-8 grid grid-cols-2 items-start gap-4 sm:mt-10 sm:gap-6 lg:grid-cols-4"
+					className="mt-8 grid grid-cols-2 gap-4 sm:mt-10 sm:gap-6 lg:grid-cols-4"
 				>
 					<Suspense fallback={<CollectionsGridSkeleton />}>
 						<CollectionsGrid collectionsPromise={collectionsPromise} />
@@ -95,14 +122,59 @@ export function CollectionsSection({
 				</ul>
 
 				{/* La sortie : `/collections` nue — la landing montre les portes, le
-				    carnet des séries les raconte. */}
+				    carnet des séries les raconte.
+
+				    ⚠️ Sa propre frontière `Suspense`, et pas un `await` dans la section :
+				    le `<h2>` et le chapô ci-dessus ne doivent JAMAIS dépendre de la
+				    lecture catalogue. Le repli rend le même bouton sans le chiffre — la
+				    portée est un plus, jamais un prérequis à l'affichage du lien. */}
 				<div className="mt-8 sm:mt-10">
-					<Button render={<Link href={ROUTES.SHOP.COLLECTIONS} />} variant="outline">
-						Toutes les collections
-						<ArrowRightIcon aria-hidden="true" className="size-4" />
-					</Button>
+					<Suspense fallback={<CollectionsExitLink />}>
+						<CollectionsExitLinkWithScope collectionsPromise={collectionsPromise} />
+					</Suspense>
 				</div>
 			</div>
 		</section>
+	);
+}
+
+/**
+ * La sortie vers `/collections`, avec sa PORTÉE quand on la connaît.
+ *
+ * « Voir les 7 collections » plutôt que « Toutes les collections » : Baymard
+ * mesure que 58-59 % des sites échouent à donner la portée de leurs liens sur
+ * mobile, et que les visiteuses lisent alors la grille affichée comme étant le
+ * catalogue entier. La landing n'en montre que quatre
+ * (`LANDING_COLLECTIONS_COUNT`) — sans le chiffre, elle laisse croire qu'il n'en
+ * existe que quatre.
+ *
+ * Le seuil est `> LANDING_COLLECTIONS_COUNT` et pas `> 1` : annoncer « Voir les 4
+ * collections » sous une grille qui en montre déjà quatre n'apprend rien et fait
+ * du lien un aller-retour. Le libellé nu reste alors le bon.
+ */
+function CollectionsExitLink({ label = "Toutes les collections" }: { label?: string }) {
+	return (
+		<Button render={<Link href={ROUTES.SHOP.COLLECTIONS} />} variant="outline">
+			{label}
+			<ArrowRightIcon aria-hidden="true" className="size-4" />
+		</Button>
+	);
+}
+
+async function CollectionsExitLinkWithScope({
+	collectionsPromise,
+}: {
+	collectionsPromise: Promise<GetCollectionsReturn>;
+}) {
+	const { totalCount } = await collectionsPromise;
+
+	return (
+		<CollectionsExitLink
+			label={
+				totalCount > LANDING_COLLECTIONS_COUNT
+					? `Voir les ${totalCount} collections`
+					: "Toutes les collections"
+			}
+		/>
 	);
 }

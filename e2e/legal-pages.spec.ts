@@ -119,6 +119,27 @@ test.describe("Pages légales", { tag: ["@regression"] }, () => {
 		}
 	});
 
+	/**
+	 * Art. L612-1 du Code de la consommation : les coordonnées du médiateur doivent
+	 * figurer dans les CGV **et** dans les mentions légales, pas dans les seules CGV.
+	 *
+	 * Le défaut attrapé ici est exactement celui qui existait avant le 2026-08-06 :
+	 * le bloc ne vivait que dans `/cgv`. On assert le nom de l'organisme ET le visa
+	 * légal — un encadré de coordonnées sans l'article ne dit pas au consommateur de
+	 * quel droit il dispose, et c'est la partie qui se perd en premier au copier-coller.
+	 */
+	for (const path of ["/cgv", "/mentions-legales"]) {
+		test(`${path} porte les coordonnées du médiateur (art. L612-1)`, async ({ page }) => {
+			await page.goto(path);
+			await page.waitForLoadState("domcontentloaded");
+
+			const body = page.locator("body");
+			await expect(body).toContainText("CNPM");
+			await expect(body).toContainText("cnpm-mediation-consommation.eu");
+			await expect(body).toContainText(/article L612-1 du Code de la consommation/i);
+		});
+	}
+
 	test("/cgv contient les sections numérotées", async ({ page }) => {
 		await page.goto("/cgv");
 		await page.waitForLoadState("domcontentloaded");

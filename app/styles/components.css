@@ -52,25 +52,6 @@
 	}
 
 	/* ==========================================
-	   TEXT SHADOW UTILITIES
-	   ========================================== */
-	.text-shadow-sm {
-		text-shadow: var(--text-shadow-sm);
-	}
-	.text-shadow-md {
-		text-shadow: var(--text-shadow-md);
-	}
-	.text-shadow-lg {
-		text-shadow: var(--text-shadow-lg);
-	}
-	.text-shadow-glow {
-		text-shadow: var(--text-shadow-glow);
-	}
-	.text-shadow-none {
-		text-shadow: none;
-	}
-
-	/* ==========================================
 	   BOTTOM BAR — papier opaque
 	   ==========================================
 	   Le grain de `.polaroid-paper`, à opacité réduite (.03 contre .035) : la

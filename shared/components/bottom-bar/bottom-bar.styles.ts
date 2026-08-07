@@ -99,9 +99,16 @@ export const bottomBarItemClass = cn(
  *
  * La couleur vient de `--section-accent`, posée par `data-accent` sur l'élément
  * (cf. `app/styles/section-accents.css`), avec repli sur le rose signature —
- * même motif que `HandDrawnUnderline`. C'est ce repli qui fait qu'un seul dessin
- * sert les deux hôtes : la boutique décline quatre couleurs de rayon, l'admin
- * garde une languette rose, sans variante à maintenir.
+ * même motif que `HandDrawnUnderline`.
+ *
+ * ⚠️ **Depuis le 2026-08-06, AUCUN des deux hôtes ne pose `data-accent`** : la
+ * languette est rose partout, par ce repli. La boutique déclinait une couleur
+ * par onglet (créations lavande, favoris menthe, recherche/panier soleil) — la
+ * barre du bas étant le seul objet co-visible avec toutes les pages, la voir
+ * changer de teinte au fil des taps lisait comme une bascule de thème. Le
+ * mécanisme `data-accent` reste dans le dessin (il ne coûte rien et documente
+ * pourquoi le repli existe), mais il n'a plus d'appelant : ne pas en conclure
+ * qu'il faut le « rebrancher ».
  *
  * Includes forced-colors (Windows High Contrast) and prefers-contrast: more
  * outlines so the active state remains perceivable without relying on color alone.

@@ -826,7 +826,6 @@ describe("useMediaUpload", () => {
 			expect(results1).toEqual([]);
 			expect(results2).toEqual([]);
 			expect(result.current.progress).toBeNull();
-			expect(result.current.queuedCount).toBe(0);
 		});
 		it("should not wipe progress if upload() is called within the done timeout window", async () => {
 			let callCount = 0;
@@ -900,7 +899,6 @@ describe("useMediaUpload", () => {
 			expect(results2).toEqual([]);
 			expect(results3).toEqual([]);
 			expect(result.current.progress).toBeNull();
-			expect(result.current.queuedCount).toBe(0);
 		});
 
 		it("should not call onSuccess when all batches fail", async () => {

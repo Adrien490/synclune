@@ -63,11 +63,16 @@ export function getMobileNavItems(): NavItemWithChildren[] {
 	];
 }
 
-/** Type pour les images de collections dans le mega menu */
+/**
+ * Type pour les images de collections dans le mega menu. Champs secondaires
+ * optionnels : aligné sur `CollectionImage` (SSOT
+ * `modules/collections/types/collection.types.ts`), la sortie
+ * d'`extractCollectionImages`.
+ */
 type CollectionImage = {
 	url: string;
-	blurDataUrl: string | null;
-	alt: string | null;
+	blurDataUrl?: string | null;
+	alt?: string | null;
 };
 
 /** Type pour les collections dans le mega menu */
@@ -130,6 +135,10 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 						{ href: ROUTES.SHOP.COLLECTIONS, label: "Toutes les collections", icon: "folder-open" },
 						...collections.map((collection) => ({
 							href: ROUTES.SHOP.COLLECTION(collection.slug),
+							// `slug` : la carte du méga-menu en dérive son `data-accent`
+							// (l'entrée « Toutes les collections » ci-dessus n'en porte pas,
+							// elle est rendue en CTA sous l'accent de salle).
+							slug: collection.slug,
 							label: collection.label,
 							description: collection.description,
 							images: collection.images,
@@ -179,4 +188,15 @@ export const legalLinks = [
 		ariaLabel: "Rétractation — Formulaire de rétractation",
 	},
 	{ label: "Accessibilité", href: ROUTES.LEGAL.ACCESSIBILITY },
+	// ⚠️ Ajoutée le 2026-08-06. `/informations-legales` était au sitemap
+	// (`app/sitemap.ts`), liée depuis le fil d'Ariane des six autres pages légales,
+	// et absente d'ici — donc **inatteignable depuis `/`**, alors que c'est le hub
+	// qui porte SIREN, hébergeurs et médiateur. Une page légale indexable qu'aucun
+	// lien du site ne désigne depuis l'accueil est exactement le cas qu'un audit
+	// de conformité relève.
+	{
+		label: "Informations légales",
+		href: ROUTES.LEGAL.HUB,
+		ariaLabel: "Informations légales — toutes les pages légales",
+	},
 ] as const;

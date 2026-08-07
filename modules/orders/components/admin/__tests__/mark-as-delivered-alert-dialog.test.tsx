@@ -158,19 +158,23 @@ describe("MarkAsDeliveredAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Mise à jour…' on submit button when isPending is true", () => {
+	/**
+	 * Ce dialogue ne décore plus l'attente (libellé « Mise à jour… », spinner,
+	 * `aria-busy`, `disabled` sur Annuler) : le bouton de confirmation est un
+	 * `Close` Base UI, donc la surface part AU CLIC, avant que `isPending` ne
+	 * passe. La décoration se jouait dans un dialog déjà en sortie, et seuls ces
+	 * tests — qui forçaient `mockIsPending = true` à la main — la voyaient.
+	 * Comportement prouvé par
+	 * `shared/components/ui/__tests__/alert-dialog-close-on-confirm.regression.test.tsx`.
+	 * Le retour d'attente appartient au toast de `useUpdateOrderStatus`.
+	 */
+	it("ne décore pas l'attente : rien ne dépend d'`isPending`", () => {
 		mockIsPending = true;
 
 		render(<MarkAsDeliveredAlertDialog />);
 
-		expect(screen.getByText("Mise à jour…")).toBeInTheDocument();
-	});
-
-	it("disables cancel button when isPending is true", () => {
-		mockIsPending = true;
-
-		render(<MarkAsDeliveredAlertDialog />);
-
-		expect(screen.getByTestId("cancel-button")).toBeDisabled();
+		expect(screen.getByTestId("submit-button")).toHaveTextContent("Marquer comme livrée");
+		expect(screen.getByTestId("submit-button")).not.toBeDisabled();
+		expect(screen.getByTestId("cancel-button")).not.toBeDisabled();
 	});
 });

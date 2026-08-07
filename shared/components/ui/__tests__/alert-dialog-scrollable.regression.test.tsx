@@ -90,16 +90,18 @@ describe("AlertDialogContent — contenu scrollable (régression P1-2)", () => {
 		expect(footer?.className ?? "").not.toMatch(/\bshrink-0\b/);
 	});
 
-	it("garde le même contrat via ResponsiveAlertDialog (pass-through pur)", async () => {
-		const { ResponsiveAlertDialog, ResponsiveAlertDialogContent, ResponsiveAlertDialogTitle } =
-			await import("../responsive-alert-dialog");
+	it("garde le même contrat via ConfirmDialog", async () => {
+		const { ConfirmDialog } = await import("@/shared/components/dialogs/confirm-dialog");
 
 		render(
-			<ResponsiveAlertDialog open>
-				<ResponsiveAlertDialogContent>
-					<ResponsiveAlertDialogTitle>Vider la file ?</ResponsiveAlertDialogTitle>
-				</ResponsiveAlertDialogContent>
-			</ResponsiveAlertDialog>,
+			<ConfirmDialog
+				open
+				onClose={() => {}}
+				onConfirm={() => {}}
+				title="Vider la file ?"
+				description="Sans retour."
+				confirmLabel="Vider"
+			/>,
 		);
 
 		const content = document.querySelector("[data-slot='alert-dialog-content']");

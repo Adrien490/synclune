@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
-import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useDeleteProductSku } from "@/modules/skus/hooks/use-delete-sku";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
@@ -25,22 +25,23 @@ export function DeleteProductSkuAlertDialog() {
 	const variantesListHref = pathname.replace(/\/variantes\/[^/]+$/, "/variantes");
 	const backToList = useBackToListOnDelete(variantesListHref);
 
-	const { action, isPending } = useDeleteProductSku({
-		onSuccess: () => {
-			deleteDialog.close();
-			backToList();
-		},
-	});
+	const { action } = useDeleteProductSku({ onSuccess: backToList });
+
+	const data = deleteDialog.data;
 
 	return (
-		<DeleteConfirmationDialog<DeleteProductSkuData>
-			dialogId={DELETE_PRODUCT_SKU_DIALOG_ID}
+		<ConfirmDialog
+			open={deleteDialog.isOpen}
+			onClose={deleteDialog.close}
 			action={action}
-			isPending={isPending}
-			hiddenFields={[{ name: "skuId", dataKey: "skuId" }]}
-			description={(data) =>
+			tone="destructive"
+			fields={{ skuId: data?.skuId }}
+			title="Confirmer la suppression"
+			confirmLabel="Supprimer"
+			descriptionClassName="space-y-3"
+			description={
 				data?.isDefault ? (
-					<div className="space-y-3">
+					<>
 						<p>
 							<strong className="text-destructive">
 								Attention : Cette variante est la variante principale du produit.
@@ -50,9 +51,9 @@ export function DeleteProductSkuAlertDialog() {
 							Êtes-vous sûr de vouloir supprimer la variante <strong>{data.skuName}</strong> ?
 						</p>
 						<p>Vous devrez définir une nouvelle variante principale après cette suppression.</p>
-					</div>
+					</>
 				) : (
-					<div className="space-y-3">
+					<>
 						<p>
 							Êtes-vous sûr de vouloir supprimer la variante <strong>{data?.skuName}</strong> ?
 						</p>
@@ -60,7 +61,7 @@ export function DeleteProductSkuAlertDialog() {
 							Cette action est irréversible et supprimera également toutes les images associées à
 							cette variante.
 						</p>
-					</div>
+					</>
 				)
 			}
 		/>

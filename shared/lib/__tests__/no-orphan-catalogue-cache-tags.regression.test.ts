@@ -134,12 +134,6 @@ const CATALOGUE_TAG_OBJECTS = [
 		knownPosterless: [] as string[],
 		knownMutatorless: [] as string[],
 	},
-	{
-		name: "RECENT_PRODUCTS_CACHE_TAGS",
-		file: join(REPO_ROOT, "modules/products/constants/cache.ts"),
-		knownPosterless: [] as string[],
-		knownMutatorless: [] as string[],
-	},
 ] as const;
 
 describe("CACHE-CATALOG-ORPHAN-TAGS-001 — aucun tag catalogue orphelin", () => {

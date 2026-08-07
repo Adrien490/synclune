@@ -226,7 +226,6 @@ async function renderDialog() {
 		createElement(QuickSearchDialog, {
 			collections: [],
 			productTypes: [],
-			recentlyViewed: [],
 		}),
 	);
 	// Radix monte le contenu dans un Portal — attendre le champ.

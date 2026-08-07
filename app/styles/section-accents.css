@@ -16,15 +16,17 @@
 @layer utilities {
 	/* Lavages d'accent — aplats lisibles SOUS l'encre --foreground (les accents
 	   valent 7,8–12,7:1 en aplat, 1,5–2,5:1 en encre : ils ne colorent que des
-	   surfaces). --section-soft (5 %) teinte une SALLE ; les lavages teintent un
-	   CONTRÔLE (CTA et item actif des panneaux du méga-menu, 2026-08-05). */
+	   surfaces). --section-soft (5 %, 6 % pour sun) teinte une SALLE ; les lavages
+	   teintent un CONTRÔLE (CTA et item actif des panneaux du méga-menu,
+	   2026-08-05). */
 	[data-accent] {
 		--section-wash: color-mix(in oklab, var(--section-accent) 10%, var(--card));
 		--section-wash-strong: color-mix(in oklab, var(--section-accent) 18%, var(--card));
 	}
 	/* --section-band — fond d'une BANDE pleine largeur (« Le carnet des séries »,
 	   /collections). Distinct de --section-soft, qui reste à 5 % pour ses
-	   consommateurs de CONTRÔLE (item de nav actif, méthode de livraison).
+	   consommateurs de CONTRÔLE (item de nav actif, méthode de livraison) — sun
+	   excepté, à 6 % : le jaune est le seul des quatre à disparaître à 5 %.
 
 		   ⚠️ Les quatre alphas sont VOLONTAIREMENT inégaux. À alpha égal les accents
 	   ne pèsent pas pareil : à 5 %, le rose donne ΔE OKLab 0,008 et la lavande

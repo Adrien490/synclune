@@ -2,6 +2,7 @@
 
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
+import { dataAccentForSlug } from "@/modules/products/components/catalog-accents.constants";
 import type { NavbarSessionData } from "@/shared/types/session.types";
 import { CountBadge } from "@/shared/components/ui/count-badge";
 import { MaskingTape } from "@/shared/components/masking-tape";
@@ -11,7 +12,7 @@ import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import type { Variants } from "motion/react";
 import { m } from "motion/react";
-import { HeartIcon, HouseIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
+import { FlowerIcon, HeartIcon, HouseIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import { useMenuSheetNavigate } from "./menu-sheet-navigate-context";
@@ -22,11 +23,19 @@ import { useMenuSheetNavigate } from "./menu-sheet-navigate-context";
  * en bande de raccourcis, les collections descendent en bande de cartes.
  *
  * Règle d'accent commune à toutes les surfaces à état de ce volet : l'entrée
- * courante est un APLAT `bg-brand-lavender` sous encre `--foreground` + filet
+ * courante est un APLAT `bg-primary` sous encre `--foreground` + filet
  * `border-l-foreground` — jamais un accent en trait ni une pastille hue-only
  * (l'ancienne pastille rose mesurait 1,06:1 contre le fond du volet, un état
  * qui n'existait qu'en couleur). Verrouillé par
  * `__tests__/menu-sheet-accent-ink.regression.test.ts`.
+ *
+ * ⚠️ L'aplat était en lavande de marque, et les deux titres de section étaient
+ * soulignés lavande / menthe. **Tout est passé au rose signature le
+ * 2026-08-06** (mono-rose de la navigation, cf. `navbar-section.ts`) : le volet
+ * couvre l'étal ENTIER, il n'avait donc aucune salle à annoncer — sa lavande
+ * était de la décoration, et elle contredisait le rose que la barre du bas et
+ * le bandeau du header montraient au même moment. Le rose pastel donne 12,60:1
+ * sous `--foreground` en aplat : le repère ne perd rien au change.
  *
  * Liens : toujours `replace` (consomme l'entrée d'historique du panneau) +
  * `onClick={useMenuSheetNavigate()}` (fermeture par la prop contrôlée, jamais
@@ -60,7 +69,7 @@ const cellClassName = cn(
 
 /** Aplat + filet du repère « tu es ici » — cf. le JSDoc d'en-tête. */
 const currentCellClassName =
-	"border-transparent bg-brand-lavender border-l-[3px] border-l-foreground font-semibold shadow-sm";
+	"border-transparent bg-primary border-l-[3px] border-l-foreground font-semibold shadow-sm";
 
 interface SectionProps {
 	isMenuItemActive: (href: string, options?: { exact?: boolean }) => boolean;
@@ -108,15 +117,18 @@ export function MenuSheetHeadNote({
 // Titre de section — display + trait dessiné
 // ---------------------------------------------------------------------------
 
+/**
+ * ⚠️ Plus de prop `stroke` : le trait prend le défaut de `SquiggleUnderline`,
+ * soit `var(--primary)`. Les deux titres étaient soulignés lavande (Créations)
+ * et menthe (Collections) — deux teintes de plus dans un volet passé au
+ * mono-rose (2026-08-06). Décoratif et doublé du titre, donc rien à compenser.
+ */
 function SectionHead({
 	id,
-	stroke,
 	className,
 	children,
 }: {
 	id?: string;
-	/** Couleur du trait décoratif (lavande pour Créations, menthe pour Collections). */
-	stroke: string;
 	className?: string;
 	children: React.ReactNode;
 }) {
@@ -124,7 +136,7 @@ function SectionHead({
 		<h3 id={id} className={cn("text-foreground font-display text-sm font-medium", className)}>
 			<span className="relative inline-block pb-1.5">
 				{children}
-				<SquiggleUnderline drawn stroke={stroke} className="bottom-0 h-2 w-full" />
+				<SquiggleUnderline drawn className="bottom-0 h-2 w-full" />
 			</span>
 		</h3>
 	);
@@ -372,7 +384,7 @@ interface CreationsGridProps extends SectionProps {
  * Les sept familles en grille 2 colonnes (3 à partir de `sm`, uniquement parce
  * que le volet grandit avec — un palier de colonnes sans conteneur plus large ne
  * ferait que rétrécir les tuiles). La 8ᵉ cellule « Voir tout » reprend
- * `/produits` en aplat lavande.
+ * `/produits` en aplat rose.
  *
  * Sans aucune famille publiée, l'encart « L'atelier est en pause » remplace la
  * grille — l'ancien `return null` laissait un menu quasi vide sans un mot
@@ -407,11 +419,7 @@ export function CreationsGrid({
 
 	return (
 		<section aria-labelledby="menu-creations" className="mb-4">
-			<SectionHead
-				id="menu-creations"
-				stroke="var(--color-brand-lavender)"
-				className="px-4 pt-1 pb-2"
-			>
+			<SectionHead id="menu-creations" className="px-4 pt-1 pb-2">
 				Mes créations
 			</SectionHead>
 			<ul className="grid grid-cols-2 gap-2 px-4 sm:grid-cols-3">
@@ -466,7 +474,7 @@ export function CreationsGrid({
 						aria-current={viewAllActive ? "page" : undefined}
 						className={cn(
 							tileClassName,
-							"bg-brand-lavender text-foreground justify-center border-transparent",
+							"bg-primary text-foreground justify-center border-transparent",
 							"font-display text-[0.9375rem]",
 							viewAllActive && "border-l-foreground border-l-[3px] font-semibold",
 						)}
@@ -511,9 +519,7 @@ export function CollectionsBand({
 	return (
 		<section aria-labelledby="menu-collections" className="mb-4">
 			<div className="flex items-baseline justify-between gap-2 px-4 pt-1 pb-2">
-				<SectionHead id="menu-collections" stroke="var(--color-brand-mint)">
-					Collections
-				</SectionHead>
+				<SectionHead id="menu-collections">Collections</SectionHead>
 				<Link
 					href={ROUTES.SHOP.COLLECTIONS}
 					replace
@@ -547,14 +553,23 @@ export function CollectionsBand({
 								prefetch={null}
 								onClick={onNavigate}
 								aria-current={active ? "page" : undefined}
+								// L'accent par slug (même hash que la carte landing et la page
+								// fille) : il ne teinte ici que le wash de l'état vide — pas de
+								// bordure accentuée, `menu-sheet-accent-ink.regression.test.ts`
+								// interdit l'accent en trait dans les fichiers menu-sheet*.
+								data-accent={dataAccentForSlug(collection.slug)}
 								className={cn(
 									cellClassName,
 									"flex-col gap-1.5 p-1.5 pb-2",
 									active && currentCellClassName,
 								)}
 							>
+								{/* `aspect-square`, plus `h-12` : le carré est LE marqueur
+								    « collection » sur toutes les surfaces (cf. JSDoc de
+								    CARD_MEDIA_CLASSES, carte landing) — la bande était la seule
+								    à rendre la même entité en bandeau (harmonisation 2026-08-06). */}
 								{image ? (
-									<span className="bg-muted relative h-12 w-full overflow-hidden rounded-[7px]">
+									<span className="bg-muted relative aspect-square w-full overflow-hidden rounded-[7px]">
 										<Image
 											src={image.url}
 											alt=""
@@ -568,7 +583,16 @@ export function CollectionsBand({
 										/>
 									</span>
 								) : (
-									<span className="bg-muted h-12 w-full rounded-[7px]" aria-hidden="true" />
+									// Même promesse que la carte landing et le méga-menu (fleur
+									// sur wash teinté par la série) — icône seule : à ~100 px de
+									// large, « Photos à venir » serait illisible et la légende de
+									// la cellule dit déjà le nom.
+									<span
+										className="flex aspect-square w-full items-center justify-center rounded-[7px] bg-(--section-wash)"
+										aria-hidden="true"
+									>
+										<FlowerIcon className="text-muted-foreground size-6" />
+									</span>
 								)}
 								<span className="text-foreground/85 w-full truncate text-center text-[0.6875rem] font-medium">
 									{collection.label}

@@ -149,6 +149,13 @@ interface CollectionChapterProps {
  * Bande de collection — « Le carnet des séries » (redesign 2026-08-05, artifact
  * 4ᵉ passe ; remplace la carte « Planche-contact » sur `/collections`).
  *
+ * @see docs/COLLECTION-CARD.md — la doctrine de la carte collection. C'est la
+ *   surface la PLUS conforme des trois (6/7, § 11) : 3 tirages, les deux
+ *   nombres, une description, et une géométrie qui n'emprunte rien au polaroid.
+ *   Sa silhouette (« la pile décalée ») est la S2 du § 5 — retenue ICI et pas
+ *   ailleurs parce que le chevauchement demande de la place : il ne tient pas
+ *   sous ~90 px, donc pas dans le méga-menu.
+ *
  * @description
  * `/collections` n'est plus une grille de cartes : chaque série est un CHAPITRE
  * pleine largeur qui possède sa couleur. L'encre vient de `dataAccentForSlug`
@@ -312,8 +319,10 @@ export function CollectionChapter({
 									// focus JAMAIS derrière can-hover (clavier sur tactile).
 									// L'ombre garde sa transition sous reduced-motion (une ombre
 									// qui s'estompe n'est pas un déplacement, WCAG 2.3.3) ; seul
-									// le `transform` est gaté, sinon l'ombre SAUTAIT.
-									"transition-[box-shadow] duration-300 ease-out motion-safe:transition-[transform,box-shadow]",
+									// le mouvement est gaté, sinon l'ombre SAUTAIT. `rotate` et non
+									// `transform` : TW v4 compile `rotate-0` vers la propriété
+									// autonome `rotate`, que `transition: transform` n'anime pas.
+									"transition-[box-shadow] duration-300 ease-out motion-safe:transition-[rotate,box-shadow]",
 									"motion-safe:can-hover:group-hover:rotate-0 group-focus-within:rotate-0",
 									"can-hover:group-hover:shadow-md group-focus-within:shadow-md",
 								)}

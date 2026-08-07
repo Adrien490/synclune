@@ -155,14 +155,20 @@ describe("catalogue — h1 en mobile (@regression catalogue-mobile-h1)", () => {
 			expect(
 				declarers.map(({ file, count }) => `${file.slice(ROOT.length + 1)} → ${count}`),
 				"la landing doit déclarer EXACTEMENT un h1, dans le bloc titre de l'étal",
-			).toEqual(["app/(shop)/(home)/_components/etal/etal-heading.tsx → 1"]);
+			).toEqual(["app/(shop)/(home)/_components/hero/hero-heading.tsx → 1"]);
 
-			// La section FAQ prend le h2, ses groupes des h3, et les questions des h4 :
-			// `headingLevel={3}` (le réglage de l'ancienne page `/aide`, où le h1
-			// était le titre de page) rouvrirait un saut de niveau.
+			// La section FAQ prend le h2 et les questions le cran juste en dessous.
+			// ⚠️ Ce cran a bougé le 2026-08-06 : tant que les cinq intertitres de
+			// groupe (« Les bijoux », « Livraison », …) existaient, ils tenaient les
+			// h3 et les questions se rangeaient en h4. Le regroupement thématique a
+			// été retiré (onze questions en liste unique, cf. JSDoc de
+			// `faq-section`), donc les h3 de groupe ont disparu : garder les
+			// questions en h4 ferait désormais sauter un cran, exactement le défaut
+			// que ce test verrouille. C'est la CONTIGUÏTÉ avec le h2 qui est
+			// l'invariant, pas le chiffre.
 			const faqSection = read("app/(shop)/(home)/_components/faq/faq-section.tsx");
 			expect(faqSection).toMatch(/<h2\b/);
-			expect(faqSection).toContain("headingLevel={4}");
+			expect(faqSection).toContain("headingLevel={3}");
 		});
 
 		it("la PDP porte son h1 dans ProductInfo, visible partout", () => {

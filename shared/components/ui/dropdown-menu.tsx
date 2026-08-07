@@ -1,7 +1,6 @@
 "use client";
 
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
-import { CheckIcon } from "@phosphor-icons/react/ssr";
 import type * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
@@ -135,46 +134,14 @@ function DropdownMenuLabel({
 	);
 }
 
-function DropdownMenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
-	return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
-}
-
-/**
- * Item radio (sélection exclusive, ex. un tri). Mêmes règles que
- * `DropdownMenuItem` : l'état parcouru s'exprime par `data-highlighted`, jamais
- * par `focus:` (focus virtuel Base UI). La coche est portée par
- * `RadioItemIndicator`, monté seulement sur l'item sélectionné.
- *
- * ⚠️ `closeOnClick` est `false` par défaut chez Base UI pour les items radio —
- * le passer explicitement quand le menu doit se refermer à la sélection.
+/*
+ * Les variantes radio (`DropdownMenuRadioGroup` / `DropdownMenuRadioItem`) ont
+ * été retirées le 2026-08-06 avec leur unique consommateur (`ProductSortMenu`,
+ * tri du catalogue déplacé dans le compartiment « Trier par » du meuble de
+ * filtres). À re-vendorer depuis shadcn si un menu à sélection exclusive
+ * revient — en gardant `data-highlighted:` (jamais `focus:`) et le
+ * `closeOnClick` explicite (false par défaut chez Base UI pour un item radio).
  */
-function DropdownMenuRadioItem({ className, children, ...props }: MenuPrimitive.RadioItem.Props) {
-	return (
-		<MenuPrimitive.RadioItem
-			data-slot="dropdown-menu-radio-item"
-			className={cn(
-				"data-highlighted:bg-accent data-highlighted:text-accent-foreground",
-				"[&_svg]:pointer-events-none [&_svg]:shrink-0",
-				"relative flex cursor-default items-center gap-2",
-				"rounded-sm py-1.5 pr-2 pl-8 text-sm",
-				"outline-hidden select-none",
-				"data-disabled:pointer-events-none data-disabled:opacity-50",
-				className,
-			)}
-			{...props}
-		>
-			<span
-				className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center"
-				aria-hidden="true"
-			>
-				<MenuPrimitive.RadioItemIndicator>
-					<CheckIcon className="size-4" />
-				</MenuPrimitive.RadioItemIndicator>
-			</span>
-			{children}
-		</MenuPrimitive.RadioItem>
-	);
-}
 
 function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.Props) {
 	return (
@@ -191,8 +158,6 @@ export {
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 };

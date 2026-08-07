@@ -7,7 +7,7 @@ import {
 import { ACCENT_SHAPE_PATHS, UNDERLINE_PATHS } from "@/shared/components/hand-drawn/paths";
 import { cn } from "@/shared/utils/cn";
 
-type HandDrawnVariant = "underline" | "circle" | "star" | "heart";
+type HandDrawnVariant = "underline" | "arrow" | "circle" | "star" | "heart";
 type HandDrawnLength = keyof typeof UNDERLINE_PATHS;
 
 /** Opacité de remplissage pour les variants pleins (star, heart) après dessin du contour. */

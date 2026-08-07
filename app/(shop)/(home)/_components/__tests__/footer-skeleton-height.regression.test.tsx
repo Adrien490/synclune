@@ -31,14 +31,18 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Hauteurs RÉELLES du footer, mesurées au navigateur sur /cgv après `networkidle`
- * (donc `--bottom-bar-height` publiée), bannière cookies écartée.
- * Playwright/chromium, 2026-08-05, police racine à 100 %.
+ * Hauteurs RÉELLES du footer, mesurées au navigateur sur /cgv une fois
+ * `--bottom-bar-height` publiée, bannière cookies écartée.
+ * Playwright/chromium, 2026-08-06, police racine à 100 %.
+ *
+ * ⚠️ Re-mesurées après le retrait de la signature « — Léane » et des deux
+ * soulignages manuscrits (2026-08-06) : −56 px sur les TROIS plages. Les
+ * valeurs d'avant étaient 1373/992/667.
  */
 const MEASURED = [
-	{ prefix: "", label: "< 640 px", worstCase: 1373, at: "320 px" },
-	{ prefix: "sm:", label: "640-1023 px", worstCase: 992, at: "768 px" },
-	{ prefix: "lg:", label: ">= 1024 px", worstCase: 667, at: "1024 px" },
+	{ prefix: "", label: "< 640 px", worstCase: 1317, at: "320 px" },
+	{ prefix: "sm:", label: "640-1023 px", worstCase: 936, at: "768 px" },
+	{ prefix: "lg:", label: ">= 1024 px", worstCase: 611, at: "1024 px" },
 ] as const;
 
 /** Marge visée au-dessus du pire cas — assez pour absorber une variation de police. */

@@ -2,43 +2,50 @@ import type { Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { SELECTORS, VIEWPORTS } from "../constants";
 
+/**
+ * Recherche produits — via le QUICK-SEARCH (dialog).
+ *
+ * Le champ inline du catalogue a été retiré (2026-08-06) : l'unique entrée de
+ * recherche est le quick-search de la navbar (`aria-label="Ouvrir la recherche
+ * rapide"`) / bottom-nav mobile, qui navigue vers `/produits?search=` à
+ * l'Entrée. L'affordance de SORTIE est l'étiquette « Recherche : "x" » du
+ * bandeau de filtres (`ProductFilterBadges`).
+ */
 export class SearchPage {
-	readonly searchForm: Locator;
+	readonly trigger: Locator;
+	readonly dialog: Locator;
 	readonly searchInput: Locator;
-	readonly clearButton: Locator;
-	readonly statusRegion: Locator;
+	readonly clearBadge: Locator;
 
 	constructor(readonly page: Page) {
-		this.searchForm = page.locator('form[role="search"]');
-		this.searchInput = page.getByRole("searchbox");
-		this.clearButton = page.getByLabel("Effacer la recherche");
-		// `MiniDotsLoader` porte lui aussi `role="status"` dans ce même form pendant
-		// le pending : un `[role="status"]` nu est ambigu. On cible la live region
-		// sr-only, seule annonceuse depuis le lot D.
-		this.statusRegion = this.searchForm.locator('span[role="status"].sr-only');
+		this.trigger = page.getByRole("button", { name: /ouvrir la recherche rapide/i });
+		this.dialog = page.getByRole("dialog");
+		this.searchInput = page.getByRole("combobox", { name: /rechercher un bijou/i });
+		// L'étiquette du bandeau qui efface `?search=` (nom accessible du badge :
+		// « Supprimer le filtre Recherche : "…" »).
+		this.clearBadge = page.getByRole("button", { name: /supprimer le filtre recherche/i });
 	}
 
 	async open() {
-		// Le champ inline vit dans le cluster `hidden md:flex` de la rangée titre
-		// (catalog-toolbar-inline.tsx) — unique instance du DOM, la barre sticky
-		// n'en monte plus. Sans viewport épinglé, il n'existe pas sur mobile.
 		await this.page.setViewportSize(VIEWPORTS.DESKTOP);
 		await this.page.goto("/produits");
 		await this.page.waitForLoadState("domcontentloaded");
-		// Attendre l'hydratation React du champ : un `fill()` avant elle est
-		// AVALÉ — la valeur reste dans le DOM mais React n'a pas encore posé ses
-		// listeners, le debounce ne part jamais et l'URL ne change pas. Prouvé au
-		// dev server (hydratation > latence du fill) ; `networkidle` n'est pas une
-		// option, il ne se résout jamais sous `next dev`.
+		// Attendre l'hydratation React du déclencheur : un `click()` avant elle est
+		// AVALÉ — le bouton est dans le DOM mais React n'a pas posé ses listeners,
+		// le dialog ne s'ouvre jamais. (`networkidle` n'est pas une option, il ne
+		// se résout jamais sous `next dev`.)
 		await this.page.waitForFunction(() => {
-			const input = document.querySelector('form[role="search"] input');
-			return !!input && Object.keys(input).some((key) => key.startsWith("__reactProps"));
+			const button = document.querySelector('button[aria-label="Ouvrir la recherche rapide"]');
+			return !!button && Object.keys(button).some((key) => key.startsWith("__reactProps"));
 		});
+		await this.trigger.first().click();
+		await expect(this.dialog).toBeVisible();
 	}
 
+	/** Saisit le terme dans le dialog et valide à l'Entrée → `/produits?search=`. */
 	async search(query: string) {
-		await this.searchInput.first().fill(query);
-		// Wait for debounced URL update
+		await this.searchInput.fill(query);
+		await this.page.keyboard.press("Enter");
 		await expect(this.page).toHaveURL(new RegExp(`search=${encodeURIComponent(query)}`), {
 			timeout: 5000,
 		});
@@ -53,9 +60,10 @@ export class SearchPage {
 		return results.count();
 	}
 
+	/** Efface la recherche via l'étiquette du bandeau de filtres. */
 	async clearSearch() {
-		if (await this.clearButton.isVisible()) {
-			await this.clearButton.click();
+		if (await this.clearBadge.first().isVisible()) {
+			await this.clearBadge.first().click();
 		}
 	}
 

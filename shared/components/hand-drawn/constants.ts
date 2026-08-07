@@ -14,7 +14,7 @@
  */
 
 export const HAND_DRAWN_DURATIONS_MS = {
-	/** Le trait qui souligne (accents, squiggle) — `--duration-slower`. */
+	/** Le trait qui souligne (accents, squiggle) — 500 ms. */
 	trait: 500,
 	/** La touche de pinceau du rail — plus lente, elle peint. */
 	rail: 800,

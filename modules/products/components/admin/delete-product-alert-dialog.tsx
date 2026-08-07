@@ -1,6 +1,6 @@
 "use client";
 
-import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 import { useDeleteProduct } from "@/modules/products/hooks/use-delete-product";
@@ -17,24 +17,23 @@ export function DeleteProductAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteProductData>(DELETE_PRODUCT_DIALOG_ID);
 	const backToList = useBackToListOnDelete("/admin/catalogue/produits");
 
-	const { action, isPending } = useDeleteProduct({
-		onSuccess: () => {
-			deleteDialog.close();
-			backToList();
-		},
-	});
+	const { action } = useDeleteProduct({ onSuccess: backToList });
 
 	return (
-		<DeleteConfirmationDialog<DeleteProductData>
-			dialogId={DELETE_PRODUCT_DIALOG_ID}
+		<ConfirmDialog
+			open={deleteDialog.isOpen}
+			onClose={deleteDialog.close}
 			action={action}
-			isPending={isPending}
-			hiddenFields={[{ name: "productId", dataKey: "productId" }]}
-			description={(data) => (
-				<div className="space-y-3">
+			tone="destructive"
+			fields={{ productId: deleteDialog.data?.productId }}
+			title="Confirmer la suppression"
+			confirmLabel="Supprimer"
+			descriptionClassName="space-y-3"
+			description={
+				<>
 					<p>
 						Êtes-vous sûr de vouloir supprimer le bijou{" "}
-						<strong>&quot;{data?.productTitle}&quot;</strong> ?
+						<strong>&quot;{deleteDialog.data?.productTitle}&quot;</strong> ?
 					</p>
 					<p>
 						<span className="text-destructive font-medium">Cette action est irréversible</span> et
@@ -43,8 +42,8 @@ export function DeleteProductAlertDialog() {
 					<p className="text-muted-foreground text-xs">
 						Note: Les commandes existantes conserveront les informations du bijou via des snapshots.
 					</p>
-				</div>
-			)}
+				</>
+			}
 		/>
 	);
 }

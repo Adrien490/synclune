@@ -117,7 +117,6 @@ vi.mock("../idle-content", () => ({
 		onRemoveSearch,
 		onClearSearches,
 	}: {
-		recentlyViewed: unknown[];
 		searches: string[];
 		collections: unknown[];
 		isPending: boolean;
@@ -410,11 +409,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 // ============================================================================
 
 import { QuickSearchDialog } from "../quick-search-dialog";
-import type {
-	QuickSearchCollection,
-	QuickSearchProductType,
-	RecentlyViewedProduct,
-} from "../constants";
+import type { QuickSearchCollection, QuickSearchProductType } from "../constants";
 
 // ============================================================================
 // FIXTURES
@@ -430,20 +425,10 @@ const mockProductTypes: QuickSearchProductType[] = [
 	{ slug: "collier", label: "Colliers" },
 ];
 
-const mockRecentlyViewed: RecentlyViewedProduct[] = [
-	{
-		slug: "bague-lune",
-		title: "Bague Lune",
-		price: 4500,
-		image: { url: "/img/bague.jpg", blurDataUrl: null },
-	},
-];
-
 const defaultProps = {
 	collections: mockCollections,
 	productTypes: mockProductTypes,
 	recentSearches: [],
-	recentlyViewed: mockRecentlyViewed,
 };
 
 // ============================================================================

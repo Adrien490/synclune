@@ -21,6 +21,65 @@ export const BRAND_PINK = {
 	theme: "#e493b3",
 } as const;
 
-/** Dégradé de fond partagé par toutes les OG images (racine, produits, créations, collections). */
+/**
+ * Le reste de la palette de marque en hex, pour les mêmes appelants que
+ * {@link BRAND_PINK} — c'est-à-dire les OG images.
+ *
+ * ⚠️ **Satori ne parse ni `oklch()` ni les variables CSS.** Une couleur écrite
+ * en token dans une `ImageResponse` n'est pas rendue en rose : elle est
+ * IGNORÉE, sans erreur, et la carte part en production avec du noir par défaut.
+ * C'est la raison d'être de ce fichier, et elle vaut pour toute la palette, pas
+ * seulement pour le rose.
+ *
+ * Chaque valeur est la conversion oklch→sRGB du token de `app/globals.css`,
+ * calculée par script et calibrée sur `BRAND_PINK.primary` — dont le dépôt
+ * connaissait déjà la réponse (#fdb8e4), ce qui fait du convertisseur autre
+ * chose qu'une promesse.
+ *
+ * ⚠️ `paper` est le seul token HORS GAMUT sRGB (`oklch(0.99 0.005 270)`) : la
+ * valeur ci-dessous est l'écrêtage, pas le gamut-mapping du navigateur. L'écart
+ * est de quelques centièmes sur le bleu, invisible sur un aplat — mais ne pas
+ * s'en servir pour un calcul de contraste.
+ */
+export const BRAND_HEX = {
+	/** `--background` — le papier sur lequel tout le storefront est posé — un blanc très légèrement froid, PAS un crème. */
+	paper: "#fafcff",
+	/** `--foreground` — l'encre. */
+	ink: "#06070b",
+	/** `--muted-foreground` — l'encre secondaire (chapôs). */
+	inkMuted: "#53555b",
+	/** `--border`. */
+	border: "#e2e4eb",
+	/** `--color-brand-lavender`. */
+	lavender: "#a996e2",
+	/** `--color-brand-mint`. */
+	mint: "#6ccea6",
+	/** `--color-brand-sun`. */
+	sun: "#eec976",
+} as const;
+
+/**
+ * Les quatre accents de marque en hex, DANS L'ORDRE de `RAIL_ACCENTS`
+ * (rose → lavande → menthe → soleil) — la projection hex du rail, à côté de ses
+ * projections classes Tailwind (`catalog-accents.constants.ts`) et
+ * `var(--…)` (`brand-brush-gradient.tsx`).
+ */
+export const OG_ACCENTS = [
+	BRAND_PINK.primary,
+	BRAND_HEX.lavender,
+	BRAND_HEX.mint,
+	BRAND_HEX.sun,
+] as const;
+
+/**
+ * Dégradé de fond des OG images de PIÈCE (créations, collections, familles) —
+ * là où une photo occupe la moitié de la carte et a besoin d'un fond soutenu
+ * pour s'en détacher.
+ *
+ * ⚠️ Il ne sert plus la carte d'ACCUEIL : elle est passée au papier du storefront le
+ * 2026-08-06 (audit de conformité DA). Un aplat rose plein est monochrome là où
+ * la marque est polychrome, et il n'a ni trait dessiné ni motif — c'était la
+ * seule surface 100 % maîtrisée par le dépôt, et elle ne racontait personne.
+ */
 export const OG_GRADIENT =
 	`linear-gradient(135deg, ${BRAND_PINK.ogFrom} 0%, ${BRAND_PINK.ogVia} 40%, ${BRAND_PINK.ogTo} 100%)` as const;

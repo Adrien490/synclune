@@ -150,11 +150,6 @@ export default async function CookiesPage() {
 							</p>
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>
-									<strong>recent-products</strong> : Produits récemment consultés - Mémorise les
-									dernières fiches produit visitées pour vous les proposer en raccourci. Durée : 30
-									jours.
-								</li>
-								<li>
 									<strong>recent-searches</strong> : Recherches récentes - Mémorise vos dernières
 									recherches pour vous les resuggérer. Durée : 30 jours.
 								</li>

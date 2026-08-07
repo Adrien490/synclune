@@ -1,5 +1,4 @@
 import { Fade } from "@/shared/components/animations/fade";
-import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { CopyButton } from "@/shared/components/copy-button";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
@@ -9,7 +8,7 @@ import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
 import { footerHelpNavItems, footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { CONTAINER_CLASS, FOOTER_PADDING } from "@/shared/constants/spacing";
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { PREPARATION_DELAY_LABEL, SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
 import { cacheLife, cacheTag } from "next/cache";
@@ -25,9 +24,24 @@ import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * footer 2026-08-04). Le grain `.polaroid-paper` remplace le dégradé rose —
  * même papier que les cartes Atelier ; c'est un `::before` en `z-1`, d'où le
  * `z-10` du conteneur de contenu.
+ *
+ * ⚠️ La réserve `pb-[calc(var(--bottom-bar-height,56px)+1rem)] lg:pb-0` n'est pas
+ * cosmétique : sans elle, les SIX liens légaux du rail bas sont **entièrement**
+ * masqués par la barre basse quand on les atteint au clavier (mesuré à 390×844 :
+ * liens à y 800-844, barre à partir de 787). C'est un échec WCAG 2.4.11 « Focus
+ * Not Obscured (Minimum) », AA — et il tombe précisément sur les liens que la loi
+ * française impose d'atteindre depuis `/`.
+ *
+ * Le `scroll-padding-bottom` posé sur `html` (globals.css) traite le cas
+ * mi-page ; il ne peut RIEN pour le bas du document, où il ne reste plus rien à
+ * faire défiler. Il faut de l'espace réel, d'où ce padding.
+ *
+ * Fallback `56px` et gate `lg:` : c'est la convention de RÉSERVE du dépôt (cf.
+ * `app/admin/layout.tsx`, gaté `md:` parce que la barre admin s'arrête à `md`).
+ * La barre boutique, elle, vit jusqu'à `lg`.
  */
 const FOOTER_SHELL_CLASS =
-	"pwa-footer polaroid-paper border-border/60 bg-background relative overflow-hidden border-t";
+	"pwa-footer polaroid-paper border-border/60 bg-background relative overflow-hidden border-t pb-[calc(var(--bottom-bar-height,56px)+1rem)] lg:pb-0";
 
 /**
  * Nom accessible du landmark `contentinfo`. Le squelette porte le MÊME : un
@@ -56,13 +70,17 @@ const SOCIAL_PASTILLE_CLASS =
 /**
  * Lightweight skeleton matching Footer's outer shell to prevent CLS during streaming.
  *
- * Les trois hauteurs sont MESURÉES (Playwright, /cgv, 2026-08-05), pas estimées.
+ * Les trois hauteurs sont MESURÉES (Playwright, /cgv, 2026-08-06), pas estimées.
  * Chacune couvre le pire cas de sa plage, pas un point confortable au milieu :
  *
- *   < 640 px   1373 px à 320  (1349 de 360 à 390 ; 1309 à 639)   → 87.5rem
- *   640-1023    992 px à 768  (986 à 640 ; 944 à 1023)           → 63.5rem
- *   >= 1024     667 px à 1024 (619 dès 1280 — le bandeau légal
- *               tient encore sur DEUX lignes à 1024)             → 42.5rem
+ *   < 640 px   1317 px à 320  (1317 à 360 ; 1293 à 390 ; 1253 à 639) → 84rem
+ *   640-1023    936 px à 768  (930 à 640 ; 888 à 1023)               → 60rem
+ *   >= 1024     611 px à 1024 (563 dès 1280 — le bandeau légal
+ *               tient encore sur DEUX lignes à 1024)                 → 39rem
+ *
+ * Re-mesurées le 2026-08-06 après le retrait de la signature « — Léane » et des
+ * deux soulignages manuscrits : −56 px exactement sur les trois plages (les
+ * anciennes valeurs 1373/992/667 → 87.5/63.5/42.5rem sur-réservaient d'autant).
  *
  * Marge de ~2 % au-dessus : une réserve trop grande fait remonter le contenu (le
  * scroll ne bouge pas), une réserve trop courte le pousse vers le bas sous le doigt.
@@ -84,7 +102,7 @@ export function FooterSkeleton() {
 	return (
 		<footer className={FOOTER_SHELL_CLASS} aria-label={FOOTER_LABEL} aria-busy="true">
 			<div className={`${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
-				<div className="min-h-[87.5rem] sm:min-h-[63.5rem] lg:min-h-[42.5rem]" />
+				<div className="min-h-[84rem] sm:min-h-[60rem] lg:min-h-[39rem]" />
 			</div>
 		</footer>
 	);
@@ -93,10 +111,16 @@ export function FooterSkeleton() {
 /**
  * Footer statique de l'application — direction « La signature ».
  *
- * Le pied de page est l'endroit où l'atelier signe : une zone de signature
- * (phrase de marque en display, « — Léane », réseaux), deux colonnes serrées,
- * puis un rail unique qui rassemble légal et paiement. Contenu entièrement
- * statique, caché au niveau composant avec le profil "reference".
+ * Le pied de page ouvre sur une zone de marque (phrase en display, réseaux),
+ * deux colonnes serrées, puis un rail unique qui rassemble légal et paiement.
+ * Contenu entièrement statique, caché au niveau composant avec le profil
+ * "reference".
+ *
+ * ⚠️ La signature « — Léane » et les soulignages manuscrits en ont été retirés
+ * le 2026-08-06 (demande utilisatrice) : le storefront ne signe plus AUCUNE
+ * page. Les commentaires de `hero-heading.tsx` et `faq-section.tsx` qui
+ * renvoyaient ici comme « la seule signature » ont été mis à jour en
+ * conséquence — ne pas les reprendre pour re-poser un paraphe.
  *
  * ⚠️ Rien de dérivé du TEMPS ne doit entrer ici : le scope `"use cache"` fige
  * la valeur jusqu'à 7 jours, et le tag `FOOTER` n'a aucun mutateur. C'est ce
@@ -136,52 +160,28 @@ export async function Footer() {
 						<div className="order-1 sm:col-span-2 lg:col-span-1">
 							<Logo href="/" size={40} sizeMd={48} viewTransitionName="shop-logo-footer" />
 
-							{/* `text-balance` : sans lui, « Des bijoux colorés créés / avec passion »
-							    coupait entre le verbe et son complément à 390 px, et l'accent
-							    manuscrit tombait au milieu de la première ligne. */}
-							<p className="font-display text-foreground mt-6 max-w-[17rem] text-2xl leading-[1.25] font-normal text-balance antialiased sm:text-[1.625rem]">
-								Des bijoux{" "}
-								<span className="relative inline-block">
-									colorés
-									{/* Pas de `delay` : il serait INERTE ici, comme `once` /
-									    `disableOnTouch` sur le <Fade> ci-dessus. `--hand-delay` n'est lu
-									    que par `.hand-draw-load` (app/styles/entrance.css) ; la branche
-									    `inView` est pilotée par `animation-timeline: view()`, où
-									    `animation-delay` n'a de toute façon aucun sens.
-									    La cascade entre cet accent et celui de « — Léane » existe quand
-									    même : chaque tracé suit SA propre position au scroll, et celui de
-									    la signature est ~90 px plus bas. C'est le scroll qui l'échelonne,
-									    pas une durée — ne pas réintroduire de `delay` pour « régler » ça. */}
-									{/* Géométrie : width seule, hauteur dérivée du ratio 6:1 — le
-									    couple 96×14 letterboxait l'encre (81,2 px rendus sur 96,
-									    mesure au navigateur, audit 2026-08-05). Couleur : le défaut
-									    cascadé (hors [data-accent], repli --primary — même rendu). */}
-									<HandDrawnAccent
-										variant="underline"
-										width={96}
-										inView
-										className="absolute inset-x-0 -bottom-1.5"
-									/>
-								</span>{" "}
-								créés avec passion
-							</p>
+							{/* `text-balance` : sans lui, la ligne coupait entre le verbe et son
+							    complément à 390 px (défaut constaté sur la copie précédente,
+							    « Des bijoux colorés créés / avec passion »).
 
-							{/* La signature de l'ancienne landing, reprise telle quelle : même
-							    accent manuscrit que « colorés » (cf. docs/atelier-story.md). */}
-							<p className="mt-6">
-								<span className="font-cursive text-foreground relative inline-block text-2xl font-normal">
-									— Léane
-									{/* `delay` retiré ici aussi — cf. l'accent de « colorés » ci-dessus. */}
-									{/* Même correctif que l'accent de « colorés » : l'ancien 92×12
-									    rendait 69,6 px d'encre décalés de 11,2 px — le trait
-									    commençait sous le « L » et ignorait le tiret. */}
-									<HandDrawnAccent
-										variant="underline"
-										width={92}
-										inView
-										className="absolute inset-x-0 -bottom-1"
-									/>
-								</span>
+							    ⚠️ La copie est la formulation COURTE de référence de
+							    `docs/BRAND-DA.md` § L'ADN en une phrase. Celle d'avant — « Des
+							    bijoux colorés créés avec passion » — était juste et
+							    interchangeable : « avec passion » est le cousin de « avec amour »
+							    que le même document écarte, et rien n'y disait le monde
+							    (miniature, récit) que la marque vend. Elle rend en DEUX lignes
+							    comme la précédente : les réserves de `FooterSkeleton` sont
+							    verrouillées par `footer-skeleton-height.regression.test.tsx`, une
+							    copie qui passerait à trois lignes les ferait mentir.
+
+							    ⚠️ Plus aucun soulignage manuscrit ici, ni sous « colorés », ni
+							    ailleurs dans le footer (demande utilisatrice, 2026-08-06) — et
+							    plus de signature « — Léane » non plus : le storefront ne signe
+							    plus nulle part. Les deux `HandDrawnAccent` retirés portaient une
+							    géométrie mesurée (96 et 92 px de large, ratio 6:1) ; les remettre
+							    demanderait de la re-mesurer, pas de la deviner. */}
+							<p className="font-display text-foreground mt-6 max-w-[17rem] text-2xl leading-[1.25] font-normal text-balance antialiased sm:text-[1.625rem]">
+								Des petits mondes colorés à porter
 							</p>
 
 							{/* Les handles ne sont plus affichés (deux pastilles à la place) : le
@@ -268,8 +268,13 @@ export async function Footer() {
 								/>
 							</div>
 
+							{/* ⚠️ La VILLE, pas le pays (2026-08-06). « Atelier basé en France »
+							    était la seule surface du site à s'arrêter au pays, alors que le
+							    `<title>`, la meta description, le sur-titre du hero, le chapô de
+							    l'atelier et les mots-clés SEO revendiquent tous Nantes — qui est
+							    le noyau lexical de la marque, pas un détail d'adresse. */}
 							<p className="text-muted-foreground mt-2 px-3 text-sm/6 antialiased">
-								Atelier basé en {BRAND.contact.location.country}
+								Atelier à {BRAND.contact.location.city}
 							</p>
 						</section>
 					</div>
@@ -307,11 +312,24 @@ export async function Footer() {
 						    retour à la ligne. Le « · » qui subsiste est du TEXTE, entre France et
 						    UE — il se lit, lui, et ne peut pas se retrouver orphelin. */}
 						<p className="text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-1 text-sm/6 antialiased">
+							{/* ⚠️ Le DÉLAI d'abord, et il est nouveau (2026-08-06).
+							    « Livraison trop lente » est le motif d'abandon nº 2 (20 %,
+							    Baymard) — juste derrière les frais — et le délai de préparation
+							    n'était lisible NULLE PART sur la boutique sans ouvrir un
+							    accordéon de la FAQ. Le coût, lui, était déjà là.
+							    Dérivé de `PREPARATION_DELAY_LABEL`, jamais d'un littéral. */}
+							<span>Expédié sous {PREPARATION_DELAY_LABEL}</span>
 							<span>
 								Livraison France {formatShippingPrice(SHIPPING_RATES.FR.amount)} · Union européenne{" "}
 								{formatShippingPrice(SHIPPING_RATES.EU.amount)}
 							</span>
 							<span>Retours et échanges sous 14 jours</span>
+							{/* ⚠️ « Commande sans compte » : l'architecture est 100 % invitée
+							    depuis le 2026-07-31, et ça ne se disait NULLE PART. Or 18 % des
+							    abandons de panier se font sur l'obligation de créer un compte
+							    (Baymard, motif nº 4) : c'est un avantage MESURÉ, et il ne compte
+							    que s'il est écrit. L'implémenter ne suffit pas à le vendre. */}
+							<span>Commande sans compte</span>
 						</p>
 					</section>
 

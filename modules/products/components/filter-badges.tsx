@@ -8,7 +8,7 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { FilterDefinition } from "@/shared/hooks/use-filter";
 import { useFilter } from "@/shared/hooks/use-filter";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface ProductTypeOption {
 	slug: string;
@@ -37,6 +37,7 @@ function ProductFilterBadgesInner({
 	activeProductType,
 }: ProductFilterBadgesProps) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const {
 		optimisticActiveFilters,
@@ -64,7 +65,7 @@ function ProductFilterBadgesInner({
 	);
 
 	// Inject synthetic filter for path-based product type
-	const allActiveFilters: FilterDefinition[] = activeProductType
+	const withCategoryType: FilterDefinition[] = activeProductType
 		? [
 				{
 					id: "categoryType",
@@ -77,8 +78,36 @@ function ProductFilterBadgesInner({
 			]
 		: visibleFilters;
 
+	// `search` est exclu des filtres de `useFilter` (clé réservée), mais depuis
+	// le retrait du champ de recherche inline du catalogue (2026-08-06) cette
+	// étiquette est la SEULE affordance qui efface `?search=` — sans elle, sortir
+	// d'une recherche demanderait de re-naviguer à la main. Le formatter la rend
+	// déjà (« Recherche : "bague" »).
+	const searchTerm = searchParams.get("search");
+	const allActiveFilters: FilterDefinition[] = searchTerm
+		? [
+				{
+					id: "search",
+					key: "search",
+					value: searchTerm,
+					label: "Recherche",
+					displayValue: `"${searchTerm}"`,
+				},
+				...withCategoryType,
+			]
+		: withCategoryType;
+
 	const handleRemove = (key: string, value?: string) => {
-		if (key === "categoryType") {
+		if (key === "search") {
+			// Hors du modèle `useFilter` (clé réservée) : suppression directe dans
+			// l'URL, curseur remis à zéro — le même contrat que `buildFilterURL`.
+			const params = new URLSearchParams(searchParams.toString());
+			params.delete("search");
+			params.delete("cursor");
+			params.delete("direction");
+			const query = params.toString();
+			router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+		} else if (key === "categoryType") {
 			// Retour à /produits en conservant les autres filtres actifs de l'URL.
 			// Pas de `page=1` : aucun parseur ne lit `page` (pagination à curseur),
 			// et ce paramètre fantôme faisait basculer la page en `noindex`.

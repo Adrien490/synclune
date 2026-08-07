@@ -13,11 +13,9 @@ import { accentForSlug } from "./catalog-accents.constants";
 async function CatalogCount({
 	productsPromise,
 	activeProductType,
-	filterSummary,
 }: {
 	productsPromise: Promise<GetProductsReturn>;
 	activeProductType?: { label: string };
-	filterSummary?: string | null;
 }) {
 	const { totalCount } = await productsPromise;
 
@@ -25,19 +23,9 @@ async function CatalogCount({
 
 	const noun = totalCount > 1 ? "pièces" : "pièce";
 
-	// Dès qu'un filtre est actif, le compte dit CE QU'IL COMPTE : au rail
-	// desktop, la grille se recompose sans quitter la page, donc cette ligne est
-	// le seul endroit qui rappelle ce qu'on a coché (« 9 pièces · Papilloux,
-	// Or jaune, jusqu'à 65 € »).
-	if (filterSummary) {
-		return (
-			<>
-				<span className="text-foreground font-semibold tabular-nums">{totalCount}</span> {noun} ·{" "}
-				{filterSummary}
-			</>
-		);
-	}
-
+	// Le rappel de CE QUI est coché n'est plus une ligne de texte : ce sont les
+	// étiquettes du bandeau (`ProductFilterBadges`, visibles à tous les
+	// viewports depuis le 2026-08-06) — manipulables, pas seulement lisibles.
 	const suffix = activeProductType
 		? `${noun} dans cette famille.`
 		: `${noun} en ligne en ce moment.`;
@@ -58,11 +46,6 @@ export type CatalogHeadingProps = {
 	activeProductType?: { slug: string; label: string; description?: string | null };
 	/** Terme recherché : la copie d'atelier laisse alors la place au contexte de recherche. */
 	searchTerm?: string;
-	/**
-	 * Résumé des filtres actifs (`formatActiveFilterSummary`), calculé côté
-	 * serveur. Rendu à la suite du compte, séparé d'un « · ».
-	 */
-	filterSummary?: string | null;
 };
 
 /**
@@ -88,8 +71,10 @@ export type CatalogHeadingProps = {
  *
  * ## Budget vertical
  *
- * ≈ 175 px à 390 px de large, contre ~290 px sur la page d'accueil : pas de chapô
- * sous `sm`, pas de signature, un titre de deux mots. C'est ce budget qui garde
+ * ≈ 150 px à 390 px de large (≈ 175 px avant le retrait du sur-titre, qui rendait
+ * sa ligne de 19,5 px et le `mt-1.5` du rail), contre ~290 px sur la page
+ * d'accueil : pas de chapô sous `sm`, pas de signature, un titre de deux mots.
+ * C'est ce budget qui garde
  * deux pièces ENTIÈRES au-dessus de la bottom-nav sur un écran de 844 px. Si la
  * copie s'allonge, c'est elle qui cède — pas le budget.
  *
@@ -101,16 +86,18 @@ export function CatalogHeading({
 	productsPromise,
 	activeProductType,
 	searchTerm,
-	filterSummary,
 }: CatalogHeadingProps) {
 	/**
 	 * Touches et chapô se rendent à TOUS les viewports ≥ `sm` — la compaction
 	 * desktop (`lg:hidden`) a été RETIRÉE le 2026-08-05 (décision user, audit
 	 * /produits direction B) : ne pas la réintroduire.
 	 *
-	 * Le `h1`, l'eyebrow et le compte ne bougent jamais : le `h1` doit rester
-	 * VISIBLE partout (régression `catalogue-mobile-h1`), et le compte est le seul
-	 * retour parlé du rail quand on coche un critère.
+	 * Le `h1` et le compte ne bougent jamais : le `h1` doit rester VISIBLE partout
+	 * (régression `catalogue-mobile-h1`), et le compte est le seul retour parlé du
+	 * rail quand on coche un critère. ⚠️ Le sur-titre « L'atelier de Léane ·
+	 * {ville} », lui, a été RETIRÉ du bloc partagé le 2026-08-06 : le fil d'Ariane
+	 * au-dessus situait déjà la page, et le chapô ci-dessous redit l'atelier et la
+	 * ville. Il ne survit que sur la page d'accueil.
 	 */
 	return (
 		<StorefrontHeading
@@ -138,17 +125,13 @@ export function CatalogHeading({
 				<Suspense
 					fallback={<Skeleton as="span" className="inline-block h-4 w-44 rounded align-[-2px]" />}
 				>
-					<CatalogCount
-						productsPromise={productsPromise}
-						activeProductType={activeProductType}
-						filterSummary={filterSummary}
-					/>
+					<CatalogCount productsPromise={productsPromise} activeProductType={activeProductType} />
 				</Suspense>
 			}
 			// Au rail desktop, cocher un critère recompose la grille SANS changer de
-			// page : cette ligne est le seul retour parlé de l'opération (« 9 pièces ·
-			// Papilloux »). Sans elle, le rail applique en silence pour un lecteur
-			// d'écran — le panneau mobile, lui, a sa propre région vivante.
+			// page : cette ligne est le retour parlé de l'opération (« 9 pièces »).
+			// Sans elle, le rail applique en silence pour un lecteur d'écran — le
+			// panneau mobile, lui, a sa propre région vivante.
 			countLive
 			// Les cartes portent des `h3` : ce libellé comble le saut de niveau.
 			listLabel="Liste des créations"

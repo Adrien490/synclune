@@ -6,9 +6,24 @@ test.describe("SEO et métadonnées - Homepage", { tag: ["@slow"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 	});
 
+	/**
+	 * ⚠️ Assertion RETARGETÉE le 2026-08-06 : elle exigeait `/Bijoux artisanaux/`,
+	 * une chaîne que la marque a explicitement abandonnée et que le `<title>` servi
+	 * ne contient plus (« Synclune | Bijoux colorés faits main à Nantes »). Le test
+	 * verrouillait donc ACTIVEMENT la copie périmée — et comme il est taggé `@slow`,
+	 * son échec pouvait passer inaperçu.
+	 *
+	 * On assert désormais le territoire distinctif de `docs/BRAND-DA.md` (couleur +
+	 * fait main + lieu) plutôt qu'une chaîne exacte : c'est ce que le titre doit
+	 * porter, et ça survit à une reformulation.
+	 */
 	test("la homepage a le titre correct", async ({ page }) => {
 		await expect(page).toHaveTitle(/Synclune/);
-		await expect(page).toHaveTitle(/Bijoux artisanaux/);
+		await expect(page).toHaveTitle(/colorés/i);
+		await expect(page).toHaveTitle(/faits main/i);
+		await expect(page).toHaveTitle(/Nantes/);
+		// Le pléonasme sans couleur ni lieu, explicitement écarté.
+		await expect(page).not.toHaveTitle(/Bijoux artisanaux/i);
 	});
 
 	test("la homepage a une meta description", async ({ page }) => {
@@ -93,6 +108,36 @@ test.describe("SEO et métadonnées - Homepage", { tag: ["@slow"] }, () => {
 		expect(faqPage.mainEntity.length).toBeGreaterThan(0);
 		expect(faqPage.mainEntity[0]["@type"]).toBe("Question");
 		expect(faqPage.mainEntity[0].acceptedAnswer.text.length).toBeGreaterThan(10);
+	});
+
+	// Les deux sections du 2026-08-05 n'avaient AUCUNE assertion E2E (constat
+	// de l'audit landing du 2026-08-06) : la FAQ était la seule verrouillée.
+	test("la homepage porte les sections Collections et Atelier, et le nœud HowTo ancre ses étapes", async ({
+		page,
+	}) => {
+		// Les ancres sont un CONTRAT une fois partagées (`/#collections`,
+		// `/#atelier` — cette dernière est aussi l'@id du nœud HowTo).
+		await expect(page.locator("#collections")).toBeVisible();
+		await expect(page.locator("#atelier")).toBeVisible();
+
+		// Même montage que le FAQPage : un NŒUD du `@graph`, jamais un second
+		// script — et même parcours tolérant à l'écho du repli `Suspense`.
+		const graphs = await page.locator('script[type="application/ld+json"]').allTextContents();
+		const howTo = graphs
+			.map((raw) => JSON.parse(raw))
+			.flatMap((json) => json["@graph"] ?? [json])
+			.find((node) => node["@type"] === "HowTo");
+
+		expect(howTo, "aucun nœud HowTo dans le JSON-LD de l'accueil").toBeDefined();
+		expect(howTo.step.length).toBeGreaterThan(0);
+
+		// Chaque `url` de HowToStep pointe un fragment qui doit exister dans le
+		// DOM — un schéma qui référence une ancre morte est pire qu'absent.
+		for (const step of howTo.step) {
+			const fragment = String(step.url).split("#")[1];
+			expect(fragment, `HowToStep sans fragment : ${step.url}`).toBeTruthy();
+			await expect(page.locator(`#${fragment}`)).toBeAttached();
+		}
 	});
 });
 

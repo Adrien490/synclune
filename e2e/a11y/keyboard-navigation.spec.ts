@@ -168,26 +168,33 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		await expect(dialog).not.toBeVisible();
 	});
 
-	test("sort drawer mobile - Enter ouvre, Escape ferme", async ({ page }) => {
+	test("tri mobile - Enter ouvre le panneau de filtres, le compartiment Trier par est au clavier", async ({
+		page,
+	}) => {
+		// Plus de tiroir de tri dédié (2026-08-06) : le tri vit dans le
+		// compartiment « Trier par » du panneau de filtres, ouvert par « Filtrer ».
 		await page.setViewportSize({ width: 390, height: 844 });
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		const sortButton = page.getByRole("button", { name: /Trier/i }).first();
-		if ((await sortButton.count()) === 0) {
-			test.skip(true, "Pas de bouton Trier en mobile");
+		const filterButton = page.getByRole("button", { name: /Filtrer/i }).first();
+		if ((await filterButton.count()) === 0) {
+			test.skip(true, "Pas de bouton Filtrer en mobile");
 			return;
 		}
 
-		await sortButton.focus();
-		await expect(sortButton).toBeFocused();
+		await filterButton.focus();
+		await expect(filterButton).toBeFocused();
 
-		// Enter opens the sort drawer
+		// Enter opens the filter panel
 		await page.keyboard.press("Enter");
 
 		const dialog = page.getByRole("dialog");
 		if ((await dialog.count()) > 0) {
 			await expect(dialog).toBeVisible();
+
+			// Le compartiment « Trier par » expose ses options en radios nommées
+			await expect(dialog.getByRole("radio", { name: "Plus récents" })).toBeVisible();
 
 			// Escape closes
 			await page.keyboard.press("Escape");

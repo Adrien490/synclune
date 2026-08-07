@@ -37,6 +37,7 @@ vi.mock("@/modules/colors/utils/color-contrast.utils", () => ({
 
 vi.mock("@phosphor-icons/react/ssr", () => ({
 	CheckIcon: () => <span />,
+	CircleIcon: () => <span />,
 	MagnifyingGlassIcon: () => <span />,
 	CaretDownIcon: () => <span />,
 	CaretUpIcon: () => <span />,
@@ -56,6 +57,7 @@ const values: FilterFormData = {
 	priceRange: [0, 500],
 	inStockOnly: false,
 	onSale: false,
+	sortBy: "created-descending",
 };
 
 const noop = () => {};
@@ -74,6 +76,8 @@ function renderHost(host: "sheet" | "rail") {
 			onPriceChange={noop}
 			onAvailabilityChange={noop}
 			onSectionReset={noop}
+			sortOptions={[{ value: "created-descending", label: "Plus récents" }]}
+			onSortChange={noop}
 		/>,
 	);
 }

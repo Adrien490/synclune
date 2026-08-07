@@ -10,7 +10,7 @@ import { CollectionsCard, CollectionsCardSkeleton } from "./collections-card";
  *
  * 4 — une rangée pleine à `lg` (4 colonnes), deux rangées pleines en mobile
  * (2 colonnes) : le compte de cellules tombe juste aux deux largeurs, même
- * logique que `ETAL_PRODUCTS_COUNT`. Si le catalogue en publie moins, la
+ * logique que `HERO_PRODUCTS_COUNT`. Si le catalogue en publie moins, la
  * rangée reste incomplète — c'est le comportement normal d'une grille de
  * cartes, pas un état à combler.
  */
@@ -38,7 +38,7 @@ function cellStyle(index: number): CSSProperties {
  * la couvre. Même contrat que `CollectionChapters` sur `/collections`.
  *
  * La branche vide garde le langage de la page (note d'atelier, comme
- * `EtalEmptyCard`) plutôt que de masquer la section : le titre est rendu
+ * `HeroEmptyCard`) plutôt que de masquer la section : le titre est rendu
  * statiquement hors de la frontière `Suspense` — le même arbitrage que le
  * `<h1>` de l'étal, transposé au `h2` — donc la section ne peut de toute
  * façon pas disparaître avec ses données. Cas réel : zéro collection publiée
@@ -77,11 +77,7 @@ export async function CollectionsGrid({
 		<>
 			{collections.map((collection, index) => (
 				<li key={collection.id} className="enter-inview" style={cellStyle(index)}>
-					<CollectionsCard
-						collection={collection}
-						index={index}
-						priceRange={priceRanges[collection.id]}
-					/>
+					<CollectionsCard collection={collection} priceRange={priceRanges[collection.id]} />
 				</li>
 			))}
 		</>
@@ -93,14 +89,14 @@ export async function CollectionsGrid({
  * La disparité avec la branche vide (4 cellules contre 1) est le MÊME
  * non-problème que sur l'étal : tout ce qui suit la section commence hors
  * viewport, et le CLS ne compte que les éléments visibles qui se déplacent
- * (mesuré le 2026-08-05, cf. JSDoc de `EtalGridSkeleton`).
+ * (mesuré le 2026-08-05, cf. JSDoc de `HeroGridSkeleton`).
  */
 export function CollectionsGridSkeleton() {
 	return (
 		<>
 			{Array.from({ length: LANDING_COLLECTIONS_COUNT }, (_, index) => (
 				<li key={index}>
-					<CollectionsCardSkeleton index={index} />
+					<CollectionsCardSkeleton />
 				</li>
 			))}
 		</>

@@ -114,23 +114,9 @@ vi.mock("motion/react", () => ({
 // ─── Import after mocks ──────────────────────────────────────────────────────
 
 import { IdleContent } from "../idle-content";
-import type { QuickSearchCollection, QuickSearchColor, RecentlyViewedProduct } from "../constants";
+import type { QuickSearchCollection, QuickSearchColor } from "../constants";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
-
-const mockProduct: RecentlyViewedProduct = {
-	slug: "bague-lune",
-	title: "Bague Lune",
-	price: 4500,
-	image: { url: "/img/bague.jpg", blurDataUrl: null },
-};
-
-const mockProduct2: RecentlyViewedProduct = {
-	slug: "collier-etoile",
-	title: "Collier Etoile",
-	price: 6000,
-	image: null,
-};
 
 const mockCollections: QuickSearchCollection[] = [
 	{ slug: "bagues", name: "Bagues", productCount: 10, image: null },
@@ -144,7 +130,6 @@ const mockColors: QuickSearchColor[] = [
 ];
 
 const defaultProps = {
-	recentlyViewed: [],
 	searches: [],
 	collections: [],
 	colors: [],
@@ -192,11 +177,6 @@ describe("IdleContent", () => {
 			expect(screen.getByRole("status")).toBeInTheDocument();
 		});
 
-		it("does not show recently viewed section when empty", () => {
-			render(<IdleContent {...defaultProps} />);
-			expect(screen.queryByText("Vus récemment")).not.toBeInTheDocument();
-		});
-
 		it("does not show recent searches section when empty", () => {
 			render(<IdleContent {...defaultProps} />);
 			expect(screen.queryByText("Recherches récentes")).not.toBeInTheDocument();
@@ -205,63 +185,6 @@ describe("IdleContent", () => {
 		it("does not show collections section when empty", () => {
 			render(<IdleContent {...defaultProps} />);
 			expect(screen.queryByText("Collections")).not.toBeInTheDocument();
-		});
-	});
-
-	// ─── Recently Viewed ──────────────────────────────────────────────────────
-
-	describe("recently viewed", () => {
-		it("shows the recently viewed section heading when products are present", () => {
-			render(<IdleContent {...defaultProps} onClose={onClose} recentlyViewed={[mockProduct]} />);
-			expect(screen.getByText("Vus récemment")).toBeInTheDocument();
-		});
-
-		it("renders a link for each recently viewed product", () => {
-			const { container } = render(
-				<IdleContent
-					{...defaultProps}
-					onClose={onClose}
-					recentlyViewed={[mockProduct, mockProduct2]}
-				/>,
-			);
-			expect(container.querySelector('a[href="/creations/bague-lune"]')).toBeInTheDocument();
-			expect(container.querySelector('a[href="/creations/collier-etoile"]')).toBeInTheDocument();
-		});
-
-		it("displays product title and formatted price", () => {
-			render(<IdleContent {...defaultProps} onClose={onClose} recentlyViewed={[mockProduct]} />);
-			expect(screen.getByText("Bague Lune")).toBeInTheDocument();
-			expect(screen.getByText("45.00 €")).toBeInTheDocument();
-		});
-
-		it("renders image when product has an image", () => {
-			const { container } = render(
-				<IdleContent {...defaultProps} onClose={onClose} recentlyViewed={[mockProduct]} />,
-			);
-			const img = container.querySelector("img");
-			expect(img).toBeInTheDocument();
-			expect(img).toHaveAttribute("src", "/img/bague.jpg");
-			expect(img).toHaveAttribute("alt", "Bague Lune");
-		});
-
-		it("renders placeholder div when product has no image", () => {
-			const { container } = render(
-				<IdleContent {...defaultProps} onClose={onClose} recentlyViewed={[mockProduct2]} />,
-			);
-			expect(container.querySelector("img")).not.toBeInTheDocument();
-		});
-
-		it("has aria-labelledby on the section for recently viewed", () => {
-			const { container } = render(
-				<IdleContent {...defaultProps} onClose={onClose} recentlyViewed={[mockProduct]} />,
-			);
-			const section = container.querySelector('[aria-labelledby="recently-viewed-heading"]');
-			expect(section).toBeInTheDocument();
-		});
-
-		it("does not show empty state when recentlyViewed has items", () => {
-			render(<IdleContent {...defaultProps} onClose={onClose} recentlyViewed={[mockProduct]} />);
-			expect(screen.queryByText("Trouve ton prochain bijou")).not.toBeInTheDocument();
 		});
 	});
 
@@ -476,7 +399,6 @@ describe("IdleContent", () => {
 					{...defaultProps}
 					colors={mockColors}
 					collections={mockCollections}
-					recentlyViewed={[mockProduct]}
 					searches={["bague"]}
 				/>,
 			);
@@ -502,12 +424,10 @@ describe("IdleContent", () => {
 					onRecentSearch={onRecentSearch}
 					onRemoveSearch={onRemoveSearch}
 					onClearSearches={onClearSearches}
-					recentlyViewed={[mockProduct]}
 					searches={["bague"]}
 					collections={mockCollections}
 				/>,
 			);
-			expect(screen.getByText("Vus récemment")).toBeInTheDocument();
 			expect(screen.getByText("Recherches récentes")).toBeInTheDocument();
 			expect(screen.getByText("Collections")).toBeInTheDocument();
 		});
@@ -531,7 +451,6 @@ describe("IdleContent", () => {
 				<IdleContent
 					{...defaultProps}
 					searches={["bague", "collier"]}
-					recentlyViewed={[mockProduct]}
 					collections={mockCollections}
 				/>,
 			);
@@ -542,12 +461,7 @@ describe("IdleContent", () => {
 
 		it("marque tout de même les items comme navigables", () => {
 			const { container } = render(
-				<IdleContent
-					{...defaultProps}
-					searches={["bague"]}
-					recentlyViewed={[mockProduct]}
-					collections={mockCollections}
-				/>,
+				<IdleContent {...defaultProps} searches={["bague"]} collections={mockCollections} />,
 			);
 
 			expect(container.querySelectorAll("[data-qs-option]").length).toBeGreaterThan(0);

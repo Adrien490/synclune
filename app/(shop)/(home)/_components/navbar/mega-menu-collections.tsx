@@ -9,6 +9,9 @@ import { LoadingIndicator } from "@/shared/components/navigation";
 import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
 import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 import { CollectionImagesGrid } from "@/modules/collections/components/collection-images-grid";
+import { dataAccentForSlug } from "@/modules/products/components/catalog-accents.constants";
+import { CARD_SURFACE_FOCUS, CARD_TILT } from "@/shared/components/card-surface.constants";
+import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
 import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { ArrowRightIcon, FlowerIcon } from "@phosphor-icons/react/ssr";
@@ -48,18 +51,21 @@ function panelLayout(count: number) {
 }
 
 /**
- * Inclinaison alternée des tirages (« La boîte à perles », artifact 2026-08-05).
- * Pose STATIQUE (pas un mouvement) → pas de `motion-safe:`. Classes LITTÉRALES.
- */
-const CARD_TILT = ["-rotate-[0.8deg]", "rotate-[0.7deg]"] as const;
-
-/**
  * Carte collection de la grille du mega menu — un TIRAGE encadré : le
  * passe-partout blanc (padding du cadre) absorbe les photos aux fonds
  * discordants, et l'état sans image devient une promesse au lieu d'un carré
  * gris muet (P3 de l'audit 2026-08-05). Le filet décoratif d'avant (1 px à
  * 40 %, compressé ×0.67) était invisible au repos — vérifié au rendu — et a
  * été retiré plutôt que remplacé.
+ *
+ * @see docs/COLLECTION-CARD.md — la doctrine de la carte collection (4/7, § 11).
+ *   ⚠️ Ses deux manques (compteur, fourchette d'entrée) sont un trou de DONNÉES,
+ *   pas un choix de design : `NavItemChild` ne les transporte pas. Ne pas
+ *   « corriger » la carte sans étendre ce type d'abord — il n'y a rien à
+ *   afficher. C'est en revanche la seule des trois surfaces à rendre 4 visuels
+ *   ET une description : l'intuition « le menu est petit, donc il en montre
+ *   moins » est fausse, et elle a été écrite dans la doctrine avant d'être
+ *   corrigée le 2026-08-06.
  */
 function CollectionCard({
 	collection,
@@ -74,8 +80,17 @@ function CollectionCard({
 	return (
 		<NavigationMenuLink
 			render={<Link href={collection.href} aria-current={isActive ? "page" : undefined} />}
+			// La carte re-scope l'accent sur SON slug (même hash que la carte
+			// landing, la bande de /collections et le rail de la page fille) : la
+			// couleur promise ici est celle qui accueille au clic. Le panneau, lui,
+			// garde le mint de salle pour son chrome (titre, baseline, CTA) —
+			// harmonisation 2026-08-06.
+			data-accent={collection.slug ? dataAccentForSlug(collection.slug) : undefined}
 			className={cn(
 				// `relative` : ancre du `LoadingIndicator`, qui se peint en `absolute`.
+				// L'enveloppe complète CARD_SURFACE_POLAROID n'est PAS adoptée :
+				// `p-1.5`/`shadow-2xs`/`polaroid-paper` sont la densité propre du menu
+				// (forme actée) — seuls tilt et focus sont la SSOT partagée.
 				"group/card polaroid-paper bg-card relative flex flex-col rounded-md p-1.5",
 				"border-2 border-transparent shadow-2xs",
 				CARD_TILT[index % CARD_TILT.length],
@@ -85,7 +100,7 @@ function CollectionCard({
 				"can-hover:hover:shadow-premium-rose",
 				"motion-safe:can-hover:hover:-translate-y-1",
 				"focus-ring",
-				"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
+				CARD_SURFACE_FOCUS,
 				isActive && "border-primary/40",
 			)}
 		>
@@ -103,8 +118,15 @@ function CollectionCard({
 
 			{/* Centered title + description — reserve height for CLS */}
 			<div className="min-h-[3.25rem] px-2 pt-2 pb-1.5 text-center">
-				<span className={cn("text-foreground line-clamp-1 text-sm", isActive && "font-medium")}>
-					{collection.label}
+				{/* Même encre que la carte landing : le squiggle teinté par le
+				    `data-accent` de la carte, posé AU REPOS (`drawn`) — c'est
+				    l'identité de la série, pas une affordance de survol. En
+				    `absolute` sous la ligne : la réserve anti-CLS ne bouge pas. */}
+				<span className="relative inline-block max-w-full">
+					<span className={cn("text-foreground line-clamp-1 text-sm", isActive && "font-medium")}>
+						{collection.label}
+					</span>
+					<SquiggleUnderline className="w-full" drawn stroke="var(--section-accent)" />
 				</span>
 				{collection.description && (
 					<p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
@@ -135,15 +157,21 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 		// Le panneau porte sa propre largeur (cf. `DesktopNav`) : une carte de
 		// collection mesure ~215px, plus les gouttières. Base UI morphe d'une
 		// largeur à l'autre — il n'y a rien à animer ici.
-		// `data-accent="mint"` : accent de salle des collections (SSOT
+		// `data-accent="rose"` : accent de salle des collections (SSOT
 		// navbar-section.ts) — le panneau portalisé pose le sien, cf. le panneau
-		// Créations. ⚠️ Le nom accessible du landmark doit continuer de matcher
+		// Créations. C'était « mint » jusqu'au passage de la navigation au
+		// mono-rose (2026-08-06). Répartition des encres inchangée : l'accent de
+		// salle ne teinte que le CHROME (h2, baseline, CTA « Toutes les
+		// collections ») ; chaque carte re-scope `data-accent` sur son slug, donc
+		// squiggle et état vide portent la couleur de leur page fille — c'est
+		// l'identité de la SÉRIE, pas de la navigation, et elle reste quadri.
+		// ⚠️ Le nom accessible du landmark doit continuer de matcher
 		// /Collections/i (e2e/mega-menu-desktop.spec.ts).
 		<div
 			className={cn(layout.width, "px-6 py-5")}
 			role="region"
 			aria-labelledby={headingId}
-			data-accent="mint"
+			data-accent="rose"
 		>
 			<h2 id={headingId} className="text-foreground font-display text-sm leading-tight font-medium">
 				Collections

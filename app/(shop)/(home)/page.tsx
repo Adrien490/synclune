@@ -1,41 +1,47 @@
 import { AtelierSection } from "@/app/(shop)/(home)/_components/atelier/atelier-section";
 import { CollectionsSection } from "@/app/(shop)/(home)/_components/collections/collections-section";
 import { LANDING_COLLECTIONS_COUNT } from "@/app/(shop)/(home)/_components/collections/collections-grid";
-import { EtalSection } from "@/app/(shop)/(home)/_components/etal/etal-section";
-import { ETAL_PRODUCTS_COUNT } from "@/app/(shop)/(home)/_components/etal/etal-grid";
+import { HeroSection } from "@/app/(shop)/(home)/_components/hero/hero-section";
+import { HERO_PRODUCTS_COUNT } from "@/app/(shop)/(home)/_components/hero/hero-grid";
 import { FaqSection } from "@/app/(shop)/(home)/_components/faq/faq-section";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts, type GetProductsReturn } from "@/modules/products/data/get-products";
-import { sortSoldOutLast } from "@/modules/products/services/product-availability.service";
+import { orderHeroProducts } from "@/modules/products/services/product-availability.service";
 import { StructuredData } from "@/shared/components/structured-data";
-import { SITE_URL } from "@/shared/constants/seo-config";
+/*
+ * ⚠️ Titre et description viennent de la SSOT `seo-config` depuis le 2026-08-06.
+ * Ils vivaient ICI, et le repli global (`root-metadata.ts`) en portait une
+ * version PÉRIMÉE — « Bijoux artisanaux faits main » — en cinq littéraux. Deux
+ * définitions de la même phrase divergent toujours ; celle qui dérive est
+ * invariablement la moins visible, donc la moins relue.
+ */
+import { HOME_DESCRIPTION, HOME_OG_ALT, HOME_TITLE, SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
 	title: {
-		absolute: "Synclune | Bijoux artisanaux faits main",
+		absolute: HOME_TITLE,
 	},
-	description:
-		"Bijoux faits main uniques et colorés. Boucles d'oreilles, colliers, bracelets créés avec amour par Léane. Éditions limitées, livraison rapide.",
+	description: HOME_DESCRIPTION,
+	// Reprises verbatim de `docs/BRAND-DA.md` § Expressions à privilégier — le
+	// `keywords` de Next ne pèse plus rien en SEO, mais c'est de la copie de
+	// marque comme le reste, et elle n'a pas de raison de diverger.
 	keywords: [
-		"bijoux artisanaux",
-		"bijoux faits main",
-		"créatrice bijoux",
-		"bijoux colorés",
-		"bijoux originaux",
-		"boucles d'oreilles artisanales",
-		"colliers faits main",
-		"bracelets artisanaux",
+		"bijoux colorés faits main",
+		"bijoux faits main à Nantes",
+		"bijoux de créatrice française",
+		"boucles d'oreilles colorées artisanales",
+		"bague peinte à la main",
+		"bijoux arc-en-ciel artisanaux",
 	],
 	alternates: {
 		canonical: "/",
 	},
 	openGraph: {
-		title: "Synclune | Bijoux artisanaux faits main",
-		description:
-			"Bijoux colorés faits main dans mon atelier. Boucles d'oreilles, colliers, bracelets. Pièces uniques.",
+		title: HOME_TITLE,
+		description: HOME_DESCRIPTION,
 		url: SITE_URL,
 		type: "website",
 		images: [
@@ -43,15 +49,14 @@ export const metadata: Metadata = {
 				url: "/opengraph-image",
 				width: 1200,
 				height: 630,
-				alt: "Synclune - Bijoux artisanaux faits main",
+				alt: HOME_OG_ALT,
 			},
 		],
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Synclune | Bijoux artisanaux faits main",
-		description:
-			"Bijoux artisanaux colorés faits main. Boucles d'oreilles, colliers, bracelets uniques. Créatrice indépendante.",
+		title: HOME_TITLE,
+		description: HOME_DESCRIPTION,
 	},
 };
 
@@ -70,9 +75,13 @@ export const metadata: Metadata = {
  * **La FAQ a rejoint la landing le 2026-08-05** : `/aide` n'existe plus et
  * redirige en 308 vers `/#faq` (`next.config.ts`). Son JSON-LD `FAQPage` est un
  * nœud du `@graph` de `StructuredData` — donc émis par les DEUX rendus autour de
- * la frontière `Suspense` ci-dessous, comme la `BreadcrumbList` de l'accueil
- * l'était déjà. Le `<script>` du repli est remplacé par celui du rendu résolu :
- * un seul survit dans le DOM final.
+ * la frontière `Suspense` ci-dessous. Le `<script>` du repli est remplacé par
+ * celui du rendu résolu : un seul survit dans le DOM final (vérifié au DOM, pas
+ * au HTML servi — le HTML streamé en contient bien deux, c'est normal).
+ *
+ * ⚠️ L'accueil n'émet **plus de `BreadcrumbList`** depuis le 2026-08-06 : elle
+ * n'avait qu'un `ListItem` pointant la racine, soit exactement l'élément que
+ * Google demande d'omettre. Détail dans `structured-data.tsx`.
  *
  * La lecture catalogue est lancée ICI et passée en promesse à la section : elle
  * n'est attendue que derrière la frontière `Suspense` de la grille, donc elle
@@ -81,19 +90,26 @@ export const metadata: Metadata = {
  * dynamique pour rien).
  */
 /**
- * Sur-allocation de la lecture catalogue, pour pouvoir pousser les pièces épuisées
- * en fin de liste sans jamais rendre moins de `ETAL_PRODUCTS_COUNT` cellules.
+ * Sur-allocation de la lecture catalogue, pour que le classement du premier écran
+ * ait de la matière : pousser les pièces épuisées en fin de liste, PUIS étaler les
+ * types, sans jamais rendre moins de `HERO_PRODUCTS_COUNT` cellules.
  *
- * Trois de plus, et pas dix : c'est un compromis entre « assez pour rattraper une
- * série de pièces vendues » et le coût d'une lecture plus large sur le chemin du
- * premier écran (chaque produit tire ses SKUs, médias, couleurs et matières).
+ * ⚠️ Porté de 3 à 10 le 2026-08-06. Trois suffisaient à rattraper une série de
+ * pièces vendues ; ils ne suffisent pas à étaler les types, qui est le second
+ * critère. Avec 8 pièces lues, un catalogue qui vient de recevoir cinq paires de
+ * boucles n'a tout simplement pas de bague à proposer au classement — mesuré : le
+ * premier écran rendait trois « Papilloux » et deux « Chaîne de corps ».
+ *
+ * Dix et pas trente : la lecture reste derrière la frontière `Suspense` de la
+ * grille (elle ne retarde jamais le `<h1>`), mais chaque produit tire ses SKUs,
+ * médias, couleurs et matières — c'est le coût qui borne ce nombre.
  */
-const ETAL_OVERFETCH = 3;
+const HERO_OVERFETCH = 10;
 
 export default function Page() {
 	const productsPromise = getProducts(
 		{
-			perPage: ETAL_PRODUCTS_COUNT + ETAL_OVERFETCH,
+			perPage: HERO_PRODUCTS_COUNT + HERO_OVERFETCH,
 			sortBy: "created-descending",
 			filters: { status: "PUBLIC" },
 		},
@@ -104,13 +120,19 @@ export default function Page() {
 		// partagée entre la grille et l'ItemList du JSON-LD : réordonner dans la
 		// grille seule ferait annoncer à Google un ordre que la page ne rend pas.
 		//
-		// Pourquoi réordonner : `getProducts` ne connaît aucun critère de stock, et
-		// une carte épuisée perd son bouton d'ajout au panier. Sur un catalogue de
-		// pièces UNIQUES — où l'épuisé est l'état terminal de chaque pièce, pas un cas
-		// de bord — le premier écran de la boutique pouvait donc n'offrir aucun achat.
-		// Le détail de l'arbitrage (réordonner et non filtrer) est dans
-		// `sortSoldOutLast`.
-		products: sortSoldOutLast(result.products).slice(0, ETAL_PRODUCTS_COUNT),
+		// `orderHeroProducts` enchaîne les deux critères, dans cet ordre :
+		//
+		//  1. **disponibilité** — `getProducts` ne connaît aucun critère de stock, et
+		//     une carte épuisée perd son bouton d'ajout au panier. Sur un catalogue de
+		//     pièces UNIQUES, où l'épuisé est l'état terminal de chaque pièce et non un
+		//     cas de bord, le premier écran pouvait n'offrir AUCUN achat ;
+		//  2. **étalement des types** — par récence pure, les cinq cellules rendaient
+		//     trois « Papilloux » et deux « Chaîne de corps » : aucune bague, aucun
+		//     bracelet, aucun collier. Baymard mesure que les visiteuses qui ne voient
+		//     pas le type qu'elles cherchent en concluent qu'il n'est pas vendu.
+		//
+		// L'ordre des deux compte, et le détail de l'arbitrage vit dans le service.
+		products: orderHeroProducts(result.products).slice(0, HERO_PRODUCTS_COUNT),
 	}));
 
 	// « Choisis ton univers » — mêmes critères MÉCANIQUES que le méga-menu
@@ -136,7 +158,7 @@ export default function Page() {
 			<Suspense fallback={<StructuredData includeHomepageSchemas />}>
 				<HomepageStructuredData productsPromise={productsPromise} />
 			</Suspense>
-			<EtalSection productsPromise={productsPromise} />
+			<HeroSection productsPromise={productsPromise} />
 			<CollectionsSection collectionsPromise={collectionsPromise} />
 			<AtelierSection />
 			<FaqSection />

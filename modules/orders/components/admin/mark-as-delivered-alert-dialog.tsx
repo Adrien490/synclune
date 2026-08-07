@@ -1,18 +1,8 @@
 "use client";
 
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
-import { Spinner } from "@/shared/components/ui/spinner";
 
 export const MARK_AS_DELIVERED_DIALOG_ID = "mark-as-delivered";
 
@@ -24,47 +14,29 @@ interface MarkAsDeliveredData {
 
 export function MarkAsDeliveredAlertDialog() {
 	const dialog = useAlertDialog<MarkAsDeliveredData>(MARK_AS_DELIVERED_DIALOG_ID);
-
-	const { action, isPending } = useUpdateOrderStatus("delivered", {
-		onSuccess: () => {
-			dialog.close();
-		},
-	});
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			dialog.close();
-		}
-	};
+	const { action } = useUpdateOrderStatus("delivered");
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="success">
-			<ResponsiveAlertDialogContent>
-				<form action={action}>
-					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
-
-					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>Confirmer la livraison</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription render={<div />}>
-							<p>
-								Êtes-vous sûr de vouloir marquer la commande{" "}
-								<strong>{dialog.data?.orderNumber}</strong> comme livrée ?
-							</p>
-							<p className="text-muted-foreground mt-4 text-sm">
-								Cette action force le statut si le webhook du transporteur ne fonctionne pas. La
-								date de livraison sera enregistrée.
-							</p>
-						</ResponsiveAlertDialogDescription>
-					</ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Spinner presentational />}
-							{isPending ? "Mise à jour…" : "Marquer comme livrée"}
-						</ResponsiveAlertDialogAction>
-					</ResponsiveAlertDialogFooter>
-				</form>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+		<ConfirmDialog
+			open={dialog.isOpen}
+			onClose={dialog.close}
+			action={action}
+			tone="success"
+			fields={{ id: dialog.data?.orderId }}
+			title="Confirmer la livraison"
+			confirmLabel="Marquer comme livrée"
+			description={
+				<>
+					<p>
+						Êtes-vous sûr de vouloir marquer la commande <strong>{dialog.data?.orderNumber}</strong>{" "}
+						comme livrée ?
+					</p>
+					<p className="text-muted-foreground mt-4 text-sm">
+						Cette action force le statut si le webhook du transporteur ne fonctionne pas. La date de
+						livraison sera enregistrée.
+					</p>
+				</>
+			}
+		/>
 	);
 }

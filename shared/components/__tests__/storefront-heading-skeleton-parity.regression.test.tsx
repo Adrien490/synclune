@@ -23,6 +23,13 @@
  * objet : **une ligne retirée d'un seul côté est exactement le même défaut
  * qu'une ligne ajoutée d'un seul côté** — ici, 40 px de CLS en sens inverse.
  *
+ * ⚠️ **Mise à jour du 2026-08-06 (retrait du sur-titre).** Même mouvement, même
+ * symétrie : « L'atelier de Léane · {ville} » était le défaut des cinq routes
+ * boutique, redit par le fil d'Ariane au-dessus et par le chapô en dessous. Il
+ * part du bloc réel ET du squelette — 4 lignes à hauteur au lieu de 5, et
+ * ~26 px (la ligne h-5 plus le `mt-1.5` du rail, qui n'avait plus rien à
+ * séparer). Le sur-titre ne survit que sur la home, hors de ce composant.
+ *
  * ## Ce que ce test impose
  *
  * - même nombre de lignes rendues (toutes props actives des deux côtés) ;
@@ -71,13 +78,13 @@ describe("StorefrontHeadingSkeleton — parité au pixel avec le bloc réel (@re
 	it("réserve exactement une ligne par ligne réelle À HAUTEUR", () => {
 		const { realRoot, skeletonRoot } = renderBoth();
 
-		// eyebrow · rail · h1 · chapô · compteur = 5 lignes à hauteur chacun.
+		// rail · h1 · chapô · compteur = 4 lignes à hauteur chacun.
 		// Le bloc réel porte en PLUS son h2 `sr-only` (listLabel, 3 routes sur 4) :
 		// zéro hauteur, donc PAS de miroir côté squelette — le comparer en brut
 		// aurait exigé une ligne fantôme. C'était 6 lignes tant que le bloc
-		// signait ; la 6ᵉ est partie DES DEUX CÔTÉS le même jour.
-		expect(realRoot.children).toHaveLength(6);
-		expect(visibleRows(realRoot)).toHaveLength(5);
+		// signait, 5 tant qu'il sur-titrait ; les deux sont parties DES DEUX CÔTÉS.
+		expect(realRoot.children).toHaveLength(5);
+		expect(visibleRows(realRoot)).toHaveLength(4);
 		expect(visibleRows(skeletonRoot)).toHaveLength(visibleRows(realRoot).length);
 	});
 
@@ -85,18 +92,20 @@ describe("StorefrontHeadingSkeleton — parité au pixel avec le bloc réel (@re
 		const { realRoot, skeletonRoot } = renderBoth();
 
 		// Par INDEX de ligne, pas par [aria-hidden] : chaque ligne `Skeleton` est
-		// elle-même un div aria-hidden — le sélecteur attraperait l'eyebrow.
-		const realRail = realRoot.children[1] as HTMLElement;
-		const skeletonRail = skeletonRoot.children[1] as HTMLElement;
+		// elle-même un div aria-hidden — le sélecteur en attraperait une autre.
+		// Le bloc d'accents est la PREMIÈRE ligne depuis le retrait du sur-titre.
+		const realRail = realRoot.children[0] as HTMLElement;
+		const skeletonRail = skeletonRoot.children[0] as HTMLElement;
 
 		// La chaîne vient d'une constante partagée (RAIL_WRAPPER_CLASS) : si l'un
 		// des deux s'en écarte, la hauteur du bloc diverge et le swap saute.
 		expect(skeletonRail.className).toBe(realRail.className);
 		// … et la constante elle-même est épinglée d'UN côté : l'égalité seule
 		// laisserait passer une régression symétrique (les deux marges changent
-		// ensemble, la hauteur du bloc dérive de celle calibrée sur l'ancien rail
-		// — 26 px sous `sm`, 32 px au-dessus — et le CLS revient à l'identique).
-		expect(realRail.className).toBe("mt-1.5 mb-2 flex sm:mt-2 sm:mb-3");
+		// ensemble et le CLS revient à l'identique). ⚠️ Plus de marge HAUTE depuis
+		// le retrait du sur-titre : le rail ouvre le bloc, et l'écart au fil
+		// d'Ariane vient du `space-y-5` du conteneur de page.
+		expect(realRail.className).toBe("mb-2 flex sm:mb-3");
 
 		// Même empreinte de touches : le SVG du squelette est celui du composant
 		// (statique, atténué), pas une réécriture qui dériverait.
@@ -118,17 +127,17 @@ describe("StorefrontHeadingSkeleton — parité au pixel avec le bloc réel (@re
 		const { skeletonRoot } = renderBoth();
 		const rows = skeletonRoot.children;
 
-		// La table de dérivation — interligne racine 1.5 (preflight Tailwind) :
-		//   eyebrow    13 px × 1.5   ≈ 19,5 px → h-5
+		// La table de dérivation — interligne racine 1.5 (preflight Tailwind).
+		// L'index 0 est le bloc d'accents (le sur-titre qui l'occupait est parti
+		// le 2026-08-06, des deux côtés) :
 		//   h1         clamp plancher 30 px × leading 1.06 ≈ 32 px → h-8,
 		//              ~35 px à lg → lg:h-9, ~44 px à xl → xl:h-11
 		//   chapô      16 px × 1.625 (leading-relaxed) = 26 px → h-[1.625rem]
 		//   compteur   15 px × 1.5 ≈ 22 px → h-[1.375rem], 16 px × 1.5 = 24 → sm:h-6
 		const expected: Array<[index: number, classes: string[]]> = [
-			[0, ["h-5"]],
-			[2, ["h-8", "lg:h-9", "xl:h-11"]],
-			[3, ["mt-3", "hidden", "h-[1.625rem]", "sm:block"]],
-			[4, ["mt-2", "h-[1.375rem]", "sm:h-6"]],
+			[1, ["h-8", "lg:h-9", "xl:h-11"]],
+			[2, ["mt-3", "hidden", "h-[1.625rem]", "sm:block"]],
+			[3, ["mt-2", "h-[1.375rem]", "sm:h-6"]],
 		];
 
 		for (const [index, classes] of expected) {
@@ -138,8 +147,21 @@ describe("StorefrontHeadingSkeleton — parité au pixel avec le bloc réel (@re
 		}
 
 		// L'ancien fantôme de h1, plus haut que le vrai titre à tous les paliers.
-		expect(rows[2]!.className).not.toContain("sm:h-11");
-		expect(rows[2]!.className).not.toContain("lg:h-12");
+		expect(rows[1]!.className).not.toContain("sm:h-11");
+		expect(rows[1]!.className).not.toContain("lg:h-12");
+	});
+
+	it("ne réserve AUCUNE ligne de sur-titre — parce que le bloc réel n'en rend plus", () => {
+		const { realRoot, skeletonRoot } = renderBoth();
+
+		// Symétrique du retrait de la signature, et même défaut au signe près : un
+		// squelette qui garderait la barre `h-5` du sur-titre ferait sauter la page
+		// vers le HAUT au swap (~26 px avec le `mt-1.5` que le rail portait sous
+		// lui). Le bloc réel n'a plus de `<p>` avant les touches.
+		expect(realRoot.querySelector("p:first-child")).toBeNull();
+		expect(Array.from(skeletonRoot.children).some((row) => row.className.includes("h-5"))).toBe(
+			false,
+		);
 	});
 
 	it("ne réserve AUCUNE ligne de signature — parce que le bloc réel n'en rend plus", () => {
@@ -177,9 +199,9 @@ describe("StorefrontHeadingSkeleton — parité au pixel avec le bloc réel (@re
 		const realRoot = real.container.firstElementChild as HTMLElement;
 		const skeletonRoot = skeleton.container.firstElementChild as HTMLElement;
 
-		// eyebrow · rail · h1 · chapô = 4 lignes à hauteur chacun (+ le h2
-		// sr-only côté réel, sans miroir — cf. le premier test).
-		expect(visibleRows(realRoot)).toHaveLength(4);
+		// rail · h1 · chapô = 3 lignes à hauteur chacun (+ le h2 sr-only côté
+		// réel, sans miroir — cf. le premier test).
+		expect(visibleRows(realRoot)).toHaveLength(3);
 		expect(visibleRows(skeletonRoot)).toHaveLength(visibleRows(realRoot).length);
 	});
 
@@ -193,9 +215,9 @@ describe("StorefrontHeadingSkeleton — parité au pixel avec le bloc réel (@re
 		const { container } = render(<StorefrontHeadingSkeleton descriptionLines={2} />);
 		const rows = visibleRows(container.firstElementChild as HTMLElement);
 
-		// Toujours 5 lignes à hauteur : les deux barres partagent la ligne chapô.
-		expect(rows).toHaveLength(5);
-		const chapo = rows[3] as HTMLElement;
+		// Toujours 4 lignes à hauteur : les deux barres partagent la ligne chapô.
+		expect(rows).toHaveLength(4);
+		const chapo = rows[2] as HTMLElement;
 		// Le wrapper porte la marge et le masquage mobile du <p> réel…
 		for (const cls of ["mt-3", "hidden", "sm:block"]) {
 			expect(chapo.className, `wrapper — ${cls}`).toContain(cls);
@@ -212,8 +234,8 @@ describe("StorefrontHeadingSkeleton — parité au pixel avec le bloc réel (@re
 	it("accent='mono' réserve une barre neutre de même empreinte que la touche unique", () => {
 		const { container } = render(<StorefrontHeadingSkeleton accent="mono" />);
 
-		// Ligne 1 = bloc d'accents (cf. note sur [aria-hidden] plus haut).
-		const rail = (container.firstElementChild as HTMLElement).children[1] as HTMLElement;
+		// Ligne 0 = bloc d'accents (cf. note sur [aria-hidden] plus haut).
+		const rail = (container.firstElementChild as HTMLElement).children[0] as HTMLElement;
 		// Pas de SVG coloré : un loading.tsx ne connaît pas le slug, donc pas la
 		// couleur — quatre couleurs qui se ravisent en une au swap étaient le
 		// flash chromatique de l'audit.

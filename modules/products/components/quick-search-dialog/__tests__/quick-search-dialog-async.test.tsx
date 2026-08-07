@@ -27,11 +27,7 @@ vi.mock("../quick-search-dialog-lazy", () => ({
 // ============================================================================
 
 import { QuickSearchDialogAsync } from "../quick-search-dialog-async";
-import type {
-	QuickSearchCollection,
-	QuickSearchProductType,
-	RecentlyViewedProduct,
-} from "../constants";
+import type { QuickSearchCollection, QuickSearchProductType } from "../constants";
 
 // ============================================================================
 // FIXTURES
@@ -47,28 +43,17 @@ const mockProductTypes: QuickSearchProductType[] = [
 	{ slug: "collier", label: "Colliers" },
 ];
 
-const mockRecentlyViewed: RecentlyViewedProduct[] = [
-	{
-		slug: "bague-lune",
-		title: "Bague Lune",
-		price: 4500,
-		image: { url: "/img/bague.jpg", blurDataUrl: null },
-	},
-];
-
 function makeQuickSearchData(
 	overrides: Partial<{
 		recentSearches: string[];
 		collections: QuickSearchCollection[];
 		productTypes: QuickSearchProductType[];
-		recentlyViewed: RecentlyViewedProduct[];
 	}> = {},
 ) {
 	return {
 		recentSearches: overrides.recentSearches ?? ["bague", "collier"],
 		collections: overrides.collections ?? mockCollections,
 		productTypes: overrides.productTypes ?? mockProductTypes,
-		recentlyViewed: overrides.recentlyViewed ?? mockRecentlyViewed,
 	};
 }
 
@@ -99,14 +84,12 @@ describe("QuickSearchDialogAsync", () => {
 				recentSearches: string[];
 				collections: QuickSearchCollection[];
 				productTypes: QuickSearchProductType[];
-				recentlyViewed: RecentlyViewedProduct[];
 			}) => (
 				<div
 					data-testid="quick-search-dialog"
 					data-recent-searches={props.recentSearches.join(",")}
 					data-collections={props.collections.length}
 					data-product-types={props.productTypes.length}
-					data-recently-viewed={props.recentlyViewed.length}
 				/>
 			),
 		);
@@ -117,7 +100,6 @@ describe("QuickSearchDialogAsync", () => {
 		expect(dialog).toHaveAttribute("data-recent-searches", "bague,collier");
 		expect(dialog).toHaveAttribute("data-collections", "2");
 		expect(dialog).toHaveAttribute("data-product-types", "2");
-		expect(dialog).toHaveAttribute("data-recently-viewed", "1");
 	});
 
 	it("passes all props spread from getQuickSearchData to QuickSearchDialog", async () => {
@@ -125,7 +107,6 @@ describe("QuickSearchDialogAsync", () => {
 			recentSearches: ["argent"],
 			collections: [mockCollections[0]!],
 			productTypes: [mockProductTypes[0]!],
-			recentlyViewed: [],
 		});
 		mockGetQuickSearchData.mockResolvedValue(data);
 
@@ -141,7 +122,6 @@ describe("QuickSearchDialogAsync", () => {
 			recentSearches: ["argent"],
 			collections: [mockCollections[0]],
 			productTypes: [mockProductTypes[0]],
-			recentlyViewed: [],
 		});
 	});
 
@@ -150,7 +130,6 @@ describe("QuickSearchDialogAsync", () => {
 			recentSearches: [],
 			collections: [],
 			productTypes: [],
-			recentlyViewed: [],
 		});
 		mockGetQuickSearchData.mockResolvedValue(data);
 
@@ -167,7 +146,6 @@ describe("QuickSearchDialogAsync", () => {
 			recentSearches: [],
 			collections: [],
 			productTypes: [],
-			recentlyViewed: [],
 		});
 	});
 });

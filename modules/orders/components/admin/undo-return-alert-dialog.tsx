@@ -1,18 +1,8 @@
 "use client";
 
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateOrderStatus } from "@/modules/orders/hooks/use-update-order-status";
-import { Spinner } from "@/shared/components/ui/spinner";
 
 export const UNDO_RETURN_DIALOG_ID = "undo-return";
 
@@ -28,46 +18,28 @@ interface UndoReturnData {
  */
 export function UndoReturnAlertDialog() {
 	const dialog = useAlertDialog<UndoReturnData>(UNDO_RETURN_DIALOG_ID);
-
-	const { action, isPending } = useUpdateOrderStatus("undo-return", {
-		onSuccess: () => {
-			dialog.close();
-		},
-	});
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			dialog.close();
-		}
-	};
+	const { action } = useUpdateOrderStatus("undo-return");
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="warning">
-			<ResponsiveAlertDialogContent>
-				<form action={action}>
-					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
-
-					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>Annuler le retour</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription render={<div />}>
-							<p>
-								Annuler le retour de la commande <strong>{dialog.data?.orderNumber}</strong> ?
-							</p>
-							<p className="text-muted-foreground mt-4 text-sm">
-								Le statut de livraison repassera à &quot;Livré&quot;. Un remboursement déjà créé
-								n&apos;est pas affecté.
-							</p>
-						</ResponsiveAlertDialogDescription>
-					</ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Spinner presentational />}
-							{isPending ? "Annulation…" : "Annuler le retour"}
-						</ResponsiveAlertDialogAction>
-					</ResponsiveAlertDialogFooter>
-				</form>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+		<ConfirmDialog
+			open={dialog.isOpen}
+			onClose={dialog.close}
+			action={action}
+			tone="warning"
+			fields={{ id: dialog.data?.orderId }}
+			title="Annuler le retour"
+			confirmLabel="Annuler le retour"
+			description={
+				<>
+					<p>
+						Annuler le retour de la commande <strong>{dialog.data?.orderNumber}</strong> ?
+					</p>
+					<p className="text-muted-foreground mt-4 text-sm">
+						Le statut de livraison repassera à &quot;Livré&quot;. Un remboursement déjà créé
+						n&apos;est pas affecté.
+					</p>
+				</>
+			}
+		/>
 	);
 }

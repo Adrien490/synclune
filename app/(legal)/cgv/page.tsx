@@ -1,5 +1,7 @@
+import { MediatorDetails } from "@/app/(legal)/_components/mediator-details";
 import { PREPARATION_DELAY_LABEL, SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { PageHeader } from "@/shared/components/page-header";
+import { MEDIATION_CONDITIONS, MEDIATION_LEGAL_BASIS } from "@/shared/constants/consumer-law";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
@@ -407,47 +409,9 @@ export default async function CGVPage() {
 							</p>
 
 							<h3 className="text-lg font-medium sm:text-xl">11.2 Médiation de la consommation</h3>
-							<p>
-								Conformément à l'article L612-1 du Code de la consommation, en cas d'échec de notre
-								tentative de règlement amiable, vous avez la possibilité de recourir{" "}
-								<strong>gratuitement</strong> à un médiateur de la consommation en vue de la
-								résolution amiable du litige.
-							</p>
-							<div className="border-info/30 bg-info/10 rounded-lg border p-6">
-								<p className="mb-3 font-medium">Coordonnées de notre médiateur :</p>
-								<div className="space-y-1 text-sm">
-									<p>
-										<strong>CNPM - MÉDIATION DE LA CONSOMMATION</strong>
-									</p>
-									<p>Centre National de la Médiation des Professions et des Métiers</p>
-									<p>27 avenue de la Libération</p>
-									<p>42400 Saint-Chamond</p>
-									<p>France</p>
-									<p className="mt-2">
-										<strong>Site internet :</strong>{" "}
-										<a
-											href="https://cnpm-mediation-consommation.eu"
-											target="_blank"
-											rel="noopener noreferrer"
-											className="underline"
-										>
-											cnpm-mediation-consommation.eu
-										</a>
-									</p>
-									<p>
-										<strong>Email :</strong>{" "}
-										<a href="mailto:contact@cnpm-mediation-consommation.eu" className="underline">
-											contact@cnpm-mediation-consommation.eu
-										</a>
-									</p>
-								</div>
-							</div>
-							<p className="text-muted-foreground text-sm">
-								Le recours à la médiation est gratuit pour le consommateur. Le médiateur doit être
-								saisi dans un délai maximum d'un an à compter de votre réclamation écrite auprès de
-								Synclune. La médiation n'est pas obligatoire mais constitue une alternative au
-								recours judiciaire.
-							</p>
+							<p>{MEDIATION_LEGAL_BASIS}</p>
+							<MediatorDetails />
+							<p className="text-muted-foreground text-sm">{MEDIATION_CONDITIONS}</p>
 
 							{/*
 							 * Pas de renvoi à la plateforme européenne de règlement en ligne des

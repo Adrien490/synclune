@@ -56,7 +56,16 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>
-			<main id="main-content" tabIndex={-1} aria-label="Contenu principal" className="min-h-dvh">
+			{/* `data-shop-shell` : marqueur lu par `html:has(…)` dans globals.css pour
+			    poser le `scroll-padding-bottom` de la bottom-nav (WCAG 2.4.11). Même
+			    montage que `[data-admin-layout]` et `[data-checkout-shell]`. */}
+			<main
+				id="main-content"
+				data-shop-shell
+				tabIndex={-1}
+				aria-label="Contenu principal"
+				className="min-h-dvh"
+			>
 				{children}
 			</main>
 			<Suspense fallback={<FooterSkeleton />}>

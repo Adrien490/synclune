@@ -1,6 +1,6 @@
 "use client";
 
-import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
@@ -42,17 +42,22 @@ interface TaxonomyDeleteAlertDialogProps {
 export function TaxonomyDeleteAlertDialog({
 	config,
 	action,
-	isPending,
-}: Omit<TaxonomyDeleteAlertDialogProps, "onDeleted">) {
+}: Omit<TaxonomyDeleteAlertDialogProps, "onDeleted" | "isPending">) {
+	const dialog = useAlertDialog<TaxonomyDeletePayload>(config.deleteDialogId);
+	const data = dialog.data;
+
 	return (
-		<DeleteConfirmationDialog<TaxonomyDeletePayload>
-			dialogId={config.deleteDialogId}
-			title={config.deleteDialogTitle}
+		<ConfirmDialog
+			open={dialog.isOpen}
+			onClose={dialog.close}
 			action={action}
-			isPending={isPending}
-			hiddenFields={[{ name: config.formFields.deleteId, dataKey: "id" }]}
-			description={(data) => (
-				<div className="space-y-3">
+			tone="destructive"
+			fields={{ [config.formFields.deleteId]: data?.id }}
+			title={config.deleteDialogTitle}
+			confirmLabel="Supprimer"
+			descriptionClassName="space-y-3"
+			description={
+				<>
 					<p>
 						Êtes-vous sûr de vouloir supprimer {config.labels.definite}{" "}
 						<strong>&quot;{data?.displayName}&quot;</strong> ?
@@ -65,8 +70,8 @@ export function TaxonomyDeleteAlertDialog({
 						</p>
 					)}
 					<p className="text-destructive font-medium">Cette action est irréversible.</p>
-				</div>
-			)}
+				</>
+			}
 		/>
 	);
 }

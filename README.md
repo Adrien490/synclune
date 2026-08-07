@@ -214,7 +214,7 @@ demarrage plutot que de degrader en silence.
 
 - **[CLAUDE.md](./CLAUDE.md)** — Architecture detaillee, patterns, cache profiles, conventions
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Guide de contribution (modules, Git workflow, tests)
-- **[docs/](./docs/)** — Modele d'activite ([BUSINESS.md](./docs/BUSINESS.md)), runbook operations ([RUNBOOK.md](./docs/RUNBOOK.md)), constats connus ([KNOWN-ISSUES.md](./docs/KNOWN-ISSUES.md))
+- **[docs/](./docs/README.md)** — [Index complet des 10 documents](./docs/README.md) : modele d'activite ([BUSINESS.md](./docs/BUSINESS.md)), conventions UI ([UI-CONVENTIONS.md](./docs/UI-CONVENTIONS.md)), grille d'audit de la landing ([LANDING-BEST-PRACTICES.md](./docs/LANDING-BEST-PRACTICES.md)), constats connus ([KNOWN-ISSUES.md](./docs/KNOWN-ISSUES.md))
 - **[docs/prompts/](./docs/prompts/)** — Les 4 catalogues de prompts (audit, refonte, maquettage) et leur [mode d'emploi](./docs/prompts/README.md)
 
 ---

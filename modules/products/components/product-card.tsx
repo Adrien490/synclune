@@ -99,7 +99,7 @@ function CardBadge({
  *
  * Surface via CARD_SURFACE_POLAROID (SSOT partagée avec CollectionCard, sans
  * `overflow-hidden` — des cartes sœurs y ancrent encore un ruban qui déborde,
- * cf. EtalCard / EtalEmptyCard) ; c'est la zone média qui clippe. Le ruban de
+ * cf. EtalCard / HeroEmptyCard) ; c'est la zone média qui clippe. Le ruban de
  * cette carte a été retiré (2026-08-05, densité rose en série sur la grille) ;
  * le trait dessiné reste la primitive partagée SquiggleUnderline.
  *
@@ -261,7 +261,7 @@ export function ProductCard({
 						className={cn(
 							"rounded-sm object-cover",
 							!secondaryImage &&
-								"motion-safe:can-hover:group-hover:scale-105 ease-out motion-safe:transition-[transform] motion-safe:duration-300",
+								"motion-safe:can-hover:group-hover:scale-105 ease-out motion-safe:transition-[scale] motion-safe:duration-300",
 						)}
 						style={{ viewTransitionName: productViewTransitionName }}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
@@ -298,7 +298,7 @@ export function ProductCard({
 								alt=""
 								aria-hidden="true"
 								fill
-								className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-sm object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500"
+								className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-sm object-cover opacity-0 ease-out motion-safe:transition-[opacity,scale] motion-safe:duration-500"
 								loading="lazy"
 								quality={IMAGE_QUALITY.STANDARD}
 								sizes={IMAGE_SIZES.PRODUCT_CARD}

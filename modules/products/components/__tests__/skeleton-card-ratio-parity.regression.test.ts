@@ -31,14 +31,13 @@ const CARD_SKELETON_SSOT = "modules/products/components/product-card-skeleton.ts
 /** Skeletons de grille : ils délèguent la carte au SSOT, sans ratio en propre. */
 const DELEGATING_SKELETONS = [
 	"modules/products/components/product-list-skeleton.tsx",
-	"modules/products/components/recently-viewed-products-skeleton.tsx",
 	"modules/products/components/related-products-skeleton.tsx",
 	"modules/products/components/search-fallback-suggestions.tsx",
 	"modules/wishlist/components/wishlist-grid-skeleton.tsx",
 	// Squelette de la grille de l'accueil (l'étal, 2026-08-04) — enregistré ici
 	// dès sa création : une grille de plus que le garde-fou ne voyait pas est
 	// exactement ce qui a laissé les trois skeletons d'origine dériver.
-	"app/(shop)/(home)/_components/etal/etal-grid.tsx",
+	"app/(shop)/(home)/_components/hero/hero-grid.tsx",
 ] as const;
 
 /**
@@ -49,7 +48,7 @@ const DELEGATING_SKELETONS = [
  */
 const MEDIA_RATIO_MIRRORS = [
 	// Dernière cellule de l'étal : l'aplat des 4 couleurs de marque.
-	"app/(shop)/(home)/_components/etal/etal-all-creations-card.tsx",
+	"app/(shop)/(home)/_components/hero/hero-all-creations-card.tsx",
 ] as const;
 
 function read(relativePath: string): string {

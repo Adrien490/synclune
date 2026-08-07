@@ -11,16 +11,29 @@ import { formatEuro } from "@/shared/utils/format-euro";
  *
  * La page `/aide` a été absorbée par la landing le 2026-08-05 : elle redirige
  * en 308 vers `/#faq` (`next.config.ts`). Il n'y a donc plus de champ de
- * recherche — sur onze questions déjà groupées et toutes présentes dans le DOM,
- * un filtre local n'apportait rien et entrait en concurrence visuelle avec la
- * recherche produits de la barre.
+ * recherche — sur onze questions toutes présentes dans le DOM, un filtre local
+ * n'apportait rien et entrait en concurrence visuelle avec la recherche
+ * produits de la barre.
+ *
+ * ⚠️ **Pas de regroupement thématique** (2026-08-06) : les cinq `h3` « Les
+ * bijoux / Livraison / … » ont été retirés, il n'y a plus de champ `section`.
+ * Sur onze questions, cinq intertitres coupaient la liste en tronçons de deux
+ * (dont deux groupes d'un seul item) et pesaient plus lourd que les questions
+ * elles-mêmes. **L'ORDRE DU TABLEAU EST LA STRUCTURE** — il reste thématique
+ * (bijoux, puis livraison, retours, personnalisation, commandes) : insérer une
+ * question au milieu, c'est la ranger.
+ *
+ * Depuis « L'échantillonnier » (2026-08-06), cet ordre est DOUBLÉ d'une encre
+ * par famille (`accent`, cf. sa JSDoc) : la couleur rend visible le découpage
+ * que l'ordre porte déjà. Les deux doivent donc rester d'accord — déplacer une
+ * question sans reprendre son `accent` casserait les blocs 4 · 3 · 2 · 2, et
+ * c'est ce que vérifie `faq-section.test.tsx`.
  *
  * - `answerText` : version texte brut, SEUL consommateur restant le JSON-LD
  *   `FAQPage` (`shared/components/structured-data.tsx`). ⚠️ Il doit rester le
  *   décalque de `answer` : Google compare le balisage au contenu visible, et un
  *   `answerText` qui dérive de la copie affichée est une non-conformité muette.
  * - `answer` : version JSX riche, rendue par les accordéons.
- * - `section` : regroupement thématique (les cinq `h3` de la section).
  *
  * ⚠️ **Copie au TUTOIEMENT** (CLAUDE.md, § Voix). Les réponses vouvoyaient tant
  * que la FAQ vivait sur sa propre page ; depuis qu'elles cohabitent avec le
@@ -37,22 +50,45 @@ export const FAQ_DATE_MODIFIED: string =
 	process.env.VERCEL_GIT_COMMIT_AUTHOR_DATE?.split("T")[0] ??
 	new Date().toISOString().split("T")[0]!;
 
-export const FAQ_SECTIONS = {
-	bijoux: "Les bijoux",
-	livraison: "Livraison",
-	retours: "Retours et annulation",
-	personnalisation: "Personnalisation",
-	commandes: "Commandes et paiement",
-} as const;
-
-export type FaqSection = keyof typeof FAQ_SECTIONS;
+/**
+ * Les quatre encres de la gamme, dans l'ordre où la page les traverse
+ * (`app/styles/section-accents.css` : « la page traverse le dégradé du hero,
+ * rose → lavande → menthe → soleil »). L'union est re-déclarée ici plutôt
+ * qu'importée : c'est déjà le cas dans cinq autres fichiers du dépôt
+ * (`NavbarAccent`, `CheckoutSectionAccent`…), aucun n'étant SSOT des autres.
+ *
+ * NON exportée : rien hors de ce fichier n'a besoin de la nommer — un appelant
+ * lit `item.accent` et récupère l'union par inférence. L'exporter en ferait un
+ * export mort, que knip signale déjà pour ses deux jumelles.
+ */
+type FaqAccent = "rose" | "lavender" | "mint" | "sun";
 
 export interface FaqItem {
 	id: string;
-	section: FaqSection;
 	question: string;
 	answerText: string;
 	answer: ReactNode;
+	/**
+	 * L'encre de la FAMILLE de la question — direction « F — Le nuancier, au bon
+	 * calibre » (2026-08-06). Rendue en `data-accent` sur l'`AccordionItem`,
+	 * elle y re-dérive toute la cascade de `section-accents.css` : la touche de
+	 * peinture en tête de question et l'anneau de la note prennent
+	 * `--section-accent`, le papier de la note ouverte `--section-wash-strong`.
+	 * La salle, elle, reste dorée.
+	 *
+	 * ⚠️ **Ce n'est PAS la résurrection du champ `section`** retiré le
+	 * 2026-08-06 : aucun intertitre, aucun regroupement DOM, aucun changement
+	 * d'ordre — la liste reste une liste unique dans l'ordre de ce tableau. La
+	 * couleur reprend le RÔLE des cinq intertitres (rendre les familles
+	 * lisibles d'un coup d'œil) sans en reprendre le coût (cinq titres qui
+	 * pesaient plus lourd que les questions qu'ils annonçaient).
+	 *
+	 * Le découpage est 4 · 3 · 2 · 2 : les deux dernières familles d'origine
+	 * (« Personnalisation » et « Commandes », un item chacune) fusionnent sous
+	 * le soleil. C'est la fusion que cinq intertitres ne pouvaient pas faire
+	 * sans mentir sur leurs propres titres.
+	 */
+	accent: FaqAccent;
 }
 
 /**
@@ -74,7 +110,7 @@ export const ANSWER_LINK_CLASS =
 export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	{
 		id: "fait-main",
-		section: "bijoux",
+		accent: "rose",
 		question: "Les bijoux sont-ils vraiment faits main ?",
 		answerText:
 			"Oui, à 100 %. Chaque pièce est dessinée, peinte, cuite et assemblée dans mon atelier à Nantes. Aucune production en série, aucune sous-traitance, chaque création passe entre mes mains.",
@@ -88,7 +124,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "entretien",
-		section: "bijoux",
+		accent: "rose",
 		question: "Comment entretenir mes bijoux faits main ?",
 		answerText:
 			"Évite le contact prolongé avec l'eau, les parfums et les crèmes. Range-les dans un endroit sec, à l'abri de la lumière directe. Un coup de chiffon doux suffit à raviver leur éclat.",
@@ -102,7 +138,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "editions-limitees",
-		section: "bijoux",
+		accent: "rose",
 		question: "Pourquoi y a-t-il si peu d'exemplaires de chaque pièce ?",
 		answerText:
 			"Parce que tout est fait main et que je tiens à ce que chaque bijou reste unique. La plupart des modèles existent en moins de dix exemplaires. Si une pièce te plaît, n'attends pas trop.",
@@ -117,7 +153,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "taille",
-		section: "bijoux",
+		accent: "rose",
 		question: "Comment choisir la bonne taille (bague, bracelet, collier) ?",
 		answerText: `Mesure un bijou que tu portes déjà avec un mètre ruban souple, ou indique-moi ton tour de doigt ou de poignet à ${BRAND.contact.email}. Je te conseille la taille adaptée et peux ajuster certaines pièces à ta demande.`,
 		answer: (
@@ -136,7 +172,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "delai",
-		section: "livraison",
+		accent: "lavender",
 		question: "Quel est le délai de livraison en France ?",
 		answerText: `Les commandes sont expédiées sous ${PREPARATION_DELAY_LABEL}. La livraison France métropolitaine prend ensuite ${SHIPPING_RATES.FR.estimatedDays} en envoi suivi (${formatEuro(SHIPPING_RATES.FR.amount)}). L'Union Européenne est livrée en ${SHIPPING_RATES.EU.estimatedDays} (${formatEuro(SHIPPING_RATES.EU.amount)}).`,
 		answer: (
@@ -152,7 +188,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "zones",
-		section: "livraison",
+		accent: "lavender",
 		question: "La livraison est-elle possible partout ?",
 		answerText:
 			"Je livre en France métropolitaine et dans l'Union Européenne. La Corse et les DOM-TOM ne sont pas desservis pour le moment : si c'est ton cas, écris-moi, je cherche une solution au cas par cas.",
@@ -175,7 +211,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "colis-perdu",
-		section: "livraison",
+		accent: "lavender",
 		question: "Que faire si mon colis n'arrive pas ?",
 		answerText:
 			"Suis d'abord ton colis avec le numéro de suivi reçu par email. Au-delà du délai annoncé, écris-moi : j'ouvre une enquête auprès du transporteur et je te tiens au courant jusqu'à la résolution.",
@@ -196,7 +232,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "retours",
-		section: "retours",
+		accent: "mint",
 		question: "Comment fonctionnent les retours ?",
 		answerText:
 			"Tu as 14 jours après réception pour me renvoyer un bijou non porté et dans son emballage d'origine. Échange ou remboursement intégral, frais de livraison initiaux compris ; seuls les frais de retour restent à ta charge. Détails complets sur la page rétractation.",
@@ -215,7 +251,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "annulation",
-		section: "retours",
+		accent: "mint",
 		question: "Comment annuler ma commande ?",
 		answerText:
 			"Tant que ta commande n'a pas été expédiée, écris-moi vite : j'annule et je te rembourse sous 72 h. Après expédition, il faut attendre la réception puis utiliser le droit de rétractation de 14 jours.",
@@ -239,7 +275,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "personnalisation",
-		section: "personnalisation",
+		accent: "sun",
 		question: "Puis-je personnaliser une création ?",
 		answerText:
 			"Bien sûr ! Couleurs, motifs, longueurs, gravures : la plupart des modèles peuvent être adaptés. Écris-moi, on en discute ensemble.",
@@ -259,7 +295,7 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 	},
 	{
 		id: "code-promo",
-		section: "commandes",
+		accent: "sun",
 		// ⚠️ Plus de mention « déjà utilisé sur votre compte » : il n'y a plus de
 		// compte client depuis le 2026-07-31, l'achat est intégralement invité.
 		question: "Mon code promo ne fonctionne pas, pourquoi ?",

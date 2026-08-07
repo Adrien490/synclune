@@ -106,7 +106,12 @@ de la haute joaillerie.
   `--section-glow` / `--section-soft`. Le rose EST `--primary` (jamais dupliqué) ; les trois autres sont
   `--color-brand-{lavender,mint,sun}`, doublés de halos translucides `--color-glow-*`. Les valeurs exactes,
   et la règle de lisibilité qui va avec, sont au §6. Si ta maquette n'emploie que `--primary` et des gris,
-  demande-toi si c'est de la retenue ou de la timidité.
+  demande-toi si c'est de la retenue ou de la timidité. ⚠️ **Deux palettes, ne les confonds pas** : celle
+  des bijoux est franchement **polychrome et saturée** (rose bonbon, mandarine, jaune soleil, vert pomme,
+  cobalt, lilas — inventaire dans `docs/BRAND-DA.md` § La palette chromatique) ; l'interface, elle, n'a que
+  ces **quatre** accents. La polychromie se joue par la **rotation de l'accent d'une section à l'autre** et
+  par la couleur des visuels produits — **n'invente pas un token par couleur de bijou**, le critère
+  d'admission des variables CSS est au §6.
 - **Le geste à la main est la signature**, et il est déjà en SSOT : `HandDrawnAccent` et `HandDrawnUnderline`
   (`shared/components/animations/hand-drawn-accent.tsx`), `shared/components/squiggle-underline.tsx`,
   `shared/components/masking-tape.tsx`, `CARD_SURFACE_POLAROID` (`shared/components/card-surface.constants.ts` —
@@ -116,21 +121,29 @@ de la haute joaillerie.
   quelqu'un » mieux que n'importe quel adjectif. Prolonge-le, tends-le, ou argumente contre — mais ne
   l'ignore pas : une ligne parfaitement droite là où le reste du site trace à la main est une rupture, pas
   une sobriété.
-- **Les motifs identitaires sont un territoire, pas un décor** — SSOT `CLAUDE.md` § « Direction
-  artistique — lexique de marque » (lis-la, elle porte aussi le vocabulaire émotionnel et les matières).
-  Deux familles dominent, lisibles dans les noms mêmes des pièces (Starry Night Ring, Green Grape
-  Necklace, Rainbow Drop Necklace, Water Lilies, Rain Loops) : le **ciel de nuit** — lune, étoiles,
-  constellation ; le nom *Synclune* contient la lune, et une identité qui s'appelle comme ça sans jamais
-  la dessiner laisse son meilleur motif à la concurrence — et le **jardin fruité** — grappes, fleurs,
-  gouttes, arc-en-ciel. S'y ajoute une **filiation à l'art** que personne d'autre ne peut revendiquer :
-  Starry Night Ring EST « La Nuit étoilée » de Van Gogh, Water Lilies, les Nymphéas de Monet — un
-  registre narratif à part entière (la pièce raconte un tableau), et le pinceau va avec le trait : des
-  cabochons sont **peints à la main**, le geste de la marque n'est pas que dessiné. C'est de la matière
-  pour les registres du §4.1, les noms de directions et la copie : UN motif par direction, tenu
-  jusqu'au bout, jamais des étoiles saupoudrées partout. Une direction qui ne mobilise ni la palette,
-  ni le geste, ni un motif n'a que des gris pour raconter Synclune. En face, une limite délibérée :
-  **irisé, pailleté, translucide décrivent les bijoux, jamais l'interface** — traduits en paillettes
-  ou en verre dépoli, ils retombent dans le décoratif interdit au §4.8.
+- **Les motifs identitaires sont un territoire, pas un décor** — SSOT `docs/BRAND-DA.md` § « Les six
+  territoires artistiques » (lis-la : elle porte aussi la palette complète, les formes, les matières
+  et le ton), résumée dans `CLAUDE.md` § « Direction artistique — lexique de marque ». **Six
+  territoires**, tous lisibles dans les noms mêmes des pièces (Starry Night Ring, Green Grape
+  Necklace, Rainbow Drop Necklace, Water Lilies, Rain Loops) : le **jardin fantastique** — raisins,
+  grappes, feuilles, fleurs, nénuphars, et les raisins ne sont jamais rustiques mais des *grappes de
+  lumière* ; le **ciel cosmique** — lune, phases, étoiles, constellation, tourbillons (le nom
+  *Synclune* contient la lune, et une identité qui s'appelle comme ça sans jamais la dessiner laisse
+  son meilleur motif à la concurrence) ; l'**arc-en-ciel liquide** — des gouttes translucides en
+  séquence, pas un dégradé plaqué ; la **pluie et les larmes joyeuses** ; la **peinture miniature** ;
+  l'**enfance et l'objet affectif** — yeux surdimensionnés, naïf assumé, porte-bonheur.
+  **La goutte traverse tout** : elle est le raisin, la pluie, la larme, la rosée et l'arc-en-ciel —
+  c'est le signe transversal de la marque, et elle a déjà un tracé (`ATELIER_THREAD_PATHS` dans
+  `shared/components/hand-drawn/paths.ts`) là où la grappe et la feuille n'en ont aucun. La
+  **peinture miniature** est le territoire le plus distinctif, et personne d'autre ne peut le
+  revendiquer : Starry Night Ring EST « La Nuit étoilée » de Van Gogh, Water Lilies les Nymphéas de
+  Monet — un registre narratif à part entière (la pièce raconte un tableau), et le pinceau va avec le
+  trait : des cabochons sont **peints à la main**, le geste de la marque n'est pas que dessiné. C'est
+  de la matière pour les registres du §4.1, les noms de directions et la copie : UN motif par
+  direction, tenu jusqu'au bout, jamais des étoiles saupoudrées partout. Une direction qui ne mobilise
+  ni la palette, ni le geste, ni un motif n'a que des gris pour raconter Synclune. En face, une limite
+  délibérée : **irisé, pailleté, translucide décrivent les bijoux, jamais l'interface** — traduits en
+  paillettes ou en verre dépoli, ils retombent dans le décoratif interdit au §4.8.
 - **La voix est à la première personne.** Léane parle d'elle (« je », « mon atelier ») ; la copie tutoie la
   cliente. Un ton corporate impersonnel (« nos artisans », « notre maison ») est faux : il n'y a qu'elle.
   ⚠️ **Piège actif : `docs/atelier-story.md` est intégralement au VOUVOIEMENT** (« Chaque bijou que vous
@@ -141,10 +154,12 @@ de la haute joaillerie.
   en légende. Ne le laisse pas en l'état sous prétexte que c'est une citation.
 - **Le test** : si ta direction pouvait servir telle quelle à n'importe quelle boutique de bijoux, elle est
   ratée — pas parce qu'elle est laide, parce qu'elle ne raconte personne. Le noyau lexical contre lequel ce
-  test se joue : **couleur + poésie + fantaisie + fait main + singularité + Nantes** (formule de référence :
-  « Création artisanale de bijoux colorés, originaux et poétiques »). L'atelier est à Nantes et c'est une
-  singularité, pas une mention légale — une direction peut s'en servir ; aucune n'a le droit de l'ignorer en
-  inventant un ailleurs.
+  test se joue : **couleur (polychromie) + goutte + récit + fait main + miniature + Nantes** (formule de
+  référence : « Synclune crée à Nantes des bijoux miniatures, colorés et expressifs, inspirés par les
+  fruits, la pluie, les tableaux, le ciel et les souvenirs d'enfance » — version courte, « des petits
+  mondes colorés à porter »). ⚠️ « Bijoux artisanaux, colorés et poétiques » ne suffit **pas** à passer ce
+  test : c'est juste, et interchangeable. L'atelier est à Nantes et c'est une singularité, pas une mention
+  légale — une direction peut s'en servir ; aucune n'a le droit de l'ignorer en inventant un ailleurs.
 
 **L'échelle fait partie du brief, et elle t'ouvre des portes autant qu'elle en ferme.**
 - ~20 commandes/mois, **une seule personne** (pas d'équipe technique), catalogue petit, B2C France + UE,
@@ -219,7 +234,7 @@ Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà éc
 - `docs/KNOWN-ISSUES.md` si la cible touche le panier ou le checkout
 
 Puis trois passes de mémoire, dans cet ordre :
-1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier : **342 fichiers
+1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier : **382 fichiers
    de test** en portent (re-mesuré le 2026-08-05 ; c'est un nombre qui bouge à chaque passe de tests, ne le
    crois pas au fichier près — il n'est là que pour te dissuader de grepper la racine).
    Chacun verrouille un bug déjà payé une fois, et devient une ligne de la section Garde-fous.

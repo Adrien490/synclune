@@ -134,8 +134,6 @@ export interface UseMediaUploadReturn {
 	isUploading: boolean;
 	/** Current progress */
 	progress: UploadProgress | null;
-	/** Number of files waiting in queue */
-	queuedCount: number;
 	/** Files that failed during the last upload session — empty after retryFailed/clearFailed */
 	failedFiles: FailedUpload[];
 	/** Utility to determine the media type */

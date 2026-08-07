@@ -179,20 +179,23 @@ describe("MarkAsReturnedAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Marquage…' on submit button when isPending is true", () => {
+	/**
+	 * Ce dialogue ne décore plus l'attente (libellé « Marquage… », spinner,
+	 * `aria-busy`, `disabled` sur l'annulation) : le bouton de confirmation est un
+	 * `Close` Base UI, donc la surface part AU CLIC, avant que `isPending` ne
+	 * passe. La décoration se jouait dans un dialog déjà en sortie, et seuls ces
+	 * tests — qui forçaient `mockIsPending = true` à la main — la voyaient.
+	 * Prouvé par `shared/components/ui/__tests__/alert-dialog-close-on-confirm.regression.test.tsx` ;
+	 * le retour d'attente appartient au toast de la mutation.
+	 */
+	it("ne décore pas l'attente : rien ne dépend d'`isPending`", () => {
 		mockIsPending = true;
 
 		render(<MarkAsReturnedAlertDialog />);
 
-		expect(screen.getByText("Marquage…")).toBeInTheDocument();
-	});
-
-	it("disables cancel button when isPending is true", () => {
-		mockIsPending = true;
-
-		render(<MarkAsReturnedAlertDialog />);
-
-		expect(screen.getByTestId("cancel-button")).toBeDisabled();
+		expect(screen.getByTestId("submit-button")).toHaveTextContent("Marquer comme retourné");
+		expect(screen.getByTestId("submit-button")).not.toBeDisabled();
+		expect(screen.getByTestId("cancel-button")).not.toBeDisabled();
 	});
 
 	// ─── Refund prompt view ───────────────────────────────────────────────────

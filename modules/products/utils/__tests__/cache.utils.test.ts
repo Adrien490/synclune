@@ -110,10 +110,6 @@ describe("getProductInvalidationTags", () => {
 		expect(tags).toContain("admin-inventory-list");
 		expect(tags).toContain("admin-badges");
 		expect(tags).toContain("sitemap-images");
-		// `get-recent-products.ts` PROMETTAIT cette invalidation en JSDoc alors qu'aucune
-		// mutation produit ne bustait le tag (seul le cron RGPD le faisait) :
-		// un produit archivé restait dans « Vus récemment » jusqu'à expiration du profil.
-		expect(tags).toContain("recent-products-list");
 		// Le `hasProducts` d'un type de bijou se calcule sur les produits PUBLIC : sans ce
 		// tag, publier le premier bijou d'un type ne le faisait pas apparaître au mega-menu.
 		expect(tags).toContain("product-types-list");
@@ -124,7 +120,9 @@ describe("getProductInvalidationTags", () => {
 		expect(tags).toContain("collections-list");
 		// `fetchSkuDetailById` embarque product.title/status/_count.skus sous `skus-list`.
 		expect(tags).toContain("skus-list");
-		expect(tags).toHaveLength(13);
+		// 12 depuis le retrait de `recent-products-list` avec la feature « produits
+		// récemment vus » (2026-08-06).
+		expect(tags).toHaveLength(12);
 	});
 
 	it("includes SKUS + COLLECTIONS + DETAIL_BY_ID tags when productId is provided", () => {
@@ -135,7 +133,7 @@ describe("getProductInvalidationTags", () => {
 		// Lecture de duplication : elle se cachait sous un tag fabriqué à la main
 		// (`product-product-id-…`) qu'aucun mutateur n'émettait.
 		expect(tags).toContain("product-id-prod-abc");
-		expect(tags).toHaveLength(16);
+		expect(tags).toHaveLength(15);
 	});
 
 	// Cascade couleurs/matériaux : le KPI « produits distincts » des listes couleurs

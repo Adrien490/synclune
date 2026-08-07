@@ -1,9 +1,7 @@
-import { useRef } from "react";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { ShelfBar, ShelfBarButton, ShelfBarToolbar } from "../shelf-bar";
-import { useToolbarRovingFocus } from "../use-toolbar-roving-focus";
+import { ShelfBar, ShelfBarButton } from "../shelf-bar";
 
 afterEach(cleanup);
 
@@ -25,15 +23,6 @@ describe("ShelfBar", () => {
 		expect(nav.className).toContain("polaroid-paper");
 		expect(nav.className).toContain("shadow-paper");
 		expect(nav.className).toContain("shelf-materialize");
-	});
-});
-
-describe("ShelfBarToolbar", () => {
-	it("est une toolbar horizontale nommée", () => {
-		render(<ShelfBarToolbar aria-label="Gestes" />);
-
-		const toolbar = screen.getByRole("toolbar", { name: "Gestes" });
-		expect(toolbar.getAttribute("aria-orientation")).toBe("horizontal");
 	});
 });
 
@@ -80,44 +69,4 @@ describe("ShelfBarButton", () => {
 		);
 		expect(badge).toBeDefined();
 	});
-});
-
-describe("useToolbarRovingFocus", () => {
-	function Harness() {
-		const a = useRef<HTMLButtonElement>(null);
-		const b = useRef<HTMLButtonElement>(null);
-		const c = useRef<HTMLButtonElement>(null);
-		const { getRovingProps } = useToolbarRovingFocus([a, b, c]);
-		return (
-			<div role="toolbar" aria-label="Gestes">
-				<button ref={a} {...getRovingProps(0)}>
-					Un
-				</button>
-				<button ref={b} {...getRovingProps(1)}>
-					Deux
-				</button>
-				<button ref={c} {...getRovingProps(2)}>
-					Trois
-				</button>
-			</div>
-		);
-	}
-
-	it("un seul arrêt de tabulation, qui suit le focus (roving tabindex)", () => {
-		render(<Harness />);
-
-		const toolbar = screen.getByRole("toolbar", { name: "Gestes" });
-		const [un, deux, trois] = within(toolbar).getAllByRole("button");
-		expect(un!.tabIndex).toBe(0);
-		expect(deux!.tabIndex).toBe(-1);
-		expect(trois!.tabIndex).toBe(-1);
-
-		fireEvent.focus(deux!);
-		expect(un!.tabIndex).toBe(-1);
-		expect(deux!.tabIndex).toBe(0);
-	});
-
-	// La navigation par flèches dérive l'anneau d'`offsetParent`, qui vaut
-	// toujours `null` en jsdom : le comportement clavier réel est couvert par
-	// `e2e/a11y/keyboard-navigation.spec.ts` sur la barre du catalogue.
 });

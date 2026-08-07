@@ -3,16 +3,16 @@
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useState, type ReactElement } from "react";
 import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-	ResponsiveAlertDialogTrigger,
-} from "@/shared/components/ui/responsive-alert-dialog";
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/shared/components/ui/alert-dialog";
 import { useLogout } from "../hooks/use-logout";
 
 interface LogoutAlertDialogProps {
@@ -21,6 +21,12 @@ interface LogoutAlertDialogProps {
 	onOpenChange?: (open: boolean) => void;
 }
 
+/**
+ * ⚠️ Reste sur les primitives, à dessein : ce composant expose son PROPRE
+ * déclencheur (`children` → `AlertDialogTrigger`, 5 consommateurs), or
+ * `ConfirmDialog` est une surface strictement contrôlée sans prop `trigger`.
+ * C'est le 4ᵉ invariant de sa frontière.
+ */
 export function LogoutAlertDialog({
 	children,
 	open: controlledOpen,
@@ -34,38 +40,39 @@ export function LogoutAlertDialog({
 	});
 
 	return (
-		<ResponsiveAlertDialog open={open} onOpenChange={setOpen}>
-			{children && <ResponsiveAlertDialogTrigger render={children as ReactElement} />}
-			<ResponsiveAlertDialogContent>
+		<AlertDialog open={open} onOpenChange={setOpen}>
+			{children && <AlertDialogTrigger render={children as ReactElement} />}
+			<AlertDialogContent>
 				<form
 					action={action}
 					data-pending={isPending || isLoggedOut ? "" : undefined}
 					aria-busy={isPending || isLoggedOut}
 				>
-					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>Se déconnecter ?</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription render={<div className="space-y-3" />}>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Se déconnecter ?</AlertDialogTitle>
+						<AlertDialogDescription render={<div className="space-y-3" />}>
 							<p>Voulez-vous vraiment vous déconnecter de votre compte ?</p>
 							<p className="text-muted-foreground text-sm">
 								Vous pourrez vous reconnecter à tout moment.
 							</p>
-						</ResponsiveAlertDialogDescription>
-					</ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel type="button" disabled={isPending || isLoggedOut}>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button" disabled={isPending || isLoggedOut}>
 							Annuler
-						</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction
+						</AlertDialogCancel>
+						<AlertDialogAction
+							tone="neutral"
 							type="submit"
 							disabled={isPending || isLoggedOut}
 							aria-busy={isPending || isLoggedOut}
 						>
 							{(isPending || isLoggedOut) && <Spinner presentational />}
 							{isLoggedOut ? "Déconnecté !" : isPending ? "Déconnexion…" : "Se déconnecter"}
-						</ResponsiveAlertDialogAction>
-					</ResponsiveAlertDialogFooter>
+						</AlertDialogAction>
+					</AlertDialogFooter>
 				</form>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+			</AlertDialogContent>
+		</AlertDialog>
 	);
 }

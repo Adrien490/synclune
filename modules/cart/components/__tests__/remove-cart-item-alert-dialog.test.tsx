@@ -215,28 +215,6 @@ describe("RemoveCartItemAlertDialog", () => {
 		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Retirer");
 	});
 
-	it("disables buttons when isPending", () => {
-		mockIsOpen.value = true;
-		mockIsPending.value = true;
-		render(<RemoveCartItemAlertDialog />);
-		expect(screen.getByTestId("cancel-btn")).toBeDisabled();
-		expect(screen.getByTestId("confirm-btn")).toBeDisabled();
-	});
-
-	it("shows 'Retrait…' text when isPending", () => {
-		mockIsOpen.value = true;
-		mockIsPending.value = true;
-		render(<RemoveCartItemAlertDialog />);
-		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Retrait…");
-	});
-
-	it("shows loader icon when isPending", () => {
-		mockIsOpen.value = true;
-		mockIsPending.value = true;
-		render(<RemoveCartItemAlertDialog />);
-		expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
-	});
-
 	it("fires an error haptic when the destructive action is confirmed", () => {
 		mockIsOpen.value = true;
 		mockDialogData.value = { skuId: "sku-42", itemName: "Collier", quantity: 1 };

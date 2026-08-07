@@ -1,10 +1,11 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
-import { OG_GRADIENT } from "@/shared/constants/brand-colors";
+import { OgShell } from "@/shared/components/og/og-shell";
+import { BRAND_HEX } from "@/shared/constants/brand-colors";
 import { ImageResponse } from "next/og";
 
 // Image metadata
-export const alt = "Collection Synclune";
+export const alt = "Une série de bijoux colorés Synclune";
 export const size = {
 	width: 1200,
 	height: 630,
@@ -15,6 +16,8 @@ export const contentType = "image/png";
 /**
  * Genere dynamiquement une image Open Graph pour chaque collection
  * Utilisee pour les partages sur reseaux sociaux (Twitter, Facebook, LinkedIn, etc.)
+ *
+ * Décor, contraintes Satori et écart de fonte : cf. `OgShell`.
  */
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
 	const { slug } = await params;
@@ -23,21 +26,9 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 	// Fallback si collection non trouvee ou non publiee
 	if (!collection || collection.status !== CollectionStatus.PUBLIC) {
 		return new ImageResponse(
-			<div
-				style={{
-					fontSize: 64,
-					background: OG_GRADIENT,
-					width: "100%",
-					height: "100%",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					color: "white",
-					fontFamily: "sans-serif",
-				}}
-			>
-				Synclune
-			</div>,
+			<OgShell align="center" signature>
+				<div style={{ display: "flex", fontSize: 64, fontWeight: 600 }}>Synclune</div>
+			</OgShell>,
 			{ ...size },
 		);
 	}
@@ -48,97 +39,57 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 	).length;
 
 	return new ImageResponse(
-		<div
-			style={{
-				background: OG_GRADIENT,
-				width: "100%",
-				height: "100%",
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				justifyContent: "center",
-				padding: "80px",
-				fontFamily: "sans-serif",
-				color: "white",
-			}}
-		>
-			{/* Badge Collection */}
-			<div
-				style={{
-					fontSize: 28,
-					fontWeight: 500,
-					textTransform: "uppercase",
-					letterSpacing: "0.1em",
-					marginBottom: "20px",
-					opacity: 0.9,
-					display: "flex",
-				}}
-			>
-				Collection
-			</div>
-
-			{/* Nom de la collection */}
-			<div
-				style={{
-					fontSize: 72,
-					fontWeight: 700,
-					textAlign: "center",
-					marginBottom: "30px",
-					lineHeight: 1.2,
-					maxWidth: "900px",
-					display: "flex",
-					textShadow: "0 2px 8px rgba(90,20,60,0.35)",
-				}}
-			>
-				{collection.name}
-			</div>
-
-			{/* Nombre de produits */}
-			{publicProductsCount > 0 && (
-				<div
-					style={{
-						fontSize: 32,
-						fontWeight: 500,
-						marginBottom: "40px",
-						opacity: 0.9,
-						display: "flex",
-					}}
-				>
-					{publicProductsCount} création{publicProductsCount > 1 ? "s" : ""}
-				</div>
-			)}
-
-			{/* Marque et tagline */}
+		<OgShell align="center" signature>
 			<div
 				style={{
 					display: "flex",
 					flexDirection: "column",
 					alignItems: "center",
-					gap: "10px",
+					textAlign: "center",
 				}}
 			>
+				{/* « Série », pas « Collection » : c'est le mot du storefront depuis
+				    l'harmonisation du langage collections (2026-08-06). */}
 				<div
 					style={{
-						fontSize: 36,
-						fontWeight: 700,
-						letterSpacing: "0.05em",
 						display: "flex",
+						fontSize: 26,
+						textTransform: "uppercase",
+						letterSpacing: "0.1em",
+						color: BRAND_HEX.inkMuted,
 					}}
 				>
-					Synclune
+					Une série
 				</div>
+
 				<div
 					style={{
-						fontSize: 24,
-						fontWeight: 400,
-						opacity: 0.9,
 						display: "flex",
+						marginTop: "18px",
+						maxWidth: "900px",
+						fontSize: 72,
+						fontWeight: 300,
+						letterSpacing: "-0.02em",
+						lineHeight: 1.1,
 					}}
 				>
-					Créations artisanales faites main en France
+					{collection.name}
 				</div>
+
+				{publicProductsCount > 0 && (
+					<div
+						style={{
+							display: "flex",
+							marginTop: "20px",
+							fontSize: 30,
+							color: BRAND_HEX.inkMuted,
+						}}
+					>
+						{publicProductsCount} création{publicProductsCount > 1 ? "s" : ""}
+					</div>
+				)}
 			</div>
-		</div>,
+		</OgShell>,
 		{ ...size },
 	);
 }

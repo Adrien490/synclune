@@ -395,8 +395,8 @@ export default async function PrivacyPolicyPage() {
 									performances en réduisant les requêtes base de données.
 								</li>
 								<li>
-									<strong>recent-products / recent-searches :</strong> produits consultés et
-									recherches récentes - confort de navigation. Durée : 30 jours (httpOnly, secure).
+									<strong>recent-searches :</strong> recherches récentes - confort de navigation.
+									Durée : 30 jours (httpOnly, secure).
 								</li>
 								<li>
 									<strong>fab-hidden-* :</strong> mémorisation de vos choix d'affichage (bouton

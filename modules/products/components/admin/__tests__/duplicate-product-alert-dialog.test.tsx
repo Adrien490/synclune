@@ -287,50 +287,16 @@ describe("DuplicateProductAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Dupliquer");
 		});
 
-		it("shows 'Duplication…' label when pending", () => {
-			mockDuplicateProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Duplication…");
-		});
-
-		it("shows loader icon when pending", () => {
-			mockDuplicateProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("loader-circle")).toBeInTheDocument();
-		});
-
 		it("does not show loader icon when not pending", () => {
 			renderDialog();
 
 			expect(screen.queryByTestId("loader-circle")).not.toBeInTheDocument();
 		});
 
-		it("is disabled when pending", () => {
-			mockDuplicateProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toBeDisabled();
-		});
-
 		it("is not disabled when not pending", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-action")).not.toBeDisabled();
-		});
-
-		it("sets aria-busy to true when pending", () => {
-			mockDuplicateProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toHaveAttribute("aria-busy", "true");
-		});
-
-		it("sets aria-busy to false when not pending", () => {
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-action")).toHaveAttribute("aria-busy", "false");
 		});
 	});
 
@@ -343,13 +309,6 @@ describe("DuplicateProductAlertDialog", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-cancel")).toHaveTextContent("Annuler");
-		});
-
-		it("is disabled when pending", () => {
-			mockDuplicateProduct.isPending = true;
-			renderDialog();
-
-			expect(screen.getByTestId("alert-dialog-cancel")).toBeDisabled();
 		});
 
 		it("is not disabled when not pending", () => {
@@ -379,9 +338,10 @@ describe("DuplicateProductAlertDialog", () => {
 			});
 		};
 
-		it("closes the dialog and refreshes the route so the new product appears in the list", () => {
+		// La fermeture n'appartient plus à `onSuccess` : le bouton de confirmation est
+		// un `Close`, le dialog est déjà parti quand la duplication aboutit.
+		it("refreshes the route so the new product appears in the list", () => {
 			callOnSuccess();
-			expect(mockDialog.close).toHaveBeenCalledTimes(1);
 			expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
 			expect(mockHaptic).toHaveBeenCalledWith("success");
 		});
@@ -412,15 +372,6 @@ describe("DuplicateProductAlertDialog", () => {
 			fireEvent.click(screen.getByTestId("alert-dialog"));
 
 			expect(mockDialog.close).toHaveBeenCalledTimes(1);
-		});
-
-		it("does NOT call dialog.close() when closed while pending", () => {
-			mockDuplicateProduct.isPending = true;
-			renderDialog();
-
-			fireEvent.click(screen.getByTestId("alert-dialog"));
-
-			expect(mockDialog.close).not.toHaveBeenCalled();
 		});
 	});
 });

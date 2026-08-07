@@ -80,20 +80,10 @@ export const PRODUCTS_CACHE_TAGS = {
 	RELATED_CONTEXTUAL: (productSlug: string) => `related-products-contextual-${productSlug}`,
 } as const;
 
-/**
- * Cache tags pour les produits recemment vus
- */
-export const RECENT_PRODUCTS_CACHE_TAGS = {
-	/** Tag principal pour les produits recemment vus */
-	LIST: "recent-products-list",
-} as const;
-
-/**
- * Retourne les tags a invalider pour les produits recemment vus
- */
-export function getRecentProductsInvalidationTags(): string[] {
-	return [RECENT_PRODUCTS_CACHE_TAGS.LIST];
-}
+// `RECENT_PRODUCTS_CACHE_TAGS` / `getRecentProductsInvalidationTags` ont été RETIRÉS
+// avec la feature « produits récemment vus » (2026-08-06). Le tag `recent-products-list`
+// n'a plus ni lecteur ni mutateur : le carrousel de PDP, sa section du panneau de
+// recherche et le cookie `recent-products` ont tous disparu.
 
 // `RECENT_SEARCHES_CACHE_TAGS` / `getRecentSearchesInvalidationTags` ont été RETIRÉS
 // (audit cache catalogue 2026-07-31) : trois Server Actions invalidaient

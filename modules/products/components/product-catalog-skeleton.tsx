@@ -13,10 +13,9 @@ import { cn } from "@/shared/utils/cn";
  * Miroir 1:1 de `ProductCatalog` pour éviter tout CLS au swap Suspense →
  * contenu final :
  * - fil d'Ariane desktop (`hidden md:block`)
- * - rangée titre : bloc titre à gauche + cluster recherche/tri à droite dès
- *   `md` (re-tranché le 2026-08-05 — le titre n'est plus une cellule de la
- *   grille, et le champ de recherche vit dans sa rangée, plus dans la barre)
- * - barre collante `lg:hidden` (3 cellules sous `md`, 2 entre `md` et `lg`)
+ * - bloc titre seul (le cluster recherche/tri est parti avec la recherche
+ *   inline, 2026-08-06 — le tri vit dans le meuble de filtres)
+ * - barre collante `lg:hidden` : une seule étiquette « Filtrer »
  * - grille : uniquement les cartes
  *
  * ⚠️ La géométrie de la grille vient de la SSOT `catalog-grid.constants.ts` — la
@@ -44,42 +43,23 @@ export function ProductCatalogSkeleton({ accent = "rail" }: { accent?: "rail" | 
 						<Skeleton className="h-5 w-44 rounded" />
 					</div>
 
-					{/* Rangée titre — même montage que le shell réel : bloc titre à gauche,
-					    cluster recherche/tri (`CatalogToolbarInline`) à droite dès `md`,
-					    calé en bas de rangée. Ghost du cluster à la géométrie exacte
-					    (champ h-11 w-64/w-72 + étiquette Trier ≥ lg), sinon CLS au swap. */}
-					<div className="md:flex md:items-end md:justify-between md:gap-6">
-						<div className="min-w-0 md:flex-1">
-							<CatalogHeadingSkeleton accent={accent} />
-						</div>
-						<div aria-hidden className="hidden shrink-0 items-center gap-2 md:flex">
-							<Skeleton className="h-11 w-64 rounded-md lg:w-72" />
-							<div className="border-border bg-background hidden h-11 w-[5.5rem] rounded-sm border lg:block" />
-						</div>
-					</div>
+					{/* Bloc titre — même montage que le shell réel : plus de cluster
+					    recherche/tri dans la rangée (2026-08-06). */}
+					<CatalogHeadingSkeleton accent={accent} />
 
-					{/* Barre collante — miroir de `ProductSortBar`, `lg:hidden` comme elle
-					    (à desktop, le rail et le cluster couvrent les trois gestes). La
-					    peau vient de la SSOT partagée `SHELF_BAR_SHELL` (coque sans le
-					    sticky — un squelette n'a pas besoin de coller, mais doit avoir la
-					    même peau et la même hauteur, sinon CLS au swap Suspense). */}
+					{/* Barre collante — miroir de `ProductFilterBar`, `lg:hidden` comme
+					    elle (à desktop, le rail porte filtres et tri). La peau vient de la
+					    SSOT partagée `SHELF_BAR_SHELL` (coque sans le sticky — un squelette
+					    n'a pas besoin de coller, mais doit avoir la même peau et la même
+					    hauteur, sinon CLS au swap Suspense). Une seule étiquette
+					    (« Filtrer »), pleine largeur sous `md`, calée à droite ensuite. */}
 					<div aria-hidden className={cn(SHELF_BAR_SHELL, "lg:hidden")}>
 						<div className="flex items-stretch gap-3">
 							<div className="flex flex-1 items-center gap-2 py-2 md:ml-auto md:flex-none md:py-0">
-								{/* Cellule 1 (« Rechercher ») masquée à `md`, cellule 2 (« Filtrer »)
-								    à `lg` — miroir exact des gates de `ProductSortBar`, sinon la
-								    barre change de largeur au swap Suspense. */}
-								{[0, 1, 2].map((i) => (
-									<div
-										key={i}
-										className={`border-border bg-background flex h-11 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2 md:flex-none md:px-3.5 ${
-											i === 1 ? "md:hidden" : i === 2 ? "lg:hidden" : ""
-										}`}
-									>
-										<Skeleton className="size-4 rounded" />
-										<Skeleton className="h-3 w-14 rounded" />
-									</div>
-								))}
+								<div className="border-border bg-background flex h-11 flex-1 items-center justify-center gap-1.5 rounded-sm border px-2 md:flex-none md:px-3.5">
+									<Skeleton className="size-4 rounded" />
+									<Skeleton className="h-3 w-14 rounded" />
+								</div>
 							</div>
 						</div>
 					</div>

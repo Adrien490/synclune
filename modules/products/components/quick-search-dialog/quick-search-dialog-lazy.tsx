@@ -7,12 +7,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { QUICK_SEARCH_DIALOG_ID } from "./constants";
 import { QuickSearchKeyboardShortcut } from "./quick-search-keyboard-shortcut";
-import type {
-	QuickSearchCollection,
-	QuickSearchColor,
-	QuickSearchProductType,
-	RecentlyViewedProduct,
-} from "./constants";
+import type { QuickSearchCollection, QuickSearchColor, QuickSearchProductType } from "./constants";
 
 const QuickSearchDialog = dynamic(
 	() => import("./quick-search-dialog").then((mod) => ({ default: mod.QuickSearchDialog })),
@@ -26,7 +21,6 @@ interface QuickSearchDialogLazyProps {
 	recentSearches?: string[];
 	collections: QuickSearchCollection[];
 	productTypes: QuickSearchProductType[];
-	recentlyViewed?: RecentlyViewedProduct[];
 	colors?: QuickSearchColor[];
 }
 

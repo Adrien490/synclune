@@ -1,9 +1,7 @@
 "use client";
 
 import { CaretRightIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react/ssr";
-import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { AnimatePresence, m } from "motion/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,28 +9,16 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import { Button } from "@/shared/components/ui/button";
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-	ResponsiveAlertDialogTrigger,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
-import { formatEuro } from "@/shared/utils/format-euro";
 import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { CollectionCard } from "./collection-card";
 import { ColorWall } from "./color-wall";
-import type { QuickSearchCollection, QuickSearchColor, RecentlyViewedProduct } from "./constants";
+import type { QuickSearchCollection, QuickSearchColor } from "./constants";
 
 interface IdleContentProps {
-	recentlyViewed: RecentlyViewedProduct[];
 	searches: string[];
 	collections: QuickSearchCollection[];
 	/** Le nuancier — déjà vide côté serveur si le catalogue a trop peu de teintes. */
@@ -45,7 +31,6 @@ interface IdleContentProps {
 }
 
 export function IdleContent({
-	recentlyViewed,
 	searches,
 	collections,
 	colors,
@@ -55,8 +40,7 @@ export function IdleContent({
 	onClearSearches,
 	isPending,
 }: IdleContentProps) {
-	const hasContent =
-		searches.length > 0 || collections.length > 0 || recentlyViewed.length > 0 || colors.length > 0;
+	const hasContent = searches.length > 0 || collections.length > 0 || colors.length > 0;
 	const router = useRouter();
 	const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
 
@@ -128,73 +112,6 @@ export function IdleContent({
 					</section>
 				)}
 
-				{/* Recently Viewed Products */}
-				{recentlyViewed.length > 0 && (
-					<section aria-labelledby="recently-viewed-heading">
-						<div className="mb-3 flex items-center">
-							<h3
-								id="recently-viewed-heading"
-								// Encre pleine — cf. le commentaire du titre « Par couleur ».
-								className="font-display text-base font-medium tracking-wide"
-							>
-								Vus récemment
-							</h3>
-						</div>
-						<div
-							data-slot="scroll-fade-container"
-							data-no-edge-swipe=""
-							className="scroll-fade-x no-scrollbar -mx-4 w-full overflow-x-auto overflow-y-hidden px-4"
-						>
-							<div className="flex w-fit min-w-full snap-x snap-mandatory gap-3">
-								{recentlyViewed.map((product) => (
-									<Tap key={product.slug} scale={0.97} className="snap-start">
-										<Link
-											href={`/creations/${product.slug}`}
-											// `replace` : consomme l'entrée d'historique du dialog
-											// (CLAUDE.md § Overlays).
-											replace
-											onClick={handleNavigateClose}
-											// Pas de `role="option"` : en idle le conteneur n'est PAS un listbox
-											// (F3) — une option y serait orpheline. `data-qs-option` suffit à la
-											// navigation, qui déplace ici le focus DOM réel, annoncé nativement.
-											data-qs-option=""
-											// Reached via arrow keys, not Tab (combobox pattern).
-											tabIndex={-1}
-											className={cn(
-												"flex w-24 shrink-0 flex-col items-center gap-2",
-												"rounded-xl p-2 transition-colors",
-												"hover:bg-muted",
-												"focus-ring",
-											)}
-										>
-											<div className="bg-muted size-20 shrink-0 overflow-hidden rounded-lg">
-												{product.image ? (
-													<Image
-														src={product.image.url}
-														alt={product.title}
-														width={80}
-														height={80}
-														quality={IMAGE_QUALITY.THUMBNAIL}
-														className="size-full object-cover"
-														placeholder={product.image.blurDataUrl ? "blur" : "empty"}
-														blurDataURL={product.image.blurDataUrl ?? undefined}
-													/>
-												) : (
-													<div className="bg-muted size-full" />
-												)}
-											</div>
-											<div className="w-full min-w-0 text-center">
-												<p className="truncate text-xs font-medium">{product.title}</p>
-												<p className="text-muted-foreground text-xs">{formatEuro(product.price)}</p>
-											</div>
-										</Link>
-									</Tap>
-								))}
-							</div>
-						</div>
-					</section>
-				)}
-
 				{/* Recent Searches */}
 				{searches.length > 0 && (
 					<section aria-labelledby="recent-searches-heading">
@@ -209,55 +126,37 @@ export function IdleContent({
 							{/* Confirmation — le geste supprime TOUT, d'un tap, sans retour
 								arrière : `useRecentSearches` n'expose aucun chemin de
 								restauration, une annulation demanderait une Server Action de
-								plus. `ResponsiveAlertDialog` est le SSOT du dépôt pour ce cas,
+								plus. `ConfirmDialog` est le SSOT du dépôt pour ce cas,
 								et le seul des quatre overlays qui NE BASCULE PAS en drawer sous
 								`md` — une confirmation ne se prend pas dans une feuille
 								éphémère. Audit DA 2026-08-05 (P3-6). */}
-							<ResponsiveAlertDialog
-								open={isClearConfirmOpen}
-								onOpenChange={setIsClearConfirmOpen}
-								tone="destructive"
+							<Button
+								variant="ghost"
+								size="sm"
+								disabled={isPending}
+								onClick={() => setIsClearConfirmOpen(true)}
+								className="hover:text-destructive -mr-2 h-11 touch-manipulation px-3 text-sm sm:h-9"
+								aria-label="Effacer toutes les recherches récentes"
 							>
-								<ResponsiveAlertDialogTrigger
-									render={
-										<Button
-											variant="ghost"
-											size="sm"
-											disabled={isPending}
-											className="hover:text-destructive -mr-2 h-11 touch-manipulation px-3 text-sm sm:h-9"
-											aria-label="Effacer toutes les recherches récentes"
-										/>
-									}
-								>
-									Effacer
-								</ResponsiveAlertDialogTrigger>
-								<ResponsiveAlertDialogContent>
-									<ResponsiveAlertDialogHeader>
-										<ResponsiveAlertDialogTitle>
-											Effacer tes recherches récentes&nbsp;?
-										</ResponsiveAlertDialogTitle>
-										<ResponsiveAlertDialogDescription>
-											{searches.length === 1
-												? "Le seul terme enregistré sera supprimé. C'est sans retour."
-												: `Les ${searches.length} termes enregistrés seront supprimés. C'est sans retour.`}
-										</ResponsiveAlertDialogDescription>
-									</ResponsiveAlertDialogHeader>
-									<ResponsiveAlertDialogFooter>
-										<ResponsiveAlertDialogCancel type="button" disabled={isPending}>
-											Annuler
-										</ResponsiveAlertDialogCancel>
-										<ResponsiveAlertDialogAction
-											disabled={isPending}
-											onClick={() => {
-												onClearSearches();
-												setIsClearConfirmOpen(false);
-											}}
-										>
-											Effacer
-										</ResponsiveAlertDialogAction>
-									</ResponsiveAlertDialogFooter>
-								</ResponsiveAlertDialogContent>
-							</ResponsiveAlertDialog>
+								Effacer
+							</Button>
+							<ConfirmDialog
+								open={isClearConfirmOpen}
+								onClose={() => setIsClearConfirmOpen(false)}
+								onConfirm={() => {
+									onClearSearches();
+									setIsClearConfirmOpen(false);
+								}}
+								tone="destructive"
+								confirmDisabled={isPending}
+								title="Effacer tes recherches récentes\u00a0?"
+								confirmLabel="Effacer"
+								description={
+									searches.length === 1
+										? "Le seul terme enregistré sera supprimé. C'est sans retour."
+										: `Les ${searches.length} termes enregistrés seront supprimés. C'est sans retour.`
+								}
+							/>
 						</div>
 						<ul className="space-y-1">
 							<AnimatePresence mode="popLayout">

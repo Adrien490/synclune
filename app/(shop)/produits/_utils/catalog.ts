@@ -123,7 +123,7 @@ export function fetchProducts(
  * NB (audit filtres S3) : il existe un jumeau CÔTÉ CLIENT dans
  * `modules/products/services/product-filter-params.service.ts` (`countActiveFilters`,
  * signature `(URLSearchParams)`), utilisé par les composants client
- * (`product-sort-bar`). Les deux doivent rester
+ * (`product-filter-bar`). Les deux doivent rester
  * cohérents : toute évolution de la logique de comptage est à répercuter ici ET là.
  */
 export function countActiveFilters(
@@ -150,6 +150,15 @@ export function countActiveFilters(
 
 	// Prix
 	if (searchParamsData.priceMin || searchParamsData.priceMax) {
+		count += 1;
+	}
+
+	// Disponibilité — oubliée à l'origine : avec `?stockStatus=in_stock` seul,
+	// `activeFiltersCount` restait à 0 et le bandeau d'étiquettes ne se montait
+	// pas, alors que le compteur client (`countActiveFilters` du service) le
+	// compte. Visible depuis que le bandeau est la surface de manipulation des
+	// filtres à tous les viewports (2026-08-06).
+	if (filters.stockStatus === "in_stock") {
 		count += 1;
 	}
 

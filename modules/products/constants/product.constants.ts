@@ -494,6 +494,13 @@ export const PRODUCTS_SORT_OPTIONS = {
 	TITLE_DESC: "title-descending",
 } as const;
 
+/**
+ * Le tri de l'URL nue — SSOT partagée entre le parse (`parseFilterValuesFromURL`),
+ * la construction d'URL (`buildFilterURL`, qui EFFACE le paramètre plutôt que
+ * d'écrire la valeur par défaut) et le compartiment « Trier par ».
+ */
+export const PRODUCTS_DEFAULT_SORT = PRODUCTS_SORT_OPTIONS.CREATED_DESC;
+
 export const PRODUCTS_SORT_LABELS = {
 	[PRODUCTS_SORT_OPTIONS.CREATED_DESC]: "Plus récents",
 	[PRODUCTS_SORT_OPTIONS.PRICE_ASC]: "Prix croissant",

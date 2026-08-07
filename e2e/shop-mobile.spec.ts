@@ -27,11 +27,11 @@ test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () =
 		// pour ça : sur un écran de 844 px, une pièce entière doit rester visible
 		// SANS scroller, barre de navigation basse déduite. C'est la promesse de la
 		// direction « L'étal » — si la copie s'allonge, c'est elle qui cède.
-		const heading = page.locator("#etal").getByRole("heading", { level: 1 });
+		const heading = page.locator("#hero").getByRole("heading", { level: 1 });
 		await expect(heading).toBeVisible();
 
-		const firstCard = page.locator("#etal article").first();
-		const cardCount = await page.locator("#etal article").count();
+		const firstCard = page.locator("#hero article").first();
+		const cardCount = await page.locator("#hero article").count();
 		test.skip(cardCount === 0, "Catalogue vide : l'étal rend la carte de contact, pas de pièce.");
 
 		await expect(firstCard).toBeVisible();

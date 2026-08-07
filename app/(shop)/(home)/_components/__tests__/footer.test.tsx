@@ -239,7 +239,11 @@ describe("Footer", () => {
 		const copyButton = within(contactSection).getByTestId("copy-button");
 		expect(copyButton).toHaveAttribute("data-text", "contact@synclune.fr");
 
-		expect(within(contactSection).getByText(/France/)).toBeInTheDocument();
+		// ⚠️ La VILLE, pas le pays, depuis le 2026-08-06 : « Atelier basé en France »
+		// était la seule surface du site à s'arrêter au pays, quand le `<title>`, le
+		// sur-titre du hero et le chapô de l'atelier revendiquent tous Nantes — qui
+		// est le noyau lexical de la marque.
+		expect(within(contactSection).getByText(/Nantes/)).toBeInTheDocument();
 	});
 
 	// --- Social links ---
@@ -368,14 +372,18 @@ describe("Footer", () => {
 
 	// --- Legal links ---
 
-	it("renders 6 legal links in a dedicated nav", async () => {
+	it("renders 7 legal links in a dedicated nav", async () => {
 		await renderFooter();
 
 		const legalNav = screen.getByRole("navigation", { name: /liens légaux/i });
 		expect(legalNav).toBeInTheDocument();
 
 		const links = within(legalNav).getAllByRole("link");
-		expect(links).toHaveLength(6);
+		// ⚠️ 6 → 7 le 2026-08-06. `/informations-legales` était au sitemap et liée
+		// depuis le fil d'Ariane des six autres, mais absente d'ici : donc
+		// INATTEIGNABLE depuis `/`, alors que c'est le hub qui porte SIREN,
+		// hébergeurs et médiateur.
+		expect(links).toHaveLength(7);
 
 		// Libellés abrégés le 2026-08-04 pour tenir en deux colonnes sous `sm` sans
 		// repasser à la ligne (le bandeau empilait 7 cibles pleine largeur, 308 px).
@@ -385,6 +393,7 @@ describe("Footer", () => {
 		expect(links[3]).toHaveTextContent("Cookies");
 		expect(links[4]).toHaveTextContent("Rétractation");
 		expect(links[5]).toHaveTextContent("Accessibilité");
+		expect(links[6]).toHaveTextContent("Informations légales");
 	});
 
 	// WCAG 2.5.3 (Label in Name) : dès qu'un libellé visible est abrégé, le nom

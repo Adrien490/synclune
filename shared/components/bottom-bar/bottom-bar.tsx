@@ -77,9 +77,9 @@ interface BottomBarProps {
  * - Wrap items in a `<ul role="list">` carrying {@link bottomBarContainerClass},
  *   one `<li className="flex-1">` per tab, so screen readers announce the item count.
  * - L'onglet courant porte `bottomBarActiveItemClass` : une languette pleine
- *   hauteur en aplat d'accent, pas un ornement posé dessus. Poser `data-accent`
- *   sur le `<li>` courant pour choisir sa couleur ; hors `data-accent` elle
- *   retombe sur le rose signature.
+ *   hauteur en aplat de rose signature, pas un ornement posé dessus. (Le dessin
+ *   sait encore prendre `data-accent` sur le `<li>`, mais plus aucun hôte ne
+ *   le pose — cf. le JSDoc de `bottomBarActiveItemClass`.)
  * - For iOS/Android-native feel, call `triggerHaptic("selection")` from
  *   `@/shared/hooks/use-haptic` on tab change (skip it when the tab is already active).
  * - Use `<CountBadge>` (shared/components/ui/count-badge) for counters on icon

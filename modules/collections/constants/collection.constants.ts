@@ -218,10 +218,13 @@ export const GET_COLLECTIONS_SELECT = {
 			},
 		},
 		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
-		// 3 tirages rendus sur la bande + 1 de rab : `extractCollectionImages`
-		// écarte en aval tout produit dont le SKU par défaut n'a aucun média IMAGE,
-		// donc lire exactement 3 produits rendrait parfois 2 tirages.
-		// (L'ancien commentaire parlait d'un « Bento Grid » retiré le 2026-08-05.)
+		// Deux consommateurs via `extractCollectionImages` (qui écarte en aval
+		// tout produit dont le SKU par défaut n'a aucun média IMAGE) :
+		// - la bande chapitre de /collections rend 3 tirages — le +1 de rab
+		//   évite qu'un produit sans image fasse tomber à 2 ;
+		// - le bento du méga-menu desktop (`CollectionImagesGrid`) veut jusqu'à
+		//   4 images — exactement ce take. Le baisser casserait le bento en
+		//   silence.
 		take: COLLECTION_CHAPTER_PRINT_COUNT + 1,
 	},
 	_count: {

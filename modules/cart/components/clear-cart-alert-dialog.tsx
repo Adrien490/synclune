@@ -1,20 +1,10 @@
 "use client";
 
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 import { useClearCart } from "../hooks/use-clear-cart";
-import { Spinner } from "@/shared/components/ui/spinner";
 
 import { CLEAR_CART_DIALOG_ID } from "./clear-cart-dialog-id";
 
@@ -35,11 +25,7 @@ export function ClearCartAlertDialog() {
 	const dialog = useAlertDialog(CLEAR_CART_DIALOG_ID);
 	const haptic = useHaptic();
 	const cartOptimistic = useCartOptimisticSafe();
-	const { action, isPending } = useClearCart(() => dialog.close());
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) dialog.close();
-	};
+	const { action } = useClearCart();
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -61,27 +47,14 @@ export function ClearCartAlertDialog() {
 	};
 
 	return (
-		<ResponsiveAlertDialog tone="destructive" open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveAlertDialogContent>
-				<form onSubmit={handleSubmit} aria-label="Vider le panier">
-					<ResponsiveAlertDialogHeader>
-						<ResponsiveAlertDialogTitle>Vider ton panier ?</ResponsiveAlertDialogTitle>
-						<ResponsiveAlertDialogDescription>
-							Toutes les pièces de ton panier seront retirées. Tu pourras toujours les retrouver
-							dans la boutique si tu changes d&apos;avis.
-						</ResponsiveAlertDialogDescription>
-					</ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogFooter>
-						<ResponsiveAlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Spinner presentational />}
-							{isPending ? "Suppression…" : "Vider"}
-						</ResponsiveAlertDialogAction>
-					</ResponsiveAlertDialogFooter>
-				</form>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+		<ConfirmDialog
+			open={dialog.isOpen}
+			onClose={dialog.close}
+			onSubmit={handleSubmit}
+			tone="destructive"
+			title="Vider ton panier ?"
+			confirmLabel="Vider"
+			description="Toutes les pièces de ton panier seront retirées. Tu pourras toujours les retrouver dans la boutique si tu changes d'avis."
+		/>
 	);
 }

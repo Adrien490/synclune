@@ -57,6 +57,11 @@ export const winkySans = Winky_Sans({
 	variable: "--font-display",
 	// Hero h1 uses the display face above-fold; without preload the woff2 fetched
 	// in ~3s on desktop, blocking LCP element render.
+	// ⚠️ Ne pas justifier ce preload par « le h1 porte le LCP mobile » : cette
+	// identité a changé de signe entre deux mesures (h1 le 2026-08-05, première
+	// photo le 2026-08-06 en dev — marge ~3 %, instable). Le preload tient sans
+	// elle : la display peint au-dessus du pli sur TOUTES les routes et le h1
+	// reste un candidat LCP. Re-mesurer en prod avant tout ré-arbitrage.
 	preload: true,
 	// ⚠️ Winky Sans est ABSENTE de capsize-font-metrics.json (Next 16.3.0) :
 	// aucune face de repli à métriques ajustées ne peut être générée. À réévaluer
@@ -136,7 +141,7 @@ export const onest = Onest({
 // Seule la 400 est CHARGÉE (usage signature uniquement) : déclarer 300/700 le
 // jour où un usage naît, pas avant.
 // A11Y : `--font-cursive` est RÉSERVÉE au décoratif non-essentiel (nom de marque,
-// légendes, signatures « — Léane ») — jamais prix, libellés de formulaire,
+// légendes, notes en marge) — jamais prix, libellés de formulaire,
 // navigation fonctionnelle ni body (lisibilité faible des scripts à petite
 // taille / dyslexie). Tel que chargé, mono-poids : ne pas appliquer
 // font-bold/semibold (aucune graisse déclarée à rendre) ni `italic`

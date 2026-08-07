@@ -1,22 +1,11 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import type { Collection } from "@/modules/collections/types/collection.types";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypesForMenu } from "@/modules/product-types/data/get-product-types-for-menu";
 
-/**
- * Extract up to 4 product images from a collection for Bento Grid display.
- */
-export function extractCollectionImages(products: Collection["products"]) {
-	return products
-		.slice(0, 4)
-		.map((p) => {
-			const image = p.product.skus[0]?.images[0];
-			return image ? { url: image.url, blurDataUrl: image.blurDataUrl, alt: image.altText } : null;
-		})
-		.filter(
-			(img): img is { url: string; blurDataUrl: string | null; alt: string | null } => img !== null,
-		);
-}
+// Plus d'`extractCollectionImages` local (harmonisation 2026-08-06) : la SSOT
+// est `modules/collections/utils/collection-images.utils.ts` (dédup par
+// productId), consommée par `navbar.tsx` — les deux homonymes pouvaient faire
+// diverger la cover d'une même collection entre le menu et la landing.
 
 /**
  * Public menu data (collections and product types). Consommée par `Navbar`

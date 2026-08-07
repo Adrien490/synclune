@@ -35,6 +35,7 @@ vi.mock("@/modules/colors/utils/color-contrast.utils", () => ({
 
 vi.mock("@phosphor-icons/react/ssr", () => ({
 	CheckIcon: () => <span />,
+	CircleIcon: () => <span />,
 	MagnifyingGlassIcon: () => <span />,
 	CaretDownIcon: () => <span />,
 	CaretUpIcon: () => <span />,
@@ -73,6 +74,7 @@ const values: FilterFormData = {
 	priceRange: [0, 500],
 	inStockOnly: false,
 	onSale: false,
+	sortBy: "created-descending",
 };
 
 const counts = { types: 0, price: 0, colors: 0, materials: 0, availability: 0 };
@@ -91,6 +93,8 @@ function renderBothHosts() {
 		onPriceChange: noop,
 		onAvailabilityChange: noop,
 		onSectionReset: noop,
+		sortOptions: [{ value: "created-descending", label: "Plus récents" }],
+		onSortChange: noop,
 	};
 	return render(
 		<>
@@ -146,7 +150,8 @@ describe("@regression filter-dual-mount-id-scope", () => {
 		// Sanity : si un hôte cessait de rendre, les deux tests ci-dessus passeraient
 		// à vide — c'est précisément le double montage qui rend le défaut possible.
 		const { container } = renderBothHosts();
+		// 6 compartiments par hôte depuis l'ajout de « Trier par » (2026-08-06).
 		const sections = container.querySelectorAll('section[aria-labelledby^="filter-compartment-"]');
-		expect(sections.length).toBe(10);
+		expect(sections.length).toBe(12);
 	});
 });

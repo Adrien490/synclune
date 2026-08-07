@@ -59,12 +59,24 @@ const src = readFileSync(CLAUDE_MD, "utf-8");
 const CONTRACTED_DOCS: ReadonlyArray<{ path: string; minCited: number }> = [
 	{ path: "CLAUDE.md", minCited: 40 },
 	{ path: "docs/UI-CONVENTIONS.md", minCited: 5 },
+	// La grille d'audit de la landing (§ 9) ne vaut que si ses ancrages tiennent : chaque
+	// ligne renvoie à un test ou à un fichier, et un renvoi mort transforme un critère
+	// vérifiable en intention. Ajouté le 2026-08-06, en même temps que le document est
+	// devenu citable — il vivait jusque-là hors git, sans aucune référence entrante.
+	{ path: "docs/LANDING-BEST-PRACTICES.md", minCited: 15 },
 	{ path: "docs/prompts/REDESIGN-PROMPT.md", minCited: 5 },
 	{ path: "docs/prompts/DESIGN-ARTIFACT-PROMPT.md", minCited: 5 },
 	// Le wrapper `/design-artifact` ne contient RIEN d'autre que des renvois : si le chemin
 	// du prompt SSOT qu'il charge se casse, la commande exécute du vide en silence — c'est
 	// tout son mode de panne, donc tout son contrat.
 	{ path: ".claude/commands/design-artifact.md", minCited: 2 },
+	// Ajouté le 2026-08-06, à l'audit du document. Il ne prescrit QUE par référence — chaque
+	// règle nomme sa constante, son service ou son test — donc un chemin mort n'y est pas une
+	// coquille : c'est une prescription qui ne s'applique plus à rien, et rien d'autre ne le
+	// dirait. Le document était orphelin (aucune référence entrante, aucun test) alors que ses
+	// chemins résolvaient déjà tous : l'entrée ne corrige pas une dette, elle empêche d'en
+	// créer une.
+	{ path: "docs/COLLECTION-CARD.md", minCited: 12 },
 ];
 
 /**

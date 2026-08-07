@@ -7,6 +7,11 @@ import { TypeFilterSection, type ProductTypeOption } from "./filter-section-type
 import { ColorFilterSection } from "./filter-section-colors";
 import { MaterialFilterSection } from "./filter-section-materials";
 import { AvailabilityFilterSection } from "./filter-section-availability";
+import { SortFilterSection } from "./filter-section-sort";
+import {
+	PRODUCTS_DEFAULT_SORT,
+	PRODUCTS_SORT_LABELS,
+} from "@/modules/products/constants/product.constants";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
@@ -14,6 +19,7 @@ import type {
 	FilterFormData,
 	FilterSectionId,
 } from "@/modules/products/services/product-filter-params.service";
+import type { SortOption } from "@/shared/types/sort.types";
 
 // ============================================================================
 // TYPES
@@ -84,6 +90,14 @@ export interface ProductFilterCompartmentsProps {
 	onPriceCommit?: (value: [number, number]) => void;
 	onAvailabilityChange: (field: "inStockOnly" | "onSale", checked: boolean) => void;
 	onSectionReset: (section: FilterSectionId) => void;
+	/**
+	 * Options du compartiment « Trier par » (SSOT `PRODUCTS_SORT_OPTIONS`).
+	 * Le tri n'est PAS un filtre : il ne passe ni par `counts` ni par
+	 * `onSectionReset` — son badge et son reset sont dérivés ici de
+	 * `values.sortBy`, et il ne compte dans aucun total de filtres actifs.
+	 */
+	sortOptions: SortOption[];
+	onSortChange: (value: string) => void;
 }
 
 // ============================================================================
@@ -114,7 +128,12 @@ export function ProductFilterCompartments({
 	onPriceCommit,
 	onAvailabilityChange,
 	onSectionReset,
+	sortOptions,
+	onSortChange,
 }: ProductFilterCompartmentsProps) {
+	const activeSortLabel = (PRODUCTS_SORT_LABELS as Partial<Record<string, string>>)[values.sortBy];
+	const isSortActive = values.sortBy !== PRODUCTS_DEFAULT_SORT;
+
 	const sortedProductTypes = productTypes.toSorted(
 		(a, b) => (b._count?.products ?? 0) - (a._count?.products ?? 0),
 	);
@@ -132,6 +151,31 @@ export function ProductFilterCompartments({
 			// Consommée par l'en-tête collant de chaque `FilterCompartment`.
 			style={{ "--filter-gutter": HOST_GUTTER[host] } as React.CSSProperties}
 		>
+			{/*
+			 * « Trier par » ouvre le meuble (retrait de la barre d'outils, 2026-08-06) :
+			 * c'est le seul réglage qui s'applique à TOUTE la grille, il précède les
+			 * critères qui la restreignent. Badge = libellé du tri actif (comme le
+			 * prix affiche sa plage), reset = retour au tri par défaut — dérivés de
+			 * `values.sortBy`, hors du circuit `counts`/`onSectionReset` (le tri
+			 * n'est pas un filtre).
+			 */}
+			<FilterCompartment
+				host={host}
+				id="sort"
+				label="Trier par"
+				count={isSortActive ? 1 : 0}
+				badgeContent={isSortActive ? activeSortLabel : undefined}
+				accent="bg-border"
+				onReset={() => onSortChange(PRODUCTS_DEFAULT_SORT)}
+			>
+				<SortFilterSection
+					idPrefix={host}
+					options={sortOptions}
+					value={values.sortBy}
+					onChange={onSortChange}
+				/>
+			</FilterCompartment>
+
 			{sortedProductTypes.length > 0 && (
 				<FilterCompartment
 					host={host}

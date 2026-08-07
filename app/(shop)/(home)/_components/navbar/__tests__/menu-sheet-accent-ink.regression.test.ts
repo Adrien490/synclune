@@ -15,9 +15,17 @@
  *
  * Règle verrouillée (la même que la bottom-bar, `bottom-bar-accent-is-a-surface`) :
  * un accent de marque est un APLAT sous encre `--foreground` (7,8–12,7:1),
- * jamais un trait. L'état courant s'écrit `bg-brand-lavender` + filet
- * `border-l-foreground` — l'aplat dit la salle, le filet en encre dit « tu es
- * ici » et survit au niveau de gris.
+ * jamais un trait. L'état courant s'écrit `bg-primary` + filet
+ * `border-l-foreground` — l'aplat porte la couleur, le filet en encre dit « tu
+ * es ici » et survit au niveau de gris.
+ *
+ * ⚠️ L'aplat était `bg-brand-lavender` jusqu'au 2026-08-06 : le volet couvre
+ * l'étal entier, il n'annonçait donc aucune salle, et sa lavande contredisait
+ * le rose que la barre du bas montrait au même moment. C'est la TEINTE qui a
+ * changé, pas le régime — le rose pastel reste un aplat (12,60:1 sous
+ * `--foreground`) et resterait illisible en encre (1,55:1). Le scan négatif
+ * ci-dessous couvre `border-*-primary` exactement comme il couvrait
+ * `border-*-brand-lavender`.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -66,7 +74,7 @@ describe("@regression menu-sheet-accent-as-stroke", () => {
 		// scan négatif ci-dessus resterait vert alors que l'état « tu es ici »
 		// n'existerait plus du tout.
 		const sections = readFileSync(join(NAVBAR_DIR, "menu-sheet-nav-sections.tsx"), "utf8");
-		expect(sections).toMatch(/bg-brand-lavender/);
+		expect(sections).toMatch(/bg-primary\b/);
 		expect(sections).toMatch(/border-l-foreground/);
 	});
 });

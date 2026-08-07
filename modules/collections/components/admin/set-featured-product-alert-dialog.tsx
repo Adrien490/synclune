@@ -1,17 +1,7 @@
 "use client";
 
-import {
-	ResponsiveAlertDialog,
-	ResponsiveAlertDialogAction,
-	ResponsiveAlertDialogCancel,
-	ResponsiveAlertDialogContent,
-	ResponsiveAlertDialogDescription,
-	ResponsiveAlertDialogFooter,
-	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogTitle,
-} from "@/shared/components/ui/responsive-alert-dialog";
+import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Spinner } from "@/shared/components/ui/spinner";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
 export const SET_FEATURED_PRODUCT_DIALOG_ID = "set-featured-product";
@@ -27,18 +17,7 @@ interface SetFeaturedProductData {
 
 export function SetFeaturedProductAlertDialog() {
 	const dialog = useAlertDialog<SetFeaturedProductData>(SET_FEATURED_PRODUCT_DIALOG_ID);
-
-	const { setFeatured, removeFeatured, isPending } = useSetFeaturedProduct({
-		onSuccess: () => {
-			dialog.close();
-		},
-	});
-
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			dialog.close();
-		}
-	};
+	const { setFeatured, removeFeatured } = useSetFeaturedProduct();
 
 	const handleConfirm = () => {
 		if (!dialog.data) return;
@@ -53,61 +32,39 @@ export function SetFeaturedProductAlertDialog() {
 	const isFeatured = dialog.data?.isFeatured ?? false;
 
 	return (
-		<ResponsiveAlertDialog
+		<ConfirmDialog
 			open={dialog.isOpen}
-			onOpenChange={handleOpenChange}
+			onClose={dialog.close}
+			onConfirm={handleConfirm}
 			tone={isFeatured ? "warning" : "info"}
-		>
-			<ResponsiveAlertDialogContent>
-				<ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogTitle>
-						{isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}
-					</ResponsiveAlertDialogTitle>
-					<ResponsiveAlertDialogDescription render={<div className="space-y-3" />}>
-						{isFeatured ? (
-							<>
-								<p>
-									Voulez-vous retirer le statut vedette de{" "}
-									<strong>&quot;{dialog.data?.productTitle}&quot;</strong> ?
-								</p>
-								<p>
-									La collection n'aura plus de produit vedette et affichera le produit le plus
-									recent comme image representative.
-								</p>
-							</>
-						) : (
-							<>
-								<p>
-									Voulez-vous definir <strong>&quot;{dialog.data?.productTitle}&quot;</strong> comme
-									produit vedette de cette collection ?
-								</p>
-								<p>
-									Ce produit sera utilise comme image representative de la collection sur la page
-									d'accueil et dans les listes.
-								</p>
-							</>
-						)}
-					</ResponsiveAlertDialogDescription>
-				</ResponsiveAlertDialogHeader>
-				<ResponsiveAlertDialogFooter>
-					<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-					<ResponsiveAlertDialogAction
-						type="button"
-						onClick={handleConfirm}
-						disabled={isPending}
-						aria-busy={isPending}
-					>
-						{isPending && <Spinner presentational />}
-						{isPending
-							? isFeatured
-								? "Retrait…"
-								: "Definition…"
-							: isFeatured
-								? "Retirer"
-								: "Definir comme vedette"}
-					</ResponsiveAlertDialogAction>
-				</ResponsiveAlertDialogFooter>
-			</ResponsiveAlertDialogContent>
-		</ResponsiveAlertDialog>
+			title={isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}
+			confirmLabel={isFeatured ? "Retirer" : "Definir comme vedette"}
+			descriptionClassName="space-y-3"
+			description={
+				isFeatured ? (
+					<>
+						<p>
+							Voulez-vous retirer le statut vedette de{" "}
+							<strong>&quot;{dialog.data?.productTitle}&quot;</strong> ?
+						</p>
+						<p>
+							La collection n&apos;aura plus de produit vedette et affichera le produit le plus
+							recent comme image representative.
+						</p>
+					</>
+				) : (
+					<>
+						<p>
+							Voulez-vous definir <strong>&quot;{dialog.data?.productTitle}&quot;</strong> comme
+							produit vedette de cette collection ?
+						</p>
+						<p>
+							Ce produit sera utilise comme image representative de la collection sur la page
+							d&apos;accueil et dans les listes.
+						</p>
+					</>
+				)
+			}
+		/>
 	);
 }

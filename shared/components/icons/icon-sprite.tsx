@@ -1,3 +1,5 @@
+import { HEART_PATH, INITIAL_PATH } from "@/shared/components/logo-mark.paths";
+
 /**
  * Sprite SVG centralisé pour icônes réutilisables
  *
@@ -17,6 +19,48 @@ export function IconSprite() {
 	return (
 		<svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }} aria-hidden="true">
 			<defs>
+				{/* Le corps du mark de marque — cf. `shared/components/logo-mark.tsx`.
+				    Il vit ici parce qu'il est rendu TROIS fois par page storefront
+				    (navbar desktop, navbar mobile, footer) et que ses seuls chemins
+				    pèsent 3,4 Ko : inline, c'était ~10 Ko de `d=` répétés dans le HTML
+				    de chaque page.
+
+				    Les couleurs et l'épaisseur restent gouvernées par le call site — un
+				    `<use>` fait hériter les custom properties de son point d'usage, donc
+				    `--logo-disc`, `--logo-heart`, `--logo-ink` et `--logo-stroke` posés
+				    par `LogoMark` traversent.
+
+				    ⚠️ Le reflet (`GLOSS_PATH`) et les deux étincelles NE sont pas ici :
+				    le premier est conditionné par la taille de rendu, les secondes
+				    portent des transforms distincts par instance — et elles ne pèsent
+				    que 238 octets à elles deux.
+
+				    ⚠️ Contrainte de portée : ce sprite est monté dans `app/layout.tsx`.
+				    Un mark rendu HORS de ce layout — `app/global-error.tsx` remplace le
+				    `<body>` entier — n'aurait rien à référencer. */}
+				<symbol id="logo-mark-body" viewBox="0 0 256 256">
+					<circle cx={128} cy={128} r={128} fill="var(--logo-disc)" />
+					<path
+						d={HEART_PATH}
+						fill="var(--logo-heart)"
+						stroke="var(--logo-ink)"
+						strokeLinejoin="round"
+						vectorEffect="non-scaling-stroke"
+						style={{ strokeWidth: "var(--logo-stroke)" }}
+					/>
+					{/* `fill-rule="evenodd"` : l'initiale a des contre-formes (la boucle, la
+					    barre) qui doivent rester creuses pour laisser passer le socle. */}
+					<path
+						d={INITIAL_PATH}
+						fill="var(--logo-disc)"
+						stroke="var(--logo-ink)"
+						strokeLinejoin="round"
+						fillRule="evenodd"
+						vectorEffect="non-scaling-stroke"
+						style={{ strokeWidth: "var(--logo-stroke)" }}
+					/>
+				</symbol>
+
 				{/* Gradient rose-doré réutilisable */}
 				<linearGradient id="gradient-rose-gold" x1="0%" y1="0%" x2="100%" y2="100%">
 					<stop offset="0%" stopColor="var(--primary)" />
@@ -112,20 +156,3 @@ export function IconSprite() {
 		</svg>
 	);
 }
-
-/**
- * Composant pour utiliser une icône du sprite avec variants
- *
- * @example
- * ```tsx
- * // Icône heart outline
- * <SpriteIcon name="heart" variant="outline" size={24} />
- *
- * // Icône cart filled avec label
- * <SpriteIcon
- *   name="cart"
- *   variant="filled"
- *   ariaLabel="Mon panier"
- * />
- * ```
- */

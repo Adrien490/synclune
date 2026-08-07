@@ -52,9 +52,6 @@ vi.mock("../../constants/cache", () => ({
 		SKUS_LIST: "skus-list",
 		RELATED_PUBLIC: "related-products-public",
 	},
-	RECENT_PRODUCTS_CACHE_TAGS: {
-		LIST: "recent-products-list",
-	},
 }));
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
@@ -119,11 +116,10 @@ describe("refreshProducts", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("max-product-price");
 		expect(mockUpdateTag).toHaveBeenCalledWith("skus-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
-		// Les 5 tags globaux qui manquaient : le bouton annonçait « Produits rafraîchis »
-		// en laissant l'inventaire admin, le sitemap images, les produits similaires, les
-		// « Vus récemment » et la liste des types de bijoux périmés.
+		// Les tags globaux qui manquaient : le bouton annonçait « Produits rafraîchis »
+		// en laissant l'inventaire admin, le sitemap images, les produits similaires et
+		// la liste des types de bijoux périmés.
 		expect(mockUpdateTag).toHaveBeenCalledWith("related-products-public");
-		expect(mockUpdateTag).toHaveBeenCalledWith("recent-products-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("product-types-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-inventory-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("sitemap-images");
@@ -132,11 +128,13 @@ describe("refreshProducts", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("collections-list");
 	});
 
-	it("should invalidate exactly 11 cache tags", async () => {
+	// 10 depuis le retrait de `recent-products-list` avec la feature « produits
+	// récemment vus » (2026-08-06).
+	it("should invalidate exactly 10 cache tags", async () => {
 		await refreshProducts(undefined, emptyFormData);
 		// 11e tag : COLLECTIONS_LIST (global, présent dans getProductInvalidationTags —
 		// les bento collections montrent des images de produits).
-		expect(mockUpdateTag).toHaveBeenCalledTimes(11);
+		expect(mockUpdateTag).toHaveBeenCalledTimes(10);
 	});
 
 	// Les tags PAR-SLUG (`product-<slug>`, `related-products-contextual-<slug>`) sont hors

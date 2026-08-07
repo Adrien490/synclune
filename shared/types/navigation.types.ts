@@ -22,11 +22,16 @@ type IconName =
 	| "info"
 	| "layout-dashboard";
 
-/** Image pour mega menu collections */
+/**
+ * Image pour mega menu collections. Champs secondaires OPTIONNELS : la source
+ * est `CollectionImage` (SSOT `modules/collections/types/collection.types.ts`,
+ * via `extractCollectionImages`), qui les déclare optionnels — les exiger ici
+ * casserait l'assignation, et tous les consommateurs lisent déjà en `??`/`?.`.
+ */
 type NavItemImage = {
 	url: string;
-	blurDataUrl: string | null;
-	alt: string | null;
+	blurDataUrl?: string | null;
+	alt?: string | null;
 };
 
 /** Produit pour mega menu (bestseller/nouveauté) */
@@ -46,6 +51,13 @@ export type MegaMenuProduct = {
 export type NavItemChild = {
 	href: string;
 	label: string;
+	/**
+	 * Slug de la collection — alimente `dataAccentForSlug` sur la carte du
+	 * méga-menu (même hash que la carte landing et la page fille : la couleur
+	 * promise est celle qui accueille au clic). Absent des entrées non-collection
+	 * (« Toutes les collections », types de produits).
+	 */
+	slug?: string;
 	badge?: string | number;
 	icon?: IconName;
 	description?: string | null;

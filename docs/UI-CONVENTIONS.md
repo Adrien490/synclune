@@ -7,6 +7,27 @@
 > Déporté de `CLAUDE.md` le 2026-08-04 : ces développements ne concernent que le travail UI, et
 > les recharger à chaque session (y compris pour un correctif Stripe) coûtait ~3 500 tokens.
 
+## Variables CSS — critère d'admission dans `globals.css`
+
+**Règle : une variable CSS n'entre dans `app/globals.css` (ou `app/styles/*.css`) que si (a) elle
+est consommée depuis au moins 2 fichiers, ou depuis JS _et_ CSS (coordination runtime — hauteurs
+publiées par un ResizeObserver, échelle z-index), ou (b) elle encode une valeur mesurée/normative
+qu'un test verrouille (contraste WCAG, parité avec `MOTION_CONFIG`). Une valeur décorative à usage
+unique s'écrit en valeur arbitraire au call site** (`shadow-[0_0_24px_…]`), pas en token.
+Verrouillé par `app/styles/__tests__/theme-token-consumers.regression.test.ts` — chaque token
+custom du bloc `@theme` doit avoir au moins un lecteur hors `globals.css`.
+
+**Pourquoi.** Les deux excès sont réels, et symétriques. D'un côté, les tokens `@theme` **sont**
+la config Tailwind v4 (il n'y a plus de `tailwind.config.js`) : refuser un token multi-consommateur
+force l'oklch dupliqué en valeurs arbitraires — c'est ainsi qu'un `z-40` en dur, hors de l'échelle
+`--z-*`, avait fait passer une barre sticky par-dessus le mega-menu (audit navbar 2026-08-04). Et
+les variables runtime (`--bottom-bar-height`, `--navbar-height`, `--pay-bar-height`) ne peuvent
+pas être des classes : du JS mesure et publie, le CSS consomme. De l'autre côté, un token frappé
+pour un seul call site est de la complexité pure — `--blur-1/2/3`, l'échelle `--text-shadow-*`
+(tokens + classes `.text-shadow-*`, personne au bout de la chaîne) et `--duration-slower` ont vécu
+des mois sans **aucun** lecteur avant le nettoyage du 2026-08-06. Un token sans lecteur est du
+poids mort ; un lecteur unique se sert au call site.
+
 ## Breakpoints — rem partout, jamais px
 
 SSOT : `shared/constants/breakpoints.ts` (`BREAKPOINTS` + `mediaBelow()` / `mediaAtLeast()` /
@@ -45,6 +66,46 @@ publie `--bottom-bar-height` que lorsque la barre est réellement visible.
 ⚠️ **Corollaire** : les consommateurs de cette variable ne doivent **pas** préfixer leur offset d'un
 breakpoint — la variable vaut déjà 0 quand il n'y a pas de barre.
 
+## Cibles tactiles, reflow et saisie
+
+Trois règles arrivées le 2026-08-06 de [`docs/LANDING-BEST-PRACTICES.md`](LANDING-BEST-PRACTICES.md)
+§ 6.2 et § 6.4, où elles vivaient seules. Elles se décident **en écrivant un composant**, pas en
+auditant une page — c'est ici qu'elles doivent être lues. Leur sourçage (texte W3C, exceptions
+exactes) reste là-bas.
+
+⚠️ **Aucune des trois n'a encore de test de régression dédié** — c'est l'exception dans ce document,
+et elle est signalée plutôt que masquée. `e2e/a11y/zoom-a11y.spec.ts` et l'audit axe-core de
+`e2e/accessibility.spec.ts` en couvrent une partie ; le reste se vérifie à la main.
+
+**Règle 1 — toute affordance en icône seule fait au moins 24 × 24 px CSS** (WCAG 2.5.8, AA).
+L'exception d'**espacement** est très mal lue : on trace un **cercle de 24 px de diamètre centré**
+sur chaque cible trop petite, et il suffit que ces cercles **ne se croisent pas**. Deux icônes de
+20 px dont les _centres_ sont distants de 24 px **passent**, malgré 4 px d'écart visible — c'est la
+distance entre centres qui compte, jamais l'espace blanc. L'autre exception (liens **en ligne** dans
+une phrase) met le texte courant entièrement hors champ. Les surfaces réellement concernées sont
+donc les barres d'icônes : navbar, barre basse, actions de carte.
+
+**Règle 2 — la page se replie à 320 px de large et 256 px de haut** (WCAG 1.4.10 _Reflow_, AA).
+⚠️ **Le plancher est 320 px, pas 400** : le « 400 » qui circule est le _niveau de zoom_ (320 px CSS
+= un viewport de 1280 px zoomé à 400 %). Conséquence directe ici : le plus petit breakpoint du dépôt
+est `xs = 23.4375 rem = 375 px`, donc **la plage 320-375 px n'est couverte par aucun palier** — elle
+se tient par le fait que les mises en page y sont déjà en une colonne, pas par une règle. Une grille
+de produits **n'est pas exemptée** : elle doit se replier sur une colonne.
+
+**Règle 3 — saisie et hauteurs mobiles.**
+
+- **`svh` ou `dvh`, jamais `vh`, pour une hauteur d'écran.** `100vh` suppose les barres du navigateur
+  rétractées : au chargement, c'est **trop haut**. `lvh` = rétractées, `svh` = déployées, `dvh` =
+  suit en direct (mise à jour throttlée). ⚠️ Les claviers virtuels **n'affectent pas** les unités de
+  viewport — pour ça, c'est `VisualViewportBridge`.
+- **Aucun champ de saisie sous 16 px rendus.** Sous ce seuil, iOS Safari zoome au focus et ne
+  revient pas. C'est la taille **effective** après héritage et `rem` qui compte.
+- ⚠️ **Ne jamais « corriger » ce zoom par `maximum-scale=1` ou `user-scalable=no`** : ça supprime le
+  zoom **tout court** et casse **WCAG 1.4.4 _Resize Text_** (AA). Le correctif est de porter le champ
+  à 16 px ; si le design impose plus petit, `font-size: 16px` + `transform: scale()`.
+- **`inputmode`** (`numeric`, `decimal`, `tel`, `email`, `search`) sur chaque champ, avec le `type`
+  correspondant : les deux **suggèrent** le clavier, sans garantie identique d'un appareil à l'autre.
+
 ## Largeurs de contenu et grilles
 
 | Surface    | Plafond                   | Note                                                                                                             |
@@ -82,17 +143,41 @@ Composants verrouillés par `shared/components/__tests__/hover-focus-parity.regr
 
 ## Overlays — quelle primitive choisir
 
-| Besoin                                           | Primitive                                                                           | Rendu                                          |
+| Besoin                                           | Composant                                                                           | Rendu                                          |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Confirmer, action destructive                    | `ResponsiveAlertDialog`                                                             | `AlertDialog`, **identique mobile et desktop** |
+| Confirmer, action destructive                    | `ConfirmDialog`                                                                     | `AlertDialog`, **identique mobile et desktop** |
 | Formulaire, édition                              | `ResponsiveDialog`                                                                  | `Drawer` < `md`, `Dialog` ≥ `md`               |
 | Navigation, filtres, panier — panneau persistant | `Sheet`                                                                             | `Drawer` Base UI, latéral par défaut           |
 | Menu d'actions, picker, tri — feuille éphémère   | `Drawer`                                                                            | `Drawer` Base UI, bottom par défaut            |
 | `Dialog` / `AlertDialog` bruts                   | seulement si la surface n'existe pas en mobile (raccourcis clavier, export desktop) |                                                |
 
-⚠️ **`ResponsiveAlertDialog` ne bascule pas** malgré son préfixe : il rend la même primitive sur
-tous les viewports (`tone` ne pilote que la couleur du bouton d'action et le pattern haptic). Seul
-`ResponsiveDialog` bascule, sur `useIsMobile()` = `mediaBelow("md")`.
+### Règle d'admission d'un fichier `responsive-*`
+
+Un fichier `responsive-*` n'existe **que** s'il rend une primitive DIFFÉRENTE selon le viewport.
+Tout autre wrapper porte un nom qui décrit ce qu'il **décide** (`ConfirmDialog`), et n'a le droit
+d'exister que s'il change le rendu ou possède un état non trivial. **Un wrapper dont ≥ 50 % des
+exports sont des pass-through est un bug d'architecture, pas un composant.**
+
+⚠️ Cette règle est née d'un cas réel : `responsive-alert-dialog.tsx` (179 lignes) ne basculait rien
+malgré son préfixe — 7 de ses 9 exports étaient des pass-through dont le seul effet était de throw
+si un contexte à un champ manquait, en doublon du message que Base UI émet déjà. Il a été supprimé
+le 2026-08-06 ; son `tone` vit désormais sur `AlertDialogAction`. Verrouillé par
+`shared/components/ui/__tests__/confirm-dialog-boundary.regression.test.ts`.
+
+### La confirmation passe par `ConfirmDialog`
+
+Toute surface dont le footer est exactement `[Annuler, Confirmer]` passe par `ConfirmDialog`
+(`shared/components/dialogs/confirm-dialog.tsx`). On ne descend aux primitives `ui/alert-dialog` que
+si l'un de ces invariants est faux — et la dérogation doit alors dire lequel, dans l'allowlist du
+test de frontière : **(1)** un seul écran ; **(2)** exactement deux boutons, Annuler puis Confirmer ;
+**(3)** tout le contenu vit dans le formulaire ; **(4)** l'ouverture est pilotée du dehors.
+
+⚠️ **Le bouton de confirmation FERME le dialog au clic** — c'est un `Close` Base UI, et la fermeture
+part avant que la mutation ne démarre (`alert-dialog-close-on-confirm.regression.test.tsx`). Deux
+corollaires : un libellé d'attente ou un spinner piloté par `isPending` n'est **jamais vu** (le
+retour d'attente appartient au toast), et une validation HTML (`required`, `minLength`) ne peut pas
+être rapportée à l'utilisatrice — le dialog a disparu quand le navigateur bloque la soumission. Toute
+garde de validation passe par `confirmDisabled`.
 
 `Sheet` et `Drawer` enveloppent le **même** `Drawer` de Base UI. Le critère est l'intention, pas la
 technique : un panneau qu'on consulte (Sheet) vs une feuille qu'on referme aussitôt l'action faite
