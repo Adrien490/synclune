@@ -45,7 +45,8 @@ export const GET_PRODUCT_TYPES_SELECT = {
  * Famille « vignette unique » (cf. CLAUDE.md § mediaType) : `mediaType: "IMAGE"`
  * est filtré DANS le select, car l'appelant prend une seule image sans pouvoir
  * trier. Le choix final passe quand même par `pickPrimaryImage()` côté appelant
- * (SSOT), d'où `mediaType` + `isPrimary` dans la projection.
+ * (SSOT), d'où `mediaType` dans la projection (V5 : plus d'`isPrimary`, la
+ * première IMAGE de l'ordre canonique `(position asc, id asc)` est la principale).
  */
 export const GET_PRODUCT_TYPES_MENU_SELECT = {
 	...GET_PRODUCT_TYPES_SELECT,
@@ -67,14 +68,15 @@ export const GET_PRODUCT_TYPES_MENU_SELECT = {
 			id: true,
 			skus: {
 				// Le même filtre `images.some` que la garde produit ci-dessus : sans
-				// lui, un SKU par défaut sans image rendait une tuile vide alors
+				// lui, un SKU représentant sans image rendait une tuile vide alors
 				// qu'un autre SKU du produit en possède une.
 				where: {
 					isActive: true,
 					deletedAt: null,
 					images: { some: { mediaType: "IMAGE" } },
 				},
-				orderBy: [{ isDefault: "desc" as const }],
+				// V5 : ordre canonique (rang 0 = représentant, plus d'`isDefault`)
+				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 				take: 1,
 				select: {
 					images: {
@@ -83,13 +85,8 @@ export const GET_PRODUCT_TYPES_MENU_SELECT = {
 							url: true,
 							blurDataUrl: true,
 							mediaType: true,
-							isPrimary: true,
 						},
-						orderBy: [
-							{ isPrimary: "desc" as const },
-							{ position: "asc" as const },
-							{ id: "asc" as const },
-						],
+						orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 						take: 1,
 					},
 				},

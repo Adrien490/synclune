@@ -25,14 +25,6 @@ interface SkuDetailMediaCardProps {
 	sku: SkuDetailReturn;
 }
 
-function sortGalleryImages(images: SkuImage[]): SkuImage[] {
-	return images.toSorted((a, b) => {
-		if (a.isPrimary && !b.isPrimary) return -1;
-		if (!a.isPrimary && b.isPrimary) return 1;
-		return 0;
-	});
-}
-
 function toProductMedia(image: SkuImage, fallbackAlt: string): ProductMedia {
 	return {
 		id: image.id,
@@ -52,7 +44,9 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 	const prefersReducedMotion = useReducedMotion();
 	const [activeIndex, setActiveIndex] = useState(0);
 
-	const images = sortGalleryImages(sku.images);
+	// Le select livre les médias dans l'ordre canonique (position asc, id asc) :
+	// le principal est le premier élément, plus de re-tri `isPrimary` côté client.
+	const images = sku.images;
 	const [primary, ...rest] = images;
 	const fallbackAlt = `${sku.sku}${sku.product.title ? ` - ${sku.product.title}` : ""}`;
 	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> tuile bg-muted

@@ -16,7 +16,7 @@ interface OrderTrackingProps {
 		trackingUrl: string | null;
 		shippingCarrier: string | null;
 		shippedAt: Date | null;
-		actualDelivery: Date | null;
+		deliveredAt: Date | null;
 	};
 }
 
@@ -78,7 +78,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 							</span>
 						</div>
 					)}
-					{order.shippedAt && !order.actualDelivery && (
+					{order.shippedAt && !order.deliveredAt && (
 						<div>
 							<span className="text-muted-foreground">Livraison estimée : </span>
 							<span className="font-medium">
@@ -90,11 +90,11 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 							</span>
 						</div>
 					)}
-					{order.actualDelivery && (
+					{order.deliveredAt && (
 						<div>
 							<span className="text-muted-foreground">Livré le : </span>
 							<span className="text-success font-medium">
-								{format(order.actualDelivery, "d MMMM yyyy", { locale: fr })}
+								{format(order.deliveredAt, "d MMMM yyyy", { locale: fr })}
 							</span>
 						</div>
 					)}

@@ -2,7 +2,7 @@
  * @regression ORD-BIZ-006
  *
  * Garantit que `updateTracking` refuse la modification de tracking au-delà de
- * 30 jours après `actualDelivery` (préservation de la preuve de livraison).
+ * 30 jours après `deliveredAt` (préservation de la preuve de livraison).
  *
  * Sans cette régression : un admin peut écraser silencieusement la preuve de
  * livraison post-litige, post-réclamation transporteur, ou pour fraude interne.
@@ -100,7 +100,7 @@ describe("ORD-BIZ-006 — update-tracking refuse modification > 30j après livra
 		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
 
-	it("autorise modification si SHIPPED (actualDelivery encore null)", async () => {
+	it("autorise modification si SHIPPED (deliveredAt encore null)", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			id: VALID_CUID,
 			orderNumber: "SYN-001",
@@ -115,7 +115,7 @@ describe("ORD-BIZ-006 — update-tracking refuse modification > 30j après livra
 			shippingCity: null,
 			shippingCountry: null,
 			trackingNumber: "old123",
-			actualDelivery: null,
+			deliveredAt: null,
 		});
 
 		const result = await updateTracking(undefined, makeForm());
@@ -139,7 +139,7 @@ describe("ORD-BIZ-006 — update-tracking refuse modification > 30j après livra
 			shippingCity: null,
 			shippingCountry: null,
 			trackingNumber: "old123",
-			actualDelivery: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 jours
+			deliveredAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 jours
 		});
 
 		const result = await updateTracking(undefined, makeForm());
@@ -163,7 +163,7 @@ describe("ORD-BIZ-006 — update-tracking refuse modification > 30j après livra
 			shippingCity: null,
 			shippingCountry: null,
 			trackingNumber: "old123",
-			actualDelivery: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000), // 31 jours
+			deliveredAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000), // 31 jours
 		});
 
 		const result = await updateTracking(undefined, makeForm());

@@ -11,6 +11,22 @@
 > `CLAUDE.md` § Conventions UI ; le résumé opérationnel — celui qui
 > change un arbitrage de design — vit dans `CLAUDE.md` § « Direction artistique — lexique de
 > marque ». Ici, le détail.
+>
+> **Deux verrous tiennent ce document honnête.**
+> `test/contract/claude-md-accuracy.contract.test.ts` vérifie ses affirmations mécaniques
+> (chemins cités, sections de `CLAUDE.md` référencées, exports nommés) ;
+> `test/contract/brand-lexicon.contract.test.ts` applique son lexique aux surfaces d'identité du
+> code (cf. § Où vit la copie de marque dans le code). Dernière synchronisation manuelle avec le
+> dépôt : 2026-08-08.
+
+## Sommaire
+
+L'ADN en une phrase · Les six territoires artistiques · Le vocabulaire des formes · Matières et
+sensations visuelles · La palette chromatique · Maximalisme miniature et joyeux · Le registre
+stylistique · Le nom des pièces · L'univers photographique · Le ton éditorial · Où vit la copie de
+marque dans le code · Les valeurs de marque implicites · Les adjectifs, par monde · Les mots à ne
+PAS mettre au centre · Les symboles identitaires, par potentiel distinctif · Territoires de
+moodboard · Répertoire de mots-clés et expressions SEO.
 
 ## L'ADN en une phrase
 
@@ -32,7 +48,10 @@ Deux formulations de référence, à préférer aux anciennes :
 ⚠️ **Ce qui a été retiré et pourquoi.** « Des bijoux artisanaux, colorés et poétiques » (et sa
 variante « Création artisanale de bijoux colorés, originaux et poétiques ») est **juste mais
 interchangeable** : n'importe quelle boutique de bijoux peut la signer. Le noyau lexical à défendre
-est désormais **couleur (polychromie) + goutte + récit + fait main + miniature + Nantes**.
+est désormais **couleur (polychromie) + goutte + récit + fait main + miniature + Nantes**. Ce
+retrait est APPLIQUÉ, pas seulement conseillé : `test/contract/brand-lexicon.contract.test.ts`
+échoue si une formule interchangeable (« avec amour », « colorés et poétiques », « occasions
+spéciales »…) revient dans une surface d'identité.
 
 ## Les six territoires artistiques
 
@@ -185,6 +204,12 @@ variables CSS (≥ 2 consommateurs, ou coordination JS ↔ CSS, ou test qui la v
 `CLAUDE.md` § Conventions UI. La polychromie de la DA se joue donc par la **rotation des accents
 d'une section à l'autre** et par la couleur des visuels produits — pas par vingt variables.
 
+⚠️ **Troisième garde, chromatique : le pastel de marque ne porte pas de glyphe.** À 1,5–2,5:1 de
+contraste, lavande, menthe et soleil peignent des aplats, des traits et des motifs — ils n'écrivent
+pas (WCAG). « Écrire en couleur » est le premier réflexe qu'un lexique polychrome déclenche, et
+c'est la transposition la plus souvent ratée ; quand le rose doit être LU et pas seulement vu,
+c'est `--color-brand-rose-strong` (la version encre) qui écrit.
+
 ## Maximalisme miniature et joyeux
 
 Synclune n'est pas minimaliste. Mais ce n'est pas non plus un maximalisme baroque ou luxueux. Le bon
@@ -214,6 +239,18 @@ psychédélique doux · bohème coloré.
 
 ⚠️ La fiche Etsy de la bague Nuit étoilée est classée « Art nouveau » : c'est vrai **de cette
 pièce**, et insuffisant pour décrire la marque.
+
+## Le nom des pièces
+
+Les créations portent des noms **anglais** (Green Grape Necklace, Starry Night Ring, Rainbow Drop
+Necklace, Rain Loops…) : héritage de la boutique Etsy et de son audience internationale — et
+surtout, ces noms fonctionnent comme des **titres d'œuvres**, pas comme des libellés de catalogue.
+La coexistence avec un site français-only (`CLAUDE.md` § Conventions : UI text French) se règle
+ainsi : le nom propre reste tel quel, tout le reste de la fiche (description, matières, CTA) est en
+français et tutoie. Ne pas traduire les noms existants — « Collier Raisin Vert » perdrait le titre
+sous lequel la pièce est déjà connue et référencée — et ne pas introduire de nommage français
+partiel qui fabriquerait deux registres. ⚠️ Convention **relevée sur l'existant**, pas dictée : à
+confirmer avec Léane avant d'en faire une règle de création pour les pièces futures.
 
 ## L'univers photographique
 
@@ -256,8 +293,28 @@ réponds »).
   tutoiement fait partie du travail de reprise.
 - **Les emojis d'Etsy ne sont pas un feu vert pour l'UI.** Ils appartiennent à une conversation de
   vendeuse à cliente ; l'interface porte le même registre par le **trait dessiné à la main**
-  (`shared/components/hand-drawn/paths.ts`, `shared/components/animations/hand-drawn-accent.tsx`,
-  `shared/components/masking-tape.tsx`), pas par des glyphes de clavier.
+  (`shared/components/hand-drawn/paths.ts`, `shared/components/animations/hand-drawn-accent.tsx` —
+  `MaskingTape` a été supprimé le 2026-08-08 avec les derniers rubans en série, ne le cite plus), pas
+  par des glyphes de clavier.
+
+## Où vit la copie de marque dans le code
+
+Le pont entre ce lexique et le code : les surfaces où la marque se décrit, scannées par
+`test/contract/brand-lexicon.contract.test.ts`. Une dérive y est invisible à l'œil — elle vit dans
+les `<meta>`, les nœuds JSON-LD et l'onglet du navigateur, jamais dans l'interface ; c'est là que
+six chaînes off-brand ont été trouvées d'un coup (audit du 2026-08-06).
+
+- **Identité** — la marque s'y DÉCRIT ; les mots bannis ET les formules interchangeables y font
+  échouer le test : `shared/constants/brand.ts` (`BRAND`), `shared/constants/seo-config.ts`
+  (`BUSINESS_INFO` + les trois schémas JSON-LD), `shared/constants/root-metadata.ts` (le repli OG
+  hérité par toute page) et les metadata de la home (`app/(shop)/(home)/page.tsx`).
+- **Éditorial** — Léane y PARLE, à la première personne ; seuls les mots bannis s'y appliquent :
+  `shared/constants/atelier-content.ts` (`ATELIER_STEPS`, `ATELIER_HOWTO`). « Avec amour » y est
+  légitime : c'est un geste raconté, pas un positionnement.
+
+Toute nouvelle SSOT de copie de marque se déclare dans `IDENTITY_SURFACES` ou `EDITORIAL_SURFACES`
+du test — la FAQ supprimée le 2026-08-08 devra y revenir avec sa refonte, sinon elle se réécrira
+sans filet lexical.
 
 ## Les valeurs de marque implicites
 
@@ -300,8 +357,14 @@ Ces termes peuvent décrire une pièce isolée, mais **brouillent l'identité** 
 cœur du discours :
 
 minimaliste · sobre · discret · intemporel · quiet luxury · classique · épuré · neutre · monochrome ·
-joaillerie fine · luxe froid · cérémonie · mariage chic · pierre précieuse · prestige ·
+joaillerie fine · luxe froid · cérémonie · mariage chic · pierre précieuse · premium · prestige ·
 sophistication silencieuse · élégance conventionnelle.
+
+Cette liste est APPLIQUÉE : `test/contract/brand-lexicon.contract.test.ts` scanne les surfaces du
+§ Où vit la copie de marque dans le code et échoue sur chacun de ces termes, avec deux
+élargissements assumés (« luxe froid » y devient « luxe », « joaillerie fine » y devient
+« joaillerie ») et une assertion de parité : un terme ajouté ici sans y être couvert fait échouer
+le test.
 
 ⚠️ **Le second univers du site n'est PAS la DA.** Le catalogue actuellement en base présente une
 gamme beaucoup plus générique — collections Mariage, Fêtes, Best Sellers, pièces en plaqué or, argent,
@@ -333,24 +396,36 @@ Par ordre de distinctivité décroissante :
 larme, la rosée et le collier arc-en-ciel. Elle relie tous les territoires sans les uniformiser —
 c'est le meilleur candidat au rôle de glyphe de marque.
 
-État du dépôt (2026-08-06, après « Le présentoir »), utile avant de « proposer un motif » : la
-goutte, l'étincelle, le nœud et le ruban ont un tracé dessiné à la main (`ATELIER_THREAD_PATHS`
-dans `shared/components/hand-drawn/paths.ts`) ; le cœur, l'étoile et la lune aussi
-(`ACCENT_SHAPE_PATHS`) ; et **le gisement le plus distinctif a été ouvert** — la grappe (via la
-baie), la feuille, le cabochon, l'œil, le cil, la volute peinte et l'arc-en-ciel (via la séquence
-de gouttes) vivent dans `CREATION_PATHS`, posés par
-`shared/components/hand-drawn/creations.ts` et consommés par la carte de partage
-(`shared/components/og/og-marks.ts`, qui importe la scène au lieu d'en recopier les poses).
+État du dépôt (re-vérifié le 2026-08-08), utile avant de « proposer un motif » : l'étincelle et le
+nœud ont un tracé dessiné à la main dans `ATELIER_THREAD_PATHS`
+(`shared/components/hand-drawn/paths.ts` — `drop`, `heat` et `bow` en ont été RETIRÉS le
+2026-08-06 : la goutte se prend désormais dans `CREATION_PATHS`, et le ruban n'a plus de tracé) ;
+le cœur, l'étoile, le cercle et la flèche vivent dans `ACCENT_SHAPE_PATHS` — **pas la lune**, qui
+n'a aucun tracé dans le fichier (le trio cœur·étoile·lune y est ponctuation, pas sujet) ; et **le gisement le plus
+distinctif a été ouvert** — la goutte, la grappe (via la baie), la feuille, l'anneau, la créole,
+le cabochon peint, la volute et la touche de peinture, plus l'arc-en-ciel (via la séquence de
+gouttes), vivent dans `CREATION_PATHS`, posés par `shared/components/hand-drawn/creations.ts` et
+consommés par la carte de partage (`shared/components/og/og-marks.ts`, qui importe la scène au
+lieu d'en recopier les poses). ⚠️ L'œil et le cil n'y sont PLUS : la refonte de fidélité produit
+du 2026-08-06 les a retirés avec les créations inventées qu'ils composaient (leurs tracés restent
+dans l'historique git) — les boucles Raindrops – Eyes n'ont plus de tracé à réemployer. En cas de
+doute, **c'est `shared/components/hand-drawn/paths.ts` qui fait foi, pas ce paragraphe** (il a déjà
+dérivé une fois, deux jours durant) ; la géométrie est verrouillée par
+`shared/components/animations/__tests__/hand-drawn-accent-aspect-ratio.regression.test.ts` (boîtes)
+et `shared/components/hand-drawn/__tests__/creations-scene.test.ts` (points d'accroche du cordon).
 
 ⚠️ **La scène a quitté le premier écran le 2026-08-07** (`hero-creations.tsx` supprimé) : elle y
 mettait un DESSIN de bijoux à côté de PHOTOS de bijoux — le même sujet rendu deux fois, dont la
 version qui prouve le moins. Le critère qui en sort, et qui vaut pour toute proposition de décor :
 **on dessine ce qu'on ne peut pas photographier** (l'atelier, le geste, le meuble, un état vide),
 jamais ce qui est photographié 40 px plus loin. Les tracés, eux, restent employés là où ce critère
-tient : la carte de partage, la section atelier, la FAQ.
+tient : la carte de partage et la section atelier. ⚠️ La FAQ en faisait partie (une touche de
+peinture `CREATION_PATHS.dab` par famille de question) ; la section a été supprimée le 2026-08-08,
+à refaire — c'est un emploi à re-viser, il tenait exactement le critère.
 
-Restent sans tracé, et c'est ce qu'il faut viser ensuite : le **présentoir illustré** et la
-**chaîne chargée de pampilles**.
+Reste sans tracé, et c'est ce qu'il faut viser ensuite : le **présentoir illustré**. La chaîne
+chargée de pampilles, elle, est couverte depuis la refonte du 2026-08-06 : le collier arc-en-ciel
+de la scène est précisément une chaîne dorée bordée d'une multitude de gouttes.
 
 ⚠️ Une direction mobilise **UN** motif tenu jusqu'au bout, jamais des étoiles saupoudrées partout.
 La scène du présentoir montre comment tenir la règle SANS s'appauvrir : quatre familles y
@@ -391,7 +466,8 @@ objet merveilleux.
 française » · « bijoux faits main à Nantes » · « boucles d'oreilles colorées artisanales » · « bague
 peinte à la main » · « bijoux inspirés de Van Gogh » · « bijoux arc-en-ciel artisanaux » · « cadeau
 artisanal pour femme » · « bijou statement coloré » · « bijoux roses faits main » · « bijoux girly
-originaux » · « collier gouttes de verre » · « bijoux raisins » · « peinture miniature à porter ».
+originaux » (longue traîne d'un registre désormais secondaire, cf. ⚠️ « girly » au § Les adjectifs,
+par monde) · « collier gouttes de verre » · « bijoux raisins » · « peinture miniature à porter ».
 
 ⚠️ **La règle « uniquement quand c'est vrai pour la pièce » vaut aussi pour le SEO** : une expression
 descriptive (rose, cœur, arc-en-ciel, peint à la main) ne se pose sur une fiche que si le bijou l'est
@@ -399,3 +475,15 @@ réellement. Rappel de périmètre : il n'y a **pas** de `metaTitle`/`metaDescri
 SEO est dérivé du titre produit et du prix, la meta description est la description produit tronquée
 (`CLAUDE.md` § Pas de `metaTitle` / `metaDescription` en base). Le vocabulaire ci-dessus se joue donc
 dans la **copie produit elle-même**, pas dans un champ SEO séparé.
+
+**Un exemple pour rendre le registre imitable** — la même pièce (le collier arc-en-ciel), deux
+copies :
+
+- ❌ « Collier artisanal fait main avec perles colorées. Un bijou original et poétique pour toutes
+  les occasions. » Vrai, et signable par n'importe qui : aucun territoire, aucune matière réelle,
+  aucun récit.
+- ✅ « Une rivière de gouttes de verre translucides — rose, orange, jaune, vert, turquoise, bleu,
+  violet — sur une chaîne dorée. L'arc-en-ciel se porte en collier, assemblé goutte à goutte dans
+  l'atelier nantais de Léane. » Le territoire C tenu de bout en bout, des matières vraies, et les
+  155 premiers caractères (la future meta description) portent déjà « gouttes de verre » et la
+  séquence chromatique.

@@ -115,7 +115,6 @@ export async function cancelOrder(
 						invoiceStatus: true,
 						items: {
 							select: {
-								id: true,
 								skuId: true,
 								quantity: true,
 								price: true,

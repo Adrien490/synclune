@@ -74,7 +74,7 @@ function makeProduct(overrides: Partial<QuickSearchProduct> = {}): QuickSearchPr
 				priceInclTax: 4500,
 				compareAtPrice: null,
 				inventory: 3,
-				isDefault: true,
+				position: 0,
 				colors: [],
 				images: [{ url: "/img/bague.jpg", blurDataUrl: null, altText: "Bague Lune" }],
 			},
@@ -149,7 +149,7 @@ describe("SearchResultItem", () => {
 					priceInclTax: 4500,
 					compareAtPrice: null,
 					inventory: 3,
-					isDefault: true,
+					position: 0,
 					colors: [],
 					images: [],
 				},
@@ -176,7 +176,7 @@ describe("SearchResultItem", () => {
 					priceInclTax: 4500,
 					compareAtPrice: null,
 					inventory: 0,
-					isDefault: true,
+					position: 0,
 					colors: [],
 					images: [],
 				},
@@ -191,14 +191,14 @@ describe("SearchResultItem", () => {
 		expect(screen.queryByText("Rupture")).not.toBeInTheDocument();
 	});
 
-	it("shows compareAtPrice and discount percentage when present and higher than price", () => {
+	it("ne rend ni prix barré ni pastille -X% malgré compareAtPrice (retrait Omnibus 2026-08-08)", () => {
 		const product = makeProduct({
 			skus: [
 				{
 					priceInclTax: 3000,
 					compareAtPrice: 4500,
 					inventory: 2,
-					isDefault: true,
+					position: 0,
 					colors: [],
 					images: [],
 				},
@@ -207,12 +207,9 @@ describe("SearchResultItem", () => {
 		const { container } = render(
 			<SearchResultItem product={product} query="" onSelect={onSelect} />,
 		);
-		// The compare-at price (strikethrough)
-		expect(container.querySelector(".line-through")?.textContent).toBe("45.00 €");
-		// The discount badge contains "-", a number, and "%" in separate nodes
-		const discountBadge = container.querySelector(".bg-destructive\\/10");
-		expect(discountBadge).toBeInTheDocument();
-		expect(discountBadge?.textContent).toMatch(/^-\d+%$/);
+		expect(screen.getByText("30.00 €")).toBeInTheDocument();
+		expect(container.querySelector(".line-through")).toBeNull();
+		expect(container.querySelector(".bg-destructive\\/10")).toBeNull();
 	});
 
 	it("does not show compareAtPrice when it is not higher than price", () => {
@@ -222,7 +219,7 @@ describe("SearchResultItem", () => {
 					priceInclTax: 4500,
 					compareAtPrice: 4500,
 					inventory: 2,
-					isDefault: true,
+					position: 0,
 					colors: [],
 					images: [],
 				},
@@ -241,7 +238,7 @@ describe("SearchResultItem", () => {
 					priceInclTax: 4500,
 					compareAtPrice: null,
 					inventory: 2,
-					isDefault: true,
+					position: 0,
 					colors: [
 						{ colorId: "or", position: 0, color: { slug: "or", name: "Or", hex: "#FFD700" } },
 					],
@@ -251,7 +248,7 @@ describe("SearchResultItem", () => {
 					priceInclTax: 4500,
 					compareAtPrice: null,
 					inventory: 2,
-					isDefault: false,
+					position: 1,
 					colors: [
 						{
 							colorId: "argent",
@@ -281,7 +278,7 @@ describe("SearchResultItem", () => {
 					priceInclTax: 4500,
 					compareAtPrice: null,
 					inventory: 2,
-					isDefault: true,
+					position: 0,
 					colors: [
 						{ colorId: "or", position: 0, color: { slug: "or", name: "Or", hex: "#FFD700" } },
 					],
@@ -317,7 +314,7 @@ describe("SearchResultItem", () => {
 				priceInclTax: 4500,
 				compareAtPrice: null,
 				inventory: 2,
-				isDefault: i === 0,
+				position: i,
 				colors: [{ colorId: color.slug, position: 0, color }],
 				images: [],
 			})),
@@ -335,7 +332,7 @@ describe("SearchResultItem", () => {
 					priceInclTax: 4500,
 					compareAtPrice: null,
 					inventory: 2,
-					isDefault: true,
+					position: 0,
 					colors: [
 						{ colorId: "or", position: 0, color: { slug: "or", name: "Or", hex: "#FFD700" } },
 					],
@@ -345,7 +342,7 @@ describe("SearchResultItem", () => {
 					priceInclTax: 4500,
 					compareAtPrice: null,
 					inventory: 2,
-					isDefault: false,
+					position: 1,
 					colors: [
 						{ colorId: "or", position: 0, color: { slug: "or", name: "Or", hex: "#FFD700" } },
 					],
@@ -371,14 +368,14 @@ describe("SearchResultItem", () => {
 		expect(marks.length).toBeGreaterThanOrEqual(1);
 	});
 
-	it("uses the non-default first SKU when no default SKU exists", () => {
+	it("uses skus[0] as representative (selects deliver SKUs sorted by position)", () => {
 		const product = makeProduct({
 			skus: [
 				{
 					priceInclTax: 9900,
 					compareAtPrice: null,
 					inventory: 1,
-					isDefault: false,
+					position: 0,
 					colors: [],
 					images: [],
 				},

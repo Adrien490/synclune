@@ -26,10 +26,11 @@
  * ne sélectionnait pas `mediaType` non plus. Aucun garde-fou statique n'existait pour
  * cette règle : c'est ce trou qui a laissé le select dériver. D'où ce fichier.
  *
- * `where: { isPrimary: true }` est en outre banni à lui seul : sur un SKU sans média
- * primaire il rend 0 image alors que le SKU en a. Le tri
- * `[{ isPrimary: desc }, { position: asc }]` + `take: 1` donne le même résultat avec un
- * repli, et reproduit la priorité de `pickPrimaryImage`.
+ * `where: { isPrimary: true }` était en outre banni à lui seul : sur un SKU sans média
+ * primaire il rendait 0 image alors que le SKU en avait. Depuis l'audit schéma V5
+ * (lot A1), la colonne `isPrimary` n'existe plus : la vignette unique est le tri
+ * canonique `[{ position: asc }, { id: asc }]` + `take: 1`, qui reproduit la règle de
+ * `pickPrimaryImage` (première IMAGE de l'ordre du tableau).
  *
  * ## Périmètre : ce fichier ne couvre QUE les selects du catalogue
  *
@@ -101,13 +102,6 @@ describe("selects catalogue — filtre média (@regression catalogue-selects-med
 	it.each(singleThumbnailSelects)('%s filtre mediaType: "IMAGE"', (_name, images) => {
 		expect(images.where).toMatchObject({ mediaType: "IMAGE" });
 	});
-
-	it.each(singleThumbnailSelects)(
-		"%s ne filtre pas sur isPrimary seul (sinon 0 image quand aucune primaire)",
-		(_name, images) => {
-			expect(images.where).not.toHaveProperty("isPrimary");
-		},
-	);
 
 	// ─── Famille « galerie » : pas de filtre, mais mediaType exposé ─────────────
 

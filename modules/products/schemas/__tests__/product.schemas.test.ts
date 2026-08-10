@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 
 // Mock Prisma client enums
 vi.mock("@/app/generated/prisma/client", () => ({
-	ProductStatus: {
+	PublicationStatus: {
 		DRAFT: "DRAFT",
 		PUBLIC: "PUBLIC",
 		ARCHIVED: "ARCHIVED",

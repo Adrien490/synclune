@@ -342,19 +342,30 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 	// 3. Order snapshots (MEDIA-AUDIT-003) — productImageUrl.
 	// Protège l'intégrité historique : un fichier encore référencé par une
 	// commande passée ne doit jamais être considéré orphelin.
+	//
+	// V5 : `OrderItem` n'a plus de colonne `id` (PK composite orderId+skuId).
+	// `paginateCursor` exige un `id` string : on encode la paire en
+	// `"<orderId>:<skuId>"` (des cuids, jamais de « : ») pour le curseur, et on
+	// la décode côté fetch en curseur composite Prisma `orderId_skuId`.
 	await paginateCursor({
 		jobName,
 		step: "orderItem-snapshot-scan",
 		batchSize: DB_QUERY_BATCH_SIZE,
 		deadline,
-		fetch: (cursor, take) =>
-			prisma.orderItem.findMany({
+		fetch: async (cursor, take) => {
+			const [orderId, skuId] = cursor?.split(":") ?? [];
+			const rows = await prisma.orderItem.findMany({
 				where: { productImageUrl: { not: null } },
-				select: { id: true, productImageUrl: true },
+				select: { orderId: true, skuId: true, productImageUrl: true },
 				take,
-				...(cursor && { skip: 1, cursor: { id: cursor } }),
-				orderBy: { id: "asc" },
-			}),
+				...(orderId && skuId && { skip: 1, cursor: { orderId_skuId: { orderId, skuId } } }),
+				orderBy: [{ orderId: "asc" as const }, { skuId: "asc" as const }],
+			});
+			return rows.map((row) => ({
+				id: `${row.orderId}:${row.skuId}`,
+				productImageUrl: row.productImageUrl,
+			}));
+		},
 		onBatch: (batch) => {
 			for (const item of batch) {
 				if (item.productImageUrl) {

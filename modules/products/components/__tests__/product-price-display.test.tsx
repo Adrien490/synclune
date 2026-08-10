@@ -58,7 +58,7 @@ function makeSku(overrides: Partial<ProductSku> = {}): ProductSku {
 		compareAtPrice: null,
 		inventory: 10,
 		isActive: true,
-		isDefault: true,
+		position: 0,
 		size: null,
 		colorId: null,
 		materialId: null,
@@ -113,16 +113,14 @@ describe("ProductPriceDisplay", () => {
 			expect(screen.getByText("49.99 €")).toBeInTheDocument();
 		});
 
-		it("renders a discount badge and savings message when compareAtPrice is set", () => {
+		it("ne rend ni badge de remise ni message d'économie (retrait Omnibus 2026-08-08)", () => {
 			const sku = makeSku({ priceInclTax: 3500, compareAtPrice: 5000 });
 			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} />);
 
-			// Discount badge: -30% (round((5000-3500)/5000*100))
-			expect(screen.getByText(/-30%/)).toBeInTheDocument();
-
-			// Savings message — tutoiement (SSOT `PRODUCT_TEXTS.PRICING.SAVINGS`)
-			expect(screen.getByText(/Tu économises/)).toBeInTheDocument();
-			expect(screen.getByText(/15\.00 €/)).toBeInTheDocument();
+			expect(screen.getByText("35.00 €")).toBeInTheDocument();
+			expect(screen.queryByText(/-\d+%/)).toBeNull();
+			expect(screen.queryByText(/Tu économises/)).toBeNull();
+			expect(screen.queryByText(/50\.00 €/)).toBeNull();
 		});
 
 		it("shows the in-stock badge when inventory is above the low-stock threshold", () => {

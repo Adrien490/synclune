@@ -190,16 +190,17 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 	});
 
 	/**
-	 * @regression collection-skeleton-parity — le volet mesuré.
+	 * ⚠️ `/collections` ne rend plus de collection depuis le 2026-08-08 (les
+	 * chapitres ont été supprimés, à refaire) : ce budget ne mesure plus que le
+	 * bloc titre, et il passe donc trivialement. Le garder est délibéré — c'est le
+	 * filet qui attendra le nouveau rendu.
 	 *
-	 * `/collections` empile des bandes derrière un `<Suspense>` dont le fallback
-	 * (`CollectionChaptersSkeleton`) doit recouvrir le carnet qu'il annonce. Sa
-	 * colonne texte réservait 112px pour ~202px de réel — description sur 4 lignes
-	 * annoncée sur une, trait dessiné non réservé, `gap-3` là où le réel a des
-	 * marges — soit ~90px de décalage PAR BANDE au swap.
-	 *
-	 * Le test de parité est statique (il compare des classes) : lui seul ne verrait
-	 * pas un décalage venu d'ailleurs. Celui-ci mesure le résultat.
+	 * Ce qu'il a attrapé, et qui vaut pour la refonte : le repli d'un `<Suspense>`
+	 * doit RECOUVRIR ce qu'il annonce. L'ancien réservait 112px de colonne texte
+	 * pour ~202px de réel (description sur 4 lignes annoncée sur une, trait dessiné
+	 * non réservé, `gap-3` là où le réel a des marges) — ~90px de décalage PAR
+	 * BANDE au swap. Un test de parité statique compare des classes ; lui seul ne
+	 * verrait pas un décalage venu d'ailleurs. Celui-ci mesure le résultat.
 	 */
 	test("page collections - CLS under 0.15", async ({ page }) => {
 		await page.goto("/collections");

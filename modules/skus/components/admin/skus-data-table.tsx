@@ -27,10 +27,10 @@ import Link from "next/link";
 import { ProductSkuRowActions } from "./sku-row-actions";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
-// Helper pour obtenir l'image primaire
+// Média principal = premier de l'ordre canonique (position asc, id asc), déjà
+// appliqué par le select — la colonne `isPrimary` n'existe plus (audit schéma V5).
 function getPrimaryImage(sku: GetProductSkusReturn["productSkus"][number]) {
-	if (sku.images.length === 0) return null;
-	return sku.images.find((img) => img.isPrimary) ?? sku.images[0];
+	return sku.images[0] ?? null;
 }
 
 // Helper pour calculer le stock disponible
@@ -59,7 +59,7 @@ export async function ProductVariantsDataTable({
 	perPage,
 	hasActiveFilters = false,
 }: ProductVariantsDataTableProps) {
-	const { productSkus, pagination } = await skusPromise;
+	const { productSkus, pagination, representativeSkuId } = await skusPromise;
 
 	if (productSkus.length === 0) {
 		return (
@@ -164,7 +164,7 @@ export async function ProductVariantsDataTable({
 									>
 										{sku.sku}
 									</Link>
-									{sku.isDefault && (
+									{sku.id === representativeSkuId && (
 										<Badge variant="secondary" className="w-fit text-xs">
 											Par défaut
 										</Badge>
@@ -238,7 +238,7 @@ export async function ProductVariantsDataTable({
 									skuId={sku.id}
 									skuName={sku.sku}
 									productSlug={productSlug}
-									isDefault={sku.isDefault}
+									isRepresentative={sku.id === representativeSkuId}
 									isActive={sku.isActive}
 									inventory={sku.inventory}
 									priceInclTax={sku.priceInclTax}

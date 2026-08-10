@@ -16,7 +16,6 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 import { ProductFilterCompartments } from "./product-filter-compartments";
@@ -268,17 +267,14 @@ function ProductFilterRailInner({
 				{/*
 				 * L'étiquette du meuble (« Le comptoir », lot 1) : le titre est le seul
 				 * mot du rail en display — 18 px contre les 10 px des étiquettes de
-				 * tiroirs, les deux crans qui manquaient. La tape passe DERRIÈRE le
-				 * titre (porte-étiquette, même geste que les boutons actifs de la
-				 * barre) ; le `h2`, positionné et déclaré après elle, peint au-dessus.
+				 * tiroirs, les deux crans qui manquaient.
 				 * Nom accessible « Filtres » verrouillé par la spec E2E (égalité
 				 * stricte) — le spinner d'à côté est présentationnel, il n'y entre pas,
 				 * et il ne se rend ici QUE lorsque le pied (qui le porte sinon) est
 				 * absent : pendant l'effacement du dernier filtre, notamment.
 				 */}
-				<div className="relative shrink-0 px-4 pt-3 pb-1.5">
-					<MaskingTape className="top-3.5 left-3 h-[1.125rem] w-[4.5rem] -rotate-2" />
-					<h2 className="font-display relative flex items-center gap-2 text-lg font-normal">
+				<div className="shrink-0 px-4 pt-3 pb-1.5">
+					<h2 className="font-display flex items-center gap-2 text-lg font-normal">
 						Filtres
 						{isPending && activeFiltersCount === 0 && <Spinner presentational className="size-3" />}
 					</h2>

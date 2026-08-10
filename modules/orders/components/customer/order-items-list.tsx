@@ -6,7 +6,7 @@ import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface OrderItem {
-	id: string;
+	skuId: string;
 	productTitle: string;
 	productImageUrl: string | null;
 	skuColor: string | null;
@@ -36,7 +36,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 							.join(" • ");
 
 						return (
-							<div key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
+							<div key={item.skuId} className="flex gap-4 py-4 first:pt-0 last:pb-0">
 								{/* Image */}
 								<div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-lg">
 									{imageUrl ? (

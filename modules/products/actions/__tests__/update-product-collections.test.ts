@@ -21,7 +21,12 @@ const {
 	mockPrisma: {
 		product: { findUnique: vi.fn() },
 		collection: { findMany: vi.fn() },
-		productCollection: { findMany: vi.fn(), deleteMany: vi.fn(), createMany: vi.fn() },
+		productCollection: {
+			findMany: vi.fn(),
+			deleteMany: vi.fn(),
+			findFirst: vi.fn(),
+			create: vi.fn(),
+		},
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -119,13 +124,18 @@ describe("updateProductCollections", () => {
 		mockPrisma.productCollection.findMany.mockResolvedValue([
 			{
 				collectionId: "old-col-id",
-				isFeatured: false,
+				position: 0,
 				collection: { slug: "ancienne-collection" },
 			},
 		]);
 		mockPrisma.productCollection.deleteMany.mockResolvedValue({ count: 1 });
-		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 2 });
-		mockPrisma.$transaction.mockResolvedValue([{ count: 1 }, { count: 2 }]);
+		mockPrisma.productCollection.findFirst.mockResolvedValue(null);
+		mockPrisma.productCollection.create.mockResolvedValue({});
+		// La tx est un callback : on l'exécute avec le client mocké comme `tx`
+		// pour pouvoir asserter les écritures (deleteMany + create par collection).
+		mockPrisma.$transaction.mockImplementation(async (cb: unknown) =>
+			typeof cb === "function" ? cb(mockPrisma) : undefined,
+		);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -235,10 +245,10 @@ describe("updateProductCollections", () => {
 		expect(mockUpdateTag).toHaveBeenCalled();
 	});
 
-	it("should preserve isFeatured when a collection is kept", async () => {
-		// COL_ID_1 est déjà associé et featured
+	it("préserve le rang (position) d'une collection conservée", async () => {
+		// COL_ID_1 est déjà associé au rang 2 (le rang 0 est la vedette, éditorial)
 		mockPrisma.productCollection.findMany.mockResolvedValue([
-			{ collectionId: COL_ID_1, isFeatured: true, collection: { slug: "bijoux" } },
+			{ collectionId: COL_ID_1, position: 2, collection: { slug: "bijoux" } },
 		]);
 		mockValidateInput.mockReturnValue({
 			data: { productId: PRODUCT_ID, collectionIds: [COL_ID_1] },
@@ -247,27 +257,46 @@ describe("updateProductCollections", () => {
 
 		await updateProductCollections(undefined, validFormData);
 
-		expect(mockPrisma.productCollection.createMany).toHaveBeenCalledWith({
-			data: [{ productId: PRODUCT_ID, collectionId: COL_ID_1, isFeatured: true }],
+		expect(mockPrisma.productCollection.create).toHaveBeenCalledWith({
+			data: { productId: PRODUCT_ID, collectionId: COL_ID_1, position: 2 },
 		});
+		// Rang conservé → pas de calcul de fin de liste
+		expect(mockPrisma.productCollection.findFirst).not.toHaveBeenCalled();
 	});
 
-	it("should set isFeatured to false for newly added collections", async () => {
-		// COL_ID_1 existait (featured), COL_ID_2 est nouveau
+	it("ajoute une nouvelle collection en fin de liste (max + 1), jamais au rang 0 occupé", async () => {
+		// COL_ID_1 existait (rang 0, la vedette), COL_ID_2 est nouveau
 		mockPrisma.productCollection.findMany.mockResolvedValue([
-			{ collectionId: COL_ID_1, isFeatured: true, collection: { slug: "bijoux" } },
+			{ collectionId: COL_ID_1, position: 0, collection: { slug: "bijoux" } },
 		]);
 		mockValidateInput.mockReturnValue({
 			data: { productId: PRODUCT_ID, collectionIds: [COL_ID_1, COL_ID_2] },
 		});
+		// La collection cible a déjà des produits : le dernier rang est 4
+		mockPrisma.productCollection.findFirst.mockResolvedValue({ position: 4 });
 
 		await updateProductCollections(undefined, validFormData);
 
-		expect(mockPrisma.productCollection.createMany).toHaveBeenCalledWith({
-			data: [
-				{ productId: PRODUCT_ID, collectionId: COL_ID_1, isFeatured: true },
-				{ productId: PRODUCT_ID, collectionId: COL_ID_2, isFeatured: false },
-			],
+		expect(mockPrisma.productCollection.create).toHaveBeenCalledWith({
+			data: { productId: PRODUCT_ID, collectionId: COL_ID_1, position: 0 },
+		});
+		expect(mockPrisma.productCollection.create).toHaveBeenCalledWith({
+			data: { productId: PRODUCT_ID, collectionId: COL_ID_2, position: 5 },
+		});
+	});
+
+	it("une nouvelle association dans une collection vide prend le rang 0 (toujours une vedette)", async () => {
+		mockPrisma.productCollection.findMany.mockResolvedValue([]);
+		mockValidateInput.mockReturnValue({
+			data: { productId: PRODUCT_ID, collectionIds: [COL_ID_1] },
+		});
+		mockPrisma.collection.findMany.mockResolvedValue([{ id: COL_ID_1, slug: "bijoux" }]);
+		mockPrisma.productCollection.findFirst.mockResolvedValue(null);
+
+		await updateProductCollections(undefined, validFormData);
+
+		expect(mockPrisma.productCollection.create).toHaveBeenCalledWith({
+			data: { productId: PRODUCT_ID, collectionId: COL_ID_1, position: 0 },
 		});
 	});
 

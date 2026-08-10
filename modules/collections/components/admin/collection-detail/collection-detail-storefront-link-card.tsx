@@ -3,14 +3,14 @@
 import { ArrowSquareOutIcon, EyeSlashIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 
 interface CollectionDetailStorefrontLinkCardProps {
 	slug: string;
-	status: CollectionStatus;
+	status: PublicationStatus;
 }
 
 export function CollectionDetailStorefrontLinkCard({
@@ -18,7 +18,7 @@ export function CollectionDetailStorefrontLinkCard({
 	status,
 }: CollectionDetailStorefrontLinkCardProps) {
 	const haptic = useHaptic();
-	const isPublic = status === CollectionStatus.PUBLIC;
+	const isPublic = status === PublicationStatus.PUBLIC;
 
 	return (
 		<Card>
@@ -62,8 +62,9 @@ export function CollectionDetailStorefrontLinkCard({
 							Voir sur la boutique
 						</Button>
 						<p id="collection-storefront-help" className="text-muted-foreground text-xs">
-							Cette collection est {status === CollectionStatus.DRAFT ? "en brouillon" : "archivée"}{" "}
-							et n&apos;est pas visible publiquement.
+							Cette collection est{" "}
+							{status === PublicationStatus.DRAFT ? "en brouillon" : "archivée"} et n&apos;est pas
+							visible publiquement.
 						</p>
 					</>
 				)}

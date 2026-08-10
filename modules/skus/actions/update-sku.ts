@@ -30,11 +30,11 @@ import {
 	assertMaterialsExist,
 	assertUniqueVariantCombination,
 	eurosToCents,
+	moveSkuToFront,
 	normalizeMediaForPersistence,
 	normalizeOptionalRefs,
 	optionalEurosToCents,
 	toSkuMediaCreatePayload,
-	unsetOtherDefaultSkus,
 } from "../services/persist-sku-helpers.service";
 import { getSkuColorsLabel } from "../utils/sku-colors-label";
 import { getSkuMaterialsLabel } from "../utils/sku-materials-label";
@@ -108,7 +108,7 @@ export async function updateProductSku(
 		const priceInclTaxCents = eurosToCents(validatedData.priceInclTaxEuros);
 		const compareAtPriceCents = optionalEurosToCents(validatedData.compareAtPriceEuros);
 
-		// 7. Normalize media for persistence (premier item = principal, isPrimary/position auto)
+		// 7. Normalize media for persistence (premier item = principal, position auto)
 		const allMedia = normalizeMediaForPersistence(validatedData.media);
 
 		// 8. Update product SKU in transaction
@@ -125,7 +125,6 @@ export async function updateProductSku(
 							id: true,
 							sku: true,
 							isActive: true,
-							isDefault: true,
 							inventory: true,
 							productId: true,
 							product: {
@@ -157,18 +156,26 @@ export async function updateProductSku(
 						throw new BusinessError("La variante spécifiée n'existe pas.");
 					}
 
+					// « Principale » = rang 0 de (position asc, id asc) — remplace le
+					// flag `isDefault` (audit schéma V5, lot A2).
+					const rankZero = await tx.productSku.findFirst({
+						where: { productId: existingSku.productId, deletedAt: null },
+						orderBy: [{ position: "asc" }, { id: "asc" }],
+						select: { id: true },
+					});
+					const isRepresentative = rankZero?.id === existingSku.id;
+
 					// Refus de desactiver la variante principale (alignement avec update-sku-status.ts).
 					// L'admin doit d'abord promouvoir une autre variante via setDefaultSku.
-					if (existingSku.isDefault && existingSku.isActive && !validatedData.isActive) {
+					if (isRepresentative && existingSku.isActive && !validatedData.isActive) {
 						throw new BusinessError(
 							"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
 						);
 					}
 
-					// Refus de retirer isDefault sans transfert. L'admin doit utiliser
-					// setDefaultSku sur une autre variante (qui re-set isDefault=false ici via
-					// unsetOtherDefaultSkus de l'action setDefaultSku).
-					if (existingSku.isDefault && !validatedData.isDefault) {
+					// Refus de retirer le rang 0 sans transfert. L'admin doit utiliser
+					// setDefaultSku sur une autre variante (qui renumérote le produit).
+					if (isRepresentative && !validatedData.isDefault) {
 						throw new BusinessError(
 							"Impossible de retirer le statut « principale » sans la transférer. Utilisez « Définir par défaut » sur une autre variante.",
 						);
@@ -192,10 +199,6 @@ export async function updateProductSku(
 						excludeSkuId: validatedData.skuId,
 					});
 
-					if (validatedData.isDefault) {
-						await unsetOtherDefaultSkus(tx, existingSku.productId, validatedData.skuId);
-					}
-
 					await tx.skuMedia.deleteMany({
 						where: { skuId: validatedData.skuId },
 					});
@@ -218,7 +221,6 @@ export async function updateProductSku(
 							compareAtPrice: compareAtPriceCents,
 							inventory: { increment: inventoryDelta },
 							isActive: validatedData.isActive,
-							isDefault: validatedData.isDefault,
 							size: refs.size,
 							colors: {
 								deleteMany: {},
@@ -252,6 +254,12 @@ export async function updateProductSku(
 						await tx.skuMedia.createMany({
 							data: toSkuMediaCreatePayload(updatedSku.id, allMedia),
 						});
+					}
+
+					// « Définir par défaut » = amener au rang 0 (no-op fonctionnel si la
+					// variante y est déjà : la renumérotation re-produit le même ordre).
+					if (validatedData.isDefault && !isRepresentative) {
+						await moveSkuToFront(tx, existingSku.productId, validatedData.skuId);
 					}
 
 					return {

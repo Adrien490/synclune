@@ -2,14 +2,13 @@ import { scryptSync } from "node:crypto";
 import { fakerFR } from "@faker-js/faker";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import {
-	CollectionStatus,
+	PublicationStatus,
 	MediaType,
 	OrderAction,
 	OrderStatus,
 	PaymentStatus,
 	type Prisma,
 	PrismaClient,
-	ProductStatus,
 	RefundReason,
 	RefundStatus,
 	HistorySource,
@@ -296,25 +295,25 @@ const collectionsData: Prisma.CollectionCreateManyInput[] = [
 		slug: "nouveautes",
 		name: "Nouveautés",
 		description: "Mes dernières créations, encore chaudes de l'établi",
-		status: CollectionStatus.PUBLIC,
+		status: PublicationStatus.PUBLIC,
 	},
 	{
 		slug: "best-sellers",
 		name: "Best Sellers",
 		description: "Les favoris de mes clientes",
-		status: CollectionStatus.PUBLIC,
+		status: PublicationStatus.PUBLIC,
 	},
 	{
 		slug: "mariage",
 		name: "Mariage",
 		description: "Pour le plus beau jour de ta vie",
-		status: CollectionStatus.PUBLIC,
+		status: PublicationStatus.PUBLIC,
 	},
 	{
 		slug: "fetes",
 		name: "Fêtes",
 		description: "Brille pour les occasions spéciales",
-		status: CollectionStatus.PUBLIC,
+		status: PublicationStatus.PUBLIC,
 	},
 ];
 
@@ -365,7 +364,6 @@ interface ProductSeedData {
 		size?: string;
 		price: number;
 		inventory: number;
-		isDefault?: boolean;
 	}[];
 	imageCategory: keyof typeof jewelryImages;
 	collections: string[];
@@ -387,7 +385,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 4990,
 				inventory: 25,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 4990, inventory: 18 },
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 5990, inventory: 12 },
@@ -407,7 +404,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "perles-naturelles",
 				price: 8990,
 				inventory: 15,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "perles-naturelles", price: 9990, inventory: 8 },
 		],
@@ -425,7 +421,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "cristal-swarovski",
 				price: 7990,
 				inventory: 20,
-				isDefault: true,
 			},
 			{ colorSlug: "emeraude", materialSlug: "cristal-swarovski", price: 8490, inventory: 10 },
 		],
@@ -443,7 +438,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "acier-inoxydable",
 				price: 2990,
 				inventory: 35,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "acier-inoxydable", price: 2990, inventory: 30 },
 			{ colorSlug: "or-rose", materialSlug: "acier-inoxydable", price: 2990, inventory: 28 },
@@ -463,7 +457,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 3990,
 				inventory: 22,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 3990, inventory: 18 },
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 4590, inventory: 15 },
@@ -482,7 +475,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "perles-naturelles",
 				price: 4990,
 				inventory: 20,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "perles-naturelles", price: 5490, inventory: 12 },
 		],
@@ -500,7 +492,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "acier-inoxydable",
 				price: 3490,
 				inventory: 25,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "acier-inoxydable", price: 3490, inventory: 22 },
 		],
@@ -518,7 +509,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "laiton",
 				price: 4490,
 				inventory: 15,
-				isDefault: true,
 			},
 			{ colorSlug: "noir", materialSlug: "laiton", price: 4490, inventory: 10 },
 		],
@@ -538,7 +528,6 @@ const productsData: ProductSeedData[] = [
 				size: "52",
 				price: 6990,
 				inventory: 8,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "argent-925", size: "54", price: 6990, inventory: 10 },
 			{ colorSlug: "or-blanc", materialSlug: "argent-925", size: "56", price: 6990, inventory: 7 },
@@ -559,7 +548,6 @@ const productsData: ProductSeedData[] = [
 				size: "52",
 				price: 1990,
 				inventory: 30,
-				isDefault: true,
 			},
 			{
 				colorSlug: "or-jaune",
@@ -598,7 +586,6 @@ const productsData: ProductSeedData[] = [
 				size: "52",
 				price: 5490,
 				inventory: 12,
-				isDefault: true,
 			},
 			{
 				colorSlug: "cristal",
@@ -630,7 +617,6 @@ const productsData: ProductSeedData[] = [
 				size: "56",
 				price: 4990,
 				inventory: 15,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "argent-925", size: "56", price: 5490, inventory: 12 },
 			{
@@ -656,7 +642,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 6990,
 				inventory: 10,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "acier-inoxydable", price: 5990, inventory: 12 },
 		],
@@ -674,7 +659,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "perles-naturelles",
 				price: 8990,
 				inventory: 8,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "perles-naturelles", price: 9490, inventory: 5 },
 		],
@@ -692,7 +676,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "acier-inoxydable",
 				price: 7490,
 				inventory: 10,
-				isDefault: true,
 			},
 			{ colorSlug: "noir", materialSlug: "acier-inoxydable", price: 7490, inventory: 8 },
 		],
@@ -711,7 +694,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "cristal-swarovski",
 				price: 3990,
 				inventory: 20,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "cristal-swarovski", price: 4290, inventory: 15 },
 		],
@@ -729,7 +711,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 3490,
 				inventory: 25,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 3490, inventory: 20 },
 		],
@@ -747,7 +728,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "cristal-swarovski",
 				price: 4490,
 				inventory: 12,
-				isDefault: true,
 			},
 			{ colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 4290, inventory: 10 },
 		],
@@ -766,7 +746,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 4990,
 				inventory: 15,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 5490, inventory: 10 },
 		],
@@ -784,7 +763,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "perles-naturelles",
 				price: 6990,
 				inventory: 12,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "perles-naturelles", price: 7490, inventory: 8 },
 		],
@@ -803,7 +781,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "acier-inoxydable",
 				price: 1990,
 				inventory: 40,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "acier-inoxydable", price: 1990, inventory: 35 },
 			{ colorSlug: "argent", materialSlug: "acier-inoxydable", price: 1990, inventory: 30 },
@@ -822,7 +799,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 2490,
 				inventory: 30,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 2990, inventory: 25 },
 		],
@@ -840,7 +816,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 2290,
 				inventory: 35,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 2290, inventory: 28 },
 			{ colorSlug: "emeraude", materialSlug: "acier-inoxydable", price: 1990, inventory: 32 },
@@ -859,7 +834,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "acier-inoxydable",
 				price: 1790,
 				inventory: 50,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "acier-inoxydable", price: 1790, inventory: 45 },
 		],
@@ -878,7 +852,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "cristal-swarovski",
 				price: 5490,
 				inventory: 18,
-				isDefault: true,
 			},
 			{ colorSlug: "emeraude", materialSlug: "cristal-swarovski", price: 5990, inventory: 12 },
 			{ colorSlug: "or-blanc", materialSlug: "argent-925", price: 4990, inventory: 15 },
@@ -897,7 +870,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 4490,
 				inventory: 22,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 4490, inventory: 20 },
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 5290, inventory: 16 },
@@ -916,7 +888,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 3990,
 				inventory: 25,
-				isDefault: true,
 			},
 			{ colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 5490, inventory: 14 },
 		],
@@ -934,7 +905,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "laiton",
 				price: 5990,
 				inventory: 12,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "laiton", price: 5990, inventory: 10 },
 		],
@@ -952,7 +922,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 3490,
 				inventory: 28,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 4290, inventory: 22 },
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 3490, inventory: 25 },
@@ -971,7 +940,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 4790,
 				inventory: 18,
-				isDefault: true,
 			},
 			{ colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 6290, inventory: 10 },
 		],
@@ -990,7 +958,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 3790,
 				inventory: 20,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 3790, inventory: 18 },
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 4490, inventory: 15 },
@@ -1009,7 +976,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "cristal-swarovski",
 				price: 7990,
 				inventory: 10,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "argent-925", price: 6990, inventory: 12 },
 		],
@@ -1027,7 +993,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "acier-inoxydable",
 				price: 2990,
 				inventory: 30,
-				isDefault: true,
 			},
 			{ colorSlug: "or-jaune", materialSlug: "acier-inoxydable", price: 2990, inventory: 28 },
 		],
@@ -1045,7 +1010,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "perles-naturelles",
 				price: 2490,
 				inventory: 35,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 2290, inventory: 30 },
 		],
@@ -1063,7 +1027,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 5490,
 				inventory: 12,
-				isDefault: true,
 			},
 			{ colorSlug: "noir", materialSlug: "acier-inoxydable", price: 4990, inventory: 15 },
 		],
@@ -1081,7 +1044,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 3290,
 				inventory: 25,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 3290, inventory: 22 },
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 3990, inventory: 18 },
@@ -1102,7 +1064,6 @@ const productsData: ProductSeedData[] = [
 				size: "52",
 				price: 2990,
 				inventory: 20,
-				isDefault: true,
 			},
 			{ colorSlug: "or-jaune", materialSlug: "plaque-or", size: "54", price: 2990, inventory: 18 },
 			{ colorSlug: "argent", materialSlug: "argent-925", size: "52", price: 3490, inventory: 15 },
@@ -1123,7 +1084,6 @@ const productsData: ProductSeedData[] = [
 				size: "52",
 				price: 3490,
 				inventory: 16,
-				isDefault: true,
 			},
 			{ colorSlug: "or-jaune", materialSlug: "plaque-or", size: "54", price: 3490, inventory: 18 },
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", size: "52", price: 3490, inventory: 14 },
@@ -1144,7 +1104,6 @@ const productsData: ProductSeedData[] = [
 				size: "52",
 				price: 5990,
 				inventory: 10,
-				isDefault: true,
 			},
 			{
 				colorSlug: "perle",
@@ -1170,7 +1129,6 @@ const productsData: ProductSeedData[] = [
 				size: "54",
 				price: 2790,
 				inventory: 22,
-				isDefault: true,
 			},
 			{
 				colorSlug: "argent",
@@ -1202,7 +1160,6 @@ const productsData: ProductSeedData[] = [
 				size: "52",
 				price: 4290,
 				inventory: 14,
-				isDefault: true,
 			},
 			{ colorSlug: "or-jaune", materialSlug: "plaque-or", size: "54", price: 4290, inventory: 16 },
 			{
@@ -1228,7 +1185,6 @@ const productsData: ProductSeedData[] = [
 				size: "52",
 				price: 3990,
 				inventory: 18,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "argent-925", size: "54", price: 3990, inventory: 16 },
 			{ colorSlug: "or-blanc", materialSlug: "argent-925", size: "54", price: 4290, inventory: 12 },
@@ -1248,7 +1204,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 7490,
 				inventory: 8,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "acier-inoxydable", price: 6490, inventory: 10 },
 		],
@@ -1266,7 +1221,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "acier-inoxydable",
 				price: 4990,
 				inventory: 15,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "acier-inoxydable", price: 4990, inventory: 12 },
 		],
@@ -1284,7 +1238,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "cristal-swarovski",
 				price: 9990,
 				inventory: 6,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "argent-925", price: 8990, inventory: 8 },
 		],
@@ -1303,7 +1256,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "perles-naturelles",
 				price: 4990,
 				inventory: 12,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "perles-naturelles", price: 5490, inventory: 8 },
 		],
@@ -1321,7 +1273,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "argent-925",
 				price: 4290,
 				inventory: 18,
-				isDefault: true,
 			},
 			{ colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 4990, inventory: 14 },
 		],
@@ -1339,7 +1290,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 5990,
 				inventory: 10,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 5990, inventory: 8 },
 		],
@@ -1358,7 +1308,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "cristal-swarovski",
 				price: 6990,
 				inventory: 10,
-				isDefault: true,
 			},
 			{ colorSlug: "or-blanc", materialSlug: "argent-925", price: 5990, inventory: 12 },
 		],
@@ -1376,7 +1325,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 5490,
 				inventory: 14,
-				isDefault: true,
 			},
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 5490, inventory: 12 },
 		],
@@ -1394,7 +1342,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "acier-inoxydable",
 				price: 3990,
 				inventory: 20,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "acier-inoxydable", price: 3990, inventory: 18 },
 		],
@@ -1412,7 +1359,6 @@ const productsData: ProductSeedData[] = [
 				materialSlug: "plaque-or",
 				price: 4290,
 				inventory: 16,
-				isDefault: true,
 			},
 			{ colorSlug: "argent", materialSlug: "argent-925", price: 4790, inventory: 14 },
 			{ colorSlug: "or-rose", materialSlug: "plaque-or", price: 4290, inventory: 15 },
@@ -1476,7 +1422,8 @@ async function main(): Promise<void> {
 				title: productData.title,
 				description: productData.description,
 				// Last 2 products are DRAFT (M1: workflow brouillon→publication)
-				status: pIdx >= productsData.length - 2 ? ProductStatus.DRAFT : ProductStatus.PUBLIC,
+				status:
+					pIdx >= productsData.length - 2 ? PublicationStatus.DRAFT : PublicationStatus.PUBLIC,
 				typeId,
 				skus: {
 					create: productData.skus.map((skuData, index) => {
@@ -1526,14 +1473,16 @@ async function main(): Promise<void> {
 							compareAtPrice,
 							inventory: skuData.inventory,
 							isActive: true,
-							isDefault: skuData.isDefault ?? false,
+							// V5 : le rang du tableau seed fait foi — position 0 = représentant
+							position: index,
 							images: {
 								create: [
 									{
 										url: imageUrl,
 										altText: `${productData.title} - ${skuData.colorSlug}`,
 										mediaType: MediaType.IMAGE,
-										isPrimary: true,
+										// V5 : plus d'`isPrimary` — le rang 0 désigne le média principal
+										position: 0,
 										// Static blur placeholder for ~50% of media (m1)
 										blurDataUrl: sampleBoolean(0.5)
 											? "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAADklEQVQI12P4z8BQDwAEgAF/QualzQAAAABJRU5ErkJggg=="
@@ -1571,7 +1520,9 @@ async function main(): Promise<void> {
 	// LIENS PRODUIT-COLLECTION (batch)
 	// ============================================
 	const productCollectionLinks: Prisma.ProductCollectionCreateManyInput[] = [];
-	const featuredCollections = new Set<string>(); // Track which collections already have a featured product
+	// V5 : plus d'`isFeatured` — le rang dans la collection fait foi (ordre
+	// canonique `(position asc, addedAt desc)`, la vedette est le rang 0).
+	const collectionLinkCounts = new Map<string, number>();
 
 	for (const productData of productsData) {
 		const productId = productMap.get(productData.slug);
@@ -1581,14 +1532,13 @@ async function main(): Promise<void> {
 			const collectionId = collectionMap.get(collectionSlug);
 			if (!collectionId) continue;
 
-			// Only first product linked to each collection gets isFeatured
-			const isFeatured = !featuredCollections.has(collectionId);
-			if (isFeatured) featuredCollections.add(collectionId);
+			const position = collectionLinkCounts.get(collectionId) ?? 0;
+			collectionLinkCounts.set(collectionId, position + 1);
 
 			productCollectionLinks.push({
 				productId,
 				collectionId,
-				isFeatured,
+				position,
 			});
 		}
 	}
@@ -1663,17 +1613,16 @@ async function main(): Promise<void> {
 						select: { material: { select: { name: true } }, position: true },
 						orderBy: { position: "asc" },
 					},
-					// ⚠️ Pas de `where: { isPrimary: true }` — ce filtre seul est banni :
-					// sur un SKU sans média primaire il rend 0 image alors que le SKU
-					// en a. Et sans `mediaType`, une VIDÉO primaire finissait figée
-					// dans `OrderItem.productImageUrl` : exactement le défaut
+					// ⚠️ Sans `mediaType`, une VIDÉO en tête finissait figée dans
+					// `OrderItem.productImageUrl` : exactement le défaut
 					// EINV-SNAPSHOT-MEDIA-001 corrigé en production. Le tri + le choix
-					// ci-dessous reproduisent `pickPrimaryImage()`
-					// (`modules/products/services/product-display.service.ts`), qui
-					// n'est pas importable ici — le seed tourne sous `tsx`, sans alias.
+					// ci-dessous reproduisent `pickPrimaryImage()` (première IMAGE de
+					// l'ordre canonique `(position asc, id asc)`, V5) — la SSOT
+					// (`modules/products/services/product-display.service.ts`) n'est pas
+					// importable ici, le seed tourne sous `tsx`, sans alias.
 					images: {
-						select: { url: true, isPrimary: true, mediaType: true },
-						orderBy: [{ isPrimary: "desc" }, { position: "asc" }, { id: "asc" }],
+						select: { url: true, mediaType: true },
+						orderBy: [{ position: "asc" }, { id: "asc" }],
 					},
 				},
 			},
@@ -1713,12 +1662,9 @@ async function main(): Promise<void> {
 			const lineAmount = sku.priceInclTax * quantity;
 			subtotal += lineAmount;
 
-			// Priorité `pickPrimaryImage` : média primaire de type IMAGE → première
-			// IMAGE → null. `null` plutôt qu'une vidéo — le snapshot est figé 10 ans.
-			const primaryImage =
-				sku.images.find((img) => img.isPrimary && img.mediaType === MediaType.IMAGE) ??
-				sku.images.find((img) => img.mediaType === MediaType.IMAGE) ??
-				null;
+			// Priorité `pickPrimaryImage` : première IMAGE de l'ordre canonique → null.
+			// `null` plutôt qu'une vidéo — le snapshot est figé 10 ans.
+			const primaryImage = sku.images.find((img) => img.mediaType === MediaType.IMAGE) ?? null;
 
 			itemsData.push({
 				skuId: sku.id,
@@ -1816,7 +1762,7 @@ async function main(): Promise<void> {
 			if (status === OrderStatus.DELIVERED) {
 				const deliveredAt = new Date(shippedAt);
 				deliveredAt.setDate(deliveredAt.getDate() + faker.number.int({ min: 2, max: 5 }));
-				trackingData.actualDelivery = deliveredAt;
+				trackingData.deliveredAt = deliveredAt;
 			}
 		}
 
@@ -2442,7 +2388,7 @@ async function main(): Promise<void> {
 
 	// Soft-delete 2 products
 	const productsToSoftDelete = await prisma.product.findMany({
-		where: { status: ProductStatus.PUBLIC, deletedAt: null },
+		where: { status: PublicationStatus.PUBLIC, deletedAt: null },
 		select: { id: true },
 		take: 2,
 		orderBy: { createdAt: "desc" },
@@ -2450,7 +2396,7 @@ async function main(): Promise<void> {
 	for (const p of productsToSoftDelete) {
 		await prisma.product.update({
 			where: { id: p.id },
-			data: { deletedAt, status: ProductStatus.ARCHIVED },
+			data: { deletedAt, status: PublicationStatus.ARCHIVED },
 		});
 	}
 

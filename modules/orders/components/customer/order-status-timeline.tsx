@@ -24,7 +24,7 @@ interface OrderStatusTimelineProps {
 		createdAt: Date;
 		paidAt: Date | null;
 		shippedAt: Date | null;
-		actualDelivery: Date | null;
+		deliveredAt: Date | null;
 	};
 }
 
@@ -88,7 +88,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 		},
 		{
 			label: "Livrée",
-			date: order.actualDelivery,
+			date: order.deliveredAt,
 			icon: CheckCircleIcon,
 			completed: isDelivered,
 			active: isDelivered && !isReturned,

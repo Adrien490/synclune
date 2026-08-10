@@ -73,7 +73,7 @@ export function getSkuInvalidationTags(
 		PRODUCTS_CACHE_TAGS.MAX_PRICE,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
-		// Le sitemap images lit `skus.images` triés isPrimary desc — exactement ce que
+		// Le sitemap images lit `skus.images` triés (position asc, id asc) — exactement ce que
 		// mutent create/update/delete-sku (l'ordre et le média principal sont recalculés
 		// depuis l'ordre du tableau du formulaire ; les actions chirurgicales
 		// `set-primary-sku-media` / `reorder-sku-media` ont été retirées le 2026-08-05,

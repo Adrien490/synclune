@@ -8,6 +8,7 @@ import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
+import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 
 // Price valid for 90 days — Google requires a future date for rich results eligibility,
 // short enough to force recrawl after price changes (avoids stale snippet in SERPs).
@@ -63,11 +64,16 @@ export function generateStructuredData({
 	// Images du SKU sélectionné ou du premier SKU
 	const skuImages = selectedSku?.images ?? product.skus[0]?.images ?? [];
 
-	// Image principale
-	const mainImage = skuImages.find((img) => img.isPrimary)?.url ?? skuImages[0]?.url;
+	// Seules les IMAGES alimentent le nœud Product : GET_PRODUCT_SELECT ne filtre pas
+	// `mediaType` (la galerie a besoin des vidéos), et un `.mp4` dans `image` est
+	// invalide en schema.org (rejet Google Merchant).
+	const imageOnlyMedia = skuImages.filter((img) => img.mediaType === "IMAGE");
+
+	// Image principale = première IMAGE de l'ordre canonique (SSOT pickPrimaryImage)
+	const mainImage = pickPrimaryImage(skuImages)?.url;
 
 	// Toutes les images en format ImageObject avec dimensions
-	const allImages = skuImages.map((img) => ({
+	const allImages = imageOnlyMedia.map((img) => ({
 		"@type": "ImageObject",
 		url: img.url,
 		contentUrl: img.url,

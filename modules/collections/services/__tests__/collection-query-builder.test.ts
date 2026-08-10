@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from "vitest";
 // Prisma.QueryMode.insensitive is available as a plain string value.
 vi.mock("@/app/generated/prisma/client", () => ({
 	Prisma: { QueryMode: { insensitive: "insensitive" } },
-	CollectionStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
+	PublicationStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
 }));
 
 import type { CollectionFilters, GetCollectionsParams } from "../../types/collection.types";

@@ -152,10 +152,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			changeFrequency: "monthly",
 			priority: 0.3,
 		},
-		// Plus d'entrée `/aide` : la FAQ a rejoint la landing le 2026-08-05 et
-		// l'URL redirige en 308 vers `/#faq`. Une URL redirigée dans un sitemap
-		// est signalée « Page avec redirection » dans la Search Console — c'est
-		// `/` qui la porte désormais, et elle y est déjà.
+		// Plus d'entrée `/aide` : la FAQ avait rejoint la landing le 2026-08-05,
+		// puis a été retirée le 2026-08-08 (à refaire) avec l'ancre `/#faq` et la
+		// redirection 308. L'URL n'a donc plus rien à indexer — et une URL
+		// redirigée dans un sitemap est de toute façon signalée « Page avec
+		// redirection » dans la Search Console.
 	];
 
 	// Combiner toutes les pages

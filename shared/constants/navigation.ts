@@ -8,11 +8,6 @@ export type {
 } from "@/shared/types/navigation.types";
 
 /**
- * Constantes pour limiter les items affichés dans les menus
- */
-export const MAX_COLLECTIONS_IN_MENU = 3;
-
-/**
  * Destinations de premier niveau du menu mobile.
  *
  * ## Ce que le sheet en consomme RÉELLEMENT : deux entrées, par href
@@ -64,41 +59,26 @@ export function getMobileNavItems(): NavItemWithChildren[] {
 }
 
 /**
- * Type pour les images de collections dans le mega menu. Champs secondaires
- * optionnels : aligné sur `CollectionImage` (SSOT
- * `modules/collections/types/collection.types.ts`), la sortie
- * d'`extractCollectionImages`.
+ * Données pour les mega menus desktop.
+ *
+ * ⚠️ Plus de `collections` : le seul méga-menu restant est « Les créations ».
+ * Le bento Collections a été supprimé le 2026-08-08 (à refaire) — la navbar
+ * continue de LIRE les collections (`getNavbarMenuData`), mais uniquement pour
+ * la collection vedette du panneau Créations, qu'elle compose elle-même.
  */
-type CollectionImage = {
-	url: string;
-	blurDataUrl?: string | null;
-	alt?: string | null;
-};
-
-/** Type pour les collections dans le mega menu */
-type MegaMenuCollection = {
-	slug: string;
-	label: string;
-	description?: string | null;
-	createdAt?: Date;
-	images: CollectionImage[];
-};
-
-/** Données pour les mega menus desktop */
 type MegaMenuData = {
 	productTypes?: Array<{ slug: string; label: string }>;
-	collections?: MegaMenuCollection[];
 	featuredProducts?: MegaMenuProduct[];
 };
 
 /**
  * Génère les items de navigation desktop avec mega menus
  *
- * @param data - Données pour les mega menus (types, collections)
+ * @param data - Données pour le mega menu Créations (types de produits)
  * @returns Items de navigation desktop avec children pour mega menus
  */
 export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
-	const { productTypes, collections } = data;
+	const { productTypes } = data;
 	// Mega menu "Les créations" avec types de produits
 	const creationsItem: NavItemWithChildren = {
 		href: ROUTES.SHOP.PRODUCTS,
@@ -122,30 +102,19 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 				: undefined,
 	};
 
-	// Mega menu "Les collections" avec images
+	// « Les collections » — lien simple, plus de méga-menu.
+	//
+	// ⚠️ Le bento de cartes a été supprimé le 2026-08-08 avec toutes les surfaces
+	// à cartes de collection (à refaire) : sans panneau à ouvrir, `hasDropdown`
+	// resterait un piège — `DesktopNav` monterait un `NavigationMenuTrigger` dont
+	// le contenu est vide, donc un tap tactile ouvrirait un panneau blanc au lieu
+	// de naviguer (la branche `isTouch` fait exprès de ne pas naviguer). L'entrée
+	// tombe donc dans la branche « lien simple », et la navigation vers
+	// `/collections` reste intacte.
 	const collectionsItem: NavItemWithChildren = {
 		href: ROUTES.SHOP.COLLECTIONS,
 		label: "Les collections",
 		icon: "folder-open",
-		hasDropdown: !!(collections && collections.length > 0),
-		dropdownType: "collections",
-		children:
-			collections && collections.length > 0
-				? [
-						{ href: ROUTES.SHOP.COLLECTIONS, label: "Toutes les collections", icon: "folder-open" },
-						...collections.map((collection) => ({
-							href: ROUTES.SHOP.COLLECTION(collection.slug),
-							// `slug` : la carte du méga-menu en dérive son `data-accent`
-							// (l'entrée « Toutes les collections » ci-dessus n'en porte pas,
-							// elle est rendue en CTA sous l'accent de salle).
-							slug: collection.slug,
-							label: collection.label,
-							description: collection.description,
-							images: collection.images,
-							createdAt: collection.createdAt,
-						})),
-					]
-				: undefined,
 	};
 
 	const items: NavItemWithChildren[] = [creationsItem, collectionsItem];
@@ -160,14 +129,11 @@ export const footerNavItems = [
 	{ href: ROUTES.SHOP.FAVORITES, label: "Mes favoris" },
 ] as const;
 
-// Footer, colonne « Écrire à l'atelier » : le libre-service AVANT l'adresse e-mail
-// (une question de délai de livraison se répond seule ; un message, non).
-//
-// ⚠️ `ROUTES.SHOP.HELP` vaut `/#faq` depuis le 2026-08-05 — une ANCRE de la
-// landing, plus une page. Le lien reste un `next/link` (la navigation vers `/`
-// passe bien par le routeur, qui honore le fragment), mais aucun helper de
-// « route active » ne peut le matcher : il n'y a pas de pathname `/#faq`.
-export const footerHelpNavItems = [{ href: ROUTES.SHOP.HELP, label: "Aide et FAQ" }] as const;
+// ⚠️ Plus de `footerHelpNavItems` : la colonne « Écrire à l'atelier » du pied de
+// page ouvrait sur « Aide et FAQ » (`/#faq`), retiré le 2026-08-08 avec la
+// section FAQ. Il ne reste que l'adresse e-mail, rendue en dur par `Footer`.
+// Le libre-service AVANT l'adresse e-mail reste le bon ordre le jour où la FAQ
+// revient : une question de délai de livraison se répond seule, un message non.
 
 // Liens légaux — libellés courts, pour tenir en deux colonnes sous `sm` sans
 // repasser à la ligne (le bandeau faisait 7 cibles empilées, 308 px).

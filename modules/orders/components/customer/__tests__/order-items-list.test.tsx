@@ -37,7 +37,7 @@ import { OrderItemsList } from "../order-items-list";
 afterEach(cleanup);
 
 interface TestOrderItem {
-	id: string;
+	skuId: string;
 	productId: string | null;
 	productTitle: string;
 	productDescription: string | null;
@@ -51,7 +51,7 @@ interface TestOrderItem {
 
 function createItem(overrides: Partial<TestOrderItem> = {}): TestOrderItem {
 	return {
-		id: "item-1",
+		skuId: "item-1",
 		productId: "prod-1",
 		productTitle: "Bague en argent",
 		productDescription: "Une bague élégante",
@@ -76,8 +76,8 @@ describe("OrderItemsList", () => {
 			render(
 				<OrderItemsList
 					items={[
-						createItem({ id: "item-1" }),
-						createItem({ id: "item-2", productTitle: "Collier doré" }),
+						createItem({ skuId: "item-1" }),
+						createItem({ skuId: "item-2", productTitle: "Collier doré" }),
 					]}
 				/>,
 			);
@@ -95,8 +95,8 @@ describe("OrderItemsList", () => {
 			render(
 				<OrderItemsList
 					items={[
-						createItem({ id: "item-1", productTitle: "Bague en argent" }),
-						createItem({ id: "item-2", productTitle: "Collier doré" }),
+						createItem({ skuId: "item-1", productTitle: "Bague en argent" }),
+						createItem({ skuId: "item-2", productTitle: "Collier doré" }),
 					]}
 				/>,
 			);
@@ -268,13 +268,13 @@ describe("OrderItemsList", () => {
 				<OrderItemsList
 					items={[
 						createItem({
-							id: "item-1",
+							skuId: "item-1",
 							productTitle: "Bague en argent",
 							price: 2500,
 							quantity: 1,
 						}),
 						createItem({
-							id: "item-2",
+							skuId: "item-2",
 							productTitle: "Bracelet doré",
 							price: 4000,
 							quantity: 2,

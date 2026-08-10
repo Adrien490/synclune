@@ -115,7 +115,7 @@ function createDeliveredOrder(overrides: Record<string, unknown> = {}) {
 		trackingNumber: "1Z999AA10123456784",
 		trackingUrl: "https://tracking.example.com/1Z999",
 		shippingCarrier: "colissimo",
-		actualDelivery: new Date("2026-02-01"),
+		deliveredAt: new Date("2026-02-01"),
 		...overrides,
 	});
 }

@@ -47,7 +47,7 @@ function diffChangedGroup(prev: FilterFormData, next: FilterFormData): FilterSec
 	if (prev.priceRange[0] !== next.priceRange[0] || prev.priceRange[1] !== next.priceRange[1]) {
 		changed.push("price");
 	}
-	if (prev.inStockOnly !== next.inStockOnly || prev.onSale !== next.onSale) {
+	if (prev.inStockOnly !== next.inStockOnly) {
 		changed.push("availability");
 	}
 

@@ -189,6 +189,15 @@ function migratedColumns(): Map<string, Set<string>> {
 			if (add) cols.add(add[1]!);
 			const drop = clause.match(/^DROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?"?(\w+)"?/i);
 			if (drop) cols.delete(drop[1]!);
+			// `RENAME COLUMN` est le DDL correct pour renommer SANS perdre la donnée
+			// (V5 lot A6 : `Order.actualDelivery` → `deliveredAt`, ancre légale du
+			// délai de rétractation). Un DROP+ADD équivalent passerait le fold mais
+			// viderait la colonne en production.
+			const rename = clause.match(/^RENAME\s+COLUMN\s+"?(\w+)"?\s+TO\s+"?(\w+)"?/i);
+			if (rename && cols.has(rename[1]!)) {
+				cols.delete(rename[1]!);
+				cols.add(rename[2]!);
+			}
 		}
 	}
 	return out;

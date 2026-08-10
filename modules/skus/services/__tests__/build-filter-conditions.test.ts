@@ -52,12 +52,6 @@ describe("buildFilterConditions", () => {
 		expect(result).toContainEqual({ isActive: false });
 	});
 
-	it("should filter by isDefault", () => {
-		const result = buildFilterConditions({ isDefault: true } as ProductSkuFilters);
-
-		expect(result).toContainEqual({ isDefault: true });
-	});
-
 	// ========================================================================
 	// Price range filters
 	// ========================================================================

@@ -94,7 +94,8 @@ export default async function ProductPage({
 	}
 
 	// Calcul du SKU sélectionné depuis les paramètres URL
-	// Par défaut : product.skus[0] (SKU principal, trié par isDefault DESC)
+	// Par défaut : product.skus[0] — le représentant (V5 : listes pré-triées
+	// `(position asc, id asc)`, rang 0 = représentant)
 	let selectedSku = product.skus[0]!;
 
 	if (Object.values(urlVariants).some((v) => v)) {

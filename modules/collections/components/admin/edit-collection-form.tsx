@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { updateCollection } from "@/modules/collections/actions/update-collection";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import type { EditableCollection } from "@/modules/collections/types/editable-collection.types";
@@ -67,7 +67,7 @@ export function EditCollectionForm({
 		},
 	});
 
-	const isPublic = collection.status === CollectionStatus.PUBLIC;
+	const isPublic = collection.status === PublicationStatus.PUBLIC;
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
 	const [state, action, isPending] = useActionState(
@@ -224,7 +224,7 @@ export function EditCollectionForm({
 					{(field) => (
 						<field.SelectField
 							label="Statut"
-							options={Object.values(CollectionStatus).map((s) => ({
+							options={Object.values(PublicationStatus).map((s) => ({
 								value: s,
 								label: COLLECTION_STATUS_LABELS[s],
 							}))}

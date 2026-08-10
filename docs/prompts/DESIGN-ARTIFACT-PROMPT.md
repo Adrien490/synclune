@@ -32,8 +32,13 @@ tout seul, sans avoir à remonter dans le texte.
 > n'est pas le bon : prends `prompts-audit-synclune.md`. Ici, tout ce qui n'est pas dessiné est perdu.
 >
 > **Si la cible n'existe pas encore** (une page vidée en attente de refonte, une surface à créer), ce prompt
-> reste le bon — mais bascule en mode « surface neuve », décrit au §5. C'est le cas de la landing
-> (`app/(shop)/(home)/page.tsx`) depuis le 2026-08-03.
+> reste le bon — mais bascule en mode « surface neuve », décrit au §5. C'est le cas, depuis le 2026-08-08,
+> des surfaces de carte collection (les quatre retirées ensemble à la demande de Léane — section de la
+> landing, bento du méga-menu, bande du volet mobile, chapitres de `/collections` — à refaire, cf.
+> `CLAUDE.md` § « Catalogue — invariants ») et de la FAQ de la landing (partie avec son `FAQPage`, l'ancre
+> `/#faq` et la redirection `/aide` — à refaire aussi). La landing, elle, n'en est PLUS un : refondue en
+> étal + atelier (2026-08-04 → 08-07), elle s'audite désormais en surface existante — grille du § 9 de
+> `docs/LANDING-BEST-PRACTICES.md` en main (cf. §3).
 >
 > ⚠️ **Les maquettes du §6 ne sont pas des composants de référence, et ne doivent jamais servir de tels.**
 > Tout ce que le §6 prescrit est une divergence **volontaire** d'avec le rendu réel : hex littéraux au lieu
@@ -113,8 +118,9 @@ de la haute joaillerie.
   par la couleur des visuels produits — **n'invente pas un token par couleur de bijou**, le critère
   d'admission des variables CSS est au §6.
 - **Le geste à la main est la signature**, et il est déjà en SSOT : `HandDrawnAccent` et `HandDrawnUnderline`
-  (`shared/components/animations/hand-drawn-accent.tsx`), `shared/components/squiggle-underline.tsx`,
-  `shared/components/masking-tape.tsx`, `CARD_SURFACE_POLAROID` (`shared/components/card-surface.constants.ts` —
+  (`shared/components/animations/hand-drawn-accent.tsx`), `shared/components/squiggle-underline.tsx`
+  (`MaskingTape` a été supprimé le 2026-08-08 avec les derniers rubans en série — ne le cite plus),
+  `CARD_SURFACE_POLAROID` (`shared/components/card-surface.constants.ts` —
   c'est LUI qui porte le lift/tilt au survol), `.polaroid-paper` (`app/styles/components.css` — uniquement un
   `::before` de grain, pas de règle de base). ⚠️ `.polaroid-hover` a été SUPPRIMÉE le 2026-08-04, pierre
   tombale in-situ « ne pas réintroduire sans consommateur » — ne la cite pas. Ce vocabulaire dit « fait par
@@ -133,14 +139,25 @@ de la haute joaillerie.
   séquence, pas un dégradé plaqué ; la **pluie et les larmes joyeuses** ; la **peinture miniature** ;
   l'**enfance et l'objet affectif** — yeux surdimensionnés, naïf assumé, porte-bonheur.
   **La goutte traverse tout** : elle est le raisin, la pluie, la larme, la rosée et l'arc-en-ciel —
-  c'est le signe transversal de la marque, et elle a déjà un tracé (`ATELIER_THREAD_PATHS` dans
-  `shared/components/hand-drawn/paths.ts`) là où la grappe et la feuille n'en ont aucun. La
+  c'est le signe transversal de la marque, et le gisement de tracés est OUVERT depuis le 2026-08-06 :
+  `CREATION_PATHS` (`shared/components/hand-drawn/paths.ts`, posé en scène par
+  `shared/components/hand-drawn/creations.ts` — les quatre créations RÉELLES, relues sur leurs photos
+  Etsy) porte la goutte, la baie de la grappe, la feuille, l'anneau, la créole, le cabochon peint, la
+  volute et la touche de peinture ; `ATELIER_THREAD_PATHS` ne garde que le fil d'atelier (tuile,
+  étincelle, nœud, attaches de pampille — `drop` en a été RETIRÉ le 2026-08-06, la goutte se prend dans
+  `CREATION_PATHS`). Restent SANS tracé, à viser en premier pour un motif neuf : le **présentoir
+  illustré** et la **chaîne à pampilles** ; l'œil, lui, a PERDU le sien (retiré le 2026-08-06 avec les
+  créations inventées qu'il composait — il vit dans l'historique git, pas dans la SSOT). La
   **peinture miniature** est le territoire le plus distinctif, et personne d'autre ne peut le
   revendiquer : Starry Night Ring EST « La Nuit étoilée » de Van Gogh, Water Lilies les Nymphéas de
   Monet — un registre narratif à part entière (la pièce raconte un tableau), et le pinceau va avec le
   trait : des cabochons sont **peints à la main**, le geste de la marque n'est pas que dessiné. C'est
   de la matière pour les registres du §4.1, les noms de directions et la copie : UN motif par
-  direction, tenu jusqu'au bout, jamais des étoiles saupoudrées partout. Une direction qui ne mobilise
+  direction, tenu jusqu'au bout, jamais des étoiles saupoudrées partout. Et le critère qui gouverne
+  tout DÉCOR dessiné, né du retrait de la scène du héros (2026-08-07) : **on dessine ce qu'on ne peut
+  pas photographier** — l'atelier, le geste, un état vide — jamais ce qui est photographié 40 px plus
+  loin ; un dessin de bijou à côté d'une photo de bijou rend le même sujet deux fois, et c'est le
+  dessin qui perd. Une direction qui ne mobilise
   ni la palette, ni le geste, ni un motif n'a que des gris pour raconter Synclune. En face, une limite
   délibérée : **irisé, pailleté, translucide décrivent les bijoux, jamais l'interface** — traduits en
   paillettes ou en verre dépoli, ils retombent dans le décoratif interdit au §4.8.
@@ -191,7 +208,7 @@ page (§5) ne change pas ; c'est ce qu'on dessine qui change.
 | Surface admin               | HTML/CSS, mais grille 1600 px sans `mx-auto`, densité réelle, 30+ lignes        | 1680 (montre le plafond) · 1280 (le cas courant) | Juger la beauté. C'est un outil : compte les clics et les allers-retours de l'œil. ⚠️ Ne dessine pas une grille de 1600 px dans une plaque de 1440 : à 1440 de viewport, `max-w-[100rem]` est plafonné **par le viewport**, et le plafond ne se voit jamais. |
 | **E-mail transactionnel**   | Maquette en **tables**, largeur 600 px, pas de flex/grid, pas de `@media` fiable | 600 · 320, **clair ET sombre** | Gmail et Apple Mail **imposent** l'inversion sombre. Un e-mail non testé en sombre est à moitié audité. |
 | **PDF facture / avoir**     | Une page A4 (210×297 mm) à l'échelle, mentions légales réelles                  | A4                     | Le rendu (`jspdf`) est **déterministe**, et l'archivage le scelle sous SHA-256 (`modules/orders/services/archive-invoice-pdf.service.ts`, Art. L102 B LPF). Toute proposition doit dire qu'elle ne s'applique qu'aux documents FUTURS, jamais aux archivés. |
-| **Copie éditoriale** (CGV, mentions, FAQ de la landing, page atelier) | Une maquette **typographique** : mesure réelle, rythme vertical, respiration, ancrages — avec le VRAI texte | 1280 · 390             | Maquetter la mise en page sans écrire le texte. Ici la copie EST le design : une colonne magnifique remplie de faux paragraphes n'a rien prouvé. Et une page légale se scanne pour trouver une clause, elle ne se lit pas au fil. |
+| **Copie éditoriale** (CGV, mentions, section atelier — et la future FAQ : l'ancienne a été supprimée le 2026-08-08, sa refonte relèvera de ce format) | Une maquette **typographique** : mesure réelle, rythme vertical, respiration, ancrages — avec le VRAI texte | 1280 · 390             | Maquetter la mise en page sans écrire le texte. Ici la copie EST le design : une colonne magnifique remplie de faux paragraphes n'a rien prouvé. Et une page légale se scanne pour trouver une clause, elle ne se lit pas au fil. |
 | Système transverse (design system, motion, icônes, états de formulaire) | Une **planche de spécimens** : chaque variante côte à côte, avant/après en regard | selon le système       | Montrer un exemplaire. La cohérence ne se juge qu'en série.                                          |
 | **Matrice d'états** (vide, chargement, erreur, succès) | La matrice complète, pas un écran                              | celui de l'hôte        | Un skeleton qui n'a pas la géométrie exacte du contenu réel produit un saut de layout — dessine-les superposés. |
 
@@ -214,10 +231,18 @@ Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà éc
   ce projet.
 - `CLAUDE.md` § Direction artistique (obligatoire) et `shared/constants/atelier-content.ts` si la surface
   porte de la copie éditoriale
-- `app/globals.css` **et les sept feuilles qu'il importe** — attention à qui porte quoi. Les **classes** vivent
+- **Si la cible touche `/`** (la landing, une de ses sections, ou `app/(shop)/layout.tsx` — navbar, pied
+  de page, barre basse, bannière cookies) : `docs/LANDING-BEST-PRACTICES.md` § 9 « La grille d'audit »
+  est LA grille — note /100 + P0-P3, chaque ligne avec sa méthode de vérification et le test qui la
+  verrouille. `CLAUDE.md` l'impose (« pas de critères ré-inventés » : chaque passe qui refabriquait sa
+  grille pouvait inverser un critère d'une session à l'autre) — `#defauts` se nourrit de ses lignes, et
+  son § 0.3 liste ce qui, à ce format d'entreprise, ne s'applique PAS (l'A/B testing y est
+  arithmétiquement indisponible, § 7).
+- `app/globals.css` **et les 8 feuilles qu'il importe** — attention à qui porte quoi. Les **classes** vivent
   dans les feuilles : `.enter-inview` et `.hand-draw-inview` (`app/styles/entrance.css`), `.animate-shimmer`
   et `.product-item` (`app/styles/animations.css`), `[data-accent]` et ses 4 valeurs
-  (`app/styles/section-accents.css`), `.polaroid-paper` (`app/styles/components.css`) ;
+  (`app/styles/section-accents.css`), `.polaroid-paper` (`app/styles/components.css`), le fil d'atelier
+  (`app/styles/atelier-thread.css`, arrivé avec la refonte de la section atelier) ;
   les trois dernières sont `app/styles/pwa.css`, `app/styles/scroll-fade.css` (fondus de défilement,
   ex-composant JS devenu CSS le 2026-08-05) et `app/styles/utilities.css`. Les **utilitaires et tokens**,
   eux, sont dans `app/globals.css` lui-même : `@utility focus-ring`, `@utility hover-halo`,
@@ -228,11 +253,16 @@ Lis la cible, ses imports, ses voisins — puis le vocabulaire visuel déjà éc
   **8 ressorts nommés** (`gentle`, `snappy`, `bouncy`, `list`, `bar`, `success`, `number`, `toast`)
 - `shared/styles/fonts.ts`, `shared/components/ui/`, `shared/constants/breakpoints.ts`
 - les données et contenus RÉELS de la cible — jamais de lorem, jamais de prix inventé. Si la base est vide
-  ou indisponible, prends les libellés du seed ou du code, et dis-le en légende.
+  ou indisponible : pour la copie VITRINE, le repli est le répertoire réel de la marque (les noms de
+  pièces cités par `docs/BRAND-DA.md` — Green Grape Necklace, Starry Night Ring, Rainbow Drop Necklace,
+  Water Lilies, Rain Loops), **jamais le seed** : `prisma/seed.ts` est le contre-brief exact (plaqué or,
+  Swarovski, « Bracelet Tennis Cristal », visuels de banque d'images), et le poser dans une plaque fait
+  arbitrer la DA sur son contraire. Le seed ne sert que l'honnêteté STRUCTURELLE — longueurs de titres,
+  prix à quatre chiffres, volumes de lignes. Dans tous les cas, dis la substitution en légende.
 
 Puis trois passes de mémoire, dans cet ordre :
-1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier : **382 fichiers
-   de test** en portent (re-mesuré le 2026-08-05 ; c'est un nombre qui bouge à chaque passe de tests, ne le
+1. `grep -rn "@regression" <dossier-cible> <dossiers-voisins>` — ciblé, pas le repo entier : **400 fichiers
+   de test** en portent (re-mesuré le 2026-08-08 ; c'est un nombre qui bouge à chaque passe de tests, ne le
    crois pas au fichier près — il n'est là que pour te dissuader de grepper la racine).
    Chacun verrouille un bug déjà payé une fois, et devient une ligne de la section Garde-fous.
 2. `grep -rn "<libellé accessible de la cible>" e2e/` — les noms accessibles pilotent des tests E2E. Toute
@@ -267,7 +297,7 @@ prémisse fausse.
 - Et un scope `"use cache"` peut te servir du **HTML périmé en dev** : si une édition semble sans effet,
   redémarre le serveur avant de chercher un bug qui n'existe pas.
 
-**Faits du projet — vérifiés le 2026-08-05. Ne les réinvente pas, ne les contredis pas ; mais si l'un
+**Faits du projet — vérifiés le 2026-08-08. Ne les réinvente pas, ne les contredis pas ; mais si l'un
 d'eux ne correspond plus à ce que tu lis dans le repo, LE REPO GAGNE — corrige-toi et signale la dérive
 dans ta restitution (§9.4).** Ce bloc et les valeurs du §6 sont les seules choses de ce prompt qui
 pourrissent ; un catalogue voisin s'est déjà retrouvé avec ~25 % de chemins morts faute de cette règle.
@@ -302,8 +332,15 @@ Fais-les diverger sur DEUX axes, pas un :
   · le **registre** — quel geste artisanal ou quel motif identitaire (§1) porte la direction (le tirage
     papier, l'établi, la vitrine, le carnet, l'atelier en désordre rangé, le ciel de nuit, le jardin
     fruité…). Deux directions de même ampleur mais de même registre sont un doublon.
+    Pour choisir le motif, `docs/BRAND-DA.md` § « Les symboles identitaires » les CLASSE par potentiel
+    distinctif — grappe translucide (1ʳᵉ), goutte colorée (2ᵉ), tableau peint à porter (3ᵉ)… la lune
+    n'est que 9ᵉ : prends haut dans la liste, pas ce qui vient en premier à l'esprit. Et « UN motif »
+    est une **unité de vocabulaire**, pas un compte de formes : sur la carte de partage, la grappe, la
+    cascade arc-en-ciel et les gouttes de verre sont la MÊME goutte.
 Au moins une direction doit être **plus risquée que ce que je demanderais spontanément** — et l'audace a une
-couverture officielle : le lexique de marque (§1) assume « pop », « maximaliste », « statement ». Si les
+couverture officielle : le lexique de marque (§1) assume « pop », « maximaliste », « statement » ; le terme
+exact est **maximalisme miniature et joyeux** (cumuler gouttes, couleurs et motifs en gardant l'échelle
+portable — pas un maximalisme baroque ou luxueux). Si les
 quatre sont confortables, tu as sous-livré : je peux refuser une direction audacieuse, je ne peux pas
 inventer celle que tu n'as pas montrée.
 
@@ -328,7 +365,11 @@ c'est un oubli.
 
 **4.4 — Un seul geste fort, tenu jusqu'au bout, bat trois effets tièdes.** Ce qui n'aide ni à lire, ni à
 comprendre, ni à désirer : coupe-le, même si c'est joli. Casse une symétrie, contraste l'échelle typo, sors
-de la grille, **ose la couleur** — mais une fois, et partout.
+de la grille, **ose la couleur** — mais une fois, et partout. Et le geste le plus Synclune est déjà nommé
+(`docs/BRAND-DA.md` § « Le vocabulaire des formes ») : **une série, une cadence, une variation — pas un
+gros bloc unique**. Répétition, accumulation, dégradé, symétrie imparfaite : la marque multiplie de petits
+éléments, jamais une grosse pierre centrale — c'est son principe de composition le plus transposable à
+l'interface.
 
 **4.5 — Les mots sont du design.** Chaque direction propose sa copie réelle (titres, libellés de boutons,
 états vides), au tutoiement. « Découvrez notre collection » n'est pas de la copie, c'est un emplacement de
@@ -336,7 +377,14 @@ copie. Un bouton se nomme par ce qu'il fait pour la cliente. Le registre des mot
 (joyeux, espiègle, poétique, solaire, féerique…) — pas dans le vocabulaire e-commerce générique. Et la même
 règle que pour les chiffres : **ne cite une matière (résine, acrylique, acier, perles…) que si elle est
 vraie pour la pièce montrée** — un libellé qui invente une matière est un faux au même titre qu'un prix
-inventé (§0).
+inventé (§0). Pour NOMMER une direction ou poser son registre, `docs/BRAND-DA.md` § « Le registre
+stylistique » trie en trois cercles — « très proche » (whimsical, pop, naïf, narratif, arty…), « second
+niveau » (kitsch chic, craftcore, folk art…), « sur certaines pièces seulement » (art nouveau, céleste,
+rétro…) : une direction ne se nomme jamais sur le troisième cercle (« art nouveau » est vrai de la bague
+Nuit étoilée, faux de la marque). Et le trio cœur · étoile · lune est le raccourci le plus court vers un
+« oui » de Léane — mais en PONCTUATION (un détail peint dans le ciel d'un cabochon, la plus petite pièce
+d'une scène), jamais en sujet : trois décors successifs l'ont pris pour sujet, les trois ont été retirés,
+parce qu'une lune et deux étoiles ne disent rien que Synclune fabrique.
 
 **4.6 — Tiens sur le contenu le plus laid, pas sur le plus beau.** Chaque direction doit survivre, et tu dois
 le montrer au moins une fois : un titre de produit à 60 caractères · un prix à quatre chiffres · l'état vide ·
@@ -346,7 +394,12 @@ Une maquette qui ne marche qu'avec « Collier Aurore — 38 € » ment.
 **Et la PHOTO, qui est le contenu le plus laid de cette boutique-ci** — c'est l'angle mort structurel de ce
 format, parce que le §6 simule les images en `linear-gradient` et qu'un dégradé est toujours propre, bien
 cadré et du ratio qu'on a choisi. Léane photographie ses pièces elle-même : il n'y a ni studio, ni charte de
-prise de vue, ni retouche systématique. Toute direction dont la beauté repose sur l'image doit donc être
+prise de vue, ni retouche systématique. Cet univers n'est pas pour autant sans identité — elle est même très
+marquée (`docs/BRAND-DA.md` § « L'univers photographique ») : domestique et vivante, lumière du jour, buste
+en velours rose, présentoir jaune illustré, macro, mains tatouées — le contre-pied exact d'une banque
+d'images (le seed en est une, cf. §3). Une direction qui dépend de la photo formule donc son critère
+d'échec (§4.7) contre CET univers-là, pas contre un studio qui n'existera jamais. Toute direction dont la
+beauté repose sur l'image doit par ailleurs être
 montrée au moins une fois avec **une photo hostile**, simulée franchement : un fond qui n'est pas le blanc
 des autres · une pièce claire sur fond clair (le bijou se perd, la carte semble vide) · un cadrage portrait
 tombant dans une grille carrée · deux vignettes voisines dont les fonds ne s'accordent pas. Si ta direction
@@ -361,7 +414,8 @@ sont interdits ici : dégradé violet/bleu · glassmorphism décoratif · « hé
 tout centrer · emoji en guise d'icône · `box-shadow: 0 4px 6px rgba(0,0,0,.1)` posée partout · un rayon
 unique sur toutes les surfaces · le « premium » signifié par le noir et l'or (contre-brief absolu, cf. §1) ·
 la police display employée pour le corps de texte · un espacement uniforme (le rythme plat est l'ennemi de
-la hiérarchie) · une micro-animation sans fonction · un « badge de confiance » inventé.
+la hiérarchie) · une micro-animation sans fonction · un « badge de confiance » inventé · un motif de bijou
+DESSINÉ à côté d'une PHOTO de bijou (§1 : on dessine ce qu'on ne peut pas photographier).
 
 ═══════════════════════════════════════════════════════════════════════════════
 5 — STRUCTURE DE LA PAGE (respecte cet ordre)
@@ -388,7 +442,10 @@ saute pas les sections non plus :
    deux scorecards restent comparables ; **une seule substitution est permise**, quand un axe n'a
    littéralement aucun sens pour la nature de la cible : PDF → `Responsive` devient `Impression &
    conformité` ; e-mail → `Compatibilité clients`. Substituer le deuxième axe, c'est se donner une bonne
-   note en changeant l'examen. Calibrage, pour que la note veuille dire quelque chose : **20** = rien à
+   note en changeant l'examen. ⚠️ Si la cible touche la landing, la grille de
+   `docs/LANDING-BEST-PRACTICES.md` § 9 s'impose en amont (cf. §3) : ses P0-P3 alimentent `#defauts` et
+   sa note /100 s'affiche dans le verdict à côté de la scorecard — qui reste, elle, pour comparer entre
+   surfaces. Calibrage, pour que la note veuille dire quelque chose : **20** = rien à
    ajouter ni retrancher · **17** = juste, sans signature · **14** = correct, avec un défaut qu'on remarque ·
    **11** = ça fonctionne et ça dessert · **8** = un utilisateur y renonce ou s'y trompe. (Cette échelle
    /20 note LA CIBLE. Le BARÈME /100 en fin de prompt note TON TRAVAIL — ne les confonds pas, et ne les
@@ -435,7 +492,8 @@ Chaque maquette est du **HTML/CSS écrit à la main dans la page**, qui reprodui
 capture, pas une description, pas un wireframe en boîtes grises.
 
 - **Traduis les tokens réels en valeurs littérales**, dans un bloc `.mk` portant un commentaire qui donne la
-  correspondance. Dérivation **OKLab → sRGB** refaite le 2026-08-05 sur `app/globals.css` :
+  correspondance. Dérivation **OKLab → sRGB** refaite le 2026-08-05 sur `app/globals.css` (les valeurs
+  `oklch` re-vérifiées à l'identique le 2026-08-08) :
 
   | Token | `oklch()` en base | hex | Note |
   |---|---|---|---|
@@ -526,6 +584,12 @@ capture, pas une description, pas un wireframe en boîtes grises.
   « corrige » pas une maquette sur ce qu'affiche ta règle à l'écran.
 - Les images de produits se simulent en dégradés (`linear-gradient`) : pas d'asset externe, pas de data-URI
   lourde. Un artifact de ce type tient en moins de 150 Ko ; la limite dure est 16 Mo.
+  **Leurs couleurs ne s'improvisent pas** : prends-les dans la table « Combinaisons particulièrement
+  Synclune » de `docs/BRAND-DA.md` § « La palette chromatique » — orange translucide + vert feuille + doré
+  (la grappe), bleu cobalt + blanc + vert + doré (le ciel peint), arc-en-ciel translucide + chaîne dorée
+  (la rivière de gouttes)… — et dis en légende laquelle tu simules. Un dégradé bleu-violet générique est
+  une image contre-brief même en placeholder ; et la photo HOSTILE ci-dessous est précisément celle qui
+  CASSE sa combinaison.
   ⚠️ **Un dégradé flatte, et c'est le biais intégré de ce format** : il est toujours net, centré, du bon
   ratio, et harmonisé avec ses voisins — quatre choses que les vraies photos de la boutique ne sont pas
   (§4.6). Au moins une plaque doit donc simuler une photo HOSTILE : un dégradé quasi blanc pour la pièce
@@ -612,7 +676,8 @@ ici : cette liste a déjà divergé TROIS fois, c'est son mode de panne.
   et carte « spotlight » large ANNULÉE · toast à l'ajout au panier (les ~24 `showSuccessToast: false` sont un
   choix, pas un oubli) · `bg-muted` — ou tout gris de séparation — sur le panneau du panier (« jugé moche » ;
   le correctif retenu est une ombre, `--shadow-paper`) · cue tactile sur `CollectionCard` (le trait rose
-  reste hover/focus seulement, assumé sur tactile — 2026-08-05) · « · fait main » dans l'eyebrow des cartes
+  reste hover/focus seulement, assumé sur tactile — 2026-08-05 ; le composant a été SUPPRIMÉ le 2026-08-08
+  avec toutes les surfaces de carte collection, mais le refus est HÉRITÉ par leur refonte à venir) · « · fait main » dans l'eyebrow des cartes
   (retiré DEUX fois le même jour, ProductCard puis CollectionCard : type de produit seul).
 - **Checkout** : champs et bouton en PILULES — ASSUMÉS, Stripe a été aligné dessus (`borderRadius: "2rem"`) :
   ne les re-signale plus · délais de préparation atelier volontairement non affichés (« 2-4 jours ouvrés » =

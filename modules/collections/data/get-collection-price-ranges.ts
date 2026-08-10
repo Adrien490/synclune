@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
@@ -26,7 +26,7 @@ export type CollectionPriceRange = { min: number; max: number; offerCount: numbe
  * ## Pourquoi une requête à part
  *
  * `GET_COLLECTIONS_SELECT` charge `products: { take: 4 }` (les 4 vignettes du
- * bento) et, dans chaque produit, `skus: { take: 1 }` trié `isDefault desc`.
+ * bento) et, dans chaque produit, `skus: { take: 1 }` trié `(position asc, id asc)`.
  * Dériver « À partir de X € » de ce payload — ce que faisait `extractPriceRange`
  * — donnait donc le minimum de **4 produits au plus, sur leur SKU par défaut**.
  * Une collection de vingt bijoux dont le moins cher n'était ni vedette ni récent
@@ -62,7 +62,7 @@ export async function getCollectionPriceRanges(
 	const rows = await prisma.productCollection.findMany({
 		where: {
 			collectionId: { in: collectionIds },
-			product: { status: ProductStatus.PUBLIC, deletedAt: null },
+			product: { status: PublicationStatus.PUBLIC, deletedAt: null },
 		},
 		select: {
 			collectionId: true,

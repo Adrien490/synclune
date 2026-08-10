@@ -172,16 +172,4 @@ describe("createProductFilterFormatter", () => {
 
 		expect(result).toEqual({ label: "Recherche", displayValue: '"bague or"' });
 	});
-
-	it("formats onSale boolean filter", () => {
-		const format = createProductFilterFormatter(
-			colors,
-			materials,
-			productTypes,
-			makeSearchParams(),
-		);
-		const result = format(filter("onSale", "true"));
-
-		expect(result).toEqual({ label: "En promotion", displayValue: "" });
-	});
 });

@@ -118,7 +118,7 @@ export async function CatalogList({
 	productsPromise: Promise<GetProductsReturn>;
 	wishlistProductIdsPromise?: Promise<Set<string>>;
 }) {
-	const { perPage, searchTerm, sortBy, filters, preferOnSale } = await listPropsPromise;
+	const { perPage, searchTerm, sortBy, filters } = await listPropsPromise;
 
 	return (
 		<ProductList
@@ -126,7 +126,6 @@ export async function CatalogList({
 			perPage={perPage}
 			searchTerm={searchTerm}
 			wishlistProductIdsPromise={wishlistProductIdsPromise}
-			preferOnSale={preferOnSale}
 			sortBy={sortBy}
 			filters={filters}
 		/>

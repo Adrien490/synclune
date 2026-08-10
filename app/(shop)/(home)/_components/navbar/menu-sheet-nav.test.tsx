@@ -88,14 +88,6 @@ const productTypes = [
 	{ slug: "colliers", label: "Colliers", productCount: 2, image: null },
 ];
 
-const collections = [
-	{
-		slug: "mariage",
-		label: "Mariage",
-		images: [{ url: "/img.jpg", blurDataUrl: null, alt: null }],
-	},
-];
-
 const baseNavItems = [
 	{ href: "/", label: "Accueil", icon: "home" as const },
 	{ href: "/produits", label: "Les créations", icon: "gem" as const, hasDropdown: true },
@@ -112,19 +104,13 @@ const baseNavItems = [
 
 function renderNav(props: Partial<React.ComponentProps<typeof MenuSheetNav>> = {}) {
 	return render(
-		<MenuSheetNav
-			navItems={baseNavItems}
-			productTypes={productTypes}
-			collections={collections}
-			session={null}
-			{...props}
-		/>,
+		<MenuSheetNav navItems={baseNavItems} productTypes={productTypes} session={null} {...props} />,
 	);
 }
 
 describe("MenuSheetNav", () => {
 	describe("sections — l'étal de poche", () => {
-		it("renders the editorial head note, creations grid and collections band", () => {
+		it("renders the editorial head note, creations grid and collections row", () => {
 			renderNav();
 
 			// Tête éditoriale greffée de la direction C — copie statique.
@@ -135,7 +121,14 @@ describe("MenuSheetNav", () => {
 			// pluriel d'entreprise banni, une seule créatrice.
 			expect(screen.getByText("Mes créations")).toBeInTheDocument();
 			expect(screen.queryByText("Nos créations")).toBeNull();
-			expect(screen.getByText("Collections")).toBeInTheDocument();
+			// ⚠️ Plus d'intertitre « Collections » : la bande de trois tirages a été
+			// supprimée le 2026-08-08 (à refaire). La salle n'est plus qu'une rangée
+			// pleine largeur — mais elle DOIT rester présente : c'est le seul lien
+			// vers /collections sous `lg`.
+			expect(screen.queryByText("Collections")).toBeNull();
+			expect(screen.getByRole("link", { name: "Les collections" }).getAttribute("href")).toBe(
+				"/collections",
+			);
 		});
 
 		it("expose la bande « Accès rapide » : Accueil, Favoris, Panier", () => {
@@ -186,18 +179,16 @@ describe("MenuSheetNav", () => {
 			expect(viewAll.getAttribute("href")).toBe("/produits");
 		});
 
-		it("renders collection cards + « Toutes les collections » using ROUTES", () => {
-			renderNav();
-
-			const mariageLink = screen.getByRole("link", { name: /Mariage/ });
-			expect(mariageLink.getAttribute("href")).toBe("/collections/mariage");
-
-			const allCollections = screen.getByRole("link", { name: "Toutes les collections" });
-			expect(allCollections.getAttribute("href")).toBe("/collections");
-		});
+		/**
+		 * ⚠️ Le test qui vivait ici vérifiait les cartes de collection ET le lien
+		 * « Toutes les collections » de la bande, supprimés le 2026-08-08. Ce qu'il
+		 * protégeait vraiment — que la salle Collections reste JOIGNABLE depuis le
+		 * volet — est repris dans le premier test de ce bloc, sur la rangée qui l'a
+		 * remplacée. Ne pas le rouvrir sans rendu de collection en face.
+		 */
 
 		it("affiche l'encart « L'atelier est en pause » quand aucune famille n'est publiée", () => {
-			renderNav({ productTypes: [], collections: [] });
+			renderNav({ productTypes: [] });
 
 			expect(screen.getByText("L'atelier est en pause")).toBeInTheDocument();
 			expect(screen.getByText(/Je remets des pièces en ligne très vite/)).toBeInTheDocument();

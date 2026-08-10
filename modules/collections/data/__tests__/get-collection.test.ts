@@ -35,7 +35,7 @@ vi.mock("../../utils/cache.utils", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	CollectionStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
+	PublicationStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
 }));
 
 vi.mock("../../constants/collection.constants", () => ({

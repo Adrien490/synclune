@@ -1,4 +1,4 @@
-import type { CollectionStatus } from "@/app/generated/prisma/enums";
+import type { PublicationStatus } from "@/app/generated/prisma/enums";
 
 /**
  * Type minimal pour la collection en edition
@@ -8,5 +8,5 @@ export interface EditableCollection {
 	name: string;
 	slug: string;
 	description: string | null;
-	status: CollectionStatus;
+	status: PublicationStatus;
 }

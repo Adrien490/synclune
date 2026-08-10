@@ -6,7 +6,6 @@ import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accen
 import { CARD_SURFACE_POLAROID } from "@/shared/components/card-surface.constants";
 import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 import { ATELIER_THREAD_PATHS } from "@/shared/components/hand-drawn/paths";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { cn } from "@/shared/utils/cn";
 
 import { AtelierThreadStroke } from "./atelier-thread";
@@ -35,9 +34,6 @@ import { AtelierThreadStroke } from "./atelier-thread";
  *   **1,53:1**, un cœur littéralement invisible sur une plaque de 362×476 px.
  *   C'est `--color-brand-rose-strong` qui est le rose LISIBLE (5,06:1 sur ce
  *   même lavis, mesuré) : même teinte 340,78, autre luminosité.
- *
- * Le ruban `MaskingTape` est l'UNIQUE de la section (la photo est
- * littéralement scotchée) — ne pas en re-poser ailleurs.
  *
  * **Mobile, option A du gate maquette (2026-08-06)** : l'axe gauche est
  * CONSERVÉ (décision utilisateur, contre la reco « centrer ») et le vide à
@@ -80,7 +76,6 @@ export function AtelierPortrait({ src, alt }: { src: string | null; alt: string 
 			)}
 			style={{ "--enter-y": "20px" } as CSSProperties}
 		>
-			<MaskingTape className="-top-2 left-1/2 z-20 h-4 w-14 -translate-x-1/2 -rotate-2" />
 			<div className="relative aspect-4/5 overflow-hidden rounded-sm">
 				{src ? (
 					<Image

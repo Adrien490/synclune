@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/shared/components/ui/badge";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
@@ -27,8 +26,6 @@ import {
 	isCartItemOutOfStock,
 	isCartItemInactive,
 	hasCartItemIssue,
-	hasCartItemDiscount,
-	getCartItemDiscountPercent,
 	getCartItemPrimaryImage,
 	CART_ITEM_ISSUE_LABELS,
 } from "../services/cart-item.service";
@@ -78,8 +75,6 @@ export function CartSheetItemRow({
 	const isOutOfStock = isCartItemOutOfStock(item);
 	const isInactive = isCartItemInactive(item);
 	const hasIssue = hasCartItemIssue(item);
-	const hasDiscount = hasCartItemDiscount(item);
-	const discountPercent = getCartItemDiscountPercent(item);
 	const primaryImage = getCartItemPrimaryImage(item);
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
 
@@ -220,6 +215,7 @@ export function CartSheetItemRow({
 						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:motion-safe:animate-pulse",
 					)}
 				>
+					{/* Pas de prix barré/remise (retrait Omnibus 2026-08-08, cf. ProductPrice) */}
 					{item.quantity > 1 ? (
 						<>
 							{formatEuro(subtotal)}{" "}
@@ -229,24 +225,6 @@ export function CartSheetItemRow({
 						</>
 					) : (
 						formatEuro(item.priceAtAdd)
-					)}
-					{hasDiscount && (
-						<span className="ml-2 inline-flex items-center gap-1">
-							<span className="text-muted-foreground text-xs line-through" aria-hidden="true">
-								{formatEuro(item.sku.compareAtPrice!)}
-							</span>
-							<Badge
-								variant="secondary"
-								className="bg-accent/20 text-2xs px-1 py-0"
-								aria-label={`Réduction de ${discountPercent} pour cent`}
-							>
-								-{discountPercent}%
-							</Badge>
-							<span className="sr-only">
-								Prix réduit de {formatEuro(item.sku.compareAtPrice!)} à{" "}
-								{formatEuro(item.priceAtAdd)}
-							</span>
-						</span>
 					)}
 				</div>
 

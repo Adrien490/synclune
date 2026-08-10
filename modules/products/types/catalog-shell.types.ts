@@ -26,8 +26,6 @@ export type CatalogListProps = {
 	searchTerm?: string;
 	sortBy?: SortField;
 	filters?: ProductFilters;
-	/** `filters.onSale` — la grille préfère alors les visuels de promotion. */
-	preferOnSale?: boolean;
 };
 
 /** Type filtré par le PATH, sur `/produits/[productTypeSlug]`. */

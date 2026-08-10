@@ -22,7 +22,7 @@ vi.mock("@/modules/auth/utils/guards", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	CollectionStatus: { DRAFT: "DRAFT", PUBLIC: "PUBLIC", ARCHIVED: "ARCHIVED" },
+	PublicationStatus: { DRAFT: "DRAFT", PUBLIC: "PUBLIC", ARCHIVED: "ARCHIVED" },
 }));
 
 vi.mock("next/cache", () => ({

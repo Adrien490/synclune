@@ -19,7 +19,7 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 		priceInclTax: 4999,
 		inventory: 5,
 		isActive: true,
-		images: [{ url: "https://cdn.example.com/img1.jpg", isPrimary: true, altText: "Vue face" }],
+		images: [{ url: "https://cdn.example.com/img1.jpg", mediaType: "IMAGE", altText: "Vue face" }],
 		...overrides,
 	} as never;
 }
@@ -240,10 +240,10 @@ describe("generateProductMetadata", () => {
 		// ⚠️ Les fixtures d'images DOIVENT porter `mediaType` : `GET_PRODUCT_SELECT` le
 		// sélectionne toujours, et c'est sur lui que repose le tri (`pickPrimaryImage`).
 		// Les fixtures d'origine l'omettaient — une combinaison qui n'existe pas en base.
-		it("uses isPrimary image when available", async () => {
+		it("uses the first IMAGE of the canonical order", async () => {
 			const images = [
-				{ url: "https://cdn.example.com/primary.jpg", isPrimary: true, mediaType: "IMAGE" },
-				{ url: "https://cdn.example.com/secondary.jpg", isPrimary: false, mediaType: "IMAGE" },
+				{ url: "https://cdn.example.com/primary.jpg", mediaType: "IMAGE" },
+				{ url: "https://cdn.example.com/secondary.jpg", mediaType: "IMAGE" },
 			];
 			mockGetProductBySlug.mockResolvedValue(makeProduct({ skus: [makeSku({ images })] }));
 
@@ -253,13 +253,13 @@ describe("generateProductMetadata", () => {
 			expect(ogImages[0]!.url).toBe("https://cdn.example.com/primary.jpg");
 		});
 
-		// LE défaut corrigé : `find(isPrimary) ?? images[0]` mettait l'url de la VIDÉO dans
+		// LE défaut corrigé : prendre `images[0]` sans filtre mettait l'url de la VIDÉO dans
 		// `og:image` et `twitter:images` — carte sociale cassée au partage de la fiche, et
 		// une transformation `/_next/image` facturée sur un `.mp4`.
-		it("skips a VIDEO primary media and takes the first real IMAGE", async () => {
+		it("skips a VIDEO at rank 0 and takes the first real IMAGE", async () => {
 			const images = [
-				{ url: "https://cdn.example.com/clip.mp4", isPrimary: true, mediaType: "VIDEO" },
-				{ url: "https://cdn.example.com/photo.jpg", isPrimary: false, mediaType: "IMAGE" },
+				{ url: "https://cdn.example.com/clip.mp4", mediaType: "VIDEO" },
+				{ url: "https://cdn.example.com/photo.jpg", mediaType: "IMAGE" },
 			];
 			mockGetProductBySlug.mockResolvedValue(makeProduct({ skus: [makeSku({ images })] }));
 
@@ -272,8 +272,8 @@ describe("generateProductMetadata", () => {
 
 		it("falls back to the brand OG image when every media is a VIDEO", async () => {
 			const images = [
-				{ url: "https://cdn.example.com/a.mp4", isPrimary: true, mediaType: "VIDEO" },
-				{ url: "https://cdn.example.com/b.webm", isPrimary: false, mediaType: "VIDEO" },
+				{ url: "https://cdn.example.com/a.mp4", mediaType: "VIDEO" },
+				{ url: "https://cdn.example.com/b.webm", mediaType: "VIDEO" },
 			];
 			mockGetProductBySlug.mockResolvedValue(makeProduct({ skus: [makeSku({ images })] }));
 
@@ -282,19 +282,6 @@ describe("generateProductMetadata", () => {
 			const ogImages = (result.openGraph as { images: Array<{ url: string }> }).images;
 			expect(ogImages[0]!.url).toContain("/opengraph-image");
 			expect(ogImages[0]!.url).not.toContain(".mp4");
-		});
-
-		it("falls back to first image when no isPrimary image", async () => {
-			const images = [
-				{ url: "https://cdn.example.com/first.jpg", isPrimary: false, mediaType: "IMAGE" },
-				{ url: "https://cdn.example.com/second.jpg", isPrimary: false, mediaType: "IMAGE" },
-			];
-			mockGetProductBySlug.mockResolvedValue(makeProduct({ skus: [makeSku({ images })] }));
-
-			const result = await generateProductMetadata({ params: makeParams() });
-
-			const ogImages = (result.openGraph as { images: Array<{ url: string }> }).images;
-			expect(ogImages[0]!.url).toBe("https://cdn.example.com/first.jpg");
 		});
 
 		it("falls back to opengraph-image URL when no images are present", async () => {

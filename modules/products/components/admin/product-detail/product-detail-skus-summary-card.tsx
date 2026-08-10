@@ -37,12 +37,9 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 		(sku) => sku.compareAtPrice !== null && sku.compareAtPrice > sku.priceInclTax,
 	).length;
 
-	const sortedSkus = skus.toSorted((a, b) => {
-		if (a.isDefault && !b.isDefault) return -1;
-		if (!a.isDefault && b.isDefault) return 1;
-		return 0;
-	});
-	const previewSkus = sortedSkus.slice(0, PREVIEW_LIMIT);
+	// Les SKUs arrivent triés par (position, id) : le rang 0 est la variante
+	// principale, l'aperçu prend donc les premiers tels quels.
+	const previewSkus = skus.slice(0, PREVIEW_LIMIT);
 	const remainingCount = Math.max(0, skus.length - PREVIEW_LIMIT);
 
 	const priceLabel =
@@ -106,7 +103,7 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 
 				{previewSkus.length > 0 ? (
 					<ul className="-mx-2 space-y-0.5 border-t pt-3" aria-label="Aperçu des variantes">
-						{previewSkus.map((sku) => {
+						{previewSkus.map((sku, index) => {
 							const label = buildVariantLabel(sku) || sku.sku;
 							const isOutOfStock = sku.inventory === 0;
 							const isOnPromo =
@@ -120,10 +117,11 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 									className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm"
 								>
 									<div className="flex min-w-0 items-center gap-1.5">
-										{sku.isDefault ? (
+										{/* Rang 0 = variante principale (plus de flag isDefault) */}
+										{index === 0 ? (
 											<StarIcon
 												className="text-muted-foreground size-3 shrink-0"
-												aria-label="Variante par défaut"
+												aria-label="Variante principale"
 											/>
 										) : null}
 										<span className="truncate">{label}</span>

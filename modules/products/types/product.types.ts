@@ -89,11 +89,11 @@ export interface ProductCardData {
 	compareAtPrice: number | null;
 	/** Informations de stock agrégées */
 	stockInfo: ProductStockInfo;
-	/** Image principale du produit */
+	/** Image principale du produit (`alt` toujours renseigné par le service) */
 	primaryImage: {
 		id: string;
 		url: string;
-		alt?: string;
+		alt: string;
 		mediaType: "IMAGE";
 		blurDataUrl?: string;
 	};
@@ -101,7 +101,7 @@ export interface ProductCardData {
 	secondaryImage: {
 		id: string;
 		url: string;
-		alt?: string;
+		alt: string;
 		mediaType: "IMAGE";
 		blurDataUrl?: string;
 	} | null;

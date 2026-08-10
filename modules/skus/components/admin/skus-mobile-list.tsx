@@ -27,7 +27,7 @@ export function SkusMobileList({
 	perPage,
 	hasActiveFilters,
 }: SkusMobileListProps) {
-	const { productSkus, pagination } = use(skusPromise);
+	const { productSkus, pagination, representativeSkuId } = use(skusPromise);
 
 	if (productSkus.length === 0) {
 		return (
@@ -72,7 +72,12 @@ export function SkusMobileList({
 			<ItemGroup aria-label="Variantes" className="gap-2">
 				{productSkus.map((sku, index) => (
 					<li key={sku.id}>
-						<SkuMobileItem sku={sku} productSlug={productSlug} preload={index === 0} />
+						<SkuMobileItem
+							sku={sku}
+							productSlug={productSlug}
+							preload={index === 0}
+							isRepresentative={sku.id === representativeSkuId}
+						/>
 					</li>
 				))}
 			</ItemGroup>

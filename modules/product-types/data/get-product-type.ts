@@ -111,25 +111,21 @@ async function fetchProductTypeDetail(slug: string) {
 						// Vignette unique : l'appelant prend `skus[0].images[0]` sans pouvoir
 						// trier, donc le tri se fait ici.
 						//
-						// `where: { isDefault: true }` et `where: { isPrimary: true }` étaient
-						// tous deux des filtres — le motif banni par CLAUDE.md : un produit
-						// sans SKU par défaut, ou un SKU sans média primaire, rendait 0 image
-						// alors qu'il en a. On ordonne au lieu de filtrer. Et `mediaType:
-						// "IMAGE"` est obligatoire ici : sans lui un `.mp4` atterrit dans
-						// `<Image src>` (vignette cassée + transformation `/_next/image`
-						// facturée). Même pattern que get-material.ts.
+						// On ordonne au lieu de filtrer (motif banni par CLAUDE.md : un filtre
+						// « défaut »/« primaire » rendait 0 image alors qu'il y en a). V5 :
+						// ordres canoniques `(position asc, id asc)` — rang 0 = représentant,
+						// première IMAGE = média principal. Et `mediaType: "IMAGE"` est
+						// obligatoire ici : sans lui un `.mp4` atterrit dans `<Image src>`
+						// (vignette cassée + transformation `/_next/image` facturée). Même
+						// pattern que get-material.ts.
 						skus: {
 							where: { isActive: true, deletedAt: null },
-							orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+							orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 							take: 1,
 							select: {
 								images: {
 									where: { mediaType: "IMAGE" as const },
-									orderBy: [
-										{ isPrimary: "desc" as const },
-										{ position: "asc" as const },
-										{ id: "asc" as const },
-									],
+									orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 									take: 1,
 									select: { url: true, blurDataUrl: true, altText: true },
 								},

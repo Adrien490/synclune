@@ -14,7 +14,7 @@ interface OrderReturnGuidanceProps {
 	order: {
 		status: OrderStatus;
 		paymentStatus: PaymentStatus;
-		actualDelivery: Date | null;
+		deliveredAt: Date | null;
 		refunds?: Array<{ status: RefundStatus }>;
 	};
 }
@@ -41,7 +41,7 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 	const reason = getReturnIneligibilityReason({
 		status: order.status,
 		paymentStatus: order.paymentStatus,
-		actualDelivery: order.actualDelivery,
+		deliveredAt: order.deliveredAt,
 		refunds: order.refunds ?? [],
 	});
 
@@ -61,7 +61,7 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 
 	if (reason === null) {
 		// Éligible ≡ now < deadline, donc toujours ≥ 1 jour restant ici.
-		const daysRemaining = getReturnDaysRemaining(order.actualDelivery);
+		const daysRemaining = getReturnDaysRemaining(order.deliveredAt);
 		return (
 			<Alert>
 				<InfoIcon />

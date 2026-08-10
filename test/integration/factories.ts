@@ -10,7 +10,7 @@ import { getIntegrationPrismaClient } from "./prisma-client";
 import {
 	OrderStatus,
 	PaymentStatus,
-	ProductStatus,
+	PublicationStatus,
 	type Order,
 	type Prisma,
 	type Product,
@@ -46,7 +46,7 @@ export async function createTestProduct(overrides: Partial<Product> = {}): Promi
 			slug,
 			title: `Test Product ${slug}`,
 			description: "Integration test product",
-			status: ProductStatus.PUBLIC,
+			status: PublicationStatus.PUBLIC,
 			...overrides,
 		},
 	});

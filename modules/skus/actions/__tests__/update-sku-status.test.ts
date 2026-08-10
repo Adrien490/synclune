@@ -20,7 +20,9 @@ const {
 	mockPrisma: {
 		// `findMany` + `$queryRaw` servent `assertUniqueVariantCombination` (advisory
 		// lock puis lecture des candidats en collision) appelée à l'activation.
-		productSku: { findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
+		// `findFirst` sert la garde « variante principale » : rang 0 de
+		// (position asc, id asc), remplace `isDefault` (audit schéma V5, lot A2).
+		productSku: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn(), findMany: vi.fn() },
 		$transaction: vi.fn(),
 		$queryRaw: vi.fn(),
 	},
@@ -76,7 +78,7 @@ function createMockExistingSku(overrides: Record<string, unknown> = {}) {
 		id: VALID_CUID,
 		sku: "BRC-LUNE-OR-M",
 		isActive: true,
-		isDefault: false,
+		position: 1,
 		productId: "prod-1",
 		// Lus par `assertUniqueVariantCombination` à l'ACTIVATION : publier une
 		// variante dont l'identité (produit × taille × set de couleurs) collisionne
@@ -111,6 +113,9 @@ describe("updateProductSkuStatus", () => {
 
 		mockPrisma.productSku.findUnique.mockResolvedValue(createMockExistingSku());
 		mockPrisma.productSku.update.mockResolvedValue(createMockUpdatedSku(false));
+		// Par défaut le rang 0 du produit est une AUTRE variante : le SKU testé
+		// n'est pas le représentant, la désactivation est permise.
+		mockPrisma.productSku.findFirst.mockResolvedValue({ id: "sku-rank-zero" });
 		// Aucun candidat en collision par défaut (garde d'identité de variante).
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		mockPrisma.$queryRaw.mockResolvedValue([]);
@@ -164,17 +169,19 @@ describe("updateProductSkuStatus", () => {
 		expect(result.message).toContain("n'existe pas");
 	});
 
-	it("should return error when trying to deactivate the default SKU", async () => {
+	it("should return error when trying to deactivate the representative SKU (rang 0)", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
-			createMockExistingSku({ isDefault: true, isActive: true }),
+			createMockExistingSku({ position: 0, isActive: true }),
 		);
+		// Le rang 0 du produit EST la variante visée : désactivation refusée.
+		mockPrisma.productSku.findFirst.mockResolvedValue({ id: VALID_CUID });
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: false } });
 		const result = await updateProductSkuStatus(undefined, deactivateFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Impossible de désactiver");
 	});
 
-	it("should succeed when deactivating a non-default SKU", async () => {
+	it("should succeed when deactivating a non-representative SKU", async () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: false } });
 		mockPrisma.productSku.update.mockResolvedValue(createMockUpdatedSku(false));
 		const result = await updateProductSkuStatus(undefined, deactivateFormData);
@@ -187,7 +194,7 @@ describe("updateProductSkuStatus", () => {
 	it("should succeed when activating an inactive SKU", async () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: true } });
 		mockPrisma.productSku.findUnique.mockResolvedValue(
-			createMockExistingSku({ isActive: false, isDefault: false }),
+			createMockExistingSku({ isActive: false, position: 1 }),
 		);
 		mockPrisma.productSku.update.mockResolvedValue(createMockUpdatedSku(true));
 		const result = await updateProductSkuStatus(undefined, activateFormData);
@@ -255,7 +262,7 @@ describe("updateProductSkuStatus", () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
 			createMockExistingSku({
 				isActive: true,
-				isDefault: false,
+				position: 1,
 				product: {
 					slug: "bracelet-lune",
 					status: "PUBLIC",
@@ -273,7 +280,7 @@ describe("updateProductSkuStatus", () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
 			createMockExistingSku({
 				isActive: true,
-				isDefault: false,
+				position: 1,
 				product: {
 					slug: "bracelet-lune",
 					status: "PUBLIC",
@@ -290,7 +297,7 @@ describe("updateProductSkuStatus", () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
 			createMockExistingSku({
 				isActive: true,
-				isDefault: false,
+				position: 1,
 				product: {
 					slug: "bracelet-lune",
 					status: "DRAFT",

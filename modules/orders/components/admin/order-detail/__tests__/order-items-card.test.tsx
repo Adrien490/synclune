@@ -28,9 +28,10 @@ import { OrderItemsCard } from "../order-items-card";
 
 afterEach(cleanup);
 
+// V5 : OrderItem n'a plus de colonne `id` (PK composite orderId+skuId) — la
+// fixture n'en porte plus, et la key React de la carte est `item.skuId`.
 function createItem(overrides = {}) {
 	return {
-		id: "item-1",
 		productId: null,
 		skuId: "sku-1",
 		productTitle: "Bague dorée",
@@ -68,7 +69,7 @@ function renderCard(itemOverrides = {}, cardOverrides = {}) {
 
 describe("OrderItemsCard", () => {
 	it("renders title with item count", () => {
-		const items = [createItem(), createItem({ id: "item-2", productTitle: "Collier argent" })];
+		const items = [createItem(), createItem({ skuId: "sku-2", productTitle: "Collier argent" })];
 		render(<OrderItemsCard items={items} subtotal={5000} shippingCost={500} total={5500} />);
 		expect(screen.getByText("Articles (2)")).toBeInTheDocument();
 	});

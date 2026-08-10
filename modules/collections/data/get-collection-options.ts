@@ -1,5 +1,5 @@
 import { logger } from "@/shared/lib/logger";
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
@@ -7,7 +7,7 @@ import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 import type { CollectionOption } from "../types/collection.types";
 
 /** Statuts de collection actifs (non archivées) */
-const COLLECTION_ACTIVE_STATUSES = [CollectionStatus.DRAFT, CollectionStatus.PUBLIC] as const;
+const COLLECTION_ACTIVE_STATUSES = [PublicationStatus.DRAFT, PublicationStatus.PUBLIC] as const;
 
 // ============================================================================
 // MAIN FUNCTION

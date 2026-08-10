@@ -22,7 +22,6 @@ interface ProductImage {
 	blurDataUrl: string | null;
 	altText: string | null;
 	mediaType: "IMAGE" | "VIDEO";
-	isPrimary: boolean;
 	width: number | null;
 	height: number | null;
 }
@@ -48,8 +47,8 @@ function toProductMedia(image: ProductImage, fallbackAlt: string): ProductMedia 
 /**
  * Image cell for the products datatable with lightbox on click.
  *
- * Vignette via `pickPrimaryImage()` (SSOT : primaire IMAGE → première IMAGE →
- * null) — le motif `find(isPrimary) ?? images[0]` mettait un `.mp4` dans
+ * Vignette via `pickPrimaryImage()` (SSOT : première IMAGE de l'ordre canonique
+ * → null) — prendre `images[0]` sans filtre mettait un `.mp4` dans
  * `<Image src>`. Slides via `buildLightboxSlides` : les vidéos de la variante
  * partaient toutes en slides *image* dans la lightbox.
  */

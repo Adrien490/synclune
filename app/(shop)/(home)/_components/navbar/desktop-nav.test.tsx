@@ -129,9 +129,9 @@ vi.mock("./mega-menu-creations", () => ({
 	MegaMenuCreations: () => <div data-testid="mega-menu-creations" />,
 }));
 
-vi.mock("./mega-menu-collections", () => ({
-	MegaMenuCollections: () => <div data-testid="mega-menu-collections" />,
-}));
+// ⚠️ Plus de mock `./mega-menu-collections` : le bento a été supprimé le
+// 2026-08-08 avec les autres surfaces à cartes de collection (à refaire), et
+// `DesktopNav` n'a plus qu'une seule branche de panneau.
 
 // Mock useActiveNavbarItem
 vi.mock("@/shared/hooks/use-active-navbar-item", () => ({
@@ -166,15 +166,14 @@ const navItems = [
 			{ href: "/produits/bagues", label: "Bagues" },
 		],
 	},
+	// « Les collections » est un LIEN SIMPLE depuis le 2026-08-08 — pas d'oubli :
+	// sans panneau à ouvrir, `hasDropdown` monterait un trigger dont le contenu
+	// est vide, et la branche tactile ferait alors ouvrir un panneau blanc au
+	// lieu de naviguer. Cf. `getDesktopNavItems`.
 	{
 		href: "/collections",
 		label: "Les collections",
 		icon: "folder-open" as const,
-		hasDropdown: true,
-		dropdownType: "collections" as const,
-		children: [
-			{ href: "/collections", label: "Toutes les collections", icon: "folder-open" as const },
-		],
 	},
 	{
 		href: "/a-propos",
@@ -207,12 +206,14 @@ describe("DesktopNav", () => {
 		// `router.push` : ⌘-clic, clic milieu, « Ouvrir dans un nouvel onglet »,
 		// « Copier l'adresse du lien », prefetch au survol et `LoadingIndicator`
 		// étaient TOUS perdus. Un `href` réel les rend tous les six d'un coup.
+		//
+		// ⚠️ « Les collections » ne figure plus ici depuis le 2026-08-08 : sans
+		// bento, ce n'est plus un trigger mais un lien simple — les six services
+		// ci-dessus lui sont acquis par construction. Il est couvert par
+		// « rend « Les collections » en lien simple, sans panneau ».
 		const creations = screen.getByRole("button", { name: "Les créations" });
 		expect(creations.tagName).toBe("A");
 		expect(creations.getAttribute("href")).toBe("/produits");
-
-		const collections = screen.getByRole("button", { name: "Les collections" });
-		expect(collections.getAttribute("href")).toBe("/collections");
 	});
 
 	it("garde le rôle `button` malgré l'ancre — l'annonce suit le CLAVIER, pas le DOM", () => {
@@ -244,7 +245,16 @@ describe("DesktopNav", () => {
 		render(<DesktopNav navItems={navItems} />);
 
 		expect(screen.getByTestId("mega-menu-creations")).toBeInTheDocument();
-		expect(screen.getByTestId("mega-menu-collections")).toBeInTheDocument();
+	});
+
+	// La contrepartie du retrait du bento : « Les collections » doit rester une
+	// destination ATTEIGNABLE, en lien simple et non en trigger sans panneau.
+	it("rend « Les collections » en lien simple, sans panneau", () => {
+		render(<DesktopNav navItems={navItems} />);
+
+		const link = screen.getByRole("link", { name: "Les collections" });
+		expect(link.getAttribute("href")).toBe("/collections");
+		expect(screen.queryByRole("button", { name: "Les collections" })).toBeNull();
 	});
 
 	describe("keyboard navigation", () => {
@@ -393,8 +403,11 @@ describe("DesktopNav", () => {
 			const activePath = activeTrigger.querySelector("svg path");
 			expect(activePath?.getAttribute("class")).toContain("[stroke-dashoffset:0]");
 
-			const inactiveTrigger = screen.getByRole("button", { name: "Les collections" });
-			const inactivePath = inactiveTrigger.querySelector("svg path");
+			// Le témoin inactif est « Les collections », devenue un LIEN simple le
+			// 2026-08-08 (bento supprimé) : le trait doit rester au repos sur les
+			// deux branches de rendu de `DesktopNav`, pas seulement sur les triggers.
+			const inactiveLink = screen.getByRole("link", { name: "Les collections" });
+			const inactivePath = inactiveLink.querySelector("svg path");
 			expect(inactivePath?.getAttribute("class")).toContain("[stroke-dashoffset:120]");
 		});
 	});

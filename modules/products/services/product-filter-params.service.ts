@@ -18,7 +18,6 @@ export interface FilterFormData {
 	productTypes: string[];
 	priceRange: [number, number];
 	inStockOnly: boolean;
-	onSale: boolean;
 	/**
 	 * Tri courant (`PRODUCTS_SORT_OPTIONS`). Il voyage avec le formulaire pour
 	 * que les DEUX hôtes du compartiment « Trier par » l'appliquent par le même
@@ -57,15 +56,16 @@ export type FilterSectionId = "types" | "price" | "colors" | "materials" | "avai
 // ============================================================================
 
 /** Clés des paramètres URL de filtrage */
-const FILTER_KEYS = [
-	"color",
-	"material",
-	"type",
-	"priceMin",
-	"priceMax",
-	"stockStatus",
-	"onSale",
-] as const;
+// `onSale` retiré des clés actives (retrait Omnibus 2026-08-08) : une URL
+// `?onSale=true` héritée d'un lien indexé est ignorée par le parse — pas de 500.
+const FILTER_KEYS = ["color", "material", "type", "priceMin", "priceMax", "stockStatus"] as const;
+
+/**
+ * Clés de filtre RETIRÉES mais encore présentes dans des URL indexées ou des
+ * favoris : les builders d'URL continuent de les purger pour que « Effacer les
+ * filtres » ou toute reconstruction rende une URL propre, sans les re-émettre.
+ */
+const LEGACY_FILTER_KEYS = ["onSale"] as const;
 
 /** Clés à exclure du comptage des filtres actifs */
 const NON_FILTER_KEYS = ["page", "perPage", "sortBy", "search", "cursor", "direction"];
@@ -98,7 +98,6 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 	let priceMin = defaultPriceRange[0];
 	let priceMax = defaultPriceRange[1];
 	let inStockOnly = false;
-	let onSale = false;
 	let sortBy: string = PRODUCTS_DEFAULT_SORT;
 
 	// Ajouter le type actif depuis le path segment (page catégorie)
@@ -126,9 +125,6 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 			case "stockStatus":
 				inStockOnly = value === "in_stock";
 				break;
-			case "onSale":
-				onSale = value === "true" || value === "1";
-				break;
 			case "sortBy":
 				// Valeur brute d'URL : un `sortBy` forgé retombe côté data sur le tri
 				// par défaut (`parsePaginationParams`), le formulaire n'a pas à valider.
@@ -147,7 +143,6 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 		productTypes: [...new Set(productTypes)],
 		priceRange: [priceMin, priceMax],
 		inStockOnly,
-		onSale,
 		sortBy,
 	};
 }
@@ -189,8 +184,8 @@ export function buildFilterURL(params: BuildFilterURLParams): {
 
 	const urlParams = new URLSearchParams(currentSearchParams.toString());
 
-	// Nettoyer tous les anciens filtres
-	for (const key of FILTER_KEYS) {
+	// Nettoyer tous les anciens filtres (y compris les clés legacy héritées d'URL indexées)
+	for (const key of [...FILTER_KEYS, ...LEGACY_FILTER_KEYS]) {
 		urlParams.delete(key);
 	}
 
@@ -251,11 +246,6 @@ export function buildFilterURL(params: BuildFilterURLParams): {
 		urlParams.set("stockStatus", "in_stock");
 	}
 
-	// Promotions
-	if (formData.onSale) {
-		urlParams.set("onSale", "true");
-	}
-
 	// Tri — même règle que l'ancien menu ancré : la valeur par défaut EFFACE le
 	// paramètre au lieu de l'écrire (`?sortBy=created-descending` et l'URL nue
 	// sont le même état ; écrire le défaut ferait basculer la page en noindex).
@@ -279,8 +269,8 @@ export function buildFilterURL(params: BuildFilterURLParams): {
 export function buildClearFiltersURL(currentSearchParams: URLSearchParams): string {
 	const urlParams = new URLSearchParams(currentSearchParams.toString());
 
-	// Supprimer tous les filtres
-	for (const key of FILTER_KEYS) {
+	// Supprimer tous les filtres (y compris les clés legacy héritées d'URL indexées)
+	for (const key of [...FILTER_KEYS, ...LEGACY_FILTER_KEYS]) {
 		urlParams.delete(key);
 	}
 
@@ -327,7 +317,6 @@ export function countActiveFilters(searchParams: URLSearchParams): ActiveFilters
 			case "color":
 			case "material":
 			case "stockStatus":
-			case "onSale":
 				count += 1;
 				break;
 		}
@@ -360,7 +349,6 @@ export function getDefaultFilterValues(defaultPriceRange: [number, number]): Fil
 		productTypes: [],
 		priceRange: defaultPriceRange,
 		inStockOnly: false,
-		onSale: false,
 		sortBy: PRODUCTS_DEFAULT_SORT,
 	};
 }
@@ -416,7 +404,7 @@ export function getSectionActiveCount(
 		price: priceActive ? 1 : 0,
 		colors: values.colors.length,
 		materials: values.materials.length,
-		availability: (values.inStockOnly ? 1 : 0) + (values.onSale ? 1 : 0),
+		availability: values.inStockOnly ? 1 : 0,
 	};
 }
 
@@ -447,7 +435,6 @@ export function filterFormDataToProductFilters(
 	}
 
 	if (values.inStockOnly) filters.stockStatus = "in_stock";
-	if (values.onSale) filters.onSale = true;
 
 	return filters;
 }
@@ -472,7 +459,7 @@ export function resetFilterGroup(
 		case "price":
 			return { ...values, priceRange: [...defaultPriceRange] as [number, number] };
 		case "availability":
-			return { ...values, inStockOnly: false, onSale: false };
+			return { ...values, inStockOnly: false };
 	}
 }
 

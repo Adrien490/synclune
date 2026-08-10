@@ -54,7 +54,7 @@ function makeProductForDuplication(overrides: Record<string, unknown> = {}) {
 				compareAtPrice: null,
 				inventory: 10,
 				isActive: true,
-				isDefault: true,
+				position: 0,
 				// M2M depuis les migrations de mai 2026 : plus de scalaires colorId/materialId
 				colors: [
 					{ colorId: "color-1", position: 0 },
@@ -68,7 +68,6 @@ function makeProductForDuplication(overrides: Record<string, unknown> = {}) {
 						thumbnailUrl: "https://example.com/thumb.jpg",
 						altText: "Bracelet Lune",
 						mediaType: "IMAGE",
-						isPrimary: true,
 						position: 0,
 					},
 				],

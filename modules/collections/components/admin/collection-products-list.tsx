@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -17,8 +17,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { cn } from "@/shared/utils/cn";
-import { PackageIcon, StarIcon, WarningIcon } from "@phosphor-icons/react/ssr";
+import { PackageIcon, StarIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import type { GetCollectionReturn } from "../../types/collection.types";
@@ -26,12 +25,12 @@ import { SET_FEATURED_PRODUCT_DIALOG_ID } from "./set-featured-product-alert-dia
 
 // Status labels et variants
 const STATUS_CONFIG: Record<
-	ProductStatus,
+	PublicationStatus,
 	{ label: string; variant: "default" | "secondary" | "outline" }
 > = {
-	[ProductStatus.PUBLIC]: { label: "Public", variant: "default" },
-	[ProductStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
-	[ProductStatus.ARCHIVED]: { label: "Archive", variant: "outline" },
+	[PublicationStatus.PUBLIC]: { label: "Public", variant: "default" },
+	[PublicationStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
+	[PublicationStatus.ARCHIVED]: { label: "Archive", variant: "outline" },
 };
 
 interface CollectionProductsListProps {
@@ -47,13 +46,14 @@ export function CollectionProductsList({
 }: CollectionProductsListProps) {
 	const { open: openSetFeaturedDialog } = useAlertDialog(SET_FEATURED_PRODUCT_DIALOG_ID);
 
-	const handleSetFeatured = (productId: string, productTitle: string, isFeatured: boolean) => {
+	// La vedette est le rang 0 de (position asc, addedAt desc) : il y en a toujours
+	// une, on ne peut que la REMPLACER — le flux « retirer » est parti avec `isFeatured`.
+	const handleSetFeatured = (productId: string, productTitle: string) => {
 		openSetFeaturedDialog({
 			collectionId,
 			collectionSlug,
 			productId,
 			productTitle,
-			isFeatured,
 		});
 	};
 
@@ -85,48 +85,51 @@ export function CollectionProductsList({
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{products.map((pc) => {
+						{products.map((pc, index) => {
 							const product = pc.product;
-							const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0];
-							const primaryImage =
-								defaultSku?.images.find((i) => i.isPrimary) ?? defaultSku?.images[0];
+							// Listes PRÉ-TRIÉES par le select : SKU représentant = rang 0 de
+							// (position, id), image principale = première IMAGE de cet ordre
+							// (le select ne remonte que des mediaType: IMAGE).
+							const defaultSku = product.skus[0];
+							const primaryImage = defaultSku?.images[0];
 							const price = defaultSku?.priceInclTax;
+							// La vedette est le premier element de la liste pre-triee (rang 0)
+							const isFeatured = index === 0;
 
 							return (
 								<TableRow key={product.id}>
-									{/* Bouton etoile pour featured */}
+									{/* Rang 0 : badge vedette statique. Autres rangs : action « Definir comme vedette » */}
 									<TableCell>
-										<Tooltip>
-											<TooltipTrigger
-												render={
-													<Button
-														variant="ghost"
-														size="icon"
-														className="size-8"
-														onClick={() =>
-															handleSetFeatured(product.id, product.title, pc.isFeatured)
-														}
-														aria-label={
-															pc.isFeatured ? "Retirer le statut vedette" : "Definir comme vedette"
-														}
+										{isFeatured ? (
+											<Tooltip>
+												<TooltipTrigger
+													render={<span className="flex size-8 items-center justify-center" />}
+												>
+													<StarIcon
+														className="size-5 fill-yellow-400 text-yellow-400"
+														aria-label="Produit vedette"
 													/>
-												}
-											>
-												<StarIcon
-													className={cn(
-														"size-5 transition-colors",
-														pc.isFeatured
-															? "fill-yellow-400 text-yellow-400"
-															: "text-muted-foreground hover:text-yellow-400",
-													)}
-												/>
-											</TooltipTrigger>
-											<TooltipContent>
-												{pc.isFeatured
-													? "Retirer le statut vedette"
-													: "Definir comme produit vedette"}
-											</TooltipContent>
-										</Tooltip>
+												</TooltipTrigger>
+												<TooltipContent>Produit vedette de la collection</TooltipContent>
+											</Tooltip>
+										) : (
+											<Tooltip>
+												<TooltipTrigger
+													render={
+														<Button
+															variant="ghost"
+															size="icon"
+															className="size-8"
+															onClick={() => handleSetFeatured(product.id, product.title)}
+															aria-label="Definir comme vedette"
+														/>
+													}
+												>
+													<StarIcon className="text-muted-foreground size-5 transition-colors hover:text-yellow-400" />
+												</TooltipTrigger>
+												<TooltipContent>Definir comme produit vedette</TooltipContent>
+											</Tooltip>
+										)}
 									</TableCell>
 
 									{/* Image */}
@@ -164,24 +167,13 @@ export function CollectionProductsList({
 										</div>
 									</TableCell>
 
-									{/* Statut */}
+									{/* Statut. Plus d'avertissement « vedette non-PUBLIC » : le select ne
+									    remonte que des produits PUBLIC et l'action serveur refuse tout
+									    produit non publie — le cas est devenu impossible. */}
 									<TableCell className="hidden sm:table-cell">
-										<div className="flex items-center gap-2">
-											<Badge variant={STATUS_CONFIG[product.status].variant}>
-												{STATUS_CONFIG[product.status].label}
-											</Badge>
-											{/* Avertissement si produit featured non-PUBLIC */}
-											{pc.isFeatured && product.status !== ProductStatus.PUBLIC && (
-												<Tooltip>
-													<TooltipTrigger render={<span className="text-amber-500" />}>
-														<WarningIcon className="size-4" />
-													</TooltipTrigger>
-													<TooltipContent>
-														<p>Ce produit vedette n'est pas visible sur le site</p>
-													</TooltipContent>
-												</Tooltip>
-											)}
-										</div>
+										<Badge variant={STATUS_CONFIG[product.status].variant}>
+											{STATUS_CONFIG[product.status].label}
+										</Badge>
 									</TableCell>
 
 									{/* Prix */}

@@ -10,18 +10,18 @@ import type { ComponentType } from "react";
 
 export const CHANGE_PRODUCT_STATUS_DIALOG_ID = "change-product-status";
 
-type ProductStatus = "DRAFT" | "PUBLIC" | "ARCHIVED";
+type PublicationStatus = "DRAFT" | "PUBLIC" | "ARCHIVED";
 
 interface ChangeProductStatusData {
 	productId: string;
 	productTitle: string;
-	currentStatus: ProductStatus;
-	targetStatus: ProductStatus;
+	currentStatus: PublicationStatus;
+	targetStatus: PublicationStatus;
 	[key: string]: unknown;
 }
 
 const STATUS_CONFIG: Record<
-	ProductStatus,
+	PublicationStatus,
 	{
 		label: string;
 		tone: AlertActionTone;

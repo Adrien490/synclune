@@ -55,15 +55,15 @@ export const CART_SKU_SELECT = {
 	// l'ordre doivent être portés ICI.
 	//
 	// Deux défauts corrigés le 2026-08-05, tous deux nommés dans CLAUDE.md :
-	//  1. `where: { isPrimary: true }` SEUL est banni — sur un SKU sans média
-	//     primaire il rend 0 image alors que le SKU en a, et la ligne de panier
-	//     s'affichait sans vignette. Remplacé par l'ordre canonique + `take: 1`.
-	//  2. aucun filtre `mediaType` : une vidéo primaire atterrissait dans un
+	//  1. prendre la « première » image sans ordre garanti rendait la vignette
+	//     instable ; l'ordre canonique `(position asc, id asc)` + `take: 1` fixe
+	//     le média principal (V5 : `isPrimary` n'existe plus, position 0 = principal).
+	//  2. aucun filtre `mediaType` : une vidéo en tête atterrissait dans un
 	//     `<Image src>` — vignette cassée ET transformation `/_next/image` facturée.
 	images: {
 		where: { mediaType: "IMAGE" as const },
 		take: 1,
-		orderBy: [{ isPrimary: "desc" as const }, { position: "asc" as const }, { id: "asc" as const }],
+		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 		select: {
 			id: true,
 			url: true,
@@ -71,7 +71,6 @@ export const CART_SKU_SELECT = {
 			thumbnailUrl: true,
 			altText: true,
 			mediaType: true,
-			isPrimary: true,
 		},
 	},
 	colors: {

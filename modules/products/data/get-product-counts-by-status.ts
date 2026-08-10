@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -37,9 +37,9 @@ export async function getProductCountsByStatus(): Promise<GetProductCountsByStat
 			service: "getProductCountsByStatus",
 		});
 		return {
-			[ProductStatus.PUBLIC]: 0,
-			[ProductStatus.DRAFT]: 0,
-			[ProductStatus.ARCHIVED]: 0,
+			[PublicationStatus.PUBLIC]: 0,
+			[PublicationStatus.DRAFT]: 0,
+			[PublicationStatus.ARCHIVED]: 0,
 		};
 	}
 }
@@ -61,13 +61,13 @@ async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
 	});
 
 	const result: ProductCountsByStatus = {
-		[ProductStatus.PUBLIC]: 0,
-		[ProductStatus.DRAFT]: 0,
-		[ProductStatus.ARCHIVED]: 0,
+		[PublicationStatus.PUBLIC]: 0,
+		[PublicationStatus.DRAFT]: 0,
+		[PublicationStatus.ARCHIVED]: 0,
 	};
 
 	counts.forEach((count) => {
-		result[count.status as ProductStatus] = count._count.id;
+		result[count.status as PublicationStatus] = count._count.id;
 	});
 
 	return result;

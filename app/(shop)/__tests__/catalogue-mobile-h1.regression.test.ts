@@ -78,9 +78,9 @@ const MIGRATED_SHELL_SURFACES = [
 	"app/(shop)/collections/page.tsx",
 	"app/(shop)/favoris/page.tsx",
 	// Plus d'`app/(shop)/aide/page.tsx` : la route a été supprimée le 2026-08-05
-	// (FAQ absorbée par la landing, 308 vers `/#faq`). Le `h1` de l'accueil est
-	// celui de l'étal, et la section FAQ prend un `h2` — cf. l'assertion
-	// « la landing garde UN seul h1 » ci-dessous.
+	// (FAQ absorbée par la landing), puis la section FAQ elle-même le 2026-08-08
+	// (à refaire) avec l'ancre `/#faq` et sa redirection. Le `h1` de l'accueil
+	// reste celui de l'étal — cf. l'assertion « la landing garde UN seul h1 ».
 ];
 
 describe("catalogue — h1 en mobile (@regression catalogue-mobile-h1)", () => {
@@ -157,18 +157,17 @@ describe("catalogue — h1 en mobile (@regression catalogue-mobile-h1)", () => {
 				"la landing doit déclarer EXACTEMENT un h1, dans le bloc titre de l'étal",
 			).toEqual(["app/(shop)/(home)/_components/hero/hero-heading.tsx → 1"]);
 
-			// La section FAQ prend le h2 et les questions le cran juste en dessous.
-			// ⚠️ Ce cran a bougé le 2026-08-06 : tant que les cinq intertitres de
-			// groupe (« Les bijoux », « Livraison », …) existaient, ils tenaient les
-			// h3 et les questions se rangeaient en h4. Le regroupement thématique a
-			// été retiré (onze questions en liste unique, cf. JSDoc de
-			// `faq-section`), donc les h3 de groupe ont disparu : garder les
-			// questions en h4 ferait désormais sauter un cran, exactement le défaut
-			// que ce test verrouille. C'est la CONTIGUÏTÉ avec le h2 qui est
-			// l'invariant, pas le chiffre.
-			const faqSection = read("app/(shop)/(home)/_components/faq/faq-section.tsx");
-			expect(faqSection).toMatch(/<h2\b/);
-			expect(faqSection).toContain("headingLevel={3}");
+			/*
+			 * ⚠️ Les deux assertions sur la section FAQ (un `h2`, et des questions au
+			 * cran juste en dessous via `headingLevel={3}`) sont parties le
+			 * 2026-08-08 avec la section, à refaire.
+			 *
+			 * Ce qu'elles apprenaient, à re-appliquer telles quelles quand elle
+			 * revient : l'invariant est la CONTIGUÏTÉ avec le `h2`, jamais le
+			 * chiffre. Les questions ont tenu des `h4` tant que cinq intertitres de
+			 * groupe occupaient les `h3` ; le regroupement retiré, garder `h4`
+			 * faisait sauter un cran — exactement le défaut que ce test verrouille.
+			 */
 		});
 
 		it("la PDP porte son h1 dans ProductInfo, visible partout", () => {

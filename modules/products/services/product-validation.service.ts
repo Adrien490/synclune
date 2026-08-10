@@ -23,7 +23,7 @@ type ProductForPublicationCheck = {
 		isActive: boolean;
 		inventory: number;
 		// `mediaType` permet de distinguer une vraie image d'une video : une video
-		// `isPrimary` ne suffit PAS a publier (la vitrine affiche un placeholder).
+		// au rang 0 ne suffit PAS a publier (la vitrine affiche un placeholder).
 		// Cf MEDIA-AUDIT-002.
 		images: { mediaType: string }[];
 	}[];
@@ -74,7 +74,7 @@ export function validateProductForPublication(
 	// Regle 4: Au moins 1 SKU actif avec une image (media de type IMAGE).
 	// Aligne sur la logique d'affichage (`extractImageFromSku` ne retourne que des
 	// medias IMAGE) : un SKU dont les seuls medias sont des videos afficherait le
-	// placeholder en vitrine. Une video marquee `isPrimary` ne compte donc pas.
+	// placeholder en vitrine. Une video au rang 0 ne compte donc pas.
 	const hasImage = activeSkus.some((sku) => sku.images.some((img) => img.mediaType === "IMAGE"));
 	if (!hasImage) {
 		return {

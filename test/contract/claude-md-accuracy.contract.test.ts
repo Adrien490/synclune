@@ -24,7 +24,15 @@
  *   3. toute SECTION citée existe sous ce titre dans le document visé ;
  *   4. aucune ancre `fichier.ts:12-34` (elles dérivent à la première édition) ;
  *   5. les comptages annoncés correspondent au dépôt ;
- *   6. toute commande `pnpm <x>` citée existe dans `package.json`.
+ *   6. toute commande `pnpm <x>` citée existe dans `package.json` ;
+ *   7. tout export backtické en UPPER_SNAKE dans `docs/BRAND-DA.md` existe comme `const`
+ *      du dépôt, membre pointé compris (ex. `CREATION_PATHS.dab`).
+ *
+ * Étendu le 2026-08-08 à `docs/BRAND-DA.md` (audit du lexique DA) : le document citait un
+ * composant supprimé (`masking-tape.tsx`) et son § « État du dépôt » annonçait l'œil dans
+ * `CREATION_PATHS` et la lune dans `ACCENT_SHAPE_PATHS` — le premier retiré deux jours
+ * plus tôt, la seconde jamais existé. Un export inventé dans un fichier existant est
+ * invisible au point 1, d'où le point 7.
  *
  * Le périmètre a été étendu le 2026-08-05 de `CLAUDE.md` seul à la CHAÎNE DESIGN
  * (les prompts collables). Motif : `REDESIGN-PROMPT.md` envoyait lire « les sections
@@ -65,10 +73,26 @@ const CONTRACTED_DOCS: ReadonlyArray<{ path: string; minCited: number }> = [
 	{ path: "docs/LANDING-BEST-PRACTICES.md", minCited: 15 },
 	{ path: "docs/prompts/REDESIGN-PROMPT.md", minCited: 5 },
 	{ path: "docs/prompts/DESIGN-ARTIFACT-PROMPT.md", minCited: 5 },
+	// Le lexique DA est la SSOT que les deux prompts design envoient lire : l'audit du 2026-08-08
+	// y a trouvé `shared/components/masking-tape.tsx` cité intact alors que le fichier avait été
+	// supprimé le jour même, plus un inventaire de tracés dérivé (l'œil annoncé deux jours après
+	// son retrait, une lune jamais existée) — précisément la classe de dérive que ce contrat
+	// attrape. Ajouté avec ses renvois de section (cf. DOC_SECTION_REFERENCES) et l'assertion
+	// d'exports (point 7). Le doc cite ~16 chemins : minCited 10 garde une marge sans laisser
+	// l'extracteur devenir aveugle.
+	{ path: "docs/BRAND-DA.md", minCited: 10 },
 	// Le wrapper `/design-artifact` ne contient RIEN d'autre que des renvois : si le chemin
 	// du prompt SSOT qu'il charge se casse, la commande exécute du vide en silence — c'est
 	// tout son mode de panne, donc tout son contrat.
 	{ path: ".claude/commands/design-artifact.md", minCited: 2 },
+	// L'audit du schéma « lean » adosse chaque lot à des fichiers du dépôt (consommateurs
+	// d'`isFeatured`, selects d'`actualDelivery`, gardes SQL…) : un renvoi mort y transforme
+	// un argument d'arbitrage en affirmation invérifiable. Ajouté le 2026-08-09 par le
+	// contre-audit qui y a trouvé deux chiffres gonflés par un `find` ratissant
+	// `.claude/worktrees/` — seul doc d'audit du dépôt, il était le seul sans filet. Les
+	// COMPTAGES du doc restent des instantanés datés, volontairement hors contrat (points 1
+	// et 2 seulement) : c'est le § 2 du doc qui porte sa méthode de re-mesure.
+	{ path: "docs/SIMPLIFICATION-V2.md", minCited: 8 },
 ];
 
 /**
@@ -93,6 +117,51 @@ const DOC_SECTION_REFERENCES: ReadonlyArray<{
 	// ajouté le 2026-08-06 — sans cette entrée, renommer la section casserait le renvoi
 	// en silence (le défaut du 2026-08-05 : le chemin existait, la section avait déménagé).
 	{ citedIn: "DESIGN-ARTIFACT-PROMPT", file: "CLAUDE.md", heading: "Direction artistique" },
+	// Depuis le 2026-08-08, le prompt d'artifact adosse le choix de motif, la palette des dégradés,
+	// la composition, le nommage des directions et l'univers photo à SIX sections nommées du lexique
+	// DA, plus la grille d'audit de la landing — même mécanique de panne que le 2026-08-05 : le
+	// chemin survivrait à un renommage de titre, seul le point 3 l'attrape.
+	{
+		citedIn: "DESIGN-ARTIFACT-PROMPT",
+		file: "docs/BRAND-DA.md",
+		heading: "Les six territoires artistiques",
+	},
+	{
+		citedIn: "DESIGN-ARTIFACT-PROMPT",
+		file: "docs/BRAND-DA.md",
+		heading: "La palette chromatique",
+	},
+	{
+		citedIn: "DESIGN-ARTIFACT-PROMPT",
+		file: "docs/BRAND-DA.md",
+		heading: "Les symboles identitaires",
+	},
+	{
+		citedIn: "DESIGN-ARTIFACT-PROMPT",
+		file: "docs/BRAND-DA.md",
+		heading: "Le registre stylistique",
+	},
+	{
+		citedIn: "DESIGN-ARTIFACT-PROMPT",
+		file: "docs/BRAND-DA.md",
+		heading: "Le vocabulaire des formes",
+	},
+	{
+		citedIn: "DESIGN-ARTIFACT-PROMPT",
+		file: "docs/BRAND-DA.md",
+		heading: "L'univers photographique",
+	},
+	{
+		citedIn: "DESIGN-ARTIFACT-PROMPT",
+		file: "docs/LANDING-BEST-PRACTICES.md",
+		heading: "La grille d'audit",
+	},
+	// BRAND-DA délègue toute sa partie « charte technique » à CLAUDE.md : si l'une de ces
+	// sections déménage, le lexique envoie lire du vide (ajouté le 2026-08-08 avec le doc).
+	{ citedIn: "BRAND-DA", file: "CLAUDE.md", heading: "Conventions UI" },
+	{ citedIn: "BRAND-DA", file: "CLAUDE.md", heading: "Direction artistique" },
+	{ citedIn: "BRAND-DA", file: "CLAUDE.md", heading: "Voix" },
+	{ citedIn: "BRAND-DA", file: "CLAUDE.md", heading: "Pas de `metaTitle`" },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -211,13 +280,14 @@ describe("Chaîne design — les SECTIONS citées existent sous ce titre", () =>
 /* 2. Ancres fichier:ligne                                                     */
 /* -------------------------------------------------------------------------- */
 
-describe("CLAUDE.md — pas d'ancre `fichier:ligne`", () => {
+describe.each(["CLAUDE.md", "docs/BRAND-DA.md"])("%s — pas d'ancre `fichier:ligne`", (docPath) => {
 	it("ne référence aucun numéro de ligne", () => {
 		// Les 6 ancres de la table « Conformité réglementaire » avaient TOUTES dérivé :
 		// l'ancre Art. 293 B tombait sur un commentaire. Un numéro de ligne est faux dès
 		// la première édition du fichier cible, et rien ne le signale.
+		const doc = readFileSync(join(REPO_ROOT, docPath), "utf-8");
 		const anchors = Array.from(
-			src.matchAll(/`?([A-Za-z0-9._/-]+\.tsx?):(\d+)(?:-(\d+))?/g),
+			doc.matchAll(/`?([A-Za-z0-9._/-]+\.tsx?):(\d+)(?:-(\d+))?/g),
 			(m) => m[0],
 		);
 
@@ -357,6 +427,28 @@ describe("Chaîne design — les comptages annoncés correspondent au dépôt", 
 			).toBeLessThanOrEqual(0.1);
 		},
 	);
+
+	// « les sept feuilles » est resté écrit dans le §3 alors que `atelier-thread.css` était
+	// devenue la huitième : même mécanique de dérive à vue que le compte `@regression` — un
+	// nombre écrit en toutes lettres n'était re-mesuré par personne. Constaté le 2026-08-08,
+	// passé en chiffres dans le prompt pour devenir assertable.
+	it("DESIGN-ARTIFACT-PROMPT annonce le bon nombre de feuilles importées par globals.css", () => {
+		const doc = readFileSync(join(REPO_ROOT, "docs/prompts/DESIGN-ARTIFACT-PROMPT.md"), "utf-8");
+		const match = doc.match(/les (\d+) feuilles qu'il importe/);
+
+		expect(
+			match,
+			"DESIGN-ARTIFACT-PROMPT ne contient plus « les N feuilles qu'il importe ». " +
+				"Si la formulation a changé, mets ce regex à jour plutôt que de retirer l'assertion.",
+		).not.toBeNull();
+
+		const real = countMatches("app/globals.css", /^@import "\.\/styles\//gm);
+		expect(
+			Number(match![1]),
+			`Le prompt annonce ${match![1]} feuilles, app/globals.css en importe ${real}. ` +
+				"Mets le §3 du prompt à jour (et sa liste de feuilles avec).",
+		).toBe(real);
+	});
 });
 
 /* -------------------------------------------------------------------------- */
@@ -507,6 +599,69 @@ describe("CLAUDE.md — les commandes citées existent", () => {
 			"Script(s) cité(s) dans § Commands mais absent(s) de package.json. " +
 				"C'est ainsi que `pnpm prisma migrate dev` est resté recommandé alors " +
 				"que le même document le déclarait cassé (P3006).",
+		).toEqual([]);
+	});
+});
+
+/* -------------------------------------------------------------------------- */
+/* 5. Exports cités dans BRAND-DA                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Le point 1 ne voit que les CHEMINS : un export inventé dans un fichier existant lui est
+ * invisible. C'est la dérive trouvée par l'audit du 2026-08-08 dans le § « État du dépôt »
+ * de BRAND-DA — l'œil et le cil annoncés dans `CREATION_PATHS` deux jours après leur
+ * retrait, une lune annoncée dans `ACCENT_SHAPE_PATHS` qui n'y a jamais existé. D'où le
+ * point 7 : tout token backtické en UPPER_SNAKE (membre pointé compris, ex.
+ * `CREATION_PATHS.dab`) doit exister comme `const` du dépôt, et le membre comme clé du
+ * fichier qui déclare la constante.
+ *
+ * `generated` s'ajoute aux exclusions : le client Prisma pèse plusieurs Mo et ne peut pas
+ * être la cible d'une citation du lexique de marque.
+ */
+const EXPORT_SCAN_SKIP = new Set([...SKIP_DIRS, "generated"]);
+
+function collectTsSources(dir: string, out: string[] = []): string[] {
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		if (EXPORT_SCAN_SKIP.has(entry.name)) continue;
+		const full = join(dir, entry.name);
+		if (entry.isDirectory()) collectTsSources(full, out);
+		else if (/\.tsx?$/.test(entry.name)) out.push(readFileSync(full, "utf-8"));
+	}
+	return out;
+}
+
+describe("docs/BRAND-DA.md — les exports cités existent", () => {
+	it("ne cite aucune constante ni membre inexistant", () => {
+		const doc = readFileSync(join(REPO_ROOT, "docs/BRAND-DA.md"), "utf-8");
+		const tokens = new Set<string>();
+		for (const match of doc.matchAll(/`([^`\n]+)`/g)) {
+			const raw = match[1]!;
+			// `CLAUDE.md` est un fichier, pas un export : son « membre » serait l'extension.
+			if (/\.(md|tsx?|css|json|sql|toml)$/i.test(raw)) continue;
+			if (/^[A-Z][A-Z0-9_]{2,}(\.[A-Za-z0-9_]+)?$/.test(raw)) tokens.add(raw);
+		}
+		// Garde-fou du garde-fou, même logique que `minCited`.
+		expect(tokens.size, "l'extracteur d'exports est devenu aveugle").toBeGreaterThan(3);
+
+		const sources = ["shared", "modules", "app", "test"].flatMap((dir) =>
+			collectTsSources(join(REPO_ROOT, dir)),
+		);
+
+		const broken = [...tokens].filter((token) => {
+			const [base, member] = token.split(".") as [string, string?];
+			const declaring = sources.filter(
+				(s) => s.includes(base) && new RegExp(`\\bconst ${base}\\b`).test(s),
+			);
+			if (declaring.length === 0) return true;
+			if (member) return !declaring.some((s) => new RegExp(`\\b${member}\\s*:`).test(s));
+			return false;
+		});
+
+		expect(
+			broken,
+			"docs/BRAND-DA.md cite un export (ou un membre) qui n'existe pas dans le dépôt. " +
+				"Mettre le DOCUMENT à jour — c'est exactement la dérive œil/lune du 2026-08-08.",
 		).toEqual([]);
 	});
 });

@@ -1,7 +1,6 @@
 import { CatalogHeadingSkeleton } from "@/modules/products/components/catalog-heading";
 import { CATALOG_GRID } from "@/modules/products/components/catalog-grid.constants";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { SHELF_BAR_SHELL } from "@/shared/components/shelf-bar/shelf-bar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/utils/cn";
@@ -68,17 +67,16 @@ export function ProductCatalogSkeleton({ accent = "rail" }: { accent?: "rail" | 
 					    sans lui, la grille du squelette est pleine largeur et saute de
 					    16rem au swap — sur la page dont le CLS est budgété en CI. */}
 					<div className="lg:grid lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-8">
-						{/* Plaque « salle rose » du rail (mêmes classes que le rail réel,
-						    tape comprise) : sans elle, le meuble teinté apparaîtrait d'un
-						    coup au swap Suspense. */}
+						{/* Plaque « salle rose » du rail (mêmes classes que le rail réel) :
+						    sans elle, le meuble teinté apparaîtrait d'un coup au swap
+						    Suspense. */}
 						<div aria-hidden className="hidden lg:block">
 							<div className="border-primary/25 bg-primary/5 relative rounded-md border">
-								{/* L'étiquette du meuble (« Le comptoir ») : tape porte-étiquette
-								    + titre display — mêmes cotes que l'en-tête réel du rail. Pas
-								    de pied : il n'apparaît qu'avec des filtres actifs. */}
-								<div className="relative px-4 pt-3 pb-1.5">
-									<MaskingTape className="top-3.5 left-3 h-[1.125rem] w-[4.5rem] -rotate-2" />
-									<Skeleton className="relative h-6 w-16 rounded" />
+								{/* L'étiquette du meuble (« Le comptoir ») : titre display —
+								    mêmes cotes que l'en-tête réel du rail. Pas de pied : il
+								    n'apparaît qu'avec des filtres actifs. */}
+								<div className="px-4 pt-3 pb-1.5">
+									<Skeleton className="h-6 w-16 rounded" />
 								</div>
 								<div className="space-y-7 px-3 pt-1 pb-2">
 									{[0, 1, 2].map((i) => (

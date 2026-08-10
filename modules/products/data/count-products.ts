@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
 import { getProductsSchema } from "../schemas/product.schemas";
@@ -32,9 +32,9 @@ export async function countPublicProducts(params: {
 
 	// Normalisation par le MÊME schéma que getProducts (défauts, bornes).
 	const validated = getProductsSchema.parse({
-		filters: { ...params.filters, status: ProductStatus.PUBLIC },
+		filters: { ...params.filters, status: PublicationStatus.PUBLIC },
 		search: params.search,
-		status: ProductStatus.PUBLIC,
+		status: PublicationStatus.PUBLIC,
 		includeDeleted: false,
 	}) as GetProductsParams;
 

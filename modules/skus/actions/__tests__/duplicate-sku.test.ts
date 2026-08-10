@@ -19,7 +19,9 @@ const {
 	mockGenerateUniqueTechnicalName,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		productSku: { findUnique: vi.fn(), create: vi.fn() },
+		// `findFirst` sert `nextSkuPosition` (rang d'insertion en fin de liste —
+		// remplace le flag isDefault, audit schéma V5, lot A2).
+		productSku: { findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -117,6 +119,8 @@ describe("duplicateSku", () => {
 		});
 
 		mockPrisma.productSku.findUnique.mockResolvedValue(createMockOriginalSku());
+		// max(position) du produit = 1 → le duplicata s'insère au rang 2 (fin de liste).
+		mockPrisma.productSku.findFirst.mockResolvedValue({ position: 1 });
 		mockPrisma.productSku.create.mockResolvedValue(createMockDuplicatedSku());
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
@@ -169,14 +173,16 @@ describe("duplicateSku", () => {
 		expect(result.message).toContain("Too many copies");
 	});
 
-	it("should create duplicate with reset inventory and inactive state", async () => {
+	it("should create duplicate with reset inventory, inactive state and end-of-list rank", async () => {
 		await duplicateSku(undefined, validFormData);
 		expect(mockPrisma.productSku.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					inventory: 0,
 					isActive: false,
-					isDefault: false,
+					// Fin de liste (max(position) + 1) : jamais représentant, le rang 0
+					// reste à l'original.
+					position: 2,
 				}),
 			}),
 		);

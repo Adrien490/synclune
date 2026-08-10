@@ -1,4 +1,5 @@
 import { getProductBySlug } from "@/modules/products/data/get-product";
+import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import { OgShell } from "@/shared/components/og/og-shell";
 import { BRAND_HEX } from "@/shared/constants/brand-colors";
 import { ImageResponse } from "next/og";
@@ -41,9 +42,9 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 	const primarySku = product.skus[0];
 	const price = primarySku?.priceInclTax ? `${(primarySku.priceInclTax / 100).toFixed(2)} €` : null;
 
-	// Get the main product image URL
-	const mainImage =
-		primarySku?.images.find((img) => img.isPrimary)?.url ?? primarySku?.images[0]?.url;
+	// Média principal via la SSOT pickPrimaryImage (première IMAGE de l'ordre
+	// canonique) : réécrire `find(...) ?? images[0]` mettrait un .mp4 dans og:image.
+	const mainImage = primarySku ? pickPrimaryImage(primarySku.images)?.url : undefined;
 
 	return new ImageResponse(
 		<OgShell signature>

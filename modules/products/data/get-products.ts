@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getRateLimitId } from "@/modules/auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
@@ -73,8 +73,8 @@ export async function getProducts(
 			validatedParams = {
 				...validatedParams,
 				includeDeleted: false,
-				status: ProductStatus.PUBLIC,
-				filters: { ...validatedParams.filters, status: ProductStatus.PUBLIC },
+				status: PublicationStatus.PUBLIC,
+				filters: { ...validatedParams.filters, status: PublicationStatus.PUBLIC },
 			};
 		}
 

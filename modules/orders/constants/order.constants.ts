@@ -75,7 +75,7 @@ export const GET_ORDER_SELECT_ADMIN = {
 	shippingCarrier: true,
 	trackingNumber: true,
 	trackingUrl: true,
-	actualDelivery: true,
+	deliveredAt: true,
 	shippedAt: true,
 	status: true,
 	paymentStatus: true,
@@ -95,7 +95,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	updatedAt: true,
 	items: {
 		select: {
-			id: true,
 			skuId: true,
 			productTitle: true,
 			productImageUrl: true,
@@ -170,7 +169,7 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	shippingCarrier: true,
 	trackingNumber: true,
 	trackingUrl: true,
-	actualDelivery: true,
+	deliveredAt: true,
 	shippedAt: true,
 	status: true,
 	paymentStatus: true,
@@ -185,7 +184,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	updatedAt: true,
 	items: {
 		select: {
-			id: true,
 			skuId: true,
 			productTitle: true,
 			productImageUrl: true,
@@ -264,7 +262,7 @@ export const GET_ORDER_TRACKING_SELECT = {
 	paymentStatus: true,
 	paidAt: true,
 	shippedAt: true,
-	actualDelivery: true,
+	deliveredAt: true,
 	subtotal: true,
 	shippingCost: true,
 	total: true,
@@ -281,7 +279,7 @@ export const GET_ORDER_TRACKING_SELECT = {
 	shippingCountry: true,
 	items: {
 		select: {
-			id: true,
+			skuId: true,
 			productTitle: true,
 			productImageUrl: true,
 			skuColor: true,
@@ -340,7 +338,7 @@ export const CONFIRMATION_ORDER_SELECT = {
 	shippingCountry: true,
 	items: {
 		select: {
-			id: true,
+			skuId: true,
 			productTitle: true,
 			productImageUrl: true,
 			skuColor: true,

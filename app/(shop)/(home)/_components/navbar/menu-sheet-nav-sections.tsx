@@ -1,18 +1,14 @@
 "use client";
 
-import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
-import { dataAccentForSlug } from "@/modules/products/components/catalog-accents.constants";
 import type { NavbarSessionData } from "@/shared/types/session.types";
 import { CountBadge } from "@/shared/components/ui/count-badge";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
-import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import type { Variants } from "motion/react";
 import { m } from "motion/react";
-import { FlowerIcon, HeartIcon, HouseIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
+import { HeartIcon, HouseIcon, ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import { useMenuSheetNavigate } from "./menu-sheet-navigate-context";
@@ -91,10 +87,10 @@ interface SectionProps {
 // ---------------------------------------------------------------------------
 
 /**
- * Le ruban de masquage et la ligne à la première personne, au-dessus de la
- * grille. Copie STATIQUE à dessein : une phrase d'inventaire (« en ce moment je
- * travaille… ») exigerait de Léane une mise à jour récurrente, et périmée elle
- * abîmerait la confiance plus qu'un menu neutre. Celle-ci ne périme pas.
+ * La ligne à la première personne, au-dessus de la grille. Copie STATIQUE à
+ * dessein : une phrase d'inventaire (« en ce moment je travaille… ») exigerait
+ * de Léane une mise à jour récurrente, et périmée elle abîmerait la confiance
+ * plus qu'un menu neutre. Celle-ci ne périme pas.
  */
 export function MenuSheetHeadNote({
 	itemVariants,
@@ -104,8 +100,7 @@ export function MenuSheetHeadNote({
 	customDelay: number;
 }) {
 	return (
-		<m.div variants={itemVariants} custom={customDelay} className="relative mx-4 mt-1 mb-4">
-			<MaskingTape className="-top-2 left-3 z-10 h-4 w-14 -rotate-3" />
+		<m.div variants={itemVariants} custom={customDelay} className="mx-4 mt-1 mb-4">
 			<p className="font-display text-muted-foreground pt-1.5 pl-1 text-[0.8125rem] leading-relaxed">
 				Chaque pièce est faite à la main, dans mon atelier.
 			</p>
@@ -488,120 +483,13 @@ export function CreationsGrid({
 }
 
 // ---------------------------------------------------------------------------
-// La bande des collections
+// ⚠️ Plus de `CollectionsBand` (supprimée le 2026-08-08)
 // ---------------------------------------------------------------------------
-
-interface CollectionsBandProps extends SectionProps {
-	collections?: Array<{
-		slug: string;
-		label: string;
-		images: CollectionImage[];
-	}>;
-}
-
-/**
- * Trois cartes photo au lieu de trois lignes à vignette 36 px. `images[0]` en
- * pleine largeur de carte : la donnée était déjà chargée (`extractCollectionImages`)
- * et rendue à une taille qui ne montrait rien d'identifiable.
- */
-export function CollectionsBand({
-	collections,
-	isMenuItemActive,
-	itemVariants,
-	nextDelay,
-}: CollectionsBandProps) {
-	const onNavigate = useMenuSheetNavigate();
-	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
-	if (!displayedCollections || displayedCollections.length === 0) return null;
-
-	const allActive = isMenuItemActive(ROUTES.SHOP.COLLECTIONS, { exact: true });
-
-	return (
-		<section aria-labelledby="menu-collections" className="mb-4">
-			<div className="flex items-baseline justify-between gap-2 px-4 pt-1 pb-2">
-				<SectionHead id="menu-collections">Collections</SectionHead>
-				<Link
-					href={ROUTES.SHOP.COLLECTIONS}
-					replace
-					prefetch={null}
-					onClick={onNavigate}
-					aria-current={allActive ? "page" : undefined}
-					className={cn(
-						"focus-ring text-muted-foreground can-hover:hover:text-foreground inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-sm underline-offset-4",
-						"motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]",
-						allActive && "text-foreground font-semibold underline",
-					)}
-				>
-					Toutes les collections
-				</Link>
-			</div>
-			<ul className="grid grid-cols-3 gap-2 px-4">
-				{displayedCollections.map((collection) => {
-					const href = ROUTES.SHOP.COLLECTION(collection.slug);
-					const active = isMenuItemActive(href);
-					const image = collection.images[0];
-					return (
-						<m.li
-							key={collection.slug}
-							variants={itemVariants}
-							custom={nextDelay()}
-							className="min-w-0"
-						>
-							<Link
-								href={href}
-								replace
-								prefetch={null}
-								onClick={onNavigate}
-								aria-current={active ? "page" : undefined}
-								// L'accent par slug (même hash que la carte landing et la page
-								// fille) : il ne teinte ici que le wash de l'état vide — pas de
-								// bordure accentuée, `menu-sheet-accent-ink.regression.test.ts`
-								// interdit l'accent en trait dans les fichiers menu-sheet*.
-								data-accent={dataAccentForSlug(collection.slug)}
-								className={cn(
-									cellClassName,
-									"flex-col gap-1.5 p-1.5 pb-2",
-									active && currentCellClassName,
-								)}
-							>
-								{/* `aspect-square`, plus `h-12` : le carré est LE marqueur
-								    « collection » sur toutes les surfaces (cf. JSDoc de
-								    CARD_MEDIA_CLASSES, carte landing) — la bande était la seule
-								    à rendre la même entité en bandeau (harmonisation 2026-08-06). */}
-								{image ? (
-									<span className="bg-muted relative aspect-square w-full overflow-hidden rounded-[7px]">
-										<Image
-											src={image.url}
-											alt=""
-											fill
-											sizes="160px"
-											quality={IMAGE_QUALITY.THUMBNAIL}
-											className="object-cover"
-											placeholder={image.blurDataUrl ? "blur" : "empty"}
-											blurDataURL={image.blurDataUrl ?? undefined}
-											aria-hidden="true"
-										/>
-									</span>
-								) : (
-									// Même promesse que la carte landing et le méga-menu (fleur
-									// sur wash teinté par la série) — icône seule : à ~100 px de
-									// large, « Photos à venir » serait illisible et la légende de
-									// la cellule dit déjà le nom.
-									<span
-										className="flex aspect-square w-full items-center justify-center rounded-[7px] bg-(--section-wash)"
-										aria-hidden="true"
-									>
-										<FlowerIcon className="text-muted-foreground size-6" />
-									</span>
-								)}
-								<span className="text-foreground/85 w-full truncate text-center text-[0.6875rem] font-medium">
-									{collection.label}
-								</span>
-							</Link>
-						</m.li>
-					);
-				})}
-			</ul>
-		</section>
-	);
-}
+//
+// Elle rendait trois tirages photo de collection ; elle est partie avec toutes
+// les autres surfaces à cartes de collection (carte de la landing, bento du
+// méga-menu, chapitres de `/collections`), à refaire.
+//
+// La destination `/collections` n'a PAS disparu du volet pour autant : cette
+// bande en portait le seul lien sous `lg`, et `MenuSheetNav` la rend désormais
+// en rangée pleine largeur, servie par la SSOT `getMobileNavItems`.

@@ -54,7 +54,12 @@ export type ColorSwatch = {
 /** Forme minimale d'un SKU pour les fonctions de sélection */
 export interface BaseSkuForList {
 	isActive: boolean;
-	isDefault: boolean;
+	/**
+	 * Rang éditorial de la variante — le représentant du produit est le rang 0
+	 * de `(position asc, id asc)` (remplace `isDefault`, audit schéma V5, lot A2).
+	 * Les selects catalogue livrent déjà les SKUs dans cet ordre.
+	 */
+	position: number;
 	inventory: number;
 	priceInclTax: number;
 	compareAtPrice: number | null;
@@ -82,7 +87,6 @@ export interface BaseSkuForList {
 		url: string;
 		thumbnailUrl: string | null;
 		altText: string | null;
-		isPrimary: boolean;
 		mediaType: "IMAGE" | "VIDEO";
 		blurDataUrl: string | null;
 	}>;

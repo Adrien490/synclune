@@ -21,7 +21,7 @@ vi.mock("@/modules/auth/lib/require-auth", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	CollectionStatus: {
+	PublicationStatus: {
 		PUBLIC: "PUBLIC",
 		DRAFT: "DRAFT",
 		ARCHIVED: "ARCHIVED",

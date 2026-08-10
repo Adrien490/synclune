@@ -1,5 +1,5 @@
 import { logger } from "@/shared/lib/logger";
-import { CollectionStatus, type Prisma } from "@/app/generated/prisma/client";
+import { PublicationStatus, type Prisma } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
@@ -74,7 +74,7 @@ export async function getCollections(
 					// inoffensif et robuste à un retour en arrière du schéma.
 					hasProducts: undefined,
 					...validation.data.filters,
-					status: CollectionStatus.PUBLIC,
+					status: PublicationStatus.PUBLIC,
 				},
 			};
 

@@ -108,7 +108,7 @@ const sourceProduct = {
 			compareAtPrice: null,
 			inventory: 10,
 			isActive: true,
-			isDefault: true,
+			position: 0,
 			// Couleurs/matériaux en M2M (migrations de mai 2026) — les scalaires
 			// `colorId`/`materialId` n'existent plus sur ProductSku.
 			colors: [
@@ -123,7 +123,6 @@ const sourceProduct = {
 					thumbnailUrl: "https://utfs.io/f/thumb.jpg",
 					altText: "Bracelet Lune",
 					mediaType: "IMAGE",
-					isPrimary: true,
 					position: 0,
 				},
 			],

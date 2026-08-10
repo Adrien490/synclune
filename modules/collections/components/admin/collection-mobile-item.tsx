@@ -4,7 +4,7 @@ import { FolderOpenIcon } from "@phosphor-icons/react/ssr";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
@@ -23,12 +23,12 @@ interface CollectionMobileItemProps {
 }
 
 const STATUS_CONFIG: Record<
-	CollectionStatus,
+	PublicationStatus,
 	{ label: string; variant: "default" | "secondary" | "outline" }
 > = {
-	[CollectionStatus.PUBLIC]: { label: "● Public", variant: "default" },
-	[CollectionStatus.DRAFT]: { label: "○ Brouillon", variant: "secondary" },
-	[CollectionStatus.ARCHIVED]: { label: "▣ Archive", variant: "outline" },
+	[PublicationStatus.PUBLIC]: { label: "● Public", variant: "default" },
+	[PublicationStatus.DRAFT]: { label: "○ Brouillon", variant: "secondary" },
+	[PublicationStatus.ARCHIVED]: { label: "▣ Archive", variant: "outline" },
 };
 
 function getCoverImage(products: CollectionMobileItemProps["collection"]["products"]) {

@@ -11,9 +11,6 @@ interface ProductTypeOption {
 
 // Filtres statiques
 const STATIC_FILTERS = {
-	onSale: {
-		name: "En promotion",
-	},
 	search: {
 		name: "Recherche",
 	},

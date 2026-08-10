@@ -95,25 +95,27 @@ const GUARDS: readonly Guard[] = [
 		hover: "sm:can-hover:group-hover:opacity-100",
 		focus: "sm:focus-within:opacity-100",
 	},
-	// « Le carnet des séries » (2026-08-05) : le redressement des tirages est
-	// l'affordance du lien de bande — l'équivalent du trait dessiné des cartes.
+	// 2026-08-08 : sur pointeur fin, les pastilles de couleur cèdent la place au
+	// repos à « Disponible en N coloris » et ne reviennent qu'au survol de la
+	// carte. Ce sont des LIENS dans l'ordre de tabulation — sans équivalent focus,
+	// un utilisateur au clavier tabulerait sur des cibles invisibles.
 	{
-		file: "modules/collections/components/collection-chapter.tsx",
-		affordance: "les tirages du chapitre se redressent (affordance du lien de bande)",
-		hover: "motion-safe:can-hover:group-hover:rotate-0",
-		focus: "group-focus-within:rotate-0",
+		file: "modules/products/components/product-card-color-swatches.tsx",
+		affordance: "les pastilles de couleur se révèlent au survol de la carte (repli texte au repos)",
+		hover: "sm:can-hover:group-hover:opacity-100",
+		focus: "sm:group-focus-within:opacity-100",
 	},
-	// Même affordance à l'échelle d'une carte (silhouette S2, 2026-08-06). Le
-	// focus est ici gaté `motion-safe:` — LICITE, et même requis : la pose de
-	// repos des tirages n'est plus gatée (une pose n'est pas un mouvement), donc
-	// sans ce gate un focus clavier sous reduced-motion mettrait la pile à plat
-	// d'un seul coup. Ce qui reste interdit, c'est `can-hover:` devant un focus.
-	{
-		file: "app/(shop)/(home)/_components/collections/collections-card.tsx",
-		affordance: "les tirages de la carte se redressent (affordance du lien étiré)",
-		hover: "motion-safe:can-hover:group-hover:rotate-0",
-		focus: "motion-safe:group-focus-within:rotate-0",
-	},
+	/*
+	 * ⚠️ Deux entrées ont été retirées le 2026-08-08 avec les surfaces à cartes de
+	 * collection (`collection-chapter.tsx` et `collections-card.tsx`, à refaire) :
+	 * le redressement des tirages, au chapitre et à la carte.
+	 *
+	 * Les rouvrir avec le rendu, et se rappeler ce qu'elles apprenaient : un focus
+	 * gaté `motion-safe:` est LICITE (la pose de repos des tirages n'étant pas
+	 * gatée, sans lui un focus clavier sous reduced-motion mettrait la pile à
+	 * plat d'un coup) ; ce qui reste interdit, c'est `can-hover:` devant un focus,
+	 * qui ne s'appliquerait jamais au clavier sur tactile.
+	 */
 	// Lot 0 filtres 2026-08-05 : l'anneau de ligne `focus-within:ring-ring`
 	// (rose 1,55:1, doublait le `focus-ring` du contrôle interne et survivait au
 	// clic souris) est remplacé par la même teinte de fond que le survol.

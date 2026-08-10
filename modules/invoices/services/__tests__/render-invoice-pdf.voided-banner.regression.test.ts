@@ -69,7 +69,7 @@ function makeVoidedOrder(): Order {
 		shippingCarrier: "colissimo",
 		trackingNumber: null,
 		trackingUrl: null,
-		actualDelivery: null,
+		deliveredAt: null,
 		shippedAt: null,
 		status: "CANCELLED",
 		paymentStatus: "REFUNDED",

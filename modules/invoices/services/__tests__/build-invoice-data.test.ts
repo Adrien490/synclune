@@ -52,7 +52,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		shippingCarrier: "colissimo",
 		trackingNumber: null,
 		trackingUrl: null,
-		actualDelivery: null,
+		deliveredAt: null,
 		shippedAt: null,
 		status: "PROCESSING",
 		paymentStatus: "PAID",
@@ -70,7 +70,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		updatedAt: new Date("2026-05-27T18:00:00Z"),
 		items: [
 			{
-				id: "item-1",
+				// V5 : OrderItem n'a plus de colonne `id` (PK composite orderId+skuId)
 				skuId: "sku-1",
 				productId: "product-1",
 				productTitle: "Collier Lune d'Argent",

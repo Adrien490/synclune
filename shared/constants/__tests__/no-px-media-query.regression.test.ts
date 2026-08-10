@@ -158,6 +158,55 @@ describe("@regression no-px-media-query", () => {
 		).toEqual([]);
 	});
 
+	// Les conditions média d'un attribut `sizes` (next/image) passaient sous le
+	// radar des contrôles ci-dessus : ni `matchMedia`, ni `@media`. Elles se
+	// désynchronisent pourtant exactement pareil — les colonnes de grille
+	// basculent aux variants Tailwind (rem) pendant que le hint reste figé en
+	// px, et le navigateur choisit une variante srcset sous-résolue dès que la
+	// police racine change (cas reproduit sur ProductCard, audit 2026-08-08 :
+	// racine 20px, viewport 768-960px → grille à 2 colonnes, hint à 30vw).
+	// Exprimer les conditions via mediaBelow()/mediaAtLeast(), comme
+	// IMAGE_SIZES.PRODUCT_CARD ; les LONGUEURS de slot (`45vw`, `16rem`, `120px`
+	// pour une vignette fixe) ne sont pas concernées, seules les conditions.
+	it("n'écrit pas de condition média en px dans un attribut sizes", () => {
+		/**
+		 * Dette constatée à l'introduction du contrôle (2026-08-08) : conditions
+		 * en px antérieures à la règle. La liste ne doit que RÉTRÉCIR — migrer un
+		 * fichier vers mediaBelow()/mediaAtLeast(), puis retirer sa ligne.
+		 */
+		const SIZES_PX_DEBT = new Set<string>([
+			// Documentation : cite l'ancien pattern interdit en exemple.
+			"shared/constants/breakpoints.ts",
+			"app/(shop)/(home)/_components/atelier/atelier-portrait.tsx",
+			"modules/cart/components/cart-sheet-item-row.tsx",
+			"modules/collections/components/admin/collection-mobile-item.tsx",
+			"modules/collections/constants/image-sizes.constants.ts",
+			"modules/media/components/admin/sortable-media-item.tsx",
+			"modules/media/components/gallery/thumbnail.tsx",
+			"modules/media/constants/image-config.constants.ts",
+			"modules/products/components/admin/product-detail/product-detail-media-card.tsx",
+			"modules/products/components/admin/product-mobile-item.tsx",
+			"modules/skus/components/admin/sku-detail/sku-detail-media-card.tsx",
+			"modules/skus/components/admin/sku-mobile-item.tsx",
+			"shared/components/media-upload/media-upload-grid.tsx",
+		]);
+
+		const offenders = findOffendingLines(
+			sourceFiles.filter((f) => !SIZES_PX_DEBT.has(f)),
+			/\((?:(?:min|max)-width:\s*|width\s*[<>]=?\s*)\d+(?:\.\d+)?px\)/,
+		);
+
+		expect(
+			offenders,
+			"Condition média en px dans un attribut `sizes` — elle se désynchronise " +
+				"des colonnes de grille (variants Tailwind en rem) dès que la police " +
+				"racine change, et le navigateur choisit une variante srcset sous-résolue.\n" +
+				"Dériver la condition de mediaBelow()/mediaAtLeast() " +
+				"(shared/constants/breakpoints.ts), cf. IMAGE_SIZES.PRODUCT_CARD.\n" +
+				offenders.join("\n"),
+		).toEqual([]);
+	});
+
 	it("n'utilise aucune largeur en px dans les media queries CSS écrites à la main", () => {
 		const offenders = findOffendingLines(
 			cssFiles,

@@ -11,8 +11,11 @@ type RadioOption = { value: string; label: string };
 
 /**
  * Carte « Statut » partagée. Rend toujours un radio (Visibilité produit OU
- * Disponibilité variante). Optionnellement, une checkbox `isDefault` après le radio
- * pour les variantes (admin SKU form).
+ * Disponibilité variante).
+ *
+ * ⚠️ La checkbox « Variante par défaut » a disparu avec `ProductSku.isDefault`
+ * (audit schéma V5, lot A) : la variante principale est désormais le rang 0 de
+ * `position`, un ORDRE — plus un drapeau qu'une case à cocher saurait porter.
  */
 export interface StatusCardProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shared across multiple form instances (Create/Edit Product, Create/Edit SKU). Union typing would create generic explosion; caller is responsible for field name validity.
@@ -29,12 +32,6 @@ export interface StatusCardProps {
 	radioOptions: RadioOption[];
 	radioHint?: string;
 
-	// --- Checkbox isDefault optionnelle (uniquement pour SKU forms) ---
-	isDefaultFieldName?: string;
-	isDefaultLabel?: string;
-	isDefaultCheckboxLabel?: string;
-	isDefaultHint?: string;
-
 	viewTransitionName?: string;
 }
 
@@ -46,10 +43,6 @@ export function StatusCard({
 	radioLabel,
 	radioOptions,
 	radioHint,
-	isDefaultFieldName,
-	isDefaultLabel = "Variante par défaut",
-	isDefaultCheckboxLabel = "Affichée en premier sur la fiche produit",
-	isDefaultHint,
 	viewTransitionName,
 }: StatusCardProps) {
 	const haptic = useHaptic();
@@ -82,23 +75,6 @@ export function StatusCard({
 						</div>
 					)}
 				</form.AppField>
-
-				{isDefaultFieldName ? (
-					<form.AppField
-						name={isDefaultFieldName}
-						listeners={{ onChange: () => haptic("selection") }}
-					>
-						{(field: { CheckboxField: React.ComponentType<{ label: string }> }) => (
-							<div className="space-y-2">
-								<FieldLabel optional>{isDefaultLabel}</FieldLabel>
-								<field.CheckboxField label={isDefaultCheckboxLabel} />
-								{isDefaultHint ? (
-									<p className="text-muted-foreground text-xs">{isDefaultHint}</p>
-								) : null}
-							</div>
-						)}
-					</form.AppField>
-				) : null}
 			</CardContent>
 		</Card>
 	);

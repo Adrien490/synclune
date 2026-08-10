@@ -20,7 +20,7 @@ import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
 import { buildSkuUrl } from "@/modules/products/utils/build-sku-url";
-import { computeDiscountPercent } from "@/modules/products/utils/compute-discount-percent";
+import { productViewTransitionName } from "@/modules/products/utils/product-view-transition";
 import type { ComponentProps, ReactNode } from "react";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
@@ -28,15 +28,16 @@ interface ProductCardProps {
 	product: ProductCarouselItem;
 	/**
 	 * Index dans la liste (eager loading + fetchPriority above-fold, et sens
-	 * de l'inclinaison au survol : une carte sur deux penche à droite)
+	 * de l'inclinaison au survol : une carte sur deux penche à droite).
+	 * Omis, la carte est traitée comme d'index 0 SAUF pour le preload LCP
+	 * (`index === 0` strict) : image en `eager`, inclinaison de carte paire.
+	 * Toute grille doit le passer — l'omission n'a de sens que hors liste.
 	 */
 	index?: number;
 	/** Indique si le produit est dans la wishlist */
 	isInWishlist?: boolean;
 	/** Identifiant de section pour des IDs uniques (ex: "bestsellers", "latest") */
 	sectionId?: string;
-	/** Si true, priorise l'affichage du SKU en promotion */
-	preferOnSale?: boolean;
 	/** Disable above-fold preload (for cards inside Suspense boundaries) */
 	disablePreload?: boolean;
 }
@@ -121,23 +122,14 @@ export function ProductCard({
 	index,
 	isInWishlist = false,
 	sectionId,
-	preferOnSale,
 	disablePreload = false,
 }: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
 
 	// Single-pass O(n) extraction of all display data from SKUs
-	const {
-		defaultSku,
-		price,
-		compareAtPrice,
-		stockInfo,
-		primaryImage,
-		secondaryImage,
-		colors,
-		material,
-	} = getProductCardData(product, preferOnSale ? { preferOnSale } : undefined);
+	const { defaultSku, price, stockInfo, primaryImage, secondaryImage, colors, material } =
+		getProductCardData(product);
 
 	const { status: stockStatus, message: stockMessage } = stockInfo;
 
@@ -153,14 +145,14 @@ export function ProductCard({
 	// Urgency badge for low stock (scarcity signal for conversion)
 	const showUrgencyBadge = stockStatus === "low_stock";
 
-	// Remise inline à côté du prix (plus de badge promo sur l'image : la promo
-	// ne dispute plus le slot haut-gauche aux badges de stock)
-	const discountPercent = computeDiscountPercent(price, compareAtPrice);
-	const showDiscountPill = discountPercent > 0 && !noActiveSku;
-
 	const baseUrl = `/creations/${slug}`;
+	// L'URL suit TOUJOURS le SKU affiché : quand getPrimarySkuForList s'écarte du
+	// représentant (rang 0 épuisé → « le moins cher en stock », ou couleur préférée),
+	// la carte affichait le prix du SKU X en liant vers une PDP qui en montre un autre.
+	// Le représentant est `skus[0]` (les selects trient par position, id) ; l'URL nue
+	// suffit alors, la PDP ouvrant elle-même sur le rang 0.
 	const productUrl =
-		preferOnSale && defaultSku && !defaultSku.isDefault
+		defaultSku && defaultSku.id !== product.skus[0]?.id
 			? buildSkuUrl(baseUrl, defaultSku)
 			: baseUrl;
 
@@ -178,10 +170,11 @@ export function ProductCard({
 	//   la bande passante 4G et retardent celle qui EST le LCP.
 	const isLcpCandidate = !disablePreload && index === 0;
 
-	// Aligned with Gallery PDP for card→detail morph (gallery.tsx:436).
-	const productViewTransitionName = `product-${product.id}`;
+	// SSOT partagée avec la première slide de la galerie PDP : l'égalité des
+	// deux noms EST le morph carte → détail (invariants documentés sur l'util).
+	const viewTransitionName = productViewTransitionName(product.id);
 
-	// Build sr-only description for screen readers (badges + promo info)
+	// Build sr-only description for screen readers (stock badges)
 	const badgeDescriptions: string[] = [];
 	if (stockStatus === "out_of_stock") {
 		badgeDescriptions.push(outOfStockBadgeMessage);
@@ -191,9 +184,6 @@ export function ProductCard({
 		badgeDescriptions.push(
 			`Stock limité : plus que ${count} exemplaire${count > 1 ? "s" : ""} disponible${count > 1 ? "s" : ""}`,
 		);
-	}
-	if (showDiscountPill) {
-		badgeDescriptions.push(`Promotion : -${discountPercent}%`);
 	}
 	const badgeDescId =
 		badgeDescriptions.length > 0
@@ -242,13 +232,15 @@ export function ProductCard({
 				)}
 				{showUrgencyBadge && <CardBadge variant="warning">{stockMessage}</CardBadge>}
 
-				{/* Wishlist button (client island) — toujours visible, pastille blanche
-				    pour le contraste sur les photos (plus de reveal au survol) */}
+				{/* Wishlist button (client island) — toujours visible, SANS pastille de fond :
+				    le contraste sur photo est porté par le double drop-shadow de l'icône
+				    (halo blanc + ombre sombre, cf. wishlist-button.tsx), qui est le
+				    traitement documenté du composant — le fond faisait doublon. */}
 				<WishlistButton
 					productId={product.id}
 					isInWishlist={isInWishlist}
 					productTitle={title}
-					className="bg-card/85 absolute top-2 right-2 z-30 rounded-full shadow-sm backdrop-blur-sm"
+					className="absolute top-2 right-2 z-30"
 				/>
 
 				<div className="absolute inset-0">
@@ -256,14 +248,14 @@ export function ProductCard({
 					    reste visible si l'URL CDN 404 (pas d'îlot client sur le hot path). */}
 					<Image
 						src={primaryImage.url}
-						alt={primaryImage.alt ?? PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+						alt={primaryImage.alt}
 						fill
 						className={cn(
 							"rounded-sm object-cover",
 							!secondaryImage &&
 								"motion-safe:can-hover:group-hover:scale-105 ease-out motion-safe:transition-[scale] motion-safe:duration-300",
 						)}
-						style={{ viewTransitionName: productViewTransitionName }}
+						style={{ viewTransitionName }}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
 						preload={isLcpCandidate}
@@ -367,21 +359,12 @@ export function ProductCard({
 					</span>
 				</Link>
 
-				{/* Matière principale du SKU affiché */}
-				{material && !noActiveSku && (
-					<span className="text-muted-foreground text-xs">{material}</span>
-				)}
+				{/* Matière principale du SKU affiché (déjà null sans SKU actif) */}
+				{material && <span className="text-muted-foreground text-xs">{material}</span>}
 
-				{/* Prix — placed before colors for scannability (Baymard guideline),
-				    remise inline recollée au prix */}
-				{!noActiveSku && (
-					<ProductPrice
-						price={price}
-						compareAtPrice={compareAtPrice}
-						discountPercent={showDiscountPill ? discountPercent : undefined}
-						className="mt-0.5"
-					/>
-				)}
+				{/* Prix — placed before colors for scannability (Baymard guideline).
+				    Pas de prix barré/remise : cf. le commentaire Omnibus de ProductPrice. */}
+				{!noActiveSku && <ProductPrice price={price} className="mt-0.5" />}
 
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (

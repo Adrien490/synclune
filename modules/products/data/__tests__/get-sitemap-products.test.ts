@@ -46,7 +46,6 @@ function makeSitemapProduct(overrides: Record<string, unknown> = {}) {
 					{
 						url: "https://example.com/image.jpg",
 						altText: "Bracelet Lune",
-						isPrimary: true,
 					},
 				],
 			},
@@ -110,7 +109,7 @@ describe("getSitemapProducts", () => {
 		await expect(getSitemapProducts()).rejects.toThrow("connection reset");
 	});
 
-	it("orders images with isPrimary first (Google uses the first <image:image>)", async () => {
+	it("orders images by canonical order (Google uses the first <image:image>)", async () => {
 		await getSitemapProducts();
 
 		expect(mockFindMany).toHaveBeenCalledWith(
@@ -119,7 +118,7 @@ describe("getSitemapProducts", () => {
 					skus: expect.objectContaining({
 						select: expect.objectContaining({
 							images: expect.objectContaining({
-								orderBy: [{ isPrimary: "desc" }, { position: "asc" }, { id: "asc" }],
+								orderBy: [{ position: "asc" }, { id: "asc" }],
 							}),
 						}),
 					}),

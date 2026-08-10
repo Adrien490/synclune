@@ -12,7 +12,6 @@ export type SitemapProduct = {
 		images: Array<{
 			url: string;
 			altText: string | null;
-			isPrimary: boolean;
 		}>;
 	}>;
 };
@@ -60,12 +59,11 @@ export async function getSitemapProducts(): Promise<SitemapProduct[]> {
 							select: {
 								url: true,
 								altText: true,
-								isPrimary: true,
 							},
-							// `isPrimary` d'abord : Google privilégie la première
-							// `<image:image>` d'une `<url>` comme visuel représentatif.
-							// `isPrimary` était sélectionné mais aucun tri ne l'exploitait.
-							orderBy: [{ isPrimary: "desc" }, { position: "asc" }, { id: "asc" }],
+							// Ordre canonique (position, id) : Google privilégie la première
+							// `<image:image>` d'une `<url>` comme visuel représentatif — le
+							// rang 0 est donc l'image représentative du SKU.
+							orderBy: [{ position: "asc" }, { id: "asc" }],
 						},
 					},
 				},

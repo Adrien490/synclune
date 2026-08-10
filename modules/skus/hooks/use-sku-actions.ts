@@ -33,7 +33,12 @@ interface UseSkuActionsParams {
 	skuId: string;
 	skuName: string;
 	productSlug: string;
-	isDefault?: boolean;
+	/**
+	 * Vrai si ce SKU est le représentant du produit — rang 0 de
+	 * (position asc, id asc), calculé au niveau liste ou data layer (remplace la
+	 * colonne `isDefault`, audit schéma V5, lot A2).
+	 */
+	isRepresentative?: boolean;
 	isActive?: boolean;
 	inventory?: number;
 	priceInclTax?: number;
@@ -48,7 +53,7 @@ export function useSkuActions({
 	skuId,
 	skuName,
 	productSlug,
-	isDefault = false,
+	isRepresentative = false,
 	isActive = true,
 	inventory = 0,
 	priceInclTax = 0,
@@ -101,7 +106,9 @@ export function useSkuActions({
 					label: isActive ? "Désactiver" : "Activer",
 					icon: isActive ? ToggleLeftIcon : ToggleRightIcon,
 					disabled: isToggling,
-					hidden: isDefault,
+					// L'action refuse de désactiver le représentant (update-sku-status) :
+					// ne pas proposer un geste voué à l'erreur.
+					hidden: isRepresentative,
 					onSelect: () => toggleStatus(skuId, !isActive),
 				},
 				{
@@ -146,15 +153,16 @@ export function useSkuActions({
 					label: "Définir par défaut",
 					icon: CheckIcon,
 					disabled: isPending,
-					hidden: isDefault,
+					// Masquée sur le rang 0 : il est déjà le représentant.
+					hidden: isRepresentative,
 					onSelect: () => setAsDefault(skuId),
 				},
 				{
 					key: "default-badge",
 					label: "Variante par défaut",
-					description: "Cette variante est le choix par défaut — non supprimable",
+					description: "Cette variante est affichée en premier sur la fiche produit",
 					disabled: true,
-					hidden: !isDefault,
+					hidden: !isRepresentative,
 					onSelect: () => {},
 				},
 			],
@@ -167,9 +175,13 @@ export function useSkuActions({
 					label: "Supprimer",
 					icon: TrashIcon,
 					variant: "destructive",
-					hidden: isDefault,
+					// Supprimer le représentant est permis depuis le passage au rang
+					// (position asc, id asc) : la variante suivante prend mécaniquement
+					// le relais, plus besoin de transfert préalable (delete-sku, lot A2).
+					// Les vrais refus (dernière variante, commandes liées) restent portés
+					// par l'action.
 					closesMenu: false,
-					onSelect: () => deleteDialog.open({ skuId, skuName, isDefault }),
+					onSelect: () => deleteDialog.open({ skuId, skuName, isRepresentative }),
 				},
 			],
 		},

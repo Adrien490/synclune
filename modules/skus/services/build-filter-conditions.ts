@@ -118,12 +118,6 @@ export const buildFilterConditions = (
 		});
 	}
 
-	if (typeof filters.isDefault === "boolean") {
-		conditions.push({
-			isDefault: filters.isDefault,
-		});
-	}
-
 	// Filtres de prix (utiliser priceInclTax)
 	if (typeof filters.priceMin === "number") {
 		conditions.push({

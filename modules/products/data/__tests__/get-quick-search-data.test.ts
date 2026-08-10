@@ -28,13 +28,13 @@ vi.mock("@/modules/product-types/data/get-product-types", () => ({
 
 // Mocké au niveau du fetcher, pas de Prisma : `get-colors` importe
 // `shared/lib/prisma`, dont l'instanciation casse sous le mock partiel du client
-// Prisma posé plus bas (`CollectionStatus` seulement).
+// Prisma posé plus bas (`PublicationStatus` seulement).
 vi.mock("@/modules/colors/data/get-colors", () => ({
 	getColors: mockGetColors,
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	CollectionStatus: { PUBLIC: "PUBLIC" },
+	PublicationStatus: { PUBLIC: "PUBLIC" },
 }));
 
 import { getQuickSearchData } from "../get-quick-search-data";
@@ -43,16 +43,15 @@ import { getQuickSearchData } from "../get-quick-search-data";
 // HELPERS
 // ============================================================================
 
-// `mediaType` et `isPrimary` sont des champs de `PRODUCT_CAROUSEL_SELECT` : toute
-// ligne réelle les porte. La fixture les omettait, ce qui la rendait compatible
-// avec l'ancien `find(isPrimary) ?? images[0]` — l'expression bannie par
-// CLAUDE.md — mais pas avec la SSOT `pickPrimaryImage`, qui exige un média IMAGE.
+// `mediaType` est un champ de `PRODUCT_CAROUSEL_SELECT` : toute ligne réelle le
+// porte. La fixture l'omettait, ce qui la rendait compatible avec l'ancienne
+// expression `images[0]` sans filtre — bannie par CLAUDE.md — mais pas avec la
+// SSOT `pickPrimaryImage`, qui exige un média IMAGE.
 function makeImage(overrides: Record<string, unknown> = {}) {
 	return {
 		url: "https://example.com/image.jpg",
 		blurDataUrl: "data:image/jpeg;base64,blur",
 		mediaType: "IMAGE",
-		isPrimary: false,
 		...overrides,
 	};
 }

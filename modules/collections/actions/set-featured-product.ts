@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -13,7 +12,14 @@ import { setFeaturedProductSchema } from "../schemas/collection.schemas";
 
 /**
  * Server Action pour definir un produit comme "vedette" dans une collection
- * Un seul produit peut etre featured par collection
+ *
+ * Depuis le remplacement d'`isFeatured` par `position` (audit schéma V5, lot A3),
+ * la vedette est le rang 0 de `(position asc, addedAt desc)` : « mettre en
+ * vedette » = amener l'association au rang 0 et renuméroter les autres en
+ * préservant leur ordre relatif. Plus d'index unique partiel à protéger, donc
+ * plus de transaction SERIALIZABLE. Il n'y a plus non plus d'état « aucune
+ * vedette » : un rang 0 existe toujours (l'ex-`removeFeaturedProduct` est
+ * parti avec le booléen).
  */
 export async function setFeaturedProduct(
 	_: ActionState | undefined,
@@ -69,23 +75,28 @@ export async function setFeaturedProduct(
 			);
 		}
 
-		// 4. Transaction interactive Serializable: deux admins concurrents sur la
-		// meme collection mais produits differents pourraient sinon violer la
-		// contrainte unique partielle (WHERE isFeatured = true). Serializable garantit
-		// l'atomicite read-modify-write sur les rows ProductCollection lus.
-		await prisma.$transaction(
-			async (tx) => {
-				await tx.productCollection.updateMany({
-					where: { collectionId, isFeatured: true },
-					data: { isFeatured: false },
-				});
+		// 4. Renumérotation : la cible prend le rang 0, les autres associations
+		// suivent dans leur ordre canonique actuel (position asc, addedAt desc).
+		// Quelques dizaines de lignes au plus — la boucle d'updates est négligeable.
+		await prisma.$transaction(async (tx) => {
+			const siblings = await tx.productCollection.findMany({
+				where: { collectionId, NOT: { productId } },
+				orderBy: [{ position: "asc" }, { addedAt: "desc" }],
+				select: { productId: true },
+			});
+			await tx.productCollection.update({
+				where: { productId_collectionId: { productId, collectionId } },
+				data: { position: 0 },
+			});
+			for (const [index, sibling] of siblings.entries()) {
 				await tx.productCollection.update({
-					where: { productId_collectionId: { productId, collectionId } },
-					data: { isFeatured: true },
+					where: {
+						productId_collectionId: { productId: sibling.productId, collectionId },
+					},
+					data: { position: index + 1 },
 				});
-			},
-			{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-		);
+			}
+		});
 
 		// 5. Invalider le cache de la collection
 		const collectionTags = getCollectionInvalidationTags(productCollection.collection.slug);
@@ -96,78 +107,5 @@ export async function setFeaturedProduct(
 		);
 	} catch (e) {
 		return handleActionError(e, "Impossible de définir le produit vedette");
-	}
-}
-
-/**
- * Server Action pour retirer le statut "vedette" d'un produit dans une collection
- */
-export async function removeFeaturedProduct(
-	_: ActionState | undefined,
-	formData: FormData,
-): Promise<ActionState> {
-	try {
-		// 1. Admin auth check
-		const auth = await requireAdmin();
-		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 2. Validate data
-		const validated = validateInput(setFeaturedProductSchema, {
-			collectionId: formData.get("collectionId"),
-			productId: formData.get("productId"),
-		});
-		if ("error" in validated) return validated.error;
-
-		const { collectionId, productId } = validated.data;
-
-		// 3. Verifier que l'association ProductCollection existe
-		const productCollection = await prisma.productCollection.findUnique({
-			where: {
-				productId_collectionId: {
-					productId,
-					collectionId,
-				},
-			},
-			include: {
-				collection: {
-					select: { slug: true, name: true },
-				},
-				product: {
-					select: { title: true },
-				},
-			},
-		});
-
-		if (!productCollection) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Ce produit n'appartient pas à cette collection.",
-			};
-		}
-
-		// 4. Retirer le statut featured
-		await prisma.productCollection.update({
-			where: {
-				productId_collectionId: {
-					productId,
-					collectionId,
-				},
-			},
-			data: {
-				isFeatured: false,
-			},
-		});
-
-		// 5. Invalider le cache de la collection
-		const collectionTags = getCollectionInvalidationTags(productCollection.collection.slug);
-		collectionTags.forEach((tag) => updateTag(tag));
-
-		return success(
-			`"${productCollection.product.title}" n'est plus le produit vedette de "${productCollection.collection.name}".`,
-		);
-	} catch (e) {
-		return handleActionError(e, "Impossible de retirer le produit vedette");
 	}
 }

@@ -26,10 +26,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * appelant un helper qu'on suppose branché.
  */
 
-const { mockCacheTag, mockCacheLife, mockFindMany } = vi.hoisted(() => ({
+const { mockCacheTag, mockCacheLife, mockFindMany, mockFindFirst } = vi.hoisted(() => ({
 	mockCacheTag: vi.fn(),
 	mockCacheLife: vi.fn(),
 	mockFindMany: vi.fn(),
+	mockFindFirst: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -39,7 +40,7 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
-	prisma: { productSku: { findMany: mockFindMany } },
+	prisma: { productSku: { findMany: mockFindMany, findFirst: mockFindFirst } },
 }));
 
 import { fetchProductSkus } from "../../data/fetch-skus";
@@ -64,6 +65,7 @@ const LIST_PARAMS = {
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockFindMany.mockResolvedValue([]);
+	mockFindFirst.mockResolvedValue(null);
 });
 
 /** Tags qu'un lecteur pose réellement, capturés depuis les appels à `cacheTag`. */

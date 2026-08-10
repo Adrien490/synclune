@@ -11,9 +11,7 @@ interface AvailabilityFilterSectionProps {
 	/** Préfixe des `id` DOM — cf. `ProductFilterCompartments.host`. */
 	idPrefix: string;
 	inStockOnly: boolean;
-	onSale: boolean;
 	onInStockChange: (checked: boolean) => void;
-	onSaleChange: (checked: boolean) => void;
 }
 
 // ============================================================================
@@ -23,7 +21,10 @@ interface AvailabilityFilterSectionProps {
 /**
  * Corps du compartiment « Disponibilité » du panneau de filtres.
  *
- * Les deux lignes portent la même parité survol ⇔ focus que les lignes à cases
+ * ⚠️ La ligne « En promotion » a été retirée (retrait Omnibus 2026-08-08,
+ * cf. `ProductPrice`) : la facette triait sur un critère devenu invisible.
+ *
+ * La ligne porte la même parité survol ⇔ focus que les lignes à cases
  * (`checkbox-filter-item`) : le survol est gaté `can-hover:` (sticky-hover iOS)
  * et le focus clavier reçoit la même teinte, jamais derrière ce gate.
  *
@@ -36,9 +37,7 @@ interface AvailabilityFilterSectionProps {
 export function AvailabilityFilterSection({
 	idPrefix,
 	inStockOnly,
-	onSale,
 	onInStockChange,
-	onSaleChange,
 }: AvailabilityFilterSectionProps) {
 	const haptic = useHaptic();
 
@@ -46,7 +45,6 @@ export function AvailabilityFilterSection({
 		"can-hover:hover:bg-accent/50 has-focus-visible:bg-accent/50 -mx-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors duration-150";
 
 	const inStockId = `${idPrefix}-filter-in-stock`;
-	const onSaleId = `${idPrefix}-filter-on-sale`;
 
 	return (
 		<div className="space-y-1">
@@ -62,20 +60,6 @@ export function AvailabilityFilterSection({
 						onInStockChange(checked);
 					}}
 					aria-labelledby={`${inStockId}-label`}
-				/>
-			</label>
-			<label htmlFor={onSaleId} className={rowClassName}>
-				<span id={`${onSaleId}-label`} className="text-sm font-normal">
-					En promotion
-				</span>
-				<Switch
-					id={onSaleId}
-					checked={onSale}
-					onCheckedChange={(checked) => {
-						haptic("selection");
-						onSaleChange(checked);
-					}}
-					aria-labelledby={`${onSaleId}-label`}
 				/>
 			</label>
 		</div>

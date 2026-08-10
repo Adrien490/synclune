@@ -144,7 +144,11 @@ describe("getProductSkus – validation", () => {
 		});
 
 		const result = await getProductSkus(makeDefaultInput());
-		expect(result).toEqual({ productSkus: [], pagination: EMPTY_PAGINATION });
+		expect(result).toEqual({
+			productSkus: [],
+			representativeSkuId: null,
+			pagination: EMPTY_PAGINATION,
+		});
 	});
 
 	it("does not call fetchProductSkus when validation fails", async () => {

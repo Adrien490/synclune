@@ -37,7 +37,8 @@ export function ProductDetailCollectionsCard({ collections }: ProductDetailColle
 									className="hover:bg-muted/40 hover:text-primary active:bg-muted/60 focus-visible:ring-ring flex touch-manipulation items-center justify-between gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
 								>
 									<span className="min-w-0 truncate">{entry.collection.name}</span>
-									{entry.isFeatured ? (
+									{/* Rang 0 = vedette : `isFeatured` a cédé la place à `position` */}
+									{entry.position === 0 ? (
 										<Badge variant="default" className="shrink-0">
 											<StarIcon className="size-3" aria-hidden="true" />À la une
 										</Badge>

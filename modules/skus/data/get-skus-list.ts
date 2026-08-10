@@ -56,6 +56,7 @@ export async function getProductSkus(params: GetProductSkusParams): Promise<GetP
 
 const EMPTY_PAGE: GetProductSkusReturn = {
 	productSkus: [],
+	representativeSkuId: null,
 	pagination: {
 		nextCursor: null,
 		prevCursor: null,

@@ -48,7 +48,7 @@ export async function fetchDashboardActionItems(): Promise<DashboardActionItems>
 				where: {
 					status: OrderStatus.SHIPPED,
 					shippedAt: { lt: new Date(now - STUCK_SHIPPED_MS) },
-					actualDelivery: null,
+					deliveredAt: null,
 					...notDeleted,
 				},
 			}),

@@ -19,14 +19,14 @@ import { OrderReturnGuidance } from "../order-return-guidance";
 interface GuidanceOrder {
 	status: string;
 	paymentStatus: string;
-	actualDelivery: Date | null;
+	deliveredAt: Date | null;
 	refunds: Array<{ status: string }>;
 }
 
 const PAID_NOT_DELIVERED: GuidanceOrder = {
 	status: "PROCESSING",
 	paymentStatus: "PAID",
-	actualDelivery: null,
+	deliveredAt: null,
 	refunds: [],
 };
 
@@ -58,7 +58,7 @@ describe("OrderReturnGuidance", () => {
 	it("délai dépassé → renvoie vers la garantie légale, pas vers un silence", () => {
 		renderGuidance({
 			status: "DELIVERED",
-			actualDelivery: new Date("2020-01-01"),
+			deliveredAt: new Date("2020-01-01"),
 		});
 
 		expect(screen.getByText(/Délai de rétractation écoulé/i)).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe("OrderReturnGuidance", () => {
 	it("demande déjà en cours → le dit, au lieu de laisser croire à une inaction", () => {
 		renderGuidance({
 			status: "DELIVERED",
-			actualDelivery: new Date(),
+			deliveredAt: new Date(),
 			refunds: [{ status: "PENDING" }] as never,
 		});
 
@@ -78,7 +78,7 @@ describe("OrderReturnGuidance", () => {
 	it("commande éligible → propose la demande de retour par email, avec le délai restant", () => {
 		const { container } = renderGuidance({
 			status: "DELIVERED",
-			actualDelivery: new Date(), // livrée à l'instant → 14 jours restants
+			deliveredAt: new Date(), // livrée à l'instant → 14 jours restants
 		});
 		const scope = within(container as HTMLElement);
 

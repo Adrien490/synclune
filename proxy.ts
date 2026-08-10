@@ -32,13 +32,17 @@ const publicRoutes = [
 	"/retractation",
 	// Autres pages publiques
 	//
-	// `/a-propos` et `/aide` n'ont plus de page : les deux sont des redirections
-	// permanentes (`next.config.ts`) vers `/` et `/#faq`. Elles restent
-	// allowlistées parce que le default-deny ci-dessous les renverrait sinon
-	// vers l'accueil SANS l'ancre — et parce qu'un jour où l'ordre de routage
-	// changerait, une URL indexée se mettrait à mentir en silence.
+	// `/a-propos` n'a plus de page : c'est une redirection permanente
+	// (`next.config.ts`) vers `/`. Elle reste allowlistée parce qu'un jour où
+	// l'ordre de routage changerait, une URL indexée se mettrait à mentir en
+	// silence.
+	//
+	// ⚠️ `/aide` a quitté cette liste le 2026-08-08, en même temps que sa règle
+	// 308 : la section FAQ a été retirée de la landing (à refaire), donc l'ancre
+	// `/#faq` qu'elle visait n'existe plus. L'URL tombe désormais dans le
+	// default-deny ci-dessous, qui renvoie vers `/`. Rouvrir la FAQ = remettre
+	// les DEUX (allowlist + redirection), sinon le proxy avale la seconde.
 	"/a-propos",
-	"/aide",
 	"/favoris",
 	"/opengraph-image",
 	"/monitoring",

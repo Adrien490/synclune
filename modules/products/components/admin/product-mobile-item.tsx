@@ -5,9 +5,10 @@ import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants"
 import Image from "next/image";
 
 import type { MediaType } from "@/app/generated/prisma/client";
-import { ProductStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
+import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import {
 	PRODUCT_STATUS_LABELS,
 	PRODUCT_STATUS_VARIANTS,
@@ -24,16 +25,16 @@ import { useProductActions } from "../../hooks/use-product-actions";
 
 // Glyphes = affordance locale (distinction hors couleur en liste dense) ;
 // libellés et variants dérivés de la SSOT product-status-display.
-const STATUS_CONFIG: Record<ProductStatus, { label: string; variant: BadgeVariant }> = {
-	[ProductStatus.PUBLIC]: {
+const STATUS_CONFIG: Record<PublicationStatus, { label: string; variant: BadgeVariant }> = {
+	[PublicationStatus.PUBLIC]: {
 		label: `● ${PRODUCT_STATUS_LABELS.PUBLIC}`,
 		variant: PRODUCT_STATUS_VARIANTS.PUBLIC,
 	},
-	[ProductStatus.DRAFT]: {
+	[PublicationStatus.DRAFT]: {
 		label: `○ ${PRODUCT_STATUS_LABELS.DRAFT}`,
 		variant: PRODUCT_STATUS_VARIANTS.DRAFT,
 	},
-	[ProductStatus.ARCHIVED]: {
+	[PublicationStatus.ARCHIVED]: {
 		label: `▣ ${PRODUCT_STATUS_LABELS.ARCHIVED}`,
 		variant: PRODUCT_STATUS_VARIANTS.ARCHIVED,
 	},
@@ -47,7 +48,6 @@ interface Sku {
 		thumbnailUrl?: string | null;
 		blurDataUrl?: string | null;
 		mediaType: MediaType;
-		isPrimary: boolean;
 	}>;
 }
 
@@ -56,7 +56,7 @@ interface ProductMobileItemProps {
 		id: string;
 		slug: string;
 		title: string;
-		status: ProductStatus;
+		status: PublicationStatus;
 		skus: Sku[];
 		type: { label: string } | null;
 	};
@@ -78,8 +78,9 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 	const statusConfig = STATUS_CONFIG[product.status];
 	const priceDisplay = getPriceDisplay(product.skus);
 	const stock = getTotalStock(product.skus);
-	const primaryImage = product.skus.flatMap((sku) => sku.images).find((img) => img.isPrimary);
-	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> icône de secours
+	// Première IMAGE de l'ordre canonique (les selects trient SKUs et médias par
+	// position) — SSOT pickPrimaryImage : une vidéo au rang 0 ne doit pas devenir vignette
+	const primaryImage = pickPrimaryImage(product.skus.flatMap((sku) => sku.images));
 	const thumbSrc = primaryImage ? resolveMediaThumbSrc(primaryImage) : null;
 
 	const { sections } = useProductActions({

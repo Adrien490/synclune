@@ -1,7 +1,6 @@
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import type { Product } from "@/modules/products/types/product.types";
 import { ATELIER_HOWTO, ATELIER_IMAGE, ATELIER_STEPS } from "@/shared/constants/atelier-content";
-import { FAQ_DATE_MODIFIED, FAQ_ITEMS } from "@/shared/constants/faq-items";
 import {
 	getFounderSchema,
 	getLocalBusinessSchema,
@@ -37,7 +36,7 @@ interface StructuredDataProps {
  */
 function buildFeaturedProductNode(product: Product, position: number) {
 	const url = `${SITE_URL}/creations/${product.slug}`;
-	// skus pré-triés par [isDefault desc, priceInclTax asc] dans GET_PRODUCTS_SELECT
+	// skus pré-triés par [position asc, id asc] dans GET_PRODUCTS_SELECT (rang 0 = représentant)
 	const defaultSku = product.skus[0];
 	const primaryImage = pickPrimaryImage(defaultSku?.images);
 	const priceCents = defaultSku?.priceInclTax;
@@ -110,27 +109,17 @@ export function StructuredData({ includeHomepageSchemas, featuredProducts }: Str
 			});
 		}
 
-		// FAQPage — la FAQ a rejoint la landing (absorption de `/aide`, 2026-08-05).
-		//
-		// Elle est un NŒUD DE CE @graph, pas un second script : la home n'en émet
-		// qu'un, et `/aide` en avait deux (FAQPage + BreadcrumbList) faute de
-		// générateur. L'`@id` pointe le fragment de la section réellement rendue
-		// (`#faq`), ce que Google attend d'un FAQPage sur une page qui n'est pas
-		// QUE de la FAQ : le balisage doit correspondre à du contenu visible.
-		graphSchemas.push({
-			"@type": "FAQPage",
-			"@id": `${SITE_URL}/#faq`,
-			inLanguage: "fr-FR",
-			dateModified: FAQ_DATE_MODIFIED,
-			mainEntity: FAQ_ITEMS.map((item) => ({
-				"@type": "Question",
-				name: item.question,
-				acceptedAnswer: {
-					"@type": "Answer",
-					text: item.answerText,
-				},
-			})),
-		});
+		/*
+		 * ⚠️ Pas de `FAQPage` : la section « Des questions ? » a été RETIRÉE de la
+		 * landing le 2026-08-08, pour être refaite. Le nœud est parti avec elle —
+		 * un `FAQPage` doit pointer du contenu réellement VISIBLE, donc le laisser
+		 * sur une page sans FAQ était du balisage mensonger.
+		 *
+		 * Quand la FAQ revient : le nœud se rouvre ICI, dans ce `@graph`, et
+		 * JAMAIS en `<script>` séparé. C'était le montage de `/aide` (deux scripts,
+		 * faute de générateur), et le recopier sur `/` y ajouterait une seconde
+		 * `BreadcrumbList` au premier copier-coller.
+		 */
 
 		// HowTo — le processus de création de la section « Viens voir l'atelier »
 		// (retour sur la landing, 2026-08-05). Même principe que le FAQPage : un

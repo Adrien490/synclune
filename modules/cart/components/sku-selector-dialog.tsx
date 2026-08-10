@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useReducedMotion } from "motion/react";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import type { GetCartReturn } from "@/modules/cart/types/cart.types";
@@ -67,7 +66,6 @@ export function SkuSelectorDialog({
 	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
 	// supposé) : sans cette alerte, un refus de `addToCartSchema` serait muet.
 	const serverErrors = useServerFieldErrors({ state });
-	const shouldReduceMotion = useReducedMotion();
 
 	const product = data?.product;
 
@@ -145,7 +143,6 @@ export function SkuSelectorDialog({
 							cartItems={cartItems}
 							preselectedColor={data.preselectedColor}
 							isPending={isPending}
-							shouldReduceMotion={!!shouldReduceMotion}
 							isStoreClosed={isStoreClosed}
 							storeClosureMessage={storeClosureMessage}
 							onClose={close}

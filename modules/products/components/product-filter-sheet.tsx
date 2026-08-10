@@ -260,7 +260,6 @@ function ProductFilterSheetInner({
 		form.setFieldValue("materials", next.materials);
 		form.setFieldValue("priceRange", next.priceRange);
 		form.setFieldValue("inStockOnly", next.inStockOnly);
-		form.setFieldValue("onSale", next.onSale);
 	};
 
 	const counts = getSectionActiveCount(values, DEFAULT_PRICE_RANGE);

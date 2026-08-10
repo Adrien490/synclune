@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	ProductStatus: {
+	PublicationStatus: {
 		PUBLIC: "PUBLIC",
 		DRAFT: "DRAFT",
 		ARCHIVED: "ARCHIVED",

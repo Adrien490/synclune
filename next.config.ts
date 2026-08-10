@@ -86,15 +86,13 @@ const nextConfig: NextConfig = {
 		return [
 			// Page À propos temporairement masquée — préserve le link equity externe
 			{ source: "/a-propos", destination: "/", permanent: true },
-			// La FAQ a rejoint la landing (2026-08-05) : `/aide` était indexée
-			// (sitemap, canonical, JSON-LD FAQPage) — un 404 aurait jeté son
-			// référencement et cassé les liens externes. 308 vers l'ancre de la
-			// section, dont l'`id` est la SSOT `FAQ_SECTION_ID`.
-			//
-			// ⚠️ `/aide` RESTE dans `publicRoutes` (proxy.ts) : si le proxy passe
-			// avant cette table, son default-deny renverrait vers `/` — donc vers
-			// le haut de la page, sans l'ancre. Même montage que `/a-propos`.
-			{ source: "/aide", destination: "/#faq", permanent: true },
+			// ⚠️ Plus de règle `/aide` → `/#faq` : la section FAQ a été RETIRÉE de la
+			// landing le 2026-08-08 (à refaire), donc l'ancre n'existe plus — un 308
+			// vers un fragment absent aurait déposé le visiteur en haut de `/` sans
+			// rien signaler. `/aide` a aussi quitté `publicRoutes` (proxy.ts) : elle
+			// tombe désormais dans le default-deny, qui renvoie vers `/`.
+			// Quand la FAQ revient, ces deux entrées reviennent ENSEMBLE — le proxy
+			// passe avant cette table, une redirection seule serait avalée.
 		];
 	},
 

@@ -89,7 +89,7 @@ vi.mock("@/app/generated/prisma/client", async (importOriginal) => {
 	const actual = await importOriginal();
 	return {
 		...(actual as object),
-		CollectionStatus: {
+		PublicationStatus: {
 			DRAFT: "DRAFT",
 			PUBLIC: "PUBLIC",
 			ARCHIVED: "ARCHIVED",

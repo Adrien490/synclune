@@ -24,7 +24,9 @@ const {
 	}
 	return {
 		mockPrisma: {
-			productSku: { findUnique: vi.fn(), updateMany: vi.fn(), update: vi.fn() },
+			// `findMany` + `update` servent `moveSkuToFront` (renumérotation des rangs —
+			// remplace la promotion de flag isDefault, audit schéma V5, lot A2).
+			productSku: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
 			$transaction: vi.fn(),
 		},
 		mockRequireAdmin: vi.fn(),
@@ -100,7 +102,8 @@ describe("setDefaultSku", () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID } });
 
 		mockPrisma.productSku.findUnique.mockResolvedValue(createMockSkuForDefault());
-		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 1 });
+		// Sœurs lues par moveSkuToFront, dans l'ordre canonique (position asc, id asc).
+		mockPrisma.productSku.findMany.mockResolvedValue([{ id: "sku-sibling-1" }]);
 		mockPrisma.productSku.update.mockResolvedValue({});
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
@@ -169,19 +172,32 @@ describe("setDefaultSku", () => {
 		expect(mockHandleActionError).toHaveBeenCalled();
 	});
 
-	it("should deactivate all product SKUs before setting new default", async () => {
-		await setDefaultSku(undefined, validFormData);
-		expect(mockPrisma.productSku.updateMany).toHaveBeenCalledWith({
-			where: { productId: "prod-1" },
-			data: { isDefault: false },
-		});
-	});
-
-	it("should set the selected SKU as default", async () => {
+	// « Définir par défaut » = amener au rang 0 + renuméroter les sœurs en
+	// préservant leur ordre relatif (moveSkuToFront) — plus de flag à basculer.
+	it("should move the selected SKU to rank 0", async () => {
 		await setDefaultSku(undefined, validFormData);
 		expect(mockPrisma.productSku.update).toHaveBeenCalledWith({
 			where: { id: VALID_CUID },
-			data: { isDefault: true },
+			data: { position: 0 },
+		});
+	});
+
+	it("should renumber sibling SKUs after the new rank 0", async () => {
+		mockPrisma.productSku.findMany.mockResolvedValue([{ id: "sku-a" }, { id: "sku-b" }]);
+		await setDefaultSku(undefined, validFormData);
+		// Sœurs lues hors la cible, renumérotées 1..n dans leur ordre relatif.
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
+			where: { productId: "prod-1", deletedAt: null, id: { not: VALID_CUID } },
+			orderBy: [{ position: "asc" }, { id: "asc" }],
+			select: { id: true },
+		});
+		expect(mockPrisma.productSku.update).toHaveBeenCalledWith({
+			where: { id: "sku-a" },
+			data: { position: 1 },
+		});
+		expect(mockPrisma.productSku.update).toHaveBeenCalledWith({
+			where: { id: "sku-b" },
+			data: { position: 2 },
 		});
 	});
 

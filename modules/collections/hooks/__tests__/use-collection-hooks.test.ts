@@ -9,13 +9,11 @@ const {
 	mockDeleteCollection,
 	mockRefreshCollections,
 	mockSetFeaturedProduct,
-	mockRemoveFeaturedProduct,
 	mockUpdateCollectionStatus,
 } = vi.hoisted(() => ({
 	mockDeleteCollection: vi.fn(),
 	mockRefreshCollections: vi.fn(),
 	mockSetFeaturedProduct: vi.fn(),
-	mockRemoveFeaturedProduct: vi.fn(),
 	mockUpdateCollectionStatus: vi.fn(),
 }));
 
@@ -25,9 +23,10 @@ vi.mock("@/modules/collections/actions/delete-collection", () => ({
 vi.mock("@/modules/collections/actions/refresh-collections", () => ({
 	refreshCollections: mockRefreshCollections,
 }));
+// `removeFeaturedProduct` n'existe plus : la vedette est le rang 0 de l'ordre
+// des associations, on ne peut que la REMPLACER (audit schéma V5, lot A3).
 vi.mock("@/modules/collections/actions/set-featured-product", () => ({
 	setFeaturedProduct: mockSetFeaturedProduct,
-	removeFeaturedProduct: mockRemoveFeaturedProduct,
 }));
 vi.mock("@/modules/collections/actions/update-collection-status", () => ({
 	updateCollectionStatus: mockUpdateCollectionStatus,
@@ -158,13 +157,11 @@ describe("useSetFeaturedProduct", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockSetFeaturedProduct.mockResolvedValue(SUCCESS);
-		mockRemoveFeaturedProduct.mockResolvedValue(SUCCESS);
 	});
 
-	it("returns setFeatured, removeFeatured, and isPending", () => {
+	it("returns setFeatured and isPending", () => {
 		const { result } = renderHook(() => useSetFeaturedProduct());
 		expect(typeof result.current.setFeatured).toBe("function");
-		expect(typeof result.current.removeFeatured).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
 	});
 
@@ -180,35 +177,12 @@ describe("useSetFeaturedProduct", () => {
 		expect(formData.get("productId")).toBe("prod-1");
 	});
 
-	it("removeFeatured appends collectionId and productId to FormData", async () => {
-		const { result } = renderHook(() => useSetFeaturedProduct());
-
-		await act(async () => {
-			result.current.removeFeatured("col-1", "prod-1");
-		});
-
-		const formData = mockRemoveFeaturedProduct.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("collectionId")).toBe("col-1");
-		expect(formData.get("productId")).toBe("prod-1");
-	});
-
 	it("calls onSuccess when setFeatured succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useSetFeaturedProduct({ onSuccess }));
 
 		await act(async () => {
 			result.current.setFeatured("col-1", "prod-1");
-		});
-
-		expect(onSuccess).toHaveBeenCalled();
-	});
-
-	it("calls onSuccess when removeFeatured succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useSetFeaturedProduct({ onSuccess }));
-
-		await act(async () => {
-			result.current.removeFeatured("col-1", "prod-1");
 		});
 
 		expect(onSuccess).toHaveBeenCalled();

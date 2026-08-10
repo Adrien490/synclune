@@ -141,7 +141,7 @@ function createProduct(overrides: Record<string, unknown> = {}) {
 		skus: [
 			{
 				id: "sku-1",
-				isDefault: true,
+				position: 0,
 				isActive: true,
 				priceInclTax: 4900,
 				compareAtPrice: 5900,
@@ -154,7 +154,6 @@ function createProduct(overrides: Record<string, unknown> = {}) {
 						id: "img-1",
 						url: "https://example.com/img1.jpg",
 						altText: "Bague Lune",
-						isPrimary: true,
 						mediaType: "IMAGE" as const,
 						thumbnailUrl: null,
 						blurDataUrl: null,

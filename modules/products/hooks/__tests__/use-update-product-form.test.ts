@@ -92,7 +92,7 @@ function makeProduct(overrides: Partial<GetProductReturn> = {}): GetProductRetur
 		skus: [
 			{
 				id: "sku-1",
-				isDefault: true,
+				position: 0,
 				isActive: true,
 				priceInclTax: 10000,
 				compareAtPrice: null,
@@ -209,7 +209,7 @@ describe("useUpdateProductForm", () => {
 			skus: [
 				{
 					id: "sku-1",
-					isDefault: true,
+					position: 0,
 					isActive: true,
 					priceInclTax: 10000,
 					compareAtPrice: null,
@@ -225,7 +225,6 @@ describe("useUpdateProductForm", () => {
 							blurDataUrl: null,
 							altText: null,
 							mediaType: "IMAGE",
-							isPrimary: true,
 							width: 1600,
 							height: 1200,
 						},

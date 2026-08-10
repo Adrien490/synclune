@@ -67,30 +67,24 @@ test.describe("Pages légales", { tag: ["@regression"] }, () => {
 		});
 	}
 
-	// `/aide` était absente de `publicRoutes` (proxy.ts) : le default-deny la
-	// redirigeait vers l'accueil alors que le footer, le sitemap et le JSON-LD
-	// FAQPage pointaient dessus. Audit « Pages légales » 2026-08-01.
-	//
-	// La page a été absorbée par la landing le 2026-08-05. L'URL survit en 308,
-	// et le défaut d'origine survit avec elle sous une forme plus discrète : sans
-	// `/aide` dans `publicRoutes`, le default-deny renvoie vers `/` NU — la page
-	// s'ouvre, simplement pas sur la FAQ. On assert donc le fragment, pas
-	// seulement le chemin d'arrivée.
-	test("/aide redirige vers la FAQ de la landing, ancre comprise", async ({ page }) => {
-		await page.goto("/aide", { waitUntil: "domcontentloaded" });
-
-		// ⚠️ `page.url()`, pas `response.url()` : un fragment n'est jamais envoyé
-		// au serveur, donc l'URL de la RÉPONSE le perd. Seule la barre d'adresse
-		// du navigateur sait si l'ancre a survécu à la redirection.
-		expect(page.url()).toMatch(/\/#faq$/);
-
-		const faq = page.locator("#faq");
-		await expect(faq).toBeVisible();
-		await expect(faq.getByRole("heading", { name: /Des questions/i })).toBeVisible();
-
-		const body = await page.textContent("body");
-		expect(body).toMatch(/livraison|retour/i);
-	});
+	/*
+	 * ⚠️ Le test « /aide redirige vers la FAQ de la landing, ancre comprise » a été
+	 * retiré le 2026-08-08 : la section FAQ a été supprimée (à refaire), et avec
+	 * elle l'ancre `/#faq`, la règle 308 et l'entrée `/aide` des `publicRoutes`.
+	 *
+	 * Deux choses à ne pas re-perdre quand elle revient :
+	 *
+	 * - il faut LES DEUX moitiés — sans `/aide` dans `publicRoutes`, le
+	 *   default-deny du proxy renvoie vers `/` NU : la page s'ouvre, simplement
+	 *   pas sur la FAQ. C'est le défaut d'origine (audit « Pages légales »
+	 *   2026-08-01) sous une forme plus discrète ;
+	 * - on assert avec `page.url()` et JAMAIS `response.url()` : un fragment n'est
+	 *   pas envoyé au serveur, donc l'URL de la RÉPONSE le perd. Seule la barre
+	 *   d'adresse sait si l'ancre a survécu à la redirection.
+	 *
+	 * La complétude du démontage est verrouillée côté unitaire en attendant
+	 * (`legal-urls-coherence.regression.test.ts`).
+	 */
 
 	test("/a-propos redirige vers l'accueil", async ({ page }) => {
 		const response = await page.goto("/a-propos", {

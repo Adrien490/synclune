@@ -27,9 +27,11 @@ function makeProduct(overrides: Record<string, unknown> = {}) {
 				isActive: true,
 				priceInclTax: 4999,
 				inventory: 5,
+				// ⚠️ `mediaType` requis : GET_PRODUCT_SELECT le sélectionne toujours, et le
+				// tri des images (pickPrimaryImage, filtre JSON-LD) repose dessus.
 				images: [
-					{ url: "https://cdn.example.com/img1.jpg", isPrimary: true, altText: "Vue face" },
-					{ url: "https://cdn.example.com/img2.jpg", isPrimary: false, altText: null },
+					{ url: "https://cdn.example.com/img1.jpg", mediaType: "IMAGE", altText: "Vue face" },
+					{ url: "https://cdn.example.com/img2.jpg", mediaType: "IMAGE", altText: null },
 				],
 				colors: [{ colorId: "color-1", position: 0, color: { name: "Or" } }],
 				materials: [{ materialId: "mat-1", position: 0, material: { name: "Argent 925" } }],
@@ -46,7 +48,7 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 		isActive: true,
 		priceInclTax: 4999,
 		inventory: 5,
-		images: [{ url: "https://cdn.example.com/img1.jpg", isPrimary: true, altText: "Vue face" }],
+		images: [{ url: "https://cdn.example.com/img1.jpg", mediaType: "IMAGE", altText: "Vue face" }],
 		colors: [{ colorId: "color-1", position: 0, color: { name: "Or" } }],
 		materials: [{ materialId: "mat-1", position: 0, material: { name: "Argent 925" } }],
 		size: "M",
@@ -258,6 +260,23 @@ describe("generateStructuredData", () => {
 		expect(images[0]["@type"]).toBe("ImageObject");
 		expect(images[0].width).toBe(1200);
 		expect(images[0].height).toBe(1200);
+	});
+
+	it("excludes VIDEO media from the Product image field (invalid en schema.org)", () => {
+		const result = generateStructuredData({
+			priceValidUntil: PRICE_VALID_UNTIL,
+			product: makeProduct(),
+			selectedSku: makeSku({
+				images: [
+					{ url: "https://cdn.example.com/clip.mp4", mediaType: "VIDEO", altText: null },
+					{ url: "https://cdn.example.com/photo.jpg", mediaType: "IMAGE", altText: null },
+				],
+			}),
+		});
+
+		const images = graph(result)[0].image;
+		expect(images).toHaveLength(1);
+		expect(images[0].url).toBe("https://cdn.example.com/photo.jpg");
 	});
 
 	it("does NOT include MPN (would duplicate SKU — handmade products have no manufacturer part number)", () => {

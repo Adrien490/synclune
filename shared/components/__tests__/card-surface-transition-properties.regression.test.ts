@@ -29,7 +29,12 @@ const FAMILY_FILES = [
 	"shared/components/card-surface.constants.ts",
 	"modules/products/components/product-card.tsx",
 	"modules/cart/components/add-to-cart-card-button.tsx",
-	"modules/collections/components/collection-chapter.tsx",
+	// ⚠️ `modules/collections/components/collection-chapter.tsx` est sorti de
+	// cette liste le 2026-08-08 : le fichier a été supprimé avec toutes les
+	// surfaces à cartes de collection (à refaire). Le piège qu'il illustrait est
+	// intact — en Tailwind v4, `translate`/`rotate`/`scale` sont des propriétés
+	// AUTONOMES, et un `transition-[transform]` n'anime plus rien. Remettre le
+	// fichier ici dès que le rendu de collection revient.
 ] as const;
 
 describe("card surface — transitions des propriétés transform autonomes (TW v4)", () => {
@@ -47,11 +52,6 @@ describe("card surface — transitions des propriétés transform autonomes (TW 
 	it("le slide-up de la pastille panier transitionne translate, pas transform", () => {
 		const source = read("modules/cart/components/add-to-cart-card-button.tsx");
 		expect(source).toContain("motion-safe:transition-[opacity,translate]");
-	});
-
-	it("le redressement des tirages de CollectionChapter transitionne rotate, pas transform", () => {
-		const source = read("modules/collections/components/collection-chapter.tsx");
-		expect(source).toContain("motion-safe:transition-[rotate,box-shadow]");
 	});
 
 	it.each(FAMILY_FILES)(

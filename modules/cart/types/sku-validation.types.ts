@@ -28,9 +28,9 @@ interface SkuData {
 	images: Array<{
 		url: string;
 		altText?: string;
-		isPrimary: boolean;
 		// EINV-SNAPSHOT-MEDIA-001 : requis pour que le consommateur du snapshot de
-		// commande puisse écarter une vidéo (`pickPrimaryImage`).
+		// commande puisse écarter une vidéo (`pickPrimaryImage`). Le tableau arrive
+		// pré-trié `(position asc, id asc)` — la première IMAGE est la principale.
 		mediaType: "IMAGE" | "VIDEO";
 	}>;
 }

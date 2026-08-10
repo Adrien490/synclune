@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { z } from "zod";
 
-// Mock Prisma client before importing schemas so CollectionStatus is available
+// Mock Prisma client before importing schemas so PublicationStatus is available
 // as plain string values without requiring a real DB connection.
 vi.mock("@/app/generated/prisma/client", () => ({
-	CollectionStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
+	PublicationStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
 }));
 
 // Mock collection constants to avoid pulling in Prisma SELECT objects that
-// reference ProductStatus and other generated types.
+// reference PublicationStatus and other generated types.
 vi.mock("../../constants/collection.constants", () => ({
 	GET_COLLECTIONS_DEFAULT_PER_PAGE: 20,
 	GET_COLLECTIONS_DEFAULT_SORT_BY: "name-ascending",
@@ -390,7 +390,7 @@ describe("collectionFiltersSchema", () => {
 	});
 
 	describe("status field", () => {
-		it("accepts a single CollectionStatus value", () => {
+		it("accepts a single PublicationStatus value", () => {
 			const result = collectionFiltersSchema.safeParse({ status: "PUBLIC" });
 			expect(result.success).toBe(true);
 			if (result.success) {
@@ -398,7 +398,7 @@ describe("collectionFiltersSchema", () => {
 			}
 		});
 
-		it("accepts an array of CollectionStatus values", () => {
+		it("accepts an array of PublicationStatus values", () => {
 			const result = collectionFiltersSchema.safeParse({
 				status: ["PUBLIC", "DRAFT"],
 			});

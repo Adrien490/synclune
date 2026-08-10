@@ -70,7 +70,7 @@ export async function updateTracking(
 					orderNumber: true,
 					status: true,
 					trackingNumber: true,
-					actualDelivery: true,
+					deliveredAt: true,
 				},
 			});
 
@@ -84,9 +84,9 @@ export async function updateTracking(
 			// après livraison. Au-delà, la preuve de livraison est stabilisée
 			// (litige client / réclamation transporteur prescrits sous ce délai).
 			// Modifier après = risque d'altération de preuve.
-			if (found.status === OrderStatus.DELIVERED && found.actualDelivery) {
+			if (found.status === OrderStatus.DELIVERED && found.deliveredAt) {
 				const daysSinceDelivery =
-					(Date.now() - found.actualDelivery.getTime()) / (1000 * 60 * 60 * 24);
+					(Date.now() - found.deliveredAt.getTime()) / (1000 * 60 * 60 * 24);
 				if (daysSinceDelivery > 30) {
 					return { ...found, _error: "tracking_lock_window" as const };
 				}

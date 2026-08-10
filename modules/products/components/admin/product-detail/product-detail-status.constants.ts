@@ -1,4 +1,4 @@
-import type { ProductStatus } from "@/app/generated/prisma/enums";
+import type { PublicationStatus } from "@/app/generated/prisma/enums";
 import {
 	PRODUCT_STATUS_LABELS,
 	PRODUCT_STATUS_VARIANTS,
@@ -10,7 +10,7 @@ import type { BadgeVariant } from "@/shared/types/badge.types";
  * `product-status-display.ts` — ne redéclare aucun libellé.
  */
 export const PRODUCT_STATUS_CONFIG: Record<
-	ProductStatus,
+	PublicationStatus,
 	{ label: string; variant: BadgeVariant }
 > = {
 	PUBLIC: { label: PRODUCT_STATUS_LABELS.PUBLIC, variant: PRODUCT_STATUS_VARIANTS.PUBLIC },

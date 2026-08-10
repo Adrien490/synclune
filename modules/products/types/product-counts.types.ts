@@ -1,13 +1,13 @@
-import { type ProductStatus } from "@/app/generated/prisma/client";
+import { type PublicationStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // FUNCTION TYPES
 // ============================================================================
 
 export type ProductCountsByStatus = {
-	[ProductStatus.PUBLIC]: number;
-	[ProductStatus.DRAFT]: number;
-	[ProductStatus.ARCHIVED]: number;
+	[PublicationStatus.PUBLIC]: number;
+	[PublicationStatus.DRAFT]: number;
+	[PublicationStatus.ARCHIVED]: number;
 };
 
 export type GetProductCountsByStatusReturn = ProductCountsByStatus;

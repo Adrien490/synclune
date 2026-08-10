@@ -57,7 +57,7 @@ import {
 /** Effets d'écriture d'une transition — `status` + colonnes de suivi, jamais l'argent. */
 type TransitionData = {
 	status: OrderStatus;
-	actualDelivery?: Date;
+	deliveredAt?: Date;
 	trackingNumber?: null;
 	trackingUrl?: null;
 	shippingCarrier?: null;
@@ -110,7 +110,7 @@ const ORDER_TRANSITIONS: Record<OrderTransitionKey, TransitionConfig> = {
 
 	delivered: {
 		guard: { status: OrderStatus.SHIPPED },
-		data: (now) => ({ status: OrderStatus.DELIVERED, actualDelivery: now }),
+		data: (now) => ({ status: OrderStatus.DELIVERED, deliveredAt: now }),
 		validate: (o) => {
 			const v = canMarkAsDelivered(o);
 			return v.canDeliver ? { ok: true } : { ok: false, reason: v.reason };

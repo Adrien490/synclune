@@ -143,7 +143,7 @@ function createSku(overrides: Partial<ProductSku> = {}): ProductSku {
 		compareAtPrice: null,
 		inventory: 5,
 		isActive: true,
-		isDefault: true,
+		position: 0,
 		colors: [
 			{ colorId: "c-1", position: 0, color: { id: "c-1", slug: "or", name: "Or", hex: "#FFD700" } },
 		],
@@ -282,12 +282,12 @@ describe("StickyCartCTADesktop", () => {
 			expect(screen.getByText("48.00 €")).toBeInTheDocument();
 		});
 
-		it("displays compareAtPrice strikethrough when higher than price", () => {
+		it("ne rend pas de prix barré même avec compareAtPrice (retrait Omnibus 2026-08-08)", () => {
 			renderVisible({
 				defaultSku: createSku({ priceInclTax: 3600, compareAtPrice: 4800 }),
 			});
 			expect(screen.getByText("36.00 €")).toBeInTheDocument();
-			expect(screen.getByText("48.00 €")).toBeInTheDocument();
+			expect(screen.queryByText("48.00 €")).toBeNull();
 		});
 	});
 

@@ -46,7 +46,7 @@ function createSku(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "sku-1",
 		isActive: true,
-		isDefault: true,
+		position: 0,
 		inventory: 10,
 		priceInclTax: 2500,
 		compareAtPrice: null,
@@ -71,7 +71,6 @@ function createSku(overrides: Record<string, unknown> = {}) {
 				url: "/image.jpg",
 				thumbnailUrl: "/image-thumb.jpg",
 				altText: null,
-				isPrimary: true,
 				mediaType: "IMAGE",
 				blurDataUrl: null,
 				width: null,
@@ -184,7 +183,7 @@ describe("ProductCard — rendu réel", () => {
 			// SKU affiché à 2, l'autre variante à 1 : l'agrégat (3) mentirait
 			const product = createProduct({}, [
 				createSku({ id: "sku-1", inventory: 2 }),
-				createSku({ id: "sku-2", inventory: 1, isDefault: false }),
+				createSku({ id: "sku-2", inventory: 1, position: 1 }),
 			]);
 			render(<ProductCard product={product} index={0} />);
 
@@ -205,6 +204,39 @@ describe("ProductCard — rendu réel", () => {
 			expect(screen.queryByText(/0,00/)).not.toBeInTheDocument();
 		});
 
+		/**
+		 * @regression default-sku-sold-out — audit ProductCard 2026-08-08.
+		 * Le défaut épuisé primait sur une sœur en stock : la carte affichait
+		 * le prix d'une variante inachetable et liait vers sa PDP, sans autre
+		 * signal que la pastille barrée.
+		 */
+		it("défaut épuisé : le prix et l'URL suivent la variante sœur en stock", () => {
+			const soldOutDefault = createSku({ id: "sku-1", inventory: 0, priceInclTax: 2500 });
+			const inStockSibling = createSku({
+				id: "sku-2",
+				position: 1,
+				inventory: 10,
+				priceInclTax: 3200,
+				colors: [
+					{
+						colorId: "color-2",
+						position: 0,
+						color: { id: "color-2", slug: "rose", hex: "#FFC0CB", name: "Rose" },
+					},
+				],
+			});
+			render(
+				<ProductCard product={createProduct({}, [soldOutDefault, inStockSibling])} index={0} />,
+			);
+
+			// Prix de la sœur en stock, pas du défaut épuisé (25,00)
+			expect(screen.getByText(/32,00/)).toBeInTheDocument();
+			expect(screen.queryByText(/25,00/)).not.toBeInTheDocument();
+			// L'URL suit TOUJOURS le SKU affiché : préselection de la variante en stock
+			const link = screen.getByRole("link", { name: "Test Product" });
+			expect(link.getAttribute("href")).toContain("color=rose");
+		});
+
 		it("en stock : les deux CTA panier (desktop + mobile) sont rendus", () => {
 			render(<ProductCard product={createProduct()} index={0} />);
 
@@ -216,15 +248,16 @@ describe("ProductCard — rendu réel", () => {
 		});
 	});
 
-	describe("promotion", () => {
-		it("annonce la remise en SR et rend la pastille -X% aria-hidden", () => {
+	describe("promotion (retrait Omnibus 2026-08-08)", () => {
+		it("ne rend NI prix barré NI pastille -X% même avec compareAtPrice en base", () => {
+			// Art. L. 112-1-1 : annoncer une remise exige le prix plancher 30 j,
+			// que rien ne trace en base — l'affichage est retiré jusqu'au lot A2.
 			const product = createProduct({}, [createSku({ priceInclTax: 2000, compareAtPrice: 3000 })]);
-			render(<ProductCard product={product} index={0} />);
+			const { container } = render(<ProductCard product={product} index={0} />);
 
-			expect(getDescription(screen.getByRole("article"))).toContain("Promotion : -33%");
-
-			const pill = screen.getByText("-33%");
-			expect(pill).toHaveAttribute("aria-hidden", "true");
+			expect(container.querySelector(".line-through")).toBeNull();
+			expect(screen.queryByText(/-\d+%/)).toBeNull();
+			expect(getDescription(screen.getByRole("article"))).not.toContain("Promotion");
 		});
 	});
 
@@ -232,7 +265,7 @@ describe("ProductCard — rendu réel", () => {
 		it("rend une liste explicite (role=list) dès 2 couleurs", () => {
 			const secondColorSku = createSku({
 				id: "sku-2",
-				isDefault: false,
+				position: 1,
 				colors: [
 					{
 						colorId: "color-2",
@@ -248,6 +281,29 @@ describe("ProductCard — rendu réel", () => {
 				name: "2 variantes disponibles pour Test Product",
 			});
 			expect(within(list).getAllByRole("link")).toHaveLength(2);
+		});
+
+		/**
+		 * Repli desktop (2026-08-08) : les pastilles ne s'affichent au repos que sur
+		 * tactile, un texte prend leur place sur pointeur fin. Le détail du gating
+		 * est verrouillé par `product-card-color-swatches.regression.test.tsx` ;
+		 * ici on vérifie seulement que la carte le monte.
+		 */
+		it("monte le repli textuel « Disponible en N coloris »", () => {
+			const secondColorSku = createSku({
+				id: "sku-2",
+				position: 1,
+				colors: [
+					{
+						colorId: "color-2",
+						position: 0,
+						color: { id: "color-2", slug: "rose", hex: "#FFC0CB", name: "Rose" },
+					},
+				],
+			});
+			render(<ProductCard product={createProduct({}, [createSku(), secondColorSku])} index={0} />);
+
+			expect(screen.getByText("Disponible en 2 coloris")).toBeInTheDocument();
 		});
 	});
 
@@ -269,8 +325,8 @@ describe("ProductCard — rendu réel", () => {
 		 * la zone média (relative sans z-index) ne crée pas de contexte
 		 * d'empilement qui les isolerait : sans `pointer-events-none`, le badge
 		 * découpait ~100 × 20 px de zone morte au clic sur l'élément le plus cliqué
-		 * de la boutique. Même règle que `MaskingTape`, où elle est déjà documentée
-		 * comme « non négociable ».
+		 * de la boutique. Règle générale des calques décoratifs superposés à une
+		 * zone cliquable : `pointer-events: none`, non négociable.
 		 */
 		it("les badges de stock n'interceptent pas le clic du lien étiré", () => {
 			const { container } = render(
@@ -298,7 +354,6 @@ describe("ProductCard — rendu réel", () => {
 						url: "/image.jpg",
 						thumbnailUrl: "/image-thumb.jpg",
 						altText: null,
-						isPrimary: true,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
 						width: null,
@@ -309,7 +364,6 @@ describe("ProductCard — rendu réel", () => {
 						url: "/image-2.jpg",
 						thumbnailUrl: "/image-2-thumb.jpg",
 						altText: null,
-						isPrimary: false,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
 						width: null,

@@ -104,7 +104,7 @@ const MOCK_SKU = {
 	sku: "REF-001",
 	productId: "product-1",
 	isActive: true,
-	isDefault: false,
+	isRepresentative: false,
 	priceInclTax: 3000,
 	compareAtPrice: null,
 	stock: 10,

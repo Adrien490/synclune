@@ -1,4 +1,4 @@
-import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
+import { Prisma, type PublicationStatus } from "@/app/generated/prisma/client";
 import { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
 import { notDeleted } from "@/shared/lib/prisma";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
@@ -32,7 +32,7 @@ export type { SearchResult } from "../types/product-services.types";
  */
 export async function buildSearchConditions(
 	search: string,
-	options?: { status?: ProductStatus },
+	options?: { status?: PublicationStatus },
 ): Promise<SearchResult> {
 	const term = search.trim();
 	if (!term) return { fuzzyIds: null, exactConditions: [] };
@@ -379,9 +379,9 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		conditions.push({ updatedAt: { lte: filters.updatedBefore } });
 	}
 
-	// On sale filter: products with at least one active SKU that has compareAtPrice set
-	// Note: compareAtPrice >= priceInclTax is enforced by schema validation on create/update,
-	// so a non-null compareAtPrice reliably indicates a sale
+	// On sale filter — ADMIN-ONLY depuis le retrait Omnibus (2026-08-08) : le
+	// parser storefront n'émet plus `onSale`, seul le filtre de gestion admin
+	// (« produits ayant un compareAtPrice ») passe encore par cette branche.
 	if (filters.onSale === true) {
 		conditions.push({
 			skus: {

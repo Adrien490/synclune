@@ -59,7 +59,7 @@ export async function updateProductSkuStatus(
 						id: true,
 						sku: true,
 						isActive: true,
-						isDefault: true,
+						position: true,
 						productId: true,
 						// Requis par la garde d'identité de variante à l'activation (cf. plus bas).
 						size: true,
@@ -82,11 +82,20 @@ export async function updateProductSkuStatus(
 					throw new BusinessError("La variante de produit n'existe pas.");
 				}
 
-				// Verifier qu'on ne desactive pas la variante principale
-				if (existing.isDefault && !validatedIsActive) {
-					throw new BusinessError(
-						"Impossible de désactiver la variante principale d'un produit. Définis d'abord une autre variante comme principale.",
-					);
+				// Verifier qu'on ne desactive pas la variante principale — le rang 0
+				// de (position asc, id asc), depuis le remplacement d'`isDefault` par
+				// `position` (audit schéma V5, lot A2).
+				if (!validatedIsActive) {
+					const rankZero = await tx.productSku.findFirst({
+						where: { productId: existing.productId, deletedAt: null },
+						orderBy: [{ position: "asc" }, { id: "asc" }],
+						select: { id: true },
+					});
+					if (rankZero?.id === existing.id) {
+						throw new BusinessError(
+							"Impossible de désactiver la variante principale d'un produit. Définis d'abord une autre variante comme principale.",
+						);
+					}
 				}
 
 				// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste apres desactivation

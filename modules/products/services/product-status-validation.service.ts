@@ -1,7 +1,7 @@
-import type { ProductStatus } from "@/app/generated/prisma/client";
+import type { PublicationStatus } from "@/app/generated/prisma/client";
 
 /**
- * Matrice des transitions valides pour `ProductStatus`.
+ * Matrice des transitions valides pour `PublicationStatus`.
  *
  * - DRAFT  → PUBLIC (publier — nécessite `validateProductForPublication`)
  * - DRAFT  → ARCHIVED (archiver directement)
@@ -12,7 +12,7 @@ import type { ProductStatus } from "@/app/generated/prisma/client";
  *
  * Pas de transition identité (X → X interdit).
  */
-const VALID_TRANSITIONS: Record<ProductStatus, readonly ProductStatus[]> = {
+const VALID_TRANSITIONS: Record<PublicationStatus, readonly PublicationStatus[]> = {
 	DRAFT: ["PUBLIC", "ARCHIVED"],
 	PUBLIC: ["DRAFT", "ARCHIVED"],
 	ARCHIVED: ["DRAFT", "PUBLIC"],
@@ -24,7 +24,10 @@ const VALID_TRANSITIONS: Record<ProductStatus, readonly ProductStatus[]> = {
  * complémentaire (titre, SKUs actifs, stock, image). Appeler
  * `validateProductForPublication` en aval pour les transitions vers PUBLIC.
  */
-export function canTransitionProductStatus(from: ProductStatus, to: ProductStatus): boolean {
+export function canTransitionProductStatus(
+	from: PublicationStatus,
+	to: PublicationStatus,
+): boolean {
 	if (from === to) return false;
 	return VALID_TRANSITIONS[from].includes(to);
 }
@@ -33,6 +36,6 @@ export function canTransitionProductStatus(from: ProductStatus, to: ProductStatu
  * Retourne la liste des statuts cibles autorisés depuis un statut donné.
  * Utile pour les dropdowns admin et les guards bulk-action.
  */
-export function getAllowedTransitions(from: ProductStatus): readonly ProductStatus[] {
+export function getAllowedTransitions(from: PublicationStatus): readonly PublicationStatus[] {
 	return VALID_TRANSITIONS[from];
 }

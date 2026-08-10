@@ -37,21 +37,12 @@ vi.mock("@/modules/products/components/product-list", () => ({
 	ProductList: ({
 		searchTerm,
 		perPage,
-		preferOnSale,
 	}: {
 		productsPromise: Promise<unknown>;
 		perPage: number;
 		searchTerm?: string;
 		wishlistProductIdsPromise?: Promise<Set<string>>;
-		preferOnSale?: boolean;
-	}) => (
-		<div
-			data-testid="product-list"
-			data-search-term={searchTerm}
-			data-per-page={perPage}
-			data-prefer-on-sale={preferOnSale}
-		/>
-	),
+	}) => <div data-testid="product-list" data-search-term={searchTerm} data-per-page={perPage} />,
 }));
 
 vi.mock("@/modules/products/components/product-list-skeleton", () => ({
@@ -339,9 +330,7 @@ describe("ProductCatalog", () => {
 		it("fait descendre à ProductList ce que la promesse a résolu", async () => {
 			await renderAsync(
 				CatalogList({
-					listPropsPromise: Promise.resolve(
-						makeListProps({ perPage: 48, searchTerm: "collier", preferOnSale: true }),
-					),
+					listPropsPromise: Promise.resolve(makeListProps({ perPage: 48, searchTerm: "collier" })),
 					productsPromise: makeProps().productsPromise,
 				}),
 			);
@@ -349,7 +338,6 @@ describe("ProductCatalog", () => {
 			const list = screen.getByTestId("product-list");
 			expect(list).toHaveAttribute("data-per-page", "48");
 			expect(list).toHaveAttribute("data-search-term", "collier");
-			expect(list).toHaveAttribute("data-prefer-on-sale", "true");
 		});
 	});
 

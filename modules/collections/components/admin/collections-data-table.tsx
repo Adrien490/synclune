@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { Badge } from "@/shared/components/ui/badge";
 import {
@@ -15,7 +15,6 @@ import {
 	FolderOpenIcon,
 	GlobeIcon,
 	NotePencilIcon,
-	StarIcon,
 	WarningIcon,
 } from "@phosphor-icons/react/ssr";
 import type { Icon } from "@phosphor-icons/react";
@@ -25,16 +24,16 @@ import { CreateCollectionButton } from "./create-collection-button";
 
 // Labels, icônes et styles pour les badges de statut
 const STATUS_CONFIG: Record<
-	CollectionStatus,
+	PublicationStatus,
 	{
 		label: string;
 		variant: "default" | "secondary" | "destructive" | "outline";
 		Icon: Icon;
 	}
 > = {
-	[CollectionStatus.PUBLIC]: { label: "Public", variant: "default", Icon: GlobeIcon },
-	[CollectionStatus.DRAFT]: { label: "Brouillon", variant: "secondary", Icon: NotePencilIcon },
-	[CollectionStatus.ARCHIVED]: { label: "Archivé", variant: "outline", Icon: ArchiveIcon },
+	[PublicationStatus.PUBLIC]: { label: "Public", variant: "default", Icon: GlobeIcon },
+	[PublicationStatus.DRAFT]: { label: "Brouillon", variant: "secondary", Icon: NotePencilIcon },
+	[PublicationStatus.ARCHIVED]: { label: "Archivé", variant: "outline", Icon: ArchiveIcon },
 };
 
 // Helper pour tronquer la description
@@ -103,8 +102,6 @@ export async function CollectionsDataTable({
 				{collections.map((collection) => {
 					const productsCount = collection._count.products || 0;
 					const truncatedDescription = truncateDescription(collection.description);
-					// Verifier si un produit featured est defini
-					const hasFeaturedProduct = collection.products[0]?.isFeatured === true;
 
 					return (
 						<TableRow key={collection.id}>
@@ -117,18 +114,6 @@ export async function CollectionsDataTable({
 									>
 										{collection.name}
 									</Link>
-									{hasFeaturedProduct && (
-										<Tooltip>
-											<TooltipTrigger
-												render={
-													<StarIcon className="size-4 shrink-0 fill-yellow-400 text-yellow-400" />
-												}
-											></TooltipTrigger>
-											<TooltipContent>
-												<p>Produit vedette defini</p>
-											</TooltipContent>
-										</Tooltip>
-									)}
 								</div>
 							</TableCell>
 							<TableCell>
@@ -143,7 +128,7 @@ export async function CollectionsDataTable({
 										);
 									})()}
 									{/* Warning si PUBLIC mais aucun produit visible */}
-									{collection.status === CollectionStatus.PUBLIC && productsCount === 0 && (
+									{collection.status === PublicationStatus.PUBLIC && productsCount === 0 && (
 										<Tooltip>
 											<TooltipTrigger render={<span className="text-amber-500" />}>
 												<WarningIcon className="size-4" />

@@ -196,11 +196,12 @@ beforeEach(() => {
 		status: "DRAFT",
 		typeId: "type_123",
 		collections: [],
-		skus: [{ id: SKU_ID, isActive: true, inventory: 10, images: [{ mediaType: "IMAGE" }] }],
+		skus: [
+			{ id: SKU_ID, isActive: true, position: 0, inventory: 10, images: [{ mediaType: "IMAGE" }] },
+		],
 	});
 	mockPrisma.productSku.findFirst.mockResolvedValue({
 		id: SKU_ID,
-		isDefault: true,
 		isActive: true,
 	});
 	mockPrisma.productType.findUnique.mockResolvedValue({ id: "type_123", isActive: true });

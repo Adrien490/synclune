@@ -498,7 +498,7 @@ export async function initiateAutomaticRefund(
 					where: { id: orderId },
 					select: {
 						total: true,
-						items: { select: { id: true, price: true, quantity: true } },
+						items: { select: { price: true, quantity: true } },
 					},
 				});
 

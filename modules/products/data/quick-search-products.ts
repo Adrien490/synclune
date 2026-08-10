@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { notDeleted } from "@/shared/lib/prisma";
 import { prisma } from "@/shared/lib/prisma";
@@ -25,7 +25,7 @@ export type QuickSearchProduct = {
 		priceInclTax: number;
 		compareAtPrice: number | null;
 		inventory: number;
-		isDefault: boolean;
+		position: number;
 		/** Couleurs M2M ordonnées (1re = principale). Vide = aucune couleur renseignée. */
 		colors: Array<{
 			colorId: string;
@@ -84,7 +84,7 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 	// par le `"use cache"` propre de la suggestion.
 	const suggestion =
 		core.products.length < SUGGESTION_THRESHOLD_RESULTS
-			? ((await getSpellSuggestion(term, { status: ProductStatus.PUBLIC }))?.term ?? null)
+			? ((await getSpellSuggestion(term, { status: PublicationStatus.PUBLIC }))?.term ?? null)
 			: null;
 
 	return {
@@ -111,7 +111,7 @@ async function fetchQuickSearchCore(
 	// 1. Fuzzy search on title/description
 	const { ids: fuzzyIds, totalCount: fuzzyTotalCount } = await fuzzySearchProductIds(term, {
 		limit: QUICK_SEARCH_LIMIT,
-		status: ProductStatus.PUBLIC,
+		status: PublicationStatus.PUBLIC,
 	});
 
 	// 2. Exact search on related fields (type, SKU, color, material, collection)
@@ -128,7 +128,7 @@ async function fetchQuickSearchCore(
 				const exactWhere = {
 					AND: [
 						...exactConditions,
-						{ status: ProductStatus.PUBLIC },
+						{ status: PublicationStatus.PUBLIC },
 						{ ...notDeleted },
 						...(fuzzyIds.length > 0 ? [{ NOT: { id: { in: fuzzyIds } } }] : []),
 					],

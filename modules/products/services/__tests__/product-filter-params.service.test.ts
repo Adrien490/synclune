@@ -40,7 +40,6 @@ function makeFormData(overrides: Partial<FilterFormData> = {}): FilterFormData {
 		productTypes: [],
 		priceRange: DEFAULT_PRICE_RANGE,
 		inStockOnly: false,
-		onSale: false,
 		sortBy: "created-descending",
 		...overrides,
 	};
@@ -70,7 +69,6 @@ describe("parseFilterValuesFromURL", () => {
 			productTypes: [],
 			priceRange: DEFAULT_PRICE_RANGE,
 			inStockOnly: false,
-			onSale: false,
 			sortBy: "created-descending",
 		});
 	});
@@ -165,19 +163,11 @@ describe("parseFilterValuesFromURL", () => {
 		expect(result.inStockOnly).toBe(false);
 	});
 
-	it("should parse onSale=true", () => {
+	it("ignore une clé onSale héritée d'une URL indexée (retrait Omnibus 2026-08-08)", () => {
+		// La clé n'est plus reconnue : elle ne doit ni jeter, ni réapparaître dans le form.
 		const result = parseFilterValuesFromURL(makeParseParams("onSale=true"));
-		expect(result.onSale).toBe(true);
-	});
-
-	it("should parse onSale=1 as true", () => {
-		const result = parseFilterValuesFromURL(makeParseParams("onSale=1"));
-		expect(result.onSale).toBe(true);
-	});
-
-	it("should parse onSale=false as false", () => {
-		const result = parseFilterValuesFromURL(makeParseParams("onSale=false"));
-		expect(result.onSale).toBe(false);
+		expect("onSale" in result).toBe(false);
+		expect(result).toEqual(parseFilterValuesFromURL(makeParseParams("")));
 	});
 
 	it("should clamp negative priceMin to 0", () => {
@@ -278,11 +268,6 @@ describe("buildFilterURL", () => {
 			makeBuildParams({ formData: makeFormData({ inStockOnly: true }) }),
 		);
 		expect(result.queryString).toContain("stockStatus=in_stock");
-	});
-
-	it("should add onSale=true when onSale is set", () => {
-		const result = buildFilterURL(makeBuildParams({ formData: makeFormData({ onSale: true }) }));
-		expect(result.queryString).toContain("onSale=true");
 	});
 
 	it("should build fullUrl without ? when no query params", () => {
@@ -403,9 +388,9 @@ describe("countActiveFilters", () => {
 		expect(result.activeFiltersCount).toBe(0);
 	});
 
-	it("should count onSale and stockStatus as filters", () => {
+	it("ne compte plus une clé onSale héritée (retrait Omnibus 2026-08-08)", () => {
 		const result = countActiveFilters(new URLSearchParams("onSale=true&stockStatus=in_stock"));
-		expect(result.activeFiltersCount).toBe(2);
+		expect(result.activeFiltersCount).toBe(1);
 	});
 
 	it("should count type filter", () => {
@@ -435,7 +420,6 @@ describe("getDefaultFilterValues", () => {
 			productTypes: [],
 			priceRange: [10, 800],
 			inStockOnly: false,
-			onSale: false,
 			sortBy: "created-descending",
 		});
 	});
@@ -538,11 +522,10 @@ describe("getSectionActiveCount", () => {
 		).toBe(1);
 	});
 
-	it("counts each availability toggle independently", () => {
+	it("counts the availability toggle", () => {
 		expect(
-			getSectionActiveCount(makeFormData({ inStockOnly: true, onSale: true }), DEFAULT_PRICE_RANGE)
-				.availability,
-		).toBe(2);
+			getSectionActiveCount(makeFormData({ inStockOnly: true }), DEFAULT_PRICE_RANGE).availability,
+		).toBe(1);
 	});
 });
 
@@ -583,13 +566,13 @@ describe("filterFormDataToProductFilters", () => {
 		expect(filters.color).toEqual(["argent", "or", "rose"]);
 	});
 
-	it("traduit la disponibilité en stockStatus / onSale", () => {
+	it("traduit la disponibilité en stockStatus", () => {
 		const filters = filterFormDataToProductFilters(
-			makeFormData({ inStockOnly: true, onSale: true }),
+			makeFormData({ inStockOnly: true }),
 			DEFAULT_PRICE_RANGE,
 		);
 		expect(filters.stockStatus).toBe("in_stock");
-		expect(filters.onSale).toBe(true);
+		expect("onSale" in filters).toBe(false);
 	});
 });
 
@@ -604,7 +587,6 @@ describe("resetFilterGroup", () => {
 		materials: ["acier"],
 		priceRange: [20, 60],
 		inStockOnly: true,
-		onSale: true,
 	});
 
 	it("ne vide QUE le groupe visé", () => {
@@ -621,10 +603,9 @@ describe("resetFilterGroup", () => {
 		);
 	});
 
-	it("remet les DEUX bascules de disponibilité à faux", () => {
+	it("remet la bascule de disponibilité à faux", () => {
 		const next = resetFilterGroup(filled, "availability", DEFAULT_PRICE_RANGE);
 		expect(next.inStockOnly).toBe(false);
-		expect(next.onSale).toBe(false);
 	});
 
 	it("ne mute pas l'objet d'entrée", () => {

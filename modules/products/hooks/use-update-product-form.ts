@@ -23,25 +23,22 @@ const getMessage = (result: ActionState): string | undefined =>
 export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 	const { product } = options;
 
-	// Get default SKU (first one, should be isDefault: true)
+	// Variante principale = rang 0 : le select trie les SKUs par (position, id)
 	const defaultSku = product.skus[0];
 
-	// Get all images sorted by isPrimary (primary first)
+	// Médias dans l'ordre canonique (position, id) — le select les livre déjà triés
 	const allMedia =
-		defaultSku?.images
-			.slice()
-			.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
-			.map((img) => ({
-				url: img.url,
-				thumbnailUrl: img.thumbnailUrl ?? undefined,
-				blurDataUrl: img.blurDataUrl ?? undefined,
-				altText: img.altText ?? undefined,
-				mediaType: img.mediaType,
-				// L'action fait deleteMany + recréation : omettre les dimensions ici
-				// les remettait à NULL à chaque édition du produit.
-				width: img.width,
-				height: img.height,
-			})) ?? [];
+		defaultSku?.images.map((img) => ({
+			url: img.url,
+			thumbnailUrl: img.thumbnailUrl ?? undefined,
+			blurDataUrl: img.blurDataUrl ?? undefined,
+			altText: img.altText ?? undefined,
+			mediaType: img.mediaType,
+			// L'action fait deleteMany + recréation : omettre les dimensions ici
+			// les remettait à NULL à chaque édition du produit.
+			width: img.width,
+			height: img.height,
+		})) ?? [];
 
 	const [state, action, isPending] = useActionState(
 		withCallbacks(

@@ -174,8 +174,6 @@ vi.mock("@/modules/cart/services/cart-item.service", async (importOriginal) => (
 	isCartItemOutOfStock: vi.fn(() => false),
 	isCartItemInactive: vi.fn(() => false),
 	hasCartItemIssue: vi.fn(() => false),
-	hasCartItemDiscount: vi.fn(() => false),
-	getCartItemDiscountPercent: vi.fn(() => 0),
 	getCartItemPrimaryImage: vi.fn(
 		(item: { sku: { images: unknown[] } }) => item.sku.images[0] ?? null,
 	),
@@ -200,8 +198,6 @@ function resetServiceMocks() {
 	vi.mocked(cartItemService.isCartItemOutOfStock).mockReturnValue(false);
 	vi.mocked(cartItemService.isCartItemInactive).mockReturnValue(false);
 	vi.mocked(cartItemService.hasCartItemIssue).mockReturnValue(false);
-	vi.mocked(cartItemService.hasCartItemDiscount).mockReturnValue(false);
-	vi.mocked(cartItemService.getCartItemDiscountPercent).mockReturnValue(0);
 	vi.mocked(cartItemService.getCartItemPrimaryImage).mockImplementation(
 		(item: any) => item.sku.images[0] ?? null,
 	);

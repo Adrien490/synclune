@@ -38,7 +38,7 @@ export interface ImmediateProductFilters {
 		checked: boolean,
 	) => void;
 	setPriceRange: (range: [number, number]) => void;
-	setAvailability: (field: "inStockOnly" | "onSale", checked: boolean) => void;
+	setAvailability: (field: "inStockOnly", checked: boolean) => void;
 	/** Tri appliqué immédiatement, par le même chemin d'URL que les filtres. */
 	setSortBy: (value: string) => void;
 	resetSection: (section: FilterSectionId) => void;

@@ -44,7 +44,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 		skuId: sku.id,
 		skuName: sku.sku,
 		productSlug: sku.product.slug,
-		isDefault: sku.isDefault,
+		isRepresentative: sku.isRepresentative,
 		isActive: sku.isActive,
 		inventory: sku.inventory,
 		priceInclTax: sku.priceInclTax,
@@ -67,7 +67,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 					/>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					{sku.isDefault ? (
+					{sku.isRepresentative ? (
 						<Badge variant="secondary">
 							<StarIcon className="size-3" aria-hidden="true" />
 							Par défaut

@@ -6,7 +6,7 @@ import { CBIcon, MastercardIcon, VisaIcon } from "@/shared/components/icons/paym
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
-import { footerHelpNavItems, footerNavItems, legalLinks } from "@/shared/constants/navigation";
+import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { CONTAINER_CLASS, FOOTER_PADDING } from "@/shared/constants/spacing";
 import { PREPARATION_DELAY_LABEL, SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
@@ -235,21 +235,18 @@ export async function Footer() {
 							</ul>
 						</nav>
 
-						{/* Zone 3 : écrire à l'atelier */}
+						{/* Zone 3 : écrire à l'atelier
+
+						    ⚠️ La liste « Aide et FAQ » qui coiffait l'adresse e-mail est
+						    partie le 2026-08-08 avec la section FAQ (à refaire) : elle
+						    pointait `/#faq`, une ancre qui n'existe plus. La colonne ne
+						    porte donc plus que le contact direct — c'est un MANQUE assumé
+						    le temps de la refonte, pas un choix : le libre-service doit
+						    revenir AU-DESSUS de l'e-mail. */}
 						<section aria-labelledby="footer-contact-title" className="order-3">
 							<h3 id="footer-contact-title" className={COLUMN_TITLE_CLASS}>
 								Écrire à l&apos;atelier
 							</h3>
-							{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
-							<ul role="list" className="mb-1 space-y-2">
-								{footerHelpNavItems.map((item) => (
-									<li key={item.href}>
-										<FooterLink href={item.href} className={COLUMN_LINK_CLASS}>
-											{item.label}
-										</FooterLink>
-									</li>
-								))}
-							</ul>
 
 							<div className="flex flex-wrap items-center gap-1">
 								<FooterLink

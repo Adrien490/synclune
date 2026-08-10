@@ -2,7 +2,6 @@
 
 import { useId, useState } from "react";
 import { Separator } from "@/shared/components/ui/separator";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import {
 	Tooltip,
 	TooltipContent,
@@ -357,7 +356,7 @@ export function CheckoutSummary({
 			</span>
 
 			{/*
-			 * Le récapitulatif n'est plus une `Card` — c'est une FICHE SCOTCHÉE.
+			 * Le récapitulatif n'est plus une `Card` — c'est une FICHE PAPIER.
 			 *
 			 * Il était l'objet le plus lourd de la page (carte blanche, ombre portée,
 			 * grands coins) pendant que les quatre étapes du formulaire n'avaient
@@ -375,44 +374,40 @@ export function CheckoutSummary({
 					Récapitulatif de ta commande
 				</h2>
 
-				<div className="relative pt-3">
-					<MaskingTape className="top-0 left-1/2 h-5 w-20 -translate-x-1/2 -rotate-2" />
-					<div className="polaroid-paper border-border bg-card relative rounded-sm border shadow-sm">
-						<button
-							type="button"
-							onClick={() => {
-								haptic("selection");
-								setIsMobileOpen((prev) => !prev);
-							}}
-							aria-expanded={isMobileOpen}
-							aria-controls="checkout-summary-mobile-content"
-							className="focus-ring flex w-full items-center justify-between rounded-sm p-4 text-left"
-						>
-							<span className="text-base font-medium">
-								{totalItems} article{totalItems > 1 ? "s" : ""}
-							</span>
-							<span className="flex items-center gap-2">
-								<span className="text-lg font-semibold tabular-nums">{formatEuro(total)}</span>
-								<CaretDownIcon
-									className={`text-muted-foreground size-4 transition-transform ${
-										isMobileOpen ? "rotate-180" : ""
-									}`}
-									aria-hidden="true"
-								/>
-							</span>
-						</button>
-						{isMobileOpen && (
-							<div id="checkout-summary-mobile-content" className="space-y-4 px-4 pt-2 pb-5">
-								<SummaryContent {...contentProps} />
-							</div>
-						)}
-					</div>
+				<div className="polaroid-paper border-border bg-card relative rounded-sm border shadow-sm">
+					<button
+						type="button"
+						onClick={() => {
+							haptic("selection");
+							setIsMobileOpen((prev) => !prev);
+						}}
+						aria-expanded={isMobileOpen}
+						aria-controls="checkout-summary-mobile-content"
+						className="focus-ring flex w-full items-center justify-between rounded-sm p-4 text-left"
+					>
+						<span className="text-base font-medium">
+							{totalItems} article{totalItems > 1 ? "s" : ""}
+						</span>
+						<span className="flex items-center gap-2">
+							<span className="text-lg font-semibold tabular-nums">{formatEuro(total)}</span>
+							<CaretDownIcon
+								className={`text-muted-foreground size-4 transition-transform ${
+									isMobileOpen ? "rotate-180" : ""
+								}`}
+								aria-hidden="true"
+							/>
+						</span>
+					</button>
+					{isMobileOpen && (
+						<div id="checkout-summary-mobile-content" className="space-y-4 px-4 pt-2 pb-5">
+							<SummaryContent {...contentProps} />
+						</div>
+					)}
 				</div>
 			</section>
 
 			{/* Desktop: fiche collante */}
-			<div className="relative hidden pt-3 lg:sticky lg:top-8 lg:block">
-				<MaskingTape className="top-0 left-1/2 h-6 w-24 -translate-x-1/2 -rotate-2" />
+			<div className="hidden lg:sticky lg:top-8 lg:block">
 				<div className="polaroid-paper border-border bg-card relative space-y-4 rounded-sm border p-5 shadow-sm">
 					{/* Le titre VISIBLE est le heading — plus de `sr-only` doublon au libellé
 					    différent du texte affiché. */}

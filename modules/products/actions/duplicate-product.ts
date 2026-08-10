@@ -110,7 +110,7 @@ export async function duplicateProduct(
 						compareAtPrice: sourceSku.compareAtPrice,
 						inventory: sourceSku.inventory,
 						isActive: sourceSku.isActive,
-						isDefault: sourceSku.isDefault,
+						position: sourceSku.position,
 						size: sourceSku.size,
 						colors: {
 							create: sourceSku.colors.map((c) => ({
@@ -139,7 +139,6 @@ export async function duplicateProduct(
 							mediaType: sourceImage.mediaType,
 							width: sourceImage.width,
 							height: sourceImage.height,
-							isPrimary: sourceImage.isPrimary,
 							position: sourceImage.position,
 						},
 					});

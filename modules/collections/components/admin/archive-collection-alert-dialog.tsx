@@ -1,6 +1,6 @@
 "use client";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
@@ -10,7 +10,7 @@ export const ARCHIVE_COLLECTION_DIALOG_ID = "archive-collection";
 interface ArchiveCollectionData {
 	collectionId: string;
 	collectionName: string;
-	collectionStatus: CollectionStatus;
+	collectionStatus: PublicationStatus;
 	[key: string]: unknown;
 }
 
@@ -18,10 +18,10 @@ export function ArchiveCollectionAlertDialog() {
 	const archiveDialog = useAlertDialog<ArchiveCollectionData>(ARCHIVE_COLLECTION_DIALOG_ID);
 	const { action } = useUpdateCollectionStatus();
 
-	const isArchiving = archiveDialog.data?.collectionStatus !== CollectionStatus.ARCHIVED;
-	const targetStatus: CollectionStatus = isArchiving
-		? CollectionStatus.ARCHIVED
-		: CollectionStatus.PUBLIC;
+	const isArchiving = archiveDialog.data?.collectionStatus !== PublicationStatus.ARCHIVED;
+	const targetStatus: PublicationStatus = isArchiving
+		? PublicationStatus.ARCHIVED
+		: PublicationStatus.PUBLIC;
 
 	return (
 		<ConfirmDialog

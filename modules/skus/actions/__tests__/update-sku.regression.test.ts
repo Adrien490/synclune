@@ -1,8 +1,13 @@
 /**
  * Regression tests for updateProductSku hardening (audit catalogue 2026-05-28).
  *
- * @regression cat-audit-002 — retirer isDefault sans transfert bloqué
- * @regression cat-audit-003 — désactiver le SKU défaut bloqué
+ * @regression cat-audit-002 — retirer le rang « principale » sans transfert bloqué
+ * @regression cat-audit-003 — désactiver la variante principale bloqué
+ *
+ * Depuis l'audit schéma V5 (lot A2), « principale » = rang 0 de
+ * (position asc, id asc) : l'action le détermine via un `findFirst` rangé,
+ * piloté ici par `mockPrisma.productSku.findFirst`. Le champ de FORMULAIRE
+ * `isDefault` survit et porte l'intention de transfert.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -127,12 +132,11 @@ function buildValidatedData(overrides: Partial<{ isActive: boolean; isDefault: b
 	};
 }
 
-function buildSkuMock(overrides: Partial<{ isActive: boolean; isDefault: boolean }>) {
+function buildSkuMock(overrides: Partial<{ isActive: boolean }>) {
 	return {
 		id: VALID_CUID,
 		sku: "BRC-01",
 		isActive: overrides.isActive ?? true,
-		isDefault: overrides.isDefault ?? false,
 		inventory: 5,
 		productId: "prod-1",
 		product: {
@@ -206,18 +210,18 @@ describe("updateProductSku — regression hardening", () => {
 	});
 
 	// ===================================================================
-	// CAT-AUDIT-002 — retrait isDefault sans transfert
+	// CAT-AUDIT-002 — retrait du rang « principale » sans transfert
 	// ===================================================================
 
-	describe("CAT-AUDIT-002: removing isDefault without transfer", () => {
-		it("rejects when isDefault transitions true → false on the current default SKU", async () => {
+	describe("CAT-AUDIT-002: removing the representative rank without transfer", () => {
+		it("rejects when isDefault transitions true → false on the current representative SKU", async () => {
 			mockSafeParse.mockReturnValue({
 				success: true,
 				data: buildValidatedData({ isDefault: false, isActive: true }),
 			});
-			mockPrisma.productSku.findUnique.mockResolvedValue(
-				buildSkuMock({ isDefault: true, isActive: true }),
-			);
+			mockPrisma.productSku.findUnique.mockResolvedValue(buildSkuMock({ isActive: true }));
+			// Le rang 0 du produit EST la variante éditée : elle est la principale.
+			mockPrisma.productSku.findFirst.mockResolvedValue({ id: VALID_CUID });
 
 			const result = await updateProductSku(undefined, formData);
 
@@ -226,48 +230,48 @@ describe("updateProductSku — regression hardening", () => {
 			expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
 		});
 
-		it("accepts when isDefault stays true on the current default SKU", async () => {
+		it("accepts when isDefault stays true on the current representative SKU", async () => {
 			mockSafeParse.mockReturnValue({
 				success: true,
 				data: buildValidatedData({ isDefault: true, isActive: true }),
 			});
-			mockPrisma.productSku.findUnique.mockResolvedValue(
-				buildSkuMock({ isDefault: true, isActive: true }),
-			);
+			mockPrisma.productSku.findUnique.mockResolvedValue(buildSkuMock({ isActive: true }));
+			mockPrisma.productSku.findFirst.mockResolvedValue({ id: VALID_CUID });
 
 			const result = await updateProductSku(undefined, formData);
 			expect(result.status).toBe(ActionStatus.SUCCESS);
 		});
 
-		it("accepts setting isDefault=true on a previously non-default SKU (transfer)", async () => {
+		it("accepts setting isDefault=true on a previously non-representative SKU (transfer)", async () => {
 			mockSafeParse.mockReturnValue({
 				success: true,
 				data: buildValidatedData({ isDefault: true, isActive: true }),
 			});
-			mockPrisma.productSku.findUnique.mockResolvedValue(
-				buildSkuMock({ isDefault: false, isActive: true }),
-			);
+			mockPrisma.productSku.findUnique.mockResolvedValue(buildSkuMock({ isActive: true }));
+			// Le rang 0 est une AUTRE variante : l'édition demande le transfert.
+			mockPrisma.productSku.findFirst.mockResolvedValue({ id: "sku-rank-zero" });
 
 			const result = await updateProductSku(undefined, formData);
 			expect(result.status).toBe(ActionStatus.SUCCESS);
-			// unsetOtherDefaultSkus must have been called
-			expect(mockPrisma.productSku.updateMany).toHaveBeenCalled();
+			// `moveSkuToFront` doit avoir amené la variante au rang 0.
+			expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
+				expect.objectContaining({ where: { id: VALID_CUID }, data: { position: 0 } }),
+			);
 		});
 	});
 
 	// ===================================================================
-	// CAT-AUDIT-003 — désactivation du SKU défaut
+	// CAT-AUDIT-003 — désactivation de la variante principale
 	// ===================================================================
 
-	describe("CAT-AUDIT-003: deactivating the default SKU", () => {
-		it("rejects when isActive transitions true → false on the current default SKU", async () => {
+	describe("CAT-AUDIT-003: deactivating the representative SKU", () => {
+		it("rejects when isActive transitions true → false on the current representative SKU", async () => {
 			mockSafeParse.mockReturnValue({
 				success: true,
 				data: buildValidatedData({ isDefault: true, isActive: false }),
 			});
-			mockPrisma.productSku.findUnique.mockResolvedValue(
-				buildSkuMock({ isDefault: true, isActive: true }),
-			);
+			mockPrisma.productSku.findUnique.mockResolvedValue(buildSkuMock({ isActive: true }));
+			mockPrisma.productSku.findFirst.mockResolvedValue({ id: VALID_CUID });
 
 			const result = await updateProductSku(undefined, formData);
 
@@ -276,14 +280,15 @@ describe("updateProductSku — regression hardening", () => {
 			expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
 		});
 
-		it("accepts deactivating a non-default SKU when another active SKU exists", async () => {
+		it("accepts deactivating a non-representative SKU when another active SKU exists", async () => {
 			mockSafeParse.mockReturnValue({
 				success: true,
 				data: buildValidatedData({ isDefault: false, isActive: false }),
 			});
-			mockPrisma.productSku.findUnique.mockResolvedValue(
-				buildSkuMock({ isDefault: false, isActive: true }),
-			);
+			mockPrisma.productSku.findUnique.mockResolvedValue(buildSkuMock({ isActive: true }));
+			// Rang 0 = une autre variante (défaut du beforeEach : findFirst → null
+			// suffirait aussi, mais l'explicite documente l'intention).
+			mockPrisma.productSku.findFirst.mockResolvedValue({ id: "sku-rank-zero" });
 
 			const result = await updateProductSku(undefined, formData);
 			expect(result.status).toBe(ActionStatus.SUCCESS);

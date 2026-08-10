@@ -1,5 +1,5 @@
 // shared-code.ts - Form options partagées entre client et serveur
-import type { ProductStatus } from "@/app/generated/prisma/client";
+import type { PublicationStatus } from "@/app/generated/prisma/client";
 
 // Form options shared between client and server
 export const createProductFormOpts = {
@@ -8,12 +8,11 @@ export const createProductFormOpts = {
 		description: "",
 		typeId: undefined as string | undefined,
 		collectionIds: [] as string[],
-		status: "PUBLIC" as ProductStatus,
+		status: "PUBLIC" as PublicationStatus,
 		initialSku: {
 			priceInclTaxEuros: null as number | null,
 			compareAtPriceEuros: undefined as number | undefined,
 			inventory: 1,
-			isDefault: true,
 			isActive: true,
 			colorIds: [] as string[],
 			materialIds: [] as string[],

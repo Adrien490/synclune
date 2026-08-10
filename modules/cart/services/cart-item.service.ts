@@ -4,7 +4,6 @@
  * Ce module contient les fonctions pures pour :
  * - Calculer le sous-total d'un item
  * - Vérifier la disponibilité (stock, statut)
- * - Calculer les réductions
  */
 
 import type { CartItem } from "../types/cart.types";
@@ -50,27 +49,6 @@ export function isCartItemInactive(item: CartItem): boolean {
  */
 export function hasCartItemIssue(item: CartItem): boolean {
 	return isCartItemOutOfStock(item) || isCartItemInactive(item);
-}
-
-// ============================================================================
-// CALCULS DE RÉDUCTION
-// ============================================================================
-
-/**
- * Vérifie si l'item a une réduction
- */
-export function hasCartItemDiscount(item: CartItem): boolean {
-	return !!(item.sku.compareAtPrice && item.sku.compareAtPrice > item.priceAtAdd);
-}
-
-/**
- * Calcule le pourcentage de réduction
- */
-export function getCartItemDiscountPercent(item: CartItem): number {
-	if (!hasCartItemDiscount(item)) return 0;
-	// Garde contre division par zéro (ne devrait pas arriver si hasCartItemDiscount est true)
-	if (!item.sku.compareAtPrice || item.sku.compareAtPrice <= 0) return 0;
-	return Math.round(((item.sku.compareAtPrice - item.priceAtAdd) / item.sku.compareAtPrice) * 100);
 }
 
 /**

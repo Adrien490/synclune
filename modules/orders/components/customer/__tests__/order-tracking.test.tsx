@@ -54,7 +54,7 @@ function createOrder(
 		trackingUrl: string | null;
 		shippingCarrier: string | null;
 		shippedAt: Date | null;
-		actualDelivery: Date | null;
+		deliveredAt: Date | null;
 	}> = {},
 ) {
 	return {
@@ -66,7 +66,7 @@ function createOrder(
 		trackingUrl: "https://track.example.com/1Z999AA10123456784",
 		shippingCarrier: "colissimo",
 		shippedAt: new Date("2026-01-01"),
-		actualDelivery: null,
+		deliveredAt: null,
 		...overrides,
 	};
 }
@@ -148,17 +148,17 @@ describe("OrderTracking", () => {
 	it("shows estimated delivery when set and not yet delivered", () => {
 		render(
 			<OrderTracking
-				order={createOrder({ shippedAt: new Date("2026-01-01"), actualDelivery: null })}
+				order={createOrder({ shippedAt: new Date("2026-01-01"), deliveredAt: null })}
 			/>,
 		);
 		expect(screen.getByText(/Livraison estimée/i)).toBeInTheDocument();
 	});
 
-	it("hides estimated delivery once actualDelivery is set", () => {
+	it("hides estimated delivery once deliveredAt is set", () => {
 		render(
 			<OrderTracking
 				order={createOrder({
-					actualDelivery: new Date("2026-01-04"),
+					deliveredAt: new Date("2026-01-04"),
 				})}
 			/>,
 		);

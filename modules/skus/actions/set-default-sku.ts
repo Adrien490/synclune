@@ -14,17 +14,17 @@ import {
 } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { setDefaultProductSkuSchema } from "../schemas/sku.schemas";
+import { moveSkuToFront } from "../services/persist-sku-helpers.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
 /**
- * Set a SKU as the default SKU for its product
+ * Set a SKU as the default (representative) SKU for its product
  *
- * BUSINESS RULE: Only one SKU can be default per product
- *
- * This function guarantees isDefault uniqueness at application level via:
- * 1. Atomic transaction to prevent race conditions
- * 2. Deactivate all isDefault for the product
- * 3. Activate the selected SKU
+ * Depuis le remplacement d'`isDefault` par `position` (audit schéma V5, lot A2),
+ * « définir par défaut » = amener la variante au rang 0 et renuméroter ses sœurs
+ * en préservant leur ordre relatif. Un entier de rang n'a pas d'unicité à
+ * garantir : plus d'index unique partiel, plus de promotion en deux temps —
+ * une transaction READ COMMITTED ordinaire suffit.
  */
 export async function setDefaultSku(
 	_prev: ActionState | undefined,
@@ -46,15 +46,13 @@ export async function setDefaultSku(
 
 		const { skuId } = validation.data;
 
-		// 4. Verify SKU exists + atomic transaction to guarantee uniqueness
+		// 4. Verify SKU exists + atomic reorder (la cible prend le rang 0)
 		const skuData = await prisma.$transaction(async (tx) => {
 			const sku = await tx.productSku.findUnique({
 				// `deletedAt: null` — un SKU soft-deleted appartient à un produit lui-même
 				// supprimé (seul writer : `delete-product`), sans chemin de restauration. Aucune
 				// surface admin ne l'expose : le muter est toujours une anomalie. Sans ce filtre,
-				// on pouvait ajuster le stock ou poser `isDefault` sur la variante d'un produit
-				// archivé — et l'index unique partiel de `isDefault` (WHERE deletedAt IS NULL) ne
-				// s'y oppose pas.
+				// on pouvait ajuster le stock ou réordonner la variante d'un produit archivé.
 				where: { id: skuId, deletedAt: null },
 				select: {
 					sku: true,
@@ -77,16 +75,7 @@ export async function setDefaultSku(
 				throw new BusinessError("Impossible de définir une variante inactive par défaut");
 			}
 
-			// Deactivate all isDefault for the product
-			await tx.productSku.updateMany({
-				where: { productId: sku.productId },
-				data: { isDefault: false },
-			});
-			// Activate the selected SKU
-			await tx.productSku.update({
-				where: { id: skuId },
-				data: { isDefault: true },
-			});
+			await moveSkuToFront(tx, sku.productId, skuId);
 
 			return sku;
 		});

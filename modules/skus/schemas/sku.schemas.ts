@@ -30,7 +30,7 @@ export const getProductSkuSchema = z.object({
  *
  * Les médias sont un tableau unifié `media[]` aligné sur le formulaire produit
  * (premier item = principal, drag-reorder côté UI). Le serveur calcule
- * `isPrimary`/`position` à partir de l'ordre du tableau.
+ * `position` à partir de l'ordre du tableau.
  */
 const baseSkuFieldsSchema = z.object({
 	// Prix en euros (sera converti en centimes cote serveur)
@@ -66,6 +66,9 @@ const baseSkuFieldsSchema = z.object({
 
 	// Boolean fields: normalized in server action before validation
 	isActive: formBooleanSchema.default(true),
+	// Champ de FORMULAIRE uniquement (« faire de cette variante le représentant
+	// du produit ») : persisté en rang 0 de `position` — la colonne `isDefault`
+	// n'existe plus (audit schéma V5, lot A2).
 	isDefault: formBooleanSchema.default(false),
 
 	// Couleurs M2M : ordre = priorité (1re = principale pour vignette + snapshot facture)

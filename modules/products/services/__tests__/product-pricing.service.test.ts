@@ -12,10 +12,7 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 import {
 	calculatePriceInfo,
 	determineStockStatus,
-	calculateDiscountPercent,
-	hasActiveDiscount,
 	getSchemaOrgAvailabilityUrl,
-	calculateSavings,
 } from "../product-pricing.service";
 
 describe("calculatePriceInfo", () => {
@@ -116,44 +113,6 @@ describe("determineStockStatus", () => {
 	});
 });
 
-describe("calculateDiscountPercent", () => {
-	it("should calculate discount percentage", () => {
-		expect(calculateDiscountPercent(100, 80)).toBe(20);
-		expect(calculateDiscountPercent(200, 150)).toBe(25);
-	});
-
-	it("should return 0 when no discount", () => {
-		expect(calculateDiscountPercent(null, 100)).toBe(0);
-		expect(calculateDiscountPercent(undefined, 100)).toBe(0);
-	});
-
-	it("should return 0 when compareAtPrice <= price", () => {
-		expect(calculateDiscountPercent(100, 100)).toBe(0);
-		expect(calculateDiscountPercent(80, 100)).toBe(0);
-	});
-
-	it("should round the percentage", () => {
-		// 33.333...% -> 33
-		expect(calculateDiscountPercent(300, 200)).toBe(33);
-	});
-});
-
-describe("hasActiveDiscount", () => {
-	it("should return true when compareAtPrice > price", () => {
-		expect(hasActiveDiscount(150, 100)).toBe(true);
-	});
-
-	it("should return false when compareAtPrice <= price", () => {
-		expect(hasActiveDiscount(100, 100)).toBe(false);
-		expect(hasActiveDiscount(80, 100)).toBe(false);
-	});
-
-	it("should return false when compareAtPrice is null/undefined", () => {
-		expect(hasActiveDiscount(null, 100)).toBe(false);
-		expect(hasActiveDiscount(undefined, 100)).toBe(false);
-	});
-});
-
 describe("getSchemaOrgAvailabilityUrl", () => {
 	it("should return InStock URL", () => {
 		expect(getSchemaOrgAvailabilityUrl("in_stock")).toBe("https://schema.org/InStock");
@@ -165,22 +124,5 @@ describe("getSchemaOrgAvailabilityUrl", () => {
 
 	it("should return OutOfStock URL", () => {
 		expect(getSchemaOrgAvailabilityUrl("out_of_stock")).toBe("https://schema.org/OutOfStock");
-	});
-});
-
-describe("calculateSavings", () => {
-	it("should calculate savings amount", () => {
-		expect(calculateSavings(150, 100)).toBe(50);
-		expect(calculateSavings(200, 120)).toBe(80);
-	});
-
-	it("should return 0 when no promotion", () => {
-		expect(calculateSavings(null, 100)).toBe(0);
-		expect(calculateSavings(undefined, 100)).toBe(0);
-	});
-
-	it("should return 0 when compareAtPrice <= price", () => {
-		expect(calculateSavings(100, 100)).toBe(0);
-		expect(calculateSavings(80, 100)).toBe(0);
 	});
 });

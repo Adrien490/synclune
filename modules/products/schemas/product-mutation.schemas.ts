@@ -3,7 +3,7 @@ import { z } from "zod";
 // les valeurs coïncidaient, mais rien ne les rattachait à `schema.prisma`. Ajouter un
 // statut au modèle aurait laissé ces 4 schémas le refuser en silence — le reste du
 // repo dérive déjà ses enums du client Prisma (OrderStatus, RefundStatus, …).
-import { ProductStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 
 import {
@@ -103,7 +103,6 @@ const skuPriceRefinement = <T extends { compareAtPriceEuros?: number; priceInclT
 const initialSkuSchema = z
 	.object({
 		...baseSkuFields,
-		isDefault: formBooleanSchema.default(true),
 	})
 	.refine(skuPriceRefinement, {
 		message: "Le prix comparé doit être strictement supérieur au prix de vente",
@@ -173,7 +172,7 @@ export const createProductSchema = z
 			.default([]),
 
 		// Status enum
-		status: z.enum(ProductStatus).default("DRAFT"),
+		status: z.enum(PublicationStatus).default("DRAFT"),
 
 		// Initial SKU (required for product creation)
 		initialSku: initialSkuSchema,
@@ -247,7 +246,7 @@ export const updateProductSchema = z
 			.default([]),
 
 		// Status enum
-		status: z.enum(ProductStatus),
+		status: z.enum(PublicationStatus),
 
 		// Default SKU (modifiable)
 		defaultSku: defaultSkuSchema,
@@ -289,8 +288,8 @@ export const duplicateProductSchema = z.object({
 
 export const toggleProductStatusSchema = z.object({
 	productId: z.cuid2(),
-	currentStatus: z.enum(ProductStatus),
-	targetStatus: z.enum(ProductStatus).optional(),
+	currentStatus: z.enum(PublicationStatus),
+	targetStatus: z.enum(PublicationStatus).optional(),
 });
 
 export const updateProductCollectionsSchema = z.object({

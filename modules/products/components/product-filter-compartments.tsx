@@ -95,7 +95,7 @@ export interface ProductFilterCompartmentsProps {
 	 * coche (le rail). Le panneau, lui, applique en bloc et n'en a pas besoin.
 	 */
 	onPriceCommit?: (value: [number, number]) => void;
-	onAvailabilityChange: (field: "inStockOnly" | "onSale", checked: boolean) => void;
+	onAvailabilityChange: (field: "inStockOnly", checked: boolean) => void;
 	onSectionReset: (section: FilterSectionId) => void;
 	/**
 	 * Options du compartiment « Trier par » (SSOT `PRODUCTS_SORT_OPTIONS`).
@@ -270,9 +270,7 @@ export function ProductFilterCompartments({
 				<AvailabilityFilterSection
 					idPrefix={host}
 					inStockOnly={values.inStockOnly}
-					onSale={values.onSale}
 					onInStockChange={(checked) => onAvailabilityChange("inStockOnly", checked)}
-					onSaleChange={(checked) => onAvailabilityChange("onSale", checked)}
 				/>
 			</FilterCompartment>
 		</div>

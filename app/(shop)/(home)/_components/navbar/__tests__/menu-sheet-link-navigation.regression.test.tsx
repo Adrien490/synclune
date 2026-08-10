@@ -128,7 +128,6 @@ function renderOpenMenu() {
 		<MenuSheet
 			navItems={NAV_ITEMS}
 			productTypes={[{ slug: "bagues", label: "Bagues" }]}
-			collections={[]}
 			isAdmin={false}
 			session={null}
 		/>,

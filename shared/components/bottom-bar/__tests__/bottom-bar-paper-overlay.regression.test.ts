@@ -8,8 +8,8 @@
  * parfaitement lisible et devient totalement inerte. C'est un mode d'échec
  * silencieux — aucun test de rendu ne le voit, jsdom n'a pas de hit-testing, et
  * l'œil ne distingue pas une barre morte d'une barre vivante sur une capture.
- * La même règle vaut pour `MaskingTape` du dépôt, où elle est déjà documentée
- * comme « non négociable ».
+ * La même règle vaut pour tout calque décoratif superposé à une zone
+ * cliquable : `pointer-events: none` y est non négociable.
  *
  * Ce test lit le CSS compilé côté source (`app/styles/components.css`) parce que
  * c'est la seule surface où la règle existe : elle n'est pas exprimable en

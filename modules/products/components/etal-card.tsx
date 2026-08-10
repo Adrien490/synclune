@@ -1,7 +1,6 @@
 "use client";
 
 import type { LoadMoreAffordanceState } from "@/shared/components/load-more";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import {
 	CARD_SURFACE_FOCUS,
 	CARD_SURFACE_HOVER,
@@ -43,21 +42,6 @@ const INNER_PANEL =
 
 /** Le pied : le journal des lots + la ligne d'invite, hauteur réservée. */
 const FOOT = "flex flex-col gap-1.5 px-1 pt-2.5 pb-3";
-
-/**
- * Le ruban, position comprise (`MaskingTape` ne fournit que la matière).
- *
- * ⚠️ Les classes de transition sont posées ICI, sur le ruban lui-même, et non
- * par un sélecteur descendant depuis la carte : `MaskingTape` ne porte aucun
- * `data-slot`, donc un `[&_[data-slot=…]]` aurait été une règle morte — sans
- * erreur, sans warning, et sans mouvement.
- */
-const TAPE =
-	"-top-2 left-1/2 z-20 h-4 w-14 -translate-x-1/2 -rotate-2 motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]";
-
-/** Le ruban se décolle pendant l'attente — le seul mouvement du carton. */
-const TAPE_PENDING =
-	"-top-2 left-1/2 z-20 h-4 w-14 -translate-x-1/2 -translate-y-0.5 -rotate-6 motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]";
 
 /**
  * Combien de segments du rail sont allumés.
@@ -163,7 +147,6 @@ export function EtalCard({
 					className,
 				)}
 			>
-				<MaskingTape className={TAPE} />
 				<span className={INNER_PANEL}>
 					{/* ⚠️ Ce carton portait un « — Léane » en cursive. Il est retiré : le
 					    carton de fin est la DERNIÈRE cellule de la grille, donc à ~200 px
@@ -210,7 +193,6 @@ export function EtalCard({
 					className,
 				)}
 			>
-				<MaskingTape className={TAPE} />
 				<span className={cn(INNER_PANEL, "border-destructive border-solid")}>
 					<span className="text-destructive text-base leading-snug font-semibold">
 						Je n&apos;ai pas réussi
@@ -253,7 +235,6 @@ export function EtalCard({
 				className,
 			)}
 		>
-			<MaskingTape className={isPending ? TAPE_PENDING : TAPE} />
 			<span className={INNER_PANEL}>
 				<span className="font-display text-[clamp(1.75rem,6vw,2.25rem)] leading-[1.02] font-light tracking-[-0.02em] tabular-nums">
 					{hasCount ? remainingCount : "Encore"}
@@ -282,8 +263,8 @@ export function EtalCard({
  * @description
  * ⚠️ La parité de géométrie avec `EtalCard` est un contrat **anti-CLS**, pas une
  * ressemblance : `/produits` est la seule page dont le CLS est budgété en CI
- * (`e2e/performance.spec.ts`, « page produits - CLS under 0.15 »). Les trois
- * constantes de géométrie (`INNER_PANEL`, `FOOT`, `TAPE`) sont partagées avec le
+ * (`e2e/performance.spec.ts`, « page produits - CLS under 0.15 »). Les deux
+ * constantes de géométrie (`INNER_PANEL`, `FOOT`) sont partagées avec le
  * carton réel — une copie littérale dériverait au premier changement.
  *
  * `aria-hidden` : la frontière `Suspense` qui monte ce squelette est déjà
@@ -296,7 +277,6 @@ export function EtalCardSkeleton({ className }: { className?: string }) {
 			aria-hidden="true"
 			className={cn(CARD_SURFACE_POLAROID, "flex w-full flex-col self-stretch", className)}
 		>
-			<MaskingTape className={TAPE} />
 			<span className={cn(INNER_PANEL, "gap-2")}>
 				<span className="bg-muted h-8 w-16 rounded motion-safe:animate-pulse" />
 				<span className="bg-muted h-3 w-28 rounded motion-safe:animate-pulse" />

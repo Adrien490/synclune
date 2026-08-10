@@ -1,5 +1,5 @@
 import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
@@ -16,9 +16,9 @@ import {
 // ============================================================================
 
 const collectionStatusSchema = z
-	.enum([CollectionStatus.PUBLIC, CollectionStatus.DRAFT, CollectionStatus.ARCHIVED])
+	.enum([PublicationStatus.PUBLIC, PublicationStatus.DRAFT, PublicationStatus.ARCHIVED])
 	.optional()
-	.default(CollectionStatus.DRAFT);
+	.default(PublicationStatus.DRAFT);
 
 // ============================================================================
 // FILTERS SCHEMA
@@ -28,7 +28,7 @@ export const collectionFiltersSchema = z.object({
 	// SSOT `formBooleanSchema` (cf. order.schemas.ts) — même ré-implémentation,
 	// même sur-ensemble de valeurs acceptées.
 	hasProducts: formBooleanSchema.optional(),
-	status: z.union([z.enum(CollectionStatus), z.array(z.enum(CollectionStatus))]).optional(),
+	status: z.union([z.enum(PublicationStatus), z.array(z.enum(PublicationStatus))]).optional(),
 });
 
 // ============================================================================
@@ -93,12 +93,12 @@ export const updateCollectionSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: collectionNameSchema,
 	description: collectionDescriptionSchema,
-	status: z.enum(CollectionStatus),
+	status: z.enum(PublicationStatus),
 });
 
 export const updateCollectionStatusSchema = z.object({
 	id: z.cuid2("ID invalide"),
-	status: z.enum(CollectionStatus),
+	status: z.enum(PublicationStatus),
 });
 
 export const deleteCollectionSchema = z.object({

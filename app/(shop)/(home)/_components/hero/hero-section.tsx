@@ -141,6 +141,12 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 				    n'étirait plus rien (même §). */}
 				<div className="enter-load col-span-2 md:col-span-3 lg:col-span-2" style={HEADING_ENTER}>
 					<HeroHeading id={TITLE_ID} />
+					{/* Les cartes de l'étal portent des `h3` : ce `h2` masqué comble le
+					    saut de niveau depuis le `h1` (WCAG 1.3.1) — même mécanisme que le
+					    `listLabel` de `StorefrontHeading` sur /produits et /favoris. Il vit
+					    dans la cellule titre, HORS de la frontière Suspense de la grille :
+					    présent dès le shell statique, quel que soit l'état de l'étal. */}
+					<h2 className="sr-only">Les dernières créations</h2>
 				</div>
 
 				<Suspense fallback={<HeroGridSkeleton />}>

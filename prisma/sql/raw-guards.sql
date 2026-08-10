@@ -138,12 +138,15 @@ DROP INDEX IF EXISTS "Product_description_unaccent_trgm_idx";
 CREATE INDEX "Product_description_unaccent_trgm_idx" ON "Product" USING gin (immutable_unaccent(COALESCE(description, '')) gin_trgm_ops);
 DROP INDEX IF EXISTS "Product_title_unaccent_trgm_idx";
 CREATE INDEX "Product_title_unaccent_trgm_idx" ON "Product" USING gin (immutable_unaccent(title) gin_trgm_ops);
-DROP INDEX IF EXISTS "ProductCollection_collectionId_isFeatured_unique";
-CREATE UNIQUE INDEX "ProductCollection_collectionId_isFeatured_unique" ON "ProductCollection" ("collectionId") WHERE "isFeatured" = true;
-DROP INDEX IF EXISTS "ProductSku_productId_isDefault_unique";
-CREATE UNIQUE INDEX "ProductSku_productId_isDefault_unique" ON "ProductSku" ("productId") WHERE "isDefault" = true AND "deletedAt" IS NULL;
-DROP INDEX IF EXISTS "SkuMedia_one_primary_per_sku";
-CREATE UNIQUE INDEX "SkuMedia_one_primary_per_sku" ON "SkuMedia" ("skuId") WHERE "isPrimary" = true;
+-- Plus d'index unique partiel de RANG (audit schéma V5, lots A1/A2/A3) : les trois
+-- booléens qu'ils gardaient — `SkuMedia.isPrimary`, `ProductSku.isDefault`,
+-- `ProductCollection.isFeatured` — sont remplacés par une colonne `position`.
+-- Un rang exprimé par un entier n'a rien à garder : il ne peut pas y avoir « deux
+-- premiers », il y a juste deux lignes au même rang, que l'ordre canonique
+-- départage par `id` (SkuMedia, ProductSku) ou par `addedAt` (ProductCollection).
+-- C'est ce qui fait disparaître les promotions transactionnelles associées —
+-- dont celle de `set-featured-product`, qui exigeait un niveau SERIALIZABLE.
+--
 -- Unicité de l'email INSENSIBLE À LA CASSE. Le `@unique` Prisma sur la colonne ne
 -- couvre que l'égalité binaire : `Alice@x.com` et `alice@x.com` y passaient comme
 -- deux comptes. Index d'EXPRESSION — non exprimable en Prisma, au même titre que les

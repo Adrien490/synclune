@@ -14,7 +14,6 @@ export function makeSku(overrides: Partial<ActiveSku> & { id: string }): ActiveS
 		compareAtPrice: null,
 		inventory: 12,
 		isActive: true,
-		isDefault: false,
 		colors: [],
 		materials: [],
 		size: null,
@@ -40,9 +39,10 @@ export function makeProduct(overrides: Partial<ProductCarouselItem> = {}): Produ
 		createdAt: new Date("2026-01-01"),
 		type: { id: "t-1", slug: "bagues", label: "Bagues" },
 		skus: [
+			// V5 : plus d'`isDefault` — le représentant est la première pièce du
+			// tableau (les listes arrivent pré-triées `(position asc, id asc)`).
 			makeSku({
 				id: "sku-cristal-52",
-				isDefault: true,
 				colors: [makeColorLink("cristal", "Cristal")],
 				size: "52",
 			}),

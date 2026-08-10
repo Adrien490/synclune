@@ -6,8 +6,6 @@ import {
 	hasCartItemIssue,
 	getCartItemIssueLabel,
 	CART_ITEM_ISSUE_LABELS,
-	hasCartItemDiscount,
-	getCartItemDiscountPercent,
 	getCartItemPrimaryImage,
 } from "../cart-item.service";
 import type { CartItem } from "../../types/cart.types";
@@ -50,7 +48,6 @@ function createCartItem(
 					thumbnailUrl: null,
 					altText: "alt",
 					mediaType: "IMAGE",
-					isPrimary: true,
 				},
 			]) as CartItem["sku"]["images"],
 			colors: [
@@ -192,51 +189,6 @@ describe("getCartItemIssueLabel", () => {
 	});
 });
 
-describe("hasCartItemDiscount", () => {
-	it("should return true when compareAtPrice > priceAtAdd", () => {
-		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 3000, priceAtAdd: 2500 }))).toBe(
-			true,
-		);
-	});
-
-	it("should return false when compareAtPrice is null", () => {
-		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: null }))).toBe(false);
-	});
-
-	it("should return false when compareAtPrice <= priceAtAdd", () => {
-		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 2500, priceAtAdd: 2500 }))).toBe(
-			false,
-		);
-		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 2000, priceAtAdd: 2500 }))).toBe(
-			false,
-		);
-	});
-});
-
-describe("getCartItemDiscountPercent", () => {
-	it("should calculate discount percentage", () => {
-		expect(
-			getCartItemDiscountPercent(createCartItem({ compareAtPrice: 5000, priceAtAdd: 2500 })),
-		).toBe(50);
-	});
-
-	it("should round the percentage", () => {
-		expect(
-			getCartItemDiscountPercent(createCartItem({ compareAtPrice: 3000, priceAtAdd: 2000 })),
-		).toBe(33);
-	});
-
-	it("should return 0 when no discount", () => {
-		expect(getCartItemDiscountPercent(createCartItem({ compareAtPrice: null }))).toBe(0);
-	});
-
-	it("should return 0 when compareAtPrice <= priceAtAdd", () => {
-		expect(
-			getCartItemDiscountPercent(createCartItem({ compareAtPrice: 2500, priceAtAdd: 2500 })),
-		).toBe(0);
-	});
-});
-
 describe("getCartItemPrimaryImage", () => {
 	it("should return the first image", () => {
 		const image = {
@@ -246,7 +198,6 @@ describe("getCartItemPrimaryImage", () => {
 			thumbnailUrl: null,
 			altText: "alt",
 			mediaType: "IMAGE",
-			isPrimary: true,
 		};
 		const item = createCartItem({ images: [image] as unknown as { id: string }[] });
 		expect(getCartItemPrimaryImage(item)).toEqual(image);

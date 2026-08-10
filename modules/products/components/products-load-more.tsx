@@ -15,12 +15,16 @@ interface ProductsLoadMoreProps {
 	totalCount: number;
 	/** Taille de lot — reprise du `?perPage=` de l'URL, comme le rendu serveur. */
 	perPage: number;
-	/** Pre-fetched wishlist ids passed from the page (avoids client refetch). */
-	wishlistProductIds?: Set<string>;
+	/**
+	 * Pre-fetched wishlist ids passed from the page (avoids client refetch).
+	 * ⚠️ REQUIS, pas optionnel : un `undefined` silencieux rendrait `isInWishlist`
+	 * faux partout — le cœur vide dont le clic RETIRE le favori (bug historique
+	 * de l'étal, cf. hero-grid.tsx).
+	 */
+	wishlistProductIds: Set<string>;
 	sortBy?: SortField;
 	search?: string;
 	filters?: ProductFilters;
-	preferOnSale?: boolean;
 }
 
 /**
@@ -63,7 +67,6 @@ export function ProductsLoadMore({
 	sortBy,
 	search,
 	filters,
-	preferOnSale,
 }: ProductsLoadMoreProps) {
 	return (
 		<LoadMore<Product>
@@ -89,9 +92,8 @@ export function ProductsLoadMore({
 				<ProductCard
 					product={p}
 					index={initialDisplayedCount + i}
-					isInWishlist={wishlistProductIds?.has(p.id)}
+					isInWishlist={wishlistProductIds.has(p.id)}
 					sectionId="catalog"
-					preferOnSale={preferOnSale}
 					disablePreload
 				/>
 			)}

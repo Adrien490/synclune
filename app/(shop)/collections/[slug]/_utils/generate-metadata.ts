@@ -1,33 +1,30 @@
-import { CollectionStatus, ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
 /**
- * Extrait l'image du produit vedette (ou le premier produit PUBLIC) pour OpenGraph
+ * Extrait l'image du produit vedette pour OpenGraph.
+ *
+ * Le select storefront arrive PRÉ-TRIÉ (position asc, addedAt desc) et filtré
+ * PUBLIC : la vedette est `products[0]`, son SKU représentant est `skus[0]`
+ * (rang 0 de (position, id)) et son image principale la première IMAGE de cet
+ * ordre — le select ne remonte que des `mediaType: IMAGE`, avec `take: 1`.
  */
 function getFeaturedProductImage(
 	products: NonNullable<Awaited<ReturnType<typeof getStorefrontCollectionBySlug>>>["products"],
 ): { url: string; alt: string } | null {
-	// Chercher d'abord le produit featured PUBLIC
-	const featuredProduct = products.find(
-		(pc) => pc.isFeatured && pc.product.status === ProductStatus.PUBLIC,
-	);
-
-	// Sinon prendre le premier produit PUBLIC
-	const productToUse =
-		featuredProduct ?? products.find((pc) => pc.product.status === ProductStatus.PUBLIC);
+	const productToUse = products[0];
 
 	if (!productToUse) return null;
 
-	// Trouver le SKU par defaut ou le premier SKU actif
-	const defaultSku =
-		productToUse.product.skus.find((s) => s.isDefault) ?? productToUse.product.skus[0];
+	// SKU représentant : rang 0 de (position asc, id asc), déjà trié par le select
+	const defaultSku = productToUse.product.skus[0];
 
 	if (!defaultSku) return null;
 
-	// Trouver l'image primaire ou la premiere image
-	const primaryImage = defaultSku.images.find((i) => i.isPrimary) ?? defaultSku.images[0];
+	// Première IMAGE de l'ordre canonique (le select filtre déjà mediaType: IMAGE)
+	const primaryImage = defaultSku.images[0];
 
 	if (!primaryImage) return null;
 
@@ -46,7 +43,7 @@ export async function generateCollectionMetadata({
 	const collection = await getStorefrontCollectionBySlug({ slug });
 
 	// Vérifier que la collection existe et est publiée
-	if (!collection || collection.status !== CollectionStatus.PUBLIC) {
+	if (!collection || collection.status !== PublicationStatus.PUBLIC) {
 		return {
 			title: "Collection non trouvée - Synclune",
 			description: "Cette collection n'existe pas ou n'est plus disponible.",

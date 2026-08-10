@@ -1,5 +1,5 @@
 import { logger } from "@/shared/lib/logger";
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -95,7 +95,7 @@ async function fetchStorefrontCollection(
 
 	try {
 		const collection = await prisma.collection.findUnique({
-			where: { slug: params.slug, status: CollectionStatus.PUBLIC },
+			where: { slug: params.slug, status: PublicationStatus.PUBLIC },
 			select: GET_COLLECTION_STOREFRONT_SELECT,
 		});
 

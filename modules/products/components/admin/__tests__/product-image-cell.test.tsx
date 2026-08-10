@@ -53,6 +53,7 @@ vi.mock("motion/react", () => ({
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
+// Plus de `isPrimary` : l'ordre du tableau EST l'ordre canonique (position, id)
 const baseImage = {
 	id: "img-a",
 	url: "https://example.com/a.jpg",
@@ -60,28 +61,25 @@ const baseImage = {
 	blurDataUrl: null,
 	altText: "Image A",
 	mediaType: "IMAGE" as const,
-	isPrimary: false as const,
 	width: null,
 	height: null,
 };
 
 const imageA = baseImage;
 
-const imagePrimary = {
+const imageB = {
 	...baseImage,
-	id: "img-primary",
-	url: "https://example.com/primary.jpg",
-	altText: "Image primaire",
-	isPrimary: true as const,
+	id: "img-b",
+	url: "https://example.com/b.jpg",
+	altText: "Image B",
 };
 
-const videoPrimary = {
+const videoRankZero = {
 	...baseImage,
 	id: "vid-1",
 	url: "https://example.com/clip.mp4",
 	altText: "Vidéo",
 	mediaType: "VIDEO" as const,
-	isPrimary: true as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -110,33 +108,28 @@ describe("ProductImageCell", () => {
 		expect(screen.queryByRole("img", { name: "Bague dorée" })).not.toBeInTheDocument();
 	});
 
-	it("priorise l'image isPrimary sur la première image", () => {
+	it("affiche la première IMAGE de l'ordre du tableau comme vignette", () => {
 		const { container } = render(
-			<ProductImageCell images={[imageA, imagePrimary]} productTitle="Bague dorée" />,
+			<ProductImageCell images={[imageA, imageB]} productTitle="Bague dorée" />,
 		);
-		// Only the primary image should be rendered, not imageA
-		expect(within(container).getByAltText("Image primaire")).toBeInTheDocument();
-		expect(within(container).queryByAltText("Image A")).not.toBeInTheDocument();
+		// Seule la première image est rendue en vignette, pas la seconde
+		expect(within(container).getByAltText("Image A")).toBeInTheDocument();
+		expect(within(container).queryByAltText("Image B")).not.toBeInTheDocument();
 	});
 
-	it("utilise la première image quand aucune isPrimary", () => {
-		render(<ProductImageCell images={[imageA]} productTitle="Bague dorée" />);
-		expect(screen.getByAltText("Image A")).toBeInTheDocument();
-	});
-
-	// pickPrimaryImage (SSOT) : une vidéo `isPrimary` ne doit JAMAIS atteindre
-	// `<Image src>` — le motif `find(isPrimary) ?? images[0]` mettait un `.mp4`
-	// dans l'optimiseur (vignette cassée + transformation facturée).
-	it("retombe sur la première IMAGE quand le média primaire est une vidéo", () => {
+	// pickPrimaryImage (SSOT) : une vidéo ne doit JAMAIS atteindre `<Image src>` —
+	// prendre `images[0]` sans filtre mettait un `.mp4` dans l'optimiseur
+	// (vignette cassée + transformation facturée).
+	it("retombe sur la première IMAGE quand le média au rang 0 est une vidéo", () => {
 		const { container } = render(
-			<ProductImageCell images={[videoPrimary, imageA]} productTitle="Bague dorée" />,
+			<ProductImageCell images={[videoRankZero, imageA]} productTitle="Bague dorée" />,
 		);
 		expect(within(container).getByAltText("Image A")).toBeInTheDocument();
 		expect(within(container).queryByAltText("Vidéo")).not.toBeInTheDocument();
 	});
 
 	it("affiche l'état vide quand le produit n'a QUE des vidéos", () => {
-		render(<ProductImageCell images={[videoPrimary]} productTitle="Bague dorée" />);
+		render(<ProductImageCell images={[videoRankZero]} productTitle="Bague dorée" />);
 		expect(screen.getByTestId("package-icon")).toBeInTheDocument();
 	});
 

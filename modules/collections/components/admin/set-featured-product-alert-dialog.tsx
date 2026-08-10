@@ -11,59 +11,44 @@ interface SetFeaturedProductData {
 	collectionSlug: string;
 	productId: string;
 	productTitle: string;
-	isFeatured: boolean;
 	[key: string]: unknown;
 }
 
+/**
+ * La vedette est le rang 0 de l'ordre des associations (audit schéma V5, lot
+ * A3) : il y a toujours une vedette, on ne peut que la REMPLACER — l'ancien
+ * flux « retirer la vedette » est parti avec le booléen `isFeatured`.
+ */
 export function SetFeaturedProductAlertDialog() {
 	const dialog = useAlertDialog<SetFeaturedProductData>(SET_FEATURED_PRODUCT_DIALOG_ID);
-	const { setFeatured, removeFeatured } = useSetFeaturedProduct();
+	const { setFeatured } = useSetFeaturedProduct();
 
 	const handleConfirm = () => {
 		if (!dialog.data) return;
 
-		if (dialog.data.isFeatured) {
-			removeFeatured(dialog.data.collectionId, dialog.data.productId);
-		} else {
-			setFeatured(dialog.data.collectionId, dialog.data.productId);
-		}
+		setFeatured(dialog.data.collectionId, dialog.data.productId);
 	};
-
-	const isFeatured = dialog.data?.isFeatured ?? false;
 
 	return (
 		<ConfirmDialog
 			open={dialog.isOpen}
 			onClose={dialog.close}
 			onConfirm={handleConfirm}
-			tone={isFeatured ? "warning" : "info"}
-			title={isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}
-			confirmLabel={isFeatured ? "Retirer" : "Definir comme vedette"}
+			tone="info"
+			title="Definir le produit vedette"
+			confirmLabel="Definir comme vedette"
 			descriptionClassName="space-y-3"
 			description={
-				isFeatured ? (
-					<>
-						<p>
-							Voulez-vous retirer le statut vedette de{" "}
-							<strong>&quot;{dialog.data?.productTitle}&quot;</strong> ?
-						</p>
-						<p>
-							La collection n&apos;aura plus de produit vedette et affichera le produit le plus
-							recent comme image representative.
-						</p>
-					</>
-				) : (
-					<>
-						<p>
-							Voulez-vous definir <strong>&quot;{dialog.data?.productTitle}&quot;</strong> comme
-							produit vedette de cette collection ?
-						</p>
-						<p>
-							Ce produit sera utilise comme image representative de la collection sur la page
-							d&apos;accueil et dans les listes.
-						</p>
-					</>
-				)
+				<>
+					<p>
+						Voulez-vous definir <strong>&quot;{dialog.data?.productTitle}&quot;</strong> comme
+						produit vedette de cette collection ?
+					</p>
+					<p>
+						Ce produit sera utilise comme image representative de la collection sur la page
+						d&apos;accueil et dans les listes.
+					</p>
+				</>
 			}
 		/>
 	);

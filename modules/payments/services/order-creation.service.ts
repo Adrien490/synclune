@@ -344,10 +344,10 @@ export async function createOrderInTransaction(
 
 				const sku = skuResult.data.sku;
 				const product = sku.product;
-				// EINV-SNAPSHOT-MEDIA-001 : SSOT `pickPrimaryImage` (primaire IMAGE →
-				// première IMAGE → null). Le motif précédent
-				// `find((img) => img.isPrimary) ?? images[0]` est celui que CLAUDE.md
-				// bannit : aveugle au `mediaType`, il figeait un `.mp4` dans
+				// EINV-SNAPSHOT-MEDIA-001 : SSOT `pickPrimaryImage` (première IMAGE de
+				// l'ordre (position asc, id asc) → null). Le motif banni par CLAUDE.md
+				// — prendre `images[0]` sans filtrer — est aveugle au `mediaType` :
+				// il figeait un `.mp4` dans
 				// `productImageUrl` — snapshot immuable de rétention 10 ans,
 				// rendu dans l'historique client ET dans le PDF de facture.
 				// `getValidImageUrl` ne rattrape rien : il ne valide que HTTPS + domaine.

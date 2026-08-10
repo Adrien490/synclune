@@ -6,6 +6,7 @@
 import { PREPARATION_DELAY_LABEL } from "@/modules/orders/constants/shipping-rates";
 import { SYSTEM_PRODUCT_TYPE_SLUGS } from "@/modules/product-types/constants/system-product-type-slugs";
 import { prefixWithProductType } from "@/modules/products/utils/product-type-prefix";
+import { mediaBelow } from "@/shared/constants/breakpoints";
 
 export const PRODUCT_TEXTS = {
 	// Descriptions par défaut
@@ -145,9 +146,19 @@ export const PRODUCT_TYPES_REQUIRING_SIZE = [
  * Configuration des tailles d'images optimisées pour performance
  */
 export const IMAGE_SIZES = {
-	// Card max width on desktop wide = 224px; hover scale x1.02 ≈ 228px. 256px covers retina (dpr 2 ≈ 512px source).
-	PRODUCT_CARD:
-		"(max-width: 767px) 45vw, (max-width: 1023px) 30vw, (max-width: 1279px) 22vw, 256px",
+	// Les conditions média DÉRIVENT de la SSOT breakpoints (rem) au lieu de px
+	// figés : les colonnes de grille basculent aux variants Tailwind (`md:`,
+	// `lg:`, `xl:` — en rem, donc mobiles avec la police racine, WCAG 1.4.4),
+	// et un hint `sizes` en px décroche dès que l'utilisateur agrandit sa
+	// police — à racine 20px, entre 768 et 960px de viewport la grille était
+	// encore à 2 colonnes (~45vw) pendant que le hint annonçait 30vw : le
+	// navigateur servait une variante sous-résolue sur l'image la plus vue de
+	// la boutique (audit ProductCard 2026-08-08).
+	//
+	// Le slot fixe est en rem pour la même raison : la carte plafonne à ~14rem
+	// (224px @16), hover scale ×1.02 inclus ; 16rem couvre le retina (dpr 2 ≈
+	// variante 512px) et suit la police racine.
+	PRODUCT_CARD: `${mediaBelow("md")} 45vw, ${mediaBelow("lg")} 30vw, ${mediaBelow("xl")} 22vw, 16rem`,
 	PRODUCT_THUMBNAIL: "120px",
 } as const;
 
@@ -160,6 +171,18 @@ export const IMAGE_SIZES = {
 
 /** Maximum number of color swatches to display on a product card */
 export const MAX_COLOR_SWATCHES = 5;
+
+/**
+ * Libellé de repli desktop, affiché à la place des pastilles tant que la carte
+ * n'est pas survolée.
+ *
+ * « coloris » et non « couleurs » : le tableau `colors` porte des COMBINAISONS
+ * (`ColorSwatch.comboKey`, ex. « Or + Argent ») dès qu'un SKU est multi-couleur
+ * — « 4 couleurs » serait alors faux. Le mot est de plus invariable en nombre,
+ * donc aucune bascule singulier/pluriel à maintenir (le call site est de toute
+ * façon gaté `colors.length > 1`).
+ */
+export const COLOR_COUNT_LABEL = (count: number) => `Disponible en ${count} coloris`;
 
 /**
  * Number of cards considered above-fold for eager image loading.

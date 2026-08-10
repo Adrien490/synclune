@@ -1,6 +1,5 @@
 "use client";
 
-import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import type { NavbarSessionData } from "@/shared/types/session.types";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
@@ -13,7 +12,6 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import type { MenuProductTypeItem } from "./menu-sheet-nav-sections";
 import {
-	CollectionsBand,
 	CreationsGrid,
 	MenuSheetHeadNote,
 	ShortcutsBand,
@@ -44,11 +42,6 @@ const adminRowClassName = cn(
 interface MenuSheetNavProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: MenuProductTypeItem[];
-	collections?: Array<{
-		slug: string;
-		label: string;
-		images: CollectionImage[];
-	}>;
 	session?: NavbarSessionData | null;
 	isAdmin?: boolean;
 	onLogoutClick?: () => void;
@@ -59,7 +52,7 @@ interface MenuSheetNavProps {
 /**
  * « L'étal de poche » — composition du volet, dans l'ordre :
  * identité (session) · tête éditoriale · bande de raccourcis · grille des
- * familles (ou encart « atelier en pause ») · bande des collections · bloc
+ * familles (ou encart « atelier en pause ») · rangée « Les collections » · bloc
  * admin (Tableau de bord + Déconnexion).
  *
  * L'état « boutique fermée » n'est volontairement PAS traité ici :
@@ -69,7 +62,6 @@ interface MenuSheetNavProps {
 export function MenuSheetNav({
 	navItems,
 	productTypes,
-	collections,
 	session,
 	isAdmin = false,
 	onLogoutClick,
@@ -86,6 +78,9 @@ export function MenuSheetNav({
 	// aujourd'hui `ROUTES.SHOP.ABOUT` ne sort pas de la SSOT, la ligne ne rend rien.
 	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
 	const aboutItem = navItems.find((item) => item.href === ROUTES.SHOP.ABOUT);
+	// Quatrième `find` depuis le 2026-08-08 : la bande de cartes Collections a été
+	// supprimée, sa destination remonte donc dans la SSOT comme les trois autres.
+	const collectionsItem = navItems.find((item) => item.href === ROUTES.SHOP.COLLECTIONS);
 	const isLoggedIn = !!session?.user;
 
 	const navRef = useRef<HTMLElement>(null);
@@ -211,7 +206,27 @@ export function MenuSheetNav({
 
 			<CreationsGrid productTypes={productTypes} {...sectionProps} />
 
-			<CollectionsBand collections={collections} {...sectionProps} />
+			{/* « Les collections » en rangée pleine largeur, pas en bande de cartes :
+			    `CollectionsBand` (trois tirages photo) a été supprimée le 2026-08-08
+			    avec toutes les surfaces à cartes de collection, à refaire.
+			    ⚠️ Ce n'est PAS un choix de design mais un plancher de navigation :
+			    la bande portait le seul lien vers `/collections` sous `lg`, et la
+			    retirer nue rendait la salle injoignable au doigt. La destination
+			    vient de la SSOT `getMobileNavItems`, comme `aboutItem` ci-dessus. */}
+			{collectionsItem && (
+				<m.div variants={itemVariants} custom={nextDelay()} className="mb-4 px-4">
+					<Link
+						href={collectionsItem.href}
+						replace
+						prefetch={null}
+						onClick={onNavigate}
+						aria-current={isMenuItemActive(collectionsItem.href) ? "page" : undefined}
+						className={adminRowClassName}
+					>
+						{collectionsItem.label}
+					</Link>
+				</m.div>
+			)}
 
 			{/* Admin (session unique de l'administratrice) : Tableau de bord +
 			    Déconnexion. « Déconnexion » vivait dans l'ancienne section Favoris —

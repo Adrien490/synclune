@@ -1,6 +1,6 @@
 "use server";
 
-import { CollectionStatus, Prisma } from "@/app/generated/prisma/client";
+import { PublicationStatus, Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -68,7 +68,7 @@ export async function updateCollection(
 			// Une collection PUBLIC ne peut pas etre renommee : changer le slug
 			// casserait le SEO (backlinks indexes Google) sans 301 redirect.
 			const slugChanged = sanitizedName !== existingCollection.name;
-			if (slugChanged && existingCollection.status === CollectionStatus.PUBLIC) {
+			if (slugChanged && existingCollection.status === PublicationStatus.PUBLIC) {
 				throw new Error("PUBLIC_RENAME_BLOCKED");
 			}
 			// `excludeId` : sans lui, un rename cosmétique (casse/accent) retrouvait

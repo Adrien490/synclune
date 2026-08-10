@@ -135,7 +135,7 @@ describe("@regression token-contrast", () => {
 		 * La leçon vaut au-delà du panier : sur toute correction de composant partagé,
 		 * la question à poser est « où sont les copies ? ». Depuis le passage à une
 		 * ligne par pièce, l'état s'y lit par la FORME — anneau `--foreground` (19,54:1)
-		 * + scotch — donc aucun rose n'a plus à porter d'information.
+		 * — donc aucun rose n'a plus à porter d'information.
 		 */
 		it.each([
 			"modules/cart/components/sku-selector-pieces.tsx",

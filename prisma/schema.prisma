@@ -87,13 +87,13 @@ model Verification {
   @@index([identifier])
 }
 
-enum ProductStatus {
-  DRAFT
-  PUBLIC
-  ARCHIVED
-}
-
-enum CollectionStatus {
+// Un seul enum de publication pour `Product` et `Collection` (audit schéma V5,
+// lot A4). `ProductStatus` et `CollectionStatus` portaient les MÊMES trois
+// membres, dans le même ordre, avec la même sémantique — deux types pour une
+// seule idée. La machine à états, elle, reste par entité :
+// `product-status-validation.service.ts` garde ses règles de publication
+// (titre + SKU actif + média IMAGE), qu'une collection n'a pas.
+enum PublicationStatus {
   DRAFT
   PUBLIC
   ARCHIVED
@@ -196,8 +196,8 @@ model Collection {
   id          String           @id @default(cuid(2))
   name        String           @unique @db.VarChar(100)
   slug        String           @unique @db.VarChar(100)
-  description String?          @db.Text
-  status      CollectionStatus @default(DRAFT)
+  description String?           @db.Text
+  status      PublicationStatus @default(DRAFT)
 
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
@@ -215,10 +215,12 @@ model ProductCollection {
 
   addedAt DateTime @default(now())
 
-  isFeatured Boolean @default(false)
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   ProductCollection_collectionId_isFeatured_unique
+  // Remplace `isFeatured Boolean` (audit schéma V5, lot A3). Le booléen de rang
+  // coûtait un index UNIQUE PARTIEL (`ProductCollection_collectionId_isFeatured_unique`)
+  // et une promotion transactionnelle en SERIALIZABLE — toute cette machinerie pour
+  // exprimer « celui-là d'abord », que `position` dit sans contrainte ni transaction.
+  // L'ordre canonique est `(position asc, addedAt desc)` : la vedette est le rang 0.
+  position Int @default(0)
 
   // PK composite, comme `ProductSkuColor` / `ProductSkuMaterial` : la clé surrogate
   // `id` n'était sélectionnée que par `GET_COLLECTION_SELECT`, et son unique
@@ -229,11 +231,11 @@ model ProductCollection {
 }
 
 model Product {
-  id          String        @id @default(cuid(2))
-  slug        String        @unique @db.VarChar(100)
-  title       String        @db.VarChar(200)
-  description String?       @db.Text
-  status      ProductStatus @default(PUBLIC)
+  id          String            @id @default(cuid(2))
+  slug        String            @unique @db.VarChar(100)
+  title       String            @db.VarChar(200)
+  description String?           @db.Text
+  status      PublicationStatus @default(PUBLIC)
 
   type   ProductType? @relation(fields: [typeId], references: [id], onDelete: SetNull)
   typeId String?
@@ -276,7 +278,14 @@ model ProductSku {
   inventory      Int     @default(0)
   isActive       Boolean @default(true)
 
-  isDefault Boolean @default(false)
+  // Remplace `isDefault Boolean` (audit schéma V5, lot A2). Le booléen coûtait un
+  // index UNIQUE PARTIEL (`ProductSku_productId_isDefault_unique`) et une promotion
+  // transactionnelle à chaque bascule ; `position` porte la même intention
+  // éditoriale — « quelle variante représente ce bijou » — sans contrainte à
+  // maintenir, et il ordonne TOUTE la liste au lieu d'en distinguer une seule.
+  // L'ordre canonique est `(position asc, id asc)`, et le représentant d'un produit
+  // se lit dans `getPrimarySkuForList` (`sku-selection.service.ts`).
+  position Int @default(0)
 
   images         SkuMedia[]
   orderItems     OrderItem[]
@@ -288,9 +297,11 @@ model ProductSku {
   //   ProductSku_compareAtPrice_valid
   //   ProductSku_inventory_non_negative
   //   ProductSku_priceInclTax_positive
-  //   ProductSku_productId_isDefault_unique
 
-  @@index([productId])
+  // `[productId]` devient `[productId, position]` : l'ordre canonique des variantes
+  // d'un produit est désormais une lecture chaude (liste admin, sélecteur de SKU,
+  // PDP), et le préfixe `productId` reste servi par le même index.
+  @@index([productId, position])
 }
 
 model SkuMedia {
@@ -303,7 +314,16 @@ model SkuMedia {
   blurDataUrl  String?   @db.Text
   altText      String?   @db.VarChar(255)
   mediaType    MediaType @default(IMAGE)
-  isPrimary    Boolean   @default(false)
+  // Plus d'`isPrimary Boolean` (audit schéma V5, lot A1) : le média principal est
+  // désormais le PREMIER par `(position asc, id asc)`, ce que `position` disait
+  // déjà en second critère de l'ordre canonique. Le booléen n'ajoutait qu'un
+  // index UNIQUE PARTIEL (`SkuMedia_one_primary_per_sku`) et une promotion
+  // transactionnelle, pour une information que le rang 0 porte seul.
+  //
+  // ⚠️ « Premier média » ≠ « première IMAGE » : `SkuMedia` est polymorphe, et une
+  // vidéo peut occuper le rang 0. La SSOT reste `pickPrimaryImage()`
+  // (`product-display.service.ts`), qui filtre `mediaType: IMAGE` avant de prendre
+  // le premier — cf. § Catalogue de CLAUDE.md.
   position     Int       @default(0)
 
   width  Int?
@@ -311,12 +331,9 @@ model SkuMedia {
 
   // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
   //   SkuMedia_dimensions_positive
-  //   SkuMedia_one_primary_per_sku
 
-  // Pas d'`@@index([skuId, isPrimary])` (audit schéma V4) : l'index UNIQUE PARTIEL
-  // `SkuMedia_one_primary_per_sku` — (skuId) WHERE isPrimary = true — sert déjà
-  // « le média principal de ce SKU », et en mieux. L'ordre canonique du dépôt
-  // (`isPrimary desc, position asc, id asc`) n'était servi par aucun des deux.
+  // `[skuId, position]` sert désormais l'ordre canonique en entier — il n'y a plus
+  // de `isPrimary desc` devant lui pour le rendre inutilisable.
   @@index([skuId, position])
 }
 
@@ -479,7 +496,13 @@ model Order {
   // `estimateDeliveryDate()` (pure). Une colonne qui recopie le résultat d'une
   // fonction de deux autres colonnes ne peut que dériver d'elles. La date reste
   // affichée à la cliente — elle est calculée au rendu.
-  actualDelivery    DateTime?
+  // Renommée depuis `actualDelivery` (audit schéma V5, lot A6) : nommage cohérent
+  // avec `shippedAt` / `paidAt` / `createdAt`.
+  //
+  // ⚠️ Champ à conséquence LÉGALE, pas un horodatage décoratif : c'est l'ancre du
+  // délai de rétractation (`return-eligibility.service.ts` — `NOT_DELIVERED` tant
+  // qu'il est nul, `deadline = deliveredAt + WITHDRAWAL_PERIOD_MS`).
+  deliveredAt       DateTime?
   shippedAt         DateTime?
 
   // Deux axes, pas trois : `status` porte l'avancement (dont `RETURNED`) et
@@ -610,7 +633,6 @@ model OrderHistory {
 }
 
 model OrderItem {
-  id      String @id @default(cuid(2))
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -656,7 +678,19 @@ model OrderItem {
   //   OrderItem_price_positive
   //   OrderItem_quantity_positive
 
-  @@index([orderId])
+  // PK composite, comme `ProductCollection` / `ProductSkuColor` / `ProductSkuMaterial`
+  // (audit schéma V5, lot A5) : la clé surrogate `id` n'identifiait rien de plus
+  // qu'`(orderId, skuId)`, et son unique consommateur était une `key` React que
+  // `skuId` porte aussi bien. Une commande consolide déjà une quantité par SKU —
+  // `addCartItem` cherche la ligne existante avant d'en créer une.
+  //
+  // ⚠️ Cette PK IMPOSE en base ce qui n'était garanti que côté panier. La migration
+  // qui l'introduit refuse de s'appliquer si une commande historique porte deux
+  // lignes du même SKU (garde `DO $$ … RAISE EXCEPTION` en tête de migration) : sans
+  // elle, l'échec serait un violation de contrainte brute en pleine production.
+  //
+  // `@@index([orderId])` est retiré : le préfixe de la PK composite le couvre.
+  @@id([orderId, skuId])
   @@index([skuId])
 }
 

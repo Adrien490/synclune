@@ -27,7 +27,7 @@ function makeSku(
 		id: "sku-1",
 		sku: "TEST-SKU",
 		isActive: true,
-		isDefault: true,
+		position: 0,
 		inventory: 10,
 		priceInclTax: 5000,
 		compareAtPrice: null,

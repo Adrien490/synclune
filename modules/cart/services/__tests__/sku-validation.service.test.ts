@@ -70,7 +70,7 @@ function createSkuRow(overrides: Record<string, unknown> = {}) {
 				material: { id: "mat123", name: "Argent 925" },
 			},
 		],
-		images: [{ url: "https://img.test/1.jpg", altText: "Bracelet", isPrimary: true }],
+		images: [{ url: "https://img.test/1.jpg", altText: "Bracelet", mediaType: "IMAGE" }],
 		...overrides,
 	};
 }

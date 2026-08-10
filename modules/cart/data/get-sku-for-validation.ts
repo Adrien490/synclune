@@ -60,18 +60,14 @@ export async function fetchSkuForValidation(skuId: string) {
 			// la facture, et `getValidImageUrl` ne valide que HTTPS + domaine, pas
 			// l'extension. C'était le seul select de sélection d'image du repo à ne
 			// même pas exposer le champ.
-			// `orderBy` reproduit la priorité de `pickPrimaryImage` (primaire d'abord) :
+			// `orderBy` reproduit l'ordre canonique consommé par `pickPrimaryImage`
+			// (première IMAGE de `(position asc, id asc)` — V5, plus d'`isPrimary`) :
 			// `createdAt: asc` seul rendait l'ordre d'upload, pas l'ordre d'affichage.
 			images: {
-				orderBy: [
-					{ isPrimary: "desc" as const },
-					{ position: "asc" as const },
-					{ id: "asc" as const },
-				],
+				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 				select: {
 					url: true,
 					altText: true,
-					isPrimary: true,
 					mediaType: true,
 				},
 			},

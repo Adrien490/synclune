@@ -6,6 +6,7 @@ import { getColors } from "@/modules/colors/data/get-colors";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { getMaxProductPrice } from "@/modules/products/data/get-max-product-price";
 import { getProducts } from "@/modules/products/data/get-products";
+import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import type { Product, SortField, ProductFilters } from "@/modules/products/data/get-products";
 import type {
 	ActiveProductType,
@@ -159,7 +160,6 @@ export async function resolveCatalogListProps(
 		searchTerm,
 		sortBy: sortBy as SortField,
 		filters: pathParams ? { ...filters, type: [pathParams.productTypeSlug] } : filters,
-		preferOnSale: filters.onSale,
 	};
 }
 
@@ -272,11 +272,6 @@ export function countActiveFilters(
 		count += 1;
 	}
 
-	// Promotions
-	if (filters.onSale) {
-		count += 1;
-	}
-
 	return count;
 }
 
@@ -298,10 +293,10 @@ type JsonLdOptions = {
 };
 
 function buildItemListProduct(product: Product) {
+	// `skus[0]` est le représentant (listes pré-triées `(position asc, id asc)`) ;
+	// le choix du média passe par la SSOT pickPrimaryImage (première IMAGE).
 	const defaultSku = product.skus[0];
-	const primaryImage =
-		defaultSku?.images.find((img) => img.isPrimary && img.mediaType === "IMAGE") ??
-		defaultSku?.images.find((img) => img.mediaType === "IMAGE");
+	const primaryImage = defaultSku ? pickPrimaryImage(defaultSku.images) : null;
 
 	const totalInventory = product.skus.reduce(
 		(sum, sku) => (sku.isActive ? sum + sku.inventory : sum),

@@ -1,6 +1,5 @@
 import type { ComponentProps } from "react";
 
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { cn } from "@/shared/utils/cn";
 
 /**
@@ -11,7 +10,7 @@ import { cn } from "@/shared/utils/cn";
  * l'étal », 2026-08-05), extraite ici pour servir toute surface qui pose des
  * gestes sur un rebord collant : papier opaque + grain (`.polaroid-paper`) +
  * `--shadow-paper` (c'est l'ombre qui sépare la tranche du contenu qui glisse
- * dessous, pas un filet ni un blur), boutons-étiquettes à ruban, et
+ * dessous, pas un filet ni un blur), boutons-étiquettes, et
  * matérialisation au défilement (`.shelf-materialize`, `components.css`) :
  * lisière fantôme en haut de page, papier plein dès que le contenu glisse
  * dessous — sans support ou en reduced-motion, l'état papier est permanent.
@@ -33,7 +32,7 @@ import { cn } from "@/shared/utils/cn";
  */
 
 /**
- * Les quatre accents de marque en version « étiquette » : ruban + fond/bord
+ * Les quatre accents de marque en version « étiquette » : fond/bord
  * d'état actif. Classes LITTÉRALES par accent — Tailwind ne compile que ce
  * qu'il lit, une template string ne produirait rien. Registre imposé par la
  * SSOT des accents (`catalog-accents.constants.ts`) : des SURFACES, jamais de
@@ -41,19 +40,15 @@ import { cn } from "@/shared/utils/cn";
  */
 const SHELF_BAR_ACCENTS = {
 	rose: {
-		tape: "bg-primary/45",
 		active: "border-primary/40 bg-primary/10",
 	},
 	lavender: {
-		tape: "bg-brand-lavender/45",
 		active: "border-brand-lavender/40 bg-brand-lavender/10",
 	},
 	mint: {
-		tape: "bg-brand-mint/45",
 		active: "border-brand-mint/40 bg-brand-mint/10",
 	},
 	sun: {
-		tape: "bg-brand-sun/45",
 		active: "border-brand-sun/40 bg-brand-sun/10",
 	},
 } as const;
@@ -78,14 +73,11 @@ export const SHELF_BAR_SHELL = cn(
 	"-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8",
 );
 
-/** Position du ruban sur une étiquette active (le geste des cartes Atelier). */
-const TAPE_POSITION = "-top-1.5 left-1/2 z-10 h-3 w-11 -translate-x-1/2 -rotate-2";
-
 /**
  * Les gestes sont des ÉTIQUETTES posées sur le rebord : encre `--foreground`
  * au repos (un gris muted ferait chrome anonyme), bord papier, rayon `sm`,
  * cible tactile 44 px (h-11). L'état actif se dit par la FORME — fond teinté,
- * bord teinté, rotation −1°, ruban — jamais par la seule couleur.
+ * bord teinté, rotation −1° — jamais par la seule couleur.
  */
 const SHELF_BAR_BUTTON = cn(
 	"relative flex flex-1 items-center justify-center gap-1.5 h-11 min-w-0 px-2",
@@ -123,15 +115,10 @@ export function ShelfBar({
 }
 
 interface ShelfBarButtonProps extends ComponentProps<"button"> {
-	/** État actif : fond/bord teintés + rotation −1° (+ ruban si `showTape`). */
+	/** État actif : fond/bord teintés + rotation −1°. */
 	active?: boolean;
 	/** Accent de la surface hôte — rose par défaut, hors de tout contexte. */
 	accent?: ShelfBarAccent;
-	/**
-	 * Ruban `MaskingTape` sur l'étiquette active. À réserver aux états SANS
-	 * badge compteur — les deux ensemble feraient double signal.
-	 */
-	showTape?: boolean;
 	/**
 	 * Badge compteur (`aria-hidden` : le nombre doit être porté par le nom
 	 * accessible du bouton, le badge n'est que sa forme visible).
@@ -143,7 +130,6 @@ interface ShelfBarButtonProps extends ComponentProps<"button"> {
 export function ShelfBarButton({
 	active = false,
 	accent = "rose",
-	showTape = false,
 	count,
 	className,
 	children,
@@ -166,7 +152,6 @@ export function ShelfBarButton({
 					{count}
 				</span>
 			)}
-			{active && showTape && <MaskingTape className={cn(TAPE_POSITION, styles.tape)} />}
 		</button>
 	);
 }

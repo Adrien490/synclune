@@ -53,7 +53,7 @@ vi.mock("@phosphor-icons/react/ssr", () => ({
 }));
 
 // Import après mocks
-import { ProductStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { ProductMobileItem } from "../product-mobile-item";
 
 // ============================================================================
@@ -64,7 +64,7 @@ const baseProduct = {
 	id: "p-1",
 	slug: "anneau-doré",
 	title: "Anneau doré",
-	status: ProductStatus.PUBLIC,
+	status: PublicationStatus.PUBLIC,
 	type: { label: "Bagues" },
 	skus: [
 		{
@@ -76,7 +76,6 @@ const baseProduct = {
 					thumbnailUrl: "https://cdn/img-thumb.jpg",
 					blurDataUrl: "data:image/png;base64,xxx",
 					mediaType: "IMAGE" as const,
-					isPrimary: true,
 				},
 			],
 		},
@@ -101,34 +100,12 @@ describe("ProductMobileItem", () => {
 		expect(screen.getByText(/Public/)).toBeInTheDocument();
 	});
 
-	it("ne rend AUCUNE image quand le média principal est une vidéo sans poster", () => {
-		// Une URL .mp4 passée à next/image produit une vignette cassée + une
-		// transformation facturée pour rien -> on retombe sur l'icône de secours.
+	it("ne rend AUCUNE image quand le produit n'a que des vidéos", () => {
+		// pickPrimaryImage ne retient que les IMAGE : une URL .mp4 passée à
+		// next/image produirait une vignette cassée + une transformation facturée.
+		// Un produit vidéo-only ne peut de toute façon pas être publié
+		// (validateProductForPublication exige un média IMAGE) -> icône de secours.
 		const videoOnly = {
-			...baseProduct,
-			skus: [
-				{
-					priceInclTax: 4500,
-					inventory: 10,
-					images: [
-						{
-							url: "https://cdn/clip.mp4",
-							thumbnailUrl: null,
-							blurDataUrl: null,
-							mediaType: "VIDEO" as const,
-							isPrimary: true,
-						},
-					],
-				},
-			],
-		};
-		render(<ProductMobileItem product={videoOnly} />);
-		expect(screen.queryByTestId("product-image")).not.toBeInTheDocument();
-		expect(screen.getByTestId("icon-package")).toBeInTheDocument();
-	});
-
-	it("utilise le poster quand le média principal est une vidéo qui en a un", () => {
-		const videoWithPoster = {
 			...baseProduct,
 			skus: [
 				{
@@ -140,15 +117,43 @@ describe("ProductMobileItem", () => {
 							thumbnailUrl: "https://cdn/clip-poster.jpg",
 							blurDataUrl: null,
 							mediaType: "VIDEO" as const,
-							isPrimary: true,
 						},
 					],
 				},
 			],
 		};
-		render(<ProductMobileItem product={videoWithPoster} />);
+		render(<ProductMobileItem product={videoOnly} />);
+		expect(screen.queryByTestId("product-image")).not.toBeInTheDocument();
+		expect(screen.getByTestId("icon-package")).toBeInTheDocument();
+	});
+
+	it("saute une vidéo au rang 0 et affiche la première IMAGE", () => {
+		const videoThenImage = {
+			...baseProduct,
+			skus: [
+				{
+					priceInclTax: 4500,
+					inventory: 10,
+					images: [
+						{
+							url: "https://cdn/clip.mp4",
+							thumbnailUrl: "https://cdn/clip-poster.jpg",
+							blurDataUrl: null,
+							mediaType: "VIDEO" as const,
+						},
+						{
+							url: "https://cdn/photo.jpg",
+							thumbnailUrl: null,
+							blurDataUrl: null,
+							mediaType: "IMAGE" as const,
+						},
+					],
+				},
+			],
+		};
+		render(<ProductMobileItem product={videoThenImage} />);
 		const img = screen.getByTestId("product-image") as HTMLImageElement;
-		expect(img.src).toBe("https://cdn/clip-poster.jpg");
+		expect(img.src).toBe("https://cdn/photo.jpg");
 	});
 
 	it("affiche la fourchette de prix min-max et le stock total", () => {
@@ -243,11 +248,13 @@ describe("ProductMobileItem", () => {
 
 	it("rend les 3 statuts (DRAFT/PUBLIC/ARCHIVED)", () => {
 		const { rerender } = render(
-			<ProductMobileItem product={{ ...baseProduct, status: ProductStatus.DRAFT }} />,
+			<ProductMobileItem product={{ ...baseProduct, status: PublicationStatus.DRAFT }} />,
 		);
 		expect(screen.getByText(/Brouillon/)).toBeInTheDocument();
 
-		rerender(<ProductMobileItem product={{ ...baseProduct, status: ProductStatus.ARCHIVED }} />);
+		rerender(
+			<ProductMobileItem product={{ ...baseProduct, status: PublicationStatus.ARCHIVED }} />,
+		);
 		expect(screen.getByText(/Archivé/)).toBeInTheDocument();
 	});
 });

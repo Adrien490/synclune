@@ -1,6 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
-import { CollectionChapters } from "@/modules/collections/components/collection-chapters";
-import { CollectionChaptersSkeleton } from "@/modules/collections/components/collection-chapters-skeleton";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { GET_COLLECTIONS_DEFAULT_PER_PAGE } from "@/modules/collections/data/get-collections";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
@@ -111,7 +109,7 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 		sortBy: "name-ascending",
 		filters: {
 			hasProducts: true,
-			status: CollectionStatus.PUBLIC,
+			status: PublicationStatus.PUBLIC,
 		},
 	});
 
@@ -124,10 +122,12 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 				dangerouslySetInnerHTML={{ __html: safeJsonLd(COLLECTIONS_BREADCRUMB_JSONLD) }}
 			/>
 
-			{/* Shell « L'étal continue » + « Le carnet des séries » (2026-08-05) :
-			    le bloc titre vit dans le conteneur standard, mais les CHAPITRES en
-			    sortent — leurs voiles `--section-soft` vont bord à bord, et chaque
-			    bande re-contraint son contenu (CHAPTER_CONTAINER_CLASSES). */}
+			{/* Shell « L'étal continue » : le bloc titre vit dans le conteneur standard.
+			    ⚠️ « Le carnet des séries » (2026-08-05) — les chapitres pleine largeur
+			    et leurs voiles `--section-soft` bord à bord — a été SUPPRIMÉ le
+			    2026-08-08 avec toutes les surfaces à cartes de collection, à refaire.
+			    La page garde donc sa route, son titre, son fil d'Ariane et son SEO,
+			    mais ne rend plus aucune collection. */}
 			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height-static)+0.75rem)] pb-12 lg:pt-[calc(var(--navbar-height-static)+1.25rem)] lg:pb-16">
 				<div className="mx-auto max-w-6xl space-y-5 px-4 pb-5 sm:px-6 lg:px-8">
 					<BreadcrumbNav items={[{ label: "Collections", href: "/collections" }]} />
@@ -146,14 +146,10 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 								<CollectionsCount collectionsPromise={collectionsPromise} />
 							</Suspense>
 						}
-						// Pas de listLabel : les bandes de collection portent des h2, la
-						// hiérarchie h1 → h2 est déjà séquentielle.
+						// Pas de listLabel : le rendu des collections est à refaire, il n'y
+						// a plus de liste à annoncer.
 					/>
 				</div>
-
-				<Suspense fallback={<CollectionChaptersSkeleton />}>
-					<CollectionChapters collectionsPromise={collectionsPromise} />
-				</Suspense>
 			</section>
 		</div>
 	);

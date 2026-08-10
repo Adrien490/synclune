@@ -1,6 +1,6 @@
 import "server-only";
 
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getColors } from "@/modules/colors/data/get-colors";
 import { sortColorsByHue } from "@/modules/colors/services/sort-colors-by-hue";
@@ -36,7 +36,7 @@ export async function getQuickSearchData(): Promise<QuickSearchData> {
 		getCollections({
 			perPage: 4,
 			sortBy: "products-descending",
-			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
+			filters: { hasProducts: true, status: PublicationStatus.PUBLIC },
 		}),
 		getProductTypes({
 			perPage: 12,

@@ -42,7 +42,7 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 							</Badge>
 						</dd>
 					</div>
-					{sku.isDefault ? (
+					{sku.isRepresentative ? (
 						<div className="flex items-center justify-between gap-3">
 							<dt className="text-muted-foreground">Variante par défaut</dt>
 							<dd>
@@ -102,7 +102,7 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 					) : null}
 				</dl>
 
-				{sku.isDefault ? (
+				{sku.isRepresentative ? (
 					<p className="text-muted-foreground border-t pt-4 text-xs italic">
 						Cette variante est affichée par défaut sur la fiche produit.
 					</p>

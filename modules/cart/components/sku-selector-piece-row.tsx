@@ -1,10 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { m } from "motion/react";
 
-import { MaskingTape } from "@/shared/components/masking-tape";
-import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
@@ -30,7 +27,6 @@ export interface SkuSelectorPieceRowProps {
 	image: ImageSelection;
 	stock: StockDescription;
 	isSelected: boolean;
-	shouldReduceMotion: boolean;
 	onSelect: () => void;
 	onKeyDown: (event: React.KeyboardEvent) => void;
 }
@@ -58,7 +54,6 @@ export function SkuSelectorPieceRow({
 	image,
 	stock,
 	isSelected,
-	shouldReduceMotion,
 	onSelect,
 	onKeyDown,
 }: SkuSelectorPieceRowProps) {
@@ -83,18 +78,6 @@ export function SkuSelectorPieceRow({
 				"aria-disabled:cursor-not-allowed",
 			)}
 		>
-			{isSelected && (
-				<m.span
-					className="absolute -top-1.5 left-5 z-10 h-3.5 w-11"
-					initial={{ scale: 0.6, opacity: 0 }}
-					animate={{ scale: 1, opacity: 1 }}
-					transition={maybeReduceMotion(MOTION_CONFIG.spring.bouncy, shouldReduceMotion)}
-				>
-					{/* Le scotch est peint en encre, pas en rose : l'aplat appartient au bijou. */}
-					<MaskingTape className="bg-foreground/15 absolute inset-0 -rotate-3" />
-				</m.span>
-			)}
-
 			<span
 				className={cn(
 					"bg-card flex items-center gap-3.5 rounded-md p-2.5",

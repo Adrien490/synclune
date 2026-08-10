@@ -28,7 +28,6 @@ export type SkuMediaInput = {
 	/** Dimensions intrinsèques lues à l'upload (NULL si illisibles ou média legacy) */
 	width?: number | null;
 	height?: number | null;
-	isPrimary: boolean;
 	position: number;
 };
 
@@ -85,8 +84,9 @@ export function optionalEurosToCents(euros: number | undefined): number | null {
 
 /**
  * Normalise un tableau unifié `media[]` issu du formulaire en SkuMediaInput[]
- * prêts pour persistance : premier item = principal (isPrimary, position 0),
- * suivants en galerie ordonnée (position 1..n).
+ * prêts pour persistance : premier item = principal (position 0), suivants en
+ * galerie ordonnée (position 1..n). Le rang EST l'information — la colonne
+ * `isPrimary` n'existe plus (audit schéma V5, lot A1).
  *
  * Le schema Zod garantit déjà que le premier item est une IMAGE
  * (refineFirstMediaNotVideo). Filet anti-bypass : on REFUSE au lieu de forcer
@@ -108,7 +108,6 @@ export function normalizeMediaForPersistence(media: ParsedMedia[]): SkuMediaInpu
 		mediaType: m.mediaType,
 		width: m.width,
 		height: m.height,
-		isPrimary: index === 0,
 		position: index,
 	}));
 }
@@ -127,7 +126,6 @@ export function toSkuMediaCreatePayload(skuId: string, media: SkuMediaInput[]) {
 		mediaType: m.mediaType ?? detectMediaType(m.url),
 		width: m.width ?? null,
 		height: m.height ?? null,
-		isPrimary: m.isPrimary,
 		position: m.position,
 	}));
 }
@@ -250,20 +248,47 @@ export async function assertUniqueVariantCombination(
 }
 
 /**
- * Désactive le flag `isDefault` sur tous les autres SKUs du produit (transaction).
- * Si `excludeSkuId` fourni (cas update), il est exclus de l'opération.
+ * Rang d'insertion en fin de liste pour un nouveau SKU : max(position) + 1.
+ *
+ * Depuis le remplacement d'`isDefault` par `position` (audit schéma V5, lot
+ * A2), le représentant d'un produit est le rang 0 de `(position asc, id asc)`.
+ * Le max est pris sur TOUTES les lignes du produit, soft-deleted comprises :
+ * un doublon de rang avec une ligne morte serait invisible mais inutile.
  */
-export async function unsetOtherDefaultSkus(
+export async function nextSkuPosition(
 	tx: Prisma.TransactionClient,
 	productId: string,
-	excludeSkuId?: string,
-): Promise<void> {
-	await tx.productSku.updateMany({
-		where: {
-			productId,
-			isDefault: true,
-			...(excludeSkuId ? { NOT: { id: excludeSkuId } } : {}),
-		},
-		data: { isDefault: false },
+): Promise<number> {
+	const last = await tx.productSku.findFirst({
+		where: { productId },
+		orderBy: { position: "desc" },
+		select: { position: true },
 	});
+	return last === null ? 0 : last.position + 1;
+}
+
+/**
+ * Amène un SKU au rang 0 (« définir par défaut ») et renumérote ses sœurs en
+ * préservant leur ordre relatif `(position asc, id asc)`. Un rang entier n'a
+ * pas d'unicité à garantir : pas d'index partiel, pas de SERIALIZABLE — la
+ * transaction READ COMMITTED de l'appelant suffit. Quelques lignes par
+ * produit, la boucle d'updates est négligeable.
+ */
+export async function moveSkuToFront(
+	tx: Prisma.TransactionClient,
+	productId: string,
+	skuId: string,
+): Promise<void> {
+	const siblings = await tx.productSku.findMany({
+		where: { productId, deletedAt: null, id: { not: skuId } },
+		orderBy: [{ position: "asc" }, { id: "asc" }],
+		select: { id: true },
+	});
+	await tx.productSku.update({ where: { id: skuId }, data: { position: 0 } });
+	for (const [index, sibling] of siblings.entries()) {
+		await tx.productSku.update({
+			where: { id: sibling.id },
+			data: { position: index + 1 },
+		});
+	}
 }

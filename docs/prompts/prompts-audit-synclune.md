@@ -834,7 +834,9 @@ Audit le point « Pages légales » dans Synclune.
 
 Vérifie CGV, mentions légales, confidentialité, cookies, livraison, retours, micro-entreprise, TVA non applicable et conformité e-commerce.
 
-Inspecte `app/(legal)/**`, `app/(shop)/(home)/_components/faq/faq-section.tsx` + `shared/constants/faq-items.tsx` (livraison et retours n'ont PAS de page légale dédiée — ils vivent dans la FAQ de la landing et `/retractation` ; `/aide` a été absorbée le 2026-08-05 et redirige en 308 vers `/#faq`), `shared/constants/legal-urls.ts` (SSOT des liens), contenus, liens footer et checkout.
+Inspecte `app/(legal)/**`, `shared/constants/legal-urls.ts` (SSOT des liens), contenus, liens footer et checkout.
+
+⚠️ **Trou connu, à signaler plutôt qu'à re-découvrir** : livraison et retours n'ont PAS de page légale dédiée — ils vivaient dans la FAQ de la landing, supprimée le 2026-08-08 (à refaire), et dans `/retractation`. Aujourd'hui `/retractation` est donc la SEULE surface, `/aide` ne redirige plus nulle part, et le pied de page n'offre plus aucun libre-service.
 
 Note /100, propose corrections/améliorations si pertinent.
 ```
@@ -1627,8 +1629,13 @@ badges de compteur.
 Juge aussi l'ergonomie de fond : est-ce que le mega-menu aide à découvrir le catalogue (visuels,
 hiérarchie, raccourcis) ou est-ce une simple liste de liens déguisée ?
 
+⚠️ Il n'y a plus qu'UN méga-menu depuis le 2026-08-08 : le bento Collections a été supprimé avec
+toutes les surfaces à cartes de collection (à refaire), et « Les collections » est redevenu un lien
+simple. Ne pas le relever comme un manque — mais vérifier que le lien navigue bien, y compris au
+doigt : un trigger sans panneau ouvrirait du vide au lieu de naviguer.
+
 Inspecte `app/(shop)/(home)/_components/navbar/**` (`navbar.tsx`, `desktop-nav.tsx`,
-`mega-menu-collections.tsx`, `mega-menu-creations.tsx`, `mega-menu-column.tsx`,
+`mega-menu-creations.tsx`, `mega-menu-column.tsx`,
 `navbar-styles.ts`, `navbar-wrapper.tsx`, `user-menu.tsx`,
 `navbar-icon-buttons.tsx`), `shared/hooks/use-active-navbar-item.ts`,
 `shared/hooks/use-roving-tab-index.ts`, `e2e/mega-menu-desktop.spec.ts`.
@@ -3144,42 +3151,21 @@ débit en P1/P2.
 
 ---
 
-## 149 — FAQ de la landing (ex-page d'aide)
+## 149 — FAQ de la landing : SANS OBJET (section supprimée le 2026-08-08)
 
-```text
-Audit le point « FAQ » dans Synclune.
-
-`app/(shop)/(home)/_components/faq/faq-section.tsx`, alimentée par `shared/constants/faq-items.tsx`,
-constitue le seul service après-vente en libre-service. ⚠️ Il n'y a PLUS de page `/aide` : elle a été
-absorbée par la landing le 2026-08-05 et redirige en 308 vers `/#faq` (`next.config.ts`). Il n'y a donc
-plus qu'UNE surface FAQ, plus de champ de recherche interne, et le `FAQPage` est un nœud du `@graph`
-de `shared/components/structured-data.tsx` — pas un script à lui.
-
-Vérifie :
-- la couverture : les questions qui déclenchent réellement un contact — délais de fabrication et de
-  livraison, entretien des bijoux, taille et ajustement, retour et rétractation, paiement sécurisé,
-  commande sans compte, suivi, personnalisation — sont-elles traitées ? Liste celles qui manquent ;
-- la parité `answer` ↔ `answerText` : le second alimente le JSON-LD et doit rester le décalque du
-  premier. Google compare le balisage au contenu VISIBLE, et une dérive y est muette ;
-- l'articulation avec les pages légales (prompt 56) : la FAQ doit expliquer, les CGV engagent. Aucune
-  contradiction n'est acceptable entre les deux — vérifie délais, frais de retour et exclusions ;
-- le contact : est-il atteignable depuis la FAQ, et depuis le tunnel d'achat ?
-- le SEO : une seule déclaration `FAQPage` sur `/`, dans le même `@graph` que la `BreadcrumbList` et
-  l'`ItemList` de l'étal (cf. CLAUDE.md § une seule BreadcrumbList par URL) ;
-- l'atteignabilité de l'ancre : `/aide` doit arriver sur `#faq` et pas sur `/` nu — donc redirection
-  ET présence dans les `publicRoutes` du proxy ;
-- la hiérarchie de titres : le `h1` appartient à l'étal, la section prend un `h2`, ses groupes des
-  `h3` et les questions des `h4` (`headingLevel={4}`) ;
-- l'accessibilité de l'accordéon : clavier, `aria-expanded`, ancres partageables ;
-- le ton : réponses courtes, concrètes, au TUTOIEMENT — elles vouvoyaient tant que la FAQ vivait sur
-  sa propre page, et sont désormais co-visibles avec le chapô de l'étal.
-
-Inspecte `app/(shop)/(home)/_components/faq/faq-section.tsx`, `shared/constants/faq-items.tsx`,
-`app/(shop)/(home)/page.tsx`, `app/(legal)/**`, `shared/components/structured-data.tsx`,
-`next.config.ts`, `proxy.ts`.
-
-Note /100, liste les questions manquantes et toute contradiction avec les CGV (P1).
-```
+> Le prompt d'audit de la FAQ a été retiré : la section « Des questions ? », `shared/constants/faq-items.tsx`,
+> le nœud `FAQPage`, l'ancre `/#faq` et la redirection 308 de `/aide` ont tous été supprimés le
+> 2026-08-08, à la demande de Léane, pour être refaits. Auditer une surface absente ne produit que
+> du bruit.
+>
+> **Ce que la refonte devra retenir**, et qui justifie ce marqueur plutôt qu'une suppression sèche :
+> le décalque texte des réponses (`answerText`) doit rester le miroir exact du rendu — Google compare
+> le balisage au contenu VISIBLE, et une dérive y est muette ; la FAQ **explique** là où les CGV
+> **engagent**, donc aucune contradiction n'est acceptable sur délais, frais de retour et exclusions ;
+> une ancre exige les DEUX moitiés (redirection **et** `publicRoutes`), sinon le default-deny dépose
+> le visiteur sur `/` nu ; le `h1` appartient à l'étal, donc la section prend un `h2` et ses questions
+> le cran **contigu** — le chiffre suit la présence ou non d'intertitres de groupe, la contiguïté est
+> l'invariant ; et le ton tutoie, la FAQ étant co-visible avec le chapô de l'étal.
 
 ---
 

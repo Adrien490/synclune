@@ -17,6 +17,7 @@ import {
 import { usePrefetchImages } from "@/modules/media/hooks/use-image-prefetch";
 import { usePrefetchVideos } from "@/modules/media/hooks/use-video-prefetch";
 import { parseGalleryParams } from "@/modules/media/schemas/gallery-params.schema";
+import { productViewTransitionName } from "@/modules/products/utils/product-view-transition";
 import { buildGallery } from "@/modules/media/services/gallery-builder.service";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
 
@@ -28,7 +29,6 @@ import {
 } from "@/shared/components/gallery";
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useLightbox } from "@/shared/hooks";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -463,11 +463,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 					    au survol. */}
 					<div className="gallery-main group relative order-2">
 						<div className="gallery-mount relative rounded-sm p-3 pb-4 sm:p-3.5 sm:pb-5">
-							<MaskingTape
-								className="-top-2 left-6 h-5 w-24 -rotate-2 motion-reduce:rotate-0"
-								tint="var(--piece-accent, var(--primary))"
-							/>
-
 							{/* La boîte photo n'est PAS clippée : c'est le viewport Embla qui
 							    clippe, pour que les chevrons puissent déborder du bord du carton. */}
 							<div className="relative aspect-3/4 sm:aspect-4/5">
@@ -490,7 +485,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 												totalImages={images.length}
 												isActive={index === current}
 												onOpen={openLightbox}
-												viewTransitionName={index === 0 ? `product-${product.id}` : undefined}
+												viewTransitionName={
+													index === 0 ? productViewTransitionName(product.id) : undefined
+												}
 											/>
 										))}
 									</div>

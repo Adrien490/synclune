@@ -1,5 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
-import { ProductStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_CHAPTER_PRINT_COUNT } from "./image-sizes.constants";
 
 // ============================================================================
@@ -27,7 +27,7 @@ export const GET_COLLECTION_SELECT = {
 		// désynchronisation status/deletedAt (parité avec le pattern notDeleted du site).
 		where: {
 			product: {
-				status: ProductStatus.PUBLIC,
+				status: PublicationStatus.PUBLIC,
 				deletedAt: null,
 			},
 		},
@@ -36,7 +36,7 @@ export const GET_COLLECTION_SELECT = {
 			// `(productId, collectionId)` (audit schéma V4, 2026-08-05). La clé
 			// surrogate n'avait qu'un consommateur, une `key` React — c'est
 			// `product.id` qui la porte désormais.
-			isFeatured: true,
+			position: true,
 			product: {
 				select: {
 					id: true,
@@ -60,7 +60,7 @@ export const GET_COLLECTION_SELECT = {
 						},
 						select: {
 							id: true,
-							isDefault: true,
+							position: true,
 							priceInclTax: true,
 							images: {
 								// Les surfaces collection ne rendent que des `next/image` :
@@ -72,24 +72,17 @@ export const GET_COLLECTION_SELECT = {
 									altText: true,
 									blurDataUrl: true,
 									mediaType: true,
-									isPrimary: true,
 								},
-								// `isPrimary desc` d'abord : trié par `createdAt`, la vignette
-								// était l'image la plus ANCIENNE du SKU, pas la principale.
-								// Ordre aligné sur le reste du repo (get-material.ts).
-								orderBy: [
-									{ isPrimary: "desc" as const },
-									{ position: "asc" as const },
-									{ id: "asc" as const },
-								],
+								// La principale est le rang 0 de (position, id) — cf. pickPrimaryImage.
+								orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 							},
 						},
-						orderBy: [{ isDefault: "desc" }, { priceInclTax: "asc" }],
+						orderBy: [{ position: "asc" }, { id: "asc" }],
 					},
 				},
 			},
 		},
-		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
+		orderBy: [{ position: "asc" }, { addedAt: "desc" }],
 		take: GET_COLLECTION_PRODUCTS_LIMIT,
 	},
 	_count: {
@@ -97,7 +90,7 @@ export const GET_COLLECTION_SELECT = {
 			products: {
 				where: {
 					product: {
-						status: ProductStatus.PUBLIC,
+						status: PublicationStatus.PUBLIC,
 						deletedAt: null,
 					},
 				},
@@ -120,12 +113,12 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 	products: {
 		where: {
 			product: {
-				status: ProductStatus.PUBLIC,
+				status: PublicationStatus.PUBLIC,
 				deletedAt: null,
 			},
 		},
 		select: {
-			isFeatured: true,
+			position: true,
 			product: {
 				select: {
 					slug: true,
@@ -139,7 +132,7 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 					skus: {
 						where: { isActive: true },
 						select: {
-							isDefault: true,
+							position: true,
 							priceInclTax: true,
 							inventory: true,
 							images: {
@@ -148,25 +141,19 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 								select: {
 									url: true,
 									altText: true,
-									isPrimary: true,
 								},
-								// `isPrimary desc` d'abord : trié par `createdAt`, l'OG image de
-								// la collection était l'image la plus ANCIENNE, pas la principale.
-								orderBy: [
-									{ isPrimary: "desc" as const },
-									{ position: "asc" as const },
-									{ id: "asc" as const },
-								],
+								// La principale est le rang 0 de (position, id) — cf. pickPrimaryImage.
+								orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 								take: 1,
 							},
 						},
-						orderBy: [{ isDefault: "desc" }],
+						orderBy: [{ position: "asc" }, { id: "asc" }],
 						take: 1,
 					},
 				},
 			},
 		},
-		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
+		orderBy: [{ position: "asc" }, { addedAt: "desc" }],
 	},
 } as const satisfies Prisma.CollectionSelect;
 
@@ -178,17 +165,17 @@ export const GET_COLLECTIONS_SELECT = {
 	status: true,
 	createdAt: true,
 	updatedAt: true,
-	// Featured product image for collection card (with fallback to most recent)
-	// orderBy: isFeatured desc puts featured product first, otherwise most recent
+	// Image du produit vedette pour la carte collection : la vedette est le rang 0
+	// de (position asc, addedAt desc).
 	products: {
 		where: {
 			product: {
-				status: ProductStatus.PUBLIC,
+				status: PublicationStatus.PUBLIC,
 				deletedAt: null,
 			},
 		},
 		select: {
-			isFeatured: true,
+			position: true,
 			product: {
 				select: {
 					id: true,
@@ -201,23 +188,18 @@ export const GET_COLLECTIONS_SELECT = {
 								// Cf. supra : jamais de vidéo dans un rendu `next/image`.
 								where: { mediaType: "IMAGE" as const },
 								select: { url: true, altText: true, blurDataUrl: true },
-								// `isPrimary desc` d'abord : la carte doit montrer l'image
-								// principale, pas la première par position.
-								orderBy: [
-									{ isPrimary: "desc" as const },
-									{ position: "asc" as const },
-									{ id: "asc" as const },
-								],
+								// La principale est le rang 0 de (position, id) — cf. pickPrimaryImage.
+								orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 								take: 1,
 							},
 						},
-						orderBy: [{ isDefault: "desc" }, { priceInclTax: "asc" }],
+						orderBy: [{ position: "asc" }, { id: "asc" }],
 						take: 1,
 					},
 				},
 			},
 		},
-		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
+		orderBy: [{ position: "asc" }, { addedAt: "desc" }],
 		// Deux consommateurs via `extractCollectionImages` (qui écarte en aval
 		// tout produit dont le SKU par défaut n'a aucun média IMAGE) :
 		// - la bande chapitre de /collections rend 3 tirages — le +1 de rab
@@ -232,7 +214,7 @@ export const GET_COLLECTIONS_SELECT = {
 			products: {
 				where: {
 					product: {
-						status: ProductStatus.PUBLIC,
+						status: PublicationStatus.PUBLIC,
 						deletedAt: null,
 					},
 				},

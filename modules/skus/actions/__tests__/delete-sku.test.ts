@@ -104,7 +104,6 @@ function createMockSkuForDelete(overrides: Record<string, unknown> = {}) {
 	return {
 		id: VALID_CUID,
 		sku: "BRC-LUNE-OR-M",
-		isDefault: false,
 		isActive: true,
 		productId: "prod-1",
 		images: [],
@@ -268,63 +267,26 @@ describe("deleteProductSku", () => {
 		expect(result.message).toContain("PUBLIC");
 	});
 
-	it("should succeed and delete a non-default SKU", async () => {
+	it("should succeed and delete a SKU", async () => {
 		const result = await deleteProductSku(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mockPrisma.$transaction).toHaveBeenCalled();
 		expect(mockPrisma.productSku.delete).toHaveBeenCalledWith({ where: { id: VALID_CUID } });
 	});
 
-	it("should promote fallback active SKU when deleting default SKU", async () => {
-		mockPrisma.productSku.findUnique.mockResolvedValue(createMockSkuForDelete({ isDefault: true }));
-		const fallback = { id: VALID_CUID_2, sku: "BRC-LUNE-AR-M" };
-		mockPrisma.productSku.findFirst.mockResolvedValueOnce(fallback);
-
-		const result = await deleteProductSku(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.productSku.update).toHaveBeenCalledWith({
-			where: { id: VALID_CUID_2 },
-			data: { isDefault: true },
-		});
-		expect(result.message).toContain(fallback.sku);
-	});
-
-	// Audit « Admin catalogue » 2026-07-26 : plus AUCUN repli sur un SKU inactif.
-	// `set-default-sku`, `update-sku-status` et `update-product` refusent tous les
-	// trois l'état « défaut inactif » — le fabriquer ici était incohérent.
-	it("ne promeut PAS de variante inactive quand aucune variante active n'existe", async () => {
-		mockPrisma.productSku.findUnique.mockResolvedValue(createMockSkuForDelete({ isDefault: true }));
-		// findFirst (candidat actif) ne trouve rien : aucune promotion ne doit suivre.
-		mockPrisma.productSku.findFirst.mockResolvedValue(null);
-
+	// Depuis le remplacement d'`isDefault` par `position` (audit schéma V5, lot A2),
+	// supprimer le représentant ne déclenche AUCUNE promotion : le rang 0 de
+	// (position asc, id asc) est recalculé mécaniquement, la variante suivante
+	// prend le relais sans écriture. Les anciens tests de promotion de flag
+	// (fallback actif, refus du fallback inactif) testaient une machinerie disparue.
+	it("supprime le représentant sans aucune écriture de promotion", async () => {
 		const result = await deleteProductSku(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.productSku.delete).toHaveBeenCalledWith({ where: { id: VALID_CUID } });
+		// Ni update (promotion de flag) ni findFirst (recherche de candidat).
 		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
-		// Une seule interrogation : le second findFirst « n'importe quelle variante »
-		// a disparu.
-		expect(mockPrisma.productSku.findFirst).toHaveBeenCalledTimes(1);
-	});
-
-	it("promeut la variante ACTIVE la plus ancienne quand le défaut est supprimé", async () => {
-		mockPrisma.productSku.findUnique.mockResolvedValue(createMockSkuForDelete({ isDefault: true }));
-		mockPrisma.productSku.findFirst.mockResolvedValue({
-			id: VALID_CUID_2,
-			sku: "BRC-LUNE-AR-M",
-		});
-
-		const result = await deleteProductSku(undefined, validFormData);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.productSku.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ isActive: true, deletedAt: null }),
-			}),
-		);
-		expect(mockPrisma.productSku.update).toHaveBeenCalledWith({
-			where: { id: VALID_CUID_2 },
-			data: { isDefault: true },
-		});
+		expect(mockPrisma.productSku.findFirst).not.toHaveBeenCalled();
 	});
 
 	it("should call deleteUploadThingFilesFromUrls after DB delete", async () => {

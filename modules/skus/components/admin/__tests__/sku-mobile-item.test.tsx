@@ -107,7 +107,6 @@ function createSku(overrides: Partial<Sku> = {}): Sku {
 		compareAtPrice: null,
 		inventory: 12,
 		isActive: true,
-		isDefault: false,
 		size: null,
 		createdAt: new Date("2026-01-01T00:00:00Z"),
 		updatedAt: new Date("2026-01-01T00:00:00Z"),
@@ -163,11 +162,12 @@ describe("SkuMobileItem", () => {
 		expect(screen.getByText("Or rose · Argent · 52mm")).toBeInTheDocument();
 	});
 
-	it("renders 'Variante principale' fallback when default sku has no attributes", () => {
+	it("renders 'Variante principale' fallback when representative sku has no attributes", () => {
 		render(
 			<SkuMobileItem
-				sku={createSku({ isDefault: true, size: null, sku: "REF-MAIN" })}
+				sku={createSku({ size: null, sku: "REF-MAIN" })}
 				productSlug="bague-lune"
+				isRepresentative
 			/>,
 		);
 		expect(screen.getByText("Variante principale")).toBeInTheDocument();
@@ -197,8 +197,9 @@ describe("SkuMobileItem", () => {
 		expect(stockBadge).toHaveAttribute("data-variant", "destructive");
 	});
 
-	it("renders 'Par défaut' badge when isDefault", () => {
-		render(<SkuMobileItem sku={createSku({ isDefault: true })} productSlug="bague-lune" />);
+	it("renders 'Par défaut' badge when isRepresentative", () => {
+		// Le rang est calculé au niveau liste (id du rang 0) et descend en prop.
+		render(<SkuMobileItem sku={createSku()} productSlug="bague-lune" isRepresentative />);
 		expect(screen.getByText("Par défaut")).toBeInTheDocument();
 	});
 
@@ -243,7 +244,6 @@ describe("SkuMobileItem", () => {
 							width: null,
 							height: null,
 							altText: null,
-							isPrimary: true,
 							mediaType: "IMAGE",
 						},
 					],
@@ -269,8 +269,9 @@ describe("SkuMobileItem", () => {
 	it("exposes accessible aria-label from composed title", () => {
 		render(
 			<SkuMobileItem
-				sku={createSku({ id: "sku-99", sku: "REF-99", isDefault: true })}
+				sku={createSku({ id: "sku-99", sku: "REF-99" })}
 				productSlug="bague-lune"
+				isRepresentative
 			/>,
 		);
 		expect(screen.getByLabelText("Variante : Variante principale")).toBeInTheDocument();

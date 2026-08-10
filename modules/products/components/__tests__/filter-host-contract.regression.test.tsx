@@ -56,7 +56,6 @@ const values: FilterFormData = {
 	productTypes: [],
 	priceRange: [0, 500],
 	inStockOnly: false,
-	onSale: false,
 	sortBy: "created-descending",
 };
 
@@ -155,7 +154,7 @@ describe("@regression filter-host-contract", () => {
 			// qu'elle prétendait garder, prouvé en réintroduisant l'`aria-label`.
 			const { getByRole } = renderHost("sheet");
 
-			for (const visible of ["En stock uniquement", "En promotion"]) {
+			for (const visible of ["En stock uniquement"]) {
 				expect(
 					getByRole("switch", { name: visible }),
 					`aucun interrupteur nommé exactement « ${visible} »`,

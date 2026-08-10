@@ -1,6 +1,6 @@
 "use client";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import type { AlertActionTone } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
@@ -13,13 +13,13 @@ export const CHANGE_COLLECTION_STATUS_DIALOG_ID = "change-collection-status";
 interface ChangeCollectionStatusData {
 	collectionId: string;
 	collectionName: string;
-	currentStatus: CollectionStatus;
-	targetStatus: CollectionStatus;
+	currentStatus: PublicationStatus;
+	targetStatus: PublicationStatus;
 	[key: string]: unknown;
 }
 
 const STATUS_CONFIG: Record<
-	CollectionStatus,
+	PublicationStatus,
 	{
 		label: string;
 		tone: AlertActionTone;
@@ -27,21 +27,21 @@ const STATUS_CONFIG: Record<
 		description: string;
 	}
 > = {
-	[CollectionStatus.DRAFT]: {
+	[PublicationStatus.DRAFT]: {
 		label: "Brouillon",
 		tone: "neutral",
 		icon: FileTextIcon,
 		description:
 			"La collection sera sauvegardee comme brouillon. Elle ne sera pas visible sur la boutique mais restera accessible dans le dashboard pour modifications.",
 	},
-	[CollectionStatus.PUBLIC]: {
+	[PublicationStatus.PUBLIC]: {
 		label: "Public",
 		tone: "success",
 		icon: GlobeIcon,
 		description:
 			"La collection sera publiee sur la boutique et visible par tous les visiteurs. Assurez-vous que toutes les informations sont correctes.",
 	},
-	[CollectionStatus.ARCHIVED]: {
+	[PublicationStatus.ARCHIVED]: {
 		label: "Archivee",
 		tone: "warning",
 		icon: ArchiveIcon,
@@ -54,14 +54,14 @@ export function ChangeCollectionStatusAlertDialog() {
 	const dialog = useAlertDialog<ChangeCollectionStatusData>(CHANGE_COLLECTION_STATUS_DIALOG_ID);
 	const { action } = useUpdateCollectionStatus();
 
-	const currentStatus = dialog.data?.currentStatus ?? CollectionStatus.DRAFT;
-	const targetStatus = dialog.data?.targetStatus ?? CollectionStatus.PUBLIC;
+	const currentStatus = dialog.data?.currentStatus ?? PublicationStatus.DRAFT;
+	const targetStatus = dialog.data?.targetStatus ?? PublicationStatus.PUBLIC;
 	const config = STATUS_CONFIG[targetStatus];
 
 	// Determine if the change is significant (needs confirmation)
 	const isSignificantChange =
-		(currentStatus === CollectionStatus.PUBLIC && targetStatus !== CollectionStatus.PUBLIC) ||
-		(currentStatus !== CollectionStatus.PUBLIC && targetStatus === CollectionStatus.PUBLIC);
+		(currentStatus === PublicationStatus.PUBLIC && targetStatus !== PublicationStatus.PUBLIC) ||
+		(currentStatus !== PublicationStatus.PUBLIC && targetStatus === PublicationStatus.PUBLIC);
 
 	return (
 		<ConfirmDialog
@@ -88,7 +88,7 @@ export function ChangeCollectionStatusAlertDialog() {
 
 					{isSignificantChange && (
 						<div className="text-muted-foreground text-xs">
-							{targetStatus === CollectionStatus.PUBLIC
+							{targetStatus === PublicationStatus.PUBLIC
 								? "La collection deviendra visible par tous les visiteurs de la boutique."
 								: "La collection ne sera plus visible sur la boutique."}
 						</div>

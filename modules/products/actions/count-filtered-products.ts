@@ -28,7 +28,6 @@ const countFilteredProductsSchema = z.object({
 	/** Borne haute du catalogue — définit la plage « par défaut » (= pas de filtre prix). */
 	maxPriceInEuros: priceEurosSchema,
 	inStockOnly: z.boolean().default(false),
-	onSale: z.boolean().default(false),
 	/** Terme de recherche actif dans l'URL — le count doit le voir aussi. */
 	search: z.string().trim().max(100).optional(),
 	/**

@@ -9,7 +9,7 @@ interface ReturnEligibilityOrder {
 	/** Ex-`fulfillmentStatus` : axe unique depuis le Lot 4 (audit V2). */
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
-	actualDelivery: Date | null;
+	deliveredAt: Date | null;
 	refunds: Array<{ status: RefundStatus }>;
 }
 
@@ -18,7 +18,7 @@ interface ReturnEligibilityOrder {
  *
  * - `null` : eligible
  * - `NOT_PAID` : payment status outside (PAID, PARTIALLY_REFUNDED)
- * - `NOT_DELIVERED` : status != DELIVERED OR actualDelivery missing
+ * - `NOT_DELIVERED` : status != DELIVERED OR deliveredAt missing
  * - `DEADLINE_EXCEEDED` : delivered but past 14-day withdrawal window
  * - `ALREADY_REQUESTED` : a PENDING or APPROVED refund already exists
  */
@@ -34,11 +34,11 @@ export function getReturnIneligibilityReason(
 		order.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
 	if (!validPaymentStatus) return "NOT_PAID";
 
-	if (order.status !== OrderStatus.DELIVERED || !order.actualDelivery) {
+	if (order.status !== OrderStatus.DELIVERED || !order.deliveredAt) {
 		return "NOT_DELIVERED";
 	}
 
-	const deadline = new Date(order.actualDelivery).getTime() + WITHDRAWAL_PERIOD_MS;
+	const deadline = new Date(order.deliveredAt).getTime() + WITHDRAWAL_PERIOD_MS;
 	if (now >= deadline) return "DEADLINE_EXCEEDED";
 
 	const hasActiveRefund = order.refunds.some(
@@ -53,10 +53,10 @@ export function getReturnIneligibilityReason(
  * Returns the number of days remaining for a return request.
  * Returns 0 if no delivery date or if the deadline has passed.
  */
-export function getReturnDaysRemaining(actualDelivery: Date | null): number {
-	if (!actualDelivery) return 0;
+export function getReturnDaysRemaining(deliveredAt: Date | null): number {
+	if (!deliveredAt) return 0;
 
-	const elapsed = Date.now() - new Date(actualDelivery).getTime();
+	const elapsed = Date.now() - new Date(deliveredAt).getTime();
 	const remaining = WITHDRAWAL_PERIOD_DAYS - Math.floor(elapsed / MS_PER_DAY);
 
 	return Math.max(0, remaining);

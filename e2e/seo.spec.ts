@@ -88,40 +88,34 @@ test.describe("SEO et métadonnées - Homepage", { tag: ["@slow"] }, () => {
 		await expect(twitterTitle).toBeAttached();
 	});
 
-	// La FAQ est REVENUE sur la home le 2026-08-05 (absorption de `/aide`) —
-	// elle avait été retirée à la refonte landing du 2026-08-03.
-	test("la homepage porte la section FAQ et son JSON-LD FAQPage", async ({ page }) => {
-		await expect(page.locator("#faq")).toBeVisible();
+	/*
+	 * ⚠️ Le test « la homepage porte la section FAQ et son JSON-LD FAQPage » a été
+	 * retiré le 2026-08-08 : la section a été supprimée (à refaire).
+	 *
+	 * Ce qu'il vérifiait, et qu'il faudra restaurer AVEC elle : que le `FAQPage`
+	 * est un NŒUD du `@graph` de `StructuredData` et jamais un second script
+	 * (c'est ce montage qui garantit une seule `BreadcrumbList` sur `/`), et que
+	 * le parcours du JSON-LD tolère l'écho du repli `Suspense` — le HTML streamé
+	 * contient les DEUX rendus, donc on cherche le nœud dans n'importe lequel des
+	 * scripts, sans jamais compter combien il y en a.
+	 *
+	 * Le symétrique est verrouillé côté unitaire en attendant
+	 * (`catalogue-single-breadcrumb.regression.test.ts` : aucun `FAQPage` tant
+	 * qu'aucune section ne le porte).
+	 */
 
-		// Le FAQPage est un NŒUD du `@graph` de `StructuredData`, pas un second
-		// script : c'est ce montage qui garantit une seule BreadcrumbList sur `/`.
-		// ⚠️ Le HTML streamé contient l'écho du repli `Suspense` en plus du rendu
-		// résolu — on cherche donc le nœud dans N'IMPORTE lequel des scripts,
-		// sans compter combien il y en a.
-		const graphs = await page.locator('script[type="application/ld+json"]').allTextContents();
-		const faqPage = graphs
-			.map((raw) => JSON.parse(raw))
-			.flatMap((json) => json["@graph"] ?? [json])
-			.find((node) => node["@type"] === "FAQPage");
-
-		expect(faqPage, "aucun nœud FAQPage dans le JSON-LD de l'accueil").toBeDefined();
-		expect(faqPage.mainEntity.length).toBeGreaterThan(0);
-		expect(faqPage.mainEntity[0]["@type"]).toBe("Question");
-		expect(faqPage.mainEntity[0].acceptedAnswer.text.length).toBeGreaterThan(10);
-	});
-
-	// Les deux sections du 2026-08-05 n'avaient AUCUNE assertion E2E (constat
-	// de l'audit landing du 2026-08-06) : la FAQ était la seule verrouillée.
-	test("la homepage porte les sections Collections et Atelier, et le nœud HowTo ancre ses étapes", async ({
+	// ⚠️ « Collections » est sorti du titre et des assertions le 2026-08-08 : la
+	// section a été supprimée (à refaire), donc l'ancre `/#collections` n'existe
+	// plus. L'atelier, lui, est intact — et c'est le seul nœud restant à ancrer.
+	test("la homepage porte la section Atelier, et le nœud HowTo ancre ses étapes", async ({
 		page,
 	}) => {
-		// Les ancres sont un CONTRAT une fois partagées (`/#collections`,
-		// `/#atelier` — cette dernière est aussi l'@id du nœud HowTo).
-		await expect(page.locator("#collections")).toBeVisible();
+		// L'ancre est un CONTRAT une fois partagée (`/#atelier` est aussi l'@id du
+		// nœud HowTo).
 		await expect(page.locator("#atelier")).toBeVisible();
 
-		// Même montage que le FAQPage : un NŒUD du `@graph`, jamais un second
-		// script — et même parcours tolérant à l'écho du repli `Suspense`.
+		// Un NŒUD du `@graph`, jamais un second script — avec un parcours tolérant
+		// à l'écho du repli `Suspense` (le HTML streamé contient les deux rendus).
 		const graphs = await page.locator('script[type="application/ld+json"]').allTextContents();
 		const howTo = graphs
 			.map((raw) => JSON.parse(raw))

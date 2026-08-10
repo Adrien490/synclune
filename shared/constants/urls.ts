@@ -56,13 +56,12 @@ export const ROUTES = {
 		// C'est désormais le SEUL chemin par lequel un client consulte sa commande.
 		ORDER_TRACKING: "/suivi-commande",
 		ABOUT: "/a-propos",
-		// La FAQ vit sur la landing depuis le 2026-08-05 (absorption de `/aide`,
-		// qui redirige en 308 vers cette ancre). Ce n'est donc PLUS un pathname :
-		// ne pas le passer à un helper qui compare des chemins
-		// (`resolveNavbarSection`, `isCatalogueRoute`) — le `#` n'y matchera jamais.
-		// L'ancre est la SSOT `FAQ_SECTION_ID`
-		// (`app/(shop)/(home)/_components/faq/faq-section.tsx`).
-		HELP: "/#faq",
+		// ⚠️ Plus de `HELP` : la section FAQ a été retirée de la landing le
+		// 2026-08-08 (à refaire), avec son ancre `/#faq`, la redirection 308 de
+		// `/aide` et les liens « Aide » du pied de page et du volet mobile.
+		// Si elle revient sous forme d'ANCRE et non de page, se rappeler que ce
+		// n'est alors pas un pathname : ne pas le passer à un helper qui compare
+		// des chemins (`resolveNavbarSection`, `isCatalogueRoute`).
 	},
 
 	// Legal pages

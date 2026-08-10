@@ -58,7 +58,7 @@ vi.mock("@/shared/constants/ui-delays", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/enums", () => ({
-	CollectionStatus: {
+	PublicationStatus: {
 		DRAFT: "DRAFT",
 		PUBLIC: "PUBLIC",
 		ARCHIVED: "ARCHIVED",

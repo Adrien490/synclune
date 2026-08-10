@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { createCollection } from "@/modules/collections/actions/create-collection";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
@@ -61,7 +61,7 @@ export function CreateCollectionForm({
 		defaultValues: {
 			name: "",
 			description: "",
-			status: CollectionStatus.PUBLIC as CollectionStatus,
+			status: PublicationStatus.PUBLIC as PublicationStatus,
 		},
 	});
 
@@ -79,7 +79,7 @@ export function CreateCollectionForm({
 					form.reset();
 					const data = (
 						result as {
-							data?: { id?: string; name?: string; collectionStatus?: CollectionStatus };
+							data?: { id?: string; name?: string; collectionStatus?: PublicationStatus };
 						}
 					).data;
 					if (data?.id) {
@@ -226,7 +226,7 @@ export function CreateCollectionForm({
 					{(field) => (
 						<field.SelectField
 							label="Statut"
-							options={[CollectionStatus.DRAFT, CollectionStatus.PUBLIC].map((s) => ({
+							options={[PublicationStatus.DRAFT, PublicationStatus.PUBLIC].map((s) => ({
 								value: s,
 								label: COLLECTION_STATUS_LABELS[s],
 							}))}

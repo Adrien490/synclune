@@ -37,7 +37,8 @@ const MAX_COLOR_SWATCHES = 3;
  */
 export function SearchResultItem({ product, query, onSelect }: SearchResultItemProps) {
 	const router = useRouter();
-	const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0];
+	// Représentant = rang 0 : QUICK_SEARCH_SELECT livre les SKUs triés par (position, id)
+	const defaultSku = product.skus[0];
 	if (!defaultSku) return null;
 
 	const image = defaultSku.images[0];
@@ -174,20 +175,10 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 						<HighlightMatch text={product.title} query={query} synonyms={synonymTerms} />
 					</p>
 					<div className="mt-0.5 flex items-center gap-2 overflow-hidden">
-						{/* Price */}
+						{/* Price — pas de prix barré/remise (retrait Omnibus 2026-08-08, cf. ProductPrice) */}
 						<span className="text-muted-foreground shrink-0 text-sm">
 							{formatEuro(defaultSku.priceInclTax)}
 						</span>
-						{defaultSku.compareAtPrice && defaultSku.compareAtPrice > defaultSku.priceInclTax && (
-							<>
-								<span className="text-muted-foreground/50 text-xs line-through">
-									{formatEuro(defaultSku.compareAtPrice)}
-								</span>
-								<span className="bg-destructive/10 text-destructive text-2xs rounded-full px-1.5 py-0.5 font-medium">
-									-{Math.round((1 - defaultSku.priceInclTax / defaultSku.compareAtPrice) * 100)}%
-								</span>
-							</>
-						)}
 
 						{/* Out of stock badge */}
 						{isOutOfStock && (

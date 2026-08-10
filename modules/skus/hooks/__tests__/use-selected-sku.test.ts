@@ -46,7 +46,8 @@ function makeSku(overrides: Partial<ProductSku> = {}): ProductSku {
 		inventory: 10,
 		priceInclTax: 5000,
 		compareAtPrice: null,
-		isDefault: false,
+		// Rang éditorial (0 = représentant) — remplace isDefault (audit schéma V5).
+		position: 1,
 		color: null,
 		material: null,
 		size: null,
@@ -69,7 +70,7 @@ function makeProduct(skus: ProductSku[] = []): GetProductReturn {
 const SKU_AVAILABLE = makeSku({ id: "sku-available", isActive: true, inventory: 5 });
 const SKU_OUT_OF_STOCK = makeSku({ id: "sku-out", isActive: true, inventory: 0 });
 const SKU_INACTIVE = makeSku({ id: "sku-inactive", isActive: false, inventory: 10 });
-const SKU_DEFAULT = makeSku({ id: "sku-default", isActive: true, inventory: 3, isDefault: true });
+const SKU_DEFAULT = makeSku({ id: "sku-default", isActive: true, inventory: 3, position: 0 });
 
 // ============================================================================
 // Tests

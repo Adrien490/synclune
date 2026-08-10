@@ -59,7 +59,6 @@ export async function deleteProductSku(
 			select: {
 				id: true,
 				sku: true,
-				isDefault: true,
 				isActive: true,
 				productId: true,
 				images: {
@@ -144,10 +143,12 @@ export async function deleteProductSku(
 			}
 		}
 
-		// 10. Promote fallback SKU + delete in a single transaction for atomicity
+		// 10. Delete in a transaction (plus de promotion : le représentant est le
+		// rang 0 de (position asc, id asc) — audit schéma V5, lot A2 — donc la
+		// variante suivante prend mécaniquement le relais à la suppression).
 		const imageUrls = existingSku.images.map((img) => img.url);
 
-		const promotedSkuSku = await prisma.$transaction(async (tx) => {
+		await prisma.$transaction(async (tx) => {
 			// Re-check sous transaction : un OrderItem a pu apparaître entre le check
 			// de l'étape 7 (hors tx) et le DELETE. Sans ce re-check, la FK Restrict
 			// ferait échouer le delete en P2003 générique — on préfère refuser avec un
@@ -159,40 +160,6 @@ export async function deleteProductSku(
 				);
 			}
 
-			let promoted: string | null = null;
-
-			if (existingSku.isDefault && existingSku.product._count.skus > 1) {
-				// Find another active SKU to promote (never a soft-deleted one : il
-				// serait invisible du storefront et hors de l'index unique partiel
-				// ProductSku_productId_isDefault_unique, scoped deletedAt IS NULL)
-				const candidateSku = await tx.productSku.findFirst({
-					where: {
-						productId: existingSku.productId,
-						id: { not: validatedSkuId },
-						isActive: true,
-						deletedAt: null,
-					},
-					orderBy: [{ createdAt: "asc" }],
-					select: { id: true, sku: true },
-				});
-
-				// Aucun repli sur un SKU INACTIF : `set-default-sku.ts`,
-				// `update-sku-status.ts` et `update-product.ts` refusent tous les trois
-				// l'etat « defaut inactif ». Promouvoir un inactif ici fabriquait donc un
-				// etat que le reste du module traite comme invalide. Sans candidat actif,
-				// le produit reste sans defaut — reparable via « Definir par defaut »
-				// apres reactivation d'une variante.
-				const fallbackSku = candidateSku;
-
-				if (fallbackSku) {
-					await tx.productSku.update({
-						where: { id: fallbackSku.id },
-						data: { isDefault: true },
-					});
-					promoted = fallbackSku.sku;
-				}
-			}
-
 			// Delete the SKU (SkuMedia cascade-deleted by Prisma)
 			//
 			// La suppression est refusée dès qu'il existe un `orderItem` (garde ci-dessus) :
@@ -201,8 +168,6 @@ export async function deleteProductSku(
 			await tx.productSku.delete({
 				where: { id: validatedSkuId },
 			});
-
-			return promoted;
 		});
 
 		// 11. Supprimer les fichiers UploadThing apres la suppression DB reussie —
@@ -230,15 +195,10 @@ export async function deleteProductSku(
 		// 13. Audit log
 
 		// 14. Success
-		const successMessage = promotedSkuSku
-			? `Variante ${existingSku.sku} supprimée avec succès. La variante ${promotedSkuSku} est maintenant la variante principale.`
-			: `Variante ${existingSku.sku} supprimée avec succès.`;
-
-		return success(successMessage, {
+		return success(`Variante ${existingSku.sku} supprimée avec succès.`, {
 			skuId: validatedSkuId,
 			sku: existingSku.sku,
 			productTitle: existingSku.product.title,
-			promotedSku: promotedSkuSku,
 		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression de la variante");

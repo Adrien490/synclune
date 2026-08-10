@@ -15,7 +15,8 @@ interface ProductSkuRowActionsProps {
 	skuId: string;
 	skuName: string;
 	productSlug: string;
-	isDefault?: boolean;
+	/** Vrai si le SKU est le représentant du produit — rang 0 de (position asc, id asc). */
+	isRepresentative?: boolean;
 	isActive?: boolean;
 	inventory?: number;
 	priceInclTax?: number;

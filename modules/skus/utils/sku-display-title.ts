@@ -8,7 +8,12 @@ interface SkuLikeForTitle {
 	colors?: readonly SkuColorEntry[] | null;
 	materials?: readonly SkuMaterialEntry[] | null;
 	size?: string | null;
-	isDefault?: boolean;
+	/**
+	 * Vrai si la variante est le représentant du produit — rang 0 de
+	 * (position asc, id asc), calculé au niveau liste (remplace la colonne
+	 * `isDefault`, audit schéma V5, lot A2).
+	 */
+	isRepresentative?: boolean;
 }
 
 /**
@@ -29,8 +34,8 @@ interface SkuLikeForTitle {
  * }) // → "Or rose + Argent · Verre, Acier · 52mm"
  *
  * - 1+ attributs → join par " · "
- * - Aucun attribut + isDefault → "Variante principale"
- * - Aucun attribut + !isDefault → "Variante sans attribut"
+ * - Aucun attribut + isRepresentative → "Variante principale"
+ * - Aucun attribut + !isRepresentative → "Variante sans attribut"
  *
  * Pour un aria-label lu par screen reader, utiliser `getSkuDisplayTitleSpoken()`.
  */
@@ -44,7 +49,7 @@ export function getSkuDisplayTitle(sku: SkuLikeForTitle): string {
 	if (size) parts.push(size);
 
 	if (parts.length > 0) return parts.join(" · ");
-	return sku.isDefault ? "Variante principale" : "Variante sans attribut";
+	return sku.isRepresentative ? "Variante principale" : "Variante sans attribut";
 }
 
 /**

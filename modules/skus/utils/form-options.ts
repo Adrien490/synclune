@@ -8,9 +8,9 @@ import type { MediaData, UpdateProductSkuFormValues } from "../types/sku-form.ty
 /**
  * Génère les options du formulaire d'édition de SKU avec les valeurs pré-remplies.
  *
- * Les images sont déjà triées par `position asc` côté data layer (getSkuById).
- * On préserve cet ordre dans le tableau unifié `media[]` (1er item = principal,
- * matche `isPrimary: true` en base).
+ * Les images sont déjà triées par `(position asc, id asc)` côté data layer
+ * (getSkuById). On préserve cet ordre dans le tableau unifié `media[]`
+ * (1er item = principal — le rang EST l'information, `isPrimary` n'existe plus).
  */
 export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 	const media: MediaData[] = sku.images.map((img) => ({
@@ -31,7 +31,10 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 			priceInclTaxEuros: sku.priceInclTax / 100, // Centimes → Euros
 			compareAtPriceEuros: sku.compareAtPrice ? sku.compareAtPrice / 100 : undefined,
 			inventory: sku.inventory,
-			isDefault: sku.isDefault,
+			// Champ de formulaire (intention « faire de cette variante le représentant »),
+			// pré-rempli depuis le rang calculé par fetchSkuById — la colonne `isDefault`
+			// n'existe plus (audit schéma V5, lot A2).
+			isDefault: sku.isRepresentative,
 			// String pour le RadioGroupField (cf. UpdateProductSkuFormValues.isActive).
 			isActive: sku.isActive ? "true" : "false",
 			// Couleurs M2M ordonnées (1re = principale). Préserve l'ordre saisi côté admin.

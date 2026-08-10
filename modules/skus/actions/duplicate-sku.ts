@@ -9,6 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { BusinessError, validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
 import { duplicateProductSkuSchema } from "../schemas/sku.schemas";
+import { nextSkuPosition } from "../services/persist-sku-helpers.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 import { updateTag } from "next/cache";
 
@@ -18,7 +19,7 @@ import { updateTag } from "next/cache";
  *
  * Crée une copie du SKU avec:
  * - Un nouveau code SKU (original + -COPY ou -COPY-N)
- * - isDefault à false
+ * - position en fin de liste (jamais représentant — le rang 0 reste à l'original)
  * - inventory à 0
  * - isActive à false (pour éviter activation accidentelle)
  */
@@ -49,9 +50,7 @@ export async function duplicateSku(
 				// `deletedAt: null` — un SKU soft-deleted appartient à un produit lui-même
 				// supprimé (seul writer : `delete-product`), sans chemin de restauration. Aucune
 				// surface admin ne l'expose : le muter est toujours une anomalie. Sans ce filtre,
-				// on pouvait ajuster le stock ou poser `isDefault` sur la variante d'un produit
-				// archivé — et l'index unique partiel de `isDefault` (WHERE deletedAt IS NULL) ne
-				// s'y oppose pas.
+				// on pouvait ajuster le stock ou réordonner la variante d'un produit archivé.
 				where: { id: skuId, deletedAt: null },
 				select: {
 					sku: true,
@@ -71,7 +70,6 @@ export async function duplicateSku(
 						select: {
 							url: true,
 							altText: true,
-							isPrimary: true,
 							position: true,
 							mediaType: true,
 							thumbnailUrl: true,
@@ -114,7 +112,8 @@ export async function duplicateSku(
 					compareAtPrice: original.compareAtPrice,
 					inventory: 0, // Reset à 0
 					isActive: false, // Désactivé par défaut
-					isDefault: false, // Jamais par défaut
+					// Fin de liste : la copie ne prend jamais le rang 0 de l'original
+					position: await nextSkuPosition(tx, original.productId),
 					colors: {
 						create: original.colors.map((c) => ({
 							colorId: c.colorId,
@@ -132,7 +131,6 @@ export async function duplicateSku(
 						create: original.images.map((img) => ({
 							url: img.url,
 							altText: img.altText,
-							isPrimary: img.isPrimary,
 							position: img.position,
 							mediaType: img.mediaType,
 							thumbnailUrl: img.thumbnailUrl,

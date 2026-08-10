@@ -73,7 +73,6 @@ const values: FilterFormData = {
 	productTypes: [],
 	priceRange: [0, 500],
 	inStockOnly: false,
-	onSale: false,
 	sortBy: "created-descending",
 };
 

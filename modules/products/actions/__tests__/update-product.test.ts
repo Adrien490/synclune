@@ -200,6 +200,7 @@ describe("updateProduct", () => {
 				{
 					id: "sku_1",
 					isActive: true,
+					position: 0,
 					inventory: 15,
 					images: [{ id: "img_1" }],
 				},
@@ -207,7 +208,6 @@ describe("updateProduct", () => {
 		});
 		mockPrisma.productSku.findFirst.mockResolvedValue({
 			id: "sku_1",
-			isDefault: true,
 			isActive: true,
 		});
 		mockPrisma.product.update.mockResolvedValue({
@@ -331,11 +331,12 @@ describe("updateProduct", () => {
 			status: "ARCHIVED",
 			typeId: "type_123",
 			collections: [{ collectionId: "col_1", collection: { slug: "col-slug" } }],
-			skus: [{ id: "sku_1", isActive: false, inventory: 15, images: [{ id: "img_1" }] }],
+			skus: [
+				{ id: "sku_1", isActive: false, position: 0, inventory: 15, images: [{ id: "img_1" }] },
+			],
 		});
 		mockPrisma.productSku.findFirst.mockResolvedValue({
 			id: "sku_1",
-			isDefault: true,
 			isActive: false,
 		});
 
@@ -352,7 +353,6 @@ describe("updateProduct", () => {
 		});
 		mockPrisma.productSku.findFirst.mockResolvedValue({
 			id: "sku_1",
-			isDefault: true,
 			isActive: true,
 		});
 

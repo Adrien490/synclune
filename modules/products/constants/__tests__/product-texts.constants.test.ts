@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { SYSTEM_PRODUCT_TYPE_SLUGS } from "@/modules/product-types/constants/system-product-type-slugs";
+import { mediaBelow } from "@/shared/constants/breakpoints";
 import {
 	PRODUCT_TEXTS,
 	PRODUCT_TYPES_REQUIRING_SIZE,
 	IMAGE_SIZES,
 	MAX_COLOR_SWATCHES,
 	ABOVE_FOLD_THRESHOLD,
+	COLOR_COUNT_LABEL,
 } from "../product-texts.constants";
 
 describe("product-texts.constants", () => {
@@ -79,8 +81,14 @@ describe("product-texts.constants", () => {
 			expect(typeof IMAGE_SIZES.PRODUCT_THUMBNAIL).toBe("string");
 		});
 
-		it("PRODUCT_CARD contains responsive breakpoints", () => {
-			expect(IMAGE_SIZES.PRODUCT_CARD).toContain("max-width");
+		it("PRODUCT_CARD dérive ses conditions média de la SSOT breakpoints (rem)", () => {
+			// Les conditions suivent les variants Tailwind (md/lg/xl, en rem) pour
+			// rester synchrones des colonnes de grille quand la police racine change
+			// (WCAG 1.4.4) — cf. no-px-media-query.regression.test.ts.
+			expect(IMAGE_SIZES.PRODUCT_CARD).toBe(
+				`${mediaBelow("md")} 45vw, ${mediaBelow("lg")} 30vw, ${mediaBelow("xl")} 22vw, 16rem`,
+			);
+			expect(IMAGE_SIZES.PRODUCT_CARD).not.toMatch(/px\)/);
 		});
 	});
 
@@ -93,6 +101,20 @@ describe("product-texts.constants", () => {
 		it("ABOVE_FOLD_THRESHOLD is a positive integer", () => {
 			expect(ABOVE_FOLD_THRESHOLD).toBeGreaterThan(0);
 			expect(Number.isInteger(ABOVE_FOLD_THRESHOLD)).toBe(true);
+		});
+
+		it("COLOR_COUNT_LABEL annonce le compte", () => {
+			expect(COLOR_COUNT_LABEL(4)).toBe("Disponible en 4 coloris");
+		});
+
+		/**
+		 * « coloris » est invariable en nombre — c'est justement pourquoi il a été
+		 * préféré à « couleurs » : aucune bascule singulier/pluriel à maintenir, et
+		 * le mot reste juste quand une variante est une COMBINAISON (« Or + Argent »,
+		 * `ColorSwatch.comboKey`), où « couleurs » serait faux.
+		 */
+		it("COLOR_COUNT_LABEL reste correct au singulier (mot invariable)", () => {
+			expect(COLOR_COUNT_LABEL(1)).toBe("Disponible en 1 coloris");
 		});
 	});
 });

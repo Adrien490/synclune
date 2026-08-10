@@ -30,19 +30,16 @@ vi.mock("@/modules/products/components/product-card", () => ({
 		product,
 		index,
 		isInWishlist,
-		preferOnSale,
 	}: {
 		product: { id: string; title: string; slug: string };
 		index: number;
 		isInWishlist?: boolean;
 		sectionId?: string;
-		preferOnSale?: boolean;
 	}) => (
 		<article
 			data-testid={`product-card-${product.id}`}
 			data-index={index}
 			data-in-wishlist={isInWishlist}
-			data-prefer-on-sale={preferOnSale}
 		>
 			{product.title}
 		</article>
@@ -362,25 +359,6 @@ describe("ProductList", () => {
 		it("defaults to empty wishlist set when no wishlistProductIdsPromise is provided", async () => {
 			await renderList({ productsPromise: makeSuccessResult(), perPage: 24 });
 			expect(screen.getByTestId("product-card-1")).toHaveAttribute("data-in-wishlist", "false");
-		});
-	});
-
-	describe("preferOnSale", () => {
-		it("passes preferOnSale=true to all product cards", async () => {
-			await renderList({
-				productsPromise: makeSuccessResult(),
-				perPage: 24,
-				preferOnSale: true,
-			});
-			expect(screen.getByTestId("product-card-1")).toHaveAttribute("data-prefer-on-sale", "true");
-		});
-
-		it("does not pass preferOnSale when not set", async () => {
-			await renderList({ productsPromise: makeSuccessResult(), perPage: 24 });
-			// When preferOnSale is undefined, the attribute should not be present or be "false"
-			const card = screen.getByTestId("product-card-1");
-			const val = card.getAttribute("data-prefer-on-sale");
-			expect(val === null || val === "false").toBe(true);
 		});
 	});
 

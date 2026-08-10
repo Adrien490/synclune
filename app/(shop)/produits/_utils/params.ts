@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import type { ProductFilters } from "@/modules/products/data/get-products";
 import { productFiltersSchema } from "@/modules/products/data/get-products";
 import { getFirstParam } from "@/shared/utils/params";
@@ -19,7 +19,7 @@ import type { ProductSearchParams } from "./types";
 export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 	// Pages publiques : toujours filtrer sur les produits PUBLIC uniquement
 	const filters: ProductFilters = {
-		status: ProductStatus.PUBLIC,
+		status: PublicationStatus.PUBLIC,
 	};
 
 	Object.entries(params).forEach(([key, value]) => {
@@ -99,13 +99,9 @@ export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 					filters.stockStatus = filterValue;
 				}
 			}
-			// On sale filter — n'accepte que "true" (harmonisé avec l'admin, dont un
-			// test verrouille le rejet de "1" ; aucune UI n'émet "1"). Audit filtres A2.
-			else if (key === "onSale") {
-				if (filterValue === "true") {
-					filters.onSale = true;
-				}
-			}
+			// NB : `onSale` n'est plus une clé reconnue (retrait Omnibus 2026-08-08).
+			// Une URL `?onSale=true` héritée d'un lien indexé tombe dans le cas
+			// « clé inconnue » de ce forEach : ignorée silencieusement, jamais un 500.
 			// String fields
 			else if (key === "collectionId") {
 				filters.collectionId = filterValue;

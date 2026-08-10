@@ -145,9 +145,11 @@ describe("cleanupOrphanMedia", () => {
 
 		// Aucun SkuMedia/ReviewMedia/User ne référence ces fichiers : seuls des
 		// snapshots de commande les pointent.
+		// V5 : plus de colonne `id` sur OrderItem — le scan pagine sur la PK
+		// composite (orderId, skuId), les lignes mockées la portent donc.
 		mockPrisma.orderItem.findMany.mockResolvedValue([
-			{ productImageUrl: "https://utfs.io/f/order-snapshot-1" },
-			{ productImageUrl: "https://utfs.io/f/order-snapshot-2" },
+			{ orderId: "order-1", skuId: "sku-1", productImageUrl: "https://utfs.io/f/order-snapshot-1" },
+			{ orderId: "order-1", skuId: "sku-2", productImageUrl: "https://utfs.io/f/order-snapshot-2" },
 		]);
 
 		mockListFiles.mockResolvedValue({

@@ -112,9 +112,7 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 		colors: [{ id: "color_1", name: "Or", hex: "#FFD700" }],
 		material: "Argent",
 		size: undefined,
-		images: [
-			{ url: "https://example.com/image.jpg", isPrimary: true, mediaType: "IMAGE" as const },
-		],
+		images: [{ url: "https://example.com/image.jpg", mediaType: "IMAGE" as const }],
 		product: {
 			id: "prod_1",
 			title: "Bague Étoile",
@@ -611,14 +609,17 @@ describe("createOrderInTransaction — order creation", () => {
 		expect(itemCall.data.skuMaterial).toBe("M".repeat(100));
 	});
 
-	it("should use primary image URL for order item", async () => {
+	it("prend la première IMAGE de l'ordre canonique (position asc) pour le snapshot", async () => {
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 		mockGetValidImageUrl.mockReturnValue("https://example.com/primary.jpg");
 
+		// Depuis le lot A1 (audit V5), le média principal est le rang 0 : le
+		// tableau arrive trié (position asc, id asc) et pickPrimaryImage prend
+		// la première IMAGE de cet ordre.
 		const skuWithPrimary = makeSkuResult({
 			images: [
-				{ url: "https://example.com/other.jpg", isPrimary: false, mediaType: "IMAGE" as const },
-				{ url: "https://example.com/primary.jpg", isPrimary: true, mediaType: "IMAGE" as const },
+				{ url: "https://example.com/primary.jpg", mediaType: "IMAGE" as const },
+				{ url: "https://example.com/other.jpg", mediaType: "IMAGE" as const },
 			],
 		});
 
@@ -632,21 +633,21 @@ describe("createOrderInTransaction — order creation", () => {
 	/**
 	 * @regression EINV-SNAPSHOT-MEDIA-001
 	 *
-	 * Une VIDÉO marquée `isPrimary` ne doit jamais atterrir dans le snapshot figé
+	 * Une VIDÉO au rang 0 ne doit jamais atterrir dans le snapshot figé
 	 * `OrderItem.productImageUrl` — immuable, rétention 10 ans, rendu
 	 * dans l'historique client ET dans le PDF de facture. Le code faisait
-	 * `find((img) => img.isPrimary) ?? images[0]`, aveugle au `mediaType` (que le
-	 * select ne remontait même pas), et `getValidImageUrl` ne valide que HTTPS +
+	 * `images[0]` sans filtre, aveugle au `mediaType` (que le select ne
+	 * remontait même pas), et `getValidImageUrl` ne valide que HTTPS +
 	 * domaine — un `.mp4` UploadThing passait donc intégralement.
 	 */
-	it("EINV-SNAPSHOT-MEDIA-001: ignore une vidéo primaire et prend la première IMAGE", async () => {
+	it("EINV-SNAPSHOT-MEDIA-001: ignore une vidéo au rang 0 et prend la première IMAGE", async () => {
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 		mockGetValidImageUrl.mockImplementation((url: string | null) => url);
 
 		const skuWithPrimaryVideo = makeSkuResult({
 			images: [
-				{ url: "https://example.com/clip.mp4", isPrimary: true, mediaType: "VIDEO" as const },
-				{ url: "https://example.com/photo.jpg", isPrimary: false, mediaType: "IMAGE" as const },
+				{ url: "https://example.com/clip.mp4", mediaType: "VIDEO" as const },
+				{ url: "https://example.com/photo.jpg", mediaType: "IMAGE" as const },
 			],
 		});
 
@@ -662,9 +663,7 @@ describe("createOrderInTransaction — order creation", () => {
 		mockGetValidImageUrl.mockReturnValue(null);
 
 		const videoOnly = makeSkuResult({
-			images: [
-				{ url: "https://example.com/clip.mp4", isPrimary: true, mediaType: "VIDEO" as const },
-			],
+			images: [{ url: "https://example.com/clip.mp4", mediaType: "VIDEO" as const }],
 		});
 
 		await createOrderInTransaction(makeParams({ skuDetailsResults: [videoOnly] }));
@@ -675,17 +674,15 @@ describe("createOrderInTransaction — order creation", () => {
 		expect(itemCall.data.productImageUrl).toBeNull();
 	});
 
-	it("should fall back to first image when no primary image", async () => {
+	it("prend l'unique image d'un SKU mono-image", async () => {
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 		mockGetValidImageUrl.mockReturnValue("https://example.com/first.jpg");
 
-		const skuWithoutPrimary = makeSkuResult({
-			images: [
-				{ url: "https://example.com/first.jpg", isPrimary: false, mediaType: "IMAGE" as const },
-			],
+		const singleImageSku = makeSkuResult({
+			images: [{ url: "https://example.com/first.jpg", mediaType: "IMAGE" as const }],
 		});
 
-		await createOrderInTransaction(makeParams({ skuDetailsResults: [skuWithoutPrimary] }));
+		await createOrderInTransaction(makeParams({ skuDetailsResults: [singleImageSku] }));
 
 		expect(mockGetValidImageUrl).toHaveBeenCalledWith("https://example.com/first.jpg");
 	});

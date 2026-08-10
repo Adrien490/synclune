@@ -11,7 +11,6 @@ export const GET_PRODUCT_SKU_SELECT = {
 	priceInclTax: true,
 	inventory: true,
 	isActive: true,
-	isDefault: true,
 	// Couleurs M2M ordonnées par priorité (1re = principale pour vignette + snapshot)
 	colors: {
 		select: {
@@ -72,7 +71,6 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 	compareAtPrice: true,
 	inventory: true,
 	isActive: true,
-	isDefault: true,
 	size: true,
 	createdAt: true,
 	updatedAt: true,
@@ -119,7 +117,8 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 		orderBy: { position: "asc" as const },
 	},
 
-	// Images
+	// Images — ordre canonique (position asc, id asc) : le média principal est
+	// le premier élément, la colonne `isPrimary` n'existe plus (audit schéma V5).
 	images: {
 		select: {
 			id: true,
@@ -127,12 +126,11 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			thumbnailUrl: true,
 			blurDataUrl: true,
 			altText: true,
-			isPrimary: true,
 			mediaType: true,
 			width: true,
 			height: true,
 		},
-		orderBy: { position: "asc" as const },
+		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 	},
 
 	// Comptage des relations

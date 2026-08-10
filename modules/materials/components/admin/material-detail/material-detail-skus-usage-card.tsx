@@ -73,7 +73,8 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 												<span className="text-foreground truncate text-sm font-medium">
 													{sku.product.title}
 												</span>
-												{sku.isDefault ? (
+												{/* V5 : rang 0 = représentant du produit (remplace `isDefault`) */}
+												{sku.position === 0 ? (
 													<Badge variant="secondary">
 														<StarIcon className="size-3" aria-hidden="true" />
 													</Badge>

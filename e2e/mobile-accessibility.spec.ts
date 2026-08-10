@@ -121,7 +121,11 @@ test.describe("A11y Mobile — retour matériel et overlays (viewport 390x844)",
 		// Régression : avec `<SheetClose asChild><Link>`, `handleClose()` déclenchait
 		// un `history.back()` synchrone qui raçait le `router.push` du Link — le tap
 		// fermait le menu et laissait l'utilisateur sur la même page.
-		await menuDialog.getByRole("link", { name: /Toutes les collections/i }).click();
+		// ⚠️ « Toutes les collections » jusqu'au 2026-08-08 : c'était le lien d'en-tête
+		// de la bande de cartes, supprimée avec les autres surfaces à cartes de
+		// collection. La destination survit en rangée pleine largeur, sous le
+		// libellé de la SSOT `getMobileNavItems`.
+		await menuDialog.getByRole("link", { name: /^Les collections$/i }).click();
 
 		await expect(page).toHaveURL(/\/collections/);
 		await expect(menuDialog).not.toBeVisible();
@@ -137,7 +141,7 @@ test.describe("A11y Mobile — retour matériel et overlays (viewport 390x844)",
 		await page
 			.getByRole("dialog")
 			.first()
-			.getByRole("link", { name: /Toutes les collections/i })
+			.getByRole("link", { name: /^Les collections$/i })
 			.click();
 		await expect(page).toHaveURL(/\/collections/);
 

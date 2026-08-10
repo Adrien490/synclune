@@ -1,5 +1,5 @@
 import type { ProductFiltersSearchParams } from "@/app/(shop)/produits/_utils/types";
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { accentForSlug } from "@/modules/products/components/catalog-accents.constants";
 import { CATALOG_GRID } from "@/modules/products/components/catalog-grid.constants";
@@ -72,7 +72,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 	const collection = await getStorefrontCollectionBySlug({ slug });
 
 	// Vérifier que la collection existe et est publiée
-	if (!collection || collection.status !== CollectionStatus.PUBLIC) {
+	if (!collection || collection.status !== PublicationStatus.PUBLIC) {
 		notFound();
 	}
 
@@ -99,7 +99,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 	];
 
 	// Récupérer l'image du produit vedette pour le SEO — fallback au premier produit
-	// avec image (l'orderBy isFeatured desc met la vedette en tête de liste)
+	// avec image (l'ordre (position asc, addedAt desc) met la vedette en tête de liste)
 	const featuredImageUrl =
 		collection.products.find((pc) => pc.product.skus[0]?.images[0]?.url)?.product.skus[0]?.images[0]
 			?.url ?? null;

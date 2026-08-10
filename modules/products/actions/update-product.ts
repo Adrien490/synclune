@@ -89,7 +89,7 @@ export async function updateProduct(
 		const validatedData = validation.data;
 
 		// 4. Verifier que le produit et le SKU existent
-		// Le select charge aussi title + skus (avec stock + isPrimary image) pour
+		// Le select charge aussi title + skus (avec stock + mediaType des images) pour
 		// permettre validateProductForPublication ci-dessous sans seconde requete.
 		// deletedAt: null — meme garde que `toggle-product-status.ts`. Sans elle, cette
 		// action pouvait editer un produit soft-deleted et lui reecrire `status: PUBLIC`,
@@ -123,6 +123,7 @@ export async function updateProduct(
 					select: {
 						id: true,
 						isActive: true,
+						position: true,
 						inventory: true,
 						// MEDIA-AUDIT-002 : type de chaque media pour exiger une vraie image.
 						images: { select: { mediaType: true } },
@@ -144,7 +145,7 @@ export async function updateProduct(
 				productId: validatedData.productId,
 				deletedAt: null,
 			},
-			select: { id: true, sku: true, isDefault: true, isActive: true },
+			select: { id: true, sku: true, isActive: true },
 		});
 
 		if (!existingSku) {
@@ -154,10 +155,16 @@ export async function updateProduct(
 		// 5. Validation metier : refus de DESACTIVER la variante principale (alignement
 		// avec update-sku-status.ts). Si l'admin veut deplacer le defaut, il doit
 		// d'abord promouvoir une autre variante via setDefaultSku.
+		// « Principale » = rang 0 de (position asc, id asc) depuis le remplacement
+		// d'`isDefault` par `position` (audit schéma V5, lot A2).
 		// La garde ne vise que la TRANSITION actif → inactif : sur un produit
 		// archive, le defaut est deja inactif et le formulaire reposte son etat —
 		// bloquer ce non-changement re-briquerait l'edition des produits archives.
-		if (existingSku.isDefault && existingSku.isActive && !validatedData.defaultSku.isActive) {
+		const rankZeroSku = [...existingProduct.skus].sort(
+			(a, b) => a.position - b.position || a.id.localeCompare(b.id),
+		)[0];
+		const isRepresentative = rankZeroSku?.id === existingSku.id;
+		if (isRepresentative && existingSku.isActive && !validatedData.defaultSku.isActive) {
 			return validationError(
 				"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
 			);
@@ -217,7 +224,7 @@ export async function updateProduct(
 			? Math.round(validatedData.defaultSku.compareAtPriceEuros * 100)
 			: null;
 
-		// 8. Prepare images with isPrimary flag (first = primary)
+		// 8. Prepare images (premier = principal via position 0)
 		// La validation que le premier média est une IMAGE (pas VIDEO) est faite
 		// dans le schéma Zod (updateProductSchema.refine). Filet anti-bypass : on
 		// REFUSE (le précédent `logger.warn` signalait la violation… puis
@@ -233,7 +240,6 @@ export async function updateProduct(
 		}
 		const allImages = validatedData.defaultSku.media.map((media, index) => ({
 			...media,
-			isPrimary: index === 0,
 			position: index,
 		}));
 
@@ -398,7 +404,6 @@ export async function updateProduct(
 								mediaType: image.mediaType ?? detectMediaType(image.url),
 								width: image.width ?? null,
 								height: image.height ?? null,
-								isPrimary: image.isPrimary,
 								position: image.position,
 							},
 						});

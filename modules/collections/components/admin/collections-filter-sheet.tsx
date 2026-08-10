@@ -1,6 +1,6 @@
 "use client";
 
-import { CollectionStatus } from "@/app/generated/prisma/browser";
+import { PublicationStatus } from "@/app/generated/prisma/browser";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
@@ -22,10 +22,10 @@ interface FilterFormData {
 	statuses: string[];
 }
 
-const STATUS_OPTIONS: ReadonlyArray<{ value: CollectionStatus; label: string }> = [
-	{ value: CollectionStatus.PUBLIC, label: "Publiées" },
-	{ value: CollectionStatus.DRAFT, label: "Brouillons" },
-	{ value: CollectionStatus.ARCHIVED, label: "Archivées" },
+const STATUS_OPTIONS: ReadonlyArray<{ value: PublicationStatus; label: string }> = [
+	{ value: PublicationStatus.PUBLIC, label: "Publiées" },
+	{ value: PublicationStatus.DRAFT, label: "Brouillons" },
+	{ value: PublicationStatus.ARCHIVED, label: "Archivées" },
 ];
 
 const VALID_STATUS_VALUES = new Set<string>(STATUS_OPTIONS.map((o) => o.value));

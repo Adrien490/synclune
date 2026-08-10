@@ -3,6 +3,7 @@
 > **Date** : Décembre 2024
 > **Scope** : `ProductCard` + `AddToCartCardButton`
 > **Status** : Audit technique - Recommandations
+> **Note (2026-08-09)** : les extraits ci-dessous prédatent l'audit schéma V5 — `ProductSku.isDefault` n'existe plus (remplacé par `position Int`, rang 0 = représentant, listes pré-triées `(position asc, id asc)`).
 
 ---
 

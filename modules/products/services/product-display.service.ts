@@ -45,11 +45,16 @@ function truncateAltText(
 
 /**
  * Type de retour pour l'extraction d'image
+ *
+ * `alt` est REQUIS : les trois chemins de construction (altText en base, alt
+ * dérivé titre + matière/couleur, placeholder) en posent toujours un — c'est
+ * ce qui permet à ProductCard de le passer tel quel à `<Image>` sans fallback
+ * au call site (un `?? DEFAULT_ALT(…)` y était du code mort).
  */
 type ExtractedImage = {
 	id: string;
 	url: string;
-	alt?: string;
+	alt: string;
 	mediaType: "IMAGE";
 	blurDataUrl?: string;
 };
@@ -57,7 +62,11 @@ type ExtractedImage = {
 /**
  * Choisit le média à utiliser comme IMAGE représentative d'un SKU.
  *
- * Priorité : média `isPrimary` de type IMAGE → premier média de type IMAGE → `null`.
+ * Règle : première IMAGE de l'ordre canonique `(position asc, id asc)` → `null`.
+ * Les selects livrent les médias déjà triés dans cet ordre ; « premier média »
+ * ≠ « première IMAGE » — `SkuMedia` est polymorphe et une vidéo peut occuper le
+ * rang 0, d'où le filtre `mediaType` AVANT de prendre le premier (remplace
+ * `isPrimary`, audit schéma V5, lot A1).
  *
  * ⚠️ SSOT à utiliser partout où l'on a besoin d'UNE url d'image à partir d'un tableau
  * de médias mixtes. Les selects `GET_PRODUCT_SELECT` / `GET_PRODUCTS_SELECT` ne filtrent
@@ -74,16 +83,12 @@ type ExtractedImage = {
  *
  * @public
  */
-export function pickPrimaryImage<T extends { mediaType: string; isPrimary: boolean }>(
+export function pickPrimaryImage<T extends { mediaType: string }>(
 	images: readonly T[] | undefined,
 ): T | null {
 	if (!images?.length) return null;
 
-	return (
-		images.find((img) => img.isPrimary && img.mediaType === "IMAGE") ??
-		images.find((img) => img.mediaType === "IMAGE") ??
-		null
-	);
+	return images.find((img) => img.mediaType === "IMAGE") ?? null;
 }
 
 /**
@@ -102,15 +107,13 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 		return null;
 	}
 
-	const fallbackQualifier = image.isPrimary ? "Image principale" : "Variante";
-
 	return {
 		id: image.id,
 		url: image.url,
 		mediaType: "IMAGE",
 		alt: truncateAltText(
 			image.altText ??
-				`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors[0]?.color.name ?? fallbackQualifier}`,
+				`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors[0]?.color.name ?? "Image principale"}`,
 		),
 		blurDataUrl: image.blurDataUrl ?? undefined,
 	};
@@ -152,7 +155,7 @@ import type { ProductCardData } from "../types/product.types";
  * Réduit la complexité de O(5n) à O(n) pour les produits avec beaucoup de SKUs.
  *
  * @param product - Produit avec ses SKUs
- * @param options - Options d'affichage (couleur préférée, promotion)
+ * @param options - Options d'affichage (couleur préférée)
  * @returns Toutes les données formatées pour ProductCard
  *
  * @example
@@ -162,23 +165,19 @@ import type { ProductCardData } from "../types/product.types";
  *
  * // Avec filtre couleur actif (thumbnail s'adapte)
  * const data = getProductCardData(product, { activeColorSlug: "or" });
- *
- * // Avec filtre promotion actif (affiche le SKU en promo)
- * const data = getProductCardData(product, { preferOnSale: true });
  * ```
  */
 export function getProductCardData(
 	product: ProductFromList,
-	options?: { activeColorSlug?: string; preferOnSale?: boolean },
+	options?: { activeColorSlug?: string },
 ): ProductCardData {
 	const skus = product.skus;
 
 	// === 1. Trouver le SKU principal via la fonction unifiée ===
 	// Utilise getPrimarySkuForList avec le paramètre couleur préférée (Baymard pattern)
-	const skuOptions: GetPrimarySkuOptions | undefined =
-		options?.activeColorSlug || options?.preferOnSale
-			? { preferredColorSlug: options.activeColorSlug, preferOnSale: options.preferOnSale }
-			: undefined;
+	const skuOptions: GetPrimarySkuOptions | undefined = options?.activeColorSlug
+		? { preferredColorSlug: options.activeColorSlug }
+		: undefined;
 	const defaultSku = getPrimarySkuForList<SkuFromList, ProductFromList>(product, skuOptions);
 
 	// === 2. Passe unique sur les SKUs actifs pour extraire toutes les données ===

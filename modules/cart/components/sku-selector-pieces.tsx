@@ -39,7 +39,6 @@ export interface SkuSelectorPiecesProps {
 	cartItems: { skuId: string; quantity: number }[];
 	preselectedColor?: string | null;
 	isPending: boolean;
-	shouldReduceMotion: boolean;
 	isStoreClosed: boolean;
 	storeClosureMessage: string | null;
 	onClose: () => void;
@@ -64,7 +63,6 @@ export function SkuSelectorPieces({
 	cartItems,
 	preselectedColor,
 	isPending,
-	shouldReduceMotion,
 	isStoreClosed,
 	storeClosureMessage,
 	onClose,
@@ -162,7 +160,6 @@ export function SkuSelectorPieces({
 								image={getSkuImage(sku, product)}
 								stock={describeStock(sku, quantityInCart)}
 								isSelected={selectedSku?.id === sku.id}
-								shouldReduceMotion={shouldReduceMotion}
 								onSelect={() => selectPiece(sku)}
 								onKeyDown={(event) => handleKeyDown(event, index)}
 							/>

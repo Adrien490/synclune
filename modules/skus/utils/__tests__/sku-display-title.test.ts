@@ -28,16 +28,16 @@ describe("getSkuDisplayTitle", () => {
 		expect(getSkuDisplayTitle({ size: "  52mm  " })).toBe("52mm");
 	});
 
-	it("retourne 'Variante principale' si aucun attribut et isDefault", () => {
-		expect(getSkuDisplayTitle({ isDefault: true })).toBe("Variante principale");
-		expect(getSkuDisplayTitle({ colors: [], materials: [], size: "", isDefault: true })).toBe(
-			"Variante principale",
-		);
+	it("retourne 'Variante principale' si aucun attribut et isRepresentative", () => {
+		expect(getSkuDisplayTitle({ isRepresentative: true })).toBe("Variante principale");
+		expect(
+			getSkuDisplayTitle({ colors: [], materials: [], size: "", isRepresentative: true }),
+		).toBe("Variante principale");
 	});
 
-	it("retourne 'Variante sans attribut' si aucun attribut et !isDefault", () => {
+	it("retourne 'Variante sans attribut' si aucun attribut et !isRepresentative", () => {
 		expect(getSkuDisplayTitle({})).toBe("Variante sans attribut");
-		expect(getSkuDisplayTitle({ isDefault: false })).toBe("Variante sans attribut");
+		expect(getSkuDisplayTitle({ isRepresentative: false })).toBe("Variante sans attribut");
 	});
 
 	it("ignore les couleurs avec name vide (DB défensive)", () => {
@@ -66,7 +66,7 @@ describe("getSkuDisplayTitleSpoken", () => {
 		).toBe("Or rose et Argent, Verre, Acier, 52mm");
 	});
 
-	it("retourne le fallback isDefault tel quel", () => {
-		expect(getSkuDisplayTitleSpoken({ isDefault: true })).toBe("Variante principale");
+	it("retourne le fallback isRepresentative tel quel", () => {
+		expect(getSkuDisplayTitleSpoken({ isRepresentative: true })).toBe("Variante principale");
 	});
 });

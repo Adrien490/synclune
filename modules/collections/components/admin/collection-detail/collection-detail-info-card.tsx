@@ -1,6 +1,6 @@
 import { InfoIcon } from "@phosphor-icons/react/ssr";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import type { GetCollectionReturn } from "@/modules/collections/types/collection.types";
 import { CopyButton } from "@/shared/components/copy-button";
@@ -12,10 +12,10 @@ interface CollectionDetailInfoCardProps {
 	collection: GetCollectionReturn;
 }
 
-const STATUS_VARIANTS: Record<CollectionStatus, "default" | "secondary" | "outline"> = {
-	[CollectionStatus.PUBLIC]: "default",
-	[CollectionStatus.DRAFT]: "secondary",
-	[CollectionStatus.ARCHIVED]: "outline",
+const STATUS_VARIANTS: Record<PublicationStatus, "default" | "secondary" | "outline"> = {
+	[PublicationStatus.PUBLIC]: "default",
+	[PublicationStatus.DRAFT]: "secondary",
+	[PublicationStatus.ARCHIVED]: "outline",
 };
 
 export function CollectionDetailInfoCard({ collection }: CollectionDetailInfoCardProps) {

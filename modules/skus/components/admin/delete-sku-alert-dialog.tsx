@@ -12,7 +12,8 @@ export const DELETE_PRODUCT_SKU_DIALOG_ID = "delete-product-sku";
 interface DeleteProductSkuData {
 	skuId: string;
 	skuName: string;
-	isDefault?: boolean;
+	/** Vrai si le SKU est le représentant du produit (rang 0 de position). */
+	isRepresentative?: boolean;
 	[key: string]: unknown;
 }
 
@@ -40,7 +41,7 @@ export function DeleteProductSkuAlertDialog() {
 			confirmLabel="Supprimer"
 			descriptionClassName="space-y-3"
 			description={
-				data?.isDefault ? (
+				data?.isRepresentative ? (
 					<>
 						<p>
 							<strong className="text-destructive">
@@ -50,7 +51,9 @@ export function DeleteProductSkuAlertDialog() {
 						<p>
 							Êtes-vous sûr de vouloir supprimer la variante <strong>{data.skuName}</strong> ?
 						</p>
-						<p>Vous devrez définir une nouvelle variante principale après cette suppression.</p>
+						{/* Plus de transfert manuel : le représentant est le rang 0 de
+						    (position asc, id asc), la variante suivante prend le relais. */}
+						<p>La variante suivante deviendra automatiquement la variante principale.</p>
 					</>
 				) : (
 					<>

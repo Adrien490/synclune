@@ -89,8 +89,9 @@ export function selectDeactivatableSkuIds(
 		}
 
 		// Sinon on en épargne exactement un. Choix par id croissant plutôt que par
-		// `isDefault` : le défaut n'est pas garanti d'être dans le groupe, et l'ordre
-		// lexicographique est stable d'un run à l'autre (rejouabilité d'un webhook).
+		// rang : le représentant (rang 0) n'est pas garanti d'être dans le groupe,
+		// et l'ordre lexicographique est stable d'un run à l'autre (rejouabilité
+		// d'un webhook).
 		const [, ...sacrificeable] = [...group].sort((a, b) => a.skuId.localeCompare(b.skuId));
 		deactivatable.push(...sacrificeable.map((c) => c.skuId));
 	}

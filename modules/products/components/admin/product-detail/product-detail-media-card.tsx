@@ -27,16 +27,11 @@ interface ProductDetailMediaCardProps {
 	product: GetProductReturn;
 }
 
-function sortImages(images: readonly ProductImage[]): ProductImage[] {
-	return images.toSorted((a, b) => {
-		if (a.isPrimary && !b.isPrimary) return -1;
-		if (!a.isPrimary && b.isPrimary) return 1;
-		return 0;
-	});
-}
-
+// La variante initiale est la première (rang position) qui porte des médias :
+// GET_PRODUCT_SELECT livre SKUs et médias déjà triés par (position, id), donc
+// aucun tri local — le média « principal » est simplement images[0].
 function pickInitialSku(skusWithImages: ProductSku[]): ProductSku | undefined {
-	return skusWithImages.find((sku) => sku.isDefault) ?? skusWithImages[0];
+	return skusWithImages[0];
 }
 
 function toProductMedia(image: ProductImage, fallbackAlt: string): ProductMedia {
@@ -68,7 +63,7 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 	const selectedSku = skusWithImages.find((sku) => sku.id === selectedSkuId) ?? initialSku;
 	const showVariantSelector = skusWithImages.length > 1;
 
-	const images = selectedSku ? sortImages(selectedSku.images) : [];
+	const images = selectedSku ? selectedSku.images : [];
 	const [primary, ...rest] = images;
 	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> tuile bg-muted
 	const primarySrc = primary ? resolveMediaThumbSrc(primary) : null;

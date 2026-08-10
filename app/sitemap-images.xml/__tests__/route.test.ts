@@ -37,8 +37,8 @@ function makeProduct(overrides: Record<string, unknown> = {}) {
 		skus: [
 			{
 				images: [
-					{ url: "https://cdn.test/a.jpg", altText: "Vue de face", isPrimary: true },
-					{ url: "https://cdn.test/b.jpg", altText: null, isPrimary: false },
+					{ url: "https://cdn.test/a.jpg", altText: "Vue de face" },
+					{ url: "https://cdn.test/b.jpg", altText: null },
 				],
 			},
 		],
@@ -92,7 +92,7 @@ describe("GET /sitemap-images.xml", () => {
 		mockGetSitemapProducts.mockResolvedValue([
 			makeProduct({
 				type: null,
-				skus: [{ images: [{ url: "https://cdn.test/x.jpg", altText: null, isPrimary: true }] }],
+				skus: [{ images: [{ url: "https://cdn.test/x.jpg", altText: null }] }],
 			}),
 		]);
 
@@ -107,8 +107,8 @@ describe("GET /sitemap-images.xml", () => {
 		mockGetSitemapProducts.mockResolvedValue([
 			makeProduct({
 				skus: [
-					{ images: [{ url: "https://cdn.test/dup.jpg", altText: "A", isPrimary: true }] },
-					{ images: [{ url: "https://cdn.test/dup.jpg", altText: "B", isPrimary: false }] },
+					{ images: [{ url: "https://cdn.test/dup.jpg", altText: "A" }] },
+					{ images: [{ url: "https://cdn.test/dup.jpg", altText: "B" }] },
 				],
 			}),
 		]);
@@ -116,7 +116,7 @@ describe("GET /sitemap-images.xml", () => {
 		const xml = await (await GET()).text();
 
 		expect(xml.match(/<image:loc>/g)).toHaveLength(1);
-		// La PREMIÈRE occurrence gagne (donc l'alt du SKU primaire).
+		// La PREMIÈRE occurrence gagne (donc l'alt du premier SKU de l'ordre canonique).
 		expect(xml).toContain("<image:caption>A</image:caption>");
 	});
 
@@ -137,9 +137,7 @@ describe("GET /sitemap-images.xml", () => {
 				title: 'Bague "R&D" <test>',
 				skus: [
 					{
-						images: [
-							{ url: "https://cdn.test/i.jpg?a=1&b=2", altText: "Vue 1 & 2", isPrimary: true },
-						],
+						images: [{ url: "https://cdn.test/i.jpg?a=1&b=2", altText: "Vue 1 & 2" }],
 					},
 				],
 			}),
@@ -161,7 +159,6 @@ describe("GET /sitemap-images.xml", () => {
 		const images = Array.from({ length: 1200 }, (_, i) => ({
 			url: `https://cdn.test/${i}.jpg`,
 			altText: `img ${i}`,
-			isPrimary: i === 0,
 		}));
 		mockGetSitemapProducts.mockResolvedValue([makeProduct({ skus: [{ images }] })]);
 

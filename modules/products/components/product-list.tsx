@@ -24,8 +24,6 @@ interface ProductListProps {
 	searchTerm?: string;
 	/** Wishlist product IDs (pre-fetched at page level to avoid inline promise) */
 	wishlistProductIdsPromise?: Promise<Set<string>>;
-	/** Si true, priorise l'affichage du SKU en promotion */
-	preferOnSale?: boolean;
 	/** Tri actif (forwardé à load-more mobile pour cohérence avec la page initiale). */
 	sortBy?: SortField;
 	/** Filtres serveur actifs (forwardés à load-more mobile). */
@@ -60,7 +58,6 @@ export function ProductList({
 	perPage,
 	searchTerm,
 	wishlistProductIdsPromise,
-	preferOnSale,
 	sortBy,
 	filters,
 }: ProductListProps) {
@@ -198,7 +195,6 @@ export function ProductList({
 						index={index}
 						isInWishlist={wishlistProductIds.has(product.id)}
 						sectionId="catalog"
-						preferOnSale={preferOnSale}
 					/>
 				</div>
 			))}
@@ -219,7 +215,6 @@ export function ProductList({
 				sortBy={sortBy}
 				search={searchTerm}
 				filters={filters}
-				preferOnSale={preferOnSale}
 			/>
 
 			{/* Desktop : pagination URL-driven (deep-link, back/forward), rendue en

@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import type { ProductsSearchParams } from "../page";
 import { getFirstParam } from "@/shared/utils/params";
 import type { ProductFilters } from "@/modules/products/data/get-products";
@@ -34,7 +34,7 @@ export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 						}
 					}
 				}
-				// Status field (ProductStatus enum)
+				// Status field (PublicationStatus enum)
 				else if (filterKey === "status") {
 					const statusValues = Array.isArray(value)
 						? value
@@ -42,12 +42,12 @@ export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 							? filterValue.split(",")
 							: [filterValue];
 
-					// Validate and cast to ProductStatus enum
+					// Validate and cast to PublicationStatus enum
 					const validStatuses = statusValues.filter(
-						(s): s is ProductStatus =>
-							s === ProductStatus.DRAFT ||
-							s === ProductStatus.PUBLIC ||
-							s === ProductStatus.ARCHIVED,
+						(s): s is PublicationStatus =>
+							s === PublicationStatus.DRAFT ||
+							s === PublicationStatus.PUBLIC ||
+							s === PublicationStatus.ARCHIVED,
 					);
 
 					if (validStatuses.length > 0) {

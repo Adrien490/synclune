@@ -1,5 +1,5 @@
 // Form options for editing a product
-import type { ProductStatus } from "@/app/generated/prisma/client";
+import type { PublicationStatus } from "@/app/generated/prisma/client";
 
 // Form options shared between client and server for editing
 export const editProductFormOpts = {
@@ -9,7 +9,7 @@ export const editProductFormOpts = {
 		description: "",
 		typeId: "",
 		collectionIds: [] as string[],
-		status: "PUBLIC" as ProductStatus,
+		status: "PUBLIC" as PublicationStatus,
 		defaultSku: {
 			skuId: "",
 			priceInclTaxEuros: 0,

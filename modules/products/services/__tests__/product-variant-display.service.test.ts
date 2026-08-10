@@ -36,7 +36,7 @@ function makeSku(overrides: MakeSkuOverrides = {}): SkuLike {
 	return {
 		id: "sku-1",
 		isActive: true,
-		isDefault: false,
+		position: 0,
 		inventory: 10,
 		priceInclTax: 5000,
 		compareAtPrice: null,

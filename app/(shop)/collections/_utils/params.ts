@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import type { ProductFilters } from "@/modules/products/data/get-products";
 import { productFiltersSchema } from "@/modules/products/data/get-products";
 import type { CollectionSearchParams } from "../[slug]/page";
@@ -11,7 +11,7 @@ export const parseFilters = (
 	// Pages publiques : toujours filtrer sur les produits PUBLIC uniquement
 	const filters: ProductFilters = {
 		collectionSlug, // Always filter by the collection
-		status: ProductStatus.PUBLIC,
+		status: PublicationStatus.PUBLIC,
 	};
 
 	Object.entries(params).forEach(([key, value]) => {

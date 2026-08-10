@@ -16,7 +16,7 @@ const {
 	mockGetSortDirection,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		productSku: { findMany: vi.fn() },
+		productSku: { findMany: vi.fn(), findFirst: vi.fn() },
 	},
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
@@ -95,6 +95,7 @@ function setupDefaults() {
 	mockGetSortDirection.mockReturnValue("desc");
 	mockBuildCursorPagination.mockReturnValue({ take: 21 });
 	mockPrisma.productSku.findMany.mockResolvedValue([]);
+	mockPrisma.productSku.findFirst.mockResolvedValue(null);
 	mockProcessCursorResults.mockReturnValue({
 		items: [],
 		pagination: EMPTY_PAGINATION,
@@ -134,11 +135,15 @@ describe("fetchProductSkus – sort order logic", () => {
 		setupDefaults();
 	});
 
-	it("always places isDefault desc as first orderBy entry", async () => {
+	// Plus d'épinglage du représentant en tête : `isDefault` a disparu (audit
+	// schéma V5, lot A2) et un épinglage `position asc` annulerait le tri
+	// utilisateur (rangs uniques par produit). Le tri choisi gouverne seul.
+	it("does not pin any representative entry before the user sort", async () => {
+		mockGetSortDirection.mockReturnValue("asc");
 		await fetchProductSkus(makeParams({ sortBy: "price-ascending" }));
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
-		expect(callArg.orderBy[0]).toEqual({ isDefault: "desc" });
+		expect(callArg.orderBy[0]).toEqual({ priceInclTax: "asc" });
 	});
 
 	it("sorts by sku when sortBy starts with 'sku-'", async () => {
@@ -308,6 +313,48 @@ describe("fetchProductSkus – return shape", () => {
 		await fetchProductSkus(makeParams({ cursor: "c-1", direction: "forward", perPage: 10 }));
 
 		expect(mockProcessCursorResults).toHaveBeenCalledWith(items, 10, "forward", "c-1");
+	});
+});
+
+// ============================================================================
+// Tests: representativeSkuId — rang 0 de (position asc, id asc)
+// ============================================================================
+
+describe("fetchProductSkus – representativeSkuId", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		setupDefaults();
+	});
+
+	it("resolves the rank-0 SKU of the product via a dedicated query", async () => {
+		mockPrisma.productSku.findFirst.mockResolvedValue({ id: "sku-rank0" });
+
+		const result = await fetchProductSkus(makeParams({ filters: { productId: "prod-1" } }));
+
+		// Requête dédiée (pas la page chargée) : sous filtre ou pagination, le
+		// rang 0 peut être absent des lignes retournées.
+		expect(mockPrisma.productSku.findFirst).toHaveBeenCalledWith({
+			where: { productId: "prod-1", deletedAt: null },
+			orderBy: [{ position: "asc" }, { id: "asc" }],
+			select: { id: true },
+		});
+		expect(result.representativeSkuId).toBe("sku-rank0");
+	});
+
+	it("returns null without querying when the list is not scoped to one product", async () => {
+		const result = await fetchProductSkus(makeParams({ filters: undefined }));
+
+		expect(mockPrisma.productSku.findFirst).not.toHaveBeenCalled();
+		expect(result.representativeSkuId).toBeNull();
+	});
+
+	it("returns null when scoped to several products", async () => {
+		const result = await fetchProductSkus(
+			makeParams({ filters: { productId: ["prod-1", "prod-2"] } }),
+		);
+
+		expect(mockPrisma.productSku.findFirst).not.toHaveBeenCalled();
+		expect(result.representativeSkuId).toBeNull();
 	});
 });
 

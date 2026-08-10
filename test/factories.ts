@@ -156,7 +156,7 @@ function createMockSku(overrides: Record<string, unknown> = {}) {
 		compareAtPrice: null,
 		inventory: 10,
 		isActive: true,
-		isDefault: true,
+		position: 0,
 		colorId: "color_123",
 		materialId: "material_123",
 		size: "M",

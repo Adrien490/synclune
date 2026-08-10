@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
@@ -17,17 +17,17 @@ export function parseProductParams(searchParams: { [key: string]: string | strin
 		: searchParams.status;
 
 	const validStatuses = [
-		ProductStatus.PUBLIC,
-		ProductStatus.DRAFT,
-		ProductStatus.ARCHIVED,
+		PublicationStatus.PUBLIC,
+		PublicationStatus.DRAFT,
+		PublicationStatus.ARCHIVED,
 	] as const;
 
 	// "all" or absent = undefined (all statuses), otherwise validate the status
 	const status =
 		statusParam === "all" || !statusParam
 			? undefined
-			: validStatuses.includes(statusParam as ProductStatus)
-				? (statusParam as ProductStatus)
+			: validStatuses.includes(statusParam as PublicationStatus)
+				? (statusParam as PublicationStatus)
 				: undefined;
 
 	return {

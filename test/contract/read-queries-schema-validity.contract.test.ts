@@ -431,7 +431,7 @@ describe("lectures Prisma — validité schéma (@regression read-queries-schema
 							id: true,
 							skus: {
 								select: { id: true, images: { where: { mediaType: "IMAGE" }, take: 1 } },
-								orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+								orderBy: [{ position: "asc" }, { id: "asc" }],
 								take: 1,
 							},
 						},

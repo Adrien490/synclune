@@ -13,7 +13,6 @@ const EMPTY_FORM: FilterFormData = {
 	productTypes: [],
 	priceRange: [0, 500],
 	inStockOnly: false,
-	onSale: false,
 	sortBy: "created-descending",
 };
 
@@ -600,10 +599,10 @@ describe("ProductFilterSheet", () => {
 	});
 
 	describe("Disponibilité section", () => {
-		it("shows the in-stock and on-sale switches", () => {
+		it("shows the in-stock switch, without the removed on-sale one (retrait Omnibus 2026-08-08)", () => {
 			renderDefault();
 			expect(screen.getByTestId("switch-sheet-filter-in-stock")).toBeInTheDocument();
-			expect(screen.getByTestId("switch-sheet-filter-on-sale")).toBeInTheDocument();
+			expect(screen.queryByTestId("switch-sheet-filter-on-sale")).toBeNull();
 		});
 	});
 

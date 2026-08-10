@@ -18,8 +18,10 @@
  * - `/aide` était liée depuis le footer, le sitemap et un JSON-LD `FAQPage`,
  *   mais absente de `publicRoutes` : toute la FAQ (livraison, retours) était
  *   inatteignable — le proxy renvoyait l'accueil. La page a depuis été absorbée
- *   par la landing (2026-08-05) ; l'URL survit en redirection 308, et c'est
- *   TOUJOURS `publicRoutes` qui décide si elle atteint son ancre.
+ *   par la landing (2026-08-05), puis la section FAQ a été retirée le
+ *   2026-08-08 (à refaire) : l'assertion s'est inversée, elle garde désormais la
+ *   COMPLÉTUDE du démontage. La leçon ne change pas — c'est `publicRoutes` et la
+ *   table de redirections ENSEMBLE qui décident du sort d'une URL.
  *
  * Dans les deux cas, chaque source était plausible isolément ; seule la
  * confrontation des trois révèle le trou. C'est le même motif que
@@ -94,36 +96,35 @@ describe("@regression legal-urls-coherence", () => {
 	});
 
 	/**
-	 * `/aide` n'est plus une page : la FAQ a rejoint la landing le 2026-08-05.
-	 * L'URL était indexée (sitemap, canonical, JSON-LD `FAQPage`), donc elle
-	 * redirige — et il faut LES DEUX moitiés du montage pour que la redirection
-	 * arrive à destination :
+	 * ⚠️ Ce test vérifiait que `/aide` redirigeait en 308 vers `/#faq` ET que le
+	 * proxy la laissait passer — il faut LES DEUX moitiés pour qu'une redirection
+	 * arrive à destination, et c'est exactement le motif que ce fichier existe
+	 * pour attraper.
 	 *
-	 * - la règle 308 dans `next.config.ts`, sinon l'URL tombe en 404 ;
-	 * - `/aide` dans `publicRoutes`, sinon le default-deny du proxy la renvoie
-	 *   vers `/` — donc en haut de la page, SANS l'ancre `#faq`. C'est la même
-	 *   moitié manquante que le bug d'origine, avec un symptôme plus discret :
-	 *   la page s'ouvre, juste pas au bon endroit.
+	 * La section FAQ a été retirée de la landing le 2026-08-08 (à refaire), avec
+	 * son ancre `/#faq`, `ROUTES.SHOP.HELP`, la règle 308 et l'entrée `publicRoutes`.
+	 * Le test s'inverse donc : il verrouille désormais que le démontage est
+	 * COMPLET, parce qu'une demi-suppression est aussi silencieuse qu'une
+	 * demi-installation — une règle 308 orpheline déposerait le visiteur en haut
+	 * de `/` sans rien signaler, et une entrée `publicRoutes` orpheline ferait
+	 * croire l'URL servie.
 	 *
-	 * Et l'ancre elle-même doit exister : un fragment inconnu ne produit aucune
-	 * erreur, le navigateur reste simplement en haut.
+	 * Quand la FAQ revient : remettre les DEUX moitiés, et ce test avec elles.
 	 */
-	it("l'ancienne URL /aide redirige vers l'ancre de la FAQ, et le proxy la laisse passer", () => {
-		expect(publicRoutes).toContain("/aide");
+	it("le démontage de /aide est complet : ni redirection, ni allowlist, ni SSOT de lien", () => {
+		expect(publicRoutes).not.toContain("/aide");
 
 		const nextConfig = readFileSync(join(REPO_ROOT, "next.config.ts"), "utf-8");
-		expect(nextConfig).toContain('source: "/aide", destination: "/#faq", permanent: true');
+		expect(nextConfig).not.toContain('source: "/aide"');
 
-		// La SSOT de lien du storefront pointe la même ancre que la redirection.
-		expect(ROUTES.SHOP.HELP).toBe("/#faq");
+		// Plus de SSOT de lien vers l'aide : le pied de page et le volet mobile
+		// pointeraient sinon un `undefined` rendu en `href="undefined"`.
+		expect("HELP" in ROUTES.SHOP).toBe(false);
 
-		// …et la section qui porte cette ancre existe, avec cet `id`.
-		const faqSection = readFileSync(
-			join(REPO_ROOT, "app", "(shop)", "(home)", "_components", "faq", "faq-section.tsx"),
-			"utf-8",
+		// …et plus aucune section ne prétend porter l'ancre.
+		expect(existsSync(join(REPO_ROOT, "app", "(shop)", "(home)", "_components", "faq"))).toBe(
+			false,
 		);
-		expect(faqSection).toContain('FAQ_SECTION_ID = "faq"');
-		expect(faqSection).toContain("id={FAQ_SECTION_ID}");
 	});
 
 	it("le logo email existe dans public/", () => {

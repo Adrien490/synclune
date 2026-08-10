@@ -30,9 +30,15 @@ export type SkuWithImages = GetProductSkuReturn & {
 		/** Dimensions intrinsèques — le formulaire d'édition doit les round-tripper. */
 		width: number | null;
 		height: number | null;
-		isPrimary: boolean;
 	}>;
 	compareAtPrice: number | null;
+	/**
+	 * Vrai si ce SKU est le représentant du produit — rang 0 de
+	 * (position asc, id asc) parmi les variantes non supprimées (remplace la
+	 * colonne `isDefault`, audit schéma V5, lot A2). Calculé par `fetchSkuById` ;
+	 * pré-remplit le champ de formulaire `isDefault`, qui lui survit.
+	 */
+	isRepresentative: boolean;
 };
 
 // ============================================================================

@@ -14,7 +14,7 @@ interface OrderInput {
 	/** Ex-`status` : axe unique depuis le Lot 4 (audit V2). */
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
-	actualDelivery: Date | null;
+	deliveredAt: Date | null;
 	refunds: Array<{ status: RefundStatus }>;
 }
 
@@ -28,7 +28,7 @@ function makeOrder(overrides: Partial<OrderInput> = {}): OrderInput {
 	return {
 		status: "DELIVERED",
 		paymentStatus: "PAID",
-		actualDelivery: DELIVERED_WITHIN_PERIOD,
+		deliveredAt: DELIVERED_WITHIN_PERIOD,
 		refunds: [],
 		...overrides,
 	};
@@ -114,27 +114,27 @@ describe("getReturnIneligibilityReason", () => {
 
 	describe("withdrawal period", () => {
 		it("should return null when delivery is within the 14-day period", () => {
-			const order = makeOrder({ actualDelivery: DELIVERED_WITHIN_PERIOD });
+			const order = makeOrder({ deliveredAt: DELIVERED_WITHIN_PERIOD });
 			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
 		it("should return null when delivery is just before the 14-day deadline expires", () => {
-			const order = makeOrder({ actualDelivery: DELIVERED_JUST_BEFORE_EXPIRY });
+			const order = makeOrder({ deliveredAt: DELIVERED_JUST_BEFORE_EXPIRY });
 			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
 		it("should return DEADLINE_EXCEEDED when delivery is exactly 14 days ago (boundary expired)", () => {
-			const order = makeOrder({ actualDelivery: DELIVERED_EXACTLY_ON_BOUNDARY });
+			const order = makeOrder({ deliveredAt: DELIVERED_EXACTLY_ON_BOUNDARY });
 			expect(getReturnIneligibilityReason(order)).toBe("DEADLINE_EXCEEDED");
 		});
 
 		it("should return DEADLINE_EXCEEDED when delivery is older than 14 days", () => {
-			const order = makeOrder({ actualDelivery: DELIVERED_EXPIRED });
+			const order = makeOrder({ deliveredAt: DELIVERED_EXPIRED });
 			expect(getReturnIneligibilityReason(order)).toBe("DEADLINE_EXCEEDED");
 		});
 
-		it("should return NOT_DELIVERED when actualDelivery is null", () => {
-			const order = makeOrder({ actualDelivery: null });
+		it("should return NOT_DELIVERED when deliveredAt is null", () => {
+			const order = makeOrder({ deliveredAt: null });
 			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
 		});
 	});
@@ -194,7 +194,7 @@ describe("getReturnIneligibilityReason", () => {
 		it("should report NOT_PAID even when the order is also undelivered", () => {
 			const order = makeOrder({
 				paymentStatus: "FAILED",
-				actualDelivery: null,
+				deliveredAt: null,
 				refunds: [{ status: "PENDING" }],
 			});
 			expect(getReturnIneligibilityReason(order)).toBe("NOT_PAID");
@@ -202,7 +202,7 @@ describe("getReturnIneligibilityReason", () => {
 
 		it("should report NOT_DELIVERED before checking the deadline or refunds", () => {
 			const order = makeOrder({
-				actualDelivery: null,
+				deliveredAt: null,
 				refunds: [{ status: "PENDING" }],
 			});
 			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
@@ -210,7 +210,7 @@ describe("getReturnIneligibilityReason", () => {
 
 		it("should report DEADLINE_EXCEEDED before checking refunds", () => {
 			const order = makeOrder({
-				actualDelivery: DELIVERED_EXPIRED,
+				deliveredAt: DELIVERED_EXPIRED,
 				refunds: [{ status: "PENDING" }],
 			});
 			expect(getReturnIneligibilityReason(order)).toBe("DEADLINE_EXCEEDED");
@@ -232,7 +232,7 @@ describe("getReturnDaysRemaining", () => {
 		vi.useRealTimers();
 	});
 
-	it("should return 0 when actualDelivery is null", () => {
+	it("should return 0 when deliveredAt is null", () => {
 		expect(getReturnDaysRemaining(null)).toBe(0);
 	});
 

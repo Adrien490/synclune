@@ -16,7 +16,7 @@ function makeSku(overrides: Partial<BaseProductSku> = {}): BaseProductSku {
 		id: "sku-1",
 		sku: "SKU-001",
 		isActive: true,
-		isDefault: false,
+		position: 0,
 		inventory: 5,
 		priceInclTax: 2000,
 		compareAtPrice: null,

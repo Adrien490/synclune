@@ -1,6 +1,5 @@
 "use client";
 
-import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { NavbarSessionData } from "@/shared/types/session.types";
 import { HamburgerIcon } from "@/shared/components/icons/hamburger-icon";
@@ -56,18 +55,17 @@ const CART_SHEET_ID = "cart" as const;
 
 /**
  * navItems (flat list from getMobileNavItems) is used to resolve the top-level
- * destinations by href (home, about, favorites). productTypes/collections
- * are consumed directly by their respective sections for hierarchical display —
- * the children embedded in navItems are not used by the sheet.
+ * destinations by href (home, about, collections, favorites). productTypes is
+ * consumed directly by its section for hierarchical display — the children
+ * embedded in navItems are not used by the sheet.
+ *
+ * ⚠️ Plus de prop `collections` : la bande de cartes a été supprimée le
+ * 2026-08-08 avec les autres surfaces à cartes de collection (à refaire). La
+ * destination `/collections` remonte donc dans `navItems`, comme les autres.
  */
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: MenuProductTypeItem[];
-	collections?: Array<{
-		slug: string;
-		label: string;
-		images: CollectionImage[];
-	}>;
 	isAdmin?: boolean;
 	session?: NavbarSessionData | null;
 }
@@ -79,13 +77,7 @@ interface MenuSheetProps {
  */
 type PendingAction = "logout" | "cart" | null;
 
-export function MenuSheet({
-	navItems,
-	productTypes,
-	collections,
-	isAdmin = false,
-	session,
-}: MenuSheetProps) {
+export function MenuSheet({ navItems, productTypes, isAdmin = false, session }: MenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("menu-sheet");
 	const [showLogout, setShowLogout] = useState(false);
 	const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -343,7 +335,6 @@ export function MenuSheet({
 								<MenuSheetNav
 									navItems={navItems}
 									productTypes={productTypes}
-									collections={collections}
 									session={session}
 									isAdmin={isAdmin}
 									onLogoutClick={handleLogoutClick}

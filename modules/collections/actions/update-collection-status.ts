@@ -1,6 +1,6 @@
 "use server";
 
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -83,10 +83,10 @@ export async function updateCollectionStatus(
 		collectionTags.forEach((tag) => updateTag(tag));
 
 		// 8. Messages de succes contextuels
-		const statusMessages: Record<CollectionStatus, string> = {
-			[CollectionStatus.DRAFT]: `"${existingCollection.name}" mise en brouillon`,
-			[CollectionStatus.PUBLIC]: `"${existingCollection.name}" publiée`,
-			[CollectionStatus.ARCHIVED]: `"${existingCollection.name}" archivée`,
+		const statusMessages: Record<PublicationStatus, string> = {
+			[PublicationStatus.DRAFT]: `"${existingCollection.name}" mise en brouillon`,
+			[PublicationStatus.PUBLIC]: `"${existingCollection.name}" publiée`,
+			[PublicationStatus.ARCHIVED]: `"${existingCollection.name}" archivée`,
 		};
 
 		return success(statusMessages[status], {

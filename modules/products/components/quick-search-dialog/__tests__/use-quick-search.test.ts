@@ -47,7 +47,7 @@ function makeResult(
 						priceInclTax: 1000,
 						compareAtPrice: null,
 						inventory: 5,
-						isDefault: true,
+						position: 0,
 						colors: [],
 						images: [],
 					},

@@ -39,7 +39,6 @@ function buildSkuDetailsSuccess(sku: NonNullable<FetchedSku>): SkuDetailsResult 
 				images: sku.images.map((img) => ({
 					url: img.url,
 					altText: img.altText ?? undefined,
-					isPrimary: img.isPrimary,
 					mediaType: img.mediaType,
 				})),
 			},

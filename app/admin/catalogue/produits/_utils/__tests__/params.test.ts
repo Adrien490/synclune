@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // MOCKS
@@ -221,37 +221,37 @@ describe("parseFilters — date fields", () => {
 describe("parseFilters — status field", () => {
 	it("parses a single valid status (DRAFT)", () => {
 		const result = parseFilters(makeParams({ filter_status: "DRAFT" }));
-		expect(result.status).toEqual([ProductStatus.DRAFT]);
+		expect(result.status).toEqual([PublicationStatus.DRAFT]);
 	});
 
 	it("parses a single valid status (PUBLIC)", () => {
 		const result = parseFilters(makeParams({ filter_status: "PUBLIC" }));
-		expect(result.status).toEqual([ProductStatus.PUBLIC]);
+		expect(result.status).toEqual([PublicationStatus.PUBLIC]);
 	});
 
 	it("parses a single valid status (ARCHIVED)", () => {
 		const result = parseFilters(makeParams({ filter_status: "ARCHIVED" }));
-		expect(result.status).toEqual([ProductStatus.ARCHIVED]);
+		expect(result.status).toEqual([PublicationStatus.ARCHIVED]);
 	});
 
 	it("parses comma-separated status values", () => {
 		const result = parseFilters(makeParams({ filter_status: "DRAFT,PUBLIC" }));
-		expect(result.status).toEqual([ProductStatus.DRAFT, ProductStatus.PUBLIC]);
+		expect(result.status).toEqual([PublicationStatus.DRAFT, PublicationStatus.PUBLIC]);
 	});
 
 	it("parses an array of status values", () => {
 		const result = parseFilters(makeParams({ filter_status: ["DRAFT", "ARCHIVED"] }));
-		expect(result.status).toEqual([ProductStatus.DRAFT, ProductStatus.ARCHIVED]);
+		expect(result.status).toEqual([PublicationStatus.DRAFT, PublicationStatus.ARCHIVED]);
 	});
 
 	it("filters out invalid status values from a comma-separated list", () => {
 		const result = parseFilters(makeParams({ filter_status: "DRAFT,INVALID,PUBLIC" }));
-		expect(result.status).toEqual([ProductStatus.DRAFT, ProductStatus.PUBLIC]);
+		expect(result.status).toEqual([PublicationStatus.DRAFT, PublicationStatus.PUBLIC]);
 	});
 
 	it("filters out invalid status values from an array", () => {
 		const result = parseFilters(makeParams({ filter_status: ["DRAFT", "NOT_A_STATUS"] }));
-		expect(result.status).toEqual([ProductStatus.DRAFT]);
+		expect(result.status).toEqual([PublicationStatus.DRAFT]);
 	});
 
 	it("ignores filter_status when all values are invalid", () => {
@@ -267,7 +267,7 @@ describe("parseFilters — status field", () => {
 	it("uses only the first element of an array to pass to getFirstParam for comma-split check", () => {
 		// When value is an array, the array itself is used directly (not comma-split)
 		const result = parseFilters(makeParams({ filter_status: ["PUBLIC", "ARCHIVED"] }));
-		expect(result.status).toEqual([ProductStatus.PUBLIC, ProductStatus.ARCHIVED]);
+		expect(result.status).toEqual([PublicationStatus.PUBLIC, PublicationStatus.ARCHIVED]);
 	});
 });
 
@@ -502,7 +502,7 @@ describe("parseFilters — combined filters", () => {
 
 		expect(result.priceMin).toBe(500);
 		expect(result.priceMax).toBe(3000);
-		expect(result.status).toEqual([ProductStatus.PUBLIC]);
+		expect(result.status).toEqual([PublicationStatus.PUBLIC]);
 		expect(result.stockStatus).toBe("in_stock");
 		expect(result.onSale).toBe(true);
 		expect(result.color).toEqual(["gold", "silver"]);

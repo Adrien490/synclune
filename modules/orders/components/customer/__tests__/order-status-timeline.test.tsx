@@ -80,7 +80,7 @@ function createOrder(overrides: Partial<OrderInput> = {}): OrderInput {
 		createdAt: BASE_DATE,
 		paidAt: null,
 		shippedAt: null,
-		actualDelivery: null,
+		deliveredAt: null,
 		...overrides,
 	};
 }
@@ -252,7 +252,7 @@ describe("OrderStatusTimeline", () => {
 						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
-						actualDelivery: DELIVERED_DATE,
+						deliveredAt: DELIVERED_DATE,
 					})}
 				/>,
 			);
@@ -307,7 +307,7 @@ describe("OrderStatusTimeline", () => {
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						shippedAt: SHIPPED_DATE,
-						actualDelivery: DELIVERED_DATE,
+						deliveredAt: DELIVERED_DATE,
 					})}
 				/>,
 			);
@@ -339,7 +339,7 @@ describe("OrderStatusTimeline", () => {
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						shippedAt: SHIPPED_DATE,
-						actualDelivery: DELIVERED_DATE,
+						deliveredAt: DELIVERED_DATE,
 					})}
 				/>,
 			);
@@ -362,7 +362,7 @@ describe("OrderStatusTimeline", () => {
 			expect(label.className).toContain("text-muted-foreground");
 		});
 
-		it("shows the delivery date when status is DELIVERED and actualDelivery is set", () => {
+		it("shows the delivery date when status is DELIVERED and deliveredAt is set", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
@@ -370,7 +370,7 @@ describe("OrderStatusTimeline", () => {
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						shippedAt: SHIPPED_DATE,
-						actualDelivery: DELIVERED_DATE,
+						deliveredAt: DELIVERED_DATE,
 					})}
 				/>,
 			);
@@ -384,7 +384,7 @@ describe("OrderStatusTimeline", () => {
 					order={createOrder({
 						status: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
-						actualDelivery: null,
+						deliveredAt: null,
 					})}
 				/>,
 			);
@@ -409,7 +409,7 @@ describe("OrderStatusTimeline", () => {
 				paymentStatus: "PAID",
 				paidAt: PAID_DATE,
 				shippedAt: SHIPPED_DATE,
-				actualDelivery: DELIVERED_DATE,
+				deliveredAt: DELIVERED_DATE,
 			});
 		}
 

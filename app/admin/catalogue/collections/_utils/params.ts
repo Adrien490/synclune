@@ -1,13 +1,13 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import type { GetCollectionsParams } from "@/modules/collections/data/get-collections";
 import { getFirstParam } from "@/shared/utils/params";
 import type { CollectionsSearchParams } from "../page";
 
-const VALID_STATUSES = new Set<string>(Object.values(CollectionStatus));
+const VALID_STATUSES = new Set<string>(Object.values(PublicationStatus));
 
 export const parseFilters = (params: CollectionsSearchParams): GetCollectionsParams["filters"] => {
 	let hasProducts: boolean | undefined = undefined;
-	const statuses: CollectionStatus[] = [];
+	const statuses: PublicationStatus[] = [];
 
 	Object.entries(params).forEach(([key, value]) => {
 		if (!key.startsWith("filter_")) return;
@@ -18,7 +18,7 @@ export const parseFilters = (params: CollectionsSearchParams): GetCollectionsPar
 			const raw = Array.isArray(value) ? value : [value];
 			raw.forEach((v) => {
 				if (typeof v === "string" && VALID_STATUSES.has(v)) {
-					statuses.push(v as CollectionStatus);
+					statuses.push(v as PublicationStatus);
 				}
 			});
 			return;

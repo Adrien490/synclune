@@ -96,7 +96,8 @@ const mockSku = {
 	priceInclTax: 5000,
 	compareAtPrice: null,
 	inventory: 10,
-	isDefault: false,
+	// Calculé par fetchSkuById (rang 0 de position) — remplace la colonne isDefault.
+	isRepresentative: false,
 	isActive: true,
 	color: null,
 	material: null,

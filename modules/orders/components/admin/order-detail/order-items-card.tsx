@@ -31,7 +31,9 @@ export function OrderItemsCard({ items, subtotal, shippingCost, total }: OrderIt
 						const imageUrl = item.productImageUrl || null;
 
 						return (
-							<div key={item.id} className="flex items-start gap-4 border-b py-3 last:border-0">
+							// V5 : OrderItem n'a plus de colonne `id` (PK composite orderId+skuId) ;
+							// dans une commande donnée, le skuId identifie la ligne à lui seul.
+							<div key={item.skuId} className="flex items-start gap-4 border-b py-3 last:border-0">
 								{/* Image */}
 								<div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-md border">
 									{imageUrl ? (

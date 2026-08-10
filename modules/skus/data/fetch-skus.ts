@@ -53,7 +53,6 @@ export async function fetchProductSkus(
 	const where = buildWhereClause(params);
 	const direction = getSortDirection(params.sortBy);
 
-	// Toujours trier le SKU par défaut en premier, puis appliquer le tri sélectionné
 	const sortFieldMap: Record<string, Prisma.ProductSkuOrderByWithRelationInput[]> = {
 		"sku-ascending": [{ sku: direction }, { id: "asc" }],
 		"sku-descending": [{ sku: direction }, { id: "asc" }],
@@ -64,13 +63,14 @@ export async function fetchProductSkus(
 		"created-ascending": [{ createdAt: direction }, { id: "asc" }],
 		"created-descending": [{ createdAt: direction }, { id: "asc" }],
 	};
-	const userSortConfig: Prisma.ProductSkuOrderByWithRelationInput[] = sortFieldMap[
-		params.sortBy
-	] ?? [{ createdAt: "desc" }, { id: "asc" }];
-
-	const orderBy: Prisma.ProductSkuOrderByWithRelationInput[] = [
-		{ isDefault: "desc" }, // SKU par défaut toujours en premier
-		...userSortConfig,
+	// Le représentant n'est plus épinglé en tête de liste : l'ancien
+	// `{ isDefault: "desc" }` reposait sur une colonne disparue (audit schéma V5,
+	// lot A2), et son équivalent `{ position: "asc" }` rendrait le tri utilisateur
+	// inopérant (les rangs sont uniques par produit). Le représentant est signalé
+	// par badge via `representativeSkuId` ci-dessous.
+	const orderBy: Prisma.ProductSkuOrderByWithRelationInput[] = sortFieldMap[params.sortBy] ?? [
+		{ createdAt: "desc" },
+		{ id: "asc" },
 	];
 
 	const take = Math.min(
@@ -84,12 +84,31 @@ export async function fetchProductSkus(
 		take,
 	});
 
-	const productSkus = await prisma.productSku.findMany({
-		where,
-		select: GET_PRODUCT_SKUS_DEFAULT_SELECT,
-		orderBy,
-		...cursorConfig,
-	});
+	// Représentant du produit = rang 0 de (position asc, id asc) parmi les
+	// variantes non supprimées (remplace `isDefault`, audit schéma V5, lot A2).
+	// Calculé par une requête dédiée — pas depuis la page chargée : sous filtre ou
+	// pagination, le rang 0 peut ne pas figurer dans les lignes retournées, et le
+	// badge « Par défaut » se poserait alors sur la mauvaise ligne. N'a de sens que
+	// pour une liste bornée à UN produit (le seul appelant en production).
+	const productIds = toArray(params.filters?.productId);
+	const representativePromise =
+		productIds.length === 1
+			? prisma.productSku.findFirst({
+					where: { productId: productIds[0], deletedAt: null },
+					orderBy: [{ position: "asc" }, { id: "asc" }],
+					select: { id: true },
+				})
+			: Promise.resolve(null);
+
+	const [productSkus, representative] = await Promise.all([
+		prisma.productSku.findMany({
+			where,
+			select: GET_PRODUCT_SKUS_DEFAULT_SELECT,
+			orderBy,
+			...cursorConfig,
+		}),
+		representativePromise,
+	]);
 
 	const { items, pagination } = processCursorResults(
 		productSkus,
@@ -101,5 +120,6 @@ export async function fetchProductSkus(
 	return {
 		productSkus: items,
 		pagination,
+		representativeSkuId: representative?.id ?? null,
 	};
 }

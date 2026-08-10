@@ -24,7 +24,6 @@ function makeAddress(overrides: Record<string, unknown> = {}) {
 		postalCode: "75002",
 		country: "FR",
 		phone: "+33612345678",
-		isDefault: false,
 		...overrides,
 	} as never;
 }

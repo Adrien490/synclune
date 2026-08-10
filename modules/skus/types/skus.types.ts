@@ -11,6 +11,13 @@ export type GetProductSkusReturn = {
 		}>
 	>;
 	pagination: PaginationInfo;
+	/**
+	 * Id du représentant du produit — rang 0 de (position asc, id asc) parmi les
+	 * variantes non supprimées (remplace `isDefault`, audit schéma V5, lot A2).
+	 * `null` si la liste n'est pas bornée à un produit unique. Les composants de
+	 * ligne en dérivent leur prop `isRepresentative`.
+	 */
+	representativeSkuId: string | null;
 	error?: string;
 };
 

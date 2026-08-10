@@ -421,8 +421,8 @@ export function SwipeableCard({
 	return (
 		// overflow-x-clip (pas overflow-hidden) : seul l'axe horizontal du swipe doit
 		// clipper — la ProductCard polaroid de /favoris déborde verticalement par
-		// construction (masking tape -top-2, lift hover, glow), et `clip` ne crée pas
-		// de scroll container donc l'axe vertical reste réellement `visible`.
+		// construction (lift hover, glow), et `clip` ne crée pas de scroll container
+		// donc l'axe vertical reste réellement `visible`.
 		<div ref={containerRef} className={cn("relative touch-pan-y overflow-x-clip", className)}>
 			{/* Screen-reader announcement of the last fired action (WCAG 2.2 SC 2.5.7 complement) */}
 			<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">

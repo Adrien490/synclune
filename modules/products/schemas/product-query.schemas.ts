@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
@@ -35,8 +35,14 @@ export const productFiltersSchema = z
 		type: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		color: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		material: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
-		status: z.union([z.enum(ProductStatus), z.array(z.enum(ProductStatus))]).optional(),
+		status: z.union([z.enum(PublicationStatus), z.array(z.enum(PublicationStatus))]).optional(),
 		stockStatus: z.enum(["in_stock", "low_stock", "out_of_stock"]).optional(),
+		/**
+		 * ADMIN-ONLY depuis le retrait Omnibus (2026-08-08) : « produits ayant un
+		 * `compareAtPrice` » est une vue de gestion (le champ est visible dans les
+		 * tables admin), plus une facette vitrine — le parser storefront
+		 * (`app/(shop)/produits/_utils/params.ts`) n'émet plus cette clé.
+		 */
 		onSale: z.boolean().optional(),
 		collectionId: optionalStringOrStringArraySchema,
 		collectionSlug: optionalStringOrStringArraySchema,
@@ -101,6 +107,8 @@ export const getProductsSchema = z.object({
 	sortBy: productSortBySchema.default(GET_PRODUCTS_DEFAULT_SORT_BY),
 	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: productFiltersSchema.default({}),
-	status: z.enum([ProductStatus.PUBLIC, ProductStatus.DRAFT, ProductStatus.ARCHIVED]).optional(),
+	status: z
+		.enum([PublicationStatus.PUBLIC, PublicationStatus.DRAFT, PublicationStatus.ARCHIVED])
+		.optional(),
 	includeDeleted: z.boolean().optional(),
 });

@@ -72,7 +72,6 @@ export async function createProduct(
 				// Si le champ n'existe pas dans le FormData, utiliser true par defaut
 				// (formBooleanSchema rejette null — le fallback boolean est couvert par l'union)
 				isActive: formData.get("initialSku.isActive") ?? true,
-				isDefault: formData.get("initialSku.isDefault") ?? true,
 				colorIds: initialSkuColorIds,
 				materialIds: initialSkuMaterialIds,
 				size: formData.get("initialSku.size") ?? "",
@@ -113,13 +112,12 @@ export async function createProduct(
 			? Math.round(validatedData.initialSku.compareAtPriceEuros * 100)
 			: null;
 
-		// 6. Prepare images with isPrimary flag (first = primary)
+		// 6. Prepare images (premier = principal via position 0)
 		// Note: La validation que le premier média est une IMAGE (pas VIDEO) est faite
 		// dans le schéma Zod (createProductSchema.refine)
 		const allImages = validatedData.initialSku.media.map((media, index) => ({
 			...media,
 			mediaType: index === 0 ? ("IMAGE" as const) : media.mediaType, // Force IMAGE for first
-			isPrimary: index === 0,
 			position: index,
 		}));
 
@@ -225,7 +223,9 @@ export async function createProduct(
 				priceInclTax: priceInclTaxCents,
 				inventory: validatedData.initialSku.inventory,
 				isActive: validatedData.initialSku.isActive,
-				isDefault: validatedData.initialSku.isDefault,
+				// Première variante d'un produit neuf : rang 0 d'office (le
+				// représentant est le rang 0 de (position asc, id asc) — lot A2).
+				position: 0,
 				size: normalizedSize,
 			};
 
@@ -263,7 +263,6 @@ export async function createProduct(
 						mediaType: image.mediaType ?? detectMediaType(image.url),
 						width: image.width ?? null,
 						height: image.height ?? null,
-						isPrimary: image.isPrimary,
 						position: image.position,
 					};
 

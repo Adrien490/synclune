@@ -1,4 +1,3 @@
-import { CollectionChaptersSkeleton } from "@/modules/collections/components/collection-chapters-skeleton";
 import { BreadcrumbNavSkeleton } from "@/shared/components/breadcrumb-nav";
 import { StorefrontHeadingSkeleton } from "@/shared/components/storefront-heading";
 
@@ -22,7 +21,11 @@ export default function CollectionsLoading() {
 					    le contenu de 26 px au swap (audit 79/100 du 2026-08-05). */}
 					<StorefrontHeadingSkeleton descriptionLines={2} />
 				</div>
-				<CollectionChaptersSkeleton />
+				{/* ⚠️ Plus de `CollectionChaptersSkeleton` : le carnet des séries a été
+				    supprimé le 2026-08-08 (à refaire). Ce repli ne couvre donc plus que
+				    le bloc titre — c'est cohérent avec `page.tsx`, qui ne rend rien
+				    d'autre. Le remettre en même temps que le rendu, sinon le repli
+				    annonce une grille qui n'arrive jamais. */}
 			</section>
 		</div>
 	);

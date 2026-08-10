@@ -1,11 +1,6 @@
 import { AtelierSection } from "@/app/(shop)/(home)/_components/atelier/atelier-section";
-import { CollectionsSection } from "@/app/(shop)/(home)/_components/collections/collections-section";
-import { LANDING_COLLECTIONS_COUNT } from "@/app/(shop)/(home)/_components/collections/collections-grid";
 import { HeroSection } from "@/app/(shop)/(home)/_components/hero/hero-section";
 import { HERO_PRODUCTS_COUNT } from "@/app/(shop)/(home)/_components/hero/hero-grid";
-import { FaqSection } from "@/app/(shop)/(home)/_components/faq/faq-section";
-import { CollectionStatus } from "@/app/generated/prisma/client";
-import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts, type GetProductsReturn } from "@/modules/products/data/get-products";
 import { orderHeroProducts } from "@/modules/products/services/product-availability.service";
 import { StructuredData } from "@/shared/components/structured-data";
@@ -63,20 +58,21 @@ export const metadata: Metadata = {
 /**
  * Page d'accueil — premier écran refondu en « L'étal » (2026-08-04).
  *
- * L'ordre de lecture est délibéré : accroche produit (étal) → orientation
- * (collections, 2026-08-05) →
+ * L'ordre de lecture est délibéré : accroche produit (étal) →
  * récit (atelier, 2026-08-05 — copie RÉÉCRITE au tutoiement dans la SSOT
- * `shared/constants/atelier-content.ts`) →
- * réassurance (FAQ) → signature (footer). L'atelier est 100 % statique
- * (aucun fetch) : il se monte sans promesse ni Suspense, et son nœud `HowTo`
- * vit dans le `@graph` de `StructuredData`, comme le `FAQPage`.
+ * `shared/constants/atelier-content.ts`) → signature (footer). L'atelier est
+ * 100 % statique (aucun fetch) : il se monte sans promesse ni Suspense, et son
+ * nœud `HowTo` vit dans le `@graph` de `StructuredData`.
  *
- * **La FAQ a rejoint la landing le 2026-08-05** : `/aide` n'existe plus et
- * redirige en 308 vers `/#faq` (`next.config.ts`). Son JSON-LD `FAQPage` est un
- * nœud du `@graph` de `StructuredData` — donc émis par les DEUX rendus autour de
- * la frontière `Suspense` ci-dessous. Le `<script>` du repli est remplacé par
- * celui du rendu résolu : un seul survit dans le DOM final (vérifié au DOM, pas
- * au HTML servi — le HTML streamé en contient bien deux, c'est normal).
+ * ⚠️ **La section Collections et la FAQ ont été retirées le 2026-08-08**, à la
+ * demande de Léane et pour être refaites : la landing n'a donc plus ni bloc
+ * d'orientation ni bloc de réassurance. Deux conséquences à connaître avant de
+ * les rebâtir — le `FAQPage` a quitté le `@graph` de `StructuredData` (le
+ * rouvrir se fait dans ce `@graph`, JAMAIS en `<script>` séparé, sinon on
+ * ré-introduit la seconde `BreadcrumbList` au premier copier-coller), et
+ * `/aide` ne redirige plus vers `/#faq` — la règle 308 de `next.config.ts`,
+ * `ROUTES.SHOP.HELP` et les liens « Aide » du pied de page et du volet mobile
+ * sont partis avec.
  *
  * ⚠️ L'accueil n'émet **plus de `BreadcrumbList`** depuis le 2026-08-06 : elle
  * n'avait qu'un `ListItem` pointant la racine, soit exactement l'élément que
@@ -134,21 +130,6 @@ export default function Page() {
 		products: orderHeroProducts(result.products).slice(0, HERO_PRODUCTS_COUNT),
 	}));
 
-	// « Choisis ton univers » — mêmes critères MÉCANIQUES que le méga-menu
-	// Collections (`getNavbarMenuData`) : les séries les plus fournies d'abord,
-	// et uniquement celles qui ont des produits. `Collection` n'a pas
-	// d'`isFeatured` (refus assumé) : il n'y a pas de mise en avant éditoriale
-	// à exprimer, le tri EST le choix. `isAdmin: false` pour la même raison que
-	// la lecture produits ci-dessus.
-	const collectionsPromise = getCollections(
-		{
-			perPage: LANDING_COLLECTIONS_COUNT,
-			sortBy: "products-descending",
-			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
-		},
-		{ isAdmin: false },
-	);
-
 	return (
 		<>
 			{/* L'ItemList a besoin des produits : sa propre frontière, pour que le
@@ -158,9 +139,7 @@ export default function Page() {
 				<HomepageStructuredData productsPromise={productsPromise} />
 			</Suspense>
 			<HeroSection productsPromise={productsPromise} />
-			<CollectionsSection collectionsPromise={collectionsPromise} />
 			<AtelierSection />
-			<FaqSection />
 		</>
 	);
 }

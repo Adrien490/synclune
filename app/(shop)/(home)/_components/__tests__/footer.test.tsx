@@ -214,23 +214,27 @@ describe("Footer", () => {
 
 	// --- Contact section ---
 
-	it("renders the contact column with help, email, copy-button and location", async () => {
+	it("renders the contact column with email, copy-button and location", async () => {
 		await renderFooter();
 
 		const contactSection = screen.getByRole("region", { name: /écrire à l'atelier/i });
 		expect(contactSection).toBeInTheDocument();
 
 		const links = within(contactSection).getAllByRole("link");
-		expect(links).toHaveLength(2);
 
-		// L'aide d'abord — déflexion avant le message (refonte 2026-08-04).
-		// Depuis le 2026-08-05, c'est une ANCRE de la landing et non plus une
-		// page : `/aide` a été absorbée (308 vers `/#faq`).
-		expect(links[0]).toHaveAttribute("href", "/#faq");
-		expect(links[0]).toHaveTextContent("Aide et FAQ");
+		/*
+		 * ⚠️ UN seul lien depuis le 2026-08-08, contre deux avant : « Aide et FAQ »
+		 * (`/#faq`) est parti avec la section FAQ, à refaire.
+		 *
+		 * Ce que ce compte protégeait, et qu'il faut restaurer avec elle : la
+		 * déflexion AVANT le message (refonte 2026-08-04) — une question de délai
+		 * de livraison se répond seule, un e-mail non. Le lien d'aide doit donc
+		 * revenir en PREMIER, au-dessus de l'adresse.
+		 */
+		expect(links).toHaveLength(1);
 
-		expect(links[1]).toHaveAttribute("href", "mailto:contact@synclune.fr");
-		expect(links[1]).toHaveAttribute(
+		expect(links[0]).toHaveAttribute("href", "mailto:contact@synclune.fr");
+		expect(links[0]).toHaveAttribute(
 			"aria-label",
 			"Envoyer un email à Synclune : contact@synclune.fr",
 		);

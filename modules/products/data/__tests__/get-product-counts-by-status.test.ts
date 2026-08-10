@@ -28,7 +28,7 @@ vi.mock("@/modules/auth/utils/guards", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	ProductStatus: {
+	PublicationStatus: {
 		PUBLIC: "PUBLIC",
 		DRAFT: "DRAFT",
 		ARCHIVED: "ARCHIVED",

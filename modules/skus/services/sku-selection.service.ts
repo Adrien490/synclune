@@ -24,11 +24,6 @@ export interface GetPrimarySkuOptions {
 	 * Si spécifié, priorise les SKUs de cette couleur.
 	 */
 	preferredColorSlug?: string;
-	/**
-	 * Si true, priorise les SKUs en promotion (compareAtPrice set).
-	 * Utilisé quand le filtre "En promotion" est actif pour afficher le prix barré.
-	 */
-	preferOnSale?: boolean;
 }
 
 /**
@@ -37,11 +32,22 @@ export interface GetPrimarySkuOptions {
  * Ordre de priorité :
  * 1. (Si preferredColorSlug) SKU de la couleur préférée en stock
  * 2. (Si preferredColorSlug) SKU de la couleur préférée (même hors stock)
- * 3. (Si preferOnSale) SKU en promo en stock, puis en promo hors stock
- * 4. SKU avec isDefault = true et actif
- * 5. Premier SKU en stock, trié par prix croissant
+ * 3. Représentant éditorial — rang 0 de `(position asc)` — actif ET en stock
+ * 4. Premier SKU en stock, trié par prix croissant
+ * 5. Représentant éditorial actif (épuisé — plus rien d'autre en stock)
  * 6. Premier SKU actif
  * 7. Premier SKU (fallback)
+ *
+ * Le représentant est le premier SKU actif par `position` (remplace
+ * `isDefault`, audit schéma V5, lot A2) ; le tri est stable, donc à positions
+ * égales l'ordre du select — `(position asc, id asc)` — départage.
+ *
+ * ⚠️ Le représentant épuisé ne prime plus sur une variante sœur en stock (audit
+ * ProductCard 2026-08-08) : la carte affichait le prix — et liait vers la
+ * PDP — d'une variante inachetable, sans autre signal que la pastille barrée,
+ * pendant qu'une sœur en stock existait. Le rang 0 reste l'éditorial du cas
+ * nominal (priorité 3) et le meilleur représentant quand PLUS RIEN n'est en
+ * stock (priorité 5) — il ne cède que la fenêtre où il mentirait.
  *
  * @param product - Produit avec ses SKUs
  * @param options - Options de sélection (couleur préférée, etc.)
@@ -54,7 +60,7 @@ export function getPrimarySkuForList<
 		return null;
 	}
 
-	const { preferredColorSlug, preferOnSale } = options ?? {};
+	const { preferredColorSlug } = options ?? {};
 
 	// 1. Si couleur préférée spécifiée, prioriser cette couleur (Baymard pattern)
 	// M2M tolérant : un SKU « contient » preferredColorSlug si une de ses couleurs match.
@@ -75,20 +81,11 @@ export function getPrimarySkuForList<
 		if (colorSku) return colorSku;
 	}
 
-	// 1.5. Si preferOnSale: prioriser les SKUs en promo
-	if (preferOnSale) {
-		const onSaleInStock = product.skus.find(
-			(sku) => sku.isActive && sku.compareAtPrice != null && sku.inventory > 0,
-		);
-		if (onSaleInStock) return onSaleInStock;
-
-		const onSale = product.skus.find((sku) => sku.isActive && sku.compareAtPrice != null);
-		if (onSale) return onSale;
-	}
-
-	// 2. SKU avec isDefault = true
-	const defaultFlagSku = product.skus.find((sku) => sku.isActive && sku.isDefault);
-	if (defaultFlagSku) return defaultFlagSku;
+	// 2. Représentant éditorial (rang 0) — seulement s'il est achetable (cf. ⚠️ JSDoc)
+	const representativeSku = [...product.skus]
+		.sort((a, b) => a.position - b.position)
+		.find((sku) => sku.isActive);
+	if (representativeSku && representativeSku.inventory > 0) return representativeSku;
 
 	// 3. SKU en stock, trié par priceInclTax ASC
 	const inStockSkus = product.skus
@@ -97,7 +94,10 @@ export function getPrimarySkuForList<
 
 	if (inStockSkus.length > 0) return inStockSkus[0]!;
 
-	// 4. Premier SKU actif
+	// 4. Plus rien en stock : le représentant épuisé redevient le meilleur choix
+	if (representativeSku) return representativeSku;
+
+	// 5. Premier SKU actif
 	const activeSku = product.skus.find((sku) => sku.isActive);
 	return activeSku ?? product.skus[0] ?? null;
 }

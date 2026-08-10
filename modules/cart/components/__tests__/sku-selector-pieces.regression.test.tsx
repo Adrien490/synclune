@@ -92,7 +92,6 @@ function renderPieces(
 				cartItems={options.cartItems ?? []}
 				preselectedColor={null}
 				isPending={false}
-				shouldReduceMotion={false}
 				isStoreClosed={options.isStoreClosed ?? false}
 				storeClosureMessage={null}
 				onClose={vi.fn()}

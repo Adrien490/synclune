@@ -160,7 +160,8 @@ export function getQuantityInCart(
 /**
  * Pièce mise en avant à l'ouverture. En cascade, du plus utile au moins mauvais :
  * couleur pré-choisie depuis la carte (si elle reste ajoutable) → première pièce
- * ajoutable → première en stock → pièce par défaut → première tout court.
+ * ajoutable → première en stock → représentant (V5 : les listes arrivent
+ * pré-triées `(position asc, id asc)`, donc `activeSkus[0]` EST le représentant).
  */
 export function pickInitialSku(
 	activeSkus: ActiveSku[],
@@ -177,12 +178,7 @@ export function pickInitialSku(
 		if (matching) return matching;
 	}
 
-	return (
-		activeSkus.find(isAddable) ??
-		activeSkus.find((sku) => sku.inventory > 0) ??
-		activeSkus.find((sku) => sku.isDefault) ??
-		activeSkus[0]
-	);
+	return activeSkus.find(isAddable) ?? activeSkus.find((sku) => sku.inventory > 0) ?? activeSkus[0];
 }
 
 /**

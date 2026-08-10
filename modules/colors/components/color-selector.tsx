@@ -9,7 +9,6 @@ import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import type { ColorCombo } from "@/shared/types/product-sku.types";
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useId, useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
@@ -184,8 +183,7 @@ function ColorSelectorInner({
 			    Les pastilles de 28 px montraient une teinte trop petite pour être jugée
 			    sur une boutique dont le positionnement EST la couleur — a fortiori pour
 			    un dégradé bicolore. La plaquette de 88 × 56 donne un aplat franc, le nom
-			    dessous, et la sélection est tenue par un bout de scotch (`MaskingTape`,
-			    la primitive partagée avec les cartes et le carton de la galerie).
+			    dessous, et la sélection est tenue par l'anneau d'encre.
 			    La cible tactile fait ≈ 88 × 84, très au-dessus des 44 px requis. */}
 			<div
 				ref={containerRef}
@@ -231,11 +229,9 @@ function ColorSelectorInner({
 								"aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:saturate-50",
 							)}
 						>
-							{/* La sélection se lit par la FORME (scotch + anneau d'encre), jamais
-							    par la seule couleur — l'aplat, lui, appartient au bijou. */}
-							{isSelected && (
-								<MaskingTape className="bg-foreground/15 -top-1.5 left-1/2 z-10 h-3.5 w-11 -translate-x-1/2 -rotate-3" />
-							)}
+							{/* La sélection se lit par la FORME (anneau d'encre, épaisseur ET
+							    teinte), jamais par la seule couleur — l'aplat, lui, appartient
+							    au bijou. */}
 							<span
 								className={cn(
 									"flex w-full flex-col overflow-hidden rounded-md transition-shadow",

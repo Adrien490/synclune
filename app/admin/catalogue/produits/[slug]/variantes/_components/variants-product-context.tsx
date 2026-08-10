@@ -4,7 +4,7 @@ import Image from "next/image";
 import { CaretRightIcon, PackageIcon } from "@phosphor-icons/react/ssr";
 
 import type { MediaType } from "@/app/generated/prisma/client";
-import { ProductStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import { Badge } from "@/shared/components/ui/badge";
 
@@ -14,11 +14,9 @@ type ContextImage = {
 	blurDataUrl?: string | null;
 	altText?: string | null;
 	mediaType: MediaType;
-	isPrimary?: boolean;
 };
 
 type ContextSku = {
-	isDefault: boolean;
 	images: ContextImage[];
 };
 
@@ -26,24 +24,26 @@ interface VariantsProductContextProps {
 	product: {
 		slug: string;
 		title: string;
-		status: ProductStatus;
+		status: PublicationStatus;
 		skus: ContextSku[];
 	};
 }
 
 const STATUS_LABEL: Record<
-	ProductStatus,
+	PublicationStatus,
 	{ label: string; variant: "default" | "secondary" | "outline" }
 > = {
-	[ProductStatus.PUBLIC]: { label: "Public", variant: "default" },
-	[ProductStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
-	[ProductStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
+	[PublicationStatus.PUBLIC]: { label: "Public", variant: "default" },
+	[PublicationStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
+	[PublicationStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
 };
 
-function pickPrimaryImage(skus: ContextSku[]): ContextImage | null {
-	const defaultSku = skus.find((s) => s.isDefault) ?? skus[0];
-	if (!defaultSku) return null;
-	return defaultSku.images.find((img) => img.isPrimary) ?? defaultSku.images[0] ?? null;
+// V5 : les listes arrivent pré-triées `(position asc, id asc)` — `skus[0]` est le
+// représentant et `images[0]` le média principal. Contrairement à la SSOT
+// `pickPrimaryImage` (première IMAGE), on garde ici une éventuelle vidéo en tête :
+// `resolveMediaThumbSrc` sait en tirer le poster, et retombe sur l'icône sinon.
+function pickContextImage(skus: ContextSku[]): ContextImage | null {
+	return skus[0]?.images[0] ?? null;
 }
 
 /**
@@ -55,7 +55,7 @@ function pickPrimaryImage(skus: ContextSku[]): ContextImage | null {
  * produit », ce qui en faisait un second bouton retour pour un lecteur d'écran.
  */
 export function VariantsProductContext({ product }: VariantsProductContextProps) {
-	const image = pickPrimaryImage(product.skus);
+	const image = pickContextImage(product.skus);
 	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> icône de secours
 	const thumbSrc = image ? resolveMediaThumbSrc(image) : null;
 	const statusConfig = STATUS_LABEL[product.status];

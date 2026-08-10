@@ -165,7 +165,15 @@ describe("catalogue — un seul BreadcrumbList par page (@regression catalogue-s
 		expect(generator).toContain('"@graph"');
 
 		// Un nœud de chaque type, pas deux.
-		for (const type of ["ItemList", "FAQPage"]) {
+		//
+		// ⚠️ `FAQPage` est sorti de cette boucle le 2026-08-08 : la section « Des
+		// questions ? » a été retirée de la landing (à refaire), et un `FAQPage`
+		// doit pointer du contenu réellement VISIBLE — le laisser aurait été du
+		// balisage mensonger. Le remettre ICI en même temps que la section, et
+		// dans le `@graph`, JAMAIS en `<script>` séparé : c'était le montage de
+		// `/aide` (deux scripts), et le recopier ajouterait une seconde
+		// `BreadcrumbList` au premier copier-coller.
+		for (const type of ["ItemList"]) {
 			expect(
 				generator.match(new RegExp(`"@type":\\s*"${type}"`, "g")),
 				`${type} doit apparaître exactement une fois dans le @graph de l'accueil`,
@@ -186,11 +194,14 @@ describe("catalogue — un seul BreadcrumbList par page (@regression catalogue-s
 			"l'accueil ne doit émettre aucune BreadcrumbList (un fil à 1 item ne s'affiche jamais)",
 		).toBeNull();
 
-		// Prémisse anti-vacuité : la section FAQ que ce balisage décrit existe, et
-		// son ancre est bien celle que cible la redirection de `/aide`.
-		const faqSection = read("app/(shop)/(home)/_components/faq/faq-section.tsx");
-		expect(faqSection).toContain('FAQ_SECTION_ID = "faq"');
-		expect(read("next.config.ts")).toContain('source: "/aide", destination: "/#faq"');
+		// Symétrique du retrait : plus de nœud `FAQPage` tant qu'aucune section ne
+		// le porte. Les deux moitiés se vérifient, sinon le balisage peut survivre
+		// seul à son contenu — c'est précisément la faute que ce fichier traque.
+		expect(
+			generator.match(/"@type":\s*"FAQPage"/g),
+			"aucun FAQPage tant que la landing ne rend pas de FAQ (balisage sans contenu visible)",
+		).toBeNull();
+		expect(read("next.config.ts")).not.toContain('source: "/aide"');
 	});
 
 	it("PageHeader émet toujours son BreadcrumbList quand l'opt-out est absent", () => {

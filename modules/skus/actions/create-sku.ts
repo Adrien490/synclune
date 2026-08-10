@@ -27,11 +27,12 @@ import {
 	assertMaterialsExist,
 	assertUniqueVariantCombination,
 	eurosToCents,
+	moveSkuToFront,
+	nextSkuPosition,
 	normalizeMediaForPersistence,
 	normalizeOptionalRefs,
 	optionalEurosToCents,
 	toSkuMediaCreatePayload,
-	unsetOtherDefaultSkus,
 } from "../services/persist-sku-helpers.service";
 import { getSkuColorsLabel } from "../utils/sku-colors-label";
 import { getSkuMaterialsLabel } from "../utils/sku-materials-label";
@@ -103,7 +104,7 @@ export async function createProductSku(
 		const priceInclTaxCents = eurosToCents(validatedData.priceInclTaxEuros);
 		const compareAtPriceCents = optionalEurosToCents(validatedData.compareAtPriceEuros);
 
-		// 7. Normalize media for persistence (premier item = principal, isPrimary/position auto)
+		// 7. Normalize media for persistence (premier item = principal, position auto)
 		const allMedia = normalizeMediaForPersistence(validatedData.media);
 
 		// 8. Create product SKU in transaction
@@ -127,10 +128,6 @@ export async function createProductSku(
 					colorIds: refs.colorIds,
 					size: refs.size,
 				});
-
-				if (validatedData.isDefault) {
-					await unsetOtherDefaultSkus(tx, validatedData.productId);
-				}
 
 				// Génération du code si non fourni.
 				// `generateAvailableSkuCode` retire un NOUVEAU code aléatoire à chaque
@@ -165,7 +162,9 @@ export async function createProductSku(
 						compareAtPrice: compareAtPriceCents,
 						inventory: validatedData.inventory,
 						isActive: validatedData.isActive,
-						isDefault: validatedData.isDefault,
+						// Nouvelle variante en fin de liste ; le formulaire peut la
+						// promouvoir représentant (rang 0) juste après — cf. plus bas.
+						position: await nextSkuPosition(tx, validatedData.productId),
 						size: refs.size,
 						colors: {
 							create: refs.colorIds.map((colorId, index) => ({
@@ -197,6 +196,12 @@ export async function createProductSku(
 					await tx.skuMedia.createMany({
 						data: toSkuMediaCreatePayload(createdSku.id, allMedia),
 					});
+				}
+
+				// « Définir par défaut » = amener au rang 0 (remplace le flag
+				// `isDefault`, audit schéma V5, lot A2).
+				if (validatedData.isDefault) {
+					await moveSkuToFront(tx, validatedData.productId, createdSku.id);
 				}
 
 				return createdSku;

@@ -100,10 +100,10 @@ export async function generateProductMetadata({
 	const fullUrl = `${SITE_URL}/creations/${slug}`;
 
 	// Image du produit pour OpenGraph.
-	// `pickPrimaryImage` et non `find(isPrimary) ?? images[0]` : `GET_PRODUCT_SELECT` ne
-	// filtre pas `mediaType` (la galerie a besoin des vidéos), donc l'ancienne expression
-	// mettait l'url d'un `.mp4` dans `og:image`/`twitter:images` dès qu'un SKU avait une
-	// vidéo en média primaire — carte sociale cassée au partage de la fiche. Le repli sur
+	// `pickPrimaryImage` et non `images[0]` : `GET_PRODUCT_SELECT` ne filtre pas
+	// `mediaType` (la galerie a besoin des vidéos), donc l'expression naïve mettait
+	// l'url d'un `.mp4` dans `og:image`/`twitter:images` dès qu'un SKU avait une
+	// vidéo au rang 0 — carte sociale cassée au partage de la fiche. Le repli sur
 	// l'OG image de marque couvre désormais aussi ce cas.
 	const mainImage = pickPrimaryImage(primarySku?.images);
 	const imageUrl = mainImage?.url ?? `${SITE_URL}/opengraph-image`;

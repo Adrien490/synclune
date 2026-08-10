@@ -27,7 +27,7 @@ const receiptButton = readFileSync(
 describe("checkout confirmation a11y (regression)", () => {
 	it('liste des articles commandés en <ul role="list"> + <li>', () => {
 		expect(confirmationPage).toMatch(/<ul role="list"/);
-		expect(confirmationPage).toMatch(/<li key=\{item\.id\}/);
+		expect(confirmationPage).toMatch(/<li key=\{item\.skuId\}/);
 		// eslint-disable nécessaire (jsx-a11y/no-redundant-roles)
 		expect(confirmationPage).toMatch(/eslint-disable-next-line jsx-a11y\/no-redundant-roles/);
 	});

@@ -76,7 +76,7 @@ describeIntegration("getProductForDuplication — select M2M contre le schéma r
 				priceInclTax: 3_990,
 				inventory: 5,
 				isActive: true,
-				isDefault: true,
+				position: 0,
 				colors: {
 					create: [
 						{ colorId: argent!.id, position: 0 },
@@ -112,7 +112,7 @@ describeIntegration("getProductForDuplication — select M2M contre le schéma r
 				priceInclTax: 2_500,
 				inventory: 1,
 				isActive: true,
-				isDefault: true,
+				position: 0,
 				// Inséré à l'envers : `position` doit primer sur l'ordre physique des lignes.
 				colors: {
 					create: [
@@ -138,7 +138,7 @@ describeIntegration("getProductForDuplication — select M2M contre le schéma r
 				priceInclTax: 1_000,
 				inventory: 1,
 				isActive: true,
-				isDefault: true,
+				position: 0,
 			},
 		});
 		await prisma.productSku.create({
@@ -148,7 +148,7 @@ describeIntegration("getProductForDuplication — select M2M contre le schéma r
 				priceInclTax: 2_000,
 				inventory: 1,
 				isActive: true,
-				isDefault: false,
+				position: 1,
 				deletedAt: new Date(),
 			},
 		});
@@ -183,7 +183,7 @@ describeIntegration("getProductForDuplication — select M2M contre le schéma r
 				priceInclTax: 4_200,
 				inventory: 3,
 				isActive: true,
-				isDefault: true,
+				position: 0,
 				colors: { create: [{ colorId: color.id, position: 0 }] },
 				materials: { create: [{ materialId: material.id, position: 0 }] },
 			},

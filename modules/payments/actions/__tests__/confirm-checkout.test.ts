@@ -351,7 +351,7 @@ const MOCK_SKU_RESULT = {
 			material: null,
 			color: null,
 			compareAtPrice: null,
-			images: [{ url: "https://utfs.io/f/image.jpg", isPrimary: true }],
+			images: [{ url: "https://utfs.io/f/image.jpg", mediaType: "IMAGE" }],
 			product: {
 				id: "prod-001",
 				title: "Bague Lune",

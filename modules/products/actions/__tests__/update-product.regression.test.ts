@@ -189,7 +189,9 @@ function buildProductMock(
 		status: "DRAFT",
 		typeId: overrides.typeId === undefined ? "type_123" : overrides.typeId,
 		collections: [],
-		skus,
+		// `position` suit l'ordre du tableau : le PREMIER SKU passé est le rang 0,
+		// donc la variante principale (remplace `isDefault`, audit schéma V5, lot A2).
+		skus: skus.map((sku, index) => ({ ...sku, position: index })),
 	};
 }
 
@@ -283,7 +285,6 @@ describe("updateProduct — regression hardening", () => {
 			);
 			mockPrisma.productSku.findFirst.mockResolvedValue({
 				id: "sku_default",
-				isDefault: true,
 				isActive: true,
 			});
 
@@ -325,7 +326,6 @@ describe("updateProduct — regression hardening", () => {
 			);
 			mockPrisma.productSku.findFirst.mockResolvedValue({
 				id: "sku_default",
-				isDefault: true,
 				isActive: true,
 			});
 
@@ -345,7 +345,6 @@ describe("updateProduct — regression hardening", () => {
 			);
 			mockPrisma.productSku.findFirst.mockResolvedValue({
 				id: "sku_default",
-				isDefault: true,
 				isActive: true,
 			});
 
@@ -365,9 +364,10 @@ describe("updateProduct — regression hardening", () => {
 					{ id: "sku_default", isActive: false, inventory: 0, images: [{ id: "img1" }] },
 				]),
 			);
+			// Déjà inactif : la garde ne vise que la TRANSITION actif → inactif,
+			// reposter l'état d'un SKU inactif reste permis même au rang 0.
 			mockPrisma.productSku.findFirst.mockResolvedValue({
 				id: "sku_default",
-				isDefault: false, // pas default → on peut desactiver librement
 				isActive: false,
 			});
 
@@ -382,18 +382,17 @@ describe("updateProduct — regression hardening", () => {
 					defaultSkuOverrides: { isActive: false },
 				}),
 			});
-			// Other SKU exists mais sans stock
+			// Other SKU exists mais sans stock — placé au rang 0 : le SKU édité n'est
+			// pas la variante principale, sinon CAT-AUDIT-003 bloque avant la
+			// validation publication.
 			mockPrisma.product.findUnique.mockResolvedValue(
 				buildProductMock([
-					{ id: "sku_default", isActive: true, inventory: 10, images: [{ id: "img1" }] },
 					{ id: "sku_other", isActive: true, inventory: 0, images: [{ id: "img2" }] },
+					{ id: "sku_default", isActive: true, inventory: 10, images: [{ id: "img1" }] },
 				]),
 			);
-			// Pour atteindre la validation publication, le defaultSku ne doit pas etre defaut
-			// (sinon CAT-AUDIT-003 bloque avant)
 			mockPrisma.productSku.findFirst.mockResolvedValue({
 				id: "sku_default",
-				isDefault: false,
 				isActive: true,
 			});
 
@@ -419,7 +418,6 @@ describe("updateProduct — regression hardening", () => {
 			);
 			mockPrisma.productSku.findFirst.mockResolvedValue({
 				id: "sku_default",
-				isDefault: true,
 				isActive: true,
 			});
 
@@ -437,14 +435,15 @@ describe("updateProduct — regression hardening", () => {
 					defaultSkuOverrides: { isActive: false },
 				}),
 			});
+			// sku_other au rang 0 : le SKU édité n'est PAS la variante principale
 			mockPrisma.product.findUnique.mockResolvedValue(
 				buildProductMock([
+					{ id: "sku_other", isActive: true, inventory: 5, images: [{ id: "img2" }] },
 					{ id: "sku_default", isActive: true, inventory: 10, images: [{ id: "img1" }] },
 				]),
 			);
 			mockPrisma.productSku.findFirst.mockResolvedValue({
 				id: "sku_default",
-				isDefault: false, // pas default
 				isActive: true,
 			});
 
@@ -475,7 +474,6 @@ describe("updateProduct — regression hardening", () => {
 			);
 			mockPrisma.productSku.findFirst.mockResolvedValue({
 				id: "sku_default",
-				isDefault: true,
 				isActive: true,
 			});
 			mockPrisma.productType.findUnique.mockResolvedValue(opts.foundType);

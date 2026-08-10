@@ -77,42 +77,54 @@ export async function updateProductCollections(
 			}
 		}
 
-		// 6. Récupérer TOUTES les collections actuelles du produit (pour invalidation cache + isFeatured)
+		// 6. Récupérer TOUTES les collections actuelles du produit (pour invalidation cache + rang)
 		const currentCollections = await prisma.productCollection.findMany({
 			where: {
 				productId: validation.data.productId,
 			},
 			select: {
 				collectionId: true,
-				isFeatured: true,
+				position: true,
 				collection: {
 					select: { slug: true },
 				},
 			},
 		});
 
-		// Conserver les flags isFeatured existants pour les collections qui restent associées
-		const featuredMap = new Map(currentCollections.map((pc) => [pc.collectionId, pc.isFeatured]));
+		// Conserver le rang existant pour les collections qui restent associées
+		// (la vedette d'une collection est le rang 0 de (position asc, addedAt desc)
+		// depuis le remplacement d'`isFeatured` — audit schéma V5, lot A3).
+		const positionMap = new Map(currentCollections.map((pc) => [pc.collectionId, pc.position]));
 
-		// 7. Mettre à jour les collections (transaction)
-		await prisma.$transaction([
-			// Supprimer les associations existantes
-			prisma.productCollection.deleteMany({
+		// 7. Mettre à jour les collections (transaction) : les associations
+		// conservées gardent leur rang, les nouvelles s'ajoutent en fin de liste
+		// de LEUR collection (max + 1) — jamais au rang 0, qui est éditorial.
+		await prisma.$transaction(async (tx) => {
+			await tx.productCollection.deleteMany({
 				where: { productId: validation.data.productId },
-			}),
-			// Créer les nouvelles associations en préservant isFeatured pour les collections conservées
-			...(validation.data.collectionIds.length > 0
-				? [
-						prisma.productCollection.createMany({
-							data: validation.data.collectionIds.map((collectionId) => ({
-								productId: validation.data.productId,
-								collectionId,
-								isFeatured: featuredMap.get(collectionId) ?? false,
-							})),
-						}),
-					]
-				: []),
-		]);
+			});
+			for (const collectionId of validation.data.collectionIds) {
+				const keptPosition = positionMap.get(collectionId);
+				let position: number;
+				if (keptPosition !== undefined) {
+					position = keptPosition;
+				} else {
+					const last = await tx.productCollection.findFirst({
+						where: { collectionId },
+						orderBy: { position: "desc" },
+						select: { position: true },
+					});
+					position = last === null ? 0 : last.position + 1;
+				}
+				await tx.productCollection.create({
+					data: {
+						productId: validation.data.productId,
+						collectionId,
+						position,
+					},
+				});
+			}
+		});
 
 		// 8. Invalider le cache des anciennes collections
 		for (const pc of currentCollections) {

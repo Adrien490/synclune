@@ -18,7 +18,7 @@ const { mockOpenAlertDialog, mockFormatEuro } = vi.hoisted(() => ({
 // ============================================================================
 
 vi.mock("@/app/generated/prisma/enums", () => ({
-	ProductStatus: {
+	PublicationStatus: {
 		PUBLIC: "PUBLIC",
 		DRAFT: "DRAFT",
 		ARCHIVED: "ARCHIVED",
@@ -156,9 +156,6 @@ vi.mock("@phosphor-icons/react/ssr", () => ({
 	StarIcon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-star" className={className} />
 	),
-	WarningIcon: ({ className }: { className?: string }) => (
-		<svg data-testid="icon-triangle-alert" className={className} />
-	),
 }));
 
 // Mock the dialog ID constant from a sibling file
@@ -180,10 +177,14 @@ type ProductEntry = GetCollectionReturn["products"][number];
 /**
  * Builds a minimal product entry matching the GetCollectionReturn["products"] shape
  * derived from GET_COLLECTION_SELECT.
+ *
+ * Depuis l'audit schéma V5 (lot A3), `isFeatured`/`isDefault`/`isPrimary` ont cédé
+ * la place à `position` : la liste arrive PRÉ-TRIÉE et la vedette est le rang 0
+ * du tableau — c'est l'INDEX qui fait foi dans le composant, pas la valeur.
  */
 function makeProductEntry(overrides: Partial<ProductEntry> = {}): ProductEntry {
 	return {
-		isFeatured: false,
+		position: 0,
 		product: {
 			id: "prod-1",
 			slug: "bague-soleil",
@@ -196,7 +197,7 @@ function makeProductEntry(overrides: Partial<ProductEntry> = {}): ProductEntry {
 			skus: [
 				{
 					id: "sku-1",
-					isDefault: true,
+					position: 0,
 					priceInclTax: 4500,
 					images: [
 						{
@@ -205,7 +206,6 @@ function makeProductEntry(overrides: Partial<ProductEntry> = {}): ProductEntry {
 							altText: "Bague Soleil",
 							blurDataUrl: null,
 							mediaType: "IMAGE" as const,
-							isPrimary: true,
 						},
 					],
 				},
@@ -224,7 +224,7 @@ function makeProductEntryNoImage(overrides: Partial<ProductEntry> = {}): Product
 			skus: [
 				{
 					id: "sku-1",
-					isDefault: true,
+					position: 0,
 					priceInclTax: 4500,
 					images: [],
 				},
@@ -242,7 +242,7 @@ function makeProductEntryNoPrice(overrides: Partial<ProductEntry> = {}): Product
 			skus: [
 				{
 					id: "sku-1",
-					isDefault: true,
+					position: 0,
 					priceInclTax: undefined as unknown as number,
 					images: [],
 				},
@@ -386,9 +386,9 @@ describe("CollectionProductsList", () => {
 		expect(badge).toHaveAttribute("data-variant", "outline");
 	});
 
-	// ─── Featured star button ─────────────────────────────────────────────────
+	// ─── Featured star (rang 0) et action « Definir comme vedette » ──────────────
 
-	it("renders the featured star button for each product row", () => {
+	it("shows a static featured star on the first row instead of a button", () => {
 		render(
 			<CollectionProductsList
 				collectionId="col-1"
@@ -397,40 +397,63 @@ describe("CollectionProductsList", () => {
 			/>,
 		);
 
-		expect(screen.getByRole("button", { name: "Definir comme vedette" })).toBeInTheDocument();
+		// La vedette est le rang 0 de la liste pre-triee : pas d'action sur elle,
+		// le flux « retirer la vedette » est parti avec `isFeatured`.
+		expect(screen.queryByRole("button", { name: "Definir comme vedette" })).not.toBeInTheDocument();
+		expect(screen.getByText("Produit vedette de la collection")).toBeInTheDocument();
 	});
 
-	it("shows 'Retirer le statut vedette' aria-label when product is already featured", () => {
+	it("renders the 'Definir comme vedette' button only on non-featured rows", () => {
+		const products = [
+			makeProductEntry({
+				position: 0,
+				product: { ...makeProductEntry().product, id: "prod-1", title: "Bague Soleil" },
+			}),
+			makeProductEntry({
+				position: 1,
+				product: { ...makeProductEntry().product, id: "prod-2", title: "Collier Lune" },
+			}),
+		];
+
 		render(
-			<CollectionProductsList
-				collectionId="col-1"
-				collectionSlug="bagues"
-				products={[makeProductEntry({ isFeatured: true })]}
-			/>,
+			<CollectionProductsList collectionId="col-1" collectionSlug="bagues" products={products} />,
 		);
 
-		expect(screen.getByRole("button", { name: "Retirer le statut vedette" })).toBeInTheDocument();
+		// Une seule action : le rang 0 porte le badge, seul le second rang est actionnable
+		expect(screen.getAllByRole("button", { name: "Definir comme vedette" })).toHaveLength(1);
 	});
 
 	it("calls openAlertDialog with correct payload when star button is clicked", async () => {
 		const user = userEvent.setup();
+		const products = [
+			makeProductEntry({
+				position: 0,
+				product: { ...makeProductEntry().product, id: "prod-1", title: "Bague Soleil" },
+			}),
+			makeProductEntry({
+				position: 1,
+				product: {
+					...makeProductEntry().product,
+					id: "prod-2",
+					title: "Collier Lune",
+					slug: "collier-lune",
+				},
+			}),
+		];
+
 		render(
-			<CollectionProductsList
-				collectionId="col-1"
-				collectionSlug="bagues"
-				products={[makeProductEntry()]}
-			/>,
+			<CollectionProductsList collectionId="col-1" collectionSlug="bagues" products={products} />,
 		);
 
 		await user.click(screen.getByRole("button", { name: "Definir comme vedette" }));
 
 		expect(mockOpenAlertDialog).toHaveBeenCalledTimes(1);
+		// Plus de `isFeatured` dans le payload : on ne peut que REMPLACER la vedette
 		expect(mockOpenAlertDialog).toHaveBeenCalledWith({
 			collectionId: "col-1",
 			collectionSlug: "bagues",
-			productId: "prod-1",
-			productTitle: "Bague Soleil",
-			isFeatured: false,
+			productId: "prod-2",
+			productTitle: "Collier Lune",
 		});
 	});
 
@@ -522,7 +545,7 @@ describe("CollectionProductsList", () => {
 							skus: [
 								{
 									id: "sku-1",
-									isDefault: true,
+									position: 0,
 									priceInclTax: 4500,
 									images: [
 										{
@@ -531,7 +554,6 @@ describe("CollectionProductsList", () => {
 											altText: "Custom alt text",
 											blurDataUrl: null,
 											mediaType: "IMAGE" as const,
-											isPrimary: true,
 										},
 									],
 								},
@@ -558,7 +580,7 @@ describe("CollectionProductsList", () => {
 							skus: [
 								{
 									id: "sku-1",
-									isDefault: true,
+									position: 0,
 									priceInclTax: 4500,
 									images: [
 										{
@@ -567,7 +589,6 @@ describe("CollectionProductsList", () => {
 											altText: null,
 											blurDataUrl: null,
 											mediaType: "IMAGE" as const,
-											isPrimary: true,
 										},
 									],
 								},
@@ -621,57 +642,7 @@ describe("CollectionProductsList", () => {
 		expect(screen.queryByText("null")).not.toBeInTheDocument();
 	});
 
-	// ─── Warning icon for non-PUBLIC featured products ────────────────────────
-
-	it("renders warning icon when featured product is not PUBLIC", () => {
-		render(
-			<CollectionProductsList
-				collectionId="col-1"
-				collectionSlug="bagues"
-				products={[
-					makeProductEntry({
-						isFeatured: true,
-						product: {
-							...makeProductEntry().product,
-							status: "DRAFT" as const,
-						},
-					}),
-				]}
-			/>,
-		);
-
-		expect(screen.getByTestId("icon-triangle-alert")).toBeInTheDocument();
-	});
-
-	it("does not render warning icon when non-featured product is DRAFT", () => {
-		render(
-			<CollectionProductsList
-				collectionId="col-1"
-				collectionSlug="bagues"
-				products={[
-					makeProductEntry({
-						isFeatured: false,
-						product: {
-							...makeProductEntry().product,
-							status: "DRAFT" as const,
-						},
-					}),
-				]}
-			/>,
-		);
-
-		expect(screen.queryByTestId("icon-triangle-alert")).not.toBeInTheDocument();
-	});
-
-	it("does not render warning icon when featured product is PUBLIC", () => {
-		render(
-			<CollectionProductsList
-				collectionId="col-1"
-				collectionSlug="bagues"
-				products={[makeProductEntry({ isFeatured: true })]}
-			/>,
-		);
-
-		expect(screen.queryByTestId("icon-triangle-alert")).not.toBeInTheDocument();
-	});
+	// Les tests « warning vedette non-PUBLIC » sont partis avec le bloc UI :
+	// le select admin ne remonte que des produits PUBLIC et l'action serveur
+	// refuse tout produit non publié — le cas est devenu impossible.
 });

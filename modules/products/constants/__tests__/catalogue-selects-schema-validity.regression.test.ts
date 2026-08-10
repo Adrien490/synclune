@@ -189,7 +189,7 @@ describe("selects catalogue — validité schéma (@regression catalogue-selects
 						priceInclTax: 100,
 						inventory: 1,
 						isActive: true,
-						isDefault: true,
+						position: 0,
 						colors: { create: [{ colorId: "probe-color", position: 0 }] },
 						materials: { create: [{ materialId: "probe-material", position: 0 }] },
 					},

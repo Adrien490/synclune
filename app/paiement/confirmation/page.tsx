@@ -203,7 +203,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
 									<ul role="list" className="space-y-3">
 										{order.items.map((item) => (
-											<li key={item.id} className="flex gap-3 text-sm">
+											<li key={item.skuId} className="flex gap-3 text-sm">
 												<div className="bg-muted relative size-14 shrink-0 overflow-hidden rounded-xl border">
 													{item.productImageUrl ? (
 														<Image

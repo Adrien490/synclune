@@ -34,7 +34,7 @@ export const PRODUCT_CAROUSEL_SELECT = {
 			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
-			isDefault: true,
+			position: true,
 			colors: {
 				select: {
 					colorId: true,
@@ -66,15 +66,11 @@ export const PRODUCT_CAROUSEL_SELECT = {
 			size: true,
 			images: {
 				// Filtre mediaType : une vidéo n'est pas rendue par l'optimiseur d'images.
-				// Sans ce filtre, un SKU dont le média `isPrimary` est une VIDÉO retournait
+				// Sans ce filtre, un SKU dont le média au rang 0 est une VIDÉO retournait
 				// 0 image et la carte tombait sur le SVG de secours malgré ses photos —
 				// le fallback "première IMAGE" de extractImageFromSku ne pouvait pas jouer.
 				where: { mediaType: "IMAGE" as const },
-				orderBy: [
-					{ isPrimary: "desc" as const },
-					{ position: "asc" as const },
-					{ id: "asc" as const },
-				],
+				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 				take: 1,
 				select: {
 					id: true,
@@ -85,11 +81,10 @@ export const PRODUCT_CAROUSEL_SELECT = {
 					mediaType: true,
 					width: true,
 					height: true,
-					isPrimary: true,
 				},
 			},
 		},
-		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 	},
 } as const satisfies Prisma.ProductSelect;
 
@@ -154,7 +149,7 @@ export const GET_PRODUCT_SELECT = {
 			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
-			isDefault: true,
+			position: true,
 			images: {
 				select: {
 					id: true,
@@ -165,7 +160,6 @@ export const GET_PRODUCT_SELECT = {
 					mediaType: true,
 					width: true,
 					height: true,
-					isPrimary: true,
 				},
 				// Tiebreaker id : deux images à même position (reorder concurrent)
 				// doivent rendre un ordre stable entre requêtes (galerie déterministe)
@@ -173,7 +167,7 @@ export const GET_PRODUCT_SELECT = {
 				take: 50,
 			},
 		},
-		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 	},
 	collections: {
 		select: {
@@ -181,7 +175,7 @@ export const GET_PRODUCT_SELECT = {
 			// `(productId, collectionId)` (audit schéma V4, 2026-08-05). La clé
 			// surrogate ne servait que de `key` React — c'est `collection.id` qui
 			// la porte désormais.
-			isFeatured: true,
+			position: true,
 			collection: {
 				select: {
 					id: true,
@@ -192,9 +186,7 @@ export const GET_PRODUCT_SELECT = {
 				},
 			},
 		},
-		orderBy: {
-			addedAt: "desc" as const,
-		},
+		orderBy: [{ position: "asc" as const }, { addedAt: "desc" as const }],
 	},
 } as const satisfies Prisma.ProductSelect;
 
@@ -207,7 +199,7 @@ export const GET_PRODUCT_SELECT = {
  * alors `skuId: ""`, prix 0, `media: []` — trois rejets Zod à la soumission :
  * l'admin ne pouvait plus corriger ne serait-ce que le titre d'un bijou
  * archivé (même trou pour un DRAFT dont l'unique variante est inactive).
- * Seul le soft delete est filtré. `orderBy isDefault desc` garantit que
+ * Seul le soft delete est filtré. `orderBy (position, id)` garantit que
  * `skus[0]` reste la variante principale, active ou non.
  */
 export const GET_PRODUCT_FOR_EDIT_SELECT = {
@@ -251,7 +243,7 @@ export const GET_PRODUCTS_SELECT = {
 			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
-			isDefault: true,
+			position: true,
 			images: {
 				select: {
 					id: true,
@@ -262,7 +254,6 @@ export const GET_PRODUCTS_SELECT = {
 					mediaType: true,
 					width: true,
 					height: true,
-					isPrimary: true,
 				},
 				// Tiebreaker id : ordre stable à positions égales (cf GET_PRODUCT_SELECT)
 				orderBy: [{ position: "asc" }, { id: "asc" }],
@@ -297,7 +288,7 @@ export const GET_PRODUCTS_SELECT = {
 			},
 			size: true,
 		},
-		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 	},
 	_count: {
 		select: {
@@ -314,7 +305,7 @@ export const GET_PRODUCTS_SELECT = {
 			// `(productId, collectionId)` (audit schéma V4, 2026-08-05). La clé
 			// surrogate ne servait que de `key` React — c'est `collection.id` qui
 			// la porte désormais.
-			isFeatured: true,
+			position: true,
 			collection: {
 				select: {
 					id: true,
@@ -325,9 +316,7 @@ export const GET_PRODUCTS_SELECT = {
 				},
 			},
 		},
-		orderBy: {
-			addedAt: "desc" as const,
-		},
+		orderBy: [{ position: "asc" as const }, { addedAt: "desc" as const }],
 	},
 } as const satisfies Prisma.ProductSelect;
 
@@ -345,7 +334,7 @@ export const QUICK_SEARCH_SELECT = {
 			priceInclTax: true,
 			compareAtPrice: true,
 			inventory: true,
-			isDefault: true,
+			position: true,
 			colors: {
 				select: {
 					colorId: true,
@@ -356,23 +345,18 @@ export const QUICK_SEARCH_SELECT = {
 			},
 			// Filtre mediaType : ce select alimente UNE vignette (`search-result-item`),
 			// qui prend `images[0]` et le passe à `<Image src>`. Sans le filtre, un SKU dont
-			// le média primaire est une VIDÉO injectait un `.mp4` dans l'optimiseur
-			// d'images — vignette cassée + transformation facturée. Et `where isPrimary`
-			// seul rendait 0 image sur un SKU sans média primaire, alors qu'il en a.
-			// Même correctif que PRODUCT_CAROUSEL_SELECT ; le tri reproduit la priorité
-			// de `pickPrimaryImage` (primaire d'abord, puis position).
+			// le média au rang 0 est une VIDÉO injectait un `.mp4` dans l'optimiseur
+			// d'images — vignette cassée + transformation facturée.
+			// Même correctif que PRODUCT_CAROUSEL_SELECT ; le tri reproduit la règle
+			// de `pickPrimaryImage` (première IMAGE par position).
 			images: {
 				where: { mediaType: "IMAGE" as const },
-				orderBy: [
-					{ isPrimary: "desc" as const },
-					{ position: "asc" as const },
-					{ id: "asc" as const },
-				],
+				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 				take: 1,
 				select: { url: true, blurDataUrl: true, altText: true },
 			},
 		},
-		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 	},
 } as const satisfies Prisma.ProductSelect;
 
@@ -414,7 +398,7 @@ export const GET_PRODUCT_FOR_DUPLICATION_SELECT = {
 			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
-			isDefault: true,
+			position: true,
 			// `position` porte l'ordre de saisie : à préserver dans la copie.
 			colors: {
 				select: { colorId: true, position: true },
@@ -434,7 +418,6 @@ export const GET_PRODUCT_FOR_DUPLICATION_SELECT = {
 					mediaType: true,
 					width: true,
 					height: true,
-					isPrimary: true,
 					position: true,
 				},
 			},

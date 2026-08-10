@@ -6,7 +6,9 @@ import { getPrimarySkuForList, getStockInfoForList } from "../sku-selection.serv
 function makeSku(overrides: Partial<BaseSkuForList> = {}): BaseSkuForList {
 	return {
 		isActive: true,
-		isDefault: false,
+		// Rang éditorial : 0 = représentant (remplace isDefault, audit schéma V5).
+		// Défaut 1 — chaque test pose explicitement son rang 0.
+		position: 1,
 		inventory: 5,
 		priceInclTax: 2000,
 		compareAtPrice: null,
@@ -48,10 +50,10 @@ describe("getPrimarySkuForList", () => {
 		expect(getPrimarySkuForList({ skus: undefined })).toBeNull();
 	});
 
-	it("should return the default SKU when available", () => {
+	it("should return the representative SKU (rang 0) when available", () => {
 		const skus = [
-			makeSku({ isDefault: false, priceInclTax: 1000 }),
-			makeSku({ isDefault: true, priceInclTax: 2000 }),
+			makeSku({ position: 1, priceInclTax: 1000 }),
+			makeSku({ position: 0, priceInclTax: 2000 }),
 		];
 
 		const result = getPrimarySkuForList({ skus });
@@ -59,10 +61,37 @@ describe("getPrimarySkuForList", () => {
 		expect(result).toBe(skus[1]);
 	});
 
-	it("should prioritize preferred color over default", () => {
+	/**
+	 * @regression default-sku-sold-out — audit ProductCard 2026-08-08.
+	 * Le défaut épuisé primait sur une sœur en stock : la carte affichait le
+	 * prix d'une variante inachetable (seul signal : la pastille barrée).
+	 */
+	it("should prefer an in-stock sibling over a sold-out representative SKU", () => {
+		const skus = [
+			makeSku({ position: 0, inventory: 0, priceInclTax: 2000 }),
+			makeSku({ position: 1, inventory: 3, priceInclTax: 3000 }),
+			makeSku({ position: 2, inventory: 5, priceInclTax: 2500 }),
+		];
+
+		const result = getPrimarySkuForList({ skus });
+
+		// La sœur en stock la moins chère, pas le défaut épuisé
+		expect(result).toBe(skus[2]);
+	});
+
+	it("should fall back to the sold-out representative SKU when nothing is in stock", () => {
+		const skus = [makeSku({ position: 1, inventory: 0 }), makeSku({ position: 0, inventory: 0 })];
+
+		const result = getPrimarySkuForList({ skus });
+
+		// Épuisé pour épuisé, l'éditorial (rang 0) reste le meilleur représentant
+		expect(result).toBe(skus[1]);
+	});
+
+	it("should prioritize preferred color over representative", () => {
 		const skus = [
 			makeSku({
-				isDefault: true,
+				position: 0,
 				colors: [
 					{
 						colorId: "c1",
@@ -72,7 +101,7 @@ describe("getPrimarySkuForList", () => {
 				],
 			}),
 			makeSku({
-				isDefault: false,
+				position: 1,
 				colors: [
 					{
 						colorId: "c2",
@@ -88,10 +117,10 @@ describe("getPrimarySkuForList", () => {
 		expect(result).toBe(skus[1]);
 	});
 
-	it("should return preferred color even if out of stock over default", () => {
+	it("should return preferred color even if out of stock over representative", () => {
 		const skus = [
 			makeSku({
-				isDefault: true,
+				position: 0,
 				inventory: 10,
 				colors: [
 					{
@@ -102,7 +131,7 @@ describe("getPrimarySkuForList", () => {
 				],
 			}),
 			makeSku({
-				isDefault: false,
+				position: 1,
 				inventory: 0,
 				colors: [
 					{
@@ -148,11 +177,14 @@ describe("getPrimarySkuForList", () => {
 		expect(result).toBe(skus[1]);
 	});
 
-	it("should return cheapest in-stock SKU when no default exists", () => {
+	// « Aucun défaut » n'existe plus : il y a toujours un rang 0. Le cas équivalent
+	// est un représentant épuisé — la sélection retombe sur la sœur en stock la
+	// moins chère (priorité 4).
+	it("should return cheapest in-stock sibling when the representative is sold out", () => {
 		const skus = [
-			makeSku({ isDefault: false, inventory: 5, priceInclTax: 3000 }),
-			makeSku({ isDefault: false, inventory: 5, priceInclTax: 1500 }),
-			makeSku({ isDefault: false, inventory: 5, priceInclTax: 2000 }),
+			makeSku({ position: 0, inventory: 0, priceInclTax: 3000 }),
+			makeSku({ position: 1, inventory: 5, priceInclTax: 1500 }),
+			makeSku({ position: 2, inventory: 5, priceInclTax: 2000 }),
 		];
 
 		const result = getPrimarySkuForList({ skus });
@@ -177,86 +209,6 @@ describe("getPrimarySkuForList", () => {
 		const result = getPrimarySkuForList({ skus });
 
 		expect(result).toBe(skus[0]);
-	});
-
-	it("should prioritize on-sale in-stock SKU when preferOnSale is true", () => {
-		const skus = [
-			makeSku({ isDefault: true, inventory: 5, compareAtPrice: null }),
-			makeSku({ isDefault: false, inventory: 3, compareAtPrice: 3000 }),
-		];
-
-		const result = getPrimarySkuForList({ skus }, { preferOnSale: true });
-
-		expect(result).toBe(skus[1]);
-	});
-
-	it("should prioritize on-sale out-of-stock SKU over default when preferOnSale is true", () => {
-		const skus = [
-			makeSku({ isDefault: true, inventory: 5, compareAtPrice: null }),
-			makeSku({ isDefault: false, inventory: 0, compareAtPrice: 3000 }),
-		];
-
-		const result = getPrimarySkuForList({ skus }, { preferOnSale: true });
-
-		expect(result).toBe(skus[1]);
-	});
-
-	it("should prefer on-sale in-stock over on-sale out-of-stock", () => {
-		const skus = [
-			makeSku({ isDefault: false, inventory: 0, compareAtPrice: 3000 }),
-			makeSku({ isDefault: false, inventory: 2, compareAtPrice: 2500 }),
-		];
-
-		const result = getPrimarySkuForList({ skus }, { preferOnSale: true });
-
-		expect(result).toBe(skus[1]);
-	});
-
-	it("should fall back to default SKU when no on-sale SKU exists and preferOnSale is true", () => {
-		const skus = [
-			makeSku({ isDefault: true, inventory: 5, compareAtPrice: null }),
-			makeSku({ isDefault: false, inventory: 3, compareAtPrice: null }),
-		];
-
-		const result = getPrimarySkuForList({ skus }, { preferOnSale: true });
-
-		expect(result).toBe(skus[0]);
-	});
-
-	it("should prioritize preferred color over preferOnSale", () => {
-		const skus = [
-			makeSku({
-				isDefault: false,
-				inventory: 5,
-				compareAtPrice: 3000,
-				colors: [
-					{
-						colorId: "c1",
-						position: 0,
-						color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
-					},
-				],
-			}),
-			makeSku({
-				isDefault: false,
-				inventory: 5,
-				compareAtPrice: null,
-				colors: [
-					{
-						colorId: "c2",
-						position: 0,
-						color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
-					},
-				],
-			}),
-		];
-
-		const result = getPrimarySkuForList(
-			{ skus },
-			{ preferredColorSlug: "argent", preferOnSale: true },
-		);
-
-		expect(result).toBe(skus[1]);
 	});
 });
 

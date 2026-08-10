@@ -11,7 +11,7 @@ import {
 } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
@@ -27,7 +27,7 @@ interface UseCollectionActionsParams {
 	collectionName: string;
 	collectionSlug: string;
 	collectionDescription: string | null;
-	collectionStatus: CollectionStatus;
+	collectionStatus: PublicationStatus;
 	productsCount: number;
 }
 
@@ -54,9 +54,9 @@ export function useCollectionActions({
 	const isMobile = useIsMobile();
 	const router = useRouter();
 
-	const isArchived = collectionStatus === CollectionStatus.ARCHIVED;
-	const isDraft = collectionStatus === CollectionStatus.DRAFT;
-	const isPublic = collectionStatus === CollectionStatus.PUBLIC;
+	const isArchived = collectionStatus === PublicationStatus.ARCHIVED;
+	const isDraft = collectionStatus === PublicationStatus.DRAFT;
+	const isPublic = collectionStatus === PublicationStatus.PUBLIC;
 
 	const sections: ActionMenuSection[] = [
 		{
@@ -113,7 +113,7 @@ export function useCollectionActions({
 							collectionId,
 							collectionName,
 							currentStatus: collectionStatus,
-							targetStatus: CollectionStatus.DRAFT,
+							targetStatus: PublicationStatus.DRAFT,
 						}),
 				},
 				{
@@ -128,7 +128,7 @@ export function useCollectionActions({
 							collectionId,
 							collectionName,
 							currentStatus: collectionStatus,
-							targetStatus: CollectionStatus.PUBLIC,
+							targetStatus: PublicationStatus.PUBLIC,
 						}),
 				},
 			],

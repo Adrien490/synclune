@@ -10,7 +10,8 @@
  *
  * Deux verrous :
  * 1. GET_PRODUCT_FOR_EDIT_SELECT ne contraint pas `isActive` (seul le soft
- *    delete est filtré) et garde `orderBy isDefault desc` (skus[0] = défaut).
+ *    delete est filtré) et garde l'ordre canonique `(position asc, id asc)`
+ *    (skus[0] = variante principale).
  * 2. La page /modifier consomme bien `getProductForEdit` — forme APPEL sur une
  *    ligne non commentée, pas une simple mention (un scan de mot nu reste vert
  *    sur son propre commentaire).
@@ -26,11 +27,8 @@ describe("GET_PRODUCT_FOR_EDIT_SELECT — les SKUs inactifs restent chargés", (
 		expect(GET_PRODUCT_FOR_EDIT_SELECT.skus.where).toEqual({ deletedAt: null });
 	});
 
-	it("garde l'ordre isDefault desc (skus[0] = variante principale, active ou non)", () => {
-		expect(GET_PRODUCT_FOR_EDIT_SELECT.skus.orderBy).toEqual([
-			{ isDefault: "desc" },
-			{ priceInclTax: "asc" },
-		]);
+	it("garde l'ordre canonique position asc, id asc (skus[0] = variante principale, active ou non)", () => {
+		expect(GET_PRODUCT_FOR_EDIT_SELECT.skus.orderBy).toEqual([{ position: "asc" }, { id: "asc" }]);
 	});
 
 	it("reste dérivé de GET_PRODUCT_SELECT (mêmes champs SKU sélectionnés)", () => {

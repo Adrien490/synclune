@@ -86,7 +86,6 @@ const FILTER_KEY_TO_SECTION: Record<string, FilterSectionId> = {
 	priceMin: "price",
 	priceMax: "price",
 	stockStatus: "availability",
-	onSale: "availability",
 };
 
 /** Classes d'accent d'une étiquette de filtre ; neutre si la clé est inconnue. */
@@ -116,6 +115,11 @@ export function accentForSlug(slug: string): (typeof RAIL_ACCENTS)[number] {
  * collection et le rail de sa page fille ne puissent JAMAIS diverger : c'était
  * précisément le défaut (audit CollectionCard 2026-08-05, P2 « la carte promet
  * rose, la page fille répond menthe »).
+ *
+ * ⚠️ **Sans consommateur depuis le 2026-08-08** (knip le signale, à raison) : les
+ * quatre surfaces à cartes de collection ont été supprimées ensemble. Gardée
+ * délibérément, et c'est la DÉRIVATION qui vaut : une refonte qui re-hache le
+ * slug de son côté ré-introduit le P2 mot pour mot.
  */
 const RAIL_ACCENT_TO_DATA_ACCENT = {
 	"bg-primary": "rose",

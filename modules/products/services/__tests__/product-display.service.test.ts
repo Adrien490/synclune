@@ -20,21 +20,42 @@ vi.mock("@/modules/media/constants/product-fallback-image.constants", () => ({
 	},
 }));
 
-import { getProductCardData } from "../product-display.service";
+import { getProductCardData, pickPrimaryImage } from "../product-display.service";
 import type { ProductFromList, SkuFromList } from "@/modules/products/types/product-list.types";
 
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
 
+type SkuImage = SkuFromList["images"][number];
+
 /**
- * Creates a mock SKU with sensible defaults
+ * Crée une image mock. L'ordre du TABLEAU est l'ordre canonique (position, id) :
+ * les selects livrent les médias déjà triés, il n'y a plus de flag `isPrimary`.
+ */
+function createMockImage(overrides: Partial<SkuImage> = {}): SkuImage {
+	return {
+		id: "img-1",
+		url: "/image.jpg",
+		thumbnailUrl: "/image-thumb.jpg",
+		altText: null,
+		mediaType: "IMAGE",
+		blurDataUrl: null,
+		width: null,
+		height: null,
+		...overrides,
+	};
+}
+
+/**
+ * Creates a mock SKU with sensible defaults.
+ * `position` remplace `isDefault` : le rang 0 est le représentant éditorial.
  */
 function createMockSku(overrides: Partial<SkuFromList> = {}): SkuFromList {
 	return {
 		id: "sku-1",
 		isActive: true,
-		isDefault: true,
+		position: 0,
 		inventory: 10,
 		priceInclTax: 2500,
 		compareAtPrice: null,
@@ -61,19 +82,7 @@ function createMockSku(overrides: Partial<SkuFromList> = {}): SkuFromList {
 				},
 			},
 		],
-		images: [
-			{
-				id: "img-1",
-				url: "/image.jpg",
-				thumbnailUrl: "/image-thumb.jpg",
-				altText: null,
-				isPrimary: true,
-				mediaType: "IMAGE",
-				blurDataUrl: null,
-				width: null,
-				height: null,
-			},
-		],
+		images: [createMockImage()],
 		...overrides,
 	};
 }
@@ -89,7 +98,7 @@ function createMockProduct(
 		id: "product-1",
 		slug: "test-product",
 		title: "Test Product",
-		status: "ACTIVE",
+		status: "PUBLIC",
 		skus,
 		type: { label: "Bague" },
 		...overrides,
@@ -99,6 +108,34 @@ function createMockProduct(
 // ============================================================================
 // TESTS
 // ============================================================================
+
+describe("pickPrimaryImage", () => {
+	it("should return the first IMAGE of the array order", () => {
+		const images = [
+			createMockImage({ id: "img-a", url: "/a.jpg" }),
+			createMockImage({ id: "img-b", url: "/b.jpg" }),
+		];
+
+		expect(pickPrimaryImage(images)?.id).toBe("img-a");
+	});
+
+	it("should skip a VIDEO occupying rank 0", () => {
+		const images = [
+			createMockImage({ id: "vid-1", url: "/video.mp4", mediaType: "VIDEO" }),
+			createMockImage({ id: "img-1", url: "/photo.jpg" }),
+		];
+
+		expect(pickPrimaryImage(images)?.id).toBe("img-1");
+	});
+
+	it("should return null when no IMAGE exists", () => {
+		const images = [createMockImage({ id: "vid-1", url: "/video.mp4", mediaType: "VIDEO" })];
+
+		expect(pickPrimaryImage(images)).toBeNull();
+		expect(pickPrimaryImage([])).toBeNull();
+		expect(pickPrimaryImage(undefined)).toBeNull();
+	});
+});
 
 describe("getProductCardData", () => {
 	describe("Basic functionality", () => {
@@ -186,8 +223,8 @@ describe("getProductCardData", () => {
 		it("should base the urgency message on the DISPLAYED sku, not the aggregate", () => {
 			// Audit ProductCard 2026-08-03 : l'agrégat mentait (« Plus que 3 ! » pour
 			// 2 couleurs × quelques exemplaires) — le badge suit le SKU affiché.
-			const sku1 = createMockSku({ id: "sku-1", inventory: 2 });
-			const sku2 = createMockSku({ id: "sku-2", inventory: 1, isDefault: false });
+			const sku1 = createMockSku({ id: "sku-1", position: 0, inventory: 2 });
+			const sku2 = createMockSku({ id: "sku-2", position: 1, inventory: 1 });
 			const product = createMockProduct({}, [sku1, sku2]);
 
 			const result = getProductCardData(product);
@@ -199,8 +236,8 @@ describe("getProductCardData", () => {
 		});
 
 		it("should flag low_stock when the displayed sku is nearly gone even if another variant is well stocked", () => {
-			const sku1 = createMockSku({ id: "sku-1", inventory: 1 });
-			const sku2 = createMockSku({ id: "sku-2", inventory: 50, isDefault: false });
+			const sku1 = createMockSku({ id: "sku-1", position: 0, inventory: 1 });
+			const sku2 = createMockSku({ id: "sku-2", position: 1, inventory: 50 });
 			const product = createMockProduct({}, [sku1, sku2]);
 
 			const result = getProductCardData(product);
@@ -222,9 +259,9 @@ describe("getProductCardData", () => {
 		});
 
 		it("should aggregate inventory from multiple active SKUs", () => {
-			const sku1 = createMockSku({ id: "sku-1", inventory: 5 });
-			const sku2 = createMockSku({ id: "sku-2", inventory: 3, isDefault: false });
-			const sku3 = createMockSku({ id: "sku-3", inventory: 2, isDefault: false });
+			const sku1 = createMockSku({ id: "sku-1", position: 0, inventory: 5 });
+			const sku2 = createMockSku({ id: "sku-2", position: 1, inventory: 3 });
+			const sku3 = createMockSku({ id: "sku-3", position: 2, inventory: 2 });
 			const product = createMockProduct({}, [sku1, sku2, sku3]);
 
 			const result = getProductCardData(product);
@@ -235,8 +272,8 @@ describe("getProductCardData", () => {
 		});
 
 		it("should exclude inactive SKUs from stock calculation", () => {
-			const sku1 = createMockSku({ id: "sku-1", inventory: 5, isActive: true });
-			const sku2 = createMockSku({ id: "sku-2", inventory: 100, isActive: false });
+			const sku1 = createMockSku({ id: "sku-1", position: 0, inventory: 5, isActive: true });
+			const sku2 = createMockSku({ id: "sku-2", position: 1, inventory: 100, isActive: false });
 			const product = createMockProduct({}, [sku1, sku2]);
 
 			const result = getProductCardData(product);
@@ -250,6 +287,7 @@ describe("getProductCardData", () => {
 		it("should extract unique colors from active SKUs", () => {
 			const sku1 = createMockSku({
 				id: "sku-1",
+				position: 0,
 				colors: [
 					{
 						colorId: "c1",
@@ -260,7 +298,7 @@ describe("getProductCardData", () => {
 			});
 			const sku2 = createMockSku({
 				id: "sku-2",
-				isDefault: false,
+				position: 1,
 				colors: [
 					{
 						colorId: "c2",
@@ -310,6 +348,7 @@ describe("getProductCardData", () => {
 		it("should merge duplicate colors and mark inStock if any has inventory", () => {
 			const sku1 = createMockSku({
 				id: "sku-1",
+				position: 0,
 				inventory: 0,
 				colors: [
 					{
@@ -321,8 +360,8 @@ describe("getProductCardData", () => {
 			});
 			const sku2 = createMockSku({
 				id: "sku-2",
+				position: 1,
 				inventory: 5,
-				isDefault: false,
 				colors: [
 					{
 						colorId: "c1",
@@ -349,6 +388,7 @@ describe("getProductCardData", () => {
 		it("should filter out invalid hex colors", () => {
 			const sku1 = createMockSku({
 				id: "sku-1",
+				position: 0,
 				colors: [
 					{
 						colorId: "c1",
@@ -359,7 +399,7 @@ describe("getProductCardData", () => {
 			});
 			const sku2 = createMockSku({
 				id: "sku-2",
-				isDefault: false,
+				position: 1,
 				colors: [
 					{
 						colorId: "c2",
@@ -370,7 +410,7 @@ describe("getProductCardData", () => {
 			});
 			const sku3 = createMockSku({
 				id: "sku-3",
-				isDefault: false,
+				position: 2,
 				colors: [
 					{
 						colorId: "c3",
@@ -408,6 +448,7 @@ describe("getProductCardData", () => {
 		it("should ignore SKUs without color", () => {
 			const sku1 = createMockSku({
 				id: "sku-1",
+				position: 0,
 				colors: [
 					{
 						colorId: "c1",
@@ -418,7 +459,7 @@ describe("getProductCardData", () => {
 			});
 			const sku2 = createMockSku({
 				id: "sku-2",
-				isDefault: false,
+				position: 1,
 				colors: [],
 			});
 			const product = createMockProduct({}, [sku1, sku2]);
@@ -430,20 +471,17 @@ describe("getProductCardData", () => {
 	});
 
 	describe("Images", () => {
-		it("should return primary image from default SKU", () => {
+		it("should return the first image of the canonical order as primary", () => {
 			const sku = createMockSku({
 				images: [
-					{
+					createMockImage({
 						id: "img-primary",
 						url: "/primary.jpg",
 						thumbnailUrl: "/primary-thumb.jpg",
 						altText: "Custom alt",
-						isPrimary: true,
-						mediaType: "IMAGE",
 						blurDataUrl: "blur-data",
-						width: null,
-						height: null,
-					},
+					}),
+					createMockImage({ id: "img-second", url: "/second.jpg" }),
 				],
 			});
 			const product = createMockProduct({ title: "Beautiful Ring" }, [sku]);
@@ -459,44 +497,9 @@ describe("getProductCardData", () => {
 			});
 		});
 
-		it("should use first image when no primary is marked", () => {
-			const sku = createMockSku({
-				images: [
-					{
-						id: "img-1",
-						url: "/image1.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: false,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-				],
-			});
-			const product = createMockProduct({ title: "Ring" }, [sku]);
-
-			const result = getProductCardData(product);
-
-			expect(result.primaryImage.id).toBe("img-1");
-		});
-
 		it("should generate alt text when missing", () => {
 			const sku = createMockSku({
-				images: [
-					{
-						id: "img-1",
-						url: "/image.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: true,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-				],
+				images: [createMockImage({ id: "img-1", url: "/image.jpg", thumbnailUrl: null })],
 				materials: [
 					{
 						materialId: "m1",
@@ -536,28 +539,8 @@ describe("getProductCardData", () => {
 		it("should return secondary image when SKU has multiple images", () => {
 			const sku = createMockSku({
 				images: [
-					{
-						id: "img-1",
-						url: "/primary.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: true,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-					{
-						id: "img-2",
-						url: "/secondary.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: false,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
+					createMockImage({ id: "img-1", url: "/primary.jpg", thumbnailUrl: null }),
+					createMockImage({ id: "img-2", url: "/secondary.jpg", thumbnailUrl: null }),
 				],
 			});
 			const product = createMockProduct({ title: "Ring" }, [sku]);
@@ -571,19 +554,7 @@ describe("getProductCardData", () => {
 
 		it("should return null secondary image when only one image exists", () => {
 			const sku = createMockSku({
-				images: [
-					{
-						id: "img-1",
-						url: "/primary.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: true,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-				],
+				images: [createMockImage({ id: "img-1", url: "/primary.jpg", thumbnailUrl: null })],
 			});
 			const product = createMockProduct({}, [sku]);
 
@@ -597,28 +568,8 @@ describe("getProductCardData", () => {
 			// the lazy duplicate poisons Next's per-URL LCP bookkeeping in dev.
 			const sku = createMockSku({
 				images: [
-					{
-						id: "img-1",
-						url: "/same.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: true,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-					{
-						id: "img-2",
-						url: "/same.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: false,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
+					createMockImage({ id: "img-1", url: "/same.jpg", thumbnailUrl: null }),
+					createMockImage({ id: "img-2", url: "/same.jpg", thumbnailUrl: null }),
 				],
 			});
 			const product = createMockProduct({}, [sku]);
@@ -631,55 +582,19 @@ describe("getProductCardData", () => {
 		it("should skip another SKU whose image shares the primary URL", () => {
 			const defaultSku = createMockSku({
 				id: "sku-1",
-				isDefault: true,
-				images: [
-					{
-						id: "img-1",
-						url: "/shared.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: true,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-				],
+				position: 0,
+				images: [createMockImage({ id: "img-1", url: "/shared.jpg", thumbnailUrl: null })],
 			});
 			// Same file under a different media id (SKUs sharing one photo)
 			const siblingSameUrl = createMockSku({
 				id: "sku-2",
-				isDefault: false,
-				images: [
-					{
-						id: "img-2",
-						url: "/shared.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: true,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-				],
+				position: 1,
+				images: [createMockImage({ id: "img-2", url: "/shared.jpg", thumbnailUrl: null })],
 			});
 			const siblingDistinct = createMockSku({
 				id: "sku-3",
-				isDefault: false,
-				images: [
-					{
-						id: "img-3",
-						url: "/distinct.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: true,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-				],
+				position: 2,
+				images: [createMockImage({ id: "img-3", url: "/distinct.jpg", thumbnailUrl: null })],
 			});
 			const product = getProductCardData(
 				createMockProduct({}, [defaultSku, siblingSameUrl, siblingDistinct]),
@@ -690,30 +605,16 @@ describe("getProductCardData", () => {
 		});
 
 		it("should skip VIDEO media types when finding images", () => {
+			// Une vidéo peut occuper le rang 0 : la vignette doit être la première IMAGE
 			const sku = createMockSku({
 				images: [
-					{
+					createMockImage({
 						id: "vid-1",
 						url: "/video.mp4",
 						thumbnailUrl: null,
-						altText: null,
-						isPrimary: true,
 						mediaType: "VIDEO",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
-					{
-						id: "img-1",
-						url: "/image.jpg",
-						thumbnailUrl: null,
-						altText: null,
-						isPrimary: false,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
+					}),
+					createMockImage({ id: "img-1", url: "/image.jpg", thumbnailUrl: null }),
 				],
 			});
 			const product = createMockProduct({}, [sku]);
@@ -729,7 +630,7 @@ describe("getProductCardData", () => {
 		it("should select SKU with preferred color when activeColorSlug is provided", () => {
 			const sku1 = createMockSku({
 				id: "sku-gold",
-				isDefault: true,
+				position: 0,
 				priceInclTax: 2000,
 				colors: [
 					{
@@ -741,7 +642,7 @@ describe("getProductCardData", () => {
 			});
 			const sku2 = createMockSku({
 				id: "sku-silver",
-				isDefault: false,
+				position: 1,
 				priceInclTax: 1800,
 				colors: [
 					{
@@ -759,10 +660,10 @@ describe("getProductCardData", () => {
 			expect(result.price).toBe(1800);
 		});
 
-		it("should fallback to default SKU when preferred color is not found", () => {
+		it("should fallback to representative SKU when preferred color is not found", () => {
 			const sku1 = createMockSku({
 				id: "sku-gold",
-				isDefault: true,
+				position: 0,
 				colors: [
 					{
 						colorId: "c1",
@@ -776,6 +677,43 @@ describe("getProductCardData", () => {
 			const result = getProductCardData(product, { activeColorSlug: "nonexistent-color" });
 
 			expect(result.defaultSku?.id).toBe("sku-gold");
+		});
+	});
+
+	describe("Representative SKU (rang 0)", () => {
+		it("should display the rank-0 SKU when it is in stock, even if a sibling is cheaper", () => {
+			const sku1 = createMockSku({
+				id: "sku-rank0",
+				position: 0,
+				priceInclTax: 3000,
+				inventory: 5,
+			});
+			const sku2 = createMockSku({
+				id: "sku-cheap",
+				position: 1,
+				priceInclTax: 1000,
+				inventory: 5,
+			});
+			const product = createMockProduct({}, [sku1, sku2]);
+
+			const result = getProductCardData(product);
+
+			expect(result.defaultSku?.id).toBe("sku-rank0");
+			expect(result.price).toBe(3000);
+		});
+
+		it("should fall back to the cheapest in-stock sibling when the rank-0 SKU is sold out", () => {
+			// Audit ProductCard 2026-08-08 : le représentant épuisé ne prime plus sur
+			// une variante sœur achetable.
+			const sku1 = createMockSku({ id: "sku-rank0", position: 0, inventory: 0 });
+			const sku2 = createMockSku({ id: "sku-2", position: 1, priceInclTax: 2200, inventory: 3 });
+			const sku3 = createMockSku({ id: "sku-3", position: 2, priceInclTax: 1900, inventory: 3 });
+			const product = createMockProduct({}, [sku1, sku2, sku3]);
+
+			const result = getProductCardData(product);
+
+			expect(result.defaultSku?.id).toBe("sku-3");
+			expect(result.price).toBe(1900);
 		});
 	});
 
@@ -803,16 +741,17 @@ describe("getProductCardData", () => {
 		});
 
 		it("should handle mix of active and inactive SKUs correctly", () => {
+			// Le rang 0 inactif cède au premier SKU actif suivant
 			const sku1 = createMockSku({
 				id: "sku-inactive",
 				isActive: false,
-				isDefault: true,
+				position: 0,
 				inventory: 100,
 			});
 			const sku2 = createMockSku({
 				id: "sku-active",
 				isActive: true,
-				isDefault: false,
+				position: 1,
 				inventory: 2,
 			});
 			const product = createMockProduct({}, [sku1, sku2]);
@@ -829,17 +768,12 @@ describe("getProductCardData", () => {
 			const longAltText = "A".repeat(200);
 			const sku = createMockSku({
 				images: [
-					{
+					createMockImage({
 						id: "img-1",
 						url: "/image.jpg",
 						thumbnailUrl: null,
 						altText: longAltText,
-						isPrimary: true,
-						mediaType: "IMAGE",
-						blurDataUrl: null,
-						width: null,
-						height: null,
-					},
+					}),
 				],
 			});
 			const product = createMockProduct({}, [sku]);

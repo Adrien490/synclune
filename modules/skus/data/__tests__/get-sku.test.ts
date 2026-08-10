@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag, mockCacheSkuDetailById } = vi.hoisted(
 	() => ({
 		mockPrisma: {
-			productSku: { findUnique: vi.fn() },
+			productSku: { findUnique: vi.fn(), findFirst: vi.fn() },
 		},
 		mockIsAdmin: vi.fn(),
 		mockCacheLife: vi.fn(),
@@ -48,6 +48,8 @@ function makeSkuRecord(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "sku-id-1",
 		sku: "SKU-001",
+		// Requis par le calcul du représentant (rang 0 du produit).
+		productId: "prod-1",
 		inventory: 5,
 		isActive: true,
 		...overrides,
@@ -72,6 +74,7 @@ describe("getSkuById", () => {
 		vi.clearAllMocks();
 		mockIsAdmin.mockResolvedValue(true);
 		mockPrisma.productSku.findUnique.mockResolvedValue(null);
+		mockPrisma.productSku.findFirst.mockResolvedValue(null);
 	});
 
 	it("returns null when skuId is an empty string", async () => {
@@ -138,13 +141,30 @@ describe("getSkuById", () => {
 
 	it("returns the SKU with images when found", async () => {
 		const skuWithImages = makeSkuWithImages({
-			images: [{ id: "img-1", url: "https://example.com/img.jpg", isPrimary: true }],
+			images: [{ id: "img-1", url: "https://example.com/img.jpg" }],
 		});
 		mockPrisma.productSku.findUnique.mockResolvedValue(skuWithImages);
 
 		const result = await getSkuById("sku-id-1");
 
-		expect(result).toEqual(skuWithImages);
+		// `isRepresentative` est calculé (rang 0 de position) et greffé au retour.
+		expect(result).toEqual({ ...skuWithImages, isRepresentative: false });
+	});
+
+	it("computes isRepresentative from the rank-0 SKU of the product", async () => {
+		mockPrisma.productSku.findUnique.mockResolvedValue(makeSkuWithImages());
+		mockPrisma.productSku.findFirst.mockResolvedValue({ id: "sku-id-1" });
+
+		const result = await getSkuById("sku-id-1");
+
+		// Représentant = rang 0 de (position asc, id asc) parmi les variantes non
+		// supprimées — remplace la colonne `isDefault` (audit schéma V5, lot A2).
+		expect(mockPrisma.productSku.findFirst).toHaveBeenCalledWith({
+			where: { productId: "prod-1", deletedAt: null },
+			orderBy: [{ position: "asc" }, { id: "asc" }],
+			select: { id: true },
+		});
+		expect(result?.isRepresentative).toBe(true);
 	});
 
 	it("calls cacheSkuDetailById with the skuId", async () => {

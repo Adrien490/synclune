@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { MaskingTape } from "@/shared/components/masking-tape";
 import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
 import { CARD_SURFACE_POLAROID } from "@/shared/components/card-surface.constants";
@@ -13,8 +12,8 @@ import { cn } from "@/shared/utils/cn";
  * C'est le seul cas où la direction « L'étal » dégrade vers une adresse
  * directe — à ce moment-là il n'y a plus d'étal du tout, et une grille de
  * cadres vides ferait un stand abandonné. La cellule reste dans le même cadre
- * polaroid, ruban compris : la page ne change pas de langage visuel parce que
- * la base est vide.
+ * polaroid : la page ne change pas de langage visuel parce que la base est
+ * vide.
  *
  * Le `mailto:` est la voie de contact retenue par le projet — la capture
  * d'adresse e-mail sur la home a été refusée explicitement (25 juin 2026), on
@@ -23,8 +22,6 @@ import { cn } from "@/shared/utils/cn";
 export function HeroEmptyCard() {
 	return (
 		<div className={cn(CARD_SURFACE_POLAROID, "pb-2 sm:pb-2.5")}>
-			<MaskingTape className="-top-2 left-1/2 z-20 h-4 w-14 -translate-x-1/2 -rotate-2" />
-
 			<div className="border-border rounded-sm border-2 border-dashed px-5 py-8 text-center sm:px-8 sm:py-10">
 				<p className="font-display text-xl font-normal sm:text-2xl">
 					L&apos;atelier remplit ses étagères

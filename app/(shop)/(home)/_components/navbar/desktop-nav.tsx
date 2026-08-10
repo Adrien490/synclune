@@ -19,7 +19,6 @@ import Link from "next/link";
 import type { MegaMenuProduct } from "@/shared/constants/navigation";
 import { LoadingIndicator } from "@/shared/components/navigation";
 import { MegaMenuCreations } from "./mega-menu-creations";
-import { MegaMenuCollections } from "./mega-menu-collections";
 
 interface DesktopNavProps {
 	navItems: NavItemWithChildren[];
@@ -31,7 +30,7 @@ interface DesktopNavProps {
 /**
  * Libellés en display (`font-display`) et non plus en sans : le header était
  * la dernière surface du storefront à parler shadcn-neutre, entre des cartes
- * « Atelier » (tirage polaroid, masking tape, trait dessiné) et un footer à
+ * « Atelier » (tirage polaroid, trait dessiné) et un footer à
  * l'accent manuscrit.
  *
  * Le trait de 2px animé en `scale-x` cède la place à `SquiggleUnderline` — la
@@ -186,6 +185,13 @@ export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: 
 							    de liens — et `w-screen` valait `100vw`, gouttière de scrollbar
 							    comprise, donc ~15px de débordement horizontal. Chaque panneau porte
 							    désormais SA largeur : Base UI morphe de l'une à l'autre. */}
+							{/* ⚠️ Plus de branche `collections` : le bento du méga-menu
+							    Collections a été supprimé le 2026-08-08 avec toutes les
+							    surfaces à cartes de collection (à refaire). « Les
+							    collections » redevient donc un lien simple — c'est
+							    `getDesktopNavItems` qui le décide, en ne posant plus
+							    `hasDropdown`, et cette branche ne serait plus atteinte
+							    de toute façon. */}
 							<NavigationMenuContent>
 								{item.dropdownType === "creations" && (
 									<MegaMenuCreations
@@ -193,9 +199,6 @@ export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: 
 										featuredProducts={featuredProducts}
 										spotlightCollection={spotlightCollection}
 									/>
-								)}
-								{item.dropdownType === "collections" && (
-									<MegaMenuCollections collections={item.children} />
 								)}
 							</NavigationMenuContent>
 						</NavigationMenuItem>

@@ -53,10 +53,6 @@ export function SkuSidebarCards({
 						{ value: "false", label: "Inactif" },
 					]}
 					radioHint="Une variante inactive n'est pas achetable même si le produit est public"
-					isDefaultFieldName="isDefault"
-					isDefaultLabel="Variante par défaut"
-					isDefaultCheckboxLabel="Affichée en premier sur la fiche produit"
-					isDefaultHint="Une seule variante par produit peut être marquée par défaut"
 					viewTransitionName={`${viewTransitionPrefix}-status`}
 				/>
 			</div>

@@ -25,8 +25,8 @@ describe("productSkuFiltersSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("should accept boolean flags isActive and isDefault", () => {
-		const result = productSkuFiltersSchema.safeParse({ isActive: true, isDefault: false });
+	it("should accept boolean flag isActive", () => {
+		const result = productSkuFiltersSchema.safeParse({ isActive: true });
 		expect(result.success).toBe(true);
 	});
 

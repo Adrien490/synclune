@@ -53,7 +53,6 @@ import { describe, expect, it } from "vitest";
 
 import { ATELIER_HOWTO, ATELIER_STEPS } from "@/shared/constants/atelier-content";
 import { BRAND } from "@/shared/constants/brand";
-import { FAQ_ITEMS } from "@/shared/constants/faq-items";
 import {
 	BUSINESS_INFO,
 	getFounderSchema,
@@ -64,29 +63,41 @@ import {
 const REPO_ROOT = join(import.meta.dirname, "..", "..");
 
 /**
- * `docs/BRAND-DA.md` § Les mots à NE PAS mettre au centre, verbatim.
+ * `docs/BRAND-DA.md` § Les mots à NE PAS mettre au centre — en PARITÉ verrouillée
+ * avec le document (assertion dédiée plus bas), pas recopié à vue : l'ancienne
+ * copie se disait « verbatim » alors qu'il lui manquait cinq termes du doc
+ * (discret, classique, neutre, monochrome, cérémonie), et rien ne le re-vérifiait.
  *
  * Le document est explicite sur la nuance : ces termes « peuvent décrire une
  * pièce isolée, mais brouillent l'identité dès qu'ils deviennent le cœur du
  * discours ». Les surfaces scannées ici sont précisément le cœur du discours —
  * une fiche produit, elle, n'est pas concernée.
  *
- * ⚠️ « luxe » est borné par `\b` : « luxuriant » est au contraire un mot-clé
- * POSITIF de la DA (§ A, le jardin fantastique).
+ * Deux élargissements assumés, plus larges que le doc (dits dans le doc lui-même) :
+ *  - « luxe froid » → `luxe`, borné par la frontière de mot : « luxuriant » est au
+ *    contraire un mot-clé POSITIF de la DA (§ A, le jardin fantastique) ;
+ *  - « joaillerie fine » → `joaillerie` (CLAUDE.md écarte la joaillerie tout court).
+ * `epuré` (sans accent) couvre la faute de frappe la plus probable sur `épuré`.
  */
 const DA_BANNED_TERMS = [
 	"minimaliste",
 	"sobre",
-	"épuré",
-	"epuré",
+	"discret",
 	"intemporel",
 	"quiet luxury",
-	"luxe",
+	"classique",
+	"épuré",
+	"epuré",
+	"neutre",
+	"monochrome",
 	"joaillerie",
+	"luxe",
+	"cérémonie",
+	"mariage chic",
 	"pierre précieuse",
 	"pierres précieuses",
+	"premium",
 	"prestige",
-	"mariage chic",
 	"sophistication silencieuse",
 	"élégance conventionnelle",
 ] as const;
@@ -119,8 +130,9 @@ function collectStrings(value: unknown, out: string[] = []): string[] {
 		for (const item of value) collectStrings(item, out);
 		return out;
 	}
-	// `null` est un objet ; les ReactNode de `faq-items` ne sont pas parcourus
-	// (leur décalque texte, `answerText`, l'est — c'est lui qui part en JSON-LD).
+	// `null` est un objet ; un ReactNode n'est pas parcouru — une SSOT de copie
+	// qui en porte doit exposer un décalque TEXTE à scanner à côté (c'est ce que
+	// faisait `answerText` de la FAQ, retirée le 2026-08-08).
 	if (value && typeof value === "object" && !("$$typeof" in value)) {
 		for (const item of Object.values(value)) collectStrings(item, out);
 	}
@@ -138,9 +150,18 @@ function stripComments(source: string): string {
 	return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
+/**
+ * ⚠️ Pas de `\b` : il est ASCII (`é` n'y est pas un caractère de mot), donc un terme
+ * qui COMMENCE ou FINIT par une lettre accentuée — « épuré », « élégance
+ * conventionnelle » — ne matchait JAMAIS ; les deux étaient du poids mort depuis
+ * l'écriture du test (constaté le 2026-08-08). Les lookarounds Unicode font le même
+ * travail de frontière de mot, accents compris.
+ */
 function findTerms(haystack: string, terms: readonly string[]): string[] {
 	const lowered = haystack.toLowerCase();
-	return terms.filter((term) => new RegExp(`\\b${term.toLowerCase()}\\b`, "u").test(lowered));
+	return terms.filter((term) =>
+		new RegExp(`(?<![\\p{L}\\p{N}_])${term.toLowerCase()}(?![\\p{L}\\p{N}_])`, "u").test(lowered),
+	);
 }
 
 const HOME_PAGE_PATH = join(REPO_ROOT, "app", "(shop)", "(home)", "page.tsx");
@@ -181,10 +202,14 @@ const EDITORIAL_SURFACES: { label: string; strings: string[] }[] = [
 		label: "shared/constants/atelier-content.ts",
 		strings: [...collectStrings(ATELIER_STEPS), ...collectStrings(ATELIER_HOWTO)],
 	},
-	{
-		label: "shared/constants/faq-items.tsx",
-		strings: FAQ_ITEMS.flatMap((item) => [item.question, item.answerText]),
-	},
+	/*
+	 * ⚠️ `shared/constants/faq-items.tsx` a été supprimée le 2026-08-08 avec la
+	 * section FAQ (à refaire). C'était la surface éditoriale la plus BAVARDE du
+	 * site — onze questions et leurs réponses, la copie la plus exposée aux mots
+	 * bannis (« intemporel », « premium », « pierre précieuse » y sont des mots
+	 * de FAQ naturels). La re-déclarer ici est obligatoire quand elle revient,
+	 * sinon la refonte se fait sans filet lexical.
+	 */
 ];
 
 describe("@regression brand-lexicon", () => {
@@ -233,5 +258,40 @@ describe("@regression brand-lexicon", () => {
 		const editorial = EDITORIAL_SURFACES.flatMap((surface) => surface.strings).join(" ");
 
 		expect(findTerms(editorial, INTERCHANGEABLE_FORMULAS).length).toBeGreaterThan(0);
+	});
+
+	it("reste en parité avec le § « Les mots à ne PAS mettre au centre » du doc", () => {
+		// La liste ci-dessus s'était dite « verbatim » tout en divergeant du document
+		// (cinq termes manquants) — personne ne re-comparait. Ici, chaque terme du doc
+		// doit être couvert par une entrée de `DA_BANNED_TERMS` (égalité ou
+		// élargissement : « luxe froid » est couvert par `luxe`). L'inverse n'est pas
+		// exigé : le test a le droit d'être PLUS strict que le doc, jamais moins.
+		const doc = readFileSync(join(REPO_ROOT, "docs", "BRAND-DA.md"), "utf-8");
+		const start = doc.indexOf("## Les mots à ne PAS mettre au centre");
+		expect(
+			start,
+			"la section « Les mots à ne PAS mettre au centre » a disparu de docs/BRAND-DA.md",
+		).toBeGreaterThanOrEqual(0);
+		const section = doc.slice(start, doc.indexOf("\n## ", start + 1));
+		const list = section.split(/\n\n+/).find((block) => (block.match(/·/g) ?? []).length >= 5);
+		expect(list, "la liste à points médians du § a disparu ou changé de forme").toBeDefined();
+
+		const docTerms = list!
+			.replace(/\n/g, " ")
+			.split("·")
+			.map((term) => term.trim().replace(/\.$/, ""))
+			.filter(Boolean);
+		// Garde-fou du garde-fou : une extraction cassée validerait une liste vide.
+		expect(docTerms.length).toBeGreaterThanOrEqual(15);
+
+		const uncovered = docTerms.filter(
+			(docTerm) => !DA_BANNED_TERMS.some((t) => docTerm.toLowerCase().includes(t.toLowerCase())),
+		);
+		expect(
+			uncovered,
+			"Terme ajouté au § de BRAND-DA sans être couvert par DA_BANNED_TERMS : le doc " +
+				"promet un verrou que ce test n'applique pas. Ajouter le terme ci-dessus " +
+				"(ou un élargissement commenté).",
+		).toEqual([]);
 	});
 });

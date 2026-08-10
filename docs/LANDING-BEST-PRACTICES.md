@@ -856,13 +856,18 @@ FAQ ; c'est le `FAQPage` qui ne rapporte plus rien.
 >    `BreadcrumbList` ou deux `ItemList` divergentes sur une URL laissent Google en choisir une au
 >    hasard).
 >
-> Appliqué ici, cela veut dire **ne toucher à rien** : `CLAUDE.md` § Catalogue impose le `FAQPage`
-> **dans le `@graph` unique** de la landing, précisément pour interdire le second script ; et le nœud
-> `HowTo` de la section atelier est verrouillé par un test qui exige la correspondance mot-à-mot
-> entre le titre visible et le `name` du nœud
-> (`app/(shop)/(home)/_components/atelier/__tests__/atelier-section.test.tsx`). Un audit qui coche
-> « supprimer le balisage mort » casse un invariant écrit et un test vert, pour zéro gain.
+> Appliqué ici, cela veut dire **ne toucher à rien** : le nœud `HowTo` de la section atelier est
+> verrouillé par un test qui exige la correspondance mot-à-mot entre le titre visible et le `name`
+> du nœud (`app/(shop)/(home)/_components/atelier/__tests__/atelier-section.test.tsx`). Un audit qui
+> coche « supprimer le balisage mort » casse un invariant écrit et un test vert, pour zéro gain.
 > **Retirer un nœud coûte un risque ; le garder coûte quelques octets.**
+>
+> ⚠️ **Le `FAQPage` faisait partie de cette démonstration jusqu'au 2026-08-08.** Il n'a PAS été
+> retiré au titre de la dépréciation Google — la section « Des questions ? » a été supprimée de la
+> landing (à refaire), et un `FAQPage` doit pointer du contenu réellement VISIBLE. C'est la
+> distinction que ce paragraphe défend, dans l'autre sens : on ne supprime pas un nœud parce qu'il
+> est inerte, on le supprime parce que **son contenu n'existe plus**. Quand la FAQ revient, le nœud
+> revient **dans le `@graph` unique**, jamais en second `<script>`.
 
 **Deux règles précises à ne pas rater :**
 
@@ -1163,11 +1168,19 @@ l'avoir relu**. Un critère 🔴 n'est pas dans la grille : on n'audite pas cont
 
 | Couche                        | Ce qu'elle apporte                                                                                         |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `app/(shop)/(home)/page.tsx`  | Les 4 sections propres : hero, collections, atelier, FAQ — plus le `@graph` JSON-LD                        |
+| `app/(shop)/(home)/page.tsx`  | Les 2 sections propres : hero, atelier — plus le `@graph` JSON-LD ⚠️ cf. note sous la table                |
 | `app/(shop)/layout.tsx`       | Navbar et méga-menus, pied de page, barre basse mobile, bannière cookies, recherche rapide, panneau panier |
 | `shared/components/` (racine) | Lien d'évitement, bannière de maintenance, remontée Web Vitals                                             |
 | `app/opengraph-image.tsx`     | L'aperçu social — vu avant la page par qui arrive d'un lien partagé (§ 1.7)                                |
 | `StoreClosurePage`            | **Remplace intégralement** la landing quand la boutique est fermée                                         |
+
+⚠️ **La landing est passée de 4 sections à 2 le 2026-08-08** : « Choisis ton univers » (collections)
+et « Des questions ? » (FAQ) ont été supprimées à la demande de Léane, pour être refaites. Un audit
+mené aujourd'hui doit donc noter ce qui EST rendu, pas ce que ce document décrivait — et deux
+familles de critères tombent forcément : l'**orientation** (§ 3, la page n'offre plus de chemin
+autre que l'étal) et la **réassurance** (§ 4, la FAQ portait les motifs d'abandon livraison /
+retours / entretien). Ce sont des P0 attendus, pas des découvertes ; les signaler comme tels, sans
+re-instruire leur cause.
 
 ⚠️ Le piège de périmètre est réel : pied de page, navbar et barre basse **vivent dans le dossier
 `(home)/_components/`** mais sont montés par le layout de la boutique. Les auditer comme des sections
@@ -1289,18 +1302,18 @@ un point acquis à vie** : elle porte la date de la passe.
 ⚠️ **Aucune ligne ne cite le p75 de terrain** : il n'existe pas à ce volume (§ 6.1). Les deux
 premières lignes le remplacent — budget de laboratoire, puis RUM collecté par le site lui-même.
 
-| ✓   | Critère                                                                                                | Vérification                                                                                    | §   |
-| --- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | --- |
-| ☐   | Le budget de laboratoire passe : LCP, CLS, INP **et l'identité de l'élément LCP**                      | `test` `e2e/performance.spec.ts` — l'identité est le vrai garde-fou, pas la valeur              | 6.1 |
-| ☐   | Le poids de la route reste sous budget                                                                 | `test` `pnpm size` — `.size-limit.json`, entrée `Homepage`                                      | 6.1 |
-| ☐   | Le p75 de terrain est **regardé** là où il existe : le RUM maison                                      | `inspect` `app/_components/web-vitals-reporter.tsx` — CrUX restera vide, ce n'est pas un défaut | 6.1 |
-| ☐   | **L'image LCP n'est pas lazy-loadée** — vérifié dans le **HTML servi**                                 | `inspect` `curl -s localhost:3000 \| grep -o 'loading="[a-z]*"' \| head` — pas la console       | 6.1 |
-| ☐   | **Une seule** image en priorité haute, et son `preload` va avec                                        | `inspect` — décision locale (doctrine carte collection) plus stricte que la règle générale      | 6.1 |
-| ☐   | Toutes les images sous la flottaison sont en `lazy`                                                    | `inspect` — le seuil Chrome charge à 1250 px en 4G, bien avant la visibilité                    | 6.1 |
-| ☐   | Toute image porte `width`/`height` ou `aspect-ratio`                                                   | `inspect` — 1ʳᵉ source de CLS                                                                   | 6.1 |
-| ☐   | Aucune animation d'entrée ne maintient le contenu LCP invisible                                        | `inspect` — ⚠️ `fill-mode: both` tient le LCP à `opacity: 0` ; défaut **mesuré**, pas de goût   | 8.8 |
-| ☐   | Les seules propriétés animées au chargement sont `transform` et `opacity`                              | `inspect` — `top`, `left`, `box-shadow` déclenchent du CLS                                      | 6.1 |
-| ☐   | Le fallback de police porte des overrides de métriques, **ou l'impossibilité est documentée et datée** | `inspect` — display hors table capsize ⇒ compensation impossible, cf. § 6.1                     | 6.1 |
+| ✓   | Critère                                                                                                | Vérification                                                                                       | §   |
+| --- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- | --- |
+| ☐   | Le budget de laboratoire passe : LCP, CLS, INP **et l'identité de l'élément LCP**                      | `test` `e2e/performance.spec.ts` — l'identité est le vrai garde-fou, pas la valeur                 | 6.1 |
+| ☐   | Le poids de la route reste sous budget                                                                 | `test` `pnpm size` — `.size-limit.json`, entrée `Homepage`                                         | 6.1 |
+| ☐   | Le p75 de terrain est **regardé** là où il existe : le RUM maison                                      | `inspect` `app/_components/web-vitals-reporter.tsx` — CrUX restera vide, ce n'est pas un défaut    | 6.1 |
+| ☐   | **L'image LCP n'est pas lazy-loadée** — vérifié dans le **HTML servi**                                 | `inspect` `curl -s localhost:3000 \| grep -o 'loading="[a-z]*"' \| head` — pas la console          | 6.1 |
+| ☐   | **Une seule** image en priorité haute, et son `preload` va avec                                        | `inspect` — la règle générale ; la décision locale plus stricte a disparu avec la carte collection | 6.1 |
+| ☐   | Toutes les images sous la flottaison sont en `lazy`                                                    | `inspect` — le seuil Chrome charge à 1250 px en 4G, bien avant la visibilité                       | 6.1 |
+| ☐   | Toute image porte `width`/`height` ou `aspect-ratio`                                                   | `inspect` — 1ʳᵉ source de CLS                                                                      | 6.1 |
+| ☐   | Aucune animation d'entrée ne maintient le contenu LCP invisible                                        | `inspect` — ⚠️ `fill-mode: both` tient le LCP à `opacity: 0` ; défaut **mesuré**, pas de goût      | 8.8 |
+| ☐   | Les seules propriétés animées au chargement sont `transform` et `opacity`                              | `inspect` — `top`, `left`, `box-shadow` déclenchent du CLS                                         | 6.1 |
+| ☐   | Le fallback de police porte des overrides de métriques, **ou l'impossibilité est documentée et datée** | `inspect` — display hors table capsize ⇒ compensation impossible, cf. § 6.1                        | 6.1 |
 
 ### Accessibilité — 10 pts
 
@@ -1329,6 +1342,7 @@ classées par rendement réel, pas par niveau WCAG — et deux mythes ont été 
 | ☐   | `hasShippingService` + `hasMerchantReturnPolicy` déclarés **une fois** sur `Organization`   | `inspect` — meilleur rapport effort/valeur du document ; source = les CGV existantes               | 6.3 |
 | ☐   | **Un seul `<script>` JSON-LD**, et aucun `BreadcrumbList` ni `ItemList` en double sur l'URL | `test` `shared/components/__tests__/catalogue-single-breadcrumb.regression.test.ts`                | 6.3 |
 | ☐   | Aucun nœud **ajouté** pour un rich result retiré (`FAQPage`, `HowTo`, `SearchAction`)       | `inspect` — ⚠️ **ne pas supprimer l'existant** : valide, inerte, et verrouillé par un test         | 6.3 |
+| ☐   | Aucun nœud **survivant** à la section qu'il décrit (balisage sans contenu visible)          | `test` `catalogue-single-breadcrumb.regression.test.ts` — le `FAQPage` est parti avec la FAQ       | 6.3 |
 | ☐   | Aucun `BreadcrumbList` à **un seul item**                                                   | `inspect` — Google exige ≥ 2 items et demande d'omettre racine et page courante                    | 6.3 |
 | ☐   | Si `LocalBusiness` est émis, son `address` **n'est pas un domicile privé**                  | `inspect` `shared/constants/seo-config.ts` → `BUSINESS_INFO.location` — **décision de vie privée** | 6.3 |
 | ☐   | Le titre porte le territoire distinctif (coloré, Nantes), pas seulement le générique        | `test` `e2e/seo.spec.ts` — ⚠️ vérifier que le repli global dit la même chose que la page           | 6.3 |

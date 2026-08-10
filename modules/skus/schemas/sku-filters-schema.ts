@@ -18,7 +18,9 @@ export const productSkuFiltersSchema = z
 		// Filtres de base
 		sku: optionalStringOrStringArraySchema, // Pour recherche de préfixe
 		isActive: z.boolean().optional(),
-		isDefault: z.boolean().optional(),
+		// Plus de filtre `isDefault` : la colonne a disparu (audit schéma V5, lot A2)
+		// et le filtre n'avait aucune surface UI — le représentant (rang 0 de
+		// position) est signalé par badge dans la liste, pas par un filtre.
 
 		// Filtres de prix (en centimes) - aligné avec max 999999.99€ = 99999999 centimes
 		priceMin: z.number().int().nonnegative().max(SKU_FILTERS_MAX_PRICE_CENTS).optional(),

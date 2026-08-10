@@ -9,8 +9,6 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import {
 	calculatePriceInfo,
 	determineStockStatus,
-	calculateDiscountPercent,
-	hasActiveDiscount,
 } from "@/modules/products/services/product-pricing.service";
 
 interface ProductPriceProps {
@@ -48,16 +46,9 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 	// Déterminer si on affiche "À partir de"
 	const showFromPrefix = priceInfo.hasMultiplePrices && !selectedSku;
 
-	// Calculer la réduction si promotion
-	const hasDiscount = hasActiveDiscount(
-		selectedSku?.compareAtPrice,
-		selectedSku?.priceInclTax ?? 0,
-	);
-
-	const discountPercent = calculateDiscountPercent(
-		selectedSku?.compareAtPrice,
-		selectedSku?.priceInclTax ?? 0,
-	);
+	// ⚠️ Pas de prix barré ni de badge de remise (retrait Omnibus 2026-08-08,
+	// art. L. 112-1-1 C. conso) : cf. le commentaire de `ProductPrice` — la
+	// réouverture passe par `lowestPriceLast30d` (lot A2).
 
 	// Calculer le stock status (en stock, stock limité, ou rupture)
 	const inventory = selectedSku?.inventory ?? 0;
@@ -113,7 +104,6 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 			    l'état de stock ; le reste est du texte lisible à la demande. */}
 			<span aria-live="polite" aria-atomic="true" className="sr-only">
 				Prix mis à jour : {formatEuro(selectedSku.priceInclTax)}
-				{hasDiscount ? `, réduit de ${discountPercent} pourcent` : ""}
 				{stockStatus === "in_stock" ? ", en stock" : ""}
 				{stockStatus === "low_stock" ? `, plus que ${inventory} en stock` : ""}
 				{stockStatus === "out_of_stock" ? ", en rupture de stock" : ""}
@@ -124,28 +114,10 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 				<p
 					id="product-price-selected"
 					className="font-display text-3xl font-normal tracking-tight sm:text-4xl"
-					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ""}`}
+					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}`}
 				>
 					{formatEuro(selectedSku.priceInclTax)}
 				</p>
-
-				{/* Prix barré si promotion */}
-				{hasDiscount && (
-					<span className="text-lg line-through opacity-70">
-						<span className="sr-only">Prix initial : </span>
-						{formatEuro(selectedSku.compareAtPrice!)}
-					</span>
-				)}
-
-				{/* Badge de réduction — inversion d'encre, lisible sur n'importe quel aplat */}
-				{hasDiscount && (
-					<span
-						className="bg-foreground text-background rounded-full px-2.5 py-1 text-xs font-semibold"
-						aria-label={`Réduction de ${discountPercent} pourcent`}
-					>
-						-{discountPercent}%
-					</span>
-				)}
 
 				{/* Disponibilité : distinguée par le LIBELLÉ, pas par la couleur */}
 				<span className="ms-auto text-sm font-semibold">
@@ -169,15 +141,6 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 					)}
 				</span>
 			</div>
-
-			{/* Message d'économie */}
-			{hasDiscount && (
-				<p className="text-sm font-medium">
-					{PRODUCT_TEXTS.PRICING.SAVINGS(
-						formatEuro(selectedSku.compareAtPrice! - selectedSku.priceInclTax),
-					)}
-				</p>
-			)}
 
 			{/* La date de livraison n'est rendue QUE si la pièce est achetable : elle
 			    s'affichait auparavant dans les deux branches, donc juste au-dessus de

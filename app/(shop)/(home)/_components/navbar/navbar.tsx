@@ -87,7 +87,10 @@ export async function Navbar() {
 		};
 	});
 
-	// Collections avec images[] pour les menus (Bento Grid - jusqu'à 4 images)
+	// Collections avec images[] — plus pour un bento (supprimé le 2026-08-08 avec
+	// toutes les surfaces à cartes de collection, à refaire), mais pour la SEULE
+	// collection vedette du panneau Créations, composée plus bas. La lecture
+	// reste donc utile ; c'est son unique consommateur.
 	const menuCollections = collectionsData.collections.map((c) => ({
 		slug: c.slug,
 		label: c.name,
@@ -104,7 +107,7 @@ export async function Navbar() {
 
 	// Featured products for the mega menu — the 2 newest published creations.
 	// "Nouveau" badge eligibility via shared isRecent() helper (NEW_PRODUCT_BADGE_DAYS window).
-	// `skus[0]` est le SKU par défaut (orderBy `isDefault desc` de GET_PRODUCTS_SELECT) ;
+	// `skus[0]` est le représentant (orderBy `(position asc, id asc)` de GET_PRODUCTS_SELECT) ;
 	// le choix du média passe par la SSOT pickPrimaryImage — ce select ne filtre pas
 	// `mediaType`, réécrire `find(isPrimary) ?? images[0]` mettrait un .mp4 dans <Image src>.
 	// Un produit sans image réelle est écarté du rail plutôt que rendu en placeholder.
@@ -138,10 +141,7 @@ export async function Navbar() {
 		: null;
 
 	// Générer les items de navigation desktop avec mega menus
-	const desktopNavItems = getDesktopNavItems({
-		productTypes,
-		collections: menuCollections,
-	});
+	const desktopNavItems = getDesktopNavItems({ productTypes });
 
 	// Collection vedette (1re = plus de produits) — fallback éditorial du panneau Créations
 	// quand aucune nouveauté récente n'est disponible (évite un panneau déséquilibré).
@@ -199,10 +199,13 @@ export async function Navbar() {
 							{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 							<div className="flex min-w-0 flex-1 items-center lg:flex-none">
 								{/* Menu burger (mobile uniquement) */}
+								{/* Plus de prop `collections` : la bande de cartes du volet est
+								    partie le 2026-08-08 avec les autres surfaces à cartes de
+								    collection (à refaire). L'accès à `/collections` survit en
+								    rangée pleine largeur, servie par la SSOT `getMobileNavItems`. */}
 								<MenuSheet
 									navItems={mobileNavItems}
 									productTypes={productTypes}
-									collections={menuCollections}
 									isAdmin={userIsAdmin}
 									session={sessionData}
 								/>

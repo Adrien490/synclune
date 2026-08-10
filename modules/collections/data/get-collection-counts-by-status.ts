@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
@@ -25,9 +25,9 @@ export async function getCollectionCountsByStatus(): Promise<GetCollectionCounts
 	const admin = await requireAdmin();
 	if ("error" in admin) {
 		return {
-			[CollectionStatus.PUBLIC]: 0,
-			[CollectionStatus.DRAFT]: 0,
-			[CollectionStatus.ARCHIVED]: 0,
+			[PublicationStatus.PUBLIC]: 0,
+			[PublicationStatus.DRAFT]: 0,
+			[PublicationStatus.ARCHIVED]: 0,
 		};
 	}
 
@@ -41,9 +41,9 @@ export async function getCollectionCountsByStatus(): Promise<GetCollectionCounts
 			service: "getCollectionCountsByStatus",
 		});
 		return {
-			[CollectionStatus.PUBLIC]: 0,
-			[CollectionStatus.DRAFT]: 0,
-			[CollectionStatus.ARCHIVED]: 0,
+			[PublicationStatus.PUBLIC]: 0,
+			[PublicationStatus.DRAFT]: 0,
+			[PublicationStatus.ARCHIVED]: 0,
 		};
 	}
 }
@@ -64,13 +64,13 @@ async function fetchCollectionCountsByStatus(): Promise<CollectionCountsByStatus
 	});
 
 	const result: CollectionCountsByStatus = {
-		[CollectionStatus.PUBLIC]: 0,
-		[CollectionStatus.DRAFT]: 0,
-		[CollectionStatus.ARCHIVED]: 0,
+		[PublicationStatus.PUBLIC]: 0,
+		[PublicationStatus.DRAFT]: 0,
+		[PublicationStatus.ARCHIVED]: 0,
 	};
 
 	counts.forEach((count) => {
-		result[count.status as CollectionStatus] = count._count.id;
+		result[count.status as PublicationStatus] = count._count.id;
 	});
 
 	return result;

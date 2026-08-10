@@ -70,8 +70,9 @@ vi.mock("motion/react", () => ({
 
 import { ProductDetailMediaCard } from "../product-detail-media-card";
 
+// Plus de `isDefault` ni de `isPrimary` : l'ordre des tableaux (skus, images) EST
+// l'ordre canonique (position, id) livré par GET_PRODUCT_SELECT.
 type SkuInput = {
-	isDefault: boolean;
 	images: unknown[];
 	colors?: Array<{ colorId: string; color: { name: string; hex: string } }>;
 	materials?: Array<{ material: { name: string } }>;
@@ -92,7 +93,7 @@ const makeProduct = (skus: Array<SkuInput>) =>
 		skus: skus.map((s, i) => ({
 			id: `sku-${i}`,
 			sku: s.sku ?? `SKU-${i}`,
-			isDefault: s.isDefault,
+			position: i,
 			images: s.images,
 			colors: s.colors ?? [],
 			materials: s.materials ?? [],
@@ -111,15 +112,14 @@ describe("ProductDetailMediaCard", () => {
 	});
 
 	it("affiche le placeholder quand SKU sans image", () => {
-		const product = makeProduct([{ isDefault: true, images: [] }]);
+		const product = makeProduct([{ images: [] }]);
 		render(<ProductDetailMediaCard product={product} />);
 		expect(screen.getByText("Aucun média")).toBeInTheDocument();
 	});
 
-	it("affiche l'image principale du SKU par défaut en priorité", () => {
+	it("affiche l'image principale (rang 0) de la variante principale en priorité", () => {
 		const product = makeProduct([
 			{
-				isDefault: true,
 				images: [
 					{
 						id: "i-1",
@@ -128,7 +128,6 @@ describe("ProductDetailMediaCard", () => {
 						blurDataUrl: null,
 						altText: "Image principale",
 						mediaType: "IMAGE",
-						isPrimary: true,
 					},
 				],
 			},
@@ -139,10 +138,9 @@ describe("ProductDetailMediaCard", () => {
 		expect(images[0]).toHaveAttribute("alt", "Image principale");
 	});
 
-	it("met l'image isPrimary en tête puis affiche le reste en secondaire", () => {
+	it("affiche images[0] en tête (ordre canonique) puis le reste en secondaire", () => {
 		const product = makeProduct([
 			{
-				isDefault: true,
 				images: [
 					{
 						id: "i-1",
@@ -151,7 +149,6 @@ describe("ProductDetailMediaCard", () => {
 						blurDataUrl: null,
 						altText: null,
 						mediaType: "IMAGE",
-						isPrimary: false,
 					},
 					{
 						id: "i-2",
@@ -160,55 +157,31 @@ describe("ProductDetailMediaCard", () => {
 						blurDataUrl: null,
 						altText: null,
 						mediaType: "IMAGE",
-						isPrimary: true,
 					},
 				],
 			},
 		]);
 		render(<ProductDetailMediaCard product={product} />);
 		const images = screen.getAllByTestId("next-image");
-		// Primary en premier (rendu hors des galeries)
-		expect(images[0]).toHaveAttribute("src", "https://cdn/b.jpg");
+		// Le rang 0 du tableau est le média principal (rendu hors des galeries)
+		expect(images[0]).toHaveAttribute("src", "https://cdn/a.jpg");
 		// Toutes les URLs doivent apparaître au moins une fois
 		const urls = images.map((img) => img.getAttribute("src"));
-		expect(urls).toContain("https://cdn/b.jpg");
-		expect(urls.some((u) => u === "https://cdn/a.jpg")).toBe(true);
+		expect(urls).toContain("https://cdn/a.jpg");
+		expect(urls.some((u) => u === "https://cdn/b.jpg")).toBe(true);
 	});
 
-	it("utilise le premier SKU si aucun n'est isDefault", () => {
-		const product = makeProduct([
-			{
-				isDefault: false,
-				images: [
-					{
-						id: "i-1",
-						url: "https://cdn/x.jpg",
-						thumbnailUrl: null,
-						blurDataUrl: null,
-						altText: null,
-						mediaType: "IMAGE",
-						isPrimary: false,
-					},
-				],
-			},
-		]);
-		render(<ProductDetailMediaCard product={product} />);
-		const images = screen.getAllByTestId("next-image");
-		expect(images[0]).toHaveAttribute("src", "https://cdn/x.jpg");
-	});
-
-	const img = (id: string, url: string, isPrimary = true) => ({
+	const img = (id: string, url: string) => ({
 		id,
 		url,
 		thumbnailUrl: null,
 		blurDataUrl: null,
 		altText: null,
 		mediaType: "IMAGE",
-		isPrimary,
 	});
 
 	it("n'affiche pas le sélecteur de variante s'il n'y a qu'un seul SKU avec images", () => {
-		const product = makeProduct([{ isDefault: true, images: [img("i-1", "https://cdn/a.jpg")] }]);
+		const product = makeProduct([{ images: [img("i-1", "https://cdn/a.jpg")] }]);
 		render(<ProductDetailMediaCard product={product} />);
 		expect(
 			screen.queryByRole("group", { name: /Choisir la variante à prévisualiser/i }),
@@ -218,12 +191,10 @@ describe("ProductDetailMediaCard", () => {
 	it("affiche un sélecteur de variante quand ≥ 2 SKU ont des images", () => {
 		const product = makeProduct([
 			{
-				isDefault: true,
 				images: [img("i-1", "https://cdn/or.jpg")],
 				colors: [{ colorId: "c-or", color: { name: "Or", hex: "#FFD700" } }],
 			},
 			{
-				isDefault: false,
 				images: [img("i-2", "https://cdn/argent.jpg")],
 				colors: [{ colorId: "c-arg", color: { name: "Argent", hex: "#C0C0C0" } }],
 			},
@@ -231,19 +202,17 @@ describe("ProductDetailMediaCard", () => {
 		render(<ProductDetailMediaCard product={product} />);
 		const group = screen.getByRole("group", { name: /Choisir la variante à prévisualiser/i });
 		expect(group).toBeInTheDocument();
-		// Le SKU par défaut (Or) est sélectionné → son image principale est affichée
+		// La variante principale (rang 0, Or) est sélectionnée → son image est affichée
 		expect(screen.getAllByTestId("next-image")[0]).toHaveAttribute("src", "https://cdn/or.jpg");
 	});
 
 	it("bascule la galerie sur le SKU sélectionné au clic", () => {
 		const product = makeProduct([
 			{
-				isDefault: true,
 				images: [img("i-1", "https://cdn/or.jpg")],
 				colors: [{ colorId: "c-or", color: { name: "Or", hex: "#FFD700" } }],
 			},
 			{
-				isDefault: false,
 				images: [img("i-2", "https://cdn/argent.jpg")],
 				colors: [{ colorId: "c-arg", color: { name: "Argent", hex: "#C0C0C0" } }],
 			},
@@ -256,12 +225,10 @@ describe("ProductDetailMediaCard", () => {
 	it("ignore les SKU sans image dans le sélecteur", () => {
 		const product = makeProduct([
 			{
-				isDefault: true,
 				images: [img("i-1", "https://cdn/or.jpg")],
 				colors: [{ colorId: "c-or", color: { name: "Or", hex: "#FFD700" } }],
 			},
 			{
-				isDefault: false,
 				images: [],
 				colors: [{ colorId: "c-x", color: { name: "Vide", hex: "#000" } }],
 			},
@@ -273,10 +240,21 @@ describe("ProductDetailMediaCard", () => {
 		).not.toBeInTheDocument();
 	});
 
+	it("retombe sur la première variante AVEC images quand le rang 0 n'en a pas", () => {
+		const product = makeProduct([
+			{ images: [] },
+			{
+				images: [img("i-1", "https://cdn/x.jpg")],
+			},
+		]);
+		render(<ProductDetailMediaCard product={product} />);
+		const images = screen.getAllByTestId("next-image");
+		expect(images[0]).toHaveAttribute("src", "https://cdn/x.jpg");
+	});
+
 	it("alt fallback sur le titre si altText absent pour l'image principale", () => {
 		const product = makeProduct([
 			{
-				isDefault: true,
 				images: [
 					{
 						id: "i-1",
@@ -285,7 +263,6 @@ describe("ProductDetailMediaCard", () => {
 						blurDataUrl: null,
 						altText: null,
 						mediaType: "IMAGE",
-						isPrimary: true,
 					},
 				],
 			},

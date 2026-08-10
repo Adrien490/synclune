@@ -39,7 +39,7 @@ async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 	"use cache";
 	cacheSkuDetailById(skuId);
 
-	return prisma.productSku.findUnique({
+	const sku = await prisma.productSku.findUnique({
 		// Parité avec le pattern `notDeleted` : une variante soft-deleted appartient à
 		// un produit lui-même supprimé, il n'existe aucun écran légitime pour l'afficher.
 		where: { id: skuId, deletedAt: null },
@@ -56,12 +56,26 @@ async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 					mediaType: true,
 					width: true,
 					height: true,
-					isPrimary: true,
 				},
-				orderBy: { position: "asc" },
+				// Ordre canonique : le média principal est le premier élément
+				// (la colonne `isPrimary` n'existe plus, audit schéma V5, lot A1).
+				orderBy: [{ position: "asc" }, { id: "asc" }],
 			},
 		},
 	});
+	if (!sku) return null;
+
+	// Le représentant du produit est le rang 0 de (position asc, id asc) parmi les
+	// variantes non supprimées (remplace la colonne `isDefault`, audit schéma V5,
+	// lot A2). Calculé ici pour que le formulaire d'édition puisse pré-cocher
+	// « Variante par défaut » — le champ de formulaire, lui, survit.
+	const rankZero = await prisma.productSku.findFirst({
+		where: { productId: sku.productId, deletedAt: null },
+		orderBy: [{ position: "asc" }, { id: "asc" }],
+		select: { id: true },
+	});
+
+	return { ...sku, isRepresentative: rankZero?.id === sku.id };
 }
 
 // ============================================================================
@@ -88,7 +102,7 @@ async function fetchSkuDetailById(skuId: string) {
 	"use cache";
 	cacheSkuDetailById(skuId);
 
-	return prisma.productSku.findUnique({
+	const sku = await prisma.productSku.findUnique({
 		// Idem `fetchSkuById` : pas d'écran pour une variante soft-deleted.
 		where: { id: skuId, deletedAt: null },
 		select: {
@@ -99,7 +113,6 @@ async function fetchSkuDetailById(skuId: string) {
 			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
-			isDefault: true,
 			size: true,
 			createdAt: true,
 			updatedAt: true,
@@ -129,9 +142,10 @@ async function fetchSkuDetailById(skuId: string) {
 					mediaType: true,
 					width: true,
 					height: true,
-					isPrimary: true,
 				},
-				orderBy: { position: "asc" },
+				// Ordre canonique : le média principal est le premier élément
+				// (la colonne `isPrimary` n'existe plus, audit schéma V5, lot A1).
+				orderBy: [{ position: "asc" }, { id: "asc" }],
 			},
 			_count: { select: { orderItems: true } },
 			product: {
@@ -144,25 +158,21 @@ async function fetchSkuDetailById(skuId: string) {
 					// Vignette unique : l'appelant prend `product.skus[0]?.images[0]` sans
 					// pouvoir trier, donc le tri se fait ici.
 					//
-					// `where: { isDefault: true }` et `where: { isPrimary: true }` étaient
-					// tous deux des filtres — le motif banni par CLAUDE.md : un produit sans
-					// SKU par défaut (état que delete-sku produit légitimement), ou un SKU
-					// sans média primaire, rendait 0 image alors qu'il en a. On ordonne au
-					// lieu de filtrer. Et `mediaType: "IMAGE"` est obligatoire ici : sans lui
-					// un `.mp4` atterrit dans `<Image src>` (vignette cassée + transformation
+					// On ordonne au lieu de filtrer (motif banni par CLAUDE.md : un filtre
+					// rend 0 image alors que le SKU en a). L'ordre canonique
+					// (position asc, id asc) remonte le représentant actif en premier —
+					// remplace `isDefault desc` / `isPrimary desc` (audit schéma V5).
+					// Et `mediaType: "IMAGE"` est obligatoire ici : sans lui un `.mp4`
+					// atterrit dans `<Image src>` (vignette cassée + transformation
 					// `/_next/image` facturée). Même pattern que get-material.ts.
 					skus: {
 						where: { isActive: true, deletedAt: null },
-						orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+						orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 						take: 1,
 						select: {
 							images: {
 								where: { mediaType: "IMAGE" as const },
-								orderBy: [
-									{ isPrimary: "desc" as const },
-									{ position: "asc" as const },
-									{ id: "asc" as const },
-								],
+								orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 								take: 1,
 								select: { url: true, blurDataUrl: true, altText: true },
 							},
@@ -172,4 +182,16 @@ async function fetchSkuDetailById(skuId: string) {
 			},
 		},
 	});
+	if (!sku) return null;
+
+	// Représentant = rang 0 de (position asc, id asc) parmi les variantes non
+	// supprimées du produit (remplace `isDefault`, audit schéma V5, lot A2).
+	// Même pattern que la garde de désactivation d'update-sku-status.
+	const rankZero = await prisma.productSku.findFirst({
+		where: { productId: sku.productId, deletedAt: null },
+		orderBy: [{ position: "asc" }, { id: "asc" }],
+		select: { id: true },
+	});
+
+	return { ...sku, isRepresentative: rankZero?.id === sku.id };
 }

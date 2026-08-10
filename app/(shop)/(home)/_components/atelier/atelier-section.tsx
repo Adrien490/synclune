@@ -54,9 +54,10 @@ const TITLE_ID = "atelier-title";
  * elle mettrait le rose contre le nœud final, à l'autre bout du fil, où il n'a
  * rien à dire.
  *
- * ⚠️ Les notes portaient chacune un `MaskingTape` teinté. Les quatre ont été
- * retirés le 2026-08-06 : c'était le dernier ruban EN SÉRIE du storefront. Ne
- * pas les remettre.
+ * ⚠️ Les notes portaient chacune un ruban de masking tape teinté. Les quatre
+ * ont été retirés le 2026-08-06 (dernier ruban EN SÉRIE du storefront), et le
+ * motif a été retiré de toute l'app le 2026-08-08 (composant supprimé). Ne pas
+ * les remettre.
  */
 const STEP_ACCENTS: Record<AtelierStepId, string> = {
 	idea: "rose",

@@ -6,7 +6,7 @@ import { ArchiveIcon, GlobeIcon, NotePencilIcon, PackageIcon } from "@phosphor-i
 import type { Icon } from "@phosphor-icons/react";
 
 // Generated types
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 
 // Shared components
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
@@ -37,10 +37,10 @@ import { getProductTotalStock } from "@/modules/products/utils/get-product-total
 import { ProductImageCell } from "./product-image-cell";
 import { ProductRowActions } from "./product-row-actions";
 
-const PRODUCT_STATUS_ICONS: Record<ProductStatus, Icon> = {
-	[ProductStatus.PUBLIC]: GlobeIcon,
-	[ProductStatus.DRAFT]: NotePencilIcon,
-	[ProductStatus.ARCHIVED]: ArchiveIcon,
+const PRODUCT_STATUS_ICONS: Record<PublicationStatus, Icon> = {
+	[PublicationStatus.PUBLIC]: GlobeIcon,
+	[PublicationStatus.DRAFT]: NotePencilIcon,
+	[PublicationStatus.ARCHIVED]: ArchiveIcon,
 };
 
 interface ProductsDataTableProps {

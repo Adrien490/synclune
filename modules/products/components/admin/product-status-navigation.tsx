@@ -1,10 +1,10 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { PublicationStatus } from "@/app/generated/prisma/client";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 
 const EMPTY_SEARCH_PARAMS: Record<string, string | string[] | undefined> = {};
 
 interface ProductStatusNavigationProps {
-	currentStatus: ProductStatus | undefined;
+	currentStatus: PublicationStatus | undefined;
 	pathname?: string;
 	searchParams?: Record<string, string | string[] | undefined>;
 }
@@ -12,10 +12,10 @@ interface ProductStatusNavigationProps {
 // Pluriels d'onglets (« Publics », « Brouillons »…) : variante de présentation
 // volontairement locale — les singuliers SSOT vivent dans
 // modules/products/constants/product-status-display.ts.
-const STATUS_LABELS: Record<ProductStatus, string> = {
-	[ProductStatus.PUBLIC]: "Publics",
-	[ProductStatus.DRAFT]: "Brouillons",
-	[ProductStatus.ARCHIVED]: "Archivés",
+const STATUS_LABELS: Record<PublicationStatus, string> = {
+	[PublicationStatus.PUBLIC]: "Publics",
+	[PublicationStatus.DRAFT]: "Brouillons",
+	[PublicationStatus.ARCHIVED]: "Archivés",
 };
 
 /**
@@ -28,7 +28,7 @@ export function ProductStatusNavigation({
 	searchParams = EMPTY_SEARCH_PARAMS,
 }: ProductStatusNavigationProps) {
 	// Construire les URLs avec les query params existants
-	const buildHref = (status: ProductStatus | "all") => {
+	const buildHref = (status: PublicationStatus | "all") => {
 		const params = new URLSearchParams();
 
 		// Copier tous les params existants sauf status, cursor et direction
@@ -56,7 +56,7 @@ export function ProductStatusNavigation({
 			value: "all" as const,
 			href: buildHref("all"),
 		},
-		...Object.values(ProductStatus).map((status) => ({
+		...Object.values(PublicationStatus).map((status) => ({
 			label: STATUS_LABELS[status],
 			value: status,
 			href: buildHref(status),

@@ -66,38 +66,6 @@ export function determineStockStatus(
 }
 
 /**
- * Calcule le pourcentage de réduction
- *
- * @param compareAtPrice - Prix barré (avant réduction)
- * @param priceInclTax - Prix actuel TTC
- * @returns Pourcentage de réduction (0 si pas de réduction)
- */
-export function calculateDiscountPercent(
-	compareAtPrice: number | undefined | null,
-	priceInclTax: number,
-): number {
-	if (!compareAtPrice || compareAtPrice <= priceInclTax) {
-		return 0;
-	}
-
-	return Math.round(((compareAtPrice - priceInclTax) / compareAtPrice) * 100);
-}
-
-/**
- * Vérifie si un SKU a une promotion active
- *
- * @param compareAtPrice - Prix barré
- * @param priceInclTax - Prix actuel
- * @returns true si promotion active
- */
-export function hasActiveDiscount(
-	compareAtPrice: number | undefined | null,
-	priceInclTax: number,
-): boolean {
-	return !!compareAtPrice && compareAtPrice > priceInclTax;
-}
-
-/**
  * Retourne l'URL Schema.org pour le statut de disponibilité
  *
  * @param stockStatus - Statut de stock
@@ -113,22 +81,4 @@ export function getSchemaOrgAvailabilityUrl(stockStatus: StockStatus): string {
 		default:
 			return "https://schema.org/InStock";
 	}
-}
-
-/**
- * Calcule les économies réalisées avec une promotion
- *
- * @param compareAtPrice - Prix barré
- * @param priceInclTax - Prix actuel
- * @returns Montant économisé (0 si pas de réduction)
- */
-export function calculateSavings(
-	compareAtPrice: number | undefined | null,
-	priceInclTax: number,
-): number {
-	if (!compareAtPrice || compareAtPrice <= priceInclTax) {
-		return 0;
-	}
-
-	return compareAtPrice - priceInclTax;
 }

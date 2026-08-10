@@ -93,9 +93,12 @@ export const COLLECTION_CHAPTER_PRINT_COUNT = 3;
  */
 export const COLLECTION_IMAGE_QUALITY = IMAGE_QUALITY.STANDARD;
 
-/**
- * Seuil above-the-fold — RE-EXPORT de la SSOT produits (valeur auparavant
- * dupliquee ici, libre de deriver). Ne pilote que `loading="eager"` : la priorite
- * reseau reste reservee au seul candidat LCP.
+/*
+ * ⚠️ Plus de re-export d'`ABOVE_FOLD_THRESHOLD` : son seul consommateur était le
+ * carnet des séries, supprimé le 2026-08-08 avec les autres surfaces à cartes de
+ * collection (à refaire). La SSOT reste
+ * `modules/products/constants/product-texts.constants.ts` — importer DE LÀ, et
+ * surtout ne pas re-dupliquer la valeur ici : c'est exactement ce que ce
+ * re-export corrigeait. Elle ne pilote que `loading="eager"` ; la priorité
+ * réseau reste réservée au seul candidat LCP.
  */
-export { ABOVE_FOLD_THRESHOLD } from "@/modules/products/constants/product-texts.constants";

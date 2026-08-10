@@ -27,23 +27,36 @@ interface SkuMobileItemProps {
 	productSlug: string;
 	/** Premier item ATF : déclenche preload SSR (LCP candidate). */
 	preload?: boolean;
+	/**
+	 * Vrai si le SKU est le représentant du produit — rang 0 de
+	 * (position asc, id asc), calculé au niveau liste via `representativeSkuId`
+	 * (remplace la colonne `isDefault`, audit schéma V5, lot A2).
+	 */
+	isRepresentative?: boolean;
 }
 
-export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps) {
-	const primaryImage = sku.images.find((img) => img.isPrimary) ?? sku.images[0] ?? null;
+export function SkuMobileItem({
+	sku,
+	productSlug,
+	preload,
+	isRepresentative = false,
+}: SkuMobileItemProps) {
+	// Média principal = premier de l'ordre canonique (position asc, id asc),
+	// déjà appliqué par le select — `isPrimary` n'existe plus.
+	const primaryImage = sku.images[0] ?? null;
 	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> icône de secours.
 	// Remplace l'ancien `unoptimized` qui servait une URL .mp4 à `next/image`.
 	const thumbSrc = primaryImage ? resolveMediaThumbSrc(primaryImage) : null;
 	const stockVariant = getStockVariant(sku.inventory);
-	const displayTitle = getSkuDisplayTitle(sku);
-	const spokenTitle = getSkuDisplayTitleSpoken(sku);
+	const displayTitle = getSkuDisplayTitle({ ...sku, isRepresentative });
+	const spokenTitle = getSkuDisplayTitleSpoken({ ...sku, isRepresentative });
 	const colorHexes = getColorHexes(sku.colors);
 
 	const { sections } = useSkuActions({
 		skuId: sku.id,
 		skuName: sku.sku,
 		productSlug,
-		isDefault: sku.isDefault,
+		isRepresentative,
 		isActive: sku.isActive,
 		inventory: sku.inventory,
 		priceInclTax: sku.priceInclTax,
@@ -95,7 +108,7 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 							/>
 						) : null}
 						<span className="truncate font-semibold">{displayTitle}</span>
-						{sku.isDefault ? <Badge variant="secondary">Par défaut</Badge> : null}
+						{isRepresentative ? <Badge variant="secondary">Par défaut</Badge> : null}
 						{!sku.isActive ? <Badge variant="outline">Inactif</Badge> : null}
 						<Badge
 							variant={stockVariant}

@@ -2,7 +2,7 @@ import { ChartBarIcon, StarIcon } from "@phosphor-icons/react/ssr";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 
-import { ProductStatus } from "@/app/generated/prisma/enums";
+import { PublicationStatus } from "@/app/generated/prisma/enums";
 import type { GetCollectionReturn } from "@/modules/collections/types/collection.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 
@@ -15,12 +15,14 @@ export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsC
 	// _count.products is filtered to PUBLIC + reflects the real total even when
 	// the products array is capped (GET_COLLECTION_PRODUCTS_LIMIT).
 	const total = collection._count.products;
-	const publicCount = products.filter((pc) => pc.product.status === ProductStatus.PUBLIC).length;
-	const featured = products.find((pc) => pc.isFeatured);
-	const featuredImage =
-		featured?.product.skus[0]?.images.find((i) => i.isPrimary) ??
-		featured?.product.skus[0]?.images[0] ??
-		null;
+	const publicCount = products.filter(
+		(pc) => pc.product.status === PublicationStatus.PUBLIC,
+	).length;
+	// La vedette est le rang 0 de la liste pre-triee (position asc, addedAt desc) ;
+	// son image principale est la premiere IMAGE de l'ordre (position, id) — le
+	// select ne remonte que des mediaType: IMAGE, deja tries.
+	const featured = products[0];
+	const featuredImage = featured?.product.skus[0]?.images[0] ?? null;
 
 	return (
 		<Card>
@@ -74,7 +76,9 @@ export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsC
 							</div>
 						</div>
 					) : (
-						<p className="text-muted-foreground text-sm italic">Aucun produit vedette défini.</p>
+						<p className="text-muted-foreground text-sm italic">
+							Aucun produit public dans cette collection.
+						</p>
 					)}
 				</div>
 			</CardContent>

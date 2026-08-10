@@ -209,14 +209,10 @@ export function StickyCartCTADesktop({
 
 						{/* Prix */}
 						<div className="flex shrink-0 items-baseline gap-2">
+							{/* Pas de prix barré (retrait Omnibus 2026-08-08, cf. ProductPrice) */}
 							<span className="text-foreground text-lg font-semibold">
 								{formatEuro(currentSku.priceInclTax)}
 							</span>
-							{currentSku.compareAtPrice && currentSku.compareAtPrice > currentSku.priceInclTax && (
-								<span className="text-muted-foreground text-sm line-through">
-									{formatEuro(currentSku.compareAtPrice)}
-								</span>
-							)}
 						</div>
 
 						{/* CTA */}

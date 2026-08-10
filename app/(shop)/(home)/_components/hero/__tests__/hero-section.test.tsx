@@ -63,7 +63,8 @@ function createSku(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "sku-1",
 		isActive: true,
-		isDefault: true,
+		// V5 : plus d'`isDefault` — le représentant est skus[0] (listes pré-triées)
+		position: 0,
 		inventory: 10,
 		priceInclTax: 2500,
 		compareAtPrice: null,
@@ -78,7 +79,6 @@ function createSku(overrides: Record<string, unknown> = {}) {
 				url: "/image.jpg",
 				thumbnailUrl: "/image-thumb.jpg",
 				altText: null,
-				isPrimary: true,
 				mediaType: "IMAGE",
 				blurDataUrl: null,
 				width: null,
@@ -467,9 +467,10 @@ describe("HeroGrid — états durs", () => {
 
 		// Le titre n'est pas tronqué dans le DOM (le clamp est visuel).
 		expect(within(article).getByRole("heading", { level: 3 })).toHaveTextContent(longTitle);
-		// Prix à quatre chiffres + remise : les deux coexistent sur la légende.
+		// Prix à quatre chiffres — sans remise : l'affichage promo est retiré
+		// (Omnibus 2026-08-08), un compareAtPrice en base ne produit plus rien.
 		expect(text).toMatch(/1 249,00/);
-		expect(text).toMatch(/-3[0-9] ?%/);
+		expect(text).not.toMatch(/-3[0-9] ?%/);
 		// …en même temps que le badge d'urgence stock.
 		expect(text).toMatch(/Plus que 1/);
 	});

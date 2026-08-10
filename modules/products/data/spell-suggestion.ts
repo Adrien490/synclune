@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 
-import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
+import { Prisma, type PublicationStatus } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { isPgTrgmAvailable } from "@/shared/lib/pg-trgm-availability";
 import { prisma } from "@/shared/lib/prisma";
@@ -45,7 +45,7 @@ type SpellSuggestion = {
 
 type SuggestionOptions = {
 	/** Product status to consider */
-	status?: ProductStatus;
+	status?: PublicationStatus;
 };
 
 type BatchResult = {
@@ -139,7 +139,7 @@ async function fetchSpellSuggestion(
 
 	try {
 		const statusCondition = status
-			? Prisma.sql`AND p.status = ${status}::"ProductStatus"`
+			? Prisma.sql`AND p.status = ${status}::"PublicationStatus"`
 			: Prisma.empty;
 
 		// Build VALUES clause for all eligible words at once

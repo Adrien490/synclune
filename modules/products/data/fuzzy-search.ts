@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
+import { Prisma, type PublicationStatus } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { isPgTrgmAvailable } from "@/shared/lib/pg-trgm-availability";
 import { prisma } from "@/shared/lib/prisma";
@@ -27,7 +27,7 @@ type FuzzySearchOptions = {
 	/** Max results (default: FUZZY_MAX_RESULTS) */
 	limit?: number;
 	/** Filter by product status */
-	status?: ProductStatus;
+	status?: PublicationStatus;
 };
 
 type FuzzySearchResult = {
@@ -187,7 +187,7 @@ export async function fuzzySearchProductIds(
 							FROM "Product" p
 							WHERE
 								p."deletedAt" IS NULL
-								${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
+								${status ? Prisma.sql`AND p.status = ${status}::"PublicationStatus"` : Prisma.empty}
 								AND ${whereClause}
 						)
 						SELECT "productId", score, COUNT(*) OVER() as "totalCount"
@@ -251,7 +251,7 @@ export async function fuzzySearchProductIds(
  */
 async function fuzzySearchProductIdsIlikeFallback(
 	words: string[],
-	status: ProductStatus | undefined,
+	status: PublicationStatus | undefined,
 	limit: number,
 ): Promise<FuzzySearchReturn> {
 	const startTime = performance.now();
@@ -273,7 +273,7 @@ async function fuzzySearchProductIdsIlikeFallback(
 				FROM "Product" p
 				WHERE
 					p."deletedAt" IS NULL
-					${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
+					${status ? Prisma.sql`AND p.status = ${status}::"PublicationStatus"` : Prisma.empty}
 					AND ${whereClause}
 			)
 			SELECT "productId", COUNT(*) OVER() as "totalCount"

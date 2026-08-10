@@ -80,7 +80,7 @@ const product = {
 			priceInclTax: 4500,
 			compareAtPrice: null,
 			inventory: 3,
-			isDefault: true,
+			position: 0,
 			colors: [],
 			images: [{ url: "/img/b.jpg", blurDataUrl: null, altText: "Bague" }],
 		},

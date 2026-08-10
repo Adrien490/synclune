@@ -32,17 +32,11 @@ describe("ShelfBarButton", () => {
 		expect(screen.getByRole("button", { name: "Trier" }).className).toContain("h-11");
 	});
 
-	it("actif + showTape : ruban décoratif présent, rotation posée", () => {
-		render(
-			<ShelfBarButton active showTape>
-				Trier
-			</ShelfBarButton>,
-		);
+	it("actif : rotation posée", () => {
+		render(<ShelfBarButton active>Trier</ShelfBarButton>);
 
 		const button = screen.getByRole("button", { name: "Trier" });
 		expect(button.className).toContain("-rotate-1");
-		// Le ruban est purement décoratif — il ne doit rien annoncer.
-		expect(button.querySelector('[aria-hidden="true"]')).not.toBeNull();
 	});
 
 	it("l'accent teinte l'état actif (classes littérales)", () => {

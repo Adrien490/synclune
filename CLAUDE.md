@@ -59,13 +59,16 @@ c'est la **sobriété qui doit se justifier**, pas l'inverse : une direction sag
   ⚠️ Cette scène tenait le **premier écran** jusqu'au 2026-08-07 ; elle en est partie parce qu'un
   dessin de bijoux y voisinait des PHOTOS de bijoux — même sujet rendu deux fois, et le dessin perd.
   Tracés : `ATELIER_THREAD_PATHS` et `CREATION_PATHS` (`shared/components/hand-drawn/paths.ts`), qui
-  a ouvert le 2026-08-06 le gisement resté inexploité — grappe, feuille, cabochon peint, œil,
-  volute. Il ne reste sans tracé que le **présentoir illustré** et la **chaîne à pampilles**.
+  a ouvert le 2026-08-06 le gisement resté inexploité — grappe, feuille, cabochon peint, volute
+  (l'œil est reparti le jour même avec la refonte de fidélité produit ; l'inventaire qui fait foi
+  est le fichier, cf. `docs/BRAND-DA.md`). Il ne reste sans tracé que le **présentoir illustré** —
+  le collier arc-en-ciel de la scène couvre désormais la chaîne à pampilles.
 - **Le trio cœur · étoile · lune est le raccourci le plus court vers un « oui » de Léane** (verbatim
   du 2026-08-06 : « si c'est rose et dans la DA cœur étoile lune ça va me plaire »). ⚠️ Il garde un
-  consommateur, mais en **détail** et non plus en sujet : la lune et les étoiles sont peintes dans
-  le ciel du cabochon du présentoir, le cœur y est la plus petite pièce
-  (`shared/components/hand-drawn/creations.ts`, rendu par `app/opengraph-image.tsx` via
+  consommateur, mais en **détail** et non plus en sujet : le cœur ponctue le portrait de l'atelier
+  (`ACCENT_SHAPE_PATHS.heart` via `HandDrawnAccent`), et sur la carte de partage les « étoiles » de
+  la Nuit étoilée sont des TOUCHES de peinture jaunes — aucun glyphe d'étoile ni de lune dans la
+  scène (`shared/components/hand-drawn/creations.ts`, rendu par `app/opengraph-image.tsx` via
   `shared/components/og/og-marks.ts`). ⚠️ Le présentoir a quitté le premier écran le 2026-08-07 —
   on ne dessine pas ce qui est photographié 40 px plus loin ; la carte de partage, elle, n'a
   aucune photo en face.
@@ -105,7 +108,9 @@ c'est la **sobriété qui doit se justifier**, pas l'inverse : une direction sag
   le 2026-08-06 (le centre est la polychromie narrative, pas le rose seul), mais quand il s'applique
   c'est le décalé et le naïf assumé qui empêchent le rose de virer princesse.
 - ⚠️ **Les mots à ne pas mettre au centre** : minimaliste, sobre, épuré, neutre, intemporel, quiet
-  luxury, premium, prestige, joaillerie fine, pierre précieuse, mariage chic. Une pièce isolée peut
+  luxury, premium, prestige, joaillerie fine, pierre précieuse, mariage chic — liste complète dans
+  le lexique, appliquée aux surfaces d'identité (brand, JSON-LD, metadata) par
+  `test/contract/brand-lexicon.contract.test.ts`. Une pièce isolée peut
   les mériter ; la marque, jamais. **Et le catalogue en base n'est pas la DA** — le jeu de
   démonstration (`prisma/seed.ts`) est du plaqué or, du Swarovski et des visuels de banque d'images,
   soit le contre-brief exact.
@@ -291,15 +296,22 @@ versionné ne bouge — d'où `test/contract/react-compiler-lint-rules.contract.
 
 ## Catalogue — invariants
 
-**La carte collection a sa doctrine à part** — ce qu'elle doit montrer, dans quel ordre, et ce qui la
-distingue d'une carte produit. La thèse tient en une phrase : **une carte produit montre UN objet,
-une carte collection doit montrer un ENSEMBLE**, et la distinction est **structurelle**, jamais
-ornementale. Trois faits la gouvernent : `Collection` n'a **aucun** champ image (elle emprunte ses
-visuels à ses produits, donc ≥ 2 visuels et « sans photo » est un état normal) ;
-`ProductCollection.isFeatured` est son **seul** levier éditorial ; et le `take` du select est
-**partagé** avec le bento du méga-menu, donc plafond dur de 4 visuels. Sites :
-`app/(shop)/(home)/_components/collections/collections-card.tsx` et
-`modules/collections/components/collection-chapter.tsx`.
+⚠️ **Il n'existe plus AUCUNE surface de carte collection** (2026-08-08, demande de Léane, à
+refaire). Quatre sont parties ensemble : la carte de la landing et sa section « Choisis ton
+univers », le bento du méga-menu desktop, la bande de trois tirages du volet mobile, et les
+chapitres de `/collections`. Ce qui SURVIT, et qu'il ne faut donc pas « nettoyer » : la route
+`/collections` (titre, fil d'Ariane, `BreadcrumbList`, SEO — elle ne rend simplement plus de
+collection), les liens de navigation vers elle depuis la barre, le volet et le pied de page, et
+toute la couche `data/` (`getCollections`, `getCollectionPriceRanges`, les 3 selects).
+
+Les trois faits qui gouvernaient la doctrine restent vrais et re-gouverneront la refonte —
+**une carte produit montre UN objet, une carte collection doit montrer un ENSEMBLE**, distinction
+**structurelle** et jamais ornementale : `Collection` n'a **aucun** champ image (elle emprunte ses
+visuels à ses produits, donc ≥ 2 visuels, et « sans photo » est un état normal) ;
+le **rang** de `ProductCollection.position` est son **seul** levier éditorial (la vedette est le
+rang 0 de `(position asc, addedAt desc)`, posée par `setFeaturedProduct` — l'ex-booléen
+`isFeatured` est parti à l'audit V5, lot A3, et il y a désormais TOUJOURS une vedette) ; et le
+`take` du select est **partagé** avec le méga-menu, donc plafond dur de 4 visuels.
 
 ### Tous les `select` Prisma du catalogue vivent dans `constants/`
 
@@ -321,15 +333,17 @@ Deux garde-fous, tous deux **sans base de données** :
 | **vignette unique** | `where: { mediaType: "IMAGE" }` **dans le select**    | L'appelant prend `images[0]` sans pouvoir trier  |
 | **galerie**         | pas de filtre, mais `mediaType: true` **sélectionné** | La galerie a besoin des vidéos ; l'appelant trie |
 
-Côté appelant, la SSOT est **`pickPrimaryImage()`** (`modules/products/services/product-display.service.ts`) : primaire IMAGE → première IMAGE → `null`. Ne jamais réécrire `find((i) => i.isPrimary) ?? images[0]` — cette expression mettait un `.mp4` dans `og:image`, dans le champ `image` d'un nœud `Product` JSON-LD (invalide en schema.org) et dans `<Image src>` (vignette cassée **+ transformation `/_next/image` facturée**). Quand elle retourne `null`, l'appelant **omet** le champ.
+Côté appelant, la SSOT est **`pickPrimaryImage()`** (`modules/products/services/product-display.service.ts`) : première IMAGE de l'ordre canonique `(position asc, id asc)` → `null`. Depuis l'audit V5 (lot A1) il n'y a plus de colonne `isPrimary` : le média principal est le **rang 0**, mais « premier média » ≠ « première IMAGE » — `SkuMedia` est polymorphe et une vidéo peut occuper le rang 0, d'où le filtre `mediaType` AVANT de prendre le premier. Ne jamais réécrire `images[0]` sans filtre — cette expression mettait un `.mp4` dans `og:image`, dans le champ `image` d'un nœud `Product` JSON-LD (invalide en schema.org) et dans `<Image src>` (vignette cassée **+ transformation `/_next/image` facturée**). Quand elle retourne `null`, l'appelant **omet** le champ.
 
-⚠️ `where: { isPrimary: true }` seul est banni : sur un SKU sans média primaire il rend 0 image alors que le SKU en a. Utiliser `orderBy: [{ isPrimary: "desc" }, { position: "asc" }, { id: "asc" }] + take: 1`.
+⚠️ Pour une vignette unique en select : `where: { mediaType: "IMAGE" }` + `orderBy: [{ position: "asc" }, { id: "asc" }] + take: 1` — jamais `take: 1` sans le filtre (une vidéo au rang 0 rendrait 0 image alors que le SKU a des photos).
 
 ### Une seule `BreadcrumbList` et une seule `ItemList` par URL
 
 Depuis l'harmonisation du storefront sur « L'étal continue » (2026-08-05), **aucune page boutique ne rend plus `PageHeader`** — il survit pour `app/(legal)/*` (où il émet le `BreadcrumbList`, sans opt-out) et l'admin (`variant="compact"`). Côté storefront : le bloc titre est **`StorefrontHeading`** (`shared/components/storefront-heading.tsx`, h1 visible à tous les viewports, jamais derrière un `await` — le compteur passe par `countSlot` avec la frontière `Suspense` chez l'appelant), le fil d'Ariane visuel est **`BreadcrumbNav`** (zéro JSON-LD, jamais), et le `BreadcrumbList` appartient au **seul émetteur page-level** (`@graph` du générateur, ou script statique dédié sur /collections). L'`ItemList` appartient au **générateur de page** (`buildCatalogJsonLd`, `generateCollectionStructuredData`), imbriquée dans son `CollectionPage` via `mainEntity` : `ProductList` n'en émet plus. Deux `ItemList` aux `numberOfItems` divergents sur une même URL laissent Google en choisir une arbitrairement. Verrouillé par `shared/components/__tests__/catalogue-single-breadcrumb.regression.test.ts`.
 
-**La landing est le cas le plus chargé, et le seul à trois nœuds** : depuis l'absorption de `/aide` (2026-08-05), `StructuredData` émet dans un `@graph` unique la `BreadcrumbList` de l'accueil, l'`ItemList` de l'étal **et** le `FAQPage` de la section « Des questions ? » (`app/(shop)/(home)/_components/faq/faq-section.tsx`). ⚠️ La FAQ ne doit **jamais** revenir à un `<script>` séparé — c'était le montage de `/aide` (deux scripts, faute de générateur), et le recopier sur `/` y ajouterait une seconde `BreadcrumbList` au premier copier-coller. `/aide` n'existe plus : elle redirige en **308 vers `/#faq`** (`next.config.ts`), reste dans les `publicRoutes` du proxy — sinon le default-deny la renvoie vers `/` **nu**, sans l'ancre — et `ROUTES.SHOP.HELP` vaut désormais `/#faq`, donc n'est plus un pathname passable à `resolveNavbarSection` ou `isCatalogueRoute`.
+**La landing émet un `@graph` unique** : `ItemList` de l'étal + `HowTo` de l'atelier, et aucune `BreadcrumbList` (elle n'aurait qu'un `ListItem` pointant la racine, soit exactement l'élément que Google demande d'omettre).
+
+⚠️ **Il n'y a plus de FAQ** (2026-08-08, demande de Léane, à refaire) : la section « Des questions ? », sa SSOT de contenu (les onze questions et leur décalque texte `answerText`, qui alimentait le JSON-LD), le nœud `FAQPage`, l'ancre `/#faq`, `ROUTES.SHOP.HELP`, la redirection **308 de `/aide`** et son entrée dans les `publicRoutes` du proxy sont **tous** partis ensemble. Trois choses à ne pas re-perdre à la refonte : le `FAQPage` se rouvre **dans ce `@graph`**, jamais en `<script>` séparé — c'était le montage de `/aide` (deux scripts, faute de générateur), et le recopier sur `/` ajouterait une seconde `BreadcrumbList` au premier copier-coller ; une ancre exige **les deux moitiés** (règle 308 **et** `publicRoutes`), sinon le default-deny renvoie vers `/` **nu**, sans le fragment ; et un `/#…` n'est pas un pathname, donc jamais passable à `resolveNavbarSection` ou `isCatalogueRoute`.
 
 ### Visibilité : les data fns forcent, elles ne font pas confiance à l'appelant
 
@@ -339,7 +353,7 @@ Depuis l'harmonisation du storefront sur « L'étal continue » (2026-08-05), **
 
 ### Statuts, soft delete
 
-- Machine à états `ProductStatus` : `product-status-validation.service.ts` (identité X→X refusée ; les 6 autres transitions autorisées). Vers `PUBLIC`, `validateProductForPublication` exige titre + ≥1 SKU actif avec stock **et un média de type IMAGE** (une vidéo `isPrimary` ne publie pas).
+- Machine à états de publication produit (enum `PublicationStatus`, partagé avec `Collection` depuis l'audit V5, lot A4 — la machine à états reste PAR ENTITÉ) : `product-status-validation.service.ts` (identité X→X refusée ; les 6 autres transitions autorisées). Vers `PUBLIC`, `validateProductForPublication` exige titre + ≥1 SKU actif avec stock **et un média de type IMAGE** (une vidéo au rang 0 ne publie pas).
 - **Toute lecture-avant-mutation d'un produit filtre `deletedAt: null`.** Sans ça on fabrique l'état `status: PUBLIC` + `deletedAt` — invisible en vitrine (`notDeleted` partout) mais qui casse les gardes d'**écriture** qui ne filtrent que le statut : `delete-product-type` refuserait à jamais un type « ayant des produits PUBLIC » invisibles.
 - Il n'y a **pas** de `restore-product` : `deleteProduct` purge les `ProductCollection`. Ni panier ni favoris à purger — les deux vivent dans les cookies de chaque navigateur (`cart` 2026-08-04, `wishlist` 2026-08-03), où un id supprimé devient simplement inerte. Archiver (`ARCHIVED`) est le chemin réversible ; supprimer ne l'est pas.
 - `Product.slug` est unique sur **toutes** les lignes, soft-deleted incluses (aucun index partiel). Pas de P2002 pour autant : `generateSlug` suffixe (`bague-x-2`). Recréer un produit supprimé ne récupère donc jamais son slug — voulu, réutiliser le slug ferait pointer une URL indexée vers un autre bijou.
@@ -680,7 +694,7 @@ existe**. Chaque module pose son `deletedAt` dans sa propre transaction, avec le
 l'accompagnent (purge des liaisons, audit, promotion d'un nouveau défaut) ; un helper mono-ligne
 à côté ne fait que suggérer un raccourci qui sauterait ces étapes.
 
-**Key enums**: `ProductStatus`, `OrderStatus`, `PaymentStatus`, `RefundStatus`
+**Key enums**: `PublicationStatus` (Product + Collection), `OrderStatus`, `PaymentStatus`, `RefundStatus`
 
 **Il n'y a plus de journal d'inventaire** (`StockMovement` supprimé : 7 écrivains, zéro lecteur).
 Le registre obligatoire d'une micro-entreprise est le livre de recettes (export CSV filtré sur
@@ -702,7 +716,7 @@ Pas de rétroactif sur les migrations existantes (risque trop élevé). En cas d
 **Structure de `0_init`** — deux parties, et la seconde est la plus importante :
 
 1. DDL généré par `prisma migrate diff --from-empty --to-schema` (tables, colonnes, enums, FK, index normaux).
-2. **Annexe des gardes bruts** — copie de `prisma/sql/raw-guards.sql` : 22 CHECK, 8 index partiels/expression, 2 extensions, 2 fonctions, 2 triggers. **`prisma migrate diff` n'en génère AUCUN.** Un baseline régénéré sans recoller cette annexe perdrait en silence le format de numéro de facture (Art. 286 CGI), le trigger d'unicité cross-table des avoirs, le CHECK singleton `StoreSettings`, la formule de total de commande…
+2. **Annexe des gardes bruts** — copie de `prisma/sql/raw-guards.sql` : 22 CHECK, 5 index partiels/expression, 2 extensions, 2 fonctions, 2 triggers. **`prisma migrate diff` n'en génère AUCUN.** Un baseline régénéré sans recoller cette annexe perdrait en silence le format de numéro de facture (Art. 286 CGI), le trigger d'unicité cross-table des avoirs, le CHECK singleton `StoreSettings`, la formule de total de commande…
 
 **`prisma/sql/raw-guards.sql` est la SSOT des gardes**, consommée par deux chemins qui doivent rester d'accord : l'annexe de `0_init`, et `test/integration/setup.ts` (appliqué après `db push`). Le fichier est **idempotent** (chaque garde précédé d'un `DROP … IF EXISTS`). Ajouter un garde là ne l'applique pas aux bases existantes : écrire aussi une migration normale.
 

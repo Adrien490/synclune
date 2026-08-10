@@ -13,7 +13,6 @@ function makeSkuImage(overrides: Record<string, unknown> = {}) {
 		blurDataUrl: null,
 		altText: null,
 		mediaType: "IMAGE" as const,
-		isPrimary: false,
 		...overrides,
 	};
 }
@@ -24,7 +23,8 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 		priceInclTax: 2500, // 25.00 EUR in cents
 		compareAtPrice: null,
 		inventory: 10,
-		isDefault: false,
+		// Calculé par fetchSkuById (rang 0 de position) — remplace la colonne isDefault.
+		isRepresentative: false,
 		isActive: true,
 		colors: [{ colorId: "color-1", position: 0, color: { id: "color-1", name: "Rose" } }],
 		materials: [
@@ -57,8 +57,9 @@ describe("getUpdateProductSkuFormOpts", () => {
 	});
 
 	it("merges images into a single ordered media[] (1er = principal)", () => {
-		const primary = makeSkuImage({ isPrimary: true, url: "https://utfs.io/f/primary.jpg" });
-		const gallery1 = makeSkuImage({ isPrimary: false, url: "https://utfs.io/f/g1.jpg" });
+		// L'ordre du tableau EST l'information : le data layer livre (position asc, id asc).
+		const primary = makeSkuImage({ url: "https://utfs.io/f/primary.jpg" });
+		const gallery1 = makeSkuImage({ id: "img-2", url: "https://utfs.io/f/g1.jpg" });
 		const result = getUpdateProductSkuFormOpts(makeSku({ images: [primary, gallery1] }));
 
 		expect(result.defaultValues.media).toHaveLength(2);
@@ -108,11 +109,13 @@ describe("getUpdateProductSkuFormOpts", () => {
 		expect(result.defaultValues.size).toBe("");
 	});
 
-	it("passes through inventory, isDefault, isActive", () => {
+	it("passes through inventory, isRepresentative (→ isDefault), isActive", () => {
 		const result = getUpdateProductSkuFormOpts(
-			makeSku({ inventory: 42, isDefault: true, isActive: false }),
+			makeSku({ inventory: 42, isRepresentative: true, isActive: false }),
 		);
 		expect(result.defaultValues.inventory).toBe(42);
+		// Le champ de FORMULAIRE s'appelle toujours isDefault ; sa valeur initiale
+		// vient du rang calculé (isRepresentative).
 		expect(result.defaultValues.isDefault).toBe(true);
 		// isActive est converti en string pour matcher le RadioGroupField
 		expect(result.defaultValues.isActive).toBe("false");
