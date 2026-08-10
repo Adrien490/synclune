@@ -197,7 +197,12 @@ une vidéo en `position: 0` empêche la publication d'un produit qui a pourtant 
   **Condition** : une SSOT applicative (`const PRODUCT_TYPES` + `z.enum`), pas un `VarChar` libre.
   La redirection `/produits?type=…` et `test/contract/catalog-type-redirect.regression.test.ts`
   doivent suivre dans la même PR.
-- **Effort** : M. **Reco : prendre, avec la SSOT applicative.** `Décision : ✅ arbitré le 2026-08-09 (Adrien) — retenu, à exécuter après le Lot A`
+- **Effort** : M. **Reco : prendre, avec la SSOT applicative.**
+  `Décision : ⛔ RÉVISÉE le 2026-08-10 (Adrien) — REJETÉ, la gestion admin des types est conservée.`
+  Le lot avait été intégralement exécuté le 2026-08-10 (SSOT applicative, migration avec backfill,
+  ~140 fichiers) puis **défait avant commit** sur cette décision : garder la possibilité pour Léane
+  de créer un type sans déploiement l'emporte sur les ~7 000 LOC. Si le lot revient un jour, son
+  exécution est reproductible depuis ce document (§ B1 + « Fichiers touchés par mot-clé » du § 2).
 
 #### B2 — `Material` → `ProductSku.materials String[]`
 
@@ -205,7 +210,8 @@ une vidéo en `position: 0` empêche la publication d'un produit qui a pourtant 
   `/produits` **et** l'admin) devient un `SELECT DISTINCT unnest("materials")`.
 - **Perte assumée** : `isActive`, `description`, l'ordre éditorial des matières.
 - **Gain** : `modules/materials` (6 214 LOC) + sa page admin.
-- **Effort** : M. **Reco : prendre.** `Décision : ✅ arbitré le 2026-08-09 (Adrien) — retenu, à exécuter après le Lot A`
+- **Effort** : M. **Reco : prendre.**
+  `Décision : ⛔ RÉVISÉE le 2026-08-10 (Adrien) — REJETÉ, la gestion admin des matériaux est conservée` (même motif que B1).
 
 #### B3 — `Color` → `ProductSku.colors String[]` — ⚠️ **NON EN L'ÉTAT**
 
@@ -224,7 +230,8 @@ une vidéo en `position: 0` empêche la publication d'un produit qui a pourtant 
   2. `ProductSku.colors Json` au format `[{ name, hex }]`, avec un schéma Zod partagé. Plus lean,
      mais la palette n'est plus réutilisable d'un bijou à l'autre et un renommage devient un
      `UPDATE` de masse.
-- **Effort** : M (option 1) / M (option 2). **Reco : option 1.** `Décision : ✅ arbitré le 2026-08-09 (Adrien) — option 1 retenue, à exécuter après B1+B2`
+- **Effort** : M (option 1) / M (option 2). **Reco : option 1.**
+  `Décision : ⛔ RÉVISÉE le 2026-08-10 (Adrien) — REJETÉ, la gestion admin des couleurs est conservée` (même motif que B1/B2).
 
 ---
 
@@ -454,7 +461,11 @@ attempts, receivedAt, processingStartedAt)` — ce qu'elle est déjà à deux co
   C'est le même argument que celui invoqué deux lignes plus haut pour garder la table entière.
   Retirer `processedAt` revient donc à **infirmer une décision documentée** — faisable, mais à
   assumer comme tel, pas à emporter en passant.
-- **Effort** : S. `Décision : ✅ arbitré le 2026-08-09 (Adrien) — réduction retenue (jamais la suppression), à exécuter après B3`
+- **Effort** : S. `Décision : ✅ arbitré le 2026-08-09 (Adrien) — réduction retenue (jamais la suppression) ; EXÉCUTÉ le 2026-08-10` (migration
+  `20260810120000_v5_lot_e_webhook_event_natural_pk` : `stripeEventId` devient la PK naturelle,
+  `id` et `processedAt` partent — l'infirmation de la décision V4 sur `processedAt` est assumée
+  et documentée dans le commentaire du schéma ; « traité quand » reste lisible via
+  `processingStartedAt`)
 
 ---
 
@@ -498,9 +509,13 @@ Chaque étape est une PR autonome, avec sa migration **et son `down.sql`** (exig
 
 1. **Lot A** — schéma seul, aucune dépendance. **A1→A6, sans A7.** Corrige M6 et M7 au passage,
    et fait passer la requête de contrôle des doublons `(orderId, skuId)` avant A5.
-2. **Lot B1 + B2** — dénormalisation types/matières, avec SSOT applicative.
-3. **Lot B3** — couleurs, option 1 (table réduite `slug/name/hex`).
+   ✅ **Exécuté le 2026-08-10** (migration `20260809100000_v5_lot_a_rank_positions_and_order_item_pk`).
+2. ~~**Lot B1 + B2** — dénormalisation types/matières, avec SSOT applicative.~~ **REJETÉS le
+   2026-08-10** (gestion admin conservée) — l'ordre saute directement au 3.
+3. ~~**Lot B3** — couleurs, option 1 (table réduite `slug/name/hex`).~~ **REJETÉ le 2026-08-10**
+   (gestion admin conservée).
 4. **Lot E** — `WebhookEvent` réduite, pas supprimée.
+   ✅ **Exécuté le 2026-08-10** (migration `20260810120000_v5_lot_e_webhook_event_natural_pk`).
 5. **Lot C** — Checkout Session **en variante Elements** + réservation. PR isolée, corrige M3
    (avec `expires_at` ≈ 30 min, jamais le défaut de 24 h) et M8. **Ni les 12 composants ni les
    3 specs e2e ne sont à réécrire** dans cette variante — c'est ce qui rend le lot finançable.
@@ -612,7 +627,7 @@ questions du § 7 ; elles ne les remplacent pas.
 
 ---
 
-**Statut global : `✅ lots A, B1+B2, B3, E, C arbitrés le 2026-08-09 (exécution dans l'ordre du § 6) ; lot D découplé, bloqué sur le § 7`.**
+**Statut global : `✅ lots A et E EXÉCUTÉS le 2026-08-10 ; lots B1+B2+B3 REJETÉS le 2026-08-10 (gestion admin des taxonomies conservée) ; reste le lot C ; lot D découplé, bloqué sur le § 7`.**
 **Révision 2 du 2026-08-09** — A7 retiré (prémisse fausse), Lot C requalifié en variante Elements
 (L → M), Lot D recadré sur la réforme e-invoicing et le choix d'une PA, M9 relevé en P2,
 compteurs de migrations / tests / `"use server"` corrigés.
