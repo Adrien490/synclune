@@ -662,7 +662,6 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 		expect(mockPrisma.webhookEvent.findUnique).toHaveBeenCalledWith({
 			where: { stripeEventId: "evt_unique_123" },
 			select: {
-				id: true,
 				status: true,
 				attempts: true,
 				receivedAt: true,
@@ -840,7 +839,7 @@ describe("POST /api/webhooks/stripe - PROCESSING record", () => {
 				// WEBHOOK-AUDIT-002 : horloge de fraîcheur du traitement courant.
 				processingStartedAt: expect.any(Date),
 			},
-			select: { id: true, attempts: true },
+			select: { attempts: true },
 		});
 		expect(mockPrisma.webhookEvent.updateMany).not.toHaveBeenCalled();
 	});
@@ -869,7 +868,8 @@ describe("POST /api/webhooks/stripe - PROCESSING record", () => {
 
 		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalledWith({
 			where: {
-				id: "wh_resume",
+				// Lot E : la reprise cible la PK naturelle, l'id surrogate est parti.
+				stripeEventId: "evt_test_123",
 				status: WebhookEventStatus.FAILED,
 				attempts: 2,
 			},
@@ -935,11 +935,8 @@ describe("POST /api/webhooks/stripe - successful processing", () => {
 		await POST(req);
 
 		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
-			where: { id: "wh_completed" },
-			data: {
-				status: WebhookEventStatus.COMPLETED,
-				processedAt: expect.any(Date),
-			},
+			where: { stripeEventId: "evt_test_123" },
+			data: { status: WebhookEventStatus.COMPLETED },
 		});
 	});
 
@@ -951,11 +948,8 @@ describe("POST /api/webhooks/stripe - successful processing", () => {
 		await POST(req);
 
 		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
-			where: { id: "wh_null_result" },
-			data: {
-				status: WebhookEventStatus.COMPLETED,
-				processedAt: expect.any(Date),
-			},
+			where: { stripeEventId: "evt_test_123" },
+			data: { status: WebhookEventStatus.COMPLETED },
 		});
 	});
 });
@@ -981,11 +975,8 @@ describe("POST /api/webhooks/stripe - skipped events", () => {
 		expect(response.status).toBe(200);
 		expect(mockDispatchEvent).not.toHaveBeenCalled();
 		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
-			where: { id: "wh_unsupported" },
-			data: {
-				status: WebhookEventStatus.SKIPPED,
-				processedAt: expect.any(Date),
-			},
+			where: { stripeEventId: "evt_test_123" },
+			data: { status: WebhookEventStatus.SKIPPED },
 		});
 	});
 
@@ -1001,11 +992,8 @@ describe("POST /api/webhooks/stripe - skipped events", () => {
 		const response = await POST(req);
 
 		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
-			where: { id: "wh_skipped" },
-			data: {
-				status: WebhookEventStatus.SKIPPED,
-				processedAt: expect.any(Date),
-			},
+			where: { stripeEventId: "evt_test_123" },
+			data: { status: WebhookEventStatus.SKIPPED },
 		});
 		expect(response.status).toBe(200);
 	});
@@ -1107,11 +1095,8 @@ describe("POST /api/webhooks/stripe - failed processing", () => {
 		// `errorMessage` est parti le 2026-08-05 : 4 écrivains, zéro lecteur (aucune
 		// UI n'expose cette table). Le motif de l'échec vit dans Sentry et les logs.
 		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
-			where: { id: "wh_failed" },
-			data: {
-				status: WebhookEventStatus.FAILED,
-				processedAt: expect.any(Date),
-			},
+			where: { stripeEventId: "evt_test_123" },
+			data: { status: WebhookEventStatus.FAILED },
 		});
 	});
 

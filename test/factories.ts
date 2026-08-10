@@ -262,13 +262,11 @@ function createMockRefund(overrides: Record<string, unknown> = {}) {
 
 function createMockWebhookEvent(overrides: Record<string, unknown> = {}) {
 	return {
-		id: "we_cm1234567890abcde",
 		stripeEventId: "evt_test_abc123",
 		eventType: "payment_intent.succeeded",
 		status: "PENDING",
 		attempts: 0,
 		receivedAt: new Date("2026-01-15"),
-		processedAt: null,
 		...overrides,
 	};
 }

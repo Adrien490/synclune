@@ -245,7 +245,6 @@ export async function POST(req: Request) {
 			where: { stripeEventId: event.id },
 			// IDEM-ROUTE-001 : `attempts` sert de version optimiste au claim ci-dessous.
 			select: {
-				id: true,
 				status: true,
 				attempts: true,
 				receivedAt: true,
@@ -303,7 +302,7 @@ export async function POST(req: Request) {
 		// claim CONDITIONNEL sur l'état exact qu'on vient de lire (`status` + `attempts`
 		// en version optimiste). Un seul gagnant, quel que soit le nombre de concurrents
 		// — la garde reste nécessaire, deux redélivrances Stripe pouvant se croiser.
-		let webhookRecord: { id: string; attempts: number };
+		let webhookRecord: { attempts: number };
 
 		if (existingEvent === null) {
 			try {
@@ -315,7 +314,7 @@ export async function POST(req: Request) {
 						// WEBHOOK-AUDIT-002 : démarre l'horloge de fraîcheur du traitement courant.
 						processingStartedAt: new Date(),
 					},
-					select: { id: true, attempts: true },
+					select: { attempts: true },
 				});
 				webhookRecord = created;
 			} catch (e) {
@@ -334,7 +333,7 @@ export async function POST(req: Request) {
 		} else {
 			const claimed = await prisma.webhookEvent.updateMany({
 				where: {
-					id: existingEvent.id,
+					stripeEventId: event.id,
 					// L'état lu doit être TOUJOURS celui-là au moment d'écrire ; sinon le
 					// cron ou une autre instance a repris l'event entre-temps.
 					status: existingEvent.status,
@@ -360,7 +359,7 @@ export async function POST(req: Request) {
 				return NextResponse.json({ received: true, status: "duplicate" });
 			}
 
-			webhookRecord = { id: existingEvent.id, attempts: existingEvent.attempts + 1 };
+			webhookRecord = { attempts: existingEvent.attempts + 1 };
 		}
 
 		try {
@@ -372,11 +371,8 @@ export async function POST(req: Request) {
 					eventType: event.type,
 				});
 				await prisma.webhookEvent.update({
-					where: { id: webhookRecord.id },
-					data: {
-						status: WebhookEventStatus.SKIPPED,
-						processedAt: new Date(),
-					},
+					where: { stripeEventId: event.id },
+					data: { status: WebhookEventStatus.SKIPPED },
 				});
 				return NextResponse.json({ received: true, status: "skipped" });
 			}
@@ -397,11 +393,8 @@ export async function POST(req: Request) {
 				: WebhookEventStatus.COMPLETED;
 			const tasks = result?.tasks ?? [];
 			await prisma.webhookEvent.update({
-				where: { id: webhookRecord.id },
-				data: {
-					status: finalStatus,
-					processedAt: new Date(),
-				},
+				where: { stripeEventId: event.id },
+				data: { status: finalStatus },
 			});
 
 			// 7. Réponse, puis effets de bord différés.
@@ -446,11 +439,8 @@ export async function POST(req: Request) {
 		} catch (error) {
 			// Marquer l'événement comme FAILED
 			await prisma.webhookEvent.update({
-				where: { id: webhookRecord.id },
-				data: {
-					status: WebhookEventStatus.FAILED,
-					processedAt: new Date(),
-				},
+				where: { stripeEventId: event.id },
+				data: { status: WebhookEventStatus.FAILED },
 			});
 
 			// Alert admin if too many failed attempts

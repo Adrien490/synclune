@@ -284,13 +284,13 @@ describe("cleanupPendingOrders", () => {
 		});
 
 		it("supprime par identifiants et remonte le total dans le résultat du cron", async () => {
-			mockPrisma.webhookEvent.findMany.mockResolvedValue([{ id: "e1" }]);
+			mockPrisma.webhookEvent.findMany.mockResolvedValue([{ stripeEventId: "evt_1" }]);
 			mockPrisma.webhookEvent.deleteMany.mockResolvedValue({ count: 1 });
 
 			await cleanupPendingOrders();
 
 			expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenCalledWith({
-				where: { id: { in: ["e1"] } },
+				where: { stripeEventId: { in: ["evt_1"] } },
 			});
 		});
 

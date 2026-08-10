@@ -2288,7 +2288,6 @@ async function main(): Promise<void> {
 			status: WebhookEventStatus.COMPLETED,
 			attempts: 1,
 			receivedAt,
-			processedAt: receivedAt,
 		});
 
 		// payment_intent.succeeded
@@ -2298,7 +2297,6 @@ async function main(): Promise<void> {
 			status: WebhookEventStatus.COMPLETED,
 			attempts: 1,
 			receivedAt,
-			processedAt: receivedAt,
 		});
 	}
 
@@ -2309,7 +2307,6 @@ async function main(): Promise<void> {
 		status: WebhookEventStatus.FAILED,
 		attempts: 3,
 		receivedAt: faker.date.recent({ days: 30 }),
-		processedAt: faker.date.recent({ days: 30 }),
 	});
 
 	// Add a skipped event
@@ -2319,7 +2316,6 @@ async function main(): Promise<void> {
 		status: WebhookEventStatus.SKIPPED,
 		attempts: 1,
 		receivedAt: faker.date.recent({ days: 15 }),
-		processedAt: faker.date.recent({ days: 15 }),
 	});
 
 	// Add PROCESSING event (stuck mid-processing)

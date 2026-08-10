@@ -277,12 +277,12 @@ async function purgeExpiredWebhookRecords(): Promise<number> {
 			status: { in: [WebhookEventStatus.COMPLETED, WebhookEventStatus.SKIPPED] },
 			receivedAt: { lt: cutoff },
 		},
-		select: { id: true },
+		select: { stripeEventId: true },
 		take: BATCH_SIZE_LARGE,
 	});
 	if (staleEvents.length > 0) {
 		const { count } = await prisma.webhookEvent.deleteMany({
-			where: { id: { in: staleEvents.map((e) => e.id) } },
+			where: { stripeEventId: { in: staleEvents.map((e) => e.stripeEventId) } },
 		});
 		deleted += count;
 	}

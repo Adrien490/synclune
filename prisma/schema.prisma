@@ -782,16 +782,19 @@ enum WebhookEventStatus {
 }
 
 model WebhookEvent {
-  id            String             @id @default(cuid(2))
-  stripeEventId String             @unique
-  // `eventType` et `processedAt` sont ÉCRITS-SEULEMENT — instruit et CONSERVÉ à
-  // l'audit schéma V4 (2026-08-05). Aucun `where`, aucun `orderBy`, aucun rendu :
-  // la route travaille sur `event.type` du payload fraîchement désérialisé, et la
-  // purge à 90 jours trie sur `receivedAt`.
+  // PK naturelle depuis l'audit V5, lot E : la clé surrogate `id` n'était jamais
+  // sélectionnée pour elle-même — tous les accès passaient par `stripeEventId`
+  // (unique par construction chez Stripe) ou la re-citaient juste après l'avoir lue.
+  stripeEventId String             @id
+  // `eventType` est ÉCRIT-SEULEMENT — instruit à l'audit V4 et conservé : cette
+  // table n'a **aucune page admin**, sa seule surface de lecture est le SQL
+  // d'incident (« quel type d'event a échoué »), et la route travaille sur
+  // `event.type` du payload fraîchement désérialisé.
   //
-  // Elles restent parce que cette table n'a **aucune page admin** : sa seule surface
-  // de lecture est le SQL d'incident (« quel type d'event, traité quand »). Retirer
-  // une colonne write-only n'est pas un réflexe quand le lecteur est un `psql`.
+  // ⚠️ `processedAt` (même statut write-only) est PARTI au lot E (SIMPLIFICATION-V2),
+  // en infirmant explicitement la décision V4 qui la couvrait : « traité quand »
+  // reste lisible via `processingStartedAt` (début du dernier traitement) à la
+  // précision d'incident près, et la purge trie sur `receivedAt`.
   eventType     String             @db.VarChar(100)
   // `PROCESSING` et non `PENDING` : la route webhook crée déjà la ligne en
   // PROCESSING, et rien n'a jamais écrit PENDING — une telle ligne serait restée
@@ -803,21 +806,15 @@ model WebhookEvent {
   // Alimente le seuil d'alerte admin `MAX_WEBHOOK_RETRY_ATTEMPTS`.
   attempts      Int                @default(0)
   receivedAt    DateTime           @default(now())
-  processedAt   DateTime?
 
   // Fraîcheur d'un PROCESSING figé (WEBHOOK-AUDIT-002) — lu par le pré-check
   // d'idempotence de la route, seul consommateur depuis le Lot 3.
   processingStartedAt DateTime?
 
-  // 3 index → 1 (audit V2, Lot 3, 2026-08-05). Le retrait de la tâche
-  // `retry-webhooks` a laissé DEUX index sans lecteur, pas un :
-  //   - `[status, attempts, processedAt]` servait sa requête de candidats
-  //     (`status=FAILED AND attempts < MAX AND processedAt < minAge`) ;
-  //   - `[status, processedAt]` n'en avait déjà plus : `processedAt` n'apparaît
-  //     plus que dans des `data:` d'écriture, jamais dans un `where`.
-  // Le seul conservé sert la purge à 90 jours de `cleanup-pending-orders`
-  // (`status IN (COMPLETED, SKIPPED) AND receivedAt < cutoff`). Les autres accès
-  // passent par `stripeEventId @unique` ou par la clé primaire.
+  // 3 index → 1 (audit V2, Lot 3, 2026-08-05) : le retrait de `retry-webhooks`
+  // avait laissé deux index sans lecteur. Le seul conservé sert la purge à
+  // 90 jours de `cleanup-pending-orders` (`status IN (COMPLETED, SKIPPED) AND
+  // receivedAt < cutoff`). Les autres accès passent par la PK `stripeEventId`.
   @@index([status, receivedAt])
 }
 
