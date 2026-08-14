@@ -1,7 +1,6 @@
 "use client";
 
-import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
-import type { NavbarSessionData } from "@/shared/types/session.types";
+import { LogoutAlertDialog } from "@/modules/admin-auth/components/logout-alert-dialog";
 import { HamburgerIcon } from "@/shared/components/icons/hamburger-icon";
 import {
 	Sheet,
@@ -67,7 +66,6 @@ interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: MenuProductTypeItem[];
 	isAdmin?: boolean;
-	session?: NavbarSessionData | null;
 }
 
 /**
@@ -77,7 +75,7 @@ interface MenuSheetProps {
  */
 type PendingAction = "logout" | "cart" | null;
 
-export function MenuSheet({ navItems, productTypes, isAdmin = false, session }: MenuSheetProps) {
+export function MenuSheet({ navItems, productTypes, isAdmin = false }: MenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("menu-sheet");
 	const [showLogout, setShowLogout] = useState(false);
 	const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -335,7 +333,6 @@ export function MenuSheet({ navItems, productTypes, isAdmin = false, session }: 
 								<MenuSheetNav
 									navItems={navItems}
 									productTypes={productTypes}
-									session={session}
 									isAdmin={isAdmin}
 									onLogoutClick={handleLogoutClick}
 									onCartClick={handleCartClick}

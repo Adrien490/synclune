@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
@@ -15,7 +15,7 @@ import {
 } from "@/shared/lib/actions";
 import { deleteProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
@@ -30,7 +30,7 @@ export async function deleteProduct(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdminWithUser();
+		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
 		// 1.1 Rate limiting

@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Server Action : annulation de commande **admin** (requireAdminWithUser).
+ * Server Action : annulation de commande **admin** (requireAdmin).
  *
  * Seul chemin d'annulation restant : l'espace client (et son
  * `cancel-order-customer.ts`) a été supprimé le 2026-07-31 — le parcours
@@ -21,14 +21,15 @@ import {
 	type StockChangedSku,
 } from "@/modules/products/utils/cache.utils";
 import { updateTagsAfterMutation } from "@/shared/lib/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 import { after } from "next/server";
@@ -67,9 +68,8 @@ export async function cancelOrder(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -318,7 +318,7 @@ export async function cancelOrder(
 					previousPaymentStatus: found.paymentStatus,
 					newPaymentStatus: newPaymentStatus,
 					note: sanitizedReason ?? undefined,
-					authorName: adminUser.name ?? "Admin",
+					authorName: ADMIN_DISPLAY_NAME,
 					source: HistorySource.ADMIN,
 					metadata: {
 						stockRestored: shouldRestoreStock,
@@ -383,7 +383,7 @@ export async function cancelOrder(
 		if (order._invoiceVoided) {
 			const voided = await voidInvoice({
 				orderId: order.id,
-				authorName: adminUser.name ?? "Admin",
+				authorName: ADMIN_DISPLAY_NAME,
 				source: HistorySource.ADMIN,
 				reason: sanitizedReason ?? "Facture invalidée suite à annulation",
 			});

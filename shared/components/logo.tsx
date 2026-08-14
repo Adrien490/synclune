@@ -27,21 +27,10 @@ const DISC_CLASS = "rounded-full";
  */
 const COMPACT_DETAIL_THRESHOLD_PX = 40;
 
-/**
- * Gabarit UNIQUE du nom accessible d'un lien de marque.
- *
- * Le nom était écrit à quatre endroits pour trois destinations identiques —
- * « Synclune - Accueil » (navbar), « Synclune - Retour à l'accueil » (panneau
- * mobile), « Synclune - Administration » (rail admin) et « Synclune » nu
- * (repli). Quatre libellés à maintenir, quatre cibles de test, et une collision
- * documentée dans `e2e/navigation.spec.ts` (le regex `/Accueil/i` matchait deux
- * éléments). Toute nouvelle surface de marque passe par ici.
- */
-export function brandLinkLabel(href: string): string {
-	if (href === "/") return `${BRAND.name} - Accueil`;
-	if (href === "/admin") return `${BRAND.name} - Administration`;
-	return BRAND.name;
-}
+// `brandLinkLabel` vit dans `brand-link-label.ts` (module SERVEUR — les Server
+// Components l'appellent) et reste ré-exporté ici pour les consommateurs clients.
+import { brandLinkLabel } from "@/shared/components/brand-link-label";
+export { brandLinkLabel };
 
 /**
  * Le nom de la marque, dessiné. SSOT de sa typographie.

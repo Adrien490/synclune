@@ -1,4 +1,4 @@
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 import { Logo } from "@/shared/components/logo";

@@ -3,7 +3,8 @@
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
@@ -16,7 +17,7 @@ import {
 	notFound,
 	safeFormGet,
 } from "@/shared/lib/actions";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import {
 	getCarrierLabel,
@@ -52,9 +53,8 @@ export async function markAsShipped(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -155,7 +155,7 @@ export async function markAsShipped(
 				action: "SHIPPED",
 				previousStatus: found.status,
 				newStatus: OrderStatus.SHIPPED,
-				authorName: adminUser.name ?? "Admin",
+				authorName: ADMIN_DISPLAY_NAME,
 				source: HistorySource.ADMIN,
 				metadata: {
 					trackingNumber: validated.data.trackingNumber,
@@ -249,7 +249,7 @@ export async function markAsShipped(
 				orderId: order.id,
 				action: "SHIPPED",
 				note: "Email de confirmation d'expédition non envoyé (échec Resend ou client sans email)",
-				authorName: adminUser.name ?? "Admin",
+				authorName: ADMIN_DISPLAY_NAME,
 				source: HistorySource.SYSTEM,
 				metadata: { emailDeliveryFailed: true, postCommit: true },
 			});

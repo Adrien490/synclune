@@ -39,7 +39,7 @@ const SOURCES = [
 	"shared/components/bottom-bar/bottom-bar.tsx",
 	"shared/components/bottom-bar/bottom-bar.styles.ts",
 	"app/(shop)/(home)/_components/shop-mobile-bottom-nav.tsx",
-	"app/admin/_components/admin-mobile-bottom-bar.tsx",
+	"app/admin/(protected)/_components/admin-mobile-bottom-bar.tsx",
 ];
 
 /** Tokens d'accent de marque, sous toutes leurs orthographes Tailwind v4. */

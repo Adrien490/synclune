@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
 import { PRODUCT_FILTER_COUNT_LIMIT } from "@/shared/lib/rate-limit-config";
 import { PRICE_LIMITS } from "@/shared/constants/validation-limits";

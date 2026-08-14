@@ -41,7 +41,7 @@ describe("GET_PRODUCT_FOR_EDIT_SELECT — les SKUs inactifs restent chargés", (
 describe("la page /modifier consomme getProductForEdit", () => {
 	it("appelle getProductForEdit (forme appel, hors commentaires)", () => {
 		const source = readFileSync(
-			join(process.cwd(), "app/admin/catalogue/produits/[slug]/modifier/page.tsx"),
+			join(process.cwd(), "app/admin/(protected)/catalogue/produits/[slug]/modifier/page.tsx"),
 			"utf8",
 		);
 		const callLines = source

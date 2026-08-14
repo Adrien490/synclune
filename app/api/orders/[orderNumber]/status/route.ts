@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { orderNumberParamSchema } from "@/modules/orders/schemas/order-route-params.schema";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -17,8 +16,6 @@ import { logger } from "@/shared/lib/logger";
  *
  * Sécurité :
  * - Lookup par `orderNumber` + `orderId` (double clé non-bruteforcable).
- * - Si `order.userId !== null`, la session doit matcher (parité avec
- *   `getOrderForConfirmation`).
  * - Pas de PII renvoyée : uniquement `paymentStatus` + `status`.
  * - Rate limit ORDER_STATUS_POLL (60/min/identifier) — un client buggé qui
  *   spamme est arrêté sans gêner le polling 3s légitime.
@@ -53,10 +50,9 @@ export async function GET(
 		return NextResponse.json({ error: "Bad request" }, { status: 400 });
 	}
 
-	const session = await getSession();
 	const headersList = await headers();
 	const ipAddress = await getClientIp(headersList);
-	const rateLimitId = getRateLimitIdentifier(session?.user.id ?? null, null, ipAddress);
+	const rateLimitId = getRateLimitIdentifier(null, null, ipAddress);
 
 	const rateLimit = await checkRateLimit(rateLimitId, ORDER_LIMITS.STATUS_POLL, ipAddress);
 	if (!rateLimit.success) {

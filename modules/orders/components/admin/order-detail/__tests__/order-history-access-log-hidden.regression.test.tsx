@@ -43,7 +43,7 @@ const BASE = {
 	newPaymentStatus: null,
 	note: null,
 	metadata: null,
-	authorName: "Admin",
+	authorName: "Léane",
 	source: "ADMIN" as const,
 	createdAt: new Date("2026-08-05T10:00:00Z"),
 };

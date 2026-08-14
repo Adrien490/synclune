@@ -8,11 +8,10 @@ import {
 	orderNumberParamSchema,
 	invoiceTokenSchema,
 } from "@/modules/orders/schemas/order-route-params.schema";
-import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
+import { isAdmin as isVerifiedAdminSession } from "@/modules/admin-auth/lib/require-admin";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
-import { checkRateLimit, getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { logger } from "@/shared/lib/logger";
 import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
@@ -72,7 +71,7 @@ export async function GET(
 	const { orderNumber } = await params;
 	const url = new URL(request.url);
 
-	// F4 (audit Zod) : params bornés/formatés AVANT session/rate-limit/Prisma
+	// F4 (audit Zod) : params bornés/formatés AVANT auth/rate-limit/Prisma
 	// (harmonisation avec status/route.ts). Échec → 400.
 	const orderNumberValidation = orderNumberParamSchema.safeParse(orderNumber);
 	const tokenValidation = invoiceTokenSchema.safeParse(url.searchParams.get("token"));
@@ -81,16 +80,11 @@ export async function GET(
 	}
 	const tokenFromQuery = tokenValidation.data;
 
-	const session = await getSession();
-
-	if (!session?.user.id && !tokenFromQuery) {
+	// Cookie de session admin signé HMAC — même garde que /invoice.
+	const isAdmin = await isVerifiedAdminSession();
+	if (!isAdmin && !tokenFromQuery) {
 		return new Response("Non autorisé", { status: 401 });
 	}
-
-	// EINV-SEC-001 : `session.user.role` est best-effort (cookie-cache Better Auth).
-	// Re-vérification DB partagée avec /invoice — un admin démoté OU SUSPENDU ne doit
-	// pas conserver le bypass d'ownership ni le quota 200/h sur les avoirs.
-	const isAdmin = await isVerifiedAdmin(session, "credit-note-route");
 
 	// Rate limit : même profil CPU/I/O que /invoice (génération PDF jsPDF +
 	// upload UploadThing), on partage les configs ORDER_LIMITS.INVOICE_DOWNLOAD
@@ -101,10 +95,8 @@ export async function GET(
 	const rateLimitConfig = isAdmin
 		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
 		: ORDER_LIMITS.INVOICE_DOWNLOAD;
-	const rateLimitIdentifier = session?.user.id
-		? isAdmin
-			? `admin-invoice:${session.user.id}`
-			: getRateLimitIdentifier(session.user.id)
+	const rateLimitIdentifier = isAdmin
+		? "admin-invoice:admin"
 		: `invoice-token:${clientIp ?? "unknown"}`;
 	// 3ᵉ argument obligatoire — cf. `/invoice` : sans lui le plafond global 100/min/IP,
 	// la whitelist et la blacklist sont inertes sur ce chemin.
@@ -115,7 +107,6 @@ export async function GET(
 				level: "warning",
 				tags: { route: "credit-note", actor: "admin" },
 				extra: {
-					adminUserId: session?.user.id,
 					limit: rateLimitConfig.limit,
 					windowMs: rateLimitConfig.windowMs,
 				},
@@ -139,7 +130,6 @@ export async function GET(
 				level: "warning",
 				tags: { route: "credit-note", actor: "admin" },
 				extra: {
-					adminUserId: session?.user.id,
 					remaining: rateCheck.remaining,
 					limit: adminLimit,
 				},

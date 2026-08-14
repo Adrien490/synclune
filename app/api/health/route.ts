@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/shared/lib/prisma";
 import { stripeCircuitBreaker, resendCircuitBreaker } from "@/shared/lib/circuit-breaker";
-import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
+import { requireAdminApiRoute } from "@/modules/admin-auth/lib/require-admin";
 import { STRIPE_API_VERSION } from "@/shared/constants/stripe-api-version";
 
 interface ServiceCheck {
@@ -90,7 +90,7 @@ export async function GET(request: Request) {
 	// token is provided (external probes like UptimeRobot / Better Stack).
 	const tokenValid = verifyHealthcheckToken(request);
 	const adminCheck = tokenValid ? null : await requireAdminApiRoute();
-	const detailed = tokenValid || (adminCheck !== null && "user" in adminCheck);
+	const detailed = tokenValid || (adminCheck !== null && "admin" in adminCheck);
 
 	// Unauthenticated/non-admin without token: return minimal status only
 	if (!detailed) {

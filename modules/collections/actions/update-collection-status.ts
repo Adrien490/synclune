@@ -2,8 +2,8 @@
 
 import { PublicationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import {
 	validateInput,
 	handleActionError,

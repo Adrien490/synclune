@@ -49,11 +49,11 @@ vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	isAdmin: mockIsAdmin,
 }));
 
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	getRateLimitId: mockGetRateLimitId,
 }));
 

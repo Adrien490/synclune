@@ -1,6 +1,5 @@
 "use server";
 
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getOrCreateGuestSessionId } from "@/modules/cart/lib/guest-session";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -35,11 +34,9 @@ export async function cancelOrphanPaymentIntent(rawPaymentIntentId: unknown): Pr
 	const paymentIntentId = parsed.data;
 
 	try {
-		// 1. Resolve caller identity (auth user OU session invité).
-		const session = await getSession();
-		const userId = session?.user.id ?? null;
-		const sessionId = !userId ? await getOrCreateGuestSessionId() : null;
-		if (!userId && !sessionId) return;
+		// 1. Resolve caller identity — session invité uniquement (migration lean, lot 1).
+		const sessionId = await getOrCreateGuestSessionId();
+		if (!sessionId) return;
 
 		// 2. Rate limit (borne l'abus de l'API Stripe `cancel`).
 		const headersList = await headers();
@@ -47,7 +44,7 @@ export async function cancelOrphanPaymentIntent(rawPaymentIntentId: unknown): Pr
 		// Comme `updatePaymentAmount` : la branche invité retombait sur un identifiant nu,
 		// donc sur le compteur partagé avec le panier et les favoris (F3).
 		const rateLimitId = buildPaymentRateLimitId("cancel-orphan", {
-			userId,
+			userId: null,
 			sessionId,
 			ipAddress,
 		});
@@ -66,9 +63,7 @@ export async function cancelOrphanPaymentIntent(rawPaymentIntentId: unknown): Pr
 
 		// Zod boundary : champ malformé droppé → undefined → ownerMatch false (no-op)
 		const piMetadata = parsePaymentIntentMetadata(pi.metadata, { paymentIntentId });
-		const ownerMatch =
-			(userId !== null && piMetadata.userId === userId) ||
-			(userId === null && sessionId !== null && piMetadata.guestSessionId === sessionId);
+		const ownerMatch = piMetadata.guestSessionId === sessionId;
 		if (!ownerMatch) return;
 
 		// 4. Cancel (best-effort).

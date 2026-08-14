@@ -1,8 +1,9 @@
 "use server";
 
 import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -40,9 +41,8 @@ export async function exportSingleOrder(
 	formData: FormData,
 ): Promise<ExportSingleOrderState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error as ExportSingleOrderState;
-		const { user: adminUser } = auth;
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error as ExportSingleOrderState;
 
@@ -94,7 +94,7 @@ export async function exportSingleOrder(
 			orderId: id,
 			action: OrderAction.BULK_EXPORT,
 			source: HistorySource.ADMIN,
-			authorName: adminUser.name ?? "Admin",
+			authorName: ADMIN_DISPLAY_NAME,
 			note: `Export CSV unitaire — commande ${order.orderNumber}`,
 			metadata: { exportType: "SINGLE_ORDER_CSV", rowCount: 1 },
 		});

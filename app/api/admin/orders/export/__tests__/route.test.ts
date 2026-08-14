@@ -5,13 +5,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ============================================================================
 
 const {
-	mockGetSession,
+	mockRequireAdminApiRoute,
 	mockPrisma,
 	mockBuildExportWhereClause,
 	mockGenerateOrdersCsv,
 	mockEnforceRateLimit,
 } = vi.hoisted(() => ({
-	mockGetSession: vi.fn(),
+	mockRequireAdminApiRoute: vi.fn(),
 	mockPrisma: {
 		order: {
 			findMany: vi.fn(),
@@ -28,11 +28,13 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
+	requireAdminApiRoute: mockRequireAdminApiRoute,
+	// `getOrdersForExport` (data/) passe par requireAdmin pour son gate de lecture.
+	requireAdmin: vi.fn().mockResolvedValue({ admin: true }),
 }));
 
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 
@@ -51,18 +53,6 @@ import { POST } from "../route";
 // ============================================================================
 // Helpers
 // ============================================================================
-
-function makeAdminSession() {
-	return {
-		user: { id: "admin-1", role: "ADMIN", email: "admin@synclune.fr" },
-	};
-}
-
-function makeUserSession() {
-	return {
-		user: { id: "user-1", role: "USER", email: "user@synclune.fr" },
-	};
-}
 
 function makeRequest(params: Record<string, string> = {}) {
 	const url = new URL("http://localhost:3000/api/admin/orders/export");
@@ -97,17 +87,7 @@ const SAMPLE_ORDERS = [
 describe("POST /api/admin/orders/export", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockGetSession.mockResolvedValue(makeAdminSession());
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: "admin-1",
-			email: "admin@synclune.fr",
-			name: "Admin",
-			role: "ADMIN",
-			image: null,
-			firstName: null,
-			lastName: null,
-			emailVerified: true,
-		});
+		mockRequireAdminApiRoute.mockResolvedValue({ admin: true });
 		mockBuildExportWhereClause.mockReturnValue({ paymentStatus: "PAID" });
 		mockPrisma.order.findMany.mockResolvedValue(SAMPLE_ORDERS);
 		mockPrisma.orderHistory.create.mockResolvedValue({ id: "audit-1" });
@@ -120,24 +100,10 @@ describe("POST /api/admin/orders/export", () => {
 	// ========================================================================
 
 	describe("authorization", () => {
-		it("returns 401 when no session exists", async () => {
-			mockGetSession.mockResolvedValue(null);
-
-			const response = await POST(makeRequest({ periodType: "all" }));
-
-			expect(response.status).toBe(401);
-		});
-
-		it("returns 403 for non-admin user", async () => {
-			mockGetSession.mockResolvedValue(makeUserSession());
-
-			const response = await POST(makeRequest({ periodType: "all" }));
-
-			expect(response.status).toBe(403);
-		});
-
-		it("returns 401 when session user has no id", async () => {
-			mockGetSession.mockResolvedValue({ user: { role: "ADMIN" } });
+		it("returns 401 when the caller is not the admin", async () => {
+			mockRequireAdminApiRoute.mockResolvedValue({
+				response: new Response("Accès non autorisé", { status: 401 }),
+			});
 
 			const response = await POST(makeRequest({ periodType: "all" }));
 
@@ -145,7 +111,9 @@ describe("POST /api/admin/orders/export", () => {
 		});
 
 		it("does not query database when unauthorized", async () => {
-			mockGetSession.mockResolvedValue(null);
+			mockRequireAdminApiRoute.mockResolvedValue({
+				response: new Response("Accès non autorisé", { status: 401 }),
+			});
 
 			await POST(makeRequest({ periodType: "all" }));
 

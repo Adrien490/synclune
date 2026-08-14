@@ -18,7 +18,7 @@ import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
 import type { SkuDetailReturn } from "@/modules/skus/data/get-sku";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { getSkuColorsDisplayLabel } from "@/modules/skus/utils/sku-colors-label";
-import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
+import { useSetAdminPageTitle } from "@/app/admin/(protected)/_components/admin-page-title-context";
 import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
 import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 

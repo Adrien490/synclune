@@ -2,8 +2,6 @@ import { describe, it, expect } from "vitest";
 import { render } from "@react-email/render";
 import { OrderConfirmationEmail } from "../order-confirmation-email";
 import { ShippingConfirmationEmail } from "../shipping-confirmation-email";
-import { VerificationEmail } from "../verification-email";
-import { PasswordResetEmail } from "../password-reset-email";
 import type { OrderItem, ShippingAddress } from "@/modules/emails/types/email.types";
 
 // ---------------------------------------------------------------------------
@@ -264,82 +262,5 @@ describe("ShippingConfirmationEmail", () => {
 		expect(html).toContain("Marie");
 		expect(html).toContain("votre commande");
 		expect(html).toContain("est en route");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// VerificationEmail
-// ---------------------------------------------------------------------------
-
-describe("VerificationEmail", () => {
-	const baseProps = {
-		verificationUrl: "https://synclune.fr/verifier-email?token=abc123",
-	};
-
-	it("renders without crashing", async () => {
-		const html = await render(<VerificationEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains the Vérification email heading", async () => {
-		const html = await render(<VerificationEmail {...baseProps} />);
-		expect(html).toContain("Vérification email");
-	});
-
-	it("contains the verification URL in a link", async () => {
-		const html = await render(<VerificationEmail {...baseProps} />);
-		expect(html).toContain("https://synclune.fr/verifier-email?token=abc123");
-	});
-
-	it("contains the Vérifier mon email CTA text", async () => {
-		const html = await render(<VerificationEmail {...baseProps} />);
-		expect(html).toContain("Vérifier mon email");
-	});
-
-	it("contains the 24 heures expiry information", async () => {
-		const html = await render(<VerificationEmail {...baseProps} />);
-		expect(html).toContain("24 heures");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// PasswordResetEmail
-// ---------------------------------------------------------------------------
-
-describe("PasswordResetEmail", () => {
-	const baseProps = {
-		resetUrl: "https://synclune.fr/reinitialiser-mot-de-passe?token=abc123",
-	};
-
-	it("renders without crashing", async () => {
-		const html = await render(<PasswordResetEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains the Réinitialisation heading", async () => {
-		const html = await render(<PasswordResetEmail {...baseProps} />);
-		expect(html).toContain("Réinitialisation");
-	});
-
-	it("contains the reset URL in a link", async () => {
-		const html = await render(<PasswordResetEmail {...baseProps} />);
-		expect(html).toContain("https://synclune.fr/reinitialiser-mot-de-passe?token=abc123");
-	});
-
-	it("contains the Réinitialiser CTA text", async () => {
-		const html = await render(<PasswordResetEmail {...baseProps} />);
-		expect(html).toContain("Réinitialiser");
-	});
-
-	it("contains the 1 heure expiry information", async () => {
-		const html = await render(<PasswordResetEmail {...baseProps} />);
-		expect(html).toContain("1 heure");
-	});
-
-	it("contains the ignorez cet email security note", async () => {
-		const html = await render(<PasswordResetEmail {...baseProps} />);
-		expect(html).toContain("ignorez cet email");
 	});
 });

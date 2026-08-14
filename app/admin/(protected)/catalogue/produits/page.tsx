@@ -1,0 +1,247 @@
+import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
+import { Toolbar } from "@/shared/components/toolbar";
+import { ButtonGroup } from "@/shared/components/ui/button-group";
+import { PageHeader } from "@/shared/components/page-header";
+import { SearchInput } from "@/shared/components/search-input";
+import { SelectFilter } from "@/shared/components/select-filter";
+import { Button } from "@/shared/components/ui/button";
+import { getColors } from "@/modules/colors/data/get-colors";
+import { getCollections } from "@/modules/collections/data/get-collections";
+import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
+import { getProductTypes } from "@/modules/product-types/data/get-product-types";
+import { getProducts } from "@/modules/products/data/get-products";
+import { getMaxProductPrice } from "@/modules/products/data/get-max-product-price";
+import {
+	GET_PRODUCTS_SORT_FIELDS,
+	ADMIN_PRODUCTS_SORT_LABELS,
+} from "@/modules/products/constants/product.constants";
+import { parseProductParams } from "@/modules/products/utils/parse-product-params";
+import Link from "next/link";
+import { Suspense } from "react";
+
+import { ProductsAdminDialogs } from "./_components/products-admin-dialogs";
+import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
+import { ProductsListSkeleton } from "@/modules/products/components/admin/products-list-skeleton";
+import { ProductsFilterBadges } from "@/modules/products/components/admin/products-filter-badges";
+import { ProductsBottomBar } from "@/modules/products/components/admin/products-bottom-bar";
+import { ProductsMobileList } from "@/modules/products/components/admin/products-mobile-list";
+import { ProductsMobileListSkeleton } from "@/modules/products/components/admin/products-mobile-list-skeleton";
+import { ProductsSortBadge } from "@/modules/products/components/admin/products-sort-badge";
+import { RefreshProductsButton } from "@/modules/products/components/admin/refresh-products-button";
+import { parseFilters } from "./_utils/params";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
+
+export type ProductFiltersSearchParams = {
+	filter_priceMin?: string;
+	filter_priceMax?: string;
+	filter_isPublished?: string;
+	filter_publishedAfter?: string;
+	filter_publishedBefore?: string;
+	filter_status?: string | string[];
+	filter_labelId?: string | string[];
+	filter_typeId?: string | string[];
+	filter_collectionId?: string | string[];
+	filter_stockStatus?: string | string[];
+	filter_updatedAfter?: string;
+	filter_updatedBefore?: string;
+	filter_material?: string | string[];
+	filter_color?: string | string[];
+	filter_collectionSlug?: string | string[];
+	filter_inStock?: string;
+	filter_withDeleted?: string;
+	filter_createdAfter?: string;
+	filter_createdBefore?: string;
+	filter_onSale?: string;
+};
+
+export type ProductsSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+} & ProductFiltersSearchParams;
+import { type Metadata } from "next";
+import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
+
+export const metadata: Metadata = {
+	title: "Produits - Administration",
+	description: "Gérer les produits du catalogue",
+};
+
+type ProductsAdminPageProps = {
+	searchParams: Promise<ProductsSearchParams>;
+};
+
+export default async function ProductsAdminPage({ searchParams }: ProductsAdminPageProps) {
+	await assertAdminPage();
+
+	return (
+		<>
+			<PageHeader
+				variant="compact"
+				title="Produits"
+				className="hidden md:block"
+				actions={
+					<Button render={<Link href="/admin/catalogue/produits/nouveau" />}>
+						Nouveau produit
+					</Button>
+				}
+			/>
+
+			<Suspense fallback={<ProductsListSkeleton />}>
+				<ProductsContent searchParams={searchParams} />
+			</Suspense>
+
+			{/* Dialogs des actions long-press / row-actions (delete, archive, status, duplicate, collections) */}
+			<ProductsAdminDialogs />
+		</>
+	);
+}
+
+async function ProductsContent({ searchParams }: { searchParams: Promise<ProductsSearchParams> }) {
+	const params = await searchParams;
+
+	// Parse and validate all search parameters safely
+	const { cursor, direction, perPage, sortBy, search } = parseProductParams(params);
+
+	const [
+		productsData,
+		productTypesData,
+		collectionsData,
+		colorsData,
+		materialsData,
+		maxPriceInCents,
+	] = await Promise.all([
+		getProducts({
+			cursor,
+			direction,
+			perPage,
+			sortBy,
+			search,
+			filters: parseFilters(params),
+		}),
+		getProductTypes({
+			perPage: 100,
+			sortBy: "label-ascending",
+		}),
+		getCollections({
+			perPage: 100,
+			sortBy: "name-ascending",
+			filters: {
+				hasProducts: undefined,
+			},
+		}),
+		getColors({ perPage: 200, sortBy: "name-ascending" }),
+		getMaterialOptions(),
+		getMaxProductPrice(),
+	]);
+
+	const productTypes = productTypesData.productTypes.map((t) => ({
+		id: t.id,
+		label: t.label,
+		slug: t.slug,
+	}));
+
+	const collections = collectionsData.collections.map((c) => ({
+		id: c.id,
+		name: c.name,
+		slug: c.slug,
+	}));
+
+	const colors = colorsData.colors;
+	const materials = materialsData;
+
+	return (
+		<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+			{/* Annonce le nombre de résultats après une recherche inline. Sans elle, la
+				barre `CursorPagination` — seule porteuse d'une live region — disparaît
+				(`if (!canNavigate) return null`) dès que la liste tient sur une page,
+				soit l'issue normale d'une recherche : le lecteur d'écran entendait
+				« Recherche en cours… » puis plus rien. Audit recherche 2026-07-26. */}
+			<ResultCountLiveRegion
+				totalCount={productsData.totalCount}
+				query={search}
+				singular="produit"
+				plural="produits"
+			/>
+
+			<ProductsBottomBar
+				productTypes={productTypes}
+				collections={collections}
+				colors={colors}
+				materials={materials}
+				maxPriceInCents={maxPriceInCents}
+			/>
+
+			<Toolbar
+				className="hidden md:flex"
+				ariaLabel="Barre d'outils de gestion des produits"
+				search={
+					<SearchInput
+						size="sm"
+						paramName="search"
+						placeholder="Rechercher par titre, type…"
+						aria-label="Rechercher un produit par titre ou type"
+						className="w-full"
+					/>
+				}
+			>
+				<SelectFilter
+					filterKey="sortBy"
+					label="Trier par"
+					options={GET_PRODUCTS_SORT_FIELDS.map((field) => ({
+						value: field,
+						label: ADMIN_PRODUCTS_SORT_LABELS[field] ?? field,
+					}))}
+					placeholder="Plus récents"
+					className="w-full sm:min-w-45"
+					noPrefix
+				/>
+				<ButtonGroup aria-label="Filtres et actions">
+					<FilterTriggerButton />
+					<RefreshProductsButton />
+				</ButtonGroup>
+			</Toolbar>
+
+			{/* Indicateur tri actif (mobile) */}
+			<ProductsSortBadge />
+
+			{/* Badges de filtres actifs (visible mobile + desktop) */}
+			<ProductsFilterBadges
+				productTypes={productTypes}
+				collections={collections}
+				colors={colors}
+				materials={materials}
+			/>
+
+			{/* Liste mobile */}
+			<Suspense
+				fallback={
+					<ProductsMobileListSkeleton
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
+				}
+			>
+				<ProductsMobileList
+					productsPromise={Promise.resolve(productsData)}
+					perPage={perPage}
+					hasActiveFilters={
+						!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+					}
+				/>
+			</Suspense>
+
+			{/* DataTable desktop */}
+			<ProductsDataTable
+				productsPromise={Promise.resolve(productsData)}
+				perPage={perPage}
+				hasActiveFilters={!!search || Object.keys(params).some((key) => key.startsWith("filter_"))}
+			/>
+		</div>
+	);
+}

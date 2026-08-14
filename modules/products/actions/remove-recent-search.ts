@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { success, handleActionError, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";

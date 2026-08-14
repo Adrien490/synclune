@@ -190,13 +190,13 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 		});
 
 		it("remonte la page dans l'état verrouillé", () => {
-			render(<CheckoutForm cart={cart as never} session={null} />);
+			render(<CheckoutForm cart={cart as never} />);
 
 			expect(screen.getByText("Montant verrouillé")).toBeInTheDocument();
 		});
 
 		it("expose l'alerte du verrou avec l'id que les champs gelés référencent", () => {
-			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
+			const { container } = render(<CheckoutForm cart={cart as never} />);
 
 			// ⚠️ Ce test exigeait naguère `<fieldset disabled>` autour de « Frais de
 			// livraison ». Ce fieldset ne gelait RIEN : la section est en lecture seule,
@@ -220,14 +220,14 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			// gel champ par champ — `readOnly` sur le code postal, `disabled` sur le pays, et
 			// eux seuls — est verrouillé par
 			// `locked-amount-address-editable.regression.test.ts`.
-			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
+			const { container } = render(<CheckoutForm cart={cart as never} />);
 
 			expect(screen.getByTestId("section-Livraison").closest("fieldset[disabled]")).toBeNull();
 			expect(container.querySelectorAll("fieldset[disabled]")).toHaveLength(0);
 		});
 
 		it("n'appelle JAMAIS updateAmount (sinon « Commande déjà initiée » en boucle)", () => {
-			render(<CheckoutForm cart={cart as never} session={null} />);
+			render(<CheckoutForm cart={cart as never} />);
 
 			expect(mockUpdateAmount).not.toHaveBeenCalled();
 		});
@@ -236,7 +236,7 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			// `resolveIdempotentHit` refuse toute divergence de pays / code postal :
 			// l'ancienne copie « Actualise la page si tu veux modifier ta livraison »
 			// décrivait une action impossible.
-			render(<CheckoutForm cart={cart as never} session={null} />);
+			render(<CheckoutForm cart={cart as never} />);
 
 			expect(screen.queryByText(/modifier ta livraison/i)).not.toBeInTheDocument();
 			// Et ne prétend plus l'adresse figée : elle l'était par un gel trop large,
@@ -253,7 +253,7 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 				value: { ...window.location, reload },
 			});
 
-			render(<CheckoutForm cart={cart as never} session={null} />);
+			render(<CheckoutForm cart={cart as never} />);
 			await userEvent.click(screen.getByRole("button", { name: "Recharger la page" }));
 
 			expect(mockAllowNavigation).toHaveBeenCalled();
@@ -277,13 +277,13 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 		});
 
 		it("ne verrouille rien", () => {
-			render(<CheckoutForm cart={cart as never} session={null} />);
+			render(<CheckoutForm cart={cart as never} />);
 
 			expect(screen.queryByText("Montant verrouillé")).not.toBeInTheDocument();
 		});
 
 		it("n'expose ni alerte de verrou ni fieldset désactivé", () => {
-			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
+			const { container } = render(<CheckoutForm cart={cart as never} />);
 
 			expect(container.querySelector(`#${AMOUNT_LOCK_ALERT_ID}`)).toBeNull();
 			expect(container.querySelectorAll("fieldset[disabled]")).toHaveLength(0);

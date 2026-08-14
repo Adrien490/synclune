@@ -5,7 +5,8 @@ import { useEffect } from "react";
 
 interface SentryUserBridgeProps {
 	userId?: string | null;
-	role?: string | null;
+	/** Rôle applicatif remonté en tag Sentry — nommé userRole pour ne pas collisionner avec l'attribut ARIA `role`. */
+	userRole?: string | null;
 }
 
 /**
@@ -16,12 +17,12 @@ interface SentryUserBridgeProps {
  * the LCP/TTI window. Errors thrown before idle still capture correctly
  * because the Sentry SDK itself is already initialized at boot.
  */
-export function SentryUserBridge({ userId, role }: SentryUserBridgeProps) {
+export function SentryUserBridge({ userId, userRole }: SentryUserBridgeProps) {
 	useEffect(() => {
 		const apply = () => {
 			if (userId) {
 				Sentry.setUser({ id: userId });
-				if (role) Sentry.setTag("role", role);
+				if (userRole) Sentry.setTag("role", userRole);
 			} else {
 				Sentry.setUser(null);
 			}
@@ -35,7 +36,7 @@ export function SentryUserBridge({ userId, role }: SentryUserBridgeProps) {
 
 		const timeout = window.setTimeout(apply, 0);
 		return () => window.clearTimeout(timeout);
-	}, [userId, role]);
+	}, [userId, userRole]);
 
 	return null;
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
@@ -17,7 +17,7 @@ import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { validateProductForPublication } from "../services/product-validation.service";
 import { canTransitionProductStatus } from "../services/product-status-validation.service";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**

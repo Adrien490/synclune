@@ -3,8 +3,8 @@
 import * as Sentry from "@sentry/nextjs";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";

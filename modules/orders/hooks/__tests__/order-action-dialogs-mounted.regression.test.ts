@@ -26,9 +26,12 @@ const HEADER = readFileSync(
 	join(root, "modules/orders/components/admin/order-detail/order-header.tsx"),
 	"utf-8",
 );
-const DETAIL_PAGE = readFileSync(join(root, "app/admin/ventes/commandes/[id]/page.tsx"), "utf-8");
+const DETAIL_PAGE = readFileSync(
+	join(root, "app/admin/(protected)/ventes/commandes/[id]/page.tsx"),
+	"utf-8",
+);
 const LIST_DIALOGS = readFileSync(
-	join(root, "app/admin/ventes/commandes/_components/orders-admin-dialogs.tsx"),
+	join(root, "app/admin/(protected)/ventes/commandes/_components/orders-admin-dialogs.tsx"),
 	"utf-8",
 );
 

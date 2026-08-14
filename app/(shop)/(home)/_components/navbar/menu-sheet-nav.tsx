@@ -1,6 +1,5 @@
 "use client";
 
-import type { NavbarSessionData } from "@/shared/types/session.types";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
@@ -11,12 +10,7 @@ import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import type { MenuProductTypeItem } from "./menu-sheet-nav-sections";
-import {
-	CreationsGrid,
-	MenuSheetHeadNote,
-	ShortcutsBand,
-	UserHeader,
-} from "./menu-sheet-nav-sections";
+import { CreationsGrid, MenuSheetHeadNote, ShortcutsBand } from "./menu-sheet-nav-sections";
 import { useMenuSheetNavigate } from "./menu-sheet-navigate-context";
 import { VAUL_TRANSITION_DURATION_MS } from "./navbar-styles";
 
@@ -42,7 +36,6 @@ const adminRowClassName = cn(
 interface MenuSheetNavProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: MenuProductTypeItem[];
-	session?: NavbarSessionData | null;
 	isAdmin?: boolean;
 	onLogoutClick?: () => void;
 	/** Ferme le menu puis ouvre le cart sheet (différé `transitionend`) — cf. `MenuSheet`. */
@@ -51,7 +44,7 @@ interface MenuSheetNavProps {
 
 /**
  * « L'étal de poche » — composition du volet, dans l'ordre :
- * identité (session) · tête éditoriale · bande de raccourcis · grille des
+ * tête éditoriale · bande de raccourcis · grille des
  * familles (ou encart « atelier en pause ») · rangée « Les collections » · bloc
  * admin (Tableau de bord + Déconnexion).
  *
@@ -62,7 +55,6 @@ interface MenuSheetNavProps {
 export function MenuSheetNav({
 	navItems,
 	productTypes,
-	session,
 	isAdmin = false,
 	onLogoutClick,
 	onCartClick,
@@ -81,7 +73,6 @@ export function MenuSheetNav({
 	// Quatrième `find` depuis le 2026-08-08 : la bande de cartes Collections a été
 	// supprimée, sa destination remonte donc dans la SSOT comme les trois autres.
 	const collectionsItem = navItems.find((item) => item.href === ROUTES.SHOP.COLLECTIONS);
-	const isLoggedIn = !!session?.user;
 
 	const navRef = useRef<HTMLElement>(null);
 
@@ -169,13 +160,6 @@ export function MenuSheetNav({
 			initial="hidden"
 			animate="visible"
 		>
-			{/* User header (if logged in) */}
-			{session?.user && (
-				<m.div variants={itemVariants} custom={nextDelay()}>
-					<UserHeader session={session} wishlistCount={wishlistCount} cartCount={cartCount} />
-				</m.div>
-			)}
-
 			{/* Tête éditoriale — greffe de la direction C sur l'étal de poche. */}
 			<MenuSheetHeadNote itemVariants={itemVariants} customDelay={nextDelay()} />
 
@@ -228,36 +212,32 @@ export function MenuSheetNav({
 				</m.div>
 			)}
 
-			{/* Admin (session unique de l'administratrice) : Tableau de bord +
-			    Déconnexion. « Déconnexion » vivait dans l'ancienne section Favoris —
-			    elle n'a jamais concerné que cette session-ci, elle vit donc ICI. */}
-			{(isAdmin || isLoggedIn) && (
+			{/* Admin (cookie de session unique de l'administratrice) : Tableau de
+			    bord + Déconnexion. « Déconnexion » vivait dans l'ancienne section
+			    Favoris — elle n'a jamais concerné que cette session-ci, elle vit ICI. */}
+			{isAdmin && (
 				<div className="border-border/60 mx-4 mt-2 border-t pt-4">
-					{isAdmin && (
-						<m.div variants={itemVariants} custom={nextDelay()}>
-							{/* Pas de `<SheetClose>` autour — cf. `menu-sheet-navigate-context`. */}
-							<Link
-								href={ROUTES.ADMIN.ROOT}
-								replace
-								prefetch={null}
-								onClick={onNavigate}
-								className={adminRowClassName}
-							>
-								Tableau de bord
-							</Link>
-						</m.div>
-					)}
-					{isLoggedIn && (
-						<m.div variants={itemVariants} custom={nextDelay()}>
-							<button
-								type="button"
-								className={cn(adminRowClassName, "text-muted-foreground w-full text-left")}
-								onClick={onLogoutClick}
-							>
-								Déconnexion
-							</button>
-						</m.div>
-					)}
+					<m.div variants={itemVariants} custom={nextDelay()}>
+						{/* Pas de `<SheetClose>` autour — cf. `menu-sheet-navigate-context`. */}
+						<Link
+							href={ROUTES.ADMIN.ROOT}
+							replace
+							prefetch={null}
+							onClick={onNavigate}
+							className={adminRowClassName}
+						>
+							Tableau de bord
+						</Link>
+					</m.div>
+					<m.div variants={itemVariants} custom={nextDelay()}>
+						<button
+							type="button"
+							className={cn(adminRowClassName, "text-muted-foreground w-full text-left")}
+							onClick={onLogoutClick}
+						>
+							Déconnexion
+						</button>
+					</m.div>
 				</div>
 			)}
 		</m.nav>

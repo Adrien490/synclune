@@ -161,16 +161,6 @@ function createMockCart() {
 	};
 }
 
-function createMockSession() {
-	return {
-		user: {
-			id: "user-1",
-			email: "test@example.com",
-			name: "Test User",
-		},
-	};
-}
-
 afterEach(cleanup);
 
 beforeEach(() => {
@@ -184,20 +174,20 @@ beforeEach(() => {
 describe("CheckoutForm", () => {
 	describe("step display", () => {
 		it("shows address step by default", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} />);
 
 			expect(screen.getByText("Livraison")).toBeInTheDocument();
 			expect(screen.queryByTestId("payment-step")).toBeNull();
 		});
 
 		it("shows checkout summary alongside the form", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} />);
 
 			expect(screen.getByTestId("checkout-summary")).toBeInTheDocument();
 		});
 
 		it("does not duplicate h1 — page parent owns the page heading", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} />);
 
 			// The form labels itself with aria-label="Formulaire de paiement"; the page
 			// (`app/paiement/page.tsx`) owns the single <h1>. CheckoutForm must not render its own.
@@ -216,13 +206,13 @@ describe("CheckoutForm", () => {
 		// Audit UI/UX paiement 2026-07-26, F9.
 
 		it("est rendue une seule fois dans le formulaire", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} />);
 
 			expect(screen.getAllByText(/champs marqués/i)).toHaveLength(1);
 		});
 
 		it("précède la section Contact dans l'ordre du document", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} />);
 
 			const note = screen.getByText(/champs marqués/i);
 			const contact = screen.getByText("Contact");
@@ -238,7 +228,7 @@ describe("CheckoutForm", () => {
 		it("does not show offline banner when online", () => {
 			vi.stubGlobal("navigator", { onLine: true });
 
-			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} />);
 
 			expect(screen.queryByText("Connexion internet perdue")).toBeNull();
 
@@ -248,7 +238,7 @@ describe("CheckoutForm", () => {
 		it("shows offline banner when navigator.onLine is false", () => {
 			vi.stubGlobal("navigator", { onLine: false });
 
-			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} />);
 
 			expect(screen.getByText("Connexion internet perdue")).toBeInTheDocument();
 
@@ -257,12 +247,10 @@ describe("CheckoutForm", () => {
 	});
 
 	describe("useCheckoutForm integration", () => {
-		it("calls useCheckoutForm with the session", () => {
-			const session = createMockSession();
+		it("calls useCheckoutForm (parcours 100 % invité — aucune session)", () => {
+			render(<CheckoutForm cart={createMockCart() as never} />);
 
-			render(<CheckoutForm cart={createMockCart() as never} session={session as never} />);
-
-			expect(useCheckoutForm).toHaveBeenCalledWith(expect.objectContaining({ session }));
+			expect(useCheckoutForm).toHaveBeenCalledWith();
 		});
 	});
 });

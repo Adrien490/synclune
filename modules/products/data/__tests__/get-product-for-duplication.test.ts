@@ -24,7 +24,7 @@ vi.mock("@/modules/products/utils/cache.utils", () => ({
 // La garde `isAdmin()` a été portée dans la couche `data/` (audit cache catalogue
 // 2026-07-31) : la requête ne filtre pas `status`, et `requireAdmin()` chez l'unique
 // appelant était la seule protection — correcte, mais rien ne l'imposait.
-vi.mock("@/modules/auth/utils/guards", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	isAdmin: mockIsAdmin,
 }));
 

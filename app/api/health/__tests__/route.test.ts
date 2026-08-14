@@ -42,7 +42,7 @@ vi.mock("stripe", () => ({
 	},
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdminApiRoute: mockRequireAdminApiRoute,
 }));
 
@@ -77,7 +77,7 @@ describe("GET /api/health", () => {
 
 	describe("admin - all services healthy", () => {
 		beforeEach(() => {
-			mockRequireAdminApiRoute.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
+			mockRequireAdminApiRoute.mockResolvedValue({ admin: true });
 		});
 
 		it("returns 200 with status ok when all services are reachable", async () => {
@@ -109,7 +109,7 @@ describe("GET /api/health", () => {
 
 	describe("admin - database down", () => {
 		beforeEach(() => {
-			mockRequireAdminApiRoute.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
+			mockRequireAdminApiRoute.mockResolvedValue({ admin: true });
 		});
 
 		it("returns 503 when database is unreachable", async () => {
@@ -128,7 +128,7 @@ describe("GET /api/health", () => {
 
 	describe("admin - stripe down", () => {
 		beforeEach(() => {
-			mockRequireAdminApiRoute.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
+			mockRequireAdminApiRoute.mockResolvedValue({ admin: true });
 		});
 
 		it("returns 503 when Stripe is unreachable", async () => {

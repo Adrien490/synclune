@@ -1,7 +1,8 @@
 "use server";
 
 import { OrderStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
@@ -11,7 +12,7 @@ import {
 	error,
 	safeFormGet,
 } from "@/shared/lib/actions";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
@@ -34,9 +35,8 @@ export async function updateTracking(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -124,7 +124,7 @@ export async function updateTracking(
 				orderId: id,
 				action: "TRACKING_UPDATED",
 				note: "Suivi mis à jour",
-				authorName: adminUser.name ?? "Admin",
+				authorName: ADMIN_DISPLAY_NAME,
 				metadata: {
 					previousTrackingNumber: found.trackingNumber,
 					newTrackingNumber: validated.data.trackingNumber,

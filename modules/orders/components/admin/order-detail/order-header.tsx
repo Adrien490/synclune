@@ -33,7 +33,7 @@ import { MARK_AS_DELIVERED_DIALOG_ID } from "../mark-as-delivered-alert-dialog";
 import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
 import { useOrderActions } from "@/modules/orders/hooks/use-order-actions";
 import type { OrderHeaderProps } from "./types";
-import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
+import { useSetAdminPageTitle } from "@/app/admin/(protected)/_components/admin-page-title-context";
 import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
 import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 

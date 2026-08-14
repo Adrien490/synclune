@@ -1,5 +1,11 @@
 import { test, expect } from "./fixtures";
 
+// ⚠️ SUITE NEUTRALISÉE au lot 1 de la migration lean (docs/MIGRATION-PROMPTS.md) :
+// les pages Better Auth (/connexion, /mot-de-passe-oublie…) n'existent plus, la
+// connexion admin vit sur /admin/connexion (mot de passe unique + cookie HMAC).
+// Le lot 7 refond les e2e — ne pas réparer cette suite avant.
+test.skip(true, "Better Auth retiré (migration lean, lot 1) — refonte e2e au lot 7");
+
 test.describe("Authentification - Connexion", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ authPage }) => {
 		await authPage.goto();

@@ -1,5 +1,5 @@
 import { logger } from "@/shared/lib/logger";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheRefundDetail } from "../constants/cache";
 import { GET_REFUND_SELECT } from "../constants/refund.constants";

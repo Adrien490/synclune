@@ -95,7 +95,7 @@ function cellStyle(index: number): CSSProperties {
  * clic le RETIRAIT (`toggleWishlistItem` : « présent → retire ») sous une UI
  * optimiste qui promettait l'inverse. Les 6 autres grilles de l'app passent
  * toutes cet état ; l'étal était le seul à ne pas le faire. Le coût est nul en
- * pratique — le layout `(shop)` lit déjà `getSession()`.
+ * pratique — la lecture du cookie est déjà payée par le layout `(shop)`.
  */
 export async function HeroGrid({
 	productsPromise,

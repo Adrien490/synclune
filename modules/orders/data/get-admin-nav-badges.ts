@@ -27,7 +27,7 @@ export type AdminNavBadges = Record<string, number>;
  * Récupère les compteurs de badges de navigation admin.
  *
  * Appelé uniquement depuis `app/admin/layout.tsx`, déjà gardé par
- * `requireAdminWithUser` — pas de ré-auth ici (les counts agrégés ne sont pas
+ * la garde admin du layout — pas de ré-auth ici (les counts agrégés ne sont pas
  * des données sensibles par-utilisateur et sont identiques pour tous les
  * admins, d'où un cache partagé plutôt que `private`).
  */

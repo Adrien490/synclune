@@ -142,52 +142,11 @@ export const AUTH_LOGIN_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Limite pour les demandes de reset de mot de passe
- *
- * Protège contre :
- * - Spam d'emails de reset
- * - Tentatives d'énumération d'emails (découvrir quels emails existent)
- */
-export const AUTH_PASSWORD_RESET_LIMIT: RateLimitConfig = {
-	name: "auth-password-reset",
-	limit: 3, // 3 demandes maximum
-	windowMs: hours(1), // par heure
-};
-
-/**
- * Limite pour la vérification d'email (envoi de code)
- *
- * Protège contre spam d'emails de vérification
- */
-export const AUTH_EMAIL_VERIFICATION_LIMIT: RateLimitConfig = {
-	name: "auth-email-verification",
-	limit: 5, // 5 envois maximum
-	windowMs: hours(1), // par heure
-};
-
-/**
- * Limite pour le changement de mot de passe
- *
- * Protège contre :
- * - Tentatives répétées de changement de mot de passe
- * - Abus potentiels du système
- *
- * NOTE: Renforcement de la sécurité - limite stricte pour éviter les abus
- */
-export const AUTH_PASSWORD_CHANGE_LIMIT: RateLimitConfig = {
-	name: "auth-password-change",
-	limit: 3, // 3 changements maximum (réduit de 5 à 3 pour plus de sécurité)
-	windowMs: hours(1), // par heure
-};
-
-/**
  * Limite pour la déconnexion
  *
- * `logout` est une Server Action PUBLIQUE (pas de garde d'auth — Better Auth
- * exige de pouvoir déconnecter une session orpheline), et chaque appel émet un
- * `auth.api.signOut()` donc une écriture DB. Sans plafond, c'est un RPC non
- * authentifié à coût base de données illimité. Limite large : un utilisateur
- * légitime se déconnecte une fois. Audit rate limiting 2026-07-31.
+ * `logout` est une Server Action PUBLIQUE (déconnecter un cookie déjà invalide
+ * doit marcher), donc un RPC atteignable hors UI : le rate limit est son seul
+ * plafond. Limite large : un utilisateur légitime se déconnecte une fois.
  */
 export const AUTH_LOGOUT_LIMIT: RateLimitConfig = {
 	name: "auth-logout",
@@ -350,9 +309,6 @@ export const CART_LIMITS = {
  */
 export const AUTH_LIMITS = {
 	LOGIN: AUTH_LOGIN_LIMIT,
-	PASSWORD_RESET: AUTH_PASSWORD_RESET_LIMIT,
-	PASSWORD_CHANGE: AUTH_PASSWORD_CHANGE_LIMIT,
-	EMAIL_VERIFICATION: AUTH_EMAIL_VERIFICATION_LIMIT,
 	LOGOUT: AUTH_LOGOUT_LIMIT,
 } as const;
 

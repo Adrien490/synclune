@@ -4,7 +4,6 @@ import { useState, useSyncExternalStore } from "react";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
-import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { ShippingCountry } from "@/shared/constants/countries";
@@ -33,7 +32,6 @@ function getOnlineStatusServerSnapshot() {
 
 interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
-	session: Session | null;
 }
 
 /**
@@ -42,13 +40,12 @@ interface CheckoutFormProps {
  * Sections: Contact, Livraison, Frais et délai de livraison, Paiement.
  * Payment via Stripe PaymentElement — carte uniquement (pas de paiement express).
  */
-export function CheckoutForm({ cart, session }: CheckoutFormProps) {
-	const isGuest = !session;
+export function CheckoutForm({ cart }: CheckoutFormProps) {
 	// Seul `formRef` sert ici : le focus post-soumission appartient à
 	// `CheckoutErrorSummary`. Le hook reste pour le câblage `onInvalidCapture`.
 	const { formRef } = useFocusFirstError();
 
-	const { form } = useCheckoutForm({ session });
+	const { form } = useCheckoutForm();
 
 	// Warn on tab close / back button when the form has been touched.
 	// Disabled once the user reaches the Stripe redirect via `allowNavigation()`.
@@ -80,7 +77,6 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 	// Initialize Payment Intent
 	const pi = usePaymentIntent({
 		cartItems,
-		email: isGuest ? undefined : session.user.email || undefined,
 	});
 
 	/**
@@ -167,7 +163,7 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 				country: ((s.country as string) || "FR") as ShippingCountry,
 				phoneNumber: s.phoneNumber,
 			},
-			email: isGuest ? (values.email as string) || undefined : undefined,
+			email: (values.email as string) || undefined,
 			paymentIntentId: pi.paymentIntentId!,
 			displayedTotal,
 		};
@@ -193,8 +189,6 @@ export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 						form={form}
 						formRef={formRef}
 						cart={cart}
-						session={session}
-						isGuest={isGuest}
 						isOnline={isOnline}
 						pi={pi}
 						subtotal={subtotal}

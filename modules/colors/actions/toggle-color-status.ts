@@ -2,8 +2,8 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";

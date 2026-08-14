@@ -1,5 +1,5 @@
 import { logger } from "@/shared/lib/logger";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheProductDetailById } from "@/modules/products/utils/cache.utils";
 import { GET_PRODUCT_FOR_DUPLICATION_SELECT } from "../constants/product.constants";

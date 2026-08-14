@@ -43,11 +43,11 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
 }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
@@ -84,7 +84,7 @@ import { deleteOrder } from "../delete-order";
 describe("ORD-BIZ-003 — delete-order crée une OrderHistory immuable", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-42", name: "Sophie" } });
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({
 			data: { id: VALID_CUID, reason: "commande de test à nettoyer" },
@@ -117,7 +117,7 @@ describe("ORD-BIZ-003 — delete-order crée une OrderHistory immuable", () => {
 				orderId: VALID_CUID,
 				action: "CANCELLED",
 				source: "ADMIN",
-				authorName: "Sophie",
+				authorName: "Léane",
 				note: "commande de test à nettoyer",
 				metadata: expect.objectContaining({
 					deleted: true,

@@ -9,7 +9,6 @@ const {
 	mockStripePaymentIntentsRetrieve,
 	mockWithStripeCircuitBreaker,
 	mockLoggerInfo,
-	mockGetSession,
 	mockGetOrCreateGuestSessionId,
 	mockCheckRateLimit,
 	mockGetClientIp,
@@ -42,10 +41,6 @@ vi.mock("@/shared/lib/stripe", () => ({
 		},
 	},
 	withStripeCircuitBreaker: mockWithStripeCircuitBreaker,
-}));
-
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
 }));
 
 vi.mock("@/modules/cart/lib/guest-session", () => ({
@@ -85,25 +80,24 @@ const OTHER_USER_ID = "cm3x7k2ab0009qz8v1a2b3c4d";
 const GUEST_SESSION_A = "550e8400-e29b-41d4-a716-446655440000";
 const GUEST_SESSION_B = "6f9619ff-8b86-4d11-b42d-00c04fc964ff";
 
-const AUTH_PI = {
+const GUEST_PI = {
 	id: "pi_test_abc123",
 	status: "requires_payment_method",
-	metadata: { userId: USER_ID },
+	metadata: { userId: "guest", guestSessionId: GUEST_SESSION_A },
 };
 
 describe("cancelOrphanPaymentIntent", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		mockWithStripeCircuitBreaker.mockImplementation((fn: () => Promise<unknown>) => fn());
-		// Default: authenticated owner of AUTH_PI, rate limit OK.
-		mockGetSession.mockResolvedValue({ user: { id: USER_ID } });
-		mockGetOrCreateGuestSessionId.mockResolvedValue(null);
+		// Default: guest owner of GUEST_PI (parcours 100 % invité), rate limit OK.
+		mockGetOrCreateGuestSessionId.mockResolvedValue(GUEST_SESSION_A);
 		mockHeaders.mockResolvedValue(new Map());
 		mockGetClientIp.mockResolvedValue("1.2.3.4");
 		mockGetRateLimitIdentifier.mockReturnValue("guest:rl");
 		mockCheckRateLimit.mockResolvedValue({ success: true });
-		mockStripePaymentIntentsRetrieve.mockResolvedValue(AUTH_PI);
-		mockStripePaymentIntentsCancel.mockResolvedValue({ id: AUTH_PI.id, status: "canceled" });
+		mockStripePaymentIntentsRetrieve.mockResolvedValue(GUEST_PI);
+		mockStripePaymentIntentsCancel.mockResolvedValue({ id: GUEST_PI.id, status: "canceled" });
 	});
 
 	// ─── Early return for invalid IDs ─────────────────────────────────────────
@@ -111,7 +105,7 @@ describe("cancelOrphanPaymentIntent", () => {
 	it("returns early without touching Stripe for ID not starting with 'pi_'", async () => {
 		await cancelOrphanPaymentIntent("ch_test_abc123");
 
-		expect(mockGetSession).not.toHaveBeenCalled();
+		expect(mockGetOrCreateGuestSessionId).not.toHaveBeenCalled();
 		expect(mockStripePaymentIntentsRetrieve).not.toHaveBeenCalled();
 		expect(mockStripePaymentIntentsCancel).not.toHaveBeenCalled();
 	});
@@ -125,27 +119,14 @@ describe("cancelOrphanPaymentIntent", () => {
 
 	// ─── Ownership enforcement (audit P2.3 — IDOR) ────────────────────────────
 
-	it("cancels when the authenticated user owns the PI (metadata.userId match)", async () => {
+	it("cancels when the guest session owns the PI (metadata.guestSessionId match)", async () => {
 		await cancelOrphanPaymentIntent("pi_test_abc123");
 
 		expect(mockStripePaymentIntentsRetrieve).toHaveBeenCalledWith("pi_test_abc123");
 		expect(mockStripePaymentIntentsCancel).toHaveBeenCalledWith("pi_test_abc123");
 	});
 
-	it("cancels when the guest session owns the PI (metadata.guestSessionId match)", async () => {
-		mockGetSession.mockResolvedValue(null);
-		mockGetOrCreateGuestSessionId.mockResolvedValue(GUEST_SESSION_A);
-		mockStripePaymentIntentsRetrieve.mockResolvedValue({
-			id: "pi_test_abc123",
-			metadata: { userId: "guest", guestSessionId: GUEST_SESSION_A },
-		});
-
-		await cancelOrphanPaymentIntent("pi_test_abc123");
-
-		expect(mockStripePaymentIntentsCancel).toHaveBeenCalledWith("pi_test_abc123");
-	});
-
-	it("does NOT cancel a PI owned by another user (ownership mismatch)", async () => {
+	it("does NOT cancel a PI owned by a legacy user account (ownership mismatch)", async () => {
 		mockStripePaymentIntentsRetrieve.mockResolvedValue({
 			id: "pi_test_abc123",
 			metadata: { userId: OTHER_USER_ID },
@@ -158,7 +139,6 @@ describe("cancelOrphanPaymentIntent", () => {
 	});
 
 	it("does NOT cancel a guest PI when the session id differs", async () => {
-		mockGetSession.mockResolvedValue(null);
 		mockGetOrCreateGuestSessionId.mockResolvedValue(GUEST_SESSION_A);
 		mockStripePaymentIntentsRetrieve.mockResolvedValue({
 			id: "pi_test_abc123",
@@ -193,7 +173,6 @@ describe("cancelOrphanPaymentIntent", () => {
 	});
 
 	it("returns early when there is no user and no session id", async () => {
-		mockGetSession.mockResolvedValue(null);
 		mockGetOrCreateGuestSessionId.mockResolvedValue(null);
 
 		await cancelOrphanPaymentIntent("pi_test_abc123");

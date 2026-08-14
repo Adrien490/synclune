@@ -47,11 +47,11 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
 }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
@@ -94,7 +94,7 @@ import { updateOrderShippingAddress } from "../update-order-shipping-address";
 describe("ORD-BIZ-005 — update-order-shipping-address crée OrderHistory.ADDRESS_UPDATED", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-7", name: "Lucie" } });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-7", name: "Léane" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
@@ -156,7 +156,7 @@ describe("ORD-BIZ-005 — update-order-shipping-address crée OrderHistory.ADDRE
 				expect.objectContaining({
 					orderId: VALID_CUID,
 					action: "ADDRESS_UPDATED",
-					authorName: "Lucie",
+					authorName: "Léane",
 					metadata: expect.objectContaining({
 						addressType: "shipping",
 						changedFields: expect.arrayContaining([

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { PublicationStatus } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getRateLimitId } from "@/modules/auth/lib/rate-limit-helpers";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { getRateLimitId } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
 import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { prisma } from "@/shared/lib/prisma";

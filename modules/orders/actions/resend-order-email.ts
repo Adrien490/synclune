@@ -1,7 +1,8 @@
 "use server";
 
 import { OrderStatus, HistorySource } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import {
 	sendOrderConfirmationEmail,
@@ -12,7 +13,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { RESEND_EMAIL_ORDER_SELECT } from "@/modules/orders/constants/order.constants";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { generateInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
@@ -53,9 +54,8 @@ export async function resendOrderEmail(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin (`WithUser` : l'entrée d'audit du renvoi nomme l'auteur)
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.RESEND_EMAIL);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -184,7 +184,7 @@ export async function resendOrderEmail(
 					emailType === "shipping"
 						? "Email d'expédition renvoyé manuellement au client"
 						: "Email de confirmation renvoyé manuellement au client",
-				authorName: adminUser.name ?? "Admin",
+				authorName: ADMIN_DISPLAY_NAME,
 				source: HistorySource.ADMIN,
 				// Pas de clé `emailType` : `sanitizeAuditMetadata` la rejette (motif
 				// PII-like « email »), à raison — `OrderHistory.metadata` est exposée au

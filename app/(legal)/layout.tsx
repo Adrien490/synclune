@@ -1,7 +1,7 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
 import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile-bottom-nav";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import { QuickSearchDialogAsync } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-async";

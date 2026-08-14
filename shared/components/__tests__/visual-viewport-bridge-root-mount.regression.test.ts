@@ -72,11 +72,10 @@ describe("@regression keyboard-bridge-root-mount", () => {
 	it("couvre les routes hors (shop) qui portent des formulaires — /paiement en tête", () => {
 		// Ces layouts existent et ne montent PAS le pont : ils dépendent donc
 		// entièrement du montage racine. Si l'un disparaît, revoir ce test.
-		const dependents = [
-			"app/paiement/layout.tsx",
-			"app/(auth)/layout.tsx",
-			"app/suivi-commande/layout.tsx",
-		];
+		// `app/(auth)/layout.tsx` a quitté la liste avec Better Auth (migration
+		// lean, lot 1) — la connexion vit désormais sous /admin/connexion, sans
+		// layout propre.
+		const dependents = ["app/paiement/layout.tsx", "app/suivi-commande/layout.tsx"];
 
 		for (const path of dependents) {
 			expect(layouts, `${path} attendu dans app/`).toContain(path);

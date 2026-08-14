@@ -6,14 +6,13 @@ import {
 	renderRefundCreditNotePdf,
 } from "@/modules/refunds/services/render-refund-credit-note.service";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
-import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
+import { isAdmin as isVerifiedAdminSession } from "@/modules/admin-auth/lib/require-admin";
 import {
 	orderNumberParamSchema,
 	refundIdParamSchema,
 } from "@/modules/orders/schemas/order-route-params.schema";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { logger } from "@/shared/lib/logger";
@@ -29,7 +28,7 @@ import { OrderAction, HistorySource, RefundStatus } from "@/app/generated/prisma
  * de récupérer ses factures ET ses avoirs comme deux artefacts comptables
  * distincts (Art. 289 CGI).
  *
- * Auth : admin (audit) OU owner session. Pas de token guest (un guest peut
+ * Auth : admin uniquement (cookie signé HMAC). Pas de token guest (un guest peut
  * contacter le support pour obtenir l'avoir si nécessaire).
  *
  * Cf. audit avoirs 2026-05-28 — EINV-CREDIT-011.
@@ -72,7 +71,7 @@ export async function GET(
 ) {
 	const { orderNumber, refundId } = await params;
 
-	// F4 (audit Zod) : params bornés/formatés AVANT session/rate-limit/Prisma
+	// F4 (audit Zod) : params bornés/formatés AVANT auth/rate-limit/Prisma
 	// (harmonisation avec status/route.ts). Échec → 400.
 	if (
 		!orderNumberParamSchema.safeParse(orderNumber).success ||
@@ -81,22 +80,15 @@ export async function GET(
 		return new Response("Bad request", { status: 400 });
 	}
 
-	const session = await getSession();
+	// Route ADMIN uniquement — cookie de session admin signé HMAC.
+	const isAdmin = await isVerifiedAdminSession();
 
-	if (!session?.user.id) {
+	if (!isAdmin) {
 		return new Response("Non autorisé", { status: 401 });
 	}
 
-	// EINV-SEC-001 : re-vérification DB du rôle admin — le cookie-cache Better Auth
-	// est stale, et le filtre couvre aussi `suspendedAt` / `accountStatus`.
-	const isAdmin = await isVerifiedAdmin(session, "credit-note-route");
-
-	const rateLimitConfig = isAdmin
-		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
-		: ORDER_LIMITS.INVOICE_DOWNLOAD;
-	const rateLimitIdentifier = isAdmin
-		? `admin-credit-note:${session.user.id}`
-		: getRateLimitIdentifier(session.user.id);
+	const rateLimitConfig = ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD;
+	const rateLimitIdentifier = "admin-credit-note:admin";
 	// 3ᵉ argument obligatoire — cf. `/invoice` : l'identifiant est ici toujours
 	// user-scopé, donc sans IP explicite le plafond global 100/min/IP ne s'applique
 	// jamais et un compte unique peut saturer le CPU de génération PDF.
@@ -112,15 +104,13 @@ export async function GET(
 	// Alerte proactive d'épuisement de quota admin (parité avec /invoice) : un admin
 	// qui s'approche de sa borne signale soit un script en boucle, soit un besoin
 	// légitime de relever la limite. Sans ça, on ne le découvrait qu'au premier 429.
-	if (isAdmin) {
+	{
 		const adminLimit = rateLimitConfig.limit ?? 200;
 		if (rateCheck.remaining <= Math.floor(adminLimit * 0.2)) {
 			Sentry.captureMessage("admin-credit-note-download-quota-warning", {
 				level: "warning",
 				tags: { route: "credit-note-refund", actor: "admin" },
 				extra: {
-					// Session obligatoire sur cette route (401 plus haut) : pas d'optional chain.
-					adminUserId: session.user.id,
 					remaining: rateCheck.remaining,
 					limit: adminLimit,
 				},
@@ -134,17 +124,6 @@ export async function GET(
 		select: GET_ORDER_SELECT_CUSTOMER,
 	})) as GetOrderReturn | null;
 	if (!order) {
-		return new Response("Commande introuvable", { status: 404 });
-	}
-
-	// EINV-SEC-003 : 404 indistinct (anti-énumération), cf. /invoice.
-	//
-	// Route ADMIN uniquement : elle n'a pas de chemin par token invité, et la
-	// branche « propriétaire de session » a disparu avec `Order.userId`
-	// (2026-08-05) — une commande n'a plus de propriétaire, l'achat est 100 %
-	// invité. La seule session possible est celle de l'administratrice, déjà
-	// couverte par `isAdmin`.
-	if (!isAdmin) {
 		return new Response("Commande introuvable", { status: 404 });
 	}
 

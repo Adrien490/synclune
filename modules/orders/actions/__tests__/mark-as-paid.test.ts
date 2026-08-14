@@ -59,11 +59,11 @@ vi.mock("@/shared/lib/stripe", () => ({
 		},
 	},
 }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({

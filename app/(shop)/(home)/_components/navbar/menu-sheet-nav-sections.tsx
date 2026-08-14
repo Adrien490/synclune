@@ -1,7 +1,6 @@
 "use client";
 
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
-import type { NavbarSessionData } from "@/shared/types/session.types";
 import { CountBadge } from "@/shared/components/ui/count-badge";
 import { SquiggleUnderline } from "@/shared/components/squiggle-underline";
 import { ROUTES } from "@/shared/constants/urls";
@@ -134,58 +133,6 @@ function SectionHead({
 				<SquiggleUnderline drawn className="bottom-0 h-2 w-full" />
 			</span>
 		</h3>
-	);
-}
-
-// ---------------------------------------------------------------------------
-// User Header (mobile menu personalized greeting)
-// ---------------------------------------------------------------------------
-
-interface UserHeaderProps {
-	session: NavbarSessionData;
-	wishlistCount: number;
-	cartCount: number;
-}
-
-/**
- * Bloc d'identité en tête du menu — **non interactif**.
- *
- * ⚠️ C'était un `<Link>` vers `ROUTES.ADMIN.DASHBOARD`. Or `MenuSheetNav` rend
- * plus bas une entrée « Tableau de bord » vers `ROUTES.ADMIN.ROOT`, et les deux
- * constantes valent `"/admin"` (`shared/constants/urls.ts`) : la même
- * destination était offerte DEUX fois dans le même panneau, à ~400 px d'écart
- * vertical, avec deux libellés qui ne se ressemblaient pas.
- *
- * C'est ce bloc-ci qui a perdu son lien, et pas l'autre : « Bonjour Léane » se
- * lit comme une carte d'identité, pas comme une destination — le libellé
- * explicite « Tableau de bord » porte mieux l'action. Bénéfice secondaire : un
- * arrêt de tabulation en moins, et la disparition d'un nom accessible qui
- * empilait la civilité et deux compteurs (« Administration - Léane, 3 favoris,
- * 2 articles ») sur un lien dont la destination n'était ni l'un ni l'autre.
- */
-export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProps) {
-	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should also be treated as missing
-	const firstName = session.user.name?.split(" ")[0] || null;
-	const greeting = firstName ? `Bonjour ${firstName}` : "Bonjour";
-
-	return (
-		<div className="bg-primary/5 mx-4 mb-4 rounded-xl p-4">
-			<p className="text-foreground text-base font-semibold">{greeting}</p>
-			<p className="text-muted-foreground mt-0.5 text-sm">
-				{wishlistCount > 0 && (
-					<span>
-						{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
-					</span>
-				)}
-				{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
-				{cartCount > 0 && (
-					<span>
-						{cartCount} article{cartCount > 1 ? "s" : ""}
-					</span>
-				)}
-				{wishlistCount === 0 && cartCount === 0 && <span>Espace administration</span>}
-			</p>
-		</div>
 	);
 }
 

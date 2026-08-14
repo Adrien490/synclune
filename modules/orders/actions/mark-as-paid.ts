@@ -6,7 +6,8 @@ import {
 	type Prisma,
 	HistorySource,
 } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { selectDeactivatableSkuIds } from "@/modules/skus/services/validate-public-active-sku.service";
 import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -26,7 +27,7 @@ import { markAsPaidSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { acquireOrderPaidLockTx } from "../utils/order-paid-lock";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 
 /**
@@ -45,9 +46,8 @@ export async function markAsPaid(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.MARK_AS_PAID);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -315,7 +315,7 @@ export async function markAsPaid(
 				newStatus: OrderStatus.PROCESSING,
 				previousPaymentStatus: found.paymentStatus,
 				newPaymentStatus: PaymentStatus.PAID,
-				authorName: adminUser.name ?? "Admin",
+				authorName: ADMIN_DISPLAY_NAME,
 				source: HistorySource.ADMIN,
 				metadata: {
 					stockAdjusted,

@@ -14,8 +14,6 @@ import { UserMenu } from "./user-menu";
 
 interface NavbarIconButtonsProps {
 	isAdmin?: boolean;
-	userName?: string | null;
-	userEmail?: string | null;
 }
 
 /**
@@ -36,7 +34,7 @@ interface NavbarIconButtonsProps {
  * `ShopMobileBottomNav` — sinon une page se retrouve sans aucune action sous `lg`.
  * C'est ce qui manquait au layout `(legal)`, corrigé en même temps.
  */
-export function NavbarIconButtons({ isAdmin, userName, userEmail }: NavbarIconButtonsProps) {
+export function NavbarIconButtons({ isAdmin }: NavbarIconButtonsProps) {
 	return (
 		<>
 			{/* Icône favoris */}
@@ -71,7 +69,7 @@ export function NavbarIconButtons({ isAdmin, userName, userEmail }: NavbarIconBu
 			</Tooltip>
 
 			{/* Menu administration — rend `null` hors session admin */}
-			<UserMenu isAdmin={isAdmin} userName={userName} userEmail={userEmail} />
+			<UserMenu isAdmin={isAdmin} />
 
 			{/* Icône panier - Ouvre le cart sheet */}
 			<Tooltip>

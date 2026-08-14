@@ -1,121 +1,52 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import type { Session } from "@/modules/auth/lib/auth";
 import { CheckoutSection } from "./checkout-section";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
-import { logout } from "@/modules/auth/actions/logout";
-import { toast } from "@/shared/utils/toast";
-import { EnvelopeIcon } from "@phosphor-icons/react/ssr";
 
 interface CheckoutContactSectionProps {
 	form: CheckoutFormInstance;
-	session: Session | null;
 	/** Première étape du tunnel — accent rose, cf. `CheckoutSection`. */
 	isComplete?: boolean;
 }
 
-export function CheckoutContactSection({ form, session, isComplete }: CheckoutContactSectionProps) {
-	const isGuest = !session;
-	const router = useRouter();
-	const [isLogoutPending, startLogoutTransition] = useTransition();
-	// Changer de compte déconnecte, quitte /paiement et perd TOUT le formulaire déjà
-	// saisi (adresse comprise) : c'est destructif, donc confirmation préalable —
-	// `ConfirmDialog` est la surface imposée pour ce cas (cf. CLAUDE.md).
-	// Dialogue local plutôt que via le store : un seul call site, aucun besoin de
-	// piloter l'ouverture à distance.
-	const [isSwitchConfirmOpen, setIsSwitchConfirmOpen] = useState(false);
-
-	const handleSwitchAccount = () => {
-		setIsSwitchConfirmOpen(false);
-		startLogoutTransition(async () => {
-			try {
-				await logout();
-			} catch {
-				toast.error("Impossible de te déconnecter. Réessaye dans un instant.");
-				return;
-			}
-			router.push("/connexion?callbackURL=/paiement");
-			router.refresh();
-		});
-	};
-
+/**
+ * Le parcours d'achat est 100 % invité (migration lean, lot 1) : plus de
+ * branche « connectée » (affichage d'email de compte, « Ce n'est pas moi »),
+ * l'email est toujours saisi ici.
+ */
+export function CheckoutContactSection({ form, isComplete }: CheckoutContactSectionProps) {
 	return (
 		<CheckoutSection title="Contact" accent="rose" isComplete={isComplete}>
 			<div className="space-y-5">
-				{/* Email (guests only) */}
-				{isGuest && (
-					<form.AppField
-						name="email"
-						validators={{
-							onDynamic: ({ value }: { value: string }) => {
-								if (!value) return "L'adresse email est requise";
-								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-									return "Entre une adresse email valide";
-								}
-								return undefined;
-							},
-						}}
-					>
-						{/* Pas de lien « Connecte-toi » ici : /connexion est réservée à
-						    l'administration (plus de compte client), et le suivi de commande
-						    passe par le lien tokenisé de l'email de confirmation. */}
-						{(field) => (
-							<field.InputField
-								label="Adresse email"
-								type="email"
-								required
-								inputMode="email"
-								autoComplete="email"
-								enterKeyHint="next"
-								spellCheck={false}
-								autoCorrect="off"
-								autoCapitalize="none"
-							/>
-						)}
-					</form.AppField>
-				)}
-
-				{/* Email display for logged-in users.
-				    `rounded-md` (16px) : l'encart vit dans une `CheckoutSection` à
-				    `rounded-lg` (20px). `rounded-xl` valait 32px — un enfant plus
-				    arrondi que son conteneur. */}
-				{!isGuest && session.user.email && (
-					<div className="border-primary/10 bg-primary/5 flex flex-wrap items-center gap-2 rounded-md border p-3.5 text-sm">
-						<EnvelopeIcon className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
-						<span className="text-muted-foreground">Email :</span>
-						<span className="font-medium">{session.user.email}</span>
-						<button
-							type="button"
-							onClick={() => setIsSwitchConfirmOpen(true)}
-							disabled={isLogoutPending}
-							// `focus-ring`, l'utility SSOT — et surtout pas la séquence
-							// `focus-visible:outline-none` + `focus-visible:ring-ring` qui vivait
-							// ici : elle annulait l'outline `--foreground` (19,5:1) posé par le
-							// base layer de `globals.css` pour ne laisser que l'anneau `--ring`,
-							// rose pastel à ~1,55:1 — sous les 3:1 de WCAG 1.4.11. `--ring` reste
-							// pastel à dessein, il ne porte que la marque ; c'est l'outline qui
-							// porte l'information.
-							className="text-muted-foreground hover:text-foreground focus-ring ml-auto rounded-sm text-xs underline hover:no-underline disabled:opacity-50"
-							aria-busy={isLogoutPending}
-						>
-							{isLogoutPending ? "Déconnexion…" : "Ce n'est pas moi"}
-						</button>
-					</div>
-				)}
-
-				<ConfirmDialog
-					open={isSwitchConfirmOpen}
-					onClose={() => setIsSwitchConfirmOpen(false)}
-					onConfirm={handleSwitchAccount}
-					tone="destructive"
-					title="Changer de compte ?"
-					cancelLabel="Rester connecté·e"
-					confirmLabel="Changer de compte"
-					description="Tu vas être déconnecté·e et redirigé·e vers la page de connexion. Les informations déjà saisies dans ce formulaire seront perdues."
-				/>
+				<form.AppField
+					name="email"
+					validators={{
+						onDynamic: ({ value }: { value: string }) => {
+							if (!value) return "L'adresse email est requise";
+							if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+								return "Entre une adresse email valide";
+							}
+							return undefined;
+						},
+					}}
+				>
+					{/* Pas de lien « Connecte-toi » ici : la connexion est réservée à
+					    l'administration (plus de compte client), et le suivi de commande
+					    passe par le lien tokenisé de l'email de confirmation. */}
+					{(field) => (
+						<field.InputField
+							label="Adresse email"
+							type="email"
+							required
+							inputMode="email"
+							autoComplete="email"
+							enterKeyHint="next"
+							spellCheck={false}
+							autoCorrect="off"
+							autoCapitalize="none"
+						/>
+					)}
+				</form.AppField>
 			</div>
 		</CheckoutSection>
 	);

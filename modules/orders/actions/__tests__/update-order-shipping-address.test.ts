@@ -43,12 +43,12 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 
@@ -480,7 +480,7 @@ describe("updateOrderShippingAddress", () => {
 			expect.objectContaining({
 				orderId: VALID_CUID,
 				action: "ADDRESS_UPDATED",
-				authorName: "Admin",
+				authorName: "Léane",
 				note: "Adresse de livraison modifiée",
 				metadata: expect.objectContaining({
 					addressType: "shipping",

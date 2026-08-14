@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { logger } from "@/shared/lib/logger";
 import { forbidden } from "next/navigation";
 import { getProductSkusSchema } from "../schemas/get-skus.schemas";

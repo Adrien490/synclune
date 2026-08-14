@@ -8,7 +8,7 @@ import { fetchAddresses } from "../data/fetch-addresses";
 import { fetchGeoapifyAddresses } from "../data/fetch-geoapify-addresses";
 import { SEARCH_ADDRESS_DEFAULT_LIMIT } from "../constants/ban-api.constants";
 import { GEOAPIFY_DEFAULT_LIMIT } from "../constants/geoapify.constants";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 import { shippingCountrySchema } from "@/shared/schemas/address.schema";
 

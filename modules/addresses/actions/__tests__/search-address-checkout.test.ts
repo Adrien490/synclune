@@ -11,7 +11,7 @@ const { mockEnforceRateLimitForCurrentUser, mockFetchAddresses, mockFetchGeoapif
 		mockFetchGeoapifyAddresses: vi.fn(),
 	}));
 
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimitForCurrentUser,
 }));
 

@@ -5,7 +5,7 @@ const {
 	mockBuildInvoiceData,
 	mockRenderInvoicePdf,
 	mockArchiveCreditNotePdf,
-	mockGetSession,
+	mockIsAdmin,
 	mockCheckRateLimit,
 	mockGetRateLimitIdentifier,
 	mockGetClientIp,
@@ -19,7 +19,7 @@ const {
 	mockBuildInvoiceData: vi.fn(),
 	mockRenderInvoicePdf: vi.fn(),
 	mockArchiveCreditNotePdf: vi.fn(),
-	mockGetSession: vi.fn(),
+	mockIsAdmin: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
 	mockGetRateLimitIdentifier: vi.fn(),
 	mockGetClientIp: vi.fn(),
@@ -62,7 +62,7 @@ vi.mock("@/modules/orders/utils/order-audit", () => ({
 vi.mock("@/modules/orders/constants/order.constants", () => ({
 	GET_ORDER_SELECT_CUSTOMER: { id: true },
 }));
-vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: mockGetSession }));
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({ isAdmin: mockIsAdmin }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
 	getRateLimitIdentifier: mockGetRateLimitIdentifier,
@@ -148,7 +148,7 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		mockGetSession.mockResolvedValue(SESSION);
+		mockIsAdmin.mockResolvedValue(false);
 		mockGetRateLimitIdentifier.mockReturnValue("user:user-1");
 		mockGetClientIp.mockResolvedValue("127.0.0.1");
 		mockHeaders.mockResolvedValue(new Headers());
@@ -179,16 +179,12 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 
 	describe("authentication", () => {
 		it("returns 401 when no session and no token", async () => {
-			mockGetSession.mockResolvedValue(null);
-
 			const res = await GET(makeReq({ token: false }), makeParams());
 
 			expect(res.status).toBe(401);
 		});
 
 		it("returns 401 when session has no user.id", async () => {
-			mockGetSession.mockResolvedValue({ user: {} });
-
 			const res = await GET(makeReq({ token: false }), makeParams());
 
 			expect(res.status).toBe(401);
@@ -205,10 +201,14 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 			expect(res.headers.get("Retry-After")).toBe("42");
 		});
 
-		it("uses session user id for rate-limit identifier", async () => {
+		it("uses the token/IP identifier for guest downloads", async () => {
 			await GET(makeReq(), makeParams());
 
-			expect(mockGetRateLimitIdentifier).toHaveBeenCalledWith("user-1");
+			expect(mockCheckRateLimit).toHaveBeenCalledWith(
+				expect.stringContaining("invoice-token:"),
+				expect.anything(),
+				expect.anything(),
+			);
 		});
 	});
 
@@ -433,7 +433,7 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 
 	describe("admin behavior", () => {
 		it("allows admin to download a credit note owned by a different user (audit)", async () => {
-			mockGetSession.mockResolvedValue(ADMIN_SESSION);
+			mockIsAdmin.mockResolvedValue(true);
 			mockPrisma.order.findFirst.mockResolvedValue({ ...VOIDED_ORDER, userId: "other-user" });
 
 			const res = await GET(makeReq(), makeParams());
@@ -442,7 +442,7 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 		});
 
 		it("enforces rate-limit for admin (anti-exfiltration quota)", async () => {
-			mockGetSession.mockResolvedValue(ADMIN_SESSION);
+			mockIsAdmin.mockResolvedValue(true);
 
 			await GET(makeReq(), makeParams());
 

@@ -39,7 +39,6 @@ vi.mock("@phosphor-icons/react/ssr", () => ({
 // ============================================================================
 
 import { CheckoutContactSection } from "../checkout-contact-section";
-import type { Session } from "@/modules/auth/lib/auth";
 
 // ============================================================================
 // HELPERS
@@ -76,16 +75,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 	} as unknown as Parameters<typeof CheckoutContactSection>[0]["form"];
 }
 
-function createSession(email = "user@example.com"): Session {
-	return {
-		user: {
-			id: "u-1",
-			email,
-			name: "Utilisateur Test",
-		},
-	} as unknown as Session;
-}
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -100,14 +89,14 @@ describe("CheckoutContactSection", () => {
 	// ─── Section structure ────────────────────────────────────────────────────
 
 	it("renders 'Contact' heading", () => {
-		render(<CheckoutContactSection form={createMockForm()} session={null} />);
+		render(<CheckoutContactSection form={createMockForm()} />);
 		expect(screen.getByRole("heading", { name: "Contact" })).toBeInTheDocument();
 	});
 
 	// ─── Guest user ───────────────────────────────────────────────────────────
 
 	it("renders email field for guest user", () => {
-		render(<CheckoutContactSection form={createMockForm()} session={null} />);
+		render(<CheckoutContactSection form={createMockForm()} />);
 		expect(screen.getByTestId("input-Adresse email")).toBeInTheDocument();
 	});
 
@@ -115,35 +104,8 @@ describe("CheckoutContactSection", () => {
 		// « Tu as déjà un compte ? Connecte-toi » envoyait 100 % des clients vers
 		// /connexion, réservée à l'administration — une impasse avec promesse fausse
 		// (aucun compte client, le suivi passe par le lien tokenisé de l'email).
-		render(<CheckoutContactSection form={createMockForm()} session={null} />);
+		render(<CheckoutContactSection form={createMockForm()} />);
 		expect(screen.queryByRole("link")).not.toBeInTheDocument();
 		expect(screen.queryByText(/Tu as déjà un compte/)).not.toBeInTheDocument();
-	});
-
-	// ─── Logged-in user ───────────────────────────────────────────────────────
-
-	it("does not render email input for logged-in user", () => {
-		render(<CheckoutContactSection form={createMockForm()} session={createSession()} />);
-		expect(screen.queryByTestId("input-Adresse email")).not.toBeInTheDocument();
-	});
-
-	it("shows user email for logged-in user", () => {
-		render(
-			<CheckoutContactSection
-				form={createMockForm()}
-				session={createSession("alice@example.com")}
-			/>,
-		);
-		expect(screen.getByText("alice@example.com")).toBeInTheDocument();
-	});
-
-	it("shows mail icon for logged-in user", () => {
-		render(<CheckoutContactSection form={createMockForm()} session={createSession()} />);
-		expect(screen.getByTestId("icon-mail")).toBeInTheDocument();
-	});
-
-	it("does not render login link for logged-in user", () => {
-		render(<CheckoutContactSection form={createMockForm()} session={createSession()} />);
-		expect(screen.queryByRole("link")).not.toBeInTheDocument();
 	});
 });

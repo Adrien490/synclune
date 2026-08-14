@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import {
 	validateInput,
@@ -15,7 +15,7 @@ import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { updateProductCollectionsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**

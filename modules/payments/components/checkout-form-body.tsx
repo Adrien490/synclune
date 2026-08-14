@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { LockIcon, WarningCircleIcon, WifiSlashIcon } from "@phosphor-icons/react/ssr";
-import type { Session } from "@/modules/auth/lib/auth";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import type { getShippingInfo } from "@/modules/orders/services/shipping.service";
@@ -40,8 +39,6 @@ interface CheckoutFormBodyProps {
 	form: ReturnType<typeof useCheckoutForm>["form"];
 	formRef: React.RefObject<HTMLFormElement | null>;
 	cart: NonNullable<GetCartReturn>;
-	session: Session | null;
-	isGuest: boolean;
 	isOnline: boolean;
 	pi: ReturnType<typeof usePaymentIntent>;
 	subtotal: number;
@@ -62,8 +59,6 @@ export function CheckoutFormBody({
 	form,
 	formRef,
 	cart,
-	session,
-	isGuest,
 	isOnline,
 	pi,
 	subtotal,
@@ -277,7 +272,7 @@ export function CheckoutFormBody({
 							// La comparaison shallow de TanStack porte alors sur la CHAÎNE, donc
 							// le bénéfice reste entier — pas de re-rendu tant qu'aucune étape ne bascule.
 							return {
-								completedKey: getCompletedSections(filledPaths, invalidPaths, isGuest).join("|"),
+								completedKey: getCompletedSections(filledPaths, invalidPaths).join("|"),
 							};
 						}}
 					>
@@ -287,11 +282,7 @@ export function CheckoutFormBody({
 							return (
 								<div className="flex min-w-0 flex-col gap-8">
 									{/* === SECTION 1: Contact === */}
-									<CheckoutContactSection
-										form={form}
-										session={session}
-										isComplete={completed.has("Contact")}
-									/>
+									<CheckoutContactSection form={form} isComplete={completed.has("Contact")} />
 
 									{/* === SECTION 2: Shipping Address === */}
 									<CheckoutSection
@@ -374,11 +365,7 @@ export function CheckoutFormBody({
 											canSubmit={canSubmit}
 											shippingUnavailable={shippingUnavailable}
 											isOnline={isOnline}
-											email={
-												isGuest
-													? (email as string) || undefined
-													: (session?.user.email ?? undefined)
-											}
+											email={(email as string) || undefined}
 											billingName={(billingName as string) || undefined}
 											incompleteSections={incompleteSections}
 											lockedAmount={lockedAmount}

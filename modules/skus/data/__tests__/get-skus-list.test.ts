@@ -17,7 +17,7 @@ const { mockRequireAdmin, mockFetchProductSkus, mockGetProductSkusSchema, mockFo
 		}),
 	}));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdmin: mockRequireAdmin,
 }));
 

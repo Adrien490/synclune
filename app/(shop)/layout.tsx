@@ -1,8 +1,7 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
 import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile-bottom-nav";
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { StoreClosurePage } from "@/modules/store-settings/components/store-closure-page";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
@@ -47,10 +46,7 @@ function ShopShellSkeleton() {
 }
 
 async function ShopLayoutContent({ children }: ShopLayoutProps) {
-	const [storeStatus, session] = await Promise.all([
-		getStoreStatus(),
-		getSession().catch(() => null),
-	]);
+	const storeStatus = await getStoreStatus();
 
 	if (storeStatus.isClosed) {
 		const admin = await isAdmin();
@@ -104,7 +100,7 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			    pas. Le geste n'y aurait rien à rafraîchir — il est réservé aux surfaces
 			    admin, où il partage le chemin d'invalidation des boutons « Rafraîchir »
 			    (cf. `use-pull-to-refresh-handler`). */}
-			<SentryUserBridge userId={session?.user.id} role={session?.user.role} />
+			<SentryUserBridge />
 			<CookieBannerLazy />
 		</>
 	);

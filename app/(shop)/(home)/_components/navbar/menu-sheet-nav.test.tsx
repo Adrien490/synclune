@@ -45,7 +45,7 @@ vi.mock("@/shared/components/ui/count-badge", () => ({
 }));
 
 // Mock LogoutAlertDialog
-vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
+vi.mock("@/modules/admin-auth/components/logout-alert-dialog", () => ({
 	LogoutAlertDialog: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
@@ -103,9 +103,7 @@ const baseNavItems = [
 ];
 
 function renderNav(props: Partial<React.ComponentProps<typeof MenuSheetNav>> = {}) {
-	return render(
-		<MenuSheetNav navItems={baseNavItems} productTypes={productTypes} session={null} {...props} />,
-	);
+	return render(<MenuSheetNav navItems={baseNavItems} productTypes={productTypes} {...props} />);
 }
 
 describe("MenuSheetNav", () => {
@@ -253,24 +251,9 @@ describe("MenuSheetNav", () => {
 		});
 	});
 
-	describe("logged in", () => {
-		const session = {
-			user: {
-				name: "Alice",
-				email: "alice@test.com",
-				image: null,
-				role: "USER" as const,
-			},
-		};
-
-		it("renders user header", () => {
-			renderNav({ session });
-
-			expect(screen.getByTestId("user-header")).toBeInTheDocument();
-		});
-
+	describe("admin", () => {
 		it("renders wishlist AND cart badges in the shortcuts band", () => {
-			renderNav({ session });
+			renderNav({ isAdmin: true });
 
 			// Deux badges : le dot des favoris (2) et le compteur du panier (1).
 			const badges = screen.getAllByTestId("count-badge");
@@ -278,7 +261,7 @@ describe("MenuSheetNav", () => {
 		});
 
 		it("renders the logout button", () => {
-			renderNav({ session });
+			renderNav({ isAdmin: true });
 
 			expect(screen.getByRole("button", { name: "Déconnexion" })).toBeInTheDocument();
 		});
@@ -289,7 +272,7 @@ describe("MenuSheetNav", () => {
 		 * d'espace client à dédupliquer.
 		 */
 		it("ne rend plus aucune entrée d'espace client", () => {
-			renderNav({ session });
+			renderNav({ isAdmin: true });
 
 			expect(screen.queryByRole("link", { name: "Mes commandes" })).not.toBeInTheDocument();
 			expect(screen.queryByRole("link", { name: "Mon compte" })).not.toBeInTheDocument();

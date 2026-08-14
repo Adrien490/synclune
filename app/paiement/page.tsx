@@ -3,7 +3,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { validateCart } from "@/modules/cart/actions/validate-cart";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
 import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 import { ShoppingBagIcon, WarningIcon } from "@phosphor-icons/react/ssr";
@@ -31,7 +30,7 @@ export const metadata: Metadata = {
  *   Stripe Checkout)
  */
 export default async function CheckoutPage() {
-	const [cart, session] = await Promise.all([getCart(), getSession()]);
+	const cart = await getCart();
 
 	// Empty cart — render a friendly empty state instead of a silent redirect.
 	// Cart is a Sheet, not a route, so we surface the situation here with clear next steps.
@@ -155,7 +154,7 @@ export default async function CheckoutPage() {
 							/>
 						</div>
 					</div>
-					<CheckoutForm cart={cart} session={session} />
+					<CheckoutForm cart={cart} />
 				</div>
 			</section>
 		</div>

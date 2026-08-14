@@ -5,7 +5,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ============================================================================
 
 const {
-	mockGetSession,
 	mockHeaders,
 	mockGetClientIp,
 	mockGetRateLimitIdentifier,
@@ -13,17 +12,12 @@ const {
 	mockGetGuestSessionId,
 	mockGetOrCreateGuestSessionId,
 } = vi.hoisted(() => ({
-	mockGetSession: vi.fn(),
 	mockHeaders: vi.fn(),
 	mockGetClientIp: vi.fn(),
 	mockGetRateLimitIdentifier: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
 	mockGetGuestSessionId: vi.fn(),
 	mockGetOrCreateGuestSessionId: vi.fn(),
-}));
-
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
 }));
 
 vi.mock("next/headers", () => ({
@@ -52,9 +46,8 @@ import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 const MOCK_LIMIT_CONFIG: RateLimitConfig = { name: "test", limit: 10, windowMs: 60000 };
 const MOCK_HEADERS = {} as Headers;
 const MOCK_IP = "1.2.3.4";
-const MOCK_USER_ID = "user-123";
 const MOCK_SESSION_ID = "session-abc";
-const MOCK_RATE_LIMIT_ID = "user:user-123";
+const MOCK_RATE_LIMIT_ID = `session:${MOCK_SESSION_ID}`;
 
 // ============================================================================
 // Helpers
@@ -76,7 +69,7 @@ function makeRateLimitFailure(error?: string) {
 }
 
 // ============================================================================
-// Tests: checkCartRateLimit
+// Tests: checkCartRateLimit — identité 100 % invitée (migration lean, lot 1)
 // ============================================================================
 
 describe("checkCartRateLimit", () => {
@@ -86,71 +79,10 @@ describe("checkCartRateLimit", () => {
 		mockGetClientIp.mockResolvedValue(MOCK_IP);
 		mockGetRateLimitIdentifier.mockReturnValue(MOCK_RATE_LIMIT_ID);
 		mockCheckRateLimit.mockResolvedValue(makeRateLimitSuccess());
+		mockGetGuestSessionId.mockResolvedValue(MOCK_SESSION_ID);
 	});
 
-	describe("authenticated user", () => {
-		beforeEach(() => {
-			mockGetSession.mockResolvedValue({ user: { id: MOCK_USER_ID } });
-		});
-
-		it("returns success with userId in context", async () => {
-			const result = await checkCartRateLimit(MOCK_LIMIT_CONFIG);
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.context.userId).toBe(MOCK_USER_ID);
-			}
-		});
-
-		it("does not call getGuestSessionId when user is authenticated", async () => {
-			await checkCartRateLimit(MOCK_LIMIT_CONFIG);
-
-			expect(mockGetGuestSessionId).not.toHaveBeenCalled();
-			expect(mockGetOrCreateGuestSessionId).not.toHaveBeenCalled();
-		});
-
-		it("sets sessionId to null for authenticated user", async () => {
-			const result = await checkCartRateLimit(MOCK_LIMIT_CONFIG);
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.context.sessionId).toBeNull();
-			}
-		});
-
-		it("includes ipAddress in context", async () => {
-			const result = await checkCartRateLimit(MOCK_LIMIT_CONFIG);
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.context.ipAddress).toBe(MOCK_IP);
-			}
-		});
-
-		it("calls getRateLimitIdentifier with userId, null sessionId and ipAddress", async () => {
-			await checkCartRateLimit(MOCK_LIMIT_CONFIG);
-
-			expect(mockGetRateLimitIdentifier).toHaveBeenCalledWith(MOCK_USER_ID, null, MOCK_IP);
-		});
-
-		it("calls checkRateLimit with the computed identifier, limitConfig and ipAddress", async () => {
-			await checkCartRateLimit(MOCK_LIMIT_CONFIG);
-
-			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				MOCK_RATE_LIMIT_ID,
-				MOCK_LIMIT_CONFIG,
-				MOCK_IP,
-			);
-		});
-	});
-
-	describe("anonymous user (no session)", () => {
-		beforeEach(() => {
-			mockGetSession.mockResolvedValue(null);
-			mockGetGuestSessionId.mockResolvedValue(MOCK_SESSION_ID);
-			mockGetRateLimitIdentifier.mockReturnValue(`session:${MOCK_SESSION_ID}`);
-		});
-
+	describe("guest identity", () => {
 		it("calls getGuestSessionId when createSessionIfMissing is false (default)", async () => {
 			await checkCartRateLimit(MOCK_LIMIT_CONFIG);
 
@@ -165,14 +97,10 @@ describe("checkCartRateLimit", () => {
 			expect(mockGetOrCreateGuestSessionId).not.toHaveBeenCalled();
 		});
 
-		it("returns success with sessionId from cookie", async () => {
+		it("returns success on a valid rate check", async () => {
 			const result = await checkCartRateLimit(MOCK_LIMIT_CONFIG);
 
 			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.context.sessionId).toBe(MOCK_SESSION_ID);
-				expect(result.context.userId).toBeUndefined();
-			}
 		});
 
 		it("calls getRateLimitIdentifier with undefined userId, sessionId and ipAddress", async () => {
@@ -180,11 +108,28 @@ describe("checkCartRateLimit", () => {
 
 			expect(mockGetRateLimitIdentifier).toHaveBeenCalledWith(undefined, MOCK_SESSION_ID, MOCK_IP);
 		});
+
+		it("calls checkRateLimit with the computed identifier, limitConfig and ipAddress", async () => {
+			await checkCartRateLimit(MOCK_LIMIT_CONFIG);
+
+			expect(mockCheckRateLimit).toHaveBeenCalledWith(
+				MOCK_RATE_LIMIT_ID,
+				MOCK_LIMIT_CONFIG,
+				MOCK_IP,
+			);
+		});
+
+		it("falls back to the IP identity when no guest session exists", async () => {
+			mockGetGuestSessionId.mockResolvedValue(null);
+
+			await checkCartRateLimit(MOCK_LIMIT_CONFIG);
+
+			expect(mockGetRateLimitIdentifier).toHaveBeenCalledWith(undefined, null, MOCK_IP);
+		});
 	});
 
 	describe("createSessionIfMissing option", () => {
 		beforeEach(() => {
-			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateGuestSessionId.mockResolvedValue(MOCK_SESSION_ID);
 		});
 
@@ -195,21 +140,14 @@ describe("checkCartRateLimit", () => {
 			expect(mockGetGuestSessionId).not.toHaveBeenCalled();
 		});
 
-		it("returns the session ID created by getOrCreateGuestSessionId", async () => {
-			const result = await checkCartRateLimit(MOCK_LIMIT_CONFIG, { createSessionIfMissing: true });
+		it("uses the session ID created by getOrCreateGuestSessionId", async () => {
+			await checkCartRateLimit(MOCK_LIMIT_CONFIG, { createSessionIfMissing: true });
 
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.context.sessionId).toBe(MOCK_SESSION_ID);
-			}
+			expect(mockGetRateLimitIdentifier).toHaveBeenCalledWith(undefined, MOCK_SESSION_ID, MOCK_IP);
 		});
 	});
 
 	describe("rate limit exceeded", () => {
-		beforeEach(() => {
-			mockGetSession.mockResolvedValue({ user: { id: MOCK_USER_ID } });
-		});
-
 		it("returns success: false when rate limit is exceeded", async () => {
 			mockCheckRateLimit.mockResolvedValue(makeRateLimitFailure());
 

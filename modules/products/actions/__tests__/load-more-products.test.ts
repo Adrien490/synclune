@@ -12,7 +12,7 @@ const { mockGetProducts, mockEnforceRateLimit, mockLoggerError } = vi.hoisted(()
 }));
 
 vi.mock("../../data/get-products", () => ({ getProducts: mockGetProducts }));
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({ PRODUCT_LOAD_MORE_LIMIT: "product-load-more" }));

@@ -1,7 +1,7 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_MAINTENANCE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { logger } from "@/shared/lib/logger";

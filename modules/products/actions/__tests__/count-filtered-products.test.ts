@@ -9,7 +9,7 @@ const { mockEnforceRateLimit, mockCountPublicProducts } = vi.hoisted(() => ({
 	mockCountPublicProducts: vi.fn().mockResolvedValue(9),
 }));
 
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 

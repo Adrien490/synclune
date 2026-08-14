@@ -47,11 +47,8 @@ export async function addToCart(
 		const validatedData = validated.data;
 
 		// 3. Rate limiting.
-		// `validateUserExists: true` re-check l'user en DB AVANT de consommer le quota user.
-		// Edge case : compte supprimé pendant onglet ouvert → fallback guest sans brûler le slot.
 		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.ADD, {
 			createSessionIfMissing: true,
-			validateUserExists: true,
 		});
 		if (!rateLimitResult.success) {
 			return rateLimitResult.errorState;

@@ -2,8 +2,9 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_STORE_SETTINGS_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -14,9 +15,8 @@ import { closeStoreSchema } from "../schemas/store-settings.schemas";
 
 export async function closeStore(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_STORE_SETTINGS_LIMITS.CLOSE_STORE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -37,7 +37,7 @@ export async function closeStore(_prevState: unknown, formData: FormData): Promi
 				isClosed: true,
 				closureMessage,
 				closedAt: new Date(),
-				closedBy: adminUser.name ?? adminUser.email,
+				closedBy: ADMIN_DISPLAY_NAME,
 				reopensAt,
 			},
 		});

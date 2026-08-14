@@ -1,9 +1,9 @@
 /**
  * Proxy de protection des routes (convention Next.js 16)
  *
- * Vérifie l'existence du cookie de session (pas de validation DB).
- * Les pages/actions protégées DOIVENT toujours revalider la session côté serveur
- * avec requireAuth() / requireAdmin() pour garantir la sécurité.
+ * Vérifie l'existence du cookie de session admin (pas de validation HMAC ici).
+ * Les pages/actions protégées DOIVENT toujours revalider le cookie côté serveur
+ * avec requireAdmin() / assertAdminPage() pour garantir la sécurité.
  *
  * NOTE: CSP is set as a response header in next.config.ts headers(), NOT here.
  * Next.js reads CSP from REQUEST headers to extract nonces (app-render.js line 150).
@@ -11,8 +11,8 @@
  * that React's streaming runtime scripts ($RC, $RV, $RB) don't receive, breaking server actions.
  */
 
-import { getCookieCache, getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_SESSION_COOKIE } from "@/modules/admin-auth/constants/admin-auth.constants";
 
 // ===== CONFIGURATION DES ROUTES =====
 
@@ -57,17 +57,12 @@ const publicRoutes = [
 ];
 
 // Routes d'authentification (redirection si déjà connecté).
-// Plus d'`/inscription` : la route a été supprimée et `disableSignUp` ferme
-// l'endpoint. La laisser ici l'aurait rendue « publique » au regard du
-// default-deny, donc non journalisée si quelqu'un la sonde.
-const authRoutes = [
-	"/connexion",
-	"/mot-de-passe-oublie",
-	"/reinitialiser-mot-de-passe",
-	"/verifier-email",
-	"/renvoyer-verification",
-	"/error",
-];
+// Migration lean, lot 1 : l'auth Better Auth (/connexion, /mot-de-passe-oublie,
+// /reinitialiser-mot-de-passe, /verifier-email, /renvoyer-verification, /error)
+// a disparu — la seule porte d'entrée est /admin/connexion. ⚠️ Elle doit être
+// testée AVANT `adminRoutes` (elle vit sous /admin) : c'est l'ordre des
+// étapes 2 et 4 ci-dessous qui le garantit.
+const authRoutes = ["/admin/connexion"];
 
 // Routes protégées par admin (admin requis)
 const adminRoutes = ["/admin"] as const;
@@ -81,7 +76,6 @@ const adminRoutes = ["/admin"] as const;
 // mais elle pré-autorise le jour où quelqu'un crée le fichier, sans que personne ne
 // repasse par la décision d'exposition. Ne laisser ici que des routes réelles.
 const apiRoutes = [
-	"/api/auth",
 	"/api/uploadthing",
 	"/api/webhooks",
 	"/api/cron",
@@ -170,12 +164,11 @@ export async function proxy(request: NextRequest) {
 	}
 
 	// AVERTISSEMENT DE SÉCURITÉ:
-	// La fonction getSessionCookie() vérifie uniquement l'EXISTENCE du cookie de session,
-	// elle ne le VALIDE PAS. C'est volontaire pour éviter les appels DB dans le middleware.
-	// Les pages/routes protégées DOIVENT toujours revalider la session côté serveur
-	// avec auth.api.getSession() pour garantir la sécurité.
-	const sessionCookie = getSessionCookie(request);
-	const isLoggedIn = !!sessionCookie;
+	// On vérifie uniquement l'EXISTENCE du cookie `admin_session`, PAS sa
+	// signature HMAC (pré-filtrage UX sans crypto dans le proxy). Les pages et
+	// actions protégées DOIVENT toujours revalider le cookie côté serveur via
+	// requireAdmin() / assertAdminPage(), qui vérifient signature + expiry.
+	const isLoggedIn = !!request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
 
 	// ===== 1. ROUTES API =====
 	// Toutes les routes API gèrent leur propre authentification côté serveur
@@ -183,17 +176,14 @@ export async function proxy(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// ===== 2. ROUTES D'AUTHENTIFICATION (AVANT les routes publiques) =====
-	// Une session ne peut plus être qu'administratrice : la destination d'un
-	// utilisateur déjà connecté qui retombe sur `/connexion` est donc `/admin` et
-	// non plus `/commandes` (route supprimée — la redirection y aurait produit un
-	// default-deny vers `/`, soit une boucle perçue comme « la connexion ne marche
-	// pas »).
+	// ===== 2. ROUTES D'AUTHENTIFICATION (AVANT publicRoutes ET adminRoutes) =====
+	// `/admin/connexion` vit sous `/admin` : si l'étape 4 la voyait d'abord, une
+	// visiteuse sans cookie serait redirigée vers... la page où elle est déjà.
+	// PAS de redirection « déjà connectée » ici : le proxy ne sait pas valider le
+	// HMAC, et rediriger sur la simple PRÉSENCE du cookie fabriquerait une boucle
+	// pour un cookie expiré (/admin/connexion → /admin → 401 → « Se connecter »).
+	// C'est la page qui redirige vers /admin après validation HMAC réelle.
 	if (matchesAnyRoute(pathname, authRoutes)) {
-		if (isLoggedIn) {
-			return NextResponse.redirect(new URL("/admin", nextUrl.origin));
-		}
-		// Utilisateur non connecté -> autoriser l'accès aux pages d'auth
 		return NextResponse.next();
 	}
 
@@ -203,37 +193,26 @@ export async function proxy(request: NextRequest) {
 	}
 
 	// ===== 4. ROUTES PROTÉGÉES ADMIN =====
-	// Pré-filtrage UX uniquement, via le cookie cache signé (HMAC, zéro appel DB).
+	// Pré-filtrage UX uniquement : présence du cookie, sans validation HMAC.
 	//
-	// ⚠️ FAIL-OPEN ASSUMÉ : si le cookie cache a expiré (TTL
-	// `AUTH_SESSION_CONFIG.cookieCache.maxAge`) ou ne porte pas de rôle, la condition
-	// ci-dessous est fausse et la requête PASSE. Ce middleware ne sait donc que
-	// *refuser* sur un cookie qui se déclare non-admin ; il n'autorise rien.
-	//
-	// Ce qui autorise réellement, et qui doit exister pour que ce fail-open soit
-	// acceptable :
-	//   - `app/admin/layout.tsx` → `requireAdminWithUser()` (chargement dur) ;
-	//   - CHAQUE `app/admin/**/page.tsx` → `assertAdminPage()`, parce qu'un layout
-	//     partagé n'est PAS ré-exécuté lors d'une navigation client entre routes
-	//     qui le partagent. Verrouillé par
-	//     `app/admin/__tests__/admin-page-auth-guard.regression.test.ts`.
+	// ⚠️ FAIL-OPEN ASSUMÉ pour un cookie PRÉSENT mais falsifié/expiré : la requête
+	// PASSE ici, et c'est la garde serveur qui refuse. Ce qui autorise réellement :
+	//   - `app/admin/(protected)/layout.tsx` → `hasValidAdminSession()` (chargement dur) ;
+	//   - CHAQUE `app/admin/(protected)/**/page.tsx` → `assertAdminPage()`, parce
+	//     qu'un layout partagé n'est PAS ré-exécuté lors d'une navigation client
+	//     entre routes qui le partagent. Verrouillé par
+	//     `admin-page-auth-guard.regression.test.ts`.
 	//   - chaque Server Action / route API → `requireAdmin*()`.
 	//
 	// Ce commentaire affirmait déjà cette dernière ligne avant l'audit du
 	// 2026-07-31, alors qu'aucune des 50 pages ne l'honorait. Ne pas le laisser
 	// redevenir une promesse : le garde-fou ci-dessus est ce qui la tient.
 	if (matchesAnyRoute(pathname, adminRoutes)) {
-		// Pas connecté -> redirection vers login
+		// Pas connecté -> redirection vers la page de connexion admin
 		if (!isLoggedIn) {
-			const redirectUrl = new URL("/connexion", nextUrl.origin);
+			const redirectUrl = new URL("/admin/connexion", nextUrl.origin);
 			redirectUrl.searchParams.set("callbackURL", pathname);
 			return NextResponse.redirect(redirectUrl);
-		}
-
-		// Vérifier le rôle ADMIN depuis le cookie cache signé
-		const sessionData = await getCookieCache(request);
-		if (sessionData?.user.role && sessionData.user.role !== "ADMIN") {
-			return NextResponse.redirect(new URL("/?error=access-denied", nextUrl.origin));
 		}
 
 		return NextResponse.next();

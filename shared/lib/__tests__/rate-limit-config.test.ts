@@ -14,9 +14,6 @@ import {
 	PAYMENT_LIMITS,
 	// Auth
 	AUTH_LOGIN_LIMIT,
-	AUTH_PASSWORD_RESET_LIMIT,
-	AUTH_EMAIL_VERIFICATION_LIMIT,
-	AUTH_PASSWORD_CHANGE_LIMIT,
 	AUTH_LOGOUT_LIMIT,
 	CRON_INVOKE_LIMIT,
 	AUTH_LIMITS,
@@ -80,9 +77,6 @@ describe("individual rate limit configs - valid shape", () => {
 		["PAYMENT_UPDATE_AMOUNT_LIMIT", PAYMENT_UPDATE_AMOUNT_LIMIT],
 		// Auth
 		["AUTH_LOGIN_LIMIT", AUTH_LOGIN_LIMIT],
-		["AUTH_PASSWORD_RESET_LIMIT", AUTH_PASSWORD_RESET_LIMIT],
-		["AUTH_EMAIL_VERIFICATION_LIMIT", AUTH_EMAIL_VERIFICATION_LIMIT],
-		["AUTH_PASSWORD_CHANGE_LIMIT", AUTH_PASSWORD_CHANGE_LIMIT],
 		// Orders
 		["ORDER_INVOICE_DOWNLOAD_LIMIT", ORDER_INVOICE_DOWNLOAD_LIMIT],
 		// Products
@@ -139,16 +133,10 @@ describe("AUTH_LIMITS", () => {
 		// Plus de `SIGNUP` : l'inscription est fermée (`disableSignUp`) et la route
 		// `/inscription` supprimée — retrait de l'espace client 2026-07-31.
 		expect(AUTH_LIMITS).not.toHaveProperty("SIGNUP");
-		expect(AUTH_LIMITS).toHaveProperty("PASSWORD_RESET");
-		expect(AUTH_LIMITS).toHaveProperty("PASSWORD_CHANGE");
-		expect(AUTH_LIMITS).toHaveProperty("EMAIL_VERIFICATION");
 	});
 
 	it("references the correct individual configs", () => {
 		expect(AUTH_LIMITS.LOGIN).toBe(AUTH_LOGIN_LIMIT);
-		expect(AUTH_LIMITS.PASSWORD_RESET).toBe(AUTH_PASSWORD_RESET_LIMIT);
-		expect(AUTH_LIMITS.PASSWORD_CHANGE).toBe(AUTH_PASSWORD_CHANGE_LIMIT);
-		expect(AUTH_LIMITS.EMAIL_VERIFICATION).toBe(AUTH_EMAIL_VERIFICATION_LIMIT);
 	});
 
 	it("l'auth ne se rabat JAMAIS sur le preset admin partagé", () => {
@@ -352,14 +340,6 @@ describe("ADMIN_LIMIT — consolidation délibérée", () => {
 describe("security-sensitive limit values", () => {
 	it("AUTH_LOGIN_LIMIT has a strict limit (<=10)", () => {
 		expect(AUTH_LOGIN_LIMIT.limit).toBeLessThanOrEqual(10);
-	});
-
-	it("AUTH_PASSWORD_RESET_LIMIT has a strict limit (<=5)", () => {
-		expect(AUTH_PASSWORD_RESET_LIMIT.limit).toBeLessThanOrEqual(5);
-	});
-
-	it("AUTH_PASSWORD_CHANGE_LIMIT has a strict limit (<=5)", () => {
-		expect(AUTH_PASSWORD_CHANGE_LIMIT.limit).toBeLessThanOrEqual(5);
 	});
 
 	it("AUTH_LOGOUT_LIMIT reste borné (<=20)", () => {

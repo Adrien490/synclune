@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { applyInventoryDeltaTx } from "@/modules/skus/services/apply-inventory-delta.service";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
@@ -26,7 +26,7 @@ import { updateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { getSkuInvalidationTags } from "@/modules/skus/utils/cache.utils";
 import { validateProductForPublication } from "../services/product-validation.service";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**

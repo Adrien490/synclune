@@ -1,24 +1,12 @@
 import { headers } from "next/headers";
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { prisma } from "@/shared/lib/prisma";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { getGuestSessionId, getOrCreateGuestSessionId } from "./guest-session";
 
-/**
- * Contexte retourné après vérification du rate limiting
- */
-type CartRateLimitContext = {
-	userId: string | undefined;
-	sessionId: string | null;
-	ipAddress: string | null;
-};
-
 type CartRateLimitSuccess = {
 	success: true;
-	context: CartRateLimitContext;
 };
 
 type CartRateLimitError = {
@@ -30,32 +18,22 @@ type CartRateLimitResult = CartRateLimitSuccess | CartRateLimitError;
 
 type CheckCartRateLimitOptions = {
 	/**
-	 * Si true, crée un sessionId si l'utilisateur n'est pas connecté et n'a pas de session.
+	 * Si true, crée un sessionId invité s'il n'en existe pas encore.
 	 * Utiliser pour les actions comme addToCart qui ont besoin d'un panier.
 	 * @default false
 	 */
 	createSessionIfMissing?: boolean;
-	/**
-	 * Si true, vérifie que l'userId de la session existe en DB AVANT de consommer le quota
-	 * rate-limit. Cas typique : compte supprimé pendant onglet ouvert → fallback guest sans
-	 * brûler le slot rate-limit user.
-	 * @default false
-	 */
-	validateUserExists?: boolean;
 };
 
 /**
  * Vérifie le rate limiting pour les actions du panier.
  *
- * Cette fonction centralise :
- * - La récupération de la session utilisateur
- * - La gestion du sessionId (lecture ou création)
- * - La récupération de l'IP client
- * - La vérification du rate limiting
+ * Le panier est 100 % invité (cookie `cart`, migration lean lot 1 pour la
+ * disparition de la branche session) : l'identité de rate limit est le
+ * sessionId invité, à défaut l'IP.
  *
  * @param limitConfig - Configuration du rate limiting (ex: CART_LIMITS.ADD)
  * @param options - Options (createSessionIfMissing pour créer une session visiteur)
- * @returns CartRateLimitResult avec le contexte ou une erreur ActionState
  *
  * @example
  * ```ts
@@ -63,46 +41,25 @@ type CheckCartRateLimitOptions = {
  * if (!result.success) {
  *   return result.errorState;
  * }
- * const { userId, sessionId } = result.context;
  * ```
  */
 export async function checkCartRateLimit(
 	limitConfig: RateLimitConfig,
 	options: CheckCartRateLimitOptions = {},
 ): Promise<CartRateLimitResult> {
-	const { createSessionIfMissing = false, validateUserExists = false } = options;
+	const { createSessionIfMissing = false } = options;
 
-	// 1. Récupérer la session utilisateur
-	const session = await getSession();
-	let userId = session?.user.id;
+	// 1. Session invité (lecture, ou création si demandée)
+	const sessionId = createSessionIfMissing
+		? await getOrCreateGuestSessionId()
+		: await getGuestSessionId();
 
-	// 1b. (Optionnel) Vérifier que l'userId existe encore en DB AVANT rate-limit.
-	// Évite qu'un compte supprimé en cours de session ne brûle son quota user
-	// avant de tomber sur le fallback guest.
-	if (userId && validateUserExists) {
-		const userExists = await prisma.user.findUnique({
-			where: { id: userId },
-			select: { id: true },
-		});
-		if (!userExists) {
-			userId = undefined;
-		}
-	}
-
-	// 2. Gérer le sessionId selon le contexte
-	let sessionId: string | null = null;
-	if (!userId) {
-		sessionId = createSessionIfMissing
-			? await getOrCreateGuestSessionId()
-			: await getGuestSessionId();
-	}
-
-	// 3. Récupérer l'IP client
+	// 2. Récupérer l'IP client
 	const headersList = await headers();
 	const ipAddress = await getClientIp(headersList);
 
-	// 4. Vérifier le rate limiting (pass IP explicitly for global limit check)
-	const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
+	// 3. Vérifier le rate limiting (pass IP explicitly for global limit check)
+	const rateLimitId = getRateLimitIdentifier(undefined, sessionId, ipAddress);
 	const rateLimit = await checkRateLimit(rateLimitId, limitConfig, ipAddress);
 
 	if (!rateLimit.success) {
@@ -115,14 +72,7 @@ export async function checkCartRateLimit(
 		};
 	}
 
-	return {
-		success: true,
-		context: {
-			userId,
-			sessionId,
-			ipAddress,
-		},
-	};
+	return { success: true };
 }
 
 // `checkMergeCartsRateLimit` retiré (audit wishlist 2026-08-01) : son unique

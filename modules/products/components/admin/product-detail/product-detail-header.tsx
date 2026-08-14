@@ -13,7 +13,7 @@ import {
 	ResponsiveActionMenuTrigger,
 } from "@/shared/components/responsive-action-menu";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
+import { useSetAdminPageTitle } from "@/app/admin/(protected)/_components/admin-page-title-context";
 
 import { useProductActions } from "../../../hooks/use-product-actions";
 

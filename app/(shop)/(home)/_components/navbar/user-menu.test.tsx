@@ -57,7 +57,7 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenuSeparator: () => <div data-testid="dropdown-sep" />,
 }));
 
-vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
+vi.mock("@/modules/admin-auth/components/logout-alert-dialog", () => ({
 	LogoutAlertDialog: ({ open }: { open?: boolean }) =>
 		open ? <div data-testid="logout-dialog-open" /> : null,
 }));
@@ -88,7 +88,7 @@ describe("UserMenu (desktop navbar) — réservé à l'admin", () => {
 	 * n'a aucune destination dans ce menu → on ne le monte pas.
 	 */
 	it("ne rend rien pour une session non-admin", () => {
-		const { container } = render(<UserMenu isAdmin={false} userName="Alice" />);
+		const { container } = render(<UserMenu isAdmin={false} />);
 
 		expect(container).toBeEmptyDOMElement();
 	});
@@ -100,13 +100,6 @@ describe("UserMenu (desktop navbar) — réservé à l'admin", () => {
 			"aria-label",
 			"Menu administration",
 		);
-	});
-
-	it("affiche le nom et l'email quand ils sont fournis", () => {
-		render(<UserMenu isAdmin userName="Alice" userEmail="alice@example.com" />);
-
-		expect(screen.getByText("Alice")).toBeInTheDocument();
-		expect(screen.getByText("alice@example.com")).toBeInTheDocument();
 	});
 
 	it("mène au tableau de bord admin", () => {

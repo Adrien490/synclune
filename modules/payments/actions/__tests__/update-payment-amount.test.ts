@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ============================================================================
 
 const {
-	mockGetSession,
+	mockIsAdmin,
 	mockGetOrCreateGuestSessionId,
 	mockGetCart,
 	mockGetSkuDetails,
@@ -33,7 +33,7 @@ const {
 	}
 
 	return {
-		mockGetSession: vi.fn(),
+		mockIsAdmin: vi.fn(),
 		mockGetOrCreateGuestSessionId: vi.fn(),
 		mockGetCart: vi.fn(),
 		mockGetSkuDetails: vi.fn(),
@@ -62,8 +62,8 @@ const {
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 vi.mock("@/modules/cart/lib/guest-session", () => ({
@@ -221,29 +221,7 @@ const MOCK_SHIPPING_INFO = {
 // HELPERS
 // ============================================================================
 
-/**
- * Une session ET la ligne DB qui va avec.
- *
- * ⚠️ `require-auth` n'est PAS mocké dans ce fichier — le test exerce le vrai
- * `isVerifiedAdmin` (bypass boutique fermée). Depuis qu'`updatePaymentAmount`
- * pose la garde AUTHZ-1 de ses deux actions sœurs,
- * `requireActiveAccountIfAuthenticated()` interroge réellement
- * `prisma.user.findUnique` : poser la session sans la ligne fait rejeter la garde
- * et l'action sort avant Stripe. Même piège que `validate-discount-code.test.ts`.
- */
-function setupAuthenticatedUser(userId = "cm3user0000123qz8v4h2j9d3") {
-	mockGetSession.mockResolvedValue({ user: { id: userId, role: "USER" } });
-	mockUserFindUnique.mockResolvedValue({
-		id: userId,
-		role: "USER",
-		accountStatus: "ACTIVE",
-		deletedAt: null,
-		suspendedAt: null,
-	});
-}
-
 function setupGuestUser(sessionId = "6f9619ff-8b86-4d11-b42d-00c04fc964ff") {
-	mockGetSession.mockResolvedValue(null);
 	mockGetOrCreateGuestSessionId.mockResolvedValue(sessionId);
 }
 
@@ -269,20 +247,22 @@ function setupCart(cart = MOCK_CART_5000, skuResult = MOCK_SKU_RESULT_5000) {
 	mockValidateCartItemsWithDb.mockResolvedValue({ success: true, data: [] });
 }
 
-function setupDefaults(userId = "cm3user0000123qz8v4h2j9d3") {
+function setupDefaults(sessionId = "6f9619ff-8b86-4d11-b42d-00c04fc964ff") {
 	// Sentry: run the callback directly with a stub span.
 	mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
 		fn({ setAttribute: vi.fn() }),
 	);
-	setupAuthenticatedUser(userId);
+	// Parcours 100 % invité (migration lean, lot 1)
+	setupGuestUser(sessionId);
+	mockIsAdmin.mockResolvedValue(false);
 	mockAssertStoreOpen.mockResolvedValue(null);
 	mockHeaders.mockResolvedValue(new Headers());
 	mockGetClientIp.mockResolvedValue("192.168.1.1");
-	mockGetRateLimitIdentifier.mockReturnValue(`user:${userId}`);
+	mockGetRateLimitIdentifier.mockReturnValue(`session:${sessionId}`);
 	setupRateLimit(true);
 	mockStripePaymentIntentsRetrieve.mockResolvedValue({
 		...MOCK_PI_USER,
-		metadata: { userId, guestSessionId: "" },
+		metadata: { userId: "", guestSessionId: sessionId },
 	});
 	mockStripePaymentIntentsUpdate.mockResolvedValue({ id: "pi_test_abc123", amount: 5499 });
 	mockDiscountFindFirst.mockResolvedValue(null);
@@ -386,19 +366,11 @@ describe("updatePaymentAmount", () => {
 			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
 		});
 
-		it("bypasses the closure guard for admins (live checkout testing)", async () => {
-			mockGetSession.mockResolvedValue({
-				user: { id: "cm3admin000001qz8v4h2j9d3", role: "ADMIN" },
-			});
-			// isVerifiedAdmin re-vérifie le rôle en DB (cookie-cache Better Auth stale).
-			mockUserFindUnique.mockResolvedValue({ role: "ADMIN" });
-			mockGetRateLimitIdentifier.mockReturnValue("user:cm3admin000001qz8v4h2j9d3");
+		it("bypasses the closure guard for the admin (live checkout testing)", async () => {
+			// Cookie admin signé HMAC — l'admin achète via le parcours invité normal,
+			// seul le bypass de fermeture change.
+			mockIsAdmin.mockResolvedValue(true);
 			mockAssertStoreOpen.mockResolvedValue({ message: "Boutique fermée." });
-			mockStripePaymentIntentsRetrieve.mockResolvedValue({
-				id: "pi_test_abc123",
-				status: "requires_payment_method",
-				metadata: { userId: "cm3admin000001qz8v4h2j9d3", guestSessionId: "" },
-			});
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
 
@@ -410,48 +382,6 @@ describe("updatePaymentAmount", () => {
 	// ──────────────────────────────────────────────────────────────
 	// AUTHZ-1 — garde compte actif
 	// ──────────────────────────────────────────────────────────────
-
-	describe("garde compte actif (AUTHZ-1)", () => {
-		beforeEach(() => {
-			setupDefaults();
-		});
-
-		it("rejette une session dont le compte n'est plus ACTIVE", async () => {
-			// `fetchUserForAuth` filtre `deletedAt` / `suspendedAt` / `accountStatus`
-			// dans son WHERE : un compte révoqué ne rend simplement aucune ligne.
-			// Cette action était la seule des trois du tunnel à ne pas poser la garde
-			// que `initializePayment` et `confirmCheckout` posaient déjà.
-			mockUserFindUnique.mockResolvedValue(null);
-
-			const result = await updatePaymentAmount(VALID_PARAMS);
-
-			expect(result.success).toBe(false);
-			expect(mockStripePaymentIntentsRetrieve).not.toHaveBeenCalled();
-			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
-		});
-
-		it("laisse passer un invité (pas de session à vérifier)", async () => {
-			setupGuestUser();
-			mockGetRateLimitIdentifier.mockReturnValue("session:6f9619ff-8b86-4d11-b42d-00c04fc964ff");
-			mockStripePaymentIntentsRetrieve.mockResolvedValue({
-				id: "pi_test_abc123",
-				status: "requires_payment_method",
-				metadata: { userId: "", guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff" },
-			});
-
-			const result = await updatePaymentAmount(VALID_PARAMS);
-
-			expect(result.success).toBe(true);
-		});
-
-		it("court-circuite AVANT le rate limit — la garde borne QUI, pas COMBIEN", async () => {
-			mockUserFindUnique.mockResolvedValue(null);
-
-			await updatePaymentAmount(VALID_PARAMS);
-
-			expect(mockCheckRateLimit).not.toHaveBeenCalled();
-		});
-	});
 
 	// ──────────────────────────────────────────────────────────────
 	// Happy path — guest user
@@ -505,7 +435,6 @@ describe("updatePaymentAmount", () => {
 		});
 
 		it("returns error when no userId and no sessionId", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateGuestSessionId.mockResolvedValue(null);
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -517,7 +446,6 @@ describe("updatePaymentAmount", () => {
 		});
 
 		it("does not call Stripe when session is invalid", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateGuestSessionId.mockResolvedValue(null);
 
 			await updatePaymentAmount(VALID_PARAMS);
@@ -754,21 +682,6 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("rejects when authenticated user tries to access a guest PI", async () => {
-			mockStripePaymentIntentsRetrieve.mockResolvedValue({
-				id: "pi_test_abc123",
-				status: "requires_payment_method",
-				metadata: { userId: "", guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff" },
-			});
-
-			const result = await updatePaymentAmount(VALID_PARAMS);
-
-			expect(result.success).toBe(false);
-			if (!result.success) {
-				expect(result.error).toBe("Accès non autorisé au paiement.");
-			}
-		});
-
 		it("does not call stripe.paymentIntents.update on ownership mismatch", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
@@ -930,7 +843,7 @@ describe("updatePaymentAmount", () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
 				status,
-				metadata: { userId: "cm3user0000123qz8v4h2j9d3", guestSessionId: "" },
+				metadata: { userId: "", guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff" },
 			});
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -949,7 +862,7 @@ describe("updatePaymentAmount", () => {
 				mockStripePaymentIntentsRetrieve.mockResolvedValue({
 					id: "pi_test_abc123",
 					status,
-					metadata: { userId: "cm3user0000123qz8v4h2j9d3", guestSessionId: "" },
+					metadata: { userId: "", guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff" },
 				});
 
 				const result = await updatePaymentAmount(VALID_PARAMS);
@@ -984,27 +897,6 @@ describe("updatePaymentAmount", () => {
 			mockAssertStoreOpen.mockResolvedValue(null);
 			setupShipping(499);
 			setupCart();
-		});
-
-		it("uses a user-based identifier for authenticated users", async () => {
-			setupAuthenticatedUser("cm3user0000456qz8v4h2j9d3");
-			mockHeaders.mockResolvedValue(new Headers());
-			mockGetClientIp.mockResolvedValue("192.168.1.1");
-			mockGetRateLimitIdentifier.mockReturnValue("user:cm3user0000456qz8v4h2j9d3");
-			setupRateLimit(true);
-			mockStripePaymentIntentsRetrieve.mockResolvedValue({
-				id: "pi_test_abc123",
-				status: "requires_payment_method",
-				metadata: { userId: "cm3user0000456qz8v4h2j9d3", guestSessionId: "" },
-			});
-
-			await updatePaymentAmount(VALID_PARAMS);
-
-			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"update-amount:user:cm3user0000456qz8v4h2j9d3",
-				expect.any(Object),
-				"192.168.1.1",
-			);
 		});
 
 		it("préfixe aussi l de repli session/IP des invités", async () => {

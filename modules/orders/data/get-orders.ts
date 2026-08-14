@@ -1,8 +1,8 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { cacheLife, cacheTag } from "next/cache";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";

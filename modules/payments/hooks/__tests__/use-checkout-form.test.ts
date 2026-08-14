@@ -15,7 +15,7 @@ vi.mock("@/shared/components/forms", () => ({
 
 // Note: getCheckoutFormOptions is intentionally NOT mocked here — we let it
 // run for real so we can assert that useAppForm receives the correct derived
-// defaultValues (session email, address pre-fill, etc.).
+// defaultValues (email vide, adresse vierge, etc.).
 // Mocking the auth module avoids Prisma/server-only imports.
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 
@@ -24,16 +24,6 @@ import { useCheckoutForm } from "../use-checkout-form";
 // ============================================================================
 // Fixtures
 // ============================================================================
-
-const mockSession = {
-	user: {
-		id: "user-1",
-		email: "user@example.com",
-		name: "Jean Dupont",
-		role: "USER",
-	},
-	session: { id: "sess-1" },
-} as never;
 
 // ============================================================================
 // Helpers
@@ -69,7 +59,7 @@ describe("useCheckoutForm", () => {
 	it("returns an object with a form property", () => {
 		setup();
 
-		const { result } = renderHook(() => useCheckoutForm({ session: null }));
+		const { result } = renderHook(() => useCheckoutForm());
 
 		expect(result.current).toHaveProperty("form");
 	});
@@ -77,7 +67,7 @@ describe("useCheckoutForm", () => {
 	it("returns exactly the form instance from useAppForm", () => {
 		const mockForm = setup();
 
-		const { result } = renderHook(() => useCheckoutForm({ session: null }));
+		const { result } = renderHook(() => useCheckoutForm());
 
 		expect(result.current.form).toBe(mockForm);
 	});
@@ -89,13 +79,13 @@ describe("useCheckoutForm", () => {
 	it("calls useAppForm exactly once on mount", () => {
 		setup();
 
-		renderHook(() => useCheckoutForm({ session: null }));
+		renderHook(() => useCheckoutForm());
 
 		expect(mockUseAppForm).toHaveBeenCalledTimes(1);
 	});
 
 	// --------------------------------------------------------------------------
-	// Guest defaults (null session, null addresses)
+	// Guest defaults
 	// --------------------------------------------------------------------------
 
 	it("passe une validationLogic (validation au blur, pas à la frappe)", () => {
@@ -104,7 +94,7 @@ describe("useCheckoutForm", () => {
 		// silencieusement non validé côté client. Audit UI/UX paiement 2026-07-26, F1.
 		setup();
 
-		renderHook(() => useCheckoutForm({ session: null }));
+		renderHook(() => useCheckoutForm());
 
 		expect(mockUseAppForm).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -116,7 +106,7 @@ describe("useCheckoutForm", () => {
 	it("calls useAppForm with empty email for guest users", () => {
 		setup();
 
-		renderHook(() => useCheckoutForm({ session: null }));
+		renderHook(() => useCheckoutForm());
 
 		expect(mockUseAppForm).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -130,7 +120,7 @@ describe("useCheckoutForm", () => {
 	it("calls useAppForm with empty shipping fields for guest with no addresses", () => {
 		setup();
 
-		renderHook(() => useCheckoutForm({ session: null }));
+		renderHook(() => useCheckoutForm());
 
 		expect(mockUseAppForm).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -154,7 +144,7 @@ describe("useCheckoutForm", () => {
 	it("calls useAppForm with an onSubmit function", () => {
 		setup();
 
-		renderHook(() => useCheckoutForm({ session: null }));
+		renderHook(() => useCheckoutForm());
 
 		expect(mockUseAppForm).toHaveBeenCalledWith(
 			expect.objectContaining({

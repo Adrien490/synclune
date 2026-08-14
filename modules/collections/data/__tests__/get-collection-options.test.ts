@@ -17,7 +17,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	},
 }));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	isAdmin: mockIsAdmin,
 }));
 

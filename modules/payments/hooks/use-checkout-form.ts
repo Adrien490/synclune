@@ -2,12 +2,7 @@
 
 import { revalidateLogic } from "@tanstack/react-form";
 import { useAppForm } from "@/shared/components/forms";
-import type { Session } from "@/modules/auth/lib/auth";
 import { getCheckoutFormOptions } from "../utils/checkout-form.utils";
-
-interface UseCheckoutFormOptions {
-	session: Session | null;
-}
 
 /**
  * Hook for the single-page checkout form.
@@ -36,11 +31,9 @@ interface UseCheckoutFormOptions {
  * correction. `form.handleSubmit()` valide de toute façon TOUT (l'événement
  * `submit` déclenche `onDynamic` inconditionnellement).
  */
-export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
-	const { session } = options;
-
+export const useCheckoutForm = () => {
 	const form = useAppForm({
-		...getCheckoutFormOptions(session),
+		...getCheckoutFormOptions(),
 		validationLogic: revalidateLogic({ mode: "blur", modeAfterSubmission: "change" }),
 	});
 

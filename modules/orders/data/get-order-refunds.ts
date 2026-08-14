@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { orderIdParamSchema } from "../schemas/order-route-params.schema";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import type { OrderRefundItem } from "../types/order-refunds.types";
 

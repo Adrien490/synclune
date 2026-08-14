@@ -62,11 +62,11 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
 }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
@@ -190,7 +190,7 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 	beforeEach(() => {
 		vi.resetAllMocks();
 		mockRequireAdmin.mockResolvedValue({
-			user: { id: "admin-1", name: "Admin Sophie", email: "admin@x.com" },
+			user: { id: "admin-1", name: "Léane", email: "admin@x.com" },
 		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSanitizeText.mockImplementation((t: string) => t);
@@ -268,7 +268,7 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 			expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
 			expect(mockVoidInvoice).toHaveBeenCalledWith({
 				orderId: expect.any(String),
-				authorName: "Admin Sophie",
+				authorName: "Léane",
 				source: "ADMIN",
 				reason: "Geste commercial",
 			});

@@ -1,7 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getOrCreateGuestSessionId } from "@/modules/cart/lib/guest-session";
 import { getCart } from "@/modules/cart/data/get-cart";
 import {
@@ -17,10 +16,7 @@ import { calculateShipping, getShippingInfo } from "@/modules/orders/services/sh
 import { type ShippingCountry } from "@/shared/constants/countries";
 import { STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
-import {
-	isVerifiedAdmin,
-	requireActiveAccountIfAuthenticated,
-} from "@/modules/auth/lib/require-auth";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { headers } from "next/headers";
 import { logger } from "@/shared/lib/logger";
@@ -64,29 +60,16 @@ export async function updatePaymentAmount(
 ): Promise<UpdatePaymentAmountResult | UpdatePaymentAmountError> {
 	return Sentry.startSpan({ name: "action.updatePaymentAmount", op: "checkout" }, async (span) => {
 		try {
-			// 1. Auth + session resolution
-			const session = await getSession();
-			const userId = session?.user.id ?? null;
-			const sessionId = !userId ? await getOrCreateGuestSessionId() : null;
+			// 1. Identité invité (parcours 100 % invité — migration lean, lot 1)
+			const sessionId = await getOrCreateGuestSessionId();
 
-			if (!userId && !sessionId) {
+			if (!sessionId) {
 				return { success: false, error: "Session invalide." };
 			}
 
-			// 1b. AUTHZ-1 (AM-3) : re-vérifie en DB que le compte est ACTIVE. Les invités
-			// passent (pas de session) ; une session suspendue/INACTIVE est rejetée.
-			// Cette action était la SEULE des trois du tunnel à ne pas poser la garde que
-			// `initializePayment` et `confirmCheckout` posent déjà — asymétrie sans
-			// conséquence connue (aucune écriture DB ici), mais c'est exactement le trou
-			// que l'audit AUTHZ-1 avait fermé sur ses deux sœurs.
-			const accountGate = await requireActiveAccountIfAuthenticated();
-			if ("error" in accountGate) {
-				return { success: false, error: accountGate.error.message };
-			}
-
 			// 2. Store-open guard (admin bypass for live checkout testing —
-			// rôle re-vérifié en DB, jamais le cookie seul)
-			if (!(await isVerifiedAdmin(session))) {
+			// cookie admin signé, validé par HMAC)
+			if (!(await isAdmin())) {
 				const storeCheck = await assertStoreOpen();
 				if (storeCheck) {
 					return { success: false, error: storeCheck.message };
@@ -99,7 +82,7 @@ export async function updatePaymentAmount(
 			// La branche authentifiée était déjà préfixée ; la branche INVITÉ retombait sur
 			// un identifiant nu, donc sur le compteur partagé du panier/des favoris (F3).
 			const rateLimitId = buildPaymentRateLimitId("update-amount", {
-				userId,
+				userId: null,
 				sessionId,
 				ipAddress,
 			});
@@ -123,7 +106,7 @@ export async function updatePaymentAmount(
 
 			const { paymentIntentId, country, postalCode } = validation.data;
 			span.setAttribute("payment_intent.id", paymentIntentId);
-			span.setAttribute("checkout.is_guest", !userId);
+			span.setAttribute("checkout.is_guest", true);
 			span.setAttribute("shipping.country", country);
 
 			// 5. Verify PI ownership via metadata
@@ -145,12 +128,7 @@ export async function updatePaymentAmount(
 
 			// Zod boundary : champ malformé droppé → undefined → ownerMatch false (deny)
 			const piMetadata = parsePaymentIntentMetadata(pi.metadata, { paymentIntentId });
-			const piUserId = piMetadata.userId;
-			const piSessionId = piMetadata.guestSessionId;
-
-			const ownerMatch =
-				(userId !== null && piUserId === userId) ||
-				(userId === null && sessionId !== null && piSessionId === sessionId);
+			const ownerMatch = piMetadata.guestSessionId === sessionId;
 
 			if (!ownerMatch) {
 				return { success: false, error: "Accès non autorisé au paiement." };

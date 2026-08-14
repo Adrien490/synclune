@@ -41,7 +41,7 @@ const LEGAL_PATHS = Object.values(ROUTES.LEGAL);
 
 /**
  * Extrait l'allowlist `publicRoutes` de `proxy.ts` sans l'importer : le module
- * tire `next/server` et `better-auth/cookies`, inutilisables dans ce runner.
+ * tire `next/server`, inutilisable dans ce runner.
  */
 function readProxyPublicRoutes(): string[] {
 	const source = readFileSync(join(REPO_ROOT, "proxy.ts"), "utf-8");

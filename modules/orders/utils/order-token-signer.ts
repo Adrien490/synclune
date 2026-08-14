@@ -16,9 +16,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 const TOKEN_LENGTH_HEX = 32; // 16 bytes truncated from HMAC-SHA256
 
 function getSigningSecret(): string {
-	const secret = process.env.BETTER_AUTH_SECRET;
+	const secret = process.env.AUTH_SECRET;
 	if (!secret || secret.length < 32) {
-		throw new Error("BETTER_AUTH_SECRET must be defined (≥32 chars) to sign order access tokens.");
+		throw new Error("AUTH_SECRET must be defined (≥32 chars) to sign order access tokens.");
 	}
 	return secret;
 }

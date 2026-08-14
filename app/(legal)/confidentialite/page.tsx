@@ -384,15 +384,10 @@ export default async function PrivacyPolicyPage() {
 									données.
 								</li>
 								<li>
-									<strong>better-auth.session_token :</strong> jeton de session - Créé uniquement
-									lors d'une connexion (l'accès authentifié est réservé à l'administration de la
-									boutique). Durée : 7 jours (httpOnly, secure). Maintient l'authentification de
-									manière sécurisée.
-								</li>
-								<li>
-									<strong>better-auth.session_data :</strong> cache de session - Créé uniquement
-									pour une session connectée. Durée : 5 minutes (httpOnly, secure). Optimise les
-									performances en réduisant les requêtes base de données.
+									<strong>admin_session :</strong> jeton de session - Créé uniquement lors d'une
+									connexion (l'accès authentifié est réservé à l'administration de la boutique).
+									Durée : 7 jours (httpOnly, secure). Maintient l'authentification de manière
+									sécurisée.
 								</li>
 								<li>
 									<strong>recent-searches :</strong> recherches récentes - confort de navigation.

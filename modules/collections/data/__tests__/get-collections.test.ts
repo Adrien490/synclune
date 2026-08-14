@@ -34,7 +34,7 @@ vi.mock("@/shared/lib/logger", () => ({
 	logger: { error: mockLoggerError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	isAdmin: mockIsAdmin,
 }));
 

@@ -1,5 +1,5 @@
-import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { requireAdminApiRoute } from "@/modules/admin-auth/lib/require-admin";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { getOrdersForExport, EXPORT_MAX_ROWS } from "@/modules/orders/data/get-orders-for-export";
 import { exportInvoicesSchema } from "@/modules/orders/schemas/order.schemas";
 import {
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 			Sentry.captureMessage("orders-csv-export-truncated", {
 				level: "warning",
 				tags: { feature: "orders-export" },
-				extra: { adminUserId: admin.user.id, maxRows: EXPORT_MAX_ROWS },
+				extra: { adminUserId: "admin", maxRows: EXPORT_MAX_ROWS },
 			});
 		}
 		const csv = generateOrdersCsv(orders);
@@ -109,17 +109,17 @@ export async function POST(request: Request) {
 				category: "admin-export",
 				message: "orders-csv-exported",
 				level: "info",
-				data: { adminUserId: admin.user.id, rowCount: orders.length },
+				data: { adminUserId: "admin", rowCount: orders.length },
 			});
 		} catch (auditError) {
 			logger.error("BULK_EXPORT audit write failed — export aborted (Art. 30)", auditError, {
 				service: "admin-orders-export",
-				adminUserId: admin.user.id,
+				adminUserId: "admin",
 			});
 			Sentry.captureException(auditError, {
 				level: "error",
 				tags: { feature: "rgpd-audit", action: "BULK_EXPORT" },
-				extra: { adminUserId: admin.user.id, rowCount: orders.length },
+				extra: { adminUserId: "admin", rowCount: orders.length },
 			});
 			return new Response(
 				JSON.stringify({

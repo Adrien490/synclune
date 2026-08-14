@@ -23,7 +23,7 @@ const {
 	mockRenderInvoicePdf,
 	mockPersistInvoiceNumber,
 	mockArchiveInvoicePdf,
-	mockGetSession,
+	mockIsAdmin,
 	mockCheckRateLimit,
 	mockGetRateLimitIdentifier,
 	mockGetClientIp,
@@ -38,7 +38,7 @@ const {
 	mockRenderInvoicePdf: vi.fn(),
 	mockPersistInvoiceNumber: vi.fn(),
 	mockArchiveInvoicePdf: vi.fn(),
-	mockGetSession: vi.fn(),
+	mockIsAdmin: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
 	mockGetRateLimitIdentifier: vi.fn(),
 	mockGetClientIp: vi.fn(),
@@ -99,7 +99,7 @@ vi.mock("@/modules/orders/utils/order-audit", () => ({
 vi.mock("@/modules/orders/constants/order.constants", () => ({
 	GET_ORDER_SELECT_CUSTOMER: { id: true },
 }));
-vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: mockGetSession }));
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({ isAdmin: mockIsAdmin }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
 	getRateLimitIdentifier: mockGetRateLimitIdentifier,
@@ -159,7 +159,7 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		mockGetSession.mockResolvedValue(null); // guest path par défaut
+		mockIsAdmin.mockResolvedValue(false); // guest path par défaut
 		mockGetRateLimitIdentifier.mockReturnValue("user:none");
 		mockGetClientIp.mockResolvedValue("1.2.3.4");
 		mockHeaders.mockResolvedValue(new Headers());
@@ -180,16 +180,12 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 
 	describe("aucune auth → 401", () => {
 		it("sans session ET sans token query → 401", async () => {
-			mockGetSession.mockResolvedValue(null);
-
 			const res = await GET(makeReq(), makeParams());
 
 			expect(res.status).toBe(401);
 		});
 
 		it("sans session ET token query null → 401", async () => {
-			mockGetSession.mockResolvedValue(null);
-
 			const res = await GET(makeReq(undefined), makeParams());
 
 			expect(res.status).toBe(401);
@@ -198,7 +194,6 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 
 	describe("token invalide → 404 (HMAC vérifie pas, anti-enumeration EINV-SEC-003)", () => {
 		it("sans session + token query mais verifyInvoiceAccessToken=false → 404", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(false);
 
 			const res = await GET(makeReq(TAMPERED_TOKEN), makeParams());
@@ -214,7 +209,6 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 
 	describe("token valide guest → 200 (chemin happy path)", () => {
 		it("sans session + token query valide → 200 PDF servi", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 
 			const res = await GET(makeReq(VALID_TOKEN), makeParams());
@@ -224,7 +218,6 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 		});
 
 		it("rate-limit identifier guest = invoice-token:<ip> (anti-DDoS par IP)", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 			mockGetClientIp.mockResolvedValue("203.0.113.42");
 
@@ -243,7 +236,6 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 		});
 
 		it("rate-limit guest fallback ip=unknown si getClientIp retourne null", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 			mockGetClientIp.mockResolvedValue(null);
 
@@ -258,10 +250,8 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 	});
 
 	describe("token PRIME sur session — admin avec token reste admin", () => {
-		it("admin session + token : admin path identifier (admin-invoice:<id>) prioritaire", async () => {
-			mockGetSession.mockResolvedValue({
-				user: { id: "admin-1", role: "ADMIN" },
-			});
+		it("cookie admin + token : admin path identifier (admin-invoice:admin) prioritaire", async () => {
+			mockIsAdmin.mockResolvedValue(true);
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 			mockPrisma.order.findFirst.mockResolvedValue({ ...GUEST_ORDER, userId: "other-user" });
 
@@ -269,7 +259,7 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 
 			expect(res.status).toBe(200);
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"admin-invoice:admin-1",
+				"admin-invoice:admin",
 				expect.objectContaining({ limit: 200 }),
 				expect.anything(),
 			);
@@ -278,7 +268,6 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 
 	describe("invariant HMAC : verifyInvoiceAccessToken est appelé avec orderId + orderNumber + token", () => {
 		it("token query passé exactement comme reçu (pas de manipulation)", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 			// Format 32-hex requis par le schéma F4 — l'invariant testé reste le
 			// passage BRUT (non trimé/normalisé) du token au vérificateur HMAC.
@@ -297,8 +286,6 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 
 	describe("F4 (audit Zod) : token malformé coupé en 400 avant le HMAC", () => {
 		it("token non-hex → 400 sans appel à verifyInvoiceAccessToken", async () => {
-			mockGetSession.mockResolvedValue(null);
-
 			const res = await GET(makeReq("abc.def.signature_base64url_xxx"), makeParams());
 
 			expect(res.status).toBe(400);
@@ -306,8 +293,6 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 		});
 
 		it("token 10 kB → 400 sans lookup Prisma", async () => {
-			mockGetSession.mockResolvedValue(null);
-
 			const res = await GET(makeReq("a".repeat(10_000)), makeParams());
 
 			expect(res.status).toBe(400);

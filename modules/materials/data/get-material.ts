@@ -2,7 +2,7 @@ import { type Prisma } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 

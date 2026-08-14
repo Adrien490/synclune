@@ -28,7 +28,7 @@ const {
 
 // Mock explicite : sans lui, `isAdmin()` résoudrait la vraie session (donc un faux
 // « non-admin » silencieux) et les assertions ci-dessous passeraient par accident.
-vi.mock("@/modules/auth/utils/guards", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	isAdmin: mockIsAdmin,
 }));
 

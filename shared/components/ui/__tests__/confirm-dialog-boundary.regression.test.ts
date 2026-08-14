@@ -55,7 +55,7 @@ const NOT_CALL_SITES = new Set([
 /** Call sites autorisés → l'invariant de la frontière qu'ils violent. */
 const ALLOWED = new Map<string, string>([
 	[
-		"modules/auth/components/logout-alert-dialog.tsx",
+		"modules/admin-auth/components/logout-alert-dialog.tsx",
 		"invariant 4 — expose son propre déclencheur (`children` → AlertDialogTrigger, 5 consommateurs)",
 	],
 	[

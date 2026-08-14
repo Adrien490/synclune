@@ -5,7 +5,7 @@
  * des ActionState pour simplifier l'usage dans les actions.
  *
  * NOTE: Les helpers qui nécessitent l'authentification (getRateLimitId, enforceRateLimitForCurrentUser)
- * sont dans @/modules/auth/lib/rate-limit-helpers
+ * sont dans @/modules/admin-auth/lib/rate-limit-helpers
  */
 
 import { checkRateLimit, type RateLimitConfig } from "@/shared/lib/rate-limit";
@@ -48,4 +48,4 @@ export async function enforceRateLimit(
 }
 
 // NOTE: getRateLimitId et enforceRateLimitForCurrentUser ont été déplacés vers
-// @/modules/auth/lib/rate-limit-helpers car ils dépendent de l'authentification
+// @/modules/admin-auth/lib/rate-limit-helpers car ils dépendent de l'authentification

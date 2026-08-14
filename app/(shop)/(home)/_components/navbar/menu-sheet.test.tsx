@@ -137,7 +137,7 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 }));
 
 // Mock LogoutAlertDialog — expose `open` as data attribute for assertions
-vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
+vi.mock("@/modules/admin-auth/components/logout-alert-dialog", () => ({
 	LogoutAlertDialog: ({ open }: { open: boolean }) => (
 		<div data-testid="logout-alert-dialog" data-open={open} />
 	),

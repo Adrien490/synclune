@@ -1,7 +1,8 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import * as Sentry from "@sentry/nextjs";
-import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
+import { requireAdminApiRoute } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
 import { generateThumbHashFromBuffer } from "@/modules/media/services/generate-thumbhash";
@@ -330,7 +331,7 @@ export const ourFileRouter = {
 				// 2. Rate limiting
 				const headersList = await headers();
 				const clientIp = await getClientIp(headersList);
-				const rateLimitId = getRateLimitIdentifier(admin.user.id, null, clientIp);
+				const rateLimitId = getRateLimitIdentifier("admin", null, clientIp);
 				const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CATALOG, clientIp);
 
 				if (!rateLimit.success) {
@@ -363,8 +364,8 @@ export const ourFileRouter = {
 				}
 
 				return {
-					userId: admin.user.id,
-					userName: admin.user.name,
+					userId: "admin",
+					userName: ADMIN_DISPLAY_NAME,
 				};
 			} catch (err) {
 				captureUnexpected(err, {

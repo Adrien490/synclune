@@ -11,11 +11,10 @@ import {
 	orderNumberParamSchema,
 	invoiceTokenSchema,
 } from "@/modules/orders/schemas/order-route-params.schema";
-import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
+import { isAdmin as isVerifiedAdminSession } from "@/modules/admin-auth/lib/require-admin";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
-import { checkRateLimit, getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { logger } from "@/shared/lib/logger";
 import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
@@ -41,8 +40,8 @@ const UPLOADTHING_FETCH_TIMEOUT_MS = 5_000;
  * lui, est fail-closed — cf. `app/api/admin/orders/export/route.ts`.)
  *
  * La source distingue :
- * - ADMIN : session admin, re-vérifiée en base par `isVerifiedAdmin()`
- * - CUSTOMER : owner session ou guest token (`verifyInvoiceAccessToken`)
+ * - ADMIN : cookie de session admin signé HMAC
+ * - CUSTOMER : guest token (`verifyInvoiceAccessToken`)
  * - SYSTEM : devrait être inatteignable ici, garde-fou
  *
  * Pas de PII dans metadata (cf. orderHistoryMetadataSchema garde-fou).
@@ -93,7 +92,7 @@ export async function GET(
 	const { orderNumber } = await params;
 	const url = new URL(request.url);
 
-	// F4 (audit Zod) : params bornés/formatés AVANT session/rate-limit/Prisma
+	// F4 (audit Zod) : params bornés/formatés AVANT auth/rate-limit/Prisma
 	// (harmonisation avec status/route.ts). Échec → 400.
 	const orderNumberValidation = orderNumberParamSchema.safeParse(orderNumber);
 	const tokenValidation = invoiceTokenSchema.safeParse(url.searchParams.get("token"));
@@ -102,23 +101,14 @@ export async function GET(
 	}
 	const tokenFromQuery = tokenValidation.data;
 
-	const session = await getSession();
-
 	// Auth modes (any one is sufficient):
-	// 1. Admin session — bypasses ownership + rate limit (audit / customer support).
-	// 2. Owner session — must match Order.userId.
-	// 3. Signed token in `?token=` — covers guest checkouts (Order.userId=null)
-	//    where the customer has no session. Token is HMAC-derived from
-	//    BETTER_AUTH_SECRET and delivered in the order confirmation email.
-	if (!session?.user.id && !tokenFromQuery) {
+	// 1. Admin session (cookie signé HMAC) — bypasses ownership (audit / support).
+	// 2. Signed token in `?token=` — le SEUL accès client (checkout 100 % invité).
+	//    Token HMAC dérivé du secret d'app, délivré dans l'email de confirmation.
+	const isAdmin = await isVerifiedAdminSession();
+	if (!isAdmin && !tokenFromQuery) {
 		return new Response("Non autorisé", { status: 401 });
 	}
-
-	// EINV-SEC-008 / EINV-SEC-001 : re-vérification DB du rôle admin (le cookie-cache
-	// Better Auth est stale jusqu'à AUTH_SESSION_CONFIG.cookieCache.maxAge). Passe par
-	// le helper d'auth partagé — il filtre aussi `suspendedAt` et `accountStatus`, pas
-	// seulement le rôle.
-	const isAdmin = await isVerifiedAdmin(session, "invoice-route");
 
 	// Rate limit: PDF generation is CPU-intensive.
 	// EINV-SEC-004 : admin n'est PLUS bypassé — quota large 200/h anti-exfiltration interne,
@@ -129,10 +119,8 @@ export async function GET(
 	const rateLimitConfig = isAdmin
 		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
 		: ORDER_LIMITS.INVOICE_DOWNLOAD;
-	const rateLimitIdentifier = session?.user.id
-		? isAdmin
-			? `admin-invoice:${session.user.id}`
-			: getRateLimitIdentifier(session.user.id)
+	const rateLimitIdentifier = isAdmin
+		? "admin-invoice:admin"
 		: `invoice-token:${clientIp ?? "unknown"}`;
 	// ⚠️ 3ᵉ argument OBLIGATOIRE : sans lui `effectiveIp` vaut `null` et whitelist,
 	// blacklist ET plafond global 100/min/IP sont tous court-circuités. Le préfixe
@@ -146,7 +134,6 @@ export async function GET(
 				level: "warning",
 				tags: { route: "invoice", actor: "admin" },
 				extra: {
-					adminUserId: session?.user.id,
 					limit: rateLimitConfig.limit,
 					windowMs: rateLimitConfig.windowMs,
 				},
@@ -166,7 +153,6 @@ export async function GET(
 				level: "warning",
 				tags: { route: "invoice", actor: "admin" },
 				extra: {
-					adminUserId: session?.user.id,
 					remaining: rateCheck.remaining,
 					limit: adminLimit,
 				},

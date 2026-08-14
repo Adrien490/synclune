@@ -31,7 +31,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	isAdmin: mockIsAdmin,
 }));
 

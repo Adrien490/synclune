@@ -125,18 +125,12 @@ export default async function CookiesPage() {
 									navigateur uniquement — rien n'est conservé sur nos serveurs.
 								</li>
 								<li>
-									<strong>better-auth.session_token</strong> : Jeton de session - Créé{" "}
+									<strong>admin_session</strong> : Jeton de session - Créé{" "}
 									<span className="text-success font-medium">
 										uniquement lors d&apos;une connexion (accès réservé à l&apos;administration de
 										la boutique)
 									</span>
 									. Durée : 7 jours (httpOnly, secure). Maintient la connexion active et sécurisée.
-								</li>
-								<li>
-									<strong>better-auth.session_data</strong> : Cache de session - Créé{" "}
-									<span className="text-success font-medium">uniquement si vous êtes connecté</span>
-									. Durée : 5 minutes (httpOnly, secure). Améliore les performances en évitant de
-									requêter la base de données à chaque requête.
 								</li>
 							</ul>
 

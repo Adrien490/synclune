@@ -1,10 +1,6 @@
 "use server";
 
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import {
-	isVerifiedAdmin,
-	requireActiveAccountIfAuthenticated,
-} from "@/modules/auth/lib/require-auth";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import {
 	getSkuDetails,
 	validateCartItemsWithDb,
@@ -79,22 +75,19 @@ export async function initializePayment(
 			}
 			const input = parsed.data;
 
-			const session = await getSession();
-			const userId = session?.user.id ?? null;
-			const userEmail = session?.user.email ?? null;
-
-			span.setAttribute("checkout.is_guest", !userId);
+			// Parcours 100 % invité (migration lean, lot 1) : plus de session client.
+			span.setAttribute("checkout.is_guest", true);
 			span.setAttribute("checkout.item_count", input.cartItems.length);
 
 			// In-memory rate limiting
 			const headersList = await headers();
-			const sessionId = !userId ? await getOrCreateGuestSessionId() : null;
+			const sessionId = await getOrCreateGuestSessionId();
 			const ipAddress = await getClientIp(headersList);
 			// Identifiant PRÉFIXÉ par l'action (F3) : sans préfixe, ce compteur était le
 			// même que celui du panier, des favoris et de la validation de code promo —
 			// 15 opérations quelconques suffisaient à bloquer le paiement pour une heure.
 			const rateLimitId = buildPaymentRateLimitId("checkout-init", {
-				userId,
+				userId: null,
 				sessionId,
 				email: input.email,
 				ipAddress,
@@ -108,18 +101,9 @@ export async function initializePayment(
 				};
 			}
 
-			// AUTHZ-1 : gate pré-paiement. Un invité passe ; une session dont le compte
-			// n'est pas ACTIVE (suspendu/INACTIVE) est rejetée AVANT
-			// la création du PaymentIntent → aucun débit orphelin possible. Ferme la
-			// fenêtre cookie-cache Better Auth (~5 min) post-suspension.
-			const accountGate = await requireActiveAccountIfAuthenticated();
-			if ("error" in accountGate) {
-				return { success: false, error: accountGate.error.message };
-			}
-
 			// Block payment if store is closed (admin bypass for live checkout
-			// testing — rôle re-vérifié en DB, jamais le cookie seul)
-			if (!(await isVerifiedAdmin(session))) {
+			// testing — cookie admin signé, validé par HMAC)
+			if (!(await isAdmin())) {
 				const storeCheck = await assertStoreOpen();
 				if (storeCheck) {
 					return { success: false, error: storeCheck.message };
@@ -209,7 +193,7 @@ export async function initializePayment(
 			// concurrentes. Aucune colonne locale ne porte le `cus_*` — parcours 100 %
 			// invité, et les deux colonnes qui l'avaient (`User.stripeCustomerId`,
 			// `Order.stripeCustomerId`) ont été droppées faute de lecteur.
-			const finalEmail = input.email ?? userEmail;
+			const finalEmail = input.email ?? null;
 			let stripeCustomerId: string | null = null;
 
 			if (finalEmail) {
@@ -240,7 +224,7 @@ export async function initializePayment(
 			//    un `customer` (param différent) → doit produire une clé différente.
 			//  - `total` : un changement de tarif d'expédition FR entre deux inits
 			//    change `amount` → doit produire une clé différente.
-			const ownerKey = userId ?? sessionId;
+			const ownerKey = sessionId;
 			if (!ownerKey) {
 				return {
 					success: false,
@@ -279,7 +263,7 @@ export async function initializePayment(
 							payment_method_types: ["card"],
 							...(stripeCustomerId && { customer: stripeCustomerId }),
 							metadata: {
-								userId: userId ?? "guest",
+								userId: "guest",
 								...(sessionId && { guestSessionId: sessionId }),
 							},
 						},

@@ -15,7 +15,7 @@ const { mockEnforceRateLimit, mockQuickSearchProducts, mockLogger, mockSentry } 
 
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 vi.mock("@sentry/nextjs", () => mockSentry);
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({ PRODUCT_SEARCH_LIMIT: "product-search" }));

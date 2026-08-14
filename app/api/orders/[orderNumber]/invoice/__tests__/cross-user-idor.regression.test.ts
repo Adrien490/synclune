@@ -38,7 +38,7 @@ const {
 	mockRenderInvoicePdf,
 	mockPersistInvoiceNumber,
 	mockArchiveInvoicePdf,
-	mockGetSession,
+	mockIsAdmin,
 	mockCheckRateLimit,
 	mockGetRateLimitIdentifier,
 	mockGetClientIp,
@@ -53,7 +53,7 @@ const {
 	mockRenderInvoicePdf: vi.fn(),
 	mockPersistInvoiceNumber: vi.fn(),
 	mockArchiveInvoicePdf: vi.fn(),
-	mockGetSession: vi.fn(),
+	mockIsAdmin: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
 	mockGetRateLimitIdentifier: vi.fn(),
 	mockGetClientIp: vi.fn(),
@@ -108,7 +108,7 @@ vi.mock("@/modules/orders/utils/order-audit", () => ({
 vi.mock("@/modules/orders/constants/order.constants", () => ({
 	GET_ORDER_SELECT_CUSTOMER: { id: true },
 }));
-vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: mockGetSession }));
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({ isAdmin: mockIsAdmin }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
 	getRateLimitIdentifier: mockGetRateLimitIdentifier,
@@ -174,7 +174,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 			invoicePdfUrl: null,
 			invoicePdfHash: null,
 		});
-		mockPrisma.user.findUnique.mockResolvedValue({ role: "ADMIN" });
+		mockIsAdmin.mockResolvedValue(false);
 		mockBuildInvoiceData.mockReturnValue({});
 		mockRenderInvoicePdf.mockReturnValue(new ArrayBuffer(8));
 		mockArchiveInvoicePdf.mockResolvedValue(null);
@@ -183,28 +183,14 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		mockIsAllowedMediaDomain.mockReturnValue(true);
 	});
 
-	it("returns 401 when anonymous request has no session AND no token", async () => {
-		mockGetSession.mockResolvedValue(null);
-
+	it("returns 401 when anonymous request has no token", async () => {
 		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA");
 
 		expect(response.status).toBe(401);
 		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 	});
 
-	it("returns 404 for any non-admin session without a valid token", async () => {
-		mockGetSession.mockResolvedValue({
-			user: { id: OTHER_USER_ID, role: "USER" },
-		});
-
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA");
-
-		expect(response.status).toBe(404);
-		expect(mockCreateOrderAudit).not.toHaveBeenCalled();
-	});
-
 	it("returns 404 when anonymous request has an invalid token (signature mismatch)", async () => {
-		mockGetSession.mockResolvedValue(null);
 		mockVerifyInvoiceAccessToken.mockReturnValue(false);
 
 		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", TAMPERED_TOKEN);
@@ -214,7 +200,6 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 	});
 
 	it("returns 200 when a valid HMAC token is passed (seul chemin client)", async () => {
-		mockGetSession.mockResolvedValue(null);
 		mockVerifyInvoiceAccessToken.mockReturnValue(true);
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: null }));
 
@@ -223,10 +208,8 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		expect(response.status).toBe(200);
 	});
 
-	it("returns 200 when admin downloads any order regardless of ownership", async () => {
-		mockGetSession.mockResolvedValue({
-			user: { id: "admin_xyz", role: "ADMIN" },
-		});
+	it("returns 200 when admin (cookie HMAC) downloads any order regardless of ownership", async () => {
+		mockIsAdmin.mockResolvedValue(true);
 
 		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA");
 
@@ -234,12 +217,10 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 	});
 
 	it("returns 404 when order does not exist (no oracle for enumeration)", async () => {
-		mockGetSession.mockResolvedValue({
-			user: { id: OTHER_USER_ID, role: "USER" },
-		});
+		mockVerifyInvoiceAccessToken.mockReturnValue(true);
 		mockPrisma.order.findFirst.mockResolvedValue(null);
 
-		const response = await callRoute("CMD-9999999999999-FFFFFFFFFFFF");
+		const response = await callRoute("CMD-9999999999999-FFFFFFFFFFFF", VALID_TOKEN);
 
 		expect(response.status).toBe(404);
 	});

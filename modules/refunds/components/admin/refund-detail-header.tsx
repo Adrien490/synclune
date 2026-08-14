@@ -10,7 +10,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 
 import { REFUND_STATUS_LABELS, REFUND_STATUS_VARIANTS } from "../../constants/refund.constants";
 import type { GetRefundReturn } from "../../types/refund.types";
-import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
+import { useSetAdminPageTitle } from "@/app/admin/(protected)/_components/admin-page-title-context";
 import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 interface RefundDetailHeaderProps {

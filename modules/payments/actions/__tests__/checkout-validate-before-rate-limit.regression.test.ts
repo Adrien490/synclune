@@ -43,7 +43,7 @@ vi.mock("@/modules/cart/lib/guest-session", () => ({
 vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
 	assertStoreOpen: mocks.assertStoreOpen,
 }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	isVerifiedAdmin: mocks.isVerifiedAdmin,
 	requireActiveAccountIfAuthenticated: mocks.requireActiveAccountIfAuthenticated,
 }));

@@ -2,7 +2,7 @@ import { Logo } from "@/shared/components/logo";
 import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/navigation";
 import type { NavItemChild } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
 import { getProducts } from "@/modules/products/data/get-products";
@@ -57,8 +57,8 @@ export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
 	// Les données publiques (collections, productTypes, nouveautés) sont servies
 	// par les caches des data fns sous-jacentes
-	const [session, cartCount, wishlistCount, menuData, newestProducts] = await Promise.all([
-		getSession().catch(() => null),
+	const [userIsAdmin, cartCount, wishlistCount, menuData, newestProducts] = await Promise.all([
+		isAdmin(),
 		getCartItemCount(),
 		getWishlistItemCount(),
 		getNavbarMenuData(),
@@ -70,9 +70,6 @@ export async function Navbar() {
 	]);
 
 	const { collectionsData, productTypesData } = menuData;
-
-	// Dériver isAdmin depuis la session (évite un appel DB redondant)
-	const userIsAdmin = session?.user.role === "ADMIN";
 
 	// `_count.products` et le produit-vignette sont enfin CONSOMMÉS : le menu
 	// mobile (« L'étal de poche ») affiche une photo et « N pièces » par famille.
@@ -127,18 +124,6 @@ export async function Navbar() {
 			}),
 		)
 	).filter((p) => p.imageUrl);
-
-	// Restrict session data passed to client components (exclude token, ipAddress, userAgent)
-	const sessionData = session
-		? {
-				user: {
-					name: session.user.name,
-					email: session.user.email,
-					image: session.user.image ?? null,
-					role: session.user.role,
-				},
-			}
-		: null;
 
 	// Générer les items de navigation desktop avec mega menus
 	const desktopNavItems = getDesktopNavItems({ productTypes });
@@ -207,7 +192,6 @@ export async function Navbar() {
 									navItems={mobileNavItems}
 									productTypes={productTypes}
 									isAdmin={userIsAdmin}
-									session={sessionData}
 								/>
 
 								{/* Pas de trigger recherche mobile ici : sous `sm`, l'entrée est
@@ -274,11 +258,7 @@ export async function Navbar() {
 							<div className="flex min-w-0 flex-1 items-center justify-end">
 								<NavbarRoomLabel />
 								<div className="flex shrink-0 items-center gap-2 sm:gap-3">
-									<NavbarIconButtons
-										isAdmin={userIsAdmin}
-										userName={session?.user.name ?? null}
-										userEmail={session?.user.email ?? null}
-									/>
+									<NavbarIconButtons isAdmin={userIsAdmin} />
 								</div>
 							</div>
 						</div>

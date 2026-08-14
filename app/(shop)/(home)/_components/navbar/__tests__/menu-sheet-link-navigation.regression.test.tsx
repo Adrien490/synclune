@@ -99,7 +99,7 @@ vi.mock("@/shared/hooks/use-active-navbar-item", () => ({
 	useActiveNavbarItem: () => ({ isMenuItemActive: () => false }),
 }));
 
-vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
+vi.mock("@/modules/admin-auth/components/logout-alert-dialog", () => ({
 	LogoutAlertDialog: () => null,
 }));
 
@@ -129,7 +129,6 @@ function renderOpenMenu() {
 			navItems={NAV_ITEMS}
 			productTypes={[{ slug: "bagues", label: "Bagues" }]}
 			isAdmin={false}
-			session={null}
 		/>,
 	);
 }

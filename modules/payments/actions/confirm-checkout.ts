@@ -1,7 +1,6 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 import { acquireOrderPaidLockTx } from "@/modules/orders/utils/order-paid-lock";
 import { getOrCreateGuestSessionId } from "@/modules/cart/lib/guest-session";
@@ -29,10 +28,7 @@ import { updatePendingOrderShippingSnapshot } from "@/modules/orders/services/up
 import { getOrderMetadataInvalidationTags } from "@/modules/orders/constants/cache";
 import { confirmCheckoutSchema, type ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
-import {
-	isVerifiedAdmin,
-	requireActiveAccountIfAuthenticated,
-} from "@/modules/auth/lib/require-auth";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { BusinessError } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
@@ -77,26 +73,12 @@ export async function confirmCheckout(
 			}
 			const v = validation.data;
 
-			// 1. Auth check (optional - guest OK)
-			const session = await getSession();
-			const userId = session?.user.id ?? null;
-			const userEmail = session?.user.email ?? null;
-
-			span.setAttribute("checkout.is_guest", !userId);
-
-			// 1b. AUTHZ-1 (AM-3) : re-vérifie en DB que le compte est ACTIVE.
-			// `initializePayment` posait déjà cette garde avant de créer le PI, mais
-			// un compte suspendu/INACTIVE entre le montage de la page et le clic Payer
-			// pouvait encore faire créer une commande payée. On rejoue donc la garde
-			// ici, avant la création de l'Order (les invités passent — pas de session).
-			const accountGate = await requireActiveAccountIfAuthenticated();
-			if ("error" in accountGate) {
-				return { success: false, error: accountGate.error.message };
-			}
+			// 1. Parcours 100 % invité (migration lean, lot 1) : plus de session client.
+			span.setAttribute("checkout.is_guest", true);
 
 			// 2. Store-open guard (admin bypass for live checkout testing —
-			// rôle re-vérifié en DB, jamais le cookie seul)
-			if (!(await isVerifiedAdmin(session))) {
+			// cookie admin signé, validé par HMAC)
+			if (!(await isAdmin())) {
 				const storeCheck = await assertStoreOpen();
 				if (storeCheck) {
 					return { success: false, error: storeCheck.message };
@@ -105,13 +87,13 @@ export async function confirmCheckout(
 
 			// 3. In-memory rate limiting
 			const headersList = await headers();
-			const sessionId = !userId ? await getOrCreateGuestSessionId() : null;
+			const sessionId = await getOrCreateGuestSessionId();
 			const ipAddress = await getClientIp(headersList);
 			// Budget PROPRE à la confirmation (F3) : il partageait auparavant son compteur
 			// avec `initializePayment`, le panier, les favoris et la validation de code
 			// promo — un client pouvait se retrouver incapable de payer pour une heure.
 			const rateLimitId = buildPaymentRateLimitId("checkout-confirm", {
-				userId,
+				userId: null,
 				sessionId,
 				// `v.email`, jamais `data.email` : la clé doit être dérivée de la valeur
 				// PARSÉE (normalisée en minuscules/trim par `emailOptionalSchema`), sinon
@@ -136,7 +118,7 @@ export async function confirmCheckout(
 				select: IDEMPOTENT_ORDER_SELECT,
 			});
 			if (existingOrder) {
-				return await resolveIdempotentHit(existingOrder, v, span, userEmail);
+				return await resolveIdempotentHit(existingOrder, v, span);
 			}
 
 			// 3c. CHECKOUT-IDOR-001 — ownership du PaymentIntent.
@@ -185,9 +167,7 @@ export async function confirmCheckout(
 			const piMetadata = parsePaymentIntentMetadata(pi.metadata, {
 				paymentIntentId: v.paymentIntentId,
 			});
-			const ownerMatch =
-				(userId !== null && piMetadata.userId === userId) ||
-				(userId === null && sessionId !== null && piMetadata.guestSessionId === sessionId);
+			const ownerMatch = piMetadata.guestSessionId === sessionId;
 
 			if (!ownerMatch) {
 				return { success: false, error: "Accès non autorisé au paiement." };
@@ -207,13 +187,11 @@ export async function confirmCheckout(
 
 			// 4. Resolve email (normalisé pour que `Order.customerEmail` reste
 			// comparable en aval — cf [[CHECKOUT-AUDIT-003]])
-			const rawFinalEmail = v.email ?? userEmail;
+			const rawFinalEmail = v.email ?? null;
 			if (!rawFinalEmail) {
 				return {
 					success: false,
-					error: userId
-						? "Ton adresse email est manquante. Reconnecte-toi."
-						: "L'email est requis pour une commande invité.",
+					error: "L'email est requis pour une commande invité.",
 				};
 			}
 			const finalEmail = normalizeEmail(rawFinalEmail);
@@ -325,7 +303,7 @@ export async function confirmCheckout(
 						select: IDEMPOTENT_ORDER_SELECT,
 					});
 					if (winner) {
-						return await resolveIdempotentHit(winner, v, span, userEmail);
+						return await resolveIdempotentHit(winner, v, span);
 					}
 				}
 				throw createError;
@@ -410,7 +388,7 @@ export async function confirmCheckout(
 						metadata: {
 							orderId: order.id,
 							orderNumber: order.orderNumber,
-							userId: userId ?? "guest",
+							userId: "guest",
 							...(sessionId && { guestSessionId: sessionId }),
 						},
 					}),
@@ -589,10 +567,6 @@ async function resolveIdempotentHit(
 	order: IdempotentOrder,
 	v: ConfirmCheckoutData,
 	span: { setAttribute: (key: string, value: string | number | boolean) => void },
-	// Email de session (l'administratrice achetant sur sa propre boutique). Ce chemin
-	// s'exécute AVANT la résolution d'email du chemin nominal (étape 4) : il n'a que
-	// `v.email` brut, il doit donc refaire lui-même le `?? userEmail` + `normalizeEmail`.
-	sessionEmail: string | null,
 ): Promise<ConfirmCheckoutResult | ConfirmCheckoutError> {
 	const itemsDiverge = buildItemsFingerprint(v.cartItems) !== buildItemsFingerprint(order.items);
 	// Ne compare QUE le pays et le code postal — les deux seules composantes dont dépend
@@ -659,7 +633,7 @@ async function resolveIdempotentHit(
 	// Repli sur la valeur déjà en base — surtout PAS de refus « email requis » ici : la
 	// commande existe déjà avec un email valide, bloquer un paiement parce qu'une
 	// resoumission ne le reporte pas serait une régression.
-	const rawResubmittedEmail = v.email ?? sessionEmail;
+	const rawResubmittedEmail = v.email ?? null;
 	const customerEmail = rawResubmittedEmail
 		? normalizeEmail(rawResubmittedEmail)
 		: order.customerEmail;

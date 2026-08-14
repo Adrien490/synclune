@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { addToWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";

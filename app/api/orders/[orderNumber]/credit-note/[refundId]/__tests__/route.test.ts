@@ -28,7 +28,7 @@ const {
 	mockBuildCreditNoteData,
 	mockRenderInvoicePdf,
 	mockArchiveCreditNotePdf,
-	mockGetSession,
+	mockIsAdmin,
 	mockCheckRateLimit,
 	mockGetRateLimitIdentifier,
 	mockHeaders,
@@ -41,7 +41,7 @@ const {
 	mockBuildCreditNoteData: vi.fn(),
 	mockRenderInvoicePdf: vi.fn(),
 	mockArchiveCreditNotePdf: vi.fn().mockResolvedValue(null),
-	mockGetSession: vi.fn(),
+	mockIsAdmin: vi.fn(),
 	mockCheckRateLimit: vi.fn().mockResolvedValue({ success: true }),
 	mockGetRateLimitIdentifier: vi.fn((id: string) => `user:${id}`),
 	mockHeaders: vi.fn().mockResolvedValue(new Map()),
@@ -77,7 +77,7 @@ vi.mock("@/modules/orders/utils/order-audit", () => ({
 vi.mock("@/modules/orders/constants/order.constants", () => ({
 	GET_ORDER_SELECT_CUSTOMER: { id: true },
 }));
-vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: mockGetSession }));
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({ isAdmin: mockIsAdmin }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
 	getRateLimitIdentifier: mockGetRateLimitIdentifier,
@@ -185,21 +185,13 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 		mockArchiveCreditNotePdf.mockResolvedValue(null);
 		mockRenderInvoicePdf.mockReturnValue(new Uint8Array([0x25, 0x50, 0x44, 0x46])); // %PDF
 		mockBuildCreditNoteData.mockReturnValue({});
-		// EINV-SEC-001 : par défaut la DB confirme le rôle pour les tests ADMIN.
-		mockPrisma.user.findUnique.mockResolvedValue({ role: "ADMIN" });
+		// Cookie admin signé HMAC : admin par défaut pour les tests ADMIN.
+		mockIsAdmin.mockResolvedValue(true);
 	});
 
 	describe("Auth obligatoire — pas de token guest sur cette route", () => {
-		it("401 quand pas de session", async () => {
-			mockGetSession.mockResolvedValue(null);
-
-			const res = await GET(makeReq(), makeParams());
-
-			expect(res.status).toBe(401);
-		});
-
-		it("401 même si session.user.id manquant", async () => {
-			mockGetSession.mockResolvedValue({ user: {} });
+		it("401 quand le cookie admin est absent ou invalide", async () => {
+			mockIsAdmin.mockResolvedValue(false);
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -209,7 +201,6 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 
 	describe("Lookup order — 404 (introuvable ou non autorisé)", () => {
 		it("404 quand order introuvable", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockPrisma.order.findFirst.mockResolvedValue(null);
 
 			const res = await GET(makeReq(), makeParams());
@@ -217,20 +208,18 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 			expect(res.status).toBe(404);
 		});
 
-		// `Order.userId` est parti le 2026-08-05 : la route n'a plus de chemin
-		// « propriétaire », elle est ADMIN-only (aucun token invité ici).
-		it("404 quand la session n'est pas admin (EINV-SEC-003 anti-enumeration)", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "user-INTRUDER", role: "USER" } });
-			mockPrisma.user.findUnique.mockResolvedValue({ role: "USER" });
-			mockPrisma.order.findFirst.mockResolvedValue(makeOrder({}));
+		// Route ADMIN-only (aucun token invité ici) : tout non-admin est refusé en
+		// 401 AVANT le lookup — aucun oracle d'existence de commande possible.
+		it("401 pour un non-admin, sans lookup DB (anti-énumération par construction)", async () => {
+			mockIsAdmin.mockResolvedValue(false);
 
 			const res = await GET(makeReq(), makeParams());
 
-			expect(res.status).toBe(404);
+			expect(res.status).toBe(401);
+			expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 		});
 
 		it("200-path pour admin (audit access)", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder({}));
 			mockPrisma.refund.findFirst.mockResolvedValue(
 				makeRefund({ creditNotePdfUrl: ARCHIVED_URL, creditNotePdfHash: ARCHIVED_HASH }),
@@ -257,7 +246,6 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 
 	describe("Lookup refund — 404 / 400", () => {
 		beforeEach(() => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 		});
 
@@ -290,7 +278,6 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 
 	describe("PDF archivé servi en priorité (Art. L102 B LPF immuable)", () => {
 		beforeEach(() => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 		});
 
@@ -343,7 +330,6 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 
 	describe("Intégrité des octets archivés servis (EINV-PDF-006)", () => {
 		beforeEach(() => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 		});
 
@@ -408,7 +394,6 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 
 	describe("Hash divergence (EINV-PDF-002) — 503 anti-corruption", () => {
 		it("retourne 503 si regénération produit un hash != archivé (refuse de servir)", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 			mockPrisma.refund.findFirst.mockResolvedValue(
 				makeRefund({
@@ -436,7 +421,6 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 
 	describe("Régénération happy-path quand aucun PDF archivé", () => {
 		it("renderInvoicePdf + archiveCreditNotePdf appelés + audit posé", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 			mockPrisma.refund.findFirst.mockResolvedValue(makeRefund()); // creditNotePdfUrl=null
 
@@ -470,7 +454,6 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 
 	describe("Rate limit — 429 sur dépassement", () => {
 		it("429 quand checkRateLimit retourne success=false", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockCheckRateLimit.mockResolvedValue({ success: false, retryAfter: 42 });
 
 			const res = await GET(makeReq(), makeParams());
@@ -481,13 +464,13 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 	});
 
 	describe("F4 (audit Zod) : params malformés coupés en 400 avant session/Prisma", () => {
-		it("refundId non-cuid → 400 sans getSession ni lookup", async () => {
+		it("refundId non-cuid → 400 sans auth ni lookup", async () => {
 			const res = await GET(makeReq(), {
 				params: Promise.resolve({ orderNumber: ORDER_NUMBER, refundId: "refund-1'; DROP" }),
 			});
 
 			expect(res.status).toBe(400);
-			expect(mockGetSession).not.toHaveBeenCalled();
+			expect(mockIsAdmin).not.toHaveBeenCalled();
 			expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 		});
 

@@ -8,14 +8,15 @@ import {
 	RefundStatus,
 	InvoiceStatus,
 } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
@@ -54,9 +55,8 @@ export async function markAsFullyRefunded(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -184,7 +184,7 @@ export async function markAsFullyRefunded(
 						await createOrderAuditTx(tx, {
 							orderId: id,
 							action: OrderAction.REFUND_CREATED,
-							authorName: adminUser.name ?? "Admin",
+							authorName: ADMIN_DISPLAY_NAME,
 							source: HistorySource.ADMIN,
 							note: `Refund manuel créé pour traçabilité du flux financier (${(remainingAmount / 100).toFixed(2)} €) — méthode: ${manualRefundMethod}`,
 							metadata: {
@@ -204,7 +204,7 @@ export async function markAsFullyRefunded(
 					action: OrderAction.REFUND_COMPLETED,
 					previousPaymentStatus: found.paymentStatus,
 					newPaymentStatus: PaymentStatus.REFUNDED,
-					authorName: adminUser.name ?? "Admin",
+					authorName: ADMIN_DISPLAY_NAME,
 					source: HistorySource.ADMIN,
 					note: reason ?? `Marquée comme remboursée (manuel — méthode: ${manualRefundMethod})`,
 					metadata: {
@@ -258,7 +258,7 @@ export async function markAsFullyRefunded(
 		if (order.invoiceStatus === InvoiceStatus.GENERATED && order.invoiceNumber) {
 			const voided = await voidInvoice({
 				orderId: order.id,
-				authorName: adminUser.name ?? "Admin",
+				authorName: ADMIN_DISPLAY_NAME,
 				source: HistorySource.ADMIN,
 				reason: reason ?? "Avoir suite à remboursement total manuel",
 			});

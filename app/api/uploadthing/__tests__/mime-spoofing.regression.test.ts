@@ -50,7 +50,7 @@ vi.mock("@sentry/nextjs", () => ({
 }));
 
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminApiRoute: vi.fn() }));
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({ requireAdminApiRoute: vi.fn() }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: vi.fn(async () => ({ success: true })),
 	getClientIp: vi.fn(async () => "127.0.0.1"),

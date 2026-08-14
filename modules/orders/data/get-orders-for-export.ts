@@ -1,6 +1,6 @@
 import type { Prisma } from "@/app/generated/prisma/client";
 import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma } from "@/shared/lib/prisma";
 
 // Exporté : la route d'export compare `orders.length` à ce plafond pour SIGNALER

@@ -80,8 +80,9 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 				_sum: { amount: true },
 				_count: true,
 			}),
-			// Nouveaux clients : clé client (COALESCE userId, email), acquisition au
-			// MIN(paidAt). Statuts encaissés (ANALYTICS-AUDIT-001).
+			// Nouveaux clients : clé client = email (Order.userId est parti le
+			// 2026-08-05 — achat 100 % invité), acquisition au MIN(paidAt).
+			// Statuts encaissés (ANALYTICS-AUDIT-001).
 			prisma.$queryRaw<NewCustomersRow[]>`
 					SELECT COUNT(*) FILTER (WHERE first_paid >= ${currentStart}) AS "currentCount"
 					FROM (
@@ -89,7 +90,7 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 						FROM "Order"
 						WHERE "paymentStatus" = ANY(${[...PAID_REVENUE_STATUSES]}::"PaymentStatus"[])
 							AND "deletedAt" IS NULL
-						GROUP BY COALESCE("userId", "customerEmail")
+						GROUP BY "customerEmail"
 					) firsts
 				`,
 		]);

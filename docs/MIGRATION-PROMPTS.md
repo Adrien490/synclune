@@ -67,7 +67,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | Lot | Nom                                       | Taille | Statut | Commit             | Notes                                                                                                                         |
 | --- | ----------------------------------------- | ------ | ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | 0   | Préparation du terrain                    | S      | ✅     | `migration(lot-0)` | Branche `migration-lean`, tag `pre-migration-lean`. Voir « État à la sortie du lot 0 » ci-dessous — 3 pièges d'environnement. |
-| 1   | Auth maison (purge Better Auth)           | L      | ⬜     | —                  |                                                                                                                               |
+| 1   | Auth maison (purge Better Auth)           | L      | ✅     | `migration(lot-1)` | Voir « État à la sortie du lot 1 » ci-dessous.                                                                                |
 | 2   | Bascule schéma + purge + catalogue        | XL     | ⬜     | —                  |                                                                                                                               |
 | 3   | Checkout Stripe hébergé + webhooks        | L      | ⬜     | —                  |                                                                                                                               |
 | 4   | Commandes : admin, facturation Int, suivi | L      | ⬜     | —                  |                                                                                                                               |
@@ -104,6 +104,45 @@ STOP », vérifier ces trois-là :
   lot 2 avec tout `prisma/migrations/`.
 - `commitlint.config.ts` accepte désormais le type `migration` (le hook `commit-msg` rejetait
   `migration(lot-N): …`, bloquant la convention de commit du chantier). À retirer au lot 9.
+
+### État à la sortie du lot 1
+
+**Ce qui existe désormais** — `modules/admin-auth/` : cookie `admin_session` =
+`<expiry>.<hmac>` (HMAC-SHA256 de l'expiry avec `AUTH_SECRET`, httpOnly + secure +
+sameSite=lax, 7 j) ; `login`/`logout` (actions), `requireAdmin()` / `requireAdminApiRoute()`
+(→ `{ admin: true } | …`, plus de `.user`) / `isAdmin()` / `assertAdminPage()` /
+`hasValidAdminSession()` / `enforceRateLimitForCurrentUser()` (identité `"admin"` ou IP).
+Page de connexion : `app/admin/connexion` (hors garde) ; tout le reste de l'admin vit dans
+`app/admin/(protected)/` (le layout garde le chargement dur, chaque page garde la navigation
+client — invariant inchangé). `ADMIN_DISPLAY_NAME = "Léane"` remplace `user.name` partout
+(audit `authorName`, sidebar, UploadThing).
+
+**Décisions prises en route, à connaître aux lots suivants** :
+
+- **`AUTH_SECRET` signe AUSSI les tokens de suivi de commande** (`order-token-signer.ts`,
+  ex-`BETTER_AUTH_SECRET`). En prod, reprendre la valeur de `BETTER_AUTH_SECRET` pour ne pas
+  invalider les liens de suivi déjà emailés.
+- **`connection()` avant `Date.now()`** dans `admin-session.ts` : sans ça, le prérendu PPR
+  refuse toute page qui valide un cookie présent. Même famille de contrainte :
+  `app/admin/connexion/loading.tsx` est la frontière Suspense OBLIGATOIRE de la page (elle
+  lit un cookie).
+- **Le proxy ne redirige PLUS un « déjà connecté » depuis `/admin/connexion`** : il ne sait
+  pas valider le HMAC (node:crypto), et rediriger sur la simple présence du cookie bouclait
+  pour un cookie expiré. C'est la PAGE qui redirige après validation réelle.
+- `requireAdminWithUser`, `requireAuth`, `requireActiveAccountIfAuthenticated`,
+  `isVerifiedAdmin`, `getSession` n'existent plus ; le checkout et le panier sont
+  100 % invité jusque dans les tests (plus aucune branche session).
+- Deux corrections de bugs PRÉEXISTANTS débusqués par la vérif manuelle :
+  `brandLinkLabel` extrait de `logo.tsx` (module client) vers
+  `shared/components/brand-link-label.ts` (les Server Components l'appellent), et le
+  `$queryRaw` de `get-kpis.ts` qui référençait la colonne `Order."userId"` droppée le
+  2026-08-05.
+- `commitlint` : scope `lot-1` non listé → warning non bloquant, assumé.
+- **knip** (déjà rouge sur main, hors gate) signale en plus après ce lot : `@prisma/client`
+  (n'était tiré que par l'adapter Better Auth — à retirer au lot 2 avec le nouveau client),
+  `DropdownMenuLabel`, `ServerActionFn`, `logo-animated.tsx`. À purger au fil des lots.
+- La base dev locale a été resynchronisée (`db push --accept-data-loss`, accord d'Adrien) —
+  elle avait dérivé bien avant le lot (table `Refund` absente).
 
 ## 4. Schéma cible (SSOT)
 

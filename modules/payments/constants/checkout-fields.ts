@@ -96,23 +96,16 @@ const CHECKOUT_SECTION_REQUIRED: Record<string, readonly string[]> = {
  * ⚠️ « Aucune erreur » ne suffit PAS : la validation est en `mode: "blur"`, donc
  * un formulaire vierge n'a aucune erreur et afficherait « complété » partout.
  * D'où la double condition — rempli ET valide.
- *
- * `isGuest: false` ⇒ la section Contact n'a aucune saisie (l'email est affiché,
- * pas demandé) : elle est complète par construction.
  */
 export function getCompletedSections(
 	filledPaths: readonly string[],
 	invalidPaths: readonly string[],
-	isGuest: boolean,
 ): string[] {
 	const filled = new Set(filledPaths);
 	const invalid = new Set(invalidPaths);
 
 	return Object.entries(CHECKOUT_SECTION_REQUIRED)
-		.filter(([section, required]) => {
-			if (section === "Contact" && !isGuest) return true;
-			return required.every((path) => filled.has(path) && !invalid.has(path));
-		})
+		.filter(([, required]) => required.every((path) => filled.has(path) && !invalid.has(path)))
 		.map(([section]) => section);
 }
 

@@ -24,7 +24,7 @@ const { mockRequireAdminApiRoute, mockCheckRateLimit } = vi.hoisted(() => {
 	};
 });
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdminApiRoute: mockRequireAdminApiRoute,
 }));
 vi.mock("@/shared/lib/rate-limit", () => ({
@@ -55,7 +55,7 @@ const IMAGE: MiddlewareFile = { name: "bague.jpg", type: "image/jpeg", size: 102
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockRequireAdminApiRoute.mockResolvedValue({ user: { id: "admin-1", name: "Adri" } });
+	mockRequireAdminApiRoute.mockResolvedValue({ admin: true });
 	mockCheckRateLimit.mockResolvedValue({ success: true });
 });
 
@@ -66,10 +66,10 @@ describe("catalogMedia.middleware", () => {
 		await expect(middleware("catalogMedia")([IMAGE])).rejects.toBeInstanceOf(UploadThingError);
 	});
 
-	it("laisse passer un admin et expose son id en metadata", async () => {
+	it("laisse passer un admin et expose son identité en metadata", async () => {
 		await expect(middleware("catalogMedia")([IMAGE])).resolves.toEqual({
-			userId: "admin-1",
-			userName: "Adri",
+			userId: "admin",
+			userName: "Léane",
 		});
 	});
 

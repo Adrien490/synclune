@@ -1,8 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import type { ActionState } from "@/shared/types/server-action";
 import { handleActionError, success } from "@/shared/lib/actions";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";

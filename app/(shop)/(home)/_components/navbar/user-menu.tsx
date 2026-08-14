@@ -3,12 +3,11 @@
 import { SignOutIcon, SquaresFourIcon, UserIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { useState } from "react";
-import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
+import { LogoutAlertDialog } from "@/modules/admin-auth/components/logout-alert-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
@@ -19,8 +18,6 @@ import { iconButtonClassName } from "./navbar-styles";
 
 interface UserMenuProps {
 	isAdmin?: boolean;
-	userName?: string | null;
-	userEmail?: string | null;
 }
 
 /**
@@ -41,7 +38,7 @@ interface UserMenuProps {
  * et se déconnecter. Le composant rend donc `null` pour tout le monde d'autre —
  * y compris une session non-admin héritée, qui n'aurait aucune destination.
  */
-export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
+export function UserMenu({ isAdmin }: UserMenuProps) {
 	const [logoutOpen, setLogoutOpen] = useState(false);
 
 	if (!isAdmin) {
@@ -77,23 +74,6 @@ export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
 					sideOffset={8}
 					className="w-60 motion-safe:duration-[var(--duration-normal)]"
 				>
-					{(userName ?? userEmail) && (
-						<>
-							<DropdownMenuLabel className="flex flex-col gap-0.5 py-2">
-								{userName && (
-									<span className="text-foreground line-clamp-1 text-sm font-medium">
-										{userName}
-									</span>
-								)}
-								{userEmail && (
-									<span className="text-muted-foreground line-clamp-1 text-xs font-normal">
-										{userEmail}
-									</span>
-								)}
-							</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-						</>
-					)}
 					<DropdownMenuItem
 						render={
 							<Link href={ROUTES.ADMIN.DASHBOARD} prefetch={null} className="cursor-pointer" />

@@ -31,7 +31,7 @@ vi.mock("@/modules/wishlist/lib/wishlist-cookie", () => ({
 	writeWishlistCookie: mockWriteWishlistCookie,
 }));
 
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 

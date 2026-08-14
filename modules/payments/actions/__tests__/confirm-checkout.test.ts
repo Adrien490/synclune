@@ -7,7 +7,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockPrismaClientKnownRequestError,
 	mockPrisma,
-	mockGetSession,
 	mockGetOrCreateGuestSessionId,
 	mockGetCart,
 	mockUpdatePendingShippingSnapshot,
@@ -29,8 +28,7 @@ const {
 	mockSentryCaptureException,
 	mockSentryWithScope,
 	mockSentryCaptureMessage,
-	mockRequireActiveAccount,
-	mockIsVerifiedAdmin,
+	mockIsAdmin,
 } = vi.hoisted(() => {
 	const CircuitBreakerErrorClass = class CircuitBreakerError extends Error {
 		constructor(name: string) {
@@ -73,7 +71,6 @@ const {
 			},
 			$transaction: vi.fn(),
 		},
-		mockGetSession: vi.fn(),
 		mockGetOrCreateGuestSessionId: vi.fn(),
 		mockGetCart: vi.fn(),
 		mockUpdatePendingShippingSnapshot: vi.fn(),
@@ -100,8 +97,7 @@ const {
 		mockSentryCaptureException: vi.fn(),
 		mockSentryWithScope: vi.fn(),
 		mockSentryCaptureMessage: vi.fn(),
-		mockRequireActiveAccount: vi.fn(),
-		mockIsVerifiedAdmin: vi.fn(),
+		mockIsAdmin: vi.fn(),
 	};
 });
 
@@ -115,10 +111,6 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 // Les autres imports du client généré dans le graphe sont type-only (érasés).
 vi.mock("@/app/generated/prisma/client", () => ({
 	Prisma: { PrismaClientKnownRequestError: mockPrismaClientKnownRequestError },
-}));
-
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
 }));
 
 vi.mock("@/modules/cart/lib/guest-session", () => ({
@@ -178,9 +170,8 @@ vi.mock("next/server", () => ({
 // AUTHZ-1 gate (require-auth) — authorise par défaut (compte ACTIF / invité).
 // isVerifiedAdmin gate le bypass "boutique fermée" pour les tests admin (défaut
 // false — le rôle admin n'est vérifié qu'explicitement par les tests concernés).
-vi.mock("@/modules/auth/lib/require-auth", () => ({
-	requireActiveAccountIfAuthenticated: mockRequireActiveAccount,
-	isVerifiedAdmin: mockIsVerifiedAdmin,
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 vi.mock("@/modules/payments/services/order-creation.service", () => ({
@@ -303,7 +294,7 @@ function createValidData(overrides: Partial<ConfirmCheckoutData> = {}): ConfirmC
 	return {
 		cartItems: VALID_CART_ITEMS,
 		shippingAddress: VALID_SHIPPING_ADDRESS,
-		email: undefined,
+		email: "marie@example.com",
 		paymentIntentId: "pi_test_123",
 		...overrides,
 	};
@@ -413,16 +404,11 @@ function setupDefaults() {
 		}),
 	);
 
-	// Auth: authenticated user
-	mockGetSession.mockResolvedValue({
-		user: { id: "cm3user0000123qz8v4h2j9d3", email: "marie@example.com" },
-	});
+	// Parcours 100 % invité (migration lean, lot 1) : identité = session invitée.
+	mockGetOrCreateGuestSessionId.mockResolvedValue("550e8400-e29b-41d4-a716-446655440000");
 
-	// AUTHZ-1 gate: account active by default
-	mockRequireActiveAccount.mockResolvedValue({ ok: true });
-
-	// isVerifiedAdmin: non-admin by default (store-open guard runs normally).
-	mockIsVerifiedAdmin.mockResolvedValue(false);
+	// isAdmin: non-admin by default (store-open guard runs normally).
+	mockIsAdmin.mockResolvedValue(false);
 
 	// DB: user has no existing Stripe customer
 	mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: null });
@@ -433,7 +419,7 @@ function setupDefaults() {
 	// Rate limit
 	mockHeaders.mockResolvedValue(new Headers({ "user-agent": "vitest/1.0" }));
 	mockGetClientIp.mockResolvedValue("192.168.1.1");
-	mockGetRateLimitIdentifier.mockReturnValue("user:cm3user0000123qz8v4h2j9d3");
+	mockGetRateLimitIdentifier.mockReturnValue("session:550e8400-e29b-41d4-a716-446655440000");
 	mockCheckRateLimit.mockResolvedValue({ success: true });
 
 	// SKU details
@@ -455,17 +441,15 @@ function setupDefaults() {
 
 	// Stripe PI retrieve (modifiable state).
 	// CHECKOUT-IDOR-001 : la metadata d'ownership est dérivée de la session
-	// courante au moment de l'appel, pour que les blocs guest/authentifié n'aient
-	// pas à la redéclarer. Les tests d'ownership la surchargent explicitement.
+	// invitée courante, pour que les blocs n'aient pas à la redéclarer. Les tests
+	// d'ownership la surchargent explicitement.
 	mockStripe.paymentIntents.retrieve.mockImplementation(async () => {
-		const session = (await mockGetSession()) as { user?: { id?: string } } | null;
-		const sessionUserId = session?.user?.id ?? null;
-		const guestSessionId = sessionUserId ? null : await mockGetOrCreateGuestSessionId();
+		const guestSessionId = (await mockGetOrCreateGuestSessionId()) as string;
 		return {
 			...MOCK_PAYMENT_INTENT,
 			metadata: {
-				userId: sessionUserId ?? "guest",
-				...(guestSessionId ? { guestSessionId } : {}),
+				userId: "guest",
+				guestSessionId,
 			},
 		};
 	});
@@ -543,27 +527,7 @@ describe("confirmCheckout", () => {
 	// Happy path — authenticated user
 	// ──────────────────────────────────────────────────────────────
 
-	// AM-3 : la garde compte-actif (AUTHZ-1) est rejouée dans confirmCheckout, pas
-	// seulement dans initializePayment — un compte suspendu entre le montage de la
-	// page et le clic Payer ne doit pas pouvoir faire créer une commande payée.
-	describe("AUTHZ-1 account-active gate (AM-3)", () => {
-		it("rejects a non-active account and never creates an order", async () => {
-			mockRequireActiveAccount.mockResolvedValue({
-				error: { message: "Votre compte n'est pas autorisé à effectuer cette action." },
-			});
-
-			const result = await confirmCheckout(createValidData());
-
-			expect(result).toEqual({
-				success: false,
-				error: "Votre compte n'est pas autorisé à effectuer cette action.",
-			});
-			expect(mockCreateOrderInTransaction).not.toHaveBeenCalled();
-			expect(mockStripe.paymentIntents.update).not.toHaveBeenCalled();
-		});
-	});
-
-	describe("happy path (authenticated user)", () => {
+	describe("happy path", () => {
 		it("should return success with orderId, orderNumber, and finalAmount", async () => {
 			const result = await confirmCheckout(createValidData());
 
@@ -610,14 +574,6 @@ describe("confirmCheckout", () => {
 			expect(mockPrisma.user.updateMany).not.toHaveBeenCalled();
 		});
 
-		it("should use session email when no email provided in data", async () => {
-			await confirmCheckout(createValidData({ email: undefined }));
-
-			expect(mockCreateOrderInTransaction).toHaveBeenCalledWith(
-				expect.objectContaining({ finalEmail: "marie@example.com" }),
-			);
-		});
-
 		it("should update Stripe PI with order metadata after order creation", async () => {
 			await confirmCheckout(createValidData());
 
@@ -629,7 +585,7 @@ describe("confirmCheckout", () => {
 					metadata: expect.objectContaining({
 						orderId: "order-001",
 						orderNumber: "SYN-20260310-A1B2",
-						userId: "cm3user0000123qz8v4h2j9d3",
+						userId: "guest",
 					}),
 				}),
 			);
@@ -682,7 +638,6 @@ describe("confirmCheckout", () => {
 
 	describe("happy path (guest user)", () => {
 		beforeEach(() => {
-			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateGuestSessionId.mockResolvedValue("550e8400-e29b-41d4-a716-446655440000");
 			mockGetRateLimitIdentifier.mockReturnValue("session:550e8400-e29b-41d4-a716-446655440000");
 		});
@@ -913,7 +868,6 @@ describe("confirmCheckout", () => {
 			// Surtout pas de refus « email requis » ici : la commande existe déjà avec un
 			// email valide, bloquer le paiement serait une régression. Invité (pas de
 			// session) ET pas d'email resoumis ⇒ c'est le repli DB qui doit jouer.
-			mockGetSession.mockResolvedValue(null);
 			mockUpdatePendingShippingSnapshot.mockResolvedValue({
 				updated: false,
 				reason: "no-change",
@@ -1125,7 +1079,6 @@ describe("confirmCheckout", () => {
 		});
 
 		it("rejects a guest PI whose guestSessionId differs from the caller's session", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateGuestSessionId.mockResolvedValue("550e8400-e29b-41d4-a716-446655440000");
 			mockPiMetadata({
 				userId: "guest",
@@ -1136,17 +1089,6 @@ describe("confirmCheckout", () => {
 
 			expect(result).toEqual({ success: false, error: "Accès non autorisé au paiement." });
 			expect(mockCreateOrderInTransaction).not.toHaveBeenCalled();
-		});
-
-		it("rejects when an authenticated user submits a guest PI", async () => {
-			mockPiMetadata({
-				userId: "guest",
-				guestSessionId: "550e8400-e29b-41d4-a716-446655440000",
-			});
-
-			const result = await confirmCheckout(createValidData());
-
-			expect(result).toEqual({ success: false, error: "Accès non autorisé au paiement." });
 		});
 
 		it("rejects a malformed ownership field (Zod drop → deny)", async () => {
@@ -1187,7 +1129,10 @@ describe("confirmCheckout", () => {
 		});
 
 		it("rejects an already succeeded PI BEFORE creating the order (no cleanup needed)", async () => {
-			mockPiMetadata({ userId: "cm3user0000123qz8v4h2j9d3" }, "succeeded");
+			mockPiMetadata(
+				{ userId: "guest", guestSessionId: "550e8400-e29b-41d4-a716-446655440000" },
+				"succeeded",
+			);
 
 			const result = await confirmCheckout(createValidData());
 
@@ -1197,7 +1142,10 @@ describe("confirmCheckout", () => {
 		});
 
 		it("rejects an already canceled PI BEFORE creating the order", async () => {
-			mockPiMetadata({ userId: "cm3user0000123qz8v4h2j9d3" }, "canceled");
+			mockPiMetadata(
+				{ userId: "guest", guestSessionId: "550e8400-e29b-41d4-a716-446655440000" },
+				"canceled",
+			);
 
 			const result = await confirmCheckout(createValidData());
 
@@ -1372,18 +1320,7 @@ describe("confirmCheckout", () => {
 			expect(mockStripe.paymentIntents.update).not.toHaveBeenCalled();
 		});
 
-		it("should use user-based rate limit identifier for authenticated users", async () => {
-			await confirmCheckout(createValidData());
-
-			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"checkout-confirm:user:cm3user0000123qz8v4h2j9d3",
-				"create-session",
-				"192.168.1.1",
-			);
-		});
-
 		it("should use email+IP based identifier for guests with email", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateGuestSessionId.mockResolvedValue("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
 
 			await confirmCheckout(createValidData({ email: "guest@example.com" }));
@@ -1417,7 +1354,6 @@ describe("confirmCheckout", () => {
 		});
 
 		it("should return error for missing guest email when no session email", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateGuestSessionId.mockResolvedValue("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
 
 			const result = await confirmCheckout(createValidData({ email: undefined }));
@@ -1425,19 +1361,6 @@ describe("confirmCheckout", () => {
 			expect(result).toEqual({
 				success: false,
 				error: "L'email est requis pour une commande invité.",
-			});
-		});
-
-		it("should return error for missing user email when session has no email", async () => {
-			mockGetSession.mockResolvedValue({
-				user: { id: "cm3user0000123qz8v4h2j9d3", email: null },
-			});
-
-			const result = await confirmCheckout(createValidData({ email: undefined }));
-
-			expect(result).toEqual({
-				success: false,
-				error: "Ton adresse email est manquante. Reconnecte-toi.",
 			});
 		});
 	});
@@ -1713,7 +1636,7 @@ describe("confirmCheckout", () => {
 
 	describe("error handling", () => {
 		it("should return generic error when an unexpected exception occurs", async () => {
-			mockGetSession.mockRejectedValue(new Error("Unexpected DB failure"));
+			mockGetOrCreateGuestSessionId.mockRejectedValue(new Error("Unexpected DB failure"));
 
 			const result = await confirmCheckout(createValidData());
 
@@ -1725,7 +1648,7 @@ describe("confirmCheckout", () => {
 
 		it("should log unexpected errors via logger.error (Sentry routed internally)", async () => {
 			const error = new Error("Unexpected crash");
-			mockGetSession.mockRejectedValue(error);
+			mockGetOrCreateGuestSessionId.mockRejectedValue(error);
 
 			await confirmCheckout(createValidData());
 

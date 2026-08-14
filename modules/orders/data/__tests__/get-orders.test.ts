@@ -34,7 +34,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
@@ -54,7 +54,7 @@ vi.mock("@/shared/lib/fuzzy-search", () => ({
 	fuzzySearchIds: mockFuzzySearchIds,
 }));
 
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+vi.mock("@/modules/admin-auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 

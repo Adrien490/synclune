@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
@@ -17,7 +17,7 @@ import { duplicateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { generateSkuCode } from "@/modules/skus/services/sku-generation.service";
 import { getProductForDuplication } from "../data/get-product-for-duplication";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_DUPLICATE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**

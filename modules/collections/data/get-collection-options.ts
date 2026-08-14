@@ -1,6 +1,6 @@
 import { logger } from "@/shared/lib/logger";
 import { PublicationStatus } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";

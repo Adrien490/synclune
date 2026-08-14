@@ -3,7 +3,7 @@
 import { randomUUID } from "crypto";
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import { prisma } from "@/shared/lib/prisma";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -21,7 +21,7 @@ import {
 	BusinessError,
 } from "@/shared/lib/actions";
 import { validatePublicProductCreation } from "../services/product-validation.service";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_CREATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { logger } from "@/shared/lib/logger";
@@ -36,7 +36,7 @@ export async function createProduct(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdminWithUser();
+		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
 		// 1.1 Rate limiting

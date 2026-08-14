@@ -59,8 +59,8 @@ function stripCommentsAndStrings(source: string): string {
 /**
  * Signatures d'export d'un fichier `"use server"`, dans les DEUX formes du dépôt.
  *
- * ⚠️ La version d'origine ne matchait que `export async function`. Or les cinq
- * actions de `modules/auth/actions/` sont déclarées
+ * ⚠️ La version d'origine ne matchait que `export async function`. Or les actions
+ * Better Auth d'alors étaient déclarées
  * `export const signInEmail = async (…) => {…}` : elles sortaient **entièrement**
  * du contrat. Toutes validaient, mais rien ne l'imposait — et c'est précisément
  * la garantie qu'on croit avoir qui est dangereuse (cf. le `readdirSync` plat de
@@ -128,10 +128,10 @@ describe("contrat · validation des entrées de Server Actions", () => {
 	describe("garde-fous du garde-fou", () => {
 		it("le scan trouve réellement les fichiers 'use server'", () => {
 			// Sans ce plancher, un glob cassé rendrait la suite vacuellement verte.
-			// Abaissé de 100 à 90 le 2026-08-05 avec le retrait des codes promo :
-			// `modules/discounts` portait 10 Server Actions (create/update/delete/
-			// duplicate/toggle/refresh + validate/apply/remove côté panier).
-			expect(SERVER_ACTION_FILES.length).toBeGreaterThan(90);
+			// Abaissé de 100 à 90 le 2026-08-05 (retrait des codes promo), puis de
+			// 90 à 80 au lot 1 de la migration lean : les 7 actions Better Auth sont
+			// parties, remplacées par les 2 de `modules/admin-auth`.
+			expect(SERVER_ACTION_FILES.length).toBeGreaterThan(80);
 		});
 
 		it("le détecteur de paramètres distingue consommé et ignoré", () => {
@@ -144,7 +144,7 @@ describe("contrat · validation des entrées de Server Actions", () => {
 		});
 
 		it("le détecteur voit AUSSI la forme fléchée `export const x = async (…)`", () => {
-			// Les 5 actions de `modules/auth/actions/` utilisent cette forme. Sans ce cas,
+			// Plusieurs actions du repo utilisent cette forme. Sans ce cas,
 			// elles sortaient du contrat sans que rien ne le signale.
 			expect(
 				consumedParams("export const signInEmail = async (_: X, formData: FormData) => {}"),
@@ -155,15 +155,16 @@ describe("contrat · validation des entrées de Server Actions", () => {
 			expect(consumedParams("export const y = async () => {}")).toEqual([]);
 		});
 
-		it("le scan couvre réellement les actions en forme fléchée du dépôt", () => {
-			// Plancher de non-régression : si quelqu'un resserre la regex, ces fichiers
-			// redeviennent invisibles au contrat et la suite repasse au vert à tort.
+		it("toute action en forme fléchée du dépôt reste visible au contrat", () => {
+			// Depuis la purge Better Auth (migration lean, lot 1) le dépôt peut ne plus
+			// compter AUCUNE action fléchée — le plancher ≥5 est parti avec elles. La
+			// capacité du détecteur reste verrouillée par le cas synthétique ci-dessus ;
+			// ici on vérifie seulement que celles qui existeraient sont bien lues.
 			const arrowFormActions = SERVER_ACTION_FILES.filter((file) => {
 				const stripped = stripCommentsAndStrings(readFileSync(file, "utf8"));
 				return /export\s+const\s+\w+\s*(?::[^=]+?)?=\s*async\s*\(/.test(stripped);
 			});
 
-			expect(arrowFormActions.length).toBeGreaterThanOrEqual(5);
 			for (const file of arrowFormActions) {
 				const stripped = stripCommentsAndStrings(readFileSync(file, "utf8"));
 				expect(

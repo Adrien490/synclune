@@ -23,7 +23,7 @@ vi.mock("next/cache", () => ({
 	cacheTag: mockCacheTag,
 }));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
 	isAdmin: mockIsAdmin,
 }));
 

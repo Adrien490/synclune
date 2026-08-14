@@ -1,6 +1,6 @@
 import { logger } from "@/shared/lib/logger";
 import { PublicationStatus, type Prisma } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { prisma } from "@/shared/lib/prisma";

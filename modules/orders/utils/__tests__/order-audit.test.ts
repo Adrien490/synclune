@@ -325,13 +325,13 @@ describe("buildStatusChangeAudit", () => {
 			baseOrder as never,
 			{
 				note: "Test note",
-				authorName: "Admin",
+				authorName: "Léane",
 				metadata: { reason: "test" },
 			},
 		);
 
 		expect(result.note).toBe("Test note");
-		expect(result.authorName).toBe("Admin");
+		expect(result.authorName).toBe("Léane");
 		expect(result.metadata).toEqual({ reason: "test" });
 	});
 

@@ -6,7 +6,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
 	mockPrisma,
-	mockGetSession,
 	mockGetOrCreateGuestSessionId,
 	mockGetCart,
 	mockCheckRateLimit,
@@ -21,6 +20,7 @@ const {
 	mockSentryStartSpan,
 	mockSentryCaptureException,
 	mockAssertStoreOpen,
+	mockIsAdmin,
 	MockCircuitBreakerError,
 } = vi.hoisted(() => {
 	class MockCircuitBreakerError extends Error {
@@ -38,7 +38,6 @@ const {
 			// rechargement (F2). Doit être mocké, sinon TOUT le happy path throw.
 			order: { findUnique: vi.fn() },
 		},
-		mockGetSession: vi.fn(),
 		mockGetOrCreateGuestSessionId: vi.fn(),
 		mockGetCart: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
@@ -55,6 +54,7 @@ const {
 		mockSentryStartSpan: vi.fn(),
 		mockSentryCaptureException: vi.fn(),
 		mockAssertStoreOpen: vi.fn(),
+		mockIsAdmin: vi.fn(),
 		MockCircuitBreakerError,
 	};
 });
@@ -66,10 +66,6 @@ const {
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
-}));
-
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
 }));
 
 vi.mock("@/modules/cart/lib/guest-session", () => ({
@@ -116,6 +112,10 @@ vi.mock("@/shared/lib/stripe", () => ({
 
 vi.mock("@/shared/constants/currency", () => ({
 	DEFAULT_CURRENCY: "EUR",
+}));
+
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
@@ -189,10 +189,8 @@ function setupDefaults() {
 		fn({ setAttribute: vi.fn() }),
 	);
 
-	// Auth: authenticated user with existing Stripe customer
-	mockGetSession.mockResolvedValue({
-		user: { id: "user-123", email: "marie@example.com" },
-	});
+	// Parcours 100 % invité (migration lean, lot 1)
+	mockIsAdmin.mockResolvedValue(false);
 	mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: "cus_existing" });
 	// Défaut : aucune commande liée au PI (cas nominal du premier passage).
 	mockPrisma.order.findUnique.mockResolvedValue(null);
@@ -205,7 +203,7 @@ function setupDefaults() {
 		})),
 	});
 
-	// Guest session (not used when authenticated)
+	// Identité invitée
 	mockGetOrCreateGuestSessionId.mockResolvedValue("session-guest-abc");
 
 	// Store closure guard: store is open
@@ -327,15 +325,14 @@ describe("initializePayment", () => {
 			expect(result.paymentIntentId).toBe("pi_test_123");
 		});
 
-		it("should use user session to build rate limit identifier", async () => {
+		it("should build an action-prefixed rate limit identifier (guest)", async () => {
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
-			// Should not call getOrCreateGuestSessionId for authenticated users
-			expect(mockGetOrCreateGuestSessionId).not.toHaveBeenCalled();
-			// Identifiant PRÉFIXÉ par l (F3) : un `user:<id>` nu partageait son
+			expect(mockGetOrCreateGuestSessionId).toHaveBeenCalled();
+			// Identifiant PRÉFIXÉ par l'action (F3) : un identifiant nu partageait son
 			// compteur avec confirmCheckout, le panier, les favoris et les codes promo.
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"checkout-init:user:user-123",
+				"checkout-init:fallback-id",
 				"create-session",
 				"192.168.1.1",
 			);
@@ -352,8 +349,8 @@ describe("initializePayment", () => {
 			);
 		});
 
-		it("should attach existing Stripe customer to Payment Intent", async () => {
-			await initializePayment({ cartItems: VALID_CART_ITEMS });
+		it("should attach the Stripe customer to Payment Intent when an email is provided", async () => {
+			await initializePayment({ cartItems: VALID_CART_ITEMS, email: "marie@example.com" });
 
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -363,34 +360,24 @@ describe("initializePayment", () => {
 			);
 		});
 
-		it("should include userId in Payment Intent metadata", async () => {
+		it("should carry the guest ownership metadata on the Payment Intent", async () => {
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					metadata: expect.objectContaining({ userId: "user-123" }),
+					metadata: expect.objectContaining({
+						userId: "guest",
+						guestSessionId: "session-guest-abc",
+					}),
 				}),
 				expect.anything(),
 			);
 		});
 
-		it("should not include guestSessionId in metadata for authenticated user", async () => {
+		it("should not create a Stripe customer when no email is provided", async () => {
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
-			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
-				expect.objectContaining({
-					metadata: expect.not.objectContaining({ guestSessionId: expect.anything() }),
-				}),
-				expect.anything(),
-			);
-		});
-
-		it("should use userEmail when no email param is passed", async () => {
-			await initializePayment({ cartItems: VALID_CART_ITEMS });
-
-			expect(mockGetOrCreateStripeCustomer).toHaveBeenCalledWith(
-				expect.objectContaining({ email: "marie@example.com" }),
-			);
+			expect(mockGetOrCreateStripeCustomer).not.toHaveBeenCalled();
 		});
 
 		it("should calculate shipping for France by default", async () => {
@@ -415,7 +402,6 @@ describe("initializePayment", () => {
 
 	describe("happy path (guest with email)", () => {
 		beforeEach(() => {
-			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateGuestSessionId.mockResolvedValue("session-guest-abc");
 			mockPrisma.user.findUnique.mockResolvedValue(null);
 			mockGetOrCreateStripeCustomer.mockResolvedValue({ customerId: "cus_new_guest" });
@@ -878,8 +864,8 @@ describe("initializePayment", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	describe("database errors", () => {
-		it("should return generic error when user lookup throws", async () => {
-			mockPrisma.user.findUnique.mockRejectedValue(new Error("DB connection lost"));
+		it("should return generic error when the server cart read throws", async () => {
+			mockGetCart.mockRejectedValue(new Error("DB connection lost"));
 
 			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
 
@@ -890,7 +876,7 @@ describe("initializePayment", () => {
 
 		it("should log DB error (Sentry via logger.error)", async () => {
 			const dbError = new Error("DB connection lost");
-			mockPrisma.user.findUnique.mockRejectedValue(dbError);
+			mockGetCart.mockRejectedValue(dbError);
 
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
@@ -987,7 +973,6 @@ describe("initializePayment", () => {
 		});
 
 		it("should reject guest when store is closed", async () => {
-			mockGetSession.mockResolvedValue(null);
 			mockAssertStoreOpen.mockResolvedValue({
 				closed: true,
 				message: "Fermée.",
@@ -1004,15 +989,8 @@ describe("initializePayment", () => {
 			expect(mockStripe.paymentIntents.create).not.toHaveBeenCalled();
 		});
 
-		it("should bypass closure check for ADMIN role", async () => {
-			mockGetSession.mockResolvedValue({
-				user: { id: "admin-1", email: "admin@example.com", role: "ADMIN" },
-			});
-			// isVerifiedAdmin re-vérifie le rôle en DB (cookie-cache Better Auth stale) —
-			// le mock doit refléter un admin réel, pas juste le stub par défaut.
-			mockPrisma.user.findUnique.mockResolvedValue({
-				role: "ADMIN",
-			});
+		it("should bypass closure check for the admin (cookie HMAC)", async () => {
+			mockIsAdmin.mockResolvedValue(true);
 			mockAssertStoreOpen.mockResolvedValue({
 				closed: true,
 				message: "La boutique est temporairement fermée.",
@@ -1023,23 +1001,6 @@ describe("initializePayment", () => {
 			expect(result.success).toBe(true);
 			expect(mockAssertStoreOpen).not.toHaveBeenCalled();
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalled();
-		});
-	});
-
-	describe("account suspension gate (AUTHZ-1)", () => {
-		it("rejects an authenticated session whose account is not ACTIVE — no PaymentIntent created", async () => {
-			mockGetSession.mockResolvedValue({
-				user: { id: "user-123", email: "marie@example.com" },
-			});
-			// DB filter (suspendedAt/accountStatus) excludes the row → gate rejects
-			// pre-payment, so no orphan charge can occur.
-			mockPrisma.user.findUnique.mockResolvedValue(null);
-
-			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
-
-			expect(result.success).toBe(false);
-			expect(mockStripe.paymentIntents.create).not.toHaveBeenCalled();
-			expect(mockAssertStoreOpen).not.toHaveBeenCalled();
 		});
 	});
 });

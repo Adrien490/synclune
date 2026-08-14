@@ -5,13 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockGetSession, mockGetFabVisibility } = vi.hoisted(() => ({
-	mockGetSession: vi.fn(),
+const { mockIsAdmin, mockGetFabVisibility } = vi.hoisted(() => ({
+	mockIsAdmin: vi.fn(),
 	mockGetFabVisibility: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
+vi.mock("@/modules/admin-auth/lib/require-admin", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 vi.mock("@/shared/data/get-fab-visibility", () => ({
@@ -89,32 +89,8 @@ async function renderComponent() {
 
 describe("AdminDashboardFab", () => {
 	describe("auth gating", () => {
-		it("returns null when session is null", async () => {
-			mockGetSession.mockResolvedValue(null);
-
-			const result = await AdminDashboardFab();
-
-			expect(result).toBeNull();
-		});
-
-		it("returns null when session has no user", async () => {
-			mockGetSession.mockResolvedValue({});
-
-			const result = await AdminDashboardFab();
-
-			expect(result).toBeNull();
-		});
-
-		it("returns null when user role is USER", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "1", role: "USER" } });
-
-			const result = await AdminDashboardFab();
-
-			expect(result).toBeNull();
-		});
-
-		it("returns null when user role is undefined", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "1" } });
+		it("returns null when the caller is not the admin", async () => {
+			mockIsAdmin.mockResolvedValue(false);
 
 			const result = await AdminDashboardFab();
 
@@ -124,7 +100,7 @@ describe("AdminDashboardFab", () => {
 
 	describe("rendering for ADMIN role", () => {
 		beforeEach(() => {
-			mockGetSession.mockResolvedValue({ user: { id: "1", role: "ADMIN" } });
+			mockIsAdmin.mockResolvedValue(true);
 			mockGetFabVisibility.mockResolvedValue(false);
 		});
 

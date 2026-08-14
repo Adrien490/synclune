@@ -1,4 +1,4 @@
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { getFabVisibility } from "@/shared/data/get-fab-visibility";
 import { FAB_KEYS } from "@/shared/constants/fab";
 import { ROUTES } from "@/shared/constants/urls";
@@ -12,9 +12,7 @@ import { SquaresFourIcon } from "@phosphor-icons/react/ssr";
  * Hidden on mobile (admin link remains in mobile nav menu).
  */
 export async function AdminDashboardFab() {
-	const session = await getSession();
-
-	if (!session?.user || session.user.role !== "ADMIN") {
+	if (!(await isAdmin())) {
 		return null;
 	}
 

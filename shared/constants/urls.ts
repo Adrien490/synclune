@@ -8,13 +8,11 @@
  * Works in both server and client contexts with appropriate fallbacks
  *
  * Priority:
- * 1. BETTER_AUTH_URL (primary)
- * 2. NEXT_PUBLIC_SITE_URL (general site URL)
- * 3. Development fallback or production URL
+ * 1. NEXT_PUBLIC_SITE_URL (general site URL)
+ * 2. Development fallback or production URL
  */
 export function getBaseUrl(): string {
 	return (
-		process.env.BETTER_AUTH_URL ??
 		process.env.NEXT_PUBLIC_SITE_URL ??
 		(process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://synclune.fr")
 	);
@@ -25,14 +23,11 @@ export function getBaseUrl(): string {
  * Centralized to avoid hardcoded strings across the codebase
  */
 export const ROUTES = {
-	// Authentication — accès administration uniquement (cf. `/connexion`).
-	// Pas de `SIGN_UP` : l'inscription est fermée (retrait de l'espace client
-	// 2026-07-31), la route `/inscription` n'existe plus.
+	// Authentication — accès administration uniquement, un seul mot de passe
+	// (migration lean, lot 1). Plus de vérification d'email ni de reset : la
+	// rotation du mot de passe se fait par la variable d'env ADMIN_PASSWORD.
 	AUTH: {
-		VERIFY_EMAIL: "/verifier-email",
-		FORGOT_PASSWORD: "/mot-de-passe-oublie",
-		RESET_PASSWORD: "/reinitialiser-mot-de-passe",
-		SIGN_IN: "/connexion",
+		SIGN_IN: "/admin/connexion",
 	},
 
 	// Shop

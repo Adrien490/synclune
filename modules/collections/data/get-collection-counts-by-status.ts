@@ -1,5 +1,5 @@
 import { PublicationStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
