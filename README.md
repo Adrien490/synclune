@@ -215,7 +215,7 @@ demarrage plutot que de degrader en silence.
 - **[CLAUDE.md](./CLAUDE.md)** — Architecture detaillee, patterns, cache profiles, conventions
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Guide de contribution (modules, Git workflow, tests)
 - **[docs/](./docs/)** — lexique de marque ([BRAND-DA.md](./docs/BRAND-DA.md)), grille d'audit de la landing ([LANDING-BEST-PRACTICES.md](./docs/LANDING-BEST-PRACTICES.md)), mirror de la doc Stripe ([stripe/](./docs/stripe/))
-- **[docs/prompts/](./docs/prompts/)** — Les 4 catalogues de prompts (audit, refonte, maquettage) et leur [mode d'emploi](./docs/prompts/README.md)
+- **[docs/MIGRATION-PROMPTS.md](./docs/MIGRATION-PROMPTS.md)** — ⚠️ SSOT du chantier de migration vers le schema lean, en cours. Prime sur CLAUDE.md en cas de conflit.
 
 ---
 

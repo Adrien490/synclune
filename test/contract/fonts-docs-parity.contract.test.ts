@@ -3,18 +3,23 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Parité fonts.ts ↔ docs/emails — le filet qui N'EXISTAIT PAS.
+ * Parité fonts.ts ↔ emails — le filet qui N'EXISTAIT PAS.
  *
- * L'audit typo du 2026-08-05 (friction 5) a
- * montré que `claude-md-accuracy.contract.test.ts` ne vérifie que des CHEMINS
- * de fichiers backtickés — jamais un nom de police : après une migration, les
- * prompts pouvaient continuer d'affirmer « Fraunces » sans qu'aucun test ne
- * rougisse. Ce contrat dérive les familles COURANTES de la SSOT
- * `shared/styles/fonts.ts` et exige que les documents qui décrivent l'état
- * courant les nomment, et ne nomment plus les familles SORTIES.
+ * L'audit typo du 2026-08-05 (friction 5) a montré qu'aucun contrat ne
+ * vérifiait un nom de police : après une migration, une surface pouvait
+ * continuer d'affirmer « Fraunces » sans qu'aucun test ne rougisse. Ce contrat
+ * dérive les familles COURANTES de la SSOT `shared/styles/fonts.ts` et exige
+ * que les surfaces qui les recopient — les emails, dont les styles sont inline
+ * et échappent donc aux tokens — nomment la display courante et plus aucune
+ * famille SORTIE.
  *
  * À chaque migration de police : ajouter les familles sortantes à
  * `PAST_FAMILIES` — c'est ce qui rend la dérive détectable la fois suivante.
+ *
+ * ⚠️ Le volet « docs » de ce contrat est parti au lot 0 de la migration lean
+ * (2026-08-14) : ses quatre sujets vivaient dans `docs/prompts/`, supprimé avec
+ * les plans d'audit antérieurs. Aucun document survivant ne nomme de police —
+ * si l'un s'y remet, le re-verrouiller ici.
  */
 
 const root = process.cwd();
@@ -31,46 +36,11 @@ const FAMILIES = (importMatch?.[1] ?? "")
 /** Familles qui ont QUITTÉ le repo — une mention dans un doc d'état courant est une dérive. */
 const PAST_FAMILIES = ["Fraunces", "Figtree", "Sacramento"];
 
-/** Documents qui listent le TRIO complet comme état courant. */
-const TRIO_DOCS = [
-	"docs/prompts/DESIGN-ARTIFACT-PROMPT.md",
-	"docs/prompts/REDESIGN-PROMPT.md",
-	"docs/prompts/AUDIT-PROMPTS.md",
-];
-
-/** Documents d'état courant où les familles SORTIES n'ont plus leur place. */
-const NO_PAST_DOCS = [
-	"docs/prompts/DESIGN-ARTIFACT-PROMPT.md",
-	"docs/prompts/REDESIGN-PROMPT.md",
-	"docs/prompts/AUDIT-PROMPTS.md",
-	"docs/prompts/README.md",
-];
-
-describe("parité fonts.ts ↔ docs", () => {
+describe("parité fonts.ts ↔ emails", () => {
 	it("la SSOT déclare exactement trois familles Google", () => {
 		expect(FAMILIES).toHaveLength(3);
 	});
 
-	it.each(TRIO_DOCS)("%s nomme les trois familles courantes", (doc) => {
-		const content = read(doc);
-		for (const family of FAMILIES) {
-			expect(content, `${doc} ne nomme pas « ${family} »`).toContain(family);
-		}
-	});
-
-	it("docs/prompts/README.md nomme la display courante", () => {
-		expect(read("docs/prompts/README.md")).toContain(FAMILIES[0]!);
-	});
-
-	it.each(NO_PAST_DOCS)("%s ne nomme plus aucune famille sortie", (doc) => {
-		const content = read(doc);
-		for (const past of PAST_FAMILIES) {
-			expect(content, `${doc} mentionne encore « ${past} »`).not.toContain(past);
-		}
-	});
-});
-
-describe("parité fonts.ts ↔ emails", () => {
 	it("EMAIL_FONT_FAMILY.display porte la display courante", () => {
 		expect(read("emails/email-colors.ts")).toContain(`'${FAMILIES[0]!}'`);
 	});

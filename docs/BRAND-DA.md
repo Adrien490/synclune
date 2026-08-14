@@ -12,11 +12,14 @@
 > change un arbitrage de design — vit dans `CLAUDE.md` § « Direction artistique — lexique de
 > marque ». Ici, le détail.
 >
-> **Deux verrous tiennent ce document honnête.**
-> `test/contract/claude-md-accuracy.contract.test.ts` vérifie ses affirmations mécaniques
-> (chemins cités, sections de `CLAUDE.md` référencées, exports nommés) ;
+> **Un verrou tient ce document honnête.**
 > `test/contract/brand-lexicon.contract.test.ts` applique son lexique aux surfaces d'identité du
-> code (cf. § Où vit la copie de marque dans le code). Dernière synchronisation manuelle avec le
+> code (cf. § Où vit la copie de marque dans le code). ⚠️ Le second verrou,
+> `test/contract/claude-md-accuracy.contract.test.ts` — qui vérifiait les affirmations mécaniques
+> de ce fichier (chemins cités, sections de `CLAUDE.md` référencées, exports nommés) — a été
+> supprimé au lot 0 de la migration lean (2026-08-14) : il serait devenu menteur dès le lot
+> suivant. Les chemins cités ici ne sont donc plus vérifiés par personne jusqu'au lot 9
+> (cf. `docs/MIGRATION-PROMPTS.md`). Dernière synchronisation manuelle avec le
 > dépôt : 2026-08-08.
 
 ## Sommaire

@@ -68,6 +68,9 @@ const config: UserConfig = {
 				"ci",
 				"chore",
 				"revert",
+				// Chantier de migration vers le schéma lean (docs/MIGRATION-PROMPTS.md) :
+				// un commit par lot, `migration(lot-N): <nom>`. À retirer au lot 9.
+				"migration",
 			],
 		],
 		"scope-enum": [1, "always", [...MODULE_SCOPES, ...CROSS_CUTTING_SCOPES]],

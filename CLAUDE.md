@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+> ## ⚠️ MIGRATION EN COURS vers le schéma lean
+>
+> Voir **[`docs/MIGRATION-PROMPTS.md`](docs/MIGRATION-PROMPTS.md)**. Ce fichier décrit l'ANCIEN
+> monde et est **gelé** jusqu'au lot 9 : il n'est plus mis à jour au fil des lots, donc des
+> sections entières deviennent fausses au fur et à mesure. **En cas de conflit entre ce fichier
+> et le document de migration, le document de migration gagne.**
+
 ## Project Overview
 
 Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prisma 7, Stripe).

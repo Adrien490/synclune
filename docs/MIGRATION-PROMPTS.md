@@ -64,18 +64,46 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 
 ## 3. Tableau de suivi
 
-| Lot | Nom                                       | Taille | Statut | Commit | Notes                               |
-| --- | ----------------------------------------- | ------ | ------ | ------ | ----------------------------------- |
-| 0   | Préparation du terrain                    | S      | ⬜     | —      |                                     |
-| 1   | Auth maison (purge Better Auth)           | L      | ⬜     | —      |                                     |
-| 2   | Bascule schéma + purge + catalogue        | XL     | ⬜     | —      |                                     |
-| 3   | Checkout Stripe hébergé + webhooks        | L      | ⬜     | —      |                                     |
-| 4   | Commandes : admin, facturation Int, suivi | L      | ⬜     | —      |                                     |
-| 5   | Rétractation (`RetractationRequest`)      | M      | ⬜     | —      |                                     |
-| 6   | Dashboard, emails, polish admin           | M      | ⬜     | —      |                                     |
-| 7   | E2E refonte                               | L      | ⬜     | —      |                                     |
-| 8   | Seed conforme à la DA                     | S/M    | ⬜     | —      | peut s'exécuter dès la fin du lot 2 |
-| 9   | Documentation finale (CLAUDE.md) + sweep  | M      | ⬜     | —      |                                     |
+| Lot | Nom                                       | Taille | Statut | Commit             | Notes                                                                                                                         |
+| --- | ----------------------------------------- | ------ | ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| 0   | Préparation du terrain                    | S      | ✅     | `migration(lot-0)` | Branche `migration-lean`, tag `pre-migration-lean`. Voir « État à la sortie du lot 0 » ci-dessous — 3 pièges d'environnement. |
+| 1   | Auth maison (purge Better Auth)           | L      | ⬜     | —                  |                                                                                                                               |
+| 2   | Bascule schéma + purge + catalogue        | XL     | ⬜     | —                  |                                                                                                                               |
+| 3   | Checkout Stripe hébergé + webhooks        | L      | ⬜     | —                  |                                                                                                                               |
+| 4   | Commandes : admin, facturation Int, suivi | L      | ⬜     | —                  |                                                                                                                               |
+| 5   | Rétractation (`RetractationRequest`)      | M      | ⬜     | —                  |                                                                                                                               |
+| 6   | Dashboard, emails, polish admin           | M      | ⬜     | —                  |                                                                                                                               |
+| 7   | E2E refonte                               | L      | ⬜     | —                  |                                                                                                                               |
+| 8   | Seed conforme à la DA                     | S/M    | ⬜     | —                  | peut s'exécuter dès la fin du lot 2                                                                                           |
+| 9   | Documentation finale (CLAUDE.md) + sweep  | M      | ⬜     | —                  |                                                                                                                               |
+
+### État à la sortie du lot 0
+
+**Trois pièges d'environnement font croire à une précondition KO.** Ils ont tous les trois fait
+rougir `pnpm validate` au lot 0 alors que `main` était sain — avant de conclure « précondition KO,
+STOP », vérifier ces trois-là :
+
+1. **Client Prisma désynchronisé** → `pnpm lint` rouge sur des dizaines d'« Unsafe assignment of an
+   error typed value » et « value is `never` » dans des modules non touchés. Correctif :
+   `pnpm prisma generate`.
+2. **`.next/dev/types/validator.ts` périmé** → `pnpm typecheck` rouge sur un `TS2307` visant une
+   route supprimée (`Cannot find module '.../route.js'`). Correctif : `rm -rf .next`. Attendu à
+   chaque lot qui supprime une route — les lots 1 à 4 en suppriment beaucoup.
+3. **Dossier de migration vide** laissé par un `prisma migrate dev` avorté → collection Vitest en
+   erreur `ENOENT … /migration.sql`. Correctif : supprimer le dossier. (Sans objet après le lot 2,
+   qui refait le baseline.)
+
+**Effets de bord assumés du lot 0**, à ne pas « réparer » :
+
+- `test/contract/fonts-docs-parity.contract.test.ts` a perdu son volet « docs » (ses 4 sujets
+  vivaient dans `docs/prompts/`, supprimé). Son volet « emails » est intact. Le nom du fichier
+  est devenu imprécis — à renommer au lot 9, pas avant.
+- `CLAUDE.md` cite encore `claude-md-accuracy.contract.test.ts` (§ Conformité réglementaire) : le
+  fichier est **gelé**, la référence morte part au lot 9.
+- Deux migrations citent `schema-migration-parity` en commentaire SQL — elles disparaissent au
+  lot 2 avec tout `prisma/migrations/`.
+- `commitlint.config.ts` accepte désormais le type `migration` (le hook `commit-msg` rejetait
+  `migration(lot-N): …`, bloquant la convention de commit du chantier). À retirer au lot 9.
 
 ## 4. Schéma cible (SSOT)
 
