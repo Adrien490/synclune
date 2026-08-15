@@ -16,8 +16,10 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 
 import type { GetOrdersReturn, OrderListItem } from "../../data/get-orders";
+import { isUnshippableFrenchAddress } from "../../services/shipping.service";
 import { OrderRowActions } from "./order-row-actions";
 import { OrderStatusBadge } from "./order-status-badge";
+import { UnshippableZoneBadge } from "./unshippable-zone-badge";
 
 /** « n° 12 » dès la facture émise ; l'id court sinon (commande PENDING). */
 export function orderDisplayLabel(order: Pick<OrderListItem, "id" | "invoiceNumber">): string {
@@ -111,7 +113,12 @@ export function OrdersDataTable({
 								<span className="text-sm font-medium">{formatEuro(order.amountTotalCents)}</span>
 							</TableCell>
 							<TableCell>
-								<OrderStatusBadge status={order.status} />
+								<div className="flex flex-wrap items-center gap-1.5">
+									<OrderStatusBadge status={order.status} />
+									{isUnshippableFrenchAddress(order.shippingCountry, order.shippingZip) && (
+										<UnshippableZoneBadge />
+									)}
+								</div>
 							</TableCell>
 							<TableCell className="text-right">
 								<OrderRowActions orderId={order.id} orderLabel={label} status={order.status} />

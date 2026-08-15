@@ -8,8 +8,11 @@
 // ============================================================================
 
 /**
- * URL builders for carrier tracking pages
- * Each function takes a tracking number and returns the full tracking URL
+ * URL builders for carrier tracking pages — un builder par transporteur que
+ * `detectCarrierAndUrl` sait DÉTECTER. Ajouter un builder sans pattern de
+ * détection est inutile : rien ne l'atteindrait (les builders GLS/DHL/UPS/
+ * FedEx/Relais Colis, orphelins depuis le retrait de `getTrackingUrl`, ont été
+ * supprimés pour cette raison).
  */
 export const CARRIER_TRACKING_URLS = {
 	/**
@@ -40,55 +43,7 @@ export const CARRIER_TRACKING_URLS = {
 	 */
 	DPD: (trackingNumber: string) =>
 		`https://trace.dpd.fr/fr/trace/${encodeURIComponent(trackingNumber)}`,
-
-	/**
-	 * GLS tracking (France)
-	 * Format: https://gls-group.com/FR/fr/suivi-colis?match=XXX
-	 */
-	GLS: (trackingNumber: string) =>
-		`https://gls-group.com/FR/fr/suivi-colis?match=${encodeURIComponent(trackingNumber)}`,
-
-	/**
-	 * DHL tracking
-	 * Format: https://www.dhl.com/fr-fr/home/tracking.html?tracking-id=XXX
-	 */
-	DHL: (trackingNumber: string) =>
-		`https://www.dhl.com/fr-fr/home/tracking.html?tracking-id=${encodeURIComponent(trackingNumber)}`,
-
-	/**
-	 * UPS tracking
-	 * Format: https://www.ups.com/track?loc=fr_FR&tracknum=XXX
-	 */
-	UPS: (trackingNumber: string) =>
-		`https://www.ups.com/track?loc=fr_FR&tracknum=${encodeURIComponent(trackingNumber)}`,
-
-	/**
-	 * FedEx tracking
-	 * Format: https://www.fedex.com/fedextrack/?trknbr=XXX
-	 */
-	FEDEX: (trackingNumber: string) =>
-		`https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(trackingNumber)}`,
-
-	/**
-	 * Relais Colis tracking
-	 * Format: https://www.relaiscolis.com/suivi-de-colis/?numeroColis=XXX
-	 */
-	RELAIS_COLIS: (trackingNumber: string) =>
-		`https://www.relaiscolis.com/suivi-de-colis/?numeroColis=${encodeURIComponent(trackingNumber)}`,
 } as const;
-
-// ============================================================================
-// TRACKING URL HOST ALLOWLIST (ORD-SEC-009)
-// ============================================================================
-
-/**
- * Apex des hôtes légitimes de suivi, DÉRIVÉS de `CARRIER_TRACKING_URLS` (pas de
- * seconde liste à maintenir) : chaque builder est invoqué avec un numéro factice
- * et on retient son hostname sans le préfixe `www.`.
- */
-const TRACKING_HOST_APEXES: readonly string[] = Object.values(CARRIER_TRACKING_URLS).map((build) =>
-	new URL(build("X")).hostname.replace(/^www\./, ""),
-);
 
 // ============================================================================
 // CARRIER DETECTION PATTERNS

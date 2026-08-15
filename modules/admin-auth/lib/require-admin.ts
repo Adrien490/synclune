@@ -33,9 +33,11 @@ export async function requireAdmin(): Promise<{ admin: true } | { error: ActionS
 	}
 
 	logger.warn("Unauthorized admin access attempt", { service: "admin-auth" });
+	// UNAUTHORIZED, pas FORBIDDEN : « plus de distinction 401/403 » (en-tête de ce
+	// fichier) vaut aussi entre les deux helpers — la variante API route répond 401.
 	return {
 		error: {
-			status: ActionStatus.FORBIDDEN,
+			status: ActionStatus.UNAUTHORIZED,
 			message: "Accès non autorisé. Droits administrateur requis.",
 		},
 	};

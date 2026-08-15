@@ -9,8 +9,10 @@ import { ADMIN_SESSION_COOKIE } from "@/modules/admin-auth/constants/admin-auth.
  * Déconnexion : supprime le cookie `admin_session`.
  *
  * Action publique par conception (déconnecter un cookie déjà invalide doit
- * marcher), plafonnée par rate limit — c'est un RPC atteignable hors UI.
- * Aucune écriture en base : la session n'existe que dans le cookie.
+ * marcher) — c'est un RPC atteignable hors UI, sans autre effet possible que de
+ * supprimer le cookie de l'appelante elle-même (pas de rate limiting : retiré
+ * par la migration lean). Aucune écriture en base : la session n'existe que
+ * dans le cookie.
  */
 export async function logout(): Promise<ActionState> {
 	try {

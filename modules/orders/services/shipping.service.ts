@@ -10,7 +10,6 @@ import { SHIPPING_RATES, type ShippingRate } from "@/modules/orders/constants/sh
 import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
-import type { AllowedShippingCountry } from "../types/order.types";
 import type { ShippingZone } from "../types/shipping-zone.types";
 
 // ============================================================================
@@ -35,20 +34,24 @@ const UNSHIPPABLE_ZONES = [
 ] as const satisfies readonly ShippingZone[];
 
 /**
- * Vrai si la destination est hors périmètre de livraison.
+ * Vrai si l'adresse est hors périmètre de livraison (CGV §5.1).
  *
- * Garde UNIQUE consommée par `calculateShipping` ET `getShippingInfo` — les deux
- * dupliquaient la même détection et ne testaient que `CORSE`, si bien qu'un CP
- * `97400` (La Réunion) obtenait le tarif métropole (4,99 €) pour un envoi
- * outre-mer, avec un délai estimé au barème métropole par-dessus. Toute
- * évolution du périmètre passe désormais par `UNSHIPPABLE_ZONES` seul.
+ * Garde UNIQUE du périmètre — deux fonctions dupliquaient la même détection et
+ * ne testaient que `CORSE`, si bien qu'un CP `97400` (La Réunion) obtenait le
+ * tarif métropole (4,99 €) pour un envoi outre-mer. Toute évolution du
+ * périmètre passe par `UNSHIPPABLE_ZONES` seul.
  *
- * Sans code postal (`calculateShipping("FR")` — au checkout hébergé le CP
- * n'est connu qu'APRÈS la création de session) la zone est indéterminable :
- * on autorise, Léane arbitre à la main les cas Corse/DOM-TOM (limite assumée
- * de la migration lean).
+ * Sans code postal (checkout hébergé : le CP n'est connu qu'APRÈS la création
+ * de session) la zone est indéterminable : on autorise, et c'est CE prédicat,
+ * appelé sur l'adresse écrite au webhook, qui signale ensuite à l'admin les
+ * commandes Corse/DOM-TOM à arbitrer (limite assumée de la migration lean).
+ * Signature élargie à `string | null` : `Order.shippingCountry` et
+ * `Order.shippingZip` sont nullables en base.
  */
-function isUnshippableDestination(countryCode: ShippingCountry, postalCode?: string): boolean {
+export function isUnshippableFrenchAddress(
+	countryCode: string | null | undefined,
+	postalCode: string | null | undefined,
+): boolean {
 	if (countryCode !== "FR" || !postalCode) {
 		return false;
 	}
@@ -82,25 +85,6 @@ export function getShippingRate(country: string): ShippingRate {
 	return SHIPPING_RATES.EU;
 }
 
-/**
- * Type predicate — true when `country` is a supported shipping country.
- * Internal helper widening SHIPPING_COUNTRIES to `readonly string[]` so the
- * predicate can be expressed without an unsafe `as` cast.
- */
-function isShippingCountry(country: string): country is ShippingCountry {
-	return (SHIPPING_COUNTRIES as readonly string[]).includes(country);
-}
-
-/**
- * Vérifie si un pays est éligible à la livraison
- *
- * @param country - Code pays ISO 3166-1 alpha-2
- * @returns true si le pays est couvert par nos tarifs de livraison
- */
-export function isShippingAvailable(country: string): country is AllowedShippingCountry {
-	return isShippingCountry(country);
-}
-
 // ============================================================================
 // FORMATTING
 // ============================================================================
@@ -120,47 +104,12 @@ export function formatShippingPrice(amountInCents: number): string {
 // ============================================================================
 
 /**
- * Calcule les frais de port selon le pays et le code postal de destination
- *
- * @param countryCode - Code pays ISO 3166-1 alpha-2 (ex: "FR", "BE")
- * @param postalCode - Code postal optionnel, requis pour écarter les zones non livrées
- * @returns Montant des frais de port en centimes, ou `null` si la destination est
- *          hors périmètre (Corse, DOM-TOM, zone indéterminée, pays non supporté)
- *
- * @example
- * ```typescript
- * calculateShipping();              // 499 (France metro par defaut)
- * calculateShipping("FR");          // 499 (France metro)
- * calculateShipping("FR", "20000"); // null (Corse - non disponible)
- * calculateShipping("FR", "97400"); // null (DOM - non disponible)
- * calculateShipping("FR", "98800"); // null (TOM - non disponible)
- * calculateShipping("BE");          // 950 (UE)
- * ```
- */
-export function calculateShipping(
-	countryCode: ShippingCountry = "FR",
-	postalCode?: string,
-): number | null {
-	try {
-		// Corse + DOM-TOM + zone indéterminée — livraison non disponible
-		if (isUnshippableDestination(countryCode, postalCode)) {
-			return null;
-		}
-
-		const rate = getShippingRate(countryCode);
-		return rate.amount;
-	} catch {
-		// Pays non supporte
-		return null;
-	}
-}
-
-/**
  * Retourne les informations completes du tarif de livraison
  *
  * @param countryCode - Code pays ISO 3166-1 alpha-2
  * @param postalCode - Code postal optionnel pour détecter la Corse
- * @returns Informations completes du tarif de livraison
+ * @returns Informations completes du tarif de livraison, ou `null` si la
+ *          destination est hors périmètre (Corse, DOM-TOM, zone indéterminée)
  *
  * @example
  * ```typescript
@@ -177,7 +126,7 @@ export function getShippingInfo(
 	postalCode?: string,
 ): ShippingRate | null {
 	// Corse + DOM-TOM + zone indéterminée — livraison non disponible
-	if (isUnshippableDestination(countryCode, postalCode)) {
+	if (isUnshippableFrenchAddress(countryCode, postalCode)) {
 		return null;
 	}
 
@@ -198,7 +147,7 @@ export function getShippingInfo(
  * ```
  */
 export function isCountrySupported(countryCode: string): countryCode is ShippingCountry {
-	return isShippingCountry(countryCode);
+	return (SHIPPING_COUNTRIES as readonly string[]).includes(countryCode);
 }
 
 // ============================================================================
@@ -233,4 +182,21 @@ export function parseEstimatedDays(estimatedDays: string): [number, number] {
 export function estimateDeliveryDate(shippedAt: Date, countryCode: string): Date {
 	const [, maxDays] = parseEstimatedDays(getShippingRate(countryCode).estimatedDays);
 	return addBusinessDays(shippedAt, maxDays);
+}
+
+/**
+ * Comme `estimateDeliveryDate`, mais rend `null` une fois la date passée :
+ * « livraison estimée le 20 août » au passé est une promesse échue — la page de
+ * suivi ne doit plus l'afficher, seul le lien transporteur aide encore.
+ *
+ * L'horloge est lue ICI et pas dans la page : `react-hooks/purity` interdit
+ * `Date.now()` dans le rendu d'un composant, et /suivi-commande est de toute
+ * façon dynamique et sans cache (donnée nominative) — la lecture au temps de
+ * requête est le comportement voulu. L'email d'expédition, lui, reste sur
+ * `estimateDeliveryDate` : envoyé au moment de l'expédition, sa date est
+ * toujours future.
+ */
+export function estimateUpcomingDeliveryDate(shippedAt: Date, countryCode: string): Date | null {
+	const estimated = estimateDeliveryDate(shippedAt, countryCode);
+	return estimated.getTime() >= Date.now() ? estimated : null;
 }

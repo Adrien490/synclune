@@ -64,21 +64,35 @@ export async function markOrderAsShipped(
 			},
 		});
 
-		if (order?.email && order.trackingNumber && order.shippedAt) {
-			const result = await sendShippingConfirmationEmail({
-				...order,
-				trackingNumber: order.trackingNumber,
-				shippedAt: order.shippedAt,
-			});
-			if (!result.success) {
-				logger.error("[markOrderAsShipped] Email d'expédition non envoyé", {
+		// `Order.email` naît "" et n'est écrit qu'au webhook : une commande passée
+		// PAID par la réconciliation d'une session incomplète peut ne pas en avoir.
+		// Le cas était sauté EN SILENCE et le toast affirmait quand même « email
+		// envoyé à la cliente » — le message doit dire ce qui s'est passé.
+		if (!order?.email || !order.trackingNumber || !order.shippedAt) {
+			logger.warn(
+				"[markOrderAsShipped] Commande expédiée sans email connu — aucune confirmation envoyée",
+				{
 					orderId,
-					error: result.error,
-				});
-				return success(
-					"Commande marquée expédiée — mais l'email d'expédition n'est pas parti. Réessaie ou préviens la cliente directement.",
-				);
-			}
+				},
+			);
+			return success(
+				"Commande expédiée — aucun email connu pour cette commande, la cliente n'a PAS été prévenue.",
+			);
+		}
+
+		const result = await sendShippingConfirmationEmail({
+			...order,
+			trackingNumber: order.trackingNumber,
+			shippedAt: order.shippedAt,
+		});
+		if (!result.success) {
+			logger.error("[markOrderAsShipped] Email d'expédition non envoyé", {
+				orderId,
+				error: result.error,
+			});
+			return success(
+				"Commande marquée expédiée — mais l'email d'expédition n'est pas parti. Réessaie ou préviens la cliente directement.",
+			);
 		}
 
 		return success("Commande expédiée, email envoyé à la cliente.");

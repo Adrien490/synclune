@@ -29,9 +29,6 @@ const REPO_ROOT = join(__dirname, "..", "..");
  */
 const ADMIN_ACTION_DIRS = [
 	"modules/orders/actions",
-	"modules/refunds/actions",
-	"modules/invoices/actions",
-	"modules/store-settings/actions",
 	// Catalogue (audit « Admin catalogue » 2026-07-26) : 54 actions admin vivaient
 	// hors de ce contrat. Toutes étaient gardées, mais rien ne l'imposait — une
 	// nouvelle action oubliant requireAdmin passait en silence.
@@ -43,18 +40,11 @@ const ADMIN_ACTION_DIRS = [
 	"modules/product-types/actions",
 	// Audit « Admin role & re-check DB » 2026-07-31 : 11 actions admin mutantes
 	// vivaient encore hors contrat. Toutes étaient gardées, rien ne l'imposait.
-	// `discounts` porte en outre le seul sous-dossier d'actions du repo
-	// (`actions/admin/`), d'où le scan récursif ci-dessous.
+	// (Le scan récursif ci-dessous date de `discounts/actions/admin/`, seul
+	// sous-dossier d'actions qu'ait porté le repo — module retiré depuis, la
+	// leçon reste.)
 	"modules/media/actions",
 	"modules/dashboard/actions",
-	// Audit « Server Actions sécurisées » 2026-08-07 : deux dossiers portant chacun
-	// une action admin restaient hors contrat.
-	//
-	// `cron/actions` → `runMaintenanceTask` déclenche la réconciliation des
-	// remboursements Stripe, la synchro des paiements asynchrones et la purge des
-	// médias orphelins. Un déclencheur d'opérations lourdes et irréversibles.
-	//
-	"modules/cron/actions",
 	// `admin-auth/actions` (migration lean, lot 1) : `login` et `logout` sont les
 	// surfaces NON authentifiées du parcours de connexion — whitelistées ci-dessous.
 	// Le dossier reste scanné pour attraper toute future action qui s'y logerait.
@@ -63,6 +53,17 @@ const ADMIN_ACTION_DIRS = [
 	// remboursement (colis reçu / rembourser / rejeter) — `request-retractation`
 	// est LA surface publique du module, whitelistée ci-dessous.
 	"modules/retractations/actions",
+	// Audit `modules/payments` 2026-08-15 (F2) : les trois dossiers d'actions du
+	// parcours d'achat invité vivaient hors contrat. Leurs actions actuelles sont
+	// toutes légitimement publiques (whitelistées ci-dessous, justification par
+	// entrée), mais toute FUTURE action posée là doit passer par cette review —
+	// c'est précisément la dérive que ce contrat existe pour attraper.
+	"modules/payments/actions",
+	"modules/cart/actions",
+	"modules/wishlist/actions",
+	// ⚠️ Dossiers retirés à ce même audit : `refunds`, `invoices`,
+	// `store-settings` et `cron` n'existent plus depuis la migration lean —
+	// le walk les avalait en silence et la liste mentait sur sa couverture.
 ];
 
 /**
@@ -107,8 +108,10 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	// garde et de son rate limit, n'écrit rien en base.
 	// --- Admin-auth : les deux surfaces du parcours de connexion ---
 	// `login` est LA surface non authentifiée : exiger `requireAdmin()` y serait un
-	// contresens (on n'est pas encore connectée). Sa garde propre est le rate limit
-	// par IP + la comparaison à temps constant.
+	// contresens (on n'est pas encore connectée). Sa garde propre est la
+	// comparaison à temps constant + la force du mot de passe (le rate limiting a
+	// été retiré par la migration lean — ne pas le réintroduire sans demande
+	// explicite, cf. CLAUDE.md § Server Actions).
 	"modules/admin-auth/actions/login.ts",
 	// Déconnexion : détruire son propre cookie ne demande aucun privilège, et
 	// l'exiger empêcherait un cookie expiré d'être proprement supprimé.
@@ -119,6 +122,29 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	// vérifié contre l'email en base AVANT toute écriture (anti-énumération),
 	// après parse Zod de l'entrée.
 	"modules/retractations/actions/request-retractation.ts",
+	// --- Paiement : LA surface publique du tunnel d'achat (checkout invité) ---
+	// Aucun compte client n'existe : requireAdmin y serait un contresens. Ses
+	// gardes propres : parse Zod du pays AVANT toute dérivation, chaque ligne du
+	// panier relue en base (prix, stock, activité), montants recalculés côté
+	// serveur — rien de l'argument client n'atteint la facturation.
+	"modules/payments/actions/create-checkout-session.ts",
+	// --- Panier : cookie httpOnly scopé à l'appelant, rien en base ---
+	// Chaque action ne lit et n'écrit QUE le cookie de son propre appelant : il
+	// n'existe aucun panier d'autrui à atteindre, donc rien à autoriser. Le prix
+	// du cookie n'est qu'un témoin d'affichage — `createCheckoutSession` revalide
+	// tout en base avant de facturer.
+	"modules/cart/actions/add-to-cart.ts",
+	"modules/cart/actions/clear-cart.ts",
+	"modules/cart/actions/clear-cart-after-order.ts",
+	"modules/cart/actions/remove-from-cart.ts",
+	"modules/cart/actions/remove-unavailable-items.ts",
+	"modules/cart/actions/update-cart-item.ts",
+	"modules/cart/actions/update-cart-prices.ts",
+	// --- Favoris : même modèle que le panier (cookie 30 j, ids produit) ---
+	// Un id supprimé devient inerte côté serveur — aucune donnée d'autrui.
+	"modules/wishlist/actions/add-to-wishlist.ts",
+	"modules/wishlist/actions/remove-from-wishlist.ts",
+	"modules/wishlist/actions/toggle-wishlist-item.ts",
 ]);
 
 interface ActionFile {
@@ -145,7 +171,10 @@ function listActionFiles(): ActionFile[] {
 				e.isDirectory() ? `${e.name}/` : e.name,
 			);
 		} catch {
-			return; // dossier inexistant (ex. invoices/actions pas encore créé)
+			// Dossier inexistant — ne devrait plus arriver depuis la purge des
+			// dossiers fantômes (audit 2026-08-15) : un module supprimé doit être
+			// retiré d'ADMIN_ACTION_DIRS, et le snapshot ci-dessous trahit l'écart.
+			return;
 		}
 		for (const entry of entries) {
 			if (entry.endsWith("/")) {

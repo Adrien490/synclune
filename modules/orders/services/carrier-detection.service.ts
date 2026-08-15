@@ -3,7 +3,7 @@
  * basé sur le format du numéro de suivi
  */
 
-import type { Carrier, DetectionResult } from "../types/carrier.types";
+import type { DetectionResult } from "../types/carrier.types";
 import { CARRIER_TRACKING_URLS, CARRIER_PATTERNS } from "../constants/carrier-urls";
 import { logger } from "@/shared/lib/logger";
 
@@ -11,42 +11,6 @@ import { logger } from "@/shared/lib/logger";
 // CARRIER DETECTION SERVICE
 // Pure business logic for carrier detection and tracking URLs
 // ============================================================================
-
-/**
- * Génère l'URL de suivi pour un transporteur donné
- *
- * @param carrier - Type de transporteur
- * @param trackingNumber - Numéro de suivi
- * @returns URL de suivi ou null si non disponible
- */
-export function getTrackingUrl(carrier: Carrier, trackingNumber: string): string | null {
-	const cleanNumber = trackingNumber.trim();
-
-	switch (carrier) {
-		case "colissimo":
-		case "lettre_suivie":
-			return CARRIER_TRACKING_URLS.LAPOSTE(cleanNumber);
-		case "chronopost":
-			return CARRIER_TRACKING_URLS.CHRONOPOST(cleanNumber);
-		case "mondial_relay":
-			return CARRIER_TRACKING_URLS.MONDIAL_RELAY(cleanNumber);
-		case "dpd":
-			return CARRIER_TRACKING_URLS.DPD(cleanNumber);
-		case "gls":
-			return CARRIER_TRACKING_URLS.GLS(cleanNumber);
-		case "dhl":
-			return CARRIER_TRACKING_URLS.DHL(cleanNumber);
-		case "ups":
-			return CARRIER_TRACKING_URLS.UPS(cleanNumber);
-		case "fedex":
-			return CARRIER_TRACKING_URLS.FEDEX(cleanNumber);
-		case "relais_colis":
-			return CARRIER_TRACKING_URLS.RELAIS_COLIS(cleanNumber);
-		case "autre":
-		default:
-			return null;
-	}
-}
 
 /**
  * Détecte automatiquement le transporteur et génère l'URL de suivi

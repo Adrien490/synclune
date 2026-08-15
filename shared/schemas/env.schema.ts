@@ -47,15 +47,21 @@ const stripSpaces = (value: string) => value.replaceAll(/\s/g, "");
 /**
  * Schéma de validation des variables d'environnement
  *
- * Les variables sont groupées par domaine fonctionnel.
+ * Les variables sont groupées par domaine fonctionnel. Exécuté UNE fois au boot
+ * (import de `@/shared/lib/env` dans `instrumentation.ts`, runtime nodejs) :
+ * une variable requise absente ou malformée fait échouer le démarrage.
+ *
+ * ⚠️ Un champ n'entre ici que s'il a un LECTEUR dans le code (même règle que les
+ * cache tags). L'audit admin-auth du 2026-08-15 a purgé les fantômes de l'ère
+ * pré-migration : `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` (auth maison désormais,
+ * `AUTH_SECRET` + `ADMIN_PASSWORD`), `CRON_SECRET`/`CRON_DRY_RUN` (zéro cron),
+ * `RATE_LIMIT_*` (rate limiting retiré), `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+ * (Checkout hébergé — aucun JS Stripe côté client, la clé n'était lue nulle
+ * part) et `GEOAPIFY_API_KEY` (l'adresse est collectée par Stripe). La cohérence
+ * de mode sk/pk est partie avec la clé publiable ; la garde `event.livemode` du
+ * webhook reste.
  */
-/**
- * Forme brute. Le schéma réellement consommé est `envSchema` plus bas : il ajoute
- * les contrôles inter-champs (cohérence de mode des clés Stripe), qu'un `z.object`
- * seul ne peut pas exprimer. ⚠️ Ne pas valider contre cette forme-ci — elle laisse
- * passer un `sk_live_` accompagné d'un `pk_test_`.
- */
-const envSchemaShape = z.object({
+export const envSchema = z.object({
 	// ========================================
 	// Base de données
 	// ========================================
@@ -72,12 +78,16 @@ const envSchemaShape = z.object({
 	SHADOW_DATABASE_URL: z.url().optional(),
 
 	// ========================================
-	// Authentification (Better Auth)
+	// Authentification admin (auth maison — migration lean, lot 1)
 	// ========================================
-	BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET doit avoir au moins 32 caractères"),
-	BETTER_AUTH_URL: z.url(),
-
-	// Google OAuth (optionnel)
+	// Clé de signature HMAC du cookie `admin_session` ET des tokens de suivi de
+	// commande. Les deux vérifications sont fail-closed à l'exécution si elle
+	// manque ; la borne de longueur, elle, se contrôle ici, au boot.
+	AUTH_SECRET: z.string().min(32, "AUTH_SECRET doit avoir au moins 32 caractères"),
+	// Unique facteur d'authentification de l'admin (comparaison à temps constant,
+	// pas de rate limiting — décision assumée) : la force du mot de passe est la
+	// seule protection contre le brute-force, d'où la borne basse au boot.
+	ADMIN_PASSWORD: z.string().min(12, "ADMIN_PASSWORD doit avoir au moins 12 caractères"),
 
 	// ========================================
 	// Email (Resend)
@@ -96,9 +106,6 @@ const envSchemaShape = z.object({
 	STRIPE_WEBHOOK_SECRET: z
 		.string()
 		.startsWith("whsec_", "STRIPE_WEBHOOK_SECRET doit commencer par 'whsec_'"),
-	NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z
-		.string()
-		.startsWith("pk_", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY doit commencer par 'pk_'"),
 
 	// ========================================
 	// Upload (UploadThing)
@@ -106,38 +113,11 @@ const envSchemaShape = z.object({
 	UPLOADTHING_TOKEN: z.string().min(1, "UPLOADTHING_TOKEN est requis"),
 
 	// ========================================
-	// Cron Jobs
-	// ========================================
-	CRON_SECRET: z.string().min(32, "CRON_SECRET doit avoir au moins 32 caractères"),
-	/**
-	 * Active le dry-run cron (OPS-AUDIT-006) — chaque cron logue ce qu'il
-	 * aurait fait mais retourne `skipped` sans muter la DB. Utilisé en staging
-	 * pour valider une nouvelle version de cron sans risquer prod.
-	 *
-	 * Pour activer : `CRON_DRY_RUN=true` côté Vercel Preview.
-	 */
-	CRON_DRY_RUN: z.enum(["true", "false"]).optional(),
-
-	// ========================================
 	// SEO & Verification (optionnel)
 	// ========================================
 	NEXT_PUBLIC_SITE_URL: z.url().optional(),
 	GOOGLE_SITE_VERIFICATION: z.string().optional(),
 	BING_SITE_VERIFICATION: z.string().optional(),
-
-	// ========================================
-	// Address Autocomplete (Geoapify - EU countries)
-	// ========================================
-	GEOAPIFY_API_KEY: z
-		.string()
-		.min(1, "GEOAPIFY_API_KEY is required for EU address autocomplete")
-		.optional(),
-
-	// ========================================
-	// Rate Limiting — Listes IP (optionnel, comma-separated)
-	// ========================================
-	RATE_LIMIT_WHITELIST: z.string().optional(),
-	RATE_LIMIT_BLACKLIST: z.string().optional(),
 
 	// ========================================
 	// Observability (Sentry)
@@ -254,49 +234,7 @@ const envSchemaShape = z.object({
 	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
-/** `sk_test_…` → "test", `pk_live_…` → "live", sinon `null` (forme inconnue). */
-function stripeKeyMode(key: string | undefined): "test" | "live" | null {
-	if (!key) return null;
-	if (/^(sk|pk|rk)_test_/.test(key)) return "test";
-	if (/^(sk|pk|rk)_live_/.test(key)) return "live";
-	return null;
-}
-
-/**
- * Cohérence de mode entre la clé secrète et la clé publiable.
- *
- * `startsWith("sk_")` / `startsWith("pk_")` accepte indifféremment `_test_` et
- * `_live_` : un `sk_live_` posé à côté d'un `pk_test_` passait la validation et
- * n'échouait qu'à l'exécution, chez Stripe, sur une erreur opaque — au moment
- * précis où un client tente de payer. Les deux clés décrivent le MÊME compte vu
- * de deux côtés ; qu'elles divergent est toujours une erreur de configuration.
- *
- * ⚠️ On ne vérifie délibérément PAS « des clés live en production » : les
- * déploiements de prévisualisation Vercel tournent avec `NODE_ENV=production` et
- * doivent pouvoir utiliser des clés de test. Le mode n'est pas déductible de
- * l'environnement ; seule sa cohérence interne l'est.
- *
- * `STRIPE_WEBHOOK_SECRET` n'entre pas dans le contrôle : un `whsec_` ne porte
- * aucun marqueur de mode. C'est la garde `event.livemode` du route handler qui
- * couvre ce troisième côté.
- */
-export const envSchema = envSchemaShape.superRefine((env, ctx) => {
-	const secretMode = stripeKeyMode(env.STRIPE_SECRET_KEY);
-	const publishableMode = stripeKeyMode(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
-
-	if (secretMode && publishableMode && secretMode !== publishableMode) {
-		ctx.addIssue({
-			code: "custom",
-			path: ["NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"],
-			message:
-				`Incohérence de mode Stripe : STRIPE_SECRET_KEY est en '${secretMode}' ` +
-				`et NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY en '${publishableMode}'. ` +
-				`Les deux clés doivent venir du même compte et du même mode.`,
-		});
-	}
-});
-
 /**
  * Type inféré des variables d'environnement validées
  */
-export type Env = z.infer<typeof envSchemaShape>;
+export type Env = z.infer<typeof envSchema>;

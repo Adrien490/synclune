@@ -34,6 +34,11 @@ const MarkOrderAsShippedDialog = dynamic(() =>
 		(mod) => mod.MarkOrderAsShippedDialog,
 	),
 );
+const UpdateTrackingNumberDialog = dynamic(() =>
+	import("@/modules/orders/components/admin/update-tracking-number-dialog").then(
+		(mod) => mod.UpdateTrackingNumberDialog,
+	),
+);
 const CancelOrderAlertDialog = dynamic(() =>
 	import("@/modules/orders/components/admin/cancel-order-alert-dialog").then(
 		(mod) => mod.CancelOrderAlertDialog,
@@ -87,6 +92,7 @@ export default async function AdminOrdersPage({
 	return (
 		<>
 			<MarkOrderAsShippedDialog />
+			<UpdateTrackingNumberDialog />
 			<CancelOrderAlertDialog />
 
 			<PageHeader

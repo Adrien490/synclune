@@ -7,8 +7,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "Connexion requise",
-	description:
-		"Cette page nécessite une authentification. Connectez-vous pour accéder à votre espace personnel.",
+	description: "Page réservée à l'administration de la boutique. Connecte-toi pour y accéder.",
 	robots: { index: false, follow: false },
 };
 

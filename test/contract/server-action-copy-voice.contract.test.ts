@@ -9,8 +9,9 @@
  *    rafraichir les materiaux », « La suppression du fichier a echoue cote
  *    UploadThing », « Recherche supprimee », « commandes associee ». Toutes
  *    rendues telles quelles à l'administratrice.
- *  - **23 vouvoyantes** — et pas dans le périmètre de KI-003, qui ne documente que
- *    les libellés de rate limit de `modules/payments`. Celles-là étaient de la
+ *  - **23 vouvoyantes** — et pas dans le périmètre de KI-003, qui ne documentait
+ *    que les libellés de rate limit de `modules/payments` (libellés disparus
+ *    depuis avec le rate limiting, migration lean). Celles-là étaient de la
  *    copie ordinaire : « Votre email n'a pas été vérifié », « Vous êtes déjà
  *    connecté », « Veuillez en choisir un autre » sur six modules du catalogue.
  *

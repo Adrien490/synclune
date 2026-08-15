@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClearCartOnMount } from "@/modules/payments/components/clear-cart-on-mount";
-import { ConfirmationPoller } from "@/modules/payments/components/confirmation-poller";
+import { PendingConfirmation } from "@/modules/payments/components/pending-confirmation";
 import { Button } from "@/shared/components/ui/button";
 import { prisma } from "@/shared/lib/prisma";
 import { ROUTES } from "@/shared/constants/urls";
@@ -77,7 +77,6 @@ export default async function CheckoutReturnPage({
 		>
 			{/* Le paiement est parti chez Stripe : le panier local a fait son œuvre. */}
 			<ClearCartOnMount />
-			{isPending && <ConfirmationPoller />}
 
 			<div className="w-full max-w-md space-y-6 text-center">
 				{isPaid && (
@@ -104,17 +103,10 @@ export default async function CheckoutReturnPage({
 					</>
 				)}
 
-				{isPending && (
-					<>
-						<h1 className="font-display text-3xl font-normal tracking-tight">
-							Paiement en cours de confirmation…
-						</h1>
-						<p className="text-muted-foreground">
-							Stripe nous confirme ton paiement d&apos;une seconde à l&apos;autre. Cette page se met
-							à jour automatiquement — tu recevras aussi un email de confirmation.
-						</p>
-					</>
-				)}
+				{/* Le composant client porte le texte des DEUX états (polling actif /
+				    épuisé) : le repli « vérifie tes emails » doit apparaître pile quand
+				    le rafraîchissement automatique s'arrête. */}
+				{isPending && <PendingConfirmation />}
 
 				{!isPaid && !isPending && (
 					<>

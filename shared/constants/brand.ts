@@ -61,6 +61,8 @@ export const BRAND = {
 	},
 
 	website: {
-		url: process.env.BETTER_AUTH_URL ?? "https://synclune.fr",
+		// Même résolution que SITE_URL (seo-config), dupliquée ici parce que
+		// seo-config importe brand.ts — l'inverse ferait un cycle.
+		url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://synclune.fr",
 	},
 } as const;

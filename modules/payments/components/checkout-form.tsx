@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { createCheckoutSession } from "@/modules/payments/actions/create-checkout-session";
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { getShippingRate } from "@/modules/orders/services/shipping.service";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
@@ -33,16 +33,21 @@ export function CheckoutForm({ subtotalCents }: CheckoutFormProps) {
 	const [country, setCountry] = useState<ShippingCountry>("FR");
 	const [state, action, isPending] = useActionState(createCheckoutSession, undefined);
 
-	const shippingCents = country === "FR" ? SHIPPING_RATES.FR.amount : SHIPPING_RATES.EU.amount;
-	const shippingLabel =
-		country === "FR" ? SHIPPING_RATES.FR.estimatedDays : SHIPPING_RATES.EU.estimatedDays;
+	// Même helper que `createCheckoutSession` côté serveur : l'affichage et la
+	// facturation ne peuvent pas diverger si le barème évolue.
+	const shippingRate = getShippingRate(country);
+	const shippingCents = shippingRate.amount;
+	const shippingLabel = shippingRate.estimatedDays;
 
 	const errorRef = useRef<HTMLDivElement>(null);
 	const isActionError = !!state?.message && state.status !== ActionStatus.SUCCESS;
 
+	// Dépendre de l'OBJET state, pas de ses champs : deux soumissions qui
+	// échouent sur le même message rendent des champs identiques mais des
+	// objets distincts — c'est ce qui permet de re-focus l'alerte à chaque échec.
 	useEffect(() => {
 		if (isActionError) errorRef.current?.focus();
-	}, [state?.message, state?.status, isActionError]);
+	}, [state, isActionError]);
 
 	return (
 		<form action={action} className="space-y-6">
@@ -69,7 +74,9 @@ export function CheckoutForm({ subtotalCents }: CheckoutFormProps) {
 				</NativeSelect>
 			</div>
 
-			<div className="space-y-2 text-sm">
+			{/* aria-live : le changement de pays met à jour livraison et total
+			    sans re-focus — l'annonce polie évite un total silencieux au lecteur d'écran. */}
+			<div className="space-y-2 text-sm" aria-live="polite">
 				<div className="flex items-baseline justify-between">
 					<span className="text-muted-foreground">Sous-total</span>
 					<span className="font-medium">{formatEuro(subtotalCents)}</span>

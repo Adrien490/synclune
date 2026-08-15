@@ -17,6 +17,11 @@ export const GET_ORDERS_SELECT = {
 	customerName: true,
 	amountTotalCents: true,
 	trackingNumber: true,
+	// Pays + CP : nourrissent le badge « Hors zone » (Corse/DOM-TOM à arbitrer,
+	// `isUnshippableFrenchAddress`) — l'exclusion CGV §5.1 n'est pas bloquante
+	// au checkout hébergé, la liste doit donc la signaler.
+	shippingCountry: true,
+	shippingZip: true,
 	createdAt: true,
 	_count: { select: { items: true } },
 } as const satisfies Prisma.OrderSelect;
@@ -142,4 +147,5 @@ export const ORDER_STATUS_BADGE_VARIANTS: Record<
 // ============================================================================
 
 export const MARK_ORDER_AS_SHIPPED_DIALOG_ID = "mark-order-as-shipped";
+export const UPDATE_TRACKING_NUMBER_DIALOG_ID = "update-tracking-number";
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";

@@ -9,15 +9,13 @@ import { envSchema } from "../env.schema";
 function validEnv(): Record<string, string> {
 	return {
 		DATABASE_URL: "postgresql://user:password@localhost:5432/synclune",
-		BETTER_AUTH_SECRET: "a".repeat(32),
-		BETTER_AUTH_URL: "https://synclune.fr",
+		AUTH_SECRET: "a".repeat(32),
+		ADMIN_PASSWORD: "correct-horse-battery",
 		RESEND_API_KEY: "re_test_abcdefghijklmnop",
 		RESEND_CONTACT_EMAIL: "contact@synclune.fr",
 		STRIPE_SECRET_KEY: "sk_test_abcdefghijklmnop",
 		STRIPE_WEBHOOK_SECRET: "whsec_abcdefghijklmnopqrstuvwxyz",
-		NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_abcdefghijklmnop",
 		UPLOADTHING_TOKEN: "test-uploadthing-token",
-		CRON_SECRET: "b".repeat(32),
 		NODE_ENV: "development",
 	};
 }
@@ -68,23 +66,45 @@ describe("envSchema", () => {
 	});
 
 	// --------------------------------------------------------------------------
-	// BETTER_AUTH_SECRET
+	// AUTH_SECRET
 	// --------------------------------------------------------------------------
 
-	describe("BETTER_AUTH_SECRET", () => {
+	describe("AUTH_SECRET", () => {
 		it("rejects a secret shorter than 32 characters", () => {
-			const result = envSchema.safeParse({ ...validEnv(), BETTER_AUTH_SECRET: "a".repeat(31) });
+			const result = envSchema.safeParse({ ...validEnv(), AUTH_SECRET: "a".repeat(31) });
 			expect(result.success).toBe(false);
 		});
 
 		it("accepts exactly 32 characters", () => {
-			const result = envSchema.safeParse({ ...validEnv(), BETTER_AUTH_SECRET: "a".repeat(32) });
+			const result = envSchema.safeParse({ ...validEnv(), AUTH_SECRET: "a".repeat(32) });
 			expect(result.success).toBe(true);
 		});
 
 		it("accepts more than 32 characters", () => {
-			const result = envSchema.safeParse({ ...validEnv(), BETTER_AUTH_SECRET: "a".repeat(64) });
+			const result = envSchema.safeParse({ ...validEnv(), AUTH_SECRET: "a".repeat(64) });
 			expect(result.success).toBe(true);
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// ADMIN_PASSWORD — unique facteur d'authentification (pas de rate limiting)
+	// --------------------------------------------------------------------------
+
+	describe("ADMIN_PASSWORD", () => {
+		it("rejects a password shorter than 12 characters", () => {
+			const result = envSchema.safeParse({ ...validEnv(), ADMIN_PASSWORD: "a".repeat(11) });
+			expect(result.success).toBe(false);
+		});
+
+		it("accepts exactly 12 characters", () => {
+			const result = envSchema.safeParse({ ...validEnv(), ADMIN_PASSWORD: "a".repeat(12) });
+			expect(result.success).toBe(true);
+		});
+
+		it("rejects a missing password", () => {
+			const env = validEnv();
+			delete env.ADMIN_PASSWORD;
+			expect(envSchema.safeParse(env).success).toBe(false);
 		});
 	});
 
@@ -124,13 +144,10 @@ describe("envSchema", () => {
 			expect(result.success).toBe(true);
 		});
 
-		it("accepts sk_live_ key (avec la publiable live correspondante)", () => {
-			// Les deux clés doivent basculer ENSEMBLE : depuis l'audit Stripe, une
-			// secrète live à côté d'une publiable test est un échec de validation.
+		it("accepts sk_live_ key", () => {
 			const result = envSchema.safeParse({
 				...validEnv(),
 				STRIPE_SECRET_KEY: "sk_live_abc123",
-				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_abc123",
 			});
 			expect(result.success).toBe(true);
 		});
@@ -159,68 +176,12 @@ describe("envSchema", () => {
 	});
 
 	// --------------------------------------------------------------------------
-	// NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+	// NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY et le @regression stripe-key-mode-coherence
+	// ont été retirés avec la clé publiable elle-même (audit admin-auth
+	// 2026-08-15) : Checkout hébergé = aucun JS Stripe côté client, la clé
+	// n'était lue nulle part et le contrôle de cohérence sk/pk n'avait plus de
+	// second côté. La garde `event.livemode` du webhook reste.
 	// --------------------------------------------------------------------------
-
-	describe("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", () => {
-		it("rejects a key not starting with pk_", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "sk_test_wrong",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("accepts pk_test_ key", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_abc123",
-			});
-			expect(result.success).toBe(true);
-		});
-
-		it("accepts pk_live_ key (avec la secrète live correspondante)", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				STRIPE_SECRET_KEY: "sk_live_abc123",
-				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_abc123",
-			});
-			expect(result.success).toBe(true);
-		});
-	});
-
-	// --------------------------------------------------------------------------
-	// @regression stripe-key-mode-coherence
-	//
-	// `startsWith("sk_")` / `startsWith("pk_")` acceptent indifféremment `_test_`
-	// et `_live_` : un `sk_live_` posé à côté d'un `pk_test_` passait la validation
-	// et n'échouait qu'à l'exécution, chez Stripe, sur une erreur opaque — au
-	// moment précis où un client tente de payer.
-	// --------------------------------------------------------------------------
-
-	describe("cohérence de mode des clés Stripe", () => {
-		it("rejette une secrète live avec une publiable test", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				STRIPE_SECRET_KEY: "sk_live_abc123",
-				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_abc123",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejette une secrète test avec une publiable live", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				STRIPE_SECRET_KEY: "sk_test_abc123",
-				NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_abc123",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("accepte une paire test cohérente", () => {
-			expect(envSchema.safeParse(validEnv()).success).toBe(true);
-		});
-	});
 
 	// --------------------------------------------------------------------------
 	// DEPLOY_DATE
@@ -266,26 +227,9 @@ describe("envSchema", () => {
 	// --------------------------------------------------------------------------
 
 	describe("optional fields", () => {
-		it("accepts env without GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET", () => {
-			const env = validEnv();
-			delete env.GOOGLE_CLIENT_ID;
-			delete env.GOOGLE_CLIENT_SECRET;
-
-			const result = envSchema.safeParse(env);
-			expect(result.success).toBe(true);
-		});
-
 		it("accepts env without NEXT_PUBLIC_SITE_URL", () => {
 			const env = validEnv();
 			delete env.NEXT_PUBLIC_SITE_URL;
-
-			const result = envSchema.safeParse(env);
-			expect(result.success).toBe(true);
-		});
-
-		it("accepts env without GEOAPIFY_API_KEY", () => {
-			const env = validEnv();
-			delete env.GEOAPIFY_API_KEY;
 
 			const result = envSchema.safeParse(env);
 			expect(result.success).toBe(true);

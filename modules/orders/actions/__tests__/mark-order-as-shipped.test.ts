@@ -129,6 +129,38 @@ describe("markOrderAsShipped", () => {
 		expect(mocks.updateMany).not.toHaveBeenCalled();
 	});
 
+	it("commande sans email : transition acquise, AUCUN envoi, et le message ne prétend pas le contraire", async () => {
+		mocks.updateMany.mockResolvedValue({ count: 1 });
+		mocks.findUnique.mockResolvedValue({
+			id: ORDER_ID,
+			invoiceNumber: 1,
+			email: "",
+			customerName: null,
+			trackingNumber: "8N00234567890",
+			shippedAt: new Date("2026-08-15T10:00:00Z"),
+			shippingLine1: null,
+			shippingLine2: null,
+			shippingZip: null,
+			shippingCity: null,
+			shippingCountry: null,
+		});
+
+		const result = await markOrderAsShipped(
+			undefined,
+			makeFormData({
+				orderId: ORDER_ID,
+				trackingNumber: "8N00234567890",
+			}),
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mocks.sendShippingConfirmationEmail).not.toHaveBeenCalled();
+		// Avant correction, ce chemin renvoyait « Commande expédiée, email envoyé
+		// à la cliente » — un mensonge : personne n'était prévenu.
+		expect(result.message).not.toContain("email envoyé");
+		expect(result.message).toContain("PAS été prévenue");
+	});
+
 	it("email en échec : la transition reste acquise, le message le dit", async () => {
 		mocks.updateMany.mockResolvedValue({ count: 1 });
 		mocks.sendShippingConfirmationEmail.mockResolvedValue({

@@ -1,7 +1,11 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import {
+	PREPARATION_BUSINESS_DAYS,
+	SHIPPING_RATES,
+} from "@/modules/orders/constants/shipping-rates";
+import { parseEstimatedDays } from "@/modules/orders/services/shipping.service";
 import { LEGAL_WITHDRAWAL_DAYS } from "@/shared/constants/consumer-law";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { getOfferAvailability } from "@/shared/utils/offer-availability";
@@ -26,6 +30,48 @@ export async function getPriceValidUntil(): Promise<string> {
 	return new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000)
 		.toISOString()
 		.split("T")[0]!;
+}
+
+/**
+ * Nœud `OfferShippingDetails` — intégralement DÉRIVÉ des SSOT livraison.
+ *
+ * ⚠️ `deliveryTime` codait `handlingTime 2-3` et `transitTime 2-4` en littéraux
+ * quand la SSOT (`PREPARATION_BUSINESS_DAYS`) dit préparation 2-4 : Google
+ * affichait une promesse plus courte que les CGV — la même dérive « allégation
+ * commerciale » que celle corrigée le 2026-08-06 sur `shippingRate` et
+ * `returnFees`, à trois lignes de là. Extraite en fonction pure pour être
+ * verrouillée par `structured-data-delivery-time.regression.test.ts`.
+ */
+export function buildOfferShippingDetails() {
+	const [transitMin, transitMax] = parseEstimatedDays(SHIPPING_RATES.FR.estimatedDays);
+
+	return {
+		"@type": "OfferShippingDetails",
+		shippingRate: {
+			"@type": "MonetaryAmount",
+			value: (SHIPPING_RATES.FR.amount / 100).toFixed(2),
+			currency: "EUR",
+		},
+		shippingDestination: {
+			"@type": "DefinedRegion",
+			addressCountry: "FR",
+		},
+		deliveryTime: {
+			"@type": "ShippingDeliveryTime",
+			handlingTime: {
+				"@type": "QuantitativeValue",
+				minValue: PREPARATION_BUSINESS_DAYS[0],
+				maxValue: PREPARATION_BUSINESS_DAYS[1],
+				unitCode: "DAY",
+			},
+			transitTime: {
+				"@type": "QuantitativeValue",
+				minValue: transitMin,
+				maxValue: transitMax,
+				unitCode: "DAY",
+			},
+		},
+	};
 }
 
 interface StructuredDataOptions {
@@ -149,23 +195,7 @@ export function generateStructuredData({
 		returnFees: "https://schema.org/ReturnShippingFees",
 	};
 
-	const shippingDetails = {
-		"@type": "OfferShippingDetails",
-		shippingRate: {
-			"@type": "MonetaryAmount",
-			value: (SHIPPING_RATES.FR.amount / 100).toFixed(2),
-			currency: "EUR",
-		},
-		shippingDestination: {
-			"@type": "DefinedRegion",
-			addressCountry: "FR",
-		},
-		deliveryTime: {
-			"@type": "ShippingDeliveryTime",
-			handlingTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 3, unitCode: "DAY" },
-			transitTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 4, unitCode: "DAY" },
-		},
-	};
+	const shippingDetails = buildOfferShippingDetails();
 
 	// Utiliser AggregateOffer pour les produits multi-variantes
 	const offers =
