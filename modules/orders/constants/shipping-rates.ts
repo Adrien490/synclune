@@ -1,12 +1,14 @@
 /**
- * Constantes des tarifs de livraison pour bijoux
+ * Tarifs et délais de livraison — SSOT du tarif FACTURÉ.
  *
- * Configuration des zones et tarifs de livraison.
- * Les tarifs réels sont définis dans Stripe Dashboard (Shipping Rates).
- * Ces valeurs locales servent pour les calculs côté backend.
+ * Ces constantes sont envoyées telles quelles à Stripe en `shipping_rate_data`
+ * inline (`createCheckoutSession`) : il n'existe AUCUN tarif côté Stripe
+ * Dashboard, changer un montant ici change ce que la cliente paie. Elles
+ * alimentent aussi toutes les surfaces d'affichage (PDP, panier, footer, CGV,
+ * JSON-LD).
  *
- * @note La logique métier (getShippingRate, isShippingAvailable, etc.)
- *       est dans @/modules/orders/services/shipping.service.ts
+ * @note La logique métier (getShippingRate, getShippingInfo, etc.) est dans
+ *       @/modules/orders/services/shipping.service.ts
  */
 
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
@@ -47,7 +49,7 @@ export const PREPARATION_DELAY_LABEL = `${PREPARATION_BUSINESS_DAYS[0]} à ${PRE
  *
  * Note : la Corse et les DOM-TOM ne sont pas livrés — le périmètre exclu est
  * porté par `UNSHIPPABLE_ZONES` (shipping.service.ts), consommé par
- * `calculateShipping` et `getShippingInfo`.
+ * `getShippingInfo` et `isUnshippableFrenchAddress`.
  */
 export const SHIPPING_RATES = {
 	/** France Métropolitaine (hors Corse) */
@@ -71,14 +73,3 @@ export const SHIPPING_RATES = {
 		>[],
 	},
 } as const satisfies Record<string, ShippingRate>;
-
-// ============================================================================
-// MIGRATION NOTICE
-// ============================================================================
-// Les fonctions getShippingRate, isShippingAvailable, formatShippingPrice
-// ont été déplacées vers @/modules/orders/services/shipping.service.ts
-//
-// Mettre à jour les imports:
-// - import { getShippingRate } from "@/modules/orders/services/shipping.service"
-// - import { isShippingAvailable } from "@/modules/orders/services/shipping.service"
-// - import { formatShippingPrice } from "@/modules/orders/services/shipping.service"

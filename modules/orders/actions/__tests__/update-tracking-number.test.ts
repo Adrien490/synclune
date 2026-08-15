@@ -1,15 +1,14 @@
 /**
  * @regression order-transition-guards
  *
- * Les transitions admin sont des `updateMany` gardés sur le statut SOURCE :
- * « Marquer expédiée » n'agit que sur une commande PAID. Un double clic, une
- * commande annulée entre-temps ou un id d'une commande PENDING rendent
- * count = 0 → erreur propre, AUCUN email, jamais d'écrasement de statut
- * (SHIPPED impossible depuis PENDING).
+ * « Corriger le n° de suivi » est un `updateMany` gardé sur `status: "SHIPPED"` :
+ * il ne s'applique qu'à une commande déjà expédiée (une PAID passe par
+ * « Marquer expédiée », une REFUNDED n'est plus modifiable). Le renvoi d'email
+ * est STRICTEMENT opt-in — corriger sans cocher ne renvoie rien.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
-import { markOrderAsShipped } from "../mark-order-as-shipped";
+import { updateTrackingNumber } from "../update-tracking-number";
 
 const mocks = vi.hoisted(() => ({
 	requireAdmin: vi.fn(),
@@ -49,7 +48,7 @@ beforeEach(() => {
 		invoiceNumber: 1,
 		email: "cliente@example.com",
 		customerName: "Marie",
-		trackingNumber: "8N00234567890",
+		trackingNumber: "6A12345678901",
 		shippedAt: new Date("2026-08-15T10:00:00Z"),
 		shippingLine1: "1 rue Test",
 		shippingLine2: null,
@@ -59,39 +58,53 @@ beforeEach(() => {
 	});
 });
 
-describe("markOrderAsShipped", () => {
-	it("PAID→SHIPPED : updateMany gardé sur le statut source + email envoyé", async () => {
+describe("updateTrackingNumber", () => {
+	it("remplace le numéro, gardé sur le statut SHIPPED, sans email si non demandé", async () => {
 		mocks.updateMany.mockResolvedValue({ count: 1 });
 
-		const result = await markOrderAsShipped(
+		const result = await updateTrackingNumber(
 			undefined,
 			makeFormData({
 				orderId: ORDER_ID,
-				trackingNumber: "8N00234567890",
+				trackingNumber: "6A12345678901",
+				resendEmail: "",
 			}),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mocks.updateMany).toHaveBeenCalledWith({
-			where: { id: ORDER_ID, status: "PAID" },
-			data: expect.objectContaining({
-				status: "SHIPPED",
-				trackingNumber: "8N00234567890",
-				shippedAt: expect.any(Date),
-			}),
+			where: { id: ORDER_ID, status: "SHIPPED" },
+			data: { trackingNumber: "6A12345678901" },
 		});
-		expect(mocks.sendShippingConfirmationEmail).toHaveBeenCalledTimes(1);
+		expect(mocks.sendShippingConfirmationEmail).not.toHaveBeenCalled();
 		expect(mocks.updateTagsAfterMutation).toHaveBeenCalledTimes(1);
 	});
 
-	it("count = 0 (commande PENDING, annulée, ou déjà expédiée) : erreur, AUCUN email", async () => {
-		mocks.updateMany.mockResolvedValue({ count: 0 });
+	it("renvoie l'email rectifié quand la case est cochée", async () => {
+		mocks.updateMany.mockResolvedValue({ count: 1 });
 
-		const result = await markOrderAsShipped(
+		const result = await updateTrackingNumber(
 			undefined,
 			makeFormData({
 				orderId: ORDER_ID,
-				trackingNumber: "8N00234567890",
+				trackingNumber: "6A12345678901",
+				resendEmail: "on",
+			}),
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mocks.sendShippingConfirmationEmail).toHaveBeenCalledTimes(1);
+	});
+
+	it("count = 0 (commande PAID, remboursée…) : erreur, AUCUN email", async () => {
+		mocks.updateMany.mockResolvedValue({ count: 0 });
+
+		const result = await updateTrackingNumber(
+			undefined,
+			makeFormData({
+				orderId: ORDER_ID,
+				trackingNumber: "6A12345678901",
+				resendEmail: "on",
 			}),
 		);
 
@@ -100,7 +113,7 @@ describe("markOrderAsShipped", () => {
 	});
 
 	it("valide l'entrée AVANT toute écriture (tracking trop court)", async () => {
-		const result = await markOrderAsShipped(
+		const result = await updateTrackingNumber(
 			undefined,
 			makeFormData({
 				orderId: ORDER_ID,
@@ -117,11 +130,11 @@ describe("markOrderAsShipped", () => {
 			error: { status: ActionStatus.UNAUTHORIZED, message: "Non autorisé" },
 		});
 
-		const result = await markOrderAsShipped(
+		const result = await updateTrackingNumber(
 			undefined,
 			makeFormData({
 				orderId: ORDER_ID,
-				trackingNumber: "8N00234567890",
+				trackingNumber: "6A12345678901",
 			}),
 		);
 
@@ -129,14 +142,14 @@ describe("markOrderAsShipped", () => {
 		expect(mocks.updateMany).not.toHaveBeenCalled();
 	});
 
-	it("commande sans email : transition acquise, AUCUN envoi, et le message ne prétend pas le contraire", async () => {
+	it("renvoi demandé mais commande sans email : succès qui ne prétend pas avoir prévenu", async () => {
 		mocks.updateMany.mockResolvedValue({ count: 1 });
 		mocks.findUnique.mockResolvedValue({
 			id: ORDER_ID,
 			invoiceNumber: 1,
 			email: "",
 			customerName: null,
-			trackingNumber: "8N00234567890",
+			trackingNumber: "6A12345678901",
 			shippedAt: new Date("2026-08-15T10:00:00Z"),
 			shippingLine1: null,
 			shippingLine2: null,
@@ -145,38 +158,17 @@ describe("markOrderAsShipped", () => {
 			shippingCountry: null,
 		});
 
-		const result = await markOrderAsShipped(
+		const result = await updateTrackingNumber(
 			undefined,
 			makeFormData({
 				orderId: ORDER_ID,
-				trackingNumber: "8N00234567890",
+				trackingNumber: "6A12345678901",
+				resendEmail: "on",
 			}),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mocks.sendShippingConfirmationEmail).not.toHaveBeenCalled();
-		// Avant correction, ce chemin renvoyait « Commande expédiée, email envoyé
-		// à la cliente » — un mensonge : personne n'était prévenu.
-		expect(result.message).not.toContain("email envoyé");
 		expect(result.message).toContain("PAS été prévenue");
-	});
-
-	it("email en échec : la transition reste acquise, le message le dit", async () => {
-		mocks.updateMany.mockResolvedValue({ count: 1 });
-		mocks.sendShippingConfirmationEmail.mockResolvedValue({
-			success: false,
-			error: new Error("Resend down"),
-		});
-
-		const result = await markOrderAsShipped(
-			undefined,
-			makeFormData({
-				orderId: ORDER_ID,
-				trackingNumber: "8N00234567890",
-			}),
-		);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("email");
 	});
 });

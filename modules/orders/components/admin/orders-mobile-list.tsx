@@ -13,8 +13,10 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 
 import type { GetOrdersReturn } from "../../data/get-orders";
+import { isUnshippableFrenchAddress } from "../../services/shipping.service";
 import { orderDisplayLabel } from "./orders-data-table";
 import { OrderStatusBadge } from "./order-status-badge";
+import { UnshippableZoneBadge } from "./unshippable-zone-badge";
 
 interface OrdersMobileListProps {
 	ordersPromise: Promise<GetOrdersReturn>;
@@ -76,7 +78,12 @@ export function OrdersMobileList({
 								{order.customerName ?? (order.email || "—")}
 							</p>
 							<div className="mt-2 flex items-center justify-between gap-3">
-								<OrderStatusBadge status={order.status} />
+								<div className="flex flex-wrap items-center gap-1.5">
+									<OrderStatusBadge status={order.status} />
+									{isUnshippableFrenchAddress(order.shippingCountry, order.shippingZip) && (
+										<UnshippableZoneBadge />
+									)}
+								</div>
 								<span className="text-muted-foreground text-xs">
 									{formatDateShort(order.createdAt)}
 								</span>

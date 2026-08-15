@@ -1,6 +1,7 @@
-import { ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import { formatCountryName } from "@/shared/constants/countries";
@@ -9,6 +10,7 @@ import { formatDateTime } from "@/shared/utils/dates";
 
 import type { AdminOrderDetail } from "../../data/get-order";
 import { detectCarrierAndUrl } from "../../services/carrier-detection.service";
+import { isUnshippableFrenchAddress } from "../../services/shipping.service";
 import { orderDisplayLabel } from "./orders-data-table";
 import { OrderDetailActions } from "./order-detail-actions";
 import { OrderStatusBadge } from "./order-status-badge";
@@ -25,6 +27,11 @@ import { OrderStatusBadge } from "./order-status-badge";
 export function OrderDetail({ order }: { order: AdminOrderDetail }) {
 	const label = orderDisplayLabel(order);
 	const tracking = order.trackingNumber ? detectCarrierAndUrl(order.trackingNumber) : null;
+	// Au checkout hébergé, le CP n'est connu qu'APRÈS le paiement : l'exclusion
+	// Corse/DOM-TOM des CGV §5.1 ne peut pas bloquer en amont, c'est Léane qui
+	// arbitre — cette alerte est ce qui déclenche l'arbitrage (avant elle, une
+	// commande hors zone s'affichait comme les autres).
+	const unshippableAddress = isUnshippableFrenchAddress(order.shippingCountry, order.shippingZip);
 
 	return (
 		<div className="space-y-6">
@@ -37,6 +44,17 @@ export function OrderDetail({ order }: { order: AdminOrderDetail }) {
 				</div>
 				<OrderDetailActions orderId={order.id} orderLabel={label} status={order.status} />
 			</div>
+
+			{unshippableAddress && (
+				<Alert variant="destructive">
+					<WarningIcon aria-hidden="true" />
+					<AlertTitle>Adresse hors zone de livraison</AlertTitle>
+					<AlertDescription>
+						Le code postal {order.shippingZip} est en Corse ou DOM-TOM — hors zone CGV (§ 5.1). À
+						toi d&apos;arbitrer : expédier quand même, ou contacter la cliente et rembourser.
+					</AlertDescription>
+				</Alert>
+			)}
 
 			<div className="grid gap-6 lg:grid-cols-3">
 				<Card className="lg:col-span-2">

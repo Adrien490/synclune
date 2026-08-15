@@ -25,10 +25,11 @@ export interface OrderForShippingEmail {
 }
 
 /**
- * Émetteur UNIQUE de l'email d'expédition (action admin « Marquer expédiée »).
- * Idempotence : `order-shipped:<orderId>` (Resend, 24 h) — un double clic
- * n'envoie qu'un email, la garde de transition n'en laissant de toute façon
- * passer qu'un seul.
+ * Émetteur UNIQUE de l'email d'expédition (« Marquer expédiée » et « Corriger
+ * le n° de suivi »). Idempotence : `order-shipped:<orderId>:<tracking>`
+ * (Resend, 24 h) — un double clic n'envoie qu'un email, mais une CORRECTION du
+ * numéro change la clé et laisse donc partir l'email rectifié (une clé au seul
+ * orderId dédupliquerait le renvoi avec l'email erroné).
  */
 export async function sendShippingConfirmationEmail(
 	order: OrderForShippingEmail,
@@ -60,7 +61,7 @@ export async function sendShippingConfirmationEmail(
 		{
 			to: order.email,
 			subject: EMAIL_SUBJECTS.ORDER_SHIPPED,
-			idempotencyKey: `order-shipped:${order.id}`,
+			idempotencyKey: `order-shipped:${order.id}:${order.trackingNumber}`,
 			tags: [{ name: "category", value: "order" }],
 		},
 	);

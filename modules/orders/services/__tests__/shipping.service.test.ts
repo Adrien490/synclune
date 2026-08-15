@@ -30,11 +30,10 @@ vi.mock("@/modules/orders/constants/shipping-rates", () => ({
 
 import {
 	getShippingRate,
-	isShippingAvailable,
 	formatShippingPrice,
-	calculateShipping,
 	getShippingInfo,
 	isCountrySupported,
+	isUnshippableFrenchAddress,
 } from "../shipping.service";
 
 // ============================================================================
@@ -64,28 +63,6 @@ describe("getShippingRate", () => {
 });
 
 // ============================================================================
-// isShippingAvailable
-// ============================================================================
-
-describe("isShippingAvailable", () => {
-	it("should return true for France", () => {
-		expect(isShippingAvailable("FR")).toBe(true);
-	});
-
-	it("should return true for Germany", () => {
-		expect(isShippingAvailable("DE")).toBe(true);
-	});
-
-	it("should return false for US", () => {
-		expect(isShippingAvailable("US")).toBe(false);
-	});
-
-	it("should return false for Japan", () => {
-		expect(isShippingAvailable("JP")).toBe(false);
-	});
-});
-
-// ============================================================================
 // formatShippingPrice
 // ============================================================================
 
@@ -110,36 +87,33 @@ describe("formatShippingPrice", () => {
 });
 
 // ============================================================================
-// calculateShipping
+// getShippingInfo
 // ============================================================================
 
-describe("calculateShipping", () => {
-	it("should return FR rate by default", () => {
-		expect(calculateShipping()).toBe(499);
+describe("getShippingInfo", () => {
+	it("should return FR rate info by default", () => {
+		const info = getShippingInfo();
+		expect(info).not.toBeNull();
+		expect(info!.amount).toBe(499);
+		expect(info!.displayName).toContain("France");
 	});
 
-	it("should return FR rate for mainland France", () => {
-		expect(calculateShipping("FR")).toBe(499);
+	it("should return FR rate info for non-Corsican postal code", () => {
+		const info = getShippingInfo("FR", "75001");
+		expect(info).not.toBeNull();
+		expect(info!.amount).toBe(499);
 	});
 
-	it("should return null for Corsican postal code (not available)", () => {
-		expect(calculateShipping("FR", "20000")).toBeNull();
+	it("should return null for Corsican postal codes (not available)", () => {
+		expect(getShippingInfo("FR", "20000")).toBeNull();
+		expect(getShippingInfo("FR", "20200")).toBeNull();
 	});
 
-	it("should return null for 20200 postal code (Corse not available)", () => {
-		expect(calculateShipping("FR", "20200")).toBeNull();
-	});
-
-	it("should return FR rate for non-Corsican postal code", () => {
-		expect(calculateShipping("FR", "75001")).toBe(499);
-	});
-
-	it("should return EU rate for Belgium", () => {
-		expect(calculateShipping("BE")).toBe(950);
-	});
-
-	it("should return EU rate for Italy", () => {
-		expect(calculateShipping("IT")).toBe(950);
+	it("should return EU rate info for Belgium", () => {
+		const info = getShippingInfo("BE");
+		expect(info).not.toBeNull();
+		expect(info!.amount).toBe(950);
+		expect(info!.displayName).toContain("Europe");
 	});
 
 	// Les CGV §5.1 excluent les DOM-TOM. Avant correction, seule `CORSE` était
@@ -152,7 +126,7 @@ describe("calculateShipping", () => {
 		["98700", "Polynésie française (TOM)"],
 	])("DOM-TOM %s — %s", (postalCode) => {
 		it("is refused, not billed at the metropolitan rate", () => {
-			expect(calculateShipping("FR", postalCode)).toBeNull();
+			expect(getShippingInfo("FR", postalCode)).toBeNull();
 		});
 	});
 
@@ -160,80 +134,51 @@ describe("calculateShipping", () => {
 	// que `getShippingRate` retombe silencieusement sur le barème métropole.
 	describe.each([["96000"], ["99000"], ["00000"]])("zone indéterminée %s", (postalCode) => {
 		it("is refused", () => {
-			expect(calculateShipping("FR", postalCode)).toBeNull();
+			expect(getShippingInfo("FR", postalCode)).toBeNull();
 		});
 	});
 
 	it("ignores the postal code for non-FR countries (foreign formats)", () => {
 		// Un CP belge "9700" ne doit pas être lu comme un département français.
-		expect(calculateShipping("BE", "9700")).toBe(950);
+		expect(getShippingInfo("BE", "9700")).not.toBeNull();
 	});
 });
 
 // ============================================================================
-// getShippingInfo
-// ============================================================================
-
-describe("getShippingInfo", () => {
-	it("should return FR rate info by default", () => {
-		const info = getShippingInfo();
-		expect(info).not.toBeNull();
-		expect(info!.amount).toBe(499);
-		expect(info!.displayName).toContain("France");
-	});
-
-	it("should return null for Corsican postal code (not available)", () => {
-		const info = getShippingInfo("FR", "20000");
-		expect(info).toBeNull();
-	});
-
-	it("should return EU rate info for Belgium", () => {
-		const info = getShippingInfo("BE");
-		expect(info).not.toBeNull();
-		expect(info!.amount).toBe(950);
-		expect(info!.displayName).toContain("Europe");
-	});
-
-	it("should return null for DOM-TOM postal codes", () => {
-		expect(getShippingInfo("FR", "97400")).toBeNull();
-		expect(getShippingInfo("FR", "98800")).toBeNull();
-	});
-});
-
-// ============================================================================
-// Parité calculateShipping ↔ getShippingInfo
+// isUnshippableFrenchAddress — garde UNIQUE du périmètre CGV §5.1
 // ============================================================================
 
 /**
- * Les deux fonctions dupliquaient la même détection de zone, chacune avec sa
- * propre copie du test `zone === "CORSE"` — une divergence ne coûtait qu'un
- * oubli de synchronisation. Elles partagent désormais `isUnshippableDestination`,
- * et ce test verrouille le fait qu'elles répondent toujours sur le même
- * périmètre : l'une ne peut pas accepter ce que l'autre refuse.
+ * C'est le prédicat que consomme `getShippingInfo` ET l'alerte admin « adresse
+ * hors zone » : les deux répondent mécaniquement sur le même périmètre — la
+ * parité qui était auparavant testée entre deux fonctions dupliquées.
  */
-describe("calculateShipping / getShippingInfo parity", () => {
-	const POSTAL_CODES = [
-		"75001", // métropole
-		"13001", // métropole
-		"20000", // Corse 2A
-		"20200", // Corse 2B
-		"2A000", // Corse (forme département)
-		"2B000", // Corse (forme département)
-		"97100", // DOM
-		"97400", // DOM
-		"98800", // TOM
-		"96000", // indéterminé
-		"99000", // indéterminé
-	];
+describe("isUnshippableFrenchAddress", () => {
+	it.each([
+		["75001", false], // métropole
+		["13001", false], // métropole
+		["20000", true], // Corse 2A
+		["20200", true], // Corse 2B
+		["2A000", true], // Corse (forme département)
+		["2B000", true], // Corse (forme département)
+		["97100", true], // DOM
+		["97400", true], // DOM
+		["98800", true], // TOM
+		["96000", true], // indéterminé
+		["99000", true], // indéterminé
+	])("FR %s → unshippable: %s", (postalCode, expected) => {
+		expect(isUnshippableFrenchAddress("FR", postalCode)).toBe(expected);
+	});
 
-	it.each(POSTAL_CODES)("agrees on availability for %s", (postalCode) => {
-		const amount = calculateShipping("FR", postalCode);
-		const info = getShippingInfo("FR", postalCode);
+	it("never flags a non-FR address, whatever its postal format", () => {
+		expect(isUnshippableFrenchAddress("BE", "9700")).toBe(false);
+		expect(isUnshippableFrenchAddress("MC", "98000")).toBe(false);
+	});
 
-		expect(amount === null).toBe(info === null);
-		if (info !== null) {
-			expect(amount).toBe(info.amount);
-		}
+	it("stays false when the address is incomplete (nullable DB columns)", () => {
+		expect(isUnshippableFrenchAddress("FR", null)).toBe(false);
+		expect(isUnshippableFrenchAddress("FR", undefined)).toBe(false);
+		expect(isUnshippableFrenchAddress(null, "20000")).toBe(false);
 	});
 });
 

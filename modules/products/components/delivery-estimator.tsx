@@ -76,9 +76,12 @@ export async function DeliveryEstimator() {
 	return (
 		<div className="text-muted-foreground flex items-center gap-2.5 text-sm">
 			<TruckIcon className="text-foreground size-4 shrink-0" aria-hidden="true" />
+			{/* « (France) » : la fenêtre est calculée sur le barème FR — sans la
+			    mention, une cliente UE (5-8 j ouvrés) lisait une promesse plus
+			    courte que la sienne. La fenêtre UE s'affiche sur /paiement. */}
 			<p>
 				Livraison estimée entre le <span className="text-foreground font-medium">{min}</span> et le{" "}
-				<span className="text-foreground font-medium">{max}</span>
+				<span className="text-foreground font-medium">{max}</span> (France)
 			</p>
 		</div>
 	);

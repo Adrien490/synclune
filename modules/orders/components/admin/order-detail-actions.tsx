@@ -1,12 +1,13 @@
 "use client";
 
-import { ProhibitIcon, TruckIcon } from "@phosphor-icons/react/ssr";
+import { PencilSimpleIcon, ProhibitIcon, TruckIcon } from "@phosphor-icons/react/ssr";
 import type { OrderStatus } from "@/app/generated/prisma/client";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import {
 	CANCEL_ORDER_DIALOG_ID,
 	MARK_ORDER_AS_SHIPPED_DIALOG_ID,
+	UPDATE_TRACKING_NUMBER_DIALOG_ID,
 } from "../../constants/order.constants";
 import type { OrderActionsData } from "../../hooks/use-order-actions";
 
@@ -19,9 +20,10 @@ interface OrderDetailActionsProps {
 /** Boutons de transition du détail — mêmes dialogs que le menu de ligne. */
 export function OrderDetailActions({ orderId, orderLabel, status }: OrderDetailActionsProps) {
 	const shipDialog = useAlertDialog<OrderActionsData>(MARK_ORDER_AS_SHIPPED_DIALOG_ID);
+	const trackingDialog = useAlertDialog<OrderActionsData>(UPDATE_TRACKING_NUMBER_DIALOG_ID);
 	const cancelDialog = useAlertDialog<OrderActionsData>(CANCEL_ORDER_DIALOG_ID);
 
-	if (status !== "PAID" && status !== "PENDING") return null;
+	if (status !== "PAID" && status !== "PENDING" && status !== "SHIPPED") return null;
 
 	return (
 		<div className="flex flex-wrap items-center gap-2">
@@ -29,6 +31,12 @@ export function OrderDetailActions({ orderId, orderLabel, status }: OrderDetailA
 				<Button onClick={() => shipDialog.open({ orderId, orderLabel })}>
 					<TruckIcon aria-hidden="true" />
 					Marquer expédiée
+				</Button>
+			)}
+			{status === "SHIPPED" && (
+				<Button variant="outline" onClick={() => trackingDialog.open({ orderId, orderLabel })}>
+					<PencilSimpleIcon aria-hidden="true" />
+					Corriger le n° de suivi
 				</Button>
 			)}
 			{status === "PENDING" && (

@@ -54,6 +54,18 @@ export const markOrderAsShippedSchema = z.object({
 		.max(64, "Le numéro de suivi est trop long."),
 });
 
+/**
+ * « Corriger le n° de suivi » (commande SHIPPED) : mêmes bornes que la saisie
+ * initiale. `resendEmail` arrive d'une checkbox — "on" coché, "" sinon (même
+ * convention que le restock du remboursement de rétractation).
+ */
+export const updateTrackingNumberSchema = markOrderAsShippedSchema.extend({
+	resendEmail: z
+		.string()
+		.optional()
+		.transform((value) => value === "on"),
+});
+
 export const cancelOrderSchema = z.object({
 	orderId: z.cuid2({ message: "ID commande invalide" }),
 });

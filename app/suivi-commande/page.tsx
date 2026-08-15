@@ -6,7 +6,7 @@ import { getOrderForTracking } from "@/modules/orders/data/get-order-for-trackin
 import { RetractationSection } from "@/modules/retractations/components/retractation-section";
 import { detectCarrierAndUrl } from "@/modules/orders/services/carrier-detection.service";
 import {
-	estimateDeliveryDate,
+	estimateUpcomingDeliveryDate,
 	isCountrySupported,
 } from "@/modules/orders/services/shipping.service";
 import { OrderStatusBadge } from "@/modules/orders/components/admin/order-status-badge";
@@ -71,10 +71,13 @@ export default async function SuiviCommandePage({
 	if (!order) notFound();
 
 	const tracking = order.trackingNumber ? detectCarrierAndUrl(order.trackingNumber) : null;
-	const estimatedDelivery =
+	// Estimation masquée une fois la date passée (promesse échue) — l'horloge est
+	// lue dans le service, cf. `estimateUpcomingDeliveryDate`.
+	const estimatedDeliveryDate =
 		order.shippedAt && order.shippingCountry && isCountrySupported(order.shippingCountry)
-			? formatDateLong(estimateDeliveryDate(order.shippedAt, order.shippingCountry))
+			? estimateUpcomingDeliveryDate(order.shippedAt, order.shippingCountry)
 			: null;
+	const estimatedDelivery = estimatedDeliveryDate ? formatDateLong(estimatedDeliveryDate) : null;
 
 	return (
 		<main id="main-content" tabIndex={-1} className="bg-background min-h-dvh px-4 py-12">

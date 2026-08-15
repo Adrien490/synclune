@@ -1,12 +1,13 @@
 "use client";
 
-import { EyeIcon, ProhibitIcon, TruckIcon } from "@phosphor-icons/react/ssr";
+import { EyeIcon, PencilSimpleIcon, ProhibitIcon, TruckIcon } from "@phosphor-icons/react/ssr";
 import type { OrderStatus } from "@/app/generated/prisma/client";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import {
 	CANCEL_ORDER_DIALOG_ID,
 	MARK_ORDER_AS_SHIPPED_DIALOG_ID,
+	UPDATE_TRACKING_NUMBER_DIALOG_ID,
 } from "../constants/order.constants";
 
 export interface OrderActionsData {
@@ -34,6 +35,9 @@ export function useOrderActions({ orderId, orderLabel, status }: UseOrderActions
 	const { open: openShipDialog } = useAlertDialog<OrderActionsData>(
 		MARK_ORDER_AS_SHIPPED_DIALOG_ID,
 	);
+	const { open: openTrackingDialog } = useAlertDialog<OrderActionsData>(
+		UPDATE_TRACKING_NUMBER_DIALOG_ID,
+	);
 	const { open: openCancelDialog } = useAlertDialog<OrderActionsData>(CANCEL_ORDER_DIALOG_ID);
 
 	const sections: ActionMenuSection[] = [
@@ -57,6 +61,15 @@ export function useOrderActions({ orderId, orderLabel, status }: UseOrderActions
 					icon: TruckIcon,
 					hidden: status !== "PAID",
 					onSelect: () => openShipDialog({ orderId, orderLabel }),
+				},
+				{
+					// Pas une transition : corrige le `trackingNumber` d'une commande
+					// déjà expédiée (faute de frappe sinon verrouillée par la garde PAID).
+					key: "fix-tracking",
+					label: "Corriger le n° de suivi",
+					icon: PencilSimpleIcon,
+					hidden: status !== "SHIPPED",
+					onSelect: () => openTrackingDialog({ orderId, orderLabel }),
 				},
 				{
 					key: "cancel",
