@@ -84,7 +84,15 @@ export async function createCheckoutSession(
 				`« ${variant?.product.name ?? "Un article"} » n'est plus disponible. Mets ton panier à jour.`,
 			);
 		}
-		if (variant.stock < cookieItem.quantity || cookieItem.quantity > MAX_QUANTITY_PER_ORDER) {
+		// Deux gardes distinctes : le plafond par commande n'est PAS un problème
+		// de stock — le confondre enverrait la cliente vérifier une rupture qui
+		// n'existe pas au lieu de réduire sa quantité.
+		if (cookieItem.quantity > MAX_QUANTITY_PER_ORDER) {
+			return error(
+				`Maximum ${MAX_QUANTITY_PER_ORDER} exemplaires de « ${variant.product.name} » par commande. Réduis la quantité dans ton panier.`,
+			);
+		}
+		if (variant.stock < cookieItem.quantity) {
 			return error(`Stock insuffisant pour « ${variant.product.name} ». Mets ton panier à jour.`);
 		}
 		items.push({ quantity: cookieItem.quantity, variant });
@@ -106,34 +114,41 @@ export async function createCheckoutSession(
 	let sessionUrl: string;
 	try {
 		const session = await withStripeCircuitBreaker(() =>
-			stripe.checkout.sessions.create({
-				mode: "payment",
-				locale: "fr",
-				line_items: buildStripeLineItems(lines),
-				shipping_address_collection: {
-					allowed_countries: [
-						country as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry,
-					],
-				},
-				shipping_options: [
-					{
-						shipping_rate_data: {
-							type: "fixed_amount",
-							display_name: shippingInfo.displayName,
-							fixed_amount: { amount: shippingInfo.amount, currency: "eur" },
-							delivery_estimate: {
-								minimum: { unit: "business_day", value: minDays },
-								maximum: { unit: "business_day", value: maxDays },
+			stripe.checkout.sessions.create(
+				{
+					mode: "payment",
+					locale: "fr",
+					line_items: buildStripeLineItems(lines),
+					shipping_address_collection: {
+						allowed_countries: [
+							country as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry,
+						],
+					},
+					shipping_options: [
+						{
+							shipping_rate_data: {
+								type: "fixed_amount",
+								display_name: shippingInfo.displayName,
+								fixed_amount: { amount: shippingInfo.amount, currency: "eur" },
+								delivery_estimate: {
+									minimum: { unit: "business_day", value: minDays },
+									maximum: { unit: "business_day", value: maxDays },
+								},
 							},
 						},
-					},
-				],
-				expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_SESSION_TTL_SECONDS,
-				metadata: { orderId },
-				client_reference_id: orderId,
-				success_url: `${SITE_URL}${ROUTES.SHOP.CHECKOUT_RETURN}?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `${SITE_URL}${ROUTES.SHOP.CHECKOUT_CANCEL}`,
-			}),
+					],
+					expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_SESSION_TTL_SECONDS,
+					metadata: { orderId },
+					client_reference_id: orderId,
+					success_url: `${SITE_URL}${ROUTES.SHOP.CHECKOUT_RETURN}?session_id={CHECKOUT_SESSION_ID}`,
+					cancel_url: `${SITE_URL}${ROUTES.SHOP.CHECKOUT_CANCEL}`,
+				},
+				// Le client Stripe rejoue jusqu'à 2 fois sur erreur réseau
+				// (`maxNetworkRetries`) : sans clé, un timeout suivi d'un retry
+				// créerait une session orpheline. L'orderId est unique par
+				// tentative (un échec supprime l'Order via releaseReservation).
+				{ idempotencyKey: `checkout-session-${orderId}` },
+			),
 		);
 
 		if (!session.url) {

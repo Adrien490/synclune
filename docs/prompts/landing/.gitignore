@@ -1,0 +1,5 @@
+# Le .pen (binaire, régénérable tour par tour) et ses sauvegardes restent hors git.
+# NOTES.md et SHOOTING.md, eux, SONT versionnés : le carnet est le journal de
+# décisions de la série, la checklist de shooting est un livrable pour Léane.
+*.pen
+*.pen.bak-*

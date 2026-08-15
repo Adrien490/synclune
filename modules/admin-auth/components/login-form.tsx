@@ -11,12 +11,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
 import { login } from "../actions/login";
-
-/** Seules les destinations admin sont des cibles de redirection valides. */
-function sanitizeCallbackURL(callbackURL: string | undefined): string {
-	if (callbackURL && /^\/admin(\/|$)/.test(callbackURL)) return callbackURL;
-	return "/admin";
-}
+import { sanitizeCallbackURL } from "../lib/sanitize-callback-url";
 
 /**
  * Formulaire de connexion admin — un seul champ : le mot de passe

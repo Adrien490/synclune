@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { signSessionToken, verifySessionToken } from "../session-token";
 
@@ -50,6 +51,17 @@ describe("signSessionToken / verifySessionToken", () => {
 		["deux points", `${NOW + 1000}.ab.cd`],
 	])("refuse un jeton malformé (%s) sans lever", (_label, token) => {
 		expect(verifySessionToken(token, SECRET, NOW)).toBe(false);
+	});
+
+	it("refuse un jeton signé sans le préfixe de domaine (ancien schéma)", () => {
+		// Avant la séparation de domaine (2026-08-15), le HMAC couvrait l'expiry
+		// nu. Un tel jeton ne doit plus être accepté — et ce test verrouille au
+		// passage qu'aucun HMAC calculé sur un payload SANS le préfixe
+		// `admin-session.v1:` (ex. le token de suivi de commande, signé par le
+		// même AUTH_SECRET) ne peut ouvrir une session admin.
+		const expiry = NOW + 1000;
+		const legacyHmac = createHmac("sha256", SECRET).update(String(expiry)).digest("hex");
+		expect(verifySessionToken(`${expiry}.${legacyHmac}`, SECRET, NOW)).toBe(false);
 	});
 
 	it("le format émis est `<expiry>.<hmac hex 64>`", () => {

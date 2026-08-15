@@ -37,8 +37,7 @@ export default async function MentionsLegalesPage() {
 	cacheLife("reference"); // 24h stale, 30j expire - contenu légal change rarement
 	cacheTag(STATIC_PAGES_CACHE_TAGS.LEGAL_NOTICE);
 
-	// Récupérer l'URL du site et l'email depuis les variables d'environnement
-	const siteUrl = process.env.BETTER_AUTH_URL ?? SITE_URL;
+	const siteUrl = SITE_URL;
 	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 
 	return (
