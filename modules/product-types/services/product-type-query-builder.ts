@@ -6,9 +6,7 @@ import type { GetProductTypesParams, ProductTypeFilters } from "../types/product
 // PRODUCT TYPE QUERY BUILDER UTILS
 // ============================================================================
 
-export function buildProductTypeSearchConditions(
-	search: string,
-): Prisma.ProductTypeWhereInput | null {
+function buildProductTypeSearchConditions(search: string): Prisma.ProductTypeWhereInput | null {
 	if (!search || search.trim().length === 0) return null;
 	// Echappement LIKE : Prisma `contains` ne neutralise pas % _ \ (P3-3, cf. escape-like-pattern.ts).
 	const searchTerm = escapeLikePattern(search.trim());
@@ -21,7 +19,7 @@ export function buildProductTypeSearchConditions(
 	};
 }
 
-export function buildProductTypeFilterConditions(
+function buildProductTypeFilterConditions(
 	filters: ProductTypeFilters,
 ): Prisma.ProductTypeWhereInput {
 	const conditions: Prisma.ProductTypeWhereInput = {};

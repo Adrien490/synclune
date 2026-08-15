@@ -27,7 +27,7 @@ const materialSortBySchema = z
 // FIELD SCHEMAS
 // ============================================================================
 
-export const materialNameSchema = z
+const materialNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Le nom est requis")

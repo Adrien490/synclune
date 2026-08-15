@@ -186,16 +186,6 @@ describe("generateBreadcrumbs", () => {
 		expect(result[result.length - 1]!.label).toBe("Variantes");
 	});
 
-	it('formats "adresse-livraison" as "Adresse de livraison"', () => {
-		const result = generateBreadcrumbs("/admin/ventes/commandes/abc/adresse-livraison");
-		expect(result[result.length - 1]!.label).toBe("Adresse de livraison");
-	});
-
-	it('formats "fermer" as "Fermer la boutique"', () => {
-		const result = generateBreadcrumbs("/admin/configuration/boutique/fermer");
-		expect(result[result.length - 1]!.label).toBe("Fermer la boutique");
-	});
-
 	it("matches navigation config labels for known URLs", () => {
 		const result = generateBreadcrumbs("/admin/catalogue/collections");
 		expect(result[2]!.label).toBe("Collections");

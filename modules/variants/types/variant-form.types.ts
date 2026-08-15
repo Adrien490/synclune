@@ -23,7 +23,3 @@ export type UpdateProductVariantFormValues = {
 	materialId: string;
 	size: string;
 };
-
-export type CreateProductVariantFormValues = Omit<UpdateProductVariantFormValues, "variantId"> & {
-	productId: string;
-};

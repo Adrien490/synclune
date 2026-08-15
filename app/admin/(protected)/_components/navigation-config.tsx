@@ -7,7 +7,6 @@ import {
 	StackIcon,
 	SwatchesIcon,
 	TagIcon,
-	TicketIcon,
 } from "@phosphor-icons/react/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -118,17 +117,6 @@ const PILOTAGE_GROUP: NavGroup = {
 			title: "Rétractations",
 			url: "/admin/ventes/retractations",
 			icon: ArrowUUpLeftIcon,
-		},
-		// Route inchangée (`/admin/marketing/discounts`) : seul le regroupement
-		// visuel bouge, comme pour la fusion Contenu+Configuration → Boutique.
-		// Le hub `/admin/marketing` reste l'ancre de section de cette route et
-		// demeure atteignable par le fil d'Ariane.
-		{
-			id: "discounts",
-			title: "Codes promo",
-			shortTitle: "Promos",
-			url: "/admin/marketing/discounts",
-			icon: TicketIcon,
 		},
 	],
 };

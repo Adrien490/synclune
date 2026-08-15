@@ -228,7 +228,7 @@ export function CreateProductForm({
 			 */}
 			<fieldset disabled={isPending} className="max-w-[46rem] space-y-10">
 				<MediaArrayCard
-					fieldName="initialVariant.media"
+					fieldName="media"
 					viewTransitionName="product-create-media"
 					title="Les photos"
 					// Le nom annoncé suit le titre visible : la région s'appelait encore

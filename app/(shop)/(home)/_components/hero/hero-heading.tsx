@@ -42,7 +42,7 @@ import { HeroCta } from "./hero-cta";
  * `hidden sm:inline` « , dans mon atelier à {ville} » le même jour, sinon le lieu
  * se dit deux fois à `sm+`. Les deux vont ensemble.
  */
-export const HOME_EYEBROW = `Atelier à ${BRAND.contact.location.city}`;
+const HOME_EYEBROW = `Atelier à ${BRAND.contact.location.city}`;
 
 /** Classes du `<p>` de sur-titre — locales, pour la même raison que la chaîne. */
 const HOME_EYEBROW_CLASS = "text-muted-foreground text-[0.8125rem] tracking-[0.09em] uppercase";

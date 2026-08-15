@@ -24,8 +24,6 @@ import {
 	cacheProductDetail,
 	cacheProductDetailById,
 	getProductInvalidationTags,
-	getStockInvalidationTags,
-	getVariantStockInvalidationTags,
 } from "../cache.utils";
 
 beforeEach(() => {
@@ -104,7 +102,6 @@ describe("getProductInvalidationTags", () => {
 		expect(tags).toContain("products-list");
 		expect(tags).toContain("product-bague-or");
 		expect(tags).toContain("max-product-price");
-		expect(tags).toContain("product-counts");
 		expect(tags).toContain("related-products-public");
 		expect(tags).toContain("related-products-contextual-bague-or");
 		expect(tags).toContain("admin-stock-list");
@@ -122,7 +119,7 @@ describe("getProductInvalidationTags", () => {
 		expect(tags).toContain("variants-list");
 		// 12 depuis le retrait de `recent-products-list` avec la feature « produits
 		// récemment vus » (2026-08-06).
-		expect(tags).toHaveLength(12);
+		expect(tags).toHaveLength(11);
 	});
 
 	it("includes VARIANTS + COLLECTIONS + DETAIL_BY_ID tags when productId is provided", () => {
@@ -133,7 +130,7 @@ describe("getProductInvalidationTags", () => {
 		// Lecture de duplication : elle se cachait sous un tag fabriqué à la main
 		// (`product-product-id-…`) qu'aucun mutateur n'émettait.
 		expect(tags).toContain("product-id-prod-abc");
-		expect(tags).toHaveLength(15);
+		expect(tags).toHaveLength(14);
 	});
 
 	// Cascade couleurs/matériaux : le KPI « produits distincts » des listes couleurs
@@ -179,83 +176,5 @@ describe("getProductInvalidationTags", () => {
 
 		expect(tags).toContain("product-collier-perle");
 		expect(tags).toContain("related-products-contextual-collier-perle");
-	});
-});
-
-// ============================================================================
-// getStockInvalidationTags
-// ============================================================================
-
-/**
- * ⚠️ Ces 4 tests verrouillaient la version PAUVRE du helper (audit cache
- * 2026-07-31). Il existait deux `getStockInvalidationTags` homonymes — celui
- * de `modules/variants/utils/` couvrait `LIST`, `VARIANTS_LIST` et `VARIANT_DETAIL_BY_ID`,
- * celui-ci non — et `collectStockInvalidationTags` déléguait au second. Les
- * `toHaveLength(4/5/6)` ci-dessous gelaient donc l'absence des tags manquants :
- * ajouter la couverture correcte faisait rougir le test censé la protéger.
- *
- * Les deux implémentations sont désormais fusionnées (SSOT ici, ré-export côté
- * variants) et les comptes reflètent la couverture complète — celle qu'exige
- * STOCK-STALE-BASELINE-001.
- */
-describe("getStockInvalidationTags", () => {
-	const BASE_TAGS = [
-		"product-bague-or",
-		"product-prod-123-variants",
-		"products-list",
-		"variants-list",
-		"admin-stock-list",
-		"admin-badges",
-	];
-
-	it("returns base stock tags without variantIds", () => {
-		const tags = getStockInvalidationTags("bague-or", "prod-123");
-
-		expect(tags).toEqual(BASE_TAGS);
-	});
-
-	it("includes VARIANT_STOCK and VARIANT_DETAIL_BY_ID for each variantId provided", () => {
-		const tags = getStockInvalidationTags("bague-or", "prod-123", ["variant-1", "variant-2"]);
-
-		// VARIANT_DETAIL_BY_ID est le tag de `fetchVariantById` / `fetchVariantDetailById` : sans
-		// lui, le formulaire d'édition rend un `originalStock` périmé et le delta
-		// relatif diverge du stock réel (STOCK-STALE-BASELINE-001).
-		expect(tags).toEqual([
-			...BASE_TAGS,
-			"variant-stock-variant-1",
-			"variant-id-variant-1",
-			"variant-stock-variant-2",
-			"variant-id-variant-2",
-		]);
-	});
-
-	it("handles empty variantIds array gracefully", () => {
-		const tags = getStockInvalidationTags("bague-or", "prod-123", []);
-
-		expect(tags).toEqual(BASE_TAGS);
-	});
-
-	it("handles a single variantId", () => {
-		const tags = getStockInvalidationTags("bague-or", "prod-123", ["variant-only"]);
-
-		expect(tags).toEqual([...BASE_TAGS, "variant-stock-variant-only", "variant-id-variant-only"]);
-	});
-});
-
-// ============================================================================
-// getVariantStockInvalidationTags
-// ============================================================================
-
-describe("getVariantStockInvalidationTags", () => {
-	it("returns a single VARIANT_STOCK tag", () => {
-		const tags = getVariantStockInvalidationTags("variant-abc");
-
-		expect(tags).toEqual(["variant-stock-variant-abc"]);
-	});
-
-	it("uses the variantId in the tag", () => {
-		const tags = getVariantStockInvalidationTags("variant-xyz-999");
-
-		expect(tags[0]).toBe("variant-stock-variant-xyz-999");
 	});
 });

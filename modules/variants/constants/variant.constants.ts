@@ -81,7 +81,6 @@ export const GET_PRODUCT_VARIANTS_DEFAULT_PER_PAGE = 20;
 export const GET_PRODUCT_VARIANTS_MAX_RESULTS_PER_PAGE = 200;
 
 export const GET_PRODUCT_VARIANTS_DEFAULT_SORT_BY = "created-descending";
-export const GET_PRODUCT_VARIANTS_ADMIN_FALLBACK_SORT_BY = "created-descending";
 
 export const GET_PRODUCT_VARIANTS_SORT_FIELDS = [
 	"created-descending",
@@ -101,6 +100,5 @@ export const SORT_LABELS: Record<string, string> = {
 	"stock-descending": "Stock (décroissant)",
 };
 
-export const VARIANT_FILTERS_MIN_DATE = new Date("2020-01-01");
 export const VARIANT_FILTERS_MAX_STOCK = 100000;
 export const VARIANT_FILTERS_MAX_PRICE_CENTS = 99999999; // 999999.99€ en centimes

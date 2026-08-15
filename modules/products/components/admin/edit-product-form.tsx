@@ -33,7 +33,7 @@ const FIELD_LABELS: Record<string, string> = {
 	typeId: "Type de bijou",
 	collectionIds: "Collections",
 	status: "Visibilité",
-	"defaultVariant.media": "Médias",
+	media: "Médias",
 	"defaultVariant.colorId": "Couleur",
 	"defaultVariant.materialId": "Matériau",
 	"defaultVariant.size": "Taille",
@@ -235,7 +235,7 @@ export function EditProductForm({
 			>
 				<div className="space-y-6 lg:col-span-2">
 					<MediaArrayCard
-						fieldName="defaultVariant.media"
+						fieldName="media"
 						viewTransitionName="product-edit-media"
 						skipUtapiDelete
 						form={form}

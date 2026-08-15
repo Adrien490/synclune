@@ -61,7 +61,6 @@ export function cacheCollectionDetail(slug: string) {
 export function getCollectionInvalidationTags(collectionSlug: string): string[] {
 	return [
 		COLLECTIONS_CACHE_TAGS.LIST,
-		COLLECTIONS_CACHE_TAGS.COUNTS,
 		COLLECTIONS_CACHE_TAGS.DETAIL(collectionSlug),
 		COLLECTIONS_CACHE_TAGS.PRODUCTS(collectionSlug),
 		SHARED_CACHE_TAGS.PRODUCTS_LIST,

@@ -78,7 +78,6 @@ describe("getCollectionInvalidationTags", () => {
 		const tags = getCollectionInvalidationTags("ete-2024");
 
 		expect(tags).toContain("collections-list");
-		expect(tags).toContain("collection-counts");
 		expect(tags).toContain("collection-ete-2024");
 		expect(tags).toContain("collection-ete-2024-products");
 		expect(tags).toContain("products-list");
@@ -86,7 +85,7 @@ describe("getCollectionInvalidationTags", () => {
 		// Le mega-menu est couvert par LIST : `getNavbarMenuData` lit l'entrée
 		// `collections-list` de `fetchCollections` directement (ex-tag `navbar-menu`
 		// déposé — CACHE-DEGRADED-VALUE-001).
-		expect(tags).toHaveLength(6);
+		expect(tags).toHaveLength(5);
 	});
 
 	it("uses the slug in DETAIL and PRODUCTS tags", () => {

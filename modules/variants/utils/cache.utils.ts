@@ -50,7 +50,6 @@ export function getVariantInvalidationTags(params: {
 
 	if (params.variantId) {
 		tags.push(PRODUCTS_CACHE_TAGS.VARIANT_DETAIL_BY_ID(params.variantId));
-		tags.push(PRODUCTS_CACHE_TAGS.VARIANT_STOCK(params.variantId));
 	}
 	if (params.productId) {
 		tags.push(PRODUCTS_CACHE_TAGS.VARIANTS(params.productId));

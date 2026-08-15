@@ -49,13 +49,6 @@ export const removeFromCartSchema = z.object({
 
 import { CART_ERROR_MESSAGES } from "../constants/error-messages";
 
-/**
- * Schema pour récupérer les détails d'un VARIANT
- */
-export const getVariantDetailsSchema = z.object({
-	variantId: z.cuid2(CART_ERROR_MESSAGES.VARIANT_NOT_FOUND),
-});
-
 // ============================================================================
 // CART METADATA SCHEMAS (P1 + P2 + P3)
 // ============================================================================

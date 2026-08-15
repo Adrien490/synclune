@@ -128,9 +128,11 @@ const RAIL_ACCENT_TO_DATA_ACCENT = {
 	"bg-brand-sun": "sun",
 } as const satisfies Record<(typeof RAIL_ACCENTS)[number], string>;
 
+/** @public Gardé pour la refonte des cartes collection — cf. la note ci-dessus. */
 export type DataAccent =
 	(typeof RAIL_ACCENT_TO_DATA_ACCENT)[keyof typeof RAIL_ACCENT_TO_DATA_ACCENT];
 
+/** @public Gardé pour la refonte des cartes collection — cf. la note ci-dessus. */
 export function dataAccentForSlug(slug: string): DataAccent {
 	return RAIL_ACCENT_TO_DATA_ACCENT[accentForSlug(slug)];
 }

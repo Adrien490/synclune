@@ -6,11 +6,6 @@
 
 type ColorInput = { name: string; hex?: string | null } | null | undefined;
 
-/** Nom de la couleur, ou null. */
-export function getVariantColorsLabel(color: ColorInput): string | null {
-	return color?.name ?? null;
-}
-
 /** Variante UI du label (identique — conservée pour parité d'API). */
 export function getVariantColorsDisplayLabel(color: ColorInput): string | null {
 	return color?.name ?? null;

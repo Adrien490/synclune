@@ -5,25 +5,6 @@
 import type { MediaType } from "@/app/generated/prisma/client";
 
 /**
- * Checks if a media is a video using the database mediaType field.
- * This is the RECOMMENDED method as it is reliable even with extensionless URLs (e.g. UploadThing).
- * @param mediaType - The media type from the database
- * @returns true if the media is a video, false otherwise
- */
-export function isVideo(type: MediaType): boolean {
-	return type === "VIDEO";
-}
-
-/**
- * Checks if a media is an image using the database mediaType field.
- * @param mediaType - The media type from the database
- * @returns true if the media is an image, false otherwise
- */
-export function isImage(type: MediaType): boolean {
-	return type === "IMAGE";
-}
-
-/**
  * Résout la source affichable d'un média pour un rendu `next/image`.
  *
  * Schéma lean : plus de poster (`thumbnailUrl`) en base. Une vidéo n'est pas

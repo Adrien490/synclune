@@ -7,23 +7,11 @@
 // ============================================================================
 
 export const VALID_CUID = "cm1234567890abcdefghijklm";
-export const VALID_CUID_2 = "cm9876543210zyxwvutsrqpon";
-/**
- * Id cuid **v2** dont la première lettre n'est PAS `c`.
- *
- * Tous les ids du schéma sont `@default(cuid(2))` : la première lettre est tirée au
- * hasard dans `a-z`, donc ~25 cas sur 26 ne commencent pas par `c`. `VALID_CUID` et
- * `VALID_CUID_2` commencent l'un et l'autre par `c` (héritage cuid v1) — ils
- * laissaient donc passer un validateur `z.cuid()` (regex v1 `/^[cC][0-9a-z]{6,}$/`)
- * sur un chemin où la production échouait sur 96 % des ids réels.
- *
- * Utiliser CETTE fixture pour tout id qui traverse une frontière de validation.
- * @see app/paiement/__tests__/checkout-return-order-id-cuid2.regression.test.ts
- */
-export const VALID_CUID2_NON_C = "km7q2p9x4v1w8t3r6y5z0nba";
-export const VALID_USER_ID = "user_cm1234567890abcdef";
-export const VALID_ORDER_ID = "order_cm1234567890abcde";
-export const VALID_VARIANT_ID = "variant_cm1234567890abcdefg";
+const VALID_CUID_2 = "cm9876543210zyxwvutsrqpon";
+
+const VALID_USER_ID = "user_cm1234567890abcdef";
+const VALID_ORDER_ID = "order_cm1234567890abcde";
+const VALID_VARIANT_ID = "variant_cm1234567890abcdefg";
 const VALID_PRODUCT_ID = "prod_cm1234567890abcde";
 
 // ============================================================================
@@ -72,7 +60,7 @@ function createMockAdminSession(overrides: Record<string, unknown> = {}) {
 // ORDERS
 // ============================================================================
 
-export function createMockOrder(overrides: Record<string, unknown> = {}) {
+function createMockOrder(overrides: Record<string, unknown> = {}) {
 	return {
 		id: VALID_ORDER_ID,
 		orderNumber: "SYN-2026-0001",

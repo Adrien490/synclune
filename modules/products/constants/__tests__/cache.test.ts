@@ -23,11 +23,6 @@ describe("cache constants", () => {
 			expect(tag1).toContain("id-1");
 		});
 
-		it("VARIANT_STOCK returns unique tags per VARIANT ID", () => {
-			const tag = PRODUCTS_CACHE_TAGS.VARIANT_STOCK("variant-123");
-			expect(tag).toContain("variant-123");
-		});
-
 		it("RELATED_CONTEXTUAL returns unique tags per product slug", () => {
 			const tag = PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL("bague-lune");
 			expect(tag).toContain("bague-lune");
@@ -35,7 +30,6 @@ describe("cache constants", () => {
 
 		it("static tags are non-empty strings", () => {
 			expect(PRODUCTS_CACHE_TAGS.MAX_PRICE.length).toBeGreaterThan(0);
-			expect(PRODUCTS_CACHE_TAGS.COUNTS.length).toBeGreaterThan(0);
 			expect(PRODUCTS_CACHE_TAGS.VARIANTS_LIST.length).toBeGreaterThan(0);
 			expect(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC.length).toBeGreaterThan(0);
 		});
@@ -44,7 +38,6 @@ describe("cache constants", () => {
 			const staticTags = [
 				PRODUCTS_CACHE_TAGS.LIST,
 				PRODUCTS_CACHE_TAGS.MAX_PRICE,
-				PRODUCTS_CACHE_TAGS.COUNTS,
 				PRODUCTS_CACHE_TAGS.VARIANTS_LIST,
 				PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,
 			];

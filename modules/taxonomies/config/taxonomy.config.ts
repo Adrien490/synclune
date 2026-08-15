@@ -108,10 +108,6 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 	},
 } as const;
 
-export function getTaxonomyConfig(kind: TaxonomyKind): TaxonomyConfig {
-	return TAXONOMY_CONFIG[kind];
-}
-
 /**
  * Accorde un adjectif ou un participe passé au genre de la taxonomie.
  *

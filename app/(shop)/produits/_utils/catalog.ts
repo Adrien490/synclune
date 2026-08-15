@@ -203,7 +203,7 @@ export async function resolveCategoryBreadcrumbs(
 /**
  * Récupère les produits avec les filtres appliqués
  */
-export function fetchProducts(
+function fetchProducts(
 	searchParamsData: ProductSearchParams,
 	additionalFilters?: Partial<ProductFilters>,
 ) {
@@ -222,55 +222,6 @@ export function fetchProducts(
 		search: searchTerm,
 		filters: mergedFilters,
 	});
-}
-
-/**
- * Compte le nombre de filtres actifs (côté RSC : reçoit l'objet `searchParams`
- * brut + les filtres déjà parsés, et gère `excludeType` pour les pages catégorie).
- *
- * NB (audit filtres S3) : il existe un jumeau CÔTÉ CLIENT dans
- * `modules/products/services/product-filter-params.service.ts` (`countActiveFilters`,
- * signature `(URLSearchParams)`), utilisé par les composants client
- * (`product-filter-bar`). Les deux doivent rester
- * cohérents : toute évolution de la logique de comptage est à répercuter ici ET là.
- */
-export function countActiveFilters(
-	searchParamsData: ProductSearchParams,
-	filters: ProductFilters,
-	excludeType = false,
-): number {
-	let count = 0;
-
-	// Types de produits (sauf si on est sur une page catégorie)
-	if (!excludeType && searchParamsData.type) {
-		count += Array.isArray(searchParamsData.type) ? searchParamsData.type.length : 1;
-	}
-
-	// Couleurs
-	if (filters.color && filters.color.length > 0) {
-		count += filters.color.length;
-	}
-
-	// Matériaux
-	if (filters.material && filters.material.length > 0) {
-		count += filters.material.length;
-	}
-
-	// Prix
-	if (searchParamsData.priceMin || searchParamsData.priceMax) {
-		count += 1;
-	}
-
-	// Disponibilité — oubliée à l'origine : avec `?stockStatus=in_stock` seul,
-	// `activeFiltersCount` restait à 0 et le bandeau d'étiquettes ne se montait
-	// pas, alors que le compteur client (`countActiveFilters` du service) le
-	// compte. Visible depuis que le bandeau est la surface de manipulation des
-	// filtres à tous les viewports (2026-08-06).
-	if (filters.stockStatus === "in_stock") {
-		count += 1;
-	}
-
-	return count;
 }
 
 // ============================================================================

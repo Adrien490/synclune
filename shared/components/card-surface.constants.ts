@@ -47,18 +47,3 @@ export const CARD_SURFACE_HOVER = [
  */
 export const CARD_SURFACE_FOCUS =
 	"has-[:focus-visible]:border-primary/40 has-[:focus-visible]:shadow-primary/15 has-[:focus-visible]:shadow-lg";
-
-/**
- * Inclinaison alternée des tirages (par index de grille). Pose STATIQUE, pas
- * un mouvement → pas de `motion-safe:`. Classes LITTÉRALES, jamais
- * interpolées : Tailwind ne compose que ce qu'il lit tel quel dans les
- * sources. `TIRAGE_TILT` de `mega-menu-creations.tsx` reste à part, ses valeurs
- * diffèrent volontairement.
- *
- * ⚠️ **Sans consommateur depuis le 2026-08-08** (knip le signale, à raison) :
- * ses deux appelants étaient la carte collection de la landing et celle du
- * méga-menu, supprimées ensemble. Gardée délibérément — c'est elle qui a mis fin
- * à la recopie des mêmes valeurs des deux côtés (harmonisation 2026-08-06), et
- * la refonte doit repartir d'ICI plutôt que de re-diverger.
- */
-export const CARD_TILT = ["-rotate-[0.8deg]", "rotate-[0.7deg]"] as const;

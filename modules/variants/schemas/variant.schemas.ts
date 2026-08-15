@@ -8,10 +8,6 @@ import { PRICE_LIMITS, STOCK_LIMITS, TEXT_LIMITS } from "@/shared/constants/vali
 // le PRODUIT, plus sur la variante.
 // ============================================================================
 
-export const getProductVariantSchema = z.object({
-	variantId: z.cuid2({ message: "ID variante invalide" }),
-});
-
 // ============================================================================
 // SHARED
 // ============================================================================

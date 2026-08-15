@@ -37,5 +37,3 @@ export const imageSchema = z
 		},
 		{ message: "Un média déclaré IMAGE ne peut pas pointer un fichier vidéo" },
 	);
-
-export type ProductMediaInput = z.infer<typeof imageSchema>;

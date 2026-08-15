@@ -3,14 +3,12 @@
  *
  * Tous les wrappers respectent prefers-reduced-motion.
  *
- * Les wrappers d'entrée (Fade / Reveal / Stagger / HandDrawn) sont des
  * composants universels pilotés par du CSS (`app/styles/entrance.css`) —
  * zéro motion-react, zéro coût d'hydratation.
  */
 
 export { Fade } from "./fade";
 export { Reveal } from "./reveal";
-export { Stagger } from "./stagger";
 
 // `HandDrawnAccent` n'est PAS réexporté ici : ses 4 appelants l'importent tous
 // depuis `./hand-drawn-accent` en direct. Un barrel qui réexporte ce que personne

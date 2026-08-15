@@ -95,11 +95,3 @@ export function orderByIds<T extends { id: string }>(
 		return 0;
 	});
 }
-
-/**
- * Tri par date de création décroissante (plus récent en premier)
- * Utilisé comme fallback pour les produits sans données de tri
- */
-export function sortByCreatedAtDesc<T extends { createdAt: Date | string }>(a: T, b: T): number {
-	return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-}

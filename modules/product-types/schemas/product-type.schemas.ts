@@ -21,7 +21,7 @@ export const productTypeFiltersSchema = z.object({
 // SORT SCHEMA
 // ============================================================================
 
-export const productTypeSortBySchema = z.preprocess((value) => {
+const productTypeSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
 		GET_PRODUCT_TYPES_SORT_FIELDS.includes(value as (typeof GET_PRODUCT_TYPES_SORT_FIELDS)[number])
 		? value
@@ -52,7 +52,7 @@ export const getProductTypeSchema = z.object({
 // MUTATION SCHEMAS
 // ============================================================================
 
-export const productTypeLabelSchema = z
+const productTypeLabelSchema = z
 	.string()
 	.trim()
 	.min(1, "Le label est requis")

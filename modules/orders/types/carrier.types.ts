@@ -15,11 +15,6 @@ export type Carrier =
 	| "relais_colis"
 	| "autre";
 
-export interface CarrierInfo {
-	value: Carrier;
-	label: string;
-}
-
 export interface DetectionResult {
 	carrier: Carrier;
 	url: string | null;

@@ -10,5 +10,3 @@ import { SHIPPING_COUNTRIES } from "@/shared/constants/countries";
 export const createCheckoutSessionSchema = z.object({
 	country: z.enum(SHIPPING_COUNTRIES),
 });
-
-export type CreateCheckoutSessionInput = z.infer<typeof createCheckoutSessionSchema>;

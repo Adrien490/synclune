@@ -74,7 +74,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | 3   | Checkout Stripe hébergé + webhooks        | L      | ✅     | `migration(lot-3)` | Voir « État à la sortie du lot 3 » ci-dessous. Port fixé par un select de pays sur /paiement ; CTA panier inchangé.           |
 | 4   | Commandes : admin, facturation Int, suivi | L      | ✅     | `migration(lot-4)` | Voir « État à la sortie du lot 4 » ci-dessous.                                                                                |
 | 5   | Rétractation (`RetractationRequest`)      | M      | ✅     | `migration(lot-5)` | Voir « État à la sortie du lot 5 » ci-dessous.                                                                                |
-| 6   | Dashboard, emails, polish admin           | M      | ⬜     | —                  |                                                                                                                               |
+| 6   | Dashboard, emails, polish admin           | M      | ✅     | `migration(lot-6)` | Voir « État à la sortie du lot 6 » ci-dessous.                                                                                |
 | 7   | E2E refonte                               | L      | ⬜     | —                  |                                                                                                                               |
 | 8   | Seed conforme à la DA                     | S/M    | ⬜     | —                  | peut s'exécuter dès la fin du lot 2                                                                                           |
 | 9   | Documentation finale (CLAUDE.md) + sweep  | M      | ⬜     | —                  |                                                                                                                               |
@@ -383,6 +383,64 @@ noop → page avoir (numéro, réf. facture, 293 B) → suivi « remboursée » 
 Restent à cliquer par Adrien : les 3 dialogs admin et l'email d'accusé réel (couverts en
 tests unitaires ; les emails de remboursement/rejet partent par la même machinerie
 Resend éprouvée aux lots 3-4).
+
+### État à la sortie du lot 6
+
+**Dashboard réécrit** (`modules/dashboard/` + page) : CA encaissé du mois (PAID/SHIPPED,
+REFUNDED exclu — CA net ; date ≈ createdAt, même approximation que l'export CSV), file
+« à expédier », stock faible (variantes actives ≤ 1), rétractations en cours, commandes
+par statut, et **carte de franchise TVA** recâblée sur les SSOT
+`getFranchiseThresholdCents()`/`getMajoredFranchiseThresholdCents()` (règle historique
+respectée : le seuil de base n'annonce pas la conséquence du majoré).
+`cacheDashboard(tag)` a retrouvé son consommateur ; profil `user`, tags admin partagés.
+
+**Navigation sans lien mort** : item « Codes promo » et hub `marketing/` supprimés (le
+modèle Discount n'existe pas dans le schéma lean), `ROUTES.ADMIN.{REFUNDS,STORE_CONFIG}`
+supprimées, bloc « boutique fermée » du menu mobile retiré (sa prop n'était jamais
+passée), patterns morts d'`admin-mobile-header` et labels morts de
+`generate-breadcrumbs` purgés (+ label `retractations`).
+
+**Emails** : 5 templates, 5 émetteurs, zéro mort. L'indirection
+`modules/emails/constants/email.constants.ts` est supprimée (import direct de
+`@/shared/lib/email-config`), `EMAIL_CONTACT` et les exports refund d'`email-colors`
+purgés. `EMAIL_ADMIN_BCC` survit (branche BCC dormante — un futur émetteur d'alerte
+admin la réactive telle quelle).
+
+**`pnpm knip` PROPRE (zéro finding)** — le plus gros du lot :
+
+- **modules entiers supprimés** : `modules/addresses/` (l'adresse est collectée chez
+  Stripe — 21 fichiers), la chaîne `validate-cart` (`validate-cart.ts`,
+  `get-variant-for-validation.ts`, `variant-validation.service.ts` — le checkout fait sa
+  propre validation), les compteurs par statut (`get-{product,collection}-counts-by-status`),
+  `get-collection-price-ranges`, et ~10 composants orphelins (multi-selects
+  couleurs/matériaux, `cart-recommendations`, `purchase-tracker`, `logo-animated`…) ;
+- **tags de cache orphelins purgés** (règle « un tag a un lecteur ET un mutateur ») :
+  `VARIANT_STOCK` (son seul poseur était la chaîne validate-cart morte — 5 sites
+  d'invalidation dans le vide), `PRODUCTS_CACHE_TAGS.COUNTS`,
+  `COLLECTIONS_CACHE_TAGS.COUNTS`, et la sous-arborescence stock-invalidation morte
+  (`getStockInvalidationTags`, `collectStockInvalidationTags`,
+  `getVariantStockInvalidationTags`) qui n'était plus appelée que par ses tests ;
+- **deps désinstallées** : `jspdf`, `embla-carousel-autoplay`, `@faker-js/faker`,
+  `embla-carousel`. ⚠️ `@prisma/client` est un FAUX positif knip (le client généré
+  résout ses types dessus — retiré puis restauré, tsc casse sans lui) : justifié dans
+  `ignoreDependencies` de `knip.config.ts` ;
+- ~55 exports/types dessexportés ou supprimés ; les gardés-délibérément portent un tag
+  `@public` avec justification (knip l'honore) : `dataAccentForSlug`/`DataAccent`
+  (refonte cartes collection), factories d'intégration (lot 7+).
+
+**🐛 Bug PRÉEXISTANT corrigé (dormant depuis le lot 2)** : les formulaires
+créer/modifier produit crashaient au navigateur (error boundary, zéro champ) —
+`MediaArrayCard` pointait encore `fieldName="initialVariant.media"` /
+`"defaultVariant.media"` alors que le média a déménagé à la racine (`media`) au lot 2 ;
+TanStack Field lisait `undefined.length`. Invisible aux smokes HTTP (la page répondait
+200, l'erreur vivait dans la frontière Suspense). Détecté par le clic-through
+NAVIGATEUR (Playwright one-off) — les vérifs de statut ne suffisent pas, leçon pour le
+lot 7.
+
+**Clic-through** : les 34 routes admin vérifiées au HTTP avec cookie admin forgé
+(toutes 200, aucun écran d'erreur), + dashboard et les 2 formulaires produit vérifiés
+AU NAVIGATEUR (champs rendus, pas d'error boundary). `/admin/marketing` supprimée rend
+le not-found (statut 200 streamé, comportement documenté au lot 5).
 
 ## 4. Schéma cible (SSOT)
 

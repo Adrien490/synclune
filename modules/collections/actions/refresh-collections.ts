@@ -17,7 +17,6 @@ export async function refreshCollections(
 
 		// Invalidate all collection cache tags
 		updateTag(COLLECTIONS_CACHE_TAGS.LIST);
-		updateTag(COLLECTIONS_CACHE_TAGS.COUNTS);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		return success("Collections rafraîchies");

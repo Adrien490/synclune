@@ -111,29 +111,6 @@ function DropdownMenuItem({
 	);
 }
 
-/**
- * Base UI n'a pas d'équivalent autonome : son `Menu.GroupLabel` THROW hors d'un
- * `Menu.Group` (il y enregistre l'id pour l'`aria-labelledby` du groupe). Notre
- * label est un simple en-tête présentationnel, comme celui de Radix — un `<div>`
- * suffit et évite d'imposer un `Group` au call site.
- */
-function DropdownMenuLabel({
-	className,
-	inset,
-	...props
-}: React.ComponentProps<"div"> & {
-	inset?: boolean;
-}) {
-	return (
-		<div
-			data-slot="dropdown-menu-label"
-			data-inset={inset}
-			className={cn("px-2 py-1.5 text-sm font-medium data-[inset]:pl-8", className)}
-			{...props}
-		/>
-	);
-}
-
 /*
  * Les variantes radio (`DropdownMenuRadioGroup` / `DropdownMenuRadioItem`) ont
  * été retirées le 2026-08-06 avec leur unique consommateur (`ProductSortMenu`,
@@ -157,7 +134,6 @@ export {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 };

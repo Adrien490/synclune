@@ -23,7 +23,6 @@ export const COLLECTIONS_CACHE_TAGS = {
 	LIST: SHARED_CACHE_TAGS.COLLECTIONS_LIST,
 
 	/** Compteurs par statut */
-	COUNTS: "collection-counts",
 
 	/** Détail d'une collection spécifique */
 	DETAIL: (slug: string) => `collection-${slug}`,

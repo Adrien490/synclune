@@ -38,7 +38,7 @@ import { cn } from "@/shared/utils/cn";
  * dedicated destructive color scheme on both desktop (red item) and mobile
  * (red icon pill + label).
  */
-export type ActionMenuItem = {
+type ActionMenuItem = {
 	/** Stable key for React — usually the action name. */
 	key: string;
 	/** Primary label (French). */

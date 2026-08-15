@@ -1,7 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import { logger } from "@/shared/lib/logger";
-import {} from "@/shared/lib/prisma";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -31,7 +30,7 @@ export type QuickSearchProduct = {
 	}>;
 };
 
-export type QuickSearchSuccess = {
+type QuickSearchSuccess = {
 	kind: "success";
 	products: QuickSearchProduct[];
 	suggestion: string | null;

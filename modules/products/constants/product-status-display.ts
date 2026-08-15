@@ -6,11 +6,6 @@ export const PRODUCT_STATUS_LABELS: Record<string, string> = {
 	false: "Brouillon",
 };
 
-export const PRODUCT_STATUS_VARIANTS: Record<string, BadgeVariant> = {
-	true: "default",
-	false: "secondary",
-};
-
 export function productStatusLabel(active: boolean): string {
 	return active ? "En vente" : "Brouillon";
 }

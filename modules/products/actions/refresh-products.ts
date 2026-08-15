@@ -24,7 +24,6 @@ export async function refreshProducts(
 		// Les tags par-slug restent hors de portée ici, par construction.
 		const globalTags = [
 			PRODUCTS_CACHE_TAGS.LIST,
-			PRODUCTS_CACHE_TAGS.COUNTS,
 			PRODUCTS_CACHE_TAGS.MAX_PRICE,
 			PRODUCTS_CACHE_TAGS.VARIANTS_LIST,
 			PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,

@@ -29,9 +29,3 @@ export type ActionState =
 			retryAfter?: number;
 	  }
 	| { status: ActionStatus.INITIAL; message: string; data?: undefined };
-
-/** Type for a Server Action compatible with useActionState */
-export type ServerActionFn = (
-	prevState: ActionState | undefined,
-	formData: FormData,
-) => Promise<ActionState>;

@@ -4,21 +4,6 @@
  */
 
 /**
- * Get the base URL for the application
- * Works in both server and client contexts with appropriate fallbacks
- *
- * Priority:
- * 1. NEXT_PUBLIC_SITE_URL (general site URL)
- * 2. Development fallback or production URL
- */
-export function getBaseUrl(): string {
-	return (
-		process.env.NEXT_PUBLIC_SITE_URL ??
-		(process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://synclune.fr")
-	);
-}
-
-/**
  * Internal route paths
  * Centralized to avoid hardcoded strings across the codebase
  */
@@ -81,9 +66,7 @@ export const ROUTES = {
 		DASHBOARD: "/admin",
 		ORDERS: "/admin/ventes/commandes",
 		ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
-		REFUNDS: "/admin/ventes/remboursements",
 		PRODUCTS: "/admin/catalogue/produits",
-		STORE_CONFIG: "/admin/configuration/boutique",
 	},
 } as const;
 
@@ -110,14 +93,3 @@ export const EXTERNAL_URLS = {
 		PRE_ORDER: "https://schema.org/PreOrder",
 	},
 } as const;
-
-/**
- * Helper to build full URLs
- */
-export function buildUrl(path: string): string {
-	const base = getBaseUrl();
-	// Remove trailing slash from base and leading slash from path to avoid double slashes
-	const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
-	const cleanPath = path.startsWith("/") ? path : `/${path}`;
-	return `${cleanBase}${cleanPath}`;
-}

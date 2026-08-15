@@ -50,7 +50,6 @@ export const PRODUCTS_CACHE_TAGS = {
 	MAX_PRICE: "max-product-price",
 
 	/** Compteurs de produits par statut (dashboard) */
-	COUNTS: "product-counts",
 
 	/** Liste globale des VARIANTs */
 	VARIANTS_LIST: "variants-list",
@@ -64,7 +63,6 @@ export const PRODUCTS_CACHE_TAGS = {
 	VARIANT_DETAIL_BY_ID: (variantId: string) => `variant-id-${variantId}`,
 
 	/** Stock temps réel d'un VARIANT (invalidé après achat/mise à jour stock) */
-	VARIANT_STOCK: (variantId: string) => `variant-stock-${variantId}`,
 
 	/** Produits similaires publics (visiteurs non authentifiés) */
 	RELATED_PUBLIC: "related-products-public",

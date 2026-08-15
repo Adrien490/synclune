@@ -137,30 +137,6 @@ export function oklchToLinearSrgb(L: number, C: number, hDeg: number): [number, 
 	return [clamp(r), clamp(g), clamp(b)];
 }
 
-/** Encodage gamma sRGB d'un canal linéaire. */
-const encodeGamma = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
-/** Décodage gamma sRGB d'un canal 0-255. */
-const decodeGamma = (v: number) => {
-	const c = v / 255;
-	return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-};
-
-/** oklch → `#rrggbb`, la forme qu'exigent les `Appearance` de Stripe. */
-export function oklchToHex(L: number, C: number, hDeg: number): string {
-	const channels = oklchToLinearSrgb(L, C, hDeg)
-		.map((c) => Math.round(encodeGamma(c) * 255))
-		.map((v) => v.toString(16).padStart(2, "0"));
-	return `#${channels.join("")}`;
-}
-
-/** `#rrggbb` → sRGB linéaire. */
-function hexToLinearSrgb(hex: string): [number, number, number] {
-	const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
-	if (!m?.[1]) throw new Error(`Hex illisible : « ${hex} »`);
-	const int = parseInt(m[1], 16);
-	return [decodeGamma((int >> 16) & 255), decodeGamma((int >> 8) & 255), decodeGamma(int & 255)];
-}
-
 export function relativeLuminance([r, g, b]: [number, number, number]): number {
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
@@ -171,28 +147,4 @@ export function contrastRatio(a: [number, number, number], b: [number, number, n
 	const lb = relativeLuminance(b);
 	const [hi, lo] = la > lb ? [la, lb] : [lb, la];
 	return (hi + 0.05) / (lo + 0.05);
-}
-
-/** Ratio entre deux hex. */
-export const contrastHex = (a: string, b: string) =>
-	contrastRatio(hexToLinearSrgb(a), hexToLinearSrgb(b));
-
-/**
- * Aplatit `color` posée à `alpha` sur `over` — l'équivalent d'un `bg-token/N`.
- * Le mélange se fait en sRGB **gamma-encodé**, comme le compositing d'un
- * navigateur, pas en linéaire.
- */
-export function blendHex(color: string, over: string, alpha: number): string {
-	const parse = (hex: string) => {
-		const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
-		if (!m?.[1]) throw new Error(`Hex illisible : « ${hex} »`);
-		const int = parseInt(m[1], 16);
-		return [(int >> 16) & 255, (int >> 8) & 255, int & 255];
-	};
-	const [fr, fg, fb] = parse(color) as [number, number, number];
-	const [br, bg, bb] = parse(over) as [number, number, number];
-	const mix = (f: number, b: number) => Math.round(f * alpha + b * (1 - alpha));
-	return `#${[mix(fr, br), mix(fg, bg), mix(fb, bb)]
-		.map((v) => v.toString(16).padStart(2, "0"))
-		.join("")}`;
 }

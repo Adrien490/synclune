@@ -37,6 +37,7 @@ export async function createTestProduct(overrides: Partial<Product> = {}): Promi
 	});
 }
 
+/** @public Réserve des suites d'intégration (lot 7+) — exempté du rapport knip. */
 export async function createTestVariant(
 	productId: string,
 	overrides: Partial<ProductVariant> = {},
@@ -55,7 +56,7 @@ export async function createTestVariant(
 	});
 }
 
-/** Une ligne de commande — seul `variantId` est obligatoire. */
+/** @public Une ligne de commande — seul `variantId` est obligatoire. Réserve des suites d'intégration (lot 7+). */
 export interface TestOrderItemInput {
 	variantId: string;
 	productId?: string | null;
@@ -66,6 +67,7 @@ export interface TestOrderItemInput {
 	variantSnapshot?: string | null;
 }
 
+/** @public Réserve des suites d'intégration (lot 7+). */
 export type TestOrderOverrides = Partial<Omit<Prisma.OrderUncheckedCreateInput, "items">>;
 
 const DEFAULT_ITEM_PRICE = 4_999;
@@ -77,6 +79,7 @@ const DEFAULT_ITEM_PRICE = 4_999;
  * garde un `amountTotalCents` cohérent) ; un test peut forcer l'incohérence
  * en passant `amountTotalCents` explicitement.
  */
+/** @public Réserve des suites d'intégration (lot 7+) — exempté du rapport knip. */
 export async function createTestOrder(
 	items: TestOrderItemInput[],
 	overrides: TestOrderOverrides = {},

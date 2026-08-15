@@ -80,21 +80,3 @@ export async function deleteUploadThingFilesFromUrls(
 		return { deleted: 0, failed: urls.length };
 	}
 }
-
-/**
- * Delete a single UploadThing file from its URL.
- * Convenience wrapper around deleteUploadThingFilesFromUrls.
- *
- * @param url - File URL to delete (can be null/undefined)
- * @returns true if the file was deleted, false otherwise
- */
-export async function deleteUploadThingFileFromUrl(
-	url: string | null | undefined,
-): Promise<boolean> {
-	if (!url || !isValidUploadThingUrl(url)) {
-		return false;
-	}
-
-	const result = await deleteUploadThingFilesFromUrls([url]);
-	return result.deleted > 0;
-}

@@ -16,4 +16,4 @@ export type SortOption = {
  * const SORT_OPTIONS = { A: "a", B: "b" } as const;
  * const fields: ReadonlyValues<typeof SORT_OPTIONS> = Object.values(SORT_OPTIONS);
  */
-export type ReadonlyValues<T extends Record<string, unknown>> = readonly T[keyof T][];
+type ReadonlyValues<T extends Record<string, unknown>> = readonly T[keyof T][];

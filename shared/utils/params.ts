@@ -57,16 +57,3 @@ export const getAllParamsIn = <const T extends readonly string[]>(
 	const kept = values.filter((value): value is T[number] => allowedSet.has(value));
 	return kept.length > 0 ? kept : undefined;
 };
-
-/**
- * Variante mono-valeur de `getAllParamsIn` — mêmes motivations.
- */
-export const getFirstParamIn = <const T extends readonly string[]>(
-	param: string | string[] | undefined,
-	allowed: T,
-): T[number] | undefined => {
-	const value = getFirstParam(param);
-	if (value === undefined) return undefined;
-
-	return (allowed as readonly string[]).includes(value) ? (value as T[number]) : undefined;
-};

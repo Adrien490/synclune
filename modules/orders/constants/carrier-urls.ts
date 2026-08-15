@@ -90,23 +90,6 @@ const TRACKING_HOST_APEXES: readonly string[] = Object.values(CARRIER_TRACKING_U
 	new URL(build("X")).hostname.replace(/^www\./, ""),
 );
 
-/**
- * Un hôte est autorisé s'il est l'apex d'un transporteur connu ou un de ses
- * sous-domaines (`www.laposte.fr`, `trace.dpd.fr`…). La comparaison se fait sur
- * l'hôte complet suffixé d'un point — `evillaposte.fr` ne matche pas `laposte.fr`.
- *
- * Consommé par le superRefine de `markAsShippedSchema` / `updateTrackingSchema`
- * (ORD-SEC-009) : un `trackingUrl` hors de cette liste n'est accepté qu'avec
- * `carrier === "autre"` — sans cette garde, une URL arbitraire partait au client
- * dans le CTA « Suivre mon colis » de l'email d'expédition et sur la page
- * publique `/suivi-commande`, cautionnée par le domaine Synclune (redirection
- * ouverte à portée admin, différé de l'audit 2026-07-26, fermé le 2026-08-01).
- */
-export function isAllowedTrackingHost(hostname: string): boolean {
-	const host = hostname.toLowerCase();
-	return TRACKING_HOST_APEXES.some((apex) => host === apex || host.endsWith(`.${apex}`));
-}
-
 // ============================================================================
 // CARRIER DETECTION PATTERNS
 // ============================================================================

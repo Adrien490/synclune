@@ -81,25 +81,18 @@ const breadcrumbs = {
 	/**
 	 * Fixture « route de détail à id opaque, avec eyebrow parent + bouton retour ».
 	 *
-	 * C'était `/admin/clients/abc-123` ; la surface a disparu au retrait de l'espace
-	 * client (2026-07-31) et ne matche donc plus `DETAIL_ROUTE_PATTERNS`. Remplacée
-	 * par le détail remboursement, qui a exactement la même forme (id opaque, parent
-	 * nommé) et existe toujours.
+	 * C'était le détail remboursement, parti avec le schéma lean (lot 2) ;
+	 * remplacée par le détail rétractation (lot 5), qui a exactement la même
+	 * forme (id opaque, parent nommé).
 	 */
-	refundDetail: (): Segment[] => [
+	retractationDetail: (): Segment[] => [
 		{ label: "Tableau de bord", href: "/admin", isCurrentPage: false },
-		{ label: "Remboursements", href: "/admin/ventes/remboursements", isCurrentPage: false },
+		{ label: "Rétractations", href: "/admin/ventes/retractations", isCurrentPage: false },
 		{
 			label: "abc-123",
-			href: "/admin/ventes/remboursements/abc-123",
+			href: "/admin/ventes/retractations/abc-123",
 			isCurrentPage: true,
 		},
-	],
-	storeClose: (): Segment[] => [
-		{ label: "Tableau de bord", href: "/admin", isCurrentPage: false },
-		{ label: "Configuration", href: "/admin/configuration", isCurrentPage: false },
-		{ label: "Boutique", href: "/admin/configuration/boutique", isCurrentPage: false },
-		{ label: "Fermer", href: "/admin/configuration/boutique/fermer", isCurrentPage: true },
 	],
 };
 
@@ -154,8 +147,8 @@ describe("AdminMobileHeader", () => {
 
 		it("n'émet AUCUN h1 — la structure du document appartient à la page", () => {
 			setup({
-				pathname: "/admin/ventes/remboursements/abc-123",
-				segments: breadcrumbs.refundDetail(),
+				pathname: "/admin/ventes/retractations/abc-123",
+				segments: breadcrumbs.retractationDetail(),
 			});
 			render(<AdminMobileHeader />);
 			expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
@@ -177,8 +170,8 @@ describe("AdminMobileHeader", () => {
 
 		it("uses text-base when parent eyebrow shown (detail route)", () => {
 			setup({
-				pathname: "/admin/ventes/remboursements/abc-123",
-				segments: breadcrumbs.refundDetail(),
+				pathname: "/admin/ventes/retractations/abc-123",
+				segments: breadcrumbs.retractationDetail(),
 			});
 			render(<AdminMobileHeader />);
 			expect(title("abc-123").className).toContain("text-base");
@@ -187,8 +180,8 @@ describe("AdminMobileHeader", () => {
 		describe("titre publié par la page (ressources à id opaque)", () => {
 			it("préfère le titre publié au segment de breadcrumb dérivé de l'id", () => {
 				setup({
-					pathname: "/admin/ventes/remboursements/abc-123",
-					segments: breadcrumbs.refundDetail(),
+					pathname: "/admin/ventes/retractations/abc-123",
+					segments: breadcrumbs.retractationDetail(),
 				});
 				render(
 					<AdminPageTitleProvider>
@@ -203,8 +196,8 @@ describe("AdminMobileHeader", () => {
 
 			it("annonce le titre publié dans la live region, pas l'id", () => {
 				setup({
-					pathname: "/admin/ventes/remboursements/abc-123",
-					segments: breadcrumbs.refundDetail(),
+					pathname: "/admin/ventes/retractations/abc-123",
+					segments: breadcrumbs.retractationDetail(),
 				});
 				render(
 					<AdminPageTitleProvider>
@@ -242,10 +235,10 @@ describe("AdminMobileHeader", () => {
 			expect(screen.queryByRole("button", { name: "Retour" })).not.toBeInTheDocument();
 		});
 
-		it("renders back button on refund detail route", () => {
+		it("renders back button on retractation detail route", () => {
 			setup({
-				pathname: "/admin/ventes/remboursements/abc-123",
-				segments: breadcrumbs.refundDetail(),
+				pathname: "/admin/ventes/retractations/abc-123",
+				segments: breadcrumbs.retractationDetail(),
 			});
 			render(<AdminMobileHeader />);
 			expect(screen.getByRole("button", { name: "Retour" })).toBeInTheDocument();
@@ -255,8 +248,7 @@ describe("AdminMobileHeader", () => {
 			["/admin/catalogue/produits/abc", breadcrumbs.list],
 			["/admin/catalogue/produits/nouveau", breadcrumbs.list],
 			["/admin/catalogue/produits/abc/variantes/xyz", breadcrumbs.list],
-			["/admin/ventes/commandes/abc/notes", breadcrumbs.list],
-			["/admin/configuration/boutique/fermer", breadcrumbs.storeClose],
+			["/admin/ventes/commandes/abc-123", breadcrumbs.list],
 		])("renders back button on detail route %s", (pathname, segmentsFn) => {
 			setup({ pathname, segments: segmentsFn() });
 			render(<AdminMobileHeader />);
@@ -267,11 +259,11 @@ describe("AdminMobileHeader", () => {
 	describe("parent eyebrow", () => {
 		it("renders parent label as uppercase eyebrow on detail route", () => {
 			setup({
-				pathname: "/admin/ventes/remboursements/abc-123",
-				segments: breadcrumbs.refundDetail(),
+				pathname: "/admin/ventes/retractations/abc-123",
+				segments: breadcrumbs.retractationDetail(),
 			});
 			render(<AdminMobileHeader />);
-			const eyebrow = screen.getByText("Remboursements");
+			const eyebrow = screen.getByText("Rétractations");
 			expect(eyebrow.className).toContain("uppercase");
 			expect(eyebrow.className).toContain("text-2xs");
 		});
@@ -290,8 +282,8 @@ describe("AdminMobileHeader", () => {
 	describe("back button behavior", () => {
 		it("fires haptic 'light' + router.back() when history has entries", () => {
 			setup({
-				pathname: "/admin/ventes/remboursements/abc-123",
-				segments: breadcrumbs.refundDetail(),
+				pathname: "/admin/ventes/retractations/abc-123",
+				segments: breadcrumbs.retractationDetail(),
 				historyLength: 5,
 			});
 			render(<AdminMobileHeader />);
@@ -303,14 +295,14 @@ describe("AdminMobileHeader", () => {
 
 		it("falls back to router.push(parentHref) when history is empty (deep-link)", () => {
 			setup({
-				pathname: "/admin/ventes/remboursements/abc-123",
-				segments: breadcrumbs.refundDetail(),
+				pathname: "/admin/ventes/retractations/abc-123",
+				segments: breadcrumbs.retractationDetail(),
 				historyLength: 1,
 			});
 			render(<AdminMobileHeader />);
 			fireEvent.click(screen.getByRole("button", { name: "Retour" }));
 			expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
-			expect(mockRouterPush).toHaveBeenCalledWith("/admin/ventes/remboursements");
+			expect(mockRouterPush).toHaveBeenCalledWith("/admin/ventes/retractations");
 			expect(mockRouterBack).not.toHaveBeenCalled();
 		});
 	});
@@ -354,8 +346,8 @@ describe("AdminMobileHeader", () => {
 
 		it("renders SR status announcement with current page title", () => {
 			setup({
-				pathname: "/admin/ventes/remboursements/abc-123",
-				segments: breadcrumbs.refundDetail(),
+				pathname: "/admin/ventes/retractations/abc-123",
+				segments: breadcrumbs.retractationDetail(),
 			});
 			render(<AdminMobileHeader />);
 			const status = screen.getByRole("status");

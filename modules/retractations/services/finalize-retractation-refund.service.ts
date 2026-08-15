@@ -94,7 +94,6 @@ export async function finalizeRetractationRefund(params: {
 							where: { id: item.variantId },
 							data: { stock: { increment: item.quantity } },
 						});
-						tags.add(PRODUCTS_CACHE_TAGS.VARIANT_STOCK(item.variantId));
 						tags.add(PRODUCTS_CACHE_TAGS.VARIANT_DETAIL_BY_ID(item.variantId));
 					}
 				}

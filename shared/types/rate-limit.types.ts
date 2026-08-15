@@ -58,35 +58,3 @@ export interface RateLimitConfig {
 	 */
 	skipGlobalIpLimit?: boolean;
 }
-
-export interface RateLimitResult {
-	/**
-	 * Indique si la requête est autorisée
-	 */
-	success: boolean;
-
-	/**
-	 * Nombre de requêtes restantes dans la fenêtre
-	 */
-	remaining: number;
-
-	/**
-	 * Nombre total de requêtes autorisées
-	 */
-	limit: number;
-
-	/**
-	 * Timestamp (ms) de réinitialisation du compteur
-	 */
-	reset: number;
-
-	/**
-	 * Nombre de secondes avant de pouvoir réessayer (si bloqué)
-	 */
-	retryAfter?: number;
-
-	/**
-	 * Message d'erreur si rate limit dépassé
-	 */
-	error?: string;
-}

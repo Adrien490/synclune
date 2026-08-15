@@ -166,5 +166,3 @@ export const COLLECTIONS_SORT_LABELS = {
 // ============================================================================
 // STATUS LABELS
 // ============================================================================
-
-export { COLLECTION_STATUS_LABELS } from "./collection-status.constants";

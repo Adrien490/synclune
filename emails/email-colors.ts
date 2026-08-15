@@ -222,20 +222,3 @@ export const EMAIL_CLASSES = {
 	},
 	codeBlock: "email-code-block",
 } as const;
-
-/**
- * Refund delay text shared between refund and cancellation templates
- */
-export const REFUND_DELAY_TEXT = "3 à 10 jours ouvrés";
-
-/**
- * Refund reason labels shared between refund-approved and refund-confirmation emails
- */
-export const REFUND_REASON_LABELS: Record<string, string> = {
-	CUSTOMER_REQUEST: "Demande client",
-	DEFECTIVE: "Produit défectueux",
-	WRONG_ITEM: "Erreur de commande",
-	LOST_IN_TRANSIT: "Colis perdu",
-	FRAUD: "Transaction contestée",
-	OTHER: "Autre raison",
-};

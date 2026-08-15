@@ -18,12 +18,6 @@ const CONTACT_EMAIL = process.env.RESEND_CONTACT_EMAIL!;
 export const EMAIL_FROM = `Synclune <${CONTACT_EMAIL}>`;
 
 /**
- * Adresse email de contact/support
- * Utilisée pour les liens "Contactez-nous" dans les emails
- */
-export const EMAIL_CONTACT = CONTACT_EMAIL;
-
-/**
  * Adresse email admin pour les notifications
  * Utilise la même adresse que le contact
  */

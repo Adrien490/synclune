@@ -29,7 +29,6 @@ import {
 	MagnifyingGlassIcon,
 	MagnifyingGlassMinusIcon,
 	SignOutIcon,
-	StorefrontIcon,
 	XIcon,
 } from "@phosphor-icons/react/ssr";
 // `m` (et non `motion`) : l'app est enveloppée dans <LazyMotion> — importer
@@ -60,14 +59,6 @@ interface AdminMenuSheetProps {
 		email: string;
 	};
 	badges?: Record<string, number>;
-	/**
-	 * Boutique fermée (`StoreSettings.isClosed`, résolu côté layout).
-	 *
-	 * C'est le seul endroit du chrome MOBILE qui le signale : ni le header ni la
-	 * bottom bar ne le portent, et une boutique fermée par erreur ne se voit donc
-	 * qu'en ouvrant `/admin/configuration/boutique`.
-	 */
-	storeClosed?: boolean;
 }
 
 const allNavItems = getAllNavItems();
@@ -105,7 +96,7 @@ const stripDiacritics = (s: string) =>
 		.replace(/\p{Diacritic}/gu, "")
 		.toLowerCase();
 
-export function AdminMenuSheet({ user, badges, storeClosed = false }: AdminMenuSheetProps) {
+export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const { open: openShortcuts } = useDialog(KEYBOARD_SHORTCUTS_DIALOG_ID);
 	const [showLogout, setShowLogout] = useState(false);
@@ -439,11 +430,7 @@ export function AdminMenuSheet({ user, badges, storeClosed = false }: AdminMenuS
 									>
 										Ce qui t&apos;attend
 									</p>
-									<QueueBoard
-										queues={queues}
-										storeClosed={storeClosed}
-										onNavigate={handleNavClick}
-									/>
+									<QueueBoard queues={queues} onNavigate={handleNavClick} />
 								</m.section>
 
 								{/* ── Où aller ────────────────────────────────────────────── */}
@@ -698,14 +685,12 @@ export function AdminMenuSheet({ user, badges, storeClosed = false }: AdminMenuS
  */
 function QueueBoard({
 	queues,
-	storeClosed,
 	onNavigate,
 }: {
 	queues: Array<{ item: NavItem; count: number }>;
-	storeClosed: boolean;
 	onNavigate: () => void;
 }) {
-	if (!storeClosed && queues.length === 0) {
+	if (queues.length === 0) {
 		return (
 			<div className="border-border bg-background flex min-h-11 items-center gap-3 rounded-xl border px-4 py-3">
 				<CheckCircleIcon className="text-success size-5 shrink-0" aria-hidden="true" />
@@ -725,48 +710,9 @@ function QueueBoard({
 			data-accent="mint"
 			className="border-border bg-background flex overflow-hidden rounded-xl border"
 		>
-			<span
-				aria-hidden="true"
-				className={cn(
-					"w-[3px] shrink-0",
-					// Boutique fermée = tout le bloc passe en alerte : un filet menthe
-					// à côté d'une rangée rouge dirait deux choses à la fois.
-					storeClosed ? "bg-destructive" : "bg-(--section-accent)",
-				)}
-			/>
+			<span aria-hidden="true" className="w-[3px] shrink-0 bg-(--section-accent)" />
 			{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
 			<ul role="list" className="min-w-0 flex-1">
-				{storeClosed && (
-					<li>
-						<Link
-							href={ROUTES.ADMIN.STORE_CONFIG}
-							prefetch={null}
-							onClick={onNavigate}
-							className={cn(
-								"bg-destructive/5 flex min-h-14 items-center gap-3.5 px-4 py-3 transition-colors",
-								"active:bg-destructive/10",
-								// Pas de filet quand rien ne suit — sinon une bordure pendante
-								// sous la dernière rangée du bloc.
-								queues.length > 0 && "border-border/60 border-b",
-								NAV_ITEM_TACTILE_CLASS,
-							)}
-						>
-							<StorefrontIcon className="text-destructive size-5 shrink-0" aria-hidden="true" />
-							<span className="min-w-0 flex-1">
-								<span className="block text-[15px] leading-tight font-semibold">
-									La boutique est fermée
-								</span>
-								<span className="text-muted-foreground block text-xs">
-									Personne ne peut commander — rouvrir
-								</span>
-							</span>
-							<CaretRightIcon
-								className="text-muted-foreground/50 size-4 shrink-0"
-								aria-hidden="true"
-							/>
-						</Link>
-					</li>
-				)}
 				{queues.map(({ item, count }, i) => {
 					const label = queueLabel(item.id, count);
 					const Icon = item.icon;

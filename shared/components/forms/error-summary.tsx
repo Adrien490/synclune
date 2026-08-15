@@ -6,7 +6,7 @@ import { WarningCircleIcon } from "@phosphor-icons/react/ssr";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { findFirstVisible } from "@/shared/hooks/use-focus-first-error";
 
-export interface ErrorSummaryField {
+interface ErrorSummaryField {
 	/** Target element `id` — clicking the list item scrolls + focuses it. */
 	name: string;
 	/** Human-readable label shown in the link. */

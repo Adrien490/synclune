@@ -5,7 +5,7 @@ import { Resend } from "resend";
 import { withRetry } from "@/shared/utils/with-retry";
 import { resendCircuitBreaker, CircuitBreakerError } from "@/shared/lib/circuit-breaker";
 import { logger } from "@/shared/lib/logger";
-import { EMAIL_ADMIN, EMAIL_ADMIN_BCC, EMAIL_FROM } from "../constants/email.constants";
+import { EMAIL_ADMIN, EMAIL_ADMIN_BCC, EMAIL_FROM } from "@/shared/lib/email-config";
 import type { EmailResult } from "../types/email.types";
 
 /**
@@ -87,11 +87,6 @@ function lookupEmailDedup(contentHash: string): { resendId: string; sentAt: numb
 function recordEmailSent(contentHash: string, resendId: string): void {
 	pruneEmailDedupCache();
 	emailDedupCache.set(contentHash, { resendId, sentAt: Date.now() });
-}
-
-/** Test-only helper: clear the in-process dedup cache between tests. */
-export function __resetEmailDedupCacheForTests(): void {
-	emailDedupCache.clear();
 }
 
 let resendClient: Resend | null = null;

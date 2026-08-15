@@ -22,9 +22,7 @@ const SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
 	nouveau: "Nouveau",
 	modifier: "Modifier",
 	variantes: "Variantes",
-	"adresse-livraison": "Adresse de livraison",
-	"adresse-facturation": "Adresse de facturation",
-	fermer: "Fermer la boutique",
+	retractations: "Rétractations",
 };
 
 /**

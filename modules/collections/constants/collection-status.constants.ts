@@ -2,7 +2,7 @@
 // STATUS LABELS — schéma lean (lot 2) : le statut est un booléen `active`.
 // ============================================================================
 
-export const COLLECTION_STATUS_LABELS = {
+const COLLECTION_STATUS_LABELS = {
 	true: "Publiée",
 	false: "Brouillon",
 } as const;

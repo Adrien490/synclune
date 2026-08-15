@@ -73,23 +73,6 @@ export async function buildSearchConditions(
 }
 
 /**
- * Exact-only search (fallback when rate limited).
- * Exported for use by the data layer.
- */
-export function buildExactSearchConditions(search: string): SearchResult {
-	const term = search.trim();
-	if (!term) return { fuzzyIds: null, exactConditions: [] };
-
-	const words = splitSearchTerms(term);
-	if (words.length === 0) return { fuzzyIds: null, exactConditions: [] };
-
-	return {
-		fuzzyIds: null,
-		exactConditions: buildFullExactSearchConditions(words),
-	};
-}
-
-/**
  * Get word variants (original + synonyms) for a search word.
  */
 function getWordVariants(word: string): string[] {
@@ -201,7 +184,7 @@ export function buildRelatedFieldsSearchConditions(words: string[]): Prisma.Prod
 	});
 }
 
-export function buildProductFilterConditions(filters: ProductFilters): Prisma.ProductWhereInput[] {
+function buildProductFilterConditions(filters: ProductFilters): Prisma.ProductWhereInput[] {
 	const conditions: Prisma.ProductWhereInput[] = [];
 
 	// Contraintes au niveau variante (couleur + matériau + prix) accumulées dans

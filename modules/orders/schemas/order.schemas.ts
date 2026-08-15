@@ -14,7 +14,7 @@ import {
 // LISTE ADMIN
 // ============================================================================
 
-export const orderFiltersSchema = z.object({
+const orderFiltersSchema = z.object({
 	status: z.array(z.enum(ORDER_STATUSES)).optional(),
 });
 

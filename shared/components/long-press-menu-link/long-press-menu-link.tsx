@@ -58,7 +58,7 @@ interface LongPressMenuLinkProps {
  * découvrabilité qu'il faut penser à activer ne l'est jamais : il est désormais
  * rendu par défaut, et son retrait doit être explicite (`affordance={null}`).
  */
-export function DefaultLongPressAffordance() {
+function DefaultLongPressAffordance() {
 	return (
 		<DotsThreeVerticalIcon
 			className="text-muted-foreground/50 pointer-events-none absolute top-1/2 right-1 size-4 -translate-y-1/2"

@@ -95,7 +95,6 @@ export function getProductInvalidationTags(
 		// édition produit laissait ces champs périmés toute la fenêtre du profil `user`.
 		PRODUCTS_CACHE_TAGS.VARIANTS_LIST,
 		PRODUCTS_CACHE_TAGS.MAX_PRICE,
-		PRODUCTS_CACHE_TAGS.COUNTS,
 		PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,
 		PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL(productSlug),
 		// `hasProducts` / `_count.products` des types de bijoux se calculent sur les
@@ -135,110 +134,4 @@ export function getProductInvalidationTags(
 	}
 
 	return tags;
-}
-
-/**
- * Tags à invalider lors de la modification des stocks.
- *
- * SSOT unique — `modules/variants/utils/cache.utils.ts` le ré-exporte.
- *
- * ⚠️ Il existait ici une SECONDE implémentation homonyme, plus pauvre, à laquelle
- * `collectStockInvalidationTags` déléguait (audit cache 2026-07-31). Elle omettait
- * `VARIANT_DETAIL_BY_ID`, `VARIANTS_LIST` et `LIST` : toute invalidation passant par ce
- * fichier (`toggle-product-status`, `mark-as-paid`)
- * laissait donc le formulaire d'édition VARIANT sur un inventaire périmé, alors que le
- * même geste depuis `adjust-variant-stock` — qui importait l'autre version — était
- * correct. Deux helpers de même nom et de couverture différente : le call site
- * décidait de la justesse selon son import.
- *
- * ⚠️ STOCK-STALE-BASELINE-001 — ce set DOIT couvrir tout tag posé par
- * `cacheVariantDetailById` / `cacheProductVariants`. Il manquait `VARIANT_DETAIL_BY_ID` et
- * `VARIANTS_LIST`, les deux tags de `fetchVariantById` / `fetchVariantDetailById` : après un
- * ajustement de stock, le formulaire d'édition continuait de rendre l'ancien
- * inventaire pendant la fenêtre du profil `user` (60 s revalidate / 120 s stale).
- * Ce n'est pas cosmétique — ce formulaire poste ce chiffre comme
- * `originalStock`, la baseline du delta relatif : une baseline périmée fait
- * diverger le stock enregistré du stock saisi (réel 15, formulaire à 10, l'admin
- * saisit 12 ⇒ delta +2 ⇒ 17). La concurrence optimiste dépend de la fraîcheur que
- * ce helper garantit. Verrouillé par
- * `modules/variants/utils/__tests__/stock-invalidation-covers-reader.regression.test.ts`.
- */
-export function getStockInvalidationTags(
-	productSlug: string,
-	productId: string,
-	variantIds?: string[],
-): string[] {
-	const tags = [
-		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
-		PRODUCTS_CACHE_TAGS.VARIANTS(productId),
-		PRODUCTS_CACHE_TAGS.LIST,
-		PRODUCTS_CACHE_TAGS.VARIANTS_LIST,
-		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
-		SHARED_CACHE_TAGS.ADMIN_BADGES,
-	];
-
-	// Invalider le cache stock temps réel + le détail par ID de chaque VARIANT
-	if (variantIds) {
-		for (const variantId of variantIds) {
-			tags.push(PRODUCTS_CACHE_TAGS.VARIANT_STOCK(variantId));
-			tags.push(PRODUCTS_CACHE_TAGS.VARIANT_DETAIL_BY_ID(variantId));
-		}
-	}
-
-	return tags;
-}
-
-/**
- * Tags à invalider pour le stock temps réel d'un VARIANT
- *
- * Utilisé après un achat ou une mise à jour de stock.
- */
-export function getVariantStockInvalidationTags(variantId: string): string[] {
-	return [PRODUCTS_CACHE_TAGS.VARIANT_STOCK(variantId)];
-}
-
-/** VARIANT dont le stock a changé, avec son produit pour invalider la page vitrine. */
-export interface StockChangedVariant {
-	variantId: string;
-	productId?: string | null;
-	productSlug?: string | null;
-}
-
-/**
- * Tags à invalider quand le stock de plusieurs VARIANTs change (achat, restock).
- *
- * CACHE-CATALOG-002 : la page produit embarque `variants.stock` sous le tag
- * `product-${slug}` — invalider seulement VARIANT_STOCK laisse la vitrine et
- * l'inventaire admin périmés jusqu'à expiration du profil `catalog`.
- * Groupe par produit et délègue à getStockInvalidationTags ; retombe sur
- * VARIANT_STOCK seul si le produit n'est pas résolu (VARIANT orphelin).
- */
-export function collectStockInvalidationTags(variants: StockChangedVariant[]): string[] {
-	const tags = new Set<string>();
-	const variantIdsByProduct = new Map<string, { slug: string; variantIds: string[] }>();
-
-	for (const { variantId, productId, productSlug } of variants) {
-		if (productId && productSlug) {
-			const entry = variantIdsByProduct.get(productId) ?? { slug: productSlug, variantIds: [] };
-			entry.variantIds.push(variantId);
-			variantIdsByProduct.set(productId, entry);
-		} else {
-			// ⚠️ Repli DÉGRADÉ, pas équivalent : `VARIANT_STOCK(variantId)` n'est posé que par
-			// les fetchers de validation panier/checkout. La PDP ne le pose PAS (elle
-			// est sous `product-${slug}`), donc dans cette branche la vitrine garde son
-			// stock périmé toute la fenêtre `catalog` — 15 min stale, 6 h expire.
-			// Inatteignable sur le chemin nominal (le select du webhook rend toujours
-			// `product.id` + `product.slug`) ; c'est un filet pour un VARIANT dont le produit
-			// n'a pas été résolu, pas un chemin équivalent. Audit cache 2026-08-07.
-			tags.add(PRODUCTS_CACHE_TAGS.VARIANT_STOCK(variantId));
-		}
-	}
-
-	for (const [productId, { slug, variantIds }] of variantIdsByProduct) {
-		for (const tag of getStockInvalidationTags(slug, productId, variantIds)) {
-			tags.add(tag);
-		}
-	}
-
-	return Array.from(tags);
 }

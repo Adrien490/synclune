@@ -1,7 +1,7 @@
 import type { MouseEvent, ReactNode, RefObject } from "react";
 import type { SortOption } from "@/shared/types/sort.types";
 
-export type FilterOption = {
+type FilterOption = {
 	value: string;
 	label: string;
 };

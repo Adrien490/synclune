@@ -9,11 +9,7 @@
  * avec le module products.
  */
 
-import type {
-	BaseVariantForList,
-	StockStatus,
-	ProductStockInfo,
-} from "@/shared/types/product-variant.types";
+import type { BaseVariantForList } from "@/shared/types/product-variant.types";
 
 /**
  * Options pour la sélection de la variante principale
@@ -77,34 +73,4 @@ export function getPrimaryVariantForList<
 	if (representativeVariant) return representativeVariant;
 
 	return product.variants[0] ?? null;
-}
-
-/**
- * Récupère les informations de stock du produit
- */
-export function getStockInfoForList<
-	TVariant extends BaseVariantForList,
-	TProduct extends { variants?: TVariant[] | null },
->(product: TProduct): ProductStockInfo {
-	const activeVariants = product.variants?.filter((variant) => variant.active) ?? [];
-	const totalStock = activeVariants.reduce((sum, variant) => sum + variant.stock, 0);
-	const availableVariants = activeVariants.filter((variant) => variant.stock > 0).length;
-
-	let status: StockStatus;
-	let message: string;
-
-	if (totalStock === 0) {
-		status = "out_of_stock";
-		message = "Rupture de stock";
-	} else {
-		status = "in_stock";
-		message = "En stock";
-	}
-
-	return {
-		status,
-		totalStock,
-		availableVariants,
-		message,
-	};
 }
