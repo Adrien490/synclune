@@ -109,7 +109,9 @@ describe("INDEX.md ↔ manifeste (toujours vérifié — fichiers versionnés)",
 	});
 
 	it("cite les versions de SDK réellement installées", () => {
-		for (const pkg of ["stripe", "@stripe/stripe-js", "@stripe/react-stripe-js"] as const) {
+		// Lot 3 (checkout hébergé) : plus de SDK client — `@stripe/stripe-js` et
+		// `@stripe/react-stripe-js` sont désinstallés, seul le SDK serveur reste.
+		for (const pkg of ["stripe"] as const) {
 			const version = packageJson.dependencies[pkg]!.replace(/^[\^~]/, "");
 			expect(indexMd, `INDEX.md doit citer \`${pkg}@${version}\``).toContain(`${pkg}@${version}`);
 		}

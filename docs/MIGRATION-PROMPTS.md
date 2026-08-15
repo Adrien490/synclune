@@ -71,7 +71,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | 0   | Préparation du terrain                    | S      | ✅     | `migration(lot-0)` | Branche `migration-lean`, tag `pre-migration-lean`. Voir « État à la sortie du lot 0 » ci-dessous — 3 pièges d'environnement. |
 | 1   | Auth maison (purge Better Auth)           | L      | ✅     | `migration(lot-1)` | Voir « État à la sortie du lot 1 » ci-dessous.                                                                                |
 | 2   | Bascule schéma + purge + catalogue        | XL     | ✅     | `migration(lot-2)` | Voir « État à la sortie du lot 2 » ci-dessous. **Amendement en cours de lot : `ProductType` conservé (cf. D2).**              |
-| 3   | Checkout Stripe hébergé + webhooks        | L      | ⬜     | —                  |                                                                                                                               |
+| 3   | Checkout Stripe hébergé + webhooks        | L      | ✅     | `migration(lot-3)` | Voir « État à la sortie du lot 3 » ci-dessous. Port fixé par un select de pays sur /paiement ; CTA panier inchangé.           |
 | 4   | Commandes : admin, facturation Int, suivi | L      | ⬜     | —                  |                                                                                                                               |
 | 5   | Rétractation (`RetractationRequest`)      | M      | ⬜     | —                  |                                                                                                                               |
 | 6   | Dashboard, emails, polish admin           | M      | ⬜     | —                  |                                                                                                                               |
@@ -206,6 +206,65 @@ webhooks, admin-auth, route webhook, contracts). Vérification dev : accueil, /p
 /produits/bagues, PDP, /collections + détail, /favoris, /paiement (placeholder), admin
 connexion + catalogue complet (produits, variantes, couleurs, matériaux, collections,
 types-de-produits) → 200.
+
+### État à la sortie du lot 3
+
+**Le paiement fonctionne** : `createCheckoutSession`
+(`modules/payments/actions/create-checkout-session.ts`) lit le panier cookie, revalide
+chaque ligne en base, puis en transaction décrémente le stock (`updateMany`
+conditionnel `stock: { gte: qty }`, count vérifié ligne par ligne — jamais de
+read-then-write) et crée l'Order PENDING avec snapshots ; la session Stripe est créée
+APRÈS (price_data inline eur, `expires_at` +31 min, `metadata.orderId`), le
+`stripeSessionId` réel remplace un placeholder `pending_…` (colonne non nulle
+`@unique`), et un échec Stripe déclenche un rollback compensatoire (restock + delete).
+`redirect(session.url)` est hors try/catch.
+
+**Choix actés en route, à connaître aux lots suivants** :
+
+- **Frais de port : select de pays sur /paiement.** Le pays choisi fixe le
+  `shipping_option` unique ET verrouille `shipping_address_collection.allowed_countries`
+  sur ce seul pays — pas de port France payé pour une livraison allemande. Tarifs :
+  `SHIPPING_RATES` (FR 4,99 € / UE 9,50 €), inchangés. ⚠️ **Limite assumée
+  Corse/DOM-TOM** : le code postal n'est connu qu'après la création de session, donc
+  l'exclusion postale d'`isUnshippableDestination` ne s'applique plus au checkout —
+  une commande Corse peut passer au tarif FR ; Léane arbitre à la main.
+- **CTA panier inchangé** : le sheet garde son lien vers `/paiement`, devenue page de
+  récap (articles, pays, totaux) + bouton submit → action. JAMAIS de création de
+  session sur un GET (un prefetch réserverait du stock).
+- **Transitions partagées** dans
+  `modules/webhooks/services/checkout-session-transitions.service.ts`
+  (`markOrderPaidFromSession`, `cancelOrderFromExpiredSession`) : le service retourne
+  les tags, l'appelant invalide selon son contexte (webhook →
+  `revalidateTagsInBackground`, action admin → `updateTagsAfterMutation`).
+  L'idempotence est la garde `updateMany({ stripeSessionId, status: PENDING })` ;
+  restock d'`expired` dans la même transaction, exactement-une-fois.
+- **Email de confirmation** : émetteur unique
+  `modules/emails/services/send-order-confirmation.tsx` (idempotencyKey Resend
+  `order-confirm:<orderId>`), template `order-confirmation-email.tsx` adapté lean
+  (items = snapshots, adresse = colonnes `shipping*`). ⚠️ `orderNumber` affiché =
+  l'`Order.id` et `trackingUrl` = null → **le lot 4 branche `invoiceNumber` et le
+  lien de suivi HMAC**. Un échec d'email ne fait pas échouer la transition (sinon le
+  500 ferait redélivrer un event devenu no-op et l'email ne partirait jamais).
+- **`Order.email` naît `""`** (collecté par Stripe, écrit au webhook depuis
+  `customer_details` / `collected_information.shipping_details`).
+- **Réconciliation admin** : bouton « Vérifier les commandes en attente » sur
+  `/admin/ventes/commandes` (`modules/orders/actions/reconcile-pending-orders.ts`) —
+  PENDING > 24 h → `checkout.sessions.retrieve` → applique l'état réel ; traite aussi
+  les vestiges `pending_…` et les sessions `resource_missing` comme expirées.
+- **SDK client Stripe désinstallé** (`@stripe/stripe-js`, `@stripe/react-stripe-js`,
+  `shared/lib/stripe-client.ts` supprimé) — le checkout hébergé n'a aucun JS Stripe
+  côté client. `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` n'a plus de lecteur (sweep lot 9).
+  Le `pnpm remove` a aussi purgé du lockfile l'arbre orphelin de better-auth (lot 1).
+- **Tests** : `test/contract/stripe-events.contract.test.ts` recréé (2 fixtures
+  `checkout.session.*`, shape des champs consommés + parité fixtures ↔ `case` de la
+  route) ; unitaires réservation (count mismatch → rollback), transitions (rejeu
+  no-op, restock une seule fois), constructeurs purs. `docs/stripe/INDEX.md` refondu
+  (4 méthodes SDK, 2 events) — la re-curation des bundles du mirror reste à faire.
+- **Vérification** : CLI Stripe absent de la machine → parcours vérifié par script
+  (session Stripe test réelle + events SIGNÉS injectés sur la route du serveur dev) :
+  signature invalide → 400, completed → PAID + adresse + email Resend parti, rejeu →
+  no-op, expired → CANCELLED + restock, rejeu → stock stable. ⚠️ Le parcours humain
+  complet (page Stripe, carte 4242, `stripe listen`) reste à faire par Adrien.
 
 ## 4. Schéma cible (SSOT)
 

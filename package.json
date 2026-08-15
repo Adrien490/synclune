@@ -64,8 +64,6 @@
 		"@prisma/sqlcommenter-trace-context": "^7.9.0",
 		"@radix-ui/react-focus-scope": "^1.1.16",
 		"@sentry/nextjs": "^10.68.0",
-		"@stripe/react-stripe-js": "^6.8.0",
-		"@stripe/stripe-js": "^9.12.0",
 		"@tanstack/react-form": "^1.33.2",
 		"@tanstack/react-form-nextjs": "^1.33.2",
 		"@uploadthing/react": "^7.3.3",

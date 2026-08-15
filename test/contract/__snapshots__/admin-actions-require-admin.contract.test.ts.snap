@@ -18,6 +18,7 @@ exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list o
   "modules/materials/actions/refresh-materials.ts",
   "modules/materials/actions/update-material.ts",
   "modules/media/actions/delete-uploadthing-file.ts",
+  "modules/orders/actions/reconcile-pending-orders.ts",
   "modules/product-types/actions/create-product-type.ts",
   "modules/product-types/actions/delete-product-type.ts",
   "modules/product-types/actions/duplicate-product-type.ts",

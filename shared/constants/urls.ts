@@ -47,6 +47,7 @@ export const ROUTES = {
 		FAVORITES: "/favoris",
 		CHECKOUT: "/paiement",
 		CHECKOUT_RETURN: "/paiement/retour",
+		CHECKOUT_CANCEL: "/paiement/annulation",
 		// Suivi de commande invité, authentifié par token HMAC dans l'URL.
 		// C'est désormais le SEUL chemin par lequel un client consulte sa commande.
 		ORDER_TRACKING: "/suivi-commande",

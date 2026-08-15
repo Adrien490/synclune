@@ -19,14 +19,11 @@ interface OrderConfirmationEmailProps {
 	shipping: number;
 	total: number;
 	shippingAddress: ShippingAddress;
-	trackingUrl: string;
 	/**
-	 * URL directe vers le PDF de la facture (Art. 289-I CGI — mise à disposition
-	 * immédiate). Inclut un token signé pour les commandes guest. Optionnel :
-	 * absent si la commande n'a pas encore reçu son numéro de facture au moment
-	 * de l'envoi (race rare avec le webhook payment_intent.succeeded).
+	 * Lien de suivi tokenisé (HMAC). Optionnel : le suivi de commande est
+	 * réécrit au lot 4 de la migration lean — sans URL, le CTA est masqué.
 	 */
-	invoiceUrl?: string | null;
+	trackingUrl?: string | null;
 }
 
 export const OrderConfirmationEmail = ({
@@ -38,7 +35,6 @@ export const OrderConfirmationEmail = ({
 	total,
 	shippingAddress,
 	trackingUrl,
-	invoiceUrl,
 }: OrderConfirmationEmailProps) => {
 	return (
 		<EmailLayout preview={`Commande ${orderNumber} confirmée`}>
@@ -93,16 +89,15 @@ export const OrderConfirmationEmail = ({
 										color: EMAIL_COLORS.text.primary,
 									}}
 								>
-									{item.productTitle}
+									{item.name}
 								</Text>
 								<Text
 									className={EMAIL_CLASSES.text.secondary}
 									style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
 								>
-									{[item.variantSize, item.variantColor, item.variantMaterial]
-										.filter(Boolean)
-										.join(" · ")}{" "}
-									× {item.quantity}
+									{item.variantLabel
+										? `${item.variantLabel} × ${item.quantity}`
+										: `× ${item.quantity}`}
 								</Text>
 							</>
 						}
@@ -117,7 +112,7 @@ export const OrderConfirmationEmail = ({
 									color: EMAIL_COLORS.text.primary,
 								}}
 							>
-								{formatEuro(item.price * item.quantity)}
+								{formatEuro(item.unitPriceCents * item.quantity)}
 							</Text>
 						}
 					/>
@@ -163,18 +158,20 @@ export const OrderConfirmationEmail = ({
 					Livraison
 				</EmailHeading>
 				<EmailCard>
-					<Text
-						className={EMAIL_CLASSES.text.body}
-						style={{ ...EMAIL_STYLES.text.body, margin: 0 }}
-					>
-						{shippingAddress.firstName} {shippingAddress.lastName}
-					</Text>
+					{shippingAddress.name && (
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{ ...EMAIL_STYLES.text.body, margin: 0 }}
+						>
+							{shippingAddress.name}
+						</Text>
+					)}
 					<Text
 						className={EMAIL_CLASSES.text.secondary}
 						style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
 					>
-						{shippingAddress.address1}
-						{shippingAddress.address2 && `, ${shippingAddress.address2}`}
+						{shippingAddress.line1}
+						{shippingAddress.line2 && `, ${shippingAddress.line2}`}
 					</Text>
 					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 						{shippingAddress.postalCode} {shippingAddress.city},{" "}
@@ -183,22 +180,7 @@ export const OrderConfirmationEmail = ({
 				</EmailCard>
 			</Section>
 
-			<EmailCTA href={trackingUrl}>Suivre ma commande</EmailCTA>
-
-			{invoiceUrl && (
-				<Section style={{ marginTop: "12px", textAlign: "center" }}>
-					<Link
-						href={invoiceUrl}
-						style={{
-							color: EMAIL_COLORS.text.secondary,
-							textDecoration: "underline",
-							fontSize: "14px",
-						}}
-					>
-						Télécharger ma facture (PDF)
-					</Link>
-				</Section>
-			)}
+			{trackingUrl && <EmailCTA href={trackingUrl}>Suivre ma commande</EmailCTA>}
 
 			<Section style={{ marginBottom: "24px" }}>
 				<Hr style={{ ...EMAIL_STYLES.hr, margin: "0 0 16px 0" }} />
@@ -238,42 +220,34 @@ export const OrderConfirmationEmail = ({
 };
 
 OrderConfirmationEmail.PreviewProps = {
-	orderNumber: "CMD-1730000000-ABCD",
+	orderNumber: "k3x9m2p8q1r5s7t0",
 	customerName: "Marie",
 	items: [
 		{
-			productTitle: "Collier Luna en Or Rose",
-			variantColor: "Or Rose",
-			variantMaterial: "Or 18 carats",
-			variantSize: "45cm",
+			name: "Collier goutte arc-en-ciel",
+			variantLabel: "Rose bonbon · Perles de verre",
 			quantity: 1,
-			price: 8900,
+			unitPriceCents: 3800,
 		},
 		{
-			productTitle: "Boucles d'oreilles Étoile",
-			variantColor: "Argent",
-			variantMaterial: "Argent 925",
-			variantSize: null,
+			name: "Bague Nuit étoilée",
+			variantLabel: "Bleu nuit · 52 · Résine",
 			quantity: 2,
-			price: 4500,
+			unitPriceCents: 3200,
 		},
 	],
-	subtotal: 17900,
-	shipping: 490,
-	total: 18390,
+	subtotal: 10200,
+	shipping: 499,
+	total: 10699,
 	shippingAddress: {
-		firstName: "Marie",
-		lastName: "Dupont",
-		address1: "12 Rue de la Paix",
-		address2: "Appartement 4B",
+		name: "Marie Dupont",
+		line1: "12 Rue de la Paix",
+		line2: "Appartement 4B",
 		postalCode: "75002",
 		city: "Paris",
 		country: "FR",
 	},
-	trackingUrl:
-		"https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD&token=abc123def456abc123def456abc12345",
-	invoiceUrl:
-		"https://synclune.fr/api/orders/CMD-1730000000-ABCD/invoice?token=abc123def456abc123def456abc12345",
+	trackingUrl: null,
 } as OrderConfirmationEmailProps;
 
 export default OrderConfirmationEmail;
