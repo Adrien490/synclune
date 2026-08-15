@@ -70,8 +70,18 @@ describe("Le gate a11y du checkout est armé", () => {
 		for (const path of [CHECKOUT_A11Y_SPEC, KEYBOARD_SPEC]) {
 			const source = read(path);
 			if (!source.includes("/paiement")) continue;
+			// Deux façons LÉGITIMES d'arriver sur /paiement avec un panier plein :
+			// - `gotoWithSeededCart` (page object, assertion positive incluse) ;
+			// - le parcours clavier COMPLET (keyboard-purchase-flow, lot 7) : le
+			//   spec ajoute un article AU CLAVIER puis suit le lien du sheet panier
+			//   — semer par raccourci détruirait son sujet. Son garde-fou est
+			//   l'assertion positive sur le formulaire, exigée ci-dessous.
+			const seedsViaHelper = source.includes("gotoWithSeededCart");
+			const seedsViaKeyboardJourney =
+				source.includes("waitForURL(/\\/paiement/)") &&
+				/expect\(countrySelect\)\.toBeFocused|expect\(payButton\)\.toBeVisible/.test(source);
 			expect(
-				source.includes("gotoWithSeededCart"),
+				seedsViaHelper || seedsViaKeyboardJourney,
 				`${path} visite /paiement sans semer le panier — il auditerait l'état vide.`,
 			).toBe(true);
 		}
@@ -81,18 +91,12 @@ describe("Le gate a11y du checkout est armé", () => {
 		const source = read(CHECKOUT_PAGE_OBJECT);
 
 		// L'assertion est le garde-fou : sans elle, l'audit retombe en silence sur
-		// l'état vide dès que le parcours d'ajout au panier change.
-		expect(source).toMatch(/expect\(this\.emailInput\)\.toBeVisible/);
+		// l'état vide dès que le parcours d'ajout au panier change. Depuis le
+		// checkout HÉBERGÉ (lot 3), les marqueurs du vrai récapitulatif sont le
+		// select de pays et le bouton « Payer avec Stripe » (plus d'emailInput —
+		// la page n'a plus aucun champ d'adresse ni de carte).
+		expect(source).toMatch(/expect\(this\.countrySelect\)\.toBeVisible/);
 		expect(source).toMatch(/expect\(this\.emptyCartMessage\)\.toHaveCount\(0\)/);
 		expect(source).toMatch(/expect\(this\.payButton\)\.toBeVisible/);
-	});
-
-	it("audite AUSSI l'état d'erreur du formulaire", () => {
-		const source = read(CHECKOUT_A11Y_SPEC);
-		expect(
-			source.includes("état erreur"),
-			"L'état d'erreur (aria-invalid, aria-describedby, résumé) a sa propre " +
-				"sémantique — un audit qui ne voit que le formulaire vierge la rate.",
-		).toBe(true);
 	});
 });

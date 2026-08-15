@@ -11,7 +11,9 @@ import { cn } from "@/shared/utils/cn";
 const counterBadgeVariants = cva("gap-1.5 border-2 px-3 py-1.5 text-sm font-semibold", {
 	variants: {
 		status: {
-			low: "bg-success/20 text-success border-success/40",
+			// Encre assombrie au call site : `text-success` (L 0.52) tombe sous AA
+			// (~3.9:1) sur la teinte `bg-success/20` — mesuré par l'audit axe e2e.
+			low: "bg-success/20 border-success/40 text-[oklch(0.4_0.12_145)]",
 			medium: "bg-warning/20 text-warning border-warning/40",
 			high: "bg-warning/30 text-warning-foreground border-warning/50",
 			critical: "bg-destructive/20 text-destructive border-destructive/40",

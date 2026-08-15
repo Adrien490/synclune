@@ -56,7 +56,10 @@ export function SubmitButton({
 			{isPending && <Spinner presentational />}
 			<span>{isPending ? pendingLabel : idleLabel}</span>
 			{showKbdHint && !isPending && (
-				<Kbd aria-hidden="true" className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex">
+				<Kbd
+					aria-hidden="true"
+					className="bg-primary-foreground/10 text-primary-foreground ml-1 hidden lg:inline-flex"
+				>
 					⌘S
 				</Kbd>
 			)}

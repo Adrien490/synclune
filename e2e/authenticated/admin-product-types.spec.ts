@@ -1,6 +1,7 @@
 import { test, expect } from "../fixtures";
 import { TIMEOUTS } from "../constants";
 import { TEST_RUN_ID } from "../helpers/test-run";
+import { getE2ePrisma } from "../helpers/db";
 
 const PRODUCT_TYPES_URL = "/admin/catalogue/types-de-produits";
 
@@ -19,29 +20,46 @@ test.describe("Admin - Types de bijoux (page)", { tag: ["@regression"] }, () => 
 	});
 
 	test("affiche le tableau de données ou un état vide", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun type/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucun type/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 	});
 
 	test("affiche la barre de recherche", async ({ page }) => {
-		const searchInput = page.getByPlaceholder(/Rechercher par label, slug/i);
+		const searchInput = page
+			.getByPlaceholder(/Rechercher par label, slug/i)
+			.filter({ visible: true })
+			.first();
 		await expect(searchInput).toBeVisible();
 	});
 
 	test("la recherche filtre les résultats", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun type/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucun type/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de types de bijoux dans la table");
 
-		const searchInput = page.getByPlaceholder(/Rechercher par label, slug/i);
+		const searchInput = page
+			.getByPlaceholder(/Rechercher par label, slug/i)
+			.filter({ visible: true })
+			.first();
 		await searchInput.fill("zzz_inexistant_xyz");
 
-		await page.waitForTimeout(600); // debounce live search
-		const noResults = page.getByText(/aucun type|aucun résultat/i);
+		// La frappe peut précéder l'hydratation : on re-tente jusqu'à ce que l'URL
+		// porte la recherche (debounce compris).
+		await expect(async () => {
+			if (!page.url().includes("search=")) {
+				await searchInput.fill("zzz_inexistant_xyz");
+			}
+			expect(page.url()).toContain("search=");
+		}).toPass({ timeout: TIMEOUTS.DATA_LOAD });
+
+		const noResults = page
+			.getByText(/aucun type|aucun résultat/i)
+			.filter({ visible: true })
+			.first();
 		await expect(noResults).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 	});
 });
@@ -70,9 +88,13 @@ test.describe("Admin - Types de bijoux (création)", { tag: ["@regression"] }, (
 		const dialog = page.getByRole("dialog");
 		await expect(dialog).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 
-		// Submit without filling required field
-		const submitButton = dialog.getByRole("button", { name: /^Créer$/i });
-		await expect(submitButton).toBeDisabled();
+		// Le bouton n'est plus désactivé à vide : la soumission affiche l'erreur de champ.
+		const submitButton = dialog.getByRole("button", { name: /Créer le type/i });
+		await submitButton.click();
+		await expect(dialog.getByText(/label est requis/i).first()).toBeVisible({
+			timeout: TIMEOUTS.VALIDATION,
+		});
+		await expect(dialog).toBeVisible();
 	});
 
 	test("crée un nouveau type de bijou avec succès", async ({ page }) => {
@@ -86,24 +108,36 @@ test.describe("Admin - Types de bijoux (création)", { tag: ["@regression"] }, (
 		const labelInput = dialog.getByLabel(/Label/i);
 		await labelInput.fill(testLabel);
 
-		// Fill optional description
-		const descriptionInput = dialog.getByLabel(/Description/i);
-		await descriptionInput.fill("Type créé par les tests E2E automatisés.");
+		// (Plus de champ description sur le formulaire lean.)
 
 		// Submit
-		const submitButton = dialog.getByRole("button", { name: /^Créer$/i });
+		const submitButton = dialog.getByRole("button", { name: /Créer le type/i });
 		await expect(submitButton).toBeEnabled();
 		await submitButton.click();
 
-		// Dialog closes and success toast appears
 		await expect(dialog).not.toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-		const toast = page.getByText(/créé|succès/i);
-		await expect(toast.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 
-		// New entry appears in the table
-		const table = page.locator("table");
-		await expect(table).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-		await expect(page.getByText(testLabel)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		try {
+			// Doctrine : après la mutation, la BASE fait foi (le toast peut être raté).
+			const prisma = getE2ePrisma();
+			await expect
+				.poll(async () => prisma.productType.count({ where: { label: testLabel } }), {
+					timeout: TIMEOUTS.DATA_LOAD,
+				})
+				.toBe(1);
+
+			// La liste nue est cachée et paginée : on vérifie la ligne via une URL de
+			// recherche (clé de cache neuve), re-chargée tant que le stream est en retard.
+			await expect(async () => {
+				await page.goto(`${PRODUCT_TYPES_URL}?search=${encodeURIComponent(testLabel)}`);
+				await expect(page.getByText(testLabel).filter({ visible: true }).first()).toBeVisible({
+					timeout: 5000,
+				});
+			}).toPass({ timeout: 30000 });
+		} finally {
+			// Nettoyage in-spec : le teardown global ne ramasse que les commandes.
+			await getE2ePrisma().productType.deleteMany({ where: { label: testLabel } });
+		}
 	});
 });
 
@@ -114,25 +148,24 @@ test.describe("Admin - Types de bijoux (modification)", { tag: ["@regression"] }
 	});
 
 	test("ouvre le dialogue d'édition via les actions de ligne", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun type/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucun type/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de types de bijoux à modifier");
 
-		// Cibler une ligne NON SYSTÈME : un type système n'expose que « Voir (lecture
-		// seule) ». `.first()` tombait sur lui selon l'ordre de tri et le test
-		// s'auto-skippait — vert sans rien vérifier. On reconnaît un type système à son
-		// interrupteur « Actif » verrouillé.
-		const editableRow = table
+		// Migration lean : plus d'interrupteur « Actif » sur les lignes (ni de types
+		// « système » verrouillés) — la première ligne expose directement Éditer.
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		const actionsTrigger = table
 			.locator("tbody tr")
-			.filter({ has: page.locator('[role="switch"]:not([disabled])') })
-			.first();
-		const hasEditableRow = (await editableRow.count()) > 0;
-		test.skip(!hasEditableRow, "Aucun type non-système à modifier");
-
-		await editableRow.getByRole("button", { name: /Actions/i }).click();
+			.first()
+			.getByRole("button", { name: /Actions/i });
+		await expect(async () => {
+			await actionsTrigger.click();
+			await expect(page.getByRole("menuitem").first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
 		const editOption = page.getByRole("menuitem", { name: /Éditer/i });
 		await expect(editOption).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
@@ -166,18 +199,33 @@ test.describe("Admin - Types de bijoux (suppression)", { tag: ["@regression"] },
 		const dialog = page.getByRole("dialog");
 		await expect(dialog).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 		await dialog.getByLabel(/Label/i).fill(labelToDelete);
-		await dialog.getByRole("button", { name: /^Créer$/i }).click();
+		await dialog.getByRole("button", { name: /Créer le type/i }).click();
 		await expect(dialog).not.toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 
-		// Wait for the new row to appear
-		const table = page.locator("table");
-		await expect(table).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		// La base fait foi sur la création (doctrine), avant toute assertion de liste.
+		const prisma = getE2ePrisma();
+		await expect
+			.poll(async () => prisma.productType.count({ where: { label: labelToDelete } }), {
+				timeout: TIMEOUTS.DATA_LOAD,
+			})
+			.toBe(1);
+
+		// Retrouver la ligne via une URL de recherche (clé de cache neuve), re-chargée
+		// tant que le stream post-mutation est en retard.
+		const table = page.getByRole("table").first();
 		const newRow = table.locator("tbody tr").filter({ hasText: labelToDelete });
-		await expect(newRow).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		await expect(async () => {
+			await page.goto(`${PRODUCT_TYPES_URL}?search=${encodeURIComponent(labelToDelete)}`);
+			await expect(newRow).toBeVisible({ timeout: 5000 });
+		}).toPass({ timeout: 30000 });
 
 		// Step 2: Open row actions and delete
 		const actionsButton = newRow.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(page.getByRole("menuitem").first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
 		const deleteOption = page.getByRole("menuitem", { name: /Supprimer/i });
 		await expect(deleteOption).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
@@ -193,19 +241,22 @@ test.describe("Admin - Types de bijoux (suppression)", { tag: ["@regression"] },
 		});
 		await confirmButton.click();
 
-		// Step 4: Row disappears and success feedback shown
-		await expect(newRow).not.toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-		const successFeedback = page.getByText(/supprimé|succès/i);
-		await expect(successFeedback.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		// Step 4 : la suppression se vérifie en BASE (doctrine), puis la ligne disparaît
+		await expect
+			.poll(async () => prisma.productType.count({ where: { label: labelToDelete } }), {
+				timeout: TIMEOUTS.DATA_LOAD,
+			})
+			.toBe(0);
+		await expect(newRow).not.toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 	});
 
 	test("bloque la suppression si le type est lié à des produits actifs", async ({ page }) => {
 		await page.goto(PRODUCT_TYPES_URL);
 		await page.waitForLoadState("domcontentloaded");
 
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun type/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucun type/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de types dans la table");
@@ -217,7 +268,11 @@ test.describe("Admin - Types de bijoux (suppression)", { tag: ["@regression"] },
 		test.skip(!hasRowWithProducts, "Aucun type lié à des produits actifs");
 
 		const actionsButton = rowWithProducts.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(page.getByRole("menuitem").first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
 		const deleteOption = page.getByRole("menuitem", { name: /Supprimer/i });
 		if ((await deleteOption.count()) === 0) {
@@ -228,7 +283,12 @@ test.describe("Admin - Types de bijoux (suppression)", { tag: ["@regression"] },
 		const confirmDialog = page.getByRole("alertdialog");
 		await expect(confirmDialog).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 
-		// Warning message about active products should be visible
-		await expect(confirmDialog.getByText(/produit(s) actif(s)|Impossible/i)).toBeVisible();
+		// Le dialog affiche « Impossible : N produit(s) utilise(nt) encore le type… »
+		await expect(confirmDialog.getByText(/Impossible/i)).toBeVisible();
+	});
+
+	test.afterAll(async () => {
+		// Filet : ne pas laisser traîner le type si la suppression UI a échoué.
+		await getE2ePrisma().productType.deleteMany({ where: { label: labelToDelete } });
 	});
 });

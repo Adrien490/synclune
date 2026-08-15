@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
-import { ogRailMark } from "@/shared/components/og/og-marks";
+import { RAIL_STROKE_PATHS, RAIL_VIEWBOX } from "@/shared/components/hand-drawn/paths";
+import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
+import { OG_ACCENTS } from "@/shared/constants/brand-colors";
 import { BRAND_HEX } from "@/shared/constants/brand-colors";
 
 /**
@@ -64,9 +66,25 @@ export function OgShell({
 			}}
 		>
 			{/* Les quatre touches — l'ouverture du bloc titre du site, et le seul
-			    signe de marque polychrome à lui tout seul. */}
-			{/* eslint-disable-next-line @next/next/no-img-element -- Satori ne rend que <img> */}
-			<img src={ogRailMark()} alt="" width={220} height={15} />
+			    signe de marque polychrome à lui tout seul.
+			    ⚠️ SVG INLINE, pas un <img> en data-URI : en rendu RUNTIME (routes ƒ
+			    paramétriques, contrairement à la carte d'accueil ○ figée au build)
+			    Next décode la src via sharp, qui rejette le SVG (« Input buffer
+			    contains unsupported image format ») — la route répondait VIDE
+			    (« failed to pipe response »), débusqué par seo.spec au lot 7.
+			    Satori rend les éléments <svg>/<path> nativement. */}
+			<svg viewBox={RAIL_VIEWBOX} width={220} height={15}>
+				{RAIL_STROKE_PATHS.map((d, index) => (
+					<path
+						key={d}
+						d={d}
+						fill="none"
+						stroke={OG_ACCENTS[index]}
+						strokeWidth={HAND_DRAWN_STROKES.pinceau}
+						strokeLinecap="round"
+					/>
+				))}
+			</svg>
 
 			{children}
 

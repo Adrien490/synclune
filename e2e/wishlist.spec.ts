@@ -32,18 +32,29 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		expect(await wishlistButton.count(), "wishlist buttons on catalog").toBeGreaterThan(0);
 
 		const firstButton = wishlistButton.first();
-		const wasFavorited = await firstButton.getAttribute("aria-pressed");
 
-		await firstButton.click();
-		await expect(firstButton).not.toHaveAttribute("aria-busy", "true", { timeout: 5000 });
+		// L'état persisté (cookie `wishlist`) fait foi : `aria-pressed` bascule en
+		// OPTIMISTE dès le clic, et un clic pré-hydratation ne produit rien. On
+		// re-clique jusqu'à ce que le cookie bascule réellement.
+		const readCookie = async () =>
+			(await page.context().cookies()).find((c) => c.name === "wishlist")?.value ?? "";
 
-		// Toggle state should have changed
-		const isNowFavorited = await firstButton.getAttribute("aria-pressed");
-		expect(isNowFavorited).not.toBe(wasFavorited);
+		const before = await readCookie();
+		await expect(async () => {
+			if ((await readCookie()) === before) {
+				await firstButton.click();
+			}
+			expect(await readCookie()).not.toBe(before);
+		}).toPass({ timeout: 20_000 });
 
 		// Undo: restore original state to avoid accumulation
-		await firstButton.click();
-		await expect(firstButton).not.toHaveAttribute("aria-busy", "true", { timeout: 5000 });
+		const after = await readCookie();
+		await expect(async () => {
+			if ((await readCookie()) === after) {
+				await firstButton.click();
+			}
+			expect(await readCookie()).not.toBe(after);
+		}).toPass({ timeout: 20_000 });
 	});
 
 	test("ajouter un produit aux favoris depuis la page detail", async ({
@@ -60,20 +71,26 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		const wishlistButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
 		expect(await wishlistButton.count(), "wishlist button on PDP").toBeGreaterThan(0);
 
-		const wasFavorited = await wishlistButton.first().getAttribute("aria-pressed");
+		// Même garde que le test catalogue : le cookie `wishlist` fait foi.
+		const readCookie = async () =>
+			(await page.context().cookies()).find((c) => c.name === "wishlist")?.value ?? "";
 
-		await wishlistButton.first().click();
-		await expect(wishlistButton.first()).not.toHaveAttribute("aria-busy", "true", {
-			timeout: 5000,
-		});
+		const before = await readCookie();
+		await expect(async () => {
+			if ((await readCookie()) === before) {
+				await wishlistButton.first().click();
+			}
+			expect(await readCookie()).not.toBe(before);
+		}).toPass({ timeout: 20_000 });
 
 		// Undo: restore original state to avoid accumulation
-		if (wasFavorited !== "true") {
-			await wishlistButton.first().click();
-			await expect(wishlistButton.first()).not.toHaveAttribute("aria-busy", "true", {
-				timeout: 5000,
-			});
-		}
+		const after = await readCookie();
+		await expect(async () => {
+			if ((await readCookie()) === after) {
+				await wishlistButton.first().click();
+			}
+			expect(await readCookie()).not.toBe(after);
+		}).toPass({ timeout: 20_000 });
 	});
 
 	test("la page favoris affiche les produits ajoutes", async ({
@@ -92,21 +109,24 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		const wishlistButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
 		expect(await wishlistButton.count(), "wishlist button on PDP").toBeGreaterThan(0);
 
-		// Ensure the product is favorited
-		const isPressedBefore = await wishlistButton.first().getAttribute("aria-pressed");
-		if (isPressedBefore !== "true") {
-			await wishlistButton.first().click();
-			await expect(wishlistButton.first()).not.toHaveAttribute("aria-busy", "true", {
-				timeout: 5000,
-			});
-		}
+		// Ensure the product is favorited. ⚠️ `aria-pressed` bascule en OPTIMISTE
+		// dès le clic : naviguer à ce moment annule l'action serveur et le cookie
+		// n'est jamais écrit. La preuve de persistance, c'est le cookie `wishlist`.
+		await expect(async () => {
+			if ((await wishlistButton.first().getAttribute("aria-pressed")) !== "true") {
+				await wishlistButton.first().click();
+			}
+			const cookies = await page.context().cookies();
+			expect(cookies.find((c) => c.name === "wishlist")?.value ?? "").not.toBe("");
+		}).toPass({ timeout: 20_000 });
 
 		// Now check the favorites page
 		await wishlistPage.goto();
 
-		const items = await wishlistPage.getItems();
-		const itemCount = await items.count();
-		expect(itemCount).toBeGreaterThan(0);
+		// La grille arrive en streaming après `domcontentloaded` : on attend.
+		await expect
+			.poll(async () => wishlistPage.getItemCount(), { timeout: 10_000 })
+			.toBeGreaterThan(0);
 
 		// Cleanup: go back and unfavorite
 		await productCatalogPage.goto();
@@ -114,9 +134,16 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		const cleanupButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
 		if ((await cleanupButton.first().getAttribute("aria-pressed")) === "true") {
 			await cleanupButton.first().click();
-			await expect(cleanupButton.first()).not.toHaveAttribute("aria-busy", "true", {
-				timeout: 5000,
-			});
+			// Best-effort : laisse l'action serveur réécrire le cookie avant de
+			// clore le contexte (pas d'assertion — c'est du nettoyage).
+			await expect
+				.poll(
+					async () =>
+						(await page.context().cookies()).find((c) => c.name === "wishlist")?.value ?? "",
+					{ timeout: 10_000 },
+				)
+				.toBe("")
+				.catch(() => {});
 		}
 	});
 
@@ -151,26 +178,34 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		const wishlistButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
 		expect(await wishlistButton.count(), "wishlist button on PDP").toBeGreaterThan(0);
 
-		// Ensure favorited
-		const isPressed = await wishlistButton.first().getAttribute("aria-pressed");
-		if (isPressed !== "true") {
-			await wishlistButton.first().click();
-			await expect(wishlistButton.first()).not.toHaveAttribute("aria-busy", "true", {
-				timeout: 5000,
-			});
-		}
+		// Ensure favorited — même garde que ci-dessus : c'est le cookie `wishlist`
+		// qui prouve que l'action serveur a persisté le favori.
+		await expect(async () => {
+			if ((await wishlistButton.first().getAttribute("aria-pressed")) !== "true") {
+				await wishlistButton.first().click();
+			}
+			const cookies = await page.context().cookies();
+			expect(cookies.find((c) => c.name === "wishlist")?.value ?? "").not.toBe("");
+		}).toPass({ timeout: 20_000 });
 
 		// Go to favorites page
 		await wishlistPage.goto();
 
+		// La grille arrive en streaming après `domcontentloaded` : on attend.
+		await expect
+			.poll(async () => wishlistPage.getItemCount(), {
+				message: "wishlist items after adding one",
+				timeout: 10_000,
+			})
+			.toBeGreaterThan(0);
 		const itemsBefore = await wishlistPage.getItemCount();
-		expect(itemsBefore, "wishlist items after adding one").toBeGreaterThan(0);
 
 		// Remove first item — sur /favoris, tous les coeurs sont en état
 		// « Retirer … des favoris » (isInWishlist forcé à true)
 		const removeButton = page.getByRole("button", { name: /Retirer.*favoris/i }).first();
 		await removeButton.click();
-		await expect(removeButton).not.toHaveAttribute("aria-busy", "true", { timeout: 5000 });
+		// Pas d'attente sur aria-busy : l'item (et son bouton) disparaît du DOM
+		// dès le retrait optimiste — la baisse du compte ci-dessous fait foi.
 
 		// Count should have decreased or empty state should show
 		await expect(async () => {

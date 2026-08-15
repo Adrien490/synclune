@@ -74,7 +74,12 @@ export function NavMainClient({ url, tooltip, badge, badgeUrl, children }: NavMa
 			    déjà dans le nom accessible du lien ci-dessus. */}
 			{badgeCount !== null &&
 				(badgeUrl ? (
-					<SidebarMenuBadge className="pointer-events-auto p-0">
+					// `h-6 min-w-6` (24px) : la pastille CLIQUABLE doit atteindre le
+					// minimum WCAG 2.5.8 — les 20px du slot (`h-5 min-w-5`) faisaient
+					// échouer `target-size` sur toutes les pages admin dès qu'une
+					// commande était en attente (attrapé par l'audit axe e2e, lot 7).
+					// `top-1` recentre les 24px dans le bouton de 32px.
+					<SidebarMenuBadge className="pointer-events-auto h-6 min-w-6 p-0 peer-data-[size=default]/menu-button:top-1">
 						<Link
 							href={badgeUrl}
 							aria-label={`Voir les ${pendingLabel}`}

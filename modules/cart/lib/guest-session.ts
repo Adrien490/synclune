@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { CART_EXPIRATION_DAYS } from "@/modules/cart/constants/expiration";
+import { shouldUseSecureCookies } from "@/shared/lib/cookie-security";
 
 /**
  * Identifiant de session INVITÉ.
@@ -65,7 +66,7 @@ async function setGuestSessionCookie(sessionId: string): Promise<void> {
 
 	cookieStore.set(GUEST_SESSION_COOKIE_NAME, sessionId, {
 		httpOnly: true, // Pas accessible en JavaScript (protection XSS)
-		secure: process.env.NODE_ENV === "production", // HTTPS uniquement en production
+		secure: shouldUseSecureCookies(), // SSOT — cf. shared/lib/cookie-security.ts
 		sameSite: "lax", // Protection CSRF
 		maxAge: GUEST_SESSION_COOKIE_MAX_AGE,
 		path: "/",

@@ -1,6 +1,14 @@
 import { test, expect } from "./fixtures";
 import { expectNoA11yViolations } from "./helpers/axe";
 
+// Les audits photographient l'état STABLE : reduced-motion AVANT la navigation.
+// Le helper l'émule au moment de l'audit, trop tard pour une transition déjà
+// lancée (fondu d'entrée, scrim d'overlay) — axe capturait des contrastes de
+// transition fantômes (ex. 1,38:1 sur du texte à mi-fondu).
+test.beforeEach(async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+});
+
 test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
@@ -56,7 +64,9 @@ test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 	});
 
 	test("la navbar a un label aria pour la navigation principale", async ({ page }) => {
-		const mainNav = page.getByRole("navigation", { name: "Navigation principale" });
+		// `exact: true` : sur mobile, « Navigation principale de la boutique »
+		// (bottom-nav) matche aussi en mode non-exact — strict violation.
+		const mainNav = page.getByRole("navigation", { name: "Navigation principale", exact: true });
 		await expect(mainNav).toBeVisible();
 	});
 
@@ -78,11 +88,12 @@ test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 		await cartPage.openButton.focus();
 		await expect(cartPage.openButton).toBeFocused();
 
-		// Activer avec Enter
-		await cartPage.openButton.page().keyboard.press("Enter");
-
-		// Le sheet doit s'ouvrir
-		await expect(cartPage.dialog).toBeVisible();
+		// Activer avec Enter. Le handler n'existe qu'après hydratation (plus
+		// lente sur WebKit) : on re-presse jusqu'à ce que le sheet réponde.
+		await expect(async () => {
+			await cartPage.openButton.page().keyboard.press("Enter");
+			await expect(cartPage.dialog).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 15_000 });
 	});
 
 	test("le menu mobile est accessible au clavier", async ({ page }) => {
@@ -152,61 +163,12 @@ test.describe("Accessibilité - Page produits", { tag: ["@slow"] }, () => {
 
 		if (count === 0) return; // Pas de produits, test ignoré
 
-		await productCatalogPage.productLinks.first().focus();
-		await expect(productCatalogPage.productLinks.first()).toBeFocused();
-	});
-});
-
-test.describe("Accessibilité - Formulaires auth", { tag: ["@slow"] }, () => {
-	test("le formulaire de connexion a des labels associés à ses champs", async ({ authPage }) => {
-		await authPage.goto();
-
-		await expect(authPage.emailInput).toBeVisible();
-
-		const emailLabel = authPage.emailInput
-			.page()
-			.locator("label")
-			.filter({ hasText: /Email/i })
-			.first();
-		await expect(emailLabel).toBeAttached();
-	});
-
-	test("les messages d'erreur sont annoncés via aria-live", async ({ page, authPage }) => {
-		await authPage.goto();
-
-		await authPage.emailInput.fill("invalide");
-		await authPage.emailInput.blur();
-
-		/*
-		 * Ce test était ROUGE, pour deux raisons indépendantes :
-		 *
-		 * 1. Il cherchait « Format d'email invalide », chaîne qui n'existe nulle part.
-		 *    Le message réel est `EMAIL_ERROR_MESSAGES.INVALID_FORMAT`
-		 *    (`shared/schemas/email.schemas.ts`).
-		 * 2. `errorMessage.locator("..")` remontait au PARENT du nœud portant le
-		 *    texte. Or `FieldError` (`shared/components/ui/field.tsx`) place
-		 *    `role="alert" aria-live="polite"` **sur** le nœud du texte ; le parent
-		 *    est le `div.min-h-0.overflow-hidden` qui gère le collapse et n'a aucun
-		 *    attribut aria. L'assertion échouait donc même avec le bon message.
-		 *
-		 * On cible désormais l'élément `[aria-live]` qui CONTIENT le message, ce qui
-		 * reste juste que `FieldError` rende une string ou une `<ul>` de plusieurs
-		 * erreurs.
-		 */
-		const errorMessage = page.getByText(/Vérifiez le format de votre email/i);
-		await expect(errorMessage).toBeVisible();
-
-		const liveContainer = page.locator("[aria-live]").filter({ has: errorMessage });
-		await expect(liveContainer.first()).toHaveAttribute("aria-live", /(polite|assertive)/);
-	});
-
-	test("les boutons de soumission ont des textes descriptifs", async ({ authPage }) => {
-		await authPage.goto();
-
-		await expect(authPage.submitButton).toBeVisible();
-
-		const buttonText = await authPage.submitButton.textContent();
-		expect(buttonText?.trim().length).toBeGreaterThan(0);
+		// Re-focus jusqu'à tenue : sous la charge d'un run complet, WebKit peut
+		// perdre un focus() programmatique posé pendant l'hydratation.
+		await expect(async () => {
+			await productCatalogPage.productLinks.first().focus();
+			await expect(productCatalogPage.productLinks.first()).toBeFocused({ timeout: 1000 });
+		}).toPass({ timeout: 15_000 });
 	});
 });
 
@@ -250,8 +212,9 @@ test.describe("Accessibilité - Fiche produit", { tag: ["@slow"] }, () => {
 
 	test("la fiche produit a un seul h1", async ({ page }) => {
 		test.skip(!productHref, "Pas de produits dans la base");
-		const count = await page.getByRole("heading", { level: 1 }).count();
-		expect(count).toBe(1);
+		// `toHaveCount` retente : le h1 peut arriver en streaming (PPR) après
+		// `domcontentloaded`, un `count()` instantané lisait 0.
+		await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
 	});
 
 	test("les images produit ont des alt descriptifs", async ({ page }) => {
@@ -318,7 +281,6 @@ test.describe("Accessibilité - Structure des pages", { tag: ["@slow"] }, () => 
 	const pagesToCheck = [
 		{ path: "/", name: "Homepage" },
 		{ path: "/produits", name: "Catalogue" },
-		{ path: "/connexion", name: "Connexion" },
 	];
 
 	for (const { path, name } of pagesToCheck) {
@@ -346,22 +308,14 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		// Existing
 		{ path: "/", name: "Homepage" },
 		{ path: "/produits", name: "Catalogue" },
-		{ path: "/connexion", name: "Connexion" },
 		// P1 - Public critical pages
 		{ path: "/collections", name: "Collections" },
 		{ path: "/favoris", name: "Favoris" },
-		{ path: "/mot-de-passe-oublie", name: "Mot de passe oublié" },
 		{ path: "/paiement/annulation", name: "Checkout annulation" },
 		// ⚠️ Pas de `/paiement/retour` : cette page ne rend RIEN. Elle se termine
-		// toujours par un `redirect()` (vers /paiement/confirmation, /annulation ou
-		// /), donc axe analysait la page d'ARRIVÉE — quand il ne plantait pas sur
-		// « Execution context was destroyed » en course avec la navigation. Seul
-		// `retour/loading.tsx` est visible par l'utilisateur.
-		// Auth pages
-		{ path: "/reinitialiser-mot-de-passe", name: "Réinitialiser mot de passe" },
-		{ path: "/renvoyer-verification", name: "Renvoyer vérification" },
-		{ path: "/verifier-email", name: "Vérifier email" },
-		{ path: "/error", name: "Page erreur auth" },
+		// toujours par un `redirect()`, donc axe analysait la page d'ARRIVÉE — quand
+		// il ne plantait pas sur « Execution context was destroyed » en course avec
+		// la navigation. Seul `retour/loading.tsx` est visible par l'utilisateur.
 	];
 
 	for (const { path, name } of pagesToAudit) {

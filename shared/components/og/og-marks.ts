@@ -25,8 +25,6 @@ import {
 	BRUSH_STROKE_PATH,
 	BRUSH_VIEWBOX,
 	CREATION_PATHS,
-	RAIL_STROKE_PATHS,
-	RAIL_VIEWBOX,
 } from "@/shared/components/hand-drawn/paths";
 import {
 	CREATION_SCENE,
@@ -43,21 +41,6 @@ import { BRAND_HEX, OG_ACCENTS } from "@/shared/constants/brand-colors";
  */
 function toDataUri(svg: string): string {
 	return `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`;
-}
-
-/**
- * Les quatre touches de pinceau — le geste d'ouverture du bloc titre du site,
- * et le seul signe de marque qui soit polychrome à lui tout seul.
- */
-export function ogRailMark(): string {
-	const strokes = RAIL_STROKE_PATHS.map(
-		(d, index) =>
-			`<path d="${d}" fill="none" stroke="${OG_ACCENTS[index]}" stroke-width="${HAND_DRAWN_STROKES.pinceau}" stroke-linecap="round"/>`,
-	).join("");
-
-	return toDataUri(
-		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${RAIL_VIEWBOX}">${strokes}</svg>`,
-	);
 }
 
 /**

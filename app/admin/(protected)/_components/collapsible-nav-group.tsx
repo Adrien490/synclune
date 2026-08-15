@@ -43,7 +43,12 @@ export function CollapsibleNavGroup({ groupLabel, groupId, badges }: Collapsible
 					render={
 						<SidebarGroupLabel
 							id={groupId}
-							className="cursor-pointer text-xs font-semibold tracking-wider text-[color:var(--sidebar-muted-foreground)] uppercase hover:text-[color:var(--sidebar-foreground)]"
+							// Un vrai <button> : Base UI pose `aria-expanded` sur ce nœud, et
+							// un <div> sans rôle ne peut pas le porter (aria-allowed-attr,
+							// violation CRITICAL sur toutes les pages admin — axe, lot 7).
+							// Le bouton rend aussi le repli opérable au clavier.
+							render={<button type="button" />}
+							className="w-full cursor-pointer text-xs font-semibold tracking-wider text-[color:var(--sidebar-muted-foreground)] uppercase hover:text-[color:var(--sidebar-foreground)]"
 						/>
 					}
 				>

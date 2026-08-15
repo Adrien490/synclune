@@ -5,7 +5,11 @@ export default defineConfig({
 	globalTeardown: "./e2e/global-teardown.ts",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
-	retries: process.env.CI ? 2 : 0,
+	// 1 retry en local (2 en CI) : sur ~1980 tests, la queue de flakes de charge
+	// (hydratation, goto interrompu, focus volé) fait échouer 1-3 tests PAR RUN,
+	// jamais les mêmes — mesuré sur 12 runs complets au lot 7. Un test repêché
+	// reste SIGNALÉ « flaky » dans le résumé : rien n'est masqué.
+	retries: process.env.CI ? 2 : 1,
 	workers: process.env.CI ? 4 : undefined,
 	timeout: 30_000,
 	expect: { timeout: 7_000 },
@@ -34,29 +38,29 @@ export default defineConfig({
 		{
 			name: "chromium",
 			use: { ...devices["Desktop Chrome"] },
-			testIgnore: /authenticated\//,
+			testIgnore: [/authenticated\//, /__tests__\//],
 		},
 		{
 			name: "firefox",
 			use: { ...devices["Desktop Firefox"] },
-			testIgnore: [/authenticated\//, /responsive-breakpoints/],
+			testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
 		},
 		{
 			name: "webkit",
 			use: { ...devices["Desktop Safari"] },
-			testIgnore: [/authenticated\//, /responsive-breakpoints/],
+			testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
 		},
 
 		// Unauthenticated tests - Mobile
 		{
 			name: "mobile-chrome",
 			use: { ...devices["Pixel 7"] },
-			testIgnore: [/authenticated\//, /responsive-breakpoints/],
+			testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
 		},
 		{
 			name: "mobile-webkit",
 			use: { ...devices["iPhone 14"] },
-			testIgnore: [/authenticated\//, /responsive-breakpoints/],
+			testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
 		},
 
 		// Unauthenticated tests - Tablette
@@ -112,5 +116,10 @@ export default defineConfig({
 		command: process.env.CI ? "pnpm start" : "pnpm dev",
 		url: "http://localhost:3000",
 		reuseExistingServer: !process.env.CI,
+		// Le seed picsum doit passer l'optimiseur d'images même en build prod
+		// (cf. le commentaire du flag dans next.config.ts) ; et les cookies ne
+		// doivent pas être `Secure` quand la suite parle en http://localhost —
+		// WebKit les refuse en silence (cf. shared/lib/cookie-security.ts).
+		env: { E2E_ALLOW_SEED_IMAGES: "1", E2E_INSECURE_COOKIES: "1" },
 	},
 });

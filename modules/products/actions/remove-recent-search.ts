@@ -8,6 +8,7 @@ import {
 	RECENT_SEARCHES_COOKIE_MAX_AGE,
 } from "../constants/recent-searches";
 import { removeRecentSearchSchema } from "../schemas/recent-searches.schemas";
+import { shouldUseSecureCookies } from "@/shared/lib/cookie-security";
 
 /**
  * Server Action pour supprimer une recherche recente specifique
@@ -56,7 +57,7 @@ export async function removeRecentSearch(
 				maxAge: RECENT_SEARCHES_COOKIE_MAX_AGE,
 				httpOnly: true,
 				sameSite: "strict",
-				secure: process.env.NODE_ENV === "production",
+				secure: shouldUseSecureCookies(), // SSOT — cf. shared/lib/cookie-security.ts
 			});
 		}
 

@@ -1,6 +1,7 @@
 import { prisma } from "@/shared/lib/prisma";
 
 import { getProductsSchema } from "../schemas/product.schemas";
+import { resolveTaxonomyFilterSlugs } from "./resolve-filter-slugs";
 import {
 	buildProductWhereClause,
 	buildSearchConditions,
@@ -45,6 +46,7 @@ export async function countPublicProducts(params: {
 		searchResult = await buildSearchConditions(validated.search, { activeOnly: true });
 	}
 
-	const where = buildProductWhereClause(validated, searchResult);
+	const filters = (await resolveTaxonomyFilterSlugs(validated.filters)) ?? validated.filters;
+	const where = buildProductWhereClause({ ...validated, filters }, searchResult);
 	return prisma.product.count({ where });
 }

@@ -1,15 +1,13 @@
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
+import { fetchOgImageAsDataUri } from "@/shared/components/og/fetch-og-image";
 import { OgShell } from "@/shared/components/og/og-shell";
 import { BRAND_HEX } from "@/shared/constants/brand-colors";
-import { ImageResponse } from "next/og";
+import { OG_SIZE, renderOgImage } from "@/shared/components/og/render-og";
 
 // Image metadata
 export const alt = "Un bijou coloré fait main par Synclune";
-export const size = {
-	width: 1200,
-	height: 630,
-};
+export const size = { ...OG_SIZE };
 
 export const contentType = "image/png";
 
@@ -31,11 +29,10 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
 	// Fallback if product not found
 	if (!product) {
-		return new ImageResponse(
+		return renderOgImage(
 			<OgShell align="center" signature>
 				<div style={{ display: "flex", fontSize: 64, fontWeight: 600 }}>Synclune</div>
 			</OgShell>,
-			{ ...size },
 		);
 	}
 
@@ -47,9 +44,11 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
 	// Média principal via la SSOT pickPrimaryImage (première IMAGE de l'ordre
 	// canonique) : réécrire `find(...) ?? images[0]` mettrait un .mp4 dans og:image.
-	const mainImage = pickPrimaryImage(product.media)?.url;
+	// Rapatriée en data-URI validé AVANT Satori — une URL distante brute dans le
+	// `src` a déjà empoisonné le rendu OG de tout le process (cf. fetch-og-image).
+	const mainImage = await fetchOgImageAsDataUri(pickPrimaryImage(product.media)?.url);
 
-	return new ImageResponse(
+	return renderOgImage(
 		<OgShell signature>
 			<div style={{ display: "flex", alignItems: "center", gap: "56px", width: "100%" }}>
 				{mainImage ? (
@@ -98,6 +97,5 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 				</div>
 			</div>
 		</OgShell>,
-		{ ...size },
 	);
 }

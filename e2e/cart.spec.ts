@@ -167,7 +167,10 @@ test.describe("Panier — reduced motion", { tag: ["@regression"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 
 		await cartPage.open();
-		const drawer = page.locator('[data-slot="sheet-content"]').first();
+		// Sheet sur desktop, Drawer sur mobile : les deux slots portent la règle.
+		const drawer = page
+			.locator('[data-slot="sheet-content"], [data-slot="drawer-content"]')
+			.first();
 		await expect(drawer).toBeVisible();
 
 		const styles = await drawer.evaluate((el) => {

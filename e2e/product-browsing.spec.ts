@@ -32,7 +32,7 @@ test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 		const productCards = page.locator("article, [data-product-card]");
 		const emptyState = page.getByText(/aucun produit/i);
 
-		await expect(productCards.first().or(emptyState)).toBeVisible({ timeout: 5000 });
+		await expect(productCards.first().or(emptyState).first()).toBeVisible({ timeout: 5000 });
 	});
 
 	test("les cartes produit ont des liens cliquables", async ({ productCatalogPage }) => {

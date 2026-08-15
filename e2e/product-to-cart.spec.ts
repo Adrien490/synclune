@@ -1,7 +1,14 @@
 import { test, expect } from "./fixtures";
 import { requireSeedData } from "./constants";
+import { preseedCookieConsent } from "./helpers/consent";
 
 test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
+	// Sans consentement pré-seedé, le bandeau cookies (lazy) recouvre la
+	// bottom-nav mobile : le tap sur l'onglet Panier expirait en 30s.
+	test.beforeEach(async ({ page }) => {
+		await preseedCookieConsent(page);
+	});
+
 	test("naviguer vers un produit depuis le catalogue et voir les details", async ({
 		productCatalogPage,
 	}) => {
@@ -44,9 +51,14 @@ test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 			if (buttonCount > 0) {
 				await productCatalogPage.addToCartButton.first().click();
 
-				// Wait for cart feedback - either dialog or toast
+				// Wait for cart feedback - either dialog or toast. `.filter({ visible })`
+				// avant `.first()` : le live region sr-only « 1 article dans ton
+				// panier » matche aussi le texte et faisait une strict violation
+				// (puis un pick caché) sur mobile.
 				const toastOrFeedback = page.getByText(/ajouté|panier/i);
-				await expect(cartPage.dialog.or(toastOrFeedback.first())).toBeVisible({ timeout: 5000 });
+				await expect(
+					cartPage.dialog.or(toastOrFeedback).filter({ visible: true }).first(),
+				).toBeVisible({ timeout: 5000 });
 			} else {
 				// Product may require SKU selection first (variants)
 				const variantSelector = page
@@ -78,10 +90,14 @@ test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 
 		await productCatalogPage.addToCartButton.first().click();
 
-		// Wait for cart to update, then ensure it's open
-		await expect(cartPage.dialog.or(page.getByText(/ajouté|panier/i).first())).toBeVisible({
-			timeout: 5000,
-		});
+		// Wait for cart to update, then ensure it's open (cf. remarque strict
+		// mode du test précédent : le live region sr-only matche aussi).
+		await expect(
+			cartPage.dialog
+				.or(page.getByText(/ajouté|panier/i))
+				.filter({ visible: true })
+				.first(),
+		).toBeVisible({ timeout: 5000 });
 
 		if (!(await cartPage.dialog.isVisible())) {
 			await cartPage.open();
@@ -128,17 +144,22 @@ test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 
 		// Plus de champ inline (2026-08-06) : la recherche passe par le
-		// quick-search — déclencheur navbar (desktop) ou bottom-nav (mobile),
-		// même aria-label sur les deux.
+		// quick-search — déclencheur navbar (desktop, aria-label « Ouvrir la
+		// recherche rapide ») ou onglet « Rechercher » de la bottom-nav (mobile,
+		// nommé par son libellé visible, PAS d'aria-label).
 		await page.waitForFunction(() => {
-			const buttons = document.querySelectorAll('button[aria-label*="echerch"]');
+			const buttons = [...document.querySelectorAll("button")].filter((b) =>
+				/echerch/i.test(b.getAttribute("aria-label") ?? b.textContent),
+			);
 			return (
 				buttons.length > 0 &&
-				[...buttons].some((b) => Object.keys(b).some((key) => key.startsWith("__reactProps")))
+				buttons.some((b) => Object.keys(b).some((key) => key.startsWith("__reactProps")))
 			);
 		});
 		await page
 			.getByRole("button", { name: /ouvrir la recherche/i })
+			.or(page.getByRole("button", { name: /^Rechercher$/ }))
+			.filter({ visible: true })
 			.first()
 			.click();
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
@@ -151,6 +172,6 @@ test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 		const productCards = page.locator('article, [data-product-card], a[href*="/creations/"]');
 		const emptyState = page.getByText(/aucun (résultat|produit)/i);
 
-		await expect(productCards.first().or(emptyState)).toBeVisible({ timeout: 5000 });
+		await expect(productCards.first().or(emptyState).first()).toBeVisible({ timeout: 5000 });
 	});
 });

@@ -11,6 +11,7 @@ import {
 	ADMIN_SESSION_DURATION_MS,
 } from "@/modules/admin-auth/constants/admin-auth.constants";
 import { signSessionToken } from "@/modules/admin-auth/lib/session-token";
+import { shouldUseSecureCookies } from "@/shared/lib/cookie-security";
 
 const loginSchema = z.object({
 	// Longueur bornée : le mot de passe n'est jamais persisté, mais un payload
@@ -81,7 +82,7 @@ export async function login(
 		const cookieStore = await cookies();
 		cookieStore.set(ADMIN_SESSION_COOKIE, signSessionToken(expiresAtMs, authSecret), {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+			secure: shouldUseSecureCookies(), // SSOT — cf. shared/lib/cookie-security.ts
 			sameSite: "lax",
 			path: "/",
 			expires: new Date(expiresAtMs),

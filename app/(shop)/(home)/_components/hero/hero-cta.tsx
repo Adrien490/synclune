@@ -37,7 +37,20 @@ import { ROUTES } from "@/shared/constants/urls";
  */
 export function HeroCta() {
 	return (
-		<Button render={<Link href={ROUTES.SHOP.PRODUCTS} />} size="lg">
+		<Button
+			render={<Link href={ROUTES.SHOP.PRODUCTS} />}
+			size="lg"
+			// `whitespace-normal` + `h-auto min-h-12` : le socle Button pose
+			// `whitespace-nowrap` — à 200% de zoom texte sur mobile (WCAG 1.4.4),
+			// le libellé (~420px au corps 32) débordait le viewport et mettait un
+			// scroll horizontal à la PAGE. On laisse la pilule passer sur deux
+			// lignes plutôt que déborder ; à zoom normal rien ne change.
+			// `max-w-full` en plus : le lien est `inline-flex`, il se DIMENSIONNE
+			// sur son contenu — sans borne au conteneur, retirer le nowrap ne
+			// suffisait pas, la pilule s'élargissait au lieu de laisser le texte
+			// passer à la ligne (re-mesuré : 37px de débordement inchangés).
+			className="h-auto min-h-12 max-w-full whitespace-normal"
+		>
 			Découvrir la boutique
 		</Button>
 	);

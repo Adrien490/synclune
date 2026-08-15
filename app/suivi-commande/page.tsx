@@ -48,7 +48,11 @@ export default async function SuiviCommandePage({
 	// Arrivée sans lien (saisie manuelle de l'URL) : on explique, sans 404.
 	if (!commande && !token) {
 		return (
-			<main className="bg-background flex min-h-dvh items-center justify-center px-4 py-12">
+			<main
+				id="main-content"
+				tabIndex={-1}
+				className="bg-background flex min-h-dvh items-center justify-center px-4 py-12"
+			>
 				<div className="w-full max-w-md space-y-6 text-center">
 					<h1 className="font-display text-3xl font-normal tracking-tight">Suivi de commande</h1>
 					<p className="text-muted-foreground">
@@ -73,7 +77,7 @@ export default async function SuiviCommandePage({
 			: null;
 
 	return (
-		<main className="bg-background min-h-dvh px-4 py-12">
+		<main id="main-content" tabIndex={-1} className="bg-background min-h-dvh px-4 py-12">
 			<div className="mx-auto w-full max-w-lg space-y-6">
 				<div className="space-y-3 text-center">
 					<h1 className="font-display text-3xl font-normal tracking-tight">

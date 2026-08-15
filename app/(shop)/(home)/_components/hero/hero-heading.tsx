@@ -188,7 +188,14 @@ export function HeroHeading({ id }: { id: string }) {
 				<span className="whitespace-nowrap">
 					<BrushHighlight>colorés</BrushHighlight>,
 				</span>{" "}
-				<span className="whitespace-nowrap">faits un par un</span>
+				{/* Espaces INSÉCABLES + `wrap-anywhere`, plus un `whitespace-nowrap` :
+			    même soudure anti-veuve à toutes les largeurs normales, mais à 200%
+			    de zoom texte (corps 80px, WCAG 1.4.4) le groupe de ~560px débordait
+			    le viewport mobile et mettait un scroll horizontal à la PAGE — un
+			    nowrap interdit TOUTE césure, `overflow-wrap: anywhere` n'autorise
+			    la coupe qu'en dernier recours, quand la ligne ne peut plus contenir
+			    le groupe. Le test silhouette normalise les nbsp avant comparaison. */}
+				<span className="wrap-anywhere">faits un par un</span>
 			</h1>
 
 			{/* UNE seule phrase, dont les compléments desktop sont masqués sous 40rem.

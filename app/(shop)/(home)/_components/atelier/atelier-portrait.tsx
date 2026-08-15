@@ -48,7 +48,9 @@ export function AtelierPortrait({ src, alt }: { src: string | null; alt: string 
 		<figure
 			className={cn(
 				CARD_SURFACE_POLAROID,
-				"polaroid-paper enter-inview max-w-[15rem] -rotate-[1.2deg]",
+				// `min(15rem,100%)` : 15rem valent 480px à 200% de zoom texte — plus
+				// large que le viewport mobile ; le cadre se borne alors au conteneur.
+				"polaroid-paper enter-inview max-w-[min(15rem,100%)] -rotate-[1.2deg]",
 				// ⚠️ **Le tirage se dimensionnait sur la LONGUEUR DE SA LÉGENDE.** De `sm`
 				// à `lg` la colonne est un flex en rangée avec `items-start`, et rien ne
 				// réinitialisait cet alignement quand elle redevenait une colonne à `lg` :

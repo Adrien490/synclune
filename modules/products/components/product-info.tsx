@@ -47,11 +47,20 @@ export function ProductInfo({ product, isInWishlist }: ProductInfoProps) {
 				    l'attribut était de la microdata orpheline, inerte pour tout
 				    consommateur. Le nom du produit est porté par le JSON-LD
 				    (`generateStructuredData`, `Product.name`). */}
-				<h1 className="font-display text-foreground text-3xl/10 font-normal tracking-tight text-balance sm:text-4xl/12">
+				{/* `wrap-anywhere` (PAS `break-words`) : à 200% de zoom texte sur mobile
+				    (WCAG 1.4.4), un mot long du titre dépasse la colonne `min-w-0` et met
+				    un scroll horizontal à la page. `overflow-wrap: break-word` ne change
+				    pas la taille min-content de l'item flex — la colonne refusait de
+				    rétrécir et le débordement restait (93px mesurés) ; `anywhere` la
+				    change, et ne casse un mot qu'en dernier recours. */}
+				<h1 className="font-display text-foreground text-3xl/10 font-normal tracking-tight text-balance wrap-anywhere sm:text-4xl/12">
 					{product.name}
 				</h1>
 
-				<p className="text-muted-foreground flex items-center gap-1.5 text-xs sm:text-sm">
+				{/* `flex-wrap` + `min-w-0` : à 200% de zoom texte, les 3 derniers px de
+				    débordement de la fiche venaient de cette ligne icône+texte, dont le
+				    min-content excédait la colonne (WCAG 1.4.4). */}
+				<p className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-1.5 text-xs sm:text-sm">
 					<HandIcon className="size-3.5 shrink-0" aria-hidden="true" />
 					<span>Fait main, chez moi, à {BRAND.contact.location.city}</span>
 				</p>

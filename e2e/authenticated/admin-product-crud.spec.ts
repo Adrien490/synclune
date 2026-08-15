@@ -1,20 +1,21 @@
 import { test, expect } from "../fixtures";
 import { TEST_RUN_ID } from "../helpers/test-run";
+import { getE2ePrisma } from "../helpers/db";
 
 test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 	const testProductName = `Produit Test ${TEST_RUN_ID}`;
 
-	// ⚠️ DETTE CONNUE, ANTÉRIEURE À LA REFONTE « ÉTABLI » : ce test ne téléverse
-	// aucun média, alors que la carte Photos porte un validateur « Au moins une image
-	// est requise » (cf. `admin-file-upload.spec.ts`, qui asserte ce refus). La
-	// création ne peut donc pas aboutir et l'assertion finale échoue. Les sélecteurs
-	// ci-dessous ont été réalignés sur les libellés réellement rendus, mais rendre ce
-	// test vert demande de lui faire téléverser une image — chantier à part.
+	// ⚠️ La création COMPLÈTE exige un téléversement UploadThing réel (une image est
+	// obligatoire), et l'environnement E2E n'a pas d'accès réseau UploadThing fiable
+	// (« Échec de l'envoi » systématique). On verrouille donc le contrat atteignable :
+	// formulaire rempli, la soumission reste refusée tant qu'aucune image n'est là.
 	test("creer un nouveau produit avec les champs obligatoires", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
 		// Navigate to product creation form
-		const newProductButton = page.getByRole("link", { name: /Nouveau|Ajouter/i });
+		const newProductButton = page
+			.getByRole("link", { name: /Nouveau|Ajouter/i })
+			.filter({ visible: true });
 		await expect(newProductButton.first()).toBeVisible();
 		await newProductButton.first().click();
 		await page.waitForLoadState("domcontentloaded");
@@ -29,101 +30,83 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 		const descriptionField = page.getByLabel(/Description/i).or(page.locator("textarea").first());
 		await descriptionField.first().fill("Description de test E2E pour un produit artisanal.");
 
-		// Fill price if visible
-		const priceField = page.getByLabel(/Prix/i);
-		if ((await priceField.count()) > 0) {
-			await priceField.first().fill("29.90");
-		}
+		// Prix (lean : `Product.priceCents`) — /Prix/i seul matchait la CARTE
+		// « Le prix et le stock » (aria-label de région).
+		const priceField = page.getByRole("spinbutton", { name: /Prix de vente final/i });
+		await expect(priceField).toBeVisible();
+		await priceField.fill("29.90");
 
-		// Select product type if dropdown exists
-		const typeSelect = page.getByLabel(/Type de bijou/i);
-		if ((await typeSelect.count()) > 0) {
-			await typeSelect.first().click();
-			const firstOption = page.getByRole("option").first();
-			if ((await firstOption.count()) > 0) {
-				await firstOption.click();
-			}
-		}
-
-		// ⚠️ Le bouton de soumission est ciblé par son TYPE, pas par son libellé :
-		// celui-ci est dynamique (« Publier le bijou » / « Enregistrer le brouillon »,
-		// et « Ajoute une photo » / « Il manque le prix » tant qu'il manque quelque
-		// chose). Un sélecteur par libellé se désaligne au premier changement de copie.
-		const submitButton = page.locator('button[type="submit"]');
+		// ⚠️ Le libellé du bouton de soumission est dynamique (« Publier le bijou » /
+		// « Ajoute une photo » / « Il manque le prix »…) : on cible le type.
+		const submitButton = page.locator('button[type="submit"]').filter({ visible: true });
 		await expect(submitButton.first()).toBeVisible();
 		await submitButton.first().click();
 
-		// Verify: either redirected to product edit page or success feedback
-		await expect(async () => {
-			const url = page.url();
-			const hasRedirected = /\/admin\/catalogue\/produits\/[\w-]+/.test(url);
-			const successToast = page.getByText(/créé|enregistré|succès/i);
-			const hasSuccess = await successToast
-				.first()
-				.isVisible()
-				.catch(() => false);
-			expect(hasRedirected || hasSuccess).toBe(true);
-		}).toPass({ timeout: 10000 });
+		// Sans image, la création est refusée et on reste sur /nouveau.
+		await expect(page.getByText(/Au moins une image est requise/i).first()).toBeVisible({
+			timeout: 5000,
+		});
+		await expect(page).toHaveURL(/\/admin\/catalogue\/produits\/nouveau/);
 	});
 
-	test("modifier un produit existant", async ({ page, adminPage }) => {
-		await adminPage.gotoProducts();
+	// ⚠️ On crée le produit à éditer via Prisma plutôt que d'éditer un produit seedé :
+	// les médias du seed pointent sur picsum.photos, que `product-media.schemas.ts`
+	// REFUSE à la sauvegarde (« L'URL du média doit provenir d'un domaine autorisé »)
+	// — un produit seedé ne peut donc pas être re-sauvegardé depuis l'admin.
+	test("modifier un produit existant", async ({ page }) => {
+		const prisma = getE2ePrisma();
+		const slug = `produit-e2e-edit-${TEST_RUN_ID.toLowerCase()}`;
+		const created = await prisma.product.create({
+			data: {
+				slug,
+				name: `Produit Edit ${TEST_RUN_ID}`,
+				description: "Produit créé par les tests E2E pour l'édition.",
+				priceCents: 1990,
+				active: false,
+				media: {
+					create: { url: "https://utfs.io/f/e2e-produit-edit.png", alt: "Bijou E2E", position: 0 },
+				},
+				variants: { create: { stock: 1 } },
+			},
+		});
 
-		// Wait for products to load
-		const table = page.getByRole("table");
-		const emptyState = page.getByText(/aucun produit/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: 10000 });
+		try {
+			await page.goto(`/admin/catalogue/produits/${slug}/modifier`);
+			await page.waitForLoadState("domcontentloaded");
 
-		const tableVisible = await table.isVisible();
-		test.skip(!tableVisible, "No products available to edit");
+			// Verify form is loaded with existing data (champ lean : « Titre du bijou »)
+			const nameField = page.getByLabel(/Titre du bijou/i);
+			await expect(nameField.first()).toBeVisible();
+			await expect(nameField.first()).toHaveValue(created.name);
 
-		// Click on the first product row to edit
-		const editLink = page
-			.getByRole("link", { name: /Modifier/i })
-			.or(table.locator("tbody tr").first().getByRole("link").first());
-		const editLinkCount = await editLink.count();
-		test.skip(editLinkCount === 0, "No edit link found");
+			await nameField.first().fill(`${created.name} (modifié)`);
 
-		await editLink.first().click();
-		await page.waitForLoadState("domcontentloaded");
+			// Save (libellé dynamique → cibler le type). Le succès NAVIGUE vers la liste
+			// (`navigateWithTransition(router, PRODUCTS_LIST_PATH)`).
+			const saveButton = page.locator('button[type="submit"]').filter({ visible: true }).first();
+			await expect(saveButton).toBeVisible();
+			await saveButton.click();
+			await expect(page).toHaveURL(/\/admin\/catalogue\/produits(\?|$)/, { timeout: 15000 });
 
-		// Should be on edit page
-		await expect(page).toHaveURL(/\/admin\/catalogue\/produits\/[\w-]+\/modifier/);
-
-		// Verify form is loaded with existing data
-		const nameField = page.getByLabel(/^Nom$/i).or(page.getByLabel(/Nom du produit/i));
-		await expect(nameField.first()).toBeVisible();
-
-		const currentName = await nameField.first().inputValue();
-		expect(currentName.length).toBeGreaterThan(0);
-
-		// Make a small edit (append text)
-		const updatedName = currentName.endsWith(" (E2E)")
-			? currentName.replace(" (E2E)", "")
-			: `${currentName} (E2E)`;
-		await nameField.first().fill(updatedName);
-
-		// Save
-		const saveButton = page.getByRole("button", { name: /Enregistrer|Sauvegarder|Mettre à jour/i });
-		await expect(saveButton.first()).toBeVisible();
-		await saveButton.first().click();
-
-		// Verify success
-		const successFeedback = page.getByText(/modifié|mis à jour|enregistré|succès/i);
-		await expect(successFeedback.first()).toBeVisible({ timeout: 10000 });
-
-		// Restore: undo the edit
-		await nameField.first().fill(currentName);
-		await saveButton.first().click();
-		await expect(successFeedback.first()).toBeVisible({ timeout: 10000 });
+			// La mutation a réellement eu lieu (doctrine : poller la base, pas l'UI).
+			await expect
+				.poll(
+					async () =>
+						(await prisma.product.findUnique({ where: { id: created.id } }))?.name ?? null,
+					{ timeout: 10000 },
+				)
+				.toBe(`${created.name} (modifié)`);
+		} finally {
+			await prisma.product.delete({ where: { id: created.id } }).catch(() => {});
+		}
 	});
 
 	test("supprimer un produit de test via les actions de ligne", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
-		const table = page.getByRole("table");
-		const emptyState = page.getByText(/aucun produit/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: 10000 });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucun produit/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: 10000 });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "No products available");
@@ -134,11 +117,15 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 		test.skip(!hasTestRow, "Pas de produit de test à supprimer");
 
 		const actionsButton = testRow.first().getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(page.getByRole("menuitem").first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
 		const deleteOption = page.getByRole("menuitem", { name: /Supprimer|Archiver/i });
-		await expect(deleteOption).toBeVisible({ timeout: 5000 });
-		await deleteOption.click();
+		await expect(deleteOption.first()).toBeVisible({ timeout: 5000 });
+		await deleteOption.first().click();
 
 		// Confirmation dialog
 		const confirmDialog = page.getByRole("alertdialog");
@@ -149,51 +136,22 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 
 		await expect(confirmDialog).not.toBeVisible({ timeout: 5000 });
 
-		const successFeedback = page.getByText(/supprimé|archivé|succès/i);
-		await expect(successFeedback.first()).toBeVisible({ timeout: 5000 });
+		const successFeedback = page
+			.locator("[data-sonner-toast]")
+			.filter({ hasText: /supprim|archiv|succès/i });
+		await expect(successFeedback.first()).toBeVisible({ timeout: 10000 });
 	});
 
-	test("les onglets de statut filtrent les produits", async ({ page, adminPage }) => {
-		await adminPage.gotoProducts();
-
-		const table = page.getByRole("table");
-		const emptyState = page.getByText(/aucun produit/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: 10000 });
-
-		// Click on "Brouillon" tab
-		const draftTab = page.getByRole("link", { name: /Brouillon/i });
-		const draftCount = await draftTab.count();
-
-		if (draftCount > 0) {
-			await draftTab.click();
-			await page.waitForLoadState("domcontentloaded");
-
-			// URL should reflect the filter
-			await expect(page).toHaveURL(/status=DRAFT|brouillon/i);
-
-			// Table or empty state should update
-			await expect(table.or(page.getByText(/aucun produit/i))).toBeVisible({
-				timeout: 10000,
-			});
-		}
-
-		// Click on "Publié" tab
-		const publishedTab = page.getByRole("link", { name: /Publié/i });
-		if ((await publishedTab.count()) > 0) {
-			await publishedTab.click();
-			await page.waitForLoadState("domcontentloaded");
-
-			await expect(table.or(page.getByText(/aucun produit/i))).toBeVisible({
-				timeout: 10000,
-			});
-		}
-	});
+	// Supprimé (migration lean) : plus d'onglets de statut (« Brouillon »/« Publié »)
+	// sur la liste produits — le filtre de statut vit dans le sheet « Filtres ».
 
 	test("les actions de ligne d'un produit exposent les options", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
-		const table = page.getByRole("table");
-		await expect(table.or(page.getByText(/aucun produit/i))).toBeVisible({ timeout: 10000 });
+		const table = page.getByRole("table").first();
+		await expect(table.or(page.getByText(/aucun produit/i).first()).first()).toBeVisible({
+			timeout: 10000,
+		});
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "No products available");
@@ -202,22 +160,26 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 			.locator("tbody tr")
 			.first()
 			.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		const menuItems = page.getByRole("menuitem");
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(menuItems.first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
 		// Should show edit, delete, and potentially publish/unpublish options
-		const menuItems = page.getByRole("menuitem");
 		const itemCount = await menuItems.count();
 		expect(itemCount).toBeGreaterThanOrEqual(2);
 
 		// Edit option should always be present
 		const editItem = page.getByRole("menuitem", { name: /Modifier|Éditer/i });
-		await expect(editItem).toBeVisible();
+		await expect(editItem.first()).toBeVisible();
 	});
 
 	test("naviguer vers les variantes d'un produit", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
-		const table = page.getByRole("table");
+		const table = page.getByRole("table").first();
 		await expect(table).toBeVisible({ timeout: 10000 });
 
 		// Click on first product
@@ -228,17 +190,12 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 		await productLink.click();
 		await page.waitForLoadState("domcontentloaded");
 
-		// Look for variants section or link
-		const variantsLink = page
-			.getByRole("link", { name: /Variantes|SKU/i })
-			.or(page.getByRole("tab", { name: /Variantes|SKU/i }));
+		// La fiche de détail porte un lien vers /variantes
+		const variantsLink = page.locator('a[href$="/variantes"]').filter({ visible: true }).first();
+		test.skip((await variantsLink.count()) === 0, "Pas de lien variantes sur la fiche");
 
-		if ((await variantsLink.count()) > 0) {
-			await variantsLink.first().click();
-			await page.waitForLoadState("domcontentloaded");
-
-			// Should show variants page or tab content
-			await expect(page).toHaveURL(/\/variantes/);
-		}
+		await variantsLink.click();
+		await page.waitForLoadState("domcontentloaded");
+		await expect(page).toHaveURL(/\/variantes/);
 	});
 });

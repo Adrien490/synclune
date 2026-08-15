@@ -9,17 +9,23 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 	});
 
 	test("la galerie est visible sur la page produit", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
 		await expect(gallery).toBeVisible();
 	});
 
 	test("la galerie a les attributs ARIA corrects", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
 		await expect(gallery).toHaveAttribute("aria-label", /Galerie photos/);
 	});
 
 	test("la galerie affiche au moins une image", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
 		const images = gallery.locator("img");
 		const count = await images.count();
 		expect(count).toBeGreaterThan(0);
@@ -32,22 +38,28 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 	// deux surfaces sont vérifiées SÉPARÉMENT — un `or` ne peut plus masquer la
 	// disparition de l'une des deux.
 	test("le compteur d'images est visible quand il y a plusieurs images", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
-		const images = gallery.locator("img");
-		const imgCount = await images.count();
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
+		// Le nombre de VUES se lit sur les vignettes (tablist) : compter les <img>
+		// gonflerait le total (vignettes + slides pour les mêmes médias).
+		const tabs = gallery.locator('[role="tablist"]').first().locator('[role="tab"]');
+		const viewCount = await tabs.count();
 
-		if (imgCount > 1) {
+		if (viewCount > 1) {
 			// Le numéro de vue vit dans la réserve basse du carton, à toutes les
 			// tailles (l'ancienne pastille de verre était `hidden sm:block`).
 			await expect(gallery.getByTestId("gallery-counter")).toBeVisible();
 			await expect(gallery.getByTestId("gallery-counter")).toHaveText(
-				new RegExp(`1\\s*/\\s*${imgCount}`),
+				new RegExp(`1\\s*/\\s*${viewCount}`),
 			);
 		}
 	});
 
 	test("la région live annonce la vue courante", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
 		const liveRegion = gallery.locator('[role="status"][aria-live="polite"]');
 
 		await expect(liveRegion).toHaveCount(1);
@@ -55,8 +67,13 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 	});
 
 	test("les vignettes sont affichées quand il y a plusieurs images", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
-		const thumbnails = gallery.locator('[role="tablist"]');
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
+		// `.filter({ visible: true })` : deux tablists coexistent (colonne desktop
+		// + rail mobile), chacun masqué par media query hors de son viewport — le
+		// `.first()` nu tombait sur le desktop caché en projet mobile.
+		const thumbnails = gallery.locator('[role="tablist"]').filter({ visible: true });
 
 		const images = gallery.locator("img");
 		const imgCount = await images.count();
@@ -70,8 +87,10 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 	});
 
 	test("cliquer sur une vignette change l'image active", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
-		const tablist = gallery.locator('[role="tablist"]').first();
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
+		const tablist = gallery.locator('[role="tablist"]').filter({ visible: true }).first();
 		const tabs = tablist.locator('[role="tab"]');
 		const tabCount = await tabs.count();
 
@@ -89,7 +108,9 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 	});
 
 	test("la région live annonce le changement d'image", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
 		const liveRegion = gallery.locator('[role="status"][aria-live="polite"]');
 
 		await expect(liveRegion).toBeAttached();
@@ -99,8 +120,10 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 	});
 
 	test("la navigation clavier fonctionne dans la galerie", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
-		const tablist = gallery.locator('[role="tablist"]').first();
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
+		const tablist = gallery.locator('[role="tablist"]').filter({ visible: true }).first();
 		const tabs = tablist.locator('[role="tab"]');
 		const tabCount = await tabs.count();
 
@@ -121,8 +144,10 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 	});
 
 	test("les vignettes ont des aria-label accessibles", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
-		const tablist = gallery.locator('[role="tablist"]').first();
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
+		const tablist = gallery.locator('[role="tablist"]').filter({ visible: true }).first();
 		const tabs = tablist.locator('[role="tab"]');
 		const tabCount = await tabs.count();
 
@@ -134,8 +159,10 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 	});
 
 	test("les touches Home et End naviguent vers la première et dernière image", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
-		const tablist = gallery.locator('[role="tablist"]').first();
+		// `.first()` : pendant le streaming/hydratation PPR, la région peut être
+		// brièvement dupliquée dans le DOM — le strict mode partirait en violation.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
+		const tablist = gallery.locator('[role="tablist"]').filter({ visible: true }).first();
 		const tabs = tablist.locator('[role="tab"]');
 		const tabCount = await tabs.count();
 

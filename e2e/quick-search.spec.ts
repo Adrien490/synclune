@@ -27,6 +27,20 @@ import { test, expect } from "./fixtures";
  * En **mode idle**, le roving déplace le **focus DOM réel** (`[data-qs-option]:focus`)
  * et il n'y a PAS d'`aria-activedescendant` — c'est l'état correct, pas un défaut.
  */
+/**
+ * Le déclencheur VISIBLE du viewport courant : la barre de la navbar est
+ * `hidden lg:inline-flex` (desktop), la bottom-nav porte l'onglet
+ * « Rechercher » (mobile) — le locator desktop seul rendait les 13 tests
+ * du dialog inexécutables sur mobile-chrome/mobile-webkit.
+ */
+function quickSearchTrigger(page: Page) {
+	return page
+		.getByRole("button", { name: /ouvrir la recherche rapide/i })
+		.or(page.getByRole("button", { name: /^Rechercher$/ }))
+		.filter({ visible: true })
+		.first();
+}
+
 test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
@@ -35,16 +49,19 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 
 	test("Cmd+K opens the dialog and focuses the search input", async ({ page }) => {
 		const modifier = process.platform === "darwin" ? "Meta" : "Control";
-		await page.keyboard.press(`${modifier}+KeyK`);
-
-		await expect(page.getByRole("dialog")).toBeVisible();
+		// Le listener clavier n'existe qu'après hydratation : on re-presse
+		// jusqu'à ce que le dialog réponde.
+		await expect(async () => {
+			await page.keyboard.press(`${modifier}+KeyK`);
+			await expect(page.getByRole("dialog")).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 15_000 });
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await expect(input).toBeFocused();
 	});
 
 	test("trigger button opens the dialog", async ({ page }) => {
-		const trigger = page.getByRole("button", { name: /ouvrir la recherche rapide/i }).first();
+		const trigger = quickSearchTrigger(page);
 		await trigger.click();
 
 		await expect(page.getByRole("dialog")).toBeVisible();
@@ -53,10 +70,7 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	});
 
 	test("typing less than 3 characters shows the hint", async ({ page }) => {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await input.fill("ba");
@@ -65,10 +79,7 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	});
 
 	test("typing a query activates search mode (combobox aria-expanded=true)", async ({ page }) => {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await input.fill("bague");
@@ -78,7 +89,7 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	});
 
 	test("Escape closes the dialog and restores focus to the trigger", async ({ page }) => {
-		const trigger = page.getByRole("button", { name: /ouvrir la recherche rapide/i }).first();
+		const trigger = quickSearchTrigger(page);
 		await trigger.click();
 
 		const dialog = page.getByRole("dialog");
@@ -90,10 +101,7 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	});
 
 	test("pressing Enter on a typed query navigates to /produits?search=...", async ({ page }) => {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await input.fill("bague");
@@ -103,10 +111,7 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	});
 
 	test("the results container becomes a listbox only in search mode", async ({ page }) => {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		const listbox = page.getByRole("listbox", { name: /résultats de recherche/i });
 		// Champ vide → mode idle : le conteneur existe mais n'est pas un listbox.
@@ -151,19 +156,13 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	test("the idle panel always offers a route to the full catalogue", async ({ page }) => {
 		// Contrepartie du passage de l'onglet 2 en bouton : le CTA doit être rendu en
 		// permanence, pas seulement dans la branche `!hasContent` (quasi morte).
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		await expect(page.getByRole("link", { name: /voir tous les produits/i })).toBeVisible();
 	});
 
 	test("unlikely query shows zero-result empty state with category pills", async ({ page }) => {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await input.fill("zxqvwpnmjk");
@@ -179,10 +178,7 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	 * assertion, l'autre se skippait systématiquement.
 	 */
 	test("ArrowDown moves aria-activedescendant through the results", async ({ page }) => {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await input.fill("bague");
@@ -218,10 +214,7 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	});
 
 	test("Enter on the active option navigates to the product", async ({ page }) => {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await input.fill("bague");
@@ -248,10 +241,7 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 	test("ArrowDown in idle mode moves real focus, and typing returns to the field", async ({
 		page,
 	}) => {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await expect(input).toBeFocused();
@@ -278,7 +268,11 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 		const hasFixedSearchAction = jsonLdPayloads.some((raw) => {
 			try {
 				const parsed = JSON.parse(raw);
-				const data = Array.isArray(parsed) ? parsed : [parsed];
+				// Les nœuds vivent désormais dans un `@graph` unique par page.
+				const roots = Array.isArray(parsed) ? parsed : [parsed];
+				const data = roots.flatMap((entry) =>
+					Array.isArray(entry?.["@graph"]) ? entry["@graph"] : [entry],
+				);
 				return data.some(
 					(entry) =>
 						entry?.potentialAction?.["@type"] === "SearchAction" &&
@@ -315,10 +309,7 @@ test.describe("Quick Search RGPD consent", { tag: ["@critical"] }, () => {
 	}
 
 	async function submitSearch(page: Page, term: string) {
-		await page
-			.getByRole("button", { name: /ouvrir la recherche rapide/i })
-			.first()
-			.click();
+		await quickSearchTrigger(page).click();
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await input.fill(term);
 		await page.keyboard.press("Enter");

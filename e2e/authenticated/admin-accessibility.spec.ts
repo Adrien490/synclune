@@ -10,8 +10,7 @@ test.describe("Accessibilité - Pages admin", { tag: ["@slow"] }, () => {
 		{ path: "/admin/catalogue/couleurs", name: "Couleurs" },
 		{ path: "/admin/catalogue/materiaux", name: "Matériaux" },
 		{ path: "/admin/ventes/commandes", name: "Commandes admin" },
-		{ path: "/admin/ventes/remboursements", name: "Remboursements" },
-		{ path: "/admin/marketing/discounts", name: "Discounts" },
+		{ path: "/admin/ventes/retractations", name: "Rétractations" },
 		{ path: "/admin/catalogue/types-de-produits", name: "Types de produits" },
 	];
 
@@ -142,13 +141,13 @@ test.describe("Accessibilité - Pages admin", { tag: ["@slow"] }, () => {
 		await expectNoA11yViolations(page, { context: "Détail collection admin" });
 	});
 
-	// Lot 2 S3.3 : la page « Nouveau remboursement » n'existe plus (Stripe-first).
-	// L'audit couvre à la place la page Maintenance introduite au Lot 1.
-	test("Maintenance admin passe l'audit axe-core WCAG AA", async ({ page }) => {
-		await page.goto("/admin/configuration/maintenance");
+	// Migration lean : plus de page Maintenance ni de remboursements — l'audit
+	// couvre à la place le détail d'une rétractation via la liste (lot 5).
+	test("Liste des rétractations passe l'audit axe-core WCAG AA", async ({ page }) => {
+		await page.goto("/admin/ventes/retractations");
 		await page.waitForLoadState("domcontentloaded");
 
-		await expectNoA11yViolations(page, { context: "Maintenance" });
+		await expectNoA11yViolations(page, { context: "Rétractations" });
 	});
 });
 

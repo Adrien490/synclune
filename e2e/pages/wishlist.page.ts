@@ -16,7 +16,10 @@ export class WishlistPage {
 	}
 
 	async goto() {
-		await this.page.goto("/favoris");
+		// Un goto() lancé pendant qu'une navigation cliente du router est encore
+		// en vol est avorté (« interrupted by another navigation », constaté sous
+		// la charge d'un run complet) — on retente une fois.
+		await this.page.goto("/favoris").catch(() => this.page.goto("/favoris"));
 		await this.page.waitForLoadState("domcontentloaded");
 	}
 

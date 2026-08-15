@@ -83,7 +83,12 @@ function AddToCartFormInner({ product, selectedVariant }: AddToCartFormProps) {
 			<Button
 				type="submit"
 				className={cn(
-					"w-full tracking-wide shadow-lg",
+					// `whitespace-normal h-auto min-h-*` : le socle Button pose
+					// `whitespace-nowrap` — à 200% de zoom texte sur mobile
+					// (WCAG 1.4.4), « Ajouter au panier » débordait le viewport
+					// (14px, mesuré sur webkit) ; on laisse le libellé passer sur
+					// deux lignes plutôt que déborder.
+					"h-auto min-h-12 w-full tracking-wide whitespace-normal shadow-lg",
 					// Style amélioré pour meilleur contraste
 					"bg-primary can-hover:hover:bg-primary/90",
 					"text-primary-foreground font-semibold",

@@ -75,7 +75,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | 4   | Commandes : admin, facturation Int, suivi | L      | ✅     | `migration(lot-4)` | Voir « État à la sortie du lot 4 » ci-dessous.                                                                                |
 | 5   | Rétractation (`RetractationRequest`)      | M      | ✅     | `migration(lot-5)` | Voir « État à la sortie du lot 5 » ci-dessous.                                                                                |
 | 6   | Dashboard, emails, polish admin           | M      | ✅     | `migration(lot-6)` | Voir « État à la sortie du lot 6 » ci-dessous.                                                                                |
-| 7   | E2E refonte                               | L      | ⬜     | —                  |                                                                                                                               |
+| 7   | E2E refonte                               | L      | ✅     | `migration(lot-7)` | Voir « État à la sortie du lot 7 » ci-dessous. Suite verte multi-navigateurs en 10,3 min (build prod local).                  |
 | 8   | Seed conforme à la DA                     | S/M    | ⬜     | —                  | peut s'exécuter dès la fin du lot 2                                                                                           |
 | 9   | Documentation finale (CLAUDE.md) + sweep  | M      | ⬜     | —                  |                                                                                                                               |
 
@@ -441,6 +441,96 @@ lot 7.
 (toutes 200, aucun écran d'erreur), + dashboard et les 2 formulaires produit vérifiés
 AU NAVIGATEUR (champs rendus, pas d'error boundary). `/admin/marketing` supprimée rend
 le not-found (statut 200 streamé, comportement documenté au lot 5).
+
+### État à la sortie du lot 7
+
+**Suite Playwright refondée et VERTE en local, multi-navigateurs** : 1983 tests sur 9 projets
+(chromium, firefox, webkit, mobile-chrome, mobile-webkit, tablet-portrait, tablet-landscape,
+setup, authenticated-admin) — **1823 passed / 0 failed / 4 flaky (repêchés au retry, signalés)
+/ 156 skipped en 10,3 min** (`pnpm e2e`, build de prod local). `pnpm validate` vert
+(7290 tests unitaires). `retries: 1` en local (2 en CI) : sur ~1980 tests, la queue de flakes
+de charge fait échouer 1-3 tests par run, jamais les mêmes (mesuré sur 12 runs complets) —
+un repêché reste signalé « flaky », rien n'est masqué.
+
+**Purge** : 24 specs de surfaces mortes supprimés (auth Better Auth, checkout Elements,
+async-payment, payment-failure, guest-cart-merge, cron/, admin-refunds/discounts/shop-config/
+order-lifecycle, factories/test-data, pages/auth.page). `auth.setup.ts` réécrit sur l'auth
+maison (formulaire /admin/connexion, storageState).
+
+**Nouveaux specs** : `checkout-hosted.spec.ts` (redirect checkout.stripe.com, extraction
+cs_test, webhooks SIGNÉS `generateTestHeaderString` rejoués en POST direct — completed → PAID
+
+- facture + confirmation + panier vidé ; expired → CANCELLED + restock + rejeu no-op ; timeout
+  90s, vrais allers-retours Stripe), `retractation.spec.ts` (parcours public token HMAC),
+  `admin-orders`/`admin-retractations` (workflows admin), `admin-login`, smoke = accueil → fiche
+  → panier → redirect Stripe. Helpers : `helpers/db.ts` (Prisma direct),
+  `helpers/stripe-webhook.ts` (payloads signés), `helpers/consent.ts` (pré-seed localStorage du
+  consentement — le bandeau lazy recouvrait la bottom-nav mobile et faisait flapper les
+  snapshots), `helpers/axe.ts` (reduced-motion + exclusion des focus guards Base UI).
+
+**Environnement d'exécution** : suite contre BUILD DE PROD local (`pnpm build` + `pnpm start`,
+le dev server sature sous les workers). Deux flags d'env opt-in, jamais actifs sans être posés :
+
+- `E2E_ALLOW_SEED_IMAGES=1` (build-time, next.config.ts) — le seed picsum passe l'optimiseur ;
+- `E2E_INSECURE_COOKIES=1` (runtime, SSOT `shared/lib/cookie-security.ts`, 7 écrivains) —
+  WebKit REFUSE en silence un cookie `Secure` posé depuis http://localhost (Chromium
+  l'accepte), ce qui rendait panier/favoris/session inertes sur les projets webkit
+  (~30 specs rouges).
+
+**🐛 Bugs PRODUIT corrigés (débusqués par la suite, invisibles aux tests unitaires)** :
+
+1. **ConfirmDialog inerte au navigateur** : le Close Base UI avale la soumission native —
+   preventDefault + requestSubmit (toutes les confirmations admin touchées ; JSDOM passait).
+2. **Filtres couleur/matériau « 0 pièce »** : l'URL porte le slug, le SQL comparait le name —
+   résolution slug→name (`modules/products/data/resolve-filter-slugs.ts`).
+3. **Cartes OG paramétriques MORTES après incident** : sous charge longue, une instance
+   satori/resvg avortée EMPOISONNE le process — toutes les cartes suivantes répondaient vides
+   (« failed to pipe response » / « Input buffer contains unsupported image format ») jusqu'au
+   redémarrage. Trois défenses : photo produit rapatriée en data-URI VALIDÉ avant Satori
+   (`shared/components/og/fetch-og-image.ts`), rail OgShell en SVG inline (le décodage du
+   data-URI `<img>` échouait en rendu runtime), et surtout `renderOgImage()`
+   (`shared/components/og/render-og.tsx`) : pré-rendu en buffer DANS le handler (échec
+   attrapable, contrairement au streaming) + carte générique pré-chauffée au chargement du
+   module en repli — la route ne ferme plus jamais la connexion au crawler.
+4. **WCAG 1.4.4 (zoom texte 200%)** : huit sources de scroll horizontal page entière
+   corrigées — pastille quick-add (boîte de layout du centrage `left-1/2 -translate-x`
+   comptée par scrollWidth → `inset-x` + flex), copie des étapes atelier (`break-words`),
+   note en marge du polaroid (`overflow-x-clip` sur la section + cap `min(15rem,100%)`),
+   groupe insécable du h1 héros (nbsp + `wrap-anywhere` au lieu de `whitespace-nowrap` —
+   test silhouette amendé), h1 fiche (`wrap-anywhere` : `break-word` ne change pas le
+   min-content d'un item flex), CTA héros et bouton « Ajouter au panier »
+   (`whitespace-normal` + `max-w-full` : le socle Button pose nowrap), ligne « Fait main »
+   (`flex-wrap`).
+5. **WCAG 2.5.8** : pastille cliquable de la sidebar admin 20px → 24px (`target-size`
+   échouait sur TOUTES les pages admin dès qu'une commande était en attente).
+6. **Contrastes admin** : hint 3:4 (`/80` retiré), compteur médias (encre assombrie),
+   Kbd ⌘S blanc sur bouton rose (encre primary-foreground).
+7. **Checkbox de filtre sans nom accessible au SSR** : un `<label>` HTML ne nomme pas un
+   `role="checkbox"` (span Base UI) et la liaison n'arrive qu'à l'hydratation —
+   `aria-labelledby` déterministe posé dès le SSR (`checkbox-filter-item`).
+8. **`.mov` accepté par le picker** : les deux `onPickerFiles` filtrent désormais
+   `isValidMediaType` avant mise en file.
+
+**Limites d'engins DOCUMENTÉES dans les specs (pas des bugs)** : politique Safari du Tab
+(liens et boutons sautés — skips webkit sur skip-links/tab-order), Base UI ne rend pas le
+focus au déclencheur à la fermeture sous WebKit (assertion gatée, à re-vérifier au bump de
+`@base-ui/react`), Enter suit le lien du mega-menu sous Firefox (ArrowDown ouvre — pas de
+perte WCAG 2.1.1), élection du porteur LCP spécifique Chromium, premier tap tactile =
+ouverture du panneau (skips `isMobile` sur les tests « clic souris »).
+
+**2 `test.fixme()` produits assumés** : étal mobile 7-12px sous le pli (arbitrage DA),
+`sidebar_state` non relu au premier paint (PPR shell).
+
+**Leçons re-utilisables** (chacune a coûté un run complet) : les listes admin cachées
+(profil `user`) rendent invisible une ligne créée par Prisma → passer par `?search=` (clé de
+cache neuve) ; `notFound()` streamé = contenu 404 sous HTTP 200 → asserter le CONTENU ; axe
+photographie les fondus d'entrée → reduced-motion AVANT la navigation (pas seulement avant
+l'audit — les staggers lisent la préférence au montage) ; un `.or()` non filtré casse en
+strict mode dès qu'un état existe en double (mobile+desktop) ; un clic pré-hydratation part
+dans le vide → toPass avec re-clic ; les données créées par un PROJET parallèle changent
+l'UI d'un autre (badge sidebar, tables non vides, stock des cartes) → locators tolérants et
+snapshots sans bandeau lazy ; les artefacts Playwright (rapport HTML, traces) doivent être
+ignorés d'ESLint/Prettier, pas seulement de git.
 
 ## 4. Schéma cible (SSOT)
 

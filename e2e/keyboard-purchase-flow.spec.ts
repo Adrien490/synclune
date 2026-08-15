@@ -75,70 +75,19 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 			await expect(checkoutLink).toBeFocused();
 			await page.keyboard.press("Enter");
 
-			// 4. Checkout page
-			// Même race que plus haut : `waitForLoadState` rend la main avant que la
-			// navigation ne démarre, et l'assertion courait contre l'URL de la fiche
-			// produit.
+			// 4. Checkout page — HÉBERGÉ (lot 3) : la page n'a plus que le select
+			// « Pays de livraison » et le bouton « Payer avec Stripe ». Le parcours
+			// clavier s'arrête ici : la suite se joue sur checkout.stripe.com.
 			await page.waitForURL(/\/paiement/);
 
-			// Tab through checkout form fields
-			const fullNameInput = page.getByLabel(/Nom complet|Prénom et nom/i);
-			if ((await fullNameInput.count()) > 0) {
-				await fullNameInput.focus();
-				await expect(fullNameInput).toBeFocused();
-				await fullNameInput.fill("Marie Dupont");
+			const countrySelect = page.getByLabel(/Pays de livraison/i);
+			await countrySelect.focus();
+			await expect(countrySelect).toBeFocused();
 
-				// Tab to next field
-				await page.keyboard.press("Tab");
-				const activeTag = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
-				expect(["input", "select", "textarea"]).toContain(activeTag);
-			}
-
-			// ⚠️ Il n'y a PAS de case « j'accepte les CGV » dans ce tunnel :
-			// l'acceptation est implicite (« En commandant, tu acceptes… » + lien).
-			// Le bloc qui cherchait `getByLabel(/conditions générales|J'accepte/i)`
-			// retombait donc sur le LIEN CGV — non cochable — et n'a jamais pu rien
-			// prouver. Vérifié au rendu : les 10 contrôles du formulaire sont 8
-			// champs de saisie et 2 selects, aucune case à cocher.
+			await page.keyboard.press("Tab");
+			const payButton = page.getByRole("button", { name: /Payer avec Stripe/i });
+			await expect(payButton).toBeVisible();
 		}
-	});
-
-	test("validation des erreurs de formulaire checkout au clavier", async ({
-		page,
-		checkoutPage,
-		productCatalogPage,
-		cartPage,
-	}) => {
-		// ⚠️ Ce test skippait EN SILENCE : `/paiement` ne redirige pas sur panier
-		// vide, donc la garde d'URL ne se déclenchait jamais, mais l'état « panier
-		// vide » n'a aucun bouton de soumission — d'où un `test.skip` systématique.
-		// Le panier doit être semé pour que le formulaire existe.
-		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
-		requireSeedData(test, !seeded.skipped, seeded.skipped ? seeded.reason : "");
-		if (seeded.skipped) return;
-
-		await checkoutPage.payButton.focus();
-		await page.keyboard.press("Enter");
-
-		// Les champs invalides sont marqués et reliés à leur message.
-		const summary = page.getByRole("alert").filter({ hasText: /erreurs? trouvée/ });
-		await expect(summary).toBeVisible();
-		expect(await page.locator('[aria-invalid="true"]').count()).toBeGreaterThan(0);
-
-		// ⚠️ UNE seule région live doit parler. Avant le 2026-08-07, sept se
-		// peuplaient dans le même tick (le résumé `assertive` + une `role="alert"`
-		// par champ) et le lecteur d'écran les bousculait toutes.
-		const speaking = await page.evaluate(
-			() =>
-				Array.from(document.querySelectorAll("[aria-live],[role=status],[role=alert]")).filter(
-					(el) => el.textContent.trim().length > 0,
-				).length,
-		);
-		expect(speaking, "Une seule région live doit vocaliser à la soumission").toBe(1);
-
-		// Et le focus atterrit sur le résumé, pas sur un champ : c'est lui qui porte
-		// les boutons de saut vers chaque erreur.
-		await expect(summary).toBeFocused();
 	});
 
 	test("navigation clavier dans la galerie produit", async ({ page }) => {
@@ -154,14 +103,21 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 
 		// Look for thumbnail buttons in the product gallery
+		// ⚠️ `.filter({ visible: true })` : la PDP rend plusieurs copies de la
+		// galerie (bascules CSS) — le `.first()` nu tombait sur une miniature
+		// masquée, que `focus()` ne peut pas atteindre (« inactive »).
 		const thumbnails = page
 			.locator(
 				"button[aria-label*='miniature' i], button[aria-label*='thumbnail' i], [data-gallery] button, [role='tablist'] button",
 			)
+			.filter({ visible: true })
 			.first();
 		if ((await thumbnails.count()) === 0) {
 			// Try generic image gallery buttons
-			const galleryButtons = page.locator("[data-gallery] button, .gallery button").first();
+			const galleryButtons = page
+				.locator("[data-gallery] button, .gallery button")
+				.filter({ visible: true })
+				.first();
 			if ((await galleryButtons.count()) === 0) {
 				test.skip(true, "Pas de galerie avec miniatures");
 				return;
@@ -174,54 +130,14 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		await thumbnails.focus();
 		await expect(thumbnails).toBeFocused();
 
-		// Tab to next thumbnail
+		// Tab to next thumbnail. WebKit suit la politique Safari : Tab saute les
+		// boutons/liens et retombe sur <body> — on l'admet là-bas uniquement.
 		await page.keyboard.press("Tab");
 		const focusedTag = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
-		expect(["button", "a", "img"]).toContain(focusedTag);
-	});
-
-	test("le focus ne sort pas du formulaire checkout pendant la saisie", async ({
-		page,
-		checkoutPage,
-		productCatalogPage,
-		cartPage,
-	}) => {
-		// Même défaut que ci-dessus, doublé d'un `if (inputCount === 0) return`
-		// qui rendait le test VERT sur l'état « panier vide » (zéro champ).
-		// `/paiement` ne redirige pas non plus vers `/connexion` : le parcours
-		// d'achat est entièrement invité depuis le 2026-07-31.
-		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
-		requireSeedData(test, !seeded.skipped, seeded.skipped ? seeded.reason : "");
-		if (seeded.skipped) return;
-
-		const formInputs = page.locator("form input, form select, form textarea");
-		const inputCount = await formInputs.count();
-		expect(inputCount, "Le formulaire de checkout doit exposer des champs").toBeGreaterThan(0);
-
-		// Focus the first input
-		await formInputs.first().focus();
-
-		// Tab through all form fields — each Tab should stay in a form element
-		for (let i = 0; i < Math.min(inputCount, 8); i++) {
-			await page.keyboard.press("Tab");
-			const isFormElement = await page.evaluate(() => {
-				const el = document.activeElement;
-				if (!el) return false;
-				return (
-					["INPUT", "SELECT", "TEXTAREA", "BUTTON"].includes(el.tagName) ||
-					el.getAttribute("role") === "checkbox" ||
-					el.getAttribute("role") === "combobox"
-				);
-			});
-			// We accept buttons too (submit, checkbox labels)
-			if (!isFormElement) {
-				// It's OK if focus goes to a button or link within the form context
-				const isStillInForm = await page.evaluate(() => {
-					const el = document.activeElement;
-					return el?.closest("form") !== null || el.closest("main") !== null;
-				});
-				expect(isStillInForm, `Tab ${i + 1}: focus has left the form area`).toBe(true);
-			}
-		}
+		const allowed =
+			test.info().project.name.includes("webkit") || test.info().project.name.includes("mobile")
+				? ["button", "a", "img", "body"]
+				: ["button", "a", "img"];
+		expect(allowed).toContain(focusedTag);
 	});
 });

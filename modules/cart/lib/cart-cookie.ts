@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { CART_EXPIRATION_DAYS } from "@/modules/cart/constants/expiration";
 import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
+import { shouldUseSecureCookies } from "@/shared/lib/cookie-security";
 
 /**
  * Cookie du panier : SSOT du panier depuis le retrait de la base (2026-08-04),
@@ -159,7 +160,7 @@ export async function writeCartCookie(cart: CartCookieValue): Promise<void> {
 
 	cookieStore.set(CART_COOKIE_NAME, JSON.stringify(payload), {
 		httpOnly: true, // Pas accessible en JavaScript (protection XSS)
-		secure: process.env.NODE_ENV === "production", // HTTPS en production uniquement
+		secure: shouldUseSecureCookies(), // SSOT — cf. shared/lib/cookie-security.ts
 		sameSite: "lax", // Protection CSRF
 		maxAge: CART_COOKIE_MAX_AGE,
 		path: "/",

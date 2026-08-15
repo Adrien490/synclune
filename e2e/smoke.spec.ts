@@ -1,4 +1,6 @@
 import { test, expect } from "./fixtures";
+import { expireSessionViaWebhook } from "./helpers/stripe-webhook";
+import { getE2ePrisma } from "./helpers/db";
 
 test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 	test("homepage loads with correct title", async ({ page }) => {
@@ -19,7 +21,7 @@ test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 		await expect(heading).toBeVisible();
 	});
 
-	const criticalRoutes = ["/", "/produits", "/collections", "/connexion"];
+	const criticalRoutes = ["/", "/produits", "/collections", "/admin/connexion"];
 
 	for (const route of criticalRoutes) {
 		test(`${route} returns 200`, async ({ page }) => {
@@ -29,8 +31,13 @@ test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 	}
 
 	test("404 page renders for unknown routes", async ({ page }) => {
-		const response = await page.goto("/cette-page-nexiste-pas");
-		expect(response?.status()).toBe(404);
+		// Une route de premier niveau inconnue tombe dans le default-deny du proxy
+		// (307 → `/`) : le contenu 404 ne se rend que sous un segment public
+		// dynamique (`/creations/[slug]`).
+		await page.goto("/creations/cette-page-nexiste-pas");
+		await expect(
+			page.getByRole("heading", { name: /n'existe plus|Erreur 404|perdu/i }),
+		).toBeVisible();
 	});
 
 	test("static assets load correctly", async ({ page }) => {
@@ -42,5 +49,40 @@ test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 			return window.getComputedStyle(document.body).fontFamily;
 		});
 		expect(bodyFontFamily).toBeTruthy();
+	});
+
+	/**
+	 * Le parcours minimal du nouveau monde (lot 3) : accueil → fiche → panier
+	 * → /paiement → redirect checkout.stripe.com. On ne pilote JAMAIS la page
+	 * hébergée. Chromium seul : chaque passage crée une vraie session Stripe
+	 * test et réserve du stock — la session est expirée (event signé) puis la
+	 * commande nettoyée.
+	 */
+	test("parcours minimal : accueil → fiche → panier → redirect Stripe", async ({
+		page,
+		browserName,
+		checkoutPage,
+		productCatalogPage,
+		cartPage,
+	}) => {
+		test.skip(browserName !== "chromium", "Effets de bord (session Stripe + stock)");
+		test.skip(
+			!process.env.STRIPE_WEBHOOK_SECRET || !process.env.DATABASE_URL,
+			"STRIPE_WEBHOOK_SECRET / DATABASE_URL requis pour le nettoyage",
+		);
+
+		await page.goto("/");
+		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
+		test.skip(seeded.skipped, seeded.skipped ? seeded.reason : "");
+
+		await checkoutPage.payButton.click();
+		await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
+
+		// Nettoyage : expiration signée (restock) + suppression de la commande.
+		const sessionId = /cs_(test|live)_[A-Za-z0-9]+/.exec(page.url())?.[0];
+		if (sessionId) {
+			await expireSessionViaWebhook(sessionId);
+			await getE2ePrisma().order.deleteMany({ where: { stripeSessionId: sessionId } });
+		}
 	});
 });

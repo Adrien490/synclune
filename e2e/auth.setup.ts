@@ -1,16 +1,28 @@
-import { test as setup } from "@playwright/test";
+import { expect, test as setup } from "@playwright/test";
 
 /**
- * ⚠️ NEUTRALISÉ au lot 1 de la migration lean (docs/MIGRATION-PROMPTS.md) —
- * Better Auth est parti, l'auth admin est un cookie HMAC posé par
- * `/admin/connexion`. Ce setup écrivait l'état de session Better Auth dans
- * `e2e/.auth/admin.json` pour le projet `authenticated`.
+ * Authentification admin — auth maison (migration lean, lot 1) : un seul
+ * champ mot de passe sur /admin/connexion, cookie `admin_session` signé HMAC.
  *
- * Les e2e sont ROUGES ASSUMÉS jusqu'au lot 7, qui refond toute la suite.
- * On écrit ici un storage state VIDE pour que les projets dépendants
- * démarrent sans crash de fichier manquant — leurs tests échouent ensuite
- * normalement, ce qui est l'état attendu.
+ * Le mot de passe vient d'`ADMIN_PASSWORD` (même variable que le serveur —
+ * en local, sourcer .env.local avant `pnpm e2e`).
  */
-setup("authenticate as admin (neutralisé — lot 7)", async ({ page }) => {
+setup("authenticate as admin", async ({ page }) => {
+	const password = process.env.ADMIN_PASSWORD;
+	if (!password) {
+		throw new Error(
+			"ADMIN_PASSWORD manquant : les projets authenticated/ ne peuvent pas se connecter. " +
+				"En local : `set -a; source .env.local; set +a` avant `pnpm e2e`.",
+		);
+	}
+
+	await page.goto("/admin/connexion");
+	await page.getByRole("textbox", { name: /Mot de passe/i }).fill(password);
+	await page.getByRole("button", { name: /Se connecter/i }).click();
+
+	// La PAGE redirige après validation réelle du cookie (le proxy ne le fait
+	// plus — il ne sait pas vérifier le HMAC).
+	await expect(page).toHaveURL(/\/admin(?!\/connexion)/, { timeout: 15_000 });
+
 	await page.context().storageState({ path: "e2e/.auth/admin.json" });
 });

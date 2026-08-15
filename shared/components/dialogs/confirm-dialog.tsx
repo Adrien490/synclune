@@ -189,7 +189,22 @@ export function ConfirmDialog({
 					disabled={confirmDisabled}
 					className={confirmClassName}
 					style={confirmStyle}
-					onClick={onConfirm}
+					onClick={(event) => {
+						if (onConfirm) {
+							onConfirm();
+							return;
+						}
+						// ⚠️ Le `Close` Base UI AVALE la soumission native au navigateur :
+						// le clic fermait le dialog sans que le `<form action>` ne parte —
+						// TOUTES les confirmations (expédier, annuler, rejeter, supprimer)
+						// étaient inertes, sans erreur ni toast. Invisible en JSDOM (le
+						// test de régression passait) ; constaté au clic-through
+						// Playwright du lot 7. `preventDefault` + `requestSubmit` rend la
+						// soumission explicite et UNIQUE quel que soit l'environnement —
+						// la fermeture au clic (contrat documenté) est préservée.
+						event.preventDefault();
+						event.currentTarget.closest("form")?.requestSubmit();
+					}}
 				>
 					{confirmLabel}
 				</AlertDialogAction>

@@ -21,44 +21,56 @@ test.describe("Admin - Collections (page)", { tag: ["@regression"] }, () => {
 	});
 
 	test("affiche le tableau de données ou un état vide", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucune collection/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucune collection/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 	});
 
 	test("affiche la barre de recherche", async ({ page }) => {
-		const searchInput = page.getByPlaceholder(/Rechercher/i).or(page.getByRole("searchbox"));
+		const searchInput = page
+			.getByPlaceholder(/Rechercher/i)
+			.or(page.getByRole("searchbox"))
+			.filter({ visible: true });
 		await expect(searchInput.first()).toBeVisible();
 	});
 
 	test("la recherche filtre les résultats", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucune collection/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucune collection/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de collections dans la table");
 
-		const searchInput = page.getByPlaceholder(/Rechercher/i).or(page.getByRole("searchbox"));
+		const searchInput = page
+			.getByPlaceholder(/Rechercher/i)
+			.or(page.getByRole("searchbox"))
+			.filter({ visible: true });
 		await searchInput.first().fill("zzz_inexistant_xyz");
 
-		await page.waitForTimeout(600);
-		const noResults = page.getByText(/aucune collection|aucun résultat/i);
+		// La frappe peut précéder l'hydratation (événements perdus) : on re-tente
+		// jusqu'à ce que l'URL porte la recherche.
+		await expect(async () => {
+			if (!page.url().includes("search=")) {
+				await searchInput.first().fill("zzz_inexistant_xyz");
+			}
+			expect(page.url()).toContain("search=");
+		}).toPass({ timeout: TIMEOUTS.DATA_LOAD });
+
+		const noResults = page
+			.getByText(/aucune collection|aucun résultat/i)
+			.filter({ visible: true })
+			.first();
 		await expect(noResults).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 	});
 
-	test("les onglets de statut sont visibles", async ({ page }) => {
-		const statusTabs = page
-			.getByRole("tab")
-			.or(page.getByRole("button", { name: /Tous|Publi|Brouillon|Archiv/i }));
-		const tabCount = await statusTabs.count();
-		expect(tabCount).toBeGreaterThan(0);
-	});
+	// Supprimé (migration lean) : plus d'onglets de statut sur la liste des
+	// collections — le statut booléen `active` est un badge de colonne, sans filtre à onglets.
 
 	test("le tri fonctionne", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucune collection/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucune collection/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const sortButton = page
 			.getByRole("button", { name: /Trier/i })
@@ -106,9 +118,9 @@ test.describe("Admin - Collections (modification)", { tag: ["@regression"] }, ()
 	});
 
 	test("ouvre l'édition via les actions de ligne", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucune collection/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucune collection/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de collections à modifier");
@@ -117,16 +129,20 @@ test.describe("Admin - Collections (modification)", { tag: ["@regression"] }, ()
 			.locator("tbody tr")
 			.first()
 			.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(page.getByRole("menuitem").first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
 		const editOption = page.getByRole("menuitem", { name: /Éditer|Modifier/i });
 		await expect(editOption).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 	});
 
 	test("naviguer vers le détail d'une collection", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucune collection/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucune collection/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de collections dans la table");
@@ -146,9 +162,9 @@ test.describe("Admin - Collections (suppression)", { tag: ["@regression"] }, () 
 		await page.goto(COLLECTIONS_URL);
 		await page.waitForLoadState("domcontentloaded");
 
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucune collection/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/aucune collection/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de collections à supprimer");
@@ -159,7 +175,11 @@ test.describe("Admin - Collections (suppression)", { tag: ["@regression"] }, () 
 		test.skip(!hasTestRow, "Pas de collection de test à supprimer");
 
 		const actionsButton = testRow.first().getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(page.getByRole("menuitem").first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
 		const deleteOption = page.getByRole("menuitem", { name: /Supprimer/i });
 		await expect(deleteOption).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
@@ -174,7 +194,9 @@ test.describe("Admin - Collections (suppression)", { tag: ["@regression"] }, () 
 		await confirmButton.click();
 
 		await expect(confirmDialog).not.toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-		const successFeedback = page.getByText(/supprimé|succès/i);
-		await expect(successFeedback.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		const successFeedback = page
+			.locator("[data-sonner-toast]")
+			.filter({ hasText: /supprim|succès/i });
+		await expect(successFeedback.first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 	});
 });

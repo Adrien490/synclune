@@ -1,14 +1,11 @@
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { OgShell } from "@/shared/components/og/og-shell";
 import { BRAND_HEX } from "@/shared/constants/brand-colors";
-import { ImageResponse } from "next/og";
+import { OG_SIZE, renderOgImage } from "@/shared/components/og/render-og";
 
 // Image metadata
 export const alt = "Une série de bijoux colorés Synclune";
-export const size = {
-	width: 1200,
-	height: 630,
-};
+export const size = { ...OG_SIZE };
 
 export const contentType = "image/png";
 
@@ -24,18 +21,17 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
 	// Fallback si collection non trouvee ou non publiee
 	if (!collection || !collection.active) {
-		return new ImageResponse(
+		return renderOgImage(
 			<OgShell align="center" signature>
 				<div style={{ display: "flex", fontSize: 64, fontWeight: 600 }}>Synclune</div>
 			</OgShell>,
-			{ ...size },
 		);
 	}
 
 	// Compter les produits publics
 	const publicProductsCount = collection.products.filter((product) => product.active).length;
 
-	return new ImageResponse(
+	return renderOgImage(
 		<OgShell align="center" signature>
 			<div
 				style={{
@@ -87,6 +83,5 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 				)}
 			</div>
 		</OgShell>,
-		{ ...size },
 	);
 }

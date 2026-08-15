@@ -7,8 +7,6 @@ export class AdminPage {
 	readonly collectionsLink: Locator;
 	readonly colorsLink: Locator;
 	readonly materialsLink: Locator;
-	readonly discountsLink: Locator;
-	readonly refundsLink: Locator;
 	readonly searchInput: Locator;
 	readonly viewSiteLink: Locator;
 
@@ -19,8 +17,6 @@ export class AdminPage {
 		this.collectionsLink = page.getByRole("link", { name: /Collections/i }).first();
 		this.colorsLink = page.getByRole("link", { name: /Couleurs/i }).first();
 		this.materialsLink = page.getByRole("link", { name: /Matériaux/i }).first();
-		this.discountsLink = page.getByRole("link", { name: /Codes promo/i }).first();
-		this.refundsLink = page.getByRole("link", { name: /Remboursements/i }).first();
 		this.searchInput = page.getByPlaceholder(/Rechercher/i);
 		this.viewSiteLink = page.getByRole("link", { name: /Voir le site/i });
 	}
@@ -55,23 +51,13 @@ export class AdminPage {
 		await this.page.waitForLoadState("domcontentloaded");
 	}
 
-	async gotoDiscounts() {
-		await this.page.goto("/admin/marketing/discounts");
-		await this.page.waitForLoadState("domcontentloaded");
-	}
-
-	async gotoRefunds() {
-		await this.page.goto("/admin/ventes/remboursements");
+	async gotoRetractations() {
+		await this.page.goto("/admin/ventes/retractations");
 		await this.page.waitForLoadState("domcontentloaded");
 	}
 
 	async gotoVariants(productSlug: string) {
 		await this.page.goto(`/admin/catalogue/produits/${productSlug}/variantes`);
-		await this.page.waitForLoadState("domcontentloaded");
-	}
-
-	async gotoShopConfig() {
-		await this.page.goto("/admin/configuration/boutique");
 		await this.page.waitForLoadState("domcontentloaded");
 	}
 

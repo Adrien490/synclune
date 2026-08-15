@@ -38,7 +38,13 @@ export class CartPage {
 		 * de couture `cart-open-button-label.regression.test.ts` qui compose les
 		 * libellés depuis la vraie fonction.
 		 */
-		this.openButton = page.getByRole("button", { name: /Ouvrir mon panier|^Panier/i }).first();
+		// `.filter({ visible: true })` : le bouton navbar est `hidden lg:inline-flex`
+		// — sur mobile c'est l'onglet « Panier » de la bottom-nav qui est visible,
+		// et le `.first()` nu tombait sur le bouton desktop caché.
+		this.openButton = page
+			.getByRole("button", { name: /Ouvrir mon panier|^Panier/i })
+			.filter({ visible: true })
+			.first();
 		this.dialog = page.getByRole("dialog");
 		this.emptyMessage = this.dialog.getByText(/Ton panier est encore vide/i);
 		this.shopLink = this.dialog.getByRole("link", { name: /Découvrir la boutique/i });
@@ -51,8 +57,23 @@ export class CartPage {
 	}
 
 	async open() {
-		await this.openButton.click();
-		await expect(this.dialog).toBeVisible();
+		// Deux pièges mesurés sous la charge d'un run complet :
+		// - le bouton est peint avant d'être hydraté — un clic trop tôt part
+		//   dans le vide, d'où le re-clic jusqu'à réponse ;
+		// - sur mobile, l'ajout au panier ouvre DÉJÀ le drawer : cliquer alors
+		//   l'onglet Panier atterrit sur le backdrop modal et FERME l'overlay
+		//   qu'on voulait ouvrir (boucle ouverte/fermée jusqu'au timeout). On ne
+		//   clique donc que si aucun dialog n'est visible.
+		await expect(async () => {
+			if (!(await this.dialog.isVisible())) {
+				// Timeout COURT + catch : pendant que le drawer d'ajout s'anime, la
+				// bottom-bar mobile se dépublie — le bouton filtré visible ne
+				// résout plus RIEN et un click() sans timeout pendait jusqu'au bout
+				// du toPass alors que le panier était déjà ouvert à l'écran.
+				await this.openButton.click({ timeout: 1000 }).catch(() => {});
+			}
+			await expect(this.dialog).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 15_000 });
 	}
 
 	async close() {

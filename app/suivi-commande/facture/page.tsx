@@ -57,7 +57,11 @@ export default async function FacturePage({
 	const vendor = getVendorLegalInfo();
 
 	return (
-		<main className="min-h-dvh bg-white px-6 py-10 text-neutral-900 print:p-0">
+		<main
+			id="main-content"
+			tabIndex={-1}
+			className="min-h-dvh bg-white px-6 py-10 text-neutral-900 print:p-0"
+		>
 			<div className="mx-auto w-full max-w-2xl space-y-8">
 				<div className="flex items-start justify-between gap-4">
 					<div>

@@ -58,17 +58,22 @@ test.describe("Filtres desktop — le rail (viewport 1280x800)", { tag: ["@regre
 		// Aucun clic sur « Appliquer » : l'URL porte déjà le filtre.
 		await expect(page).toHaveURL(/[?&]color=/, { timeout: TIMEOUTS.FEEDBACK });
 
-		// La ligne de compte devient « N pièces · <résumé> » — le seul rappel de ce
-		// qui est coché, puisqu'on n'a pas quitté la page.
-		await expect(page.getByText(/pièces? ·/).first()).toBeVisible({
-			timeout: TIMEOUTS.FEEDBACK,
-		});
-		// Le nom de la couleur cochée apparaît dans ce résumé.
-		const colorName = colorLabel.replace(/\(\d+\)\s*$/, "").trim();
-		if (colorName) {
+		// Le résumé « N pièces · <couleur> » a disparu avec la migration : la ligne
+		// de compte filtrée n'affiche plus que « N pièce(s) ».
+		const countLine = page.getByText(/^\d+\s+pièces?$/).first();
+		await expect(countLine).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+
+		// ⚠️ BUG PRODUIT (volontairement NON masqué) : la facette annonce « (N) »
+		// pièces mais le filtre renvoie « 0 pièce » pour toute couleur multi-mots —
+		// l'URL porte le SLUG (`?color=bleu-nuit`) alors que
+		// `modules/products/services/product-query-builder.ts` filtre sur
+		// `color.name` (« Bleu nuit »). Facette et résultat doivent être d'accord.
+		const advertised = Number(/\((\d+)\)/.exec(colorLabel)?.[1] ?? "0");
+		if (advertised > 0) {
 			await expect(
-				page.getByText(new RegExp(`pièces? ·.*${colorName}`, "i")).first(),
-			).toBeVisible();
+				countLine,
+				`la facette annonçait ${advertised} pièce(s) pour « ${colorLabel} », le filtre en rend 0`,
+			).not.toHaveText(/^0\s/);
 		}
 	});
 
@@ -81,11 +86,24 @@ test.describe("Filtres desktop — le rail (viewport 1280x800)", { tag: ["@regre
 
 		const typesSection = page.locator('section[aria-labelledby="filter-compartment-rail-types"]');
 		await expect(typesSection).toBeVisible();
-		await typesSection.getByRole("checkbox").first().click();
 
 		// `buildFilterURL` route un type unique vers sa page dédiée : c'est une vraie
 		// navigation, que le retour arrière doit défaire.
-		await expect(page).toHaveURL(/\/produits\/[a-z0-9-]+$/, { timeout: TIMEOUTS.DATA_LOAD });
+		// ⚠️ Re-cliqué si l'URL ne bouge pas — un clic pré-hydratation part dans le
+		// vide (constaté sur WebKit) ; on ne re-clique que si la case est restée
+		// décochée, pour ne pas DÉFAIRE un premier clic enregistré mais lent.
+		const typeCheckbox = typesSection.getByRole("checkbox").first();
+		await expect(async () => {
+			if (!(await typeCheckbox.isChecked().catch(() => true))) {
+				await typeCheckbox.click();
+			} else if (!/\/produits\/[a-z0-9-]+$/.test(page.url())) {
+				// Cochée mais l'URL n'a pas bougé : le premier clic a enregistré
+				// l'état SANS déclencher la navigation (constaté sur mobile-webkit).
+				// On décoche — le tour suivant recoche et rejoue la navigation.
+				await typeCheckbox.click();
+			}
+			await expect(page).toHaveURL(/\/produits\/[a-z0-9-]+$/, { timeout: 3000 });
+		}).toPass({ timeout: TIMEOUTS.DATA_LOAD });
 
 		await page.goBack();
 		await expect(page).toHaveURL(/\/produits\/?$/, { timeout: TIMEOUTS.DATA_LOAD });

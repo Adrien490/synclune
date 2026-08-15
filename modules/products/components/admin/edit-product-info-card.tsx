@@ -109,13 +109,14 @@ export function EditProductInfoCard({
 				<form.AppField name="typeId" listeners={{ onChange: () => haptic("selection") }}>
 					{(field) => (
 						<div className="space-y-2">
-							<FieldLabel htmlFor={field.name} optional>
-								Type de bijou
-							</FieldLabel>
 							<div className="flex gap-2">
 								<div className="flex-1">
+									{/* Le label vit DANS SelectField : c'est lui qui nomme le select
+									    natif ET le trigger desktop (aria-labelledby) — un label externe
+									    laissait le trigger sans nom accessible (axe, lot 7). */}
 									<field.SelectField
-										label=""
+										label="Type de bijou"
+										optional
 										options={typeOptions}
 										placeholder="Sélectionner un type"
 										clearable

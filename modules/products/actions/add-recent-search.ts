@@ -10,6 +10,7 @@ import {
 	RECENT_SEARCHES_MAX_ITEMS,
 } from "../constants/recent-searches";
 import { addRecentSearchSchema } from "../schemas/recent-searches.schemas";
+import { shouldUseSecureCookies } from "@/shared/lib/cookie-security";
 
 /**
  * Server Action pour ajouter une recherche recente
@@ -61,7 +62,7 @@ export async function addRecentSearch(
 			maxAge: RECENT_SEARCHES_COOKIE_MAX_AGE,
 			httpOnly: true,
 			sameSite: "strict",
-			secure: process.env.NODE_ENV === "production",
+			secure: shouldUseSecureCookies(), // SSOT — cf. shared/lib/cookie-security.ts
 		});
 
 		// Aucune invalidation ici : les recherches récentes vivent dans un cookie, lu

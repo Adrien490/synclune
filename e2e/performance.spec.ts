@@ -140,7 +140,12 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 		expect(startTime, `LCP was ${startTime}ms, budget is ${LCP_BUDGET}ms`).toBeLessThan(LCP_BUDGET);
 	});
 
-	test("homepage - le porteur du LCP est un candidat connu", async ({ page }) => {
+	test("homepage - le porteur du LCP est un candidat connu", async ({ page, browserName }) => {
+		// Le PORTEUR (pas le budget) n'est asserté que sur Chromium : Firefox
+		// élit le placeholder de bruit (DIV à background-image data:svg) comme
+		// candidat LCP là où Chromium retient la photo — divergence de moteur,
+		// pas une régression du premier écran.
+		test.skip(browserName !== "chromium", "Élection du porteur LCP spécifique au moteur");
 		await page.goto("/");
 
 		const lcp = await measureLCP(page);
@@ -227,8 +232,15 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 			(window as unknown as { __inpObserver: PerformanceObserver }).__inpObserver = observer;
 		});
 
-		// Click an actual interactive element (button or link) instead of h1
-		const interactiveElement = page.getByRole("link").first().or(page.getByRole("button").first());
+		// Click an actual interactive element (button or link) instead of h1.
+		// ⚠️ `a.first().or(b.first())` résout les DEUX premiers → strict violation,
+		// et le premier lien du DOM est le skip link sr-only (1×1 clippé,
+		// « visible » pour Playwright mais hors viewport au clic).
+		const interactiveElement = page
+			.getByRole("link")
+			.filter({ visible: true })
+			.filter({ hasNotText: /Aller au contenu principal/i })
+			.first();
 		await interactiveElement.click({ noWaitAfter: true });
 
 		// Collect INP after interaction
@@ -251,7 +263,7 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 		expect(inp, `INP was ${inp}ms, budget is ${INP_BUDGET}ms`).toBeLessThan(INP_BUDGET);
 	});
 
-	const criticalPages = ["/", "/produits", "/collections", "/connexion"];
+	const criticalPages = ["/", "/produits", "/collections", "/admin/connexion"];
 
 	for (const route of criticalPages) {
 		test(`${route} loads under budget`, async ({ page }) => {

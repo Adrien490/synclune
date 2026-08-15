@@ -28,6 +28,10 @@ test.describe("View Transition API on product detail", { tag: ["@critical"] }, (
 
 		await page.goto(firstHref!);
 		await page.waitForLoadState("domcontentloaded");
+		// Attend la fin du streaming PPR : sinon on photographie un DOM transitoire
+		// (shell + contenu) où les noms sont dupliqués/incomplets.
+		await page.locator('[role="region"][aria-roledescription="carrousel"]').first().waitFor();
+		await page.waitForLoadState("networkidle");
 
 		const viewTransitionNames = await page.evaluate(() => {
 			const all = Array.from(
@@ -57,6 +61,10 @@ test.describe("View Transition API on product detail", { tag: ["@critical"] }, (
 
 		await page.goto(href!);
 		await page.waitForLoadState("domcontentloaded");
+		// Attend la fin du streaming PPR : sinon on photographie un DOM transitoire
+		// (shell + contenu) où les noms sont dupliqués/incomplets.
+		await page.locator('[role="region"][aria-roledescription="carrousel"]').first().waitFor();
+		await page.waitForLoadState("networkidle");
 
 		const viewTransitionNames = await page.evaluate(() => {
 			const all = Array.from(

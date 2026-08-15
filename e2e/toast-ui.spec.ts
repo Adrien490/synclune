@@ -1,27 +1,66 @@
+import type { Page } from "@playwright/test";
 import { test, expect } from "./fixtures";
 
 /**
  * Toast UI/UX — vérifications cross-device du Toaster Sonner.
  *
- * Le Toaster (<AppToaster />) est monté dans le layout root, donc la région
- * `[data-sonner-toaster]` existe dès qu'une page quelconque est chargée.
+ * ⚠️ Sonner 2 ne monte le conteneur `[data-sonner-toaster]` qu'à partir du
+ * PREMIER toast : charger une page ne suffit plus. Chaque test déclenche donc
+ * un vrai toast via le seul chemin invité déterministe du storefront — le
+ * retrait d'un favori (toast « Annuler », wishlist cookie, aucun effet serveur).
  *
  * Tests :
  * - Config structurelle (position, data-attributes)
  * - Safe-area iOS (offset avec env())
- * - Swipe direction selon viewport (bottom mobile, horizontal desktop)
- * - CSS native-like (hit area close button, border-radius)
  */
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 const DESKTOP_VIEWPORT = { width: 1280, height: 800 };
 
+/**
+ * Déclenche un toast réel : ajout puis retrait d'un favori sur une FICHE
+ * produit — seul le bouton de la PDP a `enableUndoToast` (toast « Annuler »
+ * sur retrait) ; la grille est volontairement muette.
+ */
+async function triggerToast(page: Page) {
+	await page.goto("/produits");
+	const firstProduct = page.locator('a[href*="/creations/"]').first();
+	await expect(firstProduct).toBeVisible();
+	const href = await firstProduct.getAttribute("href");
+	await page.goto(href!);
+	await page.waitForLoadState("networkidle");
+
+	// Motif stable : le libellé bascule Ajouter ↔ Retirer au fil des clics.
+	const toggle = page
+		.getByRole("button", { name: /(Ajouter|Retirer) .* (aux|des) favoris/i })
+		.first();
+	await expect(toggle).toBeVisible();
+
+	// Le clic peut précéder l'hydratation : on re-clique jusqu'à l'état pressé.
+	await expect(async () => {
+		if ((await toggle.getAttribute("aria-pressed")) !== "true") {
+			await toggle.click();
+		}
+		await expect(toggle).toHaveAttribute("aria-pressed", "true", { timeout: 1500 });
+	}).toPass({ timeout: 15_000 });
+
+	// Le retrait (état pressé confirmé côté serveur) déclenche le toast « Annuler ».
+	await expect(async () => {
+		if ((await toggle.getAttribute("aria-pressed")) === "true") {
+			await toggle.click();
+		}
+		await page
+			.locator("[data-sonner-toaster]")
+			.first()
+			.waitFor({ state: "attached", timeout: 2000 });
+	}).toPass({ timeout: 15_000 });
+}
+
 test.describe("Toast — Desktop", { tag: ["@regression"] }, () => {
 	test.use({ viewport: DESKTOP_VIEWPORT });
 
 	test("le Toaster est positionné top-center sur desktop", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
+		await triggerToast(page);
 
 		const toaster = page.locator("[data-sonner-toaster]").first();
 		await expect(toaster).toHaveAttribute("data-y-position", "top");
@@ -29,14 +68,15 @@ test.describe("Toast — Desktop", { tag: ["@regression"] }, () => {
 	});
 
 	test("le Toaster applique l'offset safe-area-inset-top", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
+		await triggerToast(page);
 
+		// Style INLINE, pas computed : le moteur CSS résout `env()` en `0px` hors
+		// safe-area — seule la déclaration brute prouve que l'offset la respecte.
 		const offset = await page
 			.locator("[data-sonner-toaster]")
 			.first()
 			.evaluate((el) => {
-				return getComputedStyle(el).getPropertyValue("--offset-top");
+				return (el as HTMLElement).style.getPropertyValue("--offset-top");
 			});
 		expect(offset).toContain("env(safe-area-inset-top)");
 	});
@@ -46,8 +86,7 @@ test.describe("Toast — Mobile (iPhone viewport)", { tag: ["@regression"] }, ()
 	test.use({ viewport: MOBILE_VIEWPORT });
 
 	test("le Toaster est positionné bottom-center sur mobile", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
+		await triggerToast(page);
 
 		const toaster = page.locator("[data-sonner-toaster]").first();
 		await expect(toaster).toHaveAttribute("data-y-position", "bottom");
@@ -55,21 +94,23 @@ test.describe("Toast — Mobile (iPhone viewport)", { tag: ["@regression"] }, ()
 	});
 
 	test("le Toaster applique l'offset safe-area-inset-bottom sur mobile", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
+		await triggerToast(page);
 
+		// Style INLINE, pas computed : le moteur CSS résout `env()` en `0px` hors
+		// safe-area — seule la déclaration brute prouve que l'offset la respecte.
 		const offset = await page
 			.locator("[data-sonner-toaster]")
 			.first()
 			.evaluate((el) => {
-				return getComputedStyle(el).getPropertyValue("--offset-bottom");
+				return (el as HTMLElement).style.getPropertyValue("--offset-bottom");
 			});
-		expect(offset).toContain("env(safe-area-inset-bottom)");
+		// Sans parenthèse fermante : la déclaration porte un repli
+		// (`env(safe-area-inset-bottom, 0px)`).
+		expect(offset).toContain("env(safe-area-inset-bottom");
 	});
 
 	test("le conteneur respecte le padding-bottom safe-area via CSS", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
+		await triggerToast(page);
 
 		const paddingBottom = await page
 			.locator("[data-sonner-toaster]")

@@ -10,9 +10,9 @@ async function getFirstProductSlug(page: Page): Promise<string | null> {
 	await page.goto("/admin/catalogue/produits");
 	await page.waitForLoadState("domcontentloaded");
 
-	const table = page.locator("table");
+	const table = page.getByRole("table").first();
 	const emptyState = page.getByText(/aucun produit/i);
-	await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+	await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 	const tableVisible = await table.isVisible();
 	if (!tableVisible) return null;
@@ -48,9 +48,9 @@ test.describe("Admin - Variantes (liste)", { tag: ["@regression"] }, () => {
 	});
 
 	test("affiche le tableau de variantes ou un etat vide", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/Aucune variante/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/Aucune variante/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 	});
 
 	test("le bouton Nouvelle variante est present", async ({ page }) => {
@@ -59,23 +59,37 @@ test.describe("Admin - Variantes (liste)", { tag: ["@regression"] }, () => {
 	});
 
 	test("la recherche de variantes fonctionne", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/Aucune variante/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/Aucune variante/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de variantes dans la table");
 
-		const searchInput = page.getByPlaceholder(/Rechercher/i);
+		const searchInput = page
+			.getByPlaceholder(/Rechercher/i)
+			.filter({ visible: true })
+			.first();
 		await searchInput.fill("zzz_inexistant_xyz");
-		await page.waitForTimeout(600);
 
-		const noResults = page.getByText(/Aucune variante|aucun résultat/i);
+		// La frappe peut précéder l'hydratation : on re-tente jusqu'à ce que l'URL
+		// porte la recherche.
+		await expect(async () => {
+			if (!page.url().includes("search=")) {
+				await searchInput.fill("zzz_inexistant_xyz");
+			}
+			expect(page.url()).toContain("search=");
+		}).toPass({ timeout: TIMEOUTS.DATA_LOAD });
+
+		const noResults = page
+			.getByText(/Aucune variante|aucun résultat/i)
+			.filter({ visible: true })
+			.first();
 		await expect(noResults).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 	});
 
 	test("le tableau affiche les colonnes attendues", async ({ page }) => {
-		const table = page.locator("table");
+		const table = page.getByRole("table").first();
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de table visible");
 
@@ -85,9 +99,9 @@ test.describe("Admin - Variantes (liste)", { tag: ["@regression"] }, () => {
 	});
 
 	test("les actions de ligne sont disponibles", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/Aucune variante/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/Aucune variante/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de variantes dans la table");
@@ -96,20 +110,25 @@ test.describe("Admin - Variantes (liste)", { tag: ["@regression"] }, () => {
 			.locator("tbody tr")
 			.first()
 			.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
-
 		const actionOptions = page.getByRole("menuitem");
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(actionOptions.first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
+
 		const optionCount = await actionOptions.count();
 		expect(optionCount).toBeGreaterThan(0);
 	});
 
 	test("le stock affiche un badge avec code couleur", async ({ page }) => {
-		const table = page.locator("table");
+		const table = page.getByRole("table").first();
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de table visible");
 
-		// Stock column should display badges
-		const stockBadges = table.locator("tbody tr").first().locator("[class*='badge']");
+		// Stock column should display badges (le Badge maison se repère par son slot,
+		// pas par un fragment de classe Tailwind)
+		const stockBadges = table.locator("tbody tr").first().locator('[data-slot="badge"]');
 		const badgeCount = await stockBadges.count();
 		expect(badgeCount).toBeGreaterThan(0);
 	});
@@ -134,7 +153,7 @@ test.describe("Admin - Variantes (creation)", { tag: ["@regression"] }, () => {
 		await expect(heading).toBeVisible();
 
 		// Required fields present
-		await expect(page.getByLabel(/Prix/i).first()).toBeVisible();
+		await expect(page.getByLabel(/Prix de vente final/i).first()).toBeVisible();
 	});
 
 	test("le lien retour vers le produit est present", async ({ page }) => {
@@ -163,69 +182,27 @@ test.describe("Admin - Variantes (creation)", { tag: ["@regression"] }, () => {
 		const activeRadio = page.getByLabel(/Actif/i);
 		await expect(activeRadio.first()).toBeAttached();
 
-		// Pricing section
-		const priceInput = page.getByLabel(/Prix final/i);
+		// Pricing section — lean : `priceCents` est un OVERRIDE optionnel du prix
+		// produit, et le « prix avant réduction » n'existe plus.
+		const priceInput = page.getByLabel(/Prix de vente final/i);
 		await expect(priceInput).toBeVisible();
-
-		const comparePriceInput = page.getByLabel(/Prix avant réduction/i);
-		await expect(comparePriceInput).toBeVisible();
 
 		const inventoryInput = page.getByLabel(/Quantité en stock/i);
 		await expect(inventoryInput).toBeVisible();
 
-		// Submit buttons
+		// Submit button (plus de bouton Annuler : le retour passe par le header)
 		const createButton = page.getByRole("button", { name: /Créer la variante/i });
 		await expect(createButton).toBeVisible();
-
-		const cancelButton = page
-			.getByRole("button", { name: /Annuler/i })
-			.or(page.getByRole("link", { name: /Annuler/i }));
-		await expect(cancelButton.first()).toBeVisible();
 	});
 
-	test("la validation du prix empeche la soumission sans prix", async ({ page }) => {
-		await page.goto(`/admin/catalogue/produits/${productSlug}/variantes/nouveau`);
-		await page.waitForLoadState("domcontentloaded");
+	// Supprimé (migration lean) : le prix de la variante est un OVERRIDE optionnel
+	// de `Product.priceCents` — il n'y a plus de validation « prix requis ».
 
-		// Leave price empty and try to submit
-		const createButton = page.getByRole("button", { name: /Créer la variante/i });
+	// Supprimé (migration lean) : plus de bouton « Annuler » sur le formulaire de
+	// variante — le retour passe par le header.
 
-		// Price field should be required - clear it and blur
-		const priceInput = page.getByLabel(/Prix final/i);
-		await priceInput.fill("");
-		await priceInput.blur();
-
-		// Button should be disabled or form should show validation error
-		const isDisabled = await createButton.isDisabled();
-		const errorMessage = page.getByText(/obligatoire|requis|prix.*invalide|supérieur/i);
-		const hasError = await errorMessage
-			.first()
-			.isVisible()
-			.catch(() => false);
-
-		expect(isDisabled || hasError).toBe(true);
-	});
-
-	test("le bouton Annuler renvoie a la liste des variantes", async ({ page }) => {
-		await page.goto(`/admin/catalogue/produits/${productSlug}/variantes/nouveau`);
-		await page.waitForLoadState("domcontentloaded");
-
-		const cancelButton = page
-			.getByRole("button", { name: /Annuler/i })
-			.or(page.getByRole("link", { name: /Annuler/i }));
-		await cancelButton.first().click();
-
-		await page.waitForLoadState("domcontentloaded");
-		await expect(page).toHaveURL(/\/variantes$/);
-	});
-
-	test("le checkbox variante par defaut est present", async ({ page }) => {
-		await page.goto(`/admin/catalogue/produits/${productSlug}/variantes/nouveau`);
-		await page.waitForLoadState("domcontentloaded");
-
-		const defaultCheckbox = page.getByLabel(/Variante par défaut/i);
-		await expect(defaultCheckbox).toBeAttached();
-	});
+	// Supprimé (migration lean) : la variante par défaut ne se coche plus dans le
+	// formulaire — c'est l'item « Variante par défaut » des actions de ligne.
 });
 
 test.describe("Admin - Variantes (actions de ligne)", { tag: ["@regression"] }, () => {
@@ -243,9 +220,9 @@ test.describe("Admin - Variantes (actions de ligne)", { tag: ["@regression"] }, 
 		await page.goto(`/admin/catalogue/produits/${productSlug}/variantes`);
 		await page.waitForLoadState("domcontentloaded");
 
-		const table = page.locator("table");
-		const emptyState = page.getByText(/Aucune variante/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/Aucune variante/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de variantes dans la table");
@@ -254,10 +231,14 @@ test.describe("Admin - Variantes (actions de ligne)", { tag: ["@regression"] }, 
 			.locator("tbody tr")
 			.first()
 			.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(page.getByRole("menuitem").first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
-		// Should expose edit and delete options
-		const editOption = page.getByRole("menuitem", { name: /Modifier|Éditer/i });
+		// Should expose edit and delete options (exact : « Modifier le prix » existe aussi)
+		const editOption = page.getByRole("menuitem", { name: "Modifier", exact: true });
 		await expect(editOption).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 
 		const deleteOption = page.getByRole("menuitem", { name: /Supprimer/i });
@@ -268,9 +249,9 @@ test.describe("Admin - Variantes (actions de ligne)", { tag: ["@regression"] }, 
 		await page.goto(`/admin/catalogue/produits/${productSlug}/variantes`);
 		await page.waitForLoadState("domcontentloaded");
 
-		const table = page.locator("table");
-		const emptyState = page.getByText(/Aucune variante/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		const table = page.getByRole("table").first();
+		const emptyState = page.getByText(/Aucune variante/i).first();
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de variantes dans la table");
@@ -279,7 +260,11 @@ test.describe("Admin - Variantes (actions de ligne)", { tag: ["@regression"] }, 
 			.locator("tbody tr")
 			.first()
 			.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture du menu.
+		await expect(async () => {
+			await actionsButton.click();
+			await expect(page.getByRole("menuitem").first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
 
 		const deleteOption = page.getByRole("menuitem", { name: /Supprimer/i });
 		await deleteOption.click();
@@ -305,9 +290,13 @@ test.describe("Admin - Variantes (actions de ligne)", { tag: ["@regression"] }, 
 		const hasSortButton = (await sortButton.count()) > 0;
 		test.skip(!hasSortButton, "Pas de bouton de tri visible");
 
-		await sortButton.first().click();
-
 		const sortOptions = page.getByRole("option").or(page.getByRole("menuitem"));
+		// Le clic peut précéder l'hydratation : on re-tente jusqu'à l'ouverture.
+		await expect(async () => {
+			await sortButton.first().click();
+			await expect(sortOptions.first()).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
+
 		const optionCount = await sortOptions.count();
 		expect(optionCount).toBeGreaterThan(0);
 	});

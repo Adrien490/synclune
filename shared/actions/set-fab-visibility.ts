@@ -5,6 +5,7 @@ import { success, handleActionError, validateInput } from "@/shared/lib/actions"
 import type { ActionState } from "@/shared/types/server-action";
 import { FAB_COOKIE_MAX_AGE, getFabCookieName } from "@/shared/constants/fab";
 import { setFabVisibilitySchema } from "@/shared/schemas/fab-visibility.schema";
+import { shouldUseSecureCookies } from "@/shared/lib/cookie-security";
 
 /**
  * Server Action pour basculer la visibilité d'un FAB (préférence en cookie).
@@ -45,7 +46,7 @@ export async function setFabVisibility(
 				maxAge: FAB_COOKIE_MAX_AGE,
 				httpOnly: true,
 				sameSite: "strict",
-				secure: process.env.NODE_ENV === "production",
+				secure: shouldUseSecureCookies(), // SSOT — cf. shared/lib/cookie-security.ts
 			});
 		} else {
 			cookieStore.delete(cookieName);

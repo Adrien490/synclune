@@ -19,7 +19,11 @@ export const metadata: Metadata = {
  */
 export default function CheckoutCancelPage() {
 	return (
-		<main className="bg-background flex min-h-dvh items-center justify-center px-4 py-12">
+		<main
+			id="main-content"
+			tabIndex={-1}
+			className="bg-background flex min-h-dvh items-center justify-center px-4 py-12"
+		>
 			<div className="w-full max-w-md space-y-6 text-center">
 				<h1 className="font-display text-3xl font-normal tracking-tight">Paiement annulé</h1>
 				<p className="text-muted-foreground">

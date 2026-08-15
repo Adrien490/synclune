@@ -40,7 +40,10 @@ test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 
 			// Wait for cart feedback (dialog or toast)
 			const toastOrFeedback = page.getByText(/ajouté|panier/i);
-			await expect(cartPage.dialog.or(toastOrFeedback.first())).toBeVisible({ timeout: 5000 });
+			// (le live region sr-only matche aussi : union filtrée visible, cf. product-to-cart)
+			await expect(
+				cartPage.dialog.or(toastOrFeedback).filter({ visible: true }).first(),
+			).toBeVisible({ timeout: 5000 });
 
 			// Open cart if not already open
 			if (!(await cartPage.dialog.isVisible())) {
@@ -57,62 +60,27 @@ test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 	});
 
 	test.describe("Page de paiement", () => {
-		test("accéder à /paiement sans panier redirige ou affiche un message", async ({ page }) => {
-			const _response = await page.goto("/paiement");
+		test("/paiement sans panier reste sur l'URL et affiche l'état vide", async ({ page }) => {
+			await page.goto("/paiement");
 			await page.waitForLoadState("domcontentloaded");
 
-			const url = page.url();
-
-			// With empty cart, users should be redirected to homepage or shop
-			if (url.includes("/produits") || url.includes("/boutique")) {
-				await expect(page).toHaveURL(/\/(produits|boutique)/);
-				return;
-			}
-
-			// If staying on /paiement, page should show empty cart message or error
-			const emptyCartMessage = page.getByText(/panier.*vide|aucun.*article/i);
-			const errorMessage = page.getByText(/erreur/i);
-
-			await expect(async () => {
-				const hasMessage = (await emptyCartMessage.isVisible()) || (await errorMessage.isVisible());
-				expect(
-					hasMessage,
-					"La page /paiement sans panier devrait afficher un message vide ou erreur",
-				).toBe(true);
-			}).toPass({ timeout: 5000 });
-		});
-	});
-
-	test.describe("Page de confirmation", () => {
-		test("/paiement/confirmation sans paramètres affiche une erreur ou redirige", async ({
-			page,
-		}) => {
-			await page.goto("/paiement/confirmation");
-			await page.waitForLoadState("domcontentloaded");
-
-			const url = page.url();
-
-			// If redirected away from confirmation page, that's valid
-			if (!url.includes("/paiement/confirmation")) {
-				expect(url).not.toContain("/paiement/confirmation");
-				return;
-			}
-
-			// If staying on the page, should display an error/not-found message
-			const errorIndicator = page.getByText(/erreur|introuvable|not found|commande/i);
-			await expect(errorIndicator.first()).toBeVisible();
+			// La page ne redirige PAS : état vide explicite, CTA vers les créations.
+			expect(new URL(page.url()).pathname).toBe("/paiement");
+			await expect(page.getByText(/Ton panier est vide/i)).toBeVisible();
+			await expect(page.getByRole("link", { name: /Voir les créations/i })).toBeVisible();
 		});
 
-		test("/paiement/confirmation avec un order_id invalide affiche une erreur", async ({
-			page,
+		test("/paiement avec panier rend le récapitulatif hébergé (pays + bouton Stripe)", async ({
+			checkoutPage,
+			productCatalogPage,
+			cartPage,
 		}) => {
-			await page.goto("/paiement/confirmation?order_id=invalid-id&order_number=FAKE-000");
-			await page.waitForLoadState("domcontentloaded");
+			const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
+			test.skip(seeded.skipped, seeded.skipped ? seeded.reason : "");
 
-			const pageContent = await page.textContent("body");
-
-			// Should display an error state for invalid order
-			expect(pageContent).toMatch(/erreur|introuvable|not found|impossible/i);
+			// Le pays fixe les frais de port ET verrouille l'adresse Stripe.
+			await expect(checkoutPage.countrySelect).toHaveValue("FR");
+			await expect(checkoutPage.payButton).toBeEnabled();
 		});
 	});
 
@@ -185,28 +153,20 @@ test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 	});
 
 	test.describe("Page de retour Stripe", () => {
-		test("/paiement/retour sans session_id gère le cas d'erreur", async ({ page }) => {
+		test("/paiement/retour sans session_id rend « Commande introuvable »", async ({ page }) => {
 			await page.goto("/paiement/retour");
 			await page.waitForLoadState("domcontentloaded");
 
-			const url = page.url();
+			// Pas de redirection : la landing explique et renvoie vers la boutique.
+			expect(new URL(page.url()).pathname).toBe("/paiement/retour");
+			await expect(page.getByRole("heading", { name: /Commande introuvable/i })).toBeVisible();
+		});
 
-			// Without session_id, should redirect to confirmation, cancellation, or show error
-			if (url.includes("/paiement/confirmation") || url.includes("/paiement/annulation")) {
-				// Redirected to an appropriate page
-				expect(url).toMatch(/\/paiement\/(confirmation|annulation)/);
-				return;
-			}
+		test("/paiement/retour avec une session inconnue ne divulgue rien", async ({ page }) => {
+			await page.goto("/paiement/retour?session_id=cs_test_inconnu_000");
+			await page.waitForLoadState("domcontentloaded");
 
-			if (!url.includes("/paiement/retour")) {
-				// Redirected elsewhere (e.g., home, shop)
-				expect(url).not.toContain("/paiement/retour");
-				return;
-			}
-
-			// If staying on /paiement/retour, should show loading/error state
-			const stateIndicator = page.getByText(/chargement|erreur|redirection|traitement/i);
-			await expect(stateIndicator.first()).toBeVisible();
+			await expect(page.getByRole("heading", { name: /Commande introuvable/i })).toBeVisible();
 		});
 	});
 });

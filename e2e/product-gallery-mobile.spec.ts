@@ -18,7 +18,12 @@ test.describe("Galerie produit mobile", { tag: ["@critical", "@mobile"] }, () =>
 	});
 
 	test("le thumbnail scroll mobile applique les safe-area paddings", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		// Trois copies du carrousel coexistent dans le DOM (bascules CSS par
+		// viewport/variante) : seule la visible est opérable.
+		const gallery = page
+			.locator('[role="region"][aria-roledescription="carrousel"]')
+			.filter({ visible: true })
+			.first();
 		const tablists = gallery.locator('[role="tablist"][aria-label="Vignettes du produit"]');
 		const imgCount = await gallery.locator("img").count();
 		test.skip(imgCount < 2, "Need multiple images to display thumbnails");
@@ -32,7 +37,12 @@ test.describe("Galerie produit mobile", { tag: ["@critical", "@mobile"] }, () =>
 	test("swipe horizontal change l'image active (haptic wired via pointerDown)", async ({
 		page,
 	}) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		// Trois copies du carrousel coexistent dans le DOM (bascules CSS par
+		// viewport/variante) : seule la visible est opérable.
+		const gallery = page
+			.locator('[role="region"][aria-roledescription="carrousel"]')
+			.filter({ visible: true })
+			.first();
 		const imgCount = await gallery.locator("img").count();
 		test.skip(imgCount < 2, "Need multiple images to swipe");
 
@@ -40,19 +50,34 @@ test.describe("Galerie produit mobile", { tag: ["@critical", "@mobile"] }, () =>
 		await expect(liveRegion).toContainText(/Image 1 sur/);
 
 		// Touch-like swipe via mouse events on Embla viewport (Playwright mobile emulation)
-		const box = await gallery.boundingBox();
-		if (!box) throw new Error("Gallery bounding box unavailable");
-		await page.mouse.move(box.x + box.width * 0.8, box.y + box.height / 2);
-		await page.mouse.down();
-		await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2, { steps: 12 });
-		await page.mouse.up();
+		const swipe = async () => {
+			const box = await gallery.boundingBox();
+			if (!box) throw new Error("Gallery bounding box unavailable");
+			await page.mouse.move(box.x + box.width * 0.8, box.y + box.height / 2);
+			await page.mouse.down();
+			await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2, { steps: 12 });
+			await page.mouse.up();
+		};
 
-		// Expect index to have advanced
-		await expect(liveRegion).toContainText(/Image 2 sur/, { timeout: 2000 });
+		// Sous la charge d'un run complet, Embla peut manquer le premier drag
+		// (events souris throttlés → geste lu comme un clic) : on retente une
+		// fois avant de conclure que le swipe est cassé.
+		await swipe();
+		try {
+			await expect(liveRegion).toContainText(/Image 2 sur/, { timeout: 2000 });
+		} catch {
+			await swipe();
+			await expect(liveRegion).toContainText(/Image 2 sur/, { timeout: 4000 });
+		}
 	});
 
 	test("double-tap bascule le pinch-zoom 1x ↔ 2x", async ({ page }) => {
-		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
+		// Trois copies du carrousel coexistent dans le DOM (bascules CSS par
+		// viewport/variante) : seule la visible est opérable.
+		const gallery = page
+			.locator('[role="region"][aria-roledescription="carrousel"]')
+			.filter({ visible: true })
+			.first();
 		const pinchApp = gallery
 			.locator('[role="application"][aria-roledescription="Image zoomable"]')
 			.first();

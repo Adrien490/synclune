@@ -125,7 +125,7 @@ const nextConfig: NextConfig = {
 							// aussi absent de `remotePatterns` en prod. Les deux listes doivent
 							// rester cohérentes, sinon l'image passe l'optimiseur puis se fait
 							// bloquer au rendu (ou l'inverse).
-							`img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:${process.env.NODE_ENV === "production" ? "" : " https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos"}`,
+							`img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:${process.env.NODE_ENV === "production" && process.env.E2E_ALLOW_SEED_IMAGES !== "1" ? "" : " https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos"}`,
 							"font-src 'self'",
 							"connect-src 'self' https://*.stripe.com https://m.stripe.network https://api.uploadthing.com https://*.ingest.uploadthing.com https://*.ufs.sh https://utfs.io",
 							"frame-src https://*.stripe.com https://m.stripe.network",
@@ -209,7 +209,12 @@ const nextConfig: NextConfig = {
 			// bloqué par la CSP de toute façon) tout en laissant `/_next/image?url=…`
 			// ouvert à n'importe quelle image Unsplash — un vecteur d'épuisement du
 			// quota de transformations Vercel.
-			...(process.env.NODE_ENV === "production"
+			// `E2E_ALLOW_SEED_IMAGES=1` : la suite Playwright tourne contre un BUILD
+			// de production (webServer `pnpm start`) avec le seed picsum — sans ce
+			// flag, chaque image du catalogue rend un 400 et les specs dépendantes
+			// d'images (galerie, étal, LCP) échouent pour une raison d'environnement.
+			// Jamais posé en prod réelle (lot 8 : seed DA sur hôte UploadThing).
+			...(process.env.NODE_ENV === "production" && process.env.E2E_ALLOW_SEED_IMAGES !== "1"
 				? []
 				: [
 						{

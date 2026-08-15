@@ -294,7 +294,14 @@ export function AtelierSection() {
 			// `pt-12 lg:pt-16` ci-dessous EST l'air au-dessus du titre.
 			// ⚠️ Les `<li>` d'étape, eux, GARDENT un `scroll-mt` — ce sont des cibles
 			// d'ancre sans padding interne, cf. leur commentaire plus bas.
-			className={`${CONTAINER_CLASS} pb-12 lg:pb-16`}
+			// `overflow-x-clip` (PAS `hidden` : clip ne crée pas de conteneur de
+			// scroll, le sticky de la colonne portrait survit) : à 200% de zoom
+			// texte sur mobile, la note en marge du polaroid — posée en absolu à
+			// `left-[calc(100%+0.75rem)]`, sous un seuil rem que le zoom ne
+			// déplace pas — débordait le viewport et mettait un scroll horizontal
+			// à la PAGE (206px mesurés, WCAG 1.4.4). Décorative et aria-hidden,
+			// elle se rogne au lieu de pousser la page.
+			className={`${CONTAINER_CLASS} overflow-x-clip pb-12 lg:pb-16`}
 		>
 			<div className="pt-12 lg:pt-16">
 				<div className="enter-inview max-w-[46ch]">
@@ -450,8 +457,12 @@ export function AtelierSection() {
 											))}
 										</span>
 
-										{/* `pl-9` : la copie dégage les 14 px de débord de la perle. */}
-										<div className="min-w-0 pl-9">
+										{/* `pl-9` : la copie dégage les 14 px de débord de la perle.
+										    `break-words` : à 200% de zoom texte (WCAG 1.4.4) le chrome
+										    en rem de la grille (colonne 22rem + gap-16 + pl-14 + pl-9)
+										    laisse ~55px à cette copie — « l'assemblage » débordait et
+										    mettait un scroll horizontal de 38px à la PAGE entière. */}
+										<div className="min-w-0 pl-9 break-words">
 											{/* Le rang, en coin de note — il a quitté la perle, qui
 											    porte désormais la pièce. `aria-hidden` : l'<ol>
 											    annonce déjà « 1 sur 4 », l'entendre deux fois n'aide

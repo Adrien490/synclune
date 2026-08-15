@@ -30,7 +30,7 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
 /** Routes hors `(shop)` / `admin` : celles que le bug laissait sans pont. */
 const ROUTES_WITHOUT_SHOP_LAYOUT = [
-	{ path: "/connexion", label: "(auth)" },
+	{ path: "/admin/connexion", label: "/admin/connexion" },
 	{ path: "/suivi-commande", label: "/suivi-commande" },
 ];
 
@@ -70,48 +70,8 @@ test.describe("Pont clavier virtuel — couverture par route", { tag: ["@regress
 		await expect.poll(() => readVvh(page)).not.toBe("");
 	});
 
-	test("la barre CTA du checkout déclare data-hide-on-keyboard", async ({
-		page,
-		cartPage,
-		productCatalogPage,
-	}) => {
-		// Atteindre /paiement demande un panier non vide : on passe par le catalogue.
-		await productCatalogPage.goto();
-		const count = await productCatalogPage.productLinks.count();
-		test.skip(count === 0, "Pas de produit en base — parcours panier impossible");
-
-		await productCatalogPage.gotoFirstProduct();
-		if ((await productCatalogPage.addToCartButton.count()) === 0) {
-			test.skip(true, "Produit à variantes — sélection SKU requise, hors périmètre de ce test");
-			return;
-		}
-		await productCatalogPage.addToCartButton.first().click();
-
-		await cartPage.open();
-		if ((await cartPage.checkoutLink.count()) === 0) {
-			test.skip(true, "Lien de paiement indisponible (boutique fermée ?)");
-			return;
-		}
-		await cartPage.checkoutLink.first().click();
-		await page.waitForURL(/\/paiement/);
-		await page.waitForLoadState("domcontentloaded");
-
-		// 1. Le pont est actif sur la route la plus critique.
-		await expect
-			.poll(() => readVvh(page), {
-				message: "--vvh absent sur /paiement : le masquage de la barre CTA serait inerte",
-			})
-			.not.toBe("");
-
-		// 2. La barre CTA porte bien l'attribut que la règle CSS cible. Les deux
-		//    conditions doivent être vraies ensemble : c'est leur disjonction qui
-		//    constituait le bug (attribut présent, émetteur absent).
-		await expect(page.locator("[data-hide-on-keyboard]").first()).toBeAttached();
-
-		// 3. La réserve du formulaire suit la hauteur réelle de la barre.
-		const payBarHeight = await page.evaluate(() =>
-			document.documentElement.style.getPropertyValue("--pay-bar-height"),
-		);
-		expect(payBarHeight).not.toBe("");
-	});
+	// Le test « la barre CTA du checkout déclare data-hide-on-keyboard » a été
+	// retiré : la page /paiement hébergée (récap + « Payer avec Stripe ») n'a plus
+	// de barre CTA fixe — plus aucun émetteur de `data-hide-on-keyboard` ni de
+	// `--pay-bar-height` dans le tunnel de paiement.
 });

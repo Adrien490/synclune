@@ -65,8 +65,14 @@ export function CheckboxFilterItem({
 				checked && "bg-primary/5",
 			)}
 		>
+			{/* `aria-labelledby` EXPLICITE, posé dès le SSR : un `<label>` HTML ne
+			    nomme pas un `role="checkbox"` (le span Base UI n'est pas labelable),
+			    et Base UI ne câble sa liaison — le même id `${id}-label` — qu'à
+			    l'hydratation. Entre les deux, la case était sans nom (axe
+			    `aria-toggle-field-name`, attrapé par l'audit du catalogue au lot 7). */}
 			<Checkbox
 				id={id}
+				aria-labelledby={`${id}-label`}
 				checked={checked}
 				onCheckedChange={onCheckedChange}
 				onFocus={onIntent}
@@ -82,7 +88,9 @@ export function CheckboxFilterItem({
 					</span>
 				)}
 				<div className="min-w-0 flex-1">
-					<span className="text-sm font-normal">{children}</span>
+					<span id={`${id}-label`} className="text-sm font-normal">
+						{children}
+					</span>
 					{description && (
 						<span className="text-muted-foreground mt-0.5 block text-xs">{description}</span>
 					)}

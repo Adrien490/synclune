@@ -1,40 +1,6 @@
 import { test, expect } from "./fixtures";
 
 test.describe("Parcours utilisateur authentifie", { tag: ["@regression"] }, () => {
-	test("la connexion avec des identifiants invalides affiche une erreur", async ({
-		page,
-		authPage,
-	}) => {
-		await authPage.goto();
-
-		await authPage.login("fake@example.com", "mauvaisMotDePasse123");
-
-		// Should stay on login page and show an error
-		const errorMessage = page.getByText(/Identifiants invalides|Email ou mot de passe incorrect/i);
-		await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
-		await expect(page).toHaveURL(/\/connexion/);
-	});
-
-	test("le mot de passe oublie envoie un lien et affiche une confirmation", async ({ page }) => {
-		await page.goto("/mot-de-passe-oublie");
-		await page.waitForLoadState("domcontentloaded");
-
-		const emailInput = page.getByRole("textbox", { name: /Email/i });
-		const submitButton = page.getByRole("button", { name: /Envoyer le lien/i });
-
-		await emailInput.fill("test@example.com");
-		await submitButton.click();
-
-		// Wait for feedback after form submission
-		const confirmationMessage = page.getByText(/envoyé|vérifiez votre email|lien.*envoyé/i);
-		const errorMessage = page.getByText(/erreur|impossible/i);
-
-		// Either success confirmation or error (both are valid responses)
-		await expect(confirmationMessage.first().or(errorMessage.first())).toBeVisible({
-			timeout: 5000,
-		});
-	});
-
 	/**
 	 * Ce bloc vérifiait que `/commandes`, `/parametres` et `/favoris` redirigeaient un
 	 * visiteur vers `/connexion`. Deux de ces trois routes ont disparu au retrait de
@@ -48,7 +14,7 @@ test.describe("Parcours utilisateur authentifie", { tag: ["@regression"] }, () =
 	 * Le nouveau contrat : les routes client supprimées tombent dans le default-deny
 	 * du proxy (→ `/`), et `/favoris` reste servi tel quel.
 	 */
-	const removedAccountRoutes = ["/commandes", "/parametres"];
+	const removedAccountRoutes = ["/commandes", "/parametres", "/connexion"];
 
 	for (const route of removedAccountRoutes) {
 		test(`${route} n'existe plus et retombe sur l'accueil (default-deny)`, async ({ page }) => {
@@ -81,8 +47,10 @@ test.describe("Navigation entre pages critiques", () => {
 		await page.waitForLoadState("domcontentloaded");
 		await expect(page).toHaveURL(/\/produits/);
 
-		// Navigate to collections
-		await page.goto("/collections");
+		// Navigate to collections. Firefox/WebKit : un `goto()` lancé pendant
+		// qu'une navigation cliente du router est encore en vol est avorté
+		// (NS_BINDING_ABORTED) — on retente une fois.
+		await page.goto("/collections").catch(() => page.goto("/collections"));
 		await page.waitForLoadState("domcontentloaded");
 		await expect(page).toHaveURL(/\/collections/);
 

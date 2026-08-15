@@ -10,7 +10,9 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		// Le titre de la page doit contenir Synclune
 		await expect(page).toHaveTitle(/Synclune/);
 
-		const navbar = page.getByRole("navigation", { name: "Navigation principale" });
+		// `exact: true` : sur mobile, « Navigation principale de la boutique »
+		// (bottom-nav) matche aussi le nom en mode non-exact — strict violation.
+		const navbar = page.getByRole("navigation", { name: "Navigation principale", exact: true });
 		await expect(navbar).toBeVisible();
 
 		// Ancre de la home réintroduite avec le premier écran « L'étal »
@@ -26,7 +28,7 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 
 	test("le logo de la navbar est un lien vers l'accueil", async ({ page }) => {
 		// Sur desktop, le logo avec texte est visible
-		const logoLink = page.locator('nav a[href="/"]').first();
+		const logoLink = page.locator('nav a[href="/"]').filter({ visible: true }).first();
 		await expect(logoLink).toBeVisible();
 	});
 
@@ -41,8 +43,13 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 	});
 
 	test("la navbar contient les icônes d'action (favoris, panier)", async ({ page, cartPage }) => {
-		// Icône favoris (accessible via aria-label)
-		const favoritesLink = page.getByRole("link", { name: /Accéder à mes favoris/i });
+		// Icône favoris — navbar sur desktop (« Accéder à mes favoris »),
+		// onglet « Favoris » de la bottom-nav sur mobile.
+		const favoritesLink = page
+			.getByRole("link", { name: /Accéder à mes favoris/i })
+			.or(page.getByRole("link", { name: /^Favoris/ }))
+			.filter({ visible: true })
+			.first();
 		await expect(favoritesLink).toBeVisible();
 
 		// Bouton panier
@@ -68,7 +75,11 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		await expect(page).toHaveURL(/\/collections/);
 	});
 
-	test("navigation depuis la navbar vers /produits", async ({ page }) => {
+	test("navigation depuis la navbar vers /produits", async ({ page, isMobile }) => {
+		// Sur appareil TACTILE (projets mobile-*, même avec le viewport desktop
+		// forcé), le premier tap sur le trigger du mega-menu OUVRE le panneau au
+		// lieu de naviguer — comportement produit voulu (cf. mega-menu-desktop).
+		test.skip(isMobile, "Pas de survol sur tactile : le premier tap ouvre le panneau");
 		// Cliquer sur le lien «Les créations» dans la navbar desktop
 		// On attend un écran desktop pour le test
 		await page.setViewportSize({ width: 1280, height: 800 });
@@ -119,9 +130,10 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 	});
 
 	test("le footer est présent avec les liens de navigation", async ({ page }) => {
-		// Faire défiler jusqu'au footer et attendre qu'il soit visible
+		// Pas de scrollIntoViewIfNeeded : `toBeAttached` n'exige pas le viewport,
+		// et le scroll levait « Element is not attached to the DOM » quand un
+		// re-rendu (hydratation streamée) recréait le nœud sous lui.
 		const footer = page.getByRole("contentinfo");
-		await footer.scrollIntoViewIfNeeded();
 		await expect(footer).toBeAttached();
 
 		// Le footer doit contenir un lien vers les créations

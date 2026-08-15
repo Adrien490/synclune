@@ -47,7 +47,11 @@ export default async function CheckoutReturnPage({
 
 	if (!order) {
 		return (
-			<main className="bg-background flex min-h-dvh items-center justify-center px-4 py-12">
+			<main
+				id="main-content"
+				tabIndex={-1}
+				className="bg-background flex min-h-dvh items-center justify-center px-4 py-12"
+			>
 				<div className="w-full max-w-md space-y-6 text-center">
 					<h1 className="font-display text-3xl font-normal tracking-tight">Commande introuvable</h1>
 					<p className="text-muted-foreground">
@@ -66,7 +70,11 @@ export default async function CheckoutReturnPage({
 	const isPending = order.status === "PENDING";
 
 	return (
-		<main className="bg-background flex min-h-dvh items-center justify-center px-4 py-12">
+		<main
+			id="main-content"
+			tabIndex={-1}
+			className="bg-background flex min-h-dvh items-center justify-center px-4 py-12"
+		>
 			{/* Le paiement est parti chez Stripe : le panier local a fait son œuvre. */}
 			<ClearCartOnMount />
 			{isPending && <ConfirmationPoller />}

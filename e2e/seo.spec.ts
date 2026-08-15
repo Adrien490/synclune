@@ -45,8 +45,9 @@ test.describe("SEO et métadonnées - Homepage", { tag: ["@slow"] }, () => {
 	});
 
 	test("la homepage contient des données structurées JSON-LD", async ({ page }) => {
-		// Wait for JSON-LD scripts to be injected
-		await page.locator('script[type="application/ld+json"]').first().waitFor();
+		// Wait for JSON-LD scripts to be injected — un <script> n'est jamais
+		// "visible", on attend son ATTACHEMENT.
+		await page.locator('script[type="application/ld+json"]').first().waitFor({ state: "attached" });
 
 		const jsonLdScripts = page.locator('script[type="application/ld+json"]');
 		const count = await jsonLdScripts.count();
@@ -162,7 +163,7 @@ test.describe("SEO et métadonnées - Page produits", { tag: ["@slow"] }, () => 
 	});
 
 	test("la page /produits contient des données structurées JSON-LD", async ({ page }) => {
-		await page.locator('script[type="application/ld+json"]').first().waitFor();
+		await page.locator('script[type="application/ld+json"]').first().waitFor({ state: "attached" });
 
 		const jsonLdScripts = page.locator('script[type="application/ld+json"]');
 		const count = await jsonLdScripts.count();
@@ -187,7 +188,7 @@ test.describe("SEO et métadonnées - Page produit détail", { tag: ["@slow"] },
 		).toBeGreaterThan(0);
 
 		await productCatalogPage.gotoFirstProduct();
-		await page.locator('script[type="application/ld+json"]').first().waitFor();
+		await page.locator('script[type="application/ld+json"]').first().waitFor({ state: "attached" });
 
 		// Chercher un JSON-LD de type Product
 		const jsonLdScripts = page.locator('script[type="application/ld+json"]');
@@ -236,7 +237,21 @@ test.describe("SEO et métadonnées - Page produit détail", { tag: ["@slow"] },
 
 test.describe("SEO - OG images dynamiques", { tag: ["@slow"] }, () => {
 	test("la page categorie produit a une OG image dynamique", async ({ page }) => {
-		const response = await page.goto("/produits/colliers/opengraph-image");
+		// Next 16 suffixe l'URL des images OG dynamiques d'un hash
+		// (`opengraph-image-<id>?<version>`) : l'URL réelle se lit dans la meta
+		// `og:image` de la page, pas en la devinant.
+		await page.goto("/produits/colliers");
+		const ogImageUrl = await page
+			.locator('meta[property="og:image"]')
+			.first()
+			.getAttribute("content");
+		expect(ogImageUrl).toBeTruthy();
+
+		const localUrl = new URL(
+			new URL(ogImageUrl!).pathname + new URL(ogImageUrl!).search,
+			"http://localhost:3000",
+		);
+		const response = await page.goto(localUrl.toString());
 
 		expect(response?.status()).toBe(200);
 		expect(response?.headers()["content-type"]).toMatch(/^image\//);
@@ -267,13 +282,22 @@ test.describe("SEO - Pages légales", { tag: ["@slow"] }, () => {
 	});
 
 	test("la page 404 s'affiche pour une route inexistante", async ({ page }) => {
-		const response = await page.goto("/route-qui-nexiste-vraiment-pas-du-tout");
-		expect(response?.status()).toBe(404);
+		// Une route de PREMIER NIVEAU inconnue tombe dans le default-deny du proxy :
+		// 307 vers `/` (pas de page 404). Le contenu 404 ne se voit que sous un
+		// segment public dynamique — c'est lui qu'on assert ici.
+		await page.goto("/creations/route-qui-nexiste-vraiment-pas-du-tout");
+		await expect(
+			page.getByRole("heading", { name: /n'existe plus|Erreur 404|perdu/i }),
+		).toBeVisible();
+
+		// Et le default-deny renvoie bien l'inconnu total vers l'accueil.
+		await page.goto("/route-qui-nexiste-vraiment-pas-du-tout");
+		await expect(page).toHaveURL(/localhost:3000\/$/);
 	});
 });
 
 test.describe("SEO - Attributs HTML globaux", { tag: ["@slow"] }, () => {
-	const pagesToCheck = ["/", "/produits", "/collections", "/connexion"];
+	const pagesToCheck = ["/", "/produits", "/collections", "/admin/connexion"];
 
 	for (const path of pagesToCheck) {
 		test(`la page ${path} a lang="fr" sur l'élément html`, async ({ page }) => {
@@ -294,7 +318,8 @@ test.describe("SEO - robots.txt et sitemap.xml", { tag: ["@slow"] }, () => {
 
 		const body = await response?.text();
 		expect(body).toBeTruthy();
-		expect(body).toContain("User-agent");
+		// Next sérialise l'en-tête en `User-Agent` (casse indifférente pour les crawlers).
+		expect(body).toMatch(/User-agent/i);
 	});
 
 	test("sitemap.xml est accessible et contient du XML valide", async ({ page }) => {
@@ -340,8 +365,8 @@ test.describe("SEO - robots.txt et sitemap.xml", { tag: ["@slow"] }, () => {
 });
 
 test.describe("SEO - noindex sur pages privees", { tag: ["@slow"] }, () => {
-	test("la page /verifier-email a noindex", async ({ page }) => {
-		await page.goto("/verifier-email");
+	test("la page /paiement a noindex", async ({ page }) => {
+		await page.goto("/paiement");
 		await page.waitForLoadState("domcontentloaded");
 
 		const robotsMeta = page.locator('meta[name="robots"]');
@@ -351,8 +376,8 @@ test.describe("SEO - noindex sur pages privees", { tag: ["@slow"] }, () => {
 		expect(content).toMatch(/noindex/);
 	});
 
-	test("la page /renvoyer-verification a noindex", async ({ page }) => {
-		await page.goto("/renvoyer-verification");
+	test("la page /admin/connexion a noindex", async ({ page }) => {
+		await page.goto("/admin/connexion");
 		await page.waitForLoadState("domcontentloaded");
 
 		const robotsMeta = page.locator('meta[name="robots"]');

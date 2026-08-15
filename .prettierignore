@@ -6,6 +6,10 @@ dist
 coverage
 app/generated
 prisma/migrations
+playwright-report
+test-results
+e2e/.auth
+e2e/.tmp
 public/sw*
 public/swe-worker*
 pnpm-lock.yaml

@@ -73,18 +73,22 @@ test.describe("Responsive — surfaces de navigation boutique", () => {
 		expect(count).toBeGreaterThanOrEqual(3);
 
 		for (let i = 0; i < count; i++) {
-			const box = await tabs.nth(i).boundingBox();
-			if (!box) continue;
-			const covered = await page.evaluate(
-				({ x, y }) => {
-					const el = document.elementFromPoint(x, y);
-					if (!el) return "aucun élément au point";
-					const nav = el.closest('nav[aria-label*="boutique" i]');
-					return nav ? null : `${el.tagName}.${el.className}`.slice(0, 120);
-				},
-				{ x: box.x + box.width / 2, y: box.y + box.height / 2 },
-			);
-			expect(covered, `onglet ${i} de la bottom-nav recouvert`).toBeNull();
+			// Retenté : juste après `domcontentloaded`, la barre peut encore se
+			// positionner (hit-test hors viewport → « aucun élément au point »).
+			await expect(async () => {
+				const box = await tabs.nth(i).boundingBox();
+				expect(box, `onglet ${i} sans boundingBox`).not.toBeNull();
+				const covered = await page.evaluate(
+					({ x, y }) => {
+						const el = document.elementFromPoint(x, y);
+						if (!el) return "aucun élément au point";
+						const nav = el.closest('nav[aria-label*="boutique" i]');
+						return nav ? null : `${el.tagName}.${el.className}`.slice(0, 120);
+					},
+					{ x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 },
+				);
+				expect(covered, `onglet ${i} de la bottom-nav recouvert`).toBeNull();
+			}).toPass({ timeout: 10_000 });
 		}
 	});
 });
@@ -173,8 +177,9 @@ test.describe("Responsive — navigation admin", () => {
 		await page.goto("/admin");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Quelle que soit la destination (connexion ou 403), une nav existe.
-		const landmarks = await countVisible(page, "nav, header");
-		expect(landmarks, "aucun repère de navigation après redirection admin").toBeGreaterThan(0);
+		// Depuis l'auth maison (lot 1), /admin/connexion rend un <main> minimal
+		// sans nav ni header : « navigable » = le formulaire de connexion répond.
+		await expect(page).toHaveURL(/\/admin\/connexion/);
+		await expect(page.getByRole("textbox", { name: /Mot de passe/i })).toBeVisible();
 	});
 });

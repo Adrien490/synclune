@@ -14,6 +14,7 @@ import {
 	GET_PRODUCTS_SELECT,
 } from "../constants/product.constants";
 import type { GetProductsParams, GetProductsReturn, Product } from "../types/product.types";
+import { resolveTaxonomyFilterSlugs } from "./resolve-filter-slugs";
 import {
 	buildProductWhereClause,
 	buildSearchConditions,
@@ -161,7 +162,11 @@ async function fetchProducts(
 	// ⚠️ AUCUN try/catch dans ce scope : le repli appartient à `getProducts`
 	// ci-dessus, hors du cache (sinon une page vide de panne est mise en cache).
 	{
-		const where = buildProductWhereClause(params, searchResult);
+		// Les filtres couleur/matériau arrivent en NOMS SLUGIFIÉS (identité URL) —
+		// résolution vers les noms en base avant le query builder (cf.
+		// resolve-filter-slugs.ts, bug « 0 pièce » sur les couleurs multi-mots).
+		const filters = (await resolveTaxonomyFilterSlugs(params.filters)) ?? params.filters;
+		const where = buildProductWhereClause({ ...params, filters }, searchResult);
 
 		// NOTE: All products are loaded then sorted/paginated in JS because:
 		// - Price sorting requires MIN() on VARIANTs (not possible in Prisma)

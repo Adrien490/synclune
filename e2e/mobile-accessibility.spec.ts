@@ -26,6 +26,14 @@ const REFLOW_VIEWPORT = VIEWPORTS.REFLOW_320;
  * le double run est assumé, pas un oubli.
  */
 
+// Les audits photographient l'état STABLE : reduced-motion AVANT la navigation.
+// Le helper l'émule au moment de l'audit, trop tard pour une transition déjà
+// lancée (fondu d'entrée, scrim d'overlay) — axe capturait des contrastes de
+// transition fantômes sur les sheets ouverts.
+test.beforeEach(async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+});
+
 async function expectNoHorizontalOverflow(page: Page, name: string) {
 	const overflow = await page.evaluate(
 		() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -35,6 +43,15 @@ async function expectNoHorizontalOverflow(page: Page, name: string) {
 
 test.describe("A11y Mobile — axe-core WCAG (viewport 390x844)", () => {
 	test.use({ viewport: MOBILE_VIEWPORT });
+
+	// AVANT la navigation, pas seulement dans le helper axe : les entrées en
+	// stagger du menu sheet lisent la préférence au MONTAGE — l'émuler après
+	// coup laisse l'animation déjà lancée, et axe photographiait le texte à
+	// mi-fondu (muted-foreground à ~50% d'opacité = 1.93:1, 490 lignes de
+	// violations fantômes sur mobile-webkit, plus lent à peindre).
+	test.beforeEach(async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: "reduce" });
+	});
 
 	test("home — aucune violation WCAG", async ({ page }) => {
 		await page.goto("/");
@@ -185,9 +202,13 @@ test.describe("A11y Mobile — WCAG 1.4.10 Reflow (320 CSS px)", () => {
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 
+		// À 320 px la bottom-nav fixe intercepte le clic sur la carte scrollée en
+		// bord de pli : on navigue par l'URL, la cible du test est la FICHE.
 		const firstProduct = page.locator(SELECTORS.PRODUCT_LINK).first();
 		await expect(firstProduct).toBeVisible();
-		await firstProduct.click();
+		const href = await firstProduct.getAttribute("href");
+		expect(href).toBeTruthy();
+		await page.goto(href!);
 		await page.waitForLoadState("domcontentloaded");
 		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
@@ -200,8 +221,15 @@ test.describe("A11y Mobile — WCAG 1.4.10 Reflow (320 CSS px)", () => {
 
 		const cartTrigger = page.getByRole("button", { name: /panier/i }).first();
 		await expect(cartTrigger).toBeVisible();
+		// Le bouton est peint avant d'être hydraté : sous la charge d'un run
+		// complet, un clic trop tôt part dans le vide — on retente une fois.
 		await cartTrigger.click();
-		await expect(page.getByRole("dialog")).toBeVisible();
+		try {
+			await expect(page.getByRole("dialog")).toBeVisible({ timeout: 3000 });
+		} catch {
+			await cartTrigger.click();
+			await expect(page.getByRole("dialog")).toBeVisible();
+		}
 
 		await expectNoHorizontalOverflow(page, "panier");
 	});

@@ -13,6 +13,12 @@ const eslintConfig = [
 			"scripts/**",
 			"next-env.d.ts",
 			"app/generated/**",
+			// Artefacts Playwright (rapport HTML avec bundle trace-viewer minifié,
+			// captures d'échec) : générés par tout run local, jamais du code à lint.
+			"playwright-report/**",
+			"test-results/**",
+			"e2e/.auth/**",
+			"e2e/.tmp/**",
 			"**/*.generated.{js,ts,jsx,tsx}",
 			"**/prisma/migrations/**",
 			"public/sw*",

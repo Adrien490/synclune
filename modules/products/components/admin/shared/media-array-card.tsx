@@ -190,7 +190,7 @@ export function MediaArrayCard({
 										 * PDP est en `object-cover`. Sans cette ligne, un bijou cadré large se
 										 * découvre rogné une fois publié.
 										 */}
-										<span className="text-muted-foreground/80">
+										<span className="text-muted-foreground">
 											Les vignettes de la boutique recadrent en 3:4 — garde le bijou vers le centre.
 										</span>
 									</p>

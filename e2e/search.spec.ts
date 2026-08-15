@@ -25,7 +25,7 @@ test.describe("Recherche produits", { tag: ["@critical"] }, () => {
 		const results = await searchPage.getResults();
 		const emptyState = searchPage.page.getByText(/aucun (résultat|produit)/i);
 
-		await expect(results.first().or(emptyState)).toBeVisible({ timeout: 5000 });
+		await expect(results.first().or(emptyState).first()).toBeVisible({ timeout: 5000 });
 	});
 
 	test("la recherche sans resultats affiche un etat vide", async ({ searchPage }) => {
@@ -33,7 +33,9 @@ test.describe("Recherche produits", { tag: ["@critical"] }, () => {
 
 		await searchPage.search("xyznonexistent12345");
 
-		const emptyState = searchPage.page.getByText(/aucun (résultat|produit)/i);
+		// `.first()` : le message d'état vide existe en deux exemplaires (mise en
+		// page mobile + desktop, l'un masqué) — strict violation sinon.
+		const emptyState = searchPage.page.getByText(/aucun (résultat|produit)/i).first();
 		await expect(emptyState).toBeVisible({ timeout: 5000 });
 	});
 
@@ -71,11 +73,15 @@ test.describe("Recherche produits", { tag: ["@critical"] }, () => {
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		await page
-			.getByRole("button", { name: /ouvrir la recherche/i })
-			.first()
-			.click();
-		await expect(page.getByRole("dialog")).toBeVisible();
+		// Sur mobile, le déclencheur quick-search est l'onglet « Rechercher » de la
+		// bottom-nav (le bouton navbar « Ouvrir la recherche rapide » est desktop).
+		const searchTab = page
+			.getByRole("navigation", { name: /Navigation principale de la boutique/i })
+			.getByRole("button", { name: /Rechercher/i });
+		await expect(async () => {
+			await searchTab.click();
+			await expect(page.getByRole("dialog")).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 15_000 });
 
 		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
 		await input.fill("bague");

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { WISHLIST_EXPIRATION_DAYS } from "@/modules/wishlist/constants/expiration.constants";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
+import { shouldUseSecureCookies } from "@/shared/lib/cookie-security";
 
 /**
  * Cookie des favoris : SSOT de la wishlist depuis le retrait de la base
@@ -91,7 +92,7 @@ export async function writeWishlistCookie(productIds: string[]): Promise<void> {
 
 	cookieStore.set(WISHLIST_COOKIE_NAME, JSON.stringify(ids), {
 		httpOnly: true, // Pas accessible en JavaScript (protection XSS)
-		secure: process.env.NODE_ENV === "production", // HTTPS en production uniquement
+		secure: shouldUseSecureCookies(), // SSOT — cf. shared/lib/cookie-security.ts
 		sameSite: "lax", // Protection CSRF
 		maxAge: WISHLIST_COOKIE_MAX_AGE,
 		path: "/",

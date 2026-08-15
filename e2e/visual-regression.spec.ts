@@ -1,7 +1,15 @@
 import { test, expect } from "./fixtures";
 import { requireSeedData } from "./constants";
+import { preseedCookieConsent } from "./helpers/consent";
 
 test.describe("Visual regression - Pages cles", { tag: ["@slow"] }, () => {
+	// Sans pré-seed, le bandeau cookies (chunk lazy) se monte à un instant
+	// VARIABLE — présent sur une capture, absent de la suivante : les snapshots
+	// mobiles flappaient de ~10% d'un run à l'autre (diff mesuré : le bandeau).
+	test.beforeEach(async ({ page }) => {
+		await preseedCookieConsent(page);
+	});
+
 	test("homepage - snapshot", async ({ page }) => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
@@ -44,20 +52,6 @@ test.describe("Visual regression - Pages cles", { tag: ["@slow"] }, () => {
 		await expect(heading).toBeVisible();
 
 		await expect(page).toHaveScreenshot("product-detail.png", {
-			fullPage: false,
-			maxDiffPixelRatio: 0.05,
-			animations: "disabled",
-		});
-	});
-
-	test("page connexion - snapshot", async ({ page }) => {
-		await page.goto("/connexion");
-		await page.waitForLoadState("domcontentloaded");
-
-		const submitButton = page.getByRole("button", { name: /Se connecter/i });
-		await expect(submitButton).toBeVisible();
-
-		await expect(page).toHaveScreenshot("login-page.png", {
 			fullPage: false,
 			maxDiffPixelRatio: 0.05,
 			animations: "disabled",

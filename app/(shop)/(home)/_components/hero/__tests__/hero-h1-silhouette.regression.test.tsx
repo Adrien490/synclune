@@ -48,13 +48,22 @@ describe("HeroHeading — silhouette du h1 (mécanisme)", () => {
 	it("soude « faits un par un » : la promesse d'unicité ne se coupe plus en veuve", () => {
 		render(<HeroHeading id="hero-title" />);
 
+		// ⚠️ Mécanisme AMENDÉ au lot 7 (WCAG 1.4.4) : la soudure passe par des
+		// espaces INSÉCABLES + `wrap-anywhere`, plus par `whitespace-nowrap`.
+		// Même anti-veuve à toutes les largeurs normales, mais un nowrap
+		// interdisait toute césure : à 200% de zoom texte le groupe (~560px au
+		// corps 80) mettait un scroll horizontal à la page entière sur mobile —
+		// attrapé par zoom-a11y.spec. `overflow-wrap: anywhere` ne coupe qu'en
+		// dernier recours. (« colorés, » garde SON nowrap : un nbsp ne soude pas
+		// une boîte inline-block à sa virgule, et le groupe tient à 200%.)
 		const h1 = screen.getByRole("heading", { level: 1 });
-		const groups = Array.from(h1.querySelectorAll(".whitespace-nowrap")).map(
+		const groups = Array.from(h1.querySelectorAll(".wrap-anywhere")).map(
 			(group) => group.textContent,
 		);
-		expect(groups).toContain("faits un par un");
+		expect(groups).toContain("faits\u00A0un\u00A0par\u00A0un");
 
-		// …sans altérer ce que lit un lecteur d'écran ni un test de contenu.
-		expect(h1.textContent).toBe("Des bijoux colorés, faits un par un");
+		// …sans altérer ce que lit un lecteur d'écran ni un test de contenu
+		// (les nbsp sont des blancs pour la lecture — on les normalise).
+		expect(h1.textContent.replace(/\u00A0/g, " ")).toBe("Des bijoux colorés, faits un par un");
 	});
 });

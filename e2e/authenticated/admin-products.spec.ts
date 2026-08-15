@@ -17,16 +17,8 @@ test.describe("Admin - Gestion des produits", { tag: ["@regression"] }, () => {
 		await expect(newProductButton.first()).toBeVisible();
 	});
 
-	test("les onglets de statut sont visibles", async ({ page, adminPage }) => {
-		await adminPage.gotoProducts();
-
-		// Status tabs/filters should be present
-		const statusFilters = page
-			.getByRole("tab")
-			.or(page.getByRole("button", { name: /Tous|Actif|Brouillon|Archivé/i }));
-		const filterCount = await statusFilters.count();
-		expect(filterCount).toBeGreaterThan(0);
-	});
+	// Supprimé (migration lean) : plus d'onglets de statut sur la liste produits —
+	// le filtre de statut (`active`) vit dans le sheet « Filtres ».
 
 	test("la recherche de produits fonctionne", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
@@ -43,7 +35,7 @@ test.describe("Admin - Gestion des produits", { tag: ["@regression"] }, () => {
 		// Table or empty state should be visible
 		const table = page.getByRole("table");
 		const emptyState = page.getByText(/aucun produit/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: 5000 });
+		await expect(table.or(emptyState).first()).toBeVisible({ timeout: 5000 });
 	});
 
 	test("le tableau des produits affiche les colonnes attendues", async ({ page, adminPage }) => {
@@ -89,8 +81,8 @@ test.describe("Admin - Gestion des produits", { tag: ["@regression"] }, () => {
 		await newProductButton.first().click();
 		await page.waitForLoadState("domcontentloaded");
 
-		// Check for core product fields
-		const nameField = page.getByLabel(/Nom/i);
+		// Check for core product fields (lean : « Titre du bijou »)
+		const nameField = page.getByLabel(/Titre du bijou/i);
 		await expect(nameField.first()).toBeVisible();
 
 		const descriptionField = page.getByLabel(/Description/i).or(page.locator("textarea"));
@@ -100,12 +92,28 @@ test.describe("Admin - Gestion des produits", { tag: ["@regression"] }, () => {
 	test("la navigation entre sections admin fonctionne", async ({ page, adminPage }) => {
 		await adminPage.goto();
 
-		// Navigate to products
-		await adminPage.productsLink.click();
+		// Les liens `.first()` globaux du page-object tombent sur des doublons masqués :
+		// on scope à la sidebar visible.
+		const sidebar = page.getByRole("navigation", {
+			name: "Navigation principale du tableau de bord",
+		});
+
+		// Navigate to products — le groupe Catalogue est replié sur /admin.
+		const produitsLink = sidebar.getByRole("link", { name: /Produits/i }).first();
+		await expect(async () => {
+			if (!(await produitsLink.isVisible())) {
+				await page.locator("#nav-group-catalogue").click();
+			}
+			await expect(produitsLink).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 10000 });
+		await produitsLink.click();
 		await expect(page).toHaveURL(/\/admin\/catalogue\/produits/);
 
 		// Navigate to orders
-		await adminPage.ordersLink.click();
+		await sidebar
+			.getByRole("link", { name: /Commandes/i })
+			.first()
+			.click();
 		await expect(page).toHaveURL(/\/admin\/ventes\/commandes/);
 
 		// Back to dashboard

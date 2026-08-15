@@ -9,7 +9,7 @@ test.describe("Admin - Tableau de bord (authentifié)", { tag: ["@critical"] }, 
 
 	test("accède au tableau de bord admin sans redirection", async ({ page }) => {
 		await expect(page).toHaveURL(/\/admin/);
-		await expect(page).not.toHaveURL(/\/connexion/);
+		await expect(page).not.toHaveURL(/\/admin\/connexion/);
 	});
 
 	test("affiche le titre du tableau de bord", async ({ adminPage }) => {
@@ -17,9 +17,20 @@ test.describe("Admin - Tableau de bord (authentifié)", { tag: ["@critical"] }, 
 	});
 
 	test("affiche la navigation admin dans la sidebar", async ({ page }) => {
-		// Main navigation groups should be present
-		await expect(page.getByText("Commandes")).toBeAttached();
-		await expect(page.getByText("Produits")).toBeAttached();
+		// Scopé à la sidebar : « Commandes »/« Produits » existent aussi ailleurs (KPI, tableaux).
+		const sidebar = page.getByRole("navigation", {
+			name: "Navigation principale du tableau de bord",
+		});
+		await expect(sidebar.getByRole("link", { name: /Commandes/i }).first()).toBeVisible();
+		// Sur /admin, seul le groupe de la route courante (Pilotage) est déplié :
+		// « Produits » vit dans le groupe Catalogue, replié — on l'ouvre d'abord.
+		const produitsLink = sidebar.getByRole("link", { name: /Produits/i }).first();
+		await expect(async () => {
+			if (!(await produitsLink.isVisible())) {
+				await page.locator("#nav-group-catalogue").click();
+			}
+			await expect(produitsLink).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: TIMEOUTS.DATA_LOAD });
 	});
 
 	test("affiche les KPIs du dashboard", async ({ page }) => {
@@ -28,13 +39,31 @@ test.describe("Admin - Tableau de bord (authentifié)", { tag: ["@critical"] }, 
 		await expect(kpiSection.first()).toBeVisible({ timeout: 10000 });
 	});
 
-	test("la navigation admin fonctionne vers les commandes", async ({ adminPage, page }) => {
-		await adminPage.ordersLink.click();
+	test("la navigation admin fonctionne vers les commandes", async ({ page }) => {
+		const sidebar = page.getByRole("navigation", {
+			name: "Navigation principale du tableau de bord",
+		});
+		await sidebar
+			.getByRole("link", { name: /Commandes/i })
+			.first()
+			.click();
 		await expect(page).toHaveURL(/\/admin\/ventes\/commandes/);
 	});
 
-	test("la navigation admin fonctionne vers les produits", async ({ adminPage, page }) => {
-		await adminPage.productsLink.click();
+	test("la navigation admin fonctionne vers les produits", async ({ page }) => {
+		// `adminPage.productsLink` (`.first()` global) tombait sur un lien masqué — on
+		// scope à la sidebar, et on déplie le groupe Catalogue (replié sur /admin).
+		const sidebar = page.getByRole("navigation", {
+			name: "Navigation principale du tableau de bord",
+		});
+		const produitsLink = sidebar.getByRole("link", { name: /Produits/i }).first();
+		await expect(async () => {
+			if (!(await produitsLink.isVisible())) {
+				await page.locator("#nav-group-catalogue").click();
+			}
+			await expect(produitsLink).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: TIMEOUTS.DATA_LOAD });
+		await produitsLink.click();
 		await expect(page).toHaveURL(/\/admin\/catalogue\/produits/);
 	});
 
@@ -54,14 +83,18 @@ test.describe("Admin - Page commandes (authentifié)", { tag: ["@critical"] }, (
 		await expect(heading).toBeVisible();
 	});
 
-	test("affiche la barre de recherche", async ({ adminPage }) => {
-		await expect(adminPage.searchInput).toBeVisible();
+	test("affiche la barre de recherche", async ({ page }) => {
+		// Le champ existe en double (toolbar desktop + barre mobile) : viser le visible.
+		const searchInput = page.getByPlaceholder(/Rechercher/i).filter({ visible: true });
+		await expect(searchInput.first()).toBeVisible();
 	});
 
 	test("affiche le tableau de données ou un état vide", async ({ page }) => {
-		const table = page.locator("table");
+		const table = page.getByRole("table");
 		const emptyState = page.getByText(/Aucune commande/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: 10000 });
+		await expect(table.or(emptyState).filter({ visible: true }).first()).toBeVisible({
+			timeout: 10000,
+		});
 	});
 });
 
@@ -79,53 +112,50 @@ test.describe("Admin - Page produits (authentifié)", { tag: ["@critical"] }, ()
 		await expect(newProductButton).toBeVisible();
 	});
 
-	test("affiche les onglets de statut", async ({ page }) => {
-		// Status navigation tabs
-		const draftTab = page.getByRole("link", { name: /Brouillon/i });
-		const publishedTab = page.getByRole("link", { name: /Publié/i });
+	// Supprimé (migration lean) : plus d'onglets de statut sur la liste produits —
+	// le filtre de statut vit désormais dans le sheet « Filtres ».
 
-		await expect(draftTab).toBeAttached();
-		await expect(publishedTab).toBeAttached();
-	});
-
-	test("affiche la barre de recherche produits", async ({ adminPage }) => {
-		await expect(adminPage.searchInput).toBeVisible();
+	test("affiche la barre de recherche produits", async ({ page }) => {
+		const searchInput = page.getByPlaceholder(/Rechercher/i).filter({ visible: true });
+		await expect(searchInput.first()).toBeVisible();
 	});
 
 	test("affiche le tableau de données ou un état vide", async ({ page }) => {
-		const table = page.locator("table");
+		const table = page.getByRole("table");
 		const emptyState = page.getByText(/Aucun produit/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: 10000 });
+		await expect(table.or(emptyState).filter({ visible: true }).first()).toBeVisible({
+			timeout: 10000,
+		});
 	});
 });
 
 test.describe("Admin - Dashboard widgets smoke test", { tag: ["@regression"] }, () => {
-	test("les 3 widgets principaux sont visibles au chargement", async ({ page, adminPage }) => {
+	test("les cartes KPI du monde lean sont visibles au chargement", async ({ page, adminPage }) => {
 		await adminPage.goto();
 		await expect(adminPage.heading).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 
-		// KPIs : les 3 titres de cartes sont présents
-		await expect(page.getByRole("heading", { name: /CA du mois/i })).toBeVisible({
+		// KPI lean (lot 6) : CA du mois, à expédier, stock faible, rétractations.
+		await expect(page.getByText(/CA encaissé ce mois-ci/i).first()).toBeVisible({
 			timeout: TIMEOUTS.DATA_LOAD,
 		});
-		await expect(page.getByRole("heading", { name: /^Commandes$/i })).toBeVisible({
+		await expect(page.getByText(/À expédier/i).first()).toBeVisible({
 			timeout: TIMEOUTS.DATA_LOAD,
 		});
-		await expect(page.getByRole("heading", { name: /Panier moyen/i })).toBeVisible({
+		await expect(page.getByText(/Stock faible/i).first()).toBeVisible({
+			timeout: TIMEOUTS.DATA_LOAD,
+		});
+		await expect(page.getByText(/Rétractations en cours/i).first()).toBeVisible({
 			timeout: TIMEOUTS.DATA_LOAD,
 		});
 
-		// Graphique revenus : figure ou état vide
-		const revenueWidget = page
-			.locator('[role="figure"][aria-label*="Graphique"]')
-			.or(page.getByText(/Aucun revenu/i));
-		await expect(revenueWidget.first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-
-		// Commandes récentes : liste ou état vide
-		const recentOrdersWidget = page
-			.getByRole("list")
-			.or(page.getByText(/Aucune commande récente|Aucune commande/i));
-		await expect(recentOrdersWidget.first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		// Suivi du seuil de franchise TVA (art. 293 B CGI).
+		await expect(page.getByText(/Franchise de TVA/i).first()).toBeVisible({
+			timeout: TIMEOUTS.DATA_LOAD,
+		});
+		// Commandes par statut.
+		await expect(page.getByText(/Commandes par statut/i).first()).toBeVisible({
+			timeout: TIMEOUTS.DATA_LOAD,
+		});
 	});
 });
 
@@ -135,7 +165,7 @@ test.describe("Admin - Navigation cross-sections", { tag: ["@regression"] }, () 
 			{ url: "/admin", title: /Tableau de bord/i },
 			{ url: "/admin/ventes/commandes", title: /Commandes/i },
 			{ url: "/admin/catalogue/produits", title: /Produits/i },
-			{ url: "/admin/marketing/discounts", title: /Codes promo|Promotions/i },
+			{ url: "/admin/ventes/retractations", title: /Rétractations/i },
 			{ url: "/admin/catalogue/collections", title: /Collections/i },
 		];
 
@@ -144,247 +174,10 @@ test.describe("Admin - Navigation cross-sections", { tag: ["@regression"] }, () 
 			await page.waitForLoadState("domcontentloaded");
 
 			await expect(page).toHaveURL(new RegExp(section.url));
-			await expect(page).not.toHaveURL(/\/connexion/);
+			await expect(page).not.toHaveURL(/\/admin\/connexion/);
 		}
 	});
 });
 
-test.describe("Admin - Dashboard period + comparison selectors", { tag: ["@regression"] }, () => {
-	test.beforeEach(async ({ adminPage }) => {
-		await adminPage.goto();
-		await expect(adminPage.heading).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-	});
-
-	test("le sélecteur de période est visible et accessible", async ({ page }) => {
-		const periodTrigger = page
-			.getByRole("combobox", { name: /Période du tableau de bord/i })
-			.first();
-		await expect(periodTrigger).toBeVisible();
-	});
-
-	test("le sélecteur de mode de comparaison est visible et accessible", async ({ page }) => {
-		const comparisonTrigger = page.getByRole("combobox", { name: /Mode de comparaison/i }).first();
-		await expect(comparisonTrigger).toBeVisible();
-	});
-
-	test("changer la période met à jour l'URL (?period=)", async ({ page }) => {
-		const periodTrigger = page
-			.getByRole("combobox", { name: /Période du tableau de bord/i })
-			.first();
-		await periodTrigger.click();
-
-		const option = page.getByRole("option", { name: /7 derniers jours/i });
-		await expect(option).toBeVisible();
-		await option.click();
-
-		await expect(page).toHaveURL(/\?.*period=7d/);
-	});
-
-	test("changer le mode de comparaison en YoY met à jour l'URL (?comparison=yoy)", async ({
-		page,
-	}) => {
-		const comparisonTrigger = page.getByRole("combobox", { name: /Mode de comparaison/i }).first();
-		await comparisonTrigger.click();
-
-		// YoY option: "Année précédente" or similar
-		const yoyOption = page.getByRole("option", { name: /année précédente|N-1/i }).first();
-		await expect(yoyOption).toBeVisible();
-		await yoyOption.click();
-
-		await expect(page).toHaveURL(/\?.*comparison=yoy/);
-	});
-
-	test("le libellé de comparaison s'adapte au mode YoY", async ({ page }) => {
-		await page.goto("/admin?comparison=yoy");
-		await page.waitForLoadState("domcontentloaded");
-
-		// The evolution labels (vs "année précédente") appear in KPI cards
-		// Just assert the selector value reflects the URL
-		const comparisonTrigger = page.getByRole("combobox", { name: /Mode de comparaison/i }).first();
-		await expect(comparisonTrigger).toContainText(/Année précédente|N-1/i);
-	});
-
-	test("le sélecteur de comparaison expose aria-busy durant la transition", async ({ page }) => {
-		const comparisonTrigger = page.getByRole("combobox", { name: /Mode de comparaison/i }).first();
-
-		// Open + select a different value
-		await comparisonTrigger.click();
-		const otherOption = page.getByRole("option", { name: /année précédente|N-1/i }).first();
-		if (await otherOption.isVisible().catch(() => false)) {
-			await otherOption.click();
-			// aria-busy may flip very briefly; simply assert the attribute shape is supported
-			// by checking it can appear without throwing (soft assertion)
-			await expect(comparisonTrigger).not.toHaveAttribute("aria-busy", "invalid");
-		}
-	});
-});
-
-test.describe("Admin - Dashboard export action", { tag: ["@regression"] }, () => {
-	test.beforeEach(async ({ adminPage }) => {
-		await adminPage.goto();
-		await expect(adminPage.heading).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-	});
-
-	test("le bouton d'export est visible avec libellé accessible", async ({ page }) => {
-		const exportButton = page
-			.getByRole("button", { name: /Exporter le rapport du tableau de bord/i })
-			.first();
-		await expect(exportButton).toBeVisible();
-	});
-
-	test("cliquer sur Exporter ouvre le menu avec options CSV et JSON", async ({ page }) => {
-		const exportButton = page
-			.getByRole("button", { name: /Exporter le rapport du tableau de bord/i })
-			.first();
-		await exportButton.click();
-
-		await expect(page.getByRole("menuitem", { name: /CSV/i })).toBeVisible();
-		await expect(page.getByRole("menuitem", { name: /JSON/i })).toBeVisible();
-	});
-
-	test("sélectionner CSV déclenche la Server Action export", async ({ page }) => {
-		const exportButton = page
-			.getByRole("button", { name: /Exporter le rapport du tableau de bord/i })
-			.first();
-		await exportButton.click();
-
-		const csvItem = page.getByRole("menuitem", { name: /CSV/i });
-		await expect(csvItem).toBeVisible();
-
-		// The export hook creates a Blob URL and triggers download — we just ensure
-		// the click does not throw and the menu closes (Server Action is invoked)
-		await csvItem.click();
-		await expect(csvItem).not.toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-	});
-
-	test("le bouton d'export respecte 44px de zone tactile (WCAG 2.5.5)", async ({ page }) => {
-		const exportButton = page
-			.getByRole("button", { name: /Exporter le rapport du tableau de bord/i })
-			.first();
-		await expect(exportButton).toBeVisible();
-
-		const box = await exportButton.boundingBox();
-		expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
-	});
-});
-
-test.describe("Admin - Dashboard mobile UX 2026", { tag: ["@regression"] }, () => {
-	test.use({ viewport: { width: 390, height: 844 } });
-
-	test.beforeEach(async ({ adminPage }) => {
-		await adminPage.goto();
-		await expect(adminPage.heading).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-	});
-
-	test("le header mobile sticky est présent", async ({ page }) => {
-		// DashboardMobileHeader is md:hidden — visible on mobile viewport
-		const mobileHeading = page.getByRole("heading", { level: 1, name: /Tableau de bord/i });
-		await expect(mobileHeading).toBeVisible();
-	});
-
-	test("le PeriodSelector utilise la variante segmentée (tabs) sur mobile", async ({ page }) => {
-		// Segmented variant renders a TabsList with role="tablist"
-		const tabList = page.getByRole("tablist", { name: /Période du tableau de bord/i }).first();
-		await expect(tabList).toBeVisible();
-	});
-
-	test("les boutons Export et Refresh sont en mode iconOnly sur mobile", async ({ page }) => {
-		const exportButton = page
-			.getByRole("button", { name: /Exporter le rapport du tableau de bord/i })
-			.first();
-		await expect(exportButton).toBeVisible();
-
-		// In iconOnly mode the label is sr-only (not visible in layout) but still accessible
-		const box = await exportButton.boundingBox();
-		// size-11 icon button ≈ 44px square
-		expect(box?.width ?? 0).toBeGreaterThanOrEqual(40);
-		expect(box?.height ?? 0).toBeGreaterThanOrEqual(40);
-	});
-
-	test("un conteneur de scroll-fade enveloppe la section KPIs (UX 2026 anti-CLS)", async ({
-		page,
-	}) => {
-		// La rangée de KPIs porte `role="region"` + `tabIndex` en propre (le fondu,
-		// lui, est purement CSS depuis la bascule sur `scroll-fade-x`) — au moins
-		// une région doit donc exister.
-		const scrollRegions = page.getByRole("region");
-		await expect(scrollRegions.first()).toBeVisible();
-	});
-
-	test("la heatmap affiche un panneau info aria-live accessible (tap-to-reveal)", async ({
-		page,
-	}) => {
-		const panel = page.getByTestId("heatmap-selected-cell");
-		await expect(panel).toHaveAttribute("role", "status");
-		await expect(panel).toHaveAttribute("aria-live", "polite");
-	});
-
-	test("le graphique de revenus affiche le hint mobile de tap-to-reveal", async ({ page }) => {
-		// Hint is md:hidden — visible only on mobile viewport
-		const hint = page.getByText("Touchez le graphique pour voir le détail.");
-		// Hint may be absent if there is no revenue data for the test tenant; tolerate both cases
-		const count = await hint.count();
-		if (count > 0) {
-			await expect(hint.first()).toBeVisible();
-		}
-	});
-
-	test("l'annonceur de refresh est un role=status sr-only aria-live=polite", async ({ page }) => {
-		const announcers = page.locator("[role='status'][aria-live='polite'].sr-only");
-		expect(await announcers.count()).toBeGreaterThan(0);
-	});
-});
-
-test.describe(
-	"Admin - Dashboard landscape mobile (iPhone 14 Pro rotated)",
-	{ tag: ["@regression"] },
-	() => {
-		test.use({ viewport: { width: 844, height: 390 } });
-
-		test.beforeEach(async ({ adminPage }) => {
-			await adminPage.goto();
-			await expect(adminPage.heading).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-		});
-
-		test("le dashboard ne déborde pas horizontalement en paysage mobile", async ({ page }) => {
-			const body = page.locator("body");
-			const scrollWidth = await body.evaluate((el) => el.scrollWidth);
-			const clientWidth = await body.evaluate((el) => el.clientWidth);
-			// Tolerate 1px sub-pixel rounding; no more
-			expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
-		});
-
-		test("les boutons du header restent dans la zone tactile WCAG en landscape", async ({
-			page,
-		}) => {
-			const exportButton = page
-				.getByRole("button", { name: /Exporter le rapport du tableau de bord/i })
-				.first();
-			await expect(exportButton).toBeVisible();
-			const box = await exportButton.boundingBox();
-			expect(box?.height ?? 0).toBeGreaterThanOrEqual(40);
-		});
-	},
-);
-
-test.describe("Admin - Hub pages smoke tests", { tag: ["@regression"] }, () => {
-	const hubPages = [
-		{ url: "/admin/catalogue", name: "Catalogue" },
-		{ url: "/admin/marketing", name: "Marketing" },
-		{ url: "/admin/ventes", name: "Ventes" },
-	];
-
-	for (const { url, name } of hubPages) {
-		test(`la page hub ${name} (${url}) charge sans erreur`, async ({ page }) => {
-			const response = await page.goto(url);
-			await page.waitForLoadState("domcontentloaded");
-
-			expect(response?.status()).toBeLessThan(500);
-			await expect(page).not.toHaveURL(/\/connexion/);
-
-			// Should have at least one heading
-			const heading = page.getByRole("heading").first();
-			await expect(heading).toBeVisible();
-		});
-	}
-});
+// Sélecteurs de période/comparaison et export : retirés avec l'ancien dashboard
+// (lot 2) — le dashboard lean (lot 6) est un instantané mois/année sans options.

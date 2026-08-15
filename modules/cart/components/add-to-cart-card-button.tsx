@@ -108,7 +108,13 @@ export function AddToCartCardButton({
 						// la pastille, et un bouton opacity-0 resterait cliquable au-dessus
 						// du stretched link — elle reste donc visible en permanence là-bas.
 						cn(
-							"absolute bottom-2.5 left-1/2 z-30 -translate-x-1/2",
+							// Centrage par `inset-x` + flex, JAMAIS `left-1/2 -translate-x-1/2` :
+							// la boîte de LAYOUT (avant transform) partait du centre de la carte
+							// et s'étendait de toute la largeur du bouton vers la droite —
+							// Chromium la compte dans `scrollWidth`, et la dernière carte de la
+							// rangée mettait un scroll horizontal de 38px à la page entière à
+							// 200% de zoom (WCAG 1.4.4, mesuré par zoom-a11y.spec).
+							"pointer-events-none absolute inset-x-1.5 bottom-2.5 z-30 flex justify-center",
 							"sm:can-hover:group-hover:translate-y-0 sm:can-hover:group-hover:opacity-100 sm:can-hover:translate-y-2 sm:can-hover:opacity-0 opacity-100 sm:focus-within:translate-y-0 sm:focus-within:opacity-100",
 							// `translate` et non `transform` : Tailwind v4 compile `translate-y-*`
 							// vers la propriété autonome `translate` — avec `transform` dans la
@@ -141,7 +147,10 @@ export function AddToCartCardButton({
 							)
 						: // Icon variant: pastille arrondie posée sur la photo
 							cn(
-								"h-11 gap-2 rounded-full px-4",
+								// `pointer-events-auto` : le <form> hôte est en `pointer-events-none`
+								// pour que la bande vide de part et d'autre laisse cliquer le
+								// stretched link de la carte.
+								"pointer-events-auto h-11 max-w-full min-w-0 gap-2 rounded-full px-4",
 								"bg-primary text-primary-foreground",
 								"shadow-lg shadow-black/20",
 								"can-hover:hover:bg-primary/85 can-hover:hover:-translate-y-0.5 can-hover:hover:shadow-xl",
@@ -172,7 +181,7 @@ export function AddToCartCardButton({
 							className={cn("shrink-0", isPending && "opacity-60")}
 							aria-hidden="true"
 						/>
-						<span className="text-sm font-medium">Ajouter au panier</span>
+						<span className="truncate text-sm font-medium">Ajouter au panier</span>
 					</>
 				)}
 			</Button>

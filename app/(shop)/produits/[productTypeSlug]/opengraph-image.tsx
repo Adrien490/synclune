@@ -1,13 +1,10 @@
-import { getProductTypeBySlug } from "@/modules/product-types/data/get-product-type";
+import { prisma } from "@/shared/lib/prisma";
 import { OgShell } from "@/shared/components/og/og-shell";
 import { BRAND_HEX } from "@/shared/constants/brand-colors";
-import { ImageResponse } from "next/og";
+import { OG_SIZE, renderOgImage } from "@/shared/components/og/render-og";
 
 export const alt = "Une famille de bijoux colorés Synclune";
-export const size = {
-	width: 1200,
-	height: 630,
-};
+export const size = { ...OG_SIZE };
 
 export const contentType = "image/png";
 
@@ -19,18 +16,24 @@ export const contentType = "image/png";
  */
 export default async function Image({ params }: { params: Promise<{ productTypeSlug: string }> }) {
 	const { productTypeSlug } = await params;
-	const productType = await getProductTypeBySlug({ slug: productTypeSlug });
+	// Lecture Prisma DIRECTE : appeler une fonction "use cache" depuis une route
+	// d'image OG casse le streaming en build de production (« failed to pipe
+	// response », réponse vide — débusqué par seo.spec au lot 7). L'image est
+	// mise en cache par sa propre URL hashée, le cache applicatif n'apporte rien.
+	const productType = await prisma.productType.findUnique({
+		where: { slug: productTypeSlug },
+		select: { label: true },
+	});
 
 	if (!productType) {
-		return new ImageResponse(
+		return renderOgImage(
 			<OgShell align="center" signature>
 				<div style={{ display: "flex", fontSize: 64, fontWeight: 600 }}>Synclune</div>
 			</OgShell>,
-			{ ...size },
 		);
 	}
 
-	return new ImageResponse(
+	return renderOgImage(
 		<OgShell align="center" signature>
 			<div
 				style={{
@@ -67,6 +70,5 @@ export default async function Image({ params }: { params: Promise<{ productTypeS
 				</div>
 			</div>
 		</OgShell>,
-		{ ...size },
 	);
 }

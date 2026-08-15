@@ -213,7 +213,7 @@ export function CreateProductEtabliBar({
 							{!isBusy && (
 								<Kbd
 									aria-hidden="true"
-									className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
+									className="bg-primary-foreground/10 text-primary-foreground ml-1 hidden lg:inline-flex"
 								>
 									⌘S
 								</Kbd>

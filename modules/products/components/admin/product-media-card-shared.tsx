@@ -21,7 +21,7 @@ import { MAX_UPLOAD_COUNT_VIDEO } from "@/modules/media/constants/upload-size-li
 import type { FileProgress } from "@/modules/media/types/hooks.types";
 // `progressPercent` est la SSOT du pourcentage affiché — dérivé des OCTETS, pas du
 // compte de fichiers. Cf. son docblock dans `upload-helpers.ts`.
-import { progressPercent } from "@/modules/media/utils/upload-helpers";
+import { isValidMediaType, progressPercent } from "@/modules/media/utils/upload-helpers";
 import { MEDIA_SIZE_LIMITS } from "@/modules/media/utils/validate-media-file";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
 import type { MediaArrayField } from "@/modules/products/types/media-field.types";
@@ -185,16 +185,29 @@ export function EmptyMediaState({
 	const cappedRemaining = Math.max(0, remaining - pendingFiles.length);
 
 	const onPickerFiles = (files: File[]) => {
+		// 🐛 Filtre de TYPE dès la mise en file (régression M13 partiellement
+		// réouverte, débusquée au lot 7) : un .mov entrait dans la file de
+		// confirmation et n'était refusé qu'au clic « Téléverser » — le refus
+		// doit précéder la prévisualisation, pas la conclure.
+		const valid = files.filter(isValidMediaType);
+		if (valid.length < files.length) {
+			const rejected = files.length - valid.length;
+			toast.error(
+				`${rejected} fichier${rejected > 1 ? "s" : ""} refusé${rejected > 1 ? "s" : ""} : format non pris en charge`,
+			);
+		}
+		if (valid.length === 0) return;
+
 		if (!pendingMode) {
-			handleUpload(files, field);
+			handleUpload(valid, field);
 			return;
 		}
-		const capped = files.slice(0, cappedRemaining);
+		const capped = valid.slice(0, cappedRemaining);
 		if (capped.length === 0) {
 			toast.warning(`Tu as atteint ${maxMediaCount} médias`);
 			return;
 		}
-		if (capped.length < files.length) {
+		if (capped.length < valid.length) {
 			toast.warning(
 				`Seulement ${capped.length} média${capped.length > 1 ? "s" : ""} ajouté${capped.length > 1 ? "s" : ""} à la file`,
 			);
@@ -333,16 +346,27 @@ export function InlineUploadZone({
 	const cappedRemaining = remaining !== null ? Math.max(0, remaining - pendingFiles.length) : null;
 
 	const onPickerFiles = (files: File[]) => {
+		// Même filtre de type qu'à l'état vide (régression M13) : le refus d'un
+		// format précède la mise en file.
+		const valid = files.filter(isValidMediaType);
+		if (valid.length < files.length) {
+			const rejected = files.length - valid.length;
+			toast.error(
+				`${rejected} fichier${rejected > 1 ? "s" : ""} refusé${rejected > 1 ? "s" : ""} : format non pris en charge`,
+			);
+		}
+		if (valid.length === 0) return;
+
 		if (!pendingMode) {
-			handleUpload(files, field);
+			handleUpload(valid, field);
 			return;
 		}
-		const capped = cappedRemaining !== null ? files.slice(0, cappedRemaining) : files;
+		const capped = cappedRemaining !== null ? valid.slice(0, cappedRemaining) : valid;
 		if (capped.length === 0) {
 			toast.warning(`Limite atteinte`);
 			return;
 		}
-		if (capped.length < files.length) {
+		if (capped.length < valid.length) {
 			toast.warning(
 				`Seulement ${capped.length} média${capped.length > 1 ? "s" : ""} ajouté${capped.length > 1 ? "s" : ""} à la file`,
 			);

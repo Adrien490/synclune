@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { test, expect } from "../fixtures";
 import { TIMEOUTS, VIEWPORTS } from "../constants";
 import path from "node:path";
@@ -23,7 +24,10 @@ import fs from "node:fs";
  * `toBeAttached` dès qu'on parle de ce que voit l'utilisatrice.
  */
 
-const TMP_DIR = path.join(process.cwd(), "e2e", ".tmp");
+// Par PROCESS : les deux describes de ce fichier tournent dans des workers
+// parallèles, et un dossier partagé faisait s'entre-supprimer leurs fichiers
+// (l'afterAll de l'un pendant que l'autre écrivait — ENOENT mesuré au run 8).
+const TMP_DIR = path.join(process.cwd(), "e2e", ".tmp", String(process.pid));
 
 /** PNG 1×1 valide — suffisant pour que le navigateur produise un `image/png`. */
 const PNG_1x1 = Buffer.from(
@@ -39,6 +43,28 @@ function writeTempFile(filename: string, contents: Buffer): string {
 }
 
 const NEW_PRODUCT_URL = "/admin/catalogue/produits/nouveau";
+
+/**
+ * Sélectionne un fichier et attend son entrée dans la file de confirmation.
+ * `setInputFiles` juste après `domcontentloaded` peut précéder l'hydratation :
+ * l'événement change part dans le vide et la file ne s'ouvre jamais — on re-tente
+ * une fois avant d'échouer.
+ */
+async function stageFile(page: Page, filePath: string) {
+	await expect(
+		page.getByRole("button", { name: /Zone d'envoi des médias du bijou/i }),
+	).toBeVisible();
+	const input = page.locator('input[type="file"]').first();
+	const pendingGroup = page.getByRole("group", { name: /en attente de confirmation/i });
+	await input.setInputFiles(filePath);
+	try {
+		await expect(pendingGroup).toBeVisible({ timeout: 3000 });
+	} catch {
+		await input.setInputFiles(filePath);
+		await expect(pendingGroup).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+	}
+	return pendingGroup;
+}
 
 test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, () => {
 	test.afterAll(() => {
@@ -67,7 +93,7 @@ test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, (
 	});
 
 	test("le compteur de médias démarre à 0 sur 6", async ({ page }) => {
-		await expect(page.getByText("0/6 médias")).toBeVisible();
+		await expect(page.getByText("0/6 médias").filter({ visible: true }).first()).toBeVisible();
 	});
 
 	test("un fichier choisi passe par la grille de confirmation avant tout envoi", async ({
@@ -75,11 +101,8 @@ test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, (
 	}) => {
 		const filePath = writeTempFile("bague.png", PNG_1x1);
 
-		await page.locator('input[type="file"]').first().setInputFiles(filePath);
-
 		// Étape de revue : le fichier est en attente, pas encore téléversé.
-		const pendingGroup = page.getByRole("group", { name: /en attente de confirmation/i });
-		await expect(pendingGroup).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		const pendingGroup = await stageFile(page, filePath);
 		await expect(pendingGroup).toContainText("1 fichier en attente");
 		await expect(pendingGroup.getByRole("button", { name: /Téléverser 1 média/i })).toBeVisible();
 		await expect(pendingGroup.getByRole("button", { name: /Retirer bague\.png/i })).toBeVisible();
@@ -88,10 +111,7 @@ test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, (
 	test("retirer un fichier en attente vide la grille de confirmation", async ({ page }) => {
 		const filePath = writeTempFile("bague-retrait.png", PNG_1x1);
 
-		await page.locator('input[type="file"]').first().setInputFiles(filePath);
-
-		const pendingGroup = page.getByRole("group", { name: /en attente de confirmation/i });
-		await expect(pendingGroup).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		const pendingGroup = await stageFile(page, filePath);
 
 		await pendingGroup.getByRole("button", { name: /Retirer bague-retrait\.png/i }).click();
 
@@ -101,15 +121,12 @@ test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, (
 	test("annuler la mise en attente ne laisse rien derrière", async ({ page }) => {
 		const filePath = writeTempFile("bague-annule.png", PNG_1x1);
 
-		await page.locator('input[type="file"]').first().setInputFiles(filePath);
-
-		const pendingGroup = page.getByRole("group", { name: /en attente de confirmation/i });
-		await expect(pendingGroup).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		const pendingGroup = await stageFile(page, filePath);
 
 		await pendingGroup.getByRole("button", { name: "Annuler" }).click();
 
 		await expect(pendingGroup).toBeHidden();
-		await expect(page.getByText("0/6 médias")).toBeVisible();
+		await expect(page.getByText("0/6 médias").filter({ visible: true }).first()).toBeVisible();
 	});
 
 	test("un .mov est refusé AVANT toute montée réseau", async ({ page }) => {
@@ -123,8 +140,12 @@ test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, (
 			if (url.includes("uploadthing") || url.includes("ufs.sh")) uploadRequests.push(url);
 		});
 
+		await expect(
+			page.getByRole("button", { name: /Zone d'envoi des médias du bijou/i }),
+		).toBeVisible();
 		const movPath = writeTempFile("bijou.mov", Buffer.from([0x00, 0x00, 0x00, 0x14]));
 		await page.locator('input[type="file"]').first().setInputFiles(movPath);
+		await page.waitForTimeout(1500);
 
 		// Le fichier n'entre pas dans la file de confirmation…
 		await expect(page.getByRole("group", { name: /en attente de confirmation/i })).toBeHidden();
@@ -134,9 +155,11 @@ test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, (
 
 	test("le formulaire refuse la soumission sans média", async ({ page }) => {
 		// La carte Médias porte un validateur « Au moins une image est requise ».
-		await page.getByRole("button", { name: /Publier le bijou|Enregistrer le brouillon/i }).click();
+		// Le libellé du bouton est dynamique (« Ajoute une photo » tant qu'il manque
+		// un média) : on cible le type.
+		await page.locator('button[type="submit"]').filter({ visible: true }).first().click();
 
-		await expect(page.getByText(/Au moins une image est requise/i)).toBeVisible({
+		await expect(page.getByText(/Au moins une image est requise/i).first()).toBeVisible({
 			timeout: TIMEOUTS.VALIDATION,
 		});
 	});

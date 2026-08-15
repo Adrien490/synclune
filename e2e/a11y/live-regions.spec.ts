@@ -104,16 +104,20 @@ test.describe("Accessibilité - Live regions", { tag: ["@regression"] }, () => {
 	test("une erreur de validation est annoncée par le champ, pas par le toaster", async ({
 		page,
 	}) => {
-		// `/inscription` supprimée (2026-07-31) — le formulaire de connexion porte la
-		// même validation d'email, donc le même `FieldError` à éprouver.
-		await page.goto("/connexion");
+		// `/connexion` a disparu (monde lean) — le formulaire de connexion admin
+		// (`/admin/connexion`, un seul champ mot de passe) porte le même
+		// `FieldError` à éprouver.
+		await page.goto("/admin/connexion");
 		await page.waitForLoadState("domcontentloaded");
 
-		const emailInput = page.getByLabel(/^Email/i).first();
-		test.skip((await emailInput.count()) === 0, "Champ email absent du formulaire");
+		const passwordInput = page.getByLabel(/^Mot de passe/i).first();
+		test.skip((await passwordInput.count()) === 0, "Champ mot de passe absent du formulaire");
 
-		await emailInput.fill("invalide");
-		await emailInput.blur();
+		// Le validateur onChange rend « Le mot de passe est requis » quand le champ
+		// redevient vide après une saisie.
+		await passwordInput.fill("x");
+		await passwordInput.fill("");
+		await passwordInput.blur();
 
 		/*
 		 * `FieldError` monte son `role="alert" aria-live="polite"` en PERMANENCE (le
@@ -121,8 +125,8 @@ test.describe("Accessibilité - Live regions", { tag: ["@regression"] }, () => {
 		 * réellement annoncée. On vérifie le message, pas la présence d'un nœud.
 		 */
 		const fieldError = page
-			.locator("[aria-live='polite']")
-			.filter({ hasText: /Vérifiez le format de votre email/i })
+			.locator("[aria-live='polite'], [role='alert']")
+			.filter({ hasText: /Le mot de passe est requis/i })
 			.first();
 		await expect(fieldError).toBeAttached({ timeout: 3000 });
 

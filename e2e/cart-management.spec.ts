@@ -19,7 +19,9 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 	});
 
 	test("le panier affiche les contrôles de quantité", async ({ cartPage }) => {
-		const quantityInput = cartPage.dialog.getByRole("spinbutton");
+		// L'input quantité est un champ texte labellisé « Quantité, entre 1 et N »
+		// (plus de spinbutton depuis la refonte du panier).
+		const quantityInput = cartPage.dialog.getByRole("textbox", { name: /Quantité/i });
 		await expect(quantityInput).toBeVisible();
 
 		const decrementButton = cartPage.dialog.getByLabel(/Diminuer la quantité|Quantité minimale/i);
@@ -30,7 +32,9 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 	});
 
 	test("incrémenter la quantité met à jour la valeur affichée", async ({ cartPage }) => {
-		const quantityInput = cartPage.dialog.getByRole("spinbutton");
+		// L'input quantité est un champ texte labellisé « Quantité, entre 1 et N »
+		// (plus de spinbutton depuis la refonte du panier).
+		const quantityInput = cartPage.dialog.getByRole("textbox", { name: /Quantité/i });
 		const initialValue = await quantityInput.inputValue();
 
 		const incrementButton = cartPage.dialog.getByLabel(/Augmenter la quantité/i);
@@ -51,7 +55,9 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 	});
 
 	test("décrémenter la quantité est désactivé quand quantité = 1", async ({ cartPage }) => {
-		const quantityInput = cartPage.dialog.getByRole("spinbutton");
+		// L'input quantité est un champ texte labellisé « Quantité, entre 1 et N »
+		// (plus de spinbutton depuis la refonte du panier).
+		const quantityInput = cartPage.dialog.getByRole("textbox", { name: /Quantité/i });
 		const value = await quantityInput.inputValue();
 
 		if (parseInt(value) === 1) {
@@ -73,7 +79,7 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 
 		// Confirmation dialog should appear
 		const dialogTitle = cartPage.dialog.page().getByRole("heading", {
-			name: /Retirer ce produit/i,
+			name: /Retirer cette pièce/i,
 		});
 		await expect(dialogTitle).toBeVisible({ timeout: 5000 });
 
@@ -91,7 +97,7 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 
 		// Wait for confirmation dialog
 		const dialogTitle = cartPage.dialog.page().getByRole("heading", {
-			name: /Retirer ce produit/i,
+			name: /Retirer cette pièce/i,
 		});
 		await expect(dialogTitle).toBeVisible({ timeout: 5000 });
 
@@ -110,7 +116,7 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 
 		// Wait for confirmation dialog
 		const dialogTitle = cartPage.dialog.page().getByRole("heading", {
-			name: /Retirer ce produit/i,
+			name: /Retirer cette pièce/i,
 		});
 		await expect(dialogTitle).toBeVisible({ timeout: 5000 });
 
