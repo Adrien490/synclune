@@ -63,7 +63,7 @@ function diffChangedGroup(prev: FilterFormData, next: FilterFormData): FilterSec
  *   pas de setState synchrone dans l'effet, seul l'atterrissage de la réponse
  *   réseau écrit l'état ;
  * - garde anti-réordonnancement : un id monotone invalide les réponses périmées ;
- * - `rate-limited` / `error` : le dernier chiffre connu est conservé, sans bruit ;
+ * - `error` : le dernier chiffre connu est conservé, sans bruit ;
  * - inactif tant que `enabled` est faux (panneau fermé — aucun réveil DB).
  */
 export function useLiveFilterCount(params: {

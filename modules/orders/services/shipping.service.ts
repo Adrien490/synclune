@@ -43,9 +43,10 @@ const UNSHIPPABLE_ZONES = [
  * outre-mer, avec un délai estimé au barème métropole par-dessus. Toute
  * évolution du périmètre passe désormais par `UNSHIPPABLE_ZONES` seul.
  *
- * Sans code postal (`calculateShipping("FR")`, montant provisoire du
- * PaymentIntent avant saisie de l'adresse) la zone est indéterminable : on
- * autorise, le refus intervient au recalcul une fois l'adresse connue.
+ * Sans code postal (`calculateShipping("FR")` — au checkout hébergé le CP
+ * n'est connu qu'APRÈS la création de session) la zone est indéterminable :
+ * on autorise, Léane arbitre à la main les cas Corse/DOM-TOM (limite assumée
+ * de la migration lean).
  */
 function isUnshippableDestination(countryCode: ShippingCountry, postalCode?: string): boolean {
 	if (countryCode !== "FR" || !postalCode) {

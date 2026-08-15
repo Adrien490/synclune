@@ -37,7 +37,7 @@ type QuickSearchSuccess = {
 	totalCount: number;
 };
 
-export type QuickSearchResult = QuickSearchSuccess | { kind: "rate-limited" } | { kind: "error" };
+export type QuickSearchResult = QuickSearchSuccess | { kind: "error" };
 
 // ============================================================================
 // DATA FUNCTION

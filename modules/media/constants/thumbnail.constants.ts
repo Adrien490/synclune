@@ -108,23 +108,3 @@ export const VIDEO_EVENT_TIMEOUTS = {
 
 /** Allowed UploadThing domains for downloading */
 export const ALLOWED_UPLOADTHING_DOMAINS = ["utfs.io", "uploadthing.com", "ufs.sh"] as const;
-
-/** Configuration for the generate-video-thumbnails.ts migration script */
-export const VIDEO_MIGRATION_CONFIG = {
-	/** Timeout for video download (ms) */
-	downloadTimeout: 60_000,
-	/** Timeout for FFmpeg commands (ms) */
-	ffmpegTimeout: 30_000,
-	/** Max video size in bytes — SSOT `upload-size-limits.ts` (aligné UploadThing) */
-	maxVideoSize: MAX_UPLOAD_SIZE_VIDEO,
-	/** Max recommended duration for product videos (seconds) */
-	maxVideoDuration: 120,
-	/** Allowed UploadThing domains for downloading */
-	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
-	/** Timeout for video format validation with FFmpeg (ms) */
-	validationTimeout: 10_000,
-	/** Timeout for video info / duration extraction (ms) */
-	infoTimeout: 10_000,
-	/** Timeout for blur placeholder generation (ms) */
-	blurTimeout: 5_000,
-} as const;

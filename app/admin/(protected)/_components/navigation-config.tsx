@@ -83,11 +83,10 @@ interface NavigationData {
  * commandes, progression du seuil de franchise) sont la vue d'ensemble de ce que
  * les items suivants détaillent.
  *
- * Au passage, disparition du gate `SHOP_LIVE` qui n'englobait que ce groupe :
- * codé en dur à `true`, sa branche `false` était morte depuis que la fermeture de
- * boutique est pilotée à l'exécution par `StoreSettings.isClosed` et non plus par
- * un drapeau de build. Le garder ici aurait fait disparaître « Tableau de bord »
- * avec le groupe si quelqu'un l'avait repassé à `false`.
+ * Au passage, disparition du gate `SHOP_LIVE` (drapeau de build codé en dur à
+ * `true`, branche `false` morte de longue date). Le garder aurait fait
+ * disparaître « Tableau de bord » avec le groupe si quelqu'un l'avait repassé
+ * à `false`.
  */
 const PILOTAGE_GROUP: NavGroup = {
 	label: "Pilotage",

@@ -194,7 +194,7 @@ const nextConfig: NextConfig = {
 			// Hôte legacy v6, conservé pour les lignes média antérieures à la
 			// migration `<appId>.ufs.sh`. RÉSIDU ASSUMÉ : il est global à tous les
 			// tenants UploadThing et ne peut pas être scopé par app-id. À retirer
-			// une fois confirmé qu'aucune ligne `SkuMedia`/`Product` ne le référence
+			// une fois confirmé qu'aucune ligne `ProductMedia`/`Product` ne le référence
 			// (`SELECT count(*) … WHERE url LIKE 'https://utfs.io/%'`).
 			{ protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
 			// `uploadthing.com/**` et le bucket S3 `uploadthing-prod…/**` ont été

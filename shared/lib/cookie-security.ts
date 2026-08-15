@@ -1,5 +1,5 @@
 /**
- * SSOT du flag `secure` des cookies applicatifs (cart, wishlist, guest-session,
+ * SSOT du flag `secure` des cookies applicatifs (cart, wishlist,
  * admin_session, recherches récentes, FAB).
  *
  * En production le cookie est `Secure` (HTTPS). L'exception E2E existe parce

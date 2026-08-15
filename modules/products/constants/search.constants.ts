@@ -1,5 +1,4 @@
 import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
-import type { RateLimitConfig } from "@/shared/types/rate-limit.types";
 
 // ============================================================================
 // FUZZY SEARCH CONFIGURATION
@@ -68,34 +67,3 @@ export const RELEVANCE_WEIGHTS = {
 	/** Fuzzy match (trigram) in description */
 	fuzzyDescription: 2,
 } as const;
-
-// ============================================================================
-// RATE LIMITING
-// ============================================================================
-
-/**
- * Search request rate limits.
- * Protects against scraping and abuse.
- *
- * Calibrage (audit recherche 2026-08-01, P3-5) : chaque rendu de la PLP avec
- * `?search=` consomme une unité (recherche, pagination, changement de filtre).
- * À 15/min, un invité épuisait son budget en une navigation normale dans des
- * résultats de recherche, alors que le quick search — bien plus bavard
- * (1 requête par pause de frappe de 300 ms) — dispose de 50/min
- * (`PRODUCT_SEARCH_LIMIT`). Le dépassement reste non bloquant (repli
- * exact-only), mais dégrade la pertinence sans raison.
- */
-export const SEARCH_RATE_LIMITS = {
-	/** Limit for authenticated users */
-	authenticated: {
-		name: "product-fuzzy-search-authenticated",
-		limit: 30,
-		windowMs: 60_000,
-	},
-	/** Limit for unauthenticated visitors */
-	guest: {
-		name: "product-fuzzy-search-guest",
-		limit: 25,
-		windowMs: 60_000,
-	},
-} as const satisfies Record<string, RateLimitConfig>;

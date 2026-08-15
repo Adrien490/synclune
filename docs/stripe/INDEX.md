@@ -1,20 +1,13 @@
 # Documentation Stripe — index et correspondance avec le code
 
-> ℹ️ **Migration lean, lot 3 (2026-08-15)** : le tunnel est désormais **Stripe Checkout
-> HÉBERGÉ** (sessions + 2 webhooks). Les bundles du mirror (01-06) datent de l'ère
-> Elements : leur re-curation (retirer `02-elements.md`, entrer les pages Checkout
-> Sessions au manifeste) est à faire dans un lot ultérieur — en attendant,
-> `docs/stripe/07-checkout-sessions.md` (hors manifeste, hérité du lot C) couvre
-> Checkout Sessions.
-
-Ce dossier contient un **mirror ciblé** de la documentation officielle Stripe : 68 pages
-récupérées en markdown brut depuis `docs.stripe.com`, groupées en 6 bundles.
+Ce dossier contient un **mirror ciblé** de la documentation officielle Stripe : 40 pages
+récupérées en markdown brut depuis `docs.stripe.com`, groupées en 5 bundles.
 
 ```bash
 pnpm docs:stripe
 ```
 
-**Seul ce fichier est versionné.** Les bundles (`01-*.md` … `06-*.md`, ~1,9 Mo) sont
+**Seul ce fichier est versionné.** Les bundles (`01-*.md` … `06-*.md`) sont
 gitignorés : la doc Stripe bouge en continu, un mirror commité serait périmé et
 polluerait chaque diff. Ils sont aussi dans `.prettierignore` — sans ça,
 `pnpm format:check`, donc `pnpm validate`, parcourt 1,9 Mo de markdown qu'on ne
@@ -27,8 +20,7 @@ Le manifeste (quelle page va dans quel bundle) vit **en dur dans
 
 ## Ce que Synclune utilise réellement de Stripe
 
-C'est ce périmètre, et lui seul, qui devrait déterminer le contenu du mirror (voir la
-note de re-curation en tête).
+C'est ce périmètre, et lui seul, qui détermine le contenu du mirror.
 
 |                       |                                                                          |
 | --------------------- | ------------------------------------------------------------------------ |
@@ -94,16 +86,16 @@ binaires `@next/swc-*` sont optionnels : pnpm les retire du lockfile sans erreur
 
 La partie qui ne s'obtient nulle part ailleurs : quelle page de doc éclaire quel site du repo.
 
-| Page Stripe                                                  | Bundle              | Site Synclune                                                                                                                                                                                                        |
-| ------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Checkout Sessions (create, objet, fulfillment, `expires_at`) | 07 (hors manifeste) | `modules/payments/actions/create-checkout-session.ts` — `price_data` inline, `shipping_address_collection.allowed_countries` verrouillé sur le pays choisi, `expires_at` ≈ 30 min = durée de la réservation de stock |
-| `webhooks/signature`                                         | 03                  | `app/api/webhooks/stripe/route.ts` — signature obligatoire, anti-replay 300 s du SDK                                                                                                                                 |
-| `api/events/types`                                           | 03                  | dispatch `switch` de `app/api/webhooks/stripe/route.ts`                                                                                                                                                              |
-| `webhooks/process-undelivered-events`                        | 03                  | **Aucun retry maison** — 500 ⇒ Stripe redélivre 3 j ; au-delà, `modules/orders/actions/reconcile-pending-orders.ts` (bouton admin)                                                                                   |
-| `refunds`, `api/refunds/object`                              | 04                  | Lot 5 (`RetractationRequest` → `refunds.create`)                                                                                                                                                                     |
-| `cli/trigger`                                                | 05                  | régénération des fixtures de `test/fixtures/stripe/` (`stripe trigger <type> --print-json`)                                                                                                                          |
-| `api/versioning`, `changelog/dahlia`                         | 06                  | SSOT `shared/constants/stripe-api-version.ts`, consommée par `shared/lib/stripe.ts` **et** `app/api/health/route.ts` (qui instancie son propre client, d'où la constante à part)                                     |
-| `rate-limits`                                                | 06                  | Plus de rate limit applicatif (perte volontaire § 1 de la migration lean) — cette page documente les limites CÔTÉ Stripe                                                                                             |
+| Page Stripe                                                  | Bundle | Site Synclune                                                                                                                                                                                                        |
+| ------------------------------------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Checkout Sessions (create, objet, fulfillment, `expires_at`) | 01     | `modules/payments/actions/create-checkout-session.ts` — `price_data` inline, `shipping_address_collection.allowed_countries` verrouillé sur le pays choisi, `expires_at` ≈ 30 min = durée de la réservation de stock |
+| `webhooks/signature`                                         | 03     | `app/api/webhooks/stripe/route.ts` — signature obligatoire, anti-replay 300 s du SDK                                                                                                                                 |
+| `api/events/types`                                           | 03     | dispatch `switch` de `app/api/webhooks/stripe/route.ts`                                                                                                                                                              |
+| `webhooks/process-undelivered-events`                        | 03     | **Aucun retry maison** — 500 ⇒ Stripe redélivre 3 j ; au-delà, `modules/orders/actions/reconcile-pending-orders.ts` (bouton admin)                                                                                   |
+| `refunds`, `api/refunds/object`                              | 04     | Lot 5 (`RetractationRequest` → `refunds.create`)                                                                                                                                                                     |
+| `cli/trigger`                                                | 05     | régénération des fixtures de `test/fixtures/stripe/` (`stripe trigger <type> --print-json`)                                                                                                                          |
+| `api/versioning`, `changelog/dahlia`                         | 06     | SSOT `shared/constants/stripe-api-version.ts`, consommée par `shared/lib/stripe.ts` **et** `app/api/health/route.ts` (qui instancie son propre client, d'où la constante à part)                                     |
+| `rate-limits`                                                | 06     | Plus de rate limit applicatif (perte volontaire § 1 de la migration lean) — cette page documente les limites CÔTÉ Stripe                                                                                             |
 
 ### Clés d'idempotence
 
@@ -121,8 +113,8 @@ L'idempotence du POST-paiement est ailleurs :
 
 ## Ce qui est délibérément exclu
 
-L'index officiel `docs.stripe.com/llms.txt` compte **481 pages**. On en garde 68.
-Les ~413 autres couvrent des produits qui n'ont **aucun appelant** dans le repo :
+L'index officiel `docs.stripe.com/llms.txt` compte **481 pages**. On en garde 40.
+Les ~440 autres couvrent des produits qui n'ont **aucun appelant** dans le repo :
 
 **Connect** · **Issuing** · **Terminal** · **Treasury** · **Capital** · **Crypto** ·
 **Climate** · **Sigma** · **Atlas** · **Radar** · **Identity** · **Financial Connections** ·
@@ -131,16 +123,12 @@ Les ~413 autres couvrent des produits qui n'ont **aucun appelant** dans le repo 
 Stripe Invoicing) · **Elements / PaymentIntents côté client** (perte volontaire § 1 :
 le tunnel est hébergé chez Stripe).
 
-⚠️ Deux bundles du manifeste actuel (`01-payments.md`, `02-elements.md`) documentent
-ce périmètre RETIRÉ — ils restent utiles en lecture d'archéologie mais la re-curation
-du manifeste doit les remplacer par les pages Checkout Sessions (note de tête).
-
 ---
 
 ## ⚠️ Ne pas régénérer le manifeste depuis `llms.txt`
 
 `llms.txt` est **curé, et lacunaire précisément sur notre périmètre**. Manquent entre
-autres `api/idempotent_requests`, `disputes/*` et `changelog/dahlia`. Un filtre par
+autres `api/idempotent_requests`, `api/checkout/sessions/expire` et `changelog/dahlia`. Un filtre par
 section aurait raté l'essentiel. D'où un manifeste écrit à la main, chaque page
 vérifiée en HTTP 200.
 
@@ -162,16 +150,14 @@ C'est le symétrique du piège 404, en plus vicieux : rien ne le signale. L'audi
 query, et le script **refuse** désormais une page-sommaire en listant les variantes
 disponibles :
 
-| Page                                  | Variante retenue                                      |
-| ------------------------------------- | ----------------------------------------------------- |
-| `payments/accept-a-payment`           | `?payment-ui=elements&api-integration=paymentintents` |
-| `payments/advanced/collect-addresses` | `?payment-ui=elements`                                |
-| `testing/wallets`                     | `?ui=payment-element`                                 |
-| `get-started/development-environment` | `?lang=node`                                          |
-| `elements/appearance-api`             | `?api-integration=paymentintents`                     |
-
-(Variantes datées de l'ère Elements — à re-choisir lors de la re-curation : la page
-`payments/accept-a-payment` a une variante `?payment-ui=stripe-hosted`.)
+| Page                                           | Variante retenue                        |
+| ---------------------------------------------- | --------------------------------------- |
+| `payments/accept-a-payment`                    | `?payment-ui=checkout&ui=stripe-hosted` |
+| `payments/checkout/how-checkout-works`         | `?payment-ui=stripe-hosted`             |
+| `payments/checkout/managing-limited-inventory` | `?payment-ui=stripe-hosted`             |
+| `payments/checkout/custom-success-page`        | `?payment-ui=stripe-hosted`             |
+| `checkout/fulfillment`                         | `?payment-ui=stripe-hosted`             |
+| `get-started/development-environment`          | `?lang=node`                            |
 
 ## La locale est épinglée
 
@@ -182,19 +168,17 @@ contenu. L'idempotence annoncée par le script n'était vraie que sur une seule 
 
 ---
 
-## Les 6 bundles
+## Les 5 bundles
 
-| Fichier                  | Pages | Taille | Couvre                                                                                                                                                         |
-| ------------------------ | ----- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `01-payments.md`         | 21    | 944 Ko | PaymentIntents, `accept-a-payment`, statuts, capture asynchrone, 3DS, codes de refus, API PaymentIntents/PaymentMethods/Customers                              |
-| `02-elements.md`         | 13    | 261 Ko | Payment Element web, **API Appearance**, collecte des coordonnées, `stripe.js` (init, **objet Elements**, création d'Element, `confirmPayment`), Link, wallets |
-| `03-webhooks.md`         | 8     | 167 Ko | Réception, signature, quickstart, events non délivrés, destinations, types d'events, requêtes idempotentes                                                     |
-| `04-refunds-disputes.md` | 9     | 243 Ko | Remboursements (guide + API), litiges (réponse, mesure), objets Dispute et Charge                                                                              |
-| `05-testing.md`          | 6     | 188 Ko | Cartes de test, Stripe CLI, `stripe trigger`, checklist de mise en production, environnement de dev                                                            |
-| `06-api-versioning.md`   | 11    | 149 Ko | Montées de version, versioning, **changelog `dahlia`**, erreurs, rate limits, metadata, expansion, pagination, devises, guide sécurité, SDKs                   |
+| Fichier                   | Pages | Couvre                                                                                                                                                                 |
+| ------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `01-checkout-sessions.md` | 11    | Checkout hébergé : `accept-a-payment` (variante hébergée), fonctionnement, inventaire limité, page de retour, fulfillment, API Sessions (create/retrieve/expire/objet) |
+| `03-webhooks.md`          | 8     | Réception, signature, quickstart, events non délivrés, destinations, types d'events, requêtes idempotentes                                                             |
+| `04-refunds.md`           | 4     | Remboursements (guide + API refunds : create, objet)                                                                                                                   |
+| `05-testing.md`           | 6     | Cartes de test, Stripe CLI, `stripe trigger`, checklist de mise en production, environnement de dev                                                                    |
+| `06-api-versioning.md`    | 11    | Montées de version, versioning, **changelog `dahlia`**, erreurs, rate limits, metadata, expansion, pagination, devises, guide sécurité, SDKs                           |
 
 ## Sources complémentaires dans le repo
 
 - `docs/MIGRATION-PROMPTS.md` — décisions D4-D5 (Checkout hébergé, cycle PENDING→PAID)
-- `docs/stripe/07-checkout-sessions.md` — doc Checkout Sessions (hors manifeste, cf. note de tête)
 - `CLAUDE.md` — invariants d'invalidation de cache (webhook ⇒ `revalidateTag`, jamais `updateTag`)

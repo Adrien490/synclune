@@ -50,7 +50,6 @@ export function QuickSearchContent({
 	onViewAllResults,
 	onRetry,
 }: QuickSearchContentProps) {
-	const isRateLimited = results.kind === "rate-limited";
 	const isError = results.kind === "error";
 	const products = results.kind === "success" ? results.products : [];
 	const suggestion = results.kind === "success" ? results.suggestion : null;
@@ -73,26 +72,24 @@ export function QuickSearchContent({
 	// requête n'avait rien donné. `!hasMatchedNav` reste : annoncer « aucun
 	// résultat » à côté d'une collection qui matche serait faux.
 	// Audit recherche 2026-07-26.
-	const showEmptyState = !hasSearchResults && !hasMatchedNav && !isRateLimited && !isError;
+	const showEmptyState = !hasSearchResults && !hasMatchedNav && !isError;
 	const isSuccess = results.kind === "success";
 
 	return (
 		<div className="flex h-full flex-col">
 			{/* Screen reader announcement (replaces Suspense fallback "Recherche en cours…") —
 				muette en erreur, où un « 0 résultat trouvé » serait faux : l'erreur a son
-				propre role=alert (annoncé à l'insertion). Le rate-limit est annoncé ICI et
+				propre role=alert (annoncé à l'insertion). L'état de succès est annoncé ICI et
 				non par le bloc visible : celui-ci est inséré AVEC son contenu, pattern connu
 				pour ne pas être vocalisé (audit feedback/aria-live 2026-07-26) — seule une
 				région déjà montée dont le TEXTE change est annoncée de façon fiable. */}
 			<div role="status" aria-live="polite" className="sr-only">
-				{isRateLimited
-					? "Trop de requêtes — réessaie dans quelques instants."
-					: isSuccess
-						? // `> 1`, et non `!== 1` : en français, zéro appelle le SINGULIER
-							// (« 0 résultat trouvé »). La forme anglaise donnait « 0 résultats
-							// trouvés » — seule occurrence du module, tout le reste accorde bien.
-							`${totalCount} résultat${totalCount > 1 ? "s" : ""} trouvé${totalCount > 1 ? "s" : ""}.`
-						: ""}
+				{isSuccess
+					? // `> 1`, et non `!== 1` : en français, zéro appelle le SINGULIER
+						// (« 0 résultat trouvé »). La forme anglaise donnait « 0 résultats
+						// trouvés » — seule occurrence du module, tout le reste accorde bien.
+						`${totalCount} résultat${totalCount > 1 ? "s" : ""} trouvé${totalCount > 1 ? "s" : ""}.`
+					: ""}
 			</div>
 
 			<div className="min-h-0 flex-1">
@@ -106,8 +103,7 @@ export function QuickSearchContent({
 						{/* Pas de `role="status"` ici : ce bloc est inséré AVEC son contenu,
 							pattern connu pour ne pas être vocalisé de façon fiable — et la
 							région sr-only permanente en tête annonce déjà « 0 résultat
-							trouvé ». Deux régions feraient une double annonce. Même arbitrage
-							que le bloc rate-limit plus bas. */}
+							trouvé ». Deux régions feraient une double annonce. */}
 						{showEmptyState && (
 							<Empty variant="borderless" size="sm">
 								<EmptyHeader>
@@ -178,23 +174,12 @@ export function QuickSearchContent({
 							ici : l'annonce SR passe par la région sr-only permanente en tête
 							(un bloc inséré avec son contenu n'est pas vocalisé de façon fiable,
 							et deux régions feraient une double annonce). */}
-						{isRateLimited && (
-							<div className="flex flex-col items-center justify-center gap-3 px-4 py-4">
-								<p className="text-muted-foreground text-center text-sm">
-									Trop de requêtes — réessaie dans quelques instants.
-								</p>
-								<Button variant="outline" size="sm" onClick={onRetry}>
-									Réessayer
-								</Button>
-							</div>
-						)}
-
 						{/* Erreur SERVEUR (`kind: "error"`). À ne pas confondre avec la branche
 							du parent, qui traite l'erreur CLIENT/RÉSEAU via `isSearchError()`
 							(garde sur une clé `"type"`) : les deux sont atteignables et
 							couvrent des pannes distinctes. Le markup est mutualisé dans
 							`SearchErrorState` pour que la formulation ne puisse plus diverger. */}
-						{isError && !isRateLimited && <SearchErrorState onRetry={onRetry} />}
+						{isError && <SearchErrorState onRetry={onRetry} />}
 
 						{/* LISTBOX — périmètre ARIA, distinct du conteneur de navigation
 							(`#qs-results`). Il n'enveloppe QUE des `role="group"` contenant des

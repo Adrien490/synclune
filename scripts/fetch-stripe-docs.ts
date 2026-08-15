@@ -1,6 +1,6 @@
 /**
  * Récupère la documentation officielle Stripe pertinente pour Synclune et la
- * concatène en 6 bundles markdown dans `docs/stripe/`.
+ * concatène en 5 bundles markdown dans `docs/stripe/`.
  *
  * Stripe publie chaque page de doc en variante markdown brute : il suffit de
  * suffixer l'URL par `.md` (`docs.stripe.com/webhooks` → `docs.stripe.com/webhooks.md`).
@@ -11,14 +11,14 @@
  *
  * Stripe expose un index `docs.stripe.com/llms.txt` (481 pages). On ne s'en sert
  * PAS comme source : il est curé et **lacunaire sur notre périmètre**. Sa section
- * « Elements » ne liste que du mobile et l'Address Element — `payments/payment-element`,
- * le composant web réellement monté dans `checkout-stripe-section.tsx`, n'y figure
- * pas. Idem pour `api/idempotent_requests`, `disputes/*`, `payments/3d-secure/*` et
- * `changelog/dahlia`. Un filtre par section aurait raté l'essentiel.
+ * « Elements » est curée pour d'autres périmètres — `api/idempotent_requests`,
+ * `api/checkout/sessions/expire` et `changelog/dahlia` n'y figurent pas.
+ * Un filtre par section aurait raté l'essentiel.
  *
  * À l'inverse, ~417 de ses pages couvrent des produits sans aucun appelant ici
- * (Connect, Issuing, Terminal, Treasury, Checkout Sessions, Billing…) : les tirer
- * ferait ~10 Mo pour rien. Cf. `docs/stripe/INDEX.md` pour le détail des exclusions.
+ * (Connect, Issuing, Terminal, Treasury, Billing…) : les tirer
+ * ferait ~10 Mo pour rien (Connect, Issuing, Terminal, Elements, PaymentIntents…).
+ * Cf. `docs/stripe/INDEX.md` pour le détail des exclusions.
  *
  * ============================================================================
  * CINQ PIÈGES ENCODÉS ICI
@@ -72,7 +72,7 @@ import { pathToFileURL } from "node:url";
  * Peut porter une **query de variante** pour les pages que Stripe décline par
  * intégration ou par langage — sans elle, l'URL nue rend un index de variantes de
  * ~500 o au lieu du contenu (piège 2 en tête de fichier) :
- *   `payments/accept-a-payment?payment-ui=elements&api-integration=paymentintents`
+ *   `payments/accept-a-payment?payment-ui=checkout&ui=stripe-hosted`
  */
 type StripeDocPath = string;
 
@@ -88,89 +88,40 @@ type Bundle = {
 
 export const BUNDLES: readonly Bundle[] = [
 	{
-		file: "01-payments.md",
-		title: "Paiements — PaymentIntents",
+		file: "01-checkout-sessions.md",
+		title: "Checkout hébergé — sessions, cycle de vie, fulfillment",
 		rationale:
-			"Le flow réel de Synclune : PaymentIntents card-only, 3DS en settlement, codes de refus. " +
-			"Voir modules/payments/actions/initialize-payment.ts et confirm-checkout.ts.",
+			"Le flow réel de Synclune depuis la migration lean : session Checkout hébergée " +
+			"(price_data inline, expires_at +31 min), Order PENDING réservé puis transitions " +
+			"par webhooks. Voir modules/payments/actions/create-checkout-session.ts.",
 		pages: [
-			// Variante Elements + PaymentIntents : l'URL nue rend un index de 7 variantes
-			// (Checkout hébergé, Checkout intégré, Elements×2, iOS, Android, React Native)
-			// en 1053 o. C'est CETTE variante qui décrit notre tunnel, et elle fait 78 Ko.
-			"payments/accept-a-payment?payment-ui=elements&api-integration=paymentintents",
-			"payments/payment-intents",
-			"payments/payment-intents/verifying-status",
-			"payments/payment-intents/asynchronous-capture",
-			"payments/quickstart",
-			// Conservée bien qu'aucun `capture_method` n'existe au dépôt (vérifié 2026-08-05) :
-			// c'est la page à lire le jour où une précommande imposerait une autorisation
-			// différée. Gardée délibérément, ne pas la « découvrir » comme morte.
-			"payments/place-a-hold-on-a-payment-method",
-			"payments/payment-methods",
-			"payments/payment-methods/integration-options",
-			"payments/3d-secure",
-			"payments/3d-secure/authentication-flow",
-			"declines",
-			"declines/codes",
-			"payments/analytics",
-			"api/payment_intents",
-			"api/payment_intents/object",
-			"api/payment_intents/create",
-			"api/payment_methods",
-			"api/payment_methods/object",
-			"payments-api/tour",
-			// Ajoutées le 2026-08-05 : `getOrCreateStripeCustomer` dédupe désormais par
-			// `customers.list({ email })`, et le code dépend de DEUX propriétés que ces
-			// deux pages sont seules à énoncer — le filtre `email` de `list` est
-			// case-sensitive, et `search` s'exclut lui-même des flux read-after-write
-			// (« data is searchable in less than a minute… up to an hour behind during
-			// outages »). Sans elles au mirror, ces deux contraintes ne sont vérifiables
-			// nulle part dans le dépôt.
-			"api/customers/list",
-			"api/customers/search",
-		],
-	},
-	{
-		file: "02-elements.md",
-		title: "Elements — Payment Element (web)",
-		rationale:
-			"Le tunnel /paiement monte <Elements> + <PaymentElement>. " +
-			"Voir modules/payments/components/checkout-stripe-section.tsx et hooks/use-checkout-submit.ts.",
-		pages: [
-			"payments/payment-element",
-			"payments/payment-element/control-billing-details-collection",
-			"payments/payment-element/migration-ct",
-			// Conservées bien qu'AUCUN `AddressElement` ne soit monté (vérifié 2026-08-05) :
-			// elles décrivent la collecte des coordonnées que `pay-button.tsx` fait à la main
-			// via `confirmParams.payment_method_data.billing_details`.
-			"elements/address-element",
-			"payments/advanced/collect-addresses?payment-ui=elements",
-			// Ajoutée le 2026-08-05 : `modules/payments/constants/stripe-appearance.ts` écrit
-			// à la main 102 lignes d'objet Appearance — thème, variables, et 5 sélecteurs de
-			// règles (`.Input`, `.Input:focus`, `.Label`, `.Tab`, `.Tab--selected`) doublés
-			// pour le dark. Cette page est la SEULE référence de ces sélecteurs : sans elle,
-			// une faute de nom est indétectable (Stripe ignore silencieusement une règle
-			// inconnue). L'URL nue rend un index de 2 variantes en 452 o.
-			"elements/appearance-api?api-integration=paymentintents",
-			"js/initializing",
-			"js/elements_object/create_payment_element",
-			// Ajoutée le 2026-08-05 : `elements.submit()` (use-checkout-submit.ts, étape 2/4)
-			// n'a PAS de page dédiée — `js/elements_object/submit` est une 404. Sa contrainte
-			// d'ordre (« call elements.submit() before confirming, and wait for the promise »)
-			// n'était documentée nulle part au mirror.
-			"js/elements_object",
-			"js/payment_intents/confirm_payment",
-			"payments/link/payment-element-link",
-			"payments/link/link-payment-integrations",
-			"testing/wallets?ui=payment-element",
+			// Variante « page hébergée par Stripe » : l'URL nue rend un index de
+			// variantes (~1 Ko) — piège 2 en tête de fichier.
+			"payments/accept-a-payment?payment-ui=checkout&ui=stripe-hosted",
+			"payments/checkout",
+			"payments/checkout/how-checkout-works?payment-ui=stripe-hosted",
+			// La réservation de stock de createCheckoutSession implémente exactement
+			// le patron décrit ici (expiration + restock).
+			"payments/checkout/managing-limited-inventory?payment-ui=stripe-hosted",
+			// /paiement/retour lit session_id : c'est le patron « custom success page ».
+			"payments/checkout/custom-success-page?payment-ui=stripe-hosted",
+			// La transition PAID (webhook completed) est le « fulfillment » canonique.
+			"checkout/fulfillment?payment-ui=stripe-hosted",
+			"api/checkout/sessions",
+			"api/checkout/sessions/object",
+			"api/checkout/sessions/create",
+			// L'annulation admin d'une commande PENDING expire la session AVANT la
+			// transition (une session open laisserait payer une commande annulée).
+			"api/checkout/sessions/expire",
+			"api/checkout/sessions/retrieve",
 		],
 	},
 	{
 		file: "03-webhooks.md",
 		title: "Webhooks — signature, events, idempotence",
 		rationale:
-			"12 events routés par modules/webhooks/utils/event-registry.ts. " +
-			"Les 4 couches anti-replay sont documentées en tête de app/api/webhooks/stripe/route.ts.",
+			"2 events routés par app/api/webhooks/stripe/route.ts (completed, expired) ; " +
+			"idempotence par garde de transition updateMany, pas par table.",
 		pages: [
 			"webhooks",
 			"webhooks/quickstart",
@@ -183,29 +134,19 @@ export const BUNDLES: readonly Bundle[] = [
 		],
 	},
 	{
-		file: "04-refunds-disputes.md",
-		title: "Remboursements et litiges",
+		file: "04-refunds.md",
+		title: "Remboursements",
 		rationale:
-			"Remboursements Stripe-first (dashboard → webhook → modules/webhooks/services/refund.service.ts). " +
-			"Pas de modèle Dispute : l'état est dérivé d'OrderHistory (has-open-dispute.service.ts).",
-		pages: [
-			"refunds",
-			"api/refunds",
-			"api/refunds/object",
-			"api/refunds/create",
-			"disputes",
-			"disputes/responding",
-			"disputes/measuring",
-			"api/disputes/object",
-			"api/charges/object",
-		],
+			"stripe.refunds.create({ payment_intent }) intégral avec idempotencyKey — " +
+			"voir modules/retractations/ (pas de webhook refund.*, stripeRefundId est la trace).",
+		pages: ["refunds", "api/refunds", "api/refunds/object", "api/refunds/create"],
 	},
 	{
 		file: "05-testing.md",
 		title: "Test et mise en production",
 		rationale:
 			"Cartes de test et `stripe trigger`, qui alimente test/fixtures/stripe/*.json " +
-			"consommées par test/contract/stripe-events.test.ts.",
+			"consommées par test/contract/stripe-events.contract.test.ts.",
 		pages: [
 			"testing",
 			"stripe-cli",

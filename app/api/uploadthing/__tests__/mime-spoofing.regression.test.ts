@@ -51,12 +51,6 @@ vi.mock("@sentry/nextjs", () => ({
 
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 vi.mock("@/modules/admin-auth/lib/require-admin", () => ({ requireAdminApiRoute: vi.fn() }));
-vi.mock("@/shared/lib/rate-limit", () => ({
-	checkRateLimit: vi.fn(async () => ({ success: true })),
-	getClientIp: vi.fn(async () => "127.0.0.1"),
-	getRateLimitIdentifier: vi.fn(() => "id"),
-}));
-
 // On laisse Sharp réel — c'est le coeur de la défense.
 import { ImageDecodeError } from "@/modules/media/services/image-downloader.service";
 import { ourFileRouter } from "../core";

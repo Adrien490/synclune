@@ -93,7 +93,7 @@ async function deleteBlobBestEffort(key: string, step: string): Promise<void> {
 
 /**
  * Capture les erreurs inattendues (DB, network, bug code) sans capturer les
- * UploadThingError métier (rate-limit, MIME, taille — déjà attendues et bruyantes).
+ * UploadThingError métier (MIME, taille — déjà attendues et bruyantes).
  */
 function captureUnexpected(err: unknown, tags: Record<string, string | number | undefined>): void {
 	if (err instanceof UploadThingError) return;

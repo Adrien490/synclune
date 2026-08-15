@@ -43,7 +43,6 @@ export type CountFilteredProductsResult =
 			/** Présent seulement si count = 0 ET qu'un recomptage relaxé rend > 0. */
 			relaxed?: { group: FilterSectionId; count: number };
 	  }
-	| { kind: "rate-limited" }
 	| { kind: "error" };
 
 /**
@@ -51,7 +50,7 @@ export type CountFilteredProductsResult =
  * (pas l'URL) — alimente le bouton « Voir les N pièces » et l'état vide.
  *
  * Action de LECTURE à retour custom (même pattern que `quick-search`) :
- * `input: unknown` parsé en tête, rate limit nommé, aucune invalidation.
+ * `input: unknown` parsé en tête, aucune invalidation.
  */
 export async function countFilteredProducts(input: unknown): Promise<CountFilteredProductsResult> {
 	try {

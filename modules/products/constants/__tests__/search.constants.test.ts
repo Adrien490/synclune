@@ -9,7 +9,6 @@ import {
 	FUZZY_TIMEOUT_MS,
 	SPELL_SUGGESTION_TIMEOUT_MS,
 	RELEVANCE_WEIGHTS,
-	SEARCH_RATE_LIMITS,
 } from "../search.constants";
 
 describe("search.constants", () => {
@@ -92,26 +91,6 @@ describe("search.constants", () => {
 			Object.values(RELEVANCE_WEIGHTS).forEach((weight) => {
 				expect(weight).toBeGreaterThan(0);
 			});
-		});
-	});
-
-	describe("SEARCH_RATE_LIMITS", () => {
-		it("has authenticated and guest limits", () => {
-			expect(SEARCH_RATE_LIMITS).toHaveProperty("authenticated");
-			expect(SEARCH_RATE_LIMITS).toHaveProperty("guest");
-		});
-
-		it("authenticated limit is higher than guest limit", () => {
-			expect(SEARCH_RATE_LIMITS.authenticated.limit).toBeGreaterThan(
-				SEARCH_RATE_LIMITS.guest.limit,
-			);
-		});
-
-		it("both have positive limits and windows", () => {
-			expect(SEARCH_RATE_LIMITS.authenticated.limit).toBeGreaterThan(0);
-			expect(SEARCH_RATE_LIMITS.authenticated.windowMs).toBeGreaterThan(0);
-			expect(SEARCH_RATE_LIMITS.guest.limit).toBeGreaterThan(0);
-			expect(SEARCH_RATE_LIMITS.guest.windowMs).toBeGreaterThan(0);
 		});
 	});
 });

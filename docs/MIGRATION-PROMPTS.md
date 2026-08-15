@@ -1,5 +1,12 @@
 # MIGRATION-PROMPTS.md — Migration vers le schéma « lean » (Stripe Checkout hébergé)
 
+> ## ✅ MIGRATION TERMINÉE (2026-08-15)
+>
+> Les 10 lots sont livrés (voir le tableau § 3). `CLAUDE.md` décrit désormais le nouveau
+> monde et fait foi. Ce document est conservé comme HISTORIQUE de la migration — décisions,
+> pertes volontaires, notes de sortie de lots — et pourra être supprimé dans un commit
+> ultérieur.
+
 > **Matériau de travail — à supprimer à la fin de la migration.** Rédigé le 2026-08-14 sur la
 > base du schéma cible fourni par Adrien. Ce document est la SSOT du chantier : chaque lot
 > ci-dessous est un **prompt autonome** à copier-coller dans une **session Claude fraîche**, dans
@@ -77,7 +84,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | 6   | Dashboard, emails, polish admin           | M      | ✅     | `migration(lot-6)` | Voir « État à la sortie du lot 6 » ci-dessous.                                                                                |
 | 7   | E2E refonte                               | L      | ✅     | `migration(lot-7)` | Voir « État à la sortie du lot 7 » ci-dessous. Suite verte multi-navigateurs en 10,3 min (build prod local).                  |
 | 8   | Seed conforme à la DA                     | S/M    | ✅     | `migration(lot-8)` | Voir « État à la sortie du lot 8 » ci-dessous. db:reset + suite e2e complète 100% verte sur le nouveau jeu.                   |
-| 9   | Documentation finale (CLAUDE.md) + sweep  | M      | ⬜     | —                  |                                                                                                                               |
+| 9   | Documentation finale (CLAUDE.md) + sweep  | M      | ✅     | `migration(lot-9)` | Voir « État à la sortie du lot 9 » ci-dessous. **Migration terminée.**                                                        |
 
 ### État à la sortie du lot 0
 
@@ -559,6 +566,38 @@ est FIGÉE en PNG embarqué (`shared/components/og/generic-card.generated.ts`) �
 l'empoisonnement précède le premier import des routes OG) ; le binaire, lui, survit à tout,
 et l'erreur avalée est désormais journalisée. Les artefacts Playwright et `docs/prompts`
 (brouillons édités à la main) sont exclus d'ESLint/Prettier.
+
+### État à la sortie du lot 9 — migration terminée
+
+**CLAUDE.md réécrit pour le nouveau monde** : 44 Ko contre 99 (−56 %). Conservés tels quels :
+profil d'entreprise, lexique DA, conventions UI, règles React 19, matrice d'invalidation de
+cache. Nouveaux : schéma lean (10 modèles), cycle de commande, auth maison, checkout hébergé,
+facturation Int + suivi HMAC, rétractation, cartes OG résilientes, environnement e2e.
+La note « migration en cours » du lot 0 est retirée.
+
+**Sweep final** : les greps du prompt ne renvoient plus que des commentaires EXPLICATIFS
+(« perte volontaire », « parti avec le schéma lean ») — plus aucun code vivant. Purgés dans ce
+lot : `shared/types/rate-limit.types.ts` + `SEARCH_RATE_LIMITS` + le kind `"rate-limited"` et
+ses branches UI, `shared/lib/stripe-idempotency.ts` (son seul appelant était
+`initialize-payment`), `guest-session.ts` (zéro consommateur), les 5 scripts média de l'ancien
+pipeline (`SkuMedia`/`blurDataUrl`) + leurs entrées package.json, les usines mortes de
+`test/factories.ts` (réduit à 17 lignes), `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` de
+`.env.example`. ⚠️ `ProductType` est VIVANT (amendement lot 2) — le grep du prompt datait
+d'avant l'amendement.
+
+**docs/stripe re-curé** : manifeste réécrit pour le checkout hébergé — 5 bundles / 40 pages
+(`01-checkout-sessions.md` remplace `01-payments` + `02-elements` + le `07` hors-manifeste ;
+`04-refunds` sans disputes), chaque URL vérifiée en ligne (les variantes `?payment-ui=
+stripe-hosted` rendent du contenu, l'URL nue rend un sommaire), INDEX.md aligné (le contract
+test `stripe-docs-mirror` verrouille la parité), mirror régénéré (762 Ko).
+
+**Décision claude-md-accuracy : NON recréé.** Le test mort au lot 0 vérifiait des ancres
+`fichier:ligne` qui avaient TOUTES dérivé — c'est ce qui l'a tué. Le nouveau CLAUDE.md
+n'emploie plus d'ancre de ligne, et ses invariants nommant un test sont vérifiables par grep.
+
+**Gates** : `pnpm validate` vert, `pnpm knip` PROPRE (zéro finding), `pnpm build` vert,
+`pnpm e2e` vert. `vercel.json` sans cron, la règle ESLint locale
+`no-update-tag-outside-server-action` est branchée.
 
 ## 4. Schéma cible (SSOT)
 

@@ -141,7 +141,7 @@ describe("useLiveFilterCount", () => {
 		expect(result.current.count).toBe(3);
 	});
 
-	it("conserve le dernier chiffre connu sur rate-limited, sans rester « mise à jour »", async () => {
+	it("conserve le dernier chiffre connu sur error, sans rester « mise à jour »", async () => {
 		const { result, rerender } = renderCount();
 		await act(async () => {
 			vi.advanceTimersByTime(300);
@@ -149,7 +149,7 @@ describe("useLiveFilterCount", () => {
 		await flush();
 		expect(result.current.count).toBe(9);
 
-		mockCountAction.mockResolvedValue({ kind: "rate-limited" });
+		mockCountAction.mockResolvedValue({ kind: "error" });
 		rerender({ values: { ...baseValues, colors: ["or"] }, maxPriceInEuros: 500, enabled: true });
 		await act(async () => {
 			vi.advanceTimersByTime(300);
@@ -165,7 +165,7 @@ describe("useLiveFilterCount", () => {
 	});
 
 	it("countUnavailable retombe à faux dès qu'un recomptage aboutit", async () => {
-		mockCountAction.mockResolvedValue({ kind: "rate-limited" });
+		mockCountAction.mockResolvedValue({ kind: "error" });
 		const { result, rerender } = renderCount();
 		await act(async () => {
 			vi.advanceTimersByTime(300);
