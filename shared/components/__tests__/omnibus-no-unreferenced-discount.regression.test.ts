@@ -7,14 +7,14 @@
  *
  * Art. L. 112-1-1 C. conso (directive Omnibus) : toute annonce de réduction
  * doit référencer le prix LE PLUS BAS pratiqué dans les 30 jours précédents.
- * `ProductSku.compareAtPrice` est une valeur libre saisie par l'admin, sans
+ * `ProductVariant.compareAtPrice` est une valeur libre saisie par l'admin, sans
  * historique — l'afficher barré avec une pastille « -X % » est une annonce de
  * réduction sans référence, sanctionnable (audit 2026-08-08 : 8 surfaces la
  * rendaient — carte produit, PDP, barre collante, quick-search, panier…).
  *
  * ## Ce qui rouvre l'affichage (lot A2, déclenché par la première promo réelle)
  *
- * 1. Une table `SkuPriceHistory` + un plancher dénormalisé `lowestPriceLast30d`
+ * 1. Une table `VariantPriceHistory` + un plancher dénormalisé `lowestPriceLast30d`
  *    alimentés par TOUS les écrivains de prix, laissés se peupler 30 jours ;
  * 2. un affichage écrêté `min(compareAtPrice, lowestPriceLast30d)` accompagné
  *    de la mention du prix de référence.
@@ -24,7 +24,7 @@
  * ## Portée
  *
  * Surfaces CLIENT uniquement. L'admin est exclu du scan : `compareAtPrice` y
- * est un champ ÉDITÉ (formulaires SKU, cartes de pricing), pas une annonce
+ * est un champ ÉDITÉ (formulaires VARIANT, cartes de pricing), pas une annonce
  * faite à un consommateur — et ce sont ces écrans qui prépareront A2.
  */
 

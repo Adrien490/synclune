@@ -25,80 +25,44 @@ export const MAX_CART_ITEMS = 50;
 // ============================================================================
 
 /**
- * Colonnes SKU nécessaires au rendu du panier.
+ * Colonnes VARIANT nécessaires au rendu du panier.
  *
  * Le panier lui-même vit dans le cookie (`lib/cart-cookie.ts`) : la base ne
  * fournit plus que la matérialisation des lignes — libellé, image, prix courant,
- * stock. `priceInclTax` peut être stale jusqu'à 5 min (profil `checkout`), ce qui
+ * stock. `priceCents` peut être stale jusqu'à 5 min (profil `checkout`), ce qui
  * reste acceptable : (1) `priceAtAdd` (témoin du cookie) est la valeur affichée
  * dans le panier ; (2) le checkout re-valide au prix DB via
  * `payments/services/order-creation.service.ts` ; (3) `updateCartPrices` permet
  * un refresh manuel côté UI.
  */
-export const CART_SKU_SELECT = {
+export const CART_VARIANT_SELECT = {
 	id: true,
-	sku: true,
-	priceInclTax: true,
-	compareAtPrice: true,
-	inventory: true,
-	isActive: true,
+	priceCents: true,
+	stock: true,
+	active: true,
+	size: true,
+	color: {
+		select: { id: true, name: true, hex: true },
+	},
+	material: {
+		select: { id: true, name: true },
+	},
 	product: {
 		select: {
 			id: true,
-			title: true,
+			name: true,
 			slug: true,
-			status: true,
-		},
-	},
-	// Famille « vignette unique » (cf. CLAUDE.md § mediaType) : l'appelant prend
-	// `images[0]` sans pouvoir trier (`cart-item.service.ts:93`), donc le filtre et
-	// l'ordre doivent être portés ICI.
-	//
-	// Deux défauts corrigés le 2026-08-05, tous deux nommés dans CLAUDE.md :
-	//  1. prendre la « première » image sans ordre garanti rendait la vignette
-	//     instable ; l'ordre canonique `(position asc, id asc)` + `take: 1` fixe
-	//     le média principal (V5 : `isPrimary` n'existe plus, position 0 = principal).
-	//  2. aucun filtre `mediaType` : une vidéo en tête atterrissait dans un
-	//     `<Image src>` — vignette cassée ET transformation `/_next/image` facturée.
-	images: {
-		where: { mediaType: "IMAGE" as const },
-		take: 1,
-		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-		select: {
-			id: true,
-			url: true,
-			blurDataUrl: true,
-			thumbnailUrl: true,
-			altText: true,
-			mediaType: true,
-		},
-	},
-	colors: {
-		select: {
-			colorId: true,
-			position: true,
-			color: {
-				select: {
-					id: true,
-					name: true,
-					hex: true,
-				},
+			active: true,
+			priceCents: true,
+			// Famille « vignette unique » (cf. règle pickPrimaryImage) : l'appelant
+			// prend `media[0]` sans pouvoir trier — filtre IMAGE + ordre canonique
+			// portés ICI (une vidéo en tête casserait `<Image src>`).
+			media: {
+				where: { type: "IMAGE" as const },
+				take: 1,
+				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+				select: { id: true, url: true, alt: true, type: true },
 			},
 		},
-		orderBy: { position: "asc" as const },
 	},
-	materials: {
-		select: {
-			materialId: true,
-			position: true,
-			material: {
-				select: {
-					id: true,
-					name: true,
-				},
-			},
-		},
-		orderBy: { position: "asc" as const },
-	},
-	size: true,
-} as const satisfies Prisma.ProductSkuSelect;
+} as const satisfies Prisma.ProductVariantSelect;

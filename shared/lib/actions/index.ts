@@ -22,10 +22,7 @@
 // Validation helpers
 export { validateInput, safeFormGet, safeFormGetJSON, parseFormIds } from "./validation";
 
-// Rate limiting helpers
-// NOTE: enforceRateLimit est la seule fonction native de shared/
-// Pour getRateLimitId et enforceRateLimitForCurrentUser, importer depuis @/modules/admin-auth/lib/rate-limit-helpers
-export { enforceRateLimit } from "./rate-limit";
+// Plus de rate limiting : perte volontaire du schéma lean (§ 1, lot 2).
 
 // Error handling helpers
 export { handleActionError, BusinessError } from "./errors";

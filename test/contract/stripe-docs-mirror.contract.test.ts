@@ -124,7 +124,9 @@ describe("INDEX.md ↔ manifeste (toujours vérifié — fichiers versionnés)",
 			(match) => match[1]!,
 		);
 
-		expect(paths.length, "aucun chemin détecté — la regex a dû dériver").toBeGreaterThan(10);
+		// Plancher abaissé au lot 2 : la moitié des chemins Elements sont barrés
+		// dans INDEX.md en attendant la refonte Checkout du lot 3.
+		expect(paths.length, "aucun chemin détecté — la regex a dû dériver").toBeGreaterThan(5);
 
 		const missing = [...new Set(paths)].filter((path) => !existsSync(join(REPO_ROOT, path)));
 		expect(missing, `chemins cités par INDEX.md mais absents :\n${missing.join("\n")}`).toEqual([]);

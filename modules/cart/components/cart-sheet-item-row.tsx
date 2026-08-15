@@ -14,11 +14,11 @@ import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
 import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import {
-	getSkuColorsDisplayLabel,
+	getVariantColorsDisplayLabel,
 	getColorHexes,
 	getColorNames,
-} from "@/modules/skus/utils/sku-colors-label";
-import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
+} from "@/modules/variants/utils/variant-colors-label";
+import { getVariantMaterialsLabel } from "@/modules/variants/utils/variant-materials-label";
 
 import type { CartItem } from "../types/cart.types";
 import {
@@ -78,16 +78,16 @@ export function CartSheetItemRow({
 	const primaryImage = getCartItemPrimaryImage(item);
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
 
-	const materialsLabel = getSkuMaterialsLabel(item.sku.materials);
-	const colorsLabel = getSkuColorsDisplayLabel(item.sku.colors);
-	const colorHexes = getColorHexes(item.sku.colors);
-	const colorNames = getColorNames(item.sku.colors);
+	const materialsLabel = getVariantMaterialsLabel(item.variant.material);
+	const colorsLabel = getVariantColorsDisplayLabel(item.variant.color);
+	const colorHexes = getColorHexes(item.variant.color);
+	const colorNames = getColorNames(item.variant.color);
 	const titleId = `cart-item-title-${item.id}`;
 
 	const handleSwipeRemove = () => {
 		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
-			skuId: item.sku.id,
-			itemName: item.sku.product.title,
+			variantId: item.variant.id,
+			itemName: item.variant.product.name,
 			quantity: item.quantity,
 		});
 	};
@@ -127,21 +127,20 @@ export function CartSheetItemRow({
 			aria-labelledby={titleId}
 		>
 			<Link
-				href={`/creations/${item.sku.product.slug}`}
+				href={`/creations/${item.variant.product.slug}`}
 				onClick={onClose}
 				className="focus-ring bg-muted relative row-span-2 size-20 overflow-hidden rounded-md transition-opacity group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 active:opacity-80 sm:size-24"
-				aria-label={`Voir ${item.sku.product.title}`}
+				aria-label={`Voir ${item.variant.product.name}`}
 			>
 				{primaryImage && thumbSrc ? (
 					<Image
 						src={thumbSrc}
-						alt={primaryImage.altText ?? item.sku.product.title}
+						alt={primaryImage.alt ?? item.variant.product.name}
 						fill
 						className="object-cover"
 						sizes="(min-width: 640px) 96px, 80px"
 						quality={IMAGE_QUALITY.STANDARD}
-						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
-						blurDataURL={primaryImage.blurDataUrl ?? undefined}
+						placeholder="empty"
 					/>
 				) : (
 					<div className="text-muted-foreground flex h-full w-full items-center justify-center">
@@ -162,11 +161,11 @@ export function CartSheetItemRow({
 			<div className="grid min-w-0 gap-y-1">
 				<h3 className="text-sm" id={titleId}>
 					<Link
-						href={`/creations/${item.sku.product.slug}`}
+						href={`/creations/${item.variant.product.slug}`}
 						onClick={onClose}
 						className="focus-ring can-hover:hover:text-foreground active:text-muted-foreground line-clamp-2 block rounded font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-data-pending/sheet:pointer-events-none group-data-pending/sheet:opacity-50 sm:line-clamp-1"
 					>
-						{item.sku.product.title}
+						{item.variant.product.name}
 					</Link>
 				</h3>
 
@@ -195,7 +194,7 @@ export function CartSheetItemRow({
 							<dd>{materialsLabel}</dd>
 						</div>
 					)}
-					{item.sku.size && (
+					{item.variant.size && (
 						<div className="inline-flex items-center">
 							{/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- helpers return string ("" is falsy, ?? misses) */}
 							{(colorsLabel || materialsLabel) && (
@@ -204,7 +203,7 @@ export function CartSheetItemRow({
 								</span>
 							)}
 							<dt className="sr-only">Taille</dt>
-							<dd>{item.sku.size}</dd>
+							<dd>{item.variant.size}</dd>
 						</div>
 					)}
 				</dl>
@@ -230,7 +229,7 @@ export function CartSheetItemRow({
 
 				{/* Libellés via `CART_ITEM_ISSUE_LABELS` : la liste de l'en-tête du panier
 				    (`cart-sheet.tsx`) affiche le même état via `getCartItemIssueLabel`, qui lit
-				    la même SSOT. Les deux pastilles peuvent coexister — un SKU désactivé ET en
+				    la même SSOT. Les deux pastilles peuvent coexister — un VARIANT désactivé ET en
 				    rupture — ce que le libellé unique du service ne peut pas exprimer. */}
 				{hasIssue ? (
 					<div className="flex flex-wrap gap-1">
@@ -241,9 +240,9 @@ export function CartSheetItemRow({
 							<CartStateChip tone="danger">{CART_ITEM_ISSUE_LABELS.inactive}</CartStateChip>
 						)}
 					</div>
-				) : item.sku.inventory > 1 && item.sku.inventory <= STOCK_THRESHOLDS.LOW ? (
+				) : item.variant.stock > 1 && item.variant.stock <= STOCK_THRESHOLDS.LOW ? (
 					<p>
-						<CartStateChip tone="warning">Plus que {item.sku.inventory} en stock</CartStateChip>
+						<CartStateChip tone="warning">Plus que {item.variant.stock} en stock</CartStateChip>
 					</p>
 				) : null}
 			</div>
@@ -253,21 +252,21 @@ export function CartSheetItemRow({
 				data-no-swipe
 				data-base-ui-swipe-ignore=""
 			>
-				{item.sku.inventory === 1 && !hasIssue ? (
+				{item.variant.stock === 1 && !hasIssue ? (
 					<CartStateChip tone="warning">Il n&apos;en reste qu&apos;un</CartStateChip>
 				) : (
 					<CartItemQuantitySelector
-						skuId={item.sku.id}
+						variantId={item.variant.id}
 						currentQuantity={item.quantity}
-						maxQuantity={item.sku.inventory}
+						maxQuantity={item.variant.stock}
 						isInactive={isInactive}
-						itemName={item.sku.product.title}
+						itemName={item.variant.product.name}
 					/>
 				)}
 
 				<CartItemRemoveButton
-					skuId={item.sku.id}
-					itemName={item.sku.product.title}
+					variantId={item.variant.id}
+					itemName={item.variant.product.name}
 					quantity={item.quantity}
 				/>
 			</div>
@@ -282,7 +281,7 @@ export function CartSheetItemRow({
 			peek={peek}
 			leftAction={{
 				children: <TrashIcon className="text-destructive-foreground size-5" aria-hidden="true" />,
-				label: `Supprimer ${item.sku.product.title} du panier`,
+				label: `Supprimer ${item.variant.product.name} du panier`,
 				onAction: handleSwipeRemove,
 			}}
 		>

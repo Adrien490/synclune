@@ -2,9 +2,7 @@
 
 import { z } from "zod";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
-import { PRODUCT_LOAD_MORE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
@@ -69,16 +67,6 @@ export async function loadMoreProducts(
 				nextCursor: null,
 				hasMore: false,
 				error: "Paramètres invalides",
-			};
-		}
-
-		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_LOAD_MORE_LIMIT);
-		if ("error" in rateCheck) {
-			return {
-				products: [],
-				nextCursor: null,
-				hasMore: false,
-				error: "Trop de requêtes. Patiente un instant.",
 			};
 		}
 

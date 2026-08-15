@@ -35,7 +35,7 @@ export async function generateMetadata({
 	params: ProductTypeDetailPageParams;
 }): Promise<Metadata> {
 	const { slug } = await params;
-	const productType = await getProductTypeDetailBySlug({ slug, includeInactive: true });
+	const productType = await getProductTypeDetailBySlug({ slug });
 
 	if (!productType) {
 		return { title: "Type introuvable - Administration" };
@@ -55,7 +55,7 @@ export default async function AdminProductTypeDetailPage({
 	await assertAdminPage();
 
 	const { slug } = await params;
-	const productType = await getProductTypeDetailBySlug({ slug, includeInactive: true });
+	const productType = await getProductTypeDetailBySlug({ slug });
 
 	if (!productType) {
 		notFound();

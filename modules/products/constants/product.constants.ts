@@ -1,427 +1,237 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 
 // ============================================================================
-// SELECT DEFINITIONS
+// SELECT DEFINITIONS — schéma lean (migration lot 2)
+//
+// Le média vit désormais sur le PRODUIT (ProductMedia), plus sur la variante.
+// Le prix affiché d'une variante = variant.priceCents ?? product.priceCents.
 // ============================================================================
 
 /**
+ * Sous-select média : vignette unique (première IMAGE de l'ordre canonique).
+ * Filtre type : une vidéo n'est pas rendue par l'optimiseur d'images — sans ce
+ * filtre, un produit dont le média au rang 0 est une VIDÉO retournerait 0
+ * image et la carte tomberait sur le SVG de secours malgré ses photos.
+ */
+const PRIMARY_IMAGE_SELECT = {
+	where: { type: "IMAGE" as const },
+	orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+	take: 1,
+	select: {
+		id: true,
+		url: true,
+		alt: true,
+		type: true,
+	},
+};
+
+/** Sous-select variantes actives, ordre stable. */
+const ACTIVE_VARIANTS_SELECT = {
+	where: { active: true },
+	select: {
+		id: true,
+		size: true,
+		priceCents: true,
+		stock: true,
+		active: true,
+		color: {
+			select: { id: true, name: true, hex: true, position: true },
+		},
+		material: {
+			select: { id: true, name: true, position: true },
+		},
+	},
+	orderBy: { id: "asc" as const },
+};
+
+/**
  * Select mince pour carousels et grilles légères (related / recent / cross-sell).
- *
- * Scope volontairement limité aux champs consommés par ProductCard /
- * getProductCardData : id, slug, title, type.label, skus actifs
- * avec couleur/matériau/taille et UNIQUEMENT l'image primaire.
- *
- * Ne PAS utiliser pour le PLP ni l'admin — voir GET_PRODUCTS_SELECT.
+ * Scope limité aux champs consommés par ProductCard : identité, prix, variantes
+ * actives et UNIQUEMENT l'image primaire du produit.
  */
 export const PRODUCT_CAROUSEL_SELECT = {
 	id: true,
 	slug: true,
-	title: true,
-	status: true,
+	name: true,
+	priceCents: true,
+	active: true,
 	createdAt: true,
 	type: {
-		select: {
-			id: true,
-			slug: true,
-			label: true,
-		},
+		select: { id: true, slug: true, label: true },
 	},
-	skus: {
-		where: { isActive: true },
-		select: {
-			id: true,
-			priceInclTax: true,
-			compareAtPrice: true,
-			inventory: true,
-			isActive: true,
-			position: true,
-			colors: {
-				select: {
-					colorId: true,
-					position: true,
-					color: {
-						select: {
-							id: true,
-							slug: true,
-							name: true,
-							hex: true,
-						},
-					},
-				},
-				orderBy: { position: "asc" as const },
-			},
-			materials: {
-				select: {
-					materialId: true,
-					position: true,
-					material: {
-						select: {
-							id: true,
-							name: true,
-						},
-					},
-				},
-				orderBy: { position: "asc" as const },
-			},
-			size: true,
-			images: {
-				// Filtre mediaType : une vidéo n'est pas rendue par l'optimiseur d'images.
-				// Sans ce filtre, un SKU dont le média au rang 0 est une VIDÉO retournait
-				// 0 image et la carte tombait sur le SVG de secours malgré ses photos —
-				// le fallback "première IMAGE" de extractImageFromSku ne pouvait pas jouer.
-				where: { mediaType: "IMAGE" as const },
-				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-				take: 1,
-				select: {
-					id: true,
-					url: true,
-					thumbnailUrl: true,
-					blurDataUrl: true,
-					altText: true,
-					mediaType: true,
-					width: true,
-					height: true,
-				},
-			},
-		},
-		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-	},
+	media: PRIMARY_IMAGE_SELECT,
+	variants: ACTIVE_VARIANTS_SELECT,
 } as const satisfies Prisma.ProductSelect;
 
 /**
- * Select complet pour la page détail d'un produit
+ * Select complet pour la page détail d'un produit (galerie complète : le tri
+ * vidéos/images appartient à l'appelant — cf. pickPrimaryImage).
  */
 export const GET_PRODUCT_SELECT = {
 	id: true,
 	slug: true,
-	title: true,
+	name: true,
 	description: true,
-	type: {
-		select: {
-			id: true,
-			slug: true,
-			label: true,
-			isActive: true,
-		},
-	},
-	status: true,
+	priceCents: true,
+	active: true,
 	createdAt: true,
 	updatedAt: true,
-	skus: {
-		where: {
-			isActive: true,
-		},
+	type: {
+		select: { id: true, slug: true, label: true },
+	},
+	media: {
 		select: {
 			id: true,
-			sku: true,
-			colors: {
-				select: {
-					colorId: true,
-					position: true,
-					color: {
-						select: {
-							id: true,
-							slug: true,
-							name: true,
-							hex: true,
-							description: true,
-						},
-					},
-				},
-				orderBy: { position: "asc" as const },
-			},
-			materials: {
-				select: {
-					materialId: true,
-					position: true,
-					material: {
-						select: {
-							id: true,
-							name: true,
-							description: true,
-						},
-					},
-				},
-				orderBy: { position: "asc" as const },
-			},
-			size: true,
-			priceInclTax: true,
-			compareAtPrice: true,
-			inventory: true,
-			isActive: true,
+			url: true,
+			alt: true,
+			type: true,
 			position: true,
-			images: {
-				select: {
-					id: true,
-					url: true,
-					thumbnailUrl: true,
-					blurDataUrl: true,
-					altText: true,
-					mediaType: true,
-					width: true,
-					height: true,
-				},
-				// Tiebreaker id : deux images à même position (reorder concurrent)
-				// doivent rendre un ordre stable entre requêtes (galerie déterministe)
-				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-				take: 50,
+		},
+		// Tiebreaker id : deux médias à même position (reorder concurrent)
+		// doivent rendre un ordre stable entre requêtes (galerie déterministe)
+		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+		take: 50,
+	},
+	variants: {
+		where: { active: true },
+		select: {
+			id: true,
+			size: true,
+			priceCents: true,
+			stock: true,
+			active: true,
+			color: {
+				select: { id: true, name: true, hex: true, position: true },
+			},
+			material: {
+				select: { id: true, name: true, position: true },
 			},
 		},
-		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+		orderBy: { id: "asc" as const },
 	},
 	collections: {
 		select: {
-			// Pas d'`id` : `ProductCollection` est passé en PK composite
-			// `(productId, collectionId)` (audit schéma V4, 2026-08-05). La clé
-			// surrogate ne servait que de `key` React — c'est `collection.id` qui
-			// la porte désormais.
-			position: true,
-			collection: {
-				select: {
-					id: true,
-					name: true,
-					slug: true,
-					description: true,
-					status: true,
-				},
-			},
+			id: true,
+			name: true,
+			slug: true,
+			description: true,
+			active: true,
 		},
-		orderBy: [{ position: "asc" as const }, { addedAt: "desc" as const }],
+		orderBy: { position: "asc" as const },
 	},
 } as const satisfies Prisma.ProductSelect;
 
 /**
  * Select pour le FORMULAIRE D'ÉDITION admin — dérivé de GET_PRODUCT_SELECT,
- * mais les SKUs INACTIFS restent chargés.
- *
- * L'archivage désactive TOUS les SKUs d'un produit (`toggle-product-status`).
- * Avec le filtre `isActive: true` de GET_PRODUCT_SELECT, `/modifier` amorçait
- * alors `skuId: ""`, prix 0, `media: []` — trois rejets Zod à la soumission :
- * l'admin ne pouvait plus corriger ne serait-ce que le titre d'un bijou
- * archivé (même trou pour un DRAFT dont l'unique variante est inactive).
- * Seul le soft delete est filtré. `orderBy (position, id)` garantit que
- * `skus[0]` reste la variante principale, active ou non.
+ * mais les variantes INACTIVES restent chargées (un produit désactivé doit
+ * rester éditable, même trou historique que l'archivage d'avant-migration).
  */
 export const GET_PRODUCT_FOR_EDIT_SELECT = {
 	...GET_PRODUCT_SELECT,
-	skus: {
-		...GET_PRODUCT_SELECT.skus,
-		where: { deletedAt: null },
+	variants: {
+		...GET_PRODUCT_SELECT.variants,
+		where: {},
 	},
 } as const satisfies Prisma.ProductSelect;
 
 /**
  * Select for product listings (public storefront + admin).
  * WARNING: Shared between public and admin views.
- * Do NOT add admin-only sensitive fields here (e.g. costPrice, supplierNotes).
- * Create a separate admin select if needed.
+ * Do NOT add admin-only sensitive fields here.
  */
 export const GET_PRODUCTS_SELECT = {
 	id: true,
 	slug: true,
-	title: true,
+	name: true,
 	description: true,
-	type: {
-		select: {
-			id: true,
-			slug: true,
-			label: true,
-			isActive: true,
-		},
-	},
-	status: true,
+	priceCents: true,
+	active: true,
 	createdAt: true,
 	updatedAt: true,
-	skus: {
-		where: {
-			isActive: true,
-		},
-		select: {
-			id: true,
-			sku: true,
-			priceInclTax: true,
-			compareAtPrice: true,
-			inventory: true,
-			isActive: true,
-			position: true,
-			images: {
-				select: {
-					id: true,
-					url: true,
-					thumbnailUrl: true,
-					blurDataUrl: true,
-					altText: true,
-					mediaType: true,
-					width: true,
-					height: true,
-				},
-				// Tiebreaker id : ordre stable à positions égales (cf GET_PRODUCT_SELECT)
-				orderBy: [{ position: "asc" }, { id: "asc" }],
-			},
-			materials: {
-				select: {
-					materialId: true,
-					position: true,
-					material: {
-						select: {
-							id: true,
-							name: true,
-						},
-					},
-				},
-				orderBy: { position: "asc" as const },
-			},
-			colors: {
-				select: {
-					colorId: true,
-					position: true,
-					color: {
-						select: {
-							id: true,
-							slug: true,
-							name: true,
-							hex: true,
-						},
-					},
-				},
-				orderBy: { position: "asc" as const },
-			},
-			size: true,
-		},
-		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+	type: {
+		select: { id: true, slug: true, label: true },
 	},
+	media: PRIMARY_IMAGE_SELECT,
+	variants: ACTIVE_VARIANTS_SELECT,
 	_count: {
 		select: {
-			skus: {
-				where: {
-					isActive: true,
-				},
+			variants: {
+				where: { active: true },
 			},
 		},
 	},
 	collections: {
 		select: {
-			// Pas d'`id` : `ProductCollection` est passé en PK composite
-			// `(productId, collectionId)` (audit schéma V4, 2026-08-05). La clé
-			// surrogate ne servait que de `key` React — c'est `collection.id` qui
-			// la porte désormais.
-			position: true,
-			collection: {
-				select: {
-					id: true,
-					name: true,
-					slug: true,
-					description: true,
-					status: true,
-				},
-			},
+			id: true,
+			name: true,
+			slug: true,
+			description: true,
+			active: true,
 		},
-		orderBy: [{ position: "asc" as const }, { addedAt: "desc" as const }],
+		orderBy: { position: "asc" as const },
 	},
 } as const satisfies Prisma.ProductSelect;
 
 /**
  * Ultra-lightweight select for quick search dialog results.
- * Only includes data needed for compact result display (thumbnail, title, price, colors).
  */
 export const QUICK_SEARCH_SELECT = {
 	id: true,
 	slug: true,
-	title: true,
-	skus: {
-		where: { isActive: true },
-		select: {
-			priceInclTax: true,
-			compareAtPrice: true,
-			inventory: true,
-			position: true,
-			colors: {
-				select: {
-					colorId: true,
-					position: true,
-					color: { select: { slug: true, name: true, hex: true } },
-				},
-				orderBy: { position: "asc" as const },
-			},
-			// Filtre mediaType : ce select alimente UNE vignette (`search-result-item`),
-			// qui prend `images[0]` et le passe à `<Image src>`. Sans le filtre, un SKU dont
-			// le média au rang 0 est une VIDÉO injectait un `.mp4` dans l'optimiseur
-			// d'images — vignette cassée + transformation facturée.
-			// Même correctif que PRODUCT_CAROUSEL_SELECT ; le tri reproduit la règle
-			// de `pickPrimaryImage` (première IMAGE par position).
-			images: {
-				where: { mediaType: "IMAGE" as const },
-				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-				take: 1,
-				select: { url: true, blurDataUrl: true, altText: true },
-			},
-		},
+	name: true,
+	priceCents: true,
+	media: {
+		where: { type: "IMAGE" as const },
 		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+		take: 1,
+		select: { url: true, alt: true },
+	},
+	variants: {
+		where: { active: true },
+		select: {
+			id: true,
+			priceCents: true,
+			stock: true,
+			color: { select: { name: true, hex: true } },
+		},
+		orderBy: { id: "asc" as const },
 	},
 } as const satisfies Prisma.ProductSelect;
 
 /**
- * Select de la duplication de produit (admin) — SKUs + images + jointures M2M.
- *
- * Vit ici, avec les 4 autres selects du module, et non plus en ligne dans
- * `data/get-product-for-duplication.ts` : c'est cette exception qui avait laissé le
- * select dériver. Les migrations M2M de mai 2026 ont déplacé `colorId`/`materialId`
- * de `ProductSku` vers les tables de jointure ; les 4 selects de ce fichier ont été
- * mis à jour, celui de la duplication — invisible ici — ne l'a pas été, et
- * « Dupliquer un produit » a répondu « Le produit source n'existe pas » pendant
- * ~2,5 mois (Prisma levait une `PrismaClientValidationError`, avalée par un `catch`).
- *
- * Validité vérifiée sans base par `__tests__/catalogue-selects-schema-validity.regression.test.ts`.
+ * Select de la duplication de produit (admin) — variantes + médias produit.
+ * Vit ici avec les autres selects du module (un select en ligne dans data/
+ * avait dérivé pendant 2,5 mois — leçon conservée du monde d'avant).
  */
 export const GET_PRODUCT_FOR_DUPLICATION_SELECT = {
 	id: true,
-	title: true,
+	name: true,
 	slug: true,
 	description: true,
+	priceCents: true,
 	typeId: true,
 	collections: {
-		select: {
-			collectionId: true,
-			collection: {
-				select: { slug: true },
-			},
-		},
+		select: { id: true, slug: true },
 	},
-	skus: {
-		// Un produit vivant ne porte pas de SKU soft-deleted aujourd'hui (seul
-		// `delete-product` pose `ProductSku.deletedAt`, et il soft-delete le produit dans
-		// la même tx), mais dupliquer une variante supprimée serait silencieux.
-		where: { deletedAt: null },
+	media: {
 		select: {
-			sku: true,
-			priceInclTax: true,
-			compareAtPrice: true,
-			inventory: true,
-			isActive: true,
+			url: true,
+			alt: true,
+			type: true,
 			position: true,
-			// `position` porte l'ordre de saisie : à préserver dans la copie.
-			colors: {
-				select: { colorId: true, position: true },
-				orderBy: { position: "asc" as const },
-			},
-			materials: {
-				select: { materialId: true, position: true },
-				orderBy: { position: "asc" as const },
-			},
-			size: true,
-			images: {
-				select: {
-					url: true,
-					thumbnailUrl: true,
-					blurDataUrl: true,
-					altText: true,
-					mediaType: true,
-					width: true,
-					height: true,
-					position: true,
-				},
-			},
 		},
+		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+	},
+	variants: {
+		select: {
+			size: true,
+			colorId: true,
+			materialId: true,
+			priceCents: true,
+			stock: true,
+			active: true,
+		},
+		orderBy: { id: "asc" as const },
 	},
 } as const satisfies Prisma.ProductSelect;
 
@@ -434,21 +244,20 @@ export const GET_PRODUCTS_MAX_RESULTS_PER_PAGE = 200;
 export const GET_PRODUCTS_DEFAULT_SORT_BY = "created-descending";
 export const GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY = "created-descending";
 
-// SKU is considered low stock when inventory > 0 AND inventory <= threshold.
+// Variant is considered low stock when stock > 0 AND stock <= threshold.
 // Shared between dashboard alerts and the admin products list filter.
 export const LOW_STOCK_THRESHOLD = 3;
 
 export const GET_PRODUCTS_SORT_FIELDS = [
-	"title-ascending",
-	"title-descending",
+	"name-ascending",
+	"name-descending",
 	"price-ascending",
 	"price-descending",
 	"created-ascending",
 	"created-descending",
 	"createdAt",
 	"updatedAt",
-	"title",
-	"type",
+	"name",
 ] as const;
 
 // ============================================================================
@@ -464,23 +273,21 @@ export const PRODUCT_FILTER_DIALOG_ID = "product-filter-sheet";
 
 /**
  * L'ordre des clés EST l'ordre du tiroir et du menu de tri (`Object.values`).
- * « Plus récents » ouvre la liste : c'est le tri par défaut réel
- * (`parsePaginationParams`) — il était classé en dernière ligne, sous un
- * « Par défaut » qui en était le doublon anonyme (audit /produits 2026-08-05).
+ * « Plus récents » ouvre la liste : c'est le tri par défaut réel.
  */
 export const PRODUCTS_SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",
 	PRICE_ASC: "price-ascending",
 	PRICE_DESC: "price-descending",
 	CREATED_ASC: "created-ascending",
-	TITLE_ASC: "title-ascending",
-	TITLE_DESC: "title-descending",
+	NAME_ASC: "name-ascending",
+	NAME_DESC: "name-descending",
 } as const;
 
 /**
- * Le tri de l'URL nue — SSOT partagée entre le parse (`parseFilterValuesFromURL`),
- * la construction d'URL (`buildFilterURL`, qui EFFACE le paramètre plutôt que
- * d'écrire la valeur par défaut) et le compartiment « Trier par ».
+ * Le tri de l'URL nue — SSOT partagée entre le parse, la construction d'URL
+ * (qui EFFACE le paramètre plutôt que d'écrire la valeur par défaut) et le
+ * compartiment « Trier par ».
  */
 export const PRODUCTS_DEFAULT_SORT = PRODUCTS_SORT_OPTIONS.CREATED_DESC;
 
@@ -489,8 +296,8 @@ export const PRODUCTS_SORT_LABELS = {
 	[PRODUCTS_SORT_OPTIONS.PRICE_ASC]: "Prix croissant",
 	[PRODUCTS_SORT_OPTIONS.PRICE_DESC]: "Prix décroissant",
 	[PRODUCTS_SORT_OPTIONS.CREATED_ASC]: "Plus anciens",
-	[PRODUCTS_SORT_OPTIONS.TITLE_ASC]: "Alphabétique (A-Z)",
-	[PRODUCTS_SORT_OPTIONS.TITLE_DESC]: "Alphabétique (Z-A)",
+	[PRODUCTS_SORT_OPTIONS.NAME_ASC]: "Alphabétique (A-Z)",
+	[PRODUCTS_SORT_OPTIONS.NAME_DESC]: "Alphabétique (Z-A)",
 } as const;
 
 // ============================================================================
@@ -504,6 +311,5 @@ export const ADMIN_PRODUCTS_SORT_LABELS: Record<string, string> = {
 	...PRODUCTS_SORT_LABELS,
 	createdAt: "Date de création",
 	updatedAt: "Date de mise à jour",
-	title: "Titre",
-	type: "Type",
+	name: "Nom",
 };

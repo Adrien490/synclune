@@ -9,6 +9,8 @@ interface ColorDetailPreviewCardProps {
 }
 
 export function ColorDetailPreviewCard({ color }: ColorDetailPreviewCardProps) {
+	const hex = color.hex?.toUpperCase() ?? null;
+
 	return (
 		<Card>
 			<CardHeader>
@@ -20,18 +22,20 @@ export function ColorDetailPreviewCard({ color }: ColorDetailPreviewCardProps) {
 			<CardContent className="flex flex-col items-center gap-4 py-8">
 				<div
 					className="border-border size-24 rounded-full border-2 shadow-md sm:size-40"
-					style={{ backgroundColor: color.hex }}
+					style={{ backgroundColor: color.hex ?? undefined }}
 					aria-label={`Aperçu de la couleur ${color.name}`}
 					role="img"
 				/>
-				<div className="flex items-center gap-1">
-					<span className="text-foreground font-mono text-sm">{color.hex.toUpperCase()}</span>
-					<CopyButton
-						text={color.hex.toUpperCase()}
-						label="Code hex"
-						className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
-					/>
-				</div>
+				{hex ? (
+					<div className="flex items-center gap-1">
+						<span className="text-foreground font-mono text-sm">{hex}</span>
+						<CopyButton
+							text={hex}
+							label="Code hex"
+							className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
+						/>
+					</div>
+				) : null}
 			</CardContent>
 		</Card>
 	);

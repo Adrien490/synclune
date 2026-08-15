@@ -82,24 +82,24 @@ vi.mock("@/modules/media/components/admin/edit-alt-text-dialog", () => ({
 // ---------------------------------------------------------------------------
 const imageMedia: MediaItem = {
 	url: "https://utfs.io/f/img1.jpg",
-	altText: "Test image",
-	mediaType: "IMAGE",
+	alt: "Test image",
+	type: "IMAGE",
 	thumbnailUrl: undefined,
 	blurDataUrl: undefined,
 };
 
 const videoMedia: MediaItem = {
 	url: "https://utfs.io/f/vid1.mp4",
-	altText: "Test video",
-	mediaType: "VIDEO",
+	alt: "Test video",
+	type: "VIDEO",
 	thumbnailUrl: "https://utfs.io/f/thumb1.jpg",
 	blurDataUrl: undefined,
 };
 
 const videoNoThumb: MediaItem = {
 	url: "https://utfs.io/f/vid2.mp4",
-	altText: "Video no thumb",
-	mediaType: "VIDEO",
+	alt: "Video no thumb",
+	type: "VIDEO",
 	thumbnailUrl: undefined,
 	blurDataUrl: undefined,
 };

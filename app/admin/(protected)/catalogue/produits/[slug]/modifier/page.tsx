@@ -48,7 +48,7 @@ export default async function EditProductPage({ params }: { params: EditProductP
 
 	const { slug } = await params;
 
-	// Variante édition : inclut aussi les SKUs INACTIFS — l'archivage les
+	// Variante édition : inclut aussi les VARIANTs INACTIFS — l'archivage les
 	// désactive tous, et le select public rendait ce formulaire vide et
 	// non-enregistrable pour tout produit archivé.
 	const product = await getProductForEdit({
@@ -70,7 +70,7 @@ export default async function EditProductPage({ params }: { params: EditProductP
 
 	return (
 		<div className="space-y-4">
-			<PageHeader title={product.title} variant="compact" />
+			<PageHeader title={product.name} variant="compact" />
 
 			<EditProductForm
 				product={product}

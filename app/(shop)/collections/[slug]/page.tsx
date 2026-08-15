@@ -1,5 +1,4 @@
 import type { ProductFiltersSearchParams } from "@/app/(shop)/produits/_utils/types";
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { accentForSlug } from "@/modules/products/components/catalog-accents.constants";
 import { CATALOG_GRID } from "@/modules/products/components/catalog-grid.constants";
@@ -72,7 +71,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 	const collection = await getStorefrontCollectionBySlug({ slug });
 
 	// Vérifier que la collection existe et est publiée
-	if (!collection || collection.status !== PublicationStatus.PUBLIC) {
+	if (!collection || !collection.active) {
 		notFound();
 	}
 
@@ -98,27 +97,26 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 		{ label: collection.name, href: `/collections/${slug}` },
 	];
 
-	// Récupérer l'image du produit vedette pour le SEO — fallback au premier produit
-	// avec image (l'ordre (position asc, addedAt desc) met la vedette en tête de liste)
+	// Image représentative pour le SEO — premier produit avec image (produits
+	// actifs les plus récents en tête de liste)
 	const featuredImageUrl =
-		collection.products.find((pc) => pc.product.skus[0]?.images[0]?.url)?.product.skus[0]?.images[0]
-			?.url ?? null;
+		collection.products.find((product) => product.media[0]?.url)?.media[0]?.url ?? null;
 
 	// Mapper les produits pour le mainEntity ItemList JSON-LD (Product+Offer enrichi).
 	// Limite à 30 entries pour controler la taille de la balise script (Google indexe ~25 items).
 	const structuredProducts = collection.products
-		.filter((pc) => pc.product.skus[0])
+		.filter((product) => product.variants[0])
 		.slice(0, 30)
-		.map((pc) => {
-			const sku = pc.product.skus[0]!;
-			const image = sku.images[0];
+		.map((product) => {
+			const variant = product.variants[0]!;
+			const image = product.media[0];
 			return {
-				slug: pc.product.slug,
-				title: pc.product.title,
-				priceInclTax: sku.priceInclTax,
+				slug: product.slug,
+				name: product.name,
+				priceCents: variant.priceCents ?? product.priceCents,
 				imageUrl: image?.url,
-				imageAlt: image?.altText ?? undefined,
-				inStock: sku.inventory > 0,
+				imageAlt: image?.alt ?? undefined,
+				inStock: variant.stock > 0,
 			};
 		});
 

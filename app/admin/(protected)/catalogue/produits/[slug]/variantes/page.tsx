@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PencilSimpleIcon } from "@phosphor-icons/react/ssr";
 
-import { SkusAdminDialogs } from "./_components/skus-admin-dialogs";
+import { VariantsAdminDialogs } from "./_components/variants-admin-dialogs";
 import { VariantsProductContext } from "./_components/variants-product-context";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -22,19 +22,19 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { getProductSkus } from "@/modules/skus/data/get-skus-list";
-import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
+import { getProductVariants } from "@/modules/variants/data/get-variants-list";
+import { parseProductVariantParams } from "@/modules/variants/utils/parse-variant-params";
 import { getColorOptions } from "@/modules/colors/data/get-color-options";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
-import { SORT_LABELS } from "@/modules/skus/constants/sku.constants";
-import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
-import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
-import { SkusMobileList } from "@/modules/skus/components/admin/skus-mobile-list";
-import { SkusMobileListSkeleton } from "@/modules/skus/components/admin/skus-mobile-list-skeleton";
-import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";
+import { SORT_LABELS } from "@/modules/variants/constants/variant.constants";
+import { ProductVariantsDataTable } from "@/modules/variants/components/admin/variants-data-table";
+import { VariantsDataTableSkeleton } from "@/modules/variants/components/admin/variants-data-table-skeleton";
+import { VariantsMobileList } from "@/modules/variants/components/admin/variants-mobile-list";
+import { VariantsMobileListSkeleton } from "@/modules/variants/components/admin/variants-mobile-list-skeleton";
+import { RefreshVariantsButton } from "@/modules/variants/components/admin/refresh-variants-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
-import { SkusBottomBar } from "@/modules/skus/components/admin/skus-bottom-bar";
-import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
+import { VariantsBottomBar } from "@/modules/variants/components/admin/variants-bottom-bar";
+import { VariantsFilterBadges } from "@/modules/variants/components/admin/variants-filter-badges";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
@@ -68,12 +68,12 @@ function parseVariantFilters(params: ProductVariantsSearchParams) {
 	const colorIds = normalizeArray(params.filter_colorId);
 	const materialIds = normalizeArray(params.filter_materialId);
 
-	// Parse isActive
-	let isActive: boolean | undefined;
+	// Parse active
+	let active: boolean | undefined;
 	if (params.filter_isActive === "true") {
-		isActive = true;
+		active = true;
 	} else if (params.filter_isActive === "false") {
-		isActive = false;
+		active = false;
 	}
 
 	return {
@@ -84,7 +84,7 @@ function parseVariantFilters(params: ProductVariantsSearchParams) {
 				: undefined,
 		colorId: colorIds.length > 0 ? colorIds : undefined,
 		materialId: materialIds.length > 0 ? materialIds : undefined,
-		isActive,
+		active,
 	};
 }
 
@@ -99,8 +99,8 @@ export async function generateMetadata({ params }: ProductVariantsPageProps): Pr
 	}
 
 	return {
-		title: `Variantes de ${product.title} - Administration`,
-		description: `Gerer les variantes du produit ${product.title}`,
+		title: `Variantes de ${product.name} - Administration`,
+		description: `Gerer les variantes du produit ${product.name}`,
 	};
 }
 
@@ -113,7 +113,8 @@ export default async function ProductVariantsPage({
 	const [{ slug }, searchParamsData] = await Promise.all([params, searchParams]);
 
 	// Parse and validate all search parameters safely
-	const { cursor, direction, perPage, sortBy, search } = parseProductSkuParams(searchParamsData);
+	const { cursor, direction, perPage, sortBy, search } =
+		parseProductVariantParams(searchParamsData);
 
 	// Parse les filtres
 	const filters = parseVariantFilters(searchParamsData);
@@ -130,7 +131,7 @@ export default async function ProductVariantsPage({
 		Boolean(filters.stockStatus) ||
 		Boolean(filters.colorId?.length) ||
 		Boolean(filters.materialId?.length) ||
-		typeof filters.isActive === "boolean";
+		typeof filters.active === "boolean";
 
 	// Recuperer le produit
 	const product = await getProductBySlug({
@@ -148,8 +149,8 @@ export default async function ProductVariantsPage({
 		getMaterialOptions(),
 	]);
 
-	// La promise de SKUs n'est PAS awaited pour permettre le streaming
-	const skusPromise = getProductSkus({
+	// La promise de VARIANTs n'est PAS awaited pour permettre le streaming
+	const variantsPromise = getProductVariants({
 		cursor,
 		direction,
 		perPage,
@@ -164,16 +165,16 @@ export default async function ProductVariantsPage({
 	return (
 		<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
 			{/* ⚠️ Pas de `ResultCountLiveRegion` ici, contrairement aux 10 autres listes
-				admin : `GetProductSkusReturn` n'expose PAS de `totalCount` (curseur seul,
-				cf. `modules/skus/types/skus.types.ts`). Annoncer la taille de la page
+				admin : `GetProductVariantsReturn` n'expose PAS de `totalCount` (curseur seul,
+				cf. `modules/variants/types/variants.types.ts`). Annoncer la taille de la page
 				courante serait faux dès qu'il y a plusieurs pages, et ajouter une requête
 				de comptage à un endpoint volontairement streamé mérite son propre arbitrage
-				perf. À traiter si `getProductSkus` gagne un total. Audit recherche 2026-07-26. */}
+				perf. À traiter si `getProductVariants` gagne un total. Audit recherche 2026-07-26. */}
 
 			{/* Dialogs des actions long-press / row-actions (delete, adjust-stock, update-price) */}
-			<SkusAdminDialogs />
+			<VariantsAdminDialogs />
 
-			<SkusBottomBar
+			<VariantsBottomBar
 				productSlug={slug}
 				colorOptions={colorOptions}
 				materialOptions={materialOptions}
@@ -192,7 +193,7 @@ export default async function ProductVariantsPage({
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink href={`/admin/catalogue/produits/${slug}/modifier`}>
-							{product.title}
+							{product.name}
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
@@ -207,7 +208,7 @@ export default async function ProductVariantsPage({
 
 			<PageHeader
 				variant="compact"
-				title={`Variantes de ${product.title}`}
+				title={`Variantes de ${product.name}`}
 				description="Gerez les differentes variantes de ce produit (couleur, taille, materiau, etc.)"
 				className="hidden md:block"
 				actions={
@@ -256,26 +257,26 @@ export default async function ProductVariantsPage({
 						/>
 						<ButtonGroup aria-label="Filtres et actions">
 							<FilterTriggerButton />
-							<RefreshSkusButton productId={product.id} />
+							<RefreshVariantsButton productId={product.id} />
 						</ButtonGroup>
 					</Toolbar>
 
 					{/* Badges de filtres actifs (visible mobile + desktop) */}
-					<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
+					<VariantsFilterBadges colors={colorOptions} materials={materialOptions} />
 				</Suspense>
 
-				<Suspense fallback={<SkusDataTableSkeleton />}>
+				<Suspense fallback={<VariantsDataTableSkeleton />}>
 					<ProductVariantsDataTable
-						skusPromise={skusPromise}
+						variantsPromise={variantsPromise}
 						productSlug={slug}
 						perPage={perPage}
 						hasActiveFilters={hasActiveFilters}
 					/>
 				</Suspense>
 
-				<Suspense fallback={<SkusMobileListSkeleton hasActiveFilters={hasActiveFilters} />}>
-					<SkusMobileList
-						skusPromise={skusPromise}
+				<Suspense fallback={<VariantsMobileListSkeleton hasActiveFilters={hasActiveFilters} />}>
+					<VariantsMobileList
+						variantsPromise={variantsPromise}
 						productSlug={slug}
 						perPage={perPage}
 						hasActiveFilters={hasActiveFilters}

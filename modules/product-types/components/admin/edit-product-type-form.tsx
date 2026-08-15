@@ -24,7 +24,6 @@ export interface EditableProductType {
 	id: string;
 	label: string;
 	slug: string;
-	description: string | null;
 }
 
 interface EditProductTypeFormProps {
@@ -38,7 +37,6 @@ const LIST_PATH = "/admin/catalogue/types-de-produits";
 
 const FIELD_LABELS: Record<string, string> = {
 	label: "Label",
-	description: "Description",
 };
 
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
@@ -59,7 +57,6 @@ export function EditProductTypeForm({
 	const form = useAppForm({
 		defaultValues: {
 			label: productType.label,
-			description: productType.description ?? "",
 		},
 	});
 
@@ -179,28 +176,6 @@ export function EditProductTypeForm({
 								required
 								autoCapitalize="words"
 								enterKeyHint="next"
-							/>
-						)}
-					</form.AppField>
-
-					<form.AppField
-						name="description"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (value && value.length > 500) {
-									return "La description ne peut pas dépasser 500 caractères";
-								}
-								return undefined;
-							},
-						}}
-					>
-						{(field) => (
-							<field.TextareaField
-								label="Description"
-								placeholder="Décrivez le type de produit…"
-								disabled={isPending}
-								rows={4}
-								className="resize-none"
 							/>
 						)}
 					</form.AppField>

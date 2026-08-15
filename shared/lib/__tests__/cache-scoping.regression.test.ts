@@ -5,14 +5,14 @@ import { describe, expect, it } from "vitest";
 /**
  * @regression cache-user-scoping-2026-07-03
  *
- * Généralise `modules/cart/data/__tests__/sku-validation-cache-profile.regression.test.ts`
+ * Généralise `modules/cart/data/__tests__/variant-validation-cache-profile.regression.test.ts`
  * (limité à un seul fichier) à TOUS les fichiers source de `modules/`, `shared/` et `app/`
  * (hors tests). Verrouille six invariants du système de cache
  * (audits « cache utilisateur et checkout » 2026-07-03 + « usage cache Next.js » 2026-07-06) :
  *
  * 1. Tout `cacheLife("X")` référence un profile déclaré dans `next.config.ts:cacheLife`.
  * 2. Aucun JSDoc/commentaire ne mentionne un profile inexistant (historique : profile
- *    « realtime » fantôme dans get-sku-for-validation.ts puis get-order-for-confirmation.ts).
+ *    « realtime » fantôme dans get-variant-for-validation.ts puis get-order-for-confirmation.ts).
  * 3. Toute fonction cachée dont la signature porte l'identité (`userId`/`sessionId`)
  *    utilise `"use cache: private"` — jamais `"use cache"` public. Une fonction publique
  *    avec l'identité en argument servirait des données personnelles depuis le cache

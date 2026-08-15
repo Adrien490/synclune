@@ -97,11 +97,8 @@ export function ProductCardColorSwatches({
 				aria-label={`${colors.length} variantes disponibles pour ${title}`}
 			>
 				{colors.slice(0, MAX_COLOR_SWATCHES).map((color, index) => {
-					const isCombo = Boolean(color.comboKey) && (color.hexes?.length ?? 0) > 1;
-					const hexes = color.hexes && color.hexes.length > 0 ? color.hexes : [color.hex];
-					const href = isCombo
-						? `${productUrl}?variant=${color.comboKey}`
-						: `${productUrl}?color=${color.slug}`;
+					const hexes = [color.hex];
+					const href = `${productUrl}?color=${color.slug}`;
 					const allLight = areAllColorsLight(hexes, (hex) => isLightColor(hex, 0.85));
 					const variantLabel = `${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`;
 
@@ -111,8 +108,7 @@ export function ProductCardColorSwatches({
 								href={href}
 								className={cn(
 									"focus-ring border-foreground/15 relative block shrink-0 rounded-full border",
-									// Pastille un cran plus grande en mode combo (lisibilité gradient)
-									isCombo ? "size-9 sm:size-10" : "size-7 sm:size-8",
+									"size-7 sm:size-8",
 									"motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5 motion-safe:transition-transform motion-safe:duration-[var(--duration-fast)]",
 									// Extension du hit target SANS chevauchement : `-inset-1` (4 px)
 									// porte la cible de 28→36 px en mono et 36→44 px en combo
@@ -127,10 +123,8 @@ export function ProductCardColorSwatches({
 								)}
 								style={{
 									...buildSwatchStyle(hexes),
-									// View Transition vers le sélecteur PDP (même comboKey). En mode
-									// legacy mono, on n'expose pas de name (le PDP n'a pas de pastille
-									// VT-correspondante de toute façon).
-									...(isCombo ? { viewTransitionName: `variant-pill-${color.comboKey}` } : {}),
+									// View Transition vers le sélecteur PDP (même slug de couleur).
+									viewTransitionName: `variant-pill-${color.slug}`,
 								}}
 								aria-label={variantLabel}
 							>

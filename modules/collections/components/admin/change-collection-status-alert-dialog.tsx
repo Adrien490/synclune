@@ -1,98 +1,52 @@
 "use client";
 
-import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
-import type { AlertActionTone } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
-import { ArchiveIcon, FileTextIcon, GlobeIcon } from "@phosphor-icons/react/ssr";
-import type { ComponentType } from "react";
 
 export const CHANGE_COLLECTION_STATUS_DIALOG_ID = "change-collection-status";
 
 interface ChangeCollectionStatusData {
 	collectionId: string;
 	collectionName: string;
-	currentStatus: PublicationStatus;
-	targetStatus: PublicationStatus;
+	targetActive: boolean;
 	[key: string]: unknown;
 }
 
-const STATUS_CONFIG: Record<
-	PublicationStatus,
-	{
-		label: string;
-		tone: AlertActionTone;
-		icon: ComponentType<{ className?: string }>;
-		description: string;
-	}
-> = {
-	[PublicationStatus.DRAFT]: {
-		label: "Brouillon",
-		tone: "neutral",
-		icon: FileTextIcon,
-		description:
-			"La collection sera sauvegardee comme brouillon. Elle ne sera pas visible sur la boutique mais restera accessible dans le dashboard pour modifications.",
-	},
-	[PublicationStatus.PUBLIC]: {
-		label: "Public",
-		tone: "success",
-		icon: GlobeIcon,
-		description:
-			"La collection sera publiee sur la boutique et visible par tous les visiteurs. Assurez-vous que toutes les informations sont correctes.",
-	},
-	[PublicationStatus.ARCHIVED]: {
-		label: "Archivee",
-		tone: "warning",
-		icon: ArchiveIcon,
-		description:
-			"La collection sera archivee. Elle ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Vous pourrez la restaurer a tout moment.",
-	},
-};
-
+/**
+ * Schéma lean (lot 2) : le statut d'une collection est un booléen `active`
+ * (publiée / brouillon) — plus d'état « archivée ».
+ */
 export function ChangeCollectionStatusAlertDialog() {
 	const dialog = useAlertDialog<ChangeCollectionStatusData>(CHANGE_COLLECTION_STATUS_DIALOG_ID);
 	const { action } = useUpdateCollectionStatus();
 
-	const currentStatus = dialog.data?.currentStatus ?? PublicationStatus.DRAFT;
-	const targetStatus = dialog.data?.targetStatus ?? PublicationStatus.PUBLIC;
-	const config = STATUS_CONFIG[targetStatus];
-
-	// Determine if the change is significant (needs confirmation)
-	const isSignificantChange =
-		(currentStatus === PublicationStatus.PUBLIC && targetStatus !== PublicationStatus.PUBLIC) ||
-		(currentStatus !== PublicationStatus.PUBLIC && targetStatus === PublicationStatus.PUBLIC);
+	const targetActive = dialog.data?.targetActive ?? true;
 
 	return (
 		<ConfirmDialog
 			open={dialog.isOpen}
 			onClose={dialog.close}
 			action={action}
-			tone={config.tone}
-			fields={{ id: dialog.data?.collectionId, status: targetStatus }}
-			title={`Changer le statut en "${config.label}"`}
-			confirmLabel={`Changer en ${config.label}`}
+			tone={targetActive ? "success" : "neutral"}
+			fields={{ id: dialog.data?.collectionId, active: String(targetActive) }}
+			title={targetActive ? "Publier la collection ?" : "Repasser en brouillon ?"}
+			confirmLabel={targetActive ? "Publier" : "Mettre en brouillon"}
 			descriptionClassName="space-y-4"
 			description={
 				<>
 					<div>
-						Vous êtes sur le point de changer le statut de{" "}
-						<strong>&quot;{dialog.data?.collectionName}&quot;</strong> de{" "}
-						<span className="font-semibold">{STATUS_CONFIG[currentStatus].label}</span> vers{" "}
-						<span className="font-semibold">{config.label}</span>.
+						Tu es sur le point de {targetActive ? "publier" : "dépublier"}{" "}
+						<strong>&quot;{dialog.data?.collectionName}&quot;</strong>.
 					</div>
 
 					<div className="bg-muted rounded-md p-3">
-						<div className="text-sm">{config.description}</div>
-					</div>
-
-					{isSignificantChange && (
-						<div className="text-muted-foreground text-xs">
-							{targetStatus === PublicationStatus.PUBLIC
-								? "La collection deviendra visible par tous les visiteurs de la boutique."
-								: "La collection ne sera plus visible sur la boutique."}
+						<div className="text-sm">
+							{targetActive
+								? "La collection sera visible par tous les visiteurs de la boutique."
+								: "La collection ne sera plus visible sur la boutique mais restera accessible dans le dashboard."}
 						</div>
-					)}
+					</div>
 				</>
 			}
 		/>

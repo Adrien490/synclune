@@ -46,9 +46,9 @@ export async function CartSheetRecommendations() {
 			>
 				<div className="flex w-fit min-w-full gap-3 pb-1">
 					{recommendations.map((product) => {
-						const primarySku = product.skus[0];
-						const image = primarySku?.images[0];
-						const price = primarySku?.priceInclTax;
+						const primaryVariant = product.variants[0];
+						const image = product.media[0];
+						const price = primaryVariant?.priceCents ?? product.priceCents;
 						// Une video sans poster n'est pas decodable par l'optimiseur -> fallback texte
 						const thumbSrc = image ? resolveMediaThumbSrc(image) : null;
 
@@ -57,18 +57,17 @@ export async function CartSheetRecommendations() {
 								key={product.id}
 								href={`/creations/${product.slug}`}
 								className="focus-ring group/reco bg-card flex w-28 shrink-0 flex-col gap-1.5 rounded-md border border-transparent p-1.5 shadow-sm"
-								aria-label={`Voir ${product.title}${price != null ? ` — ${formatEuro(price)}` : ""}`}
+								aria-label={`Voir ${product.name} — ${formatEuro(price)}`}
 							>
 								<div className="bg-muted relative aspect-square w-full overflow-hidden rounded-sm">
 									{image && thumbSrc ? (
 										<Image
 											src={thumbSrc}
-											alt={image.altText ?? product.title}
+											alt={image.alt ?? product.name}
 											fill
 											sizes="112px"
 											quality={IMAGE_QUALITY.THUMBNAIL}
-											placeholder={image.blurDataUrl ? "blur" : "empty"}
-											blurDataURL={image.blurDataUrl ?? undefined}
+											placeholder="empty"
 											className="object-cover transition-transform duration-200 group-hover/reco:scale-105"
 										/>
 									) : (
@@ -81,14 +80,8 @@ export async function CartSheetRecommendations() {
 									)}
 								</div>
 								<div className="min-w-0">
-									<p className="text-foreground line-clamp-1 text-xs font-medium">
-										{product.title}
-									</p>
-									{price != null && (
-										<p className="text-muted-foreground text-xs tabular-nums">
-											{formatEuro(price)}
-										</p>
-									)}
+									<p className="text-foreground line-clamp-1 text-xs font-medium">{product.name}</p>
+									<p className="text-muted-foreground text-xs tabular-nums">{formatEuro(price)}</p>
 								</div>
 							</CartCloseLink>
 						);

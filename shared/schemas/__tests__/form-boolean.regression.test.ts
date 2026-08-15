@@ -44,7 +44,7 @@ describe("formBooleanSchema (regression)", () => {
 		expect(formBooleanSchema.safeParse(undefined).success).toBe(false);
 	});
 
-	it("absent → default via .default() (usage schémas produits/skus)", () => {
+	it("absent → default via .default() (usage schémas produits/variants)", () => {
 		const withDefault = formBooleanSchema.default(true);
 		expect(withDefault.parse(undefined)).toBe(true);
 		const withDefaultFalse = formBooleanSchema.default(false);

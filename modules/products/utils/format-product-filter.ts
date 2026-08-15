@@ -2,6 +2,7 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { slugify } from "@/shared/utils/generate-slug";
 import { type ReadonlyURLSearchParams } from "next/navigation";
 
 interface ProductTypeOption {
@@ -32,13 +33,13 @@ export function createProductFilterFormatter(
 	// Créer le mapping dynamique des couleurs
 	const colorMapping: Record<string, string> = {};
 	colors.forEach((color) => {
-		colorMapping[color.slug] = color.name;
+		colorMapping[slugify(color.name)] = color.name;
 	});
 
 	// Créer le mapping dynamique des matériaux
 	const materialMapping: Record<string, string> = {};
 	materials.forEach((material) => {
-		materialMapping[material.slug] = material.name;
+		materialMapping[slugify(material.name)] = material.name;
 	});
 
 	// Créer le mapping dynamique des types de produits

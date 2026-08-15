@@ -171,8 +171,8 @@ export const useAlertDialogStore = <T,>(selector: (store: AlertDialogStore) => T
  *
  * @example
  * // Dans un composant qui ouvre l'AlertDialog
- * const deleteDialog = useAlertDialog("delete-product-sku");
- * deleteDialog.open({ itemId: sku.id, itemName: sku.sku });
+ * const deleteDialog = useAlertDialog("delete-product-variant");
+ * deleteDialog.open({ itemId: variant.id, itemName: variant.variant });
  */
 export const useAlertDialog = <T extends AlertDialogData = AlertDialogData>(dialogId: string) => {
 	const isOpen = useAlertDialogStore((state) => state.isAlertDialogOpen(dialogId));

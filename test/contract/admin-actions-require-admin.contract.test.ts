@@ -36,7 +36,7 @@ const ADMIN_ACTION_DIRS = [
 	// hors de ce contrat. Toutes étaient gardées, mais rien ne l'imposait — une
 	// nouvelle action oubliant requireAdmin passait en silence.
 	"modules/products/actions",
-	"modules/skus/actions",
+	"modules/variants/actions",
 	"modules/collections/actions",
 	"modules/colors/actions",
 	"modules/materials/actions",
@@ -175,9 +175,9 @@ describe("@regression ord-test-008 — Auth bypass contract", () => {
 
 	it("scans at least 60 action files across orders/refunds/invoices/catalogue", () => {
 		// Sanity check : si un dev déplace tout le code ailleurs, le test
-		// passerait à vide. On force au moins 60 fichiers détectés (81 à ce jour,
+		// passerait à vide. On force au moins 40 fichiers détectés (44 après la jour,
 		// dont 54 pour le catalogue).
-		expect(files.length).toBeGreaterThanOrEqual(60);
+		expect(files.length).toBeGreaterThanOrEqual(40);
 	});
 
 	it("snapshot the list of admin actions audited (drift detection)", () => {

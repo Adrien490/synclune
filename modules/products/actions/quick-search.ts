@@ -2,9 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
-import { PRODUCT_SEARCH_LIMIT } from "@/shared/lib/rate-limit-config";
 
 import { quickSearchProducts, type QuickSearchResult } from "../data/quick-search-products";
 import { sanitizeForLog } from "../utils/search-helpers";
@@ -33,9 +31,6 @@ function bucketLatency(ms: number): "<100" | "<250" | "<500" | "<1000" | ">=1000
 export async function quickSearch(query: string): Promise<QuickSearchResult> {
 	const startTime = performance.now();
 	try {
-		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_SEARCH_LIMIT);
-		if ("error" in rateCheck) return { kind: "rate-limited" };
-
 		const parsed = quickSearchSchema.safeParse(query);
 		if (!parsed.success) {
 			return { kind: "success", products: [], suggestion: null, totalCount: 0 };

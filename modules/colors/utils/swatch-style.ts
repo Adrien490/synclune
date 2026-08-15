@@ -1,7 +1,7 @@
 /**
  * Helpers de rendu pour pastille couleur — mono, bi ou tricolore.
  *
- * Convention Synclune (multi-couleurs M2M `ProductSkuColor`, depuis 2026-05-15) :
+ * Convention Synclune (multi-couleurs M2M `ProductVariantColor`, depuis 2026-05-15) :
  * - 0 couleur  → fond muted (variante sans teinte renseignée)
  * - 1 couleur  → pastille pleine (mono-couleur, cas dominant)
  * - 2 couleurs → linear-gradient 135° mi-mi (bicolore : or rose + argent)

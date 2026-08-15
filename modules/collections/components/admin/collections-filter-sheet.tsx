@@ -1,6 +1,5 @@
 "use client";
 
-import { PublicationStatus } from "@/app/generated/prisma/browser";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
@@ -22,10 +21,9 @@ interface FilterFormData {
 	statuses: string[];
 }
 
-const STATUS_OPTIONS: ReadonlyArray<{ value: PublicationStatus; label: string }> = [
-	{ value: PublicationStatus.PUBLIC, label: "Publiées" },
-	{ value: PublicationStatus.DRAFT, label: "Brouillons" },
-	{ value: PublicationStatus.ARCHIVED, label: "Archivées" },
+const STATUS_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+	{ value: "true", label: "Publiées" },
+	{ value: "false", label: "Brouillons" },
 ];
 
 const VALID_STATUS_VALUES = new Set<string>(STATUS_OPTIONS.map((o) => o.value));
@@ -52,7 +50,7 @@ function CollectionsFilterSheetInner({
 		searchParams.forEach((value, key) => {
 			if (key === "filter_hasProducts") {
 				hasProducts = value === "true" ? "with" : "without";
-			} else if (key === "filter_status" && VALID_STATUS_VALUES.has(value)) {
+			} else if (key === "filter_active" && VALID_STATUS_VALUES.has(value)) {
 				statuses.push(value);
 			}
 		});
@@ -73,7 +71,7 @@ function CollectionsFilterSheetInner({
 	const applyFilters = (formData: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
 
-		const filterKeys = ["filter_hasProducts", "filter_status"];
+		const filterKeys = ["filter_hasProducts", "filter_active"];
 		filterKeys.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
@@ -84,7 +82,7 @@ function CollectionsFilterSheetInner({
 		}
 
 		// Add status filter (multi-select)
-		formData.statuses.forEach((s) => params.append("filter_status", s));
+		formData.statuses.forEach((s) => params.append("filter_active", s));
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });
@@ -98,7 +96,7 @@ function CollectionsFilterSheetInner({
 		});
 
 		const params = new URLSearchParams(searchParams.toString());
-		const filterKeys = ["filter_hasProducts", "filter_status"];
+		const filterKeys = ["filter_hasProducts", "filter_active"];
 		filterKeys.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");

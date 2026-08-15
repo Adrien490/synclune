@@ -37,21 +37,19 @@ export async function GET() {
 	// Construire le XML
 	const urlEntries = products
 		.map((product) => {
-			// Collecter toutes les images uniques du produit
+			// Collecter toutes les images uniques du produit (média produit, lean)
 			const imageUrls = new Set<string>();
 			const images: Array<{ url: string; alt: string }> = [];
 
-			for (const sku of product.skus) {
-				for (const image of sku.images) {
-					if (!imageUrls.has(image.url)) {
-						imageUrls.add(image.url);
-						images.push({
-							url: image.url,
-							alt:
-								image.altText ??
-								`${product.title} - ${product.type?.label ?? "Bijou artisanal"} fait main Synclune`,
-						});
-					}
+			for (const image of product.media) {
+				if (!imageUrls.has(image.url)) {
+					imageUrls.add(image.url);
+					images.push({
+						url: image.url,
+						alt:
+							image.alt ??
+							`${product.name} - ${product.type?.label ?? "Bijou artisanal"} fait main Synclune`,
+					});
 				}
 			}
 
@@ -66,7 +64,7 @@ export async function GET() {
       <image:image>
         <image:loc>${escapeXml(img.url)}</image:loc>
         <image:caption>${escapeXml(img.alt)}</image:caption>
-        <image:title>${escapeXml(product.title)}</image:title>
+        <image:title>${escapeXml(product.name)}</image:title>
       </image:image>`,
 				)
 				.join("");

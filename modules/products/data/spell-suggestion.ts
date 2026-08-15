@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 
-import { Prisma, type PublicationStatus } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { isPgTrgmAvailable } from "@/shared/lib/pg-trgm-availability";
 import { prisma } from "@/shared/lib/prisma";
@@ -44,8 +44,8 @@ type SpellSuggestion = {
 };
 
 type SuggestionOptions = {
-	/** Product status to consider */
-	status?: PublicationStatus;
+	/** Ne considérer que les produits actifs. */
+	activeOnly?: boolean;
 };
 
 type BatchResult = {
@@ -110,7 +110,7 @@ async function fetchSpellSuggestion(
 	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
-	const { status } = options;
+	const { activeOnly } = options;
 	const term = searchTerm.trim().toLowerCase();
 
 	// Validations
@@ -138,9 +138,7 @@ async function fetchSpellSuggestion(
 	const startTime = performance.now();
 
 	try {
-		const statusCondition = status
-			? Prisma.sql`AND p.status = ${status}::"PublicationStatus"`
-			: Prisma.empty;
+		const statusCondition = activeOnly ? Prisma.sql`AND p.active = true` : Prisma.empty;
 
 		// Build VALUES clause for all eligible words at once
 		const valuesFragments = eligibleWords.map((e) => Prisma.sql`(${e.word}, ${e.index})`);
@@ -158,17 +156,17 @@ async function fetchSpellSuggestion(
 				WITH vocabulary AS (
 					-- Individual words from product titles
 					SELECT DISTINCT
-						unnest(regexp_split_to_array(LOWER(p.title), '\s+')) as word,
+						unnest(regexp_split_to_array(LOWER(p.name), '\s+')) as word,
 						'product'::text as source
 					FROM "Product" p
-					WHERE p."deletedAt" IS NULL ${statusCondition}
+					WHERE TRUE ${statusCondition}
 
 					UNION
 
 					-- Collection names (as single words)
 					SELECT DISTINCT LOWER(c.name) as word, 'collection'::text as source
 					FROM "Collection" c
-					WHERE c.status = 'PUBLIC'
+					WHERE c.active = true
 
 					UNION
 

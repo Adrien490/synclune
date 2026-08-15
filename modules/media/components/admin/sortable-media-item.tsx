@@ -51,7 +51,7 @@ export interface SortableMediaItemProps {
 	/** Promote this item to first position (set as primary). Omitted when isPrimary or for videos. */
 	onSetAsPrimary?: () => void;
 	/** Update the media's alt text (description for SEO + screen readers). */
-	onUpdateAltText?: (altText: string) => void;
+	onUpdateAltText?: (alt: string) => void;
 	/**
 	 * Id du span d'instructions clavier rendu par la grille parente. Sans ce
 	 * binding, le KeyboardSensor pose son propre `aria-describedby` générique
@@ -116,7 +116,7 @@ export function SortableMediaItem({
 		transition: shouldReduceMotion ? null : { duration: 200, easing: "ease" },
 	});
 
-	const isVideo = media.mediaType === "VIDEO";
+	const isVideo = media.type === "VIDEO";
 	const [thumbnailError, setThumbnailError] = useState(false);
 	const showThumbnail = isVideo && media.thumbnailUrl && !thumbnailError;
 
@@ -341,7 +341,7 @@ export function SortableMediaItem({
 						{showThumbnail ? (
 							<Image
 								src={media.thumbnailUrl!}
-								alt={media.altText ?? `Miniature vidéo ${index + 1}`}
+								alt={media.alt ?? `Miniature vidéo ${index + 1}`}
 								fill
 								className={cn(
 									"object-cover",
@@ -411,7 +411,7 @@ export function SortableMediaItem({
 												e.currentTarget.currentTime = 0;
 											}
 								}
-								aria-label={media.altText ?? `Aperçu vidéo ${index + 1}`}
+								aria-label={media.alt ?? `Aperçu vidéo ${index + 1}`}
 							>
 								Ton navigateur ne peut pas lire cette vidéo.
 							</video>
@@ -443,7 +443,7 @@ export function SortableMediaItem({
 				) : (
 					<Image
 						src={media.url}
-						alt={media.altText ?? `Image ${index + 1}`}
+						alt={media.alt ?? `Image ${index + 1}`}
 						fill
 						className={cn(
 							"object-cover",
@@ -710,8 +710,8 @@ export function SortableMediaItem({
 				<EditAltTextDialog
 					open={editAltOpen}
 					onOpenChange={setEditAltOpen}
-					currentAltText={media.altText}
-					mediaType={media.mediaType}
+					currentAltText={media.alt}
+					type={media.type}
 					index={index}
 					onSave={onUpdateAltText}
 				/>

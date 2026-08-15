@@ -102,29 +102,29 @@ describe("generateUniqueReadableName", () => {
 describe("generateUniqueTechnicalName", () => {
 	it("should return success with 'CODE-COPY' when first candidate is free", async () => {
 		const checkExists = neverExists();
-		const result = await generateUniqueTechnicalName("SKU-001", checkExists);
+		const result = await generateUniqueTechnicalName("VARIANT-001", checkExists);
 		expect(result.success).toBe(true);
-		expect(result.name).toBe("SKU-001-COPY");
+		expect(result.name).toBe("VARIANT-001-COPY");
 	});
 
 	it("should check the '-COPY' variant first", async () => {
 		const checkExists = neverExists();
-		await generateUniqueTechnicalName("SKU-001", checkExists);
-		expect(checkExists).toHaveBeenCalledWith("SKU-001-COPY");
+		await generateUniqueTechnicalName("VARIANT-001", checkExists);
+		expect(checkExists).toHaveBeenCalledWith("VARIANT-001-COPY");
 	});
 
 	it("should fall back to '-COPY-2' when '-COPY' already exists", async () => {
 		const checkExists = makeCheckExists(1);
-		const result = await generateUniqueTechnicalName("SKU-001", checkExists);
+		const result = await generateUniqueTechnicalName("VARIANT-001", checkExists);
 		expect(result.success).toBe(true);
-		expect(result.name).toBe("SKU-001-COPY-2");
+		expect(result.name).toBe("VARIANT-001-COPY-2");
 	});
 
 	it("should fall back to '-COPY-3' when '-COPY' and '-COPY-2' exist", async () => {
 		const checkExists = makeCheckExists(2);
-		const result = await generateUniqueTechnicalName("SKU-001", checkExists);
+		const result = await generateUniqueTechnicalName("VARIANT-001", checkExists);
 		expect(result.success).toBe(true);
-		expect(result.name).toBe("SKU-001-COPY-3");
+		expect(result.name).toBe("VARIANT-001-COPY-3");
 	});
 
 	it("should return failure when all attempts exhausted (maxAttempts=2)", async () => {

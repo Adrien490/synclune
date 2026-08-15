@@ -9,6 +9,11 @@
 
 import type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.types";
 
+/** Prix effectif d'une variante : override, sinon prix du produit. */
+export function effectivePrice(item: CartItemForPriceCheck): number {
+	return item.variant.priceCents ?? item.variant.product.priceCents;
+}
+
 // ============================================================================
 // CART PRICING CALCULATOR SERVICE
 // Pure functions for detecting and calculating price changes
@@ -17,7 +22,7 @@ import type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.typ
 /**
  * Détecte tous les changements de prix dans les articles du panier
  *
- * Compare priceAtAdd (snapshot à l'ajout) vs sku.priceInclTax (prix actuel)
+ * Compare priceAtAdd (snapshot à l'ajout) vs variant.priceCents (prix actuel)
  *
  * @param items - Articles du panier
  * @returns Résultat détaillé des changements de prix
@@ -25,23 +30,23 @@ import type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.typ
 export function detectPriceChanges<T extends CartItemForPriceCheck>(
 	items: T[],
 ): PriceChangeResult<T> {
-	const itemsWithPriceChange = items.filter((item) => item.priceAtAdd !== item.sku.priceInclTax);
+	const itemsWithPriceChange = items.filter((item) => item.priceAtAdd !== effectivePrice(item));
 
 	const itemsWithPriceIncrease = itemsWithPriceChange.filter(
-		(item) => item.sku.priceInclTax > item.priceAtAdd,
+		(item) => effectivePrice(item) > item.priceAtAdd,
 	);
 
 	const itemsWithPriceDecrease = itemsWithPriceChange.filter(
-		(item) => item.sku.priceInclTax < item.priceAtAdd,
+		(item) => effectivePrice(item) < item.priceAtAdd,
 	);
 
 	const totalSavings = itemsWithPriceDecrease.reduce(
-		(sum, item) => sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity,
+		(sum, item) => sum + (item.priceAtAdd - effectivePrice(item)) * item.quantity,
 		0,
 	);
 
 	const totalIncrease = itemsWithPriceIncrease.reduce(
-		(sum, item) => sum + (item.sku.priceInclTax - item.priceAtAdd) * item.quantity,
+		(sum, item) => sum + (effectivePrice(item) - item.priceAtAdd) * item.quantity,
 		0,
 	);
 
@@ -61,7 +66,7 @@ export function detectPriceChanges<T extends CartItemForPriceCheck>(
  * @returns true si au moins un prix a changé
  */
 export function hasPriceChanges(items: CartItemForPriceCheck[]): boolean {
-	return items.some((item) => item.priceAtAdd !== item.sku.priceInclTax);
+	return items.some((item) => item.priceAtAdd !== effectivePrice(item));
 }
 
 /**
@@ -72,8 +77,8 @@ export function hasPriceChanges(items: CartItemForPriceCheck[]): boolean {
  */
 export function calculateTotalSavings(items: CartItemForPriceCheck[]): number {
 	return items
-		.filter((item) => item.sku.priceInclTax < item.priceAtAdd)
-		.reduce((sum, item) => sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity, 0);
+		.filter((item) => effectivePrice(item) < item.priceAtAdd)
+		.reduce((sum, item) => sum + (item.priceAtAdd - effectivePrice(item)) * item.quantity, 0);
 }
 
 /**
@@ -83,7 +88,7 @@ export function calculateTotalSavings(items: CartItemForPriceCheck[]): number {
  * @returns true si le prix a augmenté
  */
 export function isPriceIncrease(item: CartItemForPriceCheck): boolean {
-	return item.sku.priceInclTax > item.priceAtAdd;
+	return effectivePrice(item) > item.priceAtAdd;
 }
 
 /**
@@ -93,7 +98,7 @@ export function isPriceIncrease(item: CartItemForPriceCheck): boolean {
  * @returns true si le prix a baissé
  */
 export function isPriceDecrease(item: CartItemForPriceCheck): boolean {
-	return item.sku.priceInclTax < item.priceAtAdd;
+	return effectivePrice(item) < item.priceAtAdd;
 }
 
 /**
@@ -103,5 +108,5 @@ export function isPriceDecrease(item: CartItemForPriceCheck): boolean {
  * @returns Différence (positive si hausse, négative si baisse)
  */
 export function getPriceDifference(item: CartItemForPriceCheck): number {
-	return (item.sku.priceInclTax - item.priceAtAdd) * item.quantity;
+	return (effectivePrice(item) - item.priceAtAdd) * item.quantity;
 }

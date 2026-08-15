@@ -2,9 +2,7 @@
 
 import { z } from "zod";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
-import { PRODUCT_FILTER_COUNT_LIMIT } from "@/shared/lib/rate-limit-config";
 import { PRICE_LIMITS } from "@/shared/constants/validation-limits";
 
 import { countPublicProducts } from "../data/count-products";
@@ -59,9 +57,6 @@ export async function countFilteredProducts(input: unknown): Promise<CountFilter
 	try {
 		const parsed = countFilteredProductsSchema.safeParse(input);
 		if (!parsed.success) return { kind: "error" };
-
-		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_FILTER_COUNT_LIMIT);
-		if ("error" in rateCheck) return { kind: "rate-limited" };
 
 		const { maxPriceInEuros, search, lastChangedGroup, ...values } = parsed.data;
 		const defaultPriceRange: [number, number] = [0, maxPriceInEuros];

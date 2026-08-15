@@ -1,5 +1,4 @@
 import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
@@ -12,15 +11,6 @@ import {
 } from "../constants/collection.constants";
 
 // ============================================================================
-// STATUS SCHEMA
-// ============================================================================
-
-const collectionStatusSchema = z
-	.enum([PublicationStatus.PUBLIC, PublicationStatus.DRAFT, PublicationStatus.ARCHIVED])
-	.optional()
-	.default(PublicationStatus.DRAFT);
-
-// ============================================================================
 // FILTERS SCHEMA
 // ============================================================================
 
@@ -28,7 +18,8 @@ export const collectionFiltersSchema = z.object({
 	// SSOT `formBooleanSchema` (cf. order.schemas.ts) — même ré-implémentation,
 	// même sur-ensemble de valeurs acceptées.
 	hasProducts: formBooleanSchema.optional(),
-	status: z.union([z.enum(PublicationStatus), z.array(z.enum(PublicationStatus))]).optional(),
+	// Schéma lean : statut booléen (publiée / brouillon).
+	active: formBooleanSchema.optional(),
 });
 
 // ============================================================================
@@ -86,26 +77,21 @@ const collectionDescriptionSchema = z
 export const createCollectionSchema = z.object({
 	name: collectionNameSchema,
 	description: collectionDescriptionSchema,
-	status: collectionStatusSchema,
+	active: formBooleanSchema.optional().default(false),
 });
 
 export const updateCollectionSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: collectionNameSchema,
 	description: collectionDescriptionSchema,
-	status: z.enum(PublicationStatus),
+	active: formBooleanSchema,
 });
 
 export const updateCollectionStatusSchema = z.object({
 	id: z.cuid2("ID invalide"),
-	status: z.enum(PublicationStatus),
+	active: formBooleanSchema,
 });
 
 export const deleteCollectionSchema = z.object({
 	id: z.cuid2("ID invalide"),
-});
-
-export const setFeaturedProductSchema = z.object({
-	collectionId: z.cuid2("ID de collection invalide"),
-	productId: z.cuid2("ID de produit invalide"),
 });

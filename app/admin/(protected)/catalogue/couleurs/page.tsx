@@ -59,11 +59,8 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 	) as keyof typeof SORT_LABELS;
 	const search = searchParamParsers.search(params.search);
 
-	// Parse filters from search params
-	const filterIsActive = getFirstParam(params.filter_isActive);
-	const filters: { isActive?: boolean } = {};
-	if (filterIsActive === "true") filters.isActive = true;
-	else if (filterIsActive === "false") filters.isActive = false;
+	// Schéma lean : plus de filtre de statut sur Color
+	const filters = {};
 
 	// La promise de couleurs n'est PAS awaitée pour permettre le streaming
 	const colorsPromise = getColors({

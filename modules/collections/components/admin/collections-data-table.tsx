@@ -1,4 +1,3 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { Badge } from "@/shared/components/ui/badge";
 import {
@@ -10,31 +9,10 @@ import {
 } from "@/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import {
-	ArchiveIcon,
-	FolderOpenIcon,
-	GlobeIcon,
-	NotePencilIcon,
-	WarningIcon,
-} from "@phosphor-icons/react/ssr";
-import type { Icon } from "@phosphor-icons/react";
+import { FolderOpenIcon, GlobeIcon, NotePencilIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CreateCollectionButton } from "./create-collection-button";
-
-// Labels, icônes et styles pour les badges de statut
-const STATUS_CONFIG: Record<
-	PublicationStatus,
-	{
-		label: string;
-		variant: "default" | "secondary" | "destructive" | "outline";
-		Icon: Icon;
-	}
-> = {
-	[PublicationStatus.PUBLIC]: { label: "Public", variant: "default", Icon: GlobeIcon },
-	[PublicationStatus.DRAFT]: { label: "Brouillon", variant: "secondary", Icon: NotePencilIcon },
-	[PublicationStatus.ARCHIVED]: { label: "Archivé", variant: "outline", Icon: ArchiveIcon },
-};
 
 // Helper pour tronquer la description
 const truncateDescription = (description: string | null, maxLength = 100) => {
@@ -118,17 +96,20 @@ export async function CollectionsDataTable({
 							</TableCell>
 							<TableCell>
 								<div className="flex items-center gap-2">
-									{(() => {
-										const { label, variant, Icon } = STATUS_CONFIG[collection.status];
-										return (
-											<Badge variant={variant} role="status" aria-label={`Statut : ${label}`}>
-												<Icon aria-hidden="true" />
-												{label}
-											</Badge>
-										);
-									})()}
-									{/* Warning si PUBLIC mais aucun produit visible */}
-									{collection.status === PublicationStatus.PUBLIC && productsCount === 0 && (
+									<Badge
+										variant={collection.active ? "default" : "secondary"}
+										role="status"
+										aria-label={`Statut : ${collection.active ? "Publiée" : "Brouillon"}`}
+									>
+										{collection.active ? (
+											<GlobeIcon aria-hidden="true" />
+										) : (
+											<NotePencilIcon aria-hidden="true" />
+										)}
+										{collection.active ? "Publiée" : "Brouillon"}
+									</Badge>
+									{/* Warning si publiée mais aucun produit visible */}
+									{collection.active && productsCount === 0 && (
 										<Tooltip>
 											<TooltipTrigger render={<span className="text-amber-500" />}>
 												<WarningIcon className="size-4" />
@@ -160,7 +141,7 @@ export async function CollectionsDataTable({
 										collectionName={collection.name}
 										collectionSlug={collection.slug}
 										collectionDescription={collection.description}
-										collectionStatus={collection.status}
+										collectionActive={collection.active}
 										productsCount={productsCount}
 									/>
 								</div>

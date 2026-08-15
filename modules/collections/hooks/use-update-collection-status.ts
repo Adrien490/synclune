@@ -4,7 +4,6 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useTransition } from "react";
 import { updateCollectionStatus } from "@/modules/collections/actions/update-collection-status";
-import type { PublicationStatus } from "@/app/generated/prisma/enums";
 
 interface UseUpdateCollectionStatusOptions {
 	onSuccess?: (message: string) => void;
@@ -36,11 +35,11 @@ export const useUpdateCollectionStatus = (options?: UseUpdateCollectionStatusOpt
 		undefined,
 	);
 
-	const updateStatus = (collectionId: string, targetStatus: PublicationStatus) => {
+	const updateStatus = (collectionId: string, targetActive: boolean) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("id", collectionId);
-			formData.append("status", targetStatus);
+			formData.append("active", String(targetActive));
 			action(formData);
 		});
 	};

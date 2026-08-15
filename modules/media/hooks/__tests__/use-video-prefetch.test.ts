@@ -11,7 +11,7 @@ function makeImageMedia(id: string): ProductMedia {
 		id,
 		url: `https://cdn.example.com/image-${id}.jpg`,
 		alt: `Image ${id}`,
-		mediaType: "IMAGE",
+		type: "IMAGE",
 	};
 }
 
@@ -20,7 +20,7 @@ function makeVideoMedia(id: string, url?: string): ProductMedia {
 		id,
 		url: url ?? `https://cdn.example.com/video-${id}.mp4`,
 		alt: `Video ${id}`,
-		mediaType: "VIDEO",
+		type: "VIDEO",
 	};
 }
 

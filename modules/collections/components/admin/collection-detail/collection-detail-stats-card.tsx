@@ -2,7 +2,6 @@ import { ChartBarIcon, StarIcon } from "@phosphor-icons/react/ssr";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 
-import { PublicationStatus } from "@/app/generated/prisma/enums";
 import type { GetCollectionReturn } from "@/modules/collections/types/collection.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 
@@ -12,17 +11,14 @@ interface CollectionDetailStatsCardProps {
 
 export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsCardProps) {
 	const products = collection.products;
-	// _count.products is filtered to PUBLIC + reflects the real total even when
-	// the products array is capped (GET_COLLECTION_PRODUCTS_LIMIT).
+	// _count.products reflète le vrai total même quand le tableau est plafonné
+	// (GET_COLLECTION_PRODUCTS_LIMIT).
 	const total = collection._count.products;
-	const publicCount = products.filter(
-		(pc) => pc.product.status === PublicationStatus.PUBLIC,
-	).length;
-	// La vedette est le rang 0 de la liste pre-triee (position asc, addedAt desc) ;
-	// son image principale est la premiere IMAGE de l'ordre (position, id) — le
-	// select ne remonte que des mediaType: IMAGE, deja tries.
+	const publicCount = products.filter((product) => product.active).length;
+	// Schéma lean : plus de vedette éditoriale — le premier produit (le plus
+	// récent) sert de visuel représentatif.
 	const featured = products[0];
-	const featuredImage = featured?.product.skus[0]?.images[0] ?? null;
+	const featuredImage = featured?.media[0] ?? null;
 
 	return (
 		<Card>
@@ -46,22 +42,19 @@ export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsC
 
 				<div className="space-y-2 border-t pt-4">
 					<h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-						Produit vedette
+						Visuel représentatif
 					</h3>
 					{featured ? (
 						<div className="flex items-center gap-3">
 							{featuredImage ? (
 								<Image
 									src={featuredImage.url}
-									alt={featuredImage.altText ?? featured.product.title}
+									alt={featuredImage.alt ?? featured.name}
 									width={48}
 									height={48}
 									sizes="48px"
 									quality={IMAGE_QUALITY.THUMBNAIL}
 									className="size-12 shrink-0 rounded-md border object-cover"
-									{...(featuredImage.blurDataUrl
-										? { placeholder: "blur" as const, blurDataURL: featuredImage.blurDataUrl }
-										: {})}
 								/>
 							) : (
 								<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
@@ -69,10 +62,8 @@ export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsC
 								</div>
 							)}
 							<div className="min-w-0">
-								<p className="text-foreground truncate text-sm font-medium">
-									{featured.product.title}
-								</p>
-								<p className="text-muted-foreground text-xs">Mis en avant</p>
+								<p className="text-foreground truncate text-sm font-medium">{featured.name}</p>
+								<p className="text-muted-foreground text-xs">Produit le plus récent</p>
 							</div>
 						</div>
 					) : (

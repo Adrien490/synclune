@@ -91,7 +91,7 @@ export function AutocompleteListContent<T>({
 						key={getItemKey?.(item) ?? `${getItemLabel(item)}-${index}`}
 						item={item}
 						index={index}
-						isActive={index === activeIndex}
+						active={index === activeIndex}
 						itemCount={items.length}
 						getItemLabel={getItemLabel}
 						getItemDescription={getItemDescription}
@@ -249,7 +249,7 @@ function AutocompleteErrorState({
 interface AutocompleteItemProps<T> {
 	item: T;
 	index: number;
-	isActive: boolean;
+	active: boolean;
 	itemCount: number;
 	getItemLabel: (item: T) => string;
 	getItemDescription?: (item: T) => string | null;
@@ -267,7 +267,7 @@ interface AutocompleteItemProps<T> {
 function AutocompleteItem<T>({
 	item,
 	index,
-	isActive,
+	active,
 	itemCount,
 	getItemLabel,
 	getItemDescription,
@@ -283,12 +283,12 @@ function AutocompleteItem<T>({
 		<m.li
 			id={getItemId(index)}
 			role="option"
-			aria-selected={isActive}
+			aria-selected={active}
 			aria-posinset={index + 1}
 			aria-setsize={itemCount}
 			className={cn(
 				"min-h-11 cursor-pointer touch-manipulation p-3 transition-colors duration-150 select-none [-webkit-tap-highlight-color:transparent] md:min-h-0 md:py-2",
-				isActive ? "bg-accent" : "hover:bg-muted active:bg-accent",
+				active ? "bg-accent" : "hover:bg-muted active:bg-accent",
 			)}
 			onClick={() => onSelect(item)}
 			onPointerEnter={(e) => {

@@ -70,9 +70,7 @@ export async function generateMetadata({
 	const shouldNoindex = hasAdditionalFilters || isPaginated || isEmpty;
 
 	const title = `${productType.label} artisanaux faits main | Synclune`;
-	const description =
-		productType.description ??
-		`Découvrez mes ${productType.label.toLowerCase()} colorés créés à la main dans mon atelier. Pièces uniques et originales !`;
+	const description = `Découvrez mes ${productType.label.toLowerCase()} colorés créés à la main dans mon atelier. Pièces uniques et originales !`;
 
 	return {
 		title,

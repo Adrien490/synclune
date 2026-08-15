@@ -14,9 +14,7 @@ import { useColorActions } from "../hooks/use-color-actions";
 interface ColorsRowActionsProps {
 	colorId: string;
 	colorName: string;
-	colorHex: string;
-	colorSlug: string;
-	colorDescription?: string | null;
+	colorHex: string | null;
 }
 
 export function ColorsRowActions(props: ColorsRowActionsProps) {

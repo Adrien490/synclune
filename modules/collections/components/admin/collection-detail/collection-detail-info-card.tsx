@@ -1,7 +1,6 @@
 import { InfoIcon } from "@phosphor-icons/react/ssr";
 
-import { PublicationStatus } from "@/app/generated/prisma/enums";
-import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
+import { collectionStatusLabel } from "@/modules/collections/constants/collection-status.constants";
 import type { GetCollectionReturn } from "@/modules/collections/types/collection.types";
 import { CopyButton } from "@/shared/components/copy-button";
 import { DescriptionCollapse } from "@/shared/components/description-collapse";
@@ -11,12 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 interface CollectionDetailInfoCardProps {
 	collection: GetCollectionReturn;
 }
-
-const STATUS_VARIANTS: Record<PublicationStatus, "default" | "secondary" | "outline"> = {
-	[PublicationStatus.PUBLIC]: "default",
-	[PublicationStatus.DRAFT]: "secondary",
-	[PublicationStatus.ARCHIVED]: "outline",
-};
 
 export function CollectionDetailInfoCard({ collection }: CollectionDetailInfoCardProps) {
 	return (
@@ -33,10 +26,10 @@ export function CollectionDetailInfoCard({ collection }: CollectionDetailInfoCar
 						<dt className="text-muted-foreground">Statut</dt>
 						<dd>
 							<Badge
-								variant={STATUS_VARIANTS[collection.status]}
+								variant={collection.active ? "default" : "secondary"}
 								style={{ viewTransitionName: `collection-status-${collection.id}` }}
 							>
-								{COLLECTION_STATUS_LABELS[collection.status]}
+								{collectionStatusLabel(collection.active)}
 							</Badge>
 						</dd>
 					</div>

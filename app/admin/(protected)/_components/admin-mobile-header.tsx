@@ -16,7 +16,7 @@ const DETAIL_ROUTE_PATTERNS = [
 	// produit, elle a donc besoin du retour. Elle portait à la place deux affordances
 	// dans le corps de page (carte de contexte + flèche), désormais retirées.
 	/^\/admin\/catalogue\/produits\/[^/]+\/variantes$/,
-	// Catalogue — SKU variantes (detail + edit + create + inline forms stock/prix)
+	// Catalogue — VARIANT variantes (detail + edit + create + inline forms stock/prix)
 	/^\/admin\/catalogue\/produits\/[^/]+\/variantes\/(nouveau|[^/]+(\/(modifier|stock|prix))?)$/,
 	// Marketing — discounts (edit + create)
 	/^\/admin\/marketing\/discounts\/(nouveau|[^/]+\/modifier)$/,

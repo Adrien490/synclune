@@ -14,7 +14,7 @@ vi.mock("@/modules/cart/hooks/use-add-to-cart", () => ({
 }));
 
 // Mock useVariantValidation hook
-vi.mock("@/modules/skus/hooks/use-sku-validation", () => ({
+vi.mock("@/modules/variants/hooks/use-variant-validation", () => ({
 	useVariantValidation: mockUseVariantValidation,
 }));
 
@@ -66,7 +66,7 @@ vi.mock("@phosphor-icons/react/ssr", () => ({
 }));
 
 import { AddToCartForm } from "../add-to-cart-form";
-import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import type { GetProductReturn, ProductVariant } from "@/modules/products/types/product.types";
 
 afterEach(cleanup);
 
@@ -83,24 +83,24 @@ function createProduct(overrides: Partial<GetProductReturn> = {}): GetProductRet
 		id: "prod-1",
 		slug: "bague-lune",
 		title: "Bague Lune",
-		skus: [],
+		variants: [],
 		type: null,
 		...overrides,
 	} as unknown as GetProductReturn;
 }
 
-function createSku(overrides: Partial<ProductSku> = {}): ProductSku {
+function createVariant(overrides: Partial<ProductVariant> = {}): ProductVariant {
 	return {
-		id: "sku-1",
-		inventory: 5,
-		isActive: true,
-		priceInclTax: 4800,
+		id: "variant-1",
+		stock: 5,
+		active: true,
+		priceCents: 4800,
 		compareAtPrice: null,
 		color: null,
 		material: null,
 		size: null,
 		...overrides,
-	} as unknown as ProductSku;
+	} as unknown as ProductVariant;
 }
 
 function setupDefaultMocks() {
@@ -122,67 +122,67 @@ function setupDefaultMocks() {
 // ─── Tests ─────────────────────────────────────────────────────────────────
 
 describe("AddToCartForm", () => {
-	describe("when a valid SKU is selected and available", () => {
+	describe("when a valid VARIANT is selected and available", () => {
 		it("renders 'Ajouter au panier' button", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku()] });
-			const selectedSku = createSku();
+			const product = createProduct({ variants: [createVariant()] });
+			const selectedVariant = createVariant();
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			expect(screen.getByText("Ajouter au panier")).toBeInTheDocument();
 		});
 
 		it("renders an enabled submit button", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku()] });
-			const selectedSku = createSku();
+			const product = createProduct({ variants: [createVariant()] });
+			const selectedVariant = createVariant();
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			const button = screen.getByRole("button");
 			expect(button).not.toBeDisabled();
 		});
 
-		it("renders hidden skuId and quantity inputs", () => {
+		it("renders hidden variantId and quantity inputs", () => {
 			setupDefaultMocks();
-			const sku = createSku({ id: "sku-abc" });
-			const product = createProduct({ skus: [sku] });
+			const variant = createVariant({ id: "variant-abc" });
+			const product = createProduct({ variants: [variant] });
 
-			const { container } = render(<AddToCartForm product={product} selectedSku={sku} />);
+			const { container } = render(<AddToCartForm product={product} selectedVariant={variant} />);
 
-			const skuInput = container.querySelector('input[name="skuId"]') as HTMLInputElement;
+			const variantInput = container.querySelector('input[name="variantId"]') as HTMLInputElement;
 			const quantityInput = container.querySelector('input[name="quantity"]') as HTMLInputElement;
 
-			expect(skuInput).not.toBeNull();
-			expect(skuInput.value).toBe("sku-abc");
+			expect(variantInput).not.toBeNull();
+			expect(variantInput.value).toBe("variant-abc");
 			expect(quantityInput).not.toBeNull();
 			expect(quantityInput.value).toBe("1");
 		});
 	});
 
-	describe("when no SKU is selected (single-SKU product)", () => {
-		it("renders 'Pièce non disponible' for a product with only one SKU", () => {
+	describe("when no VARIANT is selected (single-VARIANT product)", () => {
+		it("renders 'Pièce non disponible' for a product with only one VARIANT", () => {
 			setupDefaultMocks();
-			// Single SKU product with no selection
-			const product = createProduct({ skus: [createSku()] });
+			// Single VARIANT product with no selection
+			const product = createProduct({ variants: [createVariant()] });
 
-			render(<AddToCartForm product={product} selectedSku={null} />);
+			render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			expect(screen.getByText("Pièce non disponible")).toBeInTheDocument();
 		});
 
-		it("renders disabled button when selectedSku is null", () => {
+		it("renders disabled button when selectedVariant is null", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku()] });
+			const product = createProduct({ variants: [createVariant()] });
 
-			render(<AddToCartForm product={product} selectedSku={null} />);
+			render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			expect(screen.getByRole("button")).toBeDisabled();
 		});
 	});
 
-	describe("when no SKU is selected (multi-variant product)", () => {
+	describe("when no VARIANT is selected (multi-variant product)", () => {
 		it("shows 'Choisis la couleur' when color is required and not selected", () => {
 			mockUseAddToCart.mockReturnValue({ action: vi.fn(), isPending: false, state: undefined });
 			mockUseVariantValidation.mockReturnValue({
@@ -194,9 +194,11 @@ describe("AddToCartForm", () => {
 			});
 			mockSearchParams.mockReturnValue(createSearchParams({ color: null }));
 
-			const product = createProduct({ skus: [createSku(), createSku({ id: "sku-2" })] });
+			const product = createProduct({
+				variants: [createVariant(), createVariant({ id: "variant-2" })],
+			});
 
-			render(<AddToCartForm product={product} selectedSku={null} />);
+			render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			expect(screen.getByText("Choisis la couleur")).toBeInTheDocument();
 		});
@@ -212,9 +214,11 @@ describe("AddToCartForm", () => {
 			});
 			mockSearchParams.mockReturnValue(createSearchParams({ material: null }));
 
-			const product = createProduct({ skus: [createSku(), createSku({ id: "sku-2" })] });
+			const product = createProduct({
+				variants: [createVariant(), createVariant({ id: "variant-2" })],
+			});
 
-			render(<AddToCartForm product={product} selectedSku={null} />);
+			render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			expect(screen.getByText("Choisis le matériau")).toBeInTheDocument();
 		});
@@ -230,41 +234,43 @@ describe("AddToCartForm", () => {
 			});
 			mockSearchParams.mockReturnValue(createSearchParams({ color: null, size: null }));
 
-			const product = createProduct({ skus: [createSku(), createSku({ id: "sku-2" })] });
+			const product = createProduct({
+				variants: [createVariant(), createVariant({ id: "variant-2" })],
+			});
 
-			render(<AddToCartForm product={product} selectedSku={null} />);
+			render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			expect(screen.getByText("Choisis la couleur et la taille")).toBeInTheDocument();
 		});
 	});
 
-	describe("when SKU is selected but unavailable", () => {
-		it("renders 'Indisponible' when inventory is 0", () => {
+	describe("when VARIANT is selected but unavailable", () => {
+		it("renders 'Indisponible' when stock is 0", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku({ inventory: 0 })] });
-			const selectedSku = createSku({ inventory: 0 });
+			const product = createProduct({ variants: [createVariant({ stock: 0 })] });
+			const selectedVariant = createVariant({ stock: 0 });
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			expect(screen.getByText("Indisponible")).toBeInTheDocument();
 		});
 
-		it("renders 'Indisponible' when SKU is inactive", () => {
+		it("renders 'Indisponible' when VARIANT is inactive", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku({ isActive: false })] });
-			const selectedSku = createSku({ isActive: false });
+			const product = createProduct({ variants: [createVariant({ active: false })] });
+			const selectedVariant = createVariant({ active: false });
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			expect(screen.getByText("Indisponible")).toBeInTheDocument();
 		});
 
-		it("renders a disabled button when SKU is unavailable", () => {
+		it("renders a disabled button when VARIANT is unavailable", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku({ inventory: 0 })] });
-			const selectedSku = createSku({ inventory: 0 });
+			const product = createProduct({ variants: [createVariant({ stock: 0 })] });
+			const selectedVariant = createVariant({ stock: 0 });
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			expect(screen.getByRole("button")).toBeDisabled();
 		});
@@ -286,10 +292,10 @@ describe("AddToCartForm", () => {
 			});
 			mockSearchParams.mockReturnValue(createSearchParams());
 
-			const product = createProduct({ skus: [createSku()] });
-			const selectedSku = createSku();
+			const product = createProduct({ variants: [createVariant()] });
+			const selectedVariant = createVariant();
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			expect(screen.getByTestId("loader-icon")).toBeInTheDocument();
 			expect(screen.getByText("Ajout en cours…")).toBeInTheDocument();
@@ -310,10 +316,10 @@ describe("AddToCartForm", () => {
 			});
 			mockSearchParams.mockReturnValue(createSearchParams());
 
-			const product = createProduct({ skus: [createSku()] });
-			const selectedSku = createSku();
+			const product = createProduct({ variants: [createVariant()] });
+			const selectedVariant = createVariant();
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			expect(screen.getByRole("button")).toBeDisabled();
 		});
@@ -322,9 +328,9 @@ describe("AddToCartForm", () => {
 	describe("form accessibility", () => {
 		it("renders a form with the correct id", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku()] });
+			const product = createProduct({ variants: [createVariant()] });
 
-			const { container } = render(<AddToCartForm product={product} selectedSku={null} />);
+			const { container } = render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			const form = container.querySelector("form#add-to-cart-form");
 			expect(form).not.toBeNull();
@@ -332,9 +338,9 @@ describe("AddToCartForm", () => {
 
 		it("sets aria-label on the form", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku()] });
+			const product = createProduct({ variants: [createVariant()] });
 
-			const { container } = render(<AddToCartForm product={product} selectedSku={null} />);
+			const { container } = render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			const form = container.querySelector("form");
 			expect(form?.getAttribute("aria-label")).toBe("Formulaire d'ajout au panier");
@@ -342,9 +348,9 @@ describe("AddToCartForm", () => {
 
 		it("sets aria-busy to false when not pending", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku()] });
+			const product = createProduct({ variants: [createVariant()] });
 
-			const { container } = render(<AddToCartForm product={product} selectedSku={null} />);
+			const { container } = render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			const form = container.querySelector("form");
 			expect(form?.getAttribute("aria-busy")).toBe("false");
@@ -365,9 +371,9 @@ describe("AddToCartForm", () => {
 			});
 			mockSearchParams.mockReturnValue(createSearchParams());
 
-			const product = createProduct({ skus: [createSku()] });
+			const product = createProduct({ variants: [createVariant()] });
 
-			const { container } = render(<AddToCartForm product={product} selectedSku={null} />);
+			const { container } = render(<AddToCartForm product={product} selectedVariant={null} />);
 
 			const form = container.querySelector("form");
 			expect(form?.getAttribute("aria-busy")).toBe("true");
@@ -393,10 +399,10 @@ describe("AddToCartForm", () => {
 
 		it("renders the inline error message with role=alert and stable id", () => {
 			setupErrorState("Stock insuffisant");
-			const product = createProduct({ skus: [createSku()] });
-			const selectedSku = createSku();
+			const product = createProduct({ variants: [createVariant()] });
+			const selectedVariant = createVariant();
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			const alert = screen.getByRole("alert");
 			expect(alert).toHaveTextContent("Stock insuffisant");
@@ -405,10 +411,10 @@ describe("AddToCartForm", () => {
 
 		it("links the submit button to the error via aria-invalid + aria-describedby", () => {
 			setupErrorState();
-			const product = createProduct({ skus: [createSku()] });
-			const selectedSku = createSku();
+			const product = createProduct({ variants: [createVariant()] });
+			const selectedVariant = createVariant();
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			const button = screen.getByRole("button");
 			expect(button).toHaveAttribute("aria-invalid", "true");
@@ -417,10 +423,10 @@ describe("AddToCartForm", () => {
 
 		it("omits aria-invalid and aria-describedby on the submit button when no error", () => {
 			setupDefaultMocks();
-			const product = createProduct({ skus: [createSku()] });
-			const selectedSku = createSku();
+			const product = createProduct({ variants: [createVariant()] });
+			const selectedVariant = createVariant();
 
-			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+			render(<AddToCartForm product={product} selectedVariant={selectedVariant} />);
 
 			const button = screen.getByRole("button");
 			expect(button).not.toHaveAttribute("aria-invalid");

@@ -1,13 +1,6 @@
 "use client";
 
-import {
-	ArrowSquareOutIcon,
-	CopyIcon,
-	NotePencilIcon,
-	ToggleLeftIcon,
-	ToggleRightIcon,
-	TrashIcon,
-} from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon, CopyIcon, NotePencilIcon, TrashIcon } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -24,23 +17,15 @@ import { DELETE_MATERIAL_DIALOG_ID } from "../components/admin/delete-material-a
 import { MATERIAL_DIALOG_ID } from "../components/material-form-dialog";
 
 import { useDuplicateMaterial } from "./use-duplicate-material";
-import { useToggleMaterialStatus } from "./use-toggle-material-status";
 
 interface UseMaterialActionsParams {
 	materialId: string;
 	materialName: string;
-	materialSlug: string;
-	materialDescription: string | null;
-	materialIsActive: boolean;
 }
 
-export function useMaterialActions({
-	materialId,
-	materialName,
-	materialSlug,
-	materialDescription,
-	materialIsActive,
-}: UseMaterialActionsParams): { sections: ActionMenuSection[] } {
+export function useMaterialActions({ materialId, materialName }: UseMaterialActionsParams): {
+	sections: ActionMenuSection[];
+} {
 	const { open: openDialog } = useDialog(MATERIAL_DIALOG_ID);
 	// Typé contre le payload du dialog mutualisé : les clés historiques
 	// (`materialId`/`materialName`) rendaient le champ caché vide et la
@@ -58,14 +43,11 @@ export function useMaterialActions({
 				action: {
 					label: "Voir le matériau",
 					onClick: () =>
-						withViewTransition(() =>
-							router.push(`/admin/catalogue/materiaux/${data.slug}/modifier`),
-						),
+						withViewTransition(() => router.push(`/admin/catalogue/materiaux/${data.id}/modifier`)),
 				},
 			});
 		},
 	});
-	const { toggleStatus, isPending: isToggling } = useToggleMaterialStatus();
 
 	const sections: ActionMenuSection[] = [
 		{
@@ -77,15 +59,12 @@ export function useMaterialActions({
 					icon: NotePencilIcon,
 					onSelect: () => {
 						if (isMobile) {
-							router.push(`/admin/catalogue/materiaux/${materialSlug}/modifier`);
+							router.push(`/admin/catalogue/materiaux/${materialId}/modifier`);
 						} else {
 							openDialog({
 								material: {
 									id: materialId,
 									name: materialName,
-									slug: materialSlug,
-									description: materialDescription,
-									isActive: materialIsActive,
 								},
 							});
 						}
@@ -103,13 +82,6 @@ export function useMaterialActions({
 					label: "Voir les variantes",
 					icon: ArrowSquareOutIcon,
 					href: `/admin/catalogue/inventaire?materialId=${materialId}`,
-				},
-				{
-					key: "toggle",
-					label: materialIsActive ? "Désactiver" : "Activer",
-					icon: materialIsActive ? ToggleLeftIcon : ToggleRightIcon,
-					disabled: isToggling,
-					onSelect: () => toggleStatus(materialId, !materialIsActive),
 				},
 			],
 		},

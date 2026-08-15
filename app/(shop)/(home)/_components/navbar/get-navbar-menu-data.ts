@@ -1,4 +1,3 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypesForMenu } from "@/modules/product-types/data/get-product-types-for-menu";
 
@@ -32,7 +31,7 @@ export async function getNavbarMenuData() {
 			{
 				perPage: 3,
 				sortBy: "products-descending",
-				filters: { hasProducts: true, status: PublicationStatus.PUBLIC },
+				filters: { hasProducts: true, active: true },
 			},
 			{ isAdmin: false },
 		),

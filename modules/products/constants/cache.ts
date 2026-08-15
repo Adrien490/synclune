@@ -9,7 +9,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 // ============================================
 // CACHE PROFILES (definis dans next.config.ts)
 // ============================================
-// - catalog:   stale=15min, revalidate=5min, expire=6h  (produits, SKUs, related)
+// - catalog:   stale=15min, revalidate=5min, expire=6h  (produits, VARIANTs, related)
 // - checkout:  stale=1min, revalidate=30s, expire=5min  (stock, panier, confirmation)
 // - user:      stale=2min, revalidate=1min, expire=10min (dashboard admin, donnees user)
 // - reference: stale=7j, revalidate=24h, expire=30j     (prix max, donnees stables)
@@ -38,10 +38,10 @@ export const PRODUCTS_CACHE_TAGS = {
 	DETAIL_BY_ID: (productId: string) => `product-id-${productId}`,
 
 	/**
-	 * SKUs d'un produit — posé par `modules/skus/data/fetch-skus.ts` quand la liste
+	 * VARIANTs d'un produit — posé par `modules/variants/data/fetch-variants.ts` quand la liste
 	 * est filtrée sur un produit.
 	 */
-	SKUS: (productId: string) => `product-${productId}-skus`,
+	VARIANTS: (productId: string) => `product-${productId}-variants`,
 
 	/** Collections d'un produit (invalidé lors d'updateProductCollections / create / update) */
 	COLLECTIONS: (productId: string) => `product-${productId}-collections`,
@@ -52,19 +52,19 @@ export const PRODUCTS_CACHE_TAGS = {
 	/** Compteurs de produits par statut (dashboard) */
 	COUNTS: "product-counts",
 
-	/** Liste globale des SKUs */
-	SKUS_LIST: "skus-list",
+	/** Liste globale des VARIANTs */
+	VARIANTS_LIST: "variants-list",
 
-	// `SKU_DETAIL: (sku) => \`sku-${sku}\`` a été RETIRÉ (audit cache catalogue
-	// 2026-07-31) : invalidé inconditionnellement par `getSkuInvalidationTags`, posé
-	// par aucun lecteur. Aucun chemin ne lit un SKU par son code — l'édition admin
+	// `VARIANT_DETAIL: (variant) => \`variant-${variant}\`` a été RETIRÉ (audit cache catalogue
+	// 2026-07-31) : invalidé inconditionnellement par `getVariantInvalidationTags`, posé
+	// par aucun lecteur. Aucun chemin ne lit un VARIANT par son code — l'édition admin
 	// passe par l'id, ci-dessous.
 
-	/** Détail d'un SKU par ID (pour les lookups d'édition admin) */
-	SKU_DETAIL_BY_ID: (skuId: string) => `sku-id-${skuId}`,
+	/** Détail d'un VARIANT par ID (pour les lookups d'édition admin) */
+	VARIANT_DETAIL_BY_ID: (variantId: string) => `variant-id-${variantId}`,
 
-	/** Stock temps réel d'un SKU (invalidé après achat/mise à jour stock) */
-	SKU_STOCK: (skuId: string) => `sku-stock-${skuId}`,
+	/** Stock temps réel d'un VARIANT (invalidé après achat/mise à jour stock) */
+	VARIANT_STOCK: (variantId: string) => `variant-stock-${variantId}`,
 
 	/** Produits similaires publics (visiteurs non authentifiés) */
 	RELATED_PUBLIC: "related-products-public",

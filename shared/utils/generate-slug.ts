@@ -14,7 +14,7 @@ import {
  */
 export type PrismaClientOrTransaction = Pick<
 	PrismaClient,
-	"product" | "collection" | "productType" | "color" | "material"
+	"product" | "collection" | "productType"
 >;
 
 /**
@@ -44,12 +44,12 @@ export type PrismaClientOrTransaction = Pick<
  * // Sur un UPDATE, passer l'id de l'enregistrement édité : sans lui, un
  * // rename cosmétique (« Or rose » → « Or Rose ») retrouvait son PROPRE slug
  * // et retournait « or-rose-2 » — l'URL changeait sans raison.
- * await generateSlug(tx, "color", "Or Rose", { excludeId: colorId })
+ * await generateSlug(tx, "collection", "Été", { excludeId: collectionId })
  * ```
  */
 export async function generateSlug(
 	prisma: PrismaClientOrTransaction,
-	model: "product" | "collection" | "productType" | "color" | "material",
+	model: "product" | "collection" | "productType",
 	value: string,
 	options: { excludeId?: string } = {},
 ): Promise<string> {
@@ -90,18 +90,6 @@ export async function generateSlug(
 				break;
 			case "productType":
 				existing = await prisma.productType.findUnique({
-					where: { slug: finalSlug },
-					select: { id: true },
-				});
-				break;
-			case "color":
-				existing = await prisma.color.findUnique({
-					where: { slug: finalSlug },
-					select: { id: true },
-				});
-				break;
-			case "material":
-				existing = await prisma.material.findUnique({
 					where: { slug: finalSlug },
 					select: { id: true },
 				});

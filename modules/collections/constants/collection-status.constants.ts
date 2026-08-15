@@ -1,10 +1,13 @@
 // ============================================================================
-// STATUS LABELS, COLORS & VARIANTS
-// Client-safe constants - enum-only Prisma import (no DB client)
+// STATUS LABELS — schéma lean (lot 2) : le statut est un booléen `active`.
 // ============================================================================
 
 export const COLLECTION_STATUS_LABELS = {
-	DRAFT: "Brouillon",
-	PUBLIC: "Publiée",
-	ARCHIVED: "Archivée",
+	true: "Publiée",
+	false: "Brouillon",
 } as const;
+
+/** Libellé du statut d'une collection à partir de son booléen `active`. */
+export function collectionStatusLabel(active: boolean): string {
+	return active ? COLLECTION_STATUS_LABELS.true : COLLECTION_STATUS_LABELS.false;
+}

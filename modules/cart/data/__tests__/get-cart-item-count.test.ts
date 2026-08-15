@@ -28,8 +28,8 @@ describe("getCartItemCount", () => {
 	it("somme les QUANTITÉS, pas le nombre de lignes", async () => {
 		mockReadCartCookie.mockResolvedValue({
 			items: [
-				{ skuId: "cm1234567890abcdefghijk12", quantity: 3, priceAtAdd: 100 },
-				{ skuId: "cm1234567890abcdefghijk34", quantity: 2, priceAtAdd: 200 },
+				{ variantId: "cm1234567890abcdefghijk12", quantity: 3, priceAtAdd: 100 },
+				{ variantId: "cm1234567890abcdefghijk34", quantity: 2, priceAtAdd: 200 },
 			],
 			discountCode: null,
 		});

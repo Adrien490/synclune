@@ -1,25 +1,26 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import type { GetCollectionsParams } from "@/modules/collections/data/get-collections";
 import { getFirstParam } from "@/shared/utils/params";
 import type { CollectionsSearchParams } from "../page";
 
-const VALID_STATUSES = new Set<string>(Object.values(PublicationStatus));
-
+/**
+ * Schéma lean : le statut d'une collection est le booléen `active` — le filtre
+ * URL est `filter_active=true|false` (multi-select toléré : les deux valeurs
+ * simultanées annulent le filtre).
+ */
 export const parseFilters = (params: CollectionsSearchParams): GetCollectionsParams["filters"] => {
 	let hasProducts: boolean | undefined = undefined;
-	const statuses: PublicationStatus[] = [];
+	const actives = new Set<boolean>();
 
 	Object.entries(params).forEach(([key, value]) => {
 		if (!key.startsWith("filter_")) return;
 
 		const filterKey = key.replace("filter_", "");
 
-		if (filterKey === "status") {
+		if (filterKey === "active") {
 			const raw = Array.isArray(value) ? value : [value];
 			raw.forEach((v) => {
-				if (typeof v === "string" && VALID_STATUSES.has(v)) {
-					statuses.push(v as PublicationStatus);
-				}
+				if (v === "true") actives.add(true);
+				else if (v === "false") actives.add(false);
 			});
 			return;
 		}
@@ -32,16 +33,8 @@ export const parseFilters = (params: CollectionsSearchParams): GetCollectionsPar
 		}
 	});
 
-	const uniqueStatuses = Array.from(new Set(statuses));
-	const status =
-		uniqueStatuses.length === 0
-			? undefined
-			: uniqueStatuses.length === 1
-				? uniqueStatuses[0]
-				: uniqueStatuses;
-
 	return {
 		hasProducts,
-		status,
+		active: actives.size === 1 ? [...actives][0] : undefined,
 	};
 };

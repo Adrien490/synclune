@@ -24,8 +24,8 @@ import {
 	cacheProductDetail,
 	cacheProductDetailById,
 	getProductInvalidationTags,
-	getInventoryInvalidationTags,
-	getSkuStockInvalidationTags,
+	getStockInvalidationTags,
+	getVariantStockInvalidationTags,
 } from "../cache.utils";
 
 beforeEach(() => {
@@ -69,11 +69,11 @@ describe("cacheProductDetail", () => {
 // ============================================================================
 
 /**
- * `cacheProductSkus` et `cacheSkuDetail` étaient testés ici. Ils ont été SUPPRIMÉS
+ * `cacheProductVariants` et `cacheVariantDetail` étaient testés ici. Ils ont été SUPPRIMÉS
  * (audit cache catalogue 2026-07-31) : aucun appelant en production, alors que les
  * tags qu'ils posaient étaient invalidés par une dizaine de mutateurs. Ces deux
  * `describe` verrouillaient donc la forme de tags que personne ne posait — le même
- * mode d'échec que les `toHaveLength` de `getInventoryInvalidationTags` plus bas.
+ * mode d'échec que les `toHaveLength` de `getStockInvalidationTags` plus bas.
  */
 describe("cacheProductDetailById", () => {
 	it("pose DETAIL_BY_ID + LIST sous le profil catalog", () => {
@@ -107,7 +107,7 @@ describe("getProductInvalidationTags", () => {
 		expect(tags).toContain("product-counts");
 		expect(tags).toContain("related-products-public");
 		expect(tags).toContain("related-products-contextual-bague-or");
-		expect(tags).toContain("admin-inventory-list");
+		expect(tags).toContain("admin-stock-list");
 		expect(tags).toContain("admin-badges");
 		expect(tags).toContain("sitemap-images");
 		// Le `hasProducts` d'un type de bijou se calcule sur les produits PUBLIC : sans ce
@@ -118,17 +118,17 @@ describe("getProductInvalidationTags", () => {
 		// rafraîchir (remplace l'ex-tag `navbar-menu`, déposé avec le scope cache
 		// agrégé de `getNavbarMenuData` — CACHE-DEGRADED-VALUE-001).
 		expect(tags).toContain("collections-list");
-		// `fetchSkuDetailById` embarque product.title/status/_count.skus sous `skus-list`.
-		expect(tags).toContain("skus-list");
+		// `fetchVariantDetailById` embarque product.name/status/_count.variants sous `variants-list`.
+		expect(tags).toContain("variants-list");
 		// 12 depuis le retrait de `recent-products-list` avec la feature « produits
 		// récemment vus » (2026-08-06).
 		expect(tags).toHaveLength(12);
 	});
 
-	it("includes SKUS + COLLECTIONS + DETAIL_BY_ID tags when productId is provided", () => {
+	it("includes VARIANTS + COLLECTIONS + DETAIL_BY_ID tags when productId is provided", () => {
 		const tags = getProductInvalidationTags("bague-or", "prod-abc");
 
-		expect(tags).toContain("product-prod-abc-skus");
+		expect(tags).toContain("product-prod-abc-variants");
 		expect(tags).toContain("product-prod-abc-collections");
 		// Lecture de duplication : elle se cachait sous un tag fabriqué à la main
 		// (`product-product-id-…`) qu'aucun mutateur n'émettait.
@@ -137,7 +137,7 @@ describe("getProductInvalidationTags", () => {
 	});
 
 	// Cascade couleurs/matériaux : le KPI « produits distincts » des listes couleurs
-	// et matériaux ne bougeait que sur mutation SKU, jamais sur suppression,
+	// et matériaux ne bougeait que sur mutation VARIANT, jamais sur suppression,
 	// duplication ou changement de statut du PRODUIT.
 	it("cascade les compteurs couleurs/matériaux quand ils sont fournis", () => {
 		const tags = getProductInvalidationTags("bague-or", "prod-abc", {
@@ -165,12 +165,12 @@ describe("getProductInvalidationTags", () => {
 		expect(new Set(tags).size).toBe(tags.length);
 	});
 
-	it("does not include SKUS or COLLECTIONS tags when productId is undefined", () => {
+	it("does not include VARIANTS or COLLECTIONS tags when productId is undefined", () => {
 		const tags = getProductInvalidationTags("bague-or", undefined);
 
-		const skusTags = tags.filter((t) => t.endsWith("-skus"));
+		const variantsTags = tags.filter((t) => t.endsWith("-variants"));
 		const collectionsTags = tags.filter((t) => t.endsWith("-collections"));
-		expect(skusTags).toHaveLength(0);
+		expect(variantsTags).toHaveLength(0);
 		expect(collectionsTags).toHaveLength(0);
 	});
 
@@ -183,79 +183,79 @@ describe("getProductInvalidationTags", () => {
 });
 
 // ============================================================================
-// getInventoryInvalidationTags
+// getStockInvalidationTags
 // ============================================================================
 
 /**
  * ⚠️ Ces 4 tests verrouillaient la version PAUVRE du helper (audit cache
- * 2026-07-31). Il existait deux `getInventoryInvalidationTags` homonymes — celui
- * de `modules/skus/utils/` couvrait `LIST`, `SKUS_LIST` et `SKU_DETAIL_BY_ID`,
+ * 2026-07-31). Il existait deux `getStockInvalidationTags` homonymes — celui
+ * de `modules/variants/utils/` couvrait `LIST`, `VARIANTS_LIST` et `VARIANT_DETAIL_BY_ID`,
  * celui-ci non — et `collectStockInvalidationTags` déléguait au second. Les
  * `toHaveLength(4/5/6)` ci-dessous gelaient donc l'absence des tags manquants :
  * ajouter la couverture correcte faisait rougir le test censé la protéger.
  *
  * Les deux implémentations sont désormais fusionnées (SSOT ici, ré-export côté
- * skus) et les comptes reflètent la couverture complète — celle qu'exige
+ * variants) et les comptes reflètent la couverture complète — celle qu'exige
  * STOCK-STALE-BASELINE-001.
  */
-describe("getInventoryInvalidationTags", () => {
+describe("getStockInvalidationTags", () => {
 	const BASE_TAGS = [
 		"product-bague-or",
-		"product-prod-123-skus",
+		"product-prod-123-variants",
 		"products-list",
-		"skus-list",
-		"admin-inventory-list",
+		"variants-list",
+		"admin-stock-list",
 		"admin-badges",
 	];
 
-	it("returns base inventory tags without skuIds", () => {
-		const tags = getInventoryInvalidationTags("bague-or", "prod-123");
+	it("returns base stock tags without variantIds", () => {
+		const tags = getStockInvalidationTags("bague-or", "prod-123");
 
 		expect(tags).toEqual(BASE_TAGS);
 	});
 
-	it("includes SKU_STOCK and SKU_DETAIL_BY_ID for each skuId provided", () => {
-		const tags = getInventoryInvalidationTags("bague-or", "prod-123", ["sku-1", "sku-2"]);
+	it("includes VARIANT_STOCK and VARIANT_DETAIL_BY_ID for each variantId provided", () => {
+		const tags = getStockInvalidationTags("bague-or", "prod-123", ["variant-1", "variant-2"]);
 
-		// SKU_DETAIL_BY_ID est le tag de `fetchSkuById` / `fetchSkuDetailById` : sans
-		// lui, le formulaire d'édition rend un `originalInventory` périmé et le delta
+		// VARIANT_DETAIL_BY_ID est le tag de `fetchVariantById` / `fetchVariantDetailById` : sans
+		// lui, le formulaire d'édition rend un `originalStock` périmé et le delta
 		// relatif diverge du stock réel (STOCK-STALE-BASELINE-001).
 		expect(tags).toEqual([
 			...BASE_TAGS,
-			"sku-stock-sku-1",
-			"sku-id-sku-1",
-			"sku-stock-sku-2",
-			"sku-id-sku-2",
+			"variant-stock-variant-1",
+			"variant-id-variant-1",
+			"variant-stock-variant-2",
+			"variant-id-variant-2",
 		]);
 	});
 
-	it("handles empty skuIds array gracefully", () => {
-		const tags = getInventoryInvalidationTags("bague-or", "prod-123", []);
+	it("handles empty variantIds array gracefully", () => {
+		const tags = getStockInvalidationTags("bague-or", "prod-123", []);
 
 		expect(tags).toEqual(BASE_TAGS);
 	});
 
-	it("handles a single skuId", () => {
-		const tags = getInventoryInvalidationTags("bague-or", "prod-123", ["sku-only"]);
+	it("handles a single variantId", () => {
+		const tags = getStockInvalidationTags("bague-or", "prod-123", ["variant-only"]);
 
-		expect(tags).toEqual([...BASE_TAGS, "sku-stock-sku-only", "sku-id-sku-only"]);
+		expect(tags).toEqual([...BASE_TAGS, "variant-stock-variant-only", "variant-id-variant-only"]);
 	});
 });
 
 // ============================================================================
-// getSkuStockInvalidationTags
+// getVariantStockInvalidationTags
 // ============================================================================
 
-describe("getSkuStockInvalidationTags", () => {
-	it("returns a single SKU_STOCK tag", () => {
-		const tags = getSkuStockInvalidationTags("sku-abc");
+describe("getVariantStockInvalidationTags", () => {
+	it("returns a single VARIANT_STOCK tag", () => {
+		const tags = getVariantStockInvalidationTags("variant-abc");
 
-		expect(tags).toEqual(["sku-stock-sku-abc"]);
+		expect(tags).toEqual(["variant-stock-variant-abc"]);
 	});
 
-	it("uses the skuId in the tag", () => {
-		const tags = getSkuStockInvalidationTags("sku-xyz-999");
+	it("uses the variantId in the tag", () => {
+		const tags = getVariantStockInvalidationTags("variant-xyz-999");
 
-		expect(tags[0]).toBe("sku-stock-sku-xyz-999");
+		expect(tags[0]).toBe("variant-stock-variant-xyz-999");
 	});
 });

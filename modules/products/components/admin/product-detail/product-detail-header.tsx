@@ -17,7 +17,7 @@ import { useSetAdminPageTitle } from "@/app/admin/(protected)/_components/admin-
 
 import { useProductActions } from "../../../hooks/use-product-actions";
 
-import { PRODUCT_STATUS_CONFIG } from "./product-detail-status.constants";
+import { productStatusConfig } from "./product-detail-status.constants";
 import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
 import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
@@ -25,8 +25,8 @@ interface ProductDetailHeaderProps {
 	product: {
 		id: string;
 		slug: string;
-		title: string;
-		status: "DRAFT" | "PUBLIC" | "ARCHIVED";
+		name: string;
+		active: boolean;
 		createdAt: Date;
 		updatedAt: Date;
 	};
@@ -35,13 +35,13 @@ interface ProductDetailHeaderProps {
 export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 	const haptic = useHaptic();
 	// Le header mobile affiche ce libellé plutôt que le slug Title-Casé.
-	useSetAdminPageTitle(product.title);
-	const status = PRODUCT_STATUS_CONFIG[product.status];
+	useSetAdminPageTitle(product.name);
+	const status = productStatusConfig(product.active);
 	const { sections } = useProductActions({
 		productId: product.id,
 		productSlug: product.slug,
-		productTitle: product.title,
-		productStatus: product.status,
+		productTitle: product.name,
+		productActive: product.active,
 	});
 
 	return (
@@ -52,7 +52,7 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 				    faisaient trois affordances de retour empilées sur un même écran, et
 				    aucune des ~10 autres ressources admin ne les duplique. */}
 				<h1 className="font-display text-foreground text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
-					{product.title}
+					{product.name}
 				</h1>
 				<div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs md:hidden">
 					<Badge variant={status.variant} className="shrink-0">
@@ -105,7 +105,7 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 					</ResponsiveActionMenuTrigger>
 					<ResponsiveActionMenuContent
 						title="Actions"
-						description={product.title}
+						description={product.name}
 						sections={sections}
 					/>
 				</ResponsiveActionMenu>

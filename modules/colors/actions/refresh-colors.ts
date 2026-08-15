@@ -2,10 +2,8 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { handleActionError, success } from "@/shared/lib/actions";
-import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { COLORS_CACHE_TAGS } from "../constants/cache";
@@ -18,8 +16,6 @@ export async function refreshColors(
 	try {
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.REFRESH);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		updateTag(COLORS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);

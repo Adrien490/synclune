@@ -5,7 +5,7 @@ export interface EditProductFormProps {
 	product: GetProductReturn;
 	productTypes: Array<{ id: string; label: string }>;
 	collections: Array<{ id: string; name: string }>;
-	colors: Array<{ id: string; name: string; hex: string }>;
+	colors: Array<{ id: string; name: string; hex: string | null }>;
 	materials: Array<{ id: string; name: string }>;
 }
 

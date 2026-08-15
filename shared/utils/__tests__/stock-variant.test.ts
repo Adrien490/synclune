@@ -4,7 +4,7 @@ import { getStockVariant, getStockAriaLabel, getStockStatusLabel } from "../stoc
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 describe("getStockVariant", () => {
-	it("returns 'destructive' for zero inventory", () => {
+	it("returns 'destructive' for zero stock", () => {
 		expect(getStockVariant(0)).toBe("destructive");
 	});
 
@@ -27,15 +27,15 @@ describe("getStockVariant", () => {
 		expect(getStockVariant(9999)).toBe("success");
 	});
 
-	it("treats negative inventory like 'warning' (≤ LOW) — code does not special-case it", () => {
+	it("treats negative stock like 'warning' (≤ LOW) — code does not special-case it", () => {
 		// Documenting current behaviour: negative numbers are ≤ LOW, so 'warning'.
-		// Negative inventory is a data bug; the variant doesn't currently distinguish it.
+		// Negative stock is a data bug; the variant doesn't currently distinguish it.
 		expect(getStockVariant(-5)).toBe("warning");
 	});
 });
 
 describe("getStockAriaLabel", () => {
-	it("announces 'Stock épuisé' when inventory is zero", () => {
+	it("announces 'Stock épuisé' when stock is zero", () => {
 		expect(getStockAriaLabel(0)).toBe("Stock épuisé");
 	});
 
@@ -53,7 +53,7 @@ describe("getStockAriaLabel", () => {
 });
 
 describe("getStockStatusLabel", () => {
-	it("returns 'Rupture' for zero inventory", () => {
+	it("returns 'Rupture' for zero stock", () => {
 		expect(getStockStatusLabel(0)).toBe("Rupture");
 	});
 

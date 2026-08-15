@@ -1,9 +1,8 @@
 "use client";
 
-import { FolderOpenIcon, StarIcon } from "@phosphor-icons/react/ssr";
+import { FolderOpenIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
-import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
@@ -29,20 +28,14 @@ export function ProductDetailCollectionsCard({ collections }: ProductDetailColle
 					</p>
 				) : (
 					<ul className="-mx-2 space-y-1" aria-label={`${collections.length} collection(s)`}>
-						{collections.map((entry) => (
-							<li key={entry.collection.id}>
+						{collections.map((collection) => (
+							<li key={collection.id}>
 								<Link
-									href={`/admin/catalogue/collections/${entry.collection.slug}`}
+									href={`/admin/catalogue/collections/${collection.slug}`}
 									onClick={() => haptic("light")}
 									className="hover:bg-muted/40 hover:text-primary active:bg-muted/60 focus-visible:ring-ring flex touch-manipulation items-center justify-between gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
 								>
-									<span className="min-w-0 truncate">{entry.collection.name}</span>
-									{/* Rang 0 = vedette : `isFeatured` a cédé la place à `position` */}
-									{entry.position === 0 ? (
-										<Badge variant="default" className="shrink-0">
-											<StarIcon className="size-3" aria-hidden="true" />À la une
-										</Badge>
-									) : null}
+									<span className="min-w-0 truncate">{collection.name}</span>
 								</Link>
 							</li>
 						))}

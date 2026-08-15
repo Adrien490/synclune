@@ -22,10 +22,11 @@ function createPriceItem(
 		id: overrides?.id ?? "item-1",
 		priceAtAdd: overrides?.priceAtAdd ?? 2500,
 		quantity: overrides?.quantity ?? 1,
-		sku: {
-			priceInclTax: overrides?.currentPrice ?? 2500,
+		variant: {
+			priceCents: overrides?.currentPrice ?? 2500,
 			product: {
-				title: overrides?.title ?? "Bracelet Lune",
+				name: overrides?.title ?? "Bracelet Lune",
+				priceCents: 2500,
 			},
 		},
 	};

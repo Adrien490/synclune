@@ -1,23 +1,23 @@
 import { type Prisma } from "@/app/generated/prisma/client";
-import { type CART_SKU_SELECT } from "../constants/cart";
+import { type CART_VARIANT_SELECT } from "../constants/cart";
 
 // ============================================================================
 // TYPES - CART
 // ============================================================================
 
-/** SKU matérialisé depuis la base pour une ligne de panier. */
-export type CartItemSku = Prisma.ProductSkuGetPayload<{
-	select: typeof CART_SKU_SELECT;
+/** VARIANT matérialisé depuis la base pour une ligne de panier. */
+export type CartItemVariant = Prisma.ProductVariantGetPayload<{
+	select: typeof CART_VARIANT_SELECT;
 }>;
 
 /**
  * Une ligne de panier telle que la voit l'UI : la quantité et le prix témoin
  * viennent du cookie, le reste de la base.
  *
- * ⚠️ `id` vaut le **skuId**, pas un identifiant de ligne. Depuis le passage du
+ * ⚠️ `id` vaut le **variantId**, pas un identifiant de ligne. Depuis le passage du
  * panier en cookie (2026-08-04) il n'existe plus de table `CartItem`, donc plus
- * d'identifiant propre à la ligne : le SKU EST l'identité de la ligne (le cookie
- * dédoublonne par `skuId`, comme le faisait la contrainte `@@unique([cartId, skuId])`).
+ * d'identifiant propre à la ligne : le VARIANT EST l'identité de la ligne (le cookie
+ * dédoublonne par `variantId`, comme le faisait la contrainte `@@unique([cartId, variantId])`).
  * Le champ est conservé sous le nom `id` parce qu'il sert de clé de rendu et
  * d'identifiant de mutation dans toute l'UI panier.
  */
@@ -26,7 +26,7 @@ export interface CartItem {
 	quantity: number;
 	/** Prix TTC unitaire constaté à l'ajout, en centimes (témoin d'affichage). */
 	priceAtAdd: number;
-	sku: CartItemSku;
+	variant: CartItemVariant;
 }
 
 /**
@@ -47,9 +47,9 @@ export type GetCartReturn = CartView;
 // ============================================================================
 
 export interface CartValidationIssue {
-	/** Identifiant de la ligne fautive — le skuId (cf. `CartItem.id`). */
+	/** Identifiant de la ligne fautive — le variantId (cf. `CartItem.id`). */
 	cartItemId: string;
-	skuId: string;
+	variantId: string;
 	productTitle: string;
 	issueType:
 		"OUT_OF_STOCK" | "INSUFFICIENT_STOCK" | "INACTIVE" | "NOT_PUBLIC" | "DELETED" | "UNKNOWN";
@@ -81,10 +81,12 @@ export interface CartItemForPriceCheck {
 	id: string;
 	priceAtAdd: number;
 	quantity: number;
-	sku: {
-		priceInclTax: number;
+	variant: {
+		/** Override — null = prix du produit. */
+		priceCents: number | null;
 		product: {
-			title: string;
+			name: string;
+			priceCents: number;
 		};
 	};
 }
@@ -108,18 +110,16 @@ export interface PriceChangeResult<T extends CartItemForPriceCheck> {
 
 export interface CartItemForValidation {
 	id: string;
-	skuId: string;
+	variantId: string;
 	quantity: number;
-	sku: {
+	variant: {
 		id: string;
-		isActive: boolean;
-		inventory: number;
-		deletedAt: Date | null;
+		active: boolean;
+		stock: number;
 		product: {
 			id: string;
-			title: string;
-			status: string;
-			deletedAt: Date | null;
+			name: string;
+			active: boolean;
 		};
 	};
 }

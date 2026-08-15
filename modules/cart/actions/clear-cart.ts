@@ -1,10 +1,8 @@
 "use server";
 
-import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { handleActionError, success } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { clearCartCookie, readCartCookie } from "@/modules/cart/lib/cart-cookie";
-import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { CART_ERROR_MESSAGES } from "../constants/error-messages";
 
 /**
@@ -13,19 +11,12 @@ import { CART_ERROR_MESSAGES } from "../constants/error-messages";
  *
  * Supprime le cookie `cart` : lignes ET code promo partent ensemble.
  *
- * Rate limiting configure via CART_LIMITS.CLEAR
  */
 export async function clearCart(
 	_: ActionState | undefined,
 	__formData?: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
-		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.CLEAR);
-		if (!rateLimitResult.success) {
-			return rateLimitResult.errorState;
-		}
-
 		// 2. Compter avant de vider (le message reprend le nombre d'articles retirés)
 		const cart = await readCartCookie();
 		const initialCount = cart.items.length;

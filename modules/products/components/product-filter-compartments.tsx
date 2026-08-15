@@ -145,9 +145,9 @@ export function ProductFilterCompartments({
 	const sortedProductTypes = productTypes.toSorted(
 		(a, b) => (b._count?.products ?? 0) - (a._count?.products ?? 0),
 	);
-	const sortedColors = colors.toSorted((a, b) => b._count.skus - a._count.skus);
+	const sortedColors = colors.toSorted((a, b) => b._count.variants - a._count.variants);
 	const sortedMaterials = materials.toSorted(
-		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0),
+		(a, b) => (b._count?.variants ?? 0) - (a._count?.variants ?? 0),
 	);
 
 	return (

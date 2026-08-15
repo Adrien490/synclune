@@ -59,8 +59,8 @@ const baseImage = {
 	url: "https://example.com/a.jpg",
 	thumbnailUrl: null,
 	blurDataUrl: null,
-	altText: "Image A",
-	mediaType: "IMAGE" as const,
+	alt: "Image A",
+	type: "IMAGE" as const,
 	width: null,
 	height: null,
 };
@@ -71,15 +71,15 @@ const imageB = {
 	...baseImage,
 	id: "img-b",
 	url: "https://example.com/b.jpg",
-	altText: "Image B",
+	alt: "Image B",
 };
 
 const videoRankZero = {
 	...baseImage,
 	id: "vid-1",
 	url: "https://example.com/clip.mp4",
-	altText: "Vidéo",
-	mediaType: "VIDEO" as const,
+	alt: "Vidéo",
+	type: "VIDEO" as const,
 };
 
 // ---------------------------------------------------------------------------

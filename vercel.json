@@ -1,18 +1,4 @@
 {
 	"$schema": "https://openapi.vercel.sh/vercel.json",
-	"regions": ["cdg1"],
-	"crons": [
-		{
-			"path": "/api/cron/reconcile-invoices",
-			"schedule": "0 2 * * *"
-		},
-		{
-			"path": "/api/cron/cleanup-pending-orders",
-			"schedule": "0 3 * * *"
-		},
-		{
-			"path": "/api/cron/hard-delete-retention",
-			"schedule": "0 4 2 * *"
-		}
-	]
+	"regions": ["cdg1"]
 }

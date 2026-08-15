@@ -64,10 +64,10 @@ export function CreateProductInfoCard({
 			</CardHeader>
 			<CardContent className="space-y-6 px-0 sm:px-0 md:px-6">
 				<form.AppField
-					name="title"
+					name="name"
 					validators={{
 						onChange: ({ value }) =>
-							!value || value.trim().length < 2
+							!value || String(value).trim().length < 2
 								? "Le titre doit contenir au moins 2 caractères"
 								: undefined,
 					}}
@@ -210,9 +210,9 @@ export function CreateProductInfoCard({
 					form={form}
 					colors={colors}
 					materials={materials}
-					colorIdsFieldName="initialSku.colorIds"
-					materialsFieldName="initialSku.materialIds"
-					sizeFieldName="initialSku.size"
+					colorFieldName="initialVariant.colorId"
+					materialFieldName="initialVariant.materialId"
+					sizeFieldName="initialVariant.size"
 				/>
 			</CardContent>
 		</Card>

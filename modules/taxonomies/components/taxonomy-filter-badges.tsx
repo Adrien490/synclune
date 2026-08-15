@@ -34,7 +34,7 @@ export function TaxonomyFilterBadges({ kind }: { kind: TaxonomyKind }) {
 		const filterKey = filter.key.replace("filter_", "");
 		const value = filter.value as string;
 
-		if (filterKey === "isActive") {
+		if (filterKey === "active") {
 			return formatStatusFilter(value, agree(config, "Actif"), agree(config, "Inactif"));
 		}
 

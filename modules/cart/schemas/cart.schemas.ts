@@ -6,7 +6,7 @@ import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "../constants/cart";
 // ============================================================================
 
 export const addToCartSchema = z.object({
-	skuId: z.cuid2("ID SKU invalide"),
+	variantId: z.cuid2("ID VARIANT invalide"),
 	quantity: z
 		.number()
 		.int()
@@ -19,16 +19,16 @@ export const addToCartSchema = z.object({
 // CART ACTION SCHEMAS
 // ============================================================================
 
-// ⚠️ Les lignes du panier sont identifiées par leur `skuId` depuis le passage en
+// ⚠️ Les lignes du panier sont identifiées par leur `variantId` depuis le passage en
 // cookie (2026-08-04) : il n'existe plus de table `CartItem`, donc plus
-// d'identifiant propre à la ligne. Le cookie dédoublonne par SKU, comme le
-// faisait la contrainte `@@unique([cartId, skuId])`.
+// d'identifiant propre à la ligne. Le cookie dédoublonne par VARIANT, comme le
+// faisait la contrainte `@@unique([cartId, variantId])`.
 
 /**
  * Schéma de validation pour la mise à jour d'un item
  */
 export const updateCartItemSchema = z.object({
-	skuId: z.cuid2("ID de l'article invalide"),
+	variantId: z.cuid2("ID de l'article invalide"),
 	quantity: z
 		.number()
 		.int()
@@ -40,20 +40,20 @@ export const updateCartItemSchema = z.object({
  * Schéma de validation pour la suppression d'un item
  */
 export const removeFromCartSchema = z.object({
-	skuId: z.cuid2("ID de l'article invalide"),
+	variantId: z.cuid2("ID de l'article invalide"),
 });
 
 // ============================================================================
-// SKU VALIDATION SCHEMAS
+// VARIANT VALIDATION SCHEMAS
 // ============================================================================
 
 import { CART_ERROR_MESSAGES } from "../constants/error-messages";
 
 /**
- * Schema pour récupérer les détails d'un SKU
+ * Schema pour récupérer les détails d'un VARIANT
  */
-export const getSkuDetailsSchema = z.object({
-	skuId: z.cuid2(CART_ERROR_MESSAGES.SKU_NOT_FOUND),
+export const getVariantDetailsSchema = z.object({
+	variantId: z.cuid2(CART_ERROR_MESSAGES.VARIANT_NOT_FOUND),
 });
 
 // ============================================================================

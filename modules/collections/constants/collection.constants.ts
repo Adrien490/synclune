@@ -1,159 +1,90 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
-import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_CHAPTER_PRINT_COUNT } from "./image-sizes.constants";
 
 // ============================================================================
-// SELECT DEFINITIONS
+// SELECT DEFINITIONS — schéma lean (lot 2) : M-N implicite (plus de
+// ProductCollection avec position/vedette), média sur le PRODUIT, Collection
+// { slug, name, description, position, active }.
 // ============================================================================
 
 /**
- * Cap a la lecture des associations pour le detail admin. Au-dela, l'admin
- * doit utiliser la gestion catalogue dediee. Voir GET_COLLECTION_PRODUCTS_LIMIT
- * + UX hint dans collection-products-list.
+ * Cap à la lecture des associations pour le détail admin.
  */
 export const GET_COLLECTION_PRODUCTS_LIMIT = 100;
+
+/** Sous-select vignette produit : première IMAGE de l'ordre canonique. */
+const PRODUCT_THUMB_SELECT = {
+	where: { type: "IMAGE" as const },
+	select: { id: true, url: true, alt: true, type: true },
+	orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+	take: 1,
+};
 
 export const GET_COLLECTION_SELECT = {
 	id: true,
 	slug: true,
 	name: true,
 	description: true,
-	status: true,
-	createdAt: true,
-	updatedAt: true,
+	position: true,
+	active: true,
 	products: {
-		// deletedAt: null — le statut seul ne suffit pas : un produit soft-deleted reste
-		// référencé par ProductCollection et pourrait redevenir visible en cas de
-		// désynchronisation status/deletedAt (parité avec le pattern notDeleted du site).
-		where: {
-			product: {
-				status: PublicationStatus.PUBLIC,
-				deletedAt: null,
-			},
-		},
+		where: { active: true },
 		select: {
-			// Pas d'`id` : `ProductCollection` est passé en PK composite
-			// `(productId, collectionId)` (audit schéma V4, 2026-08-05). La clé
-			// surrogate n'avait qu'un consommateur, une `key` React — c'est
-			// `product.id` qui la porte désormais.
-			position: true,
-			product: {
-				select: {
-					id: true,
-					slug: true,
-					title: true,
-					description: true,
-					status: true,
-					createdAt: true,
-					updatedAt: true,
-					type: {
-						select: {
-							id: true,
-							slug: true,
-							label: true,
-							isActive: true,
-						},
-					},
-					skus: {
-						where: {
-							isActive: true,
-						},
-						select: {
-							id: true,
-							position: true,
-							priceInclTax: true,
-							images: {
-								// Les surfaces collection ne rendent que des `next/image` :
-								// une URL vidéo n'y est pas décodable par l'optimiseur.
-								where: { mediaType: "IMAGE" as const },
-								select: {
-									id: true,
-									url: true,
-									altText: true,
-									blurDataUrl: true,
-									mediaType: true,
-								},
-								// La principale est le rang 0 de (position, id) — cf. pickPrimaryImage.
-								orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-							},
-						},
-						orderBy: [{ position: "asc" }, { id: "asc" }],
-					},
-				},
+			id: true,
+			slug: true,
+			name: true,
+			description: true,
+			priceCents: true,
+			active: true,
+			createdAt: true,
+			updatedAt: true,
+			media: PRODUCT_THUMB_SELECT,
+			variants: {
+				where: { active: true },
+				select: { id: true, priceCents: true, stock: true },
+				orderBy: { id: "asc" as const },
 			},
 		},
-		orderBy: [{ position: "asc" }, { addedAt: "desc" }],
+		orderBy: { createdAt: "desc" as const },
 		take: GET_COLLECTION_PRODUCTS_LIMIT,
 	},
 	_count: {
 		select: {
-			products: {
-				where: {
-					product: {
-						status: PublicationStatus.PUBLIC,
-						deletedAt: null,
-					},
-				},
-			},
+			products: { where: { active: true } },
 		},
 	},
 } as const satisfies Prisma.CollectionSelect;
 
 /**
- * Lightweight select for storefront collection pages (SEO metadata + OG image + JSON-LD).
- * Only loads what's needed: name, description, status, and minimal product data
- * for featured image extraction, product type keywords, public product count,
- * and ItemList Product+Offer JSON-LD (mainEntity).
+ * Lightweight select for storefront collection pages (SEO metadata + OG image +
+ * JSON-LD ItemList).
  */
 export const GET_COLLECTION_STOREFRONT_SELECT = {
 	slug: true,
 	name: true,
 	description: true,
-	status: true,
+	active: true,
 	products: {
-		where: {
-			product: {
-				status: PublicationStatus.PUBLIC,
-				deletedAt: null,
-			},
-		},
+		where: { active: true },
 		select: {
-			position: true,
-			product: {
-				select: {
-					slug: true,
-					title: true,
-					status: true,
-					type: {
-						select: {
-							label: true,
-						},
-					},
-					skus: {
-						where: { isActive: true },
-						select: {
-							position: true,
-							priceInclTax: true,
-							inventory: true,
-							images: {
-								// Cf. supra : jamais de vidéo dans un rendu `next/image`.
-								where: { mediaType: "IMAGE" as const },
-								select: {
-									url: true,
-									altText: true,
-								},
-								// La principale est le rang 0 de (position, id) — cf. pickPrimaryImage.
-								orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-								take: 1,
-							},
-						},
-						orderBy: [{ position: "asc" }, { id: "asc" }],
-						take: 1,
-					},
-				},
+			slug: true,
+			name: true,
+			priceCents: true,
+			active: true,
+			media: {
+				where: { type: "IMAGE" as const },
+				select: { url: true, alt: true },
+				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+				take: 1,
+			},
+			variants: {
+				where: { active: true },
+				select: { priceCents: true, stock: true },
+				orderBy: { id: "asc" as const },
+				take: 1,
 			},
 		},
-		orderBy: [{ position: "asc" }, { addedAt: "desc" }],
+		orderBy: { createdAt: "desc" as const },
 	},
 } as const satisfies Prisma.CollectionSelect;
 
@@ -162,63 +93,33 @@ export const GET_COLLECTIONS_SELECT = {
 	slug: true,
 	name: true,
 	description: true,
-	status: true,
-	createdAt: true,
-	updatedAt: true,
-	// Image du produit vedette pour la carte collection : la vedette est le rang 0
-	// de (position asc, addedAt desc).
+	position: true,
+	active: true,
+	// Vignettes : premières images des produits actifs les plus récents.
 	products: {
-		where: {
-			product: {
-				status: PublicationStatus.PUBLIC,
-				deletedAt: null,
-			},
-		},
+		where: { active: true },
 		select: {
-			position: true,
-			product: {
-				select: {
-					id: true,
-					title: true,
-					skus: {
-						where: { isActive: true },
-						select: {
-							priceInclTax: true,
-							images: {
-								// Cf. supra : jamais de vidéo dans un rendu `next/image`.
-								where: { mediaType: "IMAGE" as const },
-								select: { url: true, altText: true, blurDataUrl: true },
-								// La principale est le rang 0 de (position, id) — cf. pickPrimaryImage.
-								orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-								take: 1,
-							},
-						},
-						orderBy: [{ position: "asc" }, { id: "asc" }],
-						take: 1,
-					},
-				},
+			id: true,
+			name: true,
+			media: {
+				where: { type: "IMAGE" as const },
+				select: { url: true, alt: true },
+				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+				take: 1,
+			},
+			variants: {
+				where: { active: true },
+				select: { priceCents: true },
+				orderBy: { id: "asc" as const },
+				take: 1,
 			},
 		},
-		orderBy: [{ position: "asc" }, { addedAt: "desc" }],
-		// Deux consommateurs via `extractCollectionImages` (qui écarte en aval
-		// tout produit dont le SKU par défaut n'a aucun média IMAGE) :
-		// - la bande chapitre de /collections rend 3 tirages — le +1 de rab
-		//   évite qu'un produit sans image fasse tomber à 2 ;
-		// - le bento du méga-menu desktop (`CollectionImagesGrid`) veut jusqu'à
-		//   4 images — exactement ce take. Le baisser casserait le bento en
-		//   silence.
+		orderBy: { createdAt: "desc" as const },
 		take: COLLECTION_CHAPTER_PRINT_COUNT + 1,
 	},
 	_count: {
 		select: {
-			products: {
-				where: {
-					product: {
-						status: PublicationStatus.PUBLIC,
-						deletedAt: null,
-					},
-				},
-			},
+			products: { where: { active: true } },
 		},
 	},
 } as const satisfies Prisma.CollectionSelect;
@@ -263,9 +164,7 @@ export const COLLECTIONS_SORT_LABELS = {
 } as const;
 
 // ============================================================================
-// STATUS LABELS & COLORS
-// Note: Client-safe constants are in collection-status.constants.ts
-// Re-export for backward compatibility with server components
+// STATUS LABELS
 // ============================================================================
 
 export { COLLECTION_STATUS_LABELS } from "./collection-status.constants";

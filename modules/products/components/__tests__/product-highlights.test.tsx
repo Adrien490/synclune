@@ -27,7 +27,7 @@ function makeProduct(): GetProductReturn {
 	return {
 		id: "prod-1",
 		title: "Collier Étoile",
-		skus: [],
+		variants: [],
 		collections: [],
 	} as unknown as GetProductReturn;
 }

@@ -1,20 +1,20 @@
 "use client";
 
-import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
+import { useSelectedVariant } from "@/modules/variants/hooks/use-selected-variant";
 import { ProductPriceDisplay } from "./product-price-display";
 import { ProductCharacteristics } from "./product-characteristics";
 import { ProductReassurance } from "./product-reassurance";
 import { ProductHighlights } from "./product-highlights";
 import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
-import { VariantSelector } from "@/modules/skus/components/sku-selector";
+import { VariantSelector } from "@/modules/variants/components/variant-selector";
 
 import type { ReactNode } from "react";
-import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import type { GetProductReturn, ProductVariant } from "@/modules/products/types/product.types";
 
 interface ProductDetailsProps {
 	product: GetProductReturn;
-	defaultSku: ProductSku;
+	defaultVariant: ProductVariant;
 	/**
 	 * `<DeliveryEstimator />`, monté par la PAGE (Server Component) et relayé ici.
 	 *
@@ -46,15 +46,15 @@ interface ProductDetailsProps {
  * porte son propre padding et peut retourner `null` sans laisser de filet orphelin.
  *
  * **3. Plus d'`AnimatePresence` sur le prix ni sur les caractéristiques.** Les deux
- * fondus étaient keyés sur l'id du SKU et se déclenchaient au changement de
+ * fondus étaient keyés sur l'id du VARIANT et se déclenchaient au changement de
  * variante — exactement le moment où l'aplat se repeint déjà (transition CSS de
  * `.piece-field`). Deux mouvements pour un seul événement : on garde celui qui
  * porte l'information, la couleur.
  */
-export function ProductDetails({ product, defaultSku, deliveryEstimate }: ProductDetailsProps) {
-	const { selectedSku } = useSelectedSku({ product, defaultSku });
+export function ProductDetails({ product, defaultVariant, deliveryEstimate }: ProductDetailsProps) {
+	const { selectedVariant } = useSelectedVariant({ product, defaultVariant });
 
-	const currentSku = selectedSku ?? defaultSku;
+	const currentVariant = selectedVariant ?? defaultVariant;
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -63,15 +63,15 @@ export function ProductDetails({ product, defaultSku, deliveryEstimate }: Produc
 				{/* 1. L'aplat de la pièce : prix, disponibilité, date de livraison.
 				    Pas de wrapper aria-live ici : ProductPriceDisplay possède déjà ses
 				    propres annonces SR. */}
-				<ProductPriceDisplay selectedSku={currentSku} product={product}>
+				<ProductPriceDisplay selectedVariant={currentVariant} product={product}>
 					{deliveryEstimate}
 				</ProductPriceDisplay>
 
 				{/* 2. Le nuancier + les autres axes de variante */}
-				<VariantSelector product={product} defaultSku={defaultSku} />
+				<VariantSelector product={product} defaultVariant={defaultVariant} />
 
 				{/* 3. CTA principal (monté pour réduire la distance au fold - Baymard) */}
-				<AddToCartForm product={product} selectedSku={currentSku} />
+				<AddToCartForm product={product} selectedVariant={currentVariant} />
 			</div>
 
 			{/* ── 4. La description : la seule prose de la page ─────────────────
@@ -100,13 +100,13 @@ export function ProductDetails({ product, defaultSku, deliveryEstimate }: Produc
 			    (cf. `ProductCharacteristics`, qui peut retourner `null`). */}
 			<div className="border-border divide-border divide-y overflow-hidden rounded-xl border">
 				<ProductHighlights product={product} />
-				<ProductCharacteristics selectedSku={currentSku} />
+				<ProductCharacteristics selectedVariant={currentVariant} />
 				<ProductReassurance />
 			</div>
 
 			{/* ── 6. Le mot de la fin, détaché ─────────────────────────────────── */}
 			<div className="pt-6">
-				<ProductCareInfo primaryMaterial={currentSku.materials[0]?.material.name} />
+				<ProductCareInfo primaryMaterial={currentVariant.material?.name} />
 			</div>
 		</div>
 	);

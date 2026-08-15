@@ -14,8 +14,6 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 		colorId: color.id,
 		colorName: color.name,
 		colorHex: color.hex,
-		colorSlug: color.slug,
-		colorDescription: color.description,
 	});
 
 	return (
@@ -23,15 +21,11 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 			config={TAXONOMY_CONFIG.color}
 			id={color.id}
 			displayName={color.name}
-			isActive={color.isActive}
-			slug={color.slug}
-			createdAt={color.createdAt}
-			updatedAt={color.updatedAt}
 			sections={sections}
 			visual={
 				<span
 					className="border-border size-7 shrink-0 rounded-full border-2 shadow-sm"
-					style={{ backgroundColor: color.hex }}
+					style={{ backgroundColor: color.hex ?? undefined }}
 					aria-hidden="true"
 				/>
 			}

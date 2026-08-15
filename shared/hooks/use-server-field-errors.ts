@@ -5,7 +5,7 @@ import { useEffect, useEffectEvent } from "react";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 /**
- * Format path-préfixé émis par certaines Server Actions (skus create/update) :
+ * Format path-préfixé émis par certaines Server Actions (variants create/update) :
  * `"${path}: ${message}"` — cf. CLAUDE.md § Validation patterns.
  */
 const SERVER_FIELD_ERROR_PATTERN = /^([\w.]+):\s+(.+)$/s;

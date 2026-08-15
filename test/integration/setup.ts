@@ -3,12 +3,9 @@
  *
  * 1. Vérifie qu'`INTEGRATION_DATABASE_URL` est set (sinon skip la suite).
  * 2. Au boot du worker : `prisma db push --force-reset` pour avoir un schéma
- *    propre et à jour. Schéma isolé par worker via VITEST_WORKER_ID.
- * 3. Applique `prisma/sql/raw-guards.sql` — les CHECK / triggers / index
- *    partiels que `db push` ne connaît pas. Sans cette étape, les tests
- *    tourneraient contre une base sans contrainte et ne pourraient vérifier
- *    aucun invariant DB.
- * 4. `beforeEach` : `TRUNCATE ... CASCADE` sur toutes les tables, la liste
+ *    propre et à jour. Schéma isolé par worker via VITEST_WORKER_ID. Plus de
+ *    gardes SQL bruts à rejouer : le schéma lean n'en a aucun (lot 2).
+ * 3. `beforeEach` : `TRUNCATE ... CASCADE` sur toutes les tables, la liste
  *    étant dérivée de `pg_tables` (jamais codée en dur — cf. commentaire).
  *
  * Convention : importer la connexion via `getIntegrationPrismaClient()` (cf
@@ -45,20 +42,6 @@ beforeAll(async () => {
 	execSync("pnpm prisma db push --force-reset --skip-generate", {
 		env: { ...process.env, DATABASE_URL: url },
 		stdio: "pipe", // mute the noisy output, surface only on error
-	});
-
-	// `db push` ne rejoue PAS les gardes SQL bruts (CHECK, triggers, index
-	// partiels/expression — non exprimables dans schema.prisma). Sans eux, les
-	// tests d'intégration tournent contre une base SANS contrainte : ils ne
-	// peuvent alors vérifier AUCUN invariant DB.
-	//
-	// Avant l'audit schéma 2026-07-26, ce setup n'appliquait que 2 gardes sur 52
-	// — le format de numéro de facture (Art. 286 CGI), le format d'avoir
-	// (Art. 272-I) et 47 autres CHECK étaient absents. On applique désormais la
-	// SSOT complète, idempotente par construction.
-	execSync("pnpm prisma db execute --file prisma/sql/raw-guards.sql", {
-		env: { ...process.env, DATABASE_URL: url },
-		stdio: "pipe",
 	});
 });
 

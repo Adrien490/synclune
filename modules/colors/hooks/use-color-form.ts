@@ -5,9 +5,6 @@ import { useAppForm } from "@/shared/components/forms";
 export interface ColorFormValues {
 	name: string;
 	hex: string;
-	description: string;
-	/** Statut actif/inactif — utilisé en édition (toggle). Création : toujours true. */
-	isActive: boolean;
 }
 
 /**

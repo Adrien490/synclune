@@ -93,8 +93,7 @@ export function CollectionCard({
 										height={32}
 										quality={IMAGE_QUALITY.THUMBNAIL}
 										className="size-full object-cover"
-										placeholder={collection.image.blurDataUrl ? "blur" : "empty"}
-										blurDataURL={collection.image.blurDataUrl ?? undefined}
+										placeholder="empty"
 									/>
 								</div>
 							) : (
@@ -122,8 +121,7 @@ export function CollectionCard({
 									height={40}
 									quality={IMAGE_QUALITY.THUMBNAIL}
 									className="size-full object-cover"
-									placeholder={collection.image.blurDataUrl ? "blur" : "empty"}
-									blurDataURL={collection.image.blurDataUrl ?? undefined}
+									placeholder="empty"
 								/>
 							</div>
 						) : (

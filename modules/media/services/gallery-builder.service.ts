@@ -1,54 +1,39 @@
+/**
+ * Construction de la galerie produit — schéma lean (lot 2) : le média vit sur
+ * le PRODUIT, la galerie est simplement `product.media` ordonné (position asc),
+ * avec ALT descriptifs générés pour les médias sans alt en base.
+ */
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
 import { MAX_GALLERY_IMAGES } from "@/modules/media/constants/media-limits.constants";
-import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
-import { prefixWithProductType } from "@/modules/products/utils/product-type-prefix";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
-/** Minimum number of images before searching other SKUs */
-const MIN_GALLERY_IMAGES = 5;
-
 /**
- * Generates a descriptive alt text for a media item following the recommended WCAG format:
- * "[Type bijou] [Titre] en [Matériau] [Couleur] - [Vue/Index]"
- *
- * @example
- * buildAltText("Éclat de Lune", { productType: "Boucles d'oreilles", materialName: "Or", colorName: "Rose" }, 1, 5)
- * // => "Boucles d'oreilles Éclat de Lune en Or Rose - Vue 1 sur 5"
+ * ALT descriptif WCAG : "[Nom] en [Matériau] [Couleur] - Vue X sur Y".
  */
 function buildAltText(
-	productTitle: string,
+	productName: string,
 	variantInfo?: {
-		productType?: string | null;
 		materialName?: string | null;
 		colorName?: string | null;
-		size?: string | null;
 	},
 	imageIndex?: number,
 	totalImages?: number,
 ): string {
-	const { productType, materialName, colorName, size } = variantInfo ?? {};
+	const { materialName, colorName } = variantInfo ?? {};
 
-	// Build prefix with jewelry type — sans le répéter quand le titre le nomme
-	// déjà (« Colliers » + « Collier Lune Céleste »).
-	const prefix = prefixWithProductType(productTitle, productType);
-
-	// Build jewelry characteristics
 	const characteristics: string[] = [];
 	if (materialName) characteristics.push(materialName);
 	if (colorName && colorName !== materialName) characteristics.push(colorName);
-	if (size) characteristics.push(`Taille ${size}`);
 
-	// Build the descriptive part
-	let description = prefix;
+	let description = productName;
 	if (characteristics.length > 0) {
 		description += ` en ${characteristics.join(" ")}`;
 	}
 
-	// Add view index if available
 	if (typeof imageIndex === "number" && typeof totalImages === "number" && totalImages > 1) {
 		description += ` - Vue ${imageIndex + 1} sur ${totalImages}`;
-	} else if (typeof imageIndex === "number") {
+	} else if (typeof imageIndex === "number" && imageIndex > 0) {
 		description += ` - Photo ${imageIndex + 1}`;
 	}
 
@@ -57,8 +42,8 @@ function buildAltText(
 
 interface BuildGalleryOptions {
 	product: GetProductReturn;
-	selectedVariants: {
-		colorCombo?: string;
+	/** Sélection courante — sert uniquement à enrichir les ALT générés. */
+	selectedVariants?: {
 		colorSlug?: string;
 		materialSlug?: string;
 		size?: string;
@@ -66,168 +51,34 @@ interface BuildGalleryOptions {
 }
 
 /**
- * Builds the product image/video gallery by priority:
- * 1. Selected SKU images (variants)
- * 2. Default SKU images (product.skus[0])
- * 3. Other active SKU images (max MAX_GALLERY_IMAGES total)
- * 4. Fallback image if none available
- *
- * @param options - Gallery build options
- * @returns Array of ProductMedia objects ordered by priority
+ * Construit la galerie du produit : `product.media` (déjà ordonné par le
+ * select), plafonné à MAX_GALLERY_IMAGES, fallback SVG si vide.
  */
-export function buildGallery({ product, selectedVariants }: BuildGalleryOptions): ProductMedia[] {
-	const { colorCombo, colorSlug, materialSlug, size } = selectedVariants;
-
-	// Find the SKU matching the selected variants. `colorCombo` (M2M comboKey)
-	// prime sur `colorSlug` legacy via matchColor (sku-filter.service.ts).
-	const selectedSku =
-		colorCombo || colorSlug || materialSlug || size
-			? findSkuByVariants(product, {
-					colorCombo: colorCombo ?? undefined,
-					colorSlug: colorSlug ?? undefined,
-					materialSlug: materialSlug ?? undefined,
-					size: size ?? undefined,
-				})
-			: null;
-
-	// Build the gallery with ProductMedia type directly
-	const gallery: ProductMedia[] = [];
-
-	// Set for O(1) deduplication instead of O(n) with array.find
-	const seenUrls = new Set<string>();
-
-	// Product type for descriptive ALT texts
-	const productType = product.type?.label;
-
-	// Helper to add a unique image with descriptive ALT
-	const addUniqueImage = (
-		skuImage: {
-			id: string;
-			url: string;
-			thumbnailUrl?: string | null;
-			blurDataUrl?: string | null;
-			altText?: string | null;
-			mediaType: "IMAGE" | "VIDEO";
-			width?: number | null;
-			height?: number | null;
-		},
-		variantInfo: {
-			materialName?: string | null;
-			colorName?: string | null;
-			size?: string | null;
-		},
-		source: ProductMedia["source"],
-		skuId: string,
-	): boolean => {
-		if (seenUrls.has(skuImage.url)) return false;
-		seenUrls.add(skuImage.url);
-
-		const generatedAlt = buildAltText(
-			product.title,
-			{
-				productType,
-				...variantInfo,
-			},
-			gallery.length,
-		);
-
-		const hasCustomAlt = !!skuImage.altText;
-		gallery.push({
-			id: skuImage.id,
-			url: skuImage.url,
-			thumbnailUrl: skuImage.thumbnailUrl,
-			blurDataUrl: skuImage.blurDataUrl ?? undefined,
-			width: skuImage.width,
-			height: skuImage.height,
-			alt: skuImage.altText ?? generatedAlt,
-			mediaType: skuImage.mediaType,
-			source,
-			skuId,
-			_hasCustomAlt: hasCustomAlt,
-		});
-		return true;
+export function buildGallery({ product }: BuildGalleryOptions): ProductMedia[] {
+	const firstVariant = product.variants[0];
+	const variantInfo = {
+		materialName: firstVariant?.material?.name ?? null,
+		colorName: firstVariant?.color?.name ?? null,
 	};
 
-	// Priority 1: Selected SKU images
-	if (selectedSku?.images) {
-		const variantInfo = {
-			materialName: selectedSku.materials[0]?.material.name,
-			colorName: selectedSku.colors.map((c) => c.color.name).join(" + "),
-			size: selectedSku.size,
-		};
-		for (const skuImage of selectedSku.images) {
-			if (gallery.length >= MAX_GALLERY_IMAGES) break;
-			addUniqueImage(skuImage, variantInfo, "selected", selectedSku.id);
-		}
+	const media = product.media.slice(0, MAX_GALLERY_IMAGES);
+	const totalImages = media.length;
+
+	if (totalImages === 0) {
+		return [
+			{
+				...FALLBACK_PRODUCT_IMAGE,
+				alt: `${product.name} - Image bientôt disponible`,
+			},
+		];
 	}
 
-	// Priority 2: Default SKU images (product.skus[0])
-	const defaultSku = product.skus[0];
-	if (defaultSku && defaultSku.id !== selectedSku?.id) {
-		const variantInfo = {
-			materialName: defaultSku.materials[0]?.material.name,
-			colorName: defaultSku.colors.map((c) => c.color.name).join(" + "),
-			size: defaultSku.size,
-		};
-		for (const skuImage of defaultSku.images) {
-			if (gallery.length >= MAX_GALLERY_IMAGES) break;
-			addUniqueImage(skuImage, variantInfo, "default", defaultSku.id);
-		}
-	}
-
-	// Priority 3: Other active SKU images
-	if (gallery.length < MIN_GALLERY_IMAGES) {
-		for (const sku of product.skus.filter((s) => s.isActive)) {
-			if (sku.id === selectedSku?.id || sku.id === defaultSku?.id) continue;
-			if (gallery.length >= MAX_GALLERY_IMAGES) break;
-
-			const variantInfo = {
-				materialName: sku.materials[0]?.material.name,
-				colorName: sku.colors.map((c) => c.color.name).join(" + "),
-				size: sku.size,
-			};
-			for (const skuImage of sku.images) {
-				if (gallery.length >= MAX_GALLERY_IMAGES) break;
-				addUniqueImage(skuImage, variantInfo, "sku", sku.id);
-			}
-		}
-	}
-
-	// Fallback: Use fallback image if none available
-	if (gallery.length === 0) {
-		const fallbackAlt = `${prefixWithProductType(product.title, productType)} - Image bientôt disponible`;
-		gallery.push({
-			...FALLBACK_PRODUCT_IMAGE,
-			alt: fallbackAlt,
-			source: "default",
-			skuId: undefined,
-		});
-	}
-
-	// Second pass: regenerate ALTs with total image count for "Vue X sur Y" format
-	const totalImages = gallery.length;
-	if (totalImages > 1) {
-		// Index construits une fois : `find`/`indexOf` dans la boucle rendaient la
-		// seconde passe quadratique (gallery × skus).
-		const skuById = new Map(product.skus.map((s) => [s.id, s]));
-		for (const [index, media] of gallery.entries()) {
-			// Only update generated ALTs (not manually defined ones from DB)
-			if (!media._hasCustomAlt) {
-				const sku = media.skuId != null ? skuById.get(media.skuId) : undefined;
-				media.alt = buildAltText(
-					product.title,
-					{
-						productType,
-						materialName: sku?.materials[0]?.material.name,
-						colorName: sku?.colors.map((c) => c.color.name).join(" + "),
-						size: sku?.size,
-					},
-					index,
-					totalImages,
-				);
-			}
-		}
-	}
-
-	return gallery;
+	return media.map((m, index) => ({
+		id: m.id,
+		url: m.url,
+		type: m.type,
+		position: m.position,
+		alt: m.alt ?? buildAltText(product.name, variantInfo, index, totalImages),
+		_hasCustomAlt: !!m.alt,
+	}));
 }

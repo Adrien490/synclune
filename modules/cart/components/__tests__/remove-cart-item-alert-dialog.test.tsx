@@ -25,7 +25,7 @@ const {
 	mockClose: vi.fn(),
 	mockDialogData: {
 		value: null as {
-			skuId: string;
+			variantId: string;
 			itemName: string;
 			quantity: number;
 		} | null,
@@ -196,7 +196,7 @@ describe("RemoveCartItemAlertDialog", () => {
 
 	it("renders description with item name when data is provided", () => {
 		mockIsOpen.value = true;
-		mockDialogData.value = { skuId: "sku-1", itemName: "Bague étoile", quantity: 1 };
+		mockDialogData.value = { variantId: "variant-1", itemName: "Bague étoile", quantity: 1 };
 		render(<RemoveCartItemAlertDialog />);
 		expect(screen.getByText(/Bague étoile/)).toBeInTheDocument();
 	});
@@ -217,7 +217,7 @@ describe("RemoveCartItemAlertDialog", () => {
 
 	it("fires an error haptic when the destructive action is confirmed", () => {
 		mockIsOpen.value = true;
-		mockDialogData.value = { skuId: "sku-42", itemName: "Collier", quantity: 1 };
+		mockDialogData.value = { variantId: "variant-42", itemName: "Collier", quantity: 1 };
 		const { container } = render(<RemoveCartItemAlertDialog />);
 		const form = container.querySelector("form");
 		if (!form) throw new Error("form not found");
@@ -226,10 +226,10 @@ describe("RemoveCartItemAlertDialog", () => {
 	});
 
 	describe("undo toast (G4)", () => {
-		it("shows undo toast with Annuler action after successful removal when skuId is provided", () => {
+		it("shows undo toast with Annuler action after successful removal when variantId is provided", () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = {
-				skuId: "sku-1",
+				variantId: "variant-1",
 				itemName: "Bague étoile",
 				quantity: 2,
 			};
@@ -246,12 +246,12 @@ describe("RemoveCartItemAlertDialog", () => {
 		});
 
 		/**
-		 * Depuis la fusion `cartItemId`/`skuId` en une seule identité de ligne
-		 * (passage du panier en cookie, 2026-08-04), le seul cas où le skuId manque
+		 * Depuis la fusion `cartItemId`/`variantId` en une seule identité de ligne
+		 * (passage du panier en cookie, 2026-08-04), le seul cas où le variantId manque
 		 * est l'absence totale de données de dialogue — la restauration par
 		 * `addToCart` est alors impossible, donc pas de toast « Annuler ».
 		 */
-		it("skips undo toast when skuId is missing (no restoration possible)", () => {
+		it("skips undo toast when variantId is missing (no restoration possible)", () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = null;
 			render(<RemoveCartItemAlertDialog />);
@@ -263,7 +263,7 @@ describe("RemoveCartItemAlertDialog", () => {
 		it("restores item via addToCart and refreshes router on Annuler click", async () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = {
-				skuId: "sku-9",
+				variantId: "variant-9",
 				itemName: "Collier",
 				quantity: 3,
 			};
@@ -276,7 +276,7 @@ describe("RemoveCartItemAlertDialog", () => {
 			expect(mockAdjustCart).toHaveBeenCalledWith(3);
 			expect(mockAddToCart).toHaveBeenCalledWith(undefined, expect.any(FormData));
 			const fd = mockAddToCart.mock.calls[0]![1] as FormData;
-			expect(fd.get("skuId")).toBe("sku-9");
+			expect(fd.get("variantId")).toBe("variant-9");
 			expect(fd.get("quantity")).toBe("3");
 			expect(mockRouterRefresh).toHaveBeenCalled();
 			// Pas de toast "Article restauré" : le retour de la ligne dans le cart-sheet
@@ -287,7 +287,7 @@ describe("RemoveCartItemAlertDialog", () => {
 		it("rolls back the badge and shows error toast when restoration fails", async () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = {
-				skuId: "sku-9",
+				variantId: "variant-9",
 				itemName: "Collier",
 				quantity: 2,
 			};
@@ -308,7 +308,7 @@ describe("RemoveCartItemAlertDialog", () => {
 		it("calls updateOptimisticCart remove BEFORE the server action", () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = {
-				skuId: "sku-3",
+				variantId: "variant-3",
 				itemName: "Collier",
 				quantity: 1,
 			};
@@ -316,7 +316,7 @@ describe("RemoveCartItemAlertDialog", () => {
 			const form = container.querySelector("form");
 			if (!form) throw new Error("form not found");
 			fireEvent.submit(form);
-			expect(mockOptimisticUpdate).toHaveBeenCalledWith({ type: "remove", itemId: "sku-3" });
+			expect(mockOptimisticUpdate).toHaveBeenCalledWith({ type: "remove", itemId: "variant-3" });
 			expect(mockAction).toHaveBeenCalled();
 		});
 	});

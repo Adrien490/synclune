@@ -23,41 +23,35 @@ export function EditProductSidebarCards({ form, colors, materials }: EditProduct
 				form={form}
 				colors={colors}
 				materials={materials}
-				colorIdsFieldName="defaultSku.colorIds"
-				materialsFieldName="defaultSku.materialIds"
-				sizeFieldName="defaultSku.size"
+				colorFieldName="defaultVariant.colorId"
+				materialFieldName="defaultVariant.materialId"
+				sizeFieldName="defaultVariant.size"
 				ariaLabel="Variante par défaut"
 				tooltipText="Ces attributs concernent la variante par défaut du produit. Les autres variantes se gèrent depuis la page Variantes."
 			/>
-			<PricingCard
-				form={form}
-				priceFieldName="defaultSku.priceInclTaxEuros"
-				compareAtPriceFieldName="defaultSku.compareAtPriceEuros"
-				hintIdPrefix="edit-product-price"
-			/>
+			<PricingCard form={form} priceFieldName="priceEuros" hintIdPrefix="edit-product-price" />
 			<StockCard
 				form={form}
-				inventoryFieldName="defaultSku.inventory"
+				stockFieldName="defaultVariant.stock"
 				hintIdPrefix="edit-product-stock"
 				hint="Laisse vide ou 0 si le bijou est en rupture"
 			/>
 			<StatusCard
 				form={form}
-				radioFieldName="status"
+				radioFieldName="active"
 				radioLabel="Visibilité"
 				radioOptions={[
-					{ value: "DRAFT", label: "Brouillon" },
-					{ value: "PUBLIC", label: "Public" },
-					{ value: "ARCHIVED", label: "Archivé" },
+					{ value: "false", label: "Brouillon" },
+					{ value: "true", label: "En vente" },
 				]}
-				radioHint="Archiver désactive automatiquement toutes les variantes"
+				radioHint="Un bijou en brouillon n'apparaît pas en boutique"
 				cardAriaLabel="Statut du bijou"
 			/>
 			<StatusCard
 				form={form}
 				cardTitle="Statut de la variante"
 				cardAriaLabel="Statut de la variante par défaut"
-				radioFieldName="defaultSku.isActive"
+				radioFieldName="defaultVariant.active"
 				radioLabel="Disponibilité"
 				radioOptions={[
 					{ value: "true", label: "Actif" },
@@ -68,17 +62,17 @@ export function EditProductSidebarCards({ form, colors, materials }: EditProduct
 			<form.Subscribe
 				selector={(state) =>
 					[
-						state.values.status,
-						state.values.defaultSku.isActive,
-						Number(state.values.defaultSku.inventory),
+						state.values.active,
+						state.values.defaultVariant.active,
+						Number(state.values.defaultVariant.stock),
 					] as const
 				}
 			>
-				{([status, isActive, inventory]) => {
-					if (status !== "PUBLIC") return null;
+				{([productActive, variantActive, stock]) => {
+					if (productActive !== "true") return null;
 					const reasons: string[] = [];
-					if (!isActive) reasons.push("la variante par défaut est inactive");
-					if (inventory <= 0) reasons.push("le stock de la variante par défaut est à zéro");
+					if (variantActive !== "true") reasons.push("la variante par défaut est inactive");
+					if (stock <= 0) reasons.push("le stock de la variante par défaut est à zéro");
 					if (reasons.length === 0) return null;
 					return (
 						<Alert variant="warning" data-slot="publication-warning">

@@ -138,9 +138,9 @@ describe("@regression token-contrast", () => {
 		 * — donc aucun rose n'a plus à porter d'information.
 		 */
 		it.each([
-			"modules/cart/components/sku-selector-pieces.tsx",
-			"modules/cart/components/sku-selector-piece-row.tsx",
-			"modules/cart/components/sku-selector-quantity.tsx",
+			"modules/cart/components/variant-selector-pieces.tsx",
+			"modules/cart/components/variant-selector-piece-row.tsx",
+			"modules/cart/components/variant-selector-quantity.tsx",
 		])("%s ne peint aucun état en --primary", (relPath) => {
 			const code = readFileSync(join(ROOT, relPath), "utf8");
 			expect(code).not.toMatch(/\b(border|bg|text|ring|outline)-primary\b/);

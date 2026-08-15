@@ -1,7 +1,6 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import {
 	handleActionError,
@@ -11,10 +10,8 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { generateSlug } from "@/shared/utils/generate-slug";
 import { updateTag } from "next/cache";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
@@ -28,16 +25,10 @@ export async function createMaterial(
 		// 1. Verification des droits admin
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.CREATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extraire les donnees du FormData
+		// 2. Extraire les donnees du FormData
 		const rawData = {
 			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
-			description: safeFormGet(formData, "description")
-				? sanitizeText(safeFormGet(formData, "description")!)
-				: null,
 		};
 
 		// Valider les donnees
@@ -47,7 +38,7 @@ export async function createMaterial(
 
 		// Verifier l'unicite du nom — insensible à la casse (aligné sur les types
 		// de bijoux) : « Argent » et « argent » seraient deux entrées identiques
-		// dans le select SKU.
+		// dans le select VARIANT.
 		const existingName = await prisma.material.findFirst({
 			where: { name: { equals: validatedData.name, mode: "insensitive" } },
 		});
@@ -56,15 +47,10 @@ export async function createMaterial(
 			return error("Ce nom de matériau existe déjà. Choisis-en un autre.");
 		}
 
-		// Generer un slug unique automatiquement
-		const slug = await generateSlug(prisma, "material", validatedData.name);
-
 		// Creer le materiau
 		const created = await prisma.material.create({
 			data: {
 				name: validatedData.name,
-				slug,
-				description: validatedData.description,
 			},
 		});
 

@@ -2,52 +2,47 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
-import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
-import { buildComboKey } from "@/modules/skus/services/sku-info-extraction.service";
-import { buildSwatchStyle, areAllColorsLight } from "@/modules/colors/utils/swatch-style";
+import { filterCompatibleVariants } from "@/modules/variants/services/variant-filter.service";
+import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductSku } from "@/modules/products/types/product-services.types";
-import type { ColorCombo } from "@/shared/types/product-sku.types";
+import type { ProductVariant } from "@/modules/products/types/product-services.types";
+import type { ProductVariantInfo } from "@/shared/types/product-variant.types";
+import { slugify } from "@/shared/utils/generate-slug";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useId, useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
-import type { Color } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
+type AvailableColor = ProductVariantInfo["availableColors"][number];
+
 interface ColorSelectorProps {
 	/**
-	 * Combinaisons de couleurs M2M extraites du produit. Chaque pastille = une
-	 * variante (mono ou multi). Pilote l'URL via `?variant=<comboKey>` (slugs
-	 * triés alphabétiquement, séparés par `__`), rend des pastilles split-gradient
-	 * (linear/conic) pour les SKUs multi-couleur.
+	 * Couleurs disponibles extraites du produit (une pastille = une couleur ;
+	 * schéma lean, une variante porte UNE couleur). Pilote l'URL via
+	 * `?color=<slug>` où le slug est le NOM de couleur slugifié.
 	 */
-	combos: ColorCombo[];
+	colors: AvailableColor[];
 	product: GetProductReturn;
 	showMaterialLabel?: boolean;
-	defaultSku?: ProductSku;
-	/**
-	 * @deprecated Mode legacy retiré (M2M depuis 2026-05-15). Conservé pour
-	 * compatibilité de l'appelant `sku-selector.tsx` mais non utilisé.
-	 */
-	colors?: Color[];
+	defaultVariant?: ProductVariant;
 }
 
 /**
- * Sélecteur de couleur — variantes M2M (mono ou multi-couleur).
+ * Sélecteur de couleur — schéma lean : une pastille par couleur.
  *
- * - Pilote l'URL via `?variant=<comboKey>`. Compatible rétro `?color=<slug>`
- *   dérivé au mount (cf. liens partagés/anciens bookmarks).
- * - Normalise un `?variant=` stale (combo retiré du catalogue) vers le
- *   defaultSku pour éviter un état "rien de sélectionné" silencieux.
+ * - Pilote l'URL via `?color=<slug>` (slug = nom slugifié, Color n'a plus de
+ *   colonne slug).
+ * - Normalise un `?color=` stale (couleur retirée du catalogue) vers la
+ *   couleur par défaut pour éviter un état "rien de sélectionné" silencieux.
  * - Clavier (Arrow/Home/End) : le focus traverse les options indisponibles
  *   (aria-disabled) pour permettre l'annonce SR, mais l'action est bloquée.
  */
 function ColorSelectorInner({
-	combos,
+	colors,
 	product,
 	showMaterialLabel = false,
-	defaultSku,
+	defaultVariant,
 }: ColorSelectorProps) {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -55,92 +50,63 @@ function ColorSelectorInner({
 	const [isPending, startTransition] = useTransition();
 	const legendId = useId();
 
-	const defaultComboKey =
-		defaultSku && defaultSku.colors.length > 0
-			? buildComboKey(defaultSku.colors.map((c) => c.color.slug))
+	const defaultColorSlug = defaultVariant?.color
+		? slugify(defaultVariant.color.name)
+		: defaultVariant?.material
+			? slugify(defaultVariant.material.name)
 			: null;
 
-	const variantParam = searchParams.get("variant");
-	const colorLegacyParam = searchParams.get("color");
-	let derivedFromLegacy: string | null = null;
-	if (!variantParam && colorLegacyParam) {
-		const match = combos.find((c) => c.colors.some((cc) => cc.slug === colorLegacyParam));
-		derivedFromLegacy = match?.comboKey ?? null;
-	}
-
-	const rawCombo = variantParam ?? derivedFromLegacy ?? defaultComboKey;
-	// Garde-fou URL stale : un ?variant=<comboKey> retiré du catalogue (bookmark
+	const rawColor = searchParams.get("color") ?? defaultColorSlug;
+	// Garde-fou URL stale : un ?color=<slug> retiré du catalogue (bookmark
 	// vieillot, partage social, produit édité) ne doit pas laisser l'UI en état
 	// "aucune option" alors que la query string dit l'inverse → fallback default.
-	const currentCombo =
-		rawCombo && combos.some((c) => c.comboKey === rawCombo) ? rawCombo : defaultComboKey;
+	const currentColor =
+		rawColor && colors.some((c) => c.slug === rawColor) ? rawColor : defaultColorSlug;
 	const currentMaterial = searchParams.get("material");
 	const currentSize = searchParams.get("size");
 
-	const [optimisticCombo, setOptimisticCombo] = useOptimistic(currentCombo);
+	const [optimisticColor, setOptimisticColor] = useOptimistic(currentColor);
 
-	const isComboAvailable = (comboKey: string): boolean => {
-		const compatibleSkus = filterCompatibleSkus(product, {
-			colorCombo: comboKey,
+	const isColorAvailable = (colorSlug: string): boolean => {
+		const compatibleVariants = filterCompatibleVariants(product, {
+			colorSlug,
 			materialSlug: currentMaterial ?? undefined,
 			size: currentSize ?? undefined,
 		});
-		return compatibleSkus.length > 0;
+		return compatibleVariants.length > 0;
 	};
 
-	const prefetchComboImage = (comboKey: string) => {
-		const compatibleSkus = filterCompatibleSkus(product, {
-			colorCombo: comboKey,
-			materialSlug: currentMaterial ?? undefined,
-			size: currentSize ?? undefined,
-		});
-		const primaryImage = compatibleSkus[0]?.images[0];
-		if (!primaryImage?.url) return;
-		if (document.querySelector(`link[href="${primaryImage.url}"]`)) return;
-		const link = document.createElement("link");
-		link.rel = "prefetch";
-		link.as = "image";
-		link.href = primaryImage.url;
-		document.head.appendChild(link);
-	};
-
-	const updateCombo = (comboKey: string | null) => {
+	const updateColor = (colorSlug: string | null) => {
 		triggerHaptic("selection");
 		startTransition(() => {
-			setOptimisticCombo(comboKey);
+			setOptimisticColor(colorSlug);
 			const params = new URLSearchParams(searchParams.toString());
-			if (comboKey) {
-				params.set("variant", comboKey);
+			if (colorSlug) {
+				params.set("color", colorSlug);
 			} else {
-				params.delete("variant");
+				params.delete("color");
 			}
-			// Toujours nettoyer l'ancien ?color= pour éviter une double source de vérité
-			params.delete("color");
 			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
 		});
 	};
 
 	const { containerRef, handleKeyDown, getTabIndex } = useRadioGroupKeyboard({
-		options: combos,
-		getOptionId: (combo) => combo.comboKey,
+		options: colors,
+		getOptionId: (color) => color.slug ?? color.id,
 		// Pas de gate `isOptionDisabled` ici : on laisse le focus traverser les
 		// options indisponibles pour qu'elles soient annoncées par les lecteurs
 		// d'écran (cf. WCAG 1.3.1). La mutation d'URL reste bloquée par le guard
-		// `isComboAvailable` ci-dessous + le no-op `onClick` côté bouton.
-		//
-		// ⚠️ Cette traversée n'a RIEN FAIT jusqu'au 2026-08-05 : `focusOption`
-		// excluait `[aria-disabled="true"]` de sa requête, donc la flèche vers une
-		// plaquette « épuisée » ne déplaçait pas le focus — un cul-de-sac muet, et
-		// ce commentaire décrivait l'inverse du comportement réel.
-		onSelect: (combo) => {
-			if (isComboAvailable(combo.comboKey)) updateCombo(combo.comboKey);
+		// `isColorAvailable` ci-dessous + le no-op `onClick` côté bouton.
+		onSelect: (color) => {
+			const slug = color.slug ?? color.id;
+			if (isColorAvailable(slug)) updateColor(slug);
 		},
 		// Le groupe est UN seul arrêt de tabulation (ARIA APG) : les plaquettes
 		// épuisées se rejoignent aux flèches, pas au TAB.
-		activeOptionId: optimisticCombo,
+		activeOptionId: optimisticColor,
 	});
 
-	if (combos.length === 0) {
+	if (colors.length === 0) {
 		return (
 			<div role="status" className="sr-only">
 				Aucune couleur disponible
@@ -148,7 +114,7 @@ function ColorSelectorInner({
 		);
 	}
 
-	const currentLabel = combos.find((c) => c.comboKey === optimisticCombo)?.label ?? null;
+	const currentLabel = colors.find((c) => (c.slug ?? c.id) === optimisticColor)?.name ?? null;
 
 	return (
 		<fieldset
@@ -166,13 +132,13 @@ function ColorSelectorInner({
 						<span className="text-muted-foreground ml-1 font-normal">: {currentLabel}</span>
 					)}
 				</legend>
-				{optimisticCombo && (
+				{optimisticColor && (
 					<Button
 						variant="ghost"
 						size="sm"
 						aria-busy={isPending || undefined}
 						className="text-muted-foreground text-xs/5 tracking-normal antialiased aria-busy:opacity-70"
-						onClick={() => updateCombo(null)}
+						onClick={() => updateColor(null)}
 						type="button"
 					>
 						Réinitialiser
@@ -180,10 +146,8 @@ function ColorSelectorInner({
 				)}
 			</div>
 			{/* Le nuancier : on voit la couleur AVANT de lire son nom.
-			    Les pastilles de 28 px montraient une teinte trop petite pour être jugée
-			    sur une boutique dont le positionnement EST la couleur — a fortiori pour
-			    un dégradé bicolore. La plaquette de 88 × 56 donne un aplat franc, le nom
-			    dessous, et la sélection est tenue par l'anneau d'encre.
+			    La plaquette de 88 × 56 donne un aplat franc, le nom dessous, et la
+			    sélection est tenue par l'anneau d'encre.
 			    La cible tactile fait ≈ 88 × 84, très au-dessus des 44 px requis. */}
 			<div
 				ref={containerRef}
@@ -191,34 +155,28 @@ function ColorSelectorInner({
 				aria-labelledby={legendId}
 				className="flex flex-wrap gap-2.5"
 			>
-				{combos.map((combo, index) => {
-					const isSelected = combo.comboKey === optimisticCombo;
-					const isAvailable = isComboAvailable(combo.comboKey);
-					const allLight = areAllColorsLight(combo.hexes, (hex) => isLightColor(hex, 0.85));
+				{colors.map((color, index) => {
+					const slug = color.slug ?? color.id;
+					const isSelected = slug === optimisticColor;
+					const isAvailable = isColorAvailable(slug);
+					const hexes = color.hex ? [color.hex] : [];
+					const allLight = color.hex ? isLightColor(color.hex, 0.85) : false;
 
 					return (
 						<button
-							key={combo.comboKey}
+							key={slug}
 							type="button"
 							role="radio"
 							aria-checked={isSelected}
 							aria-disabled={!isAvailable}
-							aria-label={`${combo.ariaLabel}${!isAvailable ? " (indisponible)" : ""}`}
-							data-option-id={combo.comboKey}
-							tabIndex={getTabIndex(combo, index)}
+							aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
+							data-option-id={slug}
+							tabIndex={getTabIndex(color, index)}
 							onClick={() => {
 								if (!isAvailable) return;
-								updateCombo(combo.comboKey);
+								updateColor(slug);
 							}}
 							onKeyDown={(e) => handleKeyDown(e, index)}
-							onPointerEnter={(e) => {
-								// Ignorer les pointeurs tactiles : `onPointerEnter` est déclenché
-								// au premier touch en mobile (spec Pointer Events) → un simple
-								// scroll par-dessus la grille générerait des prefetch inutiles.
-								if (e.pointerType !== "mouse") return;
-								if (!isAvailable || isSelected) return;
-								prefetchComboImage(combo.comboKey);
-							}}
 							className={cn(
 								// `flex` : les plaquettes sont des items d'une rangée flex, donc
 								// étirées à la hauteur de la plus haute (celle qui porte « épuisée »
@@ -243,16 +201,16 @@ function ColorSelectorInner({
 								<span
 									className={cn("block h-14", allLight && "ring-border/40 ring-1 ring-inset")}
 									style={{
-										...buildSwatchStyle(combo.hexes),
+										...buildSwatchStyle(hexes),
 										// View Transition : morphing depuis la pastille de la ProductCard
-										// (même comboKey) vers cette plaquette au moment du navigate.
-										viewTransitionName: `variant-pill-${combo.comboKey}`,
+										// (même slug) vers cette plaquette au moment du navigate.
+										viewTransitionName: `variant-pill-${slug}`,
 									}}
 									aria-hidden="true"
 								/>
 								<span className="bg-card block grow px-2 py-1.5">
 									<span className="block text-xs/4 font-medium tracking-normal antialiased">
-										{combo.label}
+										{color.name}
 									</span>
 									{!isAvailable && (
 										<span className="text-muted-foreground text-2xs/4 block tracking-normal antialiased">

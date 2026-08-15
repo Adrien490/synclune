@@ -1,12 +1,9 @@
 "use client";
 
-import { format, formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
 import { DotsThreeIcon, PencilSimpleIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 
-import { PublicationStatus } from "@/app/generated/prisma/enums";
-import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
+import { collectionStatusLabel } from "@/modules/collections/constants/collection-status.constants";
 import { useCollectionActions } from "@/modules/collections/hooks/use-collection-actions";
 import type { GetCollectionReturn } from "@/modules/collections/types/collection.types";
 import {
@@ -24,12 +21,6 @@ interface CollectionDetailHeaderProps {
 	collection: GetCollectionReturn;
 }
 
-const STATUS_VARIANTS: Record<PublicationStatus, "default" | "secondary" | "outline"> = {
-	[PublicationStatus.PUBLIC]: "default",
-	[PublicationStatus.DRAFT]: "secondary",
-	[PublicationStatus.ARCHIVED]: "outline",
-};
-
 export function CollectionDetailHeader({ collection }: CollectionDetailHeaderProps) {
 	const haptic = useHaptic();
 	const { sections } = useCollectionActions({
@@ -37,7 +28,7 @@ export function CollectionDetailHeader({ collection }: CollectionDetailHeaderPro
 		collectionName: collection.name,
 		collectionSlug: collection.slug,
 		collectionDescription: collection.description,
-		collectionStatus: collection.status,
+		collectionActive: collection.active,
 		productsCount: collection.products.length,
 	});
 
@@ -47,27 +38,15 @@ export function CollectionDetailHeader({ collection }: CollectionDetailHeaderPro
 				<h1 className="font-display text-foreground text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
 					{collection.name}
 				</h1>
-				<div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs md:hidden">
+				<div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
 					<Badge
-						variant={STATUS_VARIANTS[collection.status]}
+						variant={collection.active ? "default" : "secondary"}
 						className="shrink-0"
 						style={{ viewTransitionName: `collection-status-${collection.id}` }}
 					>
-						{COLLECTION_STATUS_LABELS[collection.status]}
+						{collectionStatusLabel(collection.active)}
 					</Badge>
-					<span aria-hidden="true">·</span>
-					<span className="truncate">
-						Créée {formatDistanceToNow(collection.createdAt, { addSuffix: true, locale: fr })}
-					</span>
 				</div>
-				<p className="text-muted-foreground mt-1 hidden text-sm md:block">
-					Créée le {format(collection.createdAt, "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
-					<span className="text-muted-foreground">
-						{" "}
-						(mise à jour{" "}
-						{formatDistanceToNow(collection.updatedAt, { addSuffix: true, locale: fr })})
-					</span>
-				</p>
 			</div>
 
 			<DetailStickyActionBar>

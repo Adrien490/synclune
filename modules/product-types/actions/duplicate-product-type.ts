@@ -2,7 +2,6 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import {
 	validateInput,
@@ -13,7 +12,6 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
@@ -24,11 +22,8 @@ import { duplicateProductTypeSchema } from "../schemas/product-type.schemas";
 /**
  * Server Action pour dupliquer un ProductType
  *
- * Creee une copie avec:
- * - Un nouveau label ("Original (copie)" ou "Original (copie N)")
- * - Un nouveau slug auto-genere
- * - isActive: false (draft par defaut, evite l'activation accidentelle)
- * - isSystem: false (une copie n'est jamais un type systeme)
+ * Creee une copie avec un nouveau label ("Original (copie)" ou
+ * "Original (copie N)") et un nouveau slug auto-genere.
  */
 export async function duplicateProductType(
 	_prevState: ActionState | undefined,
@@ -37,8 +32,6 @@ export async function duplicateProductType(
 	try {
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.DUPLICATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
 			productTypeId: safeFormGet(formData, "productTypeId"),
@@ -74,9 +67,6 @@ export async function duplicateProductType(
 			data: {
 				label: newLabel,
 				slug,
-				description: original.description,
-				isActive: false,
-				isSystem: false,
 			},
 		});
 
@@ -84,8 +74,7 @@ export async function duplicateProductType(
 
 		return success(`Type "${duplicate.label}" dupliqué`, {
 			id: duplicate.id,
-			label: duplicate.label,
-			slug: duplicate.slug,
+			name: duplicate.label,
 		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer le type de produit");

@@ -37,12 +37,12 @@ const MAX_COLOR_SWATCHES = 3;
  */
 export function SearchResultItem({ product, query, onSelect }: SearchResultItemProps) {
 	const router = useRouter();
-	// Représentant = rang 0 : QUICK_SEARCH_SELECT livre les SKUs triés par (position, id)
-	const defaultSku = product.skus[0];
-	if (!defaultSku) return null;
+	// Représentant = rang 0 : QUICK_SEARCH_SELECT livre les VARIANTs triés par (position, id)
+	const defaultVariant = product.variants[0];
+	if (!defaultVariant) return null;
 
-	const image = defaultSku.images[0];
-	const isOutOfStock = product.skus.every((s) => s.inventory <= 0);
+	const image = product.media[0];
+	const isOutOfStock = product.variants.every((s) => s.stock <= 0);
 	const href = `/creations/${product.slug}`;
 
 	// Expand query words with synonyms for highlighting
@@ -52,16 +52,14 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 		.filter(Boolean)
 		.flatMap((word) => SEARCH_SYNONYMS.get(word.toLowerCase()) ?? []);
 
-	// Collect unique colors (M2M : aplatit toutes les couleurs des SKUs)
+	// Couleurs uniques des variantes (schéma lean : une couleur par variante)
 	const seen = new Set<string>();
-	type SwatchEntry = { slug: string; name: string; hex: string };
-	const colors = product.skus.reduce<SwatchEntry[]>((acc, s) => {
-		for (const link of s.colors) {
-			const c = link.color;
-			if (!seen.has(c.slug)) {
-				seen.add(c.slug);
-				acc.push(c);
-			}
+	type SwatchEntry = { name: string; hex: string | null };
+	const colors = product.variants.reduce<SwatchEntry[]>((acc, v) => {
+		const c = v.color;
+		if (c && !seen.has(c.name)) {
+			seen.add(c.name);
+			acc.push(c);
 		}
 		return acc;
 	}, []);
@@ -70,10 +68,8 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 	// nomme toutes. Plus de compteur « +N » : il comptait un reste qui n'est plus
 	// caché nulle part.
 	const shownColors = colors.slice(0, MAX_COLOR_SWATCHES);
-	const tintBarIsPale = areAllColorsLight(
-		shownColors.map((c) => c.hex),
-		(hex) => isLightColor(hex, 0.85),
-	);
+	const shownHexes = shownColors.map((c) => c.hex).filter((h): h is string => Boolean(h));
+	const tintBarIsPale = areAllColorsLight(shownHexes, (hex) => isLightColor(hex, 0.85));
 
 	const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
 		// Let the browser handle modifier clicks (new tab, etc.)
@@ -142,7 +138,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 								// helper que les pastilles de `ProductCard`.
 								tintBarIsPale ? "ring-border" : "ring-black/10",
 							)}
-							style={buildTintBarStyle(shownColors.map((c) => c.hex))}
+							style={buildTintBarStyle(shownHexes)}
 						/>
 					)}
 
@@ -154,14 +150,13 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 						{image ? (
 							<Image
 								src={image.url}
-								alt={image.altText ?? product.title}
+								alt={image.alt ?? product.name}
 								width={48}
 								height={48}
 								sizes="48px"
 								quality={IMAGE_QUALITY.THUMBNAIL}
 								className="size-full object-cover transition-transform duration-200 group-hover/result:scale-110"
-								placeholder={image.blurDataUrl ? "blur" : "empty"}
-								blurDataURL={image.blurDataUrl ?? undefined}
+								placeholder="empty"
 							/>
 						) : (
 							<div className="bg-muted size-full" />
@@ -172,12 +167,12 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				{/* Content */}
 				<div className="min-w-0 flex-1">
 					<p className="truncate text-sm font-medium">
-						<HighlightMatch text={product.title} query={query} synonyms={synonymTerms} />
+						<HighlightMatch text={product.name} query={query} synonyms={synonymTerms} />
 					</p>
 					<div className="mt-0.5 flex items-center gap-2 overflow-hidden">
 						{/* Price — pas de prix barré/remise (retrait Omnibus 2026-08-08, cf. ProductPrice) */}
 						<span className="text-muted-foreground shrink-0 text-sm">
-							{formatEuro(defaultSku.priceInclTax)}
+							{formatEuro(defaultVariant.priceCents ?? product.priceCents)}
 						</span>
 
 						{/* Out of stock badge */}

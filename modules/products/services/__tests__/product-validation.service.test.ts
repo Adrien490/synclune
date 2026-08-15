@@ -6,16 +6,17 @@ import {
 } from "../product-validation.service";
 
 describe("validateProductForPublication", () => {
+	// Schéma lean : le média vit sur le PRODUIT (plus sur la variante).
 	const validProduct = {
-		title: "Bague Lune",
-		skus: [
+		name: "Bague Lune",
+		variants: [
 			{
-				id: "sku-1",
-				isActive: true,
-				inventory: 5,
-				images: [{ mediaType: "IMAGE" }],
+				id: "variant-1",
+				active: true,
+				stock: 5,
 			},
 		],
+		media: [{ type: "IMAGE" }],
 	};
 
 	it("should return valid for a complete product", () => {
@@ -23,115 +24,105 @@ describe("validateProductForPublication", () => {
 		expect(result).toEqual({ isValid: true, errorMessage: null });
 	});
 
-	it("should reject product with empty title", () => {
-		const result = validateProductForPublication({ ...validProduct, title: "" });
+	it("should reject product with empty name", () => {
+		const result = validateProductForPublication({ ...validProduct, name: "" });
 		expect(result.isValid).toBe(false);
-		expect(result.errorMessage).toContain("titre");
+		expect(result.errorMessage).toContain("nom");
 	});
 
-	it("should reject product with whitespace-only title", () => {
-		const result = validateProductForPublication({ ...validProduct, title: "   " });
+	it("should reject product with whitespace-only name", () => {
+		const result = validateProductForPublication({ ...validProduct, name: "   " });
 		expect(result.isValid).toBe(false);
-		expect(result.errorMessage).toContain("titre");
+		expect(result.errorMessage).toContain("nom");
 	});
 
-	it("should reject product with no active SKUs", () => {
+	it("should reject product with no active variants", () => {
 		const result = validateProductForPublication({
 			...validProduct,
-			skus: [{ id: "sku-1", isActive: false, inventory: 5, images: [{ mediaType: "IMAGE" }] }],
+			variants: [{ id: "variant-1", active: false, stock: 5 }],
 		});
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("variante active");
 	});
 
-	it("should reject product with empty SKUs array", () => {
-		const result = validateProductForPublication({ ...validProduct, skus: [] });
+	it("should reject product with empty variants array", () => {
+		const result = validateProductForPublication({ ...validProduct, variants: [] });
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("variante active");
 	});
 
-	it("should reject product with no stock on active SKUs", () => {
+	it("should reject product with no stock on active variants", () => {
 		const result = validateProductForPublication({
 			...validProduct,
-			skus: [{ id: "sku-1", isActive: true, inventory: 0, images: [{ mediaType: "IMAGE" }] }],
+			variants: [{ id: "variant-1", active: true, stock: 0 }],
 		});
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("stock");
 	});
 
-	it("should reject product with no images on active SKUs", () => {
-		const result = validateProductForPublication({
-			...validProduct,
-			skus: [{ id: "sku-1", isActive: true, inventory: 5, images: [] }],
-		});
+	it("should reject product with no media", () => {
+		const result = validateProductForPublication({ ...validProduct, media: [] });
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("image");
 	});
 
-	it("should only consider active SKUs for stock check", () => {
+	it("should only consider active variants for stock check", () => {
 		const result = validateProductForPublication({
 			...validProduct,
-			skus: [
-				{ id: "sku-1", isActive: false, inventory: 10, images: [{ mediaType: "IMAGE" }] },
-				{ id: "sku-2", isActive: true, inventory: 3, images: [{ mediaType: "IMAGE" }] },
+			variants: [
+				{ id: "variant-1", active: false, stock: 10 },
+				{ id: "variant-2", active: true, stock: 3 },
 			],
 		});
 		expect(result.isValid).toBe(true);
 	});
 
 	// MEDIA-AUDIT-002 : une video ne compte pas comme image principale.
-	it("should reject an active SKU whose only media is a video", () => {
+	it("should reject a product whose only media is a video", () => {
 		const result = validateProductForPublication({
 			...validProduct,
-			skus: [{ id: "sku-1", isActive: true, inventory: 5, images: [{ mediaType: "VIDEO" }] }],
+			media: [{ type: "VIDEO" }],
 		});
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("image");
 	});
 
-	// MEDIA-AUDIT-002 : un SKU avec video + image reste publiable (l'image suffit).
-	it("should accept an active SKU mixing a video and an image", () => {
+	// MEDIA-AUDIT-002 : un produit avec video + image reste publiable (l'image suffit).
+	it("should accept a product mixing a video and an image", () => {
 		const result = validateProductForPublication({
 			...validProduct,
-			skus: [
-				{
-					id: "sku-1",
-					isActive: true,
-					inventory: 5,
-					images: [{ mediaType: "VIDEO" }, { mediaType: "IMAGE" }],
-				},
-			],
+			media: [{ type: "VIDEO" }, { type: "IMAGE" }],
 		});
 		expect(result.isValid).toBe(true);
 	});
 });
 
 describe("validatePublicProductCreation", () => {
-	it("should return valid for active SKU with stock", () => {
-		const result = validatePublicProductCreation({ isActive: true, inventory: 5 });
+	it("should return valid for active variant with stock", () => {
+		const result = validatePublicProductCreation({ active: true, stock: 5 });
 		expect(result).toEqual({ isValid: true, errorMessage: null });
 	});
 
-	it("should reject inactive SKU", () => {
-		const result = validatePublicProductCreation({ isActive: false, inventory: 5 });
+	it("should reject inactive variant", () => {
+		const result = validatePublicProductCreation({ active: false, stock: 5 });
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("variante inactive");
 	});
 
-	it("should reject SKU with zero inventory", () => {
-		const result = validatePublicProductCreation({ isActive: true, inventory: 0 });
+	it("should reject variant with zero stock", () => {
+		const result = validatePublicProductCreation({ active: true, stock: 0 });
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("stock");
 	});
 
-	it("should reject SKU with negative inventory", () => {
-		const result = validatePublicProductCreation({ isActive: true, inventory: -1 });
+	it("should reject variant with negative stock", () => {
+		const result = validatePublicProductCreation({ active: true, stock: -1 });
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("stock");
 	});
 
-	it("should check isActive before inventory", () => {
-		const result = validatePublicProductCreation({ isActive: false, inventory: 0 });
+	it("should check active before stock", () => {
+		const result = validatePublicProductCreation({ active: false, stock: 0 });
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("variante inactive");
 	});

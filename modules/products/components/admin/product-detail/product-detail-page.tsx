@@ -4,7 +4,7 @@ import { ProductDetailCollectionsCard } from "./product-detail-collections-card"
 import { ProductDetailHeader } from "./product-detail-header";
 import { ProductDetailInfoCard } from "./product-detail-info-card";
 import { ProductDetailMediaCard } from "./product-detail-media-card";
-import { ProductDetailSkusSummaryCard } from "./product-detail-skus-summary-card";
+import { ProductDetailVariantsSummaryCard } from "./product-detail-variants-summary-card";
 import { ProductDetailStorefrontLinkCard } from "./product-detail-storefront-link-card";
 
 interface ProductDetailPageProps {
@@ -32,8 +32,8 @@ export function ProductDetailPage({ product }: ProductDetailPageProps) {
 				</div>
 
 				<div className="space-y-6">
-					<ProductDetailStorefrontLinkCard slug={product.slug} status={product.status} />
-					<ProductDetailSkusSummaryCard product={product} />
+					<ProductDetailStorefrontLinkCard slug={product.slug} active={product.active} />
+					<ProductDetailVariantsSummaryCard product={product} />
 					<ProductDetailCollectionsCard collections={product.collections} />
 				</div>
 			</div>

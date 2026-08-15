@@ -1,13 +1,9 @@
-import { type PublicationStatus } from "@/app/generated/prisma/client";
-
-// ============================================================================
-// FUNCTION TYPES
-// ============================================================================
-
+/**
+ * Compteurs de produits par statut — schéma lean : booléen `active`.
+ */
 export type ProductCountsByStatus = {
-	[PublicationStatus.PUBLIC]: number;
-	[PublicationStatus.DRAFT]: number;
-	[PublicationStatus.ARCHIVED]: number;
+	active: number;
+	draft: number;
 };
 
 export type GetProductCountsByStatusReturn = ProductCountsByStatus;

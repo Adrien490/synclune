@@ -65,7 +65,7 @@ export function hasAnalyticsConsent(): boolean {
  *
  * No-op si : exécuté côté serveur, consentement non accordé, ou aucun provider
  * branché (sink par défaut). Le contrat reste stable pour les call sites :
- *   trackEvent(FUNNEL_EVENTS.ADD_TO_CART, { skuId, productId, quantity, value })
+ *   trackEvent(FUNNEL_EVENTS.ADD_TO_CART, { variantId, productId, quantity, value })
  *   trackEvent(FUNNEL_EVENTS.PURCHASE, { orderNumber, value, currency: "EUR" })
  */
 export function trackEvent(name: FunnelEvent | string, properties?: EventProperties): void {

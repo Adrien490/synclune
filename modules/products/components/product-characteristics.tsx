@@ -1,7 +1,7 @@
-import type { ProductSku } from "@/modules/products/types/product.types";
+import type { ProductVariant } from "@/modules/products/types/product.types";
 
 interface ProductCharacteristicsProps {
-	selectedSku?: ProductSku | null;
+	selectedVariant?: ProductVariant | null;
 }
 
 /**
@@ -19,11 +19,11 @@ interface ProductCharacteristicsProps {
  * plutôt que dans un conteneur chez l'appelant : un wrapper rendu autour d'un
  * enfant nul laisserait une case vide et un filet orphelin dans la fiche.
  */
-export function ProductCharacteristics({ selectedSku }: ProductCharacteristicsProps) {
-	const sizeInfo = selectedSku?.size
+export function ProductCharacteristics({ selectedVariant }: ProductCharacteristicsProps) {
+	const sizeInfo = selectedVariant?.size
 		? {
-				size: selectedSku.size,
-				isAdjustable: selectedSku.size.toLowerCase().includes("ajustable"),
+				size: selectedVariant.size,
+				isAdjustable: selectedVariant.size.toLowerCase().includes("ajustable"),
 			}
 		: null;
 

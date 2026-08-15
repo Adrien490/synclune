@@ -48,7 +48,7 @@ export function ProductInfo({ product, isInWishlist }: ProductInfoProps) {
 				    consommateur. Le nom du produit est porté par le JSON-LD
 				    (`generateStructuredData`, `Product.name`). */}
 				<h1 className="font-display text-foreground text-3xl/10 font-normal tracking-tight text-balance sm:text-4xl/12">
-					{product.title}
+					{product.name}
 				</h1>
 
 				<p className="text-muted-foreground flex items-center gap-1.5 text-xs sm:text-sm">
@@ -59,13 +59,13 @@ export function ProductInfo({ product, isInWishlist }: ProductInfoProps) {
 
 			<div className="flex shrink-0 items-center gap-1">
 				<ShareButton
-					title={product.title}
-					text={`Découvre ${product.title} sur Synclune`}
+					title={product.name}
+					text={`Découvre ${product.name} sur Synclune`}
 					url={`/creations/${product.slug}`}
 					size="lg"
 				/>
 				<WishlistButton
-					productTitle={product.title}
+					productTitle={product.name}
 					productId={product.id}
 					isInWishlist={isInWishlist ?? false}
 					size="lg"

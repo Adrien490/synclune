@@ -16,7 +16,7 @@ import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { useState } from "react";
 
 /**
- * SSOT partagée avec le schéma Zod (`imageSchema.altText`) — audit média M3 :
+ * SSOT partagée avec le schéma Zod (`imageSchema.alt`) — audit média M3 :
  * le dialogue bloquait à 250 alors que Zod rejette au-delà de 200, si bien qu'une
  * description de 220 caractères affichait « Description mise à jour » puis faisait
  * échouer la soumission du formulaire produit entier, sur une erreur portant sur
@@ -28,20 +28,20 @@ interface EditAltTextDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	currentAltText: string | undefined;
-	mediaType: "IMAGE" | "VIDEO";
+	type: "IMAGE" | "VIDEO";
 	index: number;
-	onSave: (altText: string) => void;
+	onSave: (alt: string) => void;
 }
 
 export function EditAltTextDialog({
 	open,
 	onOpenChange,
 	currentAltText,
-	mediaType,
+	type,
 	index,
 	onSave,
 }: EditAltTextDialogProps) {
-	const isVideo = mediaType === "VIDEO";
+	const isVideo = type === "VIDEO";
 
 	return (
 		<ResponsiveDialog open={open} onOpenChange={onOpenChange}>

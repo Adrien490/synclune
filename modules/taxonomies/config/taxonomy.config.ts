@@ -16,14 +16,9 @@ import type { TaxonomyConfig, TaxonomyKind } from "../types/taxonomy.types";
 /**
  * Registre des taxonomies catalogue.
  *
- * Tout ce qui distingue réellement une couleur d'un matériau ou d'un type de
- * bijou est ici, en données. Les composants et hooks génériques du module lisent
- * ce registre — ils n'ont aucune connaissance des entités concrètes.
- *
- * Les libellés de tri restent per-kind : ce ne sont pas des variantes du même
- * texte mais des jeux d'options réellement différents (les matériaux trient
- * aussi par date de création, les types comptent des produits et non des
- * variantes).
+ * Tout ce qui distingue réellement une couleur d'un matériau est ici, en
+ * données. Les composants et hooks génériques du module lisent ce registre —
+ * ils n'ont aucune connaissance des entités concrètes.
  */
 export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 	color: {
@@ -44,7 +39,7 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		sortLabels: COLORS_SORT_LABELS,
 		defaultSort: GET_COLORS_DEFAULT_SORT_BY,
 		drawerNamespace: "colors",
-		formFields: { duplicateId: "colorId", toggleId: "id", deleteId: "id" },
+		formFields: { duplicateId: "colorId", deleteId: "id" },
 		createButtonLabel: "Créer une couleur",
 		createAriaLabel: "Créer une nouvelle couleur",
 		search: {
@@ -52,7 +47,6 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 			ariaLabel: "Rechercher une teinte de l'atelier",
 		},
 		hasHex: true,
-		hasSystemFlag: false,
 	},
 	material: {
 		kind: "material",
@@ -72,7 +66,7 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		sortLabels: MATERIALS_SORT_LABELS,
 		defaultSort: GET_MATERIALS_DEFAULT_SORT_BY,
 		drawerNamespace: "materials",
-		formFields: { duplicateId: "materialId", toggleId: "id", deleteId: "id" },
+		formFields: { duplicateId: "materialId", deleteId: "id" },
 		createButtonLabel: "Créer un matériau",
 		createAriaLabel: "Créer un nouveau matériau",
 		search: {
@@ -80,7 +74,6 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 			ariaLabel: "Rechercher une matière à l'atelier",
 		},
 		hasHex: false,
-		hasSystemFlag: false,
 	},
 	"product-type": {
 		kind: "product-type",
@@ -102,7 +95,6 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		drawerNamespace: "product-types",
 		formFields: {
 			duplicateId: "productTypeId",
-			toggleId: "productTypeId",
 			deleteId: "productTypeId",
 		},
 		createButtonLabel: "Créer un type",
@@ -113,7 +105,6 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		},
 		deleteDialogTitle: "Supprimer ce type de bijou ?",
 		hasHex: false,
-		hasSystemFlag: true,
 	},
 } as const;
 

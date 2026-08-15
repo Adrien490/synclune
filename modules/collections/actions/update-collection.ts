@@ -1,12 +1,10 @@
 "use server";
 
-import { PublicationStatus, Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -22,15 +20,13 @@ export async function updateCollection(
 		// 1. Admin auth check
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extract and validate data
 		const validated = validateInput(updateCollectionSchema, {
 			id: formData.get("id"),
 			name: formData.get("name"),
 			description: formData.get("description") ?? null,
-			status: formData.get("status"),
+			active: formData.get("active"),
 		});
 		if ("error" in validated) return validated.error;
 
@@ -65,10 +61,10 @@ export async function updateCollection(
 			}
 
 			// Generer un nouveau slug si le nom a change.
-			// Une collection PUBLIC ne peut pas etre renommee : changer le slug
+			// Une collection publiée ne peut pas etre renommee : changer le slug
 			// casserait le SEO (backlinks indexes Google) sans 301 redirect.
 			const slugChanged = sanitizedName !== existingCollection.name;
-			if (slugChanged && existingCollection.status === PublicationStatus.PUBLIC) {
+			if (slugChanged && existingCollection.active) {
 				throw new Error("PUBLIC_RENAME_BLOCKED");
 			}
 			// `excludeId` : sans lui, un rename cosmétique (casse/accent) retrouvait
@@ -86,7 +82,7 @@ export async function updateCollection(
 					name: sanitizedName,
 					slug: generatedSlug,
 					description: sanitizedDescription,
-					status: validatedData.status,
+					active: validatedData.active,
 				},
 			});
 

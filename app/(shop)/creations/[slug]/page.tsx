@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
-import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
+import { findVariantBySelectors } from "@/modules/variants/services/variant-finder.service";
+import { filterCompatibleVariants } from "@/modules/variants/services/variant-filter.service";
 import {
 	extractVariantInfo,
 	requiresSizeSelection,
-} from "@/modules/skus/services/sku-info-extraction.service";
+} from "@/modules/variants/services/variant-info-extraction.service";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
 import { BreadcrumbNav } from "@/shared/components/breadcrumb-nav";
@@ -67,20 +67,15 @@ export default async function ProductPage({
 		notFound();
 	}
 
-	// Sécurité: Bloquer les DRAFT pour les non-admins
-	if (product.status === "DRAFT" && !admin) {
-		notFound();
-	}
-
-	// Bloquer les ARCHIVED pour tous (même admins sur le site public)
-	if (product.status === "ARCHIVED") {
+	// Sécurité: Bloquer les brouillons pour les non-admins
+	if (!product.active && !admin) {
 		notFound();
 	}
 
 	// Préparer les variants depuis searchParams.
 	// `variant` (combo M2M) prime sur `color` legacy — matchColor applique colorCombo
 	// en priorité (set égalité strict). Sans ce champ, un deep-link `?variant=` rendrait
-	// le SKU par défaut côté serveur (flash de couleur à l'hydratation).
+	// le VARIANT par défaut côté serveur (flash de couleur à l'hydratation).
 	const urlVariants = {
 		colorCombo: urlParams.variant,
 		colorSlug: urlParams.color,
@@ -88,30 +83,31 @@ export default async function ProductPage({
 		size: urlParams.size,
 	};
 
-	// Vérifier que le produit a au moins un SKU actif
-	if (product.skus.length === 0) {
+	// Vérifier que le produit a au moins un VARIANT actif
+	if (product.variants.length === 0) {
 		notFound();
 	}
 
-	// Calcul du SKU sélectionné depuis les paramètres URL
-	// Par défaut : product.skus[0] — le représentant (V5 : listes pré-triées
+	// Calcul du VARIANT sélectionné depuis les paramètres URL
+	// Par défaut : product.variants[0] — le représentant (V5 : listes pré-triées
 	// `(position asc, id asc)`, rang 0 = représentant)
-	let selectedSku = product.skus[0]!;
+	let selectedVariant = product.variants[0]!;
 
 	if (Object.values(urlVariants).some((v) => v)) {
-		// Cast: findSkuByVariants retourne BaseProductSku (forme minimale partagée
-		// avec les services skus), mais l'objet sous-jacent est bien product.skus[N]
+		// Cast: findVariantBySelectors retourne BaseProductVariant (forme minimale partagée
+		// avec les services variants), mais l'objet sous-jacent est bien product.variants[N]
 		// qui inclut Color.description + Material.description via GET_PRODUCT_SELECT.
-		const exactSku = findSkuByVariants(product, urlVariants) as typeof selectedSku | null;
-		if (exactSku) {
-			selectedSku = exactSku;
+		const exactVariant = findVariantBySelectors(product, urlVariants) as
+			typeof selectedVariant | null;
+		if (exactVariant) {
+			selectedVariant = exactVariant;
 		} else {
-			// Sinon, prendre le premier SKU compatible
-			const compatibleSkus = filterCompatibleSkus(product, urlVariants) as Array<
-				typeof selectedSku
+			// Sinon, prendre le premier VARIANT compatible
+			const compatibleVariants = filterCompatibleVariants(product, urlVariants) as Array<
+				typeof selectedVariant
 			>;
-			if (compatibleSkus.length > 0) {
-				selectedSku = compatibleSkus[0]!;
+			if (compatibleVariants.length > 0) {
+				selectedVariant = compatibleVariants[0]!;
 			}
 		}
 	}
@@ -122,13 +118,13 @@ export default async function ProductPage({
 		...(product.type
 			? [{ label: product.type.label, href: `/produits/${product.type.slug}` }]
 			: []),
-		{ label: product.title, href: `/creations/${product.slug}` },
+		{ label: product.name, href: `/creations/${product.slug}` },
 	];
 
 	// Génération du structured data JSON-LD
 	const structuredData = generateStructuredData({
 		product,
-		selectedSku,
+		selectedVariant,
 		priceValidUntil,
 	});
 
@@ -137,15 +133,15 @@ export default async function ProductPage({
 
 	// Réserves EXACTES du squelette de la colonne d'achat. Le produit est déjà
 	// résolu ici, donc on n'a pas à deviner : les mêmes prédicats que
-	// `VariantSelector` (carte affichée si > 1 SKU ; axe secondaire si plusieurs
+	// `VariantSelector` (carte affichée si > 1 VARIANT ; axe secondaire si plusieurs
 	// matériaux, ou si une taille est requise). Sans ça le squelette dessinait
 	// toujours une carte à trois plaquettes plus un axe secondaire — sur une fiche
-	// mono-SKU, ~250 px réservés pour rien, que le contenu remontait au swap.
+	// mono-VARIANT, ~250 px réservés pour rien, que le contenu remontait au swap.
 	const variantInfo = extractVariantInfo(product);
 	const hasSecondaryAxis =
 		variantInfo.availableMaterials.length > 1 ||
 		(requiresSizeSelection(product, variantInfo) && variantInfo.availableSizes.length > 0);
-	const skeletonVariantAxisCount = product.skus.length > 1 ? (hasSecondaryAxis ? 2 : 1) : 0;
+	const skeletonVariantAxisCount = product.variants.length > 1 ? (hasSecondaryAxis ? 2 : 1) : 0;
 
 	return (
 		<div className="relative min-h-dvh">
@@ -153,7 +149,7 @@ export default async function ProductPage({
 			<ViewItemTracker
 				productId={product.id}
 				slug={product.slug}
-				priceCents={selectedSku.priceInclTax}
+				priceCents={selectedVariant.priceCents ?? product.priceCents}
 			/>
 
 			{/* Structured Data JSON-LD pour SEO — SAFE: serialized via safeJsonLd */}
@@ -186,7 +182,7 @@ export default async function ProductPage({
 								fallback={
 									<ProductMainSkeleton
 										variantAxisCount={skeletonVariantAxisCount}
-										swatchCount={Math.max(1, variantInfo.availableCombos.length)}
+										swatchCount={Math.max(1, variantInfo.availableColors.length)}
 									/>
 								}
 							>
@@ -199,7 +195,7 @@ export default async function ProductPage({
 									    rendait alors irrécupérables au scroll. La variable vaut 0 tant que
 									    la barre est absente, donc l'offset nu reste le cas nominal. */}
 									<section className="lg:sticky lg:top-[calc(var(--navbar-height)+var(--pdp-cta-bar-height,0px))] lg:z-10 lg:h-fit lg:max-h-[calc(100dvh-6rem-var(--pdp-cta-bar-height,0px))] lg:overflow-hidden">
-										<Gallery product={product} title={product.title} />
+										<Gallery product={product} title={product.name} />
 									</section>
 
 									{/* Informations et configurateur scrollables */}
@@ -208,13 +204,13 @@ export default async function ProductPage({
 										<ProductInfo product={product} isInWishlist={isInWishlist} />
 
 										{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
-										{/* Composant client qui synchronise le SKU avec les paramètres URL.
+										{/* Composant client qui synchronise le VARIANT avec les paramètres URL.
 										    `deliveryEstimate` est monté ICI, côté serveur : il lit l'horloge,
 										    ce qu'un composant client ne peut pas faire de façon déterministe
 										    entre le SSR et l'hydratation. */}
 										<ProductDetails
 											product={product}
-											defaultSku={selectedSku}
+											defaultVariant={selectedVariant}
 											deliveryEstimate={<DeliveryEstimator />}
 										/>
 									</section>
@@ -222,7 +218,7 @@ export default async function ProductPage({
 							</Suspense>
 
 							{/* Sticky add-to-cart desktop (apparaît quand le CTA principal sort du viewport) */}
-							<StickyCartCTADesktop product={product} defaultSku={selectedSku} />
+							<StickyCartCTADesktop product={product} defaultVariant={selectedVariant} />
 
 							{/* 7. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
 							<Suspense fallback={<RelatedProductsSkeleton limit={4} />}>

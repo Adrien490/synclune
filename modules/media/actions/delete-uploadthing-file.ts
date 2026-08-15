@@ -1,7 +1,6 @@
 "use server";
 
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import {
 	handleActionError,
 	success,
@@ -13,7 +12,6 @@ import type { ActionState } from "@/shared/types/server-action";
 import { deleteUploadThingFileSchema } from "@/modules/media/schemas/uploadthing.schemas";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
-import { MEDIA_LIMITS } from "@/modules/media/constants/upload-limits";
 
 /**
  * Server Action to delete an UploadThing file.
@@ -27,10 +25,6 @@ export async function deleteUploadThingFile(
 		// 1. Verify admin rights
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
-
-		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(MEDIA_LIMITS.DELETE);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Extract data from FormData
 		const rawData = {

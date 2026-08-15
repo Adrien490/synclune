@@ -14,20 +14,14 @@ export function buildColorSearchConditions(search: string): Prisma.ColorWhereInp
 	return {
 		OR: [
 			{ name: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-			{ slug: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
 			{ hex: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
 		],
 	};
 }
 
-export function buildColorFilterConditions(filters: ColorFilters): Prisma.ColorWhereInput {
-	const conditions: Prisma.ColorWhereInput = {};
-
-	if (filters.isActive !== undefined) {
-		conditions.isActive = filters.isActive;
-	}
-
-	return conditions;
+export function buildColorFilterConditions(_filters: ColorFilters): Prisma.ColorWhereInput {
+	// Schéma lean : plus de statut actif/inactif sur Color.
+	return {};
 }
 
 export function buildColorWhereClause(params: GetColorsParams): Prisma.ColorWhereInput {

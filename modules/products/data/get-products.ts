@@ -1,12 +1,9 @@
 import { z } from "zod";
 
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { getRateLimitId } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
 import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { prisma } from "@/shared/lib/prisma";
-import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { getProductsSchema } from "../schemas/product.schemas";
 
 import {
@@ -16,12 +13,10 @@ import {
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 	GET_PRODUCTS_SELECT,
 } from "../constants/product.constants";
-import { SEARCH_RATE_LIMITS } from "../constants/search.constants";
 import type { GetProductsParams, GetProductsReturn, Product } from "../types/product.types";
 import {
 	buildProductWhereClause,
 	buildSearchConditions,
-	buildExactSearchConditions,
 	type SearchResult,
 } from "../services/product-query-builder";
 import { getSpellSuggestion, SUGGESTION_THRESHOLD_RESULTS } from "./spell-suggestion";
@@ -66,15 +61,14 @@ export async function getProducts(
 		let validatedParams = validation.data as GetProductsParams;
 		const admin = options?.isAdmin ?? (await isAdmin());
 
-		// Security: only admins can see soft-deleted or non-PUBLIC products.
+		// Security: only admins can see non-active products.
 		// status/filters.status are client-controlled (e.g. loadMoreProducts action):
-		// force PUBLIC here so no caller can leak DRAFT/ARCHIVED into the public cache.
+		// force "active" here so no caller can leak drafts into the public cache.
 		if (!admin) {
 			validatedParams = {
 				...validatedParams,
-				includeDeleted: false,
-				status: PublicationStatus.PUBLIC,
-				filters: { ...validatedParams.filters, status: PublicationStatus.PUBLIC },
+				status: "active",
+				filters: { ...validatedParams.filters, status: "active" },
 			};
 		}
 
@@ -86,35 +80,13 @@ export async function getProducts(
 		// Run fuzzy search BEFORE the cache
 		// This allows caching results based on found IDs
 		let searchResult: SearchResult | undefined;
-		let rateLimited = false;
 
 		if (validatedParams.search) {
-			// Rate limiting: protects against scraping and abuse
-			let useExactOnly = false;
-			try {
-				const { identifier: rateLimitId, ipAddress } = await getRateLimitId();
-				const isAuthenticated = rateLimitId.startsWith("user:");
-				const limits = isAuthenticated
-					? SEARCH_RATE_LIMITS.authenticated
-					: SEARCH_RATE_LIMITS.guest;
-
-				const rateLimitResult = await checkRateLimit(`search:${rateLimitId}`, limits, ipAddress);
-				if (!rateLimitResult.success) {
-					// Fallback: use exact search only
-					logger.warn("Search rate limit exceeded", { service: "getProducts" });
-					useExactOnly = true;
-					rateLimited = true;
-				}
-			} catch (error) {
-				logger.error("Failed to check search rate limit", error, {
-					service: "getProducts",
-				});
-				// On rate limit error, continue without blocking
-			}
-
-			searchResult = useExactOnly
-				? buildExactSearchConditions(validatedParams.search)
-				: await buildSearchConditions(validatedParams.search, { status: validatedParams.status });
+			// Rate limiting retiré (migration lean) : la recherche fuzzy passe
+			// toujours, l'exact-only n'est plus qu'un repli d'erreur interne.
+			searchResult = await buildSearchConditions(validatedParams.search, {
+				activeOnly: validatedParams.status === "active",
+			});
 		}
 
 		// Fetch products.
@@ -123,7 +95,7 @@ export async function getProducts(
 		// un catalogue VIDE en cache pour toute la fenêtre du profil `catalog`
 		// (5 min revalidate / 15 min stale / 6 h expire) — et rien, ni côté vitrine ni
 		// côté admin, ne distinguait cette page vide d'un catalogue réellement vide.
-		// Même motif que `skus/data/fetch-skus.ts`.
+		// Même motif que `variants/data/fetch-variants.ts`.
 		let result: GetProductsReturn;
 		try {
 			result = await fetchProducts(validatedParams, searchResult);
@@ -152,17 +124,17 @@ export async function getProducts(
 		}
 
 		// Suggest a correction if few or no results with an active search
-		// Skip suggestions for admins (they often search by SKU/ID)
+		// Skip suggestions for admins (they often search by VARIANT/ID)
 		if (validatedParams.search && !admin && result.totalCount <= SUGGESTION_THRESHOLD_RESULTS) {
 			const suggestion = await getSpellSuggestion(validatedParams.search, {
-				status: validatedParams.status,
+				activeOnly: validatedParams.status === "active",
 			});
 			if (suggestion) {
-				return { ...result, suggestion: suggestion.term, rateLimited };
+				return { ...result, suggestion: suggestion.term };
 			}
 		}
 
-		return rateLimited ? { ...result, rateLimited } : result;
+		return result;
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			throw new Error("Invalid parameters");
@@ -192,7 +164,7 @@ async function fetchProducts(
 		const where = buildProductWhereClause(params, searchResult);
 
 		// NOTE: All products are loaded then sorted/paginated in JS because:
-		// - Price sorting requires MIN() on SKUs (not possible in Prisma)
+		// - Price sorting requires MIN() on VARIANTs (not possible in Prisma)
 		// - Fuzzy sorting preserves the relevance order of pre-computed IDs
 		// - Bestsellers/popular use pre-computed IDs
 		// For a catalog >10,000 products, consider denormalizing minPrice.

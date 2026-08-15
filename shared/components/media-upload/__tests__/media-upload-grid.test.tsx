@@ -105,7 +105,7 @@ vi.mock("@/modules/media/components/admin/sortable-media-item", () => ({
 		<div
 			data-testid={`sortable-item-${props.index}`}
 			data-is-primary={props.isPrimary}
-			data-media-type={(props.media as MediaItem).mediaType}
+			data-media-type={(props.media as MediaItem).type}
 			data-drag-instructions-id={props.dragInstructionsId}
 		>
 			<button data-testid={`move-up-${props.index}`} onClick={props.onMoveUp as () => void}>
@@ -153,21 +153,21 @@ vi.mock("@/modules/media/constants/ui-interactions.constants", () => ({
 function createMedia(overrides: Partial<MediaItem> = {}): MediaItem {
 	return {
 		url: `https://utfs.io/f/${Math.random().toString(36).slice(2)}.jpg`,
-		altText: "Test image",
-		mediaType: "IMAGE",
+		alt: "Test image",
+		type: "IMAGE",
 		thumbnailUrl: undefined,
 		blurDataUrl: undefined,
 		...overrides,
 	};
 }
 
-const image1 = createMedia({ url: "https://utfs.io/f/img1.jpg", altText: "Image 1" });
-const image2 = createMedia({ url: "https://utfs.io/f/img2.jpg", altText: "Image 2" });
-const image3 = createMedia({ url: "https://utfs.io/f/img3.jpg", altText: "Image 3" });
+const image1 = createMedia({ url: "https://utfs.io/f/img1.jpg", alt: "Image 1" });
+const image2 = createMedia({ url: "https://utfs.io/f/img2.jpg", alt: "Image 2" });
+const image3 = createMedia({ url: "https://utfs.io/f/img3.jpg", alt: "Image 3" });
 const video1 = createMedia({
 	url: "https://utfs.io/f/vid1.mp4",
-	altText: "Video 1",
-	mediaType: "VIDEO",
+	alt: "Video 1",
+	type: "VIDEO",
 	thumbnailUrl: "https://utfs.io/f/thumb1.jpg",
 });
 
@@ -301,7 +301,7 @@ describe("MediaUploadGrid", () => {
 			expect(grid).toHaveAttribute("aria-label", "Médias du produit");
 		});
 
-		it("uses the ariaLabel prop when provided (SKU forms say « variante »)", () => {
+		it("uses the ariaLabel prop when provided (VARIANT forms say « variante »)", () => {
 			render(
 				<MediaUploadGrid
 					media={[image1]}

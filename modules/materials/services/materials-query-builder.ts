@@ -12,22 +12,13 @@ export function buildMaterialSearchConditions(search: string): Prisma.MaterialWh
 	const searchTerm = escapeLikePattern(search.trim());
 
 	return {
-		OR: [
-			{ name: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-			{ slug: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-			{ description: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-		],
+		OR: [{ name: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } }],
 	};
 }
 
 export function buildMaterialWhereClause(params: GetMaterialsParams): Prisma.MaterialWhereInput {
 	const whereClause: Prisma.MaterialWhereInput = {};
 	const andConditions: Prisma.MaterialWhereInput[] = [];
-
-	// Filtre par statut actif
-	if (params.filters.isActive !== undefined) {
-		andConditions.push({ isActive: params.filters.isActive });
-	}
 
 	// Recherche textuelle
 	if (params.search) {

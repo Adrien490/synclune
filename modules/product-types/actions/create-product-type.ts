@@ -2,11 +2,9 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
@@ -22,14 +20,10 @@ export async function createProductType(
 		// 1. Verification de l'authentification et des droits admin
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.CREATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extraire les donnees du FormData
+		// 2. Extraire les donnees du FormData
 		const rawData = {
 			label: formData.get("label"),
-			description: formData.get("description") ?? undefined,
 		};
 
 		// 4. Valider les donnees
@@ -60,12 +54,7 @@ export async function createProductType(
 		const created = await prisma.productType.create({
 			data: {
 				label: sanitizedLabel,
-				description: validatedData.description
-					? sanitizeText(validatedData.description)
-					: undefined,
 				slug,
-				isActive: true,
-				isSystem: false, // Les types crees manuellement ne sont pas systeme
 			},
 		});
 

@@ -1,10 +1,8 @@
 "use server";
 
-import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { handleActionError, success } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { clearCartCookie } from "@/modules/cart/lib/cart-cookie";
-import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 
 /**
  * Vide le panier après une commande payée.
@@ -37,11 +35,6 @@ import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
  */
 export async function clearCartAfterOrder(): Promise<ActionState> {
 	try {
-		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.CLEAR);
-		if (!rateLimitResult.success) {
-			return rateLimitResult.errorState;
-		}
-
 		await clearCartCookie();
 
 		return success("Panier vidé");

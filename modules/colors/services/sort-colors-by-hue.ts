@@ -39,8 +39,8 @@ const HUE_WHEEL_START = 337 / 360;
 const CHROMATIC_SATURATION_THRESHOLD = 0.18;
 
 export interface ColorLike {
-	slug: string;
-	hex: string;
+	id: string;
+	hex: string | null;
 }
 
 /** Composantes HSL normalisées 0-1 (la teinte en tours, pas en degrés). */
@@ -90,7 +90,7 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
  */
 export function sortColorsByHue<T extends ColorLike>(colors: readonly T[]): T[] {
 	const decorated = colors.map((color) => {
-		const hsl = hexToHsl(color.hex);
+		const hsl = color.hex ? hexToHsl(color.hex) : null;
 		return {
 			color,
 			isChromatic: hsl !== null && hsl.s >= CHROMATIC_SATURATION_THRESHOLD,
@@ -106,7 +106,7 @@ export function sortColorsByHue<T extends ColorLike>(colors: readonly T[]): T[] 
 			if (a.isChromatic !== b.isChromatic) return a.isChromatic ? -1 : 1;
 			const primary = a.isChromatic ? a.hue - b.hue : b.lightness - a.lightness;
 			if (primary !== 0) return primary;
-			return a.color.slug.localeCompare(b.color.slug);
+			return a.color.id.localeCompare(b.color.id);
 		})
 		.map((entry) => entry.color);
 }

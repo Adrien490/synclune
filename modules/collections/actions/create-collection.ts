@@ -3,10 +3,8 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -22,14 +20,12 @@ export async function createCollection(
 		// 1. Admin auth check
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.CREATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extract and validate data
 		const validated = validateInput(createCollectionSchema, {
 			name: formData.get("name"),
 			description: formData.get("description") ?? null,
-			status: formData.get("status") ?? undefined,
+			active: formData.get("active") ?? undefined,
 		});
 		if ("error" in validated) return validated.error;
 
@@ -51,7 +47,7 @@ export async function createCollection(
 					name: sanitizedName,
 					slug,
 					description: sanitizedDescription,
-					status: validatedData.status,
+					active: validatedData.active,
 				},
 			});
 
@@ -64,7 +60,7 @@ export async function createCollection(
 		return success(`Collection « ${sanitizedName} » créée`, {
 			id,
 			name: sanitizedName,
-			collectionStatus: validatedData.status,
+			collectionActive: validatedData.active,
 		});
 	} catch (e) {
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

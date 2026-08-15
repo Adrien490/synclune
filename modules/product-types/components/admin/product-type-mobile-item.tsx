@@ -3,7 +3,6 @@
 import { TagIcon } from "@phosphor-icons/react/ssr";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
-import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
 	ItemContent,
@@ -19,27 +18,18 @@ interface ProductTypeMobileItemProps {
 		id: string;
 		label: string;
 		slug: string;
-		description: string | null;
-		isActive: boolean;
-		isSystem: boolean;
 		_count: { products: number };
 	};
 }
 
 export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProps) {
 	const productsCount = productType._count.products || 0;
-	const statusLabel = productType.isActive ? "● Actif" : "○ Inactif";
 
 	const { sections } = useProductTypeActions({
 		productTypeId: productType.id,
-		isSystem: productType.isSystem,
 		label: productType.label,
-		description: productType.description,
 		slug: productType.slug,
 		productsCount,
-		// La liste mobile n'a pas d'interrupteur (badge en lecture seule) : l'item de
-		// menu Activer/Désactiver est la SEULE surface de bascule ici.
-		isActive: productType.isActive,
 	});
 
 	return (
@@ -68,17 +58,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="min-w-0 flex-1 truncate font-semibold">{productType.label}</span>
-						<Badge
-							variant={productType.isActive ? "default" : "secondary"}
-							style={{ viewTransitionName: `product-type-status-${productType.id}` }}
-						>
-							{statusLabel}
-						</Badge>
-						{productType.isSystem ? <Badge variant="outline">Système</Badge> : null}
 					</ItemTitle>
-					{productType.description ? (
-						<ItemDescription className="line-clamp-1">{productType.description}</ItemDescription>
-					) : null}
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span>
 							{productsCount} produit{productsCount !== 1 ? "s" : ""}

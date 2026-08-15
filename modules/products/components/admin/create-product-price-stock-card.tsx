@@ -50,8 +50,7 @@ export function CreateProductPriceStockCard({ form }: CreateProductPriceStockCar
 			<CardContent className="space-y-4 px-0 sm:px-0 md:px-6">
 				<PricingFields
 					form={form}
-					priceFieldName="initialSku.priceInclTaxEuros"
-					compareAtPriceFieldName="initialSku.compareAtPriceEuros"
+					priceFieldName="priceEuros"
 					hintIdPrefix="create-product-price"
 				/>
 				{/*
@@ -65,7 +64,7 @@ export function CreateProductPriceStockCard({ form }: CreateProductPriceStockCar
 				 */}
 				<StockField
 					form={form}
-					inventoryFieldName="initialSku.inventory"
+					stockFieldName="initialVariant.stock"
 					hintIdPrefix="create-product-stock"
 					hint="Un bijou à 0 ne peut pas être mis en vente — garde-le en brouillon le temps de le fabriquer"
 				/>
@@ -77,11 +76,11 @@ export function CreateProductPriceStockCard({ form }: CreateProductPriceStockCar
 				 */}
 				<form.Subscribe
 					selector={(state) =>
-						[state.values.status, Number(state.values.initialSku.inventory)] as const
+						[state.values.active, Number(state.values.initialVariant.stock)] as const
 					}
 				>
-					{([status, inventory]) =>
-						status === "PUBLIC" && inventory <= 0 ? (
+					{([active, stock]) =>
+						active === "true" && stock <= 0 ? (
 							<Alert variant="warning" data-slot="publication-warning">
 								<WarningIcon aria-hidden="true" />
 								<AlertTitle>Publication incohérente</AlertTitle>

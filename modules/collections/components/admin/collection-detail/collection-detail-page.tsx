@@ -22,7 +22,7 @@ export function CollectionDetailPage({ collection }: CollectionDetailPageProps) 
 				</div>
 
 				<div className="space-y-6">
-					<CollectionDetailStorefrontLinkCard slug={collection.slug} status={collection.status} />
+					<CollectionDetailStorefrontLinkCard slug={collection.slug} active={collection.active} />
 					<CollectionDetailStatsCard collection={collection} />
 				</div>
 			</div>

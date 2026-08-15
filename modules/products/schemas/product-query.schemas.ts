@@ -1,4 +1,3 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
@@ -32,18 +31,15 @@ export const getProductSchema = z.object({
 
 export const productFiltersSchema = z
 	.object({
-		type: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		color: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		material: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
-		status: z.union([z.enum(PublicationStatus), z.array(z.enum(PublicationStatus))]).optional(),
+		/** Type de bijou — slug(s) de ProductType. */
+		type: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
+		/** Visibilité (schéma lean) : "active" | "inactive" — admin uniquement. */
+		status: z
+			.union([z.enum(["active", "inactive"]), z.array(z.enum(["active", "inactive"]))])
+			.optional(),
 		stockStatus: z.enum(["in_stock", "low_stock", "out_of_stock"]).optional(),
-		/**
-		 * ADMIN-ONLY depuis le retrait Omnibus (2026-08-08) : « produits ayant un
-		 * `compareAtPrice` » est une vue de gestion (le champ est visible dans les
-		 * tables admin), plus une facette vitrine — le parser storefront
-		 * (`app/(shop)/produits/_utils/params.ts`) n'émet plus cette clé.
-		 */
-		onSale: z.boolean().optional(),
 		collectionId: optionalStringOrStringArraySchema,
 		collectionSlug: optionalStringOrStringArraySchema,
 		/** Filter by specific product slugs (for curated selections) */
@@ -107,8 +103,6 @@ export const getProductsSchema = z.object({
 	sortBy: productSortBySchema.default(GET_PRODUCTS_DEFAULT_SORT_BY),
 	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: productFiltersSchema.default({}),
-	status: z
-		.enum([PublicationStatus.PUBLIC, PublicationStatus.DRAFT, PublicationStatus.ARCHIVED])
-		.optional(),
-	includeDeleted: z.boolean().optional(),
+	/** Visibilité globale : "active" force les produits en vente (storefront). */
+	status: z.enum(["active", "inactive"]).optional(),
 });

@@ -72,8 +72,6 @@ import ts from "typescript";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/app/generated/prisma/client";
 
-import { REFUND_RECORD_SELECT } from "@/modules/webhooks/services/refund.service";
-
 const REPO_ROOT = join(__dirname, "..", "..");
 
 // ---------------------------------------------------------------------------
@@ -354,29 +352,28 @@ function collectFromSource(file: string, src: string): WriteSite[] {
 
 describe("écritures Prisma — validité schéma (@regression transactional-writes-schema-validity)", () => {
 	describe("oracle A — payloads exportés, soumis au validateur Prisma réel", () => {
-		it("REFUND_RECORD_SELECT est valide au regard du schéma Refund", async () => {
-			await expect(
-				verdictOf(() =>
-					prisma.refund.findUnique({
-						where: { stripeRefundId: "probe" },
-						select: REFUND_RECORD_SELECT,
-					}),
-				),
-			).resolves.toBe("schema-valid");
-		});
-
-		// Preuve de l'oracle : la forme EXACTE du P0 doit être détectée. Sans cette
-		// assertion, un oracle cassé (`verdictOf` qui renverrait toujours
-		// "schema-valid") ferait passer la suite en verrouillant… rien.
+		// Schéma lean : `Refund` n'existe plus — l'oracle A garde sa contre-épreuve
+		// sur `Order` (colonne droppée `paymentStatus`).
 		it("détecte bien une clé inexistante (contre-épreuve)", async () => {
 			await expect(
 				verdictOf(() =>
-					prisma.refund.findUnique({
-						where: { stripeRefundId: "probe" },
-						select: { id: true, currency: true } as never,
+					prisma.order.findUnique({
+						where: { stripeSessionId: "probe" },
+						select: { id: true, paymentStatus: true } as never,
 					}),
 				),
 			).resolves.toBe("schema-invalid");
+		});
+
+		it("valide une lecture Order conforme au schéma lean", async () => {
+			await expect(
+				verdictOf(() =>
+					prisma.order.findUnique({
+						where: { stripeSessionId: "probe" },
+						select: { id: true, status: true, amountTotalCents: true },
+					}),
+				),
+			).resolves.toBe("schema-valid");
 		});
 	});
 
@@ -387,7 +384,9 @@ describe("écritures Prisma — validité schéma (@regression transactional-wri
 			// Filet du filet : si le scan casse (renommage de `tx`, refonte de l'AST),
 			// il rendrait 0 site et la suite passerait sans rien vérifier.
 			expect(sites.length).toBeGreaterThan(20);
-			expect(sites.some((s) => s.model === "Refund")).toBe(true);
+			// Le checkout étant stubbé jusqu'au lot 3, la sentinelle porte sur le
+			// catalogue (écritures produit bien présentes dès le lot 2).
+			expect(sites.some((s) => s.model === "Product" || s.model === "ProductVariant")).toBe(true);
 		});
 
 		it("aucun `data` n'écrit un champ absent du schéma", () => {
@@ -399,7 +398,9 @@ describe("écritures Prisma — validité schéma (@regression transactional-wri
 		const sites = collectWriteSites(integrationFixtureFiles());
 
 		it("le scan atteint bien les fixtures d'intégration", () => {
-			expect(sites.some((s) => s.model === "Order")).toBe(true);
+			// Le checkout étant stubbé jusqu'au lot 3, la sentinelle porte sur le
+			// catalogue (écritures produit bien présentes dès le lot 2).
+			expect(sites.some((s) => s.model === "Product" || s.model === "ProductVariant")).toBe(true);
 			expect(sites.some((s) => s.file === "test/integration/factories.ts")).toBe(true);
 		});
 
@@ -419,7 +420,7 @@ describe("écritures Prisma — validité schéma (@regression transactional-wri
 						orderNumber: "X",
 						discountAmount: 0,
 						items: {
-							create: [{ skuId: "s", quantity: 1, price: 1, taxRate: 0, taxCategoryCode: "ZB" }],
+							create: [{ variantId: "s", quantity: 1, price: 1, taxRate: 0, taxCategoryCode: "ZB" }],
 						},
 					},
 				});
@@ -440,10 +441,13 @@ describe("écritures Prisma — validité schéma (@regression transactional-wri
 			const clean = `
 				await prisma.order.create({
 					data: {
-						orderNumber: "X",
-						subtotal: 1,
-						total: 1,
-						items: { create: [{ skuId: "s", quantity: 1, price: 1, productTitle: "T" }] },
+						stripeSessionId: "cs_x",
+						email: "a@b.c",
+						amountItemsCents: 1,
+						amountTotalCents: 1,
+						items: {
+							create: [{ variantId: "s", quantity: 1, unitPriceCents: 1, nameSnapshot: "T" }],
+						},
 					},
 				});
 			`;

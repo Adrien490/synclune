@@ -5,6 +5,7 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { FilterOverflowList } from "./filter-overflow-list";
 
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
+import { slugify } from "@/shared/utils/generate-slug";
 
 // ============================================================================
 // TYPES
@@ -43,19 +44,19 @@ export function MaterialFilterSection({
 	return (
 		<FilterOverflowList
 			items={materials}
-			itemKey={(material) => material.slug}
+			itemKey={(material) => slugify(material.name)}
 			moreLabel={(n) => `+ ${n} autre${n > 1 ? "s" : ""} matériau${n > 1 ? "x" : ""}`}
 			matchesSearch={(material, query) => material.name.toLowerCase().includes(query)}
 			searchPlaceholder="Rechercher un matériau…"
 			renderItem={(material) => (
 				<CheckboxFilterItem
-					id={`${idPrefix}-material-${material.slug}`}
-					checked={selectedSet.has(material.slug)}
+					id={`${idPrefix}-material-${slugify(material.name)}`}
+					checked={selectedSet.has(slugify(material.name))}
 					onCheckedChange={(checked) => {
 						haptic("selection");
-						onToggle(material.slug, checked === true);
+						onToggle(slugify(material.name), checked === true);
 					}}
-					count={material._count?.skus}
+					count={material._count?.variants}
 				>
 					{material.name}
 				</CheckboxFilterItem>

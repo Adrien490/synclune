@@ -8,7 +8,7 @@ import { ProductTypeDetailStatsCard } from "./product-type-detail-stats-card";
 
 interface ProductTypeDetailPageProps {
 	productType: ProductTypeDetailReturn;
-	counts: { public: number; draft: number; archived: number };
+	counts: { active: number; draft: number };
 }
 
 export function ProductTypeDetailPage({ productType, counts }: ProductTypeDetailPageProps) {

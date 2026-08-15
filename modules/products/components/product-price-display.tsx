@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 import { Badge } from "@/shared/components/ui/badge";
-import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import type { GetProductReturn, ProductVariant } from "@/modules/products/types/product.types";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { formatEuro } from "@/shared/utils/format-euro";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/modules/products/services/product-pricing.service";
 
 interface ProductPriceProps {
-	selectedSku: ProductSku | null;
+	selectedVariant: ProductVariant | null;
 	product: GetProductReturn;
 	/** Rendu au bas de l'aplat (estimation de livraison). */
 	children?: ReactNode;
@@ -39,22 +39,24 @@ interface ProductPriceProps {
  * Le prix passe en `font-display` (Winky Sans) : c'était jusqu'ici la seule
  * information importante de la page rendue dans la police de corps.
  */
-export function ProductPriceDisplay({ selectedSku, product, children }: ProductPriceProps) {
+export function ProductPriceDisplay({ selectedVariant, product, children }: ProductPriceProps) {
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
-	const priceInfo = calculatePriceInfo(product.skus);
+	const priceInfo = calculatePriceInfo(product.variants, product.priceCents);
+	// Prix effectif de la variante sélectionnée (override ?? prix produit)
+	const selectedPrice = selectedVariant ? (selectedVariant.priceCents ?? product.priceCents) : null;
 
 	// Déterminer si on affiche "À partir de"
-	const showFromPrefix = priceInfo.hasMultiplePrices && !selectedSku;
+	const showFromPrefix = priceInfo.hasMultiplePrices && !selectedVariant;
 
 	// ⚠️ Pas de prix barré ni de badge de remise (retrait Omnibus 2026-08-08,
 	// art. L. 112-1-1 C. conso) : cf. le commentaire de `ProductPrice` — la
 	// réouverture passe par `lowestPriceLast30d` (lot A2).
 
 	// Calculer le stock status (en stock, stock limité, ou rupture)
-	const inventory = selectedSku?.inventory ?? 0;
-	const stockStatus = determineStockStatus(inventory, selectedSku?.isActive);
+	const stock = selectedVariant?.stock ?? 0;
+	const stockStatus = determineStockStatus(stock, selectedVariant?.active);
 
-	if (!selectedSku) {
+	if (!selectedVariant) {
 		return (
 			<div
 				role="region"
@@ -103,9 +105,9 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 			    d'économie). Le changement de variante s'annonce ici, une fois, avec
 			    l'état de stock ; le reste est du texte lisible à la demande. */}
 			<span aria-live="polite" aria-atomic="true" className="sr-only">
-				Prix mis à jour : {formatEuro(selectedSku.priceInclTax)}
+				Prix mis à jour : {formatEuro(selectedPrice ?? product.priceCents)}
 				{stockStatus === "in_stock" ? ", en stock" : ""}
-				{stockStatus === "low_stock" ? `, plus que ${inventory} en stock` : ""}
+				{stockStatus === "low_stock" ? `, plus que ${stock} en stock` : ""}
 				{stockStatus === "out_of_stock" ? ", en rupture de stock" : ""}
 			</span>
 
@@ -114,9 +116,9 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 				<p
 					id="product-price-selected"
 					className="font-display text-3xl font-normal tracking-tight sm:text-4xl"
-					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}`}
+					aria-label={`Prix ${formatEuro(selectedPrice ?? product.priceCents)}`}
 				>
-					{formatEuro(selectedSku.priceInclTax)}
+					{formatEuro(selectedPrice ?? product.priceCents)}
 				</p>
 
 				{/* Disponibilité : distinguée par le LIBELLÉ, pas par la couleur */}
@@ -126,8 +128,8 @@ export function ProductPriceDisplay({ selectedSku, product, children }: ProductP
 					    par la live region unique en tête de bloc. */}
 					{stockStatus === "in_stock" && <span>{PRODUCT_TEXTS.STOCK.IN_STOCK}</span>}
 					{stockStatus === "low_stock" && (
-						<span aria-label={`Attention, plus que ${inventory} exemplaires en stock`}>
-							{PRODUCT_TEXTS.STOCK.LOW_STOCK_LEFT(inventory)}
+						<span aria-label={`Attention, plus que ${stock} exemplaires en stock`}>
+							{PRODUCT_TEXTS.STOCK.LOW_STOCK_LEFT(stock)}
 						</span>
 					)}
 					{stockStatus === "out_of_stock" && (

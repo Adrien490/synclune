@@ -29,7 +29,7 @@ import type { TaxonomyConfig } from "../types/taxonomy.types";
  */
 
 interface FilterFormData {
-	isActive: string;
+	active: string;
 }
 
 interface TaxonomyFilterSheetProps {
@@ -64,18 +64,18 @@ function TaxonomyFilterSheetInner({
 		initialValues: FilterFormData;
 		activeFiltersCount: number;
 	} => {
-		let isActive = "all";
+		let active = "all";
 		let count = 0;
 		searchParams.forEach((value, key) => {
 			if (key === "filter_isActive") {
-				isActive = value === "true" ? "active" : "inactive";
+				active = value === "true" ? "active" : "inactive";
 			}
 			if (key.startsWith("filter_")) count += 1;
 		});
-		return { initialValues: { isActive }, activeFiltersCount: count };
+		return { initialValues: { active }, activeFiltersCount: count };
 	})();
 
-	const pushFilters = (isActive: string) => {
+	const pushFilters = (active: string) => {
 		const params = new URLSearchParams(searchParams.toString());
 		params.delete("filter_isActive");
 		// La pagination est curseur : changer de filtre invalide le curseur courant.
@@ -84,8 +84,8 @@ function TaxonomyFilterSheetInner({
 		params.delete("cursor");
 		params.delete("direction");
 
-		if (isActive !== "all") {
-			params.set("filter_isActive", isActive === "active" ? "true" : "false");
+		if (active !== "all") {
+			params.set("filter_isActive", active === "active" ? "true" : "false");
 		}
 
 		startTransition(() => {
@@ -95,11 +95,11 @@ function TaxonomyFilterSheetInner({
 
 	const form = useAppForm({
 		defaultValues: initialValues,
-		onSubmit: async ({ value }: { value: FilterFormData }) => pushFilters(value.isActive),
+		onSubmit: async ({ value }: { value: FilterFormData }) => pushFilters(value.active),
 	});
 
 	const clearAllFilters = () => {
-		form.reset({ isActive: "all" });
+		form.reset({ active: "all" });
 		pushFilters("all");
 	};
 
@@ -133,7 +133,7 @@ function TaxonomyFilterSheetInner({
 				}}
 				className="space-y-6"
 			>
-				<form.Field name="isActive">
+				<form.Field name="active">
 					{(field) => (
 						<fieldset className="space-y-1">
 							<legend className="text-foreground mb-2 text-sm font-medium">Statut actif</legend>
@@ -141,7 +141,7 @@ function TaxonomyFilterSheetInner({
 								<RadioFilterItem
 									key={value}
 									id={`active-${value}`}
-									name="isActive"
+									name="active"
 									value={value}
 									checked={field.state.value === value}
 									onCheckedChange={(checked) => {

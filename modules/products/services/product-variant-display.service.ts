@@ -1,16 +1,13 @@
 /**
- * Services d'affichage des variantes de produits
- *
- * Ce module contient les fonctions pour :
- * - Extraire les couleurs disponibles pour les pastilles
- * - Compter les variantes (couleurs, matériaux, tailles)
- * - Détecter si un produit a plusieurs variantes
- * - Calculer la plage de prix
+ * Services d'affichage des variantes de produits — schéma lean (lot 2) :
+ * une variante porte UNE couleur et UN matériau (FK nullables), le prix
+ * effectif est `variant.priceCents ?? product.priceCents`, et l'identité URL
+ * d'une couleur est son NOM slugifié.
  */
 
 import type { ProductFromList, ColorSwatch } from "@/modules/products/types/product-list.types";
-import { getPrimarySkuForList } from "@/modules/skus/services/sku-selection.service";
-import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
+import { getPrimaryVariantForList } from "@/modules/variants/services/variant-selection.service";
+import { slugify } from "@/shared/utils/generate-slug";
 
 // ============================================================================
 // PRODUCT VARIANT DISPLAY SERVICE
@@ -18,18 +15,18 @@ import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label
 // ============================================================================
 
 /**
- * Récupère la couleur principale du SKU principal
+ * Récupère la couleur principale de la variante principale
  */
 export function getPrimaryColorForList(product: ProductFromList): {
 	hex?: string;
 	name?: string;
 } {
-	const primarySku = getPrimarySkuForList(product);
-	if (!primarySku) return {};
+	const primaryVariant = getPrimaryVariantForList(product);
+	if (!primaryVariant) return {};
 
-	const fallbackName = getPrimaryMaterialName(primarySku.materials) ?? undefined;
+	const fallbackName = primaryVariant.material?.name ?? undefined;
 
-	const primaryColor = primarySku.colors[0]?.color;
+	const primaryColor = primaryVariant.color;
 	if (primaryColor?.hex) {
 		return {
 			hex: primaryColor.hex,
@@ -49,40 +46,34 @@ export function getPrimaryColorForList(product: ProductFromList): {
  * Une couleur est marquée `inStock: true` si AU MOINS UNE variante de cette couleur
  * a du stock (ex: "Rouge taille 52" en stock même si "Rouge taille 54" est épuisé).
  *
- * Cela permet à l'utilisateur de voir que la couleur existe et est potentiellement disponible,
- * même si certaines tailles/matériaux sont épuisés. Le SkuSelectorDialog affichera ensuite
- * les variantes exactes disponibles.
- *
- * **Alternative non retenue :** Marquer la couleur en rupture si TOUTES les variantes sont épuisées.
- * Rejeté car cela masquerait des couleurs partiellement disponibles.
+ * Cela permet à l'utilisateur de voir que la couleur existe et est potentiellement
+ * disponible, même si certaines tailles/matériaux sont épuisés.
  */
 export function getAvailableColorsForList(product: ProductFromList): ColorSwatch[] {
-	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.colors.length > 0);
+	const activeVariants = product.variants.filter((variant) => variant.active && variant.color);
 	const colorMap = new Map<string, ColorSwatch>();
 
-	for (const sku of activeSkus) {
-		// M2M : on agrège chaque couleur unique vue dans les SKUs.
-		for (const link of sku.colors) {
-			const c = link.color;
-			if (!c.slug || !c.hex) continue;
-			const existing = colorMap.get(c.slug);
-			// Logique permissive : inStock = true si au moins un SKU actif portant
-			// cette couleur a du stock (cohérent JSDoc ci-dessus).
-			const inStock = existing?.inStock === true || sku.inventory > 0;
-			colorMap.set(c.slug, {
-				slug: c.slug,
-				hex: c.hex,
-				name: c.name,
-				inStock,
-			});
-		}
+	for (const variant of activeVariants) {
+		const c = variant.color;
+		if (!c?.hex) continue;
+		const slug = slugify(c.name);
+		const existing = colorMap.get(slug);
+		// Logique permissive : inStock = true si au moins une variante active
+		// portant cette couleur a du stock (cohérent JSDoc ci-dessus).
+		const inStock = existing?.inStock === true || variant.stock > 0;
+		colorMap.set(slug, {
+			slug,
+			hex: c.hex,
+			name: c.name,
+			inStock,
+		});
 	}
 
 	return Array.from(colorMap.values());
 }
 
 /**
- * Compte les variantes disponibles (inclut defaultSku)
+ * Compte les variantes disponibles
  */
 export function getVariantCountForList(product: ProductFromList): {
 	colors: number;
@@ -93,27 +84,23 @@ export function getVariantCountForList(product: ProductFromList): {
 	const uniqueColors = new Set<string>();
 	const uniqueMaterials = new Set<string>();
 	const uniqueSizes = new Set<string>();
-	let totalSkus = 0;
+	let totalVariants = 0;
 
-	// Ajouter les SKUs actifs en stock
-	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.inventory > 0);
+	// Variantes actives en stock
+	const activeVariants = product.variants.filter((variant) => variant.active && variant.stock > 0);
 
-	for (const sku of activeSkus) {
-		for (const link of sku.colors) {
-			if (link.color.hex) uniqueColors.add(link.color.hex);
-		}
-		for (const entry of sku.materials) {
-			uniqueMaterials.add(entry.material.name);
-		}
-		if (sku.size) uniqueSizes.add(sku.size);
-		totalSkus++;
+	for (const variant of activeVariants) {
+		if (variant.color?.hex) uniqueColors.add(variant.color.hex);
+		if (variant.material) uniqueMaterials.add(variant.material.name);
+		if (variant.size) uniqueSizes.add(variant.size);
+		totalVariants++;
 	}
 
 	return {
 		colors: uniqueColors.size,
 		materials: uniqueMaterials.size,
 		sizes: uniqueSizes.size,
-		total: totalSkus,
+		total: totalVariants,
 	};
 }
 
@@ -122,22 +109,23 @@ export function getVariantCountForList(product: ProductFromList): {
  * Retourne true si le produit a plus d'une couleur, matière OU taille
  */
 export function hasMultipleVariants(product: ProductFromList): boolean {
-	const activeSkus = product.skus.filter((sku) => sku.isActive);
-	if (activeSkus.length <= 1) return false;
+	const activeVariants = product.variants.filter((variant) => variant.active);
+	if (activeVariants.length <= 1) return false;
 
 	const uniqueColors = new Set(
-		activeSkus.flatMap((s) => s.colors.map((c) => c.color.slug).filter(Boolean)),
+		activeVariants.map((v) => v.color?.name).filter((n): n is string => Boolean(n)),
 	);
 	const uniqueMaterials = new Set(
-		activeSkus.flatMap((s) => s.materials.map((m) => m.material.name)),
+		activeVariants.map((v) => v.material?.name).filter((n): n is string => Boolean(n)),
 	);
-	const uniqueSizes = new Set(activeSkus.map((s) => s.size).filter(Boolean));
+	const uniqueSizes = new Set(activeVariants.map((v) => v.size).filter(Boolean));
 
 	return uniqueColors.size > 1 || uniqueMaterials.size > 1 || uniqueSizes.size > 1;
 }
 
 /**
- * Récupère les informations de prix min/max pour une plage (inclut defaultSku)
+ * Récupère les informations de prix min/max pour une plage — prix effectif
+ * (override variante ?? prix produit).
  */
 export function getPriceRangeForList(product: ProductFromList): {
 	min: number;
@@ -146,17 +134,17 @@ export function getPriceRangeForList(product: ProductFromList): {
 } {
 	const prices: number[] = [];
 
-	// Ajouter les prix des SKUs actifs en stock
-	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.inventory > 0);
+	// Variantes actives en stock
+	const activeVariants = product.variants.filter((variant) => variant.active && variant.stock > 0);
 
-	for (const sku of activeSkus) {
-		prices.push(sku.priceInclTax);
+	for (const variant of activeVariants) {
+		prices.push(variant.priceCents ?? product.priceCents);
 	}
 
 	if (prices.length === 0) {
 		return {
-			min: 0,
-			max: 0,
+			min: product.priceCents,
+			max: product.priceCents,
 			hasRange: false,
 		};
 	}

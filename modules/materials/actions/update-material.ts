@@ -3,7 +3,6 @@
 import { updateTag } from "next/cache";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import {
 	handleActionError,
@@ -13,10 +12,8 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { generateSlug } from "@/shared/utils/generate-slug";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
 import { updateMaterialSchema } from "../schemas/materials.schemas";
@@ -29,18 +26,11 @@ export async function updateMaterial(
 		// 1. Verification des droits admin
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.UPDATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extraire les donnees du FormData
+		// 2. Extraire les donnees du FormData
 		const rawData = {
 			id: formData.get("id"),
 			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
-			description: safeFormGet(formData, "description")
-				? sanitizeText(safeFormGet(formData, "description")!)
-				: null,
-			isActive: formData.get("isActive") === "true",
 		};
 
 		// Valider les donnees
@@ -74,55 +64,33 @@ export async function updateMaterial(
 			}
 		}
 
-		// Generer un nouveau slug si le nom a change.
-		// `excludeId` : sans lui, un rename cosmétique (casse/accent) retrouvait
-		// son PROPRE slug et suffixait `-2` — l'URL changeait sans raison.
-		const slug =
-			validatedData.name !== existingMaterial.name
-				? await generateSlug(prisma, "material", validatedData.name, {
-						excludeId: validatedData.id,
-					})
-				: existingMaterial.slug;
-
 		// Mettre a jour le materiau
 		await prisma.material.update({
 			where: { id: validatedData.id },
 			data: {
 				name: validatedData.name,
-				slug,
-				description: validatedData.description,
-				isActive: validatedData.isActive,
 			},
 		});
 
-		// Cascade : si le nom (ou isActive) change, les PDP storefront affichant
-		// ce matériau dans les badges/swatches SKU doivent être réinvalidés.
+		// Cascade : si le nom change, les PDP storefront affichant ce matériau
+		// dans les badges variante doivent être réinvalidés.
 		const nameChanged = validatedData.name !== existingMaterial.name;
-		const activeChanged = validatedData.isActive !== existingMaterial.isActive;
 		const affectedProductSlugs: string[] = [];
-		if (nameChanged || activeChanged) {
-			const skus = await prisma.productSku.findMany({
-				where: {
-					deletedAt: null,
-					materials: { some: { materialId: validatedData.id } },
-				},
+		if (nameChanged) {
+			const variants = await prisma.productVariant.findMany({
+				where: { materialId: validatedData.id },
 				select: { product: { select: { slug: true } } },
 				distinct: ["productId"],
 			});
-			for (const s of skus) {
-				if (s.product.slug) affectedProductSlugs.push(s.product.slug);
+			for (const v of variants) {
+				if (v.product.slug) affectedProductSlugs.push(v.product.slug);
 			}
 		}
 
-		// Invalider le cache — dedupe via Set sur (ancien slug ∪ nouveau slug)
-		// avec cascade product slugs.
-		const tagSet = new Set<string>(
-			getMaterialInvalidationTags({ slug: existingMaterial.slug, affectedProductSlugs }),
+		// Invalider le cache
+		getMaterialInvalidationTags({ materialId: validatedData.id, affectedProductSlugs }).forEach(
+			(tag) => updateTag(tag),
 		);
-		if (slug !== existingMaterial.slug) {
-			getMaterialInvalidationTags({ slug, affectedProductSlugs }).forEach((t) => tagSet.add(t));
-		}
-		tagSet.forEach((tag) => updateTag(tag));
 
 		return success("Matériau modifié avec succès");
 	} catch (e) {

@@ -77,15 +77,15 @@ type PriceItem = {
 	id: string;
 	priceAtAdd: number;
 	quantity: number;
-	sku: { priceInclTax: number; product: { title: string } };
+	variant: { priceCents: number; product: { title: string } };
 };
 
-function createItem(id: string, priceAtAdd: number, priceInclTax: number, quantity = 1): PriceItem {
+function createItem(id: string, priceAtAdd: number, priceCents: number, quantity = 1): PriceItem {
 	return {
 		id,
 		priceAtAdd,
 		quantity,
-		sku: { priceInclTax, product: { title: `Produit ${id}` } },
+		variant: { priceCents, product: { title: `Produit ${id}` } },
 	};
 }
 
@@ -145,7 +145,7 @@ describe("CartPriceChangeAlert", () => {
 	});
 
 	it("shows savings message when price decreased", () => {
-		// priceAtAdd=3000, priceInclTax=2500 → savings = 500
+		// priceAtAdd=3000, priceCents=2500 → savings = 500
 		const items = [createItem("1", 3000, 2500, 1)];
 		render(<CartPriceChangeAlert items={items as never} />);
 		// The savings paragraph contains both the icon and the formatted saving amount

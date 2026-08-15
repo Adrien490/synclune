@@ -37,8 +37,8 @@ type NavItemImage = {
 /** Produit pour mega menu (bestseller/nouveauté) */
 export type MegaMenuProduct = {
 	slug: string;
-	title: string;
-	priceInclTax: number; // prix en centimes
+	name: string;
+	priceCents: number; // prix en centimes
 	imageUrl: string;
 	blurDataUrl: string | null;
 	/** Vrai si publié depuis moins de 14 jours (badge "Nouveau") */

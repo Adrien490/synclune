@@ -37,10 +37,10 @@ const PILL_BASE =
  * - Desktop : tous les onglets en ligne
  * - Mobile : N premiers onglets + bouton "Plus" ouvrant un drawer
  */
-const getPillClasses = (isActive: boolean) =>
+const getPillClasses = (active: boolean) =>
 	cn(
 		PILL_BASE,
-		isActive
+		active
 			? "bg-primary text-primary-foreground shadow-sm"
 			: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-sm",
 	);

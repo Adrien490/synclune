@@ -248,9 +248,9 @@ function ProductsFilterSheetInner({
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
 	})();
 
-	const sortedColors = colors.toSorted((a, b) => b._count.skus - a._count.skus);
+	const sortedColors = colors.toSorted((a, b) => b._count.variants - a._count.variants);
 	const sortedMaterials = materials.toSorted(
-		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0),
+		(a, b) => (b._count?.variants ?? 0) - (a._count?.variants ?? 0),
 	);
 
 	const filteredColors = deferredColorSearch

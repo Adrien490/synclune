@@ -54,10 +54,10 @@ export function EditProductInfoCard({
 			</CardHeader>
 			<CardContent className="space-y-6 px-0 sm:px-0 md:px-6">
 				<form.AppField
-					name="title"
+					name="name"
 					validators={{
 						onChange: ({ value }) =>
-							!value || value.trim().length < 2
+							!value || String(value).trim().length < 2
 								? "Le titre doit contenir au moins 2 caractères"
 								: undefined,
 					}}

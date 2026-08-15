@@ -24,9 +24,6 @@ import { withViewTransition } from "@/shared/utils/view-transition";
 export interface EditableMaterial {
 	id: string;
 	name: string;
-	slug: string;
-	description: string | null;
-	isActive: boolean;
 }
 
 interface EditMaterialFormProps {
@@ -40,7 +37,6 @@ const LIST_PATH = "/admin/catalogue/materiaux";
 
 const FIELD_LABELS: Record<string, string> = {
 	name: "Nom",
-	description: "Description",
 };
 
 export function EditMaterialForm({
@@ -57,7 +53,6 @@ export function EditMaterialForm({
 	const form = useAppForm({
 		defaultValues: {
 			name: material.name,
-			description: material.description ?? "",
 		},
 	});
 
@@ -124,7 +119,6 @@ export function EditMaterialForm({
 			}}
 		>
 			<input type="hidden" name="id" value={material.id} />
-			<input type="hidden" name="isActive" value={String(material.isActive)} />
 
 			<FormServerErrorAlert errors={serverErrors} />
 
@@ -178,28 +172,6 @@ export function EditMaterialForm({
 								required
 								autoCapitalize="words"
 								enterKeyHint="next"
-							/>
-						)}
-					</form.AppField>
-
-					<form.AppField
-						name="description"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (value && value.length > 1000) {
-									return "La description ne peut pas dépasser 1000 caractères";
-								}
-								return undefined;
-							},
-						}}
-					>
-						{(field) => (
-							<field.TextareaField
-								label="Description"
-								placeholder="Description du matériau (optionnel)"
-								disabled={isPending}
-								rows={3}
-								className="resize-none"
 							/>
 						)}
 					</form.AppField>

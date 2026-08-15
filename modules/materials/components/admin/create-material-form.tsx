@@ -33,7 +33,6 @@ const LIST_PATH = "/admin/catalogue/materiaux";
 
 const FIELD_LABELS: Record<string, string> = {
 	name: "Nom",
-	description: "Description",
 };
 
 export function CreateMaterialForm({
@@ -50,7 +49,6 @@ export function CreateMaterialForm({
 	const form = useAppForm({
 		defaultValues: {
 			name: "",
-			description: "",
 		},
 	});
 
@@ -186,28 +184,6 @@ export function CreateMaterialForm({
 								required
 								autoCapitalize="words"
 								enterKeyHint="next"
-							/>
-						)}
-					</form.AppField>
-
-					<form.AppField
-						name="description"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (value && value.length > 1000) {
-									return "La description ne peut pas dépasser 1000 caractères";
-								}
-								return undefined;
-							},
-						}}
-					>
-						{(field) => (
-							<field.TextareaField
-								label="Description"
-								placeholder="Description du matériau (optionnel)"
-								disabled={isPending}
-								rows={3}
-								className="resize-none"
 							/>
 						)}
 					</form.AppField>

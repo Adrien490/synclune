@@ -18,12 +18,8 @@ const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightb
 interface ProductImage {
 	id: string;
 	url: string;
-	thumbnailUrl: string | null;
-	blurDataUrl: string | null;
-	altText: string | null;
-	mediaType: "IMAGE" | "VIDEO";
-	width: number | null;
-	height: number | null;
+	alt: string | null;
+	type: "IMAGE" | "VIDEO";
 }
 
 interface ProductImageCellProps {
@@ -35,12 +31,8 @@ function toProductMedia(image: ProductImage, fallbackAlt: string): ProductMedia 
 	return {
 		id: image.id,
 		url: image.url,
-		thumbnailUrl: image.thumbnailUrl,
-		alt: image.altText ?? fallbackAlt,
-		blurDataUrl: image.blurDataUrl ?? undefined,
-		width: image.width,
-		height: image.height,
-		mediaType: image.mediaType,
+		alt: image.alt ?? fallbackAlt,
+		type: image.type,
 	};
 }
 
@@ -79,13 +71,11 @@ export function ProductImageCell({ images, productTitle }: ProductImageCellProps
 					>
 						<Image
 							src={primaryImage.url}
-							alt={primaryImage.altText ?? productTitle}
+							alt={primaryImage.alt ?? productTitle}
 							fill
 							sizes="80px"
 							quality={IMAGE_QUALITY.STANDARD}
 							className="rounded-md object-cover"
-							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
-							blurDataURL={primaryImage.blurDataUrl ?? undefined}
 						/>
 					</button>
 				) : (

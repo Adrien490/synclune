@@ -284,7 +284,7 @@ export interface MenuProductTypeItem {
 	/** Compte de pièces PUBLIC — `_count.products`, enfin consommé. */
 	productCount?: number;
 	/** Vignette choisie par `pickPrimaryImage()` côté serveur (`navbar.tsx`). */
-	image?: { url: string; blurDataUrl: string | null } | null;
+	image?: { url: string; blurDataUrl?: string | null } | null;
 }
 
 // `p-2 gap-2` et non plus large : à 390 px la colonne texte d'une tuile ne

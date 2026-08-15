@@ -1,10 +1,8 @@
 "use client";
 
 import { FieldLabel } from "@/shared/components/forms";
-import { ColorMultiSelectField } from "@/modules/colors/components/admin/color-multi-select-field";
-import { MaterialMultiSelectField } from "@/modules/materials/components/admin/material-multi-select-field";
 
-type ColorOption = { id: string; name: string; hex: string };
+type ColorOption = { id: string; name: string; hex: string | null };
 type MaterialOption = { id: string; name: string };
 
 export interface VariantAttributeFieldsProps {
@@ -15,23 +13,19 @@ export interface VariantAttributeFieldsProps {
 	form: any;
 	colors: ColorOption[];
 	materials: MaterialOption[];
-	/** Nom du champ TanStack pour les couleurs (e.g. "initialSku.colorIds", "colorIds"). */
-	colorIdsFieldName: string;
-	/** Nom du champ pour les matériaux. */
-	materialsFieldName: string;
+	/** Nom du champ TanStack pour la couleur (e.g. "initialVariant.colorId", "colorId"). */
+	colorFieldName: string;
+	/** Nom du champ pour le matériau. */
+	materialFieldName: string;
 	/** Nom du champ pour la taille. */
 	sizeFieldName: string;
 }
 
 /**
- * Les trois attributs qui décrivent la pièce elle-même : teintes, matériaux, taille.
+ * Les trois attributs qui décrivent la pièce elle-même : teinte, matériau, taille.
  *
- * Extraits de `VariantCard` pour être montés à deux endroits sans duplication :
- * - dans `VariantCard`, qui leur donne un chrome de section « Variante » (édition
- *   produit, formulaires de variante) ;
- * - directement dans la section « Le bijou » du formulaire de création, où ils
- *   rejoignent le titre et la description — à la création il n'existe qu'une
- *   variante, et la séparer de la pièce n'apportait qu'une carte de plus.
+ * Schéma lean (lot 2) : une variante porte UNE couleur et UN matériau (FK
+ * nullables) — les champs sont des selects simples, plus des multi-selects M2M.
  *
  * ⚠️ Les noms de champs restent paramétrables : `id === field.name` est un contrat
  * verrouillé par `field-name-id-contract.regression.test.ts`, donc ces champs ne
@@ -41,38 +35,51 @@ export function VariantAttributeFields({
 	form,
 	colors,
 	materials,
-	colorIdsFieldName,
-	materialsFieldName,
+	colorFieldName,
+	materialFieldName,
 	sizeFieldName,
 }: VariantAttributeFieldsProps) {
+	const colorOptions = colors.map((c) => ({ value: c.id, label: c.name }));
+	const materialOptions = materials.map((m) => ({ value: m.id, label: m.name }));
+
 	return (
 		<>
-			<form.AppField name={colorIdsFieldName}>
+			<form.AppField name={colorFieldName}>
 				{(field: {
-					name: string;
-					state: { value: string[] };
-					handleChange: (v: string[]) => void;
+					SelectField: React.ComponentType<{
+						label?: string;
+						placeholder?: string;
+						optional?: boolean;
+						clearable?: boolean;
+						options: Array<{ value: string; label: string }>;
+					}>;
 				}) => (
-					<ColorMultiSelectField
-						fieldName={field.name}
-						value={field.state.value}
-						onValueChange={(ids) => field.handleChange(ids)}
-						options={colors}
+					<field.SelectField
+						label="Couleur"
+						placeholder="Sans couleur"
+						optional
+						clearable
+						options={colorOptions}
 					/>
 				)}
 			</form.AppField>
 
-			<form.AppField name={materialsFieldName}>
+			<form.AppField name={materialFieldName}>
 				{(field: {
-					name: string;
-					state: { value: string[] };
-					handleChange: (v: string[]) => void;
+					SelectField: React.ComponentType<{
+						label?: string;
+						placeholder?: string;
+						optional?: boolean;
+						clearable?: boolean;
+						options: Array<{ value: string; label: string }>;
+					}>;
 				}) => (
-					<MaterialMultiSelectField
-						fieldName={field.name}
-						value={field.state.value}
-						onValueChange={(ids) => field.handleChange(ids)}
-						options={materials}
+					<field.SelectField
+						label="Matériau"
+						placeholder="Sans matériau"
+						optional
+						clearable
+						options={materialOptions}
 					/>
 				)}
 			</form.AppField>

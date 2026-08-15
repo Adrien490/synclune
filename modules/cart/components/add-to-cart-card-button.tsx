@@ -5,21 +5,21 @@ import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { dispatchFlyToCart } from "@/modules/cart/lib/fly-to-cart";
 import { useDialog } from "@/shared/providers/overlay-store-provider";
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
-// ⚠️ Depuis le module FEUILLE, pas depuis `./sku-selector-dialog` : ce bouton est
+// ⚠️ Depuis le module FEUILLE, pas depuis `./variant-selector-dialog` : ce bouton est
 // rendu sur chaque carte de la grille, et importer l'identifiant du dialog tirait
 // tout son graphe (motion, ResponsiveDialog) dans le bundle du catalogue.
-import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-utils";
+import { VARIANT_SELECTOR_DIALOG_ID } from "./variant-selector-utils";
 import { cn } from "@/shared/utils/cn";
 import { ShoppingBagIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { Button } from "@/shared/components/ui/button";
 
 interface AddToCartCardButtonProps {
-	skuId: string;
+	variantId: string;
 	productTitle?: string;
 	/**
 	 * Produit complet pour déterminer si une sélection de variante est nécessaire.
-	 * Required pour ouvrir le dialog de sélection SKU si le produit a plusieurs variantes.
+	 * Required pour ouvrir le dialog de sélection VARIANT si le produit a plusieurs variantes.
 	 */
 	product: ProductCarouselItem;
 	/** Couleur pré-sélectionnée depuis les swatches de la ProductCard */
@@ -41,11 +41,11 @@ interface AddToCartCardButtonProps {
  *   bouton primaire du site
  *
  * - Disabled pendant le pending pour éviter double-click
- * - Ouvre le dialog de sélection SKU uniquement si le produit a plusieurs variantes
- * - Ajoute directement au panier si le produit n'a qu'un seul SKU
+ * - Ouvre le dialog de sélection VARIANT uniquement si le produit a plusieurs variantes
+ * - Ajoute directement au panier si le produit n'a qu'un seul VARIANT
  */
 export function AddToCartCardButton({
-	skuId,
+	variantId,
 	productTitle,
 	product,
 	preselectedColor,
@@ -54,7 +54,7 @@ export function AddToCartCardButton({
 }: AddToCartCardButtonProps) {
 	const isMobileFull = variant === "mobile-full";
 	const { action, isPending: isAdding } = useAddToCart();
-	const { open: openSkuSelector } = useDialog(SKU_SELECTOR_DIALOG_ID);
+	const { open: openVariantSelector } = useDialog(VARIANT_SELECTOR_DIALOG_ID);
 
 	// Le dialog est chargé en `dynamic(…, { loading: () => null })` : entre le tap et
 	// son apparition, il y a le téléchargement d'un chunk de plusieurs dizaines de
@@ -69,10 +69,10 @@ export function AddToCartCardButton({
 	const [isOpeningSelector, startOpenSelector] = useTransition();
 	const isPending = isAdding || isOpeningSelector;
 
-	// Détermine si le produit a plusieurs variantes actives (SKUs)
-	// Note: On filtre par isActive car le dialog ne montre que les SKUs actifs
-	const activeSkusCount = product.skus.filter((s) => s.isActive).length;
-	const hasMultipleVariants = activeSkusCount > 1;
+	// Détermine si le produit a plusieurs variantes actives (VARIANTs)
+	// Note: On filtre par isActive car le dialog ne montre que les VARIANTs actifs
+	const activeVariantsCount = product.variants.filter((s) => s.active).length;
+	const hasMultipleVariants = activeVariantsCount > 1;
 
 	// Handler de clic : ouvre le dialog si plusieurs variantes, sinon soumet le formulaire
 	const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -82,14 +82,14 @@ export function AddToCartCardButton({
 			// Plusieurs variantes : précharger le chunk du dialog, puis l'ouvrir.
 			e.preventDefault();
 			startOpenSelector(async () => {
-				await import("./sku-selector-dialog").catch(() => {
+				await import("./variant-selector-dialog").catch(() => {
 					// Un échec de chargement du chunk ne doit pas empêcher l'ouverture :
 					// `dynamic()` retentera son propre import au montage.
 				});
-				openSkuSelector({ product, preselectedColor });
+				openVariantSelector({ product, preselectedColor });
 			});
 		} else {
-			// Single SKU: trigger fly-to-cart animation
+			// Single VARIANT: trigger fly-to-cart animation
 			dispatchFlyToCart(e.currentTarget);
 		}
 	};
@@ -118,7 +118,7 @@ export function AddToCartCardButton({
 				className,
 			)}
 		>
-			<input type="hidden" name="skuId" value={skuId} />
+			<input type="hidden" name="variantId" value={variantId} />
 			<input type="hidden" name="quantity" value="1" />
 			<Button
 				type="submit"

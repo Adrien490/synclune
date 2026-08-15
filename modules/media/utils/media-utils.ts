@@ -10,8 +10,8 @@ import type { MediaType } from "@/app/generated/prisma/client";
  * @param mediaType - The media type from the database
  * @returns true if the media is a video, false otherwise
  */
-export function isVideo(mediaType: MediaType): boolean {
-	return mediaType === "VIDEO";
+export function isVideo(type: MediaType): boolean {
+	return type === "VIDEO";
 }
 
 /**
@@ -19,27 +19,23 @@ export function isVideo(mediaType: MediaType): boolean {
  * @param mediaType - The media type from the database
  * @returns true if the media is an image, false otherwise
  */
-export function isImage(mediaType: MediaType): boolean {
-	return mediaType === "IMAGE";
+export function isImage(type: MediaType): boolean {
+	return type === "IMAGE";
 }
 
 /**
  * Résout la source affichable d'un média pour un rendu `next/image`.
  *
- * Une vidéo n'est décodable par l'optimiseur d'images que via son poster
- * (`thumbnailUrl`). Sans poster, retourner l'URL `.mp4` produirait une vignette
- * cassée + une transformation facturée pour rien : on retourne `null` afin que
- * l'appelant affiche un placeholder (cf. `gallery/thumbnail.tsx`).
+ * Schéma lean : plus de poster (`thumbnailUrl`) en base. Une vidéo n'est pas
+ * décodable par l'optimiseur d'images — retourner l'URL `.mp4` produirait une
+ * vignette cassée + une transformation facturée pour rien : on retourne `null`
+ * afin que l'appelant affiche un placeholder (cf. `gallery/thumbnail.tsx`).
  *
  * @returns L'URL à passer à `<Image src>`, ou `null` si aucun rendu image n'est possible
  */
-export function resolveMediaThumbSrc(media: {
-	url: string;
-	thumbnailUrl?: string | null;
-	mediaType: MediaType;
-}): string | null {
-	if (media.mediaType === "VIDEO") {
-		return media.thumbnailUrl ?? null;
+export function resolveMediaThumbSrc(media: { url: string; type: MediaType }): string | null {
+	if (media.type === "VIDEO") {
+		return null;
 	}
 	return media.url;
 }

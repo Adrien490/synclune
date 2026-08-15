@@ -1,20 +1,16 @@
 import { logger } from "@/shared/lib/logger";
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 import type { CollectionOption } from "../types/collection.types";
 
-/** Statuts de collection actifs (non archivées) */
-const COLLECTION_ACTIVE_STATUSES = [PublicationStatus.DRAFT, PublicationStatus.PUBLIC] as const;
-
 // ============================================================================
 // MAIN FUNCTION
 // ============================================================================
 
 /**
- * Récupère toutes les collections actives (non archivées) pour les selects/filtres
+ * Récupère toutes les collections pour les selects/filtres (picker admin)
  * Version simplifiée sans pagination
  *
  * Protection: Nécessite un compte ADMIN — `isAdmin()` re-vérifie le rôle en DB
@@ -51,11 +47,10 @@ async function fetchCollectionOptions(): Promise<CollectionOption[]> {
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
 
 	return prisma.collection.findMany({
-		where: { status: { in: [...COLLECTION_ACTIVE_STATUSES] } },
 		select: {
 			id: true,
 			name: true,
 		},
-		orderBy: { name: "asc" },
+		orderBy: [{ position: "asc" }, { name: "asc" }],
 	});
 }

@@ -1,5 +1,5 @@
-import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
-import { SkusMobileListSkeleton } from "@/modules/skus/components/admin/skus-mobile-list-skeleton";
+import { VariantsDataTableSkeleton } from "@/modules/variants/components/admin/variants-data-table-skeleton";
+import { VariantsMobileListSkeleton } from "@/modules/variants/components/admin/variants-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
 import { StickyActionBarSkeleton } from "@/shared/components/sticky-action-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
@@ -66,8 +66,8 @@ export default function ProductVariantsLoading() {
 
 			<div className="min-h-[1px]" aria-hidden="true" />
 
-			<SkusMobileListSkeleton />
-			<SkusDataTableSkeleton />
+			<VariantsMobileListSkeleton />
+			<VariantsDataTableSkeleton />
 		</div>
 	);
 }

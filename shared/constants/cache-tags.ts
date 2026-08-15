@@ -24,7 +24,7 @@ export const SHARED_CACHE_TAGS = {
 	/**
 	 * Badges de la sidebar admin (compteurs de notifications)
 	 *
-	 * Utilisé par : orders, products, skus, discounts, collections,
+	 * Utilisé par : orders, products, variants, discounts, collections,
 	 * refunds, materials, colors, product-types
 	 */
 	ADMIN_BADGES: "admin-badges",
@@ -39,14 +39,14 @@ export const SHARED_CACHE_TAGS = {
 	/**
 	 * Liste de l'inventaire dans l'admin
 	 *
-	 * Utilisé par : products, skus
+	 * Utilisé par : products, variants
 	 */
-	ADMIN_INVENTORY_LIST: "admin-inventory-list",
+	ADMIN_INVENTORY_LIST: "admin-stock-list",
 
 	/**
 	 * Liste des produits (cross-module)
 	 *
-	 * Utilisé par : products, collections, skus
+	 * Utilisé par : products, collections, variants
 	 * Ce tag est partagé pour éviter les cycles de dépendances entre modules
 	 */
 	PRODUCTS_LIST: "products-list",
@@ -69,7 +69,7 @@ export const SHARED_CACHE_TAGS = {
 	 * Utilisé par : collections, products
 	 * Partagé ici, comme PRODUCTS_LIST : une mutation produit doit invalider les
 	 * surfaces collections (les bento des cartes — /collections et mega-menu — sont
-	 * des images de PRODUITS, sélectionnées via `collection.products.skus.images`).
+	 * des images de PRODUITS, sélectionnées via `collection.products.variants.images`).
 	 */
 	COLLECTIONS_LIST: "collections-list",
 
@@ -113,7 +113,7 @@ export const STATIC_PAGES_CACHE_TAGS = {
  * - Affichage d'alertes sur la boutique
  * - Alertes stock dans le dashboard admin
  *
- * Partagé entre modules pour éviter les cycles skus ↔ dashboard
+ * Partagé entre modules pour éviter les cycles variants ↔ dashboard
  */
 export const STOCK_THRESHOLDS = {
 	/** Stock critique : <= CRITICAL (alertes urgentes, 1 seul item) */

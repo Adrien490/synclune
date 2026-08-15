@@ -22,14 +22,14 @@ async function globalTeardown() {
 	try {
 		console.log("[teardown] Cleaning up test data...");
 
-		// 1. Delete test user accounts (created by signup-flow.spec.ts)
-		const deletedUsers = await prisma.user.deleteMany({
+		// Schéma lean : plus de table User — on nettoie les commandes de test.
+		const deletedOrders = await prisma.order.deleteMany({
 			where: {
 				AND: [{ email: { startsWith: "e2e-" } }, { email: { endsWith: "@synclune-test.com" } }],
 			},
 		});
-		if (deletedUsers.count > 0) {
-			console.log(`[teardown] Deleted ${deletedUsers.count} test user(s)`);
+		if (deletedOrders.count > 0) {
+			console.log(`[teardown] Deleted ${deletedOrders.count} test order(s)`);
 		}
 
 		console.log("[teardown] Cleanup complete");

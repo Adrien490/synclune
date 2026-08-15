@@ -10,7 +10,6 @@ import {
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import { PaletteIcon } from "@phosphor-icons/react/ssr";
 import { use } from "react";
-import { ColorActiveToggle } from "@/modules/colors/components/admin/color-active-toggle";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
 
 interface ColorsDataTableProps {
@@ -57,9 +56,8 @@ export function ColorsDataTable({
 			<TableHeader>
 				<TableRow>
 					<TableHead className="w-[10%]">Aperçu</TableHead>
-					<TableHead className="w-[52%]">Nom</TableHead>
-					<TableHead className="w-[14%] text-center">Variantes</TableHead>
-					<TableHead className="w-[12%] text-center">Actif</TableHead>
+					<TableHead className="w-[62%]">Nom</TableHead>
+					<TableHead className="w-[16%] text-center">Variantes</TableHead>
 					<TableHead
 						className="w-[12%] text-right"
 						aria-label="Actions disponibles pour chaque couleur"
@@ -70,16 +68,16 @@ export function ColorsDataTable({
 			</TableHeader>
 			<TableBody>
 				{colors.map((color) => {
-					const skuCount = color._count.skus || 0;
+					const variantCount = color._count.variants || 0;
 
 					return (
 						<TableRow key={color.id}>
 							<TableCell>
 								<div
 									className="border-border inline-flex size-[30px] rounded-full border"
-									style={{ backgroundColor: color.hex }}
+									style={{ backgroundColor: color.hex ?? undefined }}
 									role="img"
-									aria-label={`Aperçu couleur ${color.hex.toUpperCase()}`}
+									aria-label={`Aperçu couleur ${color.hex?.toUpperCase() ?? color.name}`}
 								/>
 							</TableCell>
 							<TableCell>
@@ -87,30 +85,13 @@ export function ColorsDataTable({
 									<span className="text-foreground block truncate font-semibold" title={color.name}>
 										{color.name}
 									</span>
-									{color.description && (
-										<span
-											className="text-muted-foreground block truncate text-xs italic"
-											title={color.description}
-										>
-											{color.description}
-										</span>
-									)}
 								</div>
 							</TableCell>
 							<TableCell className="text-center">
-								<span className="text-sm font-medium">{skuCount}</span>
-							</TableCell>
-							<TableCell className="text-center">
-								<ColorActiveToggle colorId={color.id} isActive={color.isActive} />
+								<span className="text-sm font-medium">{variantCount}</span>
 							</TableCell>
 							<TableCell className="text-right">
-								<ColorsRowActions
-									colorId={color.id}
-									colorName={color.name}
-									colorHex={color.hex}
-									colorSlug={color.slug}
-									colorDescription={color.description}
-								/>
+								<ColorsRowActions colorId={color.id} colorName={color.name} colorHex={color.hex} />
 							</TableCell>
 						</TableRow>
 					);

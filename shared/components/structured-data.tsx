@@ -30,21 +30,23 @@ interface StructuredDataProps {
  *
  * ⚠️ L'image passe par `pickPrimaryImage()` — SSOT du choix de vignette — et le
  * champ est OMIS quand elle rend `null`. La version d'avant le vidage de la
- * landing écrivait `images.find((i) => i.isPrimary) ?? images[0]` : sur un SKU
+ * landing écrivait `images.find((i) => i.isPrimary) ?? images[0]` : sur un VARIANT
  * dont le média principal est une vidéo, ça mettait un `.mp4` dans le champ
  * `image` d'un nœud `Product` (invalide en schema.org).
  */
 function buildFeaturedProductNode(product: Product, position: number) {
 	const url = `${SITE_URL}/creations/${product.slug}`;
-	// skus pré-triés par [position asc, id asc] dans GET_PRODUCTS_SELECT (rang 0 = représentant)
-	const defaultSku = product.skus[0];
-	const primaryImage = pickPrimaryImage(defaultSku?.images);
-	const priceCents = defaultSku?.priceInclTax;
+	// Schéma lean : le média vit sur le PRODUIT ; prix effectif = override ?? produit
+	const defaultVariant = product.variants[0];
+	const primaryImage = pickPrimaryImage(product.media);
+	const priceCents = defaultVariant
+		? (defaultVariant.priceCents ?? product.priceCents)
+		: product.priceCents;
 
 	const productNode: Record<string, unknown> = {
 		"@type": "Product",
 		"@id": `${url}#product`,
-		name: product.title,
+		name: product.name,
 		url,
 		...(product.description && { description: product.description }),
 		...(primaryImage && { image: primaryImage.url }),
@@ -54,7 +56,7 @@ function buildFeaturedProductNode(product: Product, position: number) {
 				url,
 				price: (priceCents / 100).toFixed(2),
 				priceCurrency: "EUR",
-				availability: getOfferAvailability((defaultSku?.inventory ?? 0) > 0),
+				availability: getOfferAvailability((defaultVariant?.stock ?? 0) > 0),
 				itemCondition: "https://schema.org/NewCondition",
 			},
 		}),

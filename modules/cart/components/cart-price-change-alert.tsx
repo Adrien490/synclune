@@ -23,7 +23,7 @@ interface CartPriceChangeAlertProps {
  * - Hausses présentes → alerte destructive/10 (sérieuse) avec role="alert"
  * - Baisses uniquement → alerte verte positive "bonne nouvelle" avec role="status"
  *
- * Compare priceAtAdd (snapshot) vs sku.priceInclTax (prix actuel).
+ * Compare priceAtAdd (snapshot) vs variant.priceCents (prix actuel).
  * Permet à l'utilisateur de mettre à jour les prix snapshot vers les prix actuels.
  */
 export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
@@ -78,14 +78,14 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					const priceIncreased = isPriceIncrease(item);
 					return (
 						<li key={item.id} className="line-clamp-1">
-							{item.sku.product.title}:{" "}
+							{item.variant.product.name}:{" "}
 							<span className="text-muted-foreground line-through">
 								{formatEuro(item.priceAtAdd)}
 							</span>{" "}
 							→{" "}
 							<span className="font-semibold">
 								{priceIncreased ? "↑ " : "↓ "}
-								{formatEuro(item.sku.priceInclTax)}
+								{formatEuro(item.variant.priceCents ?? item.variant.product.priceCents)}
 							</span>
 							<span className="sr-only">
 								{priceIncreased ? " (prix en hausse)" : " (prix en baisse)"}

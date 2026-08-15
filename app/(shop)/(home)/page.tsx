@@ -96,7 +96,7 @@ export const metadata: Metadata = {
  * premier écran rendait trois « Papilloux » et deux « Chaîne de corps ».
  *
  * Dix et pas trente : la lecture reste derrière la frontière `Suspense` de la
- * grille (elle ne retarde jamais le `<h1>`), mais chaque produit tire ses SKUs,
+ * grille (elle ne retarde jamais le `<h1>`), mais chaque produit tire ses VARIANTs,
  * médias, couleurs et matières — c'est le coût qui borne ce nombre.
  */
 const HERO_OVERFETCH = 10;
@@ -106,7 +106,7 @@ export default function Page() {
 		{
 			perPage: HERO_PRODUCTS_COUNT + HERO_OVERFETCH,
 			sortBy: "created-descending",
-			filters: { status: "PUBLIC" },
+			filters: { status: "active" },
 		},
 		{ isAdmin: false },
 	).then((result) => ({

@@ -35,18 +35,18 @@ const PRODUCTS_LIST_PATH = "/admin/catalogue/produits";
  * ne pouvait pas être atteinte.
  */
 const FIELD_LABELS: Record<string, string> = {
-	title: "Titre du bijou",
+	name: "Nom du bijou",
 	description: "Description",
+	priceEuros: "Prix de vente",
 	typeId: "Type de bijou",
 	collectionIds: "Collections",
 	// Le libellé suit le titre visible de la section, cible du lien : « Les photos ».
-	"initialSku.media": "Les photos",
-	"initialSku.colorIds": "Couleurs",
-	"initialSku.materialIds": "Matériaux",
-	"initialSku.size": "Taille",
-	"initialSku.priceInclTaxEuros": "Prix de vente",
-	"initialSku.compareAtPriceEuros": "Prix comparé",
-	"initialSku.inventory": "Stock",
+	media: "Les photos",
+	"initialVariant.colorId": "Couleur",
+	"initialVariant.materialId": "Matériau",
+	"initialVariant.size": "Taille",
+	"initialVariant.priceEuros": "Prix de la variante",
+	"initialVariant.stock": "Stock",
 };
 
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
@@ -134,7 +134,7 @@ export function CreateProductForm({
 
 	const { handleUpload } = useMediaFieldUpload({
 		uploadMedia,
-		getAltText: () => form.state.values.title || undefined,
+		getAltText: () => form.state.values.name || undefined,
 		isUploading: isMediaUploading,
 	});
 
@@ -165,26 +165,24 @@ export function CreateProductForm({
 			{/* Hidden fields — grouped in one Subscribe to avoid multiple store subscriptions */}
 			<form.Subscribe
 				selector={(state) => ({
-					media: state.values.initialSku.media,
-					status: state.values.status,
+					media: state.values.media,
+					active: state.values.active,
+					typeId: state.values.typeId,
 					collectionIds: state.values.collectionIds,
-					colorIds: state.values.initialSku.colorIds,
-					materialIds: state.values.initialSku.materialIds,
+					colorId: state.values.initialVariant.colorId,
+					materialId: state.values.initialVariant.materialId,
 				})}
 			>
-				{({ media, status, collectionIds, colorIds, materialIds }) => (
+				{({ media, active, typeId, collectionIds, colorId, materialId }) => (
 					<>
 						{media.length > 0 ? (
-							<input type="hidden" name="initialSku.media" value={JSON.stringify(media)} />
+							<input type="hidden" name="media" value={JSON.stringify(media)} />
 						) : null}
-						<input type="hidden" name="status" value={status} />
+						<input type="hidden" name="active" value={active} />
+						<input type="hidden" name="typeId" value={typeId} />
 						<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
-						<input type="hidden" name="initialSku.colorIds" value={JSON.stringify(colorIds)} />
-						<input
-							type="hidden"
-							name="initialSku.materialIds"
-							value={JSON.stringify(materialIds)}
-						/>
+						<input type="hidden" name="initialVariant.colorId" value={colorId} />
+						<input type="hidden" name="initialVariant.materialId" value={materialId} />
 					</>
 				)}
 			</form.Subscribe>
@@ -230,7 +228,7 @@ export function CreateProductForm({
 			 */}
 			<fieldset disabled={isPending} className="max-w-[46rem] space-y-10">
 				<MediaArrayCard
-					fieldName="initialSku.media"
+					fieldName="initialVariant.media"
 					viewTransitionName="product-create-media"
 					title="Les photos"
 					// Le nom annoncé suit le titre visible : la région s'appelait encore

@@ -18,11 +18,11 @@ const UNDO_TOAST_DURATION_MS = 5000;
 
 interface RemoveCartItemData {
 	/**
-	 * Identité de la ligne — le skuId. Depuis le passage du panier en cookie
+	 * Identité de la ligne — le variantId. Depuis le passage du panier en cookie
 	 * (2026-08-04) il n'y a plus de `CartItem.id` distinct : `cartItemId` et
-	 * `skuId` étaient devenus la même valeur, portée deux fois.
+	 * `variantId` étaient devenus la même valeur, portée deux fois.
 	 */
-	skuId: string;
+	variantId: string;
 	itemName: string;
 	quantity: number;
 	[key: string]: unknown;
@@ -38,10 +38,10 @@ export function RemoveCartItemAlertDialog() {
 
 	// Undo via l'action du toast : l'item a déjà été supprimé optimistic + serveur
 	// dans handleSubmit. L'undo recrée l'item via `addToCart` et restaure le badge.
-	const buildToastUndoHandler = (skuId: string, quantity: number) => () => {
+	const buildToastUndoHandler = (variantId: string, quantity: number) => () => {
 		adjustCart(quantity);
 		const fd = new FormData();
-		fd.set("skuId", skuId);
+		fd.set("variantId", variantId);
 		fd.set("quantity", String(quantity));
 		startUndoTransition(async () => {
 			const result = await addToCart(undefined, fd);
@@ -56,12 +56,12 @@ export function RemoveCartItemAlertDialog() {
 		});
 	};
 
-	const showUndoToast = (skuId: string, quantity: number, itemName: string) => {
+	const showUndoToast = (variantId: string, quantity: number, itemName: string) => {
 		toast.success(`${itemName} retiré du panier`, {
 			duration: UNDO_TOAST_DURATION_MS,
 			action: {
 				label: "Annuler",
-				onClick: buildToastUndoHandler(skuId, quantity),
+				onClick: buildToastUndoHandler(variantId, quantity),
 			},
 		});
 	};
@@ -69,10 +69,10 @@ export function RemoveCartItemAlertDialog() {
 	const { action } = useRemoveFromCart({
 		quantity: removeDialog.data?.quantity ?? 1,
 		onSuccess: () => {
-			const { skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
+			const { variantId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
 			removeDialog.close();
-			if (!skuId) return;
-			showUndoToast(skuId, quantity, itemName);
+			if (!variantId) return;
+			showUndoToast(variantId, quantity, itemName);
 		},
 	});
 
@@ -80,13 +80,13 @@ export function RemoveCartItemAlertDialog() {
 		e.preventDefault();
 		haptic("error");
 		const formData = new FormData(e.currentTarget);
-		const { skuId } = removeDialog.data ?? {};
+		const { variantId } = removeDialog.data ?? {};
 
-		if (skuId && cartOptimistic) {
+		if (variantId && cartOptimistic) {
 			// Optimistic remove immédiat → l'item disparaît avant l'action,
 			// puis (desktop) toast Sonner avec bouton "Annuler" en bas-droite.
 			cartOptimistic.startTransition(() => {
-				cartOptimistic.updateOptimisticCart({ type: "remove", itemId: skuId });
+				cartOptimistic.updateOptimisticCart({ type: "remove", itemId: variantId });
 				action(formData);
 			});
 			return;
@@ -102,7 +102,7 @@ export function RemoveCartItemAlertDialog() {
 			onClose={removeDialog.close}
 			onSubmit={handleSubmit}
 			tone="destructive"
-			fields={{ skuId: removeDialog.data?.skuId }}
+			fields={{ variantId: removeDialog.data?.variantId }}
 			title="Retirer cette pièce de ton panier ?"
 			confirmLabel="Retirer"
 			description={

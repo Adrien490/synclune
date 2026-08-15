@@ -6,14 +6,13 @@ import { GET_PRODUCT_TYPES_MENU_SELECT } from "../constants/product-type.constan
 import type { MenuProductType } from "../types/product-type.types";
 
 /**
- * Familles pour les menus de navigation (« L'étal de poche ») : les types
- * actifs ayant au moins un produit PUBLIC, avec compte de pièces et un produit
- * représentatif pour la vignette (cf. `GET_PRODUCT_TYPES_MENU_SELECT`).
+ * Familles pour les menus de navigation (« L'étal de poche ») : les types ayant
+ * au moins un produit actif, avec compte de pièces et un produit représentatif
+ * pour la vignette (cf. `GET_PRODUCT_TYPES_MENU_SELECT`).
  *
- * Publique PAR CONSTRUCTION : les filtres sont figés ici (`isActive: true`,
- * produits PUBLIC non supprimés), il n'y a ni params ni session — donc aucune
- * lecture de `headers()`, et la fonction est directement utilisable depuis un
- * scope `"use cache"` sans le détour `options.isAdmin` de `getProductTypes`.
+ * Publique PAR CONSTRUCTION : les filtres sont figés ici (produits actifs), il
+ * n'y a ni params ni session — donc aucune lecture de `headers()`, et la
+ * fonction est directement utilisable depuis un scope `"use cache"`.
  *
  * Même tag LIST que `fetchProductTypes` : toute mutation de type de produit
  * invalide les deux surfaces d'un coup.
@@ -28,13 +27,12 @@ export async function getProductTypesForMenu(): Promise<{
 	try {
 		const productTypes = await prisma.productType.findMany({
 			where: {
-				isActive: true,
 				// Même critère que `buildProductTypeFilterConditions({ hasProducts:
-				// true })` : un type sans produit PUBLIC est une catégorie vide.
-				products: { some: { status: "PUBLIC", deletedAt: null } },
+				// true })` : un type sans produit actif est une catégorie vide.
+				products: { some: { active: true } },
 			},
 			select: GET_PRODUCT_TYPES_MENU_SELECT,
-			orderBy: [{ label: "asc" }, { id: "asc" }],
+			orderBy: [{ position: "asc" }, { label: "asc" }, { id: "asc" }],
 			take: 12,
 		});
 

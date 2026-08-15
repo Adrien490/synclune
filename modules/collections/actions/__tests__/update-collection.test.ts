@@ -166,7 +166,7 @@ describe("updateCollection", () => {
 			id: VALID_CUID,
 			name: "Old Collection",
 			slug: "old-collection",
-			status: "PUBLIC",
+			active: true,
 		});
 		const result = await updateCollection(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -179,7 +179,7 @@ describe("updateCollection", () => {
 			id: VALID_CUID,
 			name: "Old Collection",
 			slug: "old-collection",
-			status: "DRAFT",
+			active: false,
 		});
 		const result = await updateCollection(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -191,10 +191,10 @@ describe("updateCollection", () => {
 			id: VALID_CUID,
 			name: "Same Name",
 			slug: "same-name",
-			status: "PUBLIC",
+			active: true,
 		});
 		mockValidateInput.mockReturnValue({
-			data: { id: VALID_CUID, name: "Same Name", description: "New desc", status: "PUBLIC" },
+			data: { id: VALID_CUID, name: "Same Name", description: "New desc", active: true },
 		});
 		const result = await updateCollection(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);

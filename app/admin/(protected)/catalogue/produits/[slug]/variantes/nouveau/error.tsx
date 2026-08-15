@@ -2,7 +2,7 @@
 
 import { AdminFormErrorBoundary } from "@/app/admin/(protected)/_components/admin-form-error-boundary";
 
-export default function NewSkuError(props: {
+export default function NewVariantError(props: {
 	error: Error & { digest?: string };
 	reset: () => void;
 }) {

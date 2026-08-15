@@ -42,14 +42,12 @@ export async function getCatalogData() {
 			perPage: 50,
 			sortBy: "label-ascending",
 			filters: {
-				isActive: true,
 				hasProducts: true,
 			},
 		}),
 		getColors({
 			perPage: 100,
 			sortBy: "name-ascending",
-			filters: { isActive: true },
 		}),
 		getMaterialOptions(),
 		getMaxProductPrice(),
@@ -186,7 +184,7 @@ export async function resolveActiveProductType(
 	return {
 		slug: productType.slug,
 		label: productType.label,
-		description: productType.description,
+		description: null,
 	};
 }
 
@@ -293,28 +291,28 @@ type JsonLdOptions = {
 };
 
 function buildItemListProduct(product: Product) {
-	// `skus[0]` est le représentant (listes pré-triées `(position asc, id asc)`) ;
-	// le choix du média passe par la SSOT pickPrimaryImage (première IMAGE).
-	const defaultSku = product.skus[0];
-	const primaryImage = defaultSku ? pickPrimaryImage(defaultSku.images) : null;
+	// Schéma lean : le média vit sur le PRODUIT ; le choix passe par la SSOT
+	// pickPrimaryImage (première IMAGE).
+	const defaultVariant = product.variants[0];
+	const primaryImage = pickPrimaryImage(product.media);
 
-	const totalInventory = product.skus.reduce(
-		(sum, sku) => (sku.isActive ? sum + sku.inventory : sum),
+	const totalStock = product.variants.reduce(
+		(sum, variant) => (variant.active ? sum + variant.stock : sum),
 		0,
 	);
-	const availability = getOfferAvailability(totalInventory > 0);
+	const availability = getOfferAvailability(totalStock > 0);
 
 	return {
 		"@type": "Product",
-		name: product.title,
+		name: product.name,
 		url: `${SITE_URL}/creations/${product.slug}`,
 		...(primaryImage && { image: primaryImage.url }),
 		...(product.description && { description: product.description }),
 		brand: { "@type": "Brand", name: "Synclune" },
-		...(defaultSku && {
+		...(defaultVariant && {
 			offers: {
 				"@type": "Offer",
-				price: (defaultSku.priceInclTax / 100).toFixed(2),
+				price: ((defaultVariant.priceCents ?? product.priceCents) / 100).toFixed(2),
 				priceCurrency: "EUR",
 				availability,
 				url: `${SITE_URL}/creations/${product.slug}`,

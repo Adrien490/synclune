@@ -1,17 +1,12 @@
 import {
-	BankIcon,
-	GearIcon,
 	PackageIcon,
 	PaletteIcon,
-	ReceiptIcon,
 	ShoppingBagIcon,
 	SquaresFourIcon,
 	StackIcon,
-	StorefrontIcon,
 	SwatchesIcon,
 	TagIcon,
 	TicketIcon,
-	WrenchIcon,
 } from "@phosphor-icons/react/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -114,19 +109,6 @@ const PILOTAGE_GROUP: NavGroup = {
 			badgeUrl: ORDERS_TO_SHIP_HREF,
 			icon: ShoppingBagIcon,
 		},
-		{
-			id: "refunds",
-			title: "Remboursements",
-			url: "/admin/ventes/remboursements",
-			badgeUrl: "/admin/ventes/remboursements?filter_status=PENDING",
-			icon: ReceiptIcon,
-		},
-		{
-			id: "invoicing",
-			title: "Facturation",
-			url: "/admin/ventes/facturation",
-			icon: BankIcon,
-		},
 		// Route inchangée (`/admin/marketing/discounts`) : seul le regroupement
 		// visuel bouge, comme pour la fusion Contenu+Configuration → Boutique.
 		// Le hub `/admin/marketing` reste l'ancre de section de cette route et
@@ -181,34 +163,7 @@ const CATALOGUE_GROUP: NavGroup = {
 	],
 };
 
-/**
- * Groupe « Boutique » — tout ce qui paramètre la vitrine.
- *
- * Anciennement issu de la fusion des groupes mono-item `Contenu` (Annonces) et
- * `Configuration` (Boutique). La barre d'annonce ayant été retirée le 2026-08-04,
- * la section `/admin/contenu/**` a disparu avec elle : ne restent que des routes
- * `/admin/configuration/**`.
- */
-const BOUTIQUE_GROUP: NavGroup = {
-	label: "Boutique",
-	icon: GearIcon,
-	accent: "mint",
-	items: [
-		{
-			id: "store-settings",
-			title: "Réglages boutique",
-			shortTitle: "Réglages",
-			url: "/admin/configuration/boutique",
-			icon: StorefrontIcon,
-		},
-		{
-			id: "maintenance",
-			title: "Maintenance",
-			url: "/admin/configuration/maintenance",
-			icon: WrenchIcon,
-		},
-	],
-};
+// Groupe « Boutique » supprimé au lot 2 (StoreSettings et Maintenance partis avec le schéma lean).
 
 // ============================================================================
 // NAVIGATION DATA
@@ -231,7 +186,7 @@ const BOUTIQUE_GROUP: NavGroup = {
  * navigation-config.test.ts.
  */
 export const navigationData: NavigationData = {
-	navGroups: [PILOTAGE_GROUP, CATALOGUE_GROUP, BOUTIQUE_GROUP],
+	navGroups: [PILOTAGE_GROUP, CATALOGUE_GROUP],
 };
 
 // ============================================================================
@@ -243,9 +198,7 @@ export const navigationData: NavigationData = {
  * Filtrés depuis getAllNavItems() pour rester en sync avec navigationData.
  */
 /**
- * ⚠️ `refunds` en fait partie **parce qu'il porte une pastille**.
- *
- * `getAdminNavBadges()` compte deux files actionnables — `orders` et `refunds` —
+ * `getAdminNavBadges()` compte la file actionnable `orders` —
  * et `app/admin/layout.tsx` passe l'objet entier à la barre du bas. Mais tant que
  * `refunds` n'était pas un onglet d'accès rapide, ce compteur traversait tout le
  * layout pour être ignoré : sur son téléphone, l'administratrice ne voyait jamais
@@ -257,7 +210,7 @@ export const navigationData: NavigationData = {
  * ici**, sinon son compteur redevient muet en mobile. Verrouillé par le test
  * « chaque file badgée est atteignable en accès rapide » de navigation-config.test.ts.
  */
-const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products", "refunds"] as const;
+const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products"] as const;
 
 /**
  * Récupère tous les items de navigation (liste plate).
@@ -294,11 +247,6 @@ const BADGE_NOUNS: Record<string, { one: string; many: string; none: string }> =
 		one: "commande en attente",
 		many: "commandes en attente",
 		none: "Aucune commande en attente",
-	},
-	refunds: {
-		one: "remboursement en attente",
-		many: "remboursements en attente",
-		none: "Aucun remboursement en attente",
 	},
 };
 
@@ -353,7 +301,6 @@ export const BADGED_ITEM_IDS = Object.keys(BADGE_NOUNS);
  */
 const QUEUE_NOUNS: Record<string, { one: string; many: string }> = {
 	orders: { one: "commande à expédier", many: "commandes à expédier" },
-	refunds: { one: "remboursement à rattraper", many: "remboursements à rattraper" },
 };
 
 /**

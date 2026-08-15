@@ -1,6 +1,5 @@
-import { Prisma, type PublicationStatus } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
-import { notDeleted } from "@/shared/lib/prisma";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
 import type { SearchResult } from "../types/product-services.types";
 
@@ -32,7 +31,7 @@ export type { SearchResult } from "../types/product-services.types";
  */
 export async function buildSearchConditions(
 	search: string,
-	options?: { status?: PublicationStatus },
+	options?: { activeOnly?: boolean },
 ): Promise<SearchResult> {
 	const term = search.trim();
 	if (!term) return { fuzzyIds: null, exactConditions: [] };
@@ -58,10 +57,10 @@ export async function buildSearchConditions(
 	// L'erreur est déjà loggée par `fuzzySearchProductIds` avant son rethrow.
 	try {
 		const { ids: fuzzyIds } = await fuzzySearchProductIds(term, {
-			status: options?.status,
+			activeOnly: options?.activeOnly,
 		});
 
-		// Exact conditions for related fields (SKU, colors, etc.)
+		// Exact conditions for related fields (VARIANT, colors, etc.)
 		const exactConditions = buildRelatedFieldsSearchConditions(words);
 
 		return { fuzzyIds, exactConditions };
@@ -110,7 +109,7 @@ function buildPerWordOrConditions(word: string): Prisma.ProductWhereInput {
 	return {
 		OR: variants.flatMap((variant) => [
 			{
-				title: {
+				name: {
 					contains: escapeLikePattern(variant),
 					mode: Prisma.QueryMode.insensitive,
 				},
@@ -128,7 +127,7 @@ function buildPerWordOrConditions(word: string): Prisma.ProductWhereInput {
 
 /**
  * Build OR conditions for a single word across related fields only
- * (SKU, color, material, collection)
+ * (VARIANT, color, material, collection)
  */
 function buildPerWordRelatedConditions(rawWord: string): Prisma.ProductWhereInput[] {
 	// Échappement LIKE (P3-3, cf. escape-like-pattern.ts) — appelé avec le mot
@@ -136,91 +135,36 @@ function buildPerWordRelatedConditions(rawWord: string): Prisma.ProductWhereInpu
 	const word = escapeLikePattern(rawWord);
 	return [
 		{
-			type: {
-				OR: [
-					{
-						label: {
-							contains: word,
-							mode: Prisma.QueryMode.insensitive,
-						},
-					},
-					{
-						slug: {
-							contains: word,
-							mode: Prisma.QueryMode.insensitive,
-						},
-					},
-				],
-			},
-		},
-		{
-			skus: {
+			variants: {
 				some: {
 					OR: [
 						{
-							sku: {
-								contains: word,
-								mode: Prisma.QueryMode.insensitive,
-							},
-						},
-						{
-							colors: {
-								some: {
-									color: {
-										OR: [
-											{
-												name: {
-													contains: word,
-													mode: Prisma.QueryMode.insensitive,
-												},
-											},
-											{
-												hex: {
-													contains: word,
-													mode: Prisma.QueryMode.insensitive,
-												},
-											},
-										],
-									},
+							color: {
+								is: {
+									OR: [
+										{ name: { contains: word, mode: Prisma.QueryMode.insensitive } },
+										{ hex: { contains: word, mode: Prisma.QueryMode.insensitive } },
+									],
 								},
 							},
 						},
 						{
-							materials: {
-								some: {
-									material: {
-										name: {
-											contains: word,
-											mode: Prisma.QueryMode.insensitive,
-										},
-									},
-								},
+							material: {
+								is: { name: { contains: word, mode: Prisma.QueryMode.insensitive } },
 							},
 						},
 					],
-					isActive: true,
+					active: true,
 				},
 			},
 		},
 		{
 			collections: {
 				some: {
-					collection: {
-						OR: [
-							{
-								name: {
-									contains: word,
-									mode: Prisma.QueryMode.insensitive,
-								},
-							},
-							{
-								slug: {
-									contains: word,
-									mode: Prisma.QueryMode.insensitive,
-								},
-							},
-						],
-					},
+					OR: [
+						{ name: { contains: word, mode: Prisma.QueryMode.insensitive } },
+						{ slug: { contains: word, mode: Prisma.QueryMode.insensitive } },
+					],
 				},
 			},
 		},
@@ -240,7 +184,7 @@ function buildFullExactSearchConditions(words: string[]): Prisma.ProductWhereInp
 }
 
 /**
- * Exact search on related fields only (SKU, colors, materials, collections).
+ * Exact search on related fields only (VARIANT, colors, materials, collections).
  * Does NOT include title/description (handled by fuzzy search).
  * AND logic: each word must match at least one related field.
  * Expanded with synonyms for each word.
@@ -261,30 +205,28 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 	const conditions: Prisma.ProductWhereInput[] = [];
 
 	// Contraintes au niveau variante (couleur + matériau + prix) accumulées dans
-	// UN SEUL `skus: { some }` : une même variante active doit satisfaire TOUS ces
+	// UN SEUL `variants: { some }` : une même variante active doit satisfaire TOUS ces
 	// critères. Sinon (conditions `some` séparées) un produit matcherait via des
-	// SKU différents — ex: variante or à 150€ + variante argent à 30€ matcherait
+	// VARIANT différents — ex: variante or à 150€ + variante argent à 30€ matcherait
 	// `color=or&priceMax=50` alors qu'aucune variante or n'est ≤ 50€ (audit filtres S1).
-	const skuSome: Prisma.ProductSkuWhereInput = { isActive: true };
-	let hasSkuConstraint = false;
+	const variantSome: Prisma.ProductVariantWhereInput = { active: true };
+	let hasVariantConstraint = false;
 
 	if (filters.status !== undefined) {
 		const statuses = (Array.isArray(filters.status) ? filters.status : [filters.status]).filter(
 			Boolean,
 		);
+		// "active"+"inactive" simultanés = pas de contrainte
 		if (statuses.length === 1) {
-			conditions.push({ status: statuses[0] });
-		} else if (statuses.length > 1) {
-			conditions.push({ status: { in: statuses } });
+			conditions.push({ active: statuses[0] === "active" });
 		}
 	}
 
+	// Type de bijou (slug ProductType)
 	if (filters.type !== undefined) {
 		const types = (Array.isArray(filters.type) ? filters.type : [filters.type]).filter(Boolean);
-		if (types.length === 1) {
-			conditions.push({ type: { slug: types[0] } });
-		} else if (types.length > 1) {
-			conditions.push({ type: { slug: { in: types } } });
+		if (types.length >= 1) {
+			conditions.push({ type: { is: { slug: { in: types } } } });
 		}
 	}
 
@@ -292,13 +234,13 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		const colors = (Array.isArray(filters.color) ? filters.color : [filters.color]).filter(Boolean);
 		// Multi-valeurs tolérant au sein d'UNE variante : la variante doit porter
 		// au moins une des couleurs sélectionnées (la contrainte « même variante »
-		// vient de la fusion dans skuSome — cf. note en tête de fonction).
-		if (colors.length === 1) {
-			skuSome.colors = { some: { color: { slug: colors[0] } } };
-			hasSkuConstraint = true;
-		} else if (colors.length > 1) {
-			skuSome.colors = { some: { color: { slug: { in: colors } } } };
-			hasSkuConstraint = true;
+		// vient de la fusion dans variantSome — cf. note en tête de fonction).
+		if (colors.length >= 1) {
+			// Identité URL = nom de couleur (Color n'a plus de slug)
+			variantSome.color = {
+				is: { name: { in: colors, mode: Prisma.QueryMode.insensitive } },
+			};
+			hasVariantConstraint = true;
 		}
 	}
 
@@ -306,12 +248,11 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		const materials = (
 			Array.isArray(filters.material) ? filters.material : [filters.material]
 		).filter(Boolean);
-		if (materials.length === 1) {
-			skuSome.materials = { some: { material: { slug: materials[0] } } };
-			hasSkuConstraint = true;
-		} else if (materials.length > 1) {
-			skuSome.materials = { some: { material: { slug: { in: materials } } } };
-			hasSkuConstraint = true;
+		if (materials.length >= 1) {
+			variantSome.material = {
+				is: { name: { in: materials, mode: Prisma.QueryMode.insensitive } },
+			};
+			hasVariantConstraint = true;
 		}
 	}
 
@@ -319,14 +260,8 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		const collectionIds = (
 			Array.isArray(filters.collectionId) ? filters.collectionId : [filters.collectionId]
 		).filter(Boolean);
-		if (collectionIds.length === 1) {
-			conditions.push({
-				collections: { some: { collectionId: collectionIds[0] } },
-			});
-		} else if (collectionIds.length > 1) {
-			conditions.push({
-				collections: { some: { collectionId: { in: collectionIds } } },
-			});
+		if (collectionIds.length >= 1) {
+			conditions.push({ collections: { some: { id: { in: collectionIds } } } });
 		}
 	}
 
@@ -334,14 +269,8 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		const collectionSlugs = (
 			Array.isArray(filters.collectionSlug) ? filters.collectionSlug : [filters.collectionSlug]
 		).filter(Boolean);
-		if (collectionSlugs.length === 1) {
-			conditions.push({
-				collections: { some: { collection: { slug: collectionSlugs[0] } } },
-			});
-		} else if (collectionSlugs.length > 1) {
-			conditions.push({
-				collections: { some: { collection: { slug: { in: collectionSlugs } } } },
-			});
+		if (collectionSlugs.length >= 1) {
+			conditions.push({ collections: { some: { slug: { in: collectionSlugs } } } });
 		}
 	}
 
@@ -350,7 +279,7 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		conditions.push({ slug: { in: filters.slugs } });
 	}
 
-	// Validation bounds: price must be >= 0. Fusionné dans skuSome pour que la
+	// Validation bounds: price must be >= 0. Fusionné dans variantSome pour que la
 	// variante dans le budget soit la MÊME que celle qui porte la couleur/matériau
 	// filtré(e) (audit filtres S1).
 	const validPriceMin =
@@ -359,11 +288,18 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		typeof filters.priceMax === "number" && filters.priceMax >= 0 ? filters.priceMax : undefined;
 
 	if (validPriceMin !== undefined || validPriceMax !== undefined) {
-		skuSome.priceInclTax = {
+		const priceBound = {
 			...(validPriceMin !== undefined ? { gte: validPriceMin } : {}),
 			...(validPriceMax !== undefined ? { lte: validPriceMax } : {}),
 		};
-		hasSkuConstraint = true;
+		// Le prix affiché = variant.priceCents ?? product.priceCents : la
+		// contrainte matche l'override de la variante, OU (override null) le prix
+		// du produit lui-même.
+		variantSome.OR = [
+			{ priceCents: priceBound },
+			{ priceCents: null, product: { priceCents: priceBound } },
+		];
+		hasVariantConstraint = true;
 	}
 
 	if (filters.createdAfter instanceof Date) {
@@ -379,51 +315,37 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		conditions.push({ updatedAt: { lte: filters.updatedBefore } });
 	}
 
-	// On sale filter — ADMIN-ONLY depuis le retrait Omnibus (2026-08-08) : le
-	// parser storefront n'émet plus `onSale`, seul le filtre de gestion admin
-	// (« produits ayant un compareAtPrice ») passe encore par cette branche.
-	if (filters.onSale === true) {
-		conditions.push({
-			skus: {
-				some: {
-					isActive: true,
-					compareAtPrice: { not: null },
-				},
-			},
-		});
-	}
-
 	// Stock status filter
 	if (filters.stockStatus !== undefined) {
 		if (filters.stockStatus === "out_of_stock") {
-			// Out of stock: no active SKU with inventory > 0
+			// Out of stock: no active VARIANT with stock > 0
 			conditions.push({
 				NOT: {
-					skus: {
+					variants: {
 						some: {
-							isActive: true,
-							inventory: { gt: 0 },
+							active: true,
+							stock: { gt: 0 },
 						},
 					},
 				},
 			});
 		} else if (filters.stockStatus === "low_stock") {
-			// Low stock: at least one active SKU with 0 < inventory <= LOW_STOCK_THRESHOLD
+			// Low stock: at least one active VARIANT with 0 < stock <= LOW_STOCK_THRESHOLD
 			conditions.push({
-				skus: {
+				variants: {
 					some: {
-						isActive: true,
-						inventory: { gt: 0, lte: LOW_STOCK_THRESHOLD },
+						active: true,
+						stock: { gt: 0, lte: LOW_STOCK_THRESHOLD },
 					},
 				},
 			});
 		} else {
-			// In stock: at least one active SKU with inventory > 0
+			// In stock: at least one active VARIANT with stock > 0
 			conditions.push({
-				skus: {
+				variants: {
 					some: {
-						isActive: true,
-						inventory: { gt: 0 },
+						active: true,
+						stock: { gt: 0 },
 					},
 				},
 			});
@@ -431,8 +353,8 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 	}
 
 	// Pousse l'unique contrainte variante (couleur + matériau + prix fusionnés).
-	if (hasSkuConstraint) {
-		conditions.push({ skus: { some: skuSome } });
+	if (hasVariantConstraint) {
+		conditions.push({ variants: { some: variantSome } });
 	}
 
 	return conditions;
@@ -454,18 +376,9 @@ export function buildProductWhereClause(
 	const andConditions: Prisma.ProductWhereInput[] = [];
 	const filters = params.filters;
 
-	// Exclude soft-deleted products by default
-	// For admin, use includeDeleted: true in params
-	if (!params.includeDeleted) {
-		andConditions.push({ ...notDeleted });
-	}
-
-	// Filter by status if specified
-	// If undefined, show all statuses (used by admin)
+	// Visibilité globale (storefront force "active" ; l'admin omet le param)
 	if (params.status) {
-		andConditions.push({
-			status: params.status,
-		});
+		andConditions.push({ active: params.status === "active" });
 	}
 
 	// Apply search conditions if provided
@@ -474,7 +387,7 @@ export function buildProductWhereClause(
 
 		if (fuzzyIds !== null && fuzzyIds.length > 0) {
 			// Active fuzzy search: combine fuzzy IDs OR exact conditions
-			// Finds products via fuzzy (title/desc) OR exact match (SKU, colors, etc.)
+			// Finds products via fuzzy (title/desc) OR exact match (VARIANT, colors, etc.)
 			// exactConditions are per-word AND conditions, so wrap in AND
 			if (exactConditions.length > 0) {
 				andConditions.push({

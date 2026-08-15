@@ -2,12 +2,10 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import type { ActionState } from "@/shared/types/server-action";
 import { success, handleActionError } from "@/shared/lib/actions";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { ADMIN_PRODUCT_REFRESH_LIMIT } from "@/shared/lib/rate-limit-config";
 
 export async function refreshProducts(
 	_prevState: unknown,
@@ -16,8 +14,6 @@ export async function refreshProducts(
 	try {
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_REFRESH_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		// Ne délègue PAS à `getProductInvalidationTags` : ce helper exige un slug (pour
 		// `DETAIL` et `RELATED_CONTEXTUAL`) qu'un rafraîchissement global n'a pas. On
@@ -30,7 +26,7 @@ export async function refreshProducts(
 			PRODUCTS_CACHE_TAGS.LIST,
 			PRODUCTS_CACHE_TAGS.COUNTS,
 			PRODUCTS_CACHE_TAGS.MAX_PRICE,
-			PRODUCTS_CACHE_TAGS.SKUS_LIST,
+			PRODUCTS_CACHE_TAGS.VARIANTS_LIST,
 			PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,
 			SHARED_CACHE_TAGS.PRODUCT_TYPES_LIST,
 			SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,

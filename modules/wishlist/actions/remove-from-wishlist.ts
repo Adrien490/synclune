@@ -1,7 +1,5 @@
 "use server";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
-import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { removeFromWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
 import { readWishlistCookie, writeWishlistCookie } from "@/modules/wishlist/lib/wishlist-cookie";
@@ -30,8 +28,6 @@ export async function removeFromWishlist(
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting (protection anti-spam) — before validation to prevent enumeration
-		const rateCheck = await enforceRateLimitForCurrentUser(WISHLIST_LIMITS.REMOVE);
-		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Validation avec Zod
 		const validated = validateInput(removeFromWishlistSchema, {

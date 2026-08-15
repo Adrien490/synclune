@@ -3,7 +3,6 @@
 import { CopyButton } from "@/shared/components/copy-button";
 import { FieldLabel } from "@/shared/components/forms";
 import { Field, FieldError } from "@/shared/components/ui/field";
-import { Switch } from "@/shared/components/ui/switch";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useRecentColors } from "@/shared/hooks/use-recent-colors";
 import { cn } from "@/shared/utils/cn";
@@ -13,11 +12,7 @@ import { ColorSwatch } from "@/modules/products/components/aria-color-swatch";
 import { HexColorInput } from "../hex-color-input";
 import { COLOR_LIBRARY, FEATURED_COLORS } from "../../constants/color-library";
 import type { ColorFormInstance } from "../../hooks/use-color-form";
-import {
-	colorDescriptionSchema,
-	colorNameSchema,
-	hexColorSchema,
-} from "../../schemas/color.schemas";
+import { colorNameSchema, hexColorSchema } from "../../schemas/color.schemas";
 import { getSwatchContrast, isLightColor, type WcagRating } from "../../utils/color-contrast.utils";
 
 const validateHex = (value: string): string | undefined => {
@@ -28,12 +23,6 @@ const validateHex = (value: string): string | undefined => {
 const validateName = (value: string): string | undefined => {
 	const result = colorNameSchema.safeParse(value);
 	return result.success ? undefined : (result.error.issues[0]?.message ?? "Nom invalide");
-};
-
-const validateDescription = (value: string): string | undefined => {
-	if (!value || value.length === 0) return undefined;
-	const result = colorDescriptionSchema.safeParse(value);
-	return result.success ? undefined : (result.error.issues[0]?.message ?? "Description invalide");
 };
 
 const WCAG_LABEL: Record<WcagRating, string> = {
@@ -53,31 +42,26 @@ const WCAG_CLASS: Record<WcagRating, string> = {
 interface ColorFormFieldsProps {
 	form: ColorFormInstance;
 	isPending: boolean;
-	/** Affiche le toggle « Couleur active » (édition uniquement). */
-	showStatus?: boolean;
 }
 
 /**
  * Champs partagés entre create-color-form et edit-color-form.
  * - Preview swatch sticky top mobile : visualisation immédiate hex + nom + contraste WCAG.
  * - Couleurs récentes (localStorage) + suggestions bijouterie dérivées de la library.
- * - Tap suggestion → pré-remplit hex + nom + description si le nom est vide.
- * - Description optionnelle (500 char) + toggle isActive en édition.
+ * - Tap suggestion → pré-remplit hex + nom si le nom est vide.
  */
-export function ColorFormFields({ form, isPending, showStatus = false }: ColorFormFieldsProps) {
+export function ColorFormFields({ form, isPending }: ColorFormFieldsProps) {
 	const haptic = useHaptic();
 	const recentColors = useRecentColors();
 
-	// Applique un hex et, si le champ nom est vide, pré-remplit nom + description
+	// Applique un hex et, si le champ nom est vide, pré-remplit le nom
 	// depuis la library (cohérent avec ColorLibrarySheet, un seul tap).
-	const applyColor = (hex: string, name?: string, description?: string | null) => {
+	const applyColor = (hex: string, name?: string) => {
 		form.setFieldValue("hex", hex);
 		if (form.getFieldValue("name").trim().length === 0) {
 			const match = COLOR_LIBRARY.find((e) => e.hex.toUpperCase() === hex.toUpperCase());
 			const resolvedName = name ?? match?.name;
 			if (resolvedName) form.setFieldValue("name", resolvedName);
-			const resolvedDesc = description ?? match?.description;
-			if (resolvedDesc) form.setFieldValue("description", resolvedDesc);
 		}
 		haptic("light");
 	};
@@ -169,9 +153,6 @@ export function ColorFormFields({ form, isPending, showStatus = false }: ColorFo
 									type="button"
 									onClick={() => {
 										form.setFieldValue("name", libraryMatch.name);
-										if (libraryMatch.description) {
-											form.setFieldValue("description", libraryMatch.description);
-										}
 										haptic("light");
 									}}
 									className="focus-ring text-primary inline-flex items-center text-xs underline-offset-2 hover:underline focus-visible:underline"
@@ -249,9 +230,7 @@ export function ColorFormFields({ form, isPending, showStatus = false }: ColorFo
 												key={suggestion.hex}
 												type="button"
 												disabled={isPending}
-												onClick={() =>
-													applyColor(suggestion.hex, suggestion.name, suggestion.description)
-												}
+												onClick={() => applyColor(suggestion.hex, suggestion.name)}
 												aria-label={`Sélectionner ${suggestion.name} (${suggestion.hex})`}
 												aria-pressed={isSelected}
 												className={cn(
@@ -289,52 +268,6 @@ export function ColorFormFields({ form, isPending, showStatus = false }: ColorFo
 					/>
 				)}
 			</form.AppField>
-
-			<form.AppField
-				name="description"
-				validators={{ onChange: ({ value }) => validateDescription(value) }}
-			>
-				{(field) => (
-					<field.TextareaField
-						label="Description"
-						optional
-						placeholder="Notes : 18 carats, finition mate, hypoallergénique…"
-						disabled={isPending}
-						rows={3}
-						maxLength={500}
-						showCounter
-						className="resize-none"
-					/>
-				)}
-			</form.AppField>
-
-			{showStatus && (
-				<form.AppField name="isActive">
-					{(field) => (
-						<Field
-							orientation="horizontal"
-							className="flex-row items-center justify-between gap-4 rounded-lg border p-4"
-						>
-							<div className="space-y-0.5">
-								<FieldLabel htmlFor={field.name}>Couleur active</FieldLabel>
-								<p className="text-muted-foreground text-xs">
-									Une couleur inactive reste enregistrée mais n'apparaît plus en boutique.
-								</p>
-							</div>
-							<Switch
-								id={field.name}
-								checked={field.state.value === true}
-								onCheckedChange={(checked) => {
-									field.handleChange(checked);
-									haptic("selection");
-								}}
-								disabled={isPending}
-								aria-label="Couleur active"
-							/>
-						</Field>
-					)}
-				</form.AppField>
-			)}
 		</div>
 	);
 }

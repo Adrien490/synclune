@@ -2,7 +2,7 @@ import { TaxonomyStatsCard } from "@/modules/taxonomies/components/taxonomy-deta
 
 interface ProductTypeDetailStatsCardProps {
 	total: number;
-	counts: { public: number; draft: number; archived: number };
+	counts: { active: number; draft: number };
 }
 
 export function ProductTypeDetailStatsCard({ total, counts }: ProductTypeDetailStatsCardProps) {
@@ -10,9 +10,8 @@ export function ProductTypeDetailStatsCard({ total, counts }: ProductTypeDetailS
 		<TaxonomyStatsCard
 			stats={[
 				{ label: "Total", value: total },
-				{ label: "Publics", value: counts.public },
+				{ label: "En vente", value: counts.active },
 				{ label: "Brouillons", value: counts.draft },
-				{ label: "Archivés", value: counts.archived },
 			]}
 		/>
 	);

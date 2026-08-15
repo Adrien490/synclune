@@ -15,7 +15,7 @@ type TaxonomyAction = (
 ) => Promise<ActionState>;
 
 /**
- * Hooks de mutation partagés par les trois taxonomies.
+ * Hooks de mutation partagés par les taxonomies (couleurs, matériaux).
  *
  * Chaque hook prend la Server Action concrète en paramètre : la frontière
  * typée reste côté module, seule la mécanique React est mutualisée.
@@ -53,73 +53,25 @@ export function useTaxonomyRefresh(action: TaxonomyAction, options?: { onSuccess
 }
 
 // ============================================================================
-// BASCULE DE STATUT
-// ============================================================================
-
-interface UseTaxonomyToggleStatusOptions {
-	onSuccess?: (message: string) => void;
-	onError?: () => void;
-}
-
-export function useTaxonomyToggleStatus(
-	action: TaxonomyAction,
-	config: TaxonomyConfig,
-	options?: UseTaxonomyToggleStatusOptions,
-) {
-	const [state, formAction, isPending] = useActionState(
-		withCallbacks(
-			action,
-			createToastCallbacks({
-				loadingMessage: "Mise à jour du statut…",
-				onSuccess: (result) => {
-					if (typeof result.message === "string") options?.onSuccess?.(result.message);
-				},
-				onError: () => options?.onError?.(),
-			}),
-		),
-		undefined,
-	);
-
-	// Pas de `startTransition` ici : les appelants (les bascules « Actif »)
-	// l'enveloppent eux-mêmes avec leur `useOptimistic`, pour que l'état
-	// optimiste survive jusqu'à la résolution de l'action.
-	const toggleStatus = (id: string, isActive: boolean) => {
-		const formData = new FormData();
-		formData.append(config.formFields.toggleId, id);
-		formData.append("isActive", String(isActive));
-		formAction(formData);
-	};
-
-	return { state, action: formAction, isPending, toggleStatus };
-}
-
-// ============================================================================
 // DUPLICATION
 // ============================================================================
 
 export interface TaxonomyDuplicateSuccessData {
 	id: string;
-	slug: string;
-	/** `name` pour couleurs et matériaux, `label` pour les types de bijoux. */
 	displayName: string;
 }
 
 /**
- * Les actions de duplication renvoient `{ id, slug }` plus le libellé sous une
- * clé qui dépend de l'entité (`name` ou `label`). On normalise ici.
+ * Les actions de duplication renvoient `{ id, name }`. On normalise ici.
  */
 function readDuplicateData(value: unknown): TaxonomyDuplicateSuccessData | null {
 	if (value === null || typeof value !== "object") return null;
 	const record = value as Record<string, unknown>;
-	const displayName = record.name ?? record.label;
-	if (
-		typeof record.id !== "string" ||
-		typeof record.slug !== "string" ||
-		typeof displayName !== "string"
-	) {
+	const displayName = record.name;
+	if (typeof record.id !== "string" || typeof displayName !== "string") {
 		return null;
 	}
-	return { id: record.id, slug: record.slug, displayName };
+	return { id: record.id, displayName };
 }
 
 interface UseTaxonomyDuplicateOptions {

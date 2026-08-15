@@ -87,7 +87,7 @@ function StorefrontLinkCardSkeleton() {
 	);
 }
 
-function SkusSummaryCardSkeleton() {
+function VariantsSummaryCardSkeleton() {
 	return (
 		<Card>
 			<CardHeader>
@@ -197,7 +197,7 @@ export default function AdminProductDetailLoading() {
 					</div>
 					<div className="space-y-6">
 						<StorefrontLinkCardSkeleton />
-						<SkusSummaryCardSkeleton />
+						<VariantsSummaryCardSkeleton />
 						<CollectionsCardSkeleton />
 					</div>
 				</div>

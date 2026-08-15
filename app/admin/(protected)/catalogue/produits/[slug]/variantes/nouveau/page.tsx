@@ -5,7 +5,7 @@ import { getColorOptions } from "@/modules/colors/data/get-color-options";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
-import { CreateProductVariantForm } from "@/modules/skus/components/admin/create-sku-form";
+import { CreateProductVariantForm } from "@/modules/variants/components/admin/create-variant-form";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 import { PageHeader } from "@/shared/components/page-header";
 import {
@@ -71,7 +71,7 @@ export default async function NewProductVariantPage({
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink href={`/admin/catalogue/produits/${slug}/modifier`}>
-							{product.title}
+							{product.name}
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
@@ -90,7 +90,7 @@ export default async function NewProductVariantPage({
 			<PageHeader
 				variant="compact"
 				title="Nouvelle variante"
-				description={`Créez une nouvelle variante pour "${product.title}"`}
+				description={`Créez une nouvelle variante pour "${product.name}"`}
 				className="hidden md:block"
 			/>
 
@@ -99,7 +99,7 @@ export default async function NewProductVariantPage({
 				materials={materials}
 				product={{
 					id: product.id,
-					title: product.title,
+					name: product.name,
 				}}
 				productSlug={slug}
 			/>

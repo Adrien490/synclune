@@ -60,11 +60,9 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 		rawSortBy && rawSortBy in MATERIALS_SORT_LABELS ? rawSortBy : "name-ascending"
 	) as keyof typeof MATERIALS_SORT_LABELS;
 	const search = searchParamParsers.search(params.search);
-	const filterIsActive = getFirstParam(params.filter_isActive);
 	const hasActiveFilters = !!search || Object.keys(params).some((key) => key.startsWith("filter_"));
-	const filters = {
-		isActive: filterIsActive ? filterIsActive === "true" : undefined,
-	};
+	// Schéma lean : plus de filtre de statut sur Material
+	const filters = {};
 
 	// La promise de matériaux n'est PAS awaitée pour permettre le streaming
 	const materialsPromise = getMaterials({

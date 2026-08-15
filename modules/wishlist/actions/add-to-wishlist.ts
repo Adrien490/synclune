@@ -1,8 +1,6 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
-import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { addToWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
 import { readWishlistCookie, writeWishlistCookie } from "@/modules/wishlist/lib/wishlist-cookie";
@@ -32,8 +30,6 @@ export async function addToWishlist(
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting (protection anti-spam) — before validation to prevent enumeration
-		const rateCheck = await enforceRateLimitForCurrentUser(WISHLIST_LIMITS.ADD);
-		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Validation avec Zod
 		const validated = validateInput(addToWishlistSchema, {
@@ -56,7 +52,7 @@ export async function addToWishlist(
 
 		// Un id n'entre dans le cookie que s'il désigne un produit PUBLIC
 		const product = await prisma.product.findUnique({
-			where: { id: productId, status: "PUBLIC", deletedAt: null },
+			where: { id: productId, active: true },
 			select: { id: true },
 		});
 		if (!product) {

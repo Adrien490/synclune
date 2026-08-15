@@ -8,7 +8,7 @@ import type { ProductTypeOption } from "../types/product-type.types";
 // ============================================================================
 
 /**
- * Récupère tous les types de produits actifs pour les selects/filtres
+ * Récupère tous les types de produits pour les selects/filtres
  * Version simplifiée sans pagination
  */
 export async function getProductTypeOptions(): Promise<ProductTypeOption[]> {
@@ -24,12 +24,11 @@ async function fetchProductTypeOptions(): Promise<ProductTypeOption[]> {
 
 	try {
 		const productTypes = await prisma.productType.findMany({
-			where: { isActive: true },
 			select: {
 				id: true,
 				label: true,
 			},
-			orderBy: { label: "asc" },
+			orderBy: [{ position: "asc" }, { label: "asc" }],
 		});
 
 		return productTypes;

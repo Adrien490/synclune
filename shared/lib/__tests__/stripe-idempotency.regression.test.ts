@@ -9,7 +9,7 @@
  *
  *  · `pi-init-${ownerKey}-${customerKey}-${total}-${cartHash}` grandissait avec le
  *    panier (~32 c. par ligne sur un préfixe de ~70 c.) et franchissait 255 c. dès
- *    **6 SKU distincts** — alors que `MAX_CART_ITEMS` en autorise 50. Rien ne le
+ *    **6 VARIANT distincts** — alors que `MAX_CART_ITEMS` en autorise 50. Rien ne le
  *    signalait : la clé part dans un en-tête, `tsc` ne la mesure pas, et aucun test
  *    ne montait un panier de plus de trois lignes.
  *  · `customer-create-${email}` mettait l'adresse e-mail en clair dans cet en-tête.
@@ -64,7 +64,7 @@ describe("clés d'idempotence Stripe (@regression stripe-idempotency-key-bounds)
 	});
 
 	it("est déterministe — mêmes composantes, même clé", () => {
-		const parts = ["owner", "cus_1", "1000", "sku:1:500"];
+		const parts = ["owner", "cus_1", "1000", "variant:1:500"];
 		expect(buildIdempotencyKey("pi-init", parts)).toBe(buildIdempotencyKey("pi-init", parts));
 	});
 

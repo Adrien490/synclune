@@ -2,54 +2,54 @@ import { describe, expect, it } from "vitest";
 
 import { interleaveByType, isSoldOut, orderHeroProducts } from "../product-availability.service";
 
-type TestSku = { isActive: boolean; inventory: number };
+type TestVariant = { active: boolean; stock: number };
 
 /**
- * Les fonctions testées ne lisent que `skus[].isActive` et `skus[].inventory` —
+ * Les fonctions testées ne lisent que `variants[].active` et `variants[].stock` —
  * le `as never` évite de recopier ici les ~40 champs de `GET_PRODUCTS_SELECT`,
  * qui n'apporteraient rien et dériveraient au premier changement de select.
  */
-const make = (id: string, skus: TestSku[], typeId?: string) =>
-	({ id, skus, type: typeId ? { id: typeId } : null }) as never;
+const make = (id: string, variants: TestVariant[], typeId?: string) =>
+	({ id, variants, type: typeId ? { id: typeId } : null }) as never;
 
 describe("isSoldOut", () => {
-	it("compte l'agrégat des SKUs ACTIFS, pas le premier", () => {
+	it("compte l'agrégat des VARIANTs ACTIFS, pas le premier", () => {
 		// Même règle que `getProductCardData` : trois couleurs à un exemplaire ne
 		// sont pas une rupture. Les deux doivent rester d'accord, sinon le classement
 		// pousse en fin une pièce que la carte présente comme achetable.
 		expect(
 			isSoldOut(
 				make("a", [
-					{ isActive: true, inventory: 0 },
-					{ isActive: true, inventory: 1 },
+					{ active: true, stock: 0 },
+					{ active: true, stock: 1 },
 				]),
 			),
 		).toBe(false);
 	});
 
-	it("ignore le stock des SKUs INACTIFS", () => {
-		// Un SKU dépublié n'est pas achetable : son stock ne doit pas faire passer la
+	it("ignore le stock des VARIANTs INACTIFS", () => {
+		// Un VARIANT dépublié n'est pas achetable : son stock ne doit pas faire passer la
 		// pièce pour disponible.
 		expect(
 			isSoldOut(
 				make("a", [
-					{ isActive: false, inventory: 12 },
-					{ isActive: true, inventory: 0 },
+					{ active: false, stock: 12 },
+					{ active: true, stock: 0 },
 				]),
 			),
 		).toBe(true);
 	});
 
-	it("traite « aucun SKU actif » comme épuisé", () => {
+	it("traite « aucun VARIANT actif » comme épuisé", () => {
 		// L'état « à venir » n'offre pas d'achat, et c'est le seul critère ici.
 		expect(isSoldOut(make("a", []))).toBe(true);
-		expect(isSoldOut(make("a", [{ isActive: false, inventory: 3 }]))).toBe(true);
+		expect(isSoldOut(make("a", [{ active: false, stock: 3 }]))).toBe(true);
 	});
 });
 
 describe("orderHeroProducts — critère 1 : disponibilité", () => {
-	const available = (id: string) => make(id, [{ isActive: true, inventory: 2 }]);
-	const soldOut = (id: string) => make(id, [{ isActive: true, inventory: 0 }]);
+	const available = (id: string) => make(id, [{ active: true, stock: 2 }]);
+	const soldOut = (id: string) => make(id, [{ active: true, stock: 0 }]);
 
 	it("pousse les épuisées en fin", () => {
 		const sorted = orderHeroProducts([soldOut("a"), available("b"), soldOut("c"), available("d")]);
@@ -92,8 +92,7 @@ describe("orderHeroProducts — critère 1 : disponibilité", () => {
 });
 
 describe("interleaveByType — critère 2 : étalement des types", () => {
-	const typed = (id: string, typeId: string) =>
-		make(id, [{ isActive: true, inventory: 2 }], typeId);
+	const typed = (id: string, typeId: string) => make(id, [{ active: true, stock: 2 }], typeId);
 	const ids = (list: { id: string }[]) => list.map((p) => p.id);
 
 	it("sort un type inédit avant un doublon de type déjà vu", () => {
@@ -130,7 +129,7 @@ describe("interleaveByType — critère 2 : étalement des types", () => {
 		// Sinon toutes les pièces non typées se disputeraient une seule place, et une
 		// boutique qui n'a pas encore rempli ce champ verrait sa home s'effondrer à une
 		// cellule. Chacune forme son propre groupe.
-		const untyped = (id: string) => make(id, [{ isActive: true, inventory: 2 }]);
+		const untyped = (id: string) => make(id, [{ active: true, stock: 2 }]);
 		const ordered = interleaveByType([untyped("a"), untyped("b"), untyped("c")]);
 		expect(ids(ordered)).toEqual(["a", "b", "c"]);
 	});
@@ -145,9 +144,9 @@ describe("interleaveByType — critère 2 : étalement des types", () => {
 
 describe("orderHeroProducts — l'ordre des deux critères", () => {
 	const availableTyped = (id: string, typeId: string) =>
-		make(id, [{ isActive: true, inventory: 2 }], typeId);
+		make(id, [{ active: true, stock: 2 }], typeId);
 	const soldOutTyped = (id: string, typeId: string) =>
-		make(id, [{ isActive: true, inventory: 0 }], typeId);
+		make(id, [{ active: true, stock: 0 }], typeId);
 
 	it("ne fait JAMAIS remonter une pièce épuisée pour cause de type rare", () => {
 		// ⚠️ L'inversion des deux critères est le piège de cette fonction : diversifier

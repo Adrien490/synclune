@@ -14,14 +14,14 @@ export type ShippingAddress = {
 
 export type OrderItem = {
 	productTitle: string;
-	skuColor: string | null;
+	variantColor: string | null;
 	/**
 	 * CSV des hex codes (ordre = position) pour pastille email (« #B76E79,#C0C0C0 »).
 	 * Optionnel pour rétro-compat avec les commandes antérieures à la migration
-	 * `add_sku_color_hexes_snapshot` (la pastille est juste skipée si absent).
+	 * `add_variant_color_hexes_snapshot` (la pastille est juste skipée si absent).
 	 */
-	skuMaterial: string | null;
-	skuSize: string | null;
+	variantMaterial: string | null;
+	variantSize: string | null;
 	quantity: number;
 	price: number;
 };

@@ -6,22 +6,22 @@ import type { GetProductsReturn } from "../types/product.types";
 type ProductFromList = GetProductsReturn["products"][number];
 
 /**
- * Un produit est épuisé quand la somme des stocks de ses SKUs ACTIFS vaut zéro.
+ * Un produit est épuisé quand la somme des stocks de ses VARIANTs ACTIFS vaut zéro.
  *
  * ⚠️ Même règle que `getProductCardData` (`product-display.service.ts`), qui juge
- * la rupture sur l'AGRÉGAT et non sur le SKU affiché : trois couleurs à un
+ * la rupture sur l'AGRÉGAT et non sur le VARIANT affiché : trois couleurs à un
  * exemplaire ne sont pas une rupture. Les deux doivent rester d'accord — sinon le
  * classement pousserait en fin une pièce que la carte présente comme achetable, ou
  * l'inverse.
  *
- * Un produit sans aucun SKU actif (« à venir ») compte comme épuisé : il n'offre
+ * Un produit sans aucun VARIANT actif (« à venir ») compte comme épuisé : il n'offre
  * pas d'achat, et c'est le seul critère qui compte ici.
  */
 export function isSoldOut(product: ProductFromList): boolean {
-	const activeInventory = product.skus
-		.filter((sku) => sku.isActive)
-		.reduce((total, sku) => total + sku.inventory, 0);
-	return activeInventory === 0;
+	const activeStock = product.variants
+		.filter((variant) => variant.active)
+		.reduce((total, variant) => total + variant.stock, 0);
+	return activeStock === 0;
 }
 
 /**

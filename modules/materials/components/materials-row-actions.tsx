@@ -14,9 +14,6 @@ import { useMaterialActions } from "../hooks/use-material-actions";
 interface MaterialsRowActionsProps {
 	materialId: string;
 	materialName: string;
-	materialSlug: string;
-	materialDescription: string | null;
-	materialIsActive: boolean;
 }
 
 export function MaterialsRowActions(props: MaterialsRowActionsProps) {

@@ -45,7 +45,6 @@ export async function SearchFallbackSuggestions({
 			perPage: 4,
 			sortBy: "created-descending",
 			filters: {
-				status: "PUBLIC",
 				stockStatus: "in_stock",
 			},
 		}),
@@ -53,7 +52,6 @@ export async function SearchFallbackSuggestions({
 			perPage: 20,
 			sortBy: "label-ascending",
 			filters: {
-				isActive: true,
 				hasProducts: true,
 			},
 		}),

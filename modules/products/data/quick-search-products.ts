@@ -1,8 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
-import { notDeleted } from "@/shared/lib/prisma";
+import {} from "@/shared/lib/prisma";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -20,19 +19,15 @@ import { getSpellSuggestion } from "./spell-suggestion";
 export type QuickSearchProduct = {
 	id: string;
 	slug: string;
-	title: string;
-	skus: Array<{
-		priceInclTax: number;
-		compareAtPrice: number | null;
-		inventory: number;
-		position: number;
-		/** Couleurs M2M ordonnées (1re = principale). Vide = aucune couleur renseignée. */
-		colors: Array<{
-			colorId: string;
-			position: number;
-			color: { slug: string; name: string; hex: string };
-		}>;
-		images: Array<{ url: string; blurDataUrl: string | null; altText: string | null }>;
+	name: string;
+	priceCents: number;
+	media: Array<{ url: string; alt: string | null }>;
+	variants: Array<{
+		id: string;
+		/** Override — null = prix du produit. */
+		priceCents: number | null;
+		stock: number;
+		color: { name: string; hex: string | null } | null;
 	}>;
 };
 
@@ -67,7 +62,7 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 	// mettait `{kind:"error"}` EN CACHE pour ce terme pendant toute la fenêtre du
 	// profil `catalog` (5 min revalidate / 15 min stale) : tout visiteur cherchant
 	// le même terme voyait l'état d'erreur après une simple panne transitoire.
-	// Même motif que `get-products.ts` / `skus/data/fetch-skus.ts` (audit
+	// Même motif que `get-products.ts` / `variants/data/fetch-variants.ts` (audit
 	// recherche 2026-08-01, P1-3). Verrouillé par
 	// `quick-search-error-not-cached.regression.test.ts`.
 	let core: { products: QuickSearchProduct[]; totalCount: number };
@@ -84,7 +79,7 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 	// par le `"use cache"` propre de la suggestion.
 	const suggestion =
 		core.products.length < SUGGESTION_THRESHOLD_RESULTS
-			? ((await getSpellSuggestion(term, { status: PublicationStatus.PUBLIC }))?.term ?? null)
+			? ((await getSpellSuggestion(term, { activeOnly: true }))?.term ?? null)
 			: null;
 
 	return {
@@ -111,10 +106,10 @@ async function fetchQuickSearchCore(
 	// 1. Fuzzy search on title/description
 	const { ids: fuzzyIds, totalCount: fuzzyTotalCount } = await fuzzySearchProductIds(term, {
 		limit: QUICK_SEARCH_LIMIT,
-		status: PublicationStatus.PUBLIC,
+		activeOnly: true,
 	});
 
-	// 2. Exact search on related fields (type, SKU, color, material, collection)
+	// 2. Exact search on related fields (type, VARIANT, color, material, collection)
 	//    Only runs when fuzzy returns fewer than QUICK_SEARCH_LIMIT results
 	let exactOnlyIds: string[] = [];
 	let exactOnlyTotalCount = 0;
@@ -128,8 +123,7 @@ async function fetchQuickSearchCore(
 				const exactWhere = {
 					AND: [
 						...exactConditions,
-						{ status: PublicationStatus.PUBLIC },
-						{ ...notDeleted },
+						{ active: true },
 						...(fuzzyIds.length > 0 ? [{ NOT: { id: { in: fuzzyIds } } }] : []),
 					],
 				};

@@ -2,10 +2,8 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { handleActionError, success } from "@/shared/lib/actions";
-import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { getProductTypeInvalidationTags } from "../utils/cache.utils";
@@ -17,8 +15,6 @@ export async function refreshProductTypes(
 	try {
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.REFRESH);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 

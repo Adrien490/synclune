@@ -1,6 +1,6 @@
 import { logger } from "@/shared/lib/logger";
 import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { cacheProductDetailById } from "@/modules/products/utils/cache.utils";
 import { GET_PRODUCT_FOR_DUPLICATION_SELECT } from "../constants/product.constants";
 
@@ -17,7 +17,7 @@ type ProductForDuplication = Awaited<ReturnType<typeof fetchProductForDuplicatio
 /**
  * Récupère un produit avec toutes les données nécessaires à la duplication
  *
- * Inclut: collections, SKUs avec images + couleurs/matériaux M2M
+ * Inclut: collections, VARIANTs avec images + couleurs/matériaux M2M
  * Utilisé par duplicate-product.ts
  *
  * Le select vit dans `constants/product.constants.ts` avec les 4 autres du module —
@@ -55,7 +55,7 @@ async function fetchProductForDuplication(productId: string) {
 
 	try {
 		return await prisma.product.findFirst({
-			where: { id: productId, ...notDeleted },
+			where: { id: productId },
 			select: GET_PRODUCT_FOR_DUPLICATION_SELECT,
 		});
 	} catch (error) {

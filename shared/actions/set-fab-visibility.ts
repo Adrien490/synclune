@@ -1,9 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { success, handleActionError, validateInput } from "@/shared/lib/actions";
-import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { FAB_COOKIE_MAX_AGE, getFabCookieName } from "@/shared/constants/fab";
 import { setFabVisibilitySchema } from "@/shared/schemas/fab-visibility.schema";
@@ -27,12 +25,6 @@ export async function setFabVisibility(
 	_prevState: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
-	// Action publique non authentifiée : le rate limit est le seul plafond.
-	// Même préset que les autres préférences en cookie (`addRecentSearch` & co.),
-	// même nature d'écriture. Audit rate limiting 2026-07-31.
-	const rateLimit = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION);
-	if ("error" in rateLimit) return rateLimit.error;
-
 	const validation = validateInput(setFabVisibilitySchema, {
 		key: formData.get("key"),
 		isHidden: formData.get("isHidden"),

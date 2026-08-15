@@ -123,7 +123,7 @@ describe("@regression server-validation-error-surfaced", () => {
 				`\`createToastCallbacks\` les retire du toast en supposant un affichage inline, ` +
 				`et rien ne les rend ici — l'échec est donc totalement silencieux.\n` +
 				`Câbler \`useServerFieldErrors({ state })\` + \`<FormServerErrorAlert errors={serverErrors} />\` ` +
-				`(cf. modules/skus/components/admin/create-sku-form.tsx).\n` +
+				`(cf. modules/variants/components/admin/create-variant-form.tsx).\n` +
 				`Si le formulaire n'a aucune saisie utilisateur, l'ajouter à ALLOWLIST avec justification.\n` +
 				`Fautifs : ${offenders.join(", ")}`,
 		).toEqual([]);

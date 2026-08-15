@@ -8,6 +8,7 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { FilterOverflowList } from "./filter-overflow-list";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
+import { slugify } from "@/shared/utils/generate-slug";
 
 // ============================================================================
 // TYPES
@@ -46,20 +47,20 @@ export function ColorFilterSection({
 	return (
 		<FilterOverflowList
 			items={colors}
-			itemKey={(color) => color.slug}
+			itemKey={(color) => slugify(color.name)}
 			moreLabel={(n) => `+ ${n} autre${n > 1 ? "s" : ""} couleur${n > 1 ? "s" : ""}`}
 			matchesSearch={(color, query) => color.name.toLowerCase().includes(query)}
 			searchPlaceholder="Rechercher une couleur…"
 			renderItem={(color) => {
-				const isSelected = selectedSet.has(color.slug);
-				const light = isLightColor(color.hex, 0.85);
+				const isSelected = selectedSet.has(slugify(color.name));
+				const light = isLightColor(color.hex ?? "#CCCCCC", 0.85);
 				return (
 					<CheckboxFilterItem
-						id={`${idPrefix}-color-${color.slug}`}
+						id={`${idPrefix}-color-${slugify(color.name)}`}
 						checked={isSelected}
 						onCheckedChange={(checked) => {
 							haptic("selection");
-							onToggle(color.slug, checked === true);
+							onToggle(slugify(color.name), checked === true);
 						}}
 						indicator={
 							<span
@@ -77,21 +78,21 @@ export function ColorFilterSection({
 										: "ring-1 ring-black/10 ring-inset",
 								)}
 								style={{
-									backgroundColor: color.hex,
+									backgroundColor: color.hex ?? undefined,
 								}}
 							>
 								{isSelected && (
 									<CheckIcon
 										className="absolute inset-0 m-auto size-4"
 										style={{
-											color: getContrastTextColor(color.hex),
+											color: getContrastTextColor(color.hex ?? "#CCCCCC"),
 										}}
 										weight="bold"
 									/>
 								)}
 							</span>
 						}
-						count={color._count.skus}
+						count={color._count.variants}
 					>
 						{color.name}
 					</CheckboxFilterItem>

@@ -13,7 +13,8 @@ import type { GetProductTypeParams, GetProductTypeReturn } from "../types/produc
 // ============================================================================
 
 /**
- * Récupère un type de produit par son slug
+ * Récupère un type de produit par son slug — schéma lean : plus de statut
+ * actif/inactif sur ProductType.
  */
 export async function getProductTypeBySlug(
 	params: Partial<GetProductTypeParams>,
@@ -24,44 +25,29 @@ export async function getProductTypeBySlug(
 		return null;
 	}
 
-	const admin = await isAdmin();
-	const includeInactive = admin && validation.data.includeInactive === true;
-
-	return fetchProductType(validation.data.slug, includeInactive);
+	return fetchProductType(validation.data.slug);
 }
 
-/**
- * Récupère le type de produit depuis la DB avec cache
- * includeInactive is a separate param to ensure distinct cache keys between admin/public
- */
-async function fetchProductType(
-	slug: string,
-	includeInactive: boolean,
-): Promise<GetProductTypeReturn | null> {
+async function fetchProductType(slug: string): Promise<GetProductTypeReturn | null> {
 	"use cache";
 	cacheProductTypeDetail(slug);
 
 	try {
-		const productType = await prisma.productType.findUnique({
+		return await prisma.productType.findUnique({
 			where: { slug },
 			select: GET_PRODUCT_TYPE_SELECT,
 		});
-
-		if (!productType) return null;
-		if (!includeInactive && !productType.isActive) return null;
-
-		return productType;
 	} catch (error) {
 		Sentry.captureException(error, {
 			tags: { module: "product-types", operation: "getProductType" },
-			extra: { slug, includeInactive },
+			extra: { slug },
 		});
 		throw error;
 	}
 }
 
 // ============================================================================
-// DETAIL — page admin enrichie (5 derniers produits + counts par statut)
+// DETAIL — page admin enrichie (5 derniers produits + counts)
 // ============================================================================
 
 export type ProductTypeDetailReturn = NonNullable<
@@ -92,49 +78,27 @@ async function fetchProductTypeDetail(slug: string) {
 				id: true,
 				slug: true,
 				label: true,
-				description: true,
-				isActive: true,
-				isSystem: true,
-				createdAt: true,
-				updatedAt: true,
+				position: true,
 				products: {
 					take: 5,
-					// deletedAt: null — cohérence avec getProductTypeProductCounts (stats card) ;
-					// sans ce filtre, la liste "récents" affiche des produits soft-deleted.
-					where: { deletedAt: null },
 					orderBy: { updatedAt: "desc" },
 					select: {
 						id: true,
 						slug: true,
-						title: true,
-						status: true,
-						// Vignette unique : l'appelant prend `skus[0].images[0]` sans pouvoir
-						// trier, donc le tri se fait ici.
-						//
-						// On ordonne au lieu de filtrer (motif banni par CLAUDE.md : un filtre
-						// « défaut »/« primaire » rendait 0 image alors qu'il y en a). V5 :
-						// ordres canoniques `(position asc, id asc)` — rang 0 = représentant,
-						// première IMAGE = média principal. Et `mediaType: "IMAGE"` est
-						// obligatoire ici : sans lui un `.mp4` atterrit dans `<Image src>`
-						// (vignette cassée + transformation `/_next/image` facturée). Même
-						// pattern que get-material.ts.
-						skus: {
-							where: { isActive: true, deletedAt: null },
+						name: true,
+						active: true,
+						priceCents: true,
+						// Vignette unique : filtre IMAGE + ordre canonique, l'appelant
+						// prend `media[0]` sans pouvoir trier.
+						media: {
+							where: { type: "IMAGE" as const },
 							orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 							take: 1,
-							select: {
-								images: {
-									where: { mediaType: "IMAGE" as const },
-									orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-									take: 1,
-									select: { url: true, blurDataUrl: true, altText: true },
-								},
-							},
+							select: { url: true, alt: true },
 						},
 					},
 				},
-				// Filtré deletedAt pour que le total égale la somme des counts par statut
-				_count: { select: { products: { where: { deletedAt: null } } } },
+				_count: { select: { products: true } },
 			},
 		});
 	} catch (error) {
@@ -147,12 +111,12 @@ async function fetchProductTypeDetail(slug: string) {
 }
 
 // ============================================================================
-// PRODUCT COUNTS BY STATUS — pour stats card
+// PRODUCT COUNTS — pour stats card (actifs / brouillons)
 // ============================================================================
 
 export async function getProductTypeProductCounts(productTypeId: string) {
 	const admin = await isAdmin();
-	if (!admin) return { public: 0, draft: 0, archived: 0 };
+	if (!admin) return { active: 0, draft: 0 };
 
 	return fetchProductTypeProductCounts(productTypeId);
 }
@@ -162,20 +126,12 @@ async function fetchProductTypeProductCounts(productTypeId: string) {
 	cacheProductTypeCounts(productTypeId);
 
 	try {
-		const grouped = await prisma.product.groupBy({
-			by: ["status"],
-			where: { typeId: productTypeId, deletedAt: null },
-			_count: { _all: true },
-		});
+		const [active, draft] = await Promise.all([
+			prisma.product.count({ where: { typeId: productTypeId, active: true } }),
+			prisma.product.count({ where: { typeId: productTypeId, active: false } }),
+		]);
 
-		const findCount = (status: "PUBLIC" | "DRAFT" | "ARCHIVED") =>
-			grouped.find((g) => g.status === status)?._count._all ?? 0;
-
-		return {
-			public: findCount("PUBLIC"),
-			draft: findCount("DRAFT"),
-			archived: findCount("ARCHIVED"),
-		};
+		return { active, draft };
 	} catch (error) {
 		Sentry.captureException(error, {
 			tags: { module: "product-types", operation: "getProductTypeProductCounts" },

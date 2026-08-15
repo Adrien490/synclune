@@ -3,8 +3,6 @@ import { UploadThingError } from "uploadthing/server";
 import * as Sentry from "@sentry/nextjs";
 import { requireAdminApiRoute } from "@/modules/admin-auth/lib/require-admin";
 import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
-import { headers } from "next/headers";
 import { generateThumbHashFromBuffer } from "@/modules/media/services/generate-thumbhash";
 import {
 	ImageDimensionsTooLargeError,
@@ -21,7 +19,6 @@ import {
 import { THUMBHASH_CONFIG } from "@/modules/media/constants/image-downloader.constants";
 import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
 import { utapi } from "@/shared/lib/uploadthing";
-import { UPLOAD_LIMITS } from "@/modules/media/constants/upload-limits";
 import {
 	ACCEPTED_IMAGE_MIME_TYPES,
 	ACCEPTED_VIDEO_MIME_TYPES,
@@ -305,7 +302,7 @@ const f = createUploadthing({
 // CSRF: UploadThing route handler uses POST with signature verification.
 // Delete operations use Next.js Server Actions (built-in same-origin CSRF protection).
 export const ourFileRouter = {
-	// Route pour les médias de catalogue (produits et SKUs) - images et vidéos
+	// Route pour les médias de catalogue (produits et VARIANTs) - images et vidéos
 	//
 	// ⚠️ COÛT (audit coûts P2-2) : la vidéo était plafonnée à 512 Mo × 6, soit
 	// **3 Go en un seul upload** — le quota de stockage UploadThing (2 Go sur le
@@ -328,19 +325,7 @@ export const ourFileRouter = {
 					);
 				}
 
-				// 2. Rate limiting
-				const headersList = await headers();
-				const clientIp = await getClientIp(headersList);
-				const rateLimitId = getRateLimitIdentifier("admin", null, clientIp);
-				const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CATALOG, clientIp);
-
-				if (!rateLimit.success) {
-					throw new UploadThingError(
-						rateLimit.error ?? "Trop d'envois d'affilée. Patiente une minute avant de réessayer.",
-					);
-				}
-
-				// 3. Validation MIME et taille côté serveur — plafonds tirés de la SSOT,
+				// 2. Validation MIME et taille côté serveur — plafonds tirés de la SSOT,
 				// JAMAIS de littéral ici. Cette garde était figée à 512 Mo pour la vidéo,
 				// soit 8× la valeur réelle de la config du router juste au-dessus : une
 				// défense en profondeur morte, que `middleware.test.ts` entérinait avec un

@@ -35,8 +35,8 @@ export async function generateMetadata({
 	}
 
 	return {
-		title: `${product.title} - Administration`,
-		description: `Détails du bijou ${product.title}`,
+		title: `${product.name} - Administration`,
+		description: `Détails du bijou ${product.name}`,
 	};
 }
 
@@ -67,7 +67,7 @@ export default async function AdminProductDetailPage({
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
-						<BreadcrumbPage>{product.title}</BreadcrumbPage>
+						<BreadcrumbPage>{product.name}</BreadcrumbPage>
 					</BreadcrumbItem>
 				</BreadcrumbList>
 			</Breadcrumb>

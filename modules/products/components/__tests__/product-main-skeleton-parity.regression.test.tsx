@@ -12,7 +12,7 @@
  *
  * Audit PDP du 2026-08-05 : le squelette dessinait TOUJOURS une carte de variante
  * (3 plaquettes + un séparateur + un axe secondaire à 2 cases, ~250 px), alors que
- * `VariantSelector` retourne `null` dès que le produit n'a qu'un SKU, et n'affiche
+ * `VariantSelector` retourne `null` dès que le produit n'a qu'un VARIANT, et n'affiche
  * son axe secondaire que si plusieurs matériaux existent ou qu'une taille est
  * requise. Sur une fiche mono-variante, tout le bas de la colonne d'achat
  * remontait au swap ; sur une fiche à un seul axe, d'un bloc.
@@ -50,7 +50,7 @@ function variantCard(container: HTMLElement) {
 
 describe("parité du squelette de la colonne d'achat", () => {
 	describe("carte de variante", () => {
-		it("est ABSENTE quand aucun axe n'est rendu (fiche mono-SKU)", () => {
+		it("est ABSENTE quand aucun axe n'est rendu (fiche mono-VARIANT)", () => {
 			const { container } = render(<ProductMainSkeleton variantAxisCount={0} />);
 			expect(variantCard(container)).toBeNull();
 		});

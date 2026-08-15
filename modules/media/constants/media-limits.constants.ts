@@ -12,7 +12,7 @@
 // MEDIA LIMITS
 // ============================================================================
 
-/** Maximum number of images in the product gallery (across all SKUs) */
+/** Maximum number of images in the product gallery (across all VARIANTs) */
 export const MAX_GALLERY_IMAGES = 20;
 
 // ============================================================================

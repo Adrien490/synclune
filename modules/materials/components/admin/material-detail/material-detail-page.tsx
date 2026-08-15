@@ -5,7 +5,7 @@ import type { MaterialDetailReturn } from "@/modules/materials/data/get-material
 
 import { MaterialDetailHeader } from "./material-detail-header";
 import { MaterialDetailInfoCard } from "./material-detail-info-card";
-import { MaterialDetailSkusUsageCard } from "./material-detail-skus-usage-card";
+import { MaterialDetailVariantsUsageCard } from "./material-detail-variants-usage-card";
 import { MaterialDetailStatsCardAsync } from "./material-detail-stats-card-async";
 import { MaterialDetailStatsCardSkeleton } from "./material-detail-stats-card-skeleton";
 
@@ -28,13 +28,13 @@ export function MaterialDetailPage({
 			main={
 				<>
 					<MaterialDetailInfoCard material={material} />
-					<MaterialDetailSkusUsageCard material={material} />
+					<MaterialDetailVariantsUsageCard material={material} />
 				</>
 			}
 			side={
 				<Suspense fallback={<MaterialDetailStatsCardSkeleton />}>
 					<MaterialDetailStatsCardAsync
-						skusCount={material._count.skus}
+						variantsCount={material._count.variants}
 						productsCountPromise={distinctProductsCountPromise}
 					/>
 				</Suspense>

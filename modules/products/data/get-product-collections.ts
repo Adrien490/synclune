@@ -81,19 +81,17 @@ async function fetchProductCollections(productId: string): Promise<{ id: string;
 	cacheLife("reference");
 	cacheTag(PRODUCTS_CACHE_TAGS.COLLECTIONS(productId), COLLECTIONS_CACHE_TAGS.LIST);
 
-	const productCollections = await prisma.productCollection.findMany({
-		where: { productId },
+	// M-N implicite : on lit les collections du produit directement.
+	const product = await prisma.product.findUnique({
+		where: { id: productId },
 		select: {
-			collection: {
+			collections: {
 				select: { id: true, name: true },
 			},
 		},
 	});
 
-	return productCollections.map((pc) => ({
-		id: pc.collection.id,
-		name: pc.collection.name,
-	}));
+	return product?.collections ?? [];
 }
 
 async function fetchAllCollections(): Promise<{ id: string; name: string }[]> {

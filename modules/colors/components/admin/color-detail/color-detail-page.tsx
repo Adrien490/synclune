@@ -6,7 +6,7 @@ import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
 import { ColorDetailHeader } from "./color-detail-header";
 import { ColorDetailInfoCard } from "./color-detail-info-card";
 import { ColorDetailPreviewCard } from "./color-detail-preview-card";
-import { ColorDetailSkusUsageCard } from "./color-detail-skus-usage-card";
+import { ColorDetailVariantsUsageCard } from "./color-detail-variants-usage-card";
 import { ColorDetailStatsCardAsync } from "./color-detail-stats-card-async";
 import { ColorDetailStatsCardSkeleton } from "./color-detail-stats-card-skeleton";
 
@@ -27,13 +27,13 @@ export function ColorDetailPage({ color, distinctProductsCountPromise }: ColorDe
 				<>
 					<ColorDetailPreviewCard color={color} />
 					<ColorDetailInfoCard color={color} />
-					<ColorDetailSkusUsageCard color={color} />
+					<ColorDetailVariantsUsageCard color={color} />
 				</>
 			}
 			side={
 				<Suspense fallback={<ColorDetailStatsCardSkeleton />}>
 					<ColorDetailStatsCardAsync
-						skusCount={color._count.skus}
+						variantsCount={color._count.variants}
 						productsCountPromise={distinctProductsCountPromise}
 					/>
 				</Suspense>

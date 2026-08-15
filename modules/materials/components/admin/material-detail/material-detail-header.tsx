@@ -15,9 +15,6 @@ export function MaterialDetailHeader({ material }: MaterialDetailHeaderProps) {
 	const { sections } = useMaterialActions({
 		materialId: material.id,
 		materialName: material.name,
-		materialSlug: material.slug,
-		materialDescription: material.description,
-		materialIsActive: material.isActive,
 	});
 
 	return (
@@ -25,10 +22,6 @@ export function MaterialDetailHeader({ material }: MaterialDetailHeaderProps) {
 			config={TAXONOMY_CONFIG.material}
 			id={material.id}
 			displayName={material.name}
-			isActive={material.isActive}
-			slug={material.slug}
-			createdAt={material.createdAt}
-			updatedAt={material.updatedAt}
 			sections={sections}
 			visual={<SwatchesIcon className="text-muted-foreground size-7 shrink-0" aria-hidden="true" />}
 		/>

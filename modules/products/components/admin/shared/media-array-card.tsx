@@ -36,17 +36,17 @@ import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
  * Le binding TanStack Form se fait via `form.Field name=... mode="array"`. Le `form`
  * est intentionnellement typé `unknown` à l'interface du composant pour accepter les
  * trois types d'instance (CreateProductFormInstance, EditProductFormInstance,
- * SkuFormInstance) sans union explicite — la responsabilité du nom de champ correct
+ * VariantFormInstance) sans union explicite — la responsabilité du nom de champ correct
  * revient au caller.
  */
 export interface MediaArrayCardProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	form: any;
-	/** Nom du champ TanStack Form (e.g. "initialSku.media", "defaultSku.media", "media"). */
+	/** Nom du champ TanStack Form (e.g. "initialVariant.media", "defaultVariant.media", "media"). */
 	fieldName: string;
 	/** Nom inscrit dans `style.viewTransitionName` (e.g. "product-create-media"). */
 	viewTransitionName?: string;
-	/** Plafond du nombre de médias (default = ARRAY_LIMITS.SKU_MEDIA). */
+	/** Plafond du nombre de médias (default = ARRAY_LIMITS.VARIANT_MEDIA). */
 	maxMediaCount?: number;
 	/** Aria-label sur la Card region (default "Médias du bijou"). */
 	ariaLabel?: string;
@@ -79,7 +79,7 @@ export function MediaArrayCard({
 	form,
 	fieldName,
 	viewTransitionName,
-	maxMediaCount = ARRAY_LIMITS.SKU_MEDIA,
+	maxMediaCount = ARRAY_LIMITS.VARIANT_MEDIA,
 	ariaLabel = "Médias du bijou",
 	title = "Médias",
 	accent,
@@ -249,8 +249,8 @@ export function MediaArrayCard({
 										<MediaUploadGrid
 											media={arrayField.state.value.map((m) => ({
 												url: m.url,
-												mediaType: m.mediaType,
-												altText: m.altText ?? undefined,
+												type: m.type,
+												alt: m.alt ?? undefined,
 												thumbnailUrl: m.thumbnailUrl ?? undefined,
 												blurDataUrl: m.blurDataUrl ?? undefined,
 												width: m.width,
@@ -272,8 +272,8 @@ export function MediaArrayCard({
 												newMedia.forEach((m) =>
 													(field as { pushValue: (v: MediaArrayFieldValue) => void }).pushValue({
 														url: m.url,
-														mediaType: m.mediaType,
-														altText: m.altText ?? undefined,
+														type: m.type,
+														alt: m.alt ?? undefined,
 														thumbnailUrl: m.thumbnailUrl ?? undefined,
 														blurDataUrl: m.blurDataUrl ?? undefined,
 														// Chaque reorder/suppression reconstruit le tableau :

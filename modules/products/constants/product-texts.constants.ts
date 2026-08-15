@@ -24,7 +24,7 @@ export const PRODUCT_TEXTS = {
 	STOCK: {
 		IN_STOCK: "En stock",
 		LOW_STOCK: "Stock limité",
-		/** Badge d'urgence de la carte produit — compte du SKU affiché */
+		/** Badge d'urgence de la carte produit — compte du VARIANT affiché */
 		LOW_STOCK_LEFT: (count: number) => `Plus que ${count} !`,
 		OUT_OF_STOCK: "Rupture de stock",
 		ON_DEMAND: "Sur commande",
@@ -135,7 +135,7 @@ export const PRODUCT_TEXTS = {
  * jamais réécrites en littéral : la version précédente disait `["ring", "bracelet"]`
  * — en anglais, au singulier — sous un commentaire « aligné avec les slugs en base »
  * qui était faux. L'intersection avec `bagues` / `bracelets` étant vide, le sélecteur
- * de taille n'était JAMAIS rendu, et le SKU envoyé au panier était le premier venu.
+ * de taille n'était JAMAIS rendu, et le VARIANT envoyé au panier était le premier venu.
  */
 export const PRODUCT_TYPES_REQUIRING_SIZE = [
 	SYSTEM_PRODUCT_TYPE_SLUGS.RINGS,
@@ -177,7 +177,7 @@ export const MAX_COLOR_SWATCHES = 5;
  * n'est pas survolée.
  *
  * « coloris » et non « couleurs » : le tableau `colors` porte des COMBINAISONS
- * (`ColorSwatch.comboKey`, ex. « Or + Argent ») dès qu'un SKU est multi-couleur
+ * (`ColorSwatch.comboKey`, ex. « Or + Argent ») dès qu'un VARIANT est multi-couleur
  * — « 4 couleurs » serait alors faux. Le mot est de plus invariable en nombre,
  * donc aucune bascule singulier/pluriel à maintenir (le call site est de toute
  * façon gaté `colors.length > 1`).

@@ -1,3 +1,3 @@
-export function getProductTotalStock(skus: ReadonlyArray<{ inventory: number }>): number {
-	return skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
+export function getProductTotalStock(variants: ReadonlyArray<{ stock: number }>): number {
+	return variants.reduce((sum, variant) => sum + (variant.stock || 0), 0);
 }

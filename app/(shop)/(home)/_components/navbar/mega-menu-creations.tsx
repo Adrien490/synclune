@@ -168,10 +168,10 @@ export function MegaMenuCreations({
 										</span>
 										<span className="mt-1.5 flex items-baseline justify-between gap-2 px-0.5">
 											<span className="text-foreground line-clamp-1 min-w-0 text-[0.8125rem] font-medium">
-												{product.title}
+												{product.name}
 											</span>
 											<span className="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs">
-												{formatEuro(product.priceInclTax, { compact: true })}
+												{formatEuro(product.priceCents, { compact: true })}
 												{product.isNew && (
 													<span
 														className={cn(

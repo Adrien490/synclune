@@ -3,8 +3,8 @@ import { getOfferAvailability } from "@/shared/utils/offer-availability";
 
 type CollectionProduct = {
 	slug: string;
-	title: string;
-	priceInclTax?: number;
+	name: string;
+	priceCents?: number;
 	imageUrl?: string;
 	imageAlt?: string;
 	inStock?: boolean;
@@ -61,7 +61,7 @@ export function generateCollectionStructuredData(collection: Collection) {
 						position: index + 1,
 						item: {
 							"@type": "Product",
-							name: product.title,
+							name: product.name,
 							url: `${SITE_URL}/creations/${product.slug}`,
 							...(product.imageUrl && {
 								image: {
@@ -70,11 +70,11 @@ export function generateCollectionStructuredData(collection: Collection) {
 									...(product.imageAlt && { caption: product.imageAlt }),
 								},
 							}),
-							...(product.priceInclTax !== undefined && {
+							...(product.priceCents !== undefined && {
 								offers: {
 									"@type": "Offer",
 									priceCurrency: "EUR",
-									price: (product.priceInclTax / 100).toFixed(2),
+									price: (product.priceCents / 100).toFixed(2),
 									availability: getOfferAvailability(!!product.inStock),
 									url: `${SITE_URL}/creations/${product.slug}`,
 								},

@@ -46,7 +46,7 @@ export function CreateColorForm({
 	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
-	const form = useColorForm({ name: "", hex: "", description: "", isActive: true });
+	const form = useColorForm({ name: "", hex: "" });
 
 	const isDirty = form.state.isDirty;
 	const allowNavigationRef = useRef<(() => void) | null>(null);
@@ -141,7 +141,6 @@ export function CreateColorForm({
 					onSelect={(entry) => {
 						form.setFieldValue("name", entry.name);
 						form.setFieldValue("hex", entry.hex);
-						form.setFieldValue("description", entry.description ?? "");
 						haptic("success");
 					}}
 				/>

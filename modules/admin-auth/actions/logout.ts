@@ -2,10 +2,8 @@
 
 import { cookies } from "next/headers";
 import { handleActionError, success } from "@/shared/lib/actions";
-import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ADMIN_SESSION_COOKIE } from "@/modules/admin-auth/constants/admin-auth.constants";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 
 /**
  * Déconnexion : supprime le cookie `admin_session`.
@@ -16,9 +14,6 @@ import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-li
  */
 export async function logout(): Promise<ActionState> {
 	try {
-		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.LOGOUT);
-		if ("error" in rateLimit) return rateLimit.error;
-
 		const cookieStore = await cookies();
 		cookieStore.delete(ADMIN_SESSION_COOKIE);
 

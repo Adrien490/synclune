@@ -1,4 +1,3 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
 import { getProductsSchema } from "../schemas/product.schemas";
@@ -32,9 +31,9 @@ export async function countPublicProducts(params: {
 
 	// Normalisation par le MÊME schéma que getProducts (défauts, bornes).
 	const validated = getProductsSchema.parse({
-		filters: { ...params.filters, status: PublicationStatus.PUBLIC },
+		filters: { ...params.filters, active: true },
 		search: params.search,
-		status: PublicationStatus.PUBLIC,
+		active: true,
 		includeDeleted: false,
 	}) as GetProductsParams;
 
@@ -43,7 +42,7 @@ export async function countPublicProducts(params: {
 	// terme lui-même, et un count n'a pas besoin de l'ordre de pertinence.
 	let searchResult: SearchResult | undefined;
 	if (validated.search) {
-		searchResult = await buildSearchConditions(validated.search, { status: validated.status });
+		searchResult = await buildSearchConditions(validated.search, { activeOnly: true });
 	}
 
 	const where = buildProductWhereClause(validated, searchResult);

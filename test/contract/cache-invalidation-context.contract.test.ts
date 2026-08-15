@@ -124,9 +124,9 @@ describe("Contrat — invalidation de cache selon le contexte d'exécution", () 
 			// donc l'entrée périmée continuerait d'être servie — inacceptable pour du
 			// stock ou un statut de commande.
 			const immediate = runIn(ROUTE_HANDLER_PAGE, () =>
-				revalidateTag("sku-stock-abc", { expire: 0 }),
+				revalidateTag("variant-stock-abc", { expire: 0 }),
 			);
-			const swr = runIn(ROUTE_HANDLER_PAGE, () => revalidateTag("sku-stock-abc", "max"));
+			const swr = runIn(ROUTE_HANDLER_PAGE, () => revalidateTag("variant-stock-abc", "max"));
 
 			expect(immediate.pendingRevalidatedTags?.[0]?.profile).toEqual({ expire: 0 });
 			expect(swr.pendingRevalidatedTags?.[0]?.profile).toBe("max");

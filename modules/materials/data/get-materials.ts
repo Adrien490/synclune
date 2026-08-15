@@ -62,11 +62,9 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 
 		const orderBy: Prisma.MaterialOrderByWithRelationInput[] = params.sortBy.startsWith("name-")
 			? [{ name: direction }, { id: "asc" }]
-			: params.sortBy.startsWith("skuCount-")
-				? [{ skuMaterials: { _count: direction } }, { id: "asc" }]
-				: params.sortBy.startsWith("createdAt-")
-					? [{ createdAt: direction }, { id: "asc" }]
-					: [{ name: "asc" }, { id: "asc" }];
+			: params.sortBy.startsWith("variantCount-")
+				? [{ variants: { _count: direction } }, { id: "asc" }]
+				: [{ name: "asc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_MATERIALS_DEFAULT_PER_PAGE),
@@ -96,15 +94,7 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 			params.cursor,
 		);
 
-		// Remap _count.skuMaterials → _count.skus pour préserver l'API publique
-		// stable côté consumers UI (materials-data-table, etc.) malgré le rename
-		// interne de la relation (M2M depuis 2026-05-14).
-		const remapped = items.map((m) => ({
-			...m,
-			_count: { skus: m._count.skuMaterials },
-		}));
-
-		return { materials: remapped, pagination, totalCount };
+		return { materials: items, pagination, totalCount };
 	} catch (e) {
 		Sentry.captureException(e, {
 			tags: { module: "materials", operation: "fetchMaterials" },

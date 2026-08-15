@@ -16,7 +16,7 @@ import {
 } from "../product-pricing.service";
 
 describe("calculatePriceInfo", () => {
-	it("should return zeros for empty SKUs", () => {
+	it("should return zeros for empty VARIANTs", () => {
 		expect(calculatePriceInfo([])).toEqual({
 			minPrice: 0,
 			maxPrice: 0,
@@ -24,7 +24,7 @@ describe("calculatePriceInfo", () => {
 		});
 	});
 
-	it("should return zeros for null/undefined SKUs", () => {
+	it("should return zeros for null/undefined VARIANTs", () => {
 		expect(calculatePriceInfo(null)).toEqual({
 			minPrice: 0,
 			maxPrice: 0,
@@ -37,47 +37,47 @@ describe("calculatePriceInfo", () => {
 		});
 	});
 
-	it("should handle a single active SKU", () => {
-		const skus = [{ isActive: true, priceInclTax: 2500 }];
-		expect(calculatePriceInfo(skus)).toEqual({
+	it("should handle a single active VARIANT", () => {
+		const variants = [{ active: true, priceCents: 2500 }];
+		expect(calculatePriceInfo(variants)).toEqual({
 			minPrice: 2500,
 			maxPrice: 2500,
 			hasMultiplePrices: false,
 		});
 	});
 
-	it("should compute min/max from multiple SKUs", () => {
-		const skus = [
-			{ isActive: true, priceInclTax: 1500 },
-			{ isActive: true, priceInclTax: 3500 },
-			{ isActive: true, priceInclTax: 2000 },
+	it("should compute min/max from multiple VARIANTs", () => {
+		const variants = [
+			{ active: true, priceCents: 1500 },
+			{ active: true, priceCents: 3500 },
+			{ active: true, priceCents: 2000 },
 		];
-		expect(calculatePriceInfo(skus)).toEqual({
+		expect(calculatePriceInfo(variants)).toEqual({
 			minPrice: 1500,
 			maxPrice: 3500,
 			hasMultiplePrices: true,
 		});
 	});
 
-	it("should filter out inactive SKUs", () => {
-		const skus = [
-			{ isActive: false, priceInclTax: 500 },
-			{ isActive: true, priceInclTax: 2000 },
-			{ isActive: false, priceInclTax: 100 },
+	it("should filter out inactive VARIANTs", () => {
+		const variants = [
+			{ active: false, priceCents: 500 },
+			{ active: true, priceCents: 2000 },
+			{ active: false, priceCents: 100 },
 		];
-		expect(calculatePriceInfo(skus)).toEqual({
+		expect(calculatePriceInfo(variants)).toEqual({
 			minPrice: 2000,
 			maxPrice: 2000,
 			hasMultiplePrices: false,
 		});
 	});
 
-	it("should return zeros when all SKUs are inactive", () => {
-		const skus = [
-			{ isActive: false, priceInclTax: 500 },
-			{ isActive: false, priceInclTax: 1000 },
+	it("should return zeros when all VARIANTs are inactive", () => {
+		const variants = [
+			{ active: false, priceCents: 500 },
+			{ active: false, priceCents: 1000 },
 		];
-		expect(calculatePriceInfo(skus)).toEqual({
+		expect(calculatePriceInfo(variants)).toEqual({
 			minPrice: 0,
 			maxPrice: 0,
 			hasMultiplePrices: false,
@@ -86,7 +86,7 @@ describe("calculatePriceInfo", () => {
 });
 
 describe("determineStockStatus", () => {
-	it("should return out_of_stock when inventory is 0", () => {
+	it("should return out_of_stock when stock is 0", () => {
 		expect(determineStockStatus(0, true)).toBe("out_of_stock");
 	});
 
@@ -101,13 +101,13 @@ describe("determineStockStatus", () => {
 		expect(determineStockStatus(5, undefined)).toBe("out_of_stock");
 	});
 
-	it("should return low_stock when inventory <= LOW threshold", () => {
+	it("should return low_stock when stock <= LOW threshold", () => {
 		expect(determineStockStatus(1, true)).toBe("low_stock");
 		expect(determineStockStatus(2, true)).toBe("low_stock");
 		expect(determineStockStatus(3, true)).toBe("low_stock");
 	});
 
-	it("should return in_stock when inventory > LOW threshold", () => {
+	it("should return in_stock when stock > LOW threshold", () => {
 		expect(determineStockStatus(4, true)).toBe("in_stock");
 		expect(determineStockStatus(100, true)).toBe("in_stock");
 	});

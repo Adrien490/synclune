@@ -1,13 +1,11 @@
 "use client";
 
-import { type PublicationStatus } from "@/app/generated/prisma/browser";
 import { FilterBadges } from "@/shared/components/filter-badges";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
 
-const COLLECTION_STATUS_LABELS: Record<PublicationStatus, string> = {
-	PUBLIC: "Publiée",
-	DRAFT: "Brouillon",
-	ARCHIVED: "Archivée",
+const COLLECTION_STATUS_LABELS: Record<string, string> = {
+	true: "Publiées",
+	false: "Brouillons",
 };
 
 function formatCollectionFilter(filter: FilterDefinition) {
@@ -15,8 +13,8 @@ function formatCollectionFilter(filter: FilterDefinition) {
 	const value = filter.value as string;
 
 	// Gestion du statut
-	if (filterKey === "status") {
-		const label = COLLECTION_STATUS_LABELS[value as PublicationStatus];
+	if (filterKey === "active") {
+		const label = COLLECTION_STATUS_LABELS[String(value)];
 		return label ? { label: "Statut", displayValue: label } : null;
 	}
 

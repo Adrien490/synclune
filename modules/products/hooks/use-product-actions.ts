@@ -1,8 +1,6 @@
 "use client";
 
 import {
-	ArchiveIcon,
-	BoxArrowUpIcon,
 	CopyIcon,
 	EyeIcon,
 	FolderPlusIcon,
@@ -16,7 +14,6 @@ import type { ActionMenuSection } from "@/shared/components/responsive-action-me
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useDialog } from "@/shared/providers/overlay-store-provider";
 
-import { ARCHIVE_PRODUCT_DIALOG_ID } from "../components/admin/archive-product-alert-dialog";
 import { CHANGE_PRODUCT_STATUS_DIALOG_ID } from "../components/admin/change-product-status-alert-dialog";
 import { DELETE_PRODUCT_DIALOG_ID } from "../components/admin/delete-product-alert-dialog";
 import { DUPLICATE_PRODUCT_DIALOG_ID } from "../components/admin/duplicate-product-alert-dialog";
@@ -26,7 +23,7 @@ interface UseProductActionsParams {
 	productId: string;
 	productSlug: string;
 	productTitle: string;
-	productStatus: "DRAFT" | "PUBLIC" | "ARCHIVED";
+	productActive: boolean;
 }
 
 /**
@@ -34,32 +31,27 @@ interface UseProductActionsParams {
  * long-press menu (mobile). Single source of truth — both surfaces consume the
  * exact same `ActionMenuSection[]`, ensuring perfect parity.
  *
- * Wires the global dialog store IDs (delete, change-status, archive, duplicate,
- * manage-collections) so consumers don't need to know about them.
+ * Schéma lean (lot 2) : le statut produit est le booléen `active` — plus
+ * d'état « archivé », la suppression est réelle et toujours proposée.
  */
 export function useProductActions({
 	productId,
 	productSlug,
 	productTitle,
-	productStatus,
+	productActive,
 }: UseProductActionsParams): { sections: ActionMenuSection[] } {
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_DIALOG_ID);
 	const changeStatusDialog = useAlertDialog(CHANGE_PRODUCT_STATUS_DIALOG_ID);
-	const archiveDialog = useAlertDialog(ARCHIVE_PRODUCT_DIALOG_ID);
 	const duplicateDialog = useAlertDialog(DUPLICATE_PRODUCT_DIALOG_ID);
 	const collectionsDialog = useDialog(MANAGE_COLLECTIONS_DIALOG_ID);
-
-	const isArchived = productStatus === "ARCHIVED";
-	const isDraft = productStatus === "DRAFT";
-	const isPublic = productStatus === "PUBLIC";
 
 	const sections: ActionMenuSection[] = [
 		{
 			key: "manage",
 			items: [
-				// « Voir la fiche » seulement si PUBLIC : sur un DRAFT ou ARCHIVED la
-				// vitrine répond notFound() — le lien menait à un 404 garanti.
-				...(isPublic
+				// « Voir la fiche » seulement si le bijou est en vente : sur un
+				// brouillon la vitrine répond notFound() — le lien menait à un 404.
+				...(productActive
 					? [
 							{
 								key: "view",
@@ -106,53 +98,28 @@ export function useProductActions({
 					key: "draft",
 					label: "Marquer comme brouillon",
 					icon: PencilSimpleIcon,
-					disabled: isDraft,
-					hidden: isArchived,
+					disabled: !productActive,
 					closesMenu: false,
 					onSelect: () =>
 						changeStatusDialog.open({
 							productId,
 							productTitle,
-							currentStatus: productStatus,
-							targetStatus: "DRAFT",
+							targetActive: false,
 						}),
 				},
 				{
 					key: "public",
-					label: "Publier",
+					label: "Mettre en vente",
 					description: "Rendre visible sur la boutique",
 					icon: UploadSimpleIcon,
-					disabled: isPublic,
-					hidden: isArchived,
+					disabled: productActive,
 					closesMenu: false,
 					onSelect: () =>
 						changeStatusDialog.open({
 							productId,
 							productTitle,
-							currentStatus: productStatus,
-							targetStatus: "PUBLIC",
+							targetActive: true,
 						}),
-				},
-			],
-		},
-		{
-			key: "archive",
-			items: [
-				{
-					key: "archive",
-					label: "Archiver",
-					icon: ArchiveIcon,
-					hidden: isArchived,
-					closesMenu: false,
-					onSelect: () => archiveDialog.open({ productId, productTitle, productStatus }),
-				},
-				{
-					key: "restore",
-					label: "Restaurer",
-					icon: BoxArrowUpIcon,
-					hidden: !isArchived,
-					closesMenu: false,
-					onSelect: () => archiveDialog.open({ productId, productTitle, productStatus }),
 				},
 			],
 		},
@@ -165,7 +132,6 @@ export function useProductActions({
 					description: "Action irréversible",
 					icon: TrashIcon,
 					variant: "destructive",
-					hidden: !isArchived,
 					closesMenu: false,
 					onSelect: () => deleteDialog.open({ productId, productTitle }),
 				},

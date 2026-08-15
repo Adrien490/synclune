@@ -1,5 +1,5 @@
 import { logger } from "@/shared/lib/logger";
-import { PublicationStatus, type Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
@@ -30,7 +30,7 @@ export { COLLECTIONS_SORT_LABELS as SORT_LABELS } from "../constants/collection.
 /**
  * Récupère la liste des collections avec pagination.
  *
- * Sécurité : le statut est forcé à PUBLIC pour tout appelant non-admin, comme le fait
+ * Sécurité : `active: true` est forcé pour tout appelant non-admin, comme le fait
  * `getProducts`. Avant ça, la visibilité reposait entièrement sur la discipline des
  * appelants — les 6 appelants publics passaient bien `status: PUBLIC`, mais un septième
  * qui l'oublie publie les noms des collections DRAFT, et rien ne l'en empêchait.
@@ -74,7 +74,7 @@ export async function getCollections(
 					// inoffensif et robuste à un retour en arrière du schéma.
 					hasProducts: undefined,
 					...validation.data.filters,
-					status: PublicationStatus.PUBLIC,
+					active: true,
 				},
 			};
 
@@ -116,10 +116,12 @@ async function fetchCollections(params: GetCollectionsParams): Promise<GetCollec
 		const where = buildCollectionWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
+		// Schéma lean : Collection n'a plus de createdAt — le tri « récentes »
+		// retombe sur `position` (ordre éditorial), stable et voulu.
 		const orderBy: Prisma.CollectionOrderByWithRelationInput[] = params.sortBy.startsWith("name-")
 			? [{ name: direction }, { id: "asc" }]
 			: params.sortBy.startsWith("created-")
-				? [{ createdAt: direction }, { id: "asc" }]
+				? [{ position: direction }, { id: "asc" }]
 				: params.sortBy.startsWith("products-")
 					? [{ products: { _count: direction } }, { id: "asc" }]
 					: [{ name: "asc" }, { id: "asc" }];

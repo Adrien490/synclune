@@ -108,7 +108,7 @@ export function WishlistListContent({ items }: WishlistListContentProps) {
 							>
 								<SwipeableWishlistItem
 									productId={product.id}
-									itemName={product.title}
+									itemName={product.name}
 									isFirst={index === 0}
 								>
 									<ProductCard

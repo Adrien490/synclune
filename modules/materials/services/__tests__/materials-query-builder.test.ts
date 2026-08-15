@@ -34,15 +34,11 @@ describe("buildMaterialSearchConditions", () => {
 		expect(result).toBeNull();
 	});
 
-	it("should return an OR condition searching name, slug, and description", () => {
+	it("should return an OR condition searching name only", () => {
 		const result = buildMaterialSearchConditions("gold");
 
 		expect(result).toEqual({
-			OR: [
-				{ name: { contains: "gold", mode: "insensitive" } },
-				{ slug: { contains: "gold", mode: "insensitive" } },
-				{ description: { contains: "gold", mode: "insensitive" } },
-			],
+			OR: [{ name: { contains: "gold", mode: "insensitive" } }],
 		});
 	});
 
@@ -50,11 +46,7 @@ describe("buildMaterialSearchConditions", () => {
 		const result = buildMaterialSearchConditions("  silver  ");
 
 		expect(result).toEqual({
-			OR: [
-				{ name: { contains: "silver", mode: "insensitive" } },
-				{ slug: { contains: "silver", mode: "insensitive" } },
-				{ description: { contains: "silver", mode: "insensitive" } },
-			],
+			OR: [{ name: { contains: "silver", mode: "insensitive" } }],
 		});
 	});
 });
@@ -75,16 +67,12 @@ describe("buildMaterialWhereClause", () => {
 	});
 
 	describe("search", () => {
-		it("should add a case-insensitive search condition across name, slug, and description", () => {
+		it("should add a case-insensitive search condition across name only", () => {
 			const result = buildMaterialWhereClause(params({ search: "bronze" }));
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({
-				OR: [
-					{ name: { contains: "bronze", mode: "insensitive" } },
-					{ slug: { contains: "bronze", mode: "insensitive" } },
-					{ description: { contains: "bronze", mode: "insensitive" } },
-				],
+				OR: [{ name: { contains: "bronze", mode: "insensitive" } }],
 			});
 		});
 
@@ -98,75 +86,6 @@ describe("buildMaterialWhereClause", () => {
 			const result = buildMaterialWhereClause(params({ search: "   " }));
 
 			expect(result.AND).toBeUndefined();
-		});
-	});
-
-	describe("filter by isActive", () => {
-		it("should add an isActive true condition when filters.isActive is true", () => {
-			const result = buildMaterialWhereClause(
-				params({
-					filters: { isActive: true },
-				}),
-			);
-
-			expect(result.AND).toHaveLength(1);
-			expect(result.AND).toContainEqual({ isActive: true });
-		});
-
-		it("should add an isActive false condition when filters.isActive is false", () => {
-			const result = buildMaterialWhereClause(
-				params({
-					filters: { isActive: false },
-				}),
-			);
-
-			expect(result.AND).toHaveLength(1);
-			expect(result.AND).toContainEqual({ isActive: false });
-		});
-
-		it("should not add an isActive condition when filters.isActive is undefined", () => {
-			const result = buildMaterialWhereClause(params({ filters: {} }));
-
-			expect(result.AND).toBeUndefined();
-		});
-
-		it("should not add an isActive condition when filters is undefined", () => {
-			const result = buildMaterialWhereClause(params());
-
-			expect(result.AND).toBeUndefined();
-		});
-	});
-
-	describe("search combined with filters", () => {
-		it("should include both search and isActive conditions in AND", () => {
-			const result = buildMaterialWhereClause(
-				params({
-					search: "steel",
-					filters: { isActive: true },
-				}),
-			);
-
-			expect(result.AND).toHaveLength(2);
-			expect(result.AND).toContainEqual({ isActive: true });
-			expect(result.AND).toContainEqual({
-				OR: [
-					{ name: { contains: "steel", mode: "insensitive" } },
-					{ slug: { contains: "steel", mode: "insensitive" } },
-					{ description: { contains: "steel", mode: "insensitive" } },
-				],
-			});
-		});
-
-		it("should add only the isActive condition when search is empty", () => {
-			const result = buildMaterialWhereClause(
-				params({
-					search: "",
-					filters: { isActive: false },
-				}),
-			);
-
-			expect(result.AND).toHaveLength(1);
-			expect(result.AND).toContainEqual({ isActive: false });
 		});
 	});
 });

@@ -3,7 +3,7 @@ import type { useCreateProductForm } from "@/modules/products/hooks/use-create-p
 export interface CreateProductFormProps {
 	productTypes: Array<{ id: string; label: string }>;
 	collections: Array<{ id: string; name: string }>;
-	colors: Array<{ id: string; name: string; hex: string }>;
+	colors: Array<{ id: string; name: string; hex: string | null }>;
 	materials: Array<{ id: string; name: string }>;
 }
 

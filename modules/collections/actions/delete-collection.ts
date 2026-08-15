@@ -2,10 +2,8 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
@@ -19,8 +17,6 @@ export async function deleteCollection(
 		// 1. Admin auth check
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.DELETE);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extract and validate data
 		const validated = validateInput(deleteCollectionSchema, {
@@ -30,14 +26,13 @@ export async function deleteCollection(
 
 		const validatedData = validated.data;
 
-		// Verifier que la collection existe + capturer la liste des productIds avant
-		// le cascade delete des ProductCollection (audit trail post-mortem).
+		// Verifier que la collection existe + compter les produits lies (M-N
+		// implicite : les lignes de jointure sont purgees automatiquement au
+		// delete, les produits eux-memes sont preserves).
 		const existingCollection = await prisma.collection.findUnique({
 			where: { id: validatedData.id },
 			include: {
-				products: {
-					select: { productId: true },
-				},
+				_count: { select: { products: true } },
 			},
 		});
 
@@ -45,10 +40,7 @@ export async function deleteCollection(
 			return error("Cette collection n'existe pas");
 		}
 
-		// Hard delete: collections have no legal retention obligation (unlike orders, payments).
-		// ProductCollection join entries are cascade-deleted; products themselves are preserved.
-		const productIds = existingCollection.products.map((pc) => pc.productId);
-		const productCount = productIds.length;
+		const productCount = existingCollection._count.products;
 
 		// Supprimer la collection
 		await prisma.collection.delete({

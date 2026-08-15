@@ -28,10 +28,7 @@ import { runAfterValidation } from "@/shared/utils/run-after-validation";
 export interface EditableColor {
 	id: string;
 	name: string;
-	slug: string;
-	hex: string;
-	description: string | null;
-	isActive: boolean;
+	hex: string | null;
 }
 
 interface EditColorFormProps {
@@ -56,9 +53,7 @@ export function EditColorForm({
 
 	const form = useColorForm({
 		name: color.name,
-		hex: color.hex,
-		description: color.description ?? "",
-		isActive: color.isActive,
+		hex: color.hex ?? "",
 	});
 
 	const isDirty = form.state.isDirty;
@@ -122,7 +117,6 @@ export function EditColorForm({
 					form.handleSubmit(),
 					() => {
 						if (form.state.isValid) {
-							formData.set("isActive", String(form.getFieldValue("isActive")));
 							action(formData);
 						} else {
 							requestAnimationFrame(() => focusFirstInvalid());
@@ -141,7 +135,7 @@ export function EditColorForm({
 			<fieldset disabled={isPending} className="space-y-6">
 				<RequiredFieldsNote />
 
-				<ColorFormFields form={form} isPending={isPending} showStatus />
+				<ColorFormFields form={form} isPending={isPending} />
 			</fieldset>
 
 			<ColorFormSubmit

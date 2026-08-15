@@ -2,7 +2,6 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import {
 	handleActionError,
@@ -13,9 +12,7 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { generateSlug } from "@/shared/utils/generate-slug";
 import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
@@ -27,7 +24,7 @@ import { duplicateMaterialSchema } from "../schemas/materials.schemas";
  * Cree une copie du materiau avec:
  * - Un nouveau nom (original + " (copie)" ou " (copie N)")
  * - Un nouveau slug genere automatiquement
- * - isActive a false (pour eviter activation accidentelle)
+ * - active a false (pour eviter activation accidentelle)
  */
 export async function duplicateMaterial(
 	_prevState: ActionState | undefined,
@@ -37,9 +34,6 @@ export async function duplicateMaterial(
 		// 1. Verification admin
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.DUPLICATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Validation des donnees
 		const rawData = {
@@ -72,27 +66,20 @@ export async function duplicateMaterial(
 
 		const newName = nameResult.name!;
 
-		// 6. Generer un slug unique
-		const slug = await generateSlug(prisma, "material", newName);
-
-		// 7. Creer la copie
+		// 6. Creer la copie
 		const duplicate = await prisma.material.create({
 			data: {
 				name: newName,
-				slug,
-				description: original.description,
-				isActive: false, // Desactive par defaut
 			},
 		});
 
-		// 8. Invalider le cache
-		const tags = getMaterialInvalidationTags(duplicate.slug);
+		// 7. Invalider le cache
+		const tags = getMaterialInvalidationTags(duplicate.id);
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(`Materiau duplique: ${duplicate.name}`, {
 			id: duplicate.id,
 			name: duplicate.name,
-			slug: duplicate.slug,
 		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer le matériau");

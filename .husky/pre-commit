@@ -4,7 +4,7 @@ pnpm lint-staged
 # Keep glob aligned with `test:critical` in package.json so a developer
 # adding a new test under app/api/webhooks/stripe or test/contract is
 # also gated pre-commit.
-changed=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(modules/(cart|orders|payments|webhooks|admin-auth|refunds|invoices)/|app/api/webhooks/stripe/|test/contract/)' || true)
+changed=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(modules/(cart|orders|payments|webhooks|admin-auth)/|app/api/webhooks/stripe/|test/contract/)' || true)
 if [ -n "$changed" ]; then
 	echo "🧪 Critical module(s) modified — running test:pre-commit"
 	pnpm test:pre-commit

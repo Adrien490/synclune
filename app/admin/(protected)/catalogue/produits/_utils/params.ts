@@ -1,4 +1,3 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import type { ProductsSearchParams } from "../page";
 import { getFirstParam } from "@/shared/utils/params";
 import type { ProductFilters } from "@/modules/products/data/get-products";
@@ -34,7 +33,7 @@ export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 						}
 					}
 				}
-				// Status field (PublicationStatus enum)
+				// Status field (booléen lean : "active" | "inactive")
 				else if (filterKey === "status") {
 					const statusValues = Array.isArray(value)
 						? value
@@ -42,12 +41,8 @@ export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 							? filterValue.split(",")
 							: [filterValue];
 
-					// Validate and cast to PublicationStatus enum
 					const validStatuses = statusValues.filter(
-						(s): s is PublicationStatus =>
-							s === PublicationStatus.DRAFT ||
-							s === PublicationStatus.PUBLIC ||
-							s === PublicationStatus.ARCHIVED,
+						(s): s is "active" | "inactive" => s === "active" || s === "inactive",
 					);
 
 					if (validStatuses.length > 0) {
@@ -62,12 +57,6 @@ export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 						filterValue === "out_of_stock"
 					) {
 						filters.stockStatus = filterValue;
-					}
-				}
-				// Boolean fields
-				else if (filterKey === "onSale") {
-					if (filterValue === "true") {
-						filters.onSale = true;
 					}
 				}
 				// Multi-select fields - Sanitized with limits

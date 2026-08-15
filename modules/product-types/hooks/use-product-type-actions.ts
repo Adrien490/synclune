@@ -4,8 +4,6 @@ import {
 	ArrowSquareOutIcon,
 	CopyIcon,
 	PencilSimpleIcon,
-	ToggleLeftIcon,
-	ToggleRightIcon,
 	TrashIcon,
 } from "@phosphor-icons/react/ssr";
 import { useRouter } from "next/navigation";
@@ -23,31 +21,20 @@ import type { TaxonomyDeletePayload } from "@/modules/taxonomies/components/taxo
 import { PRODUCT_TYPE_DIALOG_ID } from "../components/product-type-form-dialog";
 
 import { useDuplicateProductType } from "./use-duplicate-product-type";
-import { useToggleProductTypeStatus } from "./use-toggle-product-type-status";
 import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "../components/admin/delete-product-type-alert-dialog";
 
 interface UseProductTypeActionsParams {
 	productTypeId: string;
-	isSystem?: boolean;
 	label: string;
-	description?: string | null;
 	slug: string;
 	productsCount?: number;
-	/**
-	 * Pilote l'item Activer/Désactiver. Optionnel : `undefined` masque l'item, pour
-	 * les surfaces qui ne connaissent pas l'état (rien ne doit deviner un booléen).
-	 */
-	isActive?: boolean;
 }
 
 export function useProductTypeActions({
 	productTypeId,
-	isSystem = false,
 	label,
-	description,
 	slug,
 	productsCount = 0,
-	isActive,
 }: UseProductTypeActionsParams): { sections: ActionMenuSection[] } {
 	const { open: openFormDialog } = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	// Typé contre le payload du dialog mutualisé : les clés historiques
@@ -67,25 +54,21 @@ export function useProductTypeActions({
 					label: "Voir le type",
 					onClick: () =>
 						withViewTransition(() =>
-							router.push(`/admin/catalogue/types-de-produits/${data.slug}/modifier`),
+							router.push(`/admin/catalogue/types-de-produits/${data.id}/modifier`),
 						),
 				},
 			});
 		},
 	});
 
-	const { toggleStatus, isPending: isToggling } = useToggleProductTypeStatus();
-
 	const sections: ActionMenuSection[] = [
 		{
 			key: "manage",
-			label: isSystem ? "Type système protégé" : undefined,
 			items: [
 				{
 					key: "edit",
-					label: isSystem ? "Voir (lecture seule)" : "Éditer",
+					label: "Éditer",
 					icon: PencilSimpleIcon,
-					disabled: isSystem,
 					onSelect: () => {
 						if (isMobile) {
 							router.push(`/admin/catalogue/types-de-produits/${slug}/modifier`);
@@ -94,7 +77,6 @@ export function useProductTypeActions({
 								productType: {
 									id: productTypeId,
 									label,
-									description: description ?? null,
 									slug,
 								},
 							});
@@ -114,22 +96,6 @@ export function useProductTypeActions({
 					disabled: isDuplicating,
 					onSelect: () => duplicate(productTypeId),
 				},
-				// En mobile, la liste n'affiche l'état que sous forme de badge en lecture
-				// seule : sans cet item, activer/désactiver un type y était IMPOSSIBLE
-				// (l'interrupteur ne vit que dans le tableau desktop). Parité avec
-				// `use-material-actions`. Masqué pour les types système, que la DB refuse
-				// de basculer (`updateMany where isSystem: false`).
-				...(isActive === undefined || isSystem
-					? []
-					: [
-							{
-								key: "toggle",
-								label: isActive ? "Désactiver" : "Activer",
-								icon: isActive ? ToggleLeftIcon : ToggleRightIcon,
-								disabled: isToggling,
-								onSelect: () => toggleStatus(productTypeId, !isActive),
-							},
-						]),
 			],
 		},
 		{
@@ -140,7 +106,6 @@ export function useProductTypeActions({
 					label: "Supprimer",
 					icon: TrashIcon,
 					variant: "destructive",
-					hidden: isSystem,
 					closesMenu: false,
 					onSelect: () =>
 						deleteDialog.open({

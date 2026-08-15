@@ -71,7 +71,7 @@ describe("GalleryZoomButton", () => {
 		});
 
 		// Elle est montée sur TOUS les slides, y compris vidéo : gatée sur
-		// `mediaType === "IMAGE"`, elle se démontait sous le focus en arrivant sur une
+		// `type === "IMAGE"`, elle se démontait sous le focus en arrivant sur une
 		// vidéo et emportait la navigation clavier avec elle (cf. `gallery.test.tsx`).
 		// La lightbox sait afficher les vidéos : seul le libellé change.
 		it("nomme la vidéo quand le média courant en est une", () => {

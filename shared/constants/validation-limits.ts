@@ -12,11 +12,11 @@ export const TEXT_LIMITS = {
 	PRODUCT_TITLE: { min: 2, max: 200 },
 	/** Description produit */
 	PRODUCT_DESCRIPTION: { max: 500 },
-	/** Taille SKU */
-	SKU_SIZE: { max: 50 },
-	// Volontairement plus strict que `ProductSku.sku @db.VarChar(100)` : un code
+	/** Taille VARIANT */
+	VARIANT_SIZE: { max: 50 },
+	// Volontairement plus strict que `ProductVariant.variant @db.VarChar(100)` : un code
 	// technique lisible tient en 50, et la marge absorbe les suffixes `-COPY`.
-	SKU_CODE: { max: 50 },
+	VARIANT_CODE: { max: 50 },
 	/** Texte alternatif média */
 	MEDIA_ALT_TEXT: { max: 200 },
 	/**
@@ -35,7 +35,7 @@ export const TEXT_LIMITS = {
 	/** Filtre string générique */
 	FILTER_STRING: { max: 100 },
 	/**
-	 * URL de média — alignée sur `SkuMedia.url` / `SkuMedia.thumbnailUrl` et
+	 * URL de média — alignée sur `ProductMedia.url` / `ProductMedia.thumbnailUrl` et
 	 * `OrderItem.productImageUrl`, tous `VarChar(2048)`.
 	 *
 	 * ⚠️ `z.url()` valide la FORME, jamais la longueur, et le refine de domaine
@@ -55,14 +55,14 @@ export const ARRAY_LIMITS = {
 	FILTER_ITEMS: 50,
 	/** Collections par produit */
 	PRODUCT_COLLECTIONS: 10,
-	/** Médias par SKU (total) */
-	SKU_MEDIA: 6,
-	/** Médias galerie SKU (hors primaire) */
-	SKU_GALLERY_MEDIA: 5,
-	/** Matériaux par SKU (M2M ; 1er = principal pour SEO/care-tips) */
-	SKU_MATERIALS: 3,
-	/** Couleurs par SKU (M2M ; 1er = principal pour vignette listing/snapshot facture) */
-	SKU_COLORS: 3,
+	/** Médias par VARIANT (total) */
+	VARIANT_MEDIA: 6,
+	/** Médias galerie VARIANT (hors primaire) */
+	VARIANT_GALLERY_MEDIA: 5,
+	/** Matériaux par VARIANT (M2M ; 1er = principal pour SEO/care-tips) */
+	VARIANT_MATERIALS: 3,
+	/** Couleurs par VARIANT (M2M ; 1er = principal pour vignette listing/snapshot facture) */
+	VARIANT_COLORS: 3,
 } as const;
 
 // ============================================================================
@@ -87,11 +87,11 @@ export const STOCK_LIMITS = {
 	 * Stock maximum par variante.
 	 *
 	 * Le plafond n'existait QUE dans le formulaire d'ajustement
-	 * (`adjust-stock-form.tsx`, constante locale) : côté serveur, `inventory` était
+	 * (`adjust-stock-form.tsx`, constante locale) : côté serveur, `stock` était
 	 * `int().nonnegative()` sans `.max()`, et le CHECK DB ne borne que le plancher
-	 * (`inventory >= 0`). Un POST direct à `inventory=2000000000` passait donc, et une
+	 * (`stock >= 0`). Un POST direct à `stock=2000000000` passait donc, et une
 	 * telle ligne devient en plus injoignable par les filtres d'inventaire admin
-	 * (bornés à `SKU_FILTERS_MAX_INVENTORY`). Valeur alignée sur celle que l'UI
+	 * (bornés à `VARIANT_FILTERS_MAX_STOCK`). Valeur alignée sur celle que l'UI
 	 * affichait déjà — c'est la borne annoncée à l'admin qui devient la borne réelle.
 	 */
 	MAX_INVENTORY: 99999,

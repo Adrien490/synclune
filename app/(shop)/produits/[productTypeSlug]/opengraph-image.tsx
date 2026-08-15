@@ -11,9 +11,6 @@ export const size = {
 
 export const contentType = "image/png";
 
-/** Longueur au-delà de laquelle la description est coupée sur la carte. */
-const DESCRIPTION_MAX = 140;
-
 /**
  * Genere dynamiquement une image Open Graph pour chaque page categorie produit
  * Utilisee pour les partages sur reseaux sociaux (Twitter, Facebook, LinkedIn, etc.)
@@ -32,11 +29,6 @@ export default async function Image({ params }: { params: Promise<{ productTypeS
 			{ ...size },
 		);
 	}
-
-	const description =
-		productType.description && productType.description.length > DESCRIPTION_MAX
-			? `${productType.description.slice(0, DESCRIPTION_MAX)}…`
-			: productType.description;
 
 	return new ImageResponse(
 		<OgShell align="center" signature>
@@ -73,21 +65,6 @@ export default async function Image({ params }: { params: Promise<{ productTypeS
 				>
 					{productType.label}
 				</div>
-
-				{description && (
-					<div
-						style={{
-							display: "flex",
-							marginTop: "22px",
-							maxWidth: "820px",
-							fontSize: 28,
-							lineHeight: 1.4,
-							color: BRAND_HEX.inkMuted,
-						}}
-					>
-						{description}
-					</div>
-				)}
 			</div>
 		</OgShell>,
 		{ ...size },

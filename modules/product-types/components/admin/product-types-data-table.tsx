@@ -10,8 +10,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import type { GetProductTypesReturn } from "@/modules/product-types/data/get-product-types";
-import { LockIcon, ShapesIcon } from "@phosphor-icons/react/ssr";
-import { ProductTypeActiveToggle } from "./product-type-active-toggle";
+import { ShapesIcon } from "@phosphor-icons/react/ssr";
 import { ProductTypeRowActions } from "./product-type-row-actions";
 
 interface ProductTypesDataTableProps {
@@ -57,12 +56,10 @@ export async function ProductTypesDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[26%]">Label</TableHead>
-					<TableHead className="w-[38%]">Description</TableHead>
-					<TableHead className="w-[12%] text-center">Produits</TableHead>
-					<TableHead className="w-[12%] text-center">Actif</TableHead>
+					<TableHead className="w-[60%]">Label</TableHead>
+					<TableHead className="w-[16%] text-center">Produits</TableHead>
 					<TableHead
-						className="w-[12%] text-right"
+						className="w-[24%] text-right"
 						aria-label="Actions disponibles pour chaque type de produit"
 					>
 						Actions
@@ -87,35 +84,15 @@ export async function ProductTypesDataTable({
 									>
 										{productType.label}
 									</Link>
-									{productType.isSystem ? (
-										<LockIcon
-											className="text-muted-foreground size-4 shrink-0"
-											aria-label="Type système verrouillé"
-										/>
-									) : null}
-								</div>
-							</TableCell>
-							<TableCell>
-								<div className="text-muted-foreground line-clamp-2 text-sm">
-									{productType.description ?? "-"}
 								</div>
 							</TableCell>
 							<TableCell className="text-center">
 								<span className="text-sm font-medium">{productsCount}</span>
 							</TableCell>
-							<TableCell className="text-center">
-								<ProductTypeActiveToggle
-									productTypeId={productType.id}
-									isActive={productType.isActive}
-									isSystem={productType.isSystem}
-								/>
-							</TableCell>
 							<TableCell className="text-right">
 								<ProductTypeRowActions
 									productTypeId={productType.id}
-									isSystem={productType.isSystem}
 									label={productType.label}
-									description={productType.description}
 									slug={productType.slug}
 									productsCount={productsCount}
 								/>

@@ -66,7 +66,7 @@ export const useUpdateCartItem = (options?: UseUpdateCartItemOptions) => {
 
 	/**
 	 * Soumet le changement de quantité avec optimistic UI
-	 * @param formData - Les données du formulaire (skuId, quantity)
+	 * @param formData - Les données du formulaire (variantId, quantity)
 	 * @param delta - La différence de quantité pour le badge (ex: +1 ou -1)
 	 */
 	const action = (formData: FormData, delta: number) => {

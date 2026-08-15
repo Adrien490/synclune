@@ -10,16 +10,16 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 
 interface ProductDetailStorefrontLinkCardProps {
 	slug: string;
-	status: GetProductReturn["status"];
+	active: GetProductReturn["active"];
 }
 
 export function ProductDetailStorefrontLinkCard({
 	slug,
-	status,
+	active,
 }: ProductDetailStorefrontLinkCardProps) {
 	const haptic = useHaptic();
-	const isPublic = status === "PUBLIC";
-	const isDraft = status === "DRAFT";
+	const isPublic = active;
+	const isDraft = !active;
 
 	return (
 		<Card style={{ viewTransitionName: "product-detail-storefront" }}>

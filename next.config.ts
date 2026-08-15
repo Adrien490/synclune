@@ -125,7 +125,7 @@ const nextConfig: NextConfig = {
 							// aussi absent de `remotePatterns` en prod. Les deux listes doivent
 							// rester cohérentes, sinon l'image passe l'optimiseur puis se fait
 							// bloquer au rendu (ou l'inverse).
-							`img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:${process.env.NODE_ENV === "production" ? "" : " https://images.unsplash.com"}`,
+							`img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:${process.env.NODE_ENV === "production" ? "" : " https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos"}`,
 							"font-src 'self'",
 							"connect-src 'self' https://*.stripe.com https://m.stripe.network https://api.uploadthing.com https://*.ingest.uploadthing.com https://*.ufs.sh https://utfs.io",
 							"frame-src https://*.stripe.com https://m.stripe.network",
@@ -215,6 +215,18 @@ const nextConfig: NextConfig = {
 						{
 							protocol: "https" as const,
 							hostname: "images.unsplash.com",
+							pathname: "/**" as const,
+						},
+						// Placeholders du seed lean (picsum) — dev uniquement, même
+						// raisonnement que l'hôte Unsplash ci-dessus.
+						{
+							protocol: "https" as const,
+							hostname: "picsum.photos",
+							pathname: "/**" as const,
+						},
+						{
+							protocol: "https" as const,
+							hostname: "fastly.picsum.photos",
 							pathname: "/**" as const,
 						},
 					]),

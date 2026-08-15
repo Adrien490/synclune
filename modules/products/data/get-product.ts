@@ -30,14 +30,14 @@ async function fetchProduct(params: GetProductParams): Promise<GetProductReturn 
 	try {
 		const product = await prisma.product.findUnique({
 			where: { slug: params.slug },
-			select: { ...GET_PRODUCT_SELECT, deletedAt: true },
+			select: GET_PRODUCT_SELECT,
 		});
 
-		if (!product || product.deletedAt) {
+		if (!product) {
 			return null;
 		}
 
-		if (!params.includeDraft && product.status !== "PUBLIC") {
+		if (!params.includeDraft && !product.active) {
 			return null;
 		}
 

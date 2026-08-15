@@ -118,19 +118,19 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 						aria-label="Catégories de couleurs"
 					>
 						{COLOR_LIBRARY_CATEGORIES.map((cat) => {
-							const isActive = category === cat.value;
+							const active = category === cat.value;
 							return (
 								<button
 									key={cat.value}
 									type="button"
-									aria-pressed={isActive}
+									aria-pressed={active}
 									onClick={() => {
 										setCategory(cat.value);
 										haptic("light");
 									}}
 									className={cn(
 										"focus-ring inline-flex shrink-0 items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-										isActive
+										active
 											? "border-foreground bg-foreground text-background"
 											: "border-border bg-background hover:bg-muted",
 									)}

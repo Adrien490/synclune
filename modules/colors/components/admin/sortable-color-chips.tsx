@@ -34,7 +34,7 @@ interface SortableColorChipsProps {
  * - Drag-to-reorder via @dnd-kit (parité visuelle avec medias) — touch = long-press 250ms,
  *   desktop = distance 8px, clavier = Space pour saisir/déposer + flèches.
  * - L'ordre matérialise la priorité métier : la 1ʳᵉ teinte habille la vignette
- *   boutique et la facture (snapshot order `skuColor`).
+ *   boutique et la facture (snapshot order `variantColor`).
  * - Bouton « X » sur chaque chip pour retirer la teinte sans rouvrir le MultiSelect.
  */
 export function SortableColorChips({ chips, onReorder, onRemove }: SortableColorChipsProps) {

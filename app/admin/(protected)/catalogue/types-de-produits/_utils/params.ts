@@ -2,32 +2,23 @@ import type { GetProductTypesParams } from "@/modules/product-types/data/get-pro
 import { getFirstParam } from "@/shared/utils/params";
 import type { ProductTypesSearchParams } from "../page";
 
+/**
+ * Schéma lean : ProductType n'a plus de statut ni de flag système — seul le
+ * filtre `hasProducts` survit.
+ */
 export const parseFilters = (
 	params: ProductTypesSearchParams,
 ): GetProductTypesParams["filters"] => {
-	let isActive: boolean | undefined = undefined;
-	let isSystem: boolean | undefined = undefined;
+	let hasProducts: boolean | undefined = undefined;
 
 	Object.entries(params).forEach(([key, value]) => {
-		if (key.startsWith("filter_")) {
-			const filterKey = key.replace("filter_", "");
-			const filterValue = getFirstParam(value);
-
-			if (filterValue) {
-				switch (filterKey) {
-					case "isActive":
-						isActive = filterValue === "true";
-						break;
-					case "isSystem":
-						isSystem = filterValue === "true";
-						break;
-				}
-			}
+		if (!key.startsWith("filter_")) return;
+		const filterKey = key.replace("filter_", "");
+		const filterValue = getFirstParam(value);
+		if (filterValue && filterKey === "hasProducts") {
+			hasProducts = filterValue === "true";
 		}
 	});
 
-	return {
-		isActive,
-		isSystem,
-	};
+	return { hasProducts };
 };

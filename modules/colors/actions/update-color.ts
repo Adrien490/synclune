@@ -2,7 +2,6 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import {
 	validateInput,
@@ -12,10 +11,8 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { generateSlug } from "@/shared/utils/generate-slug";
 
 import { getColorInvalidationTags } from "../constants/cache";
 import { updateColorSchema } from "../schemas/color.schemas";
@@ -25,19 +22,12 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 		// 1. Admin authorization check
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.UPDATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extract data from FormData
-		const rawDescription = sanitizeText(safeFormGet(formData, "description") ?? "");
-		const rawIsActive = formData.get("isActive");
+		// 2. Extract data from FormData
 		const rawData = {
 			id: formData.get("id"),
 			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
 			hex: formData.get("hex"),
-			description: rawDescription.length > 0 ? rawDescription : undefined,
-			isActive: rawIsActive === null ? undefined : rawIsActive === "true",
 		};
 
 		// Validate data
@@ -54,10 +44,9 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			return error("Cette couleur n'existe pas");
 		}
 
-		// Check name uniqueness (skip if unchanged) — insensible à la casse
-		// (aligné sur les types de bijoux). `id: { not }` : un rename purement
-		// cosmétique (« Or rose » → « Or Rose ») se retrouverait lui-même en
-		// insensible et serait rejeté à tort.
+		// Check name uniqueness (skip if unchanged) — insensible à la casse.
+		// `id: { not }` : un rename purement cosmétique (« Or rose » → « Or Rose »)
+		// se retrouverait lui-même en insensible et serait rejeté à tort.
 		if (validatedData.name !== existingColor.name) {
 			const nameExists = await prisma.color.findFirst({
 				where: {
@@ -89,64 +78,36 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			}
 		}
 
-		// Generate new slug if name changed.
-		// `excludeId` : sans lui, un rename cosmétique (casse/accent) retrouvait
-		// son PROPRE slug et suffixait `-2` — l'URL changeait sans raison.
-		const slug =
-			validatedData.name !== existingColor.name
-				? await generateSlug(prisma, "color", validatedData.name, {
-						excludeId: validatedData.id,
-					})
-				: existingColor.slug;
-
-		// isActive : ne s'applique que si transmis (édition). Création force true.
-		const nextIsActive = validatedData.isActive ?? existingColor.isActive;
-
 		// Update the color
 		await prisma.color.update({
 			where: { id: validatedData.id },
 			data: {
 				name: validatedData.name,
-				slug,
 				hex: validatedData.hex,
-				description: validatedData.description ?? null,
-				isActive: nextIsActive,
 			},
 		});
 
-		// Cascade : si name/hex/isActive change, les pages produit qui montrent
-		// cette couleur (swatch + nom dans les SKUs) ou sa disponibilité doivent
-		// être réinvalidées.
+		// Cascade : si name/hex change, les pages produit qui montrent cette
+		// couleur (swatch + nom dans les variantes) doivent être réinvalidées.
 		const nameOrHexChanged =
-			validatedData.name !== existingColor.name ||
-			validatedData.hex !== existingColor.hex ||
-			nextIsActive !== existingColor.isActive;
+			validatedData.name !== existingColor.name || validatedData.hex !== existingColor.hex;
 
 		const affectedProductSlugs: string[] = [];
 		if (nameOrHexChanged) {
-			// M2M : on cherche les SKUs actifs liés à cette couleur via la jointure
-			const skus = await prisma.productSku.findMany({
-				where: {
-					deletedAt: null,
-					colors: { some: { colorId: validatedData.id } },
-				},
+			const variants = await prisma.productVariant.findMany({
+				where: { colorId: validatedData.id },
 				select: { product: { select: { slug: true } } },
 				distinct: ["productId"],
 			});
-			for (const s of skus) {
-				if (s.product.slug) affectedProductSlugs.push(s.product.slug);
+			for (const v of variants) {
+				if (v.product.slug) affectedProductSlugs.push(v.product.slug);
 			}
 		}
 
-		// Invalidate cache — use Set to dedupe tags across the previous + new
-		// slug invalidation pairs and the cross-module product cascade.
-		const tagSet = new Set(
-			getColorInvalidationTags({ slug: existingColor.slug, affectedProductSlugs }),
+		// Invalidate cache
+		getColorInvalidationTags({ colorId: validatedData.id, affectedProductSlugs }).forEach((tag) =>
+			updateTag(tag),
 		);
-		if (slug !== existingColor.slug) {
-			getColorInvalidationTags({ slug, affectedProductSlugs }).forEach((t) => tagSet.add(t));
-		}
-		tagSet.forEach((tag) => updateTag(tag));
 
 		return success("Couleur modifiée avec succès");
 	} catch (e) {

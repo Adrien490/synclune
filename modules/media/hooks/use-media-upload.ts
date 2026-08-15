@@ -155,7 +155,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			percent: 0,
 			sizeBytes: file.size,
 			bytesUploaded: 0,
-			mediaType: getMediaTypeFromFile(file),
+			type: getMediaTypeFromFile(file),
 		}));
 		updateProgress({ files: entries });
 	};
@@ -402,7 +402,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			if (serverData?.url) {
 				return {
 					url: serverData.url,
-					mediaType: "VIDEO",
+					type: "VIDEO",
 					fileName: videoFile.name,
 					thumbnailUrl,
 					blurDataUrl,
@@ -456,7 +456,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 				if (serverData.url) {
 					uploadResults.push({
 						url: serverData.url,
-						mediaType: "IMAGE",
+						type: "IMAGE",
 						fileName: imageFiles[i]!.name,
 						blurDataUrl: serverData.blurDataUrl ?? undefined,
 						width: serverData.width ?? undefined,

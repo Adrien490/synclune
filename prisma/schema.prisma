@@ -1,102 +1,129 @@
 generator client {
-  provider      = "prisma-client"
-  output        = "../app/generated/prisma"
-  compilerBuild = "small"
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ADMIN
+// ------------------------------------------------------------
+// RÉFÉRENTIELS GÉRÉS PAR LA CRÉATRICE (admin)
+// ------------------------------------------------------------
+model Collection {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String?
+  position    Int     @default(0)
+  active      Boolean @default(true)
+
+  products Product[]
 }
 
-enum AccountStatus {
-  ACTIVE
-  INACTIVE
-  ANONYMIZED
+model Color {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  hex      String?
+  position Int     @default(0)
+
+  variants ProductVariant[]
 }
 
-model User {
-  id            String    @id @default(cuid(2))
-  role          Role      @default(USER)
-  name          String?   @db.VarChar(100)
-  email         String    @unique @db.VarChar(255)
-  emailVerified Boolean   @default(false)
-  image         String?   @db.VarChar(2048)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-  suspendedAt   DateTime?
+model Material {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  position Int     @default(0)
 
-  accountStatus AccountStatus @default(ACTIVE)
-
-  sessions Session[]
-  accounts Account[]
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   User_email_lower_key
-  //   User_email_lowercase
+  variants ProductVariant[]
 }
 
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String   @db.VarChar(500)
+// Type de bijou (bagues, colliers, boucles…) — conservé à la demande de Léane
+// (2026-08-15). Forme lean : pas de statut, pas de description, pas de dates.
+// `slug` reste l'identité URL (filtre `?type=`) et porte les types « système »
+// (bagues/bracelets) qui pilotent le guide des tailles.
+model ProductType {
+  id       String @id @default(cuid())
+  slug     String @unique
+  label    String @unique
+  position Int    @default(0)
+
+  products Product[]
+}
+
+// ------------------------------------------------------------
+// PRODUITS — pas de synchro catalogue Stripe : price_data inline
+// ------------------------------------------------------------
+model Product {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  priceCents  Int
+  active      Boolean  @default(true)
+
+  typeId String?
+  type   ProductType? @relation(fields: [typeId], references: [id], onDelete: Restrict)
+
+  media ProductMedia[]
+
+  collections Collection[]
+
+  // RÈGLE : chaque produit a AU MOINS UNE variante, même unique.
+  // Le stock vit sur la variante, jamais sur le produit.
+  variants ProductVariant[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  ipAddress String?  @db.VarChar(45)
-  userAgent String?  @db.VarChar(500)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
-  @@index([userId, expiresAt])
+  orderItems OrderItem[]
+
+  @@index([typeId])
 }
 
-model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?   @db.Text
-  refreshToken          String?   @db.Text
-  idToken               String?   @db.Text
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?   @db.VarChar(255)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+model ProductVariant {
+  id String @id @default(cuid())
 
-  @@index([userId])
-  @@index([providerId, accountId])
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  size String?
+
+  colorId String?
+  color   Color?  @relation(fields: [colorId], references: [id], onDelete: Restrict)
+
+  materialId String?
+  material   Material? @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  // null = prix du produit ; sinon prix propre à la variante
+  priceCents Int?
+
+  stock  Int     @default(1)
+  active Boolean @default(true)
+
+  orderItems OrderItem[]
+
+  @@unique([productId, size, colorId, materialId])
+  @@index([colorId])
+  @@index([materialId])
 }
 
-model Verification {
-  id         String   @id
-  identifier String
-  value      String   @db.VarChar(500)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model ProductMedia {
+  id String @id @default(cuid())
 
-  @@index([identifier])
-}
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-// Un seul enum de publication pour `Product` et `Collection` (audit schéma V5,
-// lot A4). `ProductStatus` et `CollectionStatus` portaient les MÊMES trois
-// membres, dans le même ordre, avec la même sémantique — deux types pour une
-// seule idée. La machine à états, elle, reste par entité :
-// `product-status-validation.service.ts` garde ses règles de publication
-// (titre + SKU actif + média IMAGE), qu'une collection n'a pas.
-enum PublicationStatus {
-  DRAFT
-  PUBLIC
-  ARCHIVED
+  type MediaType @default(IMAGE)
+  url  String
+  alt  String?
+
+  // position 0 = média principal (liste boutique + session Stripe Checkout)
+  position Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId, position])
 }
 
 enum MediaType {
@@ -104,731 +131,101 @@ enum MediaType {
   VIDEO
 }
 
-enum HistorySource {
-  ADMIN
-  WEBHOOK
-  SYSTEM
-  CUSTOMER
-}
+// ------------------------------------------------------------
+// COMMANDES — guest checkout, adresse collectée par Stripe
+// ------------------------------------------------------------
+model Order {
+  id String @id @default(cuid())
 
-model ProductType {
-  id          String  @id @default(cuid(2))
-  slug        String  @unique @db.VarChar(100)
-  label       String  @unique @db.VarChar(50)
-  description String? @db.Text
-  isActive    Boolean @default(true)
-  isSystem    Boolean @default(false)
+  // Séquentiel sans trou, attribué au paiement confirmé (webhook)
+  invoiceNumber Int? @unique
 
-  products Product[]
+  status OrderStatus @default(PENDING)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  stripeSessionId       String  @unique
+  stripePaymentIntentId String? @unique
 
-  // Pas d'`@@index([isActive])` (audit schéma V4) : une dizaine de lignes, que
-  // Postgres parcourt en moins d'une milliseconde. Même arbitrage que les 5 index
-  // d'`Order` retirés à la V1 — ce qu'ils coûtaient, c'était de l'écriture et du
-  // bruit de schéma, pas une performance mesurable.
-}
+  amountItemsCents    Int
+  amountShippingCents Int @default(0)
+  amountTotalCents    Int
 
-model Color {
-  id          String            @id @default(cuid(2))
-  slug        String            @unique @db.VarChar(100)
-  name        String            @unique @db.VarChar(100)
-  hex         String            @db.VarChar(7)
-  description String?           @db.Text
-  isActive    Boolean           @default(true)
-  skuColors   ProductSkuColor[]
+  email           String
+  customerName    String?
+  shippingLine1   String?
+  shippingLine2   String?
+  shippingZip     String?
+  shippingCity    String?
+  shippingCountry String?
+
+  shippedAt      DateTime?
+  trackingNumber String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Pas d'`@@index([isActive])` — cf. `ProductType`.
-}
+  items        OrderItem[]
+  retractation RetractationRequest?
 
-model Material {
-  id           String               @id @default(cuid(2))
-  slug         String               @unique @db.VarChar(100)
-  name         String               @unique @db.VarChar(100)
-  description  String?              @db.Text
-  isActive     Boolean              @default(true)
-  skuMaterials ProductSkuMaterial[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Pas d'`@@index([isActive])` — cf. `ProductType`.
-}
-
-model ProductSkuColor {
-  skuId   String
-  sku     ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
-  colorId String
-  color   Color      @relation(fields: [colorId], references: [id], onDelete: Restrict)
-
-  position Int @default(0)
-
-  // PK composite : la clé surrogate `id` n'était sélectionnée nulle part, et
-  // `@@unique([skuId, colorId])` portait déjà l'identité de la ligne.
-  // Pas d'`@@index([skuId, position])` (audit schéma V4) : depuis la PK composite,
-  // le préfixe `skuId` est déjà indexé, et `position` ne trie que 2 à 3 lignes par
-  // SKU (`ARRAY_LIMITS.SKU_COLORS`). `[colorId]` reste : c'est lui que consulte le
-  // contrôle d'intégrité d'`onDelete: Restrict` à chaque suppression de couleur.
-  @@id([skuId, colorId])
-  @@index([colorId])
-}
-
-model ProductSkuMaterial {
-  skuId      String
-  sku        ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
-  materialId String
-  material   Material   @relation(fields: [materialId], references: [id], onDelete: Restrict)
-
-  position Int @default(0)
-
-  // PK composite : la clé surrogate `id` n'était sélectionnée nulle part, et
-  // `@@unique([skuId, materialId])` portait déjà l'identité de la ligne.
-  // Pas d'`@@index([skuId, position])` — cf. `ProductSkuColor`.
-  @@id([skuId, materialId])
-  @@index([materialId])
-}
-
-model Collection {
-  id          String           @id @default(cuid(2))
-  name        String           @unique @db.VarChar(100)
-  slug        String           @unique @db.VarChar(100)
-  description String?           @db.Text
-  status      PublicationStatus @default(DRAFT)
-
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  products  ProductCollection[]
-
-  // Pas d'`@@index([status])` — cf. `ProductType`. Le filtre par statut de la liste
-  // admin porte sur une poignée de lignes.
-}
-
-model ProductCollection {
-  productId    String
-  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-  collectionId String
-  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-
-  addedAt DateTime @default(now())
-
-  // Remplace `isFeatured Boolean` (audit schéma V5, lot A3). Le booléen de rang
-  // coûtait un index UNIQUE PARTIEL (`ProductCollection_collectionId_isFeatured_unique`)
-  // et une promotion transactionnelle en SERIALIZABLE — toute cette machinerie pour
-  // exprimer « celui-là d'abord », que `position` dit sans contrainte ni transaction.
-  // L'ordre canonique est `(position asc, addedAt desc)` : la vedette est le rang 0.
-  position Int @default(0)
-
-  // PK composite, comme `ProductSkuColor` / `ProductSkuMaterial` : la clé surrogate
-  // `id` n'était sélectionnée que par `GET_COLLECTION_SELECT`, et son unique
-  // consommateur était une `key` React que `product.id` porte aussi bien. Toutes les
-  // mutations passaient déjà par `where: { productId_collectionId: … }`.
-  @@id([productId, collectionId])
-  @@index([collectionId])
-}
-
-model Product {
-  id          String            @id @default(cuid(2))
-  slug        String            @unique @db.VarChar(100)
-  title       String            @db.VarChar(200)
-  description String?           @db.Text
-  status      PublicationStatus @default(PUBLIC)
-
-  type   ProductType? @relation(fields: [typeId], references: [id], onDelete: SetNull)
-  typeId String?
-
-  collections ProductCollection[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  skus ProductSku[]
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   Product_description_unaccent_trgm_idx
-  //   Product_title_unaccent_trgm_idx
-
-  // Pas d'`@@index([status, deletedAt])` (audit schéma V4) : `[status, createdAt]`
-  // ci-dessous sert déjà l'égalité sur `status` ET le tri de toutes les listes
-  // catalogue ; `deletedAt` se filtre ensuite sur un ensemble déjà réduit. Deux
-  // index composites qui se recouvrent sur une table de quelques centaines de
-  // lignes, c'est du bruit.
-  @@index([typeId])
-  @@index([status, createdAt(sort: Desc)])
-}
-
-model ProductSku {
-  id        String  @id @default(cuid(2))
-  sku       String  @unique @db.VarChar(100)
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  colors ProductSkuColor[]
-
-  materials ProductSkuMaterial[]
-
-  size String? @db.VarChar(50)
-
-  priceInclTax   Int
-  compareAtPrice Int?
-  inventory      Int     @default(0)
-  isActive       Boolean @default(true)
-
-  // Remplace `isDefault Boolean` (audit schéma V5, lot A2). Le booléen coûtait un
-  // index UNIQUE PARTIEL (`ProductSku_productId_isDefault_unique`) et une promotion
-  // transactionnelle à chaque bascule ; `position` porte la même intention
-  // éditoriale — « quelle variante représente ce bijou » — sans contrainte à
-  // maintenir, et il ordonne TOUTE la liste au lieu d'en distinguer une seule.
-  // L'ordre canonique est `(position asc, id asc)`, et le représentant d'un produit
-  // se lit dans `getPrimarySkuForList` (`sku-selection.service.ts`).
-  position Int @default(0)
-
-  images         SkuMedia[]
-  orderItems     OrderItem[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  deletedAt      DateTime?
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   ProductSku_compareAtPrice_valid
-  //   ProductSku_inventory_non_negative
-  //   ProductSku_priceInclTax_positive
-
-  // `[productId]` devient `[productId, position]` : l'ordre canonique des variantes
-  // d'un produit est désormais une lecture chaude (liste admin, sélecteur de SKU,
-  // PDP), et le préfixe `productId` reste servi par le même index.
-  @@index([productId, position])
-}
-
-model SkuMedia {
-  id    String     @id @default(cuid(2))
-  skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
-
-  url          String    @db.VarChar(2048)
-  thumbnailUrl String?   @db.VarChar(2048)
-  blurDataUrl  String?   @db.Text
-  altText      String?   @db.VarChar(255)
-  mediaType    MediaType @default(IMAGE)
-  // Plus d'`isPrimary Boolean` (audit schéma V5, lot A1) : le média principal est
-  // désormais le PREMIER par `(position asc, id asc)`, ce que `position` disait
-  // déjà en second critère de l'ordre canonique. Le booléen n'ajoutait qu'un
-  // index UNIQUE PARTIEL (`SkuMedia_one_primary_per_sku`) et une promotion
-  // transactionnelle, pour une information que le rang 0 porte seul.
-  //
-  // ⚠️ « Premier média » ≠ « première IMAGE » : `SkuMedia` est polymorphe, et une
-  // vidéo peut occuper le rang 0. La SSOT reste `pickPrimaryImage()`
-  // (`product-display.service.ts`), qui filtre `mediaType: IMAGE` avant de prendre
-  // le premier — cf. § Catalogue de CLAUDE.md.
-  position     Int       @default(0)
-
-  width  Int?
-  height Int?
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   SkuMedia_dimensions_positive
-
-  // `[skuId, position]` sert désormais l'ordre canonique en entier — il n'y a plus
-  // de `isPrimary desc` devant lui pour le rendre inutilisable.
-  @@index([skuId, position])
+  @@index([email])
 }
 
 enum OrderStatus {
-  PENDING
-  PROCESSING
+  PENDING   // session Checkout créée → stock RÉSERVÉ (décrémenté)
+  PAID      // webhook checkout.session.completed (payment_status=paid)
   SHIPPED
-  DELIVERED
-  // Absorbe l'unique valeur que `FulfillmentStatus` portait en propre (audit V2,
-  // Lot 4, 2026-08-05). Les quatre autres membres de cet enum étaient écrits EN
-  // LOCKSTEP avec `status` par les 7 actions de commande : `UNFULFILLED`↔`PENDING`,
-  // puis `PROCESSING`/`SHIPPED`/`DELIVERED` à l'identique.
-  //
-  // ⚠️ `RETURNED` n'est PAS absorbant : `undo-return` rebascule vers `DELIVERED`
-  // (cf. `order-status-validation.service.ts`).
-  RETURNED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  PARTIALLY_REFUNDED
   REFUNDED
-}
-
-// Réduit aux TRANSITIONS et aux jalons de facturation lisibles dans la timeline
-// (2026-08-05). Les 6 valeurs de plomberie retirées — INVOICE_GENERATION_FAILED,
-// INVOICE_ARCHIVED, CREDIT_NOTE_ARCHIVED, PDF_ARCHIVE_FAILED, CREDIT_NOTE_FAILED,
-// INVOICE_RECONCILED — traçaient des étapes techniques dont l'état est DÉRIVABLE
-// (`invoicePdfUrl`, `creditNotePdfUrl`, `invoiceRetryDeferred`) et dont l'alerte
-// réelle est ailleurs : e-mail admin + Sentry, tous deux conservés. Elles
-// noyaient les événements métier de la fiche commande.
-enum OrderAction {
-  CREATED
-  PAID
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  RETURNED
-  STATUS_REVERTED
-  TRACKING_UPDATED
-  ADDRESS_UPDATED
-  INVOICE_GENERATED
-  REFUND_CREATED
-  REFUND_COMPLETED
-  REFUND_FAILED
-  DISPUTE_OPENED
-  DISPUTE_RESOLVED
-  INVOICE_VOIDED
-  CREDIT_NOTE_GENERATED
-  INVOICE_DOWNLOADED
-  BULK_EXPORT
-}
-
-enum InvoiceStatus {
-  GENERATED
-  VOIDED
-}
-
-// Le checkout est card-only (`payment_method_types: ["card"]`,
-// `initialize-payment.ts`) : Stripe n'émettra jamais `SEPA_DEBIT`, `KLARNA` ni
-// `BANCONTACT`, retirés à l'audit V2 (Lot 1). `WALLET` et `LINK` restent
-// atteignables — ce sont des portefeuilles rendus SUR une carte
-// (`payment_method_details.card.wallet.type`), pas d'autres moyens de paiement.
-// Rouvrir un de ces moyens exige d'élargir `payment_method_types` ET de
-// réintroduire la valeur ici + sa ligne dans `map-stripe-payment-method.ts`.
-enum PaymentMethod {
-  CARD
-  LINK
-  WALLET
-  OTHER
-}
-
-model Order {
-  id          String  @id @default(cuid(2))
-  orderNumber String  @unique @db.VarChar(50)
-  stripePaymentIntentId String? @unique
-
-  // Pas de `stripeChargeId` : ajoutée le 2026-08-04 pour UNE raison — `buildInvoiceData`
-  // écrivait `payment.stripeChargeId: null` EN DUR, et ce `null` partait figé dans
-  // `invoiceDataSnapshot`, canonicalisé sous SHA-256 pour dix ans. Le snapshot a été
-  // retiré à la vague V3 : le considérant est parti avec lui. Le renderer PDF ne l'a
-  // JAMAIS imprimé, et aucune requête ne l'a jamais filtré.
-  //
-  // La charge reste retrouvable à tout instant depuis `stripePaymentIntentId`
-  // (conservé, `@unique`, et exigé par le CHECK `Order_paid_requires_stripe_proof`)
-  // via `PaymentIntent.latest_charge`.
-  //
-  // ⚠️ Condition de réouverture : si un snapshot de données de facture revient, la
-  // colonne doit revenir AVANT lui — sinon on refige un `null` pour dix ans.
-
-  customerEmail String @db.VarChar(255)
-  customerName  String @db.VarChar(100)
-
-  shippingFirstName  String  @db.VarChar(50)
-  shippingLastName   String  @db.VarChar(50)
-  shippingAddress1   String  @db.VarChar(255)
-  shippingAddress2   String? @db.VarChar(255)
-  shippingPostalCode String  @db.VarChar(10)
-  shippingCity       String  @db.VarChar(100)
-  shippingCountry    String  @default("FR") @db.VarChar(2)
-  shippingPhone      String  @db.VarChar(20)
-
-  // Pas de `discountAmount` : les codes promo ont été retirés le 2026-08-05.
-  // `Order_total_formula` vaut désormais `total = subtotal + shippingCost`.
-  subtotal     Int
-  shippingCost Int @default(0)
-  total        Int
-
-  invoiceNumber      String?        @unique @db.VarChar(30)
-  invoiceStatus      InvoiceStatus?
-  invoiceGeneratedAt DateTime?
-
-  // Pas d'`invoiceVoidedAt` : `void-invoice.service.ts` l'écrivait dans le MÊME
-  // `update` et avec la MÊME valeur que `creditNoteGeneratedAt` — deux colonnes
-  // pour une date. La date d'annulation, c'est celle de l'avoir qui l'annule
-  // (Art. 272-I : c'est l'avoir qui porte la correction), et `invoiceStatus`
-  // dit qu'elle est annulée.
-
-  creditNoteNumber      String?   @unique @db.VarChar(30)
-  creditNoteGeneratedAt DateTime?
-  creditNotePdfUrl      String?   @db.VarChar(2048)
-  creditNotePdfHash     String?   @db.VarChar(64)
-
-  // Le PDF archivé EST la facture au sens de l'Art. L102 B LPF, et son SHA-256
-  // est re-vérifié à CHAQUE téléchargement contre l'artefact réellement servi
-  // (EINV-PDF-006, routes facture/avoir) : c'est lui qui détecte une copie
-  // UploadThing corrompue. Ne jamais réécrire un `*PdfHash` après émission.
-  invoicePdfUrl  String? @db.VarChar(2048)
-  invoicePdfHash String? @db.VarChar(64)
-
-  // Pas d'`invoiceDataSnapshot`/`invoiceDataHash` (retirés 2026-08-05) : c'était
-  // une SECONDE preuve du même document — le JSON canonicalisé des données de
-  // facture, figé sous son propre SHA-256, à côté du PDF déjà archivé et déjà
-  // hashé. Deux pièces probantes pour un seul document, chacune avec sa
-  // machinerie (canonicalisation, versionnement de format, vérification
-  // d'intégrité, backfill).
-  //
-  // ⚠️ CE QUE ÇA DÉPLACE, et qu'il faut tenir : l'identité VENDEUR n'est plus
-  // figée nulle part en base (`Order.vendor*` avait été droppé en s'appuyant sur
-  // ce snapshot). Elle ne survit que DANS LE PDF ARCHIVÉ. Conséquence directe :
-  //   - le PDF archivé fait foi, toujours ;
-  //   - une régénération est un DÉPANNAGE best-effort qui porte l'identité
-  //     vendeur COURANTE, et ne doit jamais être présentée comme l'original ;
-  //   - donc l'archivage n'est pas optionnel — c'est `reconcile-invoices`
-  //     (seul cron monitoré Sentry) qui garantit qu'aucune facture ne reste sans
-  //     archive, via un prédicat DÉRIVÉ : `invoiceNumber != null AND
-  //     invoicePdfUrl == null`.
-  // Rouvrir un snapshot de données exigerait de re-verser l'identité vendeur
-  // dedans, dans la MÊME transaction que `invoiceNumber`.
-
-  shippingCarrier   String?   @db.VarChar(30)
-  trackingNumber    String?   @db.VarChar(50)
-  trackingUrl       String?   @db.VarChar(2048)
-  // Pas d'`estimatedDelivery` : la date était STOCKÉE alors qu'elle est
-  // entièrement DÉRIVABLE de `shippedAt` + `shippingCountry` par
-  // `estimateDeliveryDate()` (pure). Une colonne qui recopie le résultat d'une
-  // fonction de deux autres colonnes ne peut que dériver d'elles. La date reste
-  // affichée à la cliente — elle est calculée au rendu.
-  // Renommée depuis `actualDelivery` (audit schéma V5, lot A6) : nommage cohérent
-  // avec `shippedAt` / `paidAt` / `createdAt`.
-  //
-  // ⚠️ Champ à conséquence LÉGALE, pas un horodatage décoratif : c'est l'ancre du
-  // délai de rétractation (`return-eligibility.service.ts` — `NOT_DELIVERED` tant
-  // qu'il est nul, `deadline = deliveredAt + WITHDRAWAL_PERIOD_MS`).
-  deliveredAt       DateTime?
-  shippedAt         DateTime?
-
-  // Deux axes, pas trois : `status` porte l'avancement (dont `RETURNED`) et
-  // `paymentStatus` l'encaissement. `fulfillmentStatus` était un troisième axe
-  // écrit en lockstep avec le premier — cf. le commentaire d'`OrderStatus`.
-  //
-  // ⚠️ `PENDING` désigne DEUX situations, désambiguïsées par `paymentStatus` :
-  // « pas encore payée » et « payée, pas encore prise en main ». C'est déjà ainsi
-  // que la file « à expédier » se construit (`to-ship.service.ts`) — aucune
-  // information n'a été perdue au retrait de `fulfillmentStatus`.
-  status        OrderStatus   @default(PENDING)
-  paymentStatus PaymentStatus @default(PENDING)
-
-  paymentMethod PaymentMethod @default(CARD)
-  paidAt        DateTime?
-
-  // Pas de code promo : le modèle `Discount`, l'enum `DiscountType` et les
-  // colonnes `discountCode`/`discountId`/`discountAmount` ont été retirés le
-  // 2026-08-05. Une micro-entreprise à ~20 commandes/mois n'a pas de programme
-  // promotionnel à piloter ; la remise, si elle revient un jour, se fera par un
-  // prix barré (`ProductSku.compareAtPrice`, déjà en place) et non par un moteur
-  // de codes avec plafonds d'usage, éligibilité et comptage par email.
-  //
-  // ⚠️ Condition de réouverture : il faudra RE-créer le snapshot figé
-  // (`discountCode` était un instantané survivant au renommage du code), la
-  // garde `onDelete: Restrict` — « un code déjà utilisé ne se supprime pas » —
-  // et le décompte transactionnel de `usageCount` sous le lock de stock. Ne pas
-  // se contenter d'une colonne de montant : c'est ce trio qui rendait la remise
-  // auditable.
-
-  items   OrderItem[]
-  refunds Refund[]
-  history OrderHistory[]
-
-  // Drapeau d'appartenance à la DLQ facture, relu par `reconcile-invoices`.
-  //
-  // Pas de compteur `invoiceReconcileAttempts` à côté (retiré 2026-08-05) : il ne
-  // faisait que RETARDER de 3 jours la première alerte, alors que
-  // `flagInvoiceFailureForReconcile` alerte déjà à J+0 — et au-delà du seuil il
-  // ré-alertait à chaque run, donc il ne dédoublonnait rien.
-  invoiceRetryDeferred Boolean @default(false)
-
-  // Trop-perçu Stripe (capture > `total`), posé par `payment_intent.succeeded`.
-  //
-  // ⚠️ NE PAS RETIRER : lu par la garde anti-sur-remboursement de
-  // `refund-handlers.ts`, qui borne le remboursement à `total + overbilled`. Sans
-  // lui, rembourser un trop-perçu légitime déclencherait une alerte Sentry.
-  //
-  // Pas de `overbillingResolvedAt` en face (retiré 2026-08-05) : il n'existait que
-  // pour éteindre un compteur de dashboard, son unique writer était une passe
-  // déclenchée à la main, et le lien de l'alerte menait à la liste NON filtrée.
-  // La notification réelle, c'est l'e-mail d'alerte admin, qui subsiste.
-  overbilledAmountCents Int?
-
-  piiPurgedAt DateTime?
-
-  deletedAt DateTime?
-
-  createdAt DateTime @default(now())
-  // Lu par l'`orderBy` du DLQ `reconcile-voided-invoices` (traite d'abord la
-  // commande la moins récemment touchée) — pas seulement un horodatage décoratif.
-  updatedAt DateTime @updatedAt
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   Order_creditNoteNumber_cross_unique
-  //   Order_creditNoteNumber_format_check
-  //   Order_creditNotePdfHash_format_check
-  //   Order_customerEmail_unaccent_trgm_idx
-  //   Order_customerName_unaccent_trgm_idx
-  //   Order_invoiceNumber_format
-  //   Order_invoicePdfHash_format_check
-  //   Order_overbilledAmountCents_positive_check
-  //   Order_paid_requires_paidAt
-  //   Order_paid_requires_stripe_proof
-  //   Order_shippingCost_non_negative
-  //   Order_subtotal_non_negative
-  //   Order_total_formula
-  //   Order_total_non_negative
-
-  // 10 index composites → 5 (audit schéma V1, 2026-08-05). `Order` atteint ~2 400
-  // lignes au bout de DIX ANS à 20 commandes/mois : Postgres parcourt ça en moins
-  // d'une milliseconde, aucun de ces index ne servait une performance mesurable.
-  // Ce qu'ils coûtaient : de l'écriture à chaque commande et du bruit de schéma.
-  //
-  // Les 5 conservés couvrent les seules requêtes qui grandiront avec le temps :
-  // le tri de la liste admin, le livre de recettes (`paidAt`), la DLQ facture, la
-  // purge RGPD à 10 ans et le compteur de facturation.
-  //
-  // Retirés : `customerEmail` (la recherche admin passe par le GIN trigram),
-  // `paymentStatus+createdAt` et `paymentStatus+deletedAt+paidAt` (couverts par
-  // `paidAt`), `piiPurgedAt+paidAt+createdAt` (doublon du précédent) et
-  // `overbillingResolvedAt+overbilledAmountCents` (2 colonnes quasi toujours NULL).
-  @@index([paidAt(sort: Desc)])
-  @@index([status, createdAt(sort: Desc)])
-  @@index([invoiceStatus])
-  @@index([invoiceRetryDeferred, paidAt], map: "Order_invoiceRetryDeferred_idx")
-  @@index([piiPurgedAt, paidAt], map: "Order_piiPurgedAt_paidAt_idx")
-}
-
-model OrderHistory {
-  id      String  @id @default(cuid(2))
-  orderId String?
-  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  action OrderAction
-
-  previousStatus            OrderStatus?
-  newStatus                 OrderStatus?
-  previousPaymentStatus     PaymentStatus?
-  newPaymentStatus          PaymentStatus?
-
-  note String? @db.Text
-
-  metadata Json?
-
-  // Pas d'`authorId` : la colonne avait ~35 écrivains et ZÉRO lecteur (absente
-  // de tout `select`, de tout `where`, de tout composant) — retirée à l'audit V2
-  // (Lot 1). Sur une boutique à opératrice unique, l'identité de l'auteur est
-  // déjà portée par `authorName` (affiché dans la timeline) et par `source`
-  // (badge Admin / Stripe / Client / Système).
-  authorName String? @db.VarChar(100)
-
-  source HistorySource @default(ADMIN)
-
-  createdAt DateTime @default(now())
-
-  @@index([orderId, createdAt(sort: Desc)])
+  CANCELLED // webhook checkout.session.expired → RESTITUER le stock
 }
 
 model OrderItem {
+  id String @id @default(cuid())
+
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  // Pas de `productId` : la colonne était sélectionnée par 3 selects et lue par
-  // AUCUN appelant (retirée à l'audit V2, Lot 1). C'était en outre un pointeur
-  // VIVANT dans une table de snapshot, contraire à l'invariant « snapshots
-  // OrderItem figés » — les colonnes `product*` ci-dessous portent déjà tout ce
-  // que la commande doit conserver. Les `productId` utilisés en logique de
-  // restock viennent du `RETURNING` SQL sur `ProductSku`, pas d'ici.
-  skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  // Pas de `productDescription` ni de `skuSku` : tous deux n'alimentaient que le
-  // payload de facture (`InvoiceData.lines[].productDescription` / `.skuCode`),
-  // qu'aucun rendu ne dessine — `render-invoice-pdf.ts` ne trace que
-  // `productTitle` et `variantInfo`. Sans le snapshot, ils n'ont plus aucun
-  // consommateur. Les autres colonnes `product*`/`sku*` restent le SNAPSHOT figé
-  // au checkout (invariant 4).
-  productTitle    String  @db.VarChar(200)
-  productImageUrl String? @db.VarChar(2048)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
 
-  // Pas de `skuColorHexes` : le snapshot CSV des hex n'avait qu'un rendu dans tout
-  // le dépôt — les pastilles de couleur de l'e-mail de confirmation. Ni le PDF de
-  // facture, ni l'admin, ni le suivi client, ni l'e-mail d'expédition ne le
-  // lisaient, alors qu'il traversait 8 couches de transport. `skuColor` porte le
-  // NOM de la couleur et reste : c'est lui qui est imprimé sur la facture.
-  //
-  // ⚠️ Condition de réouverture : les hex ne se dérivent PAS au rendu. L'invariant 4
-  // (snapshots `OrderItem` figés au checkout) l'interdit — un renvoi d'e-mail six
-  // mois plus tard afficherait les couleurs COURANTES du SKU, ou rien s'il a été
-  // supprimé. Rouvrir la pastille, c'est rouvrir la colonne.
-  skuColor    String? @db.VarChar(100)
-  skuMaterial String? @db.VarChar(100)
-  skuSize     String? @db.VarChar(50)
+  nameSnapshot    String
+  variantSnapshot String?
+  unitPriceCents  Int
+  quantity        Int     @default(1)
 
-  price    Int
-  quantity Int
-
-
-  createdAt DateTime @default(now())
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   OrderItem_price_positive
-  //   OrderItem_quantity_positive
-
-  // PK composite, comme `ProductCollection` / `ProductSkuColor` / `ProductSkuMaterial`
-  // (audit schéma V5, lot A5) : la clé surrogate `id` n'identifiait rien de plus
-  // qu'`(orderId, skuId)`, et son unique consommateur était une `key` React que
-  // `skuId` porte aussi bien. Une commande consolide déjà une quantité par SKU —
-  // `addCartItem` cherche la ligne existante avant d'en créer une.
-  //
-  // ⚠️ Cette PK IMPOSE en base ce qui n'était garanti que côté panier. La migration
-  // qui l'introduit refuse de s'appliquer si une commande historique porte deux
-  // lignes du même SKU (garde `DO $$ … RAISE EXCEPTION` en tête de migration) : sans
-  // elle, l'échec serait un violation de contrainte brute en pleine production.
-  //
-  // `@@index([orderId])` est retiré : le préfixe de la PK composite le couvre.
-  @@id([orderId, skuId])
-  @@index([skuId])
-}
-
-enum RefundReason {
-  CUSTOMER_REQUEST
-  DEFECTIVE
-  FRAUD
-  OTHER
-}
-
-enum RefundStatus {
-  PENDING
-  APPROVED
-  COMPLETED
-  FAILED
-  CANCELLED
-}
-
-model Refund {
-  id String @id @default(cuid(2))
-
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
-
-  stripeRefundId String? @unique
-
-  amount   Int
-
-  reason        RefundReason
-  status        RefundStatus @default(PENDING)
-  failureReason String?      @db.VarChar(500)
-
-  note String? @db.Text
-
-
-  // Pas de `createdBy` : les remboursements sont Stripe-first (Lot 2 S3.3), la
-  // colonne n'avait plus aucun lecteur. La trace « qui a déclenché » vit dans
-  // `OrderHistory.authorName`, écrit par les mêmes actions.
-  processedAt DateTime?
-
-  attemptCount Int @default(0)
-
-  confirmationEmailSentAt DateTime?
-
-  createdAt DateTime @default(now())
-
-  // ⚠️ `updatedAt` a un LECTEUR, contrairement à ses homologues du Lot B (audit
-  // schéma V1) : `handleRefundUpdated` s'en sert comme horloge de fraîcheur pour la
-  // fenêtre de grâce SAGA de 30 s (ORD-REFUND-AUDIT-004). Sans elle, un
-  // `refund.updated` arrivant pendant une finalisation concurrente
-  // (`reconcile-refunds` → `finalizeRefundCompletion`) prend COMPLETED, la
-  // finalisation voit `status != APPROVED` et abort → avoir Art. 272-I et audit
-  // perdus. Ce lecteur avait échappé au passage « le compilateur rend la liste
-  // exhaustive » : une clé inexistante dans un `select` imbriqué échappe au typage
-  // Prisma, et l'accès de propriété en aval avec elle. Ne pas re-dropper sans
-  // supprimer d'abord le garde et sa régression
-  // (`refund-webhook-saga-in-flight-skip.regression.test.ts`).
-  updatedAt DateTime @updatedAt
-
-  creditNoteNumber      String?   @unique @db.VarChar(30)
-  creditNoteGeneratedAt DateTime?
-  creditNotePdfUrl      String?   @db.VarChar(2048)
-  creditNotePdfHash     String?   @db.VarChar(64)
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   Refund_amount_positive
-  //   Refund_creditNoteNumber_cross_unique
-  //   Refund_creditNoteNumber_format_check
-  //   Refund_creditNotePdfHash_format_check
-
-  // Pas d'index `[status, stripeRefundId]` : aucune requête ne filtre sur une
-  // VALEUR de `stripeRefundId` conjointement à `status` — les lookups par id
-  // Stripe passent par la contrainte `@unique`, et les deux requêtes qui
-  // combinent les colonnes ne testent qu'une NULLITÉ, la sélectivité venant de
-  // `status`, déjà couvert en préfixe par `[status, processedAt]`.
-  // Pas d'`@@index([createdAt])` (audit schéma V4) : la liste admin trie sur
-  // `[{createdAt}, {id: "asc"}]` (pagination par curseur), que cet index ne couvrait
-  // pas — et `Refund` atteint quelques centaines de lignes en dix ans. `[orderId]` et
-  // `[status, processedAt]` restent : eux servent des `where` (garde SAGA, DLQ).
   @@index([orderId])
-  @@index([status, processedAt])
+  @@index([productId])
+  @@index([variantId])
 }
 
-enum WebhookEventStatus {
-  PROCESSING
-  COMPLETED
-  FAILED
-  SKIPPED
+// ------------------------------------------------------------
+// RÉTRACTATION (obligation légale depuis le 19 juin 2026)
+// ------------------------------------------------------------
+model RetractationRequest {
+  id String @id @default(cuid())
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  reason String?
+
+  status RetractationStatus @default(RECEIVED)
+
+  requestedAt    DateTime  @default(now())
+  acknowledgedAt DateTime?
+  itemReceivedAt DateTime?
+  refundedAt     DateTime?
+
+  stripeRefundId String?
+
+  creditNoteNumber Int? @unique
 }
 
-model WebhookEvent {
-  // PK naturelle depuis l'audit V5, lot E : la clé surrogate `id` n'était jamais
-  // sélectionnée pour elle-même — tous les accès passaient par `stripeEventId`
-  // (unique par construction chez Stripe) ou la re-citaient juste après l'avoir lue.
-  stripeEventId String             @id
-  // `eventType` est ÉCRIT-SEULEMENT — instruit à l'audit V4 et conservé : cette
-  // table n'a **aucune page admin**, sa seule surface de lecture est le SQL
-  // d'incident (« quel type d'event a échoué »), et la route travaille sur
-  // `event.type` du payload fraîchement désérialisé.
-  //
-  // ⚠️ `processedAt` (même statut write-only) est PARTI au lot E (SIMPLIFICATION-V2),
-  // en infirmant explicitement la décision V4 qui la couvrait : « traité quand »
-  // reste lisible via `processingStartedAt` (début du dernier traitement) à la
-  // précision d'incident près, et la purge trie sur `receivedAt`.
-  eventType     String             @db.VarChar(100)
-  // `PROCESSING` et non `PENDING` : la route webhook crée déjà la ligne en
-  // PROCESSING, et rien n'a jamais écrit PENDING — une telle ligne serait restée
-  // orpheline (jamais reprise, ni purgée par `cleanup-pending-orders`, qui ne
-  // prend que COMPLETED/SKIPPED).
-  status        WebhookEventStatus @default(PROCESSING)
-  // Compte les REDÉLIVRANCES DE STRIPE, pas des rejeux applicatifs : la route
-  // renvoie 500 en échec, Stripe retente 3 jours, et chaque passage ré-incrémente.
-  // Alimente le seuil d'alerte admin `MAX_WEBHOOK_RETRY_ATTEMPTS`.
-  attempts      Int                @default(0)
-  receivedAt    DateTime           @default(now())
-
-  // Fraîcheur d'un PROCESSING figé (WEBHOOK-AUDIT-002) — lu par le pré-check
-  // d'idempotence de la route, seul consommateur depuis le Lot 3.
-  processingStartedAt DateTime?
-
-  // 3 index → 1 (audit V2, Lot 3, 2026-08-05) : le retrait de `retry-webhooks`
-  // avait laissé deux index sans lecteur. Le seul conservé sert la purge à
-  // 90 jours de `cleanup-pending-orders` (`status IN (COMPLETED, SKIPPED) AND
-  // receivedAt < cutoff`). Les autres accès passent par la PK `stripeEventId`.
-  @@index([status, receivedAt])
-}
-
-model StoreSettings {
-  id             String    @id @default("store-settings-singleton")
-  isClosed       Boolean   @default(false)
-  closureMessage String?   @db.VarChar(500)
-  closedAt       DateTime?
-  reopensAt      DateTime?
-  closedBy       String?   @db.VarChar(255)
-
-  orphanMediaScanOffset Int @default(0)
-  updatedAt DateTime @updatedAt
-
-  // Gardes DB (SSOT `prisma/sql/raw-guards.sql`) :
-  //   StoreSettings_singleton_id
+enum RetractationStatus {
+  RECEIVED
+  ACKNOWLEDGED
+  AWAITING_RETURN
+  REFUNDED
+  REJECTED
 }

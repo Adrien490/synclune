@@ -2,7 +2,7 @@ export type QuickSearchCollection = {
 	slug: string;
 	name: string;
 	productCount: number;
-	image: { url: string; blurDataUrl: string | null } | null;
+	image: { url: string } | null;
 };
 
 export type QuickSearchProductType = {
@@ -14,7 +14,7 @@ export type QuickSearchProductType = {
 export type QuickSearchColor = {
 	slug: string;
 	name: string;
-	hex: string;
+	hex: string | null;
 };
 
 /**

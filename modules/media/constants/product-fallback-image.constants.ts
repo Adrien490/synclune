@@ -47,6 +47,6 @@ export const FALLBACK_PRODUCT_IMAGE = {
 	id: "fallback-image",
 	url: FALLBACK_IMAGE_URL,
 	alt: FALLBACK_IMAGE_ALT,
-	mediaType: "IMAGE" as const,
+	type: "IMAGE" as const,
 	blurDataUrl: undefined,
 } as const;

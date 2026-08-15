@@ -1,14 +1,8 @@
 /**
- * Helpers de display pour les listes de produits
+ * Helpers de display pour les listes de produits — schéma lean (lot 2).
  *
- * Ce module contient les fonctions de composition et d'affichage pour :
- * - Récupérer le prix principal
- * - Récupérer l'image principale
- * - Déterminer la disponibilité (Schema.org)
- * - Récupérer toutes les données d'une ProductCard en une seule passe (optimisé)
- *
- * Les fonctions de sélection SKU et d'affichage des variantes sont
- * ré-exportées depuis leurs modules respectifs pour rétrocompatibilité.
+ * Le média vit sur le PRODUIT (`product.media`), une variante porte UNE couleur
+ * et UN matériau, le prix affiché = `variant.priceCents ?? product.priceCents`.
  */
 
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
@@ -17,16 +11,14 @@ import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 import { PRODUCT_TEXTS } from "../constants/product-texts.constants";
 import type {
 	ProductFromList,
-	SkuFromList,
+	VariantFromList,
 	ColorSwatch,
 } from "@/modules/products/types/product-list.types";
-import type { ProductStockInfo, StockStatus } from "@/shared/types/product-sku.types";
+import type { ProductStockInfo, StockStatus } from "@/shared/types/product-variant.types";
 import {
-	getPrimarySkuForList,
-	type GetPrimarySkuOptions,
-} from "@/modules/skus/services/sku-selection.service";
-import { buildComboKey } from "@/modules/skus/services/sku-info-extraction.service";
-import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
+	getPrimaryVariantForList,
+	type GetPrimaryVariantOptions,
+} from "@/modules/variants/services/variant-selection.service";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 /** Validates hex color format at display time (defense in depth) */
@@ -44,102 +36,78 @@ function truncateAltText(
 }
 
 /**
- * Type de retour pour l'extraction d'image
- *
- * `alt` est REQUIS : les trois chemins de construction (altText en base, alt
- * dérivé titre + matière/couleur, placeholder) en posent toujours un — c'est
- * ce qui permet à ProductCard de le passer tel quel à `<Image>` sans fallback
- * au call site (un `?? DEFAULT_ALT(…)` y était du code mort).
+ * Type de retour pour l'extraction d'image — `alt` est REQUIS (les chemins de
+ * construction en posent toujours un).
  */
 type ExtractedImage = {
 	id: string;
 	url: string;
 	alt: string;
-	mediaType: "IMAGE";
+	type: "IMAGE";
 	blurDataUrl?: string;
 };
 
 /**
- * Choisit le média à utiliser comme IMAGE représentative d'un SKU.
+ * Choisit le média à utiliser comme IMAGE représentative.
  *
  * Règle : première IMAGE de l'ordre canonique `(position asc, id asc)` → `null`.
  * Les selects livrent les médias déjà triés dans cet ordre ; « premier média »
- * ≠ « première IMAGE » — `SkuMedia` est polymorphe et une vidéo peut occuper le
- * rang 0, d'où le filtre `mediaType` AVANT de prendre le premier (remplace
- * `isPrimary`, audit schéma V5, lot A1).
+ * ≠ « première IMAGE » — `ProductMedia` est polymorphe et une vidéo peut occuper
+ * le rang 0, d'où le filtre `type` AVANT de prendre le premier.
  *
- * ⚠️ SSOT à utiliser partout où l'on a besoin d'UNE url d'image à partir d'un tableau
- * de médias mixtes. Les selects `GET_PRODUCT_SELECT` / `GET_PRODUCTS_SELECT` ne filtrent
- * volontairement pas `mediaType` (la galerie a besoin des vidéos) mais sélectionnent
- * `mediaType` précisément pour que l'appelant trie. Trois consommateurs ne le
- * faisaient pas et écrivaient un `.mp4` là où une image est requise : `og:image` /
- * `twitter:images` (carte sociale cassée au partage), le champ `image` du nœud
- * `Product` d'un `ItemList` JSON-LD (invalide en schema.org, rejet Google Merchant), et
- * la vignette de recherche rapide (`<Image src>` sur une vidéo → vignette cassée + une
- * transformation `/_next/image` facturée pour rien).
- *
- * Retourne `null` quand aucun rendu image n'est possible : l'appelant OMET alors le
- * champ plutôt que de publier une url invalide.
+ * ⚠️ SSOT à utiliser partout où l'on a besoin d'UNE url d'image à partir d'un
+ * tableau de médias mixtes (og:image, JSON-LD, vignettes). Retourne `null`
+ * quand aucun rendu image n'est possible : l'appelant OMET alors le champ
+ * plutôt que de publier une url invalide.
  *
  * @public
  */
-export function pickPrimaryImage<T extends { mediaType: string }>(
+export function pickPrimaryImage<T extends { type: string }>(
 	images: readonly T[] | undefined,
 ): T | null {
 	if (!images?.length) return null;
 
-	return images.find((img) => img.mediaType === "IMAGE") ?? null;
+	return images.find((img) => img.type === "IMAGE") ?? null;
 }
 
-/**
- * Extrait l'image principale d'un SKU (fonction utilitaire unique)
- *
- * Délègue le choix du média à `pickPrimaryImage` et n'ajoute que l'habillage
- * (alt dérivé, blurDataUrl).
- *
- * @param sku - SKU dont on veut extraire l'image
- * @param productTitle - Titre du produit pour le texte alt
- * @returns Image extraite ou null si aucune image trouvée
- */
-function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedImage | null {
-	const image = pickPrimaryImage(sku.images);
-	if (!image) {
-		return null;
-	}
+/** Médias minimaux attendus par les helpers d'image. */
+type MediaLike = {
+	id: string;
+	url: string;
+	alt?: string | null;
+	type: string;
+};
+
+/** Extrait la Nième IMAGE du média produit (habillage alt inclus). */
+function extractImageAt(
+	media: readonly MediaLike[] | undefined,
+	index: number,
+	productName: string,
+): ExtractedImage | null {
+	if (!media?.length) return null;
+	const images = media.filter((m) => m.type === "IMAGE");
+	const image = images[index];
+	if (!image) return null;
 
 	return {
 		id: image.id,
 		url: image.url,
-		mediaType: "IMAGE",
-		alt: truncateAltText(
-			image.altText ??
-				`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors[0]?.color.name ?? "Image principale"}`,
-		),
-		blurDataUrl: image.blurDataUrl ?? undefined,
+		type: "IMAGE",
+		alt: truncateAltText(image.alt ?? `${productName} - Image ${index + 1}`),
 	};
 }
 
-/*
- * ⚠️ `getPrimaryPriceForList` a été retiré le 2026-08-07 : son seul appelant
- * était `ProductCarouselUI`, composant mort supprimé le même jour. Les cartes
- * produit lisent le prix via `getProductDisplayData` ci-dessous, qui gère en
- * plus la couleur préférée et la fourchette multi-SKU.
- */
-
 /**
- * Récupère l'image principale depuis le SKU principal ou SKUs
- *
- * IMPORTANT: Cette fonction retourne TOUJOURS une image (jamais null)
- * - Priorité 1: Image du SKU principal (via extractImageFromSku)
- * - Priorité 2: Image de n'importe quel SKU actif
- * - Fallback final: Image SVG de placeholder élégante
- *
- * Les médias principaux sont UNIQUEMENT des images (jamais de vidéos)
+ * Récupère l'image principale du produit — retourne TOUJOURS une image
+ * (placeholder SVG en dernier recours).
  */
 export function getPrimaryImageForList(product: ProductFromList): ExtractedImage {
-	const primarySku = getPrimarySkuForList<SkuFromList, ProductFromList>(product);
-	const activeSkus = product.skus.filter((s) => s.isActive);
-	return getPrimaryImageFromSku(primarySku, product, activeSkus);
+	return (
+		extractImageAt(product.media, 0, product.name) ?? {
+			...FALLBACK_PRODUCT_IMAGE,
+			alt: truncateAltText(`${product.name} - ${FALLBACK_PRODUCT_IMAGE.alt}`),
+		}
+	);
 }
 
 // ============================================================================
@@ -151,127 +119,73 @@ import type { ProductCardData } from "../types/product.types";
 /**
  * Récupère toutes les données nécessaires à ProductCard en une seule passe.
  *
- * OPTIMISATION : Évite 5 appels séparés qui itèrent chacun sur les SKUs.
- * Réduit la complexité de O(5n) à O(n) pour les produits avec beaucoup de SKUs.
- *
- * @param product - Produit avec ses SKUs
- * @param options - Options d'affichage (couleur préférée)
- * @returns Toutes les données formatées pour ProductCard
- *
- * @example
- * ```tsx
- * // Sans filtre
- * const data = getProductCardData(product);
- *
- * // Avec filtre couleur actif (thumbnail s'adapte)
- * const data = getProductCardData(product, { activeColorSlug: "or" });
- * ```
+ * @param product - Produit avec ses variantes et médias
+ * @param options - Options d'affichage (couleur préférée — identité = nom)
  */
 export function getProductCardData(
 	product: ProductFromList,
 	options?: { activeColorSlug?: string },
 ): ProductCardData {
-	const skus = product.skus;
+	const variants = product.variants;
 
-	// === 1. Trouver le SKU principal via la fonction unifiée ===
-	// Utilise getPrimarySkuForList avec le paramètre couleur préférée (Baymard pattern)
-	const skuOptions: GetPrimarySkuOptions | undefined = options?.activeColorSlug
+	// === 1. Variante principale ===
+	const variantOptions: GetPrimaryVariantOptions | undefined = options?.activeColorSlug
 		? { preferredColorSlug: options.activeColorSlug }
 		: undefined;
-	const defaultSku = getPrimarySkuForList<SkuFromList, ProductFromList>(product, skuOptions);
+	const defaultVariant = getPrimaryVariantForList<VariantFromList, ProductFromList>(
+		product,
+		variantOptions,
+	);
 
-	// === 2. Passe unique sur les SKUs actifs pour extraire toutes les données ===
-	let totalInventory = 0;
-	let availableSkus = 0;
+	// === 2. Passe unique sur les variantes actives ===
+	let totalStock = 0;
+	let availableVariants = 0;
 	const colorMap = new Map<string, ColorSwatch>();
-	const comboMap = new Map<string, ColorSwatch>();
-	let hasMultiColorSku = false;
 
-	for (const sku of skus) {
-		if (!sku.isActive) continue;
+	for (const variant of variants) {
+		if (!variant.active) continue;
 
-		// Stock
-		totalInventory += sku.inventory;
-		if (sku.inventory > 0) availableSkus++;
+		totalStock += variant.stock;
+		if (variant.stock > 0) availableVariants++;
 
-		// Couleurs M2M : on agrège chaque couleur unique vue dans les SKUs.
-		// `inStock` = la couleur est présente sur au moins un SKU en stock (au moins
-		// 1 unité). Hex validated at display time to prevent style injection.
-		for (const link of sku.colors) {
-			const c = link.color;
-			if (!c.slug || !c.hex || !HEX_PATTERN.test(c.hex)) continue;
-			const existing = colorMap.get(c.slug);
-			const inStock = existing?.inStock === true || sku.inventory > 0;
-			colorMap.set(c.slug, {
-				slug: c.slug,
+		const c = variant.color;
+		if (c?.hex && HEX_PATTERN.test(c.hex)) {
+			const existing = colorMap.get(c.name);
+			const inStock = existing?.inStock === true || variant.stock > 0;
+			colorMap.set(c.name, {
+				slug: c.name,
 				hex: c.hex,
 				name: c.name,
 				inStock,
 			});
 		}
-
-		// Combos M2M : on accumule chaque combinaison de couleurs portée par les
-		// SKUs actifs. Une carte produit avec au moins un SKU multi-couleur passe
-		// en mode combos (pastille split-gradient + lien `?variant=`).
-		const skuColors = sku.colors;
-		if (skuColors.length > 1) hasMultiColorSku = true;
-		if (skuColors.length > 0) {
-			const ordered = [...skuColors].sort((a, b) => a.position - b.position);
-			const validLinks = ordered.filter(
-				(link) => link.color.slug && link.color.hex && HEX_PATTERN.test(link.color.hex),
-			);
-			if (validLinks.length > 0) {
-				// `link.color` extrait une fois : évite 3 déréférencements imbriqués par lien.
-				const linkedColors = validLinks.map((link) => link.color);
-				const slugs = linkedColors.map((color) => color.slug);
-				const hexes = linkedColors.map((color) => color.hex);
-				const names = linkedColors.map((color) => color.name);
-				const comboKey = buildComboKey(slugs);
-				const existing = comboMap.get(comboKey);
-				const inStock = existing?.inStock === true || sku.inventory > 0;
-				comboMap.set(comboKey, {
-					slug: comboKey,
-					hex: hexes[0]!,
-					name: names.join(" + "),
-					inStock,
-					hexes,
-					comboKey,
-					names,
-				});
-			}
-		}
 	}
 
 	// === 3. Construire les résultats ===
 
-	// Prix depuis le SKU principal
-	const price = defaultSku?.priceInclTax ?? 0;
-	const compareAtPrice = defaultSku?.compareAtPrice ?? null;
+	// Prix affiché : override variante, sinon prix produit
+	const price = defaultVariant?.priceCents ?? product.priceCents;
 
-	// Matière principale du SKU affiché — déjà chargée par les selects catalogue,
-	// affichée sous le titre de la carte (redesign Atelier 2026-08-03)
-	const material = defaultSku ? getPrimaryMaterialName(defaultSku.materials) : null;
+	// Matériau de la variante affichée
+	const material = defaultVariant?.material?.name ?? null;
 
-	// Warning en dev si pas de SKU
-	if (!defaultSku && process.env.NODE_ENV === "development") {
-		logger.warn(`Product "${product.slug}" has no active SKU`, { service: "product-display" });
+	if (!defaultVariant && process.env.NODE_ENV === "development") {
+		logger.warn(`Product "${product.slug}" has no active variant`, {
+			service: "product-display",
+		});
 	}
 
-	// Stock info avec support low_stock. La rupture se juge sur l'AGRÉGAT (tous
-	// SKUs actifs à 0 = rien à vendre), mais l'urgence se juge sur le SKU AFFICHÉ :
-	// l'agrégat mentait dans les deux sens — 3 couleurs × 1 exemplaire affichait
-	// « Plus que 3 ! », et une variante presque épuisée n'affichait rien si une
-	// autre couleur était bien stockée (audit ProductCard 2026-08-03).
-	const displayedInventory = defaultSku?.inventory ?? 0;
+	// Stock : la rupture se juge sur l'AGRÉGAT, l'urgence sur la variante AFFICHÉE
+	const displayedStock = defaultVariant?.stock ?? 0;
 	let status: StockStatus;
 	let message: string;
 
-	if (totalInventory === 0) {
+	if (totalStock === 0) {
 		status = "out_of_stock";
 		message = PRODUCT_TEXTS.STOCK.OUT_OF_STOCK;
-	} else if (displayedInventory > 0 && displayedInventory <= STOCK_THRESHOLDS.LOW) {
+	} else if (displayedStock > 0 && displayedStock <= STOCK_THRESHOLDS.LOW) {
 		status = "low_stock";
-		message = PRODUCT_TEXTS.STOCK.LOW_STOCK_LEFT(displayedInventory);
+		message = PRODUCT_TEXTS.STOCK.LOW_STOCK_LEFT(displayedStock);
 	} else {
 		status = "in_stock";
 		message = PRODUCT_TEXTS.STOCK.IN_STOCK;
@@ -279,106 +193,27 @@ export function getProductCardData(
 
 	const stockInfo: ProductStockInfo = {
 		status,
-		totalInventory,
-		availableSkus,
+		totalStock,
+		availableVariants,
 		message,
 	};
 
-	// Image principale (réutilise la logique existante mais avec le SKU déjà trouvé)
-	const activeSkus = skus.filter((s) => s.isActive);
-	const primaryImage = getPrimaryImageFromSku(defaultSku, product, activeSkus);
-
-	// Secondary image for hover effect (different from primary)
-	const secondaryImage = getSecondaryImage(defaultSku, activeSkus, product.title, primaryImage);
-
-	// Si au moins un SKU multi-couleur existe, la carte présente des combos
-	// (pastilles split-gradient, lien `?variant=`). Sinon, mode legacy avec
-	// 1 pastille par couleur mono et lien `?color=`.
-	const colors = hasMultiColorSku ? Array.from(comboMap.values()) : Array.from(colorMap.values());
+	// Images produit : rang 0 = principale, rang 1 = hover
+	const primaryImage = getPrimaryImageForList(product);
+	const secondary = extractImageAt(product.media, 1, product.name);
+	const secondaryImage =
+		secondary && secondary.id !== primaryImage.id && secondary.url !== primaryImage.url
+			? secondary
+			: null;
 
 	return {
-		defaultSku,
+		defaultVariant,
 		price,
-		compareAtPrice,
 		stockInfo,
 		primaryImage,
 		secondaryImage,
-		colors,
+		colors: Array.from(colorMap.values()),
 		material,
-		hasValidSku: defaultSku !== null && defaultSku.isActive,
-	};
-}
-
-/**
- * Extracts a secondary image different from the primary one (for hover effect).
- * Priority: non-primary image from default SKU, then image from another active SKU.
- *
- * The comparison is on id AND url: two media rows can point at the same file
- * (typical of SKUs sharing a photo). A same-url "alternative view" makes the
- * hover swap a visual no-op, and its `loading="lazy"` instance overwrites the
- * eager one in Next's per-URL LCP bookkeeping (`allImgs` in get-img-props),
- * triggering a false "detected as LCP, add loading=eager" warning on the card
- * that IS preloaded.
- */
-function getSecondaryImage(
-	defaultSku: SkuFromList | null,
-	activeSkus: SkuFromList[],
-	productTitle: string,
-	primaryImage: Pick<ExtractedImage, "id" | "url">,
-): ExtractedImage | null {
-	// Priority 1: Another image from the default SKU
-	if (defaultSku?.images) {
-		const secondaryFromDefaultSku = defaultSku.images.find(
-			(img) =>
-				img.mediaType === "IMAGE" && img.id !== primaryImage.id && img.url !== primaryImage.url,
-		);
-		if (secondaryFromDefaultSku) {
-			return {
-				id: secondaryFromDefaultSku.id,
-				url: secondaryFromDefaultSku.url,
-				mediaType: "IMAGE",
-				alt: truncateAltText(
-					secondaryFromDefaultSku.altText ?? `${productTitle} - Vue alternative`,
-				),
-				blurDataUrl: secondaryFromDefaultSku.blurDataUrl ?? undefined,
-			};
-		}
-	}
-
-	// Priority 2: Primary image from a different active SKU
-	for (const sku of activeSkus) {
-		if (sku.id === defaultSku?.id) continue;
-		const image = extractImageFromSku(sku, productTitle);
-		if (image && image.id !== primaryImage.id && image.url !== primaryImage.url) return image;
-	}
-
-	return null;
-}
-
-/**
- * Extrait l'image principale depuis un SKU ou fallback sur les autres SKUs
- * Fonction interne utilisée par getProductCardData
- */
-function getPrimaryImageFromSku(
-	primarySku: SkuFromList | null,
-	product: ProductFromList,
-	activeSkus: SkuFromList[],
-): ExtractedImage {
-	// Priorité 1: Image du SKU principal
-	if (primarySku) {
-		const image = extractImageFromSku(primarySku, product.title);
-		if (image) return image;
-	}
-
-	// Priorité 2: Image de n'importe quel SKU actif
-	for (const sku of activeSkus) {
-		const image = extractImageFromSku(sku, product.title);
-		if (image) return image;
-	}
-
-	// Fallback final: placeholder
-	return {
-		...FALLBACK_PRODUCT_IMAGE,
-		alt: truncateAltText(`${product.title} - ${FALLBACK_PRODUCT_IMAGE.alt}`),
+		hasValidVariant: defaultVariant !== null && defaultVariant.active,
 	};
 }

@@ -20,7 +20,7 @@ type GetCartItemCountReturn = number;
  * un cookie est déjà l'opération la moins chère du rendu, et un `"use cache"` sur
  * une source dynamique n'aurait de toute façon pas été permis.
  *
- * ⚠️ Dérive assumée, comme pour le badge favoris : une ligne dont le SKU a été
+ * ⚠️ Dérive assumée, comme pour le badge favoris : une ligne dont le VARIANT a été
  * supprimé ou dépublié depuis l'ajout compte encore ici alors que `getCart()`
  * l'écarte. Le badge peut donc annoncer un article de plus que ce que la
  * cart-sheet affiche, jusqu'à la prochaine mutation du panier.

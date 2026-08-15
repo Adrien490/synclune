@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { logger } from "@/shared/lib/logger";
-import { headers } from "next/headers";
 
 /**
  * Champs loggés bornés (fail-open par champ : valeur absente/malformée/trop
@@ -26,24 +24,7 @@ const cspReportSchema = z.looseObject({
  */
 export async function POST(request: Request) {
 	try {
-		// Rate limit: 20 reports per minute per IP
-		const headersList = await headers();
-		const ip = await getClientIp(headersList);
-		const rateLimit = await checkRateLimit(`ip:${ip ?? "unknown"}`, {
-			name: "csp-report",
-			limit: 20,
-			windowMs: 60_000,
-		});
-
-		if (!rateLimit.success) {
-			return NextResponse.json(
-				{ status: "rate_limited" },
-				{
-					status: 429,
-					headers: { "Retry-After": String(rateLimit.retryAfter ?? 60) },
-				},
-			);
-		}
+		// Rate limiting retiré (migration lean §1).
 
 		const body: unknown = await request.json();
 

@@ -99,8 +99,10 @@ export const OrderConfirmationEmail = ({
 									className={EMAIL_CLASSES.text.secondary}
 									style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
 								>
-									{[item.skuSize, item.skuColor, item.skuMaterial].filter(Boolean).join(" · ")} ×{" "}
-									{item.quantity}
+									{[item.variantSize, item.variantColor, item.variantMaterial]
+										.filter(Boolean)
+										.join(" · ")}{" "}
+									× {item.quantity}
 								</Text>
 							</>
 						}
@@ -241,17 +243,17 @@ OrderConfirmationEmail.PreviewProps = {
 	items: [
 		{
 			productTitle: "Collier Luna en Or Rose",
-			skuColor: "Or Rose",
-			skuMaterial: "Or 18 carats",
-			skuSize: "45cm",
+			variantColor: "Or Rose",
+			variantMaterial: "Or 18 carats",
+			variantSize: "45cm",
 			quantity: 1,
 			price: 8900,
 		},
 		{
 			productTitle: "Boucles d'oreilles Étoile",
-			skuColor: "Argent",
-			skuMaterial: "Argent 925",
-			skuSize: null,
+			variantColor: "Argent",
+			variantMaterial: "Argent 925",
+			variantSize: null,
 			quantity: 2,
 			price: 4500,
 		},

@@ -11,7 +11,7 @@ const BLUR_DATA_URL_MAX_LENGTH = 10_000;
 
 /**
  * SSOT de validation d'un `blurDataUrl` — les trois chemins d'écriture
- * (produits, SKUs, avis) divergeaient : `max(10000)` sans contrôle de format,
+ * (produits, VARIANTs, avis) divergeaient : `max(10000)` sans contrôle de format,
  * `startsWith("data:image/") + max(5000)`, et aucune contrainte du tout.
  * Cette valeur est injectée telle quelle dans l'attribut `blurDataURL` de
  * `next/image` : le préfixe doit être vérifié.
@@ -36,7 +36,7 @@ export const mediaDimensionSchema = z.number().int().positive().max(50_000);
  * `nullableImageMediaSchema`) ont été retirés (audit Zod 2026-07-31) : zéro
  * consommateur en production, alors qu'ils dupliquaient intégralement
  * `modules/products/schemas/product-media.schemas.ts` — le seul réellement branché
- * (products + skus) — avec des nuances divergentes (`altText` nullable ici,
+ * (products + variants) — avec des nuances divergentes (`alt` nullable ici,
  * simplement optional là-bas). Deux SSOT concurrentes dont une morte, et c'est la
  * morte qui revendiquait le titre en commentaire.
  *

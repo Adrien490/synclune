@@ -13,9 +13,7 @@ import {
 // FILTERS SCHEMA
 // ============================================================================
 
-const materialFiltersSchema = z.object({
-	isActive: z.boolean().optional(),
-});
+const materialFiltersSchema = z.object({});
 
 // ============================================================================
 // SORT SCHEMA
@@ -29,25 +27,11 @@ const materialSortBySchema = z
 // FIELD SCHEMAS
 // ============================================================================
 
-export const materialSlugSchema = z
-	.string()
-	.trim()
-	.min(1, "Le slug est requis")
-	.max(100, "Le slug ne peut pas dépasser 100 caractères")
-	.regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets");
-
 export const materialNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Le nom est requis")
 	.max(100, "Le nom ne peut pas dépasser 100 caractères");
-
-export const materialDescriptionSchema = z
-	.string()
-	.trim()
-	.max(1000, "La description ne peut pas dépasser 1000 caractères")
-	.optional()
-	.nullable();
 
 // ============================================================================
 // MAIN SCHEMAS
@@ -63,8 +47,7 @@ export const getMaterialsSchema = z.object({
 });
 
 export const getMaterialSchema = z.object({
-	slug: materialSlugSchema,
-	includeInactive: z.boolean().optional(),
+	id: z.string().trim().min(1),
 });
 
 // ============================================================================
@@ -73,23 +56,15 @@ export const getMaterialSchema = z.object({
 
 export const createMaterialSchema = z.object({
 	name: materialNameSchema,
-	description: materialDescriptionSchema,
 });
 
 export const updateMaterialSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: materialNameSchema,
-	description: materialDescriptionSchema,
-	isActive: z.boolean(),
 });
 
 export const deleteMaterialSchema = z.object({
 	id: z.cuid2("ID invalide"),
-});
-
-export const toggleMaterialStatusSchema = z.object({
-	id: z.cuid2("ID invalide"),
-	isActive: z.boolean(),
 });
 
 export const duplicateMaterialSchema = z.object({

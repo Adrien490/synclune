@@ -13,12 +13,12 @@ type RadioOption = { value: string; label: string };
  * Carte « Statut » partagée. Rend toujours un radio (Visibilité produit OU
  * Disponibilité variante).
  *
- * ⚠️ La checkbox « Variante par défaut » a disparu avec `ProductSku.isDefault`
+ * ⚠️ La checkbox « Variante par défaut » a disparu avec `ProductVariant.isDefault`
  * (audit schéma V5, lot A) : la variante principale est désormais le rang 0 de
  * `position`, un ORDRE — plus un drapeau qu'une case à cocher saurait porter.
  */
 export interface StatusCardProps {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shared across multiple form instances (Create/Edit Product, Create/Edit SKU). Union typing would create generic explosion; caller is responsible for field name validity.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shared across multiple form instances (Create/Edit Product, Create/Edit VARIANT). Union typing would create generic explosion; caller is responsible for field name validity.
 	form: any;
 
 	/** Titre de la card (default "Statut"). */

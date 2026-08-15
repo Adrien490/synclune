@@ -15,7 +15,7 @@ export const MATERIALS_CACHE_TAGS = {
 	LIST: "materials-list",
 
 	/** Détail d'un matériau spécifique */
-	DETAIL: (slug: string) => `material-${slug}`,
+	DETAIL: (id: string) => `material-${id}`,
 
 	/** Nombre de produits distincts référençant ce matériau (clé par id). */
 	PRODUCT_COUNT: (materialId: string) => `material-${materialId}-product-count`,
@@ -40,9 +40,9 @@ export function cacheMaterials() {
  * - Utilisé pour : page détail matériau
  * - Durée : 7j stale, 24h revalidation
  */
-export function cacheMaterialDetail(slug: string) {
+export function cacheMaterialDetail(id: string) {
 	cacheLife("reference");
-	cacheTag(MATERIALS_CACHE_TAGS.DETAIL(slug), MATERIALS_CACHE_TAGS.LIST);
+	cacheTag(MATERIALS_CACHE_TAGS.DETAIL(id), MATERIALS_CACHE_TAGS.LIST);
 }
 
 // ============================================
@@ -50,10 +50,10 @@ export function cacheMaterialDetail(slug: string) {
 // ============================================
 
 interface MaterialInvalidationOptions {
-	/** Slug du matériau modifié (actuel et/ou précédent si renommé). */
-	slug?: string;
+	/** Id du matériau modifié. */
+	materialId?: string;
 	/**
-	 * Slugs des produits qui possèdent un SKU référençant ce matériau. Quand
+	 * Slugs des produits qui possèdent un VARIANT référençant ce matériau. Quand
 	 * fourni, cascade aussi `products-list` + `product-${slug}` pour que le PDP
 	 * storefront ne reste pas avec un ancien nom/description ≤24h (profil
 	 * `reference`). Parité comportement `getColorInvalidationTags`.
@@ -69,21 +69,21 @@ interface MaterialInvalidationOptions {
  * - Le détail du matériau (si `slug` fourni)
  * - Les badges de la sidebar admin
  * - Les pages produit affectées + la liste produits (si `affectedProductSlugs`
- *   fourni) — le PDP embarque le nom du matériau dans le swatch/badge SKU,
+ *   fourni) — le PDP embarque le nom du matériau dans le swatch/badge VARIANT,
  *   un rename resterait sinon stale jusqu'à 24h (profil `reference`).
  *
- * @param input - soit un slug (signature legacy), soit un options bag.
+ * @param input - soit un id de matériau (raccourci), soit un options bag.
  */
 export function getMaterialInvalidationTags(
 	input?: string | MaterialInvalidationOptions,
 ): string[] {
 	const opts: MaterialInvalidationOptions =
-		typeof input === "string" ? { slug: input } : (input ?? {});
+		typeof input === "string" ? { materialId: input } : (input ?? {});
 
 	const tags = new Set<string>([MATERIALS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]);
 
-	if (opts.slug) {
-		tags.add(MATERIALS_CACHE_TAGS.DETAIL(opts.slug));
+	if (opts.materialId) {
+		tags.add(MATERIALS_CACHE_TAGS.DETAIL(opts.materialId));
 	}
 
 	if (opts.affectedProductSlugs && opts.affectedProductSlugs.length > 0) {

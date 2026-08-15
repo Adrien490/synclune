@@ -294,7 +294,7 @@ describe("getStorefrontCollectionBySlug", () => {
 		// Assert
 		expect(mockFindUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { slug: "draft-collection", status: "PUBLIC" },
+				where: { slug: "draft-collection", active: true },
 			}),
 		);
 	});

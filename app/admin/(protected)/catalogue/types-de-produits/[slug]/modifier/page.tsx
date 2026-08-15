@@ -11,7 +11,7 @@ interface EditProductTypePageProps {
 
 export async function generateMetadata({ params }: EditProductTypePageProps): Promise<Metadata> {
 	const { slug } = await params;
-	const productType = await getProductTypeBySlug({ slug, includeInactive: true });
+	const productType = await getProductTypeBySlug({ slug });
 	return {
 		title: productType ? `Modifier ${productType.label}` : "Type introuvable",
 	};
@@ -21,9 +21,9 @@ export default async function EditProductTypePage({ params }: EditProductTypePag
 	await assertAdminPage();
 
 	const { slug } = await params;
-	const productType = await getProductTypeBySlug({ slug, includeInactive: true });
+	const productType = await getProductTypeBySlug({ slug });
 
-	if (!productType || productType.isSystem) notFound();
+	if (!productType) notFound();
 
 	return (
 		<div className="space-y-4">
@@ -35,7 +35,6 @@ export default async function EditProductTypePage({ params }: EditProductTypePag
 					id: productType.id,
 					label: productType.label,
 					slug: productType.slug,
-					description: productType.description,
 				}}
 				className="max-w-md"
 			/>

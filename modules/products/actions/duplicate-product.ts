@@ -15,165 +15,91 @@ import {
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { duplicateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
-import { generateSkuCode } from "@/modules/skus/services/sku-generation.service";
 import { getProductForDuplication } from "../data/get-product-for-duplication";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
-import { ADMIN_PRODUCT_DUPLICATE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
- * Server Action pour dupliquer un produit
- * Duplique le produit et tous ses SKUs avec leurs images
- * Compatible avec useActionState de React 19
+ * Server Action pour dupliquer un produit — schéma lean (lot 2).
+ * Copie produit + variantes + médias (les blobs UploadThing sont PARTAGÉS —
+ * la purge à la suppression passe par la SSOT qui recoupe les références).
+ * La copie naît toujours INACTIVE.
  */
 export async function duplicateProduct(
 	_: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Vérification des droits admin
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 1.1 Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_DUPLICATE_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
 
-		// 2. Extraction des donnees du FormData
-		const rawData = {
-			productId: safeFormGet(formData, "productId"),
-		};
-
-		// 3. Validation avec Zod
+		// 2. Extraction + validation
+		const rawData = { productId: safeFormGet(formData, "productId") };
 		const validation = validateInput(duplicateProductSchema, rawData);
 		if ("error" in validation) return validation.error;
 
 		const { productId } = validation.data;
 
-		// 4. Recuperer le produit source avec tous ses SKUs et images (via data/)
+		// 3. Produit source (via data/ — select SSOT dans constants/)
 		const sourceProduct = await getProductForDuplication(productId);
 
 		if (!sourceProduct) {
 			return notFound("Produit source");
 		}
 
-		// 5. Dupliquer le produit et ses SKUs dans une transaction
-		const newTitle = `Copie de ${sourceProduct.title}`;
+		// 4. Duplication en transaction
+		const newName = `Copie de ${sourceProduct.name}`;
 
 		const duplicatedProduct = await prisma.$transaction(async (tx) => {
-			// Generate slug inside transaction to avoid race conditions
-			const newSlug = await generateSlug(tx, "product", newTitle);
+			const newSlug = await generateSlug(tx, "product", newName);
 
-			// Creer le nouveau produit (toujours en DRAFT)
-			const createdProduct = await tx.product.create({
+			return tx.product.create({
 				data: {
-					title: newTitle,
+					name: newName,
 					slug: newSlug,
 					description: sourceProduct.description,
-					status: "DRAFT", // Toujours en brouillon pour eviter publication accidentelle
+					priceCents: sourceProduct.priceCents,
+					active: false,
 					typeId: sourceProduct.typeId,
-				},
-				select: {
-					id: true,
-					title: true,
-					slug: true,
-					description: true,
-					status: true,
-					typeId: true,
-					createdAt: true,
-					updatedAt: true,
-				},
-			});
-
-			// Dupliquer les associations ProductCollection (many-to-many)
-			if (sourceProduct.collections.length > 0) {
-				await tx.productCollection.createMany({
-					data: sourceProduct.collections.map((pc) => ({
-						productId: createdProduct.id,
-						collectionId: pc.collectionId,
-					})),
-				});
-			}
-
-			// Dupliquer tous les SKUs
-			for (const sourceSku of sourceProduct.skus) {
-				// Generer un nouveau SKU unique
-				const newSkuValue = generateSkuCode();
-
-				// Creer le nouveau SKU + ses couleurs/materiaux M2M.
-				// `position` est recopie tel quel plutot que reindexe : la source est deja
-				// triee par position (cf. `getProductForDuplication`) et l'ordre de saisie
-				// pilote l'affichage des variantes en vitrine.
-				const createdSku = await tx.productSku.create({
-					data: {
-						productId: createdProduct.id,
-						sku: newSkuValue,
-						priceInclTax: sourceSku.priceInclTax,
-						compareAtPrice: sourceSku.compareAtPrice,
-						inventory: sourceSku.inventory,
-						isActive: sourceSku.isActive,
-						position: sourceSku.position,
-						size: sourceSku.size,
-						colors: {
-							create: sourceSku.colors.map((c) => ({
-								colorId: c.colorId,
-								position: c.position,
-							})),
-						},
-						materials: {
-							create: sourceSku.materials.map((m) => ({
-								materialId: m.materialId,
-								position: m.position,
-							})),
-						},
+					collections: {
+						connect: sourceProduct.collections.map((c) => ({ id: c.id })),
 					},
-				});
-
-				// Dupliquer toutes les images du SKU
-				for (const sourceImage of sourceSku.images) {
-					await tx.skuMedia.create({
-						data: {
-							skuId: createdSku.id,
-							url: sourceImage.url,
-							thumbnailUrl: sourceImage.thumbnailUrl,
-							blurDataUrl: sourceImage.blurDataUrl,
-							altText: sourceImage.altText,
-							mediaType: sourceImage.mediaType,
-							width: sourceImage.width,
-							height: sourceImage.height,
-							position: sourceImage.position,
-						},
-					});
-				}
-			}
-
-			return createdProduct;
+					media: {
+						create: sourceProduct.media.map((m) => ({
+							url: m.url,
+							alt: m.alt,
+							type: m.type,
+							position: m.position,
+						})),
+					},
+					variants: {
+						create: sourceProduct.variants.map((v) => ({
+							size: v.size,
+							colorId: v.colorId,
+							materialId: v.materialId,
+							priceCents: v.priceCents,
+							stock: v.stock,
+							active: v.active,
+						})),
+					},
+				},
+				select: { id: true, name: true, slug: true },
+			});
 		});
 
-		// 7. Invalidate cache tags
-		// Les couleurs/matériaux sont ceux du produit SOURCE : la copie porte les
-		// mêmes, et c'est leur KPI « produits distincts » qui vient d'augmenter.
-		const productTags = getProductInvalidationTags(duplicatedProduct.slug, duplicatedProduct.id, {
-			affectedColorIds: sourceProduct.skus.flatMap((sku) => sku.colors.map((c) => c.colorId)),
-			affectedMaterialIds: sourceProduct.skus.flatMap((sku) =>
-				sku.materials.map((m) => m.materialId),
-			),
-		});
-		productTags.forEach((tag) => updateTag(tag));
-
-		// Si le produit appartient a des collections, invalider aussi les collections
-		for (const pc of sourceProduct.collections) {
-			const collectionTags = getCollectionInvalidationTags(pc.collection.slug);
-			collectionTags.forEach((tag) => updateTag(tag));
+		// 5. Invalidation de cache
+		getProductInvalidationTags(duplicatedProduct.slug, duplicatedProduct.id).forEach((tag) =>
+			updateTag(tag),
+		);
+		for (const c of sourceProduct.collections) {
+			getCollectionInvalidationTags(c.slug).forEach((tag) => updateTag(tag));
 		}
 
-		// 8. Audit log
-
-		// 9. Success
-		return success(`Produit "${duplicatedProduct.title}" dupliqué avec succès.`, {
+		// 6. Succès
+		return success(`Bijou dupliqué : « ${duplicatedProduct.name} » (brouillon)`, {
 			productId: duplicatedProduct.id,
-			title: duplicatedProduct.title,
 			slug: duplicatedProduct.slug,
 		});
 	} catch (e) {
-		return handleActionError(e, "Une erreur est survenue lors de la duplication du produit.");
+		return handleActionError(e, "Impossible de dupliquer le produit");
 	}
 }

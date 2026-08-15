@@ -1,4 +1,4 @@
-import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
+import { findVariantBySelectors } from "@/modules/variants/services/variant-finder.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 
 /**
@@ -84,7 +84,6 @@ export function normalizeAccentHex(hex: string | null | undefined): string | nul
 interface ResolveGalleryAccentOptions {
 	product: GetProductReturn;
 	selectedVariants: {
-		colorCombo?: string;
 		colorSlug?: string;
 		materialSlug?: string;
 		size?: string;
@@ -95,8 +94,8 @@ interface ResolveGalleryAccentOptions {
  * Teinte de la galerie pour la variante affichée, ou `null` si le produit n'a
  * aucune couleur exploitable (l'appelant retombe alors sur `--primary`).
  *
- * ⚠️ La résolution du SKU **mirroir celle de `buildGallery`** (SKU des variantes
- * sélectionnées, sinon premier SKU actif) : les deux doivent désigner le même
+ * ⚠️ La résolution du VARIANT **mirroir celle de `buildGallery`** (VARIANT des variantes
+ * sélectionnées, sinon premier VARIANT actif) : les deux doivent désigner le même
  * bijou, sinon le cadre serait teinté de la couleur d'une autre photo.
  * Verrouillé par `gallery-accent.service.test.ts`.
  */
@@ -104,24 +103,16 @@ export function resolveGalleryAccent({
 	product,
 	selectedVariants,
 }: ResolveGalleryAccentOptions): string | null {
-	const { colorCombo, colorSlug, materialSlug, size } = selectedVariants;
+	const { colorSlug, materialSlug, size } = selectedVariants;
 
-	const selectedSku =
-		colorCombo || colorSlug || materialSlug || size
-			? findSkuByVariants(product, { colorCombo, colorSlug, materialSlug, size })
+	const selectedVariant =
+		colorSlug || materialSlug || size
+			? findVariantBySelectors(product, { colorSlug, materialSlug, size })
 			: null;
 
-	const sku = selectedSku ?? product.skus[0] ?? null;
-	if (!sku) return null;
+	// Schéma lean : une variante porte UNE couleur (FK simple).
+	const variant = selectedVariant ?? product.variants[0] ?? null;
+	if (!variant) return null;
 
-	// `?color=` est tolérant any-of sur le M2M : un SKU bicolore matche un slug
-	// unique. On prend donc la couleur DEMANDÉE quand elle existe, pas `colors[0]`
-	// — sinon un « or-rose + argent » sélectionné par `?color=argent` se
-	// teinterait en rose.
-	const requested = colorSlug
-		? sku.colors.find((link) => link.color.slug === colorSlug)
-		: undefined;
-
-	// À défaut, la couleur de position 0 (le select Prisma ordonne par `position`).
-	return normalizeAccentHex((requested ?? sku.colors[0])?.color.hex);
+	return normalizeAccentHex(variant.color?.hex);
 }

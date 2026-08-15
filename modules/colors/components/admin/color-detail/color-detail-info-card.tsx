@@ -2,8 +2,6 @@ import { InfoIcon } from "@phosphor-icons/react/ssr";
 
 import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
 import { CopyButton } from "@/shared/components/copy-button";
-import { DescriptionCollapse } from "@/shared/components/description-collapse";
-import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 
 interface ColorDetailInfoCardProps {
@@ -11,6 +9,8 @@ interface ColorDetailInfoCardProps {
 }
 
 export function ColorDetailInfoCard({ color }: ColorDetailInfoCardProps) {
+	const hex = color.hex?.toUpperCase() ?? null;
+
 	return (
 		<Card style={{ viewTransitionName: "color-edit-info" }}>
 			<CardHeader>
@@ -22,58 +22,23 @@ export function ColorDetailInfoCard({ color }: ColorDetailInfoCardProps) {
 			<CardContent>
 				<dl className="grid gap-3 text-sm">
 					<div className="flex items-center justify-between gap-3">
-						<dt className="text-muted-foreground">Statut</dt>
-						<dd>
-							<Badge
-								variant={color.isActive ? "default" : "secondary"}
-								style={{ viewTransitionName: `color-status-${color.id}` }}
-							>
-								{color.isActive ? "Active" : "Inactive"}
-							</Badge>
-						</dd>
+						<dt className="text-muted-foreground">Nom</dt>
+						<dd className="text-foreground/80">{color.name}</dd>
 					</div>
-					<div className="flex items-start justify-between gap-3">
-						<dt className="text-muted-foreground shrink-0 pt-1.5">Slug</dt>
-						<dd className="flex min-w-0 items-start gap-1">
-							<span className="text-foreground/80 pt-1.5 font-mono text-xs break-all">
-								{color.slug}
-							</span>
-							<CopyButton
-								text={color.slug}
-								label="Slug"
-								className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
-							/>
-						</dd>
-					</div>
-					<div className="flex items-start justify-between gap-3">
-						<dt className="text-muted-foreground shrink-0 pt-1.5">Hex</dt>
-						<dd className="flex min-w-0 items-start gap-1">
-							<span className="text-foreground/80 pt-1.5 font-mono text-xs">
-								{color.hex.toUpperCase()}
-							</span>
-							<CopyButton
-								text={color.hex.toUpperCase()}
-								label="Code hex"
-								className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
-							/>
-						</dd>
-					</div>
+					{hex ? (
+						<div className="flex items-start justify-between gap-3">
+							<dt className="text-muted-foreground shrink-0 pt-1.5">Hex</dt>
+							<dd className="flex min-w-0 items-start gap-1">
+								<span className="text-foreground/80 pt-1.5 font-mono text-xs">{hex}</span>
+								<CopyButton
+									text={hex}
+									label="Code hex"
+									className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
+								/>
+							</dd>
+						</div>
+					) : null}
 				</dl>
-
-				{color.description ? (
-					<div className="mt-4 space-y-2 border-t pt-4">
-						<h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-							Description
-						</h3>
-						<DescriptionCollapse text={color.description} />
-					</div>
-				) : null}
-
-				{!color.isActive ? (
-					<p className="border-muted bg-muted/30 text-muted-foreground mt-4 rounded-md border p-3 text-xs">
-						Cette couleur est désactivée et ne peut plus être assignée à de nouvelles variantes.
-					</p>
-				) : null}
 			</CardContent>
 		</Card>
 	);

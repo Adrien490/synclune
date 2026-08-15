@@ -23,7 +23,7 @@ export const VALID_CUID_2 = "cm9876543210zyxwvutsrqpon";
 export const VALID_CUID2_NON_C = "km7q2p9x4v1w8t3r6y5z0nba";
 export const VALID_USER_ID = "user_cm1234567890abcdef";
 export const VALID_ORDER_ID = "order_cm1234567890abcde";
-export const VALID_SKU_ID = "sku_cm1234567890abcdefg";
+export const VALID_VARIANT_ID = "variant_cm1234567890abcdefg";
 const VALID_PRODUCT_ID = "prod_cm1234567890abcde";
 
 // ============================================================================
@@ -105,12 +105,12 @@ export function createMockOrder(overrides: Record<string, unknown> = {}) {
 		items: [
 			{
 				id: "cm1234567890abcdef0",
-				skuId: VALID_SKU_ID,
+				variantId: VALID_VARIANT_ID,
 				quantity: 1,
 				productTitle: "Bracelet Lune",
-				skuColor: "Or",
-				skuMaterial: "Argent 925",
-				skuSize: "M",
+				variantColor: "Or",
+				variantMaterial: "Argent 925",
+				variantSize: "M",
 				price: 4999,
 				// EINV-CREDIT-004 : `refundItems` agrégé par mark-as-fully-refunded
 				// pour calculer la quantité restant à rembourser sur chaque item.
@@ -134,7 +134,7 @@ function createMockProduct(overrides: Record<string, unknown> = {}) {
 		title: "Bracelet Lune",
 		slug: "bracelet-lune",
 		description: "Un bracelet artisanal inspire par la lune",
-		status: "PUBLIC",
+		active: true,
 		typeId: "type_123",
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),
@@ -144,18 +144,18 @@ function createMockProduct(overrides: Record<string, unknown> = {}) {
 }
 
 // ============================================================================
-// SKUS
+// VARIANTS
 // ============================================================================
 
-function createMockSku(overrides: Record<string, unknown> = {}) {
+function createMockVariant(overrides: Record<string, unknown> = {}) {
 	return {
-		id: VALID_SKU_ID,
-		sku: "BRC-LUNE-OR-M",
+		id: VALID_VARIANT_ID,
+		variant: "BRC-LUNE-OR-M",
 		productId: VALID_PRODUCT_ID,
-		priceInclTax: 4999,
+		priceCents: 4999,
 		compareAtPrice: null,
-		inventory: 10,
-		isActive: true,
+		stock: 10,
+		active: true,
 		position: 0,
 		colorId: "color_123",
 		materialId: "material_123",
@@ -203,7 +203,7 @@ function createMockCartItem(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "ci_cm1234567890abcdef",
 		cartId: "cart_cm1234567890abcde",
-		skuId: VALID_SKU_ID,
+		variantId: VALID_VARIANT_ID,
 		quantity: 1,
 		priceAtAdd: 4999,
 		addedAt: new Date("2026-01-15"),
@@ -221,7 +221,7 @@ function createMockDiscount(overrides: Record<string, unknown> = {}) {
 		code: "PROMO20",
 		type: "PERCENTAGE",
 		value: 20,
-		isActive: true,
+		active: true,
 		endsAt: new Date("2026-12-31"),
 		minOrderAmount: null,
 		maxUsageCount: null,
@@ -281,7 +281,7 @@ function createMockCollection(overrides: Record<string, unknown> = {}) {
 		title: "Ete 2026",
 		slug: "ete-2026",
 		description: "Collection estivale",
-		isActive: true,
+		active: true,
 		position: 0,
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),
@@ -316,14 +316,14 @@ function createMockOrderItem(overrides: Record<string, unknown> = {}) {
 		id: "oi_cm1234567890abcde",
 		orderId: VALID_ORDER_ID,
 		productId: VALID_PRODUCT_ID,
-		skuId: VALID_SKU_ID,
+		variantId: VALID_VARIANT_ID,
 		productTitle: "Bracelet Lune",
 		productDescription: null,
 		productImageUrl: "https://cdn.example.com/bracelet.jpg",
-		skuSku: "BRC-LUNE-OR-M",
-		skuColor: "Or",
-		skuMaterial: "Argent 925",
-		skuSize: "M",
+		variantVariant: "BRC-LUNE-OR-M",
+		variantColor: "Or",
+		variantMaterial: "Argent 925",
+		variantSize: "M",
 		price: 4999,
 		quantity: 1,
 		createdAt: new Date("2026-01-15"),
@@ -358,7 +358,7 @@ function createMockProductType(overrides: Record<string, unknown> = {}) {
 		slug: "bague",
 		label: "Bague",
 		description: null,
-		isActive: true,
+		active: true,
 		isSystem: false,
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),
@@ -376,7 +376,7 @@ function createMockColor(overrides: Record<string, unknown> = {}) {
 		slug: "or-rose",
 		name: "Or Rose",
 		hex: "#B76E79",
-		isActive: true,
+		active: true,
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),
 		...overrides,
@@ -393,7 +393,7 @@ function createMockMaterial(overrides: Record<string, unknown> = {}) {
 		slug: "argent-925",
 		name: "Argent 925",
 		description: null,
-		isActive: true,
+		active: true,
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),
 		...overrides,

@@ -368,7 +368,7 @@ describe("lectures Prisma — validité schéma (@regression read-queries-schema
 		// Filet du filet : si le scan casse (renommage de `tx`, refonte de l'AST), il
 		// rendrait 0 site et la suite passerait en verrouillant… rien.
 		expect(callSites).toBeGreaterThan(50);
-		expect(MODELS.get("Order")?.fields.has("customerEmail")).toBe(true);
+		expect(MODELS.get("Order")?.fields.has("email")).toBe(true);
 	});
 
 	it("aucun `where`/`select`/`include` ne nomme un champ absent du schéma", () => {
@@ -412,7 +412,9 @@ describe("lectures Prisma — validité schéma (@regression read-queries-schema
 			const found = scanSnippet(
 				`prisma.orderItem.findMany({ where: { order: { userId, paymentStatus: "PAID" } } });`,
 			);
-			expect(found.map((o) => o.key)).toEqual(["userId"]);
+			// Schéma lean : `userId` ET `paymentStatus` sont droppés — les deux
+			// doivent être signalés.
+			expect(found.map((o) => o.key)).toEqual(["userId", "paymentStatus"]);
 		});
 
 		it("détecte un `include` sur une relation droppée", () => {
@@ -426,12 +428,17 @@ describe("lectures Prisma — validité schéma (@regression read-queries-schema
 			expect(
 				scanSnippet(
 					`prisma.product.findMany({
-						where: { status: "PUBLIC", skus: { some: { isActive: true, inventory: { gt: 0 } } } },
+						where: { active: true, variants: { some: { active: true, stock: { gt: 0 } } } },
 						select: {
 							id: true,
-							skus: {
-								select: { id: true, images: { where: { mediaType: "IMAGE" }, take: 1 } },
+							media: {
+								where: { type: "IMAGE" },
+								select: { id: true, url: true },
 								orderBy: [{ position: "asc" }, { id: "asc" }],
+								take: 1,
+							},
+							variants: {
+								select: { id: true, priceCents: true },
 								take: 1,
 							},
 						},

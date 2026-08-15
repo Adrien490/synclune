@@ -1,18 +1,14 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
 import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile-bottom-nav";
-import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
-import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
+import { CartAndVariantWrapper } from "@/modules/cart/components/cart-and-variant-wrapper";
 import { QuickSearchDialogAsync } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-async";
 
 import { CookieBannerLazy } from "@/shared/components/cookie-banner-lazy";
-import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { Suspense } from "react";
 
 /**
  * Layout for legal pages — always accessible, even when the store is closed (RGPD compliance).
- * No store closure gate. Shows MaintenanceBanner if store is closed (admin awareness).
  *
  * ⚠️ Les trois surfaces montées après `<main>` ne sont pas décoratives : la
  * `Navbar` rend un déclencheur de panier et un déclencheur de recherche, et
@@ -25,17 +21,8 @@ import { Suspense } from "react";
  * théorique. Audit navbar 2026-08-04.
  */
 export default async function LegalLayout({ children }: { children: React.ReactNode }) {
-	const storeStatus = await getStoreStatus();
-	const showMaintenanceBanner = storeStatus.isClosed && (await isAdmin());
-
 	return (
 		<>
-			{showMaintenanceBanner && (
-				<MaintenanceBanner
-					closureMessage={storeStatus.closureMessage}
-					reopensAt={storeStatus.reopensAt}
-				/>
-			)}
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>
@@ -45,7 +32,7 @@ export default async function LegalLayout({ children }: { children: React.ReactN
 			<Suspense fallback={<FooterSkeleton />}>
 				<Footer />
 			</Suspense>
-			<CartAndSkuWrapper />
+			<CartAndVariantWrapper />
 			<Suspense fallback={null}>
 				<QuickSearchDialogAsync />
 			</Suspense>

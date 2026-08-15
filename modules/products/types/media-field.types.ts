@@ -2,8 +2,8 @@ import type { MediaField } from "@/modules/products/hooks/use-media-field-upload
 
 export interface MediaArrayFieldValue {
 	url: string;
-	mediaType: "IMAGE" | "VIDEO";
-	altText?: string;
+	type: "IMAGE" | "VIDEO";
+	alt?: string;
 	thumbnailUrl?: string | null;
 	blurDataUrl?: string;
 	/** Dimensions intrinsèques — cf. MediaItem : chaque remap doit les porter. */
@@ -13,7 +13,7 @@ export interface MediaArrayFieldValue {
 
 /**
  * Type strict pour les champs `form.Field` de TanStack Form attachés à un
- * tableau de médias (création + édition produit + SKU). Étend `MediaField`
+ * tableau de médias (création + édition produit + VARIANT). Étend `MediaField`
  * en exposant `state.value` typé et `removeValue` pour la suppression.
  *
  * Partagé entre create-product-media-card et edit-product-media-card pour

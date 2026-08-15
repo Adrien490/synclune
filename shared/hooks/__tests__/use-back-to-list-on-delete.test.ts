@@ -51,11 +51,11 @@ describe("useBackToListOnDelete", () => {
 		expect(mockNav.replace).not.toHaveBeenCalled();
 	});
 
-	it("gère le cas SKU (liste variantes dynamique)", () => {
-		// href dérivé par le dialog SKU depuis le pathname détail
+	it("gère le cas VARIANT (liste variantes dynamique)", () => {
+		// href dérivé par le dialog VARIANT depuis le pathname détail
 		invoke(
 			"/admin/catalogue/produits/bague-or/variantes",
-			"/admin/catalogue/produits/bague-or/variantes/sku_1",
+			"/admin/catalogue/produits/bague-or/variantes/variant_1",
 		);
 		expect(mockNav.replace).toHaveBeenCalledWith("/admin/catalogue/produits/bague-or/variantes");
 	});

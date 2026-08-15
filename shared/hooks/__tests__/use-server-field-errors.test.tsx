@@ -5,7 +5,7 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 import { parseServerFieldError, useServerFieldErrors } from "../use-server-field-errors";
 
-const FIELDS = ["size", "priceInclTaxEuros", "media"] as const;
+const FIELDS = ["size", "priceEuros", "media"] as const;
 
 describe("parseServerFieldError", () => {
 	it("extrait le champ et le message d'un préfixe path connu", () => {
@@ -64,13 +64,13 @@ describe("useServerFieldErrors", () => {
 
 		const { result } = renderHook(() =>
 			useServerFieldErrors({
-				state: validationError("Un produit PUBLIC doit avoir un SKU actif"),
+				state: validationError("Un produit PUBLIC doit avoir un VARIANT actif"),
 				fieldNames: FIELDS,
 				setFieldError,
 			}),
 		);
 
-		expect(result.current).toEqual(["Un produit PUBLIC doit avoir un SKU actif"]);
+		expect(result.current).toEqual(["Un produit PUBLIC doit avoir un VARIANT actif"]);
 		expect(setFieldError).not.toHaveBeenCalled();
 	});
 

@@ -16,16 +16,16 @@ describe("cache constants", () => {
 			expect(tag1).toContain("bague-lune");
 		});
 
-		it("SKUS returns unique tags per product ID", () => {
-			const tag1 = PRODUCTS_CACHE_TAGS.SKUS("id-1");
-			const tag2 = PRODUCTS_CACHE_TAGS.SKUS("id-2");
+		it("VARIANTS returns unique tags per product ID", () => {
+			const tag1 = PRODUCTS_CACHE_TAGS.VARIANTS("id-1");
+			const tag2 = PRODUCTS_CACHE_TAGS.VARIANTS("id-2");
 			expect(tag1).not.toBe(tag2);
 			expect(tag1).toContain("id-1");
 		});
 
-		it("SKU_STOCK returns unique tags per SKU ID", () => {
-			const tag = PRODUCTS_CACHE_TAGS.SKU_STOCK("sku-123");
-			expect(tag).toContain("sku-123");
+		it("VARIANT_STOCK returns unique tags per VARIANT ID", () => {
+			const tag = PRODUCTS_CACHE_TAGS.VARIANT_STOCK("variant-123");
+			expect(tag).toContain("variant-123");
 		});
 
 		it("RELATED_CONTEXTUAL returns unique tags per product slug", () => {
@@ -36,7 +36,7 @@ describe("cache constants", () => {
 		it("static tags are non-empty strings", () => {
 			expect(PRODUCTS_CACHE_TAGS.MAX_PRICE.length).toBeGreaterThan(0);
 			expect(PRODUCTS_CACHE_TAGS.COUNTS.length).toBeGreaterThan(0);
-			expect(PRODUCTS_CACHE_TAGS.SKUS_LIST.length).toBeGreaterThan(0);
+			expect(PRODUCTS_CACHE_TAGS.VARIANTS_LIST.length).toBeGreaterThan(0);
 			expect(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC.length).toBeGreaterThan(0);
 		});
 
@@ -45,7 +45,7 @@ describe("cache constants", () => {
 				PRODUCTS_CACHE_TAGS.LIST,
 				PRODUCTS_CACHE_TAGS.MAX_PRICE,
 				PRODUCTS_CACHE_TAGS.COUNTS,
-				PRODUCTS_CACHE_TAGS.SKUS_LIST,
+				PRODUCTS_CACHE_TAGS.VARIANTS_LIST,
 				PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,
 			];
 			const unique = new Set(staticTags);

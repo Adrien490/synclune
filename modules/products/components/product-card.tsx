@@ -19,7 +19,7 @@ import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
-import { buildSkuUrl } from "@/modules/products/utils/build-sku-url";
+import { buildVariantUrl } from "@/modules/products/utils/build-variant-url";
 import { productViewTransitionName } from "@/modules/products/utils/product-view-transition";
 import type { ComponentProps, ReactNode } from "react";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
@@ -124,18 +124,18 @@ export function ProductCard({
 	sectionId,
 	disablePreload = false,
 }: ProductCardProps) {
-	const { slug, title, type } = product;
+	const { slug, name: title, type } = product;
 	const productType = type?.label;
 
-	// Single-pass O(n) extraction of all display data from SKUs
-	const { defaultSku, price, stockInfo, primaryImage, secondaryImage, colors, material } =
+	// Single-pass O(n) extraction of all display data from VARIANTs
+	const { defaultVariant, price, stockInfo, primaryImage, secondaryImage, colors, material } =
 		getProductCardData(product);
 
 	const { status: stockStatus, message: stockMessage } = stockInfo;
 
-	// No active SKU — produit en catalogue sans variante publiée (état "à venir")
-	const noActiveSku = defaultSku === null;
-	const outOfStockBadgeMessage = noActiveSku ? PRODUCT_TEXTS.STOCK.COMING_SOON : stockMessage;
+	// No active VARIANT — produit en catalogue sans variante publiée (état "à venir")
+	const noActiveVariant = defaultVariant === null;
+	const outOfStockBadgeMessage = noActiveVariant ? PRODUCT_TEXTS.STOCK.COMING_SOON : stockMessage;
 
 	// Unique ID for aria-labelledby (combines sectionId + product.id to avoid collisions)
 	const titleId = sectionId
@@ -146,14 +146,14 @@ export function ProductCard({
 	const showUrgencyBadge = stockStatus === "low_stock";
 
 	const baseUrl = `/creations/${slug}`;
-	// L'URL suit TOUJOURS le SKU affiché : quand getPrimarySkuForList s'écarte du
+	// L'URL suit TOUJOURS le VARIANT affiché : quand getPrimaryVariantForList s'écarte du
 	// représentant (rang 0 épuisé → « le moins cher en stock », ou couleur préférée),
-	// la carte affichait le prix du SKU X en liant vers une PDP qui en montre un autre.
-	// Le représentant est `skus[0]` (les selects trient par position, id) ; l'URL nue
+	// la carte affichait le prix du VARIANT X en liant vers une PDP qui en montre un autre.
+	// Le représentant est `variants[0]` (les selects trient par position, id) ; l'URL nue
 	// suffit alors, la PDP ouvrant elle-même sur le rang 0.
 	const productUrl =
-		defaultSku && defaultSku.id !== product.skus[0]?.id
-			? buildSkuUrl(baseUrl, defaultSku)
+		defaultVariant && defaultVariant.id !== product.variants[0]?.id
+			? buildVariantUrl(baseUrl, defaultVariant)
 			: baseUrl;
 
 	// Above-fold => `loading="eager"` (l'image est décodée sans attendre le scroll),
@@ -178,9 +178,9 @@ export function ProductCard({
 	const badgeDescriptions: string[] = [];
 	if (stockStatus === "out_of_stock") {
 		badgeDescriptions.push(outOfStockBadgeMessage);
-	} else if (showUrgencyBadge && defaultSku) {
-		// Même source que le badge visuel : le stock du SKU affiché, pas l'agrégat
-		const count = defaultSku.inventory;
+	} else if (showUrgencyBadge && defaultVariant) {
+		// Même source que le badge visuel : le stock du VARIANT affiché, pas l'agrégat
+		const count = defaultVariant.stock;
 		badgeDescriptions.push(
 			`Stock limité : plus que ${count} exemplaire${count > 1 ? "s" : ""} disponible${count > 1 ? "s" : ""}`,
 		);
@@ -313,9 +313,9 @@ export function ProductCard({
 				)}
 
 				{/* Add to cart button - Desktop (client island) : pastille posée sur la photo */}
-				{defaultSku && stockStatus !== "out_of_stock" && (
+				{defaultVariant && stockStatus !== "out_of_stock" && (
 					<AddToCartCardButton
-						skuId={defaultSku.id}
+						variantId={defaultVariant.id}
 						productTitle={title}
 						product={product}
 						className="hidden sm:block"
@@ -359,12 +359,12 @@ export function ProductCard({
 					</span>
 				</Link>
 
-				{/* Matière principale du SKU affiché (déjà null sans SKU actif) */}
+				{/* Matière principale du VARIANT affiché (déjà null sans VARIANT actif) */}
 				{material && <span className="text-muted-foreground text-xs">{material}</span>}
 
 				{/* Prix — placed before colors for scannability (Baymard guideline).
 				    Pas de prix barré/remise : cf. le commentaire Omnibus de ProductPrice. */}
-				{!noActiveSku && <ProductPrice price={price} className="mt-0.5" />}
+				{!noActiveVariant && <ProductPrice price={price} className="mt-0.5" />}
 
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (
@@ -374,9 +374,9 @@ export function ProductCard({
 				{/* Add to cart button - Mobile full-width (client island).
 				    mt-auto : pousse le CTA en bas de la légende (1fr) pour que les
 				    boutons d'une même rangée de grille restent alignés */}
-				{defaultSku && stockStatus !== "out_of_stock" && (
+				{defaultVariant && stockStatus !== "out_of_stock" && (
 					<AddToCartCardButton
-						skuId={defaultSku.id}
+						variantId={defaultVariant.id}
 						productTitle={title}
 						product={product}
 						variant="mobile-full"

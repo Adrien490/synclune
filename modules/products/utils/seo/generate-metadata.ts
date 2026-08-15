@@ -67,7 +67,7 @@ export async function generateProductMetadata({
 	const { slug } = await params;
 	const product = await getProductBySlug({ slug, includeDraft: true });
 
-	if (!product || product.status !== "PUBLIC") {
+	if (!product || !product.active) {
 		return {
 			title: "Produit non trouvé - Synclune",
 			description: "Ce produit n'existe pas ou n'est plus disponible.",
@@ -75,24 +75,26 @@ export async function generateProductMetadata({
 		};
 	}
 
-	// ✅ SIMPLE : product.skus[0] = SKU principal
-	const primarySku = product.skus[0];
-	const price = primarySku?.priceInclTax ? `${(primarySku.priceInclTax / 100).toFixed(2)}€` : "";
+	// ✅ SIMPLE : product.variants[0] = VARIANT principal
+	const primaryVariant = product.variants[0];
+	const price = primaryVariant?.priceCents
+		? `${(primaryVariant.priceCents / 100).toFixed(2)}€`
+		: "";
 
-	// Availability OG = somme inventaire sur tous SKUs actifs (aligné avec AggregateOffer JSON-LD).
-	// Évite de signaler "out of stock" quand seul le SKU principal est épuisé mais d'autres variantes sont dispo.
-	const totalInventory = product.skus.reduce(
-		(sum, sku) => (sku.isActive ? sum + sku.inventory : sum),
+	// Availability OG = somme inventaire sur tous VARIANTs actifs (aligné avec AggregateOffer JSON-LD).
+	// Évite de signaler "out of stock" quand seul le VARIANT principal est épuisé mais d'autres variantes sont dispo.
+	const totalStock = product.variants.reduce(
+		(sum, variant) => (variant.active ? sum + variant.stock : sum),
 		0,
 	);
 
 	// Construire le titre SEO optimisé (< 60 caractères garanti)
-	const title = buildSeoTitle(product.title, price || undefined);
+	const title = buildSeoTitle(product.name, price || undefined);
 
 	// Construire la description avec limite SEO (155 caractères)
 	const rawDescription =
-		product.description ??
-		`Découvrez ${product.title}, un bijou artisanal fait main avec amour. ${product.type ? `Type: ${product.type.label}.` : ""} Bijoux colorés et originaux, créations uniques Synclune.`;
+		product.description ||
+		`Découvrez ${product.name}, un bijou artisanal fait main avec amour. ${product.type ? `Type: ${product.type.label}.` : ""} Bijoux colorés et originaux, créations uniques Synclune.`;
 	const description = truncateDescription(rawDescription);
 
 	// URL canonique et complète
@@ -102,10 +104,10 @@ export async function generateProductMetadata({
 	// Image du produit pour OpenGraph.
 	// `pickPrimaryImage` et non `images[0]` : `GET_PRODUCT_SELECT` ne filtre pas
 	// `mediaType` (la galerie a besoin des vidéos), donc l'expression naïve mettait
-	// l'url d'un `.mp4` dans `og:image`/`twitter:images` dès qu'un SKU avait une
+	// l'url d'un `.mp4` dans `og:image`/`twitter:images` dès qu'un VARIANT avait une
 	// vidéo au rang 0 — carte sociale cassée au partage de la fiche. Le repli sur
 	// l'OG image de marque couvre désormais aussi ce cas.
-	const mainImage = pickPrimaryImage(primarySku?.images);
+	const mainImage = pickPrimaryImage(product.media);
 	const imageUrl = mainImage?.url ?? `${SITE_URL}/opengraph-image`;
 
 	return {
@@ -124,7 +126,7 @@ export async function generateProductMetadata({
 					url: imageUrl,
 					width: 1200,
 					height: 630,
-					alt: product.title,
+					alt: product.name,
 				},
 			],
 		},
@@ -136,9 +138,9 @@ export async function generateProductMetadata({
 		},
 		other: {
 			"product:price:amount":
-				price || (primarySku?.priceInclTax ? (primarySku.priceInclTax / 100).toFixed(2) : ""),
+				price || (primaryVariant?.priceCents ? (primaryVariant.priceCents / 100).toFixed(2) : ""),
 			"product:price:currency": "EUR",
-			"product:availability": totalInventory > 0 ? "in stock" : "out of stock",
+			"product:availability": totalStock > 0 ? "in stock" : "out of stock",
 			"product:condition": "new",
 			"product:brand": "Synclune",
 		},

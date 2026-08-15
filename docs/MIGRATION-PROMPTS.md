@@ -11,14 +11,14 @@
 
 ## 0. Décisions actées (2026-08-14, Adrien) — non rediscutables par une session d'exécution
 
-| #   | Décision                                                                                                                                                                                                                                                                                                                          |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D1  | **Base jetable** : reset complet de la base, nouveau baseline de migrations, **aucune migration de données**. Les 44 migrations actuelles et `prisma/sql/raw-guards.sql` sont supprimées.                                                                                                                                         |
-| D2  | **Le schéma cible (§ 4) fait foi, tel quel** : 9 modèles, `invoiceNumber Int? @unique` séquentiel (plus de format `F-YYYY-NNNNN`), pas d'archivage PDF SHA-256, pas d'`OrderHistory`, pas de `WebhookEvent`, pas de `StoreSettings`, pas de `ProductType`. Une seule retouche autorisée : le `output` du generator (voir ⚠️ § 4). |
-| D3  | **Better Auth disparaît.** Auth admin = mot de passe unique `ADMIN_PASSWORD` en variable d'environnement + cookie de session signé maison (HMAC, httpOnly). **Zéro table d'auth en base.**                                                                                                                                        |
-| D4  | **Stripe Checkout hébergé** : plus de page de paiement maison. Une action `createCheckoutSession` (line items en `price_data` inline, `shipping_address_collection`, devise `eur` codée en dur) + `redirect(session.url)`. Webhooks : `checkout.session.completed` et `checkout.session.expired`.                                 |
-| D5  | **Cycle de vie commande** (défini par les commentaires du schéma cible) : `Order` **PENDING** créé à la création de la session Checkout avec **stock décrémenté** (= réservation) → webhook `completed` (payment_status=paid) → **PAID** ; webhook `expired` → **CANCELLED + restock**.                                           |
-| D6  | **« Vert aux frontières »** : chaque lot se termine avec `pnpm validate` vert. Le rouge est autorisé **en cours** de lot, jamais entre deux lots. Exception : les e2e Playwright (hors `validate`) sont rouges assumés des lots 2 à 6 — le lot 7 les refonde.                                                                     |
+| #   | Décision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | **Base jetable** : reset complet de la base, nouveau baseline de migrations, **aucune migration de données**. Les 44 migrations actuelles et `prisma/sql/raw-guards.sql` sont supprimées.                                                                                                                                                                                                                                                                                                                                                                               |
+| D2  | **Le schéma cible (§ 4) fait foi, tel quel** : 9 modèles, `invoiceNumber Int? @unique` séquentiel (plus de format `F-YYYY-NNNNN`), pas d'archivage PDF SHA-256, pas d'`OrderHistory`, pas de `WebhookEvent`, pas de `StoreSettings`. ~~pas de `ProductType`~~ — **amendé le 2026-08-15 (Adrien, en cours de lot 2)** : `ProductType` est CONSERVÉ, en forme lean `{ id, slug, label, position }` + `Product.typeId` (FK `Restrict`), sans statut/description/dates ni flag système. Une seule retouche autorisée par ailleurs : le `output` du generator (voir ⚠️ § 4). |
+| D3  | **Better Auth disparaît.** Auth admin = mot de passe unique `ADMIN_PASSWORD` en variable d'environnement + cookie de session signé maison (HMAC, httpOnly). **Zéro table d'auth en base.**                                                                                                                                                                                                                                                                                                                                                                              |
+| D4  | **Stripe Checkout hébergé** : plus de page de paiement maison. Une action `createCheckoutSession` (line items en `price_data` inline, `shipping_address_collection`, devise `eur` codée en dur) + `redirect(session.url)`. Webhooks : `checkout.session.completed` et `checkout.session.expired`.                                                                                                                                                                                                                                                                       |
+| D5  | **Cycle de vie commande** (défini par les commentaires du schéma cible) : `Order` **PENDING** créé à la création de la session Checkout avec **stock décrémenté** (= réservation) → webhook `completed` (payment_status=paid) → **PAID** ; webhook `expired` → **CANCELLED + restock**.                                                                                                                                                                                                                                                                                 |
+| D6  | **« Vert aux frontières »** : chaque lot se termine avec `pnpm validate` vert. Le rouge est autorisé **en cours** de lot, jamais entre deux lots. Exception : les e2e Playwright (hors `validate`) sont rouges assumés des lots 2 à 6 — le lot 7 les refonde.                                                                                                                                                                                                                                                                                                           |
 
 ## 1. Pertes volontaires — INTERDIT de restaurer
 
@@ -27,8 +27,10 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 
 - **Better Auth** et ses 4 tables (`User`, `Session`, `Account`, `Verification`), la vérification
   d'email, le reset de mot de passe, les rôles en base.
-- **`ProductType`** (module `modules/product-types/`, route `/produits/[productTypeSlug]`, admin
-  `catalogue/types-de-produits`).
+- ~~**`ProductType`**~~ — **amendement 2026-08-15** : conservé finalement (demande d'Adrien en
+  cours de lot 2). Le module `modules/product-types/`, la route `/produits/[productTypeSlug]` et
+  l'admin `catalogue/types-de-produits` restent, adaptés au style lean (pas de `isActive`/
+  `isSystem`/`description`/dates, pas de toggle de statut, suppression bloquée par FK `Restrict`).
 - **`StoreSettings`** (fermeture de boutique, `orphanMediaScanOffset`).
 - **`WebhookEvent`** (table d'idempotence — remplacée par `Order.stripeSessionId @unique` + gardes
   de transition, cf. lot 3).
@@ -68,7 +70,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | --- | ----------------------------------------- | ------ | ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | 0   | Préparation du terrain                    | S      | ✅     | `migration(lot-0)` | Branche `migration-lean`, tag `pre-migration-lean`. Voir « État à la sortie du lot 0 » ci-dessous — 3 pièges d'environnement. |
 | 1   | Auth maison (purge Better Auth)           | L      | ✅     | `migration(lot-1)` | Voir « État à la sortie du lot 1 » ci-dessous.                                                                                |
-| 2   | Bascule schéma + purge + catalogue        | XL     | ⬜     | —                  |                                                                                                                               |
+| 2   | Bascule schéma + purge + catalogue        | XL     | ✅     | `migration(lot-2)` | Voir « État à la sortie du lot 2 » ci-dessous. **Amendement en cours de lot : `ProductType` conservé (cf. D2).**              |
 | 3   | Checkout Stripe hébergé + webhooks        | L      | ⬜     | —                  |                                                                                                                               |
 | 4   | Commandes : admin, facturation Int, suivi | L      | ⬜     | —                  |                                                                                                                               |
 | 5   | Rétractation (`RetractationRequest`)      | M      | ⬜     | —                  |                                                                                                                               |
@@ -144,6 +146,67 @@ client — invariant inchangé). `ADMIN_DISPLAY_NAME = "Léane"` remplace `user.
 - La base dev locale a été resynchronisée (`db push --accept-data-loss`, accord d'Adrien) —
   elle avait dérivé bien avant le lot (table `Refund` absente).
 
+### État à la sortie du lot 2
+
+**Schéma en place** — baseline unique `prisma/migrations/20260815001033_init/` (base dev resettée,
+`migrate status` propre). Le schéma effectif = § 4 **+ le modèle `ProductType` lean**
+`{ id, slug, label, position }` et `Product.typeId` (FK `onDelete: Restrict`), réintégré à la
+demande d'Adrien le 2026-08-15 en cours de lot. La convention `down.sql` est abandonnée (son
+contract test est parti au lot 0). `prisma/sql/raw-guards.sql` et `RAW_SQL_GUARD_MIGRATIONS`
+n'existent plus ; pg_trgm/unaccent ne sont plus installées par migration — la recherche fuzzy
+retombe proprement sur ILIKE via `isPgTrgmAvailable` (dégradé assumé, réévaluer au lot 8/9).
+
+**Renommage global `sku` → `variant`** (demande d'Adrien en cours de lot) : dossiers
+(`modules/variants/`, routes admin `…/variantes/[variantId]`), identifiants
+(`prisma.productVariant`, `CART_VARIANT_SELECT`, `getVariantInvalidationTags({ variantId, … })`),
+cookie panier : les lignes portent désormais des ids de `ProductVariant` sous la clé `variantId`
+(les anciens cookies échouent au parse → panier vide, sans conséquence : base resettée).
+
+**Sémantique lean appliquée partout** :
+
+- prix effectif d'une variante = `variant.priceCents ?? product.priceCents` (helpers :
+  `calculatePriceInfo(variants, basePriceCents)`, `effectivePrice()` du panier) ;
+- identité URL d'une couleur = son NOM slugifié (`slugify(color.name)`, param `?color=`) ;
+  matchers : `variant-filter.service.ts` (avec repli matériau pour une variante sans couleur) ;
+- statut = booléens `active` (produit/collection), plus d'enum `PublicationStatus` ; le filtre
+  admin URL reste `status=active|inactive` ;
+- média sur le PRODUIT (`ProductMedia`), `pickPrimaryImage()` inchangée dans sa règle ; plus de
+  `thumbnailUrl`/`blurDataUrl`/`width`/`height` (une vidéo sans poster rend un placeholder) ;
+- représentant d'un produit = première variante (ordre id) ; plus de vedette de collection.
+
+**Stubs (TODO lots 3-6)** : `modules/payments/` (README + page `/paiement` placeholder),
+`app/api/webhooks/stripe/route.ts` (signature → log → 200), `modules/dashboard/` (KPIs à 0),
+commandes admin + `/suivi-commande` stubbés. `modules/orders/` garde le socle
+(shipping, carrier, `retractation-eligibility.service.ts` sauvé du lot 2.1).
+
+**Pertes/retraits supplémentaires actés en route** :
+
+- rate limiting retiré partout (login, recherche, uploads, csp-report) — §1 ;
+- toggles de statut couleur/matériau supprimés (plus de colonne `active`) ; les routes admin
+  couleurs/matériaux sont keyées par **id** (`[id]`), celles des types par slug ;
+- `set-default-variant`, `compareAtPrice` (prix barré), vedette de collection, archivage :
+  supprimés avec leurs surfaces ;
+- `docs/stripe/INDEX.md` : chemins Elements morts barrés + bannière, refonte au lot 3 ;
+- `zod-prisma-length-parity.contract.test.ts` supprimé (plus AUCUNE colonne `VarChar(n)`).
+
+**⚠️ Dette de tests assumée (la plus grosse note du lot)** : ~245 suites écrites pour l'ancien
+schéma ont été SUPPRIMÉES plutôt qu'adaptées (composants admin/storefront, actions, hooks,
+data du catalogue — l'inventaire est dans le commit). Ont été ADAPTÉS : les contract tests
+(`read-queries`/`transactional-writes-schema-validity` — qui ont attrapé 2 vrais résidus
+`deletedAt` —, `admin-actions-require-admin`, `server-action-*`, `stripe-docs-mirror`) et un
+noyau de tests de services purs (query builders couleurs/matériaux/collections,
+`variant-filter`, `product-validation`, panier `item-availability` + `cart-pricing-calculator`).
+La suite est verte (7310 tests) mais la couverture du catalogue est amputée : chaque lot suivant
+doit RE-TESTER ce qu'il touche, et le lot 7 (e2e) est la contrepartie planifiée.
+
+**Divers** : seed minimal `prisma/seed.ts` (7 types système, 6 couleurs, 4 matériaux,
+3 collections, 5 produits ; images picsum — hôte autorisé en DEV uniquement dans
+`next.config.ts`). `test:critical` et `.husky/pre-commit` réalignés (cart, orders, payments,
+webhooks, admin-auth, route webhook, contracts). Vérification dev : accueil, /produits,
+/produits/bagues, PDP, /collections + détail, /favoris, /paiement (placeholder), admin
+connexion + catalogue complet (produits, variantes, couleurs, matériaux, collections,
+types-de-produits) → 200.
+
 ## 4. Schéma cible (SSOT)
 
 ⚠️ **Une seule retouche par rapport au schéma fourni** : le generator garde
@@ -192,6 +255,16 @@ model Material {
   variants ProductVariant[]
 }
 
+// Amendement 2026-08-15 : conservé (cf. D2). Forme lean.
+model ProductType {
+  id       String @id @default(cuid())
+  slug     String @unique
+  label    String @unique
+  position Int    @default(0)
+
+  products Product[]
+}
+
 // ------------------------------------------------------------
 // PRODUITS — pas de synchro catalogue Stripe : price_data inline
 // ------------------------------------------------------------
@@ -202,6 +275,9 @@ model Product {
   description String
   priceCents  Int
   active      Boolean  @default(true)
+
+  typeId String?
+  type   ProductType? @relation(fields: [typeId], references: [id], onDelete: Restrict)
 
   media ProductMedia[]
 

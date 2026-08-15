@@ -7,10 +7,12 @@ import type { Product } from "../types/product.types";
 // ============================================================================
 
 /**
- * Calcule le prix minimum d'un produit à partir de ses SKUs actifs
+ * Calcule le prix minimum d'un produit à partir de ses VARIANTs actifs
  */
 function getMinPrice(product: Product): number {
-	const activePrices = product.skus.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax);
+	const activePrices = product.variants
+		.filter((variant) => variant.active)
+		.map((variant) => variant.priceCents ?? product.priceCents);
 
 	return activePrices.length > 0 ? Math.min(...activePrices) : Infinity;
 }
@@ -22,15 +24,15 @@ export function sortProducts(products: Product[], sortBy: string): Product[] {
 	const direction = getSortDirection(sortBy);
 	const multiplier = direction === "asc" ? 1 : -1;
 
-	// Précalcul O(n) des prix minimum : getMinPrice filtre+mappe les SKUs à chaque
+	// Précalcul O(n) des prix minimum : getMinPrice filtre+mappe les VARIANTs à chaque
 	// appel et le comparateur l'invoquerait O(n log n) fois sur un tri par prix.
 	const minPrices = sortBy.startsWith("price-")
 		? new Map(products.map((p) => [p.id, getMinPrice(p)]))
 		: null;
 
 	return [...products].sort((a, b) => {
-		if (sortBy.startsWith("title-")) {
-			return multiplier * a.title.localeCompare(b.title, "fr");
+		if (sortBy.startsWith("name-") || sortBy.startsWith("title-")) {
+			return multiplier * a.name.localeCompare(b.name, "fr");
 		}
 
 		if (sortBy.startsWith("price-")) {
@@ -49,8 +51,8 @@ export function sortProducts(products: Product[], sortBy: string): Product[] {
 		if (sortBy === "updatedAt") {
 			return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
 		}
-		if (sortBy === "title") {
-			return a.title.localeCompare(b.title, "fr");
+		if (sortBy === "name") {
+			return a.name.localeCompare(b.name, "fr");
 		}
 		if (sortBy === "type") {
 			const typeA = a.type?.label ?? "";

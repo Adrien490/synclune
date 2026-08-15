@@ -40,8 +40,9 @@ export function GalleryThumbnail({
 }: GalleryThumbnailProps) {
 	const prefersReduced = useReducedMotion();
 	const haptic = useHaptic();
-	const isVideo = media.mediaType === "VIDEO";
-	const thumbnailSrc = isVideo ? media.thumbnailUrl : media.url;
+	const isVideo = media.type === "VIDEO";
+	// Schéma lean : plus de poster en base — une vidéo tombe sur le fallback badge.
+	const thumbnailSrc = isVideo ? null : media.url;
 	const alt = media.alt || `${title} - ${isVideo ? "Vidéo" : "Photo"} ${index + 1}`;
 
 	const transitionClass = prefersReduced ? "" : "transition-all duration-200";
@@ -88,8 +89,6 @@ export function GalleryThumbnail({
 						quality={THUMBNAIL_IMAGE_QUALITY}
 						loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
 						fetchPriority={isLCPCandidate ? "high" : "auto"}
-						placeholder={media.blurDataUrl ? "blur" : "empty"}
-						blurDataURL={media.blurDataUrl}
 						onError={onError}
 					/>
 					{isVideo && <VideoPlayBadge />}

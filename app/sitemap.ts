@@ -22,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			perPage: 200,
 			cursor: productCursor,
 			sortBy: "created-descending",
-			filters: { status: "PUBLIC" },
+			filters: { status: "active" },
 		});
 		allProducts.push(...products);
 		productCursor = pagination.nextCursor ?? undefined;
@@ -37,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	}));
 
 	// Récupérer toutes les collections (pagination)
-	const allCollections: Array<{ slug: string; updatedAt: Date }> = [];
+	const allCollections: Array<{ slug: string }> = [];
 	let collectionCursor: string | undefined;
 	let hasMoreCollections = true;
 
@@ -46,16 +46,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			perPage: 200,
 			cursor: collectionCursor,
 			sortBy: "name-ascending",
-			filters: { status: "PUBLIC", hasProducts: true },
+			filters: { active: true, hasProducts: true },
 		});
 		allCollections.push(...collections);
 		collectionCursor = pagination.nextCursor ?? undefined;
 		hasMoreCollections = pagination.hasNextPage;
 	}
 
+	// Schéma lean : Collection n'a plus d'updatedAt — lastModified omis.
 	const collectionPages: MetadataRoute.Sitemap = allCollections.map((collection) => ({
 		url: `${SITE_URL}/collections/${collection.slug}`,
-		lastModified: new Date(collection.updatedAt),
 		changeFrequency: "weekly",
 		priority: 0.6,
 	}));
@@ -64,12 +64,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	const { productTypes } = await getProductTypes({
 		perPage: 200,
 		sortBy: "label-ascending",
-		filters: { isActive: true, hasProducts: true },
+		filters: { hasProducts: true },
 	});
 
+	// Schéma lean : ProductType n'a plus d'updatedAt — lastModified omis.
 	const productTypePages: MetadataRoute.Sitemap = productTypes.map((type) => ({
 		url: `${SITE_URL}/produits/${type.slug}`,
-		lastModified: new Date(type.updatedAt),
 		changeFrequency: "daily",
 		priority: 0.8,
 	}));
@@ -80,14 +80,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		(max, p) => (p.updatedAt > max ? p.updatedAt : max),
 		new Date(0),
 	);
-	const latestCollectionUpdate = allCollections.reduce(
-		(max, c) => (c.updatedAt > max ? c.updatedAt : max),
-		new Date(0),
-	);
-	const homeLastModified =
-		latestProductUpdate.getTime() > latestCollectionUpdate.getTime()
-			? latestProductUpdate
-			: latestCollectionUpdate;
+	// Schéma lean : Collection n'a plus d'updatedAt — l'index suit les produits.
+	const homeLastModified = latestProductUpdate;
 	const fallbackLastModified = homeLastModified.getTime() === 0 ? legalLastModified : null;
 
 	// Pages statiques avec leurs priorités et fréquences de mise à jour
@@ -106,7 +100,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		},
 		{
 			url: `${SITE_URL}/collections`,
-			lastModified: fallbackLastModified ?? latestCollectionUpdate,
+			lastModified: fallbackLastModified ?? latestProductUpdate,
 			changeFrequency: "weekly",
 			priority: 0.8,
 		},

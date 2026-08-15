@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { GET_PRODUCTS_SELECT } from "@/modules/products/constants/product.constants";
@@ -58,8 +58,8 @@ export async function getWishlist(): Promise<GetWishlistReturn> {
  * (la liste elle-même vient du cookie de l'appelante, jamais du cache).
  *
  * Profil `checkout` (et non `catalog`) : `GET_PRODUCTS_SELECT` embarque
- * `priceInclTax` et `inventory`, et la grille favoris affiche le prix et la
- * rupture — c'est le raisonnement mot pour mot de `fetchCartSkus`
+ * `priceCents` et `stock`, et la grille favoris affiche le prix et la
+ * rupture — c'est le raisonnement mot pour mot de `fetchCartVariants`
  * (`modules/cart/data/get-cart.ts`), sur les mêmes champs. Elle passait par
  * `cacheProducts()` (profil `catalog`) jusqu'au 2026-08-07, soit un `expire` 72×
  * plus long (6 h contre 5 min) que le panier pour la même donnée. Tags identiques
@@ -70,7 +70,7 @@ async function fetchWishlistProducts(productIds: string[]): Promise<GetWishlistR
 	"use cache";
 	cacheLife("checkout");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
-	cacheTag(PRODUCTS_CACHE_TAGS.SKUS_LIST);
+	cacheTag(PRODUCTS_CACHE_TAGS.VARIANTS_LIST);
 
 	// ⚠️ AUCUN try/catch dans ce scope : le repli appartient à `getWishlist`,
 	// hors du cache — sinon le vide d'une panne est mis en cache pour toute la
@@ -79,8 +79,7 @@ async function fetchWishlistProducts(productIds: string[]): Promise<GetWishlistR
 		const products = await prisma.product.findMany({
 			where: {
 				id: { in: productIds },
-				status: "PUBLIC",
-				...notDeleted,
+				active: true,
 			},
 			select: GET_PRODUCTS_SELECT,
 		});

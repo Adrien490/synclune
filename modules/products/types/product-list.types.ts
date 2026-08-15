@@ -12,8 +12,8 @@ import type { ProductCarouselItem } from "@/modules/products/types/product.types
  */
 export type ProductFromList = ProductCarouselItem;
 
-/** SKU tel que retourné dans ProductFromList */
-export type SkuFromList = ProductFromList["skus"][0];
+/** VARIANT tel que retourné dans ProductFromList */
+export type VariantFromList = ProductFromList["variants"][0];
 
 // Re-export ColorSwatch depuis shared pour rétrocompatibilité
-export type { ColorSwatch } from "@/shared/types/product-sku.types";
+export type { ColorSwatch } from "@/shared/types/product-variant.types";

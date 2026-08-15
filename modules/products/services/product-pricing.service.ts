@@ -2,14 +2,14 @@
  * Service de calcul des prix produits
  *
  * Ce module contient les fonctions pures pour :
- * - Calculer la plage de prix (min/max) des SKUs
+ * - Calculer la plage de prix (min/max) des VARIANTs
  * - Déterminer le statut de stock
  * - Calculer les pourcentages de réduction
  * - Générer les URLs Schema.org pour la disponibilité
  */
 
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
-import type { StockStatus, PriceInfo, SkuForPricing } from "../types/product-services.types";
+import type { StockStatus, PriceInfo, VariantForPricing } from "../types/product-services.types";
 
 // ============================================================================
 // PRODUCT PRICING SERVICE
@@ -17,20 +17,29 @@ import type { StockStatus, PriceInfo, SkuForPricing } from "../types/product-ser
 // ============================================================================
 
 /**
- * Calcule les informations de prix à partir des SKUs
+ * Calcule les informations de prix à partir des variantes.
  *
- * @param skus - Liste des SKUs du produit
+ * Schéma lean : le prix effectif d'une variante est son override
+ * `priceCents`, sinon le prix du produit (`basePriceCents`).
+ *
+ * @param variants - Liste des variantes du produit
+ * @param basePriceCents - Prix du produit (hérité quand l'override est null)
  * @returns Informations de prix (min, max, hasMultiplePrices)
  */
-export function calculatePriceInfo(skus: SkuForPricing[] | undefined | null): PriceInfo {
-	if (!skus || skus.length === 0) {
-		return { minPrice: 0, maxPrice: 0, hasMultiplePrices: false };
+export function calculatePriceInfo(
+	variants: VariantForPricing[] | undefined | null,
+	basePriceCents = 0,
+): PriceInfo {
+	if (!variants || variants.length === 0) {
+		return { minPrice: basePriceCents, maxPrice: basePriceCents, hasMultiplePrices: false };
 	}
 
-	const activePrices = skus.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax);
+	const activePrices = variants
+		.filter((variant) => variant.active)
+		.map((variant) => variant.priceCents ?? basePriceCents);
 
 	if (activePrices.length === 0) {
-		return { minPrice: 0, maxPrice: 0, hasMultiplePrices: false };
+		return { minPrice: basePriceCents, maxPrice: basePriceCents, hasMultiplePrices: false };
 	}
 
 	const minPrice = Math.min(...activePrices);
@@ -41,17 +50,17 @@ export function calculatePriceInfo(skus: SkuForPricing[] | undefined | null): Pr
 }
 
 /**
- * Détermine le statut de stock d'un SKU
+ * Détermine le statut de stock d'un VARIANT
  *
- * @param inventory - Quantité en stock
- * @param isActive - Si le SKU est actif
+ * @param stock - Quantité en stock
+ * @param isActive - Si le VARIANT est actif
  * @returns Statut de stock (in_stock, low_stock, out_of_stock)
  */
 export function determineStockStatus(
-	inventory: number | undefined | null,
+	stock: number | undefined | null,
 	isActive: boolean | undefined | null,
 ): StockStatus {
-	const qty = inventory ?? 0;
+	const qty = stock ?? 0;
 	const active = isActive ?? false;
 
 	if (!active || qty === 0) {

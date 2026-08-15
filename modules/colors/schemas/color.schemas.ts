@@ -14,9 +14,7 @@ import { normalizeHex } from "../utils/hex-normalizer";
 // FILTERS SCHEMA
 // ============================================================================
 
-export const colorFiltersSchema = z.object({
-	isActive: z.boolean().optional(),
-});
+export const colorFiltersSchema = z.object({});
 
 // ============================================================================
 // SORT SCHEMA
@@ -38,8 +36,7 @@ export const getColorsSchema = z.object({
 });
 
 export const getColorSchema = z.object({
-	slug: z.string().trim().min(1),
-	includeInactive: z.boolean().optional(),
+	id: z.string().trim().min(1),
 });
 
 // ============================================================================
@@ -61,45 +58,25 @@ export const hexColorSchema = z
 	})
 	.transform((val) => normalizeHex(val));
 
-// `colorSlugSchema` supprimé : aucun consommateur hors de son propre test
-// (vert pour rien), et son max(50) contredisait `Color.slug @db.VarChar(100)`.
-// Le slug est GÉNÉRÉ côté serveur (generateSlug), jamais saisi.
-
 export const colorNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Le nom est requis")
 	.max(100, "Le nom ne peut pas dépasser 100 caractères");
 
-export const colorDescriptionSchema = z
-	.string()
-	.trim()
-	.max(500, "La description ne peut pas dépasser 500 caractères")
-	.optional()
-	.transform((val) => (val && val.length > 0 ? val : null))
-	.nullable();
-
 export const createColorSchema = z.object({
 	name: colorNameSchema,
 	hex: hexColorSchema,
-	description: colorDescriptionSchema,
 });
 
 export const updateColorSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: colorNameSchema,
 	hex: hexColorSchema,
-	description: colorDescriptionSchema,
-	isActive: z.boolean().optional(),
 });
 
 export const deleteColorSchema = z.object({
 	id: z.cuid2("ID invalide"),
-});
-
-export const toggleColorStatusSchema = z.object({
-	id: z.cuid2("ID invalide"),
-	isActive: z.boolean(),
 });
 
 export const duplicateColorSchema = z.object({

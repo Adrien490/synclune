@@ -4,8 +4,6 @@ import { FolderOpenIcon } from "@phosphor-icons/react/ssr";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import Image from "next/image";
 
-import { PublicationStatus } from "@/app/generated/prisma/enums";
-
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
@@ -16,25 +14,15 @@ import { useCollectionActions } from "../../hooks/use-collection-actions";
 interface CollectionMobileItemProps {
 	collection: Pick<
 		Collection,
-		"id" | "name" | "slug" | "description" | "status" | "products" | "_count"
+		"id" | "name" | "slug" | "description" | "active" | "products" | "_count"
 	>;
 	/** Premier item ATF : déclenche preload SSR (LCP candidate). */
 	preload?: boolean;
 }
 
-const STATUS_CONFIG: Record<
-	PublicationStatus,
-	{ label: string; variant: "default" | "secondary" | "outline" }
-> = {
-	[PublicationStatus.PUBLIC]: { label: "● Public", variant: "default" },
-	[PublicationStatus.DRAFT]: { label: "○ Brouillon", variant: "secondary" },
-	[PublicationStatus.ARCHIVED]: { label: "▣ Archive", variant: "outline" },
-};
-
 function getCoverImage(products: CollectionMobileItemProps["collection"]["products"]) {
-	for (const join of products) {
-		const sku = join.product.skus[0];
-		const image = sku?.images[0];
+	for (const product of products) {
+		const image = product.media[0];
 		if (image?.url) return image;
 	}
 	return null;
@@ -42,7 +30,6 @@ function getCoverImage(products: CollectionMobileItemProps["collection"]["produc
 
 export function CollectionMobileItem({ collection, preload }: CollectionMobileItemProps) {
 	const productsCount = collection._count.products || 0;
-	const statusConfig = STATUS_CONFIG[collection.status];
 	const cover = getCoverImage(collection.products);
 
 	const { sections } = useCollectionActions({
@@ -50,7 +37,7 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 		collectionName: collection.name,
 		collectionSlug: collection.slug,
 		collectionDescription: collection.description,
-		collectionStatus: collection.status,
+		collectionActive: collection.active,
 		productsCount,
 	});
 
@@ -81,7 +68,6 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 						className="size-12 shrink-0 rounded-md border object-cover"
 						style={{ viewTransitionName: `collection-image-${collection.id}` }}
 						{...(preload ? { preload: true } : {})}
-						{...(cover.blurDataUrl ? { placeholder: "blur", blurDataURL: cover.blurDataUrl } : {})}
 					/>
 				) : (
 					<div
@@ -95,10 +81,10 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{collection.name}</span>
 						<Badge
-							variant={statusConfig.variant}
+							variant={collection.active ? "default" : "secondary"}
 							style={{ viewTransitionName: `collection-status-${collection.id}` }}
 						>
-							{statusConfig.label}
+							{collection.active ? "● Publiée" : "○ Brouillon"}
 						</Badge>
 					</ItemTitle>
 					{collection.description ? (

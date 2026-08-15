@@ -1,8 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
-import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { success, handleActionError, validateInput } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
 import type { ActionState } from "@/shared/types/server-action";
@@ -22,9 +20,6 @@ export async function addRecentSearch(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION);
-		if ("error" in rateCheck) return rateCheck.error;
-
 		const validation = validateInput(addRecentSearchSchema, {
 			term: formData.get("term"),
 		});

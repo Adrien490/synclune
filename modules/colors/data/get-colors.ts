@@ -59,8 +59,8 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 
 		const orderBy: Prisma.ColorOrderByWithRelationInput[] = params.sortBy.startsWith("name-")
 			? [{ name: direction }, { id: "asc" }]
-			: params.sortBy.startsWith("skuCount-")
-				? [{ skuColors: { _count: direction } }, { id: "asc" }]
+			: params.sortBy.startsWith("variantCount-")
+				? [{ variants: { _count: direction } }, { id: "asc" }]
 				: [{ name: "asc" }, { id: "asc" }];
 
 		const take = Math.min(
@@ -91,15 +91,7 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 			params.cursor,
 		);
 
-		// Remap _count.skuColors → _count.skus pour préserver l'API publique stable
-		// côté consumers UI (colors-data-table, etc.) malgré le rename interne de la
-		// relation (M2M depuis 2026-05-15).
-		const remapped = items.map((c) => ({
-			...c,
-			_count: { skus: c._count.skuColors },
-		}));
-
-		return { colors: remapped, pagination, totalCount };
+		return { colors: items, pagination, totalCount };
 	} catch (error) {
 		Sentry.captureException(error, {
 			tags: { module: "colors", operation: "fetchColors" },

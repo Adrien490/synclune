@@ -1,10 +1,8 @@
 "use server";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { z } from "zod";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
-import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import { handleActionError, success, validateInput } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
@@ -47,19 +45,8 @@ export async function login(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limit par IP, AVANT toute dérivation de l'argument : l'appelante
-		// n'est par définition pas encore authentifiée.
-		const headersList = await headers();
-		const ipAddress = await getClientIp(headersList);
-		const identifier = getRateLimitIdentifier(null, null, ipAddress);
-		const rateCheck = await checkRateLimit(identifier, AUTH_LIMITS.LOGIN, ipAddress);
-		if (!rateCheck.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: rateCheck.error ?? "Trop de tentatives. Réessaie plus tard.",
-				...(rateCheck.retryAfter !== undefined && { retryAfter: rateCheck.retryAfter }),
-			};
-		}
+		// Rate limiting retiré (migration lean §1) : la protection restante est la
+		// comparaison à temps constant + le mot de passe fort.
 
 		// 2. Validation
 		const validation = validateInput(loginSchema, {

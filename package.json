@@ -19,7 +19,7 @@
 		"analyse": "next experimental-analyse",
 		"test": "vitest",
 		"test:coverage": "vitest run --coverage",
-		"test:critical": "vitest run modules/cart modules/orders modules/payments modules/webhooks modules/admin-auth modules/refunds modules/invoices app/api/webhooks/stripe test/contract",
+		"test:critical": "vitest run modules/cart modules/orders modules/payments modules/webhooks modules/admin-auth app/api/webhooks/stripe test/contract",
 		"test:integration": "vitest run -c vitest.integration.config.ts",
 		"test:pre-commit": "pnpm test:critical",
 		"e2e": "playwright test",

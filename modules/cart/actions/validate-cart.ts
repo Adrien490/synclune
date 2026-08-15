@@ -1,9 +1,7 @@
 "use server";
 
 import { logger } from "@/shared/lib/logger";
-import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
-import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
-import { readCartWithSkus } from "@/modules/cart/services/read-cart-with-skus.service";
+import { readCartWithVariants } from "@/modules/cart/services/read-cart-with-variants.service";
 import { validateCartItems } from "../services/item-availability.service";
 import type { ValidateCartResult } from "../types/cart.types";
 
@@ -11,10 +9,10 @@ import type { ValidateCartResult } from "../types/cart.types";
  * Valide l'intégralité du panier avant la commande
  *
  * Cette fonction effectue toutes les vérifications critiques :
- * - Existence du SKU
- * - Activation du SKU (ProductSku.isActive = true)
+ * - Existence du VARIANT
+ * - Activation du VARIANT (ProductVariant.active = true)
  * - Statut du produit (Product.status = 'PUBLIC')
- * - Disponibilité du stock (sku.inventory >= cartItem.quantity)
+ * - Disponibilité du stock (variant.stock >= cartItem.quantity)
  *
  * Contraintes métier :
  * - Pas de réservation de stock (principe "first come, first served")
@@ -28,18 +26,8 @@ import type { ValidateCartResult } from "../types/cart.types";
  */
 export async function validateCart(): Promise<ValidateCartResult> {
 	try {
-		// 0. Rate limiting
-		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.VALIDATE);
-		if (!rateLimitResult.success) {
-			return {
-				isValid: false,
-				issues: [],
-				rateLimited: true,
-			};
-		}
-
-		// 1. Panier du cookie + SKUs frais
-		const { cookie, items } = await readCartWithSkus();
+		// 1. Panier du cookie + VARIANTs frais
+		const { cookie, items } = await readCartWithVariants();
 
 		if (cookie.items.length === 0) {
 			return {
@@ -64,7 +52,7 @@ export async function validateCart(): Promise<ValidateCartResult> {
 			issues: [
 				{
 					cartItemId: "unknown",
-					skuId: "unknown",
+					variantId: "unknown",
 					productTitle: "",
 					issueType: "UNKNOWN" as const,
 					message: "Une erreur est survenue lors de la validation du panier. Réessaie.",

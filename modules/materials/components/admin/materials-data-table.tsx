@@ -8,7 +8,6 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import type { GetMaterialsReturn } from "@/modules/materials/data/get-materials";
-import { MaterialActiveToggle } from "@/modules/materials/components/admin/material-active-toggle";
 import { SwatchesIcon } from "@phosphor-icons/react/ssr";
 import { use } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
@@ -56,12 +55,10 @@ export function MaterialsDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[28%]">Nom</TableHead>
-					<TableHead className="w-[36%]">Description</TableHead>
-					<TableHead className="w-[12%] text-center">Statut</TableHead>
-					<TableHead className="w-[12%] text-center">Variantes</TableHead>
+					<TableHead className="w-[64%]">Nom</TableHead>
+					<TableHead className="w-[16%] text-center">Variantes</TableHead>
 					<TableHead
-						className="w-[12%] text-right"
+						className="w-[20%] text-right"
 						aria-label="Actions disponibles pour chaque matériau"
 					>
 						Actions
@@ -70,7 +67,7 @@ export function MaterialsDataTable({
 			</TableHeader>
 			<TableBody>
 				{materials.map((material) => {
-					const skuCount = material._count.skus;
+					const variantCount = material._count.variants;
 
 					return (
 						<TableRow key={material.id}>
@@ -84,25 +81,11 @@ export function MaterialsDataTable({
 									</span>
 								</div>
 							</TableCell>
-							<TableCell>
-								<span className="text-muted-foreground line-clamp-2 text-sm">
-									{material.description ?? "-"}
-								</span>
-							</TableCell>
 							<TableCell className="text-center">
-								<MaterialActiveToggle materialId={material.id} isActive={material.isActive} />
-							</TableCell>
-							<TableCell className="text-center">
-								<span className="text-sm font-medium">{skuCount}</span>
+								<span className="text-sm font-medium">{variantCount}</span>
 							</TableCell>
 							<TableCell className="text-right">
-								<MaterialsRowActions
-									materialId={material.id}
-									materialName={material.name}
-									materialSlug={material.slug}
-									materialDescription={material.description}
-									materialIsActive={material.isActive}
-								/>
+								<MaterialsRowActions materialId={material.id} materialName={material.name} />
 							</TableCell>
 						</TableRow>
 					);

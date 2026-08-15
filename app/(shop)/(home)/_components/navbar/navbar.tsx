@@ -66,7 +66,7 @@ export async function Navbar() {
 		// Était branché sur les « récemment vus » du cookie — rail vide pour tout
 		// primo-visiteur, et des produits anciens déjà consultés étiquetés
 		// « Pièces récentes de l'atelier » (audit navbar 2026-08-03).
-		getProducts({ perPage: 2, sortBy: "created-descending", filters: { status: "PUBLIC" } }),
+		getProducts({ perPage: 2, sortBy: "created-descending", filters: { status: "active" } }),
 	]);
 
 	const { collectionsData, productTypesData } = menuData;
@@ -75,12 +75,12 @@ export async function Navbar() {
 	// mobile (« L'étal de poche ») affiche une photo et « N pièces » par famille.
 	// Le choix du média passe par la SSOT pickPrimaryImage (jamais `images[0]` nu).
 	const productTypes = productTypesData.productTypes.map((t) => {
-		const image = pickPrimaryImage(t.products[0]?.skus[0]?.images ?? []);
+		const image = pickPrimaryImage(t.products[0]?.media ?? []);
 		return {
 			slug: t.slug,
 			label: t.label,
 			productCount: t._count.products,
-			image: image ? { url: image.url, blurDataUrl: image.blurDataUrl } : null,
+			image: image ? { url: image.url } : null,
 		};
 	});
 
@@ -92,7 +92,6 @@ export async function Navbar() {
 		slug: c.slug,
 		label: c.name,
 		description: c.description,
-		createdAt: c.createdAt,
 		images: extractCollectionImages(c.products),
 	}));
 
@@ -104,21 +103,21 @@ export async function Navbar() {
 
 	// Featured products for the mega menu — the 2 newest published creations.
 	// "Nouveau" badge eligibility via shared isRecent() helper (NEW_PRODUCT_BADGE_DAYS window).
-	// `skus[0]` est le représentant (orderBy `(position asc, id asc)` de GET_PRODUCTS_SELECT) ;
+	// `variants[0]` est le représentant (orderBy `(position asc, id asc)` de GET_PRODUCTS_SELECT) ;
 	// le choix du média passe par la SSOT pickPrimaryImage — ce select ne filtre pas
 	// `mediaType`, réécrire `find(isPrimary) ?? images[0]` mettrait un .mp4 dans <Image src>.
 	// Un produit sans image réelle est écarté du rail plutôt que rendu en placeholder.
 	const featuredProducts = (
 		await Promise.all(
 			newestProducts.products.map(async (p) => {
-				const sku = p.skus[0];
-				const image = pickPrimaryImage(sku?.images);
+				const variant = p.variants[0];
+				const image = pickPrimaryImage(p.media);
 				return {
 					slug: p.slug,
-					title: p.title,
-					priceInclTax: sku?.priceInclTax ?? 0,
+					name: p.name,
+					priceCents: variant?.priceCents ?? p.priceCents,
 					imageUrl: image?.url ?? "",
-					blurDataUrl: image?.blurDataUrl ?? null,
+					blurDataUrl: null,
 					isNew: await isNewArrival(p.createdAt),
 				};
 			}),

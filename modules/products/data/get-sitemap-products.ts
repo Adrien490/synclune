@@ -1,23 +1,21 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export type SitemapProduct = {
 	slug: string;
-	title: string;
+	name: string;
 	updatedAt: Date;
 	type: { label: string } | null;
-	skus: Array<{
-		images: Array<{
-			url: string;
-			altText: string | null;
-		}>;
+	media: Array<{
+		url: string;
+		alt: string | null;
 	}>;
 };
 
 /**
- * Fetches public products with their SKU images for the image sitemap.
+ * Fetches public products with their images for the image sitemap.
  * Cached with the sitemap-images tag for targeted invalidation.
  *
  * @throws Propage l'erreur DB au lieu de retourner `[]`. Un tableau vide était
@@ -34,38 +32,29 @@ export async function getSitemapProducts(): Promise<SitemapProduct[]> {
 	try {
 		return await prisma.product.findMany({
 			where: {
-				status: "PUBLIC",
-				...notDeleted,
+				active: true,
 			},
 			select: {
 				slug: true,
-				title: true,
+				name: true,
 				updatedAt: true,
 				type: {
 					select: {
 						label: true,
 					},
 				},
-				skus: {
+				media: {
 					where: {
-						isActive: true,
-						deletedAt: null,
+						type: "IMAGE",
 					},
 					select: {
-						images: {
-							where: {
-								mediaType: "IMAGE",
-							},
-							select: {
-								url: true,
-								altText: true,
-							},
-							// Ordre canonique (position, id) : Google privilégie la première
-							// `<image:image>` d'une `<url>` comme visuel représentatif — le
-							// rang 0 est donc l'image représentative du SKU.
-							orderBy: [{ position: "asc" }, { id: "asc" }],
-						},
+						url: true,
+						alt: true,
 					},
+					// Ordre canonique (position, id) : Google privilégie la première
+					// `<image:image>` d'une `<url>` comme visuel représentatif — le
+					// rang 0 est donc l'image représentative du produit.
+					orderBy: [{ position: "asc" }, { id: "asc" }],
 				},
 			},
 		});

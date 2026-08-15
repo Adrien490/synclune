@@ -38,7 +38,7 @@ interface GalleryZoomButtonProps {
  *   « le pincement couvre l'agrandissement » — il n'est pas là.
  *
  * ⚠️ **Toujours montée, y compris sur un slide vidéo.** Elle était gatée sur
- * `mediaType === "IMAGE"` : sur un produit `[IMAGE, IMAGE, VIDÉO]`, deux
+ * `type === "IMAGE"` : sur un produit `[IMAGE, IMAGE, VIDÉO]`, deux
  * flèches droite depuis la loupe focalisée la démontaient SOUS le focus. Le
  * focus retombait sur `<body>`, or le listener `keydown` de la galerie est
  * attaché à l'élément galerie — un événement émis sur `<body>` ne remonte pas

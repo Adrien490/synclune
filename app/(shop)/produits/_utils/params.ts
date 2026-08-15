@@ -1,4 +1,3 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import type { ProductFilters } from "@/modules/products/data/get-products";
 import { productFiltersSchema } from "@/modules/products/data/get-products";
 import { getFirstParam } from "@/shared/utils/params";
@@ -17,9 +16,9 @@ import type { ProductSearchParams } from "./types";
  * répercutée sur les surfaces concernées. À unifier si la maintenance le justifie.
  */
 export const parseFilters = (params: ProductSearchParams): ProductFilters => {
-	// Pages publiques : toujours filtrer sur les produits PUBLIC uniquement
+	// Pages publiques : toujours filtrer sur les produits actifs uniquement
 	const filters: ProductFilters = {
-		status: PublicationStatus.PUBLIC,
+		status: "active",
 	};
 
 	Object.entries(params).forEach(([key, value]) => {

@@ -39,12 +39,15 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 		);
 	}
 
-	const primarySku = product.skus[0];
-	const price = primarySku?.priceInclTax ? `${(primarySku.priceInclTax / 100).toFixed(2)} €` : null;
+	const primaryVariant = product.variants[0];
+	const effectivePrice = primaryVariant
+		? (primaryVariant.priceCents ?? product.priceCents)
+		: product.priceCents;
+	const price = effectivePrice ? `${(effectivePrice / 100).toFixed(2)} €` : null;
 
 	// Média principal via la SSOT pickPrimaryImage (première IMAGE de l'ordre
 	// canonique) : réécrire `find(...) ?? images[0]` mettrait un .mp4 dans og:image.
-	const mainImage = primarySku ? pickPrimaryImage(primarySku.images)?.url : undefined;
+	const mainImage = pickPrimaryImage(product.media)?.url;
 
 	return new ImageResponse(
 		<OgShell signature>
@@ -84,7 +87,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 							lineHeight: 1.1,
 						}}
 					>
-						{product.title}
+						{product.name}
 					</div>
 
 					{price && (

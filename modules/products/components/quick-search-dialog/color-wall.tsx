@@ -82,7 +82,7 @@ export function ColorWall({ colors, onSelect, navigable = true }: ColorWallProps
 				// Une teinte quasi blanche disparaît sur le fond du panneau : elle a
 				// besoin d'un vrai bord, pas d'un liseré interne. Même arbitrage (et
 				// même seuil) que la section « Couleurs » du filtre catalogue.
-				const isPale = isLightColor(color.hex, 0.85);
+				const isPale = isLightColor(color.hex ?? "#CCCCCC", 0.85);
 
 				return (
 					<Link
@@ -116,7 +116,7 @@ export function ColorWall({ colors, onSelect, navigable = true }: ColorWallProps
 								"block size-14 shrink-0 rounded-full shadow-sm sm:size-11",
 								isPale ? "border-border border" : "ring-1 ring-black/5 ring-inset",
 							)}
-							style={buildSwatchStyle([color.hex])}
+							style={buildSwatchStyle(color.hex ? [color.hex] : [])}
 						/>
 						{/* `text-2xs` (jeton, 0.625rem) et non `text-[11px]` : une taille en px
 							ne suit pas le réglage de police du navigateur (WCAG 1.4.4). */}

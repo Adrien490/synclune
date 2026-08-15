@@ -6,9 +6,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
-import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
-import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
-import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
+import type { GetProductReturn, ProductVariant } from "@/modules/products/types/product.types";
+import { getVariantMaterialsLabel } from "@/modules/variants/utils/variant-materials-label";
+import { useSelectedVariant } from "@/modules/variants/hooks/use-selected-variant";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
@@ -17,7 +17,7 @@ import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants"
 
 interface StickyCartCTADesktopProps {
 	product: GetProductReturn;
-	defaultSku: ProductSku;
+	defaultVariant: ProductVariant;
 	/** ID de l'element a observer pour le trigger */
 	targetId?: string;
 }
@@ -34,11 +34,11 @@ interface StickyCartCTADesktopProps {
  */
 export function StickyCartCTADesktop({
 	product,
-	defaultSku,
+	defaultVariant,
 	targetId = "add-to-cart-form",
 }: StickyCartCTADesktopProps) {
-	const { selectedSku } = useSelectedSku({ product, defaultSku });
-	const currentSku = selectedSku ?? defaultSku;
+	const { selectedVariant } = useSelectedVariant({ product, defaultVariant });
+	const currentVariant = selectedVariant ?? defaultVariant;
 	const [isVisible, setIsVisible] = useState(false);
 	const observerRef = useRef<IntersectionObserver | null>(null);
 	const barRef = useRef<HTMLElement>(null);
@@ -46,11 +46,11 @@ export function StickyCartCTADesktop({
 
 	const { action, isPending } = useAddToCart({ showErrorToast: false });
 
-	const isAvailable = currentSku.inventory > 0 && currentSku.isActive;
+	const isAvailable = currentVariant.stock > 0 && currentVariant.active;
 	const canAddToCart = isAvailable;
 
 	// Une video sans poster n'est pas rendue par l'optimiseur -> pas de miniature
-	const primaryMedia = currentSku.images[0];
+	const primaryMedia = product.media[0];
 	const thumbSrc = primaryMedia ? resolveMediaThumbSrc(primaryMedia) : null;
 
 	useEffect(() => {
@@ -141,11 +141,11 @@ export function StickyCartCTADesktop({
 
 	// Résumé variant compact : "Rose + Argent · Taille M"
 	const variantSummaryParts: string[] = [];
-	const currentColorsLabel = currentSku.colors.map((c) => c.color.name).join(" + ");
+	const currentColorsLabel = currentVariant.color?.name ?? "";
 	if (currentColorsLabel) variantSummaryParts.push(currentColorsLabel);
-	const currentMaterialsLabel = getSkuMaterialsLabel(currentSku.materials);
+	const currentMaterialsLabel = getVariantMaterialsLabel(currentVariant.material);
 	if (currentMaterialsLabel) variantSummaryParts.push(currentMaterialsLabel);
-	if (currentSku.size) variantSummaryParts.push(`Taille ${currentSku.size}`);
+	if (currentVariant.size) variantSummaryParts.push(`Taille ${currentVariant.size}`);
 	const variantSummary = variantSummaryParts.join(" · ");
 
 	return (
@@ -177,7 +177,7 @@ export function StickyCartCTADesktop({
 						aria-busy={isPending}
 						data-pending={isPending ? "" : undefined}
 					>
-						<input type="hidden" name="skuId" value={currentSku.id} />
+						<input type="hidden" name="variantId" value={currentVariant.id} />
 						<input type="hidden" name="quantity" value="1" />
 
 						{/* Miniature (décorative) */}
@@ -193,15 +193,13 @@ export function StickyCartCTADesktop({
 									className="object-cover"
 									sizes="40px"
 									quality={IMAGE_QUALITY.THUMBNAIL}
-									placeholder={primaryMedia?.blurDataUrl ? "blur" : "empty"}
-									blurDataURL={primaryMedia?.blurDataUrl ?? undefined}
 								/>
 							</div>
 						)}
 
 						{/* Titre + variant résumé */}
 						<div className="min-w-0 flex-1">
-							<p className="text-foreground truncate text-sm font-semibold">{product.title}</p>
+							<p className="text-foreground truncate text-sm font-semibold">{product.name}</p>
 							{variantSummary && (
 								<p className="text-muted-foreground truncate text-xs">{variantSummary}</p>
 							)}
@@ -211,7 +209,7 @@ export function StickyCartCTADesktop({
 						<div className="flex shrink-0 items-baseline gap-2">
 							{/* Pas de prix barré (retrait Omnibus 2026-08-08, cf. ProductPrice) */}
 							<span className="text-foreground text-lg font-semibold">
-								{formatEuro(currentSku.priceInclTax)}
+								{formatEuro(currentVariant.priceCents ?? product.priceCents)}
 							</span>
 						</div>
 

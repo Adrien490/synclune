@@ -30,20 +30,20 @@ interface ColorMultiSelectFieldProps {
 	showLabel?: boolean;
 	/** Libellé du label affiché. Défaut: "Couleurs". */
 	label?: string;
-	/** Cap dur sur le nombre de couleurs. Défaut: ARRAY_LIMITS.SKU_COLORS. */
+	/** Cap dur sur le nombre de couleurs. Défaut: ARRAY_LIMITS.VARIANT_COLORS. */
 	maxSelected?: number;
 	/** ID du champ (utilisé pour l'aria/label). */
 	fieldName?: string;
 }
 
 /**
- * Champ multi-select pour les couleurs d'un SKU.
+ * Champ multi-select pour les couleurs d'un VARIANT.
  *
  * Convention métier : l'ordre du tableau reflète la priorité d'affichage,
  * la 1re couleur est la couleur « principale » utilisée pour la vignette
  * listing/PDP et le snapshot facture (joint dans l'ordre).
  *
- * - Cap à `ARRAY_LIMITS.SKU_COLORS` (3) par défaut.
+ * - Cap à `ARRAY_LIMITS.VARIANT_COLORS` (3) par défaut.
  * - Bouton « Créer une couleur » inline qui ouvre le dialog partagé.
  * - Aide visuelle indiquant la convention « 1re = principale ».
  * - Chaque option est préfixée d'une pastille hex inline pour repérage rapide.
@@ -54,7 +54,7 @@ export function ColorMultiSelectField({
 	options,
 	showLabel = true,
 	label = "Couleurs",
-	maxSelected = ARRAY_LIMITS.SKU_COLORS,
+	maxSelected = ARRAY_LIMITS.VARIANT_COLORS,
 	fieldName,
 }: ColorMultiSelectFieldProps) {
 	const router = useRouter();

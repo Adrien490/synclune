@@ -1,7 +1,7 @@
 import { MaterialDetailStatsCard } from "./material-detail-stats-card";
 
 interface MaterialDetailStatsCardAsyncProps {
-	skusCount: number;
+	variantsCount: number;
 	productsCountPromise: Promise<number>;
 }
 
@@ -11,9 +11,9 @@ interface MaterialDetailStatsCardAsyncProps {
  * count query (admin-only KPI) resolves in parallel.
  */
 export async function MaterialDetailStatsCardAsync({
-	skusCount,
+	variantsCount,
 	productsCountPromise,
 }: MaterialDetailStatsCardAsyncProps) {
 	const productsCount = await productsCountPromise;
-	return <MaterialDetailStatsCard skusCount={skusCount} productsCount={productsCount} />;
+	return <MaterialDetailStatsCard variantsCount={variantsCount} productsCount={productsCount} />;
 }

@@ -11,11 +11,11 @@ export const CART_ERROR_MESSAGES = {
 	INSUFFICIENT_STOCK: "Ce produit n'est plus disponible pour le moment",
 	OUT_OF_STOCK: "Cet article n'est plus en stock",
 
-	// Erreurs liées au produit/SKU
+	// Erreurs liées au produit/VARIANT
 	PRODUCT_DELETED: "Ce produit n'existe plus dans notre catalogue",
 	PRODUCT_NOT_PUBLIC: "Ce produit n'est pas disponible à la vente",
-	SKU_NOT_FOUND: "Produit introuvable",
-	SKU_INACTIVE: "Ce produit n'est plus disponible",
+	VARIANT_NOT_FOUND: "Produit introuvable",
+	VARIANT_INACTIVE: "Ce produit n'est plus disponible",
 
 	// Erreurs de quantité
 	QUANTITY_MIN: "La quantité minimale est de 1",

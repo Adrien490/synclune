@@ -6,8 +6,7 @@ import { LEGAL_WITHDRAWAL_DAYS } from "@/shared/constants/consumer-law";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductSku } from "@/modules/products/types/product-services.types";
-import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
+import type { ProductVariant } from "@/modules/products/types/product-services.types";
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 
 // Price valid for 90 days — Google requires a future date for rich results eligibility,
@@ -31,46 +30,50 @@ export async function getPriceValidUntil(): Promise<string> {
 
 interface StructuredDataOptions {
 	product: GetProductReturn;
-	selectedSku: ProductSku | null;
+	selectedVariant: ProductVariant | null;
 	/** Date AAAA-MM-JJ issue de `getPriceValidUntil()` — injectée car dérivée de l'horloge. */
 	priceValidUntil: string;
 }
 
 export function generateStructuredData({
 	product,
-	selectedSku,
+	selectedVariant,
 	priceValidUntil,
 }: StructuredDataOptions) {
-	// Calculer le prix minimum et maximum pour les offres agrégées
-	const activePrices = product.skus.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax);
+	// Prix effectif (override variante ?? prix produit) pour les offres agrégées
+	const activePrices = product.variants
+		.filter((variant) => variant.active)
+		.map((variant) => variant.priceCents ?? product.priceCents);
+
+	const selectedPrice = selectedVariant ? (selectedVariant.priceCents ?? product.priceCents) : null;
 
 	const minPrice =
-		activePrices.length > 0 ? Math.min(...activePrices) : (selectedSku?.priceInclTax ?? 0);
+		activePrices.length > 0 ? Math.min(...activePrices) : (selectedPrice ?? product.priceCents);
 
 	const maxPrice =
-		activePrices.length > 0 ? Math.max(...activePrices) : (selectedSku?.priceInclTax ?? 0);
+		activePrices.length > 0 ? Math.max(...activePrices) : (selectedPrice ?? product.priceCents);
 
 	const hasMultiplePrices = minPrice !== maxPrice;
 
-	const price = selectedSku?.priceInclTax
-		? (selectedSku.priceInclTax / 100).toFixed(2)
-		: (minPrice / 100).toFixed(2);
+	const price =
+		selectedPrice != null ? (selectedPrice / 100).toFixed(2) : (minPrice / 100).toFixed(2);
 
-	const availability = getOfferAvailability(!!selectedSku && selectedSku.inventory > 0);
+	const availability = getOfferAvailability(!!selectedVariant && selectedVariant.stock > 0);
 
 	// Dimensions standard pour les images produits (format carré e-commerce)
 	const PRODUCT_IMAGE_SIZE = 1200;
 
-	// Images du SKU sélectionné ou du premier SKU
-	const skuImages = selectedSku?.images ?? product.skus[0]?.images ?? [];
+	// Schéma lean : le média vit sur le PRODUIT — toutes les variantes partagent
+	// la même galerie.
+	const productMedia = product.media;
 
 	// Seules les IMAGES alimentent le nœud Product : GET_PRODUCT_SELECT ne filtre pas
-	// `mediaType` (la galerie a besoin des vidéos), et un `.mp4` dans `image` est
+	// `type` (la galerie a besoin des vidéos), et un `.mp4` dans `image` est
 	// invalide en schema.org (rejet Google Merchant).
-	const imageOnlyMedia = skuImages.filter((img) => img.mediaType === "IMAGE");
+	const imageOnlyMedia = productMedia.filter((img) => img.type === "IMAGE");
 
 	// Image principale = première IMAGE de l'ordre canonique (SSOT pickPrimaryImage)
-	const mainImage = pickPrimaryImage(skuImages)?.url;
+	const mainImage = pickPrimaryImage(productMedia)?.url;
 
 	// Toutes les images en format ImageObject avec dimensions
 	const allImages = imageOnlyMedia.map((img) => ({
@@ -79,7 +82,7 @@ export function generateStructuredData({
 		contentUrl: img.url,
 		width: PRODUCT_IMAGE_SIZE,
 		height: PRODUCT_IMAGE_SIZE,
-		...(img.altText && { caption: img.altText }),
+		...(img.alt && { caption: img.alt }),
 	}));
 
 	// Construction du BreadcrumbList pour SEO
@@ -110,7 +113,7 @@ export function generateStructuredData({
 						{
 							"@type": "ListItem",
 							position: 4,
-							name: product.title,
+							name: product.name,
 							item: `${SITE_URL}/creations/${product.slug}`,
 						},
 					]
@@ -118,17 +121,15 @@ export function generateStructuredData({
 						{
 							"@type": "ListItem",
 							position: 3,
-							name: product.title,
+							name: product.name,
 							item: `${SITE_URL}/creations/${product.slug}`,
 						},
 					]),
 		],
 	};
 
-	const skuCode = selectedSku?.sku ?? product.skus[0]?.sku;
-
-	// Nombre de SKUs actifs pour AggregateOffer
-	const activeSkuCount = product.skus.filter((sku) => sku.isActive).length || 1;
+	// Nombre de VARIANTs actifs pour AggregateOffer
+	const activeVariantCount = product.variants.filter((variant) => variant.active).length || 1;
 
 	// Return policy and shipping details shared by all offer types.
 	//
@@ -168,13 +169,13 @@ export function generateStructuredData({
 
 	// Utiliser AggregateOffer pour les produits multi-variantes
 	const offers =
-		hasMultiplePrices && activeSkuCount > 1
+		hasMultiplePrices && activeVariantCount > 1
 			? {
 					"@type": "AggregateOffer",
 					lowPrice: (minPrice / 100).toFixed(2),
 					highPrice: (maxPrice / 100).toFixed(2),
 					priceCurrency: "EUR",
-					offerCount: activeSkuCount,
+					offerCount: activeVariantCount,
 					availability,
 					priceValidUntil,
 					itemCondition: "https://schema.org/NewCondition",
@@ -216,10 +217,9 @@ export function generateStructuredData({
 	const productData = {
 		"@type": "Product",
 		"@id": `${SITE_URL}/creations/${product.slug}#product`,
-		name: product.title,
-		description: product.description ?? `${product.title} - Bijou artisanal fait main`,
+		name: product.name,
+		description: product.description || `${product.name} - Bijou artisanal fait main`,
 		image: allImages.length > 0 ? allImages : mainImageObject ? [mainImageObject] : [],
-		sku: skuCode,
 		brand: {
 			"@type": "Brand",
 			name: "Synclune",
@@ -228,17 +228,17 @@ export function generateStructuredData({
 		...(product.type && {
 			category: product.type.label,
 		}),
-		...(getPrimaryMaterialName(selectedSku?.materials) && {
-			material: getPrimaryMaterialName(selectedSku?.materials),
+		...(selectedVariant?.material?.name && {
+			material: selectedVariant.material.name,
 		}),
-		...(selectedSku?.colors.length && {
-			color: selectedSku.colors.map((c) => c.color.name).join(" · "),
+		...(selectedVariant?.color?.name && {
+			color: selectedVariant.color.name,
 		}),
 		...(product.collections.length > 0 && {
-			isRelatedTo: product.collections.map((pc) => ({
+			isRelatedTo: product.collections.map((collection) => ({
 				"@type": "CollectionPage",
-				name: pc.collection.name,
-				url: `${SITE_URL}/collections/${pc.collection.slug}`,
+				name: collection.name,
+				url: `${SITE_URL}/collections/${collection.slug}`,
 			})),
 		}),
 		additionalProperty: [
@@ -252,15 +252,15 @@ export function generateStructuredData({
 				name: "Origine",
 				value: "France",
 			},
-			...(selectedSku?.inventory
+			...(selectedVariant?.stock
 				? [
 						{
 							"@type": "PropertyValue",
 							name: "Stock",
 							value:
-								selectedSku.inventory === 1
+								selectedVariant.stock === 1
 									? "Pièce unique"
-									: selectedSku.inventory <= 3 // STOCK_THRESHOLDS.LOW
+									: selectedVariant.stock <= 3 // STOCK_THRESHOLDS.LOW
 										? "Stock limité"
 										: "En stock",
 						},

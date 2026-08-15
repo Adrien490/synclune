@@ -172,7 +172,7 @@ export function ShopMobileBottomNav() {
 			label: "Accueil",
 			href: ROUTES.SHOP.HOME,
 			icon: HouseIcon,
-			isActive: pathname === ROUTES.SHOP.HOME,
+			active: pathname === ROUTES.SHOP.HOME,
 			type: "link" as const,
 		},
 		{
@@ -183,7 +183,7 @@ export function ShopMobileBottomNav() {
 			// nav desktop et le menu sheet savaient tous deux où on se trouvait.
 			//
 			// « Créations » et non « Produits » : « produits » est le mot de l'admin
-			// (un inventaire, des SKU) ; « créations » est celui de la boutique — le
+			// (un inventaire, des VARIANT) ; « créations » est celui de la boutique — le
 			// mega-menu dit déjà « Les créations » et l'URL d'une pièce est
 			// `/creations/<slug>`.
 			//
@@ -196,7 +196,7 @@ export function ShopMobileBottomNav() {
 			label: "Créations",
 			href: ROUTES.SHOP.PRODUCTS,
 			icon: FlowerIcon,
-			isActive: isCatalogueRoute(pathname),
+			active: isCatalogueRoute(pathname),
 			type: "link" as const,
 		},
 		{
@@ -209,7 +209,7 @@ export function ShopMobileBottomNav() {
 			id: "search",
 			label: "Rechercher",
 			icon: MagnifyingGlassIcon,
-			isActive: isQuickSearchOpen,
+			active: isQuickSearchOpen,
 			type: "button" as const,
 			onClick: handleSearchClick,
 		},
@@ -218,7 +218,7 @@ export function ShopMobileBottomNav() {
 			label: "Favoris",
 			href: ROUTES.SHOP.FAVORITES,
 			icon: HeartIcon,
-			isActive: isRouteActive(pathname, ROUTES.SHOP.FAVORITES),
+			active: isRouteActive(pathname, ROUTES.SHOP.FAVORITES),
 			type: "link" as const,
 			// `type: "dot"` n'affiche AUCUN chiffre : sans ce libellé, le nombre de
 			// favoris n'était exposé nulle part — ni à l'œil, ni au lecteur d'écran.
@@ -234,7 +234,7 @@ export function ShopMobileBottomNav() {
 			id: "cart",
 			label: "Panier",
 			icon: ShoppingBagIcon,
-			isActive: isCartOpen,
+			active: isCartOpen,
 			type: "button" as const,
 			ariaLabel: tabAriaLabel("Panier", cartCount, "article", "articles"),
 			badge: {
@@ -278,7 +278,7 @@ export function ShopMobileBottomNav() {
 							 * inactif ne se distinguaient que par une nuance de gris. */}
 							<tab.icon
 								className={bottomBarIconClass}
-								weight={tab.isActive ? "fill" : "regular"}
+								weight={tab.active ? "fill" : "regular"}
 								aria-hidden="true"
 							/>
 							{"badge" in tab && tab.badge && (
@@ -305,9 +305,9 @@ export function ShopMobileBottomNav() {
 										triggerHaptic("selection");
 										tab.onClick(e);
 									}}
-									className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
+									className={cn(bottomBarItemClass, tab.active && bottomBarActiveItemClass)}
 									aria-haspopup="dialog"
-									aria-expanded={tab.isActive}
+									aria-expanded={tab.active}
 									aria-label={"ariaLabel" in tab ? tab.ariaLabel : tab.label}
 								>
 									{iconEl}
@@ -326,9 +326,9 @@ export function ShopMobileBottomNav() {
 								// était muet, un tap sur Recherche/Panier non. « Bottom nav tab
 								// change » = `selection` (règle haptique projet), et seulement quand
 								// l'onglet change réellement de page.
-								onClick={() => !tab.isActive && triggerHaptic("selection")}
-								className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
-								aria-current={tab.isActive ? "page" : undefined}
+								onClick={() => !tab.active && triggerHaptic("selection")}
+								className={cn(bottomBarItemClass, tab.active && bottomBarActiveItemClass)}
+								aria-current={tab.active ? "page" : undefined}
 								aria-label={"ariaLabel" in tab ? tab.ariaLabel : undefined}
 							>
 								{iconEl}

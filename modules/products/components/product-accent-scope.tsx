@@ -70,7 +70,6 @@ function ProductAccentScopeInner({ product, className, children }: ProductAccent
 	const accent = resolveGalleryAccent({
 		product,
 		selectedVariants: {
-			colorCombo: selectedVariants.variant,
 			colorSlug: selectedVariants.color,
 			materialSlug: selectedVariants.material,
 			size: selectedVariants.size,

@@ -1,16 +1,12 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
 import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile-bottom-nav";
-import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { StoreClosurePage } from "@/modules/store-settings/components/store-closure-page";
-import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
 import { CookieBannerLazy } from "@/shared/components/cookie-banner-lazy";
-import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
 import { Suspense } from "react";
-import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
+import { CartAndVariantWrapper } from "@/modules/cart/components/cart-and-variant-wrapper";
 import { QuickSearchDialogAsync } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-async";
 
 interface ShopLayoutProps {
@@ -46,29 +42,10 @@ function ShopShellSkeleton() {
 }
 
 async function ShopLayoutContent({ children }: ShopLayoutProps) {
-	const storeStatus = await getStoreStatus();
-
-	if (storeStatus.isClosed) {
-		const admin = await isAdmin();
-
-		if (!admin) {
-			return (
-				<>
-					<StoreClosurePage status={storeStatus} />
-					<CookieBannerLazy />
-				</>
-			);
-		}
-	}
-
+	// Plus de « boutique fermée » : StoreSettings est parti avec le schéma lean
+	// (perte volontaire § 1, lot 2).
 	return (
 		<>
-			{storeStatus.isClosed && (
-				<MaintenanceBanner
-					closureMessage={storeStatus.closureMessage}
-					reopensAt={storeStatus.reopensAt}
-				/>
-			)}
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>
@@ -87,7 +64,7 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			<Suspense fallback={<FooterSkeleton />}>
 				<Footer />
 			</Suspense>
-			<CartAndSkuWrapper />
+			<CartAndVariantWrapper />
 			<Suspense fallback={null}>
 				<QuickSearchDialogAsync />
 			</Suspense>

@@ -1,6 +1,5 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
-import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { logger } from "@/shared/lib/logger";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
@@ -30,23 +29,14 @@ export type { GetProductTypesParams, GetProductTypesReturn } from "../types/prod
 // ============================================================================
 
 /**
- * Récupère les types de produits (bijoux). Accessible publiquement.
- *
- * Sécurité : `isActive` est forcé à `true` pour tout appelant non-admin, comme
- * `getProducts` force `status: PUBLIC`. Avant ça, la visibilité reposait entièrement
- * sur la discipline des appelants — les 4 appelants publics passaient bien
- * `isActive: true`, mais un cinquième qui l'oublie expose les types désactivés dans le
- * mega-menu ou le sitemap, et rien ne l'en empêchait.
- *
- * `options.isAdmin` permet à un appelant qui exécute déjà dans un scope `"use cache"`
- * (ex: `getNavbarMenuData`) de fournir le statut admin sans appeler `isAdmin()` ici —
- * `isAdmin()` lit `headers()`, une source dynamique interdite dans un scope cache.
+ * Récupère les types de produits (bijoux). Accessible publiquement — schéma
+ * lean : ProductType n'a plus de statut actif/inactif, il n'y a donc plus de
+ * visibilité à forcer.
  */
 export async function getProductTypes(
 	params: GetProductTypesParamsInput,
-	// `isAdmin?: false` (littéral, pas `boolean`) : ce paramètre ne peut que baisser
-	// le privilège — cf. la justification détaillée dans `products/data/get-products.ts`.
-	options?: { isAdmin?: false },
+	// Conservé pour compatibilité d'appel depuis un scope "use cache" (navbar).
+	_options?: { isAdmin?: false },
 ): Promise<GetProductTypesReturn> {
 	const validation = getProductTypesSchema.safeParse(params);
 
@@ -71,12 +61,7 @@ export async function getProductTypes(
 		};
 	}
 
-	const admin = options?.isAdmin ?? (await isAdmin());
-	const validatedParams = admin
-		? validation.data
-		: { ...validation.data, filters: { ...validation.data.filters, isActive: true } };
-
-	return fetchProductTypes(validatedParams);
+	return fetchProductTypes(validation.data);
 }
 
 /**

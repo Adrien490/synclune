@@ -1,12 +1,12 @@
 /**
  * Types partagés des taxonomies catalogue (couleurs, matériaux, types de bijoux).
  *
- * Ces trois entités sont des tables d'étiquettes : un nom, un slug, une
- * description, un drapeau actif, et un compteur d'usage. Elles avaient trois
- * implémentations parallèles qui ont dérivé (deux façons d'écrire le même hook
- * de suppression, par exemple). Ce module porte la forme commune ; les écarts
- * réels — le `hex` d'une couleur, le `isSystem` d'un type, le libellé de l'unité
- * comptée — vivent dans le registre `taxonomy.config.ts`.
+ * Ces entités sont des tables d'étiquettes : un nom (+ hex pour les couleurs),
+ * une position, et un compteur d'usage. Elles avaient des implémentations
+ * parallèles qui ont dérivé (deux façons d'écrire le même hook de suppression,
+ * par exemple). Ce module porte la forme commune ; les écarts réels — le `hex`
+ * d'une couleur, le libellé de l'unité comptée — vivent dans le registre
+ * `taxonomy.config.ts`.
  */
 
 export type TaxonomyKind = "color" | "material" | "product-type";
@@ -56,15 +56,13 @@ export interface TaxonomyConfig {
 	/**
 	 * Noms de champs `FormData` attendus par les Server Actions.
 	 *
-	 * Ils ont dérivé entre les trois modules : la duplication attend `colorId` /
-	 * `materialId` / `productTypeId`, et le toggle de statut attend `id` sauf
-	 * pour les types de bijoux qui attendent `productTypeId`. Plutôt que de
-	 * réécrire six actions et leurs schémas Zod (risque sans bénéfice), le
-	 * registre porte l'écart et les hooks génériques s'y conforment.
+	 * Ils ont dérivé entre les modules : la duplication attend `colorId` /
+	 * `materialId`. Plutôt que de réécrire les actions et leurs schémas Zod
+	 * (risque sans bénéfice), le registre porte l'écart et les hooks génériques
+	 * s'y conforment.
 	 */
 	formFields: {
 		duplicateId: string;
-		toggleId: string;
 		/** Champ portant l'id dans le formulaire de suppression. */
 		deleteId: string;
 	};
@@ -78,6 +76,4 @@ export interface TaxonomyConfig {
 	createAriaLabel: string;
 	/** La taxonomie porte une couleur hexadécimale (couleurs uniquement). */
 	hasHex: boolean;
-	/** La taxonomie porte un drapeau « système » non supprimable (types uniquement). */
-	hasSystemFlag: boolean;
 }

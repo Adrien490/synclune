@@ -9,7 +9,7 @@ import { cacheProductDetail } from "../utils/cache.utils";
 
 /**
  * Variante admin de `getProductBySlug` pour le FORMULAIRE D'ÉDITION : charge
- * aussi les SKUs inactifs (l'archivage les désactive tous — avec le select
+ * aussi les VARIANTs inactifs (l'archivage les désactive tous — avec le select
  * public le formulaire d'un produit archivé était vide et non-enregistrable).
  *
  * Tous statuts confondus (éditer un DRAFT/ARCHIVED est le cas nominal) : la
@@ -39,10 +39,10 @@ async function fetchProductForEdit(params: GetProductParams): Promise<GetProduct
 	try {
 		const product = await prisma.product.findUnique({
 			where: { slug: params.slug },
-			select: { ...GET_PRODUCT_FOR_EDIT_SELECT, deletedAt: true },
+			select: GET_PRODUCT_FOR_EDIT_SELECT,
 		});
 
-		if (!product || product.deletedAt) {
+		if (!product) {
 			return null;
 		}
 

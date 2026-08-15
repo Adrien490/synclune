@@ -1,6 +1,5 @@
 "use client";
 
-import { ArchiveProductAlertDialog } from "@/modules/products/components/admin/archive-product-alert-dialog";
 import { ChangeProductStatusAlertDialog } from "@/modules/products/components/admin/change-product-status-alert-dialog";
 import { DeleteProductAlertDialog } from "@/modules/products/components/admin/delete-product-alert-dialog";
 import { DuplicateProductAlertDialog } from "@/modules/products/components/admin/duplicate-product-alert-dialog";
@@ -10,7 +9,6 @@ export function ProductsAdminDialogs() {
 	return (
 		<>
 			<DeleteProductAlertDialog />
-			<ArchiveProductAlertDialog />
 			<ChangeProductStatusAlertDialog />
 			<DuplicateProductAlertDialog />
 			<ManageCollectionsDialog />

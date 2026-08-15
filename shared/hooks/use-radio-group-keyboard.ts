@@ -11,7 +11,7 @@ interface UseRadioGroupKeyboardOptions<T> {
 	 * Id de l'option cochée, pour un **tabindex roving** (ARIA APG : un radiogroup
 	 * est UN seul arrêt de tabulation). Omettre la prop laisse le comportement
 	 * natif — chaque option reste un arrêt de tabulation, ce qui est le choix
-	 * assumé du sélecteur de pièces du panier (`sku-selector-pieces.tsx`), où les
+	 * assumé du sélecteur de pièces du panier (`variant-selector-pieces.tsx`), où les
 	 * options épuisées sont annoncées au TAB.
 	 */
 	activeOptionId?: string | null;

@@ -23,22 +23,16 @@ const getMessage = (result: ActionState): string | undefined =>
 export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 	const { product } = options;
 
-	// Variante principale = rang 0 : le select trie les SKUs par (position, id)
-	const defaultSku = product.skus[0];
+	// Variante principale = première du produit (ordre stable par id)
+	const defaultVariant = product.variants[0];
 
-	// Médias dans l'ordre canonique (position, id) — le select les livre déjà triés
-	const allMedia =
-		defaultSku?.images.map((img) => ({
-			url: img.url,
-			thumbnailUrl: img.thumbnailUrl ?? undefined,
-			blurDataUrl: img.blurDataUrl ?? undefined,
-			altText: img.altText ?? undefined,
-			mediaType: img.mediaType,
-			// L'action fait deleteMany + recréation : omettre les dimensions ici
-			// les remettait à NULL à chaque édition du produit.
-			width: img.width,
-			height: img.height,
-		})) ?? [];
+	// Médias du PRODUIT dans l'ordre canonique (position, id) — le select les
+	// livre déjà triés (schéma lean : le média vit sur le produit).
+	const allMedia = product.media.map((m) => ({
+		url: m.url,
+		alt: m.alt ?? undefined,
+		type: m.type,
+	}));
 
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -69,25 +63,24 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 		...editProductFormOpts,
 		defaultValues: {
 			productId: product.id,
-			title: product.title,
-			description: product.description ?? "",
+			name: product.name,
+			description: product.description,
+			priceEuros: product.priceCents / 100,
+			active: product.active ? ("true" as const) : ("false" as const),
 			typeId: product.type?.id ?? "",
-			collectionIds: product.collections.map((pc) => pc.collection.id),
-			status: product.status,
-			defaultSku: {
-				skuId: defaultSku?.id ?? "",
-				priceInclTaxEuros: defaultSku ? defaultSku.priceInclTax / 100 : 0,
-				compareAtPriceEuros: defaultSku?.compareAtPrice
-					? defaultSku.compareAtPrice / 100
-					: undefined,
-				inventory: defaultSku?.inventory ?? 0,
-				isActive: String(defaultSku?.isActive ?? true),
-				// Couleurs M2M ordonnées (1re = principale)
-				colorIds: defaultSku?.colors.map((c) => c.colorId) ?? [],
-				// Matériaux M2M ordonnés (1er = principal)
-				materialIds: defaultSku?.materials.map((m) => m.materialId) ?? [],
-				size: defaultSku?.size ?? "",
-				media: allMedia,
+			collectionIds: product.collections.map((collection) => collection.id),
+			media: allMedia,
+			defaultVariant: {
+				variantId: defaultVariant?.id ?? "",
+				// Override — vide = hérite du prix produit.
+				priceEuros:
+					defaultVariant?.priceCents != null ? defaultVariant.priceCents / 100 : ("" as const),
+				originalStock: defaultVariant?.stock ?? 0,
+				stock: defaultVariant?.stock ?? 0,
+				active: defaultVariant?.active ? ("true" as const) : ("false" as const),
+				colorId: defaultVariant?.color?.id ?? "",
+				materialId: defaultVariant?.material?.id ?? "",
+				size: defaultVariant?.size ?? "",
 			},
 		},
 		transform: useTransform(

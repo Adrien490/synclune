@@ -35,13 +35,12 @@ describe("buildColorSearchConditions", () => {
 		expect(result).toBeNull();
 	});
 
-	it("should return an OR condition searching name, slug, and hex", () => {
+	it("should return an OR condition searching name and hex", () => {
 		const result = buildColorSearchConditions("rouge");
 
 		expect(result).toEqual({
 			OR: [
 				{ name: { contains: "rouge", mode: "insensitive" } },
-				{ slug: { contains: "rouge", mode: "insensitive" } },
 				{ hex: { contains: "rouge", mode: "insensitive" } },
 			],
 		});
@@ -53,7 +52,6 @@ describe("buildColorSearchConditions", () => {
 		expect(result).toEqual({
 			OR: [
 				{ name: { contains: "bleu", mode: "insensitive" } },
-				{ slug: { contains: "bleu", mode: "insensitive" } },
 				{ hex: { contains: "bleu", mode: "insensitive" } },
 			],
 		});
@@ -61,28 +59,9 @@ describe("buildColorSearchConditions", () => {
 });
 
 describe("buildColorFilterConditions", () => {
-	it("should return an empty object when no filters are provided", () => {
-		const result = buildColorFilterConditions({});
-
-		expect(result).toEqual({});
-	});
-
-	it("should add isActive true when filters.isActive is true", () => {
-		const result = buildColorFilterConditions({ isActive: true });
-
-		expect(result).toEqual({ isActive: true });
-	});
-
-	it("should add isActive false when filters.isActive is false", () => {
-		const result = buildColorFilterConditions({ isActive: false });
-
-		expect(result).toEqual({ isActive: false });
-	});
-
-	it("should not add isActive when filters.isActive is undefined", () => {
-		const result = buildColorFilterConditions({ isActive: undefined });
-
-		expect(result).toEqual({});
+	// Schéma lean : Color n'a plus de statut — le filtre est un no-op assumé.
+	it("should return an empty object whatever the input", () => {
+		expect(buildColorFilterConditions({})).toEqual({});
 	});
 });
 
@@ -102,13 +81,12 @@ describe("buildColorWhereClause", () => {
 	});
 
 	describe("search", () => {
-		it("should add a case-insensitive search condition across name, slug, and hex", () => {
+		it("should add a case-insensitive search condition across name and hex", () => {
 			const result = buildColorWhereClause(params({ search: "FF5733" }));
 
 			expect(result).toEqual({
 				OR: [
 					{ name: { contains: "FF5733", mode: "insensitive" } },
-					{ slug: { contains: "FF5733", mode: "insensitive" } },
 					{ hex: { contains: "FF5733", mode: "insensitive" } },
 				],
 			});
@@ -124,72 +102,6 @@ describe("buildColorWhereClause", () => {
 			const result = buildColorWhereClause(params({ search: "   " }));
 
 			expect(result).toEqual({});
-		});
-	});
-
-	describe("filter by isActive", () => {
-		it("should add an isActive true condition when filters.isActive is true", () => {
-			const result = buildColorWhereClause(
-				params({
-					filters: { isActive: true },
-				}),
-			);
-
-			expect(result).toEqual({ isActive: true });
-		});
-
-		it("should add an isActive false condition when filters.isActive is false", () => {
-			const result = buildColorWhereClause(
-				params({
-					filters: { isActive: false },
-				}),
-			);
-
-			expect(result).toEqual({ isActive: false });
-		});
-
-		it("should not add an isActive condition when filters.isActive is undefined", () => {
-			const result = buildColorWhereClause(params({ filters: {} }));
-
-			expect(result).toEqual({});
-		});
-
-		it("should not add an isActive condition when filters is undefined", () => {
-			const result = buildColorWhereClause(params());
-
-			expect(result).toEqual({});
-		});
-	});
-
-	describe("search combined with filters", () => {
-		it("should include both search and isActive conditions in AND", () => {
-			const result = buildColorWhereClause(
-				params({
-					search: "vert",
-					filters: { isActive: true },
-				}),
-			);
-
-			expect(result.AND).toHaveLength(2);
-			expect(result.AND).toContainEqual({ isActive: true });
-			expect(result.AND).toContainEqual({
-				OR: [
-					{ name: { contains: "vert", mode: "insensitive" } },
-					{ slug: { contains: "vert", mode: "insensitive" } },
-					{ hex: { contains: "vert", mode: "insensitive" } },
-				],
-			});
-		});
-
-		it("should add only the isActive condition when search is empty", () => {
-			const result = buildColorWhereClause(
-				params({
-					search: "",
-					filters: { isActive: false },
-				}),
-			);
-
-			expect(result).toEqual({ isActive: false });
 		});
 	});
 

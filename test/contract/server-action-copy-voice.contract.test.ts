@@ -135,7 +135,8 @@ describe("contrat · voix et orthographe de la copie des Server Actions", () => 
 	describe("garde-fous du garde-fou", () => {
 		it("le scan trouve bien les fichiers d'actions du dépôt", () => {
 			// Sans plancher, un renommage de dossier rendrait la suite vacuellement verte.
-			expect(ACTION_FILES.length).toBeGreaterThan(80);
+			// Abaissé à 50 au lot 2 (purge invoices/refunds/cron/store-settings).
+			expect(ACTION_FILES.length).toBeGreaterThan(50);
 		});
 
 		it("le scan trouve bien des chaînes utilisateur dedans", () => {

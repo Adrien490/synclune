@@ -98,7 +98,7 @@ describe("TaxonomyActiveToggle", () => {
 		render(
 			<TaxonomyActiveToggle
 				id="color-1"
-				isActive={true}
+				active={true}
 				toggleStatus={toggleStatus}
 				isPending={false}
 			/>,
@@ -115,7 +115,7 @@ describe("TaxonomyActiveToggle", () => {
 		render(
 			<TaxonomyActiveToggle
 				id="mat-1"
-				isActive={false}
+				active={false}
 				toggleStatus={toggleStatus}
 				isPending={false}
 			/>,
@@ -132,7 +132,7 @@ describe("TaxonomyActiveToggle", () => {
 		render(
 			<TaxonomyActiveToggle
 				id="pt-system"
-				isActive={true}
+				active={true}
 				toggleStatus={toggleStatus}
 				isPending={false}
 				disabled

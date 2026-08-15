@@ -1,7 +1,7 @@
+import { Prisma } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { Prisma, type PublicationStatus } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { isPgTrgmAvailable } from "@/shared/lib/pg-trgm-availability";
 import { prisma } from "@/shared/lib/prisma";
@@ -26,8 +26,8 @@ type FuzzySearchOptions = {
 	threshold?: number;
 	/** Max results (default: FUZZY_MAX_RESULTS) */
 	limit?: number;
-	/** Filter by product status */
-	status?: PublicationStatus;
+	/** Ne retourner que les produits actifs (storefront). */
+	activeOnly?: boolean;
 };
 
 type FuzzySearchResult = {
@@ -56,9 +56,9 @@ type FuzzySearchReturn = {
 function buildWordWhereFragment(word: string): Prisma.Sql {
 	const like = `%${escapeLikePattern(word)}%`;
 	return Prisma.sql`(
-		immutable_unaccent(p.title) ILIKE immutable_unaccent(${like})
+		immutable_unaccent(p.name) ILIKE immutable_unaccent(${like})
 		OR immutable_unaccent(COALESCE(p.description, '')) ILIKE immutable_unaccent(${like})
-		OR immutable_unaccent(p.title) % immutable_unaccent(${word})
+		OR immutable_unaccent(p.name) % immutable_unaccent(${word})
 		OR immutable_unaccent(${word}) <% immutable_unaccent(COALESCE(p.description, ''))
 	)`;
 }
@@ -89,9 +89,9 @@ function buildWordGroupWhereFragment(word: string): Prisma.Sql {
 function buildWordScoreFragment(word: string): Prisma.Sql {
 	const like = `%${escapeLikePattern(word)}%`;
 	return Prisma.sql`GREATEST(
-		CASE WHEN immutable_unaccent(p.title) ILIKE immutable_unaccent(${like})
+		CASE WHEN immutable_unaccent(p.name) ILIKE immutable_unaccent(${like})
 			THEN ${RELEVANCE_WEIGHTS.exactTitle}::float
-			ELSE similarity(immutable_unaccent(p.title), immutable_unaccent(${word})) * ${RELEVANCE_WEIGHTS.fuzzyTitle}::float
+			ELSE similarity(immutable_unaccent(p.name), immutable_unaccent(${word})) * ${RELEVANCE_WEIGHTS.fuzzyTitle}::float
 		END,
 		CASE WHEN immutable_unaccent(COALESCE(p.description, '')) ILIKE immutable_unaccent(${like})
 			THEN ${RELEVANCE_WEIGHTS.exactDescription}::float
@@ -142,13 +142,13 @@ export async function fuzzySearchProductIds(
 	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
-	const { threshold = FUZZY_SIMILARITY_THRESHOLD, limit = FUZZY_MAX_RESULTS, status } = options;
+	const { threshold = FUZZY_SIMILARITY_THRESHOLD, limit = FUZZY_MAX_RESULTS, activeOnly } = options;
 
 	const words = splitSearchTerms(searchTerm);
 	if (words.length === 0) return { ids: [], totalCount: 0 };
 
 	if (!(await isPgTrgmAvailable())) {
-		return fuzzySearchProductIdsIlikeFallback(words, status, limit);
+		return fuzzySearchProductIdsIlikeFallback(words, activeOnly, limit);
 	}
 
 	const startTime = performance.now();
@@ -157,7 +157,7 @@ export async function fuzzySearchProductIds(
 		{ name: "fuzzy-search.products", op: "db.query" },
 		async (span): Promise<FuzzySearchReturn> => {
 			span.setAttribute("search.word_count", words.length);
-			span.setAttribute("search.has_status_filter", Boolean(status));
+			span.setAttribute("search.has_status_filter", Boolean(activeOnly));
 
 			try {
 				// Build per-word WHERE fragments (AND: every word must match)
@@ -186,8 +186,8 @@ export async function fuzzySearchProductIds(
 								${scoreExpr} as score
 							FROM "Product" p
 							WHERE
-								p."deletedAt" IS NULL
-								${status ? Prisma.sql`AND p.status = ${status}::"PublicationStatus"` : Prisma.empty}
+								TRUE
+								${activeOnly ? Prisma.sql`AND p.active = true` : Prisma.empty}
 								AND ${whereClause}
 						)
 						SELECT "productId", score, COUNT(*) OVER() as "totalCount"
@@ -251,7 +251,7 @@ export async function fuzzySearchProductIds(
  */
 async function fuzzySearchProductIdsIlikeFallback(
 	words: string[],
-	status: PublicationStatus | undefined,
+	activeOnly: boolean | undefined,
 	limit: number,
 ): Promise<FuzzySearchReturn> {
 	const startTime = performance.now();
@@ -260,7 +260,7 @@ async function fuzzySearchProductIdsIlikeFallback(
 		const whereFragments = words.map((word) => {
 			const like = `%${escapeLikePattern(word)}%`;
 			return Prisma.sql`(
-				LOWER(p.title) LIKE LOWER(${like})
+				LOWER(p.name) LIKE LOWER(${like})
 				OR LOWER(COALESCE(p.description, '')) LIKE LOWER(${like})
 			)`;
 		});
@@ -272,8 +272,8 @@ async function fuzzySearchProductIdsIlikeFallback(
 				SELECT p.id as "productId"
 				FROM "Product" p
 				WHERE
-					p."deletedAt" IS NULL
-					${status ? Prisma.sql`AND p.status = ${status}::"PublicationStatus"` : Prisma.empty}
+					TRUE
+					${activeOnly ? Prisma.sql`AND p.active = true` : Prisma.empty}
 					AND ${whereClause}
 			)
 			SELECT "productId", COUNT(*) OVER() as "totalCount"

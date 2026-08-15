@@ -14,12 +14,6 @@ import {
 } from "@/shared/components/ui/breadcrumb";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
 
-const SetFeaturedProductAlertDialog = dynamic(() =>
-	import("@/modules/collections/components/admin/set-featured-product-alert-dialog").then(
-		(mod) => mod.SetFeaturedProductAlertDialog,
-	),
-);
-
 const CollectionFormDialog = dynamic(() =>
 	import("@/modules/collections/components/admin/collection-form-dialog").then(
 		(mod) => mod.CollectionFormDialog,
@@ -77,8 +71,6 @@ export default async function AdminCollectionDetailPage({ params }: CollectionDe
 			</Breadcrumb>
 
 			<CollectionDetailPage collection={collection} />
-
-			<SetFeaturedProductAlertDialog />
 			<CollectionFormDialog />
 			<CollectionsAdminDialogs />
 		</div>

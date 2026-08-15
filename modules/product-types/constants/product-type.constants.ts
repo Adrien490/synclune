@@ -1,36 +1,21 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 
 // ============================================================================
-// SELECT DEFINITIONS
+// SELECT DEFINITIONS — schéma lean (lot 2) : ProductType { id, slug, label,
+// position }, relation directe `products` (Product.typeId).
 // ============================================================================
 
 export const GET_PRODUCT_TYPES_SELECT = {
 	id: true,
 	slug: true,
 	label: true,
-	description: true,
-	isActive: true,
-	isSystem: true,
-	createdAt: true,
-	updatedAt: true,
+	position: true,
 	_count: {
 		select: {
 			products: {
 				where: {
-					status: "PUBLIC",
-					// Explicite même si status=PUBLIC exclut déjà les soft-deleted
-					// aujourd'hui (deleteProduct force ARCHIVED) — ne pas dépendre
-					// de ce couplage pour le compte affiché.
-					deletedAt: null,
-					// `deletedAt: null` aussi sur le SKU : parité avec la garde de
-					// `delete-product-type` — sans lui, un produit dont tous les SKUs
-					// sont soft-deleted était compté en liste mais pas par la garde.
-					skus: {
-						some: {
-							isActive: true,
-							deletedAt: null,
-						},
-					},
+					active: true,
+					variants: { some: { active: true } },
 				},
 			},
 		},
@@ -40,56 +25,32 @@ export const GET_PRODUCT_TYPES_SELECT = {
 /**
  * Select du menu mobile (« L'étal de poche ») : chaque famille y montre UNE
  * vignette + son compte de pièces. Étend `GET_PRODUCT_TYPES_SELECT` d'un
- * produit représentatif — le plus récent publié qui possède au moins une image.
+ * produit représentatif — le plus récent actif qui possède au moins une image.
  *
- * Famille « vignette unique » (cf. CLAUDE.md § mediaType) : `mediaType: "IMAGE"`
+ * Famille « vignette unique » (cf. règle pickPrimaryImage) : `type: "IMAGE"`
  * est filtré DANS le select, car l'appelant prend une seule image sans pouvoir
- * trier. Le choix final passe quand même par `pickPrimaryImage()` côté appelant
- * (SSOT), d'où `mediaType` dans la projection (V5 : plus d'`isPrimary`, la
- * première IMAGE de l'ordre canonique `(position asc, id asc)` est la principale).
+ * trier.
  */
 export const GET_PRODUCT_TYPES_MENU_SELECT = {
 	...GET_PRODUCT_TYPES_SELECT,
 	products: {
 		where: {
-			status: "PUBLIC",
-			deletedAt: null,
-			skus: {
-				some: {
-					isActive: true,
-					deletedAt: null,
-					images: { some: { mediaType: "IMAGE" } },
-				},
-			},
+			active: true,
+			variants: { some: { active: true } },
+			media: { some: { type: "IMAGE" } },
 		},
 		orderBy: [{ createdAt: "desc" as const }, { id: "asc" as const }],
 		take: 1,
 		select: {
 			id: true,
-			skus: {
-				// Le même filtre `images.some` que la garde produit ci-dessus : sans
-				// lui, un SKU représentant sans image rendait une tuile vide alors
-				// qu'un autre SKU du produit en possède une.
-				where: {
-					isActive: true,
-					deletedAt: null,
-					images: { some: { mediaType: "IMAGE" } },
+			media: {
+				where: { type: "IMAGE" as const },
+				select: {
+					url: true,
+					type: true,
 				},
-				// V5 : ordre canonique (rang 0 = représentant, plus d'`isDefault`)
 				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 				take: 1,
-				select: {
-					images: {
-						where: { mediaType: "IMAGE" as const },
-						select: {
-							url: true,
-							blurDataUrl: true,
-							mediaType: true,
-						},
-						orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-						take: 1,
-					},
-				},
 			},
 		},
 	},
@@ -99,28 +60,15 @@ export const GET_PRODUCT_TYPE_SELECT = {
 	id: true,
 	slug: true,
 	label: true,
-	description: true,
-	isActive: true,
-	isSystem: true,
-	createdAt: true,
-	updatedAt: true,
+	position: true,
 	// Compte des produits réellement visibles storefront (mêmes critères que
 	// GET_PRODUCT_TYPES_SELECT) — sert au noindex des pages catégorie vides.
 	_count: {
 		select: {
 			products: {
 				where: {
-					status: "PUBLIC",
-					deletedAt: null,
-					// `deletedAt: null` aussi sur le SKU : parité avec la garde de
-					// `delete-product-type` — sans lui, un produit dont tous les SKUs
-					// sont soft-deleted était compté en liste mais pas par la garde.
-					skus: {
-						some: {
-							isActive: true,
-							deletedAt: null,
-						},
-					},
+					active: true,
+					variants: { some: { active: true } },
 				},
 			},
 		},

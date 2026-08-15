@@ -3,9 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
 
-import { PublicationStatus } from "@/app/generated/prisma/enums";
 import { createCollection } from "@/modules/collections/actions/create-collection";
-import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
@@ -39,7 +37,7 @@ const LIST_PATH = "/admin/catalogue/collections";
 const FIELD_LABELS: Record<string, string> = {
 	name: "Nom",
 	description: "Description",
-	status: "Statut",
+	active: "Statut",
 };
 
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
@@ -61,7 +59,7 @@ export function CreateCollectionForm({
 		defaultValues: {
 			name: "",
 			description: "",
-			status: PublicationStatus.PUBLIC as PublicationStatus,
+			active: "false" as "true" | "false",
 		},
 	});
 
@@ -79,7 +77,7 @@ export function CreateCollectionForm({
 					form.reset();
 					const data = (
 						result as {
-							data?: { id?: string; name?: string; collectionStatus?: PublicationStatus };
+							data?: { id?: string; name?: string; collectionActive?: boolean };
 						}
 					).data;
 					if (data?.id) {
@@ -141,8 +139,8 @@ export function CreateCollectionForm({
 				);
 			}}
 		>
-			<form.Subscribe selector={(state) => ({ status: state.values.status })}>
-				{({ status }) => <input type="hidden" name="status" value={status} />}
+			<form.Subscribe selector={(state) => ({ active: state.values.active })}>
+				{({ active }) => <input type="hidden" name="active" value={String(active)} />}
 			</form.Subscribe>
 
 			<FormServerErrorAlert errors={serverErrors} />
@@ -222,14 +220,14 @@ export function CreateCollectionForm({
 					)}
 				</form.AppField>
 
-				<form.AppField name="status">
+				<form.AppField name="active">
 					{(field) => (
 						<field.SelectField
 							label="Statut"
-							options={[PublicationStatus.DRAFT, PublicationStatus.PUBLIC].map((s) => ({
-								value: s,
-								label: COLLECTION_STATUS_LABELS[s],
-							}))}
+							options={[
+								{ value: "false", label: "Brouillon" },
+								{ value: "true", label: "Publiée" },
+							]}
 							disabled={isPending}
 						/>
 					)}

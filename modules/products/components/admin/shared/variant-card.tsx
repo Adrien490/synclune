@@ -10,7 +10,7 @@ import { FORM_SECTION_CARD_CLASS } from "./shared-styles";
 import { VariantAttributeFields } from "./variant-attribute-fields";
 import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
 
-type ColorOption = { id: string; name: string; hex: string };
+type ColorOption = { id: string; name: string; hex: string | null };
 type MaterialOption = { id: string; name: string };
 
 export interface VariantCardProps {
@@ -18,10 +18,10 @@ export interface VariantCardProps {
 	form: any;
 	colors: ColorOption[];
 	materials: MaterialOption[];
-	/** Nom du champ TanStack pour les couleurs (e.g. "initialSku.colorIds", "colorIds"). */
-	colorIdsFieldName: string;
-	/** Nom du champ pour les matériaux. */
-	materialsFieldName: string;
+	/** Nom du champ TanStack pour la couleur (e.g. "initialVariant.colorId", "colorId"). */
+	colorFieldName: string;
+	/** Nom du champ pour le matériau. */
+	materialFieldName: string;
 	/** Nom du champ pour la taille. */
 	sizeFieldName: string;
 	/** aria-label sur la Card region (default "Variante"). */
@@ -36,8 +36,8 @@ export function VariantCard({
 	form,
 	colors,
 	materials,
-	colorIdsFieldName,
-	materialsFieldName,
+	colorFieldName,
+	materialFieldName,
 	sizeFieldName,
 	ariaLabel = "Variante",
 	tooltipText,
@@ -85,8 +85,8 @@ export function VariantCard({
 					form={form}
 					colors={colors}
 					materials={materials}
-					colorIdsFieldName={colorIdsFieldName}
-					materialsFieldName={materialsFieldName}
+					colorFieldName={colorFieldName}
+					materialFieldName={materialFieldName}
 					sizeFieldName={sizeFieldName}
 				/>
 			</CardContent>

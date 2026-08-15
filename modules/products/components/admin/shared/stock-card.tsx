@@ -10,13 +10,13 @@ import { FORM_SECTION_CARD_CLASS } from "./shared-styles";
 import { FormSectionTitle } from "@/shared/components/forms/form-section-title";
 
 export interface StockFieldProps {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shared across multiple form instances (Create/Edit Product, Create/Edit SKU). Union typing would create generic explosion; caller is responsible for field name validity.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shared across multiple form instances (Create/Edit Product, Create/Edit VARIANT). Union typing would create generic explosion; caller is responsible for field name validity.
 	form: any;
-	/** Nom du champ TanStack pour l'inventaire (e.g. "initialSku.inventory"). */
-	inventoryFieldName: string;
+	/** Nom du champ TanStack pour l'inventaire (e.g. "initialVariant.stock"). */
+	stockFieldName: string;
 	/** Identifiant unique pour aria-describedby (default "stock-card"). */
 	hintIdPrefix?: string;
-	/** Microcopie sous le champ (default sku-side wording). */
+	/** Microcopie sous le champ (default variant-side wording). */
 	hint?: string;
 }
 
@@ -30,12 +30,12 @@ export interface StockCardProps extends StockFieldProps {
  */
 export function StockField({
 	form,
-	inventoryFieldName,
+	stockFieldName,
 	hintIdPrefix = "stock-card",
 	hint = "Laisse vide ou 0 si la variante est en rupture",
 }: StockFieldProps) {
 	return (
-		<form.AppField name={inventoryFieldName}>
+		<form.AppField name={stockFieldName}>
 			{(field: {
 				InputGroupField: React.ComponentType<{
 					type: string;
@@ -48,7 +48,7 @@ export function StockField({
 			}) => (
 				<div className="space-y-2">
 					{/* `htmlFor` = `id` posé par `InputGroupField` — cf. `pricing-card.tsx`. */}
-					<FieldLabel htmlFor={inventoryFieldName} optional>
+					<FieldLabel htmlFor={stockFieldName} optional>
 						Quantité en stock
 					</FieldLabel>
 					<field.InputGroupField

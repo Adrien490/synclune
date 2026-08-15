@@ -2,7 +2,6 @@
 
 import { DotsThreeVerticalIcon } from "@phosphor-icons/react/ssr";
 
-import type { PublicationStatus } from "@/app/generated/prisma/enums";
 import {
 	ResponsiveActionMenu,
 	ResponsiveActionMenuContent,
@@ -17,7 +16,7 @@ interface CollectionRowActionsProps {
 	collectionName: string;
 	collectionSlug: string;
 	collectionDescription: string | null;
-	collectionStatus: PublicationStatus;
+	collectionActive: boolean;
 	productsCount: number;
 }
 

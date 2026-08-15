@@ -1,15 +1,13 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
 /**
- * Extrait l'image du produit vedette pour OpenGraph.
+ * Extrait l'image du produit représentatif pour OpenGraph.
  *
- * Le select storefront arrive PRÉ-TRIÉ (position asc, addedAt desc) et filtré
- * PUBLIC : la vedette est `products[0]`, son SKU représentant est `skus[0]`
- * (rang 0 de (position, id)) et son image principale la première IMAGE de cet
- * ordre — le select ne remonte que des `mediaType: IMAGE`, avec `take: 1`.
+ * Le select storefront arrive PRÉ-TRIÉ (produits actifs les plus récents) : le
+ * représentatif est `products[0]` et son image principale `media[0]` — le
+ * select ne remonte que des `type: IMAGE`, avec `take: 1`.
  */
 function getFeaturedProductImage(
 	products: NonNullable<Awaited<ReturnType<typeof getStorefrontCollectionBySlug>>>["products"],
@@ -18,19 +16,13 @@ function getFeaturedProductImage(
 
 	if (!productToUse) return null;
 
-	// SKU représentant : rang 0 de (position asc, id asc), déjà trié par le select
-	const defaultSku = productToUse.product.skus[0];
-
-	if (!defaultSku) return null;
-
-	// Première IMAGE de l'ordre canonique (le select filtre déjà mediaType: IMAGE)
-	const primaryImage = defaultSku.images[0];
+	const primaryImage = productToUse.media[0];
 
 	if (!primaryImage) return null;
 
 	return {
 		url: primaryImage.url,
-		alt: primaryImage.altText ?? productToUse.product.title,
+		alt: primaryImage.alt ?? productToUse.name,
 	};
 }
 
@@ -43,7 +35,7 @@ export async function generateCollectionMetadata({
 	const collection = await getStorefrontCollectionBySlug({ slug });
 
 	// Vérifier que la collection existe et est publiée
-	if (!collection || collection.status !== PublicationStatus.PUBLIC) {
+	if (!collection || !collection.active) {
 		return {
 			title: "Collection non trouvée - Synclune",
 			description: "Cette collection n'existe pas ou n'est plus disponible.",
@@ -78,17 +70,6 @@ export async function generateCollectionMetadata({
 		"bijoux colorés",
 		"bijoux originaux",
 	];
-
-	// Ajouter les types de produits présents dans la collection
-	const productTypes = new Set<string>();
-	collection.products.forEach((pc) => {
-		if (pc.product.type?.label) {
-			productTypes.add(pc.product.type.label.toLowerCase());
-		}
-	});
-	productTypes.forEach((type) => {
-		dynamicKeywords.push(`${type} ${collectionNameLower}`);
-	});
 
 	return {
 		title,

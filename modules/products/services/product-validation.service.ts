@@ -17,21 +17,20 @@ type ProductPublicationValidation = {
 };
 
 type ProductForPublicationCheck = {
-	title: string;
-	skus: {
+	name: string;
+	variants: {
 		id: string;
-		isActive: boolean;
-		inventory: number;
-		// `mediaType` permet de distinguer une vraie image d'une video : une video
-		// au rang 0 ne suffit PAS a publier (la vitrine affiche un placeholder).
-		// Cf MEDIA-AUDIT-002.
-		images: { mediaType: string }[];
+		active: boolean;
+		stock: number;
 	}[];
+	// Médias du PRODUIT (schéma lean) : `type` distingue une vraie image d'une
+	// vidéo — une vidéo au rang 0 ne suffit PAS à publier (placeholder vitrine).
+	media: { type: string }[];
 };
 
-type SkuForPublicCheck = {
-	isActive: boolean;
-	inventory: number;
+type VariantForPublicCheck = {
+	active: boolean;
+	stock: number;
 };
 
 /**
@@ -41,19 +40,19 @@ type SkuForPublicCheck = {
 export function validateProductForPublication(
 	product: ProductForPublicationCheck,
 ): ProductPublicationValidation {
-	// Regle 1: Titre requis
-	if (!product.title || product.title.trim().length === 0) {
+	// Regle 1: Nom requis
+	if (!product.name || product.name.trim().length === 0) {
 		return {
 			isValid: false,
-			errorMessage: "Impossible de publier ce produit : son titre est vide. Renseigne un titre.",
+			errorMessage: "Impossible de publier ce produit : son nom est vide. Renseigne un nom.",
 		};
 	}
 
-	// Filtrer les SKUs actifs
-	const activeSkus = product.skus.filter((sku) => sku.isActive);
+	// Filtrer les VARIANTs actifs
+	const activeVariants = product.variants.filter((variant) => variant.active);
 
-	// Regle 2: Au moins 1 SKU actif
-	if (activeSkus.length === 0) {
+	// Regle 2: Au moins 1 VARIANT actif
+	if (activeVariants.length === 0) {
 		return {
 			isValid: false,
 			errorMessage:
@@ -61,8 +60,8 @@ export function validateProductForPublication(
 		};
 	}
 
-	// Regle 3: Au moins 1 SKU actif avec stock
-	const hasStock = activeSkus.some((sku) => sku.inventory > 0);
+	// Regle 3: Au moins 1 VARIANT actif avec stock
+	const hasStock = activeVariants.some((variant) => variant.stock > 0);
 	if (!hasStock) {
 		return {
 			isValid: false,
@@ -71,30 +70,15 @@ export function validateProductForPublication(
 		};
 	}
 
-	// Regle 4: Au moins 1 SKU actif avec une image (media de type IMAGE).
-	// Aligne sur la logique d'affichage (`extractImageFromSku` ne retourne que des
-	// medias IMAGE) : un SKU dont les seuls medias sont des videos afficherait le
-	// placeholder en vitrine. Une video au rang 0 ne compte donc pas.
-	const hasImage = activeSkus.some((sku) => sku.images.some((img) => img.mediaType === "IMAGE"));
+	// Regle 4: Le produit a au moins une IMAGE (média de type IMAGE — le média
+	// vit sur le PRODUIT depuis le schéma lean). Une vidéo au rang 0 ne compte
+	// pas : la vitrine afficherait le placeholder.
+	const hasImage = product.media.some((m) => m.type === "IMAGE");
 	if (!hasImage) {
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de publier ce produit : aucune variante active n'a d'image principale. Ajoute une image à au moins une variante.",
-		};
-	}
-
-	// Regle 5: Les regles 3 et 4 doivent etre vraies sur le MEME SKU — evaluees
-	// independamment, un produit se publiait si le SKU A avait du stock et le
-	// SKU B une image, sans qu'aucune variante ne soit achetable ET illustree.
-	const hasSellableSku = activeSkus.some(
-		(sku) => sku.inventory > 0 && sku.images.some((img) => img.mediaType === "IMAGE"),
-	);
-	if (!hasSellableSku) {
-		return {
-			isValid: false,
-			errorMessage:
-				"Impossible de publier ce produit : aucune variante active n'a à la fois du stock et une image. Complète au moins une variante.",
+				"Impossible de publier ce produit : il n'a aucune image. Ajoute au moins une photo.",
 		};
 	}
 
@@ -102,20 +86,20 @@ export function validateProductForPublication(
 }
 
 /**
- * Verifie si un produit PUBLIC peut etre cree avec le SKU initial fourni
- * Version simplifiee pour la creation (pas encore de SKU en DB).
+ * Verifie si un produit PUBLIC peut etre cree avec le VARIANT initial fourni
+ * Version simplifiee pour la creation (pas encore de VARIANT en DB).
  *
  * NOTE (MEDIA-AUDIT-007) : la presence d'au moins une image (media IMAGE) est
  * garantie en amont par `createProductSchema` — refines inconditionnels
- * `initialSku.media.length > 0` + premier media force a IMAGE
+ * `initialVariant.media.length > 0` + premier media force a IMAGE
  * (`product-mutation.schemas.ts`). Cette garantie est verrouillee par un test
  * de regression dedie ; ne pas dupliquer un controle d'URL ici (le service
  * pur n'a pas connaissance des extensions).
  */
 export function validatePublicProductCreation(
-	sku: SkuForPublicCheck,
+	variant: VariantForPublicCheck,
 ): ProductPublicationValidation {
-	if (!sku.isActive) {
+	if (!variant.active) {
 		return {
 			isValid: false,
 			errorMessage:
@@ -123,7 +107,7 @@ export function validatePublicProductCreation(
 		};
 	}
 
-	if (sku.inventory <= 0) {
+	if (variant.stock <= 0) {
 		return {
 			isValid: false,
 			errorMessage:

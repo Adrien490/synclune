@@ -1,4 +1,3 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { OgShell } from "@/shared/components/og/og-shell";
 import { BRAND_HEX } from "@/shared/constants/brand-colors";
@@ -24,7 +23,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 	const collection = await getStorefrontCollectionBySlug({ slug });
 
 	// Fallback si collection non trouvee ou non publiee
-	if (!collection || collection.status !== PublicationStatus.PUBLIC) {
+	if (!collection || !collection.active) {
 		return new ImageResponse(
 			<OgShell align="center" signature>
 				<div style={{ display: "flex", fontSize: 64, fontWeight: 600 }}>Synclune</div>
@@ -34,9 +33,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 	}
 
 	// Compter les produits publics
-	const publicProductsCount = collection.products.filter(
-		(pc) => pc.product.status === "PUBLIC",
-	).length;
+	const publicProductsCount = collection.products.filter((product) => product.active).length;
 
 	return new ImageResponse(
 		<OgShell align="center" signature>

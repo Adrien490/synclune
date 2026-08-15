@@ -16,7 +16,7 @@ export function buildLightboxSlides(
 	prefersReducedMotion: boolean | null,
 ): Slide[] {
 	return medias.map((media) => {
-		if (media.mediaType === "VIDEO") {
+		if (media.type === "VIDEO") {
 			return {
 				type: "video" as const,
 				sources: [
@@ -25,7 +25,6 @@ export function buildLightboxSlides(
 						type: getVideoMimeType(media.url),
 					},
 				],
-				poster: media.thumbnailUrl ?? undefined,
 				autoPlay: !prefersReducedMotion,
 				muted: true,
 				loop: !prefersReducedMotion,
@@ -39,26 +38,9 @@ export function buildLightboxSlides(
 			LIGHTBOX_QUALITY,
 		);
 
-		// `ImageSource.height` est REQUIS par la lightbox et sert à calculer le ratio
-		// d'affichage. Sans dimensions connues (média antérieur au backfill), on omet
-		// le `srcSet` entier plutôt que de déclarer `height: 0` : un ratio impossible
-		// cassait le fit et le zoom. Le rendu retombe sur la seule `src` pleine taille.
-		if (!media.width || !media.height) {
-			return { src, alt: media.alt };
-		}
-
-		const aspectRatio = media.height / media.width;
-
-		return {
-			src,
-			alt: media.alt,
-			width: media.width,
-			height: media.height,
-			srcSet: LIGHTBOX_SRCSET_SIZES.map((size) => ({
-				src: nextImageUrl(media.url, size, LIGHTBOX_QUALITY),
-				width: size,
-				height: Math.round(size * aspectRatio),
-			})),
-		};
+		// Schéma lean (lot 2) : ProductMedia ne porte plus de dimensions
+		// intrinsèques — la lightbox rend la seule `src` pleine taille (le ratio
+		// est déduit du fichier au chargement).
+		return { src, alt: media.alt };
 	});
 }

@@ -170,7 +170,7 @@ describe("ShopMobileBottomNav", () => {
 
 	describe("accessibilité des onglets à dialogue et des compteurs", () => {
 		/**
-		 * Régression : `isActive: false` était un littéral, donc `aria-expanded`
+		 * Régression : `active: false` était un littéral, donc `aria-expanded`
 		 * restait "false" panier ouvert, sur un bouton `aria-haspopup="dialog"`
 		 * (WCAG 4.1.2). L'onglet Rechercher, lui, était correct.
 		 */

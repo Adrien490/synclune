@@ -27,19 +27,19 @@ interface MaterialMultiSelectFieldProps {
 	showLabel?: boolean;
 	/** Libellé du label affiché. Défaut: "Matériaux". */
 	label?: string;
-	/** Cap dur sur le nombre de matériaux. Défaut: ARRAY_LIMITS.SKU_MATERIALS. */
+	/** Cap dur sur le nombre de matériaux. Défaut: ARRAY_LIMITS.VARIANT_MATERIALS. */
 	maxSelected?: number;
 	/** ID du champ (utilisé pour l'aria/label). */
 	fieldName?: string;
 }
 
 /**
- * Champ multi-select pour les matériaux d'un SKU.
+ * Champ multi-select pour les matériaux d'un VARIANT.
  *
  * Convention métier : l'ordre du tableau reflète la priorité d'affichage,
  * le 1er élément est le matériau « principal » utilisé pour SEO / care-tips.
  *
- * - Cap à `ARRAY_LIMITS.SKU_MATERIALS` (3) par défaut.
+ * - Cap à `ARRAY_LIMITS.VARIANT_MATERIALS` (3) par défaut.
  * - Bouton « Créer un matériau » inline qui ouvre le dialog partagé.
  * - Aide visuelle indiquant la convention « 1er = principal ».
  */
@@ -49,7 +49,7 @@ export function MaterialMultiSelectField({
 	options,
 	showLabel = true,
 	label = "Matériaux",
-	maxSelected = ARRAY_LIMITS.SKU_MATERIALS,
+	maxSelected = ARRAY_LIMITS.VARIANT_MATERIALS,
 	fieldName,
 }: MaterialMultiSelectFieldProps) {
 	const router = useRouter();

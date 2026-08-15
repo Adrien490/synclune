@@ -17,12 +17,6 @@ export function buildProductTypeSearchConditions(
 		OR: [
 			{ label: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
 			{ slug: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-			{
-				description: {
-					contains: searchTerm,
-					mode: Prisma.QueryMode.insensitive,
-				},
-			},
 		],
 	};
 }
@@ -32,22 +26,14 @@ export function buildProductTypeFilterConditions(
 ): Prisma.ProductTypeWhereInput {
 	const conditions: Prisma.ProductTypeWhereInput = {};
 
-	if (filters.isActive !== undefined) {
-		conditions.isActive = filters.isActive;
-	}
-
-	if (filters.isSystem !== undefined) {
-		conditions.isSystem = filters.isSystem;
-	}
-
 	if (filters.hasProducts !== undefined) {
-		// Restreint aux produits PUBLIC + non soft-deleted : un ProductType qui n'a que
-		// des DRAFT/ARCHIVED se rendrait comme catégorie vide (signal "thin content" pour Google).
-		const publicProductsOnly = { status: "PUBLIC", deletedAt: null } as const;
+		// Restreint aux produits actifs : un ProductType qui n'a que des brouillons
+		// se rendrait comme catégorie vide (signal "thin content" pour Google).
+		const activeProductsOnly = { active: true } as const;
 		if (filters.hasProducts) {
-			conditions.products = { some: publicProductsOnly };
+			conditions.products = { some: activeProductsOnly };
 		} else {
-			conditions.products = { none: publicProductsOnly };
+			conditions.products = { none: activeProductsOnly };
 		}
 	}
 

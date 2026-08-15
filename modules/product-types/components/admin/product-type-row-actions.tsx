@@ -13,9 +13,7 @@ import { useProductTypeActions } from "../../hooks/use-product-type-actions";
 
 interface ProductTypeRowActionsProps {
 	productTypeId: string;
-	isSystem?: boolean;
 	label: string;
-	description?: string | null;
 	slug: string;
 	productsCount?: number;
 }

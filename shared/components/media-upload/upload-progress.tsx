@@ -388,7 +388,7 @@ function FileProgressItem({ file, onCancel }: FileProgressItemProps) {
 						<WarningIcon aria-hidden="true" />
 					) : isActive ? (
 						<Spinner presentational size="sm" className="text-primary" />
-					) : file.mediaType === "VIDEO" ? (
+					) : file.type === "VIDEO" ? (
 						<VideoCameraIcon className="text-muted-foreground" aria-hidden="true" />
 					) : (
 						<ImageIcon className="text-muted-foreground" aria-hidden="true" />

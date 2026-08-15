@@ -22,7 +22,6 @@ interface GallerySlideProps {
 	media: ProductMedia;
 	index: number;
 	title: string;
-	productType?: string;
 	totalImages: number;
 	isActive: boolean;
 	onOpen: () => void;
@@ -99,7 +98,6 @@ export function GallerySlide({
 	media,
 	index,
 	title,
-	productType,
 	totalImages,
 	isActive,
 	onOpen,
@@ -134,14 +132,14 @@ export function GallerySlide({
 
 	// Timeout pour éviter spinner infini
 	useEffect(() => {
-		if (media.mediaType !== "VIDEO" || videoState !== "loading") return;
+		if (media.type !== "VIDEO" || videoState !== "loading") return;
 
 		const timeout = setTimeout(() => {
 			setVideoState("error");
 		}, VIDEO_LOAD_TIMEOUT);
 
 		return () => clearTimeout(timeout);
-	}, [media.mediaType, media.url, videoState]);
+	}, [media.type, media.url, videoState]);
 
 	const handleRetry = () => {
 		setVideoState("loading");
@@ -153,7 +151,7 @@ export function GallerySlide({
 	const transitionClass = prefersReduced ? "" : "transition-opacity duration-300";
 
 	// Vidéo : même rendu mobile/desktop
-	if (media.mediaType === "VIDEO") {
+	if (media.type === "VIDEO") {
 		return (
 			// Surface de clic, PAS un contrôle — même forme que la branche image desktop
 			// plus bas. C'était un `role="button" tabIndex={0}` nommé « Ouvrir la vidéo en
@@ -171,9 +169,7 @@ export function GallerySlide({
 				onPointerDown={prefetchLightbox}
 			>
 				{videoState === "loading" && <VideoLoadingSpinner />}
-				{videoState === "error" && (
-					<VideoErrorFallback onRetry={handleRetry} poster={media.thumbnailUrl ?? undefined} />
-				)}
+				{videoState === "error" && <VideoErrorFallback onRetry={handleRetry} />}
 				<video
 					ref={videoRef}
 					preload="metadata"
@@ -186,7 +182,6 @@ export function GallerySlide({
 					loop={!prefersReduced}
 					playsInline
 					autoPlay={isActive && !prefersReduced}
-					poster={media.thumbnailUrl ?? undefined}
 					onCanPlay={() => {
 						if (videoRef.current && videoRef.current.readyState >= 3) {
 							setVideoState("ready");
@@ -208,8 +203,7 @@ export function GallerySlide({
 		);
 	}
 
-	const alt =
-		media.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType);
+	const alt = media.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages);
 
 	// Image : rendu conditionnel desktop/mobile
 	// Desktop → Zoom hover
@@ -239,7 +233,6 @@ export function GallerySlide({
 				<GalleryHoverZoom
 					src={media.url}
 					alt={alt}
-					blurDataUrl={media.blurDataUrl}
 					zoomLevel={GALLERY_ZOOM_LEVEL}
 					preload={index === 0}
 					quality={MAIN_IMAGE_QUALITY}
@@ -264,7 +257,6 @@ export function GallerySlide({
 			<GalleryPinchZoom
 				src={media.url}
 				alt={alt}
-				blurDataUrl={media.blurDataUrl}
 				isActive={isActive}
 				onTap={onOpen}
 				preload={index === 0}

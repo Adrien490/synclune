@@ -49,7 +49,7 @@ export function usePrefetchVideos({
 
 		for (const index of indicesToPrefetch) {
 			const media = medias[index];
-			if (media?.mediaType === "VIDEO" && media.url) {
+			if (media?.type === "VIDEO" && media.url) {
 				videoUrlsToPrefetch.add(media.url);
 			}
 		}

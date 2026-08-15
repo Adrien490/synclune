@@ -11,8 +11,8 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import type { CreateProductFormInstance } from "./create-product-form-types";
 
 const STATUS_OPTIONS = [
-	{ value: "DRAFT", label: "Brouillon" },
-	{ value: "PUBLIC", label: "En vente" },
+	{ value: "false", label: "Brouillon" },
+	{ value: "true", label: "En vente" },
 ];
 
 interface CreateProductEtabliBarProps {
@@ -73,15 +73,15 @@ export function CreateProductEtabliBar({
 		<form.Subscribe
 			selector={(state) =>
 				[
-					state.values.status,
-					state.values.title,
-					state.values.initialSku.priceInclTaxEuros,
-					Number(state.values.initialSku.inventory),
-					state.values.initialSku.media.length,
+					state.values.active,
+					state.values.name,
+					state.values.priceEuros,
+					Number(state.values.initialVariant.stock),
+					state.values.media.length,
 				] as const
 			}
 		>
-			{([status, title, price, inventory, mediaCount]) => {
+			{([active, name, price, stock, mediaCount]) => {
 				// ⚠️ La mise en vente à zéro stock fait partie de « ce qui manque ».
 				// Sans cette branche, la barre s'allumait et proposait « Publier le
 				// bijou » pendant que l'alerte « Publication incohérente » annonçait que
@@ -90,11 +90,11 @@ export function CreateProductEtabliBar({
 				// décrit ; ce test-ci reste le SIEN, sinon la barre s'allumerait quand
 				// même.)
 				const isBusy = isPending || isMediaUploading;
-				const publishesEmptyStock = status === "PUBLIC" && inventory <= 0;
+				const publishesEmptyStock = active === "true" && stock <= 0;
 				const missing =
 					mediaCount === 0
 						? "Ajoute une photo"
-						: !title || title.trim().length < 2
+						: !name || name.trim().length < 2
 							? "Il manque le titre"
 							: !price || price <= 0
 								? "Il manque le prix"
@@ -125,7 +125,7 @@ export function CreateProductEtabliBar({
 						 * items directs du flex de la barre.
 						 */}
 						<div className="flex flex-wrap items-center justify-between gap-3 md:contents">
-							<form.AppField name="status" listeners={{ onChange: () => haptic("selection") }}>
+							<form.AppField name="active" listeners={{ onChange: () => haptic("selection") }}>
 								{(field: {
 									name: string;
 									RadioGroupField: React.ComponentType<{
@@ -165,7 +165,7 @@ export function CreateProductEtabliBar({
 									{price && price > 0 ? formatEuro(Math.round(price * 100)) : "Prix à définir"}
 								</span>
 								<span aria-hidden="true"> · </span>
-								{inventory > 0 ? `${inventory} en stock` : "aucun stock"}
+								{stock > 0 ? `${stock} en stock` : "aucun stock"}
 							</p>
 						</div>
 
@@ -203,12 +203,12 @@ export function CreateProductEtabliBar({
 							<span>
 								{isBusy
 									? isPending
-										? status === "PUBLIC"
+										? active === "true"
 											? "Publication…"
 											: "Enregistrement…"
 										: "Téléversement…"
 									: (missing ??
-										(status === "PUBLIC" ? "Publier le bijou" : "Enregistrer le brouillon"))}
+										(active === "true" ? "Publier le bijou" : "Enregistrer le brouillon"))}
 							</span>
 							{!isBusy && (
 								<Kbd

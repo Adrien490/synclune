@@ -28,19 +28,18 @@ export type { EditProductFormProps };
 const PRODUCTS_LIST_PATH = "/admin/catalogue/produits";
 
 const FIELD_LABELS: Record<string, string> = {
-	title: "Titre du bijou",
+	name: "Nom du bijou",
 	description: "Description",
 	typeId: "Type de bijou",
 	collectionIds: "Collections",
 	status: "Visibilité",
-	"defaultSku.media": "Médias",
-	"defaultSku.colorIds": "Couleurs",
-	"defaultSku.materialIds": "Matériaux",
-	"defaultSku.size": "Taille",
-	"defaultSku.priceInclTaxEuros": "Prix de vente",
-	"defaultSku.compareAtPriceEuros": "Prix comparé",
-	"defaultSku.inventory": "Stock",
-	"defaultSku.isActive": "Statut de la variante",
+	"defaultVariant.media": "Médias",
+	"defaultVariant.colorId": "Couleur",
+	"defaultVariant.materialId": "Matériau",
+	"defaultVariant.size": "Taille",
+	"defaultVariant.priceEuros": "Prix de vente",
+	"defaultVariant.stock": "Stock",
+	"defaultVariant.active": "Statut de la variante",
 };
 
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
@@ -73,7 +72,7 @@ export function EditProductForm({
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const originalImageUrls = product.skus[0]?.images.map((img) => img.url) ?? [];
+	const originalImageUrls = product.media.map((m) => m.url);
 
 	const { form, state, action, isPending } = useUpdateProductForm({
 		product,
@@ -116,7 +115,7 @@ export function EditProductForm({
 
 	const { handleUpload } = useMediaFieldUpload({
 		uploadMedia,
-		getAltText: () => form.state.values.title || undefined,
+		getAltText: () => form.state.values.name || undefined,
 		isUploading: isMediaUploading,
 	});
 
@@ -147,23 +146,34 @@ export function EditProductForm({
 			<form.Subscribe
 				selector={(state) => ({
 					productId: state.values.productId,
-					skuId: state.values.defaultSku.skuId,
-					media: state.values.defaultSku.media,
-					status: state.values.status,
-					isActive: state.values.defaultSku.isActive,
+					variantId: state.values.defaultVariant.variantId,
+					media: state.values.media,
+					active: state.values.active,
+					typeId: state.values.typeId,
+					variantActive: state.values.defaultVariant.active,
 					collectionIds: state.values.collectionIds,
-					colorIds: state.values.defaultSku.colorIds,
-					materialIds: state.values.defaultSku.materialIds,
+					colorId: state.values.defaultVariant.colorId,
+					materialId: state.values.defaultVariant.materialId,
 				})}
 			>
-				{({ productId, skuId, media, status, isActive, collectionIds, colorIds, materialIds }) => {
+				{({
+					productId,
+					variantId,
+					media,
+					active,
+					typeId,
+					variantActive,
+					collectionIds,
+					colorId,
+					materialId,
+				}) => {
 					const currentUrls = new Set(media.map((m) => m.url));
 					const removedOriginal = originalImageUrls.filter((url) => !currentUrls.has(url));
 					const allDeleted = Array.from(new Set([...deletedImageUrls, ...removedOriginal]));
 					return (
 						<>
 							<input type="hidden" name="productId" value={productId} />
-							<input type="hidden" name="defaultSku.skuId" value={skuId} />
+							<input type="hidden" name="defaultVariant.variantId" value={variantId} />
 							{/* Stock rendu à l'ouverture — délibérément lu sur `product` et NON sur
 							    l'état du formulaire : c'est la baseline qui permet à l'action
 							    d'appliquer un delta relatif plutôt qu'un set absolu, et donc de ne
@@ -172,21 +182,18 @@ export function EditProductForm({
 							    saisie ⇒ delta toujours nul ⇒ champ de stock inopérant. */}
 							<input
 								type="hidden"
-								name="defaultSku.originalInventory"
-								value={product.skus[0]?.inventory ?? 0}
+								name="defaultVariant.originalStock"
+								value={product.variants[0]?.stock ?? 0}
 							/>
 							{media.length > 0 ? (
-								<input type="hidden" name="defaultSku.media" value={JSON.stringify(media)} />
+								<input type="hidden" name="media" value={JSON.stringify(media)} />
 							) : null}
-							<input type="hidden" name="status" value={status} />
-							<input type="hidden" name="defaultSku.isActive" value={String(isActive)} />
+							<input type="hidden" name="active" value={active} />
+							<input type="hidden" name="typeId" value={typeId} />
+							<input type="hidden" name="defaultVariant.active" value={variantActive} />
 							<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
-							<input type="hidden" name="defaultSku.colorIds" value={JSON.stringify(colorIds)} />
-							<input
-								type="hidden"
-								name="defaultSku.materialIds"
-								value={JSON.stringify(materialIds)}
-							/>
+							<input type="hidden" name="defaultVariant.colorId" value={colorId} />
+							<input type="hidden" name="defaultVariant.materialId" value={materialId} />
 							{allDeleted.length > 0 && (
 								<input type="hidden" name="deletedImageUrls" value={JSON.stringify(allDeleted)} />
 							)}
@@ -228,7 +235,7 @@ export function EditProductForm({
 			>
 				<div className="space-y-6 lg:col-span-2">
 					<MediaArrayCard
-						fieldName="defaultSku.media"
+						fieldName="defaultVariant.media"
 						viewTransitionName="product-edit-media"
 						skipUtapiDelete
 						form={form}

@@ -5,8 +5,8 @@ import { toast } from "@/shared/utils/toast";
 
 interface MediaValue {
 	url: string;
-	mediaType: "IMAGE" | "VIDEO";
-	altText?: string;
+	type: "IMAGE" | "VIDEO";
+	alt?: string;
 	thumbnailUrl?: string | null;
 	blurDataUrl?: string;
 	/** Dimensions intrinsèques — cf. MediaItem : chaque remap doit les porter. */
@@ -21,7 +21,7 @@ export interface MediaField {
 
 interface MediaUploadResult {
 	url: string;
-	mediaType: "IMAGE" | "VIDEO";
+	type: "IMAGE" | "VIDEO";
 	thumbnailUrl?: string;
 	blurDataUrl?: string;
 	width?: number;
@@ -37,13 +37,13 @@ interface UseMediaFieldUploadOptions {
 }
 
 /**
- * Handles media upload logic for product/SKU forms:
+ * Handles media upload logic for product/VARIANT forms:
  * sorts images before videos, enforces limits, prevents video-first.
  */
 export function useMediaFieldUpload({
 	uploadMedia,
 	getAltText,
-	maxCount = ARRAY_LIMITS.SKU_MEDIA,
+	maxCount = ARRAY_LIMITS.VARIANT_MEDIA,
 	isUploading = false,
 }: UseMediaFieldUploadOptions) {
 	const handleUpload = async (files: File[], field: MediaField) => {
@@ -78,12 +78,12 @@ export function useMediaFieldUpload({
 		triggerHaptic("medium");
 		try {
 			const results = await uploadMedia(filesToUpload);
-			const altText = getAltText();
+			const alt = getAltText();
 			results.forEach((result) => {
 				field.pushValue({
 					url: result.url,
-					altText,
-					mediaType: result.mediaType,
+					alt,
+					type: result.type,
 					thumbnailUrl: result.thumbnailUrl,
 					blurDataUrl: result.blurDataUrl,
 					width: result.width,

@@ -4,7 +4,6 @@ import { describe, it, expect, vi } from "vitest";
 // Prisma.QueryMode.insensitive is available as a plain string value.
 vi.mock("@/app/generated/prisma/client", () => ({
 	Prisma: { QueryMode: { insensitive: "insensitive" } },
-	PublicationStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
 }));
 
 import type { CollectionFilters, GetCollectionsParams } from "../../types/collection.types";
@@ -92,16 +91,12 @@ describe("buildCollectionFilterConditions", () => {
 
 	it("filters products using 'some' when hasProducts is true", () => {
 		const result = buildCollectionFilterConditions({ hasProducts: true });
-		expect(result.products).toEqual({
-			some: { product: { status: "PUBLIC", deletedAt: null } },
-		});
+		expect(result.products).toEqual({ some: { active: true } });
 	});
 
 	it("filters products using 'none' when hasProducts is false", () => {
 		const result = buildCollectionFilterConditions({ hasProducts: false });
-		expect(result.products).toEqual({
-			none: { product: { status: "PUBLIC", deletedAt: null } },
-		});
+		expect(result.products).toEqual({ none: { active: true } });
 	});
 
 	it("does not set a products condition when hasProducts is undefined", () => {
@@ -109,39 +104,28 @@ describe("buildCollectionFilterConditions", () => {
 		expect(result).not.toHaveProperty("products");
 	});
 
-	it("applies a single status value directly", () => {
-		const result = buildCollectionFilterConditions({ status: "PUBLIC" } as CollectionFilters);
-		expect(result.status).toBe("PUBLIC");
+	it("applies the boolean active filter", () => {
+		const result = buildCollectionFilterConditions({ active: true } as CollectionFilters);
+		expect(result.active).toBe(true);
 	});
 
-	it("applies an array of status values using 'in'", () => {
-		const result = buildCollectionFilterConditions({
-			status: ["PUBLIC", "DRAFT"],
-		} as CollectionFilters);
-		expect(result.status).toEqual({ in: ["PUBLIC", "DRAFT"] });
+	it("applies active=false as well", () => {
+		const result = buildCollectionFilterConditions({ active: false } as CollectionFilters);
+		expect(result.active).toBe(false);
 	});
 
-	it("does not set a status condition when status is undefined", () => {
-		const result = buildCollectionFilterConditions({ status: undefined } as CollectionFilters);
-		expect(result).not.toHaveProperty("status");
+	it("does not set an active condition when undefined", () => {
+		const result = buildCollectionFilterConditions({ active: undefined } as CollectionFilters);
+		expect(result).not.toHaveProperty("active");
 	});
 
-	it("combines hasProducts and status conditions independently", () => {
+	it("combines hasProducts and active conditions independently", () => {
 		const result = buildCollectionFilterConditions({
 			hasProducts: true,
-			status: ["PUBLIC", "ARCHIVED"],
+			active: true,
 		} as CollectionFilters);
-		expect(result.products).toEqual({
-			some: { product: { status: "PUBLIC", deletedAt: null } },
-		});
-		expect(result.status).toEqual({ in: ["PUBLIC", "ARCHIVED"] });
-	});
-
-	it("handles a single-element status array correctly", () => {
-		const result = buildCollectionFilterConditions({
-			status: ["DRAFT"],
-		} as CollectionFilters);
-		expect(result.status).toEqual({ in: ["DRAFT"] });
+		expect(result.products).toEqual({ some: { active: true } });
+		expect(result.active).toBe(true);
 	});
 });
 
@@ -159,9 +143,7 @@ describe("buildCollectionWhereClause", () => {
 			filters: { hasProducts: true },
 		} as GetCollectionsParams);
 		// Single condition: should be returned unwrapped, not inside AND.
-		expect(result).toEqual({
-			products: { some: { product: { status: "PUBLIC", deletedAt: null } } },
-		});
+		expect(result).toEqual({ products: { some: { active: true } } });
 		expect(result).not.toHaveProperty("AND");
 	});
 
@@ -184,17 +166,17 @@ describe("buildCollectionWhereClause", () => {
 	it("places the filter condition first inside AND", () => {
 		const result = buildCollectionWhereClause({
 			search: "argent",
-			filters: { status: "DRAFT" },
+			filters: { active: false },
 		} as GetCollectionsParams);
 		const andArray = (result as { AND: unknown[] }).AND;
 		// The first element is the filter object.
-		expect(andArray[0]).toEqual({ status: "DRAFT" });
+		expect(andArray[0]).toEqual({ active: false });
 	});
 
 	it("places the search condition second inside AND", () => {
 		const result = buildCollectionWhereClause({
 			search: "argent",
-			filters: { status: "DRAFT" },
+			filters: { active: false },
 		} as GetCollectionsParams);
 		const andArray = (result as { AND: unknown[] }).AND;
 		// The second element is the search OR object.
@@ -208,9 +190,7 @@ describe("buildCollectionWhereClause", () => {
 		} as GetCollectionsParams);
 		// Single condition - returned without AND wrapper.
 		expect(result).not.toHaveProperty("AND");
-		expect(result).toEqual({
-			products: { none: { product: { status: "PUBLIC", deletedAt: null } } },
-		});
+		expect(result).toEqual({ products: { none: { active: true } } });
 	});
 
 	it("returns an empty object when search is whitespace and filters is undefined", () => {

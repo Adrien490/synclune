@@ -10,8 +10,8 @@
 
 export interface MediaItem {
 	url: string;
-	altText: string | undefined;
-	mediaType: "IMAGE" | "VIDEO";
+	alt: string | undefined;
+	type: "IMAGE" | "VIDEO";
 	thumbnailUrl: string | undefined;
 	blurDataUrl: string | undefined;
 	/**
@@ -51,7 +51,7 @@ export interface MediaUploadResult {
 	/** Uploaded file URL */
 	url: string;
 	/** Media type */
-	mediaType: "IMAGE" | "VIDEO";
+	type: "IMAGE" | "VIDEO";
 	/** Original file name */
 	fileName: string;
 	/** Blur placeholder in base64 (images and videos) */
@@ -79,7 +79,7 @@ export interface FileProgress {
 	/** Bytes uploaded so far (uploading phase only) */
 	bytesUploaded?: number;
 	/** Media type */
-	mediaType: "IMAGE" | "VIDEO";
+	type: "IMAGE" | "VIDEO";
 	/** Human-readable error message if state === "failed" */
 	error?: string;
 }

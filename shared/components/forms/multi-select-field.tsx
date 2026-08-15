@@ -61,7 +61,7 @@ export const MultiSelectField = ({
 			 * `MultiSelect` ne rend aucun contrôle natif : sans cet input caché, le
 			 * champ était absent du `FormData` d'une soumission `action=` — donc
 			 * silencieusement vide côté Server Action. Sérialisé en JSON, comme les
-			 * `colorIds` / `materialIds` des formulaires SKU.
+			 * `colorIds` / `materialIds` des formulaires VARIANT.
 			 */}
 			<input type="hidden" name={field.name} value={JSON.stringify(field.state.value)} />
 

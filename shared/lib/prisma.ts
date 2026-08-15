@@ -15,10 +15,10 @@ const adapter = new PrismaNeon({ connectionString: databaseUrl! });
  * Client Prisma avec Neon serverless adapter
  *
  * Soft Delete :
- * - Les modèles Order, User, Product, ProductSku et Discount ont un champ `deletedAt` pour le soft delete
+ * - Les modèles Order, User, Product, ProductVariant et Discount ont un champ `deletedAt` pour le soft delete
  * - Le filtrage automatique n'est PAS implémenté via $extends pour éviter
  *   les problèmes de compatibilité avec les transactions Prisma
- * - Utiliser `where: { deletedAt: null }` explicitement dans les requêtes
+ * - Utiliser `where: {}` explicitement dans les requêtes
  *
  * Conformité légale (Art. L123-22 Code de Commerce) :
  * - Ne JAMAIS supprimer physiquement les données comptables (Order, Refund, Payment)
@@ -44,21 +44,11 @@ if (process.env.NODE_ENV !== "production") {
 
 export { prisma };
 
-/**
- * Helper pour filtrer les enregistrements soft-deleted
- * À utiliser dans les clauses `where` des requêtes Prisma
- *
- * @example
- * import { notDeleted } from "@/shared/lib/prisma";
- * const users = await prisma.user.findMany({
- *   where: { ...notDeleted, role: "USER" }
- * });
- */
-export const notDeleted = { deletedAt: null } as const;
+// Plus de `notDeleted` : le soft delete a disparu avec le schéma lean (lot 2).
 
 // Plus de helper `softDelete` : sa DERNIÈRE entrée (`discount`) est partie avec
 // les codes promo le 2026-08-05, et les cinq précédentes (`order`, `user`,
-// `orderNote`, `product`, `productSku`) n'avaient déjà aucun appelant. Chaque
+// `orderNote`, `product`, `productVariant`) n'avaient déjà aucun appelant. Chaque
 // module pose son `deletedAt` dans sa propre transaction, avec les écritures qui
 // l'accompagnent (purge des liaisons, audit, promotion d'un défaut) ; un helper
 // mono-ligne à côté ne faisait que suggérer un raccourci qui aurait sauté ces

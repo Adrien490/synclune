@@ -5,7 +5,7 @@ import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants
 /**
  * Cookie du panier : SSOT du panier depuis le retrait de la base (2026-08-04),
  * sur le modèle de `wishlist-cookie.ts`. Le cookie porte directement les lignes
- * (SKU, quantité, prix constaté à l'ajout) — il n'y a plus ni table `Cart` ni
+ * (VARIANT, quantité, prix constaté à l'ajout) — il n'y a plus ni table `Cart` ni
  * table `CartItem`. Plus de code promo non plus : les `Discount` ont été retirés
  * le 2026-08-05, avec la clé `d` de la forme sérialisée. Un ancien cookie qui la
  * porte encore reste lisible — les clés inconnues sont simplement ignorées.
@@ -30,7 +30,7 @@ const CUID2_LIKE_REGEX = /^[a-z][a-z0-9]{1,31}$/;
  * Plafond de prix accepté dans le cookie (10 000 € en centimes).
  *
  * ⚠️ Ce n'est PAS une garde de facturation : `priceAtAdd` est un témoin
- * d'affichage, jamais une base de calcul. Le checkout re-lit `sku.priceInclTax`
+ * d'affichage, jamais une base de calcul. Le checkout re-lit `variant.priceCents`
  * en base (`computeCartSubtotal`) et refuse la commande si le témoin diverge
  * (`confirm-checkout.ts`, étape 6). La borne ne sert qu'à empêcher un cookie
  * forgé d'afficher un total absurde avant d'être rejeté.
@@ -39,7 +39,7 @@ const MAX_PRICE_AT_ADD = 1_000_000;
 
 /** Une ligne du panier telle qu'elle vit dans le cookie. */
 interface CartCookieItem {
-	skuId: string;
+	variantId: string;
 	quantity: number;
 	/**
 	 * Prix TTC unitaire constaté à l'ajout, en centimes. Témoin d'affichage et
@@ -55,7 +55,7 @@ export interface CartCookieValue {
 const EMPTY_CART: CartCookieValue = { items: [] };
 
 /**
- * Forme sérialisée, volontairement compacte : `{"i":[[skuId,qty,price]]}`.
+ * Forme sérialisée, volontairement compacte : `{"i":[[variantId,qty,price]]}`.
  *
  * ⚠️ Budget 4 Ko. Next sérialise la valeur avec `encodeURIComponent`, donc chaque
  * caractère de ponctuation JSON (`[`, `]`, `"`, `,`) coûte 3 octets une fois
@@ -63,7 +63,7 @@ const EMPTY_CART: CartCookieValue = { items: [] };
  * ponctuation et les nombres) : à `MAX_CART_ITEMS` = 50, le cookie plafonne vers
  * 2,7 Ko. Relever `MAX_CART_ITEMS` impose de refaire ce calcul.
  */
-type SerializedItem = [skuId: string, quantity: number, priceAtAdd: number];
+type SerializedItem = [variantId: string, quantity: number, priceAtAdd: number];
 interface SerializedCart {
 	i?: unknown;
 }
@@ -75,9 +75,9 @@ function isPositiveInt(value: unknown, max: number): value is number {
 function parseItem(entry: unknown): CartCookieItem | null {
 	if (!Array.isArray(entry)) return null;
 
-	const [skuId, quantity, priceAtAdd] = entry as Partial<SerializedItem>;
+	const [variantId, quantity, priceAtAdd] = entry as Partial<SerializedItem>;
 
-	if (typeof skuId !== "string" || !CUID2_LIKE_REGEX.test(skuId)) return null;
+	if (typeof variantId !== "string" || !CUID2_LIKE_REGEX.test(variantId)) return null;
 	if (!isPositiveInt(quantity, MAX_QUANTITY_PER_ORDER)) return null;
 	// `priceAtAdd` peut valoir 0 (article offert) — borne basse à 0, pas à 1.
 	if (
@@ -89,7 +89,7 @@ function parseItem(entry: unknown): CartCookieItem | null {
 		return null;
 	}
 
-	return { skuId, quantity, priceAtAdd };
+	return { variantId, quantity, priceAtAdd };
 }
 
 /**
@@ -125,8 +125,8 @@ export async function readCartCookie(): Promise<CartCookieValue> {
 		const seen = new Set<string>();
 		for (const entry of i) {
 			const item = parseItem(entry);
-			if (!item || seen.has(item.skuId)) continue;
-			seen.add(item.skuId);
+			if (!item || seen.has(item.variantId)) continue;
+			seen.add(item.variantId);
 			items.push(item);
 			if (items.length >= MAX_CART_ITEMS) break;
 		}
@@ -154,7 +154,7 @@ export async function writeCartCookie(cart: CartCookieValue): Promise<void> {
 	}
 
 	const payload: { i: SerializedItem[] } = {
-		i: items.map((item) => [item.skuId, item.quantity, item.priceAtAdd]),
+		i: items.map((item) => [item.variantId, item.quantity, item.priceAtAdd]),
 	};
 
 	cookieStore.set(CART_COOKIE_NAME, JSON.stringify(payload), {

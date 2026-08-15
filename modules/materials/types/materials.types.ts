@@ -15,17 +15,7 @@ export type GetMaterialsParamsInput = z.input<typeof getMaterialsSchema>;
 
 export type GetMaterialsParams = z.output<typeof getMaterialsSchema>;
 
-/**
- * Le shape retourné par `getMaterials` est volontairement remappé pour préserver
- * l'API publique stable (`_count.skus`) côté consumers UI, malgré le rename
- * interne de la relation Prisma en `skuMaterials` (M2M depuis 2026-05-14).
- */
-type MaterialListItem = Omit<
-	Prisma.MaterialGetPayload<{ select: typeof GET_MATERIALS_SELECT }>,
-	"_count"
-> & {
-	_count: { skus: number };
-};
+type MaterialListItem = Prisma.MaterialGetPayload<{ select: typeof GET_MATERIALS_SELECT }>;
 
 export type GetMaterialsReturn = {
 	materials: MaterialListItem[];
@@ -53,8 +43,7 @@ export type GetMaterialReturn = Prisma.MaterialGetPayload<{
 export type MaterialOption = {
 	id: string;
 	name: string;
-	slug: string;
 	_count?: {
-		skus: number;
+		variants: number;
 	};
 };

@@ -34,35 +34,16 @@ export function buildCollectionFilterConditions(
 
 	if (filters.hasProducts !== undefined) {
 		if (filters.hasProducts === true) {
-			// Only count PUBLIC products (consistent with storefront display)
-			conditions.products = {
-				some: {
-					product: {
-						status: "PUBLIC",
-						deletedAt: null,
-					},
-				},
-			};
+			// Ne compter que les produits actifs (cohérent avec le storefront)
+			conditions.products = { some: { active: true } };
 		} else {
-			// No PUBLIC products (consistent with hasProducts: true filter)
-			conditions.products = {
-				none: {
-					product: {
-						status: "PUBLIC",
-						deletedAt: null,
-					},
-				},
-			};
+			conditions.products = { none: { active: true } };
 		}
 	}
 
-	// Filter by status
-	if (filters.status !== undefined) {
-		if (Array.isArray(filters.status)) {
-			conditions.status = { in: filters.status };
-		} else {
-			conditions.status = filters.status;
-		}
+	// Filtre par statut (booléen depuis le schéma lean)
+	if (filters.active !== undefined) {
+		conditions.active = filters.active;
 	}
 
 	return conditions;

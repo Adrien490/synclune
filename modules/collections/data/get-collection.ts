@@ -1,5 +1,4 @@
 import { logger } from "@/shared/lib/logger";
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -73,7 +72,7 @@ async function fetchCollection(params: GetCollectionParams): Promise<GetCollecti
 /**
  * Récupère une collection avec un select léger pour le storefront
  * (metadata, OG image, structured data). Évite le over-fetching de
- * GET_COLLECTION_SELECT qui charge tous les SKUs et images.
+ * GET_COLLECTION_SELECT qui charge tous les VARIANTs et images.
  */
 export async function getStorefrontCollectionBySlug(
 	params: Partial<GetCollectionParams>,
@@ -95,7 +94,7 @@ async function fetchStorefrontCollection(
 
 	try {
 		const collection = await prisma.collection.findUnique({
-			where: { slug: params.slug, status: PublicationStatus.PUBLIC },
+			where: { slug: params.slug, active: true },
 			select: GET_COLLECTION_STOREFRONT_SELECT,
 		});
 

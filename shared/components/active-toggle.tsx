@@ -3,7 +3,7 @@
 import { Switch } from "@/shared/components/ui/switch";
 
 interface ActiveToggleProps {
-	isActive: boolean;
+	active: boolean;
 	onToggle: (checked: boolean) => void;
 	isPending?: boolean;
 	disabled?: boolean;
@@ -12,7 +12,7 @@ interface ActiveToggleProps {
 }
 
 export function ActiveToggle({
-	isActive,
+	active,
 	onToggle,
 	isPending = false,
 	disabled = false,
@@ -21,10 +21,10 @@ export function ActiveToggle({
 }: ActiveToggleProps) {
 	return (
 		<Switch
-			checked={isActive}
+			checked={active}
 			onCheckedChange={onToggle}
 			disabled={isPending || disabled}
-			aria-label={isActive ? activeLabel : inactiveLabel}
+			aria-label={active ? activeLabel : inactiveLabel}
 		/>
 	);
 }

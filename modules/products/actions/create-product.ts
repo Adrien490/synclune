@@ -1,6 +1,5 @@
 "use server";
 
-import { randomUUID } from "crypto";
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
@@ -15,67 +14,47 @@ import {
 	validateInput,
 	success,
 	error,
-	validationError,
 	handleActionError,
 	safeFormGetJSON,
 	BusinessError,
 } from "@/shared/lib/actions";
-import { validatePublicProductCreation } from "../services/product-validation.service";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
-import { ADMIN_PRODUCT_CREATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { logger } from "@/shared/lib/logger";
 
 /**
- * Server Action pour creer un produit
- * Compatible avec useActionState de React 19
+ * Server Action pour créer un produit — schéma lean (lot 2) :
+ * produit { name, priceCents, active, media[] } + variante initiale
+ * { colorId?, materialId?, size?, priceCents?, stock, active }.
  */
 export async function createProduct(
 	_: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Vérification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 1.1 Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_CREATE_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 2. Extraction des donnees du FormData
-		// Parse media from form: initialSku.media is sent as JSON array
-		const media = safeFormGetJSON<unknown[]>(formData, "initialSku.media") ?? [];
-		// Couleurs M2M sérialisées en JSON (1re = principale)
-		const initialSkuColorIds = safeFormGetJSON<string[]>(formData, "initialSku.colorIds") ?? [];
-		// Matériaux M2M sérialisés en JSON (cohérent avec collectionIds)
-		const initialSkuMaterialIds =
-			safeFormGetJSON<string[]>(formData, "initialSku.materialIds") ?? [];
+		// 2. Extraction des données du FormData
+		const media = safeFormGetJSON<unknown[]>(formData, "media") ?? [];
 
 		const rawData = {
-			title: formData.get("title"),
+			name: formData.get("name"),
 			description: formData.get("description"),
+			priceEuros: formData.get("priceEuros"),
+			// Champ absent ⇒ `.default(false)` du schéma : un appel sans champ
+			// `active` ne publie PAS le bijou.
+			active: formData.get("active") ?? undefined,
 			typeId: formData.get("typeId") ?? "",
 			collectionIds: safeFormGetJSON<string[]>(formData, "collectionIds") ?? [],
-			// Champ absent => on laisse `undefined` pour que le `.default("DRAFT")` de
-			// `createProductSchema` s'applique. Un fallback `?? "PUBLIC"` ici masquait ce
-			// defaut sur : un appel sans champ `status` publiait immediatement le bijou.
-			status: formData.get("status") ?? undefined,
-			initialSku: {
-				// Plus de lecture de `initialSku.sku` : aucun formulaire ne rend ce champ et
-				// `createProductSchema` n'a pas cette clé — le code SKU est généré plus bas,
-				// dans la transaction. La lecture ne faisait qu'entretenir l'idée d'un champ
-				// saisissable.
-				priceInclTaxEuros: formData.get("initialSku.priceInclTaxEuros"),
-				compareAtPriceEuros: formData.get("initialSku.compareAtPriceEuros"),
-				inventory: formData.get("initialSku.inventory"),
-				// Si le champ n'existe pas dans le FormData, utiliser true par defaut
-				// (formBooleanSchema rejette null — le fallback boolean est couvert par l'union)
-				isActive: formData.get("initialSku.isActive") ?? true,
-				colorIds: initialSkuColorIds,
-				materialIds: initialSkuMaterialIds,
-				size: formData.get("initialSku.size") ?? "",
-				media,
+			media,
+			initialVariant: {
+				priceEuros: formData.get("initialVariant.priceEuros") ?? "",
+				stock: formData.get("initialVariant.stock"),
+				active: formData.get("initialVariant.active") ?? true,
+				colorId: formData.get("initialVariant.colorId") ?? "",
+				materialId: formData.get("initialVariant.materialId") ?? "",
+				size: formData.get("initialVariant.size") ?? "",
 			},
 		};
 
@@ -85,68 +64,32 @@ export async function createProduct(
 
 		const validatedData = validation.data;
 
-		// 3.5. Validation metier : Produit PUBLIC doit avoir un SKU actif
-		if (validatedData.status === "PUBLIC") {
-			const validation = validatePublicProductCreation(validatedData.initialSku);
-			if (!validation.isValid) {
-				return validationError(validation.errorMessage!);
-			}
-		}
-
-		// 4. Normalize empty strings to null for optional foreign keys
-		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
 		const normalizedCollectionIds = validatedData.collectionIds;
-		// Dedupe couleurs et matériaux (au cas où l'UI laisse passer un doublon)
-		// tout en préservant l'ordre saisi (1er = principal).
-		const normalizedColorIds = Array.from(new Set(validatedData.initialSku.colorIds));
-		const normalizedMaterialIds = Array.from(new Set(validatedData.initialSku.materialIds));
-		const normalizedSize = validatedData.initialSku.size?.trim() ?? null;
-		// Sanitisation XSS de la description
+		const normalizedSize = validatedData.initialVariant.size?.trim() ?? null;
 		const normalizedDescription = validatedData.description?.trim()
 			? sanitizeText(validatedData.description)
+			: "";
+
+		// 4. Prix en centimes
+		const productPriceCents = Math.round(validatedData.priceEuros * 100);
+		const variantPriceCents = validatedData.initialVariant.priceEuros
+			? Math.round(validatedData.initialVariant.priceEuros * 100)
 			: null;
 
-		// 5. Convert priceInclTaxEuros to cents for database
-		const priceInclTaxCents = Math.round(validatedData.initialSku.priceInclTaxEuros * 100);
-		const compareAtPriceCents = validatedData.initialSku.compareAtPriceEuros
-			? Math.round(validatedData.initialSku.compareAtPriceEuros * 100)
-			: null;
-
-		// 6. Prepare images (premier = principal via position 0)
-		// Note: La validation que le premier média est une IMAGE (pas VIDEO) est faite
-		// dans le schéma Zod (createProductSchema.refine)
-		const allImages = validatedData.initialSku.media.map((media, index) => ({
-			...media,
-			mediaType: index === 0 ? ("IMAGE" as const) : media.mediaType, // Force IMAGE for first
+		// 5. Médias du produit (premier = principal via position 0, forcé IMAGE par le schéma)
+		const allMedia = validatedData.media.map((m, index) => ({
+			url: m.url,
+			alt: m.alt ?? null,
+			type: index === 0 ? ("IMAGE" as const) : (m.type ?? detectMediaType(m.url)),
 			position: index,
 		}));
 
-		// 7. Create product in transaction
+		// 6. Création en transaction
 		const { product, collectionSlugs } = await prisma.$transaction(async (tx) => {
-			// Generate unique slug INSIDE transaction to prevent race conditions
-			const finalSlug = await generateSlug(tx, "product", validatedData.title);
+			// Slug unique généré DANS la transaction (anti-race)
+			const finalSlug = await generateSlug(tx, "product", validatedData.name);
 
-			// Validate references exist within the transaction
-			if (normalizedTypeId) {
-				const productType = await tx.productType.findUnique({
-					where: { id: normalizedTypeId },
-					select: { id: true, isActive: true },
-				});
-				// A la creation, le type est toujours « choisi » : exiger un type actif est
-				// correct ici (contrairement a updateProduct, ou un type reconduit passe).
-				if (!productType) {
-					throw new BusinessError("Le type de bijou sélectionné n'existe pas.");
-				}
-				if (!productType.isActive) {
-					throw new BusinessError(
-						"Le type de bijou sélectionné est désactivé. Choisis un type actif.",
-					);
-				}
-			}
-
-			// Validate all collections exist and capture slugs inside the transaction
-			// to avoid a race condition where a collection is deleted between the
-			// transaction commit and the post-transaction fetch.
+			// Collections : existence + slugs capturés dans la transaction
 			let fetchedCollectionSlugs: string[] = [];
 			if (normalizedCollectionIds.length > 0) {
 				const collections = await tx.collection.findMany({
@@ -154,128 +97,65 @@ export async function createProduct(
 					select: { id: true, slug: true },
 				});
 				if (collections.length !== normalizedCollectionIds.length) {
-					throw new Error("Une ou plusieurs collections spécifiées n'existent pas.");
+					throw new BusinessError("Une ou plusieurs collections spécifiées n'existent pas.");
 				}
 				fetchedCollectionSlugs = collections.map((c) => c.slug);
 			}
 
-			// Validate colors if provided (M2M)
-			if (normalizedColorIds.length > 0) {
-				const colors = await tx.color.findMany({
-					where: { id: { in: normalizedColorIds } },
+			// Couleur / matériau : existence
+			if (validatedData.initialVariant.colorId) {
+				const color = await tx.color.findUnique({
+					where: { id: validatedData.initialVariant.colorId },
 					select: { id: true },
 				});
-				if (colors.length !== normalizedColorIds.length) {
-					throw new Error("Une ou plusieurs couleurs spécifiées n'existent pas.");
-				}
+				if (!color) throw new BusinessError("La couleur sélectionnée n'existe pas.");
 			}
-
-			// Validate materials if provided (M2M)
-			if (normalizedMaterialIds.length > 0) {
-				const materials = await tx.material.findMany({
-					where: { id: { in: normalizedMaterialIds } },
+			if (validatedData.initialVariant.materialId) {
+				const material = await tx.material.findUnique({
+					where: { id: validatedData.initialVariant.materialId },
 					select: { id: true },
 				});
-				if (materials.length !== normalizedMaterialIds.length) {
-					throw new Error("Un ou plusieurs matériaux spécifiés n'existent pas.");
-				}
+				if (!material) throw new BusinessError("Le matériau sélectionné n'existe pas.");
 			}
-
-			// Create product
-			const productData = {
-				title: validatedData.title,
-				slug: finalSlug,
-				description: normalizedDescription,
-				status: validatedData.status,
-				typeId: normalizedTypeId,
-			};
 
 			const createdProduct = await tx.product.create({
-				data: productData,
+				data: {
+					name: validatedData.name,
+					slug: finalSlug,
+					description: normalizedDescription,
+					priceCents: productPriceCents,
+					active: validatedData.active,
+					typeId: validatedData.typeId ?? null,
+					collections: {
+						connect: normalizedCollectionIds.map((id) => ({ id })),
+					},
+					media: {
+						create: allMedia,
+					},
+					variants: {
+						create: {
+							priceCents: variantPriceCents,
+							stock: validatedData.initialVariant.stock,
+							active: validatedData.initialVariant.active,
+							colorId: validatedData.initialVariant.colorId ?? null,
+							materialId: validatedData.initialVariant.materialId ?? null,
+							size: normalizedSize,
+						},
+					},
+				},
 				select: {
 					id: true,
-					title: true,
+					name: true,
 					slug: true,
-					description: true,
-					status: true,
-					typeId: true,
+					active: true,
 					createdAt: true,
-					updatedAt: true,
 				},
 			});
-
-			// Create ProductCollection associations (many-to-many)
-			if (normalizedCollectionIds.length > 0) {
-				await tx.productCollection.createMany({
-					data: normalizedCollectionIds.map((collectionId) => ({
-						productId: createdProduct.id,
-						collectionId,
-					})),
-				});
-			}
-
-			// Generate SKU with cryptographically secure random ID
-			const skuValue = `SKU-${(randomUUID().split("-")[0] ?? "").toUpperCase()}`;
-
-			const skuData = {
-				productId: createdProduct.id,
-				sku: skuValue,
-				priceInclTax: priceInclTaxCents,
-				inventory: validatedData.initialSku.inventory,
-				isActive: validatedData.initialSku.isActive,
-				// Première variante d'un produit neuf : rang 0 d'office (le
-				// représentant est le rang 0 de (position asc, id asc) — lot A2).
-				position: 0,
-				size: normalizedSize,
-			};
-
-			// Create initial SKU + couleurs + matériaux M2M (ordre saisi préservé via `position`)
-			const createdSku = await tx.productSku.create({
-				data: {
-					...skuData,
-					compareAtPrice: compareAtPriceCents,
-					colors: {
-						create: normalizedColorIds.map((colorId, index) => ({
-							colorId,
-							position: index,
-						})),
-					},
-					materials: {
-						create: normalizedMaterialIds.map((materialId, index) => ({
-							materialId,
-							position: index,
-						})),
-					},
-				},
-			});
-
-			// Create SKU images
-			if (allImages.length > 0) {
-				for (let i = 0; i < allImages.length; i++) {
-					const image = allImages[i];
-					if (!image) continue;
-					const imageData = {
-						skuId: createdSku.id,
-						url: image.url,
-						thumbnailUrl: image.thumbnailUrl ?? null,
-						blurDataUrl: image.blurDataUrl ?? null,
-						altText: image.altText ?? null,
-						mediaType: image.mediaType ?? detectMediaType(image.url),
-						width: image.width ?? null,
-						height: image.height ?? null,
-						position: image.position,
-					};
-
-					await tx.skuMedia.create({
-						data: imageData,
-					});
-				}
-			}
 
 			return { product: createdProduct, collectionSlugs: fetchedCollectionSlugs };
 		});
 
-		// 8. Delete orphaned UploadThing files (removed from form before submit)
+		// 7. Purge des fichiers UploadThing retirés du formulaire avant envoi
 		const rawDeletedImageUrls = safeFormGetJSON<unknown[]>(formData, "deletedImageUrls") ?? [];
 		const deletedImageUrls = rawDeletedImageUrls.filter(
 			(url): url is string => typeof url === "string" && url.length > 0 && url.length <= 2048,
@@ -286,26 +166,19 @@ export async function createProduct(
 			});
 		}
 
-		// 9. Invalidate cache tags
-		// Invalider le cache produit
+		// 8. Invalidation de cache
 		const productTags = getProductInvalidationTags(product.slug, product.id);
 		productTags.forEach((tag) => updateTag(tag));
-
-		// Invalider les caches des collections (slugs captures dans la transaction)
 		for (const slug of collectionSlugs) {
-			const collectionTags = getCollectionInvalidationTags(slug);
-			collectionTags.forEach((tag) => updateTag(tag));
+			getCollectionInvalidationTags(slug).forEach((tag) => updateTag(tag));
 		}
 
-		// 10. Success
+		// 9. Succès
 		return success(
-			`Nouveau bijou « ${product.title} » dans l'atelier${
-				product.status === "PUBLIC" ? " — publié" : ""
-			}`,
+			`Nouveau bijou « ${product.name} » dans l'atelier${product.active ? " — publié" : ""}`,
 			product,
 		);
 	} catch (e) {
-		// Gestion spéciale des contraintes d'unicité (slug)
 		if (e instanceof Error && e.message.includes("Unique constraint")) {
 			return error("Une erreur technique est survenue. Réessaie.");
 		}

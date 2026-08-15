@@ -225,7 +225,7 @@ function CartSheetBody({
 									<li key={item.id} className="flex items-center gap-1">
 										<span aria-hidden="true">•</span>
 										<span className="line-clamp-1">
-											{item.sku.product.title}
+											{item.variant.product.name}
 											{` (${getCartItemIssueLabel(item)})`}
 										</span>
 									</li>

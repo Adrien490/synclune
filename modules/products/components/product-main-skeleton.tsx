@@ -10,7 +10,7 @@ export const PRODUCT_MAIN_SKELETON_DEFAULTS = {
 interface ProductMainSkeletonProps {
 	/**
 	 * Nombre d'axes de variante que `VariantSelector` va RÉELLEMENT rendre.
-	 * `0` retire toute la carte : sur une fiche mono-SKU, `VariantSelector`
+	 * `0` retire toute la carte : sur une fiche mono-VARIANT, `VariantSelector`
 	 * retourne `null` et le squelette réservait quand même ~250 px — le contenu
 	 * remontait d'autant au swap.
 	 */
@@ -128,7 +128,7 @@ export function ProductMainSkeleton({
 						</div>
 
 						{/* 2b. VariantSelector — Card + nuancier (plaquettes 88 × 56 + libellé).
-						    Absent quand le produit n'a qu'un SKU : `VariantSelector` rend
+						    Absent quand le produit n'a qu'un VARIANT : `VariantSelector` rend
 						    `null`, et une carte réservée pour rien fait remonter tout le bas
 						    de la colonne au swap. */}
 						{variantAxisCount > 0 && (

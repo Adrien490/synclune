@@ -5,7 +5,7 @@ import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 /**
  * Récupère le prix maximum parmi tous les produits publics
- * Prend en compte à la fois les prix de base et les prix des SKUs
+ * Prend en compte à la fois les prix de base et les prix des VARIANTs
  *
  * Utilise "use cache" avec cacheLife pour un profil de cache long car :
  * - Les prix changent rarement (ajout de produits peu fréquent)
@@ -37,21 +37,20 @@ async function fetchMaxProductPrice(): Promise<number> {
 	cacheLife("reference");
 	cacheTag(PRODUCTS_CACHE_TAGS.MAX_PRICE);
 
-	// Récupérer le prix maximum des SKUs actifs uniquement (utiliser priceInclTax)
-	const maxSkuPrice = await prisma.productSku.aggregate({
+	// Récupérer le prix maximum des VARIANTs actifs uniquement (utiliser priceCents)
+	const maxVariantPrice = await prisma.productVariant.aggregate({
 		where: {
-			isActive: true,
+			active: true,
 			product: {
-				status: "PUBLIC",
-				deletedAt: null,
+				active: true,
 			},
 		},
 		_max: {
-			priceInclTax: true,
+			priceCents: true,
 		},
 	});
 
-	const maxPrice = maxSkuPrice._max.priceInclTax ?? 0;
+	const maxPrice = maxVariantPrice._max.priceCents ?? 0;
 
 	// Retourner un minimum de 200€ si aucun prix n'est trouvé
 	// et arrondir à la dizaine supérieure pour une meilleure UX

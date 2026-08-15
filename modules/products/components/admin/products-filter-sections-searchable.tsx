@@ -17,6 +17,7 @@ import { SEARCH_THRESHOLD } from "./products-filter-sheet.types";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { FilterForm, FilterFieldApi } from "./products-filter-sheet.types";
+import { slugify } from "@/shared/utils/generate-slug";
 
 // ============================================================================
 // COLORS SECTION
@@ -61,18 +62,18 @@ export function ColorsSection({
 								<p className="text-muted-foreground py-2 text-center text-xs">Aucun résultat</p>
 							) : (
 								filteredColors.map((color) => {
-									const isSelected = field.state.value.includes(color.slug);
-									const light = isLightColor(color.hex, 0.85);
+									const isSelected = field.state.value.includes(slugify(color.name));
+									const light = isLightColor(color.hex ?? "#CCCCCC", 0.85);
 									return (
 										<CheckboxFilterItem
-											key={color.slug}
-											id={`admin-color-${color.slug}`}
+											key={slugify(color.name)}
+											id={`admin-color-${slugify(color.name)}`}
 											checked={isSelected}
 											onCheckedChange={(checked) => {
 												if (checked && !isSelected) {
-													field.pushValue(color.slug);
+													field.pushValue(slugify(color.name));
 												} else if (!checked && isSelected) {
-													const index = field.state.value.indexOf(color.slug);
+													const index = field.state.value.indexOf(slugify(color.name));
 													field.removeValue(index);
 												}
 											}}
@@ -85,18 +86,18 @@ export function ColorsSection({
 															? "ring-primary ring-2 ring-offset-1"
 															: "ring-1 ring-black/5 ring-inset",
 													)}
-													style={{ backgroundColor: color.hex }}
+													style={{ backgroundColor: color.hex ?? undefined }}
 												>
 													{isSelected && (
 														<CheckIcon
 															className="absolute inset-0 m-auto size-3"
-															style={{ color: getContrastTextColor(color.hex) }}
+															style={{ color: getContrastTextColor(color.hex ?? "#CCCCCC") }}
 															weight="bold"
 														/>
 													)}
 												</span>
 											}
-											count={color._count.skus}
+											count={color._count.variants}
 										>
 											{color.name}
 										</CheckboxFilterItem>
@@ -154,21 +155,21 @@ export function MaterialsSection({
 								<p className="text-muted-foreground py-2 text-center text-xs">Aucun résultat</p>
 							) : (
 								filteredMaterials.map((material) => {
-									const isSelected = field.state.value.includes(material.slug);
+									const isSelected = field.state.value.includes(slugify(material.name));
 									return (
 										<CheckboxFilterItem
-											key={material.slug}
-											id={`admin-material-${material.slug}`}
+											key={slugify(material.name)}
+											id={`admin-material-${slugify(material.name)}`}
 											checked={isSelected}
 											onCheckedChange={(checked) => {
 												if (checked && !isSelected) {
-													field.pushValue(material.slug);
+													field.pushValue(slugify(material.name));
 												} else if (!checked && isSelected) {
-													const index = field.state.value.indexOf(material.slug);
+													const index = field.state.value.indexOf(slugify(material.name));
 													field.removeValue(index);
 												}
 											}}
-											count={material._count?.skus}
+											count={material._count?.variants}
 										>
 											{material.name}
 										</CheckboxFilterItem>

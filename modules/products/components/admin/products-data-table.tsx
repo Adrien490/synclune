@@ -2,11 +2,7 @@
 import Link from "next/link";
 
 // External packages
-import { ArchiveIcon, GlobeIcon, NotePencilIcon, PackageIcon } from "@phosphor-icons/react/ssr";
-import type { Icon } from "@phosphor-icons/react";
-
-// Generated types
-import { PublicationStatus } from "@/app/generated/prisma/client";
+import { GlobeIcon, NotePencilIcon, PackageIcon } from "@phosphor-icons/react/ssr";
 
 // Shared components
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
@@ -22,8 +18,8 @@ import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant
 
 // Module imports
 import {
-	PRODUCT_STATUS_LABELS,
-	PRODUCT_STATUS_VARIANTS,
+	productStatusLabel,
+	productStatusVariant,
 } from "@/modules/products/constants/product-status-display";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
 import { calculatePriceInfo } from "@/modules/products/services/product-pricing.service";
@@ -36,12 +32,6 @@ import { getProductTotalStock } from "@/modules/products/utils/get-product-total
 // Local components
 import { ProductImageCell } from "./product-image-cell";
 import { ProductRowActions } from "./product-row-actions";
-
-const PRODUCT_STATUS_ICONS: Record<PublicationStatus, Icon> = {
-	[PublicationStatus.PUBLIC]: GlobeIcon,
-	[PublicationStatus.DRAFT]: NotePencilIcon,
-	[PublicationStatus.ARCHIVED]: ArchiveIcon,
-};
 
 interface ProductsDataTableProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -102,39 +92,34 @@ export async function ProductsDataTable({
 			</TableHeader>
 			<TableBody>
 				{products.map((product) => {
-					const totalStock = getProductTotalStock(product.skus);
-					const skusCount = product._count.skus || 0;
-					const priceInfo = calculatePriceInfo(product.skus);
+					const totalStock = getProductTotalStock(product.variants);
+					const variantsCount = product._count.variants || 0;
+					const priceInfo = calculatePriceInfo(product.variants, product.priceCents);
 
 					return (
 						<TableRow key={product.id}>
 							<TableCell className="py-3">
-								<ProductImageCell
-									// flatMap sur TOUS les SKUs (parité avec product-mobile-item) :
-									// `skus[0]` limitait vignette et lightbox à la première variante.
-									images={product.skus.flatMap((sku) => sku.images)}
-									productTitle={product.title}
-								/>
+								<ProductImageCell images={product.media} productTitle={product.name} />
 							</TableCell>
 							<TableCell>
 								<div className="overflow-hidden">
 									<Link
 										href={`/admin/catalogue/produits/${product.slug}`}
 										className="text-foreground hover:text-foreground block truncate font-semibold hover:underline"
-										title={`Voir ${product.title}`}
-										aria-label={`Voir ${product.title}`}
+										title={`Voir ${product.name}`}
+										aria-label={`Voir ${product.name}`}
 									>
-										{product.title}
+										{product.name}
 									</Link>
 								</div>
 							</TableCell>
 							<TableCell>
 								{(() => {
-									const label = PRODUCT_STATUS_LABELS[product.status];
-									const Icon = PRODUCT_STATUS_ICONS[product.status];
+									const label = productStatusLabel(product.active);
+									const Icon = product.active ? GlobeIcon : NotePencilIcon;
 									return (
 										<Badge
-											variant={PRODUCT_STATUS_VARIANTS[product.status]}
+											variant={productStatusVariant(product.active)}
 											role="status"
 											aria-label={`Statut : ${label}`}
 										>
@@ -145,11 +130,11 @@ export async function ProductsDataTable({
 								})()}
 							</TableCell>
 							<TableCell className="text-center">
-								{skusCount === 0 ? (
+								{variantsCount === 0 ? (
 									<span className="text-muted-foreground text-sm" aria-label="Aucune variante">
 										—
 									</span>
-								) : skusCount === 1 ? (
+								) : variantsCount === 1 ? (
 									<Link
 										href={`/admin/catalogue/produits/${product.slug}/variantes`}
 										className="text-muted-foreground text-xs hover:underline"
@@ -162,10 +147,10 @@ export async function ProductsDataTable({
 									<Link
 										href={`/admin/catalogue/produits/${product.slug}/variantes`}
 										className="text-sm font-medium hover:underline"
-										aria-label={`${skusCount} variantes - Cliquer pour gerer`}
+										aria-label={`${variantsCount} variantes - Cliquer pour gerer`}
 										title="Gerer les variantes"
 									>
-										{skusCount}
+										{variantsCount}
 									</Link>
 								)}
 							</TableCell>
@@ -191,8 +176,8 @@ export async function ProductsDataTable({
 								<ProductRowActions
 									productId={product.id}
 									productSlug={product.slug}
-									productTitle={product.title}
-									productStatus={product.status}
+									productTitle={product.name}
+									productActive={product.active}
 								/>
 							</TableCell>
 						</TableRow>

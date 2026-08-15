@@ -131,7 +131,8 @@ describe("contrat · validation des entrées de Server Actions", () => {
 			// Abaissé de 100 à 90 le 2026-08-05 (retrait des codes promo), puis de
 			// 90 à 80 au lot 1 de la migration lean : les 7 actions Better Auth sont
 			// parties, remplacées par les 2 de `modules/admin-auth`.
-			expect(SERVER_ACTION_FILES.length).toBeGreaterThan(80);
+			// Abaissé à 50 au lot 2 (purge invoices/refunds/cron/store-settings).
+			expect(SERVER_ACTION_FILES.length).toBeGreaterThan(50);
 		});
 
 		it("le détecteur de paramètres distingue consommé et ignoré", () => {

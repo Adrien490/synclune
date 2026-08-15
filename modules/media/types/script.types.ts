@@ -10,13 +10,13 @@ import type { Prisma } from "../../../app/generated/prisma/client";
 
 /**
  * Media item to process (image or video).
- * Derived from the Prisma SkuMedia model to ensure schema consistency.
+ * Derived from the Prisma ProductMedia model to ensure schema consistency.
  */
-export type ScriptMediaItem = Prisma.SkuMediaGetPayload<{
+export type ScriptMediaItem = Prisma.ProductMediaGetPayload<{
 	select: {
 		id: true;
 		url: true;
-		skuId: true;
+		variantId: true;
 	};
 }>;
 

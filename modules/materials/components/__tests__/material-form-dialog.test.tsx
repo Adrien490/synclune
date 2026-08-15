@@ -15,7 +15,7 @@ interface DialogState {
 					name: string;
 					slug: string;
 					description: string | null;
-					isActive: boolean;
+					active: boolean;
 				};
 				onCreated?: (id: string) => void;
 		  }
@@ -121,7 +121,7 @@ describe("MaterialFormDialog", () => {
 			name: "Argent 925",
 			slug: "argent-925",
 			description: null,
-			isActive: true,
+			active: true,
 		};
 		mockDialog.current = { isOpen: true, close: vi.fn(), data: { material } };
 		render(<MaterialFormDialog />);
@@ -137,7 +137,7 @@ describe("MaterialFormDialog", () => {
 			name: "Argent 925",
 			slug: "argent-925",
 			description: "Argent massif",
-			isActive: true,
+			active: true,
 		};
 		mockDialog.current = { isOpen: true, close, data: { material } };
 		render(<MaterialFormDialog />);

@@ -11,24 +11,25 @@ import type {
 // ============================================================================
 
 /**
- * Vérifie si le SKU ou le produit a été supprimé (soft delete)
+ * Schéma lean : plus de soft delete — une ligne dont le variant a disparu de la
+ * base est traitée en amont (variant introuvable), ce prédicat est toujours faux.
  */
-export function isCartItemDeleted(item: CartItemForValidation): boolean {
-	return item.sku.deletedAt !== null || item.sku.product.deletedAt !== null;
+export function isCartItemDeleted(_item: CartItemForValidation): boolean {
+	return false;
 }
 
 /**
- * Vérifie si le SKU est inactif
+ * Vérifie si le VARIANT est inactif
  */
-export function isCartItemSkuInactive(item: CartItemForValidation): boolean {
-	return !item.sku.isActive;
+export function isCartItemVariantInactive(item: CartItemForValidation): boolean {
+	return !item.variant.active;
 }
 
 /**
  * Vérifie si le produit n'est pas public
  */
 export function isCartItemProductNotPublic(item: CartItemForValidation): boolean {
-	return item.sku.product.status !== "PUBLIC";
+	return !item.variant.product.active;
 }
 
 /**
@@ -42,21 +43,21 @@ export function isCartItemProductNotPublic(item: CartItemForValidation): boolean
  *
  * Pour le test global, utiliser `isCartItemUnavailable` (ou son équivalent UI
  * `isCartItemOutOfStock` dans `cart-item.service.ts`, qui couvre les deux cas d'un
- * seul `inventory < quantity`).
+ * seul `stock < quantity`).
  */
 export function isCartItemZeroStock(item: CartItemForValidation): boolean {
-	return item.sku.inventory === 0;
+	return item.variant.stock === 0;
 }
 
 /**
  * Stock insuffisant mais NON NUL — il en reste, juste pas assez.
  *
- * ⚠️ Le `&& inventory > 0` n'est pas un oubli : il complète `isCartItemZeroStock`
+ * ⚠️ Le `&& stock > 0` n'est pas un oubli : il complète `isCartItemZeroStock`
  * (cf. la note ci-dessus). Ne PAS le retirer en croyant « corriger » un trou —
  * `validate-cart` classerait alors deux fois la même ligne.
  */
 export function hasInsufficientStock(item: CartItemForValidation): boolean {
-	return item.sku.inventory < item.quantity && item.sku.inventory > 0;
+	return item.variant.stock < item.quantity && item.variant.stock > 0;
 }
 
 /**
@@ -66,9 +67,9 @@ export function hasInsufficientStock(item: CartItemForValidation): boolean {
 export function isCartItemUnavailable(item: CartItemForValidation): boolean {
 	return (
 		isCartItemDeleted(item) ||
-		isCartItemSkuInactive(item) ||
+		isCartItemVariantInactive(item) ||
 		isCartItemProductNotPublic(item) ||
-		item.sku.inventory < item.quantity
+		item.variant.stock < item.quantity
 	);
 }
 
@@ -83,24 +84,24 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 			isAvailable: false,
 			issue: {
 				cartItemId: item.id,
-				skuId: item.skuId,
-				productTitle: item.sku.product.title,
+				variantId: item.variantId,
+				productTitle: item.variant.product.name,
 				issueType: "DELETED",
 				message: CART_ERROR_MESSAGES.PRODUCT_DELETED,
 			},
 		};
 	}
 
-	// Vérifier l'activation du SKU
-	if (isCartItemSkuInactive(item)) {
+	// Vérifier l'activation du VARIANT
+	if (isCartItemVariantInactive(item)) {
 		return {
 			isAvailable: false,
 			issue: {
 				cartItemId: item.id,
-				skuId: item.skuId,
-				productTitle: item.sku.product.title,
+				variantId: item.variantId,
+				productTitle: item.variant.product.name,
 				issueType: "INACTIVE",
-				message: CART_ERROR_MESSAGES.SKU_INACTIVE,
+				message: CART_ERROR_MESSAGES.VARIANT_INACTIVE,
 			},
 		};
 	}
@@ -111,8 +112,8 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 			isAvailable: false,
 			issue: {
 				cartItemId: item.id,
-				skuId: item.skuId,
-				productTitle: item.sku.product.title,
+				variantId: item.variantId,
+				productTitle: item.variant.product.name,
 				issueType: "NOT_PUBLIC",
 				message: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
 			},
@@ -125,8 +126,8 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 			isAvailable: false,
 			issue: {
 				cartItemId: item.id,
-				skuId: item.skuId,
-				productTitle: item.sku.product.title,
+				variantId: item.variantId,
+				productTitle: item.variant.product.name,
 				issueType: "OUT_OF_STOCK",
 				message: CART_ERROR_MESSAGES.OUT_OF_STOCK,
 			},
@@ -139,8 +140,8 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 			isAvailable: false,
 			issue: {
 				cartItemId: item.id,
-				skuId: item.skuId,
-				productTitle: item.sku.product.title,
+				variantId: item.variantId,
+				productTitle: item.variant.product.name,
 				issueType: "INSUFFICIENT_STOCK",
 				message: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK,
 			},

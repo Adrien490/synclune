@@ -27,9 +27,9 @@ export type GetProductReturn = Prisma.ProductGetPayload<{
 	select: typeof GET_PRODUCT_SELECT;
 }>;
 
-export type ProductSku = GetProductReturn["skus"][0];
+export type ProductVariant = GetProductReturn["variants"][0];
 
-// Re-export depuis shared (évite la dépendance circulaire avec skus)
+// Re-export depuis shared (évite la dépendance circulaire avec variants)
 // ============================================================================
 // TYPES - PRODUCT LIST (Liste avec pagination)
 // ============================================================================
@@ -71,8 +71,8 @@ export type ProductCarouselItem = Prisma.ProductGetPayload<{
 // PRODUCT CARD DATA (centralisé ici comme source de vérité)
 // ============================================================================
 
-import type { ColorSwatch, SkuFromList } from "./product-list.types";
-import type { ProductStockInfo } from "@/shared/types/product-sku.types";
+import type { ColorSwatch, VariantFromList } from "./product-list.types";
+import type { ProductStockInfo } from "@/shared/types/product-variant.types";
 
 /**
  * Données combinées pour ProductCard (optimisé O(n))
@@ -81,12 +81,10 @@ import type { ProductStockInfo } from "@/shared/types/product-sku.types";
  * et représente toutes les informations nécessaires pour afficher une carte produit.
  */
 export interface ProductCardData {
-	/** SKU principal sélectionné (peut être null si aucun SKU actif) */
-	defaultSku: SkuFromList | null;
+	/** Variante principale sélectionnée (null si aucune variante active) */
+	defaultVariant: VariantFromList | null;
 	/** Prix TTC en centimes */
 	price: number;
-	/** Prix barré (compareAtPrice) en centimes ou null */
-	compareAtPrice: number | null;
 	/** Informations de stock agrégées */
 	stockInfo: ProductStockInfo;
 	/** Image principale du produit (`alt` toujours renseigné par le service) */
@@ -94,7 +92,7 @@ export interface ProductCardData {
 		id: string;
 		url: string;
 		alt: string;
-		mediaType: "IMAGE";
+		type: "IMAGE";
 		blurDataUrl?: string;
 	};
 	/** Image secondaire pour le hover (null si aucune disponible) */
@@ -102,20 +100,20 @@ export interface ProductCardData {
 		id: string;
 		url: string;
 		alt: string;
-		mediaType: "IMAGE";
+		type: "IMAGE";
 		blurDataUrl?: string;
 	} | null;
 	/** Couleurs disponibles pour les swatches */
 	colors: ColorSwatch[];
 	/**
-	 * Matériau principal du SKU affiché (position 0, priorité saisie admin).
-	 * null si le SKU n'a aucun matériau ou si aucun SKU actif.
+	 * Matériau principal du VARIANT affiché (position 0, priorité saisie admin).
+	 * null si le VARIANT n'a aucun matériau ou si aucun VARIANT actif.
 	 */
 	material: string | null;
 	/**
-	 * Indique si le produit a un SKU actif valide.
+	 * Indique si le produit a un VARIANT actif valide.
 	 * false signifie que le produit ne devrait pas être affiché
 	 * ou qu'un warning devrait être montré à l'admin.
 	 */
-	hasValidSku: boolean;
+	hasValidVariant: boolean;
 }

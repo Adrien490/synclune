@@ -1,9 +1,7 @@
 "use server";
 
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import {
 	validateInput,
 	handleActionError,
@@ -12,15 +10,14 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { updateCollectionStatusSchema } from "../schemas/collection.schemas";
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
-import { COLLECTION_STATUS_LABELS } from "../constants/collection.constants";
 
 /**
- * Server Action pour changer le statut d'une collection
- * Compatible avec useActionState de React 19
+ * Server Action pour activer/désactiver une collection — schéma lean (lot 2) :
+ * le statut est un booléen `active`, plus un enum de publication.
+ * Compatible avec useActionState de React 19.
  */
 export async function updateCollectionStatus(
 	_: ActionState | undefined,
@@ -30,22 +27,20 @@ export async function updateCollectionStatus(
 		// 1. Admin auth check
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extract data from FormData
 		const rawData = {
 			id: safeFormGet(formData, "id"),
-			status: safeFormGet(formData, "status"),
+			active: safeFormGet(formData, "active"),
 		};
 
 		// 3. Validation avec Zod
 		const validated = validateInput(updateCollectionStatusSchema, rawData);
 		if ("error" in validated) return validated.error;
 
-		const { id, status } = validated.data;
+		const { id, active } = validated.data;
 
-		// 4. Transaction atomique : lire + muter pour garantir oldStatus coherent dans l'audit
+		// 4. Transaction atomique : lire + muter
 		const existingCollection = await prisma.$transaction(async (tx) => {
 			const collection = await tx.collection.findUnique({
 				where: { id },
@@ -53,7 +48,7 @@ export async function updateCollectionStatus(
 					id: true,
 					name: true,
 					slug: true,
-					status: true,
+					active: true,
 				},
 			});
 
@@ -61,40 +56,38 @@ export async function updateCollectionStatus(
 				throw new Error("NOT_FOUND");
 			}
 
-			if (collection.status === status) {
+			if (collection.active === active) {
 				return { ...collection, skipped: true as const };
 			}
 
 			await tx.collection.update({
 				where: { id },
-				data: { status },
+				data: { active },
 			});
 
 			return { ...collection, skipped: false as const };
 		});
 
-		// 5. Si statut deja applique, retourner immediatement sans invalidation ni audit
+		// 5. Si statut deja applique, retourner immediatement sans invalidation
 		if (existingCollection.skipped) {
-			return success(`La collection est déjà ${COLLECTION_STATUS_LABELS[status].toLowerCase()}.`);
+			return success(`La collection est déjà ${active ? "publiée" : "en brouillon"}.`);
 		}
 
-		// 7. Invalidate cache tags
+		// 6. Invalidate cache tags
 		const collectionTags = getCollectionInvalidationTags(existingCollection.slug);
 		collectionTags.forEach((tag) => updateTag(tag));
 
-		// 8. Messages de succes contextuels
-		const statusMessages: Record<PublicationStatus, string> = {
-			[PublicationStatus.DRAFT]: `"${existingCollection.name}" mise en brouillon`,
-			[PublicationStatus.PUBLIC]: `"${existingCollection.name}" publiée`,
-			[PublicationStatus.ARCHIVED]: `"${existingCollection.name}" archivée`,
-		};
-
-		return success(statusMessages[status], {
-			collectionId: id,
-			name: existingCollection.name,
-			oldStatus: existingCollection.status,
-			newStatus: status,
-		});
+		return success(
+			active
+				? `"${existingCollection.name}" publiée`
+				: `"${existingCollection.name}" mise en brouillon`,
+			{
+				collectionId: id,
+				name: existingCollection.name,
+				oldActive: existingCollection.active,
+				newActive: active,
+			},
+		);
 	} catch (e) {
 		if (e instanceof Error && e.message === "NOT_FOUND") {
 			return notFound("Collection", "f");

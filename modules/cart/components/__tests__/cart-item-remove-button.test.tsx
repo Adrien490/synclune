@@ -81,7 +81,7 @@ afterEach(() => {
 
 function renderButton(overrides: Partial<React.ComponentProps<typeof CartItemRemoveButton>> = {}) {
 	const props = {
-		skuId: "item-1",
+		variantId: "item-1",
 		itemName: "Bague Lune",
 		quantity: 2,
 		...overrides,
@@ -107,11 +107,11 @@ describe("CartItemRemoveButton", () => {
 	});
 
 	it("calls openAlertDialog with correct arguments on click", () => {
-		renderButton({ skuId: "sku-42", itemName: "Collier Étoile", quantity: 1 });
+		renderButton({ variantId: "variant-42", itemName: "Collier Étoile", quantity: 1 });
 		fireEvent.click(screen.getByRole("button"));
 		expect(mockOpenAlertDialog).toHaveBeenCalledOnce();
 		expect(mockOpenAlertDialog).toHaveBeenCalledWith("remove-cart-item", {
-			skuId: "sku-42",
+			variantId: "variant-42",
 			itemName: "Collier Étoile",
 			quantity: 1,
 		});

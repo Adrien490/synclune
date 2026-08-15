@@ -1,18 +1,18 @@
 import { TaxonomyStatsCard } from "@/modules/taxonomies/components/taxonomy-detail-layout";
 
 interface MaterialDetailStatsCardProps {
-	skusCount: number;
+	variantsCount: number;
 	productsCount: number;
 }
 
 export function MaterialDetailStatsCard({
-	skusCount,
+	variantsCount,
 	productsCount,
 }: MaterialDetailStatsCardProps) {
 	return (
 		<TaxonomyStatsCard
 			stats={[
-				{ label: "Variantes actives", value: skusCount },
+				{ label: "Variantes actives", value: variantsCount },
 				{ label: "Produits distincts", value: productsCount },
 			]}
 		/>

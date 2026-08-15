@@ -6,14 +6,14 @@ import { CopyButton } from "@/shared/components/copy-button";
 import { DescriptionCollapse } from "@/shared/components/description-collapse";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 
-import { PRODUCT_STATUS_CONFIG } from "./product-detail-status.constants";
+import { productStatusConfig } from "./product-detail-status.constants";
 
 interface ProductDetailInfoCardProps {
 	product: GetProductReturn;
 }
 
 export function ProductDetailInfoCard({ product }: ProductDetailInfoCardProps) {
-	const status = PRODUCT_STATUS_CONFIG[product.status];
+	const status = productStatusConfig(product.active);
 
 	return (
 		<Card style={{ viewTransitionName: "product-edit-info" }}>

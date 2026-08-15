@@ -2,7 +2,6 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import {
 	validateInput,
@@ -13,10 +12,8 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 import type { ActionState } from "@/shared/types/server-action";
-import { generateSlug } from "@/shared/utils/generate-slug";
 
 import { getColorInvalidationTags } from "../constants/cache";
 import { duplicateColorSchema } from "../schemas/color.schemas";
@@ -24,10 +21,7 @@ import { duplicateColorSchema } from "../schemas/color.schemas";
 /**
  * Admin server action to duplicate a color.
  *
- * Creates a copy with:
- * - A new name (original + " (copie)" or " (copie N)")
- * - A new automatically generated slug
- * - isActive set to false (to prevent accidental activation)
+ * Creates a copy with a new name (original + " (copie)" or " (copie N)").
  */
 export async function duplicateColor(
 	_prevState: ActionState | undefined,
@@ -37,9 +31,6 @@ export async function duplicateColor(
 		// 1. Admin authorization check
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.DUPLICATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Validate data
 		const rawData = {
@@ -71,30 +62,21 @@ export async function duplicateColor(
 
 		const newName = nameResult.name!;
 
-		// 6. Generate a unique slug
-		const slug = await generateSlug(prisma, "color", newName);
-
-		// 7. Create the copy
+		// 6. Create the copy
 		const duplicate = await prisma.color.create({
 			data: {
 				name: newName,
-				slug,
 				hex: original.hex,
-				// Parité avec duplicateMaterial/duplicateProductType : les notes
-				// créatrice suivent la copie.
-				description: original.description,
-				isActive: false, // Disabled by default
 			},
 		});
 
-		// 8. Invalidate cache
-		const tags = getColorInvalidationTags(duplicate.slug);
+		// 7. Invalidate cache
+		const tags = getColorInvalidationTags(duplicate.id);
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(`Couleur dupliquee: ${duplicate.name}`, {
 			id: duplicate.id,
 			name: duplicate.name,
-			slug: duplicate.slug,
 		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer la couleur");

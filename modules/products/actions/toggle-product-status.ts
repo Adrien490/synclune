@@ -15,80 +15,52 @@ import {
 import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../utils/cache.utils";
+import { getVariantInvalidationTags } from "@/modules/variants/utils/cache.utils";
 import { validateProductForPublication } from "../services/product-validation.service";
-import { canTransitionProductStatus } from "../services/product-status-validation.service";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
-import { ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
- * Server Action pour basculer le statut d'un produit
- * DRAFT <-> PUBLIC (toggle simple)
- * ARCHIVED -> DRAFT (restauration)
- *
- * La restauration vise DRAFT, jamais PUBLIC : l'archivage desactive TOUS les SKUs
- * du produit (cf. etape 6), et `validateProductForPublication` exige >= 1 SKU actif
- * avec stock et image. Viser PUBLIC rendait donc tout produit archive via l'UI
- * definitivement irrecuperable (« aucune variante active »). DRAFT est le seul
- * statut coherent avec les donnees post-archivage ; republier reste un geste
- * explicite, apres reactivation manuelle d'au moins une variante.
- *
- * Compatible avec useActionState de React 19
+ * Server Action pour basculer la visibilité d'un produit — schéma lean (lot 2) :
+ * l'ancien triptyque DRAFT/PUBLIC/ARCHIVED devient un booléen `active`.
+ * L'activation revalide la publiabilité (variante active avec stock + image).
  */
 export async function toggleProductStatus(
 	_: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Vérification des droits admin
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 1.1 Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
 
-		// 2. Extraction des donnees du FormData
+		// 2. Extraction + validation
 		const rawData = {
 			productId: safeFormGet(formData, "productId"),
-			currentStatus: safeFormGet(formData, "currentStatus"),
-			targetStatus: safeFormGet(formData, "targetStatus"),
+			targetActive: safeFormGet(formData, "targetActive") ?? undefined,
 		};
-
-		// 3. Validation avec Zod
 		const validation = validateInput(toggleProductStatusSchema, rawData);
 		if ("error" in validation) return validation.error;
 
-		const { productId, currentStatus, targetStatus } = validation.data;
+		const { productId, targetActive } = validation.data;
 
-		// 4. Verifier que le produit existe et recuperer toutes les donnees necessaires
-		// (requete unique pour eviter N+1)
-		// deletedAt: null — un produit soft-deleted est ARCHIVED + deletedAt ; sans ce filtre,
-		// la transition ARCHIVED → PUBLIC le ressusciterait en gardant son deletedAt (état
-		// zombie visible dans les selects filtrés sur status seul).
+		// 3. Produit + données de validation en une requête
 		const existingProduct = await prisma.product.findUnique({
-			where: { id: productId, deletedAt: null },
+			where: { id: productId },
 			select: {
 				id: true,
-				title: true,
+				name: true,
 				slug: true,
-				status: true,
-				description: true,
-				collections: { select: { collection: { select: { slug: true } } } },
-				skus: {
+				active: true,
+				collections: { select: { slug: true } },
+				variants: {
 					select: {
 						id: true,
-						isActive: true,
-						inventory: true,
-						// Cascade cache : le KPI « produits distincts » des couleurs et
-						// matériaux ne compte que les SKUs actifs — publier ou archiver
-						// le produit le fait bouger.
-						colors: { select: { colorId: true } },
-						materials: { select: { materialId: true } },
-						// MEDIA-AUDIT-002 : on charge le type de chaque media (pas seulement
-						// l'image au rang 0) pour que validateProductForPublication exige une
-						// vraie image (mediaType IMAGE), pas une video au rang 0.
-						images: { select: { mediaType: true } },
+						active: true,
+						stock: true,
+						colorId: true,
+						materialId: true,
 					},
 				},
+				media: { select: { type: true } },
 			},
 		});
 
@@ -96,118 +68,53 @@ export async function toggleProductStatus(
 			return notFound("Produit");
 		}
 
-		// 5. Determiner le nouveau statut
-		let newStatus: "DRAFT" | "PUBLIC" | "ARCHIVED";
+		const nextActive = targetActive ?? !existingProduct.active;
 
-		if (targetStatus) {
-			// Si un statut cible est fourni, l'utiliser directement
-			newStatus = targetStatus;
-		} else {
-			// Sinon, logique de toggle par defaut. On se base sur le statut lu en DB et
-			// non sur le `currentStatus` fourni par le client : une ligne de liste
-			// perimee produirait sinon une transition identite refusee (5.4).
-			// DRAFT <-> PUBLIC (toggle)
-			// ARCHIVED -> DRAFT (restauration, cf. docstring)
-			if (existingProduct.status === "ARCHIVED") {
-				newStatus = "DRAFT";
-			} else if (existingProduct.status === "DRAFT") {
-				newStatus = "PUBLIC";
-			} else {
-				newStatus = "DRAFT";
-			}
-		}
-
-		// 5.4. Garde state machine : refuser les transitions invalides
-		if (!canTransitionProductStatus(existingProduct.status, newStatus)) {
-			return validationError(
-				`Transition de statut invalide : ${existingProduct.status} → ${newStatus}`,
+		if (nextActive === existingProduct.active) {
+			return success(
+				nextActive
+					? `« ${existingProduct.name} » est déjà en vente`
+					: `« ${existingProduct.name} » est déjà masqué`,
 			);
 		}
 
-		// 5.5. Validation metier : Un produit PUBLIC doit avoir au moins 1 SKU actif avec stock
-		if (newStatus === "PUBLIC") {
-			const pubValidation = validateProductForPublication(existingProduct);
-			if (!pubValidation.isValid) {
-				return validationError(pubValidation.errorMessage!);
+		// 4. Publication : revalider les règles métier
+		if (nextActive) {
+			const pubCheck = validateProductForPublication(existingProduct);
+			if (!pubCheck.isValid) {
+				return validationError(pubCheck.errorMessage!);
 			}
 		}
 
-		// 5.6. Verifier si le produit a des commandes (warning informatif pour ARCHIVED)
-		let warningMessage: string | undefined;
-		if (newStatus === "ARCHIVED") {
-			// Compte via la relation SKU, et non via un `OrderItem.productId` : cette
-			// colonne a été retirée (audit V2, Lot 1). `OrderItem.skuId` est en
-			// `onDelete: Restrict`, donc le SKU existe toujours — là où l'ancien
-			// pointeur, nullable et en `SetNull`, aurait compté 0 pour un produit
-			// dont la ligne avait été détachée.
-			const orderItemsCount = await prisma.orderItem.count({
-				where: { sku: { productId } },
-			});
+		// 5. Écriture
+		const updatedProduct = await prisma.product.update({
+			where: { id: productId },
+			data: { active: nextActive },
+			select: { id: true, name: true, slug: true, active: true },
+		});
 
-			if (orderItemsCount > 0) {
-				warningMessage = `Ce produit a ${orderItemsCount} commande${orderItemsCount > 1 ? "s" : ""} associée${orderItemsCount > 1 ? "s" : ""}. Il restera visible dans l'historique des commandes.`;
-			}
+		// 6. Invalidation de cache (produit + variantes + collections + compteurs
+		// couleur/matériau — le KPI « produits distincts » ne compte que l'actif)
+		getProductInvalidationTags(updatedProduct.slug, updatedProduct.id).forEach((tag) =>
+			updateTag(tag),
+		);
+		getVariantInvalidationTags({
+			productId: updatedProduct.id,
+			productSlug: updatedProduct.slug,
+			colorIds: existingProduct.variants.map((v) => v.colorId),
+			materialIds: existingProduct.variants.map((v) => v.materialId),
+		}).forEach((tag) => updateTag(tag));
+		for (const c of existingProduct.collections) {
+			getCollectionInvalidationTags(c.slug).forEach((tag) => updateTag(tag));
 		}
 
-		// 6. Mettre a jour le statut et desactiver les SKUs si archive
-		await prisma.$transaction(async (tx) => {
-			await tx.product.update({
-				where: { id: productId },
-				data: { status: newStatus },
-			});
-
-			// Si le produit est archive, desactiver automatiquement tous ses SKUs
-			if (newStatus === "ARCHIVED") {
-				await tx.productSku.updateMany({
-					where: { productId },
-					data: { isActive: false },
-				});
-			}
-		});
-
-		// 7. Invalidate cache tags (invalidation ciblee)
-		const productTags = getProductInvalidationTags(existingProduct.slug, existingProduct.id, {
-			affectedColorIds: existingProduct.skus.flatMap((sku) => sku.colors.map((c) => c.colorId)),
-			affectedMaterialIds: existingProduct.skus.flatMap((sku) =>
-				sku.materials.map((m) => m.materialId),
-			),
-		});
-		productTags.forEach((tag) => updateTag(tag));
-
-		// 7.1 Invalider les caches des collections associees
-		for (const productCollection of existingProduct.collections) {
-			getCollectionInvalidationTags(productCollection.collection.slug).forEach((tag) =>
-				updateTag(tag),
-			);
-		}
-
-		// 8. Messages de succes contextuels. La restauration a son propre libelle :
-		// arriver en brouillon sans savoir que les variantes ont ete desactivees
-		// laisserait l'admin devant un « Publier » qui echoue.
-		const isRestore = existingProduct.status === "ARCHIVED" && newStatus === "DRAFT";
-		const statusMessages: Record<typeof newStatus, string> = {
-			DRAFT: isRestore
-				? `"${existingProduct.title}" restaure en brouillon. Reactivez au moins une variante (stock + image) pour pouvoir le publier.`
-				: `"${existingProduct.title}" mis en brouillon`,
-			PUBLIC: `"${existingProduct.title}" publie`,
-			ARCHIVED: `"${existingProduct.title}" archive`,
-		};
-
-		// 9. Audit log
-
-		// 10. Success (avec warning si applicable)
-		const successMessage = warningMessage
-			? `${statusMessages[newStatus]}. ${warningMessage}`
-			: statusMessages[newStatus];
-
-		return success(successMessage, {
-			productId,
-			title: existingProduct.title,
-			oldStatus: currentStatus,
-			newStatus,
-			warning: warningMessage,
-		});
+		// 7. Succès
+		return success(
+			updatedProduct.active
+				? `« ${updatedProduct.name} » est en vente`
+				: `« ${updatedProduct.name} » est masqué de la boutique`,
+		);
 	} catch (e) {
-		return handleActionError(e, "Une erreur est survenue lors du changement de statut");
+		return handleActionError(e, "Impossible de changer le statut du produit");
 	}
 }

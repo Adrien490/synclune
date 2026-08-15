@@ -1,29 +1,26 @@
-// shared-code.ts - Form options partagées entre client et serveur
-import type { PublicationStatus } from "@/app/generated/prisma/client";
+// Form options partagées entre client et serveur
 
-// Form options shared between client and server
 export const createProductFormOpts = {
 	defaultValues: {
-		title: "",
+		name: "",
 		description: "",
-		typeId: undefined as string | undefined,
+		priceEuros: null as number | null,
+		active: "false" as "true" | "false",
+		typeId: "",
 		collectionIds: [] as string[],
-		status: "PUBLIC" as PublicationStatus,
-		initialSku: {
-			priceInclTaxEuros: null as number | null,
-			compareAtPriceEuros: undefined as number | undefined,
-			inventory: 1,
-			isActive: true,
-			colorIds: [] as string[],
-			materialIds: [] as string[],
+		media: [] as Array<{
+			url: string;
+			alt?: string;
+			type: "IMAGE" | "VIDEO";
+		}>,
+		initialVariant: {
+			// Override du prix produit — vide = hérite du prix produit.
+			priceEuros: "" as number | "",
+			stock: 1,
+			active: "true" as "true" | "false",
+			colorId: "",
+			materialId: "",
 			size: "",
-			media: [] as Array<{
-				url: string;
-				thumbnailUrl?: string | null;
-				blurDataUrl?: string;
-				altText?: string;
-				mediaType: "IMAGE" | "VIDEO";
-			}>,
 		},
 	},
 };

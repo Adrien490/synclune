@@ -83,7 +83,7 @@ export function MediaUploadGrid({
 
 	// Prepare slides for the lightbox
 	const slides: Slide[] = media.map((m) => {
-		if (m.mediaType === "VIDEO") {
+		if (m.type === "VIDEO") {
 			return {
 				type: "video" as const,
 				sources: [{ src: m.url, type: getVideoMimeType(m.url) }],
@@ -92,7 +92,7 @@ export function MediaUploadGrid({
 		}
 		return {
 			src: m.url,
-			alt: m.altText ?? "Image du produit",
+			alt: m.alt ?? "Image du produit",
 		};
 	});
 
@@ -136,7 +136,7 @@ export function MediaUploadGrid({
 		const newMedia = arrayMove(media, oldIndex, newIndex);
 
 		// Prevent a video from ending up in first position (covers all cases)
-		if (newMedia[0]?.mediaType === "VIDEO") {
+		if (newMedia[0]?.type === "VIDEO") {
 			triggerHaptic("error");
 			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			setAnnouncement("Impossible de placer une vidéo en première position.");
@@ -144,7 +144,7 @@ export function MediaUploadGrid({
 		}
 
 		const draggedMedia = media[oldIndex];
-		const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
+		const mediaType = draggedMedia?.type === "VIDEO" ? "Vidéo" : "Image";
 
 		triggerHaptic("selection");
 		withViewTransition(() => onChange(newMedia));
@@ -159,7 +159,7 @@ export function MediaUploadGrid({
 		// immédiat), le dialog supprimait d'abord le blob UploadThing puis
 		// `onRemove` refusait « une vidéo passerait en première position » —
 		// fichier détruit, URL morte encore dans le champ de formulaire.
-		const wouldLeaveVideoFirst = media.filter((_, i) => i !== index)[0]?.mediaType === "VIDEO";
+		const wouldLeaveVideoFirst = media.filter((_, i) => i !== index)[0]?.type === "VIDEO";
 		if (wouldLeaveVideoFirst) {
 			triggerHaptic("error");
 			toast.error("Impossible : une vidéo passerait en première position. Réorganise d'abord.");
@@ -172,7 +172,7 @@ export function MediaUploadGrid({
 			onRemove: () => {
 				const newMedia = media.filter((_, i) => i !== index);
 				// Prevent a video in first position after deletion
-				if (newMedia[0]?.mediaType === "VIDEO") {
+				if (newMedia[0]?.type === "VIDEO") {
 					triggerHaptic("error");
 					toast.error("Impossible : une vidéo passerait en première position. Réorganise d'abord.");
 					return;
@@ -184,7 +184,7 @@ export function MediaUploadGrid({
 				// Undo affordance — uniquement en mode skipUtapiDelete (différé),
 				// sinon le fichier est déjà supprimé sur UploadThing et l'undo serait trompeur.
 				if (skipUtapiDelete && removedMedia) {
-					const isVideo = removedMedia.mediaType === "VIDEO";
+					const isVideo = removedMedia.type === "VIDEO";
 					toast.success(`${isVideo ? "Vidéo" : "Image"} retirée de l'atelier`, {
 						action: {
 							label: "Annuler",
@@ -205,7 +205,7 @@ export function MediaUploadGrid({
 		if (index <= 0) return;
 		const newMedia = arrayMove(media, index, index - 1);
 		// Prevent a video in first position
-		if (newMedia[0]?.mediaType === "VIDEO") {
+		if (newMedia[0]?.type === "VIDEO") {
 			triggerHaptic("error");
 			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			return;
@@ -219,7 +219,7 @@ export function MediaUploadGrid({
 		if (index >= media.length - 1) return;
 		const newMedia = arrayMove(media, index, index + 1);
 		// Prevent a video in first position
-		if (newMedia[0]?.mediaType === "VIDEO") {
+		if (newMedia[0]?.type === "VIDEO") {
 			triggerHaptic("error");
 			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			return;
@@ -233,7 +233,7 @@ export function MediaUploadGrid({
 	const handleSetAsPrimary = (index: number) => {
 		if (index === 0) return;
 		const target = media[index];
-		if (!target || target.mediaType === "VIDEO") {
+		if (!target || target.type === "VIDEO") {
 			triggerHaptic("error");
 			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			return;
@@ -247,13 +247,13 @@ export function MediaUploadGrid({
 	};
 
 	// Update the alt text (description) of a single media item
-	const handleUpdateAltText = (index: number, altText: string) => {
+	const handleUpdateAltText = (index: number, alt: string) => {
 		const target = media[index];
 		if (!target) return;
-		const next = altText.trim();
-		if ((target.altText ?? "") === next) return;
+		const next = alt.trim();
+		if ((target.alt ?? "") === next) return;
 		const newMedia = media.map((m, i) =>
-			i === index ? { ...m, altText: next.length > 0 ? next : undefined } : m,
+			i === index ? { ...m, alt: next.length > 0 ? next : undefined } : m,
 		);
 		onChange(newMedia);
 		// Canal de retour unique : `aria-live` + fermeture du dialogue. Pas de toast —
@@ -363,11 +363,9 @@ export function MediaUploadGrid({
 								onMoveDown={() => handleMoveDown(index)}
 								totalCount={media.length}
 								onSetAsPrimary={
-									m.mediaType === "VIDEO" || index === 0
-										? undefined
-										: () => handleSetAsPrimary(index)
+									m.type === "VIDEO" || index === 0 ? undefined : () => handleSetAsPrimary(index)
 								}
-								onUpdateAltText={(altText) => handleUpdateAltText(index, altText)}
+								onUpdateAltText={(alt) => handleUpdateAltText(index, alt)}
 								dragInstructionsId={dragInstructionsId}
 							/>
 						);
@@ -408,7 +406,7 @@ export function MediaUploadGrid({
 
 						return (
 							<div className="border-primary bg-muted aspect-square overflow-hidden rounded-lg border-2 shadow-2xl">
-								{sourceMedia.mediaType === "VIDEO" ? (
+								{sourceMedia.type === "VIDEO" ? (
 									<div className="relative h-full w-full">
 										{sourceMedia.thumbnailUrl ? (
 											<Image

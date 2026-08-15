@@ -149,7 +149,7 @@ export async function HeroGrid({
 			))}
 			<div className="enter-load" style={cellStyle(products.length)}>
 				{/* `totalCount` = le catalogue PUBLIC entier (la lecture filtre déjà
-				    `status: "PUBLIC"`), pas le nombre de cellules rendues. C'est ce
+				    `active: true`), pas le nombre de cellules rendues. C'est ce
 				    chiffre qui donne au lien sa PORTÉE — cf. le JSDoc de la carte. */}
 				<HeroAllCreationsCard totalCount={result.totalCount} />
 			</div>

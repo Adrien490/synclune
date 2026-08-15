@@ -51,7 +51,7 @@ interface UseEdgeSwipeOptions {
  */
 export function useEdgeSwipe(
 	onTrigger: () => void,
-	isActive: boolean,
+	active: boolean,
 	options: UseEdgeSwipeOptions = {},
 ) {
 	const { side = "left", disabledFrom = "lg", onProgress } = options;
@@ -79,7 +79,7 @@ export function useEdgeSwipe(
 		}
 
 		function onTouchStart(e: TouchEvent) {
-			if (isActive || mql.matches) return;
+			if (active || mql.matches) return;
 			// Le hook écoute au niveau `document` et ignorait la cible : un drag amorcé
 			// dans les 20px du bord gauche faisait défiler le carousel/la table qui
 			// touche ce bord ET ouvrait le menu. Les conteneurs à défilement horizontal
@@ -139,5 +139,5 @@ export function useEdgeSwipe(
 			document.removeEventListener("touchend", onTouchEnd);
 			document.removeEventListener("touchcancel", onTouchEnd);
 		};
-	}, [isActive, disabledFrom, side]);
+	}, [active, disabledFrom, side]);
 }

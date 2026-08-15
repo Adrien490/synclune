@@ -103,8 +103,8 @@ export function RefreshTaxonomyButton({
 
 interface TaxonomyActiveToggleProps {
 	id: string;
-	isActive: boolean;
-	toggleStatus: (id: string, isActive: boolean) => void;
+	active: boolean;
+	toggleStatus: (id: string, active: boolean) => void;
 	isPending: boolean;
 	/** Verrouille la bascule (types de bijoux système, non modifiables). */
 	disabled?: boolean;
@@ -117,12 +117,12 @@ interface TaxonomyActiveToggleProps {
  */
 export function TaxonomyActiveToggle({
 	id,
-	isActive,
+	active,
 	toggleStatus,
 	isPending,
 	disabled = false,
 }: TaxonomyActiveToggleProps) {
-	const [optimisticIsActive, setOptimisticIsActive] = useOptimistic(isActive);
+	const [optimisticIsActive, setOptimisticIsActive] = useOptimistic(active);
 	const [isTransitionPending, startTransition] = useTransition();
 
 	const handleToggle = (checked: boolean) => {
@@ -134,7 +134,7 @@ export function TaxonomyActiveToggle({
 
 	return (
 		<ActiveToggle
-			isActive={optimisticIsActive}
+			active={optimisticIsActive}
 			onToggle={handleToggle}
 			isPending={isPending || isTransitionPending}
 			disabled={disabled}

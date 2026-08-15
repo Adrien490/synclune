@@ -1,7 +1,6 @@
 "use client";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
-import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
 	ItemContent,
@@ -16,33 +15,24 @@ interface ColorMobileItemProps {
 	color: {
 		id: string;
 		name: string;
-		hex: string;
-		slug: string;
-		description: string | null;
-		isActive: boolean;
-		_count: { skus: number };
+		hex: string | null;
+		_count: { variants: number };
 	};
 }
 
 export function ColorMobileItem({ color }: ColorMobileItemProps) {
-	const skuCount = color._count.skus || 0;
-	const statusLabel = color.isActive ? "● Actif" : "○ Inactif";
-	const hexUpper = color.hex.toUpperCase();
+	const variantCount = color._count.variants || 0;
+	const hexUpper = color.hex?.toUpperCase() ?? null;
 
 	const { sections } = useColorActions({
 		colorId: color.id,
 		colorName: color.name,
 		colorHex: color.hex,
-		colorSlug: color.slug,
-		colorDescription: color.description,
-		// La liste mobile n'a pas d'interrupteur (badge en lecture seule) : l'item de
-		// menu Activer/Désactiver est la SEULE surface de bascule ici.
-		colorIsActive: color.isActive,
 	});
 
 	return (
 		<LongPressMenuLink
-			href={`/admin/catalogue/couleurs/${color.slug}`}
+			href={`/admin/catalogue/couleurs/${color.id}`}
 			ariaLabel={`Couleur ${color.name}`}
 			sections={sections}
 			menuTitle="Actions"
@@ -60,7 +50,7 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 					<span
 						className="border-border size-8 rounded-full border"
 						style={{
-							backgroundColor: color.hex,
+							backgroundColor: color.hex ?? undefined,
 							viewTransitionName: `color-swatch-${color.id}`,
 						}}
 						aria-hidden="true"
@@ -69,25 +59,18 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{color.name}</span>
-						<Badge
-							variant={color.isActive ? "default" : "secondary"}
-							style={{ viewTransitionName: `color-status-${color.id}` }}
-						>
-							{statusLabel}
-						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-						<span className="text-muted-foreground font-mono text-xs">{hexUpper}</span>
-						<span aria-hidden="true">·</span>
+						{hexUpper ? (
+							<>
+								<span className="text-muted-foreground font-mono text-xs">{hexUpper}</span>
+								<span aria-hidden="true">·</span>
+							</>
+						) : null}
 						<span>
-							{skuCount} variante{skuCount !== 1 ? "s" : ""}
+							{variantCount} variante{variantCount !== 1 ? "s" : ""}
 						</span>
 					</ItemDescription>
-					{color.description && (
-						<ItemDescription className="text-muted-foreground line-clamp-1 text-xs italic">
-							{color.description}
-						</ItemDescription>
-					)}
 				</ItemContent>
 			</Item>
 		</LongPressMenuLink>

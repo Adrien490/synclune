@@ -1,12 +1,10 @@
-import type { PublicationStatus } from "@/app/generated/prisma/enums";
-
 /**
- * Type minimal pour la collection en edition
+ * Type minimal pour la collection en edition — schéma lean : statut booléen.
  */
 export interface EditableCollection {
 	id: string;
 	name: string;
 	slug: string;
 	description: string | null;
-	status: PublicationStatus;
+	active: boolean;
 }

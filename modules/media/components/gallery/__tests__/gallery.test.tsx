@@ -114,17 +114,17 @@ vi.mock("@/modules/media/components/gallery/thumbnail", async () => ({
 	GalleryThumbnail: ({
 		media,
 		index,
-		isActive,
+		active,
 	}: {
 		media: { id: string };
 		index: number;
-		isActive: boolean;
+		active: boolean;
 		[key: string]: unknown;
 	}) => (
 		<button
 			role="tab"
 			data-testid={`gallery-thumbnail-${index}`}
-			aria-selected={isActive}
+			aria-selected={active}
 			data-media-id={media.id}
 		>
 			thumbnail {index}
@@ -153,7 +153,7 @@ function createMedia(id: string, overrides: Partial<ProductMedia> = {}): Product
 		id,
 		url: `https://example.com/${id}.jpg`,
 		alt: `Media ${id}`,
-		mediaType: "IMAGE",
+		type: "IMAGE",
 		thumbnailUrl: null,
 		blurDataUrl: null,
 		...overrides,
@@ -167,7 +167,7 @@ function createProduct(overrides: Record<string, unknown> = {}): any {
 		id: "prod-1",
 		title: "Bague étoile",
 		type: { label: "Bijou" },
-		skus: [],
+		variants: [],
 		media: [],
 		...overrides,
 	};
@@ -270,21 +270,21 @@ describe("Gallery", () => {
 		});
 	});
 
-	// La loupe était gatée sur `mediaType === "IMAGE"`. Sur un produit qui mélange
+	// La loupe était gatée sur `type === "IMAGE"`. Sur un produit qui mélange
 	// photos et vidéo, deux flèches droite depuis la loupe focalisée la démontaient
 	// SOUS le focus : le focus retombait sur `<body>`, et comme le listener `keydown`
 	// de la galerie est attaché à l'élément galerie, un événement émis sur `<body>`
 	// ne remonte plus jusqu'à lui — flèches, Home et End mouraient en silence.
 	describe("la loupe ne se démonte jamais sous le focus", () => {
 		it("reste montée quand le média courant est une vidéo", () => {
-			const images = [createMedia("m-1", { mediaType: "VIDEO" }), createMedia("m-2")];
+			const images = [createMedia("m-1", { type: "VIDEO" }), createMedia("m-2")];
 			vi.mocked(buildGallery).mockReturnValue(images);
 			render(<Gallery product={createProduct()} title="Bague étoile" />);
 			expect(screen.getByTestId("gallery-zoom-button")).toBeInTheDocument();
 		});
 
 		it("annonce le type du média courant, seule chose qui change", () => {
-			vi.mocked(buildGallery).mockReturnValue([createMedia("m-1", { mediaType: "VIDEO" })]);
+			vi.mocked(buildGallery).mockReturnValue([createMedia("m-1", { type: "VIDEO" })]);
 			render(<Gallery product={createProduct()} title="Bague étoile" />);
 			expect(screen.getByTestId("gallery-zoom-button")).toHaveAttribute("data-media-type", "VIDEO");
 
@@ -311,7 +311,7 @@ describe("Gallery", () => {
 		// « Image 3 sur 3 » pendant que le plein écran ouvert depuis cette même vue
 		// disait « Vidéo 3 sur 3 » : une galerie, deux vocabulaires.
 		it("annonce « Vidéo » quand le média courant en est une", () => {
-			vi.mocked(buildGallery).mockReturnValue([createMedia("m-1", { mediaType: "VIDEO" })]);
+			vi.mocked(buildGallery).mockReturnValue([createMedia("m-1", { type: "VIDEO" })]);
 			render(<Gallery product={createProduct()} title="Bague étoile" />);
 
 			expect(screen.getByRole("status").textContent).toContain("Vidéo 1 sur 1");

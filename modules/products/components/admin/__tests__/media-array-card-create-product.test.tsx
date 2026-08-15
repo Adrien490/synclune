@@ -205,8 +205,8 @@ import { MediaArrayCard } from "../shared/media-array-card";
 function createMediaForm(
 	media: Array<{
 		url: string;
-		mediaType: "IMAGE" | "VIDEO";
-		altText?: string;
+		type: "IMAGE" | "VIDEO";
+		alt?: string;
 		thumbnailUrl?: string | null;
 		blurDataUrl?: string;
 	}> = [],
@@ -237,7 +237,7 @@ function createMediaForm(
  * exactement la configuration rendue par `create-product-form.tsx`.
  */
 const defaultProps = {
-	fieldName: "initialSku.media" as const,
+	fieldName: "initialVariant.media" as const,
 	viewTransitionName: "product-create-media",
 	title: "Les photos",
 	ariaLabel: "Les photos",
@@ -264,8 +264,8 @@ afterEach(() => {
 
 describe("MediaArrayCard — réglage création produit", () => {
 	/*
-	 * ⚠️ Ces assertions portent sur le VRAI plafond (`ARRAY_LIMITS.SKU_MEDIA` = 6).
-	 * Le fichier mockait `@/shared/constants/validation-limits` avec `SKU_MEDIA: 10`
+	 * ⚠️ Ces assertions portent sur le VRAI plafond (`ARRAY_LIMITS.VARIANT_MEDIA` = 6).
+	 * Le fichier mockait `@/shared/constants/validation-limits` avec `VARIANT_MEDIA: 10`
 	 * — toutes les assertions « 0/10 », « 3/10 », « jusqu'à 10 médias » et « Limite de
 	 * 10 médias » testaient donc une fiction, et changer le vrai plafond ne rougissait
 	 * rien. Mock retiré (audit 2026-08-04).
@@ -340,8 +340,8 @@ describe("MediaArrayCard — réglage création produit", () => {
 	describe("with media", () => {
 		it("shows MediaUploadGrid when media items are present", () => {
 			const media = [
-				{ url: "https://example.com/img1.jpg", mediaType: "IMAGE" as const },
-				{ url: "https://example.com/img2.jpg", mediaType: "IMAGE" as const },
+				{ url: "https://example.com/img1.jpg", type: "IMAGE" as const },
+				{ url: "https://example.com/img2.jpg", type: "IMAGE" as const },
 			];
 			const form = createMediaForm(media);
 			render(<MediaArrayCard form={form as never} {...defaultProps} />);
@@ -349,7 +349,7 @@ describe("MediaArrayCard — réglage création produit", () => {
 		});
 
 		it("does not show dropzone directly in empty state when media present", () => {
-			const media = [{ url: "https://example.com/img1.jpg", mediaType: "IMAGE" as const }];
+			const media = [{ url: "https://example.com/img1.jpg", type: "IMAGE" as const }];
 			const form = createMediaForm(media);
 			render(<MediaArrayCard form={form as never} {...defaultProps} />);
 			expect(screen.queryByTestId("icon-image-plus")).not.toBeInTheDocument();
@@ -358,7 +358,7 @@ describe("MediaArrayCard — réglage création produit", () => {
 		it("shows correct counter with media", () => {
 			const media = Array.from({ length: 3 }, (_, i) => ({
 				url: `https://example.com/img${i}.jpg`,
-				mediaType: "IMAGE" as const,
+				type: "IMAGE" as const,
 			}));
 			const form = createMediaForm(media);
 			render(<MediaArrayCard form={form as never} {...defaultProps} />);
@@ -370,7 +370,7 @@ describe("MediaArrayCard — réglage création produit", () => {
 		it("shows limit warning when at max (10)", () => {
 			const media = Array.from({ length: 10 }, (_, i) => ({
 				url: `https://example.com/img${i}.jpg`,
-				mediaType: "IMAGE" as const,
+				type: "IMAGE" as const,
 			}));
 			const form = createMediaForm(media);
 			render(<MediaArrayCard form={form as never} {...defaultProps} />);
@@ -380,7 +380,7 @@ describe("MediaArrayCard — réglage création produit", () => {
 		it("shows Info icon when at limit", () => {
 			const media = Array.from({ length: 10 }, (_, i) => ({
 				url: `https://example.com/img${i}.jpg`,
-				mediaType: "IMAGE" as const,
+				type: "IMAGE" as const,
 			}));
 			const form = createMediaForm(media);
 			render(<MediaArrayCard form={form as never} {...defaultProps} />);
@@ -390,7 +390,7 @@ describe("MediaArrayCard — réglage création produit", () => {
 		it("does not show limit warning when below max", () => {
 			const media = Array.from({ length: 5 }, (_, i) => ({
 				url: `https://example.com/img${i}.jpg`,
-				mediaType: "IMAGE" as const,
+				type: "IMAGE" as const,
 			}));
 			const form = createMediaForm(media);
 			render(<MediaArrayCard form={form as never} {...defaultProps} />);
@@ -565,7 +565,7 @@ describe("MediaArrayCard — réglage création produit", () => {
 	 * Le champ média n'a pas de contrôle unique, donc rien ne portait son `id` ni
 	 * son état invalide. Deux mécanismes en dépendaient et échouaient EN SILENCE :
 	 * `useFocusFirstError` cherche `[aria-invalid="true"]`, et le lien « Photos »
-	 * du récapitulatif d'erreurs cherche `#initialSku.media`. Soumettre sans photo
+	 * du récapitulatif d'erreurs cherche `#initialVariant.media`. Soumettre sans photo
 	 * — le premier manque de la cascade, donc le plus fréquent — ne déplaçait donc
 	 * ni le focus ni le scroll, et le lien du récapitulatif était mort.
 	 */
@@ -574,7 +574,7 @@ describe("MediaArrayCard — réglage création produit", () => {
 			const form = createMediaForm();
 			const { container } = render(<MediaArrayCard form={form as never} {...defaultProps} />);
 
-			const anchor = container.querySelector("#initialSku\\.media");
+			const anchor = container.querySelector("#initialVariant\\.media");
 			expect(anchor).not.toBeNull();
 			// Focalisable par programme : `focusFirstInvalid()` appelle `focus()`.
 			expect(anchor).toHaveAttribute("tabindex", "-1");
@@ -588,9 +588,9 @@ describe("MediaArrayCard — réglage création produit", () => {
 			const { container } = render(<MediaArrayCard form={form as never} {...defaultProps} />);
 
 			const anchor = container.querySelector('[data-field-invalid="true"]');
-			expect(anchor).toHaveAttribute("id", "initialSku.media");
-			expect(anchor).toHaveAttribute("aria-describedby", "initialSku.media-error");
-			expect(container.querySelector("#initialSku\\.media-error")).toHaveTextContent(
+			expect(anchor).toHaveAttribute("id", "initialVariant.media");
+			expect(anchor).toHaveAttribute("aria-describedby", "initialVariant.media-error");
+			expect(container.querySelector("#initialVariant\\.media-error")).toHaveTextContent(
 				"Au moins une image est requise",
 			);
 		});

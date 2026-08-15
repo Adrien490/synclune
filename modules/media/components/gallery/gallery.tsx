@@ -234,7 +234,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 	};
 
 	// Product type for descriptive ALT texts
-	const productType = product.type?.label;
 
 	// Extract and validate URL params for variants
 	const {
@@ -430,8 +429,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 				    s'annonçait « Image 3 sur 3 », et le plein écran ouvert depuis cette même
 				    vue disait « Vidéo 3 sur 3 ». Une seule galerie, deux vocabulaires. */}
 				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-					{currentMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image"} {current + 1} sur{" "}
-					{images.length}
+					{currentMedia?.type === "VIDEO" ? "Vidéo" : "Image"} {current + 1} sur {images.length}
 				</div>
 
 				<div
@@ -481,7 +479,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 												media={media}
 												index={index}
 												title={title}
-												productType={productType}
 												totalImages={images.length}
 												isActive={index === current}
 												onOpen={openLightbox}
@@ -522,12 +519,12 @@ function GalleryContent({ product, title }: GalleryProps) {
 								    ⚠️ Ce n'est PAS une cible tactile (`<p aria-hidden>`) : `md:min-h-11`
 								    reste juste, ne pas le repasser en `min-h-11`. */}
 								<GalleryTapHint enabled={!hasOpenedLightbox} />
-								{/* Inconditionnelle : gatée sur `mediaType === "IMAGE"`, elle se
+								{/* Inconditionnelle : gatée sur `type === "IMAGE"`, elle se
 								    démontait SOUS le focus en arrivant sur un slide vidéo, et la
 								    navigation au clavier mourait avec elle. Cf. `zoom-button.tsx`. */}
 								<GalleryZoomButton
 									onOpen={openLightbox}
-									mediaType={currentMedia?.mediaType === "VIDEO" ? "VIDEO" : "IMAGE"}
+									mediaType={currentMedia?.type === "VIDEO" ? "VIDEO" : "IMAGE"}
 									isOpen={isOpen}
 								/>
 							</div>

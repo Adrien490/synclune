@@ -15,18 +15,6 @@ interface ProductTypeDetailProductsCardProps {
 	productType: ProductTypeDetailReturn;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-	PUBLIC: "Public",
-	DRAFT: "Brouillon",
-	ARCHIVED: "Archivé",
-};
-
-const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline"> = {
-	PUBLIC: "default",
-	DRAFT: "secondary",
-	ARCHIVED: "outline",
-};
-
 export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetailProductsCardProps) {
 	const haptic = useHaptic();
 	const products = productType.products;
@@ -53,7 +41,7 @@ export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetail
 				) : (
 					<ul className="-mx-2 space-y-1" aria-label={`${products.length} produit(s) récents`}>
 						{products.map((product) => {
-							const image = product.skus[0]?.images[0] ?? null;
+							const image = product.media[0] ?? null;
 							return (
 								<li key={product.id}>
 									<Link
@@ -64,15 +52,12 @@ export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetail
 										{image ? (
 											<Image
 												src={image.url}
-												alt={image.altText ?? product.title}
+												alt={image.alt ?? product.name}
 												width={40}
 												height={40}
 												sizes="40px"
 												quality={IMAGE_QUALITY.THUMBNAIL}
 												className="size-10 shrink-0 rounded-md border object-cover"
-												{...(image.blurDataUrl
-													? { placeholder: "blur" as const, blurDataURL: image.blurDataUrl }
-													: {})}
 											/>
 										) : (
 											<div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md border">
@@ -80,12 +65,10 @@ export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetail
 											</div>
 										)}
 										<div className="min-w-0 flex-1">
-											<p className="text-foreground truncate text-sm font-medium">
-												{product.title}
-											</p>
+											<p className="text-foreground truncate text-sm font-medium">{product.name}</p>
 										</div>
-										<Badge variant={STATUS_VARIANTS[product.status] ?? "outline"}>
-											{STATUS_LABELS[product.status] ?? product.status}
+										<Badge variant={product.active ? "default" : "secondary"}>
+											{product.active ? "En vente" : "Brouillon"}
 										</Badge>
 									</Link>
 								</li>

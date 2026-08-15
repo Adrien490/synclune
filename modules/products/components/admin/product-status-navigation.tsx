@@ -1,26 +1,28 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 
 const EMPTY_SEARCH_PARAMS: Record<string, string | string[] | undefined> = {};
 
+type ProductStatusValue = "active" | "inactive";
+
 interface ProductStatusNavigationProps {
-	currentStatus: PublicationStatus | undefined;
+	currentStatus: ProductStatusValue | undefined;
 	pathname?: string;
 	searchParams?: Record<string, string | string[] | undefined>;
 }
 
-// Pluriels d'onglets (« Publics », « Brouillons »…) : variante de présentation
+// Pluriels d'onglets (« En vente », « Brouillons ») : variante de présentation
 // volontairement locale — les singuliers SSOT vivent dans
 // modules/products/constants/product-status-display.ts.
-const STATUS_LABELS: Record<PublicationStatus, string> = {
-	[PublicationStatus.PUBLIC]: "Publics",
-	[PublicationStatus.DRAFT]: "Brouillons",
-	[PublicationStatus.ARCHIVED]: "Archivés",
+const STATUS_LABELS: Record<ProductStatusValue, string> = {
+	active: "En vente",
+	inactive: "Brouillons",
 };
 
 /**
- * Composant de navigation par onglets pour les statuts de bijoux
- * Server Component pur avec Next.js Links
+ * Composant de navigation par onglets pour les statuts de bijoux — schéma
+ * lean : le statut est le booléen `active`, exposé en URL comme
+ * `status=active|inactive`.
+ * Server Component pur avec Next.js Links.
  */
 export function ProductStatusNavigation({
 	currentStatus,
@@ -28,7 +30,7 @@ export function ProductStatusNavigation({
 	searchParams = EMPTY_SEARCH_PARAMS,
 }: ProductStatusNavigationProps) {
 	// Construire les URLs avec les query params existants
-	const buildHref = (status: PublicationStatus | "all") => {
+	const buildHref = (status: ProductStatusValue | "all") => {
 		const params = new URLSearchParams();
 
 		// Copier tous les params existants sauf status, cursor et direction
@@ -56,7 +58,7 @@ export function ProductStatusNavigation({
 			value: "all" as const,
 			href: buildHref("all"),
 		},
-		...Object.values(PublicationStatus).map((status) => ({
+		...(["active", "inactive"] as const).map((status) => ({
 			label: STATUS_LABELS[status],
 			value: status,
 			href: buildHref(status),

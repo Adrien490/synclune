@@ -48,7 +48,7 @@ export async function generateUniqueReadableName(
 }
 
 /**
- * Genere un nom unique technique pour duplication (codes SKU, etc.)
+ * Genere un nom unique technique pour duplication (codes VARIANT, etc.)
  * Format: "CODE-COPY" ou "CODE-COPY-2"
  *
  * @param originalName - Code original a dupliquer
@@ -56,7 +56,7 @@ export async function generateUniqueReadableName(
  * @param maxAttempts - Nombre maximum de tentatives (defaut: 100)
  */
 /**
- * Borne haute alignée sur `ProductSku.sku @db.VarChar(100)` : dupliquer une
+ * Borne haute alignée sur `ProductVariant.variant @db.VarChar(100)` : dupliquer une
  * copie ~15 fois empilait les suffixes `-COPY` jusqu'à dépasser la colonne —
  * erreur Postgres 22001 brute rendue « Une erreur est survenue ».
  * On tronque la BASE pour laisser la place au plus long suffixe possible.

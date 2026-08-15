@@ -1,4 +1,3 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { GET_COLLECTIONS_DEFAULT_PER_PAGE } from "@/modules/collections/data/get-collections";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
@@ -109,7 +108,7 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 		sortBy: "name-ascending",
 		filters: {
 			hasProducts: true,
-			status: PublicationStatus.PUBLIC,
+			active: true,
 		},
 	});
 

@@ -10,6 +10,7 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 
 import { PRODUCT_STATUS_LABELS } from "@/modules/products/constants/product-status-display";
+import { slugify } from "@/shared/utils/generate-slug";
 
 const STOCK_STATUS_LABELS: Record<string, string> = {
 	in_stock: "En stock",
@@ -179,8 +180,8 @@ function ProductsFilterBadgesInner({
 	const filterMaps = {
 		productTypes: new Map(productTypes.map((t) => [t.slug, t.label])),
 		collections: new Map(collections.map((c) => [c.id, c.name])),
-		colors: new Map(colors.map((c) => [c.slug, c.name])),
-		materials: new Map(materials.map((m) => [m.slug, m.name])),
+		colors: new Map(colors.map((c) => [slugify(c.name), c.name])),
+		materials: new Map(materials.map((m) => [slugify(m.name), m.name])),
 	};
 
 	return (

@@ -100,11 +100,11 @@ describe("createAlertDialogStore", () => {
 		});
 
 		it("should return typed data", () => {
-			const data = { itemId: "sku-789", itemName: "Bague Lune" };
+			const data = { itemId: "variant-789", itemName: "Bague Lune" };
 			store.getState().openAlertDialog("delete", data);
 
 			const retrieved = store.getState().getAlertDialogData<typeof data>("delete");
-			expect(retrieved?.itemId).toBe("sku-789");
+			expect(retrieved?.itemId).toBe("variant-789");
 			expect(retrieved?.itemName).toBe("Bague Lune");
 		});
 

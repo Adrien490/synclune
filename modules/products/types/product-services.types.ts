@@ -1,8 +1,8 @@
 import { type Prisma } from "@/app/generated/prisma/client";
-import type { StockStatus as SharedStockStatus } from "@/shared/types/product-sku.types";
+import type { StockStatus as SharedStockStatus } from "@/shared/types/product-variant.types";
 
 // Re-export des types depuis product.types.ts (source de vérité)
-export type { ProductSku } from "./product.types";
+export type { ProductVariant } from "./product.types";
 
 // Re-export depuis shared (évite la dépendance circulaire)
 export type StockStatus = SharedStockStatus;
@@ -17,11 +17,11 @@ export interface PriceInfo {
 	hasMultiplePrices: boolean;
 }
 
-export interface SkuForPricing {
-	isActive: boolean;
-	priceInclTax: number;
-	compareAtPrice?: number | null;
-	inventory?: number;
+export interface VariantForPricing {
+	active: boolean;
+	/** Override du prix produit — null = prix du produit */
+	priceCents: number | null;
+	stock?: number;
 }
 
 // ============================================================================
@@ -55,7 +55,7 @@ export type ProductHighlight = {
 export type SearchResult = {
 	/** IDs de produits triés par pertinence (fuzzy search) */
 	fuzzyIds: string[] | null;
-	/** Conditions de recherche exacte (SKU, couleurs, etc.) */
+	/** Conditions de recherche exacte (VARIANT, couleurs, etc.) */
 	exactConditions: Prisma.ProductWhereInput[];
 };
 

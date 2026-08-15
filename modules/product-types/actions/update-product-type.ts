@@ -2,11 +2,9 @@
 
 import { updateTag } from "next/cache";
 
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
@@ -22,15 +20,11 @@ export async function updateProductType(
 		// 1. Verification de l'authentification et des droits admin
 		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.UPDATE);
-		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extraire les donnees du FormData
+		// 2. Extraire les donnees du FormData
 		const rawData = {
 			id: formData.get("id"),
 			label: formData.get("label"),
-			description: formData.get("description") ?? undefined,
 		};
 
 		// 4. Valider les donnees
@@ -42,18 +36,11 @@ export async function updateProductType(
 		// 5. Verifier que le type existe (slug nécessaire pour invalidation tag détail)
 		const existingType = await prisma.productType.findUnique({
 			where: { id: validatedData.id },
-			select: { id: true, label: true, slug: true, isSystem: true },
+			select: { id: true, label: true, slug: true },
 		});
 
 		if (!existingType) {
 			return notFound("Type de produit");
-		}
-
-		// 6. Protection: Les types systeme ne peuvent pas etre modifies (label/slug)
-		if (existingType.isSystem) {
-			return error(
-				`Le type "${existingType.label}" est un type systeme et ne peut pas etre modifie`,
-			);
 		}
 
 		// Sanitizer AVANT l'unicité et le slug : l'update écrivait
@@ -82,20 +69,17 @@ export async function updateProductType(
 					})
 				: existingType.slug;
 
-		// 9. Mettre a jour le type (updateMany atomique avec guard isSystem=false pour eviter TOCTOU)
+		// 9. Mettre a jour le type
 		const updateResult = await prisma.productType.updateMany({
-			where: { id: validatedData.id, isSystem: false },
+			where: { id: validatedData.id },
 			data: {
 				label: sanitizedLabel,
-				description: validatedData.description ? sanitizeText(validatedData.description) : null,
 				slug,
 			},
 		});
 
 		if (updateResult.count === 0) {
-			return error(
-				"Le type ne peut plus être modifié (il a été supprimé ou est devenu un type système)",
-			);
+			return error("Le type ne peut plus être modifié (il a été supprimé)");
 		}
 
 		// 10. Invalider le cache des types de produits (ancien + nouveau slug si changement)

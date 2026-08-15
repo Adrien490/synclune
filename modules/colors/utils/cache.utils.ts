@@ -17,7 +17,7 @@ import { COLORS_CACHE_TAGS } from "../constants/cache";
  * Configure cache for the colors list.
  *
  * Used by both admin (sees inactive too) and storefront (filters by
- * `isActive: true` on the consumer side). Profile `reference` is fine because
+ * `active: true` on the consumer side). Profile `reference` is fine because
  * every admin mutation invalidates `colors-list` via `getColorInvalidationTags`,
  * so the 24h revalidate window is never the source of stale data.
  */
@@ -27,11 +27,11 @@ export function cacheColors() {
 }
 
 /**
- * Configure cache for a specific color detail page
+ * Configure cache for a specific color detail page (keyed by id)
  */
-export function cacheColorDetail(slug: string) {
+export function cacheColorDetail(id: string) {
 	cacheLife("reference");
-	cacheTag(COLORS_CACHE_TAGS.DETAIL(slug), COLORS_CACHE_TAGS.LIST);
+	cacheTag(COLORS_CACHE_TAGS.DETAIL(id), COLORS_CACHE_TAGS.LIST);
 }
 
 // ============================================
@@ -39,10 +39,10 @@ export function cacheColorDetail(slug: string) {
 // ============================================
 
 interface ColorInvalidationOptions {
-	/** Slug of the modified color (current and/or previous if renamed). */
-	slug?: string;
+	/** Id of the modified color. */
+	colorId?: string;
 	/**
-	 * Slugs of products that own a SKU referencing this color. When provided,
+	 * Slugs of products that own a VARIANT referencing this color. When provided,
 	 * cascade invalidates `products-list` + `product-${slug}` so storefront
 	 * pages don't display a stale name/hex after a color update.
 	 */
@@ -58,19 +58,19 @@ interface ColorInvalidationOptions {
  * - The admin sidebar badges
  * - Affected product pages + the products list (if `affectedProductSlugs`
  *   provided) — the storefront product PDP embeds the color name/hex in the
- *   SKU swatch, so a rename would otherwise stay stale up to 15 min (catalog
+ *   VARIANT swatch, so a rename would otherwise stay stale up to 15 min (catalog
  *   cache profile).
  *
- * @param input - either a single slug (legacy signature) or an options bag.
+ * @param input - either a color id (shorthand) or an options bag.
  */
 export function getColorInvalidationTags(input?: string | ColorInvalidationOptions): string[] {
 	const opts: ColorInvalidationOptions =
-		typeof input === "string" ? { slug: input } : (input ?? {});
+		typeof input === "string" ? { colorId: input } : (input ?? {});
 
 	const tags = new Set<string>([COLORS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]);
 
-	if (opts.slug) {
-		tags.add(COLORS_CACHE_TAGS.DETAIL(opts.slug));
+	if (opts.colorId) {
+		tags.add(COLORS_CACHE_TAGS.DETAIL(opts.colorId));
 	}
 
 	if (opts.affectedProductSlugs && opts.affectedProductSlugs.length > 0) {

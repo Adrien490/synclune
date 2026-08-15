@@ -8,8 +8,6 @@ import { fetchAddresses } from "../data/fetch-addresses";
 import { fetchGeoapifyAddresses } from "../data/fetch-geoapify-addresses";
 import { SEARCH_ADDRESS_DEFAULT_LIMIT } from "../constants/ban-api.constants";
 import { GEOAPIFY_DEFAULT_LIMIT } from "../constants/geoapify.constants";
-import { enforceRateLimitForCurrentUser } from "@/modules/admin-auth/lib/rate-limit-helpers";
-import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 import { shippingCountrySchema } from "@/shared/schemas/address.schema";
 
 /**
@@ -59,10 +57,6 @@ export async function searchAddress(params: unknown): Promise<SearchAddressRetur
 	const validatedParams = parsed.data;
 
 	// Rate limiting (user or IP-based)
-	const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.SEARCH);
-	if ("error" in rateCheck) {
-		return emptyResult(validatedParams.text, validatedParams.maximumResponses);
-	}
 
 	try {
 		return await fetchAddresses(validatedParams);
@@ -98,11 +92,6 @@ export async function searchAddressForCheckout(params: unknown): Promise<SearchA
 		return emptyResult("", GEOAPIFY_DEFAULT_LIMIT);
 	}
 	const { text, country } = parsed.data;
-
-	const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.SEARCH);
-	if ("error" in rateCheck) {
-		return emptyResult(text, GEOAPIFY_DEFAULT_LIMIT);
-	}
 
 	try {
 		if (country === "FR") {

@@ -3,15 +3,15 @@
 import { Suspense, type ComponentProps } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
-import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
-import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import { useVariantValidation } from "@/modules/variants/hooks/use-variant-validation";
+import type { GetProductReturn, ProductVariant } from "@/modules/products/types/product.types";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
 import { Spinner } from "@/shared/components/ui/spinner";
 
 interface AddToCartFormProps {
 	product: GetProductReturn;
-	selectedSku: ProductSku | null;
+	selectedVariant: ProductVariant | null;
 }
 
 /**
@@ -21,7 +21,7 @@ interface AddToCartFormProps {
  * Les badges de réassurance sont dans ProductReassurance (RSC).
  * La quantité est toujours 1, modifiable ensuite dans le panier.
  */
-function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
+function AddToCartFormInner({ product, selectedVariant }: AddToCartFormProps) {
 	const { action, isPending, state } = useAddToCart({ showErrorToast: false });
 	const searchParams = useSearchParams();
 
@@ -51,13 +51,13 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 		return `Choisis ${missing.slice(0, -1).join(", ")} et ${missing[missing.length - 1]}`;
 	};
 
-	// Vérifier si le produit a un seul SKU
-	const hasOnlyOneSku = product.skus.length === 1;
+	// Vérifier si le produit a un seul VARIANT
+	const hasOnlyOneVariant = product.variants.length === 1;
 
-	// Vérifier si le SKU est disponible
-	const isAvailable = selectedSku ? selectedSku.inventory > 0 && selectedSku.isActive : false;
+	// Vérifier si le VARIANT est disponible
+	const isAvailable = selectedVariant ? selectedVariant.stock > 0 && selectedVariant.active : false;
 
-	const canAddToCart = selectedSku && isAvailable;
+	const canAddToCart = selectedVariant && isAvailable;
 
 	const hasError =
 		!!state && state.status !== "success" && state.status !== "initial" && !isPending;
@@ -72,9 +72,9 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 			aria-label="Formulaire d'ajout au panier"
 		>
 			{/* Champs cachés */}
-			{selectedSku && (
+			{selectedVariant && (
 				<>
-					<input type="hidden" name="skuId" value={selectedSku.id} />
+					<input type="hidden" name="variantId" value={selectedVariant.id} />
 					<input type="hidden" name="quantity" value="1" />
 				</>
 			)}
@@ -108,9 +108,9 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 						<Spinner presentational />
 						<span>Ajout en cours…</span>
 					</span>
-				) : !selectedSku ? (
+				) : !selectedVariant ? (
 					<>
-						{hasOnlyOneSku ? (
+						{hasOnlyOneVariant ? (
 							<span>Pièce non disponible</span>
 						) : (
 							<span>{getMissingOptionsMessage()}</span>

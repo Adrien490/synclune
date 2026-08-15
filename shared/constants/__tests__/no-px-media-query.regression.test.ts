@@ -186,8 +186,8 @@ describe("@regression no-px-media-query", () => {
 			"modules/media/constants/image-config.constants.ts",
 			"modules/products/components/admin/product-detail/product-detail-media-card.tsx",
 			"modules/products/components/admin/product-mobile-item.tsx",
-			"modules/skus/components/admin/sku-detail/sku-detail-media-card.tsx",
-			"modules/skus/components/admin/sku-mobile-item.tsx",
+			"modules/variants/components/admin/variant-detail/variant-detail-media-card.tsx",
+			"modules/variants/components/admin/variant-mobile-item.tsx",
 			"shared/components/media-upload/media-upload-grid.tsx",
 		]);
 

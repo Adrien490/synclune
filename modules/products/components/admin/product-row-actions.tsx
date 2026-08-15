@@ -16,7 +16,7 @@ interface ProductRowActionsProps {
 	productId: string;
 	productSlug: string;
 	productTitle: string;
-	productStatus: "DRAFT" | "PUBLIC" | "ARCHIVED";
+	productActive: boolean;
 }
 
 export function ProductRowActions(props: ProductRowActionsProps) {

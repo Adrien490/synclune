@@ -1,7 +1,6 @@
-import { PublicationStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { logger } from "@/shared/lib/logger";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
@@ -10,14 +9,13 @@ import type {
 	ProductCountsByStatus,
 } from "../types/product-counts.types";
 
-// Re-export pour compatibilité
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
 
 /**
- * Récupère le nombre de produits par statut
- * Optimisé avec une seule requête groupBy
+ * Récupère le nombre de produits par statut (en vente / brouillons) — schéma
+ * lean : le statut est le booléen `active`.
  *
  * Protection: Nécessite un compte ADMIN
  */
@@ -36,11 +34,7 @@ export async function getProductCountsByStatus(): Promise<GetProductCountsByStat
 		logger.error("Failed to fetch product counts by status", error, {
 			service: "getProductCountsByStatus",
 		});
-		return {
-			[PublicationStatus.PUBLIC]: 0,
-			[PublicationStatus.DRAFT]: 0,
-			[PublicationStatus.ARCHIVED]: 0,
-		};
+		return { active: 0, draft: 0 };
 	}
 }
 
@@ -52,23 +46,10 @@ async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
 	cacheLife("user");
 	cacheTag(PRODUCTS_CACHE_TAGS.COUNTS);
 
-	const counts = await prisma.product.groupBy({
-		by: ["status"],
-		where: { ...notDeleted },
-		_count: {
-			id: true,
-		},
-	});
+	const [active, draft] = await Promise.all([
+		prisma.product.count({ where: { active: true } }),
+		prisma.product.count({ where: { active: false } }),
+	]);
 
-	const result: ProductCountsByStatus = {
-		[PublicationStatus.PUBLIC]: 0,
-		[PublicationStatus.DRAFT]: 0,
-		[PublicationStatus.ARCHIVED]: 0,
-	};
-
-	counts.forEach((count) => {
-		result[count.status as PublicationStatus] = count._count.id;
-	});
-
-	return result;
+	return { active, draft };
 }

@@ -354,8 +354,11 @@ describe("logger.error context tags", () => {
 describe("logger.debug", () => {
 	it("calls pinoLogger.debug with the redacted message and context", () => {
 		const ctx = { service: "cart" };
-		logger.debug("SKU validation started", ctx);
-		expect(mockPinoInstance.debug).toHaveBeenCalledWith({ context: ctx }, "SKU validation started");
+		logger.debug("VARIANT validation started", ctx);
+		expect(mockPinoInstance.debug).toHaveBeenCalledWith(
+			{ context: ctx },
+			"VARIANT validation started",
+		);
 	});
 
 	it("forwards undefined context when none provided", () => {

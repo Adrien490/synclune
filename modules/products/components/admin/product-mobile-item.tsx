@@ -5,13 +5,12 @@ import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants"
 import Image from "next/image";
 
 import type { MediaType } from "@/app/generated/prisma/client";
-import { PublicationStatus } from "@/app/generated/prisma/enums";
 
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import {
-	PRODUCT_STATUS_LABELS,
-	PRODUCT_STATUS_VARIANTS,
+	productStatusLabel,
+	productStatusVariant,
 } from "@/modules/products/constants/product-status-display";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
@@ -25,69 +24,59 @@ import { useProductActions } from "../../hooks/use-product-actions";
 
 // Glyphes = affordance locale (distinction hors couleur en liste dense) ;
 // libellés et variants dérivés de la SSOT product-status-display.
-const STATUS_CONFIG: Record<PublicationStatus, { label: string; variant: BadgeVariant }> = {
-	[PublicationStatus.PUBLIC]: {
-		label: `● ${PRODUCT_STATUS_LABELS.PUBLIC}`,
-		variant: PRODUCT_STATUS_VARIANTS.PUBLIC,
-	},
-	[PublicationStatus.DRAFT]: {
-		label: `○ ${PRODUCT_STATUS_LABELS.DRAFT}`,
-		variant: PRODUCT_STATUS_VARIANTS.DRAFT,
-	},
-	[PublicationStatus.ARCHIVED]: {
-		label: `▣ ${PRODUCT_STATUS_LABELS.ARCHIVED}`,
-		variant: PRODUCT_STATUS_VARIANTS.ARCHIVED,
-	},
-};
+function statusConfigOf(active: boolean): { label: string; variant: BadgeVariant } {
+	return {
+		label: `${active ? "●" : "○"} ${productStatusLabel(active)}`,
+		variant: productStatusVariant(active),
+	};
+}
 
-interface Sku {
-	priceInclTax: number;
-	inventory: number;
-	images: Array<{
-		url: string;
-		thumbnailUrl?: string | null;
-		blurDataUrl?: string | null;
-		mediaType: MediaType;
-	}>;
+interface Variant {
+	/** Override — null = prix du produit. */
+	priceCents: number | null;
+	stock: number;
 }
 
 interface ProductMobileItemProps {
 	product: {
 		id: string;
 		slug: string;
-		title: string;
-		status: PublicationStatus;
-		skus: Sku[];
+		name: string;
+		active: boolean;
+		priceCents: number;
+		variants: Variant[];
+		media: Array<{ url: string; alt: string | null; type: MediaType }>;
 		type: { label: string } | null;
 	};
 	/** Premier item ATF : déclenche preload SSR (LCP candidate). */
 	preload?: boolean;
 }
 
-const getTotalStock = (skus: Sku[]) => skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
+const getTotalStock = (variants: Variant[]) =>
+	variants.reduce((sum, variant) => sum + (variant.stock || 0), 0);
 
-const getPriceDisplay = (skus: Sku[]) => {
-	if (skus.length === 0) return "—";
-	const prices = skus.map((s) => s.priceInclTax);
+const getPriceDisplay = (variants: Variant[], basePriceCents: number) => {
+	if (variants.length === 0) return formatEuro(basePriceCents);
+	const prices = variants.map((v) => v.priceCents ?? basePriceCents);
 	const min = Math.min(...prices);
 	const max = Math.max(...prices);
 	return min === max ? formatEuro(min) : `${formatEuro(min)} – ${formatEuro(max)}`;
 };
 
 export function ProductMobileItem({ product, preload }: ProductMobileItemProps) {
-	const statusConfig = STATUS_CONFIG[product.status];
-	const priceDisplay = getPriceDisplay(product.skus);
-	const stock = getTotalStock(product.skus);
-	// Première IMAGE de l'ordre canonique (les selects trient SKUs et médias par
-	// position) — SSOT pickPrimaryImage : une vidéo au rang 0 ne doit pas devenir vignette
-	const primaryImage = pickPrimaryImage(product.skus.flatMap((sku) => sku.images));
+	const statusConfig = statusConfigOf(product.active);
+	const priceDisplay = getPriceDisplay(product.variants, product.priceCents);
+	const stock = getTotalStock(product.variants);
+	// Première IMAGE de l'ordre canonique (le select trie les médias par position)
+	// — SSOT pickPrimaryImage : une vidéo au rang 0 ne doit pas devenir vignette
+	const primaryImage = pickPrimaryImage(product.media);
 	const thumbSrc = primaryImage ? resolveMediaThumbSrc(primaryImage) : null;
 
 	const { sections } = useProductActions({
 		productId: product.id,
 		productSlug: product.slug,
-		productTitle: product.title,
-		productStatus: product.status,
+		productTitle: product.name,
+		productActive: product.active,
 	});
 
 	const stockVariant = getStockVariant(stock);
@@ -96,10 +85,10 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 	return (
 		<LongPressMenuLink
 			href={`/admin/catalogue/produits/${product.slug}`}
-			ariaLabel={`Produit ${product.title}`}
+			ariaLabel={`Produit ${product.name}`}
 			sections={sections}
 			menuTitle="Actions"
-			menuDescription={product.title}
+			menuDescription={product.name}
 			className="text-left"
 			viewTransitionName={`product-card-${product.id}`}
 		>
@@ -120,9 +109,6 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 						className="size-12 shrink-0 rounded-md border object-cover"
 						style={{ viewTransitionName: `product-image-${product.id}` }}
 						{...(preload ? { preload: true } : {})}
-						{...(primaryImage.blurDataUrl
-							? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
-							: {})}
 					/>
 				) : (
 					<div
@@ -134,7 +120,7 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 				)}
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
-						<span className="truncate font-semibold">{product.title}</span>
+						<span className="truncate font-semibold">{product.name}</span>
 						<Badge
 							variant={statusConfig.variant}
 							style={{ viewTransitionName: `product-status-${product.id}` }}
@@ -156,7 +142,9 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 						<span className="sr-only">, </span>
 						<span aria-hidden="true">·</span>
 						<span>
-							{product.skus.length <= 1 ? "Variante unique" : `${product.skus.length} variantes`}
+							{product.variants.length <= 1
+								? "Variante unique"
+								: `${product.variants.length} variantes`}
 						</span>
 						{product.type ? (
 							<>
