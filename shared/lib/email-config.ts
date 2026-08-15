@@ -50,4 +50,7 @@ export const EMAIL_ADMIN_BCC = process.env.EMAIL_ADMIN_BCC ?? undefined;
 export const EMAIL_SUBJECTS = {
 	ORDER_CONFIRMATION: "Confirmation de commande - Synclune",
 	ORDER_SHIPPED: "Votre commande a été expédiée - Synclune",
+	RETRACTATION_ACK: "Demande de rétractation bien reçue - Synclune",
+	RETRACTATION_REFUNDED: "Votre remboursement est en route - Synclune",
+	RETRACTATION_REJECTED: "Votre demande de rétractation - Synclune",
 } as const;

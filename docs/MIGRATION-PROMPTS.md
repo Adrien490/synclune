@@ -73,7 +73,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | 2   | Bascule schéma + purge + catalogue        | XL     | ✅     | `migration(lot-2)` | Voir « État à la sortie du lot 2 » ci-dessous. **Amendement en cours de lot : `ProductType` conservé (cf. D2).**              |
 | 3   | Checkout Stripe hébergé + webhooks        | L      | ✅     | `migration(lot-3)` | Voir « État à la sortie du lot 3 » ci-dessous. Port fixé par un select de pays sur /paiement ; CTA panier inchangé.           |
 | 4   | Commandes : admin, facturation Int, suivi | L      | ✅     | `migration(lot-4)` | Voir « État à la sortie du lot 4 » ci-dessous.                                                                                |
-| 5   | Rétractation (`RetractationRequest`)      | M      | ⬜     | —                  |                                                                                                                               |
+| 5   | Rétractation (`RetractationRequest`)      | M      | ✅     | `migration(lot-5)` | Voir « État à la sortie du lot 5 » ci-dessous.                                                                                |
 | 6   | Dashboard, emails, polish admin           | M      | ⬜     | —                  |                                                                                                                               |
 | 7   | E2E refonte                               | L      | ⬜     | —                  |                                                                                                                               |
 | 8   | Seed conforme à la DA                     | S/M    | ⬜     | —                  | peut s'exécuter dès la fin du lot 2                                                                                           |
@@ -322,6 +322,67 @@ numéros 1 puis 2, rejeu sans re-numérotation, suivi 200/404 selon token, factu
 mention 293 B + vendeur), expédition → tracking sur le suivi, annulation → restock sans
 numéro, export refusé sans session. Restent à cliquer par Adrien : le dialog d'expédition
 et l'annulation depuis l'admin (couverts en tests unitaires).
+
+### État à la sortie du lot 5
+
+**Nouveau module `modules/retractations/`** (constants, schemas, data, actions, services,
+components). La machine à états est STRICTEMENT MONOTONE, gardée par `updateMany` sur le
+statut source : RECEIVED → ACKNOWLEDGED → AWAITING_RETURN → REFUNDED, REJECTED possible
+tant que non remboursée.
+
+**Surface publique** : bouton « Me rétracter » sur /suivi-commande (motif OPTIONNEL) via
+`requestRetractation` — parse Zod PUIS token HMAC vérifié contre l'email en base AVANT
+toute écriture (anti-énumération : même message pour token faux et commande inconnue).
+`@unique(orderId)` ⇒ P2002 = « demande déjà enregistrée » (une seule demande par commande,
+même rejetée — la suite passe par email). L'accusé de réception part SANS DÉLAI
+(`retractation-ack:<orderId>`) ; s'il part, la demande passe ACKNOWLEDGED — RECEIVED ne
+dure que si l'envoi échoue, et le détail admin le signale. Hors délai : soumettable
+(droit de demande), l'admin tranche. Éligibilité : le service transplanté au lot 2
+(`retractation-eligibility.service.ts`, ancre `shippedAt`) — commande non expédiée =
+pas de formulaire (annulation par email).
+
+**Workflow admin** (`/admin/ventes/retractations`, entrée sidebar + hub Ventes — SANS
+pastille de nav, l'échéance vit dans la liste) : liste (actives d'abord, alerte
+`RefundDeadlineBadge` = 14 j après la DEMANDE, art. L221-24, calculée en couche data hors
+cache et hors rendu — les composants restent purs), détail, 3 dialogs :
+
+- « Colis reçu » → AWAITING_RETURN + `itemReceivedAt` (RECEIVED accepté en source si
+  l'accusé a échoué) ;
+- « Rembourser » : `stripe.refunds.create({ payment_intent })` INTÉGRAL avec
+  idempotencyKey `retractation-refund-<id>` (un double clic rejoue le MÊME refund), puis
+  `finalizeRetractationRefund` (service transactionnel) : REFUNDED + **`creditNoteNumber`
+  = max+1 sur RetractationRequest — compteur séquentiel DISTINCT du compteur facture**,
+  retry P2002 ×3 + `Order.status` REFUNDED + restock **OPT-IN décoché par défaut**
+  (bijou retourné ≠ revendable) ignorant les `variantId` null. Pas de webhook `refund.*`
+  (perte volontaire) : `stripeRefundId` est la trace ;
+- « Rejeter » : motif REQUIS (≥10 c., `confirmDisabled`), envoyé tel quel par email — le
+  motif n'est PAS persisté (schéma lean), il ne vit que dans l'email. L'exception légale
+  (bijou personnalisé, art. L221-28 3°) est un arbitrage humain.
+
+**Avoir** : `/suivi-commande/avoir` (token ou session admin) — UNE ligne au montant
+remboursé + référence de la facture d'origine (art. 272-I), mention 293 B, imprimable.
+Pas de PDF archivé. Lien dans l'email de remboursement et sur le suivi.
+
+**Emails** : 3 templates + émetteurs idempotents (`retractation-ack`, `-refund`,
+`-reject:<orderId>`), 3 sujets ajoutés à `EMAIL_SUBJECTS`. Un échec d'email ne défait
+jamais une transition.
+
+**Contract** : `ADMIN_ACTION_DIRS` += `modules/retractations/actions`,
+`request-retractation` whitelistée (surface publique, garde token documentée).
+
+**⚠️ Comportement découvert (vaut pour TOUTES les routes à `loading.tsx`)** : depuis les
+frontières Suspense du lot 4, `notFound()` est streamé APRÈS le shell — le corps rendu est
+bien la page 404 (aucune fuite, rendu identique token faux / commande inconnue) mais le
+**statut HTTP est 200**. Trade-off standard du streaming PPR, assumé (pages noindex) ; les
+e2e du lot 7 doivent asserter sur le CONTENU, pas le code HTTP.
+
+**Vérifié en dev** (Stripe test RÉEL) : PaymentIntent confirmé `pm_card_visa` → commande
+SHIPPED → bouton proposé sur le suivi → demande ACKNOWLEDGED affichée → colis reçu →
+`refunds.create` réel succeeded → REFUNDED + avoir n° max+1 + Order REFUNDED + rejeu
+noop → page avoir (numéro, réf. facture, 293 B) → suivi « remboursée » + lien avoir.
+Restent à cliquer par Adrien : les 3 dialogs admin et l'email d'accusé réel (couverts en
+tests unitaires ; les emails de remboursement/rejet partent par la même machinerie
+Resend éprouvée aux lots 3-4).
 
 ## 4. Schéma cible (SSOT)
 

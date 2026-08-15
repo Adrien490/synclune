@@ -9,8 +9,10 @@ export type AdminNavBadges = Record<string, number>;
 /**
  * Pastilles de navigation admin — schéma lean (lot 4).
  *
- * `orders` = commandes PAID non expédiées (la file « à expédier »). Le lot 5
- * y ajoutera les demandes de rétractation RECEIVED.
+ * `orders` = commandes PAID non expédiées (la file « à expédier »). Les
+ * rétractations n'ont volontairement PAS de pastille (lot 5) : l'item n'est
+ * pas dans QUICK_ACCESS et l'échéance de remboursement est portée par la
+ * liste elle-même (`RefundDeadlineBadge`).
  *
  * Appelée par le layout admin, déjà gardé par `requireAdmin` — un simple
  * compteur, pas de donnée nominative.

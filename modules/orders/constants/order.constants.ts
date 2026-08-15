@@ -84,6 +84,16 @@ export const GET_ORDER_TRACKING_SELECT = {
 			quantity: true,
 		},
 	},
+	// Lot 5 : état de la demande de rétractation, affiché sur le suivi
+	// (et l'avoir a besoin du numéro + des dates).
+	retractation: {
+		select: {
+			status: true,
+			requestedAt: true,
+			refundedAt: true,
+			creditNoteNumber: true,
+		},
+	},
 } as const satisfies Prisma.OrderSelect;
 
 // ============================================================================

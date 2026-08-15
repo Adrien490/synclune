@@ -59,6 +59,10 @@ const ADMIN_ACTION_DIRS = [
 	// surfaces NON authentifiées du parcours de connexion — whitelistées ci-dessous.
 	// Le dossier reste scanné pour attraper toute future action qui s'y logerait.
 	"modules/admin-auth/actions",
+	// `retractations/actions` (migration lean, lot 5) : le workflow admin du
+	// remboursement (colis reçu / rembourser / rejeter) — `request-retractation`
+	// est LA surface publique du module, whitelistée ci-dessous.
+	"modules/retractations/actions",
 ];
 
 /**
@@ -109,6 +113,12 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	// Déconnexion : détruire son propre cookie ne demande aucun privilège, et
 	// l'exiger empêcherait un cookie expiré d'être proprement supprimé.
 	"modules/admin-auth/actions/logout.ts",
+	// --- Rétractation : la surface PUBLIQUE du droit de rétractation en ligne ---
+	// La cliente n'a pas de compte (checkout invité) : exiger requireAdmin y
+	// serait un contresens. Sa garde propre est le token HMAC du lien de suivi,
+	// vérifié contre l'email en base AVANT toute écriture (anti-énumération),
+	// après parse Zod de l'entrée.
+	"modules/retractations/actions/request-retractation.ts",
 ]);
 
 interface ActionFile {

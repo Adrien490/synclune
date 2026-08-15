@@ -1,4 +1,5 @@
 import {
+	ArrowUUpLeftIcon,
 	PackageIcon,
 	PaletteIcon,
 	ShoppingBagIcon,
@@ -108,6 +109,15 @@ const PILOTAGE_GROUP: NavGroup = {
 			// La pastille compte la file « à expédier » — elle doit y mener.
 			badgeUrl: ORDERS_TO_SHIP_HREF,
 			icon: ShoppingBagIcon,
+		},
+		// Lot 5 : file des demandes de rétractation (volontairement sans
+		// pastille — la contrainte QUICK_ACCESS ne vaut que pour les items
+		// badgés, et l'échéance de remboursement est affichée DANS la liste).
+		{
+			id: "retractations",
+			title: "Rétractations",
+			url: "/admin/ventes/retractations",
+			icon: ArrowUUpLeftIcon,
 		},
 		// Route inchangée (`/admin/marketing/discounts`) : seul le regroupement
 		// visuel bouge, comme pour la fusion Contenu+Configuration → Boutique.

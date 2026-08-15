@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getOrderForTracking } from "@/modules/orders/data/get-order-for-tracking";
+import { RetractationSection } from "@/modules/retractations/components/retractation-section";
 import { detectCarrierAndUrl } from "@/modules/orders/services/carrier-detection.service";
 import {
 	estimateDeliveryDate,
@@ -184,6 +185,8 @@ export default async function SuiviCommandePage({
 						</CardContent>
 					</Card>
 				)}
+
+				<RetractationSection order={order} token={token!} />
 
 				<div className="space-y-3 text-center">
 					{order.invoiceNumber != null && (
