@@ -72,7 +72,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | 1   | Auth maison (purge Better Auth)           | L      | ✅     | `migration(lot-1)` | Voir « État à la sortie du lot 1 » ci-dessous.                                                                                |
 | 2   | Bascule schéma + purge + catalogue        | XL     | ✅     | `migration(lot-2)` | Voir « État à la sortie du lot 2 » ci-dessous. **Amendement en cours de lot : `ProductType` conservé (cf. D2).**              |
 | 3   | Checkout Stripe hébergé + webhooks        | L      | ✅     | `migration(lot-3)` | Voir « État à la sortie du lot 3 » ci-dessous. Port fixé par un select de pays sur /paiement ; CTA panier inchangé.           |
-| 4   | Commandes : admin, facturation Int, suivi | L      | ⬜     | —                  |                                                                                                                               |
+| 4   | Commandes : admin, facturation Int, suivi | L      | ✅     | `migration(lot-4)` | Voir « État à la sortie du lot 4 » ci-dessous.                                                                                |
 | 5   | Rétractation (`RetractationRequest`)      | M      | ⬜     | —                  |                                                                                                                               |
 | 6   | Dashboard, emails, polish admin           | M      | ⬜     | —                  |                                                                                                                               |
 | 7   | E2E refonte                               | L      | ⬜     | —                  |                                                                                                                               |
@@ -265,6 +265,63 @@ APRÈS (price_data inline eur, `expires_at` +31 min, `metadata.orderId`), le
   signature invalide → 400, completed → PAID + adresse + email Resend parti, rejeu →
   no-op, expired → CANCELLED + restock, rejeu → stock stable. ⚠️ Le parcours humain
   complet (page Stripe, carte 4242, `stripe listen`) reste à faire par Adrien.
+
+### État à la sortie du lot 4
+
+**Numérotation** : `invoiceNumber` (Int nu, séquentiel) est attribué DANS la transaction de
+la transition PENDING→PAID (`transitionToPaidWithInvoiceNumber`, privé de
+`checkout-session-transitions.service.ts`) — `max + 1`, retry borné ×3 sur P2002, pas
+d'advisory lock. **Le webhook (et la réconciliation admin, qui passe par le même service)
+est le SEUL écrivain** ; jamais de commande PAID sans numéro, l'échec des 3 tentatives fait
+répondre 500 (Stripe redélivre). L'email de confirmation affiche « n° X » et porte le lien
+de suivi.
+
+**Admin commandes** (`/admin/ventes/commandes`) : liste (recherche email / n° facture / id,
+filtre `filter_status` multi, tri date, pagination curseur — `getOrders` est ADMIN ONLY,
+sans variante publique), détail par `[orderId]` (SNAPSHOTS uniquement — les FK ne servent
+qu'aux liens de navigation), actions « Marquer expédiée » (PAID→SHIPPED, `updateMany` gardé,
+`shippedAt` + `trackingNumber` saisi en dialog, transporteur auto-détecté, email) et
+« Annuler » (PENDING→CANCELLED via `cancelOrderFromExpiredSession` — ⚠️ la session Stripe
+est **expirée AVANT** la transition : une session encore `open` laisserait la cliente payer
+une commande annulée ; si elle est déjà `complete`, l'annulation est refusée). REFUNDED =
+lot 5. Pastille de nav `orders` = count des PAID à expédier ; `ORDERS_TO_SHIP_HREF` pointe
+`?filter_status=PAID`.
+
+**Suivi client** (`/suivi-commande?commande=<id>&token=<hmac>`) : token =
+HMAC-SHA256(`orderId:email` minuscule) signé `AUTH_SECRET`
+(`modules/orders/lib/order-tracking-token.ts`, fonctions pures), vérifié CONTRE l'email en
+base — token invalide ⇒ 404 indistinct (anti-énumération). Lecture fraîche sans cache
+(donnée nominative). `buildOrderTrackingUrl` est la SSOT de l'URL (fail-closed sans
+`AUTH_SECRET`).
+
+**Facture** = rendu HTML imprimable `/suivi-commande/facture` (token client OU session
+admin), reconstruite à chaque affichage : identité vendeur `getVendorLegalInfo()` (env),
+lignes snapshots, mention `DEFAULT_FRANCHISE_VAT_MENTION`, pied `getInvoiceFooter()`,
+`window.print`. Pas de PDF, pas d'archive, pas de hash (D2). ⚠️ **Date de facture ET date
+d'encaissement de l'export = `createdAt`** de la commande (la date Stripe n'est plus
+stockée ; `updatedAt` serait pire, il bouge à l'expédition ; l'écart réel ≤ ~31 min, la
+durée de vie d'une session Checkout). Limite assumée, documentée sur les deux surfaces.
+
+**Export livre de recettes** : `POST /api/admin/orders/export` (`requireAdminApiRoute`) —
+CSV `;` + BOM UTF-8, commandes PAID/SHIPPED/REFUNDED triées par numéro, colonnes
+numero_facture/date/email/total_ttc_eur/statut. Bouton sur la liste admin (`downloadCSV`).
+
+**Emails** : `shipping-confirmation` adapté lean (adresse `ShippingAddress` partagée,
+émetteur `send-shipping-confirmation.tsx`, idempotencyKey `order-shipped:<id>`,
+transporteur + date estimée dérivés). `EMAIL_SUBJECTS` purgé à 2 entrées (confirmation,
+expédition) — le lot 5 recrée les siens. `error-code-block.tsx` (orphelin) supprimé.
+Un échec d'email ne défait JAMAIS une transition (message admin l'indique).
+
+**Piège découvert** : toute page à IO non cachée (prisma direct, cookies) DOIT avoir un
+`loading.tsx` (frontière Suspense), sinon le prérendu PPR log « uncached data during
+prerendering » (et casserait le build) — ajoutés sur /suivi-commande, /suivi-commande/facture,
+/paiement, /paiement/retour. Même contrainte que `app/admin/connexion/loading.tsx` (lot 1).
+
+**Vérifié en dev** (script + events Stripe signés, CLI Stripe absent) : 2 achats →
+numéros 1 puis 2, rejeu sans re-numérotation, suivi 200/404 selon token, facture (numéro +
+mention 293 B + vendeur), expédition → tracking sur le suivi, annulation → restock sans
+numéro, export refusé sans session. Restent à cliquer par Adrien : le dialog d'expédition
+et l'annulation depuis l'admin (couverts en tests unitaires).
 
 ## 4. Schéma cible (SSOT)
 

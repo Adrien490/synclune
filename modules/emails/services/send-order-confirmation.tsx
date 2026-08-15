@@ -1,4 +1,5 @@
 import { OrderConfirmationEmail } from "@/emails/order-confirmation-email";
+import { buildOrderTrackingUrl } from "@/modules/orders/lib/order-tracking-url";
 import { EMAIL_SUBJECTS } from "@/shared/lib/email-config";
 import type { EmailResult } from "../types/email.types";
 import { renderAndSend } from "./send-email";
@@ -9,6 +10,8 @@ import { renderAndSend } from "./send-email";
  */
 export interface OrderForConfirmationEmail {
 	id: string;
+	/** Attribué dans la même transaction que la transition PAID (lot 4). */
+	invoiceNumber: number | null;
 	email: string;
 	customerName: string | null;
 	amountItemsCents: number;
@@ -35,16 +38,13 @@ export interface OrderForConfirmationEmail {
  * portée par l'`idempotencyKey` Resend `order-confirm:<orderId>` (dédup 24 h
  * côté Resend, cross-instance) — la garde de transition `updateMany` garantit
  * déjà qu'un seul chemin y arrive par commande.
- *
- * TODO lot 4 : passer `trackingUrl` (lien de suivi tokenisé HMAC) quand
- * /suivi-commande sera réécrit.
  */
 export async function sendOrderConfirmationEmail(
 	order: OrderForConfirmationEmail,
 ): Promise<EmailResult> {
 	return renderAndSend(
 		<OrderConfirmationEmail
-			orderNumber={order.id}
+			orderNumber={order.invoiceNumber != null ? `n° ${order.invoiceNumber}` : order.id}
 			customerName={order.customerName ?? "cliente"}
 			items={order.items.map((item) => ({
 				name: item.nameSnapshot,
@@ -63,7 +63,7 @@ export async function sendOrderConfirmationEmail(
 				city: order.shippingCity,
 				country: order.shippingCountry,
 			}}
-			trackingUrl={null}
+			trackingUrl={buildOrderTrackingUrl(order)}
 		/>,
 		{
 			to: order.email,

@@ -42,16 +42,12 @@ export const EMAIL_ADMIN_BCC = process.env.EMAIL_ADMIN_BCC ?? undefined;
 /**
  * Messages d'email prédéfinis
  */
-// Un sujet par émetteur réel (8 templates, cf. CLAUDE.md § Emails). Les sujets
-// orphelins (REFUND_APPROVED/REJECTED/CANCELLED du workflow refund parti au Lot 2,
-// PASSWORD_CHANGED / EMAIL_CHANGE_CONFIRMATION de l'espace client, ORDER_RETURNED /
-// ORDER_SHIPPING_REVERTED des emails retirés) ont été purgés au Lot 6.
+// Un sujet par émetteur RÉEL — schéma lean, lot 4 : il ne reste que deux
+// templates (confirmation + expédition). Les sujets orphelins (auth Better
+// Auth, annulation, remboursement, échec de paiement) sont purgés ; le lot 5
+// recréera les siens (accusé de rétractation, remboursement, rejet) avec
+// leurs templates.
 export const EMAIL_SUBJECTS = {
-	VERIFICATION: "Vérifiez votre adresse email - Synclune",
-	PASSWORD_RESET: "Réinitialisez votre mot de passe - Synclune",
 	ORDER_CONFIRMATION: "Confirmation de commande - Synclune",
 	ORDER_SHIPPED: "Votre commande a été expédiée - Synclune",
-	ORDER_CANCELLED: "Votre commande a été annulée - Synclune",
-	REFUND_CONFIRMATION: "Votre remboursement a été effectué - Synclune",
-	PAYMENT_FAILED: "Échec de votre paiement - Synclune",
 } as const;

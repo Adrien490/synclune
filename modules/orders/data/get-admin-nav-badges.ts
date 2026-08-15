@@ -1,11 +1,36 @@
-/**
- * Pastilles de navigation admin — STUB (migration lean, lot 2).
- *
- * TODO lot 4 : recompter les commandes actionnables sur le schéma lean
- * (Order.status PAID non expédiées, demandes de rétractation RECEIVED).
- */
+import { cacheLife, cacheTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
+import { prisma } from "@/shared/lib/prisma";
+import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+
 export type AdminNavBadges = Record<string, number>;
 
+/**
+ * Pastilles de navigation admin — schéma lean (lot 4).
+ *
+ * `orders` = commandes PAID non expédiées (la file « à expédier »). Le lot 5
+ * y ajoutera les demandes de rétractation RECEIVED.
+ *
+ * Appelée par le layout admin, déjà gardé par `requireAdmin` — un simple
+ * compteur, pas de donnée nominative.
+ */
 export async function getAdminNavBadges(): Promise<AdminNavBadges> {
-	return { orders: 0 };
+	try {
+		return await fetchAdminNavBadges();
+	} catch (error) {
+		if (!isPrerenderInterrupt(error)) {
+			logger.error("[getAdminNavBadges] Échec de comptage", { error });
+		}
+		return { orders: 0 };
+	}
+}
+
+async function fetchAdminNavBadges(): Promise<AdminNavBadges> {
+	"use cache";
+	cacheLife("user");
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+
+	const toShip = await prisma.order.count({ where: { status: "PAID" } });
+	return { orders: toShip };
 }

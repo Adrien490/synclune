@@ -19,9 +19,11 @@ import {
 	sendOrderConfirmationEmail,
 	type OrderForConfirmationEmail,
 } from "@/modules/emails/services/send-order-confirmation";
+import { Prisma } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
 export interface TransitionResult {
@@ -50,6 +52,61 @@ function extractCustomerData(session: Stripe.Checkout.Session) {
 	};
 }
 
+/** Nombre de tentatives de la transaction PAID + numérotation sur collision P2002. */
+const INVOICE_NUMBER_MAX_ATTEMPTS = 3;
+
+function isUniqueConstraintError(error: unknown): boolean {
+	return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
+/**
+ * Transition PENDING→PAID **et** attribution du numéro de facture, dans la
+ * MÊME transaction (Art. 286 CGI : séquentiel sans trou — un Int nu, décision
+ * D2, plus de format F-YYYY ni d'advisory lock).
+ *
+ * `max(invoiceNumber) + 1` sous transaction suffit à ~20 commandes/mois : si
+ * deux webhooks calculent le même numéro, le `@unique` fait échouer l'une des
+ * deux transactions en P2002 — la transition est alors annulée AVEC la
+ * numérotation (pas de commande PAID sans numéro) et l'ensemble est retenté,
+ * borné à 3 tentatives. Le webhook est le SEUL écrivain d'`invoiceNumber` :
+ * aucune Server Action ne doit l'écrire.
+ */
+async function transitionToPaidWithInvoiceNumber(
+	stripeSessionId: string,
+	data: Prisma.OrderUpdateManyMutationInput,
+): Promise<"transitioned" | "noop"> {
+	for (let attempt = 1; attempt <= INVOICE_NUMBER_MAX_ATTEMPTS; attempt++) {
+		try {
+			return await prisma.$transaction(async (tx) => {
+				const { count } = await tx.order.updateMany({
+					where: { stripeSessionId, status: "PENDING" },
+					data,
+				});
+				if (count === 0) return "noop";
+
+				const aggregate = await tx.order.aggregate({ _max: { invoiceNumber: true } });
+				const nextInvoiceNumber = (aggregate._max.invoiceNumber ?? 0) + 1;
+				await tx.order.update({
+					where: { stripeSessionId },
+					data: { invoiceNumber: nextInvoiceNumber },
+				});
+				return "transitioned";
+			});
+		} catch (error) {
+			if (isUniqueConstraintError(error) && attempt < INVOICE_NUMBER_MAX_ATTEMPTS) {
+				logger.warn("[checkout.completed] Collision invoiceNumber (P2002) — nouvelle tentative", {
+					stripeSessionId,
+					attempt,
+				});
+				continue;
+			}
+			throw error;
+		}
+	}
+	// Inatteignable (la boucle return ou throw), mais TypeScript l'exige.
+	throw new Error("transitionToPaidWithInvoiceNumber: tentatives épuisées");
+}
+
 /**
  * `checkout.session.completed` (payment_status = paid) : PENDING → PAID.
  *
@@ -68,16 +125,13 @@ export async function markOrderPaidFromSession(
 			? session.payment_intent
 			: (session.payment_intent?.id ?? null);
 
-	const { count } = await prisma.order.updateMany({
-		where: { stripeSessionId: session.id, status: "PENDING" },
-		data: {
-			status: "PAID",
-			stripePaymentIntentId: paymentIntentId,
-			...extractCustomerData(session),
-		},
+	const outcome = await transitionToPaidWithInvoiceNumber(session.id, {
+		status: "PAID",
+		stripePaymentIntentId: paymentIntentId,
+		...extractCustomerData(session),
 	});
 
-	if (count === 0) {
+	if (outcome === "noop") {
 		// Redélivrance, double traitement concurrent, ou session inconnue de
 		// cette base (autre environnement) : rien à faire.
 		logger.info("[checkout.completed] Transition no-op (déjà traitée ou inconnue)", {
@@ -90,6 +144,7 @@ export async function markOrderPaidFromSession(
 		where: { stripeSessionId: session.id },
 		select: {
 			id: true,
+			invoiceNumber: true,
 			email: true,
 			customerName: true,
 			amountItemsCents: true,
@@ -128,7 +183,9 @@ export async function markOrderPaidFromSession(
 	return {
 		outcome: "transitioned",
 		orderId: order?.id ?? null,
-		tags: [SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST, SHARED_CACHE_TAGS.ADMIN_BADGES],
+		tags: order
+			? getOrderInvalidationTags(order.id)
+			: [SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST, SHARED_CACHE_TAGS.ADMIN_BADGES],
 	};
 }
 
@@ -177,6 +234,9 @@ export async function cancelOrderFromExpiredSession(
 			PRODUCTS_CACHE_TAGS.LIST,
 			PRODUCTS_CACHE_TAGS.VARIANTS_LIST,
 		]);
+		if (order) {
+			for (const tag of getOrderInvalidationTags(order.id)) tags.add(tag);
+		}
 
 		for (const item of order?.items ?? []) {
 			if (!item.variantId) continue;

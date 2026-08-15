@@ -1,4 +1,5 @@
 import { Link, Section, Text } from "react-email";
+import type { ShippingAddress } from "@/modules/emails/types/email.types";
 import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailCard } from "./_components/email-card";
 import { EmailCTA } from "./_components/email-cta";
@@ -23,15 +24,7 @@ interface ShippingConfirmationEmailProps {
 	orderTrackingUrl?: string | null;
 	carrierLabel: string;
 	estimatedDelivery?: string | null;
-	shippingAddress: {
-		firstName: string;
-		lastName: string;
-		address1: string;
-		address2?: string | null;
-		postalCode: string;
-		city: string;
-		country: string;
-	};
+	shippingAddress: ShippingAddress;
 }
 
 export const ShippingConfirmationEmail = ({
@@ -69,18 +62,20 @@ export const ShippingConfirmationEmail = ({
 					Adresse de livraison
 				</EmailHeading>
 				<EmailCard>
-					<Text
-						className={EMAIL_CLASSES.text.body}
-						style={{ ...EMAIL_STYLES.text.body, margin: 0 }}
-					>
-						{shippingAddress.firstName} {shippingAddress.lastName}
-					</Text>
+					{shippingAddress.name && (
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{ ...EMAIL_STYLES.text.body, margin: 0 }}
+						>
+							{shippingAddress.name}
+						</Text>
+					)}
 					<Text
 						className={EMAIL_CLASSES.text.secondary}
 						style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
 					>
-						{shippingAddress.address1}
-						{shippingAddress.address2 && `, ${shippingAddress.address2}`}
+						{shippingAddress.line1}
+						{shippingAddress.line2 && `, ${shippingAddress.line2}`}
 					</Text>
 					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 						{shippingAddress.postalCode} {shippingAddress.city},{" "}
@@ -121,19 +116,18 @@ export const ShippingConfirmationEmail = ({
 };
 
 ShippingConfirmationEmail.PreviewProps = {
-	orderNumber: "CMD-1730000000-ABCD",
+	orderNumber: "n° 12",
 	customerName: "Marie",
 	trackingNumber: "8N00234567890",
 	trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
 	orderTrackingUrl:
-		"https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD&token=0123456789abcdef0123456789abcdef",
+		"https://synclune.fr/suivi-commande?commande=k3x9m2p8q1r5s7t0&token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 	carrierLabel: "Colissimo",
 	estimatedDelivery: "12 juin 2026",
 	shippingAddress: {
-		firstName: "Marie",
-		lastName: "Dupont",
-		address1: "12 Rue de la Paix",
-		address2: "Appartement 4B",
+		name: "Marie Dupont",
+		line1: "12 Rue de la Paix",
+		line2: "Appartement 4B",
 		postalCode: "75002",
 		city: "Paris",
 		country: "FR",
