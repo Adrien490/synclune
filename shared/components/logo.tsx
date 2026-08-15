@@ -183,7 +183,12 @@ export function Logo({
 					animated={Boolean(href)}
 				/>
 			</span>
-			{showText && <LogoWordmark className={textClassName} />}
+			{/* En LOCKUP (nom posé à côté du dessin), le wordmark prend l'encre du
+			    mark (`--logo-ink`, brun chaud) : deux encres co-visibles — le brun
+			    du tracé et le bleu-noir `--foreground` — refroidissaient la moitié
+			    du lockup (audit logo 2026-08-15). Seul, `LogoWordmark` garde
+			    `text-foreground` : il est alors du texte parmi le texte. */}
+			{showText && <LogoWordmark className={cn("text-(--logo-ink)", textClassName)} />}
 			{/* L'image portait le nom accessible via son `alt`. En SVG décoratif, il
 			    faut le rendre explicitement — mais SEULEMENT quand rien d'autre ne nomme
 			    la marque : avec le wordmark, c'est LUI le texte ; avec `href`, l'ancre

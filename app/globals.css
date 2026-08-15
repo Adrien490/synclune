@@ -538,6 +538,15 @@ main#main-content {
 	--secondary: oklch(0.9221 0.0871 86.29); /* Jaune pastel */
 	--secondary-foreground: oklch(0.13 0.01 270);
 
+	/* L'encre du logo — le brun chaud du feutre, mesuré sur le raster d'origine
+	   (#4c2420, 8,32:1 sur --primary, ~12,7:1 sur blanc). Ce n'est PAS
+	   --foreground (bleu-noir) : les confondre refroidirait tout le tracé.
+	   Consommé par `logo-mark.tsx` (contours du mark, via les custom properties
+	   du sprite) et `logo.tsx` (encre du wordmark en lockup — une seule encre
+	   chaude quand le nom est posé à côté du dessin). Surchargable au call site
+	   (un e-mail sombre, une salle). */
+	--logo-ink: oklch(0.3143 0.0613 27.03);
+
 	/* ⚠️ Les tokens --gradient-hero-* (mot d'accent dégradé du h1) ont été RETIRÉS
 	   le 2026-08-05 — direction B « Le surligneur » : le mot « colorés » est
 	   passé d'une encre dégradée (pendants assombris des accents, seuls tenables

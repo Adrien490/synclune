@@ -9,7 +9,7 @@ vi.mock("@/shared/constants/brand", () => ({
 	BRAND: {
 		name: "Synclune",
 		logo: {
-			alt: "Synclune — Créations artisanales faites main",
+			alt: "Synclune — bijoux colorés faits main à Nantes",
 		},
 	},
 }));
@@ -84,9 +84,10 @@ describe("Logo", () => {
 		const style = markRoot(render(<Logo />).container)?.getAttribute("style") ?? "";
 		expect(style).toContain("--logo-disc: var(--primary)");
 		expect(style).toContain("--logo-heart: var(--secondary)");
-		// L'encre n'a pas de jeton (brun feutre mesuré sur le raster, distinct de
-		// `--foreground`) : sa valeur en dur EST le contrat.
-		expect(style).toContain("--logo-ink: #4c2420");
+		// L'encre a REJOINT les jetons le 2026-08-15 (`--logo-ink` dans
+		// globals.css, oklch mesuré sur le raster) : le composant ne doit PLUS la
+		// poser en dur — une valeur inline masquerait le jeton en silence.
+		expect(style).not.toContain("--logo-ink:");
 	});
 
 	// =========================================================================
@@ -178,14 +179,14 @@ describe("Logo", () => {
 		render(<Logo />);
 
 		// L'`alt` de l'image portait ce rôle ; un SVG décoratif ne le porte plus.
-		expect(screen.getByText("Synclune — Créations artisanales faites main")).toBeInTheDocument();
+		expect(screen.getByText("Synclune — bijoux colorés faits main à Nantes")).toBeInTheDocument();
 	});
 
 	it("ne double PAS l'annonce quand le wordmark est visible", () => {
 		render(<Logo showText />);
 
 		expect(screen.getByText("Synclune")).toBeInTheDocument();
-		expect(screen.queryByText("Synclune — Créations artisanales faites main")).toBeNull();
+		expect(screen.queryByText("Synclune — bijoux colorés faits main à Nantes")).toBeNull();
 	});
 
 	it("ne répète pas la marque en sr-only quand le lien porte déjà son aria-label", () => {
@@ -194,7 +195,7 @@ describe("Logo", () => {
 		// fois (mesuré sur l'arbre AX du footer, audit 2026-08-05).
 		render(<Logo href="/" />);
 
-		expect(screen.queryByText("Synclune — Créations artisanales faites main")).toBeNull();
+		expect(screen.queryByText("Synclune — bijoux colorés faits main à Nantes")).toBeNull();
 	});
 
 	// =========================================================================

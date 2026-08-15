@@ -1,4 +1,4 @@
-import { HEART_PATH, INITIAL_PATH } from "@/shared/components/logo-mark.paths";
+import { FIVE_PATH, HEART_PATH } from "@/shared/components/logo-mark.paths";
 
 /**
  * Sprite SVG centralisé pour icônes réutilisables
@@ -48,10 +48,10 @@ export function IconSprite() {
 						vectorEffect="non-scaling-stroke"
 						style={{ strokeWidth: "var(--logo-stroke)" }}
 					/>
-					{/* `fill-rule="evenodd"` : l'initiale a des contre-formes (la boucle, la
+					{/* `fill-rule="evenodd"` : le 5 a des contre-formes (la boucle, la
 					    barre) qui doivent rester creuses pour laisser passer le socle. */}
 					<path
-						d={INITIAL_PATH}
+						d={FIVE_PATH}
 						fill="var(--logo-disc)"
 						stroke="var(--logo-ink)"
 						strokeLinejoin="round"

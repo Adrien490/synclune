@@ -130,7 +130,7 @@ export function EmailLayout({
 					{/* Header */}
 					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
 						{displayLogo ? (
-							/* ⚠️ Le cadre doit rester CARRÉ : la source est `logo.webp`, 256 × 256.
+							/* ⚠️ Le cadre doit rester CARRÉ : la source est `logo.png`, 512 × 512.
 							   Il était déclaré 120 × 40 — un ratio 3:1 hérité du temps où le
 							   logo portait son wordmark. Le `height: "auto"` inline sauvait les
 							   clients qui appliquent le CSS, mais Outlook desktop (moteur Word)

@@ -19,5 +19,8 @@ export const LEGAL_URLS = {
 
 /**
  * Logo hébergé accessible depuis les clients email (URL absolue requise).
+ * `logo.png` est le rendu 512 px du mark vectoriel, généré par
+ * `scripts/generate-brand-icons.ts` — PNG et non WebP : Outlook desktop
+ * (moteur Word) ne décode pas le WebP.
  */
-export const EMAIL_LOGO_URL = `${PROD_URL}/logo.webp`;
+export const EMAIL_LOGO_URL = `${PROD_URL}/logo.png`;

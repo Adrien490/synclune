@@ -56,8 +56,9 @@ interface LogoMarkProps {
 	 * mesure ~16 × 36 dans la viewBox, soit **1,8 × 4 px** de blanc à 50 %
 	 * d'opacité : il ne peint plus un reflet, il salit le lobe.
 	 *
-	 * ⚠️ L'INITIALE ne saute jamais, à aucune taille — c'est le « S » de
-	 * Synclune, la charge utile du mark. Ce qui cède, c'est le reflet.
+	 * ⚠️ Le 5 ne saute jamais, à aucune taille — c'est le glyphe assumé de la
+	 * marque (cf. `FIVE_PATH`), la charge utile du mark. Ce qui cède, c'est le
+	 * reflet.
 	 */
 	detail?: "full" | "compact";
 	/**
@@ -165,11 +166,10 @@ export function LogoMark({
 					// CSS. Surchargeables par le call site (une salle, un e-mail sombre…).
 					"--logo-disc": "var(--primary)",
 					"--logo-heart": "var(--secondary)",
-					// ⚠️ La seule couleur du dessin qui n'a PAS de jeton : le brun chaud du
-					// feutre, mesuré sur le raster. Ce n'est pas `--foreground` (bleu-noir,
-					// #06070b) — les confondre refroidirait tout le tracé. Lui donner un
-					// jeton relève d'une décision de design system, pas de ce composant.
-					"--logo-ink": "#4c2420",
+					// `--logo-ink` n'est plus posé ici : c'est un jeton de `globals.css`
+					// depuis le 2026-08-15 (le brun chaud du feutre, distinct de
+					// `--foreground`), partagé avec l'encre du wordmark en lockup et
+					// toujours surchargeable par le call site.
 					"--logo-stroke": `${strokePx}px`,
 				} as React.CSSProperties
 			}
@@ -188,14 +188,14 @@ export function LogoMark({
 				// tons système et il n'en reste qu'une tache.
 				style={{ forcedColorAdjust: "none" }}
 			>
-				{/* Socle + cœur + initiale viennent du sprite monté dans `app/layout.tsx` :
+				{/* Socle + cœur + le 5 viennent du sprite monté dans `app/layout.tsx` :
 				    ces trois chemins pèsent 3,4 Ko et la page storefront rend le mark
 				    trois fois. Les jetons posés ci-dessus traversent le `<use>`.
 				    Cf. `shared/components/icons/icon-sprite.tsx`. */}
 				<use href="#logo-mark-body" />
-				{/* Le reflet est peint APRÈS l'initiale, ce qui est sans effet : il vit
-				    sur le lobe supérieur gauche (x 62→79), l'initiale au centre
-				    (x 104→154). Les deux ne se recouvrent jamais. */}
+				{/* Le reflet est peint APRÈS le 5, ce qui est sans effet : il vit
+				    sur le lobe supérieur gauche (x 57→75), le 5 au centre
+				    (x 99→149). Les deux ne se recouvrent jamais. */}
 				{detail === "full" && <path d={GLOSS_PATH} fill="#ffffff" opacity={0.5} />}
 				{!escaping && (
 					<>

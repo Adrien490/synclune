@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	FIVE_PATH,
 	GLOSS_PATH,
 	HEART_PATH,
-	INITIAL_PATH,
 	SPARK_ANCHORS,
 	SPARK_LEFT_PATH,
 	SPARK_RIGHT_PATH,
@@ -28,7 +28,7 @@ const ANCHOR_EPSILON = VIEWBOX * 0.02;
 
 const ALL_PATHS = {
 	HEART_PATH,
-	INITIAL_PATH,
+	FIVE_PATH,
 	GLOSS_PATH,
 	SPARK_LEFT_PATH,
 	SPARK_RIGHT_PATH,
@@ -55,8 +55,9 @@ describe("logo-mark.paths — validité", () => {
 	it.each(Object.entries(ALL_PATHS))("%s est un path absolu bien formé", (_, d) => {
 		const { commands, numbers } = tokenize(d);
 
-		// Commandes absolues uniquement — les coordonnées restent celles du raster
-		// d'origine (viewBox 256), directement comparables à toute re-mesure.
+		// Commandes absolues uniquement — les coordonnées sont celles du raster
+		// d'origine décalées de (−4,5, +5,5) (recentrage optique 2026-08-15),
+		// cf. l'en-tête de `logo-mark.paths.ts` pour re-comparer à une mesure.
 		expect(commands[0]).toBe("M");
 		expect(commands.at(-1)).toBe("Z");
 		for (const c of commands) expect(["M", "L", "C", "Z"]).toContain(c);

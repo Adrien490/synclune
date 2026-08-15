@@ -22,9 +22,16 @@ export const BRAND = {
 
 	logo: {
 		// Le mark se dessine en SVG inline (`shared/components/logo-mark.tsx`) ;
-		// `url` et `blurDataURL` sont partis avec le raster — le `/logo.webp`
-		// résiduel des emails et du JSON-LD est référencé là-bas en littéral.
-		alt: "Synclune — Créations artisanales faites main",
+		// `url` et `blurDataURL` sont partis avec le raster. Les surfaces qui ont
+		// besoin d'un bitmap (emails, JSON-LD) servent `/logo.png`, rendu 512 px
+		// du vectoriel généré par `scripts/generate-brand-icons.ts` — `logo.webp`
+		// (le raster peint par Léane) reste dans `public/` comme pièce de
+		// provenance, plus aucune surface ne le sert.
+		// « Créations artisanales faites main » (redondant, et signable par
+		// n'importe quelle boutique — le registre interchangeable que
+		// `docs/BRAND-DA.md` § ADN écarte) → noyau lexical de la marque :
+		// bijoux + colorés + faits main + Nantes (audit logo 2026-08-15).
+		alt: "Synclune — bijoux colorés faits main à Nantes",
 	},
 
 	social: {

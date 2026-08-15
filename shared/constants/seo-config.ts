@@ -161,7 +161,7 @@ export function getLocalBusinessSchema() {
 		legalName: BUSINESS_INFO.legalName,
 		description: BUSINESS_INFO.description,
 		url: SITE_URL,
-		logo: `${SITE_URL}/logo.webp`,
+		logo: `${SITE_URL}/logo.png`,
 		image: `${SITE_URL}/opengraph-image`,
 		email: BUSINESS_INFO.email,
 		// Ni `streetAddress` ni `geo` : cf. le JSDoc de `BUSINESS_INFO.location`.
@@ -187,7 +187,7 @@ export function getLocalBusinessSchema() {
 		brand: {
 			"@type": "Brand",
 			name: BUSINESS_INFO.name,
-			logo: `${SITE_URL}/logo.webp`,
+			logo: `${SITE_URL}/logo.png`,
 		},
 		founder: {
 			"@type": "Person",
@@ -319,8 +319,8 @@ export function getOrganizationSchema() {
 		logo: {
 			"@type": "ImageObject",
 			"@id": `${SITE_URL}/#logo`,
-			url: `${SITE_URL}/logo.webp`,
-			contentUrl: `${SITE_URL}/logo.webp`,
+			url: `${SITE_URL}/logo.png`,
+			contentUrl: `${SITE_URL}/logo.png`,
 			caption: BUSINESS_INFO.name,
 		},
 		image: {

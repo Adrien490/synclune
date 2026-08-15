@@ -220,7 +220,7 @@ export async function Navbar() {
 										shadow
 										sparkles="escaping"
 										showText
-										textClassName="text-xl lg:text-2xl text-foreground truncate"
+										textClassName="text-xl lg:text-2xl truncate"
 									/>
 								</div>
 							</div>
@@ -240,7 +240,7 @@ export async function Navbar() {
 										shadow
 										sparkles="escaping"
 										showText
-										textClassName="text-foreground truncate text-xl"
+										textClassName="truncate text-xl"
 									/>
 								</div>
 								<DesktopNav

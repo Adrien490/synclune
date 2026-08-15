@@ -28,8 +28,8 @@ L'ADN en une phrase · Les six territoires artistiques · Le vocabulaire des for
 sensations visuelles · La palette chromatique · Maximalisme miniature et joyeux · Le registre
 stylistique · Le nom des pièces · L'univers photographique · Le ton éditorial · Où vit la copie de
 marque dans le code · Les valeurs de marque implicites · Les adjectifs, par monde · Les mots à ne
-PAS mettre au centre · Les symboles identitaires, par potentiel distinctif · Territoires de
-moodboard · Répertoire de mots-clés et expressions SEO.
+PAS mettre au centre · Les symboles identitaires, par potentiel distinctif · Le logo ·
+Territoires de moodboard · Répertoire de mots-clés et expressions SEO.
 
 ## L'ADN en une phrase
 
@@ -434,6 +434,48 @@ de la scène est précisément une chaîne dorée bordée d'une multitude de gou
 La scène du présentoir montre comment tenir la règle SANS s'appauvrir : quatre familles y
 coexistent, mais trois d'entre elles sont faites de la MÊME goutte (le raisin, la pluie, la larme).
 Le motif unique n'est pas le nombre de formes, c'est l'unité de vocabulaire.
+
+## Le logo
+
+Un cœur crème dessiné au feutre, un **5** en découpe rose, deux étincelles blanches, sur un disque
+`--primary`. Le dessin est de Léane ; il reprend son **présentoir d'atelier** (cf. § L'univers
+photographique : « présentoir illustré jaune (chiffre 5, formes de cœur et d'étoile) ») — le logo
+dessine un objet réel, pas un moodboard.
+
+**Le glyphe est un 5, et c'est ASSUMÉ** (décision du 2026-08-15, après l'audit logo). Il s'est
+appelé « l'initiale » pendant deux mois sur l'hypothèse d'un « S » de Synclune — hypothèse écartée :
+cinq lecteurs indépendants lisaient « 5 », ce document lui-même écrivait « chiffre 5 ». Ne pas
+« corriger » le tracé vers un S. ⚠️ **Reste à faire, et c'est à Léane** : raconter l'histoire du 5
+(page atelier, à-propos…) — un chiffre assumé porte une marque (précédent : N°5), un chiffre muet
+laisse chaque visiteur inventer sa réponse. Le nom, lui, est porté par le **wordmark** (Kalam,
+`LogoWordmark`), jamais par le mark seul.
+
+**Exception documentée à la doctrine des motifs** : la § Symboles identitaires classe la goutte
+meilleur glyphe et range le cœur en ponctuation — le logo, lui, est cœur + étoiles en sujet. Ce
+n'est pas une contradiction à « corriger » : le logo **prédate** la doctrine et dessine un objet
+réel de l'atelier. La doctrine gouverne les décors et les directions à venir ; le logo est un fait
+de marque. Aucun futur audit ne doit rejouer ce conflit.
+
+Règles de lockup et d'usage (SSOT d'implémentation : `shared/components/logo.tsx`,
+`logo-mark.tsx`, `logo-mark.paths.ts`) :
+
+- **Encre** : le tracé est `--logo-ink` (brun chaud, jeton de `globals.css`) — jamais
+  `--foreground` (bleu-noir), les confondre refroidit le dessin. En lockup (mark + wordmark),
+  le wordmark prend AUSSI `--logo-ink` : une seule encre chaude. Seul, il reste `--foreground`.
+- **Étincelles** : `sparkles="escaping"` est réservé à la **navbar** (la devanture) ; toutes les
+  autres surfaces gardent le rond parfait du défaut.
+- **Tailles** : le mark complet vit de 28 à 96 px (reflet à partir de 40 px). En dessous de
+  ~24 px, on ne réduit pas le disque : on sert la **variante micro** (carré plein recadré sur le
+  cœur, traits épaissis, sans reflet) — c'est le favicon, et toutes les icônes carrées (iOS, MS,
+  splash) en sortent. Un favicon est une synecdoque du logo, pas sa réduction homothétique.
+- **Déclinaisons raster** : TOUTES générées par `pnpm generate:brand-icons`
+  (`scripts/generate-brand-icons.ts`) depuis la SSOT vectorielle — jamais d'export manuel
+  (verrouillé par `brand-icons-manifest.regression.test.ts`). Les surfaces bitmap (emails,
+  JSON-LD) servent `/logo.png` ; `public/logo.webp` est la pièce d'origine peinte par Léane,
+  conservée comme référence de provenance, plus servie nulle part.
+- ⚠️ **Le fichier source de Léane n'existe pas dans le dépôt** : les chemins sont une
+  vectorisation du raster. Le jour où son vectoriel arrive, il remplace `logo-mark.paths.ts`
+  et tout le reste se régénère.
 
 ## Territoires de moodboard
 
