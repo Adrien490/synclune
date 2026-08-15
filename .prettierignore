@@ -22,3 +22,8 @@ pnpm-lock.yaml
 # INDEX.md est écrit à la main et reste formaté normalement.
 docs/stripe/*.md
 !docs/stripe/INDEX.md
+
+# Brouillons de prompts (Pencil, audits) édités à la main en continu —
+# les reformater sous les doigts de leur auteure ferait échouer validate
+# à chaque frappe. Non trackés tant qu'ils sont en travail.
+docs/prompts

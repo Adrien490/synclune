@@ -1,30 +1,12 @@
 import type { ReactElement } from "react";
 import { ImageResponse } from "next/og";
 
-import { OgShell } from "./og-shell";
+import { OG_GENERIC_CARD_PNG_BASE64 } from "./generic-card.generated";
 
 /** Taille canonique des cartes de partage — celle qu'exportent les 4 routes. */
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 
 const PNG_HEADERS = { "content-type": "image/png" } as const;
-
-/**
- * La carte générique, rendue UNE fois au chargement du module — pendant que le
- * moteur est encore sain — et gardée en buffer pour servir de repli.
- */
-const genericCard: Promise<ArrayBuffer | null> = (async () => {
-	try {
-		const image = new ImageResponse(
-			<OgShell align="center" signature>
-				<div style={{ display: "flex", fontSize: 64, fontWeight: 600 }}>Synclune</div>
-			</OgShell>,
-			{ ...OG_SIZE },
-		);
-		return await image.arrayBuffer();
-	} catch {
-		return null;
-	}
-})();
 
 /**
  * Rend une carte OG en BUFFER dans le handler, avec repli sur la carte
@@ -44,11 +26,12 @@ export async function renderOgImage(element: ReactElement): Promise<Response> {
 	try {
 		const image = new ImageResponse(element, { ...OG_SIZE });
 		return new Response(await image.arrayBuffer(), { headers: PNG_HEADERS });
-	} catch {
-		const fallback = await genericCard;
-		if (fallback) {
-			return new Response(fallback.slice(0), { headers: PNG_HEADERS });
-		}
-		return new Response(null, { status: 503 });
+	} catch (error) {
+		// Visible dans les logs serveur : c'est la SEULE trace de l'empoisonnement
+		// du moteur (le crawler, lui, reçoit une carte valide).
+		console.error("[og] rendu échoué — carte générique servie en repli :", error);
+		return new Response(Buffer.from(OG_GENERIC_CARD_PNG_BASE64, "base64"), {
+			headers: PNG_HEADERS,
+		});
 	}
 }

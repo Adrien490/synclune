@@ -76,7 +76,7 @@ c'est **voulu**. Ne pas le recréer, ne pas le « réparer », ne pas ré-écrir
 | 5   | Rétractation (`RetractationRequest`)      | M      | ✅     | `migration(lot-5)` | Voir « État à la sortie du lot 5 » ci-dessous.                                                                                |
 | 6   | Dashboard, emails, polish admin           | M      | ✅     | `migration(lot-6)` | Voir « État à la sortie du lot 6 » ci-dessous.                                                                                |
 | 7   | E2E refonte                               | L      | ✅     | `migration(lot-7)` | Voir « État à la sortie du lot 7 » ci-dessous. Suite verte multi-navigateurs en 10,3 min (build prod local).                  |
-| 8   | Seed conforme à la DA                     | S/M    | ⬜     | —                  | peut s'exécuter dès la fin du lot 2                                                                                           |
+| 8   | Seed conforme à la DA                     | S/M    | ✅     | `migration(lot-8)` | Voir « État à la sortie du lot 8 » ci-dessous. db:reset + suite e2e complète 100% verte sur le nouveau jeu.                   |
 | 9   | Documentation finale (CLAUDE.md) + sweep  | M      | ⬜     | —                  |                                                                                                                               |
 
 ### État à la sortie du lot 0
@@ -531,6 +531,34 @@ dans le vide → toPass avec re-clic ; les données créées par un PROJET paral
 l'UI d'un autre (badge sidebar, tables non vides, stock des cartes) → locators tolérants et
 snapshots sans bandeau lazy ; les artefacts Playwright (rapport HTML, traces) doivent être
 ignorés d'ESLint/Prettier, pas seulement de git.
+
+### État à la sortie du lot 8
+
+**`prisma/seed.ts` réécrit dans la langue de la marque** : 4 collections-territoires (Jardin
+fantastique, Ciel cosmique, Arc-en-ciel liquide, Tableaux à porter), 9 couleurs (accents de
+marque + turquoise/vert grappe/abricot du lexique), 7 matériaux VRAIS du § Produits & matières
+(pas d'or fin ni d'argent 925), 8 types (les 7 slugs système + « Boucles d'oreilles », type
+libre — les créoles étaient classées Colliers), **14 produits** narratifs de 12 à 45 €, chacun
+≥ 1 variante, 8 pièces uniques (stock=1), multi-variantes sur tailles de bague et longueurs.
+Visuels picsum stables seedés par slug ; les `alt` sont de VRAIS alt SEO descriptifs
+(« chaîne de corps argentée gouttes de verre bijou de créatrice »). Idempotent par upsert
+(médias/variantes resynchronisés en bloc).
+
+⚠️ **L'ORDRE DE CRÉATION du tableau produits est PORTEUR** : le catalogue trie « plus récents
+en premier », donc le DERNIER du tableau ouvre l'étal. Les pièces uniques sont créées en
+premier — les e2e achètent le « premier produit » de l'étal, et une tête d'étal à stock=1 se
+vidait sous les tests parallèles (mesuré : les tests panier échouaient sur « panier vide »).
+
+**Vérifié** : `db:reset` + re-seed idempotent verts, boutique cohérente en dev, baselines
+visuelles régénérées, **suite e2e complète 100 % verte sur le nouveau jeu** (1817 passed /
+0 failed / 0 flaky, 9,8 min), `pnpm validate` vert.
+
+**Inclus dans ce lot (reliquat de la traque OG du lot 7)** : la carte générique de partage
+est FIGÉE en PNG embarqué (`shared/components/og/generic-card.generated.ts`) — le repli de
+`renderOgImage()` rendu par le moteur vivant mourait AVEC le moteur (503 mesuré quand
+l'empoisonnement précède le premier import des routes OG) ; le binaire, lui, survit à tout,
+et l'erreur avalée est désormais journalisée. Les artefacts Playwright et `docs/prompts`
+(brouillons édités à la main) sont exclus d'ESLint/Prettier.
 
 ## 4. Schéma cible (SSOT)
 
