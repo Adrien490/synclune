@@ -39,7 +39,7 @@ beforeAll(async () => {
 	const url = getIntegrationDatabaseUrl();
 
 	// Push schema fresh (--force-reset drops everything first → état propre).
-	execSync("pnpm prisma db push --force-reset --skip-generate", {
+	execSync("pnpm prisma db push --force-reset", {
 		env: { ...process.env, DATABASE_URL: url },
 		stdio: "pipe", // mute the noisy output, surface only on error
 	});

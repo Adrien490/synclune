@@ -65,8 +65,13 @@ jobs:
       - name: Audit all dependencies (non-blocking)
         run: pnpm audit --audit-level=critical
         continue-on-error: true
+      # ⚠️ `license-checker-rsync-3` N'EXISTE PAS sur npm : `npx` renvoyait 404 et
+      # l'étape échouait à chaque run — elle n'a donc JAMAIS vérifié une licence
+      # depuis son écriture. Le paquet réel est `license-checker-rseidelsohn`
+      # (fork maintenu de `license-checker`), épinglé pour que `npx` ne parte pas
+      # chercher une version majeure inconnue.
       - name: Check licenses
-        run: npx license-checker-rsync-3 --production --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0;SSPL-1.0;BSL-1.1;EUPL-1.1;EUPL-1.2'
+        run: npx license-checker-rseidelsohn@5.0.1 --production --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0;SSPL-1.0;BSL-1.1;EUPL-1.1;EUPL-1.2'
       - name: Generate SBOM
         run: npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON --omit dev
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -151,11 +156,18 @@ jobs:
   build:
     name: Production build
     runs-on: ubuntu-latest
-    # Fast feedback : decoupled from secrets so Dependabot/external PRs
-    # still validate that the production build compiles. Uses placeholder
-    # env vars matching the Zod schema in shared/schemas/env.schema.ts.
+    # ⚠️ Ce job était « découplé des secrets » pour que les PR Dependabot valident
+    # quand même la compilation. Cette promesse N'EST PLUS TENABLE : le layout
+    # boutique interroge la base (navbar → types de produits, collections), donc
+    # CHAQUE page prérendue en dépend — le build mourait sur
+    # `Error occurred prerendering page "/accessibilite"`, une page légale qui ne
+    # lit pourtant aucune donnée métier. Un `DATABASE_URL` bidon ne peut plus
+    # produire un build. La base n'a pas besoin d'être seedée : des résultats
+    # vides suffisent, seule la connexion compte.
+    # Corollaire assumé : les PR sans accès aux secrets (Dependabot, forks)
+    # échouent sur ce job. C'était DÉJÀ le cas en pratique, mais pour une
+    # mauvaise raison et sans que ce soit dit.
     env:
-      DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
       AUTH_SECRET: "ci-placeholder-secret-32-chars-min!"
       ADMIN_PASSWORD: "ci-placeholder-password!"
       STRIPE_SECRET_KEY: "sk_test_placeholder"
@@ -172,9 +184,16 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # `DATABASE_URL` est posé au niveau de l'ÉTAPE, pas du job : c'est la
+      # convention du dépôt (cf. l'en-tête du job `e2e`) — sinon les scripts de
+      # lifecycle npm de `pnpm install` tourneraient avec le secret en env.
       - name: Build (prisma generate + next build --turbopack)
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
         run: pnpm build
       - name: Bundle size check
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
         run: pnpm size
 
   tests:
@@ -197,11 +216,19 @@ jobs:
       - name: Generate Prisma client
         run: pnpm prisma generate
       - run: pnpm test:coverage -- --run
+      # ⚠️ `fail_ci_if_error` repassé à `false` le 2026-08-16 : l'action échouait
+      # sur `gpg: Can't check signature: No public key` en vérifiant son propre
+      # binaire — une panne du service tiers, pas un défaut du dépôt — et faisait
+      # échouer le job ALORS QUE les 7428 tests et les seuils de couverture
+      # étaient verts. Le vrai gate de couverture, ce sont les `thresholds` de
+      # `vitest.config.ts` (étape précédente, bloquante) ; le rapport reste
+      # disponible en artefact GitHub juste en dessous. Un remonteur de métriques
+      # indisponible ne doit pas rougir un build par ailleurs sain.
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         if: always()
         with:
           files: ./coverage/lcov.info
-          fail_ci_if_error: true
+          fail_ci_if_error: false
       - name: Diff coverage gate (PR only)
         if: github.event_name == 'pull_request'
         run: |
@@ -258,7 +285,7 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_CONTACT_EMAIL: ci-e2e@example.com
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
-        run: pnpm prisma db push --skip-generate
+        run: pnpm prisma db push
       - name: Seed database
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
