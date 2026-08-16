@@ -1,5 +1,5 @@
 import { PrismaClient } from "../../app/generated/prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { createPrismaAdapter } from "./prisma-adapter";
 
 /**
  * Client Prisma partagé des specs e2e (même pattern que global-teardown).
@@ -16,7 +16,7 @@ export function getE2ePrisma(): PrismaClient {
 		if (!databaseUrl) {
 			throw new Error("DATABASE_URL manquant — les specs à données ne peuvent pas tourner.");
 		}
-		client = new PrismaClient({ adapter: new PrismaNeon({ connectionString: databaseUrl }) });
+		client = new PrismaClient({ adapter: createPrismaAdapter(databaseUrl) });
 	}
 	return client;
 }

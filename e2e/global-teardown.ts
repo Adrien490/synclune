@@ -1,5 +1,5 @@
 import { PrismaClient } from "../app/generated/prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { createPrismaAdapter } from "./helpers/prisma-adapter";
 import { TEST_EMAIL_DOMAIN } from "./helpers/test-run";
 
 /**
@@ -17,7 +17,7 @@ async function globalTeardown() {
 		return;
 	}
 
-	const adapter = new PrismaNeon({ connectionString: databaseUrl });
+	const adapter = createPrismaAdapter(databaseUrl);
 	const prisma = new PrismaClient({ adapter });
 
 	try {
