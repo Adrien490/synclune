@@ -25,13 +25,28 @@
  */
 import { PrismaClient } from "../app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { SYSTEM_PRODUCT_TYPE_SLUGS } from "../modules/product-types/constants/system-product-type-slugs";
 
 const connectionString = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
 if (!connectionString) {
 	throw new Error("[seed] DATABASE_URL manquant");
 }
-const adapter = new PrismaNeon({ connectionString });
+// Sélection de l'adapter PAR HOST — même règle que `shared/lib/prisma.ts` et
+// `test/integration/prisma-client.ts`. `@neondatabase/serverless` parle au
+// proxy WebSocket de Neon ; un Postgres standard (service container de la CI,
+// docker local) ne l'expose pas et le seed mourait sur un `ErrorEvent` opaque
+// (audit CI 2026-08-16). En production l'URL est Neon : rien ne change.
+const isNeonHost = (() => {
+	try {
+		return new URL(connectionString).hostname.endsWith(".neon.tech");
+	} catch {
+		return true;
+	}
+})();
+const adapter = isNeonHost
+	? new PrismaNeon({ connectionString })
+	: new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 const PLACEHOLDER_IMAGE = (seed: string) => `https://picsum.photos/seed/${seed}/1200/1200`;
