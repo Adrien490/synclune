@@ -121,13 +121,20 @@ describeIntegration("finalizeRetractationRefund — transaction contre le schém
 			restock: true,
 		});
 
-		expect(r1.creditNoteNumber).toBe(1);
-		expect(r2.creditNoteNumber).toBe(2);
+		// ⚠️ Le contrat est la SÉQUENTIALITÉ et l'absence de trou, PAS la valeur
+		// absolue : le compteur est un `max+1` sur la table entière, donc son point
+		// de départ dépend de ce que le worker a déjà écrit. Asserter `1` et `2` en
+		// dur rendait le test dépendant de l'ordre d'exécution des `it` du fichier
+		// (mesuré en CI : `expected 3 to be 1`). Ce qui doit être vrai, et l'est
+		// quel que soit le point de départ : deux demandes consécutives prennent
+		// deux numéros qui se suivent, et un rejeu n'en consomme aucun.
+		expect(r1.creditNoteNumber).not.toBeNull();
+		expect(r2.creditNoteNumber).toBe(r1.creditNoteNumber! + 1);
 		expect(replay.outcome).toBe("noop");
 
 		const max = await prisma.retractationRequest.aggregate({
 			_max: { creditNoteNumber: true },
 		});
-		expect(max._max.creditNoteNumber).toBe(2);
+		expect(max._max.creditNoteNumber).toBe(r2.creditNoteNumber);
 	});
 });

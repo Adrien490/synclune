@@ -8,7 +8,28 @@
  *
  * Muet sans INTEGRATION_DATABASE_URL (cf. conventions de tests).
  */
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import type * as RequireAdminModuleType from "@/modules/admin-auth/lib/require-admin";
+
+type RequireAdminModule = typeof RequireAdminModuleType;
+
+/**
+ * ⚠️ `getProductForDuplication` est GARDÉ par `isAdmin()` (la garde vit dans la
+ * couche data, pas seulement dans l'action appelante). En intégration il n'y a
+ * ni requête ni cookie : `isAdmin()` est fail-closed, la fonction rendait donc
+ * `null` et les deux tests échouaient sur « expected null not to be null »
+ * (audit CI 2026-08-16) — en décrivant un défaut du SELECT qui n'existait pas.
+ *
+ * On simule la session admin, et RIEN d'autre : ce que cette suite verrouille,
+ * c'est la forme du select contre le schéma réel. La garde elle-même est
+ * couverte par les tests unitaires d'`admin-auth` et par le sweep e2e
+ * `admin-security.spec.ts` (cookie forgé, expiré, signature transplantée).
+ */
+vi.mock("@/modules/admin-auth/lib/require-admin", async (importOriginal) => ({
+	...(await importOriginal<RequireAdminModule>()),
+	isAdmin: vi.fn(async () => true),
+}));
 
 import { getProductForDuplication } from "@/modules/products/data/get-product-for-duplication";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";

@@ -71,3 +71,6 @@ public/swe-worker*
 .sentryclirc
 
 .env*.local
+
+# SBOM généré en CI
+sbom.json
