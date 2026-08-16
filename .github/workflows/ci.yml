@@ -72,8 +72,14 @@ jobs:
       # chercher une version majeure inconnue.
       - name: Check licenses
         run: npx license-checker-rseidelsohn@5.0.1 --production --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0;SSPL-1.0;BSL-1.1;EUPL-1.1;EUPL-1.2'
+      # ⚠️ `@cyclonedx/cyclonedx-npm` est un outil **npm** : il exécute `npm ls`,
+      # qui ne sait pas lire l'arborescence à liens symboliques de pnpm et sortait
+      # en `ELSPROBLEMS` (« invalid: react@… », « missing: bun-types… »). L'étape
+      # échouait donc à chaque run et n'a jamais produit un SBOM. `cdxgen` gère
+      # pnpm nativement (`-t pnpm`), vérifié en local : 1,4 Mo de CycloneDX.
+      # Épinglé en majeure pour éviter une dérive silencieuse du format.
       - name: Generate SBOM
-        run: npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON --omit dev
+        run: npx --yes @cyclonedx/cdxgen@11 -t pnpm -o sbom.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: sbom
@@ -136,6 +142,11 @@ jobs:
           --health-retries 10
     env:
       INTEGRATION_DATABASE_URL: postgresql://synclune:synclune@localhost:5432/synclune_integration
+      # Les data fns appelées par ces suites passent par `isAdmin()` →
+      # `admin-session`, qui est FAIL-CLOSED : sans `AUTH_SECRET` la session est
+      # refusée et le test observe un résultat vide au lieu de sa fixture.
+      # Valeur éphémère : aucune session réelle n'est signée ici.
+      AUTH_SECRET: "ci-integration-auth-secret-32-chars!"
       # Placeholder pour `prisma generate` uniquement (cf. `tests-critical`) : c'est
       # `INTEGRATION_DATABASE_URL` ci-dessus qui porte la vraie base, et
       # `test/integration/setup.ts` écrase `DATABASE_URL` par worker au démarrage.
@@ -156,18 +167,34 @@ jobs:
   build:
     name: Production build
     runs-on: ubuntu-latest
-    # ⚠️ Ce job était « découplé des secrets » pour que les PR Dependabot valident
-    # quand même la compilation. Cette promesse N'EST PLUS TENABLE : le layout
-    # boutique interroge la base (navbar → types de produits, collections), donc
-    # CHAQUE page prérendue en dépend — le build mourait sur
-    # `Error occurred prerendering page "/accessibilite"`, une page légale qui ne
-    # lit pourtant aucune donnée métier. Un `DATABASE_URL` bidon ne peut plus
-    # produire un build. La base n'a pas besoin d'être seedée : des résultats
-    # vides suffisent, seule la connexion compte.
-    # Corollaire assumé : les PR sans accès aux secrets (Dependabot, forks)
-    # échouent sur ce job. C'était DÉJÀ le cas en pratique, mais pour une
-    # mauvaise raison et sans que ce soit dit.
+    # ⚠️ Ce job est « découplé des secrets » pour que les PR Dependabot et les
+    # forks valident quand même la compilation — et cette propriété est
+    # PRÉSERVÉE, mais un `DATABASE_URL` bidon ne suffit plus : le layout boutique
+    # interroge la base (navbar → types de produits, collections), donc CHAQUE
+    # page prérendue en dépend et le build mourait sur
+    # `Error occurred prerendering page "/accessibilite"` — une page légale qui
+    # ne lit pourtant aucune donnée métier.
+    # La réponse n'est pas d'injecter un secret (le dépôt n'en a aucun), c'est de
+    # fournir un VRAI Postgres jetable, comme le job d'intégration. La base n'a
+    # pas besoin d'être seedée : des tables vides suffisent, seule la connexion
+    # compte. C'est `shared/lib/prisma.ts` qui choisit alors `PrismaPg` plutôt que
+    # l'adapter Neon, sur le host (localhost ≠ *.neon.tech).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: synclune
+          POSTGRES_PASSWORD: synclune
+          POSTGRES_DB: synclune_build
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
+      DATABASE_URL: "postgresql://synclune:synclune@localhost:5432/synclune_build"
       AUTH_SECRET: "ci-placeholder-secret-32-chars-min!"
       ADMIN_PASSWORD: "ci-placeholder-password!"
       STRIPE_SECRET_KEY: "sk_test_placeholder"
@@ -184,16 +211,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # `DATABASE_URL` est posé au niveau de l'ÉTAPE, pas du job : c'est la
-      # convention du dépôt (cf. l'en-tête du job `e2e`) — sinon les scripts de
-      # lifecycle npm de `pnpm install` tourneraient avec le secret en env.
+      # Le schéma doit exister : le prérendu lit des tables, pas seulement la
+      # connexion. `db push` sur une base vide les crée en une passe.
+      - name: Push database schema
+        run: pnpm prisma db push
       - name: Build (prisma generate + next build --turbopack)
-        env:
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
         run: pnpm build
       - name: Bundle size check
-        env:
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
         run: pnpm size
 
   tests:

@@ -2,6 +2,7 @@ import "server-only";
 
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { traceContext } from "@prisma/sqlcommenter-trace-context";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -9,7 +10,34 @@ if (!databaseUrl && process.env.NODE_ENV !== "test") {
 	throw new Error("DATABASE_URL environment variable is not set");
 }
 
-const adapter = new PrismaNeon({ connectionString: databaseUrl! });
+/**
+ * Sélection de l'adapter PAR HOST — même règle que
+ * `test/integration/prisma-client.ts`, où elle est en place depuis l'origine.
+ *
+ * ⚠️ Pourquoi c'est nécessaire ici aussi : `@neondatabase/serverless` parle au
+ * proxy WebSocket de Neon. Un Postgres standard (service container de la CI,
+ * docker local) ne l'expose pas et répond « Received network error or non-101
+ * status code » — l'erreur qui faisait échouer les suites d'intégration dès
+ * qu'elles appelaient du code applicatif, puisque celui-ci importe CE
+ * singleton et non le client d'intégration (audit CI 2026-08-16).
+ *
+ * En production, `DATABASE_URL` pointe sur `*.neon.tech` : le comportement est
+ * strictement inchangé.
+ */
+const isNeonHost = (() => {
+	if (!databaseUrl) return true;
+	try {
+		return new URL(databaseUrl).hostname.endsWith(".neon.tech");
+	} catch {
+		// URL malformée : on garde le comportement historique plutôt que de
+		// basculer silencieusement de driver sur une valeur qu'on ne comprend pas.
+		return true;
+	}
+})();
+
+const adapter = isNeonHost
+	? new PrismaNeon({ connectionString: databaseUrl! })
+	: new PrismaPg({ connectionString: databaseUrl! });
 
 /**
  * Client Prisma avec Neon serverless adapter
