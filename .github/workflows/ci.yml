@@ -43,6 +43,11 @@ jobs:
   quality:
     name: Quality checks
     runs-on: ubuntu-latest
+    # ⚠️ Placeholder pour `prisma generate` (même raison que `tests-critical`) :
+    # `prisma.config.ts` lit `env("DATABASE_URL")` de façon STRICTE. `generate`
+    # ne se connecte à rien, il ne fait que lire le schéma.
+    env:
+      DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
@@ -88,6 +93,14 @@ jobs:
           # 500 Mo sur le plan gratuit, partagé avec les rapports Playwright.
           # Un SBOM sert au diagnostic d'incident récent, pas à l'archivage.
           retention-days: 30
+      # ⚠️ INDISPENSABLE avant lint et typecheck : sans le client généré dans
+      # `app/generated/prisma`, TypeScript résout les types Prisma en `any` et
+      # les règles typées d'ESLint (`no-unsafe-assignment`…) s'allument sur des
+      # dizaines de fichiers `app/**`. Avec `--max-warnings=0`, le job échouait
+      # donc sur du bruit — jamais sur une vraie faute de style (audit CI
+      # 2026-08-16). Le typecheck aurait échoué juste après, pour la même raison.
+      - name: Generate Prisma client
+        run: pnpm prisma generate
       - name: Lint
         run: pnpm lint
       - name: Format check

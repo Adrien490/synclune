@@ -35,9 +35,30 @@ const isNeonHost = (() => {
 	}
 })();
 
+/**
+ * Schéma cible, quand l'URL le précise en `?schema=`.
+ *
+ * ⚠️ Les drivers `pg` et `neon` IGNORENT ce search param — c'est une convention
+ * de la CLI Prisma, pas de la chaîne de connexion. Il faut donc le passer
+ * explicitement à l'adapter, exactement comme le fait
+ * `test/integration/prisma-client.ts`. Sans ça, les suites d'intégration (qui
+ * isolent chaque worker dans son propre schéma) voyaient le code applicatif
+ * requêter `public` pendant que leurs fixtures vivaient dans
+ * `synclune_test_<n>` — d'où des lectures qui rendaient `null`.
+ * En production l'URL n'a pas de `?schema=` : `undefined`, comportement inchangé.
+ */
+const schema = (() => {
+	if (!databaseUrl) return undefined;
+	try {
+		return new URL(databaseUrl).searchParams.get("schema") ?? undefined;
+	} catch {
+		return undefined;
+	}
+})();
+
 const adapter = isNeonHost
-	? new PrismaNeon({ connectionString: databaseUrl! })
-	: new PrismaPg({ connectionString: databaseUrl! });
+	? new PrismaNeon({ connectionString: databaseUrl! }, { schema })
+	: new PrismaPg({ connectionString: databaseUrl! }, { schema });
 
 /**
  * Client Prisma avec Neon serverless adapter

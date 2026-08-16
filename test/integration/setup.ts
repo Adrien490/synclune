@@ -31,6 +31,16 @@ if (skip) {
 			"   Set it to a dedicated Postgres URL (NOT production), e.g.:\n" +
 			"   export INTEGRATION_DATABASE_URL='postgresql://user:pwd@localhost:5432/synclune_test'\n",
 	);
+} else {
+	// ⚠️ AU CHARGEMENT DU SETUP, pas dans un hook : `shared/lib/prisma.ts`
+	// construit son adapter AU MOMENT DE L'IMPORT. Les suites qui exercent du
+	// code applicatif (`getProductForDuplication`, `finalizeRetractationRefund`)
+	// importent ce singleton statiquement, donc il était figé sur le
+	// `DATABASE_URL` placeholder du job AVANT que `getIntegrationPrismaClient()`
+	// — appelé en `beforeEach` — n'ait eu l'occasion de le corriger. Les data
+	// fns interrogeaient alors une autre base que celle des fixtures et
+	// rendaient `null` (audit CI 2026-08-16).
+	process.env.DATABASE_URL = getIntegrationDatabaseUrl();
 }
 
 beforeAll(async () => {
