@@ -8,12 +8,21 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import Link from "next/link";
 import { STOCK_ISSUES_ALERT_ID } from "./stock-issues-alert-id";
+import { PRICE_INCREASE_ALERT_ID } from "./price-increase-alert-id";
 
 interface CartSheetFooterProps {
 	totalItems: number;
 	subtotal: number;
 	isPending: boolean;
 	hasStockIssues: boolean;
+	/**
+	 * Une hausse de prix non actualisée bloque aussi le CTA : la facturation est
+	 * toujours au prix courant (`createCheckoutSession`), donc laisser passer une
+	 * cliente dont le panier affiche l'ancien prix ferait diverger le sous-total
+	 * du sheet de celui de `/paiement` — la « surprise » que la copy de
+	 * `CartPriceChangeAlert` promet d'éviter. « Actualiser les prix » lève le blocage.
+	 */
+	hasPriceIncrease: boolean;
 	onClose: () => void;
 }
 
@@ -22,9 +31,14 @@ export function CartSheetFooter({
 	subtotal,
 	isPending,
 	hasStockIssues,
+	hasPriceIncrease,
 	onClose,
 }: CartSheetFooterProps) {
 	const haptic = useHaptic();
+	const isBlocked = hasStockIssues || hasPriceIncrease;
+	// Les problèmes de stock priment : leur alerte est la plus haute et son
+	// correctif (retirer/ajuster des lignes) peut aussi faire disparaître la hausse.
+	const blockingAlertId = hasStockIssues ? STOCK_ISSUES_ALERT_ID : PRICE_INCREASE_ALERT_ID;
 
 	const handleCheckoutClick = () => {
 		haptic("medium");
@@ -44,7 +58,7 @@ export function CartSheetFooter({
 	 */
 	const handleBlockedClick = () => {
 		haptic("error");
-		const alert = document.getElementById(STOCK_ISSUES_ALERT_ID);
+		const alert = document.getElementById(blockingAlertId);
 		if (!alert) return;
 		alert.scrollIntoView({ block: "nearest" });
 		alert.focus({ preventScroll: true });
@@ -109,7 +123,7 @@ export function CartSheetFooter({
 				    = double vocalisation. */}
 
 				{/* Primary CTA */}
-				{hasStockIssues ? (
+				{isBlocked ? (
 					/*
 					 * ⚠️ `aria-disabled` SEUL, jamais `disabled` natif — et pas d'`opacity-*`.
 					 *
@@ -133,7 +147,7 @@ export function CartSheetFooter({
 						size="lg"
 						className="w-full border-2 border-dashed"
 						aria-disabled="true"
-						aria-describedby={STOCK_ISSUES_ALERT_ID}
+						aria-describedby={blockingAlertId}
 						onClick={handleBlockedClick}
 					>
 						Passer commande

@@ -1,4 +1,4 @@
-import { OrderStatus, RetractationStatus } from "@/app/generated/prisma/enums";
+import { OrderStatus, type RetractationStatus } from "@/app/generated/prisma/enums";
 
 /** Fenêtre de rétractation de 14 jours (directive 2011/83/UE, art. L221-18). */
 export const WITHDRAWAL_PERIOD_DAYS = 14;
@@ -25,7 +25,8 @@ interface RetractationEligibilityOrder {
  * - `NOT_PAID` : commande jamais encaissée (PENDING/CANCELLED) ou déjà remboursée
  * - `NOT_SHIPPED` : pas encore expédiée (la fenêtre n'a pas commencé)
  * - `DEADLINE_EXCEEDED` : expédiée mais fenêtre de 14 jours écoulée
- * - `ALREADY_REQUESTED` : une demande de rétractation non rejetée existe déjà
+ * - `ALREADY_REQUESTED` : une demande de rétractation existe déjà, quel que
+ *   soit son état — REJECTED comprise
  */
 export type RetractationIneligibilityReason =
 	"NOT_PAID" | "NOT_SHIPPED" | "DEADLINE_EXCEEDED" | "ALREADY_REQUESTED";
@@ -39,18 +40,19 @@ export function getRetractationIneligibilityReason(
 	const validStatus = order.status === OrderStatus.PAID || order.status === OrderStatus.SHIPPED;
 	if (!validStatus) return "NOT_PAID";
 
+	// Toute demande existante bloque, REJECTED comprise : le schéma est
+	// `@unique(orderId)` (une re-demande serait un P2002) et la page de suivi
+	// affiche l'état de la demande dès qu'elle existe. Ce service disait
+	// l'inverse pour REJECTED (audit 2026-08-16) — trois couches, un seul
+	// invariant : une seule demande par commande, l'échange continue par email.
+	if (order.retractation) return "ALREADY_REQUESTED";
+
 	if (order.status !== OrderStatus.SHIPPED || !order.shippedAt) {
 		return "NOT_SHIPPED";
 	}
 
 	const deadline = new Date(order.shippedAt).getTime() + WITHDRAWAL_PERIOD_MS;
 	if (now >= deadline) return "DEADLINE_EXCEEDED";
-
-	// Une demande REJECTED ne bloque pas une nouvelle demande dans la fenêtre ;
-	// tout autre statut (reçue, accusée, retour attendu, remboursée) la bloque.
-	if (order.retractation && order.retractation.status !== RetractationStatus.REJECTED) {
-		return "ALREADY_REQUESTED";
-	}
 
 	return null;
 }

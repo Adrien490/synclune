@@ -1,17 +1,18 @@
 import { test, expect } from "./fixtures";
 
 test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
-	test("la page 404 affiche un message utilisateur", async ({ page }) => {
-		// ⚠️ PPR : statut 200 (shell streamé), le CONTENU fait foi (cf. lot 5).
-		await page.goto("/page-inexistante-xyz");
-		await page.waitForLoadState("domcontentloaded");
-
-		const heading = page.getByRole("heading");
-		await expect(heading.first()).toBeVisible();
+	test("un segment inexistant affiche la 404 avec un message utilisateur", async ({ page }) => {
+		// ⚠️ Une route de PREMIER NIVEAU inconnue tombe dans le default-deny du
+		// proxy (307 vers `/`) : l'ancien `/page-inexistante-xyz` faisait donc
+		// passer les assertions… sur la homepage. Seul un segment public dynamique
+		// rend le vrai contenu 404 — PPR : statut 200 (shell streamé), le CONTENU
+		// fait foi (cf. CLAUDE.md § Testing).
+		await page.goto("/creations/produit-inexistant-resilience-xyz");
+		await expect(page.getByRole("heading", { name: /n'existe plus/i })).toBeVisible();
 
 		// Should offer navigation back
-		const homeLink = page.getByRole("link", { name: /accueil|retour|boutique/i });
-		await expect(homeLink.first()).toBeVisible();
+		const homeLink = page.getByRole("link", { name: /Retour à l'accueil/i });
+		await expect(homeLink).toBeVisible();
 	});
 
 	test("une route API inexistante ne rend pas de contenu applicatif", async ({ page }) => {
@@ -45,7 +46,8 @@ test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
 		await expect(page.getByRole("heading", { name: /n'existe pas/i })).toBeVisible();
 	});
 
-	// l'ajout panier est une Server Action, pas un appel /api — test retiré, il passait pour la mauvaise raison
+	// l'ajout panier est une Server Action, pas un appel /api — la panne réelle
+	// (POST de Server Action en 500) est couverte dans error-scenarios-advanced.
 
 	/*
 	 * Retiré : « les erreurs reseau sur la recherche sont gerees gracieusement ».
@@ -58,38 +60,26 @@ test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
 	 */
 
 	test("la navigation fonctionne apres une erreur", async ({ page }) => {
-		// Trigger a 404
-		await page.goto("/page-inexistante-xyz");
-		await page.waitForLoadState("domcontentloaded");
+		// Une vraie 404 de segment (pas la redirection proxy du premier niveau).
+		await page.goto("/creations/produit-inexistant-navigation-xyz");
 
-		// Navigate back to home
-		const homeLink = page.getByRole("link", { name: /accueil|retour|boutique/i });
-		if (await homeLink.first().isVisible()) {
-			await homeLink.first().click();
-		} else {
-			await page.goto("/");
-		}
+		// Chemin DÉTERMINISTE : le lien « Retour à l'accueil » de la 404 segment
+		// existe toujours (l'ancien if/else menait au même état par deux chemins,
+		// donc ne testait rien de précis).
+		const homeLink = page.getByRole("link", { name: /Retour à l'accueil/i });
+		await expect(homeLink).toBeVisible();
+		await homeLink.click();
 
-		await page.waitForLoadState("domcontentloaded");
+		await expect(page).toHaveURL(/\/$/);
 		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 	});
 
-	test("un reseau lent ne bloque pas le rendu initial", async ({ page }) => {
-		// Simulate slow network by delaying API responses
-		await page.route("**/api/**", async (route) => {
-			await new Promise((r) => setTimeout(r, 3000));
-			await route.continue();
-		});
-
-		try {
-			await page.goto("/");
-			await page.waitForLoadState("domcontentloaded");
-
-			// Page should render even with slow API
-			const heading = page.getByRole("heading", { level: 1 });
-			await expect(heading).toBeVisible({ timeout: 10000 });
-		} finally {
-			await page.unroute("**/api/**");
-		}
-	});
+	/*
+	 * Retiré le 2026-08-16 : « un reseau lent ne bloque pas le rendu initial ».
+	 * Il retardait `**​/api/**` — un canal que la homepage n'appelle pas (tout est
+	 * SSR + Server Actions) : le délai ne s'appliquait jamais et le test mesurait
+	 * un chargement normal. La lenteur RÉELLE du canal mutation (Server Action
+	 * retardée → état d'attente exposé) est couverte dans
+	 * error-scenarios-advanced.spec.ts via `delayServerActions`.
+	 */
 });

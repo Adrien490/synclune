@@ -93,18 +93,27 @@ export async function requestRetractation(
 				where: { id: retractationId, status: "RECEIVED" },
 				data: { status: "ACKNOWLEDGED", acknowledgedAt: new Date() },
 			});
-		} else {
-			// RECEIVED reste — l'admin verra une demande sans accusé et relancera.
-			logger.error("[requestRetractation] Accusé de réception non envoyé", {
-				retractationId,
-				error: ack.error,
-			});
+
+			updateTagsAfterMutation(
+				getRetractationInvalidationTags({ retractationId, orderId: order.id }),
+			);
+
+			return success(
+				"Ta demande de rétractation est enregistrée — tu vas recevoir un accusé de réception par email avec la marche à suivre.",
+			);
 		}
+
+		// RECEIVED reste — l'admin verra une demande sans accusé et relancera.
+		// Le message ne promet PAS un accusé automatique qui ne partira pas.
+		logger.error("[requestRetractation] Accusé de réception non envoyé", {
+			retractationId,
+			error: ack.error,
+		});
 
 		updateTagsAfterMutation(getRetractationInvalidationTags({ retractationId, orderId: order.id }));
 
 		return success(
-			"Ta demande de rétractation est enregistrée — tu vas recevoir un accusé de réception par email avec la marche à suivre.",
+			"Ta demande de rétractation est bien enregistrée — on revient vers toi par email avec la marche à suivre.",
 		);
 	} catch (e) {
 		return handleActionError(e, "Impossible d'enregistrer ta demande. Réessaie.");

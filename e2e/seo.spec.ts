@@ -1,4 +1,9 @@
 import { test, expect } from "./fixtures";
+import { requireSeedData } from "./constants";
+
+// Même défaut que le `baseURL` de playwright.config.ts — les assertions d'URL
+// absolue ne doivent pas figer `localhost:3000` quand BASE_URL pointe ailleurs.
+const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 
 test.describe("SEO et métadonnées - Homepage", { tag: ["@slow"] }, () => {
 	test.beforeEach(async ({ page }) => {
@@ -237,20 +242,30 @@ test.describe("SEO et métadonnées - Page produit détail", { tag: ["@slow"] },
 
 test.describe("SEO - OG images dynamiques", { tag: ["@slow"] }, () => {
 	test("la page categorie produit a une OG image dynamique", async ({ page }) => {
+		// Le slug de catégorie se DÉRIVE du catalogue rendu (l'ancien
+		// `/produits/colliers` en dur devenait une 404 silencieuse dès que le seed
+		// renommait ses types de produits).
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+		const categoryLink = page.locator('a[href^="/produits/"]:not([href="/produits"])').first();
+		requireSeedData(
+			test,
+			(await categoryLink.count()) > 0,
+			"Aucun lien de catégorie /produits/<type> sur le catalogue (seed absent)",
+		);
+		const categoryHref = await categoryLink.getAttribute("href");
+
 		// Next 16 suffixe l'URL des images OG dynamiques d'un hash
 		// (`opengraph-image-<id>?<version>`) : l'URL réelle se lit dans la meta
 		// `og:image` de la page, pas en la devinant.
-		await page.goto("/produits/colliers");
+		await page.goto(categoryHref!);
 		const ogImageUrl = await page
 			.locator('meta[property="og:image"]')
 			.first()
 			.getAttribute("content");
 		expect(ogImageUrl).toBeTruthy();
 
-		const localUrl = new URL(
-			new URL(ogImageUrl!).pathname + new URL(ogImageUrl!).search,
-			"http://localhost:3000",
-		);
+		const localUrl = new URL(new URL(ogImageUrl!).pathname + new URL(ogImageUrl!).search, BASE_URL);
 		const response = await page.goto(localUrl.toString());
 
 		expect(response?.status()).toBe(200);
@@ -292,7 +307,7 @@ test.describe("SEO - Pages légales", { tag: ["@slow"] }, () => {
 
 		// Et le default-deny renvoie bien l'inconnu total vers l'accueil.
 		await page.goto("/route-qui-nexiste-vraiment-pas-du-tout");
-		await expect(page).toHaveURL(/localhost:3000\/$/);
+		await expect(page).toHaveURL(`${BASE_URL}/`);
 	});
 });
 

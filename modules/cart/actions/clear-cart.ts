@@ -9,8 +9,7 @@ import { CART_ERROR_MESSAGES } from "../constants/error-messages";
  * Server Action pour vider integralement le panier
  * Compatible avec useActionState de React 19
  *
- * Supprime le cookie `cart` : lignes ET code promo partent ensemble.
- *
+ * Supprime le cookie `cart` d'un bloc.
  */
 export async function clearCart(
 	_: ActionState | undefined,

@@ -16,16 +16,26 @@ test.describe("Recherche produits", { tag: ["@critical"] }, () => {
 		await expect(searchPage.searchInput).toBeVisible();
 	});
 
-	test("la recherche met a jour les resultats", async ({ searchPage }) => {
+	test("la recherche d'un terme du seed affiche des resultats", async ({ searchPage }) => {
 		await searchPage.open();
 
 		await searchPage.search("bague");
 
-		// Either products or empty state should be visible
+		// Déterministe : le seed garantit des produits pour « bague », donc on
+		// asserte des RÉSULTATS — l'ancienne union « résultats OU état vide »
+		// acceptait les deux issues et ne pouvait pas échouer. Le cas « aucun
+		// résultat » a son propre test déterministe juste en dessous (charabia).
 		const results = await searchPage.getResults();
-		const emptyState = searchPage.page.getByText(/aucun (résultat|produit)/i);
-
-		await expect(results.first().or(emptyState).first()).toBeVisible({ timeout: 5000 });
+		// La grille arrive en streaming après la navigation : on attend le premier
+		// lien avant de compter (un catalogue vraiment vide coûte le timeout).
+		await results
+			.first()
+			.waitFor({ state: "attached", timeout: 15000 })
+			.catch(() => {
+				/* aucun résultat : requireSeedData tranche juste après */
+			});
+		requireSeedData(test, (await results.count()) > 0, "produits pour la recherche « bague »");
+		await expect(results.first()).toBeVisible();
 	});
 
 	test("la recherche sans resultats affiche un etat vide", async ({ searchPage }) => {

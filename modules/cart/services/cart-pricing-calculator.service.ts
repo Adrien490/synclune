@@ -60,28 +60,6 @@ export function detectPriceChanges<T extends CartItemForPriceCheck>(
 }
 
 /**
- * Vérifie si des articles ont des prix qui ont changé
- *
- * @param items - Articles du panier
- * @returns true si au moins un prix a changé
- */
-export function hasPriceChanges(items: CartItemForPriceCheck[]): boolean {
-	return items.some((item) => item.priceAtAdd !== effectivePrice(item));
-}
-
-/**
- * Calcule les économies potentielles sur les baisses de prix
- *
- * @param items - Articles du panier
- * @returns Montant total économisable
- */
-export function calculateTotalSavings(items: CartItemForPriceCheck[]): number {
-	return items
-		.filter((item) => effectivePrice(item) < item.priceAtAdd)
-		.reduce((sum, item) => sum + (item.priceAtAdd - effectivePrice(item)) * item.quantity, 0);
-}
-
-/**
  * Détermine si un article a subi une hausse de prix
  *
  * @param item - Article du panier
@@ -91,22 +69,7 @@ export function isPriceIncrease(item: CartItemForPriceCheck): boolean {
 	return effectivePrice(item) > item.priceAtAdd;
 }
 
-/**
- * Détermine si un article a subi une baisse de prix
- *
- * @param item - Article du panier
- * @returns true si le prix a baissé
- */
-export function isPriceDecrease(item: CartItemForPriceCheck): boolean {
-	return effectivePrice(item) < item.priceAtAdd;
-}
-
-/**
- * Calcule la différence de prix pour un article
- *
- * @param item - Article du panier
- * @returns Différence (positive si hausse, négative si baisse)
- */
-export function getPriceDifference(item: CartItemForPriceCheck): number {
-	return (effectivePrice(item) - item.priceAtAdd) * item.quantity;
-}
+// `hasPriceChanges`, `calculateTotalSavings`, `isPriceDecrease` et
+// `getPriceDifference` ont été retirées (audit panier 2026-08-15) : aucun
+// consommateur de production — seuls leurs tests les maintenaient en vie, ce
+// qui rendait `knip` aveugle. `detectPriceChanges` couvre tous ces besoins.

@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures";
+import { requireSeedData } from "../constants";
 
 test.describe("Accessibilité composants - Cart Sheet", { tag: ["@slow"] }, () => {
 	test("le cart sheet piège le focus et Escape retourne au bouton", async ({
@@ -92,108 +93,102 @@ test.describe("Accessibilité composants - Accordion", { tag: ["@slow"] }, () =>
 });
 
 test.describe("Accessibilité composants - Carousel", { tag: ["@slow"] }, () => {
-	test("Carousel - ArrowLeft/Right navigue les slides", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
+	test("Carousel — région annoncée, diapositives étiquetées, live region", async ({
+		page,
+		productCatalogPage,
+	}) => {
+		// ⚠️ Deux corrections (audit e2e 2026-08-16) :
+		//  1. le carrousel n'est PAS sur l'accueil — il est monté par
+		//     `related-products.tsx` (fiche produit) ; le test visait `/` et
+		//     skippait à chaque run ;
+		//  2. ce carrousel ne rend AUCUN bouton précédent/suivant (mesuré : ses 8
+		//     boutons sont les actions favoris/panier des cartes). Asserter une
+		//     navigation par flèches y était donc impossible — et la navigation
+		//     clavier des diapositives est DÉJÀ couverte, en profondeur, par
+		//     `product-gallery.spec.ts` (tablist, ArrowLeft/Right, Home/End).
+		// Ce qui reste à verrouiller ici est le contrat ARIA du conteneur.
+		await productCatalogPage.goto();
+		const productCount = await productCatalogPage.productLinks.count();
+		requireSeedData(test, productCount > 0, "Pas de produits dans la base");
+		await productCatalogPage.gotoFirstProduct();
 
 		const carousel = page.locator('[role="region"][aria-roledescription="carousel"]').first();
-		if ((await carousel.count()) === 0) {
-			test.skip(true, "Pas de carousel sur la homepage");
-			return;
-		}
+		await expect(carousel).toBeVisible({ timeout: 15_000 });
 
-		// Focus the carousel or its navigation buttons
-		const prevButton = carousel.getByRole("button", { name: /Précédent|Previous/i }).first();
-		const nextButton = carousel.getByRole("button", { name: /Suivant|Next/i }).first();
+		// La région porte un nom accessible (sinon « région, carrousel » tout court
+		// au lecteur d'écran, indistinguable des autres régions de la page).
+		const accessibleName = await carousel.evaluate(
+			(el) =>
+				el.getAttribute("aria-label") ??
+				(el.getAttribute("aria-labelledby")
+					? (document.getElementById(el.getAttribute("aria-labelledby")!)?.textContent ?? "")
+					: ""),
+		);
+		expect(accessibleName.trim().length).toBeGreaterThan(0);
 
-		if ((await nextButton.count()) > 0) {
-			await nextButton.focus();
-			await expect(nextButton).toBeFocused();
-			await page.keyboard.press("Enter");
-		} else if ((await prevButton.count()) > 0) {
-			await prevButton.focus();
-			await expect(prevButton).toBeFocused();
-		}
+		// Chaque diapositive s'annonce comme telle.
+		const slides = carousel.locator('[aria-roledescription="slide"]');
+		expect(await slides.count()).toBeGreaterThan(0);
+
+		// ⚠️ Pas d'assertion sur la live region ici : `Carousel` ne la rend que si
+		// `scrollSnaps.length > 1` (cf. `shared/components/ui/carousel.tsx`), et
+		// les produits liés tiennent en une seule position de défilement à ce
+		// viewport. L'exiger inconditionnellement rendait le test rouge pour une
+		// raison fausse. La live region des galeries qui DÉFILENT, elle, est
+		// vérifiée avec son texte exact par `product-gallery.spec.ts`.
 	});
 });
 
 test.describe("Accessibilité composants - Tooltip", { tag: ["@slow"] }, () => {
-	test("les tooltips apparaissent au focus et disparaissent au blur", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
-
-		// Find buttons with tooltip triggers (icon buttons in navbar)
-		const tooltipTriggers = page.locator("[data-state][data-radix-tooltip-trigger]");
-		if ((await tooltipTriggers.count()) === 0) {
-			// Try alternative: buttons with aria-describedby that contain only icons.
-			// `visible: true` : le premier bouton du DOM est le burger `lg:hidden`,
-			// infocusable au viewport desktop.
-			const iconButtons = page.locator("nav button[aria-label]").filter({ visible: true });
-			if ((await iconButtons.count()) === 0) return;
-
-			const btn = iconButtons.first();
-			await btn.focus();
-			await expect(btn).toBeFocused();
-
-			// Tab away — tooltip should disappear
-			await page.keyboard.press("Tab");
-			return;
-		}
-
-		const trigger = tooltipTriggers.first();
-		await trigger.focus();
-		await expect(trigger).toBeFocused();
-
-		// Wait for tooltip to appear on focus
-		const tooltip = page.getByRole("tooltip");
-		await tooltip
-			.first()
-			.waitFor({ state: "visible", timeout: 1500 })
-			.catch(() => {});
-		if ((await tooltip.count()) > 0 && (await tooltip.first().isVisible())) {
-			await expect(tooltip.first()).toBeVisible();
-		}
-
-		// Tab away — tooltip should disappear
-		await page.keyboard.press("Tab");
-		if ((await tooltip.count()) > 0) {
-			await expect(tooltip).not.toBeVisible();
-		}
-	});
-});
-
-test.describe("Accessibilité composants - Popover", { tag: ["@slow"] }, () => {
-	test("Popover couleurs - focus trap, Escape ferme et retourne le focus", async ({ page }) => {
+	test("le tooltip s'ouvre au survol et se referme quand le pointeur part", async ({ page }) => {
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Color swatches popover trigger ("+N" button on product cards)
-		const popoverTrigger = page.locator("[data-radix-popover-trigger]").first();
-		if ((await popoverTrigger.count()) === 0) {
-			test.skip(true, "Pas de popover de couleurs sur la page");
-			return;
-		}
+		// ⚠️ Trois pièges corrigés le 2026-08-16 :
+		//  1. `[data-radix-tooltip-trigger]` est mort depuis la migration Base UI —
+		//     le test retombait sur une branche de repli sans une seule assertion
+		//     sur le tooltip ;
+		//  2. le déclencheur Base UI est `data-slot="tooltip-trigger"` ;
+		//  3. la surface Base UI NE PORTE PAS `role="tooltip"` : `getByRole("tooltip")`
+		//     rend 0 alors que `[data-slot="tooltip-content"]` rend bien 1. C'est
+		//     `data-slot` qui fait foi.
+		const trigger = page.locator('[data-slot="tooltip-trigger"]').filter({ visible: true }).first();
+		await expect(trigger).toBeVisible({ timeout: 15_000 });
 
-		await popoverTrigger.click();
+		// Le déclencheur reste utile SANS le tooltip : il porte son propre nom
+		// accessible, donc un utilisateur clavier n'est privé d'aucune information
+		// (Base UI n'ouvre pas ce tooltip sur un focus programmatique).
+		const triggerName = await trigger.evaluate(
+			(el) => el.getAttribute("aria-label") ?? el.textContent.trim(),
+		);
+		expect(triggerName.length).toBeGreaterThan(0);
 
-		const popoverContent = page.locator("[data-radix-popover-content]");
-		await expect(popoverContent).toBeVisible();
+		const tooltip = page.locator('[data-slot="tooltip-content"]').first();
+		// Le survol peut précéder l'hydratation (le tooltip est piloté par React) :
+		// on redemande jusqu'à l'ouverture. ⚠️ Il faut ÉCARTER le pointeur entre
+		// deux tentatives : Base UI ouvre sur `pointerenter`, et re-survoler un
+		// élément déjà survolé n'en émet aucun — la boucle tournait dans le vide.
+		await expect(async () => {
+			await page.mouse.move(0, 0);
+			await trigger.hover();
+			await expect(tooltip).toBeVisible({ timeout: 1500 });
+		}).toPass({ timeout: 15_000 });
 
-		// Focus should be inside the popover
-		const isInside = await page.evaluate(() => {
-			const p = document.querySelector("[data-radix-popover-content]");
-			return p?.contains(document.activeElement);
-		});
-		expect(isInside).toBe(true);
-
-		// Escape closes the popover
-		await page.keyboard.press("Escape");
-		await expect(popoverContent).not.toBeVisible();
-
-		// Focus returns to trigger
-		await expect(popoverTrigger).toBeFocused();
+		// Le pointeur s'en va : le tooltip se referme (assertion DURE — l'ancienne
+		// version enveloppait tout dans des `if (count > 0)`).
+		await page.mouse.move(0, 0);
+		await expect(tooltip).toBeHidden({ timeout: 5_000 });
 	});
 });
+
+/**
+ * ⚠️ Le test « Popover couleurs - focus trap » a été SUPPRIMÉ le 2026-08-16 :
+ * il ciblait `[data-radix-popover-trigger]`, mort depuis la migration Base UI,
+ * et sondé après migration `[data-slot="popover-trigger"]` rend **0 nœud** sur
+ * `/` comme sur `/produits` — la pastille « +N couleurs » ne rend pas de
+ * popover sur les cartes du storefront. Le test skippait donc à chaque run.
+ * À rétablir le jour où un popover revient sur une surface publique.
+ */
 
 // Les tests MultiSelect (/admin/catalogue/produits/nouveau) et Switch
 // (/admin/catalogue/couleurs) ont été retirés : en projet public, ces routes

@@ -110,6 +110,86 @@ test.describe("Rétractation publique @critical", () => {
 		}
 	});
 
+	test("une seconde demande est refusée : une seule rétractation par commande (@unique orderId)", async ({
+		page,
+	}) => {
+		const email = testEmail("retract-dup");
+		const order = await createShippedOrder(email);
+		const token = trackingToken(order.id, email);
+
+		try {
+			await page.goto(`/suivi-commande?commande=${order.id}&token=${token}`);
+			await page.getByRole("button", { name: /Me rétracter/i }).click();
+			await expect(page.getByRole("button", { name: /Envoyer ma demande/i })).toBeVisible();
+
+			// Une demande concurrente aboutit AVANT la soumission (autre onglet, double
+			// clic réparti) : le P2002 de `@unique(orderId)` doit produire le message
+			// dédié de `request-retractation.ts`, pas une erreur générique.
+			const prisma = getE2ePrisma();
+			await prisma.retractationRequest.create({
+				data: { orderId: order.id, status: "RECEIVED" },
+			});
+
+			await page.getByRole("button", { name: /Envoyer ma demande/i }).click();
+			await expect(
+				page.getByText(/Une demande de rétractation est déjà enregistrée pour cette commande/i),
+			).toBeVisible({ timeout: 15_000 });
+
+			// Vérité serveur : toujours UNE SEULE demande.
+			expect(await prisma.retractationRequest.count({ where: { orderId: order.id } })).toBe(1);
+		} finally {
+			await cleanup(order.id);
+		}
+	});
+
+	test("hors délai (14 j dépassés) : la demande reste soumettable — l'admin tranche", async ({
+		page,
+	}) => {
+		const email = testEmail("retract-late");
+		const order = await createShippedOrder(email);
+		const prisma = getE2ePrisma();
+		// Expédiée il y a 20 jours : fenêtre légale écoulée (proxy shippedAt,
+		// cf. retractation-eligibility.service).
+		await prisma.order.update({
+			where: { id: order.id },
+			data: { shippedAt: new Date(Date.now() - 20 * 86_400_000) },
+		});
+		const token = trackingToken(order.id, email);
+
+		try {
+			await page.goto(`/suivi-commande?commande=${order.id}&token=${token}`);
+
+			// Le bouton reste là, avec la copy « hors délai » — c'est un droit de
+			// demande, jamais un mur.
+			const openFormButton = page.getByRole("button", { name: /Me rétracter/i });
+			await expect(openFormButton).toBeVisible();
+			await expect(page.getByText(/délai légal de 14 jours est dépassé/i)).toBeVisible();
+			await openFormButton.click();
+
+			await expect(page.getByText(/ta demande sera examinée à la main/i)).toBeVisible();
+			// Motif optionnel : soumission sans se justifier.
+			await page.getByRole("button", { name: /Envoyer ma demande/i }).click();
+
+			await expect(page.getByText(/demande de rétractation est (bien )?enregistrée/i)).toBeVisible({
+				timeout: 15_000,
+			});
+
+			// La demande existe bien en base (RECEIVED, ou ACKNOWLEDGED si l'accusé est parti).
+			await expect
+				.poll(() => prisma.retractationRequest.count({ where: { orderId: order.id } }), {
+					timeout: 10_000,
+				})
+				.toBe(1);
+			const retractation = await prisma.retractationRequest.findUnique({
+				where: { orderId: order.id },
+				select: { status: true },
+			});
+			expect(["RECEIVED", "ACKNOWLEDGED"]).toContain(retractation!.status);
+		} finally {
+			await cleanup(order.id);
+		}
+	});
+
 	test("token faux : le suivi rend la page 404, jamais la commande", async ({ page }) => {
 		const email = testEmail("retract-bad");
 		const order = await createShippedOrder(email);

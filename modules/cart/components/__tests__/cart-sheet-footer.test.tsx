@@ -70,6 +70,7 @@ vi.mock("../cart-promo-code-form", () => ({
 
 import { CartSheetFooter } from "../cart-sheet-footer";
 import { STOCK_ISSUES_ALERT_ID } from "../stock-issues-alert-id";
+import { PRICE_INCREASE_ALERT_ID } from "../price-increase-alert-id";
 
 afterEach(() => {
 	cleanup();
@@ -82,6 +83,7 @@ function createProps(overrides: Partial<React.ComponentProps<typeof CartSheetFoo
 		subtotal: 4800,
 		isPending: false,
 		hasStockIssues: false,
+		hasPriceIncrease: false,
 		onClose: vi.fn(),
 		...overrides,
 	};
@@ -271,5 +273,58 @@ describe("CartSheetFooter", () => {
 	it("does not render the discount line when no discount is applied", () => {
 		render(<CartSheetFooter {...createProps()} />);
 		expect(screen.queryByText(/^Réduction/)).not.toBeInTheDocument();
+	});
+
+	/**
+	 * @regression cart-price-increase-blocks-checkout-2026-08-15
+	 *
+	 * `createCheckoutSession` facture TOUJOURS le prix courant en base, jamais le
+	 * témoin `priceAtAdd` du cookie. Tant qu'une hausse n'est pas actualisée, le
+	 * sous-total affiché par le panier diverge donc du montant qui sera réellement
+	 * facturé — laisser passer la cliente serait exactement la « surprise » que la
+	 * copy de `CartPriceChangeAlert` promet d'éviter. Le CTA doit être bloqué au
+	 * même titre qu'un problème de stock, et renvoyer vers l'alerte prix.
+	 *
+	 * L'audit du 2026-08-15 a montré que ce blocage était DOCUMENTÉ (ex-commentaire
+	 * de `cart-cookie.ts` : « refuse la commande si le témoin diverge ») mais n'a
+	 * jamais existé dans le code — ce describe est ce qui l'empêche de redisparaître.
+	 */
+	describe("@regression une hausse de prix non actualisée bloque le passage en caisse", () => {
+		it("rend un bouton bloqué (aria-disabled), pas un lien, quand hasPriceIncrease", () => {
+			render(<CartSheetFooter {...createProps({ hasPriceIncrease: true })} />);
+			expect(screen.queryByRole("link", { name: /Passer commande/i })).toBeNull();
+			const blocked = screen.getByRole("button", { name: /Passer commande/i });
+			expect(blocked.getAttribute("aria-disabled")).toBe("true");
+			expect(blocked).not.toBeDisabled();
+		});
+
+		it("décrit le blocage par l'alerte PRIX quand seul le prix bloque", () => {
+			render(<CartSheetFooter {...createProps({ hasPriceIncrease: true })} />);
+			const blocked = screen.getByRole("button", { name: /Passer commande/i });
+			expect(blocked.getAttribute("aria-describedby")).toBe(PRICE_INCREASE_ALERT_ID);
+		});
+
+		it("les problèmes de stock priment quand les deux blocages coexistent", () => {
+			render(
+				<CartSheetFooter {...createProps({ hasPriceIncrease: true, hasStockIssues: true })} />,
+			);
+			const blocked = screen.getByRole("button", { name: /Passer commande/i });
+			expect(blocked.getAttribute("aria-describedby")).toBe(STOCK_ISSUES_ALERT_ID);
+		});
+
+		it("le clic sur le CTA bloqué par le prix déplace le focus sur l'alerte prix", () => {
+			const alert = document.createElement("div");
+			alert.id = PRICE_INCREASE_ALERT_ID;
+			alert.tabIndex = -1;
+			alert.scrollIntoView = vi.fn();
+			document.body.appendChild(alert);
+
+			render(<CartSheetFooter {...createProps({ hasPriceIncrease: true })} />);
+			fireEvent.click(screen.getByRole("button", { name: /Passer commande/i }));
+
+			expect(alert).toHaveFocus();
+			expect(alert.scrollIntoView).toHaveBeenCalled();
+			alert.remove();
+		});
 	});
 });

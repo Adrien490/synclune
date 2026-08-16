@@ -48,7 +48,7 @@ export default async function PaiementPage() {
 		);
 	}
 
-	const issues = validateCartItems(items.map((item) => ({ ...item, variantId: item.id })));
+	const issues = validateCartItems(items.map((item) => ({ variantId: item.id, ...item })));
 	const subtotalCents = items.reduce((sum, item) => sum + effectivePrice(item) * item.quantity, 0);
 
 	return (
@@ -68,7 +68,7 @@ export default async function PaiementPage() {
 							<p className="font-medium">Certains articles ne sont plus disponibles :</p>
 							<ul className="mt-1 list-inside list-disc">
 								{issues.map((issue) => (
-									<li key={issue.cartItemId}>{issue.message}</li>
+									<li key={issue.variantId}>{issue.message}</li>
 								))}
 							</ul>
 							<p className="mt-2">Mets ton panier à jour avant de payer.</p>

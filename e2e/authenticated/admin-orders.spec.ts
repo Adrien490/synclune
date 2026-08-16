@@ -1,6 +1,7 @@
+import Stripe from "stripe";
 import { expect, test } from "../fixtures";
 import { getE2ePrisma } from "../helpers/db";
-import { testEmail } from "../helpers/test-run";
+import { testEmail, testName } from "../helpers/test-run";
 
 /**
  * Admin commandes — schéma lean (lot 4) : liste (recherche, filtre statut),
@@ -135,6 +136,11 @@ test.describe("Admin commandes", () => {
 		}
 	});
 
+	// ⚠️ Le `stripeSessionId` préfixé `pending_e2e_` de `createOrder` ESQUIVE la
+	// branche Stripe de `cancelOrder` (le préfixe `pending_` est le placeholder
+	// « session jamais créée », court-circuité avant tout appel API) : ce test ne
+	// couvre que la transition DB. La branche réelle (expiration de session +
+	// restock) est couverte par le test « session Stripe réelle » ci-dessous.
 	test("« Annuler » une commande en attente la passe CANCELLED", async ({ page }) => {
 		const order = await createOrder({ emailSuffix: "orders-cancel", status: "PENDING" });
 
@@ -162,6 +168,115 @@ test.describe("Admin commandes", () => {
 				.toBe("CANCELLED");
 		} finally {
 			await cleanup(order.id);
+		}
+	});
+
+	test("« Annuler » avec session Stripe réelle : session expirée + stock restitué", async ({
+		page,
+	}) => {
+		// Vrais allers-retours Stripe : plus long que la limite par défaut.
+		test.setTimeout(120_000);
+		test.skip(!process.env.STRIPE_SECRET_KEY, "STRIPE_SECRET_KEY requis (session réelle)");
+
+		const prisma = getE2ePrisma();
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+		// Variante avec stock DÉCRÉMENTÉ (1 exemplaire réservé sur 2) : c'est le
+		// restock — invérifiable sur un OrderItem sans variantId — qu'on verrouille.
+		const product = await prisma.product.create({
+			data: {
+				slug: `${testName("orders-cancel-stripe").toLowerCase()}-${Math.random().toString(36).slice(2, 8)}`,
+				name: testName("Bijou Annulation Stripe"),
+				description: "Produit créé par les tests E2E (annulation Stripe).",
+				priceCents: 2100,
+				active: false,
+				variants: { create: { stock: 1, size: "E2E-C" } },
+			},
+			select: { id: true, variants: { select: { id: true } } },
+		});
+		const variantId = product.variants[0]!.id;
+
+		let orderId: string | null = null;
+		try {
+			// Session Checkout réelle, laissée OUVERTE : `cancelOrder` doit
+			// l'expirer LUI-MÊME avant la transition (sinon la cliente pourrait
+			// encore payer une commande annulée).
+			const session = await stripe.checkout.sessions.create({
+				mode: "payment",
+				line_items: [
+					{
+						quantity: 1,
+						price_data: {
+							currency: "eur",
+							unit_amount: 2100,
+							product_data: { name: "Bijou e2e annulation" },
+						},
+					},
+				],
+				success_url: "http://localhost:3000/paiement/retour?session_id={CHECKOUT_SESSION_ID}",
+				cancel_url: "http://localhost:3000/paiement/annulation",
+			});
+
+			const order = await prisma.order.create({
+				data: {
+					stripeSessionId: session.id,
+					status: "PENDING",
+					email: testEmail("orders-cancel-stripe"),
+					amountItemsCents: 2100,
+					amountShippingCents: 499,
+					amountTotalCents: 2599,
+					items: {
+						create: [
+							{
+								variantId,
+								nameSnapshot: "Bijou e2e annulation",
+								variantSnapshot: "E2E-C",
+								unitPriceCents: 2100,
+								quantity: 1,
+							},
+						],
+					},
+				},
+				select: { id: true },
+			});
+			orderId = order.id;
+
+			await page.goto(`/admin/ventes/commandes/${order.id}`);
+			await expect(page.getByText(/En attente de paiement/i).first()).toBeVisible();
+
+			await page.getByRole("button", { name: /Annuler la commande/i }).click();
+			await page
+				.getByRole("alertdialog")
+				.getByRole("button", { name: /Annuler la commande/i })
+				.click();
+
+			// 1. Transition DB (poll la BASE, doctrine).
+			await expect
+				.poll(
+					async () =>
+						(
+							await prisma.order.findUnique({
+								where: { id: order.id },
+								select: { status: true },
+							})
+						)?.status,
+					{ timeout: 20_000 },
+				)
+				.toBe("CANCELLED");
+
+			// 2. Stock restitué (restock atomique avec la transition).
+			const variantAfter = await prisma.productVariant.findUnique({
+				where: { id: variantId },
+				select: { stock: true },
+			});
+			expect(variantAfter?.stock).toBe(2);
+
+			// 3. La porte Stripe est bien FERMÉE : session expirée côté Stripe.
+			const sessionAfter = await stripe.checkout.sessions.retrieve(session.id);
+			expect(sessionAfter.status).toBe("expired");
+		} finally {
+			if (orderId) await prisma.order.deleteMany({ where: { id: orderId } });
+			await prisma.product.deleteMany({ where: { id: product.id } });
 		}
 	});
 

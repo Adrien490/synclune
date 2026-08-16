@@ -102,7 +102,10 @@ describe("getRetractationIneligibilityReason", () => {
 	});
 
 	describe("demande existante", () => {
-		it.each(["RECEIVED", "ACKNOWLEDGED", "AWAITING_RETURN", "REFUNDED"] as const)(
+		// REJECTED bloque AUSSI : `@unique(orderId)` rendrait une re-demande P2002
+		// et la page de suivi affiche l'état dès qu'une demande existe — ce service
+		// disait l'inverse pour REJECTED (audit 2026-08-16).
+		it.each(["RECEIVED", "ACKNOWLEDGED", "AWAITING_RETURN", "REFUNDED", "REJECTED"] as const)(
 			"ALREADY_REQUESTED quand une demande %s existe",
 			(status) => {
 				expect(getRetractationIneligibilityReason(makeOrder({ retractation: { status } }))).toBe(
@@ -111,10 +114,12 @@ describe("getRetractationIneligibilityReason", () => {
 			},
 		);
 
-		it("éligible malgré une demande REJECTED (nouvelle demande possible dans la fenêtre)", () => {
+		it("ALREADY_REQUESTED domine DEADLINE_EXCEEDED (la demande existe, la fenêtre ne compte plus)", () => {
 			expect(
-				getRetractationIneligibilityReason(makeOrder({ retractation: { status: "REJECTED" } })),
-			).toBeNull();
+				getRetractationIneligibilityReason(
+					makeOrder({ shippedAt: SHIPPED_EXPIRED, retractation: { status: "ACKNOWLEDGED" } }),
+				),
+			).toBe("ALREADY_REQUESTED");
 		});
 	});
 });

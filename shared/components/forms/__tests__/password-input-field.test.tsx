@@ -235,7 +235,14 @@ describe("PasswordInputField", () => {
 		const toggleBtn = screen.getByRole("button", { name: "Afficher le mot de passe" });
 		// Check the className includes the invisible hit-area extension
 		expect(toggleBtn.className).toContain("after:absolute");
-		expect(toggleBtn.className).toContain("after:inset-[-12px]");
+		// 24px (size-6) + 2×10px = 44px effectifs. ⚠️ La paire boîte/inset a changé
+		// le 2026-08-16 : la boîte était à 20px (icône 16 + p-0.5) avec un inset de
+		// -12px. Le total faisait déjà 44px, mais axe mesure la boîte de l'ÉLÉMENT,
+		// pas le pseudo — et relevait donc une violation `target-size` (24px min,
+		// WCAG 2.5.8 AA) sur /admin/connexion. Les deux règles sont désormais
+		// satisfaites : boîte ≥ 24px ET zone tactile 44px.
+		expect(toggleBtn.className).toContain("size-6");
+		expect(toggleBtn.className).toContain("after:inset-[-10px]");
 		expect(toggleBtn.className).toContain("after:content-['']");
 	});
 

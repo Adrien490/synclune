@@ -17,15 +17,18 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 };
 test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () => {
 	test.use({ viewport: MOBILE_VIEWPORT });
 
-	// 🐛 BUG PRODUIT documenté (lot 7, non masqué) : la première carte de l'étal
-	// finit 7-12 px SOUS la ligne de flottaison à 390×844 (barre basse déduite).
-	// La promesse « une pièce entière visible sans scroller » est ratée de peu
-	// depuis la migration — arbitrage DA à faire (raccourcir la copie du bloc
-	// titre ou resserrer ses espacements). fixme = suivi, pas absolution.
-	test.fixme();
 	test("étal — titre ET première création au-dessus de la ligne de flottaison", async ({
 		page,
 	}) => {
+		// 🐛 BUG PRODUIT documenté (lot 7, non masqué) : la première carte de l'étal
+		// finit 7-12 px SOUS la ligne de flottaison à 390×844 (barre basse déduite).
+		// La promesse « une pièce entière visible sans scroller » est ratée de peu
+		// depuis la migration — arbitrage DA à faire (raccourcir la copie du bloc
+		// titre ou resserrer ses espacements). fixme = suivi, pas absolution.
+		// ⚠️ DANS le test : un `test.fixme()` nu au scope du describe s'applique à
+		// TOUT le groupe — c'est ce qui a désactivé 9 tests mobiles en silence
+		// (audit e2e 2026-08-16).
+		test.fixme();
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
@@ -175,25 +178,31 @@ test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () =
 		});
 		await expect(bottomNav).toBeVisible();
 
-		const paddingBottom = await bottomNav.evaluate((el) => getComputedStyle(el).paddingBottom);
-		// Padding is set via env(safe-area-inset-bottom) — value ≥ 0 should always resolve
-		expect(paddingBottom).toBeTruthy();
+		// En émulation, env(safe-area-inset-bottom) résout à 0px : la valeur calculée
+		// ne distingue rien (l'ancienne assertion `toBeTruthy()` passait sur "0px").
+		// Le contrat vérifiable ici est la PRÉSENCE de la déclaration safe-area sur
+		// la barre (même contrat que bottom-bar-height-contract.regression.test.ts).
+		const hasSafeAreaPadding = await bottomNav.evaluate(
+			(el) => el.closest('[class*="safe-area-inset-bottom"]') !== null,
+		);
+		expect(hasSafeAreaPadding).toBe(true);
 	});
 
 	test("search input — inputMode=search + enterKeyHint=search sur mobile", async ({ page }) => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Cmd+K shortcut equivalent — open via the search icon (sm:hidden on some layouts)
-		// Search dialog opens on any type=search encountered in the DOM
-		const shortcut = page.locator('button[aria-label*="echerch" i]').first();
-		if (await shortcut.isVisible().catch(() => false)) {
-			await shortcut.click();
-			const searchInput = page.locator('input[type="search"]').first();
-			await expect(searchInput).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-			await expect(searchInput).toHaveAttribute("inputmode", "search");
-			await expect(searchInput).toHaveAttribute("enterkeyhint", "search");
-		}
+		// L'onglet Rechercher de la bottom-nav existe TOUJOURS à ce viewport — pas de
+		// branche conditionnelle (l'ancien `if (isVisible)` rendait le test optionnel).
+		const searchTab = page
+			.getByRole("navigation", { name: /Navigation principale de la boutique/i })
+			.getByRole("button", { name: /Rechercher/i });
+		await searchTab.click();
+
+		const searchInput = page.locator('input[type="search"]').first();
+		await expect(searchInput).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		await expect(searchInput).toHaveAttribute("inputmode", "search");
+		await expect(searchInput).toHaveAttribute("enterkeyhint", "search");
 	});
 });
 

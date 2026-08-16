@@ -23,8 +23,7 @@ const CART_GUARD_VARIANT_SELECT = {
 } as const;
 
 interface CartGuardItem {
-	/** Le variantId — identité de la ligne depuis le passage en cookie. */
-	id: string;
+	/** Identité de la ligne depuis le passage en cookie. */
 	variantId: string;
 	quantity: number;
 	priceAtAdd: number;
@@ -78,7 +77,6 @@ export async function readCartWithVariants(): Promise<CartWithVariants> {
 		if (!variant) return [];
 		return [
 			{
-				id: item.variantId,
 				variantId: item.variantId,
 				quantity: item.quantity,
 				priceAtAdd: item.priceAtAdd,

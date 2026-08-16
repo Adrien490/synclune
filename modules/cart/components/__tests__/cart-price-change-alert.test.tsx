@@ -167,4 +167,44 @@ describe("CartPriceChangeAlert", () => {
 		render(<CartPriceChangeAlert items={items as never} />);
 		expect(screen.getByText("↓ 25.00 €")).toBeInTheDocument();
 	});
+
+	/**
+	 * @regression cart-price-copy-matches-billing-2026-08-15
+	 *
+	 * `createCheckoutSession` facture TOUJOURS le prix courant en base — jamais le
+	 * témoin `priceAtAdd`. La copy de la branche « hausse » a longtemps affirmé le
+	 * contraire (« Ton panier garde le prix du jour où tu les as ajoutées, pour
+	 * éviter toute surprise ») : la cliente découvrait le vrai montant sur
+	 * `/paiement`, exactement la surprise promise impossible. La copy doit dire la
+	 * vérité (prix du jour facturé, actualisation requise) et l'alerte doit rester
+	 * la cible de focus du CTA bloqué (`CartSheetFooter`).
+	 */
+	describe("@regression la copy hausse dit la vérité sur la facturation", () => {
+		it("ne promet jamais de garder l'ancien prix", () => {
+			const items = [createItem("1", 2000, 2500)];
+			render(<CartPriceChangeAlert items={items as never} />);
+			expect(screen.queryByText(/garde le prix/i)).toBeNull();
+		});
+
+		it("annonce le prix du jour et l'actualisation nécessaire pour continuer", () => {
+			const items = [createItem("1", 2000, 2500)];
+			render(<CartPriceChangeAlert items={items as never} />);
+			expect(screen.getByText(/prix facturé est toujours le prix du jour/i)).toBeInTheDocument();
+			expect(screen.getByText(/Actualise ton panier pour continuer/i)).toBeInTheDocument();
+		});
+
+		it("porte l'id et le tabIndex ciblés par le CTA bloqué quand une hausse existe", () => {
+			const items = [createItem("1", 2000, 2500)];
+			render(<CartPriceChangeAlert items={items as never} />);
+			const alert = screen.getByRole("alert");
+			expect(alert.id).toBe("price-increase-alert");
+			expect(alert.tabIndex).toBe(-1);
+		});
+
+		it("ne porte pas l'id de blocage quand seules des baisses existent", () => {
+			const items = [createItem("1", 3000, 2500)];
+			render(<CartPriceChangeAlert items={items as never} />);
+			expect(screen.getByRole("status").id).toBe("");
+		});
+	});
 });

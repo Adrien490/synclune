@@ -29,8 +29,6 @@ export type { VariantSelectorDialogData };
 interface VariantSelectorDialogProps {
 	/** Panier serveur — sert à soustraire ce qui est déjà pris de chaque pièce. */
 	cart: GetCartReturn;
-	isStoreClosed?: boolean;
-	storeClosureMessage?: string | null;
 }
 
 /**
@@ -47,11 +45,7 @@ interface VariantSelectorDialogProps {
  * acheter une bague sans jamais voir sa taille. La correction est faite par ailleurs ;
  * ici, il n'y a plus de constante à croire.
  */
-export function VariantSelectorDialog({
-	cart,
-	isStoreClosed = false,
-	storeClosureMessage = null,
-}: VariantSelectorDialogProps) {
+export function VariantSelectorDialog({ cart }: VariantSelectorDialogProps) {
 	const cartItems = cart.items.map((item) => ({
 		variantId: item.variant.id,
 		quantity: item.quantity,
@@ -144,8 +138,6 @@ export function VariantSelectorDialog({
 							cartItems={cartItems}
 							preselectedColor={data.preselectedColor}
 							isPending={isPending}
-							isStoreClosed={isStoreClosed}
-							storeClosureMessage={storeClosureMessage}
 							onClose={close}
 						/>
 					</form>

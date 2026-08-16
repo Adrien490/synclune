@@ -1,7 +1,26 @@
 import { defineConfig, devices } from "@playwright/test";
 
+/**
+ * Matrice de navigateurs : COMPLÈTE en CI, réduite en local.
+ *
+ * En local, `pnpm e2e` lançait les 5 projets navigateurs sur ~390 tests, soit
+ * ~1 950 exécutions et ~11 min de 4 workers à saturer le CPU d'un portable —
+ * pour une boutique française, en français, à ~20 commandes/mois. Le retour sur
+ * investissement de Firefox desktop y est quasi nul, et les divergences WebKit
+ * comme les régressions visuelles se voient très bien sur la machine de CI,
+ * dont c'est le métier de chauffer.
+ *
+ * Par défaut en local : chromium + admin + les deux projets tablette (scopés au
+ * seul `responsive-breakpoints`, donc ~14 tests). Pour reproduire la matrice
+ * complète en local — bug WebKit à confirmer, mise à jour de snapshots —
+ * `E2E_ALL_BROWSERS=1 pnpm e2e`.
+ */
+const fullMatrix = !!process.env.CI || process.env.E2E_ALL_BROWSERS === "1";
+
 export default defineConfig({
 	testDir: "./e2e",
+	// Fige TEST_RUN_ID avant le spawn des workers — cf. e2e/global-setup.ts.
+	globalSetup: "./e2e/global-setup.ts",
 	globalTeardown: "./e2e/global-teardown.ts",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
@@ -40,28 +59,35 @@ export default defineConfig({
 			use: { ...devices["Desktop Chrome"] },
 			testIgnore: [/authenticated\//, /__tests__\//],
 		},
-		{
-			name: "firefox",
-			use: { ...devices["Desktop Firefox"] },
-			testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
-		},
-		{
-			name: "webkit",
-			use: { ...devices["Desktop Safari"] },
-			testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
-		},
-
-		// Unauthenticated tests - Mobile
-		{
-			name: "mobile-chrome",
-			use: { ...devices["Pixel 7"] },
-			testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
-		},
-		{
-			name: "mobile-webkit",
-			use: { ...devices["iPhone 14"] },
-			testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
-		},
+		...(fullMatrix
+			? [
+					{
+						name: "firefox",
+						use: { ...devices["Desktop Firefox"] },
+						testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
+					},
+				]
+			: []),
+		...(fullMatrix
+			? [
+					{
+						name: "webkit",
+						use: { ...devices["Desktop Safari"] },
+						testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
+					},
+					// Unauthenticated tests - Mobile
+					{
+						name: "mobile-chrome",
+						use: { ...devices["Pixel 7"] },
+						testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
+					},
+					{
+						name: "mobile-webkit",
+						use: { ...devices["iPhone 14"] },
+						testIgnore: [/authenticated\//, /responsive-breakpoints/, /__tests__\//],
+					},
+				]
+			: []),
 
 		// Unauthenticated tests - Tablette
 		// La plage 48-64rem n'était couverte par AUCUN projet (le saut allait de

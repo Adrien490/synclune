@@ -87,6 +87,7 @@ describe("requestRetractation", () => {
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("accusé de réception");
 		expect(mocks.retractationCreate).toHaveBeenCalledWith({
 			data: { orderId: ORDER_ID, reason: "Trop grande", status: "RECEIVED" },
 			select: { id: true },
@@ -137,7 +138,7 @@ describe("requestRetractation", () => {
 		expect(mocks.sendRetractationAckEmail).not.toHaveBeenCalled();
 	});
 
-	it("accusé en échec : la demande RESTE RECEIVED (pas d'ACKNOWLEDGED menteur)", async () => {
+	it("accusé en échec : la demande RESTE RECEIVED, et le message ne promet PAS l'accusé", async () => {
 		mocks.sendRetractationAckEmail.mockResolvedValue({ success: false, error: new Error("down") });
 
 		const result = await requestRetractation(
@@ -147,6 +148,9 @@ describe("requestRetractation", () => {
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mocks.retractationUpdateMany).not.toHaveBeenCalled();
+		// Avant correction, la cliente lisait « tu vas recevoir un accusé de
+		// réception par email » alors que l'envoi venait d'échouer.
+		expect(result.message).not.toContain("accusé de réception");
 	});
 
 	it("commande non encaissée (PENDING/CANCELLED/REFUNDED) : refus", async () => {

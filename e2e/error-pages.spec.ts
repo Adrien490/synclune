@@ -1,25 +1,46 @@
 import { test, expect } from "./fixtures";
 
+/**
+ * Pages d'erreur — les VRAIES 404 de segment.
+ *
+ * ⚠️ Réécrit le 2026-08-16 : une URL inconnue de PREMIER NIVEAU
+ * (`/page-inexistante-xyz`) ne rend PAS de 404 — le proxy default-deny la
+ * redirige en 307 vers `/`. Les anciens tests asservaient donc leurs
+ * assertions à la homepage (et `expect(status === 404 || status === 200)`
+ * acceptait n'importe quoi). Le contenu 404 n'existe que sous les segments
+ * publics dynamiques : `/creations/[slug]`, `/collections/[slug]`,
+ * `/produits/[productTypeSlug]`. PPR : le statut HTTP reste 200 (shell
+ * streamé), on assert le CONTENU (cf. CLAUDE.md § Testing).
+ */
 test.describe("Pages d'erreur", { tag: ["@regression"] }, () => {
-	test("une URL inexistante affiche la page 404", async ({ page }) => {
-		const response = await page.goto("/page-inexistante-e2e-test-xyz");
+	test("un produit inexistant affiche la 404 du segment créations", async ({ page }) => {
+		await page.goto("/creations/produit-inexistant-e2e-xyz");
 
-		// In dev mode, Next.js may return 200 for not-found pages
-		const status = response?.status();
-		expect(status === 404 || status === 200).toBe(true);
-
-		// Should show error content
-		const body = await page.textContent("body");
-		expect(body).toMatch(/404|introuvable|n'existe pas|page non trouvée/i);
+		await expect(page.getByRole("heading", { name: /n'existe plus/i })).toBeVisible();
+		// Les deux sorties réelles de la page.
+		await expect(page.getByRole("link", { name: /Découvrir mes créations/i })).toBeVisible();
+		await expect(page.getByRole("link", { name: /Retour à l'accueil/i })).toBeVisible();
 	});
 
-	test("la page 404 contient un lien vers l'accueil", async ({ page }) => {
-		await page.goto("/page-inexistante-e2e-test-xyz");
+	test("une collection inexistante affiche la 404 du segment collections", async ({ page }) => {
+		await page.goto("/collections/collection-inexistante-e2e-xyz");
 
-		const homeLink = page
-			.getByRole("link", { name: /accueil|retour/i })
-			.or(page.getByRole("link", { name: /boutique/i }));
-		await expect(homeLink.first()).toBeVisible();
+		await expect(page.getByRole("heading", { name: /n'existe pas/i })).toBeVisible();
+		await expect(page.getByRole("link", { name: /Retour à l'accueil/i })).toBeVisible();
+	});
+
+	test("une catégorie inexistante affiche la 404 du segment produits", async ({ page }) => {
+		await page.goto("/produits/categorie-inexistante-e2e-xyz");
+
+		await expect(page.getByRole("heading", { name: /n'existe pas/i })).toBeVisible();
+		await expect(page.getByRole("link", { name: /Retour à l'accueil/i })).toBeVisible();
+	});
+
+	test("une URL de premier niveau inconnue est renvoyée vers l'accueil", async ({ page }) => {
+		// Le default-deny du proxy est le comportement ATTENDU ici — pas une 404.
+		await page.goto("/page-inexistante-e2e-test-xyz");
+		await expect(page).toHaveURL(/\/$/);
+		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 	});
 
 	test("la page de connexion admin est servie", async ({ page }) => {
@@ -30,33 +51,7 @@ test.describe("Pages d'erreur", { tag: ["@regression"] }, () => {
 		await expect(page.getByRole("heading", { level: 1, name: /Connexion/i })).toBeVisible();
 	});
 
-	test("un produit inexistant affiche une erreur", async ({ page }) => {
-		const response = await page.goto("/creations/produit-inexistant-e2e-xyz");
-
-		// Should show 404 or error page
-		const status = response?.status();
-		expect(status === 404 || status === 200).toBe(true);
-
-		if (status === 200) {
-			// If 200, should show a "not found" message in the page
-			const body = await page.textContent("body");
-			expect(body).toMatch(/introuvable|n'existe|pas trouvé|erreur/i);
-		}
-	});
-
-	test("une collection inexistante affiche une erreur", async ({ page }) => {
-		const response = await page.goto("/collections/collection-inexistante-e2e-xyz");
-
-		const status = response?.status();
-		expect(status === 404 || status === 200).toBe(true);
-
-		if (status === 200) {
-			const body = await page.textContent("body");
-			expect(body).toMatch(/introuvable|n'existe|pas trouvé|erreur/i);
-		}
-	});
-
-	test("la page 404 ne contient pas d'erreurs JS dans la console", async ({ page }) => {
+	test("la page 404 de segment ne contient pas d'erreurs JS dans la console", async ({ page }) => {
 		const consoleErrors: string[] = [];
 		page.on("console", (msg) => {
 			if (msg.type() === "error") {
@@ -64,8 +59,8 @@ test.describe("Pages d'erreur", { tag: ["@regression"] }, () => {
 			}
 		});
 
-		await page.goto("/page-inexistante-e2e-test-xyz");
-		await page.waitForLoadState("domcontentloaded");
+		await page.goto("/creations/produit-inexistant-e2e-console-xyz");
+		await expect(page.getByRole("heading", { name: /n'existe plus/i })).toBeVisible();
 
 		// Filter out expected errors : favicon, 404, et les images picsum du seed
 		// refusées par l'optimiseur en PROD (hôte autorisé en dev seulement —

@@ -65,20 +65,27 @@ export async function rejectRetractation(
 				getRetractationInvalidationTags({ retractationId, orderId: retractation.orderId }),
 			);
 
-			if (retractation.order.email) {
-				const emailResult = await sendRetractationRejectedEmail({
-					order: retractation.order,
-					rejectionReason: adminReason,
+			// Branche défensive : une rétractation n'existe que pour une commande
+			// encaissée (email écrit au webhook) — mais si l'email manque, le
+			// message ne doit pas prétendre que la cliente est informée.
+			if (!retractation.order.email) {
+				return success(
+					"Demande rejetée — la commande n'a pas d'email : préviens la cliente directement.",
+				);
+			}
+
+			const emailResult = await sendRetractationRejectedEmail({
+				order: retractation.order,
+				rejectionReason: adminReason,
+			});
+			if (!emailResult.success) {
+				logger.error("[rejectRetractation] Email de rejet non envoyé", {
+					retractationId,
+					error: emailResult.error,
 				});
-				if (!emailResult.success) {
-					logger.error("[rejectRetractation] Email de rejet non envoyé", {
-						retractationId,
-						error: emailResult.error,
-					});
-					return success(
-						"Demande rejetée — mais l'email d'information n'est pas parti. Préviens la cliente directement.",
-					);
-				}
+				return success(
+					"Demande rejetée — mais l'email d'information n'est pas parti. Préviens la cliente directement.",
+				);
 			}
 		}
 

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-	isCartItemDeleted,
 	isCartItemVariantInactive,
 	isCartItemProductNotPublic,
 	isCartItemZeroStock,
@@ -12,9 +11,12 @@ import {
 } from "../item-availability.service";
 import type { CartItemForValidation } from "../../types/cart.types";
 
+// `isCartItemDeleted` (toujours faux depuis le schéma lean) et son issueType
+// « DELETED » ont été retirés (audit panier 2026-08-15) : une ligne au variant
+// disparu est écartée en amont, la branche était inatteignable.
+
 function createItem(
 	overrides?: Partial<{
-		id: string;
 		variantId: string;
 		quantity: number;
 		stock: number;
@@ -24,7 +26,6 @@ function createItem(
 	}>,
 ): CartItemForValidation {
 	return {
-		id: overrides?.id ?? "item-1",
 		variantId: overrides?.variantId ?? "variant-1",
 		quantity: overrides?.quantity ?? 1,
 		variant: {
@@ -43,14 +44,6 @@ function createItem(
 // ============================================================================
 // INDIVIDUAL CHECK FUNCTIONS
 // ============================================================================
-
-describe("isCartItemDeleted", () => {
-	// Schéma lean : plus de soft delete — le prédicat est conservé pour l'API
-	// mais toujours faux (une ligne au variant disparu est traitée en amont).
-	it("should always return false (no soft delete in lean schema)", () => {
-		expect(isCartItemDeleted(createItem())).toBe(false);
-	});
-});
 
 describe("isCartItemVariantInactive", () => {
 	it("should return true when VARIANT is inactive", () => {
@@ -161,11 +154,10 @@ describe("checkCartItemAvailability", () => {
 		expect(result.issue?.issueType).toBe("INSUFFICIENT_STOCK");
 	});
 
-	it("should include correct cartItemId and variantId in issue", () => {
+	it("should include correct variantId in issue", () => {
 		const result = checkCartItemAvailability(
-			createItem({ id: "ci-42", variantId: "variant-42", active: false }),
+			createItem({ variantId: "variant-42", active: false }),
 		);
-		expect(result.issue?.cartItemId).toBe("ci-42");
 		expect(result.issue?.variantId).toBe("variant-42");
 	});
 
@@ -188,19 +180,19 @@ describe("checkCartItemAvailability", () => {
 
 describe("validateCartItems", () => {
 	it("should return empty issues for all valid items", () => {
-		const items = [createItem({ id: "i1" }), createItem({ id: "i2" })];
+		const items = [createItem({ variantId: "v1" }), createItem({ variantId: "v2" })];
 		expect(validateCartItems(items)).toEqual([]);
 	});
 
 	it("should return issues for unavailable items only", () => {
 		const items = [
-			createItem({ id: "i1", stock: 0 }),
-			createItem({ id: "i2", stock: 10 }),
-			createItem({ id: "i3", active: false }),
+			createItem({ variantId: "v1", stock: 0 }),
+			createItem({ variantId: "v2", stock: 10 }),
+			createItem({ variantId: "v3", active: false }),
 		];
 		const issues = validateCartItems(items);
 		expect(issues).toHaveLength(2);
-		expect(issues.map((i) => i.cartItemId)).toEqual(["i1", "i3"]);
+		expect(issues.map((i) => i.variantId)).toEqual(["v1", "v3"]);
 	});
 
 	it("should return empty array for empty items list", () => {
@@ -215,22 +207,25 @@ describe("validateCartItems", () => {
 describe("filterUnavailableItems", () => {
 	it("should return only unavailable items", () => {
 		const items = [
-			createItem({ id: "i1", stock: 0 }),
-			createItem({ id: "i2", stock: 10 }),
-			createItem({ id: "i3", active: false }),
+			createItem({ variantId: "v1", stock: 0 }),
+			createItem({ variantId: "v2", stock: 10 }),
+			createItem({ variantId: "v3", active: false }),
 		];
 		const unavailable = filterUnavailableItems(items);
 		expect(unavailable).toHaveLength(2);
-		expect(unavailable.map((i) => i.id)).toEqual(["i1", "i3"]);
+		expect(unavailable.map((i) => i.variantId)).toEqual(["v1", "v3"]);
 	});
 
 	it("should return empty array when all items are available", () => {
-		const items = [createItem({ id: "i1" }), createItem({ id: "i2" })];
+		const items = [createItem({ variantId: "v1" }), createItem({ variantId: "v2" })];
 		expect(filterUnavailableItems(items)).toEqual([]);
 	});
 
 	it("should return all items when none are available", () => {
-		const items = [createItem({ id: "i1", active: false }), createItem({ id: "i2", stock: 0 })];
+		const items = [
+			createItem({ variantId: "v1", active: false }),
+			createItem({ variantId: "v2", stock: 0 }),
+		];
 		expect(filterUnavailableItems(items)).toHaveLength(2);
 	});
 });

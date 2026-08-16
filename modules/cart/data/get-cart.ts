@@ -21,11 +21,11 @@ const EMPTY_CART: GetCartReturn = { items: [] };
 /**
  * Récupère le panier du visiteur.
  *
- * Les lignes (VARIANT, quantité, prix témoin) et le code promo viennent du cookie
- * `cart` — SSOT depuis le retrait de la base (2026-08-04). Seule la
- * matérialisation des VARIANTs passe par la DB. Une ligne dont le VARIANT a disparu, a
- * été soft-deleted ou dont le produit est supprimé est silencieusement écartée
- * (même comportement que l'ancien filtre de relation de `GET_CART_SELECT`).
+ * Les lignes (VARIANT, quantité, prix témoin) viennent du cookie `cart` — SSOT
+ * depuis le retrait de la base (2026-08-04). Seule la matérialisation des
+ * VARIANTs passe par la DB. Une ligne dont le VARIANT a disparu de la base est
+ * silencieusement écartée ; une ligne inactive ou en rupture reste, elle,
+ * AFFICHÉE — c'est le rôle des pastilles d'état du cart-sheet.
  *
  * ⚠️ Le panier n'est plus jamais `null` : sans cookie, il est simplement vide.
  */
@@ -88,10 +88,7 @@ async function fetchCartVariants(variantIds: string[]): Promise<CartItemVariant[
 	// cache — sinon le vide d'une panne est mis en cache pour toute la fenêtre du
 	// profil. Même motif que `get-products.ts` et `get-wishlist.ts`.
 	return await prisma.productVariant.findMany({
-		where: {
-			id: { in: variantIds },
-			product: {},
-		},
+		where: { id: { in: variantIds } },
 		select: CART_VARIANT_SELECT,
 	});
 }

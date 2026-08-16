@@ -8,15 +8,9 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 
 import type { RetractationListItem } from "../../data/get-retractations";
+import { retractationOrderLabel } from "../../utils/retractation-order-label";
 import { RefundDeadlineBadge } from "./refund-deadline-badge";
 import { RetractationStatusBadge } from "./retractation-status-badge";
-
-/** « n° 12 » ou l'email — identité lisible de la commande liée. */
-export function retractationOrderLabel(
-	order: Pick<RetractationListItem["order"], "invoiceNumber" | "email">,
-): string {
-	return order.invoiceNumber != null ? `n° ${order.invoiceNumber}` : order.email;
-}
 
 /**
  * Liste des demandes de rétractation — file d'attente rare (quelques cas par

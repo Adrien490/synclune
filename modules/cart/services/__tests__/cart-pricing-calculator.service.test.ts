@@ -1,14 +1,19 @@
 import { describe, it, expect } from "vitest";
 import {
 	detectPriceChanges,
-	hasPriceChanges,
-	calculateTotalSavings,
+	effectivePrice,
 	isPriceIncrease,
-	isPriceDecrease,
-	getPriceDifference,
 } from "../cart-pricing-calculator.service";
 import type { CartItemForPriceCheck } from "../../types/cart.types";
 
+// `hasPriceChanges`, `calculateTotalSavings`, `isPriceDecrease` et
+// `getPriceDifference` ont été retirées avec leurs tests (audit panier
+// 2026-08-15) : aucun consommateur de production — les tests étaient leur seul
+// importeur, ce qui rendait `knip` aveugle au code mort.
+
+// `id` n'appartient pas à `CartItemForPriceCheck` (le service n'en a pas
+// besoin) — le fixture en porte un pour tracer les items dans les assertions,
+// comme le fait `CartItem` en production.
 function createPriceItem(
 	overrides?: Partial<{
 		id: string;
@@ -17,7 +22,7 @@ function createPriceItem(
 		quantity: number;
 		title: string;
 	}>,
-): CartItemForPriceCheck {
+): CartItemForPriceCheck & { id: string } {
 	return {
 		id: overrides?.id ?? "item-1",
 		priceAtAdd: overrides?.priceAtAdd ?? 2500,
@@ -33,7 +38,23 @@ function createPriceItem(
 }
 
 // ============================================================================
-// isPriceIncrease / isPriceDecrease
+// effectivePrice
+// ============================================================================
+
+describe("effectivePrice", () => {
+	it("uses the variant override when set", () => {
+		expect(effectivePrice(createPriceItem({ currentPrice: 1800 }))).toBe(1800);
+	});
+
+	it("falls back to the product price when the override is null", () => {
+		const item = createPriceItem();
+		item.variant.priceCents = null;
+		expect(effectivePrice(item)).toBe(2500);
+	});
+});
+
+// ============================================================================
+// isPriceIncrease
 // ============================================================================
 
 describe("isPriceIncrease", () => {
@@ -47,101 +68,6 @@ describe("isPriceIncrease", () => {
 
 	it("should return false when price decreased", () => {
 		expect(isPriceIncrease(createPriceItem({ priceAtAdd: 3000, currentPrice: 2500 }))).toBe(false);
-	});
-});
-
-describe("isPriceDecrease", () => {
-	it("should return true when current price < priceAtAdd", () => {
-		expect(isPriceDecrease(createPriceItem({ priceAtAdd: 3000, currentPrice: 2500 }))).toBe(true);
-	});
-
-	it("should return false when prices are equal", () => {
-		expect(isPriceDecrease(createPriceItem({ priceAtAdd: 2500, currentPrice: 2500 }))).toBe(false);
-	});
-
-	it("should return false when price increased", () => {
-		expect(isPriceDecrease(createPriceItem({ priceAtAdd: 2000, currentPrice: 2500 }))).toBe(false);
-	});
-});
-
-// ============================================================================
-// getPriceDifference
-// ============================================================================
-
-describe("getPriceDifference", () => {
-	it("should return positive value for price increase", () => {
-		expect(
-			getPriceDifference(createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 1 })),
-		).toBe(500);
-	});
-
-	it("should return negative value for price decrease", () => {
-		expect(
-			getPriceDifference(createPriceItem({ priceAtAdd: 3000, currentPrice: 2500, quantity: 1 })),
-		).toBe(-500);
-	});
-
-	it("should return 0 when prices are equal", () => {
-		expect(getPriceDifference(createPriceItem({ priceAtAdd: 2500, currentPrice: 2500 }))).toBe(0);
-	});
-
-	it("should multiply by quantity", () => {
-		expect(
-			getPriceDifference(createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 3 })),
-		).toBe(1500);
-	});
-});
-
-// ============================================================================
-// hasPriceChanges
-// ============================================================================
-
-describe("hasPriceChanges", () => {
-	it("should return true when at least one price changed", () => {
-		const items = [
-			createPriceItem({ priceAtAdd: 2500, currentPrice: 2500 }),
-			createPriceItem({ priceAtAdd: 2000, currentPrice: 2500 }),
-		];
-		expect(hasPriceChanges(items)).toBe(true);
-	});
-
-	it("should return false when no prices changed", () => {
-		const items = [
-			createPriceItem({ priceAtAdd: 2500, currentPrice: 2500 }),
-			createPriceItem({ priceAtAdd: 1500, currentPrice: 1500 }),
-		];
-		expect(hasPriceChanges(items)).toBe(false);
-	});
-
-	it("should return false for empty array", () => {
-		expect(hasPriceChanges([])).toBe(false);
-	});
-});
-
-// ============================================================================
-// calculateTotalSavings
-// ============================================================================
-
-describe("calculateTotalSavings", () => {
-	it("should sum savings from price decreases only", () => {
-		const items = [
-			createPriceItem({ priceAtAdd: 3000, currentPrice: 2500, quantity: 1 }), // -500
-			createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 1 }), // increase, ignored
-			createPriceItem({ priceAtAdd: 5000, currentPrice: 4000, quantity: 2 }), // -2000
-		];
-		expect(calculateTotalSavings(items)).toBe(2500);
-	});
-
-	it("should return 0 when no price decreases", () => {
-		const items = [
-			createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 1 }),
-			createPriceItem({ priceAtAdd: 2500, currentPrice: 2500, quantity: 1 }),
-		];
-		expect(calculateTotalSavings(items)).toBe(0);
-	});
-
-	it("should return 0 for empty array", () => {
-		expect(calculateTotalSavings([])).toBe(0);
 	});
 });
 
@@ -209,7 +135,7 @@ describe("detectPriceChanges", () => {
 	});
 
 	it("should preserve original item type in results", () => {
-		type ExtendedItem = CartItemForPriceCheck & { customField: string };
+		type ExtendedItem = CartItemForPriceCheck & { id: string; customField: string };
 		const items: ExtendedItem[] = [
 			{ ...createPriceItem({ priceAtAdd: 1000, currentPrice: 2000 }), customField: "test" },
 		];

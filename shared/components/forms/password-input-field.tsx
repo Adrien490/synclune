@@ -67,7 +67,12 @@ export const PasswordInputField = ({
 				triggerHaptic("selection");
 				setShowPassword(!showPassword);
 			}}
-			className="focus-ring text-muted-foreground hover:text-foreground relative inline-flex items-center justify-center rounded-sm p-0.5 transition-colors after:absolute after:inset-[-12px] after:content-[''] motion-safe:transition-colors"
+			// ⚠️ `size-6` (24px) est le MINIMUM WCAG 2.5.8 AA, et il porte sur la boîte
+			// du bouton lui-même : le `after:inset-[-12px]` élargit bien la zone
+			// cliquable à 44px, mais axe mesure `getBoundingClientRect` de l'élément
+			// et voyait donc 20px (icône 16 + p-0.5). Violation réelle relevée sur
+			// /admin/connexion par l'audit e2e du 2026-08-16 — l'icône reste à 16px.
+			className="focus-ring text-muted-foreground hover:text-foreground relative inline-flex size-6 items-center justify-center rounded-sm transition-colors after:absolute after:inset-[-10px] after:content-[''] motion-safe:transition-colors"
 			aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
 			aria-pressed={showPassword}
 		>

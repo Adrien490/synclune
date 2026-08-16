@@ -44,7 +44,10 @@ import {
 	hasCartItemIssue,
 	getCartItemSubtotal,
 	getCartItemIssueLabel,
+	isCartItemInactive,
 } from "../services/cart-item.service";
+import { isPriceIncrease } from "../services/cart-pricing-calculator.service";
+import { CartRemoveUnavailableButton } from "./cart-remove-unavailable-button";
 import { CartOptimisticContext } from "../contexts/cart-optimistic-context";
 import { CartCloseContext } from "../contexts/cart-close-context";
 import { cartReducer } from "../services/cart-reducer.service";
@@ -130,6 +133,7 @@ interface CartSheetBodyProps {
 	totalItems: number;
 	subtotal: number;
 	hasStockIssues: boolean;
+	hasPriceIncrease: boolean;
 	itemsWithIssues: CartItem[];
 	isPending: boolean;
 	isMobile: boolean;
@@ -142,6 +146,7 @@ function CartSheetBody({
 	items,
 	hasItems,
 	hasStockIssues,
+	hasPriceIncrease,
 	itemsWithIssues,
 	isPending,
 	isMobile,
@@ -231,6 +236,7 @@ function CartSheetBody({
 									</li>
 								))}
 							</ul>
+							<CartRemoveUnavailableButton itemsWithIssues={itemsWithIssues} />
 						</div>
 					)}
 
@@ -306,6 +312,7 @@ function CartSheetBody({
 					subtotal={subtotal}
 					isPending={isPending}
 					hasStockIssues={hasStockIssues}
+					hasPriceIncrease={hasPriceIncrease}
 					onClose={close}
 				/>
 			)}
@@ -329,6 +336,11 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 	const subtotal = items.reduce((sum, item) => sum + getCartItemSubtotal(item), 0);
 	const itemsWithIssues = items.filter(hasCartItemIssue);
 	const hasStockIssues = itemsWithIssues.length > 0;
+	// Hausse non actualisée ⇒ CTA bloqué (cf. CartPriceChangeAlert : la facturation
+	// est toujours au prix courant, le blocage est ce qui rend la copy vraie).
+	// Les lignes inactives sont exclues : `updateCartPrices` ne les rafraîchit pas,
+	// et elles bloquent déjà via `hasStockIssues` — sinon le blocage serait sans issue.
+	const hasPriceIncrease = items.some((item) => !isCartItemInactive(item) && isPriceIncrease(item));
 
 	const cartOptimisticValue = {
 		updateOptimisticCart,
@@ -377,6 +389,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		totalItems,
 		subtotal,
 		hasStockIssues,
+		hasPriceIncrease,
 		itemsWithIssues,
 		isPending,
 		isMobile,

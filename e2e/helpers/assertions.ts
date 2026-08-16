@@ -26,33 +26,36 @@ export const VISIBLE_ALERT = '[role="alert"]:not(.sr-only)';
 export const VISIBLE_STATUS = '[role="status"]:not(.sr-only)';
 
 /**
- * Assert that a success toast/alert is visible on the page.
- * Matches common French success messages.
+ * Assert that a success toast/alert with THIS message is visible.
+ *
+ * ⚠️ `message` est OBLIGATOIRE (audit 2026-08-16) : le motif générique par
+ * défaut (/succès|réussi|ajouté|…/) matchait n'importe quel feedback de la
+ * page — un toast d'erreur contenant « ajouté » (ou le succès d'une TOUTE
+ * autre action) rendait l'assertion verte. La branche `VISIBLE_STATUS` est
+ * filtrée sur le même motif : un status visible SANS le message ne suffit plus.
  */
-export async function expectSuccessToast(page: Page, message?: string | RegExp) {
-	const pattern =
-		message instanceof RegExp
-			? message
-			: message
-				? new RegExp(message, "i")
-				: /succès|réussi|ajouté|enregistré|créé|modifié|supprimé|envoyé|confirmé/i;
+export async function expectSuccessToast(page: Page, message: string | RegExp) {
+	const pattern = message instanceof RegExp ? message : new RegExp(message, "i");
 
-	const toast = page.getByText(pattern).or(page.locator(VISIBLE_STATUS));
+	const toast = page
+		.getByText(pattern)
+		.or(page.locator(VISIBLE_STATUS).filter({ hasText: pattern }));
 	await expect(toast.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 }
 
 /**
- * Assert that a form error is visible for a specific field or in general.
+ * Assert that a form error with THIS message is visible.
+ *
+ * ⚠️ `message` est OBLIGATOIRE — même raison que `expectSuccessToast` : le
+ * motif générique par défaut acceptait n'importe quelle erreur, y compris une
+ * erreur d'un AUTRE champ que celui testé.
  */
-export async function expectFormError(page: Page, message?: string | RegExp) {
-	const pattern =
-		message instanceof RegExp
-			? message
-			: message
-				? new RegExp(message, "i")
-				: /obligatoire|requis|invalide|erreur|au moins/i;
+export async function expectFormError(page: Page, message: string | RegExp) {
+	const pattern = message instanceof RegExp ? message : new RegExp(message, "i");
 
-	const error = page.getByText(pattern).or(page.locator(VISIBLE_ALERT));
+	const error = page
+		.getByText(pattern)
+		.or(page.locator(VISIBLE_ALERT).filter({ hasText: pattern }));
 	await expect(error.first()).toBeVisible({ timeout: TIMEOUTS.VALIDATION });
 }
 
@@ -67,11 +70,7 @@ export async function expectPageHeading(page: Page, text: string | RegExp) {
 	}
 }
 
-/**
- * Assert that a rate limit error is shown.
- * Use when rate limiting is expected (not as a fallback for success).
- */
-export async function expectRateLimitError(page: Page) {
-	const error = page.getByText(/trop de demandes|réessayer plus tard|rate limit/i);
-	await expect(error.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-}
+// `expectRateLimitError` supprimé (audit 2026-08-16) : le rate limiting
+// n'existe plus (perte volontaire de la migration lean, cf. CLAUDE.md) et
+// aucun spec ne l'importait — un helper qui asserte un comportement retiré ne
+// pouvait qu'induire en erreur.

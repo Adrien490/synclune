@@ -1,5 +1,6 @@
 "use server";
 
+import Stripe from "stripe";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { sendRetractationRefundedEmail } from "@/modules/emails/services/send-retractation-emails";
 import { error, handleActionError, notFound, success, validateInput } from "@/shared/lib/actions";
@@ -8,6 +9,7 @@ import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe, withStripeCircuitBreaker } from "@/shared/lib/stripe";
 import type { ActionState } from "@/shared/types/server-action";
+import { RETRACTATION_STATUS_LABELS } from "../constants/retractation.constants";
 import { refundRetractationSchema } from "../schemas/retractation.schemas";
 import { finalizeRetractationRefund } from "../services/finalize-retractation-refund.service";
 
@@ -23,6 +25,10 @@ import { finalizeRetractationRefund } from "../services/finalize-retractation-re
  *
  * Pas de webhook `refund.*` (perte volontaire § 1) : le remboursement est
  * déclenché par NOUS via l'API, `stripeRefundId` suffit comme trace.
+ *
+ * Reprise sur incident : si la finalisation a échoué après un refund réussi,
+ * un nouveau clic rejoue le même refund (idempotencyKey, 24 h) ou retrouve le
+ * refund existant (« charge already refunded ») et reprend la finalisation.
  */
 export async function refundRetractation(
 	_prevState: ActionState | undefined,
@@ -65,12 +71,42 @@ export async function refundRetractation(
 			return error("Cette commande n'a pas de paiement Stripe ancré — remboursement impossible.");
 		}
 
-		const refund = await withStripeCircuitBreaker(() =>
-			stripe.refunds.create(
-				{ payment_intent: retractation.order.stripePaymentIntentId! },
-				{ idempotencyKey: `retractation-refund-${retractationId}` },
-			),
-		);
+		let refund: { id: string };
+		try {
+			refund = await withStripeCircuitBreaker(() =>
+				stripe.refunds.create(
+					{ payment_intent: retractation.order.stripePaymentIntentId! },
+					{ idempotencyKey: `retractation-refund-${retractationId}` },
+				),
+			);
+		} catch (e) {
+			// Reprise après crash entre le refund et la finalisation : dans les
+			// 24 h, l'idempotencyKey rejoue le MÊME refund ; au-delà, la clé
+			// Stripe a expiré et `refunds.create` répond « charge already
+			// refunded » alors que la demande est restée AWAITING_RETURN. On
+			// retrouve alors le refund existant et on reprend la finalisation —
+			// sans ce chemin, la demande serait coincée sans issue dans l'UI.
+			if (
+				e instanceof Stripe.errors.StripeInvalidRequestError &&
+				e.code === "charge_already_refunded"
+			) {
+				const existing = await withStripeCircuitBreaker(() =>
+					stripe.refunds.list({
+						payment_intent: retractation.order.stripePaymentIntentId!,
+						limit: 1,
+					}),
+				);
+				const found = existing.data[0];
+				if (!found) throw e;
+				logger.warn(
+					"[refundRetractation] Refund Stripe déjà existant — reprise de la finalisation",
+					{ retractationId, stripeRefundId: found.id },
+				);
+				refund = found;
+			} else {
+				throw e;
+			}
+		}
 
 		const result = await finalizeRetractationRefund({
 			retractationId,
@@ -80,6 +116,19 @@ export async function refundRetractation(
 
 		if (result.outcome === "noop") {
 			// Le refund Stripe est idempotent (même clé) : rien n'a été doublé.
+			// Mais le noop ne dit pas POURQUOI : un rejet concurrent a pu passer
+			// entre le refund et la finalisation (REJECTED est atteignable depuis
+			// AWAITING_RETURN) — relire le statut réel plutôt qu'affirmer
+			// « déjà remboursée » à tort.
+			const current = await prisma.retractationRequest.findUnique({
+				where: { id: retractationId },
+				select: { status: true },
+			});
+			if (current && current.status !== "REFUNDED") {
+				return error(
+					`Cette demande n'est plus remboursable (${RETRACTATION_STATUS_LABELS[current.status]}). ⚠️ Un remboursement Stripe a pu être créé juste avant — vérifie le dashboard.`,
+				);
+			}
 			return error("Cette demande a déjà été remboursée.");
 		}
 

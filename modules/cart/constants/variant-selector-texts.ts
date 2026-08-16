@@ -44,8 +44,6 @@ export const VARIANT_SELECTOR_TEXTS = {
 	ALL_SOLD_OUT: "Tout est parti pour le moment.",
 	NO_ACTIVE_VARIANTS: "Ce bijou n'est pas disponible en ce moment.",
 
-	STORE_CLOSED_FALLBACK: "La boutique est fermée en ce moment — tu peux regarder, pas commander.",
-
 	/**
 	 * Stock, par pièce. Le mot porte l'information ; le point coloré n'est que
 	 * redondance.

@@ -46,14 +46,16 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 		const tabs = gallery.locator('[role="tablist"]').first().locator('[role="tab"]');
 		const viewCount = await tabs.count();
 
-		if (viewCount > 1) {
-			// Le numéro de vue vit dans la réserve basse du carton, à toutes les
-			// tailles (l'ancienne pastille de verre était `hidden sm:block`).
-			await expect(gallery.getByTestId("gallery-counter")).toBeVisible();
-			await expect(gallery.getByTestId("gallery-counter")).toHaveText(
-				new RegExp(`1\\s*/\\s*${viewCount}`),
-			);
-		}
+		// `test.skip` explicite plutôt que l'ancien `if` silencieux : un produit
+		// mono-vue apparaît comme SKIP dans le rapport, pas comme un vert vide.
+		test.skip(viewCount < 2, "Produit à une seule vue — pas de compteur");
+
+		// Le numéro de vue vit dans la réserve basse du carton, à toutes les
+		// tailles (l'ancienne pastille de verre était `hidden sm:block`).
+		await expect(gallery.getByTestId("gallery-counter")).toBeVisible();
+		await expect(gallery.getByTestId("gallery-counter")).toHaveText(
+			new RegExp(`1\\s*/\\s*${viewCount}`),
+		);
 	});
 
 	test("la région live annonce la vue courante", async ({ page }) => {
@@ -78,12 +80,14 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 		const images = gallery.locator("img");
 		const imgCount = await images.count();
 
-		if (imgCount > 1) {
-			await expect(thumbnails.first()).toBeVisible();
+		// `test.skip` explicite plutôt que l'ancien `if` silencieux : un produit
+		// mono-image apparaît comme SKIP dans le rapport, pas comme un vert vide.
+		test.skip(imgCount < 2, "Produit à une seule image — pas de vignettes");
 
-			const tabs = thumbnails.first().locator('[role="tab"]');
-			expect(await tabs.count()).toBeGreaterThan(1);
-		}
+		await expect(thumbnails.first()).toBeVisible();
+
+		const tabs = thumbnails.first().locator('[role="tab"]');
+		expect(await tabs.count()).toBeGreaterThan(1);
 	});
 
 	test("cliquer sur une vignette change l'image active", async ({ page }) => {
@@ -151,11 +155,13 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 		const tabs = tablist.locator('[role="tab"]');
 		const tabCount = await tabs.count();
 
-		if (tabCount > 0) {
-			const firstLabel = await tabs.first().getAttribute("aria-label");
-			expect(firstLabel).toBeTruthy();
-			expect(firstLabel).toMatch(/Voir (photo|vidéo) 1|Photo 1|Vidéo 1/);
-		}
+		// `test.skip` explicite plutôt que l'ancien `if` silencieux : un produit
+		// sans vignettes apparaît comme SKIP dans le rapport, pas comme un vert vide.
+		test.skip(tabCount === 0, "Produit à une seule vue — pas de vignettes");
+
+		const firstLabel = await tabs.first().getAttribute("aria-label");
+		expect(firstLabel).toBeTruthy();
+		expect(firstLabel).toMatch(/Voir (photo|vidéo) 1|Photo 1|Vidéo 1/);
 	});
 
 	test("les touches Home et End naviguent vers la première et dernière image", async ({ page }) => {

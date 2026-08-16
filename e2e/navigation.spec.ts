@@ -27,9 +27,17 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 	});
 
 	test("le logo de la navbar est un lien vers l'accueil", async ({ page }) => {
-		// Sur desktop, le logo avec texte est visible
-		const logoLink = page.locator('nav a[href="/"]').filter({ visible: true }).first();
+		// Le nom accessible vient du gabarit unique `brandLinkLabel("/")`
+		// (« Synclune - Accueil », logo.tsx) — plus précis que l'ancien CSS
+		// `nav a[href="/"]`, qui matchait n'importe quel lien vers l'accueil.
+		// `.filter({ visible: true })` : le logo existe en variantes masquées
+		// selon le viewport.
+		const logoLink = page
+			.getByRole("link", { name: "Synclune - Accueil", exact: true })
+			.filter({ visible: true })
+			.first();
 		await expect(logoLink).toBeVisible();
+		await expect(logoLink).toHaveAttribute("href", "/");
 	});
 
 	test("la navbar contient les liens de navigation desktop", async ({ page }) => {
@@ -86,9 +94,19 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Chercher le lien «Les créations» dans la nav desktop
-		const creationsNavLink = page.locator('nav a[href="/produits"]').first();
-		await creationsNavLink.click();
+		// ⚠️ « Les créations » est le DÉCLENCHEUR du méga-menu (un bouton), pas un
+		// lien : quand des types de produits existent, `getDesktopNavItems` pose
+		// `hasDropdown` (shared/constants/navigation.ts). Le lien vers le catalogue
+		// est « Toutes les créations », DANS le panneau. Chercher un rôle `link`
+		// nommé « Les créations » expirait donc au bout de 30 s.
+		const mainNav = page.getByRole("navigation", { name: "Navigation principale", exact: true });
+		const creationsTrigger = mainNav.getByRole("button", { name: /Les créations/i }).first();
+		await expect(creationsTrigger).toBeVisible({ timeout: 15_000 });
+		await creationsTrigger.click();
+
+		const allCreationsLink = page.getByRole("link", { name: "Toutes les créations", exact: true });
+		await expect(allCreationsLink).toBeVisible({ timeout: 10_000 });
+		await allCreationsLink.click();
 
 		await page.waitForLoadState("domcontentloaded");
 		await expect(page).toHaveURL(/\/produits/);

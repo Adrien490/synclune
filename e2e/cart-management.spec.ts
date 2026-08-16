@@ -31,7 +31,10 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 		await expect(incrementButton).toBeVisible();
 	});
 
-	test("incrémenter la quantité met à jour la valeur affichée", async ({ cartPage }) => {
+	test("incrémenter la quantité met à jour la valeur affichée et persiste", async ({
+		page,
+		cartPage,
+	}) => {
 		// L'input quantité est un champ texte labellisé « Quantité, entre 1 et N »
 		// (plus de spinbutton depuis la refonte du panier).
 		const quantityInput = cartPage.dialog.getByRole("textbox", { name: /Quantité/i });
@@ -45,6 +48,10 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 			return;
 		}
 
+		const readCartCookie = async () =>
+			(await page.context().cookies()).find((c) => c.name === "cart")?.value ?? "";
+		const cookieBefore = await readCartCookie();
+
 		await incrementButton.click();
 
 		// Wait for optimistic update
@@ -52,18 +59,41 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 			const newValue = await quantityInput.inputValue();
 			expect(parseInt(newValue)).toBe(parseInt(initialValue) + 1);
 		}).toPass({ timeout: 5000 });
+
+		// La valeur optimiste ne prouve pas que l'action serveur a abouti : on
+		// attend que le cookie `cart` (httpOnly, lisible via context.cookies())
+		// soit RÉÉCRIT, puis on recharge — la quantité rendue depuis le cookie
+		// doit tenir. Recharger avant l'écriture ferait perdre l'incrément.
+		await expect
+			.poll(readCartCookie, { message: "le cookie cart doit être réécrit", timeout: 10_000 })
+			.not.toBe(cookieBefore);
+
+		await page.reload();
+		await page.waitForLoadState("domcontentloaded");
+		await cartPage.open();
+		await expect(cartPage.dialog.getByRole("textbox", { name: /Quantité/i })).toHaveValue(
+			String(parseInt(initialValue) + 1),
+		);
 	});
 
 	test("décrémenter la quantité est désactivé quand quantité = 1", async ({ cartPage }) => {
 		// L'input quantité est un champ texte labellisé « Quantité, entre 1 et N »
 		// (plus de spinbutton depuis la refonte du panier).
 		const quantityInput = cartPage.dialog.getByRole("textbox", { name: /Quantité/i });
-		const value = await quantityInput.inputValue();
 
-		if (parseInt(value) === 1) {
-			const decrementButton = cartPage.dialog.getByLabel(/Diminuer la quantité|Quantité minimale/i);
-			await expect(decrementButton).toBeDisabled();
-		}
+		// Déterministe : on RAMÈNE d'abord la quantité à 1. Le beforeEach n'ajoute
+		// qu'une unité, mais l'ancien `if (valeur === 1)` transformait le test en
+		// no-op silencieux dès que cet invariant implicite cessait de tenir.
+		await expect(async () => {
+			const value = parseInt(await quantityInput.inputValue());
+			if (value > 1) {
+				await cartPage.dialog.getByLabel(/Diminuer la quantité/i).click();
+			}
+			expect(parseInt(await quantityInput.inputValue())).toBe(1);
+		}).toPass({ timeout: 10_000 });
+
+		const decrementButton = cartPage.dialog.getByLabel(/Diminuer la quantité|Quantité minimale/i);
+		await expect(decrementButton).toBeDisabled();
 	});
 
 	test("le bouton supprimer est visible pour chaque article", async ({ cartPage }) => {

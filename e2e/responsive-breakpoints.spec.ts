@@ -109,14 +109,33 @@ test.describe("Responsive — cohérence des seuils rem/px", () => {
 			await page.waitForLoadState("domcontentloaded");
 			await setRootFontSize(page, fontSize);
 
-			// Burger (mobile/tablette) XOR nav desktop — jamais les deux, jamais aucune.
-			const burger = await countVisible(page, 'button[aria-label*="menu" i]');
-			const desktopNav = await countVisible(page, 'nav[aria-label*="principale" i]');
+			// Burger (mobile/tablette) XOR liens desktop — jamais les deux, jamais
+			// aucun.
+			//
+			// ⚠️ Deux erreurs successives corrigées ici (audit e2e 2026-08-16) :
+			//  1. l'assertion d'origine (`burger + desktopNav > 0`) laissait passer
+			//     « les deux à la fois », soit la moitié du bug qu'elle prétendait
+			//     verrouiller ;
+			//  2. le second correctif opposait le burger à
+			//     `nav[aria-label="Navigation principale"]` — or ce <nav> est le
+			//     CONTENEUR qui héberge les DEUX variantes (le burger est dedans).
+			//     Il est donc toujours présent, et l'XOR échouait partout.
+			// La vraie alternative se joue à l'intérieur : le burger (`lg:hidden`)
+			// contre la barre de liens desktop (`hidden lg:flex`), dont le
+			// déclencheur de méga-menu « Les créations » est le témoin stable.
+			const mainNav = 'nav[aria-label="Navigation principale"]';
+			const burger = await countVisible(page, `${mainNav} button[aria-label*="menu" i]`);
+			const desktopNav = await countVisible(
+				page,
+				`${mainNav} button[aria-label*="créations" i], ${mainNav} a[href="/produits"]`,
+			);
 
+			const hasBurger = burger > 0;
+			const hasDesktopNav = desktopNav > 0;
 			expect(
-				burger + desktopNav,
-				`${label} : ${burger} burger(s) + ${desktopNav} nav(s) — il en faut au moins une`,
-			).toBeGreaterThan(0);
+				hasBurger !== hasDesktopNav,
+				`${label} : ${burger} burger(s) + ${desktopNav} nav(s) desktop — il en faut exactement une des deux`,
+			).toBe(true);
 		});
 	}
 });

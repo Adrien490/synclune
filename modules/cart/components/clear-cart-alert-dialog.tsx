@@ -12,7 +12,7 @@ import { CLEAR_CART_DIALOG_ID } from "./clear-cart-dialog-id";
  * Dialog de confirmation pour vider intégralement le panier.
  *
  * Optimistic UI : dispatch `{ type: "clear" }` dans `CartOptimisticContext`
- * (le cart-sheet vide ses items + discount cache instantanément) + le hook
+ * (le cart-sheet vide ses items instantanément) + le hook
  * `useClearCart` ramène le badge navbar à 0 — symétrique à
  * `RemoveCartItemAlertDialog`.
  *

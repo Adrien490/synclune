@@ -154,4 +154,50 @@ test.describe("Checkout hébergé @critical", () => {
 			await cleanupOrderBySession(sessionId!);
 		}
 	});
+
+	test("rejeu du webhook completed → no-op : statut PAID conservé, MÊME numéro de facture", async ({
+		page,
+		checkoutPage,
+		productCatalogPage,
+		cartPage,
+	}) => {
+		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
+		test.skip(seeded.skipped, seeded.skipped ? seeded.reason : "");
+
+		await checkoutPage.payButton.click();
+		await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
+		const sessionId = /cs_(test|live)_[A-Za-z0-9]+/.exec(page.url())?.[0];
+		expect(sessionId).toBeTruthy();
+
+		try {
+			const email = testEmail("replay");
+			expect(await completeSessionViaWebhook({ sessionId: sessionId!, email })).toBe(200);
+
+			const prisma = getE2ePrisma();
+			const first = await prisma.order.findUnique({
+				where: { stripeSessionId: sessionId! },
+				select: { status: true, invoiceNumber: true },
+			});
+			expect(first?.status).toBe("PAID");
+			expect(first?.invoiceNumber).not.toBeNull();
+
+			// Stripe redélivre : DEUXIÈME event completed signé, même session. La
+			// garde de transition `updateMany({ stripeSessionId, status: PENDING })`
+			// rend le rejeu inerte — 200 (sinon Stripe redélivrerait encore), sans
+			// nouvelle attribution de numéro ni commande dupliquée.
+			expect(await completeSessionViaWebhook({ sessionId: sessionId!, email })).toBe(200);
+
+			const after = await prisma.order.findUnique({
+				where: { stripeSessionId: sessionId! },
+				select: { status: true, invoiceNumber: true },
+			});
+			expect(after?.status).toBe("PAID");
+			expect(after?.invoiceNumber).toBe(first!.invoiceNumber);
+
+			// Pas de doublon : une seule commande pour cet email de test.
+			expect(await prisma.order.count({ where: { email } })).toBe(1);
+		} finally {
+			await cleanupOrderBySession(sessionId!);
+		}
+	});
 });

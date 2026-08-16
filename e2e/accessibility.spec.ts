@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures";
+import { requireSeedData } from "./constants";
 import { expectNoA11yViolations } from "./helpers/axe";
 
 // Les audits photographient l'état STABLE : reduced-motion AVANT la navigation.
@@ -43,10 +44,9 @@ test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 		const images = page.locator('img:not([aria-hidden="true"])');
 		const count = await images.count();
 
-		if (count === 0) {
-			// Pas d'images non décoratives sur la page, test OK
-			return;
-		}
+		// L'étal de la home rend les photos produit : zéro image = seed absent
+		// (skip local, échec CI), pas un vert silencieux.
+		requireSeedData(test, count > 0, "Aucune image non décorative sur la homepage (seed absent)");
 
 		// Vérifier que chaque image non décorative a un alt
 		for (let i = 0; i < count; i++) {
@@ -123,11 +123,15 @@ test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 			const textContent = await link.textContent();
 			const title = await link.getAttribute("title");
 
-			// Un lien doit avoir soit du texte visible, soit un aria-label, soit un title
-			const hasAccessibleName =
-				(ariaLabel && ariaLabel.trim().length > 0) ??
-				(textContent && textContent.trim().length > 0) ??
-				(title && title.trim().length > 0);
+			// Un lien doit avoir soit du texte visible, soit un aria-label, soit un
+			// title. ⚠️ L'ancienne chaîne `(a && …) ?? (b && …)` court-circuitait
+			// sur `aria-label=""` : `"" && …` vaut `""` (falsy mais PAS nullish),
+			// le `??` ne repliait jamais sur le texte et le test échouait/passait
+			// pour la mauvaise raison. `some` dit ce qu'on veut : au moins une
+			// source NON VIDE (et non « non nullish », d'où le refus de `??`).
+			const hasAccessibleName = [ariaLabel, textContent, title].some(
+				(source) => (source ?? "").trim().length > 0,
+			);
 
 			expect(hasAccessibleName, `Le lien ${i} dans la navbar n'a pas de nom accessible`).toBe(true);
 		}
@@ -149,7 +153,7 @@ test.describe("Accessibilité - Page produits", { tag: ["@slow"] }, () => {
 		const productImages = page.locator("article img, [data-product-card] img");
 		const count = await productImages.count();
 
-		if (count === 0) return; // Pas de produits, test ignoré
+		requireSeedData(test, count > 0, "Aucune carte produit sur /produits (seed absent)");
 
 		for (let i = 0; i < Math.min(count, 5); i++) {
 			const img = productImages.nth(i);
@@ -161,7 +165,7 @@ test.describe("Accessibilité - Page produits", { tag: ["@slow"] }, () => {
 	test("les cartes produit sont navigables au clavier", async ({ productCatalogPage }) => {
 		const count = await productCatalogPage.productLinks.count();
 
-		if (count === 0) return; // Pas de produits, test ignoré
+		requireSeedData(test, count > 0, "Aucun lien produit sur /produits (seed absent)");
 
 		// Re-focus jusqu'à tenue : sous la charge d'un run complet, WebKit peut
 		// perdre un focus() programmatique posé pendant l'hydratation.
@@ -231,7 +235,7 @@ test.describe("Accessibilité - Fiche produit", { tag: ["@slow"] }, () => {
 		test.skip(!productHref, "Pas de produits");
 		const radioGroups = page.getByRole("radiogroup");
 		const count = await radioGroups.count();
-		if (count === 0) return;
+		test.skip(count === 0, "Produit sans sélecteur de variantes (pas de radiogroup)");
 		for (let i = 0; i < count; i++) {
 			const group = radioGroups.nth(i);
 			const label = await group.getAttribute("aria-label");
@@ -243,7 +247,7 @@ test.describe("Accessibilité - Fiche produit", { tag: ["@slow"] }, () => {
 	test("le bouton ajout panier a un nom accessible", async ({ page }) => {
 		test.skip(!productHref, "Pas de produits");
 		const btn = page.getByRole("button", { name: /Ajouter au panier/i }).first();
-		if ((await btn.count()) === 0) return;
+		test.skip((await btn.count()) === 0, "Produit à options : pas de bouton d'ajout direct");
 		const text = await btn.textContent();
 		expect(text?.trim().length).toBeGreaterThan(0);
 	});
@@ -251,7 +255,7 @@ test.describe("Accessibilité - Fiche produit", { tag: ["@slow"] }, () => {
 	test("le fil d'Ariane marque la page courante", async ({ page }) => {
 		test.skip(!productHref, "Pas de produits");
 		const breadcrumb = page.getByRole("navigation", { name: /fil d'ariane|breadcrumb/i });
-		if ((await breadcrumb.count()) === 0) return;
+		test.skip((await breadcrumb.count()) === 0, "Pas de fil d'Ariane sur cette fiche");
 		const current = breadcrumb.locator('[aria-current="page"]');
 		await expect(current).toBeAttached();
 	});
@@ -263,17 +267,21 @@ test.describe("Accessibilité - Fiche produit", { tag: ["@slow"] }, () => {
 
 	test("navigation clavier dans les variantes", async ({ page }) => {
 		test.skip(!productHref, "Pas de produits");
-		const firstRadio = page.getByRole("radio").first();
-		if ((await firstRadio.count()) === 0) return;
-		await firstRadio.focus();
-		await expect(firstRadio).toBeFocused();
+		// Sélecteurs maison (`useRadioGroupKeyboard`, ARIA APG) : les flèches font
+		// du roving focus DANS le premier groupe. ⚠️ L'ancienne version acceptait
+		// `data-state === "checked"` (attribut Radix, mort depuis Base UI — jamais
+		// posé) OU le focus, sous double `if` : elle ne pouvait pas échouer. On
+		// assert désormais LE comportement : ArrowDown déplace le focus sur la
+		// deuxième option du groupe.
+		const firstGroup = page.getByRole("radiogroup").first();
+		test.skip((await firstGroup.count()) === 0, "Produit sans sélecteur de variantes");
+		const radios = firstGroup.getByRole("radio");
+		test.skip((await radios.count()) < 2, "Une seule option : rien à parcourir aux flèches");
+
+		await radios.first().focus();
+		await expect(radios.first()).toBeFocused();
 		await page.keyboard.press("ArrowDown");
-		const secondRadio = page.getByRole("radio").nth(1);
-		if ((await secondRadio.count()) > 0) {
-			const state = await secondRadio.getAttribute("data-state");
-			const isFocused = await secondRadio.evaluate((el) => el === document.activeElement);
-			expect(state === "checked" || isFocused).toBe(true);
-		}
+		await expect(radios.nth(1)).toBeFocused();
 	});
 });
 
@@ -392,11 +400,67 @@ test.describe("Accessibilité - États interactifs axe-core", { tag: ["@slow"] }
 		await page.waitForLoadState("domcontentloaded");
 
 		const filterButton = page.getByRole("button", { name: /Filtrer|Filtres/i });
-		if ((await filterButton.count()) > 0) {
-			await filterButton.click();
-			await page.waitForTimeout(300);
-			await expectNoA11yViolations(page, { context: "Catalogue (filtres mobiles ouverts)" });
-		}
+		test.skip((await filterButton.count()) === 0, "Pas de bouton Filtrer en mobile");
+		await filterButton.click();
+		// Attente déterministe (l'ancien waitForTimeout(300) espérait la fin d'une
+		// animation) : le panneau est un dialog, on attend sa visibilité.
+		await expect(page.getByRole("dialog")).toBeVisible();
+		await expectNoA11yViolations(page, { context: "Catalogue (filtres mobiles ouverts)" });
+	});
+
+	test("Quick-search ouverte passe l'audit axe-core", async ({ page, searchPage }) => {
+		// `searchPage.open()` attend l'hydratation du déclencheur puis la
+		// visibilité du dialog — surface jamais auditée par axe jusqu'ici.
+		await searchPage.open();
+		await expect(searchPage.searchInput).toBeVisible();
+
+		await expectNoA11yViolations(page, { context: "Quick-search (dialog ouvert)" });
+	});
+
+	test("ConfirmDialog « Vider le panier » ouvert passe l'audit axe-core", async ({
+		page,
+		productCatalogPage,
+		cartPage,
+	}) => {
+		// Le bouton « Vider le panier » n'existe qu'avec au moins un article :
+		// même semis que le tunnel (cf. checkout-accessibility).
+		const seeded = await productCatalogPage.addFirstProductToCart(cartPage);
+		requireSeedData(test, !seeded.skipped, seeded.skipped ? seeded.reason : "");
+		if (seeded.skipped) return;
+
+		await cartPage.open();
+		await page.getByRole("button", { name: /Vider le panier/i }).click();
+
+		const alertDialog = page.getByRole("alertdialog");
+		await expect(alertDialog).toBeVisible();
+		await expect(alertDialog.getByText(/Vider ton panier \?/i)).toBeVisible();
+
+		await expectNoA11yViolations(page, { context: "ConfirmDialog (vider le panier)" });
+	});
+
+	test("Formulaire de connexion admin EN ERREUR passe l'audit axe-core", async ({ page }) => {
+		// `/admin/connexion` est publique (hors garde) : l'état d'erreur — alerte
+		// assertive focusée après un mauvais mot de passe — est donc auditable
+		// sans session. C'est le seul formulaire public du site, et son état
+		// d'erreur n'était couvert par aucun audit axe.
+		await page.goto("/admin/connexion");
+		await page.waitForLoadState("domcontentloaded");
+
+		const passwordInput = page.getByRole("textbox", { name: /Mot de passe/i });
+		await passwordInput.fill("mauvais-mot-de-passe-e2e");
+		// La soumission peut précéder l'hydratation : re-soumettre jusqu'à l'alerte.
+		const errorAlert = page.getByRole("alert").filter({ hasText: /Mot de passe incorrect/i });
+		await expect(async () => {
+			if (!(await errorAlert.isVisible())) {
+				await page
+					.getByRole("button", { name: /Se connecter/i })
+					.click({ timeout: 1000 })
+					.catch(() => {});
+			}
+			await expect(errorAlert).toBeVisible({ timeout: 2000 });
+		}).toPass({ timeout: 15_000 });
+
+		await expectNoA11yViolations(page, { context: "Connexion admin (erreur)" });
 	});
 });
 

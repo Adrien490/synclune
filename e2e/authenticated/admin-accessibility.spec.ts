@@ -156,13 +156,20 @@ test.describe("Accessibilité admin - États interactifs axe-core", { tag: ["@sl
 		await page.goto("/admin/catalogue/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		const menuTrigger = page.locator("[data-radix-dropdown-menu-trigger]").first();
-		if ((await menuTrigger.count()) > 0) {
-			await menuTrigger.click();
-			const dropdownMenu = page.getByRole("menu");
-			await expect(dropdownMenu).toBeVisible();
-			await expectNoA11yViolations(page, { context: "Admin (dropdown ouvert)" });
-		}
+		// ⚠️ `[data-radix-dropdown-menu-trigger]` ne matchait PLUS RIEN depuis la
+		// migration Base UI (2026-08-04) : `count() === 0` toujours, et le corps
+		// entier vivait sous un `if` — le test passait vert sans rien auditer, pour
+		// toujours (audit e2e 2026-08-16). Le vrai déclencheur est le bouton
+		// « Actions pour <produit> » de `ProductRowActions`. Et il faut l'ATTENDRE :
+		// le tableau arrive en streaming, un `count()` juste après
+		// `domcontentloaded` rend 0.
+		const menuTrigger = page.getByRole("button", { name: /^Actions pour / }).first();
+		await expect(menuTrigger).toBeVisible({ timeout: 15_000 });
+		await menuTrigger.click();
+
+		const dropdownMenu = page.getByRole("menu");
+		await expect(dropdownMenu).toBeVisible();
+		await expectNoA11yViolations(page, { context: "Admin (dropdown ouvert)" });
 	});
 });
 
@@ -172,11 +179,9 @@ test.describe("Accessibilité composants admin - DropdownMenu", { tag: ["@slow"]
 		await page.goto("/admin/catalogue/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		const trigger = page.getByRole("button", { name: /Actions/i }).first();
-		if ((await trigger.count()) === 0) {
-			test.skip(true, "Pas de bouton Actions sur cette page");
-			return;
-		}
+		// Attendre le tableau streamé plutôt que compter (skip permanent sinon).
+		const trigger = page.getByRole("button", { name: /^Actions pour / }).first();
+		await expect(trigger).toBeVisible({ timeout: 15_000 });
 
 		await trigger.focus();
 		await page.keyboard.press("Enter");
@@ -196,27 +201,57 @@ test.describe("Accessibilité composants admin - DropdownMenu", { tag: ["@slow"]
 
 test.describe("Accessibilité composants admin - AlertDialog", { tag: ["@slow"] }, () => {
 	test("AlertDialog de suppression - focus trap, Escape annule", async ({ page }) => {
+		// 🐛 BUG PRODUIT documenté (audit e2e 2026-08-16, non masqué) : quand la
+		// confirmation de suppression est ouverte DEPUIS le menu « Actions » d'une
+		// ligne, le focus ne SORT JAMAIS du déclencheur. Mesuré sur
+		// /admin/catalogue/couleurs à 200 ms, 1 s et 3 s après l'ouverture :
+		// `document.activeElement` reste `<button aria-label="Actions pour Abricot">`,
+		// jamais un nœud de l'`alertdialog`. Le piège à focus n'est donc pas armé —
+		// au clavier comme au lecteur d'écran, on confirme une suppression
+		// définitive sans que le focus soit entré dans la modale (WCAG 2.4.3).
+		//
+		// Cause probable : l'item porte `closesMenu: false` et ouvre le dialog via
+		// le store (`useAlertDialog`), donc le menu Base UI reste monté et garde/
+		// restaure le focus par-dessus la modale. Le correctif touche la pile de
+		// dismiss partagée par les 4 familles d'overlays (cf. CLAUDE.md § Overlays)
+		// — hors périmètre de l'audit des tests, à arbitrer séparément.
+		//
+		// ⚠️ Ce test EST correct : il échoue parce que le produit a le défaut.
+		// `fixme` = suivi, pas absolution. Le retirer dès le correctif posé.
+		test.fixme();
 		await page.goto("/admin/catalogue/couleurs");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Find a delete button that triggers an AlertDialog
-		const deleteButton = page.getByRole("button", { name: /Supprimer/i }).first();
-		if ((await deleteButton.count()) === 0) {
-			test.skip(true, "Pas de bouton Supprimer sur cette page");
-			return;
-		}
+		// ⚠️ La suppression ne vit PAS sur la page : elle est un item du menu
+		// « Actions » de ligne. Chercher un bouton « Supprimer » à la racine
+		// skippait donc systématiquement, et le focus-trap de l'AlertDialog
+		// n'était jamais testé (audit e2e 2026-08-16).
+		const rowActions = page.getByRole("button", { name: /^Actions pour / }).first();
+		await expect(rowActions).toBeVisible({ timeout: 15_000 });
+		await rowActions.click();
 
+		const deleteButton = page.getByRole("menuitem", { name: /Supprimer/i }).first();
+		await expect(deleteButton).toBeVisible();
 		await deleteButton.click();
 
 		const alertDialog = page.getByRole("alertdialog");
 		await expect(alertDialog).toBeVisible();
 
-		// Focus is inside the alert dialog
-		const isInside = await page.evaluate(() => {
-			const d = document.querySelector('[role="alertdialog"]');
-			return d?.contains(document.activeElement);
-		});
-		expect(isInside).toBe(true);
+		// Focus is inside the alert dialog.
+		// ⚠️ Base UI déplace le focus APRÈS l'animation d'ouverture : un
+		// `page.evaluate` synchrone juste après `toBeVisible()` lit encore le
+		// déclencheur. On sonde jusqu'à ce que le piège soit armé.
+		await expect
+			.poll(
+				() =>
+					page.evaluate(
+						() =>
+							document.querySelector('[role="alertdialog"]')?.contains(document.activeElement) ??
+							false,
+					),
+				{ timeout: 5_000 },
+			)
+			.toBe(true);
 
 		// Escape closes without action
 		await page.keyboard.press("Escape");
@@ -224,62 +259,23 @@ test.describe("Accessibilité composants admin - AlertDialog", { tag: ["@slow"] 
 	});
 });
 
-test.describe("Accessibilité composants admin - Tabs", { tag: ["@slow"] }, () => {
-	test("Tabs - ArrowRight/ArrowLeft change l'onglet actif", async ({ page }) => {
-		await page.goto("/admin");
-		await page.waitForLoadState("domcontentloaded");
-
-		const tabList = page.getByRole("tablist").first();
-		if ((await tabList.count()) === 0) {
-			test.skip(true, "Pas de tabs sur cette page");
-			return;
-		}
-
-		const tabs = tabList.getByRole("tab");
-		const tabCount = await tabs.count();
-		if (tabCount < 2) return;
-
-		// Focus the first tab
-		await tabs.first().focus();
-		await expect(tabs.first()).toBeFocused();
-
-		// ArrowRight moves to next tab
-		await page.keyboard.press("ArrowRight");
-		await expect(tabs.nth(1)).toBeFocused();
-
-		// ArrowLeft moves back
-		await page.keyboard.press("ArrowLeft");
-		await expect(tabs.first()).toBeFocused();
-	});
-});
-
-test.describe("Accessibilité composants admin - Switch", { tag: ["@slow"] }, () => {
-	test("Switch - Space toggle et aria-checked", async ({ page }) => {
-		await page.goto("/admin/catalogue/couleurs");
-		await page.waitForLoadState("domcontentloaded");
-
-		const switchEl = page.getByRole("switch").first();
-		if ((await switchEl.count()) === 0) {
-			test.skip(true, "Pas de switch sur cette page");
-			return;
-		}
-
-		const initialChecked = await switchEl.getAttribute("aria-checked");
-		await switchEl.focus();
-		await expect(switchEl).toBeFocused();
-
-		// Space toggles the switch
-		await page.keyboard.press("Space");
-		const newChecked = await switchEl.getAttribute("aria-checked");
-		expect(newChecked).not.toBe(initialChecked);
-
-		// Toggle back
-		await page.keyboard.press("Space");
-		const restoredChecked = await switchEl.getAttribute("aria-checked");
-		expect(restoredChecked).toBe(initialChecked);
-	});
-});
-
+/**
+ * ⚠️ Le test « Tabs - ArrowRight/ArrowLeft » a été SUPPRIMÉ le 2026-08-16 :
+ * `ProductTabs` (`modules/products/components/admin/product-tabs.tsx`) n'est
+ * monté par AUCUNE page de `app/` — c'est un composant orphelin, dont seul son
+ * propre test unitaire dépend. Il n'existe donc aucun `role="tablist"` dans
+ * l'admin, et le test skippait à chaque run en prétendant couvrir la
+ * navigation clavier des onglets. Candidat `pnpm knip` côté produit.
+ */
+/**
+ * ⚠️ Le test « Switch - Space toggle et aria-checked » a été SUPPRIMÉ le
+ * 2026-08-16 : `SwitchField` n'est monté par aucune surface admin depuis la
+ * migration lean (les statuts sont des booléens `active` pilotés par les
+ * actions de ligne, cf. `use-color-actions`). Le test cherchait un
+ * `role="switch"` sur /admin/catalogue/couleurs et skippait donc à chaque run
+ * — un test mort, pas une couverture. Le jour où un switch revient dans
+ * l'admin, le rétablir en ciblant la surface qui le rend.
+ */
 test.describe("Accessibilité admin - Navigation clavier", { tag: ["@slow"] }, () => {
 	test("Sidebar admin - Tab entre les sections, Enter ouvre/ferme collapsible", async ({
 		page,
@@ -348,17 +344,16 @@ test.describe("Accessibilité admin - Navigation clavier", { tag: ["@slow"] }, (
 		// Enter opens the speed dial menu
 		await page.keyboard.press("Enter");
 
+		// ⚠️ Assertions DURES : l'ancien `waitFor().catch(() => {})` suivi d'un
+		// `if (count > 0)` garantissait le vert quoi qu'il arrive (audit 2026-08-16).
 		const menu = page.getByRole("menu");
-		await menu.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
-		if ((await menu.count()) > 0) {
-			await expect(menu).toBeVisible();
+		await expect(menu).toBeVisible({ timeout: 10_000 });
 
-			// ArrowDown navigates menu items
-			await page.keyboard.press("ArrowDown");
+		// ArrowDown navigates menu items
+		await page.keyboard.press("ArrowDown");
 
-			// Escape closes
-			await page.keyboard.press("Escape");
-			await expect(menu).not.toBeVisible();
-		}
+		// Escape closes
+		await page.keyboard.press("Escape");
+		await expect(menu).not.toBeVisible();
 	});
 });

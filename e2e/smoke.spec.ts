@@ -44,11 +44,15 @@ test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Check that CSS has loaded (body should have computed styles)
-		const bodyFontFamily = await page.evaluate(() => {
-			return window.getComputedStyle(document.body).fontFamily;
-		});
-		expect(bodyFontFamily).toBeTruthy();
+		// La feuille CSS du projet doit être RÉELLEMENT appliquée. L'ancienne
+		// assertion (`fontFamily` truthy) était imperdable : tout navigateur rend
+		// une famille par défaut même sans le moindre CSS chargé. `--primary` est
+		// un token que SEUL `app/globals.css` pose — si la feuille manque, la
+		// custom property vaut chaîne vide sur :root.
+		const primary = await page.evaluate(() =>
+			window.getComputedStyle(document.documentElement).getPropertyValue("--primary").trim(),
+		);
+		expect(primary, "--primary doit être posé par app/globals.css").not.toBe("");
 	});
 
 	/**

@@ -58,7 +58,7 @@ export async function updateCartPrices(
 		const increased = priceChanges.itemsWithPriceIncrease.map((item) => {
 			const newPrice = item.variant.priceCents ?? item.variant.product.priceCents;
 			return {
-				cartItemId: item.id,
+				variantId: item.variantId,
 				productTitle: item.variant.product.name,
 				oldPrice: item.priceAtAdd,
 				newPrice,
@@ -68,7 +68,7 @@ export async function updateCartPrices(
 		const decreased = priceChanges.itemsWithPriceDecrease.map((item) => {
 			const newPrice = item.variant.priceCents ?? item.variant.product.priceCents;
 			return {
-				cartItemId: item.id,
+				variantId: item.variantId,
 				productTitle: item.variant.product.name,
 				oldPrice: item.priceAtAdd,
 				newPrice,

@@ -31,10 +31,12 @@ const CUID2_LIKE_REGEX = /^[a-z][a-z0-9]{1,31}$/;
  * Plafond de prix accepté dans le cookie (10 000 € en centimes).
  *
  * ⚠️ Ce n'est PAS une garde de facturation : `priceAtAdd` est un témoin
- * d'affichage, jamais une base de calcul. Le checkout re-lit `variant.priceCents`
- * en base (`computeCartSubtotal`) et refuse la commande si le témoin diverge
- * (`confirm-checkout.ts`, étape 6). La borne ne sert qu'à empêcher un cookie
- * forgé d'afficher un total absurde avant d'être rejeté.
+ * d'affichage, jamais une base de calcul. `createCheckoutSession` (étape 2)
+ * re-lit chaque ligne en base et facture le prix COURANT — le témoin n'entre
+ * dans aucun montant. Quand il diverge à la hausse, c'est l'UI qui bloque le
+ * passage en caisse jusqu'à actualisation (`CartPriceChangeAlert` +
+ * `CartSheetFooter`). La borne ne sert qu'à empêcher un cookie forgé
+ * d'afficher un total absurde.
  */
 const MAX_PRICE_AT_ADD = 1_000_000;
 

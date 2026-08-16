@@ -9,7 +9,7 @@ import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import type { ActionState } from "@/shared/types/server-action";
 
 /**
- * Hook pour vider intégralement le panier (reset items + discount + notes).
+ * Hook pour vider intégralement le panier.
  *
  * Toast d'erreur uniquement — le toast de succès « N articles supprimés » est
  * volontairement supprimé (le panier vide est sa propre confirmation visuelle).

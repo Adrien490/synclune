@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { SELECTORS, VIEWPORTS } from "../constants";
+import { waitForHydratedButton } from "../helpers/hydration";
 
 /**
  * Recherche produits — via le QUICK-SEARCH (dialog).
@@ -32,12 +33,8 @@ export class SearchPage {
 		await this.page.waitForLoadState("domcontentloaded");
 		// Attendre l'hydratation React du déclencheur : un `click()` avant elle est
 		// AVALÉ — le bouton est dans le DOM mais React n'a pas posé ses listeners,
-		// le dialog ne s'ouvre jamais. (`networkidle` n'est pas une option, il ne
-		// se résout jamais sous `next dev`.)
-		await this.page.waitForFunction(() => {
-			const button = document.querySelector('button[aria-label="Ouvrir la recherche rapide"]');
-			return !!button && Object.keys(button).some((key) => key.startsWith("__reactProps"));
-		});
+		// le dialog ne s'ouvre jamais (sonde centralisée dans helpers/hydration.ts).
+		await waitForHydratedButton(this.page, /^Ouvrir la recherche rapide$/);
 		await this.trigger.first().click();
 		await expect(this.dialog).toBeVisible();
 	}
@@ -62,9 +59,10 @@ export class SearchPage {
 
 	/** Efface la recherche via l'étiquette du bandeau de filtres. */
 	async clearSearch() {
-		if (await this.clearBadge.first().isVisible()) {
-			await this.clearBadge.first().click();
-		}
+		// Pas de garde `isVisible()` : si l'étiquette a disparu (renommage du
+		// badge, refonte du bandeau), le clic doit ÉCHOUER au timeout — l'ancienne
+		// version no-op laissait le test appelant passer sans rien effacer.
+		await this.clearBadge.first().click();
 	}
 
 	async hasEmptyState() {

@@ -1,6 +1,7 @@
 import { test, expect } from "./fixtures";
 import { requireSeedData } from "./constants";
 import { preseedCookieConsent } from "./helpers/consent";
+import { waitForHydratedButton } from "./helpers/hydration";
 
 test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 	// Sans consentement pré-seedé, le bandeau cookies (lazy) recouvre la
@@ -46,29 +47,46 @@ test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 
 			await productCatalogPage.gotoFirstProduct();
 
-			const buttonCount = await productCatalogPage.addToCartButton.count();
-
-			if (buttonCount > 0) {
-				await productCatalogPage.addToCartButton.first().click();
-
-				// Wait for cart feedback - either dialog or toast. `.filter({ visible })`
-				// avant `.first()` : le live region sr-only « 1 article dans ton
-				// panier » matche aussi le texte et faisait une strict violation
-				// (puis un pick caché) sur mobile.
-				const toastOrFeedback = page.getByText(/ajouté|panier/i);
-				await expect(
-					cartPage.dialog.or(toastOrFeedback).filter({ visible: true }).first(),
-				).toBeVisible({ timeout: 5000 });
-			} else {
-				// Product may require SKU selection first (variants)
-				const variantSelector = page
-					.getByRole("region", { name: /Choisis tes options/i })
-					.or(page.locator('[role="radiogroup"]'));
+			// Si la fiche exige une sélection de variante, on SÉLECTIONNE puis on
+			// ajoute vraiment. L'ancienne branche `else` se contentait de constater
+			// le sélecteur de variantes et validait ce @smoke sans jamais rien
+			// ajouter au panier.
+			if ((await productCatalogPage.addToCartButton.count()) === 0) {
 				expect(
-					await variantSelector.count(),
-					"No add-to-cart button or variant selector found",
-				).toBeGreaterThan(0);
+					await productCatalogPage.selectAllVariantOptions(),
+					"Ni bouton d'ajout direct ni variante sélectionnable sur la fiche",
+				).toBe(true);
 			}
+
+			await productCatalogPage.addToCartButton.first().click();
+
+			// Wait for cart feedback - either dialog or toast. `.filter({ visible })`
+			// avant `.first()` : le live region sr-only « 1 article dans ton
+			// panier » matche aussi le texte et faisait une strict violation
+			// (puis un pick caché) sur mobile.
+			const toastOrFeedback = page.getByText(/ajouté|panier/i);
+			await expect(
+				cartPage.dialog.or(toastOrFeedback).filter({ visible: true }).first(),
+			).toBeVisible({ timeout: 5000 });
+
+			// L'état SERVEUR fait foi : le feedback ci-dessus est optimiste, l'action
+			// serveur peut encore être en vol. Le cookie `cart` est httpOnly mais
+			// `context.cookies()` le lit (même oracle que wishlist.spec.ts) — on
+			// attend qu'il soit réellement écrit avant de recharger.
+			await expect
+				.poll(
+					async () => (await page.context().cookies()).find((c) => c.name === "cart")?.value ?? "",
+					{ message: "le cookie cart doit être écrit par l'action serveur", timeout: 10_000 },
+				)
+				.not.toBe("");
+
+			// Rechargement : le panier est reconstruit côté serveur depuis le cookie.
+			// Un ajout purement optimiste (cookie jamais écrit) rendrait ici un
+			// panier vide — c'est LA preuve de persistance.
+			await page.reload();
+			await page.waitForLoadState("domcontentloaded");
+			await cartPage.open();
+			await expect(cartPage.emptyMessage).not.toBeVisible();
 		},
 	);
 
@@ -146,16 +164,9 @@ test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 		// Plus de champ inline (2026-08-06) : la recherche passe par le
 		// quick-search — déclencheur navbar (desktop, aria-label « Ouvrir la
 		// recherche rapide ») ou onglet « Rechercher » de la bottom-nav (mobile,
-		// nommé par son libellé visible, PAS d'aria-label).
-		await page.waitForFunction(() => {
-			const buttons = [...document.querySelectorAll("button")].filter((b) =>
-				/echerch/i.test(b.getAttribute("aria-label") ?? b.textContent),
-			);
-			return (
-				buttons.length > 0 &&
-				buttons.some((b) => Object.keys(b).some((key) => key.startsWith("__reactProps")))
-			);
-		});
+		// nommé par son libellé visible, PAS d'aria-label). /echerch/i couvre les
+		// deux formes.
+		await waitForHydratedButton(page, /echerch/i);
 		await page
 			.getByRole("button", { name: /ouvrir la recherche/i })
 			.or(page.getByRole("button", { name: /^Rechercher$/ }))

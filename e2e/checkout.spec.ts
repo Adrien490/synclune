@@ -129,26 +129,37 @@ test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 	});
 
 	test.describe("Page d'annulation", () => {
-		test("/paiement/annulation affiche un message de contexte", async ({ page }) => {
+		test("/paiement/annulation rend la landing du cancel_url Stripe", async ({ page }) => {
 			await page.goto("/paiement/annulation");
 			await page.waitForLoadState("domcontentloaded");
 
-			// The cancellation page should display context
-			const heading = page.getByRole("heading");
-			await expect(heading.first()).toBeVisible();
-
-			// Should offer a way to retry or return to shop
-			const pageContent = await page.textContent("body");
-			expect(pageContent).toMatch(/annul|panier|boutique|réessayer|retour/i);
+			// Contenu RÉEL de `app/paiement/annulation/page.tsx` — l'ancien motif
+			// /annul|panier|boutique|réessayer|retour/i sur le body entier matchait
+			// n'importe quelle page de la boutique (« panier » est partout).
+			await expect(page.getByRole("heading", { name: "Paiement annulé" })).toBeVisible();
+			// Le panier n'est PAS vidé à l'annulation (choix produit) : la page le dit.
+			await expect(page.getByText(/ton panier est toujours là/i)).toBeVisible();
+			await expect(page.getByRole("link", { name: "Reprendre le paiement" })).toHaveAttribute(
+				"href",
+				"/paiement",
+			);
+			await expect(page.getByRole("link", { name: "Continuer mes découvertes" })).toHaveAttribute(
+				"href",
+				"/produits",
+			);
 		});
 
-		test("/paiement/annulation avec raison affiche le message approprié", async ({ page }) => {
+		test("/paiement/annulation?reason=expired rend la même landing", async ({ page }) => {
 			await page.goto("/paiement/annulation?reason=expired");
 			await page.waitForLoadState("domcontentloaded");
 
-			const pageContent = await page.textContent("body");
-			// Should show relevant content about cancellation
-			expect(pageContent).toMatch(/annul|expir|panier|boutique/i);
+			// La page ne lit AUCUN searchParam (cf. page.tsx) : `reason` est ignoré
+			// et le contenu est identique — on vérifie que le param ne casse rien,
+			// y compris la mention honnête de la réservation de stock
+			// (`CHECKOUT_RESERVATION_LABEL`). Si un message spécifique à
+			// l'expiration apparaît un jour, ce test doit l'asserter à la place.
+			await expect(page.getByRole("heading", { name: "Paiement annulé" })).toBeVisible();
+			await expect(page.getByText(/restent réservés environ 30 minutes/i)).toBeVisible();
 		});
 	});
 

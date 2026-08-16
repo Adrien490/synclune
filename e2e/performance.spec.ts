@@ -2,6 +2,18 @@ import { test, expect } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 /**
+ * Budgets de performance mesurés via les APIs navigateur (LCP, CLS, INP).
+ *
+ * ⚠️ Les 4 anciens tests « X loads under budget » (chronométrage `Date.now()`
+ * autour de `page.goto`) ont été SUPPRIMÉS le 2026-08-16 : sous workers
+ * parallèles, ils mesuraient la charge de la machine de test (build de prod +
+ * N navigateurs simultanés), pas la page — leurs échecs ne corrélaient à
+ * aucune régression et leurs succès n'excluaient rien. Les budgets qui restent
+ * (LCP/CLS) reposent sur les timings du navigateur, corrigés du multiplicateur
+ * CI, et mesurent bien la page.
+ */
+
+/**
  * L'entrée LCP retenue : son instant, mais aussi QUI la porte.
  *
  * ⚠️ L'identité de l'élément n'est pas du confort de debug. Plusieurs décisions de
@@ -25,9 +37,16 @@ interface LcpMeasurement {
 }
 
 /**
- * Measures LCP using PerformanceObserver with buffered entries.
- * Uses requestAnimationFrame to ensure paint entries are flushed
- * before reading, instead of unreliable setTimeout.
+ * Mesure le LCP en attendant qu'il se STABILISE.
+ *
+ * ⚠️ L'ancienne version résolvait au double-rAF qui suit `load`. Or `load` ne
+ * finalise pas le LCP : le h1 de l'étal est en `font-display` (Winky Sans), et
+ * tant que la police n'a pas peint, le plus grand candidat peut être un SPAN
+ * de quelques milliers de px². Mesuré le 2026-08-16 : à `load` le porteur
+ * était un `SPAN` de 3 978 px², à +3 s le `H1` de 59 352 px² — le test
+ * échouait donc en dénonçant une régression du premier écran qui n'existait
+ * pas (le porteur final est bien le h1, hypothèse du `preload` intacte).
+ * On attend désormais 600 ms sans NOUVELLE entrée LCP, avec un plafond dur.
  */
 async function measureLCP(page: Page): Promise<LcpMeasurement> {
 	return page.evaluate(() => {
@@ -35,6 +54,8 @@ async function measureLCP(page: Page): Promise<LcpMeasurement> {
 			// `element` est une référence DOM vivante : elle ne franchit pas la
 			// frontière d'évaluation. On extrait ce qu'on veut savoir ici.
 			let latest: LcpMeasurement = { startTime: 0, tagName: null, id: "", url: "", size: 0 };
+			// Réarmé plus bas : chaque entrée repousse la fenêtre de calme.
+			let onLcpEntry = () => {};
 
 			const observer = new PerformanceObserver((entryList) => {
 				for (const entry of entryList.getEntries()) {
@@ -52,67 +73,76 @@ async function measureLCP(page: Page): Promise<LcpMeasurement> {
 						size: lcp.size ?? 0,
 					};
 				}
+				onLcpEntry();
 			});
 			observer.observe({ type: "largest-contentful-paint", buffered: true });
 
-			// LCP is finalized after the page becomes interactive.
-			// Wait for the document to be fully loaded, then use double-rAF
-			// to ensure all paint entries have been dispatched.
-			const onReady = () => {
-				requestAnimationFrame(() => {
-					requestAnimationFrame(() => {
-						observer.disconnect();
-						resolve(latest);
-					});
-				});
+			// Fenêtre de calme : chaque nouvelle entrée repousse l'échéance de
+			// 600 ms ; un plafond de 5 s borne le cas pathologique (candidats qui
+			// se succèdent sans fin). Le LCP retenu est donc le DERNIER stable,
+			// pas le dernier connu au moment où `load` a sonné.
+			let quietTimer: ReturnType<typeof setTimeout>;
+			const settle = () => {
+				observer.disconnect();
+				clearTimeout(quietTimer);
+				resolve(latest);
 			};
-
-			if (document.readyState === "complete") {
-				onReady();
-			} else {
-				window.addEventListener("load", onReady, { once: true });
-			}
+			const bumpQuietWindow = () => {
+				clearTimeout(quietTimer);
+				quietTimer = setTimeout(settle, 600);
+			};
+			bumpQuietWindow();
+			onLcpEntry = bumpQuietWindow;
+			setTimeout(settle, 5_000);
 		});
 	});
 }
 
+declare global {
+	interface Window {
+		__cls?: { value: number; lastShiftAt: number };
+	}
+}
+
 /**
- * Measures CLS using PerformanceObserver with buffered entries.
- * Waits for document load + double-rAF to capture layout shifts.
+ * Mesure le CLS en observant AU-DELÀ de `load`.
+ *
+ * ⚠️ L'ancienne version arrêtait l'observation au double-rAF qui suit `load` :
+ * les décalages POST-hydratation (swap d'un repli `Suspense`, montée d'un
+ * chunk lazy — précisément la famille de bugs que le commentaire du test
+ * `/collections` documente) arrivaient après sa fenêtre et étaient invisibles.
+ * On attend désormais une fenêtre de CALME : 1 s sans aucun layout-shift
+ * après `load`, puis on lit le cumul.
  */
 async function measureCLS(page: Page): Promise<number> {
-	return page.evaluate(() => {
-		return new Promise<number>((resolve) => {
-			let clsValue = 0;
-
-			const observer = new PerformanceObserver((entryList) => {
-				for (const entry of entryList.getEntries()) {
-					if (
-						"hadRecentInput" in entry &&
-						!(entry as PerformanceEntry & { hadRecentInput: boolean }).hadRecentInput
-					) {
-						clsValue += (entry as unknown as PerformanceEntry & { value: number }).value;
-					}
+	// `buffered: true` rattrape les shifts survenus depuis la navigation, même
+	// si l'observateur est installé après.
+	await page.evaluate(() => {
+		const state = { value: 0, lastShiftAt: performance.now() };
+		window.__cls = state;
+		const observer = new PerformanceObserver((entryList) => {
+			for (const entry of entryList.getEntries()) {
+				const shift = entry as PerformanceEntry & { hadRecentInput: boolean; value: number };
+				if (!shift.hadRecentInput) {
+					state.value += shift.value;
+					state.lastShiftAt = performance.now();
 				}
-			});
-			observer.observe({ type: "layout-shift", buffered: true });
-
-			const onReady = () => {
-				requestAnimationFrame(() => {
-					requestAnimationFrame(() => {
-						observer.disconnect();
-						resolve(clsValue);
-					});
-				});
-			};
-
-			if (document.readyState === "complete") {
-				onReady();
-			} else {
-				window.addEventListener("load", onReady, { once: true });
 			}
 		});
+		observer.observe({ type: "layout-shift", buffered: true });
 	});
+
+	await page.waitForLoadState("load");
+
+	// Fenêtre post-hydratation : on ne lit le cumul qu'après 1 s sans shift.
+	await expect
+		.poll(() => page.evaluate(() => performance.now() - (window.__cls?.lastShiftAt ?? 0)), {
+			message: "La page continue de bouger : aucun calme d'1s après load",
+			timeout: 15_000,
+		})
+		.toBeGreaterThan(1000);
+
+	return page.evaluate(() => window.__cls?.value ?? 0);
 }
 
 /**
@@ -126,7 +156,6 @@ const PERF_MULTIPLIER = process.env.CI
 const LCP_BUDGET = 3000 * PERF_MULTIPLIER;
 const CLS_BUDGET = 0.15;
 const INP_BUDGET = 200 * PERF_MULTIPLIER;
-const LOAD_BUDGET = 3500 * PERF_MULTIPLIER;
 
 test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 	test("homepage - LCP under budget", async ({ page }) => {
@@ -215,20 +244,41 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 		expect(cls, `CLS was ${cls}, should be under ${CLS_BUDGET}`).toBeLessThan(CLS_BUDGET);
 	});
 
-	test("homepage - INP under budget", async ({ page }) => {
+	test("homepage - INP under budget", async ({ page, browserName }) => {
+		// L'Event Timing API avec `interactionId` n'existe que sur Chromium —
+		// ailleurs, l'observateur ne produit rien et la mesure vaudrait toujours 0
+		// (vert trivial, exactement le défaut corrigé ci-dessous).
+		test.skip(browserName !== "chromium", "Event Timing (interactionId) — Chromium uniquement");
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Set up INP observer BEFORE interaction
+		// Set up INP observer BEFORE interaction.
+		// ⚠️ Sans `durationThreshold` ni filtre `interactionId`, l'observateur ne
+		// remontait AUCUNE entrée d'interaction (seuil par défaut : 104 ms) et la
+		// mesure valait toujours 0 : le budget passait quel que soit le code.
 		await page.evaluate(() => {
 			(window as unknown as { __inpEntries: number[] }).__inpEntries = [];
 			const observer = new PerformanceObserver((list) => {
 				for (const entry of list.getEntries()) {
-					const duration = (entry as unknown as { duration: number }).duration;
-					(window as unknown as { __inpEntries: number[] }).__inpEntries.push(duration);
+					const timing = entry as PerformanceEntry & {
+						duration: number;
+						interactionId?: number;
+					};
+					// Seules les entrées portant un interactionId non nul sont des
+					// interactions utilisateur (le reste : hover, scroll passif…).
+					if ((timing.interactionId ?? 0) > 0) {
+						(window as unknown as { __inpEntries: number[] }).__inpEntries.push(timing.duration);
+					}
 				}
 			});
-			observer.observe({ type: "event", buffered: true });
+			// `durationThreshold` est absent de `PerformanceObserverInit` dans les lib
+			// DOM de TypeScript, mais fait bien partie de l'Event Timing API — sans
+			// lui le seuil par défaut (~104 ms) vide la mesure.
+			observer.observe({
+				type: "event",
+				buffered: true,
+				durationThreshold: 16,
+			} as PerformanceObserverInit & { durationThreshold: number });
 			(window as unknown as { __inpObserver: PerformanceObserver }).__inpObserver = observer;
 		});
 
@@ -243,7 +293,8 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 			.first();
 		await interactiveElement.click({ noWaitAfter: true });
 
-		// Collect INP after interaction
+		// Collect INP after interaction. 0 = aucune interaction n'a dépassé le
+		// seuil de 16 ms — c'est un résultat honnête, pas une absence de mesure.
 		const inp = await page.evaluate(() => {
 			return new Promise<number>((resolve) => {
 				requestAnimationFrame(() => {
@@ -263,18 +314,12 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 		expect(inp, `INP was ${inp}ms, budget is ${INP_BUDGET}ms`).toBeLessThan(INP_BUDGET);
 	});
 
-	const criticalPages = ["/", "/produits", "/collections", "/admin/connexion"];
-
-	for (const route of criticalPages) {
-		test(`${route} loads under budget`, async ({ page }) => {
-			const startTime = Date.now();
-			await page.goto(route);
-			await page.waitForLoadState("domcontentloaded");
-			const loadTime = Date.now() - startTime;
-
-			expect(loadTime, `${route} took ${loadTime}ms, budget is ${LOAD_BUDGET}ms`).toBeLessThan(
-				LOAD_BUDGET,
-			);
-		});
-	}
+	/*
+	 * Supprimés le 2026-08-16 : les 4 budgets « <route> loads under budget »
+	 * (`Date.now()` autour de `page.goto` + `domcontentloaded`). Sous workers
+	 * parallèles, cette horloge murale mesure la contention de la machine (CPU
+	 * partagé entre navigateurs et serveur de prod), pas la page : mêmes commits,
+	 * écarts ×3 d'un run à l'autre. Les métriques navigateur ci-dessus (LCP par
+	 * PerformanceObserver) couvrent le même risque sans ce bruit.
+	 */
 });

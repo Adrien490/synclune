@@ -47,12 +47,10 @@ export type GetCartReturn = CartView;
 // ============================================================================
 
 export interface CartValidationIssue {
-	/** Identifiant de la ligne fautive — le variantId (cf. `CartItem.id`). */
-	cartItemId: string;
+	/** Identifiant de la ligne fautive — le variantId EST l'identité de la ligne. */
 	variantId: string;
 	productTitle: string;
-	issueType:
-		"OUT_OF_STOCK" | "INSUFFICIENT_STOCK" | "INACTIVE" | "NOT_PUBLIC" | "DELETED" | "UNKNOWN";
+	issueType: "OUT_OF_STOCK" | "INSUFFICIENT_STOCK" | "INACTIVE" | "NOT_PUBLIC";
 	message: string;
 }
 
@@ -71,7 +69,6 @@ export interface CartValidationIssue {
 // ============================================================================
 
 export interface CartItemForPriceCheck {
-	id: string;
 	priceAtAdd: number;
 	quantity: number;
 	variant: {
@@ -102,7 +99,6 @@ export interface PriceChangeResult<T extends CartItemForPriceCheck> {
 // ============================================================================
 
 export interface CartItemForValidation {
-	id: string;
 	variantId: string;
 	quantity: number;
 	variant: {

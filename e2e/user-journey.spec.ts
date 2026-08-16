@@ -49,8 +49,12 @@ test.describe("Navigation entre pages critiques", () => {
 
 		// Navigate to collections. Firefox/WebKit : un `goto()` lancé pendant
 		// qu'une navigation cliente du router est encore en vol est avorté
-		// (NS_BINDING_ABORTED) — on retente une fois.
-		await page.goto("/collections").catch(() => page.goto("/collections"));
+		// (NS_BINDING_ABORTED) — `toPass` retente SANS avaler l'échec final,
+		// contrairement à l'ancien `.catch(() => goto())` qui masquait toute
+		// erreur du second essai.
+		await expect(async () => {
+			await page.goto("/collections");
+		}).toPass({ timeout: 15_000 });
 		await page.waitForLoadState("domcontentloaded");
 		await expect(page).toHaveURL(/\/collections/);
 

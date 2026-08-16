@@ -3,16 +3,6 @@ import { logger } from "@/shared/lib/logger";
 
 import { readCartCookie } from "../lib/cart-cookie";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-type GetCartItemCountReturn = number;
-
-// ============================================================================
-// MAIN FUNCTIONS
-// ============================================================================
-
 /**
  * Récupère le nombre total d'articles dans le panier (badge de navigation).
  *
@@ -25,7 +15,7 @@ type GetCartItemCountReturn = number;
  * l'écarte. Le badge peut donc annoncer un article de plus que ce que la
  * cart-sheet affiche, jusqu'à la prochaine mutation du panier.
  */
-export async function getCartItemCount(): Promise<GetCartItemCountReturn> {
+export async function getCartItemCount(): Promise<number> {
 	try {
 		const cart = await readCartCookie();
 		return cart.items.reduce((sum, item) => sum + item.quantity, 0);

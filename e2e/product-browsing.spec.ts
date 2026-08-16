@@ -1,5 +1,6 @@
-import { VIEWPORTS } from "./constants";
+import { VIEWPORTS, requireSeedData } from "./constants";
 import { test, expect } from "./fixtures";
+import { waitForHydratedButton } from "./helpers/hydration";
 
 test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 	test("la page /produits charge correctement", async ({ page }) => {
@@ -15,12 +16,18 @@ test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 		await expect(productCatalogPage.heading).toBeVisible();
 	});
 
-	test("la page /produits affiche une barre d'outils (tri, filtres)", async ({ page }) => {
+	test("la page /produits affiche la barre de filtres", async ({ page }) => {
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		const toolbar = page.locator('[role="toolbar"], form').first();
-		await expect(toolbar).toBeAttached();
+		// La vraie barre d'outils : le ShelfBar « Filtres » (`product-filter-bar.tsx`),
+		// un `<nav aria-label="Filtres">` monté à TOUS les viewports mais `lg:hidden`
+		// (à partir de lg, c'est le rail qui porte filtres et tri) — d'où le locator
+		// CSS + `toBeAttached` : `getByRole` exclut les éléments masqués. L'ancien
+		// `'[role="toolbar"], form'` matchait le premier `<form>` venu de la page,
+		// quel qu'il soit — le test ne pouvait pas échouer.
+		const filterBar = page.locator('nav[aria-label="Filtres"]');
+		await expect(filterBar).toBeAttached();
 	});
 
 	test("la page /produits affiche des cartes produit ou un état vide", async ({
@@ -38,13 +45,15 @@ test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 	test("les cartes produit ont des liens cliquables", async ({ productCatalogPage }) => {
 		await productCatalogPage.goto();
 
+		// `requireSeedData` plutôt que l'ancien `if (count > 0)` : catalogue vide
+		// = échec en CI (le seed le garantit), skip motivé en local — jamais un
+		// test vert qui n'a rien assené.
 		const count = await productCatalogPage.productLinks.count();
+		requireSeedData(test, count > 0, "No products found");
 
-		if (count > 0) {
-			const firstLink = productCatalogPage.productLinks.first();
-			const href = await firstLink.getAttribute("href");
-			expect(href).toMatch(/\/creations\//);
-		}
+		const firstLink = productCatalogPage.productLinks.first();
+		const href = await firstLink.getAttribute("href");
+		expect(href).toMatch(/\/creations\//);
 	});
 
 	test("cliquer sur une carte produit navigue vers la page détail", async ({
@@ -86,9 +95,14 @@ test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 
 		await productCatalogPage.gotoFirstProduct();
 
-		const pricePattern = /\d+[,.]?\d*\s*€/;
-		const pageText = await page.textContent("body");
-		expect(pageText).toMatch(pricePattern);
+		// Le prix se lit DANS le bloc prix de la fiche (`product-price-display.tsx` :
+		// `#product-price-selected` avec variante sélectionnée, `#product-price-title`
+		// en « À partir de »). L'ancienne regex € sur le body entier matchait
+		// n'importe quel montant de la page (frais de port, cartes « Vous aimerez
+		// aussi »…) — un prix produit absent passait inaperçu.
+		const price = page.locator("#product-price-selected, #product-price-title").first();
+		await expect(price).toBeVisible();
+		await expect(price).toHaveText(/\d+[,.]?\d*\s*€/);
 	});
 
 	test("la page détail produit affiche un bouton d'ajout au panier ou de sélection SKU", async ({
@@ -159,10 +173,8 @@ test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		await page.waitForFunction(() => {
-			const button = document.querySelector('button[aria-label="Ouvrir la recherche rapide"]');
-			return !!button && Object.keys(button).some((key) => key.startsWith("__reactProps"));
-		});
+		// Hydratation du déclencheur : sonde centralisée (cf. helpers/hydration.ts).
+		await waitForHydratedButton(page, /^Ouvrir la recherche rapide$/);
 		await page
 			.getByRole("button", { name: /ouvrir la recherche rapide/i })
 			.first()

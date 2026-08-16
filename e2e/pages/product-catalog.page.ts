@@ -162,9 +162,20 @@ export class ProductCatalogPage {
 	}
 
 	/**
-	 * Navigate to catalog, pick the first product, add it to cart, and
-	 * wait for the cart dialog to appear. Skips the test if no products
-	 * or no add-to-cart button is found (variant selection required).
+	 * Navigate to catalog, pick the first product, select its variant options if
+	 * it has any, add it to cart, and wait for the cart dialog to appear.
+	 *
+	 * ⚠️ Ne renonce PLUS quand le produit exige une sélection de variante (audit
+	 * e2e 2026-08-16). L'ancien `{ skipped: true, reason: "Product requires SKU
+	 * selection" }` était le skip le plus coûteux de la suite : il dépendait de
+	 * l'ORDRE du seed, et comme presque tout le chemin argent passe par ce
+	 * helper (`@critical` compris — panier, checkout, cohérence des montants),
+	 * un simple réordonnancement du catalogue pouvait désactiver la couverture
+	 * du paiement en silence. Sélectionner la variante est ce que fait une
+	 * cliente : c'est le comportement à tester, pas une raison de s'arrêter.
+	 *
+	 * Seul « catalogue vide » reste un skip — et il porte `seedData: true`, donc
+	 * `requireSeedData` en fait un ÉCHEC en CI.
 	 */
 	async addFirstProductToCart(cartPage: CartPage): Promise<AddToCartResult> {
 		await this.goto();
@@ -176,11 +187,13 @@ export class ProductCatalogPage {
 
 		await this.gotoFirstProduct();
 
-		const addButtonCount = await this.addToCartButton.count();
-		if (addButtonCount === 0) {
-			return { skipped: true, reason: "Product requires SKU selection", seedData: false };
+		if (await this.hasVariantSelector()) {
+			await this.selectAllVariantOptions();
 		}
 
+		// Le CTA n'apparaît qu'une fois la combinaison résolue : l'attendre plutôt
+		// que de compter (le bloc d'achat est un client component hydraté).
+		await expect(this.addToCartButton.first()).toBeVisible({ timeout: 15_000 });
 		await this.addToCartButton.first().click();
 		await expect(cartPage.dialog).toBeVisible({ timeout: 5000 });
 

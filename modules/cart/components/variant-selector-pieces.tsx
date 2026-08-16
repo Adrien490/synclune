@@ -3,9 +3,8 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { ArrowRightIcon, WarningIcon } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
-import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { ResponsiveDialogFooter } from "@/shared/components/responsive-dialog";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
@@ -39,8 +38,6 @@ export interface VariantSelectorPiecesProps {
 	cartItems: { variantId: string; quantity: number }[];
 	preselectedColor?: string | null;
 	isPending: boolean;
-	isStoreClosed: boolean;
-	storeClosureMessage: string | null;
 	onClose: () => void;
 }
 
@@ -63,8 +60,6 @@ export function VariantSelectorPieces({
 	cartItems,
 	preselectedColor,
 	isPending,
-	isStoreClosed,
-	storeClosureMessage,
 	onClose,
 }: VariantSelectorPiecesProps) {
 	const [chosenId, setChosenId] = useState<string | null>(null);
@@ -88,7 +83,7 @@ export function VariantSelectorPieces({
 	// plus que `stock − déjà au panier` déclencherait un INSUFFICIENT_STOCK.
 	const submittedQuantity = maxQuantity > 0 ? Math.min(quantity, maxQuantity) : 1;
 
-	const canAddToCart = Boolean(selectedVariant) && !selectedStock?.isBlocked && !isStoreClosed;
+	const canAddToCart = Boolean(selectedVariant) && !selectedStock?.isBlocked;
 	const hasAnySize = activeVariants.some((variant) => Boolean(variant.size));
 
 	const selectPiece = (variant: ActiveVariant) => {
@@ -133,15 +128,6 @@ export function VariantSelectorPieces({
 					"motion-safe:transition-opacity motion-safe:duration-200",
 				)}
 			>
-				{isStoreClosed && (
-					<Alert variant="warning">
-						<WarningIcon aria-hidden="true" />
-						<AlertDescription>
-							{storeClosureMessage ?? VARIANT_SELECTOR_TEXTS.STORE_CLOSED_FALLBACK}
-						</AlertDescription>
-					</Alert>
-				)}
-
 				{/* `pt-2` : le scotch dépasse de 6 px au-dessus de la première ligne, et le
 				    conteneur ci-dessus défile — sans cette réserve il serait rogné. */}
 				<div

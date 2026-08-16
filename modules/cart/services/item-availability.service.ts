@@ -10,13 +10,9 @@ import type {
 // Pure functions for checking cart item availability
 // ============================================================================
 
-/**
- * Schéma lean : plus de soft delete — une ligne dont le variant a disparu de la
- * base est traitée en amont (variant introuvable), ce prédicat est toujours faux.
- */
-export function isCartItemDeleted(_item: CartItemForValidation): boolean {
-	return false;
-}
+// Schéma lean : plus de soft delete. Une ligne dont le variant a disparu de la
+// base est écartée en amont (`readCartWithVariants`, `getCart`) — il n'existe
+// donc pas de prédicat « supprimé » ici, ni d'issueType « DELETED ».
 
 /**
  * Vérifie si le VARIANT est inactif
@@ -66,7 +62,6 @@ export function hasInsufficientStock(item: CartItemForValidation): boolean {
  */
 export function isCartItemUnavailable(item: CartItemForValidation): boolean {
 	return (
-		isCartItemDeleted(item) ||
 		isCartItemVariantInactive(item) ||
 		isCartItemProductNotPublic(item) ||
 		item.variant.stock < item.quantity
@@ -78,26 +73,11 @@ export function isCartItemUnavailable(item: CartItemForValidation): boolean {
  * Utilisé pour la validation complète du panier avec messages d'erreur
  */
 export function checkCartItemAvailability(item: CartItemForValidation): AvailabilityCheckResult {
-	// Vérifier les soft deletes
-	if (isCartItemDeleted(item)) {
-		return {
-			isAvailable: false,
-			issue: {
-				cartItemId: item.id,
-				variantId: item.variantId,
-				productTitle: item.variant.product.name,
-				issueType: "DELETED",
-				message: CART_ERROR_MESSAGES.PRODUCT_DELETED,
-			},
-		};
-	}
-
 	// Vérifier l'activation du VARIANT
 	if (isCartItemVariantInactive(item)) {
 		return {
 			isAvailable: false,
 			issue: {
-				cartItemId: item.id,
 				variantId: item.variantId,
 				productTitle: item.variant.product.name,
 				issueType: "INACTIVE",
@@ -111,7 +91,6 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 		return {
 			isAvailable: false,
 			issue: {
-				cartItemId: item.id,
 				variantId: item.variantId,
 				productTitle: item.variant.product.name,
 				issueType: "NOT_PUBLIC",
@@ -125,7 +104,6 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 		return {
 			isAvailable: false,
 			issue: {
-				cartItemId: item.id,
 				variantId: item.variantId,
 				productTitle: item.variant.product.name,
 				issueType: "OUT_OF_STOCK",
@@ -139,7 +117,6 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 		return {
 			isAvailable: false,
 			issue: {
-				cartItemId: item.id,
 				variantId: item.variantId,
 				productTitle: item.variant.product.name,
 				issueType: "INSUFFICIENT_STOCK",

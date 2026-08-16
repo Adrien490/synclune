@@ -147,15 +147,13 @@ jobs:
     # env vars matching the Zod schema in shared/schemas/env.schema.ts.
     env:
       DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
-      BETTER_AUTH_SECRET: "ci-placeholder-secret-32-chars-min!"
-      BETTER_AUTH_URL: "http://localhost:3000"
+      AUTH_SECRET: "ci-placeholder-secret-32-chars-min!"
+      ADMIN_PASSWORD: "ci-placeholder-password!"
       STRIPE_SECRET_KEY: "sk_test_placeholder"
       STRIPE_WEBHOOK_SECRET: "whsec_placeholder"
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_placeholder"
       RESEND_API_KEY: "re_placeholder"
       RESEND_CONTACT_EMAIL: "ci@example.com"
       UPLOADTHING_TOKEN: "ci-placeholder-token"
-      CRON_SECRET: "ci-placeholder-cron-secret-32-chars!"
       NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -241,44 +239,44 @@ jobs:
       - name: Push database schema
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: http://localhost:3000
+          # Auth maison (migration lean) : valeurs éphémères, le serveur e2e est
+          # local au runner — aucun besoin d'un secret partagé.
+          AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
+          ADMIN_PASSWORD: "ci-e2e-admin-password!"
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_BASE_URL: http://localhost:3000
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_CONTACT_EMAIL: ci-e2e@example.com
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
-          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
         run: pnpm prisma db push --skip-generate
       - name: Seed database
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: http://localhost:3000
+          # Auth maison (migration lean) : valeurs éphémères, le serveur e2e est
+          # local au runner — aucun besoin d'un secret partagé.
+          AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
+          ADMIN_PASSWORD: "ci-e2e-admin-password!"
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_BASE_URL: http://localhost:3000
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_CONTACT_EMAIL: ci-e2e@example.com
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
-          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
         run: pnpm seed
       - name: Build application
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: http://localhost:3000
+          # Auth maison (migration lean) : valeurs éphémères, le serveur e2e est
+          # local au runner — aucun besoin d'un secret partagé.
+          AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
+          ADMIN_PASSWORD: "ci-e2e-admin-password!"
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_BASE_URL: http://localhost:3000
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_CONTACT_EMAIL: ci-e2e@example.com
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
-          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
         run: pnpm build
       - name: Get Playwright version
         id: playwright-version
@@ -298,16 +296,16 @@ jobs:
       - name: Run E2E suite
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: http://localhost:3000
+          # Auth maison (migration lean) : valeurs éphémères, le serveur e2e est
+          # local au runner — aucun besoin d'un secret partagé.
+          AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
+          ADMIN_PASSWORD: "ci-e2e-admin-password!"
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_BASE_URL: http://localhost:3000
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_CONTACT_EMAIL: ci-e2e@example.com
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
-          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
         run: pnpm e2e
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()

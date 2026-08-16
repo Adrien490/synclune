@@ -68,26 +68,28 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		});
 		expect(focusInDialog).toBe(true);
 
-		// Tab to the checkout link
+		// Le lien de checkout est une GARANTIE du panier non vide : son absence
+		// est un bug produit, pas une variante d'UI. L'ancien
+		// `if (count() > 0)` amputait en silence toute la moitié checkout du
+		// parcours — le test restait vert sans jamais atteindre /paiement.
 		const checkoutLink = cartPage.checkoutLink;
-		if ((await checkoutLink.count()) > 0) {
-			await checkoutLink.focus();
-			await expect(checkoutLink).toBeFocused();
-			await page.keyboard.press("Enter");
+		await expect(checkoutLink).toBeVisible();
+		await checkoutLink.focus();
+		await expect(checkoutLink).toBeFocused();
+		await page.keyboard.press("Enter");
 
-			// 4. Checkout page — HÉBERGÉ (lot 3) : la page n'a plus que le select
-			// « Pays de livraison » et le bouton « Payer avec Stripe ». Le parcours
-			// clavier s'arrête ici : la suite se joue sur checkout.stripe.com.
-			await page.waitForURL(/\/paiement/);
+		// 4. Checkout page — HÉBERGÉ (lot 3) : la page n'a plus que le select
+		// « Pays de livraison » et le bouton « Payer avec Stripe ». Le parcours
+		// clavier s'arrête ici : la suite se joue sur checkout.stripe.com.
+		await page.waitForURL(/\/paiement/);
 
-			const countrySelect = page.getByLabel(/Pays de livraison/i);
-			await countrySelect.focus();
-			await expect(countrySelect).toBeFocused();
+		const countrySelect = page.getByLabel(/Pays de livraison/i);
+		await countrySelect.focus();
+		await expect(countrySelect).toBeFocused();
 
-			await page.keyboard.press("Tab");
-			const payButton = page.getByRole("button", { name: /Payer avec Stripe/i });
-			await expect(payButton).toBeVisible();
-		}
+		await page.keyboard.press("Tab");
+		const payButton = page.getByRole("button", { name: /Payer avec Stripe/i });
+		await expect(payButton).toBeVisible();
 	});
 
 	test("navigation clavier dans la galerie produit", async ({ page }) => {
@@ -102,33 +104,27 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		await page.goto(href);
 		await page.waitForLoadState("domcontentloaded");
 
-		// Look for thumbnail buttons in the product gallery
-		// ⚠️ `.filter({ visible: true })` : la PDP rend plusieurs copies de la
-		// galerie (bascules CSS) — le `.first()` nu tombait sur une miniature
-		// masquée, que `focus()` ne peut pas atteindre (« inactive »).
-		const thumbnails = page
-			.locator(
-				"button[aria-label*='miniature' i], button[aria-label*='thumbnail' i], [data-gallery] button, [role='tablist'] button",
-			)
-			.filter({ visible: true })
-			.first();
-		if ((await thumbnails.count()) === 0) {
-			// Try generic image gallery buttons
-			const galleryButtons = page
-				.locator("[data-gallery] button, .gallery button")
-				.filter({ visible: true })
-				.first();
-			if ((await galleryButtons.count()) === 0) {
-				test.skip(true, "Pas de galerie avec miniatures");
-				return;
-			}
-			await galleryButtons.focus();
-			await expect(galleryButtons).toBeFocused();
-			return;
-		}
+		// La galerie RÉELLE (cf. product-gallery.spec.ts) : région carrousel dont
+		// les vignettes sont des `[role="tab"]` dans un tablist. L'ancienne union
+		// de 4 sélecteurs spéculatifs (`[data-gallery]`, `.gallery`,
+		// `aria-label*='miniature'`…) ne matchait RIEN de ce que le code rend — la
+		// branche « Pas de galerie avec miniatures » skippait le test à tous coups.
+		// ⚠️ `.filter({ visible: true })` : deux tablists coexistent (colonne
+		// desktop + rail mobile), chacun masqué hors de son viewport — le `.first()`
+		// nu tomberait sur une vignette masquée, que `focus()` ne peut pas atteindre.
+		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]').first();
+		const tablist = gallery.locator('[role="tablist"]').filter({ visible: true }).first();
+		// La galerie (client component) arrive après hydratation ; sans vignettes
+		// (produit à une seule vue), le waitFor expire et le count vaut 0.
+		await tablist.waitFor({ state: "visible", timeout: 15000 }).catch(() => {
+			/* produit à une seule vue : pas de tablist rendu */
+		});
+		const thumbnails = tablist.locator('[role="tab"]');
+		test.skip((await thumbnails.count()) === 0, "Produit à une seule vue — pas de vignettes");
 
-		await thumbnails.focus();
-		await expect(thumbnails).toBeFocused();
+		const firstThumbnail = thumbnails.first();
+		await firstThumbnail.focus();
+		await expect(firstThumbnail).toBeFocused();
 
 		// Tab to next thumbnail. WebKit suit la politique Safari : Tab saute les
 		// boutons/liens et retombe sur <body> — on l'admet là-bas uniquement.

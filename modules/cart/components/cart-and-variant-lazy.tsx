@@ -22,8 +22,6 @@ const VariantSelectorDialog = dynamic(
 interface CartAndVariantLazyProps {
 	cart: GetCartReturn;
 	recommendations?: React.ReactNode;
-	isStoreClosed?: boolean;
-	storeClosureMessage?: string | null;
 }
 
 /**
@@ -39,12 +37,7 @@ interface CartAndVariantLazyProps {
  * `*HasOpened` flips during render (no effect) once the store becomes open.
  * React docs: storing information from previous renders.
  */
-export function CartAndVariantLazy({
-	cart,
-	recommendations,
-	isStoreClosed = false,
-	storeClosureMessage = null,
-}: CartAndVariantLazyProps) {
+export function CartAndVariantLazy({ cart, recommendations }: CartAndVariantLazyProps) {
 	const cartOpen = useSheet("cart").isOpen;
 	const variantOpen = useDialog(VARIANT_SELECTOR_DIALOG_ID).isOpen;
 
@@ -59,14 +52,7 @@ export function CartAndVariantLazy({
 			{cartHasOpened && (
 				<CartSheet key="cart-sheet" cart={cart} recommendations={recommendations} />
 			)}
-			{variantHasOpened && (
-				<VariantSelectorDialog
-					key="variant-selector"
-					cart={cart}
-					isStoreClosed={isStoreClosed}
-					storeClosureMessage={storeClosureMessage}
-				/>
-			)}
+			{variantHasOpened && <VariantSelectorDialog key="variant-selector" cart={cart} />}
 		</>
 	);
 }

@@ -7,10 +7,10 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateTime } from "@/shared/utils/dates";
 
 import type { RetractationDetail as RetractationDetailData } from "../../data/get-retractation";
+import { retractationOrderLabel } from "../../utils/retractation-order-label";
 import { RefundDeadlineBadge } from "./refund-deadline-badge";
 import { RetractationDetailActions } from "./retractation-detail-actions";
 import { RetractationStatusBadge } from "./retractation-status-badge";
-import { retractationOrderLabel } from "./retractations-list";
 
 /** Détail d'une demande — commande liée en snapshots, chronologie, actions. */
 export function RetractationDetail({ retractation }: { retractation: RetractationDetailData }) {

@@ -14,7 +14,10 @@ import { writeCartCookie } from "@/modules/cart/lib/cart-cookie";
  * - Stock insuffisant (variant.stock < quantity)
  * - VARIANT inactif (variant.active = false)
  * - Produit non public (!product.active)
- * - VARIANT ou produit soft-deleted
+ * - VARIANT disparu de la base (la ligne du cookie n'a plus de contrepartie)
+ *
+ * Déclencheur UI : `CartRemoveUnavailableButton`, dans l'alerte stock du
+ * cart-sheet (câblé le 2026-08-15 — l'action existait sans appelant).
  *
  * Compatible avec useActionState de React 19
  */

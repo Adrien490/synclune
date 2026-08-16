@@ -1,32 +1,149 @@
+import type { Page } from "@playwright/test";
 import { test, expect } from "../fixtures";
+import { getE2ePrisma } from "../helpers/db";
+import { TEST_RUN_ID } from "../helpers/test-run";
+import { waitForHydratedButton } from "../helpers/hydration";
+
+/**
+ * Pagination curseur de l'admin.
+ *
+ * ⚠️ Huit de ces tests se SKIPPAIENT quand le catalogue tenait sur une page
+ * (« No next page button — not enough data »), et rien ne garantissait le
+ * contraire : le seed rend 14 produits pour une page de 20
+ * (`GET_PRODUCTS_DEFAULT_PER_PAGE`). Toute la suite pouvait donc être verte en
+ * n'ayant rien exercé (audit e2e 2026-08-16). On sème désormais de quoi FORCER
+ * une deuxième page, et les skips deviennent des échecs si la barre manque.
+ */
+const PER_PAGE = 20;
+const PRODUCTS_TO_SEED = 12;
+const SEED_PREFIX = `Pagination ${TEST_RUN_ID}`;
+
+/**
+ * Le compteur VISIBLE, pas l'annonce lecteur d'écran.
+ *
+ * ⚠️ `AdminDataTable` rend aussi une live region `sr-only` (« Page chargée,
+ * 20 sur 26 résultats. ») qui matche le même motif et arrive PREMIÈRE dans le
+ * DOM : un `getByText(...).first()` tombait dessus et échouait en « hidden ».
+ * Même piège que celui documenté dans `helpers/assertions.ts`. Filtrer sur la
+ * visibilité est la seule forme correcte — un `locator(":not(.sr-only)")`
+ * englobant ne sert à rien, il matche aussi les ANCÊTRES du nœud sr-only.
+ */
+function visibleResultCount(page: Page) {
+	return page
+		.getByText(/\d+( sur \d+)? résultats?/)
+		.filter({ visible: true })
+		.first();
+}
+
+/**
+ * Le sélecteur « par page » VISIBLE : la barre est rendue en deux variantes
+ * (compacte et large), donc le libellé résout à plusieurs nœuds dont un seul
+ * est peint au viewport courant.
+ */
+function visiblePerPageSelect(page: Page) {
+	return page
+		.getByLabel(/Nombre de résultats par page/i)
+		.filter({ visible: true })
+		.first();
+}
+
+/**
+ * Va à la page suivante et ATTEND que l'URL porte le curseur.
+ *
+ * ⚠️ Les boutons de `CursorPagination` poussent l'état via le router : un clic
+ * ANTÉRIEUR à l'hydratation est avalé sans erreur, l'URL ne bouge pas. Ces
+ * tests ne l'avaient jamais rencontré parce qu'ils se skippaient tous faute de
+ * page 2 (audit 2026-08-16) — le semis les a réveillés, et ce piège avec.
+ */
+async function goToNextPage(page: Page) {
+	const nextButton = page.getByRole("button", { name: /Page suivante/i });
+	await expect(nextButton).toBeVisible({ timeout: 15_000 });
+	await waitForHydratedButton(page, /Page suivante/i);
+	await expect(async () => {
+		if (!page.url().includes("cursor=")) {
+			await nextButton.click({ timeout: 2000 }).catch(() => {});
+		}
+		expect(page.url()).toContain("cursor=");
+	}).toPass({ timeout: 20_000 });
+}
 
 test.describe("Admin - Pagination cursor", { tag: ["@regression"] }, () => {
-	test("la pagination est visible sur la page produits", async ({ page, adminPage }) => {
+	/**
+	 * ⚠️ `beforeAll` s'exécute une fois PAR WORKER (3 en local, 4 en CI) : trois
+	 * workers créaient les mêmes slugs et deux échouaient en P2002, tuant leurs
+	 * tests (« 5 did not run »). D'où l'`upsert` — idempotent, donc chaque worker
+	 * converge sur le même jeu au lieu d'entrer en collision.
+	 *
+	 * Et PAS d'`afterAll` : il s'exécuterait lui aussi par worker et supprimerait
+	 * les produits des workers encore en cours. Le nettoyage revient au teardown
+	 * global, qui ramasse tout produit dont le slug contient « e2e- ».
+	 */
+	test.beforeAll(async () => {
+		const prisma = getE2ePrisma();
+		const existing = await prisma.product.count();
+		const missing = Math.max(0, PER_PAGE + 1 - existing);
+		const toCreate = Math.max(PRODUCTS_TO_SEED, missing);
+
+		for (let i = 0; i < toCreate; i++) {
+			// Numérotation zéro-paddée : l'ordre alphabétique est stable, donc la
+			// tranche de la page 2 l'est aussi d'un run à l'autre.
+			const index = String(i).padStart(2, "0");
+			const slug = `pagination-${TEST_RUN_ID}-${index}`;
+			try {
+				await prisma.product.create({
+					data: {
+						slug,
+						name: `${SEED_PREFIX} ${index}`,
+						description: "Produit semé par les E2E pour garantir une deuxième page.",
+						priceCents: 1500 + i,
+						active: false,
+						variants: { create: { stock: 1 } },
+					},
+				});
+			} catch (e) {
+				// ⚠️ P2002 TOLÉRÉ : `upsert` ne suffit pas — il n'est pas atomique,
+				// deux workers constatent tous deux l'absence puis insèrent. La
+				// collision signifie « un autre worker a déjà semé cette ligne »,
+				// exactement le résultat voulu. Même stratégie que le retry P2002 du
+				// compteur de factures.
+				if (!(e instanceof Error && (e as { code?: string }).code === "P2002")) throw e;
+			}
+		}
+	});
+
+	test("la barre de pagination existe — le semis garantit une deuxième page", async ({
+		page,
+		adminPage,
+	}) => {
+		await adminPage.gotoProducts();
+		await expect(page.getByRole("navigation", { name: /Pagination/i })).toBeVisible({
+			timeout: 15_000,
+		});
+		await expect(page.getByRole("button", { name: /Page suivante/i })).toBeVisible();
+	});
+
+	test("la barre de pagination rend AUSSI le sélecteur « par page »", async ({
+		page,
+		adminPage,
+	}) => {
 		await adminPage.gotoProducts();
 
-		const pagination = page.getByRole("navigation", { name: /Pagination/i });
-		const paginationVisible = await pagination.isVisible().catch(() => false);
-
-		if (!paginationVisible) {
-			// Une seule page : `CursorPagination` retourne `null` et masque TOUTE la
-			// barre, sélecteur « par page » compris. L'ancienne version de ce test
-			// affirmait ici que le sélecteur restait visible — assertion impossible à
-			// satisfaire, qui échouait dès que le seed tenait sur une page.
-			await expect(page.getByLabel(/Nombre de résultats par page/i)).toBeHidden();
-			// Le compteur de résultats, lui, reste rendu par `AdminDataTable` hors de
-			// la zone conditionnelle : c'est tout l'intérêt de l'avoir sorti de la barre.
-			await expect(page.getByText(/\d+ résultats?/).first()).toBeVisible();
-			return;
-		}
-
-		await expect(pagination).toBeVisible();
+		// `CursorPagination` rend la barre ENTIÈRE ou rien : quand elle est là, le
+		// sélecteur « par page » l'est aussi. (Le cas « une seule page » n'est plus
+		// atteignable ici — le semis force la page 2 — et le compteur de résultats,
+		// lui, vit hors de la barre, dans `AdminDataTable`.)
+		await expect(page.getByRole("navigation", { name: /Pagination/i })).toBeVisible({
+			timeout: 15_000,
+		});
+		await expect(visiblePerPageSelect(page)).toBeVisible();
+		await expect(visibleResultCount(page)).toBeVisible();
 	});
 
 	test("le compteur de résultats est toujours affiché", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
 		// Rendu par `AdminDataTable`, donc indépendant du nombre de pages.
-		await expect(page.getByText(/\d+( sur \d+)? résultats?/).first()).toBeVisible();
+		await expect(visibleResultCount(page)).toBeVisible();
 	});
 
 	test("changer le tri depuis la page 2 repart du debut (curseur purge)", async ({
@@ -35,13 +152,7 @@ test.describe("Admin - Pagination cursor", { tag: ["@regression"] }, () => {
 	}) => {
 		await adminPage.gotoProducts();
 
-		const nextButton = page.getByRole("button", { name: /Page suivante/i });
-		const nextVisible = await nextButton.isVisible().catch(() => false);
-		test.skip(!nextVisible, "No next page button - not enough data for pagination");
-
-		await nextButton.click();
-		await page.waitForLoadState("domcontentloaded");
-		expect(page.url()).toContain("cursor=");
+		await goToNextPage(page);
 
 		// Changer le tri depuis une page profonde doit purger cursor + direction :
 		// sinon Prisma se repositionne sur un id de l'ANCIEN tri et rend une
@@ -50,9 +161,10 @@ test.describe("Admin - Pagination cursor", { tag: ["@regression"] }, () => {
 		await sortTrigger.click();
 		const option = page.getByRole("option").nth(1);
 		await option.click();
-		await page.waitForLoadState("domcontentloaded");
 
-		expect(page.url()).not.toContain("cursor=");
+		// Le router pousse de façon ASYNCHRONE : lire `page.url()` juste après le
+		// clic observe encore l'URL de la page 2. On attend la purge.
+		await expect.poll(() => page.url(), { timeout: 15_000 }).not.toContain("cursor=");
 		expect(page.url()).not.toContain("direction=");
 	});
 
@@ -94,143 +206,112 @@ test.describe("Admin - Pagination cursor", { tag: ["@regression"] }, () => {
 	test("naviguer page suivante met a jour l'URL", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
-		const nextButton = page.getByRole("button", { name: /Page suivante/i });
-		const nextVisible = await nextButton.isVisible().catch(() => false);
-		test.skip(!nextVisible, "No next page button - not enough data for pagination");
-
-		await nextButton.click();
-		await page.waitForLoadState("domcontentloaded");
+		await goToNextPage(page);
 
 		// URL should contain cursor and direction params
-		const url = page.url();
-		expect(url).toContain("cursor=");
-		expect(url).toContain("direction=forward");
+		expect(page.url()).toContain("cursor=");
+		expect(page.url()).toContain("direction=forward");
 	});
 
 	test("naviguer page precedente met a jour l'URL", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
 		// First, go to page 2
-		const nextButton = page.getByRole("button", { name: /Page suivante/i });
-		const nextVisible = await nextButton.isVisible().catch(() => false);
-		test.skip(!nextVisible, "No next page button - not enough data for pagination");
-
-		await nextButton.click();
-		await page.waitForLoadState("domcontentloaded");
+		await goToNextPage(page);
 
 		// Then go back
 		const prevButton = page.getByRole("button", { name: /Page précédente/i });
 		await expect(prevButton).toBeEnabled();
 		await prevButton.click();
-		await page.waitForLoadState("domcontentloaded");
 
-		const url = page.url();
-		expect(url).toContain("direction=backward");
+		await expect.poll(() => page.url(), { timeout: 15_000 }).toContain("direction=backward");
 	});
 
 	test("retour au debut supprime le cursor de l'URL", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
-		const nextButton = page.getByRole("button", { name: /Page suivante/i });
-		const nextVisible = await nextButton.isVisible().catch(() => false);
-		test.skip(!nextVisible, "No next page button - not enough data for pagination");
-
-		// Go to page 2
-		await nextButton.click();
-		await page.waitForLoadState("domcontentloaded");
-		expect(page.url()).toContain("cursor=");
+		await goToNextPage(page);
 
 		// Click reset
 		const resetButton = page.getByRole("button", { name: /Retour au début/i });
 		await expect(resetButton).toBeEnabled();
 		await resetButton.click();
-		await page.waitForLoadState("domcontentloaded");
 
 		// URL should no longer have cursor or direction
-		const url = page.url();
-		expect(url).not.toContain("cursor=");
-		expect(url).not.toContain("direction=");
+		await expect.poll(() => page.url(), { timeout: 15_000 }).not.toContain("cursor=");
+		expect(page.url()).not.toContain("direction=");
 	});
 
 	test("changer le nombre par page reset le cursor", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
-		// First navigate to page 2 if possible
-		const nextButton = page.getByRole("button", { name: /Page suivante/i });
-		const nextVisible = await nextButton.isVisible().catch(() => false);
+		// Page 2 d'abord — garantie par le semis de `beforeAll`.
+		await goToNextPage(page);
 
-		if (nextVisible) {
-			await nextButton.click();
-			await page.waitForLoadState("domcontentloaded");
-			expect(page.url()).toContain("cursor=");
-		}
-
-		// Change per-page — la barre entière (sélecteur compris) est absente quand la
-		// liste tient sur une page : rien à tester dans ce cas.
-		const perPageTrigger = page.getByLabel(/Nombre de résultats par page/i);
-		test.skip(
-			(await perPageTrigger.count()) === 0,
-			"Pas de sélecteur par page (liste sur une seule page)",
-		);
+		const perPageTrigger = visiblePerPageSelect(page);
 		await expect(perPageTrigger).toBeVisible();
 		await perPageTrigger.click();
 
-		// Select 50
 		const option50 = page.getByRole("option", { name: "50" });
-		const option50Visible = await option50.isVisible().catch(() => false);
-		test.skip(!option50Visible, "No per-page option 50 found");
-
+		await expect(option50).toBeVisible();
 		await option50.click();
-		await page.waitForLoadState("domcontentloaded");
 
 		// URL should have perPage=50 but no cursor
-		const url = page.url();
-		expect(url).toContain("perPage=50");
-		expect(url).not.toContain("cursor=");
+		await expect.poll(() => page.url(), { timeout: 15_000 }).toContain("perPage=50");
+		expect(page.url()).not.toContain("cursor=");
 	});
 
 	test("le status badge indique la position courante", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
 		const pagination = page.getByRole("navigation", { name: /Pagination/i });
-		const paginationVisible = await pagination.isVisible().catch(() => false);
-		test.skip(!paginationVisible, "No pagination visible");
+		await expect(pagination).toBeVisible({ timeout: 15_000 });
 
-		// On first page, should show "Première page"
-		await expect(page.getByText("Première page")).toBeVisible();
+		// Le badge porte un rôle et un nom accessibles : on le cible par là plutôt
+		// que par son texte (rendu en double avec la barre compacte).
+		const positionBadge = page
+			.getByRole("status", { name: /Position actuelle dans la pagination/i })
+			.filter({ visible: true })
+			.first();
+		await expect(positionBadge).toHaveText("Première page");
 
 		// Navigate to next page
-		const nextButton = page.getByRole("button", { name: /Page suivante/i });
-		const nextEnabled = await nextButton.isEnabled().catch(() => false);
-		test.skip(!nextEnabled, "Next button not enabled");
+		await goToNextPage(page);
 
-		await nextButton.click();
-		await page.waitForLoadState("domcontentloaded");
-
-		// Should show "Suite" or "Dernière page"
-		const suite = page.getByText("Suite");
-		const derniere = page.getByText("Dernière page");
-		await expect(suite.or(derniere).first()).toBeVisible({ timeout: 5000 });
+		// Page 2 : le badge quitte « Première page » pour « Suite » ou, si c'est la
+		// dernière, « Dernière page ». Le contrat vérifié est le CHANGEMENT.
+		await expect(positionBadge).toHaveText(/^(Suite|Dernière page)$/, { timeout: 10_000 });
 	});
 
 	test("les raccourcis clavier Alt+Fleche fonctionnent", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
-		const nextButton = page.getByRole("button", { name: /Page suivante/i });
-		const nextVisible = await nextButton.isVisible().catch(() => false);
-		test.skip(!nextVisible, "No next page button - not enough data for pagination");
+		await expect(page.getByRole("button", { name: /Page suivante/i })).toBeVisible({
+			timeout: 15_000,
+		});
+		// Le raccourci est posé par un effet du composant : sans hydratation, la
+		// frappe part dans le vide (même piège que le clic, cf. `goToNextPage`).
+		await waitForHydratedButton(page, /Page suivante/i);
 
-		// Use Alt+ArrowRight to go next
-		await page.keyboard.press("Alt+ArrowRight");
-		await page.waitForLoadState("domcontentloaded");
-
-		expect(page.url()).toContain("cursor=");
+		// ⚠️ `onKeyDown` IGNORE les frappes dont la cible est interactive
+		// (`isInteractiveTarget`) : si le focus traîne sur un lien de la liste, le
+		// raccourci ne fait rien. On le ramène sur le body avant chaque tentative.
+		await expect(async () => {
+			if (!page.url().includes("cursor=")) {
+				await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+				await page.keyboard.press("Alt+ArrowRight");
+			}
+			expect(page.url()).toContain("cursor=");
+		}).toPass({ timeout: 20_000 });
 		expect(page.url()).toContain("direction=forward");
 
 		// Use Alt+ArrowLeft to go back
-		await page.keyboard.press("Alt+ArrowLeft");
-		await page.waitForLoadState("domcontentloaded");
-
-		expect(page.url()).toContain("direction=backward");
+		await expect(async () => {
+			if (!page.url().includes("direction=backward")) {
+				await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+				await page.keyboard.press("Alt+ArrowLeft");
+			}
+			expect(page.url()).toContain("direction=backward");
+		}).toPass({ timeout: 20_000 });
 	});
 });

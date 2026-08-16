@@ -4,8 +4,13 @@
  *
  * Format: `e2e-{timestamp}` — short enough to be human-readable,
  * unique enough to avoid collisions between parallel runs.
+ *
+ * ⚠️ Set ONCE by `global-setup.ts` in the main process : evaluating
+ * `Date.now()` here gave every worker its own ID, so any test matching data
+ * created by another worker (`hasText: TEST_RUN_ID`) skipped forever. The
+ * fallback only serves contexts outside a Playwright run (vitest meta-tests).
  */
-export const TEST_RUN_ID = `e2e-${Date.now()}`;
+export const TEST_RUN_ID = process.env.E2E_TEST_RUN_ID ?? `e2e-${Date.now()}`;
 
 /** Email domain used for all test-created accounts */
 export const TEST_EMAIL_DOMAIN = "synclune-test.com";
@@ -25,9 +30,3 @@ export function testEmail(suffix: string): string {
 export function testName(base: string): string {
 	return `${base}-${TEST_RUN_ID}`;
 }
-
-/**
- * Pattern that matches ALL test-created emails (across any run).
- * Used by global teardown for cleanup.
- */
-export const TEST_EMAIL_PATTERN = `e2e-%@${TEST_EMAIL_DOMAIN}`;

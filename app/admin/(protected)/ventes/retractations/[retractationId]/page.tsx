@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
 import { getRetractationById } from "@/modules/retractations/data/get-retractation";
 import { RetractationDetail } from "@/modules/retractations/components/admin/retractation-detail";
-import { retractationOrderLabel } from "@/modules/retractations/components/admin/retractations-list";
+import { retractationOrderLabel } from "@/modules/retractations/utils/retractation-order-label";
 import { PageHeader } from "@/shared/components/page-header";
 
 const RetractationDialogs = dynamic(() =>

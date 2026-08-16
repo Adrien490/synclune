@@ -1,7 +1,7 @@
 "use client";
 
 import { formatEuro } from "@/shared/utils/format-euro";
-import type { GetCartReturn } from "@/modules/cart/data/get-cart";
+import type { CartItem } from "@/modules/cart/types/cart.types";
 import { Button } from "@/shared/components/ui/button";
 import { useUpdateCartPrices } from "@/modules/cart/hooks/use-update-cart-prices";
 import { ArrowsClockwiseIcon, PiggyBankIcon, WarningIcon } from "@phosphor-icons/react/ssr";
@@ -10,9 +10,10 @@ import {
 	detectPriceChanges,
 	isPriceIncrease,
 } from "@/modules/cart/services/cart-pricing-calculator.service";
+import { PRICE_INCREASE_ALERT_ID } from "./price-increase-alert-id";
 
 interface CartPriceChangeAlertProps {
-	items: NonNullable<GetCartReturn>["items"];
+	items: CartItem[];
 }
 
 /**
@@ -25,6 +26,14 @@ interface CartPriceChangeAlertProps {
  *
  * Compare priceAtAdd (snapshot) vs variant.priceCents (prix actuel).
  * Permet à l'utilisateur de mettre à jour les prix snapshot vers les prix actuels.
+ *
+ * ⚠️ La copy de la branche « hausse » et le blocage du CTA vont ENSEMBLE :
+ * `createCheckoutSession` facture toujours le prix courant en base, jamais
+ * `priceAtAdd`. Tant qu'une hausse n'est pas actualisée, `CartSheetFooter`
+ * bloque « Passer commande » et renvoie ici — c'est ce qui rend la phrase
+ * « aucune surprise » vraie. Une copy qui promettrait de garder l'ancien prix
+ * serait un mensonge (c'est l'erreur corrigée le 2026-08-15). Verrouillé par
+ * `cart-price-change-alert.test.tsx` (@regression cart-price-copy-matches-billing).
  */
 export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 	const { action, isPending } = useUpdateCartPrices();
@@ -63,6 +72,13 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 				hasIncrease ? "border-l-destructive bg-destructive/10" : "border-l-success bg-success/10",
 			)}
 			role={hasIncrease ? "alert" : "status"}
+			/*
+			 * Cible de focus du CTA bloqué (`handleBlockedClick` dans `CartSheetFooter`),
+			 * sur le modèle de l'alerte stock : id + tabIndex={-1} seulement quand une
+			 * hausse bloque réellement le passage en caisse.
+			 */
+			id={hasIncrease ? PRICE_INCREASE_ALERT_ID : undefined}
+			tabIndex={hasIncrease ? -1 : undefined}
 		>
 			<p className="mb-1 flex items-center gap-1.5 font-semibold">
 				{hasIncrease ? (
@@ -96,7 +112,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 			</ul>
 			<p className="text-muted-foreground mt-2 text-xs">
 				{hasIncrease
-					? "Ton panier garde le prix du jour où tu les as ajoutées, pour éviter toute surprise."
+					? "Le prix facturé est toujours le prix du jour. Actualise ton panier pour continuer ta commande — comme ça, aucune surprise au paiement."
 					: "Tu peux actualiser ton panier pour profiter des nouveaux prix."}
 			</p>
 

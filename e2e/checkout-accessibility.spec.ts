@@ -1,4 +1,3 @@
-import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { requireSeedData } from "./constants";
 import { expectNoA11yViolations } from "./helpers/axe";
@@ -50,48 +49,45 @@ test.describe("Accessibilité - Tunnel de paiement", { tag: ["@slow"] }, () => {
 	});
 });
 
-// Dark mode tests for authenticated pages
-async function enableDarkMode(page: Page) {
-	await page.evaluate(() => document.documentElement.classList.add("dark"));
-	await page.waitForTimeout(100);
-}
-
-test.describe("Accessibilité - Tunnel de paiement (dark mode)", { tag: ["@slow"] }, () => {
-	const guestDarkPages = [{ path: "/suivi-commande", name: "Suivi de commande" }];
-
-	for (const { path, name } of guestDarkPages) {
-		test(`${name} (${path}) passe l'audit axe-core WCAG AA en dark mode`, async ({ page }) => {
-			await page.goto(path);
-			await page.waitForLoadState("domcontentloaded");
-			await enableDarkMode(page);
-
-			await expectNoA11yViolations(page, { context: `${name} (dark mode)` });
-		});
-	}
-
-	test("Checkout passe l'audit axe-core WCAG AA en dark mode", async ({
+/*
+ * ⚠️ Les trois audits « dark mode » ont été SUPPRIMÉS le 2026-08-16 : Synclune
+ * est LIGHT-ONLY par choix (`color-scheme: light` dans `app/styles/pwa.css`,
+ * zéro variante `dark:` dans tout le dépôt, aucun ThemeProvider). Le
+ * `classList.add("dark")` qu'ils posaient n'était branché sur AUCUN style : ils
+ * ré-auditaient exactement le même rendu clair, deux fois, sous un nom qui
+ * créditait une couverture inexistante.
+ *
+ * Ce qui reste testable — et l'est ci-dessous : la préférence sombre du
+ * navigateur ne doit PAS déformer le rendu (le choix light-only n'est sûr que
+ * si `color-scheme: light` continue de neutraliser `prefers-color-scheme`, et
+ * qu'aucune media query sombre partielle ne s'introduit).
+ */
+test.describe("Accessibilité - Tunnel de paiement (préférence sombre)", { tag: ["@slow"] }, () => {
+	test("le checkout reste light-only et accessible sous prefers-color-scheme: dark", async ({
 		page,
 		checkoutPage,
 		productCatalogPage,
 		cartPage,
 	}) => {
+		// Le VRAI mécanisme : l'émulation de la préférence utilisateur — pas une
+		// classe posée à la main sur <html>.
+		await page.emulateMedia({ colorScheme: "dark" });
+
 		const seeded = await checkoutPage.gotoWithSeededCart(productCatalogPage, cartPage);
 		requireSeedData(test, !seeded.skipped, seeded.skipped ? seeded.reason : "");
 		if (seeded.skipped) return;
 
-		await enableDarkMode(page);
+		// Le contrat light-only tient : le document se déclare clair même quand
+		// l'OS demande le sombre (sinon champs de formulaire et scrollbars UA
+		// basculeraient seuls, sur un fond resté clair).
+		const declaredScheme = await page.evaluate(
+			() => getComputedStyle(document.documentElement).colorScheme,
+		);
+		expect(declaredScheme).toBe("light");
 
 		await expectNoA11yViolations(page, {
 			exclude: ["iframe[src*='stripe']"],
-			context: "Checkout (dark mode)",
+			context: "Checkout (préférence sombre émulée)",
 		});
-	});
-
-	test("Annulation paiement passe l'audit axe-core WCAG AA en dark mode", async ({ page }) => {
-		await page.goto("/paiement/annulation");
-		await page.waitForLoadState("domcontentloaded");
-		await enableDarkMode(page);
-
-		await expectNoA11yViolations(page, { context: "Annulation paiement (dark mode)" });
 	});
 });

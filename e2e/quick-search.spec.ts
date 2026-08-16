@@ -134,6 +134,11 @@ test.describe("Quick Search Dialog", { tag: ["@critical"] }, () => {
 		page,
 		browserName,
 	}) => {
+		// Skip documenté (audit 2026-08-16) : sous émulation mobile en CI, le tap
+		// webkit sur la bottom-nav est intermittent (geste parfois lu comme un
+		// scroll). Conditions de réexamen : prochain bump Playwright, ou si les
+		// projets mobile-webkit cessent de flaker sur les taps bottom-nav (le même
+		// parcours mobile est couvert sans skip par search.spec.ts, projet chrome).
 		test.skip(browserName === "webkit", "Mobile emulation flakey under webkit in CI.");
 		await page.setViewportSize(VIEWPORTS.MOBILE);
 		await page.reload();
@@ -326,11 +331,27 @@ test.describe("Quick Search RGPD consent", { tag: ["@critical"] }, () => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
+		// Preuve déterministe plutôt qu'un `waitForTimeout(500)` : consentement
+		// refusé, `useAddRecentSearch.add()` retourne AVANT `startTransition` —
+		// aucune Server Action ne doit même PARTIR. On capture donc tout POST
+		// portant l'en-tête `next-action` (la signature réseau d'une action Next).
+		const actionPosts: string[] = [];
+		page.on("request", (request) => {
+			if (request.method() === "POST" && request.headers()["next-action"] !== undefined) {
+				actionPosts.push(request.url());
+			}
+		});
+
 		await submitSearch(page, "consenttestrgpd1");
 
-		// Give the (no-op) server action a window to run before asserting absence.
-		await page.waitForTimeout(500);
+		// Point de synchronisation honnête : l'action (si elle partait) est
+		// déclenchée dans la MÊME transition que le router.push que `submitSearch`
+		// attend déjà — le chargement de /produits?search=… borne la fenêtre. Le
+		// test positif ci-dessous prouve que ce même câblage fait atterrir le
+		// cookie dans cette fenêtre quand le consentement est accordé.
+		await page.waitForLoadState("domcontentloaded");
 
+		expect(actionPosts, "aucune Server Action ne doit partir sans consentement").toEqual([]);
 		const cookies = await context.cookies();
 		expect(cookies.find((c) => c.name === "recent-searches")).toBeUndefined();
 	});

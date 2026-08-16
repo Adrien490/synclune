@@ -1,5 +1,4 @@
 import type { Locator, Page } from "@playwright/test";
-import { expect } from "@playwright/test";
 import { SELECTORS } from "../constants";
 
 export class WishlistPage {
@@ -31,12 +30,12 @@ export class WishlistPage {
 		return this.page.getByRole("button", { name: /(Ajouter|Retirer).*favoris/i });
 	}
 
-	async toggleItem(productTitle?: string) {
-		const button = this.getToggleButton(productTitle);
-		await button.first().click();
-		// Wait for server action to complete
-		await expect(button.first()).not.toHaveAttribute("aria-busy", "true", { timeout: 5000 });
-	}
+	// `toggleItem` supprimée (audit 2026-08-16) : morte (aucun spec ne
+	// l'appelait — wishlist.spec.ts clique les boutons directement) et fausse :
+	// elle attendait la fin d'un `aria-busy` alors que sur /favoris l'item — et
+	// son bouton — DISPARAÎT du DOM au retrait optimiste ; l'attente ne prouvait
+	// rien. L'oracle correct est le cookie `wishlist` (cf. wishlist.spec.ts) ou
+	// la baisse de `getItemCount()`.
 
 	async getItems() {
 		return this.page.locator(SELECTORS.PRODUCT_LINK);
