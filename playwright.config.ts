@@ -10,12 +10,22 @@ import { defineConfig, devices } from "@playwright/test";
  * comme les régressions visuelles se voient très bien sur la machine de CI,
  * dont c'est le métier de chauffer.
  *
- * Par défaut en local : chromium + admin + les deux projets tablette (scopés au
- * seul `responsive-breakpoints`, donc ~14 tests). Pour reproduire la matrice
- * complète en local — bug WebKit à confirmer, mise à jour de snapshots —
- * `E2E_ALL_BROWSERS=1 pnpm e2e`.
+ * Par défaut, EN LOCAL COMME EN CI : chromium + admin + les deux projets
+ * tablette (scopés au seul `responsive-breakpoints`, donc ~14 tests), soit ~589
+ * exécutions. La matrice complète ne s'obtient qu'avec `E2E_ALL_BROWSERS=1` —
+ * en local pour confirmer un bug WebKit ou régénérer des snapshots, en CI via
+ * le déclenchement manuel `full_e2e` de `ci.yml`.
+ *
+ * ⚠️ Pourquoi la CI n'a PLUS la matrice complète par défaut : mesuré le
+ * 2026-08-16, le job a été coupé à 60 min PILE sans avoir fini les ~1950
+ * exécutions (déjà coupé à 20 min au run précédent). Un runner GitHub est
+ * bien plus lent qu'une machine de dev — les 11 min locales ne s'y transposent
+ * pas. À ce rythme, un seul push consommerait 3 % du quota mensuel du plan
+ * gratuit (2000 min, tous jobs confondus) pour un job qui n'aboutit même pas.
+ * Firefox desktop, en particulier, ne justifie pas ce coût sur une boutique
+ * française à ~20 commandes/mois.
  */
-const fullMatrix = !!process.env.CI || process.env.E2E_ALL_BROWSERS === "1";
+const fullMatrix = process.env.E2E_ALL_BROWSERS === "1";
 
 export default defineConfig({
 	testDir: "./e2e",
