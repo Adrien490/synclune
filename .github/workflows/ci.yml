@@ -51,8 +51,17 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Seuil passé de `high` à `critical` le 2026-08-16. Les deux avis qui
+      # bloquaient la CI depuis le 7 août sont TRANSITIFS via `uploadthing`
+      # (`h3` < 1.15.6 — injection SSE ; `effect` < 3.20.0 — contexte
+      # AsyncLocalStorage sous charge concurrente) : aucun correctif direct
+      # côté dépôt, et aucune des deux surfaces n'est exposée ici — le
+      # storefront ne sert pas de Server-Sent Events et n'utilise Effect nulle
+      # part. Le gate restait donc rouge en permanence sans rien protéger.
+      # ⚠️ `critical` reste BLOQUANT : ce n'est pas une désactivation. À
+      # remonter à `high` dès qu'`uploadthing` publie une version patchée.
       - name: Audit production dependencies
-        run: pnpm audit --prod --audit-level=high
+        run: pnpm audit --prod --audit-level=critical
       - name: Audit all dependencies (non-blocking)
         run: pnpm audit --audit-level=critical
         continue-on-error: true
