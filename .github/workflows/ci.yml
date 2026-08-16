@@ -299,6 +299,44 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [quality, tests]
+    # Postgres jetable, comme les jobs `build` et `tests-integration` : le dépôt
+    # n'a AUCUN secret Actions, donc `secrets.DATABASE_URL` résolvait en chaîne
+    # vide et le job mourait dès `prisma generate` (`prisma.config.ts` lit
+    # `env("DATABASE_URL")` de façon stricte).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: synclune
+          POSTGRES_PASSWORD: synclune
+          POSTGRES_DB: synclune_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    # ⚠️ Ces valeurs ne sont PAS des secrets : base locale au runner, mots de
+    # passe éphémères. Elles peuvent donc vivre au niveau du job (la règle
+    # « secrets step-par-step » vise les vraies clés, pour que les scripts de
+    # lifecycle de `pnpm install` ne les voient pas).
+    # Les clés Stripe/Resend/UploadThing, elles, viennent des secrets QUAND ils
+    # existent, avec un repli marqué `ci_placeholder` : le schéma d'env EXIGE ces
+    # variables pour démarrer l'app, mais `hasRealStripeCredentials()`
+    # (e2e/constants.ts) reconnaît le leurre et fait SKIPPER explicitement les
+    # specs qui font de vrais allers-retours Stripe, au lieu de les faire
+    # échouer sur un 401.
+    env:
+      DATABASE_URL: postgresql://synclune:synclune@localhost:5432/synclune_e2e
+      AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
+      ADMIN_PASSWORD: "ci-e2e-admin-password!"
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      RESEND_CONTACT_EMAIL: ci-e2e@example.com
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_ci_placeholder' }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET || 'whsec_ci_placeholder' }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || 're_ci_placeholder' }}
+      UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN || 'ci-placeholder-token' }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
@@ -310,46 +348,10 @@ jobs:
       - name: Generate Prisma client
         run: pnpm prisma generate
       - name: Push database schema
-        env:
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
-          # Auth maison (migration lean) : valeurs éphémères, le serveur e2e est
-          # local au runner — aucun besoin d'un secret partagé.
-          AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
-          ADMIN_PASSWORD: "ci-e2e-admin-password!"
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          NEXT_PUBLIC_BASE_URL: http://localhost:3000
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_CONTACT_EMAIL: ci-e2e@example.com
-          UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
         run: pnpm prisma db push
       - name: Seed database
-        env:
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
-          # Auth maison (migration lean) : valeurs éphémères, le serveur e2e est
-          # local au runner — aucun besoin d'un secret partagé.
-          AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
-          ADMIN_PASSWORD: "ci-e2e-admin-password!"
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          NEXT_PUBLIC_BASE_URL: http://localhost:3000
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_CONTACT_EMAIL: ci-e2e@example.com
-          UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
         run: pnpm seed
       - name: Build application
-        env:
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
-          # Auth maison (migration lean) : valeurs éphémères, le serveur e2e est
-          # local au runner — aucun besoin d'un secret partagé.
-          AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
-          ADMIN_PASSWORD: "ci-e2e-admin-password!"
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          NEXT_PUBLIC_BASE_URL: http://localhost:3000
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_CONTACT_EMAIL: ci-e2e@example.com
-          UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
         run: pnpm build
       - name: Get Playwright version
         id: playwright-version
@@ -367,18 +369,6 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
       - name: Run E2E suite
-        env:
-          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL || secrets.DATABASE_URL }}
-          # Auth maison (migration lean) : valeurs éphémères, le serveur e2e est
-          # local au runner — aucun besoin d'un secret partagé.
-          AUTH_SECRET: "ci-e2e-auth-secret-placeholder-32-chars!"
-          ADMIN_PASSWORD: "ci-e2e-admin-password!"
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          NEXT_PUBLIC_BASE_URL: http://localhost:3000
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_CONTACT_EMAIL: ci-e2e@example.com
-          UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
         run: pnpm e2e
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()

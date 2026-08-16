@@ -31,6 +31,20 @@ vi.mock("@/modules/admin-auth/lib/require-admin", async (importOriginal) => ({
 	isAdmin: vi.fn(async () => true),
 }));
 
+/**
+ * ⚠️ `fetchProductForDuplication` est un scope `"use cache"` : hors runtime
+ * Next, `cacheLife()` lève « only available with the `cacheComponents` config ».
+ * La directive elle-même n'est qu'une chaîne, inerte sous vitest — seuls les
+ * deux appels d'annotation posent problème. On les neutralise, comme le font
+ * déjà les tests unitaires de `cache.utils`. Ce que cette suite mesure est le
+ * SQL émis, pas la politique de cache (couverte, elle, par
+ * `modules/products/utils/__tests__/cache.utils.test.ts`).
+ */
+vi.mock("next/cache", () => ({
+	cacheLife: () => undefined,
+	cacheTag: () => undefined,
+}));
+
 import { getProductForDuplication } from "@/modules/products/data/get-product-for-duplication";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
 import { createTestProduct } from "@/test/integration/factories";

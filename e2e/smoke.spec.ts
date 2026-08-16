@@ -1,6 +1,7 @@
 import { test, expect } from "./fixtures";
 import { expireSessionViaWebhook } from "./helpers/stripe-webhook";
 import { getE2ePrisma } from "./helpers/db";
+import { hasRealStripeCredentials } from "./constants";
 
 test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 	test("homepage loads with correct title", async ({ page }) => {
@@ -71,8 +72,8 @@ test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 	}) => {
 		test.skip(browserName !== "chromium", "Effets de bord (session Stripe + stock)");
 		test.skip(
-			!process.env.STRIPE_WEBHOOK_SECRET || !process.env.DATABASE_URL,
-			"STRIPE_WEBHOOK_SECRET / DATABASE_URL requis pour le nettoyage",
+			!hasRealStripeCredentials() || !process.env.DATABASE_URL,
+			"Clés Stripe RÉELLES / DATABASE_URL requises pour le nettoyage",
 		);
 
 		await page.goto("/");

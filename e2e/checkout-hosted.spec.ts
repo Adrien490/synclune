@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 import { getE2ePrisma } from "./helpers/db";
 import { completeSessionViaWebhook, expireSessionViaWebhook } from "./helpers/stripe-webhook";
 import { testEmail } from "./helpers/test-run";
+import { hasRealStripeCredentials } from "./constants";
 
 /**
  * Checkout Stripe HÉBERGÉ — le parcours argent (lot 7).
@@ -27,8 +28,8 @@ test.describe("Checkout hébergé @critical", () => {
 		"Flux à effets de bord (session Stripe réelle + stock) — chromium seul",
 	);
 	test.skip(
-		!process.env.STRIPE_WEBHOOK_SECRET || !process.env.DATABASE_URL,
-		"STRIPE_WEBHOOK_SECRET / DATABASE_URL requis",
+		!hasRealStripeCredentials() || !process.env.DATABASE_URL,
+		"Clés Stripe RÉELLES / DATABASE_URL requises",
 	);
 
 	/** Restocke et supprime la commande créée par la session — nettoyage dur. */

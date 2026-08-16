@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { expect, test } from "../fixtures";
 import { getE2ePrisma } from "../helpers/db";
 import { testEmail, testName } from "../helpers/test-run";
+import { hasRealStripeCredentials } from "../constants";
 
 /**
  * Réconciliation admin — « Vérifier les commandes en attente »
@@ -23,8 +24,8 @@ test.describe("Admin réconciliation des commandes en attente", () => {
 	// trop courte sous la charge d'un run complet.
 	test.describe.configure({ timeout: 120_000 });
 	test.skip(
-		!process.env.STRIPE_SECRET_KEY || !process.env.DATABASE_URL,
-		"STRIPE_SECRET_KEY / DATABASE_URL requis",
+		!hasRealStripeCredentials() || !process.env.DATABASE_URL,
+		"Clés Stripe RÉELLES / DATABASE_URL requises",
 	);
 
 	test("PENDING > 24 h à session expirée → CANCELLED + stock restitué", async ({ page }) => {

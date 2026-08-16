@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { expect, test } from "../fixtures";
 import { getE2ePrisma } from "../helpers/db";
 import { testEmail, testName } from "../helpers/test-run";
+import { hasRealStripeCredentials } from "../constants";
 
 /**
  * Admin commandes — schéma lean (lot 4) : liste (recherche, filtre statut),
@@ -176,7 +177,7 @@ test.describe("Admin commandes", () => {
 	}) => {
 		// Vrais allers-retours Stripe : plus long que la limite par défaut.
 		test.setTimeout(120_000);
-		test.skip(!process.env.STRIPE_SECRET_KEY, "STRIPE_SECRET_KEY requis (session réelle)");
+		test.skip(!hasRealStripeCredentials(), "Clés Stripe RÉELLES requises (session réelle)");
 
 		const prisma = getE2ePrisma();
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);

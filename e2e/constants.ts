@@ -64,3 +64,24 @@ export function requireSeedData(
 	}
 	testFn.skip(true, message);
 }
+
+/**
+ * Vraies clés Stripe disponibles ?
+ *
+ * ⚠️ Le schéma d'env EXIGE `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` pour
+ * que l'application démarre : la CI doit donc les poser même quand le dépôt n'a
+ * aucun secret configuré. Un simple `!process.env.STRIPE_SECRET_KEY` ne suffit
+ * alors plus à décider si le flux Stripe est exerçable — la variable est
+ * présente, mais c'est un leurre. Les valeurs de repli portent le marqueur
+ * `ci_placeholder`, que cette fonction reconnaît.
+ *
+ * Les specs qui font de VRAIS allers-retours Stripe (session Checkout, webhook
+ * signé, réconciliation) s'appuient dessus pour se skipper explicitement plutôt
+ * que d'échouer sur un 401 de l'API.
+ */
+export function hasRealStripeCredentials(): boolean {
+	const secret = process.env.STRIPE_SECRET_KEY ?? "";
+	const webhook = process.env.STRIPE_WEBHOOK_SECRET ?? "";
+	if (!secret || !webhook) return false;
+	return !secret.includes("ci_placeholder") && !webhook.includes("ci_placeholder");
+}
