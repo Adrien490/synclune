@@ -7,10 +7,13 @@ ne pouvait les tenir seul.
 
 ## Monter la page
 
-Copie dans les deux frames, dans l'ordre : barre haute → hero → créations → collections →
-types → atelier → FAQ → pied de page (plus la barre basse sur mobile). Tu **copies** : les
-frames de section restent intouchées. Si l'assemblage révèle un défaut dans l'une d'elles,
-tu le signales à la fin **sans y toucher** — c'est la règle de conduite.
+Monte dans les deux frames, dans l'ordre : barre haute → hero → créations → collections →
+types → atelier → FAQ → pied de page (plus la barre basse sur mobile). **Instancie** les
+frames de section si l'éditeur le permet — une instance reste synchrone avec sa section si
+elle est corrigée ensuite ; à défaut, copie, et note dans `NOTES.md` que l'assemblage est un
+instantané. Dans les deux cas, les frames de section restent intouchées. Si l'assemblage
+révèle un défaut dans l'une d'elles, tu le signales à la fin **sans y toucher** — c'est la
+règle de conduite.
 
 ## Les trois vérifications qui n'existaient pas encore
 

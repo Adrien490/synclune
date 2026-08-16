@@ -78,6 +78,9 @@ Rayons              : 8 · 12 (défaut) · 16 · 20 · 32 · pilule
 
 **Toute valeur d'espacement ou de typo vient de ces variables. Aucune valeur libre.**
 
+⚠️ **Les frames de la série sont 1440 et 390, point.** Les breakpoints 768 et 1024 documentent le
+comportement attendu du futur code, pas des maquettes à produire : ne crée aucune frame tablette.
+
 Hauteur de section : jamais en `vh` — en `svh`/`dvh`, sinon un hero est trop haut au chargement.
 
 ## États et interaction

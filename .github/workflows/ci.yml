@@ -297,7 +297,15 @@ jobs:
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # ⚠️ 20 min ne suffisaient pas : la préparation (install, generate, push,
+    # seed, build, navigateurs) prend ~8 min, et la matrice COMPLÈTE — 8 projets,
+    # ~1950 exécutions — a été coupée net après 17 min de tests sans avoir fini
+    # (run du 2026-08-16). Le runner GitHub est bien plus lent que la machine de
+    # dev : 11 min en local n'y correspondent pas.
+    # À surveiller : si la durée réelle approche ce plafond, la bonne réponse
+    # n'est pas de le relever encore mais de réduire ce que la CI exécute par
+    # défaut (le quota du plan gratuit est de 2000 min/mois, tous jobs confondus).
+    timeout-minutes: 60
     needs: [quality, tests]
     # Postgres jetable, comme les jobs `build` et `tests-integration` : le dépôt
     # n'a AUCUN secret Actions, donc `secrets.DATABASE_URL` résolvait en chaîne

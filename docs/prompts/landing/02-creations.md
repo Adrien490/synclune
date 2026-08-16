@@ -65,7 +65,7 @@ est partie » dit que d'autres ont acheté. **Mais seulement si c'est une porte.
 
 ## Sortie
 
-Colle ici le bloc `_checklist.md`, et ajoute :
+Le bloc de contrôle commun est joint plus bas dans ce prompt ; ajoute-lui ces points :
 
 ```
 - [ ] les 8 pièces étalent les types de bijoux, elles ne se ressemblent pas

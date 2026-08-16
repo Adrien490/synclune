@@ -40,7 +40,7 @@ conduite). Ce n'est pas l'endroit d'une composition qui demande à être déchif
 
 ## Sortie
 
-Colle ici le bloc `_checklist.md`, et ajoute :
+Le bloc de contrôle commun est joint plus bas dans ce prompt ; ajoute-lui ces points :
 
 ```
 - [ ] huit vignettes dessinées (boucles d'oreilles comprises), aucune photo de bijou dans cette section

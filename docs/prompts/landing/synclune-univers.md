@@ -1,7 +1,7 @@
 # Synclune — l'univers
 
-> Contexte de marque, chargé **une fois** au tour de bootstrap. Les tours suivants y renvoient
-> (« respecte l'univers déjà chargé ») au lieu de le répéter.
+> Contexte de marque, chargé au début de **chaque** tour — chaque tour est un processus neuf.
+> Quand un tour dit « respecte l'univers déjà chargé », c'est de ce document qu'il parle.
 > Source : `docs/BRAND-DA.md`.
 
 ## Qui c'est

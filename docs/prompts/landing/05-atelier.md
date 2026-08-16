@@ -50,7 +50,7 @@ substitut de confiance qui a une base — et elle est gratuite quand on est seul
 
 ## Sortie
 
-Colle ici le bloc `_checklist.md`, et ajoute :
+Le bloc de contrôle commun est joint plus bas dans ce prompt ; ajoute-lui ces points :
 
 ```
 - [ ] le portrait est un placeholder photo, pas une illustration

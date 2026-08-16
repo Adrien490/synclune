@@ -3,3 +3,7 @@
 # décisions de la série, la checklist de shooting est un livrable pour Léane.
 *.pen
 *.pen.bak-*
+
+# Artefacts régénérés à chaque tour, comme le .pen : exports PNG et relevés de coût.
+apercus/
+usage/

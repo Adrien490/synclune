@@ -57,7 +57,7 @@ pourquoi.**
 
 ## Sortie
 
-Colle ici le bloc `_checklist.md`, et ajoute :
+Le bloc de contrôle commun est joint plus bas dans ce prompt ; ajoute-lui ces points :
 
 ```
 - [ ] le test des 5 secondes est passable sur la maquette mobile seule

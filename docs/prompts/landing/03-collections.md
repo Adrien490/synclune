@@ -47,7 +47,7 @@ doit **ne pas casser** à 6 ou 9 cartes ; dis-moi comment elle se comporte.
 
 ## Sortie
 
-Colle ici le bloc `_checklist.md`, et ajoute :
+Le bloc de contrôle commun est joint plus bas dans ce prompt ; ajoute-lui ces points :
 
 ```
 - [ ] chaque carte montre 2 à 4 visuels, jamais un seul

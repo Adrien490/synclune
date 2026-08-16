@@ -24,6 +24,9 @@ Si tu penses qu'une frame déjà dessinée a un problème, **dis-le à la fin sa
 Deux exceptions, explicites : le tour 0 crée tout, et un tour peut **ajouter** un variant à un
 composant si sa section en a besoin — jamais en modifier un existant.
 
+Même règle côté fichiers : dans le dossier de travail, tu n'écris que `NOTES.md` et
+`SHOOTING.md`. Les fichiers de prompt et le script ne sont pas à toi.
+
 ## Tes affirmations s'appuient sur des appels d'outil
 
 Avant d'annoncer qu'un point est tenu, vérifie-le contre un résultat d'outil de cette session — une

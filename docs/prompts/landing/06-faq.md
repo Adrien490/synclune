@@ -62,7 +62,7 @@ le charme artisanal en risque perçu.
 
 ## Sortie
 
-Colle ici le bloc `_checklist.md`, et ajoute :
+Le bloc de contrôle commun est joint plus bas dans ce prompt ; ajoute-lui ces points :
 
 ```
 - [ ] « Commande sans créer de compte » est écrit quelque part, visiblement
