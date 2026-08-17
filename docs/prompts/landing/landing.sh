@@ -48,8 +48,9 @@ effort_for() {
 		06) echo medium ;; # faq
 		07) echo medium ;; # carte de partage + bannière cookies
 		08) echo high ;;   # assemblage — le tour qui attrape les défauts inter-sections
+		09) echo high ;;   # améliorations — retouches trans-sections + re-montage, tout se mesure
 		*)
-			echo "tour inconnu : « $1 » — attendu : 00 à 08, sur deux chiffres (03, pas 3)" >&2
+			echo "tour inconnu : « $1 » — attendu : 00 à 09, sur deux chiffres (03, pas 3)" >&2
 			return 1
 			;;
 	esac
@@ -124,6 +125,6 @@ if [[ $# -gt 0 ]]; then
 	exit 0
 fi
 
-for tour in 00 01 02 03 04 05 06 07 08; do
+for tour in 00 01 02 03 04 05 06 07 08 09; do
 	run "$tour"
 done
