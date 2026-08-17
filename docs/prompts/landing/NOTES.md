@@ -312,3 +312,194 @@
 - Les avertissements `zTPJG`/`ToeQT` accompagnent toujours les copies (bénins connus des tours 3 et 6, ne pas « corriger »).
 - Hauteur FAQ mobile mesurée à 1352 AVANT ma retouche (le carnet du tour 6 disait 1326) : écart antérieur au tour 9, cause inconnue (peut-être un reflow de fonte) — sans conséquence, les mesures de ce tour partent du réel.
 - Le rendu du bandeau vérifié en capture sur les deux heros ; « dès » confirmé par lecture du nœud (la capture basse résolution laissait un doute).
+
+## Passe correctifs — audit maquette du 2026-08-17 (hors série)
+
+Backlog de `AUDIT-MAQUETTE-2026-08-17.md` appliqué à la maquette, avec Adrien en édition
+simultanée dans l'app (voir « édition concurrente » plus bas).
+
+- **P1.1 frais** : bandeau des deux barres hautes enrichi en « Livraison {frais} · offerte dès
+  {franco} » (verbatim de la ligne FAQ « En pratique ») — une seule ligne, 260 px, hauteurs de
+  barre INCHANGÉES (91/83), propagation par refs partout, aucun budget re-mesuré.
+- **P1.1 délai** : ma ligne « Expédié sous {délai} depuis Nantes » posée sous le CTA des deux
+  heros a été REMPLACÉE en cours de passe par la note manuscrite d'Adrien « commence par là »
+  (flèche + Kalam, `note-cta`) ; interrogé, Adrien a tranché **« ne pas mettre »** — le délai
+  reste FAQ-only, écart à l'audit ASSUMÉ par décision explicite du 2026-08-17.
+- **Padding hero desktop** : `contenu-hero` desktop passé de 96 à 64 de padding haut pour
+  rendre à la frise le budget mangé par la ligne sous le CTA (tuiles coupées par le pli avec
+  ~53-125 px visibles avec la note-cta actuelle ; mobile non touché, 49-81 px visibles).
+- **P2.7 barre basse** : alignée sur le code réel (`e2e/shop-mobile.spec.ts` : 5 onglets) —
+  « Boutique » renommé « Créations », onglet « Rechercher » (magnifying-glass) inséré en
+  position 3. Les 5 onglets font 78 px chacun, libellés non clippés (vérifié en instance).
+  ⚠️ Le composant maître n'a AUCUN `layout` posé et rend bizarrement sur sa planche
+  (positions figées) ; les INSTANCES, elles, se résolvent correctement — ne pas « corriger ».
+- **P3.10 plis 2-3** : contenu de `02-creations/mobile` décalé de +32 px à hauteur constante
+  (padding 64/64 → 96/32) : le pli 2 (1688) coupait exactement le bord bas de la photo de la
+  rangée 2 (1479+209), il coupe maintenant la photo en pleine chair ; au pli 3 (2532) la carte
+  Papillou (plus haute) traverse de 70 px. Copie re-synchronisée dans l'assemblage mobile,
+  **relevé des 11 plis refait : tous coupent du contenu réel**, frontières de sections
+  strictement inchangées (total 9750).
+- **P2.6 + P1.2 + P1.3 en `context`** (spec maquette → code) : carte-produit et les deux
+  cartes-collection portent « toute la carte est UN SEUL lien » ; les deux frises hero portent
+  « tuiles choisies pour l'étalement des types, pas par récence » ; les deux sections FAQ
+  portent « ne pas ré-émettre le JSON-LD FAQPage ».
+
+### Édition concurrente (à savoir pour toute passe future)
+
+- Adrien éditait dans l'app PENDANT la passe : note-cta posée sur les deux heros, copies hero
+  des assemblages et de la frame cookies re-synchronisées par lui (`J7vIaF`, `g4xlyD`,
+  `dkMmz`), copies atelier remplacées (`ytHTB`, `vb5kQ`). Rien de tout ça n'est de moi ;
+  positions et hauteurs de sections vérifiées inchangées après coup.
+  ⚠️ **Erratum (audit du dossier, 2026-08-17)** : ces nœuds ne sont pas des retouches manuelles
+  d'Adrien — ils sont la « Passe créative » ci-dessous, menée en parallèle via le MCP à sa
+  demande. Le constat de concurrence reste valide, l'attribution non.
+- ⚠️ **`TakeScreenshot` sert un rendu périmé** quand l'app est ouverte (le CTA « disparu »
+  n'était qu'un cache) : vérifier les visuels avec **`Export` png**, qui est fiable ; les
+  bounds d'un `Get` dans le MÊME appel qu'une mutation peuvent aussi être à moitié recalculés
+  — re-mesurer dans un appel séparé.
+- Un `Move` d'une instance (`ref`) vers un frame fraîchement créé a été suivi d'un rendu vide
+  même après recréation ; la structure modèle était pourtant correcte (c'était le cache
+  ci-dessus). Symptôme à connaître avant de « réparer » quoi que ce soit.
+
+### Non traité (hors périmètre solo, inchangé)
+
+- P1.4 test des 5 secondes : après pose des vraies photos (5-8 personnes).
+- P2.5 six sections vs ≤ 4, P2.8 sur-titres réintroduits, P3.11 gouttes en marge du hero
+  desktop : arbitrages Léane.
+- P2.9 échelle des packshots : déjà couvert par `SHOOTING.md` (fait à l'audit).
+
+## Passe créative — ponctuation manuscrite & planche motion (2026-08-17, hors série)
+
+Demande d'Adrien (« implémentations créatives dans la DA »), exécutée via le MCP de l'app —
+EN MÊME TEMPS que la passe correctifs ci-dessus : les retouches que son entrée attribue à
+« Adrien en édition simultanée » (note-cta des deux heros, copies `J7vIaF`/`g4xlyD`/`dkMmz`/
+`ytHTB`/`vb5kQ`) sont en réalité CETTE passe-ci, pilotée par Adrien.
+
+- Motif tenu : la goutte reste le motif structurant. **Le cœur entre en ponctuation**
+  (arbitrage Adrien du 2026-08-17 : « Léane aime bien les cœurs, rose de préférence »),
+  à deux emplacements sémantiquement motivés — l'atelier et le favori — jamais en sujet.
+- **Note-cta** (remplace « Expédié sous {délai} depuis Nantes » sous les deux CTA hero,
+  arbitrage « pas de délai — pression pour la créatrice ») : flèche dessinée + « commence par
+  là » en Kalam (rotation −2). Texte choisi contre la répétition : le titre dit déjà « un par
+  un », le chapô l'unicité, le sur-titre Nantes — la note est un griffonnage d'orientation,
+  pas une réassurance. Tracé = `ACCENT_SHAPE_PATHS.arrow` de `shared/components/hand-drawn/
+  paths.ts`, posé à la main (rotation 70) — fidélité exacte à la main du code, pas de
+  `Generate` (dérogation assumée à la règle du tour 0 : ces tracés SONT la main).
+- **Cœur atelier** : marque cœur 18 px (fill `$rose`, contour `$encre` 1,5, rotation −8) à
+  côté de « environ 3 h par bijou », sous le portrait — transposition maquette de
+  `HandDrawnAccent`/`heart` (dans le code, le cœur ponctue déjà le portrait de l'atelier).
+  `ngs4l`/`VZ9aF` remplacés par des groupes horizontaux (`hh58U` desktop, `XnzGm` mobile),
+  hauteur 32 inchangée — aucun pli ne bouge.
+- **Copies re-synchronisées** : heros (`J7vIaF`, `g4xlyD`), ateliers (`ytHTB`, `vb5kQ`),
+  cookies (`dkMmz`). Hauteurs d'assemblage strictement inchangées (mobile 9750, desktop 6393
+  — le relevé pli par pli des passes précédentes reste valide), balayage d'accents : zéro
+  contamination, colonne-récit 664×794 (trait latent connu du tour 8). Les 4 « Expédié sous
+  {délai} » restants sont la ligne du bloc « En pratique » FAQ — à leur place, non touchés.
+- **Planche `00-systeme/motion`** (`R4RFeq`, x 4488, grammaire de la planche composants) :
+  quatre specs de micro-interactions, poses clés dessinées — rien n'anime la maquette.
+  1. **États du favori** : repos · survol (fond `$gris`, recette bouton discret) · focus
+     (anneau `$trait-focus` encre) · actif = touche rose (`ACCENT_SHAPE_PATHS.heart`, fill
+     `$rose`) qui DÉBORDE derrière le glyphe encre — même geste que le pinceau derrière
+     « colorés » ; jamais un cœur rose seul (1,55:1).
+  2. **Toast d'ajout au panier** (surface qui manquait au code) : papier + trait encre 1,5 +
+     rayon 20 (grammaire bannière cookies), goutte rose cerclée d'encre, « C'est dans ton
+     panier » + lien « Voir le panier » ; mobile 8 px au-dessus de la barre basse ; glissement
+     d'entrée < 0,1 s, jamais d'opacity: 0 au repos, disparition seule ~4 s.
+  3. **Micro-balancement des pampilles du hero** : ±2° autour du point d'attache, UNE fois au
+     chargement, déphasé de ~80 ms par tuile, ease-out ~1,2 s, désactivé sous
+     prefers-reduced-motion.
+  4. **Badge compteur en goutte** (`$rose-encre`, chiffre `$papier`) — VARIANTE du badge rond
+     rose déjà posé sur l'onglet panier de la barre basse par la passe correctifs : en retenir
+     UNE au passage en code ; aucun composant chrome modifié.
+
+### Non vérifié / en suspens
+
+- **Le tour 10 (`10-etats.md`) n'a jamais été exécuté** : pas d'entrée carnet, pas d'états
+  survol/focus dans la planche carte-produit, pas de frame `chrome-scrollee`. La planche
+  motion référence donc la recette du bouton discret, pas « l'état carte du tour 10 ».
+- La frame motion d'origine (`ZOEMv`) a été remplacée par sa copie `R4RFeq` : rendu périmé
+  persistant sur tout son sous-arbre (le piège `TakeScreenshot` de l'entrée précédente, en
+  version tenace) — contenu identique, vérifié par `Export` png.
+- Rendu Kalam de la note et du cœur vérifiés par `Export` ; les contrastes cités (rose-encre
+  5,15:1, encre 12,6:1 sur rose) sont repris des calculs des tours 0-1, non recalculés.
+
+## Tour 10 — États d'interaction
+
+Exécuté le 2026-08-17 via le MCP de l'app (le tour CLI n'avait jamais tourné — constat de la
+passe créative). Les deux chantiers de `10-etats.md`, rien d'autre.
+
+- **Survol de `carte-produit` : le squiggle sous le nom** — choisi parmi les trois pistes du
+  tour parce que c'est DÉJÀ l'affordance du code : `SQUIGGLE_PATH` de
+  `shared/components/hand-drawn/paths.ts` (« l'affordance de lien des cartes, pas un ornement
+  de titre »), posé tel quel (viewBox 0 0 84 12, trait `$trait`). Rien de nouveau n'est
+  révélé (acquis du tour 0 respecté). Écartés : l'élévation (ombre floue hors DA) et le zoom
+  photo (le contenu bouge sous le curseur).
+- **Focus** : le MÊME squiggle + anneau `$trait-focus` (2 px) encre, offset 2, rayon 20, sur
+  la carte ENTIÈRE — survol ⇒ focus tenu (WCAG 2.4.7), jamais d'anneau rose.
+- Rendus dans `00-systeme/composants` → « États d'interaction » (`mx5S9`, entre les variantes
+  et le doc) : deux wrappers `layout: none` 270×430 contenant une instance `ref` intacte +
+  l'overlay — le composant `Trd6e` n'est PAS modifié.
+- **`00-systeme/chrome-scrollee`** (`oAtQ9`, x 2840 y 2650) : les deux rangées principales
+  seules (desktop 64, mobile 56), bandeau retiré par override d'instance `enabled: false`
+  (composition, aucun composant chrome modifié), flottant sur un aplat `$gris` + **liseré
+  1 px encre** sous la rangée (décision : trait, jamais d'ombre floue). Consigne code : le
+  bandeau vit HORS du bloc sticky ; `position: sticky` sur la seule rangée principale ;
+  liseré = border-bottom de l'état flottant. Le badge rose du cabas (passe correctifs) se
+  propage par ref dans les démos.
+- **Vérifications** : 35/35 instances existantes de `carte-produit` re-mesurées, 0 bougée
+  d'un pixel (planche, tour 2 desktop/mobile, assemblages) ; bandeau absent vérifié par
+  hauteurs (64/56) ET par export png ; les avertissements `G8IMgC`/`i4Cxgy` (bandeaux
+  désactivés en fill_container) sont la même famille bénigne que `zTPJG`/`ToeQT`.
+
+### Non vérifié / en suspens
+
+- ⚠️ **Piège d'outillage confirmé et AGGRAVÉ** : un sous-arbre fraîchement créé via le MCP
+  peut rester BLANC même à l'`Export` (pas seulement au `TakeScreenshot`) tant qu'il n'a pas
+  été COPIÉ — remède systématique : `Copy` du frame, suppression de l'original, garder la
+  copie (fait ici pour `mx5S9` et `oAtQ9`, comme pour la planche motion `R4RFeq`). Les
+  bounds, eux, portent parfois un offset fantôme uniforme (+50) sur ces sous-arbres — se
+  fier aux écarts RELATIFS et à l'export.
+- Le squiggle de survol frôle la rangée de pastilles (fin d'encre ~y 388, pastilles y 384) —
+  lisible à l'export, à ajuster en code par l'interlignage réel du nom sur deux lignes.
+
+## Audit du dossier — 2026-08-17 (hors série)
+
+Audit du dossier `docs/prompts/landing/` comme système de documentation (16/20, rapport :
+artifact « Audit de la série pen.dev »), suivi de l'application de son plan le même jour.
+
+- ⚠️ **DÉCOUVERTE : `{franco}` n'a AUCUNE source dans le code.** `shipping-rates.ts` ne
+  connaît que deux tarifs plats (FR 4,99 € / UE 9,50 €), aucun seuil de livraison offerte —
+  « Livraison offerte dès {franco} » (bandeau, toutes les frames + bloc « En pratique » FAQ)
+  est une offre que la série a inventée. **Nouvel arbitrage Léane, prioritaire** : créer
+  l'offre (nouveau champ dans `SHIPPING_RATES` au passage en code) ou retirer la promesse de
+  la maquette. `06-faq.md` et `09-ameliorations.md` corrigés (ils affirmaient une « source
+  unique côté code » inexistante) ; `{frais}` et `{délai}`, eux, ont bien leur source
+  (`SHIPPING_RATES`, `PREPARATION_BUSINESS_DAYS`).
+- `00-bootstrap.md` aligné sur la chrome réelle du code : barre basse **5 onglets** (Accueil ·
+  Créations · Rechercher · Favoris · Panier), nav desktop « Les créations » / « Les
+  collections » (plus de « Boutique » ni « À propos »), coordonnées CNPM en clair en repli
+  d'import — l'outil `browser` ayant échoué aux deux tentatives, la description du prompt est
+  de fait la source de la chrome.
+- `landing.pen` **entre dans git** (justification « régénérable » caduque : les passes MCP du
+  17/08 ne sont scriptées nulle part) ; `.gitignore` réécrit, `.bak-*`/`apercus/`/`usage/`
+  restent locaux.
+- `landing.sh` durci : garde « app Pen fermée ? » en préflight (la double copie app/CLI
+  écrase en silence), glob strict sur les fichiers de tour, commentaires de blocs de sortie
+  rafraîchis (00 et 07-10) — idem en-tête de `_checklist.md`.
+- Backlog de `AUDIT-MAQUETTE-2026-08-17.md` statué item par item (fait / spécifié / arbitrage
+  Léane) ; `README.md` créé (statut de la série, rejouabilité, pièges d'outillage consolidés,
+  coûts : **73,36 $** au total) ; `HANDOFF.md` créé (les consignes « en code : … » du carnet,
+  consolidées par surface pour le passage en code).
+- Tours de reprise hors script constatés : `0b` (reprise chrome, 1,87 $, import browser en
+  échec) et `04b` (finition types, 6,55 $) ont été lancés à la main — `effort_for` ne les
+  connaît pas, documenté dans README.md plutôt qu'ajouté au script (cas one-shot).
+
+### Arbitrages Léane en attente (récapitulatif à jour)
+
+1. **Franco de port** : créer l'offre ou retirer « offerte dès {franco} » (nouveau, voir
+   ci-dessus).
+2. Système bicolore rose/or vs rotation lavande/menthe/soleil du code (tour 0).
+3. Six sections vs critère ≤ 4 de la grille § 9 (fusionner collections + types ?).
+4. Sur-titres réintroduits vs retrait du 2026-08-06.
+5. « avec amour » de l'étape 4 atelier (formule interchangeable vs copie imposée).
+6. Gouttes de ponctuation en marge du hero desktop (option, P3.11).

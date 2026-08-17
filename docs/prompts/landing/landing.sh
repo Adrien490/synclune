@@ -49,18 +49,25 @@ effort_for() {
 		07) echo medium ;; # carte de partage + bannière cookies
 		08) echo high ;;   # assemblage — le tour qui attrape les défauts inter-sections
 		09) echo high ;;   # améliorations — retouches trans-sections + re-montage, tout se mesure
+		10) echo medium ;; # états d'interaction — deux variants + une frame d'état
 		*)
-			echo "tour inconnu : « $1 » — attendu : 00 à 09, sur deux chiffres (03, pas 3)" >&2
+			echo "tour inconnu : « $1 » — attendu : 00 à 10, sur deux chiffres (03, pas 3)" >&2
 			return 1
 			;;
 	esac
 }
 
-# Trois contrôles avant de payer le moindre tour : l'auth (sans session, l'échec
-# arriverait après plusieurs minutes), le site local (le tour 00 importe la chrome
-# depuis $SITE_URL — le repli existe, mais autant le savoir avant), et la fraîcheur
+# Quatre contrôles avant de payer le moindre tour : l'app fermée (app et CLI
+# tiennent CHACUN leur copie du .pen — le dernier qui sauve écrase l'autre,
+# constaté le 2026-08-17), l'auth (sans session, l'échec arriverait après
+# plusieurs minutes), le site local (le tour 00 importe la chrome depuis
+# $SITE_URL — le repli existe, mais autant le savoir avant), et la fraîcheur
 # du CLI (recommandation de la skill officielle : une fois par session).
 preflight() {
+	if pgrep -xq Pen; then
+		echo "l'app Pen est ouverte — ferme-la d'abord : elle tient sa propre copie du .pen et le dernier qui sauve écrase l'autre." >&2
+		exit 1
+	fi
 	if ! pen status >/dev/null 2>&1; then
 		echo "pen n'est pas authentifié — lance « pen login » d'abord." >&2
 		exit 1
@@ -79,10 +86,14 @@ preflight() {
 run() {
 	local tour="$1" effort file notes="" check="" prompt
 	effort="$(effort_for "$tour")"
-	file="$(ls "${tour}"-*.md 2>/dev/null)" || {
-		echo "aucun fichier ${tour}-*.md dans $(pwd)" >&2
+	# Glob strict : zéro ou plusieurs correspondances feraient passer un nom de
+	# fichier invalide à `cat` plus bas — on exige exactement un fichier.
+	local matches=("${tour}"-*.md)
+	if [[ ${#matches[@]} -ne 1 || ! -f "${matches[0]}" ]]; then
+		echo "il faut exactement un fichier ${tour}-*.md dans $(pwd) — trouvé(s) : ${matches[*]}" >&2
 		exit 1
-	}
+	fi
+	file="${matches[0]}"
 
 	# Un tour écrit dans le .pen qu'il lit (--in/--out sur le même fichier) : sans
 	# copie préalable, un tour qui déraille rend l'état précédent irrécupérable.
@@ -95,7 +106,7 @@ run() {
 	# de travail (`--repo`) pour que l'agent puisse y écrire son entrée.
 	[[ -f NOTES.md ]] && notes="$(printf '\n\n---\n\n# NOTES.md — décisions des tours précédents\n\n%s' "$(cat NOTES.md)")"
 
-	# La checklist commune ne vaut que pour les tours de SECTION : 00, 07 et 08
+	# La checklist commune ne vaut que pour les tours de SECTION : 00 et 07 à 10
 	# portent chacun leur propre bloc de sortie.
 	case "$tour" in
 		0[1-6]) check="$(printf '\n\n---\n\n%s' "$CHECK")" ;;
@@ -125,6 +136,6 @@ if [[ $# -gt 0 ]]; then
 	exit 0
 fi
 
-for tour in 00 01 02 03 04 05 06 07 08 09; do
+for tour in 00 01 02 03 04 05 06 07 08 09 10; do
 	run "$tour"
 done

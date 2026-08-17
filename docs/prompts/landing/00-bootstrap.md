@@ -32,6 +32,12 @@ ramène trop et se range mal.
 ⚠️ **Si le serveur ne répond pas ou si l'outil `browser` n'est pas disponible ici, dessine la chrome
 d'après la description ci-dessous et signale-le** — ce n'est pas un motif de blocage.
 
+⚠️ **Retour d'expérience (série d'août 2026)** : l'outil `browser` exige l'app desktop pen.dev
+lancée, et l'import a échoué aux DEUX tentatives, app comprise. La description ci-dessous est donc,
+de fait, la source de la chrome — elle a été alignée sur le code le 2026-08-17 (audit du dossier)
+et doit le rester : toute divergence constatée dans le code (libellés de nav, mentions du pied)
+gagne sur ce texte.
+
 ⚠️ **L'import donne la STRUCTURE, pas la direction artistique.** Le site actuel est l'état d'avant
 la refonte : reprends-en l'ossature, les libellés et les composants ; ne reprends pas ses partis pris
 visuels s'ils contredisent l'univers chargé.
@@ -61,16 +67,21 @@ en omettre, plus une planche `00-systeme/styles` qui les rend lisibles d'un coup
 
 **La chrome**, réutilisée par toutes les frames :
 
-- **Barre haute sticky** — « Synclune » · Boutique · Collections · À propos · Recherche · Favoris ·
-  Panier (avec badge). ⚠️ Nav desktop **visible, jamais derrière un burger** : cachée, son usage
-  tombe de 48 % à 27 % et la navigation devient 39 % plus lente.
+- **Barre haute sticky** — « Synclune » · Les créations · Les collections (les deux libellés du
+  code, `shared/constants/navigation.ts`) · Rechercher · Favoris · Panier (avec badge). ⚠️ Nav
+  desktop **visible, jamais derrière un burger** : cachée, son usage tombe de 48 % à 27 % et la
+  navigation devient 39 % plus lente.
 - **Barre basse mobile fixe, 56 px** (3,5 rem — la zone de sécurité iOS s'y ajoute sur les
-  téléphones à encoche) — Accueil · Boutique · Favoris · Panier.
+  téléphones à encoche) — **cinq onglets** : Accueil · Créations · Rechercher · Favoris · Panier
+  (le jeu du code, verrouillé par `e2e/shop-mobile.spec.ts` — la première version de ce prompt en
+  décrivait quatre, corrigé le 2026-08-17).
 - **Pied de page** — signature de marque + 4 colonnes (Boutique · La marque · Aide · Légal).
   ⚠️ C'est une **surface de conformité** autant que de navigation : coordonnées du **médiateur de la
-  consommation** (obligation française depuis 2016), CGV, mentions légales, **rétractation 14
-  jours**, « Fait main à Nantes », « TVA non applicable, art. 293 B du CGI » — tout cela visible et
-  lisible.
+  consommation** (obligation française depuis 2016 — celui du code,
+  `shared/constants/consumer-law.ts` : **CNPM - MÉDIATION DE LA CONSOMMATION, 27 avenue de la
+  Libération, 42400 Saint-Chamond, cnpm-mediation-consommation.eu** — ne pas en inventer un autre),
+  CGV, mentions légales, **rétractation 14 jours**, « Fait main à Nantes », « TVA non applicable,
+  art. 293 B du CGI » — tout cela visible et lisible.
   ⛔ **Aucun lien vers la plateforme européenne de règlement des litiges** : fermée le 20 juillet
   2025. C'est le défaut de conformité le plus répandu du e-commerce français, précisément parce
   qu'il consiste à ne rien faire.

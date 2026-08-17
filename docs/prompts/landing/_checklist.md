@@ -1,7 +1,7 @@
 # Checklist de sortie
 
-> Bloc collé à la fin de chaque tour de **section** (tours 1 à 6 — les tours 0, 7 et 8 portent
-> leur propre bloc de sortie). C'est ce qui sépare « l'agent a dessiné » de
+> Bloc collé à la fin de chaque tour de **section** (tours 1 à 6 — les tours 0 et 7 à 10 portent
+> chacun leur propre bloc de sortie). C'est ce qui sépare « l'agent a dessiné » de
 > « le design tient les contraintes ».
 >
 > Tous les points ci-dessous sont **vérifiables depuis le fichier** — capture, lecture de nœud ou

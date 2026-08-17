@@ -34,7 +34,9 @@ Le bloc « En pratique » de la FAQ est la seule surface qui porte le franco —
 dernière section, la moins vue. Ajoute la ligne à la **barre haute** (composants
 `chrome/barre-haute` ET `chrome/barre-haute-mobile`) : un bandeau fin au-dessus ou intégré,
 une seule ligne, texte `Livraison offerte dès {franco}` — placeholder `{franco}` OBLIGATOIRE,
-jamais un montant en dur (source unique côté code, cf. tour 6). Sobre : fond `$papier` ou
+jamais un montant en dur (⚠️ correction post-série, audit du 2026-08-17 : la « source unique
+côté code » annoncée ici n'existe PAS — aucun seuil de franco dans `shipping-rates.ts` ; l'offre
+elle-même est un arbitrage Léane en attente, cf. tour 6). Sobre : fond `$papier` ou
 `$gris`, texte `$encre` en `sans/small` — pas d'aplat d'accent, la barre n'est pas une section.
 ⚠️ Ces composants sont référencés par toutes les frames : vérifie sur le hero desktop ET mobile
 que le bandeau ne casse ni le sticky ni le budget du premier écran (le bloc titre entier doit

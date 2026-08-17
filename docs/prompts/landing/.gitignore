@@ -1,9 +1,13 @@
-# Le .pen (binaire, régénérable tour par tour) et ses sauvegardes restent hors git.
-# NOTES.md et SHOOTING.md, eux, SONT versionnés : le carnet est le journal de
-# décisions de la série, la checklist de shooting est un livrable pour Léane.
-*.pen
+# landing.pen EST versionné depuis le 2026-08-17 : l'ancienne justification
+# (« régénérable tour par tour ») est caduque — l'état final embarque quatre
+# passes faites via le MCP de l'app (correction médiateur, correctifs d'audit,
+# passe créative, tour 10) qui ne sont scriptées nulle part. Rejouer
+# ./landing.sh produirait un fichier différent et moins complet : le binaire
+# committé est le livrable, sa seule source. Voir README.md.
+#
+# Les sauvegardes par tour, elles, restent locales (instantanés de travail),
+# comme les artefacts régénérés à chaque tour (exports PNG, relevés de coût —
+# les coûts sont recopiés dans README.md, seule trace versionnée).
 *.pen.bak-*
-
-# Artefacts régénérés à chaque tour, comme le .pen : exports PNG et relevés de coût.
 apercus/
 usage/

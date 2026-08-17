@@ -43,8 +43,13 @@ parmi celles-ci — ce sont les vraies :
 - Puis-je personnaliser une création ?
 
 ⚠️ **Les valeurs de livraison sont des placeholders `{frais}`, `{délai}`, `{franco}`.** Ne les écris
-pas en dur dans la maquette : elles viennent d'une source unique côté code, et une page d'accueil
-qui annonce un délai différent de celui du tunnel fabrique exactement le motif d'abandon nº 1.
+pas en dur dans la maquette : une page d'accueil qui annonce un délai différent de celui du tunnel
+fabrique exactement le motif d'abandon nº 1. `{frais}` et `{délai}` ont leur source unique côté
+code (`SHIPPING_RATES` et `PREPARATION_BUSINESS_DAYS`,
+`modules/orders/constants/shipping-rates.ts`). ⚠️ **`{franco}`, lui, n'a AUCUNE source** — aucun
+seuil de livraison offerte n'existe dans le code (constaté à l'audit du dossier, 2026-08-17) :
+c'est une offre que Léane doit créer ou abandonner avant le passage en code, pas une valeur à
+brancher.
 
 Sortie humaine en fin de section : **« Une autre question ? Écris-moi. »**
 
