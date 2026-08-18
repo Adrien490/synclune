@@ -53,7 +53,16 @@
   `context` de la chrome ne pointent pas vers les composants réels. Libellés de référence :
   nav « Les créations » / « Les collections », barre basse 5 onglets
   (`e2e/shop-mobile.spec.ts`), médiateur CNPM (`shared/constants/consumer-law.ts`). (Tour 0,
-  corrigé les 2026-08-17.)
+  corrigé les 2026-08-17 ; nav desktop et médiateur re-alignés dans la maquette le 2026-08-18,
+  audit 17b.)
+- **Pied de page sur `rose-pale` `#fdf0f8`** (passe du 2026-08-17, documentée à l'audit 17b) :
+  si la maquette est retenue, créer le token (teinte du rose, surfaces uniquement) ; le filet
+  interne `#06070b24` = `var(--foreground)` à 14 % ; focus des liens du pied = anneau encre
+  2 px standard (la règle « focus papier sur fond encre » est morte avec l'aplat encre).
+- **Transitions en dégradé entre sections** (assemblages) : papier↔or autour des types,
+  papier→rose-pale avant le pied — desktop 64 px, mobile 16 px (hauteurs réglées par le relevé
+  des plis). Le papier→rose-pale est quasi invisible (1,08:1), c'est un raccord de surface
+  assumé, pas un effet à reproduire en plus voyant.
 
 ## Carte produit
 

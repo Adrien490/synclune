@@ -503,3 +503,51 @@ artifact « Audit de la série pen.dev »), suivi de l'application de son plan l
 4. Sur-titres réintroduits vs retrait du 2026-08-06.
 5. « avec amour » de l'étape 4 atelier (formule interchangeable vs copie imposée).
 6. Gouttes de ponctuation en marge du hero desktop (option, P3.11).
+
+## Seconde passe d'audit maquette — 2026-08-17 (hors série)
+
+Rapport : `AUDIT-MAQUETTE-2026-08-17b.md` — **77/100, 1 P0** (était 79/100, 0 P0 fin de
+tour 9). Passe menée en lecture seule (Get/Export uniquement, inventaire des 21 frames
+identique avant/après) sur **la mémoire de l'app** — le disque est resté à fin de tour 9 et
+le `.pen` est toujours untracked.
+
+- **Découverte : une passe non journalisée** postérieure au tour 10 — pied de page redessiné
+  (encre → nouvelle variable `rose-pale` `#fdf0f8`, goutte or, filet `#06070b24` en dur),
+  3 transitions en dégradé par assemblage (64/48 px — assemblages 6585/9894), bandeau
+  livraison RETIRÉ des barres hautes, frise hero mobile remontée (fin 761 < barre basse 788).
+- **Régressions mesurées** : le pied refondu a réintroduit **CM2C** (P0 — CNPM n'existe plus
+  nulle part, note `SpFVf` incluse) ; frais/franco redevenus FAQ-only (P1.1 défait) ; signal
+  de scroll mobile du premier écran perdu ; relevé des 11 plis refait → faux fonds de retour
+  aux plis 1, 7, 8, 9 (le réglage du tour 9 est défait par les décalages).
+- **Acquis confirmés** : barre basse 5 onglets + badge (+1 Mobile), planche motion aux termes
+  de la grille (+1 Performance), états tour 10 (35/35 instances intactes), parité cookies,
+  carte OG 100 % hex, zéro texte rose/or, alternance d'accents, copie propre (balayage
+  lexical : seul « avec amour », arbitrage nº 5).
+- Piste relevée : specimen « Livraison France 4,99 € · Union européenne 9,50 € » (`zmU3f`,
+  planche styles) = option bandeau vrais-tarifs-sans-franco, compatible code actuel.
+
+## Passe d'application — 2026-08-18 (backlog de l'audit 17b, « applique tout » d'Adrien)
+
+Les 9 items du backlog appliqués (détail et vérifications item par item dans
+`AUDIT-MAQUETTE-2026-08-17b.md`, statués ce jour). **Note effective : 82/100 — 0 P0.**
+
+- **P0 CNPM** : `s1TNc`/`UW2tL`/`SpFVf` réécrits au verbatim de `consumer-law.ts` ; balayage
+  final CM2C = 0, CNPM = 3.
+- **Bandeau restauré** (option « restauration », arbitrage franco nº 1 toujours ouvert) :
+  nouveaux nœuds `XCTvG` (desktop) / `EICEp` (mobile), texte small `lineHeight 1.26` → barres
+  re-mesurées **91/83 pile**. Overrides `enabled:false` re-posés sur les démos scrollées
+  (`xe1pz/XCTvG`, `r8fthJ/EICEp`) — la doc de `chrome-scrollee` redevient vraie telle quelle.
+- **Frise hero mobile** : tuiles re-taillées 168×210 (la passe fantôme les avait réduites à
+  190) et reposées (chaîne y40, attaches 60/86, tuiles y100/126) → coupées par la barre basse
+  et le cadre ; cookies et assemblages re-synchronisés (`cp5Q1`, `q1JLo`…).
+- **Plis** : transitions mobiles 48 → 16 (`MLdMu`, `RctM4`), créations bas 32 → 4, atelier
+  haut 24 → 4. Relevé refait sur 9 828 px : 11/11 coupent du contenu (7 : h2 à 29 px ·
+  8 : étape-1 à 97 px · 9 : h2 à 27 px). Zéro contamination d'accents sur les 4 copies neuves.
+- **Nav desktop** : « Les créations · Les collections » (« À propos » supprimé) ; colonnes
+  pieds « LA BOUTIQUE ». Maître accordéon aligné sur les placeholders.
+- Docs mis à jour : `synclune-systeme.md` (rose-pale en table + § ajouts du 2026-08-17),
+  `HANDOFF.md` § Chrome (rose-pale, filet 14 %, transitions, focus pied).
+- ⚠️ Les avertissements `zTPJG`/`ToeQT` ont accompagné les re-copies : famille bénigne connue
+  (tours 3/6), non « corrigée ».
+- ⚠️ **Toujours pas de Cmd+S** : cette passe vit aussi en mémoire d'app. Cmd+S puis commit
+  du `.pen` = le seul item restant du backlog.

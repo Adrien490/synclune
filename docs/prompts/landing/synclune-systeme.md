@@ -17,6 +17,7 @@ du papier, de l'encre et du gris.
 | `or`         | `#ffe2a2` | **secondary** — aplats : bandeaux, fonds de section, tracés remplis |
 | `or-encre`   | `#896e2c` | Le doré quand il doit être **lu**                                   |
 | `gris`       | `#e8ebf2` | Séparateurs, survols, fonds de champ                                |
+| `rose-pale`  | `#fdf0f8` | Fond du pied de page — **teinte du rose**, pas une couleur de plus  |
 
 **Trois règles dures :**
 
@@ -27,7 +28,22 @@ du papier, de l'encre et du gris.
 2. **Une seule couleur d'accent par section**, en alternance rose → or → rose → or. Pas les deux
    dans la même section.
 3. **Pas de troisième couleur d'interface.** La polychromie de la marque arrive par les **photos** et
-   par les tracés dessinés, pas par de nouveaux tokens.
+   par les tracés dessinés, pas par de nouveaux tokens. `rose-pale` (ajouté par la passe du
+   2026-08-17) ne compte pas comme une troisième couleur : c'est une teinte du rose, réservée aux
+   **surfaces** (fond du pied) — elle n'écrit jamais et ne porte aucun trait porteur.
+
+**Ajouts de la passe du 2026-08-17 (documentés a posteriori, audit 17b) :**
+
+- **Pied de page sur `rose-pale`** (l'aplat encre du tour 0 est abandonné) : texte en `encre`
+  (18,2:1), goutte décorative `or-encre`, filet interne `#06070b24` — l'encre à 14 % d'alpha,
+  **seule valeur non tokenisée tolérée** hors carte OG (une variable ne porte pas d'alpha) ; en
+  code : `var(--foreground)` à 14 %. La règle « sur fond encre, focus papier » est **caduque** :
+  sur `rose-pale`, le focus est l'anneau encre 2 px standard.
+- **Transitions en dégradé entre sections d'assemblage** : papier↔or autour de la section types,
+  papier→rose-pale avant le pied. Desktop 64 px, **mobile 16 px** (réglé par le relevé des plis,
+  audit 17b). Le dégradé papier→rose-pale est à 1,08:1 — invisibilité **assumée** (raccord de
+  surface, pas un effet). Ces bandes complètent la séparation « blanc + filets gris », elles ne la
+  remplacent pas ailleurs.
 
 ### Écarts avec le code actuel — à faire arbitrer avant le passage en code
 
