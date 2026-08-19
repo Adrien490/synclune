@@ -10,9 +10,12 @@ const { mockReducedMotion } = vi.hoisted(() => ({
 }));
 
 const mockHaptic = vi.fn();
+const mockTriggerHaptic = vi.fn();
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => mockHaptic,
-	triggerHaptic: vi.fn(),
+	// Closure (pas une référence directe) : la factory est évaluée avant l'init
+	// des `const` de ce fichier — une référence directe tombe dans la TDZ.
+	triggerHaptic: (...args: unknown[]) => mockTriggerHaptic(...args),
 }));
 
 vi.mock("motion/react", () => ({
@@ -42,6 +45,7 @@ vi.mock("@/shared/utils/cn", () => ({
 
 import { SwipeableCard } from "../swipeable-card";
 import { applyRubberBand } from "@/shared/utils/rubber-band";
+import { ANNOUNCE_REGION_IDS } from "@/shared/utils/announce";
 
 // ============================================================================
 // HELPERS
@@ -71,6 +75,7 @@ describe("SwipeableCard", () => {
 	beforeEach(() => {
 		mockReducedMotion.value = false;
 		mockHaptic.mockClear();
+		mockTriggerHaptic.mockClear();
 	});
 
 	// -------------------------------------------------------------------------
@@ -380,21 +385,24 @@ describe("SwipeableCard", () => {
 	});
 
 	// -------------------------------------------------------------------------
-	// aria-live announcement (initial state only — full swipe flow needs E2E)
+	// Screen-reader announcement (content assertions live in "gesture firing")
 	// -------------------------------------------------------------------------
 
-	describe("aria-live announcement", () => {
-		it("renders an sr-only polite status region", () => {
-			render(
-				<SwipeableCard>
+	describe("screen-reader announcement", () => {
+		it("owns no live region — announcements go through the document-level singleton", () => {
+			const { container } = render(
+				<SwipeableCard
+					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
+				>
 					<span>Content</span>
 				</SwipeableCard>,
 			);
 
-			const status = screen.getByRole("status");
-			expect(status).toHaveAttribute("aria-live", "polite");
-			expect(status).toHaveClass("sr-only");
-			expect(status.textContent).toBe("");
+			// La région vivait DANS la carte : une action qui démonte la carte
+			// (retrait favoris, retrait optimiste) emportait le texte d'annonce dans
+			// le même commit React — le lecteur d'écran ne le lisait jamais. Le
+			// canal est désormais `announce()` → régions globales d'AppToaster.
+			expect(container.querySelector('[role="status"]')).toBeNull();
 		});
 	});
 
@@ -425,7 +433,13 @@ describe("SwipeableCard", () => {
 			expect(onAction).not.toHaveBeenCalled();
 		});
 
-		it("still tracks touchstart outside [data-no-swipe] (control)", () => {
+		it("still tracks the gesture outside [data-no-swipe] (control)", () => {
+			vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+				cb(0);
+				return 0;
+			});
+			vi.stubGlobal("cancelAnimationFrame", () => {});
+
 			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
@@ -436,12 +450,248 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			// Touching the body (no data-no-swipe) must start tracking — sliding card
-			// switches its transition to "none" while tracking is active.
-			fireEvent.touchStart(screen.getByTestId("card-body"), {
-				touches: [{ clientX: 100, clientY: 100 }],
-			});
+			// Touching the body (no data-no-swipe) then locking a direction must
+			// track — the sliding card cuts its transition and follows the finger.
+			// (`isSwiping` bascule au VERROUILLAGE de direction, plus au touchstart :
+			// un simple tap ne re-rend plus le wrapper.)
+			const body = screen.getByTestId("card-body");
+			fireEvent.touchStart(body, { touches: [{ clientX: 100, clientY: 100 }] });
+			fireEvent.touchMove(body, { touches: [{ clientX: 90, clientY: 100 }] });
 			expect(getSlidingCard(container)?.style.transition).toBe("none");
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(-10px)");
+			fireEvent.touchEnd(body);
+
+			vi.unstubAllGlobals();
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// Gesture firing — release decisions (distance, flick, overswipe, cancel)
+	// -------------------------------------------------------------------------
+
+	describe("gesture firing (release decisions)", () => {
+		// Horloge déterministe pour l'échantillonnage de vélocité + rAF SYNCHRONE :
+		// le setSwipeOffset différé atterrit dans le même act() que le fireEvent qui
+		// l'a causé. La décision de tir, elle, n'en dépend pas (le ref d'offset est
+		// écrit en synchrone dans touchmove — c'est le correctif du flick perdu).
+		let now = 0;
+
+		beforeEach(() => {
+			now = 0;
+			vi.spyOn(performance, "now").mockImplementation(() => now);
+			vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+				cb(0);
+				return 0;
+			});
+			vi.stubGlobal("cancelAnimationFrame", () => {});
+		});
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		function renderCard(threshold?: number) {
+			const onAction = vi.fn();
+			const utils = render(
+				<SwipeableCard
+					leftAction={{
+						children: <span>Delete</span>,
+						label: "Article supprimé",
+						onAction,
+						...(threshold !== undefined ? { threshold } : {}),
+					}}
+				>
+					<div data-testid="body">
+						<span>Content</span>
+					</div>
+				</SwipeableCard>,
+			);
+			return { onAction, body: screen.getByTestId("body"), ...utils };
+		}
+
+		function touchStart(target: HTMLElement, x: number, y = 100) {
+			fireEvent.touchStart(target, { touches: [{ clientX: x, clientY: y }] });
+		}
+
+		function touchMove(target: HTMLElement, x: number, y = 100, advanceMs = 16) {
+			now += advanceMs;
+			fireEvent.touchMove(target, { touches: [{ clientX: x, clientY: y }] });
+		}
+
+		it("fires the action on release past the distance threshold and announces its label", () => {
+			// Région polie globale, telle que montée par AppToaster dans le layout
+			// racine : `announce()` s'y branche — elle survit au démontage de la
+			// carte par l'action elle-même (l'ancienne région interne, non).
+			const region = document.createElement("div");
+			region.id = ANNOUNCE_REGION_IDS.polite;
+			region.setAttribute("role", "status");
+			region.setAttribute("aria-live", "polite");
+			document.body.appendChild(region);
+
+			const { onAction, body } = renderCard();
+
+			touchStart(body, 200);
+			touchMove(body, 150);
+			touchMove(body, 100); // -100px ≥ seuil fallback de 80px (largeur jsdom = 0)
+			// Release-to-confirm : jamais pendant le drag.
+			expect(onAction).not.toHaveBeenCalled();
+			fireEvent.touchEnd(body);
+
+			expect(onAction).toHaveBeenCalledTimes(1);
+			// Le rAF stub est synchrone : la séquence clear → rAF → set d'announce()
+			// a déjà posé le texte.
+			expect(region.textContent).toBe("Article supprimé");
+			region.remove();
+		});
+
+		it("does not fire on a slow release below the distance threshold", () => {
+			const { onAction, body } = renderCard();
+
+			touchStart(body, 200);
+			touchMove(body, 180, 100, 300);
+			touchMove(body, 160, 100, 300); // -40px à ~0,07 px/ms : ni distance ni flick
+			fireEvent.touchEnd(body);
+
+			expect(onAction).not.toHaveBeenCalled();
+		});
+
+		it("commits a fast flick below the distance threshold (velocity path)", () => {
+			const { onAction, body } = renderCard();
+
+			touchStart(body, 200);
+			touchMove(body, 180, 100, 25);
+			touchMove(body, 160, 100, 25); // -40px en 50ms → 0,8 px/ms ≥ 0,5
+			fireEvent.touchEnd(body);
+
+			expect(onAction).toHaveBeenCalledTimes(1);
+			// Le seuil n'a jamais été franchi → le tick de confirmation part au commit.
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
+		});
+
+		it("ignores a fast flick under the minimum travelled distance (tap micro-drag)", () => {
+			const { onAction, body } = renderCard();
+
+			touchStart(body, 200);
+			touchMove(body, 190, 100, 8); // -10px très rapide, mais < plancher de 24px
+			fireEvent.touchEnd(body);
+
+			expect(onAction).not.toHaveBeenCalled();
+		});
+
+		it("overswipe: heavy haptic during the drag, action deferred to release", () => {
+			// Le check d'overswipe exige une largeur mesurée (75% de la largeur).
+			vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+				width: 400,
+				height: 100,
+				top: 0,
+				left: 0,
+				bottom: 100,
+				right: 400,
+				x: 0,
+				y: 0,
+				toJSON: () => ({}),
+			} as DOMRect);
+			const { onAction, body } = renderCard();
+
+			touchStart(body, 380);
+			touchMove(body, 20); // -360px > 75% de 400px
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("heavy");
+			// Différé au relâcher : une modale ne doit jamais s'ouvrir sous le doigt.
+			expect(onAction).not.toHaveBeenCalled();
+			fireEvent.touchEnd(body);
+
+			expect(onAction).toHaveBeenCalledTimes(1);
+		});
+
+		it("vertical drift cancels the swipe and the return ANIMATES (no jump)", () => {
+			const { onAction, body, container } = renderCard();
+
+			touchStart(body, 200);
+			touchMove(body, 140); // -60px, direction verrouillée
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(-60px)");
+			expect(getSlidingCard(container)?.style.transition).toBe("none");
+
+			touchMove(body, 140, 140); // deltaY 40 > 30 → annulation verticale
+			const card = getSlidingCard(container);
+			expect(card?.style.transform).toBe("translateX(0px)");
+			// `isSwiping` est relâché avec le tracking : le retour se joue en
+			// transition de snap-back — plus de saut sec pendant un scroll.
+			expect(card?.style.transition).toContain("0.2s");
+
+			fireEvent.touchEnd(body);
+			expect(onAction).not.toHaveBeenCalled();
+		});
+
+		it("marks the zone data-committed past the threshold and pops the icon", () => {
+			const { onAction, body, container } = renderCard();
+			const zone = getZone(container, "left");
+
+			touchStart(body, 200);
+			touchMove(body, 150); // -50px → progress 0,625
+			expect(zone).not.toHaveAttribute("data-committed");
+
+			touchMove(body, 100); // -100px → progress 1 : relâcher tirera
+			// L'état discret est le signal VISUEL « relâche pour confirmer » — le
+			// signal haptique est un no-op silencieux sur iOS Safari.
+			expect(zone).toHaveAttribute("data-committed");
+			expect(zone.style.filter).toContain("saturate(1.35)");
+			expect(zone.querySelector("span")?.style.transform).toContain("scale(1.2)");
+
+			// Recul sous le seuil → l'affordance s'éteint honnêtement.
+			touchMove(body, 160, 100, 300);
+			expect(zone).not.toHaveAttribute("data-committed");
+
+			fireEvent.touchEnd(body);
+			expect(onAction).not.toHaveBeenCalled();
+		});
+
+		it("re-arms the threshold haptic after retreating below the commit zone", () => {
+			const { body } = renderCard();
+
+			touchStart(body, 200);
+			touchMove(body, 100); // progress 1 → tick
+			expect(mockHaptic).toHaveBeenCalledTimes(1);
+
+			touchMove(body, 170, 100, 300); // -30px → progress 0,375 < 0,85 → ré-arme
+			touchMove(body, 100, 100, 300); // re-franchit → re-tick
+			expect(mockHaptic).toHaveBeenCalledTimes(2);
+			expect(mockHaptic).toHaveBeenLastCalledWith("medium");
+
+			fireEvent.touchEnd(body);
+		});
+
+		it("floors a consumer threshold of 0 — progress stays finite and the swipe fires", () => {
+			const { onAction, body, container } = renderCard(0);
+
+			touchStart(body, 200);
+			touchMove(body, 190); // -10px ≥ plancher de 1px
+			// Sans le plancher : progress = offset / 0 → opacité NaN.
+			expect(getZone(container, "left").style.opacity).toBe("1");
+			fireEvent.touchEnd(body);
+
+			expect(onAction).toHaveBeenCalledTimes(1);
+		});
+
+		it("disabling mid-gesture snaps the card back instead of freezing it", () => {
+			const onAction = vi.fn();
+			const cardEl = (enabled: boolean) => (
+				<SwipeableCard
+					enabled={enabled}
+					leftAction={{ children: <span>Delete</span>, label: "Supprimé", onAction }}
+				>
+					<div data-testid="body">Content</div>
+				</SwipeableCard>
+			);
+			const { container, rerender } = render(cardEl(true));
+			const body = screen.getByTestId("body");
+
+			touchStart(body, 200);
+			touchMove(body, 140);
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(-60px)");
+
+			rerender(cardEl(false));
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
+			expect(onAction).not.toHaveBeenCalled();
 		});
 	});
 
@@ -552,6 +802,26 @@ describe("SwipeableCard", () => {
 				vi.advanceTimersByTime(700);
 			});
 			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
+		});
+
+		it("floors the zone opacity during the peek (the hint must read clearly)", () => {
+			const { container } = render(
+				<SwipeableCard peek rightAction={rightAction}>
+					<span>Card</span>
+				</SwipeableCard>,
+			);
+
+			act(() => {
+				vi.advanceTimersByTime(700);
+			});
+			// La progression du peek vaut 0,55 ; l'opacité, elle, est plancher à 0,9 —
+			// un indice pédagogique délavé n'apprend rien.
+			expect(Number(getZone(container, "right").style.opacity)).toBeGreaterThanOrEqual(0.9);
+
+			act(() => {
+				vi.advanceTimersByTime(650);
+			});
+			expect(getZone(container, "right").style.opacity).toBe("0");
 		});
 
 		it("does nothing when peek is false (default)", () => {

@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
+import { announce } from "@/shared/utils/announce";
 import { applyRubberBand } from "@/shared/utils/rubber-band";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { triggerHaptic, useHaptic } from "@/shared/hooks/use-haptic";
@@ -22,10 +23,37 @@ const SWIPE_VERTICAL_CANCEL_THRESHOLD = 30;
 /** Minimum horizontal movement (px) before locking swipe direction */
 const SWIPE_DIRECTION_LOCK_DISTANCE = 5;
 
+/** Minimum release velocity (px/ms) for a flick to commit below the distance threshold. */
+const FLICK_VELOCITY_THRESHOLD = 0.5;
+
+/** Minimum travelled distance (px) for a flick commit — immunises tap micro-drags. */
+const FLICK_MIN_DISTANCE = 24;
+
+/** Sliding window (ms) of touch samples retained to measure the release velocity. */
+const VELOCITY_SAMPLE_WINDOW_MS = 100;
+
+/**
+ * Icon scale while the swipe is committed (release will fire) — the iOS Mail
+ * "pop". This is the VISUAL half of the commit cue: the haptic half is a silent
+ * no-op on iOS Safari (no Vibration API), so without it an iPhone user has no
+ * way to tell whether releasing will fire.
+ */
+const COMMITTED_ICON_SCALE = 1.2;
+
+/** Zone saturation while committed — a discrete step above the progressive ramp (max 1.2). */
+const COMMITTED_ZONE_SATURATION = 1.35;
+
+/**
+ * Progress below which the threshold haptic re-arms (hysteresis). Retreating
+ * under the commit zone then re-crossing must re-tick — but a finger resting ON
+ * the threshold must not buzz, hence 0.85 and not 1.
+ */
+const THRESHOLD_HAPTIC_REARM_PROGRESS = 0.85;
+
 interface SwipeActionSlot {
 	/** Icon or label rendered inside the action zone */
 	children: React.ReactNode;
-	/** Text announced via `aria-live` when the action fires (screen-reader feedback, required) */
+	/** Text announced via `announce()` when the action fires (screen-reader feedback, required) */
 	label: string;
 	/** Tailwind background class (default: "bg-destructive" for left, "bg-secondary" for right) */
 	className?: string;
@@ -76,11 +104,15 @@ const ZONE_SNAP_TRANSITION =
 /** Saturation-filter transition for the action zone — independent of the snap-back. */
 const ZONE_FILTER_TRANSITION = "filter 150ms ease-out";
 
-/** Duration (ms) an aria-live announcement remains in the DOM after firing. */
-const ANNOUNCEMENT_DURATION_MS = 1500;
-
 /** Fraction of the action threshold revealed during the one-shot peek nudge. */
 const PEEK_OFFSET_RATIO = 0.55;
+
+/**
+ * Minimum zone opacity while the peek plays. The zone opacity normally follows
+ * the swipe progress, so at 55% of the threshold the hint sat at 55% opacity —
+ * too washed out to teach anything.
+ */
+const PEEK_ZONE_MIN_OPACITY = 0.9;
 
 /** Delay (ms) before the peek opens — lets list entrance animations settle first. */
 const PEEK_DELAY_MS = 700;
@@ -89,12 +121,32 @@ const PEEK_DELAY_MS = 700;
 const PEEK_HOLD_MS = 650;
 
 /**
- * Computes the effective threshold: min(configuredPx, containerWidth * 30%).
+ * Computes the effective threshold: min(configuredPx, containerWidth * 30%),
+ * floored at 1px — a consumer-provided `threshold: 0` would otherwise divide
+ * the progress by zero (progress = offset / threshold).
  * Falls back to the px threshold if the container width is unavailable.
  */
 function getEffectiveThreshold(pxThreshold: number, containerWidth: number): number {
-	if (containerWidth <= 0) return pxThreshold;
-	return Math.min(pxThreshold, containerWidth * SWIPE_WIDTH_RATIO);
+	if (containerWidth <= 0) return Math.max(1, pxThreshold);
+	return Math.max(1, Math.min(pxThreshold, containerWidth * SWIPE_WIDTH_RATIO));
+}
+
+interface VelocitySample {
+	x: number;
+	t: number;
+}
+
+/**
+ * Signed horizontal release velocity (px/ms) over the retained sample window.
+ * Returns 0 with fewer than 2 samples or a degenerate elapsed time.
+ */
+function computeReleaseVelocity(samples: readonly VelocitySample[]): number {
+	const first = samples[0];
+	const last = samples[samples.length - 1];
+	if (!first || !last || first === last) return 0;
+	const elapsed = last.t - first.t;
+	if (elapsed <= 0) return 0;
+	return (last.x - first.x) / elapsed;
 }
 
 /**
@@ -108,11 +160,18 @@ function getEffectiveThreshold(pxThreshold: number, containerWidth: number): num
  * - Dynamic threshold: min(configured px, 30% of card width)
  * - Action zone width tracks the card edge, filling the revealed area (no background gap)
  * - Overswipe past 75% of card width commits the action — runs on release, `heavy` haptic
+ * - Flick commit: a fast release (≥ 0.5 px/ms over ≥ 24 px) fires below the distance threshold
+ * - Discrete committed state past the threshold: `data-committed` on the zone, icon pop
+ *   (scale 1.2) + saturation step — the visual "release to confirm" cue (the haptic one
+ *   is a silent no-op on iOS Safari)
  * - iOS-style rubber-band elasticity past the threshold (logarithmic compression)
  * - Scale + rotate icon reveal synchronized with swipe progress (iOS Mail style)
  * - Progressive color saturation of the action zone (feedback intensifies)
- * - Single `medium` haptic tick when the swipe crosses the action threshold; `heavy` on overswipe
- * - `aria-live="polite"` announcement of the action label on confirm (WCAG 2.2)
+ * - Single `medium` haptic tick when the swipe crosses the action threshold (re-armed
+ *   with hysteresis when retreating below); `heavy` on overswipe; `medium` on flick commit
+ * - Screen-reader announcement of the action label on confirm (WCAG 2.2), via the
+ *   global live regions of `AppToaster` (`announce()`) — they survive the card
+ *   unmounting, which is the nominal case for a remove action
  * - Elastic snap-back with spring-like timing
  * - Respects `prefers-reduced-motion`
  * - Passive touch listeners for scroll-safe performance
@@ -139,25 +198,21 @@ export function SwipeableCard({
 	const prefersReducedMotion = useReducedMotion();
 	const haptic = useHaptic();
 	const thresholdHapticFiredRef = useRef(false);
-	const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const [announcement, setAnnouncement] = useState("");
 
-	// Wrap an action with the screen-reader announcement, then run it.
+	// Announce for screen readers, then run the consumer action. The announcement
+	// goes through the GLOBAL live regions mounted by `AppToaster` (`announce()`)
+	// and NOT a live region owned by this card: a remove action unmounts the card
+	// in the same React commit as the announcement text, which was therefore
+	// never read — and a region must pre-exist in the a11y tree to be voiced.
 	function fireAction(onAction: () => void, label: string) {
-		if (announcementTimerRef.current) {
-			clearTimeout(announcementTimerRef.current);
-		}
-		setAnnouncement(label);
-		announcementTimerRef.current = setTimeout(() => {
-			setAnnouncement("");
-			announcementTimerRef.current = null;
-		}, ANNOUNCEMENT_DURATION_MS);
+		announce(label);
 		onAction();
 	}
 
 	// Inlined swipe-action state
 	const [swipeOffset, setSwipeOffset] = useState(0);
 	const [isSwiping, setIsSwiping] = useState(false);
+	const [isPeeking, setIsPeeking] = useState(false);
 	const [containerWidth, setContainerWidth] = useState(0);
 
 	const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -165,6 +220,7 @@ export function SwipeableCard({
 	const lockedDirectionRef = useRef<"left" | "right" | null>(null);
 	const swipeOffsetRef = useRef(0);
 	const overswipeFiredRef = useRef(false);
+	const velocitySamplesRef = useRef<VelocitySample[]>([]);
 	const rafIdRef = useRef(0);
 	const containerWidthRef = useRef(0);
 
@@ -174,7 +230,8 @@ export function SwipeableCard({
 	const rightThresholdPx = rightAction?.threshold ?? SWIPE_ACTION_THRESHOLD;
 
 	// Stable action callbacks — announce + run. Haptics are fired separately
-	// (medium tick on threshold cross, heavy on overswipe) to keep one source of truth.
+	// (medium tick on threshold cross or flick commit, heavy on overswipe) to keep
+	// one source of truth.
 	const onLeftAction = useEffectEvent(() => {
 		if (leftAction) fireAction(leftAction.onAction, leftAction.label);
 	});
@@ -222,7 +279,10 @@ export function SwipeableCard({
 			isTrackingRef.current = true;
 			lockedDirectionRef.current = null;
 			overswipeFiredRef.current = false;
-			setIsSwiping(true);
+			velocitySamplesRef.current = [{ x: touch.clientX, t: performance.now() }];
+			// The user grabbed the card — the peek (open or pending) no longer owns
+			// the offset, and its opacity floor must not apply to the real gesture.
+			setIsPeeking(false);
 		}
 
 		function onTouchMove(e: TouchEvent) {
@@ -236,6 +296,11 @@ export function SwipeableCard({
 				isTrackingRef.current = false;
 				lockedDirectionRef.current = null;
 				cancelAnimationFrame(rafIdRef.current);
+				swipeOffsetRef.current = 0;
+				// Release `isSwiping` too: the return to 0 must ANIMATE — leaving it
+				// true kept `transition: none` and the card (plus its colored zone)
+				// jumped back instead of snapping back.
+				setIsSwiping(false);
 				setSwipeOffset(0);
 				return;
 			}
@@ -249,6 +314,9 @@ export function SwipeableCard({
 					isTrackingRef.current = false;
 					return;
 				}
+				// Set at direction lock, not at touchstart: a plain tap (or a vertical
+				// scroll grab) must not toggle state and re-render the wrapper.
+				setIsSwiping(true);
 			}
 
 			let newOffset = 0;
@@ -258,11 +326,22 @@ export function SwipeableCard({
 				newOffset = Math.max(0, deltaX);
 			}
 
+			const now = performance.now();
+			const samples = velocitySamplesRef.current;
+			samples.push({ x: touch.clientX, t: now });
+			while (samples.length > 1 && samples[0] && now - samples[0].t > VELOCITY_SAMPLE_WINDOW_MS) {
+				samples.shift();
+			}
+
 			const measuredWidth = containerWidthRef.current;
 
+			// The ref is written SYNCHRONOUSLY: touchend cancels the pending frame,
+			// so a ref written inside the rAF decided on the SECOND-TO-LAST move —
+			// a fast swipe ending just past the threshold didn't fire. Only the
+			// setState (render concern) is deferred to the frame.
+			swipeOffsetRef.current = newOffset;
 			cancelAnimationFrame(rafIdRef.current);
 			rafIdRef.current = requestAnimationFrame(() => {
-				swipeOffsetRef.current = newOffset;
 				setSwipeOffset(newOffset);
 			});
 
@@ -282,29 +361,35 @@ export function SwipeableCard({
 			setIsSwiping(false);
 			cancelAnimationFrame(rafIdRef.current);
 
-			if (isTrackingRef.current) {
-				const dir = lockedDirectionRef.current;
+			const dir = lockedDirectionRef.current;
+			if (isTrackingRef.current && dir) {
+				const runAction = dir === "left" ? onLeftAction : onRightAction;
 
 				if (overswipeFiredRef.current) {
 					// Overswipe committed during the drag — run the action now the finger is up.
-					if (dir === "left") {
-						onLeftAction();
-					} else if (dir === "right") {
-						onRightAction();
-					}
+					runAction();
 				} else {
 					const offset = swipeOffsetRef.current;
 					const width = containerWidthRef.current;
+					const thresholdPx = dir === "left" ? leftThresholdPx : rightThresholdPx;
+					const threshold = getEffectiveThreshold(thresholdPx, width);
 
-					if (dir === "left") {
-						const threshold = getEffectiveThreshold(leftThresholdPx, width);
-						if (Math.abs(offset) >= threshold) {
-							onLeftAction();
-						}
-					} else if (dir === "right") {
-						const threshold = getEffectiveThreshold(rightThresholdPx, width);
-						if (offset >= threshold) {
-							onRightAction();
+					if (Math.abs(offset) >= threshold) {
+						runAction();
+					} else {
+						// Flick commit: a fast short swipe confirms below the distance
+						// threshold (iOS Mail). The distance floor immunises tap
+						// micro-drags; the threshold haptic never fired down here, so
+						// tick the confirm now (cooldown in use-haptic dedupes anyway).
+						const velocity = computeReleaseVelocity(velocitySamplesRef.current);
+						const isFlick =
+							Math.abs(offset) >= FLICK_MIN_DISTANCE &&
+							(dir === "left"
+								? velocity <= -FLICK_VELOCITY_THRESHOLD
+								: velocity >= FLICK_VELOCITY_THRESHOLD);
+						if (isFlick) {
+							triggerHaptic("medium");
+							runAction();
 						}
 					}
 				}
@@ -313,6 +398,8 @@ export function SwipeableCard({
 			isTrackingRef.current = false;
 			lockedDirectionRef.current = null;
 			overswipeFiredRef.current = false;
+			velocitySamplesRef.current = [];
+			swipeOffsetRef.current = 0;
 			setSwipeOffset(0);
 		}
 
@@ -327,6 +414,17 @@ export function SwipeableCard({
 			el.removeEventListener("touchmove", onTouchMove);
 			el.removeEventListener("touchend", onTouchEnd);
 			el.removeEventListener("touchcancel", onTouchEnd);
+			// `enabled` can flip mid-gesture (viewport class change, list refresh):
+			// without this reset the card stayed frozen at its current offset with
+			// no listener left to ever bring it back.
+			touchStartRef.current = null;
+			isTrackingRef.current = false;
+			lockedDirectionRef.current = null;
+			overswipeFiredRef.current = false;
+			velocitySamplesRef.current = [];
+			swipeOffsetRef.current = 0;
+			setIsSwiping(false);
+			setSwipeOffset(0);
 		};
 	}, [enabled, hasLeft, hasRight, leftThresholdPx, rightThresholdPx]);
 
@@ -336,8 +434,14 @@ export function SwipeableCard({
 		swipeOffset < 0 ? Math.min(1, Math.abs(swipeOffset) / effectiveLeftThreshold) : 0;
 	const rightProgress = swipeOffset > 0 ? Math.min(1, swipeOffset / effectiveRightThreshold) : 0;
 
+	// Committed = releasing now fires the action. Drives the discrete visual cue
+	// (`data-committed`, icon pop, saturation step) — see COMMITTED_ICON_SCALE.
+	const isLeftCommitted = leftProgress >= 1;
+	const isRightCommitted = rightProgress >= 1;
+
 	// Single `medium` haptic tick the moment the swipe crosses the action threshold
-	// (the iOS-style "release to confirm" cue). No premature hint, no release haptic.
+	// (the iOS-style "release to confirm" cue). Re-armed with hysteresis when the
+	// finger retreats below THRESHOLD_HAPTIC_REARM_PROGRESS, so re-crossing re-ticks.
 	useEffect(() => {
 		if (!isSwiping) {
 			thresholdHapticFiredRef.current = false;
@@ -347,16 +451,10 @@ export function SwipeableCard({
 		if (progress >= 1 && !thresholdHapticFiredRef.current) {
 			thresholdHapticFiredRef.current = true;
 			haptic("medium");
+		} else if (progress < THRESHOLD_HAPTIC_REARM_PROGRESS && thresholdHapticFiredRef.current) {
+			thresholdHapticFiredRef.current = false;
 		}
 	}, [isSwiping, leftProgress, rightProgress, haptic]);
-
-	useEffect(() => {
-		return () => {
-			if (announcementTimerRef.current) {
-				clearTimeout(announcementTimerRef.current);
-			}
-		};
-	}, []);
 
 	// One-shot "peek" nudge: briefly auto-reveal the action zone then snap back, to
 	// teach the swipe gesture on first visit. Silent demo — no haptic, no action fires.
@@ -376,6 +474,7 @@ export function SwipeableCard({
 		// Prefer the right action (card slides →); fall back to the left action (←).
 		const magnitude =
 			(hasRight ? effectiveRightThreshold : effectiveLeftThreshold) * PEEK_OFFSET_RATIO;
+		setIsPeeking(true);
 		setSwipeOffset(hasRight ? magnitude : -magnitude);
 	});
 
@@ -387,6 +486,7 @@ export function SwipeableCard({
 
 		const close = setTimeout(() => {
 			if (isTrackingRef.current) return;
+			setIsPeeking(false);
 			setSwipeOffset(0);
 		}, PEEK_DELAY_MS + PEEK_HOLD_MS);
 
@@ -418,30 +518,31 @@ export function SwipeableCard({
 			? ZONE_FILTER_TRANSITION
 			: `${ZONE_SNAP_TRANSITION}, ${ZONE_FILTER_TRANSITION}`;
 
+	// Peek floor: during the hint, the zone opacity is floored so the teaching
+	// reveal reads clearly instead of replaying the washed-out 55% of the ramp.
+	const zoneOpacity = (progress: number) =>
+		isPeeking && progress > 0 ? Math.max(PEEK_ZONE_MIN_OPACITY, progress) : progress;
+
 	return (
 		// overflow-x-clip (pas overflow-hidden) : seul l'axe horizontal du swipe doit
 		// clipper — la ProductCard polaroid de /favoris déborde verticalement par
 		// construction (lift hover, glow), et `clip` ne crée pas de scroll container
 		// donc l'axe vertical reste réellement `visible`.
 		<div ref={containerRef} className={cn("relative touch-pan-y overflow-x-clip", className)}>
-			{/* Screen-reader announcement of the last fired action (WCAG 2.2 SC 2.5.7 complement) */}
-			<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-				{announcement}
-			</span>
-
 			{/* Right-side action (revealed on swipe right →) — decorative reveal zone */}
 			{rightAction && (
 				<div
 					aria-hidden="true"
 					data-swipe-action="right"
+					data-committed={isRightCommitted ? "" : undefined}
 					className={cn(
 						"absolute inset-y-0 left-0 flex items-center justify-start overflow-hidden pl-5",
 						rightAction.className ?? "bg-secondary",
 					)}
 					style={{
 						width: rightZoneWidth,
-						opacity: rightProgress,
-						filter: `saturate(${0.7 + rightProgress * 0.5})`,
+						opacity: zoneOpacity(rightProgress),
+						filter: `saturate(${isRightCommitted ? COMMITTED_ZONE_SATURATION : 0.7 + rightProgress * 0.5})`,
 						transition: zoneTransition,
 						["--swipe-progress" as string]: rightProgress,
 					}}
@@ -451,7 +552,9 @@ export function SwipeableCard({
 						style={{
 							transform: prefersReducedMotion
 								? undefined
-								: "scale(calc(0.6 + var(--swipe-progress, 0) * 0.4)) rotate(calc((1 - var(--swipe-progress, 0)) * -8deg))",
+								: isRightCommitted
+									? `scale(${COMMITTED_ICON_SCALE}) rotate(0deg)`
+									: "scale(calc(0.6 + var(--swipe-progress, 0) * 0.4)) rotate(calc((1 - var(--swipe-progress, 0)) * -8deg))",
 							transformOrigin: "center",
 						}}
 					>
@@ -465,14 +568,15 @@ export function SwipeableCard({
 				<div
 					aria-hidden="true"
 					data-swipe-action="left"
+					data-committed={isLeftCommitted ? "" : undefined}
 					className={cn(
 						"absolute inset-y-0 right-0 flex items-center justify-end overflow-hidden pr-5",
 						leftAction.className ?? "bg-destructive",
 					)}
 					style={{
 						width: leftZoneWidth,
-						opacity: leftProgress,
-						filter: `saturate(${0.7 + leftProgress * 0.5})`,
+						opacity: zoneOpacity(leftProgress),
+						filter: `saturate(${isLeftCommitted ? COMMITTED_ZONE_SATURATION : 0.7 + leftProgress * 0.5})`,
 						transition: zoneTransition,
 						["--swipe-progress" as string]: leftProgress,
 					}}
@@ -482,7 +586,9 @@ export function SwipeableCard({
 						style={{
 							transform: prefersReducedMotion
 								? undefined
-								: "scale(calc(0.6 + var(--swipe-progress, 0) * 0.4)) rotate(calc((1 - var(--swipe-progress, 0)) * 8deg))",
+								: isLeftCommitted
+									? `scale(${COMMITTED_ICON_SCALE}) rotate(0deg)`
+									: "scale(calc(0.6 + var(--swipe-progress, 0) * 0.4)) rotate(calc((1 - var(--swipe-progress, 0)) * 8deg))",
 							transformOrigin: "center",
 						}}
 					>
