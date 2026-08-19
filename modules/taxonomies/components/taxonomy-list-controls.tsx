@@ -1,9 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
 
-import { ActiveToggle } from "@/shared/components/active-toggle";
 import { AdminSortBadge } from "@/shared/components/admin/admin-sort-badge";
 import { RefreshButton } from "@/shared/components/refresh-button";
 import { Button } from "@/shared/components/ui/button";
@@ -19,24 +17,15 @@ import type { TaxonomyConfig, TaxonomyKind } from "../types/taxonomy.types";
  * Chaque module expose un composant nommé qui délègue ici en passant sa
  * configuration — les pages admin gardent des noms explicites
  * (`ColorsSortBadge`, `CreateMaterialButton`…) tout en partageant le corps.
+ *
+ * Les composants qui prennent un `kind` plutôt qu'un `config` le font pour la
+ * raison exposée sur `TaxonomyKind` (frontière RSC).
  */
 
 // ============================================================================
 // CHIP DE TRI (mobile)
 // ============================================================================
 
-/**
- * ⚠️ Prend un `kind` (chaîne), pas l'objet `config`.
- *
- * Ce composant est `"use client"` et monté depuis des Server Components : un
- * `TaxonomyConfig` passé en prop traverserait la frontière RSC — ~40 champs
- * sérialisés à chaque rendu, pour une valeur que le client peut lire seul dans
- * le registre. Le `kind` fait cinq caractères sur le fil.
- *
- * C'est aussi ce qui a permis de supprimer les fichiers-liants d'un composant
- * (`colors-bottom-bar.tsx` et ses quatorze jumeaux, 8 à 13 lignes chacun) dont
- * le corps entier était `return <Taxonomy… config={TAXONOMY_CONFIG.x} />`.
- */
 export function TaxonomySortBadge({ kind }: { kind: TaxonomyKind }) {
 	const config = TAXONOMY_CONFIG[kind];
 	return <AdminSortBadge sortLabels={config.sortLabels} defaultSort={config.defaultSort} />;
@@ -93,51 +82,6 @@ export function RefreshTaxonomyButton({
 			label={`Rafraîchir ${config.labels.plural}`}
 			className={className}
 			variant={variant}
-		/>
-	);
-}
-
-// ============================================================================
-// BASCULE « ACTIF »
-// ============================================================================
-
-interface TaxonomyActiveToggleProps {
-	id: string;
-	active: boolean;
-	toggleStatus: (id: string, active: boolean) => void;
-	isPending: boolean;
-	/** Verrouille la bascule (types de bijoux système, non modifiables). */
-	disabled?: boolean;
-}
-
-/**
- * `useOptimistic` + `startTransition` maison : l'état optimiste doit survivre
- * jusqu'à la résolution de l'action, d'où le `startTransition` ici plutôt que
- * dans le hook de mutation.
- */
-export function TaxonomyActiveToggle({
-	id,
-	active,
-	toggleStatus,
-	isPending,
-	disabled = false,
-}: TaxonomyActiveToggleProps) {
-	const [optimisticIsActive, setOptimisticIsActive] = useOptimistic(active);
-	const [isTransitionPending, startTransition] = useTransition();
-
-	const handleToggle = (checked: boolean) => {
-		startTransition(() => {
-			setOptimisticIsActive(checked);
-			toggleStatus(id, checked);
-		});
-	};
-
-	return (
-		<ActiveToggle
-			active={optimisticIsActive}
-			onToggle={handleToggle}
-			isPending={isPending || isTransitionPending}
-			disabled={disabled}
 		/>
 	);
 }

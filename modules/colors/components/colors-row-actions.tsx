@@ -15,6 +15,8 @@ interface ColorsRowActionsProps {
 	colorId: string;
 	colorName: string;
 	colorHex: string | null;
+	/** Total des variantes rattachées — garde du dialog de suppression. */
+	variantsCount?: number;
 }
 
 export function ColorsRowActions(props: ColorsRowActionsProps) {

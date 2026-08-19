@@ -46,7 +46,7 @@ export async function duplicateProductType(
 		});
 
 		if (!original) {
-			return notFound("Type de produit");
+			return notFound("Type de bijou");
 		}
 
 		const nameResult = await generateUniqueReadableName(original.label, async (label) => {
@@ -77,6 +77,6 @@ export async function duplicateProductType(
 			name: duplicate.label,
 		});
 	} catch (e) {
-		return handleActionError(e, "Impossible de dupliquer le type de produit");
+		return handleActionError(e, "Impossible de dupliquer le type de bijou");
 	}
 }

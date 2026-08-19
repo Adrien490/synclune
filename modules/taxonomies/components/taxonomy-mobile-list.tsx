@@ -7,7 +7,7 @@ import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-re
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { ItemGroup } from "@/shared/components/ui/item";
 
-import { agree } from "../config/taxonomy.config";
+import { agree } from "../utils/taxonomy-labels";
 import type { TaxonomyConfig } from "../types/taxonomy.types";
 import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";

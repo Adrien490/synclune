@@ -26,7 +26,7 @@ vi.mock("@/shared/providers/overlay-store-provider", () => ({
 // Imports (after mocks)
 // ============================================================================
 
-import { CreateTaxonomyButton, TaxonomyActiveToggle } from "../taxonomy-list-controls";
+import { CreateTaxonomyButton } from "../taxonomy-list-controls";
 import { TAXONOMY_CONFIG } from "../../config/taxonomy.config";
 
 beforeEach(() => {
@@ -84,63 +84,5 @@ describe("CreateTaxonomyButton", () => {
 		await user.click(screen.getByRole("button"));
 
 		expect(mockPush).toHaveBeenCalledWith(expectedPath);
-	});
-});
-
-// ============================================================================
-// TaxonomyActiveToggle
-// ============================================================================
-
-describe("TaxonomyActiveToggle", () => {
-	it("transmet l'id et le nouvel état à toggleStatus", async () => {
-		const toggleStatus = vi.fn();
-		const user = userEvent.setup();
-		render(
-			<TaxonomyActiveToggle
-				id="color-1"
-				active={true}
-				toggleStatus={toggleStatus}
-				isPending={false}
-			/>,
-		);
-
-		await user.click(screen.getByRole("switch"));
-
-		expect(toggleStatus).toHaveBeenCalledWith("color-1", false);
-	});
-
-	it("bascule dans l'autre sens depuis l'état inactif", async () => {
-		const toggleStatus = vi.fn();
-		const user = userEvent.setup();
-		render(
-			<TaxonomyActiveToggle
-				id="mat-1"
-				active={false}
-				toggleStatus={toggleStatus}
-				isPending={false}
-			/>,
-		);
-
-		await user.click(screen.getByRole("switch"));
-
-		expect(toggleStatus).toHaveBeenCalledWith("mat-1", true);
-	});
-
-	it("ne déclenche rien quand la bascule est verrouillée (type système)", async () => {
-		const toggleStatus = vi.fn();
-		const user = userEvent.setup();
-		render(
-			<TaxonomyActiveToggle
-				id="pt-system"
-				active={true}
-				toggleStatus={toggleStatus}
-				isPending={false}
-				disabled
-			/>,
-		);
-
-		await user.click(screen.getByRole("switch"));
-
-		expect(toggleStatus).not.toHaveBeenCalled();
 	});
 });

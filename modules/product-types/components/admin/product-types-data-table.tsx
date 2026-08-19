@@ -43,7 +43,7 @@ export async function ProductTypesDataTable({
 
 	return (
 		<AdminDataTable
-			caption="Liste des types de produits"
+			caption="Liste des types de bijoux"
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -60,7 +60,7 @@ export async function ProductTypesDataTable({
 					<TableHead className="w-[16%] text-center">Produits</TableHead>
 					<TableHead
 						className="w-[24%] text-right"
-						aria-label="Actions disponibles pour chaque type de produit"
+						aria-label="Actions disponibles pour chaque type de bijou"
 					>
 						Actions
 					</TableHead>

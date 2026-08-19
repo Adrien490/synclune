@@ -91,7 +91,12 @@ export function ColorsDataTable({
 								<span className="text-sm font-medium">{variantCount}</span>
 							</TableCell>
 							<TableCell className="text-right">
-								<ColorsRowActions colorId={color.id} colorName={color.name} colorHex={color.hex} />
+								<ColorsRowActions
+									colorId={color.id}
+									colorName={color.name}
+									colorHex={color.hex}
+									variantsCount={color._count.variants}
+								/>
 							</TableCell>
 						</TableRow>
 					);

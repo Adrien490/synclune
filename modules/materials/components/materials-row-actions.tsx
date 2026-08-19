@@ -14,6 +14,8 @@ import { useMaterialActions } from "../hooks/use-material-actions";
 interface MaterialsRowActionsProps {
 	materialId: string;
 	materialName: string;
+	/** Total des variantes rattachées — garde du dialog de suppression. */
+	variantsCount?: number;
 }
 
 export function MaterialsRowActions(props: MaterialsRowActionsProps) {

@@ -105,7 +105,12 @@ export function useMaterialActions({
 					icon: TrashIcon,
 					variant: "destructive",
 					closesMenu: false,
-					onSelect: () => openAlert({ id: materialId, displayName: materialName }),
+					onSelect: () =>
+						openAlert({
+							id: materialId,
+							displayName: materialName,
+							usageCount: variantsCount,
+						}),
 				},
 			],
 		},

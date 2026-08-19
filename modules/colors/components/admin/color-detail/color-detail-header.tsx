@@ -14,6 +14,9 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 		colorId: color.id,
 		colorName: color.name,
 		colorHex: color.hex,
+		// `_count.variants` est filtré sur `active` (KPI de la carte de stats) ;
+		// la garde de suppression veut le total.
+		variantsCount: color.totalVariantCount,
 	});
 
 	return (

@@ -40,7 +40,7 @@ export async function updateProductType(
 		});
 
 		if (!existingType) {
-			return notFound("Type de produit");
+			return notFound("Type de bijou");
 		}
 
 		// Sanitizer AVANT l'unicité et le slug : l'update écrivait
@@ -89,8 +89,8 @@ export async function updateProductType(
 		]);
 		invalidationTags.forEach((tag) => updateTag(tag));
 
-		return success("Type de produit modifié avec succès");
+		return success("Type de bijou modifié avec succès");
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la modification du type de produit");
+		return handleActionError(e, "Erreur lors de la modification du type de bijou");
 	}
 }

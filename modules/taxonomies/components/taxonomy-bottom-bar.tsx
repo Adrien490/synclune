@@ -15,34 +15,40 @@ import type { TaxonomyConfig, TaxonomyKind } from "../types/taxonomy.types";
 
 /**
  * Sous-header sticky (mobile, admin) des listes de taxonomies.
- * Quatre actions : Filtrer | Rechercher | Ajouter | Trier.
+ * Trois ou quatre actions : [Filtrer] | Rechercher | Ajouter | Trier.
+ *
+ * Le bouton « Filtrer » n'existe que si la taxonomie déclare des filtres — un
+ * déclencheur pour une feuille vide est une promesse que la liste ne tient pas.
  */
 function TaxonomyBottomBarInner({ config }: { config: TaxonomyConfig }) {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
 	const { hasActiveSort, activeFilterCount } = useActiveListControls();
 
 	const ids = getAdminDrawerIds(config.drawerNamespace);
+	const hasFilters = config.filters.length > 0;
 	const sortOptions: SortOption[] = Object.entries(config.sortLabels).map(([value, label]) => ({
 		value,
 		label,
 	}));
 
+	const filterItem: StickyActionBarItem = {
+		key: "filter",
+		icon: SlidersHorizontalIcon,
+		label: "Filtrer",
+		ariaLabel: "Ouvrir les filtres",
+		onClick: () => open("filter"),
+		badgeCount: activeFilterCount,
+		haspopup: "dialog",
+		controls: ids.filter,
+		expanded: isOpen("filter"),
+		announcement:
+			activeFilterCount > 0
+				? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
+				: undefined,
+	};
+
 	const items: StickyActionBarItem[] = [
-		{
-			key: "filter",
-			icon: SlidersHorizontalIcon,
-			label: "Filtrer",
-			ariaLabel: "Ouvrir les filtres",
-			onClick: () => open("filter"),
-			badgeCount: activeFilterCount,
-			haspopup: "dialog",
-			controls: ids.filter,
-			expanded: isOpen("filter"),
-			announcement:
-				activeFilterCount > 0
-					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
-					: undefined,
-		},
+		...(hasFilters ? [filterItem] : []),
 		{
 			kind: "link",
 			key: "add",
@@ -70,7 +76,7 @@ function TaxonomyBottomBarInner({ config }: { config: TaxonomyConfig }) {
 		<>
 			<StickyActionBar
 				items={items}
-				ariaLabel="Recherche, filtres, ajout et tri"
+				ariaLabel={hasFilters ? "Recherche, filtres, ajout et tri" : "Recherche, ajout et tri"}
 				search={
 					<SearchInput
 						size="sm"
@@ -82,13 +88,15 @@ function TaxonomyBottomBarInner({ config }: { config: TaxonomyConfig }) {
 				}
 			/>
 
-			<TaxonomyFilterSheet
-				config={config}
-				open={isOpen("filter")}
-				onOpenChange={onOpenChange("filter")}
-				hideTrigger
-				id={ids.filter}
-			/>
+			{hasFilters && (
+				<TaxonomyFilterSheet
+					config={config}
+					open={isOpen("filter")}
+					onOpenChange={onOpenChange("filter")}
+					hideTrigger
+					id={ids.filter}
+				/>
+			)}
 
 			<SortDrawer
 				open={isOpen("sort")}
@@ -101,18 +109,7 @@ function TaxonomyBottomBarInner({ config }: { config: TaxonomyConfig }) {
 	);
 }
 
-/**
- * ⚠️ Prend un `kind` (chaîne), pas l'objet `config`.
- *
- * Ce composant est `"use client"` et monté depuis des Server Components : un
- * `TaxonomyConfig` passé en prop traverserait la frontière RSC — ~40 champs
- * sérialisés à chaque rendu, pour une valeur que le client peut lire seul dans
- * le registre. Le `kind` fait cinq caractères sur le fil.
- *
- * C'est aussi ce qui a permis de supprimer les fichiers-liants d'un composant
- * (`colors-bottom-bar.tsx` et ses quatorze jumeaux, 8 à 13 lignes chacun) dont
- * le corps entier était `return <Taxonomy… config={TAXONOMY_CONFIG.x} />`.
- */
+/** Prend un `kind` — cf. la ⚠️ de `TaxonomyKind` (frontière RSC). */
 export function TaxonomyBottomBar({ kind }: { kind: TaxonomyKind }) {
 	return (
 		<Suspense fallback={null}>

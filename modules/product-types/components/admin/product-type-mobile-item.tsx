@@ -46,7 +46,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 				variant="outline"
 				size="sm"
 				className={"w-full gap-3 motion-safe:transition-opacity"}
-				aria-roledescription="carte type de produit"
+				aria-roledescription="carte type de bijou"
 			>
 				<ItemMedia variant="icon">
 					<TagIcon

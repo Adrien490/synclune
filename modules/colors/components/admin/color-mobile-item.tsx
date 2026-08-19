@@ -28,6 +28,7 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 		colorId: color.id,
 		colorName: color.name,
 		colorHex: color.hex,
+		variantsCount: variantCount,
 	});
 
 	return (

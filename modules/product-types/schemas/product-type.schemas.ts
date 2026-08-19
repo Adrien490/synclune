@@ -76,5 +76,5 @@ export const deleteProductTypeSchema = z.object({
 });
 
 export const duplicateProductTypeSchema = z.object({
-	productTypeId: z.cuid2("ID de type de produit invalide"),
+	productTypeId: z.cuid2("ID de type de bijou invalide"),
 });

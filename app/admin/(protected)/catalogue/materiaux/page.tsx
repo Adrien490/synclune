@@ -2,16 +2,14 @@ import {
 	CreateTaxonomyButton,
 	TaxonomySortBadge,
 } from "@/modules/taxonomies/components/taxonomy-list-controls";
-import { TaxonomyFilterBadges } from "@/modules/taxonomies/components/taxonomy-filter-badges";
 import { TaxonomyBottomBar } from "@/modules/taxonomies/components/taxonomy-bottom-bar";
-import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
-import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getMaterials, MATERIALS_SORT_LABELS } from "@/modules/materials/data/get-materials";
+import { GET_MATERIALS_DEFAULT_SORT_BY } from "@/modules/materials/constants/materials.constants";
 import { getFirstParam } from "@/shared/utils/params";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { Suspense } from "react";
@@ -55,13 +53,18 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
 	// Repli sur le tri par défaut plutôt qu'un cast aveugle : un `?sortBy=bogus`
 	// faisait échouer le safeParse de getMaterials → liste VIDE sans message.
+	// La constante SSOT, pas un littéral : `TaxonomySortBadge` compare l'URL à
+	// `config.defaultSort` (même constante) — un littéral qui divergerait ferait
+	// annoncer « Tri actif » à tort, ou jamais.
 	const rawSortBy = getFirstParam(params.sortBy);
 	const sortBy = (
-		rawSortBy && rawSortBy in MATERIALS_SORT_LABELS ? rawSortBy : "name-ascending"
+		rawSortBy && rawSortBy in MATERIALS_SORT_LABELS ? rawSortBy : GET_MATERIALS_DEFAULT_SORT_BY
 	) as keyof typeof MATERIALS_SORT_LABELS;
 	const search = searchParamParsers.search(params.search);
-	const hasActiveFilters = !!search || Object.keys(params).some((key) => key.startsWith("filter_"));
-	// Schéma lean : plus de filtre de statut sur Material
+	// Schéma lean : Material n'a plus aucune colonne filtrable — la liste se
+	// navigue à la recherche et au tri. `TAXONOMY_CONFIG.material.filters` est
+	// vide en conséquence, et aucune surface de filtre n'est montée.
+	const hasActiveFilters = !!search;
 	const filters = {};
 
 	// La promise de matériaux n'est PAS awaitée pour permettre le streaming
@@ -96,7 +99,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 				<TaxonomyBottomBar kind="material" />
 
 				<Suspense
-					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
+					fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />}
 				>
 					<Toolbar
 						className="hidden md:flex"
@@ -122,14 +125,8 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 							className="w-full sm:min-w-45"
 							noPrefix
 						/>
-						<ButtonGroup aria-label="Filtres et actions">
-							<FilterTriggerButton />
-							<RefreshMaterialsButton />
-						</ButtonGroup>
+						<RefreshMaterialsButton />
 					</Toolbar>
-
-					{/* Badges de filtres actifs (visible mobile + desktop) */}
-					<TaxonomyFilterBadges kind="material" />
 				</Suspense>
 
 				{/* Sort badge mobile (visible si sortBy URL défini) */}

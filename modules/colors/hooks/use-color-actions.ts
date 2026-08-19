@@ -107,7 +107,12 @@ export function useColorActions({
 					icon: TrashIcon,
 					variant: "destructive",
 					closesMenu: false,
-					onSelect: () => openAlert({ id: colorId, displayName: colorName }),
+					onSelect: () =>
+						openAlert({
+							id: colorId,
+							displayName: colorName,
+							usageCount: variantsCount,
+						}),
 				},
 			],
 		},

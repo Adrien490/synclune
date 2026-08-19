@@ -15,6 +15,9 @@ export function MaterialDetailHeader({ material }: MaterialDetailHeaderProps) {
 	const { sections } = useMaterialActions({
 		materialId: material.id,
 		materialName: material.name,
+		// `_count.variants` est filtré sur `active` (KPI de la carte de stats) ;
+		// la garde de suppression veut le total.
+		variantsCount: material.totalVariantCount,
 	});
 
 	return (

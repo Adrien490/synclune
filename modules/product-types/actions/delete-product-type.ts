@@ -71,7 +71,7 @@ export async function deleteProductType(
 		});
 
 		if (result.status === "notFound") {
-			return notFound("Type de produit");
+			return notFound("Type de bijou");
 		}
 
 		if (result.status === "blocked") {
@@ -81,7 +81,7 @@ export async function deleteProductType(
 		// 5. Invalidation du cache (incluant tags détail granulaire + counts)
 		getProductTypeInvalidationTags(result.slug, productTypeId).forEach((tag) => updateTag(tag));
 
-		return success("Type de produit supprimé avec succès");
+		return success("Type de bijou supprimé avec succès");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression");
 	}

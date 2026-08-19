@@ -1,8 +1,8 @@
 "use client";
 
 import { refreshColors } from "@/modules/colors/actions/refresh-colors";
-import { useTaxonomyRefresh } from "@/modules/taxonomies/hooks/use-taxonomy-mutations";
+import { useRefreshAction } from "@/shared/hooks/use-action-with-toast";
 
 export function useRefreshColors(options?: { onSuccess?: () => void }) {
-	return useTaxonomyRefresh(refreshColors, options);
+	return useRefreshAction(refreshColors, options);
 }

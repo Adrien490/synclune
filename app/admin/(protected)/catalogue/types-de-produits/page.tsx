@@ -4,6 +4,8 @@ import {
 } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { TaxonomyFilterBadges } from "@/modules/taxonomies/components/taxonomy-filter-badges";
 import { TaxonomyBottomBar } from "@/modules/taxonomies/components/taxonomy-bottom-bar";
+import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
+import { GET_PRODUCT_TYPES_DEFAULT_SORT_BY } from "@/modules/product-types/constants/product-type.constants";
 import { FilterTriggerButton } from "@/shared/components/filter-trigger-button";
 import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
@@ -35,7 +37,8 @@ import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.s
 import { cn } from "@/shared/utils/cn";
 
 export type ProductTypeFiltersSearchParams = {
-	filter_isActive?: string;
+	/** Seul filtre du modèle lean — cf. `TAXONOMY_CONFIG["product-type"].filters`. */
+	filter_hasProducts?: string;
 };
 
 export type ProductTypesSearchParams = {
@@ -47,9 +50,6 @@ export type ProductTypesSearchParams = {
 	sortOrder?: string;
 } & ProductTypeFiltersSearchParams;
 
-export type ParsedProductTypeFilters = {
-	isActive?: boolean;
-};
 import { type Metadata } from "next";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
@@ -74,9 +74,12 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
 	// Repli sur le tri par défaut plutôt qu'un cast aveugle : un `?sortBy=bogus`
 	// faisait échouer le safeParse de getProductTypes → liste VIDE sans message.
+	// La constante SSOT, pas un littéral : `TaxonomySortBadge` compare l'URL à
+	// `config.defaultSort` (même constante) — un littéral qui divergerait ferait
+	// annoncer « Tri actif » à tort, ou jamais.
 	const rawSortBy = getFirstParam(params.sortBy);
 	const sortBy = (
-		rawSortBy && rawSortBy in SORT_LABELS ? rawSortBy : "label-ascending"
+		rawSortBy && rawSortBy in SORT_LABELS ? rawSortBy : GET_PRODUCT_TYPES_DEFAULT_SORT_BY
 	) as keyof typeof SORT_LABELS;
 	const search = searchParamParsers.search(params.search);
 	const filters = parseFilters(params);
@@ -110,8 +113,8 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 					<ResultCountLiveRegion
 						totalCount={productTypesPromise.then((d) => d.totalCount)}
 						query={search}
-						singular="type de produit"
-						plural="types de produits"
+						singular={TAXONOMY_CONFIG["product-type"].labels.singular}
+						plural={TAXONOMY_CONFIG["product-type"].labels.plural}
 					/>
 				</Suspense>
 

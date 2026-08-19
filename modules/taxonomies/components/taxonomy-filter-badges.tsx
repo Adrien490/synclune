@@ -2,43 +2,34 @@
 
 import { FilterBadges } from "@/shared/components/filter-badges";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
-import { formatStatusFilter } from "@/shared/utils/format-status-filter";
 
-import { agree, TAXONOMY_CONFIG } from "../config/taxonomy.config";
+import { TAXONOMY_CONFIG } from "../config/taxonomy.config";
 import type { TaxonomyKind } from "../types/taxonomy.types";
 
 /**
  * Badges de filtres actifs des listes de taxonomies.
  *
- * Le seul filtre est le statut. Les trois modules l'affichaient différemment
- * (« Actives » au pluriel féminin, « Actifs », « Actif » au singulier) ; on
- * retient le singulier accordé, cohérent avec la feuille de filtres.
- */
-
-/**
- * ⚠️ Prend un `kind` (chaîne), pas l'objet `config`.
+ * Le libellé vient du registre : `badgeLabel` pour le nom du filtre, le
+ * `label` de l'option pour la valeur.
  *
- * Ce composant est `"use client"` et monté depuis des Server Components : un
- * `TaxonomyConfig` passé en prop traverserait la frontière RSC — ~40 champs
- * sérialisés à chaque rendu, pour une valeur que le client peut lire seul dans
- * le registre. Le `kind` fait cinq caractères sur le fil.
- *
- * C'est aussi ce qui a permis de supprimer les fichiers-liants d'un composant
- * (`colors-bottom-bar.tsx` et ses quatorze jumeaux, 8 à 13 lignes chacun) dont
- * le corps entier était `return <Taxonomy… config={TAXONOMY_CONFIG.x} />`.
+ * ⚠️ `filter.key` porte le préfixe (`filter_hasProducts`), pas le suffixe. Le
+ * comparer sans le retirer — ou le retirer et comparer à autre chose que le
+ * `param` du registre — fait tomber le badge dans son cas par défaut, où il
+ * rend la clé technique : « isActive : true » s'est affiché ainsi pendant des
+ * mois, y compris dans le nom accessible du bouton de retrait.
  */
 export function TaxonomyFilterBadges({ kind }: { kind: TaxonomyKind }) {
 	const config = TAXONOMY_CONFIG[kind];
 
 	const formatFilter = (filter: FilterDefinition) => {
-		const filterKey = filter.key.replace("filter_", "");
-		const value = filter.value as string;
+		const param = filter.key.replace("filter_", "");
+		const value = String(filter.value);
+		const definition = config.filters.find((candidate) => candidate.param === param);
 
-		if (filterKey === "active") {
-			return formatStatusFilter(value, agree(config, "Actif"), agree(config, "Inactif"));
-		}
+		if (!definition) return { label: param, displayValue: value };
 
-		return { label: filterKey, displayValue: value };
+		const option = definition.options.find((candidate) => candidate.value === value);
+		return { label: definition.badgeLabel, displayValue: option?.label ?? value };
 	};
 
 	return <FilterBadges formatFilter={formatFilter} />;

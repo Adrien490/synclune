@@ -7,14 +7,12 @@ import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { useAppForm } from "@/shared/components/forms";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 
-import { agree } from "../config/taxonomy.config";
 import type { TaxonomyConfig } from "../types/taxonomy.types";
 
 /**
  * Feuille de filtres des listes de taxonomies.
  *
- * Les trois modules en avaient chacun leur version, chacune avec ses qualités
- * propres — ce générique les réunit :
+ * Les trois modules en avaient chacun leur version ; ce générique les réunit :
  *   - passe unique sur `searchParams` (couleurs) plutôt que deux ;
  *   - `RadioFilterItem` partagé (types de bijoux), seul à respecter la cible
  *     tactile de 44 px, au lieu d'un `RadioGroup` inline ;
@@ -24,13 +22,13 @@ import type { TaxonomyConfig } from "../types/taxonomy.types";
  *   - `preventDefault` + `stopPropagation` au submit (types de bijoux), pour
  *     que le formulaire de filtre ne remonte pas au formulaire parent.
  *
- * Le seul filtre est le statut actif — c'est tout ce que porte une table
- * d'étiquettes.
+ * Les groupes rendus viennent de `config.filters` — voir la ⚠️ de
+ * `TaxonomyFilterDefinition` : une définition n'existe que si une page parse
+ * son paramètre. Aucun appelant ne monte cette feuille pour une taxonomie sans
+ * filtre, mais le garde ci-dessous rend le contrat lisible sur place.
  */
 
-interface FilterFormData {
-	active: string;
-}
+type FilterFormData = Record<string, string>;
 
 interface TaxonomyFilterSheetProps {
 	config: TaxonomyConfig;
@@ -58,35 +56,47 @@ function TaxonomyFilterSheetInner({
 	const isOpen = controlledOpen ?? internalOpen;
 	const handleOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
-	// Passe unique sur searchParams : on extrait la valeur du formulaire ET on
+	// Passe unique sur searchParams : on extrait les valeurs du formulaire ET on
 	// compte les filtres actifs (toute clé préfixée `filter_`).
 	const { initialValues, activeFiltersCount } = ((): {
 		initialValues: FilterFormData;
 		activeFiltersCount: number;
 	} => {
-		let active = "all";
+		const values: FilterFormData = Object.fromEntries(
+			config.filters.map((filter) => [filter.param, neutralValue(filter.options)]),
+		);
 		let count = 0;
 		searchParams.forEach((value, key) => {
-			if (key === "filter_isActive") {
-				active = value === "true" ? "active" : "inactive";
+			if (!key.startsWith("filter_")) return;
+			count += 1;
+			const param = key.slice("filter_".length);
+			const filter = config.filters.find((candidate) => candidate.param === param);
+			// Une valeur d'URL hors options (lien périmé, saisie manuelle) laisse le
+			// groupe sur sa valeur neutre plutôt que de le rendre sans sélection.
+			if (filter && filter.options.some((option) => option.value === value)) {
+				values[param] = value;
 			}
-			if (key.startsWith("filter_")) count += 1;
 		});
-		return { initialValues: { active }, activeFiltersCount: count };
+		return { initialValues: values, activeFiltersCount: count };
 	})();
 
-	const pushFilters = (active: string) => {
+	const pushFilters = (values: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
-		params.delete("filter_isActive");
+
+		for (const filter of config.filters) {
+			params.delete(`filter_${filter.param}`);
+			const value = values[filter.param];
+			if (value && value !== neutralValue(filter.options)) {
+				params.set(`filter_${filter.param}`, value);
+			}
+		}
+
 		// La pagination est curseur : changer de filtre invalide le curseur courant.
 		// (`page` n'existe pas dans ce modèle — l'ancien `params.set("page", "1")`
 		// écrivait un paramètre d'URL mort.)
+		// @regression taxonomy-filter-sheet-url-sync-2026-08-19
 		params.delete("cursor");
 		params.delete("direction");
-
-		if (active !== "all") {
-			params.set("filter_isActive", active === "active" ? "true" : "false");
-		}
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });
@@ -95,27 +105,32 @@ function TaxonomyFilterSheetInner({
 
 	const form = useAppForm({
 		defaultValues: initialValues,
-		onSubmit: async ({ value }: { value: FilterFormData }) => pushFilters(value.active),
+		onSubmit: async ({ value }: { value: FilterFormData }) => pushFilters(value),
 	});
 
-	const clearAllFilters = () => {
-		form.reset({ active: "all" });
-		pushFilters("all");
+	// ⚠️ Le formulaire ne réagit PAS aux changements d'URL venus d'ailleurs — un
+	// badge retiré, un « Tout effacer », un retour arrière. `defaultValues` n'est
+	// lu qu'au premier montage, et la feuille reste montée en permanence : sans
+	// cette resynchronisation à l'ouverture, elle rouvrait sur la sélection
+	// précédente en contredisant l'URL et les badges.
+	// @regression taxonomy-filter-sheet-url-sync-2026-08-19
+	const handleOpenChangeWithSync = (next: boolean) => {
+		if (next) form.reset(initialValues);
+		handleOpenChange(next);
 	};
 
-	// Copie retenue : celle des types de bijoux, la plus explicite sur la
-	// sémantique du filtre (« Actif uniquement » plutôt qu'un « Actifs »
-	// ambigu). Accordée en genre via le registre.
-	const statusOptions = [
-		{ value: "all", label: "Tous" },
-		{ value: "active", label: `${agree(config, "Actif")} uniquement` },
-		{ value: "inactive", label: `${agree(config, "Inactif")} uniquement` },
-	];
+	const clearAllFilters = () => {
+		const cleared: FilterFormData = Object.fromEntries(
+			config.filters.map((filter) => [filter.param, neutralValue(filter.options)]),
+		);
+		form.reset(cleared);
+		pushFilters(cleared);
+	};
 
 	return (
 		<FilterSheetWrapper
 			open={isOpen}
-			onOpenChange={handleOpenChange}
+			onOpenChange={handleOpenChangeWithSync}
 			hideTrigger={hideTrigger}
 			id={id}
 			activeFiltersCount={activeFiltersCount}
@@ -133,33 +148,44 @@ function TaxonomyFilterSheetInner({
 				}}
 				className="space-y-6"
 			>
-				<form.Field name="active">
-					{(field) => (
-						<fieldset className="space-y-1">
-							<legend className="text-foreground mb-2 text-sm font-medium">Statut actif</legend>
-							{statusOptions.map(({ value, label }) => (
-								<RadioFilterItem
-									key={value}
-									id={`active-${value}`}
-									name="active"
-									value={value}
-									checked={field.state.value === value}
-									onCheckedChange={(checked) => {
-										if (checked) field.handleChange(value);
-									}}
-								>
-									{label}
-								</RadioFilterItem>
-							))}
-						</fieldset>
-					)}
-				</form.Field>
+				{config.filters.map((filter) => (
+					<form.Field key={filter.param} name={filter.param}>
+						{(field) => (
+							<fieldset className="space-y-1">
+								<legend className="text-foreground mb-2 text-sm font-medium">
+									{filter.legend}
+								</legend>
+								{filter.options.map(({ value, label }) => (
+									<RadioFilterItem
+										key={value}
+										id={`${filter.param}-${value}`}
+										name={filter.param}
+										value={value}
+										checked={field.state.value === value}
+										onCheckedChange={(checked) => {
+											if (checked) field.handleChange(value);
+										}}
+									>
+										{label}
+									</RadioFilterItem>
+								))}
+							</fieldset>
+						)}
+					</form.Field>
+				))}
 			</form>
 		</FilterSheetWrapper>
 	);
 }
 
+/** `options[0]` est la valeur neutre par contrat (cf. `TaxonomyFilterOption`). */
+function neutralValue(options: ReadonlyArray<{ value: string }>): string {
+	return options[0]?.value ?? "all";
+}
+
 export function TaxonomyFilterSheet(props: ComponentProps<typeof TaxonomyFilterSheetInner>) {
+	if (props.config.filters.length === 0) return null;
+
 	return (
 		<Suspense fallback={null}>
 			<TaxonomyFilterSheetInner {...props} />

@@ -74,7 +74,7 @@ export async function duplicateColor(
 		const tags = getColorInvalidationTags(duplicate.id);
 		tags.forEach((tag) => updateTag(tag));
 
-		return success(`Couleur dupliquee: ${duplicate.name}`, {
+		return success(`Couleur dupliquée : ${duplicate.name}`, {
 			id: duplicate.id,
 			name: duplicate.name,
 		});

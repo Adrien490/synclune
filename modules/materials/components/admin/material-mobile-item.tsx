@@ -27,6 +27,7 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	const { sections } = useMaterialActions({
 		materialId: material.id,
 		materialName: material.name,
+		variantsCount: variantCount,
 	});
 
 	return (

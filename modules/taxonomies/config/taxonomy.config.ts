@@ -26,9 +26,7 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		labels: {
 			singular: "couleur",
 			plural: "couleurs",
-			indefinite: "une couleur",
 			definite: "la couleur",
-			capitalized: "Couleur",
 			capitalizedPlural: "Couleurs",
 			feminine: true,
 		},
@@ -39,23 +37,24 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		sortLabels: COLORS_SORT_LABELS,
 		defaultSort: GET_COLORS_DEFAULT_SORT_BY,
 		drawerNamespace: "colors",
+		// Le schéma lean ne laisse à Color que { id, name, hex?, position } :
+		// aucune colonne n'est filtrable. Recherche + tri.
+		filters: [],
 		formFields: { duplicateId: "colorId", deleteId: "id" },
 		createButtonLabel: "Créer une couleur",
 		createAriaLabel: "Créer une nouvelle couleur",
+		deleteDialogTitle: "Supprimer cette couleur ?",
 		search: {
 			placeholder: "Une teinte de l'atelier…",
 			ariaLabel: "Rechercher une teinte de l'atelier",
 		},
-		hasHex: true,
 	},
 	material: {
 		kind: "material",
 		labels: {
 			singular: "matériau",
 			plural: "matériaux",
-			indefinite: "un matériau",
 			definite: "le matériau",
-			capitalized: "Matériau",
 			capitalizedPlural: "Matériaux",
 			feminine: false,
 		},
@@ -66,23 +65,23 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		sortLabels: MATERIALS_SORT_LABELS,
 		defaultSort: GET_MATERIALS_DEFAULT_SORT_BY,
 		drawerNamespace: "materials",
+		// Idem Color : { id, name, position }, rien à filtrer.
+		filters: [],
 		formFields: { duplicateId: "materialId", deleteId: "id" },
 		createButtonLabel: "Créer un matériau",
 		createAriaLabel: "Créer un nouveau matériau",
+		deleteDialogTitle: "Supprimer ce matériau ?",
 		search: {
 			placeholder: "Une matière à l'atelier…",
 			ariaLabel: "Rechercher une matière à l'atelier",
 		},
-		hasHex: false,
 	},
 	"product-type": {
 		kind: "product-type",
 		labels: {
 			singular: "type de bijou",
 			plural: "types de bijoux",
-			indefinite: "un type de bijou",
 			definite: "le type de bijou",
-			capitalized: "Type de bijou",
 			capitalizedPlural: "Types de bijoux",
 			feminine: false,
 		},
@@ -93,43 +92,31 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		sortLabels: PRODUCT_TYPES_SORT_LABELS,
 		defaultSort: GET_PRODUCT_TYPES_DEFAULT_SORT_BY,
 		drawerNamespace: "product-types",
+		// Le SEUL filtre que la couche data sait appliquer à un type de bijou
+		// (`buildProductTypeFilterConditions`), et le seul que sa page parse
+		// (`types-de-produits/_utils/params.ts`).
+		filters: [
+			{
+				param: "hasProducts",
+				legend: "Bijoux rattachés",
+				badgeLabel: "Bijoux",
+				options: [
+					{ value: "all", label: "Tous" },
+					{ value: "true", label: "Avec bijoux" },
+					{ value: "false", label: "Sans bijou" },
+				],
+			},
+		],
 		formFields: {
 			duplicateId: "productTypeId",
 			deleteId: "productTypeId",
 		},
 		createButtonLabel: "Créer un type",
 		createAriaLabel: "Créer un nouveau type de bijou",
+		deleteDialogTitle: "Supprimer ce type de bijou ?",
 		search: {
 			placeholder: "Label, slug…",
 			ariaLabel: "Rechercher un type de bijou",
 		},
-		deleteDialogTitle: "Supprimer ce type de bijou ?",
-		hasHex: false,
 	},
 } as const;
-
-/**
- * Accorde un adjectif ou un participe passé au genre de la taxonomie.
- *
- * `agree(config, "supprimé")` → « supprimée » pour une couleur.
- * `agree(config, "Actif")`    → « Active »   pour une couleur.
- *
- * Couvre le cas régulier (ajout d'un « e ») et la terminaison en « -if », la
- * seule irrégularité rencontrée dans ces libellés. Toute autre irrégularité
- * (« -eux » → « -euse », « -er » → « -ère »…) doit être écrite en toutes
- * lettres dans le registre plutôt qu'ajoutée ici : mieux vaut une donnée
- * explicite qu'un moteur de morphologie approximatif.
- */
-export function agree(config: TaxonomyConfig, masculine: string): string {
-	if (!config.labels.feminine) return masculine;
-	if (masculine.endsWith("if")) return `${masculine.slice(0, -2)}ive`;
-	return `${masculine}e`;
-}
-
-/**
- * Compose « 3 variantes » / « 1 produit » en accordant le pluriel.
- */
-export function formatUsage(config: TaxonomyConfig, count: number): string {
-	const noun = count > 1 ? config.usage.plural : config.usage.singular;
-	return `${count} ${noun}`;
-}

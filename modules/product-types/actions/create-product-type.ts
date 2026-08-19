@@ -61,8 +61,8 @@ export async function createProductType(
 		// 8. Invalider le cache des types de produits
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 
-		return success("Type de produit créé avec succès", { id: created.id, label: created.label });
+		return success("Type de bijou créé avec succès", { id: created.id, label: created.label });
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la création du type de produit");
+		return handleActionError(e, "Erreur lors de la création du type de bijou");
 	}
 }

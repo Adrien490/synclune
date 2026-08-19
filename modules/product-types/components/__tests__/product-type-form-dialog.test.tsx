@@ -96,7 +96,7 @@ describe("ProductTypeFormDialog", () => {
 		render(<ProductTypeFormDialog />);
 		expect(screen.getByTestId("create-product-type-form")).toBeInTheDocument();
 		expect(screen.queryByTestId("edit-product-type-form")).not.toBeInTheDocument();
-		expect(screen.getByText("Créer un type de produit")).toBeInTheDocument();
+		expect(screen.getByText("Créer un type de bijou")).toBeInTheDocument();
 	});
 
 	it("forwards onCreated, onSuccess and redirectOnSuccess=false to CreateProductTypeForm", () => {
@@ -125,7 +125,7 @@ describe("ProductTypeFormDialog", () => {
 		render(<ProductTypeFormDialog />);
 		expect(screen.getByTestId("edit-product-type-form")).toBeInTheDocument();
 		expect(screen.queryByTestId("create-product-type-form")).not.toBeInTheDocument();
-		expect(screen.getByText("Modifier le type de produit")).toBeInTheDocument();
+		expect(screen.getByText("Modifier le type de bijou")).toBeInTheDocument();
 	});
 
 	it("forwards productType, onSuccess and redirectOnSuccess=false to EditProductTypeForm", () => {

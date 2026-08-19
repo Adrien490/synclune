@@ -1,10 +1,8 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useTransition } from "react";
 
-import { useActionWithToast, useRefreshAction } from "@/shared/hooks/use-action-with-toast";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 import type { ActionState } from "@/shared/types/server-action";
 
 import type { TaxonomyConfig } from "../types/taxonomy.types";
@@ -15,7 +13,7 @@ type TaxonomyAction = (
 ) => Promise<ActionState>;
 
 /**
- * Hooks de mutation partagés par les taxonomies (couleurs, matériaux).
+ * Hooks de mutation partagés par les taxonomies (couleurs, matériaux, types).
  *
  * Chaque hook prend la Server Action concrète en paramètre : la frontière
  * typée reste côté module, seule la mécanique React est mutualisée.
@@ -26,6 +24,12 @@ type TaxonomyAction = (
  * `useTransition` maison). Même intention, deux comportements — notamment sur
  * le toast de chargement, présent d'un côté seulement. La version retenue ici
  * est la plus récente et la plus simple.
+ *
+ * ⚠️ **Ce fichier n'accueille que ce qui AJOUTE du comportement.** Il a porté
+ * un `useTaxonomyRefresh(action, options)` dont le corps entier était
+ * `useRefreshAction(action, options)` — un maillon d'identité entre le hook du
+ * module et le hook partagé, soit trois étages pour zéro effet. Les hooks
+ * `use*Refresh` des trois modules appellent `useRefreshAction` directement.
  */
 
 // ============================================================================
@@ -45,14 +49,6 @@ export function useTaxonomyDelete(action: TaxonomyAction, options?: UseTaxonomyD
 }
 
 // ============================================================================
-// RAFRAÎCHISSEMENT
-// ============================================================================
-
-export function useTaxonomyRefresh(action: TaxonomyAction, options?: { onSuccess?: () => void }) {
-	return useRefreshAction(action, { onSuccess: options?.onSuccess });
-}
-
-// ============================================================================
 // DUPLICATION
 // ============================================================================
 
@@ -63,8 +59,16 @@ export interface TaxonomyDuplicateSuccessData {
 
 /**
  * Les actions de duplication renvoient `{ id, name }`. On normalise ici.
+ *
+ * ⚠️ Un `data` hors contrat ne lève PAS : il rend `null`, et le `onSuccess` de
+ * `useTaxonomyDuplicate` ne se déclenche alors jamais — la duplication réussit
+ * en base mais l'UI ne fait rien après « Duplication en cours… ». Le risque est
+ * réel : `duplicateProductType` doit déjà mapper `label → name` à la main pour
+ * s'y conformer. D'où l'export : les deux bouts du fil — ce que les trois
+ * actions renvoient et ce que ce lecteur accepte — sont tenus ensemble par
+ * `test/contract/taxonomy-duplicate-payload.contract.test.ts`.
  */
-function readDuplicateData(value: unknown): TaxonomyDuplicateSuccessData | null {
+export function readDuplicateData(value: unknown): TaxonomyDuplicateSuccessData | null {
 	if (value === null || typeof value !== "object") return null;
 	const record = value as Record<string, unknown>;
 	const displayName = record.name;
@@ -84,27 +88,23 @@ export function useTaxonomyDuplicate(
 	config: TaxonomyConfig,
 	options?: UseTaxonomyDuplicateOptions,
 ) {
-	const [isPending, startTransition] = useTransition();
+	const [isTransitionPending, startTransition] = useTransition();
 
-	const [, formAction] = useActionState(
-		withCallbacks(
-			action,
-			createToastCallbacks({
-				loadingMessage: "Duplication en cours…",
-				showSuccessToast: false,
-				onSuccess: (result) => {
-					const data = readDuplicateData(result.data);
-					if (typeof result.message === "string" && data) {
-						options?.onSuccess?.(result.message, data);
-					}
-				},
-				onError: (result) => {
-					if (result.message) options?.onError?.(result.message);
-				},
-			}),
-		),
-		undefined,
-	);
+	// La plomberie toast vit dans `useActionWithToast` (règle du préambule : ce
+	// fichier n'accueille que ce qui AJOUTE du comportement) ; ce hook n'ajoute
+	// que la normalisation `{ id, name }` et l'envoi par id via le registre.
+	const { action: formAction, isPending } = useActionWithToast(action, {
+		toastOptions: { loadingMessage: "Duplication en cours…", showSuccessToast: false },
+		onSuccess: (result) => {
+			const data = readDuplicateData(result.data);
+			if (typeof result.message === "string" && data) {
+				options?.onSuccess?.(result.message, data);
+			}
+		},
+		onError: (result) => {
+			if (result.message) options?.onError?.(result.message);
+		},
+	});
 
 	const duplicate = (id: string) => {
 		startTransition(() => {
@@ -114,5 +114,5 @@ export function useTaxonomyDuplicate(
 		});
 	};
 
-	return { duplicate, isPending };
+	return { duplicate, isPending: isPending || isTransitionPending };
 }

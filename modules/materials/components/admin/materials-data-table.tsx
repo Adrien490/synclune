@@ -85,7 +85,11 @@ export function MaterialsDataTable({
 								<span className="text-sm font-medium">{variantCount}</span>
 							</TableCell>
 							<TableCell className="text-right">
-								<MaterialsRowActions materialId={material.id} materialName={material.name} />
+								<MaterialsRowActions
+									materialId={material.id}
+									materialName={material.name}
+									variantsCount={material._count.variants}
+								/>
 							</TableCell>
 						</TableRow>
 					);

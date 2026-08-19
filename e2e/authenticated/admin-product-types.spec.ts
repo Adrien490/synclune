@@ -78,7 +78,7 @@ test.describe("Admin - Types de bijoux (création)", { tag: ["@regression"] }, (
 
 		const dialog = page.getByRole("dialog");
 		await expect(dialog).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-		await expect(dialog.getByRole("heading", { name: /Créer un type de produit/i })).toBeVisible();
+		await expect(dialog.getByRole("heading", { name: /Créer un type de bijou/i })).toBeVisible();
 	});
 
 	test("valide que le champ label est requis", async ({ page }) => {
@@ -174,9 +174,7 @@ test.describe("Admin - Types de bijoux (modification)", { tag: ["@regression"] }
 		// Dialog opens in update mode
 		const dialog = page.getByRole("dialog");
 		await expect(dialog).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-		await expect(
-			dialog.getByRole("heading", { name: /Modifier le type de produit/i }),
-		).toBeVisible();
+		await expect(dialog.getByRole("heading", { name: /Modifier le type de bijou/i })).toBeVisible();
 
 		// Label field should be pre-filled
 		const labelInput = dialog.getByLabel(/Label/i);

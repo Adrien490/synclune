@@ -105,7 +105,7 @@ export function CreateProductTypeForm({
 	return (
 		<form
 			ref={formRef}
-			aria-label="Formulaire de création de type de produit"
+			aria-label="Formulaire de création de type de bijou"
 			className={cn("space-y-6", className)}
 			onInvalidCapture={onInvalidCapture}
 			onSubmit={(event) => {

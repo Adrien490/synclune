@@ -106,7 +106,7 @@ export function EditProductTypeForm({
 		<form
 			ref={formRef}
 			action={action}
-			aria-label="Formulaire de modification de type de produit"
+			aria-label="Formulaire de modification de type de bijou"
 			className={cn("space-y-6", className)}
 			onInvalidCapture={onInvalidCapture}
 			onSubmit={(event) => {

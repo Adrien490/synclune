@@ -77,7 +77,7 @@ export async function duplicateMaterial(
 		const tags = getMaterialInvalidationTags(duplicate.id);
 		tags.forEach((tag) => updateTag(tag));
 
-		return success(`Materiau duplique: ${duplicate.name}`, {
+		return success(`Matériau dupliqué : ${duplicate.name}`, {
 			id: duplicate.id,
 			name: duplicate.name,
 		});

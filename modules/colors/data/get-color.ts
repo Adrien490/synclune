@@ -67,46 +67,57 @@ async function fetchColorDetail(id: string) {
 	cacheColorDetail(id);
 
 	try {
-		return await prisma.color.findUnique({
-			where: { id },
-			select: {
-				id: true,
-				name: true,
-				hex: true,
-				position: true,
-				// Variantes actives qui portent cette couleur (FK simple depuis le lean).
-				variants: {
-					where: { active: true },
-					take: 10,
-					orderBy: { product: { name: "asc" } },
-					select: {
-						id: true,
-						size: true,
-						priceCents: true,
-						stock: true,
-						material: { select: { id: true, name: true } },
-						product: {
-							select: {
-								id: true,
-								slug: true,
-								name: true,
-								active: true,
-								priceCents: true,
-								// Vignette unique : filtre IMAGE + ordre canonique, l'appelant
-								// prend `media[0]` sans pouvoir trier.
-								media: {
-									where: { type: "IMAGE" as const },
-									orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-									take: 1,
-									select: { url: true, alt: true },
+		// Deux comptages coexistent, et ils ne comptent PAS la même chose :
+		// `_count.variants` alimente le KPI « Variantes actives » de la carte de
+		// statistiques, `totalVariantCount` la garde de suppression — la FK
+		// est en ON DELETE RESTRICT, une variante INACTIVE bloque tout autant.
+		const [color, totalVariantCount] = await Promise.all([
+			prisma.color.findUnique({
+				where: { id },
+				select: {
+					id: true,
+					name: true,
+					hex: true,
+					position: true,
+					// Variantes actives qui portent cette couleur (FK simple depuis le lean).
+					variants: {
+						where: { active: true },
+						take: 10,
+						orderBy: { product: { name: "asc" } },
+						select: {
+							id: true,
+							size: true,
+							priceCents: true,
+							stock: true,
+							material: { select: { id: true, name: true } },
+							product: {
+								select: {
+									id: true,
+									slug: true,
+									name: true,
+									active: true,
+									priceCents: true,
+									// Vignette unique : filtre IMAGE + ordre canonique, l'appelant
+									// prend `media[0]` sans pouvoir trier.
+									media: {
+										where: { type: "IMAGE" as const },
+										orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
+										take: 1,
+										select: { url: true, alt: true },
+									},
 								},
 							},
 						},
 					},
+					_count: { select: { variants: { where: { active: true } } } },
 				},
-				_count: { select: { variants: { where: { active: true } } } },
-			},
-		});
+			}),
+			prisma.productVariant.count({ where: { colorId: id } }),
+		]);
+
+		if (!color) return null;
+
+		return { ...color, totalVariantCount };
 	} catch (error) {
 		Sentry.captureException(error, {
 			tags: { module: "colors", operation: "fetchColorDetail" },

@@ -4,7 +4,7 @@ import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
-import { formatUsage } from "../config/taxonomy.config";
+import { formatUsage } from "../utils/taxonomy-labels";
 import type { TaxonomyConfig } from "../types/taxonomy.types";
 
 /**
@@ -12,9 +12,14 @@ import type { TaxonomyConfig } from "../types/taxonomy.types";
  *
  * Les trois modules passaient des clés différentes (`colorId`/`colorName`,
  * `materialId`/`materialName`, `productTypeId`/`label`) ; une seule forme
- * suffit. `usageCount` n'était renseigné que par les types de bijoux, mais le
- * blocage vaut pour les trois (la contrainte FK est en ON DELETE RESTRICT
- * partout) — l'avertissement s'affiche donc dès qu'il est fourni.
+ * suffit.
+ *
+ * `usageCount` est le nombre d'entités qui référencent l'étiquette — variantes
+ * pour une couleur ou un matériau, produits pour un type. **Il doit compter la
+ * même chose que la garde de la Server Action**, c'est-à-dire TOUTES les
+ * références et pas seulement les actives : la FK est en ON DELETE RESTRICT,
+ * une variante inactive bloque la suppression tout autant. Un compteur filtré
+ * annoncerait « 0 » et laisserait cliquer sur un bouton condamné.
  *
  * Volontairement un alias `type` SANS index signature : chaque ouvreur doit
  * typer son `useAlertDialog<TaxonomyDeletePayload>` pour que `tsc` rougisse
@@ -34,17 +39,13 @@ interface TaxonomyDeleteAlertDialogProps {
 	config: TaxonomyConfig;
 	/** Action de formulaire renvoyée par le hook de suppression. */
 	action: (formData: FormData) => void;
-	isPending: boolean;
-	/** Ferme le dialog puis revient à la liste — fourni par le module appelant. */
-	onDeleted: () => void;
 }
 
-export function TaxonomyDeleteAlertDialog({
-	config,
-	action,
-}: Omit<TaxonomyDeleteAlertDialogProps, "onDeleted" | "isPending">) {
+export function TaxonomyDeleteAlertDialog({ config, action }: TaxonomyDeleteAlertDialogProps) {
 	const dialog = useAlertDialog<TaxonomyDeletePayload>(config.deleteDialogId);
 	const data = dialog.data;
+	const usageCount = data?.usageCount ?? 0;
+	const isBlocked = usageCount > 0;
 
 	return (
 		<ConfirmDialog
@@ -55,18 +56,23 @@ export function TaxonomyDeleteAlertDialog({
 			fields={{ [config.formFields.deleteId]: data?.id }}
 			title={config.deleteDialogTitle}
 			confirmLabel="Supprimer"
+			// La suppression échouerait côté serveur (FK RESTRICT) : mieux vaut un
+			// bouton inerte qu'un toast d'erreur après coup. `confirmDisabled` est le
+			// SEUL mécanisme de validation admis par `ConfirmDialog` — le dialog se
+			// ferme au clic, donc rien de ce qui suit le clic n'est visible.
+			confirmDisabled={isBlocked}
 			descriptionClassName="space-y-3"
 			description={
 				<>
 					<p>
-						Êtes-vous sûr de vouloir supprimer {config.labels.definite}{" "}
-						<strong>&quot;{data?.displayName}&quot;</strong> ?
+						Veux-tu vraiment supprimer {config.labels.definite}{" "}
+						<strong>«&nbsp;{data?.displayName}&nbsp;»</strong> ?
 					</p>
-					{data?.usageCount != null && data.usageCount > 0 && (
+					{isBlocked && (
 						<p className="text-destructive font-medium">
-							Impossible : {formatUsage(config, data.usageCount)} utilise
-							{data.usageCount > 1 ? "nt" : ""} encore {config.labels.definite}. Retirez
-							{data.usageCount > 1 ? "-les" : "-le"} avant de supprimer.
+							Impossible : {formatUsage(config, usageCount)} utilise
+							{usageCount > 1 ? "nt" : ""} encore {config.labels.definite}. Retire
+							{usageCount > 1 ? "-les" : "-le"} avant de supprimer.
 						</p>
 					)}
 					<p className="text-destructive font-medium">Cette action est irréversible.</p>

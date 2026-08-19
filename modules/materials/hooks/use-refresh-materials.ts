@@ -1,8 +1,8 @@
 "use client";
 
 import { refreshMaterials } from "@/modules/materials/actions/refresh-materials";
-import { useTaxonomyRefresh } from "@/modules/taxonomies/hooks/use-taxonomy-mutations";
+import { useRefreshAction } from "@/shared/hooks/use-action-with-toast";
 
 export function useRefreshMaterials(options?: { onSuccess?: () => void }) {
-	return useTaxonomyRefresh(refreshMaterials, options);
+	return useRefreshAction(refreshMaterials, options);
 }

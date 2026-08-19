@@ -40,12 +40,12 @@ export function ProductTypeFormDialog() {
 			<ResponsiveDialogContent className="max-w-md">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>
-						{isUpdateMode ? "Modifier le type de produit" : "Créer un type de produit"}
+						{isUpdateMode ? "Modifier le type de bijou" : "Créer un type de bijou"}
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
 						{isUpdateMode
-							? "Modifiez les informations du type. Les changements seront appliqués à tous les produits utilisant ce type."
-							: "Ajoutez un nouveau type pour catégoriser vos produits."}
+							? "Modifie les informations du type. Les changements seront appliqués à tous les bijoux utilisant ce type."
+							: "Ajoute un nouveau type pour catégoriser tes bijoux."}
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
