@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
 import { getOrderById } from "@/modules/orders/data/get-order";
 import { OrderDetail } from "@/modules/orders/components/admin/order-detail";
-import { orderDisplayLabel } from "@/modules/orders/components/admin/orders-data-table";
+import { orderDisplayLabel } from "@/modules/orders/utils/order-display";
 import { PageHeader } from "@/shared/components/page-header";
 
 const MarkOrderAsShippedDialog = dynamic(() =>

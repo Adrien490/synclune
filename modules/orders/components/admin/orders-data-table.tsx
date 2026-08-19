@@ -15,16 +15,12 @@ import {
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 
-import type { GetOrdersReturn, OrderListItem } from "../../data/get-orders";
+import type { GetOrdersReturn } from "../../data/get-orders";
 import { isUnshippableFrenchAddress } from "../../services/shipping.service";
+import { orderDisplayLabel } from "../../utils/order-display";
 import { OrderRowActions } from "./order-row-actions";
 import { OrderStatusBadge } from "./order-status-badge";
 import { UnshippableZoneBadge } from "./unshippable-zone-badge";
-
-/** « n° 12 » dès la facture émise ; l'id court sinon (commande PENDING). */
-export function orderDisplayLabel(order: Pick<OrderListItem, "id" | "invoiceNumber">): string {
-	return order.invoiceNumber != null ? `n° ${order.invoiceNumber}` : `…${order.id.slice(-6)}`;
-}
 
 interface OrdersDataTableProps {
 	ordersPromise: Promise<GetOrdersReturn>;

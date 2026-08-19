@@ -104,11 +104,11 @@ export function formatShippingPrice(amountInCents: number): string {
 // ============================================================================
 
 /**
- * Retourne les informations completes du tarif de livraison
+ * Retourne les informations complètes du tarif de livraison
  *
  * @param countryCode - Code pays ISO 3166-1 alpha-2
  * @param postalCode - Code postal optionnel pour détecter la Corse
- * @returns Informations completes du tarif de livraison, ou `null` si la
+ * @returns Informations complètes du tarif de livraison, ou `null` si la
  *          destination est hors périmètre (Corse, DOM-TOM, zone indéterminée)
  *
  * @example
@@ -134,10 +134,10 @@ export function getShippingInfo(
 }
 
 /**
- * Verifie si un pays est supporte pour la livraison
+ * Vérifie si un pays est supporté pour la livraison
  *
  * @param countryCode - Code pays ISO 3166-1 alpha-2
- * @returns true si le pays est supporte
+ * @returns true si le pays est supporté
  *
  * @example
  * ```typescript

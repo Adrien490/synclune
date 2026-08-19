@@ -4,6 +4,12 @@ import { prisma } from "@/shared/lib/prisma";
 import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
+/**
+ * Indexé par id d'item de navigation (`badges?.[item.id]` dans la sidebar et la
+ * bottom bar) : le type reste stringly-keyed À DESSEIN — la SSOT des ids badgés
+ * vit dans `navigation-config.tsx` (app/), que ce module ne peut pas importer
+ * sans inverser la dépendance modules → app.
+ */
 export type AdminNavBadges = Record<string, number>;
 
 /**

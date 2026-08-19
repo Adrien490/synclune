@@ -11,7 +11,7 @@ import { formatDateTime } from "@/shared/utils/dates";
 import type { AdminOrderDetail } from "../../data/get-order";
 import { detectCarrierAndUrl } from "../../services/carrier-detection.service";
 import { isUnshippableFrenchAddress } from "../../services/shipping.service";
-import { orderDisplayLabel } from "./orders-data-table";
+import { orderDisplayLabel } from "../../utils/order-display";
 import { OrderDetailActions } from "./order-detail-actions";
 import { OrderStatusBadge } from "./order-status-badge";
 

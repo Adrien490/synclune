@@ -42,7 +42,7 @@ export async function cancelOrder(
 			where: { id: orderId },
 			select: { stripeSessionId: true, status: true },
 		});
-		if (!order) return notFound("Commande introuvable.");
+		if (!order) return notFound("Commande", "f");
 		if (order.status !== "PENDING") {
 			return error("Seule une commande en attente de paiement peut être annulée ici.");
 		}
@@ -61,6 +61,15 @@ export async function cancelOrder(
 						if (session.status === "complete") {
 							return error(
 								"Impossible d'annuler : la cliente vient de payer cette commande. Rafraîchis la page.",
+							);
+						}
+						if (session.status !== "expired") {
+							// Session encore `open` alors qu'`expire` a échoué : état
+							// inattendu — poursuivre annulerait et restockerait une commande
+							// que la cliente peut encore payer, LE scénario que l'ordre
+							// expire-avant-transition existe pour empêcher. On s'arrête.
+							return error(
+								"Impossible d'annuler : la session de paiement Stripe n'a pas pu être fermée. Réessaie.",
 							);
 						}
 					}

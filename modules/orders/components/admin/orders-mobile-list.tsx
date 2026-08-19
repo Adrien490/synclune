@@ -14,7 +14,7 @@ import { formatDateShort } from "@/shared/utils/dates";
 
 import type { GetOrdersReturn } from "../../data/get-orders";
 import { isUnshippableFrenchAddress } from "../../services/shipping.service";
-import { orderDisplayLabel } from "./orders-data-table";
+import { orderDisplayLabel } from "../../utils/order-display";
 import { OrderStatusBadge } from "./order-status-badge";
 import { UnshippableZoneBadge } from "./unshippable-zone-badge";
 

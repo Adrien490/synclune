@@ -1,10 +1,10 @@
 /**
- * Zones de livraison supportees
+ * Zones de livraison supportées
  */
 export type ShippingZone = "METROPOLITAN" | "CORSE" | "DOM" | "TOM" | "UNKNOWN";
 
 /**
- * Resultat de la detection de zone postale
+ * Résultat de la détection de zone postale
  */
 export type ShippingZoneResult = {
 	zone: ShippingZone;

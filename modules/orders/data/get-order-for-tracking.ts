@@ -30,13 +30,21 @@ export async function getOrderForTracking(
 	}
 	if (!orderId || !token) return null;
 
-	const order = await prisma.order.findUnique({
-		where: { id: orderId },
-		select: GET_ORDER_TRACKING_SELECT,
-	});
-	if (!order || !order.email) return null;
+	try {
+		const order = await prisma.order.findUnique({
+			where: { id: orderId },
+			select: GET_ORDER_TRACKING_SELECT,
+		});
+		if (!order || !order.email) return null;
 
-	if (!verifyOrderTrackingToken(token, order.id, order.email, secret)) return null;
+		if (!verifyOrderTrackingToken(token, order.id, order.email, secret)) return null;
 
-	return order;
+		return order;
+	} catch (error) {
+		// Même convention que les autres data fns : on logge et on rend null —
+		// la page fait notFound(), indistinct d'un token faux (anti-énumération
+		// préservée même sur incident DB).
+		logger.error("[getOrderForTracking] Échec de lecture de la commande", { orderId, error });
+		return null;
+	}
 }

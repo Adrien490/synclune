@@ -116,8 +116,13 @@ export async function reconcilePendingOrders(
 			stillOpen,
 		});
 
+		const summary = `${pendingOrders.length} commande(s) vérifiée(s) : ${paid} confirmée(s), ${cancelled} annulée(s) avec stock restitué, ${stillOpen} encore ouverte(s).`;
+		// Batch plein = il peut en rester au-delà des 25 traitées — sans cette
+		// phrase, Léane croit la vérification terminée après un seul clic.
 		return success(
-			`${pendingOrders.length} commande(s) vérifiée(s) : ${paid} confirmée(s), ${cancelled} annulée(s) avec stock restitué, ${stillOpen} encore ouverte(s).`,
+			pendingOrders.length === RECONCILE_BATCH_SIZE
+				? `${summary} Il peut en rester d'autres — clique à nouveau pour vérifier la suite.`
+				: summary,
 		);
 	} catch (e) {
 		return handleActionError(e, "La vérification des commandes en attente a échoué. Réessaie.");
