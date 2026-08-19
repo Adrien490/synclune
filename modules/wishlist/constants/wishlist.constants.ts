@@ -12,3 +12,17 @@
  * recalculer cette borne.
  */
 export const WISHLIST_MAX_ITEMS = 100;
+
+// ============================================================================
+// EXPIRATION
+// ============================================================================
+
+/**
+ * Durée de vie du cookie `wishlist` (jours, glissants — le maxAge est reposé
+ * en entier à chaque mutation).
+ *
+ * ⚠️ La page confidentialité annonce cette durée (tableau de rétention +
+ * fiche du cookie) : la parité copie ↔ constante est verrouillée par
+ * `test/contract/wishlist-retention-copy.contract.test.ts`.
+ */
+export const WISHLIST_EXPIRATION_DAYS = 30;

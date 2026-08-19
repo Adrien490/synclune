@@ -30,6 +30,15 @@ interface ShowWishlistUndoToastOptions {
  *
  * Réutilisé entre `SwipeableWishlistItem` (grille) et `WishlistButton`
  * (PDP via `enableUndoToast`).
+ *
+ * Resynchronisation après un undo réussi — deux stratégies, toutes deux
+ * voulues :
+ * - **Grille** (pas de `onRestored`) : `addToWishlist` pose le cookie, et une
+ *   mutation de cookie dans une Server Action suffit à Next pour rafraîchir le
+ *   router — `useOptimistic` se recale sur les données revalidées.
+ * - **PDP** (`onRestored` → `router.refresh()`) : le cœur lit sa prop
+ *   `isInWishlist` du rendu serveur ; le refresh explicite force la
+ *   resynchronisation immédiate de cette prop sans attendre une navigation.
  */
 export function showWishlistUndoToast({
 	productId,

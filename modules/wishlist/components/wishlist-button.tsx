@@ -6,7 +6,7 @@ import { cn } from "@/shared/utils/cn";
 import { Button } from "@/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 
-type WishlistButtonSize = "sm" | "md" | "lg";
+type WishlistButtonSize = "md" | "lg";
 
 interface WishlistButtonProps {
 	productId: string;
@@ -15,9 +15,12 @@ interface WishlistButtonProps {
 	className?: string;
 	/**
 	 * Taille du bouton.
-	 * - `sm` (36px) — **réservé contextes desktop dense** (listes admin). Sous le seuil WCAG 2.5.5 (44px), non recommandé pour cibles touch.
-	 * - `md` (44px) — défaut, conforme WCAG 2.5.5.
+	 * - `md` (44px) — défaut (cartes produit), conforme WCAG 2.5.5.
 	 * - `lg` (56px) — PDP hero.
+	 *
+	 * L'ancienne variante `sm` (36px, « listes admin denses ») est retirée :
+	 * aucun call site — la wishlist est 100 % storefront, et 36px est sous le
+	 * seuil touch WCAG 2.5.5.
 	 */
 	size?: WishlistButtonSize;
 	/**
@@ -28,7 +31,6 @@ interface WishlistButtonProps {
 }
 
 const sizeConfig: Record<WishlistButtonSize, { button: string; icon: string }> = {
-	sm: { button: "size-9", icon: "size-4" },
 	md: { button: "size-11", icon: "size-5" },
 	lg: { button: "size-14", icon: "size-8 sm:size-7" },
 };

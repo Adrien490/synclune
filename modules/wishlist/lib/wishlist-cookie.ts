@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
-import { WISHLIST_EXPIRATION_DAYS } from "@/modules/wishlist/constants/expiration.constants";
-import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
+import {
+	WISHLIST_EXPIRATION_DAYS,
+	WISHLIST_MAX_ITEMS,
+} from "@/modules/wishlist/constants/wishlist.constants";
 import { shouldUseSecureCookies } from "@/shared/lib/cookie-security";
 
 /**

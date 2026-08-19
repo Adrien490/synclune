@@ -172,6 +172,40 @@ describe("useWishlistToggle", () => {
 		expect(onSuccess).toHaveBeenCalledWith("removed");
 	});
 
+	it("add qui échoue → rollback net du badge (un increment optimiste, un decrement de rollback)", async () => {
+		// Le rollback suit la direction TENTÉE (ref posée au dispatch), jamais
+		// `initialIsInWishlist` : la prop peut être périmée quand deux toggles
+		// s'enchaînent avant la revalidation du premier. Ce test verrouille
+		// l'invariant net-zéro du badge sur le chemin add.
+		mockToggleWishlistItem.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useWishlistToggle());
+
+		const formData = new FormData();
+		formData.append("productId", "prod-1");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		expect(mockIncrementWishlist).toHaveBeenCalledTimes(1);
+		expect(mockDecrementWishlist).toHaveBeenCalledTimes(1);
+	});
+
+	it("remove qui échoue → rollback net du badge (un decrement optimiste, un increment de rollback)", async () => {
+		mockToggleWishlistItem.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useWishlistToggle({ initialIsInWishlist: true }));
+
+		const formData = new FormData();
+		formData.append("productId", "prod-1");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		expect(mockDecrementWishlist).toHaveBeenCalledTimes(1);
+		expect(mockIncrementWishlist).toHaveBeenCalledTimes(1);
+	});
+
 	it("calls router.refresh() on error", async () => {
 		mockToggleWishlistItem.mockResolvedValue(ERROR);
 		const { result } = renderHook(() => useWishlistToggle());

@@ -27,11 +27,10 @@ export async function getWishlist(): Promise<GetWishlistReturn> {
 		const productIds = await readWishlistCookie();
 
 		if (productIds.length === 0) {
-			return { items: [], totalCount: 0 };
+			return { items: [] };
 		}
 
-		const items = await fetchWishlistProducts(productIds);
-		return { items, totalCount: items.length };
+		return { items: await fetchWishlistProducts(productIds) };
 	} catch (e) {
 		// Le repli vit ICI, HORS du scope "use cache" de fetchWishlistProducts —
 		// sinon la liste vide d'une panne serait mise en cache (CACHE-DEGRADED-VALUE-001).
@@ -44,7 +43,7 @@ export async function getWishlist(): Promise<GetWishlistReturn> {
 		if (!isPrerenderInterrupt(e)) {
 			logger.error("Failed to fetch wishlist", e, { service: "wishlist" });
 		}
-		return { items: [], totalCount: 0 };
+		return { items: [] };
 	}
 }
 

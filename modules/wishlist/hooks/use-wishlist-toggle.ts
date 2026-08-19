@@ -56,6 +56,10 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	// server ne le renvoie pas, on le capture depuis le FormData côté hook).
 	const lastProductIdRef = useRef<string | null>(null);
 
+	// Direction TENTÉE par l'action en cours — la seule base fiable pour le
+	// rollback d'erreur du badge (cf. onError ci-dessous).
+	const lastAttemptRef = useRef<"added" | "removed" | null>(null);
+
 	// Mise à jour de la ref dans useEffect pour éviter setState pendant le render
 	useEffect(() => {
 		isInWishlistRef.current = optimisticIsInWishlist;
@@ -89,14 +93,18 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 					}
 				},
 				onError: () => {
-					// Rollback de l'état optimiste (coeur)
-					setOptimisticIsInWishlist(initialIsInWishlist);
-
-					// Rollback du badge navbar
-					if (initialIsInWishlist) {
-						incrementWishlist(); // On avait decrementé à tort
-					} else {
-						decrementWishlist(); // On avait incrementé à tort
+					// Rollback du badge navbar selon la direction TENTÉE, jamais d'après
+					// `initialIsInWishlist` : la prop peut être périmée quand deux toggles
+					// s'enchaînent avant que la revalidation du premier n'ait rafraîchi le
+					// parent (add réussi puis remove échoué → l'ancienne version décrémentait
+					// une seconde fois, et le badge restait faux — le provider ne
+					// resynchronise le store que sur CHANGEMENT du count initial).
+					// Le cœur n'a pas besoin de rollback manuel : `useOptimistic` revient
+					// seul à la valeur de base en fin de transition.
+					if (lastAttemptRef.current === "added") {
+						decrementWishlist(); // On avait incrémenté à tort
+					} else if (lastAttemptRef.current === "removed") {
+						incrementWishlist(); // On avait décrémenté à tort
 					}
 
 					// Force re-fetch to restore optimistically removed grid items
@@ -135,10 +143,10 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		// Utilise la ref pour lire l'état actuel (évite closure stale)
 		const currentState = isInWishlistRef.current;
 		const newState = !currentState;
+		lastAttemptRef.current = newState ? "added" : "removed";
 
-		// Haptique synchrone (pas une mise à jour d'état React → non affectée par la
-		// transition de la form action). Le burst de cœurs optimiste est, lui, déclenché
-		// côté composant dans le `onClick` du bouton (événement discret = commit immédiat).
+		// Haptique synchrone (pas une mise à jour d'état React → non affectée par
+		// la transition de la form action).
 		triggerHaptic(newState ? "medium" : "light");
 
 		startTransition(() => {

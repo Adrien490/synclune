@@ -2,8 +2,6 @@ import { logger } from "@/shared/lib/logger";
 import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { readWishlistCookie } from "@/modules/wishlist/lib/wishlist-cookie";
 
-import type { GetWishlistItemCountReturn } from "../types/wishlist.types";
-
 /**
  * Récupère le nombre de favoris — badge du header.
  *
@@ -12,7 +10,7 @@ import type { GetWishlistItemCountReturn } from "../types/wishlist.types";
  * depuis son ajout compte encore jusqu'à son retrait par la visiteuse — dérive
  * assumée (le filtre PUBLIC exigerait une requête par rendu, pour un badge).
  */
-export async function getWishlistItemCount(): Promise<GetWishlistItemCountReturn> {
+export async function getWishlistItemCount(): Promise<number> {
 	try {
 		const ids = await readWishlistCookie();
 		return ids.length;

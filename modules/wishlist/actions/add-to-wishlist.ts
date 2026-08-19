@@ -1,11 +1,10 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { addToWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
-import { readWishlistCookie, writeWishlistCookie } from "@/modules/wishlist/lib/wishlist-cookie";
+import { readWishlistCookie } from "@/modules/wishlist/lib/wishlist-cookie";
+import { addProductIdToWishlist } from "@/modules/wishlist/lib/add-product-id-to-wishlist";
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
-import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import {
 	validateInput,
 	handleActionError,
@@ -29,9 +28,7 @@ export async function addToWishlist(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting (protection anti-spam) — before validation to prevent enumeration
-
-		// 2. Validation avec Zod
+		// 1. Validation avec Zod
 		const validated = validateInput(addToWishlistSchema, {
 			productId: safeFormGet(formData, "productId"),
 		});
@@ -39,28 +36,18 @@ export async function addToWishlist(
 
 		const { productId } = validated.data;
 
-		// 3. Le cookie est la SSOT — lecture validée (forme cuid2, dédup, cap)
+		// 2. Le cookie est la SSOT — lecture validée (forme cuid2, dédup, cap)
 		const ids = await readWishlistCookie();
 
-		if (ids.includes(productId)) {
-			return success("Déjà dans tes favoris");
-		}
+		// 3. Chemin d'ajout partagé avec `toggleWishlistItem` (cap + garde
+		//    produit actif + écriture en tête — SSOT `lib/add-product-id-to-wishlist`)
+		const outcome = await addProductIdToWishlist(ids, productId);
 
-		if (ids.length >= WISHLIST_MAX_ITEMS) {
-			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
-		}
-
-		// Un id n'entre dans le cookie que s'il désigne un produit PUBLIC
-		const product = await prisma.product.findUnique({
-			where: { id: productId, active: true },
-			select: { id: true },
-		});
-		if (!product) {
+		if (outcome === "already-present") return success("Déjà dans tes favoris");
+		if (outcome === "list-full") return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
+		if (outcome === "product-unavailable") {
 			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 		}
-
-		// 4. Plus récent en premier — l'ordre du cookie est l'ordre d'affichage
-		await writeWishlistCookie([productId, ...ids]);
 
 		return success("Ajouté à tes favoris");
 	} catch (e) {
