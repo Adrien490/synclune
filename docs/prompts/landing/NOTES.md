@@ -752,3 +752,32 @@ Léane, qui peut aussi défaire les trois propositions (réversibles, tout est c
 - **La signature 12/20 est à re-noter sur pièce** (l'audit projetait ~18/20 avec les nº 6-7 —
   on ne s'auto-attribue pas la note, conformément à `_checklist.md`).
 - En code : consignes ajoutées à `HANDOFF.md` (nth-child créations, bulle FAQ, path goutte).
+
+## 2026-08-19 — arbitrages nº 1-4 tranchés (Adrien), nº 5 reformulé en pistes de fond
+
+Séance d'arbitrage menée par Adrien dans la session (questions fermées, sur pièce).
+
+- **Nº 1 — BICOLORE rose/or** (recommandation suivie) : la maquette entière est bâtie dessus et
+  l'accent sait écrire. En code : créer `or` `#ffe2a2` / `or-encre` `#896e2c`, retirer la
+  rotation `[data-accent]`. **Le passage en code est DÉBLOQUÉ.**
+- **Nº 2 — SIX sections** (pas de fusion collections+types). **Nº 3 — sur-titres PARTOUT** (à
+  réintroduire sur les 5 routes boutique). **Nº 4 — « avec amour » remplacé** dans les 4
+  occurrences (`corps-étape` ×4 : sections + assemblages) par « les doigts encore pleins de
+  peinture ». ⚠️ Précision d'Adrien en cours de passe : la formule ne doit pas être
+  « systématiquement présente » — pas de purge : elle peut réapparaître ponctuellement.
+- **Nº 5 reformulé** : Adrien veut des recommandations de FOND pour le hero desktop. Planche
+  `proposition/hero-fonds` dessinée (copies du hero, section intouchée) : **A** bain rose-pale
+  (frise comprise — son fond `$papier` masquait le bain, corrigé), **B** filigrane de marges
+  au trait encre ~10 %, **C** lavis rose-pale pleine largeur sous la frise. Export
+  `apercus/arbitrages/proposition-hero-fonds.png`.
+- **Direction de motif donnée par Adrien en cours de passe** : « trop de gouttes » (en partie
+  un artefact des placeholders — les vraies photos en retireront beaucoup), et « Léane aime
+  bien les cœurs ». Conséquences : le filigrane B est passé de 5 gouttes à **3 cœurs + 2
+  gouttes** (géométrie du `tracé-cœur` de l'atelier), et `ETAT.md` § motif porte désormais
+  « la goutte se dose, le cœur est bienvenu en ponctuation ».
+- **Pièges neufs** : dans une string `input` du shell pen, `\d` de regex est mangé par
+  l'échappement JS (`'\d'` → `d`) — écrire les regex sans backslash ou passer par
+  `[0-9]` ; les enfants d'un frame en flex ignorent x/y — poser `layoutPosition:"absolute"`
+  (constaté : les 5 filigranes empilés au centre au premier rendu).
+- Reste ouvert : le choix A/B/C/blanc du fond de hero — puis application à `01-hero/desktop`
+  (+ copie assemblage, + déclinaison mobile si A).

@@ -28,15 +28,17 @@
    2026-08-18 liste les pistes).
    Conséquence de forme : pour rester au ratio 4:5 imposé par la spec, les tuiles desktop
    passent de 184×230 à **148×185** (mobile inchangé, 168×210).
-3. **Système bicolore rose/or vs rotation lavande/menthe/soleil** : la famille `or`/`or-encre`
-   n'existe pas dans `globals.css` et le bicolore REMPLACE la rotation `[data-accent]`. Décision
-   AVANT d'écrire un token — créer `or`/`or-encre` et retirer la rotation, OU adapter la
-   maquette. (`synclune-systeme.md`, tour 0.) ⚠️ Les **deux planches** `00-systeme/accents-bicolore`
-   et `-rotation` sont **dessinées dans `landing.pen`** depuis la contre-visite du 2026-08-19,
-   contrastes recalculés des deux (la rotation ne sait pas écrire : lavande 2,51:1, menthe 1,85,
-   soleil 1,54 sur papier, sans déclinaison encre) : l'arbitrage se prend sur pièce.
-4. Les autres arbitrages Léane (six sections, sur-titres, « avec amour », gouttes de marge du
-   hero) sont listés dans **`ETAT.md`**, en questions fermées — c'est la liste qui fait foi.
+3. ~~**Système bicolore rose/or vs rotation lavande/menthe/soleil**~~ — **TRANCHÉ le
+   2026-08-19 (Adrien) : BICOLORE rose/or.** En code : créer les tokens `or` `#ffe2a2` et
+   `or-encre` `#896e2c` dans `globals.css` (avec leur test de contraste — or-encre/papier
+   4,72:1) et **retirer la rotation `[data-accent]`** (`app/styles/section-accents.css`).
+   Raison sur pièce (planches `00-systeme/accents-*`) : la rotation ne sait pas écrire
+   (lavande 2,51:1, menthe 1,85, soleil 1,54, sans déclinaison encre).
+4. **Arbitrages nº 2-4 tranchés le 2026-08-19 (Adrien)** : SIX sections (pas de fusion) ·
+   sur-titres PARTOUT — à **réintroduire sur les 5 routes boutique** au handoff · « avec
+   amour » remplacé par « les doigts encore pleins de peinture » (pas de purge systématique
+   de la formule ailleurs). Reste UN arbitrage ouvert : le fond du hero desktop
+   (planche `proposition/hero-fonds`, A/B/C/blanc) — liste à jour dans **`ETAT.md`**.
    Les trois propositions (grille respire · FAQ-message · pastilles gouttes) sont **prises et
    appliquées** le 2026-08-19 (délégation Adrien, réversible par Léane) — consignes de code
    dans les sections concernées ci-dessous.

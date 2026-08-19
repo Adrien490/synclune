@@ -2,20 +2,21 @@
 
 > **Réécrit** à chaque passe, ≤ 80 lignes — le script l'injecte aux tours avec les deux dernières
 > entrées de `NOTES.md` ; le carnet, lui, ne se réécrit jamais (le *pourquoi* est là-bas, ici on
-> lit *ce qui est vrai aujourd'hui*). Dernière mise à jour : **2026-08-19** (contre-visite + signature).
+> lit *ce qui est vrai aujourd'hui*). Dernière mise à jour : **2026-08-19** (propositions
+> appliquées + arbitrages nº 1-4 tranchés).
 
 ## Statut
 
 Maquette complète et figée : système, 6 sections, carte OG, cookies, assemblages, états, motion.
 **Conformité 82/100** (§ 9, 0 P0) · **signature 12/20 AVANT propositions** — les trois prises et
 appliquées le 2026-08-19, à re-noter sur pièce (`AUDIT-DOSSIER-2026-08-19b.md`).
-Passage en code non commencé, bloqué par l'arbitrage nº 1.
+Passage en code non commencé — **DÉBLOQUÉ le 2026-08-19** (nº 1-4 tranchés par Adrien).
 
 ## Le motif et les accents
 
-- **Motif unique : la goutte**, du hero au pied (raisin, pluie, larme, rosée, arc-en-ciel — la
-  grappe est une accumulation de gouttes) ; le **cœur** en ponctuation à deux endroits motivés
-  (atelier, favori), jamais en sujet. Aucun autre glyphe de marque.
+- **La goutte reste le motif directeur mais SE DOSE** (Adrien, 2026-08-19 : « trop de gouttes » —
+  une partie est un artefact des placeholders) ; le **cœur** est bienvenu en ponctuation au-delà
+  de l'atelier et du favori (Léane les aime) — toujours en détail, jamais en sujet.
 - **Alternance** : hero rose · créations or · collections rose · types or · atelier rose ·
   FAQ or · carte de partage rose · cookies rose. Jamais deux voisines dans la même couleur.
 - **Pied de page sur `rose-pale` `#fdf0f8`** (teinte du rose, surfaces seulement, n'écrit
@@ -44,22 +45,17 @@ Passage en code non commencé, bloqué par l'arbitrage nº 1.
    anneau encre 2 px sur la carte entière. Jamais d'anneau rose, jamais d'ombre floue.
 5. **Les trois propositions sont PRISES et APPLIQUÉES** (2026-08-19, délégué par Adrien — Léane
    peut défaire) : grille 0·24·8·32 desktop · réponse FAQ en bulle signée · pastilles gouttes.
+6. **Nº 1-4 tranchés par Adrien le 2026-08-19** : accents BICOLORE rose/or (créer `or`/`or-encre`
+   en code, retirer la rotation `[data-accent]`) · SIX sections · sur-titres PARTOUT (à
+   réintroduire sur les 5 routes boutique) · « avec amour » remplacé par « les doigts encore
+   pleins de peinture » — sans purge systématique de la formule (elle peut réapparaître ponctuellement).
 
-## Arbitrages ouverts — cinq questions fermées pour Léane
+## Arbitrage ouvert — un seul
 
-Chacune se tranche sur pièce, en une phrase ; toutes bloquent le passage en code.
-
-1. **Accents** — bicolore rose/or de la maquette, ou rotation lavande/menthe/soleil du code
-   (`[data-accent]`) ? *Les deux planches `00-systeme/accents-*` sont **dessinées** (2026-08-19),
-   contrastes recalculés — décider dessus.* ⚠️ Seul arbitrage **bloquant** : il décide s'il faut
-   créer les tokens `or`/`or-encre` ou adapter la maquette.
-2. **Nombre de sections** — garder les six, ou fusionner collections + types en un bloc
-   d'orientation unique (la grille § 9 recommande ≤ 4) ?
-3. **Sur-titres** — retirés des 5 routes boutique, réintroduits par la maquette : partout, ou nulle part ?
-4. **« avec amour »** (étape 4 de l'atelier) — voix de Léane assumée, ou formule interchangeable
-   (elle est dans les ⛔ de `synclune-univers.md`) à remplacer ?
-5. **Gouttes de ponctuation en marge du hero desktop** (très aéré) — on en pose 2-3, ou on
-   laisse le blanc ?
+**Fond du hero desktop** (reformulation du nº 5 par Adrien : des recommandations de fond plutôt
+que le binaire gouttes/blanc) — planche `proposition/hero-fonds`, export
+`apercus/arbitrages/proposition-hero-fonds.png` : **A** bain rose-pale · **B** filigrane
+cœurs + gouttes dans les marges · **C** lavis rose-pale sous la frise · ou rester au blanc.
 
 ## Pièges d'outillage — tous constatés
 
