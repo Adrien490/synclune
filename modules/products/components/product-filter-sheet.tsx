@@ -6,7 +6,6 @@ import { useAppForm } from "@/shared/components/forms";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { mediaAtLeast } from "@/shared/constants/breakpoints";
 import { useStore } from "@tanstack/react-form";
-import { withViewTransition } from "@/shared/utils/view-transition";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
 	use,
@@ -39,6 +38,7 @@ import type { MaterialOption } from "@/modules/materials/data/get-material-optio
 import type { ProductTypeOption } from "./filter-section-types";
 import type { LiveFilterCount } from "@/modules/products/hooks/use-live-filter-count";
 import type { SortOption } from "@/shared/types/sort.types";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 // ============================================================================
 // CONSTANTS
@@ -226,7 +226,7 @@ function ProductFilterSheetInner({
 		});
 
 		startTransition(() => {
-			withViewTransition(() => router.push(fullUrl));
+			router.push(fullUrl, PAGE_FADE_NAVIGATION);
 			scrollToProductsGrid();
 		});
 	};
@@ -237,7 +237,7 @@ function ProductFilterSheetInner({
 		const fullUrl = buildClearFiltersURL(searchParams);
 
 		startTransition(() => {
-			withViewTransition(() => router.push(fullUrl));
+			router.push(fullUrl, PAGE_FADE_NAVIGATION);
 			scrollToProductsGrid();
 		});
 	};

@@ -9,11 +9,9 @@ const { mockHaptic, mockRouter } = vi.hoisted(() => ({
 
 vi.mock("@/shared/hooks/use-haptic", () => ({ useHaptic: () => mockHaptic }));
 vi.mock("next/navigation", () => ({ useRouter: () => mockRouter }));
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: (cb: () => void) => cb(),
-}));
 
 import { useAdminFormKeyboard } from "../use-admin-form-keyboard";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface HarnessProps {
 	isPending?: boolean;
@@ -119,7 +117,10 @@ describe("useAdminFormKeyboard", () => {
 			render(<Harness allowNavigation={allowNavigation} />);
 			pressEscape();
 			expect(allowNavigation).toHaveBeenCalledTimes(1);
-			expect(mockRouter.push).toHaveBeenCalledWith("/admin/catalogue/couleurs");
+			expect(mockRouter.push).toHaveBeenCalledWith(
+				"/admin/catalogue/couleurs",
+				PAGE_FADE_NAVIGATION,
+			);
 		});
 
 		it("confirms before leaving when dirty and navigates when confirmed", () => {
@@ -127,7 +128,10 @@ describe("useAdminFormKeyboard", () => {
 			render(<Harness isDirty />);
 			pressEscape();
 			expect(confirmSpy).toHaveBeenCalled();
-			expect(mockRouter.push).toHaveBeenCalledWith("/admin/catalogue/couleurs");
+			expect(mockRouter.push).toHaveBeenCalledWith(
+				"/admin/catalogue/couleurs",
+				PAGE_FADE_NAVIGATION,
+			);
 		});
 
 		it("does not navigate when dirty and the confirm is dismissed", () => {

@@ -19,7 +19,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { withViewTransition } from "@/shared/utils/view-transition";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 export type { EditableCollection };
 
@@ -40,10 +40,6 @@ const FIELD_LABELS: Record<string, string> = {
 	description: "Description",
 	active: "Statut",
 };
-
-function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
-	withViewTransition(() => router.push(path));
-}
 
 export function EditCollectionForm({
 	collection,
@@ -77,7 +73,7 @@ export function EditCollectionForm({
 				successAction: redirectOnSuccess
 					? {
 							label: "Voir les collections",
-							onClick: () => navigateWithTransition(router, LIST_PATH),
+							onClick: () => router.push(LIST_PATH, PAGE_FADE_NAVIGATION),
 						}
 					: undefined,
 				onSuccess: () => {

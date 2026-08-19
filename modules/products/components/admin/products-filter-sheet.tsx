@@ -3,7 +3,6 @@
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { Accordion } from "@/shared/components/ui/accordion";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { withViewTransition } from "@/shared/utils/view-transition";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
 	useDeferredValue,
@@ -27,6 +26,7 @@ import {
 } from "./products-filter-sheet.types";
 
 import type { ProductsFilterSheetProps, AdminFilterFormData } from "./products-filter-sheet.types";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 // ============================================================================
 // CONSTANTS
@@ -207,7 +207,7 @@ function ProductsFilterSheetInner({
 		if (formData.updatedBefore) params.set("filter_updatedBefore", formData.updatedBefore);
 
 		startTransition(() => {
-			withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
+			router.push(`?${params.toString()}`, { scroll: false, ...PAGE_FADE_NAVIGATION });
 		});
 	};
 
@@ -233,7 +233,7 @@ function ProductsFilterSheetInner({
 		params.set("page", "1");
 
 		startTransition(() => {
-			withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
+			router.push(`?${params.toString()}`, { scroll: false, ...PAGE_FADE_NAVIGATION });
 		});
 	};
 

@@ -16,12 +16,12 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/view-transition";
 import type { EditProductFormProps } from "./edit-product-form-types";
 import { MediaArrayCard } from "./shared/media-array-card";
 import { EditProductInfoCard } from "./edit-product-info-card";
 import { EditProductSidebarCards } from "./edit-product-sidebar-cards";
 import { runAfterValidation } from "@/shared/utils/run-after-validation";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 export type { EditProductFormProps };
 
@@ -41,10 +41,6 @@ const FIELD_LABELS: Record<string, string> = {
 	"defaultVariant.stock": "Stock",
 	"defaultVariant.active": "Statut de la variante",
 };
-
-function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
-	withViewTransition(() => router.push(path));
-}
 
 export function EditProductForm({
 	product,
@@ -83,7 +79,7 @@ export function EditProductForm({
 			// exactement la destination que proposait « Voir les bijoux ». L'utilisateur
 			// se retrouvait donc avec un bouton menant là où il venait d'arriver.
 			toast.success(message || "Bijou peaufiné");
-			navigateWithTransition(router, PRODUCTS_LIST_PATH);
+			router.push(PRODUCTS_LIST_PATH, PAGE_FADE_NAVIGATION);
 		},
 	});
 

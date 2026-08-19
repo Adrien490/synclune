@@ -142,12 +142,35 @@ textarea {
 	}
 }
 
+/* ⚠️ MÊMES DURÉES des deux côtés, et ce n'est pas un détail de goût. Depuis que
+   le `<main>` porte son propre nom (`page-content`, posé par les frontières
+   `<ViewTransition>` des deux layouts), `root` ne capture plus que le CHROME —
+   navbar, pied de page, sidebar admin, barre basse — c'est-à-dire ce qui NE
+   CHANGE PAS d'une navigation à l'autre. Le navigateur empile quand même ses
+   deux snapshots : à durées égales, `1 - ease(t)` et `ease(t)` se somment
+   exactement à 1 et le fondu de deux images identiques est invisible. Avec
+   l'ancien réglage 180/240 ms (légitime tant que `root` couvrait TOUTE la page,
+   avant le 2026-08-18), la somme creuse en milieu de course : le chrome
+   clignoterait à chaque navigation. */
 ::view-transition-old(root) {
-	animation: synclune-fade-out 180ms ease both;
+	animation: synclune-fade-out 200ms ease both;
 }
 
 ::view-transition-new(root) {
-	animation: synclune-fade-in 240ms ease both;
+	animation: synclune-fade-in 200ms ease both;
+}
+
+/* Contenu de page — le nom est posé par React (frontières `<ViewTransition>`
+   des layouts boutique et admin), et il vaut le littéral de
+   `PAGE_CONTENT_VIEW_TRANSITION_NAME` : le CSS ne sait pas importer, la parité
+   est tenue par `view-transition-names.regression.test.ts`. Même fondu que le
+   chrome, c'est le même geste — sauf qu'ici les deux images DIFFÈRENT. */
+::view-transition-old(page-content) {
+	animation: synclune-fade-out 200ms ease both;
+}
+
+::view-transition-new(page-content) {
+	animation: synclune-fade-in 200ms ease both;
 }
 
 /* Disable view transitions for users who prefer reduced motion */
@@ -156,9 +179,15 @@ textarea {
 		navigation: none;
 	}
 
-	::view-transition-old(root),
-	::view-transition-new(root) {
-		animation: none;
+	/* ⚠️ `navigation: none` ne coupe QUE les transitions de document (chargement
+	   dur). Les navigations client sont démarrées par React, qui ne lit aucune
+	   media query : sans les trois sélecteurs ci-dessous, toute la boutique
+	   continuerait de fondre sous réduction de mouvement. Le `*` couvre aussi
+	   les noms générés par React pour une frontière sans `name`. */
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
 	}
 }
 

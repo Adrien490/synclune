@@ -8,9 +8,9 @@ import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { QuickSearchColor } from "./constants";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface ColorWallProps {
 	colors: QuickSearchColor[];
@@ -65,7 +65,7 @@ export function ColorWall({ colors, onSelect, navigable = true }: ColorWallProps
 		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
 		// de lire la prop `replace` du `<Link>` — la déclarer là ne suffit pas, c'est
 		// ici que la navigation se décide.
-		withViewTransition(() => router.replace(href));
+		router.replace(href, PAGE_FADE_NAVIGATION);
 	};
 
 	return (

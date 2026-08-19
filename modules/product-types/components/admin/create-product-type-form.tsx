@@ -18,10 +18,10 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { isCreateProductTypeSuccessData } from "../../utils/is-create-product-type-success-data";
 import { runAfterValidation } from "@/shared/utils/run-after-validation";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface CreateProductTypeFormProps {
 	onSuccess?: () => void;
@@ -35,10 +35,6 @@ const LIST_PATH = "/admin/catalogue/types-de-produits";
 const FIELD_LABELS: Record<string, string> = {
 	label: "Label",
 };
-
-function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
-	withViewTransition(() => router.push(path));
-}
 
 export function CreateProductTypeForm({
 	onSuccess,
@@ -69,7 +65,7 @@ export function CreateProductTypeForm({
 				successAction: redirectOnSuccess
 					? {
 							label: "Voir les types",
-							onClick: () => navigateWithTransition(router, LIST_PATH),
+							onClick: () => router.push(LIST_PATH, PAGE_FADE_NAVIGATION),
 						}
 					: undefined,
 				onSuccess: (result) => {

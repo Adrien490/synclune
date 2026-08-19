@@ -21,6 +21,7 @@ import type { ProductCarouselItem } from "@/modules/products/types/product.types
 import { getProductCardData } from "@/modules/products/services/product-display.service";
 import { buildVariantUrl } from "@/modules/products/utils/build-variant-url";
 import { productViewTransitionName } from "@/modules/products/utils/product-view-transition";
+import { PAGE_FADE_TRANSITION_TYPES } from "@/shared/constants/view-transitions";
 import type { ComponentProps, ReactNode } from "react";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
@@ -343,6 +344,13 @@ export function ProductCard({
 				<Link
 					href={productUrl}
 					className="focus-ring block w-fit max-w-full after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
+					// Réclame le fondu de page à la frontière <ViewTransition> du layout
+					// (opt-in — cf. `shared/constants/view-transitions.ts`). C'est aussi
+					// ce qui RÉVEILLE le morph carte → fiche : les deux
+					// `view-transition-name` de `productViewTransitionName()` existaient
+					// depuis 2026-08-08, mais rien ne démarrait jamais la transition qui
+					// les fait se répondre.
+					transitionTypes={PAGE_FADE_TRANSITION_TYPES}
 				>
 					<span className="relative block">
 						<h3

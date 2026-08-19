@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { withViewTransition } from "@/shared/utils/view-transition";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 /**
  * Overlays qui consomment déjà Échap : le raccourci « retour à la liste » doit les
@@ -150,7 +150,7 @@ export function useAdminFormKeyboard({
 		const navigate = () => {
 			haptic("light");
 			allowNavigation();
-			withViewTransition(() => router.push(listPath));
+			router.push(listPath, PAGE_FADE_NAVIGATION);
 		};
 
 		if (!navigationGuard) {

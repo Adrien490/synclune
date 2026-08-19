@@ -66,10 +66,6 @@ vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: (cb: () => void) => cb(),
-}));
-
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: vi.fn(),
 }));

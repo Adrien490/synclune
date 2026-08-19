@@ -5,7 +5,11 @@ import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile
 import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
 import { CookieBannerLazy } from "@/shared/components/cookie-banner-lazy";
 import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
-import { Suspense } from "react";
+import { Suspense, ViewTransition } from "react";
+import {
+	PAGE_CONTENT_VIEW_TRANSITION_NAME,
+	PAGE_FADE_TRANSITION_TYPE,
+} from "@/shared/constants/view-transitions";
 import { CartAndVariantWrapper } from "@/modules/cart/components/cart-and-variant-wrapper";
 import { QuickSearchDialogAsync } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-async";
 
@@ -49,18 +53,37 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>
-			{/* `data-shop-shell` : marqueur lu par `html:has(…)` dans globals.css pour
-			    poser le `scroll-padding-bottom` de la bottom-nav (WCAG 2.4.11). Même
-			    montage que `[data-admin-layout]` et `[data-checkout-shell]`. */}
-			<main
-				id="main-content"
-				data-shop-shell
-				tabIndex={-1}
-				aria-label="Contenu principal"
-				className="min-h-dvh"
+			{/* Frontière View Transition du storefront. React démarre lui-même la
+			    transition sur `router.push`/`replace` (déjà enveloppés dans
+			    `startTransition`) et n'anime QU'UNE FOIS le nouveau contenu prêt —
+			    c'est ce qui remplace `withViewTransition()`, dont le snapshot
+			    partait avant le montage de la page suivante.
+
+			    ⚠️ Les DEUX `none` sont mesurés, pas prudentiels. Sans celui de
+			    `update`, chaque tronçon streamé par PPR rejoue le fondu (4
+			    transitions enchaînées au premier rendu de `/produits`) ; sans le
+			    `default`, c'est l'ENTRÉE de la frontière — quand la coquille
+			    `ShopShellSkeleton` cède la place au contenu — qui en démarre une
+			    de plus, en plein chemin du LCP. Seule une navigation qui réclame
+			    `PAGE_FADE_TRANSITION_TYPE` anime. */}
+			<ViewTransition
+				default="none"
+				name={PAGE_CONTENT_VIEW_TRANSITION_NAME}
+				update={{ [PAGE_FADE_TRANSITION_TYPE]: "auto", default: "none" }}
 			>
-				{children}
-			</main>
+				{/* `data-shop-shell` : marqueur lu par `html:has(…)` dans globals.css pour
+				    poser le `scroll-padding-bottom` de la bottom-nav (WCAG 2.4.11). Même
+				    montage que `[data-admin-layout]` et `[data-checkout-shell]`. */}
+				<main
+					id="main-content"
+					data-shop-shell
+					tabIndex={-1}
+					aria-label="Contenu principal"
+					className="min-h-dvh"
+				>
+					{children}
+				</main>
+			</ViewTransition>
 			<Suspense fallback={<FooterSkeleton />}>
 				<Footer />
 			</Suspense>

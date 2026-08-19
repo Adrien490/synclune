@@ -24,9 +24,6 @@ const { mockHaptic, mockRouter } = vi.hoisted(() => ({
 
 vi.mock("@/shared/hooks/use-haptic", () => ({ useHaptic: () => mockHaptic }));
 vi.mock("next/navigation", () => ({ useRouter: () => mockRouter }));
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: (cb: () => void) => cb(),
-}));
 
 import { useAdminFormKeyboard } from "../use-admin-form-keyboard";
 

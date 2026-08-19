@@ -1,24 +1,31 @@
 /**
- * Runs the given callback inside a View Transition when supported
- * (Chromium-only as of 2026), otherwise invokes it directly.
+ * Démarre une View Transition autour d'une mutation d'état **synchrone**,
+ * quand l'API est disponible (Chromium, Safari récent) — sinon exécute le
+ * callback tel quel. No-op sous `prefers-reduced-motion: reduce`. Retourne ce
+ * que retourne le callback.
  *
- * No-op gracefully under `prefers-reduced-motion: reduce` (le crossfade UA et
- * les morphs `view-transition-name` sont des animations comme les autres) et
- * quand l'API est indisponible (Safari, Firefox). Returns whatever the
- * callback returns so callers can await navigations if needed.
+ * ⚠️ **PLUS JAMAIS AUTOUR D'UNE NAVIGATION.** Les 34 sites qui enveloppaient un
+ * `router.push`/`router.replace` ont été retirés le 2026-08-18 : le snapshot
+ * partait avant que la page suivante ne soit montée (la navigation n'est pas
+ * synchrone du point de vue de `startViewTransition`), donc la transition se
+ * jouait entre l'ancienne page et… l'ancienne page. C'était le bug
+ * `checkout-back-link-viewtransition-bug-2026-05-20`. Ces navigations passent
+ * désormais `PAGE_FADE_NAVIGATION` (`shared/constants/view-transitions.ts`), et
+ * ce sont les frontières `<ViewTransition>` des deux layouts qui animent :
+ * React possède la transition, il ne prend le snapshot d'arrivée qu'une fois le
+ * nouveau contenu prêt. Verrouillé par
+ * `view-transition-navigation.regression.test.ts`.
+ *
+ * Le seul consommateur restant est `media-upload-grid` (réordonner / retirer un
+ * média), et il est légitime : `onChange()` est un `setState` **synchrone**,
+ * React le flushe dans la micro-tâche qui suit le callback, donc le snapshot
+ * d'arrivée voit bien la nouvelle grille. Un `<ViewTransition>` n'y ferait rien
+ * de plus sans passer d'abord ces mutations en `startTransition` — ce qui
+ * retarderait le retour visuel d'un geste de tri direct.
  *
  * SSOT : l'ancien doublon homonyme `with-view-transition.ts` (même nom
  * d'export, signature `void`, feature-detect plus laxiste) a été fusionné ici
  * le 2026-08-03 — ne pas le recréer.
- *
- * @warning
- * Pour les navigations Next.js (`router.push`/`router.replace`), le callback
- * est synchrone du point de vue de `startViewTransition` (router.push ne
- * retourne pas de promise), donc le snapshot peut compléter avant que la
- * nouvelle page ne soit montée. Le pattern fonctionne en pratique mais reste
- * racy ; cf. incident `checkout-back-link-viewtransition-bug-2026-05-20` pour
- * le cas connu (Link natif + history.back). Préférer `<Link>` natif sans
- * wrapper lorsque la transition visuelle n'est pas critique.
  */
 export function withViewTransition<T>(callback: () => T): T {
 	if (typeof document === "undefined") return callback();

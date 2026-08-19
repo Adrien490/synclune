@@ -12,11 +12,11 @@ import { Button } from "@/shared/components/ui/button";
 import { ConfirmDialog } from "@/shared/components/dialogs/confirm-dialog";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { CollectionCard } from "./collection-card";
 import { ColorWall } from "./color-wall";
 import type { QuickSearchCollection, QuickSearchColor } from "./constants";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface IdleContentProps {
 	searches: string[];
@@ -64,7 +64,7 @@ export function IdleContent({
 		handleNavigateClose();
 		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
 		// de lire la prop `replace` du `<Link>`. C'est ici que la navigation se décide.
-		withViewTransition(() => router.replace("/collections"));
+		router.replace("/collections", PAGE_FADE_NAVIGATION);
 	};
 
 	const handleViewAllProducts = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -74,7 +74,7 @@ export function IdleContent({
 		handleNavigateClose();
 		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
 		// de lire la prop `replace` du `<Link>`. C'est ici que la navigation se décide.
-		withViewTransition(() => router.replace("/produits"));
+		router.replace("/produits", PAGE_FADE_NAVIGATION);
 	};
 
 	return (

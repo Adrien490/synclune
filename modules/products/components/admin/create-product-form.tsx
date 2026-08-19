@@ -16,13 +16,13 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/view-transition";
 import type { CreateProductFormProps } from "./create-product-form-types";
 import { MediaArrayCard } from "./shared/media-array-card";
 import { CreateProductInfoCard } from "./create-product-info-card";
 import { CreateProductPriceStockCard } from "./create-product-price-stock-card";
 import { CreateProductEtabliBar } from "./create-product-etabli-bar";
 import { runAfterValidation } from "@/shared/utils/run-after-validation";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 export type { CreateProductFormProps };
 
@@ -48,10 +48,6 @@ const FIELD_LABELS: Record<string, string> = {
 	"initialVariant.priceEuros": "Prix de la variante",
 	"initialVariant.stock": "Stock",
 };
-
-function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
-	withViewTransition(() => router.push(path));
-}
 
 export function CreateProductForm({
 	productTypes,
@@ -89,7 +85,7 @@ export function CreateProductForm({
 			toast.success(message || "Nouveau bijou dans l'atelier", {
 				action: {
 					label: "Voir les bijoux",
-					onClick: () => navigateWithTransition(router, PRODUCTS_LIST_PATH),
+					onClick: () => router.push(PRODUCTS_LIST_PATH, PAGE_FADE_NAVIGATION),
 				},
 			});
 			form.reset();

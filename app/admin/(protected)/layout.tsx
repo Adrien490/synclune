@@ -6,7 +6,11 @@ import { hasValidAdminSession } from "@/modules/admin-auth/lib/admin-session";
 import { ADMIN_DISPLAY_NAME } from "@/modules/admin-auth/constants/admin-auth.constants";
 import type { Metadata } from "next";
 import { unauthorized } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, ViewTransition } from "react";
+import {
+	PAGE_CONTENT_VIEW_TRANSITION_NAME,
+	PAGE_FADE_TRANSITION_TYPE,
+} from "@/shared/constants/view-transitions";
 import { AdminMenuSheet } from "./_components/admin-menu-sheet";
 import { AdminPageTitleProvider } from "./_components/admin-page-title-context";
 import { AdminMobileBottomBar } from "./_components/admin-mobile-bottom-bar";
@@ -76,28 +80,40 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 				<SidebarInset data-admin-layout>
 					<DashboardHeader />
 					<AdminMobileHeader />
-					<main
-						id="admin-main-content"
-						tabIndex={-1}
-						style={{ "--admin-main-x": "1.5rem" } as React.CSSProperties}
-						// PAS de `+ env(safe-area-inset-top)` ici : `body` porte déjà
-						// `padding-top: env(safe-area-inset-top)` (pwa.css), donc `main` démarre
-						// sous l'encoche. L'ajouter comptait le notch deux fois → ~47px de vide
-						// mort sous le header sur tout iPhone à encoche.
-						//
-						// `max-w-[100rem]` (1600px) : sans plafond, les tables denses et les
-						// grilles KPI `lg:grid-cols-4` s'étiraient sur toute la largeur en
-						// 1920px+, et les notes / descriptions libres perdaient toute borne de
-						// longueur de ligne. Volontairement SANS `mx-auto` — le contenu reste
-						// collé à la sidebar plutôt que centré, sinon la gouttière gauche varie
-						// avec la largeur de fenêtre et tout l'admin se décale sur les écrans
-						// intermédiaires. Audit responsive 2026-07-26, P2.
-						className="max-w-[100rem] space-y-6 px-[var(--admin-main-x)] pt-[calc(var(--admin-header-height,3.5rem)+1rem)] pb-[calc(var(--bottom-bar-height,56px)+1rem)] focus:outline-none md:pt-6 md:pb-6"
+					{/* Même frontière que le storefront, même polarité opt-in : le
+					    chrome admin (sidebar, header, barre basse) reste NET, seul le
+					    contenu se fond — et seulement quand une navigation le réclame
+					    (`PAGE_FADE_NAVIGATION`), jamais sur un tronçon streamé ni sur
+					    l'entrée de la frontière (cf. le commentaire jumeau côté
+					    boutique, qui porte la mesure). */}
+					<ViewTransition
+						default="none"
+						name={PAGE_CONTENT_VIEW_TRANSITION_NAME}
+						update={{ [PAGE_FADE_TRANSITION_TYPE]: "auto", default: "none" }}
 					>
-						{/* `AdminStreamingSkeleton` (sans gabarit) : ce `<main>` porte déjà
-						    plafond et paddings — cf. JSDoc des deux squelettes. */}
-						<Suspense fallback={<AdminStreamingSkeleton />}>{children}</Suspense>
-					</main>
+						<main
+							id="admin-main-content"
+							tabIndex={-1}
+							style={{ "--admin-main-x": "1.5rem" } as React.CSSProperties}
+							// PAS de `+ env(safe-area-inset-top)` ici : `body` porte déjà
+							// `padding-top: env(safe-area-inset-top)` (pwa.css), donc `main` démarre
+							// sous l'encoche. L'ajouter comptait le notch deux fois → ~47px de vide
+							// mort sous le header sur tout iPhone à encoche.
+							//
+							// `max-w-[100rem]` (1600px) : sans plafond, les tables denses et les
+							// grilles KPI `lg:grid-cols-4` s'étiraient sur toute la largeur en
+							// 1920px+, et les notes / descriptions libres perdaient toute borne de
+							// longueur de ligne. Volontairement SANS `mx-auto` — le contenu reste
+							// collé à la sidebar plutôt que centré, sinon la gouttière gauche varie
+							// avec la largeur de fenêtre et tout l'admin se décale sur les écrans
+							// intermédiaires. Audit responsive 2026-07-26, P2.
+							className="max-w-[100rem] space-y-6 px-[var(--admin-main-x)] pt-[calc(var(--admin-header-height,3.5rem)+1rem)] pb-[calc(var(--bottom-bar-height,56px)+1rem)] focus:outline-none md:pt-6 md:pb-6"
+						>
+							{/* `AdminStreamingSkeleton` (sans gabarit) : ce `<main>` porte déjà
+							    plafond et paddings — cf. JSDoc des deux squelettes. */}
+							<Suspense fallback={<AdminStreamingSkeleton />}>{children}</Suspense>
+						</main>
+					</ViewTransition>
 					<AdminMobileBottomBar badges={badges} />
 				</SidebarInset>
 			</AdminPageTitleProvider>

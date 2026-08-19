@@ -7,7 +7,7 @@ import { Suspense } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { withViewTransition } from "@/shared/utils/view-transition";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface AdminSortBadgeProps {
 	/** Map valeur sortBy → label affiché. Ex: { "name-ascending": "Nom A→Z" } */
@@ -21,7 +21,8 @@ interface AdminSortBadgeProps {
 /**
  * Chip mobile uniquement affichant le tri actif "Trié par : X".
  * Tap = ouvre le SortDrawer (via useToolbarDrawer).
- * X latéral = reset au tri par défaut + withViewTransition + haptic light.
+ * X latéral = reset au tri par défaut + haptic light (le fondu de page est porté
+ * par la frontière `<ViewTransition>` du layout admin).
  *
  * Affiché uniquement si sortBy URL !== null. Place avant FilterBadges pour
  * cohérence visuelle "état de la liste". Wrapper Suspense inclus (lit URL).
@@ -48,7 +49,7 @@ function AdminSortBadgeInner({ sortLabels, defaultSort, sortKey = "sortBy" }: Ad
 		// cette surface était la seule à l'oublier (audit 2026-08-01, P2).
 		params.delete("cursor");
 		params.delete("direction");
-		withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
+		router.push(`?${params.toString()}`, { scroll: false, ...PAGE_FADE_NAVIGATION });
 	};
 
 	return (

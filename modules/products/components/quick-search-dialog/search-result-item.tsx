@@ -11,11 +11,11 @@ import { areAllColorsLight, buildTintBarStyle } from "@/modules/colors/utils/swa
 import { Skeleton, SkeletonGroup, SkeletonText } from "@/shared/components/ui/skeleton";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { SEARCH_SYNONYMS } from "../../constants/search-synonyms";
 import type { QuickSearchProduct } from "../../data/quick-search-products";
 import { SKELETON_ROWS } from "./constants";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface SearchResultItemProps {
 	product: QuickSearchProduct;
@@ -78,7 +78,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 		onSelect();
 		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
 		// de lire la prop `replace` du `<Link>`. C'est ici que la navigation se décide.
-		withViewTransition(() => router.replace(href));
+		router.replace(href, PAGE_FADE_NAVIGATION);
 	};
 
 	return (

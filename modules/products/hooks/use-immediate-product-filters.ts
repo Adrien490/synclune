@@ -57,9 +57,16 @@ export interface ImmediateProductFilters {
  * ne sait pas faire. Les deux services d'URL sont donc réutilisés tels quels,
  * ce qui garantit que le rail et le panneau produisent des URL identiques.
  *
- * ⚠️ Pas de `withViewTransition` ni de `scrollToProductsGrid` ici : le rail est
- * collé à côté de la grille, rien ne se déplace, et la recomposition est portée
- * par le grisage `data-pending` déjà en place (`CATALOG_PENDING_DIM`).
+ * ⚠️ Pas de fondu ni de `scrollToProductsGrid` ici : le rail est collé à côté
+ * de la grille, rien ne se déplace, et la recomposition est portée par le
+ * grisage `data-pending` déjà en place (`CATALOG_PENDING_DIM`).
+ *
+ * Concrètement : les navigations ci-dessous ne passent PAS
+ * `PAGE_FADE_NAVIGATION`. La frontière `<ViewTransition>` du layout boutique
+ * est en opt-in — sans le type, elle ne nomme même pas le `<main>` et aucune
+ * transition ne démarre. Ne rien faire suffit donc à ne rien animer, et c'est
+ * délibéré : le rail applique à la coche, un fondu de 200 ms par case cochée
+ * serait un frein, pas un retour.
  */
 export function useImmediateProductFilters(params: {
 	maxPriceInEuros: number;

@@ -8,10 +8,10 @@ import { StackIcon } from "@phosphor-icons/react/ssr";
 
 import { Tap } from "@/shared/components/animations/tap";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { QuickSearchCollection } from "./constants";
 import { HighlightMatch } from "./search-result-item";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface CollectionCardProps {
 	collection: QuickSearchCollection;
@@ -48,7 +48,7 @@ export function CollectionCard({
 		onSelect();
 		// `replace`, jamais `push` : ce handler `preventDefault()` donc Next sort AVANT
 		// de lire la prop `replace` du `<Link>`. C'est ici que la navigation se décide.
-		withViewTransition(() => router.replace(href));
+		router.replace(href, PAGE_FADE_NAVIGATION);
 	};
 
 	return (

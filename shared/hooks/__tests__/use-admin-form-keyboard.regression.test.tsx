@@ -20,11 +20,9 @@ const { mockPush, mockHaptic } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
 vi.mock("@/shared/hooks/use-haptic", () => ({ useHaptic: () => mockHaptic }));
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: (fn: () => void) => fn(),
-}));
 
 import { OVERLAY_SELECTOR, useAdminFormKeyboard } from "../use-admin-form-keyboard";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 // Pas de valeur par défaut ici : un `listPath={undefined}` explicite doit bien
 // arriver `undefined` jusqu'au hook (c'est le cas testé).
@@ -124,7 +122,7 @@ describe("@regression admin-form-escape-overlay", () => {
 		fireEvent.keyDown(getByTestId("plain-field"), { key: "Escape", bubbles: true });
 
 		expect(confirmSpy).toHaveBeenCalledOnce();
-		expect(mockPush).toHaveBeenCalledWith("/admin/liste");
+		expect(mockPush).toHaveBeenCalledWith("/admin/liste", PAGE_FADE_NAVIGATION);
 	});
 
 	// -------------------------------------------------------------------------

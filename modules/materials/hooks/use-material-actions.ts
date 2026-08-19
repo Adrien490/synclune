@@ -9,7 +9,6 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { TaxonomyDeletePayload } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
 
@@ -17,13 +16,25 @@ import { DELETE_MATERIAL_DIALOG_ID } from "../components/admin/delete-material-a
 import { MATERIAL_DIALOG_ID } from "../components/material-form-dialog";
 
 import { useDuplicateMaterial } from "./use-duplicate-material";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface UseMaterialActionsParams {
 	materialId: string;
 	materialName: string;
+	/**
+	 * Nombre TOTAL de variantes qui portent ce matériau — actives comprises.
+	 * Alimente la garde du dialog de suppression (FK ON DELETE RESTRICT) ; un
+	 * compteur filtré sur `active` annoncerait « 0 » et laisserait cliquer sur
+	 * un bouton condamné.
+	 */
+	variantsCount?: number;
 }
 
-export function useMaterialActions({ materialId, materialName }: UseMaterialActionsParams): {
+export function useMaterialActions({
+	materialId,
+	materialName,
+	variantsCount = 0,
+}: UseMaterialActionsParams): {
 	sections: ActionMenuSection[];
 } {
 	const { open: openDialog } = useDialog(MATERIAL_DIALOG_ID);
@@ -43,7 +54,7 @@ export function useMaterialActions({ materialId, materialName }: UseMaterialActi
 				action: {
 					label: "Voir le matériau",
 					onClick: () =>
-						withViewTransition(() => router.push(`/admin/catalogue/materiaux/${data.id}/modifier`)),
+						router.push(`/admin/catalogue/materiaux/${data.id}/modifier`, PAGE_FADE_NAVIGATION),
 				},
 			});
 		},

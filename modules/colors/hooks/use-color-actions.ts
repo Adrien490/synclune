@@ -9,7 +9,6 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { TaxonomyDeletePayload } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
 
@@ -17,14 +16,27 @@ import { DELETE_COLOR_DIALOG_ID } from "../components/admin/delete-color-alert-d
 import { COLOR_DIALOG_ID } from "../components/color-form-dialog";
 
 import { useDuplicateColor } from "./use-duplicate-color";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface UseColorActionsParams {
 	colorId: string;
 	colorName: string;
 	colorHex: string | null;
+	/**
+	 * Nombre TOTAL de variantes qui portent cette couleur — actives comprises.
+	 * Alimente la garde du dialog de suppression (FK ON DELETE RESTRICT) ; un
+	 * compteur filtré sur `active` annoncerait « 0 » et laisserait cliquer sur
+	 * un bouton condamné.
+	 */
+	variantsCount?: number;
 }
 
-export function useColorActions({ colorId, colorName, colorHex }: UseColorActionsParams): {
+export function useColorActions({
+	colorId,
+	colorName,
+	colorHex,
+	variantsCount = 0,
+}: UseColorActionsParams): {
 	sections: ActionMenuSection[];
 } {
 	const { open: openDialog } = useDialog(COLOR_DIALOG_ID);
@@ -43,7 +55,7 @@ export function useColorActions({ colorId, colorName, colorHex }: UseColorAction
 				action: {
 					label: "Voir la couleur",
 					onClick: () =>
-						withViewTransition(() => router.push(`/admin/catalogue/couleurs/${data.id}/modifier`)),
+						router.push(`/admin/catalogue/couleurs/${data.id}/modifier`, PAGE_FADE_NAVIGATION),
 				},
 			});
 		},

@@ -14,7 +14,6 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import type { TaxonomyDeletePayload } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
 
@@ -22,6 +21,7 @@ import { PRODUCT_TYPE_DIALOG_ID } from "../components/product-type-form-dialog";
 
 import { useDuplicateProductType } from "./use-duplicate-product-type";
 import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "../components/admin/delete-product-type-alert-dialog";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface UseProductTypeActionsParams {
 	productTypeId: string;
@@ -53,8 +53,9 @@ export function useProductTypeActions({
 				action: {
 					label: "Voir le type",
 					onClick: () =>
-						withViewTransition(() =>
-							router.push(`/admin/catalogue/types-de-produits/${data.id}/modifier`),
+						router.push(
+							`/admin/catalogue/types-de-produits/${data.id}/modifier`,
+							PAGE_FADE_NAVIGATION,
 						),
 				},
 			});

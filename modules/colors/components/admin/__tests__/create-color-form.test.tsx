@@ -29,9 +29,6 @@ vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 	useUnsavedChanges: mockUseUnsavedChanges,
 }));
 vi.mock("@/modules/colors/actions/create-color", () => ({ createColor: mockCreateColor }));
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: (cb: () => void) => cb(),
-}));
 
 // Library sheet trigger is rendered, but full Drawer/Dialog mock to avoid jsdom complexity.
 vi.mock("@/modules/colors/components/admin/color-library-sheet", () => ({

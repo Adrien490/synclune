@@ -12,7 +12,6 @@ const mockUseToolbarDrawerOpen = vi.fn();
 const mockTriggerHaptic = vi.fn();
 const mockRouterPush = vi.fn();
 const mockSearchParams = new URLSearchParams();
-const mockWithViewTransition = vi.fn((cb: () => void) => cb());
 
 vi.mock("@/shared/hooks", () => ({
 	useActiveListControls: () => mockUseActiveListControls(),
@@ -21,10 +20,6 @@ vi.mock("@/shared/hooks", () => ({
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: (...args: unknown[]) => mockTriggerHaptic(...args),
-}));
-
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: (cb: () => void) => mockWithViewTransition(cb),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -87,13 +82,12 @@ describe("AdminSortBadge", () => {
 		expect(mockUseToolbarDrawerOpen).toHaveBeenCalledWith("sort");
 	});
 
-	it("resets sortBy + withViewTransition + haptic light on X click", () => {
+	it("resets sortBy + haptic light on X click", () => {
 		mockSearchParams.set("sortBy", "name-descending");
 		mockUseActiveListControls.mockReturnValue({ hasActiveSort: true });
 		render(<AdminSortBadge sortLabels={SORT_LABELS} defaultSort="name-ascending" />);
 		fireEvent.click(screen.getByLabelText("Effacer le tri"));
 		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
-		expect(mockWithViewTransition).toHaveBeenCalled();
 		expect(mockRouterPush).toHaveBeenCalled();
 		const url = mockRouterPush.mock.calls[0]?.[0] as string;
 		expect(url).not.toContain("sortBy");

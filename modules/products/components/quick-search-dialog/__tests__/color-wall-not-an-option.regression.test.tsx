@@ -74,10 +74,6 @@ vi.mock("@/shared/components/animations/stagger", () => ({
 
 vi.mock("@/shared/hooks/use-haptic", () => ({ triggerHaptic: vi.fn() }));
 
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: (cb: () => void) => cb(),
-}));
-
 // ─── Import after mocks ──────────────────────────────────────────────────────
 
 import { ColorWall } from "../color-wall";

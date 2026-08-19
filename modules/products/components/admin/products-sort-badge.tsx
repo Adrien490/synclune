@@ -7,12 +7,12 @@ import { Badge } from "@/shared/components/ui/badge";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import {
 	ADMIN_PRODUCTS_SORT_LABELS,
 	GET_PRODUCTS_DEFAULT_SORT_BY,
 } from "../../constants/product.constants";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 /**
  * Chip visible mobile + desktop affichant le tri actif "Trie par : X".
@@ -39,7 +39,7 @@ function ProductsSortBadgeInner() {
 		triggerHaptic("light");
 		const params = new URLSearchParams(searchParams.toString());
 		params.delete("sortBy");
-		withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
+		router.push(`?${params.toString()}`, { scroll: false, ...PAGE_FADE_NAVIGATION });
 	};
 
 	return (

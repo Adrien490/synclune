@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -13,7 +14,6 @@ const {
 	mockUseDuplicateProduct,
 	mockHaptic,
 	mockToastSuccess,
-	mockWithViewTransition,
 } = vi.hoisted(() => ({
 	mockDialog: {
 		isOpen: true,
@@ -29,7 +29,6 @@ const {
 	mockUseDuplicateProduct: vi.fn(),
 	mockHaptic: vi.fn(),
 	mockToastSuccess: vi.fn(),
-	mockWithViewTransition: vi.fn((fn: () => void) => fn()),
 }));
 
 // ============================================================================
@@ -50,10 +49,6 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 
 vi.mock("@/shared/utils/toast", () => ({
 	toast: { success: mockToastSuccess },
-}));
-
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: mockWithViewTransition,
 }));
 
 vi.mock("@/modules/products/hooks/use-duplicate-product", () => ({
@@ -159,7 +154,6 @@ beforeEach(() => {
 	mockRouterRefresh.mockReset();
 	mockHaptic.mockReset();
 	mockToastSuccess.mockReset();
-	mockWithViewTransition.mockImplementation((fn: () => void) => fn());
 	mockUseDuplicateProduct.mockImplementation(() => mockDuplicateProduct);
 });
 
@@ -354,9 +348,9 @@ describe("DuplicateProductAlertDialog", () => {
 			expect((options as { action: { label: string } }).action.label).toBe("Voir le bijou");
 
 			(options as { action: { onClick: () => void } }).action.onClick();
-			expect(mockWithViewTransition).toHaveBeenCalledTimes(1);
 			expect(mockRouterPush).toHaveBeenCalledWith(
 				"/admin/catalogue/produits/copie-de-bague-lune/modifier",
+				PAGE_FADE_NAVIGATION,
 			);
 		});
 	});

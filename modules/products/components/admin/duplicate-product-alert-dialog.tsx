@@ -5,8 +5,8 @@ import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-prod
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/view-transition";
 import { useRouter } from "next/navigation";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 export const DUPLICATE_PRODUCT_DIALOG_ID = "duplicate-product";
 
@@ -29,9 +29,7 @@ export function DuplicateProductAlertDialog() {
 				action: {
 					label: "Voir le bijou",
 					onClick: () =>
-						withViewTransition(() =>
-							router.push(`/admin/catalogue/produits/${data.slug}/modifier`),
-						),
+						router.push(`/admin/catalogue/produits/${data.slug}/modifier`, PAGE_FADE_NAVIGATION),
 				},
 			});
 		},

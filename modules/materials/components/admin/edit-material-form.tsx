@@ -19,7 +19,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { withViewTransition } from "@/shared/utils/view-transition";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 export interface EditableMaterial {
 	id: string;
@@ -68,7 +68,7 @@ export function EditMaterialForm({
 				successAction: redirectOnSuccess
 					? {
 							label: "Voir les matériaux",
-							onClick: () => withViewTransition(() => router.push(LIST_PATH)),
+							onClick: () => router.push(LIST_PATH, PAGE_FADE_NAVIGATION),
 						}
 					: undefined,
 				onSuccess: () => {
