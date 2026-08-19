@@ -2055,9 +2055,16 @@
                               "gap": "$space-8",
                               "children": [
                                 {
-                                  "type": "ellipse",
-                                  "id": "u8Uvnj",
-                                  "name": "variante/framboise",
+                                  "type": "path",
+                                  "id": "Uvjrj",
+                                  "name": "goutte/framboise",
+                                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                                  "viewBox": [
+                                    0,
+                                    0,
+                                    24,
+                                    24
+                                  ],
                                   "fill": "#e0559b",
                                   "width": 14,
                                   "height": 14,
@@ -2065,9 +2072,16 @@
                                   "strokeWidth": 1
                                 },
                                 {
-                                  "type": "ellipse",
-                                  "id": "YkUyT",
-                                  "name": "variante/turquoise",
+                                  "type": "path",
+                                  "id": "OA28X",
+                                  "name": "goutte/turquoise",
+                                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                                  "viewBox": [
+                                    0,
+                                    0,
+                                    24,
+                                    24
+                                  ],
                                   "fill": "#5bc0c9",
                                   "width": 14,
                                   "height": 14,
@@ -2075,9 +2089,16 @@
                                   "strokeWidth": 1
                                 },
                                 {
-                                  "type": "ellipse",
-                                  "id": "aHbMV",
-                                  "name": "variante/citron",
+                                  "type": "path",
+                                  "id": "xQZhi",
+                                  "name": "goutte/citron",
+                                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                                  "viewBox": [
+                                    0,
+                                    0,
+                                    24,
+                                    24
+                                  ],
                                   "fill": "#f2d24b",
                                   "width": 14,
                                   "height": 14,
@@ -2085,9 +2106,16 @@
                                   "strokeWidth": 1
                                 },
                                 {
-                                  "type": "ellipse",
-                                  "id": "s7me4n",
-                                  "name": "variante/lilas",
+                                  "type": "path",
+                                  "id": "uY1Cu",
+                                  "name": "goutte/lilas",
+                                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                                  "viewBox": [
+                                    0,
+                                    0,
+                                    24,
+                                    24
+                                  ],
                                   "fill": "#a48ad4",
                                   "width": 14,
                                   "height": 14,
@@ -2853,17 +2881,48 @@
                       ],
                       "children": [
                         {
-                          "type": "text",
-                          "id": "MDCJE",
-                          "name": "Texte réponse",
-                          "fill": "$encre",
-                          "textGrowth": "fixed-width",
+                          "type": "frame",
+                          "id": "i5p10Q",
+                          "name": "bulle",
                           "width": "fill_container",
-                          "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part.",
-                          "lineHeight": "$leading-body",
-                          "fontFamily": "$font-sans",
-                          "fontSize": "$text-body",
-                          "fontWeight": "$graisse-normale"
+                          "fill": "$gris",
+                          "cornerRadius": [
+                            "$radius-20",
+                            "$radius-20",
+                            "$radius-20",
+                            4
+                          ],
+                          "layout": "vertical",
+                          "gap": "$space-8",
+                          "padding": [
+                            "$space-16",
+                            "$space-24"
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "MDCJE",
+                              "name": "Texte réponse",
+                              "fill": "$encre",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part.",
+                              "lineHeight": "$leading-body",
+                              "fontFamily": "$font-sans",
+                              "fontSize": "$text-body",
+                              "fontWeight": "$graisse-normale"
+                            },
+                            {
+                              "type": "text",
+                              "id": "ygagQ",
+                              "name": "signature",
+                              "fill": "$rose-encre",
+                              "content": "— Léane",
+                              "fontFamily": "$font-cursive",
+                              "fontSize": "$text-note",
+                              "fontWeight": "$graisse-normale"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -5778,14 +5837,17 @@
               "type": "frame",
               "id": "pN1Oi",
               "name": "rangee-1",
-              "width": "fill_container",
-              "gap": "$gouttiere",
+              "width": 1152,
+              "height": 462,
+              "layout": "none",
               "children": [
                 {
                   "id": "u2vIrz",
                   "type": "ref",
                   "ref": "Trd6e",
                   "name": "Collier goutte arc-en-ciel",
+                  "x": 0,
+                  "y": 0,
                   "descendants": {
                     "e98ER3": {
                       "name": "photo/creation-collier-arc-en-ciel",
@@ -5793,22 +5855,6 @@
                     },
                     "vwijz": {
                       "content": "Collier goutte arc-en-ciel"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#e0559b",
-                      "name": "variante/framboise"
-                    },
-                    "YkUyT": {
-                      "fill": "#f28c4b",
-                      "name": "variante/mandarine"
-                    },
-                    "aHbMV": {
-                      "fill": "#f2d24b",
-                      "name": "variante/citron"
-                    },
-                    "s7me4n": {
-                      "fill": "#4a6fd4",
-                      "name": "variante/cobalt"
                     },
                     "c52uxU": {
                       "content": "38 €"
@@ -5820,6 +5866,8 @@
                   "type": "ref",
                   "ref": "Trd6e",
                   "name": "Créoles grappe de raisin",
+                  "x": 294,
+                  "y": 24,
                   "descendants": {
                     "e98ER3": {
                       "name": "photo/creation-porte-creoles-raisin",
@@ -5835,20 +5883,6 @@
                     "vwijz": {
                       "content": "Créoles grappe de raisin"
                     },
-                    "u8Uvnj": {
-                      "fill": "#7b4a9e",
-                      "name": "variante/prune"
-                    },
-                    "YkUyT": {
-                      "fill": "#7bc25e",
-                      "name": "variante/vert-pomme"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
-                    },
                     "c52uxU": {
                       "content": "26 €"
                     }
@@ -5859,6 +5893,8 @@
                   "type": "ref",
                   "ref": "Trd6e",
                   "name": "Bague Nuit étoilée",
+                  "x": 588,
+                  "y": 8,
                   "descendants": {
                     "e98ER3": {
                       "name": "photo/creation-bague-nuit-etoilee",
@@ -5874,20 +5910,6 @@
                     "vwijz": {
                       "content": "Bague Nuit étoilée"
                     },
-                    "u8Uvnj": {
-                      "fill": "#3554a6",
-                      "name": "variante/cobalt"
-                    },
-                    "YkUyT": {
-                      "fill": "#f2d24b",
-                      "name": "variante/citron"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
-                    },
                     "c52uxU": {
                       "content": "29 €"
                     }
@@ -5898,6 +5920,8 @@
                   "type": "ref",
                   "ref": "Trd6e",
                   "name": "Bracelet pluie joyeuse",
+                  "x": 882,
+                  "y": 32,
                   "descendants": {
                     "e98ER3": {
                       "name": "photo/creation-bracelet-pluie-joyeuse",
@@ -5905,21 +5929,6 @@
                     },
                     "vwijz": {
                       "content": "Bracelet pluie joyeuse"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#5bc0c9",
-                      "name": "variante/turquoise"
-                    },
-                    "YkUyT": {
-                      "fill": "#4a6fd4",
-                      "name": "variante/cobalt"
-                    },
-                    "aHbMV": {
-                      "fill": "#a48ad4",
-                      "name": "variante/lilas"
-                    },
-                    "s7me4n": {
-                      "enabled": false
                     },
                     "c52uxU": {
                       "content": "28 €"
@@ -5932,14 +5941,17 @@
               "type": "frame",
               "id": "epDBu",
               "name": "rangee-2",
-              "width": "fill_container",
-              "gap": "$gouttiere",
+              "width": 1152,
+              "height": 489,
+              "layout": "none",
               "children": [
                 {
                   "id": "YPwNW",
                   "type": "ref",
                   "ref": "Trd6e",
                   "name": "Chaîne de cheveux étoile filante",
+                  "x": 0,
+                  "y": 0,
                   "descendants": {
                     "e98ER3": {
                       "name": "photo/creation-chaine-cheveux-etoile",
@@ -5947,20 +5959,6 @@
                     },
                     "vwijz": {
                       "content": "Chaîne de cheveux étoile filante"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#d4a94e",
-                      "name": "variante/doree"
-                    },
-                    "YkUyT": {
-                      "fill": "#b9c0cc",
-                      "name": "variante/argentee"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
                     },
                     "c52uxU": {
                       "content": "24 €"
@@ -5972,6 +5970,8 @@
                   "type": "ref",
                   "ref": "Trd6e",
                   "name": "Chaîne de corps goutte de pluie",
+                  "x": 294,
+                  "y": 24,
                   "descendants": {
                     "e98ER3": {
                       "name": "photo/creation-porte-chaine-corps-goutte",
@@ -5979,20 +5979,6 @@
                     },
                     "vwijz": {
                       "content": "Chaîne de corps goutte de pluie"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#5bc0c9",
-                      "name": "variante/turquoise"
-                    },
-                    "YkUyT": {
-                      "fill": "#b9c0cc",
-                      "name": "variante/argentee"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
                     },
                     "c52uxU": {
                       "content": "42 €"
@@ -6004,6 +5990,8 @@
                   "type": "ref",
                   "ref": "Trd6e",
                   "name": "Papillou tourbillon violet",
+                  "x": 588,
+                  "y": 8,
                   "descendants": {
                     "e98ER3": {
                       "name": "photo/creation-papillou-tourbillon",
@@ -6023,20 +6011,6 @@
                     "vwijz": {
                       "content": "Papillou tourbillon violet"
                     },
-                    "u8Uvnj": {
-                      "fill": "#7b4a9e",
-                      "name": "variante/prune"
-                    },
-                    "YkUyT": {
-                      "fill": "#a48ad4",
-                      "name": "variante/lilas"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
-                    },
                     "c52uxU": {
                       "content": "18 €"
                     },
@@ -6053,6 +6027,8 @@
                   "type": "ref",
                   "ref": "Trd6e",
                   "name": "Porte-clés nénuphar",
+                  "x": 882,
+                  "y": 32,
                   "descendants": {
                     "e98ER3": {
                       "name": "photo/creation-echelle-porte-cles-nenuphar",
@@ -6060,20 +6036,6 @@
                     },
                     "vwijz": {
                       "content": "Porte-clés nénuphar"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#7bc25e",
-                      "name": "variante/vert-pomme"
-                    },
-                    "YkUyT": {
-                      "fill": "#f28ac2",
-                      "name": "variante/rose-bonbon"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
                     },
                     "c52uxU": {
                       "content": "14 €"
@@ -6213,22 +6175,6 @@
                     "vwijz": {
                       "content": "Collier goutte arc-en-ciel"
                     },
-                    "u8Uvnj": {
-                      "fill": "#e0559b",
-                      "name": "variante/framboise"
-                    },
-                    "YkUyT": {
-                      "fill": "#f28c4b",
-                      "name": "variante/mandarine"
-                    },
-                    "aHbMV": {
-                      "fill": "#f2d24b",
-                      "name": "variante/citron"
-                    },
-                    "s7me4n": {
-                      "fill": "#4a6fd4",
-                      "name": "variante/cobalt"
-                    },
                     "c52uxU": {
                       "content": "38 €"
                     }
@@ -6263,20 +6209,6 @@
                     },
                     "vwijz": {
                       "content": "Créoles grappe de raisin"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#7b4a9e",
-                      "name": "variante/prune"
-                    },
-                    "YkUyT": {
-                      "fill": "#7bc25e",
-                      "name": "variante/vert-pomme"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
                     },
                     "c52uxU": {
                       "content": "26 €"
@@ -6322,20 +6254,6 @@
                     "vwijz": {
                       "content": "Bague Nuit étoilée"
                     },
-                    "u8Uvnj": {
-                      "fill": "#3554a6",
-                      "name": "variante/cobalt"
-                    },
-                    "YkUyT": {
-                      "fill": "#f2d24b",
-                      "name": "variante/citron"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
-                    },
                     "c52uxU": {
                       "content": "29 €"
                     }
@@ -6363,21 +6281,6 @@
                     },
                     "vwijz": {
                       "content": "Bracelet pluie joyeuse"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#5bc0c9",
-                      "name": "variante/turquoise"
-                    },
-                    "YkUyT": {
-                      "fill": "#4a6fd4",
-                      "name": "variante/cobalt"
-                    },
-                    "aHbMV": {
-                      "fill": "#a48ad4",
-                      "name": "variante/lilas"
-                    },
-                    "s7me4n": {
-                      "enabled": false
                     },
                     "c52uxU": {
                       "content": "28 €"
@@ -6416,20 +6319,6 @@
                     "vwijz": {
                       "content": "Chaîne de cheveux étoile filante"
                     },
-                    "u8Uvnj": {
-                      "fill": "#d4a94e",
-                      "name": "variante/doree"
-                    },
-                    "YkUyT": {
-                      "fill": "#b9c0cc",
-                      "name": "variante/argentee"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
-                    },
                     "c52uxU": {
                       "content": "24 €"
                     }
@@ -6457,20 +6346,6 @@
                     },
                     "vwijz": {
                       "content": "Chaîne de corps goutte de pluie"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#5bc0c9",
-                      "name": "variante/turquoise"
-                    },
-                    "YkUyT": {
-                      "fill": "#b9c0cc",
-                      "name": "variante/argentee"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
                     },
                     "c52uxU": {
                       "content": "42 €"
@@ -6522,20 +6397,6 @@
                     "vwijz": {
                       "content": "Papillou tourbillon violet"
                     },
-                    "u8Uvnj": {
-                      "fill": "#7b4a9e",
-                      "name": "variante/prune"
-                    },
-                    "YkUyT": {
-                      "fill": "#a48ad4",
-                      "name": "variante/lilas"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
-                    },
                     "c52uxU": {
                       "content": "18 €"
                     },
@@ -6569,20 +6430,6 @@
                     },
                     "vwijz": {
                       "content": "Porte-clés nénuphar"
-                    },
-                    "u8Uvnj": {
-                      "fill": "#7bc25e",
-                      "name": "variante/vert-pomme"
-                    },
-                    "YkUyT": {
-                      "fill": "#f28ac2",
-                      "name": "variante/rose-bonbon"
-                    },
-                    "aHbMV": {
-                      "enabled": false
-                    },
-                    "s7me4n": {
-                      "enabled": false
                     },
                     "c52uxU": {
                       "content": "14 €"
@@ -12706,7 +12553,7 @@
                               "fill": "$encre",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, avec amour.",
+                              "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, les doigts encore pleins de peinture.",
                               "lineHeight": "$leading-small",
                               "fontFamily": "$font-sans",
                               "fontSize": "$text-small",
@@ -13163,7 +13010,7 @@
                       "fill": "$encre",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, avec amour.",
+                      "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, les doigts encore pleins de peinture.",
                       "lineHeight": "$leading-small",
                       "fontFamily": "$font-sans",
                       "fontSize": "$text-small",
@@ -13657,9 +13504,6 @@
                     },
                     "ToeQT": {
                       "enabled": true
-                    },
-                    "MDCJE": {
-                      "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part."
                     }
                   }
                 },
@@ -13672,9 +13516,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Comment fonctionnent les retours ?"
-                    },
-                    "MDCJE": {
-                      "content": "Tu as 14 jours après réception pour changer d'avis, sans avoir à te justifier. Tu me préviens depuis ta page de suivi, tu me renvoies le bijou, et je te rembourse dès qu'il revient à l'atelier."
                     }
                   }
                 },
@@ -13687,9 +13528,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Les bijoux sont-ils vraiment faits main ?"
-                    },
-                    "MDCJE": {
-                      "content": "Oui : je peins les cabochons, j'assemble les perles et je monte chaque chaîne moi-même, à l'atelier. Personne d'autre ne touche à tes bijoux — c'est aussi pour ça que chaque pièce est un peu différente de sa voisine."
                     }
                   }
                 },
@@ -13702,9 +13540,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Pourquoi y a-t-il si peu d'exemplaires de chaque pièce ?"
-                    },
-                    "MDCJE": {
-                      "content": "Parce que je fabrique tout moi-même, en petites séries — souvent un seul exemplaire par modèle. Si une pièce te plaît et qu'elle est déjà partie, écris-moi : je peux souvent créer une variation proche."
                     }
                   }
                 },
@@ -13717,9 +13552,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Comment choisir la bonne taille ?"
-                    },
-                    "MDCJE": {
-                      "content": "Chaque fiche indique les dimensions exactes de la pièce. La plupart de mes bagues sont ajustables ; pour un collier ou un bracelet, le plus simple est de mesurer un bijou que tu portes déjà. En cas de doute, écris-moi avant de commander."
                     }
                   }
                 },
@@ -13732,9 +13564,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Puis-je personnaliser une création ?"
-                    },
-                    "MDCJE": {
-                      "content": "Oui ! Dis-moi ce que tu imagines — d'autres couleurs, une pièce déjà partie, une idée à toi — et on en parle. Chaque commande personnalisée commence par un simple message."
                     }
                   }
                 },
@@ -14161,9 +13990,6 @@
                 },
                 "ToeQT": {
                   "enabled": true
-                },
-                "MDCJE": {
-                  "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part."
                 }
               }
             },
@@ -14176,9 +14002,6 @@
               "descendants": {
                 "c2cX4": {
                   "content": "Comment fonctionnent les retours ?"
-                },
-                "MDCJE": {
-                  "content": "Tu as 14 jours après réception pour changer d'avis, sans avoir à te justifier. Tu me préviens depuis ta page de suivi, tu me renvoies le bijou, et je te rembourse dès qu'il revient à l'atelier."
                 }
               }
             },
@@ -14191,9 +14014,6 @@
               "descendants": {
                 "c2cX4": {
                   "content": "Les bijoux sont-ils vraiment faits main ?"
-                },
-                "MDCJE": {
-                  "content": "Oui : je peins les cabochons, j'assemble les perles et je monte chaque chaîne moi-même, à l'atelier. Personne d'autre ne touche à tes bijoux — c'est aussi pour ça que chaque pièce est un peu différente de sa voisine."
                 }
               }
             },
@@ -14206,9 +14026,6 @@
               "descendants": {
                 "c2cX4": {
                   "content": "Pourquoi y a-t-il si peu d'exemplaires de chaque pièce ?"
-                },
-                "MDCJE": {
-                  "content": "Parce que je fabrique tout moi-même, en petites séries — souvent un seul exemplaire par modèle. Si une pièce te plaît et qu'elle est déjà partie, écris-moi : je peux souvent créer une variation proche."
                 }
               }
             },
@@ -14221,9 +14038,6 @@
               "descendants": {
                 "c2cX4": {
                   "content": "Comment choisir la bonne taille ?"
-                },
-                "MDCJE": {
-                  "content": "Chaque fiche indique les dimensions exactes de la pièce. La plupart de mes bagues sont ajustables ; pour un collier ou un bracelet, le plus simple est de mesurer un bijou que tu portes déjà. En cas de doute, écris-moi avant de commander."
                 }
               }
             },
@@ -14236,9 +14050,6 @@
               "descendants": {
                 "c2cX4": {
                   "content": "Puis-je personnaliser une création ?"
-                },
-                "MDCJE": {
-                  "content": "Oui ! Dis-moi ce que tu imagines — d'autres couleurs, une pièce déjà partie, une idée à toi — et on en parle. Chaque commande personnalisée commence par un simple message."
                 }
               }
             }
@@ -15970,14 +15781,17 @@
                   "type": "frame",
                   "id": "bZG1b",
                   "name": "rangee-1",
-                  "width": "fill_container",
-                  "gap": "$gouttiere",
+                  "width": 1152,
+                  "height": 462,
+                  "layout": "none",
                   "children": [
                     {
                       "id": "GEDgX",
                       "type": "ref",
                       "ref": "Trd6e",
                       "name": "Collier goutte arc-en-ciel",
+                      "x": 0,
+                      "y": 0,
                       "descendants": {
                         "e98ER3": {
                           "name": "photo/creation-collier-arc-en-ciel",
@@ -15985,22 +15799,6 @@
                         },
                         "vwijz": {
                           "content": "Collier goutte arc-en-ciel"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#e0559b",
-                          "name": "variante/framboise"
-                        },
-                        "YkUyT": {
-                          "fill": "#f28c4b",
-                          "name": "variante/mandarine"
-                        },
-                        "aHbMV": {
-                          "fill": "#f2d24b",
-                          "name": "variante/citron"
-                        },
-                        "s7me4n": {
-                          "fill": "#4a6fd4",
-                          "name": "variante/cobalt"
                         },
                         "c52uxU": {
                           "content": "38 €"
@@ -16012,6 +15810,8 @@
                       "type": "ref",
                       "ref": "Trd6e",
                       "name": "Créoles grappe de raisin",
+                      "x": 294,
+                      "y": 24,
                       "descendants": {
                         "e98ER3": {
                           "name": "photo/creation-porte-creoles-raisin",
@@ -16027,20 +15827,6 @@
                         "vwijz": {
                           "content": "Créoles grappe de raisin"
                         },
-                        "u8Uvnj": {
-                          "fill": "#7b4a9e",
-                          "name": "variante/prune"
-                        },
-                        "YkUyT": {
-                          "fill": "#7bc25e",
-                          "name": "variante/vert-pomme"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
-                        },
                         "c52uxU": {
                           "content": "26 €"
                         }
@@ -16051,6 +15837,8 @@
                       "type": "ref",
                       "ref": "Trd6e",
                       "name": "Bague Nuit étoilée",
+                      "x": 588,
+                      "y": 8,
                       "descendants": {
                         "e98ER3": {
                           "name": "photo/creation-bague-nuit-etoilee",
@@ -16066,20 +15854,6 @@
                         "vwijz": {
                           "content": "Bague Nuit étoilée"
                         },
-                        "u8Uvnj": {
-                          "fill": "#3554a6",
-                          "name": "variante/cobalt"
-                        },
-                        "YkUyT": {
-                          "fill": "#f2d24b",
-                          "name": "variante/citron"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
-                        },
                         "c52uxU": {
                           "content": "29 €"
                         }
@@ -16090,6 +15864,8 @@
                       "type": "ref",
                       "ref": "Trd6e",
                       "name": "Bracelet pluie joyeuse",
+                      "x": 882,
+                      "y": 32,
                       "descendants": {
                         "e98ER3": {
                           "name": "photo/creation-bracelet-pluie-joyeuse",
@@ -16097,21 +15873,6 @@
                         },
                         "vwijz": {
                           "content": "Bracelet pluie joyeuse"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#5bc0c9",
-                          "name": "variante/turquoise"
-                        },
-                        "YkUyT": {
-                          "fill": "#4a6fd4",
-                          "name": "variante/cobalt"
-                        },
-                        "aHbMV": {
-                          "fill": "#a48ad4",
-                          "name": "variante/lilas"
-                        },
-                        "s7me4n": {
-                          "enabled": false
                         },
                         "c52uxU": {
                           "content": "28 €"
@@ -16124,14 +15885,17 @@
                   "type": "frame",
                   "id": "o5lLAa",
                   "name": "rangee-2",
-                  "width": "fill_container",
-                  "gap": "$gouttiere",
+                  "width": 1152,
+                  "height": 489,
+                  "layout": "none",
                   "children": [
                     {
                       "id": "n853Vo",
                       "type": "ref",
                       "ref": "Trd6e",
                       "name": "Chaîne de cheveux étoile filante",
+                      "x": 0,
+                      "y": 0,
                       "descendants": {
                         "e98ER3": {
                           "name": "photo/creation-chaine-cheveux-etoile",
@@ -16139,20 +15903,6 @@
                         },
                         "vwijz": {
                           "content": "Chaîne de cheveux étoile filante"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#d4a94e",
-                          "name": "variante/doree"
-                        },
-                        "YkUyT": {
-                          "fill": "#b9c0cc",
-                          "name": "variante/argentee"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
                         },
                         "c52uxU": {
                           "content": "24 €"
@@ -16164,6 +15914,8 @@
                       "type": "ref",
                       "ref": "Trd6e",
                       "name": "Chaîne de corps goutte de pluie",
+                      "x": 294,
+                      "y": 24,
                       "descendants": {
                         "e98ER3": {
                           "name": "photo/creation-porte-chaine-corps-goutte",
@@ -16171,20 +15923,6 @@
                         },
                         "vwijz": {
                           "content": "Chaîne de corps goutte de pluie"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#5bc0c9",
-                          "name": "variante/turquoise"
-                        },
-                        "YkUyT": {
-                          "fill": "#b9c0cc",
-                          "name": "variante/argentee"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
                         },
                         "c52uxU": {
                           "content": "42 €"
@@ -16196,6 +15934,8 @@
                       "type": "ref",
                       "ref": "Trd6e",
                       "name": "Papillou tourbillon violet",
+                      "x": 588,
+                      "y": 8,
                       "descendants": {
                         "e98ER3": {
                           "name": "photo/creation-papillou-tourbillon",
@@ -16215,20 +15955,6 @@
                         "vwijz": {
                           "content": "Papillou tourbillon violet"
                         },
-                        "u8Uvnj": {
-                          "fill": "#7b4a9e",
-                          "name": "variante/prune"
-                        },
-                        "YkUyT": {
-                          "fill": "#a48ad4",
-                          "name": "variante/lilas"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
-                        },
                         "c52uxU": {
                           "content": "18 €"
                         },
@@ -16245,6 +15971,8 @@
                       "type": "ref",
                       "ref": "Trd6e",
                       "name": "Porte-clés nénuphar",
+                      "x": 882,
+                      "y": 32,
                       "descendants": {
                         "e98ER3": {
                           "name": "photo/creation-echelle-porte-cles-nenuphar",
@@ -16252,20 +15980,6 @@
                         },
                         "vwijz": {
                           "content": "Porte-clés nénuphar"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#7bc25e",
-                          "name": "variante/vert-pomme"
-                        },
-                        "YkUyT": {
-                          "fill": "#f28ac2",
-                          "name": "variante/rose-bonbon"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
                         },
                         "c52uxU": {
                           "content": "14 €"
@@ -19858,7 +19572,7 @@
                                   "fill": "$encre",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, avec amour.",
+                                  "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, les doigts encore pleins de peinture.",
                                   "lineHeight": "$leading-small",
                                   "fontFamily": "$font-sans",
                                   "fontSize": "$text-small",
@@ -20284,9 +19998,6 @@
                         },
                         "ToeQT": {
                           "enabled": true
-                        },
-                        "MDCJE": {
-                          "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part."
                         }
                       }
                     },
@@ -20299,9 +20010,6 @@
                       "descendants": {
                         "c2cX4": {
                           "content": "Comment fonctionnent les retours ?"
-                        },
-                        "MDCJE": {
-                          "content": "Tu as 14 jours après réception pour changer d'avis, sans avoir à te justifier. Tu me préviens depuis ta page de suivi, tu me renvoies le bijou, et je te rembourse dès qu'il revient à l'atelier."
                         }
                       }
                     },
@@ -20314,9 +20022,6 @@
                       "descendants": {
                         "c2cX4": {
                           "content": "Les bijoux sont-ils vraiment faits main ?"
-                        },
-                        "MDCJE": {
-                          "content": "Oui : je peins les cabochons, j'assemble les perles et je monte chaque chaîne moi-même, à l'atelier. Personne d'autre ne touche à tes bijoux — c'est aussi pour ça que chaque pièce est un peu différente de sa voisine."
                         }
                       }
                     },
@@ -20329,9 +20034,6 @@
                       "descendants": {
                         "c2cX4": {
                           "content": "Pourquoi y a-t-il si peu d'exemplaires de chaque pièce ?"
-                        },
-                        "MDCJE": {
-                          "content": "Parce que je fabrique tout moi-même, en petites séries — souvent un seul exemplaire par modèle. Si une pièce te plaît et qu'elle est déjà partie, écris-moi : je peux souvent créer une variation proche."
                         }
                       }
                     },
@@ -20344,9 +20046,6 @@
                       "descendants": {
                         "c2cX4": {
                           "content": "Comment choisir la bonne taille ?"
-                        },
-                        "MDCJE": {
-                          "content": "Chaque fiche indique les dimensions exactes de la pièce. La plupart de mes bagues sont ajustables ; pour un collier ou un bracelet, le plus simple est de mesurer un bijou que tu portes déjà. En cas de doute, écris-moi avant de commander."
                         }
                       }
                     },
@@ -20359,9 +20058,6 @@
                       "descendants": {
                         "c2cX4": {
                           "content": "Puis-je personnaliser une création ?"
-                        },
-                        "MDCJE": {
-                          "content": "Oui ! Dis-moi ce que tu imagines — d'autres couleurs, une pièce déjà partie, une idée à toi — et on en parle. Chaque commande personnalisée commence par un simple message."
                         }
                       }
                     },
@@ -20917,22 +20613,6 @@
                         "vwijz": {
                           "content": "Collier goutte arc-en-ciel"
                         },
-                        "u8Uvnj": {
-                          "fill": "#e0559b",
-                          "name": "variante/framboise"
-                        },
-                        "YkUyT": {
-                          "fill": "#f28c4b",
-                          "name": "variante/mandarine"
-                        },
-                        "aHbMV": {
-                          "fill": "#f2d24b",
-                          "name": "variante/citron"
-                        },
-                        "s7me4n": {
-                          "fill": "#4a6fd4",
-                          "name": "variante/cobalt"
-                        },
                         "c52uxU": {
                           "content": "38 €"
                         }
@@ -20967,20 +20647,6 @@
                         },
                         "vwijz": {
                           "content": "Créoles grappe de raisin"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#7b4a9e",
-                          "name": "variante/prune"
-                        },
-                        "YkUyT": {
-                          "fill": "#7bc25e",
-                          "name": "variante/vert-pomme"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
                         },
                         "c52uxU": {
                           "content": "26 €"
@@ -21026,20 +20692,6 @@
                         "vwijz": {
                           "content": "Bague Nuit étoilée"
                         },
-                        "u8Uvnj": {
-                          "fill": "#3554a6",
-                          "name": "variante/cobalt"
-                        },
-                        "YkUyT": {
-                          "fill": "#f2d24b",
-                          "name": "variante/citron"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
-                        },
                         "c52uxU": {
                           "content": "29 €"
                         }
@@ -21067,21 +20719,6 @@
                         },
                         "vwijz": {
                           "content": "Bracelet pluie joyeuse"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#5bc0c9",
-                          "name": "variante/turquoise"
-                        },
-                        "YkUyT": {
-                          "fill": "#4a6fd4",
-                          "name": "variante/cobalt"
-                        },
-                        "aHbMV": {
-                          "fill": "#a48ad4",
-                          "name": "variante/lilas"
-                        },
-                        "s7me4n": {
-                          "enabled": false
                         },
                         "c52uxU": {
                           "content": "28 €"
@@ -21120,20 +20757,6 @@
                         "vwijz": {
                           "content": "Chaîne de cheveux étoile filante"
                         },
-                        "u8Uvnj": {
-                          "fill": "#d4a94e",
-                          "name": "variante/doree"
-                        },
-                        "YkUyT": {
-                          "fill": "#b9c0cc",
-                          "name": "variante/argentee"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
-                        },
                         "c52uxU": {
                           "content": "24 €"
                         }
@@ -21161,20 +20784,6 @@
                         },
                         "vwijz": {
                           "content": "Chaîne de corps goutte de pluie"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#5bc0c9",
-                          "name": "variante/turquoise"
-                        },
-                        "YkUyT": {
-                          "fill": "#b9c0cc",
-                          "name": "variante/argentee"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
                         },
                         "c52uxU": {
                           "content": "42 €"
@@ -21226,20 +20835,6 @@
                         "vwijz": {
                           "content": "Papillou tourbillon violet"
                         },
-                        "u8Uvnj": {
-                          "fill": "#7b4a9e",
-                          "name": "variante/prune"
-                        },
-                        "YkUyT": {
-                          "fill": "#a48ad4",
-                          "name": "variante/lilas"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
-                        },
                         "c52uxU": {
                           "content": "18 €"
                         },
@@ -21273,20 +20868,6 @@
                         },
                         "vwijz": {
                           "content": "Porte-clés nénuphar"
-                        },
-                        "u8Uvnj": {
-                          "fill": "#7bc25e",
-                          "name": "variante/vert-pomme"
-                        },
-                        "YkUyT": {
-                          "fill": "#f28ac2",
-                          "name": "variante/rose-bonbon"
-                        },
-                        "aHbMV": {
-                          "enabled": false
-                        },
-                        "s7me4n": {
-                          "enabled": false
                         },
                         "c52uxU": {
                           "content": "14 €"
@@ -24362,7 +23943,7 @@
                           "fill": "$encre",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, avec amour.",
+                          "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, les doigts encore pleins de peinture.",
                           "lineHeight": "$leading-small",
                           "fontFamily": "$font-sans",
                           "fontSize": "$text-small",
@@ -24843,9 +24424,6 @@
                     },
                     "ToeQT": {
                       "enabled": true
-                    },
-                    "MDCJE": {
-                      "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part."
                     }
                   }
                 },
@@ -24858,9 +24436,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Comment fonctionnent les retours ?"
-                    },
-                    "MDCJE": {
-                      "content": "Tu as 14 jours après réception pour changer d'avis, sans avoir à te justifier. Tu me préviens depuis ta page de suivi, tu me renvoies le bijou, et je te rembourse dès qu'il revient à l'atelier."
                     }
                   }
                 },
@@ -24873,9 +24448,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Les bijoux sont-ils vraiment faits main ?"
-                    },
-                    "MDCJE": {
-                      "content": "Oui : je peins les cabochons, j'assemble les perles et je monte chaque chaîne moi-même, à l'atelier. Personne d'autre ne touche à tes bijoux — c'est aussi pour ça que chaque pièce est un peu différente de sa voisine."
                     }
                   }
                 },
@@ -24888,9 +24460,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Pourquoi y a-t-il si peu d'exemplaires de chaque pièce ?"
-                    },
-                    "MDCJE": {
-                      "content": "Parce que je fabrique tout moi-même, en petites séries — souvent un seul exemplaire par modèle. Si une pièce te plaît et qu'elle est déjà partie, écris-moi : je peux souvent créer une variation proche."
                     }
                   }
                 },
@@ -24903,9 +24472,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Comment choisir la bonne taille ?"
-                    },
-                    "MDCJE": {
-                      "content": "Chaque fiche indique les dimensions exactes de la pièce. La plupart de mes bagues sont ajustables ; pour un collier ou un bracelet, le plus simple est de mesurer un bijou que tu portes déjà. En cas de doute, écris-moi avant de commander."
                     }
                   }
                 },
@@ -24918,9 +24484,6 @@
                   "descendants": {
                     "c2cX4": {
                       "content": "Puis-je personnaliser une création ?"
-                    },
-                    "MDCJE": {
-                      "content": "Oui ! Dis-moi ce que tu imagines — d'autres couleurs, une pièce déjà partie, une idée à toi — et on en parle. Chaque commande personnalisée commence par un simple message."
                     }
                   }
                 }
@@ -27014,8 +26577,8 @@
       "id": "hxikH",
       "x": 6198,
       "y": 961,
-      "name": "proposition/contre-visite-creations",
-      "context": "Proposition (droit de proposition, _conduite.md) — contre-visite du 2026-08-19, passe de signature : la section créations est la seule sans geste propre ni idée (grille au cordeau, contre-pied de la symétrie imparfaite). La section 02-creations reste intouchée : Léane arbitre sur cette frame.",
+      "name": "proposition/contre-visite-creations — PRISE",
+      "context": "Proposition (droit de proposition, _conduite.md) — contre-visite du 2026-08-19, passe de signature : la section créations est la seule sans geste propre ni idée (grille au cordeau, contre-pied de la symétrie imparfaite). La section 02-creations reste intouchée : Léane arbitre sur cette frame. — PRISE le 2026-08-19 : arbitrage délégué par Adrien à la session, appliquée à la maquette (Léane peut revenir dessus).",
       "clip": true,
       "width": 1340,
       "fill": "$papier",
@@ -27186,8 +26749,8 @@
       "id": "VhiCE",
       "x": 7478,
       "y": 961,
-      "name": "proposition/contre-visite-faq",
-      "context": "Proposition (droit de proposition, _conduite.md) — contre-visite du 2026-08-19, passe de signature : la FAQ tient par sa voix, pas par sa forme (accordéon standard, substituable). La section 06-faq reste intouchée : Léane arbitre sur cette frame.",
+      "name": "proposition/contre-visite-faq — PRISE",
+      "context": "Proposition (droit de proposition, _conduite.md) — contre-visite du 2026-08-19, passe de signature : la FAQ tient par sa voix, pas par sa forme (accordéon standard, substituable). La section 06-faq reste intouchée : Léane arbitre sur cette frame. — PRISE le 2026-08-19 : arbitrage délégué par Adrien à la session, appliquée à la maquette (Léane peut revenir dessus).",
       "clip": true,
       "width": 860,
       "fill": "$papier",
@@ -27331,6 +26894,2607 @@
               "fontWeight": "$graisse-normale"
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "BSC8c",
+      "x": 8418,
+      "y": 961,
+      "name": "proposition/carte-pastilles-gouttes — PRISE",
+      "context": "Proposition (droit de proposition, _conduite.md) — 2026-08-19, suite de la passe de signature : la carte n’a aucun geste au repos, le squiggle n’existe qu’au survol. Le composant carte-produit reste intouché : Léane arbitre sur cette frame (arbitrage nº 8 d’ETAT.md). — PRISE le 2026-08-19 : arbitrage délégué par Adrien à la session, appliquée à la maquette (Léane peut revenir dessus).",
+      "clip": true,
+      "width": 900,
+      "fill": "$papier",
+      "layout": "vertical",
+      "gap": "$space-24",
+      "padding": "$space-48",
+      "children": [
+        {
+          "type": "text",
+          "id": "rNLPO",
+          "name": "Titre",
+          "fill": "$encre",
+          "content": "Proposition — les pastilles en gouttes (carte produit)",
+          "lineHeight": "$leading-h3",
+          "fontFamily": "$font-display",
+          "fontSize": "$text-h3",
+          "fontWeight": "$graisse-display"
+        },
+        {
+          "type": "text",
+          "id": "u5e8hj",
+          "name": "idée",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "L’idée : chaque pastille de variante devient une petite goutte pleine — les couleurs du bijou portées par le motif de la marque. Un geste de contenu au repos : la carte ne montre rien qui ne soit pas vrai du bijou.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "frame",
+          "id": "vnmLo",
+          "name": "démo avant-après",
+          "gap": "$space-48",
+          "children": [
+            {
+              "type": "frame",
+              "id": "HXDre",
+              "name": "avant",
+              "layout": "vertical",
+              "gap": "$space-12",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "zSPzW",
+                  "name": "label avant",
+                  "fill": "$rose-encre",
+                  "content": "AVANT — PASTILLES RONDES",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-label",
+                  "fontWeight": "$graisse-medium",
+                  "letterSpacing": "$tracking-label"
+                },
+                {
+                  "id": "p7kfxQ",
+                  "type": "ref",
+                  "ref": "Trd6e",
+                  "width": 270
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZB6xV",
+              "name": "après",
+              "layout": "vertical",
+              "gap": "$space-12",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ynu3t",
+                  "name": "label après",
+                  "fill": "$rose-encre",
+                  "content": "APRÈS — PASTILLES GOUTTES",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-label",
+                  "fontWeight": "$graisse-medium",
+                  "letterSpacing": "$tracking-label"
+                },
+                {
+                  "type": "frame",
+                  "id": "rSLoQ",
+                  "name": "carte-produit — copie détachée (gouttes)",
+                  "width": 270,
+                  "layout": "vertical",
+                  "gap": "$space-12",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "qJKAn",
+                      "name": "photo/creation-01",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 338,
+                      "fill": "$rose",
+                      "cornerRadius": "$radius-16",
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "T3c6uo",
+                          "x": 87,
+                          "y": 121,
+                          "name": "Motif goutte",
+                          "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            24,
+                            24
+                          ],
+                          "width": 96,
+                          "height": 96,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinejoin": "round"
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": "$radius-16",
+                          "id": "TsyFy",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Voile vendu",
+                          "enabled": false,
+                          "fill": "#fafcffb3",
+                          "width": 270,
+                          "height": 338
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Zx7pv",
+                          "x": 12,
+                          "y": 12,
+                          "name": "Badge",
+                          "enabled": false,
+                          "fill": "$or",
+                          "cornerRadius": "$radius-pilule",
+                          "padding": [
+                            "$space-4",
+                            "$space-12"
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GJw8Z",
+                              "name": "Badge libellé",
+                              "fill": "$encre",
+                              "content": "DERNIÈRE PIÈCE",
+                              "fontFamily": "$font-sans",
+                              "fontSize": "$text-label",
+                              "fontWeight": "$graisse-medium",
+                              "letterSpacing": "$tracking-label"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "DBjKE",
+                          "x": 214,
+                          "y": 12,
+                          "name": "Favori",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "$papier",
+                          "cornerRadius": "$radius-pilule",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "i9luj",
+                              "name": "Icône cœur",
+                              "width": 20,
+                              "height": 20,
+                              "icon": "heart",
+                              "library": "phosphor",
+                              "fill": "$encre"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "BNtAj",
+                      "name": "Infos",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": "$space-8",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Ruv1v",
+                          "name": "Nom du bijou",
+                          "fill": "$encre",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Créoles Grappe de cassis",
+                          "lineHeight": "$leading-small",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-body",
+                          "fontWeight": "$graisse-medium"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "wvD0r",
+                          "name": "Variantes de couleur",
+                          "gap": "$space-8",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "K7iLBr",
+                              "name": "goutte/framboise",
+                              "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                              "viewBox": [
+                                0,
+                                0,
+                                24,
+                                24
+                              ],
+                              "fill": "#e0559b",
+                              "width": 14,
+                              "height": 14,
+                              "stroke": "$gris",
+                              "strokeWidth": 1
+                            },
+                            {
+                              "type": "path",
+                              "id": "OmTH6",
+                              "name": "goutte/turquoise",
+                              "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                              "viewBox": [
+                                0,
+                                0,
+                                24,
+                                24
+                              ],
+                              "fill": "#5bc0c9",
+                              "width": 14,
+                              "height": 14,
+                              "stroke": "$gris",
+                              "strokeWidth": 1
+                            },
+                            {
+                              "type": "path",
+                              "id": "e10tH",
+                              "name": "goutte/citron",
+                              "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                              "viewBox": [
+                                0,
+                                0,
+                                24,
+                                24
+                              ],
+                              "fill": "#f2d24b",
+                              "width": 14,
+                              "height": 14,
+                              "stroke": "$gris",
+                              "strokeWidth": 1
+                            },
+                            {
+                              "type": "path",
+                              "id": "gMJud",
+                              "name": "goutte/lilas",
+                              "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                              "viewBox": [
+                                0,
+                                0,
+                                24,
+                                24
+                              ],
+                              "fill": "#a48ad4",
+                              "width": 14,
+                              "height": 14,
+                              "stroke": "$gris",
+                              "strokeWidth": 1
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "l6f7I",
+                          "name": "Prix TTC",
+                          "fill": "$encre",
+                          "content": "26 €",
+                          "lineHeight": "$leading-prix",
+                          "fontFamily": "$font-display",
+                          "fontSize": "$text-prix",
+                          "fontWeight": "$graisse-normale"
+                        },
+                        {
+                          "type": "text",
+                          "id": "k7BBXH",
+                          "x": 0,
+                          "y": 0,
+                          "name": "Lien pièces proches",
+                          "enabled": false,
+                          "fill": "$encre",
+                          "content": "Voir des pièces proches",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-small",
+                          "fontWeight": "$graisse-medium"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "p6jmTW",
+          "name": "zoom ×4",
+          "gap": "$space-48",
+          "children": [
+            {
+              "type": "frame",
+              "id": "WxTvV",
+              "name": "rondes ×4",
+              "layout": "vertical",
+              "gap": "$space-8",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "I82lus",
+                  "name": "label",
+                  "fill": "$rose-encre",
+                  "content": "LES MÊMES, ×4 — RONDES",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-label",
+                  "fontWeight": "$graisse-medium",
+                  "letterSpacing": "$tracking-label"
+                },
+                {
+                  "type": "frame",
+                  "id": "cD8O6",
+                  "name": "rangée",
+                  "gap": "$space-12",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "csk3G",
+                      "name": "×4/framboise",
+                      "fill": "#e0559b",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": "$gris",
+                      "strokeWidth": 4
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "rB131",
+                      "name": "×4/turquoise",
+                      "fill": "#5bc0c9",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": "$gris",
+                      "strokeWidth": 4
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Cjw3l",
+                      "name": "×4/citron",
+                      "fill": "#f2d24b",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": "$gris",
+                      "strokeWidth": 4
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "PbDE0",
+                      "name": "×4/lilas",
+                      "fill": "#a48ad4",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": "$gris",
+                      "strokeWidth": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "LLXPp",
+              "name": "gouttes ×4",
+              "layout": "vertical",
+              "gap": "$space-8",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "tnCGR",
+                  "name": "label",
+                  "fill": "$rose-encre",
+                  "content": "×4 — GOUTTES",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-label",
+                  "fontWeight": "$graisse-medium",
+                  "letterSpacing": "$tracking-label"
+                },
+                {
+                  "type": "frame",
+                  "id": "KYIn0",
+                  "name": "rangée",
+                  "gap": "$space-12",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "ikftR",
+                      "name": "×4/framboise",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "fill": "#e0559b",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": "$gris",
+                      "strokeWidth": 4
+                    },
+                    {
+                      "type": "path",
+                      "id": "aJA0Z",
+                      "name": "×4/turquoise",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "fill": "#5bc0c9",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": "$gris",
+                      "strokeWidth": 4
+                    },
+                    {
+                      "type": "path",
+                      "id": "W4mq2",
+                      "name": "×4/citron",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "fill": "#f2d24b",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": "$gris",
+                      "strokeWidth": 4
+                    },
+                    {
+                      "type": "path",
+                      "id": "s9xp7z",
+                      "name": "×4/lilas",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "fill": "#a48ad4",
+                      "width": 56,
+                      "height": 56,
+                      "stroke": "$gris",
+                      "strokeWidth": 4
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "s2aJp",
+          "name": "légende",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": "$space-8",
+          "children": [
+            {
+              "type": "text",
+              "id": "tcBKe",
+              "name": "ajoute",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Ajoute : le premier geste au repos de la carte, visible aussi sur tactile où le squiggle du survol n’existe pas — et il voyage sur toutes les routes qui rendent la carte.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            },
+            {
+              "type": "text",
+              "id": "F8j7so",
+              "name": "coûte",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Coûte : un path unique en code à la place du rond ; lisibilité à vérifier à 14 px — la goutte reste une pastille pleine cerclée de gris, elle ne porte jamais de texte (le pastel n’écrit pas).",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            },
+            {
+              "type": "text",
+              "id": "bZbf7",
+              "name": "remplacerait",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Remplacerait : les pastilles rondes du composant carte-produit — repos, survol et focus inchangés par ailleurs, l’état ACTIF du favori ne bouge pas.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "IWRfm",
+      "x": 9500,
+      "y": 961,
+      "name": "proposition/hero-fonds",
+      "context": "Proposition (droit de proposition, _conduite.md) — 2026-08-19, reformulation de l’arbitrage nº 5 : Adrien veut des recommandations de FOND pour le hero desktop plutôt que le binaire gouttes/blanc. Trois pistes, section 01-hero intouchée — on tranche sur cette frame (A, B, C, ou rester au blanc).",
+      "clip": true,
+      "width": 1536,
+      "fill": "$papier",
+      "layout": "vertical",
+      "gap": "$space-32",
+      "padding": "$space-48",
+      "children": [
+        {
+          "type": "text",
+          "id": "wp0ar",
+          "name": "Titre",
+          "fill": "$encre",
+          "content": "Proposition — fonds et formes pour le hero (desktop)",
+          "lineHeight": "$leading-h3",
+          "fontFamily": "$font-display",
+          "fontSize": "$text-h3",
+          "fontWeight": "$graisse-display"
+        },
+        {
+          "type": "text",
+          "id": "xcTEM",
+          "name": "idée",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "L’idée : le blanc du hero est assumé mais nu — trois manières de l’habiter sans écrire ni bruiter, de la plus enveloppante (A) à la plus discrète (B). Le pastel peint des surfaces, jamais des glyphes ; la barre haute reste papier (chrome).",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "text",
+          "id": "ZtFZ3",
+          "name": "label A",
+          "fill": "$rose-encre",
+          "content": "PISTE A — BAIN ROSE-PALE",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-label",
+          "fontWeight": "$graisse-medium",
+          "letterSpacing": "$tracking-label"
+        },
+        {
+          "type": "frame",
+          "id": "ZCyLu",
+          "name": "hero A — bain rose-pale",
+          "clip": true,
+          "width": 1440,
+          "height": 800,
+          "fill": "$rose-pale",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "o8PUf8",
+              "type": "ref",
+              "ref": "M6cFW",
+              "name": "barre-haute",
+              "width": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "jfztV",
+              "name": "contenu-hero",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": "$space-32",
+              "padding": [
+                "$space-64",
+                "$marge-page",
+                0,
+                "$marge-page"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "uTz2L",
+                  "name": "texte",
+                  "layout": "vertical",
+                  "gap": "$space-24",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "oFMmQ",
+                      "name": "titre-groupe",
+                      "layout": "vertical",
+                      "gap": "$space-16",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "NJcyi",
+                          "name": "sur-titre",
+                          "fill": "$rose-encre",
+                          "content": "ATELIER À NANTES",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-label",
+                          "fontWeight": "$graisse-medium",
+                          "letterSpacing": "$tracking-label"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "c0G4we",
+                          "name": "titre",
+                          "layout": "vertical",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "IVSE5",
+                              "name": "ligne-1",
+                              "gap": "$space-16",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "x9Gyx",
+                                  "name": "des-bijoux",
+                                  "fill": "$encre",
+                                  "content": "Des bijoux",
+                                  "lineHeight": "$leading-h1",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h1",
+                                  "fontWeight": "$graisse-display",
+                                  "letterSpacing": "$tracking-h1"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ByyY3",
+                                  "name": "mot-surligné",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "f9bk2",
+                                      "layoutPosition": "absolute",
+                                      "x": -14,
+                                      "y": 2,
+                                      "name": "touche-de-pinceau",
+                                      "clip": true,
+                                      "width": 222,
+                                      "height": 62,
+                                      "layout": "none",
+                                      "children": [
+                                        {
+                                          "type": "path",
+                                          "id": "pDjuO",
+                                          "x": 9.1088,
+                                          "y": 16.8602,
+                                          "name": "tracé-pinceau-01",
+                                          "geometry": "M203.04105 24.78436c-0.10593-0.52959 0.52957-0.63551-0.52959-1.16508-2.96565-1.05916-2.6479-0.74141-3.2834-1.271l-0.63548-0.6355-1.69468-0.10592c-0.31775 0.21185-3.28338-0.21181-0.21182-0.84731l-3.07156 0c0.42366-0.31776 2.0124-0.21184 0-0.52958-3.60115-0.31775-2.43607 0.10593-3.2834 0-0.84734-0.10593-0.6355-0.21182-1.80057-0.21183-1.16507 0-2.22425-0.42366-6.35497-0.63551-4.55438-0.1059-4.66031-0.74141-1.3769-0.84732 2.54197-0.10591 4.55439 0.31775 6.77862 0.31775 0-1.37692 2.33016 0.42367 4.02481-0.6355l3.70706-0.31775c2.96566-0.31775 0.42368-0.74141 2.96566-1.48283 1.69465 0.52959 1.80056 0 2.11831-0.84731 0.6355-0.84734 1.9065-0.52959 2.01239-0.74142-0.42364-0.74141-1.05916-1.37691-1.69464-1.90648-0.74141-0.74142-0.95325 0.31773-2.85972 0.10589-3.38933-0.84732-4.44849 0.31776-4.23665-0.95323l-1.48284-0.42367-3.81295-0.52957-1.58875 0.10591-0.52959 0-0.52957-0.10591 0.42366-0.10592c-1.69467-0.21182-2.96565-0.84734 0.95323-0.52958l-2.96563-0.6355 1.90649 0 4.34255 0.31775c1.16508-0.6355-2.64791-1.05916-3.17748-1.48282l-2.11832-0.42368-1.69467-0.10589c-1.48282 0.21182-1.58874-0.74142-3.38931-0.31775l-1.05916-0.10593-3.70706-0.42366c-1.27098 0.31775-0.95323-0.52959-2.33015-0.21182l-10.16794-1.05917-0.84732-0.31775c-0.84732-0.74141-1.05916-0.10591-1.69466 0.31775-1.05916 0.10591-0.31775-1.271-2.11832-0.42366l-0.52958-0.42366-0.6355 0.31774-15.25191-1.05915c-3.81299 0-5.29581-0.42368-19.70039-1.16509l-0.31774 0-0.95324-0.10593c-0.31775 0-0.42366 0-1.271 0.21186l-1.37691-0.31777-7.09637-0.42366c-2.54199-0.10591-2.6479-0.52959 0.95325-0.52958 5.61354 0.31775 11.22709 0.52959 18.00572 0.95324 0.95324-0.10591 6.14313-0.10591 9.63836 0.42366 3.91889 0.52959 7.41413 0.21184 11.43894 0.74141l1.16507-0.21182 1.69465-0.52959-9.00286-0.74141-12.81585-0.84732-0.63548 0.10592c-6.77864-0.74141-12.81584-0.74141-17.58208-1.05916-3.07154-0.10593-5.40171-0.42368-7.94369-0.42368-5.08397-0.52957-10.80344-0.31773-18.00574-0.31773l-1.37691 0-0.95323-0.21184-1.58874 0.21184 0-0.21184c-4.5544 0.21184-7.41412 0.31775-9.32062 0.31775-3.38931 0-6.35497 0.10593-9.85019 0.42367l0 0c-4.55438 0.52957-11.86259 0.63548-21.50095 1.3769-9.32061 0.42368-18.64122 0.6355-25.63168 1.80058-9.32061 1.69466-11.75668 2.22423-11.65076 4.13072l0 0.31775-0.42366 0.74141-3.9189 1.16509-0.52958 0.63548c-1.58874 2.11832-0.84733 2.11832-1.05916 2.75383 0.31775 0.74141-0.31775 1.27098 1.05916 3.91888l0.84733 1.58875 1.80057 2.6479 1.16508 2.01239 1.27099 1.27101c3.70706 2.6479 4.76622 3.70706 10.48569 4.0248 3.07156 0.31775 6.67271 0.31775 8.68511 0 10.69752-1.05916 21.28913-2.85973 30.50382-3.07157l6.99046 0.21184 1.48282 0 7.52004-0.42366c6.5668-0.6355 12.18034-0.74141 18.5353-1.16508 3.70706-0.21182 3.2834 0.21182 7.73188 0l5.2958 0.21182c1.48282 0 4.23664 0 6.46088-0.1059 0.31775 0 0.6355-0.21184 0.74141-0.31775 0.6355-0.42366 3.70706-0.52959 5.40172-0.52958 0.74141-0.10593 3.49524-0.21182 4.66031 0 7.09637-0.10593 20.65362 0.6355 22.87787 1.05916 4.34254 0.95323 5.18988 0.95323 10.37977 1.05915l0.21182-0.21182-3.81297-0.95326c2.22424-0.74141 8.15552 0.21185 9.21469-0.1059 1.05916 0.1059 1.16507 0.63548 5.40172 0.63549 0.95323 0 0.52959 0 1.271 0.31774l0.21182-0.31774 1.69466 0.21183 1.05917-0.21183 0.42364-0.21183c3.07158 0.95325 6.35497 1.16507 9.53246 0.7414 2.75381 0 4.44849 0.74144 7.09637 0.10592l-1.16507-0.84732-10.06202-0.6355-3.17749-0.10591-0.10591-0.42366-1.16507 0.21183-0.63552-0.31775-1.27098 0-0.95323-0.31775-1.58875 0.31775-1.90649-0.52959-0.95325-0.10591-0.84732 0.21184-2.85974-0.31775-0.74141 0.21182c-1.90649-0.10591-1.16507-0.42365-2.54199-0.21182-1.37691 0.21182-1.37691-0.31775-2.75381-0.21182-3.49524 0.31773 2.54199 0.8473 3.60115 0.63548l1.05915 0.21182c0.95325-0.21182 1.90648 0.10593 2.54198-0.31773 0.74141 0 1.271 0.10591 1.69467 0.10591 1.69464 0.10593 8.26143 0.52957 8.89695 0.52957 2.96565 0.21184 10.06202 0.52959 11.01525 0.42367l4.87215 0 6.35497 0.42367c5.82537 0.21184 2.11831-0.6355 0-0.6355l-3.07157-0.31774-4.66032-0.21185c-1.27098-0.42366 1.05917-0.31773 2.54201-0.63548l3.07154-0.21182c0.42366-0.52959 3.07157 0 3.60115-0.42368l1.37691 0.31775c1.27098 0.6355 4.13074 0.10593 5.50763 0.52957l1.16509 0.21184 0 1.16508z m-95.32444-22.98378l-0.95324-0.21185 1.05916 0-0.10592 0.21185 0 0z m-12.18034-0.42367l0-0.10591 1.80057 0.10591-1.80057 0z m2.01241 0.10592l-0.10593-0.10592 0.84733-0.10591 1.05916 0.10591 0.84732-0.10591 2.33016 0.21183 0 0.1059-4.97804-0.1059 0 0z m5.82537 0.21183l0-0.21183 0.6355 0-0.10592 0.21183-0.52958 0z m1.05916-0.21183l0.84732 0.21183-0.84732 0 0-0.21183z m38.12976 20.01813c0.52959-0.10591 2.43608-0.21184 2.75383 0.21182l1.05916-0.10591 0.6355 0.31775 0.52959-0.21184 1.58874 0.10593 0.52957 0.21182 0.84732-0.10591 1.16509 0.31775 1.27098-0.10591 0 0.31775-3.28339-0.10593-1.16508-0.21182-0.95323 0.21182-0.52959-0.42366-0.52957 0.21184-0.52959-0.21184-2.0124 0-1.37693-0.42366z",
+                                          "fill": "$rose",
+                                          "width": 203.1348,
+                                          "height": 29.3652
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "JUp4d",
+                                          "x": 165.4408,
+                                          "y": 20.2495,
+                                          "name": "tracé-pinceau-02",
+                                          "geometry": "M0.21185 0.42365l-0.21185-0.42365 5.08397 0.42365 8.26146 0.52958c2.22424 0.6355 4.87215 0.42366 0.52958 0l-5.82539-0.6355-7.83777-0.31773 0 0.42365z m15.35782 2.54199l1.16507 0.31775 0-0.21184 0.84734 0.10592 0.21182-0.21183-1.37691-0.21184-0.84732 0.21184z",
+                                          "fill": "$rose",
+                                          "width": 17.7939,
+                                          "height": 3.2834
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "bhzX5",
+                                          "x": 185.0353,
+                                          "y": 22.2619,
+                                          "name": "tracé-pinceau-03",
+                                          "geometry": "M0.31775 0.42366l0.31775-0.21182-0.6355-0.21184 0.31775 0.42366z",
+                                          "fill": "$rose",
+                                          "width": 0.6355,
+                                          "height": 0.4237
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "seuW8",
+                                          "x": 129.9275,
+                                          "y": 40.7635,
+                                          "name": "tracé-pinceau-04",
+                                          "geometry": "M6.49239 0.66921l-4.66031-0.6355c-1.80058-0.21182-2.96565 0.6355-0.10591 0.84734l6.46087 0.31775 6.6727 0-0.52957-0.31775-7.83778-0.21184 2.75381 0.10593-2.75381-0.10593z",
+                                          "fill": "$rose",
+                                          "width": 14.8597,
+                                          "height": 1.1988
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "bZ6IH",
+                                          "x": 186.3063,
+                                          "y": 41.8564,
+                                          "name": "tracé-pinceau-05",
+                                          "geometry": "M7.41412 0l-0.95326 0.74141-1.27098-0.31775-1.80057 0.21184-0.84733-0.52957-1.16509 0.31773-0.21182-0.42366-1.05917 0.42366 0 0.21184 1.90649-0.10591 0 0.42364 1.48282-0.21182 1.05916 0.21182 2.33017 0 0.52958 0.42368 2.22423-0.31775c3.07156-0.42366-1.80057-0.95323-2.22423-1.05916l0 0z m-6.88455 2.01241l-0.52957 0.31774 1.05916 0 0.21182-0.31774-0.74141 0z",
+                                          "fill": "$rose",
+                                          "width": 10.6486,
+                                          "height": 2.3302
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "I2Sm2",
+                                          "x": 121.168,
+                                          "y": 41.2209,
+                                          "name": "tracé-pinceau-06",
+                                          "geometry": "M0.95323 0l-0.95323 0 0.31775 0.21184 0.63548-0.21184z",
+                                          "fill": "$rose",
+                                          "width": 0.9532,
+                                          "height": 0.2118
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "obvQt",
+                                      "name": "colorés",
+                                      "fill": "$encre",
+                                      "content": "colorés,",
+                                      "lineHeight": "$leading-h1",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": "$text-h1",
+                                      "fontWeight": "$graisse-display",
+                                      "letterSpacing": "$tracking-h1"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "h4682",
+                              "name": "faits-un-par-un",
+                              "fill": "$encre",
+                              "content": "faits un par un",
+                              "lineHeight": "$leading-h1",
+                              "fontFamily": "$font-display",
+                              "fontSize": "$text-h1",
+                              "fontWeight": "$graisse-display",
+                              "letterSpacing": "$tracking-h1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "YKT29",
+                      "name": "chapô",
+                      "fill": "$encre",
+                      "textGrowth": "fixed-width",
+                      "width": 420,
+                      "content": "Je peins et j'assemble chaque pièce à la main. Aucune n'est identique à une autre.",
+                      "lineHeight": "$leading-body",
+                      "textAlign": "center",
+                      "fontFamily": "$font-sans",
+                      "fontSize": "$text-body",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                },
+                {
+                  "id": "RSwqP",
+                  "type": "ref",
+                  "ref": "GZTHW",
+                  "name": "cta-principal",
+                  "descendants": {
+                    "BAx7m": {
+                      "content": "Voir les 14 créations"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "N7TTD",
+                  "name": "note-cta",
+                  "width": 170,
+                  "height": 30,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "Ludlv",
+                      "x": 4,
+                      "y": 6,
+                      "name": "tracé-flèche",
+                      "rotation": 70,
+                      "geometry": "M2 11.5q9-2.5 18-1.3 6.5 1 12.5-0.2m-5.7-5.4q3.4 2.8 6.6 5.4-3.4 2.8-7 5.4",
+                      "viewBox": [
+                        0,
+                        0,
+                        36,
+                        20
+                      ],
+                      "width": 27,
+                      "height": 15,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round",
+                      "strokeLinecap": "round"
+                    },
+                    {
+                      "type": "text",
+                      "id": "f2aAcz",
+                      "x": 44,
+                      "y": 4,
+                      "name": "note-manuscrite",
+                      "rotation": -2,
+                      "fill": "$encre",
+                      "content": "commence par là",
+                      "fontFamily": "$font-cursive",
+                      "fontSize": "$text-note",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dbo6e",
+              "name": "frise-créations",
+              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
+              "width": "fill_container",
+              "height": 254,
+              "fill": "$rose-pale",
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "a4ZP3",
+                  "x": 0,
+                  "y": 12,
+                  "name": "chaîne",
+                  "fill": "$encre",
+                  "width": 1440,
+                  "height": 1.5
+                },
+                {
+                  "type": "rectangle",
+                  "id": "dmMgL",
+                  "x": 95.25,
+                  "y": 12,
+                  "name": "attache-01",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "xuBM5",
+                  "x": 22,
+                  "y": 40,
+                  "name": "photo/creation-hero-01",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "rKCHm",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "Bf3z6",
+                  "x": 303.25,
+                  "y": 12,
+                  "name": "attache-02",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "kRLnx",
+                  "x": 230,
+                  "y": 58,
+                  "name": "photo/creation-hero-02",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "H6N17O",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "HTeEt",
+                  "x": 511.25,
+                  "y": 12,
+                  "name": "attache-03",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 20
+                },
+                {
+                  "type": "frame",
+                  "id": "c2VIyA",
+                  "x": 438,
+                  "y": 32,
+                  "name": "photo/creation-hero-03",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "z9V1I",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "sHbn6",
+                  "x": 719.25,
+                  "y": 12,
+                  "name": "attache-04",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 38
+                },
+                {
+                  "type": "frame",
+                  "id": "fwt1T",
+                  "x": 646,
+                  "y": 50,
+                  "name": "photo/creation-hero-04",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "ZF9n4",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "lKyEY",
+                  "x": 927.25,
+                  "y": 12,
+                  "name": "attache-05",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 16
+                },
+                {
+                  "type": "frame",
+                  "id": "r1RV3f",
+                  "x": 854,
+                  "y": 28,
+                  "name": "photo/creation-hero-05",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "ZO0uD",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "Bc0bf",
+                  "x": 1135.25,
+                  "y": 12,
+                  "name": "attache-06",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "twkvQ",
+                  "x": 1062,
+                  "y": 58,
+                  "name": "photo/creation-hero-06",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "I93Xa",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "Q9iqq",
+                  "x": 1343.25,
+                  "y": 12,
+                  "name": "attache-07",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 34
+                },
+                {
+                  "type": "frame",
+                  "id": "nOVwU",
+                  "x": 1270,
+                  "y": 46,
+                  "name": "photo/creation-hero-07",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "XkOaI",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "G8OhZ",
+          "name": "note A",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "A : toute la section sous la teinte de marque (surface seulement, elle n’écrit jamais) — un aplat, zéro token neuf, le raccord papier→rose-pale du pied de page trouve son écho au premier écran.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "text",
+          "id": "A7TGjF",
+          "name": "label B",
+          "fill": "$rose-encre",
+          "content": "PISTE B — PLUIE EN FILIGRANE",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-label",
+          "fontWeight": "$graisse-medium",
+          "letterSpacing": "$tracking-label"
+        },
+        {
+          "type": "frame",
+          "id": "TkYUs",
+          "name": "hero B — pluie en filigrane",
+          "clip": true,
+          "width": 1440,
+          "height": 800,
+          "fill": "$papier",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "AhUCm",
+              "type": "ref",
+              "ref": "M6cFW",
+              "name": "barre-haute",
+              "width": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "mgzTB",
+              "name": "contenu-hero",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": "$space-32",
+              "padding": [
+                "$space-64",
+                "$marge-page",
+                0,
+                "$marge-page"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "H9ZkT",
+                  "name": "texte",
+                  "layout": "vertical",
+                  "gap": "$space-24",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "WykOt",
+                      "name": "titre-groupe",
+                      "layout": "vertical",
+                      "gap": "$space-16",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "go73a",
+                          "name": "sur-titre",
+                          "fill": "$rose-encre",
+                          "content": "ATELIER À NANTES",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-label",
+                          "fontWeight": "$graisse-medium",
+                          "letterSpacing": "$tracking-label"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "OceS7",
+                          "name": "titre",
+                          "layout": "vertical",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "ghPRW",
+                              "name": "ligne-1",
+                              "gap": "$space-16",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "ndkRh",
+                                  "name": "des-bijoux",
+                                  "fill": "$encre",
+                                  "content": "Des bijoux",
+                                  "lineHeight": "$leading-h1",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h1",
+                                  "fontWeight": "$graisse-display",
+                                  "letterSpacing": "$tracking-h1"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "u2pmi",
+                                  "name": "mot-surligné",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "y1lg0K",
+                                      "layoutPosition": "absolute",
+                                      "x": -14,
+                                      "y": 2,
+                                      "name": "touche-de-pinceau",
+                                      "clip": true,
+                                      "width": 222,
+                                      "height": 62,
+                                      "layout": "none",
+                                      "children": [
+                                        {
+                                          "type": "path",
+                                          "id": "wuT0F",
+                                          "x": 9.1088,
+                                          "y": 16.8602,
+                                          "name": "tracé-pinceau-01",
+                                          "geometry": "M203.04105 24.78436c-0.10593-0.52959 0.52957-0.63551-0.52959-1.16508-2.96565-1.05916-2.6479-0.74141-3.2834-1.271l-0.63548-0.6355-1.69468-0.10592c-0.31775 0.21185-3.28338-0.21181-0.21182-0.84731l-3.07156 0c0.42366-0.31776 2.0124-0.21184 0-0.52958-3.60115-0.31775-2.43607 0.10593-3.2834 0-0.84734-0.10593-0.6355-0.21182-1.80057-0.21183-1.16507 0-2.22425-0.42366-6.35497-0.63551-4.55438-0.1059-4.66031-0.74141-1.3769-0.84732 2.54197-0.10591 4.55439 0.31775 6.77862 0.31775 0-1.37692 2.33016 0.42367 4.02481-0.6355l3.70706-0.31775c2.96566-0.31775 0.42368-0.74141 2.96566-1.48283 1.69465 0.52959 1.80056 0 2.11831-0.84731 0.6355-0.84734 1.9065-0.52959 2.01239-0.74142-0.42364-0.74141-1.05916-1.37691-1.69464-1.90648-0.74141-0.74142-0.95325 0.31773-2.85972 0.10589-3.38933-0.84732-4.44849 0.31776-4.23665-0.95323l-1.48284-0.42367-3.81295-0.52957-1.58875 0.10591-0.52959 0-0.52957-0.10591 0.42366-0.10592c-1.69467-0.21182-2.96565-0.84734 0.95323-0.52958l-2.96563-0.6355 1.90649 0 4.34255 0.31775c1.16508-0.6355-2.64791-1.05916-3.17748-1.48282l-2.11832-0.42368-1.69467-0.10589c-1.48282 0.21182-1.58874-0.74142-3.38931-0.31775l-1.05916-0.10593-3.70706-0.42366c-1.27098 0.31775-0.95323-0.52959-2.33015-0.21182l-10.16794-1.05917-0.84732-0.31775c-0.84732-0.74141-1.05916-0.10591-1.69466 0.31775-1.05916 0.10591-0.31775-1.271-2.11832-0.42366l-0.52958-0.42366-0.6355 0.31774-15.25191-1.05915c-3.81299 0-5.29581-0.42368-19.70039-1.16509l-0.31774 0-0.95324-0.10593c-0.31775 0-0.42366 0-1.271 0.21186l-1.37691-0.31777-7.09637-0.42366c-2.54199-0.10591-2.6479-0.52959 0.95325-0.52958 5.61354 0.31775 11.22709 0.52959 18.00572 0.95324 0.95324-0.10591 6.14313-0.10591 9.63836 0.42366 3.91889 0.52959 7.41413 0.21184 11.43894 0.74141l1.16507-0.21182 1.69465-0.52959-9.00286-0.74141-12.81585-0.84732-0.63548 0.10592c-6.77864-0.74141-12.81584-0.74141-17.58208-1.05916-3.07154-0.10593-5.40171-0.42368-7.94369-0.42368-5.08397-0.52957-10.80344-0.31773-18.00574-0.31773l-1.37691 0-0.95323-0.21184-1.58874 0.21184 0-0.21184c-4.5544 0.21184-7.41412 0.31775-9.32062 0.31775-3.38931 0-6.35497 0.10593-9.85019 0.42367l0 0c-4.55438 0.52957-11.86259 0.63548-21.50095 1.3769-9.32061 0.42368-18.64122 0.6355-25.63168 1.80058-9.32061 1.69466-11.75668 2.22423-11.65076 4.13072l0 0.31775-0.42366 0.74141-3.9189 1.16509-0.52958 0.63548c-1.58874 2.11832-0.84733 2.11832-1.05916 2.75383 0.31775 0.74141-0.31775 1.27098 1.05916 3.91888l0.84733 1.58875 1.80057 2.6479 1.16508 2.01239 1.27099 1.27101c3.70706 2.6479 4.76622 3.70706 10.48569 4.0248 3.07156 0.31775 6.67271 0.31775 8.68511 0 10.69752-1.05916 21.28913-2.85973 30.50382-3.07157l6.99046 0.21184 1.48282 0 7.52004-0.42366c6.5668-0.6355 12.18034-0.74141 18.5353-1.16508 3.70706-0.21182 3.2834 0.21182 7.73188 0l5.2958 0.21182c1.48282 0 4.23664 0 6.46088-0.1059 0.31775 0 0.6355-0.21184 0.74141-0.31775 0.6355-0.42366 3.70706-0.52959 5.40172-0.52958 0.74141-0.10593 3.49524-0.21182 4.66031 0 7.09637-0.10593 20.65362 0.6355 22.87787 1.05916 4.34254 0.95323 5.18988 0.95323 10.37977 1.05915l0.21182-0.21182-3.81297-0.95326c2.22424-0.74141 8.15552 0.21185 9.21469-0.1059 1.05916 0.1059 1.16507 0.63548 5.40172 0.63549 0.95323 0 0.52959 0 1.271 0.31774l0.21182-0.31774 1.69466 0.21183 1.05917-0.21183 0.42364-0.21183c3.07158 0.95325 6.35497 1.16507 9.53246 0.7414 2.75381 0 4.44849 0.74144 7.09637 0.10592l-1.16507-0.84732-10.06202-0.6355-3.17749-0.10591-0.10591-0.42366-1.16507 0.21183-0.63552-0.31775-1.27098 0-0.95323-0.31775-1.58875 0.31775-1.90649-0.52959-0.95325-0.10591-0.84732 0.21184-2.85974-0.31775-0.74141 0.21182c-1.90649-0.10591-1.16507-0.42365-2.54199-0.21182-1.37691 0.21182-1.37691-0.31775-2.75381-0.21182-3.49524 0.31773 2.54199 0.8473 3.60115 0.63548l1.05915 0.21182c0.95325-0.21182 1.90648 0.10593 2.54198-0.31773 0.74141 0 1.271 0.10591 1.69467 0.10591 1.69464 0.10593 8.26143 0.52957 8.89695 0.52957 2.96565 0.21184 10.06202 0.52959 11.01525 0.42367l4.87215 0 6.35497 0.42367c5.82537 0.21184 2.11831-0.6355 0-0.6355l-3.07157-0.31774-4.66032-0.21185c-1.27098-0.42366 1.05917-0.31773 2.54201-0.63548l3.07154-0.21182c0.42366-0.52959 3.07157 0 3.60115-0.42368l1.37691 0.31775c1.27098 0.6355 4.13074 0.10593 5.50763 0.52957l1.16509 0.21184 0 1.16508z m-95.32444-22.98378l-0.95324-0.21185 1.05916 0-0.10592 0.21185 0 0z m-12.18034-0.42367l0-0.10591 1.80057 0.10591-1.80057 0z m2.01241 0.10592l-0.10593-0.10592 0.84733-0.10591 1.05916 0.10591 0.84732-0.10591 2.33016 0.21183 0 0.1059-4.97804-0.1059 0 0z m5.82537 0.21183l0-0.21183 0.6355 0-0.10592 0.21183-0.52958 0z m1.05916-0.21183l0.84732 0.21183-0.84732 0 0-0.21183z m38.12976 20.01813c0.52959-0.10591 2.43608-0.21184 2.75383 0.21182l1.05916-0.10591 0.6355 0.31775 0.52959-0.21184 1.58874 0.10593 0.52957 0.21182 0.84732-0.10591 1.16509 0.31775 1.27098-0.10591 0 0.31775-3.28339-0.10593-1.16508-0.21182-0.95323 0.21182-0.52959-0.42366-0.52957 0.21184-0.52959-0.21184-2.0124 0-1.37693-0.42366z",
+                                          "fill": "$rose",
+                                          "width": 203.1348,
+                                          "height": 29.3652
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "zSwhO",
+                                          "x": 165.4408,
+                                          "y": 20.2495,
+                                          "name": "tracé-pinceau-02",
+                                          "geometry": "M0.21185 0.42365l-0.21185-0.42365 5.08397 0.42365 8.26146 0.52958c2.22424 0.6355 4.87215 0.42366 0.52958 0l-5.82539-0.6355-7.83777-0.31773 0 0.42365z m15.35782 2.54199l1.16507 0.31775 0-0.21184 0.84734 0.10592 0.21182-0.21183-1.37691-0.21184-0.84732 0.21184z",
+                                          "fill": "$rose",
+                                          "width": 17.7939,
+                                          "height": 3.2834
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "NbQio",
+                                          "x": 185.0353,
+                                          "y": 22.2619,
+                                          "name": "tracé-pinceau-03",
+                                          "geometry": "M0.31775 0.42366l0.31775-0.21182-0.6355-0.21184 0.31775 0.42366z",
+                                          "fill": "$rose",
+                                          "width": 0.6355,
+                                          "height": 0.4237
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "EK8qe",
+                                          "x": 129.9275,
+                                          "y": 40.7635,
+                                          "name": "tracé-pinceau-04",
+                                          "geometry": "M6.49239 0.66921l-4.66031-0.6355c-1.80058-0.21182-2.96565 0.6355-0.10591 0.84734l6.46087 0.31775 6.6727 0-0.52957-0.31775-7.83778-0.21184 2.75381 0.10593-2.75381-0.10593z",
+                                          "fill": "$rose",
+                                          "width": 14.8597,
+                                          "height": 1.1988
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "Fywti",
+                                          "x": 186.3063,
+                                          "y": 41.8564,
+                                          "name": "tracé-pinceau-05",
+                                          "geometry": "M7.41412 0l-0.95326 0.74141-1.27098-0.31775-1.80057 0.21184-0.84733-0.52957-1.16509 0.31773-0.21182-0.42366-1.05917 0.42366 0 0.21184 1.90649-0.10591 0 0.42364 1.48282-0.21182 1.05916 0.21182 2.33017 0 0.52958 0.42368 2.22423-0.31775c3.07156-0.42366-1.80057-0.95323-2.22423-1.05916l0 0z m-6.88455 2.01241l-0.52957 0.31774 1.05916 0 0.21182-0.31774-0.74141 0z",
+                                          "fill": "$rose",
+                                          "width": 10.6486,
+                                          "height": 2.3302
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "EFvWp",
+                                          "x": 121.168,
+                                          "y": 41.2209,
+                                          "name": "tracé-pinceau-06",
+                                          "geometry": "M0.95323 0l-0.95323 0 0.31775 0.21184 0.63548-0.21184z",
+                                          "fill": "$rose",
+                                          "width": 0.9532,
+                                          "height": 0.2118
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "v4D1o",
+                                      "name": "colorés",
+                                      "fill": "$encre",
+                                      "content": "colorés,",
+                                      "lineHeight": "$leading-h1",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": "$text-h1",
+                                      "fontWeight": "$graisse-display",
+                                      "letterSpacing": "$tracking-h1"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "d4sah",
+                              "name": "faits-un-par-un",
+                              "fill": "$encre",
+                              "content": "faits un par un",
+                              "lineHeight": "$leading-h1",
+                              "fontFamily": "$font-display",
+                              "fontSize": "$text-h1",
+                              "fontWeight": "$graisse-display",
+                              "letterSpacing": "$tracking-h1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "YCX7T",
+                      "name": "chapô",
+                      "fill": "$encre",
+                      "textGrowth": "fixed-width",
+                      "width": 420,
+                      "content": "Je peins et j'assemble chaque pièce à la main. Aucune n'est identique à une autre.",
+                      "lineHeight": "$leading-body",
+                      "textAlign": "center",
+                      "fontFamily": "$font-sans",
+                      "fontSize": "$text-body",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                },
+                {
+                  "id": "BHG6Q",
+                  "type": "ref",
+                  "ref": "GZTHW",
+                  "name": "cta-principal",
+                  "descendants": {
+                    "BAx7m": {
+                      "content": "Voir les 14 créations"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "KsOU8",
+                  "name": "note-cta",
+                  "width": 170,
+                  "height": 30,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "u05SfP",
+                      "x": 4,
+                      "y": 6,
+                      "name": "tracé-flèche",
+                      "rotation": 70,
+                      "geometry": "M2 11.5q9-2.5 18-1.3 6.5 1 12.5-0.2m-5.7-5.4q3.4 2.8 6.6 5.4-3.4 2.8-7 5.4",
+                      "viewBox": [
+                        0,
+                        0,
+                        36,
+                        20
+                      ],
+                      "width": 27,
+                      "height": 15,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round",
+                      "strokeLinecap": "round"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lAzf3",
+                      "x": 44,
+                      "y": 4,
+                      "name": "note-manuscrite",
+                      "rotation": -2,
+                      "fill": "$encre",
+                      "content": "commence par là",
+                      "fontFamily": "$font-cursive",
+                      "fontSize": "$text-note",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                },
+                {
+                  "type": "path",
+                  "id": "lJaeQ",
+                  "layoutPosition": "absolute",
+                  "x": 190,
+                  "y": 150,
+                  "name": "filigrane-goutte-1",
+                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "viewBox": [
+                    0,
+                    0,
+                    24,
+                    24
+                  ],
+                  "width": 32,
+                  "height": 32,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                },
+                {
+                  "type": "path",
+                  "id": "if7KN",
+                  "layoutPosition": "absolute",
+                  "x": 312,
+                  "y": 330,
+                  "name": "filigrane-cœur-2",
+                  "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                  "viewBox": [
+                    0,
+                    0,
+                    50,
+                    50
+                  ],
+                  "width": 26,
+                  "height": 26,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                },
+                {
+                  "type": "path",
+                  "id": "E2AjYu",
+                  "layoutPosition": "absolute",
+                  "x": 240,
+                  "y": 410,
+                  "name": "filigrane-cœur-3",
+                  "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                  "viewBox": [
+                    0,
+                    0,
+                    50,
+                    50
+                  ],
+                  "width": 20,
+                  "height": 20,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                },
+                {
+                  "type": "path",
+                  "id": "m1zsf",
+                  "layoutPosition": "absolute",
+                  "x": 1140,
+                  "y": 120,
+                  "name": "filigrane-cœur-4",
+                  "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                  "viewBox": [
+                    0,
+                    0,
+                    50,
+                    50
+                  ],
+                  "width": 30,
+                  "height": 30,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                },
+                {
+                  "type": "path",
+                  "id": "A9I4vU",
+                  "layoutPosition": "absolute",
+                  "x": 1252,
+                  "y": 340,
+                  "name": "filigrane-goutte-5",
+                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "viewBox": [
+                    0,
+                    0,
+                    24,
+                    24
+                  ],
+                  "width": 24,
+                  "height": 24,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "o6qGP",
+              "name": "frise-créations",
+              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
+              "width": "fill_container",
+              "height": 254,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "t6EM82",
+                  "x": 0,
+                  "y": 12,
+                  "name": "chaîne",
+                  "fill": "$encre",
+                  "width": 1440,
+                  "height": 1.5
+                },
+                {
+                  "type": "rectangle",
+                  "id": "ovO86",
+                  "x": 95.25,
+                  "y": 12,
+                  "name": "attache-01",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "MGKEt",
+                  "x": 22,
+                  "y": 40,
+                  "name": "photo/creation-hero-01",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "U3nDMn",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "Bn72c",
+                  "x": 303.25,
+                  "y": 12,
+                  "name": "attache-02",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "bHfZ4",
+                  "x": 230,
+                  "y": 58,
+                  "name": "photo/creation-hero-02",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "Yzknh",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "HJ7gy",
+                  "x": 511.25,
+                  "y": 12,
+                  "name": "attache-03",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 20
+                },
+                {
+                  "type": "frame",
+                  "id": "Gplpw",
+                  "x": 438,
+                  "y": 32,
+                  "name": "photo/creation-hero-03",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "WCKSL",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "cJamH",
+                  "x": 719.25,
+                  "y": 12,
+                  "name": "attache-04",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 38
+                },
+                {
+                  "type": "frame",
+                  "id": "NULi2",
+                  "x": 646,
+                  "y": 50,
+                  "name": "photo/creation-hero-04",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "dNp8J",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "RKWsn",
+                  "x": 927.25,
+                  "y": 12,
+                  "name": "attache-05",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 16
+                },
+                {
+                  "type": "frame",
+                  "id": "Z1MfA3",
+                  "x": 854,
+                  "y": 28,
+                  "name": "photo/creation-hero-05",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "fPr4w",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "t7Hzbu",
+                  "x": 1135.25,
+                  "y": 12,
+                  "name": "attache-06",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "B5qJt",
+                  "x": 1062,
+                  "y": 58,
+                  "name": "photo/creation-hero-06",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "RZWwG",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "E3U5q",
+                  "x": 1343.25,
+                  "y": 12,
+                  "name": "attache-07",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 34
+                },
+                {
+                  "type": "frame",
+                  "id": "Kp0IQ",
+                  "x": 1270,
+                  "y": 46,
+                  "name": "photo/creation-hero-07",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "oGfHk",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "y7FEP",
+          "name": "note B",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "B : cinq touches au trait encre ~10 % dans les marges du bloc texte — cœurs et gouttes mêlés, tailles et hauteurs inégales (la goutte se dose, le cœur entre en ponctuation) ; le blanc reste blanc de loin.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "text",
+          "id": "jc539",
+          "name": "label C",
+          "fill": "$rose-encre",
+          "content": "PISTE C — LAVIS SOUS LA FRISE",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-label",
+          "fontWeight": "$graisse-medium",
+          "letterSpacing": "$tracking-label"
+        },
+        {
+          "type": "frame",
+          "id": "t6MO9T",
+          "name": "hero C — lavis sous la frise",
+          "clip": true,
+          "width": 1440,
+          "height": 800,
+          "fill": "$papier",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "U4UNX",
+              "type": "ref",
+              "ref": "M6cFW",
+              "name": "barre-haute",
+              "width": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "ugT6J",
+              "name": "contenu-hero",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": "$space-32",
+              "padding": [
+                "$space-64",
+                "$marge-page",
+                0,
+                "$marge-page"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "R13W1",
+                  "name": "texte",
+                  "layout": "vertical",
+                  "gap": "$space-24",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "pYOt6",
+                      "name": "titre-groupe",
+                      "layout": "vertical",
+                      "gap": "$space-16",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "mGPnn",
+                          "name": "sur-titre",
+                          "fill": "$rose-encre",
+                          "content": "ATELIER À NANTES",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-label",
+                          "fontWeight": "$graisse-medium",
+                          "letterSpacing": "$tracking-label"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "uffT8",
+                          "name": "titre",
+                          "layout": "vertical",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "f5qYQ7",
+                              "name": "ligne-1",
+                              "gap": "$space-16",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "xURyL",
+                                  "name": "des-bijoux",
+                                  "fill": "$encre",
+                                  "content": "Des bijoux",
+                                  "lineHeight": "$leading-h1",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h1",
+                                  "fontWeight": "$graisse-display",
+                                  "letterSpacing": "$tracking-h1"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "B3csk",
+                                  "name": "mot-surligné",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "AFEER",
+                                      "layoutPosition": "absolute",
+                                      "x": -14,
+                                      "y": 2,
+                                      "name": "touche-de-pinceau",
+                                      "clip": true,
+                                      "width": 222,
+                                      "height": 62,
+                                      "layout": "none",
+                                      "children": [
+                                        {
+                                          "type": "path",
+                                          "id": "c7GgjF",
+                                          "x": 9.1088,
+                                          "y": 16.8602,
+                                          "name": "tracé-pinceau-01",
+                                          "geometry": "M203.04105 24.78436c-0.10593-0.52959 0.52957-0.63551-0.52959-1.16508-2.96565-1.05916-2.6479-0.74141-3.2834-1.271l-0.63548-0.6355-1.69468-0.10592c-0.31775 0.21185-3.28338-0.21181-0.21182-0.84731l-3.07156 0c0.42366-0.31776 2.0124-0.21184 0-0.52958-3.60115-0.31775-2.43607 0.10593-3.2834 0-0.84734-0.10593-0.6355-0.21182-1.80057-0.21183-1.16507 0-2.22425-0.42366-6.35497-0.63551-4.55438-0.1059-4.66031-0.74141-1.3769-0.84732 2.54197-0.10591 4.55439 0.31775 6.77862 0.31775 0-1.37692 2.33016 0.42367 4.02481-0.6355l3.70706-0.31775c2.96566-0.31775 0.42368-0.74141 2.96566-1.48283 1.69465 0.52959 1.80056 0 2.11831-0.84731 0.6355-0.84734 1.9065-0.52959 2.01239-0.74142-0.42364-0.74141-1.05916-1.37691-1.69464-1.90648-0.74141-0.74142-0.95325 0.31773-2.85972 0.10589-3.38933-0.84732-4.44849 0.31776-4.23665-0.95323l-1.48284-0.42367-3.81295-0.52957-1.58875 0.10591-0.52959 0-0.52957-0.10591 0.42366-0.10592c-1.69467-0.21182-2.96565-0.84734 0.95323-0.52958l-2.96563-0.6355 1.90649 0 4.34255 0.31775c1.16508-0.6355-2.64791-1.05916-3.17748-1.48282l-2.11832-0.42368-1.69467-0.10589c-1.48282 0.21182-1.58874-0.74142-3.38931-0.31775l-1.05916-0.10593-3.70706-0.42366c-1.27098 0.31775-0.95323-0.52959-2.33015-0.21182l-10.16794-1.05917-0.84732-0.31775c-0.84732-0.74141-1.05916-0.10591-1.69466 0.31775-1.05916 0.10591-0.31775-1.271-2.11832-0.42366l-0.52958-0.42366-0.6355 0.31774-15.25191-1.05915c-3.81299 0-5.29581-0.42368-19.70039-1.16509l-0.31774 0-0.95324-0.10593c-0.31775 0-0.42366 0-1.271 0.21186l-1.37691-0.31777-7.09637-0.42366c-2.54199-0.10591-2.6479-0.52959 0.95325-0.52958 5.61354 0.31775 11.22709 0.52959 18.00572 0.95324 0.95324-0.10591 6.14313-0.10591 9.63836 0.42366 3.91889 0.52959 7.41413 0.21184 11.43894 0.74141l1.16507-0.21182 1.69465-0.52959-9.00286-0.74141-12.81585-0.84732-0.63548 0.10592c-6.77864-0.74141-12.81584-0.74141-17.58208-1.05916-3.07154-0.10593-5.40171-0.42368-7.94369-0.42368-5.08397-0.52957-10.80344-0.31773-18.00574-0.31773l-1.37691 0-0.95323-0.21184-1.58874 0.21184 0-0.21184c-4.5544 0.21184-7.41412 0.31775-9.32062 0.31775-3.38931 0-6.35497 0.10593-9.85019 0.42367l0 0c-4.55438 0.52957-11.86259 0.63548-21.50095 1.3769-9.32061 0.42368-18.64122 0.6355-25.63168 1.80058-9.32061 1.69466-11.75668 2.22423-11.65076 4.13072l0 0.31775-0.42366 0.74141-3.9189 1.16509-0.52958 0.63548c-1.58874 2.11832-0.84733 2.11832-1.05916 2.75383 0.31775 0.74141-0.31775 1.27098 1.05916 3.91888l0.84733 1.58875 1.80057 2.6479 1.16508 2.01239 1.27099 1.27101c3.70706 2.6479 4.76622 3.70706 10.48569 4.0248 3.07156 0.31775 6.67271 0.31775 8.68511 0 10.69752-1.05916 21.28913-2.85973 30.50382-3.07157l6.99046 0.21184 1.48282 0 7.52004-0.42366c6.5668-0.6355 12.18034-0.74141 18.5353-1.16508 3.70706-0.21182 3.2834 0.21182 7.73188 0l5.2958 0.21182c1.48282 0 4.23664 0 6.46088-0.1059 0.31775 0 0.6355-0.21184 0.74141-0.31775 0.6355-0.42366 3.70706-0.52959 5.40172-0.52958 0.74141-0.10593 3.49524-0.21182 4.66031 0 7.09637-0.10593 20.65362 0.6355 22.87787 1.05916 4.34254 0.95323 5.18988 0.95323 10.37977 1.05915l0.21182-0.21182-3.81297-0.95326c2.22424-0.74141 8.15552 0.21185 9.21469-0.1059 1.05916 0.1059 1.16507 0.63548 5.40172 0.63549 0.95323 0 0.52959 0 1.271 0.31774l0.21182-0.31774 1.69466 0.21183 1.05917-0.21183 0.42364-0.21183c3.07158 0.95325 6.35497 1.16507 9.53246 0.7414 2.75381 0 4.44849 0.74144 7.09637 0.10592l-1.16507-0.84732-10.06202-0.6355-3.17749-0.10591-0.10591-0.42366-1.16507 0.21183-0.63552-0.31775-1.27098 0-0.95323-0.31775-1.58875 0.31775-1.90649-0.52959-0.95325-0.10591-0.84732 0.21184-2.85974-0.31775-0.74141 0.21182c-1.90649-0.10591-1.16507-0.42365-2.54199-0.21182-1.37691 0.21182-1.37691-0.31775-2.75381-0.21182-3.49524 0.31773 2.54199 0.8473 3.60115 0.63548l1.05915 0.21182c0.95325-0.21182 1.90648 0.10593 2.54198-0.31773 0.74141 0 1.271 0.10591 1.69467 0.10591 1.69464 0.10593 8.26143 0.52957 8.89695 0.52957 2.96565 0.21184 10.06202 0.52959 11.01525 0.42367l4.87215 0 6.35497 0.42367c5.82537 0.21184 2.11831-0.6355 0-0.6355l-3.07157-0.31774-4.66032-0.21185c-1.27098-0.42366 1.05917-0.31773 2.54201-0.63548l3.07154-0.21182c0.42366-0.52959 3.07157 0 3.60115-0.42368l1.37691 0.31775c1.27098 0.6355 4.13074 0.10593 5.50763 0.52957l1.16509 0.21184 0 1.16508z m-95.32444-22.98378l-0.95324-0.21185 1.05916 0-0.10592 0.21185 0 0z m-12.18034-0.42367l0-0.10591 1.80057 0.10591-1.80057 0z m2.01241 0.10592l-0.10593-0.10592 0.84733-0.10591 1.05916 0.10591 0.84732-0.10591 2.33016 0.21183 0 0.1059-4.97804-0.1059 0 0z m5.82537 0.21183l0-0.21183 0.6355 0-0.10592 0.21183-0.52958 0z m1.05916-0.21183l0.84732 0.21183-0.84732 0 0-0.21183z m38.12976 20.01813c0.52959-0.10591 2.43608-0.21184 2.75383 0.21182l1.05916-0.10591 0.6355 0.31775 0.52959-0.21184 1.58874 0.10593 0.52957 0.21182 0.84732-0.10591 1.16509 0.31775 1.27098-0.10591 0 0.31775-3.28339-0.10593-1.16508-0.21182-0.95323 0.21182-0.52959-0.42366-0.52957 0.21184-0.52959-0.21184-2.0124 0-1.37693-0.42366z",
+                                          "fill": "$rose",
+                                          "width": 203.1348,
+                                          "height": 29.3652
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "q8Pb8",
+                                          "x": 165.4408,
+                                          "y": 20.2495,
+                                          "name": "tracé-pinceau-02",
+                                          "geometry": "M0.21185 0.42365l-0.21185-0.42365 5.08397 0.42365 8.26146 0.52958c2.22424 0.6355 4.87215 0.42366 0.52958 0l-5.82539-0.6355-7.83777-0.31773 0 0.42365z m15.35782 2.54199l1.16507 0.31775 0-0.21184 0.84734 0.10592 0.21182-0.21183-1.37691-0.21184-0.84732 0.21184z",
+                                          "fill": "$rose",
+                                          "width": 17.7939,
+                                          "height": 3.2834
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "T5JV5",
+                                          "x": 185.0353,
+                                          "y": 22.2619,
+                                          "name": "tracé-pinceau-03",
+                                          "geometry": "M0.31775 0.42366l0.31775-0.21182-0.6355-0.21184 0.31775 0.42366z",
+                                          "fill": "$rose",
+                                          "width": 0.6355,
+                                          "height": 0.4237
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "jMHv6",
+                                          "x": 129.9275,
+                                          "y": 40.7635,
+                                          "name": "tracé-pinceau-04",
+                                          "geometry": "M6.49239 0.66921l-4.66031-0.6355c-1.80058-0.21182-2.96565 0.6355-0.10591 0.84734l6.46087 0.31775 6.6727 0-0.52957-0.31775-7.83778-0.21184 2.75381 0.10593-2.75381-0.10593z",
+                                          "fill": "$rose",
+                                          "width": 14.8597,
+                                          "height": 1.1988
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "lQchE",
+                                          "x": 186.3063,
+                                          "y": 41.8564,
+                                          "name": "tracé-pinceau-05",
+                                          "geometry": "M7.41412 0l-0.95326 0.74141-1.27098-0.31775-1.80057 0.21184-0.84733-0.52957-1.16509 0.31773-0.21182-0.42366-1.05917 0.42366 0 0.21184 1.90649-0.10591 0 0.42364 1.48282-0.21182 1.05916 0.21182 2.33017 0 0.52958 0.42368 2.22423-0.31775c3.07156-0.42366-1.80057-0.95323-2.22423-1.05916l0 0z m-6.88455 2.01241l-0.52957 0.31774 1.05916 0 0.21182-0.31774-0.74141 0z",
+                                          "fill": "$rose",
+                                          "width": 10.6486,
+                                          "height": 2.3302
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "cztWp",
+                                          "x": 121.168,
+                                          "y": 41.2209,
+                                          "name": "tracé-pinceau-06",
+                                          "geometry": "M0.95323 0l-0.95323 0 0.31775 0.21184 0.63548-0.21184z",
+                                          "fill": "$rose",
+                                          "width": 0.9532,
+                                          "height": 0.2118
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "BjdDr",
+                                      "name": "colorés",
+                                      "fill": "$encre",
+                                      "content": "colorés,",
+                                      "lineHeight": "$leading-h1",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": "$text-h1",
+                                      "fontWeight": "$graisse-display",
+                                      "letterSpacing": "$tracking-h1"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "cYsN7",
+                              "name": "faits-un-par-un",
+                              "fill": "$encre",
+                              "content": "faits un par un",
+                              "lineHeight": "$leading-h1",
+                              "fontFamily": "$font-display",
+                              "fontSize": "$text-h1",
+                              "fontWeight": "$graisse-display",
+                              "letterSpacing": "$tracking-h1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "YXtyt",
+                      "name": "chapô",
+                      "fill": "$encre",
+                      "textGrowth": "fixed-width",
+                      "width": 420,
+                      "content": "Je peins et j'assemble chaque pièce à la main. Aucune n'est identique à une autre.",
+                      "lineHeight": "$leading-body",
+                      "textAlign": "center",
+                      "fontFamily": "$font-sans",
+                      "fontSize": "$text-body",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                },
+                {
+                  "id": "s4YANy",
+                  "type": "ref",
+                  "ref": "GZTHW",
+                  "name": "cta-principal",
+                  "descendants": {
+                    "BAx7m": {
+                      "content": "Voir les 14 créations"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "Jqcfm",
+                  "name": "note-cta",
+                  "width": 170,
+                  "height": 30,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "WHAeG",
+                      "x": 4,
+                      "y": 6,
+                      "name": "tracé-flèche",
+                      "rotation": 70,
+                      "geometry": "M2 11.5q9-2.5 18-1.3 6.5 1 12.5-0.2m-5.7-5.4q3.4 2.8 6.6 5.4-3.4 2.8-7 5.4",
+                      "viewBox": [
+                        0,
+                        0,
+                        36,
+                        20
+                      ],
+                      "width": 27,
+                      "height": 15,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round",
+                      "strokeLinecap": "round"
+                    },
+                    {
+                      "type": "text",
+                      "id": "AW9Fa",
+                      "x": 44,
+                      "y": 4,
+                      "name": "note-manuscrite",
+                      "rotation": -2,
+                      "fill": "$encre",
+                      "content": "commence par là",
+                      "fontFamily": "$font-cursive",
+                      "fontSize": "$text-note",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "M8YTXi",
+              "name": "frise-créations",
+              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
+              "width": "fill_container",
+              "height": 254,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "fzZZc",
+                  "x": 0,
+                  "y": 0,
+                  "name": "lavis",
+                  "fill": "$rose-pale",
+                  "width": 1440,
+                  "height": 254
+                },
+                {
+                  "type": "rectangle",
+                  "id": "HV50u",
+                  "x": 0,
+                  "y": 12,
+                  "name": "chaîne",
+                  "fill": "$encre",
+                  "width": 1440,
+                  "height": 1.5
+                },
+                {
+                  "type": "rectangle",
+                  "id": "suFKM",
+                  "x": 95.25,
+                  "y": 12,
+                  "name": "attache-01",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "genbW",
+                  "x": 22,
+                  "y": 40,
+                  "name": "photo/creation-hero-01",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "tz5Yo",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "rjmo6",
+                  "x": 303.25,
+                  "y": 12,
+                  "name": "attache-02",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "gLQyB",
+                  "x": 230,
+                  "y": 58,
+                  "name": "photo/creation-hero-02",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "o7tIhq",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "z6CdhY",
+                  "x": 511.25,
+                  "y": 12,
+                  "name": "attache-03",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 20
+                },
+                {
+                  "type": "frame",
+                  "id": "Otkwk",
+                  "x": 438,
+                  "y": 32,
+                  "name": "photo/creation-hero-03",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "r49kf",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "gp9e7",
+                  "x": 719.25,
+                  "y": 12,
+                  "name": "attache-04",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 38
+                },
+                {
+                  "type": "frame",
+                  "id": "tYJqC",
+                  "x": 646,
+                  "y": 50,
+                  "name": "photo/creation-hero-04",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "iqSaF",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "a1XewW",
+                  "x": 927.25,
+                  "y": 12,
+                  "name": "attache-05",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 16
+                },
+                {
+                  "type": "frame",
+                  "id": "JkG0o",
+                  "x": 854,
+                  "y": 28,
+                  "name": "photo/creation-hero-05",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "lWoq4",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "ou2Ca",
+                  "x": 1135.25,
+                  "y": 12,
+                  "name": "attache-06",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "POHRb",
+                  "x": 1062,
+                  "y": 58,
+                  "name": "photo/creation-hero-06",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "EhvQu",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "GXPdj",
+                  "x": 1343.25,
+                  "y": 12,
+                  "name": "attache-07",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 34
+                },
+                {
+                  "type": "frame",
+                  "id": "l0Ec7",
+                  "x": 1270,
+                  "y": 46,
+                  "name": "photo/creation-hero-07",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "v28sE",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "xTC9x",
+          "name": "note C",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "C : une bande rose-pale pleine largeur derrière les pampilles — la frise gagne un sol, le haut du hero reste blanc, et le pli bas de l’écran est souligné sans rien dessiner de plus.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "text",
+          "id": "I2Wftw",
+          "name": "label D",
+          "fill": "$rose-encre",
+          "content": "PISTE D — LA PLUIE SE POSE (LES FORMES DE B, ANIMÉES)",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-label",
+          "fontWeight": "$graisse-medium",
+          "letterSpacing": "$tracking-label"
+        },
+        {
+          "type": "text",
+          "id": "EgeLP",
+          "name": "note D",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "D : les cinq formes de la piste B, animées UNE fois au chargement — chaque cœur ou goutte tombe en place (translateY −16 → 0, opacité 0 → 1), déphasée de 60-120 ms, ease-out ~1 s, dans la grammaire du micro-balancement des pampilles (planche 00-systeme/motion). Ensuite tout est statique : D au repos = B. prefers-reduced-motion : pas de chute, B tel quel. Jamais de boucle infinie — l’attention reste aux créations, pas au décor.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
         }
       ]
     }

@@ -781,3 +781,19 @@ Séance d'arbitrage menée par Adrien dans la session (questions fermées, sur p
   (constaté : les 5 filigranes empilés au centre au premier rendu).
 - Reste ouvert : le choix A/B/C/blanc du fond de hero — puis application à `01-hero/desktop`
   (+ copie assemblage, + déclinaison mobile si A).
+
+## 2026-08-19 — piste D (formes animées) et le piège du save() fantôme
+
+- **Précision d'Adrien** : « fond » ne voulait pas dire couleur — des FORMES, statiques ou
+  animées. Piste **D** ajoutée à `proposition/hero-fonds` : les cinq formes de B, animées UNE
+  fois au chargement (translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s,
+  grammaire du micro-balancement des pampilles) ; au repos D = B ; `prefers-reduced-motion` =
+  B statique ; jamais de boucle. Titre de la planche : « fonds et formes ».
+- ⚠️ **PIÈGE MAJEUR constaté : le `save()` du shell `pen interactive --app` ne sauve PAS le
+  fichier** — il écrit `~/.pencil/backup/<hash>` (repéré : 1 351 509 o, mtime vivant, alors
+  que `landing.pen` restait à 09:49). Les commits cd4703f35 et e83fce32b sont partis avec un
+  binaire PÉRIMÉ. Réparation : backup vérifié en headless (hero-fonds, note D, frames PRISE,
+  gouttes du composant présents) puis copié sur `landing.pen` — ce commit-ci porte le vrai
+  binaire. La règle du dossier reste vraie et s'étend : **Cmd+S dans l'app OU copie depuis
+  `~/.pencil/backup/` + vérification headless, et TOUJOURS vérifier le mtime avant commit.**
+- L'osascript Cmd+S (System Events) n'a pas écrit le fichier non plus — ne pas compter dessus.

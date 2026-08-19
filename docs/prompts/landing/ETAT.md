@@ -52,10 +52,11 @@ Passage en code non commencé — **DÉBLOQUÉ le 2026-08-19** (nº 1-4 tranché
 
 ## Arbitrage ouvert — un seul
 
-**Fond du hero desktop** (reformulation du nº 5 par Adrien : des recommandations de fond plutôt
-que le binaire gouttes/blanc) — planche `proposition/hero-fonds`, export
+**Fond et formes du hero desktop** (reformulation du nº 5 par Adrien — pas seulement de la
+couleur : des formes, statiques ou animées) — planche `proposition/hero-fonds`, export
 `apercus/arbitrages/proposition-hero-fonds.png` : **A** bain rose-pale · **B** filigrane
-cœurs + gouttes dans les marges · **C** lavis rose-pale sous la frise · ou rester au blanc.
+cœurs + gouttes · **C** lavis sous la frise · **D** les formes de B animées à la pose
+(une fois au chargement, grammaire du micro-balancement) · ou rester au blanc.
 
 ## Pièges d'outillage — tous constatés
 
@@ -71,6 +72,9 @@ cœurs + gouttes dans les marges · **C** lavis rose-pale sous la frise · ou re
   la source de la chrome, et le code gagne sur elle en cas d'écart.
 - **`Replace` échoue sur un enfant de COMPOSANT via le MCP de l'app** (TypeError systématique) —
   contourner par Delete + Insert ; le même Replace passe en headless et sur une copie détachée.
+- ⚠️ **Le `save()` du shell `--app` ne sauve PAS le `.pen`** — il écrit `~/.pencil/backup/<hash>` ;
+  seul **Cmd+S** écrit le fichier. Vérifier le **mtime avant tout commit** (2026-08-19 : deux
+  commits partis périmés, réparés depuis le backup).
 - Avertissements bénins : `touche-de-pinceau`, `tracé-flèche`, `note-manuscrite`, bandeaux
   désactivés en `fill_container` — encre qui déborde à dessein, ne pas « corriger ». Un `ref`
   anonyme vide traîne à la racine (`GH7Z7`) — origine inconnue, non touché, à trier.
