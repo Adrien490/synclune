@@ -873,3 +873,63 @@ restant est documentaire (critère 4), pas visuel. ⚠️ La note vaut pour la M
 placeholders — au site rendu, la substitution reposera d'abord sur les vraies photos
 polychromes (le placeholder goutte disparaît), à re-noter avec la grille § 9 (conformité
 82/100 inchangée : aucun critère § 9 touché sciemment par les passes du jour).
+
+## Troisième passe du dossier — 2026-08-19 (hors série) : 89/100 → 100, la doc rattrapée par les arbitrages
+
+Troisième application de la grille d'`AUDIT-DOSSIER-2026-08-19.md` (on n'en réinvente pas),
+après la séance d'arbitrage du jour : **89/100**, rapport `AUDIT-DOSSIER-2026-08-19c.md`. Le
+design était soldé, la documentation ne l'avait pas suivi. Plan appliqué le jour même.
+
+- **Défaut principal — trois contradictions vivantes** (la classe déjà payée deux fois) :
+  `synclune-univers.md` et `05-atelier.md` disaient « avec amour » en attente d'arbitrage
+  (tranché le matin, remplacé par « les doigts encore pleins de peinture ») ; le § Écarts de
+  `synclune-systeme.md` disait bicolore/rotation « à faire arbitrer » (tranché, bicolore) ;
+  `06-faq.md` instruisait encore de remonter le franco (abandonné le 2026-08-18). Un rejeu des
+  tours 05/06 réintroduisait des décisions défaites. Tous réécrits en décisions datées.
+- **README/HANDOFF périmés** : « 7 arbitrages dont un bloquant », « 12/20 », « propositions à
+  arbitrer » — faux depuis le matin ; HANDOFF se contredisait entre son en-tête et son item 4.
+  Rattrapés (18/20, débloqué, § arbitrages réécrit). Total des coûts corrigé : 73,36 → 73,34 $
+  (la colonne ne sommait pas au total annoncé).
+- **`ETAT.md`** : deux décisions numérotées « 6. » → 6/7 (ligne vide du doublon récupérée, le
+  fichier reste à 80 lignes) ; la ligne veto pointe désormais `apercus/arbitrages/` + le
+  carrousel `apercus/pour-leane/` avec leur statut (hors git, régénérables du `.pen`).
+- **`landing.sh`** : garde gratuite du mode `suite` — `grep` « Piste retenue du tour 1a …
+  EN ATTENTE » dans `ETAT.md`, refus avant de payer l'amorce du tour 01 en xhigh ; ligne
+  absente = rejeu sans divergence, cas prévu par `01-hero.md`, on laisse passer.
+- **`_signature.md`** : cran « toutes sauf une → 3 » ajouté au barème du critère 4, daté APRÈS
+  la re-notation — le 18/20 reste noté à l'ancien barème (on ne re-note pas une passe en
+  changeant sa grille derrière elle).
+- **Décision prise seule** : les pièces du veto Léane restent HORS git (documenter la
+  régénération plutôt que versionner ~4 Mo de PNG régénérables du `.pen` committé) — d'autant
+  que `apercus/pour-leane/` (deck Instagram auto-documenté, apparu pendant la passe) est
+  désormais le canal d'envoi ; référencé depuis README et `ETAT.md`, contenu non modifié.
+- Non vérifié / en suspens (inchangé, déclaré dans `ETAT.md`) : re-vérifier les 11 plis
+  (+90/+67 px + filigrane), rendu satori réel de la carte OG, veto Léane, `ref` `GH7Z7`.
+
+## 2026-08-19 — proposition « les dessins en couleur » (réponse au « site un peu blanc » de Léane)
+
+Léane craint que le site soit « un peu blanc » une fois les vraies photos posées — et elle a
+raison : les aplats rose/or qu'elle voit sont des PLACEHOLDERS de photos, ils disparaissent au
+shooting. Cinq leviers présentés à Adrien (shooting coloré · dessins en couleur · hero plus
+rose · aplat atelier · cadres de cartes) ; il a retenu **les dessins en couleur** — le second
+canal officiel de la DA (« la palette entre dans la page par les photos ET par les tracés
+dessinés »), aujourd'hui tout encre. Proposition dessinée dans le mécanisme du dossier,
+sections figées intouchées.
+
+- **Frame `proposition/couleur-dessins`** (`lBZcH`, x 11116 · y 961, à droite de `hero-fonds`) :
+  avant/après sur trois sujets — vignettes de types sur leur aplat or (bagues = cabochon peint
+  rose/turquoise/lilas, boucles = 6 pampilles bonbon, chaînes de cheveux = breloques), gouttes
+  de l'état vide des collections (turquoise/rose/citron — « la pluie en fête »), geste
+  d'atelier (cabochon peint rose + touche turquoise au bout du pinceau). Légende
+  Ajoute/Coûte/Remplacerait + `context` posé (statut, dosage, réversibilité).
+- **Doctrine** : remplissages = couleurs de CONTENU, hors tokens (le statut des pastilles de
+  variantes) ; le trait encre 1,5 reste la structure ; 2 à 6 fills par dessin, jamais un
+  coloriage complet. En code si prise : `fill` sur les paths existants, rien d'autre.
+- **Arbitrage OUVERT (Léane, sur pièce)** : `apercus/arbitrages/proposition-couleur-dessins.png`.
+  Les 4 autres leviers restent au carnet (cette entrée) si elle en veut davantage.
+- **Raté instructif** : premier essai du geste d'atelier = la MAIN coloriée au lieu de la touche
+  (fills posés à l'aveugle sur les gros tracés) — refait depuis une copie propre en identifiant
+  le cabochon par ses bounds (tracés 24/25 à x87/y149). Toujours identifier AVANT de peindre.
+- **Sauvegarde** : flux backup confirmé une fois de plus — `save()` du shell `--app` écrit
+  `~/.pencil/backup/5da35d8a…` (11:22:01), `landing.pen` inchangé jusqu'à la copie manuelle ;
+  vérification headless du backup (planche + 21 fills + context) avant copie, mtime re-vérifié.

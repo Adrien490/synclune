@@ -8,9 +8,8 @@
 ## Statut
 
 Maquette complète et figée : système, 6 sections, carte OG, cookies, assemblages, états, motion.
-**Conformité 82/100** (§ 9, 0 P0) · **signature 18/20** (re-notée sur pièce le 2026-08-19,
-rapport au carnet — le point manquant est documentaire, critère 4, constatable à la prochaine passe).
-Passage en code non commencé — **DÉBLOQUÉ le 2026-08-19** (nº 1-4 tranchés par Adrien).
+**Conformité 82/100** (§ 9, 0 P0) · **signature 18/20** (re-notée sur pièce le 2026-08-19, rapport
+au carnet — point manquant documentaire, critère 4). Passage en code **DÉBLOQUÉ** (nº 1-4, Adrien).
 
 ## Le motif et les accents
 
@@ -50,13 +49,14 @@ Passage en code non commencé — **DÉBLOQUÉ le 2026-08-19** (nº 1-4 tranché
    en code, retirer la rotation `[data-accent]`) · SIX sections · sur-titres PARTOUT (à
    réintroduire sur les 5 routes boutique) · « avec amour » remplacé par « les doigts encore
    pleins de peinture » — sans purge systématique de la formule (elle peut réapparaître ponctuellement).
-
-6. **Hero : piste D appliquée** (2026-08-19) — filigrane 3 cœurs + 2 gouttes (encre 10 %) dans
+7. **Hero : piste D appliquée** (2026-08-19) — filigrane 3 cœurs + 2 gouttes (encre 10 %) dans
    les marges desktop, animé à la pose une fois au chargement (spec planche motion) ; réduit = statique.
 
-## Arbitrages ouverts — AUCUN
+## Arbitrages ouverts — UN
 
-Tout est tranché ; veto Léane sur pièce (`apercus/`). Vérifs restantes : plis · satori OG.
+**Proposition `couleur-dessins`** (« site un peu blanc » de Léane) — remplissages bonbon SOUS le
+trait encre du décor dessiné, couleurs de CONTENU hors tokens ; pièce `apercus/arbitrages/`.
+Le reste : tranché, veto sur pièce (`apercus/`, hors git, régénérable). Vérifs : plis · satori OG.
 
 ## Pièges d'outillage — tous constatés
 
