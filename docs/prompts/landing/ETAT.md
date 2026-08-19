@@ -8,8 +8,8 @@
 ## Statut
 
 Maquette complète et figée : système, 6 sections, carte OG, cookies, assemblages, états, motion.
-**Conformité 82/100** (§ 9, 0 P0) · **signature 12/20 AVANT propositions** — les trois prises et
-appliquées le 2026-08-19, à re-noter sur pièce (`AUDIT-DOSSIER-2026-08-19b.md`).
+**Conformité 82/100** (§ 9, 0 P0) · **signature 18/20** (re-notée sur pièce le 2026-08-19,
+rapport au carnet — le point manquant est documentaire, critère 4, constatable à la prochaine passe).
 Passage en code non commencé — **DÉBLOQUÉ le 2026-08-19** (nº 1-4 tranchés par Adrien).
 
 ## Le motif et les accents
@@ -56,7 +56,7 @@ Passage en code non commencé — **DÉBLOQUÉ le 2026-08-19** (nº 1-4 tranché
 
 ## Arbitrages ouverts — AUCUN
 
-Tout est tranché ; veto Léane sur pièce (`apercus/`). Vérifs restantes : plis · signature · satori OG.
+Tout est tranché ; veto Léane sur pièce (`apercus/`). Vérifs restantes : plis · satori OG.
 
 ## Pièges d'outillage — tous constatés
 

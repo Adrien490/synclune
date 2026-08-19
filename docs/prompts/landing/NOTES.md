@@ -818,3 +818,58 @@ Séance d'arbitrage menée par Adrien dans la session (questions fermées, sur p
   ne fonctionne pas — ne pas re-essayer.
 - **Plus aucun arbitrage ouvert.** Prochaines étapes : re-noter la signature sur pièce,
   re-vérifier les plis (contenu décalé), shooting, passage en code (HANDOFF est complet).
+
+## 2026-08-19 — re-notation de la signature sur pièce : 18/20
+
+Grille `_signature.md`, exports frais de la session (hero, créations, collections, types,
+atelier, FAQ, pied, carte OG — `apercus/apres-*.png` + exports de travail). ⚠️ **Réserve de
+conduite, assumée par l'écriture** : la passe est notée par la session qui vient d'appliquer
+les gestes. Mitigations : les verdicts conditionnels étaient PRÉ-écrits par l'audit 19b
+(« les deux prises ⇒ substitution 6/6, geste 6/6, idée 4/4 »), chaque jugement est une phrase
+contestable ci-dessous, et le critère 4 est noté À LA LETTRE (strict) plutôt qu'à l'esprit.
+
+### Critère 1 — substitution : 0 substituable sur 6 → 6/6
+
+1. Hero — tient : frange de pampilles, touche de pinceau sur « colorés », filigrane qui se pose.
+2. Créations — tient (bascule depuis la passe 19b) : les cartes s'échelonnent comme les
+   pampilles — retirer l'écho et la section redevient une grille de boutique quelconque.
+3. Collections — tient : « Choisis ton petit monde », grappe inégale, état vide en pluie.
+4. Types — tient : « Plutôt collier ou porte-clés ? », papilloux et chaînes de cheveux au trait.
+5. Atelier — tient : première personne, plastique fou/cuisson, « 3 h par bijou ♥ », « les
+   doigts encore pleins de peinture ».
+6. FAQ — tient (bascule) : la réponse dépliée EST un message signé « — Léane » — une boutique
+   sans visage ne peut pas le signer.
+
+### Critère 2 — geste propre : 6 sections sur 6 → 6/6
+
+Hero : la frange (`q3d3a8`) + la pluie qui se pose (`filigrane-hero` `e4Ls4`/`AYfdv`).
+Créations : l'échelonnage 0·24·8·32 (`pN1Oi`/`epDBu` + copies assemblage). Collections : la
+grappe inégale + la pluie de l'état vide. Types : les huit dessins tremblés (`oyFzp`).
+Atelier : la main au pinceau (`gQkR6`) + la cursive « 3 h par bijou ♥ ». FAQ : la bulle
+signée (`afjyM`/`i5p10Q`).
+
+### Critère 3 — une idée par section : six phrases → 4/4
+
+1. « Le catalogue pend à une chaîne, comme les bijoux — et la pluie se pose autour du titre. »
+2. « Les cartes s'échelonnent comme les pampilles : l'accumulation, pas le cordeau. »
+3. « Quatre petits mondes en grappe. » 4. « La question de comptoir. »
+5. « Le bijou passe entre les mains — les 3 h se montrent. »
+6. « Je te réponds comme par message — la réponse EST un message signé. »
+
+### Critère 4 — coût de la sobriété : toutes justifiées SAUF une au moment de la passe → 2/4
+
+Justifiées par écrit : bandeau chrome sobre (tour 9), rangée d'accordéon simple (tour 6),
+blanc du hero (tranché piste D), pied rose-pale (audit 17b), grille au cordeau (n'existe
+plus). NON justifiée au moment de la passe : le bloc « En pratique » plat (`bYRW3`) — relevé
+tel quel à l'audit 19b, toujours muet aujourd'hui. Barème : « 4 si toutes » — une manque, la
+lettre du barème donne 2. La justification (référentiel scannable, logique du tour 6) a été
+écrite en `context` APRÈS la notation : le point se constatera à la prochaine passe, pas à
+celle qui l'écrit.
+
+### Note : 6 + 6 + 4 + 2 = 18/20 — « la page ne peut être signée que par Synclune »
+
+Conforme à la projection de l'audit 19b (~18/20). Sections faibles : aucune ; le point
+restant est documentaire (critère 4), pas visuel. ⚠️ La note vaut pour la MAQUETTE sur
+placeholders — au site rendu, la substitution reposera d'abord sur les vraies photos
+polychromes (le placeholder goutte disparaît), à re-noter avec la grille § 9 (conformité
+82/100 inchangée : aucun critère § 9 touché sciemment par les passes du jour).

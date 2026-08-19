@@ -13271,6 +13271,7 @@
                   "type": "frame",
                   "id": "bYRW3",
                   "name": "bloc-en-pratique",
+                  "context": "Sobriété JUSTIFIÉE (écrite le 2026-08-19, après la passe de signature qui la relevait muette) : ce bloc est le référentiel pratique de la page — frais, délais, retours, compte — fait pour être scanné en 5 secondes, même logique que la rangée d’accordéon sobre (tour 6, budget d’attention en position 6). Les puces gouttes sont sa seule ponctuation, à dessein.",
                   "width": "fill_container",
                   "fill": "$or",
                   "cornerRadius": "$radius-16",
