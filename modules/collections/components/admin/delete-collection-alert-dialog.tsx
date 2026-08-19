@@ -35,7 +35,7 @@ export function DeleteCollectionAlertDialog() {
 			description={
 				<>
 					<p>
-						Êtes-vous sûr de vouloir supprimer la collection{" "}
+						Veux-tu vraiment supprimer la collection{" "}
 						<strong>&quot;{deleteDialog.data?.collectionName}&quot;</strong> ?
 					</p>
 					{productsCount > 0 ? (

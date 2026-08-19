@@ -32,7 +32,7 @@ export function DeleteProductAlertDialog() {
 			description={
 				<>
 					<p>
-						Êtes-vous sûr de vouloir supprimer le bijou{" "}
+						Veux-tu vraiment supprimer le bijou{" "}
 						<strong>&quot;{deleteDialog.data?.productTitle}&quot;</strong> ?
 					</p>
 					<p>

@@ -181,7 +181,7 @@ describe("DeleteProductAlertDialog", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-description")).toHaveTextContent(
-				"Êtes-vous sûr de vouloir supprimer le bijou",
+				"Veux-tu vraiment supprimer le bijou",
 			);
 		});
 

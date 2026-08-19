@@ -47,7 +47,7 @@ export function DuplicateProductAlertDialog() {
 			description={
 				<>
 					<p>
-						Êtes-vous sûr de vouloir dupliquer le bijou{" "}
+						Veux-tu vraiment dupliquer le bijou{" "}
 						<strong>&quot;{duplicateDialog.data?.productTitle}&quot;</strong> ?
 					</p>
 					<p className="mt-4">Une copie sera créée avec :</p>

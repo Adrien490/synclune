@@ -206,7 +206,7 @@ describe("DuplicateProductAlertDialog", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-description")).toHaveTextContent(
-				"Êtes-vous sûr de vouloir dupliquer le bijou",
+				"Veux-tu vraiment dupliquer le bijou",
 			);
 		});
 
