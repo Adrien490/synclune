@@ -15,10 +15,13 @@
 
 1. ~~**Franco de port**~~ — **TRANCHÉ le 2026-08-18 : le franco est ABANDONNÉ.** Le placeholder
    `{franco}` n'avait aucune source dans le code (`shipping-rates.ts`) ; il est retiré de toute
-   la maquette (bandeaux, blocs « En pratique », réponse FAQ, y compris les overrides
-   d'instances). Le bandeau des deux barres hautes porte désormais
-   « Livraison {frais} · expédié sous {délai} » — deux valeurs qui ont, elles, une SSOT.
-   **Ne pas réintroduire `{franco}` sans que Léane crée l'offre en base.**
+   la maquette. **Ne pas réintroduire `{franco}` sans que Léane crée l'offre en base.**
+   ⚠️ **Le bandeau livraison lui-même est RETIRÉ le 2026-08-19** (Adrien, pendant le passage en
+   code avorté : « pas de bandeau livraison ») : la barre haute est la rangée principale seule,
+   comme dans le code actuel — ne rien y ajouter. `{frais}` et `{délai}` vivent dans le bloc
+   « En pratique » de la FAQ et la réassurance du pied de page. Les deux nœuds bandeau des
+   composants chrome sont conservés `enabled:false` dans la maquette (les rétablir est un
+   arbitrage, pas un correctif).
 2. **Tuiles du hero ENTIÈRES — dérogation assumée au § 1.5 (2026-08-18).** Adrien a demandé
    deux fois que les photos du hero ne soient pas coupées ; c'est tranché, les tuiles sont
    entières sur les deux formats. ⚠️ Cela déroge sciemment au critère « la section suivante est
@@ -56,7 +59,8 @@
   de la ligne claire — la phrase doit rester vraie si la visiteuse revient demain. (Tour 2.)
 - **`{frais}`** = `SHIPPING_RATES`, **`{délai}`** = `PREPARATION_BUSINESS_DAYS` +
   `estimatedDays` (`modules/orders/constants/shipping-rates.ts`). ⚠️ **`{franco}` n'existe
-  plus** — franco abandonné le 2026-08-18, cf. arbitrage nº 1.
+  plus** — franco abandonné le 2026-08-18, et **le bandeau livraison n'existe plus non plus**
+  (2026-08-19) : les deux placeholders ne vivent qu'en FAQ et pied de page, cf. arbitrage nº 1.
 
 ## Système
 
@@ -70,11 +74,12 @@
 
 ## Chrome
 
-- **Bandeau livraison HORS du bloc sticky** ; `position: sticky` sur la seule rangée
-  principale ; le liseré 1 px encre = `border-bottom` de l'état flottant — jamais d'ombre
-  floue. (Tour 10, frame `00-systeme/chrome-scrollee`.)
-- **Badge compteur du panier : deux variantes coexistent** dans la maquette (rond rose sur la
-  barre basse, goutte `$rose-encre` sur la planche motion) — en retenir UNE. (Passe créative.)
+- ~~**Bandeau livraison**~~ — **RETIRÉ le 2026-08-19** (cf. arbitrage nº 1 ci-dessus) : la
+  barre haute du code ne change pas de structure. Le liseré 1 px encre = `border-bottom` de
+  l'état flottant — jamais d'ombre floue. (Tour 10, frame `00-systeme/chrome-scrollee`.)
+- **Badge compteur du panier : TRANCHÉ le 2026-08-19 — ROND rose à chiffre encre** (celui des
+  chromes ET du code actuel : zéro changement en code). La goutte de la planche motion est
+  archivée non retenue.
 - **Vérifier la chrome contre le code** : l'import `browser` n'a jamais eu lieu, les champs
   `context` de la chrome ne pointent pas vers les composants réels. Libellés de référence :
   nav « Les créations » / « Les collections », barre basse 5 onglets
@@ -108,7 +113,9 @@
 - Le lien texte de la carte vendue (~22 px de haut) est acceptable **si** toute la carte est
   cliquable — exception « lien en ligne » de WCAG 2.5.8. (Tour 2.)
 - Carte vendue = une porte : « Commander une pièce comme elle » pointe vers la **commande
-  personnalisée** — garder ce libellé. (Tour 2.)
+  personnalisée** — garder ce libellé. ⚠️ Tant qu'aucune page commande personnalisée n'existe,
+  la cible est `mailto:BRAND.contact.email` — JAMAIS de lien mort (passe « 20/20 », context
+  posé sur le composant). (Tour 2 + 2026-08-19.)
 
 ## Hero
 
@@ -121,10 +128,17 @@
 - **Filigrane des marges (piste D, tranchée le 2026-08-19)** : 5 formes — 3 cœurs, 2 gouttes —
   au trait encre 10 % dans les marges desktop du bloc titre ; elles TOMBENT en place UNE fois
   au chargement (translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s), hors
-  chemin du LCP ; `prefers-reduced-motion` : posées d'emblée. Jamais de boucle. Desktop
-  seulement. (Spec sur la planche motion + `context` du groupe `filigrane-hero`.)
+  chemin du LCP ; `prefers-reduced-motion` : posées d'emblée. Jamais de boucle.
+  (Spec sur la planche motion + `context` du groupe `filigrane-hero`.)
   **Depuis le 2026-08-19 (« D en couleur », prise)** : 2 des 5 formes portent un remplissage
   translucide — cœur `#f7a8d866`, goutte `#7fd8d866` — trait encre 10 % et animation inchangés.
+  **Depuis la passe « 20/20 » (2026-08-19) : le MOBILE a son filigrane** — 2 formes seulement,
+  LES DEUX colorées (cœur en haut-droite du bloc titre, goutte en marge gauche —
+  `filigrane-hero-mobile` dans les deux heroes mobiles), mêmes règles de pose et de réduit.
+- **Frange posée sur la barre basse (mobile)** : la frise se termine à ~789 pour une barre à
+  788 — c'est le signal de continuation de l'écran 1 (le pli 1 du relevé), à REPRODUIRE en
+  code. Le retrait du bandeau a été absorbé par les paddings du bloc titre (haut 64, bas 24
+  desktop / haut 64, bas 12 mobile) — ne pas le rendre en « air en bas du hero ».
 
 ## Sections
 
@@ -133,9 +147,12 @@
   respire », prise le 2026-08-19 ; coût accepté ~32 px par rangée.
 - **Collections** : plafonner la section à ~6 cartes + lien (la grappe tient à 6 et 9, mais
   6 est la recommandation) ; visuels par carte = requête **partagée avec le méga-menu,
-  plafond 4** ; une collection sans photo se rend en état `sans-visuel`. (Tour 3.)
-- **Types** : les puces SONT les liens vers les pages de type ; hauteur de puce 41 px — sous
-  le confort 44-48, à relever en code. (Tour 4.)
+  plafond 4** ; une collection sans photo se rend en état `sans-visuel` — qui porte depuis la
+  passe « 20/20 » une note manuscrite « bientôt ! » (cursive = ponctuation, la ligne « En
+  préparation — reviens bientôt » reste le texte porteur). (Tour 3 + 2026-08-19.)
+- **Types** : les puces SONT les liens vers les pages de type ; hauteur de puce **44 px**
+  (relevée dans la maquette à la passe « 20/20 » — `min-h-11` en code, plus rien à corriger).
+  (Tour 4 + 2026-08-19.)
 - **FAQ** : ⛔ **ne pas ré-émettre le JSON-LD `FAQPage`** avec le retour visuel de la FAQ
   (`context` posé ; rich result retiré, verrouillé par
   `catalogue-single-breadcrumb.regression.test.ts`). La rangée d'accordéon ENTIÈRE est le
@@ -143,8 +160,10 @@
   dépliée est une bulle de message signée** (fond gris, rayons 20/20/20/4 — coin-queue en
   bas-gauche —, padding 16/24, signature « — Léane » en cursive rose-encre : de la
   ponctuation, pas un texte porteur). Proposition prise le 2026-08-19.
-- **Atelier** : « Lire l'histoire de l'atelier » pointe vers la future page atelier/à-propos —
-  garder ce libellé. (Tour 5.) **Bain `rose-pale` sur toute la section** (proposition prise le
+- **Atelier** : « Lire l'histoire de l'atelier » pointe vers la future page atelier/à-propos
+  (`ROUTES.SHOP.ABOUT`, `/a-propos`) — garder ce libellé, mais **ne rendre le lien que quand la
+  page existe** : d'ici là la section se termine sans bouton, le débord de la FAQ est la sortie
+  (passe « 20/20 », contexts posés sur les 4 sorties). (Tour 5 + 2026-08-19.) **Bain `rose-pale` sur toute la section** (proposition prise le
   2026-08-19, desktop + mobile) : fond `--color-brand-rose-pale` en code, texte encre (18,21:1),
   transitions d'assemblage ajustées (cf. § Chrome).
 - **Dessins en couleur (proposition prise et appliquée le 2026-08-19, réponse au « site un peu
@@ -179,3 +198,9 @@
 - `SHOOTING.md` : 9 photos, toutes 4:5 — le portrait de Léane est une **vraie photo**,
   obligatoire (ni illustration, ni banque d'images). Hero et collections n'ont **aucun
   shooting dédié** (photos empruntées aux produits).
+- Depuis la passe « 20/20 » (2026-08-19), **chaque placeholder annonce son sujet** (grappe,
+  cabochon, cascade, volute, anneau, cadre de musée, cœur pour le portrait…) au lieu d'une
+  goutte uniforme : c'est un enrichissement de la checklist de shooting, PAS un décor à
+  reproduire en code — en code, ces emplacements sont des photos réelles. Seuls restent
+  dessinés en code : l'état `sans-visuel` des collections (avec sa note « bientôt ! »), les
+  vignettes de types, le geste d'atelier, les puces de la FAQ et le filigrane du hero.

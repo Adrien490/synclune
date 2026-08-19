@@ -1018,3 +1018,54 @@ des effets de bord annoncés dans les légendes.
   synclune-systeme (§ ajouts). Rendus : `apercus/apres-{hero-filigrane-couleur,atelier-rose-pale,
   assemblage-couleur}.png` ; planches renommées « — PRISE », pièces re-exportées dans arbitrages/.
 - Il ne reste qu'UNE vérif au dossier : le rendu satori réel de la carte OG (au passage en code).
+
+## 2026-08-19 — passe « 20/20 » (Adrien : « améliore tout ») : bandeau retiré, filigrane mobile, gouttes dosées
+
+Adrien a lancé le passage en code, l'a annulé (« je continuerai à taffer la landing page »), puis a
+demandé une passe d'amélioration globale (« améliore tout pour atteindre 20/20 »). Sept lots, tous
+appliqués via le MCP de l'app — ⚠️ Cmd+S requis pour écrire le fichier.
+
+- **Bandeau livraison RETIRÉ** (décision Adrien pendant le passage en code : « pas de bandeau
+  livraison ») : `enabled:false` sur les deux nœuds bandeau des composants chrome (`XCTvG`,
+  `EICEp`), conservés désactivés — les rétablir est un arbitrage, pas un correctif. Barres
+  hautes : 64 desktop / 56 mobile (contre 91/83). Coût assumé : frais et délai ne vivent plus
+  qu'en FAQ (bloc « En pratique ») et pied de page. Consigne code `YWuis` réécrite.
+- **Effet de bord réglé — la frange re-posée sur la barre** : le retrait remontait tout de 27 px
+  et la frange mobile perdait son ancrage (bas à 761 pour une barre à 788, signal du pli 1 du
+  tour 1). Redistribution dans les paddings du bloc titre (`t0h5q`/`VlsoK` desktop : haut 64,
+  bas 24 ; `mPLNA`/`PyOHq` mobile : haut 48→64, bas 12) — frange mobile re-mesurée bas 789,
+  desktop 797 dans le cadre de 800.
+- **Filigrane MOBILE** (le mobile n'avait aucun geste du hero) : 2 formes seulement, LES DEUX
+  colorées (cœur #f7a8d866 à 346,34 ; goutte #7fd8d866 à 26,312), frames `filigrane-hero-mobile`
+  dans `mPLNA` (`gUvEb`) et `PyOHq` (`NyRi9`), mêmes règles de pose que la piste D, contexts posés.
+- **Carte collection vide → rendez-vous** : note manuscrite « bientôt ! » (Kalam, encre, −8°)
+  ajoutée au composant `carte-collection/sans-visuel` (`MAJmf` dans `CONkd`) — une promesse
+  écrite à la main, pas un trou. La ligne « En préparation — reviens bientôt » reste le texte
+  porteur (la cursive est de la ponctuation).
+- **Liens orphelins soldés par contexts** : « Lire l'histoire de l'atelier » ne se rend en code
+  que quand `/a-propos` existe (4 sorties d'atelier) ; « Commander une pièce comme elle » et
+  « Écris-moi un message » ciblent `mailto:BRAND.contact.email` (context de `Trd6e` + 4 sorties
+  FAQ). JAMAIS de lien mort.
+- **Puce-type 41→44 px** : hauteur fixe 44 sur le composant `uWwCH` (padding 8/24, contenu
+  centré) — le dessin honnête du `min-h-11` du code ; le caveat « à relever en code » du
+  HANDOFF tombe.
+- **Badge du panier TRANCHÉ : rond** (planche motion mise à jour, `CWHVg` + `ipccD`) — la goutte
+  archivée non retenue ; trois surfaces déjà rondes (deux chromes + code), zéro changement code.
+- **La goutte SE DOSE — motifs de placeholders variés** (réponse au « trop de gouttes » d'Adrien,
+  artefact des placeholders) : chaque placeholder annonce désormais son SUJET de shooting.
+  Frises hero : goutte · anneau · cabochon · grappe · goutte · volute · porte-clés (mobile :
+  goutte · anneau). Cartes créations (surcharges d'instance sur `v8zBX`, 4 surfaces) : grappe
+  (créoles raisin), cabochon (bague Nuit étoilée), cascade de 3 gouttes (chaîne de cheveux),
+  goutte longue (chaîne de corps), volute (papillou tourbillon), anneau+goutte (porte-clés).
+  Collections (surcharges sur `AjuQK`) : grappe (jardin), cabochon (ciel), CADRE de musée
+  (tableaux). Portrait atelier : la goutte devient un CŒUR (4 surfaces vivantes — Léane les
+  aime, ponctuation jamais sujet). Gouttes restantes : collier, bracelet pluie, pampilles,
+  état vide, puces FAQ — le motif directeur, dosé.
+- **Vérifications** : surcharge d'instance testée sur pièce avant généralisation (35 posées) ;
+  exports de contrôle assemblages + hero + carte + composant ; piège « sous-arbre neuf blanc à
+  l'Export » re-constaté sur le filigrane mobile (remède Copy appliqué) ; bounds rassis dans
+  l'appel mutant re-constatés (puce 44 confirmée à l'export après une lecture à 41 mensongère).
+- Rendus : `apercus/apres-passe-vingt-{assemblage,hero}-{desktop,mobile}.png`.
+- Non vérifié / en suspens : le rendu satori OG (inchangé, au passage en code) ; les hauteurs
+  d'assemblage exactes après retrait du bandeau (les cadres hero sont FIXES, 800/844 — seul
+  l'intérieur a bougé, le relevé des 11 plis reste valable) ; Cmd+S PAS ENCORE FAIT.

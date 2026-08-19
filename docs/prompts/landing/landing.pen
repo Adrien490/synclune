@@ -1925,7 +1925,7 @@
                       "type": "frame",
                       "id": "Trd6e",
                       "name": "carte-produit",
-                      "context": "En code : toute la carte est UN SEUL lien vers la fiche produit (aria-label cohérent avec le texte visible : nom + prix) ; le favori reste un bouton distinct superposé. Décidé à la passe d'audit 2026-08-17 (P2.6).",
+                      "context": "En code : toute la carte est UN SEUL lien vers la fiche produit (aria-label cohérent avec le texte visible : nom + prix) ; le favori reste un bouton distinct superposé. Décidé à la passe d'audit 2026-08-17 (P2.6). — Carte vendue (passe 20/20 du 2026-08-19) : « Commander une pièce comme elle » cible mailto:BRAND.contact.email tant qu'aucune page commande personnalisée n'existe — JAMAIS de lien mort ; garder le libellé, c'est la porte (tour 2).",
                       "reusable": true,
                       "width": 270,
                       "layout": "vertical",
@@ -2629,7 +2629,7 @@
                       "type": "frame",
                       "id": "K9kvw",
                       "name": "carte-collection/sans-visuel",
-                      "context": "En code : toute la carte est UN SEUL lien vers la page collection (aria-label = nom de la collection). Décidé à la passe d'audit 2026-08-17 (P2.6).",
+                      "context": "En code : toute la carte est UN SEUL lien vers la page collection (aria-label = nom de la collection). Décidé à la passe d'audit 2026-08-17 (P2.6). — La note manuscrite « bientôt ! » (passe 20/20 du 2026-08-19) transforme l'état vide en rendez-vous : une promesse écrite à la main, pas un trou dans le catalogue. En code : la cursive est de la ponctuation (font-cursive, jamais porteuse seule d'information — la ligne « En préparation — reviens bientôt » reste le texte porteur).",
                       "reusable": true,
                       "width": 368,
                       "layout": "vertical",
@@ -2707,6 +2707,19 @@
                               "stroke": "$encre",
                               "strokeWidth": "$trait",
                               "strokeLinejoin": "round"
+                            },
+                            {
+                              "type": "text",
+                              "id": "MAJmf",
+                              "x": 202,
+                              "y": 152,
+                              "name": "note-bientôt",
+                              "rotation": -8,
+                              "fill": "$encre",
+                              "content": "bientôt !",
+                              "fontFamily": "$font-cursive",
+                              "fontSize": "$text-note",
+                              "fontWeight": "$graisse-normale"
                             }
                           ]
                         },
@@ -2985,15 +2998,17 @@
                   "id": "uWwCH",
                   "name": "puce-type",
                   "reusable": true,
+                  "height": 44,
                   "fill": "$papier",
                   "cornerRadius": "$radius-pilule",
                   "stroke": "$encre",
                   "strokeWidth": "$trait",
                   "gap": "$space-8",
                   "padding": [
-                    "$space-12",
+                    "$space-8",
                     "$space-24"
                   ],
+                  "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
                     {
@@ -3143,8 +3158,11 @@
             {
               "type": "frame",
               "id": "XCTvG",
+              "x": 0,
+              "y": 0,
               "name": "bandeau-livraison",
-              "width": "fill_container",
+              "enabled": false,
+              "width": "fill_container(1440)",
               "fill": "$gris",
               "padding": [
                 "$space-4",
@@ -3366,8 +3384,11 @@
             {
               "type": "frame",
               "id": "EICEp",
+              "x": 0,
+              "y": 0,
               "name": "bandeau-livraison",
-              "width": "fill_container",
+              "enabled": false,
+              "width": "fill_container(390)",
               "fill": "$gris",
               "padding": [
                 "$space-4",
@@ -4801,7 +4822,7 @@
           "padding": [
             "$space-64",
             "$marge-page",
-            0,
+            "$space-24",
             "$marge-page"
           ],
           "alignItems": "center",
@@ -4813,7 +4834,7 @@
               "x": 0,
               "y": -50,
               "name": "filigrane-hero",
-              "context": "D — la pluie se pose (arbitrage tranché le 2026-08-19, Adrien) : chaque forme tombe en place UNE fois au chargement — translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s (grammaire du micro-balancement des pampilles). prefers-reduced-motion : statique. Jamais de boucle. Desktop seulement.",
+              "context": "D — la pluie se pose (arbitrage tranché le 2026-08-19, Adrien) : chaque forme tombe en place UNE fois au chargement — translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s (grammaire du micro-balancement des pampilles). prefers-reduced-motion : statique. Jamais de boucle. Desktop : ces 5 formes ; MOBILE (passe 20/20 du 2026-08-19) : 2 formes — cœur et goutte colorés, cf. filigrane-hero-mobile du hero mobile — mêmes règles.",
               "width": 1440,
               "height": 455,
               "layout": "none",
@@ -5245,13 +5266,13 @@
                   "id": "fFaEL",
                   "x": 42,
                   "y": 60,
-                  "name": "motif-goutte",
-                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "name": "motif-anneau",
+                  "geometry": "M32 6.4c13.6-0.6 25.6 10.8 26 25.6 0.4 14.8-12 26.2-26 25.6-14 0.6-25.8-11-26-25.6-0.2-14.6 12.4-25.8 26-25.6z",
                   "viewBox": [
                     0,
                     0,
-                    24,
-                    24
+                    64,
+                    64
                   ],
                   "width": 64,
                   "height": 64,
@@ -5289,13 +5310,13 @@
                   "id": "nYyJ5",
                   "x": 42,
                   "y": 60,
-                  "name": "motif-goutte",
-                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "name": "motif-cabochon",
+                  "geometry": "M32 4.5c14.8-0.3 25.6 11.9 26 28 0.2 16.5-11.6 27.3-26 27-14.4 0.3-26-10.5-26-27 0.2-16.3 11.4-27.9 26-28z m0 11.3c8.8-0.2 15 6.8 15.2 16.8 0.2 10-6.6 16.2-15.2 16-8.6 0.2-15.2-6.2-15-16 0.2-9.8 6.2-16.7 15-16.8z",
                   "viewBox": [
                     0,
                     0,
-                    24,
-                    24
+                    64,
+                    64
                   ],
                   "width": 64,
                   "height": 64,
@@ -5332,17 +5353,17 @@
                   "type": "path",
                   "id": "rLQkI",
                   "x": 42,
-                  "y": 60,
-                  "name": "motif-goutte",
-                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "y": 68,
+                  "name": "motif-grappe",
+                  "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z m-14 20c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z m28 0c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
                     0,
                     0,
-                    24,
-                    24
+                    56,
+                    44
                   ],
                   "width": 64,
-                  "height": 64,
+                  "height": 50,
                   "stroke": "$encre",
                   "strokeWidth": "$trait",
                   "strokeLinejoin": "round"
@@ -5421,13 +5442,13 @@
                   "id": "R1rSg",
                   "x": 42,
                   "y": 60,
-                  "name": "motif-goutte",
-                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "name": "motif-volute",
+                  "geometry": "M10 37c-1-20 44-23.5 44.5-3.5 0.3 16.5-29.5 19.5-30 5-0.3-12 19-13 19.3-4",
                   "viewBox": [
                     0,
                     0,
-                    24,
-                    24
+                    64,
+                    64
                   ],
                   "width": 64,
                   "height": 64,
@@ -5463,18 +5484,18 @@
                 {
                   "type": "path",
                   "id": "Jf5On",
-                  "x": 42,
+                  "x": 45,
                   "y": 60,
-                  "name": "motif-goutte",
-                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "name": "motif-porte-cles",
+                  "geometry": "M32 4.6c11-0.2 20 8.6 20 19.8 0 11.2-9 20-20 19.8-11 0.2-20-8.8-20-19.8 0-11 9-19.8 20-19.8z m0 39.6c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
                     0,
                     0,
-                    24,
-                    24
+                    64,
+                    66
                   ],
-                  "width": 64,
-                  "height": 64,
+                  "width": 58,
+                  "height": 60,
                   "stroke": "$encre",
                   "strokeWidth": "$trait",
                   "strokeLinejoin": "round"
@@ -5515,9 +5536,9 @@
           "layout": "vertical",
           "gap": "$space-32",
           "padding": [
-            "$space-48",
+            "$space-64",
             "$marge-page",
-            0,
+            "$space-12",
             "$marge-page"
           ],
           "alignItems": "center",
@@ -5721,6 +5742,62 @@
                   "fontWeight": "$graisse-normale"
                 }
               ]
+            },
+            {
+              "type": "frame",
+              "id": "gUvEb",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": -20,
+              "name": "filigrane-hero-mobile",
+              "context": "Filigrane mobile (passe 20/20 du 2026-08-19) : DEUX formes seulement — un cœur et une goutte, les deux en remplissage translucide (#f7a8d866 / #7fd8d866) puisqu'elles portent seules la signature ici. Mêmes règles que la piste D desktop : chute en place UNE fois au chargement (translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s), hors chemin du LCP ; prefers-reduced-motion : posées d'emblée. Jamais de boucle.",
+              "width": 390,
+              "height": 380,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "path",
+                  "id": "pzh9U",
+                  "x": 346,
+                  "y": 34,
+                  "name": "filigrane-cœur-1",
+                  "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                  "viewBox": [
+                    0,
+                    0,
+                    50,
+                    50
+                  ],
+                  "fill": "#f7a8d866",
+                  "width": 22,
+                  "height": 22,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                },
+                {
+                  "type": "path",
+                  "id": "NHnsc",
+                  "x": 26,
+                  "y": 312,
+                  "name": "filigrane-goutte-2",
+                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "viewBox": [
+                    0,
+                    0,
+                    24,
+                    24
+                  ],
+                  "fill": "#7fd8d866",
+                  "width": 20,
+                  "height": 20,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5,
+                  "strokeLinejoin": "round",
+                  "strokeLinecap": "round"
+                }
+              ]
             }
           ]
         },
@@ -5814,14 +5891,14 @@
                   "type": "path",
                   "id": "I1S5fQ",
                   "x": 54,
-                  "y": 73,
-                  "name": "motif-goutte",
-                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "y": 75,
+                  "name": "motif-anneau",
+                  "geometry": "M32 6.4c13.6-0.6 25.6 10.8 26 25.6 0.4 14.8-12 26.2-26 25.6-14 0.6-25.8-11-26-25.6-0.2-14.6 12.4-25.8 26-25.6z",
                   "viewBox": [
                     0,
                     0,
-                    24,
-                    24
+                    64,
+                    64
                   ],
                   "width": 60,
                   "height": 60,
@@ -5954,6 +6031,20 @@
                       "name": "photo/creation-porte-creoles-raisin",
                       "fill": "$or"
                     },
+                    "v8zBX": {
+                      "name": "motif-grappe",
+                      "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M14 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M42 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        56,
+                        44
+                      ],
+                      "x": 91,
+                      "y": 134,
+                      "width": 88,
+                      "height": 69
+                    },
                     "XN3JE": {
                       "enabled": true,
                       "fill": "$papier"
@@ -5980,6 +6071,20 @@
                     "e98ER3": {
                       "name": "photo/creation-bague-nuit-etoilee",
                       "fill": "$or"
+                    },
+                    "v8zBX": {
+                      "name": "motif-cabochon",
+                      "geometry": "M32 4.5 C46.8 4.2 57.6 16.4 58 32.5 C58.2 49 46.4 59.8 32 59.5 C17.6 59.8 6 49 6 32.5 C6.2 16.2 17.4 4.6 32 4.5 Z M32 15.8 C40.8 15.6 47 22.6 47.2 32.6 C47.4 42.6 40.6 48.8 32 48.6 C23.4 48.8 16.8 42.4 17 32.6 C17.2 22.8 23.2 15.9 32 15.8 Z",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        64
+                      ],
+                      "x": 91,
+                      "y": 125,
+                      "width": 88,
+                      "height": 88
                     },
                     "XN3JE": {
                       "enabled": true,
@@ -6038,6 +6143,20 @@
                       "name": "photo/creation-chaine-cheveux-etoile",
                       "fill": "$or"
                     },
+                    "v8zBX": {
+                      "name": "motif-cascade",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M28 20.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M44 38.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        56,
+                        60
+                      ],
+                      "x": 97,
+                      "y": 128,
+                      "width": 76,
+                      "height": 81
+                    },
                     "vwijz": {
                       "content": "Chaîne de cheveux étoile filante"
                     },
@@ -6058,6 +6177,20 @@
                       "name": "photo/creation-porte-chaine-corps-goutte",
                       "fill": "$or"
                     },
+                    "v8zBX": {
+                      "name": "motif-goutte-longue",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "x": 107,
+                      "y": 119,
+                      "width": 56,
+                      "height": 100
+                    },
                     "vwijz": {
                       "content": "Chaîne de corps goutte de pluie"
                     },
@@ -6077,6 +6210,20 @@
                     "e98ER3": {
                       "name": "photo/creation-papillou-tourbillon",
                       "fill": "$or"
+                    },
+                    "v8zBX": {
+                      "name": "motif-volute",
+                      "geometry": "M10 37 C9 17 54 13.5 54.5 33.5 C54.8 50 25 53 24.5 38.5 C24.2 26.5 43.5 25.5 43.8 34.5",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        64
+                      ],
+                      "x": 91,
+                      "y": 125,
+                      "width": 88,
+                      "height": 88
                     },
                     "hmvFr": {
                       "enabled": true
@@ -6114,6 +6261,20 @@
                     "e98ER3": {
                       "name": "photo/creation-echelle-porte-cles-nenuphar",
                       "fill": "$or"
+                    },
+                    "v8zBX": {
+                      "name": "motif-porte-cles",
+                      "geometry": "M32 4.6 C43 4.4 52 13.2 52 24.4 C52 35.6 43 44.4 32 44.2 C21 44.4 12 35.4 12 24.4 C12 13.4 21 4.6 32 4.6 Z M32 44.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        66
+                      ],
+                      "x": 93,
+                      "y": 125,
+                      "width": 84,
+                      "height": 87
                     },
                     "vwijz": {
                       "content": "Porte-clés nénuphar"
@@ -6274,8 +6435,18 @@
                       "height": 209
                     },
                     "v8zBX": {
-                      "x": 35,
-                      "y": 56
+                      "x": 40,
+                      "y": 70,
+                      "name": "motif-grappe",
+                      "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M14 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M42 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        56,
+                        44
+                      ],
+                      "width": 88,
+                      "height": 69
                     },
                     "XN3JE": {
                       "enabled": true,
@@ -6318,8 +6489,18 @@
                       "height": 209
                     },
                     "v8zBX": {
-                      "x": 35,
-                      "y": 56
+                      "x": 40,
+                      "y": 60,
+                      "name": "motif-cabochon",
+                      "geometry": "M32 4.5 C46.8 4.2 57.6 16.4 58 32.5 C58.2 49 46.4 59.8 32 59.5 C17.6 59.8 6 49 6 32.5 C6.2 16.2 17.4 4.6 32 4.5 Z M32 15.8 C40.8 15.6 47 22.6 47.2 32.6 C47.4 42.6 40.6 48.8 32 48.6 C23.4 48.8 16.8 42.4 17 32.6 C17.2 22.8 23.2 15.9 32 15.8 Z",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        64
+                      ],
+                      "width": 88,
+                      "height": 88
                     },
                     "XN3JE": {
                       "enabled": true,
@@ -6390,8 +6571,18 @@
                       "height": 209
                     },
                     "v8zBX": {
-                      "x": 35,
-                      "y": 56
+                      "x": 45,
+                      "y": 64,
+                      "name": "motif-cascade",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M28 20.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M44 38.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        56,
+                        60
+                      ],
+                      "width": 76,
+                      "height": 81
                     },
                     "QoNB6": {
                       "x": 111,
@@ -6418,8 +6609,18 @@
                       "height": 209
                     },
                     "v8zBX": {
-                      "x": 35,
-                      "y": 56
+                      "x": 55,
+                      "y": 54,
+                      "name": "motif-goutte-longue",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 56,
+                      "height": 100
                     },
                     "QoNB6": {
                       "x": 111,
@@ -6455,8 +6656,18 @@
                       "height": 209
                     },
                     "v8zBX": {
-                      "x": 35,
-                      "y": 56
+                      "x": 40,
+                      "y": 60,
+                      "name": "motif-volute",
+                      "geometry": "M10 37 C9 17 54 13.5 54.5 33.5 C54.8 50 25 53 24.5 38.5 C24.2 26.5 43.5 25.5 43.8 34.5",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        64
+                      ],
+                      "width": 88,
+                      "height": 88
                     },
                     "hmvFr": {
                       "enabled": true,
@@ -6502,8 +6713,18 @@
                       "height": 209
                     },
                     "v8zBX": {
-                      "x": 35,
-                      "y": 56
+                      "x": 42,
+                      "y": 61,
+                      "name": "motif-porte-cles",
+                      "geometry": "M32 4.6 C43 4.4 52 13.2 52 24.4 C52 35.6 43 44.4 32 44.2 C21 44.4 12 35.4 12 24.4 C12 13.4 21 4.6 32 4.6 Z M32 44.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        66
+                      ],
+                      "width": 84,
+                      "height": 87
                     },
                     "QoNB6": {
                       "x": 111,
@@ -6652,6 +6873,18 @@
                   "descendants": {
                     "c06t5": {
                       "name": "photo/collection-jardin-01"
+                    },
+                    "AjuQK": {
+                      "name": "motif-grappe",
+                      "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M14 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M42 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        56,
+                        44
+                      ],
+                      "width": 84,
+                      "height": 66
                     },
                     "gLooO": {
                       "type": "frame",
@@ -6809,6 +7042,18 @@
                     "c06t5": {
                       "name": "photo/collection-tableaux-01"
                     },
+                    "AjuQK": {
+                      "name": "motif-cadre",
+                      "geometry": "M15.5 9.2 L48.5 9 Q55 9.2 55 15.5 L55.2 48.5 Q55 55 48.5 55 L15.5 55.2 Q9 55 9.2 48.5 L9 15.5 Q9.2 9.2 15.5 9.2 Z M17.5 17.3 L46.7 17.2 L46.8 46.6 L17.4 46.7 Z",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        64
+                      ],
+                      "width": 72,
+                      "height": 72
+                    },
                     "K7L1V": {
                       "name": "photo/collection-tableaux-02"
                     },
@@ -6881,6 +7126,18 @@
                     },
                     "c06t5": {
                       "name": "photo/collection-ciel-01"
+                    },
+                    "AjuQK": {
+                      "name": "motif-cabochon",
+                      "geometry": "M32 4.5 C46.8 4.2 57.6 16.4 58 32.5 C58.2 49 46.4 59.8 32 59.5 C17.6 59.8 6 49 6 32.5 C6.2 16.2 17.4 4.6 32 4.5 Z M32 15.8 C40.8 15.6 47 22.6 47.2 32.6 C47.4 42.6 40.6 48.8 32 48.6 C23.4 48.8 16.8 42.4 17 32.6 C17.2 22.8 23.2 15.9 32 15.8 Z",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        64
+                      ],
+                      "width": 72,
+                      "height": 72
                     },
                     "K7L1V": {
                       "name": "photo/collection-ciel-02"
@@ -7096,6 +7353,18 @@
                 "c06t5": {
                   "name": "photo/collection-jardin-01"
                 },
+                "AjuQK": {
+                  "name": "motif-grappe",
+                  "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M14 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M42 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "viewBox": [
+                    0,
+                    0,
+                    56,
+                    44
+                  ],
+                  "width": 84,
+                  "height": 66
+                },
                 "gLooO": {
                   "type": "frame",
                   "id": "hr5sm",
@@ -7252,6 +7521,18 @@
                 "c06t5": {
                   "name": "photo/collection-ciel-01"
                 },
+                "AjuQK": {
+                  "name": "motif-cabochon",
+                  "geometry": "M32 4.5 C46.8 4.2 57.6 16.4 58 32.5 C58.2 49 46.4 59.8 32 59.5 C17.6 59.8 6 49 6 32.5 C6.2 16.2 17.4 4.6 32 4.5 Z M32 15.8 C40.8 15.6 47 22.6 47.2 32.6 C47.4 42.6 40.6 48.8 32 48.6 C23.4 48.8 16.8 42.4 17 32.6 C17.2 22.8 23.2 15.9 32 15.8 Z",
+                  "viewBox": [
+                    0,
+                    0,
+                    64,
+                    64
+                  ],
+                  "width": 72,
+                  "height": 72
+                },
                 "K7L1V": {
                   "name": "photo/collection-ciel-02"
                 },
@@ -7369,6 +7650,18 @@
                 },
                 "c06t5": {
                   "name": "photo/collection-tableaux-01"
+                },
+                "AjuQK": {
+                  "name": "motif-cadre",
+                  "geometry": "M15.5 9.2 L48.5 9 Q55 9.2 55 15.5 L55.2 48.5 Q55 55 48.5 55 L15.5 55.2 Q9 55 9.2 48.5 L9 15.5 Q9.2 9.2 15.5 9.2 Z M17.5 17.3 L46.7 17.2 L46.8 46.6 L17.4 46.7 Z",
+                  "viewBox": [
+                    0,
+                    0,
+                    64,
+                    64
+                  ],
+                  "width": 72,
+                  "height": 72
                 },
                 "K7L1V": {
                   "name": "photo/collection-tableaux-02"
@@ -11923,18 +12216,18 @@
                     {
                       "type": "path",
                       "id": "P4g8i",
-                      "x": 175,
-                      "y": 205,
-                      "name": "tracé-goutte",
-                      "geometry": "M50 0c0 0 50 62 50 105 0 28-22 50-50 50-28 0-50-22-50-50 0-43 50-105 50-105z",
+                      "x": 160,
+                      "y": 222,
+                      "name": "tracé-cœur",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
                       "viewBox": [
                         0,
                         0,
-                        100,
-                        155
+                        50,
+                        50
                       ],
-                      "width": 90,
-                      "height": 140,
+                      "width": 120,
+                      "height": 108,
                       "stroke": "$encre",
                       "strokeWidth": "$trait"
                     }
@@ -12731,6 +13024,7 @@
                   "type": "frame",
                   "id": "hYOXv",
                   "name": "sortie",
+                  "context": "En code (passe 20/20 du 2026-08-19) : « Lire l'histoire de l'atelier » ne se rend QUE lorsque la page atelier existe (ROUTES.SHOP.ABOUT, /a-propos — constante déjà déclarée, page pas encore écrite). JAMAIS de lien mort : tant que la page n'existe pas, la section se termine sans bouton — le débord de la FAQ est la sortie (un bouton n'est pas obligatoire, grille § 3.4). Garder ce libellé quand la page arrive (tour 5).",
                   "width": "fill_container",
                   "children": [
                     {
@@ -12844,18 +13138,18 @@
                 {
                   "type": "path",
                   "id": "OZUch",
-                  "x": 139,
-                  "y": 163,
-                  "name": "tracé-goutte",
-                  "geometry": "M50 0c0 0 50 62 50 105 0 28-22 50-50 50-28 0-50-22-50-50 0-43 50-105 50-105z",
+                  "x": 127,
+                  "y": 176,
+                  "name": "tracé-cœur",
+                  "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
                   "viewBox": [
                     0,
                     0,
-                    100,
-                    155
+                    50,
+                    50
                   ],
-                  "width": 72,
-                  "height": 112,
+                  "width": 96,
+                  "height": 86,
                   "stroke": "$encre",
                   "strokeWidth": "$trait"
                 }
@@ -13258,6 +13552,7 @@
           "type": "frame",
           "id": "DYYQj",
           "name": "sortie",
+          "context": "En code (passe 20/20 du 2026-08-19) : « Lire l'histoire de l'atelier » ne se rend QUE lorsque la page atelier existe (ROUTES.SHOP.ABOUT, /a-propos — constante déjà déclarée, page pas encore écrite). JAMAIS de lien mort : tant que la page n'existe pas, la section se termine sans bouton — le débord de la FAQ est la sortie (un bouton n'est pas obligatoire, grille § 3.4). Garder ce libellé quand la page arrive (tour 5).",
           "width": "fill_container",
           "justifyContent": "center",
           "children": [
@@ -13736,6 +14031,7 @@
                   "type": "frame",
                   "id": "YATPy",
                   "name": "sortie",
+                  "context": "En code : « Écris-moi un message » = mailto:BRAND.contact.email (aucune page contact n'existe, le contact du site est l'e-mail — même cible que le pied de page). Pas de formulaire à inventer.",
                   "gap": "$space-8",
                   "padding": [
                     "$space-32",
@@ -14222,6 +14518,7 @@
           "type": "frame",
           "id": "SNE9F",
           "name": "sortie",
+          "context": "En code : « Écris-moi un message » = mailto:BRAND.contact.email (aucune page contact n'existe, le contact du site est l'e-mail — même cible que le pied de page). Pas de formulaire à inventer.",
           "width": "fill_container",
           "layout": "vertical",
           "alignItems": "center",
@@ -15294,7 +15591,7 @@
               "padding": [
                 "$space-64",
                 "$marge-page",
-                0,
+                "$space-24",
                 "$marge-page"
               ],
               "alignItems": "center",
@@ -15306,7 +15603,7 @@
                   "x": 0,
                   "y": -50,
                   "name": "filigrane-hero",
-                  "context": "D — la pluie se pose (arbitrage tranché le 2026-08-19, Adrien) : chaque forme tombe en place UNE fois au chargement — translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s (grammaire du micro-balancement des pampilles). prefers-reduced-motion : statique. Jamais de boucle. Desktop seulement.",
+                  "context": "D — la pluie se pose (arbitrage tranché le 2026-08-19, Adrien) : chaque forme tombe en place UNE fois au chargement — translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s (grammaire du micro-balancement des pampilles). prefers-reduced-motion : statique. Jamais de boucle. Desktop : ces 5 formes ; MOBILE (passe 20/20 du 2026-08-19) : 2 formes — cœur et goutte colorés, cf. filigrane-hero-mobile du hero mobile — mêmes règles.",
                   "width": 1440,
                   "height": 455,
                   "layout": "none",
@@ -15738,13 +16035,13 @@
                       "id": "NPMjb",
                       "x": 42,
                       "y": 60,
-                      "name": "motif-goutte",
-                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "name": "motif-anneau",
+                      "geometry": "M32 6.4c13.6-0.6 25.6 10.8 26 25.6 0.4 14.8-12 26.2-26 25.6-14 0.6-25.8-11-26-25.6-0.2-14.6 12.4-25.8 26-25.6z",
                       "viewBox": [
                         0,
                         0,
-                        24,
-                        24
+                        64,
+                        64
                       ],
                       "width": 64,
                       "height": 64,
@@ -15782,13 +16079,13 @@
                       "id": "f0wtz",
                       "x": 42,
                       "y": 60,
-                      "name": "motif-goutte",
-                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "name": "motif-cabochon",
+                      "geometry": "M32 4.5c14.8-0.3 25.6 11.9 26 28 0.2 16.5-11.6 27.3-26 27-14.4 0.3-26-10.5-26-27 0.2-16.3 11.4-27.9 26-28z m0 11.3c8.8-0.2 15 6.8 15.2 16.8 0.2 10-6.6 16.2-15.2 16-8.6 0.2-15.2-6.2-15-16 0.2-9.8 6.2-16.7 15-16.8z",
                       "viewBox": [
                         0,
                         0,
-                        24,
-                        24
+                        64,
+                        64
                       ],
                       "width": 64,
                       "height": 64,
@@ -15825,17 +16122,17 @@
                       "type": "path",
                       "id": "xSFlX",
                       "x": 42,
-                      "y": 60,
-                      "name": "motif-goutte",
-                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "y": 68,
+                      "name": "motif-grappe",
+                      "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z m-14 20c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z m28 0c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
                         0,
                         0,
-                        24,
-                        24
+                        56,
+                        44
                       ],
                       "width": 64,
-                      "height": 64,
+                      "height": 50,
                       "stroke": "$encre",
                       "strokeWidth": "$trait",
                       "strokeLinejoin": "round"
@@ -15914,13 +16211,13 @@
                       "id": "F9CJv",
                       "x": 42,
                       "y": 60,
-                      "name": "motif-goutte",
-                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "name": "motif-volute",
+                      "geometry": "M10 37c-1-20 44-23.5 44.5-3.5 0.3 16.5-29.5 19.5-30 5-0.3-12 19-13 19.3-4",
                       "viewBox": [
                         0,
                         0,
-                        24,
-                        24
+                        64,
+                        64
                       ],
                       "width": 64,
                       "height": 64,
@@ -15956,18 +16253,18 @@
                     {
                       "type": "path",
                       "id": "JjJOY",
-                      "x": 42,
+                      "x": 45,
                       "y": 60,
-                      "name": "motif-goutte",
-                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "name": "motif-porte-cles",
+                      "geometry": "M32 4.6c11-0.2 20 8.6 20 19.8 0 11.2-9 20-20 19.8-11 0.2-20-8.8-20-19.8 0-11 9-19.8 20-19.8z m0 39.6c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
                         0,
                         0,
-                        24,
-                        24
+                        64,
+                        66
                       ],
-                      "width": 64,
-                      "height": 64,
+                      "width": 58,
+                      "height": 60,
                       "stroke": "$encre",
                       "strokeWidth": "$trait",
                       "strokeLinejoin": "round"
@@ -16086,6 +16383,20 @@
                           "name": "photo/creation-porte-creoles-raisin",
                           "fill": "$or"
                         },
+                        "v8zBX": {
+                          "name": "motif-grappe",
+                          "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M14 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M42 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            56,
+                            44
+                          ],
+                          "x": 91,
+                          "y": 134,
+                          "width": 88,
+                          "height": 69
+                        },
                         "XN3JE": {
                           "enabled": true,
                           "fill": "$papier"
@@ -16112,6 +16423,20 @@
                         "e98ER3": {
                           "name": "photo/creation-bague-nuit-etoilee",
                           "fill": "$or"
+                        },
+                        "v8zBX": {
+                          "name": "motif-cabochon",
+                          "geometry": "M32 4.5 C46.8 4.2 57.6 16.4 58 32.5 C58.2 49 46.4 59.8 32 59.5 C17.6 59.8 6 49 6 32.5 C6.2 16.2 17.4 4.6 32 4.5 Z M32 15.8 C40.8 15.6 47 22.6 47.2 32.6 C47.4 42.6 40.6 48.8 32 48.6 C23.4 48.8 16.8 42.4 17 32.6 C17.2 22.8 23.2 15.9 32 15.8 Z",
+                          "viewBox": [
+                            0,
+                            0,
+                            64,
+                            64
+                          ],
+                          "x": 91,
+                          "y": 125,
+                          "width": 88,
+                          "height": 88
                         },
                         "XN3JE": {
                           "enabled": true,
@@ -16170,6 +16495,20 @@
                           "name": "photo/creation-chaine-cheveux-etoile",
                           "fill": "$or"
                         },
+                        "v8zBX": {
+                          "name": "motif-cascade",
+                          "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M28 20.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M44 38.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            56,
+                            60
+                          ],
+                          "x": 97,
+                          "y": 128,
+                          "width": 76,
+                          "height": 81
+                        },
                         "vwijz": {
                           "content": "Chaîne de cheveux étoile filante"
                         },
@@ -16190,6 +16529,20 @@
                           "name": "photo/creation-porte-chaine-corps-goutte",
                           "fill": "$or"
                         },
+                        "v8zBX": {
+                          "name": "motif-goutte-longue",
+                          "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            24,
+                            24
+                          ],
+                          "x": 107,
+                          "y": 119,
+                          "width": 56,
+                          "height": 100
+                        },
                         "vwijz": {
                           "content": "Chaîne de corps goutte de pluie"
                         },
@@ -16209,6 +16562,20 @@
                         "e98ER3": {
                           "name": "photo/creation-papillou-tourbillon",
                           "fill": "$or"
+                        },
+                        "v8zBX": {
+                          "name": "motif-volute",
+                          "geometry": "M10 37 C9 17 54 13.5 54.5 33.5 C54.8 50 25 53 24.5 38.5 C24.2 26.5 43.5 25.5 43.8 34.5",
+                          "viewBox": [
+                            0,
+                            0,
+                            64,
+                            64
+                          ],
+                          "x": 91,
+                          "y": 125,
+                          "width": 88,
+                          "height": 88
                         },
                         "hmvFr": {
                           "enabled": true
@@ -16246,6 +16613,20 @@
                         "e98ER3": {
                           "name": "photo/creation-echelle-porte-cles-nenuphar",
                           "fill": "$or"
+                        },
+                        "v8zBX": {
+                          "name": "motif-porte-cles",
+                          "geometry": "M32 4.6 C43 4.4 52 13.2 52 24.4 C52 35.6 43 44.4 32 44.2 C21 44.4 12 35.4 12 24.4 C12 13.4 21 4.6 32 4.6 Z M32 44.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            64,
+                            66
+                          ],
+                          "x": 93,
+                          "y": 125,
+                          "width": 84,
+                          "height": 87
                         },
                         "vwijz": {
                           "content": "Porte-clés nénuphar"
@@ -16385,6 +16766,18 @@
                       "descendants": {
                         "c06t5": {
                           "name": "photo/collection-jardin-01"
+                        },
+                        "AjuQK": {
+                          "name": "motif-grappe",
+                          "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M14 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M42 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            56,
+                            44
+                          ],
+                          "width": 84,
+                          "height": 66
                         },
                         "gLooO": {
                           "type": "frame",
@@ -16542,6 +16935,18 @@
                         "c06t5": {
                           "name": "photo/collection-tableaux-01"
                         },
+                        "AjuQK": {
+                          "name": "motif-cadre",
+                          "geometry": "M15.5 9.2 L48.5 9 Q55 9.2 55 15.5 L55.2 48.5 Q55 55 48.5 55 L15.5 55.2 Q9 55 9.2 48.5 L9 15.5 Q9.2 9.2 15.5 9.2 Z M17.5 17.3 L46.7 17.2 L46.8 46.6 L17.4 46.7 Z",
+                          "viewBox": [
+                            0,
+                            0,
+                            64,
+                            64
+                          ],
+                          "width": 72,
+                          "height": 72
+                        },
                         "K7L1V": {
                           "name": "photo/collection-tableaux-02"
                         },
@@ -16614,6 +17019,18 @@
                         },
                         "c06t5": {
                           "name": "photo/collection-ciel-01"
+                        },
+                        "AjuQK": {
+                          "name": "motif-cabochon",
+                          "geometry": "M32 4.5 C46.8 4.2 57.6 16.4 58 32.5 C58.2 49 46.4 59.8 32 59.5 C17.6 59.8 6 49 6 32.5 C6.2 16.2 17.4 4.6 32 4.5 Z M32 15.8 C40.8 15.6 47 22.6 47.2 32.6 C47.4 42.6 40.6 48.8 32 48.6 C23.4 48.8 16.8 42.4 17 32.6 C17.2 22.8 23.2 15.9 32 15.8 Z",
+                          "viewBox": [
+                            0,
+                            0,
+                            64,
+                            64
+                          ],
+                          "width": 72,
+                          "height": 72
                         },
                         "K7L1V": {
                           "name": "photo/collection-ciel-02"
@@ -19092,18 +19509,18 @@
                         {
                           "type": "path",
                           "id": "dHMbL",
-                          "x": 175,
-                          "y": 205,
-                          "name": "tracé-goutte",
-                          "geometry": "M50 0c0 0 50 62 50 105 0 28-22 50-50 50-28 0-50-22-50-50 0-43 50-105 50-105z",
+                          "x": 160,
+                          "y": 222,
+                          "name": "tracé-cœur",
+                          "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
                           "viewBox": [
                             0,
                             0,
-                            100,
-                            155
+                            50,
+                            50
                           ],
-                          "width": 90,
-                          "height": 140,
+                          "width": 120,
+                          "height": 108,
                           "stroke": "$encre",
                           "strokeWidth": "$trait"
                         }
@@ -19900,6 +20317,7 @@
                       "type": "frame",
                       "id": "U7rWDJ",
                       "name": "sortie",
+                      "context": "En code (passe 20/20 du 2026-08-19) : « Lire l'histoire de l'atelier » ne se rend QUE lorsque la page atelier existe (ROUTES.SHOP.ABOUT, /a-propos — constante déjà déclarée, page pas encore écrite). JAMAIS de lien mort : tant que la page n'existe pas, la section se termine sans bouton — le débord de la FAQ est la sortie (un bouton n'est pas obligatoire, grille § 3.4). Garder ce libellé quand la page arrive (tour 5).",
                       "width": "fill_container",
                       "children": [
                         {
@@ -20403,6 +20821,7 @@
                       "type": "frame",
                       "id": "vnr0y",
                       "name": "sortie",
+                      "context": "En code : « Écris-moi un message » = mailto:BRAND.contact.email (aucune page contact n'existe, le contact du site est l'e-mail — même cible que le pied de page). Pas de formulaire à inventer.",
                       "gap": "$space-8",
                       "padding": [
                         "$space-32",
@@ -20517,9 +20936,9 @@
               "layout": "vertical",
               "gap": "$space-32",
               "padding": [
-                "$space-48",
+                "$space-64",
                 "$marge-page",
-                0,
+                "$space-12",
                 "$marge-page"
               ],
               "alignItems": "center",
@@ -20723,6 +21142,62 @@
                       "fontWeight": "$graisse-normale"
                     }
                   ]
+                },
+                {
+                  "type": "frame",
+                  "id": "NyRi9",
+                  "layoutPosition": "absolute",
+                  "x": 0,
+                  "y": -20,
+                  "name": "filigrane-hero-mobile",
+                  "context": "Filigrane mobile (passe 20/20 du 2026-08-19) : DEUX formes seulement — un cœur et une goutte, les deux en remplissage translucide (#f7a8d866 / #7fd8d866) puisqu'elles portent seules la signature ici. Mêmes règles que la piste D desktop : chute en place UNE fois au chargement (translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s), hors chemin du LCP ; prefers-reduced-motion : posées d'emblée. Jamais de boucle.",
+                  "width": 390,
+                  "height": 380,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "fGhaI",
+                      "x": 346,
+                      "y": 34,
+                      "name": "filigrane-cœur-1",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "fill": "#f7a8d866",
+                      "width": 22,
+                      "height": 22,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5,
+                      "strokeLinejoin": "round",
+                      "strokeLinecap": "round"
+                    },
+                    {
+                      "type": "path",
+                      "id": "MPF7n",
+                      "x": 26,
+                      "y": 312,
+                      "name": "filigrane-goutte-2",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "fill": "#7fd8d866",
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5,
+                      "strokeLinejoin": "round",
+                      "strokeLinecap": "round"
+                    }
+                  ]
                 }
               ]
             },
@@ -20816,14 +21291,14 @@
                       "type": "path",
                       "id": "OZSAX",
                       "x": 54,
-                      "y": 73,
-                      "name": "motif-goutte",
-                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "y": 75,
+                      "name": "motif-anneau",
+                      "geometry": "M32 6.4c13.6-0.6 25.6 10.8 26 25.6 0.4 14.8-12 26.2-26 25.6-14 0.6-25.8-11-26-25.6-0.2-14.6 12.4-25.8 26-25.6z",
                       "viewBox": [
                         0,
                         0,
-                        24,
-                        24
+                        64,
+                        64
                       ],
                       "width": 60,
                       "height": 60,
@@ -20969,8 +21444,18 @@
                           "height": 209
                         },
                         "v8zBX": {
-                          "x": 35,
-                          "y": 56
+                          "x": 40,
+                          "y": 70,
+                          "name": "motif-grappe",
+                          "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M14 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M42 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            56,
+                            44
+                          ],
+                          "width": 88,
+                          "height": 69
                         },
                         "XN3JE": {
                           "enabled": true,
@@ -21013,8 +21498,18 @@
                           "height": 209
                         },
                         "v8zBX": {
-                          "x": 35,
-                          "y": 56
+                          "x": 40,
+                          "y": 60,
+                          "name": "motif-cabochon",
+                          "geometry": "M32 4.5 C46.8 4.2 57.6 16.4 58 32.5 C58.2 49 46.4 59.8 32 59.5 C17.6 59.8 6 49 6 32.5 C6.2 16.2 17.4 4.6 32 4.5 Z M32 15.8 C40.8 15.6 47 22.6 47.2 32.6 C47.4 42.6 40.6 48.8 32 48.6 C23.4 48.8 16.8 42.4 17 32.6 C17.2 22.8 23.2 15.9 32 15.8 Z",
+                          "viewBox": [
+                            0,
+                            0,
+                            64,
+                            64
+                          ],
+                          "width": 88,
+                          "height": 88
                         },
                         "XN3JE": {
                           "enabled": true,
@@ -21085,8 +21580,18 @@
                           "height": 209
                         },
                         "v8zBX": {
-                          "x": 35,
-                          "y": 56
+                          "x": 45,
+                          "y": 64,
+                          "name": "motif-cascade",
+                          "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M28 20.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M44 38.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            56,
+                            60
+                          ],
+                          "width": 76,
+                          "height": 81
                         },
                         "QoNB6": {
                           "x": 111,
@@ -21113,8 +21618,18 @@
                           "height": 209
                         },
                         "v8zBX": {
-                          "x": 35,
-                          "y": 56
+                          "x": 55,
+                          "y": 54,
+                          "name": "motif-goutte-longue",
+                          "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            24,
+                            24
+                          ],
+                          "width": 56,
+                          "height": 100
                         },
                         "QoNB6": {
                           "x": 111,
@@ -21150,8 +21665,18 @@
                           "height": 209
                         },
                         "v8zBX": {
-                          "x": 35,
-                          "y": 56
+                          "x": 40,
+                          "y": 60,
+                          "name": "motif-volute",
+                          "geometry": "M10 37 C9 17 54 13.5 54.5 33.5 C54.8 50 25 53 24.5 38.5 C24.2 26.5 43.5 25.5 43.8 34.5",
+                          "viewBox": [
+                            0,
+                            0,
+                            64,
+                            64
+                          ],
+                          "width": 88,
+                          "height": 88
                         },
                         "hmvFr": {
                           "enabled": true,
@@ -21197,8 +21722,18 @@
                           "height": 209
                         },
                         "v8zBX": {
-                          "x": 35,
-                          "y": 56
+                          "x": 42,
+                          "y": 61,
+                          "name": "motif-porte-cles",
+                          "geometry": "M32 4.6 C43 4.4 52 13.2 52 24.4 C52 35.6 43 44.4 32 44.2 C21 44.4 12 35.4 12 24.4 C12 13.4 21 4.6 32 4.6 Z M32 44.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                          "viewBox": [
+                            0,
+                            0,
+                            64,
+                            66
+                          ],
+                          "width": 84,
+                          "height": 87
                         },
                         "QoNB6": {
                           "x": 111,
@@ -21326,6 +21861,18 @@
                     },
                     "c06t5": {
                       "name": "photo/collection-jardin-01"
+                    },
+                    "AjuQK": {
+                      "name": "motif-grappe",
+                      "geometry": "M28 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M14 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z M42 22.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        56,
+                        44
+                      ],
+                      "width": 84,
+                      "height": 66
                     },
                     "gLooO": {
                       "type": "frame",
@@ -21483,6 +22030,18 @@
                     "c06t5": {
                       "name": "photo/collection-ciel-01"
                     },
+                    "AjuQK": {
+                      "name": "motif-cabochon",
+                      "geometry": "M32 4.5 C46.8 4.2 57.6 16.4 58 32.5 C58.2 49 46.4 59.8 32 59.5 C17.6 59.8 6 49 6 32.5 C6.2 16.2 17.4 4.6 32 4.5 Z M32 15.8 C40.8 15.6 47 22.6 47.2 32.6 C47.4 42.6 40.6 48.8 32 48.6 C23.4 48.8 16.8 42.4 17 32.6 C17.2 22.8 23.2 15.9 32 15.8 Z",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        64
+                      ],
+                      "width": 72,
+                      "height": 72
+                    },
                     "K7L1V": {
                       "name": "photo/collection-ciel-02"
                     },
@@ -21600,6 +22159,18 @@
                     },
                     "c06t5": {
                       "name": "photo/collection-tableaux-01"
+                    },
+                    "AjuQK": {
+                      "name": "motif-cadre",
+                      "geometry": "M15.5 9.2 L48.5 9 Q55 9.2 55 15.5 L55.2 48.5 Q55 55 48.5 55 L15.5 55.2 Q9 55 9.2 48.5 L9 15.5 Q9.2 9.2 15.5 9.2 Z M17.5 17.3 L46.7 17.2 L46.8 46.6 L17.4 46.7 Z",
+                      "viewBox": [
+                        0,
+                        0,
+                        64,
+                        64
+                      ],
+                      "width": 72,
+                      "height": 72
                     },
                     "K7L1V": {
                       "name": "photo/collection-tableaux-02"
@@ -23991,18 +24562,18 @@
                     {
                       "type": "path",
                       "id": "zwgWb",
-                      "x": 139,
-                      "y": 163,
-                      "name": "tracé-goutte",
-                      "geometry": "M50 0c0 0 50 62 50 105 0 28-22 50-50 50-28 0-50-22-50-50 0-43 50-105 50-105z",
+                      "x": 127,
+                      "y": 176,
+                      "name": "tracé-cœur",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
                       "viewBox": [
                         0,
                         0,
-                        100,
-                        155
+                        50,
+                        50
                       ],
-                      "width": 72,
-                      "height": 112,
+                      "width": 96,
+                      "height": 86,
                       "stroke": "$encre",
                       "strokeWidth": "$trait"
                     }
@@ -24405,6 +24976,7 @@
               "type": "frame",
               "id": "ixy5L",
               "name": "sortie",
+              "context": "En code (passe 20/20 du 2026-08-19) : « Lire l'histoire de l'atelier » ne se rend QUE lorsque la page atelier existe (ROUTES.SHOP.ABOUT, /a-propos — constante déjà déclarée, page pas encore écrite). JAMAIS de lien mort : tant que la page n'existe pas, la section se termine sans bouton — le débord de la FAQ est la sortie (un bouton n'est pas obligatoire, grille § 3.4). Garder ce libellé quand la page arrive (tour 5).",
               "width": "fill_container",
               "justifyContent": "center",
               "children": [
@@ -24895,6 +25467,7 @@
               "type": "frame",
               "id": "jUB3L",
               "name": "sortie",
+              "context": "En code : « Écris-moi un message » = mailto:BRAND.contact.email (aucune page contact n'existe, le contact du site est l'e-mail — même cible que le pied de page). Pas de formulaire à inventer.",
               "width": "fill_container",
               "layout": "vertical",
               "alignItems": "center",
@@ -25694,7 +26267,7 @@
               "id": "CWHVg",
               "name": "h3",
               "fill": "$encre",
-              "content": "compteur du panier — goutte",
+              "content": "compteur du panier — TRANCHÉ : rond (goutte non retenue)",
               "lineHeight": "$leading-h3",
               "fontFamily": "$font-display",
               "fontSize": "$text-h3",
@@ -25783,7 +26356,7 @@
               "fill": "$encre",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Le compteur du cabas est une goutte pleine rose-encre (5,15:1) au chiffre papier — la goutte porte le nombre comme elle porte tout le reste. Quand le compte change, la goutte tombe de 4 px (translateY, sous 0,1 s) puis se pose. ⚠️ La barre basse mobile porte déjà un badge ROND rose à chiffre encre (passe correctifs du 2026-08-17) : la goutte est la variante proposée pour harmoniser cabas desktop et onglet panier — en retenir UNE au passage en code. Le composant chrome/barre-haute n'est pas modifié ici.",
+              "content": "TRANCHÉ le 2026-08-19 (passe 20/20) : le compteur du panier reste le badge ROND rose à chiffre encre — celui des trois composants chrome ET du code actuel. La goutte pleine rose-encre ci-dessus est ARCHIVÉE non retenue : harmoniser trois surfaces (barre haute, barre basse, code) sur une variante qui n'existe nulle part coûtait plus que la signature qu'elle apportait, et le rond respecte déjà la règle d'encre (chiffre encre sur aplat rose). En code : ne rien changer au badge existant. Si le compte change, l'animation reste celle du code (bump), pas la chute de la goutte.",
               "lineHeight": "$leading-small",
               "fontFamily": "$font-sans",
               "fontSize": "$text-small",
@@ -25930,7 +26503,7 @@
           "fill": "$encre",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "En code : le bandeau vit HORS du bloc sticky (deux éléments empilés, pas deux barres) — position: sticky sur la seule rangée principale (64 px desktop, 56 px mobile). Quand la rangée flotte sur du contenu, un LISERÉ 1 px encre la détache — jamais d'ombre portée floue (hors DA). Budget d'écran une fois scrollé : 64 px desktop ; 56 px + barre basse 56 px sur mobile (le bandeau de 27 px est rendu à la page). Aucun composant chrome n'est modifié ici : l'état scrollé est une COMPOSITION (bandeau désactivé par override d'instance).",
+          "content": "En code : PLUS DE BANDEAU LIVRAISON (exclu par Adrien le 2026-08-19, pendant le passage en code avorté — « pas de bandeau livraison ») : la barre haute est la rangée principale SEULE, sticky, comme aujourd'hui dans le code. Frais et délai vivent dans le bloc « En pratique » de la FAQ et la réassurance du pied de page (SSOT SHIPPING_RATES / PREPARATION_DELAY_LABEL). Quand la rangée flotte sur du contenu, un LISERÉ 1 px encre la détache — jamais d'ombre portée floue (hors DA). Budget d'écran : 64 px desktop ; 56 px + barre basse 56 px sur mobile. Les deux nœuds bandeau-livraison des composants chrome sont conservés DÉSACTIVÉS (enabled:false) : les rétablir est un arbitrage Léane/Adrien, pas un correctif.",
           "lineHeight": "$leading-small",
           "fontFamily": "$font-sans",
           "fontSize": "$text-small",

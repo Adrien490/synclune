@@ -2,79 +2,77 @@
 
 > **Réécrit** à chaque passe, ≤ 80 lignes — le script l'injecte aux tours avec les deux dernières
 > entrées de `NOTES.md` ; le carnet, lui, ne se réécrit jamais (le *pourquoi* est là-bas, ici on
-> lit *ce qui est vrai aujourd'hui*). Dernière mise à jour : **2026-08-19** (propositions
-> appliquées + arbitrages nº 1-4 tranchés).
+> lit *ce qui est vrai aujourd'hui*). Dernière mise à jour : **2026-08-19** (passe « 20/20 »,
+> demandée par Adrien après l'annulation du passage en code).
 
 ## Statut
 
 Maquette complète et figée : système, 6 sections, carte OG, cookies, assemblages, états, motion.
-**Conformité 82/100** (§ 9, 0 P0) · **signature 18/20** (re-notée sur pièce le 2026-08-19, rapport
-au carnet — point manquant documentaire, critère 4). Passage en code **DÉBLOQUÉ** (nº 1-4, Adrien).
+Passage en code : **lancé puis ANNULÉ par Adrien le 2026-08-19** (« je continuerai à taffer la
+landing avant de l'implémenter ») — le dépôt de code est revenu à son état d'avant, le HANDOFF
+reste la porte d'entrée. ⚠️ **Cmd+S à faire dans l'app** pour écrire la passe « 20/20 » au fichier.
 
 ## Le motif et les accents
 
-- **La goutte reste le motif directeur mais SE DOSE** (Adrien, 2026-08-19 : « trop de gouttes » —
-  une partie est un artefact des placeholders) ; le **cœur** est bienvenu en ponctuation au-delà
-  de l'atelier et du favori (Léane les aime) — toujours en détail, jamais en sujet.
-- **Alternance** : hero rose · créations or · collections rose · types or · atelier rose ·
+- **La goutte reste le motif directeur et EST DOSÉE** (passe 20/20) : chaque placeholder photo
+  annonce désormais son SUJET — anneau, cabochon, grappe, cascade, volute, porte-clés, cadre de
+  musée, goutte longue — la goutte garde le hero (tuiles 1 et 5, pampilles), la pluie et l'état
+  vide. Le **cœur** ponctue l'atelier (portrait + note « 3 h par bijou ») — détail, jamais sujet.
+- **Alternance** : hero rose · créations or · collections rose · types or · atelier rose-pale ·
   FAQ or · carte de partage rose · cookies rose. Jamais deux voisines dans la même couleur.
-- **Pied de page sur `rose-pale` `#fdf0f8`** (teinte du rose, surfaces seulement, n'écrit
-  jamais) ; filet interne `#06070b24` — seule valeur non tokenisée tolérée hors carte OG.
+- **Pied de page sur `rose-pale` `#fdf0f8`** ; filet interne `#06070b24` — seule valeur non
+  tokenisée tolérée hors carte OG.
 - **Transitions en dégradé** : papier→or avant les types · or→rose-pale puis rose-pale→papier
-  autour de l'atelier (en bain `rose-pale`) · papier→rose-pale avant le pied — desktop 64, mobile 16.
+  autour de l'atelier · papier→rose-pale avant le pied — desktop 64, mobile 16.
 
 ## Mesures qui font autorité
 
-- Barres hautes **91 px desktop / 83 mobile** (bandeau + rangée) ; barre basse 56 ; le bandeau
-  porte « Livraison {frais} · expédié sous {délai} ».
-- Assemblages : desktop **6 785 px**, mobile **9 874 px** (bain atelier + transition + FAQ 96→64) —
-  **11/11 plis re-relevés le 2026-08-19** ✓ (pli 1 = frange sous la barre basse, cas assumé).
+- Barres hautes **64 px desktop / 56 mobile** (rangée seule — **bandeau livraison RETIRÉ**,
+  décision Adrien 2026-08-19, nœuds conservés `enabled:false`) ; barre basse 56.
+- Assemblages : desktop **6 785**, mobile **9 874** — les cadres hero sont FIXES (800/844), le
+  retrait du bandeau n'a bougé que leur intérieur : le relevé **11/11 plis reste valable**.
+  Frange mobile re-posée sur la barre basse (bas 789 / barre 788 — signal du pli 1 restauré) ;
+  frise desktop bas 797 dans le cadre de 800. Paddings du bloc titre redistribués (desktop
+  haut 64 bas 24, mobile haut 64 bas 12).
 - Tuiles de la frise hero : desktop **148 × 185**, mobile **168 × 210** — toutes **entières**.
+- Puce-type : hauteur FIXE **44 px** (le « 41 px à relever en code » est soldé dans la maquette).
 - Contrastes en vigueur : encre/papier 19,59 · encre/or 15,97 · encre/rose-pale 18,21 ·
   rose-encre/papier 5,15 · or-encre/papier 4,72. Zéro texte encré en `$rose` ou `$or`.
+- Côté code (constat du passage avorté) : `or` #ffe2a2 = **exactement** `--secondary` existant ;
+  seuls `or-encre` et `rose-pale` seront à créer.
 
 ## Décisions verrouillées — ne pas « corriger » par réflexe
 
-1. **Les tuiles du hero sont ENTIÈRES** (2026-08-18, demandé deux fois par Adrien) — dérogation
-   assumée, −1 pt ; un signal de continuation, s'il revient, vient d'**ailleurs** que de la coupe.
-2. **Le franco de port est ABANDONNÉ** (2026-08-18). `{franco}` n'avait aucune source dans
-   `shipping-rates.ts`. Ne pas le réintroduire sans que l'offre existe en base.
-3. **`{délai}` reste hors du hero** (décision Adrien : pression pour la créatrice) — bandeau et FAQ.
-4. Survol de carte produit = **squiggle** (`SQUIGGLE_PATH` du code) ; focus = le même squiggle +
-   anneau encre 2 px sur la carte entière. Jamais d'anneau rose, jamais d'ombre floue.
-5. **Propositions appliquées** (2026-08-19, délégué par Adrien) : grille 0·24·8·32 desktop ·
-   réponse FAQ en bulle signée. ⚠️ Les **pastilles gouttes**, appliquées puis **REJETÉES par
-   Adrien le jour même** (« pas en color swatch ») — pastilles **RONDES**, ne pas re-proposer.
-6. **Nº 1-4 tranchés par Adrien le 2026-08-19** : accents BICOLORE rose/or (créer `or`/`or-encre`
-   en code, retirer la rotation `[data-accent]`) · SIX sections · sur-titres PARTOUT (à
-   réintroduire sur les 5 routes boutique) · « avec amour » remplacé par « les doigts encore
-   pleins de peinture » — sans purge systématique de la formule (elle peut réapparaître ponctuellement).
-7. **Hero : piste D appliquée** (2026-08-19) — filigrane 3 cœurs + 2 gouttes (encre 10 %) dans
-   les marges desktop, animé à la pose une fois au chargement (spec planche motion) ; réduit = statique.
+1. **Tuiles du hero ENTIÈRES** (2026-08-18, Adrien ×2) — dérogation assumée ; le signal de
+   continuation mobile est la frange posée sur la barre basse, pas une coupe.
+2. **Franco ABANDONNÉ** (2026-08-18) ; **bandeau livraison RETIRÉ** (2026-08-19, Adrien) — frais
+   et délai vivent en FAQ (« En pratique ») et pied de page, placeholders `{frais}`/`{délai}`.
+3. **`{délai}` hors du hero** (pression pour la créatrice) — FAQ et pied seulement.
+4. Survol de carte = **squiggle** ; focus = squiggle + anneau encre 2 px. Jamais d'anneau rose.
+5. **Pastilles de variantes RONDES** (gouttes REJETÉES par Adrien — ne pas re-proposer) ;
+   **badge du panier ROND** (tranché 2026-08-19, la goutte de la planche motion est archivée).
+6. **Bicolore rose/or** · SIX sections · sur-titres PARTOUT (5 routes boutique au handoff) ·
+   « les doigts encore pleins de peinture » (étape 4).
+7. **Filigrane** : desktop 5 formes (D, 2 colorées) ; **mobile 2 formes, les deux colorées**
+   (passe 20/20) — même pose, réduit = statique, jamais de boucle.
+8. **Liens sans cible = JAMAIS rendus** : « Lire l'histoire de l'atelier » attend `/a-propos` ;
+   « Commander une pièce comme elle » et « Écris-moi un message » → mailto (contexts posés).
+9. **État vide de collection = rendez-vous** : note manuscrite « bientôt ! » (composant
+   sans-visuel) — la cursive est de la ponctuation, la ligne « En préparation » reste le porteur.
 
 ## Arbitrages ouverts — AUCUN
 
-Suite couleur ENTIÈREMENT PRISE (Adrien, 2026-08-19) : `couleur-dessins` · `hero-filigrane-couleur`
-(cœur #f7a8d866, goutte #7fd8d866) · `atelier-rose-pale` (bain + transitions + FAQ 96→64). Hex
-littéraux, jamais `$rose`/`$or`. Veto Léane sur pièce (`apercus/`). Vérif restante : satori OG.
+Vérif restante : le rendu satori réel de la carte OG (au passage en code).
 
 ## Pièges d'outillage — tous constatés
 
-- **App Pen et CLI tiennent chacun leur copie du `.pen`** : le dernier qui sauve écrase l'autre.
-  App fermée avant tout `./landing.sh` (le préflight refuse sinon) ; **Cmd+S avant tout commit**
-  après une session MCP.
-- **`TakeScreenshot` sert des rendus périmés** ; vérifier à l'`Export` png. Un sous-arbre neuf
-  peut sortir **blanc** à l'Export tant qu'il n'a pas été **copié** (remède : `Copy`, supprimer
-  l'original) ; un balayage de copie sans `resolveInstances: true` **ment** (0 « franco » alors
-  qu'un override d'instance l'affichait) ; les bounds lus dans l'appel d'une mutation sont à
-  moitié recalculés — re-mesurer à part.
-- L'outil `browser` n'a **jamais** fonctionné (deux tentatives) : `00-bootstrap.md` est de fait
-  la source de la chrome, et le code gagne sur elle en cas d'écart.
-- **`Replace` échoue sur un enfant de COMPOSANT via le MCP de l'app** (TypeError systématique) —
-  contourner par Delete + Insert ; le même Replace passe en headless et sur une copie détachée.
-- ⚠️ **Le `save()` du shell `--app` ne sauve PAS le `.pen`** — il écrit `~/.pencil/backup/<hash>` ;
-  seul **Cmd+S** écrit le fichier. Vérifier le **mtime avant tout commit** (2026-08-19 : deux
-  commits partis périmés, réparés depuis le backup).
-- Avertissements bénins : `touche-de-pinceau`, `tracé-flèche`, `note-manuscrite`, bandeaux
-  désactivés en `fill_container` — encre qui déborde à dessein, ne pas « corriger ». Un `ref`
-  anonyme vide traîne à la racine (`GH7Z7`) — origine inconnue, non touché, à trier.
+- **App et CLI tiennent chacun leur copie** : le dernier qui sauve écrase l'autre. **Cmd+S seul
+  écrit le fichier** (le save() du shell écrit `~/.pencil/backup/`) — vérifier le mtime avant commit.
+- **Un sous-arbre neuf sort BLANC à l'Export** tant qu'il n'a pas été copié (re-constaté sur le
+  filigrane mobile — remède : Copy, supprimer l'original). `TakeScreenshot` sert du périmé.
+- **Les bounds lus après une mutation dans le même appel MENTENT** (re-constaté : puce lue à 41
+  après passage à 44) — re-mesurer dans un appel séparé, et l'app fait foi contre le headless.
+- `Replace` échoue sur un enfant de composant via le MCP de l'app — mais la **surcharge de
+  propriétés** (`Update("instance/enfant")`) marche, y compris `geometry` (35 posées, passe 20/20).
+- Avertissements bénins : touche-de-pinceau, tracé-flèche, note-manuscrite, bandeaux désactivés,
+  « Collapsed size » des copies atelier. Un `ref` anonyme vide traîne à la racine (`GH7Z7`).
