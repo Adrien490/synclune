@@ -14,11 +14,10 @@ import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
 import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import {
-	getVariantColorsDisplayLabel,
+	getAttributeLabel,
 	getColorHexes,
 	getColorNames,
-} from "@/modules/variants/utils/variant-colors-label";
-import { getVariantMaterialsLabel } from "@/modules/variants/utils/variant-materials-label";
+} from "@/modules/variants/utils/variant-labels";
 
 import type { CartItem } from "../types/cart.types";
 import {
@@ -78,8 +77,8 @@ export function CartSheetItemRow({
 	const primaryImage = getCartItemPrimaryImage(item);
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
 
-	const materialsLabel = getVariantMaterialsLabel(item.variant.material);
-	const colorsLabel = getVariantColorsDisplayLabel(item.variant.color);
+	const materialsLabel = getAttributeLabel(item.variant.material);
+	const colorsLabel = getAttributeLabel(item.variant.color);
 	const colorHexes = getColorHexes(item.variant.color);
 	const colorNames = getColorNames(item.variant.color);
 	const titleId = `cart-item-title-${item.id}`;

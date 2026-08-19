@@ -19,15 +19,16 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/view-transition";
-
-const COMPARE_AT_PRICE_ERROR = "Le prix barré doit être supérieur au prix de vente";
+import { formatEuro } from "@/shared/utils/format-euro";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface UpdatePriceFormProps {
 	variantId: string;
 	variantName: string;
-	currentPrice: number;
-	currentCompareAtPrice: number | null;
+	/** Override de prix EN CENTIMES, ou `null` si la variante suit le produit. */
+	priceCents: number | null;
+	/** Prix du produit parent en centimes — ce que vaut la variante sans override. */
+	productPriceCents: number;
 	onSuccess?: () => void;
 	redirectOnSuccess?: boolean;
 	successPath?: string;
@@ -40,10 +41,6 @@ interface UpdatePriceFormProps {
  */
 type PriceFieldValue = string | number | null;
 
-function toEuros(cents: number | null): string {
-	return cents ? (cents / 100).toFixed(2) : "";
-}
-
 /** Parse une valeur de champ (string des défauts ou number TanStack) en nombre, sinon null. */
 function toNumber(value: PriceFieldValue): number | null {
 	if (value === null || value === "") return null;
@@ -51,11 +48,20 @@ function toNumber(value: PriceFieldValue): number | null {
 	return Number.isNaN(parsed) ? null : parsed;
 }
 
+/**
+ * Formulaire d'override de prix d'une variante.
+ *
+ * ⚠️ Le champ s'ouvre sur l'OVERRIDE (`priceCents`), jamais sur le prix effectif :
+ * pré-remplir le prix hérité du produit transformait « ouvrir puis enregistrer »
+ * en épinglage silencieux d'un override — et il n'existait alors plus aucun geste
+ * pour revenir à l'héritage. Vider le champ RETIRE l'override, c'est la sémantique
+ * de `updateVariantPriceSchema` côté serveur.
+ */
 export function UpdatePriceForm({
 	variantId,
 	variantName,
-	currentPrice,
-	currentCompareAtPrice,
+	priceCents,
+	productPriceCents,
 	onSuccess,
 	redirectOnSuccess = false,
 	successPath,
@@ -66,8 +72,7 @@ export function UpdatePriceForm({
 	const isMobile = useIsMobile();
 	const formRef = useRef<HTMLFormElement>(null);
 
-	const initialPrice = (currentPrice / 100).toFixed(2);
-	const initialCompareAtPrice = toEuros(currentCompareAtPrice);
+	const initialPrice = priceCents !== null ? (priceCents / 100).toFixed(2) : "";
 
 	const { updatePrice, isPending, state } = useUpdateVariantPrice({
 		onSuccess: () => {
@@ -77,7 +82,7 @@ export function UpdatePriceForm({
 			onSuccess?.();
 			if (redirectOnSuccess && successPath) {
 				setTimeout(
-					() => withViewTransition(() => router.push(successPath)),
+					() => router.push(successPath, PAGE_FADE_NAVIGATION),
 					FORM_SUCCESS_REDIRECT_DELAY_MS,
 				);
 			}
@@ -89,18 +94,15 @@ export function UpdatePriceForm({
 	const form = useAppForm({
 		defaultValues: {
 			price: initialPrice as PriceFieldValue,
-			compareAtPrice: initialCompareAtPrice as PriceFieldValue,
 		},
 	});
 
 	const price = useStore(form.store, (s) => s.values.price);
-	const compareAtPrice = useStore(form.store, (s) => s.values.compareAtPrice);
 	const isDirty = useStore(form.store, (s) => s.isDirty);
 
-	const priceValue = toNumber(price) ?? 0;
-	const compareAtPriceValue = toNumber(compareAtPrice) ?? 0;
-	const hasCompareAtPrice = compareAtPrice !== null && compareAtPrice !== "";
-	const isValid = priceValue > 0 && (!hasCompareAtPrice || compareAtPriceValue > priceValue);
+	const priceValue = toNumber(price);
+	// Champ vide = retrait volontaire de l'override : c'est une soumission VALIDE.
+	const isValid = priceValue === null || priceValue > 0;
 
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
 
@@ -119,10 +121,7 @@ export function UpdatePriceForm({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!isValid) return;
-		const priceInEuros = toNumber(price);
-		const compareAtPriceInEuros = hasCompareAtPrice ? toNumber(compareAtPrice) : null;
-		if (priceInEuros === null || priceInEuros <= 0) return;
-		updatePrice(variantId, variantName, priceInEuros, compareAtPriceInEuros);
+		updatePrice(variantId, priceValue);
 	};
 
 	return (
@@ -136,10 +135,11 @@ export function UpdatePriceForm({
 			<form.AppField name="price">
 				{(field) => (
 					<field.InputGroupField
-						label="Prix final (€)"
+						label="Prix de la variante (€)"
 						type="number"
 						step="0.01"
 						min="0.01"
+						placeholder="Laisser vide pour suivre le prix du produit"
 						disabled={isPending}
 						className="text-lg font-semibold"
 					>
@@ -148,33 +148,11 @@ export function UpdatePriceForm({
 				)}
 			</form.AppField>
 
-			<form.AppField
-				name="compareAtPrice"
-				validators={{
-					onChangeListenTo: ["price"],
-					onChange: ({ value, fieldApi }) => {
-						const compareAt = toNumber(value);
-						if (compareAt === null) return undefined;
-						const priceInEuros = toNumber(fieldApi.form.getFieldValue("price"));
-						return priceInEuros !== null && compareAt <= priceInEuros
-							? COMPARE_AT_PRICE_ERROR
-							: undefined;
-					},
-				}}
-			>
-				{(field) => (
-					<field.InputGroupField
-						label="Prix barré (optionnel)"
-						type="number"
-						step="0.01"
-						min="0"
-						placeholder="Laisser vide pour aucun"
-						disabled={isPending}
-					>
-						<InputGroupAddon align="inline-end">€</InputGroupAddon>
-					</field.InputGroupField>
-				)}
-			</form.AppField>
+			<p className="text-muted-foreground text-xs">
+				{priceValue === null
+					? `Champ vide : la variante suit le prix du produit (${formatEuro(productPriceCents)}).`
+					: `Vide le champ pour revenir au prix du produit (${formatEuro(productPriceCents)}).`}
+			</p>
 
 			<AdminFormFooter pending={isPending}>
 				<div className="flex justify-end">

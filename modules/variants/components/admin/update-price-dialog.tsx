@@ -13,11 +13,13 @@ import { UpdatePriceForm } from "@/modules/variants/components/admin/update-pric
 
 export const UPDATE_PRICE_DIALOG_ID = "update-variant-price";
 
-type UpdatePriceDialogData = {
+export type UpdatePriceDialogData = {
 	variantId: string;
 	variantName: string;
-	currentPrice: number;
-	currentCompareAtPrice: number | null;
+	/** Override de prix en centimes, `null` si la variante suit le produit. */
+	priceCents: number | null;
+	/** Prix du produit parent en centimes. */
+	productPriceCents: number;
 	[key: string]: unknown;
 };
 
@@ -39,8 +41,8 @@ export function UpdatePriceDialog() {
 						key={`${data.variantId}-${isOpen}`}
 						variantId={data.variantId}
 						variantName={data.variantName}
-						currentPrice={data.currentPrice}
-						currentCompareAtPrice={data.currentCompareAtPrice}
+						priceCents={data.priceCents}
+						productPriceCents={data.productPriceCents}
 						onSuccess={close}
 					/>
 				)}

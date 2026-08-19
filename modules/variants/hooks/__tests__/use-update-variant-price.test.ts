@@ -32,26 +32,33 @@ describe("useUpdateVariantPrice", () => {
 	it("updatePrice appends variantId and priceEuros to FormData", async () => {
 		const { result } = renderHook(() => useUpdateVariantPrice());
 		await act(async () => {
-			result.current.updatePrice("variant-123", "Bague Or", 30.0);
+			result.current.updatePrice("variant-123", 30.0);
 		});
 		const formData = mockUpdateVariantPrice.mock.calls[0]?.[1] as FormData;
 		expect(formData.get("variantId")).toBe("variant-123");
 		expect(formData.get("priceEuros")).toBe("30");
 	});
 
-	it("updatePrice appends compareAtPriceEuros when provided", async () => {
+	/**
+	 * Retrait de l'override : le serveur lit une CHAÎNE VIDE comme « la variante
+	 * retombe sur le prix du produit » (`optionalPriceEurosSchema`). Ne pas
+	 * envoyer le champ du tout laisserait `safeFormGet` renvoyer `null`, que le
+	 * schéma traduit aussi en vide — mais c'est la chaîne vide qui est le contrat
+	 * explicite, et le formulaire n'a aucun autre geste pour délier un prix.
+	 */
+	it("sends an empty priceEuros to remove the override", async () => {
 		const { result } = renderHook(() => useUpdateVariantPrice());
 		await act(async () => {
-			result.current.updatePrice("variant-123", "Bague Or", 30.0, 45.0);
+			result.current.updatePrice("variant-123", null);
 		});
 		const formData = mockUpdateVariantPrice.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("compareAtPriceEuros")).toBe("45");
+		expect(formData.get("priceEuros")).toBe("");
 	});
 
-	it("does not append compareAtPriceEuros when null", async () => {
+	it("never sends a compareAtPriceEuros field (colonne supprimée du schéma lean)", async () => {
 		const { result } = renderHook(() => useUpdateVariantPrice());
 		await act(async () => {
-			result.current.updatePrice("variant-123", "Bague Or", 30.0, null);
+			result.current.updatePrice("variant-123", 30.0);
 		});
 		const formData = mockUpdateVariantPrice.mock.calls[0]?.[1] as FormData;
 		expect(formData.get("compareAtPriceEuros")).toBeNull();
@@ -61,7 +68,7 @@ describe("useUpdateVariantPrice", () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useUpdateVariantPrice({ onSuccess }));
 		await act(async () => {
-			result.current.updatePrice("variant-123", "Bague Or", 30.0);
+			result.current.updatePrice("variant-123", 30.0);
 		});
 		expect(onSuccess).toHaveBeenCalledTimes(1);
 	});
@@ -71,7 +78,7 @@ describe("useUpdateVariantPrice", () => {
 		const onError = vi.fn();
 		const { result } = renderHook(() => useUpdateVariantPrice({ onError }));
 		await act(async () => {
-			result.current.updatePrice("variant-123", "Bague Or", 30.0);
+			result.current.updatePrice("variant-123", 30.0);
 		});
 		expect(onError).toHaveBeenCalledWith("Erreur");
 	});
@@ -81,7 +88,7 @@ describe("useUpdateVariantPrice", () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useUpdateVariantPrice({ onSuccess }));
 		await act(async () => {
-			result.current.updatePrice("variant-123", "Bague Or", 30.0);
+			result.current.updatePrice("variant-123", 30.0);
 		});
 		expect(onSuccess).not.toHaveBeenCalled();
 	});

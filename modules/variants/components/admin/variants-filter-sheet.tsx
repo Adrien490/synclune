@@ -7,7 +7,6 @@ import { Separator } from "@/shared/components/ui/separator";
 import type { ColorOption } from "@/modules/colors/data/get-color-options";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import { useAppForm } from "@/shared/components/forms";
-import { withViewTransition } from "@/shared/utils/view-transition";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, useTransition, Suspense, type ComponentProps } from "react";
 
@@ -18,6 +17,7 @@ import {
 	type VariantActiveFilter,
 	type VariantsFilterFormData,
 } from "./variants-filter/variants-filter-options";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface CheckboxArrayField {
 	state: { value: string[] };
@@ -188,7 +188,7 @@ function VariantsFilterSheetInner({
 	const applyFilters = (formData: VariantsFilterFormData) => {
 		const query = buildFilterUrl(searchParams, formData);
 		startTransition(() => {
-			withViewTransition(() => router.push(`?${query}`, { scroll: false }));
+			router.push(`?${query}`, { scroll: false, ...PAGE_FADE_NAVIGATION });
 		});
 	};
 
@@ -202,7 +202,7 @@ function VariantsFilterSheetInner({
 		form.reset(defaultValues);
 		const query = buildFilterUrl(searchParams, defaultValues);
 		startTransition(() => {
-			withViewTransition(() => router.push(`?${query}`, { scroll: false }));
+			router.push(`?${query}`, { scroll: false, ...PAGE_FADE_NAVIGATION });
 		});
 	};
 

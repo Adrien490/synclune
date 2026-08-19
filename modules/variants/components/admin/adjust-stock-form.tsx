@@ -23,6 +23,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { Label } from "@/shared/components/ui/label";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
+import { STOCK_LIMITS } from "@/shared/constants/validation-limits";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
@@ -33,10 +34,14 @@ import {
 	getStockStatusLabel,
 	getStockVariant,
 } from "@/shared/utils/stock-variant";
-import { withViewTransition } from "@/shared/utils/view-transition";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
-/** Plafond aligné sur `adjustVariantStockSchema` (adjustment.max(99999)). */
-const MAX_INVENTORY = 99999;
+/**
+ * Plafond d'inventaire — LU depuis la SSOT partagée, jamais recopié : la valeur
+ * était en dur ici avec un commentaire « aligné sur adjustVariantStockSchema »,
+ * c'est-à-dire un alignement que rien ne vérifiait.
+ */
+const MAX_INVENTORY = STOCK_LIMITS.MAX_INVENTORY;
 
 /** Pas rapides : symétrie mobile/desktop avec le Maj+↑/↓ (±10) du clavier. */
 const QUICK_STEPS = [-10, -5, 5, 10] as const;
@@ -49,10 +54,6 @@ interface AdjustStockFormProps {
 	redirectOnSuccess?: boolean;
 	successPath?: string;
 	className?: string;
-}
-
-function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
-	withViewTransition(() => router.push(path));
 }
 
 export function AdjustStockForm({
@@ -78,7 +79,7 @@ export function AdjustStockForm({
 			allowNavigationRef.current?.();
 			onSuccess?.();
 			if (redirectOnSuccess && successPath) {
-				navigateWithTransition(router, successPath);
+				router.push(successPath, PAGE_FADE_NAVIGATION);
 			}
 		},
 	});

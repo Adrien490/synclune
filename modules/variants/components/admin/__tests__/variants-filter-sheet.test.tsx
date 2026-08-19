@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -567,7 +568,10 @@ describe("VariantsFilterSheet", () => {
 	it("calls router.push when the clear-all button is clicked", () => {
 		render(<VariantsFilterSheet colorOptions={[]} materialOptions={[]} />);
 		fireEvent.click(screen.getByTestId("clear-all-btn"));
-		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("?"), { scroll: false });
+		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("?"), {
+			scroll: false,
+			...PAGE_FADE_NAVIGATION,
+		});
 	});
 
 	it("removes all filter keys from URL when clearing filters", () => {
@@ -636,7 +640,10 @@ describe("VariantsFilterSheet", () => {
 		await capturedOnSubmit?.({
 			value: { stockStatuses: [], colorIds: [], materialIds: [], active: "all" },
 		});
-		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("?"), { scroll: false });
+		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("?"), {
+			scroll: false,
+			...PAGE_FADE_NAVIGATION,
+		});
 	});
 
 	it("encodes stockStatuses into URL params when applyFilters is called", async () => {

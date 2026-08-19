@@ -15,6 +15,23 @@ import { BusinessError } from "./business-error";
 export { BusinessError };
 
 /**
+ * L'erreur est-elle une violation de contrainte d'unicité Prisma (P2002) ?
+ *
+ * ⚠️ `instanceof`, jamais un duck-typing `"code" in e && e.code === "P2002"` :
+ * trois actions VARIANT le faisaient, ce qui accepte n'importe quelle erreur
+ * portant un champ `code` (une erreur Node, une erreur d'un SDK tiers) et
+ * renvoie alors un message d'unicité pour un incident sans rapport. C'est aussi
+ * la contrepartie de la convention de test du dépôt : une erreur Prisma mockée
+ * DOIT être une vraie instance de la classe.
+ *
+ * Utile quand une action veut un message d'unicité CONTEXTUALISÉ ; sans cela,
+ * `handleActionError` répond déjà « Cette valeur existe déjà. ».
+ */
+export function isUniqueConstraintError(error: unknown): boolean {
+	return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
+/**
  * Convertit une erreur en ActionState
  *
  * SECURITE: Seules les BusinessError exposent leur message.

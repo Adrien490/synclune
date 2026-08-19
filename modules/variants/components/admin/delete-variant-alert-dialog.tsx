@@ -49,7 +49,7 @@ export function DeleteProductVariantAlertDialog() {
 							</strong>
 						</p>
 						<p>
-							Êtes-vous sûr de vouloir supprimer la variante <strong>{data.variantName}</strong> ?
+							Tu es sûre de vouloir supprimer la variante <strong>{data.variantName}</strong> ?
 						</p>
 						{/* Plus de transfert manuel : le représentant est le rang 0 de
 						    (position asc, id asc), la variante suivante prend le relais. */}
@@ -58,12 +58,12 @@ export function DeleteProductVariantAlertDialog() {
 				) : (
 					<>
 						<p>
-							Êtes-vous sûr de vouloir supprimer la variante <strong>{data?.variantName}</strong> ?
+							Tu es sûre de vouloir supprimer la variante <strong>{data?.variantName}</strong> ?
 						</p>
-						<p>
-							Cette action est irréversible et supprimera également toutes les images associées à
-							cette variante.
-						</p>
+						{/* ⚠️ Ne promet plus de supprimer « toutes les images associées à cette
+						    variante » : depuis le schéma lean, le média vit sur le PRODUIT et
+						    survit intégralement à la suppression d'une variante. */}
+						<p>Cette action est irréversible. Les photos, elles, restent sur la fiche produit.</p>
 					</>
 				)
 			}

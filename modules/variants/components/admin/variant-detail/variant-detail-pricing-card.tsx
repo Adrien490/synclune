@@ -11,6 +11,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { UPDATE_PRICE_DIALOG_ID } from "@/modules/variants/components/admin/update-price-dialog";
 import type { VariantDetailReturn } from "@/modules/variants/data/get-variant";
+import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-labels";
 
 interface VariantDetailPricingCardProps {
 	variant: VariantDetailReturn;
@@ -22,6 +23,7 @@ export function VariantDetailPricingCard({ variant }: VariantDetailPricingCardPr
 	const router = useRouter();
 
 	const effectivePrice = variant.priceCents ?? variant.product.priceCents;
+	const variantTitle = getVariantDisplayTitle(variant);
 	const hasOverride = variant.priceCents !== null;
 
 	const handleUpdatePrice = () => {
@@ -30,8 +32,9 @@ export function VariantDetailPricingCard({ variant }: VariantDetailPricingCardPr
 		} else {
 			updatePriceDialog.open({
 				variantId: variant.id,
-				variantName: variant.product.name,
-				currentPrice: effectivePrice,
+				variantName: variantTitle,
+				priceCents: variant.priceCents,
+				productPriceCents: variant.product.priceCents,
 			});
 		}
 	};

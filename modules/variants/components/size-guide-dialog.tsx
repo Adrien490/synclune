@@ -63,7 +63,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						Guide des tailles
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Trouvez la taille parfaite pour votre produit
+						Trouve ta taille — mesure en deux minutes, chez toi
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
@@ -78,17 +78,17 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						<div className="space-y-3">
 							<h3 className="text-sm font-semibold">Comment mesurer ?</h3>
 							<ol className="text-muted-foreground list-inside list-decimal space-y-2 text-sm">
-								<li>Enroulez une ficelle ou un ruban autour de votre doigt</li>
-								<li>Marquez l'endroit où les deux extrémités se rejoignent</li>
-								<li>Mesurez la longueur obtenue en millimètres</li>
-								<li>Comparez avec le tableau ci-dessous</li>
+								<li>Enroule une ficelle ou un ruban autour de ton doigt</li>
+								<li>Marque l&apos;endroit où les deux extrémités se rejoignent</li>
+								<li>Mesure la longueur obtenue en millimètres</li>
+								<li>Compare avec le tableau ci-dessous</li>
 							</ol>
 						</div>
 
 						<div className="overflow-hidden rounded-lg border">
 							<table className="w-full text-sm">
 								<caption className="sr-only">
-									Correspondances des tailles de bagues francaises
+									Correspondances des tailles de bagues françaises
 								</caption>
 								<thead className="bg-muted/50">
 									<tr>
@@ -96,7 +96,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 											Tour de doigt
 										</th>
 										<th scope="col" className="px-3 py-2 text-left font-medium">
-											Diametre
+											Diamètre
 										</th>
 										<th scope="col" className="px-3 py-2 text-left font-medium">
 											Taille FR
@@ -161,9 +161,9 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						<div className="bg-accent/50 flex items-start gap-2 rounded-lg p-3 text-sm">
 							<InfoIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
 							<p className="text-muted-foreground">
-								<strong className="text-foreground">Astuce :</strong> Mesurez en fin de journée
-								quand vos doigts sont légèrement gonflés. En cas de doute, choisissez la taille
-								supérieure.
+								<strong className="text-foreground">Astuce :</strong> mesure en fin de journée,
+								quand tes doigts sont légèrement gonflés. En cas de doute, prends la taille
+								au-dessus.
 							</p>
 						</div>
 					</TabsContent>
@@ -173,10 +173,10 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						<div className="space-y-3">
 							<h3 className="text-sm font-semibold">Comment mesurer ?</h3>
 							<ol className="text-muted-foreground list-inside list-decimal space-y-2 text-sm">
-								<li>Enroulez un mètre ruban souple autour de votre poignet</li>
-								<li>Placez-le juste au-dessus de l'os du poignet</li>
-								<li>Notez la mesure en centimètres</li>
-								<li>Ajoutez 1 à 2 cm selon le confort souhaité</li>
+								<li>Enroule un mètre ruban souple autour de ton poignet</li>
+								<li>Place-le juste au-dessus de l&apos;os du poignet</li>
+								<li>Note la mesure en centimètres</li>
+								<li>Ajoute 1 à 2 cm selon le confort souhaité</li>
 							</ol>
 						</div>
 
@@ -229,8 +229,8 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						<div className="bg-accent/50 flex items-start gap-2 rounded-lg p-3 text-sm">
 							<InfoIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
 							<p className="text-muted-foreground">
-								<strong className="text-foreground">Astuce :</strong> Si vous hésitez entre deux
-								tailles, choisissez la plus grande pour un confort optimal.
+								<strong className="text-foreground">Astuce :</strong> si tu hésites entre deux
+								tailles, prends la plus grande — c&apos;est plus confortable.
 							</p>
 						</div>
 					</TabsContent>

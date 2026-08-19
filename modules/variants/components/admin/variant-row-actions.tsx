@@ -19,7 +19,10 @@ interface ProductVariantRowActionsProps {
 	isRepresentative?: boolean;
 	active?: boolean;
 	stock?: number;
-	priceCents?: number;
+	/** Override de prix en centimes — `null` = la variante suit le produit. */
+	priceCents?: number | null;
+	/** Prix du produit parent en centimes. */
+	productPriceCents?: number;
 }
 
 export function ProductVariantRowActions(props: ProductVariantRowActionsProps) {

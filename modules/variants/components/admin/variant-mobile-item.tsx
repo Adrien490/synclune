@@ -13,10 +13,10 @@ import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant
 import { useVariantActions } from "@/modules/variants/hooks/use-variant-actions";
 import type { GetProductVariantsReturn } from "@/modules/variants/types/variants.types";
 import {
+	getColorHexes,
 	getVariantDisplayTitle,
 	getVariantDisplayTitleSpoken,
-} from "@/modules/variants/utils/variant-display-title";
-import { getColorHexes } from "@/modules/variants/utils/variant-colors-label";
+} from "@/modules/variants/utils/variant-labels";
 import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 
@@ -59,7 +59,8 @@ export function VariantMobileItem({
 		isRepresentative,
 		active: variant.active,
 		stock: variant.stock,
-		priceCents: variant.priceCents ?? variant.product.priceCents,
+		priceCents: variant.priceCents,
+		productPriceCents: variant.product.priceCents,
 	});
 
 	return (

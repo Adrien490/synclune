@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
-import { getVariantMaterialsLabel } from "@/modules/variants/utils/variant-materials-label";
+import { getAttributeLabel } from "@/modules/variants/utils/variant-labels";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -17,7 +17,7 @@ interface ColorDetailVariantsUsageCardProps {
 }
 
 type VariantLike = ColorDetailReturn["variants"][number];
-const materialsLabelOf = (variant: VariantLike) => getVariantMaterialsLabel(variant.material);
+const materialsLabelOf = (variant: VariantLike) => getAttributeLabel(variant.material);
 
 export function ColorDetailVariantsUsageCard({ color }: ColorDetailVariantsUsageCardProps) {
 	const haptic = useHaptic();

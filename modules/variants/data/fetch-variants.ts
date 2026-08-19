@@ -56,9 +56,14 @@ export async function fetchProductVariants(
 	const where = buildWhereClause(params);
 	const direction = getSortDirection(params.sortBy);
 
+	// `priceCents` est NULLABLE (null = la variante suit le prix du produit).
+	// Sans `nulls`, Postgres place les NULL en DERNIER en ASC et en PREMIER en
+	// DESC : « Prix décroissant » ouvrait donc sur les variantes SANS prix propre.
+	// `nulls: "last"` les renvoie en fin de liste dans les deux sens — le tri porte
+	// alors sur les seuls prix réellement saisis, ce que le libellé promet.
 	const sortFieldMap: Record<string, Prisma.ProductVariantOrderByWithRelationInput[]> = {
-		"price-ascending": [{ priceCents: direction }, { id: "asc" }],
-		"price-descending": [{ priceCents: direction }, { id: "asc" }],
+		"price-ascending": [{ priceCents: { sort: direction, nulls: "last" } }, { id: "asc" }],
+		"price-descending": [{ priceCents: { sort: direction, nulls: "last" } }, { id: "asc" }],
 		"stock-ascending": [{ stock: direction }, { id: "asc" }],
 		"stock-descending": [{ stock: direction }, { id: "asc" }],
 		// Plus de createdAt sur la variante lean : l'id cuid est croissant dans

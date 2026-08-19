@@ -15,6 +15,7 @@ import {
 } from "@/shared/utils/stock-variant";
 import { ADJUST_STOCK_DIALOG_ID } from "@/modules/variants/components/admin/adjust-stock-dialog";
 import type { VariantDetailReturn } from "@/modules/variants/data/get-variant";
+import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-labels";
 
 interface VariantDetailStockCardProps {
 	variant: VariantDetailReturn;
@@ -33,7 +34,7 @@ export function VariantDetailStockCard({ variant }: VariantDetailStockCardProps)
 		} else {
 			adjustStockDialog.open({
 				variantId: variant.id,
-				variantName: variant.product.name,
+				variantName: getVariantDisplayTitle(variant),
 				currentStock: variant.stock,
 			});
 		}

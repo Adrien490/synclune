@@ -94,7 +94,7 @@ describe("VariantsFilterBadges", () => {
 
 		const result = formatFilter({ key: "filter_materialId", value: "mat-2" });
 
-		expect(result).toEqual({ label: "Materiau", displayValue: "Argent" });
+		expect(result).toEqual({ label: "Matériau", displayValue: "Argent" });
 	});
 
 	it("formatFilter returns stock status label for in_stock", () => {
@@ -125,6 +125,28 @@ describe("VariantsFilterBadges", () => {
 		};
 
 		expect(result).toEqual({ label: "Stock", displayValue: "Rupture" });
+	});
+
+	/**
+	 * ⚠️ Chemin JAMAIS couvert avant l'audit du 2026-08-19 — et cassé : le sheet
+	 * écrit `filter_isActive`, le formateur testait `"active"`. Le filtre tombait
+	 * dans le cas par défaut et le badge affichait « isActive : true » à l'admin.
+	 */
+	it("formatFilter formats the isActive filter as a readable status", () => {
+		render(<VariantsFilterBadges colors={colors} materials={materials} />);
+
+		const { formatFilter } = mockFilterBadges.mock.calls[0]![0] as {
+			formatFilter: (filter: { key: string; value: unknown }) => unknown;
+		};
+
+		expect(formatFilter({ key: "filter_isActive", value: "true" })).toEqual({
+			label: "Statut",
+			displayValue: "Actives",
+		});
+		expect(formatFilter({ key: "filter_isActive", value: "false" })).toEqual({
+			label: "Statut",
+			displayValue: "Inactives",
+		});
 	});
 
 	it("formatFilter falls back to raw value for unknown colorId", () => {

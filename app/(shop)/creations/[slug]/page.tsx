@@ -73,11 +73,10 @@ export default async function ProductPage({
 	}
 
 	// Préparer les variants depuis searchParams.
-	// `variant` (combo M2M) prime sur `color` legacy — matchColor applique colorCombo
-	// en priorité (set égalité strict). Sans ce champ, un deep-link `?variant=` rendrait
-	// le VARIANT par défaut côté serveur (flash de couleur à l'hydratation).
+	// ⚠️ Pas de `colorCombo` : le combo M2M a disparu avec le schéma lean, et
+	// `matchColor` n'a jamais lu ce champ (cf. `use-selected-variant`). Le deep-link
+	// d'une variante passe par `?color` / `?material` / `?size`.
 	const urlVariants = {
-		colorCombo: urlParams.variant,
 		colorSlug: urlParams.color,
 		materialSlug: urlParams.material,
 		size: urlParams.size,

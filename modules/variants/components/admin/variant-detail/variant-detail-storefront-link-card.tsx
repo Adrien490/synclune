@@ -6,10 +6,30 @@ import Link from "next/link";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { slugify } from "@/shared/utils/generate-slug";
 import type { VariantDetailReturn } from "@/modules/variants/data/get-variant";
 
 interface VariantDetailStorefrontLinkCardProps {
 	variant: VariantDetailReturn;
+}
+
+/**
+ * URL vitrine PRÉ-SÉLECTIONNANT la variante.
+ *
+ * ⚠️ Le lien pointait sur `?variant=<id>` — un paramètre que plus rien ne lit
+ * depuis la migration lean (le combo M2M a disparu, `matchColor` ne l'a jamais
+ * résolu) : le bouton ouvrait toujours la fiche sur la variante par défaut.
+ * Les sélecteurs de la fiche écrivent `?color` / `?material` / `?size`, et
+ * l'identité URL d'une couleur est son NOM SLUGIFIÉ (Color n'a pas de colonne
+ * slug) — d'où `slugify` des deux côtés, comme `matchColor`/`matchMaterial`.
+ */
+function buildStorefrontHref(variant: VariantDetailReturn): string {
+	const params = new URLSearchParams();
+	if (variant.color) params.set("color", slugify(variant.color.name));
+	if (variant.material) params.set("material", slugify(variant.material.name));
+	if (variant.size) params.set("size", variant.size);
+	const query = params.toString();
+	return `/creations/${variant.product.slug}${query ? `?${query}` : ""}`;
 }
 
 function getDisabledReason(variant: VariantDetailReturn): string | null {
@@ -47,7 +67,7 @@ export function VariantDetailStorefrontLinkCard({ variant }: VariantDetailStoref
 					<Button
 						render={
 							<Link
-								href={`/creations/${variant.product.slug}?variant=${variant.id}`}
+								href={buildStorefrontHref(variant)}
 								target="_blank"
 								rel="noopener noreferrer"
 								aria-label="Voir cette variante sur la boutique (nouvel onglet)"

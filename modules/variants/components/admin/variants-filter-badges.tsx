@@ -34,8 +34,13 @@ function formatVariantFilter(
 		return label ? { label: "Stock", displayValue: label } : null;
 	}
 
-	// Gestion du statut actif/inactif
-	if (filterKey === "active") {
+	// Gestion du statut actif/inactif.
+	// ⚠️ `filter.key` porte le préfixe : le suffixe est `isActive`, pas `active`
+	// (`variants-filter-sheet.tsx` écrit `filter_isActive`). Comparé à "active",
+	// le test échouait toujours et le badge tombait dans son cas par défaut, où
+	// il rendait la clé technique : « isActive : true », y compris dans le nom
+	// accessible du bouton de retrait.
+	if (filterKey === "isActive") {
 		return formatStatusFilter(value, "Actives", "Inactives");
 	}
 
@@ -48,16 +53,16 @@ function formatVariantFilter(
 		};
 	}
 
-	// Gestion des materiaux
+	// Gestion des matériaux
 	if (filterKey === "materialId") {
 		const materialName = materials.get(value);
 		return {
-			label: "Materiau",
+			label: "Matériau",
 			displayValue: materialName ?? value,
 		};
 	}
 
-	// Cas par defaut
+	// Cas par défaut
 	return {
 		label: filterKey,
 		displayValue: value,

@@ -11,8 +11,11 @@ interface UseUpdateVariantPriceOptions {
 }
 
 /**
- * Hook admin pour modifier rapidement le prix d'un VARIANT
- * Note: Les prix sont en EUROS (convertis en centimes côté serveur)
+ * Hook admin pour modifier l'override de prix d'un VARIANT.
+ *
+ * Le prix est en EUROS (converti en centimes côté serveur). `null` = retirer
+ * l'override : la variante retombe sur le prix du produit — c'est la sémantique
+ * de `updateVariantPriceSchema` (champ vide), pas un cas d'erreur.
  */
 export function useUpdateVariantPrice(options?: UseUpdateVariantPriceOptions) {
 	const [isPending, startTransition] = useTransition();
@@ -39,25 +42,14 @@ export function useUpdateVariantPrice(options?: UseUpdateVariantPriceOptions) {
 	);
 
 	/**
-	 * Met à jour le prix d'un VARIANT
-	 * @param variantId - ID du VARIANT
-	 * @param _variantName - Nom du VARIANT (pour le message de confirmation)
-	 * @param priceEuros - Prix en euros (ex: 30.00)
-	 * @param compareAtPriceEuros - Prix barré optionnel en euros
+	 * @param priceEuros - Prix en euros (ex: 30) ou `null` pour retirer l'override.
 	 */
-	const updatePrice = (
-		variantId: string,
-		_variantName: string,
-		priceEuros: number,
-		compareAtPriceEuros?: number | null,
-	) => {
+	const updatePrice = (variantId: string, priceEuros: number | null) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("variantId", variantId);
-			formData.append("priceEuros", String(priceEuros));
-			if (compareAtPriceEuros != null) {
-				formData.append("compareAtPriceEuros", String(compareAtPriceEuros));
-			}
+			// Chaîne vide = retrait de l'override (cf. `optionalPriceEurosSchema`).
+			formData.append("priceEuros", priceEuros === null ? "" : String(priceEuros));
 			formAction(formData);
 		});
 	};

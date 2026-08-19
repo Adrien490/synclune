@@ -15,7 +15,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { buildVariantLabel } from "@/modules/variants/utils/variant-variant-label";
+import { buildVariantLabel } from "@/modules/variants/utils/variant-labels";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 
 const PREVIEW_LIMIT = 3;

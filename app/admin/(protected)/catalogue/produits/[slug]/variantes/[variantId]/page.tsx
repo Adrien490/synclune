@@ -14,7 +14,7 @@ import {
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
-import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-display-title";
+import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-labels";
 
 const VariantsAdminDialogs = dynamic(() =>
 	import("../_components/variants-admin-dialogs").then((mod) => mod.VariantsAdminDialogs),

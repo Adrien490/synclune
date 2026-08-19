@@ -14,15 +14,20 @@ vi.mock("sonner", () => ({
 
 import { useDuplicateVariant } from "../use-duplicate-variant";
 
+/**
+ * ⚠️ Forme du `data` renvoyé par `actions/duplicate-variant.ts` — `{ variantId }`,
+ * et rien d'autre. La version précédente de ce fichier fabriquait
+ * `{ id, variant, productId, productSlug }`, une forme que l'action n'a jamais
+ * produite : le test validait le garde du hook contre une fiction, restait vert,
+ * et la duplication ne rendait AUCUN retour visible en production.
+ * L'autre moitié du verrou vit dans `actions/__tests__/duplicate-variant.test.ts`,
+ * qui asserte que l'action émet bien cette clé.
+ */
+const SUCCESS_DATA = { variantId: "new-variant-id" };
 const SUCCESS = {
 	status: "success" as const,
 	message: "VARIANT dupliqué",
-	data: {
-		id: "new-variant-id",
-		variant: "REF-001-COPIE",
-		productId: "prod-1",
-		productSlug: "bracelet-lune",
-	},
+	data: SUCCESS_DATA,
 };
 const ERROR = { status: "error" as const, message: "Erreur" };
 
@@ -41,24 +46,33 @@ describe("useDuplicateVariant", () => {
 	it("duplicate appends variantId to FormData", async () => {
 		const { result } = renderHook(() => useDuplicateVariant());
 		await act(async () => {
-			result.current.duplicate("variant-123", "Bague Or");
+			result.current.duplicate("variant-123");
 		});
 		const formData = mockDuplicateVariant.mock.calls[0]?.[1] as FormData;
 		expect(formData.get("variantId")).toBe("variant-123");
 	});
 
-	it("calls onSuccess with (message, { id, variant, productId, productSlug }) when action succeeds", async () => {
+	it("calls onSuccess with (message, { variantId }) when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDuplicateVariant({ onSuccess }));
 		await act(async () => {
-			result.current.duplicate("variant-123", "Bague Or");
+			result.current.duplicate("variant-123");
 		});
-		expect(onSuccess).toHaveBeenCalledWith("VARIANT dupliqué", {
-			id: "new-variant-id",
-			variant: "REF-001-COPIE",
-			productId: "prod-1",
-			productSlug: "bracelet-lune",
+		expect(onSuccess).toHaveBeenCalledWith("VARIANT dupliqué", { variantId: "new-variant-id" });
+	});
+
+	it("ignores a payload without variantId (garde de forme)", async () => {
+		mockDuplicateVariant.mockResolvedValue({
+			status: "success" as const,
+			message: "VARIANT dupliqué",
+			data: { id: "new-variant-id" },
 		});
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useDuplicateVariant({ onSuccess }));
+		await act(async () => {
+			result.current.duplicate("variant-123");
+		});
+		expect(onSuccess).not.toHaveBeenCalled();
 	});
 
 	it("calls onError with message when action fails", async () => {
@@ -66,7 +80,7 @@ describe("useDuplicateVariant", () => {
 		const onError = vi.fn();
 		const { result } = renderHook(() => useDuplicateVariant({ onError }));
 		await act(async () => {
-			result.current.duplicate("variant-123", "Bague Or");
+			result.current.duplicate("variant-123");
 		});
 		expect(onError).toHaveBeenCalledWith("Erreur");
 	});
@@ -76,7 +90,7 @@ describe("useDuplicateVariant", () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDuplicateVariant({ onSuccess }));
 		await act(async () => {
-			result.current.duplicate("variant-123", "Bague Or");
+			result.current.duplicate("variant-123");
 		});
 		expect(onSuccess).not.toHaveBeenCalled();
 	});

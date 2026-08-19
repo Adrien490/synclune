@@ -18,7 +18,7 @@ import { getVariantById } from "@/modules/variants/data/get-variant";
 import { EditProductVariantForm } from "@/modules/variants/components/admin/edit-variant-form";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
-import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-display-title";
+import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-labels";
 
 const ColorFormDialog = dynamic(() =>
 	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
@@ -118,10 +118,6 @@ export default async function EditVariantPage({ params }: { params: EditVariantP
 			<EditProductVariantForm
 				colors={colors}
 				materials={materials}
-				product={{
-					id: product.id,
-					name: product.name,
-				}}
 				productSlug={slug}
 				variant={variant}
 			/>

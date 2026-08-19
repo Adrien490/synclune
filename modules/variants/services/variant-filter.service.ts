@@ -112,14 +112,11 @@ export function filterCompatibleVariants<
 >(product: TProduct, selectedVariants: VariantSelectors): TVariant[] {
 	if (!product.variants) return [];
 
+	// Pas d'indirection `selectors_of(variant, selectors)` ici : elle retournait son
+	// second argument tel quel, en snake_case, « pour garder la signature stable si
+	// des sélecteurs contextuels arrivent plus tard ». Ils ne sont pas arrivés.
 	return product.variants.filter((variant: TVariant) => {
 		if (!variant.active || variant.stock <= 0) return false;
-		return matchVariantSelectors(variant, selectors_of(variant, selectedVariants));
+		return matchVariantSelectors(variant, selectedVariants);
 	});
-}
-
-// Petite indirection pour garder la signature stable si des sélecteurs
-// contextuels arrivent plus tard.
-function selectors_of(_variant: BaseProductVariant, selectors: VariantSelectors): VariantSelectors {
-	return selectors;
 }

@@ -4,7 +4,14 @@ import { prisma } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { requireAdmin } from "@/modules/admin-auth/lib/require-admin";
 import type { ActionState } from "@/shared/types/server-action";
-import { success, notFound, handleActionError, safeFormGet, error } from "@/shared/lib/actions";
+import {
+	success,
+	notFound,
+	handleActionError,
+	isUniqueConstraintError,
+	safeFormGet,
+	error,
+} from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { updateProductVariantSchema } from "../schemas/variant.schemas";
 import { getVariantInvalidationTags } from "../utils/cache.utils";
@@ -109,7 +116,7 @@ export async function updateVariant(
 		// 7. Succès
 		return success("Variante mise à jour");
 	} catch (e) {
-		if (e instanceof Error && "code" in e && (e as { code?: string }).code === "P2002") {
+		if (isUniqueConstraintError(e)) {
 			return error(
 				"Une variante identique (même taille, couleur et matériau) existe déjà pour ce produit.",
 			);

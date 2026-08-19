@@ -3,8 +3,12 @@ import type { useCreateProductVariantForm } from "@/modules/variants/hooks/use-c
 export interface VariantFormSharedProps {
 	colors: Array<{ id: string; name: string; hex: string | null }>;
 	materials: Array<{ id: string; name: string }>;
-	product: { id: string; name: string };
 	productSlug: string;
+}
+
+/** Création uniquement : le formulaire d'édition tient son produit de `variant`. */
+export interface CreateVariantFormProps extends VariantFormSharedProps {
+	product: { id: string; name: string };
 }
 
 /**

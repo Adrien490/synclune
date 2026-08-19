@@ -62,7 +62,7 @@ function normalizeArray(value: string | string[] | undefined): string[] {
 	return Array.isArray(value) ? value : [value];
 }
 
-// Parse les filtres depuis les parametres URL
+// Parse les filtres depuis les paramètres URL
 function parseVariantFilters(params: ProductVariantsSearchParams) {
 	const stockStatuses = normalizeArray(params.filter_stockStatus).filter((s) => s !== "all");
 	const colorIds = normalizeArray(params.filter_colorId);
@@ -76,12 +76,16 @@ function parseVariantFilters(params: ProductVariantsSearchParams) {
 		active = false;
 	}
 
+	// ⚠️ Tous les statuts cochés sont transmis (union OR côté `buildFilterConditions`).
+	// La version précédente ne les passait QUE s'il y en avait exactement un : cocher
+	// « En stock » + « Stock faible » affichait deux badges et ne filtrait rien.
+	const validStatuses = stockStatuses.filter(
+		(status): status is "in_stock" | "low_stock" | "out_of_stock" =>
+			status === "in_stock" || status === "low_stock" || status === "out_of_stock",
+	);
+
 	return {
-		// Si un seul statut, utiliser comme string pour le schema existant
-		stockStatus:
-			stockStatuses.length === 1
-				? (stockStatuses[0] as "in_stock" | "low_stock" | "out_of_stock")
-				: undefined,
+		stockStatus: validStatuses.length > 0 ? validStatuses : undefined,
 		colorId: colorIds.length > 0 ? colorIds : undefined,
 		materialId: materialIds.length > 0 ? materialIds : undefined,
 		active,
@@ -100,7 +104,7 @@ export async function generateMetadata({ params }: ProductVariantsPageProps): Pr
 
 	return {
 		title: `Variantes de ${product.name} - Administration`,
-		description: `Gerer les variantes du produit ${product.name}`,
+		description: `Gérer les variantes du produit ${product.name}`,
 	};
 }
 
@@ -128,12 +132,12 @@ export default async function ProductVariantsPage({
 	 */
 	const hasActiveFilters =
 		Boolean(search) ||
-		Boolean(filters.stockStatus) ||
+		Boolean(filters.stockStatus?.length) ||
 		Boolean(filters.colorId?.length) ||
 		Boolean(filters.materialId?.length) ||
 		typeof filters.active === "boolean";
 
-	// Recuperer le produit
+	// Récupérer le produit
 	const product = await getProductBySlug({
 		slug,
 		includeDraft: true,
@@ -143,7 +147,7 @@ export default async function ProductVariantsPage({
 		notFound();
 	}
 
-	// Les options de filtre sont awaited car necessaires immediatement
+	// Les options de filtre sont awaited car nécessaires immédiatement
 	const [colorOptions, materialOptions] = await Promise.all([
 		getColorOptions(),
 		getMaterialOptions(),
@@ -209,7 +213,7 @@ export default async function ProductVariantsPage({
 			<PageHeader
 				variant="compact"
 				title={`Variantes de ${product.name}`}
-				description="Gerez les differentes variantes de ce produit (couleur, taille, materiau, etc.)"
+				description="Gère les variantes de ce produit : couleur, matériau, taille."
 				className="hidden md:block"
 				actions={
 					<div className="flex items-center gap-2">
@@ -251,7 +255,7 @@ export default async function ProductVariantsPage({
 								value,
 								label,
 							}))}
-							placeholder="Plus recents"
+							placeholder="Plus récentes"
 							className="w-full sm:min-w-45"
 							noPrefix
 						/>

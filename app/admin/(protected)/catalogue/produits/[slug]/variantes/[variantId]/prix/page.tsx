@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { UpdatePriceForm } from "@/modules/variants/components/admin/update-price-form";
 import { getVariantDetailById } from "@/modules/variants/data/get-variant";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
-import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-display-title";
+import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-labels";
 
 type UpdatePricePageParams = Promise<{ slug: string; variantId: string }>;
 
@@ -31,8 +31,8 @@ export default async function UpdatePricePage({ params }: { params: UpdatePriceP
 			<UpdatePriceForm
 				variantId={variant.id}
 				variantName={getVariantDisplayTitle(variant)}
-				currentPrice={variant.priceCents ?? variant.product.priceCents}
-				currentCompareAtPrice={null}
+				priceCents={variant.priceCents}
+				productPriceCents={variant.product.priceCents}
 				redirectOnSuccess
 				successPath={backPath}
 				className="max-w-2xl"

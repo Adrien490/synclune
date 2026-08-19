@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AdjustStockForm } from "@/modules/variants/components/admin/adjust-stock-form";
 import { getVariantDetailById } from "@/modules/variants/data/get-variant";
 import { assertAdminPage } from "@/modules/admin-auth/lib/assert-admin-page";
-import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-display-title";
+import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-labels";
 
 type AdjustStockPageParams = Promise<{ slug: string; variantId: string }>;
 

@@ -16,8 +16,8 @@ let mockDialogState: {
 	data: {
 		variantId: string;
 		variantName: string;
-		currentPrice: number;
-		currentCompareAtPrice: number | null;
+		priceCents: number | null;
+		productPriceCents: number;
 	} | null;
 	close: typeof mockClose;
 } = {
@@ -46,10 +46,6 @@ vi.mock("@/modules/variants/hooks/use-update-variant-price", () => ({
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => vi.fn(),
 	triggerHaptic: vi.fn(),
-}));
-
-vi.mock("@/shared/utils/view-transition", () => ({
-	withViewTransition: (fn: () => void) => fn(),
 }));
 
 vi.mock("@/shared/components/admin-form-footer", () => ({
@@ -144,8 +140,8 @@ describe("UpdatePriceDialog", () => {
 			data: {
 				variantId: "variant_1",
 				variantName: "Bague Or - T52",
-				currentPrice: 5000,
-				currentCompareAtPrice: null,
+				priceCents: 5000,
+				productPriceCents: 4200,
 			},
 			close: mockClose,
 		};
@@ -161,8 +157,8 @@ describe("UpdatePriceDialog", () => {
 			data: {
 				variantId: "variant_1",
 				variantName: "Bague Or - T52",
-				currentPrice: 5000,
-				currentCompareAtPrice: null,
+				priceCents: 5000,
+				productPriceCents: 4200,
 			},
 			close: mockClose,
 		};
@@ -178,8 +174,8 @@ describe("UpdatePriceDialog", () => {
 			data: {
 				variantId: "variant_1",
 				variantName: "Bague Or - T52",
-				currentPrice: 5000,
-				currentCompareAtPrice: null,
+				priceCents: 5000,
+				productPriceCents: 4200,
 			},
 			close: mockClose,
 		};
@@ -190,38 +186,65 @@ describe("UpdatePriceDialog", () => {
 		expect(matches.length).toBeGreaterThanOrEqual(1);
 	});
 
-	it("renders price input", () => {
+	it("renders the variant price input", () => {
 		mockDialogState = {
 			isOpen: true,
 			data: {
 				variantId: "variant_1",
 				variantName: "Bague Or - T52",
-				currentPrice: 5000,
-				currentCompareAtPrice: null,
+				priceCents: 5000,
+				productPriceCents: 4200,
 			},
 			close: mockClose,
 		};
 
 		render(<UpdatePriceDialog />);
 
-		expect(screen.getByLabelText("Prix final (€)")).toBeInTheDocument();
+		expect(screen.getByLabelText("Prix de la variante (€)")).toBeInTheDocument();
 	});
 
-	it("renders compare at price input", () => {
+	/**
+	 * ⚠️ Le « prix barré » (`compareAtPrice`) a disparu du schéma avec la migration
+	 * lean. Le champ était pourtant resté rendu et validé : Léane pouvait le saisir,
+	 * se faire refuser une valeur trop basse, et le serveur le jetait en silence.
+	 */
+	it("does not render a compare-at price input", () => {
 		mockDialogState = {
 			isOpen: true,
 			data: {
 				variantId: "variant_1",
-				variantName: "Bague Or - T52",
-				currentPrice: 5000,
-				currentCompareAtPrice: null,
+				variantName: "Or rose · M",
+				priceCents: 5000,
+				productPriceCents: 4200,
 			},
 			close: mockClose,
 		};
 
 		render(<UpdatePriceDialog />);
 
-		expect(screen.getByLabelText("Prix barré (optionnel)")).toBeInTheDocument();
+		expect(screen.queryByLabelText(/barré/i)).not.toBeInTheDocument();
+	});
+
+	/**
+	 * L'override est un CHAMP VIDE quand la variante suit le produit : pré-remplir
+	 * le prix hérité transformait « ouvrir puis enregistrer » en épinglage
+	 * silencieux, sans aucun geste pour revenir à l'héritage.
+	 */
+	it("leaves the price field empty when the variant inherits the product price", () => {
+		mockDialogState = {
+			isOpen: true,
+			data: {
+				variantId: "variant_1",
+				variantName: "Or rose · M",
+				priceCents: null,
+				productPriceCents: 4200,
+			},
+			close: mockClose,
+		};
+
+		render(<UpdatePriceDialog />);
+
+		expect(screen.getByLabelText("Prix de la variante (€)")).toHaveValue(null);
 	});
 
 	it("renders save submit button", () => {
@@ -230,8 +253,8 @@ describe("UpdatePriceDialog", () => {
 			data: {
 				variantId: "variant_1",
 				variantName: "Bague Or - T52",
-				currentPrice: 5000,
-				currentCompareAtPrice: null,
+				priceCents: 5000,
+				productPriceCents: 4200,
 			},
 			close: mockClose,
 		};
@@ -249,8 +272,8 @@ describe("UpdatePriceDialog", () => {
 			data: {
 				variantId: "variant_1",
 				variantName: "Bague Or - T52",
-				currentPrice: 5000,
-				currentCompareAtPrice: null,
+				priceCents: 5000,
+				productPriceCents: 4200,
 			},
 			close: mockClose,
 		};
@@ -267,8 +290,8 @@ describe("UpdatePriceDialog", () => {
 			data: {
 				variantId: "variant_1",
 				variantName: "Bague Or - T52",
-				currentPrice: 5000,
-				currentCompareAtPrice: null,
+				priceCents: 5000,
+				productPriceCents: 4200,
 			},
 			close: mockClose,
 		};

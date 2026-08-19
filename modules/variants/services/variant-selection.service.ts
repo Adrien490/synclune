@@ -9,6 +9,7 @@
  * avec le module products.
  */
 
+import { slugify } from "@/shared/utils/generate-slug";
 import type { BaseVariantForList } from "@/shared/types/product-variant.types";
 
 /**
@@ -16,9 +17,10 @@ import type { BaseVariantForList } from "@/shared/types/product-variant.types";
  */
 export interface GetPrimaryVariantOptions {
 	/**
-	 * Identité URL de la couleur préférée (= NOM de la couleur depuis le schéma
-	 * lean). Si spécifié, priorise les variantes de cette couleur (Baymard :
-	 * thumbnail dynamique selon filtre).
+	 * Identité URL de la couleur préférée = NOM DE LA COULEUR SLUGIFIÉ (Color n'a
+	 * pas de colonne slug). Si spécifié, priorise les variantes de cette couleur
+	 * (Baymard : vignette dynamique selon le filtre). La comparaison slugifie les
+	 * deux côtés — un nom brut passé ici fonctionne donc aussi.
 	 */
 	preferredColorSlug?: string;
 }
@@ -45,15 +47,22 @@ export function getPrimaryVariantForList<
 	const { preferredColorSlug } = options ?? {};
 
 	if (preferredColorSlug) {
+		// ⚠️ SLUGIFY des deux côtés. La comparaison était `variant.color?.name ===
+		// preferredColorSlug`, soit un SLUG confronté à un NOM : « bleu-nuit » ne
+		// pouvait jamais égaler « Bleu nuit ». La règle du dépôt est explicite —
+		// l'identité URL d'une couleur est son nom slugifié, on ne compare jamais un
+		// slug à `color.name`. Le défaut dormait faute d'appelant passant l'option ;
+		// il se serait réveillé au premier branchement du filtre couleur sur les cartes.
+		const target = slugify(preferredColorSlug);
+		const matchesColor = (variant: TVariant) =>
+			variant.active && variant.color != null && slugify(variant.color.name) === target;
+
 		const colorVariantInStock = product.variants.find(
-			(variant) =>
-				variant.active && variant.color?.name === preferredColorSlug && variant.stock > 0,
+			(variant) => matchesColor(variant) && variant.stock > 0,
 		);
 		if (colorVariantInStock) return colorVariantInStock;
 
-		const colorVariant = product.variants.find(
-			(variant) => variant.active && variant.color?.name === preferredColorSlug,
-		);
+		const colorVariant = product.variants.find(matchesColor);
 		if (colorVariant) return colorVariant;
 	}
 

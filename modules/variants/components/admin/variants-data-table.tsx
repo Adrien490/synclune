@@ -10,17 +10,15 @@ import {
 } from "@/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetProductVariantsReturn } from "@/modules/variants/types/variants.types";
-import { getVariantMaterialsLabel } from "@/modules/variants/utils/variant-materials-label";
-import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-display-title";
 import {
+	getAttributeLabel,
 	getColorHexes,
 	getColorNames,
-	getVariantColorsDisplayLabel,
-} from "@/modules/variants/utils/variant-colors-label";
+	getVariantDisplayTitle,
+} from "@/modules/variants/utils/variant-labels";
 import { buildSwatchStyle, getSwatchAriaLabel } from "@/modules/colors/utils/swatch-style";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
-import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PackageIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,14 +27,10 @@ import { ProductVariantRowActions } from "./variant-row-actions";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 // Schéma lean : le média vit sur le PRODUIT — vignette = première IMAGE du
-// produit (filtre + ordre canonique portés par le select).
+// produit (filtre `type: "IMAGE"` + ordre canonique portés par le select, donc
+// aucune vidéo ne peut arriver ici).
 function getPrimaryImage(variant: GetProductVariantsReturn["productVariants"][number]) {
 	return variant.product.media[0] ?? null;
-}
-
-// Helper pour calculer le stock disponible
-function getAvailableStock(variant: { stock: number }): number {
-	return variant.stock;
 }
 
 interface ProductVariantsDataTableProps {
@@ -115,7 +109,6 @@ export async function ProductVariantsDataTable({
 			<TableBody>
 				{productVariants.map((variant) => {
 					const primaryImage = getPrimaryImage(variant);
-					const availableStock = getAvailableStock(variant);
 					const displayTitle = getVariantDisplayTitle({
 						...variant,
 						isRepresentative: variant.id === representativeVariantId,
@@ -126,29 +119,14 @@ export async function ProductVariantsDataTable({
 							<TableCell className="py-3">
 								<div className="bg-muted relative size-20 shrink-0 rounded-md">
 									{primaryImage ? (
-										primaryImage.type === "VIDEO" ? (
-											<video
-												className="h-full w-full rounded-md object-cover"
-												muted
-												loop
-												playsInline
-												preload="none"
-												aria-label={primaryImage.alt ?? `Vidéo variante ${displayTitle}`}
-											>
-												<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
-												<track kind="captions" srcLang="fr" label="Français" default />
-												Votre navigateur ne supporte pas la lecture de vidéos.
-											</video>
-										) : (
-											<Image
-												src={primaryImage.url}
-												alt={primaryImage.alt ?? displayTitle}
-												fill
-												sizes="80px"
-												quality={IMAGE_QUALITY.STANDARD}
-												className="rounded-md object-cover"
-											/>
-										)
+										<Image
+											src={primaryImage.url}
+											alt={primaryImage.alt ?? displayTitle}
+											fill
+											sizes="80px"
+											quality={IMAGE_QUALITY.STANDARD}
+											className="rounded-md object-cover"
+										/>
 									) : (
 										<div className="bg-muted flex h-full w-full items-center justify-center rounded-md">
 											<PackageIcon className="text-muted-foreground size-8" />
@@ -178,7 +156,7 @@ export async function ProductVariantsDataTable({
 								{(() => {
 									const hexes = getColorHexes(variant.color);
 									const names = getColorNames(variant.color);
-									const label = getVariantColorsDisplayLabel(variant.color);
+									const label = getAttributeLabel(variant.color);
 									if (!label) {
 										return <span className="text-muted-foreground text-sm">—</span>;
 									}
@@ -208,7 +186,7 @@ export async function ProductVariantsDataTable({
 							</TableCell>
 							<TableCell>
 								{(() => {
-									const label = getVariantMaterialsLabel(variant.material);
+									const label = getAttributeLabel(variant.material);
 									return label ? (
 										<span className="block truncate text-sm" title={label}>
 											{label}
@@ -232,10 +210,10 @@ export async function ProductVariantsDataTable({
 							</TableCell>
 							<TableCell className="text-center">
 								<Badge
-									variant={getStockVariant(availableStock)}
-									aria-label={getStockAriaLabel(availableStock)}
+									variant={getStockVariant(variant.stock)}
+									aria-label={getStockAriaLabel(variant.stock)}
 								>
-									{availableStock}
+									{variant.stock}
 								</Badge>
 							</TableCell>
 							<TableCell className="text-right">
@@ -246,7 +224,8 @@ export async function ProductVariantsDataTable({
 									isRepresentative={variant.id === representativeVariantId}
 									active={variant.active}
 									stock={variant.stock}
-									priceCents={variant.priceCents ?? variant.product.priceCents}
+									priceCents={variant.priceCents}
+									productPriceCents={variant.product.priceCents}
 								/>
 							</TableCell>
 						</TableRow>

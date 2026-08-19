@@ -5,23 +5,24 @@ import { duplicateVariant } from "@/modules/variants/actions/duplicate-variant";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
+/**
+ * Charge utile de succès de `duplicateVariant` — l'id de la COPIE.
+ *
+ * ⚠️ Ce garde doit rester aligné sur le `success(…, { variantId })` de
+ * `actions/duplicate-variant.ts`. Il a longtemps exigé `{ id, variant, productId,
+ * productSlug }`, une forme que l'action n'a jamais renvoyée : le garde ne passait
+ * donc jamais, `onSuccess` n'était jamais appelé et, avec `showSuccessToast: false`,
+ * dupliquer une variante ne produisait AUCUN retour visible. Le test unitaire
+ * fabriquait la forme attendue au lieu de la lire de l'action — il restait vert.
+ */
 export interface DuplicateVariantSuccessData {
-	id: string;
-	variant: string;
-	productId: string;
-	productSlug: string;
+	variantId: string;
 }
 
-const isDuplicateVariantSuccessData = (value: unknown): value is DuplicateVariantSuccessData => {
-	return (
-		value !== null &&
-		typeof value === "object" &&
-		typeof (value as DuplicateVariantSuccessData).id === "string" &&
-		typeof (value as DuplicateVariantSuccessData).variant === "string" &&
-		typeof (value as DuplicateVariantSuccessData).productId === "string" &&
-		typeof (value as DuplicateVariantSuccessData).productSlug === "string"
-	);
-};
+const isDuplicateVariantSuccessData = (value: unknown): value is DuplicateVariantSuccessData =>
+	value !== null &&
+	typeof value === "object" &&
+	typeof (value as DuplicateVariantSuccessData).variantId === "string";
 
 interface UseDuplicateVariantOptions {
 	onSuccess?: (message: string, data: DuplicateVariantSuccessData) => void;
@@ -29,7 +30,7 @@ interface UseDuplicateVariantOptions {
 }
 
 /**
- * Hook admin pour dupliquer un VARIANT
+ * Hook admin pour dupliquer un VARIANT.
  */
 export function useDuplicateVariant(options?: UseDuplicateVariantOptions) {
 	const [isPending, startTransition] = useTransition();
@@ -55,7 +56,7 @@ export function useDuplicateVariant(options?: UseDuplicateVariantOptions) {
 		undefined,
 	);
 
-	const duplicate = (variantId: string, _variantName: string) => {
+	const duplicate = (variantId: string) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("variantId", variantId);

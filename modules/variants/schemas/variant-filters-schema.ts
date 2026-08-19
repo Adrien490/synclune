@@ -1,71 +1,41 @@
 import { z } from "zod";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 
-import {
-	VARIANT_FILTERS_MAX_STOCK,
-	VARIANT_FILTERS_MAX_PRICE_CENTS,
-} from "../constants/variant.constants";
+/**
+ * Filtres de la liste des VARIANTs d'un produit (admin).
+ *
+ * ⚠️ Ce schéma ne déclare QUE des filtres réellement câblés à une surface :
+ * le sheet (`variants-filter-sheet.tsx`) et l'URL de
+ * `catalogue/produits/[slug]/variantes`. Huit filtres fantômes ont été retirés
+ * lors de l'audit du module (2026-08-19) — `material` (par NOM, marqué
+ * « legacy »), `priceMin`/`priceMax`, `stockMin`/`stockMax`, `inStock`,
+ * `outOfStock`, `size`, `hasOrders` : aucun n'avait de producteur, mais tous
+ * portaient du `WHERE` à maintenir, deux `refine` d'exclusion mutuelle et une
+ * ligne de risque à chaque migration de schéma. Même logique que la règle des
+ * tags de cache : un filtre n'existe que s'il a un émetteur ET un lecteur.
+ */
+export const productVariantFiltersSchema = z.object({
+	/** Borne la liste à un produit — le seul appelant en production en pose un. */
+	productId: optionalStringOrStringArraySchema,
+	colorId: optionalStringOrStringArraySchema,
+	materialId: optionalStringOrStringArraySchema,
 
-export const productVariantFiltersSchema = z
-	.object({
-		// Filtres recommandés
-		productId: optionalStringOrStringArraySchema, // Fortement recommandé
-		colorId: optionalStringOrStringArraySchema,
-		materialId: optionalStringOrStringArraySchema, // Filtre par ID de matériau
-		material: optionalStringOrStringArraySchema, // Filtre par nom de matériau (legacy)
+	active: z.boolean().optional(),
 
-		// Filtres de base
-		active: z.boolean().optional(),
-		// Plus de filtre `isDefault` : la colonne a disparu (audit schéma V5, lot A2)
-		// et le filtre n'avait aucune surface UI — le représentant (rang 0 de
-		// position) est signalé par badge dans la liste, pas par un filtre.
-
-		// Filtres de prix (en centimes) - aligné avec max 999999.99€ = 99999999 centimes
-		priceMin: z.number().int().nonnegative().max(VARIANT_FILTERS_MAX_PRICE_CENTS).optional(),
-		priceMax: z.number().int().nonnegative().max(VARIANT_FILTERS_MAX_PRICE_CENTS).optional(),
-
-		// Filtres de stock
-		stockMin: z.number().int().nonnegative().max(VARIANT_FILTERS_MAX_STOCK).optional(),
-		stockMax: z.number().int().nonnegative().max(VARIANT_FILTERS_MAX_STOCK).optional(),
-		inStock: z.boolean().optional(), // stock > 0
-		outOfStock: z.boolean().optional(), // stock = 0
-		stockStatus: z.enum(["all", "in_stock", "low_stock", "out_of_stock"]).optional(),
-
-		// Filtres de taille
-		size: optionalStringOrStringArraySchema,
-
-		// Filtres sur les relations
-		hasOrders: z.boolean().optional(),
-	})
-	.refine((data) => {
-		// `!== undefined` (et non truthy) pour ne pas sauter la vérif quand une borne
-		// vaut 0 — aligné sur productFiltersSchema (audit filtres K1).
-		if (data.priceMin !== undefined && data.priceMax !== undefined) {
-			return data.priceMin <= data.priceMax;
-		}
-		return true;
-	}, "Le prix minimum doit être inférieur ou égal au prix maximum")
-	.refine((data) => {
-		if (data.stockMin !== undefined && data.stockMax !== undefined) {
-			return data.stockMin <= data.stockMax;
-		}
-		return true;
-	}, "Le stock minimum doit être inférieur ou égal au stock maximum")
-	// Filtres de stock mutuellement exclusifs. `buildFilterConditions` empile chaque
-	// filtre dans le même `AND` : demander à la fois « en stock » et « épuisé »
-	// poussait `stock > 0` ET `stock <= 0`, soit un jeu de résultats
-	// VIDE GARANTI — sans message, l'admin concluait « aucune variante ».
-	.refine(
-		(data) => !(data.inStock === true && data.outOfStock === true),
-		"« En stock » et « Épuisé » ne peuvent pas être demandés en même temps",
-	)
-	.refine((data) => {
-		if (data.inStock !== true) return true;
-		return data.stockStatus !== "out_of_stock";
-	}, "« En stock » est incompatible avec le statut « Épuisé »")
-	.refine((data) => {
-		if (data.outOfStock !== true) return true;
-		return data.stockStatus !== "in_stock" && data.stockStatus !== "low_stock";
-	}, "« Épuisé » est incompatible avec un statut de stock non nul");
+	/**
+	 * Statuts de stock cochés — UNION (OR) des cases du sheet.
+	 *
+	 * ⚠️ Tableau et non chaîne : le sheet a toujours été multi-select, mais la
+	 * page ne transmettait le filtre que si EXACTEMENT un statut était coché
+	 * (`stockStatuses.length === 1 ? … : undefined`). Cocher « En stock » +
+	 * « Stock faible » affichait donc deux badges et n'appliquait aucun filtre.
+	 * `in_stock` contient `low_stock` : leur union vaut `in_stock`, ce que
+	 * l'admin attend.
+	 */
+	stockStatus: z
+		.array(z.enum(["in_stock", "low_stock", "out_of_stock"]))
+		.min(1)
+		.optional(),
+});
 
 export type ProductVariantFilters = z.infer<typeof productVariantFiltersSchema>;

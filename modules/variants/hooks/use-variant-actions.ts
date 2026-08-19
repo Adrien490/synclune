@@ -18,7 +18,6 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useDialog } from "@/shared/providers/overlay-store-provider";
 import { toast } from "@/shared/utils/toast";
-import { withViewTransition } from "@/shared/utils/view-transition";
 
 import { useDuplicateVariant } from "./use-duplicate-variant";
 import { useUpdateProductVariantStatus } from "./use-update-variant-status";
@@ -26,6 +25,7 @@ import { useUpdateProductVariantStatus } from "./use-update-variant-status";
 import { ADJUST_STOCK_DIALOG_ID } from "../components/admin/adjust-stock-dialog";
 import { DELETE_PRODUCT_VARIANT_DIALOG_ID } from "../components/admin/delete-variant-alert-dialog";
 import { UPDATE_PRICE_DIALOG_ID } from "../components/admin/update-price-dialog";
+import { PAGE_FADE_NAVIGATION } from "@/shared/constants/view-transitions";
 
 interface UseVariantActionsParams {
 	variantId: string;
@@ -39,7 +39,10 @@ interface UseVariantActionsParams {
 	isRepresentative?: boolean;
 	active?: boolean;
 	stock?: number;
-	priceCents?: number;
+	/** Override de prix de la variante en centimes — `null` = suit le produit. */
+	priceCents?: number | null;
+	/** Prix du produit parent en centimes. */
+	productPriceCents?: number;
 }
 
 /**
@@ -53,7 +56,8 @@ export function useVariantActions({
 	isRepresentative = false,
 	active = true,
 	stock = 0,
-	priceCents = 0,
+	priceCents = null,
+	productPriceCents = 0,
 }: UseVariantActionsParams): { sections: ActionMenuSection[] } {
 	const router = useRouter();
 	const haptic = useHaptic();
@@ -70,10 +74,9 @@ export function useVariantActions({
 				action: {
 					label: "Voir la variante",
 					onClick: () =>
-						withViewTransition(() =>
-							router.push(
-								`/admin/catalogue/produits/${data.productSlug}/variantes/${data.id}/modifier`,
-							),
+						router.push(
+							`/admin/catalogue/produits/${productSlug}/variantes/${data.variantId}/modifier`,
+							PAGE_FADE_NAVIGATION,
 						),
 				},
 			});
@@ -101,9 +104,13 @@ export function useVariantActions({
 					label: active ? "Désactiver" : "Activer",
 					icon: active ? ToggleLeftIcon : ToggleRightIcon,
 					disabled: isToggling,
-					// L'action refuse de désactiver le représentant (update-variant-status) :
-					// ne pas proposer un geste voué à l'erreur.
-					hidden: isRepresentative,
+					// ⚠️ Plus de `hidden: isRepresentative` : il invoquait une règle qui
+					// n'existe pas. `update-variant-status` ne refuse QUE la dernière
+					// variante ACTIVE d'un produit en vente — le représentant d'un produit
+					// qui en compte cinq actives est parfaitement désactivable, et le geste
+					// était pourtant introuvable. La vraie règle demande le compte des
+					// variantes actives du produit, que cette liste paginée n'a pas : c'est
+					// donc l'action qui tranche, avec son message explicite.
 					onSelect: () => toggleStatus(variantId, !active),
 				},
 				{
@@ -127,7 +134,8 @@ export function useVariantActions({
 							: updatePriceDialog.open({
 									variantId,
 									variantName,
-									currentPrice: priceCents,
+									priceCents,
+									productPriceCents,
 								}),
 				},
 				{
@@ -135,7 +143,7 @@ export function useVariantActions({
 					label: "Dupliquer",
 					icon: CopyIcon,
 					disabled: isDuplicating,
-					onSelect: () => duplicate(variantId, variantName),
+					onSelect: () => duplicate(variantId),
 				},
 			],
 		},

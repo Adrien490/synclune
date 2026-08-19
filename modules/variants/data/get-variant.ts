@@ -2,12 +2,29 @@ import { isAdmin } from "@/modules/admin-auth/lib/require-admin";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
-import { GET_PRODUCT_VARIANT_SELECT } from "../constants/variant.constants";
+import {
+	GET_PRODUCT_VARIANT_DETAIL_SELECT,
+	GET_PRODUCT_VARIANT_SELECT,
+} from "../constants/variant.constants";
 import type { VariantDetail } from "../types/variant.types";
 import { cacheVariantDetailById } from "../utils/cache.utils";
 
 // Re-export pour compatibilité
 export type { VariantDetail } from "../types/variant.types";
+
+/**
+ * Le REPRÉSENTANT d'un produit est sa première variante par id — le schéma lean
+ * n'a plus de rang éditorial `position` sur la variante.
+ *
+ * ⚠️ L'information arrive avec le select (`product.variants`, `take: 1`) : les
+ * deux lecteurs ci-dessous lançaient un `findFirst` SÉQUENTIEL supplémentaire
+ * pour la calculer, soit deux allers-retours DB par affichage de fiche.
+ */
+function withRepresentative<
+	TVariant extends { id: string; product: { variants: { id: string }[] } },
+>(variant: TVariant): TVariant & { isRepresentative: boolean } {
+	return { ...variant, isRepresentative: variant.product.variants[0]?.id === variant.id };
+}
 
 // ============================================================================
 // GET VARIANT BY ID (pour édition)
@@ -45,15 +62,7 @@ async function fetchVariantById(variantId: string): Promise<VariantDetail | null
 	});
 	if (!variant) return null;
 
-	// Le représentant du produit = première variante par id (plus de rang
-	// éditorial `position` dans le schéma lean).
-	const first = await prisma.productVariant.findFirst({
-		where: { productId: variant.productId },
-		orderBy: { id: "asc" },
-		select: { id: true },
-	});
-
-	return { ...variant, isRepresentative: first?.id === variant.id };
+	return withRepresentative(variant);
 }
 
 // ============================================================================
@@ -84,41 +93,9 @@ async function fetchVariantDetailById(variantId: string) {
 
 	const variant = await prisma.productVariant.findUnique({
 		where: { id: variantId },
-		select: {
-			id: true,
-			productId: true,
-			priceCents: true,
-			stock: true,
-			active: true,
-			size: true,
-			color: { select: { id: true, name: true, hex: true } },
-			material: { select: { id: true, name: true } },
-			product: {
-				select: {
-					id: true,
-					slug: true,
-					name: true,
-					active: true,
-					priceCents: true,
-					media: {
-						where: { type: "IMAGE" },
-						orderBy: [{ position: "asc" }, { id: "asc" }],
-						take: 1,
-						select: { id: true, url: true, alt: true, type: true },
-					},
-					_count: { select: { variants: true } },
-				},
-			},
-			_count: { select: { orderItems: true } },
-		},
+		select: GET_PRODUCT_VARIANT_DETAIL_SELECT,
 	});
 	if (!variant) return null;
 
-	const first = await prisma.productVariant.findFirst({
-		where: { productId: variant.productId },
-		orderBy: { id: "asc" },
-		select: { id: true },
-	});
-
-	return { ...variant, isRepresentative: first?.id === variant.id };
+	return withRepresentative(variant);
 }

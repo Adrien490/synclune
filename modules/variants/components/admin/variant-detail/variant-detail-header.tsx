@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useVariantActions } from "@/modules/variants/hooks/use-variant-actions";
 import type { VariantDetailReturn } from "@/modules/variants/data/get-variant";
-import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-display-title";
+import { getVariantDisplayTitle } from "@/modules/variants/utils/variant-labels";
 import { useSetAdminPageTitle } from "@/app/admin/(protected)/_components/admin-page-title-context";
 import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
 import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
@@ -39,7 +39,8 @@ export function VariantDetailHeader({ variant }: VariantDetailHeaderProps) {
 		isRepresentative: variant.isRepresentative,
 		active: variant.active,
 		stock: variant.stock,
-		priceCents: variant.priceCents ?? variant.product.priceCents,
+		priceCents: variant.priceCents,
+		productPriceCents: variant.product.priceCents,
 	});
 
 	return (

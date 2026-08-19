@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import type { GetProductReturn, ProductVariant } from "@/modules/products/types/product.types";
-import { getVariantMaterialsLabel } from "@/modules/variants/utils/variant-materials-label";
+import { getAttributeLabel } from "@/modules/variants/utils/variant-labels";
 import { useSelectedVariant } from "@/modules/variants/hooks/use-selected-variant";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
@@ -143,7 +143,7 @@ export function StickyCartCTADesktop({
 	const variantSummaryParts: string[] = [];
 	const currentColorsLabel = currentVariant.color?.name ?? "";
 	if (currentColorsLabel) variantSummaryParts.push(currentColorsLabel);
-	const currentMaterialsLabel = getVariantMaterialsLabel(currentVariant.material);
+	const currentMaterialsLabel = getAttributeLabel(currentVariant.material);
 	if (currentMaterialsLabel) variantSummaryParts.push(currentMaterialsLabel);
 	if (currentVariant.size) variantSummaryParts.push(`Taille ${currentVariant.size}`);
 	const variantSummary = variantSummaryParts.join(" · ");

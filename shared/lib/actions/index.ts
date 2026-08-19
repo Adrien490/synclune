@@ -25,7 +25,7 @@ export { validateInput, safeFormGet, safeFormGetJSON, parseFormIds } from "./val
 // Plus de rate limiting : perte volontaire du schéma lean (§ 1, lot 2).
 
 // Error handling helpers
-export { handleActionError, BusinessError } from "./errors";
+export { handleActionError, isUniqueConstraintError, BusinessError } from "./errors";
 
 // Response helpers
 export {

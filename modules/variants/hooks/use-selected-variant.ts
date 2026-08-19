@@ -46,10 +46,12 @@ export function useSelectedVariant({
 	const searchParams = useSearchParams();
 
 	const selectedVariant = ((): ProductVariant | null => {
+		// ⚠️ Pas de `colorCombo` ici : le champ (combo M2M d'avant la migration lean)
+		// n'existe pas dans `VariantSelectors` et `matchColor` ne l'a jamais lu — trois
+		// commentaires prétendaient pourtant qu'il « primait ». Le deep-link d'une
+		// variante passe par `?color=<slug>&material=<slug>&size=`, seuls paramètres
+		// que les sélecteurs écrivent et que le matching sait résoudre.
 		const urlVariants = {
-			// `variant` (combo M2M) prime sur `color` legacy si présent. Le service
-			// matchColor applique colorCombo en priorité (set égalité strict).
-			colorCombo: searchParams.get("variant") ?? undefined,
 			colorSlug: searchParams.get("color") ?? undefined,
 			materialSlug: searchParams.get("material") ?? undefined,
 			size: searchParams.get("size") ?? undefined,

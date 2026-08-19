@@ -9,6 +9,7 @@ import {
 	notFound,
 	error,
 	handleActionError,
+	isUniqueConstraintError,
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
@@ -81,7 +82,7 @@ export async function duplicateVariant(
 			{ variantId: copy.id },
 		);
 	} catch (e) {
-		if (e instanceof Error && "code" in e && (e as { code?: string }).code === "P2002") {
+		if (isUniqueConstraintError(e)) {
 			return error(
 				"Une variante identique existe déjà (une copie sans taille existe peut-être) — modifie-la plutôt.",
 			);

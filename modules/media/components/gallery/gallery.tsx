@@ -240,7 +240,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 		color: colorSlug,
 		material: materialSlug,
 		size,
-		variant: colorCombo,
 	} = parseGalleryParams({
 		color: searchParams.get("color") ?? undefined,
 		material: searchParams.get("material") ?? undefined,
@@ -249,7 +248,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 	});
 
 	// Build image list based on selected variants
-	const selectedVariants = { colorCombo, colorSlug, materialSlug, size };
+	// `colorCombo` retiré : ni `buildGallery` ni `resolveGalleryAccent` ne l'ont
+	// jamais lu (combo M2M d'avant la migration lean).
+	const selectedVariants = { colorSlug, materialSlug, size };
 	const images: ProductMedia[] = buildGallery({ product, selectedVariants });
 
 	// Teinte du carton : la couleur du bijou qu'on regarde. Elle n'est plus
