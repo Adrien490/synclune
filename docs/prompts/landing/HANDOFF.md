@@ -51,8 +51,17 @@
 
 - **« Voir les 14 créations »** (hero + section 2) : compte des créations actives en base,
   même valeur partout. (Tours 1-2.)
-- **Comptes par collection** (6/5/3 dans la maquette) et **par type** (« Colliers (3) ») :
-  inventés pour sommer à 14 — à lire en base. (Tours 3-4.)
+- **Comptes par collection** (6/5/3 dans la maquette) : inventés pour sommer à 14 — à lire en
+  base. (Tour 3.) ⚠️ **Aucun compte par type sur les puces** — la mention « Colliers (3) » du
+  tour 4 a été abandonnée et ne doit pas revenir : sur un catalogue de 14 pièces, des « (1) »
+  et « (2) » afficheraient la minceur, pas la richesse (passe types du 2026-08-19, context
+  posé sur les 4 frames de section).
+- **« Voir les 4 collections »** (section 3, lien ×2) : compte des collections **actives** en
+  base — même famille que le « 14 ». ⚠️ Le **chapô** de la section énumère les territoires
+  RÉELS (« le jardin, le ciel de nuit, la pluie ou les musées ») : **copie ÉDITORIALE à réviser
+  quand une collection naît ou meurt** — la structure survit à 9 (aucun compte en dur), la
+  phrase, elle, est vivante. (Audit collections 2026-08-19, P3, contexts posés sur les 4
+  en-têtes.)
 - **Prix des 8 cartes** (38/26/29/28/24/42/18/14 €) : placeholders plausibles, la base fait
   foi. (Tour 2.)
 - **Badges de rareté** (« PIÈCE UNIQUE », « IL EN RESTE 2 ») : lus en base, et tenus au test
@@ -77,19 +86,64 @@
 - ~~**Bandeau livraison**~~ — **RETIRÉ le 2026-08-19** (cf. arbitrage nº 1 ci-dessus) : la
   barre haute du code ne change pas de structure. Le liseré 1 px encre = `border-bottom` de
   l'état flottant — jamais d'ombre floue. (Tour 10, frame `00-systeme/chrome-scrollee`.)
-- **Badge compteur du panier : TRANCHÉ le 2026-08-19 — ROND rose à chiffre encre** (celui des
-  chromes ET du code actuel : zéro changement en code). La goutte de la planche motion est
-  archivée non retenue.
-- **Vérifier la chrome contre le code** : l'import `browser` n'a jamais eu lieu, les champs
-  `context` de la chrome ne pointent pas vers les composants réels. Libellés de référence :
-  nav « Les créations » / « Les collections », barre basse 5 onglets
-  (`e2e/shop-mobile.spec.ts`), médiateur CNPM (`shared/constants/consumer-law.ts`). (Tour 0,
-  corrigé les 2026-08-17 ; nav desktop et médiateur re-alignés dans la maquette le 2026-08-18,
-  audit 17b.)
-- **Pied de page sur `rose-pale` `#fdf0f8`** (passe du 2026-08-17, documentée à l'audit 17b) :
-  si la maquette est retenue, créer le token (teinte du rose, surfaces uniquement) ; le filet
-  interne `#06070b24` = `var(--foreground)` à 14 % ; focus des liens du pied = anneau encre
-  2 px standard (la règle « focus papier sur fond encre » est morte avec l'aplat encre).
+- **Badge compteur du panier : TRANCHÉ le 2026-08-19 — ROND rose à chiffre encre, 18×18**
+  (pilule au-delà de 9 ; harmonisé sur les deux surfaces restantes à l'audit navbar). La goutte
+  de la planche motion est archivée non retenue.
+- **Chrome re-vérifiée contre la STRUCTURE du code le 2026-08-19** (`AUDIT-NAVBAR-2026-08-19.md`,
+  appliqué — le « vérifier la chrome contre le code » du tour 0 est SOLDÉ, contexts posés) :
+  - **Barre haute mobile = burger + lockup centré + nom de salle au scroll** — parité
+    `navbar.tsx` / `navbar-room-label.tsx` : la dédup du 2026-08-04 est CONSERVÉE, aucune
+    action dans la rangée sous `lg` (recherche/favoris/panier vivent dans la barre basse).
+    Zéro changement de structure en code ; le nom de salle est déjà en `font-display` (parité),
+    encre 70 %, aria-hidden, jamais un lien.
+  - **Le lockup porte le MARK** (les deux barres, tailles code 48/40) : mêmes chemins que
+    `logo-mark.paths.ts`, étincelles `escaping` (convention : navbar seule), animées au
+    survol/focus (`group/logo`). ⚠️ Wordmark de la refonte = **Winky Sans 24/20** (décision
+    tour 0) : remplace la typo Kalam de `LogoWordmark` au passage en code (c'est sa SSOT).
+  - **Recherche desktop** : pilule « Rechercher ⌘K » = `QuickSearchTrigger variant="bar"`
+    restylée papier + trait encre 1,5, radius pilule (structure et aria-label inchangés) ;
+    icône seule sous `lg` inchangée.
+  - **Méga-menu Créations CONSERVÉ** (types + nouveautés + collection vedette), restylé
+    papier/encre ; caret 12 px ajouté au trigger. « Les collections » reste un lien simple
+    (bento supprimé le 2026-08-08 — pas de caret, pas de panneau vide).
+  - **Volet menu et méga-menu DESSINÉS dans la DA (lot 5, 2026-08-19)** — planches
+    `00-systeme/chrome-volet-menu` et `00-systeme/chrome-mega-menu`, structure du code respectée.
+    En code, quatre changements : (1) le volet perd les comptes « n pièces » par type (même motif
+    que les puces de la section 4 : sur 14 pièces, « 1 pièce » affiche la minceur) ; (2) la 8ᵉ
+    cellule « Voir tout » devient « Voir les 14 créations » (portée chiffrée, règle § 9, même
+    source que le hero) ; (3) panneau et volet se détachent au TRAIT (encre 1, radius 16 / liseré
+    de tranche), plus aucune ombre floue — le `shadow-premium-rose` du spotlight disparaît ;
+    (4) tuiles et cellules sur fond gris (`$gris`), badge compteur rond 18 partout. Bloc admin,
+    encart « atelier en pause » et fallback « À découvrir » : inchangés (contexts posés).
+  - **États de la chrome** (planche `00-systeme/chrome-etats`) : lien de nav survol ET focus =
+    **squiggle** (`SQUIGGLE_PATH` — remplace l'aplat d'accent d'`aria-current`) + anneau encre
+    2 px au focus ; boutons icône : fond gris rond au survol, anneau au focus ; onglets barre
+    basse : anneau au focus. Survol ⇒ focus partout, jamais d'anneau rose.
+  - Barre basse à 320 px : libellés `text-xs + truncate` (déjà le code) ; si « Rechercher »
+    tronque, raccourcir le libellé en « Recherche » plutôt que laisser l'ellipse.
+  - Libellés de référence inchangés : nav « Les créations » / « Les collections », barre basse
+    5 onglets (`e2e/shop-mobile.spec.ts`), médiateur CNPM (`shared/constants/consumer-law.ts`).
+- **Pied de page sur `rose-pale` `#fdf0f8`** (2026-08-17 ; REFONDU à l'audit pied du
+  2026-08-19) : créer le token (surfaces uniquement) ; filet interne `#06070b24` =
+  `var(--foreground)` à 14 %. **Réassurance du pied** : « Expédié sous {délai} · Livraison
+  France {frais} · Union européenne {frais-ue} · Retours et échanges sous 14 jours · Commande
+  sans compte » — SSOT `PREPARATION_DELAY_LABEL` / `SHIPPING_RATES.FR` / `.EU`, la chaîne
+  retours EXACTE de `ProductReassurance`, jamais de littéral. **Légal complet, 8 entrées** :
+  CGV (libellé long assumé) · Mentions · Confidentialité · Rétractation · Cookies ·
+  Accessibilité · Informations légales (le hub — l'anti-orphelin du 2026-08-06) · « Modifier
+  mes préférences (cookies) » = BOUTON (`ManageCookiesButton`). **Email en clair**
+  `contact@synclune.fr` + `CopyButton` (le libre-service reste AU-DESSUS, comme `footer.tsx`
+  le réclame). **Lockup mark + wordmark = UN lien vers /** (parité `Logo`, viewTransitionName
+  `shop-logo-footer`). **PAS de rail paiement** Stripe/Visa/MC/CB — assumé § 4.5 (la preuve
+  porte sur le tunnel), divergence écrite en context. **© sans année** (cache `reference` 7 j —
+  décision `footer.tsx`, ne pas la remettre). **Réserve barre basse** :
+  `pb = --bottom-bar-height + 16` (parité `FOOTER_SHELL_CLASS`, 2.4.11 MESURÉ — la maquette
+  dessine 72). Survol de lien = fond `$gris` arrondi (équivalent maquette du `bg-primary/5`),
+  focus = anneau encre 2 px (planche chrome-etats, « Rangée pied ») ; cibles `min-h-11`.
+  **Décision nº 8 sur les liens** : « L'atelier » ne se rend que quand `/a-propos` existe ;
+  commande personnalisée → mailto ; « Suivi de commande » EXIGE un état sans token ;
+  « Questions fréquentes » → ancre `#faq` À RECRÉER ; TikTok ajouté (parité `BRAND.social` ×2) ;
+  le médiateur CNPM reste du TEXTE dans le pied, son URL en lien externe.
 - **Transitions en dégradé entre sections** (assemblages) : papier→or avant les types ·
   or→rose-pale puis rose-pale→papier autour de l'atelier (qui prend un **bain `rose-pale`**
   depuis le 2026-08-19) · papier→rose-pale avant le pied — desktop 64 px, mobile 16 px
@@ -110,6 +164,12 @@
   encre — jamais un cœur rose seul (1,55:1 ne signale rien). (Passe créative.)
 - **Pastilles de variantes : RONDES.** La variante gouttes a été appliquée puis **rejetée** le
   2026-08-19 (Adrien : pas en color swatch) — ne pas la re-proposer.
+- **Pastilles = les VRAIES variantes lues en base** (mêmes données que la boutique) : une
+  pièce unique n'en montre AUCUNE (la Bague Nuit étoilée du tour 2 le montre), les 4
+  pastilles uniformes des autres cartes sont un placeholder de composant. Coloris NOMMÉS
+  dans l'accessible name (« Existe en framboise, turquoise, citron, lilas ») — l'anneau
+  `$gris` reste décoratif, on ne fonce pas un trait pour un 3:1 qu'une pastille bonbon ne
+  peut pas tenir. (Audit créations 2026-08-19.)
 - Le lien texte de la carte vendue (~22 px de haut) est acceptable **si** toute la carte est
   cliquable — exception « lien en ligne » de WCAG 2.5.8. (Tour 2.)
 - Carte vendue = une porte : « Commander une pièce comme elle » pointe vers la **commande
@@ -144,12 +204,26 @@
 
 - **Créations (desktop)** : les 8 cartes s'échelonnent — tops **0·24·8·32** par colonne
   (`nth-child`, desktop seulement, le 2 colonnes mobile reste aligné). Proposition « la grille
-  respire », prise le 2026-08-19 ; coût accepté ~32 px par rangée.
+  respire », prise le 2026-08-19 ; coût accepté ~32 px par rangée. Au pli 2 (y 1600), une
+  goutte de filigrane traverse la flottaison depuis la marge droite — en code : décor absolu
+  au sommet de la rangée 2 (`nth-child(5)`, `translateY(-50%)`), même recette que la goutte
+  du pli 1 du hero. Images de la grille en `loading="lazy"`, jamais `priority` (la section
+  commence pile à la flottaison, le LCP vit au hero). (Audit créations 2026-08-19.)
 - **Collections** : plafonner la section à ~6 cartes + lien (la grappe tient à 6 et 9, mais
   6 est la recommandation) ; visuels par carte = requête **partagée avec le méga-menu,
   plafond 4** ; une collection sans photo se rend en état `sans-visuel` — qui porte depuis la
   passe « 20/20 » une note manuscrite « bientôt ! » (cursive = ponctuation, la ligne « En
-  préparation — reviens bientôt » reste le texte porteur). (Tour 3 + 2026-08-19.)
+  préparation — reviens bientôt » reste le texte porteur). **Recette de grappe (desktop)** :
+  3 colonnes remplies en tourniquet (carte 1→col 1, 2→col 2, 3→col 3, 4→col 1…), offsets de
+  tête **0·64·32** par `nth-child` ; mobile : pile, collage en **miroir** (`scaleX(-1)`) un
+  rang sur deux, sur le collage SEUL. **Survol/focus** : squiggle sous le nom ; focus = même
+  squiggle + anneau encre 2 px sur la carte (planche États d'interaction de la section
+  carte-collection — l'état vide est un lien aussi). **À 4 collections, le vide bas-droit de
+  la grappe est une respiration ASSUMÉE** (arbitrage audit collections — ne pas re-répartir
+  sans décision) ; les cellules photo restent des emprunts aux produits, la polychromie vient
+  des photos elles-mêmes. Images `loading="lazy"`, JAMAIS `priority` (section entièrement
+  sous la flottaison, le LCP vit au hero) ; grappe = `<ul>` de cartes-liens, accessible name
+  du sans-visuel « <nom> — en préparation ». (Tour 3 + audit collections 2026-08-19.)
 - **Types** : les puces SONT les liens vers les pages de type ; hauteur de puce **44 px**
   (relevée dans la maquette à la passe « 20/20 » — `min-h-11` en code, plus rien à corriger).
   (Tour 4 + 2026-08-19.)

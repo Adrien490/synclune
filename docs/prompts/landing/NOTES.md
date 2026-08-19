@@ -1069,3 +1069,473 @@ appliqués via le MCP de l'app — ⚠️ Cmd+S requis pour écrire le fichier.
 - Non vérifié / en suspens : le rendu satori OG (inchangé, au passage en code) ; les hauteurs
   d'assemblage exactes après retrait du bandeau (les cadres hero sont FIXES, 800/844 — seul
   l'intérieur a bougé, le relevé des 11 plis reste valable) ; Cmd+S PAS ENCORE FAIT.
+
+## 2026-08-19 — passe types (Adrien : « applique les trois premières ») : échange, perles, contexts
+
+Suite de la revue de la section types (notée 17/20 sur pièce). Trois améliorations prises par
+Adrien, appliquées via le MCP de l'app — ⚠️ Cmd+S requis.
+
+- **Rangée 2 desktop réordonnée** (standalone `YutJO` + assemblage `s8i3t`) : chaînes de
+  cheveux ↔ chaînes de corps. Les deux drapés en V (colliers / chaînes de corps) ne
+  s'empilent plus en colonne 1 ; la natte multicolore équilibre la gauche. ⚠️ Ordre
+  COMPOSITIONNEL : en code, l'ordre vient de `ProductType.position` en base (context posé).
+- **Les deux dessins gris rejoignent la couleur** : 4 perles bonbon (#f7a8d8 #ffe066 #7fd8d8
+  #c7a8e8, ellipses 7 px cerclées d'encre) enfilées SUR la courbe du collier — grammaire du
+  bracelet voisin — sur les 4 copies de `vignette-colliers` ; les 3 gouttes colorées des 4
+  copies de `vignette-chaines-corps` doublées (×2 autour de leur centre, 4×15 px, enfin
+  visibles). Règle « 2 à 6 touches par dessin » respectée partout.
+- **Contexts de code posés sur les 4 frames de section** (`GkVpA`, `WGE7s`, `ShEDs`, `nTm7P`) :
+  zone cliquable = vignette + puce (la puce reste l'affordance) · type admin sans vignette =
+  puce seule · ordre = position en base · AUCUN compte par type sur les puces (assumé —
+  « (2) » sur 14 pièces afficherait la minceur). HANDOFF § Valeurs dynamiques corrigé (la
+  mention « Colliers (3) » du tour 4 était restée dans la doc alors que les puces n'en
+  portent plus).
+- **Vérifications** : piège « sous-arbre neuf blanc à l'Export » re-constaté sur les perles
+  (remède Copy ×16) ; positions des perles ajustées deux fois sur export ×4 (le bras gauche
+  de la courbe est plus pentu que modélisé) — les 4 sont posées SUR le fil. Exports de
+  contrôle : `ShEDs`, `nIAiz` ×4, assemblages re-exportés en aperçus.
+- Non vérifié / en suspens : Cmd+S PAS ENCORE FAIT au moment de l'écriture.
+
+## 2026-08-19 — audit hero 16,5/20, correctifs TOUS appliqués (« applique tout »)
+
+Audit du hero seul (`AUDIT-HERO-2026-08-19.md`, grilles § 9 + `01-hero.md` + `_signature.md`,
+rien de réinventé) : 16,5/20 — copie 5/5, signature hero 3,5/4, mais le pli 1 n'était signalé
+nulle part VISUELLEMENT (mobile : cadre invisible à 789 mais tuile la plus basse à 782, 6 px
+au-dessus de la barre ; desktop : frise finie à 797, en-tête section 2 à 896 — faux fond à 800
+pile). Adrien : « applique tout ». Six lots, via le MCP de l'app :
+
+- **P1a — pli 1 mobile rendu visuel** : `attache-02` 44→54 sur les DEUX copies (`GZU4o`+`p4Uo6`),
+  tuile 2 descendue (y 56→66, bas **792**), frises `Y3kcO`/`t0LzZ` h 273→276 — la barre basse
+  opaque (788) recouvre **4 px** de la tuile. La tuile reste ENTIÈRE : c'est la barre
+  d'interface qui passe devant, pas une coupe dessinée (veto 2026-08-18 respecté).
+- **P1b — pli 1 desktop** : `goutte-pli-desktop` (`t57T4y`), COPIE de `filigrane-goutte-1`,
+  à cheval sur la flottaison (786→818, x 48, sous la tuile 1 — « une goutte tombée de la
+  frise »). ⚠️ Découverte : TOUTES les frames de section clippent (`clip:true`) — un y négatif
+  dans `section-creations` ne rend rien ; la goutte vit donc en enfant ABSOLU de `fb42R`
+  (layout vertical sans clip), peinte après les sections. En code : décor absolu au sommet de
+  la section créations, translateY(-50%) — context posé sur le nœud. Zéro reflow, relevé des
+  11 plis intact.
+- **P2a — attache-03 mobile sans tuile** (`jfufG`+`yGf1v`, x 381 — d'abord posée à 371, collée
+  au bord de la tuile 2 qui finit à 372, re-décalée dans la marge) : la chaîne seule suggère la
+  pièce suivante hors-champ, aucune tuile coupée. Context : en code la 3ᵉ création existe au
+  DOM, tuile entière hors viewport.
+- **P2b — tuiles polychromes** : fonds bonbon LITTÉRAUX du répertoire couleur-dessins, rose
+  dominant — desktop goutte·rose / anneau·`#7fd8d8` / cabochon·`#ffe066` / grappe·rose /
+  goutte·rose / volute·`#c7a8e8` / porte-clés·rose (accents en 2-3-6, symétrie imparfaite) ;
+  mobile goutte·rose / anneau·`#ffe066` (3ᵉ teinte au premier écran avec la goutte menthe du
+  filigrane). Les 4 copies. Placeholders : tout part au shooting — « coloré » est désormais
+  MONTRÉ sur la maquette, pas seulement écrit.
+- **P2c — cliquabilité tranchée** : context des 4 frises complété — chaque tuile est un LIEN
+  vers sa fiche (§ 5.3, une pièce montrée mène quelque part), photos-portes sans prix.
+- **P3** : filigrane mobile déplacé en PREMIER enfant (`gUvEb`, `NyRi9` — il peignait AU-DESSUS
+  du texte, parité desktop rétablie) ; 6 micro-tracés dégénérés supprimés (touche-de-pinceau,
+  1×0/0×0, les 4 copies) ; encre du filigrane desktop 10 %→15 % (`#06070b26` sur les 3 formes
+  non colorées, les 2 copies) — les colorées gardent leur contour 10 %.
+- Vérifs : bounds re-lus dans un appel séparé (piège des bounds rassis) ; captures uevFm/spy2H
+  + goutte + frise mobile ; la goutte REND (copie, pas un sous-arbre neuf). ETAT.md re-tenu à
+  80 lignes pile. ⚠️ **Cmd+S toujours requis** — cette passe ET la passe « 20/20 » ne sont
+  écrites que dans la copie de l'app.
+
+## 2026-08-19 — audit atelier 17/20, correctifs TOUS appliqués (« applique tout »)
+
+Audit sur pièce de la section atelier (grille 5×/4 dérivée de `05-atelier.md` + DA + décisions
+ETAT, rien de réinventé — ⚠️ `AUDIT-ATELIER-2026-08-19.md` porte désormais l'audit PARALLÈLE
+18/20 d'une autre session, qui a écrasé ce rapport-ci ; le détail vit dans cette entrée) :
+17/20 — brief 4/4 (verbatims exacts, « c'est moi qui lis » dans le chapô, décor = geste), mais
+lien de sortie nu au repos, respiration mobile d'entrée à 52 px (la plus faible de la page) et
+contexts introuvables par TYPE de nœud (constat corrigé plus bas). Adrien : « applique tout » :
+
+- **P1 — flèche statique sur `bouton/discret`** (`HTAMi` dans `DABzB`) : la géométrie du
+  `tracé-flèche` du hero à plat, 20×11, encre `$trait` bouts ronds. Un seul composant, les
+  4 usages + la matrice d'états servis ; instances 206→234, centrage mobile auto.
+- **P2 — respiration mobile** : atelier haut `$space-4`→`$space-24` — 24 et NON le 32 proposé
+  à l'audit : à +28 le pli 7 tombait dans l'interlignage sur-titre/titre (gouttière, mesurée) ;
+  à +20 il coupe le titre à 9 px. Frontière types→atelier 52→72. ⚠️ Le décalage aval mettait
+  le pli 11 en gouttière (339–351 du pied) : compensé par FAQ mobile bas 64→48 — le pied
+  revient à 8922 et le pli recoupe « Lien Dernières pièces ». Assemblage mobile 9 874→9 878,
+  relevé 11/11 refait par géométrie (pli 1 : rien ne traverse, doctrine barre/frange).
+- **P3** : cœurs de note `$rose`→`#fdb8e4` (hex identique aujourd'hui — découple du balayage
+  d'accents, zéro pixel changé) ; token `text-chiffre` (20) sur les 16 chiffres d'étapes
+  (découplés de `$text-prix`) ; copies d'assemblage mobile renommées `section-types/atelier/
+  faq` ; décor mobile = main + pinceau (copie du desktop ×0,714, 30 tracés, traits constants,
+  l'ancienne version 4 tracés supprimée) ; propriété `context` posée sur les 12 nœuds de lien
+  (histoire de l'atelier ×4 → `/a-propos` jamais rendu sans cible ; « Écris-moi un message »
+  ×4 et carte DÉJÀ PARTIE ×4 → mailto SSOT BUSINESS_INFO). ⚠️ Constat corrigé en fin de passe :
+  les contexts de la passe 20/20 EXISTAIENT, en PROPRIÉTÉ `context` des frames sortie
+  (`hYOXv`/`DYYQj`) — un balayage par type de nœud (context/note) ne les voit pas ; les ×12
+  s'y AJOUTENT sur les nœuds de lien eux-mêmes.
+- **Méthode** : assemblage mobile re-copié FRAIS depuis la section corrigée (parité 16/16
+  re-vérifiée, `context` porté par la copie) ; desktop retouché en place. Écarté : ligne
+  « cadeau » (le brief interdit d'ajouter autour des étapes). Les « Écris-moi un message » /
+  « Commander une pièce comme elle » vivent dans des OVERRIDES d'instance — invisibles à une
+  recherche de textes, chercher aussi dans `descendants`.
+- ⚠️ Cmd+S PAS ENCORE FAIT au moment de l'écriture (cette passe + hero + « 20/20 »).
+
+## 2026-08-19 — audit atelier passe b 18/20 → 20/20, correctifs appliqués (« applique tout »)
+
+Deuxième passe du jour sur la section, à la grille § 9 + checklist tour 5 + `_signature.md`
+(rapport `AUDIT-ATELIER-2026-08-19b.md` ; le nom sans suffixe est un renvoi de filiation) —
+notée 18/20 sur l'état POST-correctifs de la passe 17/20, 18,25 après le P2 (rose-encre/
+rose-pale 4,79) déjà consigné par elle. Adrien : « applique tout ». Via le MCP de l'app :
+
+- **P1a — le portrait sans photo est TRANCHÉ par context** (`EPx5j`, `SUhjp` + copies
+  `P0vX1p`, `TlCK1`) : vraie photo de Léane obligatoire (SHOOTING P1, § 4.4), l'aplat cœur
+  ne se rend JAMAIS en prod, la mise en ligne de la refonte ATTEND la photo — pas de repli
+  dessiné. Le pendant photo de la règle « lien sans cible = jamais rendu » (décision 8).
+- **P1b — contexts de code posés sur les 4 frames de section** (`hBDKm`, `qL3Cm`, `xEE3n`,
+  `oTeoG`) : étapes = `<ol>` sémantique, pastilles décoratives aria-hidden · **pastilles
+  $rose UNIFORMES — la rotation `[data-accent]` lavande/menthe/soleil de l'atelier codé
+  (`STEP_ACCENTS`, son DERNIER consommateur storefront) ne survit pas à la refonte** (les
+  entrées CSS restent : l'admin les consomme) · portrait lazy / jamais priority / alt ·
+  décor et empreintes = SVG décoratifs aria-hidden, `non-scaling-stroke`.
+- **P1c — les empreintes de doigt ferment l'étape 4** : trio de touches roses #f7a8d8
+  (12×15, 9×11, 6×8, rotations −10/6/−14, trait `$encre`/`$trait` bouts ronds) traînant
+  après « …pleins de peinture. » — le texte l'affirme, le dessin le MONTRE. Posées en
+  ABSOLU dans étape-4, desktop x256 y53 / mobile x298 y79 (premier essai x266 chevauchait
+  « peinture. », re-calé sur capture). Nœuds : `K9mnty`/`lfkRR` (sections), `G6gzN`/`UEMxc`
+  (copies). Appliquées DIRECTEMENT — « applique tout » a valu veto favorable, pas de frame
+  `proposition/`.
+- **Vérifications** : ZÉRO reflow mesuré (sections 1440×986 / 390×1618, copies y 4384 /
+  y 5842 h 1618, assemblage mobile 9 878 — le relevé 11/11 ne bouge pas) ; parité 4/4 des
+  groupes ; piège « sous-arbre neuf blanc » re-constaté sur les empreintes (remède Copy
+  AVANT propagation aux copies) ; exports de contrôle
+  `apercus/apres-audit-atelier-b-{desktop,mobile}.png` — ⚠️ nouveau piège : `Export` avec
+  un chemin `.png` crée un DOSSIER de ce nom (un fichier par nœud), re-plaqués à la main.
+- ⚠️ Constat hors périmètre, non corrigé : l'assemblage desktop `fb42R` mesure **6 791**
+  dans l'app (ETAT dit 6 785) — écart antérieur à cette passe (aucune géométrie touchée
+  ici), à re-mesurer au prochain relevé desktop.
+- ⚠️ Deux sessions ont travaillé le `.pen` en PARALLÈLE toute la journée (celle-ci a vu le
+  padding atelier changer entre deux lectures). État ci-dessus = l'app à ~14 h 25.
+  Cmd+S TOUJOURS pas fait — le `.pen` sur disque date de 13:26.
+
+## 2026-08-19 — audit FAQ 15,5/20 → 20/20, correctifs appliqués (« applique tout »)
+
+Audit à la grille § 9 (Confiance) + checklist `06-faq.md` + `_signature.md` restreinte
+(rapport `AUDIT-FAQ-2026-08-19.md`, notes A 7/8 · B 3,5/5 · C 1,5/3 · D 3,5/4). Adrien :
+« applique tout ». Via le MCP de l'app :
+
+- **P1 — les 6 réponses existent enfin** : les 12 instances d'`accordeon-question`
+  (`hsKuc` + `qCvQR`) overrident désormais `MDCJE` — 5 réponses ÉCRITES (voix de Léane,
+  chaleur sur le geste / précision sur l'exploitation, « 14 jours » légal comme seul
+  chiffre, zéro valeur de livraison en dur) + la réponse livraison ÉPINGLÉE sur les 2
+  ouvertes (elle ne repose plus sur le défaut du composant par coïncidence). ⚠️ Corollaire
+  balayage : chercher les réponses dans les `descendants`, jamais dans le seul maître.
+- **P2a — token `rose-encre` assombri** `#ac448d` → `#a8428a` : 4,62 sur gris (la signature
+  « — Léane » de la bulle passait à 4,44, sous AA) · 5,36 sur papier · 4,99 sur rose-pale.
+  Alignés : étiquettes styles (`L25XaT`/`EE5NV`/`hWd9c`), sur-titre hex de la carte OG
+  (`n8FZGC`), `synclune-systeme.md`, contrastes d'`ETAT.md`. En code : re-dériver
+  `--color-brand-rose-strong` (la conversion exacte du 2026-08-15 ne tient plus).
+- **P2b — les deux sobriétés muettes sont écrites** : bulle GRISE justifiée en context sur
+  `i5p10Q` (le gris est la couleur du message REÇU — c'est le geste, pas un défaut) ;
+  signature `$rose-encre` dans la section OR assumée en context sur `ygagQ` (l'encre de
+  Léane est rose partout, hors alternance comme le pied). ⚠️ Le balayage d'accents « zéro
+  contamination » ne comparait que `$rose`/`$or` : les `-encre` de signature s'EXCLUENT,
+  ils ne se comptent pas comme contamination.
+- **P2c — `E2StV` passe à 4 poses** fermé · survol · focus · ouvert (`sGEBf`/`r3Wpy`) :
+  survol = fill `$gris` radius 8 sur la rangée (recette du bouton discret) ; focus =
+  anneau `$encre`/`$trait-focus`, padding 2 (recette matrice bouton). Doc `SwGjq` réécrite ;
+  context de COMPORTEMENT posé sur le composant `afjyM` : rangée = `<button aria-expanded>`
+  dans un h3, panneaux INDÉPENDANTS, dépliage ~200 ms (reduced-motion : bascule sèche),
+  survol ⇒ focus jamais gaté `can-hover`.
+- **P2d — géométrie mobile** : `qCvQR` haut 64→32, gap 32→24, sortie padding [48, 0, 8, 0]
+  (cale) — hauteur de section 1398 STRICTEMENT inchangée, pied fixe à 8922. Relevé : pli 9
+  coupe le h2 à 20 px (ligne 2) · pli 10 coupe « fait main » à 16 px en pleine ligne
+  (avant : ~10 px de padding muet) · pli 11 INCHANGÉ (11 px dans « Dernières pièces »).
+  Desktop intact (pli 7 : h2 à 37 px). Le « 9 894 » du rapport était un relevé pré-reflow
+  de fontes — re-mesuré à froid, l'app rend bien 9 878 ; le pli 10 à ~10 px restait vrai.
+- **P3a — copies remplacées** : desktop `oCQlN`→`CJ4j7` (récupère ENFIN les contexts —
+  l'ancienne copie n'en portait AUCUN), mobile `x5TO4y`→`Ntv1S`. Totaux d'assemblage
+  6 791 / 9 878 inchangés au pixel.
+- ⚠️ Cmd+S PAS FAIT au moment de l'écriture (s'ajoute à la dette des passes du jour).
+
+## 2026-08-19 — audit créations 18,5/20, correctifs TOUS appliqués (« applique tout »)
+
+Audit de la section 02 seule (`AUDIT-CREATIONS-2026-08-19.md`, grille § 9 « Cartes et
+grille » + « Rareté » + copie § 2 + checklist `02-creations.md` + `_signature.md` restreinte,
+rien de réinventé) : **18,5/20** — A cartes 6,5/7 · B copie/rareté 5/5 · C exécution 3/4 ·
+D signature 4/4 (à la lettre). La section la plus solide auditée à ce jour ; copies
+d'assemblage vérifiées en phase (29 textes = 29, diff vide, 2 viewports). Adrien :
+« applique tout ». Via le MCP de l'app :
+
+- **P1 — pli 2 desktop rendu visuel** : `goutte-pli-2-desktop` (`AMKoS`), COPIE de `t57T4y`,
+  x 1360 · y 1584→1616, à cheval sur la flottaison 1600 depuis la marge droite, enfant
+  ABSOLU de `fb42R` (les frames de section clippent — précédent du pli 1). Avant : rangée 1
+  finissait à 1555, rangée 2 commençait à 1603 — rien ne traversait, le même « 3 px sous la
+  ligne » que la frise hero à 797. Context posé : en code, décor absolu ancré au sommet de
+  la rangée 2 (`nth-child(5)`, `translateY(-50%)`), pose « la pluie se pose », statique en
+  reduced-motion. **Zéro reflow** (le nœud vit dans l'assemblage seul).
+- **P2a — vérité des pastilles tranchée** : règle ÉCRITE (context de `Trd6e` + HANDOFF
+  § carte-produit) — pastilles = les VRAIES variantes lues en base, une pièce unique n'en
+  montre AUCUNE, les 4 uniformes des autres cartes sont un placeholder de composant. Et
+  MONTRÉE : la Bague Nuit étoilée perd ses pastilles (`k1EeIq → enabled:false` sur `Jow0r`,
+  `i6jWDm`, `DHkw0`, `jyAdv` — les 2 sections + les 2 copies), carte 430→408 desktop,
+  301→279 mobile ; rangées STRICTEMENT inchangées (D 462/489, M 327·327·327·373), donc
+  zéro pli ne bouge. ⚠️ Le Papillou GARDE ses pastilles : sa hauteur TIENT la rangée 4
+  mobile (373), et des coloris « déjà partis » restent défendables.
+- **P2b — contexts de code posés sur les 4 frames** (`S6wpPX`, `i0bny`, `Jvq8q`, `NMY5z`),
+  pattern de la passe types : images `loading="lazy"` JAMAIS `priority` (la section commence
+  PILE à la flottaison des deux formats, le LCP vit au hero) · grille = `<ul>` sémantique ·
+  « Déjà partie » entre dans l'accessible name de la carte vendue · coloris des pastilles
+  nommés dans l'accessible name (l'anneau `$gris` reste décoratif — citron/papier 1,44:1,
+  le remède est textuel, pas un anneau foncé).
+- **Hors barème A appliqué** (couvert par « applique tout ») : `SHOOTING.md` § créations
+  disait « fond simple » — la seule direction couleur des 8 photos qui remplaceront les
+  aplats or, lisible « fond blanc » (le « site un peu blanc » en germe). Réécrit : fond
+  simple mais COLORÉ, la pièce en sujet unique.
+- **Hors barème B NON appliqué — veto Léane** : le mono-or des 8 tuiles (justification
+  tour 2 antérieure aux arbitrages couleur du jour). Si elle veut de la couleur avant le
+  shooting : grammaire couleur-dessins sur les 6 motifs-sujets (~24 overrides, zéro
+  géométrie). Interdits de re-proposition tenus : pastilles gouttes, cadres colorés.
+- **Vérifications** (bounds re-lus dans un appel SÉPARÉ, piège connu) : totaux d'assemblage
+  **6 791 / 9 878 inchangés au pixel**, sections 1 490 / 1 848, rangées inchangées, goutte
+  traverse bien 1600 (1584→1616), pastilles du Papillou actives, capture `S6wpPX`.
+- ⚠️ Cmd+S PAS FAIT au moment de l'écriture (s'ajoute à la dette des passes du jour).
+
+## 2026-08-19 — audit FAQ passe b 19,75/20 → 20/20, correctif appliqué (« fais pareil sur la FAQ »)
+
+Passe de VÉRIFICATION sur l'état post-correctifs de l'audit FAQ 15,5→20 du même jour
+(rapport `AUDIT-FAQ-2026-08-19b.md`, grille § 9 + brief `06-faq.md` + `_signature.md`),
+même exercice que la passe b atelier — deux sessions travaillant le `.pen` en parallèle,
+chaque affirmation re-mesurée sur pièce :
+
+- **Tout tient** : 6 réponses relues mot à mot (voix, zéro superlatif, zéro valeur en dur,
+  « c'est le moment » passe la ligne claire § 5.6 — pièces uniques réelles) ; parité copies
+  29/29 textes overrides compris ; plis re-mesurés (`Ntv1S` y 7476 h 1398 : pli 9 à 120 px
+  dans le h2, pli 10 à 58 px dans la rangée « fait main » 2 lignes, pli 11 intact ;
+  `CJ4j7` y 5434 : 5600 coupe le h2 ; totaux 6 791/9 878) ; contrastes recalculés des hex
+  (#a8428a : 4,62 gris · 5,36 papier · 4,98 rose-pale ; or-encre/papier 4,72 — et l'or-encre
+  n'écrit jamais sur l'aplat or) ; `E2StV` 4 poses, icônes `library:"phosphor"`, garde
+  FAQPage ×4, SSOT {frais}/{délai} au HANDOFF l. 63.
+- **Un seul résidu, corrigé** : le context de sobriété du bloc « En pratique » (359 c.)
+  vivait sur la paire DESKTOP (`bYRW3` + copie `G4F62J`) mais PAS sur la paire MOBILE —
+  reporté verbatim sur `IzWco` et `KhNhH`, vérifié 4/4. Zéro pixel, zéro reflow. Même
+  classe d'écart que le `oCQlN` sans contexts relevé par la première passe : **la parité
+  des contexts se vérifie exemplaire PAR exemplaire, pas au niveau section**.
+- ⚠️ Cmd+S TOUJOURS pas fait — le `.pen` sur disque date de 13:26 ; l'état ci-dessus est
+  l'app à ~14 h 35.
+
+## 2026-08-19 — Audit navbar 12,5/20 — correctifs TOUS appliqués (« applique tout ») + mark Synclune
+
+Rapport `AUDIT-NAVBAR-2026-08-19.md` (grille : lignes chrome/nav du § 9 + `00-bootstrap.md` +
+`10-etats.md` + HANDOFF § Chrome + `_signature.md` restreinte ; code lu : `navbar/*`,
+`shop-mobile-bottom-nav`, `navigation.ts`, `quick-search-trigger`, `logo-mark*`). La chrome était
+née de la description du tour 0 (import browser en échec ×2) et jamais re-vérifiée contre la
+STRUCTURE du code — seuls libellés, 5 onglets et CNPM l'avaient été (17-18/08). Arbitrage
+structure mobile : **option A (parité code) retenue via « applique tout »** (délégation Adrien,
+réversible — l'option B « garder le cluster » défaisait la dédup code du 2026-08-04 « à
+conserver » et laissait les collections sans accès mobile).
+
+- **P1a — barre haute mobile réalignée** (`G7eeo`) : burger `spq0C` (phosphor `list` 24, hit
+  44×44, context = MenuSheet du code, l'ACCÈS mobile collections/types) + lockup centré +
+  `Zone droite` — le cluster Recherche/Favoris/Panier SUPPRIMÉ (`mvgIB`, badge `gEnT2` avec) :
+  triple doublon avec la barre basse, et le code n'a AUCUNE action sous `lg`
+  (`hidden lg:inline-flex`). Colonnes latérales à largeur FIXE 96 : le nom de salle apparaîtra
+  sans décaler la marque (le commentaire de `navbar.tsx` dit la même chose en flex).
+- **P1b — nom de salle** `fvu2j` (« Les créations », Winky Sans `$text-label`, encre 70 %,
+  `enabled:false` au repos) — activé par override `descendants` dans la démo mobile `r8fthJ` de
+  `chrome-scrollee` ; parité `navbar-room-label.tsx` (aria-hidden, JAMAIS un lien, fondu + 4 px
+  motion-safe, libellés `navbar-section.ts`) ; docs `L8POO`/`YWuis`/`i1wj4u` réécrits (le
+  premier disait encore « le bandeau défile », faux depuis son retrait).
+- **P2a — recherche desktop en PILULE** `mMMD4` (200×44, trait encre 1,5, radius pilule,
+  « Rechercher » + chip ⌘K à 0,6) = `QuickSearchTrigger variant="bar"` du code, restylée ;
+  l'icône seule 44×44 (`N0lT80`) supprimée — elle ne survit en code que sous `lg`.
+- **P2c — méga-menu** : `CoDxp` → frame `CoGQZ` « Nav Créations » (libellé + caret-down 12,
+  context : panneau du code CONSERVÉ, restylé papier/encre, tap tactile = ouvre) ; context
+  « lien simple, bento supprimé 2026-08-08, pas de caret » posé sur `UAk4z`.
+- **P2b — planche `00-systeme/chrome-etats`** (`NdbZS`, x 2840 y 3642, COMPOSITION, aucun
+  composant modifié) : lien de nav survol = SQUIGGLE sous le libellé (copies de `kYHi1`, le
+  squiggle des états carte = `SQUIGGLE_PATH` — en code, il REMPLACE l'aplat d'accent
+  d'`aria-current`) ; focus = squiggle + anneau encre 2 ; bouton icône survol = fond `$gris`
+  rond / focus = anneau ellipse 52 ; onglet barre basse focus = anneau rect sur Favoris
+  (ref `ydXQZ` + rect). Survol ⇒ focus partout, jamais d'anneau rose.
+- **P3a — badge VRAIMENT rond** : `j3TJ1l`/`dHiCQ` passés 18×18 padding 0 (contexts « pilule
+  au-delà de 9 ») — la décision nº 5 d'ETAT était une pilule 16×18/16×20 en 3 tailles.
+  **P3b** : contexts wordmark ×2 (lien `/`, UN lien pour le lockup entier, Winky Sans assumé
+  CONTRE le `LogoWordmark` Kalam du code — SSOT typo à remplacer au passage) ; politique 320 px
+  sur `ydXQZ` (`text-xs + truncate` du code ; si « Rechercher » tronque → « Recherche », jamais
+  d'ellipse) ; `CoDxp` « Nav Boutique » mort avec le remplacement.
+- **MARK SYNCLUNE AJOUTÉ (demande Adrien en cours de passe, hors audit)** : reconstruit en
+  vectoriel dans les DEUX barres — desktop `VdNaq` 48 (lockup `TRR6v`, gap 12, bbaUZ index 0),
+  mobile `VlMxZ` 40 (lockup `tJDW0` centré, 134..257, centre 195 ✓). Fidèle au sprite
+  `#logo-mark-body` : disque `$rose` (`--logo-disc = --primary`), cœur `$or`
+  (`--logo-heart = --secondary`), CINQ en `$rose` evenodd par-dessus (pas une découpe — c'est
+  la structure du sprite), encre feutre `#4c2420` (= `--logo-ink` oklch converti), trait 0,75
+  (plancher `logoStrokeWidth`), reflet `#ffffff80`, étincelles blanches cerclées (trait 0,5).
+  **Étincelles « escaping »** (convention code : navbar SEULE) : translate ±8-9 % + scale 1,12
+  PRÉ-CALCULÉS en coordonnées (viewBox par étincelle, nœuds séparés) — animation au
+  survol/focus du lien (`group/logo`) notée en context. ⚠️ **Le 5 est ASSUMÉ** (2026-08-15) —
+  ne pas le « corriger » en S. Le pied de page n'a PAS reçu le mark (hors périmètre : le code y
+  met le « sceau discret » rond — à trancher à une passe pied de page).
+
+**Sobriété de la chrome — justification écrite (critère 4 signature)** : le cadre ne concurrence
+pas le tableau. Les gestes de la chrome sont le mark à étincelles échappées, le squiggle de nav,
+le nom de salle en Winky Sans et le badge rose — tout décor de plus concurrencerait les créations
+que la barre encadre.
+
+**Vérifications** : bounds 0 problème sur `M6cFW`/`CX8Rg`/`ydXQZ`/`NdbZS` en appel frais ;
+hauteurs 64/56 INCHANGÉES → assemblages intacts (desktop mesuré 6 791 — l'écart vs 6 785 vient de
+la goutte-pli absolue de l'audit hero, pas de cette passe ; mobile 9 878 pile), relevé des plis
+non affecté ; captures OK (lockups, pilule, états, salle dans la démo scrollée). ⚠️ Piège
+re-constaté EN DOUBLE : bounds ET TakeScreenshot d'un sous-arbre neuf mentent pendant 1-2 appels
+(Marque « fully clipped » à y 78, screenshots sans lockup) — re-mesurer à part, se fier au flux.
+Lot 5 du rapport (volet menu + méga-menu dessinés dans la DA) NON fait — optionnel, hors note.
+Restent : Cmd+S (l'app seule écrit le fichier), et le veto Léane sur pièce.
+
+## 2026-08-19 — Audit pied de page 10,5/20 — PROPOSÉ, rien d'appliqué
+
+Rapport `AUDIT-PIED-DE-PAGE-2026-08-19.md` (grille : lignes pied/légal du § 9 — § 4.6
+opposable — + spec pied de `00-bootstrap.md` + décision nº 2 d'ETAT + HANDOFF § Chrome +
+`_checklist.md` + `_signature.md` restreinte ; code lu : `footer.tsx`, `footer-link.tsx`,
+`navigation.ts`). Dernière surface de la chrome sans passe dédiée (`NAapJ`/`LIf3N`, 2 refs
+sans override — les correctifs se propageront seuls, aucune copie à synchroniser).
+
+Le paradoxe : **la meilleure conformité opposable de la maquette** (médiateur CNPM complet
+DANS le pied, récrit en voix de Léane — mieux que le code) et **une contradiction interne**
+— la consigne `YWuis` écrit « frais et délai vivent dans … la réassurance du pied de page »,
+et le pied n'a AUCUNE réassurance (décision nº 2 non honorée ; « Commande sans compte »
+n'est écrit nulle part sur la page, le « aussi » de la FAQ pend dans le vide). Autres trous :
+6 liens sans cible existante et ZÉRO context sur les 17 (décision nº 8 — « L'atelier » alors
+que la section atelier a retiré le sien pour cette raison exacte) ; « Les collections »
+absent du pied (§ 8.6 secours de nav) ; « Accessibilité » + « Informations légales » (hub
+SIREN/médiateur) manquants — la régression orpheline que le code a payée le 2026-08-06 ;
+« © 2026 » réintroduit l'année que le cache 7 j du code interdit ; chrome-etats sans cellule
+pied ; barre basse sur les 8 derniers px du © mobile (le code a `FOOTER_SHELL_CLASS` mesuré) ;
+goutte or + goutte rose dans la même section (la justification tour 0 « traits rose/or
+autorisés » était écrite pour l'aplat ENCRE, morte au passage rose-pale). Signature 2,5/4 :
+deux gestes réellement nommables (note cursive « c'est moi qui lis, c'est moi qui réponds »,
+médiateur tutoyé) mais rien d'écrit, sobriété non justifiée. Plan 20/20 en 4 lots + 4
+arbitrages Adrien (« Dernières pièces »→« Les collections » 1:1 zéro reflow recommandé ;
+mark au pied — le renvoi de la passe navbar ; rail paiement sans, mais écrit ; favoris
+optionnel). Toutes les croissances tombent SOUS le pli 11 (y 362 du pied) → relevé 11/11
+valide sans re-mesure ; seuls les totaux d'ETAT bougent (desktop réel 6 791 vs 6 785 écrit —
+constat partagé avec l'audit collections du jour).
+
+## Audit collections — 16,75/20 → 20/20, correctifs TOUS appliqués (2026-08-19)
+
+Rapport complet : `AUDIT-COLLECTIONS-2026-08-19.md` (grille § 9 ciblée + checklist tour 3 +
+`_signature.md` section — 1ʳᵉ passe notée au NOUVEAU cran du critère 4). Seule section jamais
+re-passée depuis le tour 3 ; conformes exemplaires re-vérifiés : visuels 4/3/2/0 (`zTPJG`
+`enabled:false` ×4), descriptions VERBATIM entières, copies en phase (17=17 ×2), accent rose
+pur, plis 4 D / 4-5 M coupent des photos en plein corps. ⚠️ Passe menée PENDANT l'application
+créations puis navbar (AMKoS et #a8428a apparus en cours de lecture) — positions re-vérifiées
+post-application, stables.
+
+### Appliqué (« applique tout »)
+
+- **P1 · `goutte-pli-3-desktop` (`EXUUp`)** : copie d'`AMKoS`, **ROSE `#f7a8d866`** (accent de
+  la section — la série varie couleur/position, jamais la famille), x 1336, à cheval
+  **2384→2416** sur le pli 3 (la flottaison tombait dans l'interlignage sur-titre/h2 : 3 px de
+  label rasés, h2 19 px sous la ligne). Enfant ABSOLU de `fb42R`, context posé (ancrage en-tête,
+  translateY(-50%), pose « la pluie se pose », reduced-motion). Série complète : `t57T4y`
+  786→818 · `AMKoS` 1584→1616 · `EXUUp` 2384→2416.
+- **P2a · Planche « États d'interaction » carte-collection (`LSoW4`)** dans `C7O3kH`, modèle
+  `mx5S9` : survol = squiggle 140×12 sous le nom (y 303) ; focus = squiggle + `anneau-focus`
+  −4/−4 376×340 `$trait-focus` `$radius-20` ; doc écrite (décision nº 4 étendue, état vide =
+  lien aussi). ⚠️ Sous-arbre neuf sorti BLANC au screenshot → remède Copy+Delete appliqué
+  (l'id `ulY2x` est mort, `LSoW4` fait foi). Composants `hqNhg` 3572→4088 (chevauche la zone
+  hero mobile DÉJÀ chevauchée, z-order OK, rangée y 5000 loin).
+- **P2b · Contexts de code** sur `s1ElXh`/`aXEsK` (lazy jamais priority, `<ul>`, recette
+  tourniquet + offsets 0·64·32, plafonds 6/4, accessible name sans-visuel, « 4 » et 6/5/3 lus
+  en base) et `L5cwO`/`WgrAo` (pile, miroir `scaleX(-1)` sur le collage SEUL) ; doc `rzKkH`
+  rafraîchie (gouttes REMPLIES + « bientôt ! », calques `photo/collection-*`, renvoi états).
+- **P3 · Chapô = copie éditoriale VIVANTE** (option documentaire, la réécriture intemporelle
+  perdait les territoires) : context sur les 4 en-têtes (`HJ043`/`jTiK6`/`GmMBf`/`wn3Ix`) +
+  HANDOFF § Valeurs dynamiques — l'énumération « jardin/ciel/pluie/musées » se révise quand
+  une collection naît ou meurt ; la structure, elle, survit à 9.
+- **P4 · Trou bas-droit à 4 cartes = respiration ASSUMÉE** (context sur `MJZEa`/`eeBUk`) :
+  ~286×760 px de papier nu à l'état du lancement ; NE PAS déplacer Tableaux en colonne 3
+  (grappe +12, reflow desktop sous y 3451) sans décision explicite.
+- **P5 · Mono-rose des 9 cellules JUSTIFIÉ par écrit** (contexts `MJZEa`/`LSXOA` + copies) :
+  placeholders de photos EMPRUNTÉES aux produits (aucun shooting dédié), la polychromie vient
+  des photos ; parité hero non applicable (les tuiles hero annoncent un shooting). Si Léane
+  veut de la couleur AVANT : fonds bonbon littéraux façon tuiles hero, ~9 overrides ×2 + copies
+  (interdits de re-proposition : pastilles gouttes, cadres colorés).
+- **ETAT.md** : total desktop corrigé **6 785→6 791** (constat partagé avec l'audit pied du
+  jour), série des gouttes de pli, décision nº 4 étendue (carte produit ET collection),
+  arbitrages collections dans la décision nº 9 — 80 lignes PILE tenues.
+
+### Vérifié post-application
+
+Assemblages **6 791 / 9 878 INCHANGÉS** (zéro reflow — P1 absolu, P2a hors sections, le reste
+documentaire) ; copies collections stables (2290→3451 / 2692→4527) ; goutte rose rendue
+(capture) ; planche états rendue (capture, squiggle + anneau OK). Cmd+S restait à faire.
+
+## 2026-08-19 — Lot 5 de l'audit navbar (« oui ») : volet menu et méga-menu dessinés dans la DA
+
+Le lot optionnel du rapport navbar, pris par Adrien. Deux planches nouvelles, structure du CODE
+respectée (lue dans `menu-sheet*.tsx` / `mega-menu-creations.tsx` avant de dessiner) :
+
+- **`00-systeme/chrome-volet-menu`** (`vDXr8`, x 2840 y 4277) : le MenuSheet du burger — démo
+  390×844, volet 330 papier glissé de gauche, liseré encre 1 px sur la tranche, page grise
+  derrière (overlay). Dedans : en-tête lockup (mark 40 + Synclune) + croix 44 · bande « Accès
+  rapide » (Accueil / Mes favoris / Panier, cellules $gris r12, badges roses 16) · « Mes
+  créations » en Winky + 8 tuiles de types 2×4 (44 px, casse normale) · rangée « Voir les 14
+  créations » en $rose · rangée « Les collections » + caret · pied « Écrire à Léane » (cerclé
+  encre, mailto) + Instagram/TikTok + © en encre 60 %. **Divergences voulues, en context** :
+  pas de compte par type (le code affiche « n pièces » — même motif que la décision landing) ;
+  « Voir tout » → « Voir les 14 créations » (portée chiffrée § 9) ; bloc admin et encart
+  « atelier en pause » non dessinés (inchangés en code).
+- **`00-systeme/chrome-mega-menu`** (`ABkX2`, x 2840 y 5516) : le panneau Créations — démo 1440
+  avec la barre haute (ref) et le panneau 800×290 sous « Les créations » : papier + trait encre
+  1 + radius 16 (JAMAIS d'ombre — le shadow-premium-rose du spotlight disparaît au restylage),
+  colonne types (« Toutes les créations » medium + 8 types en 2 colonnes), séparateur $gris,
+  rail « Nouveautés » (soulignement marqueur — déjà HandDrawnUnderline en code —, 2 vignettes
+  72×90 fonds bonbon littéraux #c7a8e8/#7fd8d8 = placeholders de shooting, badge NOUVEAU rose,
+  noms + prix en medium). Fallback « À découvrir » (collection vedette) documenté en context,
+  non dessiné.
+- ⚠️ **Le remède « Copy puis Delete » a été NÉCESSAIRE** : les deux planches neuves sortaient
+  BLANCHES au TakeScreenshot avec 55/33 « clipped » fantômes ; après copie (`CDYJQ`→`vDXr8`,
+  `m21ZN`→`ABkX2`), rendu correct et 0 problème. Seul vrai défaut attrapé ensuite : le logo du
+  volet copié 32×32 avec des enfants restés à 40 — repassé 40×40 (`bnnt2`). Un warning bénin
+  `XCTvG fill_container` (bandeau désactivé) à chaque copie de la barre.
+- Le panneau du méga-menu est CALÉ à x 330 sous le trigger (nav à ~341 après le lockup 48+12).
+  Hauteur panneau FIXE 290 (un séparateur `fill_container` dans un panneau `fit_content`
+  collapse — circulaire). ⚠️ Cmd+S toujours requis.
+
+## 2026-08-19 — Audit pied de page 10,5/20 → 20/20, correctifs TOUS appliqués (« applique tout »)
+
+Application du plan d'`AUDIT-PIED-DE-PAGE-2026-08-19.md` (délégation Adrien, réversible par
+Léane). Arbitrages : nº 1-3 pris à la recommandation, nº 4 tranché — « Mes favoris » ABSENT
+assumé (la chrome le porte deux fois), écrit en context sur les colonnes BOUTIQUE.
+
+- **P1a — réassurance du pied** (`c8TxE` D / `W72RWE` M, entre colonnes et filet) : « Expédié
+  sous {délai} · Livraison France {frais} · Union européenne {frais-ue} · Retours et échanges
+  sous 14 jours · Commande sans compte » — {frais-ue} est un placeholder NOUVEAU
+  (SHIPPING_RATES.EU), la chaîne retours est l'EXACTE de ProductReassurance, et « Commande sans
+  compte » donne enfin son antécédent au « aussi » de la FAQ. Interligne aligné sur les
+  mentions ($leading-small — la 1ʳᵉ pose héritait du 1,27 des liens, +4/+12 px repris).
+- **P1b/arbitrage nº 1 — « Dernières pièces » → « Les collections »** (`THM8a`/`pTdJq`,
+  remplacement 1:1) : le pli 11 recoupe désormais « Lien Les collections » (9 284 ∈
+  9 278-9 297 ✓, géométrie du lien inchangée au +5 px de signature près).
+- **P1c — décision nº 8 sur les 17 liens ×2 formats** : contexts posés en PARITÉ STRICTE
+  exemplaire par exemplaire (leçon FAQ passe b) — L'atelier gated /a-propos, commande perso →
+  mailto, suivi → état sans token EXIGÉ, Questions fréquentes → ancre #faq à recréer,
+  Instagram/TikTok externes avec aria. **« Livraison & retours » SUPPRIMÉ** (`RK1Du`/`rl7dI`) :
+  fusionné dans Questions fréquentes — la réassurance du pied et « En pratique » portent
+  frais/délai à 40 px.
+- **P2a — email en clair** : « Contact » → `contact@synclune.fr` (`whErW`/`POer3`, renommés
+  « Lien email »), consigne CopyButton + aria en context.
+- **P2b — légal complet 8 entrées** : + Accessibilité (`aElsy`/`LOyeR`), + Informations
+  légales (`XfqiU`/`jhLcB`, le hub anti-orphelin), + « Modifier mes préférences (cookies) »
+  (`d5QjF`/`AdL3u`, BOUTON parité ManageCookiesButton). TikTok ajouté (`GzapP`/`aOB5R`).
+- **P2c — réserve barre basse + états** : padding bas mobile 48→**72** (= $hauteur-barre-basse
+  + $space-16, valeur dérivée en context — le © finit à 1 126/1 198, dégagé de 16 px au-dessus
+  de la barre) ; planche chrome-etats + « Rangée pied » (`bQqHs`) : survol = fond $gris arrondi
+  8 (équivalent maquette du bg-primary/5, illisible sur rose-pale), focus = anneau encre 2 px ;
+  doc `AidWI` complétée.
+- **Arbitrage nº 2 — lockup mark au pied** : `e2rFJ8` D (mark 48 copié de `VdNaq`) / `VtTet` M
+  (40, de `VlMxZ`), wordmark déplacé dedans, UN lien / en context (parité Logo,
+  shop-logo-footer). Solde le renvoi de la passe navbar (« sceau discret à trancher »).
+- **P3a — accent unique** : `Vth86` goutte or → `$rose-encre` (renommée « Goutte rose
+  haut-droite ») — la justification tour 0 « traits rose/or autorisés » valait pour l'aplat
+  ENCRE, morte au rose-pale ; context posé. **P3b — © sans année** (`bNcFn`/`zCaxe`).
+  **P3c** : mentions desktop plafonnées 880 px (médiateur reste sur 2 lignes), types en dur =
+  placeholders (context colonnes), gestes NOMMÉS en context (note cursive `xXnVb`/`B5Tb7X`,
+  médiateur `s1TNc`/`UW2tL`), sobriété justifiée sur les racines (`NAapJ`/`LIf3N`) avec la
+  divergence paiement ASSUMÉE (§ 4.5) et le refus du rail écrit.
+
+**Géométrie vérifiée en appel séparé** : pied desktop 528→**711** (assemblage **6 974**),
+mobile 956→**1 198** (assemblage **10 120** — pas de pli 12 : < 10 128, et il tomberait dans la
+réserve) ; toutes les croissances SOUS le pli 11, relevé 11/11 intact ; captures OK (lockups,
+réassurance 3 lignes mobile, rangée pied des états). `ETAT.md` (totaux, pli 11 renommé,
+{frais-ue}) et HANDOFF § Chrome (pied refondu) mis à jour. Cmd+S restait à faire.

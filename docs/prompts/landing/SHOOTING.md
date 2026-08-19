@@ -13,7 +13,10 @@ mention contraire.
 
 ## Priorité 2 — les 8 cartes « dernières créations » (section 02)
 
-Une photo par pièce, ratio 4:5, fond simple, la pièce en sujet unique.
+Une photo par pièce, ratio 4:5, **fond simple mais COLORÉ** (aplat bonbon, papier coloré —
+jamais un blanc neutre : c'est de ces 8 photos que la section tient sa couleur une fois les
+aplats or de la maquette partis, cf. l'univers photo de `BRAND-DA.md`), la pièce en sujet
+unique.
 
 | Calque | Section | Ratio | Sujet |
 | --- | --- | --- | --- |
