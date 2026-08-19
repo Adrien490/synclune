@@ -7,8 +7,9 @@
 > courant et arbitrages ouverts), `11-livraison-au-code.md` (les 24 critères que la maquette ne
 > peut que spécifier), et les deux grilles pour re-noter le site rendu :
 > `docs/LANDING-BEST-PRACTICES.md` § 9 (conformité /100) et `_signature.md` (désirabilité /20).
-> État des notes de la maquette : **82/100 en conformité, 12/20 en signature** (passe du
-> 2026-08-19, détail dans `AUDIT-DOSSIER-2026-08-19b.md` — deux propositions à arbitrer).
+> État des notes de la maquette : **82/100 en conformité, 18/20 en signature** (re-notée sur
+> pièce le 2026-08-19 après application des propositions — rapport au carnet ; plus aucun
+> arbitrage ouvert, cf. `ETAT.md`).
 
 ## Avant le moindre token — les arbitrages bloquants
 

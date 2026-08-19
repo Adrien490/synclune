@@ -22,12 +22,11 @@ fort pour le **cadeau** que pour l'usage personnel, ce qui compte en bijou.
   1. **D'abord, une idée** — « Une couleur croisée dans la rue, un motif sur un tissu, un rêve… Je laisse l'inspiration venir, sans forcer. »
   2. **Le bon matériel** — « Plastique fou, peinture, perles : je choisis chaque élément un par un, avec soin. »
   3. **La cuisson et l'assemblage** — « Chaque bijou a sa propre recette de fabrication — c'est ce qui rend chaque pièce unique. »
-  4. **La touche finale** — « Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, avec amour. »
-     ⚠️ **Contradiction connue, assumée jusqu'à arbitrage** : « avec amour » figure dans les ⛔
-     formules interchangeables de `synclune-univers.md`, et c'est ici de la copie **imposée**.
-     Garde le verbatim — c'est la voix de Léane, et c'est elle qui tranchera (arbitrage nº 4 de
-     `ETAT.md`). Ne le remplace pas de ton propre chef, et ne t'autorise aucune autre formule du
-     même registre au motif que celle-ci existe.
+  4. **La touche finale** — « Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, les doigts encore pleins de peinture. »
+     ⚠️ **Arbitrage nº 4 tranché le 2026-08-19** : la version d'origine finissait par « avec
+     amour » — une des ⛔ formules interchangeables de `synclune-univers.md` — et l'exception a
+     été soldée par le remplacement ci-dessus. Garde ce verbatim tel quel, ne réintroduis pas
+     « avec amour » ici, et ne t'autorise aucune autre formule du même registre.
 - Mention discrète : **« environ 3 h par bijou »**
 - Sortie : **« Lire l'histoire de l'atelier »**
 

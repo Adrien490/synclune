@@ -42,21 +42,20 @@ parmi celles-ci — ce sont les vraies :
 - Comment fonctionnent les retours ?
 - Puis-je personnaliser une création ?
 
-⚠️ **Les valeurs de livraison sont des placeholders `{frais}` et `{délai}`.** (`{franco}` a été
-retiré le 2026-08-18 — franco abandonné, cf. HANDOFF arbitrage nº 1.) Ne les écris
+⚠️ **Les valeurs de livraison sont des placeholders `{frais}` et `{délai}`.** Ne les écris
 pas en dur dans la maquette : une page d'accueil qui annonce un délai différent de celui du tunnel
 fabrique exactement le motif d'abandon nº 1. `{frais}` et `{délai}` ont leur source unique côté
 code (`SHIPPING_RATES` et `PREPARATION_BUSINESS_DAYS`,
-`modules/orders/constants/shipping-rates.ts`). ⚠️ **`{franco}`, lui, n'a AUCUNE source** — aucun
-seuil de livraison offerte n'existe dans le code (constaté à l'audit du dossier, 2026-08-17) :
-c'est une offre que Léane doit créer ou abandonner avant le passage en code, pas une valeur à
-brancher.
+`modules/orders/constants/shipping-rates.ts`). ⛔ **`{franco}` n'existe plus** : aucun seuil de
+livraison offerte n'existe dans le code (constaté le 2026-08-17), et l'offre a été **abandonnée
+le 2026-08-18** (HANDOFF, arbitrage nº 1). Ne réintroduis ni le placeholder ni la promesse.
 
 Sortie humaine en fin de section : **« Une autre question ? Écris-moi. »**
 
 ⚠️ **Dernière section de la page** : elle ne peut pas être la seule porteuse d'une information
-critique. Si le franco de port ne vit qu'ici, il ne vit nulle part — remonte-le, ou dis-moi où il
-devrait vivre en plus.
+critique. `{frais}` et `{délai}` vivent AUSSI dans le bandeau des barres hautes (« Livraison
+{frais} · expédié sous {délai} ») — si ta version de la section porte une information critique
+qui ne vit qu'ici, remonte-la, ou dis-moi où elle devrait vivre en plus.
 
 ## Chaleur et précision
 

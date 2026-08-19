@@ -45,20 +45,21 @@ du papier, de l'encre et du gris.
   surface, pas un effet). Ces bandes complètent la séparation « blanc + filets gris », elles ne la
   remplacent pas ailleurs.
 
-### Écarts avec le code actuel — à faire arbitrer avant le passage en code
+### Écarts avec le code actuel — TRANCHÉ le 2026-08-19 : bicolore rose/or
 
 `papier`, `encre`, `rose` et `rose-encre` sont les conversions hex **exactes** des tokens
 `--background`, `--foreground`, `--primary` et `--color-brand-rose-strong` de `app/globals.css`
 (vérifié le 2026-08-15 par conversion oklch → sRGB).
 
 La famille **or**, elle, est entièrement neuve : `or` (`#ffe2a2`) ne correspond à aucun token
-(`--color-brand-sun` vaut `#eec976`) et `or-encre` (`#896e2c`) n'existe pas non plus. Surtout,
-le système bicolore rose → or **remplace** la rotation d'accents actuelle lavande / menthe /
-soleil (`[data-accent]`, `app/styles/section-accents.css`) : c'est un **choix de design à faire
-valider par Léane**, pas un état de fait. Si la maquette est retenue, le passage en code devra
-créer les tokens `or` / `or-encre` et retirer la rotation — ou, si Léane tient à la rotation,
-c'est la maquette qui devra être adaptée. Dans les deux cas, la décision se prend **avant**
-d'écrire le moindre token.
+(`--color-brand-sun` vaut `#eec976`) et `or-encre` (`#896e2c`) n'existe pas non plus. Le
+système bicolore rose → or **remplace** la rotation d'accents lavande / menthe / soleil
+(`[data-accent]`, `app/styles/section-accents.css`) : arbitrage nº 1, **tranché par Adrien le
+2026-08-19 sur les deux planches `00-systeme/accents-*`**. Le fait décisif : la rotation ne
+sait pas **écrire** (lavande 2,51:1, menthe 1,85, soleil 1,54 sur papier, sans déclinaison
+encre en code). Au passage en code : créer les tokens `or` / `or-encre` (avec leur test de
+contraste — or-encre/papier 4,72:1) et retirer la rotation. Veto Léane possible sur pièce,
+comme pour le reste.
 
 ## Typographie
 

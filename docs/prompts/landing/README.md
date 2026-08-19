@@ -1,10 +1,11 @@
 # Série pen.dev — landing Synclune
 
 > Série de design de la landing, menée du 2026-08-16 au 2026-08-19.
-> **Statut : livrable figé, passage en code non commencé** (il reste 7 arbitrages Léane, dont
-> un bloquant — `ETAT.md`). Maquette notée **82/100 en conformité** (grille § 9) et **12/20 en
-> signature** (grille `_signature.md`, passée à la contre-visite du 2026-08-19 — deux propositions
-> en attente d'arbitrage pour les sections faibles). Le livrable est `landing.pen` (versionné) ;
+> **Statut : livrable figé, passage en code DÉBLOQUÉ le 2026-08-19** (arbitrages nº 1-4
+> tranchés par Adrien, plus aucun ouvert — veto Léane sur pièce, `ETAT.md`). Maquette notée
+> **82/100 en conformité** (grille § 9) et **18/20 en signature** (grille `_signature.md`,
+> re-notée sur pièce le 2026-08-19 après application des propositions — le point manquant est
+> documentaire, critère 4). Le livrable est `landing.pen` (versionné) ;
 > l'état courant est `ETAT.md`, le journal des décisions `NOTES.md` ; ce README dit ce qui est
 > rejouable, ce qui ne l'est pas, et les pièges d'outillage.
 
@@ -22,6 +23,7 @@
 | `AUDIT-MAQUETTE-2026-08-17b.md` | Contre-visite après le tour 10 : 77/100 et 1 P0 → **82/100, 0 P0** après application du backlog. |
 | `AUDIT-DOSSIER-2026-08-19.md` | Audit du dossier **comme système de prompts**, pondéré sur la liberté créative : 73/100 → plan appliqué le même jour. |
 | `AUDIT-DOSSIER-2026-08-19b.md` | Contre-visite du même jour, même grille : 88/100 (fourche 01a→01 sans arbitre, dettes d'exécution) → plan appliqué — passe de signature **12/20** sur la maquette, planches d'accent dessinées, deux frames `proposition/*`. |
+| `AUDIT-DOSSIER-2026-08-19c.md` | Troisième passe, même grille : 89/100 — les documents n'avaient pas été rattrapés par les arbitrages du jour (contradictions vivantes, README/HANDOFF périmés) → plan appliqué le jour même. |
 | `_conduite.md` · `synclune-univers.md` · `synclune-systeme.md` | Contexte injecté au début de chaque tour (comportement, marque, système). |
 | `_checklist.md` | Bloc de sortie commun des tours de section (1 à 6) — garde-fous **et** bloc SIGNATURE. |
 | `_signature.md` | Grille de **désirabilité /20**, contrepoids de la grille de conformité § 9. Toute passe d'audit produit les deux notes. |
@@ -67,7 +69,7 @@
 - **Édition concurrente** : quelqu'un peut éditer dans l'app pendant une session MCP —
   re-lire avant d'écrire, ne jamais « réparer » un nœud inattendu sans vérifier son origine.
 
-## Coûts (CLI `pen`, claude-fable-5 — total : 73,36 $)
+## Coûts (CLI `pen`, claude-fable-5 — total : 73,34 $)
 
 | Tour | Effort | Coût | Note |
 | --- | --- | --- | --- |
@@ -89,16 +91,17 @@
 Les passes MCP du 2026-08-17 (médiateur, correctifs, créative, tour 10) sont passées par des
 sessions Claude Code, hors de ce compteur.
 
-## En attente d'arbitrage Léane
+## Arbitrages — tout est tranché (2026-08-19)
 
-**La liste à jour vit dans `ETAT.md`** — cinq questions fermées, chacune tranchable en une
-phrase et sur pièce. La nº 1 (accents bicolore rose/or **vs** rotation lavande/menthe/soleil du
-code) est la plus structurante : elle décide s'il faut créer les tokens `or`/`or-encre` ou
-adapter la maquette — les deux planches `00-systeme/accents-*` sont dessinées, contrastes
-recalculés des deux. Les trois propositions (grille respire · FAQ-message · pastilles gouttes)
-ont été **prises et appliquées le 2026-08-19** sur délégation d'Adrien (frames
-`proposition/* — PRISE`, Léane peut les défaire) ; le pack d'arbitrage vit dans
-`apercus/arbitrages/`, les rendus après application dans `apercus/apres-propositions-*.png`.
+**L'état à jour vit dans `ETAT.md`** — plus aucun arbitrage ouvert : nº 1-4 tranchés par Adrien
+le 2026-08-19 (accents BICOLORE rose/or · SIX sections · sur-titres PARTOUT · « avec amour »
+remplacé par « les doigts encore pleins de peinture »), fond du hero tranché en **piste D**
+(filigrane animé à la pose), propositions prises et appliquées — sauf les **pastilles gouttes,
+essayées puis rejetées** par Adrien (« pas en color swatch » — ne pas re-proposer). Léane garde
+un veto sur pièce : le pack vit dans `apercus/arbitrages/`, les rendus après application dans
+`apercus/apres-*.png`, et le carrousel Instagram à lui envoyer dans `apercus/pour-leane/`
+(artefacts hors git, régénérables — le `.pen` committé est la source, recette dans
+`apercus/pour-leane/README.md`).
 
 ⚠️ Le point qui était prioritaire — **le franco de port** — a été **tranché le 2026-08-18 :
 abandonné**. `{franco}` n'avait aucune source dans `shipping-rates.ts` ; il est retiré de toute

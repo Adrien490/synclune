@@ -50,8 +50,10 @@ en omettre, plus une planche `00-systeme/styles` qui les rend lisibles d'un coup
 **Deux planches d'accent, et c'est un livrable, pas une illustration** (ajouté le 2026-08-19).
 Le système bicolore rose/or de `synclune-systeme.md` **remplace** la rotation d'accents du code
 (lavande / menthe / soleil, `[data-accent]`, `app/styles/section-accents.css`) : c'est un choix de
-design, pas un état de fait, et il bloque le passage en code tant qu'il n'est pas tranché. Ne le
-tranche pas, **rends-le arbitrable** — deux planches côte à côte, `00-systeme/accents-bicolore` et
+design, pas un état de fait. Il a été tranché une première fois le 2026-08-19 (bicolore, sur
+pièce) — mais un rejeu du tour 0 produit un NOUVEAU design, et l'arbitrage doit rester
+re-prenable sur pièce. Ne le tranche pas toi-même, **rends-le arbitrable** — deux planches côte
+à côte, `00-systeme/accents-bicolore` et
 `00-systeme/accents-rotation`, montrant chacune la même séquence de six bandeaux de section (une
 bande par section, son accent en aplat, un titre et un bouton dessus) :
 

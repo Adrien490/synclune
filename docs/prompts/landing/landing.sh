@@ -173,6 +173,15 @@ preflight
 # restent one-shot (cf. guard_one_shot) : les rejouer sur un fichier neuf demande
 # PEN_FORCE=1, tour par tour, en connaissance de cause.
 if [[ "${1:-}" == "suite" ]]; then
+	# La fourche du tour 1a se solde AVANT de payer le tour le plus cher de la série.
+	# Le tour 1 sait refuser tout seul (01-hero.md), mais son refus arrive après avoir
+	# payé l'amorce d'un tour xhigh — ce grep, lui, est gratuit. Ligne absente = rejeu
+	# sans divergence (cas prévu par 01-hero.md), on laisse passer.
+	if grep -q 'Piste retenue du tour 1a.*EN ATTENTE' ETAT.md 2>/dev/null; then
+		echo "la ligne « Piste retenue du tour 1a » d'ETAT.md dit encore EN ATTENTE — l'arbitrage n'est pas pris." >&2
+		echo "inscris la piste retenue (a/b/c + greffes), puis relance :  ./landing.sh suite" >&2
+		exit 1
+	fi
 	for tour in 01 02 03 04 05 06 07 08; do
 		run "$tour"
 	done

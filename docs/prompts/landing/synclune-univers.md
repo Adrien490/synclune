@@ -69,10 +69,11 @@ Chacun correspond à une proposition déjà produite et jetée.
   chaud avec un filet de rose a raté le brief.
 - ⛔ **Aucune formule interchangeable** : « avec amour », « colorés et poétiques », « pour toutes
   les occasions ». Si n'importe quelle boutique de bijoux peut signer la phrase, elle ne dit rien.
-  ⚠️ **Une exception, une seule, et elle est en attente d'arbitrage** : « avec amour » clôt
-  l'étape 4 du récit d'atelier (`05-atelier.md`), en copie imposée, verbatim de Léane. Elle y
-  reste jusqu'à ce que Léane tranche (arbitrage nº 4 de `ETAT.md`). Elle n'ouvre aucun droit :
-  nulle part ailleurs, et aucune autre formule du registre.
+  ⚠️ **L'ancienne exception est soldée** (arbitrage nº 4, tranché le 2026-08-19) : « avec
+  amour » clôturait l'étape 4 du récit d'atelier, remplacé par « les doigts encore pleins de
+  peinture » (`05-atelier.md`). Sans purge systématique pour autant (précision d'Adrien) : la
+  formule peut réapparaître ponctuellement dans la voix de Léane — ce qui est interdit, c'est
+  de l'écrire en signature, et le remplacement de l'étape 4 ne se défait pas.
 - ⛔ **Irisé, pailleté, translucide décrivent les BIJOUX, jamais l'interface.** Pas de verre dépoli,
   pas de paillettes, pas de dégradé nacré dans l'UI.
 - ⛔ **Pas de compte client.** Ni « Se connecter », ni « Mon compte », ni « Créer un compte » :

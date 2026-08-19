@@ -73,7 +73,10 @@ couleur) doit porter sa justification par écrit — dans le carnet ou en `conte
 L'inverse n'est pas demandé : l'audace, elle, n'a pas à se justifier.
 
 **Vérification** : relève les décisions sobres de la page, compte celles qui portent une
-justification. 4 pts si toutes, 2 si la moitié, 0 si la sobriété est le défaut silencieux.
+justification. 4 pts si toutes, **3 si toutes sauf une**, 2 si environ la moitié, 0 si la
+sobriété est le défaut silencieux. (Le cran « toutes sauf une » est ajouté le 2026-08-19,
+APRÈS la re-notation 18/20 — qui reste notée à l'ancien barème : on ne re-note pas une passe
+en changeant sa grille derrière elle.)
 
 ## Barème de lecture
 
