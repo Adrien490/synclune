@@ -1,5 +1,6 @@
 "use client";
 
+import type { MediaType } from "@/app/generated/prisma/client";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import {
@@ -28,7 +29,7 @@ interface EditAltTextDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	currentAltText: string | undefined;
-	type: "IMAGE" | "VIDEO";
+	type: MediaType;
 	index: number;
 	onSave: (alt: string) => void;
 }
@@ -53,10 +54,13 @@ export function EditAltTextDialog({
 					<ResponsiveDialogDescription>
 						Décris le contenu pour les lecteurs d'écran et le SEO. Concis, factuel, sans préfixe «
 						Image de ».
+						{/* `text-success` (token sémantique) et non un `emerald-700` en dur :
+						    hors système de tokens, le contraste n'était garanti dans aucun
+						    des deux thèmes. */}
 						<span className="mt-2 block text-xs">
-							<span className="text-emerald-700">À privilégier</span> : « Bague argent ciselé,
-							pierre verte sertie, vue 3/4 ». <span className="text-destructive">À éviter</span> : «
-							Image de bague ».
+							<span className="text-success">À privilégier</span> : « Bague argent ciselé, pierre
+							verte sertie, vue 3/4 ». <span className="text-destructive">À éviter</span> : « Image
+							de bague ».
 						</span>
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>

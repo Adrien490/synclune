@@ -5,6 +5,7 @@
  */
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
 import { MAX_GALLERY_IMAGES } from "@/modules/media/constants/media-limits.constants";
+import { findVariantBySelectors } from "@/modules/variants/services/variant-finder.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
@@ -42,7 +43,12 @@ function buildAltText(
 
 interface BuildGalleryOptions {
 	product: GetProductReturn;
-	/** Sélection courante — sert uniquement à enrichir les ALT générés. */
+	/**
+	 * Sélection courante — enrichit les ALT générés avec matière/couleur de la
+	 * variante AFFICHÉE. Même résolution que `resolveGalleryAccent` : ignorer
+	 * la sélection citait toujours `variants[0]` (« en Argent Bleu » sur la
+	 * photo affichée en rose — un ALT WCAG factuellement faux).
+	 */
 	selectedVariants?: {
 		colorSlug?: string;
 		materialSlug?: string;
@@ -54,11 +60,16 @@ interface BuildGalleryOptions {
  * Construit la galerie du produit : `product.media` (déjà ordonné par le
  * select), plafonné à MAX_GALLERY_IMAGES, fallback SVG si vide.
  */
-export function buildGallery({ product }: BuildGalleryOptions): ProductMedia[] {
-	const firstVariant = product.variants[0];
+export function buildGallery({ product, selectedVariants }: BuildGalleryOptions): ProductMedia[] {
+	const { colorSlug, materialSlug, size } = selectedVariants ?? {};
+	const selectedVariant =
+		colorSlug || materialSlug || size
+			? findVariantBySelectors(product, { colorSlug, materialSlug, size })
+			: null;
+	const variant = selectedVariant ?? product.variants[0];
 	const variantInfo = {
-		materialName: firstVariant?.material?.name ?? null,
-		colorName: firstVariant?.color?.name ?? null,
+		materialName: variant?.material?.name ?? null,
+		colorName: variant?.color?.name ?? null,
 	};
 
 	const media = product.media.slice(0, MAX_GALLERY_IMAGES);
@@ -77,6 +88,7 @@ export function buildGallery({ product }: BuildGalleryOptions): ProductMedia[] {
 		id: m.id,
 		url: m.url,
 		type: m.type,
+		blurDataUrl: m.blurDataUrl,
 		position: m.position,
 		alt: m.alt ?? buildAltText(product.name, variantInfo, index, totalImages),
 		_hasCustomAlt: !!m.alt,

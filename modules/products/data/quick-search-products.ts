@@ -20,7 +20,7 @@ export type QuickSearchProduct = {
 	slug: string;
 	name: string;
 	priceCents: number;
-	media: Array<{ url: string; alt: string | null }>;
+	media: Array<{ url: string; alt: string | null; blurDataUrl: string | null }>;
 	variants: Array<{
 		id: string;
 		/** Override — null = prix du produit. */

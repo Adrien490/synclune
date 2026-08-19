@@ -34,8 +34,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
-const GALLERY_DIR = "shared/components/gallery";
+const REPO_ROOT = join(__dirname, "..", "..", "..", "..", "..");
+const GALLERY_DIR = "modules/media/components/gallery";
 
 /**
  * Fichiers de chrome — `hover-zoom.tsx` est l'image elle-même, pas du chrome.

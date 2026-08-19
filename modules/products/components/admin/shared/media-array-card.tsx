@@ -66,13 +66,6 @@ export interface MediaArrayCardProps {
 	onRetry: () => void;
 	onRetryOne?: (file: File) => void;
 	onDismissErrors: () => void;
-
-	/**
-	 * Skip UploadThing delete when reorder/remove. Vrai pour les forms d'édition
-	 * (l'action serveur calcule le diff et supprime ce qui a été retiré). Faux pour
-	 * la création (suppression immédiate côté UploadThing).
-	 */
-	skipUtapiDelete?: boolean;
 }
 
 export function MediaArrayCard({
@@ -93,7 +86,6 @@ export function MediaArrayCard({
 	onRetry,
 	onRetryOne,
 	onDismissErrors,
-	skipUtapiDelete = false,
 }: MediaArrayCardProps) {
 	// Ancre de retour du focus quand le bandeau de progression disparaît : sans elle,
 	// le focus retomberait sur `<body>` à la fin de chaque envoi.
@@ -253,8 +245,6 @@ export function MediaArrayCard({
 												alt: m.alt ?? undefined,
 												thumbnailUrl: m.thumbnailUrl ?? undefined,
 												blurDataUrl: m.blurDataUrl ?? undefined,
-												width: m.width,
-												height: m.height,
 											}))}
 											onFilesDropped={(files) => handleUpload(files, asMediaField(field))}
 											onChange={(newMedia) => {
@@ -275,16 +265,13 @@ export function MediaArrayCard({
 														type: m.type,
 														alt: m.alt ?? undefined,
 														thumbnailUrl: m.thumbnailUrl ?? undefined,
-														blurDataUrl: m.blurDataUrl ?? undefined,
 														// Chaque reorder/suppression reconstruit le tableau :
-														// omettre les dimensions ici les perdait au premier
+														// omettre `blurDataUrl` ici le perdait au premier
 														// glisser-déposer, avant même la soumission.
-														width: m.width,
-														height: m.height,
+														blurDataUrl: m.blurDataUrl ?? undefined,
 													}),
 												);
 											}}
-											skipUtapiDelete={skipUtapiDelete}
 											maxItems={maxMediaCount}
 											ariaLabel={ariaLabel}
 											renderUploadZone={

@@ -24,13 +24,14 @@ function getGalleryLinks(): HTMLLinkElement[] {
 }
 
 /**
- * Flush the idle callback polyfill (setTimeout with delay=1ms in jsdom)
- * The hook uses requestIdleCallback polyfill which falls back to setTimeout(cb, 1)
- * We need to use fake timers and advance by 1ms.
+ * Flush the idle callback polyfill.
+ * jsdom n'implémente pas requestIdleCallback : le hook retombe sur le polyfill
+ * setTimeout(cb, timeout), planifié à 500 ms (le `timeout` passé par le hook).
+ * On avance donc les fake timers au-delà de ce délai.
  */
 async function flushIdleCallback() {
 	await act(async () => {
-		vi.advanceTimersByTime(2);
+		vi.advanceTimersByTime(501);
 		await Promise.resolve();
 	});
 }
@@ -126,7 +127,23 @@ describe("usePrefetchImages", () => {
 		expect(getGalleryLinks()).toHaveLength(0);
 	});
 
-	it("does not create duplicate prefetch links for already-prefetched images", async () => {
+	it("does not create duplicate links when adjacent indices resolve to the same URL", async () => {
+		// Galerie de 2 : à l'index 0, next et previous pointent tous deux l'index 1
+		renderHook(() =>
+			usePrefetchImages({
+				imageUrls: [IMAGE_URLS[0]!, IMAGE_URLS[1]!],
+				currentIndex: 0,
+				prefetchRange: 1,
+				enabled: true,
+			}),
+		);
+
+		await flushIdleCallback();
+
+		expect(getGalleryLinks()).toHaveLength(1);
+	});
+
+	it("tears down all links and recreates them on index change (full churn assumed)", async () => {
 		const { rerender } = renderHook(
 			({ index }: { index: number }) =>
 				usePrefetchImages({
@@ -140,15 +157,19 @@ describe("usePrefetchImages", () => {
 
 		await flushIdleCallback();
 
-		const linksAfterFirstRender = getGalleryLinks().length;
-		expect(linksAfterFirstRender).toBeGreaterThan(0);
+		const hrefsAtIndex2 = getGalleryLinks().map((link) => link.getAttribute("href"));
+		expect(hrefsAtIndex2.length).toBeGreaterThan(0);
 
-		// Re-render with same index - should not add duplicates
-		rerender({ index: 2 });
+		// Changement d'index : le cleanup intégral retire tout, puis l'effet
+		// recrée les links des nouveaux voisins — sans accumulation ni doublon
+		rerender({ index: 4 });
 		await flushIdleCallback();
 
-		const linksAfterRerender = getGalleryLinks().length;
-		expect(linksAfterRerender).toBe(linksAfterFirstRender);
+		const hrefsAtIndex4 = getGalleryLinks().map((link) => link.getAttribute("href"));
+		expect(hrefsAtIndex4.length).toBe(hrefsAtIndex2.length);
+		expect(new Set(hrefsAtIndex4).size).toBe(hrefsAtIndex4.length);
+		// Les voisins de l'index 4 (3 et 0) ne sont pas ceux de l'index 2 (1 et 3)
+		expect(hrefsAtIndex4).not.toEqual(hrefsAtIndex2);
 	});
 
 	it("wraps around for circular carousel when currentIndex=0", async () => {

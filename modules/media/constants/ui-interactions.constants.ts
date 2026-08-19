@@ -10,9 +10,9 @@
  * UI interaction delays for media components
  * Used in media-upload-grid, lightbox, etc.
  */
+// ⚠️ `HINT_DISAPPEAR_MS` et `ETA_TICK_INTERVAL_MS` ont été retirés : zéro
+// lecteur — l'ETA est partie avec la file d'upload hors-ligne (Lot 5/S4.4).
 export const UI_DELAYS = {
-	/** Display duration for "long press" hint (ms) */
-	HINT_DISAPPEAR_MS: 4000,
 	/** Mobile long press activation delay (ms) */
 	LONG_PRESS_ACTIVATION_MS: 250,
 	/** Movement tolerance during long press (px) */
@@ -29,8 +29,6 @@ export const UI_DELAYS = {
 	ANIMATION_SWIPE_MS: 300,
 	/** Delay before video frame stabilization (ms) */
 	VIDEO_FRAME_STABILIZATION_MS: 50,
-	/** ETA recompute tick interval for upload progress (ms) */
-	ETA_TICK_INTERVAL_MS: 500,
 } as const;
 
 // ============================================================================

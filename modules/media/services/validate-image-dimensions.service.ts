@@ -70,26 +70,7 @@ export async function assertImageDimensions(
 	return { width, height };
 }
 
-/**
- * Lit les dimensions d'un buffer image sans jamais échouer.
- *
- * À appeler sur le buffer FINAL (post strip EXIF / re-encode HEIC) : `sharp.rotate()`
- * applique l'orientation EXIF et peut donc INTERVERTIR largeur et hauteur — les
- * dimensions du buffer d'origine ne décrivent pas toujours l'image publiée.
- *
- * Contrairement à `assertImageDimensions`, un échec est non fatal (retourne `null`) :
- * une dimension manquante dégrade le srcSet, elle ne doit pas perdre l'upload.
- */
-export async function readImageDimensions(
-	buffer: Buffer,
-): Promise<{ width: number; height: number } | null> {
-	try {
-		const { width, height } = await sharp(buffer).metadata();
-		if (typeof width !== "number" || typeof height !== "number" || width <= 0 || height <= 0) {
-			return null;
-		}
-		return { width, height };
-	} catch {
-		return null;
-	}
-}
+// ⚠️ `readImageDimensions` (lecture non fatale) a été retiré avec la purge du
+// transport `width`/`height` (audit 2026-08-16) : les dimensions ne quittent
+// plus le serveur, seule la garde image-bomb (`assertImageDimensions`) en a
+// besoin.

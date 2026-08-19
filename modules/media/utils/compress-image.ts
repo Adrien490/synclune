@@ -9,8 +9,7 @@
  * lazy-loaded only when a HEIC file is encountered).
  */
 
-const HEIC_MIME_TYPES = ["image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"];
-const HEIC_EXTENSIONS = [".heic", ".heif"];
+import { HEIC_EXTENSIONS, HEIC_MIME_TYPES } from "@/modules/media/constants/media-limits.constants";
 
 /** Threshold under which compression is skipped (file is already small enough) */
 const SKIP_COMPRESSION_THRESHOLD = 1024 * 1024; // 1 MB
@@ -42,22 +41,23 @@ export interface CompressImageResult {
  */
 export function isHeicFile(file: File): boolean {
 	const type = file.type.toLowerCase();
-	if (HEIC_MIME_TYPES.includes(type)) return true;
+	if ((HEIC_MIME_TYPES as readonly string[]).includes(type)) return true;
 	const name = file.name.toLowerCase();
 	return HEIC_EXTENSIONS.some((ext) => name.endsWith(ext));
 }
 
 /**
- * True if the browser supports createImageBitmap with imageOrientation option.
+ * True if `createImageBitmap` is available.
+ *
+ * ⚠️ L'option `imageOrientation` n'est PAS détectable : l'ancienne détection
+ * (`"imageOrientation" in { imageOrientation: … }`) testait la présence d'une
+ * clé dans son propre littéral — toujours vrai. Un navigateur qui ignore
+ * l'option la traite en silence (photos non pivotées), et il n'existe aucun
+ * feature-test synchrone pour ça ; sur les evergreen, elle est supportée
+ * partout où `createImageBitmap` existe.
  */
 function supportsImageBitmapOrientation(): boolean {
-	if (typeof createImageBitmap !== "function") return false;
-	try {
-		const opts: ImageBitmapOptions = { imageOrientation: "from-image" };
-		return "imageOrientation" in opts;
-	} catch {
-		return false;
-	}
+	return typeof createImageBitmap === "function";
 }
 
 /**
@@ -134,10 +134,13 @@ function computeTargetDimensions(
 		return { width, height };
 	}
 	const ratio = width / height;
+	// `Math.max(1, …)` : un panorama extrême (8000×1) donnait une dimension 0
+	// → `new OffscreenCanvas(2048, 0)` → `convertToBlob` rejette → l'upload
+	// d'un fichier VALIDE échouait.
 	if (width >= height) {
-		return { width: maxDim, height: Math.round(maxDim / ratio) };
+		return { width: maxDim, height: Math.max(1, Math.round(maxDim / ratio)) };
 	}
-	return { width: Math.round(maxDim * ratio), height: maxDim };
+	return { width: Math.max(1, Math.round(maxDim * ratio)), height: maxDim };
 }
 
 function renameWithExtension(originalName: string, newMimeType: string): string {

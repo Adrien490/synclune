@@ -9,14 +9,12 @@
 /**
  * Largeurs générées par l'optimiseur d'images Next.
  *
- * ⚠️ Copie des valeurs par défaut de Next (`images.deviceSizes`), utilisée pour
- * construire à la main le `srcSet` de la lightbox via `nextImageUrl()`. Comme
- * `next.config.ts` ne définit PAS `deviceSizes`, les deux coïncident — mais
- * rien ne le garantit : y ajouter une largeur ici sans la déclarer dans
- * `next.config.ts` produirait des URLs `/_next/image?w=…` rejetées en 400
- * (audit média M17). Toute modification doit toucher les deux, ou déclarer
- * explicitement `deviceSizes` dans `next.config.ts` à partir de cette
- * constante. Verrouillé par `image-config.constants.test.ts`.
+ * ⚠️ Miroir des `images.deviceSizes` DÉCLARÉS dans `next.config.ts` (M17 —
+ * ils y sont explicites depuis l'audit), utilisée pour construire à la main le
+ * `srcSet` de la lightbox via `nextImageUrl()`. Une largeur ajoutée ici sans
+ * son pendant dans `next.config.ts` produirait des URLs `/_next/image?w=…`
+ * rejetées en 400. La parité des deux listes est verrouillée par
+ * `image-config.constants.test.ts`.
  */
 export const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048] as const;
 

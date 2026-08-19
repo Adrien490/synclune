@@ -22,17 +22,23 @@ export async function deleteUploadThingFilesFromUrls(
 		return { deleted: 0, failed: 0 };
 	}
 
-	// Filter to valid UploadThing URLs only (HTTPS + allowed domain)
+	// Filter to valid UploadThing URLs only (HTTPS + allowed domain).
+	// Une URL hors domaine n'est PAS un échec (elle n'a rien à supprimer chez
+	// UploadThing) — elle est ignorée, mais loguée pour visibilité.
 	const candidateUrls = urls.filter(isValidUploadThingUrl);
+	const skipped = urls.length - candidateUrls.length;
+	if (skipped > 0) {
+		logger.warn(`${skipped} non-UploadThing URL(s) skipped`, {
+			service: "delete-uploadthing-files",
+		});
+	}
 
 	if (candidateUrls.length === 0) {
 		return { deleted: 0, failed: 0 };
 	}
 
-	const uploadThingUrls = candidateUrls;
-
 	// Extract file keys from URLs
-	const { keys: fileKeys, failedUrls } = extractFileKeysFromUrls(uploadThingUrls);
+	const { keys: fileKeys, failedUrls } = extractFileKeysFromUrls(candidateUrls);
 
 	if (failedUrls.length > 0) {
 		logger.warn(`${failedUrls.length} URL(s) could not be extracted: ${failedUrls.join(", ")}`, {
@@ -51,7 +57,9 @@ export async function deleteUploadThingFilesFromUrls(
 			logger.warn(`UTApi.deleteFiles returned success=false for ${fileKeys.length} key(s)`, {
 				service: "delete-uploadthing-files",
 			});
-			return { deleted: 0, failed: urls.length };
+			// Comptabilité uniforme : seuls les CANDIDATS comptent (les URLs hors
+			// domaine, déjà filtrées, ne peuvent pas « échouer » deux fois).
+			return { deleted: 0, failed: fileKeys.length + failedUrls.length };
 		}
 
 		const actualDeleted = result.deletedCount;
@@ -77,6 +85,6 @@ export async function deleteUploadThingFilesFromUrls(
 		// Log error but don't block the main operation
 		logger.error("Failed to delete files", error, { service: "delete-uploadthing-files" });
 
-		return { deleted: 0, failed: urls.length };
+		return { deleted: 0, failed: fileKeys.length + failedUrls.length };
 	}
 }

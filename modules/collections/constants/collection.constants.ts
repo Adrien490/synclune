@@ -15,7 +15,7 @@ export const GET_COLLECTION_PRODUCTS_LIMIT = 100;
 /** Sous-select vignette produit : première IMAGE de l'ordre canonique. */
 const PRODUCT_THUMB_SELECT = {
 	where: { type: "IMAGE" as const },
-	select: { id: true, url: true, alt: true, type: true },
+	select: { id: true, url: true, alt: true, type: true, blurDataUrl: true },
 	orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 	take: 1,
 };
@@ -73,7 +73,7 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 			active: true,
 			media: {
 				where: { type: "IMAGE" as const },
-				select: { url: true, alt: true },
+				select: { url: true, alt: true, blurDataUrl: true },
 				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 				take: 1,
 			},
@@ -103,7 +103,7 @@ export const GET_COLLECTIONS_SELECT = {
 			name: true,
 			media: {
 				where: { type: "IMAGE" as const },
-				select: { url: true, alt: true },
+				select: { url: true, alt: true, blurDataUrl: true },
 				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 				take: 1,
 			},

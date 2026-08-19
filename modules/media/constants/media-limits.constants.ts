@@ -33,6 +33,18 @@ export const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avi
  */
 export const HEIC_EXTENSIONS = [".heic", ".heif"] as const;
 
+/**
+ * MIME HEIC/HEIF, variantes `-sequence` (burst iPhone) comprises — SSOT
+ * partagée entre le décodage client (`compress-image`) et le ré-encodage
+ * serveur (`reencode-heic.service`), qui portaient chacun leur copie.
+ */
+export const HEIC_MIME_TYPES = [
+	"image/heic",
+	"image/heif",
+	"image/heic-sequence",
+	"image/heif-sequence",
+] as const;
+
 // ============================================================================
 // ACCEPTED MIME TYPES — SSOT partagée client / serveur
 // ============================================================================

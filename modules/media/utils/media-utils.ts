@@ -1,5 +1,8 @@
 /**
- * Utilities for media management (images and videos)
+ * Résolution de la source affichable d'un média pour `next/image`.
+ *
+ * (`getVideoMimeType` a déménagé dans `media-type-detection.ts` — la détection
+ * par URL vit désormais dans UN seul fichier, avec UN seul parseur d'extension.)
  */
 
 import type { MediaType } from "@/app/generated/prisma/client";
@@ -19,28 +22,4 @@ export function resolveMediaThumbSrc(media: { url: string; type: MediaType }): s
 		return null;
 	}
 	return media.url;
-}
-
-/** Video extension to MIME type mapping */
-const VIDEO_MIME_TYPES: Record<string, string> = {
-	mp4: "video/mp4",
-};
-
-/**
- * Gets the MIME type of a video from its URL.
- * Uses a regex to extract the extension at the end of the URL (before query string).
- * @param url - The video URL
- * @returns The video MIME type
- */
-export function getVideoMimeType(url: string): string {
-	// Extract file extension (before query params)
-	const extensionMatch = url.toLowerCase().match(/\.(\w+)(?:\?|#|$)/);
-	const extension = extensionMatch?.[1];
-
-	// CDN URLs without extension (e.g. UploadThing) - fallback to mp4
-	if (!extension) {
-		return "video/mp4";
-	}
-
-	return VIDEO_MIME_TYPES[extension] ?? "video/mp4";
 }

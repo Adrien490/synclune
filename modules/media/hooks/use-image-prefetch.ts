@@ -23,8 +23,10 @@ interface UsePrefetchImagesOptions {
 
 /**
  * Polyfill for requestIdleCallback (Safari, Edge < 79).
- * Uses setTimeout as a low-priority fallback.
- * Respects the timeout option for consistent behavior.
+ * Uses setTimeout as a low-priority fallback: le callback est planifié après
+ * `timeout` ms (pas « dès que possible »), faute de vraie notion d'idle —
+ * c'est le comportement basse priorité attendu d'un prefetch. L'ancien
+ * `Math.min(1, timeout)` planifiait à 1 ms quel que soit `timeout`.
  * Note: In the browser, setTimeout returns a number, not a NodeJS.Timeout.
  */
 const requestIdleCallbackPolyfill =
@@ -33,16 +35,13 @@ const requestIdleCallbackPolyfill =
 		: (callback: IdleRequestCallback, options?: IdleRequestOptions): number => {
 				const timeout = options?.timeout ?? 50;
 				const start = Date.now();
-				return window.setTimeout(
-					() => {
-						const elapsed = Date.now() - start;
-						callback({
-							didTimeout: elapsed >= timeout,
-							timeRemaining: () => Math.max(0, 50 - elapsed),
-						});
-					},
-					Math.min(1, timeout),
-				);
+				return window.setTimeout(() => {
+					const elapsed = Date.now() - start;
+					callback({
+						didTimeout: elapsed >= timeout,
+						timeRemaining: () => Math.max(0, 50 - elapsed),
+					});
+				}, timeout);
 			};
 
 const cancelIdleCallbackPolyfill =
@@ -74,9 +73,8 @@ function getPrefetchImageSize(): number {
  * 1. Prefetch adjacent images (next + previous)
  * 2. Uses requestIdleCallback to avoid blocking the main thread (with Safari polyfill)
  * 3. Creates <link rel="prefetch"> elements in the <head>
- * 4. Automatically cleans up unused prefetch links
+ * 4. Full teardown of the links on every index change (see effect cleanup)
  * 5. SSR protection (checks for window)
- * 6. XSS security (no injection in querySelector)
  *
  * @example
  * usePrefetchImages({
@@ -108,57 +106,29 @@ export function usePrefetchImages({
 		// Use requestIdleCallback with polyfill for Safari
 		const prefetchId = requestIdleCallbackPolyfill(
 			() => {
+				const prefetchSize = getPrefetchImageSize();
+
+				// Set : deux indices adjacents peuvent pointer la même URL sur une
+				// petite galerie (wrap circulaire) — on dédoublonne DANS ce run.
+				// Aucune dédup contre le DOM en revanche : le cleanup de l'effet
+				// détruit tous les links à chaque changement d'index, donc il n'y a
+				// jamais de link survivant d'un run précédent à retrouver.
+				const urlsToPrefetch = new Set<string>();
 				for (const index of indicesToPrefetch) {
 					const imageUrl = imageUrls[index];
 					if (!imageUrl) continue;
+					// Optimized Next.js URL (640px mobile, 1080px desktop)
+					urlsToPrefetch.add(nextImageUrl(imageUrl, prefetchSize, MAIN_IMAGE_QUALITY));
+				}
 
-					// Security: check if already prefetched without SQL/XSS injection
-					// Retrieve all links and filter in JS rather than via querySelector with interpolation
-					const allGalleryLinks = Array.from(
-						document.querySelectorAll<HTMLLinkElement>(
-							'link[rel="prefetch"][data-prefetched-by="gallery"]',
-						),
-					);
-
-					// Compare with optimized Next.js URL (size adapted to viewport)
-					const prefetchSize = getPrefetchImageSize();
-					const optimizedUrl = nextImageUrl(imageUrl, prefetchSize, MAIN_IMAGE_QUALITY);
-					const existingLink = allGalleryLinks.find(
-						(link) => link.getAttribute("href") === optimizedUrl,
-					);
-					if (existingLink) continue;
-
-					// Create prefetch link with optimized Next.js URL
+				for (const optimizedUrl of urlsToPrefetch) {
 					const link = document.createElement("link");
 					link.rel = "prefetch";
 					link.as = "image";
-					// Use optimized Next.js URL (640px mobile, 1080px desktop)
 					link.href = optimizedUrl;
 					link.dataset.prefetchedBy = "gallery";
 
 					document.head.appendChild(link);
-				}
-
-				// Cleanup: remove old prefetch links that are no longer adjacent
-				const allPrefetchLinks = Array.from(
-					document.querySelectorAll<HTMLLinkElement>(
-						'link[rel="prefetch"][data-prefetched-by="gallery"]',
-					),
-				);
-
-				// Use optimized URLs for cleanup (same size as prefetch)
-				const cleanupPrefetchSize = getPrefetchImageSize();
-				const currentUrls = new Set(
-					indicesToPrefetch
-						.map((i) => imageUrls[i])
-						.filter((url): url is string => Boolean(url))
-						.map((url) => nextImageUrl(url, cleanupPrefetchSize, MAIN_IMAGE_QUALITY)),
-				);
-
-				for (const link of allPrefetchLinks) {
-					if (!currentUrls.has(link.getAttribute("href")!)) {
-						link.remove();
-					}
 				}
 			},
 			{ timeout: 500 },
@@ -166,7 +136,11 @@ export function usePrefetchImages({
 
 		return () => {
 			cancelIdleCallbackPolyfill(prefetchId);
-			// Cleanup all prefetch links on unmount
+			// Cleanup intégral à CHAQUE changement d'index (pas seulement à
+			// l'unmount) : comportement choisi — le churn de <link> est amorti par
+			// le cache HTTP (l'image déjà téléchargée n'est pas re-téléchargée).
+			// C'est pourquoi toute logique « retirer les links plus adjacents » ou
+			// de dédup inter-runs serait du code mort : rien ne survit à ce cleanup.
 			const allLinks = document.querySelectorAll<HTMLLinkElement>(
 				'link[rel="prefetch"][data-prefetched-by="gallery"]',
 			);

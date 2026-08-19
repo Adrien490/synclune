@@ -237,7 +237,6 @@ export function EditProductForm({
 					<MediaArrayCard
 						fieldName="media"
 						viewTransitionName="product-edit-media"
-						skipUtapiDelete
 						form={form}
 						isMediaUploading={isMediaUploading}
 						uploadProgress={uploadProgress}

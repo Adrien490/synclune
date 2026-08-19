@@ -12,9 +12,10 @@ import {
 	GALLERY_ZOOM_LEVEL,
 	VIDEO_LOAD_TIMEOUT,
 } from "@/modules/media/constants/gallery.constants";
-import { getVideoMimeType } from "@/modules/media/utils/media-utils";
+import { getVideoMimeType } from "@/modules/media/utils/media-type-detection";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
-import { GalleryHoverZoom, prefetchLightbox } from "@/shared/components/gallery";
+import { GalleryHoverZoom } from "./hover-zoom";
+import { prefetchLightbox } from "./prefetch-lightbox";
 import { GalleryPinchZoom } from "./pinch-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
@@ -159,10 +160,13 @@ export function GallerySlide({
 			// celui-ci porte désormais le libellé pour les DEUX types de média. Le div
 			// interne n'existait que pour éviter un `<button>` dans un `<button>` quand
 			// `VideoErrorFallback` rend le sien : ce risque est parti avec le rôle.
-			// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events -- surface de clic souris/tactile ; le chemin clavier est GalleryZoomButton
+			// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- surface de clic souris/tactile ; le chemin clavier est GalleryZoomButton (le rôle tabpanel est conditionnel : à 1 média l'élément est statique)
 			<div
 				id={id}
-				role="tabpanel"
+				// `tabpanel` seulement quand une tablist existe (>1 média) : à 1 média
+				// les vignettes ne sont pas rendues, le rôle serait orphelin.
+				role={totalImages > 1 ? "tabpanel" : undefined}
+				aria-labelledby={totalImages > 1 ? `gallery-tab-${index}` : undefined}
 				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in"
 				style={{ viewTransitionName }}
 				onClick={onOpen}
@@ -193,8 +197,9 @@ export function GallerySlide({
 					aria-describedby={`video-desc-${index}`}
 				>
 					<source src={media.url} type={getVideoMimeType(media.url)} />
-					{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
-					<track kind="captions" srcLang="fr" label="Français" default />
+					{/* Pas de <track> : une piste captions SANS `src` est du HTML invalide
+					    et n'apporte rien à WCAG — la description sr-only ci-dessous déclare
+					    déjà que la vidéo est muette. */}
 				</video>
 				<span id={`video-desc-${index}`} className="sr-only">
 					Vidéo de démonstration du produit sans audio
@@ -221,10 +226,13 @@ export function GallerySlide({
 			// plein écran est `GalleryZoomButton`, qui porte le libellé et l'arrêt de
 			// tabulation. En rajouter un rendrait ce panneau focusable et
 			// réintroduirait exactement le doublon qu'on vient de retirer.
-			// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events -- surface de clic souris ; le chemin clavier/lecteur d'écran est GalleryZoomButton
+			// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- surface de clic souris ; le chemin clavier/lecteur d'écran est GalleryZoomButton (rôle tabpanel conditionnel)
 			<div
 				id={id}
-				role="tabpanel"
+				// `tabpanel` seulement quand une tablist existe (>1 média) : à 1 média
+				// les vignettes ne sont pas rendues, le rôle serait orphelin.
+				role={totalImages > 1 ? "tabpanel" : undefined}
+				aria-labelledby={totalImages > 1 ? `gallery-tab-${index}` : undefined}
 				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in"
 				style={{ viewTransitionName }}
 				onClick={onOpen}
@@ -233,6 +241,7 @@ export function GallerySlide({
 				<GalleryHoverZoom
 					src={media.url}
 					alt={alt}
+					blurDataUrl={media.blurDataUrl ?? undefined}
 					zoomLevel={GALLERY_ZOOM_LEVEL}
 					preload={index === 0}
 					quality={MAIN_IMAGE_QUALITY}
@@ -245,7 +254,8 @@ export function GallerySlide({
 	return (
 		<div
 			id={id}
-			role="tabpanel"
+			role={totalImages > 1 ? "tabpanel" : undefined}
+			aria-labelledby={totalImages > 1 ? `gallery-tab-${index}` : undefined}
 			className="relative h-full min-w-0 flex-[0_0_100%]"
 			style={{ viewTransitionName }}
 			// Au doigt, c'est le SEUL préchauffage possible du chunk lightbox : la loupe,
@@ -257,6 +267,7 @@ export function GallerySlide({
 			<GalleryPinchZoom
 				src={media.url}
 				alt={alt}
+				blurDataUrl={media.blurDataUrl ?? undefined}
 				isActive={isActive}
 				onTap={onOpen}
 				preload={index === 0}

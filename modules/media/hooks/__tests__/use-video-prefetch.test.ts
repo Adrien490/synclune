@@ -361,11 +361,12 @@ describe("usePrefetchVideos", () => {
 	});
 
 	// --------------------------------------------------------------------------
-	// Intelligent prefetch timing — index changes trigger cleanup
+	// Index change — full teardown then recreation (churn assumed, HTTP cache
+	// amortit ; cf. commentaire du cleanup dans le hook)
 	// --------------------------------------------------------------------------
 
-	describe("intelligent prefetch timing", () => {
-		it("creates a new video element when currentIndex changes to expose a new adjacent video", () => {
+	describe("index change", () => {
+		it("recreates a fresh element for a still-adjacent video after index change", () => {
 			const medias: ProductMedia[] = [
 				makeImageMedia("img-0"),
 				makeImageMedia("img-1"),
@@ -379,18 +380,17 @@ describe("usePrefetchVideos", () => {
 			);
 
 			// At index 0, adjacent: index 1 (image) and index 2 (video, wraps) — 1 video
-			const countAfterFirst = createdElements.length;
-			expect(countAfterFirst).toBe(1);
+			expect(createdElements).toHaveLength(1);
 
-			// Move to index 1, adjacent: index 0 (image) and index 2 (video)
+			// Move to index 1, adjacent: index 0 (image) and index 2 (video).
+			// Cleanup intégral puis recréation : un NOUVEL élément est créé pour
+			// vid-2 même s'il était déjà préchargé (churn assumé)
 			rerender({ currentIndex: 1 });
 
-			// The same video at index 2 should still be prefetched
-			// (new element if the old was cleaned up, or same if still in range)
-			expect(createdElements.length).toBeGreaterThanOrEqual(1);
+			expect(createdElements).toHaveLength(2);
 		});
 
-		it("removes videos that are no longer adjacent after index change", () => {
+		it("clears every prefetched video on index change (full teardown)", () => {
 			const medias: ProductMedia[] = [
 				makeVideoMedia("vid-0"),
 				makeImageMedia("img-1"),
@@ -417,11 +417,14 @@ describe("usePrefetchVideos", () => {
 				configurable: true,
 			});
 
-			// Move to index 2: adjacent index 1 (image) and index 3 (video)
+			// Move to index 2: the effect cleanup tears down vid-0's element…
 			rerender({ currentIndex: 2 });
 
-			// vid-0 was adjacent at index 1 but not at index 2 → should be cleaned up
 			expect(clearSrcSpy).toHaveBeenCalledWith("");
+			expect(firstVideo?.load).toHaveBeenCalled();
+			// …and a fresh element is created for the newly adjacent vid-3
+			expect(createdElements).toHaveLength(2);
+			expect(createdElements[1]?.src).toBe("https://cdn.example.com/video-vid-3.mp4");
 		});
 	});
 });

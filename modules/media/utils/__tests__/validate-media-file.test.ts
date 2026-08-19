@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { MAX_UPLOAD_SIZE_VIDEO } from "@/modules/media/constants/upload-size-limits";
-import { isValidCuid, isValidUploadThingUrl, MEDIA_SIZE_LIMITS } from "../validate-media-file";
+import {
+	MAX_UPLOAD_SIZE_IMAGE,
+	MAX_UPLOAD_SIZE_VIDEO,
+} from "@/modules/media/constants/upload-size-limits.constants";
+import { isValidUploadThingUrl, MEDIA_SIZE_LIMITS } from "../validate-media-file";
 
 // ============================================================================
 // MEDIA_SIZE_LIMITS
@@ -13,62 +16,11 @@ import { isValidCuid, isValidUploadThingUrl, MEDIA_SIZE_LIMITS } from "../valida
 
 describe("MEDIA_SIZE_LIMITS", () => {
 	it("reste aligné sur les plafonds des routes UploadThing", () => {
-		expect(MEDIA_SIZE_LIMITS.CATALOG_IMAGE).toBe(16 * 1024 * 1024);
+		// Référence croisée à la SSOT, PAS un littéral : verrouiller `16 Mo` en
+		// dur entérinait la copie — un changement de plafond dans
+		// `upload-size-limits.ts` aurait laissé la copie admin mentir.
+		expect(MEDIA_SIZE_LIMITS.CATALOG_IMAGE).toBe(MAX_UPLOAD_SIZE_IMAGE);
 		expect(MEDIA_SIZE_LIMITS.VIDEO).toBe(MAX_UPLOAD_SIZE_VIDEO);
-	});
-});
-
-// ============================================================================
-// isValidCuid
-// ============================================================================
-
-describe("isValidCuid", () => {
-	it("returns true for valid CUID", () => {
-		expect(isValidCuid("cjld2cjxh0000qzrmn831i7rn")).toBe(true);
-	});
-
-	it("accepts CUID with digits only after c", () => {
-		expect(isValidCuid("c012345678901234567890123")).toBe(true);
-	});
-
-	it("accepts CUID with mixed lowercase and digits", () => {
-		expect(isValidCuid("cabcdefghij0123456789abcd")).toBe(true);
-	});
-
-	it("returns false for string not starting with c", () => {
-		expect(isValidCuid("xlabcdefghijklmnopqrstuvw")).toBe(false);
-	});
-
-	it("returns false for uppercase C prefix", () => {
-		expect(isValidCuid("Cjld2cjxh0000qzrmn831i7rn")).toBe(false);
-	});
-
-	it("returns false for string too short", () => {
-		expect(isValidCuid("clabc")).toBe(false);
-	});
-
-	it("returns false for string too long", () => {
-		expect(isValidCuid("clabcdefghijklmnopqrstuvwx")).toBe(false);
-	});
-
-	it("returns false for empty string", () => {
-		expect(isValidCuid("")).toBe(false);
-	});
-
-	it("returns false for uppercase letters in body", () => {
-		expect(isValidCuid("cLABCDEFGHIJKLMNOPQRSTUVW")).toBe(false);
-	});
-
-	it("returns false for special characters", () => {
-		expect(isValidCuid("cjld2cjxh0000qzrmn831i7!")).toBe(false);
-	});
-
-	it("returns false for hyphen", () => {
-		expect(isValidCuid("cjld2-cjxh0000qzrmn831i7rn")).toBe(false);
-	});
-
-	it("returns false for spaces", () => {
-		expect(isValidCuid("cjld2cjxh0000qzrmn831i rn")).toBe(false);
 	});
 });
 

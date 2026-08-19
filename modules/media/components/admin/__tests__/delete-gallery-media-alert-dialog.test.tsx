@@ -6,19 +6,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsOpen, mockClose, mockDialogData, mockAction, mockIsPending } = vi.hoisted(() => ({
+const { mockIsOpen, mockClose, mockDialogData } = vi.hoisted(() => ({
 	mockIsOpen: { value: false },
 	mockClose: vi.fn(),
 	mockDialogData: {
 		value: null as {
 			index: number;
 			url: string;
-			skipUtapiDelete?: boolean;
 			onRemove: () => void;
 		} | null,
 	},
-	mockAction: vi.fn(),
-	mockIsPending: { value: false },
 }));
 
 // ============================================================================
@@ -33,16 +30,6 @@ vi.mock("@/shared/providers/overlay-store-provider", () => ({
 		isOpen: mockIsOpen.value,
 		close: mockClose,
 		data: mockDialogData.value,
-	}),
-}));
-
-vi.mock("@/modules/media/lib/uploadthing/use-delete-uploadthing-file", () => ({
-	useDeleteUploadThingFile: ({ onSuccess }: { onSuccess: () => void }) => ({
-		isPending: mockIsPending.value,
-		action: (formData: FormData) => {
-			mockAction(formData);
-			onSuccess();
-		},
 	}),
 }));
 
@@ -128,7 +115,6 @@ describe("DeleteGalleryMediaAlertDialog", () => {
 		vi.clearAllMocks();
 		mockIsOpen.value = false;
 		mockDialogData.value = null;
-		mockIsPending.value = false;
 	});
 
 	it("renders nothing when closed", () => {
@@ -155,28 +141,19 @@ describe("DeleteGalleryMediaAlertDialog", () => {
 		expect(screen.getByText("Confirmer la suppression")).toBeInTheDocument();
 	});
 
-	it("renders irreversible message when skipUtapiDelete is false", () => {
+	/**
+	 * La suppression est TOUJOURS différée au submit du formulaire : le message
+	 * ne doit jamais annoncer une action « irréversible » — le blob UploadThing
+	 * n'est détruit qu'à la validation, via la garde de références partagées.
+	 * L'ancien mode « suppression immédiate » détruisait le blob AVANT la
+	 * validation (404 sur produit dupliqué, ligne DB pointant un fichier mort).
+	 */
+	it("announces deferred deletion, never an irreversible one", () => {
 		mockIsOpen.value = true;
-		mockDialogData.value = {
-			index: 0,
-			url: "https://utfs.io/f/img.jpg",
-			skipUtapiDelete: false,
-			onRemove: vi.fn(),
-		};
-		render(<DeleteGalleryMediaAlertDialog />);
-		expect(screen.getByText(/irréversible/i)).toBeInTheDocument();
-	});
-
-	it("renders deferred message when skipUtapiDelete is true", () => {
-		mockIsOpen.value = true;
-		mockDialogData.value = {
-			index: 0,
-			url: "https://utfs.io/f/img.jpg",
-			skipUtapiDelete: true,
-			onRemove: vi.fn(),
-		};
+		mockDialogData.value = { index: 0, url: "https://utfs.io/f/img.jpg", onRemove: vi.fn() };
 		render(<DeleteGalleryMediaAlertDialog />);
 		expect(screen.getByText(/validation du formulaire/i)).toBeInTheDocument();
+		expect(screen.queryByText(/irréversible/i)).toBeNull();
 	});
 
 	it("renders Annuler and Supprimer buttons", () => {
@@ -187,19 +164,19 @@ describe("DeleteGalleryMediaAlertDialog", () => {
 		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Supprimer");
 	});
 
-	it("calls onRemove and closes without UTAPI when skipUtapiDelete=true", async () => {
+	it("confirm calls onRemove SYNCHRONOUSLY — no store re-read after an await", async () => {
 		const onRemove = vi.fn();
 		mockIsOpen.value = true;
 		mockDialogData.value = {
 			index: 0,
 			url: "https://utfs.io/f/img.jpg",
-			skipUtapiDelete: true,
 			onRemove,
 		};
 		render(<DeleteGalleryMediaAlertDialog />);
 		await userEvent.click(screen.getByTestId("confirm-btn"));
+		// Capture synchrone : l'ancien `onSuccess` async relisait le store à la
+		// résolution — ouvrir le dialog d'une autre tuile entre-temps faisait
+		// retirer LA MAUVAISE tuile.
 		expect(onRemove).toHaveBeenCalledOnce();
-		// La fermeture vient du `Close` de la confirmation, plus du handler.
-		expect(mockAction).not.toHaveBeenCalled();
 	});
 });

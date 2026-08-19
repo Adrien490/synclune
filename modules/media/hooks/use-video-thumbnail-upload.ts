@@ -6,7 +6,7 @@
  * Extrait de `useMediaUpload` (audit P1.4) pour isoler la pipeline "video
  * thumbnail" du reste du hook orchestrateur :
  *
- * 1. Generate thumbnail (Canvas API via `use-video-thumbnail`).
+ * 1. Generate thumbnail (Canvas API via `utils/video-thumbnail`).
  * 2. Upload du thumbnail (avec retry + signal).
  * 3. Revoke ObjectURL preview.
  * 4. Cleanup orphan thumbnail si l'upload vidéo principal échoue downstream.
@@ -18,7 +18,7 @@
 import {
 	generateVideoThumbnail,
 	isThumbnailGenerationSupported,
-} from "@/modules/media/hooks/use-video-thumbnail";
+} from "@/modules/media/utils/video-thumbnail";
 import type { VideoThumbnailResult } from "@/modules/media/types/hooks.types";
 import { deleteUploadThingFile } from "@/modules/media/actions/delete-uploadthing-file";
 import { withRetry } from "@/shared/utils/with-retry";
@@ -26,19 +26,11 @@ import { withRetry } from "@/shared/utils/with-retry";
 interface ThumbnailUploadResult {
 	thumbnailUrl?: string;
 	blurDataUrl?: string;
-	/** Dimensions du poster (le thumbnail est une image : le serveur les lit) */
-	width?: number;
-	height?: number;
 }
 
 export interface UseVideoThumbnailUploadOptions {
 	/** Injection : `startUpload` exposé par `useUploadThing` parent. */
-	startUpload: (files: File[]) => Promise<
-		| Array<{
-				serverData: { url: string; width?: number | null; height?: number | null };
-		  }>
-		| undefined
-	>;
+	startUpload: (files: File[]) => Promise<Array<{ serverData: { url: string } }> | undefined>;
 }
 
 export interface UseVideoThumbnailUploadReturn {
@@ -57,15 +49,20 @@ export interface UseVideoThumbnailUploadReturn {
 	cleanupOrphanThumbnail: (thumbnailUrl: string) => void;
 }
 
-const cleanupOrphanThumbnail = (thumbnailUrl: string): void => {
+/**
+ * Best-effort, fire-and-forget : supprime un fichier UploadThing devenu
+ * orphelin côté client (thumbnail dont la vidéo a échoué, upload résolu
+ * APRÈS une annulation). Partagé avec `use-media-upload`.
+ */
+export const cleanupOrphanUploadedFile = (fileUrl: string): void => {
 	void (async () => {
 		try {
 			const formData = new FormData();
-			formData.append("fileUrl", thumbnailUrl);
+			formData.append("fileUrl", fileUrl);
 			await deleteUploadThingFile(undefined, formData);
 		} catch (cleanupError) {
 			if (process.env.NODE_ENV === "development") {
-				console.warn("[useVideoThumbnailUpload] Cleanup thumbnail orphelin échoué:", cleanupError);
+				console.warn("[useVideoThumbnailUpload] Cleanup fichier orphelin échoué:", cleanupError);
 			}
 		}
 	})();
@@ -101,14 +98,14 @@ export function useVideoThumbnailUpload(
 				URL.revokeObjectURL(thumbnailResult.previewUrl);
 			}
 
-			// Le poster EST une image : ses dimensions décrivent le ratio de la vidéo,
-			// ce qui suffit à dimensionner la vignette côté client.
-			return {
-				thumbnailUrl,
-				blurDataUrl,
-				width: thumbServerData?.width ?? undefined,
-				height: thumbServerData?.height ?? undefined,
-			};
+			// Annulé pendant le vol : le thumbnail est monté côté serveur mais le
+			// run est mort — cleanup puis propagation (même garde que l'orchestrateur).
+			if (signal.aborted) {
+				if (thumbnailUrl) cleanupOrphanUploadedFile(thumbnailUrl);
+				throw new DOMException("Operation annulee", "AbortError");
+			}
+
+			return { thumbnailUrl, blurDataUrl };
 		} catch (error) {
 			if (thumbnailResult?.previewUrl) {
 				URL.revokeObjectURL(thumbnailResult.previewUrl);
@@ -123,5 +120,5 @@ export function useVideoThumbnailUpload(
 		}
 	};
 
-	return { uploadThumbnailForVideo, cleanupOrphanThumbnail };
+	return { uploadThumbnailForVideo, cleanupOrphanThumbnail: cleanupOrphanUploadedFile };
 }

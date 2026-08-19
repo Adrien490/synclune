@@ -11,15 +11,16 @@
 /**
  * Formate un nombre d'octets en libellé français court.
  *
- * ⚠️ Ko / Mo / Go, pas KB / MB / GB : la copie utilisateur est en français
- * (cf. CLAUDE.md § Conventions).
+ * ⚠️ Ko / Mo / Go, pas KB / MB / GB, et VIRGULE décimale, pas point : la copie
+ * utilisateur est en français (cf. CLAUDE.md § Conventions) — « 1.0 Mo »
+ * trahissait la typographie au milieu d'unités françaises.
  */
 export function formatBytesShort(bytes: number): string {
 	if (bytes < 1024 * 1024) {
 		return `${(bytes / 1024).toFixed(0)} Ko`;
 	}
 	if (bytes < 1024 * 1024 * 1024) {
-		return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+		return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} Mo`;
 	}
-	return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} Go`;
+	return `${(bytes / (1024 * 1024 * 1024)).toFixed(2).replace(".", ",")} Go`;
 }

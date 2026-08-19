@@ -14,15 +14,16 @@ vi.mock("sharp", () => ({
 	default: vi.fn(() => mockSharpInstance),
 }));
 
-vi.mock("@/shared/utils/with-retry", () => ({
-	withRetry: vi.fn(async (fn: () => Promise<unknown>) => fn()),
-}));
+// Pas de mock de @/shared/utils/with-retry : les tests `withRetry` ci-dessous
+// vérifient le VRAI court-circuit des erreurs déterministes (baseDelay: 0).
 
 import {
 	truncateUrl,
 	isRetryableError,
 	downloadImage,
+	withRetry,
 	ImageDecodeError,
+	NonRetryableDownloadError,
 } from "../image-downloader.service";
 
 // ============================================================================
@@ -119,6 +120,42 @@ describe("isRetryableError", () => {
 	it("returns true for generic errors with no HTTP code", () => {
 		expect(isRetryableError(new Error("Something went wrong"))).toBe(true);
 	});
+
+	// Audit : « SSRF blocked » et « Content-Type invalide » ne matchent ni le motif
+	// HTTP ni les mots-clés réseau — le défaut « unknown ⇒ retry » les re-tentait 3×.
+	it("returns false for typed NonRetryableDownloadError (deterministic failures)", () => {
+		expect(isRetryableError(new NonRetryableDownloadError("SSRF blocked: whatever"))).toBe(false);
+		expect(
+			isRetryableError(new NonRetryableDownloadError("Content-Type invalide: text/html")),
+		).toBe(false);
+	});
+});
+
+// ============================================================================
+// withRetry (service) — court-circuit des erreurs déterministes
+// ============================================================================
+
+describe("withRetry", () => {
+	it("does NOT retry a NonRetryableDownloadError (deterministic failure)", async () => {
+		const fn = vi.fn().mockRejectedValue(new NonRetryableDownloadError("SSRF blocked: test"));
+
+		await expect(withRetry(fn, { baseDelay: 0 })).rejects.toThrow(/SSRF blocked/);
+		expect(fn).toHaveBeenCalledTimes(1);
+	});
+
+	it("does NOT retry an ImageDecodeError", async () => {
+		const fn = vi.fn().mockRejectedValue(new ImageDecodeError());
+
+		await expect(withRetry(fn, { baseDelay: 0 })).rejects.toThrow(/pas une image décodable/);
+		expect(fn).toHaveBeenCalledTimes(1);
+	});
+
+	it("retries transient network errors until success", async () => {
+		const fn = vi.fn().mockRejectedValueOnce(new Error("ECONNRESET")).mockResolvedValue("ok");
+
+		await expect(withRetry(fn, { baseDelay: 0 })).resolves.toBe("ok");
+		expect(fn).toHaveBeenCalledTimes(2);
+	});
 });
 
 // ============================================================================
@@ -163,6 +200,45 @@ describe("downloadImage – SSRF protection", () => {
 
 	it("blocks 192.168.x.x (RFC 1918)", async () => {
 		await expect(downloadImage("http://192.168.1.1/image.jpg")).rejects.toThrow(/SSRF blocked/);
+	});
+
+	it("blocks 100.64.0.0/10 (CGNAT, RFC 6598) across the whole range", async () => {
+		await expect(downloadImage("http://100.64.0.1/image.jpg")).rejects.toThrow(/SSRF blocked/);
+		await expect(downloadImage("http://100.127.255.255/image.jpg")).rejects.toThrow(/SSRF blocked/);
+	});
+
+	it("allows public IPs adjacent to the CGNAT range (100.63.x / 100.128.x)", async () => {
+		const headers = new Headers({ "content-type": "image/jpeg" });
+		const arrayBuffer = Buffer.from("fake-image").buffer;
+		global.fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			headers,
+			arrayBuffer: vi.fn().mockResolvedValue(arrayBuffer),
+		});
+		await expect(downloadImage("http://100.63.255.255/image.jpg")).resolves.toBeInstanceOf(Buffer);
+		await expect(downloadImage("http://100.128.0.1/image.jpg")).resolves.toBeInstanceOf(Buffer);
+	});
+
+	it("blocks 192.0.0.0/24 (IETF protocol assignments, RFC 6890)", async () => {
+		await expect(downloadImage("http://192.0.0.1/image.jpg")).rejects.toThrow(/SSRF blocked/);
+	});
+
+	it("allows 192.0.1.x (public, just outside 192.0.0.0/24)", async () => {
+		const headers = new Headers({ "content-type": "image/jpeg" });
+		const arrayBuffer = Buffer.from("fake-image").buffer;
+		global.fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			headers,
+			arrayBuffer: vi.fn().mockResolvedValue(arrayBuffer),
+		});
+		await expect(downloadImage("http://192.0.1.1/image.jpg")).resolves.toBeInstanceOf(Buffer);
+	});
+
+	it("throws a typed non-retryable error on SSRF block (retrying cannot succeed)", async () => {
+		const err = await downloadImage("http://10.0.0.1/image.jpg").catch((e: unknown) => e);
+
+		expect(err).toBeInstanceOf(NonRetryableDownloadError);
+		expect(isRetryableError(err)).toBe(false);
 	});
 
 	it("blocks 169.254.x.x (link-local / cloud metadata)", async () => {
@@ -242,6 +318,9 @@ describe("downloadImage", () => {
 			PUBLIC_URL,
 			expect.objectContaining({
 				headers: expect.objectContaining({ "User-Agent": "Synclune-ImageDownloader/1.0" }),
+				// Défense en profondeur SSRF : une redirection re-pointerait la
+				// requête vers une cible jamais re-validée.
+				redirect: "error",
 			}),
 		);
 		expect(mockSharpMetadata).toHaveBeenCalledTimes(1);
@@ -272,6 +351,32 @@ describe("downloadImage", () => {
 		await expect(downloadImage(PUBLIC_URL)).rejects.toThrow(/Content-Type invalide/);
 	});
 
+	it("marks an invalid Content-Type as non-retryable (the server will answer the same)", async () => {
+		global.fetch = vi.fn().mockResolvedValue(buildOkResponse({ contentType: "text/html" }));
+
+		const err = await downloadImage(PUBLIC_URL).catch((e: unknown) => e);
+
+		expect(err).toBeInstanceOf(NonRetryableDownloadError);
+		expect(isRetryableError(err)).toBe(false);
+	});
+
+	// Audit : fetch suivait les redirections sans re-valider la cible (SSRF via
+	// redirect). Undici signale le refus par un TypeError « fetch failed » dont la
+	// cause porte « unexpected redirect » — le service le retraduit en erreur claire.
+	it("refuses redirects with a clear, non-retryable error", async () => {
+		global.fetch = vi
+			.fn()
+			.mockRejectedValue(
+				new TypeError("fetch failed", { cause: new Error("unexpected redirect") }),
+			);
+
+		const err = await downloadImage(PUBLIC_URL).catch((e: unknown) => e);
+
+		expect(err).toBeInstanceOf(NonRetryableDownloadError);
+		expect((err as Error).message).toMatch(/Redirection refusée/);
+		expect(isRetryableError(err)).toBe(false);
+	});
+
 	it("throws when content-length header exceeds maxImageSize", async () => {
 		const oversizedBytes = String(21 * 1024 * 1024); // 21 MB
 		global.fetch = vi.fn().mockResolvedValue(buildOkResponse({ contentLength: oversizedBytes }));
@@ -285,6 +390,53 @@ describe("downloadImage", () => {
 		global.fetch = vi.fn().mockResolvedValue(buildOkResponse({ arrayBuffer: largeBuffer }));
 
 		await expect(downloadImage(PUBLIC_URL)).rejects.toThrow(/Image trop volumineuse/);
+	});
+
+	// Audit : sans content-length (ou avec un header menteur), arrayBuffer()
+	// bufferisait TOUT avant le contrôle des 20 Mo. Le flux ci-dessous n'a pas de
+	// fin — si l'implémentation bufferisait encore, ce test ne terminerait jamais.
+	it("aborts a stream that exceeds maxImageSize instead of buffering it entirely", async () => {
+		const body = new ReadableStream<Uint8Array>({
+			pull(controller) {
+				// 1 KB par pull, jamais de close : simule un serveur qui ment/streame sans fin
+				controller.enqueue(new Uint8Array(1024));
+			},
+		});
+		global.fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			statusText: "OK",
+			headers: new Headers({ "content-type": "image/jpeg" }),
+			body,
+		});
+
+		const err = await downloadImage(PUBLIC_URL, { maxImageSize: 4096 }).catch((e: unknown) => e);
+
+		expect(err).toBeInstanceOf(NonRetryableDownloadError);
+		expect((err as Error).message).toMatch(/Image trop volumineuse/);
+	});
+
+	it("reads a streamed body chunk by chunk and returns the concatenated buffer", async () => {
+		const bytes = Buffer.from("stream-image-bytes");
+		const body = new ReadableStream<Uint8Array>({
+			start(controller) {
+				// Deux chunks pour vérifier la concaténation, pas juste le passage
+				controller.enqueue(new Uint8Array(bytes.subarray(0, 6)));
+				controller.enqueue(new Uint8Array(bytes.subarray(6)));
+				controller.close();
+			},
+		});
+		global.fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			statusText: "OK",
+			headers: new Headers({ "content-type": "image/jpeg" }),
+			body,
+		});
+
+		const result = await downloadImage(PUBLIC_URL);
+
+		expect(result.equals(bytes)).toBe(true);
 	});
 
 	// Audit média M1 : l'échec de décodage doit être typé `ImageDecodeError` pour que

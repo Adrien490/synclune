@@ -151,6 +151,7 @@ export async function updateProduct(
 			url: m.url,
 			alt: m.alt ?? null,
 			type: index === 0 ? ("IMAGE" as const) : (m.type ?? detectMediaType(m.url)),
+			blurDataUrl: m.blurDataUrl ?? null,
 			position: index,
 		}));
 

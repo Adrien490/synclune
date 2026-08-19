@@ -1,11 +1,11 @@
 // ============================================================================
 // GALLERY URL PARAMS VALIDATION
 // ============================================================================
-// NOTE: Validation without Zod to avoid HMR Turbopack errors in
-// client components. Zod v4 is not compatible with "use client" + Turbopack.
-// Plain validation (no Zod) to avoid HMR Turbopack errors in "use client" boundaries.
-// Revisit when next@>=16.3 + zod@>=4.x stable (TODO: ouvrir/linker issue Next.js si pas déjà tracké).
-// Schema partagé avec utils admin server — bouge ce fichier vers schemas/server/ si besoin de Zod côté API.
+// NOTE: Validation sans Zod — Zod v4 + "use client" + Turbopack cassait le
+// HMR au moment de l'écriture. La validation manuelle est correcte et testée
+// (fail-open en `undefined`, bornes + regex ancrées) ; re-tenter Zod ici est
+// un confort, pas un besoin — à réévaluer à l'occasion d'un bump majeur de
+// Next ou de Zod, pas avant.
 
 interface GalleryParams {
 	color?: string;

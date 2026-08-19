@@ -56,7 +56,13 @@ export function GalleryThumbnail({
 		<button
 			type="button"
 			role="tab"
+			id={`gallery-tab-${index}`}
 			aria-controls={`gallery-panel-${index}`}
+			// Roving tabindex (pattern tabs WAI-ARIA) : UN seul arrêt Tab dans la
+			// tablist — chaque vignette en arrêt séparé forçait jusqu'à 8 Tab pour
+			// traverser la galerie. Les flèches (gérées au niveau galerie) font la
+			// navigation interne.
+			tabIndex={isActive ? 0 : -1}
 			onClick={handleClick}
 			className={cn(
 				"group relative aspect-square w-full overflow-hidden rounded-xl",

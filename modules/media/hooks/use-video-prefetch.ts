@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import type { ProductMedia } from "../types/product-media.types";
 
 interface UsePrefetchVideosOptions {
@@ -21,7 +21,7 @@ interface UsePrefetchVideosOptions {
  * 1. Identifies adjacent videos (N-1, N+1)
  * 2. Creates hidden <video preload="metadata"> elements
  * 3. Preloads only metadata (not the full video)
- * 4. Automatically cleans up non-adjacent videos
+ * 4. Full teardown of the created elements on every index change (see effect cleanup)
  */
 export function usePrefetchVideos({
 	medias,
@@ -29,13 +29,9 @@ export function usePrefetchVideos({
 	prefetchRange = 1,
 	enabled = true,
 }: UsePrefetchVideosOptions) {
-	const prefetchedVideosRef = useRef<Map<string, HTMLVideoElement>>(new Map());
-
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 		if (!enabled || medias.length === 0) return;
-
-		const videos = prefetchedVideosRef.current;
 
 		// Calculate indices to prefetch (with wrap for circular carousel)
 		const indicesToPrefetch: number[] = [];
@@ -44,7 +40,9 @@ export function usePrefetchVideos({
 			indicesToPrefetch.push((currentIndex - i + medias.length) % medias.length);
 		}
 
-		// URLs of videos to prefetch
+		// URLs of videos to prefetch — Set : deux indices adjacents peuvent
+		// pointer la même URL sur une petite galerie (wrap circulaire), on
+		// dédoublonne DANS ce run uniquement.
 		const videoUrlsToPrefetch = new Set<string>();
 
 		for (const index of indicesToPrefetch) {
@@ -55,9 +53,8 @@ export function usePrefetchVideos({
 		}
 
 		// Create video elements to preload metadata
+		const prefetchedVideos: HTMLVideoElement[] = [];
 		for (const url of videoUrlsToPrefetch) {
-			if (videos.has(url)) continue;
-
 			const video = document.createElement("video");
 			video.preload = "metadata";
 			video.src = url;
@@ -66,25 +63,20 @@ export function usePrefetchVideos({
 			video.setAttribute("aria-hidden", "true");
 
 			// No need to add to DOM for preload
-			videos.set(url, video);
-		}
-
-		// Cleanup: remove videos that are no longer adjacent
-		for (const [url, video] of videos) {
-			if (!videoUrlsToPrefetch.has(url)) {
-				video.src = "";
-				video.load();
-				videos.delete(url);
-			}
+			prefetchedVideos.push(video);
 		}
 
 		return () => {
-			// Cleanup on unmount
-			for (const [, video] of videos) {
+			// Cleanup intégral à CHAQUE changement d'index (pas seulement à
+			// l'unmount) : comportement choisi — le churn d'éléments <video> est
+			// amorti par le cache HTTP (les métadonnées déjà téléchargées ne le
+			// sont pas deux fois). C'est pourquoi toute dédup inter-runs (ref/Map
+			// persistante) ou logique « retirer les vidéos plus adjacentes »
+			// serait du code mort : rien ne survit à ce cleanup.
+			for (const video of prefetchedVideos) {
 				video.src = "";
 				video.load();
 			}
-			videos.clear();
 		};
 	}, [medias, currentIndex, prefetchRange, enabled]);
 }

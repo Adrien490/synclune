@@ -118,6 +118,10 @@ model ProductMedia {
   url  String
   alt  String?
 
+  // Placeholder blur (ThumbHash data URL, calculé par le pipeline d'upload).
+  // Nullable : média legacy, vidéo sans poster, ou génération en échec.
+  blurDataUrl String?
+
   // position 0 = média principal (liste boutique + session Stripe Checkout)
   position Int @default(0)
 

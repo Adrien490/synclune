@@ -1,9 +1,8 @@
 "use client";
 
 import useEmblaCarousel from "embla-carousel-react";
-import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { HAND_DRAWN_STROKES } from "@/shared/components/hand-drawn/constants";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
@@ -21,12 +20,10 @@ import { productViewTransitionName } from "@/modules/products/utils/product-view
 import { buildGallery } from "@/modules/media/services/gallery-builder.service";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
 
-import {
-	GalleryCounter,
-	GalleryNavigation,
-	GalleryTapHint,
-	GalleryZoomButton,
-} from "@/shared/components/gallery";
+import { GalleryCounter } from "./counter";
+import { GalleryNavigation } from "./navigation";
+import { GalleryTapHint } from "./tap-hint";
+import { GalleryZoomButton } from "./zoom-button";
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -36,11 +33,14 @@ import { mediaBelow } from "@/shared/constants/breakpoints";
 import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
 
-// Code-split — lightbox charge uniquement à l'ouverture, jamais en SSR.
-const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
-	ssr: false,
-	loading: () => null,
-});
+// Code-split — lightbox chargée uniquement à l'ouverture (le composant n'est
+// monté que quand `isOpen` passe à true, donc jamais au SSR).
+// ⚠️ `React.lazy`, PAS `next/dynamic` : `dynamic({ ssr: false, loading })`
+// enveloppe TOUJOURS le lazy dans son propre <Suspense> au fallback `loading`
+// (null ici) — le voile spinner du Suspense externe ne s'affichait donc JAMAIS
+// pendant le téléchargement du chunk, et le premier tap ne produisait rien à
+// l'écran sur connexion lente. Même pattern que `media-upload-grid.tsx`.
+const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
@@ -221,7 +221,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Suivi ici plutôt que dans `GalleryTapHint` : c'est la galerie qui possède les
 	// deux chemins d'ouverture (tap sur le slide et loupe desktop).
 	const [hasOpenedLightbox, setHasOpenedLightbox] = useState(false);
+	// Focus à restaurer à la fermeture du plein écran — capturé ICI, avant
+	// `open()` : capturé dans la lightbox (effet au mount), il pointait déjà
+	// dans le portail YARL (cf. `MediaLightboxProps.returnFocusRef`).
+	const returnFocusRef = useRef<HTMLElement | null>(null);
 	const openLightbox = () => {
+		returnFocusRef.current =
+			document.activeElement instanceof HTMLElement ? document.activeElement : null;
 		setHasOpenedLightbox(true);
 		open();
 	};
@@ -253,6 +259,12 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const selectedVariants = { colorSlug, materialSlug, size };
 	const images: ProductMedia[] = buildGallery({ product, selectedVariants });
 
+	// `current` peut transitoirement déborder quand `images` rétrécit (média
+	// remplacé, reInit Embla pas encore passé) : clamp au point de lecture,
+	// sinon le statut SR annonce « Image 5 sur 3 » et l'index transmis à la
+	// lightbox déborde du tableau de slides.
+	const safeCurrent = Math.max(0, Math.min(current, images.length - 1));
+
 	// Teinte du carton : la couleur du bijou qu'on regarde. Elle n'est plus
 	// calculée ici — `ProductAccentScope` la pose une seule fois en
 	// `--piece-accent` sur l'`<article>` de la fiche, pour que l'aplat du prix,
@@ -272,15 +284,20 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Track pointer drag to differentiate swipe-triggered selects from button-triggered ones
 	const isDraggingRef = useRef(false);
 
-	const prefetchRange = getEffectivePrefetchRange();
+	// Lecture d'environnement (navigator.connection / matchMedia) isolée dans
+	// une lazy-init : la lire dans le corps du rendu violait la règle de pureté
+	// (entrée que le compilateur ne peut pas mémoïser honnêtement). La valeur
+	// est stable par montage — une connexion qui se dégrade en cours de visite
+	// garde le range initial, compromis assumé.
+	const [prefetchRange] = useState(() => getEffectivePrefetchRange());
 
-	// Smart prefetch of adjacent images (Next.js 16 + React 19)
-	// Extract URLs to avoid recreating an array on each render
+	// Smart prefetch of adjacent images (Next.js 16 + React 19) —
+	// URLs extraites pour donner aux hooks de prefetch une liste plate.
 	const imageUrls = images.map((img) => img.url);
 
 	usePrefetchImages({
 		imageUrls,
-		currentIndex: current,
+		currentIndex: safeCurrent,
 		prefetchRange,
 		enabled: images.length > 1,
 	});
@@ -288,7 +305,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Prefetch adjacent video metadata
 	usePrefetchVideos({
 		medias: images,
-		currentIndex: current,
+		currentIndex: safeCurrent,
 		prefetchRange,
 		enabled: images.length > 1,
 	});
@@ -405,7 +422,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 		);
 	}
 
-	const currentMedia = images[current];
+	const currentMedia = images[safeCurrent];
 
 	return (
 		<>
@@ -430,7 +447,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 				    s'annonçait « Image 3 sur 3 », et le plein écran ouvert depuis cette même
 				    vue disait « Vidéo 3 sur 3 ». Une seule galerie, deux vocabulaires. */}
 				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-					{currentMedia?.type === "VIDEO" ? "Vidéo" : "Image"} {current + 1} sur {images.length}
+					{currentMedia?.type === "VIDEO" ? "Vidéo" : "Image"} {safeCurrent + 1} sur {images.length}
 				</div>
 
 				<div
@@ -445,7 +462,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 					{images.length > 1 && (
 						<GalleryThumbnailList
 							images={images}
-							current={current}
+							current={safeCurrent}
 							thumbnailErrors={thumbnailErrors}
 							title={title}
 							onScrollTo={scrollTo}
@@ -481,7 +498,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 												index={index}
 												title={title}
 												totalImages={images.length}
-												isActive={index === current}
+												isActive={index === safeCurrent}
 												onOpen={openLightbox}
 												viewTransitionName={
 													index === 0 ? productViewTransitionName(product.id) : undefined
@@ -510,7 +527,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 							    tout changement de hauteur doit y être répercuté, sinon CLS au
 							    streaming. */}
 							<div className="mt-3 flex items-center gap-3 md:min-h-11">
-								{images.length > 1 && <GalleryCounter current={current} total={images.length} />}
+								{images.length > 1 && (
+									<GalleryCounter current={safeCurrent} total={images.length} />
+								)}
 								{/* Sous `md`, aucune commande n'annonçait le plein écran (loupe et
 								    chevrons sont `hidden md:flex`, le numéro de vue est `aria-hidden`).
 								    L'indice vit ICI, dans la réserve, et pas sur la photo : le chrome
@@ -536,7 +555,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 					{images.length > 1 && (
 						<GalleryThumbnailList
 							images={images}
-							current={current}
+							current={safeCurrent}
 							thumbnailErrors={thumbnailErrors}
 							title={title}
 							onScrollTo={scrollTo}
@@ -563,8 +582,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 						open={isOpen}
 						close={close}
 						slides={slides}
-						index={current}
+						index={safeCurrent}
 						onIndexChange={(index) => scrollTo(index)}
+						returnFocusRef={returnFocusRef}
 					/>
 				</Suspense>
 			)}

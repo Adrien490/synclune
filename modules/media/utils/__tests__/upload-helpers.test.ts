@@ -1,42 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
-	MAX_UPLOAD_SIZE_VIDEO,
-	MAX_UPLOAD_SIZE_IMAGE,
-} from "@/modules/media/constants/upload-size-limits";
-import {
-	DEFAULT_MAX_SIZE_IMAGE,
-	DEFAULT_MAX_SIZE_VIDEO,
-	DEFAULT_MAX_FILES,
-	DEFAULT_VIDEO_CONCURRENCY,
 	describeRejectedFile,
 	getMediaTypeFromFile,
 	isValidMediaType,
+	normalizeFileMimeType,
 	progressPercent,
 } from "../upload-helpers";
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-describe("constants", () => {
-	it("DEFAULT_MAX_SIZE_IMAGE suit la SSOT des plafonds d'upload", () => {
-		expect(DEFAULT_MAX_SIZE_IMAGE).toBe(MAX_UPLOAD_SIZE_IMAGE);
-	});
-
-	it("DEFAULT_MAX_SIZE_VIDEO suit la SSOT des plafonds d'upload", () => {
-		// Ramené de 512 Mo à 64 Mo (audit coûts P2-2) : 512 × 6 = 3 Go en un
-		// upload faisait sauter le quota UploadThing gratuit d'un coup.
-		expect(DEFAULT_MAX_SIZE_VIDEO).toBe(MAX_UPLOAD_SIZE_VIDEO);
-	});
-
-	it("DEFAULT_MAX_FILES is 6", () => {
-		expect(DEFAULT_MAX_FILES).toBe(6);
-	});
-
-	it("DEFAULT_VIDEO_CONCURRENCY is 2", () => {
-		expect(DEFAULT_VIDEO_CONCURRENCY).toBe(2);
-	});
-});
 
 // ============================================================================
 // progressPercent
@@ -176,6 +145,32 @@ describe("isValidMediaType", () => {
 		expect(isValidMediaType(makeFile("", "bijou.mp4"))).toBe(true);
 		expect(isValidMediaType(makeFile("", "bijou.mov"))).toBe(false);
 		expect(isValidMediaType(makeFile(""))).toBe(false);
+	});
+});
+
+// ============================================================================
+// normalizeFileMimeType
+// ============================================================================
+
+describe("normalizeFileMimeType", () => {
+	it("ré-emballe un MIME vide avec le MIME inféré de l'extension", () => {
+		// Sans ça, le fichier passait la validation cliente (repli extension)
+		// puis se faisait rejeter par le middleware serveur — après avoir
+		// téléversé jusqu'à 64 Mo pour un .mp4.
+		const video = normalizeFileMimeType(new File(["x"], "bijou.mp4", { type: "" }));
+		expect(video.type).toBe("video/mp4");
+		const image = normalizeFileMimeType(new File(["x"], "photo.HEIC", { type: "" }));
+		expect(image.type).toBe("image/heic");
+	});
+
+	it("ne touche pas un fichier déjà typé", () => {
+		const file = new File(["x"], "bijou.mp4", { type: "video/mp4" });
+		expect(normalizeFileMimeType(file)).toBe(file);
+	});
+
+	it("laisse intact un MIME vide sans extension connue", () => {
+		const file = new File(["x"], "mystere.dat", { type: "" });
+		expect(normalizeFileMimeType(file)).toBe(file);
 	});
 });
 

@@ -21,7 +21,7 @@ import {
 	MAX_UPLOAD_COUNT_VIDEO,
 	MAX_UPLOAD_SIZE_IMAGE,
 	MAX_UPLOAD_SIZE_VIDEO,
-} from "../upload-size-limits";
+} from "../upload-size-limits.constants";
 
 const fileRouterSource = readFileSync(
 	resolve(process.cwd(), "app/api/uploadthing/core.ts"),

@@ -17,7 +17,7 @@ import {
 	IMAGE_FORMATS_LABEL,
 	VIDEO_FORMATS_LABEL,
 } from "@/modules/media/constants/media-limits.constants";
-import { MAX_UPLOAD_COUNT_VIDEO } from "@/modules/media/constants/upload-size-limits";
+import { MAX_UPLOAD_COUNT_VIDEO } from "@/modules/media/constants/upload-size-limits.constants";
 import type { FileProgress } from "@/modules/media/types/hooks.types";
 // `progressPercent` est la SSOT du pourcentage affiché — dérivé des OCTETS, pas du
 // compte de fichiers. Cf. son docblock dans `upload-helpers.ts`.

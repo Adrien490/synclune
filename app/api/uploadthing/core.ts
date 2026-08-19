@@ -7,7 +7,6 @@ import { generateThumbHashFromBuffer } from "@/modules/media/services/generate-t
 import {
 	ImageDimensionsTooLargeError,
 	assertImageDimensions,
-	readImageDimensions,
 } from "@/modules/media/services/validate-image-dimensions.service";
 import { stripImageMetadata } from "@/modules/media/services/strip-image-metadata.service";
 import { isHeicMimeType, reencodeHeicToWebp } from "@/modules/media/services/reencode-heic.service";
@@ -28,7 +27,7 @@ import {
 import {
 	MAX_UPLOAD_SIZE_IMAGE,
 	MAX_UPLOAD_SIZE_VIDEO,
-} from "@/modules/media/constants/upload-size-limits";
+} from "@/modules/media/constants/upload-size-limits.constants";
 
 /** Métadonnées minimales d'un blob fraîchement uploadé sur UploadThing. */
 interface UploadedFile {
@@ -39,24 +38,15 @@ interface UploadedFile {
 	size: number;
 }
 
-/** Résultat du post-traitement image renvoyé au client via `serverData`. */
+/**
+ * Résultat du post-traitement image renvoyé au client via `serverData`.
+ * Le blur est PERSISTÉ en base (`ProductMedia.blurDataUrl`) par les actions
+ * produit ; les dimensions ne sont plus remontées (aucun lecteur en rendu —
+ * elles ne servent qu'à la garde image-bomb, côté serveur).
+ */
 interface ProcessedImage {
 	url: string;
 	blurDataUrl: string | undefined;
-	/** Dimensions du buffer FINAL (post strip/re-encode) — `undefined` si illisibles. */
-	width: number | undefined;
-	height: number | undefined;
-}
-
-/**
- * Lit les dimensions du buffer publié. Non fatal : une dimension manquante
- * dégrade le srcSet (cf. lightbox) mais ne doit pas faire perdre l'upload.
- */
-async function readDimensionsSafe(
-	buffer: Buffer,
-): Promise<{ width: number | undefined; height: number | undefined }> {
-	const dims = await readImageDimensions(buffer);
-	return { width: dims?.width, height: dims?.height };
 }
 
 /**
@@ -78,8 +68,10 @@ async function generateBlurSafe(buffer: Buffer): Promise<string | undefined> {
 
 /**
  * Supprime un blob orphelin sans jamais faire échouer l'appelant : le rejet de
- * l'upload prime sur le nettoyage (le cron `cleanup-orphan-media` ramassera le
- * blob si le delete échoue).
+ * l'upload prime sur le nettoyage. ⚠️ Limite assumée : il n'existe AUCUN cron
+ * dans ce dépôt — un delete qui échoue laisse un orphelin définitif sur
+ * UploadThing (coût : du quota de stockage, jamais un 404). Léane surveille le
+ * quota depuis le dashboard UploadThing.
  */
 async function deleteBlobBestEffort(key: string, step: string): Promise<void> {
 	try {
@@ -152,7 +144,7 @@ async function processUploadedImage(
 			});
 			throw new UploadThingError(
 				isHeicMimeType(file.type)
-					? `Image HEIC non convertie: ${file.name}. Veuillez réessayer ou utiliser un format JPEG/PNG.`
+					? `Image HEIC non convertie: ${file.name}. Réessaie ou utilise un format JPEG/PNG.`
 					: `Fichier illisible: ${file.name}. Le contenu ne correspond pas à une image ${file.type}.`,
 			);
 		}
@@ -161,7 +153,7 @@ async function processUploadedImage(
 		Sentry.captureException(err, {
 			tags: { source: "uploadthing", step: "download", fileKey: file.key },
 		});
-		return { url: file.ufsUrl, blurDataUrl: undefined, width: undefined, height: undefined };
+		return { url: file.ufsUrl, blurDataUrl: undefined };
 	}
 
 	// --- 2. Garde image-bomb -------------------------------------------------
@@ -191,7 +183,6 @@ async function processUploadedImage(
 			return {
 				url: converted.url,
 				blurDataUrl: await generateBlurSafe(converted.buffer),
-				...(await readDimensionsSafe(converted.buffer)),
 			};
 		} catch (err) {
 			await deleteBlobBestEffort(file.key, "heic-reject-cleanup");
@@ -199,7 +190,7 @@ async function processUploadedImage(
 				tags: { source: "uploadthing", step: "heic-reencode", fileKey: file.key },
 			});
 			throw new UploadThingError(
-				`Image HEIC non convertie: ${file.name}. Veuillez réessayer ou utiliser un format JPEG/PNG.`,
+				`Image HEIC non convertie: ${file.name}. Réessaie ou utilise un format JPEG/PNG.`,
 			);
 		}
 	}
@@ -217,7 +208,7 @@ async function processUploadedImage(
 			tags: { source: "uploadthing", step: "metadata-strip-required", fileKey: file.key },
 		});
 		throw new UploadThingError(
-			`Photo non traitée: ${file.name}. Impossible de retirer les métadonnées de l'image, veuillez réessayer.`,
+			`Photo non traitée: ${file.name}. Impossible de retirer les métadonnées de l'image, réessaie.`,
 		);
 	}
 
@@ -228,7 +219,6 @@ async function processUploadedImage(
 	return {
 		url: finalUrl,
 		blurDataUrl: await generateBlurSafe(finalBuffer),
-		...(await readDimensionsSafe(finalBuffer)),
 	};
 }
 
@@ -367,14 +357,11 @@ export const ourFileRouter = {
 				// Le thumbnail est genere cote client via Canvas API (useMediaUpload hook)
 				// et uploade separement avant la video.
 				if (!file.type.startsWith("image/")) {
+					// Vidéo : pas de blur serveur — celui du poster remonte via
+					// l'upload du thumbnail (lui-même une image).
 					return {
 						url: file.ufsUrl,
-						thumbnailUrl: null,
 						blurDataUrl: null,
-						// Dimensions non lues pour une vidéo : celles du poster remontent
-						// via l'upload du thumbnail (lui-même une image).
-						width: null,
-						height: null,
 						uploadedBy: metadata.userId,
 					};
 				}
@@ -385,10 +372,7 @@ export const ourFileRouter = {
 
 				return {
 					url: processed.url,
-					thumbnailUrl: null,
-					blurDataUrl: processed.blurDataUrl,
-					width: processed.width ?? null,
-					height: processed.height ?? null,
+					blurDataUrl: processed.blurDataUrl ?? null,
 					uploadedBy: metadata.userId,
 				};
 			} catch (err) {

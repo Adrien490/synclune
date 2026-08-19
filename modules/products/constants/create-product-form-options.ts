@@ -1,5 +1,7 @@
 // Form options partagées entre client et serveur
 
+import type { MediaType } from "@/app/generated/prisma/client";
+
 export const createProductFormOpts = {
 	defaultValues: {
 		name: "",
@@ -11,7 +13,8 @@ export const createProductFormOpts = {
 		media: [] as Array<{
 			url: string;
 			alt?: string;
-			type: "IMAGE" | "VIDEO";
+			type: MediaType;
+			blurDataUrl?: string;
 		}>,
 		initialVariant: {
 			// Override du prix produit — vide = hérite du prix produit.

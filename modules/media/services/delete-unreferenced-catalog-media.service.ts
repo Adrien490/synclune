@@ -17,6 +17,11 @@ import { deleteUploadThingFilesFromUrls } from "./delete-uploadthing-files.servi
  * `ProductMedia` restantes sont donc exactement les références tierces — aucun
  * paramètre d'exclusion n'est nécessaire.
  *
+ * ⚠️ Fenêtre TOCTOU assumée : entre le `findMany` et le `deleteFiles`, un
+ * `duplicate-product` concurrent pourrait ré-insérer une des URLs. Une seule
+ * admin, actions séquentielles — la fermer (re-check pré-delete ou advisory
+ * lock) coûterait plus que le risque qu'elle couvre.
+ *
  * LAYER EXCEPTION : effets de bord (lectures Prisma + UTApi) — même dérogation
  * documentée que `delete-uploadthing-files.service.ts`.
  */

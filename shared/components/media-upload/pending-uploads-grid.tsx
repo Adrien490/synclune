@@ -11,7 +11,7 @@ import {
 	formatVideoDuration,
 	getVideoMetadata,
 	type VideoMetadataPreview,
-} from "@/modules/media/hooks/use-video-thumbnail";
+} from "@/modules/media/utils/video-thumbnail";
 import { cn } from "@/shared/utils/cn";
 import { PlayIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { Spinner } from "@/shared/components/ui/spinner";

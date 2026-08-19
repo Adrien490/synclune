@@ -24,7 +24,7 @@ vi.mock("@/modules/media/utils/validate-media-file", () => ({
 // Imports under test (after mocks)
 // ============================================================================
 
-import { deleteUploadThingFileSchema, deleteUploadThingFilesSchema } from "../uploadthing.schemas";
+import { deleteUploadThingFileSchema } from "../uploadthing.schemas";
 
 // ============================================================================
 // Helpers
@@ -73,58 +73,5 @@ describe("deleteUploadThingFileSchema", () => {
 	it("calls isValidUploadThingUrl with the provided URL", () => {
 		deleteUploadThingFileSchema.safeParse({ fileUrl: VALID_URL });
 		expect(mockIsValidUploadThingUrl).toHaveBeenCalledWith(VALID_URL);
-	});
-});
-
-// ============================================================================
-// deleteUploadThingFilesSchema
-// ============================================================================
-
-describe("deleteUploadThingFilesSchema", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockIsValidUploadThingUrl.mockImplementation((url: string) => url.includes("utfs.io"));
-	});
-
-	it("accepts an array of valid UploadThing URLs", () => {
-		const result = deleteUploadThingFilesSchema.safeParse({
-			fileUrls: [VALID_URL, "https://utfs.io/f/def456"],
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("accepts an array with a single valid URL", () => {
-		const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: [VALID_URL] });
-		expect(result.success).toBe(true);
-	});
-
-	it("rejects an empty array (min 1)", () => {
-		const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: [] });
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects an array with more than 100 URLs (max 100)", () => {
-		const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: makeUrls(101) });
-		expect(result.success).toBe(false);
-	});
-
-	it("accepts an array of exactly 100 URLs", () => {
-		const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: makeUrls(100) });
-		expect(result.success).toBe(true);
-	});
-
-	it("rejects an array containing a non-UploadThing URL", () => {
-		mockIsValidUploadThingUrl.mockImplementation((url: string) => url.includes("utfs.io"));
-		const result = deleteUploadThingFilesSchema.safeParse({
-			fileUrls: [VALID_URL, NON_UPLOADTHING_URL],
-		});
-		// NON_UPLOADTHING_URL passes z.string().url() but fails the refine
-		// mockIsValidUploadThingUrl returns false for non-utfs.io URLs
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects missing fileUrls field", () => {
-		const result = deleteUploadThingFilesSchema.safeParse({});
-		expect(result.success).toBe(false);
 	});
 });

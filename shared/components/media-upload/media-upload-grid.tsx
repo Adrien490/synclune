@@ -10,14 +10,14 @@ import { useAlertDialog } from "@/shared/providers/overlay-store-provider";
 import { useReducedMotion } from "motion/react";
 import { PlayIcon, ProhibitIcon, UploadSimpleIcon } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { useLightbox } from "@/shared/hooks";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
-import { getVideoMimeType } from "@/modules/media/utils/media-utils";
+import { getVideoMimeType } from "@/modules/media/utils/media-type-detection";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/view-transition";
 
@@ -38,8 +38,6 @@ interface MediaUploadGridProps {
 	media: MediaItem[];
 	/** Callback called when the list changes (reorder or deletion) */
 	onChange: (media: MediaItem[]) => void;
-	/** If true, don't delete via UTAPI immediately (edit mode) */
-	skipUtapiDelete?: boolean;
 	/** Maximum number of medias allowed */
 	maxItems?: number;
 	/** Upload zone (rendered by parent) */
@@ -53,7 +51,6 @@ interface MediaUploadGridProps {
 export function MediaUploadGrid({
 	media,
 	onChange,
-	skipUtapiDelete,
 	maxItems = 6,
 	renderUploadZone,
 	onFilesDropped,
@@ -101,8 +98,13 @@ export function MediaUploadGrid({
 		setLoadedImages((prev) => new Set(prev).add(url));
 	};
 
-	// Open the lightbox
+	// Open the lightbox — le focus à restaurer est capturé ICI, avant
+	// l'ouverture (capturé dans la lightbox, il pointerait déjà dans le
+	// portail YARL — cf. `MediaLightboxProps.returnFocusRef`).
+	const returnFocusRef = useRef<HTMLElement | null>(null);
 	const openLightbox = (index: number) => {
+		returnFocusRef.current =
+			document.activeElement instanceof HTMLElement ? document.activeElement : null;
 		setLightboxIndex(index);
 		openLightboxHook();
 	};
@@ -168,7 +170,6 @@ export function MediaUploadGrid({
 		deleteDialog.open({
 			index,
 			url: media[index]!.url,
-			skipUtapiDelete,
 			onRemove: () => {
 				const newMedia = media.filter((_, i) => i !== index);
 				// Prevent a video in first position after deletion
@@ -181,9 +182,9 @@ export function MediaUploadGrid({
 				const snapshot = media;
 				triggerHaptic("success");
 				withViewTransition(() => onChange(newMedia));
-				// Undo affordance — uniquement en mode skipUtapiDelete (différé),
-				// sinon le fichier est déjà supprimé sur UploadThing et l'undo serait trompeur.
-				if (skipUtapiDelete && removedMedia) {
+				// Undo toujours disponible : la suppression UploadThing est DIFFÉRÉE
+				// au submit (deletedImageUrls), le fichier existe encore côté serveur.
+				if (removedMedia) {
 					const isVideo = removedMedia.type === "VIDEO";
 					toast.success(`${isVideo ? "Vidéo" : "Image"} retirée de l'atelier`, {
 						action: {
@@ -465,6 +466,7 @@ export function MediaUploadGrid({
 						slides={slides}
 						index={lightboxIndex}
 						onIndexChange={setLightboxIndex}
+						returnFocusRef={returnFocusRef}
 					/>
 				</Suspense>
 			)}

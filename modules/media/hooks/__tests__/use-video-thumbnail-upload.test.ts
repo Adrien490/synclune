@@ -15,7 +15,7 @@ const {
 	mockRevokeObjectURL: vi.fn(),
 }));
 
-vi.mock("@/modules/media/hooks/use-video-thumbnail", () => ({
+vi.mock("@/modules/media/utils/video-thumbnail", () => ({
 	generateVideoThumbnail: (...args: unknown[]) => mockGenerateVideoThumbnail(...args),
 	isThumbnailGenerationSupported: () => mockIsThumbnailGenerationSupported(),
 }));

@@ -76,7 +76,9 @@ describe("UploadProgress — cohérence entre la barre et les libellés", () => 
 		expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "47");
 		// …et le libellé visible dit la même chose que le compteur d'octets.
 		expect(screen.getByText(/Envoi… 47 ?%/)).toBeInTheDocument();
-		expect(screen.getByText(/5\.6 Mo \/ 12\.0 Mo/)).toBeInTheDocument();
+		// Virgule décimale française (« 5,6 Mo »), pas le point anglophone —
+		// cf. formatBytesShort, aligné sur CLAUDE.md § Conventions.
+		expect(screen.getByText(/5,6 Mo \/ 12,0 Mo/)).toBeInTheDocument();
 	});
 
 	it("annonce un palier non nul au lecteur d'écran en cours d'envoi", () => {

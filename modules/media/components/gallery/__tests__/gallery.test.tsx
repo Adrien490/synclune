@@ -64,7 +64,7 @@ vi.mock("@/modules/media/services/lightbox-builder.service", () => ({
 	buildLightboxSlides: vi.fn(() => []),
 }));
 
-vi.mock("@/shared/components/gallery/counter", () => ({
+vi.mock("@/modules/media/components/gallery/counter", () => ({
 	GalleryCounter: ({ current, total }: { current: number; total: number }) => (
 		<div data-testid="gallery-counter">
 			{current + 1}/{total}
@@ -72,7 +72,7 @@ vi.mock("@/shared/components/gallery/counter", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/gallery/navigation", () => ({
+vi.mock("@/modules/media/components/gallery/navigation", () => ({
 	GalleryNavigation: ({ onPrev, onNext }: { onPrev: () => void; onNext: () => void }) => (
 		<div data-testid="gallery-navigation">
 			<button onClick={onPrev}>Prev</button>
@@ -81,7 +81,7 @@ vi.mock("@/shared/components/gallery/navigation", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/gallery/zoom-button", () => ({
+vi.mock("@/modules/media/components/gallery/zoom-button", () => ({
 	GalleryZoomButton: ({ onOpen, mediaType }: { onOpen: () => void; mediaType?: string }) => (
 		<button data-testid="gallery-zoom-button" data-media-type={mediaType} onClick={onOpen}>
 			Zoom

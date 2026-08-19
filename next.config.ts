@@ -63,7 +63,6 @@ const nextConfig: NextConfig = {
 			"date-fns",
 			"embla-carousel-react",
 			"@tanstack/react-form",
-			"@radix-ui/react-focus-scope",
 		],
 	},
 

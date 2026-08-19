@@ -22,6 +22,7 @@ const PRIMARY_IMAGE_SELECT = {
 		url: true,
 		alt: true,
 		type: true,
+		blurDataUrl: true,
 	},
 };
 
@@ -85,6 +86,7 @@ export const GET_PRODUCT_SELECT = {
 			url: true,
 			alt: true,
 			type: true,
+			blurDataUrl: true,
 			position: true,
 		},
 		// Tiebreaker id : deux médias à même position (reorder concurrent)
@@ -184,7 +186,7 @@ export const QUICK_SEARCH_SELECT = {
 		where: { type: "IMAGE" as const },
 		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 		take: 1,
-		select: { url: true, alt: true },
+		select: { url: true, alt: true, blurDataUrl: true },
 	},
 	variants: {
 		where: { active: true },
@@ -218,6 +220,7 @@ export const GET_PRODUCT_FOR_DUPLICATION_SELECT = {
 			url: true,
 			alt: true,
 			type: true,
+			blurDataUrl: true,
 			position: true,
 		},
 		orderBy: [{ position: "asc" as const }, { id: "asc" as const }],

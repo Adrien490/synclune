@@ -3,13 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import {
-	DEFAULT_MAX_SIZE_IMAGE,
-	DEFAULT_MAX_SIZE_VIDEO,
-	DEFAULT_MAX_FILES,
-	DEFAULT_VIDEO_CONCURRENCY,
+	MAX_UPLOAD_COUNT_IMAGE,
+	MAX_UPLOAD_SIZE_IMAGE,
+	MAX_UPLOAD_SIZE_VIDEO,
+} from "@/modules/media/constants/upload-size-limits.constants";
+import {
 	describeRejectedFile,
 	getMediaTypeFromFile,
 	isValidMediaType,
+	normalizeFileMimeType,
 } from "@/modules/media/utils/upload-helpers";
 // `formatBytesShort` (français : Ko / Mo / Go) et non l'ancien `formatFileSize`
 // (anglais : KB / MB) — ces tailles s'affichent sous une copie qui annonce « max
@@ -17,7 +19,10 @@ import {
 import { formatBytesShort } from "@/modules/media/utils/format-bytes";
 import { compressImage, HeicDecodeError, isHeicFile } from "@/modules/media/utils/compress-image";
 import { useUploadCancellation } from "@/modules/media/hooks/use-upload-cancellation";
-import { useVideoThumbnailUpload } from "@/modules/media/hooks/use-video-thumbnail-upload";
+import {
+	cleanupOrphanUploadedFile,
+	useVideoThumbnailUpload,
+} from "@/modules/media/hooks/use-video-thumbnail-upload";
 import { withRetry } from "@/shared/utils/with-retry";
 import { toast } from "@/shared/utils/toast";
 import type {
@@ -30,13 +35,34 @@ import type {
 	FileProgressState,
 } from "../types/hooks.types";
 
-interface UseMediaUploadOptionsExtended extends UseMediaUploadOptions {}
-
 type CurrentBatchTracker = {
 	mode: "image-batch" | "video-single";
 	files: File[];
 	startBytes: number;
 	totalBytes: number;
+};
+
+/**
+ * L'identité d'un fichier dans toute la pipeline (progression, annulation,
+ * succès) est son NOM : deux homonymes (`IMG_0001.jpg` sortis de deux dossiers)
+ * fusionneraient leurs entrées et `cancelOne` annulerait les deux. On rend les
+ * noms uniques à l'entrée du batch en suffixant les doublons — le `File` est
+ * recréé (même contenu, même type) pour que le nom envoyé au serveur suive.
+ */
+const dedupeFileNames = (files: File[]): File[] => {
+	const seen = new Map<string, number>();
+	return files.map((file) => {
+		const count = seen.get(file.name) ?? 0;
+		seen.set(file.name, count + 1);
+		if (count === 0) return file;
+		const dot = file.name.lastIndexOf(".");
+		const base = dot > 0 ? file.name.slice(0, dot) : file.name;
+		const ext = dot > 0 ? file.name.slice(dot) : "";
+		return new File([file], `${base} (${count + 1})${ext}`, {
+			type: file.type,
+			lastModified: file.lastModified,
+		});
+	});
 };
 
 /**
@@ -52,14 +78,18 @@ type CurrentBatchTracker = {
  * - Retry with exponential backoff (network) + manual retry for failed files
  * - Cancellation: global (cancel) and per-file (cancelOne) via AbortController
  * - Per-file error tracking exposed via failedFiles
+ *
+ * Les vidéos partent STRICTEMENT en séquence : le tracker de progression et le
+ * binding d'annulation (`useUploadCancellation`) sont mono-slot — une
+ * concurrence > 1 routait les octets vers le mauvais fichier et rendait
+ * `cancelOne` inopérant sur la première vidéo d'une paire.
  */
-export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): UseMediaUploadReturn {
+export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUploadReturn {
 	const {
 		endpoint = "catalogMedia",
-		maxSizeImage = DEFAULT_MAX_SIZE_IMAGE,
-		maxSizeVideo = DEFAULT_MAX_SIZE_VIDEO,
-		maxFiles = DEFAULT_MAX_FILES,
-		videoConcurrency = DEFAULT_VIDEO_CONCURRENCY,
+		maxSizeImage = MAX_UPLOAD_SIZE_IMAGE,
+		maxSizeVideo = MAX_UPLOAD_SIZE_VIDEO,
+		maxFiles = MAX_UPLOAD_COUNT_IMAGE,
 		onSuccess,
 		onError,
 		onProgress,
@@ -69,11 +99,12 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	const [failedFiles, setFailedFiles] = useState<FailedUpload[]>([]);
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const isProcessingRef = useRef(false);
+	// La queue ne REJETTE jamais : un échec se matérialise par `[]` + `failedFiles`
+	// + `onError` — le caller n'a donc qu'un seul chemin d'erreur à gérer.
 	const queueRef = useRef<
 		Array<{
 			files: File[];
 			resolve: (results: MediaUploadResult[]) => void;
-			reject: (error: Error) => void;
 		}>
 	>([]);
 	const cumulativeResultsRef = useRef<MediaUploadResult[]>([]);
@@ -114,9 +145,14 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	// Génération + upload thumbnail vidéo + cleanup orphan — extrait dans `useVideoThumbnailUpload` (audit P1.4 split).
 	const videoThumbnail = useVideoThumbnailUpload({ startUpload });
 
-	// Cleanup on unmount.
+	// Cleanup on unmount. Le flag distingue l'unmount d'un cancel utilisateur :
+	// sans lui, l'abort d'unmount déclenchait un toast « Envoi annulé » après
+	// navigation et re-planifiait un doneTimeout jamais nettoyé.
+	const isUnmountedRef = useRef(false);
 	useEffect(() => {
+		isUnmountedRef.current = false;
 		return () => {
+			isUnmountedRef.current = true;
 			abortControllerRef.current?.abort();
 			cancellation.abortAnyVideo();
 			if (doneTimeoutRef.current) clearTimeout(doneTimeoutRef.current);
@@ -311,54 +347,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		return prepared;
 	};
 
-	/**
-	 * Public validation API exposed via UseMediaUploadReturn.
-	 * Runs full validation (MIME + size + count) — kept atomic so callers can
-	 * pre-filter files outside the upload pipeline if needed.
-	 */
-	const validateFiles = (files: File[]): File[] => {
-		const mediaFiles = files.filter(isValidMediaType);
-
-		if (mediaFiles.length < files.length) {
-			const rejected = files.length - mediaFiles.length;
-			toast.warning(`${rejected} fichier(s) ignoré(s)`, {
-				description: "Seules les images et vidéos sont acceptées",
-			});
-		}
-
-		const oversized: File[] = [];
-		const validSizeFiles: File[] = [];
-		for (const f of mediaFiles) {
-			if (isOversized(f)) {
-				oversized.push(f);
-				pushFailed(f, `Fichier trop volumineux (${formatBytesShort(f.size)})`);
-			} else {
-				validSizeFiles.push(f);
-			}
-		}
-
-		if (oversized.length > 0) {
-			const details = oversized
-				.slice(0, 3)
-				.map((f) => `${f.name} (${formatBytesShort(f.size)})`)
-				.join(", ");
-			const suffix = oversized.length > 3 ? ` et ${oversized.length - 3} autre(s)` : "";
-
-			toast.error(`${oversized.length} fichier(s) trop volumineux`, {
-				description: details + suffix,
-			});
-		}
-
-		if (validSizeFiles.length > maxFiles) {
-			toast.warning(`Maximum ${maxFiles} fichiers`, {
-				description: `${validSizeFiles.length - maxFiles} fichier(s) ignoré(s)`,
-			});
-			return validSizeFiles.slice(0, maxFiles);
-		}
-
-		return validSizeFiles;
-	};
-
 	/** Internal post-compression size check — used inside processBatch */
 	const validateSizesInternal = (files: File[]): File[] => {
 		const oversized: File[] = [];
@@ -388,8 +376,10 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		videoFile: File,
 		signal: AbortSignal,
 	): Promise<MediaUploadResult | null> => {
-		const { thumbnailUrl, blurDataUrl, width, height } =
-			await videoThumbnail.uploadThumbnailForVideo(videoFile, signal);
+		const { thumbnailUrl, blurDataUrl } = await videoThumbnail.uploadThumbnailForVideo(
+			videoFile,
+			signal,
+		);
 
 		try {
 			const videoUploadResult = await withRetry(() => startUpload([videoFile]), {
@@ -399,6 +389,17 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			});
 
 			const serverData = videoUploadResult?.[0]?.serverData;
+
+			// `withRetry` ne re-vérifie pas le signal APRÈS résolution : un cancel
+			// pendant le vol laisserait l'upload « réussir » et ressusciter la
+			// progression. On re-vérifie ici — le fichier étant déjà monté côté
+			// serveur, on le nettoie avant de propager l'annulation (le thumbnail,
+			// lui, est nettoyé par le catch comme sur tout autre chemin d'erreur).
+			if (signal.aborted) {
+				if (serverData?.url) cleanupOrphanUploadedFile(serverData.url);
+				throw new DOMException("Operation annulee", "AbortError");
+			}
+
 			if (serverData?.url) {
 				return {
 					url: serverData.url,
@@ -406,8 +407,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 					fileName: videoFile.name,
 					thumbnailUrl,
 					blurDataUrl,
-					width,
-					height,
 				};
 			}
 
@@ -448,6 +447,20 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 				signal,
 			});
 
+			// `withRetry` ne re-vérifie pas le signal APRÈS résolution : sans ce
+			// check, un batch annulé se terminait normalement et `onSuccess`
+			// livrait au formulaire des fichiers que l'admin venait d'annuler.
+			// Les fichiers sont déjà montés côté serveur — cleanup best-effort.
+			// TS narrows signal.aborted=false depuis le check d'entrée ; le runtime
+			// peut le faire basculer pendant l'await.
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+			if (signal.aborted) {
+				for (const result of results ?? []) {
+					if (result.serverData.url) cleanupOrphanUploadedFile(result.serverData.url);
+				}
+				throw new DOMException("Operation annulee", "AbortError");
+			}
+
 			const uploadResults: MediaUploadResult[] = [];
 
 			for (let i = 0; i < (results ?? []).length; i++) {
@@ -459,8 +472,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 						type: "IMAGE",
 						fileName: imageFiles[i]!.name,
 						blurDataUrl: serverData.blurDataUrl ?? undefined,
-						width: serverData.width ?? undefined,
-						height: serverData.height ?? undefined,
 					});
 				}
 			}
@@ -479,6 +490,12 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		}
 	};
 
+	/**
+	 * Upload vidéos STRICTEMENT séquentiel — le tracker de progression
+	 * (`currentBatchRef`) et le binding d'annulation (`useUploadCancellation`)
+	 * sont mono-slot : ils sont corrects par construction tant qu'une seule
+	 * vidéo est en vol à la fois.
+	 */
 	const uploadVideos = async (
 		videoFiles: File[],
 		signal: AbortSignal,
@@ -487,77 +504,62 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 
 		const results: MediaUploadResult[] = [];
 
-		for (let i = 0; i < videoFiles.length; i += videoConcurrency) {
+		for (const file of videoFiles) {
 			if (signal.aborted) {
 				throw new DOMException("Operation annulee", "AbortError");
 			}
+			if (cancellation.isCancelled(file.name)) {
+				markFileState(file.name, "failed", "Annulé");
+				continue;
+			}
 
-			const batch = videoFiles.slice(i, i + videoConcurrency);
-			updateProgress({ current: batch.map((f) => f.name).join(", ") });
+			updateProgress({ current: file.name });
 
-			const batchResults = await Promise.allSettled(
-				batch.map(async (file) => {
-					if (cancellation.isCancelled(file.name)) {
-						markFileState(file.name, "failed", "Annulé");
-						return null;
-					}
-					// Per-video sub-abort enables cancelOne mid-flight (P1.5)
-					const subAbort = new AbortController();
-					cancellation.bindVideo(file.name, subAbort);
-					const composite = new AbortController();
-					const onParentAbort = () => composite.abort();
-					const onSubAbort = () => composite.abort();
-					signal.addEventListener("abort", onParentAbort);
-					subAbort.signal.addEventListener("abort", onSubAbort);
-					const releaseVideoBinding = () => {
-						currentBatchRef.current = null;
-						signal.removeEventListener("abort", onParentAbort);
-						subAbort.signal.removeEventListener("abort", onSubAbort);
-						cancellation.releaseVideo(file.name, subAbort);
-					};
-					// `catch` + rethrow au lieu de `finally` : bail-out React Compiler
-					// (TryStatement sans catch) sur tout le hook.
-					try {
-						currentBatchRef.current = {
-							mode: "video-single",
-							files: [file],
-							startBytes: bytesUploadedRef.current,
-							totalBytes: file.size,
-						};
-						const r = await uploadVideo(file, composite.signal);
-						updateBytesUploaded(
-							currentBatchRef.current.startBytes + file.size,
-							currentBatchRef.current,
-						);
-						releaseVideoBinding();
-						return r;
-					} catch (error) {
-						releaseVideoBinding();
-						throw error;
-					}
-				}),
-			);
-
-			for (let j = 0; j < batchResults.length; j++) {
-				const result = batchResults[j]!;
-				const file = batch[j]!;
-				if (result.status === "fulfilled" && result.value) {
-					results.push(result.value);
-				} else if (result.status === "rejected") {
-					if (result.reason instanceof DOMException && result.reason.name === "AbortError") {
-						// Per-file abort = silent skip (cancelOne flow); parent abort = propagate.
-						// TS narrows signal.aborted=false from L594 check; runtime can flip it after await.
-						// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-						if (signal.aborted) throw result.reason;
-						markFileState(file.name, "failed", "Annulé");
-						continue;
-					}
-					const message =
-						result.reason instanceof Error ? result.reason.message : "Échec du téléversement vidéo";
-					pushFailed(file, message);
-					if (process.env.NODE_ENV === "development") {
-						console.warn("[useMediaUpload] Echec upload video:", result.reason);
-					}
+			// Per-video sub-abort enables cancelOne mid-flight (P1.5)
+			const subAbort = new AbortController();
+			cancellation.bindVideo(file.name, subAbort);
+			const composite = new AbortController();
+			const onParentAbort = () => composite.abort();
+			const onSubAbort = () => composite.abort();
+			signal.addEventListener("abort", onParentAbort);
+			subAbort.signal.addEventListener("abort", onSubAbort);
+			const releaseVideoBinding = () => {
+				currentBatchRef.current = null;
+				signal.removeEventListener("abort", onParentAbort);
+				subAbort.signal.removeEventListener("abort", onSubAbort);
+				cancellation.releaseVideo(file.name, subAbort);
+			};
+			// `catch` + rethrow au lieu de `finally` : bail-out React Compiler
+			// (TryStatement sans catch) sur tout le hook.
+			try {
+				currentBatchRef.current = {
+					mode: "video-single",
+					files: [file],
+					startBytes: bytesUploadedRef.current,
+					totalBytes: file.size,
+				};
+				const r = await uploadVideo(file, composite.signal);
+				updateBytesUploaded(
+					currentBatchRef.current.startBytes + file.size,
+					currentBatchRef.current,
+				);
+				releaseVideoBinding();
+				if (r) results.push(r);
+			} catch (error) {
+				releaseVideoBinding();
+				if (error instanceof DOMException && error.name === "AbortError") {
+					// Per-file abort = silent skip (cancelOne flow); parent abort = propagate.
+					// TS narrows signal.aborted=false depuis le check de tête de boucle ;
+					// le runtime peut le faire basculer pendant l'await.
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+					if (signal.aborted) throw error;
+					markFileState(file.name, "failed", "Annulé");
+					continue;
+				}
+				const message = error instanceof Error ? error.message : "Échec du téléversement vidéo";
+				pushFailed(file, message);
+				if (process.env.NODE_ENV === "development") {
+					console.warn("[useMediaUpload] Echec upload video:", error);
 				}
 			}
 		}
@@ -569,9 +571,12 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		rawFiles: File[],
 		signal: AbortSignal,
 	): Promise<MediaUploadResult[]> => {
-		// 1. Pre-validate count + MIME BEFORE compression (P1.3) — avoids burning CPU
+		// 1. Pre-validate count + MIME BEFORE compression (P1.3) — avoids burning CPU.
+		// `normalizeFileMimeType` : un fichier au MIME vide (pellicule iOS) passait
+		// la validation cliente par extension puis se faisait rejeter par le
+		// middleware serveur — après avoir téléversé jusqu'à 64 Mo.
+		const preValidated = dedupeFileNames(preValidateBasic(rawFiles).map(normalizeFileMimeType));
 		updateProgress({ phase: "validating" });
-		const preValidated = preValidateBasic(rawFiles);
 		if (preValidated.length === 0) return [];
 		setFileProgressList(preValidated);
 
@@ -692,6 +697,9 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 						queueRef.current = [];
 						setProgress(null);
 						isProcessingRef.current = false;
+						// L'abort d'unmount emprunte ce même chemin : pas de toast
+						// après navigation.
+						if (isUnmountedRef.current) return;
 						if (keptCount > 0) {
 							toast.info("Envoi annulé", {
 								description: `${keptCount} fichier${keptCount > 1 ? "s" : ""} conservé${keptCount > 1 ? "s" : ""}`,
@@ -707,6 +715,13 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 					toast.error("Échec de l'envoi", { description: err.message });
 					entry.resolve([]);
 				}
+			}
+
+			// Résolution après unmount : le cleanup a déjà tourné, ne pas
+			// re-planifier un timer ni pousser d'état sur un composant démonté.
+			if (isUnmountedRef.current) {
+				isProcessingRef.current = false;
+				return;
 			}
 
 			if (cumulativeResultsRef.current.length > 0) {
@@ -740,8 +755,8 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	const upload = (files: File[]): Promise<MediaUploadResult[]> => {
 		if (files.length === 0) return Promise.resolve([]);
 
-		return new Promise<MediaUploadResult[]>((resolve, reject) => {
-			queueRef.current.push({ files, resolve, reject });
+		return new Promise<MediaUploadResult[]>((resolve) => {
+			queueRef.current.push({ files, resolve });
 
 			if (!isProcessingRef.current) {
 				void processQueue();
@@ -778,9 +793,13 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	 *   surfaces a toast and leaves the upload running
 	 */
 	const cancelOne = (fileName: string) => {
-		cancellation.markCancelled(fileName);
-		markFileState(fileName, "failed", "Annulé");
+		// Le branchement PRÉCÈDE le marquage : marquer « failed : Annulé » avant
+		// de savoir qu'on ne peut pas annuler laissait un fichier d'un batch image
+		// en vol passer failed → toast « impossible » → re-marqué done, avec un
+		// set d'annulés incohérent jusqu'au run suivant.
 		if (cancellation.abortCurrentVideo(fileName)) {
+			cancellation.markCancelled(fileName);
+			markFileState(fileName, "failed", "Annulé");
 			return;
 		}
 		const tracker = currentBatchRef.current;
@@ -791,7 +810,10 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			toast.info("Impossible d'annuler", {
 				description: "Ce fichier part avec d'autres. Annule l'envoi complet pour tout arrêter.",
 			});
+			return;
 		}
+		cancellation.markCancelled(fileName);
+		markFileState(fileName, "failed", "Annulé");
 	};
 
 	const retryFailed = async (): Promise<MediaUploadResult[]> => {
@@ -816,7 +838,6 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	return {
 		upload,
 		uploadSingle,
-		validateFiles,
 		cancel,
 		cancelOne,
 		retryFailed,

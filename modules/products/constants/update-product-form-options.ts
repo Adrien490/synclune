@@ -1,5 +1,7 @@
 // Form options for editing a product
 
+import type { MediaType } from "@/app/generated/prisma/client";
+
 export const editProductFormOpts = {
 	defaultValues: {
 		productId: "",
@@ -12,7 +14,8 @@ export const editProductFormOpts = {
 		media: [] as Array<{
 			url: string;
 			alt?: string;
-			type: "IMAGE" | "VIDEO";
+			type: MediaType;
+			blurDataUrl?: string;
 		}>,
 		defaultVariant: {
 			variantId: "",

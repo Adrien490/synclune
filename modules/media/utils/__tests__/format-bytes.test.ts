@@ -15,14 +15,16 @@ describe("formatBytesShort", () => {
 		expect(formatBytesShort(500 * 1024)).toBe("500 Ko");
 	});
 
-	it("bascule en Mo avec une décimale", () => {
-		expect(formatBytesShort(1024 * 1024)).toBe("1.0 Mo");
-		expect(formatBytesShort(2.5 * 1024 * 1024)).toBe("2.5 Mo");
+	it("bascule en Mo avec une décimale, VIRGULE française", () => {
+		// « 1.0 Mo » mélangeait point anglophone et unité française — le propre
+		// JSDoc d'upload-helpers cite « 5,6 Mo / 12,0 Mo ».
+		expect(formatBytesShort(1024 * 1024)).toBe("1,0 Mo");
+		expect(formatBytesShort(2.5 * 1024 * 1024)).toBe("2,5 Mo");
 	});
 
-	it("bascule en Go avec deux décimales", () => {
-		expect(formatBytesShort(1024 * 1024 * 1024)).toBe("1.00 Go");
-		expect(formatBytesShort(1.75 * 1024 * 1024 * 1024)).toBe("1.75 Go");
+	it("bascule en Go avec deux décimales, VIRGULE française", () => {
+		expect(formatBytesShort(1024 * 1024 * 1024)).toBe("1,00 Go");
+		expect(formatBytesShort(1.75 * 1024 * 1024 * 1024)).toBe("1,75 Go");
 	});
 
 	// La copie utilisateur est en français (CLAUDE.md § Conventions) : jamais KB/MB/GB.

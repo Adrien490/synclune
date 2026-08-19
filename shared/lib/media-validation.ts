@@ -6,9 +6,9 @@
  */
 
 /**
- * Domaines UploadThing autorisés pour les médias uploadés
- *
- * Must stay in sync with UPLOADTHING_EXACT_HOSTS in modules/media/utils/validate-media-file.ts
+ * Domaines UploadThing autorisés pour les médias uploadés — SSOT : le set
+ * `UPLOADTHING_EXACT_HOSTS` (modules/media/utils/validate-media-file.ts) est
+ * CONSTRUIT depuis cette liste, il n'y a rien à synchroniser à la main.
  */
 export const UPLOADTHING_DOMAINS = [
 	"utfs.io",
@@ -59,35 +59,8 @@ export function isAllowedMediaDomain(
 	}
 }
 
-/**
- * Vérifie qu'une URL d'image est valide et sécurisée (HTTPS + domaine autorisé)
- * Utilisé principalement pour Stripe qui requiert HTTPS
- *
- * @param url - URL à valider
- * @returns true si l'URL est https et sur un domaine autorisé
- */
-export function isValidImageUrl(url: string | undefined | null): boolean {
-	if (!url) return false;
-
-	try {
-		const parsed = new URL(url);
-
-		// Doit être HTTPS
-		if (parsed.protocol !== "https:") {
-			return false;
-		}
-
-		// Doit être sur un domaine autorisé (tous les domaines)
-		return isAllowedMediaDomain(url, ALLOWED_MEDIA_DOMAINS);
-	} catch {
-		return false;
-	}
-}
-
-/**
- * Retourne l'URL si valide, undefined sinon
- * Utile pour les line items Stripe
- */
-export function getValidImageUrl(url: string | undefined | null): string | undefined {
-	return isValidImageUrl(url) ? (url as string) : undefined;
-}
+// ⚠️ `isValidImageUrl` / `getValidImageUrl` ont été retirés (audit
+// 2026-08-16) : zéro appelant hors tests. Leur docstring promettait les line
+// items Stripe, mais `checkout-order.service.ts` s'appuie sur la validation à
+// l'ÉCRITURE (`product-media.schemas.ts` + invariant « premier média = image »)
+// — l'invariant tient en amont, pas par un filtre à la lecture.

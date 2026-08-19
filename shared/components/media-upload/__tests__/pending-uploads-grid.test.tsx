@@ -21,7 +21,7 @@ vi.mock("@/modules/media/utils/upload-helpers", () => ({
 	formatFileSize: (bytes: number) => `${bytes} o`,
 }));
 
-vi.mock("@/modules/media/hooks/use-video-thumbnail", () => ({
+vi.mock("@/modules/media/utils/video-thumbnail", () => ({
 	getVideoMetadata: vi.fn(async () => null),
 	formatVideoDuration: (seconds: number) => `0:0${seconds}`,
 }));

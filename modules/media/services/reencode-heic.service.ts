@@ -22,9 +22,9 @@
 
 import sharp from "sharp";
 import { utapi } from "@/shared/lib/uploadthing";
+import { HEIC_MIME_TYPES } from "@/modules/media/constants/media-limits.constants";
 import { ImageDecodeError } from "./image-downloader.service";
 
-const HEIC_MIME_TYPES = ["image/heic", "image/heif"] as const;
 const REENCODE_WEBP_QUALITY = 82;
 
 export interface ReencodeHeicInput {
@@ -77,8 +77,10 @@ export async function reencodeHeicToWebp(
 		throw new Error("reencodeHeicToWebp: re-upload returned no URL");
 	}
 
-	// Supprime l'original HEIC UNIQUEMENT après succès de l'upload WebP. Best-effort :
-	// si le delete échoue, cleanup-orphan-media (24h grace) ramassera l'orphelin.
+	// Supprime l'original HEIC UNIQUEMENT après succès de l'upload WebP.
+	// Best-effort. ⚠️ Limite assumée : aucun cron dans ce dépôt — un delete en
+	// échec laisse un orphelin définitif (coût : quota de stockage, surveillé
+	// sur le dashboard UploadThing).
 	try {
 		await utapi.deleteFiles([file.key]);
 	} catch {

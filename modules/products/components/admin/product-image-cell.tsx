@@ -1,5 +1,6 @@
 "use client";
 
+import type { MediaType } from "@/app/generated/prisma/client";
 import { useState, lazy, Suspense } from "react";
 import Image from "next/image";
 
@@ -19,7 +20,7 @@ interface ProductImage {
 	id: string;
 	url: string;
 	alt: string | null;
-	type: "IMAGE" | "VIDEO";
+	type: MediaType;
 }
 
 interface ProductImageCellProps {

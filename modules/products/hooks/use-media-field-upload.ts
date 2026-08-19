@@ -1,31 +1,23 @@
 import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
+import type { MediaUploadResult } from "@/modules/media/types/hooks.types";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { toast } from "@/shared/utils/toast";
+import type { MediaType } from "@/app/generated/prisma/client";
 
 interface MediaValue {
 	url: string;
-	type: "IMAGE" | "VIDEO";
+	type: MediaType;
 	alt?: string;
+	/** Poster vidéo — transitoire (session formulaire), jamais persisté. */
 	thumbnailUrl?: string | null;
+	/** Placeholder blur — persisté : cf. `MediaArrayFieldValue`. */
 	blurDataUrl?: string;
-	/** Dimensions intrinsèques — cf. MediaItem : chaque remap doit les porter. */
-	width?: number | null;
-	height?: number | null;
 }
 
 export interface MediaField {
 	state: { value: MediaValue[] };
 	pushValue: (value: MediaValue) => void;
-}
-
-interface MediaUploadResult {
-	url: string;
-	type: "IMAGE" | "VIDEO";
-	thumbnailUrl?: string;
-	blurDataUrl?: string;
-	width?: number;
-	height?: number;
 }
 
 interface UseMediaFieldUploadOptions {
@@ -86,8 +78,6 @@ export function useMediaFieldUpload({
 					type: result.type,
 					thumbnailUrl: result.thumbnailUrl,
 					blurDataUrl: result.blurDataUrl,
-					width: result.width,
-					height: result.height,
 				});
 			});
 			if (results.length > 0) triggerHaptic("success");

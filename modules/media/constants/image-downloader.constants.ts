@@ -2,8 +2,6 @@
  * Image download service and ThumbHash placeholder configuration
  */
 
-import { ALLOWED_UPLOADTHING_DOMAINS } from "./thumbnail.constants";
-
 // ============================================================================
 // IMAGE DOWNLOADER CONFIGURATION
 // ============================================================================
@@ -50,12 +48,8 @@ export const THUMBHASH_CONFIG = {
 	maxImageSize: IMAGE_DOWNLOADER_CONFIG.MAX_IMAGE_SIZE,
 	/** Max resize dimension (pixels) - ThumbHash limits to 100x100 */
 	maxSize: 100,
-	/** Number of retries before failure */
-	maxRetries: IMAGE_DOWNLOADER_CONFIG.MAX_RETRIES,
-	/** Base delay for exponential backoff (ms) */
-	retryBaseDelay: IMAGE_DOWNLOADER_CONFIG.RETRY_BASE_DELAY_MS,
-	/** Pause between batches (ms) - migration script only */
-	batchDelay: 500,
-	/** Allowed domains for downloading */
-	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
+	// ⚠️ Pas de clé `allowedDomains` ici : la défense SSRF réelle est
+	// `isValidUploadThingUrl` (gate en amont de tout download, core.ts) — une
+	// config à l'allure sécuritaire que personne ne lit ferait croire à une
+	// garde. Les clés retry/batch ont suivi le même chemin (zéro lecteur).
 } as const;

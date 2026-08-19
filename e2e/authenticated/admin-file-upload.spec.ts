@@ -22,6 +22,15 @@ import fs from "node:fs";
  * Règles tenues ici : pas de garde `if (count > 0)` autour d'une assertion, pas de
  * sélecteur par fragment de classe, et `toBeVisible` / `toBeDisabled` plutôt que
  * `toBeAttached` dès qu'on parle de ce que voit l'utilisatrice.
+ *
+ * ⚠️ LIMITE ASSUMÉE (audit 2026-08-16) : cette suite couvre exclusivement le
+ * PRÉ-upload (zone, compteur, mise en attente, refus MIME avant toute montée
+ * réseau). Le chemin compression → UploadThing → `core.ts` → DB n'est validé
+ * par aucun e2e : il exige le service UploadThing réel (secrets + réseau),
+ * qu'on ne pilote pas depuis la CI. Filets en place : la validation serveur
+ * est verrouillée unitairement (`mime-spoofing.regression.test.ts`,
+ * `client-mime-allowlist.regression.test.ts`, `upload-size-limits.regression.test.ts`)
+ * et l'orchestration cliente par `use-media-upload.test.ts`.
  */
 
 // Par PROCESS : les deux describes de ce fichier tournent dans des workers

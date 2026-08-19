@@ -4,11 +4,7 @@
  * Extracted from use-media-upload.ts to keep each file under 500 lines.
  */
 
-import {
-	MAX_UPLOAD_COUNT_IMAGE,
-	MAX_UPLOAD_SIZE_IMAGE,
-	MAX_UPLOAD_SIZE_VIDEO,
-} from "@/modules/media/constants/upload-size-limits";
+import type { MediaType } from "@/app/generated/prisma/client";
 import {
 	ACCEPTED_IMAGE_MIME_TYPES,
 	ACCEPTED_VIDEO_MIME_TYPES,
@@ -19,21 +15,10 @@ import {
 	VIDEO_FORMATS_LABEL,
 } from "@/modules/media/constants/media-limits.constants";
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-/** Default max image size. SSOT: `constants/upload-size-limits.ts`. */
-export const DEFAULT_MAX_SIZE_IMAGE = MAX_UPLOAD_SIZE_IMAGE;
-
-/** Default max video size. SSOT: `constants/upload-size-limits.ts`. */
-export const DEFAULT_MAX_SIZE_VIDEO = MAX_UPLOAD_SIZE_VIDEO;
-
-/** Default max number of files per upload */
-export const DEFAULT_MAX_FILES = MAX_UPLOAD_COUNT_IMAGE;
-
-/** Default video upload concurrency */
-export const DEFAULT_VIDEO_CONCURRENCY = 2;
+// ⚠️ Les alias `DEFAULT_MAX_SIZE_IMAGE` / `_VIDEO` / `DEFAULT_MAX_FILES` ont
+// été retirés : purs pass-through de la SSOT `constants/upload-size-limits.ts`
+// avec un unique consommateur (`use-media-upload`), qui importe désormais la
+// SSOT directement.
 
 // ============================================================================
 // HELPERS
@@ -84,7 +69,7 @@ function clampPercent(value: number): number {
  * `isValidMediaType` — sans quoi un `.mp4` sans MIME était classé IMAGE et partait
  * dans le lot d'images.
  */
-export function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
+export function getMediaTypeFromFile(file: File): MediaType {
 	if (file.type.startsWith("video/")) return "VIDEO";
 	if (file.type === "" && hasExtension(file.name, VIDEO_EXTENSIONS)) return "VIDEO";
 	return "IMAGE";
@@ -93,6 +78,34 @@ export function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
 function hasExtension(fileName: string, extensions: readonly string[]): boolean {
 	const name = fileName.toLowerCase();
 	return extensions.some((ext) => name.endsWith(ext));
+}
+
+/** Extension (minuscule, sans point) → MIME, pour le repli « MIME vide » d'iOS. */
+const EXTENSION_TO_MIME: Record<string, string> = {
+	mp4: "video/mp4",
+	jpg: "image/jpeg",
+	jpeg: "image/jpeg",
+	png: "image/png",
+	gif: "image/gif",
+	webp: "image/webp",
+	avif: "image/avif",
+	heic: "image/heic",
+	heif: "image/heif",
+};
+
+/**
+ * Ré-emballe un fichier au MIME VIDE (pellicule iOS) avec le MIME inféré de
+ * son extension. Sans ça, le repli client par extension acceptait le fichier
+ * mais le middleware serveur (qui teste `file.type`) le REJETAIT — après
+ * avoir téléversé jusqu'à 64 Mo pour un `.mp4`. Le scénario exact que
+ * M13/M13-bis avaient fermé pour `.mov`, côté serveur cette fois.
+ */
+export function normalizeFileMimeType(file: File): File {
+	if (file.type !== "") return file;
+	const extension = file.name.toLowerCase().split(".").pop() ?? "";
+	const inferred = EXTENSION_TO_MIME[extension];
+	if (!inferred) return file;
+	return new File([file], file.name, { type: inferred, lastModified: file.lastModified });
 }
 
 /**

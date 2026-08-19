@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { blurDataUrlSchema, mediaDimensionSchema } from "../media.schema";
+import { blurDataUrlSchema } from "../media.schema";
 
 /**
  * Ce fichier couvrait `baseMediaSchema` / `imageMediaSchema` /
@@ -36,26 +36,5 @@ describe("blurDataUrlSchema", () => {
 		expect(blurDataUrlSchema.safeParse(prefix + "A".repeat(10_001 - prefix.length)).success).toBe(
 			false,
 		);
-	});
-});
-
-describe("mediaDimensionSchema", () => {
-	it("accepte une dimension entière positive", () => {
-		expect(mediaDimensionSchema.safeParse(1).success).toBe(true);
-		expect(mediaDimensionSchema.safeParse(1920).success).toBe(true);
-	});
-
-	it("rejette zéro et les négatifs", () => {
-		expect(mediaDimensionSchema.safeParse(0).success).toBe(false);
-		expect(mediaDimensionSchema.safeParse(-1).success).toBe(false);
-	});
-
-	it("rejette un décimal", () => {
-		expect(mediaDimensionSchema.safeParse(1920.5).success).toBe(false);
-	});
-
-	it("borne à 50 000 px — cohérence avec la garde image-bomb", () => {
-		expect(mediaDimensionSchema.safeParse(50_000).success).toBe(true);
-		expect(mediaDimensionSchema.safeParse(50_001).success).toBe(false);
 	});
 });

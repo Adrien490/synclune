@@ -1,5 +1,6 @@
 "use client";
 
+import type { MediaType } from "@/app/generated/prisma/client";
 import { cn } from "@/shared/utils/cn";
 import { prefetchLightbox } from "./prefetch-lightbox";
 import { GALLERY_TOKEN_CLASS } from "./token.styles";
@@ -7,7 +8,7 @@ import { GALLERY_TOKEN_CLASS } from "./token.styles";
 interface GalleryZoomButtonProps {
 	onOpen: () => void;
 	/** Type du média courant — seul le libellé en dépend. */
-	mediaType?: "IMAGE" | "VIDEO";
+	mediaType?: MediaType;
 	/** État de la lightbox, pour `aria-expanded`. */
 	isOpen?: boolean;
 }

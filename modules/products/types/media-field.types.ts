@@ -1,14 +1,17 @@
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
+import type { MediaType } from "@/app/generated/prisma/client";
 
 export interface MediaArrayFieldValue {
 	url: string;
-	type: "IMAGE" | "VIDEO";
+	type: MediaType;
 	alt?: string;
+	/** Poster vidéo — transitoire (session formulaire), jamais persisté. */
 	thumbnailUrl?: string | null;
+	/**
+	 * Placeholder blur — PERSISTÉ (`ProductMedia.blurDataUrl`) : chaque remap
+	 * doit le porter, les actions font deleteMany + recréation.
+	 */
 	blurDataUrl?: string;
-	/** Dimensions intrinsèques — cf. MediaItem : chaque remap doit les porter. */
-	width?: number | null;
-	height?: number | null;
 }
 
 /**

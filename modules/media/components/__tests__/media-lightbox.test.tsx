@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -12,36 +13,25 @@ vi.mock("motion/react", () => ({
 	useReducedMotion: () => false,
 }));
 
-vi.mock("@radix-ui/react-focus-scope", () => ({
-	Root: ({
-		children,
-		onMountAutoFocus,
-	}: {
-		children: React.ReactNode;
-		trapped?: boolean;
-		onMountAutoFocus?: (e: Event) => void;
-	}) => {
-		// Simulate mount
-		onMountAutoFocus?.(new Event("focusMount"));
-		return <div data-testid="focus-scope">{children}</div>;
-	},
-}));
-
 vi.mock("yet-another-react-lightbox", () => ({
 	default: ({
 		open,
 		slides,
 		close,
+		render: renderSlots,
 	}: {
 		open: boolean;
 		close: () => void;
 		slides: unknown[];
 		index: number;
 		plugins: unknown[];
+		render?: { controls?: () => React.ReactNode };
 		[key: string]: unknown;
 	}) =>
 		open ? (
 			<div data-testid="lightbox" data-slides={slides.length}>
+				{/* YARL rend `render.controls` DANS son portail — reproduit ici */}
+				{renderSlots?.controls?.()}
 				<button data-testid="lightbox-close" onClick={close}>
 					close
 				</button>
@@ -108,26 +98,38 @@ describe("MediaLightbox", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("renders dialog with aria-modal when open", () => {
-		render(<MediaLightbox {...defaultProps} />);
-		const dialog = screen.getByRole("dialog");
-		expect(dialog).toBeInTheDocument();
-		expect(dialog).toHaveAttribute("aria-modal", "true");
-	});
-
-	it("has accessible label 'Galerie en plein écran'", () => {
-		render(<MediaLightbox {...defaultProps} />);
-		expect(screen.getByRole("dialog")).toHaveAttribute("aria-label", "Galerie en plein écran");
-	});
-
-	it("renders the FocusScope wrapper", () => {
-		render(<MediaLightbox {...defaultProps} />);
-		expect(screen.getByTestId("focus-scope")).toBeInTheDocument();
-	});
-
 	it("renders the lightbox component", () => {
 		render(<MediaLightbox {...defaultProps} />);
 		expect(screen.getByTestId("lightbox")).toBeInTheDocument();
+	});
+
+	/**
+	 * YARL rend en PORTAIL vers document.body : un wrapper `role="dialog"` /
+	 * FocusScope autour du composant ne contiendrait PAS la lightbox — le
+	 * « piège » n'enfermait que le bouton d'aide (nasse clavier) et doublait
+	 * l'`aria-modal` de YARL. Le composant ne doit rendre AUCUN wrapper : la
+	 * lightbox est l'élément racine, et le chrome custom vit dans son portail
+	 * via `render.controls`.
+	 */
+	it("renders the lightbox as root — no dialog/FocusScope wrapper around the portal", () => {
+		const { container } = render(<MediaLightbox {...defaultProps} />);
+		expect(container.firstChild).toBe(screen.getByTestId("lightbox"));
+		expect(screen.queryByRole("dialog")).toBeNull();
+	});
+
+	it("renders the aria-live announcement INSIDE the lightbox (render.controls)", () => {
+		render(<MediaLightbox {...defaultProps} />);
+		const status = screen.getByRole("status");
+		expect(status).toHaveTextContent("Image 1 sur 2");
+		expect(screen.getByTestId("lightbox")).toContainElement(status);
+	});
+
+	it("renders the keyboard help button INSIDE the lightbox (render.controls)", () => {
+		render(<MediaLightbox {...defaultProps} />);
+		// getByLabelText et non getByRole : le calcul de style de jsdom crashe
+		// sur le `calc(env(safe-area-inset-top…))` inline du bouton.
+		const helpButton = screen.getByLabelText("Afficher les raccourcis clavier");
+		expect(screen.getByTestId("lightbox")).toContainElement(helpButton);
 	});
 
 	it("passes correct slide count to lightbox", () => {
@@ -135,15 +137,18 @@ describe("MediaLightbox", () => {
 		expect(screen.getByTestId("lightbox")).toHaveAttribute("data-slides", "2");
 	});
 
-	it("restores focus to the previously active element after close", async () => {
+	it("restores focus to the element captured by the CALLER (returnFocusRef)", async () => {
 		const trigger = document.createElement("button");
 		trigger.textContent = "Open gallery";
 		document.body.appendChild(trigger);
 		trigger.focus();
 		expect(document.activeElement).toBe(trigger);
 
+		const returnFocusRef = createRef<HTMLElement | null>();
+		returnFocusRef.current = trigger;
+
 		const close = vi.fn();
-		render(<MediaLightbox {...defaultProps} close={close} />);
+		render(<MediaLightbox {...defaultProps} close={close} returnFocusRef={returnFocusRef} />);
 
 		fireEvent.click(screen.getByTestId("lightbox-close"));
 		expect(close).toHaveBeenCalledTimes(1);
@@ -155,31 +160,15 @@ describe("MediaLightbox", () => {
 		trigger.remove();
 	});
 
-	it("snapshots the active element on open, not on every render", async () => {
-		const first = document.createElement("button");
-		first.textContent = "First";
-		document.body.appendChild(first);
-		first.focus();
-
+	it("close is a no-op on focus restore when no returnFocusRef is provided", async () => {
 		const close = vi.fn();
-		const { rerender } = render(<MediaLightbox {...defaultProps} close={close} />);
-
-		// Swap focus after open — should NOT change the stored ref
-		const second = document.createElement("button");
-		second.textContent = "Second";
-		document.body.appendChild(second);
-		second.focus();
-
-		// Rerender with open=true still — useEffect should not re-run (open deps unchanged)
-		rerender(<MediaLightbox {...defaultProps} close={close} />);
+		render(<MediaLightbox {...defaultProps} close={close} />);
 
 		fireEvent.click(screen.getByTestId("lightbox-close"));
+		expect(close).toHaveBeenCalledTimes(1);
+
 		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-
-		// Focus should go back to the FIRST button (snapshot taken on open)
-		expect(document.activeElement).toBe(first);
-
-		first.remove();
-		second.remove();
+		// Sans ref fournie, la restauration est déléguée au mécanisme interne
+		// de YARL — aucune erreur ne doit être levée.
 	});
 });

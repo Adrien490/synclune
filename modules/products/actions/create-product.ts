@@ -18,8 +18,7 @@ import {
 	safeFormGetJSON,
 	BusinessError,
 } from "@/shared/lib/actions";
-import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
-import { logger } from "@/shared/lib/logger";
+import { deleteUnreferencedCatalogMedia } from "@/modules/media/services/delete-unreferenced-catalog-media.service";
 
 /**
  * Server Action pour créer un produit — schéma lean (lot 2) :
@@ -81,6 +80,7 @@ export async function createProduct(
 			url: m.url,
 			alt: m.alt ?? null,
 			type: index === 0 ? ("IMAGE" as const) : (m.type ?? detectMediaType(m.url)),
+			blurDataUrl: m.blurDataUrl ?? null,
 			position: index,
 		}));
 
@@ -155,15 +155,17 @@ export async function createProduct(
 			return { product: createdProduct, collectionSlugs: fetchedCollectionSlugs };
 		});
 
-		// 7. Purge des fichiers UploadThing retirés du formulaire avant envoi
+		// 7. Purge des fichiers UploadThing retirés du formulaire avant envoi.
+		// Via la garde de références (et pas le delete brut) : un média retiré
+		// PUIS restauré par l'undo du toast reste listé dans `deletedImageUrls`
+		// tout en étant recréé par la transaction ci-dessus — la garde le voit
+		// référencé et le préserve.
 		const rawDeletedImageUrls = safeFormGetJSON<unknown[]>(formData, "deletedImageUrls") ?? [];
 		const deletedImageUrls = rawDeletedImageUrls.filter(
 			(url): url is string => typeof url === "string" && url.length > 0 && url.length <= 2048,
 		);
 		if (deletedImageUrls.length > 0) {
-			deleteUploadThingFilesFromUrls(deletedImageUrls).catch((e) => {
-				logger.error("Failed to delete UploadThing files", e, { action: "createProduct" });
-			});
+			void deleteUnreferencedCatalogMedia(deletedImageUrls, { action: "createProduct" });
 		}
 
 		// 8. Invalidation de cache

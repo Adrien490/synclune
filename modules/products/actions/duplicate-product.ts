@@ -68,6 +68,7 @@ export async function duplicateProduct(
 							url: m.url,
 							alt: m.alt,
 							type: m.type,
+							blurDataUrl: m.blurDataUrl,
 							position: m.position,
 						})),
 					},

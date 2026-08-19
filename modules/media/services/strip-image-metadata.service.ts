@@ -15,10 +15,10 @@
  * interdisait à l'appelant de bloquer la publication d'une photo encore
  * porteuse de coordonnées GPS.
  *
- * LAYER EXCEPTION: ce service contient des I/O (UTApi upload/delete).
- * Documenté dans `01-conventions.md § Services transactionnels partagés` car
- * appelé depuis le route handler UploadThing (catalogMedia
- * `onUploadComplete`).
+ * LAYER EXCEPTION: ce service contient des I/O (UTApi upload/delete) —
+ * même dérogation documentée que `delete-uploadthing-files.service.ts`
+ * (cf. CLAUDE.md § Module Layers Pattern) : appelé depuis le route handler
+ * UploadThing (catalogMedia `onUploadComplete`).
  *
  * @module modules/media/services/strip-image-metadata.service
  */
@@ -96,8 +96,9 @@ export async function stripImageMetadata(
 					newKey: uploaded.key,
 				},
 			});
-			// Ne pas faire échouer le strip : le fichier sera ramassé par
-			// `cleanup-orphan-media` (24h grace period).
+			// Ne pas faire échouer le strip. ⚠️ Limite assumée : aucun cron dans
+			// ce dépôt — l'original non supprimé reste un orphelin définitif
+			// (coût : quota de stockage, surveillé sur le dashboard UploadThing).
 		}
 
 		return { status: "stripped", url: uploaded.ufsUrl, key: uploaded.key, buffer: cleaned };

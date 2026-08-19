@@ -13,6 +13,11 @@
  * @param url - Full file URL (e.g. https://utfs.io/f/abc123.png)
  * @returns The file key or null if extraction fails
  *
+ * ⚠️ Ne vérifie PAS l'hôte : `https://evil.com/f/x` rend `"x"`. La garde de
+ * domaine appartient aux APPELANTS (schema `refine(isValidUploadThingUrl)`,
+ * `filter(isValidUploadThingUrl)` du service de suppression) — tout nouvel
+ * appelant doit gater l'URL AVANT d'extraire la clé.
+ *
  * @example
  * extractFileKeyFromUrl("https://utfs.io/f/abc123.png") // "abc123.png"
  * extractFileKeyFromUrl("invalid-url") // null

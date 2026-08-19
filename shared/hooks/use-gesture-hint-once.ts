@@ -45,7 +45,7 @@ interface UseGestureHintOnceOptions {
 	 * retirer de l'information à quelqu'un qui n'a demandé qu'à réduire le
 	 * mouvement — « moins de mouvement » n'est pas « moins d'information », c'est
 	 * la règle appliquée par ailleurs au retour de survol du chrome de la galerie
-	 * (`shared/components/gallery/token.styles.ts`).
+	 * (`modules/media/components/gallery/token.styles.ts`).
 	 */
 	respectsReducedMotion?: boolean;
 }

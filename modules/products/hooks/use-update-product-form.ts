@@ -28,10 +28,14 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 
 	// Médias du PRODUIT dans l'ordre canonique (position, id) — le select les
 	// livre déjà triés (schéma lean : le média vit sur le produit).
+	// ⚠️ Remap DB → formulaire : `blurDataUrl` DOIT transiter — l'action fait
+	// deleteMany + recréation, l'omettre ici remettrait la colonne à NULL à la
+	// première édition.
 	const allMedia = product.media.map((m) => ({
 		url: m.url,
 		alt: m.alt ?? undefined,
 		type: m.type,
+		blurDataUrl: m.blurDataUrl ?? undefined,
 	}));
 
 	const [state, action, isPending] = useActionState(

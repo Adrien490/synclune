@@ -9,7 +9,6 @@ import {
 import { UI_DELAYS } from "../constants/ui-interactions.constants";
 import type { VideoThumbnailOptions, VideoThumbnailResult } from "../types/hooks.types";
 
-// Re-export types for backwards compatibility
 // ============================================================================
 // FEATURE DETECTION
 // ============================================================================
@@ -258,12 +257,18 @@ async function captureFrameAtPosition(
 	video: HTMLVideoElement,
 	position: number,
 	signal?: AbortSignal,
+	// Pourquoi des options : les appelants (generateVideoThumbnail) doivent pouvoir
+	// honorer width/maxCaptureTime de VideoThumbnailOptions sur le chemin principal,
+	// pas seulement sur le repli.
+	options: { width?: number; maxCaptureTime?: number } = {},
 ): Promise<{ canvas: CanvasType; ctx: ContextType; width: number; height: number } | null> {
+	const {
+		width: targetWidth = CLIENT_THUMBNAIL_CONFIG.width,
+		maxCaptureTime = THUMBNAIL_CONFIG.maxCaptureTime,
+	} = options;
+
 	// Calculate capture time
-	const captureTime = Math.min(
-		THUMBNAIL_CONFIG.maxCaptureTime,
-		Math.max(0.1, video.duration * position),
-	);
+	const captureTime = Math.min(maxCaptureTime, Math.max(0.1, video.duration * position));
 
 	video.currentTime = captureTime;
 
@@ -275,7 +280,7 @@ async function captureFrameAtPosition(
 
 		// Calculate dimensions
 		const aspectRatio = video.videoHeight / video.videoWidth;
-		const width = CLIENT_THUMBNAIL_CONFIG.width;
+		const width = targetWidth;
 		const height = Math.round(width * aspectRatio);
 
 		// Create the canvas and draw
@@ -308,8 +313,8 @@ async function captureFrameAtPosition(
  *
  * @example
  * const controller = new AbortController();
+ * const result = await generateVideoThumbnail(videoFile, { signal: controller.signal });
  * try {
- *   const result = await generateVideoThumbnail(videoFile, { signal: controller.signal });
  *   // Upload result.thumbnailFile
  *   // Use result.blurDataUrl as placeholder
  * } finally {
@@ -361,7 +366,10 @@ export async function generateVideoThumbnail(
 				throw new DOMException("Operation annulee", "AbortError");
 			}
 
-			capturedFrame = await captureFrameAtPosition(video, position, signal);
+			capturedFrame = await captureFrameAtPosition(video, position, signal, {
+				width,
+				maxCaptureTime,
+			});
 
 			if (capturedFrame) {
 				capturedPosition = position;

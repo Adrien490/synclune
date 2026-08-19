@@ -90,6 +90,11 @@ export function GalleryPinchZoom({
 	const isPanning = useRef(false);
 	const hasMoved = useRef(false);
 	const tapTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	// Dernières valeurs APPLIQUÉES par un handler de geste : plusieurs touchmove
+	// peuvent être coalescés avant re-render, `scale`/`position` lus depuis
+	// l'état sont alors ceux du rendu précédent. Écrite uniquement dans les
+	// handlers (jamais pendant le rendu — règle compilateur).
+	const lastApplied = useRef<{ scale: number; position: Point } | null>(null);
 
 	const isZoomed = scale > config.minScale;
 
@@ -117,26 +122,30 @@ export function GalleryPinchZoom({
 	function reset() {
 		setScale(config.minScale);
 		setPosition({ x: 0, y: 0 });
+		lastApplied.current = { scale: config.minScale, position: { x: 0, y: 0 } };
 	}
 
 	function zoomIn() {
 		const newScale = Math.min(config.maxScale, scale + config.keyboardZoomStep);
-		setScale(newScale);
-		setPosition(
-			clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null),
+		const newPosition = clampPosition(
+			position,
+			newScale,
+			containerRef.current?.getBoundingClientRect() ?? null,
 		);
+		setScale(newScale);
+		setPosition(newPosition);
+		lastApplied.current = { scale: newScale, position: newPosition };
 	}
 
 	function zoomOut() {
 		const newScale = Math.max(config.minScale, scale - config.keyboardZoomStep);
+		const newPosition =
+			newScale === config.minScale
+				? { x: 0, y: 0 }
+				: clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null);
 		setScale(newScale);
-		if (newScale === config.minScale) {
-			setPosition({ x: 0, y: 0 });
-		} else {
-			setPosition(
-				clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null),
-			);
-		}
+		setPosition(newPosition);
+		lastApplied.current = { scale: newScale, position: newPosition };
 	}
 
 	function handleKeyDown(e: React.KeyboardEvent) {
@@ -255,14 +264,24 @@ export function GalleryPinchZoom({
 				Math.max(config.minScale, initialScale.current * ratio),
 			);
 
-			const focalX = center.x - rect.left - rect.width / 2;
-			const focalY = center.y - rect.top - rect.height / 2;
-
-			const scaleRatio = scale > 0 ? newScale / scale : 1;
+			// Géométrie ancrée sur l'état de DÉBUT de geste (refs), jamais sur
+			// `scale`/`position` : plusieurs touchmove coalescés avant re-render
+			// liraient l'état du rendu précédent → dérive/jitter de la focale.
+			// Focale = centre du pinch au départ ; le drift du centre pendant le
+			// geste devient un pan additionnel.
+			const focalX = startTouchCenter.current.x - rect.left - rect.width / 2;
+			const focalY = startTouchCenter.current.y - rect.top - rect.height / 2;
+			const scaleRatio = newScale / initialScale.current;
 			const newPosition = clampPosition(
 				{
-					x: focalX - (focalX - position.x) * scaleRatio,
-					y: focalY - (focalY - position.y) * scaleRatio,
+					x:
+						focalX -
+						(focalX - initialPosition.current.x) * scaleRatio +
+						(center.x - startTouchCenter.current.x),
+					y:
+						focalY -
+						(focalY - initialPosition.current.y) * scaleRatio +
+						(center.y - startTouchCenter.current.y),
 				},
 				newScale,
 				rect,
@@ -270,7 +289,12 @@ export function GalleryPinchZoom({
 
 			setScale(newScale);
 			setPosition(newPosition);
-		} else if (e.touches.length === 1 && isPanning.current && isZoomed) {
+			lastApplied.current = { scale: newScale, position: newPosition };
+		} else if (
+			e.touches.length === 1 &&
+			isPanning.current &&
+			(lastApplied.current?.scale ?? scale) > config.minScale
+		) {
 			e.preventDefault();
 
 			const touch = e.touches[0]!;
@@ -291,11 +315,15 @@ export function GalleryPinchZoom({
 					x: initialPosition.current.x + deltaX,
 					y: initialPosition.current.y + deltaY,
 				},
-				scale,
+				lastApplied.current?.scale ?? scale,
 				rect,
 			);
 
 			setPosition(newPosition);
+			lastApplied.current = {
+				scale: lastApplied.current?.scale ?? scale,
+				position: newPosition,
+			};
 		} else if (e.touches.length === 1 && !isZoomed) {
 			const touch = e.touches[0]!;
 			const totalDistance = Math.hypot(
@@ -315,6 +343,23 @@ export function GalleryPinchZoom({
 
 		isPinching.current = false;
 		isPanning.current = false;
+
+		// Un doigt levé après un pinch : le doigt RESTANT reprend le pan sans
+		// devoir se reposer (avant, `isPanning` retombait à false et le doigt
+		// restant était inerte). Ancrage sur les dernières valeurs appliquées —
+		// l'état peut avoir un rendu de retard en fin de geste.
+		if (e.touches.length === 1) {
+			const remaining = e.touches[0]!;
+			const appliedScale = lastApplied.current?.scale ?? scale;
+			if (appliedScale > config.minScale) {
+				isPanning.current = true;
+				const point = { x: remaining.clientX, y: remaining.clientY };
+				lastTouchCenter.current = point;
+				startTouchCenter.current = point;
+				initialPosition.current = { ...(lastApplied.current?.position ?? position) };
+			}
+			return;
+		}
 
 		if (containerRef.current && e.touches.length === 0) {
 			containerRef.current.focus();
@@ -422,30 +467,40 @@ export function GalleryPinchZoom({
 
 	// Dynamic ARIA label based on state
 	const ariaLabel = isZoomed
-		? `${alt}. Zoom ${Math.round(scale * 100)}%. Utilisez les flèches pour déplacer, Échap pour réinitialiser.`
-		: `${alt}. Double-tapez ou appuyez sur + pour zoomer. Entrée pour ouvrir en plein écran.`;
+		? `${alt}. Zoom ${Math.round(scale * 100)}%. Utilise les flèches pour déplacer, Échap pour réinitialiser.`
+		: `${alt}. Double-tape ou appuie sur + pour zoomer. Entrée pour ouvrir en plein écran.`;
 
 	// `data-no-ptr` : le pull-to-refresh écoute sur `window` en mode passif, donc le
 	// `preventDefault()` de ce conteneur ne l'empêche PAS d'accumuler sa distance de
 	// tirage. Un pan vers le bas sur une image zoomée, page en haut de scroll, le
 	// déclenchait par-dessus le geste de déplacement.
+	// tabIndex 0 : le libellé annonce des raccourcis (+/−/flèches/Échap) — à -1,
+	// ils étaient inatteignables au clavier pur (le conteneur n'était focusé que
+	// programmatiquement au touchend), et sous `md` la loupe `GalleryZoomButton`
+	// n'existe pas comme chemin de secours.
+	/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- false positive : role="application" est interactif per WAI-ARIA, la règle ne le reconnaît pas (disable de BLOC : la règle pointe l'attribut, hors de portée d'un disable-next-line) */
 	return (
 		// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- false positive: role="application" is interactive per WAI-ARIA spec
 		<div
+			tabIndex={0}
 			ref={containerRef}
 			role="application"
 			aria-label={ariaLabel}
 			aria-roledescription="Image zoomable"
-			tabIndex={-1}
 			onKeyDown={handleKeyDown}
 			className={cn(
 				"group relative h-full w-full overflow-hidden",
 				"outline-none",
 				"focus-visible:ring-primary focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2",
 				"transition-transform active:scale-[0.99]", // Touch feedback
-				isZoomed ? "cursor-grab touch-none" : "cursor-zoom-in touch-manipulation",
+				isZoomed ? "cursor-grab" : "cursor-zoom-in",
 			)}
-			style={{ touchAction: isZoomed ? "none" : "manipulation" }}
+			// touch-action UNIQUE (le doublon classe + style inline divergeait déjà)
+			// et `pan-y` au repos plutôt que `manipulation` : `manipulation` AUTORISE
+			// le pinch-zoom natif de la page, qui raçait notre geste maison — `pan-y`
+			// laisse le scroll vertical au navigateur et nous garantit le pinch (le
+			// touchmove reste annulable).
+			style={{ touchAction: isZoomed ? "none" : "pan-y" }}
 			data-no-ptr
 		>
 			{/* Transformable image container */}
@@ -502,7 +557,7 @@ export function GalleryPinchZoom({
 			{/* Zoom entry hint — assertive, fired once on enter */}
 			{zoomEntryHint && (
 				<div className="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
-					Zoom activé. Appuyez sur Échap pour revenir.
+					Zoom activé. Appuie sur Échap pour revenir.
 				</div>
 			)}
 
@@ -524,3 +579,4 @@ export function GalleryPinchZoom({
 		</div>
 	);
 }
+/* eslint-enable jsx-a11y/no-noninteractive-tabindex */

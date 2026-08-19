@@ -25,11 +25,9 @@ export const blurDataUrlSchema = z
 		message: "Le placeholder doit être une data URL d'image",
 	});
 
-/**
- * Dimension intrinsèque d'un média (px). Entier strictement positif, borné pour
- * rester coherent avec la garde image-bomb (`MAX_IMAGE_PIXELS` = 50 MP).
- */
-export const mediaDimensionSchema = z.number().int().positive().max(50_000);
+// ⚠️ `mediaDimensionSchema` a été retiré (audit 2026-08-16) avec la purge du
+// transport `width`/`height` : les dimensions ne quittent plus le serveur
+// (aucun lecteur en rendu — elles ne servent qu'à la garde image-bomb).
 
 /**
  * ⚠️ Les schémas de média COMPOSÉS (`baseMediaSchema`, `imageMediaSchema`,
@@ -40,7 +38,7 @@ export const mediaDimensionSchema = z.number().int().positive().max(50_000);
  * simplement optional là-bas). Deux SSOT concurrentes dont une morte, et c'est la
  * morte qui revendiquait le titre en commentaire.
  *
- * Ce fichier ne garde donc que les BRIQUES effectivement partagées ci-dessus
- * (`blurDataUrlSchema`, `mediaDimensionSchema`), consommées par
- * `product-media.schemas.ts`. Un futur schéma de média composé s'ajoute là-bas.
+ * Ce fichier ne garde donc que la BRIQUE effectivement partagée ci-dessus
+ * (`blurDataUrlSchema`), consommée par `product-media.schemas.ts`. Un futur
+ * schéma de média composé s'ajoute là-bas.
  */

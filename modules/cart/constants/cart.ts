@@ -61,7 +61,7 @@ export const CART_VARIANT_SELECT = {
 				where: { type: "IMAGE" as const },
 				take: 1,
 				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
-				select: { id: true, url: true, alt: true, type: true },
+				select: { id: true, url: true, alt: true, type: true, blurDataUrl: true },
 			},
 		},
 	},

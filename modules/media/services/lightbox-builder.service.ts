@@ -1,6 +1,6 @@
 import type { Slide } from "yet-another-react-lightbox";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
-import { getVideoMimeType } from "../utils/media-utils";
+import { getVideoMimeType } from "../utils/media-type-detection";
 import { nextImageUrl, LIGHTBOX_QUALITY, DEVICE_SIZES } from "../constants/image-config.constants";
 
 /** Sizes used for lightbox srcSet (largest device sizes for fullscreen viewing) */

@@ -2,7 +2,7 @@
  * Thumbnail generation, video processing, and migration configuration
  */
 
-import { MAX_UPLOAD_SIZE_VIDEO } from "./upload-size-limits";
+import { MAX_UPLOAD_SIZE_VIDEO } from "./upload-size-limits.constants";
 
 // ============================================================================
 // THUMBNAIL CONFIGURATION
@@ -91,7 +91,7 @@ export const FRAME_VALIDATION = {
 
 /**
  * Timeouts for HTML5 video events
- * Used in use-video-thumbnail.ts
+ * Used in utils/video-thumbnail.ts
  */
 export const VIDEO_EVENT_TIMEOUTS = {
 	/** Default timeout for video events (ms) */
@@ -102,9 +102,7 @@ export const VIDEO_EVENT_TIMEOUTS = {
 	SEEKED_MS: 5000,
 } as const;
 
-// ============================================================================
-// MIGRATION SCRIPT CONFIGURATION
-// ============================================================================
-
-/** Allowed UploadThing domains for downloading */
-export const ALLOWED_UPLOADTHING_DOMAINS = ["utfs.io", "uploadthing.com", "ufs.sh"] as const;
+// ⚠️ `ALLOWED_UPLOADTHING_DOMAINS` a été retiré : c'était la 3ᵉ copie
+// (divergente) de l'allowlist de domaines, jamais lue par la moindre garde —
+// la SSOT est `UPLOADTHING_DOMAINS` (shared/lib/media-validation.ts), la
+// défense réelle `isValidUploadThingUrl`.

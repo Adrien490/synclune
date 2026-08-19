@@ -25,12 +25,6 @@ export const deleteUploadThingFileSchema = z.object({
 	fileUrl: uploadThingUrlSchema,
 });
 
-/**
- * Schema for deleting multiple UploadThing files
- */
-export const deleteUploadThingFilesSchema = z.object({
-	fileUrls: z
-		.array(uploadThingUrlSchema)
-		.min(1, "Au moins une URL est requise")
-		.max(100, "Maximum 100 URLs par requête"),
-});
+// ⚠️ `deleteUploadThingFilesSchema` (bulk) a été retiré : l'action bulk
+// n'existe pas — un schéma sans consommateur ne valide rien. À recréer le
+// jour où un delete bulk naît, sur la même brique `uploadThingUrlSchema`.

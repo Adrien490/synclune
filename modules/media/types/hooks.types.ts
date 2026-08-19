@@ -4,6 +4,8 @@
  * @module modules/media/types/hooks.types
  */
 
+import type { MediaType } from "@/app/generated/prisma/client";
+
 // ============================================================================
 // MEDIA GRID TYPES
 // ============================================================================
@@ -11,17 +13,20 @@
 export interface MediaItem {
 	url: string;
 	alt: string | undefined;
-	type: "IMAGE" | "VIDEO";
-	thumbnailUrl: string | undefined;
-	blurDataUrl: string | undefined;
+	type: MediaType;
 	/**
-	 * Dimensions intrinsèques lues à l'upload (absentes sur un média legacy).
-	 * Doivent transiter par CHAQUE remap de la couche formulaire : les actions
-	 * font deleteMany + recréation, donc tout maillon qui les omet remet les
-	 * colonnes à NULL à la première édition (et efface le backfill).
+	 * Poster vidéo — TRANSITOIRE (session formulaire uniquement) : le schéma
+	 * lean ne persiste pas de poster, la vitrine rend un placeholder
+	 * (cf. `resolveMediaThumbSrc`).
 	 */
-	width?: number | null;
-	height?: number | null;
+	thumbnailUrl: string | undefined;
+	/**
+	 * Placeholder blur — PERSISTÉ (`ProductMedia.blurDataUrl`). Doit transiter
+	 * par CHAQUE remap de la couche formulaire : les actions font deleteMany +
+	 * recréation, donc tout maillon qui l'omet remet la colonne à NULL à la
+	 * première édition.
+	 */
+	blurDataUrl: string | undefined;
 }
 
 // ============================================================================
@@ -37,8 +42,6 @@ export interface UseMediaUploadOptions {
 	maxSizeVideo?: number;
 	/** Max number of files (default: 6) */
 	maxFiles?: number;
-	/** Max concurrency for video uploads (default: 2) */
-	videoConcurrency?: number;
 	/** Callback called after a successful upload */
 	onSuccess?: (results: MediaUploadResult[]) => void;
 	/** Callback called on error */
@@ -51,17 +54,13 @@ export interface MediaUploadResult {
 	/** Uploaded file URL */
 	url: string;
 	/** Media type */
-	type: "IMAGE" | "VIDEO";
+	type: MediaType;
 	/** Original file name */
 	fileName: string;
 	/** Blur placeholder in base64 (images and videos) */
 	blurDataUrl?: string;
 	/** Thumbnail URL (videos only) */
 	thumbnailUrl?: string;
-	/** Intrinsic width of the published image, or of the poster for a video */
-	width?: number;
-	/** Intrinsic height of the published image, or of the poster for a video */
-	height?: number;
 }
 
 export type FileProgressState =
@@ -79,7 +78,7 @@ export interface FileProgress {
 	/** Bytes uploaded so far (uploading phase only) */
 	bytesUploaded?: number;
 	/** Media type */
-	type: "IMAGE" | "VIDEO";
+	type: MediaType;
 	/** Human-readable error message if state === "failed" */
 	error?: string;
 }
@@ -118,8 +117,6 @@ export interface UseMediaUploadReturn {
 	upload: (files: File[]) => Promise<MediaUploadResult[]>;
 	/** Upload a single file */
 	uploadSingle: (file: File) => Promise<MediaUploadResult | null>;
-	/** Validate files without uploading them */
-	validateFiles: (files: File[]) => File[];
 	/** Cancel the current upload */
 	cancel: () => void;
 	/** Cancel a single queued or in-flight video file (no-op if already done/failed/uploading-image-batch) */
@@ -137,7 +134,7 @@ export interface UseMediaUploadReturn {
 	/** Files that failed during the last upload session — empty after retryFailed/clearFailed */
 	failedFiles: FailedUpload[];
 	/** Utility to determine the media type */
-	getMediaType: (file: File) => "IMAGE" | "VIDEO";
+	getMediaType: (file: File) => MediaType;
 	/** Utility to check if a file is too large */
 	isOversized: (file: File) => boolean;
 }
@@ -151,7 +148,7 @@ export interface VideoThumbnailOptions {
 	width?: number;
 	/** JPEG quality 0-1 (default: 0.8) */
 	quality?: number;
-	/** Capture positions as ratio of duration (default: [0.1, 0.25, 0.5]) */
+	/** Capture positions as ratio of duration (default: [0.1, 0.25, 0.5, 0.75]) */
 	capturePositions?: number[];
 	/** Max capture time in seconds (default: 1) */
 	maxCaptureTime?: number;

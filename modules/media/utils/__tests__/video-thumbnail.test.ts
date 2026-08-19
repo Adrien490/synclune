@@ -57,7 +57,7 @@ describe("isThumbnailGenerationSupported", () => {
 		// @ts-expect-error -- simulating SSR
 		delete globalThis.document;
 
-		const mod = await import("../use-video-thumbnail");
+		const mod = await import("../video-thumbnail");
 		const result = mod.isThumbnailGenerationSupported();
 
 		expect(result).toBe(false);
@@ -72,7 +72,7 @@ describe("isThumbnailGenerationSupported", () => {
 	it("returns true when Canvas 2D is supported", async () => {
 		vi.resetModules();
 
-		const mod = await import("../use-video-thumbnail");
+		const mod = await import("../video-thumbnail");
 		const result = mod.isThumbnailGenerationSupported();
 
 		// jsdom supports canvas context
@@ -82,7 +82,7 @@ describe("isThumbnailGenerationSupported", () => {
 	it("caches the result across calls", async () => {
 		vi.resetModules();
 
-		const mod = await import("../use-video-thumbnail");
+		const mod = await import("../video-thumbnail");
 		const first = mod.isThumbnailGenerationSupported();
 		const second = mod.isThumbnailGenerationSupported();
 
@@ -98,7 +98,7 @@ describe("generateVideoThumbnail", () => {
 	it("throws when signal is already aborted", async () => {
 		vi.resetModules();
 
-		const mod = await import("../use-video-thumbnail");
+		const mod = await import("../video-thumbnail");
 
 		// Mock canvas support
 		const mockCanvas = { getContext: () => ({}) };
@@ -130,7 +130,7 @@ describe("generateVideoThumbnail", () => {
 			return origCreateElement(tag);
 		});
 
-		const mod = await import("../use-video-thumbnail");
+		const mod = await import("../video-thumbnail");
 		const file = new File(["video content"], "test.mp4", { type: "video/mp4" });
 
 		await expect(mod.generateVideoThumbnail(file)).rejects.toThrow(
@@ -159,7 +159,7 @@ describe("generateVideoThumbnail", () => {
 			};
 		}
 
-		const mod = await import("../use-video-thumbnail");
+		const mod = await import("../video-thumbnail");
 
 		const origCreateElement = document.createElement.bind(document);
 
@@ -249,7 +249,7 @@ describe("generateVideoThumbnail", () => {
 	it("cleans up video resources on error", async () => {
 		vi.resetModules();
 
-		const mod = await import("../use-video-thumbnail");
+		const mod = await import("../video-thumbnail");
 
 		// Mock canvas support
 		const mockCanvas = { getContext: () => ({}) };
@@ -292,7 +292,7 @@ describe("generateVideoThumbnail", () => {
 	it("aborts mid-generation when signal fires", async () => {
 		vi.resetModules();
 
-		const mod = await import("../use-video-thumbnail");
+		const mod = await import("../video-thumbnail");
 
 		const mockCanvas = { getContext: () => ({}) };
 		const origCreateElement = document.createElement.bind(document);

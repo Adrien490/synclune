@@ -489,8 +489,14 @@ export function SortableMediaItem({
 						"bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md",
 						"can-hover:hover:bg-warning can-hover:hover:text-warning-foreground active:scale-[0.98] active:bg-black/75",
 						"focus-visible:ring-warning focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-						"motion-safe:transition-[colors,transform] motion-safe:duration-[var(--duration-fast)]",
-						"can-hover:opacity-0 can-hover:group-focus-within:opacity-100 can-hover:group-hover:opacity-100",
+						"motion-safe:transition-[color,background-color,transform] motion-safe:duration-[var(--duration-fast)]",
+						// `pointer-events-none` tant que le bouton est masqué (même garde
+						// que le bouton play) : sur hybride (iPad + trackpad, can-hover
+						// vrai), un tap dans ce coin déclenchait un set-as-primary sur un
+						// bouton jamais devenu visible.
+						"can-hover:pointer-events-none can-hover:opacity-0",
+						"can-hover:group-focus-within:pointer-events-auto can-hover:group-focus-within:opacity-100",
+						"can-hover:group-hover:pointer-events-auto can-hover:group-hover:opacity-100",
 					)}
 					aria-label={`Définir ${isVideo ? "la vidéo" : "l'image"} ${index + 1} comme principale`}
 				>
@@ -536,7 +542,7 @@ export function SortableMediaItem({
 								"bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md",
 								"active:scale-[0.95] active:bg-black/75",
 								"focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-none",
-								"motion-safe:transition-[colors,transform] motion-safe:duration-[var(--duration-fast)]",
+								"motion-safe:transition-[color,background-color,transform] motion-safe:duration-[var(--duration-fast)]",
 								"after:absolute after:-inset-1 after:content-['']",
 							)}
 						>
@@ -557,7 +563,7 @@ export function SortableMediaItem({
 								"bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md",
 								"active:scale-[0.95] active:bg-black/75",
 								"focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-none",
-								"motion-safe:transition-[colors,transform] motion-safe:duration-[var(--duration-fast)]",
+								"motion-safe:transition-[color,background-color,transform] motion-safe:duration-[var(--duration-fast)]",
 								"after:absolute after:-inset-1 after:content-['']",
 							)}
 						>
@@ -655,7 +661,7 @@ export function SortableMediaItem({
 								variant="secondary"
 								size="icon"
 								onClick={() => haptic("light")}
-								className="size-11 rounded-full border-0 bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md active:scale-[0.98] active:bg-black/75 motion-safe:transition-[colors,transform] motion-safe:duration-[var(--duration-fast)]"
+								className="size-11 rounded-full border-0 bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md active:scale-[0.98] active:bg-black/75 motion-safe:transition-[color,background-color,transform] motion-safe:duration-[var(--duration-fast)]"
 								aria-label={`Actions pour le média ${index + 1}`}
 							/>
 						}
