@@ -52,11 +52,11 @@ au carnet — point manquant documentaire, critère 4). Passage en code **DÉBLO
 7. **Hero : piste D appliquée** (2026-08-19) — filigrane 3 cœurs + 2 gouttes (encre 10 %) dans
    les marges desktop, animé à la pose une fois au chargement (spec planche motion) ; réduit = statique.
 
-## Arbitrages ouverts — UN
+## Arbitrages ouverts — AUCUN
 
-**Proposition `couleur-dessins`** (« site un peu blanc » de Léane) — remplissages bonbon SOUS le
-trait encre du décor dessiné, couleurs de CONTENU hors tokens ; pièce `apercus/arbitrages/`.
-Le reste : tranché, veto sur pièce (`apercus/`, hors git, régénérable). Vérifs : plis · satori OG.
+**`couleur-dessins` PRISE et appliquée** (Adrien, 2026-08-19) : remplissages bonbon (hex littéraux,
+JAMAIS `$rose`/`$or` — le balayage d'accents reste propre) sur vignettes types, état vide, geste
+atelier. Tout tranché, veto Léane sur pièce (`apercus/`, hors git). Vérifs : plis · satori OG.
 
 ## Pièges d'outillage — tous constatés
 

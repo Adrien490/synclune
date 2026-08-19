@@ -142,6 +142,14 @@
   ponctuation, pas un texte porteur). Proposition prise le 2026-08-19.
 - **Atelier** : « Lire l'histoire de l'atelier » pointe vers la future page atelier/à-propos —
   garder ce libellé. (Tour 5.)
+- **Dessins en couleur (proposition prise et appliquée le 2026-08-19, réponse au « site un peu
+  blanc » de Léane)** : les tracés du décor dessiné portent des remplissages bonbon SOUS le trait
+  encre 1,5 — vignettes des 8 types (desktop + mobile), gouttes de l'état `sans-visuel` des
+  collections, touche du geste d'atelier. Couleurs de CONTENU en **hex littéraux** (#f7a8d8
+  #ffb26b #ffe066 #a8e063 #7fd8d8 #c7a8e8 #8ab6f0 #f28aa2), **jamais un token** — le balayage
+  « une seule couleur d'accent par section » doit rester propre. En code : `fill` sur les paths
+  existants, 2 à 6 par dessin, jamais un coloriage complet. Réversible (veto Léane) en retirant
+  les fills.
 
 ## Bannière cookies & toast panier
 

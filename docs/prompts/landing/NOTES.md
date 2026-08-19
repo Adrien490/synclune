@@ -933,3 +933,38 @@ sections figées intouchées.
 - **Sauvegarde** : flux backup confirmé une fois de plus — `save()` du shell `--app` écrit
   `~/.pencil/backup/5da35d8a…` (11:22:01), `landing.pen` inchangé jusqu'à la copie manuelle ;
   vérification headless du backup (planche + 21 fills + context) avant copie, mtime re-vérifié.
+
+## 2026-08-19 — « couleur-dessins » PRISE et APPLIQUÉE (Adrien : « oui j'aime bien, applique-la également »)
+
+Application du mécanisme éprouvé : réversible, montré, Léane peut défaire. Sections + composant +
+assemblages, planche renommée « — PRISE », contexts à jour.
+
+- **Doctrine tenue à l'application** : remplissages en **hex littéraux** (#f7a8d8 #ffb26b #ffe066
+  #a8e063 #7fd8d8 #c7a8e8 #8ab6f0 #f28aa2), JAMAIS `$rose`/`$or` — le balayage « une seule couleur
+  d'accent par section » reste propre (vérifié : 0 token rose dans les deux sections types). La
+  planche elle-même a été mise en conformité (ses `$rose` → littéraux) avant application.
+- **Vignettes des 8 types, desktop ET mobile** (mêmes noms de tracés des deux côtés, sauf la
+  tresse régénérée à part) : bagues = cabochon peint turquoise/rose/lilas · bracelet = rang de
+  ~11 perles bonbon (une série, pas un coloriage) · boucles = 6 pampilles · papillou = ailes
+  lilas/cobalt/rose + antennes citron · nénuphar du porte-clés rose/pomme/turquoise · gouttes des
+  chaînes de corps · breloques de la tresse · une goutte rose au collier (la chaîne reste encre).
+- **État vide des collections : fills posés dans le COMPOSANT `K9kvw`** (turquoise/rose/citron) —
+  propagation automatique partout (section, assemblages, méga-menu futur). L'« avant » de la
+  planche est préservé par des overrides `fill:#00000000` sur l'instance — l'avant/après reste
+  lisible sans détacher l'instance.
+- **Geste d'atelier** : cabochon peint rose + touche turquoise au bout du pinceau, desktop
+  (`WwCuk`, tracés 24/25/26/27/28) et mobile (`abwA0` : `Aup5s` rose, `oL4GR` turquoise).
+- **Assemblages re-synchronisés** : copies types + atelier remplacées aux mêmes index
+  (D : `ShEDs`/`xEE3n`, M : `nTm7P`/`m7Yom`) — hauteurs STRICTEMENT inchangées (6 721 / 9 890,
+  re-mesurées), le relevé des plis ne bouge pas (il reste « à re-vérifier » depuis les
+  propositions du matin, rien de neuf). Collections : rien à re-copier, le composant propage.
+  La colonne-récit de la copie atelier se résout à 664×794 comme l'originale (avertissement
+  « Collapsed size » latent connu, famille `nHZEp` du tour 8).
+- **Rendus de contrôle** : `apercus/apres-couleur-{types,atelier,collections}-desktop.png`,
+  `apres-couleur-types-mobile.png` ; pièce re-exportée `arbitrages/proposition-couleur-dessins.png`.
+- ⚠️ **Piège de mesure constaté** : les bounds lus en HEADLESS divergent de l'app (+16/+19 px sur
+  les assemblages, fontes rendues différemment) — **l'app fait foi**, comme pour toutes les
+  mesures du carnet ; ne pas « corriger » un écart headless.
+- Sauvegarde : flux backup (le hash `5da35d8a…` est RÉUTILISÉ et mis à jour en place par le
+  save() suivant — ne pas s'étonner de retrouver le même nom), vérif headless, copie, mtime OK.
+- En code : consigne complète ajoutée à `HANDOFF.md` § Sections.
