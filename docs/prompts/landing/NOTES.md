@@ -968,3 +968,26 @@ assemblages, planche renommée « — PRISE », contexts à jour.
 - Sauvegarde : flux backup (le hash `5da35d8a…` est RÉUTILISÉ et mis à jour en place par le
   save() suivant — ne pas s'étonner de retrouver le même nom), vérif headless, copie, mtime OK.
 - En code : consigne complète ajoutée à `HANDOFF.md` § Sections.
+
+## 2026-08-19 — deux propositions de fond dessinées : « D en couleur » et « atelier rose-pale »
+
+Question d'Adrien (« quel meilleur fond animé/statique sur le hero et ailleurs ? »), instruite en
+respectant l'arbitrage nº 5 déjà pris (piste D) : on ne re-litige pas le hero, on propose ses deux
+évolutions naturelles. Recommandation écartée d'office : tout fond en boucle (WCAG 2.2.2 +
+planche motion « jamais de boucle ») et tout nacré/pailleté (interdit DA).
+
+- **`proposition/hero-filigrane-couleur`** (`x7fe0`) : 2 des 5 formes du filigrane prennent un
+  remplissage translucide (cœur `h5VI6` → #f7a8d866, goutte `D4Ypk` → #7fd8d866), trait encre
+  10 % et animation de pose INCHANGÉS — le filigrane reste un filigrane, mais raccordé aux
+  dessins bonbon. Avant/après sur copies du hero, section intouchée.
+- **`proposition/atelier-rose-pale`** (`YqESG`) : bain `$rose-pale` sur la seule section rose
+  sans aplat (l'ex-levier nº 4, redevenu pertinent). Avant/après sur copies, encre 18,21:1 tenu.
+  ⚠️ Si prise : transitions d'assemblage autour de l'atelier à recomposer (or→rose-pale,
+  rose-pale→papier) et relevé des plis mobiles à refaire — écrit dans la légende et le context.
+- **Arbitrage OUVERT ×2** (Léane/Adrien, sur pièce) : `apercus/arbitrages/
+  proposition-hero-filigrane-couleur.png` et `proposition-atelier-rose-pale.png`.
+- Avertissements « Collapsed size » sur les copies d'atelier des planches : famille latente
+  connue (tour 8) — colonne-récit résolue par la colonne portrait, rendu vérifié à l'export.
+- Sauvegarde : flux backup (save() → `~/.pencil/backup/`, vérif headless des deux planches,
+  copie, mtime 11:52). Le hash du backup a CHANGÉ cette fois (nouveau fichier) — le nom stable
+  de l'entrée précédente n'était donc pas une règle, toujours prendre le plus récent par mtime.

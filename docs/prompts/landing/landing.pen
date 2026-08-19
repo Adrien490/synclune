@@ -32107,6 +32107,3388 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "x7fe0",
+      "x": 12360,
+      "y": 961,
+      "name": "proposition/hero-filigrane-couleur",
+      "context": "Proposition du 2026-08-19 (suite couleur, non appliquée — arbitrage Léane/Adrien OUVERT) : 2 des 5 formes du filigrane hero prennent un remplissage bonbon translucide (h5VI6 cœur #f7a8d866, D4Ypk goutte #7fd8d866), trait encre 10 % et animation de pose inchangés. Si PRISE : deux fills sur les paths du groupe filigrane-hero (section + copie assemblage). Réversible en les retirant. La section 01-hero/desktop n'est PAS touchée.",
+      "fill": "$papier",
+      "stroke": "$encre",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "gap": "$space-24",
+      "padding": "$space-48",
+      "children": [
+        {
+          "type": "text",
+          "id": "pqEOQ",
+          "name": "Titre",
+          "fill": "$encre",
+          "content": "Proposition — le filigrane du hero passe en couleur (« D en couleur »)",
+          "fontFamily": "$font-display",
+          "fontSize": "$text-h3",
+          "fontWeight": "$graisse-display"
+        },
+        {
+          "type": "text",
+          "id": "vPVQg",
+          "name": "idée",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": 1440,
+          "content": "L'idée : depuis « les dessins en couleur », le filigrane est le seul décor resté tout encre. Deux des cinq formes prennent un remplissage bonbon translucide (cœur rose #f7a8d8 à 40 %, goutte turquoise #7fd8d8 à 40 %), trait encre 10 % conservé, animation de pose inchangée. Les trois autres restent encre — le filigrane reste un filigrane.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "N8SF5",
+          "name": "label",
+          "fill": "$encre",
+          "content": "AVANT — PISTE D ACTUELLE (TOUT ENCRE 10 %)",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-label",
+          "fontWeight": "$graisse-medium",
+          "letterSpacing": "$tracking-label"
+        },
+        {
+          "type": "frame",
+          "id": "feePu",
+          "name": "avant-hero",
+          "clip": true,
+          "width": 1440,
+          "height": 800,
+          "fill": "$papier",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "EnUI1",
+              "type": "ref",
+              "ref": "M6cFW",
+              "name": "barre-haute",
+              "width": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "QZOj0",
+              "name": "contenu-hero",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": "$space-32",
+              "padding": [
+                "$space-64",
+                "$marge-page",
+                0,
+                "$marge-page"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "qZxki",
+                  "layoutPosition": "absolute",
+                  "x": 0,
+                  "y": -50,
+                  "name": "filigrane-hero",
+                  "context": "D — la pluie se pose (arbitrage tranché le 2026-08-19, Adrien) : chaque forme tombe en place UNE fois au chargement — translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s (grammaire du micro-balancement des pampilles). prefers-reduced-motion : statique. Jamais de boucle. Desktop seulement.",
+                  "width": 1440,
+                  "height": 455,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "YKNMF",
+                      "x": 190,
+                      "y": 150,
+                      "name": "filigrane-goutte-1",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 32,
+                      "height": 32,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "qV7OK",
+                      "x": 312,
+                      "y": 330,
+                      "name": "filigrane-cœur-2",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "width": 26,
+                      "height": 26,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "LO7VE",
+                      "x": 240,
+                      "y": 410,
+                      "name": "filigrane-cœur-3",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "QnmPe",
+                      "x": 1140,
+                      "y": 120,
+                      "name": "filigrane-cœur-4",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "width": 30,
+                      "height": 30,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "rEunq",
+                      "x": 1252,
+                      "y": 340,
+                      "name": "filigrane-goutte-5",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 24,
+                      "height": 24,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hMwyN",
+                  "name": "texte",
+                  "layout": "vertical",
+                  "gap": "$space-24",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "FblF3",
+                      "name": "titre-groupe",
+                      "layout": "vertical",
+                      "gap": "$space-16",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ka3A7",
+                          "name": "sur-titre",
+                          "fill": "$rose-encre",
+                          "content": "ATELIER À NANTES",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-label",
+                          "fontWeight": "$graisse-medium",
+                          "letterSpacing": "$tracking-label"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "H6LzP",
+                          "name": "titre",
+                          "layout": "vertical",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "x1jZ45",
+                              "name": "ligne-1",
+                              "gap": "$space-16",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "xvwvl",
+                                  "name": "des-bijoux",
+                                  "fill": "$encre",
+                                  "content": "Des bijoux",
+                                  "lineHeight": "$leading-h1",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h1",
+                                  "fontWeight": "$graisse-display",
+                                  "letterSpacing": "$tracking-h1"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "iwz4b",
+                                  "name": "mot-surligné",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "L3RnA",
+                                      "layoutPosition": "absolute",
+                                      "x": -14,
+                                      "y": 2,
+                                      "name": "touche-de-pinceau",
+                                      "clip": true,
+                                      "width": 222,
+                                      "height": 62,
+                                      "layout": "none",
+                                      "children": [
+                                        {
+                                          "type": "path",
+                                          "id": "xzI48",
+                                          "x": 9.1088,
+                                          "y": 16.8602,
+                                          "name": "tracé-pinceau-01",
+                                          "geometry": "M203.04105 24.78436c-0.10593-0.52959 0.52957-0.63551-0.52959-1.16508-2.96565-1.05916-2.6479-0.74141-3.2834-1.271l-0.63548-0.6355-1.69468-0.10592c-0.31775 0.21185-3.28338-0.21181-0.21182-0.84731l-3.07156 0c0.42366-0.31776 2.0124-0.21184 0-0.52958-3.60115-0.31775-2.43607 0.10593-3.2834 0-0.84734-0.10593-0.6355-0.21182-1.80057-0.21183-1.16507 0-2.22425-0.42366-6.35497-0.63551-4.55438-0.1059-4.66031-0.74141-1.3769-0.84732 2.54197-0.10591 4.55439 0.31775 6.77862 0.31775 0-1.37692 2.33016 0.42367 4.02481-0.6355l3.70706-0.31775c2.96566-0.31775 0.42368-0.74141 2.96566-1.48283 1.69465 0.52959 1.80056 0 2.11831-0.84731 0.6355-0.84734 1.9065-0.52959 2.01239-0.74142-0.42364-0.74141-1.05916-1.37691-1.69464-1.90648-0.74141-0.74142-0.95325 0.31773-2.85972 0.10589-3.38933-0.84732-4.44849 0.31776-4.23665-0.95323l-1.48284-0.42367-3.81295-0.52957-1.58875 0.10591-0.52959 0-0.52957-0.10591 0.42366-0.10592c-1.69467-0.21182-2.96565-0.84734 0.95323-0.52958l-2.96563-0.6355 1.90649 0 4.34255 0.31775c1.16508-0.6355-2.64791-1.05916-3.17748-1.48282l-2.11832-0.42368-1.69467-0.10589c-1.48282 0.21182-1.58874-0.74142-3.38931-0.31775l-1.05916-0.10593-3.70706-0.42366c-1.27098 0.31775-0.95323-0.52959-2.33015-0.21182l-10.16794-1.05917-0.84732-0.31775c-0.84732-0.74141-1.05916-0.10591-1.69466 0.31775-1.05916 0.10591-0.31775-1.271-2.11832-0.42366l-0.52958-0.42366-0.6355 0.31774-15.25191-1.05915c-3.81299 0-5.29581-0.42368-19.70039-1.16509l-0.31774 0-0.95324-0.10593c-0.31775 0-0.42366 0-1.271 0.21186l-1.37691-0.31777-7.09637-0.42366c-2.54199-0.10591-2.6479-0.52959 0.95325-0.52958 5.61354 0.31775 11.22709 0.52959 18.00572 0.95324 0.95324-0.10591 6.14313-0.10591 9.63836 0.42366 3.91889 0.52959 7.41413 0.21184 11.43894 0.74141l1.16507-0.21182 1.69465-0.52959-9.00286-0.74141-12.81585-0.84732-0.63548 0.10592c-6.77864-0.74141-12.81584-0.74141-17.58208-1.05916-3.07154-0.10593-5.40171-0.42368-7.94369-0.42368-5.08397-0.52957-10.80344-0.31773-18.00574-0.31773l-1.37691 0-0.95323-0.21184-1.58874 0.21184 0-0.21184c-4.5544 0.21184-7.41412 0.31775-9.32062 0.31775-3.38931 0-6.35497 0.10593-9.85019 0.42367l0 0c-4.55438 0.52957-11.86259 0.63548-21.50095 1.3769-9.32061 0.42368-18.64122 0.6355-25.63168 1.80058-9.32061 1.69466-11.75668 2.22423-11.65076 4.13072l0 0.31775-0.42366 0.74141-3.9189 1.16509-0.52958 0.63548c-1.58874 2.11832-0.84733 2.11832-1.05916 2.75383 0.31775 0.74141-0.31775 1.27098 1.05916 3.91888l0.84733 1.58875 1.80057 2.6479 1.16508 2.01239 1.27099 1.27101c3.70706 2.6479 4.76622 3.70706 10.48569 4.0248 3.07156 0.31775 6.67271 0.31775 8.68511 0 10.69752-1.05916 21.28913-2.85973 30.50382-3.07157l6.99046 0.21184 1.48282 0 7.52004-0.42366c6.5668-0.6355 12.18034-0.74141 18.5353-1.16508 3.70706-0.21182 3.2834 0.21182 7.73188 0l5.2958 0.21182c1.48282 0 4.23664 0 6.46088-0.1059 0.31775 0 0.6355-0.21184 0.74141-0.31775 0.6355-0.42366 3.70706-0.52959 5.40172-0.52958 0.74141-0.10593 3.49524-0.21182 4.66031 0 7.09637-0.10593 20.65362 0.6355 22.87787 1.05916 4.34254 0.95323 5.18988 0.95323 10.37977 1.05915l0.21182-0.21182-3.81297-0.95326c2.22424-0.74141 8.15552 0.21185 9.21469-0.1059 1.05916 0.1059 1.16507 0.63548 5.40172 0.63549 0.95323 0 0.52959 0 1.271 0.31774l0.21182-0.31774 1.69466 0.21183 1.05917-0.21183 0.42364-0.21183c3.07158 0.95325 6.35497 1.16507 9.53246 0.7414 2.75381 0 4.44849 0.74144 7.09637 0.10592l-1.16507-0.84732-10.06202-0.6355-3.17749-0.10591-0.10591-0.42366-1.16507 0.21183-0.63552-0.31775-1.27098 0-0.95323-0.31775-1.58875 0.31775-1.90649-0.52959-0.95325-0.10591-0.84732 0.21184-2.85974-0.31775-0.74141 0.21182c-1.90649-0.10591-1.16507-0.42365-2.54199-0.21182-1.37691 0.21182-1.37691-0.31775-2.75381-0.21182-3.49524 0.31773 2.54199 0.8473 3.60115 0.63548l1.05915 0.21182c0.95325-0.21182 1.90648 0.10593 2.54198-0.31773 0.74141 0 1.271 0.10591 1.69467 0.10591 1.69464 0.10593 8.26143 0.52957 8.89695 0.52957 2.96565 0.21184 10.06202 0.52959 11.01525 0.42367l4.87215 0 6.35497 0.42367c5.82537 0.21184 2.11831-0.6355 0-0.6355l-3.07157-0.31774-4.66032-0.21185c-1.27098-0.42366 1.05917-0.31773 2.54201-0.63548l3.07154-0.21182c0.42366-0.52959 3.07157 0 3.60115-0.42368l1.37691 0.31775c1.27098 0.6355 4.13074 0.10593 5.50763 0.52957l1.16509 0.21184 0 1.16508z m-95.32444-22.98378l-0.95324-0.21185 1.05916 0-0.10592 0.21185 0 0z m-12.18034-0.42367l0-0.10591 1.80057 0.10591-1.80057 0z m2.01241 0.10592l-0.10593-0.10592 0.84733-0.10591 1.05916 0.10591 0.84732-0.10591 2.33016 0.21183 0 0.1059-4.97804-0.1059 0 0z m5.82537 0.21183l0-0.21183 0.6355 0-0.10592 0.21183-0.52958 0z m1.05916-0.21183l0.84732 0.21183-0.84732 0 0-0.21183z m38.12976 20.01813c0.52959-0.10591 2.43608-0.21184 2.75383 0.21182l1.05916-0.10591 0.6355 0.31775 0.52959-0.21184 1.58874 0.10593 0.52957 0.21182 0.84732-0.10591 1.16509 0.31775 1.27098-0.10591 0 0.31775-3.28339-0.10593-1.16508-0.21182-0.95323 0.21182-0.52959-0.42366-0.52957 0.21184-0.52959-0.21184-2.0124 0-1.37693-0.42366z",
+                                          "fill": "$rose",
+                                          "width": 203.1348,
+                                          "height": 29.3652
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "hxctx",
+                                          "x": 165.4408,
+                                          "y": 20.2495,
+                                          "name": "tracé-pinceau-02",
+                                          "geometry": "M0.21185 0.42365l-0.21185-0.42365 5.08397 0.42365 8.26146 0.52958c2.22424 0.6355 4.87215 0.42366 0.52958 0l-5.82539-0.6355-7.83777-0.31773 0 0.42365z m15.35782 2.54199l1.16507 0.31775 0-0.21184 0.84734 0.10592 0.21182-0.21183-1.37691-0.21184-0.84732 0.21184z",
+                                          "fill": "$rose",
+                                          "width": 17.7939,
+                                          "height": 3.2834
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "zttrq",
+                                          "x": 185.0353,
+                                          "y": 22.2619,
+                                          "name": "tracé-pinceau-03",
+                                          "geometry": "M0.31775 0.42366l0.31775-0.21182-0.6355-0.21184 0.31775 0.42366z",
+                                          "fill": "$rose",
+                                          "width": 0.6355,
+                                          "height": 0.4237
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "pr2DB",
+                                          "x": 129.9275,
+                                          "y": 40.7635,
+                                          "name": "tracé-pinceau-04",
+                                          "geometry": "M6.49239 0.66921l-4.66031-0.6355c-1.80058-0.21182-2.96565 0.6355-0.10591 0.84734l6.46087 0.31775 6.6727 0-0.52957-0.31775-7.83778-0.21184 2.75381 0.10593-2.75381-0.10593z",
+                                          "fill": "$rose",
+                                          "width": 14.8597,
+                                          "height": 1.1988
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "gIpw2",
+                                          "x": 186.3063,
+                                          "y": 41.8564,
+                                          "name": "tracé-pinceau-05",
+                                          "geometry": "M7.41412 0l-0.95326 0.74141-1.27098-0.31775-1.80057 0.21184-0.84733-0.52957-1.16509 0.31773-0.21182-0.42366-1.05917 0.42366 0 0.21184 1.90649-0.10591 0 0.42364 1.48282-0.21182 1.05916 0.21182 2.33017 0 0.52958 0.42368 2.22423-0.31775c3.07156-0.42366-1.80057-0.95323-2.22423-1.05916l0 0z m-6.88455 2.01241l-0.52957 0.31774 1.05916 0 0.21182-0.31774-0.74141 0z",
+                                          "fill": "$rose",
+                                          "width": 10.6486,
+                                          "height": 2.3302
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "V1Kt97",
+                                          "x": 121.168,
+                                          "y": 41.2209,
+                                          "name": "tracé-pinceau-06",
+                                          "geometry": "M0.95323 0l-0.95323 0 0.31775 0.21184 0.63548-0.21184z",
+                                          "fill": "$rose",
+                                          "width": 0.9532,
+                                          "height": 0.2118
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "dLe41",
+                                      "name": "colorés",
+                                      "fill": "$encre",
+                                      "content": "colorés,",
+                                      "lineHeight": "$leading-h1",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": "$text-h1",
+                                      "fontWeight": "$graisse-display",
+                                      "letterSpacing": "$tracking-h1"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "uXcfe",
+                              "name": "faits-un-par-un",
+                              "fill": "$encre",
+                              "content": "faits un par un",
+                              "lineHeight": "$leading-h1",
+                              "fontFamily": "$font-display",
+                              "fontSize": "$text-h1",
+                              "fontWeight": "$graisse-display",
+                              "letterSpacing": "$tracking-h1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "YxhDo",
+                      "name": "chapô",
+                      "fill": "$encre",
+                      "textGrowth": "fixed-width",
+                      "width": 420,
+                      "content": "Je peins et j'assemble chaque pièce à la main. Aucune n'est identique à une autre.",
+                      "lineHeight": "$leading-body",
+                      "textAlign": "center",
+                      "fontFamily": "$font-sans",
+                      "fontSize": "$text-body",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                },
+                {
+                  "id": "fWYbg",
+                  "type": "ref",
+                  "ref": "GZTHW",
+                  "name": "cta-principal",
+                  "descendants": {
+                    "BAx7m": {
+                      "content": "Voir les 14 créations"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "Jyl9V",
+                  "name": "note-cta",
+                  "width": 170,
+                  "height": 30,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "xUnEy",
+                      "x": 4,
+                      "y": 6,
+                      "name": "tracé-flèche",
+                      "rotation": 70,
+                      "geometry": "M2 11.5q9-2.5 18-1.3 6.5 1 12.5-0.2m-5.7-5.4q3.4 2.8 6.6 5.4-3.4 2.8-7 5.4",
+                      "viewBox": [
+                        0,
+                        0,
+                        36,
+                        20
+                      ],
+                      "width": 27,
+                      "height": 15,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round",
+                      "strokeLinecap": "round"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RRXub",
+                      "x": 44,
+                      "y": 4,
+                      "name": "note-manuscrite",
+                      "rotation": -2,
+                      "fill": "$encre",
+                      "content": "commence par là",
+                      "fontFamily": "$font-cursive",
+                      "fontSize": "$text-note",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "EbADg",
+              "name": "frise-créations",
+              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
+              "width": "fill_container",
+              "height": 254,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "jpugm",
+                  "x": 0,
+                  "y": 12,
+                  "name": "chaîne",
+                  "fill": "$encre",
+                  "width": 1440,
+                  "height": 1.5
+                },
+                {
+                  "type": "rectangle",
+                  "id": "yxj4V",
+                  "x": 95.25,
+                  "y": 12,
+                  "name": "attache-01",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "T4FkGH",
+                  "x": 22,
+                  "y": 40,
+                  "name": "photo/creation-hero-01",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "xrQs5",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "o3yD4",
+                  "x": 303.25,
+                  "y": 12,
+                  "name": "attache-02",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "fjrNM",
+                  "x": 230,
+                  "y": 58,
+                  "name": "photo/creation-hero-02",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "zRNPN",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "JCdsa",
+                  "x": 511.25,
+                  "y": 12,
+                  "name": "attache-03",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 20
+                },
+                {
+                  "type": "frame",
+                  "id": "FzdQw",
+                  "x": 438,
+                  "y": 32,
+                  "name": "photo/creation-hero-03",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "ghdv5",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "ukpE0",
+                  "x": 719.25,
+                  "y": 12,
+                  "name": "attache-04",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 38
+                },
+                {
+                  "type": "frame",
+                  "id": "c9N2F",
+                  "x": 646,
+                  "y": 50,
+                  "name": "photo/creation-hero-04",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "Nl4dY",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "xLCcq",
+                  "x": 927.25,
+                  "y": 12,
+                  "name": "attache-05",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 16
+                },
+                {
+                  "type": "frame",
+                  "id": "orO8S",
+                  "x": 854,
+                  "y": 28,
+                  "name": "photo/creation-hero-05",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "kLL43",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "q4lMwp",
+                  "x": 1135.25,
+                  "y": 12,
+                  "name": "attache-06",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "oAZMC",
+                  "x": 1062,
+                  "y": 58,
+                  "name": "photo/creation-hero-06",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "U5zkAV",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "oVXtf",
+                  "x": 1343.25,
+                  "y": 12,
+                  "name": "attache-07",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 34
+                },
+                {
+                  "type": "frame",
+                  "id": "zUlHO",
+                  "x": 1270,
+                  "y": 46,
+                  "name": "photo/creation-hero-07",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "T1oz0",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "X8MAyA",
+          "name": "label",
+          "fill": "$encre",
+          "content": "APRÈS — D EN COULEUR (2 FORMES SUR 5)",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-label",
+          "fontWeight": "$graisse-medium",
+          "letterSpacing": "$tracking-label"
+        },
+        {
+          "type": "frame",
+          "id": "PDMli",
+          "name": "après-hero",
+          "clip": true,
+          "width": 1440,
+          "height": 800,
+          "fill": "$papier",
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "b6y2DU",
+              "type": "ref",
+              "ref": "M6cFW",
+              "name": "barre-haute",
+              "width": "fill_container"
+            },
+            {
+              "type": "frame",
+              "id": "RLXSs",
+              "name": "contenu-hero",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": "$space-32",
+              "padding": [
+                "$space-64",
+                "$marge-page",
+                0,
+                "$marge-page"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Hfnlp",
+                  "layoutPosition": "absolute",
+                  "x": 0,
+                  "y": -50,
+                  "name": "filigrane-hero",
+                  "context": "D — la pluie se pose (arbitrage tranché le 2026-08-19, Adrien) : chaque forme tombe en place UNE fois au chargement — translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s (grammaire du micro-balancement des pampilles). prefers-reduced-motion : statique. Jamais de boucle. Desktop seulement.",
+                  "width": 1440,
+                  "height": 455,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "KZC4g",
+                      "x": 190,
+                      "y": 150,
+                      "name": "filigrane-goutte-1",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "fill": "#7fd8d866",
+                      "width": 32,
+                      "height": 32,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "Y2gIMA",
+                      "x": 312,
+                      "y": 330,
+                      "name": "filigrane-cœur-2",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "width": 26,
+                      "height": 26,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "YRaJ5",
+                      "x": 240,
+                      "y": 410,
+                      "name": "filigrane-cœur-3",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "z3AdL",
+                      "x": 1140,
+                      "y": 120,
+                      "name": "filigrane-cœur-4",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "fill": "#f7a8d866",
+                      "width": 30,
+                      "height": 30,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "tMmc8",
+                      "x": 1252,
+                      "y": 340,
+                      "name": "filigrane-goutte-5",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 24,
+                      "height": 24,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "b6aEJ",
+                  "name": "texte",
+                  "layout": "vertical",
+                  "gap": "$space-24",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "kctPZ",
+                      "name": "titre-groupe",
+                      "layout": "vertical",
+                      "gap": "$space-16",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "V5eILU",
+                          "name": "sur-titre",
+                          "fill": "$rose-encre",
+                          "content": "ATELIER À NANTES",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-label",
+                          "fontWeight": "$graisse-medium",
+                          "letterSpacing": "$tracking-label"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "OcT5l",
+                          "name": "titre",
+                          "layout": "vertical",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "QDqZX",
+                              "name": "ligne-1",
+                              "gap": "$space-16",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "qUA0f",
+                                  "name": "des-bijoux",
+                                  "fill": "$encre",
+                                  "content": "Des bijoux",
+                                  "lineHeight": "$leading-h1",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h1",
+                                  "fontWeight": "$graisse-display",
+                                  "letterSpacing": "$tracking-h1"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "WE0oW",
+                                  "name": "mot-surligné",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "P0spj",
+                                      "layoutPosition": "absolute",
+                                      "x": -14,
+                                      "y": 2,
+                                      "name": "touche-de-pinceau",
+                                      "clip": true,
+                                      "width": 222,
+                                      "height": 62,
+                                      "layout": "none",
+                                      "children": [
+                                        {
+                                          "type": "path",
+                                          "id": "o1VaW",
+                                          "x": 9.1088,
+                                          "y": 16.8602,
+                                          "name": "tracé-pinceau-01",
+                                          "geometry": "M203.04105 24.78436c-0.10593-0.52959 0.52957-0.63551-0.52959-1.16508-2.96565-1.05916-2.6479-0.74141-3.2834-1.271l-0.63548-0.6355-1.69468-0.10592c-0.31775 0.21185-3.28338-0.21181-0.21182-0.84731l-3.07156 0c0.42366-0.31776 2.0124-0.21184 0-0.52958-3.60115-0.31775-2.43607 0.10593-3.2834 0-0.84734-0.10593-0.6355-0.21182-1.80057-0.21183-1.16507 0-2.22425-0.42366-6.35497-0.63551-4.55438-0.1059-4.66031-0.74141-1.3769-0.84732 2.54197-0.10591 4.55439 0.31775 6.77862 0.31775 0-1.37692 2.33016 0.42367 4.02481-0.6355l3.70706-0.31775c2.96566-0.31775 0.42368-0.74141 2.96566-1.48283 1.69465 0.52959 1.80056 0 2.11831-0.84731 0.6355-0.84734 1.9065-0.52959 2.01239-0.74142-0.42364-0.74141-1.05916-1.37691-1.69464-1.90648-0.74141-0.74142-0.95325 0.31773-2.85972 0.10589-3.38933-0.84732-4.44849 0.31776-4.23665-0.95323l-1.48284-0.42367-3.81295-0.52957-1.58875 0.10591-0.52959 0-0.52957-0.10591 0.42366-0.10592c-1.69467-0.21182-2.96565-0.84734 0.95323-0.52958l-2.96563-0.6355 1.90649 0 4.34255 0.31775c1.16508-0.6355-2.64791-1.05916-3.17748-1.48282l-2.11832-0.42368-1.69467-0.10589c-1.48282 0.21182-1.58874-0.74142-3.38931-0.31775l-1.05916-0.10593-3.70706-0.42366c-1.27098 0.31775-0.95323-0.52959-2.33015-0.21182l-10.16794-1.05917-0.84732-0.31775c-0.84732-0.74141-1.05916-0.10591-1.69466 0.31775-1.05916 0.10591-0.31775-1.271-2.11832-0.42366l-0.52958-0.42366-0.6355 0.31774-15.25191-1.05915c-3.81299 0-5.29581-0.42368-19.70039-1.16509l-0.31774 0-0.95324-0.10593c-0.31775 0-0.42366 0-1.271 0.21186l-1.37691-0.31777-7.09637-0.42366c-2.54199-0.10591-2.6479-0.52959 0.95325-0.52958 5.61354 0.31775 11.22709 0.52959 18.00572 0.95324 0.95324-0.10591 6.14313-0.10591 9.63836 0.42366 3.91889 0.52959 7.41413 0.21184 11.43894 0.74141l1.16507-0.21182 1.69465-0.52959-9.00286-0.74141-12.81585-0.84732-0.63548 0.10592c-6.77864-0.74141-12.81584-0.74141-17.58208-1.05916-3.07154-0.10593-5.40171-0.42368-7.94369-0.42368-5.08397-0.52957-10.80344-0.31773-18.00574-0.31773l-1.37691 0-0.95323-0.21184-1.58874 0.21184 0-0.21184c-4.5544 0.21184-7.41412 0.31775-9.32062 0.31775-3.38931 0-6.35497 0.10593-9.85019 0.42367l0 0c-4.55438 0.52957-11.86259 0.63548-21.50095 1.3769-9.32061 0.42368-18.64122 0.6355-25.63168 1.80058-9.32061 1.69466-11.75668 2.22423-11.65076 4.13072l0 0.31775-0.42366 0.74141-3.9189 1.16509-0.52958 0.63548c-1.58874 2.11832-0.84733 2.11832-1.05916 2.75383 0.31775 0.74141-0.31775 1.27098 1.05916 3.91888l0.84733 1.58875 1.80057 2.6479 1.16508 2.01239 1.27099 1.27101c3.70706 2.6479 4.76622 3.70706 10.48569 4.0248 3.07156 0.31775 6.67271 0.31775 8.68511 0 10.69752-1.05916 21.28913-2.85973 30.50382-3.07157l6.99046 0.21184 1.48282 0 7.52004-0.42366c6.5668-0.6355 12.18034-0.74141 18.5353-1.16508 3.70706-0.21182 3.2834 0.21182 7.73188 0l5.2958 0.21182c1.48282 0 4.23664 0 6.46088-0.1059 0.31775 0 0.6355-0.21184 0.74141-0.31775 0.6355-0.42366 3.70706-0.52959 5.40172-0.52958 0.74141-0.10593 3.49524-0.21182 4.66031 0 7.09637-0.10593 20.65362 0.6355 22.87787 1.05916 4.34254 0.95323 5.18988 0.95323 10.37977 1.05915l0.21182-0.21182-3.81297-0.95326c2.22424-0.74141 8.15552 0.21185 9.21469-0.1059 1.05916 0.1059 1.16507 0.63548 5.40172 0.63549 0.95323 0 0.52959 0 1.271 0.31774l0.21182-0.31774 1.69466 0.21183 1.05917-0.21183 0.42364-0.21183c3.07158 0.95325 6.35497 1.16507 9.53246 0.7414 2.75381 0 4.44849 0.74144 7.09637 0.10592l-1.16507-0.84732-10.06202-0.6355-3.17749-0.10591-0.10591-0.42366-1.16507 0.21183-0.63552-0.31775-1.27098 0-0.95323-0.31775-1.58875 0.31775-1.90649-0.52959-0.95325-0.10591-0.84732 0.21184-2.85974-0.31775-0.74141 0.21182c-1.90649-0.10591-1.16507-0.42365-2.54199-0.21182-1.37691 0.21182-1.37691-0.31775-2.75381-0.21182-3.49524 0.31773 2.54199 0.8473 3.60115 0.63548l1.05915 0.21182c0.95325-0.21182 1.90648 0.10593 2.54198-0.31773 0.74141 0 1.271 0.10591 1.69467 0.10591 1.69464 0.10593 8.26143 0.52957 8.89695 0.52957 2.96565 0.21184 10.06202 0.52959 11.01525 0.42367l4.87215 0 6.35497 0.42367c5.82537 0.21184 2.11831-0.6355 0-0.6355l-3.07157-0.31774-4.66032-0.21185c-1.27098-0.42366 1.05917-0.31773 2.54201-0.63548l3.07154-0.21182c0.42366-0.52959 3.07157 0 3.60115-0.42368l1.37691 0.31775c1.27098 0.6355 4.13074 0.10593 5.50763 0.52957l1.16509 0.21184 0 1.16508z m-95.32444-22.98378l-0.95324-0.21185 1.05916 0-0.10592 0.21185 0 0z m-12.18034-0.42367l0-0.10591 1.80057 0.10591-1.80057 0z m2.01241 0.10592l-0.10593-0.10592 0.84733-0.10591 1.05916 0.10591 0.84732-0.10591 2.33016 0.21183 0 0.1059-4.97804-0.1059 0 0z m5.82537 0.21183l0-0.21183 0.6355 0-0.10592 0.21183-0.52958 0z m1.05916-0.21183l0.84732 0.21183-0.84732 0 0-0.21183z m38.12976 20.01813c0.52959-0.10591 2.43608-0.21184 2.75383 0.21182l1.05916-0.10591 0.6355 0.31775 0.52959-0.21184 1.58874 0.10593 0.52957 0.21182 0.84732-0.10591 1.16509 0.31775 1.27098-0.10591 0 0.31775-3.28339-0.10593-1.16508-0.21182-0.95323 0.21182-0.52959-0.42366-0.52957 0.21184-0.52959-0.21184-2.0124 0-1.37693-0.42366z",
+                                          "fill": "$rose",
+                                          "width": 203.1348,
+                                          "height": 29.3652
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "RtLZ0",
+                                          "x": 165.4408,
+                                          "y": 20.2495,
+                                          "name": "tracé-pinceau-02",
+                                          "geometry": "M0.21185 0.42365l-0.21185-0.42365 5.08397 0.42365 8.26146 0.52958c2.22424 0.6355 4.87215 0.42366 0.52958 0l-5.82539-0.6355-7.83777-0.31773 0 0.42365z m15.35782 2.54199l1.16507 0.31775 0-0.21184 0.84734 0.10592 0.21182-0.21183-1.37691-0.21184-0.84732 0.21184z",
+                                          "fill": "$rose",
+                                          "width": 17.7939,
+                                          "height": 3.2834
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "NXUyD",
+                                          "x": 185.0353,
+                                          "y": 22.2619,
+                                          "name": "tracé-pinceau-03",
+                                          "geometry": "M0.31775 0.42366l0.31775-0.21182-0.6355-0.21184 0.31775 0.42366z",
+                                          "fill": "$rose",
+                                          "width": 0.6355,
+                                          "height": 0.4237
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "o8o0s",
+                                          "x": 129.9275,
+                                          "y": 40.7635,
+                                          "name": "tracé-pinceau-04",
+                                          "geometry": "M6.49239 0.66921l-4.66031-0.6355c-1.80058-0.21182-2.96565 0.6355-0.10591 0.84734l6.46087 0.31775 6.6727 0-0.52957-0.31775-7.83778-0.21184 2.75381 0.10593-2.75381-0.10593z",
+                                          "fill": "$rose",
+                                          "width": 14.8597,
+                                          "height": 1.1988
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "tnZFV",
+                                          "x": 186.3063,
+                                          "y": 41.8564,
+                                          "name": "tracé-pinceau-05",
+                                          "geometry": "M7.41412 0l-0.95326 0.74141-1.27098-0.31775-1.80057 0.21184-0.84733-0.52957-1.16509 0.31773-0.21182-0.42366-1.05917 0.42366 0 0.21184 1.90649-0.10591 0 0.42364 1.48282-0.21182 1.05916 0.21182 2.33017 0 0.52958 0.42368 2.22423-0.31775c3.07156-0.42366-1.80057-0.95323-2.22423-1.05916l0 0z m-6.88455 2.01241l-0.52957 0.31774 1.05916 0 0.21182-0.31774-0.74141 0z",
+                                          "fill": "$rose",
+                                          "width": 10.6486,
+                                          "height": 2.3302
+                                        },
+                                        {
+                                          "type": "path",
+                                          "id": "v79l5",
+                                          "x": 121.168,
+                                          "y": 41.2209,
+                                          "name": "tracé-pinceau-06",
+                                          "geometry": "M0.95323 0l-0.95323 0 0.31775 0.21184 0.63548-0.21184z",
+                                          "fill": "$rose",
+                                          "width": 0.9532,
+                                          "height": 0.2118
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "s9j7X",
+                                      "name": "colorés",
+                                      "fill": "$encre",
+                                      "content": "colorés,",
+                                      "lineHeight": "$leading-h1",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": "$text-h1",
+                                      "fontWeight": "$graisse-display",
+                                      "letterSpacing": "$tracking-h1"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "Fjm6N",
+                              "name": "faits-un-par-un",
+                              "fill": "$encre",
+                              "content": "faits un par un",
+                              "lineHeight": "$leading-h1",
+                              "fontFamily": "$font-display",
+                              "fontSize": "$text-h1",
+                              "fontWeight": "$graisse-display",
+                              "letterSpacing": "$tracking-h1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "L7spo",
+                      "name": "chapô",
+                      "fill": "$encre",
+                      "textGrowth": "fixed-width",
+                      "width": 420,
+                      "content": "Je peins et j'assemble chaque pièce à la main. Aucune n'est identique à une autre.",
+                      "lineHeight": "$leading-body",
+                      "textAlign": "center",
+                      "fontFamily": "$font-sans",
+                      "fontSize": "$text-body",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                },
+                {
+                  "id": "u4xfY0",
+                  "type": "ref",
+                  "ref": "GZTHW",
+                  "name": "cta-principal",
+                  "descendants": {
+                    "BAx7m": {
+                      "content": "Voir les 14 créations"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "L4Ifl",
+                  "name": "note-cta",
+                  "width": 170,
+                  "height": 30,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "CyWx5",
+                      "x": 4,
+                      "y": 6,
+                      "name": "tracé-flèche",
+                      "rotation": 70,
+                      "geometry": "M2 11.5q9-2.5 18-1.3 6.5 1 12.5-0.2m-5.7-5.4q3.4 2.8 6.6 5.4-3.4 2.8-7 5.4",
+                      "viewBox": [
+                        0,
+                        0,
+                        36,
+                        20
+                      ],
+                      "width": 27,
+                      "height": 15,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round",
+                      "strokeLinecap": "round"
+                    },
+                    {
+                      "type": "text",
+                      "id": "uQnAs",
+                      "x": 44,
+                      "y": 4,
+                      "name": "note-manuscrite",
+                      "rotation": -2,
+                      "fill": "$encre",
+                      "content": "commence par là",
+                      "fontFamily": "$font-cursive",
+                      "fontSize": "$text-note",
+                      "fontWeight": "$graisse-normale"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "OP8F2",
+              "name": "frise-créations",
+              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
+              "width": "fill_container",
+              "height": 254,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "J0RB9",
+                  "x": 0,
+                  "y": 12,
+                  "name": "chaîne",
+                  "fill": "$encre",
+                  "width": 1440,
+                  "height": 1.5
+                },
+                {
+                  "type": "rectangle",
+                  "id": "V9GVBm",
+                  "x": 95.25,
+                  "y": 12,
+                  "name": "attache-01",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 28
+                },
+                {
+                  "type": "frame",
+                  "id": "q7YXfK",
+                  "x": 22,
+                  "y": 40,
+                  "name": "photo/creation-hero-01",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "p8X6YV",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "uu7b6",
+                  "x": 303.25,
+                  "y": 12,
+                  "name": "attache-02",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "ADSDz",
+                  "x": 230,
+                  "y": 58,
+                  "name": "photo/creation-hero-02",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "n0PpR",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "E7tZO",
+                  "x": 511.25,
+                  "y": 12,
+                  "name": "attache-03",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 20
+                },
+                {
+                  "type": "frame",
+                  "id": "xtqT9",
+                  "x": 438,
+                  "y": 32,
+                  "name": "photo/creation-hero-03",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "a0U0n",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "Ta1u3",
+                  "x": 719.25,
+                  "y": 12,
+                  "name": "attache-04",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 38
+                },
+                {
+                  "type": "frame",
+                  "id": "hWFWH",
+                  "x": 646,
+                  "y": 50,
+                  "name": "photo/creation-hero-04",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "oobDM",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "oqZqF",
+                  "x": 927.25,
+                  "y": 12,
+                  "name": "attache-05",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 16
+                },
+                {
+                  "type": "frame",
+                  "id": "U66fc",
+                  "x": 854,
+                  "y": 28,
+                  "name": "photo/creation-hero-05",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "RSqGO",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "j3SPsI",
+                  "x": 1135.25,
+                  "y": 12,
+                  "name": "attache-06",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 46
+                },
+                {
+                  "type": "frame",
+                  "id": "kmX1S",
+                  "x": 1062,
+                  "y": 58,
+                  "name": "photo/creation-hero-06",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "sHoDE",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle",
+                  "id": "QueOK",
+                  "x": 1343.25,
+                  "y": 12,
+                  "name": "attache-07",
+                  "fill": "$encre",
+                  "width": 1.5,
+                  "height": 34
+                },
+                {
+                  "type": "frame",
+                  "id": "xzcvw",
+                  "x": 1270,
+                  "y": 46,
+                  "name": "photo/creation-hero-07",
+                  "clip": true,
+                  "width": 148,
+                  "height": 185,
+                  "fill": "$rose",
+                  "cornerRadius": "$radius-16",
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "nUqdC",
+                      "x": 42,
+                      "y": 60,
+                      "name": "motif-goutte",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 64,
+                      "height": 64,
+                      "stroke": "$encre",
+                      "strokeWidth": "$trait",
+                      "strokeLinejoin": "round"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ugrvK",
+          "name": "légende",
+          "layout": "vertical",
+          "gap": "$space-8",
+          "children": [
+            {
+              "type": "text",
+              "id": "tMkDR",
+              "name": "ajoute",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": 1440,
+              "content": "Ajoute : le premier écran cesse d'être la seule surface sans couleur de décor — et le raccord avec les dessins bonbon du reste de la page.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "hPSjo",
+              "name": "coûte",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": 1440,
+              "content": "Coûte : deux fills en code ; à vérifier au chargement que la pose reste discrète (les formes colorées attirent plus que l'encre 10 %).",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "daDoX",
+              "name": "remplacerait",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": 1440,
+              "content": "Remplacerait : rien — la piste D reste, deux formes gagnent un remplissage. Réversible en retirant les deux fills.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "YqESG",
+      "x": 12360,
+      "y": 3600,
+      "name": "proposition/atelier-rose-pale",
+      "context": "Proposition du 2026-08-19 (suite couleur, non appliquée — arbitrage Léane/Adrien OUVERT) : bain $rose-pale sur toute la section atelier (la seule section rose sans aplat). Contrastes tenus (encre 18,21:1). Si PRISE : fill de section + régler les transitions d'assemblage autour de l'atelier (or→rose-pale, rose-pale→papier) et re-relever les plis mobiles. Réversible. La section 05-atelier n'est PAS touchée.",
+      "fill": "$papier",
+      "stroke": "$encre",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "gap": "$space-24",
+      "padding": "$space-48",
+      "children": [
+        {
+          "type": "text",
+          "id": "cbgxo",
+          "name": "Titre",
+          "fill": "$encre",
+          "content": "Proposition — l'atelier prend un bain rose-pale",
+          "fontFamily": "$font-display",
+          "fontSize": "$text-h3",
+          "fontWeight": "$graisse-display"
+        },
+        {
+          "type": "text",
+          "id": "TL1hG",
+          "name": "idée",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": 1440,
+          "content": "L'idée : l'atelier est la seule section ROSE sans aucun aplat — un bain rose-pale #fdf0f8 (le fond du pied de page : teinte du rose, surfaces seulement, texte encre à 18,2:1) la sort du papier sans toucher l'alternance rose → or. Réponse directe au « site un peu blanc » : une cinquième surface colorée pleine largeur, au milieu de la page.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "c8C3R",
+          "name": "label",
+          "fill": "$encre",
+          "content": "AVANT — PAPIER",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-label",
+          "fontWeight": "$graisse-medium",
+          "letterSpacing": "$tracking-label"
+        },
+        {
+          "type": "frame",
+          "id": "ZCO5v",
+          "name": "avant-atelier",
+          "clip": true,
+          "width": 1440,
+          "fill": "$papier",
+          "layout": "vertical",
+          "padding": [
+            "$space-96",
+            "$marge-page"
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "M6HJv",
+              "name": "contenu",
+              "width": "fill_container",
+              "gap": "$space-48",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "CWos9",
+                  "name": "colonne-portrait",
+                  "width": 440,
+                  "layout": "vertical",
+                  "gap": "$space-16",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "T9nI2O",
+                      "name": "photo/portrait-leane",
+                      "clip": true,
+                      "width": 440,
+                      "height": 550,
+                      "fill": "$rose",
+                      "cornerRadius": "$radius-16",
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "NQ6hi",
+                          "x": 175,
+                          "y": 205,
+                          "name": "tracé-goutte",
+                          "geometry": "M50 0c0 0 50 62 50 105 0 28-22 50-50 50-28 0-50-22-50-50 0-43 50-105 50-105z",
+                          "viewBox": [
+                            0,
+                            0,
+                            100,
+                            155
+                          ],
+                          "width": 90,
+                          "height": 140,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "abDNo",
+                      "name": "note-durée-groupe",
+                      "gap": "$space-8",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "wE9Nb",
+                          "name": "note-durée",
+                          "rotation": -2,
+                          "fill": "$encre",
+                          "content": "environ 3 h par bijou",
+                          "fontFamily": "$font-cursive",
+                          "fontSize": "$text-note",
+                          "fontWeight": "$graisse-normale"
+                        },
+                        {
+                          "type": "path",
+                          "id": "H0MvJ8",
+                          "name": "tracé-cœur",
+                          "rotation": -8,
+                          "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                          "viewBox": [
+                            0,
+                            0,
+                            50,
+                            50
+                          ],
+                          "fill": "$rose",
+                          "width": 18,
+                          "height": 18,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinejoin": "round"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "B14Zs3",
+                      "name": "décor-geste-pinceau",
+                      "clip": true,
+                      "width": 280,
+                      "height": 180,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "bKAFF",
+                          "x": 24.9544,
+                          "y": 118.7111,
+                          "name": "tracé-geste-1",
+                          "geometry": "M0 5.02084c16.98659-0.96515 74.50938-4.24664 84.16086-4.82573 1.9303-0.09653 7.62466-0.38606 8.01071 0 0.38605 0.38605-2.02683 1.15817-4.34317 1.25469-13.02948 0.38606-45.94101 2.6059-83.48523 4.53619",
+                          "width": 92.2125,
+                          "height": 5.986,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "QtRKG",
+                          "x": 106.9765,
+                          "y": 113.1153,
+                          "name": "tracé-geste-2",
+                          "geometry": "M5.99933 6.85255c2.41287-3.18498 3.47452-6.85255 5.11526-6.85255 1.64072 0 3.08847 0.77213 2.12332 3.37802-0.96515 2.6059-8.49329 13.60857-9.65145 15.0563-1.1582 1.44772-4.4397-0.96515-3.37802-2.31635 0.38605-0.77212 2.70239-4.72922 5.79089-9.26542z",
+                          "width": 13.5482,
+                          "height": 18.8817,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "j2h930",
+                          "x": 118.2842,
+                          "y": 107.3244,
+                          "name": "tracé-geste-3",
+                          "geometry": "M3.37802 4.15013l-3.37802 0.96515 0-1.2547 2.41287-3.86058 0.96515 0 2.12335 0.96515 0 1.25468-2.12335 3.8606 0-1.9303z",
+                          "width": 5.5014,
+                          "height": 6.0804,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "Q5fJU0",
+                          "x": 122.9047,
+                          "y": 114.2734,
+                          "name": "tracé-geste-4",
+                          "geometry": "M0.59122 0c-0.48257 1.73727 5.88742 10.23058 5.88742 12.3539-0.67563 0-8.68634-11.0992-5.88742-10.4236l0-1.9303z",
+                          "width": 6.4786,
+                          "height": 12.3539,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "f3I85b",
+                          "x": 136.9115,
+                          "y": 123.5824,
+                          "name": "tracé-geste-5",
+                          "geometry": "M0 3.04493c3.66757 1.06166 10.52014 6.65952 12.45041 5.98389 1.44772-0.57907-7.52814-4.15012-8.68631-5.30829-3.0885-4.72922 8.30023-6.36996 8.20373 3.76407",
+                          "width": 12.608,
+                          "height": 9.0852,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "qAgoP",
+                          "x": 149.1689,
+                          "y": 120.013,
+                          "name": "tracé-geste-6",
+                          "geometry": "M0 12.88775c2.02683-0.19302 8.68631 2.70242 9.36194-2.50937 0.57907-7.04557-7.43164-8.68633-5.88742-9.94102 0.77213-1.06166 12.25736 0 14.47723 1.15818 2.21985 1.15817 15.53888 12.06434 27.41019 17.0831 11.77481 5.1153 17.7587 5.79089 24.61123 6.17694 5.69437 0.38608 3.95712 0.09653 8.20377 2.5094 2.89545 2.12332 19.97855 13.60858 24.32172 17.0831 0.6756 0.6756-0.48258-0.28955 3.66754 3.185",
+                          "width": 106.1662,
+                          "height": 47.6331,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "JpqFL",
+                          "x": 207.5603,
+                          "y": 133.7987,
+                          "name": "tracé-geste-7",
+                          "geometry": "M0 0.06726c1.83377-0.19302 7.43164 0 7.23862 0.96515-1.8338 0.38605-7.14209-0.38605-7.23862-0.96515z",
+                          "width": 7.2435,
+                          "height": 1.1363,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "voLF3",
+                          "x": 152.5469,
+                          "y": 111.7641,
+                          "name": "tracé-geste-8",
+                          "geometry": "M0 0c6.08041 0 11.77481 0.77211 20.46112 7.04556 7.81769 6.08043 18.14478 13.22253 32.62198 15.0563",
+                          "width": 53.0831,
+                          "height": 22.1019,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "iugi2",
+                          "x": 142.4949,
+                          "y": 111.3953,
+                          "name": "tracé-geste-9",
+                          "geometry": "M83.40318 34.34201c9.65146 0.19302 25.47989 6.36997 26.34851 7.72116 3.37802 1.54422-5.01873-4.53619-17.46914-7.62466-6.27347-1.3512-8.97589-1.44772-14.67026-1.64075-12.06433-0.0965-18.04825-1.2547-28.95441-5.98392-7.04556-3.185-20.36462-12.06434-22.68097-14.47721-1.9303-1.3512-1.73724-8.4933-2.21982-8.68632-0.48257-0.19302-0.38611 1.3512 0 3.76407-1.1582 3.08849-9.84454 0.48257-10.80966-1.44773-0.96515-1.9303 1.3512-7.43163-1.54425-5.59784-1.06168 1.44772 2.12332 6.17694-2.79892 7.14209l-0.48257 0c-1.9303-1.9303-2.60593-3.185-5.79089-4.82574-2.6059-2.6059-3.37802-1.2547-0.48258 1.44772 2.89545 2.21983 8.39679 5.3083 7.62467 12.16086-0.48257 4.82574-5.21179 4.43966-2.7024 4.43966",
+                          "width": 110.5031,
+                          "height": 42.3101,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "K4IErh",
+                          "x": 117.6591,
+                          "y": 118.8711,
+                          "name": "tracé-geste-10",
+                          "geometry": "M2.07276 0.03503c-3.47452-0.28955-2.41287 1.3512 1.9303 0",
+                          "width": 4.0031,
+                          "height": 0.5762,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "Dwqqb",
+                          "x": 125.3297,
+                          "y": 109.2547,
+                          "name": "tracé-geste-11",
+                          "geometry": "M0 0c2.79895 0.28954 5.30832 1.3512 8.20377 1.64075",
+                          "width": 8.2038,
+                          "height": 1.6407,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "BOVic",
+                          "x": 119.8529,
+                          "y": 91.882,
+                          "name": "tracé-geste-12",
+                          "geometry": "M3.83613 2.41287c-5.1153 1.83377-5.69437 12.54692 1.83377 12.54692 7.52814 0 8.20377-0.6756 8.20377-5.79089 0-6.27345 0-7.04558-8.97587-7.2386l0.28952-0.77213 3.8606-1.15817",
+                          "width": 13.8737,
+                          "height": 14.9598,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "EUgE5",
+                          "x": 135.6568,
+                          "y": 77.4972,
+                          "name": "tracé-geste-13",
+                          "geometry": "M0 12.93707l7.23859-11.09918 0.48257-0.48257c3.0885 0.19302 6.65952-1.44772 6.65952-1.35122 0 0.09653-0.28952 9.26541-0.57911 10.52012-0.28952 0.96515-2.79892 1.3512-4.15011 1.83377 6.27347 0 9.65149 2.02681 17.85522 1.83378 8.10724-0.09651 16.50403-3.18498 16.31101-5.11528-0.28955-0.5791-2.31638-0.09653-2.31638-0.09652",
+                          "width": 43.821,
+                          "height": 14.2047,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "t6QKk",
+                          "x": 120.3206,
+                          "y": 79.5196,
+                          "name": "tracé-geste-14",
+                          "geometry": "M16.78391 11.20426c2.79895-0.28955 5.30832-0.86864 7.72119-0.77212m-22.00534 3.57104c-0.19305-0.19302 1.83377-2.12332 0.28952-4.34315-1.54425-2.21985-4.15012-4.05362-1.93029-3.57105 2.21985 0.96515 2.99197 4.92226 5.30832 3.37802 2.31635-2.02683 4.72922-6.75604 5.30831-8.20376 0.57907-1.44771 1.3512-1.25468 3.37803-1.25469 1.54422 0.19302-4.34317 8.10724-5.7909 11.0992 0.09653 0.48257-0.19305 1.73726 6.36997 0.09651",
+                          "width": 24.5051,
+                          "height": 14.0032,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "WcOd8",
+                          "x": 157.3723,
+                          "y": 13.3624,
+                          "name": "tracé-geste-15",
+                          "geometry": "M0.00035 41.84407c-0.0965-1.3512 19.68903-33.87667 20.46115-34.55229 2.12329-2.99195 4.72922-9.45844 5.11527-6.56299 1.06168 0.96515-2.21982 5.98391-3.37802 8.30027l-21.0402 33.00803 5.59784-0.67559c6.27347-0.86863 11.77481-3.86059 18.53086 2.12332 2.21982 1.9303 4.63269 4.72923 7.04556 7.04558 8.20374 7.33513 21.32977 16.9866 26.05896 21.13671 8.30029 6.36998 21.71582 17.56571 39.57104 19.88205 1.25469 0.28955-1.64075-0.38605 0.48258 0",
+                          "width": 98.4454,
+                          "height": 91.6236,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "G70auC",
+                          "x": 129.66,
+                          "y": 55.689,
+                          "name": "tracé-geste-16",
+                          "geometry": "M19.02637 0c0.86862 0.57909-10.61664 17.37265-12.54694 20.75067-1.93027 3.37802-2.89542 2.02681-3.37799 0.96515-0.28955-1.15817-1.83377-7.62466-2.89545-7.72118-1.06168-0.48257 2.31635 8.30026 2.50937 9.74799",
+                          "width": 19.0732,
+                          "height": 23.7426,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "q2dUM",
+                          "x": 109.5941,
+                          "y": 56.1716,
+                          "name": "tracé-geste-17",
+                          "geometry": "M39.09226 0c-8.68634 0.96515-22.39145 2.99196-25.57641 4.82573-2.99194 1.35121-4.34317 6.85255-7.23859 12.73994-4.63272 9.36194-6.37 11.0992-6.27347 16.69706 0 1.06168 0.28952 5.59787 0.5791 7.23861",
+                          "width": 39.0923,
+                          "height": 41.5013,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "LUPLw",
+                          "x": 110.563,
+                          "y": 94.3914,
+                          "name": "tracé-geste-18",
+                          "geometry": "M0 4.24664l0 6.75603c0 3.66756 0.28952 5.69437 3.8606 5.88741 3.57104-0.19304 4.24664-1.9303 5.79086-4.92226 0.5791-0.86862-1.64075-2.12332-1.44772-5.59786 0.19305-3.47453 2.31635-5.79089 4.72921-6.36996",
+                          "width": 12.933,
+                          "height": 16.8901,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "F0OqAR",
+                          "x": 121.5354,
+                          "y": 109.2141,
+                          "name": "tracé-geste-19",
+                          "geometry": "M13.63885 1.97091c3.86057 0.48257 6.46649 0.38606 7.72116 0.38606m-17.37265-2.31634c-1.3512-0.48257-2.89545 3.47453-3.66754 4.43968-0.77213 0.96515 0.0965 3.37801 0.09649 3.378",
+                          "width": 21.36,
+                          "height": 7.8583,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "i6WtzV",
+                          "x": 135.1708,
+                          "y": 111.2815,
+                          "name": "tracé-geste-20",
+                          "geometry": "M0.38951 0c-0.96515 0.28954 0.09653 1.25468 0.6756 3.76407 1.3512 4.82573 0.77213 10.61662-0.96515 11.67828",
+                          "width": 1.8117,
+                          "height": 15.4424,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "uggRH",
+                          "x": 144.0584,
+                          "y": 56.1716,
+                          "name": "tracé-geste-21",
+                          "geometry": "M0.28474 55.20644c1.9303 0 4.82574-1.15819 10.61664-0.09652m-5.21179-35.22789c-5.11533 2.12332-6.85257 2.79894-4.92227 0 1.9303-2.99196 9.74799-15.82841 11.58176-19.01341l0.86865-0.86862",
+                          "width": 13.2177,
+                          "height": 55.2064,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "A1zdyb",
+                          "x": 149.8445,
+                          "y": 66.3056,
+                          "name": "tracé-geste-22",
+                          "geometry": "M0.0965 8.97588c2.60593-2.70242 3.0885-8.68633 5.0188-8.97588 0.48257 0.38605-0.09653 5.69437-5.1153 9.74799",
+                          "width": 5.253,
+                          "height": 9.748,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "a4Th0d",
+                          "x": 150.134,
+                          "y": 69.2011,
+                          "name": "tracé-geste-23",
+                          "geometry": "M0.09653 8.20375c1.06165 0-0.09653 8.78284-0.09653 11.58177 0 1.44771 2.12332 1.25468 7.04556 1.93028 8.30026 0.96515 8.39679-0.09651 8.78284-0.96514 0.5791-2.50938-0.7721-18.14476 2.99197-20.75066 1.06168 0.38605-1.44772 5.50133-1.54425 18.82037-0.28952 4.82573 0.77213 2.50938 1.9303 2.41286 4.72922-3.28149 5.79089-9.26541 6.27347-9.55495 0.48257-0.28954 0 2.41287-0.48258 2.89545",
+                          "width": 25.6798,
+                          "height": 22.0986,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "Cv5a2",
+                          "x": 86.7239,
+                          "y": 149.3083,
+                          "name": "tracé-geste-24",
+                          "geometry": "M0 0c0.57907 3.7641 8.97588 5.88742 17.56567 5.69437 8.68634-0.38605 12.93298-2.6059 12.93299-4.72922",
+                          "fill": "#f7a8d8",
+                          "width": 30.4987,
+                          "height": 5.7065,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "r0fle2",
+                          "x": 85.9605,
+                          "y": 149.3083,
+                          "name": "tracé-geste-25",
+                          "geometry": "M0.08778 0c-0.86865 3.185 4.72922 6.17694 15.92493 6.27347 8.58981 0 16.31097-1.83377 15.7319-5.30832",
+                          "fill": "#f7a8d8",
+                          "width": 31.7752,
+                          "height": 6.2735,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "DfY8k",
+                          "x": 105.2547,
+                          "y": 142.9985,
+                          "name": "tracé-geste-26",
+                          "geometry": "M12.06433 7.37149c-1.44769-5.01877-9.55493-7.72116-12.06433-7.33511",
+                          "fill": "#ffe066",
+                          "width": 12.0643,
+                          "height": 7.3715,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "Mfoq3",
+                          "x": 86.5308,
+                          "y": 143.0165,
+                          "name": "tracé-geste-27",
+                          "geometry": "M12.93297 0.01837c-4.63272-0.28955-12.64345 2.89545-12.93297 5.98392",
+                          "fill": "#a8e063",
+                          "width": 12.933,
+                          "height": 6.0023,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "kyC1J",
+                          "x": 99.4638,
+                          "y": 131.6566,
+                          "name": "tracé-geste-28",
+                          "geometry": "M0 11.86079c1.54424-6.85257 2.50938-8.10724 4.82573-10.23056 2.31635-2.12335 4.34317-2.41287 4.34317 0.57907-1.54425 8.39679-8.10724 9.36194-8.30028 11.19575 1.54424 0 2.99196-1.8338 5.69435-1.54426",
+                          "fill": "#7fd8d8",
+                          "width": 9.1689,
+                          "height": 13.405,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "vxAi2",
+                          "x": 105.2547,
+                          "y": 142.9383,
+                          "name": "tracé-geste-29",
+                          "geometry": "M0 0c2.31635 0.09653 5.79089 1.06168 5.79089 1.06168",
+                          "width": 5.7909,
+                          "height": 1.0617,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "IoPfG",
+                          "x": 110.2735,
+                          "y": 98.1543,
+                          "name": "tracé-geste-30",
+                          "geometry": "M0 0.00119c1.35123-0.09653 2.79892 5.69437 0.77213 9.65147l-0.38605 1.54424",
+                          "width": 1.7768,
+                          "height": 11.1969,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Ks9D9",
+                  "name": "colonne-récit",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": "$space-48",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "b5Nz06",
+                      "name": "en-tête",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": "$space-16",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QwYdX",
+                          "name": "sur-titre",
+                          "fill": "$rose-encre",
+                          "content": "L'ATELIER",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-label",
+                          "fontWeight": "$graisse-medium",
+                          "letterSpacing": "$tracking-label"
+                        },
+                        {
+                          "type": "text",
+                          "id": "gdm2i",
+                          "name": "titre",
+                          "fill": "$encre",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Chaque bijou passe entre mes mains",
+                          "lineHeight": "$leading-h2",
+                          "fontFamily": "$font-display",
+                          "fontSize": "$text-h2",
+                          "fontWeight": "$graisse-display",
+                          "letterSpacing": "$tracking-h2"
+                        },
+                        {
+                          "type": "text",
+                          "id": "btfM0",
+                          "name": "chapô",
+                          "fill": "$encre",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Je m'appelle Léane. Je peins et j'assemble chaque pièce dans mon atelier, à Nantes. Et si tu m'écris : c'est moi qui lis, c'est moi qui réponds.",
+                          "lineHeight": "$leading-body",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-body",
+                          "fontWeight": "$graisse-normale"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Vzyow",
+                      "name": "les-quatre-étapes",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": "$space-32",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "AZpEX",
+                          "name": "étape-1",
+                          "width": "fill_container",
+                          "gap": "$space-16",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "H0NdAX",
+                              "name": "numéro",
+                              "width": 40,
+                              "height": 40,
+                              "fill": "$rose",
+                              "cornerRadius": "$radius-pilule",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "AXmXz",
+                                  "name": "chiffre",
+                                  "fill": "$encre",
+                                  "content": "1",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-prix",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "IFx35",
+                              "name": "texte",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": "$space-4",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Ycnti",
+                                  "name": "titre-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "D'abord, une idée",
+                                  "lineHeight": "$leading-h3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h3",
+                                  "fontWeight": "$graisse-display"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "d1obuc",
+                                  "name": "corps-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Une couleur croisée dans la rue, un motif sur un tissu, un rêve… Je laisse l'inspiration venir, sans forcer.",
+                                  "lineHeight": "$leading-small",
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": "$text-small",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "s1eSG",
+                          "name": "étape-2",
+                          "width": "fill_container",
+                          "gap": "$space-16",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "urukH",
+                              "name": "numéro",
+                              "width": 40,
+                              "height": 40,
+                              "fill": "$rose",
+                              "cornerRadius": "$radius-pilule",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "r9s3G",
+                                  "name": "chiffre",
+                                  "fill": "$encre",
+                                  "content": "2",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-prix",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "j6L8r6",
+                              "name": "texte",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": "$space-4",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "sFbpK",
+                                  "name": "titre-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Le bon matériel",
+                                  "lineHeight": "$leading-h3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h3",
+                                  "fontWeight": "$graisse-display"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "sJYFm",
+                                  "name": "corps-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Plastique fou, peinture, perles : je choisis chaque élément un par un, avec soin.",
+                                  "lineHeight": "$leading-small",
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": "$text-small",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "z1ywe",
+                          "name": "étape-3",
+                          "width": "fill_container",
+                          "gap": "$space-16",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Gp3wQ",
+                              "name": "numéro",
+                              "width": 40,
+                              "height": 40,
+                              "fill": "$rose",
+                              "cornerRadius": "$radius-pilule",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "v9ZNg",
+                                  "name": "chiffre",
+                                  "fill": "$encre",
+                                  "content": "3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-prix",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "w9VfsN",
+                              "name": "texte",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": "$space-4",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "IvErA",
+                                  "name": "titre-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "La cuisson et l'assemblage",
+                                  "lineHeight": "$leading-h3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h3",
+                                  "fontWeight": "$graisse-display"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "E4wuV",
+                                  "name": "corps-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Chaque bijou a sa propre recette de fabrication — c'est ce qui rend chaque pièce unique.",
+                                  "lineHeight": "$leading-small",
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": "$text-small",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "maGb0",
+                          "name": "étape-4",
+                          "width": "fill_container",
+                          "gap": "$space-16",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "NFRiD",
+                              "name": "numéro",
+                              "width": 40,
+                              "height": 40,
+                              "fill": "$rose",
+                              "cornerRadius": "$radius-pilule",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "E97W0",
+                                  "name": "chiffre",
+                                  "fill": "$encre",
+                                  "content": "4",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-prix",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "KwUtV",
+                              "name": "texte",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": "$space-4",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "MH8pB",
+                                  "name": "titre-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "La touche finale",
+                                  "lineHeight": "$leading-h3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h3",
+                                  "fontWeight": "$graisse-display"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "z1ExDl",
+                                  "name": "corps-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, les doigts encore pleins de peinture.",
+                                  "lineHeight": "$leading-small",
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": "$text-small",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "oTYIO",
+                      "name": "sortie",
+                      "width": "fill_container",
+                      "children": [
+                        {
+                          "id": "z3nXD",
+                          "type": "ref",
+                          "ref": "DABzB",
+                          "name": "lien-histoire-atelier",
+                          "descendants": {
+                            "g5v8E": {
+                              "content": "Lire l'histoire de l'atelier"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "p14PO",
+          "name": "label",
+          "fill": "$encre",
+          "content": "APRÈS — BAIN ROSE-PALE",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-label",
+          "fontWeight": "$graisse-medium",
+          "letterSpacing": "$tracking-label"
+        },
+        {
+          "type": "frame",
+          "id": "sQFh4",
+          "name": "après-atelier",
+          "clip": true,
+          "width": 1440,
+          "fill": "$rose-pale",
+          "layout": "vertical",
+          "padding": [
+            "$space-96",
+            "$marge-page"
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "i7k8A3",
+              "name": "contenu",
+              "width": "fill_container",
+              "gap": "$space-48",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "T4fYEn",
+                  "name": "colonne-portrait",
+                  "width": 440,
+                  "layout": "vertical",
+                  "gap": "$space-16",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "IfZQW",
+                      "name": "photo/portrait-leane",
+                      "clip": true,
+                      "width": 440,
+                      "height": 550,
+                      "fill": "$rose",
+                      "cornerRadius": "$radius-16",
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "z3mlHx",
+                          "x": 175,
+                          "y": 205,
+                          "name": "tracé-goutte",
+                          "geometry": "M50 0c0 0 50 62 50 105 0 28-22 50-50 50-28 0-50-22-50-50 0-43 50-105 50-105z",
+                          "viewBox": [
+                            0,
+                            0,
+                            100,
+                            155
+                          ],
+                          "width": 90,
+                          "height": 140,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "kBnAP",
+                      "name": "note-durée-groupe",
+                      "gap": "$space-8",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "iMHwA",
+                          "name": "note-durée",
+                          "rotation": -2,
+                          "fill": "$encre",
+                          "content": "environ 3 h par bijou",
+                          "fontFamily": "$font-cursive",
+                          "fontSize": "$text-note",
+                          "fontWeight": "$graisse-normale"
+                        },
+                        {
+                          "type": "path",
+                          "id": "eiBds",
+                          "name": "tracé-cœur",
+                          "rotation": -8,
+                          "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                          "viewBox": [
+                            0,
+                            0,
+                            50,
+                            50
+                          ],
+                          "fill": "$rose",
+                          "width": 18,
+                          "height": 18,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinejoin": "round"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ltMAy",
+                      "name": "décor-geste-pinceau",
+                      "clip": true,
+                      "width": 280,
+                      "height": 180,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "izyQY",
+                          "x": 24.9544,
+                          "y": 118.7111,
+                          "name": "tracé-geste-1",
+                          "geometry": "M0 5.02084c16.98659-0.96515 74.50938-4.24664 84.16086-4.82573 1.9303-0.09653 7.62466-0.38606 8.01071 0 0.38605 0.38605-2.02683 1.15817-4.34317 1.25469-13.02948 0.38606-45.94101 2.6059-83.48523 4.53619",
+                          "width": 92.2125,
+                          "height": 5.986,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "ZELVZ",
+                          "x": 106.9765,
+                          "y": 113.1153,
+                          "name": "tracé-geste-2",
+                          "geometry": "M5.99933 6.85255c2.41287-3.18498 3.47452-6.85255 5.11526-6.85255 1.64072 0 3.08847 0.77213 2.12332 3.37802-0.96515 2.6059-8.49329 13.60857-9.65145 15.0563-1.1582 1.44772-4.4397-0.96515-3.37802-2.31635 0.38605-0.77212 2.70239-4.72922 5.79089-9.26542z",
+                          "width": 13.5482,
+                          "height": 18.8817,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "VPox5",
+                          "x": 118.2842,
+                          "y": 107.3244,
+                          "name": "tracé-geste-3",
+                          "geometry": "M3.37802 4.15013l-3.37802 0.96515 0-1.2547 2.41287-3.86058 0.96515 0 2.12335 0.96515 0 1.25468-2.12335 3.8606 0-1.9303z",
+                          "width": 5.5014,
+                          "height": 6.0804,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "WxO8n",
+                          "x": 122.9047,
+                          "y": 114.2734,
+                          "name": "tracé-geste-4",
+                          "geometry": "M0.59122 0c-0.48257 1.73727 5.88742 10.23058 5.88742 12.3539-0.67563 0-8.68634-11.0992-5.88742-10.4236l0-1.9303z",
+                          "width": 6.4786,
+                          "height": 12.3539,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "omtCf",
+                          "x": 136.9115,
+                          "y": 123.5824,
+                          "name": "tracé-geste-5",
+                          "geometry": "M0 3.04493c3.66757 1.06166 10.52014 6.65952 12.45041 5.98389 1.44772-0.57907-7.52814-4.15012-8.68631-5.30829-3.0885-4.72922 8.30023-6.36996 8.20373 3.76407",
+                          "width": 12.608,
+                          "height": 9.0852,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "tRirM",
+                          "x": 149.1689,
+                          "y": 120.013,
+                          "name": "tracé-geste-6",
+                          "geometry": "M0 12.88775c2.02683-0.19302 8.68631 2.70242 9.36194-2.50937 0.57907-7.04557-7.43164-8.68633-5.88742-9.94102 0.77213-1.06166 12.25736 0 14.47723 1.15818 2.21985 1.15817 15.53888 12.06434 27.41019 17.0831 11.77481 5.1153 17.7587 5.79089 24.61123 6.17694 5.69437 0.38608 3.95712 0.09653 8.20377 2.5094 2.89545 2.12332 19.97855 13.60858 24.32172 17.0831 0.6756 0.6756-0.48258-0.28955 3.66754 3.185",
+                          "width": 106.1662,
+                          "height": 47.6331,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "MzzAu",
+                          "x": 207.5603,
+                          "y": 133.7987,
+                          "name": "tracé-geste-7",
+                          "geometry": "M0 0.06726c1.83377-0.19302 7.43164 0 7.23862 0.96515-1.8338 0.38605-7.14209-0.38605-7.23862-0.96515z",
+                          "width": 7.2435,
+                          "height": 1.1363,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "j6e36h",
+                          "x": 152.5469,
+                          "y": 111.7641,
+                          "name": "tracé-geste-8",
+                          "geometry": "M0 0c6.08041 0 11.77481 0.77211 20.46112 7.04556 7.81769 6.08043 18.14478 13.22253 32.62198 15.0563",
+                          "width": 53.0831,
+                          "height": 22.1019,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "fdHnD",
+                          "x": 142.4949,
+                          "y": 111.3953,
+                          "name": "tracé-geste-9",
+                          "geometry": "M83.40318 34.34201c9.65146 0.19302 25.47989 6.36997 26.34851 7.72116 3.37802 1.54422-5.01873-4.53619-17.46914-7.62466-6.27347-1.3512-8.97589-1.44772-14.67026-1.64075-12.06433-0.0965-18.04825-1.2547-28.95441-5.98392-7.04556-3.185-20.36462-12.06434-22.68097-14.47721-1.9303-1.3512-1.73724-8.4933-2.21982-8.68632-0.48257-0.19302-0.38611 1.3512 0 3.76407-1.1582 3.08849-9.84454 0.48257-10.80966-1.44773-0.96515-1.9303 1.3512-7.43163-1.54425-5.59784-1.06168 1.44772 2.12332 6.17694-2.79892 7.14209l-0.48257 0c-1.9303-1.9303-2.60593-3.185-5.79089-4.82574-2.6059-2.6059-3.37802-1.2547-0.48258 1.44772 2.89545 2.21983 8.39679 5.3083 7.62467 12.16086-0.48257 4.82574-5.21179 4.43966-2.7024 4.43966",
+                          "width": 110.5031,
+                          "height": 42.3101,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "WgaFE",
+                          "x": 117.6591,
+                          "y": 118.8711,
+                          "name": "tracé-geste-10",
+                          "geometry": "M2.07276 0.03503c-3.47452-0.28955-2.41287 1.3512 1.9303 0",
+                          "width": 4.0031,
+                          "height": 0.5762,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "Ee3x6",
+                          "x": 125.3297,
+                          "y": 109.2547,
+                          "name": "tracé-geste-11",
+                          "geometry": "M0 0c2.79895 0.28954 5.30832 1.3512 8.20377 1.64075",
+                          "width": 8.2038,
+                          "height": 1.6407,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "YMc3q",
+                          "x": 119.8529,
+                          "y": 91.882,
+                          "name": "tracé-geste-12",
+                          "geometry": "M3.83613 2.41287c-5.1153 1.83377-5.69437 12.54692 1.83377 12.54692 7.52814 0 8.20377-0.6756 8.20377-5.79089 0-6.27345 0-7.04558-8.97587-7.2386l0.28952-0.77213 3.8606-1.15817",
+                          "width": 13.8737,
+                          "height": 14.9598,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "h0ReTK",
+                          "x": 135.6568,
+                          "y": 77.4972,
+                          "name": "tracé-geste-13",
+                          "geometry": "M0 12.93707l7.23859-11.09918 0.48257-0.48257c3.0885 0.19302 6.65952-1.44772 6.65952-1.35122 0 0.09653-0.28952 9.26541-0.57911 10.52012-0.28952 0.96515-2.79892 1.3512-4.15011 1.83377 6.27347 0 9.65149 2.02681 17.85522 1.83378 8.10724-0.09651 16.50403-3.18498 16.31101-5.11528-0.28955-0.5791-2.31638-0.09653-2.31638-0.09652",
+                          "width": 43.821,
+                          "height": 14.2047,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "IkqPp",
+                          "x": 120.3206,
+                          "y": 79.5196,
+                          "name": "tracé-geste-14",
+                          "geometry": "M16.78391 11.20426c2.79895-0.28955 5.30832-0.86864 7.72119-0.77212m-22.00534 3.57104c-0.19305-0.19302 1.83377-2.12332 0.28952-4.34315-1.54425-2.21985-4.15012-4.05362-1.93029-3.57105 2.21985 0.96515 2.99197 4.92226 5.30832 3.37802 2.31635-2.02683 4.72922-6.75604 5.30831-8.20376 0.57907-1.44771 1.3512-1.25468 3.37803-1.25469 1.54422 0.19302-4.34317 8.10724-5.7909 11.0992 0.09653 0.48257-0.19305 1.73726 6.36997 0.09651",
+                          "width": 24.5051,
+                          "height": 14.0032,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "pFlvY",
+                          "x": 157.3723,
+                          "y": 13.3624,
+                          "name": "tracé-geste-15",
+                          "geometry": "M0.00035 41.84407c-0.0965-1.3512 19.68903-33.87667 20.46115-34.55229 2.12329-2.99195 4.72922-9.45844 5.11527-6.56299 1.06168 0.96515-2.21982 5.98391-3.37802 8.30027l-21.0402 33.00803 5.59784-0.67559c6.27347-0.86863 11.77481-3.86059 18.53086 2.12332 2.21982 1.9303 4.63269 4.72923 7.04556 7.04558 8.20374 7.33513 21.32977 16.9866 26.05896 21.13671 8.30029 6.36998 21.71582 17.56571 39.57104 19.88205 1.25469 0.28955-1.64075-0.38605 0.48258 0",
+                          "width": 98.4454,
+                          "height": 91.6236,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "OXHIa",
+                          "x": 129.66,
+                          "y": 55.689,
+                          "name": "tracé-geste-16",
+                          "geometry": "M19.02637 0c0.86862 0.57909-10.61664 17.37265-12.54694 20.75067-1.93027 3.37802-2.89542 2.02681-3.37799 0.96515-0.28955-1.15817-1.83377-7.62466-2.89545-7.72118-1.06168-0.48257 2.31635 8.30026 2.50937 9.74799",
+                          "width": 19.0732,
+                          "height": 23.7426,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "ZFaGL",
+                          "x": 109.5941,
+                          "y": 56.1716,
+                          "name": "tracé-geste-17",
+                          "geometry": "M39.09226 0c-8.68634 0.96515-22.39145 2.99196-25.57641 4.82573-2.99194 1.35121-4.34317 6.85255-7.23859 12.73994-4.63272 9.36194-6.37 11.0992-6.27347 16.69706 0 1.06168 0.28952 5.59787 0.5791 7.23861",
+                          "width": 39.0923,
+                          "height": 41.5013,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "siDnM",
+                          "x": 110.563,
+                          "y": 94.3914,
+                          "name": "tracé-geste-18",
+                          "geometry": "M0 4.24664l0 6.75603c0 3.66756 0.28952 5.69437 3.8606 5.88741 3.57104-0.19304 4.24664-1.9303 5.79086-4.92226 0.5791-0.86862-1.64075-2.12332-1.44772-5.59786 0.19305-3.47453 2.31635-5.79089 4.72921-6.36996",
+                          "width": 12.933,
+                          "height": 16.8901,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "E48Ef",
+                          "x": 121.5354,
+                          "y": 109.2141,
+                          "name": "tracé-geste-19",
+                          "geometry": "M13.63885 1.97091c3.86057 0.48257 6.46649 0.38606 7.72116 0.38606m-17.37265-2.31634c-1.3512-0.48257-2.89545 3.47453-3.66754 4.43968-0.77213 0.96515 0.0965 3.37801 0.09649 3.378",
+                          "width": 21.36,
+                          "height": 7.8583,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "uTr2j",
+                          "x": 135.1708,
+                          "y": 111.2815,
+                          "name": "tracé-geste-20",
+                          "geometry": "M0.38951 0c-0.96515 0.28954 0.09653 1.25468 0.6756 3.76407 1.3512 4.82573 0.77213 10.61662-0.96515 11.67828",
+                          "width": 1.8117,
+                          "height": 15.4424,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "FgOTZ",
+                          "x": 144.0584,
+                          "y": 56.1716,
+                          "name": "tracé-geste-21",
+                          "geometry": "M0.28474 55.20644c1.9303 0 4.82574-1.15819 10.61664-0.09652m-5.21179-35.22789c-5.11533 2.12332-6.85257 2.79894-4.92227 0 1.9303-2.99196 9.74799-15.82841 11.58176-19.01341l0.86865-0.86862",
+                          "width": 13.2177,
+                          "height": 55.2064,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "ge6uh",
+                          "x": 149.8445,
+                          "y": 66.3056,
+                          "name": "tracé-geste-22",
+                          "geometry": "M0.0965 8.97588c2.60593-2.70242 3.0885-8.68633 5.0188-8.97588 0.48257 0.38605-0.09653 5.69437-5.1153 9.74799",
+                          "width": 5.253,
+                          "height": 9.748,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "sY2EH",
+                          "x": 150.134,
+                          "y": 69.2011,
+                          "name": "tracé-geste-23",
+                          "geometry": "M0.09653 8.20375c1.06165 0-0.09653 8.78284-0.09653 11.58177 0 1.44771 2.12332 1.25468 7.04556 1.93028 8.30026 0.96515 8.39679-0.09651 8.78284-0.96514 0.5791-2.50938-0.7721-18.14476 2.99197-20.75066 1.06168 0.38605-1.44772 5.50133-1.54425 18.82037-0.28952 4.82573 0.77213 2.50938 1.9303 2.41286 4.72922-3.28149 5.79089-9.26541 6.27347-9.55495 0.48257-0.28954 0 2.41287-0.48258 2.89545",
+                          "width": 25.6798,
+                          "height": 22.0986,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "JqDQN",
+                          "x": 86.7239,
+                          "y": 149.3083,
+                          "name": "tracé-geste-24",
+                          "geometry": "M0 0c0.57907 3.7641 8.97588 5.88742 17.56567 5.69437 8.68634-0.38605 12.93298-2.6059 12.93299-4.72922",
+                          "fill": "#f7a8d8",
+                          "width": 30.4987,
+                          "height": 5.7065,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "W91ZS",
+                          "x": 85.9605,
+                          "y": 149.3083,
+                          "name": "tracé-geste-25",
+                          "geometry": "M0.08778 0c-0.86865 3.185 4.72922 6.17694 15.92493 6.27347 8.58981 0 16.31097-1.83377 15.7319-5.30832",
+                          "fill": "#f7a8d8",
+                          "width": 31.7752,
+                          "height": 6.2735,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "B6PlJK",
+                          "x": 105.2547,
+                          "y": 142.9985,
+                          "name": "tracé-geste-26",
+                          "geometry": "M12.06433 7.37149c-1.44769-5.01877-9.55493-7.72116-12.06433-7.33511",
+                          "fill": "#ffe066",
+                          "width": 12.0643,
+                          "height": 7.3715,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "ZZRc5",
+                          "x": 86.5308,
+                          "y": 143.0165,
+                          "name": "tracé-geste-27",
+                          "geometry": "M12.93297 0.01837c-4.63272-0.28955-12.64345 2.89545-12.93297 5.98392",
+                          "fill": "#a8e063",
+                          "width": 12.933,
+                          "height": 6.0023,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "Avfre",
+                          "x": 99.4638,
+                          "y": 131.6566,
+                          "name": "tracé-geste-28",
+                          "geometry": "M0 11.86079c1.54424-6.85257 2.50938-8.10724 4.82573-10.23056 2.31635-2.12335 4.34317-2.41287 4.34317 0.57907-1.54425 8.39679-8.10724 9.36194-8.30028 11.19575 1.54424 0 2.99196-1.8338 5.69435-1.54426",
+                          "fill": "#7fd8d8",
+                          "width": 9.1689,
+                          "height": 13.405,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "TXoJg",
+                          "x": 105.2547,
+                          "y": 142.9383,
+                          "name": "tracé-geste-29",
+                          "geometry": "M0 0c2.31635 0.09653 5.79089 1.06168 5.79089 1.06168",
+                          "width": 5.7909,
+                          "height": 1.0617,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        },
+                        {
+                          "type": "path",
+                          "id": "z2rhy",
+                          "x": 110.2735,
+                          "y": 98.1543,
+                          "name": "tracé-geste-30",
+                          "geometry": "M0 0.00119c1.35123-0.09653 2.79892 5.69437 0.77213 9.65147l-0.38605 1.54424",
+                          "width": 1.7768,
+                          "height": 11.1969,
+                          "stroke": "$encre",
+                          "strokeWidth": "$trait",
+                          "strokeLinecap": "round"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ylo6a",
+                  "name": "colonne-récit",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "vertical",
+                  "gap": "$space-48",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "YNSDn",
+                      "name": "en-tête",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": "$space-16",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "l1n7mA",
+                          "name": "sur-titre",
+                          "fill": "$rose-encre",
+                          "content": "L'ATELIER",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-label",
+                          "fontWeight": "$graisse-medium",
+                          "letterSpacing": "$tracking-label"
+                        },
+                        {
+                          "type": "text",
+                          "id": "A5ppt",
+                          "name": "titre",
+                          "fill": "$encre",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Chaque bijou passe entre mes mains",
+                          "lineHeight": "$leading-h2",
+                          "fontFamily": "$font-display",
+                          "fontSize": "$text-h2",
+                          "fontWeight": "$graisse-display",
+                          "letterSpacing": "$tracking-h2"
+                        },
+                        {
+                          "type": "text",
+                          "id": "WMAC4",
+                          "name": "chapô",
+                          "fill": "$encre",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Je m'appelle Léane. Je peins et j'assemble chaque pièce dans mon atelier, à Nantes. Et si tu m'écris : c'est moi qui lis, c'est moi qui réponds.",
+                          "lineHeight": "$leading-body",
+                          "fontFamily": "$font-sans",
+                          "fontSize": "$text-body",
+                          "fontWeight": "$graisse-normale"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "zxn4Z",
+                      "name": "les-quatre-étapes",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": "$space-32",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "XOjhF",
+                          "name": "étape-1",
+                          "width": "fill_container",
+                          "gap": "$space-16",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "MdAEi",
+                              "name": "numéro",
+                              "width": 40,
+                              "height": 40,
+                              "fill": "$rose",
+                              "cornerRadius": "$radius-pilule",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Nmnfi",
+                                  "name": "chiffre",
+                                  "fill": "$encre",
+                                  "content": "1",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-prix",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Yv7hN",
+                              "name": "texte",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": "$space-4",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "gf5Ii",
+                                  "name": "titre-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "D'abord, une idée",
+                                  "lineHeight": "$leading-h3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h3",
+                                  "fontWeight": "$graisse-display"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "G1Vr7",
+                                  "name": "corps-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Une couleur croisée dans la rue, un motif sur un tissu, un rêve… Je laisse l'inspiration venir, sans forcer.",
+                                  "lineHeight": "$leading-small",
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": "$text-small",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "J8zMSY",
+                          "name": "étape-2",
+                          "width": "fill_container",
+                          "gap": "$space-16",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "LqxY6",
+                              "name": "numéro",
+                              "width": 40,
+                              "height": 40,
+                              "fill": "$rose",
+                              "cornerRadius": "$radius-pilule",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "QaIhj",
+                                  "name": "chiffre",
+                                  "fill": "$encre",
+                                  "content": "2",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-prix",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "zIRoJ",
+                              "name": "texte",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": "$space-4",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "mgR2p",
+                                  "name": "titre-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Le bon matériel",
+                                  "lineHeight": "$leading-h3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h3",
+                                  "fontWeight": "$graisse-display"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "C8iu0p",
+                                  "name": "corps-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Plastique fou, peinture, perles : je choisis chaque élément un par un, avec soin.",
+                                  "lineHeight": "$leading-small",
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": "$text-small",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "kSdpx",
+                          "name": "étape-3",
+                          "width": "fill_container",
+                          "gap": "$space-16",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "V9g2f4",
+                              "name": "numéro",
+                              "width": 40,
+                              "height": 40,
+                              "fill": "$rose",
+                              "cornerRadius": "$radius-pilule",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "ahBsH",
+                                  "name": "chiffre",
+                                  "fill": "$encre",
+                                  "content": "3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-prix",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "E3Ixv9",
+                              "name": "texte",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": "$space-4",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Ez2cZ",
+                                  "name": "titre-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "La cuisson et l'assemblage",
+                                  "lineHeight": "$leading-h3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h3",
+                                  "fontWeight": "$graisse-display"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "I05vYo",
+                                  "name": "corps-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Chaque bijou a sa propre recette de fabrication — c'est ce qui rend chaque pièce unique.",
+                                  "lineHeight": "$leading-small",
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": "$text-small",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "C11n8u",
+                          "name": "étape-4",
+                          "width": "fill_container",
+                          "gap": "$space-16",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "aDXMy",
+                              "name": "numéro",
+                              "width": 40,
+                              "height": 40,
+                              "fill": "$rose",
+                              "cornerRadius": "$radius-pilule",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "FyXqy",
+                                  "name": "chiffre",
+                                  "fill": "$encre",
+                                  "content": "4",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-prix",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "IPLzP",
+                              "name": "texte",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": "$space-4",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "pGMIj",
+                                  "name": "titre-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "La touche finale",
+                                  "lineHeight": "$leading-h3",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": "$text-h3",
+                                  "fontWeight": "$graisse-display"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "YSRQ8",
+                                  "name": "corps-étape",
+                                  "fill": "$encre",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, les doigts encore pleins de peinture.",
+                                  "lineHeight": "$leading-small",
+                                  "fontFamily": "$font-sans",
+                                  "fontSize": "$text-small",
+                                  "fontWeight": "$graisse-normale"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vv0NG",
+                      "name": "sortie",
+                      "width": "fill_container",
+                      "children": [
+                        {
+                          "id": "vQbwy",
+                          "type": "ref",
+                          "ref": "DABzB",
+                          "name": "lien-histoire-atelier",
+                          "descendants": {
+                            "g5v8E": {
+                              "content": "Lire l'histoire de l'atelier"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "PYcNu",
+          "name": "légende",
+          "layout": "vertical",
+          "gap": "$space-8",
+          "children": [
+            {
+              "type": "text",
+              "id": "ZwuRr",
+              "name": "ajoute",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": 1440,
+              "content": "Ajoute : une surface colorée pleine largeur en position 5, là où la page retombait en papier entre l'or des types et l'or de la FAQ.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Q8Elr5",
+              "name": "coûte",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": 1440,
+              "content": "Coûte : un fond de section en code, et le réglage des transitions d'assemblage autour de l'atelier (types→atelier et atelier→FAQ deviennent or→rose-pale et rose-pale→papier) — les plis mobiles sont à re-relever si prise.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Dgm7t",
+              "name": "remplacerait",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": 1440,
+              "content": "Remplacerait : le fond papier de la section. Réversible en retirant le fill. Contrastes tenus : encre/rose-pale 18,21:1, le rose des pastilles reste un aplat décoratif.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
     }
   ],
   "themes": {
