@@ -3,6 +3,21 @@
 Travaille dans `01-hero/desktop` et `01-hero/mobile`. Utilise les composants et les variables déjà
 présents dans le fichier. Respecte l'univers déjà chargé.
 
+## D'abord : la piste retenue du tour 1a
+
+Si `ETAT.md` porte une **piste retenue du tour 1a** (« Piste retenue du tour 1a : … »), elle est
+ton **brief de forme** : exécute sa direction — motif, composition, place de la marchandise —
+greffes listées comprises. Les contraintes ci-dessous s'appliquent à elle, elles ne la remplacent
+pas.
+
+⚠️ Si les frames `01a-divergence/*` sont **dessinées** mais que la ligne d'`ETAT.md` est absente ou
+dit **« EN ATTENTE »**, **arrête-toi et dis-le** : l'arbitrage n'est pas pris, et il n'est pas à
+toi — choisir ici referait exactement ce que le tour 1a existe pour empêcher. Ce n'est pas une question à poser en
+fin de tour : c'est le seul cas de blocage légitime de la série.
+
+Si les frames `01a-divergence/*` sont vides ou absentes (rejeu sans divergence), ce prompt seul
+fait foi.
+
 ## Le test que ce hero doit passer
 
 Montre la maquette 5 secondes à quelqu'un, masque-la, demande : **« qu'est-ce que cette boutique
@@ -40,9 +55,15 @@ porte sa portée et n'est jamais un mot unique.** « Voir les 48 créations » p
 
 **Contraint** :
 
-1. La hauteur du hero est libre **à condition que la section suivante soit visiblement coupée par la
-   ligne de flottaison**. 6 utilisateurs sur 8 n'ont pas compris qu'une page défilait — le remède
-   établi est géométrique (le débord), pas iconographique : **pas de flèche « scroll »**.
+1. La hauteur du hero est libre **à condition que le premier écran porte un signal de continuation
+   géométrique** : quelque chose de la suite déborde sous la ligne de flottaison. 6 utilisateurs
+   sur 8 n'ont pas compris qu'une page défilait — le remède établi est géométrique, pas
+   iconographique : **pas de flèche « scroll »**.
+   ⚠️ **Ce signal ne peut PAS être la coupe des photos de la frise** — tranché le 2026-08-18,
+   après qu'Adrien l'a demandé deux fois : les tuiles du hero sont **entières** sur les deux
+   formats. C'est une décision, pas une régression, et la grille § 9 en retire sciemment 1 pt.
+   Cherche le signal ailleurs : l'en-tête de la section suivante qui dépasse sous le pli, un
+   débord de la chaîne seule (l'encre, pas les tuiles), un élément de décor traversant.
 2. Sur mobile 390 × 844, entre la barre haute et la barre basse de 56 px, on doit voir le bloc titre
    **entier**, et de la marchandise entamée — le haut d'une pièce si la grille monte dans le hero,
    le haut de la section 2 sinon. Si la copie s'allonge, c'est elle qui cède, pas ce budget.
@@ -61,6 +82,7 @@ Le bloc de contrôle commun est joint plus bas dans ce prompt ; ajoute-lui ces p
 
 ```
 - [ ] le test des 5 secondes est passable sur la maquette mobile seule
-- [ ] la section 2 est visiblement coupée par la flottaison, sans flèche
+- [ ] un signal de continuation déborde sous la flottaison, sans flèche — et ce n'est PAS
+      la coupe des tuiles de la frise (arbitrage du 2026-08-18 : elles restent entières)
 - [ ] le CTA porte une portée chiffrée
 ```

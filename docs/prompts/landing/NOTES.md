@@ -551,3 +551,204 @@ Les 9 items du backlog appliqués (détail et vérifications item par item dans
   (tours 3/6), non « corrigée ».
 - ⚠️ **Toujours pas de Cmd+S** : cette passe vit aussi en mémoire d'app. Cmd+S puis commit
   du `.pen` = le seul item restant du backlog.
+
+## Passe du 2026-08-18 — franco abandonné, coupe hero rendue au desktop
+
+Deux gestes demandés par Adrien, plus la mise en cohérence qui va avec.
+
+- **Coupe du premier écran desktop rétablie** (critère § 1.5, illusion de complétude). Une passe
+  antérieure de la journée avait décadré les tuiles pour « réparer » des photos coupées — or la
+  coupe est le signal de continuation, pas un bug. Tuiles rendues à 230 px de haut, tops
+  échelonnés 52-95, chaîne y12, attaches recalculées : les **7 tuiles traversent le pli 800**
+  (bas 282 à 325 pour une frise de 254). Propagé à `08-assemblage/desktop`. Le mobile, lui,
+  était déjà correct (tuiles coupées par la barre basse à 788).
+- **Franco de port ABANDONNÉ** (arbitrage nº 1, tranché par Adrien). `{franco}` n'avait aucune
+  source dans `shipping-rates.ts` — la maquette promettait une offre inexistante.
+  - Bandeaux des deux barres hautes (`h6y2m9`, `qLf00`) → « Livraison {frais} · expédié sous
+    {délai} ». Le bandeau porte maintenant **deux** valeurs à SSOT au lieu d'une promesse fausse,
+    ce qui solde aussi le ◐ « coût de port ET délai » de la contre-visite.
+  - Blocs « En pratique » (`WztYI`, `Ud0eJ`, `FaZ52`, `mwIMP`) → « Livraison {frais}, partout en
+    France et en Union européenne ».
+  - Réponse FAQ : maître `MDCJE` **et les 4 instances qui l'overridaient** (`G3ReQw/MDCJE`,
+    `RJcPg/MDCJE`, `gwrtm/MDCJE`, `NScXk/MDCJE`). ⚠️ Piège : le balayage sans `resolveInstances`
+    renvoyait 0 occurrence alors que la FAQ affichait encore le franco — **toujours re-balayer
+    avec `resolveInstances: true`** après un changement de copie sur un maître.
+  - Balayage final : `franco|offerte` = **0**, instances résolues comprises.
+- Docs alignés : `HANDOFF.md` (arbitrage nº 1 tranché), `README.md`, `06-faq.md` (glossaire des
+  placeholders), `09-ameliorations.md` (§ 3 marqué caduc), `11-livraison-au-code.md`.
+- **Nouveau : `11-livraison-au-code.md`** — les 24 critères Performance / SEO / Accessibilité que
+  la maquette ne peut pas tenir seule, avec leur méthode de vérification. 16 nœuds portent
+  désormais un `context` (frises = LCP/lazy/ratio, assemblages = @graph, barres = scroll-padding
+  et cibles 24 px).
+- ⚠️ **Le rendu des nœuds NOUVELLEMENT insérés est cassé dans cette session de l'app** : une
+  planche `00-systeme/livraison-au-code` créée puis exportée est sortie entièrement blanche,
+  alors que `Get(..., {resolveVariables:true})` rendait des données correctes et qu'une planche
+  existante s'exporte parfaitement. Les **mises à jour de propriétés sur nœuds existants
+  fonctionnent** (hero, franco : vérifiés à l'export). La planche a été supprimée et son contenu
+  livré en markdown. À re-tester après redémarrage de l'app.
+- ⚠️ **Toujours pas de Cmd+S.**
+
+## Passe du 2026-08-18 (suite) — tuiles du hero rendues ENTIÈRES
+
+Adrien signale une seconde fois les photos coupées du hero. J'avais expliqué au passage précédent
+que la coupe était délibérée (§ 1.5, illusion de complétude) ; la demande étant réaffirmée, elle
+est tranchée : **les tuiles sont entières**, sur les deux formats et sur les cinq frises.
+
+- **Desktop** (`q3d3a8`, `DOs94`) : tuiles **184×230 → 148×185** pour tenir dans les 254 px de
+  frise SANS casser le ratio 4:5 (verrouillé par la spec et par `11-livraison-au-code.md`) ;
+  re-centrées dans leur créneau de 208 px (x = centre − 74), donc les attaches ne bougent pas.
+  Tops échelonnés 28-58, chaîne y12, attaches recalculées. Bas des tuiles : 213 à 243 ≤ 254 ✓
+- **Mobile** (`Y3kcO`, `Ag3oA`, `t0LzZ`) : dimensions inchangées (168×210, déjà au ratio) ; tops
+  ramenés à 40/56. Bas 250 et 266 ≤ 273 ✓ — plus rien ne touche la barre basse.
+- Motifs goutte re-centrés (desktop 42/60, mobile y73).
+- Export desktop + mobile vérifié : tuiles entières, chaîne et attaches lisibles.
+
+⚠️ **Coût mesuré, accepté** : le premier écran perd le signal de continuation (grille § 1.5),
+soit −1 pt → **82/100**. Inscrit comme arbitrage nº 2 du HANDOFF pour qu'aucune passe ultérieure
+ne le "corrige" par réflexe. Si un signal de scroll doit revenir, il devra venir d'ailleurs que
+de la coupe des photos — pistes : laisser dépasser l'en-tête de la section créations sous le pli,
+ou un débord partiel de la chaîne seule (l'encre, pas les tuiles).
+
+Les 16 avertissements restants (`touche-de-pinceau`, `tracé-flèche`, `note-manuscrite`) sont la
+famille bénigne connue — de l'encre décorative qui déborde sa boîte à dessein, aucun ancêtre ne
+la clippe. Présents avant la passe, non touchés.
+
+## Audit du dossier — 2026-08-19 (hors série) : la liberté créative
+
+Audit du dossier comme **système de prompts**, pondéré sur la demande d'Adrien (« laisser la
+liberté créative à l'IA ») : **73/100**, rapport `AUDIT-DOSSIER-2026-08-19.md`. Les trois lots du
+plan appliqués le même jour → 100/100 sur cette grille.
+
+- **Constat central, mesuré** : `grep` « deux propositions | trois directions | alternative » sur
+  les 16 fichiers de prompt = **0 occurrence**. La série demandait onze fois un résultat, jamais
+  une fourche. Et les seuls gestes vraiment créatifs qu'elle a produits (frange de pampilles,
+  squiggle, planche motion, cœur) viennent des **trois** endroits où un prompt invitait
+  explicitement à créer. La production créative suit les invitations, pas les interdits.
+- **Second constat** : sur les 20 items de `_checklist.md`, **zéro** portait sur la désirabilité —
+  20 garde-fous, et le seul item de style était négatif. Une checklist qui n'attrape que l'échec
+  produit ce qu'elle sait mesurer : une section qui ne se trompe pas et qui ne dit rien.
+- **Nouveaux fichiers** : `01a-divergence.md` (trois pistes de premier écran, ⛔ pas de piste de
+  sécurité — **posé, jamais exécuté**), `_signature.md` (grille de désirabilité /20, contrepoids
+  de la § 9 — **pas encore passée sur la maquette**), `ETAT.md` (état courant ≤ 80 lignes),
+  `AUDIT-DOSSIER-2026-08-19.md`.
+- **`_checklist.md`** : bloc **SIGNATURE** en tête (test de substitution, geste propre nommé, une
+  idée par section, coût de la sobriété justifié) — le seul bloc qui peut faire REFAIRE une
+  section — plus un bloc PROPOSITION en pied.
+- **`_conduite.md`** : **droit de proposition**, une par tour, en frame `proposition/<tour>-<sujet>`
+  hors section et hors planches système. Motif : la règle « ne touche à rien » ne laissait comme
+  issue que le signalement, et personne n'arbitre une idée qu'il n'a pas vue.
+- **`00-bootstrap.md`** : deux planches d'accent (`00-systeme/accents-bicolore` et `-rotation`),
+  contrastes recalculés des deux — l'arbitrage bloquant se prendra sur pièce. Plus les 3 frames
+  vides du tour 1a et la création d'`ETAT.md`.
+- **`landing.sh`** : injecte `ETAT.md` + les **deux dernières entrées** du carnet au lieu de
+  `NOTES.md` entier — **66 413 → 4 689 caractères** de journal par tour (le contexte de marque
+  pèse 16 922 : l'historique était les trois quarts du prompt). Plus `01a` dans `effort_for`
+  (xhigh), garde **one-shot** sur 09/10 (`PEN_FORCE=1` pour passer outre), séquence complète
+  = `00 · 01a · 01 → 08`.
+- **Deux contradictions du corpus soldées** : `01-hero.md` exigeait la coupe de la frise que
+  l'arbitrage du 2026-08-18 interdit (réécrit en « signal de continuation géométrique », avec
+  l'interdit explicite et trois pistes de remplacement) ; « avec amour » est à la fois ⛔ de
+  l'univers et copie imposée du tour 5 — l'exception est maintenant écrite **des deux côtés**,
+  sans ouvrir de droit ailleurs, en attendant l'arbitrage de Léane.
+- **Hygiène** : `11-livraison-au-code.md` ajouté à git (il était untracked), README complété
+  (6 fichiers manquants à la carte, note 79 → **82**, statut et dates), `HANDOFF.md` renuméroté,
+  commentaire `.prettierignore` corrigé (« non trackés » était faux depuis le 2026-08-17).
+- ⚠️ **À faire ensuite, dans cet ordre** : passer `_signature.md` sur `landing.pen` (la maquette
+  est notée en conformité, pas en désirabilité — c'est la passe qui dira si le diagnostic vaut
+  aussi pour le livrable), puis les 5 arbitrages Léane d'`ETAT.md`, le nº 1 en premier.
+
+## Contre-visite du dossier — 2026-08-19 (hors série) : même grille, 88/100 → 100, et passe de signature 12/20
+
+Contre-visite de l'audit du matin (même grille — on n'en réinvente pas) : le plan du matin était
+réellement appliqué, mais **88/100** — rapport `AUDIT-DOSSIER-2026-08-19b.md`. Plan appliqué le
+jour même.
+
+- **Défaut principal (manqué le matin)** : `landing.sh` enchaînait `01a → 01` d'une traite alors
+  que `01a` dit « tu ne choisis pas » — la fourche n'avait pas d'arbitre. Corrigé : la séquence
+  sans argument s'arrête après `01a` ; `./landing.sh suite` joue `01 → 08` ; le tour 1 lit
+  `Piste retenue du tour 1a : …` dans `ETAT.md` et **refuse de tourner** sur « EN ATTENTE ».
+- **Passe de signature** (`_signature.md`, première application au livrable) : **12/20** —
+  substitution 4/6 (créations et FAQ substituables), geste propre 4/6 (créations et FAQ sans
+  geste), idée 2/4 (créations = gabarit), sobriété 2/4 (la grille au cordeau n'a aucune
+  justification écrite). Sections faibles : **créations** (grave, c'est elle qui convertit), FAQ.
+- **Deux propositions dessinées** (mécanisme du droit de proposition, sections figées
+  intouchées) : `proposition/contre-visite-creations` (« la grille respire » — tops 0·24·8·32,
+  écho de la frange du hero) et `proposition/contre-visite-faq` (« répondue comme un message » —
+  bulle signée « — Léane »). Arbitrages nº 6-7 d'`ETAT.md`. Les deux prises ⇒ ~18/20 à re-vérifier.
+- **Les planches d'accent n'existaient pas dans le `.pen`** (le matin les avait ajoutées au
+  prompt, pas au fichier) : `00-systeme/accents-bicolore` et `-rotation` **dessinées**,
+  contrastes recalculés — la rotation ne sait pas écrire (lavande #a996e2 2,51:1, menthe
+  #6ccea6 1,85:1, soleil #eec976 1,54:1 sur papier, aucune déclinaison encre en code).
+  L'arbitrage bloquant nº 1 se prend enfin sur pièce.
+- **Statut de 01a tranché** : instrument de la PROCHAINE refonte, hors décompte de la maquette
+  actuelle (README). Préambule de `_checklist.md` scindé (garde-fous par outil, SIGNATURE par
+  l'écriture — une coche sans sa phrase ne vaut rien). `synclune-systeme.md` : 4,74 → **4,72**
+  (recalculé depuis les hex, c'est le système qui était faux).
+- Décisions prises seul : format `EN ATTENTE — a/b/c` de la ligne d'arbitrage 01a ; propositions
+  en frames plutôt qu'en retouche des sections figées ; rotation rendue rose → lavande → menthe →
+  soleil (l'ordre du dégradé du hero, `section-accents.css`).
+- Non vérifié / en suspens : un `ref` anonyme vide à la racine du `.pen` (`GH7Z7`), origine
+  inconnue, non touché ; le rendu satori réel de la carte OG (inchangé depuis le tour 7).
+
+## 2026-08-19 — proposition « pastilles en gouttes » (carte produit)
+
+Suite d'une note posée sur le composant carte-produit (81/100, grille dérivée des invariants du
+dépôt — session Claude Code) : son déficit signature est « rien au repos », le squiggle n'existe
+qu'au survol, donc jamais sur tactile. Proposition dessinée dans le mécanisme du droit de
+proposition, composant figé intouché.
+
+- **Frame `proposition/carte-pastilles-gouttes`** (`BSC8c`, x 8418 · y 961, à droite de
+  `contre-visite-faq`) : avant/après sur le composant réel (instance vs copie détachée), zoom ×4
+  des pastilles, légende Ajoute/Coûte/Remplacerait. **Arbitrage nº 8 d'`ETAT.md`, non bloquant.**
+  L'idée : la pastille de variante devient une goutte pleine — couleur de CONTENU portée par le
+  motif de la marque, cerclage `$gris` 1 px inchangé, géométrie reprise du `Motif goutte` du
+  composant (`v8zBX`).
+- **Exports du jour dans `apercus/arbitrages/`** (gratuits — `pen interactive` headless, `Export`
+  sans agent) : `accents-bicolore`, `accents-rotation`, `proposition-creations`,
+  `proposition-faq`, `proposition-carte-pastilles-gouttes`. Le pack de la séance Léane est complet.
+- **Pièges re-confirmés** : la frame neuve est sortie BLANCHE au premier `Export` — remède
+  Copy-puis-Delete appliqué (`lwlZ6` → `BSC8c`), c'est bien le protocole. Un `ref` s'insère par
+  l'**id** du composant (`ref:"Trd6e"`), pas par son nom — `ref:"carte-produit"` fait échouer tout
+  le batch (atomique, aucun résidu). Construction via MCP de l'app (ouverte pendant la session —
+  le préflight CLI a bien refusé d'écrire) ; `save()` passé depuis le shell, `.bak-prop-carte`
+  posé avant.
+- En code, si prise : un path unique à la place du `border-radius` du swatch — à embarquer avec
+  le lot carte (variante mobile du favori, interlignage nom/squiggle, overflow « +N »).
+
+## 2026-08-19 — les trois propositions PRISES et APPLIQUÉES (délégation Adrien)
+
+Adrien a délégué l'arbitrage des propositions à la session (« choisis les meilleures et
+applique-les »). Décision : **les trois sont prises** — chacune répond à un manque nommé par la
+passe de signature, coût quasi nul, indépendantes entre elles. Les arbitrages nº 1-5 restent à
+Léane, qui peut aussi défaire les trois propositions (réversibles, tout est consigné).
+
+- **Grille respire** (créations desktop) : rangées passées en layout libre, cartes à
+  x = 0·294·588·882 et tops **0·24·8·32**, rangées 462/489 px (+32 chacune) — appliqué aux
+  QUATRE rangées (section `S6wpPX` + copie assemblage `Jvq8q`). Mobile intouché (2 colonnes
+  alignées, conforme à la proposition).
+- **FAQ-message** : dans le COMPOSANT `accordeon-question` (`afjyM`), le panneau `ToeQT` reçoit
+  une bulle (`i5p10Q` : fond `$gris`, rayons 20/20/20/4, padding 16/24) ; `MDCJE` déplacé
+  dedans, signature « — Léane » (`$font-cursive`, `$text-note`, `$rose-encre`) ajoutée —
+  propagation automatique aux 4 rendus FAQ (sections + assemblages, desktop + mobile), les
+  overrides d'instances par id (`MDCJE`) survivent au déplacement.
+- **Pastilles gouttes** : dans le composant `carte-produit`, les 4 ellipses remplacées par des
+  paths goutte 14×14 (couleur de contenu, cerclage `$gris` 1 px) — propagation à toutes les
+  instances (sections, assemblages, états, proposition « avant », qui montre donc désormais
+  des gouttes elle aussi : la frame reste lisible par sa légende).
+- **Piège neuf, constaté 6× : `Replace` sur un enfant de COMPOSANT échoue via le MCP de
+  l'app** (TypeError « reading 'type' », mêmes arguments qui passaient en headless sur copie
+  détachée). Contournement : Delete ×4 puis Insert ×4 dans l'ordre (le conteneur ne portait
+  que les pastilles). Ajouté aux pièges d'`ETAT.md`.
+- **Mesures après application** (bounds re-lus) : créations desktop 1426 → **1490** (+64), FAQ
+  desktop 739 → **765** (+26), FAQ mobile 1379 → **1446** (+67), assemblage desktop 6631 →
+  **6721** (+90), assemblage mobile 9823 → **9890** (+67). Le « 11/11 plis coupent du
+  contenu » est à re-vérifier (contenu décalé). NB : `ETAT.md` portait « ~6 393 » pour
+  l'assemblage desktop alors que la mesure AVANT application donnait déjà 6 631 — la valeur
+  d'`ETAT.md` était périmée, les nouvelles font foi.
+- **Frames `proposition/*` renommées « — PRISE »**, contexts annotés (décision + réversibilité).
+  Rendus de contrôle : `apercus/apres-propositions-{creations,faq,assemblage}.png` — vérifiés
+  dans la session (échelonnage, bulle signée, gouttes partout). `landing.pen` sauvé via la
+  session app (`save()` ×2) ; backups `landing.pen.bak-prop-carte` et `.bak-props-appliquees`.
+- **La signature 12/20 est à re-noter sur pièce** (l'audit projetait ~18/20 avec les nº 6-7 —
+  on ne s'auto-attribue pas la note, conformément à `_checklist.md`).
+- En code : consignes ajoutées à `HANDOFF.md` (nth-child créations, bulle FAQ, path goutte).

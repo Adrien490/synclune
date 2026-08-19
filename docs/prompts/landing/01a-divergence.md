@@ -75,7 +75,10 @@ t'en laissait qu'une.
 
 Termine par **ta recommandation** : laquelle tu défendrais, en trois lignes, et ce que les deux
 autres ont trouvé qui mériterait d'être greffé sur elle. Puis ajoute ton entrée
-`## Tour 1a — Divergence` à `NOTES.md`, et reporte dans `ETAT.md` ce qui reste à trancher.
+`## Tour 1a — Divergence` à `NOTES.md`, et ouvre l'arbitrage dans `ETAT.md`, au format que le
+tour 1 sait lire : `Piste retenue du tour 1a : EN ATTENTE — a/b/c, recommandation de l'agent : <…>`.
 
-⚠️ **Tu ne choisis pas.** La piste retenue est un arbitrage d'Adrien et de Léane ; le tour 1
-exécute celle qui a été retenue, en la traitant comme le brief de forme du hero.
+⚠️ **Tu ne choisis pas.** La piste retenue est un arbitrage d'Adrien et de Léane — le script
+s'arrête d'ailleurs après ce tour pour qu'il soit pris. Le tour 1 refuse de tourner tant que la
+ligne d'`ETAT.md` dit « EN ATTENTE » ; une fois la piste inscrite, il l'exécute comme le brief de
+forme du hero.

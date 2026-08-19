@@ -47,6 +47,24 @@ visuels s'ils contredisent l'univers chargé.
 **Le système, en variables nommées** — toutes celles de `synclune-systeme.md`, sans en inventer ni
 en omettre, plus une planche `00-systeme/styles` qui les rend lisibles d'un coup d'œil.
 
+**Deux planches d'accent, et c'est un livrable, pas une illustration** (ajouté le 2026-08-19).
+Le système bicolore rose/or de `synclune-systeme.md` **remplace** la rotation d'accents du code
+(lavande / menthe / soleil, `[data-accent]`, `app/styles/section-accents.css`) : c'est un choix de
+design, pas un état de fait, et il bloque le passage en code tant qu'il n'est pas tranché. Ne le
+tranche pas, **rends-le arbitrable** — deux planches côte à côte, `00-systeme/accents-bicolore` et
+`00-systeme/accents-rotation`, montrant chacune la même séquence de six bandeaux de section (une
+bande par section, son accent en aplat, un titre et un bouton dessus) :
+
+- **bicolore** : rose → or → rose → or → rose → or, les tokens de `synclune-systeme.md` ;
+- **rotation** : les accents du code réel — `--color-brand-lavender`, `-mint`, `-sun` — plus le
+  rose `--primary`, dans la rotation que `section-accents.css` applique déjà.
+
+Sous chaque planche, deux lignes : ce que la direction gagne, ce qu'elle coûte. **Recalcule les
+contrastes des deux** depuis les hex : si la rotation ne peut pas écrire, dis-le, c'est un
+argument. Le reste du tour, et toute la série, part du **bicolore** — la planche rotation existe
+pour que l'arbitrage se prenne sur pièce le jour où Léane le prend, pas pour ouvrir une variante
+de travail.
+
 **Cinq composants**, dans `00-systeme/composants` :
 
 - **`bouton`** — `primaire` (rose plein) · `secondaire` (contour encre) · `discret` (texte seul),
@@ -91,6 +109,10 @@ les tours suivants :
 
 ```
 00-systeme/styles   00-systeme/composants   00-systeme/chrome
+00-systeme/accents-bicolore   00-systeme/accents-rotation
+01a-divergence/piste-a   390 × 844   (les trois frames du tour 1a, vides)
+01a-divergence/piste-b   390 × 844
+01a-divergence/piste-c   390 × 844
 01-hero/desktop        1440    01-hero/mobile        390 × 844
 02-creations/desktop   1440    02-creations/mobile   390
 03-collections/desktop 1440    03-collections/mobile 390
@@ -104,9 +126,14 @@ les tours suivants :
 
 ## Rendu
 
-`get_screenshot` des frames système, puis **crée `NOTES.md`** (format dans la conduite) avec ce que
-les huit tours suivants doivent savoir : le **motif unique** que tu tiens et pourquoi lui,
-l'**alternance d'accents** section par section, ce que tu comptes **dessiner** plutôt que
-photographier, et ce que l'import a ramené ou pas.
+`get_screenshot` des frames système et des deux planches d'accent, puis **crée `NOTES.md`**
+(format dans la conduite) avec ce que les tours suivants doivent savoir : le **motif unique** que
+tu tiens et pourquoi lui, l'**alternance d'accents** section par section, ce que tu comptes
+**dessiner** plutôt que photographier, et ce que l'import a ramené ou pas.
+
+**Crée aussi `ETAT.md`** — l'état courant en ≤ 80 lignes (motif, accents, mesures qui font
+autorité, arbitrages ouverts, pièges d'outillage). C'est lui que le script injectera aux tours
+suivants ; le carnet, lui, ne sera plus lu qu'en cas de doute. Le premier arbitrage à y inscrire
+est celui des deux planches d'accent.
 
 Dis-moi la même chose en trois lignes, puis rends la main.

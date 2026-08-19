@@ -28,7 +28,7 @@ Toujours sur mobile : l'étape 1 de l'atelier n'émerge que de ~9 px au-dessus d
 débord invisible vaut un faux fond. En retouchant les hauteurs de la tâche 1, vérifie que
 chaque pli de l'assemblage recalculé coupe la suite d'au moins ~40 px visibles.
 
-## 3. Le franco de port, remonté (recommandation du tour 6)
+## 3. ~~Le franco de port, remonté~~ — CADUC (franco abandonné le 2026-08-18)
 
 Le bloc « En pratique » de la FAQ est la seule surface qui porte le franco — or c'est la
 dernière section, la moins vue. Ajoute la ligne à la **barre haute** (composants
@@ -72,7 +72,7 @@ refais les deux vérifications du tour 8 qui ont bougé : la chaîne des débord
 
 ```
 - [ ] plus aucun pli mobile de 844 px sans ≥ ~40 px visibles de la suite — relevé pli par pli
-- [ ] le bandeau franco est sur les deux barres hautes, avec {franco} en placeholder
+- [x] ~~le bandeau franco~~ → le bandeau porte « Livraison {frais} · expédié sous {délai} » (franco abandonné le 2026-08-18)
 - [ ] le premier écran du hero (desktop et mobile) survit au bandeau — budget du tour 1 tenu
 - [ ] les trois boutons survivent à un libellé sur deux lignes, les instances existantes sont intactes
 - [ ] l'assemblage re-monté passe les contrôles d'accents et de débords du tour 8

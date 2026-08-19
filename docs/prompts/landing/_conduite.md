@@ -24,8 +24,32 @@ Si tu penses qu'une frame déjà dessinée a un problème, **dis-le à la fin sa
 Deux exceptions, explicites : le tour 0 crée tout, et un tour peut **ajouter** un variant à un
 composant si sa section en a besoin — jamais en modifier un existant.
 
-Même règle côté fichiers : dans le dossier de travail, tu n'écris que `NOTES.md` et
+Même règle côté fichiers : dans le dossier de travail, tu n'écris que `NOTES.md`, `ETAT.md` et
 `SHOOTING.md`. Les fichiers de prompt et le script ne sont pas à toi.
+
+## Ton droit de proposition — une par tour
+
+La règle ci-dessus a un effet de bord qu'il faut annuler explicitement : à force de ne rien pouvoir
+toucher et de ne rien pouvoir inventer hors des variables, la seule issue quand tu vois mieux est
+de le **signaler**. Un signalement n'est pas une proposition, et personne ne peut arbitrer une
+idée qu'il n'a pas vue.
+
+Tu as donc droit à **une proposition hors cadre par tour** : une extension du système — une
+variable, un composant, un geste, une grammaire — que ta section réclame et que le système n'a pas.
+
+- Elle se dessine dans une frame **`proposition/<tour>-<sujet>`**, jamais dans la section, jamais
+  dans les planches système. Ta section, elle, reste conforme au système en vigueur.
+- Elle se décrit en **trois lignes au carnet** : ce qu'elle ajoute, ce qu'elle coûte, ce qu'elle
+  remplacerait.
+- Elle n'est **pas** un droit de contourner les interdits de l'univers : ceux-là correspondent
+  chacun à une proposition déjà produite et jetée.
+
+Une proposition refusée ne coûte rien — la frame se supprime. Une proposition jamais faite ne se
+voit pas, et c'est la seule des deux qui a un coût réel.
+
+⚠️ Le corollaire vaut pour ta section elle-même : **une composition sans aucun risque est un
+résultat pauvre, pas un résultat sûr.** L'univers de la marque pose que c'est la sobriété qui doit
+se justifier, pas l'audace ; le bloc SIGNATURE de la checklist est ce qui le rend vérifiable.
 
 ## Tes affirmations s'appuient sur des appels d'outil
 
@@ -39,7 +63,20 @@ plus cher qu'un point signalé comme non vérifié, parce qu'il fait passer le d
 Chaque tour s'exécute dans un processus neuf : tu ne te souviens de rien du tour précédent. Le seul
 lien, c'est le fichier `.pen` et un carnet à côté.
 
-**Au début de ton tour**, lis `NOTES.md` s'il existe. **À la fin**, ajoute-lui une entrée courte :
+Ce lien tient en **deux** fichiers depuis le 2026-08-19, et la distinction compte :
+
+- **`ETAT.md`** — l'état courant, ≤ 80 lignes, **réécrit** à chaque passe : le motif tenu,
+  l'alternance d'accents, les mesures qui font autorité, les arbitrages ouverts, les pièges
+  d'outillage. C'est ce que le script t'injecte, avec les deux dernières entrées du carnet.
+- **`NOTES.md`** — le journal, **jamais réécrit**, seulement augmenté. C'est la mémoire longue :
+  on y va chercher pourquoi une décision a été prise, pas ce qui est vrai aujourd'hui.
+
+La séparation n'est pas cosmétique. Injecté en entier, le carnet pesait 66 Ko contre 17 Ko de
+contexte de marque — les trois quarts de ce que tu lisais avant de dessiner étaient l'historique de
+ce qui avait déjà été dessiné. Un tour qui lit surtout le passé le reproduit.
+
+**Au début de ton tour**, lis ce qui t'est injecté, et va dans `NOTES.md` si une décision t'étonne.
+**À la fin**, ajoute au carnet une entrée courte :
 
 ```
 ## Tour <n> — <section>
@@ -52,6 +89,10 @@ lien, c'est le fichier `.pen` et un carnet à côté.
 
 Une décision par ligne, pas de récit. C'est ce carnet qui empêche le tour 5 de choisir un autre
 motif que le tour 1.
+
+Puis **mets `ETAT.md` à jour** si ton tour a changé l'état courant : une mesure qui fait désormais
+autorité, un arbitrage soldé ou nouvellement ouvert, un piège d'outillage constaté. Si rien n'a
+changé, ne le touche pas — il ne grossit pas, c'est tout son intérêt.
 
 ## Ce que tu écris à la fin est lu par quelqu'un qui n'a rien vu
 

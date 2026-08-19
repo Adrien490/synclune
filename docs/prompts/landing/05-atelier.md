@@ -23,6 +23,11 @@ fort pour le **cadeau** que pour l'usage personnel, ce qui compte en bijou.
   2. **Le bon matériel** — « Plastique fou, peinture, perles : je choisis chaque élément un par un, avec soin. »
   3. **La cuisson et l'assemblage** — « Chaque bijou a sa propre recette de fabrication — c'est ce qui rend chaque pièce unique. »
   4. **La touche finale** — « Je polis, je vérifie chaque détail, puis je glisse ton bijou dans sa pochette, avec amour. »
+     ⚠️ **Contradiction connue, assumée jusqu'à arbitrage** : « avec amour » figure dans les ⛔
+     formules interchangeables de `synclune-univers.md`, et c'est ici de la copie **imposée**.
+     Garde le verbatim — c'est la voix de Léane, et c'est elle qui tranchera (arbitrage nº 4 de
+     `ETAT.md`). Ne le remplace pas de ton propre chef, et ne t'autorise aucune autre formule du
+     même registre au motif que celle-ci existe.
 - Mention discrète : **« environ 3 h par bijou »**
 - Sortie : **« Lire l'histoire de l'atelier »**
 

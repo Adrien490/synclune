@@ -2,8 +2,11 @@
 # Séquence complète de la landing Synclune.
 # Chaque tour repart du .pen produit par le précédent.
 #
-# Usage :  ./landing.sh            # toute la séquence
+# Usage :  ./landing.sh            # 00 puis 01a, et S'ARRÊTE : la piste retenue est un
+#                                  # arbitrage d'Adrien et de Léane, pas un tour de plus
+#          ./landing.sh suite      # 01 → 08, une fois la piste inscrite dans ETAT.md
 #          ./landing.sh 03         # un seul tour, sur le fichier existant
+#          PEN_FORCE=1 ./landing.sh 09   # forcer un tour one-shot (09 et 10)
 #
 # Artefacts par tour : apercus/tour-<n>.png (export ×2, revoyable tour par tour)
 # et usage/tour-<n>.json (tokens + coût) — régénérables, hors git comme le .pen.
@@ -40,6 +43,7 @@ trap on_fail ERR
 effort_for() {
 	case "$1" in
 		00) echo max ;;    # bootstrap : variables, composants, frames — les huit tours en dépendent
+		01a) echo xhigh ;; # divergence — trois pistes de premier écran ; le tour qui décide de tout
 		01) echo xhigh ;;  # hero — ~100 % de l'audience, le plus cher à refaire
 		02) echo high ;;   # créations — la section qui convertit
 		03) echo high ;;   # collections
@@ -51,8 +55,25 @@ effort_for() {
 		09) echo high ;;   # améliorations — retouches trans-sections + re-montage, tout se mesure
 		10) echo medium ;; # états d'interaction — deux variants + une frame d'état
 		*)
-			echo "tour inconnu : « $1 » — attendu : 00 à 10, sur deux chiffres (03, pas 3)" >&2
+			echo "tour inconnu : « $1 » — attendu : 00, 01a, 01 à 10, sur deux chiffres (03, pas 3)" >&2
 			return 1
+			;;
+	esac
+}
+
+# Les tours 09 et 10 sont ONE-SHOT : leurs prompts référencent des ids de nœuds et des
+# mesures (plis, bounds) d'une exécution précise — « j9QGj », « Trd6e », « fb42R ». Sur un
+# .pen régénéré, ces ids ne désignent rien et le tour travaille dans le vide sans erreur.
+# Constaté à l'audit du dossier du 2026-08-19 : le script les acceptait sans broncher.
+guard_one_shot() {
+	case "$1" in
+		09 | 10)
+			if [[ "${PEN_FORCE:-}" != 1 ]]; then
+				echo "tour $1 : ONE-SHOT — son prompt cite des ids de nœuds d'une exécution précise (README § Rejouable)." >&2
+				echo "sur un fichier régénéré il ne trouvera rien. « PEN_FORCE=1 ./landing.sh $1 » pour passer outre." >&2
+				exit 1
+			fi
+			echo "⚠ tour $1 forcé (PEN_FORCE=1) — vérifie que les ids cités par le prompt existent encore." >&2
 			;;
 	esac
 }
@@ -86,6 +107,7 @@ preflight() {
 run() {
 	local tour="$1" effort file notes="" check="" prompt
 	effort="$(effort_for "$tour")"
+	guard_one_shot "$tour"
 	# Glob strict : zéro ou plusieurs correspondances feraient passer un nom de
 	# fichier invalide à `cat` plus bas — on exige exactement un fichier.
 	local matches=("${tour}"-*.md)
@@ -101,13 +123,29 @@ run() {
 	[[ -f "$PEN_FILE" ]] && cp "$PEN_FILE" "${PEN_FILE}.bak-${tour}"
 	CURRENT_TOUR="$tour"
 
-	# Le carnet est ce qui relie les tours : chaque `pen` est un processus neuf.
-	# On l'injecte dans le prompt (lecture garantie) ET on donne au CLI le dossier
-	# de travail (`--repo`) pour que l'agent puisse y écrire son entrée.
-	[[ -f NOTES.md ]] && notes="$(printf '\n\n---\n\n# NOTES.md — décisions des tours précédents\n\n%s' "$(cat NOTES.md)")"
+	# Ce qui relie les tours : chaque `pen` est un processus neuf. On injecte l'ÉTAT
+	# COURANT (ETAT.md, réécrit à chaque passe) plus les DEUX dernières entrées du
+	# carnet — et non plus le carnet entier. Mesuré à l'audit du 2026-08-19 : NOTES.md
+	# pesait 66 Ko contre 17 Ko de contexte de marque, soit trois quarts du prompt en
+	# historique. Un tour qui lit surtout le passé le reproduit. Le carnet complet reste
+	# lisible par l'agent : `--repo` lui donne le dossier, la conduite lui dit d'y aller
+	# en cas de doute.
+	if [[ -f ETAT.md ]]; then
+		notes="$(printf '\n\n---\n\n# ETAT.md — état courant de la maquette\n\n%s' "$(cat ETAT.md)")"
+	fi
+	if [[ -f NOTES.md ]]; then
+		# Depuis la 2ᵉ entrée en partant de la fin : « ## » ouvre une entrée de carnet.
+		local from
+		from="$(grep -n '^## ' NOTES.md | tail -2 | head -1 | cut -d: -f1)"
+		if [[ -n "$from" ]]; then
+			notes+="$(printf '\n\n---\n\n# NOTES.md — les deux dernières entrées (le carnet complet est dans le dossier)\n\n%s' "$(tail -n "+${from}" NOTES.md)")"
+		fi
+	fi
 
-	# La checklist commune ne vaut que pour les tours de SECTION : 00 et 07 à 10
-	# portent chacun leur propre bloc de sortie.
+	# La checklist commune ne vaut que pour les tours de SECTION : 00, 01a et 07 à 10
+	# portent chacun leur propre bloc de sortie. Le glob `0[1-6]` ne matche que deux
+	# caractères — « 01a » en est donc exclu, c'est voulu (ses frames n'ont ni
+	# placeholder photo ni contrainte de pli).
 	case "$tour" in
 		0[1-6]) check="$(printf '\n\n---\n\n%s' "$CHECK")" ;;
 	esac
@@ -131,11 +169,34 @@ run() {
 
 preflight
 
+# `suite` joue 01 → 08 : c'est la reprise APRÈS l'arbitrage de la divergence. 09 et 10
+# restent one-shot (cf. guard_one_shot) : les rejouer sur un fichier neuf demande
+# PEN_FORCE=1, tour par tour, en connaissance de cause.
+if [[ "${1:-}" == "suite" ]]; then
+	for tour in 01 02 03 04 05 06 07 08; do
+		run "$tour"
+	done
+	exit 0
+fi
+
 if [[ $# -gt 0 ]]; then
 	run "$1"
 	exit 0
 fi
 
-for tour in 00 01 02 03 04 05 06 07 08 09 10; do
+# La séquence sans argument s'arrête APRÈS la divergence, à dessein : 01a produit trois
+# pistes et 01a-divergence.md est formel — l'agent ne choisit pas, la piste retenue est
+# un arbitrage d'Adrien et de Léane. Enchaîner 01 ici ferait payer le tour le plus cher
+# de la série (xhigh) avant que quiconque ait vu les pistes. Constaté à la contre-visite
+# du 2026-08-19 (AUDIT-DOSSIER-2026-08-19b.md).
+for tour in 00 01a; do
 	run "$tour"
 done
+cat >&2 <<'EOF'
+── séquence arrêtée après la divergence — c'est voulu.
+   1. Regarde les trois pistes : apercus/tour-01a.png (et la recommandation de l'agent
+      dans son rapport).
+   2. Inscris la piste retenue dans ETAT.md, section « Arbitrages » (une ligne :
+      « Piste retenue du tour 1a : <a|b|c>, greffes : … »).
+   3. Relance :  ./landing.sh suite     (01 → 08)
+EOF

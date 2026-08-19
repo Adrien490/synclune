@@ -18,7 +18,7 @@ motifs adressables sont, dans l'ordre :
 **Deux conséquences directes :**
 
 1. Les deux plus gros postes sont de l'**information**, pas de la réassurance graphique. Une page qui
-   écrit en clair **le coût de port, le seuil de franco et le délai d'expédition** fait mieux qu'une
+   écrit en clair **le coût de port et le délai d'expédition** fait mieux qu'une
    rangée de pictogrammes de bouclier. ⛔ Pas de bandeau d'icônes de confiance.
 2. **18 % abandonnent sur l'obligation de créer un compte.** Synclune est 100 % invité : c'est un
    avantage **mesuré**, et il faut le **dire** — « Commande sans créer de compte » — pas seulement
@@ -42,7 +42,8 @@ parmi celles-ci — ce sont les vraies :
 - Comment fonctionnent les retours ?
 - Puis-je personnaliser une création ?
 
-⚠️ **Les valeurs de livraison sont des placeholders `{frais}`, `{délai}`, `{franco}`.** Ne les écris
+⚠️ **Les valeurs de livraison sont des placeholders `{frais}` et `{délai}`.** (`{franco}` a été
+retiré le 2026-08-18 — franco abandonné, cf. HANDOFF arbitrage nº 1.) Ne les écris
 pas en dur dans la maquette : une page d'accueil qui annonce un délai différent de celui du tunnel
 fabrique exactement le motif d'abandon nº 1. `{frais}` et `{délai}` ont leur source unique côté
 code (`SHIPPING_RATES` et `PREPARATION_BUSINESS_DAYS`,

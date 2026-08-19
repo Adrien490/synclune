@@ -23,7 +23,7 @@ du papier, de l'encre et du gris.
 
 1. **`rose` et `or` ne portent jamais de texte ni de glyphe.** À 1,55:1 et 1,22:1 sur le papier, ils
    peignent des aplats, des traits et des motifs — ils n'écrivent pas. Pour écrire : `rose-encre`
-   (5,15:1) et `or-encre` (4,74:1). L'encre sur un aplat rose ou or, elle, passe largement
+   (5,15:1) et `or-encre` (4,72:1). L'encre sur un aplat rose ou or, elle, passe largement
    (12,6:1 et 16:1).
 2. **Une seule couleur d'accent par section**, en alternance rose → or → rose → or. Pas les deux
    dans la même section.

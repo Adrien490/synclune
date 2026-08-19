@@ -2859,7 +2859,7 @@
                           "fill": "$encre",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais} en France, et elle est offerte dès {franco} d'achat. Tu reçois le lien de suivi dès que ton colis part.",
+                          "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part.",
                           "lineHeight": "$leading-body",
                           "fontFamily": "$font-sans",
                           "fontSize": "$text-body",
@@ -3096,6 +3096,7 @@
           "type": "frame",
           "id": "M6cFW",
           "name": "chrome/barre-haute",
+          "context": "En code — barres collantes : compenser par scroll-padding-top / scroll-padding-bottom en CSS (WCAG 2.4.11), JAMAIS en JS ; aucun élément focalisé ne doit finir sous la barre. Toute affordance en icône seule ≥ 24×24 px, cercles non sécants. Posé à la passe 2026-08-18.",
           "reusable": true,
           "width": 1440,
           "fill": "$papier",
@@ -3123,7 +3124,7 @@
                   "id": "h6y2m9",
                   "name": "Texte livraison",
                   "fill": "$encre",
-                  "content": "Livraison {frais} · offerte dès {franco}",
+                  "content": "Livraison {frais} · expédié sous {délai}",
                   "lineHeight": 1.26,
                   "textAlign": "center",
                   "fontFamily": "$font-sans",
@@ -3315,6 +3316,7 @@
           "type": "frame",
           "id": "CX8Rg",
           "name": "chrome/barre-haute-mobile",
+          "context": "En code — barres collantes : compenser par scroll-padding-top / scroll-padding-bottom en CSS (WCAG 2.4.11), JAMAIS en JS ; aucun élément focalisé ne doit finir sous la barre. Toute affordance en icône seule ≥ 24×24 px, cercles non sécants. Posé à la passe 2026-08-18.",
           "theme": {
             "device": "mobile"
           },
@@ -3345,7 +3347,7 @@
                   "id": "qLf00",
                   "name": "Texte livraison",
                   "fill": "$encre",
-                  "content": "Livraison {frais} · offerte dès {franco}",
+                  "content": "Livraison {frais} · expédié sous {délai}",
                   "lineHeight": 1.26,
                   "textAlign": "center",
                   "fontFamily": "$font-sans",
@@ -3499,6 +3501,7 @@
           "type": "frame",
           "id": "ydXQZ",
           "name": "chrome/barre-basse-mobile",
+          "context": "En code — barres collantes : compenser par scroll-padding-top / scroll-padding-bottom en CSS (WCAG 2.4.11), JAMAIS en JS ; aucun élément focalisé ne doit finir sous la barre. Toute affordance en icône seule ≥ 24×24 px, cercles non sécants. Posé à la passe 2026-08-18.",
           "theme": {
             "device": "mobile"
           },
@@ -5015,7 +5018,7 @@
           "type": "frame",
           "id": "q3d3a8",
           "name": "frise-créations",
-          "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2.",
+          "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
           "width": "fill_container",
           "height": 254,
           "layout": "none",
@@ -5038,17 +5041,17 @@
               "name": "attache-01",
               "fill": "$encre",
               "width": 1.5,
-              "height": 24
+              "height": 28
             },
             {
               "type": "frame",
               "id": "z6Zje",
-              "x": 4,
-              "y": 36,
+              "x": 22,
+              "y": 40,
               "name": "photo/creation-hero-01",
               "clip": true,
-              "width": 184,
-              "height": 190,
+              "width": 148,
+              "height": 185,
               "fill": "$rose",
               "cornerRadius": "$radius-16",
               "layout": "none",
@@ -5056,8 +5059,8 @@
                 {
                   "type": "path",
                   "id": "H8XEep",
-                  "x": 60,
-                  "y": 63,
+                  "x": 42,
+                  "y": 60,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -5082,17 +5085,17 @@
               "name": "attache-02",
               "fill": "$encre",
               "width": 1.5,
-              "height": 48
+              "height": 46
             },
             {
               "type": "frame",
               "id": "yP3XA",
-              "x": 212,
-              "y": 60,
+              "x": 230,
+              "y": 58,
               "name": "photo/creation-hero-02",
               "clip": true,
-              "width": 184,
-              "height": 190,
+              "width": 148,
+              "height": 185,
               "fill": "$rose",
               "cornerRadius": "$radius-16",
               "layout": "none",
@@ -5100,8 +5103,8 @@
                 {
                   "type": "path",
                   "id": "fFaEL",
-                  "x": 60,
-                  "y": 63,
+                  "x": 42,
+                  "y": 60,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -5126,17 +5129,17 @@
               "name": "attache-03",
               "fill": "$encre",
               "width": 1.5,
-              "height": 16
+              "height": 20
             },
             {
               "type": "frame",
               "id": "owC27",
-              "x": 420,
-              "y": 28,
+              "x": 438,
+              "y": 32,
               "name": "photo/creation-hero-03",
               "clip": true,
-              "width": 184,
-              "height": 190,
+              "width": 148,
+              "height": 185,
               "fill": "$rose",
               "cornerRadius": "$radius-16",
               "layout": "none",
@@ -5144,8 +5147,8 @@
                 {
                   "type": "path",
                   "id": "nYyJ5",
-                  "x": 60,
-                  "y": 63,
+                  "x": 42,
+                  "y": 60,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -5170,17 +5173,17 @@
               "name": "attache-04",
               "fill": "$encre",
               "width": 1.5,
-              "height": 32
+              "height": 38
             },
             {
               "type": "frame",
               "id": "KnsuD",
-              "x": 628,
-              "y": 44,
+              "x": 646,
+              "y": 50,
               "name": "photo/creation-hero-04",
               "clip": true,
-              "width": 184,
-              "height": 190,
+              "width": 148,
+              "height": 185,
               "fill": "$rose",
               "cornerRadius": "$radius-16",
               "layout": "none",
@@ -5188,8 +5191,8 @@
                 {
                   "type": "path",
                   "id": "rLQkI",
-                  "x": 60,
-                  "y": 63,
+                  "x": 42,
+                  "y": 60,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -5214,17 +5217,17 @@
               "name": "attache-05",
               "fill": "$encre",
               "width": 1.5,
-              "height": 12
+              "height": 16
             },
             {
               "type": "frame",
               "id": "p4f5gU",
-              "x": 836,
-              "y": 24,
+              "x": 854,
+              "y": 28,
               "name": "photo/creation-hero-05",
               "clip": true,
-              "width": 184,
-              "height": 190,
+              "width": 148,
+              "height": 185,
               "fill": "$rose",
               "cornerRadius": "$radius-16",
               "layout": "none",
@@ -5232,8 +5235,8 @@
                 {
                   "type": "path",
                   "id": "QvJaW",
-                  "x": 60,
-                  "y": 63,
+                  "x": 42,
+                  "y": 60,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -5258,17 +5261,17 @@
               "name": "attache-06",
               "fill": "$encre",
               "width": 1.5,
-              "height": 48
+              "height": 46
             },
             {
               "type": "frame",
               "id": "RAZwg",
-              "x": 1044,
-              "y": 60,
+              "x": 1062,
+              "y": 58,
               "name": "photo/creation-hero-06",
               "clip": true,
-              "width": 184,
-              "height": 190,
+              "width": 148,
+              "height": 185,
               "fill": "$rose",
               "cornerRadius": "$radius-16",
               "layout": "none",
@@ -5276,8 +5279,8 @@
                 {
                   "type": "path",
                   "id": "R1rSg",
-                  "x": 60,
-                  "y": 63,
+                  "x": 42,
+                  "y": 60,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -5302,17 +5305,17 @@
               "name": "attache-07",
               "fill": "$encre",
               "width": 1.5,
-              "height": 32
+              "height": 34
             },
             {
               "type": "frame",
               "id": "Opy5P",
-              "x": 1252,
-              "y": 44,
+              "x": 1270,
+              "y": 46,
               "name": "photo/creation-hero-07",
               "clip": true,
-              "width": 184,
-              "height": 190,
+              "width": 148,
+              "height": 185,
               "fill": "$rose",
               "cornerRadius": "$radius-16",
               "layout": "none",
@@ -5320,8 +5323,8 @@
                 {
                   "type": "path",
                   "id": "Jf5On",
-                  "x": 60,
-                  "y": 63,
+                  "x": 42,
+                  "y": 60,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -5585,7 +5588,7 @@
           "type": "frame",
           "id": "Y3kcO",
           "name": "frise-créations",
-          "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2.",
+          "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
           "width": "fill_container",
           "height": 273,
           "layout": "none",
@@ -5594,7 +5597,7 @@
               "type": "rectangle",
               "id": "Kclzr",
               "x": 0,
-              "y": 40,
+              "y": 12,
               "name": "chaîne",
               "fill": "$encre",
               "width": 390,
@@ -5604,17 +5607,17 @@
               "type": "rectangle",
               "id": "xKVGE",
               "x": 103.25,
-              "y": 40,
+              "y": 12,
               "name": "attache-01",
               "fill": "$encre",
               "width": 1.5,
-              "height": 60
+              "height": 28
             },
             {
               "type": "frame",
               "id": "JOpZU",
               "x": 20,
-              "y": 100,
+              "y": 40,
               "name": "photo/creation-hero-01",
               "clip": true,
               "width": 168,
@@ -5627,7 +5630,7 @@
                   "type": "path",
                   "id": "cxPC6",
                   "x": 54,
-                  "y": 63,
+                  "y": 73,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -5648,17 +5651,17 @@
               "type": "rectangle",
               "id": "GZU4o",
               "x": 287.25,
-              "y": 40,
+              "y": 12,
               "name": "attache-02",
               "fill": "$encre",
               "width": 1.5,
-              "height": 86
+              "height": 44
             },
             {
               "type": "frame",
               "id": "nGka7",
               "x": 204,
-              "y": 126,
+              "y": 56,
               "name": "photo/creation-hero-02",
               "clip": true,
               "width": 168,
@@ -5671,7 +5674,7 @@
                   "type": "path",
                   "id": "I1S5fQ",
                   "x": 54,
-                  "y": 63,
+                  "y": 73,
                   "name": "motif-goutte",
                   "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                   "viewBox": [
@@ -13461,7 +13464,7 @@
                           "fill": "$encre",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
-                          "content": "Livraison {frais} · offerte dès {franco}",
+                          "content": "Livraison {frais}, partout en France et en Union européenne",
                           "lineHeight": "$leading-small",
                           "fontFamily": "$font-sans",
                           "fontSize": "$text-small",
@@ -13656,7 +13659,7 @@
                       "enabled": true
                     },
                     "MDCJE": {
-                      "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais} en France, et elle est offerte dès {franco} d'achat. Tu reçois le lien de suivi dès que ton colis part."
+                      "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part."
                     }
                   }
                 },
@@ -13967,7 +13970,7 @@
                   "fill": "$encre",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Livraison {frais} · offerte dès {franco}",
+                  "content": "Livraison {frais}, partout en France et en Union européenne",
                   "lineHeight": "$leading-small",
                   "fontFamily": "$font-sans",
                   "fontSize": "$text-small",
@@ -14160,7 +14163,7 @@
                   "enabled": true
                 },
                 "MDCJE": {
-                  "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais} en France, et elle est offerte dès {franco} d'achat. Tu reçois le lien de suivi dès que ton colis part."
+                  "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part."
                 }
               }
             },
@@ -15047,7 +15050,7 @@
               "type": "frame",
               "id": "Ag3oA",
               "name": "frise-créations",
-              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2.",
+              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
               "width": "fill_container",
               "height": 273,
               "layout": "none",
@@ -15056,7 +15059,7 @@
                   "type": "rectangle",
                   "id": "MNSJL",
                   "x": 0,
-                  "y": 40,
+                  "y": 12,
                   "name": "chaîne",
                   "fill": "$encre",
                   "width": 390,
@@ -15066,17 +15069,17 @@
                   "type": "rectangle",
                   "id": "wbRr1",
                   "x": 103.25,
-                  "y": 40,
+                  "y": 12,
                   "name": "attache-01",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 60
+                  "height": 28
                 },
                 {
                   "type": "frame",
                   "id": "PKMP1",
                   "x": 20,
-                  "y": 100,
+                  "y": 40,
                   "name": "photo/creation-hero-01",
                   "clip": true,
                   "width": 168,
@@ -15089,7 +15092,7 @@
                       "type": "path",
                       "id": "l7Coy",
                       "x": 54,
-                      "y": 63,
+                      "y": 73,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -15110,17 +15113,17 @@
                   "type": "rectangle",
                   "id": "K2krU",
                   "x": 287.25,
-                  "y": 40,
+                  "y": 12,
                   "name": "attache-02",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 86
+                  "height": 44
                 },
                 {
                   "type": "frame",
                   "id": "bAfxD",
                   "x": 204,
-                  "y": 126,
+                  "y": 56,
                   "name": "photo/creation-hero-02",
                   "clip": true,
                   "width": 168,
@@ -15133,7 +15136,7 @@
                       "type": "path",
                       "id": "scFqf",
                       "x": 54,
-                      "y": 63,
+                      "y": 73,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -15285,6 +15288,7 @@
       "x": 0,
       "y": 19400,
       "name": "08-assemblage/desktop",
+      "context": "En code — JSON-LD : UN SEUL <script>, un @graph unique. Organization sous-type OnlineStore, avec hasShippingService + hasMerchantReturnPolicy déclarés UNE fois (source SHIPPING_RATES + CGV). AUCUNE BreadcrumbList sur / (un seul item = l'élément que Google demande d'omettre). Ne pas ré-émettre FAQPage/HowTo/SearchAction avec le retour des sections, ne pas supprimer l'existant non plus. Posé à la passe 2026-08-18.",
       "width": 1440,
       "fill": "$papier",
       "layout": "vertical",
@@ -15567,6 +15571,7 @@
               "type": "frame",
               "id": "DOs94",
               "name": "frise-créations",
+              "context": " — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
               "width": "fill_container",
               "height": 254,
               "layout": "none",
@@ -15589,17 +15594,17 @@
                   "name": "attache-01",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 24
+                  "height": 28
                 },
                 {
                   "type": "frame",
                   "id": "Y2wQL",
-                  "x": 4,
-                  "y": 36,
+                  "x": 22,
+                  "y": 40,
                   "name": "photo/creation-hero-01",
                   "clip": true,
-                  "width": 184,
-                  "height": 190,
+                  "width": 148,
+                  "height": 185,
                   "fill": "$rose",
                   "cornerRadius": "$radius-16",
                   "layout": "none",
@@ -15607,8 +15612,8 @@
                     {
                       "type": "path",
                       "id": "DzQhi",
-                      "x": 60,
-                      "y": 63,
+                      "x": 42,
+                      "y": 60,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -15633,17 +15638,17 @@
                   "name": "attache-02",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 48
+                  "height": 46
                 },
                 {
                   "type": "frame",
                   "id": "G0deU",
-                  "x": 212,
-                  "y": 60,
+                  "x": 230,
+                  "y": 58,
                   "name": "photo/creation-hero-02",
                   "clip": true,
-                  "width": 184,
-                  "height": 190,
+                  "width": 148,
+                  "height": 185,
                   "fill": "$rose",
                   "cornerRadius": "$radius-16",
                   "layout": "none",
@@ -15651,8 +15656,8 @@
                     {
                       "type": "path",
                       "id": "NPMjb",
-                      "x": 60,
-                      "y": 63,
+                      "x": 42,
+                      "y": 60,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -15677,17 +15682,17 @@
                   "name": "attache-03",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 16
+                  "height": 20
                 },
                 {
                   "type": "frame",
                   "id": "Th9zG",
-                  "x": 420,
-                  "y": 28,
+                  "x": 438,
+                  "y": 32,
                   "name": "photo/creation-hero-03",
                   "clip": true,
-                  "width": 184,
-                  "height": 190,
+                  "width": 148,
+                  "height": 185,
                   "fill": "$rose",
                   "cornerRadius": "$radius-16",
                   "layout": "none",
@@ -15695,8 +15700,8 @@
                     {
                       "type": "path",
                       "id": "f0wtz",
-                      "x": 60,
-                      "y": 63,
+                      "x": 42,
+                      "y": 60,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -15721,17 +15726,17 @@
                   "name": "attache-04",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 32
+                  "height": 38
                 },
                 {
                   "type": "frame",
                   "id": "pYUGO",
-                  "x": 628,
-                  "y": 44,
+                  "x": 646,
+                  "y": 50,
                   "name": "photo/creation-hero-04",
                   "clip": true,
-                  "width": 184,
-                  "height": 190,
+                  "width": 148,
+                  "height": 185,
                   "fill": "$rose",
                   "cornerRadius": "$radius-16",
                   "layout": "none",
@@ -15739,8 +15744,8 @@
                     {
                       "type": "path",
                       "id": "xSFlX",
-                      "x": 60,
-                      "y": 63,
+                      "x": 42,
+                      "y": 60,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -15765,17 +15770,17 @@
                   "name": "attache-05",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 12
+                  "height": 16
                 },
                 {
                   "type": "frame",
                   "id": "QDGGW",
-                  "x": 836,
-                  "y": 24,
+                  "x": 854,
+                  "y": 28,
                   "name": "photo/creation-hero-05",
                   "clip": true,
-                  "width": 184,
-                  "height": 190,
+                  "width": 148,
+                  "height": 185,
                   "fill": "$rose",
                   "cornerRadius": "$radius-16",
                   "layout": "none",
@@ -15783,8 +15788,8 @@
                     {
                       "type": "path",
                       "id": "yGfdj",
-                      "x": 60,
-                      "y": 63,
+                      "x": 42,
+                      "y": 60,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -15809,17 +15814,17 @@
                   "name": "attache-06",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 48
+                  "height": 46
                 },
                 {
                   "type": "frame",
                   "id": "yxt11",
-                  "x": 1044,
-                  "y": 60,
+                  "x": 1062,
+                  "y": 58,
                   "name": "photo/creation-hero-06",
                   "clip": true,
-                  "width": 184,
-                  "height": 190,
+                  "width": 148,
+                  "height": 185,
                   "fill": "$rose",
                   "cornerRadius": "$radius-16",
                   "layout": "none",
@@ -15827,8 +15832,8 @@
                     {
                       "type": "path",
                       "id": "F9CJv",
-                      "x": 60,
-                      "y": 63,
+                      "x": 42,
+                      "y": 60,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -15853,17 +15858,17 @@
                   "name": "attache-07",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 32
+                  "height": 34
                 },
                 {
                   "type": "frame",
                   "id": "Xp3bm",
-                  "x": 1252,
-                  "y": 44,
+                  "x": 1270,
+                  "y": 46,
                   "name": "photo/creation-hero-07",
                   "clip": true,
-                  "width": 184,
-                  "height": 190,
+                  "width": 148,
+                  "height": 185,
                   "fill": "$rose",
                   "cornerRadius": "$radius-16",
                   "layout": "none",
@@ -15871,8 +15876,8 @@
                     {
                       "type": "path",
                       "id": "JjJOY",
-                      "x": 60,
-                      "y": 63,
+                      "x": 42,
+                      "y": 60,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -20086,7 +20091,7 @@
                               "fill": "$encre",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "Livraison {frais} · offerte dès {franco}",
+                              "content": "Livraison {frais}, partout en France et en Union européenne",
                               "lineHeight": "$leading-small",
                               "fontFamily": "$font-sans",
                               "fontSize": "$text-small",
@@ -20281,7 +20286,7 @@
                           "enabled": true
                         },
                         "MDCJE": {
-                          "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais} en France, et elle est offerte dès {franco} d'achat. Tu reçois le lien de suivi dès que ton colis part."
+                          "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part."
                         }
                       }
                     },
@@ -20442,6 +20447,7 @@
       "x": 1600,
       "y": 19400,
       "name": "08-assemblage/mobile",
+      "context": "En code — JSON-LD : UN SEUL <script>, un @graph unique. Organization sous-type OnlineStore, avec hasShippingService + hasMerchantReturnPolicy déclarés UNE fois (source SHIPPING_RATES + CGV). AUCUNE BreadcrumbList sur / (un seul item = l'élément que Google demande d'omettre). Ne pas ré-émettre FAQPage/HowTo/SearchAction avec le retour des sections, ne pas supprimer l'existant non plus. Posé à la passe 2026-08-18.",
       "theme": {
         "device": "mobile"
       },
@@ -20690,7 +20696,7 @@
               "type": "frame",
               "id": "t0LzZ",
               "name": "frise-créations",
-              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2.",
+              "context": "En code : les tuiles sont CHOISIES POUR L'ÉTALEMENT DES TYPES (40-50 % du catalogue visibles au premier écran), pas par récence — audit 2026-08-17, P1.2. — En code — LCP : la PREMIÈRE tuile est l'image LCP, jamais lazy (vérifier dans le HTML SERVI, pas la console) ; elle est la SEULE en priorité haute et porte son preload ; toutes les autres tuiles sont lazy. Ratio 4:5 figé par width/height (1ʳᵉ source de CLS). Aucune animation d'entrée ne la laisse à opacity:0. Posé à la passe 2026-08-18.",
               "width": "fill_container",
               "height": 273,
               "layout": "none",
@@ -20699,7 +20705,7 @@
                   "type": "rectangle",
                   "id": "DB9mJ",
                   "x": 0,
-                  "y": 40,
+                  "y": 12,
                   "name": "chaîne",
                   "fill": "$encre",
                   "width": 390,
@@ -20709,17 +20715,17 @@
                   "type": "rectangle",
                   "id": "WTqB6",
                   "x": 103.25,
-                  "y": 40,
+                  "y": 12,
                   "name": "attache-01",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 60
+                  "height": 28
                 },
                 {
                   "type": "frame",
                   "id": "e4Iyn3",
                   "x": 20,
-                  "y": 100,
+                  "y": 40,
                   "name": "photo/creation-hero-01",
                   "clip": true,
                   "width": 168,
@@ -20732,7 +20738,7 @@
                       "type": "path",
                       "id": "RizAY",
                       "x": 54,
-                      "y": 63,
+                      "y": 73,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -20753,17 +20759,17 @@
                   "type": "rectangle",
                   "id": "p4Uo6",
                   "x": 287.25,
-                  "y": 40,
+                  "y": 12,
                   "name": "attache-02",
                   "fill": "$encre",
                   "width": 1.5,
-                  "height": 86
+                  "height": 44
                 },
                 {
                   "type": "frame",
                   "id": "noMf9",
                   "x": 204,
-                  "y": 126,
+                  "y": 56,
                   "name": "photo/creation-hero-02",
                   "clip": true,
                   "width": 168,
@@ -20776,7 +20782,7 @@
                       "type": "path",
                       "id": "OZSAX",
                       "x": 54,
-                      "y": 63,
+                      "y": 73,
                       "name": "motif-goutte",
                       "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
                       "viewBox": [
@@ -24646,7 +24652,7 @@
                       "fill": "$encre",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
-                      "content": "Livraison {frais} · offerte dès {franco}",
+                      "content": "Livraison {frais}, partout en France et en Union européenne",
                       "lineHeight": "$leading-small",
                       "fontFamily": "$font-sans",
                       "fontSize": "$text-small",
@@ -24839,7 +24845,7 @@
                       "enabled": true
                     },
                     "MDCJE": {
-                      "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais} en France, et elle est offerte dès {franco} d'achat. Tu reçois le lien de suivi dès que ton colis part."
+                      "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part."
                     }
                   }
                 },
@@ -25951,6 +25957,1380 @@
           "fontFamily": "$font-sans",
           "fontSize": "$text-small",
           "fontWeight": "$graisse-normale"
+        }
+      ]
+    },
+    {
+      "id": "GH7Z7",
+      "type": "ref",
+      "ref": "Trd6e",
+      "x": 5808,
+      "y": 0
+    },
+    {
+      "type": "frame",
+      "id": "ZlReT",
+      "x": 6198,
+      "y": 0,
+      "name": "00-systeme/accents-bicolore",
+      "context": "Planche d'arbitrage nº 1 (ETAT.md) — dessinée à la contre-visite du dossier, 2026-08-19. Contrastes recalculés depuis les hex (conversion oklch → sRGB pour la rotation). Léane tranche sur ces deux planches ; le reste de la maquette est en bicolore.",
+      "clip": true,
+      "width": 1280,
+      "fill": "$papier",
+      "layout": "vertical",
+      "gap": "$space-24",
+      "padding": "$space-48",
+      "children": [
+        {
+          "type": "text",
+          "id": "QqJ6T",
+          "name": "Titre",
+          "fill": "$encre",
+          "content": "Accents — bicolore rose / or (la maquette)",
+          "lineHeight": "$leading-h2",
+          "fontFamily": "$font-display",
+          "fontSize": "$text-h2",
+          "fontWeight": "$graisse-display",
+          "letterSpacing": "$tracking-h2"
+        },
+        {
+          "type": "text",
+          "id": "oxHug",
+          "name": "chapô",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "L'alternance de la série : rose → or, jamais deux sections voisines dans la même couleur. Les deux accents ont chacun leur version encre pour écrire.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "frame",
+          "id": "QQuSB",
+          "name": "bandeau-hero",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$rose",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "VkZDE",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "1 · HERO",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "uXXRB",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "L6zqp",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "x2Zz4",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "SFYm9",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 12,6:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "iQFo0",
+          "name": "bandeau-créations",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$or",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "FaV02",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "2 · CRÉATIONS",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "I0xrd",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "DyBfk",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Vm3Xa",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "qb15b",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 16,0:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "PXr5w",
+          "name": "bandeau-collections",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$rose",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "y0UkY",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "3 · COLLECTIONS",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "W1Ffx0",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "lP0v5",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ZBENa",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "PhI3h",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 12,6:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Kh8XX",
+          "name": "bandeau-types",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$or",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Cjvim",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "4 · TYPES",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "u6FUBH",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "Md9sN",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "T5zaP",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "hNycN",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 16,0:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Xv2Zg",
+          "name": "bandeau-atelier",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$rose",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "A6XUt",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "5 · ATELIER",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "p1XuH",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "YnLdB",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "YgwVi",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "z229fj",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 12,6:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "yowUY",
+          "name": "bandeau-faq",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$or",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "I8nXMN",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "6 · FAQ",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "h14zo",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "j4j33E",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "NooWd",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "KBlV9",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 16,0:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "jHbXO",
+          "name": "légende",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": "$space-8",
+          "children": [
+            {
+              "type": "text",
+              "id": "hWd9c",
+              "name": "gagne",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Gagne : l'accent sait ÉCRIRE — rose-encre 5,15:1 et or-encre 4,72:1 sur papier. Deux couleurs, une alternance lisible de bout en bout.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            },
+            {
+              "type": "text",
+              "id": "Lauxd",
+              "name": "coûte",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Coûte : deux tokens à créer en code (or #ffe2a2, or-encre #896e2c) et la rotation [data-accent] existante à retirer.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "qyjjM",
+      "x": 7578,
+      "y": 0,
+      "name": "00-systeme/accents-rotation",
+      "context": "Planche d'arbitrage nº 1 (ETAT.md) — dessinée à la contre-visite du dossier, 2026-08-19. Contrastes recalculés depuis les hex (conversion oklch → sRGB pour la rotation). Léane tranche sur ces deux planches ; le reste de la maquette est en bicolore.",
+      "clip": true,
+      "width": 1280,
+      "fill": "$papier",
+      "layout": "vertical",
+      "gap": "$space-24",
+      "padding": "$space-48",
+      "children": [
+        {
+          "type": "text",
+          "id": "lWjqw",
+          "name": "Titre",
+          "fill": "$encre",
+          "content": "Accents — rotation du code (rose → lavande → menthe → soleil)",
+          "lineHeight": "$leading-h2",
+          "fontFamily": "$font-display",
+          "fontSize": "$text-h2",
+          "fontWeight": "$graisse-display",
+          "letterSpacing": "$tracking-h2"
+        },
+        {
+          "type": "text",
+          "id": "uoFpU",
+          "name": "chapô",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "La rotation déjà en production ([data-accent], app/styles/section-accents.css) : le dégradé du hero, repris section par section. Hex convertis des tokens oklch du code.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "frame",
+          "id": "RmWHD",
+          "name": "bandeau-hero",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$rose",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Z9YRlT",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "1 · HERO  —  rose = --primary",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "zLLBM",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "BKqUT",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "CHFMZ",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "qQDoS",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 12,6:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ylR5W",
+          "name": "bandeau-créations",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "#a996e2",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "lCPQ4",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "2 · CRÉATIONS  —  lavande #a996e2",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "Ab5uD",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "bnv75",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "IXphX",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "QEzbx",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 7,8:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ZerXN",
+          "name": "bandeau-collections",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "#6ccea6",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "ncUUH",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "3 · COLLECTIONS  —  menthe #6ccea6",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "e4iNt0",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "bOEUu",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Mtdlw",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "hknrn",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 10,6:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "u1nya",
+          "name": "bandeau-types",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "#eec976",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "L0kxTa",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "4 · TYPES  —  soleil #eec976",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "IEOWL",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "g6DTHm",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "SzYyl",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "K3OWqO",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 12,7:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "keHLs",
+          "name": "bandeau-atelier",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$rose",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "uA1aA",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "5 · ATELIER  —  rose = --primary",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "K1Peb",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "rY9iC",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "mpEn9",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "o3lNh",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 12,6:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "IBOnK",
+          "name": "bandeau-faq",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "#a996e2",
+          "cornerRadius": "$radius-12",
+          "padding": [
+            0,
+            "$space-32"
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "SrcWx",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "6 · FAQ  —  lavande #a996e2",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            },
+            {
+              "type": "text",
+              "id": "EpoEB",
+              "name": "titre-témoin",
+              "fill": "$encre",
+              "content": "Un titre de section",
+              "lineHeight": "$leading-h3",
+              "fontFamily": "$font-display",
+              "fontSize": "$text-h3",
+              "fontWeight": "$graisse-display"
+            },
+            {
+              "type": "frame",
+              "id": "ki2M5",
+              "name": "bouton-témoin",
+              "fill": "$papier",
+              "cornerRadius": "$radius-pilule",
+              "padding": [
+                "$space-12",
+                "$space-24"
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "tF2q0",
+                  "name": "libellé-bouton",
+                  "fill": "$encre",
+                  "content": "Un bouton",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-medium"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "TkLfq",
+              "name": "libellé",
+              "fill": "$encre",
+              "content": "encre sur aplat 7,8:1",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-label",
+              "fontWeight": "$graisse-medium",
+              "letterSpacing": "$tracking-label"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "VywyX",
+          "name": "légende",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": "$space-8",
+          "children": [
+            {
+              "type": "text",
+              "id": "F1w59b",
+              "name": "gagne",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Gagne : zéro token à créer — la rotation existe déjà en code, et la polychromie de la marque monte dans l'interface au lieu de rester dans les photos.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            },
+            {
+              "type": "text",
+              "id": "Q5Yr4",
+              "name": "coûte",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Coûte : l'accent ne sait pas écrire — lavande 2,51:1, menthe 1,85:1, soleil 1,54:1 sur papier, sans déclinaison encre dans le code : tout texte accentué retombe sur rose-encre ou l'encre pure.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "hxikH",
+      "x": 6198,
+      "y": 961,
+      "name": "proposition/contre-visite-creations",
+      "context": "Proposition (droit de proposition, _conduite.md) — contre-visite du 2026-08-19, passe de signature : la section créations est la seule sans geste propre ni idée (grille au cordeau, contre-pied de la symétrie imparfaite). La section 02-creations reste intouchée : Léane arbitre sur cette frame.",
+      "clip": true,
+      "width": 1340,
+      "fill": "$papier",
+      "layout": "vertical",
+      "gap": "$space-24",
+      "padding": "$space-48",
+      "children": [
+        {
+          "type": "text",
+          "id": "K8Ubbs",
+          "name": "Titre",
+          "fill": "$encre",
+          "content": "Proposition — la grille respire (section créations)",
+          "lineHeight": "$leading-h3",
+          "fontFamily": "$font-display",
+          "fontSize": "$text-h3",
+          "fontWeight": "$graisse-display"
+        },
+        {
+          "type": "text",
+          "id": "xQdtv",
+          "name": "idée",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "L'idée : les 8 cartes s'échelonnent comme les pampilles du hero — l'accumulation de la marque, pas la grille au cordeau. Tops décalés (0 · 24 · 8 · 32), l'alignement parfait devient une symétrie imparfaite.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "frame",
+          "id": "g7r4B8",
+          "name": "démo",
+          "width": "fill_container",
+          "gap": "$space-24",
+          "children": [
+            {
+              "type": "frame",
+              "id": "zXQMH",
+              "name": "cale-1",
+              "layout": "vertical",
+              "children": [
+                {
+                  "id": "KacC0",
+                  "type": "ref",
+                  "ref": "Trd6e",
+                  "name": "carte-1"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "GkrzK",
+              "name": "cale-2",
+              "layout": "vertical",
+              "padding": [
+                24,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "id": "w1S3CR",
+                  "type": "ref",
+                  "ref": "Trd6e",
+                  "name": "carte-2"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "GIucZ",
+              "name": "cale-3",
+              "layout": "vertical",
+              "padding": [
+                8,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "id": "UImxh",
+                  "type": "ref",
+                  "ref": "Trd6e",
+                  "name": "carte-3"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "HgR77",
+              "name": "cale-4",
+              "layout": "vertical",
+              "padding": [
+                32,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "id": "OfPmo",
+                  "type": "ref",
+                  "ref": "Trd6e",
+                  "name": "carte-4"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "w6JJK",
+          "name": "légende",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": "$space-8",
+          "children": [
+            {
+              "type": "text",
+              "id": "F09Hu",
+              "name": "ajoute",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Ajoute : un geste propre à la section qui fait le chiffre — l'écho de la frange du hero, sans toucher au composant carte-produit.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            },
+            {
+              "type": "text",
+              "id": "bBSFO",
+              "name": "coûte",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Coûte : ~32 px de hauteur de section ; en code, un décalage par nth-child (desktop seulement — le 2 colonnes mobile reste aligné).",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            },
+            {
+              "type": "text",
+              "id": "Z0Kw4R",
+              "name": "remplacerait",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Remplacerait : l'alignement parfait des rangées de 02-creations/desktop.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VhiCE",
+      "x": 7478,
+      "y": 961,
+      "name": "proposition/contre-visite-faq",
+      "context": "Proposition (droit de proposition, _conduite.md) — contre-visite du 2026-08-19, passe de signature : la FAQ tient par sa voix, pas par sa forme (accordéon standard, substituable). La section 06-faq reste intouchée : Léane arbitre sur cette frame.",
+      "clip": true,
+      "width": 860,
+      "fill": "$papier",
+      "layout": "vertical",
+      "gap": "$space-24",
+      "padding": "$space-48",
+      "children": [
+        {
+          "type": "text",
+          "id": "U0duj0",
+          "name": "Titre",
+          "fill": "$encre",
+          "content": "Proposition — répondue comme un message (FAQ)",
+          "lineHeight": "$leading-h3",
+          "fontFamily": "$font-display",
+          "fontSize": "$text-h3",
+          "fontWeight": "$graisse-display"
+        },
+        {
+          "type": "text",
+          "id": "nXqeJ",
+          "name": "idée",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "L'idée : le chapô promet « je te réponds ici comme je le ferais par message » — la réponse dépliée tient la promesse en devenant une bulle de message, signée. La forme rejoint la voix.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
+        },
+        {
+          "type": "frame",
+          "id": "jAWnA",
+          "name": "démo-bulle",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": "$space-12",
+          "children": [
+            {
+              "type": "text",
+              "id": "x9ygoO",
+              "name": "question",
+              "fill": "$encre",
+              "content": "Quel est le délai de livraison en France ?",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-body",
+              "fontWeight": "$graisse-medium"
+            },
+            {
+              "type": "frame",
+              "id": "IO7gG",
+              "name": "bulle",
+              "width": 620,
+              "fill": "$gris",
+              "cornerRadius": [
+                "$radius-20",
+                "$radius-20",
+                "$radius-20",
+                4
+              ],
+              "layout": "vertical",
+              "gap": "$space-8",
+              "padding": [
+                "$space-16",
+                "$space-24"
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BmDLw",
+                  "name": "réponse",
+                  "fill": "$encre",
+                  "textGrowth": "fixed-width",
+                  "width": 572,
+                  "content": "J'expédie sous {délai} depuis mon atelier de Nantes, en colis suivi. La livraison coûte {frais}. Tu reçois le lien de suivi dès que ton colis part.",
+                  "lineHeight": "$leading-small",
+                  "fontFamily": "$font-sans",
+                  "fontSize": "$text-small",
+                  "fontWeight": "$graisse-normale"
+                },
+                {
+                  "type": "text",
+                  "id": "Y5Ysw",
+                  "name": "signature",
+                  "fill": "$rose-encre",
+                  "content": "— Léane",
+                  "fontFamily": "$font-cursive",
+                  "fontSize": "$text-note",
+                  "fontWeight": "$graisse-normale"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "i5NTZ",
+          "name": "légende",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": "$space-8",
+          "children": [
+            {
+              "type": "text",
+              "id": "aTGaU",
+              "name": "ajoute",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Ajoute : le seul geste de la page côté FAQ — la réponse-message signée, qu'aucune boutique sans visage ne peut signer.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            },
+            {
+              "type": "text",
+              "id": "YBNcD",
+              "name": "coûte",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Coûte : un style de plus sur le panneau ouvert de l'accordéon (bulle + signature) ; la signature cursive reste de la ponctuation, pas un texte porteur.",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            },
+            {
+              "type": "text",
+              "id": "DFacl",
+              "name": "remplacerait",
+              "fill": "$encre",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Remplacerait : le panneau ouvert plat d'accordeon-question (état « ouvert » seulement — la rangée fermée ne bouge pas).",
+              "lineHeight": "$leading-small",
+              "fontFamily": "$font-sans",
+              "fontSize": "$text-small",
+              "fontWeight": "$graisse-normale"
+            }
+          ]
         }
       ]
     }

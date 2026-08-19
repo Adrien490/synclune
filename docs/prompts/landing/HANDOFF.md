@@ -3,20 +3,43 @@
 > Tout ce que la maquette (`landing.pen`) exige du code, extrait des entrées « en code : … »
 > de `NOTES.md` (la source de détail : chaque item cite son tour) et des champs `context`
 > posés dans le `.pen`. Écrit le 2026-08-17 à l'audit du dossier. Compagnons : `SHOOTING.md`
-> (photos), `AUDIT-MAQUETTE-2026-08-17.md` (backlog statué), et la grille officielle
-> `docs/LANDING-BEST-PRACTICES.md` § 9 pour re-noter le site rendu.
+> (photos), `AUDIT-MAQUETTE-2026-08-17.md` + `-17b.md` (backlogs statués), `ETAT.md` (état
+> courant et arbitrages ouverts), `11-livraison-au-code.md` (les 24 critères que la maquette ne
+> peut que spécifier), et les deux grilles pour re-noter le site rendu :
+> `docs/LANDING-BEST-PRACTICES.md` § 9 (conformité /100) et `_signature.md` (désirabilité /20).
+> État des notes de la maquette : **82/100 en conformité, 12/20 en signature** (passe du
+> 2026-08-19, détail dans `AUDIT-DOSSIER-2026-08-19b.md` — deux propositions à arbitrer).
 
 ## Avant le moindre token — les arbitrages bloquants
 
-1. **Franco de port** : « Livraison offerte dès {franco} » est sur toutes les frames, mais
-   **aucun seuil d'offre n'existe dans le code** (`shipping-rates.ts`). Léane crée l'offre
-   (nouveau champ dans `SHIPPING_RATES`) ou la promesse sort de la maquette. (Audit du dossier.)
-2. **Système bicolore rose/or vs rotation lavande/menthe/soleil** : la famille `or`/`or-encre`
+1. ~~**Franco de port**~~ — **TRANCHÉ le 2026-08-18 : le franco est ABANDONNÉ.** Le placeholder
+   `{franco}` n'avait aucune source dans le code (`shipping-rates.ts`) ; il est retiré de toute
+   la maquette (bandeaux, blocs « En pratique », réponse FAQ, y compris les overrides
+   d'instances). Le bandeau des deux barres hautes porte désormais
+   « Livraison {frais} · expédié sous {délai} » — deux valeurs qui ont, elles, une SSOT.
+   **Ne pas réintroduire `{franco}` sans que Léane crée l'offre en base.**
+2. **Tuiles du hero ENTIÈRES — dérogation assumée au § 1.5 (2026-08-18).** Adrien a demandé
+   deux fois que les photos du hero ne soient pas coupées ; c'est tranché, les tuiles sont
+   entières sur les deux formats. ⚠️ Cela déroge sciemment au critère « la section suivante est
+   visiblement coupée par la flottaison » (illusion de complétude, NN/g) : le premier écran perd
+   son signal de continuation et la grille retire 1 pt. Coût accepté. **Ne pas "corriger" en
+   re-coupant les tuiles** — c'est une décision, pas une régression. Si un signal de scroll
+   redevient souhaitable, le chercher AILLEURS que dans la coupe des photos (le carnet du
+   2026-08-18 liste les pistes).
+   Conséquence de forme : pour rester au ratio 4:5 imposé par la spec, les tuiles desktop
+   passent de 184×230 à **148×185** (mobile inchangé, 168×210).
+3. **Système bicolore rose/or vs rotation lavande/menthe/soleil** : la famille `or`/`or-encre`
    n'existe pas dans `globals.css` et le bicolore REMPLACE la rotation `[data-accent]`. Décision
    AVANT d'écrire un token — créer `or`/`or-encre` et retirer la rotation, OU adapter la
-   maquette. (`synclune-systeme.md`, tour 0.)
-3. Les autres arbitrages Léane (six sections, sur-titres, « avec amour », gouttes de marge)
-   sont listés dans `NOTES.md`, entrée « Audit du dossier — 2026-08-17 ».
+   maquette. (`synclune-systeme.md`, tour 0.) ⚠️ Les **deux planches** `00-systeme/accents-bicolore`
+   et `-rotation` sont **dessinées dans `landing.pen`** depuis la contre-visite du 2026-08-19,
+   contrastes recalculés des deux (la rotation ne sait pas écrire : lavande 2,51:1, menthe 1,85,
+   soleil 1,54 sur papier, sans déclinaison encre) : l'arbitrage se prend sur pièce.
+4. Les autres arbitrages Léane (six sections, sur-titres, « avec amour », gouttes de marge du
+   hero) sont listés dans **`ETAT.md`**, en questions fermées — c'est la liste qui fait foi.
+   Les trois propositions (grille respire · FAQ-message · pastilles gouttes) sont **prises et
+   appliquées** le 2026-08-19 (délégation Adrien, réversible par Léane) — consignes de code
+   dans les sections concernées ci-dessous.
 
 ## Valeurs dynamiques — rien de chiffré ne s'écrit en dur
 
@@ -29,8 +52,8 @@
 - **Badges de rareté** (« PIÈCE UNIQUE », « IL EN RESTE 2 ») : lus en base, et tenus au test
   de la ligne claire — la phrase doit rester vraie si la visiteuse revient demain. (Tour 2.)
 - **`{frais}`** = `SHIPPING_RATES`, **`{délai}`** = `PREPARATION_BUSINESS_DAYS` +
-  `estimatedDays` (`modules/orders/constants/shipping-rates.ts`) ; **`{franco}`** : voir
-  arbitrage nº 1. (Tour 6, corrigé à l'audit.)
+  `estimatedDays` (`modules/orders/constants/shipping-rates.ts`). ⚠️ **`{franco}` n'existe
+  plus** — franco abandonné le 2026-08-18, cf. arbitrage nº 1.
 
 ## Système
 
@@ -76,6 +99,9 @@
 - **Sous 768** : favori en bas-droite de la photo (en haut, il chevauche le badge). (Tour 2.)
 - **Favori actif** : touche rose (`ACCENT_SHAPE_PATHS.heart`) qui déborde DERRIÈRE le glyphe
   encre — jamais un cœur rose seul (1,55:1 ne signale rien). (Passe créative.)
+- **Pastilles de variantes = GOUTTES pleines** (proposition prise le 2026-08-19) : un path
+  unique 14×14 (géométrie du motif goutte de la maquette), rempli de la couleur de CONTENU,
+  cerclage gris 1 px — remplace le rond ; repos, survol, focus inchangés par ailleurs.
 - Le lien texte de la carte vendue (~22 px de haut) est acceptable **si** toute la carte est
   cliquable — exception « lien en ligne » de WCAG 2.5.8. (Tour 2.)
 - Carte vendue = une porte : « Commander une pièce comme elle » pointe vers la **commande
@@ -92,6 +118,9 @@
 
 ## Sections
 
+- **Créations (desktop)** : les 8 cartes s'échelonnent — tops **0·24·8·32** par colonne
+  (`nth-child`, desktop seulement, le 2 colonnes mobile reste aligné). Proposition « la grille
+  respire », prise le 2026-08-19 ; coût accepté ~32 px par rangée.
 - **Collections** : plafonner la section à ~6 cartes + lien (la grappe tient à 6 et 9, mais
   6 est la recommandation) ; visuels par carte = requête **partagée avec le méga-menu,
   plafond 4** ; une collection sans photo se rend en état `sans-visuel`. (Tour 3.)
@@ -100,7 +129,10 @@
 - **FAQ** : ⛔ **ne pas ré-émettre le JSON-LD `FAQPage`** avec le retour visuel de la FAQ
   (`context` posé ; rich result retiré, verrouillé par
   `catalogue-single-breadcrumb.regression.test.ts`). La rangée d'accordéon ENTIÈRE est le
-  bouton (58 px) — l'icône seule fait 20 px. (Tour 6, audit maquette P1.3.)
+  bouton (58 px) — l'icône seule fait 20 px. (Tour 6, audit maquette P1.3.) **La réponse
+  dépliée est une bulle de message signée** (fond gris, rayons 20/20/20/4 — coin-queue en
+  bas-gauche —, padding 16/24, signature « — Léane » en cursive rose-encre : de la
+  ponctuation, pas un texte porteur). Proposition prise le 2026-08-19.
 - **Atelier** : « Lire l'histoire de l'atelier » pointe vers la future page atelier/à-propos —
   garder ce libellé. (Tour 5.)
 
