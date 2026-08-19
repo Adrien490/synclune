@@ -85,10 +85,11 @@
   si la maquette est retenue, créer le token (teinte du rose, surfaces uniquement) ; le filet
   interne `#06070b24` = `var(--foreground)` à 14 % ; focus des liens du pied = anneau encre
   2 px standard (la règle « focus papier sur fond encre » est morte avec l'aplat encre).
-- **Transitions en dégradé entre sections** (assemblages) : papier↔or autour des types,
-  papier→rose-pale avant le pied — desktop 64 px, mobile 16 px (hauteurs réglées par le relevé
-  des plis). Le papier→rose-pale est quasi invisible (1,08:1), c'est un raccord de surface
-  assumé, pas un effet à reproduire en plus voyant.
+- **Transitions en dégradé entre sections** (assemblages) : papier→or avant les types ·
+  or→rose-pale puis rose-pale→papier autour de l'atelier (qui prend un **bain `rose-pale`**
+  depuis le 2026-08-19) · papier→rose-pale avant le pied — desktop 64 px, mobile 16 px
+  (hauteurs réglées par le relevé des plis). Le papier→rose-pale est quasi invisible (1,08:1),
+  c'est un raccord de surface assumé, pas un effet à reproduire en plus voyant.
 
 ## Carte produit
 
@@ -122,6 +123,8 @@
   au chargement (translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s), hors
   chemin du LCP ; `prefers-reduced-motion` : posées d'emblée. Jamais de boucle. Desktop
   seulement. (Spec sur la planche motion + `context` du groupe `filigrane-hero`.)
+  **Depuis le 2026-08-19 (« D en couleur », prise)** : 2 des 5 formes portent un remplissage
+  translucide — cœur `#f7a8d866`, goutte `#7fd8d866` — trait encre 10 % et animation inchangés.
 
 ## Sections
 
@@ -141,7 +144,9 @@
   bas-gauche —, padding 16/24, signature « — Léane » en cursive rose-encre : de la
   ponctuation, pas un texte porteur). Proposition prise le 2026-08-19.
 - **Atelier** : « Lire l'histoire de l'atelier » pointe vers la future page atelier/à-propos —
-  garder ce libellé. (Tour 5.)
+  garder ce libellé. (Tour 5.) **Bain `rose-pale` sur toute la section** (proposition prise le
+  2026-08-19, desktop + mobile) : fond `--color-brand-rose-pale` en code, texte encre (18,21:1),
+  transitions d'assemblage ajustées (cf. § Chrome).
 - **Dessins en couleur (proposition prise et appliquée le 2026-08-19, réponse au « site un peu
   blanc » de Léane)** : les tracés du décor dessiné portent des remplissages bonbon SOUS le trait
   encre 1,5 — vignettes des 8 types (desktop + mobile), gouttes de l'état `sans-visuel` des

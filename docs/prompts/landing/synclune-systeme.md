@@ -39,11 +39,12 @@ du papier, de l'encre et du gris.
   **seule valeur non tokenisée tolérée** hors carte OG (une variable ne porte pas d'alpha) ; en
   code : `var(--foreground)` à 14 %. La règle « sur fond encre, focus papier » est **caduque** :
   sur `rose-pale`, le focus est l'anneau encre 2 px standard.
-- **Transitions en dégradé entre sections d'assemblage** : papier↔or autour de la section types,
-  papier→rose-pale avant le pied. Desktop 64 px, **mobile 16 px** (réglé par le relevé des plis,
-  audit 17b). Le dégradé papier→rose-pale est à 1,08:1 — invisibilité **assumée** (raccord de
-  surface, pas un effet). Ces bandes complètent la séparation « blanc + filets gris », elles ne la
-  remplacent pas ailleurs.
+- **Transitions en dégradé entre sections d'assemblage** : papier→or avant les types ·
+  or→rose-pale puis rose-pale→papier autour de l'atelier (en **bain `rose-pale`** depuis la
+  passe couleur du 2026-08-19) · papier→rose-pale avant le pied. Desktop 64 px, **mobile 16 px**
+  (réglé par le relevé des plis). Le dégradé papier→rose-pale est à 1,08:1 — invisibilité
+  **assumée** (raccord de surface, pas un effet). Ces bandes complètent la séparation « blanc +
+  filets gris », elles ne la remplacent pas ailleurs.
 
 ### Écarts avec le code actuel — TRANCHÉ le 2026-08-19 : bicolore rose/or
 

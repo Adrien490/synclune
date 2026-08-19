@@ -4831,6 +4831,7 @@
                     24,
                     24
                   ],
+                  "fill": "#7fd8d866",
                   "width": 32,
                   "height": 32,
                   "stroke": "#06070b1a",
@@ -4885,6 +4886,7 @@
                     50,
                     50
                   ],
+                  "fill": "#f7a8d866",
                   "width": 30,
                   "height": 30,
                   "stroke": "#06070b1a",
@@ -11884,7 +11886,7 @@
       "name": "05-atelier/desktop",
       "clip": true,
       "width": 1440,
-      "fill": "$papier",
+      "fill": "$rose-pale",
       "layout": "vertical",
       "padding": [
         "$space-96",
@@ -12761,7 +12763,7 @@
       },
       "clip": true,
       "width": 390,
-      "fill": "$papier",
+      "fill": "$rose-pale",
       "layout": "vertical",
       "gap": "$space-48",
       "padding": [
@@ -13788,8 +13790,6 @@
       "layout": "vertical",
       "gap": "$space-32",
       "padding": [
-        "$space-96",
-        "$marge-page",
         "$space-64",
         "$marge-page"
       ],
@@ -15324,6 +15324,7 @@
                         24,
                         24
                       ],
+                      "fill": "#7fd8d866",
                       "width": 32,
                       "height": 32,
                       "stroke": "#06070b1a",
@@ -15378,6 +15379,7 @@
                         50,
                         50
                       ],
+                      "fill": "#f7a8d866",
                       "width": 30,
                       "height": 30,
                       "stroke": "#06070b1a",
@@ -19041,7 +19043,7 @@
                 "position": 0
               },
               {
-                "color": "$papier",
+                "color": "$rose-pale",
                 "position": 1
               }
             ]
@@ -19053,7 +19055,7 @@
           "name": "section-atelier",
           "clip": true,
           "width": 1440,
-          "fill": "$papier",
+          "fill": "$rose-pale",
           "layout": "vertical",
           "padding": [
             "$space-96",
@@ -19918,6 +19920,32 @@
               ]
             }
           ]
+        },
+        {
+          "type": "frame",
+          "id": "g6Wif8",
+          "name": "transition-atelier-faq",
+          "width": "fill_container",
+          "height": 64,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$rose-pale",
+                "position": 0
+              },
+              {
+                "color": "$papier",
+                "position": 1
+              }
+            ]
+          }
         },
         {
           "type": "frame",
@@ -23867,7 +23895,7 @@
                 "position": 0
               },
               {
-                "color": "$papier",
+                "color": "$rose-pale",
                 "position": 1
               }
             ]
@@ -23882,7 +23910,7 @@
           },
           "clip": true,
           "width": 390,
-          "fill": "$papier",
+          "fill": "$rose-pale",
           "layout": "vertical",
           "gap": "$space-48",
           "padding": [
@@ -24397,7 +24425,33 @@
         },
         {
           "type": "frame",
-          "id": "UYICR",
+          "id": "En7OV",
+          "name": "transition-atelier-faq",
+          "width": "fill_container",
+          "height": 16,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "$rose-pale",
+                "position": 0
+              },
+              {
+                "color": "$papier",
+                "position": 1
+              }
+            ]
+          }
+        },
+        {
+          "type": "frame",
+          "id": "x5TO4y",
           "name": "06-faq/mobile",
           "context": "Au passage en code : ne PAS ré-émettre le JSON-LD FAQPage avec le retour visuel de la FAQ (rich result retiré, verrouillé par catalogue-single-breadcrumb.regression.test.ts) — audit 2026-08-17, P1.3.",
           "theme": {
@@ -24409,15 +24463,13 @@
           "layout": "vertical",
           "gap": "$space-32",
           "padding": [
-            "$space-96",
-            "$marge-page",
             "$space-64",
             "$marge-page"
           ],
           "children": [
             {
               "type": "frame",
-              "id": "A6eI5",
+              "id": "zPbd3",
               "name": "en-tete",
               "width": "fill_container",
               "layout": "vertical",
@@ -24425,7 +24477,7 @@
               "children": [
                 {
                   "type": "text",
-                  "id": "Mnyoo",
+                  "id": "maJnc",
                   "name": "sur-titre",
                   "fill": "$or-encre",
                   "content": "QUESTIONS FRÉQUENTES",
@@ -24436,7 +24488,7 @@
                 },
                 {
                   "type": "text",
-                  "id": "D9o6Cj",
+                  "id": "hSAxQ",
                   "name": "titre",
                   "fill": "$encre",
                   "textGrowth": "fixed-width",
@@ -24450,7 +24502,7 @@
                 },
                 {
                   "type": "text",
-                  "id": "QC8db",
+                  "id": "t9181T",
                   "name": "chapo",
                   "fill": "$encre",
                   "textGrowth": "fixed-width",
@@ -24465,7 +24517,7 @@
             },
             {
               "type": "frame",
-              "id": "ZM77n",
+              "id": "yrATB",
               "name": "bloc-en-pratique",
               "width": "fill_container",
               "fill": "$or",
@@ -24476,7 +24528,7 @@
               "children": [
                 {
                   "type": "text",
-                  "id": "yGU3Z",
+                  "id": "mRIRZ",
                   "name": "titre-bloc",
                   "fill": "$encre",
                   "content": "EN PRATIQUE",
@@ -24487,14 +24539,14 @@
                 },
                 {
                   "type": "frame",
-                  "id": "BSTCW",
+                  "id": "aTl6V",
                   "name": "ligne-pratique",
                   "width": "fill_container",
                   "gap": "$space-12",
                   "children": [
                     {
                       "type": "frame",
-                      "id": "AyZhS",
+                      "id": "Hpu4c",
                       "name": "puce",
                       "layout": "vertical",
                       "padding": [
@@ -24506,7 +24558,7 @@
                       "children": [
                         {
                           "type": "path",
-                          "id": "wVutT",
+                          "id": "h0AR5",
                           "name": "goutte-puce",
                           "geometry": "M5 1c0 3.5-4 6.5-4 8.5a4 4 0 0 0 8 0c0-2-4-5-4-8.5z",
                           "viewBox": [
@@ -24525,7 +24577,7 @@
                     },
                     {
                       "type": "text",
-                      "id": "BVyt2",
+                      "id": "ZCv9g",
                       "name": "texte-ligne",
                       "fill": "$encre",
                       "textGrowth": "fixed-width",
@@ -24540,14 +24592,14 @@
                 },
                 {
                   "type": "frame",
-                  "id": "kLlAK",
+                  "id": "EkoYj",
                   "name": "ligne-pratique",
                   "width": "fill_container",
                   "gap": "$space-12",
                   "children": [
                     {
                       "type": "frame",
-                      "id": "lCZ4F",
+                      "id": "J5xeH",
                       "name": "puce",
                       "layout": "vertical",
                       "padding": [
@@ -24559,7 +24611,7 @@
                       "children": [
                         {
                           "type": "path",
-                          "id": "o8thKH",
+                          "id": "tHlgO",
                           "name": "goutte-puce",
                           "geometry": "M5 1c0 3.5-4 6.5-4 8.5a4 4 0 0 0 8 0c0-2-4-5-4-8.5z",
                           "viewBox": [
@@ -24578,7 +24630,7 @@
                     },
                     {
                       "type": "text",
-                      "id": "mwIMP",
+                      "id": "JNI4L",
                       "name": "texte-ligne",
                       "fill": "$encre",
                       "textGrowth": "fixed-width",
@@ -24593,14 +24645,14 @@
                 },
                 {
                   "type": "frame",
-                  "id": "V75nNH",
+                  "id": "Y9oGoq",
                   "name": "ligne-pratique",
                   "width": "fill_container",
                   "gap": "$space-12",
                   "children": [
                     {
                       "type": "frame",
-                      "id": "V2GTyD",
+                      "id": "RRiEt",
                       "name": "puce",
                       "layout": "vertical",
                       "padding": [
@@ -24612,7 +24664,7 @@
                       "children": [
                         {
                           "type": "path",
-                          "id": "Hjge6",
+                          "id": "w8BMlc",
                           "name": "goutte-puce",
                           "geometry": "M5 1c0 3.5-4 6.5-4 8.5a4 4 0 0 0 8 0c0-2-4-5-4-8.5z",
                           "viewBox": [
@@ -24631,7 +24683,7 @@
                     },
                     {
                       "type": "text",
-                      "id": "GT8fw",
+                      "id": "CLISL",
                       "name": "texte-ligne",
                       "fill": "$encre",
                       "textGrowth": "fixed-width",
@@ -24646,14 +24698,14 @@
                 },
                 {
                   "type": "frame",
-                  "id": "D4mCo",
+                  "id": "vDb9o",
                   "name": "ligne-pratique",
                   "width": "fill_container",
                   "gap": "$space-12",
                   "children": [
                     {
                       "type": "frame",
-                      "id": "r69Nw0",
+                      "id": "UEsw8",
                       "name": "puce",
                       "layout": "vertical",
                       "padding": [
@@ -24665,7 +24717,7 @@
                       "children": [
                         {
                           "type": "path",
-                          "id": "c6u7lv",
+                          "id": "CvLYG",
                           "name": "goutte-puce",
                           "geometry": "M5 1c0 3.5-4 6.5-4 8.5a4 4 0 0 0 8 0c0-2-4-5-4-8.5z",
                           "viewBox": [
@@ -24684,7 +24736,7 @@
                     },
                     {
                       "type": "text",
-                      "id": "B06Cc",
+                      "id": "I7Yqj",
                       "name": "texte-ligne",
                       "fill": "$encre",
                       "textGrowth": "fixed-width",
@@ -24699,14 +24751,14 @@
                 },
                 {
                   "type": "frame",
-                  "id": "NL48z",
+                  "id": "P8RKvN",
                   "name": "ligne-pratique",
                   "width": "fill_container",
                   "gap": "$space-12",
                   "children": [
                     {
                       "type": "frame",
-                      "id": "HJBmg",
+                      "id": "AneZi",
                       "name": "puce",
                       "layout": "vertical",
                       "padding": [
@@ -24718,7 +24770,7 @@
                       "children": [
                         {
                           "type": "path",
-                          "id": "g52xYI",
+                          "id": "M94SXV",
                           "name": "goutte-puce",
                           "geometry": "M5 1c0 3.5-4 6.5-4 8.5a4 4 0 0 0 8 0c0-2-4-5-4-8.5z",
                           "viewBox": [
@@ -24737,7 +24789,7 @@
                     },
                     {
                       "type": "text",
-                      "id": "MQO8t",
+                      "id": "r23kHd",
                       "name": "texte-ligne",
                       "fill": "$encre",
                       "textGrowth": "fixed-width",
@@ -24754,13 +24806,13 @@
             },
             {
               "type": "frame",
-              "id": "FhcMH",
+              "id": "omhpg",
               "name": "liste-questions",
               "width": "fill_container",
               "layout": "vertical",
               "children": [
                 {
-                  "id": "NScXk",
+                  "id": "rqXBY",
                   "type": "ref",
                   "ref": "afjyM",
                   "name": "question-delai-livraison",
@@ -24778,7 +24830,7 @@
                   }
                 },
                 {
-                  "id": "qv65G",
+                  "id": "lhAAL",
                   "type": "ref",
                   "ref": "afjyM",
                   "name": "question-retours",
@@ -24790,7 +24842,7 @@
                   }
                 },
                 {
-                  "id": "M2w3IA",
+                  "id": "Ze8XF",
                   "type": "ref",
                   "ref": "afjyM",
                   "name": "question-fait-main",
@@ -24802,7 +24854,7 @@
                   }
                 },
                 {
-                  "id": "XdoCD",
+                  "id": "qAZYR",
                   "type": "ref",
                   "ref": "afjyM",
                   "name": "question-exemplaires",
@@ -24814,7 +24866,7 @@
                   }
                 },
                 {
-                  "id": "Aw6d6",
+                  "id": "F0MyE0",
                   "type": "ref",
                   "ref": "afjyM",
                   "name": "question-taille",
@@ -24826,7 +24878,7 @@
                   }
                 },
                 {
-                  "id": "D0Vl6",
+                  "id": "uXSkZ",
                   "type": "ref",
                   "ref": "afjyM",
                   "name": "question-personnalisation",
@@ -24841,7 +24893,7 @@
             },
             {
               "type": "frame",
-              "id": "EMVmd",
+              "id": "jUB3L",
               "name": "sortie",
               "width": "fill_container",
               "layout": "vertical",
@@ -24849,7 +24901,7 @@
               "children": [
                 {
                   "type": "frame",
-                  "id": "x6LSm",
+                  "id": "Q42edX",
                   "name": "ligne-sortie",
                   "layout": "vertical",
                   "gap": "$space-4",
@@ -24857,7 +24909,7 @@
                   "children": [
                     {
                       "type": "text",
-                      "id": "R65EKE",
+                      "id": "XTao9",
                       "name": "texte-sortie",
                       "fill": "$encre",
                       "content": "Une autre question ?",
@@ -24866,7 +24918,7 @@
                       "fontWeight": "$graisse-normale"
                     },
                     {
-                      "id": "NF5tX",
+                      "id": "tDey8",
                       "type": "ref",
                       "ref": "DABzB",
                       "name": "lien-ecris-moi",
@@ -32113,8 +32165,8 @@
       "id": "x7fe0",
       "x": 12360,
       "y": 961,
-      "name": "proposition/hero-filigrane-couleur",
-      "context": "Proposition du 2026-08-19 (suite couleur, non appliquée — arbitrage Léane/Adrien OUVERT) : 2 des 5 formes du filigrane hero prennent un remplissage bonbon translucide (h5VI6 cœur #f7a8d866, D4Ypk goutte #7fd8d866), trait encre 10 % et animation de pose inchangés. Si PRISE : deux fills sur les paths du groupe filigrane-hero (section + copie assemblage). Réversible en les retirant. La section 01-hero/desktop n'est PAS touchée.",
+      "name": "proposition/hero-filigrane-couleur — PRISE",
+      "context": "PRISE et APPLIQUÉE le 2026-08-19 (Adrien) : fills #f7a8d866 (cœur h5VI6) et #7fd8d866 (goutte D4Ypk) posés sur la section 01-hero/desktop ET la copie d'assemblage (SjI1c/bRLaU). Réversible en retirant les deux fills. Veto Léane possible.",
       "fill": "$papier",
       "stroke": "$encre",
       "strokeWidth": 1,
@@ -33642,8 +33694,8 @@
       "id": "YqESG",
       "x": 12360,
       "y": 3600,
-      "name": "proposition/atelier-rose-pale",
-      "context": "Proposition du 2026-08-19 (suite couleur, non appliquée — arbitrage Léane/Adrien OUVERT) : bain $rose-pale sur toute la section atelier (la seule section rose sans aplat). Contrastes tenus (encre 18,21:1). Si PRISE : fill de section + régler les transitions d'assemblage autour de l'atelier (or→rose-pale, rose-pale→papier) et re-relever les plis mobiles. Réversible. La section 05-atelier n'est PAS touchée.",
+      "name": "proposition/atelier-rose-pale — PRISE",
+      "context": "PRISE et APPLIQUÉE le 2026-08-19 (Adrien) : fill $rose-pale sur 05-atelier desktop+mobile et les copies d'assemblage ; transitions types→atelier passées or→rose-pale, nouvelle transition atelier→FAQ rose-pale→papier (64 desktop / 16 mobile) ; padding haut FAQ mobile 96→64 (le pli 10 retombait en gouttière depuis la bulle +67). Relevé complet refait : 11/11 plis coupent du contenu. Réversible. Veto Léane possible.",
       "fill": "$papier",
       "stroke": "$encre",
       "strokeWidth": 1,

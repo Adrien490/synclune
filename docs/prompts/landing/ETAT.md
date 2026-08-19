@@ -20,15 +20,15 @@ au carnet — point manquant documentaire, critère 4). Passage en code **DÉBLO
   FAQ or · carte de partage rose · cookies rose. Jamais deux voisines dans la même couleur.
 - **Pied de page sur `rose-pale` `#fdf0f8`** (teinte du rose, surfaces seulement, n'écrit
   jamais) ; filet interne `#06070b24` — seule valeur non tokenisée tolérée hors carte OG.
-- **Transitions en dégradé** : papier↔or autour des types, papier→rose-pale avant le pied —
-  desktop 64 px, **mobile 16 px** ; le papier→rose-pale (1,08:1) est un raccord de surface assumé.
+- **Transitions en dégradé** : papier→or avant les types · or→rose-pale puis rose-pale→papier
+  autour de l'atelier (en bain `rose-pale`) · papier→rose-pale avant le pied — desktop 64, mobile 16.
 
 ## Mesures qui font autorité
 
 - Barres hautes **91 px desktop / 83 mobile** (bandeau + rangée) ; barre basse 56 ; le bandeau
   porte « Livraison {frais} · expédié sous {délai} ».
-- Assemblages : desktop **6 721 px**, mobile **9 890 px** (mesurés après propositions, +90/+67) —
-  le « 11/11 plis coupent du contenu » est à **re-vérifier** depuis ce décalage.
+- Assemblages : desktop **6 785 px**, mobile **9 874 px** (bain atelier + transition + FAQ 96→64) —
+  **11/11 plis re-relevés le 2026-08-19** ✓ (pli 1 = frange sous la barre basse, cas assumé).
 - Tuiles de la frise hero : desktop **148 × 185**, mobile **168 × 210** — toutes **entières**.
 - Contrastes en vigueur : encre/papier 19,59 · encre/or 15,97 · encre/rose-pale 18,21 ·
   rose-encre/papier 5,15 · or-encre/papier 4,72. Zéro texte encré en `$rose` ou `$or`.
@@ -52,11 +52,11 @@ au carnet — point manquant documentaire, critère 4). Passage en code **DÉBLO
 7. **Hero : piste D appliquée** (2026-08-19) — filigrane 3 cœurs + 2 gouttes (encre 10 %) dans
    les marges desktop, animé à la pose une fois au chargement (spec planche motion) ; réduit = statique.
 
-## Arbitrages ouverts — DEUX (suite couleur, pièces dans `apercus/arbitrages/`)
+## Arbitrages ouverts — AUCUN
 
-**`hero-filigrane-couleur`** (2 des 5 formes du filigrane en bonbon translucide) ·
-**`atelier-rose-pale`** (bain de section — si prise : transitions d'assemblage et plis à re-régler).
-`couleur-dessins` : PRISE, appliquée (hex littéraux, jamais `$rose`/`$or`). Vérifs : plis · satori OG.
+Suite couleur ENTIÈREMENT PRISE (Adrien, 2026-08-19) : `couleur-dessins` · `hero-filigrane-couleur`
+(cœur #f7a8d866, goutte #7fd8d866) · `atelier-rose-pale` (bain + transitions + FAQ 96→64). Hex
+littéraux, jamais `$rose`/`$or`. Veto Léane sur pièce (`apercus/`). Vérif restante : satori OG.
 
 ## Pièges d'outillage — tous constatés
 

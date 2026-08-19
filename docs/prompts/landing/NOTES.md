@@ -991,3 +991,30 @@ planche motion « jamais de boucle ») et tout nacré/pailleté (interdit DA).
 - Sauvegarde : flux backup (save() → `~/.pencil/backup/`, vérif headless des deux planches,
   copie, mtime 11:52). Le hash du backup a CHANGÉ cette fois (nouveau fichier) — le nom stable
   de l'entrée précédente n'était donc pas une règle, toujours prendre le plus récent par mtime.
+
+## 2026-08-19 — « D en couleur » et « atelier rose-pale » PRISES et APPLIQUÉES ; les 11 plis re-relevés
+
+Adrien prend les deux propositions de fond. Application complète, réversible, plus le règlement
+des effets de bord annoncés dans les légendes.
+
+- **Hero** : fills posés sur la section (`h5VI6` cœur #f7a8d866, `D4Ypk` goutte #7fd8d866) ET la
+  copie d'assemblage (`SjI1c`/`bRLaU`) — trait encre 10 % et animation de pose inchangés.
+- **Atelier** : `$rose-pale` sur `hBDKm` (desktop), `qL3Cm` (mobile) et les deux copies
+  d'assemblage. Transitions : types→atelier re-teintées or→rose-pale (`XffQT`, `RctM4`),
+  nouvelle `transition-atelier-faq` rose-pale→papier insérée (64 desktop / 16 mobile).
+- **Pli 10 re-tombé en gouttière** : la bulle FAQ (+67 du matin) avait défait le +32 du 18/08 —
+  le pli 984 tombait au centre du gap de 32 px entre deux questions. Remède du même levier :
+  padding haut FAQ mobile **96→64** (`qCvQR`), copie d'assemblage remplacée (`x5TO4y`).
+- **Relevé COMPLET des 11 plis refait par géométrie** (assemblage mobile 9 874) : tous coupent du
+  contenu — 2 : favori + photo bague · 3 : voile vendu · 4-5 : photos collections · 6 : vignette
+  bagues sur aplat or · 7 : h2 atelier (29/41) · 8 : corps-étape coupé en pleine ligne ·
+  9 : h2 FAQ (43/27) · 10 : question (14/38) · 11 : lien du pied coupé en pleine ligne.
+  **Pli 1 : rien ne traverse 844 et c'est NORMAL** — la barre basse fixe occupe 788-844, le
+  signal de l'écran 1 est la frange coupée par la barre (design du tour 1) ; cas à connaître
+  pour tout relevé futur. La dette « plis à re-vérifier » d'ETAT est SOLDÉE.
+- **Hauteurs qui font autorité** : desktop **6 785** (+64), mobile **9 874** (+16 −32). Headless
+  toujours décalé (+16/+19, fontes) — l'app fait foi.
+- Docs : ETAT (arbitrages AUCUN, mesures, transitions), HANDOFF (filigrane, bain, transitions),
+  synclune-systeme (§ ajouts). Rendus : `apercus/apres-{hero-filigrane-couleur,atelier-rose-pale,
+  assemblage-couleur}.png` ; planches renommées « — PRISE », pièces re-exportées dans arbitrages/.
+- Il ne reste qu'UNE vérif au dossier : le rendu satori réel de la carte OG (au passage en code).
