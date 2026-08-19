@@ -43,20 +43,20 @@ Passage en code non commencé — **DÉBLOQUÉ le 2026-08-19** (nº 1-4 tranché
 3. **`{délai}` reste hors du hero** (décision Adrien : pression pour la créatrice) — bandeau et FAQ.
 4. Survol de carte produit = **squiggle** (`SQUIGGLE_PATH` du code) ; focus = le même squiggle +
    anneau encre 2 px sur la carte entière. Jamais d'anneau rose, jamais d'ombre floue.
-5. **Les trois propositions sont PRISES et APPLIQUÉES** (2026-08-19, délégué par Adrien — Léane
-   peut défaire) : grille 0·24·8·32 desktop · réponse FAQ en bulle signée · pastilles gouttes.
+5. **Propositions appliquées** (2026-08-19, délégué par Adrien) : grille 0·24·8·32 desktop ·
+   réponse FAQ en bulle signée. ⚠️ Les **pastilles gouttes**, appliquées puis **REJETÉES par
+   Adrien le jour même** (« pas en color swatch ») — pastilles **RONDES**, ne pas re-proposer.
 6. **Nº 1-4 tranchés par Adrien le 2026-08-19** : accents BICOLORE rose/or (créer `or`/`or-encre`
    en code, retirer la rotation `[data-accent]`) · SIX sections · sur-titres PARTOUT (à
    réintroduire sur les 5 routes boutique) · « avec amour » remplacé par « les doigts encore
    pleins de peinture » — sans purge systématique de la formule (elle peut réapparaître ponctuellement).
 
-## Arbitrage ouvert — un seul
+6. **Hero : piste D appliquée** (2026-08-19) — filigrane 3 cœurs + 2 gouttes (encre 10 %) dans
+   les marges desktop, animé à la pose une fois au chargement (spec planche motion) ; réduit = statique.
 
-**Fond et formes du hero desktop** (reformulation du nº 5 par Adrien — pas seulement de la
-couleur : des formes, statiques ou animées) — planche `proposition/hero-fonds`, export
-`apercus/arbitrages/proposition-hero-fonds.png` : **A** bain rose-pale · **B** filigrane
-cœurs + gouttes · **C** lavis sous la frise · **D** les formes de B animées à la pose
-(une fois au chargement, grammaire du micro-balancement) · ou rester au blanc.
+## Arbitrages ouverts — AUCUN
+
+Tout est tranché ; veto Léane sur pièce (`apercus/`). Vérifs restantes : plis · signature · satori OG.
 
 ## Pièges d'outillage — tous constatés
 

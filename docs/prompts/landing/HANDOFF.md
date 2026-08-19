@@ -37,8 +37,8 @@
 4. **Arbitrages nº 2-4 tranchés le 2026-08-19 (Adrien)** : SIX sections (pas de fusion) ·
    sur-titres PARTOUT — à **réintroduire sur les 5 routes boutique** au handoff · « avec
    amour » remplacé par « les doigts encore pleins de peinture » (pas de purge systématique
-   de la formule ailleurs). Reste UN arbitrage ouvert : le fond du hero desktop
-   (planche `proposition/hero-fonds`, A/B/C/blanc) — liste à jour dans **`ETAT.md`**.
+   de la formule ailleurs). Le fond du hero est tranché aussi : **piste D** (filigrane animé
+   à la pose — consigne au § Hero). Plus AUCUN arbitrage ouvert (liste : **`ETAT.md`**).
    Les trois propositions (grille respire · FAQ-message · pastilles gouttes) sont **prises et
    appliquées** le 2026-08-19 (délégation Adrien, réversible par Léane) — consignes de code
    dans les sections concernées ci-dessous.
@@ -101,9 +101,8 @@
 - **Sous 768** : favori en bas-droite de la photo (en haut, il chevauche le badge). (Tour 2.)
 - **Favori actif** : touche rose (`ACCENT_SHAPE_PATHS.heart`) qui déborde DERRIÈRE le glyphe
   encre — jamais un cœur rose seul (1,55:1 ne signale rien). (Passe créative.)
-- **Pastilles de variantes = GOUTTES pleines** (proposition prise le 2026-08-19) : un path
-  unique 14×14 (géométrie du motif goutte de la maquette), rempli de la couleur de CONTENU,
-  cerclage gris 1 px — remplace le rond ; repos, survol, focus inchangés par ailleurs.
+- **Pastilles de variantes : RONDES.** La variante gouttes a été appliquée puis **rejetée** le
+  2026-08-19 (Adrien : pas en color swatch) — ne pas la re-proposer.
 - Le lien texte de la carte vendue (~22 px de haut) est acceptable **si** toute la carte est
   cliquable — exception « lien en ligne » de WCAG 2.5.8. (Tour 2.)
 - Carte vendue = une porte : « Commander une pièce comme elle » pointe vers la **commande
@@ -117,6 +116,11 @@
 - **Micro-balancement des pampilles** : ±2° autour du point d'attache, UNE fois au
   chargement, déphasé ~80 ms par tuile, ease-out ~1,2 s, désactivé sous
   `prefers-reduced-motion`. (Planche `00-systeme/motion`.)
+- **Filigrane des marges (piste D, tranchée le 2026-08-19)** : 5 formes — 3 cœurs, 2 gouttes —
+  au trait encre 10 % dans les marges desktop du bloc titre ; elles TOMBENT en place UNE fois
+  au chargement (translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s), hors
+  chemin du LCP ; `prefers-reduced-motion` : posées d'emblée. Jamais de boucle. Desktop
+  seulement. (Spec sur la planche motion + `context` du groupe `filigrane-hero`.)
 
 ## Sections
 

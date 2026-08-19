@@ -797,3 +797,24 @@ Séance d'arbitrage menée par Adrien dans la session (questions fermées, sur p
   binaire. La règle du dossier reste vraie et s'étend : **Cmd+S dans l'app OU copie depuis
   `~/.pencil/backup/` + vérification headless, et TOUJOURS vérifier le mtime avant commit.**
 - L'osascript Cmd+S (System Events) n'a pas écrit le fichier non plus — ne pas compter dessus.
+
+## 2026-08-19 — piste D appliquée au hero ; pastilles gouttes rejetées après essai
+
+- **Piste D choisie par Adrien** (sur la planche, question fermée) et **appliquée** : groupe
+  `filigrane-hero` (3 cœurs + 2 gouttes, trait encre 10 %) inséré dans `contenu-hero` de la
+  section desktop ET de la copie assemblage, à l'index 0 ; spec d'animation ajoutée à la
+  planche `00-systeme/motion` (`motion-filigrane-hero`) + `context` sur les groupes. Rendu
+  vérifié : `apercus/apres-hero-filigrane.png` — 5 formes discrètes, asymétriques, aucune
+  clippée. Micro-piège : `layoutPosition:"absolute"` est décalé du padding du parent (+50
+  constaté, un cœur entièrement clippé) — compensé par `y:-50` sur le wrapper, re-mesuré.
+- **Pastilles gouttes REJETÉES par Adrien après essai** (« je n'aime pas les gouttes en tant
+  que color swatch ») : composant `carte-produit` revenu aux 4 ellipses rondes (Delete+Insert,
+  ordre préservé), frame renommée `proposition/carte-pastilles-gouttes — ESSAYÉE PUIS
+  REJETÉE`, context annoté « ne pas re-proposer ». C'est le mécanisme qui marche : appliquer
+  réversible, montrer, laisser trancher — coût du va-et-vient quasi nul.
+- **Sauvegarde disque** : le flux backup est le canal fiable — `save()` shell → 
+  `~/.pencil/backup/5da35d8a…` (mtime vivant), vérification headless du contenu (ellipses,
+  filigranes ×2, nom REJETÉE), puis copie sur `landing.pen` (1 359 037 o). L'osascript Cmd+S
+  ne fonctionne pas — ne pas re-essayer.
+- **Plus aucun arbitrage ouvert.** Prochaines étapes : re-noter la signature sur pièce,
+  re-vérifier les plis (contenu décalé), shooting, passage en code (HANDOFF est complet).

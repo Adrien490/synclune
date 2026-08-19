@@ -2055,16 +2055,9 @@
                               "gap": "$space-8",
                               "children": [
                                 {
-                                  "type": "path",
-                                  "id": "Uvjrj",
-                                  "name": "goutte/framboise",
-                                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
-                                  "viewBox": [
-                                    0,
-                                    0,
-                                    24,
-                                    24
-                                  ],
+                                  "type": "ellipse",
+                                  "id": "q6qLV",
+                                  "name": "variante/framboise",
                                   "fill": "#e0559b",
                                   "width": 14,
                                   "height": 14,
@@ -2072,16 +2065,9 @@
                                   "strokeWidth": 1
                                 },
                                 {
-                                  "type": "path",
-                                  "id": "OA28X",
-                                  "name": "goutte/turquoise",
-                                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
-                                  "viewBox": [
-                                    0,
-                                    0,
-                                    24,
-                                    24
-                                  ],
+                                  "type": "ellipse",
+                                  "id": "gaUQp",
+                                  "name": "variante/turquoise",
                                   "fill": "#5bc0c9",
                                   "width": 14,
                                   "height": 14,
@@ -2089,16 +2075,9 @@
                                   "strokeWidth": 1
                                 },
                                 {
-                                  "type": "path",
-                                  "id": "xQZhi",
-                                  "name": "goutte/citron",
-                                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
-                                  "viewBox": [
-                                    0,
-                                    0,
-                                    24,
-                                    24
-                                  ],
+                                  "type": "ellipse",
+                                  "id": "OCEQx",
+                                  "name": "variante/citron",
                                   "fill": "#f2d24b",
                                   "width": 14,
                                   "height": 14,
@@ -2106,16 +2085,9 @@
                                   "strokeWidth": 1
                                 },
                                 {
-                                  "type": "path",
-                                  "id": "uY1Cu",
-                                  "name": "goutte/lilas",
-                                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
-                                  "viewBox": [
-                                    0,
-                                    0,
-                                    24,
-                                    24
-                                  ],
+                                  "type": "ellipse",
+                                  "id": "gM2wg",
+                                  "name": "variante/lilas",
                                   "fill": "#a48ad4",
                                   "width": 14,
                                   "height": 14,
@@ -4831,6 +4803,110 @@
           ],
           "alignItems": "center",
           "children": [
+            {
+              "type": "frame",
+              "id": "e4Ls4",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": -50,
+              "name": "filigrane-hero",
+              "context": "D — la pluie se pose (arbitrage tranché le 2026-08-19, Adrien) : chaque forme tombe en place UNE fois au chargement — translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s (grammaire du micro-balancement des pampilles). prefers-reduced-motion : statique. Jamais de boucle. Desktop seulement.",
+              "width": 1440,
+              "height": 455,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "path",
+                  "id": "D4Ypk",
+                  "x": 190,
+                  "y": 150,
+                  "name": "filigrane-goutte-1",
+                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "viewBox": [
+                    0,
+                    0,
+                    24,
+                    24
+                  ],
+                  "width": 32,
+                  "height": 32,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                },
+                {
+                  "type": "path",
+                  "id": "H2CGp",
+                  "x": 312,
+                  "y": 330,
+                  "name": "filigrane-cœur-2",
+                  "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                  "viewBox": [
+                    0,
+                    0,
+                    50,
+                    50
+                  ],
+                  "width": 26,
+                  "height": 26,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                },
+                {
+                  "type": "path",
+                  "id": "o9sSz0",
+                  "x": 240,
+                  "y": 410,
+                  "name": "filigrane-cœur-3",
+                  "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                  "viewBox": [
+                    0,
+                    0,
+                    50,
+                    50
+                  ],
+                  "width": 20,
+                  "height": 20,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                },
+                {
+                  "type": "path",
+                  "id": "h5VI6",
+                  "x": 1140,
+                  "y": 120,
+                  "name": "filigrane-cœur-4",
+                  "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                  "viewBox": [
+                    0,
+                    0,
+                    50,
+                    50
+                  ],
+                  "width": 30,
+                  "height": 30,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                },
+                {
+                  "type": "path",
+                  "id": "c8CzB",
+                  "x": 1252,
+                  "y": 340,
+                  "name": "filigrane-goutte-5",
+                  "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                  "viewBox": [
+                    0,
+                    0,
+                    24,
+                    24
+                  ],
+                  "width": 24,
+                  "height": 24,
+                  "stroke": "#06070b1a",
+                  "strokeWidth": 1.5
+                }
+              ]
+            },
             {
               "type": "frame",
               "id": "OA4Ru",
@@ -15138,6 +15214,110 @@
               "children": [
                 {
                   "type": "frame",
+                  "id": "AYfdv",
+                  "layoutPosition": "absolute",
+                  "x": 0,
+                  "y": -50,
+                  "name": "filigrane-hero",
+                  "context": "D — la pluie se pose (arbitrage tranché le 2026-08-19, Adrien) : chaque forme tombe en place UNE fois au chargement — translateY −16 → 0, opacité 0 → 1, déphasage 60-120 ms, ease-out ~1 s (grammaire du micro-balancement des pampilles). prefers-reduced-motion : statique. Jamais de boucle. Desktop seulement.",
+                  "width": 1440,
+                  "height": 455,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "bRLaU",
+                      "x": 190,
+                      "y": 150,
+                      "name": "filigrane-goutte-1",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 32,
+                      "height": 32,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "SJSYt",
+                      "x": 312,
+                      "y": 330,
+                      "name": "filigrane-cœur-2",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "width": 26,
+                      "height": 26,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "eauP7",
+                      "x": 240,
+                      "y": 410,
+                      "name": "filigrane-cœur-3",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "width": 20,
+                      "height": 20,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "SjI1c",
+                      "x": 1140,
+                      "y": 120,
+                      "name": "filigrane-cœur-4",
+                      "geometry": "M25 45q-20-15-20-27 0-13 10-13 10 0 10 10 0-10 10-10 10 0 10 13 0 12-20 27",
+                      "viewBox": [
+                        0,
+                        0,
+                        50,
+                        50
+                      ],
+                      "width": 30,
+                      "height": 30,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    },
+                    {
+                      "type": "path",
+                      "id": "I3tiwC",
+                      "x": 1252,
+                      "y": 340,
+                      "name": "filigrane-goutte-5",
+                      "geometry": "M12 2.2c-2.5 4.1-6.6 8.6-6.6 12.8 0 3.7 3 6.6 6.6 6.6 3.6 0 6.6-2.9 6.6-6.6 0-4.2-4-8.9-6.6-12.8z",
+                      "viewBox": [
+                        0,
+                        0,
+                        24,
+                        24
+                      ],
+                      "width": 24,
+                      "height": 24,
+                      "stroke": "#06070b1a",
+                      "strokeWidth": 1.5
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
                   "id": "f9vwfp",
                   "name": "texte",
                   "layout": "vertical",
@@ -25388,6 +25568,19 @@
               "fontWeight": "$graisse-normale"
             }
           ]
+        },
+        {
+          "type": "text",
+          "id": "hxLET",
+          "name": "motion-filigrane-hero",
+          "fill": "$encre",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Filigrane du hero (piste D, tranchée le 2026-08-19) : les 5 formes des marges (3 cœurs, 2 gouttes, trait encre ~10 %) tombent en place UNE fois au chargement — translateY −16 → 0 + opacité 0 → 1, déphasage 60-120 ms par forme, ease-out ~1 s, après le premier rendu du texte (jamais sur le chemin du LCP). prefers-reduced-motion : les formes sont posées, aucune chute. Jamais de boucle infinie.",
+          "lineHeight": "$leading-small",
+          "fontFamily": "$font-sans",
+          "fontSize": "$text-small",
+          "fontWeight": "$graisse-normale"
         }
       ]
     },
@@ -26902,8 +27095,8 @@
       "id": "BSC8c",
       "x": 8418,
       "y": 961,
-      "name": "proposition/carte-pastilles-gouttes — PRISE",
-      "context": "Proposition (droit de proposition, _conduite.md) — 2026-08-19, suite de la passe de signature : la carte n’a aucun geste au repos, le squiggle n’existe qu’au survol. Le composant carte-produit reste intouché : Léane arbitre sur cette frame (arbitrage nº 8 d’ETAT.md). — PRISE le 2026-08-19 : arbitrage délégué par Adrien à la session, appliquée à la maquette (Léane peut revenir dessus).",
+      "name": "proposition/carte-pastilles-gouttes — ESSAYÉE PUIS REJETÉE",
+      "context": "Proposition (droit de proposition, _conduite.md) — 2026-08-19, suite de la passe de signature : la carte n’a aucun geste au repos, le squiggle n’existe qu’au survol. Le composant carte-produit reste intouché : Léane arbitre sur cette frame (arbitrage nº 8 d’ETAT.md). — PRISE le 2026-08-19 : arbitrage délégué par Adrien à la session, appliquée à la maquette (Léane peut revenir dessus). — REJETÉE par Adrien le 2026-08-19 après application : les gouttes ne conviennent pas en color swatch, les pastilles restent RONDES. Ne pas re-proposer.",
       "clip": true,
       "width": 900,
       "fill": "$papier",
@@ -27446,8 +27639,8 @@
       "id": "IWRfm",
       "x": 9500,
       "y": 961,
-      "name": "proposition/hero-fonds",
-      "context": "Proposition (droit de proposition, _conduite.md) — 2026-08-19, reformulation de l’arbitrage nº 5 : Adrien veut des recommandations de FOND pour le hero desktop plutôt que le binaire gouttes/blanc. Trois pistes, section 01-hero intouchée — on tranche sur cette frame (A, B, C, ou rester au blanc).",
+      "name": "proposition/hero-fonds — PRISE (D)",
+      "context": "Proposition (droit de proposition, _conduite.md) — 2026-08-19, reformulation de l’arbitrage nº 5 : Adrien veut des recommandations de FOND pour le hero desktop plutôt que le binaire gouttes/blanc. Trois pistes, section 01-hero intouchée — on tranche sur cette frame (A, B, C, ou rester au blanc). — PRISE le 2026-08-19 : piste D (les formes de B, animées à la pose), appliquée à 01-hero/desktop et à la copie assemblage.",
       "clip": true,
       "width": 1536,
       "fill": "$papier",
